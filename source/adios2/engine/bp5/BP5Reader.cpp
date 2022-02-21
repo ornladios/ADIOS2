@@ -100,19 +100,21 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     StepStatus status = StepStatus::OK;
     if (m_FirstStep)
     {
-        if (m_StepsCount == 0)
+        if (!m_StepsCount)
         {
-            //            status = CheckForNewSteps(Seconds(timeoutSeconds));
+            // not steps was found in Open/Init, check for new steps now
+            status = CheckForNewSteps(Seconds(timeoutSeconds));
         }
     }
     else
     {
         if (m_CurrentStep + 1 >= m_StepsCount)
         {
-            // status = CheckForNewSteps(Seconds(timeoutSeconds));
-            status = StepStatus::EndOfStream;
+            // we processed steps in memory, check for new steps now
+            status = CheckForNewSteps(Seconds(timeoutSeconds));
         }
     }
+
     if (status == StepStatus::OK)
     {
         m_BetweenStepPairs = true;
@@ -141,6 +143,10 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         m_BP5Deserializer->SetupForStep(
             m_CurrentStep,
             m_WriterMap[m_WriterMapIndex[m_CurrentStep]].WriterCount);
+
+        /* Remove all existing variables from previous steps
+           It seems easier than trying to update them */
+        // m_IO.RemoveAllVariables();
 
         InstallMetadataForTimestep(m_CurrentStep);
         m_IO.ResetVariablesStepSelection(false,
@@ -253,9 +259,8 @@ void BP5Reader::Init()
 
     // if IO was involved in reading before this flag may be true now
     m_IO.m_ReadStreaming = false;
-
-    ParseParams(m_IO, m_Parameters);
     m_ReaderIsRowMajor = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
+    InitParameters();
     InitTransports();
     if (!m_Parameters.SelectSteps.empty())
     {
@@ -273,18 +278,31 @@ void BP5Reader::Init()
     }
 
     TimePoint timeoutInstant = Now() + timeoutSeconds;
-
     OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
+    UpdateBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
+}
 
-    /* non-stream reader gets as much steps as available now */
-    InitBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
+void BP5Reader::InitParameters()
+{
+    ParseParams(m_IO, m_Parameters);
+    if (m_Parameters.OpenTimeoutSecs < 0.0f)
+    {
+        if (m_OpenMode == Mode::ReadRandomAccess)
+        {
+            m_Parameters.OpenTimeoutSecs = 0.0f;
+        }
+        else
+        {
+            m_Parameters.OpenTimeoutSecs = 3600.0f;
+        }
+    }
 }
 
 bool BP5Reader::SleepOrQuit(const TimePoint &timeoutInstant,
                             const Seconds &pollSeconds)
 {
     auto now = Now();
-    if (now + pollSeconds >= timeoutInstant)
+    if (now >= timeoutInstant)
     {
         return false;
     }
@@ -484,7 +502,7 @@ uint64_t BP5Reader::MetadataExpectedMinFileSize(const std::string &IdxFileName,
 
 void BP5Reader::InstallMetaMetaData(format::BufferSTL buffer)
 {
-    size_t Position = 0;
+    size_t Position = m_MetaMetaDataFileAlreadyProcessedSize;
     while (Position < buffer.m_Buffer.size())
     {
         format::BP5Base::MetaMetaInfoBlock MMI;
@@ -498,59 +516,73 @@ void BP5Reader::InstallMetaMetaData(format::BufferSTL buffer)
         m_BP5Deserializer->InstallMetaMetaData(MMI);
         Position += MMI.MetaMetaIDLen + MMI.MetaMetaInfoLen;
     }
+    m_MetaMetaDataFileAlreadyProcessedSize = Position;
 }
 
-void BP5Reader::InitBuffer(const TimePoint &timeoutInstant,
-                           const Seconds &pollSeconds,
-                           const Seconds &timeoutSeconds)
+void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant,
+                             const Seconds &pollSeconds,
+                             const Seconds &timeoutSeconds)
 {
-    /* Put all metadata in buffer and parse in random access mode */
     size_t newIdxSize = 0;
+    m_MetadataIndex.Reset(true, false);
     if (m_Comm.Rank() == 0)
     {
         /* Read metadata index table into memory */
         const size_t metadataIndexFileSize =
             m_MDIndexFileManager.GetFileSize(0);
-        if (metadataIndexFileSize > 0)
+        newIdxSize = metadataIndexFileSize - m_MDIndexFileAlreadyReadSize;
+        if (metadataIndexFileSize > m_MDIndexFileAlreadyReadSize)
         {
-            m_MetadataIndex.Resize(metadataIndexFileSize,
-                                   "allocating metadata index buffer, "
-                                   "in call to BPFileReader Open");
+            m_MetadataIndex.m_Buffer.resize(newIdxSize);
             m_MDIndexFileManager.ReadFile(m_MetadataIndex.m_Buffer.data(),
-                                          metadataIndexFileSize);
+                                          newIdxSize,
+                                          m_MDIndexFileAlreadyReadSize);
         }
-        m_MDIndexFileAlreadyReadSize = metadataIndexFileSize;
-        newIdxSize = metadataIndexFileSize;
+        else
+        {
+            m_MetadataIndex.m_Buffer.resize(0);
+        }
     }
 
-    newIdxSize = m_Comm.BroadcastValue(newIdxSize, 0);
+    // broadcast metadata index buffer to all ranks from zero
+    m_Comm.BroadcastVector(m_MetadataIndex.m_Buffer);
+    newIdxSize = m_MetadataIndex.m_Buffer.size();
 
+    size_t parsedIdxSize = 0;
+    const auto stepsBefore = m_StepsCount;
     if (newIdxSize > 0)
     {
-        // broadcast metadata index buffer to all ranks from zero
-        m_Comm.BroadcastVector(m_MetadataIndex.m_Buffer);
-
         /* Parse metadata index table */
-        ParseMetadataIndex(m_MetadataIndex, 0, true, false);
+        const bool hasHeader = (!m_MDIndexFileAlreadyReadSize);
+        parsedIdxSize = ParseMetadataIndex(m_MetadataIndex, 0, hasHeader);
         // now we are sure the index header has been parsed,
         // first step parsing done
         // m_FilteredMetadataInfo is created
-        m_IdxHeaderParsed = true;
+
+        // cut down the index buffer by throwing away the read but unprocessed
+        // steps
+        m_MetadataIndex.m_Buffer.resize(parsedIdxSize);
+        // next time read index file from this position
+        m_MDIndexFileAlreadyReadSize += parsedIdxSize;
+
+        // At this point first in time we learned the writer's major and we can
+        // create the serializer object
+        if (!m_BP5Deserializer)
+        {
+            m_BP5Deserializer = new format::BP5Deserializer(
+                m_WriterIsRowMajor, m_ReaderIsRowMajor,
+                (m_OpenMode == Mode::ReadRandomAccess));
+            m_BP5Deserializer->m_Engine = this;
+        }
     }
 
-    if (newIdxSize > 0)
+    if (m_StepsCount > stepsBefore)
     {
+        m_Metadata.Reset(true, false);
+        m_MetaMetadata.Reset(true, false);
         if (m_Comm.Rank() == 0)
         {
-            /* Read metametadata into memory */
-            const size_t metametadataFileSize =
-                m_FileMetaMetadataManager.GetFileSize(0);
-            m_MetaMetadata.Resize(metametadataFileSize,
-                                  "allocating metadata index buffer, "
-                                  "in call to BPFileReader Open");
-            m_FileMetaMetadataManager.ReadFile(m_MetaMetadata.m_Buffer.data(),
-                                               metametadataFileSize);
-
+            // How much metadata do we need to read?
             size_t fileFilteredSize = 0;
             for (auto p : m_FilteredMetadataInfo)
             {
@@ -576,13 +608,9 @@ void BP5Reader::InitBuffer(const TimePoint &timeoutInstant,
                 m_Metadata.Resize(fileFilteredSize,
                                   "allocating metadata buffer, "
                                   "in call to BP5Reader Open");
-
                 size_t mempos = 0;
                 for (auto p : m_FilteredMetadataInfo)
                 {
-                    /*std::cout << "Read metadata pos = " << p.first
-                              << " size = " << p.second
-                              << " to mempos = " << mempos << std::endl;*/
                     m_MDFileManager.ReadFile(
                         m_Metadata.m_Buffer.data() + mempos, p.second, p.first);
                     mempos += p.second;
@@ -592,7 +620,7 @@ void BP5Reader::InitBuffer(const TimePoint &timeoutInstant,
             else
             {
                 helper::Throw<std::ios_base::failure>(
-                    "Engine", "BP5Reader", "InitBuffer",
+                    "Engine", "BP5Reader", "UpdateBuffer",
                     "File " + m_Name +
                         " was found with an index file but md.0 "
                         "has not contained enough data within "
@@ -602,9 +630,28 @@ void BP5Reader::InitBuffer(const TimePoint &timeoutInstant,
                         " metadata size = " + std::to_string(actualFileSize) +
                         " expected size = " +
                         std::to_string(expectedMinFileSize) +
-                        ". One reason could be if the reader finds old data "
+                        ". One reason could be if the reader finds old "
+                        "data "
                         "while "
                         "the writer is creating the new files.");
+            }
+
+            /* Read new meta-meta-data into memory and append to existing one in
+             * memory */
+            const size_t metametadataFileSize =
+                m_FileMetaMetadataManager.GetFileSize(0);
+            if (metametadataFileSize > m_MetaMetaDataFileAlreadyReadSize)
+            {
+                const size_t newMMDSize =
+                    metametadataFileSize - m_MetaMetaDataFileAlreadyReadSize;
+                m_MetaMetadata.Resize(metametadataFileSize,
+                                      "(re)allocating meta-meta-data buffer, "
+                                      "in call to BP5Reader Open");
+                m_FileMetaMetadataManager.ReadFile(
+                    m_MetaMetadata.m_Buffer.data() +
+                        m_MetaMetaDataFileAlreadyReadSize,
+                    newMMDSize, m_MetaMetaDataFileAlreadyReadSize);
+                m_MetaMetaDataFileAlreadyReadSize += newMMDSize;
             }
         }
 
@@ -613,11 +660,6 @@ void BP5Reader::InitBuffer(const TimePoint &timeoutInstant,
 
         // broadcast metadata index buffer to all ranks from zero
         m_Comm.BroadcastVector(m_MetaMetadata.m_Buffer);
-
-        m_BP5Deserializer =
-            new format::BP5Deserializer(m_WriterIsRowMajor, m_ReaderIsRowMajor,
-                                        (m_OpenMode == Mode::ReadRandomAccess));
-        m_BP5Deserializer->m_Engine = this;
 
         InstallMetaMetaData(m_MetaMetadata);
 
@@ -630,26 +672,12 @@ void BP5Reader::InitBuffer(const TimePoint &timeoutInstant,
                 InstallMetadataForTimestep(Step);
             }
         }
-        // fills IO with Variables and Attributes
-        //        m_MDFileProcessedSize = ParseMetadata(
-        //            m_Metadata, *this, true);
-
-        /* m_MDFileProcessedSize is the position in the buffer where processing
-         * ends. The processing is controlled by the number of records in the
-         * Index, which may be less than the actual entries in the metadata in a
-         * streaming situation (where writer has just written metadata for step
-         * K+1,...,K+L while the index contains K steps when the reader looks at
-         * it).
-         *
-         * In ProcessMetadataForNewSteps(), we will re-read the metadata which
-         * is in the buffer but has not been processed yet.
-         */
     }
 }
 
-void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
-                                   const size_t absoluteStartPos,
-                                   const bool hasHeader, const bool oneStepOnly)
+size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
+                                     const size_t absoluteStartPos,
+                                     const bool hasHeader)
 {
     const auto &buffer = bufferSTL.m_Buffer;
     size_t &position = bufferSTL.m_Position;
@@ -709,15 +737,23 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
         position = m_IndexHeaderSize;
     }
 
+    // set a limit for metadata size in streaming mode
+    size_t maxMetadataSizeInMemory = adios2::MaxSizeT;
+    if (m_OpenMode == Mode::Read)
+    {
+        maxMetadataSizeInMemory = 16777216; // 16MB
+    }
+    size_t metadataSizeToRead = 0;
+
     // Read each record now
-    uint64_t absStepInFile = 0;
-    uint64_t lastMapStep = 0;
-    uint64_t lastWriterCount = 0;
     uint64_t MetadataPosTotalSkip = 0;
+    m_MetadataIndexTable.clear();
     m_FilteredMetadataInfo.clear();
     uint64_t minfo_pos = 0;
     uint64_t minfo_size = 0;
-    do
+    int n = 0; // a loop counter for current run
+    while (position < buffer.size() &&
+           metadataSizeToRead < maxMetadataSizeInMemory)
     {
         std::vector<uint64_t> ptrs;
         const uint64_t MetadataPos = helper::ReadValue<uint64_t>(
@@ -729,7 +765,7 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
         const uint64_t hasWriterMap = helper::ReadValue<uint64_t>(
             buffer, position, m_Minifooter.IsLittleEndian);
 
-        if (!absStepInFile)
+        if (!n)
         {
             minfo_pos = MetadataPos; // initialize minfo_pos properly
             MetadataPosTotalSkip = MetadataPos;
@@ -753,20 +789,21 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
                     buffer, position, m_Minifooter.IsLittleEndian);
                 s.RankToSubfile.push_back(subfileIdx);
             }
-            lastMapStep = m_StepsCount;
-            lastWriterCount = s.WriterCount;
+            m_LastMapStep = m_StepsCount;
+            m_LastWriterCount = s.WriterCount;
         }
 
-        if (m_SelectedSteps.IsSelected(absStepInFile))
+        if (m_SelectedSteps.IsSelected(m_AbsStepsInFile))
         {
-            m_WriterMapIndex.push_back(lastMapStep);
+            m_WriterMapIndex.push_back(m_LastMapStep);
 
             // pos in metadata in memory
             ptrs.push_back(MetadataPos - MetadataPosTotalSkip);
             ptrs.push_back(MetadataSize);
             ptrs.push_back(FlushCount);
             ptrs.push_back(position);
-            ptrs.push_back(MetadataPos); // absolute pos in file before read
+            // absolute pos in file before read
+            ptrs.push_back(MetadataPos);
             m_MetadataIndexTable[m_StepsCount] = ptrs;
 #ifdef DUMPDATALOCINFO
             for (uint64_t i = 0; i < m_WriterCount; i++)
@@ -788,6 +825,7 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
             }
 #endif
             minfo_size += MetadataSize;
+            metadataSizeToRead += MetadataSize;
             m_StepsCount++;
         }
         else
@@ -803,13 +841,105 @@ void BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
         }
 
         // skip over the writer -> data file offset records
-        position += sizeof(uint64_t) * lastWriterCount * ((2 * FlushCount) + 1);
-        absStepInFile++;
-    } while (!oneStepOnly && position < buffer.size());
+        position +=
+            sizeof(uint64_t) * m_LastWriterCount * ((2 * FlushCount) + 1);
+        ++m_AbsStepsInFile;
+        ++n;
+    }
     if (minfo_size > 0)
     {
         m_FilteredMetadataInfo.push_back(std::make_pair(minfo_pos, minfo_size));
     }
+    return position;
+}
+
+bool BP5Reader::ReadActiveFlag(std::vector<char> &buffer)
+{
+    if (buffer.size() < m_ActiveFlagPosition)
+    {
+        helper::Throw<std::runtime_error>(
+            "Engine", "BP5Reader", "ReadActiveFlag",
+            "called with a buffer smaller than required");
+    }
+    // Writer active flag
+    size_t position = m_ActiveFlagPosition;
+    const char activeChar = helper::ReadValue<uint8_t>(
+        buffer, position, m_Minifooter.IsLittleEndian);
+    m_WriterIsActive = (activeChar == '\1' ? true : false);
+    return m_WriterIsActive;
+}
+
+bool BP5Reader::CheckWriterActive()
+{
+    size_t flag = 0;
+    if (m_Comm.Rank() == 0)
+    {
+        std::vector<char> header(m_IndexHeaderSize, '\0');
+        m_MDIndexFileManager.ReadFile(header.data(), m_IndexHeaderSize, 0, 0);
+        bool active = ReadActiveFlag(header);
+        flag = (active ? 1 : 0);
+    }
+    flag = m_Comm.BroadcastValue(flag, 0);
+    m_WriterIsActive = (flag > 0);
+    return m_WriterIsActive;
+}
+
+StepStatus BP5Reader::CheckForNewSteps(Seconds timeoutSeconds)
+{
+    /* Do a collective wait for a step within timeout.
+       Make sure every reader comes to the same conclusion */
+    StepStatus retval = StepStatus::OK;
+
+    if (timeoutSeconds < Seconds::zero())
+    {
+        timeoutSeconds = Seconds(999999999); // max 1 billion seconds wait
+    }
+    const TimePoint timeoutInstant = Now() + timeoutSeconds;
+
+    auto pollSeconds = Seconds(m_Parameters.BeginStepPollingFrequencySecs);
+    if (pollSeconds > timeoutSeconds)
+    {
+        pollSeconds = timeoutSeconds;
+    }
+
+    /* Poll */
+    const auto stepsBefore = m_StepsCount;
+    do
+    {
+        UpdateBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
+        if (m_StepsCount > stepsBefore)
+        {
+            break;
+        }
+        if (!CheckWriterActive())
+        {
+            /* Race condition: When checking data in UpdateBuffer, new
+             * step(s) may have not arrived yet. When checking active flag,
+             * the writer may have completed write and terminated. So we may
+             * have missed a step or two. */
+            UpdateBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
+            break;
+        }
+    } while (SleepOrQuit(timeoutInstant, pollSeconds));
+
+    if (m_StepsCount > stepsBefore)
+    {
+        /* we have got new steps and new metadata in memory */
+        retval = StepStatus::OK;
+    }
+    else
+    {
+        m_IO.m_ReadStreaming = false;
+        if (m_WriterIsActive)
+        {
+            retval = StepStatus::NotReady;
+        }
+        else
+        {
+            retval = StepStatus::EndOfStream;
+        }
+    }
+    return retval;
 }
 
 void BP5Reader::DoGetAbsoluteSteps(const VariableBase &variable,
@@ -860,11 +990,15 @@ void BP5Reader::NotifyEngineNoVarsQuery()
         helper::Throw<std::logic_error>(
             "Engine", "BP5Reader", "NotifyEngineNoVarsQuery",
             "You've called InquireVariable() when the IO is empty and "
-            "outside a BeginStep/EndStep pair.  If this is code that is newly "
-            "transititioning to the BP5 file engine, you may be relying upon "
+            "outside a BeginStep/EndStep pair.  If this is code that is "
+            "newly "
+            "transititioning to the BP5 file engine, you may be relying "
+            "upon "
             "deprecated behaviour.  If you intend to use ADIOS using the "
-            "Begin/EndStep interface, move all InquireVariable calls inside "
-            "the BeginStep/EndStep pair.  If intending to use random-access "
+            "Begin/EndStep interface, move all InquireVariable calls "
+            "inside "
+            "the BeginStep/EndStep pair.  If intending to use "
+            "random-access "
             "file mode, change your Open() mode parameter to "
             "Mode::ReadRandomAccess.");
     }
