@@ -1403,7 +1403,12 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       subroutine adios2_allocate(array, shp, ierr)
 
       ! Allocatable array, upto 6 dimensions supported
-      integer(kind=8), dimension(:, ), allocatable, intent(out):: array
+      Generic Fortran types, dimension(:), allocatable, intent(out):: array
+      Generic Fortran types, dimension(:,:), allocatable, intent(out):: array
+      Generic Fortran types, dimension(:,:,:), allocatable, intent(out):: array
+      Generic Fortran types, dimension(:,:,:,:), allocatable, intent(out):: array
+      Generic Fortran types, dimension(:,:,:,:,:), allocatable, intent(out):: array
+      Generic Fortran types, dimension(:,:,:,:,:,:), allocatable, intent(out):: array
       
       ! shape of the allocatable array in each dimension. Size must match no. of dimensions of the array 
       integer(kind=8), dimension(1..6), intent(in):: shp
