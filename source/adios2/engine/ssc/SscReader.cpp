@@ -234,10 +234,10 @@ void SscReader::PerformGets()
             {                                                                  \
                 continue;                                                      \
             }                                                                  \
-            helper::NdCopy<T>(m_Buffer.data<char>() + b.bufferStart, b.start,  \
-                              b.count, true, true,                             \
-                              reinterpret_cast<char *>(br.data), br.start,     \
-                              br.count, true, true);                           \
+            helper::NdCopy(m_Buffer.data<char>() + b.bufferStart, b.start,     \
+                           b.count, true, true,                                \
+                           reinterpret_cast<char *>(br.data), br.start,        \
+                           br.count, true, true, sizeof(T));                   \
         }                                                                      \
         else if (b.shapeId == ShapeID::GlobalValue ||                          \
                  b.shapeId == ShapeID::LocalValue)                             \

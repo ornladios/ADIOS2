@@ -264,19 +264,19 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
             {
                 if (m_ContiguousMajor)
                 {
-                    helper::NdCopy<T>(
+                    helper::NdCopy(
                         input_data, j.start, j.count, true, j.isLittleEndian,
                         reinterpret_cast<char *>(outputData), varStart,
-                        varCount, true, m_IsLittleEndian, j.start, j.count,
-                        varMemStart, varMemCount);
+                        varCount, true, m_IsLittleEndian, sizeof(T), j.start,
+                        j.count, varMemStart, varMemCount);
                 }
                 else
                 {
-                    helper::NdCopy<T>(
+                    helper::NdCopy(
                         input_data, j.start, j.count, j.isRowMajor,
                         j.isLittleEndian, reinterpret_cast<char *>(outputData),
                         varStart, varCount, m_IsRowMajor, m_IsLittleEndian,
-                        j.start, j.count, varMemStart, varMemCount);
+                        sizeof(T), j.start, j.count, varMemStart, varMemCount);
                 }
             }
             if (j.shape.empty() or (j.shape.size() == 1 and j.shape[0] == 1))

@@ -581,11 +581,11 @@ void BP3Deserializer::PostDataRead(
             intersectStart[d] += blockInfo.MemoryStart[d];
             blockStart[d] += blockInfo.MemoryStart[d];
         }
-        helper::NdCopy<T>(
-            m_ThreadBuffers[threadID][0].data(), intersectStart, intersectCount,
-            true, true, reinterpret_cast<char *>(blockInfo.Data),
-            intersectStart, intersectCount, true, true, intersectStart,
-            blockCount, memoryStart, blockInfo.MemoryCount, false);
+        helper::NdCopy(m_ThreadBuffers[threadID][0].data(), intersectStart,
+                       intersectCount, true, true,
+                       reinterpret_cast<char *>(blockInfo.Data), intersectStart,
+                       intersectCount, true, true, sizeof(T), intersectStart,
+                       blockCount, memoryStart, blockInfo.MemoryCount, false);
     }
     else
     {
