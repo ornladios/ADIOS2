@@ -267,8 +267,8 @@ adios2_error adios2_lock_reader_selections(adios2_engine *engine);
 /**
  * Get the list of blocks for a variable in a given step.
  * In Streaming mode, step is unused, always the current step is processed.
- * @return Newly allocated adios2_varinfo structure, NULL pointer if step does not
- * exist. The memory must be freed by the adios2_free_blockinfo function
+ * @return Newly allocated adios2_varinfo structure, NULL pointer if step does
+ * not exist. The memory must be freed by the adios2_free_blockinfo function
  */
 adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
                                          adios2_variable *variable,
