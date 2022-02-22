@@ -3039,18 +3039,21 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
             for (size_t step = 0; step < nsteps; step++)
             {
                 minBlocks = fp->MinBlocksInfo(*variable, step);
-                for (size_t k = 0; k < ndim; k++)
+                if (minBlocks->Shape)
                 {
-                    if (firstStep)
+                    for (size_t k = 0; k < ndim; k++)
                     {
-                        dims[k] = minBlocks->Shape[k];
+                        if (firstStep)
+                        {
+                            dims[k] = minBlocks->Shape[k];
+                        }
+                        else if (dims[k] != minBlocks->Shape[k])
+                        {
+                            dims[k] = 0;
+                        }
                     }
-                    else if (dims[k] != minBlocks->Shape[k])
-                    {
-                        dims[k] = 0;
-                    }
+                    firstStep = false;
                 }
-                firstStep = false;
                 delete minBlocks;
             }
             return dims;
