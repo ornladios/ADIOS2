@@ -39,28 +39,3 @@ add_test(NAME adios_plugin_engine_read_test COMMAND adios_plugin_engine_read_tes
 set_tests_properties(adios_plugin_engine_read_test PROPERTIES
     DEPENDS adios_plugin_engine_write_test)
 
-#---------- Operator Plugin Tests
-
-list(INSERT CMAKE_MODULE_PATH 0 ${CMAKE_CURRENT_SOURCE_DIR}/../../../examples/plugins/operator)
-find_package(Sodium 1.8 REQUIRED)
-
-add_library(EncryptionOperator
-    ../../../examples/plugins/operator/EncryptionOperator.cpp
-)
-target_link_libraries(EncryptionOperator adios2::cxx11 adios2::core sodium)
-
-# add write test
-add_executable(adios_plugin_operator_write_test
-  ../../../examples/plugins/operator/examplePluginOperator_write.cpp
-)
-target_link_libraries(adios_plugin_operator_write_test adios2::cxx11)
-add_test(NAME adios_plugin_operator_write_test COMMAND adios_plugin_operator_write_test)
-
-# add read test
-add_executable(adios_plugin_operator_read_test
-  ../../../examples/plugins/operator/examplePluginOperator_read.cpp
-)
-target_link_libraries(adios_plugin_operator_read_test adios2::cxx11)
-add_test(NAME adios_plugin_operator_read_test COMMAND adios_plugin_operator_read_test)
-set_tests_properties(adios_plugin_operator_read_test PROPERTIES
-    DEPENDS adios_plugin_operator_write_test)

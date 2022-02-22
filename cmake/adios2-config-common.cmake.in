@@ -127,6 +127,11 @@ if(NOT @BUILD_SHARED_LIBS@)
     find_dependency(HDF5 COMPONENTS C)
   endif()
 
+  set(ADIOS2_HAVE_Sodium @ADIOS2_HAVE_Sodium@)
+  if(ADIOS2_HAVE_Sodium)
+    find_dependency(Sodium)
+  endif()
+
   adios2_add_thirdparty_target(pugixml)
   set(ADIOS2_USE_EXTERNAL_PUGIXML @ADIOS2_USE_EXTERNAL_PUGIXML@)
   if(ADIOS2_USE_EXTERNAL_PUGIXML)
