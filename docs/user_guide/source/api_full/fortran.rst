@@ -179,8 +179,6 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       ! error code
       integer, intent(out) :: ierr
 
-      TODO: provide list of available operators
-
 
 * :f90:`subroutine adios2_inquire_operator` inquire an adios2 data compression/reduction operator
 
@@ -308,22 +306,6 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       character*(*), intent(in):: engine_type
 
 
-* :f90:`subroutine adios2_retrieve_names` TODO
-
-   .. code-block:: fortran
-
-      subroutine adios2_retrieve_names(namestruct, namelist, ierr)
-
-      ! 
-      type(adios2_namestruct), intent(inout) :: namestruct
-
-      ! 
-      character(*), dimension(*), intent(inout) :: namelist
-
-      ! error code
-      integer, intent(out) :: ierr
-
-
 * :f90:`subroutine adios2_in_config_file` checks if an IO object exists in a config file passed to ADIOS.
 
    .. code-block:: fortran
@@ -358,7 +340,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       character*(*), intent(in):: value
       
 
-* :f90:`subroutine adios2_set_parameters` set a map of key/value parameters in an IO object. Replaces any existing parameters. Otherwise use set_parameter for adding single parameters. TODO: is this correct? There is no key-value pair passed to this subroutine.
+* :f90:`subroutine adios2_set_parameters` set a map of key/value parameters in an IO object. Replaces any existing parameters. Otherwise use set_parameter for adding single parameters.
 
    .. code-block:: fortran
 
@@ -367,7 +349,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       ! io handler
       type(adios2_io), intent(in) :: io
 
-      ! TODO
+      ! Comma-separated parameter list. E.g. "Threads=2, CollectiveMetadata=OFF"
       character*(*), intent(in) :: parameters
 
       ! error code
@@ -458,6 +440,22 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
 
       ! name struct handler 
       type(adios2_namestruct), intent(out) :: namestruct
+
+      ! error code
+      integer, intent(out) :: ierr
+
+
+* :f90:`subroutine adios2_retrieve_names` retrieve variable names from namestruct obtained from ``adios2_available_variables``. namelist must be pre-allocated.
+
+   .. code-block:: fortran
+
+      subroutine adios2_retrieve_names(namestruct, namelist, ierr)
+
+      ! namestruct obtained from adios2_available_variables
+      type(adios2_namestruct), intent(inout) :: namestruct
+
+      ! namelist that will contain variable names
+      character(*), dimension(*), intent(inout) :: namelist
 
       ! error code
       integer, intent(out) :: ierr
@@ -755,7 +753,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
 
       subroutine adios2_add_operation(operation_index, variable, op, key, value, ierr)
 
-      ! operation index handler TODO
+      ! reference to the operator handle that will be created
       integer, intent(out):: operation_index
 
       ! variable handler
@@ -936,7 +934,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       integer, intent(out) :: ierr
 
 
-* :f90:`subroutine adios2_variable_check_type` inspect variable type TODO intent(in) ?
+* :f90:`subroutine adios2_variable_check_type` compare variable datatype with input type
 
    .. code-block:: fortran
 
@@ -948,7 +946,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       ! return value for the variable type
       integer, intent(in):: adios2_type
 
-      ! TODO
+      ! text name for adios2_type, for meaningful message output
       character*(*), intent(in):: hint
 
       ! error code
@@ -1351,7 +1349,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       integer, intent(out) :: ierr
 
 
-* :f90:`subroutine adios2_attribute_check_type` inspect attribute datatype
+* :f90:`subroutine adios2_attribute_check_type` compare attribute datatype with input type
 
    .. code-block:: fortran
 
@@ -1360,17 +1358,17 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       ! attribute handler
       type(adios2_attribute), intent(in):: attribute
 
-      ! type of the attribute
+      ! input type to compare attribute type with
       integer, intent(in):: adios2_type
 
-      ! TODO
+      ! text representation of input type for informational message output
       character*(*), intent(in):: hint
 
       ! error code
       integer, intent(out):: ierr
 
 
-* :f90:`subroutine adios2_inquire_variable_attribute` inspect attribute for a variable
+* :f90:`subroutine adios2_inquire_variable_attribute` retrieve a handler to a previously defined attribute associated to a variable
 
    .. code-block:: fortran
 
@@ -1388,7 +1386,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       ! variable name
       character*(*), intent(in) :: variable_name
 
-      ! TODO
+      ! hierarchy separator (e.g. “/” in variable/attribute )
       character*(*), intent(in) :: separator
 
       ! error code
@@ -1398,7 +1396,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
 :ref:`Other` subroutines
 ----------------------------
 
-* :f90:`subroutine adios2_allocate`
+* :f90:`subroutine adios2_allocate` allocate an array
 
    .. code-block:: fortran
 
@@ -1407,8 +1405,8 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS components descr
       ! Allocatable array, upto 6 dimensions supported
       integer(kind=8), dimension(:, ), allocatable, intent(out):: array
       
-      !
-      integer(kind=8), dimension(6), intent(in):: shp
+      ! shape of the allocatable array in each dimension. Size must match no. of dimensions of the array 
+      integer(kind=8), dimension(1..6), intent(in):: shp
       
-      !
+      ! Error code
       integer, intent(out):: ierr
