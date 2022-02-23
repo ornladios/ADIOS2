@@ -1,0 +1,10 @@
+packages:
+  all:
+    target: [haswell]
+  cmake:
+    variants: ~ownlibs
+  adios2:
+    variants: +blosc +bzip2 +zfp +sz +png +sst +dataman +ssc +hdf5 +python +fortran
+  hdf5:
+    variants: api=default
+    version: ['1.13.0:']
