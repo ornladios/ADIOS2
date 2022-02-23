@@ -163,7 +163,10 @@ void Comm::BroadcastVector(std::vector<T> &vector, const int rankSource) const
         vector.resize(inputSize);
     }
 
-    this->Bcast(vector.data(), inputSize, rankSource);
+    if (inputSize > 0)
+    {
+        this->Bcast(vector.data(), inputSize, rankSource);
+    }
 }
 
 template <typename TSend, typename TRecv>

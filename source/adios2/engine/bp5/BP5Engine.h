@@ -113,8 +113,8 @@ public:
     };
 
 #define BP5_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
-    MACRO(OpenTimeoutSecs, Int, int, 3600)                                     \
-    MACRO(BeginStepPollingFrequencySecs, Int, int, 0)                          \
+    MACRO(OpenTimeoutSecs, Float, float, -1.0f)                                \
+    MACRO(BeginStepPollingFrequencySecs, Float, float, 1.0f)                   \
     MACRO(StreamReader, Bool, bool, false)                                     \
     MACRO(BurstBufferDrain, Bool, bool, true)                                  \
     MACRO(BurstBufferPath, String, std::string, (char *)(intptr_t)0)           \

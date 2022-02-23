@@ -13,6 +13,7 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 //#include <iostream>
+#include <iostream>
 #include <sstream>
 #include <stdexcept> // std::invalid_argument
 /// \endcond
@@ -133,17 +134,11 @@ bool RangeFilter::IsSelected(size_t n)
 
 size_t RangeFilter::ToSizeT(const std::string &input)
 {
+    long value;
+    size_t pos;
     try
     {
-        size_t pos;
-        const size_t out = static_cast<size_t>(std::stoul(input, &pos));
-        if (pos < input.size())
-        {
-            helper::ThrowNested<std::invalid_argument>(
-                "Helper", "adiosRangeFilter", "ToSizeT",
-                "could not cast string '" + input + "' to number ");
-        }
-        return out;
+        value = std::stol(input, &pos);
     }
     catch (...)
     {
@@ -151,7 +146,23 @@ size_t RangeFilter::ToSizeT(const std::string &input)
             "Helper", "adiosRangeFilter", "ToSizeT",
             "could not cast string '" + input + "' to number ");
     }
-    return 0;
+    if (value < 0L)
+    {
+        helper::ThrowNested<std::invalid_argument>(
+            "Helper", "adiosRangeFilter", "ToSizeT",
+            "Negative number '" + input +
+                "' not supported in range selections!");
+    }
+    if (pos < input.size())
+    {
+        helper::ThrowNested<std::invalid_argument>(
+            "Helper", "adiosRangeFilter", "ToSizeT",
+            "could not cast the entire string '" + input +
+                "' to a single integer number. RangeFilter accepts a "
+                "space-separated list of i:j:k expressions where i,j,k are "
+                "non-negative integers or the character 'n'");
+    }
+    return static_cast<size_t>(value);
 }
 
 } // end namespace helper

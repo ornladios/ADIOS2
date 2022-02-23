@@ -88,6 +88,11 @@ private:
     /* How many bytes of metadata index have we already read in? */
     size_t m_MDIndexFileAlreadyReadSize = 0;
 
+    /* How many bytes of meta-metadata have we already read in? */
+    size_t m_MetaMetaDataFileAlreadyReadSize = 0;
+    /* How many bytes of meta-metadata have we already processed? */
+    size_t m_MetaMetaDataFileAlreadyProcessedSize = 0;
+
     /* transport manager for managing the active flag file */
     transportman::TransportMan m_ActiveFlagFileManager;
     bool m_WriterIsActive = true;
@@ -95,8 +100,10 @@ private:
     /** used for per-step reads, TODO: to be moved to BP5Deserializer */
     size_t m_CurrentStep = 0;
     size_t m_StepsCount = 0;
+    size_t m_AbsStepsInFile = 0;    // all steps parsed including unselected
+    uint64_t m_LastMapStep = 0;     // remember last step that had writer map
+    uint64_t m_LastWriterCount = 0; // remember writer count in that step
     bool m_FirstStep = true;
-    bool m_IdxHeaderParsed = false; // true after first index parsing
 
     /** used to filter steps */
     helper::RangeFilter m_SelectedSteps;
@@ -107,6 +114,7 @@ private:
     Minifooter m_Minifooter;
 
     void Init();
+    void InitParameters();
     void InitTransports();
 
     /* Sleep up to pollSeconds time if we have not reached timeoutInstant.
@@ -130,19 +138,34 @@ private:
      */
     void OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
                    const Seconds &timeoutSeconds);
-    void InitBuffer(const TimePoint &timeoutInstant, const Seconds &pollSeconds,
-                    const Seconds &timeoutSeconds);
 
-    /** Read in more metadata if exist (throwing away old).
-     *  For streaming only.
-     *  @return size of new content from Index Table
+    /** Read in metadata if exist (throwing away old).
+     *  It reads and parses metadata-index, and reads metadata into memory.
+     *  In streaming mode, only a limited size of metadata is read in.
+     *  Changes in m_StepsCount before and after calling can be used to
+     *  track if new steps (after filtering with SelectSteps) are read in
+     *  and are ready to be processed.
      */
-    size_t UpdateBuffer(const TimePoint &timeoutInstant,
-                        const Seconds &pollSeconds);
+    void UpdateBuffer(const TimePoint &timeoutInstant,
+                      const Seconds &pollSeconds,
+                      const Seconds &timeoutSeconds);
 
-    void ParseMetadataIndex(format::BufferSTL &bufferSTL,
-                            const size_t absoluteStartPos, const bool hasHeader,
-                            const bool oneStepOnly);
+    bool ReadActiveFlag(std::vector<char> &buffer);
+
+    /* Parse metadata.
+     *
+     * Return the size of metadataindex where parsing stopped. In streaming mode
+     * parsing is limited to read only a certain size of metadata at once.
+     *
+     * As a side effect, the following variables are filled out:
+     *   m_MetadataIndexTable
+     *   m_WriterMapIndex
+     *   m_FilteredMetadataInfo
+     */
+    size_t ParseMetadataIndex(format::BufferSTL &bufferSTL,
+                              const size_t absoluteStartPos,
+                              const bool hasHeader);
+
     /** Process the new metadata coming in (in UpdateBuffer)
      *  @param newIdxSize: the size of the new content from Index Table
      */
