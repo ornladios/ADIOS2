@@ -109,8 +109,8 @@ bp_gtest_add_tests_helper(StepsFileGlobalArray MPI_ALLOW)
 bp_gtest_add_tests_helper(StepsFileLocalArray MPI_ALLOW)
 bp_gtest_add_tests_helper(SelectSteps MPI_ALLOW)
 
-bp3_bp4_gtest_add_tests_helper(SelectionsOnRowMajorData MPI_NONE)
-bp3_bp4_gtest_add_tests_helper(SelectionsOnColumnMajorData MPI_NONE)
+bp_gtest_add_tests_helper(SelectionsOnRowMajorData MPI_NONE)
+bp_gtest_add_tests_helper(SelectionsOnColumnMajorData MPI_NONE)
 
 if(NOT MSVC)
   bp_gtest_add_tests_helper(BufferSize MPI_NONE)
