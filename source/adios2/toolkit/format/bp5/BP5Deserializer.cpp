@@ -1230,24 +1230,30 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                             GlobalDimensions[i] = RankSize[i];
                         }
                     }
-		    helper::NdCopy(IncomingData, adios2::Dims(RankOffset, RankOffset+DimCount), adios2::Dims(RankSize, RankSize+DimCount),
-				   true /* m_WriterIsRowMajor */, false /*WriterIsLittleEndian*/,
-				   (char*)Req.Data, adios2::Dims(SelOffset, SelOffset+DimCount), adios2::Dims(SelSize, SelSize+DimCount), true /*m_ReaderIsRowMajor */,
-				   false /*m_ReaderIsLittleEndian*/, ElementSize);
+                    helper::NdCopy(
+                        IncomingData,
+                        adios2::Dims(RankOffset, RankOffset + DimCount),
+                        adios2::Dims(RankSize, RankSize + DimCount),
+                        true /* m_WriterIsRowMajor */,
+                        false /*WriterIsLittleEndian*/, (char *)Req.Data,
+                        adios2::Dims(SelOffset, SelOffset + DimCount),
+                        adios2::Dims(SelSize, SelSize + DimCount),
+                        true /*m_ReaderIsRowMajor */,
+                        false /*m_ReaderIsLittleEndian*/, ElementSize);
 
                     // if (m_ReaderIsRowMajor)
                     // {
                     //     ExtractSelectionFromPartialRM(
-                    //         ElementSize, DimCount, GlobalDimensions, RankOffset,
-                    //         RankSize, SelOffset, SelSize, IncomingData,
-                    //         (char *)Req.Data, Req.MemSpace);
+                    //         ElementSize, DimCount, GlobalDimensions,
+                    //         RankOffset, RankSize, SelOffset, SelSize,
+                    //         IncomingData, (char *)Req.Data, Req.MemSpace);
                     // }
                     // else
                     // {
                     //     ExtractSelectionFromPartialCM(
-                    //         ElementSize, DimCount, GlobalDimensions, RankOffset,
-                    //         RankSize, SelOffset, SelSize, IncomingData,
-                    //         (char *)Req.Data, Req.MemSpace);
+                    //         ElementSize, DimCount, GlobalDimensions,
+                    //         RankOffset, RankSize, SelOffset, SelSize,
+                    //         IncomingData, (char *)Req.Data, Req.MemSpace);
                     // }
                 }
             }
