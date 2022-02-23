@@ -290,7 +290,7 @@ void SscWriter::CalculatePosition(ssc::BlockVecVec &writerVecVec,
         for (int rank = 0; rank < static_cast<int>(writerVecVec.size()); ++rank)
         {
             bool hasOverlap = false;
-            for (const auto r : currentReaderOverlapWriterRanks)
+            for (const auto &r : currentReaderOverlapWriterRanks)
             {
                 if (r.first == rank)
                 {

@@ -81,7 +81,7 @@ void BP5Writer::AsyncWriteThread_TwoLevelShm_SendDataToAggregator(
     std::vector<core::iovec> DataVec = Data->DataVec();
     size_t nBlocks = DataVec.size();
 
-    size_t sent = 0;
+    // size_t sent = 0;
     size_t block = 0;
     size_t temp_offset = 0;
     while (block < nBlocks)
@@ -126,7 +126,7 @@ void BP5Writer::AsyncWriteThread_TwoLevelShm_SendDataToAggregator(
                 break;
             }
         }
-        sent += b->actual_size;
+        // sent += b->actual_size;
         a->UnlockProducerBuffer();
     }
 }

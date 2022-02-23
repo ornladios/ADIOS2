@@ -55,6 +55,7 @@ void CheckStepsBlockInfo1D_C(adios2_variable *var, adios2_varinfo *vi,
                              const size_t NSteps, const size_t nproc,
                              const size_t Nx)
 {
+    (void)NSteps;
     EXPECT_EQ(vi->nblocks, nproc);
     adios2_shapeid shapeid;
     adios2_variable_shapeid(&shapeid, var);

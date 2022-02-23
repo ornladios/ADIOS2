@@ -54,9 +54,9 @@ bool VariableBase::IsCUDAPointer(void *ptr)
     cudaPointerAttributes attr;
     cudaPointerGetAttributes(&attr, ptr);
     return attr.type == cudaMemoryTypeDevice;
-#endif
-
+#else
     return false;
+#endif
 }
 
 size_t VariableBase::TotalSize() const noexcept

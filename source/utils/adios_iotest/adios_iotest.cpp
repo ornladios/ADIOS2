@@ -200,7 +200,7 @@ int main(int argc, char *argv[])
                 std::cout << "App " + std::to_string(settings.appId) + " Step "
                           << step << ": " << std::endl;
             }
-            for (const auto cmd : cfg.commands)
+            for (const auto &cmd : cfg.commands)
             {
                 if (!cmd->conditionalStream.empty() &&
                     cfg.condMap.at(cmd->conditionalStream) !=
@@ -248,8 +248,8 @@ int main(int argc, char *argv[])
                     auto cmdS = dynamic_cast<const CommandBusy *>(cmd.get());
                     std::chrono::high_resolution_clock::time_point start =
                         std::chrono::high_resolution_clock::now();
-                    auto sleeptime =
-                        std::chrono::microseconds(cmdS->busyTime_us);
+                    // auto sleeptime =
+                    //     std::chrono::microseconds(cmdS->busyTime_us);
                     if (!settings.myRank && settings.verbose)
                     {
                         double t =

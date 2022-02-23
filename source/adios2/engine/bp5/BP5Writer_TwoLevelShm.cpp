@@ -196,7 +196,7 @@ void BP5Writer::SendDataToAggregator(format::BufferV *Data)
     std::vector<core::iovec> DataVec = Data->DataVec();
     size_t nBlocks = DataVec.size();
 
-    size_t sent = 0;
+    // size_t sent = 0;
     size_t block = 0;
     size_t temp_offset = 0;
     while (block < nBlocks)
@@ -241,7 +241,7 @@ void BP5Writer::SendDataToAggregator(format::BufferV *Data)
                 break;
             }
         }
-        sent += b->actual_size;
+        // sent += b->actual_size;
 
         /*if (m_RankMPI >= 42)
         {

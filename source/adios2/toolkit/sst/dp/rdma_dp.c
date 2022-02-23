@@ -115,7 +115,7 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params,
                         CP_Services Svcs, void *CP_Stream)
 {
     struct fi_info *hints, *info, *originfo, *useinfo;
-    struct fi_av_attr av_attr = {0};
+    struct fi_av_attr av_attr = {FI_AV_UNSPEC};
     struct fi_cq_attr cq_attr = {0};
     char *ifname;
     int result;
