@@ -253,13 +253,13 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const std::string hint,
  *                 stack/simulated stack which has more overhead for the algm.
  */
 
-template <class T>
 int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
            const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
            const Dims &outStart, const Dims &outCount, const bool outIsRowMajor,
-           const bool outIsLittleEndian, const Dims &inMemStart = Dims(),
-           const Dims &inMemCount = Dims(), const Dims &outMemStart = Dims(),
-           const Dims &outMemCount = Dims(), const bool safeMode = false);
+           const bool outIsLittleEndian, const int typeSize,
+           const Dims &inMemStart = Dims(), const Dims &inMemCount = Dims(),
+           const Dims &outMemStart = Dims(), const Dims &outMemCount = Dims(),
+           const bool safeMode = false);
 
 template <class T>
 size_t PayloadSize(const T *data, const Dims &count) noexcept;
