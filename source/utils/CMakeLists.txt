@@ -74,7 +74,7 @@ if(Python_Interpreter_FOUND)
   add_subdirectory(bp5dbg)
 endif()
 
-install(PROGRAMS adios_deactivate_bp.sh
+install(PROGRAMS adios2_deactivate_bp
   RENAME adios2_deactivate_bp
   DESTINATION ${CMAKE_INSTALL_BINDIR}
   COMPONENT adios2_scripts-runtime)
