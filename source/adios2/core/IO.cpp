@@ -143,6 +143,7 @@ std::unordered_map<std::string, IO::EngineFactoryEntry>::const_iterator
 FactoryLookup(std::string const &name)
 {
     std::lock_guard<std::mutex> factoryGuard(FactoryMutex);
+    (void)factoryGuard;
     return Factory.find(name);
 }
 

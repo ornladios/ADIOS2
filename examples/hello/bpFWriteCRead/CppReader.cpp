@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
         const std::map<std::string, adios2::Params> variables =
             bpIO.AvailableVariables();
 
-        for (const auto variablePair : variables)
+        for (const auto &variablePair : variables)
         {
             std::cout << "Name: " << variablePair.first;
 

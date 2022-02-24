@@ -368,7 +368,7 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     // Get type info
     int dtype = 0;
-    size_t dataTypeSize;
+    size_t dataTypeSize = 0;
     if (type == helper::GetDataType<double>() ||
         type == helper::GetDataType<std::complex<double>>())
     {
@@ -437,7 +437,7 @@ size_t CompressSZ::DecompressV2(const char *bufferIn, const size_t sizeIn,
 
     // Get type info
     int dtype = 0;
-    size_t dataTypeSize;
+    size_t dataTypeSize = 0;
     if (type == helper::GetDataType<double>() ||
         type == helper::GetDataType<std::complex<double>>())
     {

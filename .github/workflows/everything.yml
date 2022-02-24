@@ -41,41 +41,17 @@ jobs:
     needs: format
     runs-on: ubuntu-latest
     container:
-      image: ${{ matrix.container }}
+      image: ornladios/adios2:ci-spack-el8-${{ matrix.compiler }}-${{ matrix.parallel }}
       options: --shm-size=1g
       env:
-        GH_YML_JOBNAME: ${{ matrix.jobname }}
+        GH_YML_JOBNAME: el8-${{ matrix.compiler }}-${{ matrix.parallel }}
         GH_YML_OS: Linux
 
     strategy:
       fail-fast: false
       matrix:
-        jobname: [
-          el7,
-          el7-gnu8-ohpc,
-          el7-gnu8-openmpi-ohpc,
-          el7-gnu8-openmpi-ohpc-static,
-          suse-pgi,
-          suse-pgi-openmpi,
-          debian-sid,
-          debian-sid-openmpi ]
-        include:
-        - jobname: el7
-          container: ornladios/adios2:ci-el7
-        - jobname: el7-gnu8-ohpc
-          container: ornladios/adios2:ci-el7-gnu8-ohpc
-        - jobname: el7-gnu8-openmpi-ohpc
-          container: ornladios/adios2:ci-el7-gnu8-openmpi-ohpc
-        - jobname: el7-gnu8-openmpi-ohpc-static
-          container: ornladios/adios2:ci-el7-gnu8-openmpi-ohpc
-        - jobname: suse-pgi
-          container: ornladios/adios2:ci-suse-nvhpcsdk
-        - jobname: suse-pgi-openmpi
-          container: ornladios/adios2:ci-suse-nvhpcsdk-openmpi
-        - jobname: debian-sid
-          container: ornladios/adios2:ci-debian-sid
-        - jobname: debian-sid-openmpi
-          container: ornladios/adios2:ci-debian-sid
+        compiler: [ gcc8, gcc9, gcc10, gcc11, icc, oneapi, nvhpc222 ]
+        parallel: [ serial, mpi ]
 
     steps:
     - uses: actions/checkout@v2
@@ -137,6 +113,46 @@ jobs:
     - name: Test
       run: scripts/ci/gh-actions/run.sh test
 
+
+  macos:
+    needs: format
+    runs-on: ${{ matrix.image }}
+    env:
+      GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.parallel }}
+      GH_YML_OS: macOS
+      GH_YML_XCODE: "${{ matrix.xcode }}"
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ macos10, macos11, macos11_12sdk ]
+        # parallel: [ serial, mpi ]
+        parallel: [ serial ]
+        include:
+        - os: macos10
+          image: macos-10.15
+          xcode: "12.1.1"
+        - os: macos11
+          image: macos-11
+          xcode: "13.0"
+        - os: macos11_12sdk
+          image: macos-11
+          xcode: "13.2.1"
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: Setup
+      run: scripts/ci/gh-actions/macos-setup.sh
+    - name: Update
+      run: scripts/ci/gh-actions/run.sh update
+    - name: Configure
+      run: scripts/ci/gh-actions/run.sh configure
+    - name: Build
+      run: scripts/ci/gh-actions/run.sh build
+    - name: Test
+      run: scripts/ci/gh-actions/run.sh test
 
 #######################################
 # Docker container jobs

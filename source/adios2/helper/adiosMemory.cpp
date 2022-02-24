@@ -50,6 +50,8 @@ void CopyPayloadStride(const char *src, const size_t payloadStride, char *dest,
         std::copy(src, src + payloadStride, dest);
     }
 #else
+    (void)endianReverse;
+    (void)destType;
     std::copy(src, src + payloadStride, dest);
 #endif
 }

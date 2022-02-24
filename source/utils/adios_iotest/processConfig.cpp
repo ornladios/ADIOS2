@@ -319,7 +319,7 @@ void printConfig(const Config &cfg)
     }
 
     std::cout << "    Commands :" << std::endl;
-    for (const auto cmd : cfg.commands)
+    for (const auto &cmd : cfg.commands)
     {
         if (!cmd->conditionalStream.empty())
         {
@@ -408,7 +408,7 @@ void printVarMaps(Config &cfg, std::string &groupName)
 
 void globalChecks(const Config &cfg, const Settings &settings)
 {
-    for (const auto cmd : cfg.commands)
+    for (const auto &cmd : cfg.commands)
     {
         if (!cmd->conditionalStream.empty())
         {

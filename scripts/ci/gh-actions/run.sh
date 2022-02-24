@@ -25,7 +25,7 @@ fi
 export CI_BIN_DIR="${CI_ROOT_DIR}/${GH_YML_JOBNAME}"
 
 STEP=$1
-CTEST_SCRIPT=scripts/ci/cmake/ci-${GH_YML_JOBNAME}.cmake
+CTEST_SCRIPT=scripts/ci/cmake-v2/ci-${GH_YML_JOBNAME}.cmake
 
 # Update and Test steps enable an extra step
 CTEST_STEP_ARGS=""
@@ -49,7 +49,7 @@ export TMPDIR="${RUNNER_TEMP}/tmp"
 mkdir -p "${TMPDIR}"
 
 # OpenMPI specific setup and workarounds
-if [[ "${GH_YML_JOBNAME}" =~ (openmpi|smpi) ]]
+if [[ "${GH_YML_JOBNAME}" =~ mpi ]]
 then
   # Quiet some warnings from OpenMPI
   export OMPI_MCA_btl_base_warn_component_unused=0
@@ -77,6 +77,12 @@ fi
 
 # Make sure staging tests use localhost
 export ADIOS2_IP=127.0.0.1
+
+# Load any additional setup scripts
+if [ -f scripts/ci/setup-run/ci-${GH_YML_JOBNAME}.sh ]
+then
+  source scripts/ci/setup-run/ci-${GH_YML_JOBNAME}.sh
+fi
 
 echo "**********Env Begin**********"
 env | sort

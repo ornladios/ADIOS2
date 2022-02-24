@@ -261,7 +261,7 @@ function(add_common_test basename engine)
     endif()
     set (timeout "${${basename}_TIMEOUT}")
     if ("${timeout}" STREQUAL "")
-       set (timeout "30")
+       set (timeout "60")
     endif()
 
     set_tests_properties(${testname} PROPERTIES

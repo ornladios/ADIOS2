@@ -17,6 +17,8 @@ list(APPEND CTEST_CUSTOM_WARNING_EXCEPTION
   "Warning: Rank mismatch between actual argument.*"
   "zfp/types.h.*typedef"
   "was built for newer macOS version"
+  "warning generated"
+  "warnings generated"
 )
 list(APPEND CTEST_CUSTOM_COVERAGE_EXCLUDE
   ".*/thirdparty/.*"

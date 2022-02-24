@@ -367,7 +367,7 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
     MPI_Barrier(comm);
     timeStart = MPI_Wtime();
     engine.BeginStep();
-    for (const auto ov : cmdW->variables)
+    for (const auto &ov : cmdW->variables)
     {
         putADIOSArray(ov);
     }

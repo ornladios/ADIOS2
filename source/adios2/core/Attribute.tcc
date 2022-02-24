@@ -34,7 +34,7 @@ struct Pad;
 template <typename T, typename Enable>
 struct Pad
 {
-    static void Zero(T &arg) {}
+    static void Zero(T & /*arg*/) {}
 };
 
 template <typename T>

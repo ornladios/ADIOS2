@@ -583,7 +583,6 @@ static void GetMinMax(const void *Data, size_t ElemCount, const DataType Type,
     else if (MemSpace == MemorySpace::CUDA &&                                  \
              Type == helper::GetDataType<T>())                                 \
     {                                                                          \
-        const size_t size = ElemCount * sizeof(T);                             \
         const T *values = (const T *)Data;                                     \
         helper::CUDAMinMax(values, ElemCount, MinMax.MinUnion.field_##N,       \
                            MinMax.MaxUnion.field_##N);                         \
