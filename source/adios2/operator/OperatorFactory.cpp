@@ -27,6 +27,7 @@
 
 #ifdef ADIOS2_HAVE_MGARD
 #include "adios2/operator/compress/CompressMGARD.h"
+#include "adios2/operator/compress/CompressMGARDPlus.h"
 #endif
 
 #ifdef ADIOS2_HAVE_PNG
@@ -62,6 +63,8 @@ std::string OperatorTypeToString(const Operator::OperatorType type)
         return "libpressio";
     case Operator::COMPRESS_MGARD:
         return "mgard";
+    case Operator::COMPRESS_MGARDPLUS:
+        return "mgardplus";
     case Operator::COMPRESS_PNG:
         return "png";
     case Operator::COMPRESS_SIRIUS:
@@ -104,6 +107,12 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type,
     {
 #ifdef ADIOS2_HAVE_MGARD
         ret = std::make_shared<compress::CompressMGARD>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "mgardplus")
+    {
+#ifdef ADIOS2_HAVE_MGARD
+        ret = std::make_shared<compress::CompressMGARDPlus>(parameters);
 #endif
     }
     else if (typeLowerCase == "png")

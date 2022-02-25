@@ -36,6 +36,7 @@ public:
         COMPRESS_SIRIUS = 5,
         COMPRESS_SZ = 6,
         COMPRESS_ZFP = 7,
+        COMPRESS_MGARDPLUS = 8,
         CALLBACK_SIGNATURE1 = 51,
         CALLBACK_SIGNATURE2 = 52,
         COMPRESS_NULL = 127,
