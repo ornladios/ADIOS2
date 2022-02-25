@@ -71,8 +71,8 @@ TEST(CommonWriteTest, ADIOS2CommonWrite)
      *		Don't write
      *          Sync   - always destroy data afterwards
      *		Deferred
-     *		Deferred with immediate PerformPuts() or PerformDataWrite() -  Destroy
-     *all prior data
+     *		Deferred with immediate PerformPuts() or PerformDataWrite() -
+     *Destroy all prior data
      *
      */
     for (int step = StartStep; step < EndStep; ++step)
