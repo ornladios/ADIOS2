@@ -100,6 +100,12 @@ void FC_GLOBAL(adios2_perform_puts_f2c,
     *ierr = static_cast<int>(adios2_perform_puts(*engine));
 }
 
+void FC_GLOBAL(adios2_perform_data_write_f2c,
+               ADIOS2_PERFORM_DATA_WRITE_F2C)(adios2_engine **engine, int *ierr)
+{
+    *ierr = static_cast<int>(adios2_perform_data_write(*engine));
+}
+
 // ******** GETS */
 void FC_GLOBAL(adios2_get_f2c, ADIOS2_get_F2C)(adios2_engine **engine,
                                                adios2_variable **variable,

@@ -406,6 +406,31 @@ adios2_error adios2_perform_puts(adios2_engine *engine)
     }
 }
 
+adios2_error adios2_perform_data_write(adios2_engine *engine)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            engine, "for adios2_engine, in call to adios2_perform_data_write");
+
+        adios2::core::Engine *engineCpp =
+            reinterpret_cast<adios2::core::Engine *>(engine);
+
+        if (engineCpp->m_EngineType == "NULL")
+        {
+            return adios2_error_none;
+        }
+
+        engineCpp->PerformDataWrite();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_perform_data_write"));
+    }
+}
+
 adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
                         void *values, const adios2_mode mode)
 {

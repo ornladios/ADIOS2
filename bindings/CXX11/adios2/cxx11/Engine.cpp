@@ -87,6 +87,16 @@ void Engine::PerformPuts()
     m_Engine->PerformPuts();
 }
 
+void Engine::PerformDataWrite()
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::PerformDataWrite");
+    if (m_Engine->m_EngineType == "NULL")
+    {
+        return;
+    }
+    m_Engine->PerformDataWrite();
+}
+
 void Engine::PerformGets()
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::PerformGets");

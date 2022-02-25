@@ -61,9 +61,11 @@ The goal is to provide specific advice and good practices about the use of ADIOS
 
 15. ``Put Span``: create all spans in a step before populating them. Spans follow the same iterator invalidation rules as ``std::vector``, so use ``span.data()`` to always keep the span pointer up-to-date 
 
-16. Prefer populating data before calling ``Put`` in deferred mode, rather than manipulating it between ``Put`` and ``PerformPuts``, ``EndStep``, or ``Close``
+16. Always populate data before calling ``Put`` in deferred mode,
+    and do not change it between ``Put`` and ``PerformPuts``, ``EndStep``, or ``Close``
 
-17. Use ``BeginStep`` and ``EndStep`` to write code that is portable across all ADIOS 2 Engines: file and streaming.
+17. Use ``BeginStep`` and ``EndStep`` to write code that is portable
+    across all ADIOS 2 Engine types: file and streaming.
 
 18. Always use ``Close`` for every call to ``Open``.
 

@@ -63,6 +63,7 @@ size_t Engine::CurrentStep() const
 void Engine::EndStep() { ThrowUp("EndStep"); }
 void Engine::PerformPuts() { ThrowUp("PerformPuts"); }
 void Engine::PerformGets() { ThrowUp("PerformGets"); }
+void Engine::PerformDataWrite() { return; }
 
 void Engine::Close(const int transportIndex)
 {

@@ -50,6 +50,7 @@ public:
                          const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void PerformPuts() final;
+    void PerformDataWrite() final;
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
 
@@ -171,12 +172,6 @@ private:
                                         bool SerializedWriters);
     void WriteData_TwoLevelShm(format::BufferV *Data);
     void WriteData_TwoLevelShm_Async(format::BufferV *Data);
-
-    void PopulateMetadataIndexFileContent(
-        format::BufferSTL &buffer, const uint64_t currentStep,
-        const uint64_t mpirank, const uint64_t pgIndexStart,
-        const uint64_t variablesIndexStart, const uint64_t attributesIndexStart,
-        const uint64_t currentStepEndPos, const uint64_t currentTimeStamp);
 
     void UpdateActiveFlag(const bool active);
 

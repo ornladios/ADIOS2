@@ -103,7 +103,8 @@ if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
    endforeach()
 endif()
 
-set (SIMPLE_TESTS "1x1;1x1DefSync;1x1Flush")
+set (SIMPLE_TESTS "1x1;1x1DefSync")
+set (BP5File_ONLY_TESTS "1x1DataWrite")
 
 set (SIMPLE_FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
@@ -191,8 +192,8 @@ if(NOT WIN32)    # not on windows
     list (FILTER BP_TESTS EXCLUDE REGEX ".*SharedVar$")
     # The nobody-writes-data-in-a-timestep tests don't work for any BP file engine
     list (FILTER BP_TESTS EXCLUDE REGEX ".*NoData$")
-    # BP3 and BP4 semantics on flush differ from BP5
-    list (FILTER BP_TESTS EXCLUDE REGEX ".*Flush.*")
+    # BP3 and BP4 don't do PerformDataWrite
+    list (FILTER BP_TESTS EXCLUDE REGEX ".*DataWrite.*")
     foreach(test ${BP_TESTS})
         add_common_test(${test} BP4)
     endforeach()
