@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
         const std::map<std::string, adios2::Params> variables =
             h5IO.AvailableVariables();
 
-        for (const auto variablePair : variables)
+        for (const auto &variablePair : variables)
         {
             std::cout << "Name: " << variablePair.first;
             std::cout << std::endl;
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
         const std::map<std::string, adios2::Params> attributes =
             h5IO.AvailableAttributes();
 
-        for (const auto attrPair : attributes)
+        for (const auto &attrPair : attributes)
         {
             std::cout << "AttrName: " << attrPair.first;
             std::cout << std::endl;

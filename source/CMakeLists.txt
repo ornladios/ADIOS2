@@ -6,11 +6,16 @@
 add_subdirectory(adios2)
 add_subdirectory(utils)
 
-# HDF5 VOL requires a matching adios configuration
-if(ADIOS2_HAVE_HDF5 AND HDF5_VERSION VERSION_GREATER_EQUAL 1.11 AND
-   (NOT HDF5_IS_PARALLEL OR (HDF5_IS_PARALLEL AND ADIOS2_USE_MPI)))
-  set(ADIOS2_HAVE_HDF5_VOL ON CACHE INTERNAL "" FORCE)
-  add_subdirectory(h5vol)
+# HDF5 VOL requires 1.13+
+if(ADIOS2_HAVE_HDF5)
+  if(HDF5_VERSION VERSION_LESS 1.13)
+    set(ADIOS2_HAVE_HDF5_VOL OFF CACHE INTERNAL "")
+  else()
+    set(ADIOS2_HAVE_HDF5_VOL ON CACHE INTERNAL "")
+  endif()
 else()
-  set(ADIOS2_HAVE_HDF5_VOL OFF CACHE INTERNAL "" FORCE)
+  set(ADIOS2_HAVE_HDF5_VOL OFF CACHE INTERNAL "")
+endif()
+if(ADIOS2_HAVE_HDF5_VOL)
+  add_subdirectory(h5vol)
 endif()

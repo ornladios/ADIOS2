@@ -35,6 +35,7 @@ namespace
 HDF5Common::MPI_API const *GetHDF5Common_MPI_API()
 {
     std::lock_guard<std::mutex> guard(HDF5Common_MPI_API_Mutex);
+    (void)guard; // Workaround to silence compiler warning about unused variable
     return HDF5Common_MPI_API;
 }
 

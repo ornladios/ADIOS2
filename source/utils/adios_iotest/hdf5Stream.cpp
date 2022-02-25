@@ -220,7 +220,7 @@ void hdf5Stream::Write(CommandWrite *cmdW, Config &cfg,
     double maxWriteTime, minWriteTime;
     MPI_Barrier(comm);
     timeStart = MPI_Wtime();
-    for (const auto ov : cmdW->variables)
+    for (const auto &ov : cmdW->variables)
     {
         putHDF5Array(ov, step);
     }
@@ -394,7 +394,7 @@ adios2::StepStatus hdf5Stream::Read(CommandRead *cmdR, Config &cfg,
 }
 void hdf5Stream::Close()
 {
-    for (const auto it : varmap)
+    for (const auto &it : varmap)
     {
         auto &vi = it.second;
         H5Dclose(vi.dataset);
