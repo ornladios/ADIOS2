@@ -228,8 +228,8 @@ if(ADIOS2_HAVE_DataSpaces)
   add_subdirectory(toolkit/dataspaces)
   target_sources(adios2_core_mpi PRIVATE
      toolkit/dataspaces/ds_writer.c
-     engine/dataspaces/DataSpacesWriter.cpp engine/dataspaces/DataSpacesWriter.tcc 
-     engine/dataspaces/DataSpacesReader.cpp engine/dataspaces/DataSpacesReader.tcc 
+     engine/dataspaces/DataSpacesWriter.cpp engine/dataspaces/DataSpacesWriter.tcc
+     engine/dataspaces/DataSpacesReader.cpp engine/dataspaces/DataSpacesReader.tcc
   )
   target_link_libraries(adios2_core_mpi PRIVATE DataSpaces::DataSpaces)
 endif()
@@ -260,6 +260,7 @@ if(ADIOS2_HAVE_LIBPRESSIO)
 endif()
 
 if(ADIOS2_HAVE_MGARD)
+  target_sources(adios2_core PRIVATE operator/compress/CompressMGARDPlus.cpp)
   target_sources(adios2_core PRIVATE operator/compress/CompressMGARD.cpp)
   target_link_libraries(adios2_core PRIVATE MGARD::MGARD)
 endif()

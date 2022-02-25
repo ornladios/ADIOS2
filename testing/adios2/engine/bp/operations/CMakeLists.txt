@@ -51,6 +51,7 @@ endif()
 
 if(ADIOS2_HAVE_MGARD)
   bp_gtest_add_tests_helper(WriteReadMGARD MPI_ALLOW)
+  bp_gtest_add_tests_helper(WriteReadMGARDPlus MPI_ALLOW)
 endif()
 
 if(ADIOS2_HAVE_BZip2)
