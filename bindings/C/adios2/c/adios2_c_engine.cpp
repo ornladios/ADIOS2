@@ -823,6 +823,20 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
     return varinfo;
 }
 
+void adios2_free_blockinfo(adios2_varinfo *data_blocks)
+{
+    if (data_blocks != NULL)
+    {
+        for (size_t i = 0; i < data_blocks->nblocks; ++i)
+        {
+            free(data_blocks->BlocksInfo[i].Start);
+            free(data_blocks->BlocksInfo[i].Count);
+        }
+        free(data_blocks->BlocksInfo);
+        free(data_blocks);
+    }
+}
+
 adios2_error adios2_close_by_index(adios2_engine *engine,
                                    const int transport_index)
 {
