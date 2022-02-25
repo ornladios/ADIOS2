@@ -1541,26 +1541,6 @@ void BP5Writer::FlushProfiler()
     }
 }
 
-/*write the content of metadata index file*/
-void BP5Writer::PopulateMetadataIndexFileContent(
-    format::BufferSTL &b, const uint64_t currentStep, const uint64_t mpirank,
-    const uint64_t pgIndexStart, const uint64_t variablesIndexStart,
-    const uint64_t attributesIndexStart, const uint64_t currentStepEndPos,
-    const uint64_t currentTimeStamp)
-{
-    PERFSTUBS_SCOPED_TIMER("BP5Writer::PopulateMetadataIndexFileContent");
-    auto &buffer = b.m_Buffer;
-    auto &position = b.m_Position;
-    helper::CopyToBuffer(buffer, position, &currentStep);
-    helper::CopyToBuffer(buffer, position, &mpirank);
-    helper::CopyToBuffer(buffer, position, &pgIndexStart);
-    helper::CopyToBuffer(buffer, position, &variablesIndexStart);
-    helper::CopyToBuffer(buffer, position, &attributesIndexStart);
-    helper::CopyToBuffer(buffer, position, &currentStepEndPos);
-    helper::CopyToBuffer(buffer, position, &currentTimeStamp);
-    position += 8;
-}
-
 size_t BP5Writer::DebugGetDataBufferSize() const
 {
     return m_BP5Serializer.DebugGetDataBufferSize();

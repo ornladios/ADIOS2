@@ -173,12 +173,6 @@ private:
     void WriteData_TwoLevelShm(format::BufferV *Data);
     void WriteData_TwoLevelShm_Async(format::BufferV *Data);
 
-    void PopulateMetadataIndexFileContent(
-        format::BufferSTL &buffer, const uint64_t currentStep,
-        const uint64_t mpirank, const uint64_t pgIndexStart,
-        const uint64_t variablesIndexStart, const uint64_t attributesIndexStart,
-        const uint64_t currentStepEndPos, const uint64_t currentTimeStamp);
-
     void UpdateActiveFlag(const bool active);
 
     void WriteCollectiveMetadataFile(const bool isFinal = false);
