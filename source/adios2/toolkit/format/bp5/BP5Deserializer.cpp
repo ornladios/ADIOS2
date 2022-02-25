@@ -1230,20 +1230,25 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                             GlobalDimensions[i] = RankSize[i];
                         }
                     }
-                    if (m_ReaderIsRowMajor)
+
+                    auto inStart =
+                        adios2::Dims(RankOffset, RankOffset + DimCount);
+                    auto inCount = adios2::Dims(RankSize, RankSize + DimCount);
+                    auto outStart =
+                        adios2::Dims(SelOffset, SelOffset + DimCount);
+                    auto outCount = adios2::Dims(SelSize, SelSize + DimCount);
+
+                    if (!m_ReaderIsRowMajor)
                     {
-                        ExtractSelectionFromPartialRM(
-                            ElementSize, DimCount, GlobalDimensions, RankOffset,
-                            RankSize, SelOffset, SelSize, IncomingData,
-                            (char *)Req.Data, Req.MemSpace);
+                        std::reverse(inStart.begin(), inStart.end());
+                        std::reverse(inCount.begin(), inCount.end());
+                        std::reverse(outStart.begin(), outStart.end());
+                        std::reverse(outCount.begin(), outCount.end());
                     }
-                    else
-                    {
-                        ExtractSelectionFromPartialCM(
-                            ElementSize, DimCount, GlobalDimensions, RankOffset,
-                            RankSize, SelOffset, SelSize, IncomingData,
-                            (char *)Req.Data, Req.MemSpace);
-                    }
+
+                    helper::NdCopy(IncomingData, inStart, inCount, true, true,
+                                   (char *)Req.Data, outStart, outCount, true,
+                                   true, ElementSize);
                 }
             }
         }
