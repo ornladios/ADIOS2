@@ -1230,31 +1230,25 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
                             GlobalDimensions[i] = RankSize[i];
                         }
                     }
-                    helper::NdCopy(
-                        IncomingData,
-                        adios2::Dims(RankOffset, RankOffset + DimCount),
-                        adios2::Dims(RankSize, RankSize + DimCount),
-                        true /* m_WriterIsRowMajor */,
-                        false /*WriterIsLittleEndian*/, (char *)Req.Data,
-                        adios2::Dims(SelOffset, SelOffset + DimCount),
-                        adios2::Dims(SelSize, SelSize + DimCount),
-                        true /*m_ReaderIsRowMajor */,
-                        false /*m_ReaderIsLittleEndian*/, ElementSize);
 
-                    // if (m_ReaderIsRowMajor)
-                    // {
-                    //     ExtractSelectionFromPartialRM(
-                    //         ElementSize, DimCount, GlobalDimensions,
-                    //         RankOffset, RankSize, SelOffset, SelSize,
-                    //         IncomingData, (char *)Req.Data, Req.MemSpace);
-                    // }
-                    // else
-                    // {
-                    //     ExtractSelectionFromPartialCM(
-                    //         ElementSize, DimCount, GlobalDimensions,
-                    //         RankOffset, RankSize, SelOffset, SelSize,
-                    //         IncomingData, (char *)Req.Data, Req.MemSpace);
-                    // }
+                    auto inStart =
+                        adios2::Dims(RankOffset, RankOffset + DimCount);
+                    auto inCount = adios2::Dims(RankSize, RankSize + DimCount);
+                    auto outStart =
+                        adios2::Dims(SelOffset, SelOffset + DimCount);
+                    auto outCount = adios2::Dims(SelSize, SelSize + DimCount);
+
+                    if (!m_ReaderIsRowMajor)
+                    {
+                        std::reverse(inStart.begin(), inStart.end());
+                        std::reverse(inCount.begin(), inCount.end());
+                        std::reverse(outStart.begin(), outStart.end());
+                        std::reverse(outCount.begin(), outCount.end());
+                    }
+
+                    helper::NdCopy(IncomingData, inStart, inCount, true, true,
+                                   (char *)Req.Data, outStart, outCount, true,
+                                   true, ElementSize);
                 }
             }
         }
