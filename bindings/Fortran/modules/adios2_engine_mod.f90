@@ -21,6 +21,7 @@ module adios2_engine_mod
     external adios2_lock_writer_definitions_f2c
     external adios2_perform_gets_f2c
     external adios2_perform_puts_f2c
+    external adios2_perform_data_write_f2c
     external adios2_steps_f2c
 
 contains
@@ -31,6 +32,15 @@ contains
 
         if(trim(engine%type) == "NULL") return
         call adios2_perform_puts_f2c(engine%f2c, ierr)
+
+    end subroutine
+
+    subroutine adios2_perform_data_write(engine, ierr)
+        type(adios2_engine), intent(in) :: engine
+        integer, intent(out) :: ierr
+
+        if(trim(engine%type) == "NULL") return
+        call adios2_perform_data_write_f2c(engine%f2c, ierr)
 
     end subroutine
 

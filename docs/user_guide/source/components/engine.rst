@@ -69,7 +69,10 @@ Put: modes and memory contracts
 ``Put`` publishes data in ADIOS2.
 It is unavailable unless the ``Engine`` is created in ``Write`` or ``Append`` mode.
 
-The most common signature is the one that passes a ``Variable<T>`` object for the metadata, a ``const`` piece of contiguous memory for the data, and a mode for either ``Deferred`` (data is collected until EndStep/PerformPuts/Close) or ``Sync`` (data is reusable immediately).
+The most common signature is the one that passes a ``Variable<T>``
+object for the metadata, a ``const`` piece of contiguous memory for
+the data, and a mode for either ``Deferred`` (data may be collected at
+Put() or not until EndStep/PerformPuts/Close) or ``Sync`` (data is reusable immediately).
 This is the most common use case in applications.
 
 1. Deferred (default) or Sync mode, data is contiguous memory 
@@ -133,7 +136,7 @@ The following table summarizes the memory contracts required by ADIOS2 engines b
 +----------+-------------+----------------------------------------------------+
 |          | Pointer     | do not modify until PerformPuts/EndStep/Close      |
 | Deferred |             |                                                    |
-|          | Contents    | consumed at PerformPuts/EndStep/Close              |
+|          | Contents    | consumed at Put or PerformPuts/EndStep/Close       |
 +----------+-------------+----------------------------------------------------+
 |          | Pointer     | modify after Put                                   |
 | Sync     |             |                                                    |
@@ -164,7 +167,8 @@ Each ``Engine`` will give a concrete meaning to  each functions signatures, but 
       
    - "data pointer" do not modify (e.g. resize) until first call to ``PerformPuts``, ``EndStep`` or ``Close``.
       
-   - "data contents" consumed at first call to ``PerformPuts``, ``EndStep`` or ``Close``. It's recommended practice to set all data contents before Put.
+   - "data contents" may be consumed immediately or at first call to
+     ``PerformPuts``, ``EndStep`` or ``Close``.  Do not modify data contents after Put.
 
 
    Usage:
@@ -180,11 +184,13 @@ Each ``Engine`` will give a concrete meaning to  each functions signatures, but 
          // associated with current variable metadata
          engine.Put(variable, data);
          
-         // valid but not recommended
-         // risk of changing "data pointer" (e.g. resize) 
+         // Modifying data after Put(Deferred) may result in different
+	 // results with different engines
+         // Any resize of data after Put(Deferred) may result in
+	 // memory corruption or segmentation faults
          data[1] = 10; 
          
-         // "data contents" must be ready
+         // "data contents" must not have been changed
          // "data pointer" must be the same as in Put
          engine.EndStep();   
          //engine.PerformPuts();  
@@ -306,7 +312,25 @@ The ``data`` fed to the ``Put`` function is assumed to be allocated on the Host 
 PerformsPuts
 ------------
 
-   Executes all pending ``Put`` calls in deferred mode ad collect spans data
+   Executes all pending ``Put`` calls in deferred mode and collects
+   span data.  Specifically this call copies Put(Deferred) data into
+   internal ADIOS buffers, as if Put(Sync) had been used instead.
+
+.. note::
+
+   This call allows the reuse of user buffers, but may negatively
+   impact performance on some engines.
+
+
+PerformsDataWrite
+------------
+
+   If supported by the engine, moves data from prior ``Put`` calls to disk
+
+.. note::
+
+   Currently only supported by the BP5 file engine.
+
 
 
 Get: modes and memory contracts
@@ -339,7 +363,7 @@ The following table summarizes the memory contracts required by ADIOS2 engines b
 +----------+-------------+-----------------------------------------------+
 |          | Pointer     | do not modify until PerformPuts/EndStep/Close |
 | Deferred |             |                                               |
-|          | Contents    | populated at PerformPuts/EndStep/Close        |
+|          | Contents    | populated at Put or PerformPuts/EndStep/Close |
 +----------+-------------+-----------------------------------------------+
 |          | Pointer     | modify after Put                              |
 | Sync     |             |                                               |
@@ -359,9 +383,9 @@ The following table summarizes the memory contracts required by ADIOS2 engines b
       
    - "data pointer": do not modify (e.g. resize) until first call to ``PerformPuts``, ``EndStep`` or ``Close``.
       
-   - "data contents": populated at first call to ``PerformPuts``, ``EndStep`` or ``Close``.
+   - "data contents": populated at ``Put``, or at first call to ``PerformPuts``, ``EndStep`` or ``Close``.
 
-   Usage:
+   Usage:`
 
       .. code-block:: c++
 
@@ -380,9 +404,9 @@ The following table summarizes the memory contracts required by ADIOS2 engines b
          // leave resize to adios2
          //engine.Get(variable, data);
 
-         // "data contents" must be ready
          // "data pointer" must be the same as in Get
          engine.EndStep();   
+         // "data contents" are now ready
          //engine.PerformPuts();  
          //engine.Close();
 
@@ -454,7 +478,7 @@ The following example illustrates the basic API usage in write mode for data gen
       // Application can modify dataT address and contents
       
       // deferred functions return immediately (lazy evaluation),
-      // dataU, dataV and dataW pointers must not be modified
+      // dataU, dataV and dataW pointers and contents must not be modified
       // until PerformPuts, EndStep or Close.
       // 1st batch
       engine.Put(varU, dataU);
@@ -465,8 +489,9 @@ The following example illustrates the basic API usage in write mode for data gen
       engine.Put(varW, dataW, adios2::Mode::Deferred);
 
       // effectively dataU, dataV, dataW are "deferred"
-      // until the first call to PerformPuts, EndStep or Close.
-      // Application MUST NOT modify the data pointer (e.g. resize memory).
+      // possibly until the first call to PerformPuts, EndStep or Close.
+      // Application MUST NOT modify the data pointer (e.g. resize
+      // memory) or change data contents.
       engine.PerformPuts();
 
       // dataU, dataV, dataW pointers/values can now be reused
@@ -474,14 +499,16 @@ The following example illustrates the basic API usage in write mode for data gen
       // ... Application modifies dataU, dataV, dataW 
 
       //2nd batch
+      dataU[0] = 10
+      dataV[0] = 10
+      dataW[0] = 10 
       engine.Put(varU, dataU);
       engine.Put(varV, dataV);
       engine.Put(varW, dataW);
       // Application MUST NOT modify dataU, dataV and dataW pointers (e.g. resize),
-      // optionally data can be modified, but not recommended
-      dataU[0] = 10
-      dataV[0] = 10
-      dataW[0] = 10 
+      // Contents should also not be modified after Put() and before
+      // PerformPuts() because ADIOS may access the data immediately
+      // or not until PerformPuts(), depending upon the engine
       engine.PerformPuts();
       
       // dataU, dataV, dataW pointers/values can now be reused

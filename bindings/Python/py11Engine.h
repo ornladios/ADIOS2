@@ -53,6 +53,7 @@ public:
              const Mode launch = Mode::Deferred);
     void Put(Variable variable, const std::string &string);
     void PerformPuts();
+    void PerformDataWrite();
 
     void Get(Variable variable, pybind11::array &array,
              const Mode launch = Mode::Deferred);

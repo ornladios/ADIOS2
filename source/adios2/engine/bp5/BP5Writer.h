@@ -50,6 +50,7 @@ public:
                          const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void PerformPuts() final;
+    void PerformDataWrite() final;
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
 

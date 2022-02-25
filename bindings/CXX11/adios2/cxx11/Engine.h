@@ -191,8 +191,15 @@ public:
     void Put(const std::string &variableName, const T &datum,
              const Mode launch = Mode::Deferred);
 
-    /** Perform all Put calls in Deferred mode up to this point */
+    /** Perform all Put calls in Deferred mode up to this point.  Specifically,
+     * this causes Deferred data to be copied into ADIOS internal buffers as if
+     * the Put had been done in Sync mode. */
     void PerformPuts();
+
+    /** Write already-Put() array data to disk.  If supported by the engine,
+     * this may relieve memory pressure by clearing ADIOS buffers.  It is a
+     * collective call and can only be called between Begin/EndStep pairs. */
+    void PerformDataWrite();
 
     /**
      * Get data associated with a Variable from the Engine

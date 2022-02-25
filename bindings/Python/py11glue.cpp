@@ -474,6 +474,8 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
 
         .def("PerformPuts", &adios2::py11::Engine::PerformPuts)
 
+        .def("PerformDataWrite", &adios2::py11::Engine::PerformDataWrite)
+
         .def("Get",
              (void (adios2::py11::Engine::*)(adios2::py11::Variable,
                                              pybind11::array &,

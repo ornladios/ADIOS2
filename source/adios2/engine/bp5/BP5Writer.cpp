@@ -1393,7 +1393,9 @@ void BP5Writer::FlushData(const bool isFinal)
     }
 }
 
-void BP5Writer::Flush(const int transportIndex) { FlushData(false); }
+void BP5Writer::Flush(const int transportIndex) {}
+
+void BP5Writer::PerformDataWrite() { FlushData(false); }
 
 void BP5Writer::DoClose(const int transportIndex)
 {

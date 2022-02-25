@@ -127,6 +127,16 @@ void Engine::PerformPuts()
     m_Engine->PerformPuts();
 }
 
+void Engine::PerformDataWrite()
+{
+    helper::CheckForNullptr(m_Engine, "in call to PerformDataWrite");
+    if (m_Engine->m_EngineType == "NULL")
+    {
+        return;
+    }
+    m_Engine->PerformDataWrite();
+}
+
 void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
 {
     helper::CheckForNullptr(m_Engine,

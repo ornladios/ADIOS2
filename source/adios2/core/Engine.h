@@ -364,6 +364,10 @@ public:
      * PerformGets, BeginStep or Open */
     virtual void PerformGets();
 
+    /** Write array data to disk.  This may relieve memory pressure by clearing
+     * ADIOS buffers.  It is a collective call. */
+    virtual void PerformDataWrite();
+
     /**
      * Closes a particular transport, or all if transportIndex = -1 (default).
      * @param transportIndex index returned from IO AddTransport, default (-1) =
