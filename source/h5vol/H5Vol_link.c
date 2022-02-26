@@ -4,9 +4,9 @@
 #include "H5Vol_def.h"
 
 herr_t H5VL_adios2_link_specific(void *obj, const H5VL_loc_params_t *loc_params,
-                                 H5VL_link_specific_t specific_type,
+                                 H5VL_link_specific_args_t *args,
                                  hid_t H5_ATTR_UNUSED dxpl_id,
-                                 void H5_ATTR_UNUSED **req, va_list arguments)
+                                 void H5_ATTR_UNUSED **req)
 
 {
     REQUIRE_NOT_NULL_ERR(loc_params, -1);
@@ -14,13 +14,13 @@ herr_t H5VL_adios2_link_specific(void *obj, const H5VL_loc_params_t *loc_params,
 
     H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)obj;
 
-    switch (specific_type)
+    switch (args->op_type)
     {
     case H5VL_LINK_EXISTS:
     {
         if ((GROUP == vol->m_ObjType) || (ROOT == vol->m_ObjType))
         {
-            htri_t *ret = va_arg(arguments, htri_t *);
+            hbool_t *ret = args->args.exists.exists;
 
             const char *obj_name = loc_params->loc_data.loc_by_name.name;
             *ret = gExistsUnderGrp(vol, obj_name);
@@ -52,21 +52,21 @@ herr_t H5VL_adios2_link_specific(void *obj, const H5VL_loc_params_t *loc_params,
 }
 
 herr_t H5VL_adios2_link_get(void *obj, const H5VL_loc_params_t *loc_params,
-                            H5VL_link_get_t get_type,
+                            H5VL_link_get_args_t *args,
                             hid_t H5_ATTR_UNUSED dxpl_id,
-                            void H5_ATTR_UNUSED **req, va_list arguments)
+                            void H5_ATTR_UNUSED **req)
 {
 
     REQUIRE_NOT_NULL_ERR(loc_params, -1);
     REQUIRE_NOT_NULL_ERR(obj, -1);
 
     H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)obj;
-    switch (get_type)
+    switch (args->op_type)
     {
     case H5VL_LINK_GET_NAME:
     {
-        char *name = va_arg(arguments, char *);
-        ssize_t *ret = va_arg(arguments, ssize_t *);
+        char *name = args->args.get_name.name;
+        size_t *ret = (size_t *)args->args.get_name.name_len;
 
         if ((GROUP == vol->m_ObjType) || (ROOT == vol->m_ObjType))
         {

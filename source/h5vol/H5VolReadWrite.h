@@ -34,7 +34,8 @@ extern herr_t H5VL_adios2_beginstep(const char *engine_name,
 extern herr_t H5VL_adios2_endstep(const char *engine_nane);
 
 static herr_t H5VL_adios2_introspect_opt_query(void *obj, H5VL_subclass_t cls,
-                                               int opt_type, hbool_t *supported)
+                                               int opt_type,
+                                               uint64_t *supported)
 {
     *supported = 0;
     return 0;
@@ -52,10 +53,11 @@ static herr_t H5VL_adios2_datatype_close(void *dt, hid_t H5_ATTR_UNUSED dxpl_id,
 static const H5VL_class_t H5VL_adios2_def = {
     H5VL_ADIOS2_VERSION,
     (H5VL_class_value_t)H5VL_ADIOS2_VALUE,
-    H5VL_ADIOS2_NAME, /* name */
-    0,
-    H5VL_adios2_init, /* initialize */
-    H5VL_adios2_term, /* terminate */
+    H5VL_ADIOS2_NAME,   /* name */
+    0,                  /* Version # of connector */
+    H5VL_CAP_FLAG_NONE, /* Capability flags for connector */
+    H5VL_adios2_init,   /* initialize */
+    H5VL_adios2_term,   /* terminate */
     {
         /* info_cls */
         (size_t)0, /* info size    */
@@ -118,6 +120,7 @@ static const H5VL_class_t H5VL_adios2_def = {
     {
         /* introspect_cls */
         NULL, // H5VL_pass_through_introspect_get_conn_cls,  /* get_conn_cls */
+        NULL, /* get_cap_flags */
         H5VL_adios2_introspect_opt_query, /* opt_query */
     },
     {

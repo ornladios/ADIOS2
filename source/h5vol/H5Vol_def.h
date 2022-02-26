@@ -103,9 +103,8 @@ extern void *H5VL_adios2_file_open(const char *name, unsigned flags,
                                    hid_t fapl_id, hid_t dxpl_id, void **req);
 
 extern herr_t H5VL_adios2_file_specific(void *file,
-                                        H5VL_file_specific_t specific_type,
-                                        hid_t dxpl_id, void **req,
-                                        va_list arguments);
+                                        H5VL_file_specific_args_t *args,
+                                        hid_t dxpl_id, void **req);
 
 extern herr_t H5VL_adios2_file_close(void *file, hid_t dxpl_id, void **req);
 
@@ -130,17 +129,15 @@ extern herr_t H5VL_adios2_attr_write(void *attr, hid_t mem_type_id,
                                      const void *buf, hid_t dxpl_id,
                                      void **req);
 
-extern herr_t H5VL_adios2_attr_get(void *obj, H5VL_attr_get_t get_type,
-                                   hid_t dxpl_id, void **req,
-                                   va_list arguments);
+extern herr_t H5VL_adios2_attr_get(void *obj, H5VL_attr_get_args_t *args,
+                                   hid_t dxpl_id, void **req);
 
 extern herr_t H5VL_adios2_attr_close(void *attr, hid_t dxpl_id, void **req);
 
 extern herr_t H5VL_adios2_attr_specific(void *obj,
                                         const H5VL_loc_params_t *loc_params,
-                                        H5VL_attr_specific_t specific_type,
-                                        hid_t dxpl_id, void **req,
-                                        va_list arguments);
+                                        H5VL_attr_specific_args_t *args,
+                                        hid_t dxpl_id, void **req);
 
 //
 // object functions:
@@ -151,10 +148,11 @@ extern void *H5VL_adios2_object_open(void *obj,
                                      hid_t H5_ATTR_UNUSED dxpl_id,
                                      void H5_ATTR_UNUSED **req);
 
-extern herr_t
-H5VL_adios2_object_get(void *obj, const H5VL_loc_params_t *loc_params,
-                       H5VL_object_get_t get_type, hid_t H5_ATTR_UNUSED dxpl_id,
-                       void H5_ATTR_UNUSED **req, va_list arguments);
+extern herr_t H5VL_adios2_object_get(void *obj,
+                                     const H5VL_loc_params_t *loc_params,
+                                     H5VL_object_get_args_t *args,
+                                     hid_t H5_ATTR_UNUSED dxpl_id,
+                                     void H5_ATTR_UNUSED **req);
 
 // dataset functions:
 extern void *H5VL_adios2_dataset_create(void *obj,
@@ -173,9 +171,8 @@ extern herr_t H5VL_adios2_dataset_read(void *dset, hid_t mem_type_id,
                                        hid_t mem_space_id, hid_t file_space_id,
                                        hid_t plist_id, void *buf, void **req);
 
-extern herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_t get_type,
-                                      hid_t dxpl_id, void **req,
-                                      va_list arguments);
+extern herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_args_t *args,
+                                      hid_t dxpl_id, void **req);
 
 extern herr_t H5VL_adios2_dataset_write(void *dset, hid_t mem_type_id,
                                         hid_t mem_space_id, hid_t file_space_id,
@@ -189,15 +186,15 @@ extern herr_t H5VL_adios2_dataset_close(void *dset, hid_t dxpl_id, void **req);
 //
 extern herr_t H5VL_adios2_link_specific(void *obj,
                                         const H5VL_loc_params_t *loc_params,
-                                        H5VL_link_specific_t specific_type,
+                                        H5VL_link_specific_args_t *args,
                                         hid_t H5_ATTR_UNUSED dxpl_id,
-                                        void H5_ATTR_UNUSED **req,
-                                        va_list arguments);
+                                        void H5_ATTR_UNUSED **req);
 
-extern herr_t
-H5VL_adios2_link_get(void *obj, const H5VL_loc_params_t *loc_params,
-                     H5VL_link_get_t get_type, hid_t H5_ATTR_UNUSED dxpl_id,
-                     void H5_ATTR_UNUSED **req, va_list arguments);
+extern herr_t H5VL_adios2_link_get(void *obj,
+                                   const H5VL_loc_params_t *loc_params,
+                                   H5VL_link_get_args_t *args,
+                                   hid_t H5_ATTR_UNUSED dxpl_id,
+                                   void H5_ATTR_UNUSED **req);
 
 //
 // group functions:
@@ -215,10 +212,9 @@ extern void *H5VL_adios2_group_open(void *obj,
                                     const char *name, hid_t gapl_id,
                                     hid_t dxpl_id, void **req);
 
-extern herr_t H5VL_adios2_group_get(void *obj, H5VL_group_get_t get_type,
+extern herr_t H5VL_adios2_group_get(void *obj, H5VL_group_get_args_t *args,
                                     hid_t H5_ATTR_UNUSED dxpl_id,
-                                    void H5_ATTR_UNUSED **req,
-                                    va_list arguments);
+                                    void H5_ATTR_UNUSED **req);
 
 //
 // general definitions:
@@ -242,8 +238,8 @@ extern void gLoadAttrDef(H5VL_AttrDef_t *attrDef);
 extern void gLoadContent(H5VL_ObjDef_t *obj);
 extern void gLoadSubGroups(H5VL_ObjDef_t *obj);
 
-extern ssize_t gGetNameOfNthAttr(H5VL_ObjDef_t *obj, uint32_t idx, char *name);
-extern ssize_t gGetNameOfNthItem(H5VL_ObjDef_t *obj, uint32_t idx, char *name);
+extern size_t gGetNameOfNthAttr(H5VL_ObjDef_t *obj, uint32_t idx, char *name);
+extern size_t gGetNameOfNthItem(H5VL_ObjDef_t *obj, uint32_t idx, char *name);
 
 extern H5VL_ObjDef_t *gGetVarObjDef(const char *fullPath, H5VL_ObjDef_t *vol);
 extern H5VL_VarDef_t *gCreateVarDef(const char *name, adios2_engine *engine,

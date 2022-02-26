@@ -3,6 +3,12 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+if(CMAKE_C_COMPILER_ID MATCHES "^(GNU)$")
+  # Silence a noisy warning in our log functions as the behavior is
+  # intentional
+  string(APPEND CMAKE_C_FLAGS " -Wno-format-zero-length")
+endif()
+
 add_library(adios2_h5vol
   H5VolReadWrite.c
   H5Vol.c
@@ -18,18 +24,14 @@ target_include_directories(adios2_h5vol PRIVATE ${HDF5_C_INCLUDE_DIRS})
 target_link_libraries(adios2_h5vol PRIVATE
   ${HDF5_C_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}
 )
-if(NOT HDF5_IS_PARALLEL)
-  target_link_libraries(adios2_h5vol PRIVATE adios2::c)
-elseif(HDF5_IS_PARALLEL AND ADIOS2_HAVE_MPI)
+
+if(ADIOS2_USE_MPI)
   target_link_libraries(adios2_h5vol PRIVATE adios2::c_mpi MPI::MPI_C)
-else() # HDF5_IS_PARALLEL AND NOT ADIOS2_HAVE_MPI
-  message(FATAL_ERROR "Invalid configuration: HDF5_IS_PARALLEL AND NOT ADIOS2_HAVE_MPI")
+else()
+  target_link_libraries(adios2_h5vol PRIVATE adios2::c)
 endif()
 
-install(FILES H5Vol_def.h H5VolError.h H5Vol.h H5VolReadWrite.h H5VolUtil.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/h5vol
-  COMPONENT adios2_h5vol
-)
+# VOL install should only contain the .so and no headers
 install(TARGETS adios2_h5vol
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}

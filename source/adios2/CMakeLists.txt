@@ -288,14 +288,18 @@ if(ADIOS2_HAVE_HDF5)
   set(adios2_hdf5_objs adios2_hdf5)
   if(HDF5_IS_PARALLEL)
     list(APPEND adios2_hdf5_objs adios2_hdf5_mpi)
-    set_property(SOURCE core/IOMPI.cpp APPEND PROPERTY COMPILE_DEFINITIONS ADIOS2_HAVE_HDF5_PARALLEL)
+    set_property(SOURCE core/IOMPI.cpp APPEND PROPERTY
+      COMPILE_DEFINITIONS ADIOS2_HAVE_HDF5_PARALLEL
+      )
     add_library(adios2_hdf5_mpi OBJECT
       toolkit/interop/hdf5/HDF5CommonMPI.cpp
       )
     target_compile_definitions(adios2_hdf5_mpi PRIVATE ADIOS2_USE_MPI)
     target_link_libraries(adios2_core_mpi PRIVATE adios2_hdf5_mpi)
     set_property(TARGET adios2_hdf5_mpi PROPERTY EXPORT_NAME hdf5_mpi)
-    set_property(TARGET adios2_hdf5_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_hdf5_mpi)
+    set_property(TARGET adios2_hdf5_mpi PROPERTY
+      OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_hdf5_mpi
+      )
   endif()
 
   foreach(lib IN LISTS adios2_hdf5_objs)

@@ -100,18 +100,18 @@ herr_t H5VL_adios2_dataset_read(void *dset, hid_t mem_type_id,
     return gADIOS2ReadVar(var);
 }
 
-herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_t get_type,
-                               hid_t dxpl_id, void **req, va_list arguments)
+herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_args_t *args,
+                               hid_t dxpl_id, void **req)
 {
     REQUIRE_NOT_NULL_ERR(dset, -1);
     H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)dset;
     H5VL_VarDef_t *varDef = (H5VL_VarDef_t *)(vol->m_ObjPtr);
 
-    switch (get_type)
+    switch (args->op_type)
     {
     case H5VL_DATASET_GET_SPACE:
     {
-        hid_t *ret_id = va_arg(arguments, hid_t *);
+        hid_t *ret_id = (hid_t *)args->args.get_space.space_id;
         *ret_id = H5Scopy(varDef->m_ShapeID);
         REQUIRE_SUCC_MSG((*ret_id >= 0), -1,
                          "H5VOL-ADIOS2: Unable to get space id.");
@@ -119,7 +119,7 @@ herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_t get_type,
     }
     case H5VL_DATASET_GET_TYPE:
     {
-        hid_t *ret_id = va_arg(arguments, hid_t *);
+        hid_t *ret_id = (hid_t *)args->args.get_type.type_id;
         *ret_id = H5Tcopy(varDef->m_TypeID);
         break;
     }
