@@ -23,7 +23,7 @@ namespace plugin
 struct EncryptionOperator::EncryptImpl
 {
     std::string KeyFilename;
-    unsigned char Key[crypto_secretbox_KEYBYTES];
+    unsigned char Key[crypto_secretbox_KEYBYTES] = {0};
     bool KeyValid = false;
 
     ~EncryptImpl()
@@ -90,6 +90,12 @@ EncryptionOperator::EncryptionOperator(const Params &parameters)
 
 EncryptionOperator::~EncryptionOperator() {}
 
+#if defined(__clang__)
+#if __has_feature(memory_sanitizer)
+// Memory Sanitizer has an issue with some libsodium calls.
+__attribute__((no_sanitize("memory")))
+#endif
+#endif
 size_t EncryptionOperator::Operate(const char *dataIn, const Dims &blockStart,
                                    const Dims &blockCount, const DataType type,
                                    char *bufferOut)
@@ -131,6 +137,12 @@ size_t EncryptionOperator::Operate(const char *dataIn, const Dims &blockStart,
     return offset;
 }
 
+#if defined(__clang__)
+#if __has_feature(memory_sanitizer)
+// Memory Sanitizer has an issue with some libsodium calls.
+__attribute__((no_sanitize("memory")))
+#endif
+#endif
 size_t EncryptionOperator::InverseOperate(const char *bufferIn,
                                           const size_t sizeIn, char *dataOut)
 {
