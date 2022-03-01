@@ -30,7 +30,14 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    api_full/api_full
    api_high/api_high
 
-
+.. toctree::
+   :caption: Advanced Topics
+   
+   advanced/aggregation
+   advanced/reduction
+   advanced/gpu_aware
+   advanced/plugins
+   
 .. toctree::
    :caption: Ecosystem Tools
 
