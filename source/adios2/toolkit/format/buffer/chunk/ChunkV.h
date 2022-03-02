@@ -41,7 +41,6 @@ public:
 
     virtual void *GetPtr(int bufferIdx, size_t posInBuffer);
 
-    void CopyExternalToInternal();
     void CopyDataToBuffer(const size_t size, const void *buf, size_t pos,
                           MemorySpace MemSpace);
 

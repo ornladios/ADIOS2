@@ -58,6 +58,8 @@ size_t ChunkV::ChunkAlloc(Chunk &v, const size_t size)
             v.Ptr = (char *)((p + m_MemAlign - 1) & ~(m_MemAlign - 1));
         }
         v.Size = actualsize;
+        /*std::cout << "    ChunkAlloc: buf = " << (void *)v.Ptr
+                  << " size = " << actualsize << std::endl;*/
         return actualsize;
     }
     else
@@ -67,53 +69,6 @@ size_t ChunkV::ChunkAlloc(Chunk &v, const size_t size)
                      "Continue buffering with chunk size "
                   << v.Size / 1048576 << " MB" << std::endl;
         return 0;
-    }
-}
-
-void ChunkV::CopyExternalToInternal()
-{
-    for (std::size_t i = 0; i < DataV.size(); ++i)
-    {
-        if (DataV[i].External)
-        {
-            size_t size = DataV[i].Size;
-            // we can possibly append this entry to the tail if the tail entry
-            // is internal
-            bool AppendPossible = DataV.size() && !DataV.back().External;
-
-            if (AppendPossible && (m_TailChunkPos + size > m_ChunkSize))
-            {
-                // No room in current chunk, close it out
-                // realloc down to used size (helpful?) and set size in array
-                ChunkAlloc(m_Chunks.back(), m_TailChunkPos);
-                m_TailChunkPos = 0;
-                m_TailChunk = nullptr;
-                AppendPossible = false;
-            }
-            if (AppendPossible)
-            {
-                // We can use current chunk, just append the data and modify the
-                // DataV entry
-                memcpy(m_TailChunk->Ptr + m_TailChunkPos, DataV[i].Base, size);
-                DataV[i].External = false;
-                DataV[i].Base = m_TailChunk + m_TailChunkPos;
-                m_TailChunkPos += size;
-            }
-            else
-            {
-                // We need a new chunk, get the larger of size or m_ChunkSize
-                size_t NewSize = m_ChunkSize;
-                if (size > m_ChunkSize)
-                    NewSize = size;
-                Chunk c{nullptr, nullptr, 0};
-                ChunkAlloc(c, NewSize);
-                m_Chunks.push_back(c);
-                m_TailChunk = &m_Chunks.back();
-                memcpy(m_TailChunk->Ptr, DataV[i].Base, size);
-                m_TailChunkPos = size;
-                DataV[i] = {false, m_TailChunk->Ptr, 0, size};
-            }
-        }
     }
 }
 
@@ -128,8 +83,11 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
         return CurOffset;
     }
 
+    /* std::cout << "  AddToVec: size = " << size << " copy = " << CopyReqd
+              << std::endl; */
     if (!CopyReqd && !m_AlwaysCopy)
     {
+        /*std::cout << "    add external = " << size << std::endl;*/
         // just add buf to internal version of output vector
         VecEntry entry = {true, buf, 0, size};
         DataV.push_back(entry);
@@ -147,6 +105,8 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
         {
             // No room in current chunk, close it out
             // realloc down to used size (helpful?) and set size in array
+            /*std::cout << "    downsize ptr = " << m_Chunks.back().Ptr
+                      << " to size = " << m_TailChunkPos << std::endl;*/
             size_t actualsize = ChunkAlloc(m_Chunks.back(), m_TailChunkPos);
             size_t alignment = actualsize - m_TailChunkPos;
             if (alignment)
@@ -163,6 +123,9 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
         if (AppendPossible)
         {
             // We can use current chunk, just append the data;
+            /*std::cout << "    append to current chunk ptr = "
+                      << m_TailChunk->Ptr << " at pos = " << m_TailChunkPos
+                      << " add size = " << size << std::endl; */
             CopyDataToBuffer(size, buf, m_TailChunkPos, MemSpace);
             DataV.back().Size += size;
             m_TailChunkPos += size;
@@ -170,6 +133,8 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
         else
         {
             // We need a new chunk, get the larger of size or m_ChunkSize
+            /*  std::cout << "    get a new chunk size = " << m_ChunkSize
+                      << std::endl; */
             size_t NewSize = m_ChunkSize;
             if (size > m_ChunkSize)
                 NewSize = size;
@@ -202,6 +167,8 @@ void ChunkV::CopyDataToBuffer(const size_t size, const void *buf, size_t pos,
 
 BufferV::BufferPos ChunkV::Allocate(const size_t size, size_t align)
 {
+    /*std::cout << "  Allocate: size = " << size << " align = " << align
+              << std::endl;*/
     if (size == 0)
     {
         return BufferPos(-1, 0, CurOffset);

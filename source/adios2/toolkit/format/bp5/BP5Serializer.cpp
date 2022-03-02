@@ -548,10 +548,8 @@ size_t BP5Serializer::CalcSize(const size_t Count, const size_t *Vals)
 
 void BP5Serializer::PerformPuts(bool forceCopyDeferred)
 {
-    //  Dump data for externs into iovec
-    DumpDeferredBlocks(forceCopyDeferred);
-
-    CurDataBuffer->CopyExternalToInternal();
+    // Copy all data for externs into iovec
+    DumpDeferredBlocks(true);
 }
 
 void BP5Serializer::DumpDeferredBlocks(bool forceCopyDeferred)

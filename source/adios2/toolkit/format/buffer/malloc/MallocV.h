@@ -45,8 +45,6 @@ public:
 
     virtual void *GetPtr(int bufferIdx, size_t posInBuffer);
 
-    void CopyExternalToInternal();
-
 private:
     char *m_InternalBlock = NULL;
     size_t m_AllocatedSize = 0;
