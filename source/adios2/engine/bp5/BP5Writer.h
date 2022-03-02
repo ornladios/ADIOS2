@@ -196,8 +196,6 @@ private:
     bool m_IAmDraining = false;
     bool m_IAmWritingData = false;
     helper::Comm *DataWritingComm; // processes that write the same data file
-    bool m_IAmWritingDataHeader = false;
-
     adios2::profiling::JSONProfiler m_Profiler;
 
 private:
@@ -226,9 +224,6 @@ private:
     std::vector<uint64_t> m_WriterDataPos;
 
     bool m_MarshalAttributesNecessary = true;
-
-    // where each writer rank writes its data, init in InitBPBuffer;
-    std::vector<uint64_t> m_Assignment;
 
     std::vector<std::vector<size_t>> FlushPosSizeInfo;
 

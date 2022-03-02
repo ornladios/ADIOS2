@@ -319,10 +319,21 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
 {
     m_FileMetadataManager.FlushFiles();
 
-    std::vector<uint64_t> buf(
-        4 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size() + 3 +
-        m_Comm.Size());
-    buf.resize(4 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size());
+    if (MetaDataPos == 0)
+    {
+        //  First time, write the headers
+        format::BufferSTL bi;
+        MakeHeader(bi, "Index Table", true);
+        m_FileMetadataIndexManager.WriteFiles(bi.m_Buffer.data(),
+                                              bi.m_Position);
+    }
+
+    std::vector<uint64_t> buf;
+    buf.reserve(4 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size() + 3 +
+                m_Comm.Size());
+
+    buf.resize(buf.size() + 4 +
+               ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size());
     buf[0] = MetaDataPos;
     buf[1] = MetaDataSize;
     buf[2] = FlushPosSizeInfo.size();
@@ -519,22 +530,6 @@ void BP5Writer::EndStep()
         auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
             RecvBuffer, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks,
             DataSizes, m_WriterDataPos);
-        if (m_MetaDataPos == 0)
-        {
-            //  First time, write the headers
-            format::BufferSTL b;
-            MakeHeader(b, "Metadata", false);
-            m_FileMetadataManager.WriteFiles(b.m_Buffer.data(), b.m_Position);
-            m_MetaDataPos = b.m_Position;
-            format::BufferSTL bi;
-            MakeHeader(bi, "Index Table", true);
-            m_FileMetadataIndexManager.WriteFiles(bi.m_Buffer.data(),
-                                                  bi.m_Position);
-            // where each rank's data will end up
-            m_FileMetadataIndexManager.WriteFiles((char *)m_Assignment.data(),
-                                                  sizeof(m_Assignment[0]) *
-                                                      m_Assignment.size());
-        }
         WriteMetaMetadata(UniqueMetaMetaBlocks);
         m_LatestMetaDataPos = m_MetaDataPos;
         m_LatestMetaDataSize = WriteMetadata(Metadata, AttributeBlocks);
@@ -855,7 +850,6 @@ void BP5Writer::InitAggregator()
         m_AggregatorEveroneWrites.Init(m_Parameters.NumAggregators,
                                        m_Parameters.NumSubFiles, m_Comm);
         m_IAmDraining = m_AggregatorEveroneWrites.m_IsAggregator;
-        m_IAmWritingDataHeader = m_AggregatorEveroneWrites.m_IsAggregator;
         m_IAmWritingData = true;
         DataWritingComm = &m_AggregatorEveroneWrites.m_Comm;
         m_Aggregator = static_cast<aggregator::MPIAggregator *>(
@@ -878,7 +872,6 @@ void BP5Writer::InitAggregator()
 
         m_IAmDraining = m_AggregatorTwoLevelShm.m_IsMasterAggregator;
         m_IAmWritingData = m_AggregatorTwoLevelShm.m_IsAggregator;
-        m_IAmWritingDataHeader = m_AggregatorTwoLevelShm.m_IsMasterAggregator;
         DataWritingComm = &m_AggregatorTwoLevelShm.m_AggregatorChainComm;
         m_Aggregator =
             static_cast<aggregator::MPIAggregator *>(&m_AggregatorTwoLevelShm);
@@ -1274,16 +1267,8 @@ void BP5Writer::InitBPBuffer()
          */
         if (m_Comm.Rank() == 0)
         {
-            format::BufferSTL b;
-            MakeHeader(b, "Metadata", false);
-            m_FileMetadataManager.SeekToFileBegin();
-            m_FileMetadataManager.WriteFiles(b.m_Buffer.data(), b.m_Position);
-            m_MetaDataPos = b.m_Position;
-            format::BufferSTL bi;
-            MakeHeader(bi, "Index Table", true);
             m_FileMetadataIndexManager.SeekToFileBegin();
-            m_FileMetadataIndexManager.WriteFiles(bi.m_Buffer.data(),
-                                                  bi.m_Position);
+            m_FileMetadataManager.SeekToFileBegin();
             m_FileMetaMetadataManager.SeekToFileBegin();
         }
         // last attempt to clean up datafile if called with append mode,
