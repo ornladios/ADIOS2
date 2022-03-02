@@ -7,6 +7,7 @@ from adios2.bp5dbg import *
 
 WriterCount = -1
 
+
 def SetupArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -75,13 +76,13 @@ def DumpIndexTableFile(args):
         print("There is  no BP% Index Table file as " + args.idxFileName)
 
 
-def DumpMetadataFiles(args):
-    mdFileList = glob.glob(args.metadataFileName)
-    if len(mdFileList) > 0:
-        for fname in mdFileList:
-            DumpMetaData(fname)
-    else:
-        print("There are no BP% Metadata files in   " + args.metadataFileName)
+# def DumpMetadataFiles(args):
+#    mdFileList = glob.glob(args.metadataFileName)
+#    if len(mdFileList) > 0:
+#        for fname in mdFileList:
+#            DumpMetaData(fname)
+#    else:
+#        print("There are no BP% Metadata files in   " + args.metadataFileName)
 
 # def DumpDataFiles(args):
 #    dataFileList = glob.glob(args.dataFileName)
@@ -103,8 +104,8 @@ if __name__ == "__main__":
     if args.dumpIdx:
         DumpIndexTableFile(args)
 
-    if args.dumpMetadata:
-        DumpMetadataFiles(args)
+#    if args.dumpMetadata:
+#        DumpMetadataFiles(args)
 
 #    if args.dumpData:
 #        DumpDataFiles(args)
