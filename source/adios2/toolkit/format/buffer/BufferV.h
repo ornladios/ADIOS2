@@ -33,12 +33,6 @@ public:
 
     virtual std::vector<core::iovec> DataVec() noexcept = 0;
 
-    /*
-     *  This is used in PerformPuts() to copy externally referenced data so that
-     * it can be modified by the application
-     */
-    virtual void CopyExternalToInternal() = 0;
-
     /**
      * Reset the buffer to initial state (without freeing internal buffers)
      */
