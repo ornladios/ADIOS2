@@ -248,8 +248,8 @@ constexpr uint64_t DefaultMaxBufferSize = MaxSizeT - 1;
 constexpr float DefaultBufferGrowthFactor = 1.05f;
 
 /** default Buffer Chunk Size
- *  16Mb */
-constexpr uint64_t DefaultBufferChunkSize = 16 * 1024 * 1024;
+ *  128Mb */
+constexpr uint64_t DefaultBufferChunkSize = 128 * 1024 * 1024;
 
 /** default minimum size not copying deferred writes
  *  4Mb */
