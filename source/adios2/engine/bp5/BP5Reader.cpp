@@ -484,22 +484,6 @@ void BP5Reader::InitTransports()
     }
 }
 
-uint64_t BP5Reader::MetadataExpectedMinFileSize(const std::string &IdxFileName,
-                                                bool hasHeader)
-{
-    size_t cur_idxsize = m_MetadataIndex.m_Buffer.size();
-    static constexpr size_t m_MinIndexRecordSize = 3 * sizeof(uint64_t);
-    if ((hasHeader && cur_idxsize < m_IndexHeaderSize + m_MinIndexRecordSize) ||
-        cur_idxsize < m_MinIndexRecordSize)
-    {
-        // no (new) step entry in the index, so no metadata is expected
-        return 0;
-    }
-    uint64_t lastpos =
-        *(uint64_t *)&(m_MetadataIndex.m_Buffer[cur_idxsize - 24]);
-    return lastpos;
-}
-
 void BP5Reader::InstallMetaMetaData(format::BufferSTL buffer)
 {
     size_t Position = m_MetaMetaDataFileAlreadyProcessedSize;
@@ -871,13 +855,18 @@ bool BP5Reader::ReadActiveFlag(std::vector<char> &buffer)
 
 bool BP5Reader::CheckWriterActive()
 {
-    size_t flag = 0;
+    size_t flag = 1;
     if (m_Comm.Rank() == 0)
     {
-        std::vector<char> header(m_IndexHeaderSize, '\0');
-        m_MDIndexFileManager.ReadFile(header.data(), m_IndexHeaderSize, 0, 0);
-        bool active = ReadActiveFlag(header);
-        flag = (active ? 1 : 0);
+        auto fsize = m_MDIndexFileManager.GetFileSize(0);
+        if (fsize >= m_IndexHeaderSize)
+        {
+            std::vector<char> header(m_IndexHeaderSize, '\0');
+            m_MDIndexFileManager.ReadFile(header.data(), m_IndexHeaderSize, 0,
+                                          0);
+            bool active = ReadActiveFlag(header);
+            flag = (active ? 1 : 0);
+        }
     }
     flag = m_Comm.BroadcastValue(flag, 0);
     m_WriterIsActive = (flag > 0);
