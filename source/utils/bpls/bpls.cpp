@@ -2156,8 +2156,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
  */
 template <class T>
 int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
-                 size_t step, size_t blockid,
-                 typename core::Variable<T>::BPInfo &blockinfo)
+                 size_t step, size_t blockid, Dims Count, Dims Start)
 {
     int i, j;
     uint64_t start_t[MAX_DIMS],
@@ -2210,21 +2209,21 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
     for (j = 0; j < ndim; j++)
     {
         if (istart[j + tidx] < 0) // negative index means last-|index|
-            st = blockinfo.Count[j] + istart[j + tidx];
+            st = Count[j] + istart[j + tidx];
         else
             st = istart[j + tidx];
         if (icount[j + tidx] < 0) // negative index means last-|index|+1-start
-            ct = blockinfo.Count[j] + icount[j + tidx] + 1 - st;
+            ct = Count[j] + icount[j + tidx] + 1 - st;
         else
             ct = icount[j + tidx];
 
-        if (st > blockinfo.Count[j])
+        if (st > Count[j])
         {
             out_of_bound = 1;
         }
-        else if (ct > blockinfo.Count[j] - st)
+        else if (ct > Count[j] - st)
         {
-            ct = blockinfo.Count[j] - st;
+            ct = Count[j] - st;
         }
         if (verbose > 2)
             printf("    j=%d, st=%" PRIu64 " ct=%" PRIu64 "\n", j, st, ct);
@@ -2243,7 +2242,7 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
                nelems * elemsize);
     }
 
-    print_slice_info(variable, false, start_t, count_t, blockinfo.Count);
+    print_slice_info(variable, false, start_t, count_t, Count);
 
     if (out_of_bound)
         return 0;
@@ -2343,7 +2342,7 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
         {
             for (j = 0; j < ndim; j++)
             {
-                startv[j] += blockinfo.Start[j];
+                startv[j] += Start[j];
             }
         }
 
@@ -3262,9 +3261,43 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             for (size_t RelStep = 0; RelStep < variable->m_AvailableStepsCount;
                  RelStep++)
             {
-                minBlocksInfo =
-                    fp->MinBlocksInfo(*variable, 0 /* relative step 0 */);
-                auto coreBlocksInfo = minBlocksInfo->BlocksInfo;
+                minBlocksInfo = fp->MinBlocksInfo(*variable, RelStep);
+                auto blocks = minBlocksInfo->BlocksInfo;
+                fprintf(outf, "%c       step %*zu: ", commentchar,
+                        ndigits_nsteps, minBlocksInfo->Step);
+                if (blocks.size() == 1)
+                {
+                    fprintf(outf, " = ");
+                    print_data(blocks[0].BufferP, 0, adiosvartype, true);
+                    fprintf(outf, "\n");
+                }
+                else
+                {
+                    fprintf(outf, "%zu instances available\n", blocks.size());
+                }
+                if (dump)
+                {
+                    fprintf(outf, "               ");
+                    int col = 0;
+                    for (size_t j = 0; j < blocks.size(); j++)
+                    {
+                        print_data(blocks[j].BufferP, 0, adiosvartype, true);
+                        ++col;
+                        if (j < blocks.size() - 1)
+                        {
+                            if (col < ncols)
+                            {
+                                fprintf(outf, " ");
+                            }
+                            else
+                            {
+                                fprintf(outf, "\n               ");
+                                col = 0;
+                            }
+                        }
+                    }
+                    fprintf(outf, "\n");
+                }
             }
         }
         else
@@ -3355,14 +3388,10 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     fprintf(outf, "\n");
                     if (dump)
                     {
-                        static bool first = true;
-                        if (first)
-                        {
-                            printf("BP5 dump TBD\n");
-                            first = false;
-                        }
-                        //	readVarBlock(fp, io, variable, RelStep, j,
-                        // blocks[j]);
+                        readVarBlock(
+                            fp, io, variable, RelStep, j,
+                            Dims(blocks[j].Count, blocks[j].Count + ndim),
+                            Dims(blocks[j].Start, blocks[j].Start + ndim));
                     }
                 }
             }
@@ -3509,7 +3538,8 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                 fprintf(outf, "\n");
                 if (dump)
                 {
-                    readVarBlock(fp, io, variable, stepRelative, j, blocks[j]);
+                    readVarBlock(fp, io, variable, stepRelative, j,
+                                 blocks[j].Count, blocks[j].Start);
                 }
             }
             ++stepRelative;
@@ -3705,7 +3735,7 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
                 if (!minBlocks)
                 {
                     readVarBlock(fp, io, variable, stepRelative, j,
-                                 coreBlocks[j]);
+                                 coreBlocks[j].Count, coreBlocks[j].Start);
                 }
                 else
                 {
