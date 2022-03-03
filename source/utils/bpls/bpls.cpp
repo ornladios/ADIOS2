@@ -3147,11 +3147,59 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
     }
     else
     {
-        std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
-            allblocks = fp->AllStepsBlocksInfo(*variable);
-
         bool firstStep = true;
         bool firstBlock = true;
+
+        MinVarInfo *minBlocksInfo = nullptr;
+        minBlocksInfo = fp->MinBlocksInfo(*variable, 0 /* relative step 0 */);
+
+        // first step
+        if (minBlocksInfo)
+        {
+            dims.resize(minBlocksInfo->Dims);
+            delete minBlocksInfo;
+            size_t RelStep = 0;
+            for (RelStep = 0; RelStep < variable->m_AvailableStepsCount;
+                 RelStep++)
+            {
+                minBlocksInfo = fp->MinBlocksInfo(*variable, RelStep);
+
+                auto coreBlocksInfo = minBlocksInfo->BlocksInfo;
+                if (firstStep)
+                {
+                    nblocks = coreBlocksInfo.size();
+                }
+                else if (nblocks != coreBlocksInfo.size())
+                {
+                    nblocks = 0;
+                }
+                for (auto &coreBlockInfo : coreBlocksInfo)
+                {
+                    if (firstBlock)
+                    {
+                        for (size_t k = 0; k < dims.size(); k++)
+                        {
+                            dims[k] = coreBlockInfo.Count[k];
+                        }
+                    }
+                    else
+                    {
+                        for (size_t k = 0; k < dims.size(); k++)
+                        {
+                            if (dims[k] != coreBlockInfo.Count[k])
+                            {
+                                dims[k] = 0;
+                            }
+                        }
+                    }
+                    firstBlock = false;
+                }
+                firstStep = false;
+            }
+        }
+
+        std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
+            allblocks = fp->AllStepsBlocksInfo(*variable);
 
         for (auto &blockpair : allblocks)
         {
@@ -3188,11 +3236,140 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
     return std::make_pair(nblocks, dims);
 }
 
+static int ndigits_dims[32] = {
+    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+};
 template <class T>
 void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     /* Print block info */
     DataType adiosvartype = variable->m_Type;
+
+    MinVarInfo *minBlocksInfo = nullptr;
+    minBlocksInfo = fp->MinBlocksInfo(
+        *variable, variable->m_AvailableStepsCount - 1 /* relative step 0 */);
+
+    // first step
+    if (minBlocksInfo)
+    {
+        delete minBlocksInfo;
+        size_t laststep = minBlocksInfo->Step; // used relative last step above
+        int ndigits_nsteps = ndigits(laststep);
+        if (variable->m_ShapeID == ShapeID::GlobalValue ||
+            variable->m_ShapeID == ShapeID::LocalValue)
+        {
+            for (size_t RelStep = 0; RelStep < variable->m_AvailableStepsCount;
+                 RelStep++)
+            {
+                minBlocksInfo =
+                    fp->MinBlocksInfo(*variable, 0 /* relative step 0 */);
+                auto coreBlocksInfo = minBlocksInfo->BlocksInfo;
+            }
+        }
+        else
+        {
+            // arrays
+            for (size_t RelStep = 0; RelStep < variable->m_AvailableStepsCount;
+                 RelStep++)
+            {
+                minBlocksInfo = fp->MinBlocksInfo(*variable, RelStep);
+                auto blocks = minBlocksInfo->BlocksInfo;
+                size_t ndim = variable->m_Count.size();
+                int ndigits_nblocks;
+                for (size_t k = 0; k < ndim; k++)
+                {
+                    // get digit lengths for each dimension
+                    if (variable->m_ShapeID == ShapeID::GlobalArray)
+                    {
+                        ndigits_dims[k] = ndigits(variable->m_Shape[k] - 1);
+                    }
+                    else
+                    {
+                        ndigits_dims[k] = ndigits(variable->m_Count[k] - 1);
+                    }
+                }
+
+                size_t stepAbsolute = minBlocksInfo->Step;
+
+                fprintf(outf, "%c       step %*zu: ", commentchar,
+                        ndigits_nsteps, stepAbsolute);
+                fprintf(outf, "\n");
+                const size_t blocksSize = blocks.size();
+                ndigits_nblocks = ndigits(blocksSize - 1);
+
+                for (size_t j = 0; j < blocksSize; j++)
+                {
+                    fprintf(outf, "%c         block %*zu: [", commentchar,
+                            ndigits_nblocks, j);
+
+                    // just in case ndim for a block changes in LocalArrays:
+                    ndim = variable->m_Count.size();
+
+                    for (size_t k = 0; k < ndim; k++)
+                    {
+                        if (blocks[j].Count[k])
+                        {
+                            if (variable->m_ShapeID == ShapeID::GlobalArray)
+                            {
+                                fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
+                                        blocks[j].Start[k], ndigits_dims[k],
+                                        blocks[j].Start[k] +
+                                            blocks[j].Count[k] - 1);
+                            }
+                            else
+                            {
+                                // blockStart is empty vector for LocalArrays
+                                fprintf(outf, "0:%*zu", ndigits_dims[k],
+                                        blocks[j].Count[k] - 1);
+                            }
+                        }
+                        else
+                        {
+                            fprintf(outf, "%-*s", 2 * ndigits_dims[k] + 1,
+                                    "null");
+                        }
+                        if (k < ndim - 1)
+                            fprintf(outf, ", ");
+                    }
+                    fprintf(outf, "]");
+
+                    /* Print per-block statistics if available */
+                    if (longopt)
+                    {
+                        if (true /* TODO: variable->has_minmax */)
+                        {
+                            fprintf(outf, " = ");
+                            print_data(&blocks[j].MinMax.MinUnion, 0,
+                                       adiosvartype, false);
+
+                            fprintf(outf, " / ");
+                            print_data(&blocks[j].MinMax.MaxUnion, 0,
+                                       adiosvartype, false);
+                        }
+                        else
+                        {
+                            fprintf(outf, "N/A / N/A");
+                        }
+                    }
+                    fprintf(outf, "\n");
+                    if (dump)
+                    {
+                        static bool first = true;
+                        if (first)
+                        {
+                            printf("BP5 dump TBD\n");
+                            first = false;
+                        }
+                        //	readVarBlock(fp, io, variable, RelStep, j,
+                        // blocks[j]);
+                    }
+                }
+            }
+        }
+        return;
+    }
+
     std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
         allblocks = fp->AllStepsBlocksInfo(*variable);
     if (allblocks.empty())
@@ -3253,10 +3430,6 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         // arrays
         size_t ndim = variable->m_Count.size();
         int ndigits_nblocks;
-        int ndigits_dims[32] = {
-            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-            8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-        };
         for (size_t k = 0; k < ndim; k++)
         {
             // get digit lengths for each dimension
