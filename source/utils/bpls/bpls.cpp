@@ -3261,9 +3261,43 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             for (size_t RelStep = 0; RelStep < variable->m_AvailableStepsCount;
                  RelStep++)
             {
-                minBlocksInfo =
-                    fp->MinBlocksInfo(*variable, 0 /* relative step 0 */);
-                auto coreBlocksInfo = minBlocksInfo->BlocksInfo;
+                minBlocksInfo = fp->MinBlocksInfo(*variable, RelStep);
+                auto blocks = minBlocksInfo->BlocksInfo;
+                fprintf(outf, "%c       step %*zu: ", commentchar,
+                        ndigits_nsteps, minBlocksInfo->Step);
+                if (blocks.size() == 1)
+                {
+                    fprintf(outf, " = ");
+                    print_data(blocks[0].BufferP, 0, adiosvartype, true);
+                    fprintf(outf, "\n");
+                }
+                else
+                {
+                    fprintf(outf, "%zu instances available\n", blocks.size());
+                }
+                if (dump)
+                {
+                    fprintf(outf, "               ");
+                    int col = 0;
+                    for (size_t j = 0; j < blocks.size(); j++)
+                    {
+                        print_data(blocks[j].BufferP, 0, adiosvartype, true);
+                        ++col;
+                        if (j < blocks.size() - 1)
+                        {
+                            if (col < ncols)
+                            {
+                                fprintf(outf, " ");
+                            }
+                            else
+                            {
+                                fprintf(outf, "\n               ");
+                                col = 0;
+                            }
+                        }
+                    }
+                    fprintf(outf, "\n");
+                }
             }
         }
         else
