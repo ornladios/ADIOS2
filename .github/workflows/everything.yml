@@ -19,10 +19,26 @@ concurrency:
 jobs:
 
 #######################################
+# Git checks
+#######################################
+
+  git_checks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+    - name: Check for appropriately named topic branch
+      run: |
+        scripts/ci/gh-actions/check-branch-name.sh
+
+#######################################
 # Formatting jobs
 #######################################
 
   format:
+    needs: git_checks
+
     runs-on: ubuntu-latest
     container:
       image: ornladios/adios2:ci-formatting
@@ -42,7 +58,8 @@ jobs:
 #######################################
 
   linux:
-    needs: format
+    needs: [ format, git_checks ]
+
     runs-on: ubuntu-latest
     container:
       image: ornladios/adios2:ci-spack-el8-${{ matrix.compiler }}-${{ matrix.parallel }}
@@ -73,7 +90,8 @@ jobs:
       run: scripts/ci/gh-actions/run.sh test
 
   linux_emu:
-    needs: format
+    needs: [ format, git_checks ]
+
     runs-on: ubuntu-latest
     container:
       image: ${{ matrix.container }}
@@ -119,7 +137,8 @@ jobs:
 
 
   macos:
-    needs: format
+    needs: [ format, git_checks ]
+
     runs-on: ${{ matrix.image }}
     env:
       GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.parallel }}
@@ -163,7 +182,8 @@ jobs:
 #######################################
 
   docker:
-    needs: format
+    needs: [ format, git_checks ]
+
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -227,9 +247,9 @@ jobs:
   # run steps lets the steps be written as though they too were using a
   # standard container job.
   contract:
-    needs: docker
-    runs-on: ubuntu-latest
+    needs: [ format, git_checks, docker ]
 
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
