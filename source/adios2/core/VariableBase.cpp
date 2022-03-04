@@ -43,7 +43,7 @@ VariableBase::VariableBase(const std::string &name, const DataType type,
     InitShapeType();
 }
 
-bool VariableBase::IsCUDAPointer(void *ptr)
+bool VariableBase::IsCUDAPointer(const void *ptr)
 {
     if (m_MemorySpace == MemorySpace::CUDA)
         return true;

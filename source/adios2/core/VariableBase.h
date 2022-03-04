@@ -124,7 +124,7 @@ public:
      * Check if buffer is allocated on CUDA space
      * @param pointer to the user data
      */
-    bool IsCUDAPointer(void *ptr);
+    bool IsCUDAPointer(const void *ptr);
 
     /**
      * Set the memory space
