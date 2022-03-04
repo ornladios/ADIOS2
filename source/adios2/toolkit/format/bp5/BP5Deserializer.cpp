@@ -972,6 +972,9 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
         }
         return false;
     }
+    MemorySpace MemSpace = MemorySpace::Host;
+    if (variable.IsCUDAPointer(DestData))
+        MemSpace = MemorySpace::CUDA;
     if ((variable.m_SelectionType == adios2::SelectionType::BoundingBox) &&
         (variable.m_ShapeID == ShapeID::GlobalArray))
     {
@@ -982,7 +985,7 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
         Req.Count = variable.m_Count;
         Req.Start = variable.m_Start;
         Req.Step = Step;
-        Req.MemSpace = variable.m_MemorySpace;
+        Req.MemSpace = MemSpace;
         Req.Data = DestData;
         PendingRequests.push_back(Req);
     }
