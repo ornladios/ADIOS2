@@ -24,13 +24,25 @@ jobs:
 
   git_checks:
     runs-on: ubuntu-latest
+    outputs:
+      num_code_changes: ${{ steps.get_code_changes.outputs.num_code_changes }}
     steps:
     - uses: actions/checkout@v2
       with:
         ref: ${{ github.event.pull_request.head.sha }}
+        fetch-depth: 0
     - name: Check for appropriately named topic branch
       run: |
         scripts/ci/gh-actions/check-branch-name.sh
+    - name: Check for code changes
+      id: get_code_changes
+      run: |
+        scripts/ci/gh-actions/get-changed-files.sh
+        echo "::group::Test script output files"
+        ls -la *-changed-files.txt
+        NUM_CHANGES=$(wc -l < filtered-changed-files.txt)
+        echo "Number of files changed (filtered): ${NUM_CHANGES}"
+        echo "::set-output name=num_code_changes::${NUM_CHANGES}"
 
 #######################################
 # Formatting jobs
@@ -38,6 +50,7 @@ jobs:
 
   format:
     needs: git_checks
+    if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
     container:
@@ -59,6 +72,7 @@ jobs:
 
   linux:
     needs: [ format, git_checks ]
+    if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
     container:
@@ -91,6 +105,7 @@ jobs:
 
   linux_emu:
     needs: [ format, git_checks ]
+    if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
     container:
@@ -138,6 +153,7 @@ jobs:
 
   macos:
     needs: [ format, git_checks ]
+    if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ${{ matrix.image }}
     env:
@@ -183,6 +199,7 @@ jobs:
 
   docker:
     needs: [ format, git_checks ]
+    if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
     strategy:
@@ -248,6 +265,7 @@ jobs:
   # standard container job.
   contract:
     needs: [ format, git_checks, docker ]
+    if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
     strategy:
@@ -307,3 +325,13 @@ jobs:
       run: /opt/adios2/source/testing/contract/${{ matrix.code }}/install.sh
     - name: Test
       run: /opt/adios2/source/testing/contract/${{ matrix.code }}/test.sh
+
+#######################################
+# Workaround for skipping matrix jobs
+#######################################
+
+  build_and_test:
+    needs: [ linux, linux_emu, macos, docker, contract ]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "All required jobs complete"
