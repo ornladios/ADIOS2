@@ -1,4 +1,17 @@
-# Ideally this would be done in seperate workflows but placing them all # in one is currently necessary to enforce job dependencies
+#######################################
+# Ideally this would be done in seperate workflows but placing them all
+# in one is currently necessary to enforce job dependencies
+#######################################
+
+#######################################
+# Note the use of multiple checkout actions in most jobs.  This has been
+# implemented to allow the use of CI scripts at a different ref or sha than
+# the source code they're evaluating.  For push events (when a pull_request is
+# merged) ther is no difference.  However, for pull_request events this allows
+# us test code at the head of a pull_request using the CI scripts from the
+# prospectively merged pull_request, which will include any CI updates that
+# may have made it to the target branch after the pull_request was started.
+#######################################
 
 name: GitHub Actions
 
@@ -27,9 +40,8 @@ jobs:
     outputs:
       num_code_changes: ${{ steps.get_code_changes.outputs.num_code_changes }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
-        ref: ${{ github.event.pull_request.head.sha }}
         fetch-depth: 0
     - name: Check for appropriately named topic branch
       run: |
@@ -57,13 +69,19 @@ jobs:
       image: ornladios/adios2:ci-formatting
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        path: gha
+    - uses: actions/checkout@v3
       with:
         ref: ${{ github.event.pull_request.head.sha }}
+        path: source
     - name: CXX
-      run: scripts/ci/scripts/run-clang-format.sh
+      working-directory: source
+      run: ../gha/scripts/ci/scripts/run-clang-format.sh
     - name: Python
-      run: scripts/ci/scripts/run-flake8.sh
+      working-directory: source
+      run: ../gha/scripts/ci/scripts/run-flake8.sh
 
 
 #######################################
@@ -89,19 +107,23 @@ jobs:
         parallel: [ serial, mpi ]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        path: gha
+    - uses: actions/checkout@v3
       with:
         ref: ${{ github.event.pull_request.head.sha }}
+        path: source
     - name: Setup
-      run: scripts/ci/gh-actions/linux-setup.sh
+      run: gha/scripts/ci/gh-actions/linux-setup.sh
     - name: Update
-      run: scripts/ci/gh-actions/run.sh update
+      run: gha/scripts/ci/gh-actions/run.sh update
     - name: Configure
-      run: scripts/ci/gh-actions/run.sh configure
+      run: gha/scripts/ci/gh-actions/run.sh configure
     - name: Build
-      run: scripts/ci/gh-actions/run.sh build
+      run: gha/scripts/ci/gh-actions/run.sh build
     - name: Test
-      run: scripts/ci/gh-actions/run.sh test
+      run: gha/scripts/ci/gh-actions/run.sh test
 
   linux_emu:
     needs: [ format, git_checks ]
@@ -138,17 +160,21 @@ jobs:
       run: mount --bind /x86_64/bin/node /__e/node12/bin/node
     - uses: actions/checkout@v2
       with:
+        path: gha
+    - uses: actions/checkout@v2
+      with:
         ref: ${{ github.event.pull_request.head.sha }}
+        path: source
     - name: Setup
-      run: scripts/ci/gh-actions/linux-setup.sh
+      run: gha/scripts/ci/gh-actions/linux-setup.sh
     - name: Update
-      run: scripts/ci/gh-actions/run.sh update
+      run: gha/scripts/ci/gh-actions/run.sh update
     - name: Configure
-      run: scripts/ci/gh-actions/run.sh configure
+      run: gha/scripts/ci/gh-actions/run.sh configure
     - name: Build
-      run: scripts/ci/gh-actions/run.sh build
+      run: gha/scripts/ci/gh-actions/run.sh build
     - name: Test
-      run: scripts/ci/gh-actions/run.sh test
+      run: gha/scripts/ci/gh-actions/run.sh test
 
 
   macos:
@@ -179,19 +205,23 @@ jobs:
           xcode: "13.2.1"
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
+      with:
+        path: gha
+    - uses: actions/checkout@v3
       with:
         ref: ${{ github.event.pull_request.head.sha }}
+        path: source
     - name: Setup
-      run: scripts/ci/gh-actions/macos-setup.sh
+      run: gha/scripts/ci/gh-actions/macos-setup.sh
     - name: Update
-      run: scripts/ci/gh-actions/run.sh update
+      run: gha/scripts/ci/gh-actions/run.sh update
     - name: Configure
-      run: scripts/ci/gh-actions/run.sh configure
+      run: gha/scripts/ci/gh-actions/run.sh configure
     - name: Build
-      run: scripts/ci/gh-actions/run.sh build
+      run: gha/scripts/ci/gh-actions/run.sh build
     - name: Test
-      run: scripts/ci/gh-actions/run.sh test
+      run: gha/scripts/ci/gh-actions/run.sh test
 
 #######################################
 # Docker container jobs
@@ -209,7 +239,7 @@ jobs:
           ubuntu-bionic ]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         path: ci-source
@@ -295,7 +325,7 @@ jobs:
         shell: bash -c "docker exec adios2-ci bash --login -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         repository: ${{ matrix.repo }}
         ref: ${{ matrix.ref }}
