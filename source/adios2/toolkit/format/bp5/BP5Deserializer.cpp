@@ -1286,17 +1286,6 @@ int BP5Deserializer::FindOffset(size_t Dims, const size_t *Size,
     return Offset;
 }
 
-static int FindOffsetCM(size_t Dims, const size_t *Size, const size_t *Index)
-{
-    size_t Offset = 0;
-    for (int i = static_cast<int>(Dims - 1); i >= 0; i--)
-    {
-        Offset = Index[i] + (Size[i] * Offset);
-    }
-
-    return std::min(static_cast<size_t>(INT_MAX), Offset);
-}
-
 #define MAX(x, y) (((x) > (y)) ? (x) : (y))
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
