@@ -661,6 +661,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
     }
     else
     {
+	MemorySpace MemSpace = MemorySpace::Host;
+	if (VB->IsCUDAPointer(Data)) MemSpace = MemorySpace::CUDA;
         MetaArrayRec *MetaEntry =
             (MetaArrayRec *)((char *)(MetadataBuf) + Rec->MetaOffset);
         size_t ElemCount = CalcSize(DimCount, Count);
@@ -679,7 +681,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         if ((m_StatsLevel > 0) && !Span)
         {
             GetMinMax(Data, ElemCount, (DataType)Rec->Type, MinMax,
-                      VB->m_MemorySpace);
+                      MemSpace);
         }
 
         if (Rec->OperatorType)
@@ -711,7 +713,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                 DataOffset =
                     m_PriorDataBufferSizeTotal +
                     CurDataBuffer->AddToVec(ElemCount * ElemSize, Data,
-                                            ElemSize, Sync, VB->m_MemorySpace);
+                                            ElemSize, Sync, MemSpace);
             }
         }
         else
