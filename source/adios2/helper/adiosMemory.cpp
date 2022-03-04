@@ -257,7 +257,7 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
            const bool outIsLittleEndian, const int typeSize,
            const Dims &inMemStart, const Dims &inMemCount,
            const Dims &outMemStart, const Dims &outMemCount,
-           const bool safeMode)
+           const bool safeMode, MemorySpace MemSpace)
 
 {
 
@@ -448,6 +448,14 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         // algorithm used.
         if (inIsLittleEndian == outIsLittleEndian)
         {
+#ifdef ADIOS2_HAVE_CUDA
+            if (MemSpace == MemorySpace::CUDA)
+            {
+                helper::CudaMemCopyFromBuffer(outOvlpBase, 0, inOvlpBase,
+                                              blockSize);
+                return 0;
+            }
+#endif
             // most efficient algm
             // warning: number of function stacks used is number of dimensions
             // of data.
@@ -470,6 +478,14 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         // different endianess mode
         else
         {
+#ifdef ADIOS2_HAVE_CUDA
+            if (MemSpace == MemorySpace::CUDA)
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Helper", "Memory", "CopyContiguousMemory",
+                    "Direct byte order reversal not supported for GPU buffers");
+            }
+#endif
             if (!safeMode)
             {
                 NdCopyRecurDFSeqPaddingRevEndian(
@@ -591,6 +607,14 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         // Same Endian"
         if (inIsLittleEndian == outIsLittleEndian)
         {
+#ifdef ADIOS2_HAVE_CUDA
+            if (MemSpace == MemorySpace::CUDA)
+            {
+                helper::CudaMemCopyFromBuffer(outOvlpBase, 0, inOvlpBase,
+                                              blockSize);
+                return 0;
+            }
+#endif
             if (!safeMode)
             {
                 NdCopyRecurDFNonSeqDynamic(0, inOvlpBase, outOvlpBase,
@@ -608,6 +632,14 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         // different Endian"
         else
         {
+#ifdef ADIOS2_HAVE_CUDA
+            if (MemSpace == MemorySpace::CUDA)
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Helper", "Memory", "CopyContiguousMemory",
+                    "Direct byte order reversal not supported for GPU buffers");
+            }
+#endif
             if (!safeMode)
             {
                 NdCopyRecurDFNonSeqDynamicRevEndian(

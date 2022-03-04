@@ -1248,7 +1248,8 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Requests)
 
                     helper::NdCopy(IncomingData, inStart, inCount, true, true,
                                    (char *)Req.Data, outStart, outCount, true,
-                                   true, ElementSize);
+                                   true, ElementSize, Dims(), Dims(), Dims(),
+                                   Dims(), false, Req.MemSpace);
                 }
             }
         }
