@@ -306,7 +306,7 @@ The ``data`` fed to the ``Put`` function is assumed to be allocated on the Host 
 .. note::
 
    Only CUDA allocated buffers are supported for device data.
-   Only the BP4 engine is capable of receiving device allocated buffers.
+   Only the BP4 and BP5 engines are capable of receiving device allocated buffers.
 
 
 PerformsPuts
