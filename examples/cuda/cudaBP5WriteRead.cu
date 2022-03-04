@@ -72,16 +72,14 @@ int BPRead(const std::string fname, const size_t N, int nSteps)
     for (; bpReader.BeginStep() == adios2::StepStatus::OK; ++step)
     {
         auto data = io.InquireVariable<float>("data");
-        // Create the local buffer and initialize the access point in the ADIOS
-        // file
-        std::vector<float> simData(N); // set size to N
+        std::vector<float> simData(N);
         const adios2::Dims start{0};
         const adios2::Dims count{N};
         const adios2::Box<adios2::Dims> sel(start, count);
         data.SetSelection(sel);
 
         data.SetMemorySpace(adios2::MemorySpace::CUDA);
-        bpReader.Get(data, gpuSimData, adios2::Mode::Deferred);
+        bpReader.Get(data, gpuSimData); //, adios2::Mode::Deferred);
         bpReader.EndStep();
         cudaMemcpy(simData.data(), gpuSimData, N * sizeof(float),
                    cudaMemcpyDeviceToHost);
@@ -94,7 +92,7 @@ int BPRead(const std::string fname, const size_t N, int nSteps)
 
 int main(int argc, char **argv)
 {
-    const std::string fname("GPUWriteRead.bp");
+    const std::string fname("CudaBp5wr.bp");
     const int device_id = 1;
     cudaSetDevice(device_id);
     const size_t N = 6000;
