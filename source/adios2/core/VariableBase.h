@@ -50,7 +50,11 @@ public:
     /** Variable -> sizeof(T),
      *  VariableCompound -> from constructor sizeof(struct) */
     const size_t m_ElementSize;
+#ifdef ADIOS2_HAVE_CUDA
+    MemorySpace m_MemorySpace = MemorySpace::Detect;
+#else
     MemorySpace m_MemorySpace = MemorySpace::Host;
+#endif
 
     ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
     size_t m_BlockID = 0; ///< current block ID for local variables, global = 0
