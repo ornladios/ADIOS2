@@ -167,9 +167,13 @@ if(ADIOS2_HAVE_MPI)
         core/IOMPI.cpp
         helper/adiosCommMPI.h helper/adiosCommMPI.cpp
         helper/adiosMpiHandshake.h helper/adiosMpiHandshake.cpp
-        engine/ssc/SscReader.cpp engine/ssc/SscReader.tcc
-        engine/ssc/SscWriter.cpp engine/ssc/SscWriter.tcc
         engine/ssc/SscHelper.cpp
+        engine/ssc/SscWriter.cpp
+        engine/ssc/SscWriterBase.cpp
+        engine/ssc/SscWriterGeneric.cpp
+        engine/ssc/SscReader.cpp
+        engine/ssc/SscReaderBase.cpp
+        engine/ssc/SscReaderGeneric.cpp
         )
     set_property(TARGET adios2_core_mpi PROPERTY EXPORT_NAME core_mpi)
     set_property(TARGET adios2_core_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_mpi)

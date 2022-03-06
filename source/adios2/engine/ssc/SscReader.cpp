@@ -30,6 +30,7 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
     helper::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs",
                          m_OpenTimeoutSecs);
+    helper::GetParameter(m_IO.m_Parameters, "EngineMode", m_EngineMode);
 
     helper::Log("Engine", "SSCReader", "Open", m_Name, 0, m_Comm.Rank(), 5,
                 m_Verbosity, helper::LogMode::INFO);
