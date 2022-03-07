@@ -11,6 +11,7 @@
 #ifndef ADIOS2_ENGINE_SSCREADERBASE_H_
 #define ADIOS2_ENGINE_SSCREADERBASE_H_
 
+#include "SscHelper.h"
 #include "adios2/core/IO.h"
 #include <mpi.h>
 
@@ -31,15 +32,44 @@ public:
                   MPI_Comm comm);
     virtual ~SscReaderBase();
 
-    virtual StepStatus BeginStep(StepMode mode, const float timeoutSeconds) = 0;
+    virtual StepStatus BeginStep(const StepMode mode,
+                                 const float timeoutSeconds,
+                                 const bool readerLocked) = 0;
     virtual size_t CurrentStep() = 0;
     virtual void PerformGets() = 0;
-    virtual void EndStep() = 0;
+    virtual void EndStep(const bool readerLocked) = 0;
     virtual void Close(const int transportIndex) = 0;
 
-#define declare_type(T) virtual void GetDeferred(Variable<T> &, const T *) = 0;
+#define declare_type(T)                                                        \
+    virtual void GetDeferred(Variable<T> &, T *) = 0;                          \
+    virtual std::vector<typename Variable<T>::BPInfo> BlocksInfo(              \
+        const Variable<T> &variable, const size_t step) const = 0;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+protected:
+    void SyncMpiPattern(MPI_Comm comm);
+
+    MPI_Group m_WriterGroup;
+    MPI_Comm m_StreamComm;
+    MPI_Comm m_ReaderComm;
+
+    int m_StreamRank;
+    int m_StreamSize;
+    int m_ReaderRank;
+    int m_ReaderSize;
+    int m_WriterMasterStreamRank;
+    int m_ReaderMasterStreamRank;
+
+    ssc::Buffer m_Buffer;
+
+    int64_t m_CurrentStep = -1;
+    std::string m_Name;
+    int m_Verbosity = 0;
+    int m_OpenTimeoutSecs = 10;
+    bool m_Threading = false;
+
+    IO &m_IO;
 };
 
 }

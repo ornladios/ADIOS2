@@ -8,7 +8,7 @@
  *      Author: Jason Wang
  */
 
-#include "SscWriterBase.tcc"
+#include "SscWriterBase.h"
 #include "adios2/helper/adiosMpiHandshake.h"
 #include "adios2/helper/adiosString.h"
 
