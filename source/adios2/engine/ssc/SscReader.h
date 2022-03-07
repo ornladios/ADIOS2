@@ -12,6 +12,7 @@
 #define ADIOS2_ENGINE_SSCREADER_H_
 
 #include "SscHelper.h"
+#include "SscReaderBase.h"
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosMpiHandshake.h"
 #include <mpi.h>
@@ -95,10 +96,12 @@ private:
     void CalculatePosition(ssc::BlockVecVec &mapVec,
                            ssc::RankPosMap &allOverlapRanks);
 
-    int m_Verbosity = 0;
     int m_OpenTimeoutSecs = 10;
     bool m_Threading = false;
+
+    int m_Verbosity = 0;
     std::string m_EngineMode = "generic";
+    std::shared_ptr<ssc::SscReaderBase> m_EngineInstance;
 };
 
 } // end namespace engine

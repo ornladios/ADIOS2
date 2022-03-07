@@ -9,6 +9,7 @@
  */
 
 #include "SscReader.tcc"
+#include "SscReaderGeneric.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosMpiHandshake.h"
@@ -27,15 +28,23 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
-    helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
-    helper::GetParameter(m_IO.m_Parameters, "OpenTimeoutSecs",
-                         m_OpenTimeoutSecs);
     helper::GetParameter(m_IO.m_Parameters, "EngineMode", m_EngineMode);
 
     helper::Log("Engine", "SSCReader", "Open", m_Name, 0, m_Comm.Rank(), 5,
                 m_Verbosity, helper::LogMode::INFO);
 
+    if (m_EngineMode == "generic")
+    {
+        m_EngineInstance = std::make_shared<ssc::SscReaderGeneric>(
+            io, name, mode, CommAsMPI(m_Comm));
+    }
+    else if (m_EngineMode == "naive")
+    {
+    }
+
+    /*
     SyncMpiPattern();
+    */
 }
 
 SscReader::~SscReader() { PERFSTUBS_SCOPED_TIMER_FUNC(); }
@@ -70,11 +79,15 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
-    ++m_CurrentStep;
-
     helper::Log("Engine", "SSCReader", "BeginStep",
                 std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
                 helper::LogMode::INFO);
+
+    return m_EngineInstance->BeginStep(stepMode, timeoutSeconds,
+                                       m_ReaderSelectionsLocked);
+
+    /*
+    ++m_CurrentStep;
 
     m_StepBegun = true;
 
@@ -163,6 +176,7 @@ StepStatus SscReader::BeginStep(const StepMode stepMode,
     }
 
     return StepStatus::OK;
+    */
 }
 
 void SscReader::PerformGets()
@@ -171,6 +185,9 @@ void SscReader::PerformGets()
     helper::Log("Engine", "SSCReader", "PerformGets", "", 0, m_Comm.Rank(), 5,
                 m_Verbosity, helper::LogMode::INFO);
 
+    m_EngineInstance->PerformGets();
+
+    /*
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
         m_ReaderSelectionsLocked == false)
     {
@@ -261,9 +278,16 @@ void SscReader::PerformGets()
             br.performed = true;
         }
     }
+*/
 }
 
-size_t SscReader::CurrentStep() const { return m_CurrentStep; }
+size_t SscReader::CurrentStep() const
+{
+    return m_EngineInstance->CurrentStep();
+    /*
+    return m_CurrentStep;
+    */
+}
 
 void SscReader::EndStepFixed()
 {
@@ -300,6 +324,9 @@ void SscReader::EndStep()
     helper::Log("Engine", "SSCReader", "EndStep", std::to_string(CurrentStep()),
                 0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
 
+    return m_EngineInstance->EndStep(m_ReaderSelectionsLocked);
+
+    /*
     PerformGets();
 
     if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
@@ -336,6 +363,7 @@ void SscReader::EndStep()
     }
 
     m_StepBegun = false;
+    */
 }
 
 void SscReader::SyncMpiPattern()
@@ -477,19 +505,19 @@ void SscReader::CalculatePosition(ssc::BlockVecVec &bvv,
     {                                                                          \
         helper::Log("Engine", "SSCReader", "GetSync", variable.m_Name, 0,      \
                     m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
-        GetDeferredCommon(variable, data);                                     \
-        PerformGets();                                                         \
+        m_EngineInstance->GetDeferred(variable, data);                         \
+        m_EngineInstance->PerformGets();                                       \
     }                                                                          \
     void SscReader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
         helper::Log("Engine", "SSCReader", "GetDeferred", variable.m_Name, 0,  \
                     m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
-        GetDeferredCommon(variable, data);                                     \
+        m_EngineInstance->GetDeferred(variable, data);                         \
     }                                                                          \
     std::vector<typename Variable<T>::BPInfo> SscReader::DoBlocksInfo(         \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
-        return BlocksInfoCommon(variable, step);                               \
+        return m_EngineInstance->BlocksInfo(variable, step);                   \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -501,10 +529,13 @@ void SscReader::DoClose(const int transportIndex)
     helper::Log("Engine", "SSCReader", "Close", m_Name, 0, m_Comm.Rank(), 5,
                 m_Verbosity, helper::LogMode::INFO);
 
+    m_EngineInstance->Close(transportIndex);
+    /*
     if (!m_StepBegun)
     {
         BeginStep();
     }
+    */
 }
 
 } // end namespace engine

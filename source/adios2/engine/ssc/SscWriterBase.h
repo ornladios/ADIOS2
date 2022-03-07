@@ -58,8 +58,6 @@ protected:
     int m_WriterMasterStreamRank;
     int m_ReaderMasterStreamRank;
 
-    bool m_WriterDefinitionsLocked = false;
-    bool m_ReaderSelectionsLocked = false;
     ssc::Buffer m_Buffer;
 
     int64_t m_CurrentStep = -1;

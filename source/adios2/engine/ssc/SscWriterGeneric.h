@@ -51,6 +51,9 @@ private:
     std::vector<MPI_Request> m_MpiRequests;
     ssc::RankPosMap m_AllSendingReaderRanks;
 
+    bool m_WriterDefinitionsLocked = false;
+    bool m_ReaderSelectionsLocked = false;
+
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
     void SyncWritePattern(bool finalStep = false);
