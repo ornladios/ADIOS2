@@ -9,11 +9,6 @@
  */
 
 #include "SscHelper.h"
-#include "adios2/common/ADIOSMacros.h"
-#include "adios2/helper/adiosFunctions.h"
-#include "adios2/helper/adiosType.h"
-#include <iostream>
-#include <numeric>
 
 namespace adios2
 {

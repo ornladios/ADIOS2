@@ -11,11 +11,8 @@
 #ifndef ADIOS2_ENGINE_SSCWRITER_H_
 #define ADIOS2_ENGINE_SSCWRITER_H_
 
-#include "SscHelper.h"
 #include "SscWriterBase.h"
 #include "adios2/core/Engine.h"
-#include "adios2/helper/adiosMpiHandshake.h"
-#include <mpi.h>
 
 namespace adios2
 {

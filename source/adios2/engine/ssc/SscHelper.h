@@ -11,12 +11,8 @@
 #ifndef ADIOS2_ENGINE_SSCHELPER_H_
 #define ADIOS2_ENGINE_SSCHELPER_H_
 
-#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
-#include "adios2/helper/adiosLog.h"
 #include <mpi.h>
-#include <unordered_map>
-#include <vector>
 
 namespace adios2
 {
