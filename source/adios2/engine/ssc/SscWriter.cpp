@@ -73,8 +73,6 @@ void SscWriter::EndStep()
     m_EngineInstance->EndStep(m_WriterDefinitionsLocked);
 }
 
-void SscWriter::Flush(const int transportIndex) {}
-
 void SscWriter::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
@@ -103,6 +101,8 @@ void SscWriter::DoClose(const int transportIndex)
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+void SscWriter::Flush(const int transportIndex) {}
 
 } // end namespace engine
 } // end namespace core
