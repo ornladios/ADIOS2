@@ -2,19 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * SscReader.tcc
+ * SscReaderGeneric.tcc
  *
- *  Created on: Nov 1, 2018
+ *  Created on: Mar 3, 2022
  *      Author: Jason Wang
  */
 
-#ifndef ADIOS2_ENGINE_SSCREADER_TCC_
-#define ADIOS2_ENGINE_SSCREADER_TCC_
-
-#include "SscReader.h"
-#include "adios2/helper/adiosFunctions.h"
-#include <adios2-perfstubs-interface.h>
-#include <iostream>
+#include "SscReaderGeneric.h"
+#include "adios2/helper/adiosMemory.h"
 
 namespace adios2
 {
@@ -22,11 +17,12 @@ namespace core
 {
 namespace engine
 {
+namespace ssc
+{
 
 template <class T>
-void SscReader::GetDeferredDeltaCommon(Variable<T> &variable, T *data)
+void SscReaderGeneric::GetDeferredDeltaCommon(Variable<T> &variable, T *data)
 {
-    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     Dims vStart = variable.m_Start;
     Dims vCount = variable.m_Count;
@@ -64,10 +60,9 @@ void SscReader::GetDeferredDeltaCommon(Variable<T> &variable, T *data)
 }
 
 template <>
-void SscReader::GetDeferredCommon(Variable<std::string> &variable,
-                                  std::string *data)
+void SscReaderGeneric::GetDeferredCommon(Variable<std::string> &variable,
+                                         std::string *data)
 {
-    PERFSTUBS_SCOPED_TIMER_FUNC();
     variable.SetData(data);
 
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
@@ -92,9 +87,8 @@ void SscReader::GetDeferredCommon(Variable<std::string> &variable,
 }
 
 template <class T>
-void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
+void SscReaderGeneric::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    PERFSTUBS_SCOPED_TIMER_FUNC();
     variable.SetData(data);
 
     Dims vStart = variable.m_Start;
@@ -153,7 +147,7 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
                     else
                     {
                         helper::Log("Engine", "SSCReader", "GetDeferredCommon",
-                                    "unknown ShapeID", 0, m_Comm.Rank(), 0,
+                                    "unknown ShapeID", 0, m_ReaderRank, 0,
                                     m_Verbosity, helper::LogMode::ERROR);
                     }
                 }
@@ -164,10 +158,9 @@ void SscReader::GetDeferredCommon(Variable<T> &variable, T *data)
 
 template <typename T>
 std::vector<typename Variable<T>::BPInfo>
-SscReader::BlocksInfoCommon(const Variable<T> &variable,
-                            const size_t step) const
+SscReaderGeneric::BlocksInfoCommon(const Variable<T> &variable,
+                                   const size_t step) const
 {
-    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     std::vector<typename Variable<T>::BPInfo> ret;
 
@@ -215,8 +208,7 @@ SscReader::BlocksInfoCommon(const Variable<T> &variable,
     return ret;
 }
 
-} // end namespace engine
-} // end namespace core
-} // end namespace adios2
-
-#endif // ADIOS2_ENGINE_SSCREADER_TCC_
+}
+}
+}
+}

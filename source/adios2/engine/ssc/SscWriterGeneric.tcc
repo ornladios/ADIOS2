@@ -2,19 +2,13 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * SscWriter.tcc
+ * SscWriterGeneric.tcc
  *
- *  Created on: Nov 1, 2018
+ *  Created on: Mar 3, 2022
  *      Author: Jason Wang
  */
 
-#ifndef ADIOS2_ENGINE_SSCWRITER_TCC_
-#define ADIOS2_ENGINE_SSCWRITER_TCC_
-
-#include "SscWriter.h"
-#include "adios2/helper/adiosFunctions.h"
-#include <adios2-perfstubs-interface.h>
-#include <cstring>
+#include "SscWriterGeneric.h"
 
 namespace adios2
 {
@@ -22,12 +16,13 @@ namespace core
 {
 namespace engine
 {
+namespace ssc
+{
 
 template <>
-void SscWriter::PutDeferredCommon(Variable<std::string> &variable,
-                                  const std::string *data)
+void SscWriterGeneric::PutDeferredCommon(Variable<std::string> &variable,
+                                         const std::string *data)
 {
-    PERFSTUBS_SCOPED_TIMER_FUNC();
     variable.SetData(data);
 
     bool found = false;
@@ -78,9 +73,8 @@ void SscWriter::PutDeferredCommon(Variable<std::string> &variable,
 }
 
 template <class T>
-void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
+void SscWriterGeneric::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
-    PERFSTUBS_SCOPED_TIMER_FUNC();
 
     if ((variable.m_ShapeID == ShapeID::GlobalValue ||
          variable.m_ShapeID == ShapeID::LocalValue ||
@@ -147,9 +141,7 @@ void SscWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
         }
     }
 }
-
-} // end namespace engine
-} // end namespace core
-} // end namespace adios2
-
-#endif // ADIOS2_ENGINE_SSCWRITER_TCC_
+}
+}
+}
+}
