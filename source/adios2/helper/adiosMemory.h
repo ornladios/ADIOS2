@@ -259,7 +259,8 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
            const bool outIsLittleEndian, const int typeSize,
            const Dims &inMemStart = Dims(), const Dims &inMemCount = Dims(),
            const Dims &outMemStart = Dims(), const Dims &outMemCount = Dims(),
-           const bool safeMode = false);
+           const bool safeMode = false,
+           MemorySpace MemSpace = MemorySpace::Host);
 
 template <class T>
 size_t PayloadSize(const T *data, const Dims &count) noexcept;
