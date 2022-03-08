@@ -161,6 +161,7 @@ adios_option(Fortran    "Enable support for Fortran bindings" AUTO)
 adios_option(SysVShMem  "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
 adios_option(Profiling  "Enable support for profiling" AUTO)
 adios_option(Endian_Reverse "Enable support for Little/Big Endian Interoperability" AUTO)
+adios_option(Sodium     "Enable support for Sodium for encryption" AUTO)
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_CUDA)
@@ -221,7 +222,7 @@ endif()
 
 
 set(ADIOS2_CONFIG_OPTS
-    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST CUDA Fortran MPI Python Blosc BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT SysVShMem ZeroMQ Profiling Endian_Reverse
+    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST CUDA Fortran MPI Python Blosc BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT SysVShMem ZeroMQ Profiling Endian_Reverse Sodium
 )
 
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
@@ -285,6 +286,11 @@ add_subdirectory(source)
 # Language bindings
 #------------------------------------------------------------------------------#
 add_subdirectory(bindings)
+
+#------------------------------------------------------------------------------#
+# Plugins
+#------------------------------------------------------------------------------#
+add_subdirectory(plugins)
 
 #------------------------------------------------------------------------------#
 # Examples

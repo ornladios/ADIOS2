@@ -16,13 +16,10 @@
 
 namespace adios2
 {
-namespace core
+namespace plugin
 {
 
-namespace engine
-{
-
-ExampleWritePlugin::ExampleWritePlugin(IO &io, const std::string &name,
+ExampleWritePlugin::ExampleWritePlugin(core::IO &io, const std::string &name,
                                        const Mode mode, helper::Comm comm)
 : PluginEngineInterface(io, name, mode, comm.Duplicate())
 {
@@ -74,11 +71,12 @@ size_t ExampleWritePlugin::CurrentStep() const { return m_CurrentStep; }
 void ExampleWritePlugin::EndStep() { m_CurrentStep++; }
 
 #define declare(T)                                                             \
-    void ExampleWritePlugin::DoPutSync(Variable<T> &variable, const T *values) \
+    void ExampleWritePlugin::DoPutSync(core::Variable<T> &variable,            \
+                                       const T *values)                        \
     {                                                                          \
         WriteArray(variable, values);                                          \
     }                                                                          \
-    void ExampleWritePlugin::DoPutDeferred(Variable<T> &variable,              \
+    void ExampleWritePlugin::DoPutDeferred(core::Variable<T> &variable,        \
                                            const T *values)                    \
     {                                                                          \
         WriteArray(variable, values);                                          \
@@ -110,22 +108,19 @@ void ExampleWritePlugin::WriteVarsFromIO()
     }
 }
 
-} // end namespace engine
-} // end namespace core
+} // end namespace plugin
 } // end namespace adios2
 
 extern "C" {
 
-adios2::core::engine::ExampleWritePlugin *
-EngineCreate(adios2::core::IO &io, const std::string &name,
-             const adios2::Mode mode, adios2::helper::Comm comm)
+adios2::plugin::ExampleWritePlugin *EngineCreate(adios2::core::IO &io,
+                                                 const std::string &name,
+                                                 const adios2::Mode mode,
+                                                 adios2::helper::Comm comm)
 {
-    return new adios2::core::engine::ExampleWritePlugin(io, name, mode,
-                                                        comm.Duplicate());
+    return new adios2::plugin::ExampleWritePlugin(io, name, mode,
+                                                  comm.Duplicate());
 }
 
-void EngineDestroy(adios2::core::engine::ExampleWritePlugin *obj)
-{
-    delete obj;
-}
+void EngineDestroy(adios2::plugin::ExampleWritePlugin *obj) { delete obj; }
 }

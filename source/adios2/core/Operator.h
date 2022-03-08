@@ -39,6 +39,7 @@ public:
         COMPRESS_MGARDPLUS = 8,
         CALLBACK_SIGNATURE1 = 51,
         CALLBACK_SIGNATURE2 = 52,
+        PLUGIN_INTERFACE = 53,
         COMPRESS_NULL = 127,
     };
 

@@ -13,17 +13,15 @@
 
 namespace adios2
 {
-namespace core
-{
-namespace engine
+namespace plugin
 {
 
-PluginEngineInterface::PluginEngineInterface(IO &io, const std::string &name,
+PluginEngineInterface::PluginEngineInterface(core::IO &io,
+                                             const std::string &name,
                                              const Mode mode, helper::Comm comm)
 : Engine("PluginInterface", io, name, mode, std::move(comm))
 {
 }
 
-} // end namespace engine
-} // end namespace core
+} // end namespace plugin
 } // end namespace adios2

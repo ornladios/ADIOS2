@@ -17,37 +17,52 @@
 #include <stdexcept>
 #include <utility>
 
-#include "adios2/helper/adiosDynamicBinder.h"
 #include "adios2/helper/adiosLog.h"
-
-#include <adios2sys/SystemTools.hxx>
+#include "adios2/helper/adiosPluginManager.h"
 
 namespace adios2
 {
-namespace core
-{
-namespace engine
+namespace plugin
 {
 
 /******************************************************************************/
 
 struct PluginEngine::Impl
 {
-    std::string m_PluginName = "UserPlugin";
-    std::unique_ptr<helper::DynamicBinder> m_Binder;
-    EngineCreateFun m_HandleCreate;
-    EngineDestroyFun m_HandleDestroy;
+    PluginManager::EngineCreateFun m_HandleCreate;
+    PluginManager::EngineDestroyFun m_HandleDestroy;
     PluginEngineInterface *m_Plugin = nullptr;
 };
 
 /******************************************************************************/
 
-PluginEngine::PluginEngine(IO &io, const std::string &name, const Mode mode,
-                           helper::Comm comm)
+PluginEngine::PluginEngine(core::IO &io, const std::string &name,
+                           const Mode mode, helper::Comm comm)
 : Engine("Plugin", io, name, mode, comm.Duplicate()), m_Impl(new Impl)
 {
-    Init();
-    m_Impl->m_Plugin = m_Impl->m_HandleCreate(io, m_Impl->m_PluginName, mode,
+    auto pluginNameIt = m_IO.m_Parameters.find("PluginName");
+    if (pluginNameIt == m_IO.m_Parameters.end())
+    {
+        helper::Throw<std::runtime_error>(
+            "Plugins", "PluginEngine", "PluginEngine",
+            "PluginName must be specified in the engine parameters");
+    }
+
+    auto pluginLibIt = m_IO.m_Parameters.find("PluginLibrary");
+    if (pluginLibIt == m_IO.m_Parameters.end())
+    {
+        helper::Throw<std::runtime_error>(
+            "Plugins", "PluginEngine", "PluginEngine",
+            "PluginLibrary must be specified in the engine parameters");
+    }
+
+    auto &pluginManager = PluginManager::GetInstance();
+    pluginManager.LoadPlugin(pluginNameIt->second, pluginLibIt->second);
+    m_Impl->m_HandleCreate =
+        pluginManager.GetEngineCreateFun(pluginNameIt->second);
+    m_Impl->m_HandleDestroy =
+        pluginManager.GetEngineDestroyFun(pluginNameIt->second);
+    m_Impl->m_Plugin = m_Impl->m_HandleCreate(io, pluginNameIt->second, mode,
                                               comm.Duplicate());
 }
 
@@ -64,68 +79,21 @@ void PluginEngine::PerformGets() { m_Impl->m_Plugin->PerformGets(); }
 
 void PluginEngine::EndStep() { m_Impl->m_Plugin->EndStep(); }
 
-void PluginEngine::Init()
-{
-    auto paramPluginNameIt = m_IO.m_Parameters.find("PluginName");
-    if (paramPluginNameIt != m_IO.m_Parameters.end())
-    {
-        m_Impl->m_PluginName = paramPluginNameIt->second;
-    }
-
-    std::string pluginPath;
-    adios2sys::SystemTools::GetEnv("ADIOS2_PLUGIN_PATH", pluginPath);
-
-    auto paramPluginLibraryIt = m_IO.m_Parameters.find("PluginLibrary");
-    if (paramPluginLibraryIt == m_IO.m_Parameters.end())
-    {
-        helper::Throw<std::invalid_argument>(
-            "Engine", "PluginEngine", "Init",
-            "PluginLibrary must be specified in "
-            "engine parameters if no PluginName "
-            "is specified");
-    }
-    std::string &pluginLibrary = paramPluginLibraryIt->second;
-
-    m_Impl->m_Binder.reset(
-        new helper::DynamicBinder(pluginLibrary, pluginPath));
-
-    m_Impl->m_HandleCreate = reinterpret_cast<EngineCreatePtr>(
-        m_Impl->m_Binder->GetSymbol("EngineCreate"));
-    if (!m_Impl->m_HandleCreate)
-    {
-        helper::Throw<std::runtime_error>(
-            "Engine", "PluginEngine", "Init",
-            "Unable to locate "
-            "EngineCreate symbol in specified plugin "
-            "library");
-    }
-
-    m_Impl->m_HandleDestroy = reinterpret_cast<EngineDestroyPtr>(
-        m_Impl->m_Binder->GetSymbol("EngineDestroy"));
-    if (!m_Impl->m_HandleDestroy)
-    {
-        helper::Throw<std::runtime_error>(
-            "Engine", "PluginEngine", "Init",
-            "Unable to locate "
-            "EngineDestroy symbol in specified plugin "
-            "library");
-    }
-}
-
 #define declare(T)                                                             \
-    void PluginEngine::DoPutSync(Variable<T> &variable, const T *values)       \
+    void PluginEngine::DoPutSync(core::Variable<T> &variable, const T *values) \
     {                                                                          \
         m_Impl->m_Plugin->DoPutSync(variable, values);                         \
     }                                                                          \
-    void PluginEngine::DoPutDeferred(Variable<T> &variable, const T *values)   \
+    void PluginEngine::DoPutDeferred(core::Variable<T> &variable,              \
+                                     const T *values)                          \
     {                                                                          \
         m_Impl->m_Plugin->DoPutDeferred(variable, values);                     \
     }                                                                          \
-    void PluginEngine::DoGetSync(Variable<T> &variable, T *values)             \
+    void PluginEngine::DoGetSync(core::Variable<T> &variable, T *values)       \
     {                                                                          \
         m_Impl->m_Plugin->DoGetSync(variable, values);                         \
     }                                                                          \
-    void PluginEngine::DoGetDeferred(Variable<T> &variable, T *values)         \
+    void PluginEngine::DoGetDeferred(core::Variable<T> &variable, T *values)   \
     {                                                                          \
         m_Impl->m_Plugin->DoGetDeferred(variable, values);                     \
     }
@@ -138,6 +106,5 @@ void PluginEngine::DoClose(const int transportIndex)
     m_Impl->m_Plugin->Close(transportIndex);
 }
 
-} // end namespace engine
-} // end namespace core
+} // end namespace plugin
 } // end namespace adios2

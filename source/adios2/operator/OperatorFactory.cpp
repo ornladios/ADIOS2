@@ -11,6 +11,7 @@
 #include "OperatorFactory.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/operator/compress/CompressNull.h"
+#include "adios2/operator/plugin/PluginOperator.h"
 #include <numeric>
 
 #ifdef ADIOS2_HAVE_BLOSC
@@ -73,6 +74,8 @@ std::string OperatorTypeToString(const Operator::OperatorType type)
         return "sz";
     case Operator::COMPRESS_ZFP:
         return "zfp";
+    case Operator::PLUGIN_INTERFACE:
+        return "plugin";
     default:
         return "null";
     }
@@ -138,6 +141,10 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type,
 #ifdef ADIOS2_HAVE_ZFP
         ret = std::make_shared<compress::CompressZFP>(parameters);
 #endif
+    }
+    else if (typeLowerCase == "plugin")
+    {
+        ret = std::make_shared<plugin::PluginOperator>(parameters);
     }
     else if (typeLowerCase == "null")
     {

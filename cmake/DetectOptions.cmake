@@ -403,6 +403,16 @@ if(ADIOS2_USE_Endian_Reverse STREQUAL ON)
   set(ADIOS2_HAVE_Endian_Reverse TRUE)
 endif()
 
+# Sodium for EncryptionOperator
+if(ADIOS2_USE_Sodium STREQUAL AUTO)
+  find_package(Sodium)
+elseif(ADIOS2_USE_Sodium)
+  find_package(Sodium REQUIRED)
+endif()
+if(Sodium_FOUND)
+  set(ADIOS2_HAVE_Sodium TRUE)
+endif()
+
 # Multithreading
 find_package(Threads REQUIRED)
 

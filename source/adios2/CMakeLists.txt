@@ -31,6 +31,7 @@ add_library(adios2_core
   helper/adiosMath.cpp
   helper/adiosMemory.cpp
   helper/adiosNetwork.cpp
+  helper/adiosPluginManager.cpp
   helper/adiosString.cpp helper/adiosString.tcc
   helper/adiosSystem.cpp
   helper/adiosType.cpp
@@ -58,6 +59,7 @@ add_library(adios2_core
   engine/nullcore/NullCoreWriter.cpp engine/nullcore/NullCoreWriter.tcc
 
   engine/plugin/PluginEngine.cpp engine/plugin/PluginEngineInterface.cpp
+  operator/plugin/PluginOperator.cpp operator/plugin/PluginOperatorInterface.cpp
 #toolkit
   toolkit/format/buffer/Buffer.cpp
   toolkit/format/buffer/BufferV.cpp
@@ -387,6 +389,12 @@ install(DIRECTORY helper/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/helper COMPONENT adios2_core-development
   FILES_MATCHING PATTERN "*.h"
   PATTERN "*.inl"
+)
+
+install(DIRECTORY operator/
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/operator COMPONENT adios2_core-development
+  FILES_MATCHING PATTERN "*/*.h"
+  PATTERN "*/*.inl"
 )
 
 install(DIRECTORY toolkit/
