@@ -9,7 +9,6 @@
  */
 
 #include "SscReaderGeneric.tcc"
-#include "adios2/helper/adiosMemory.h"
 
 namespace adios2
 {

@@ -10,6 +10,7 @@
 
 #include "SscWriter.h"
 #include "SscWriterGeneric.h"
+#include "SscWriterNaive.h"
 #include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosString.h"
 #include <adios2-perfstubs-interface.h>
@@ -37,6 +38,8 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
     }
     else if (m_EngineMode == "naive")
     {
+        m_EngineInstance = std::make_shared<ssc::SscWriterNaive>(
+            io, name, mode, CommAsMPI(m_Comm));
     }
 }
 

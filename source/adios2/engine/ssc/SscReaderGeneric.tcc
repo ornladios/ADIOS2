@@ -8,6 +8,9 @@
  *      Author: Jason Wang
  */
 
+#ifndef ADIOS2_ENGINE_SSCREADERGENERIC_TCC_
+#define ADIOS2_ENGINE_SSCREADERGENERIC_TCC_
+
 #include "SscReaderGeneric.h"
 #include "adios2/helper/adiosMemory.h"
 
@@ -212,3 +215,5 @@ SscReaderGeneric::BlocksInfoCommon(const Variable<T> &variable,
 }
 }
 }
+
+#endif // ADIOS2_ENGINE_SSCREADERGENERIC_TCC_
