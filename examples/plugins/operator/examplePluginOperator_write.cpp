@@ -2,8 +2,8 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * examplePluginEngine_write.cpp example showing how to use ExampleWritePlugin
- * engine
+ * examplePluginOperator_write.cpp example showing how to use EncryptionOperator
+ * plugin
  *
  *  Created on: July 5, 2021
  *      Author: Caitlin Ross <caitlin.ross@kitware.com>
@@ -16,24 +16,6 @@
 
 #include "adios2.h"
 
-void testStreaming(adios2::Engine &writer, std::vector<float> &myFloats,
-                   adios2::Variable<float> &var)
-{
-    for (int i = 0; i < 2; i++)
-    {
-        if (i == 1)
-        {
-            for (auto &num : myFloats)
-            {
-                num *= 2;
-            }
-        }
-        writer.BeginStep();
-        writer.Put<float>(var, myFloats.data());
-        writer.EndStep();
-    }
-}
-
 int main(int argc, char *argv[])
 {
     std::string config;
@@ -42,15 +24,22 @@ int main(int argc, char *argv[])
         config = std::string(argv[1]);
     }
 
-    bool streaming = false;
-    if (argc > 2)
-    {
-        streaming = std::atoi(argv[2]) == 1;
-    }
-
     /** Application variable */
-    std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
-    const std::size_t Nx = myFloats.size();
+    std::vector<double> myDoubles = {
+        0.0001, 1.0001, 2.0001, 3.0001, 4.0001, 5.0001, 6.0001, 7.0001, 8.0001,
+        9.0001, 1.0001, 2.0001, 3.0001, 4.0001, 5.0001, 6.0001, 7.0001, 8.0001,
+        9.0001, 8.0001, 2.0001, 3.0001, 4.0001, 5.0001, 6.0001, 7.0001, 8.0001,
+        9.0001, 8.0001, 7.0001, 3.0001, 4.0001, 5.0001, 6.0001, 7.0001, 8.0001,
+        9.0001, 8.0001, 7.0001, 6.0001, 4.0001, 5.0001, 6.0001, 7.0001, 8.0001,
+        9.0001, 8.0001, 7.0001, 6.0001, 5.0001, 5.0001, 6.0001, 7.0001, 8.0001,
+        9.0001, 8.0001, 7.0001, 6.0001, 5.0001, 4.0001, 6.0001, 7.0001, 8.0001,
+        9.0001, 8.0001, 7.0001, 6.0001, 5.0001, 4.0001, 3.0001, 7.0001, 8.0001,
+        9.0001, 8.0001, 7.0001, 6.0001, 5.0001, 4.0001, 3.0001, 2.0001, 8.0001,
+        9.0001, 8.0001, 7.0001, 6.0001, 5.0001, 4.0001, 3.0001, 2.0001, 1.0001,
+        9.0001, 8.0001, 7.0001, 6.0001, 5.0001, 4.0001, 3.0001, 2.0001, 1.0001,
+        0.0001,
+    };
+    const std::size_t Nx = myDoubles.size();
 
     try
     {
@@ -63,28 +52,25 @@ int main(int argc, char *argv[])
 
         /** global array: name, { shape (total dimensions) }, { start (local) },
          * { count (local) }, all are constant dimensions */
-        adios2::Variable<float> var = io.DefineVariable<float>(
+        adios2::Variable<double> var = io.DefineVariable<double>(
             "data", {}, {}, {Nx}, adios2::ConstantDims);
 
         if (config.empty())
         {
-            io.SetEngine("Plugin");
+            io.SetEngine("BP4");
+            /* PluginName -> <operator name> is required. If your operator needs
+             * other parameters, they can be passed in here as well. */
             adios2::Params params;
-            params["PluginName"] = "WritePlugin";
-            params["PluginLibrary"] = "PluginEngineWrite";
-            io.SetParameters(params);
+            params["PluginName"] = "MyOperator";
+            params["PluginLibrary"] = "EncryptionOperator";
+            params["SecretKeyFile"] = "test-key";
+            var.AddOperation("plugin", params);
         }
-        adios2::Engine writer = io.Open("TestPlugin", adios2::Mode::Write);
 
-        if (streaming)
-        {
-            testStreaming(writer, myFloats, var);
-        }
-        else
-        {
-            writer.Put<float>(var, myFloats.data());
-            writer.PerformPuts();
-        }
+        adios2::Engine writer = io.Open("testOperator.bp", adios2::Mode::Write);
+
+        writer.Put<double>(var, myDoubles.data());
+        writer.PerformPuts();
 
         /** Engine becomes unreachable after this*/
         writer.Close();

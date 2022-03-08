@@ -3,15 +3,15 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_library(PluginEngineWriteExample
+add_library(PluginEngineWrite
   ExampleWritePlugin.cpp
 )
-target_link_libraries(PluginEngineWriteExample adios2::cxx11 adios2_core)
+target_link_libraries(PluginEngineWrite adios2::cxx11 adios2_core)
 
-add_library(PluginEngineReadExample
+add_library(PluginEngineRead
   ExampleReadPlugin.cpp
 )
-target_link_libraries(PluginEngineReadExample adios2::cxx11 adios2_core)
+target_link_libraries(PluginEngineRead adios2::cxx11 adios2_core)
 
 add_executable(examplePluginEngine_write
   examplePluginEngine_write.cpp

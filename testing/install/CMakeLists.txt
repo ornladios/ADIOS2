@@ -110,4 +110,7 @@ if(NOT WIN32)
   endif()
 endif()
 
-add_install_cmake_test(plugin)
+add_install_cmake_test(EnginePlugin)
+if(ADIOS2_HAVE_Sodium)
+  add_install_cmake_test(EncryptionOperator)
+endif()
