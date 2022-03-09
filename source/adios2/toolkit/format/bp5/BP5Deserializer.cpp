@@ -1101,8 +1101,13 @@ BP5Deserializer::GenerateReadRequests()
     for (const auto &Req : PendingRequests)
     {
         const size_t writerCohortSize = WriterCohortSize(Req.Step);
+        size_t NodeFirst = 0;
         for (size_t i = 0; i < writerCohortSize; i++)
         {
+            if (!NeedWriter(Req, i, NodeFirst))
+            {
+                continue;
+            }
             if (WriterTSNeeded.count(std::make_pair(Req.Step, i)) == 0)
             {
                 WriterTSNeeded[std::make_pair(Req.Step, i)] = true;
