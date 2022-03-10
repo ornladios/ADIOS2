@@ -59,6 +59,15 @@ public:
     static constexpr size_t m_VersionTagPosition = 0;
     static constexpr size_t m_VersionTagLength = 32;
 
+    static constexpr uint8_t m_BP5MinorVersion = 2;
+
+    /** Index record types */
+    enum IndexRecord
+    {
+        StepRecord = 's',
+        WriterMapRecord = 'w',
+    };
+
     std::vector<std::string>
     GetBPSubStreamNames(const std::vector<std::string> &names,
                         size_t subFileIndex) const noexcept;

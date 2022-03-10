@@ -227,8 +227,8 @@ private:
 
     std::vector<std::vector<size_t>> FlushPosSizeInfo;
 
-    void MakeHeader(format::BufferSTL &b, const std::string fileType,
-                    const bool isActive);
+    void MakeHeader(std::vector<char> &buffer, size_t &position,
+                    const std::string fileType, const bool isActive);
 
     std::vector<uint64_t> m_WriterSubfileMap; // rank => subfile index
 
