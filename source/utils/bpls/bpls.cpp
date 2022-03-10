@@ -1549,8 +1549,8 @@ int doList(const char *path)
         }
         catch (std::exception &e)
         {
-            printf("Failed to open with %s engine: %s\n",
-                   engineName.c_str(), e.what());
+            printf("Failed to open with %s engine: %s\n", engineName.c_str(),
+                   e.what());
         }
         if (fp != nullptr)
             break;
