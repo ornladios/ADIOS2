@@ -319,57 +319,74 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
 {
     m_FileMetadataManager.FlushFiles();
 
+    // bufsize: Step record
+    size_t bufsize =
+        1 + (4 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size()) *
+                sizeof(uint64_t);
     if (MetaDataPos == 0)
     {
         //  First time, write the headers
-        format::BufferSTL bi;
-        MakeHeader(bi, "Index Table", true);
-        m_FileMetadataIndexManager.WriteFiles(bi.m_Buffer.data(),
-                                              bi.m_Position);
+        bufsize += m_IndexHeaderSize;
     }
-
-    std::vector<uint64_t> buf;
-    buf.reserve(4 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size() + 3 +
-                m_Comm.Size());
-
-    buf.resize(buf.size() + 4 +
-               ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size());
-    buf[0] = MetaDataPos;
-    buf[1] = MetaDataSize;
-    buf[2] = FlushPosSizeInfo.size();
-    buf[3] = static_cast<uint64_t>(m_WriterSubfileMap.size() > 0);
-
-    uint64_t pos = 4;
-
     if (!m_WriterSubfileMap.empty())
     {
-        // Add Writer to Subfiles Map
-        buf.resize(buf.size() + 3 + m_Comm.Size());
-        buf[4] = static_cast<uint64_t>(m_Comm.Size());
-        buf[5] = static_cast<uint64_t>(m_Aggregator->m_NumAggregators);
-        buf[6] = static_cast<uint64_t>(m_Aggregator->m_SubStreams);
-        pos += 3;
-        std::copy(m_WriterSubfileMap.begin(), m_WriterSubfileMap.end(),
-                  buf.begin() + pos);
-        m_WriterSubfileMap.clear();
-        pos += m_Comm.Size();
+        // WriterMap record
+        bufsize += 1 + (4 + m_Comm.Size()) * sizeof(uint64_t);
     }
+
+    std::vector<char> buf(bufsize);
+    size_t pos = 0;
+    uint64_t d;
+    unsigned char record;
+
+    if (MetaDataPos == 0)
+    {
+        //  First time, write the headers
+        MakeHeader(buf, pos, "Index Table", true);
+    }
+
+    // WriterMap record
+    if (!m_WriterSubfileMap.empty())
+    {
+        record = WriterMapRecord;
+        helper::CopyToBuffer(buf, pos, &record, 1); // record type
+        d = (3 + m_Comm.Size()) * sizeof(uint64_t);
+        helper::CopyToBuffer(buf, pos, &d, 1); // record length
+        d = static_cast<uint64_t>(m_Comm.Size());
+        helper::CopyToBuffer(buf, pos, &d, 1);
+        d = static_cast<uint64_t>(m_Aggregator->m_NumAggregators);
+        helper::CopyToBuffer(buf, pos, &d, 1);
+        d = static_cast<uint64_t>(m_Aggregator->m_SubStreams);
+        helper::CopyToBuffer(buf, pos, &d, 1);
+        helper::CopyToBuffer(buf, pos, m_WriterSubfileMap.data(),
+                             m_Comm.Size());
+        m_WriterSubfileMap.clear();
+    }
+
+    // Step record
+    record = StepRecord;
+    helper::CopyToBuffer(buf, pos, &record, 1); // record type
+    d = (3 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size()) *
+        sizeof(uint64_t);
+    helper::CopyToBuffer(buf, pos, &d, 1); // record length
+    helper::CopyToBuffer(buf, pos, &MetaDataPos, 1);
+    helper::CopyToBuffer(buf, pos, &MetaDataSize, 1);
+    d = static_cast<uint64_t>(FlushPosSizeInfo.size());
+    helper::CopyToBuffer(buf, pos, &d, 1);
 
     for (int writer = 0; writer < m_Comm.Size(); writer++)
     {
         for (size_t flushNum = 0; flushNum < FlushPosSizeInfo.size();
              flushNum++)
         {
-            buf[pos + (flushNum * 2)] = FlushPosSizeInfo[flushNum][2 * writer];
-            buf[pos + (flushNum * 2) + 1] =
-                FlushPosSizeInfo[flushNum][2 * writer + 1];
+            // add two numbers here
+            helper::CopyToBuffer(buf, pos,
+                                 &FlushPosSizeInfo[flushNum][2 * writer], 2);
         }
-        buf[pos + FlushPosSizeInfo.size() * 2] = m_WriterDataPos[writer];
-        pos += (FlushPosSizeInfo.size() * 2) + 1;
+        helper::CopyToBuffer(buf, pos, &m_WriterDataPos[writer], 1);
     }
 
-    m_FileMetadataIndexManager.WriteFiles((char *)buf.data(),
-                                          buf.size() * sizeof(uint64_t));
+    m_FileMetadataIndexManager.WriteFiles((char *)buf.data(), buf.size());
 
 #ifdef DUMPDATALOCINFO
     std::cout << "Flush count is :" << FlushPosSizeInfo.size() << std::endl;
@@ -675,6 +692,19 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
                 std::to_string(Version) + " version");
     }
 
+    // BP minor version
+    position = m_BPMinorVersionPosition;
+    uint8_t minorVersion =
+        helper::ReadValue<uint8_t>(buffer, position, IsLittleEndian);
+    if (minorVersion != m_BP5MinorVersion)
+    {
+        helper::Throw<std::runtime_error>(
+            "Engine", "BP5Writer", "CountStepsInMetadataIndex",
+            "Current ADIOS2 BP5 Engine can only append to bp format 5." +
+                std::to_string(m_BP5MinorVersion) + " but this file is 5." +
+                std::to_string(minorVersion) + " version");
+    }
+
     position = m_ColumnMajorFlagPosition;
     const uint8_t columnMajor =
         helper::ReadValue<uint8_t>(buffer, position, IsLittleEndian);
@@ -697,12 +727,13 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
     uint64_t nDataFiles = 0;
     while (position < buffer.size())
     {
-        position += 2 * sizeof(uint64_t); // MetadataPos, MetadataSize
-        const uint64_t FlushCount =
-            helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-        const uint64_t hasWriterMap =
-            helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-        if (hasWriterMap)
+        const unsigned char recordID =
+            helper::ReadValue<unsigned char>(buffer, position, IsLittleEndian);
+        position += sizeof(uint64_t); // recordLength
+
+        switch (recordID)
+        {
+        case IndexRecord::WriterMapRecord:
         {
             m_AppendWriterCount =
                 helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
@@ -716,11 +747,20 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
             }
             // jump over writermap
             position += m_AppendWriterCount * sizeof(uint64_t);
+            break;
         }
-
-        position +=
-            sizeof(uint64_t) * m_AppendWriterCount * ((2 * FlushCount) + 1);
-        availableSteps++;
+        case IndexRecord::StepRecord:
+        {
+            position += 2 * sizeof(uint64_t); // MetadataPos, MetadataSize
+            const uint64_t FlushCount =
+                helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
+            // jump over the metadata positions
+            position +=
+                sizeof(uint64_t) * m_AppendWriterCount * ((2 * FlushCount) + 1);
+            availableSteps++;
+            break;
+        }
+        }
     }
 
     unsigned int targetStep = 0;
@@ -774,15 +814,13 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
     // reading one step beyond target to get correct offsets
     while (currentStep <= targetStep && position < buffer.size())
     {
-        m_AppendMetadataIndexPos = position;
-        const uint64_t MetadataPos =
-            helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-        position += sizeof(uint64_t); // MetadataSize
-        const uint64_t FlushCount =
-            helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-        const uint64_t hasWriterMap =
-            helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-        if (hasWriterMap)
+        const unsigned char recordID =
+            helper::ReadValue<unsigned char>(buffer, position, IsLittleEndian);
+        position += sizeof(uint64_t); // recordLength
+
+        switch (recordID)
+        {
+        case IndexRecord::WriterMapRecord:
         {
             m_AppendWriterCount =
                 helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
@@ -799,38 +837,50 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
                     buffer, position, IsLittleEndian);
                 writerToFileMap.push_back(subfileIdx);
             }
+            break;
         }
-
-        m_AppendMetadataPos = static_cast<size_t>(MetadataPos);
-
-        if (currentStep == targetStep)
+        case IndexRecord::StepRecord:
         {
-            // we need the very first (smallest) write position to each
-            // subfile Offsets and sizes,  2*FlushCount + 1 per writer
-            for (uint64_t i = 0; i < m_AppendWriterCount; i++)
+            m_AppendMetadataIndexPos = position;
+            const uint64_t MetadataPos =
+                helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
+            position += sizeof(uint64_t); // MetadataSize
+            const uint64_t FlushCount =
+                helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
+
+            m_AppendMetadataPos = static_cast<size_t>(MetadataPos);
+
+            if (currentStep == targetStep)
             {
-                // first flush/write position will do
-                const size_t FirstDataPos =
-                    static_cast<size_t>(helper::ReadValue<uint64_t>(
-                        buffer, position, IsLittleEndian));
-                position +=
-                    sizeof(uint64_t) * 2 * FlushCount; // no need to read
-                /* std::cout << "Writer " << i << " subfile " <<
-                   writerToFileMap[i]  << "  first data loc:" <<
-                   FirstDataPos << std::endl; */
-                if (FirstDataPos < m_AppendDataPos[writerToFileMap[i]])
+                // we need the very first (smallest) write position to each
+                // subfile Offsets and sizes,  2*FlushCount + 1 per writer
+                for (uint64_t i = 0; i < m_AppendWriterCount; i++)
                 {
-                    m_AppendDataPos[writerToFileMap[i]] = FirstDataPos;
+                    // first flush/write position will do
+                    const size_t FirstDataPos =
+                        static_cast<size_t>(helper::ReadValue<uint64_t>(
+                            buffer, position, IsLittleEndian));
+                    position +=
+                        sizeof(uint64_t) * 2 * FlushCount; // no need to read
+                    /* std::cout << "Writer " << i << " subfile " <<
+                       writerToFileMap[i]  << "  first data loc:" <<
+                       FirstDataPos << std::endl; */
+                    if (FirstDataPos < m_AppendDataPos[writerToFileMap[i]])
+                    {
+                        m_AppendDataPos[writerToFileMap[i]] = FirstDataPos;
+                    }
                 }
             }
+            else
+            {
+                // jump over all data offsets in this step
+                position += sizeof(uint64_t) * m_AppendWriterCount *
+                            (1 + 2 * FlushCount);
+            }
+            currentStep++;
+            break;
         }
-        else
-        {
-            // jump over all data offsets in this step
-            position +=
-                sizeof(uint64_t) * m_AppendWriterCount * (1 + 2 * FlushCount);
         }
-        currentStep++;
     }
     return targetStep;
 }
@@ -1029,17 +1079,17 @@ void BP5Writer::InitTransports()
 }
 
 /*generate the header for the metadata index file*/
-void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
-                           const bool isActive)
+void BP5Writer::MakeHeader(std::vector<char> &buffer, size_t &position,
+                           const std::string fileType, const bool isActive)
 {
     auto lf_CopyVersionChar = [](const std::string version,
                                  std::vector<char> &buffer, size_t &position) {
         helper::CopyToBuffer(buffer, position, version.c_str());
     };
 
-    auto &buffer = b.m_Buffer;
-    auto &position = b.m_Position;
-    auto &absolutePosition = b.m_AbsolutePosition;
+    // auto &buffer = b.m_Buffer;
+    // auto &position = b.m_Position;
+    // auto &absolutePosition = b.m_AbsolutePosition;
     if (position > 0)
     {
         helper::Throw<std::invalid_argument>(
@@ -1050,9 +1100,9 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
                 std::to_string(position) + " bytes.");
     }
 
-    if (b.GetAvailableSize() < m_IndexHeaderSize)
+    if (buffer.size() < m_IndexHeaderSize)
     {
-        b.Resize(m_IndexHeaderSize, "BP4Serializer::MakeHeader " + fileType);
+        buffer.resize(m_IndexHeaderSize);
     }
 
     const std::string majorVersion(std::to_string(ADIOS2_VERSION_MAJOR));
@@ -1131,7 +1181,7 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
             "ADIOS Coding ERROR in BP5Writer::MakeHeader. BP Minor version "
             "position mismatch");
     }
-    const uint8_t minorversion = 1;
+    const uint8_t minorversion = m_BP5MinorVersion;
     helper::CopyToBuffer(buffer, position, &minorversion);
 
     // byte 39: Active flag (used in Index Table only)
@@ -1153,7 +1203,7 @@ void BP5Writer::MakeHeader(format::BufferSTL &b, const std::string fileType,
 
     // byte 41-63: unused
     position += 23;
-    absolutePosition = position;
+    // absolutePosition = position;
 }
 
 void BP5Writer::UpdateActiveFlag(const bool active)
