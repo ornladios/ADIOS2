@@ -146,11 +146,20 @@ BP5Engine::GetBPSubStreamNames(const std::vector<std::string> &names,
 
 void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
 {
+    adios2::Params params_lowercase;
+    for (auto &p : io.m_Parameters)
+    {
+        const std::string key = helper::LowerCase(p.first);
+        const std::string value = helper::LowerCase(p.second);
+        params_lowercase[key] = value;
+    }
+
     auto lf_SetBoolParameter = [&](const std::string key, bool &parameter,
                                    bool def) {
-        auto itKey = io.m_Parameters.find(key);
+        const std::string lkey = helper::LowerCase(std::string(key));
+        auto itKey = params_lowercase.find(lkey);
         parameter = def;
-        if (itKey != io.m_Parameters.end())
+        if (itKey != params_lowercase.end())
         {
             std::string value = itKey->second;
             std::transform(value.begin(), value.end(), value.begin(),
@@ -174,9 +183,10 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
 
     auto lf_SetFloatParameter = [&](const std::string key, float &parameter,
                                     float def) {
-        auto itKey = io.m_Parameters.find(key);
+        const std::string lkey = helper::LowerCase(std::string(key));
+        auto itKey = params_lowercase.find(lkey);
         parameter = def;
-        if (itKey != io.m_Parameters.end())
+        if (itKey != params_lowercase.end())
         {
             std::string value = itKey->second;
             parameter =
@@ -186,9 +196,10 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
 
     auto lf_SetSizeBytesParameter = [&](const std::string key,
                                         size_t &parameter, size_t def) {
-        auto itKey = io.m_Parameters.find(key);
+        const std::string lkey = helper::LowerCase(std::string(key));
+        auto itKey = params_lowercase.find(lkey);
         parameter = def;
-        if (itKey != io.m_Parameters.end())
+        if (itKey != params_lowercase.end())
         {
             std::string value = itKey->second;
             parameter = helper::StringToByteUnits(
@@ -198,9 +209,10 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
 
     auto lf_SetIntParameter = [&](const std::string key, int &parameter,
                                   int def) {
-        auto itKey = io.m_Parameters.find(key);
+        const std::string lkey = helper::LowerCase(std::string(key));
+        auto itKey = params_lowercase.find(lkey);
         parameter = def;
-        if (itKey != io.m_Parameters.end())
+        if (itKey != params_lowercase.end())
         {
             parameter = std::stoi(itKey->second);
             return true;
@@ -210,9 +222,10 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
 
     auto lf_SetUIntParameter = [&](const std::string key,
                                    unsigned int &parameter, unsigned int def) {
-        auto itKey = io.m_Parameters.find(key);
+        const std::string lkey = helper::LowerCase(std::string(key));
+        auto itKey = params_lowercase.find(lkey);
         parameter = def;
-        if (itKey != io.m_Parameters.end())
+        if (itKey != params_lowercase.end())
         {
             unsigned long result = std::stoul(itKey->second);
             if (result > std::numeric_limits<unsigned>::max())
@@ -227,8 +240,10 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
 
     auto lf_SetStringParameter = [&](const std::string key,
                                      std::string &parameter, const char *def) {
-        auto itKey = io.m_Parameters.find(key);
-        if (itKey != io.m_Parameters.end())
+        const std::string lkey = helper::LowerCase(std::string(key));
+        auto itKey = params_lowercase.find(lkey);
+        parameter = def;
+        if (itKey != params_lowercase.end())
         {
             parameter = itKey->second;
             return true;
@@ -238,9 +253,10 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
 
     auto lf_SetBufferVTypeParameter = [&](const std::string key, int &parameter,
                                           int def) {
-        auto itKey = io.m_Parameters.find(key);
+        const std::string lkey = helper::LowerCase(std::string(key));
+        auto itKey = params_lowercase.find(lkey);
         parameter = def;
-        if (itKey != io.m_Parameters.end())
+        if (itKey != params_lowercase.end())
         {
             std::string value = itKey->second;
             std::transform(value.begin(), value.end(), value.begin(),
@@ -265,9 +281,10 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
 
     auto lf_SetAggregationTypeParameter = [&](const std::string key,
                                               int &parameter, int def) {
-        auto itKey = io.m_Parameters.find(key);
+        const std::string lkey = helper::LowerCase(std::string(key));
+        auto itKey = params_lowercase.find(lkey);
         parameter = def;
-        if (itKey != io.m_Parameters.end())
+        if (itKey != params_lowercase.end())
         {
             std::string value = itKey->second;
             std::transform(value.begin(), value.end(), value.begin(),
@@ -297,9 +314,10 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
 
     auto lf_SetAsyncWriteParameter = [&](const std::string key, int &parameter,
                                          int def) {
-        auto itKey = io.m_Parameters.find(key);
+        const std::string lkey = helper::LowerCase(std::string(key));
+        auto itKey = params_lowercase.find(lkey);
         parameter = def;
-        if (itKey != io.m_Parameters.end())
+        if (itKey != params_lowercase.end())
         {
             std::string value = itKey->second;
             std::transform(value.begin(), value.end(), value.begin(),
@@ -331,8 +349,27 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
 
 #define get_params(Param, Type, Typedecl, Default)                             \
     lf_Set##Type##Parameter(#Param, Params.Param, Default);
+
     BP5_FOREACH_PARAMETER_TYPE_4ARGS(get_params);
 #undef get_params
+
+    if (Params.verbose > 0 && !m_RankMPI)
+    {
+        std::cout << "---------------- " << io.m_EngineType
+                  << " engine parameters --------------\n";
+#define print_params(Param, Type, Typedecl, Default)                           \
+    lf_Set##Type##Parameter(#Param, Params.Param, Default);                    \
+    if (!m_RankMPI)                                                            \
+    {                                                                          \
+        std::cout << "  " << std::string(#Param) << " = " << Params.Param      \
+                  << "   default = " << Default << std::endl;                  \
+    }
+
+        BP5_FOREACH_PARAMETER_TYPE_4ARGS(print_params);
+#undef print_params
+        std::cout << "-----------------------------------------------------"
+                  << std::endl;
+    }
 };
 
 } // namespace engine
