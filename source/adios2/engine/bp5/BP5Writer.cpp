@@ -647,6 +647,8 @@ void BP5Writer::InitParameters()
             m_Parameters.BufferChunkSize = k * m_Parameters.DirectIOAlignOffset;
         }
     }
+
+    m_BP5Serializer.m_StatsLevel = m_Parameters.StatsLevel;
 }
 
 uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)

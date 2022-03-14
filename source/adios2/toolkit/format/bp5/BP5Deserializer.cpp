@@ -1710,11 +1710,8 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
     {
         if (VarRec->MinMaxOffset == SIZE_MAX)
         {
-            helper::Throw<std::logic_error>(
-                "Toolkit", "format::BP5Deserializer", "VariableMinMax",
-                "Min or Max requests for Variable for which Min/Max was not "
-                "supplied by the writer.  Specify parameter StatsLevel > 0 to "
-                "include writer-side data statistics.");
+            std::memset(&MinMax, 0, sizeof(struct MinMaxStruct));
+            return true;
         }
     }
 
