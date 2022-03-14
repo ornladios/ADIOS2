@@ -23,6 +23,13 @@ namespace core
 namespace engine
 {
 
+/**
+ * sub-block size for min/max calculation of large arrays in number of
+ * elements (not bytes). The default big number per Put() default will
+ * result in the original single min/max value-pair per block
+ */
+constexpr size_t DefaultStatsBlockSize = 1125899906842624ULL;
+
 class BP5Engine
 {
 public:
@@ -149,7 +156,9 @@ public:
     MACRO(BufferVType, BufferVType, int, (int)BufferVType::ChunkVType)         \
     MACRO(AppendAfterSteps, Int, int, INT_MAX)                                 \
     MACRO(SelectSteps, String, std::string, "")                                \
-    MACRO(ReaderShortCircuitReads, Bool, bool, false)
+    MACRO(ReaderShortCircuitReads, Bool, bool, false)                          \
+    MACRO(StatsLevel, UInt, unsigned int, 1)                                   \
+    MACRO(StatsBlockSize, SizeBytes, size_t, DefaultStatsBlockSize)
 
     struct BP5Params
     {

@@ -121,6 +121,10 @@ This engine allows the user to fine tune the buffering operations through the fo
 
    #. **DirectIOAlignBuffer**: Alignment for memory pointers. Default is to be same as *DirectIOAlignOffset*. 
 
+#. Miscellaneous
+
+   #. **StatsLevel**: 1 turns on *Min/Max* calculation for every variable, 0 turns this off. Default is 1. It has some cost to generate this metadata so it can be turned off if there is no need for this information.
+
 
 ============================== ===================== ===========================================================
  **Key**                       **Value Format**      **Default** and Examples
@@ -145,6 +149,7 @@ This engine allows the user to fine tune the buffering operations through the fo
  DirectIO                       string On/Off         **Off**, On, true, false
  DirectIOAlignOffset            integer               **512**
  DirectIOAlignBuffer            integer               set to DirectIOAlignOffset if unset
+ StatsLevel                     integer, 0 or 1       **1**, ``0``
 ============================== ===================== ===========================================================
 
 
