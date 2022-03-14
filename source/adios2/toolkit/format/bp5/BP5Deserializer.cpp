@@ -1085,8 +1085,6 @@ std::vector<BP5Deserializer::ReadRequest>
 BP5Deserializer::GenerateReadRequests()
 {
     std::vector<BP5Deserializer::ReadRequest> Ret;
-    // std::vector<FFSReaderPerWriterRec> WriterInfo(m_WriterCohortSize);
-    typedef std::pair<size_t, size_t> pair;
 
     for (size_t ReqIndex = 0; ReqIndex < PendingRequests.size(); ReqIndex++)
     {
