@@ -403,11 +403,28 @@ bool introspectAsBPDir(const std::string &name) noexcept
     char patch = buffer[34];
     bool isBigEndian = static_cast<bool>(buffer[36]);
     uint8_t BPVersion = static_cast<uint8_t>(buffer[37]);
-    bool isActive = static_cast<bool>(buffer[38]);
-
-    printf("ADIOS-BP Version %d %s - ADIOS v%c.%c.%c %s\n", BPVersion,
-           (isBigEndian ? "Big Endian" : "Little Endian"), major, minor, patch,
-           (isActive ? "- active" : ""));
+    bool isActive = false;
+    if (BPVersion == 4)
+    {
+        isActive = static_cast<bool>(buffer[38]);
+        printf("ADIOS-BP Version %d %s - ADIOS v%c.%c.%c %s\n", BPVersion,
+               (isBigEndian ? "Big Endian" : "Little Endian"), major, minor,
+               patch, (isActive ? "- active" : ""));
+    }
+    else if (BPVersion == 5)
+    {
+        uint8_t minversion = static_cast<uint8_t>(buffer[38]);
+        isActive = static_cast<bool>(buffer[39]);
+        printf("ADIOS-BP Version %d.%d %s - ADIOS v%c.%c.%c %s\n", BPVersion,
+               minversion, (isBigEndian ? "Big Endian" : "Little Endian"),
+               major, minor, patch, (isActive ? "- active" : ""));
+    }
+    else
+    {
+        printf("ADIOS-BP Version %d %s - ADIOS v%c.%c.%c %s\n", BPVersion,
+               (isBigEndian ? "Big Endian" : "Little Endian"), major, minor,
+               patch, (isActive ? "- active" : ""));
+    }
 
     return true;
 }
