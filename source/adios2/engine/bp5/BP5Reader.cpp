@@ -227,8 +227,8 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
     }
     ThisDataPos = helper::ReadValue<uint64_t>(
         m_MetadataIndex.m_Buffer, ThisFlushInfo, m_Minifooter.IsLittleEndian);
-    m_DataFileManager.ReadFile(Destination, RemainingLength, ThisDataPos,
-                               SubfileNum);
+    m_DataFileManager.ReadFile(Destination, RemainingLength,
+                               ThisDataPos + Offset, SubfileNum);
 }
 
 void BP5Reader::PerformGets()
