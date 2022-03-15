@@ -1174,6 +1174,7 @@ BP5Deserializer::GenerateReadRequests()
                             RR.Internal = NULL;
                             RR.ReqIndex = ReqIndex;
                             RR.BlockID = Block;
+                            RR.OffsetInBlock = 0;
                             Ret.push_back(RR);
                         }
                         else
