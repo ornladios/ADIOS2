@@ -24,6 +24,8 @@ namespace adios2
 namespace helper
 {
 
+const size_t MAX_DIMS = 32;
+
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
 template <class T>
 void CopyEndianReverse(const char *src, const size_t payloadStride, T *dest);

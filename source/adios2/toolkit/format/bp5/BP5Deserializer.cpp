@@ -30,6 +30,7 @@
 
 #include "adios2/operator/OperatorFactory.h"
 
+#include <array>
 #include <float.h>
 #include <limits.h>
 #include <math.h>
@@ -1148,9 +1149,8 @@ BP5Deserializer::GenerateReadRequests()
                 for (size_t Block = 0; Block < writer_meta_base->BlockCount;
                      Block++)
                 {
-#define maxdims 10
-                    size_t intersectionstart[maxdims];
-                    size_t intersectioncount[maxdims];
+                    std::array<size_t, helper::MAX_DIMS> intersectionstart;
+                    std::array<size_t, helper::MAX_DIMS> intersectioncount;
 
                     size_t StartDim = Block * Req->VarRec->DimCount;
                     if (IntersectionStartCount(
