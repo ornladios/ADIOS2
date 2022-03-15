@@ -47,12 +47,14 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
+    auto ret = m_EngineInstance->BeginStep(mode, timeoutSeconds,
+                                           m_WriterDefinitionsLocked);
+
     helper::Log("Engine", "SSCWriter", "BeginStep",
                 std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
                 helper::LogMode::INFO);
 
-    return m_EngineInstance->BeginStep(mode, timeoutSeconds,
-                                       m_WriterDefinitionsLocked);
+    return ret;
 }
 
 size_t SscWriter::CurrentStep() const

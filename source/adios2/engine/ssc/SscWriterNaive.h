@@ -46,6 +46,8 @@ public:
 private:
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);
+
+    ssc::BlockVec m_Metadata;
 };
 
 }

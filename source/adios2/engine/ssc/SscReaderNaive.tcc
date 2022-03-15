@@ -23,13 +23,6 @@ namespace engine
 namespace ssc
 {
 
-template <>
-void SscReaderNaive::GetDeferredCommon(Variable<std::string> &variable,
-                                       std::string *data)
-{
-    variable.SetData(data);
-}
-
 template <class T>
 void SscReaderNaive::GetDeferredCommon(Variable<T> &variable, T *data)
 {
