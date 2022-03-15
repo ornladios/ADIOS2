@@ -53,8 +53,6 @@ void SscWriterNaive::EndStep(const bool writerLocked)
         ssc::SerializeAttributes(m_IO, m_Buffer);
     }
 
-    m_Buffer.value<uint64_t>() = m_Buffer.size();
-
     int localSize = static_cast<int>(m_Buffer.value<uint64_t>());
     std::vector<int> localSizes(m_WriterSize);
     MPI_Gather(&localSize, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0,

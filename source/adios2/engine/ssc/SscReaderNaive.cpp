@@ -50,6 +50,32 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
     }
     MPI_Bcast(m_Buffer.data(), globalSize, MPI_CHAR, 0, m_ReaderComm);
 
+    uint64_t pos = 0;
+    while (pos < m_Buffer.size())
+    {
+        uint64_t end = pos + m_Buffer.value<uint64_t>(pos);
+        pos += m_Buffer.value<uint64_t>(pos + 8);
+
+        while (pos < end)
+        {
+            uint8_t shapeId = m_Buffer[pos];
+            ++pos;
+
+            if (shapeId == 66)
+            {
+                DeserializeAttribute(m_Buffer, pos, m_IO, true);
+            }
+            else
+            {
+                int rank = m_Buffer.value<int>(pos);
+                pos += 4;
+                ssc::BlockInfo b;
+                DeserializeVariable(m_Buffer, static_cast<ShapeID>(shapeId),
+                                    pos, b, m_IO, true);
+            }
+        }
+    }
+
     return StepStatus::OK;
 }
 
