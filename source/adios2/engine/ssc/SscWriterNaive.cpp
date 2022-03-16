@@ -32,6 +32,7 @@ StepStatus SscWriterNaive::BeginStep(const StepMode mode,
     ++m_CurrentStep;
 
     m_Buffer.clear();
+    m_Buffer.resize(16);
     m_Metadata.clear();
 
     return StepStatus::OK;
@@ -79,7 +80,19 @@ void SscWriterNaive::EndStep(const bool writerLocked)
     }
 }
 
-void SscWriterNaive::Close(const int transportIndex) {}
+void SscWriterNaive::Close(const int transportIndex)
+{
+
+    uint64_t globalSize = 1;
+    ssc::Buffer globalBuffer(globalSize);
+    if (m_WriterRank == 0)
+    {
+        MPI_Send(&globalSize, 1, MPI_UNSIGNED_LONG_LONG,
+                 m_ReaderMasterStreamRank, 0, m_StreamComm);
+        MPI_Send(globalBuffer.data(), globalSize, MPI_CHAR,
+                 m_ReaderMasterStreamRank, 0, m_StreamComm);
+    }
+}
 
 #define declare_type(T)                                                        \
     void SscWriterNaive::PutDeferred(Variable<T> &variable, const T *data)     \

@@ -38,6 +38,22 @@ void SscReaderNaive::GetDeferredCommon(Variable<T> &variable, T *data)
         std::reverse(vCount.begin(), vCount.end());
         std::reverse(vShape.begin(), vShape.end());
     }
+
+    for (const auto &b : m_BlockMap[variable.m_Name])
+    {
+        if (b.shapeId == ShapeID::GlobalArray ||
+            b.shapeId == ShapeID::LocalArray)
+        {
+            helper::NdCopy(m_Buffer.data<char>() + b.bufferStart, b.start,
+                           b.count, true, true, reinterpret_cast<char *>(data),
+                           vStart, vCount, true, true, sizeof(T));
+        }
+        else if (b.shapeId == ShapeID::GlobalValue ||
+                 b.shapeId == ShapeID::LocalValue)
+        {
+            std::memcpy(data, m_Buffer.data() + b.bufferStart, b.bufferCount);
+        }
+    }
 }
 
 template <typename T>

@@ -53,6 +53,8 @@ private:
 
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
+
+    std::unordered_map<std::string, ssc::BlockVec> m_BlockMap;
 };
 
 }

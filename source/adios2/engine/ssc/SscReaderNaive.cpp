@@ -30,6 +30,9 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
                                      const bool readerLocked)
 {
 
+    m_Buffer.clear();
+    m_BlockMap.clear();
+
     ++m_CurrentStep;
 
     size_t globalSize;
@@ -48,11 +51,16 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
     {
         m_Buffer.resize(globalSize);
     }
+    if (globalSize == 1)
+    {
+        return StepStatus::EndOfStream;
+    }
     MPI_Bcast(m_Buffer.data(), globalSize, MPI_CHAR, 0, m_ReaderComm);
 
     uint64_t pos = 0;
     while (pos < m_Buffer.size())
     {
+        uint64_t start = pos;
         uint64_t end = pos + m_Buffer.value<uint64_t>(pos);
         pos += m_Buffer.value<uint64_t>(pos + 8);
 
@@ -72,6 +80,8 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
                 ssc::BlockInfo b;
                 DeserializeVariable(m_Buffer, static_cast<ShapeID>(shapeId),
                                     pos, b, m_IO, true);
+                b.bufferStart += start;
+                m_BlockMap[b.name].push_back(b);
             }
         }
     }
