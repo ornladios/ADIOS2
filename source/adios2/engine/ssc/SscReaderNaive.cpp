@@ -75,7 +75,6 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
             }
             else
             {
-                int rank = m_Buffer.value<int>(pos);
                 pos += 4;
                 ssc::BlockInfo b;
                 DeserializeVariable(m_Buffer, static_cast<ShapeID>(shapeId),
