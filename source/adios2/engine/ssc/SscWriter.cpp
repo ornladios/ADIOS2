@@ -10,6 +10,7 @@
 
 #include "SscWriter.h"
 #include "SscWriterGeneric.h"
+#include "SscWriterNaive.h"
 #include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosString.h"
 #include <adios2-perfstubs-interface.h>
@@ -37,6 +38,8 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
     }
     else if (m_EngineMode == "naive")
     {
+        m_EngineInstance = std::make_shared<ssc::SscWriterNaive>(
+            io, name, mode, CommAsMPI(m_Comm));
     }
 }
 
@@ -44,12 +47,14 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
+    auto ret = m_EngineInstance->BeginStep(mode, timeoutSeconds,
+                                           m_WriterDefinitionsLocked);
+
     helper::Log("Engine", "SSCWriter", "BeginStep",
                 std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
                 helper::LogMode::INFO);
 
-    return m_EngineInstance->BeginStep(mode, timeoutSeconds,
-                                       m_WriterDefinitionsLocked);
+    return ret;
 }
 
 size_t SscWriter::CurrentStep() const

@@ -243,55 +243,36 @@ void SerializeAttributes(IO &input, Buffer &output)
     }
 }
 
-void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
-                 const bool regVars, const bool regAttrs)
+void DeserializeAttribute(const Buffer &input, uint64_t &pos, IO &io,
+                          const bool regIO)
 {
-    for (auto &i : output)
-    {
-        i.clear();
-    }
+    const DataType type = static_cast<DataType>(input[pos]);
+    ++pos;
 
-    uint64_t pos = 2;
+    uint8_t nameSize = input[pos];
+    ++pos;
 
-    uint64_t blockSize = input.value<uint64_t>(pos);
+    std::vector<char> namev(nameSize);
+    std::memcpy(namev.data(), input.data(pos), nameSize);
+    std::string name = std::string(namev.begin(), namev.end());
+    pos += nameSize;
 
+    uint64_t size = input.value<uint64_t>(pos);
     pos += 8;
 
-    while (pos < blockSize)
+    if (regIO)
     {
-
-        uint8_t shapeId = input[pos];
-        ++pos;
-
-        if (shapeId == 66)
+        const auto &attributes = io.GetAttributes();
+        auto it = attributes.find(name);
+        if (it == attributes.end())
         {
-            const DataType type = static_cast<DataType>(input[pos]);
-            ++pos;
-
-            uint8_t nameSize = input[pos];
-            ++pos;
-
-            std::vector<char> namev(nameSize);
-            std::memcpy(namev.data(), input.data(pos), nameSize);
-            std::string name = std::string(namev.begin(), namev.end());
-            pos += nameSize;
-
-            uint64_t size = input.value<uint64_t>(pos);
-            pos += 8;
-
-            if (regAttrs)
+            int rank;
+            MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+            if (type == DataType::String)
             {
-                const auto &attributes = io.GetAttributes();
-                auto it = attributes.find(name);
-                if (it == attributes.end())
-                {
-                    int rank;
-                    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-                    if (type == DataType::String)
-                    {
-                        io.DefineAttribute<std::string>(
-                            name, std::string(input.data<char>(pos), size));
-                    }
+                io.DefineAttribute<std::string>(
+                    name, std::string(input.data<char>(pos), size));
+            }
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
@@ -304,75 +285,73 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
             io.DefineAttribute<T>(name, input.data<T>(pos), size / sizeof(T)); \
         }                                                                      \
     }
-                    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
-                    else
-                    {
-                        helper::Throw<std::runtime_error>(
-                            "Engine", "SscHelper", "Deserialize",
-                            "unknown attribute data type");
-                    }
-                }
+            else
+            {
+                helper::Throw<std::runtime_error>(
+                    "Engine", "SscHelper", "Deserialize",
+                    "unknown attribute data type");
             }
-            pos += size;
         }
-        else
+    }
+    pos += size;
+}
+
+void DeserializeVariable(const Buffer &input, const ShapeID shapeId,
+                         uint64_t &pos, BlockInfo &b, IO &io, const bool regIO)
+{
+    b.shapeId = static_cast<ShapeID>(shapeId);
+
+    uint8_t nameSize = input[pos];
+    ++pos;
+
+    std::vector<char> name(nameSize);
+    std::memcpy(name.data(), input.data(pos), nameSize);
+    b.name = std::string(name.begin(), name.end());
+    pos += nameSize;
+
+    b.type = static_cast<DataType>(input[pos]);
+    ++pos;
+
+    uint8_t shapeSize = input[pos];
+    ++pos;
+    b.shape.resize(shapeSize);
+    b.start.resize(shapeSize);
+    b.count.resize(shapeSize);
+
+    std::memcpy(b.shape.data(), input.data(pos), 8 * shapeSize);
+    pos += 8 * shapeSize;
+
+    std::memcpy(b.start.data(), input.data(pos), 8 * shapeSize);
+    pos += 8 * shapeSize;
+
+    std::memcpy(b.count.data(), input.data(pos), 8 * shapeSize);
+    pos += 8 * shapeSize;
+
+    b.bufferStart = input.value<uint64_t>(pos);
+    pos += 8;
+
+    b.bufferCount = input.value<uint64_t>(pos);
+    pos += 8;
+
+    uint8_t valueSize = input[pos];
+    pos++;
+    b.value.resize(valueSize);
+    if (valueSize > 0)
+    {
+        std::memcpy(b.value.data(), input.data() + pos, valueSize);
+        pos += valueSize;
+    }
+
+    if (regIO)
+    {
+        if (b.type == DataType::None)
         {
-            int rank = input.value<int>(pos);
-            pos += 4;
-            output[rank].emplace_back();
-            auto &b = output[rank].back();
-            b.shapeId = static_cast<ShapeID>(shapeId);
-
-            uint8_t nameSize = input[pos];
-            ++pos;
-
-            std::vector<char> name(nameSize);
-            std::memcpy(name.data(), input.data(pos), nameSize);
-            b.name = std::string(name.begin(), name.end());
-            pos += nameSize;
-
-            b.type = static_cast<DataType>(input[pos]);
-            ++pos;
-
-            uint8_t shapeSize = input[pos];
-            ++pos;
-            b.shape.resize(shapeSize);
-            b.start.resize(shapeSize);
-            b.count.resize(shapeSize);
-
-            std::memcpy(b.shape.data(), input.data(pos), 8 * shapeSize);
-            pos += 8 * shapeSize;
-
-            std::memcpy(b.start.data(), input.data(pos), 8 * shapeSize);
-            pos += 8 * shapeSize;
-
-            std::memcpy(b.count.data(), input.data(pos), 8 * shapeSize);
-            pos += 8 * shapeSize;
-
-            b.bufferStart = input.value<uint64_t>(pos);
-            pos += 8;
-
-            b.bufferCount = input.value<uint64_t>(pos);
-            pos += 8;
-
-            uint8_t valueSize = input[pos];
-            pos++;
-            b.value.resize(valueSize);
-            if (valueSize > 0)
-            {
-                std::memcpy(b.value.data(), input.data() + pos, valueSize);
-                pos += valueSize;
-            }
-
-            if (regVars)
-            {
-                if (b.type == DataType::None)
-                {
-                    helper::Throw<std::runtime_error>(
-                        "Engine", "SscHelper", "Deserialize",
-                        "unknown variable data type");
-                }
+            helper::Throw<std::runtime_error>("Engine", "SscHelper",
+                                              "Deserialize",
+                                              "unknown variable data type");
+        }
 #define declare_type(T)                                                        \
     else if (b.type == helper::GetDataType<T>())                               \
     {                                                                          \
@@ -404,15 +383,50 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
             }                                                                  \
         }                                                                      \
     }
-                ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-                else
-                {
-                    helper::Throw<std::runtime_error>(
-                        "Engine", "SscHelper", "Deserialize",
-                        "unknown variable data type");
-                }
-            }
+        else
+        {
+            helper::Throw<std::runtime_error>("Engine", "SscHelper",
+                                              "Deserialize",
+                                              "unknown variable data type");
+        }
+    }
+}
+
+void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
+                 const bool regVars, const bool regAttrs)
+{
+    for (auto &i : output)
+    {
+        i.clear();
+    }
+
+    uint64_t pos = 2;
+
+    uint64_t blockSize = input.value<uint64_t>(pos);
+
+    pos += 8;
+
+    while (pos < blockSize)
+    {
+
+        uint8_t shapeId = input[pos];
+        ++pos;
+
+        if (shapeId == 66)
+        {
+            DeserializeAttribute(input, pos, io, regAttrs);
+        }
+        else
+        {
+            int rank = input.value<int>(pos);
+            pos += 4;
+            output[rank].emplace_back();
+            auto &b = output[rank].back();
+
+            DeserializeVariable(input, static_cast<ShapeID>(shapeId), pos, b,
+                                io, regVars);
         }
     }
 }

@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * SscWriterBase.h
+ * SscWriterGeneric.h
  *
  *  Created on: Mar 3, 2022
  *      Author: Jason Wang

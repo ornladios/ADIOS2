@@ -8,6 +8,9 @@
  *      Author: Jason Wang
  */
 
+#ifndef ADIOS2_ENGINE_SSCWRITERGENERIC_TCC_
+#define ADIOS2_ENGINE_SSCWRITERGENERIC_TCC_
+
 #include "SscWriterGeneric.h"
 
 namespace adios2
@@ -145,3 +148,5 @@ void SscWriterGeneric::PutDeferredCommon(Variable<T> &variable, const T *data)
 }
 }
 }
+
+#endif // ADIOS2_ENGINE_SSCWRITERGENERIC_TCC_

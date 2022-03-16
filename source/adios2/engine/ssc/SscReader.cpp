@@ -10,6 +10,7 @@
 
 #include "SscReader.h"
 #include "SscReaderGeneric.h"
+#include "SscReaderNaive.h"
 #include "adios2/helper/adiosCommMPI.h"
 #include "adios2/helper/adiosString.h"
 #include <adios2-perfstubs-interface.h>
@@ -37,6 +38,8 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     }
     else if (m_EngineMode == "naive")
     {
+        m_EngineInstance = std::make_shared<ssc::SscReaderNaive>(
+            io, name, mode, CommAsMPI(m_Comm));
     }
 }
 
@@ -44,12 +47,14 @@ StepStatus SscReader::BeginStep(StepMode stepMode, const float timeoutSeconds)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
-    helper::Log("Engine", "SSCReader", "BeginStep",
+    auto ret = m_EngineInstance->BeginStep(stepMode, timeoutSeconds,
+                                           m_ReaderSelectionsLocked);
+
+    helper::Log("Engine", "SscReader", "BeginStep",
                 std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
                 helper::LogMode::INFO);
 
-    return m_EngineInstance->BeginStep(stepMode, timeoutSeconds,
-                                       m_ReaderSelectionsLocked);
+    return ret;
 }
 
 size_t SscReader::CurrentStep() const

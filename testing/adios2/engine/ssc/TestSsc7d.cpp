@@ -192,36 +192,72 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
 TEST_F(SscEngineTest, TestSsc7d)
 {
-    std::string filename = "TestSsc7d";
-    adios2::Params engineParams = {};
-
-    int worldRank, worldSize;
-    MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
-    int mpiGroup = worldRank / (worldSize / 2);
-    MPI_Comm_split(MPI_COMM_WORLD, mpiGroup, worldRank, &mpiComm);
-
-    MPI_Comm_rank(mpiComm, &mpiRank);
-    MPI_Comm_size(mpiComm, &mpiSize);
-
-    Dims shape = {10, 2, 2, (size_t)mpiSize, 2, 8, 10};
-    Dims start = {0, 0, 0, (size_t)mpiRank, 0, 0, 0};
-    Dims count = {10, 2, 2, 1, 2, 8, 10};
-    size_t steps = 20;
-
-    if (mpiGroup == 0)
     {
-        Writer(shape, start, count, steps, engineParams, filename);
+        std::string filename = "TestSsc7d";
+        adios2::Params engineParams = {};
+
+        int worldRank, worldSize;
+        MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
+        MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
+        int mpiGroup = worldRank / (worldSize / 2);
+        MPI_Comm_split(MPI_COMM_WORLD, mpiGroup, worldRank, &mpiComm);
+
+        MPI_Comm_rank(mpiComm, &mpiRank);
+        MPI_Comm_size(mpiComm, &mpiSize);
+
+        Dims shape = {10, 2, 2, (size_t)mpiSize, 2, 8, 10};
+        Dims start = {0, 0, 0, (size_t)mpiRank, 0, 0, 0};
+        Dims count = {10, 2, 2, 1, 2, 8, 10};
+        size_t steps = 20;
+
+        if (mpiGroup == 0)
+        {
+            Writer(shape, start, count, steps, engineParams, filename);
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        if (mpiGroup == 1)
+        {
+            Reader(shape, start, count, steps, engineParams, filename);
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-
-    if (mpiGroup == 1)
     {
-        Reader(shape, start, count, steps, engineParams, filename);
-    }
+        std::string filename = "TestSsc7dNaive";
+        adios2::Params engineParams = {{"Verbose", "0"},
+                                       {"EngineMode", "naive"}};
 
-    MPI_Barrier(MPI_COMM_WORLD);
+        int worldRank, worldSize;
+        MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
+        MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
+        int mpiGroup = worldRank / (worldSize / 2);
+        MPI_Comm_split(MPI_COMM_WORLD, mpiGroup, worldRank, &mpiComm);
+
+        MPI_Comm_rank(mpiComm, &mpiRank);
+        MPI_Comm_size(mpiComm, &mpiSize);
+
+        Dims shape = {10, 2, 2, (size_t)mpiSize, 2, 8, 10};
+        Dims start = {0, 0, 0, (size_t)mpiRank, 0, 0, 0};
+        Dims count = {10, 2, 2, 1, 2, 8, 10};
+        size_t steps = 20;
+
+        if (mpiGroup == 0)
+        {
+            Writer(shape, start, count, steps, engineParams, filename);
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+        if (mpiGroup == 1)
+        {
+            Reader(shape, start, count, steps, engineParams, filename);
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
 }
 
 int main(int argc, char **argv)
