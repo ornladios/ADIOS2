@@ -222,7 +222,7 @@ endif()
 
 
 set(ADIOS2_CONFIG_OPTS
-    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST CUDA Fortran MPI Python Blosc BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT SysVShMem ZeroMQ Profiling Endian_Reverse Sodium
+    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST CUDA Fortran MPI Python Blosc BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT Sodium SysVShMem ZeroMQ Profiling Endian_Reverse
 )
 
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
