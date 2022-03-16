@@ -22,6 +22,27 @@ namespace engine
 namespace ssc
 {
 
+template <>
+void SscWriterNaive::PutDeferredCommon(Variable<std::string> &variable,
+                                       const std::string *data)
+{
+    variable.SetData(data);
+    m_Metadata.emplace_back();
+    auto &b = m_Metadata.back();
+    b.name = variable.m_Name;
+    b.type = DataType::String;
+    b.shapeId = variable.m_ShapeID;
+    b.shape = variable.m_Shape;
+    b.start = variable.m_Start;
+    b.count = variable.m_Count;
+    b.bufferStart = m_Buffer.size();
+    b.bufferCount = data->size();
+    m_Buffer.resize(b.bufferStart + b.bufferCount);
+    std::memcpy(m_Buffer.data() + b.bufferStart, data->data(), data->size());
+    b.value.resize(data->size());
+    std::memcpy(b.value.data(), data->data(), data->size());
+}
+
 template <class T>
 void SscWriterNaive::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
@@ -46,10 +67,6 @@ void SscWriterNaive::PutDeferredCommon(Variable<T> &variable, const T *data)
         std::reverse(vCount.begin(), vCount.end());
         std::reverse(vShape.begin(), vShape.end());
     }
-
-    size_t putBytes = helper::GetTotalSize(vCount, sizeof(*data));
-    auto bufSizeP = m_Buffer.data<uint64_t>();
-    auto bufMetaStartP = m_Buffer.data<uint64_t>(8);
 
     bool found = false;
     for (const auto &b : m_Metadata)
@@ -80,7 +97,7 @@ void SscWriterNaive::PutDeferredCommon(Variable<T> &variable, const T *data)
         if (b.shapeId == ShapeID::GlobalValue ||
             b.shapeId == ShapeID::LocalValue)
         {
-            b.value.resize(sizeof(T));
+            b.value.resize(sizeof(*data));
             std::memcpy(b.value.data(), data, b.bufferCount);
         }
     }

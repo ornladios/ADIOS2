@@ -23,6 +23,26 @@ namespace engine
 namespace ssc
 {
 
+template <>
+void SscReaderNaive::GetDeferredCommon(Variable<std::string> &variable,
+                                       std::string *data)
+{
+    variable.SetData(data);
+
+    for (const auto &b : m_BlockMap[variable.m_Name])
+    {
+        if (b.name == variable.m_Name)
+        {
+            *data =
+                std::string(m_Buffer.data() + b.bufferStart,
+                            m_Buffer.data() + b.bufferStart + b.bufferCount);
+            variable.m_Value = *data;
+            variable.m_Min = *data;
+            variable.m_Max = *data;
+        }
+    }
+}
+
 template <class T>
 void SscReaderNaive::GetDeferredCommon(Variable<T> &variable, T *data)
 {
