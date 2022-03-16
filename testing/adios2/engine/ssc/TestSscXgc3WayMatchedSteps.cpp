@@ -219,73 +219,148 @@ void gene(const Dims &shape, const Dims &start, const Dims &count,
 TEST_F(SscEngineTest, TestSscXgc3WayMatchedSteps)
 {
 
-    Dims start, count, shape;
-    int worldRank, worldSize;
-    MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
-
-    if (worldSize < 4)
     {
-        return;
+        Dims start, count, shape;
+        int worldRank, worldSize;
+        MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
+        MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
+
+        if (worldSize < 4)
+        {
+            return;
+        }
+
+        if (worldRank == 0)
+        {
+            mpiGroup = 0;
+        }
+        else if (worldRank == 1)
+        {
+            mpiGroup = 1;
+        }
+        else
+        {
+            mpiGroup = 2;
+        }
+
+        MPI_Comm_split(MPI_COMM_WORLD, mpiGroup, worldRank, &mpiComm);
+
+        MPI_Comm_rank(mpiComm, &mpiRank);
+        MPI_Comm_size(mpiComm, &mpiSize);
+
+        size_t steps = 20;
+
+        if (mpiGroup == 0)
+        {
+            shape = {(size_t)mpiSize, 10};
+            start = {(size_t)mpiRank, 0};
+            count = {1, 10};
+            adios2::Params engineParams = {{"RendezvousAppCount", "2"},
+                                           {"MaxStreamsPerApp", "4"},
+                                           {"OpenTimeoutSecs", "3"},
+                                           {"Verbose", "0"}};
+            coupler(shape, start, count, steps, engineParams);
+        }
+
+        if (mpiGroup == 1)
+        {
+            shape = {(size_t)mpiSize, 10};
+            start = {(size_t)mpiRank, 0};
+            count = {1, 10};
+            adios2::Params engineParams = {{"RendezvousAppCount", "2"},
+                                           {"MaxStreamsPerApp", "4"},
+                                           {"OpenTimeoutSecs", "3"},
+                                           {"Verbose", "0"}};
+            gene(shape, start, shape, steps, engineParams);
+        }
+
+        if (mpiGroup == 2)
+        {
+            shape = {(size_t)mpiSize, 10};
+            start = {(size_t)mpiRank, 0};
+            count = {1, 10};
+            adios2::Params engineParams = {{"RendezvousAppCount", "2"},
+                                           {"MaxStreamsPerApp", "4"},
+                                           {"OpenTimeoutSecs", "3"},
+                                           {"Verbose", "0"}};
+            xgc(shape, start, count, steps, engineParams);
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
     }
 
-    if (worldRank == 0)
     {
-        mpiGroup = 0;
+        Dims start, count, shape;
+        int worldRank, worldSize;
+        MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
+        MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
+
+        if (worldSize < 4)
+        {
+            return;
+        }
+
+        if (worldRank == 0)
+        {
+            mpiGroup = 0;
+        }
+        else if (worldRank == 1)
+        {
+            mpiGroup = 1;
+        }
+        else
+        {
+            mpiGroup = 2;
+        }
+
+        MPI_Comm_split(MPI_COMM_WORLD, mpiGroup, worldRank, &mpiComm);
+
+        MPI_Comm_rank(mpiComm, &mpiRank);
+        MPI_Comm_size(mpiComm, &mpiSize);
+
+        size_t steps = 20;
+
+        if (mpiGroup == 0)
+        {
+            shape = {(size_t)mpiSize, 10};
+            start = {(size_t)mpiRank, 0};
+            count = {1, 10};
+            adios2::Params engineParams = {{"RendezvousAppCount", "2"},
+                                           {"MaxStreamsPerApp", "4"},
+                                           {"OpenTimeoutSecs", "3"},
+                                           {"EngineMode", "naive"},
+                                           {"Verbose", "0"}};
+            coupler(shape, start, count, steps, engineParams);
+        }
+
+        if (mpiGroup == 1)
+        {
+            shape = {(size_t)mpiSize, 10};
+            start = {(size_t)mpiRank, 0};
+            count = {1, 10};
+            adios2::Params engineParams = {{"RendezvousAppCount", "2"},
+                                           {"MaxStreamsPerApp", "4"},
+                                           {"OpenTimeoutSecs", "3"},
+                                           {"EngineMode", "naive"},
+                                           {"Verbose", "0"}};
+            gene(shape, start, shape, steps, engineParams);
+        }
+
+        if (mpiGroup == 2)
+        {
+            shape = {(size_t)mpiSize, 10};
+            start = {(size_t)mpiRank, 0};
+            count = {1, 10};
+            adios2::Params engineParams = {{"RendezvousAppCount", "2"},
+                                           {"MaxStreamsPerApp", "4"},
+                                           {"OpenTimeoutSecs", "3"},
+                                           {"EngineMode", "naive"},
+                                           {"Verbose", "0"}};
+            xgc(shape, start, count, steps, engineParams);
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
     }
-    else if (worldRank == 1)
-    {
-        mpiGroup = 1;
-    }
-    else
-    {
-        mpiGroup = 2;
-    }
-
-    MPI_Comm_split(MPI_COMM_WORLD, mpiGroup, worldRank, &mpiComm);
-
-    MPI_Comm_rank(mpiComm, &mpiRank);
-    MPI_Comm_size(mpiComm, &mpiSize);
-
-    size_t steps = 20;
-
-    if (mpiGroup == 0)
-    {
-        shape = {(size_t)mpiSize, 10};
-        start = {(size_t)mpiRank, 0};
-        count = {1, 10};
-        adios2::Params engineParams = {{"RendezvousAppCount", "2"},
-                                       {"MaxStreamsPerApp", "4"},
-                                       {"OpenTimeoutSecs", "3"},
-                                       {"Verbose", "0"}};
-        coupler(shape, start, count, steps, engineParams);
-    }
-
-    if (mpiGroup == 1)
-    {
-        shape = {(size_t)mpiSize, 10};
-        start = {(size_t)mpiRank, 0};
-        count = {1, 10};
-        adios2::Params engineParams = {{"RendezvousAppCount", "2"},
-                                       {"MaxStreamsPerApp", "4"},
-                                       {"OpenTimeoutSecs", "3"},
-                                       {"Verbose", "0"}};
-        gene(shape, start, shape, steps, engineParams);
-    }
-
-    if (mpiGroup == 2)
-    {
-        shape = {(size_t)mpiSize, 10};
-        start = {(size_t)mpiRank, 0};
-        count = {1, 10};
-        adios2::Params engineParams = {{"RendezvousAppCount", "2"},
-                                       {"MaxStreamsPerApp", "4"},
-                                       {"OpenTimeoutSecs", "3"},
-                                       {"Verbose", "0"}};
-        xgc(shape, start, count, steps, engineParams);
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
 }
 
 int main(int argc, char **argv)
