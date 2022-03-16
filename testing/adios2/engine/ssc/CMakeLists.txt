@@ -68,4 +68,7 @@ endif()
   gtest_add_tests_helper(VaryingSteps MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscVaryingSteps.MPI "" TRUE)
 
+  gtest_add_tests_helper(ZeroBlock MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscZeroBlock.MPI "" TRUE)
+
 endif()
