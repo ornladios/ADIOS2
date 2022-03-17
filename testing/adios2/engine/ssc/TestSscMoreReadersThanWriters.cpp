@@ -193,52 +193,104 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
 TEST_F(SscEngineTest, TestSscMoreReadersThanWriters)
 {
-    std::string filename = "TestSscMoreReadersThanWriters";
-    adios2::Params engineParams = {};
-
-    int worldRank, worldSize;
-    Dims start, count, shape;
-    MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
-    int mpiGroup;
-    int writers = 2;
-    if (worldSize < 3)
     {
-        return;
+        std::string filename = "TestSscMoreReadersThanWriters";
+        adios2::Params engineParams = {};
+
+        int worldRank, worldSize;
+        Dims start, count, shape;
+        MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
+        MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
+        int mpiGroup;
+        int writers = 2;
+        if (worldSize < 3)
+        {
+            return;
+        }
+        if (worldRank < writers)
+        {
+            mpiGroup = 0;
+        }
+        else
+        {
+            mpiGroup = 1;
+        }
+
+        MPI_Comm_split(MPI_COMM_WORLD, mpiGroup, worldRank, &mpiComm);
+
+        MPI_Comm_rank(mpiComm, &mpiRank);
+        MPI_Comm_size(mpiComm, &mpiSize);
+
+        size_t steps = 20;
+
+        if (mpiGroup == 0)
+        {
+            shape = {(size_t)writers, 10};
+            start = {(size_t)mpiRank, 0};
+            count = {1, 10};
+            Writer(shape, start, count, steps, engineParams, filename);
+        }
+
+        if (mpiGroup == 1)
+        {
+            shape = {(size_t)writers, 10};
+            start = {0, 0};
+            count = shape;
+            Reader(shape, start, shape, steps, engineParams, filename);
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
     }
-    if (worldRank < writers)
+
     {
-        mpiGroup = 0;
+        std::string filename = "TestSscMoreReadersThanWritersNaive";
+        adios2::Params engineParams = {{"Verbose", "0"},
+                                       {"EngineMode", "naive"}};
+
+        int worldRank, worldSize;
+        Dims start, count, shape;
+        MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
+        MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
+        int mpiGroup;
+        int writers = 2;
+        if (worldSize < 3)
+        {
+            return;
+        }
+        if (worldRank < writers)
+        {
+            mpiGroup = 0;
+        }
+        else
+        {
+            mpiGroup = 1;
+        }
+
+        MPI_Comm_split(MPI_COMM_WORLD, mpiGroup, worldRank, &mpiComm);
+
+        MPI_Comm_rank(mpiComm, &mpiRank);
+        MPI_Comm_size(mpiComm, &mpiSize);
+
+        size_t steps = 20;
+
+        if (mpiGroup == 0)
+        {
+            shape = {(size_t)writers, 10};
+            start = {(size_t)mpiRank, 0};
+            count = {1, 10};
+            Writer(shape, start, count, steps, engineParams, filename);
+        }
+
+        if (mpiGroup == 1)
+        {
+            shape = {(size_t)writers, 10};
+            start = {0, 0};
+            count = shape;
+            Reader(shape, start, shape, steps, engineParams, filename);
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
     }
-    else
-    {
-        mpiGroup = 1;
-    }
-
-    MPI_Comm_split(MPI_COMM_WORLD, mpiGroup, worldRank, &mpiComm);
-
-    MPI_Comm_rank(mpiComm, &mpiRank);
-    MPI_Comm_size(mpiComm, &mpiSize);
-
-    size_t steps = 20;
-
-    if (mpiGroup == 0)
-    {
-        shape = {(size_t)writers, 10};
-        start = {(size_t)mpiRank, 0};
-        count = {1, 10};
-        Writer(shape, start, count, steps, engineParams, filename);
-    }
-
-    if (mpiGroup == 1)
-    {
-        shape = {(size_t)writers, 10};
-        start = {0, 0};
-        count = shape;
-        Reader(shape, start, shape, steps, engineParams, filename);
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
 }
 
 int main(int argc, char **argv)
