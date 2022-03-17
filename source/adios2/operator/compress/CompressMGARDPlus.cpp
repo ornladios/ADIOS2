@@ -10,6 +10,7 @@
 
 #include "CompressMGARDPlus.h"
 #include "CompressMGARD.h"
+#include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
@@ -28,6 +29,18 @@ size_t CompressMGARDPlus::Operate(const char *dataIn, const Dims &blockStart,
                                   const Dims &blockCount, const DataType type,
                                   char *bufferOut)
 {
+
+    // Read ADIOS2 files from here
+    adios2::core::ADIOS adios("C++");
+    auto &io = adios.DeclareIO("SubIO");
+    auto *engine = &io.Open(m_Parameters["MeshFile"], adios2::Mode::Read);
+    auto var = io.InquireVariable<float>(m_Parameters["MeshVariable"]);
+    std::vector<float> data(std::accumulate(var->m_Shape.begin(),
+                                            var->m_Shape.end(), sizeof(float),
+                                            std::multiplies<size_t>()));
+    engine->Get(*var, data);
+    // Read ADIOS2 files end, use data for your algorithm
+
     size_t bufferOutOffset = 0;
     const uint8_t bufferVersion = 1;
 
