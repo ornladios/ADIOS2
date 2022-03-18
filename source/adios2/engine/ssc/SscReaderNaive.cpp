@@ -42,7 +42,7 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
         MPI_Recv(&globalSize, 1, MPI_UNSIGNED_LONG_LONG,
                  m_WriterMasterStreamRank, 0, m_StreamComm, MPI_STATUS_IGNORE);
         m_Buffer.resize(globalSize);
-        MPI_Recv(m_Buffer.data(), globalSize, MPI_UNSIGNED_LONG_LONG,
+        MPI_Recv(m_Buffer.data(), globalSize, MPI_CHAR,
                  m_WriterMasterStreamRank, 0, m_StreamComm, MPI_STATUS_IGNORE);
     }
 
