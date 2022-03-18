@@ -31,6 +31,10 @@ SscWriter::SscWriter(IO &io, const std::string &name, const Mode mode,
     helper::GetParameter(m_IO.m_Parameters, "EngineMode", m_EngineMode);
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
 
+    helper::Log("Engine", "SscWriter", "SscWriter", m_EngineMode,
+                m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
+
     if (m_EngineMode == "generic")
     {
         m_EngineInstance = std::make_shared<ssc::SscWriterGeneric>(
@@ -50,9 +54,10 @@ StepStatus SscWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     auto ret = m_EngineInstance->BeginStep(mode, timeoutSeconds,
                                            m_WriterDefinitionsLocked);
 
-    helper::Log("Engine", "SSCWriter", "BeginStep",
-                std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
-                helper::LogMode::INFO);
+    helper::Log("Engine", "SscWriter", "BeginStep",
+                std::to_string(CurrentStep()),
+                m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
 
     return ret;
 }
@@ -72,8 +77,9 @@ void SscWriter::EndStep()
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
-    helper::Log("Engine", "SSCWriter", "EndStep", std::to_string(CurrentStep()),
-                0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
+    helper::Log("Engine", "SscWriter", "EndStep", std::to_string(CurrentStep()),
+                m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
 
     m_EngineInstance->EndStep(m_WriterDefinitionsLocked);
 }
@@ -82,7 +88,8 @@ void SscWriter::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
-    helper::Log("Engine", "SSCWriter", "Close", m_Name, 0, m_Comm.Rank(), 5,
+    helper::Log("Engine", "SscWriter", "Close", m_Name,
+                m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,
                 m_Verbosity, helper::LogMode::INFO);
 
     m_EngineInstance->Close(transportIndex);
@@ -92,16 +99,18 @@ void SscWriter::DoClose(const int transportIndex)
     void SscWriter::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER_FUNC();                                         \
-        helper::Log("Engine", "SSCWriter", "PutSync", variable.m_Name, 0,      \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
+        helper::Log("Engine", "SscWriter", "PutSync", variable.m_Name,         \
+                    m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,   \
+                    m_Verbosity, helper::LogMode::INFO);                       \
         m_EngineInstance->PutDeferred(variable, data);                         \
         m_EngineInstance->PerformPuts();                                       \
     }                                                                          \
     void SscWriter::DoPutDeferred(Variable<T> &variable, const T *data)        \
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER_FUNC();                                         \
-        helper::Log("Engine", "SSCWriter", "PutDeferred", variable.m_Name, 0,  \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
+        helper::Log("Engine", "SscWriter", "PutDeferred", variable.m_Name,     \
+                    m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,   \
+                    m_Verbosity, helper::LogMode::INFO);                       \
         m_EngineInstance->PutDeferred(variable, data);                         \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)

@@ -181,8 +181,9 @@ void SscWriterGeneric::EndStepConsequentFlexible()
 void SscWriterGeneric::SyncWritePattern(bool finalStep)
 {
 
-    helper::Log("Engine", "SSCWriter", "SyncWritePattern", "", 0, m_WriterRank,
-                5, m_Verbosity, helper::LogMode::INFO);
+    helper::Log("Engine", "SscWriter", "SyncWritePattern", "",
+                m_Verbosity >= 10 ? m_WriterRank : 0, m_WriterRank, 5,
+                m_Verbosity, helper::LogMode::INFO);
 
     ssc::Buffer localBuffer(8);
     localBuffer.value<uint64_t>() = 8;
@@ -214,8 +215,9 @@ void SscWriterGeneric::SyncWritePattern(bool finalStep)
 void SscWriterGeneric::SyncReadPattern()
 {
 
-    helper::Log("Engine", "SSCWriter", "SyncReadPattern", "", 0, m_WriterRank,
-                5, m_Verbosity, helper::LogMode::INFO);
+    helper::Log("Engine", "SscWriter", "SyncReadPattern", "",
+                m_Verbosity >= 10 ? m_WriterRank : 0, m_WriterRank, 5,
+                m_Verbosity, helper::LogMode::INFO);
 
     ssc::Buffer globalBuffer;
 

@@ -132,9 +132,9 @@ StepStatus SscReaderGeneric::BeginStep(const StepMode stepMode,
 #undef declare_type
                 else
                 {
-                    helper::Log("Engine", "SSCReader", "BeginStep",
-                                "unknown data type", 0, m_ReaderRank, 0,
-                                m_Verbosity, helper::LogMode::ERROR);
+                    helper::Log("Engine", "SscReader", "BeginStep",
+                                "unknown data type", m_ReaderRank, m_ReaderRank,
+                                0, m_Verbosity, helper::LogMode::ERROR);
                 }
             }
         }
@@ -303,9 +303,10 @@ void SscReaderGeneric::PerformGets()
 #undef declare_type
                         else
                         {
-                            helper::Log("Engine", "SSCReader", "PerformGets",
-                                        "unknown data type", 0, m_ReaderRank, 0,
-                                        m_Verbosity, helper::LogMode::ERROR);
+                            helper::Log("Engine", "SscReader", "PerformGets",
+                                        "unknown data type", m_ReaderRank,
+                                        m_ReaderRank, 0, m_Verbosity,
+                                        helper::LogMode::ERROR);
                         }
                     }
                 }
@@ -427,8 +428,6 @@ void SscReaderGeneric::Close(const int transportIndex)
 #define declare_type(T)                                                        \
     void SscReaderGeneric::GetDeferred(Variable<T> &variable, T *data)         \
     {                                                                          \
-        helper::Log("Engine", "SSCReader", "GetDeferred", variable.m_Name, 0,  \
-                    m_ReaderRank, 5, m_Verbosity, helper::LogMode::INFO);      \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
     std::vector<typename Variable<T>::BPInfo> SscReaderGeneric::BlocksInfo(    \

@@ -31,6 +31,10 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     helper::GetParameter(m_IO.m_Parameters, "EngineMode", m_EngineMode);
 
+    helper::Log("Engine", "SscReader", "SscReader", m_EngineMode,
+                m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
+
     if (m_EngineMode == "generic")
     {
         m_EngineInstance = std::make_shared<ssc::SscReaderGeneric>(
@@ -51,8 +55,9 @@ StepStatus SscReader::BeginStep(StepMode stepMode, const float timeoutSeconds)
                                            m_ReaderSelectionsLocked);
 
     helper::Log("Engine", "SscReader", "BeginStep",
-                std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
-                helper::LogMode::INFO);
+                std::to_string(CurrentStep()),
+                m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
 
     return ret;
 }
@@ -72,8 +77,9 @@ void SscReader::EndStep()
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
-    helper::Log("Engine", "SSCReader", "EndStep", std::to_string(CurrentStep()),
-                0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
+    helper::Log("Engine", "SscReader", "EndStep", std::to_string(CurrentStep()),
+                m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
 
     return m_EngineInstance->EndStep(m_ReaderSelectionsLocked);
 }
@@ -82,7 +88,8 @@ void SscReader::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
-    helper::Log("Engine", "SSCReader", "Close", m_Name, 0, m_Comm.Rank(), 5,
+    helper::Log("Engine", "SscReader", "Close", m_Name,
+                m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,
                 m_Verbosity, helper::LogMode::INFO);
 
     m_EngineInstance->Close(transportIndex);
@@ -92,16 +99,18 @@ void SscReader::DoClose(const int transportIndex)
     void SscReader::DoGetSync(Variable<T> &variable, T *data)                  \
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER_FUNC();                                         \
-        helper::Log("Engine", "SSCReader", "GetSync", variable.m_Name, 0,      \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
+        helper::Log("Engine", "SscReader", "GetSync", variable.m_Name,         \
+                    m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,   \
+                    m_Verbosity, helper::LogMode::INFO);                       \
         m_EngineInstance->GetDeferred(variable, data);                         \
         m_EngineInstance->PerformGets();                                       \
     }                                                                          \
     void SscReader::DoGetDeferred(Variable<T> &variable, T *data)              \
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER_FUNC();                                         \
-        helper::Log("Engine", "SSCReader", "GetDeferred", variable.m_Name, 0,  \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
+        helper::Log("Engine", "SscReader", "GetDeferred", variable.m_Name,     \
+                    m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,   \
+                    m_Verbosity, helper::LogMode::INFO);                       \
         m_EngineInstance->GetDeferred(variable, data);                         \
     }                                                                          \
     std::vector<typename Variable<T>::BPInfo> SscReader::DoBlocksInfo(         \

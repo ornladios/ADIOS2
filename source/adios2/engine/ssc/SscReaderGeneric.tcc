@@ -149,9 +149,10 @@ void SscReaderGeneric::GetDeferredCommon(Variable<T> &variable, T *data)
                     }
                     else
                     {
-                        helper::Log("Engine", "SSCReader", "GetDeferredCommon",
-                                    "unknown ShapeID", 0, m_ReaderRank, 0,
-                                    m_Verbosity, helper::LogMode::ERROR);
+                        helper::Log("Engine", "SscReader", "GetDeferredCommon",
+                                    "unknown ShapeID", m_ReaderRank,
+                                    m_ReaderRank, 0, m_Verbosity,
+                                    helper::LogMode::ERROR);
                     }
                 }
             }

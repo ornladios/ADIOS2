@@ -99,8 +99,6 @@ void SscReaderNaive::Close(const int transportIndex) {}
 #define declare_type(T)                                                        \
     void SscReaderNaive::GetDeferred(Variable<T> &variable, T *data)           \
     {                                                                          \
-        helper::Log("Engine", "SSCReader", "GetDeferred", variable.m_Name, 0,  \
-                    m_ReaderRank, 5, m_Verbosity, helper::LogMode::INFO);      \
         GetDeferredCommon(variable, data);                                     \
     }                                                                          \
     std::vector<typename Variable<T>::BPInfo> SscReaderNaive::BlocksInfo(      \
