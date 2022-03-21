@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdio.h>
 #include "dill.h"
 #include <stdlib.h>

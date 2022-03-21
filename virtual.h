@@ -5,7 +5,7 @@ if ((((char*)c->p->cur_ip) + sizeof(virtual_insn)) >= (char*)c->p->code_limit) {
 }\
 *(virtual_insn*)c->p->cur_ip = i;\
 if (c->dill_debug) {\
-printf("%lx  -- ", (unsigned long)c->p->cur_ip);\
+printf("%p  -- ", c->p->cur_ip);\
 virtual_print_insn(c, NULL, c->p->cur_ip);\
 printf("\n");}\
 c->p->cur_ip = ((char*)c->p->cur_ip)+ sizeof(virtual_insn)
