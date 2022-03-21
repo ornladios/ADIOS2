@@ -42,8 +42,13 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
         MPI_Recv(&globalSize, 1, MPI_UNSIGNED_LONG_LONG,
                  m_WriterMasterStreamRank, 0, m_StreamComm, MPI_STATUS_IGNORE);
         m_Buffer.resize(globalSize);
-        MPI_Recv(m_Buffer.data(), globalSize, MPI_CHAR,
-                 m_WriterMasterStreamRank, 0, m_StreamComm, MPI_STATUS_IGNORE);
+        //        MPI_Recv(m_Buffer.data(), globalSize, MPI_CHAR,
+        //        m_WriterMasterStreamRank, 0, m_StreamComm, MPI_STATUS_IGNORE);
+        // TODO: revert when the crusher MPI bug is fixed
+        ssc::Buffer tmp(globalSize);
+        MPI_Recv(tmp.data(), globalSize, MPI_CHAR, m_WriterMasterStreamRank, 0,
+                 m_StreamComm, MPI_STATUS_IGNORE);
+        std::memcpy(m_Buffer.data(), tmp.data(), globalSize);
     }
 
     MPI_Bcast(&globalSize, 1, MPI_UNSIGNED_LONG_LONG, 0, m_ReaderComm);
