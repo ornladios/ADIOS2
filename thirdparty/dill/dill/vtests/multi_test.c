@@ -1,8 +1,9 @@
-#include <assert.h>
 #include <stdio.h>
 #include "dill.h"
 #include <stdlib.h>
 #include <string.h>
+
+#define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 
 int main(int argc, char **argv) 
 { 

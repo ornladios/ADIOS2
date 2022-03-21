@@ -24,6 +24,7 @@
 #include <malloc.h>
 #endif
 #include <string.h>
+#include <stdint.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -218,7 +219,7 @@ set_mach_reset(dill_stream s, char *arch)
     return 0;
 }
 
-EXTERN void
+extern void
 dill_free_stream(dill_stream s)
 {
     if (s->p->branch_table.label_locs) free(s->p->branch_table.label_locs);
@@ -256,7 +257,7 @@ dill_free_stream(dill_stream s)
 
 extern void DILLprint_version();
 
-EXTERN dill_stream
+extern dill_stream
 dill_cross_init(char *arch)
 {
     dill_stream s = (dill_stream) malloc(sizeof(struct dill_stream_s));
@@ -325,7 +326,7 @@ extern void dill_virtual_init(dill_stream s);
 
 
 
-EXTERN dill_stream
+extern dill_stream
 dill_create_stream()
 {
     dill_stream s;
@@ -350,11 +351,11 @@ dill_create_stream()
     
 
 #ifndef EMULATION_ONLY
-EXTERN void
+extern void
 dill_native_dcg(){}
 #endif
 
-EXTERN dill_stream
+extern dill_stream
 dill_create_raw_stream()
 {
     return dill_cross_init(NATIVE_ARCH);
@@ -389,13 +390,13 @@ extend_params(dill_stream s, int argno)
     s->p->c_param_count = (argno + 1);
 }
 
-EXTERN dill_reg
+extern dill_reg
 dill_vparam(dill_stream s, int param_no)
 {
     return param_no;
 }
 
-EXTERN int
+extern int
 dill_param_reg(dill_stream s, int argno)
 {
     if (argno >= s->p->c_param_count) {
@@ -406,7 +407,7 @@ dill_param_reg(dill_stream s, int argno)
     return s->p->c_param_args[argno].in_reg;
 }
 
-EXTERN void
+extern void
 dill_param_alloc(dill_stream s, int argno, int type, dill_reg *reg_p)
 {
     extend_params(s, argno);
@@ -414,7 +415,7 @@ dill_param_alloc(dill_stream s, int argno, int type, dill_reg *reg_p)
     s->p->c_param_args[argno].type = type;
 }
 
-EXTERN void
+extern void
 dill_param_struct_alloc(dill_stream s, int argno, int type, 
 		     dill_parameter_type *struct_p)
 {
@@ -423,7 +424,7 @@ dill_param_struct_alloc(dill_stream s, int argno, int type,
     s->p->c_param_args[argno].type = type;
 }
 
-EXTERN void
+extern void
 dill_start_simple_proc(dill_stream s, const char *subr_name, int ret_type)
 {
     int i;
@@ -458,14 +459,14 @@ dill_start_simple_proc(dill_stream s, const char *subr_name, int ret_type)
     }
 }
 
-EXTERN void *
+extern void *
 dill_get_fp(dill_exec_handle h)
 {
     return (void *) h->fp;
 }
 
 
-EXTERN dill_exec_handle
+extern dill_exec_handle
 dill_finalize(dill_stream s)
 {
     dill_exec_handle handle = malloc(sizeof(*handle));
@@ -479,16 +480,16 @@ dill_finalize(dill_stream s)
     return handle;
 }
 
-EXTERN dill_exec_handle
+extern dill_exec_handle
 dill_get_handle(dill_stream s)
 {
     char* native_base = s->p->native.code_base;
     dill_exec_handle handle = malloc(sizeof(*handle));
-    int size = (long)s->p->native.code_limit - (long)s->p->native.code_base + END_OF_CODE_BUFFER;
+    intptr_t size = (intptr_t)s->p->native.code_limit - (intptr_t)s->p->native.code_base + END_OF_CODE_BUFFER;
     s->p->native.code_base = NULL;
     if (native_base == 0) {
         native_base = s->p->code_base;
-	size = (long)s->p->code_limit - (long)s->p->code_base + END_OF_CODE_BUFFER;
+	size = (intptr_t)s->p->code_limit - (intptr_t)s->p->code_base + END_OF_CODE_BUFFER;
 	s->p->code_base = NULL;
     }
     handle->fp = (void(*)())s->p->fp;
@@ -505,7 +506,7 @@ dill_get_handle(dill_stream s)
     return handle;
 }
 
-EXTERN void
+extern void
 dill_free_handle(dill_exec_handle handle)
 {
     handle->ref_count--;
@@ -527,7 +528,7 @@ dill_free_handle(dill_exec_handle handle)
     free(handle);
 }
 
-EXTERN void
+extern void
 dill_ref_handle(dill_exec_handle handle)
 {
     handle->ref_count++;
@@ -565,11 +566,11 @@ dill_build_package(dill_stream s, int *pkg_len)
     memcpy(pkg + pkg_size, s->p->code_base, dill_code_size(s));
     pkg_size += dill_code_size(s);
     *pkg_len = pkg_size;
-    ((struct dill_pkg_1 *)pkg)->entry_offset = (char*)s->p->fp - (char*)s->p->code_base;
+    ((struct dill_pkg_1 *)pkg)->entry_offset = (short)( (char*)s->p->fp - (char*)s->p->code_base);
     return pkg;
 }
 
-EXTERN char *
+extern char *
 dill_finalize_package(dill_stream s, int *pkg_len)
 {
     (s->j->package_end)(s);
@@ -579,7 +580,7 @@ dill_finalize_package(dill_stream s, int *pkg_len)
     return p;
 }
 
-EXTERN int
+extern int
 dill_code_size(dill_stream s)
 {
     char* native_base = s->p->native.code_base;
@@ -589,13 +590,13 @@ dill_code_size(dill_stream s)
     return  (int) ((char*)s->p->cur_ip - native_base);
 }
 
-EXTERN void *
+extern void *
 dill_clone_code(dill_stream s, void *new_base, int size)
 {
     return (s->j->clone_code)(s, new_base, size);
 }
 
-EXTERN void *
+extern void *
 dill_take_code(dill_stream s)
 {
     void *ret = s->p->code_base;
@@ -604,7 +605,7 @@ dill_take_code(dill_stream s)
     return ret;
 }
 
-EXTERN int
+extern int
 dill_alloc_label(dill_stream s, char *name)
 {
     struct branch_table *t = &s->p->branch_table;
@@ -619,7 +620,7 @@ dill_alloc_label(dill_stream s, char *name)
     return t->next_label++;
 }
 
-EXTERN void dill_mark_label(dill_stream s, int label)
+extern void dill_mark_label(dill_stream s, int label)
 {
     struct branch_table *t = &s->p->branch_table;
     int label_loc = (int) ((char*)s->p->cur_ip - (char*)s->p->code_base);
@@ -634,7 +635,7 @@ EXTERN void dill_mark_label(dill_stream s, int label)
     }
 }
 
-EXTERN int dill_is_label_mark(dill_stream s)
+extern int dill_is_label_mark(dill_stream s)
 {
     struct branch_table *t = &s->p->branch_table;
     int i;
@@ -691,7 +692,7 @@ extern void dill_mark_call_location(dill_stream s, const char *xfer_name,
     t->call_count++;
 }
 
-EXTERN int
+extern int
 dill_add_const(dill_stream s, void *addr, int size)
 {
     struct branch_table *t = &s->p->branch_table;
@@ -767,7 +768,7 @@ translate_arg_str(const char *string, int *count)
     return list;
 }
 
-EXTERN void
+extern void
 dill_start_proc(dill_stream s, char *name, int ret_type, char *arg_str)
 {
     int arg_count = 0;
@@ -792,7 +793,7 @@ init_code_block(dill_stream s)
 #ifndef MAP_ANONYMOUS
 #define MAP_ANONYMOUS MAP_ANON
 #endif
-    static unsigned long ps = -1;
+    static long ps = -1;
     if (ps == -1) {
         ps = (getpagesize ());
     }
@@ -908,7 +909,7 @@ reg_alloc(reg_set *regs)
     return reg;
 }
 
-EXTERN void
+extern void
 dill_alloc_specific(dill_stream s, dill_reg reg, int type, int class)
 {
     switch(type) {
@@ -931,7 +932,7 @@ dill_alloc_specific(dill_stream s, dill_reg reg, int type, int class)
     }
 }
 
-EXTERN void
+extern void
 dill_dealloc_specific(dill_stream s, dill_reg reg, int type, int class)
 {
     switch(type) {
@@ -954,7 +955,7 @@ dill_dealloc_specific(dill_stream s, dill_reg reg, int type, int class)
     }
 }
 
-EXTERN void
+extern void
 dill_raw_unavailreg(dill_stream s, int type, dill_reg reg)
 {
     if (s->p->unavail_called == 0) {
@@ -973,7 +974,7 @@ dill_raw_unavailreg(dill_stream s, int type, dill_reg reg)
     }
 }
 
-EXTERN void
+extern void
 dill_raw_availreg(dill_stream s, int type, dill_reg reg)
 {
     switch(type) {
@@ -998,7 +999,7 @@ dill_raw_availreg(dill_stream s, int type, dill_reg reg)
     }
 }
 
-EXTERN int
+extern int
 dill_getreg(dill_stream s, int typ)
 {
     s->p->vregs = realloc(s->p->vregs, 
@@ -1010,7 +1011,7 @@ dill_getreg(dill_stream s, int typ)
     return ((s->p->vreg_count++) + 100);
 }
 
-EXTERN int
+extern int
 dill_getvblock(dill_stream s, int size)
 {
     s->p->vregs = realloc(s->p->vregs, 
@@ -1022,7 +1023,7 @@ dill_getvblock(dill_stream s, int size)
     return ((s->p->vreg_count++) + 100);
 }
 
-EXTERN int 
+extern int 
 dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int class)
 {
     int reg = -1;
@@ -1048,7 +1049,6 @@ dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int class)
 	    *reg_p = reg;
 	    return (reg != -1);
 	}
-	break;
     default:
 	if (class == DILL_VAR) {
 	    if ((reg = reg_alloc(&s->p->var_i)) == -1) {
@@ -1072,11 +1072,10 @@ dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int class)
 	    *reg_p = reg;
 	    return (reg != -1);
 	}
-	break;
     }
 }	
 
-EXTERN void
+extern void
 dill_raw_putreg(dill_stream s, dill_reg reg, int type)
 {
     switch (type) {
@@ -1107,7 +1106,7 @@ dill_raw_putreg(dill_stream s, dill_reg reg, int type)
     }
 }	
 
-EXTERN int 
+extern int 
 dill_do_reverse_vararg_push(dill_stream s)
 {
     if (s->j->do_reverse_push) {
@@ -1342,7 +1341,7 @@ dill_pcompare(dill_stream s, int op_type, int data_type, dill_reg dest, dill_reg
 			 s->j->c_data[index].data2, dest, src1, src2);
 }
 
-EXTERN void
+extern void
 dill_dump_reg(dill_stream s, int typ, int reg)
 {
     s->j->print_reg(s, typ, reg);
@@ -1493,7 +1492,7 @@ dump_cur_dill_insn(dill_stream s)
 }
 #endif
 
-EXTERN void
+extern void
 dill_dump(dill_stream s)
 {
     struct disassemble_info info;
@@ -1513,7 +1512,7 @@ dill_dump(dill_stream s)
 	int insn_count = 0;
 	printf("\nDILL virtual instruction stream\n\n");
 	for (p =base; p < code_limit;) {
-	    printf("%lx  - %x - ", (unsigned long)p, (unsigned)*(int*)p);
+	    printf("%p  - %x - ", p, (unsigned)*(int*)p);
 	    l = s->p->virtual.mach_jump->print_insn(s, &info, (void *)p);
 	    printf("\n");
 	    if (l == -1) return;
@@ -1557,7 +1556,7 @@ dill_dump(dill_stream s)
 	    if (p == s->p->fp) {
 		printf("Function entry point:\n");
 	    }
-	    printf("%lx  - %x - ", (unsigned long)p, (unsigned)*(int*)p);
+	    printf("%p  - %x - ", p, (unsigned)*(int*)p);
 	    l = s->j->print_insn(s, &info, (void *)p);
 	    printf("\n");
 	    if (l <= 0) return;

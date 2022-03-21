@@ -1,10 +1,12 @@
 $FT = "f";
 $DT = "d";
+$MSVC_LONG = 0;
 
 while ($_ = $ARGV[0]) {
 	shift;
 	last if /^--$/;
 	if (/^-no_float/) {$FT=""; $DT="";}
+	if (/^-msvc_long/) {$MSVC_LONG = 1;}
 }
 
 ### BEGIN ###
@@ -661,7 +663,7 @@ sub emit_branch {
 	$insn = "$name$t";
 	$insni = "$insn" . "i";
 	if ($t eq "p") {
-	   $cast = "(long)";
+	   $cast = "(IMM_TYPE)";
 	} else {
 	   $cast = "";
 	}
@@ -744,7 +746,7 @@ sub emit_load {
         $upt = "\U$t\E";
 print<<EOF;
     {
-	$type{$t} (*func)(unsigned long, unsigned long);
+	$type{$t} (*func)(UIMM_TYPE, UIMM_TYPE);
 	$type{$t} result;
 	dill_exec_handle h;
 	dill_reg	rd$t;
@@ -758,8 +760,8 @@ print<<EOF;
         	dill_$insn(s, rd$t, dill_param_reg(s, 0), dill_param_reg(s, 1));
         	dill_ret$rt(s, rd$t);
 	h = dill_finalize(s);
-        func = ($type{$t}(*)(unsigned long, unsigned long)) dill_get_fp(h);
-	result = func((unsigned long)&d$t - $offset, $offset);
+        func = ($type{$t}(*)(UIMM_TYPE, UIMM_TYPE)) dill_get_fp(h);
+	result = func((UIMM_TYPE)&d$t - $offset, $offset);
 	dill_free_handle(h);
 	if (d$t != result) {
 	    printf("Failed test for $insn , expected $c_print_formats{$t}, got $c_print_formats{$t}\\n", $cast1 d$t, $cast1 result);
@@ -768,7 +770,7 @@ print<<EOF;
 	}
     }	
     {
-	$type{$t} (*func)(unsigned long);
+	$type{$t} (*func)(UIMM_TYPE);
 	$type{$t} result;
 	dill_reg	rd$t;
 	dill_exec_handle h;
@@ -782,8 +784,8 @@ print<<EOF;
         	dill_$insni(s, rd$t, dill_param_reg(s, 0), $offset);
         	dill_ret$rt(s, rd$t);
 	h = dill_finalize(s);
-        func = ($type{$t}(*)(unsigned long))dill_get_fp(h);
-	result = func((unsigned long)&d$t - $offset);
+        func = ($type{$t}(*)(UIMM_TYPE))dill_get_fp(h);
+	result = func((UIMM_TYPE)&d$t - $offset);
 	dill_free_handle(h);
 	if (d$t != result) {
 	    printf("Failed test for $insn , expected $c_print_formats{$t}, got $c_print_formats{$t}\\n", $cast1 d$t, $cast1 result);
@@ -804,12 +806,12 @@ sub emit_store {
 
 print<<EOF;
     {
-        void (*func)(unsigned long, unsigned long);
+        void (*func)(UIMM_TYPE, UIMM_TYPE);
 	dill_reg	rd$t;
 	dill_exec_handle h;
 
 	if (verbose) printf(" - $insn\\n");
-	s2ul = (unsigned long)&d$t - $offset;
+	s2ul = (UIMM_TYPE)&d$t - $offset;
 
 	/* mem [ reg + reg ] <- reg */
         dill_start_proc(s, "$insn", DILL_V, "%ul%ul");
@@ -819,8 +821,8 @@ print<<EOF;
 		dill_set$t(s, rd$t, s1$t);
         	dill_$insn(s, rd$t, dill_param_reg(s, 0), dill_param_reg(s, 1));
 	h = dill_finalize(s);
-        func = (void(*)(unsigned long, unsigned long)) dill_get_fp(h);
-        ((void(*)(unsigned long, unsigned long))func)(s2ul, $offset);
+        func = (void(*)(UIMM_TYPE, UIMM_TYPE)) dill_get_fp(h);
+        ((void(*)(UIMM_TYPE, UIMM_TYPE))func)(s2ul, $offset);
 	dill_free_handle(h);
 	if (d$t != ($type{$t})s1$t) {
 	    printf("Failed test for $insn\\n");
@@ -830,7 +832,7 @@ print<<EOF;
     }
     {
 	/* mem [ reg + reg ] <- reg */
-        void (*func)(unsigned long);
+        void (*func)(UIMM_TYPE);
 	dill_reg	rd$t;
 	dill_exec_handle h;
 
@@ -843,8 +845,8 @@ print<<EOF;
 		dill_set$t(s, rd$t, s1$t);
         	dill_$insni(s, rd$t, dill_param_reg(s, 0), $offset);
 	h = dill_finalize(s);
-        func = (void(*)(unsigned long))dill_get_fp(h);
-        ((void(*)(unsigned long))func)(s2ul);
+        func = (void(*)(UIMM_TYPE))dill_get_fp(h);
+        ((void(*)(UIMM_TYPE))func)(s2ul);
 	dill_free_handle(h);
 
 	if (d$t != ($type{$t})s1$t) {
@@ -889,8 +891,8 @@ int main(int argc, char *argv[])
     unsigned short	dus, s2us, s1us;
     int 	     	di, s1i, s2i;
     unsigned     	du, s1u, s2u;
-    unsigned long   	dul, s1ul, s2ul;
-    long     		s1l, s2l;
+    UIMM_TYPE   	dul, s1ul, s2ul;
+    IMM_TYPE     		s1l, s2l;
     char		s2c;
     short		s2s;
     unsigned char	s2uc;
@@ -911,8 +913,8 @@ int main(int argc, char *argv[])
     }
 	
 loop:
-    s1p = (void *)(long)rand();
-    s2p = (void *)(long)rand();
+    s1p = (void *)(IMM_TYPE)rand();
+    s2p = (void *)(IMM_TYPE)rand();
 
     s1c = rand() - rand();
     if(!(s1uc = rand() - rand()))
@@ -961,8 +963,8 @@ loop:
 
     shifti = rand() % ((sizeof(int) * BITSPERBYTE) - 2) + 1;
     shiftu = rand() % ((sizeof(unsigned) * BITSPERBYTE)-2) + 1;
-    shiftl = rand() % ((sizeof(long) * BITSPERBYTE)-2) + 1;
-    shiftul = rand() % ((sizeof(unsigned long) * BITSPERBYTE)-2) + 1;
+    shiftl = rand() % ((sizeof(IMM_TYPE) * BITSPERBYTE)-2) + 1;
+    shiftul = rand() % ((sizeof(UIMM_TYPE) * BITSPERBYTE)-2) + 1;
 
     aligned_offset = (rand() - rand()) & ~7;
     unaligned_offset = (rand() - rand());
@@ -1000,7 +1002,7 @@ print<<EOF;
 
     printf("*** %d Errors! on loop %d ****\\n", dill_errors, loop_count -1);
     printf("s1i %d, s2i %d, s1u %x, s2u %x\\n", s1i,s2i,s1u,s2u);
-    printf("s1ul %lu, s2ul %lu, s1l %ld, s2l %ld\\n", 
+    printf("s1ul %zu, s2ul %zu, s1l %zx, s2l %zx\\n", 
 	   s1ul,s2ul,s1l,s2l);
     printf("s1f = %f, s2f = %f, s1d = %f, s2d = %f\\n",
 	   s1f,s2f,s1d,s2d);
@@ -1036,6 +1038,9 @@ typedef void *arg_info_list;  /* just to get us through the #include below */
 	{XMM1, XMM10},
 	{XMM10, XMM1}};
 
+    x86_64_mach_info *tmp = NULL;
+    (void)tmp;
+
     if (regpairid >= (sizeof(intregs) / sizeof(struct regset)))  return 0;
     if ((type1 == DILL_F) || (type1 == DILL_D)) {
     	*reg1p = floatregs[regpairid].reg1;
@@ -1070,8 +1075,8 @@ sub initialize {
 		'us', '%u', 
 		'i', '%d', 
 		'u', '%u',
-		'l', '%ld', 
-		'ul', '%lu', 
+		'l', '%zx', 
+		'ul', '%zx', 
 		'p', '%p', 
 		'f', '%g', 
 		'd', '%g'
@@ -1084,8 +1089,8 @@ sub initialize {
 		'us', '%x', 
 		'i', '%x', 
 		'u', '%x',
-		'l', '%lx', 
-		'ul', '%lx', 
+		'l', '%zx', 
+		'ul', '%zu', 
 		'p', '%p', 
 		'f', '%g', 
 		'd', '%g'
@@ -1098,8 +1103,8 @@ sub initialize {
         	"s", "short",
         	"u", "unsigned",
         	"i", "int",
-        	"l", "long",
-        	"ul", "unsigned long",
+        	"l", "IMM_TYPE",
+        	"ul", "UIMM_TYPE",
         	"p", "void *",
         	"f",    "float",
         	"d", "double",

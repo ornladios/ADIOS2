@@ -6,8 +6,10 @@
 #include <malloc.h>
 #endif
 #ifdef STDC_HEADERS
-#include <unistd.h>
 #include <stdlib.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
 #endif
 
 #include "../config.h"
@@ -120,7 +122,7 @@ int main() {
 #endif
 	{
 	    int size = dill_code_size(s);
-	    static unsigned long ps = -1;
+	    static long ps = -1;
 	    if (ps == -1) {
 	        ps = (getpagesize ());
 	    }

@@ -1,5 +1,14 @@
 #!perl
 
+
+$MSVC_LONG = 0;
+
+while ($_ = $ARGV[0]) {
+	shift;
+	last if /^--$/;
+	if (/^-msvc_long/) {$MSVC_LONG = 1;}
+}
+
 sub upperc {
     local($_) = pop(@_);
     tr/[a-z]/[A-Z]/;
@@ -85,62 +94,62 @@ print HOUT<<EOF;
 typedef enum {iclass_arith3, iclass_arith3i, iclass_arith2, iclass_ret, iclass_convert, iclass_loadstore, iclass_loadstorei, iclass_set, iclass_setf, iclass_mov, iclass_reti, iclass_branch, iclass_branchi, iclass_jump_to_label, iclass_special, iclass_jump_to_reg, iclass_jump_to_imm, iclass_push, iclass_pushi, iclass_pushf, iclass_call, iclass_lea, iclass_compare, iclass_mark_label, iclass_nop} insn_class;
 
 struct arith3 {
-    unsigned short dest;
-    unsigned short src1;
-    unsigned short src2;
+    int dest;
+    int src1;
+    int src2;
 };
 
 struct arith3i {
-    unsigned short dest;
-    unsigned short src;
+    int dest;
+    int src;
     union {
-	long imm;
+	IMM_TYPE imm;
 	void *imm_a;
     }u;
 };
 
 struct arith2 {
-    unsigned short dest;
-    unsigned short src;
+    int dest;
+    int src;
 };
 
 struct arith1 {
-    unsigned short src;
+    int src;
 };
 
 struct setf {
-    unsigned short dest;
+    int dest;
     double imm;
 };
 
 struct branch {
-    unsigned short src1;
-    unsigned short src2;
-    unsigned short label;
+    int src1;
+    int src2;
+    int label;
 };
 
 struct branchi {
-    unsigned short src;
-    unsigned short label;
+    int src;
+    int label;
     void *imm_a;
-    long imm_l;
+    IMM_TYPE imm_l;
 };
 
 struct calli {
-    unsigned short src;
+    int src;
     void *imm_a;
-    long imm_l;
+    IMM_TYPE imm_l;
     const char *xfer_name;
 };
 
 struct label {
-    unsigned short label;
+    int label;
     char *label_name;
 };
 
 struct special {
     special_operations type;
-    long param;
+    IMM_TYPE param;
 };
 
 union operands {
@@ -182,8 +191,8 @@ char *dill_type_names[] = {
     "us",   /* unsigned short */
     "i",    /* int */
     "u",    /* unsigned */
-    "l",    /* long */
-    "ul",   /* unsigned long */
+    "l",    /* long (full register size) */
+    "ul",   /* unsigned long (full register size) */
     "p",    /* pointer */
     "f",    /* floating */
     "d",    /* double */
@@ -349,7 +358,7 @@ sub ret {
 	    ($type eq 'us')) { $dill_type = "i";}
 	print HOUT "#define dill_ret${type}(s, src) (s->j->ret)(s, DILL_" . &upperc($dill_type) . ", 0, src)\n";
 	if ($_ eq 'p') {
-	    print HOUT "#define dill_ret${type}i(s, imm) (s->j->reti)(s, DILL_" . &upperc($type) . ", 0, (unsigned long) imm)\n";
+	    print HOUT "#define dill_ret${type}i(s, imm) (s->j->reti)(s, DILL_" . &upperc($type) . ", 0, (IMM_TYPE) imm)\n";
 	} elsif (($_ eq 'f') || ($_ eq 'd')) {
 	    print HOUT "#define dill_ret${type}i(s, imm) (s->j->retf)(s, DILL_" . &upperc($type) . ", 0, imm)\n";
 	} else {
@@ -443,6 +452,17 @@ extern "C" {
 #endif
 
 
+EOF
+if ($MSVC_LONG) {
+print HOUT "#include <stdint.h>\n";
+print HOUT "#define IMM_TYPE intptr_t\n";
+print HOUT "#define UIMM_TYPE uintptr_t\n";
+} else {
+print HOUT "#define IMM_TYPE long\n";
+print HOUT "#define UIMM_TYPE unsigned long\n";
+}
+print HOUT<<EOF;
+
 struct dill_private_ctx;
 
 typedef struct dill_private_ctx *private_ctx;
@@ -489,36 +509,36 @@ typedef void (*dill_mach_package_end)(dill_stream s);
 typedef void (*dill_mach_package_stitch)(void *package, void *externs);
 typedef void *(*dill_mach_clone_code)(dill_stream s, void *new_base, int size);
 typedef void (*arith_op3)(dill_stream s, int data1, int data2, int dest, int src1, int src2);
-typedef void (*arith_op3i)(dill_stream s, int data1, int data2, int dest, int src1, long imm);
+typedef void (*arith_op3i)(dill_stream s, int data1, int data2, int dest, int src1, IMM_TYPE imm);
 typedef void (*arith_op3fi)(dill_stream s, int data1, int data2, int dest, int src1, double imm);
 typedef void (*arith_op2)(dill_stream s, int data1, int data2, int dest, int src);
-typedef void (*arith_op2i)(dill_stream s, int data1, int data2, int dest, long imm);
+typedef void (*arith_op2i)(dill_stream s, int data1, int data2, int dest, IMM_TYPE imm);
 typedef void (*branch_op)(dill_stream s, int data1, int data2, int src1, int src2, int label);
-typedef void (*branch_opi)(dill_stream s, int data1, int data2, int src, long imm, int label);
+typedef void (*branch_opi)(dill_stream s, int data1, int data2, int src, IMM_TYPE imm, int label);
 typedef void (*compare_op)(dill_stream s, int data1, int data2, int dest, int src1, int src2);
-typedef void (*compare_opi)(dill_stream s, int data1, int data2, int dest, int src, long imm);
+typedef void (*compare_opi)(dill_stream s, int data1, int data2, int dest, int src, IMM_TYPE imm);
 typedef void (*cvt_op)(dill_stream s, int data1, int data2, int dest, int src);
-typedef void (*cvt_opi)(dill_stream s, int data1, int data2, int dest, long imm);
+typedef void (*cvt_opi)(dill_stream s, int data1, int data2, int dest, IMM_TYPE imm);
 typedef void (*ldst_op)(dill_stream s, int data1, int data2, int dest, int src1, int src2);
-typedef void (*ldst_opi)(dill_stream s, int data1, int data2, int dest, int src1, long imm);
+typedef void (*ldst_opi)(dill_stream s, int data1, int data2, int dest, int src1, IMM_TYPE imm);
 typedef void (*ret_op)(dill_stream s, int data1, int data2, int src);
-typedef void (*ret_opi)(dill_stream s, int data1, int data2, long imm);
+typedef void (*ret_opi)(dill_stream s, int data1, int data2, IMM_TYPE imm);
 typedef void (*ret_opf)(dill_stream s, int data1, int data2, double imm);
 typedef void (*jmp_op)(dill_stream s, unsigned long arg);
 typedef void (*jmp_opa)(dill_stream s, void *arg);
 typedef void (*jal_op)(dill_stream s, int dest, int target);
-typedef void (*special_op)(dill_stream s, special_operations type, long param);
+typedef void (*special_op)(dill_stream s, special_operations type, IMM_TYPE param);
 typedef int (*call_opi)(dill_stream s, int type, void *xfer_address, const char *name);
 typedef int (*call_opr)(dill_stream s, int type, int src);
 typedef void (*setf_opi)(dill_stream s, int data1, int data2, int dest, double imm);
 typedef void (*setp_opi)(dill_stream s, int data1, int data2, int dest, void *imm);
 typedef void (*push_op)(dill_stream s, int type, int reg);
-typedef void (*push_opi)(dill_stream s, int type, long value);
+typedef void (*push_opi)(dill_stream s, int type, IMM_TYPE value);
 typedef void (*push_oppi)(dill_stream s, int type, void *value);
 typedef void (*push_opfi)(dill_stream s, int type, double value);
 typedef int (*local_op)(dill_stream s, int flag, int val);
 typedef void (*save_restore_op)(dill_stream s, int save_restore_flag, int type, int reg);
-typedef void (*lea_op)(dill_stream s, int data1, int data2, int dest, int src, long offset);
+typedef void (*lea_op)(dill_stream s, int data1, int data2, int dest, int src, IMM_TYPE offset);
 typedef int (*init_disassembly_op)(dill_stream s, void *dis_info);
 typedef int (*print_insn_op)(dill_stream s, void *dis_info, void *insn);
 typedef void (*print_reg_op)(dill_stream s, int typ, int reg);
@@ -597,16 +617,6 @@ typedef struct {
     int offset;			/* otherwise at this offset from stack */
 } dill_parameter_type;
 
-#if defined(_MSC_VER)
-#ifdef DILL_EXPORTS
-#define EXTERN extern __declspec(dllexport)
-#else
-#define EXTERN extern __declspec(dllimport)
-#endif
-#else
-#define EXTERN extern
-#endif
-
 #endif
 
 /*! Start a DCG native instruction stream
@@ -621,7 +631,7 @@ typedef struct {
  * \\return Will return a new initialized dill_stream unless there is
  * no available memory.
  */
-EXTERN dill_stream dill_create_raw_stream(void);
+extern dill_stream dill_create_raw_stream(void);
 
 /*! Start a DCG virtual instruction stream
  *
@@ -636,38 +646,38 @@ EXTERN dill_stream dill_create_raw_stream(void);
  * \\return Will return a new initialized dill_stream unless there is
  * no available memory.
  */
-EXTERN dill_stream dill_create_stream(void);
-EXTERN dill_stream dill_dup_stream(dill_stream s);
+extern dill_stream dill_create_stream(void);
+extern dill_stream dill_dup_stream(dill_stream s);
 
-EXTERN dill_exec_ctx dill_get_exec_context(dill_stream x);
-EXTERN void dill_free_stream(dill_stream s);
-EXTERN void dill_free_exec_context(dill_exec_ctx c);
-EXTERN void dill_assoc_client_data(dill_exec_ctx ec, int key, long value);
-EXTERN long dill_get_client_data(dill_exec_ctx ec, int key);
-EXTERN void* dill_take_code(dill_stream s);
-EXTERN int dill_alloc_label(dill_stream s, char *name);
-EXTERN void dill_mark_label(dill_stream s, int label);
-EXTERN int dill_is_label_mark(dill_stream s);
-EXTERN int dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int reg_class);
-EXTERN int dill_getreg(dill_stream s, int typ);
-EXTERN void dill_raw_putreg(dill_stream s, dill_reg reg_p, int type);
-EXTERN void dill_raw_unavailreg(dill_stream s, int type, dill_reg reg);
-EXTERN void dill_raw_availreg(dill_stream s, int type, dill_reg reg);
-EXTERN void dill_alloc_specific(dill_stream s, dill_reg reg_p, int type, int reg_class);
-EXTERN void dill_dealloc_specific(dill_stream s, dill_reg reg_p, int type, int reg_class);
-EXTERN void dill_start_simple_proc(dill_stream s, const char *name, int ret_type);
-EXTERN void dill_param_alloc(dill_stream s, int argno, int type, 
+extern dill_exec_ctx dill_get_exec_context(dill_stream x);
+extern void dill_free_stream(dill_stream s);
+extern void dill_free_exec_context(dill_exec_ctx c);
+extern void dill_assoc_client_data(dill_exec_ctx ec, int key, IMM_TYPE value);
+extern IMM_TYPE dill_get_client_data(dill_exec_ctx ec, int key);
+extern void* dill_take_code(dill_stream s);
+extern int dill_alloc_label(dill_stream s, char *name);
+extern void dill_mark_label(dill_stream s, int label);
+extern int dill_is_label_mark(dill_stream s);
+extern int dill_raw_getreg(dill_stream s, dill_reg *reg_p, int type, int reg_class);
+extern int dill_getreg(dill_stream s, int typ);
+extern void dill_raw_putreg(dill_stream s, dill_reg reg_p, int type);
+extern void dill_raw_unavailreg(dill_stream s, int type, dill_reg reg);
+extern void dill_raw_availreg(dill_stream s, int type, dill_reg reg);
+extern void dill_alloc_specific(dill_stream s, dill_reg reg_p, int type, int reg_class);
+extern void dill_dealloc_specific(dill_stream s, dill_reg reg_p, int type, int reg_class);
+extern void dill_start_simple_proc(dill_stream s, const char *name, int ret_type);
+extern void dill_param_alloc(dill_stream s, int argno, int type, 
 			  dill_reg *regp);
-EXTERN void dill_param_struct_alloc(dill_stream s, int argno, int type, 
+extern void dill_param_struct_alloc(dill_stream s, int argno, int type, 
 				 dill_parameter_type *paramp);
-EXTERN dill_reg dill_param_reg(dill_stream s, int argno);
-EXTERN dill_reg dill_vparam(dill_stream s, int argno);
-EXTERN void dill_start_proc(dill_stream s, char *name, int ret_type, char *arg_str);
-EXTERN void dill_dump(dill_stream s);
-EXTERN dill_exec_handle dill_finalize(dill_stream s);
-EXTERN void dill_begin_prefix_code(dill_stream s);
-EXTERN dill_exec_handle dill_get_handle(dill_stream s);
-EXTERN char *dill_finalize_package(dill_stream s, int *pkg_len);
+extern dill_reg dill_param_reg(dill_stream s, int argno);
+extern dill_reg dill_vparam(dill_stream s, int argno);
+extern void dill_start_proc(dill_stream s, char *name, int ret_type, char *arg_str);
+extern void dill_dump(dill_stream s);
+extern dill_exec_handle dill_finalize(dill_stream s);
+extern void dill_begin_prefix_code(dill_stream s);
+extern dill_exec_handle dill_get_handle(dill_stream s);
+extern char *dill_finalize_package(dill_stream s, int *pkg_len);
 typedef struct _dill_extern_entry {
     /*! the textual name of the external entry */
     char *extern_name;
@@ -675,20 +685,20 @@ typedef struct _dill_extern_entry {
     void *extern_value;
 } dill_extern_entry;
 
-EXTERN dill_exec_handle dill_package_stitch(char *package, dill_extern_entry* externs);
-EXTERN void *dill_package_entry(char* package);
-EXTERN void dill_free_handle(dill_exec_handle h);
-EXTERN void dill_ref_handle(dill_exec_handle h);
-EXTERN void *dill_get_fp(dill_exec_handle h);
-EXTERN void *dill_clone_code(dill_stream s, void *new_base, int size);
-EXTERN int dill_code_size(dill_stream s);
-EXTERN int dill_do_reverse_vararg_push(dill_stream s);
-EXTERN int dill_getvblock(dill_stream s, int size);
-EXTERN void dill_virtual_lea(dill_stream s, int dest, int src);
-EXTERN void dill_pbr(dill_stream s, int op_type, int data_type, dill_reg src1, 
+extern dill_exec_handle dill_package_stitch(char *package, dill_extern_entry* externs);
+extern void *dill_package_entry(char* package);
+extern void dill_free_handle(dill_exec_handle h);
+extern void dill_ref_handle(dill_exec_handle h);
+extern void *dill_get_fp(dill_exec_handle h);
+extern void *dill_clone_code(dill_stream s, void *new_base, int size);
+extern int dill_code_size(dill_stream s);
+extern int dill_do_reverse_vararg_push(dill_stream s);
+extern int dill_getvblock(dill_stream s, int size);
+extern void dill_virtual_lea(dill_stream s, int dest, int src);
+extern void dill_pbr(dill_stream s, int op_type, int data_type, dill_reg src1, 
 		   dill_reg src2, int label);
-EXTERN void dill_markused(dill_stream s, int type, int reg);
-EXTERN void dill_pcompare(dill_stream s, int op_type, int data_type, 
+extern void dill_markused(dill_stream s, int type, int reg);
+extern void dill_pcompare(dill_stream s, int op_type, int data_type, 
 			  dill_reg dest, dill_reg src1, 
 			  dill_reg src2);
 
@@ -701,7 +711,7 @@ EXTERN void dill_pcompare(dill_stream s, int op_type, int data_type,
  * get_xfer_ptr() to support DCG of C++ method calls.
  * \\return the address (as a void*) of the method's code
  */
-EXTERN void *get_this_ptr(void *method_ptr, void *object_ptr);
+extern void *get_this_ptr(void *method_ptr, void *object_ptr);
 
 /*!  Return the transfer address to be used in a DCG method call
  *
@@ -711,7 +721,7 @@ EXTERN void *get_this_ptr(void *method_ptr, void *object_ptr);
  * get_this_ptr() to support DCG of C++ method calls.  
  * \\return the address (as a void*) of the method's code
  */
-EXTERN void *get_xfer_ptr(void *method_ptr, void *object_ptr);
+extern void *get_xfer_ptr(void *method_ptr, void *object_ptr);
 
 #define dill_type_align(s, t) s->j->type_align[t]
 #define dill_type_size(s, t) s->j->type_size[t]
@@ -731,8 +741,8 @@ enum {
     DILL_US,   /* unsigned short */
     DILL_I,    /* int */
     DILL_U,    /* unsigned */
-    DILL_L,    /* long */
-    DILL_UL,   /* unsigned long */
+    DILL_L,    /* long (full register size */
+    DILL_UL,   /* unsigned long (full register size) */
     DILL_P,    /* pointer */
     DILL_F,    /* floating */
     DILL_D,    /* double */

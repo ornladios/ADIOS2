@@ -29,17 +29,17 @@ unpack_package(char *package, call_t *t, char **code_p)
     t->call_locs = malloc(sizeof(t->call_locs[0]) * pkg->symbol_count);
     memset(t->call_locs, 0, sizeof(t->call_locs[0]) * pkg->symbol_count);
     for (count = 0; count<pkg->symbol_count; count++) {
-	int call_len;
+	size_t call_len;
 	t->call_locs[count].loc = *((int*)p);
 	t->call_locs[count].xfer_name = (p + sizeof(int));
 	call_len = sizeof(int) + strlen(t->call_locs[count].xfer_name) + 1;
-	call_len = (call_len + 7) & -8;  /* round up to mod 8 */
+	call_len = (call_len + 7) & (size_t)-8;  /* round up to mod 8 */
 	p += call_len;
     }
     *code_p = p;
 }
 
-EXTERN void*
+extern void*
 dill_package_entry(char* package)
 {
     struct dill_pkg_1 *pkg = (struct dill_pkg_1 *) package;
@@ -71,7 +71,7 @@ dill_lookup_xfer_addrs(call_t *t, xfer_entry *x)
     }
 }
 
-EXTERN dill_exec_handle
+extern dill_exec_handle
 dill_package_stitch(char *pkg, dill_extern_entry* extra_externs)
 {
     dill_exec_handle handle = malloc(sizeof(*handle));
