@@ -190,53 +190,53 @@ extern int x86_64_type_size[];
 extern void *gen_x86_64_mach_info();
 extern void x86_64_arith3(dill_stream c, int op, int commut, int dest, int src1, int src2);
 extern void x86_64_arith2(dill_stream c, int op, int subop, int dest, int src);
-extern void x86_64_mul(dill_stream c, int signed, int imm, int dest, int src1, long src2);
+extern void x86_64_mul(dill_stream c, int signed, int imm, int dest, int src1, IMM_TYPE src2);
 
 extern void x86_64_div_mod(dill_stream c, int sign, int div, int dest, int src1, int src2);
-extern void x86_64_div_modi(dill_stream c, int sign, int div, int dest, int src1, long imm);
-extern void x86_64_arith3i(dill_stream c, int op, int commut, int dest, int src1, long src2);
+extern void x86_64_div_modi(dill_stream c, int sign, int div, int dest, int src1, IMM_TYPE imm);
+extern void x86_64_arith3i(dill_stream c, int op, int commut, int dest, int src1, IMM_TYPE src2);
 extern void x86_64_shift(dill_stream c, int op, int junk, int dest, int src1, int src2);
-extern void x86_64_shifti(dill_stream c, int op, int junk, int dest, int src, long imm);
-extern void x86_64_special(dill_stream c, special_operations type, long param);
-extern void x86_64_set(dill_stream c, int r, long imm);
+extern void x86_64_shifti(dill_stream c, int op, int junk, int dest, int src, IMM_TYPE imm);
+extern void x86_64_special(dill_stream c, special_operations type, IMM_TYPE param);
+extern void x86_64_set(dill_stream c, int r, IMM_TYPE imm);
 extern void x86_64_proc_start(dill_stream c, char *subr_name, int arg_count, 
 			   arg_info_list args, dill_reg *arglist);
 extern void x86_64_end(dill_stream c);
 extern void x86_64_package_end(dill_stream c);
 extern void *x86_64_clone_code(dill_stream c, void *base, int size);
 extern void x86_64_ret(dill_stream c, int data1, int data2, int src);
-extern void x86_64_reti(dill_stream c, int data1, int data2, long imm);
+extern void x86_64_reti(dill_stream c, int data1, int data2, IMM_TYPE imm);
 extern void x86_64_retf(dill_stream c, int data1, int data2, double imm);
 extern int x86_64_getreg(dill_stream c, dill_reg *reg_p, int type, int class);
 extern int x86_64_putreg(dill_stream c, dill_reg reg, int type);
 extern void
-x86_64_ploadi(dill_stream c, int type, int junk, int dest, int src, long offset);
+x86_64_ploadi(dill_stream c, int type, int junk, int dest, int src, IMM_TYPE offset);
 extern void
 x86_64_pload(dill_stream c, int type, int junk, int dest, int src1, int src2);
 extern void
-x86_64_pbsloadi(dill_stream c, int type, int junk, int dest, int src, long offset);
+x86_64_pbsloadi(dill_stream c, int type, int junk, int dest, int src, IMM_TYPE offset);
 extern void
 x86_64_pbsload(dill_stream c, int type, int junk, int dest, int src1, int src2);
 extern void
-x86_64_pstorei(dill_stream c, int type, int junk, int dest, int src, long offset);
+x86_64_pstorei(dill_stream c, int type, int junk, int dest, int src, IMM_TYPE offset);
 extern void
 x86_64_pstore(dill_stream c, int type, int junk, int dest, int src1, int src2);
 extern void
-x86_64_modi(dill_stream c, int type, int junk, int dest, int src, long offset);
+x86_64_modi(dill_stream c, int type, int junk, int dest, int src, IMM_TYPE offset);
 extern void
 x86_64_mod(dill_stream c, int type, int junk, int dest, int src1, int src2);
 extern void
-x86_64_divi(dill_stream c, int type, int junk, int dest, int src, long offset);
+x86_64_divi(dill_stream c, int type, int junk, int dest, int src, IMM_TYPE offset);
 extern void
 x86_64_div(dill_stream c, int type, int junk, int dest, int src1, int src2);
 extern void
-x86_64_converti(dill_stream c, int from_type, int to_type, int dest, long src);
+x86_64_converti(dill_stream c, int from_type, int to_type, int dest, IMM_TYPE src);
 extern void
 x86_64_convert(dill_stream c, int from_type, int to_type, int dest, int src);
 extern void
 x86_64_mov(dill_stream c, int type, int junk, int dest, int src);
 extern void
-x86_64_pset(dill_stream c, int type, int junk, int dest, long imm);
+x86_64_pset(dill_stream c, int type, int junk, int dest, IMM_TYPE imm);
 extern void
 x86_64_setf(dill_stream c, int type, int junk, int dest, double imm);
 extern void
@@ -244,13 +244,13 @@ x86_64_setp(dill_stream c, int type, int junk, int dest, void *imm);
 extern void
 x86_64_branch(dill_stream c, int op, int type, int src1, int src2, int label);
 extern void
-x86_64_branchi(dill_stream c, int op, int type, int src, long imm, int label);
+x86_64_branchi(dill_stream c, int op, int type, int src, IMM_TYPE imm, int label);
 extern void
 x86_64_compare(dill_stream s, int op, int type, int dest, int src1, int src2);
 extern void
-x86_64_comparei(dill_stream s, int op, int type, int dest, int src, long imm);
+x86_64_comparei(dill_stream s, int op, int type, int dest, int src, IMM_TYPE imm);
 extern void 
-x86_64_lea(dill_stream c, int junk, int junk1, int dest, int src, long imm);
+x86_64_lea(dill_stream c, int junk, int junk1, int dest, int src, IMM_TYPE imm);
 extern void 
 x86_64_farith(dill_stream c, int op, int typ, int dest, int src1, int src2);
 extern void 
@@ -263,7 +263,7 @@ extern void x86_64_jal(dill_stream c, int return_addr_reg, int target);
 extern int x86_64_calli(dill_stream c, int type, void *xfer_address, const char *name);
 extern int x86_64_callr(dill_stream c, int type, int src);
 extern void x86_64_push(dill_stream c, int type, int reg);
-extern void x86_64_pushi(dill_stream c, int type, long value);
+extern void x86_64_pushi(dill_stream c, int type, IMM_TYPE value);
 extern void x86_64_pushpi(dill_stream c, int type, void *value);
 extern void x86_64_pushfi(dill_stream c, int type, double value);
 extern int x86_64_local_op(dill_stream c, int flag, int val);

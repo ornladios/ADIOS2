@@ -4,6 +4,7 @@
 #include "virtual.h"
 #undef NDEBUG
 #include "assert.h"
+#include <stdint.h>
 #include <stdarg.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
