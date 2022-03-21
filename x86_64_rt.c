@@ -1,9 +1,18 @@
 #include "config.h"
+#include <stdint.h>
+#include <stdio.h>
 #include "dill.h"
 #include "dill_internal.h"
+#ifdef HAVE_SYS_MMAN_H
 #include "sys/mman.h"
+#endif
 #ifdef HAVE_MEMORY_H
 #include "memory.h"
+#endif
+#ifdef USE_VIRTUAL_PROTECT
+#include <windows.h>
+#include <memoryapi.h>
+#include <intrin.h>
 #endif
 #include "x86.h"
 
@@ -23,7 +32,7 @@ x86_64_rt_call_link(char *code, call_t *t)
     int i;
 
     for(i=0; i< t->call_count; i++) {
-	unsigned long tmp = (unsigned long) t->call_locs[i].xfer_addr;
+	uintptr_t tmp = (uintptr_t) t->call_locs[i].xfer_addr;
 	long *call_addr = (long *) (code + t->call_locs[i].loc + 2);
 	memcpy(call_addr, &tmp, 8);
     }
@@ -38,14 +47,22 @@ x86_64_flush(void *base, void *limit)
 
 	/* flush every 8 bytes of preallocated insn stream. */
 	while((char*)ptr < (char*) limit) {
+#ifndef _MSC_VER
+#ifdef __x86_64__
 	    asm volatile ("clflush (%0)" : /* */ : "r" (ptr));
+#endif
+#else
+        _mm_clflush(ptr);
+#endif
 	    ptr = (char *)ptr + 8;
 	}
+#ifndef _MSC_VER
 	asm volatile("nop");
 	asm volatile("nop");
 	asm volatile("nop");
 	asm volatile("nop");
 	asm volatile("nop");
+#endif
     }
 #endif
 }    
@@ -65,6 +82,11 @@ x86_64_package_stitch(char *code, call_t *t, dill_pkg pkg)
 		      PROT_EXEC | PROT_READ | PROT_WRITE, 
 		      MAP_ANONYMOUS|MAP_PRIVATE, -1, 0);
     memcpy(tmp, code, pkg->code_size);
+#endif
+#ifdef USE_VIRTUAL_PROTECT
+    int result;
+    DWORD dummy;
+    result = VirtualProtect(tmp, pkg->code_size, PAGE_EXECUTE_READWRITE, &dummy);
 #endif
     return tmp + pkg->entry_offset;
 }

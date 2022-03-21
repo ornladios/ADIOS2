@@ -168,20 +168,14 @@ int main(int argc, char *argv[]) {
     long     	s1l, s2l;
     float		s1f, s2f;
     double		s1d, s2d;
-    char 		*s1p, *s2p;
-    int		i, max_iters = 10;
+    int		i;
     int verbose = 0;
 
     for (i=1; i < argc; i++) {
 	if (strcmp(argv[i], "-v") == 0) {
 	    verbose++;
-	} else {
-	    max_iters = atoi(argv[i]);
 	}
     }
-
-    s1p = (void *)(long)rand();
-    s2p = (void *)(long)rand();
 
     s1i = rand() - rand();
     s2i = rand() - rand();
