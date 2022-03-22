@@ -34,7 +34,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    :caption: Advanced Topics
    
    advanced/aggregation
-   advanced/reduction
+   advanced/memory_management
    advanced/gpu_aware
    advanced/plugins
    
