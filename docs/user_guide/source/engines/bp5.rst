@@ -78,7 +78,7 @@ This engine allows the user to fine tune the buffering operations through the fo
 
    #. **BufferVType**: *chunk* or *malloc*, default is chunking. Chunking maintains the buffer as a list of memory blocks, either ADIOS-owned for sync-ed Puts and small Puts, and user-owned pointers of deferred Puts. Malloc maintains a single memory block and extends it (reallocates) whenever more data is buffered. Chunking incurs extra cost in I/O by having to write data in chunks (multiple write system calls), which can be helped by increasing *BufferChunkSize* and *MinDeferredSize*. Malloc incurs extra cost by reallocating memory whenever more data is buffered (by Put()), which can be helped by increasing *InitialBufferSize*. 
 
-   #. **BufferChunkSize**: (for *chunk* buffer type) The size of each memory buffer chunk, default is 128MB but it is worth increasing up to 2GB if possible for maximum write performance.
+   #. **BufferChunkSize**: (for *chunk* buffer type) The size of each memory buffer chunk, default is 128MB but it is worth increasing up to 2147381248 (a bit less than 2GB) if possible for maximum write performance.
 
    #. **MinDeferredSize**: (for *chunk* buffer type) Small user variables are always buffered, default is 4MB. 
 
