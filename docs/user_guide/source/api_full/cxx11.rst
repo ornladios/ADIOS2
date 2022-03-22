@@ -71,6 +71,8 @@ The following section provides a summary of the available functionality for each
    :members:
 
 
+.. _C++11 Engine class:
+
 :ref:`Engine` class
 -------------------
 
