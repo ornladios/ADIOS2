@@ -107,8 +107,8 @@ redo:
     {
         // CMusleep(Stream->CPInfo->cm, SleepInterval);
         usleep(SleepInterval);
-        TimeoutRemainingMsec -= (SleepInterval/1000);
-        WaitWarningRemainingMsec -= (SleepInterval/1000);
+        TimeoutRemainingMsec -= (SleepInterval / 1000);
+        WaitWarningRemainingMsec -= (SleepInterval / 1000);
         if (WaitWarningRemainingMsec == 0)
         {
             fprintf(stderr,
