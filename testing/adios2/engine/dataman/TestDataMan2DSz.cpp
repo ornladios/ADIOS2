@@ -107,7 +107,7 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     adios2::IO dataManIO = adios.DeclareIO("WAN");
     dataManIO.SetEngine("DataMan");
     dataManIO.SetParameters(engineParams);
-    dataManIO.AddOperation("bpFloats", "sz", {{"accuracy", "0.01"}});
+    //    dataManIO.AddOperation("bpFloats", "sz", {{"accuracy", "0.01"}});
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
