@@ -90,13 +90,17 @@ public:
         }
     }
 
-    void AddToJsonStr(std::string &rankLog) const
+    void AddToJsonStr(std::string &rankLog, const bool addComma = true) const
     {
         if (0 == m_nCalls)
             return;
 
+        if (addComma)
+        {
+            rankLog += ", ";
+        }
         rankLog +=
-            "\"" + m_Process + "\":{ \"mus\":" + std::to_string(m_ProcessTime);
+            "\"" + m_Process + "\":{\"mus\":" + std::to_string(m_ProcessTime);
         rankLog += ", \"nCalls\":" + std::to_string(m_nCalls);
 
         if (500 > m_nCalls)
@@ -106,7 +110,7 @@ public:
                 rankLog += ", \"trace\":[" + m_Details + "]";
             }
         }
-        rankLog += "}, ";
+        rankLog += "}";
     }
 
     std::string m_Details;

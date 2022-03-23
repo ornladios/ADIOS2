@@ -72,6 +72,10 @@ endif()
 if(Python_Interpreter_FOUND)
   add_subdirectory(bp4dbg)
   add_subdirectory(bp5dbg)
+  install(PROGRAMS adios2_json_pp.py
+    RENAME adios2_json_pp
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT adios2_scripts-runtime)
 endif()
 
 install(PROGRAMS adios2_deactivate_bp

@@ -77,6 +77,7 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
         TimePoint wait_start = Now();
         if (m_WriteFuture.valid())
         {
+            m_Profiler.Start("WaitOnAsync");
             m_WriteFuture.get();
             m_Comm.Barrier();
             AsyncWriteDataCleanup();
@@ -85,12 +86,17 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
             {
                 WriteMetadataFileIndex(m_LatestMetaDataPos,
                                        m_LatestMetaDataSize);
-                std::cout << "BeginStep, wait on async write was = "
-                          << wait.count() << " time since EndStep was = "
-                          << m_LastTimeBetweenSteps.count()
-                          << " expect next one to be = "
-                          << m_ExpectedTimeBetweenSteps.count() << std::endl;
+                if (m_Parameters.verbose > 0)
+                {
+                    std::cout << "BeginStep, wait on async write was = "
+                              << wait.count() << " time since EndStep was = "
+                              << m_LastTimeBetweenSteps.count()
+                              << " expect next one to be = "
+                              << m_ExpectedTimeBetweenSteps.count()
+                              << std::endl;
+                }
             }
+            m_Profiler.Stop("WaitOnAsync");
         }
     }
 
@@ -1452,11 +1458,13 @@ void BP5Writer::DoClose(const int transportIndex)
     Seconds wait(0.0);
     if (m_WriteFuture.valid())
     {
+        m_Profiler.Start("WaitOnAsync");
         m_AsyncWriteLock.lock();
         m_flagRush = true;
         m_AsyncWriteLock.unlock();
         m_WriteFuture.get();
         wait += Now() - wait_start;
+        m_Profiler.Stop("WaitOnAsync");
     }
 
     m_FileDataManager.CloseFiles(transportIndex);
@@ -1474,15 +1482,17 @@ void BP5Writer::DoClose(const int transportIndex)
     if (m_Parameters.AsyncWrite)
     {
         // wait until all process' writing thread completes
+        m_Profiler.Start("WaitOnAsync");
         wait_start = Now();
         m_Comm.Barrier();
         AsyncWriteDataCleanup();
         wait += Now() - wait_start;
-        if (m_Comm.Rank() == 0)
+        if (m_Comm.Rank() == 0 && m_Parameters.verbose > 0)
         {
             std::cout << "Close waited " << wait.count()
                       << " seconds on async threads" << std::endl;
         }
+        m_Profiler.Stop("WaitOnAsync");
     }
 
     if (m_Comm.Rank() == 0)

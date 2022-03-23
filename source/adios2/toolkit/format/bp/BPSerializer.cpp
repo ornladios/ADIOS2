@@ -47,12 +47,12 @@ std::string BPSerializer::GetRankProfilingJSON(
 {
     auto lf_WriterTimer = [](std::string &rankLog,
                              const profiling::Timer &timer) {
-        rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
-                   "\": " + std::to_string(timer.m_ProcessTime) + ", ";
+        rankLog += ", \"" + timer.m_Process + "_" + timer.GetShortUnits() +
+                   "\": " + std::to_string(timer.m_ProcessTime);
     };
 
     // prepare string dictionary per rank
-    std::string rankLog("{ \"rank\": " + std::to_string(m_RankMPI) + ", ");
+    std::string rankLog("{ \"rank\": " + std::to_string(m_RankMPI));
 
     auto &profiler = m_Profiler;
 
@@ -61,42 +61,30 @@ std::string BPSerializer::GetRankProfilingJSON(
     // avoid whitespace
     std::replace(timeDate.begin(), timeDate.end(), ' ', '_');
 
-    rankLog += "\"start\": \"" + timeDate + "\", ";
-    rankLog += "\"threads\": " + std::to_string(m_Parameters.Threads) + ", ";
+    rankLog += ", \"start\": \"" + timeDate + "\"";
+    rankLog += ", \"threads\": " + std::to_string(m_Parameters.Threads);
     rankLog +=
-        "\"bytes\": " + std::to_string(profiler.m_Bytes.at("buffering")) + ", ";
+        ", \"bytes\": " + std::to_string(profiler.m_Bytes.at("buffering"));
 
     for (const auto &timerPair : profiler.m_Timers)
     {
         const profiling::Timer &timer = timerPair.second;
-        rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
-                   "\": " + std::to_string(timer.m_ProcessTime) + ", ";
+        rankLog += ", \"" + timer.m_Process + "_" + timer.GetShortUnits() +
+                   "\": " + std::to_string(timer.m_ProcessTime);
     }
 
     const size_t transportsSize = transportsTypes.size();
 
     for (unsigned int t = 0; t < transportsSize; ++t)
     {
-        rankLog += "\"transport_" + std::to_string(t) + "\": { ";
-        rankLog += "\"type\": \"" + transportsTypes[t] + "\", ";
+        rankLog += ", \"transport_" + std::to_string(t) + "\": { ";
+        rankLog += "\"type\": \"" + transportsTypes[t] + "\"";
 
         for (const auto &transportTimerPair : transportsProfilers[t]->m_Timers)
         {
             lf_WriterTimer(rankLog, transportTimerPair.second);
         }
-        // replace last comma with space
-        rankLog.pop_back();
-        rankLog.pop_back();
-        rankLog += " ";
-
-        if (t == transportsSize - 1) // last element
-        {
-            rankLog += "}";
-        }
-        else
-        {
-            rankLog += "},";
-        }
+        rankLog += "}";
     }
     rankLog += " }"; // end rank entry
 
