@@ -38,20 +38,12 @@ Engine::operator bool() const noexcept
 StepStatus Engine::BeginStep(const StepMode mode, const float timeoutSeconds)
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::BeginStep");
-    if (m_Engine->m_EngineType == "NULL")
-    {
-        return StepStatus::EndOfStream;
-    }
     return m_Engine->BeginStep(mode, timeoutSeconds);
 }
 
 StepStatus Engine::BeginStep()
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::BeginStep");
-    if (m_Engine->m_EngineType == "NULL")
-    {
-        return StepStatus::EndOfStream;
-    }
     return m_Engine->BeginStep();
 }
 
@@ -59,11 +51,6 @@ void Engine::Put(Variable variable, const pybind11::array &array,
                  const Mode launch)
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::Put numpy array");
-    if (m_Engine->m_EngineType == "NULL")
-    {
-        return;
-    }
-
     helper::CheckForNullptr(variable.m_VariableBase,
                             "for variable, in call to Engine::Put numpy array");
 
@@ -96,11 +83,6 @@ void Engine::Put(Variable variable, const std::string &string)
 {
     helper::CheckForNullptr(m_Engine,
                             "for engine, in call to Engine::Put string");
-    if (m_Engine->m_EngineType == "NULL")
-    {
-        return;
-    }
-
     helper::CheckForNullptr(variable.m_VariableBase,
                             "for variable, in call to Engine::Put string");
 
@@ -120,20 +102,12 @@ void Engine::Put(Variable variable, const std::string &string)
 void Engine::PerformPuts()
 {
     helper::CheckForNullptr(m_Engine, "in call to PerformPuts");
-    if (m_Engine->m_EngineType == "NULL")
-    {
-        return;
-    }
     m_Engine->PerformPuts();
 }
 
 void Engine::PerformDataWrite()
 {
     helper::CheckForNullptr(m_Engine, "in call to PerformDataWrite");
-    if (m_Engine->m_EngineType == "NULL")
-    {
-        return;
-    }
     m_Engine->PerformDataWrite();
 }
 
@@ -141,11 +115,6 @@ void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
 {
     helper::CheckForNullptr(m_Engine,
                             "for engine, in call to Engine::Get a numpy array");
-    if (m_Engine->m_EngineType == "NULL")
-    {
-        return;
-    }
-
     helper::CheckForNullptr(
         variable.m_VariableBase,
         "for variable, in call to Engine::Get a numpy array");
@@ -182,11 +151,6 @@ std::string Engine::Get(Variable variable, const Mode launch)
     std::string string;
     helper::CheckForNullptr(m_Engine,
                             "for engine, in call to Engine::Get a numpy array");
-    if (m_Engine->m_EngineType == "NULL")
-    {
-        return "";
-    }
-
     helper::CheckForNullptr(variable.m_VariableBase,
                             "for variable, in call to Engine::Get a string");
 
@@ -210,40 +174,24 @@ std::string Engine::Get(Variable variable, const Mode launch)
 void Engine::PerformGets()
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::PerformGets");
-    if (m_Engine->m_EngineType == "NULL")
-    {
-        return;
-    }
     m_Engine->PerformGets();
 }
 
 void Engine::EndStep()
 {
     helper::CheckForNullptr(m_Engine, "for engine, in call to Engine::EndStep");
-    if (m_Engine->m_EngineType == "NULL")
-    {
-        return;
-    }
     m_Engine->EndStep();
 }
 
 void Engine::Flush(const int transportIndex)
 {
     helper::CheckForNullptr(m_Engine, "for engine, in call to Engine::Flush");
-    if (m_Engine->m_EngineType == "NULL")
-    {
-        return;
-    }
     m_Engine->Flush(transportIndex);
 }
 
 void Engine::Close(const int transportIndex)
 {
     helper::CheckForNullptr(m_Engine, "for engine, in call to Engine::Close");
-    if (m_Engine->m_EngineType == "NULL")
-    {
-        return;
-    }
     m_Engine->Close(transportIndex);
 
     // erase Engine object from IO
@@ -257,10 +205,6 @@ size_t Engine::CurrentStep() const
 {
     helper::CheckForNullptr(m_Engine,
                             "for engine, in call to Engine::CurrentStep");
-    if (m_Engine->m_EngineType == "NULL")
-    {
-        return MaxSizeT;
-    }
     return m_Engine->CurrentStep();
 }
 

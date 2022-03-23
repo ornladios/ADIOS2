@@ -53,6 +53,7 @@ TEST_F(NullWriteReadTests_C_API, NullWriteRead1D8)
         const std::vector<std::size_t> shape{static_cast<size_t>(Nx * mpiSize)};
         const std::vector<std::size_t> start{static_cast<size_t>(Nx * mpiRank)};
         const std::vector<std::size_t> count{Nx};
+        std::vector<double> data(Nx, 1.0);
 
         adios2_variable *var = adios2_define_variable(
             io, "r64", adios2_type_double, 1, shape.data(), start.data(),
@@ -68,7 +69,7 @@ TEST_F(NullWriteReadTests_C_API, NullWriteRead1D8)
         {
             adios2_begin_step(nullWriter, adios2_step_mode_append, -1.,
                               &status);
-            adios2_put(nullWriter, var, nullptr, adios2_mode_deferred);
+            adios2_put(nullWriter, var, data.data(), adios2_mode_deferred);
             adios2_perform_puts(nullWriter);
             adios2_end_step(nullWriter);
         }
@@ -98,9 +99,11 @@ TEST_F(NullWriteReadTests_C_API, NullWriteRead1D8)
             EXPECT_EQ(var, nullptr);
 
             adios2_current_step(&currentStep, nullReader);
-            EXPECT_EQ(currentStep, std::numeric_limits<size_t>::max());
+            EXPECT_EQ(currentStep, t);
 
-            adios2_get(nullReader, var, nullptr, adios2_mode_deferred);
+            auto ret =
+                adios2_get(nullReader, var, nullptr, adios2_mode_deferred);
+            EXPECT_EQ(ret, 1);
             adios2_perform_gets(nullReader);
             adios2_end_step(nullReader);
         }
