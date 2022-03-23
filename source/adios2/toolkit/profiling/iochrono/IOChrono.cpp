@@ -40,16 +40,11 @@ JSONProfiler::JSONProfiler(helper::Comm const &comm) : m_Comm(comm)
     m_Profiler.m_IsActive = true; // default is true
 
     AddTimerWatch("buffering");
-    // xAddTimerWatch("memcpy");
     AddTimerWatch("endstep");
     AddTimerWatch("PP");
-    // AddTimerWatch("meta_merge");
     AddTimerWatch("meta_gather");
-    // AddTimerWatch("meta_ds");
-    // AddTimerWatch("meta_s");
-    // AddTimerWatch("meta_sort_merge");
-
     AddTimerWatch("AWD");
+    AddTimerWatch("WaitOnAsync");
 
     m_Profiler.m_Bytes.emplace("buffering", 0);
 
@@ -74,7 +69,7 @@ std::string JSONProfiler::GetRankProfilingJSON(
     };
 
     // prepare string dictionary per rank
-    std::string rankLog("{ \"rank\": " + std::to_string(m_RankMPI) + ", ");
+    std::string rankLog("{ \"rank\":" + std::to_string(m_RankMPI));
 
     auto &profiler = m_Profiler;
 
@@ -83,10 +78,10 @@ std::string JSONProfiler::GetRankProfilingJSON(
     // avoid whitespace
     std::replace(timeDate.begin(), timeDate.end(), ' ', '_');
 
-    rankLog += "\"start\": \"" + timeDate + "\", ";
-    // rankLog += "\"threads\": " + std::to_string(m_Parameters.Threads) + ", ";
+    rankLog += ", \"start\":\"" + timeDate + "\"";
+    // rankLog += ", \"threads\":" + std::to_string(m_Parameters.Threads);
     rankLog +=
-        "\"bytes\": " + std::to_string(profiler.m_Bytes.at("buffering")) + ", ";
+        ", \"bytes\":" + std::to_string(profiler.m_Bytes.at("buffering"));
 
     for (const auto &timerPair : profiler.m_Timers)
     {
@@ -100,26 +95,14 @@ std::string JSONProfiler::GetRankProfilingJSON(
 
     for (unsigned int t = 0; t < transportsSize; ++t)
     {
-        rankLog += "\"transport_" + std::to_string(t) + "\": { ";
-        rankLog += "\"type\": \"" + transportsTypes[t] + "\", ";
+        rankLog += ", \"transport_" + std::to_string(t) + "\":{";
+        rankLog += "\"type\":\"" + transportsTypes[t] + "\"";
 
         for (const auto &transportTimerPair : transportsProfilers[t]->m_Timers)
         {
             lf_WriterTimer(rankLog, transportTimerPair.second);
         }
-        // replace last comma with space
-        rankLog.pop_back();
-        rankLog.pop_back();
-        rankLog += " ";
-
-        if (t == transportsSize - 1) // last element
-        {
-            rankLog += "}";
-        }
-        else
-        {
-            rankLog += "},";
-        }
+        rankLog += "}";
     }
     rankLog += " }"; // end rank entry
 
