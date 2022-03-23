@@ -94,8 +94,8 @@ static char *readContactInfoFile(const char *Name, SstStream Stream,
     int Badfile = 0;
     int ZeroCount = 0;
     FILE *WriterInfo;
-    int64_t TimeoutRemaining = Timeout * 1000 * 1000;
-    int64_t WaitWarningRemaining = 5 * 1000 * 1000;
+    int64_t TimeoutRemainingMsec = Timeout * 1000;
+    int64_t WaitWarningRemainingMsec = 5 * 1000;
     long SleepInterval = 100000;
     snprintf(FileName, len, "%s" SST_POSTFIX, Name);
     CP_verbose(Stream, PerRankVerbose,
@@ -107,16 +107,16 @@ redo:
     {
         // CMusleep(Stream->CPInfo->cm, SleepInterval);
         usleep(SleepInterval);
-        TimeoutRemaining -= SleepInterval;
-        WaitWarningRemaining -= SleepInterval;
-        if (WaitWarningRemaining == 0)
+        TimeoutRemainingMsec -= (SleepInterval / 1000);
+        WaitWarningRemainingMsec -= (SleepInterval / 1000);
+        if (WaitWarningRemainingMsec == 0)
         {
             fprintf(stderr,
                     "ADIOS2 SST Engine waiting for contact information "
                     "file %s to be created\n",
                     Name);
         }
-        if (TimeoutRemaining <= 0)
+        if (TimeoutRemainingMsec <= 0)
         {
             free(FileName);
             return NULL;
