@@ -2,14 +2,14 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * NullCoreWriter.h
+ * NullWriter.h
  *
  *  Created on: 16 Apr 19
  *      Author: Chuck Atkins chuck.atkins@kitware.com
  */
 
-#ifndef ADIOS2_ENGINE_NULL2_NULLCOREWRITER_H_
-#define ADIOS2_ENGINE_NULL2_NULLCOREWRITER_H_
+#ifndef ADIOS2_ENGINE_NULL2_NULLWRITER_H_
+#define ADIOS2_ENGINE_NULL2_NULLWRITER_H_
 
 #include <memory>
 
@@ -24,14 +24,14 @@ namespace core
 namespace engine
 {
 
-class NullCoreWriter : public core::Engine
+class NullWriter : public core::Engine
 {
 
 public:
-    NullCoreWriter(IO &io, const std::string &name, const Mode mode,
-                   helper::Comm comm);
+    NullWriter(IO &io, const std::string &name, const Mode mode,
+               helper::Comm comm);
 
-    virtual ~NullCoreWriter();
+    virtual ~NullWriter();
 
     StepStatus BeginStep(StepMode mode,
                          const float timeoutSeconds = -1.0) override;
@@ -58,12 +58,12 @@ protected:
     void DoClose(const int transportIndex) override;
 
 private:
-    struct NullCoreWriterImpl;
-    std::unique_ptr<NullCoreWriterImpl> Impl;
+    struct NullWriterImpl;
+    std::unique_ptr<NullWriterImpl> Impl;
 };
 
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_ENGINE_NULL2_NULLCOREWRITER_H_ */
+#endif /* ADIOS2_ENGINE_NULL2_NULLWRITER_H_ */

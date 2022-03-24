@@ -54,9 +54,8 @@ add_library(adios2_core
   engine/inline/InlineReader.cpp engine/inline/InlineReader.tcc
   engine/inline/InlineWriter.cpp engine/inline/InlineWriter.tcc
 
-  engine/null/NullEngine.cpp
-
-  engine/nullcore/NullCoreWriter.cpp engine/nullcore/NullCoreWriter.tcc
+  engine/null/NullWriter.cpp engine/null/NullWriter.tcc
+  engine/null/NullReader.cpp engine/null/NullReader.tcc
 
   engine/plugin/PluginEngine.cpp engine/plugin/PluginEngineInterface.cpp
   operator/plugin/PluginOperator.cpp operator/plugin/PluginOperatorInterface.cpp

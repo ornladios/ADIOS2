@@ -148,17 +148,6 @@ TEST_F(NullWriteReadTests, NullWriteRead1D8)
 
         std::string IString;
         std::vector<int8_t> I8;
-        std::vector<int16_t> I16;
-        std::vector<int32_t> I32;
-        std::vector<int64_t> I64;
-        std::vector<uint8_t> U8;
-        std::vector<uint16_t> U16;
-        std::vector<uint32_t> U32;
-        std::vector<uint64_t> U64;
-        std::vector<float> R32;
-        std::vector<double> R64;
-
-        EXPECT_EQ(I8.empty(), true);
 
         for (size_t t = 0; t < NSteps; ++t)
         {
@@ -166,73 +155,25 @@ TEST_F(NullWriteReadTests, NullWriteRead1D8)
             EXPECT_EQ(status, adios2::StepStatus::EndOfStream);
 
             const size_t currentStep = nullReader.CurrentStep();
-            EXPECT_EQ(currentStep, adios2::MaxSizeT);
+            EXPECT_EQ(currentStep, t);
+
+            auto vars = io.AvailableVariables();
+            EXPECT_TRUE(vars.empty());
 
             auto var_iString = io.InquireVariable<std::string>("iString");
             EXPECT_FALSE(var_iString);
 
             auto var_i8 = io.InquireVariable<int8_t>("i8");
-            auto var_i8_info = nullReader.BlocksInfo(var_i8, currentStep);
             EXPECT_FALSE(var_i8);
-            EXPECT_EQ(var_i8_info.empty(), true);
 
-            auto var_i16 = io.InquireVariable<int16_t>("i16");
-            auto var_i16_info = nullReader.BlocksInfo(var_i8, currentStep);
-            EXPECT_FALSE(var_i16);
-            EXPECT_EQ(var_i16_info.empty(), true);
+            EXPECT_THROW(nullReader.Get(var_iString, IString),
+                         std::invalid_argument);
 
-            auto var_i32 = io.InquireVariable<int32_t>("i32");
-            EXPECT_FALSE(var_i32);
-
-            auto var_i64 = io.InquireVariable<int64_t>("i64");
-            EXPECT_FALSE(var_i64);
-
-            auto var_u8 = io.InquireVariable<uint8_t>("u8");
-            EXPECT_FALSE(var_u8);
-
-            auto var_u16 = io.InquireVariable<uint16_t>("u16");
-            EXPECT_FALSE(var_u16);
-
-            auto var_u32 = io.InquireVariable<uint32_t>("u32");
-            EXPECT_FALSE(var_u32);
-
-            auto var_u64 = io.InquireVariable<uint64_t>("u64");
-            EXPECT_FALSE(var_u64);
-
-            auto var_r32 = io.InquireVariable<float>("r32");
-            EXPECT_FALSE(var_r32);
-
-            auto var_r64 = io.InquireVariable<double>("r64");
-            EXPECT_FALSE(var_r64);
-
-            nullReader.Get(var_iString, IString);
-
-            nullReader.Get(var_i8, I8.data());
-            nullReader.Get(var_i16, I16.data());
-            nullReader.Get(var_i32, I32.data());
-            nullReader.Get(var_i64, I64.data());
-
-            nullReader.Get(var_u8, U8.data());
-            nullReader.Get(var_u16, U16.data());
-            nullReader.Get(var_u32, U32.data());
-            nullReader.Get(var_u64, U64.data());
-
-            nullReader.Get(var_r32, R32.data());
-            nullReader.Get(var_r64, R64.data());
+            EXPECT_THROW(nullReader.Get(var_i8, I8.data()),
+                         std::invalid_argument);
 
             nullReader.PerformGets();
             nullReader.EndStep();
-
-            EXPECT_TRUE(I8.empty());
-            EXPECT_TRUE(I16.empty());
-            EXPECT_TRUE(I32.empty());
-            EXPECT_TRUE(I64.empty());
-            EXPECT_TRUE(U8.empty());
-            EXPECT_TRUE(U16.empty());
-            EXPECT_TRUE(U32.empty());
-            EXPECT_TRUE(U64.empty());
-            EXPECT_TRUE(R32.empty());
-            EXPECT_TRUE(R64.empty());
         }
         nullReader.Close();
     }
