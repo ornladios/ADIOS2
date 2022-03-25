@@ -64,6 +64,14 @@ namespace adios2
     }                                                                          \
                                                                                \
     template <>                                                                \
+    bool Attribute<T>::IsValue() const                                         \
+    {                                                                          \
+        helper::CheckForNullptr(m_Attribute,                                   \
+                                "in call to Attribute<T>::IsValue()");         \
+        return m_Attribute->m_IsSingleValue;                                   \
+    }                                                                          \
+                                                                               \
+    template <>                                                                \
     std::string ToString(const Attribute<T> &attribute)                        \
     {                                                                          \
         return std::string("Attribute<") + attribute.Type() + ">(Name: \"" +   \
