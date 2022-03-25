@@ -98,6 +98,37 @@ void CudaMemCopyFromBuffer(T *GPUbuffer, size_t position, const char *source,
     char *dest = reinterpret_cast<char *>(GPUbuffer);
     MemcpyBufferToGPU(dest, source + position, size);
 }
+
+static inline void NdCopyCUDA(const char *&inOvlpBase, char *&outOvlpBase,
+                              Dims &inOvlpGapSize, Dims &outOvlpGapSize,
+                              Dims &ovlpCount, size_t minContDim,
+                              size_t blockSize)
+{
+    Dims pos(ovlpCount.size(), 0);
+    size_t curDim = 0;
+    while (true)
+    {
+        while (curDim != minContDim)
+        {
+            pos[curDim]++;
+            curDim++;
+        }
+        CudaMemCopyFromBuffer(outOvlpBase, 0, inOvlpBase, blockSize);
+        inOvlpBase += blockSize;
+        outOvlpBase += blockSize;
+        do
+        {
+            if (curDim == 0)
+            {
+                return;
+            }
+            inOvlpBase += inOvlpGapSize[curDim];
+            outOvlpBase += outOvlpGapSize[curDim];
+            pos[curDim] = 0;
+            curDim--;
+        } while (pos[curDim] == ovlpCount[curDim]);
+    }
+}
 #endif
 
 template <class T>
