@@ -451,8 +451,9 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
 #ifdef ADIOS2_HAVE_CUDA
             if (MemSpace == MemorySpace::CUDA)
             {
-                helper::CudaMemCopyFromBuffer(outOvlpBase, 0, inOvlpBase,
-                                              blockSize);
+                helper::NdCopyCUDA(inOvlpBase, outOvlpBase, inOvlpGapSize,
+                                   outOvlpGapSize, ovlpCount, minContDim,
+                                   blockSize);
                 return 0;
             }
 #endif
@@ -509,6 +510,14 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
     // padding
     else
     {
+#ifdef ADIOS2_HAVE_CUDA
+        if (MemSpace == MemorySpace::CUDA)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Helper", "Memory", "CopyContiguousMemory",
+                "Direct byte order reversal not supported for GPU buffers");
+        }
+#endif
         //        Dims revInCount(inCount);
         //        Dims revOutCount(outCount);
         //
@@ -607,14 +616,6 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         // Same Endian"
         if (inIsLittleEndian == outIsLittleEndian)
         {
-#ifdef ADIOS2_HAVE_CUDA
-            if (MemSpace == MemorySpace::CUDA)
-            {
-                helper::CudaMemCopyFromBuffer(outOvlpBase, 0, inOvlpBase,
-                                              blockSize);
-                return 0;
-            }
-#endif
             if (!safeMode)
             {
                 NdCopyRecurDFNonSeqDynamic(0, inOvlpBase, outOvlpBase,
@@ -632,14 +633,6 @@ int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
         // different Endian"
         else
         {
-#ifdef ADIOS2_HAVE_CUDA
-            if (MemSpace == MemorySpace::CUDA)
-            {
-                helper::Throw<std::invalid_argument>(
-                    "Helper", "Memory", "CopyContiguousMemory",
-                    "Direct byte order reversal not supported for GPU buffers");
-            }
-#endif
             if (!safeMode)
             {
                 NdCopyRecurDFNonSeqDynamicRevEndian(
