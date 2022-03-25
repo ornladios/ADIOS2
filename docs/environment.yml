@@ -5,13 +5,14 @@ channels:
   - williamfgc
 
 dependencies:
-  - python
   - adios2-openmpi
-  - sphinx
-  - breathe=4.18.1
-  - funcparserlib>=0.3.6
+  - breathe==4.33.0
+  - docutils==0.17
+  - python
+  - sphinx=4
+#  - funcparserlib>=0.3.6
   - pip
   - pip:
-    - blockdiag>=1.5.4
-    - sphinxcontrib-blockdiag>=1.5.5
-    - sphinx_rtd_theme>=0.4.1
+    - blockdiag==3.0.0
+    - sphinxcontrib-blockdiag==3.0.0
+    - sphinx_rtd_theme==1.0.0
