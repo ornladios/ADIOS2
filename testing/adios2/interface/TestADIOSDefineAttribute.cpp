@@ -156,6 +156,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeS1.Data()[0], currentTestData.S1);
     EXPECT_EQ(attributeS1.Data().size(), 1);
     EXPECT_EQ(attributeS1.Type(), "string");
+    EXPECT_TRUE(attributeS1.IsValue());
 
     ASSERT_EQ(attributeI8.Data().size() == 1, true);
     ASSERT_EQ(attributeI8.Data().empty(), false);
@@ -163,6 +164,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeI8.Data()[0], currentTestData.I8.front());
     EXPECT_EQ(attributeI8.Data().size(), 1);
     EXPECT_EQ(attributeI8.Type(), "int8_t");
+    EXPECT_TRUE(attributeI8.IsValue());
 
     ASSERT_EQ(attributeI16.Data().size() == 1, true);
     ASSERT_EQ(attributeI16.Data().empty(), false);
@@ -170,6 +172,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeI16.Data()[0], currentTestData.I16.front());
     EXPECT_EQ(attributeI16.Data().size(), 1);
     EXPECT_EQ(attributeI16.Type(), "int16_t");
+    EXPECT_TRUE(attributeI16.IsValue());
 
     ASSERT_EQ(attributeI32.Data().size() == 1, true);
     ASSERT_EQ(attributeI32.Data().empty(), false);
@@ -177,6 +180,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeI32.Data()[0], currentTestData.I32.front());
     EXPECT_EQ(attributeI32.Data().size(), 1);
     EXPECT_EQ(attributeI32.Type(), "int32_t");
+    EXPECT_TRUE(attributeI32.IsValue());
 
     ASSERT_EQ(attributeI64.Data().size() == 1, true);
     ASSERT_EQ(attributeI64.Data().empty(), false);
@@ -184,6 +188,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeI64.Data()[0], currentTestData.I64.front());
     EXPECT_EQ(attributeI64.Data().size(), 1);
     EXPECT_EQ(attributeI64.Type(), "int64_t");
+    EXPECT_TRUE(attributeI64.IsValue());
     EXPECT_EQ(sizeof(attributeI64.Data()[0]), 8);
 
     ASSERT_EQ(attributeU8.Data().size() == 1, true);
@@ -192,6 +197,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeU8.Data()[0], currentTestData.U8.front());
     EXPECT_EQ(attributeU8.Data().size(), 1);
     EXPECT_EQ(attributeU8.Type(), "uint8_t");
+    EXPECT_TRUE(attributeU8.IsValue());
 
     ASSERT_EQ(attributeU16.Data().size() == 1, true);
     ASSERT_EQ(attributeU16.Data().empty(), false);
@@ -199,6 +205,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeU16.Data()[0], currentTestData.U16.front());
     EXPECT_EQ(attributeU16.Data().size(), 1);
     EXPECT_EQ(attributeU16.Type(), "uint16_t");
+    EXPECT_TRUE(attributeU16.IsValue());
 
     ASSERT_EQ(attributeU32.Data().size() == 1, true);
     ASSERT_EQ(attributeU32.Data().empty(), false);
@@ -206,6 +213,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeU32.Data()[0], currentTestData.U32.front());
     EXPECT_EQ(attributeU32.Data().size(), 1);
     EXPECT_EQ(attributeU32.Type(), "uint32_t");
+    EXPECT_TRUE(attributeU32.IsValue());
 
     ASSERT_EQ(attributeU64.Data().size() == 1, true);
     ASSERT_EQ(attributeU64.Data().empty(), false);
@@ -213,6 +221,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeU64.Data()[0], currentTestData.U64.front());
     EXPECT_EQ(attributeU64.Data().size(), 1);
     EXPECT_EQ(attributeU64.Type(), "uint64_t");
+    EXPECT_TRUE(attributeU64.IsValue());
     EXPECT_EQ(sizeof(attributeU64.Data()[0]), 8);
 
     ASSERT_EQ(attributeFloat.Data().size() == 1, true);
@@ -221,6 +230,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeFloat.Data()[0], currentTestData.R32.front());
     EXPECT_EQ(attributeFloat.Data().size(), 1);
     EXPECT_EQ(attributeFloat.Type(), "float");
+    EXPECT_TRUE(attributeFloat.IsValue());
 
     ASSERT_EQ(attributeDouble.Data().size() == 1, true);
     ASSERT_EQ(attributeDouble.Data().empty(), false);
@@ -228,6 +238,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     EXPECT_EQ(attributeDouble.Data()[0], currentTestData.R64.front());
     EXPECT_EQ(attributeDouble.Data().size(), 1);
     EXPECT_EQ(attributeDouble.Type(), "double");
+    EXPECT_TRUE(attributeDouble.IsValue());
 }
 
 TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
@@ -483,30 +494,35 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeS3.Name(), s3_Single);
     EXPECT_EQ(attributeS3.Data().size(), 3);
     EXPECT_EQ(attributeS3.Type(), "string");
+    EXPECT_FALSE(attributeS3.IsValue());
 
     ASSERT_EQ(attributeI8.Data().size() == 1, false);
     ASSERT_EQ(attributeI8.Data().empty(), false);
     EXPECT_EQ(attributeI8.Name(), i8_Single);
     EXPECT_EQ(attributeI8.Data().size(), numberOfElements);
     EXPECT_EQ(attributeI8.Type(), "int8_t");
+    EXPECT_FALSE(attributeI8.IsValue());
 
     ASSERT_EQ(attributeI16.Data().size() == 1, false);
     ASSERT_EQ(attributeI16.Data().empty(), false);
     EXPECT_EQ(attributeI16.Name(), i16_Single);
     EXPECT_EQ(attributeI16.Data().size(), numberOfElements);
     EXPECT_EQ(attributeI16.Type(), "int16_t");
+    EXPECT_FALSE(attributeI16.IsValue());
 
     ASSERT_EQ(attributeI32.Data().size() == 1, false);
     ASSERT_EQ(attributeI32.Data().empty(), false);
     EXPECT_EQ(attributeI32.Name(), i32_Single);
     EXPECT_EQ(attributeI32.Data().size(), numberOfElements);
     EXPECT_EQ(attributeI32.Type(), "int32_t");
+    EXPECT_FALSE(attributeI32.IsValue());
 
     ASSERT_EQ(attributeI64.Data().size() == 1, false);
     ASSERT_EQ(attributeI64.Data().empty(), false);
     EXPECT_EQ(attributeI64.Name(), i64_Single);
     EXPECT_EQ(attributeI64.Data().size(), numberOfElements);
     EXPECT_EQ(attributeI64.Type(), "int64_t");
+    EXPECT_FALSE(attributeI64.IsValue());
     EXPECT_EQ(sizeof(attributeI64.Data()[0]), 8);
 
     ASSERT_EQ(attributeU8.Data().size() == 1, false);
@@ -514,24 +530,28 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeU8.Name(), u8_Single);
     EXPECT_EQ(attributeU8.Data().size(), numberOfElements);
     EXPECT_EQ(attributeU8.Type(), "uint8_t");
+    EXPECT_FALSE(attributeU8.IsValue());
 
     ASSERT_EQ(attributeU16.Data().size() == 1, false);
     ASSERT_EQ(attributeU16.Data().empty(), false);
     EXPECT_EQ(attributeU16.Name(), u16_Single);
     EXPECT_EQ(attributeU16.Data().size(), numberOfElements);
     EXPECT_EQ(attributeU16.Type(), "uint16_t");
+    EXPECT_FALSE(attributeU16.IsValue());
 
     ASSERT_EQ(attributeU32.Data().size() == 1, false);
     ASSERT_EQ(attributeU32.Data().empty(), false);
     EXPECT_EQ(attributeU32.Name(), u32_Single);
     EXPECT_EQ(attributeU32.Data().size(), numberOfElements);
     EXPECT_EQ(attributeU32.Type(), "uint32_t");
+    EXPECT_FALSE(attributeU32.IsValue());
 
     ASSERT_EQ(attributeU64.Data().size() == 1, false);
     ASSERT_EQ(attributeU64.Data().empty(), false);
     EXPECT_EQ(attributeU64.Name(), u64_Single);
     EXPECT_EQ(attributeU64.Data().size(), numberOfElements);
     EXPECT_EQ(attributeU64.Type(), "uint64_t");
+    EXPECT_FALSE(attributeU64.IsValue());
     EXPECT_EQ(sizeof(attributeU64.Data()[0]), 8);
 
     ASSERT_EQ(attributeFloat.Data().size() == 1, false);
@@ -539,12 +559,14 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     EXPECT_EQ(attributeFloat.Name(), float_Single);
     EXPECT_EQ(attributeFloat.Data().size(), numberOfElements);
     EXPECT_EQ(attributeFloat.Type(), "float");
+    EXPECT_FALSE(attributeFloat.IsValue());
 
     ASSERT_EQ(attributeDouble.Data().size() == 1, false);
     ASSERT_EQ(attributeDouble.Data().empty(), false);
     EXPECT_EQ(attributeDouble.Name(), double_Single);
     EXPECT_EQ(attributeDouble.Data().size(), numberOfElements);
     EXPECT_EQ(attributeDouble.Type(), "double");
+    EXPECT_FALSE(attributeDouble.IsValue());
 
     // Verify data
     for (size_t index = 0; index < numberOfElements; index++)
