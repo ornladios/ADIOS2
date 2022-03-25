@@ -164,13 +164,29 @@ gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .FileStream
   WORKING_DIRECTORY ${FS_DIR} EXTRA_ARGS "FileStream"
 )
 
-if(ADIOS2_HAVE_CUDA AND ADIOS2_HAVE_BP5)
+if(ADIOS2_HAVE_CUDA)
     enable_language(CUDA)
-    gtest_add_tests_helper(WriteReadCuda MPI_ALLOW BP Engine.BP. .BP5
-      WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-      )
+	gtest_add_tests_helper(WriteReadCuda MPI_ALLOW BP Engine.BP. .BP4
+	  WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
+	  )
+	gtest_add_tests_helper(SelectionsCuda MPI_ALLOW BP Engine.BP. .BP4
+	  WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
+	  )
+	if(ADIOS2_HAVE_BP5)
+		gtest_add_tests_helper(WriteReadCuda MPI_ALLOW BP Engine.BP. .BP5
+		  WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+		  )
+		gtest_add_tests_helper(SelectionsCuda MPI_ALLOW BP Engine.BP. .BP5
+		  WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+		  )
+	endif()
 
   foreach(tgt ${Test.Engine.BP.WriteReadCuda-TARGETS})
+    target_sources(${tgt} PRIVATE operations/CudaRoutines.cu)
+    target_link_libraries(${tgt} CUDA::cudart)
+  endforeach()
+
+  foreach(tgt ${Test.Engine.BP.SelectionsCuda-TARGETS})
     target_sources(${tgt} PRIVATE operations/CudaRoutines.cu)
     target_link_libraries(${tgt} CUDA::cudart)
   endforeach()
