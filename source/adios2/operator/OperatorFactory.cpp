@@ -164,6 +164,9 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type,
             "ADIOS2 didn't compile with " + typeLowerCase +
                 " library, operator not added");
     }
+    else
+    {
+    }
 
     return ret;
 }
