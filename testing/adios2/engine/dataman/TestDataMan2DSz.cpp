@@ -311,7 +311,7 @@ TEST_F(DataManEngineTest, 2D_Sz)
     Dims start = {0, 0};
     Dims count = {10, 10};
 
-    size_t steps = 50;
+    size_t steps = 1;
     adios2::Params engineParams = {
         {"IPAddress", "127.0.0.1"}, {"Port", "12330"}, {"Verbose", "0"}};
 

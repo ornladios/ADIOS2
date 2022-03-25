@@ -406,6 +406,7 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
     std::memcpy(dataOut, result, dataSizeBytes);
     free(result);
     result = nullptr;
+    SZ_Finalize();
     return dataSizeBytes;
 }
 
@@ -477,6 +478,7 @@ size_t CompressSZ::DecompressV2(const char *bufferIn, const size_t sizeIn,
     std::memcpy(dataOut, result, dataSizeBytes);
     free(result);
     result = nullptr;
+    SZ_Finalize();
     return dataSizeBytes;
 }
 
