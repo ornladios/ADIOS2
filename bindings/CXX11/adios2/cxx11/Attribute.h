@@ -67,6 +67,12 @@ public:
      */
     std::vector<T> Data() const;
 
+    /**
+     * Distinguish single-value attributes from vector attributes
+     * @return true if single-value, false otherwise
+     */
+    bool IsValue() const;
+
 private:
     Attribute<T>(core::Attribute<IOType> *attribute);
     core::Attribute<IOType> *m_Attribute = nullptr;
