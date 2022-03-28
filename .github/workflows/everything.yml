@@ -15,15 +15,15 @@
 
 name: GitHub Actions
 
-on: 
-  push: 
-    branches: 
-    - master 
-    - release* 
-  pull_request: 
-    branches: 
-    - master 
-    - release* 
+on:
+  push:
+    branches:
+      - master
+      - release*
+  pull_request:
+    branches:
+      - master
+      - release*
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -40,21 +40,21 @@ jobs:
     outputs:
       num_code_changes: ${{ steps.get_code_changes.outputs.num_code_changes }}
     steps:
-    - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-    - name: Check for appropriately named topic branch
-      run: |
-        scripts/ci/gh-actions/check-branch-name.sh
-    - name: Check for code changes
-      id: get_code_changes
-      run: |
-        scripts/ci/gh-actions/get-changed-files.sh
-        echo "::group::Test script output files"
-        ls -la *-changed-files.txt
-        NUM_CHANGES=$(wc -l < filtered-changed-files.txt)
-        echo "Number of files changed (filtered): ${NUM_CHANGES}"
-        echo "::set-output name=num_code_changes::${NUM_CHANGES}"
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Check for appropriately named topic branch
+        run: |
+          scripts/ci/gh-actions/check-branch-name.sh
+      - name: Check for code changes
+        id: get_code_changes
+        run: |
+          scripts/ci/gh-actions/get-changed-files.sh
+          echo "::group::Test script output files"
+          ls -la *-changed-files.txt
+          NUM_CHANGES=$(wc -l < filtered-changed-files.txt)
+          echo "Number of files changed (filtered): ${NUM_CHANGES}"
+          echo "::set-output name=num_code_changes::${NUM_CHANGES}"
 
 #######################################
 # Formatting jobs
@@ -69,19 +69,19 @@ jobs:
       image: ornladios/adios2:ci-formatting
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        path: gha
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-        path: source
-    - name: CXX
-      working-directory: source
-      run: ../gha/scripts/ci/scripts/run-clang-format.sh
-    - name: Python
-      working-directory: source
-      run: ../gha/scripts/ci/scripts/run-flake8.sh
+      - uses: actions/checkout@v3
+        with:
+          path: gha
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: source
+      - name: CXX
+        working-directory: source
+        run: ../gha/scripts/ci/scripts/run-clang-format.sh
+      - name: Python
+        working-directory: source
+        run: ../gha/scripts/ci/scripts/run-flake8.sh
 
 
 #######################################
@@ -89,7 +89,7 @@ jobs:
 #######################################
 
   linux:
-    needs: [ format, git_checks ]
+    needs: [format, git_checks]
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
@@ -97,36 +97,40 @@ jobs:
       image: ornladios/adios2:ci-spack-el8-${{ matrix.compiler }}-${{ matrix.parallel }}
       options: --shm-size=1g
       env:
-        GH_YML_JOBNAME: el8-${{ matrix.compiler }}-${{ matrix.parallel }}
-        GH_YML_OS: Linux
+        GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+        GH_YML_BASE_OS: Linux
+        GH_YML_MATRIX_OS: ${{ matrix.os }}
+        GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
+        GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
 
     strategy:
       fail-fast: false
       matrix:
-        compiler: [ gcc8, gcc9, gcc10, gcc11, icc, oneapi, nvhpc222 ]
-        parallel: [ serial, mpi ]
+        os: [el8]
+        compiler: [gcc8, gcc9, gcc10, gcc11, icc, oneapi, nvhpc222]
+        parallel: [serial, mpi]
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        path: gha
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-        path: source
-    - name: Setup
-      run: gha/scripts/ci/gh-actions/linux-setup.sh
-    - name: Update
-      run: gha/scripts/ci/gh-actions/run.sh update
-    - name: Configure
-      run: gha/scripts/ci/gh-actions/run.sh configure
-    - name: Build
-      run: gha/scripts/ci/gh-actions/run.sh build
-    - name: Test
-      run: gha/scripts/ci/gh-actions/run.sh test
+      - uses: actions/checkout@v3
+        with:
+          path: gha
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: source
+      - name: Setup
+        run: gha/scripts/ci/gh-actions/linux-setup.sh
+      - name: Update
+        run: gha/scripts/ci/gh-actions/run.sh update
+      - name: Configure
+        run: gha/scripts/ci/gh-actions/run.sh configure
+      - name: Build
+        run: gha/scripts/ci/gh-actions/run.sh build
+      - name: Test
+        run: gha/scripts/ci/gh-actions/run.sh test
 
   linux_emu:
-    needs: [ format, git_checks ]
+    needs: [format, git_checks]
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
@@ -134,234 +138,290 @@ jobs:
       image: ${{ matrix.container }}
       options: --privileged --shm-size=1g
       env:
-        GH_YML_JOBNAME: ${{ matrix.jobname }}
-        GH_YML_OS: Linux
+        GH_YML_JOBNAME: ${{ matrix.cpu }}-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+        GH_YML_BASE_OS: Linux
+        GH_YML_MATRIX_OS: ${{ matrix.os }}
+        GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
+        GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
 
     strategy:
       fail-fast: false
       matrix:
-        jobname: [
-          power8-el7-xl,
-          power8-el7-xl-smpi ]
+        cpu: [power8]
+        os: [el7]
+        compiler: [xl]
+        parallel: [serial, mpi]
         include:
-        - jobname: power8-el7-xl
-          container: ornladios/adios2:ci-x86_64-power8-el7-xl
-          arch: ppc64le
-        - jobname: power8-el7-xl-smpi
-          container: ornladios/adios2:ci-x86_64-power8-el7-xl-smpi
-          arch: ppc64le
+          - cpu: power8
+            os: el7
+            compiler: xl
+            parallel: serial
+            container: ornladios/adios2:ci-x86_64-power8-el7-xl
+            arch: ppc64le
+          - cpu: power8
+            os: el7
+            compiler: xl
+            parallel: mpi
+            container: ornladios/adios2:ci-x86_64-power8-el7-xl-smpi
+            arch: ppc64le
 
     steps:
-    - name: Emulation Setup
-      run: /x86_64/bin/register --reset --targets ${{ matrix.arch }}
-      env:
-        PATH: /x86_64/bin
-    - name: Node.js Setup
-      run: mount --bind /x86_64/bin/node /__e/node12/bin/node
-    - uses: actions/checkout@v2
-      with:
-        path: gha
-    - uses: actions/checkout@v2
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-        path: source
-    - name: Setup
-      run: gha/scripts/ci/gh-actions/linux-setup.sh
-    - name: Update
-      run: gha/scripts/ci/gh-actions/run.sh update
-    - name: Configure
-      run: gha/scripts/ci/gh-actions/run.sh configure
-    - name: Build
-      run: gha/scripts/ci/gh-actions/run.sh build
-    - name: Test
-      run: gha/scripts/ci/gh-actions/run.sh test
+      - name: Emulation Setup
+        run: /x86_64/bin/register --reset --targets ${{ matrix.arch }}
+        env:
+          PATH: /x86_64/bin
+      - name: Node.js Setup
+        run: mount --bind /x86_64/bin/node /__e/node12/bin/node
+      - uses: actions/checkout@v2
+        with:
+          path: gha
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: source
+      - name: Setup
+        run: gha/scripts/ci/gh-actions/linux-setup.sh
+      - name: Update
+        run: gha/scripts/ci/gh-actions/run.sh update
+      - name: Configure
+        run: gha/scripts/ci/gh-actions/run.sh configure
+      - name: Build
+        run: gha/scripts/ci/gh-actions/run.sh build
+      - name: Test
+        run: gha/scripts/ci/gh-actions/run.sh test
 
 
   macos:
-    needs: [ format, git_checks ]
+    needs: [format, git_checks]
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ${{ matrix.image }}
     env:
-      GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.parallel }}
-      GH_YML_OS: macOS
-      GH_YML_XCODE: "${{ matrix.xcode }}"
+      GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+      GH_YML_BASE_OS: macOS
+      GH_YML_MATRIX_OS: ${{ matrix.os }}
+      GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
+      GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ macos10, macos11, macos11_12sdk ]
-        # parallel: [ serial, mpi ]
-        parallel: [ serial ]
+        os: [macos10_15, macos11, macos11_12sdk]
+        parallel: [serial]
         include:
-        - os: macos10
-          image: macos-10.15
-          xcode: "12.1.1"
-        - os: macos11
-          image: macos-11
-          xcode: "13.0"
-        - os: macos11_12sdk
-          image: macos-11
-          xcode: "13.2.1"
+          - os: macos10_15
+            image: macos-10.15
+            compiler: xcode12_1_1
+          - os: macos11
+            image: macos-11
+            compiler: xcode13_0
+          - os: macos11_12sdk
+            image: macos-11
+            compiler: xcode13_2_1
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        path: gha
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-        path: source
-    - name: Setup
-      run: gha/scripts/ci/gh-actions/macos-setup.sh
-    - name: Update
-      run: gha/scripts/ci/gh-actions/run.sh update
-    - name: Configure
-      run: gha/scripts/ci/gh-actions/run.sh configure
-    - name: Build
-      run: gha/scripts/ci/gh-actions/run.sh build
-    - name: Test
-      run: gha/scripts/ci/gh-actions/run.sh test
+      - uses: actions/checkout@v3
+        with:
+          path: gha
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: source
+      - name: Setup
+        run: gha/scripts/ci/gh-actions/macos-setup.sh
+      - name: Update
+        run: gha/scripts/ci/gh-actions/run.sh update
+      - name: Configure
+        run: gha/scripts/ci/gh-actions/run.sh configure
+      - name: Build
+        run: gha/scripts/ci/gh-actions/run.sh build
+      - name: Test
+        run: gha/scripts/ci/gh-actions/run.sh test
+
+
+  windows:
+    needs: [format, git_checks]
+    if: needs.git_checks.outputs.num_code_changes > 0
+
+    runs-on: ${{ matrix.image }}
+    env:
+      GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+      GH_YML_BASE_OS: Windows
+      GH_YML_MATRIX_OS: ${{ matrix.os }}
+      GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
+      GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [win2019, win2022]
+        parallel: [serial, mpi]
+        include:
+          - os: win2019
+            image: windows-2019
+            compiler: vs2019
+          - os: win2022
+            image: windows-2022
+            compiler: vs2022
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          path: gha
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: source
+      - name: Setup
+        shell: pwsh
+        run: gha/scripts/ci/gh-actions/windows-setup.ps1
+      - name: Update
+        run: gha/scripts/ci/gh-actions/run.sh update
+      - name: Configure
+        run: gha/scripts/ci/gh-actions/run.sh configure
+      - name: Build
+        run: gha/scripts/ci/gh-actions/run.sh build
+      - name: Test
+        run: gha/scripts/ci/gh-actions/run.sh test
 
 #######################################
 # Docker container jobs
 #######################################
 
   docker:
-    needs: [ format, git_checks ]
+    needs: [format, git_checks]
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        baseos: [
-          ubuntu-bionic ]
+        baseos: [ubuntu-bionic]
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        ref: ${{ github.event.pull_request.head.sha }}
-        path: ci-source
-    - name: Re-configure docker daemon
-      run: |
-          sudo systemctl stop docker
-          echo $'{\n    "experimental": true\n}' | \
-              sudo tee /etc/docker/daemon.json
-          sudo systemctl start docker
-    - name: Build image
-      run: |
-          docker build \
-              --rm --squash \
-              -t ornladios/adios2:ci-tmp \
-              --build-arg baseos=${{ matrix.baseos }} \
-              --build-arg ci_source_dir=ci-source \
-              -f ci-source/scripts/ci/images/spack/Dockerfile \
-              .
-    - name: Save image as a tar file
-      run: |
-          docker save -o ci-docker.tar ornladios/adios2:ci-tmp
-          ls -lah ci-docker.tar
-    - name: Upload
-      uses: actions/upload-artifact@v2
-      with:
-        retention-days: 1
-        name: ci-docker ${{ matrix.baseos }} ${{ github.sha }}
-        path: ci-docker.tar
-    - name: Push image to Docker Hub
-      if: github.event_name == 'push'
-      env:
-        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
-      run: |
-          target_tag="${GITHUB_REF##refs/heads/}-${{ matrix.baseos }}"
-          docker tag \
-              ornladios/adios2:ci-tmp \
-              ornladios/adios2:${target_tag}
-          docker login \
-              --username="${DOCKERHUB_USERNAME}" \
-              --password="${DOCKERHUB_PASSWORD}"
-          docker push \
-              ornladios/adios2:${target_tag}
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: ci-source
+      - name: Re-configure docker daemon
+        run: |
+            sudo systemctl stop docker
+            echo $'{\n    "experimental": true\n}' | \
+                sudo tee /etc/docker/daemon.json
+            sudo systemctl start docker
+      - name: Build image
+        run: |
+            docker build \
+                --rm --squash \
+                -t ornladios/adios2:ci-tmp \
+                --build-arg baseos=${{ matrix.baseos }} \
+                --build-arg ci_source_dir=ci-source \
+                -f ci-source/scripts/ci/images/spack/Dockerfile \
+                .
+      - name: Save image as a tar file
+        run: |
+            docker save -o ci-docker.tar ornladios/adios2:ci-tmp
+            ls -lah ci-docker.tar
+      - name: Upload
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 1
+          name: ci-docker ${{ matrix.baseos }} ${{ github.sha }}
+          path: ci-docker.tar
+      - name: Push image to Docker Hub
+        if: github.event_name == 'push'
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+        run: |
+            target_tag="${GITHUB_REF##refs/heads/}-${{ matrix.baseos }}"
+            docker tag \
+                ornladios/adios2:ci-tmp \
+                ornladios/adios2:${target_tag}
+            docker login \
+                --username="${DOCKERHUB_USERNAME}" \
+                --password="${DOCKERHUB_PASSWORD}"
+            docker push \
+                ornladios/adios2:${target_tag}
 
 #######################################
 # Contract testing jobs
 #######################################
 
-  # These contract testing jobs use the container built in the previous 
+  # These contract testing jobs use the container built in the previous
   # docker job and runs it in a way similar to how a typical GitHub
   # Actions container job does.  Using the "messy" default shell for
   # run steps lets the steps be written as though they too were using a
   # standard container job.
   contract:
-    needs: [ format, git_checks, docker ]
+    needs: [format, git_checks, docker]
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        code: [
-          examples,
-          lammps,
-          scorpio,
-          tau ]
+        code: [examples, lammps, scorpio, tau]
         include:
-        - code: examples
-          repo: ornladios/ADIOS2-Examples
-          ref: master
-        - code: lammps
-          repo: lammps/lammps
-          ref: patch_10Feb2021
-        - code: scorpio
-          repo: E3SM-Project/scorpio
-          ref: scorpio-v1.2.1
-        - code: tau
-          repo: ornladios/ADIOS2-Examples
-          ref: master
+          - code: examples
+            repo: ornladios/ADIOS2-Examples
+            ref: master
+          - code: lammps
+            repo: lammps/lammps
+            ref: patch_10Feb2021
+          - code: scorpio
+            repo: E3SM-Project/scorpio
+            ref: scorpio-v1.2.1
+          - code: tau
+            repo: ornladios/ADIOS2-Examples
+            ref: master
 
     defaults:
       run:
         shell: bash -c "docker exec adios2-ci bash --login -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
 
     steps:
-    - uses: actions/checkout@v3
-      with:
-        repository: ${{ matrix.repo }}
-        ref: ${{ matrix.ref }}
-        path: source
-    - name: Download CI docker image
-      uses: actions/download-artifact@v2
-      with:
-        name: ci-docker ubuntu-bionic ${{ github.sha }}
-    - name: Initialize containers
-      shell: bash -e {0}
-      run: |
-          sudo chown 1000:1000 .
-          docker load -i ci-docker.tar
-          docker create \
-              --name adios2-ci --workdir /__w/ADIOS2/ADIOS2 \
-              -v "/home/runner/work":"/__w" \
-              --entrypoint "tail" ornladios/adios2:ci-tmp \
-              "-f" "/dev/null"
-          docker start adios2-ci
-    - name: Dependencies
-      run: /opt/adios2/source/testing/contract/${{ matrix.code }}/depends.sh
-    - name: Configure
-      run: /opt/adios2/source/testing/contract/${{ matrix.code }}/config.sh
-    - name: Build
-      run: /opt/adios2/source/testing/contract/${{ matrix.code }}/build.sh
-    - name: Install
-      run: /opt/adios2/source/testing/contract/${{ matrix.code }}/install.sh
-    - name: Test
-      run: /opt/adios2/source/testing/contract/${{ matrix.code }}/test.sh
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ matrix.repo }}
+          ref: ${{ matrix.ref }}
+          path: source
+      - name: Download CI docker image
+        uses: actions/download-artifact@v2
+        with:
+          name: ci-docker ubuntu-bionic ${{ github.sha }}
+      - name: Initialize containers
+        shell: bash -e {0}
+        run: |
+            sudo chown 1000:1000 .
+            docker load -i ci-docker.tar
+            docker create \
+                --name adios2-ci --workdir /__w/ADIOS2/ADIOS2 \
+                -v "/home/runner/work":"/__w" \
+                --entrypoint "tail" ornladios/adios2:ci-tmp \
+                "-f" "/dev/null"
+            docker start adios2-ci
+      - name: Dependencies
+        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/depends.sh
+      - name: Configure
+        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/config.sh
+      - name: Build
+        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/build.sh
+      - name: Install
+        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/install.sh
+      - name: Test
+        run: /opt/adios2/source/testing/contract/${{ matrix.code }}/test.sh
 
 #######################################
 # Workaround for skipping matrix jobs
 #######################################
 
   build_and_test:
-    needs: [ linux, linux_emu, macos, docker, contract ]
+    needs: [linux, linux_emu, macos, docker, contract]
     runs-on: ubuntu-latest
     steps:
       - run: echo "All required jobs complete"
