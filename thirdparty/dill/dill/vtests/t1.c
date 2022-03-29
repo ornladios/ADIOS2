@@ -4,7 +4,9 @@
 #include "malloc.h"
 #endif
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include "unistd.h"
+#endif
 
 #include "dill.h"
 #ifdef USE_MMAP_CODE_SEG
@@ -16,7 +18,7 @@ static int verbose = 0;
 void a () {
     dill_stream s = dill_create_stream();
     char *target;
-    dill_reg a,b,p3,d,e,f,g,h,i,j,w,z;
+    dill_reg a,b,p3,d,e,f;
     dill_exec_ctx ec;
     dill_exec_handle handle;
      int (*ip)();
@@ -29,12 +31,6 @@ void a () {
      d = dill_getreg(s, DILL_I);
      e = dill_getreg(s, DILL_I);
      f = dill_getreg(s, DILL_I);
-     g = dill_getreg(s, DILL_I);
-     h = dill_getreg(s, DILL_I);
-     i = dill_getreg(s, DILL_I);
-     j = dill_getreg(s, DILL_I);
-     z = dill_getreg(s, DILL_I);
-     w = dill_getreg(s, DILL_I);
 
      dill_addii(s, p3, a, 5);
      dill_addi(s, d, a, b);
@@ -59,7 +55,7 @@ void a () {
 #endif
      {
 	 int size = dill_code_size(s);
-	 static unsigned long ps = -1;
+	 static long ps = -1;
 	 if (ps == -1) {
 	     ps = (getpagesize ());
 	 }

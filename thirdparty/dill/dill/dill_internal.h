@@ -8,8 +8,8 @@ typedef struct arg_info {
     char type;
     char is_register;		/* true if parameter is in register */
     char is_immediate;		/* true if actual is an immediate */
-    unsigned in_reg;		/* callee register it's in */
-    unsigned out_reg;		/* caller register it's in */
+    int in_reg;		/* callee register it's in */
+    int out_reg;		/* caller register it's in */
     int offset;			/* otherwise at this offset from v_pp */
     int used;
 } *arg_info_list;
@@ -242,7 +242,7 @@ extern void dill_mark_call_location(dill_stream s, const char *xfer_name,
 				 void *xfer_address);
 extern void dill_mark_ret_location(dill_stream s);
 extern void dill_end_vararg_push(dill_stream s);
-EXTERN void dill_dump_reg(dill_stream s, int typ, int reg);
+extern void dill_dump_reg(dill_stream s, int typ, int reg);
 extern void setup_VM_proc(dill_stream s);
 
 typedef struct dill_pkg_1 {

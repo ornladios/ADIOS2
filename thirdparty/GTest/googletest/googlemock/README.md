@@ -30,15 +30,11 @@ gMock:
 
 Details and examples can be found here:
 
-*   [gMock for Dummies](docs/for_dummies.md)
-*   [Legacy gMock FAQ](docs/gmock_faq.md)
-*   [gMock Cookbook](docs/cook_book.md)
-*   [gMock Cheat Sheet](docs/cheat_sheet.md)
+*   [gMock for Dummies](https://google.github.io/googletest/gmock_for_dummies.html)
+*   [Legacy gMock FAQ](https://google.github.io/googletest/gmock_faq.html)
+*   [gMock Cookbook](https://google.github.io/googletest/gmock_cook_book.html)
+*   [gMock Cheat Sheet](https://google.github.io/googletest/gmock_cheat_sheet.html)
 
-Please note that code under scripts/generator/ is from the [cppclean
-project](http://code.google.com/p/cppclean/) and under the Apache
-License, which is different from Google Mock's license.
-
-Google Mock is a part of
-[Google Test C++ testing framework](http://github.com/google/googletest/) and a
+GoogleMock is a part of
+[GoogleTest C++ testing framework](http://github.com/google/googletest/) and a
 subject to the same requirements.

@@ -19,6 +19,7 @@ int main(int argc, char **argv)
 	h = dill_finalize(s);
 	func = (int (*)())dill_get_fp(h);
 	if (verbose) dill_dump(s);
+	fprintf(stderr, "T1, func is %p\n", (void*) func);
 	result = func();
 	dill_free_handle(h);
 

@@ -1,6 +1,6 @@
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
-/* Define with the build version of atl */
+/* Define with the build version of dill */
 #cmakedefine DILL_VERSION "@DILL_VERSION@"
 
 /* Define if bfd functions use bfd_byte arguments. */
@@ -26,6 +26,9 @@
 
 /* Define to 1 if you have the <malloc.h> header file. */
 #cmakedefine HAVE_MALLOC_H
+
+/* Define to 1 if you have the <sys/mman.h> header file. */
+#cmakedefine HAVE_SYS_MMAN_H
 
 /* Define to 1 if you have the <memory.h> header file. */
 #cmakedefine HAVE_MEMORY_H
@@ -142,6 +145,9 @@
 
 /* Define this is mmap should be used instead of malloc() for code memory */
 #cmakedefine USE_MMAP_CODE_SEG
+
+/* Define this is VirtualProtect should be used to change memory protections */
+#cmakedefine USE_VIRTUAL_PROTECT
 
 /* Define if byteorder is bigendian */
 #cmakedefine WORDS_BIGENDIAN

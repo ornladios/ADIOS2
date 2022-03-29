@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 2.8)
 
 set(TESTS basic_call general t1 opt branch prefix_test)
 
@@ -14,7 +13,7 @@ include_directories(BEFORE
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/general.c
-  COMMAND perl ${CMAKE_CURRENT_SOURCE_DIR}/general.ops
+  COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/general.ops
   MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/general.ops
 )
 
@@ -24,7 +23,10 @@ foreach(TEST ${TESTS})
   add_test(NAME vtest_${TEST} COMMAND v${TEST})
 endforeach()
 
-set_target_properties(vgeneral PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "-O0")
+if(NOT (CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
+     CMAKE_C_SIMULATE_ID MATCHES "MSVC"))
+     set_target_properties(vgeneral PROPERTIES LINKER_LANGUAGE C COMPILE_FLAGS "-O0")
+ENDIF()
 
 set_tests_properties(vtest_basic_call
   PROPERTIES PASS_REGULAR_EXPRESSION "########## A

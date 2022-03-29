@@ -37,7 +37,7 @@ namespace helper
 
 bool CreateDirectory(const std::string &fullPath) noexcept
 {
-    return adios2sys::SystemTools::MakeDirectory(fullPath);
+    return static_cast<bool>(adios2sys::SystemTools::MakeDirectory(fullPath));
 }
 
 bool IsLittleEndian() noexcept

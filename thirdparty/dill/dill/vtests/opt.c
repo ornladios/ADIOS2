@@ -4,7 +4,9 @@
 #include "malloc.h"
 #endif
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include "unistd.h"
+#endif
 
 #include "dill.h"
 #ifdef USE_MMAP_CODE_SEG

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unix_defs.h>
+#include <stdint.h>
 #include <atl.h>
 #include <ctype.h>
 #include <string.h>
@@ -41,7 +42,7 @@ main()
 
 	if (fgets(line, sizeof(line), stdin) == NULL)
 	    return 0;
-	len = strlen(line);
+	len = (int) strlen(line);
 	if (len > 0)
 	    line[len - 1] = 0;	/* truncate \n */
 	if (line[0] == 0)

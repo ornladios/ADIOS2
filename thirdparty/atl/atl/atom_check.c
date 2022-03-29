@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unix_defs.h>
+#include <stdint.h>
 #include <atl.h>
 #include <ctype.h>
 #include <string.h>

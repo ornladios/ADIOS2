@@ -117,7 +117,7 @@ void b () {
 
      if (verbose) dill_dump(s);
 
-     printf("**3=%d\n", (*(int (*)(int, int))(long)((*pp)()))(1,2));
+     printf("**3=%d\n", (*(int (*)(int, int))(IMM_TYPE)((*pp)()))(1,2));
      dill_free_handle(h);
      dill_free_stream(s);
 }

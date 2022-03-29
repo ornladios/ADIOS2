@@ -31,7 +31,7 @@
 
 import re
 from xml.dom import minidom, Node
-import gtest_test_utils
+from googletest.test import gtest_test_utils
 
 GTEST_DEFAULT_OUTPUT_FILE = 'test_detail.xml'
 
@@ -70,7 +70,7 @@ class GTestXMLTestCase(gtest_test_utils.TestCase):
     self.assertEquals(expected_node.tagName, actual_node.tagName)
 
     expected_attributes = expected_node.attributes
-    actual_attributes   = actual_node  .attributes
+    actual_attributes = actual_node.attributes
     self.assertEquals(
         expected_attributes.length, actual_attributes.length,
         'attribute numbers differ in element %s:\nExpected: %r\nActual: %r' % (
@@ -78,7 +78,7 @@ class GTestXMLTestCase(gtest_test_utils.TestCase):
             actual_attributes.keys()))
     for i in range(expected_attributes.length):
       expected_attr = expected_attributes.item(i)
-      actual_attr   = actual_attributes.get(expected_attr.name)
+      actual_attr = actual_attributes.get(expected_attr.name)
       self.assert_(
           actual_attr is not None,
           'expected attribute %s not found in element %s' %
@@ -170,6 +170,10 @@ class GTestXMLTestCase(gtest_test_utils.TestCase):
     *  The stack traces are removed.
     """
 
+    if element.tagName == 'testcase':
+      source_file = element.getAttributeNode('file')
+      if source_file:
+        source_file.value = re.sub(r'^.*[/\\](.*)', '\\1', source_file.value)
     if element.tagName in ('testsuites', 'testsuite', 'testcase'):
       timestamp = element.getAttributeNode('timestamp')
       timestamp.value = re.sub(r'^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d\d\d$',
