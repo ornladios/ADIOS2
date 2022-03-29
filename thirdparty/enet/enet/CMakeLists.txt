@@ -33,6 +33,9 @@ endif()
 if(NOT DEFINED ENET_HEADER_COMPONENT)
   set(ENET_HEADER_COMPONENT dev)
 endif()
+if(NOT DEFINED ENET_DOC_COMPONENT)
+  set(ENET_DOC_COMPONENT doc)
+endif()
 
 # Default to a RelWithDebInfo build if not specified
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -177,3 +180,10 @@ install(FILES
 install(EXPORT enet-targets NAMESPACE enet::
   DESTINATION "${CMAKE_INSTALL_CMAKEDIR}"
   COMPONENT ${ENET_HEADER_COMPONENT})
+
+# Build documentation
+find_package(Doxygen)
+if(Doxygen_FOUND)
+  doxygen_add_docs(enet_docs "${CMAKE_CURRENT_SOURCE_DIR}" ALL)
+  install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html" DESTINATION "${CMAKE_INSTALL_DOCDIR}" COMPONENT ${ENET_DOC_COMPONENT})
+endif()
