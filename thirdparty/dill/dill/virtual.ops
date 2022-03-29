@@ -33,7 +33,7 @@ sub upperc {
 
 print VMOUT "void emulate_arith3(int code, struct reg_type *dest, struct reg_type *src1, struct reg_type *src2)\n";
 print VMOUT "{\n    switch(code) {\n$vm_a3_code    }\n}\n";
-print VMOUT "void emulate_arith3i(int code, struct reg_type *dest, struct reg_type *src1, long imm)\n";
+print VMOUT "void emulate_arith3i(int code, struct reg_type *dest, struct reg_type *src1, IMM_TYPE imm)\n";
 print VMOUT "{\n    switch(code) {\n$vm_a3i_code    }\n}\n";
 print VMOUT "void emulate_arith2(int code, struct reg_type *dest, struct reg_type *src)\n";
 print VMOUT "{\n    switch(code) {\n$vm_a2_code    }\n}\n";
@@ -41,16 +41,16 @@ print VMOUT "int emulate_branch(int code, struct reg_type *src1, struct reg_type
 print VMOUT "{\n    switch(code) {\n$vm_br_code    }return 0;\n}\n";
 print VMOUT "int emulate_compare(int code, struct reg_type *src1, struct reg_type *src2)\n";
 print VMOUT "{\n    switch(code) {\n$vm_c_code    }return 0;\n}\n";
-print VMOUT "int emulate_branchi(int code, struct reg_type *src1, long imm)\n";
+print VMOUT "int emulate_branchi(int code, struct reg_type *src1, IMM_TYPE imm)\n";
 print VMOUT "{\n    switch(code) {\n$vm_bri_code    }return 0;\n}\n";
 
 print VMOUT "#define CONV(x,y) ((x<<4)+y)\n";
 print VMOUT "void emulate_convert(int code, struct reg_type *dest, struct reg_type *src)\n";
 print VMOUT "{\n    switch(code) {\n$vm_cvt_code        default: printf(\"convert missed case %x \\n\", code); break;}\n}\n";
-print VMOUT "int emulate_loadi(int code, struct reg_type *dest, struct reg_type *src, long imm)\n";
+print VMOUT "int emulate_loadi(int code, struct reg_type *dest, struct reg_type *src, IMM_TYPE imm)\n";
 print VMOUT "{\n    switch(code) {\n$vm_loadi_code    default: printf(\"loadi missed case %x \\n\", code); break;}return 0;\n}\n";
 
-print VMOUT "int emulate_storei(int code, struct reg_type *dest, struct reg_type *src, long imm)\n";
+print VMOUT "int emulate_storei(int code, struct reg_type *dest, struct reg_type *src, IMM_TYPE imm)\n";
 print VMOUT "{\n    switch(code) {\n$vm_storei_code    }return 0;\n}\n";
 
 print COUT "DECLARE_JUMP_TABLE(${mach});\n";
@@ -147,7 +147,7 @@ EOF
 
 sub arith_insn {
 %src1_cast = ('p', '(char*)');
-%src2_cast = ('p', '(long)');
+%src2_cast = ('p', '(IMM_TYPE)');
     local ($ops, $type_list, $subr) = @_;
     foreach(split(' ', $ops)) {
 	$op = $_;
@@ -214,7 +214,7 @@ sub branchi_insn {
 	$c_op = $c_operations{$op};
 	foreach (split(' ', $types)) {
 	    $jmp_b_assigns = $jmp_b_assigns . "\t  ${mach}_jump_table->jmp_bi[dill_jmp_b${op}${_}] = $subr;\n";
-	    $vm_bri_code .=  "\t  case dill_jmp_b${op}${_}:  return ($src1_cast{$_} src1->u.${_}.${_}) $c_op $src1_cast{$_} imm; break;\n";
+	    $vm_bri_code .=  "\t  case dill_jmp_b${op}${_}:  return ($src1_cast{$_} src1->u.${_}.${_}) $c_op $src1_cast{$_} imm;\n";
 	}
     }
 }
@@ -236,8 +236,8 @@ sub compare_insn {
 
 sub convert {
     local($from_types, $to_types) = @_;
-    %src_cast = ('pul', '(long)', 'ulp', '(void*)');
-    %convert_right = ('c', 'src->u.c.c', 's', '((short)(0xffff & src->u.s.s))', 'i', '((int)(0xffffffff & src->u.i.i))', 'uc', '((unsigned char)(0xff & src->u.uc.uc))', 'us', '((unsigned short)(0xffff & src->u.us.us))', 'u', '((unsigned int)(0xffffffff & src->u.u.u))', 'l', 'src->u.l.l', 'ul', '(unsigned long)src->u.ul.ul', 'd', 'src->u.d.d', 'f', 'src->u.f.f', 'p', 'src->u.l.l');
+    %src_cast = ('pul', '(IMM_TYPE)', 'ulp', '(void*)');
+    %convert_right = ('c', 'src->u.c.c', 's', '((short)(0xffff & src->u.s.s))', 'i', '((int)(0xffffffff & src->u.i.i))', 'uc', '((unsigned char)(0xff & src->u.uc.uc))', 'us', '((unsigned short)(0xffff & src->u.us.us))', 'u', '((unsigned int)(0xffffffff & src->u.u.u))', 'l', 'src->u.l.l', 'ul', '(UIMM_TYPE)src->u.ul.ul', 'd', 'src->u.d.d', 'f', 'src->u.f.f', 'p', 'src->u.l.l');
     foreach (split(' ', $from_types)) {
 	$from = $_;
 	foreach (split(' ', $to_types)) {
@@ -253,12 +253,12 @@ sub convert {
 
 sub load_store {
     local($types) = @_;
-    %load_store = ('c', '*((char*)(src->u.l.l + imm))', 's', '*((short*)(src->u.l.l + imm))', 'i', '*((int*)(src->u.l.l + imm))', 'uc', '*((unsigned char*)(src->u.l.l + imm))', 'us', '*((unsigned short *)(src->u.l.l + imm))', 'u', '*((unsigned int *)(src->u.l.l + imm))', 'l', '*((long*)(src->u.l.l + imm))', 'ul', '*((unsigned long *)(src->u.l.l + imm))', 'd', '*((double*)(src->u.l.l + imm))', 'f', '*((float*)(src->u.l.l + imm))', 'p', '*((void**)(src->u.l.l + imm))');
+    %load_store = ('c', '*((char*)(src->u.l.l + imm))', 's', '*((short*)(src->u.l.l + imm))', 'i', '*((int*)(src->u.l.l + imm))', 'uc', '*((unsigned char*)(src->u.l.l + imm))', 'us', '*((unsigned short *)(src->u.l.l + imm))', 'u', '*((unsigned int *)(src->u.l.l + imm))', 'l', '*((IMM_TYPE*)(src->u.l.l + imm))', 'ul', '*((UIMM_TYPE *)(src->u.l.l + imm))', 'd', '*((double*)(src->u.l.l + imm))', 'f', '*((float*)(src->u.l.l + imm))', 'p', '*((void**)((char*)src->u.p.p + imm))');
     foreach (split(' ', $types)) {
 	if (($_ eq 'f') || ($_ eq 'd')) {
 	    $vm_loadi_code .= "\tcase DILL_" . &upperc(${_}). ": dest->u.${_}.${_} = $load_store{$_}; break;\n";
 	} else {
-	    $vm_loadi_code .= "\tcase DILL_" . &upperc(${_}). ": dest->u.l.l = (long) $load_store{$_}; break;\n";
+	    $vm_loadi_code .= "\tcase DILL_" . &upperc(${_}). ": dest->u.l.l = (IMM_TYPE) $load_store{$_}; break;\n";
 	}
 	$vm_storei_code .= "\tcase DILL_" . &upperc(${_}). ": $load_store{$_} = dest->u.${_}.${_}; break;\n";
     }
@@ -283,6 +283,7 @@ print COUT<<EOF;
 #ifndef LINUX_KERNEL_MODULE
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
@@ -333,7 +334,7 @@ virtual_compare(dill_stream s, int op, int junk, int dest, int src1, int src2)
 }
 
 static void 
-dill_varith3i(dill_stream s, int op3, int op, int dest, int src1, long imm)
+dill_varith3i(dill_stream s, int op3, int op, int dest, int src1, IMM_TYPE imm)
 {
     virtual_insn i;
     i.class_code = iclass_arith3i;
@@ -390,7 +391,7 @@ virtual_load(dill_stream s, int type, int junk, int dest, int src1, int src2)
 }
 
 extern void
-virtual_loadi(dill_stream s, int type, int junk, int dest, int src1, long imm)
+virtual_loadi(dill_stream s, int type, int junk, int dest, int src1, IMM_TYPE imm)
 {
     virtual_insn i;
     i.class_code = iclass_loadstorei;
@@ -414,7 +415,7 @@ virtual_pbsload(dill_stream s, int type, int junk, int dest, int src1, int src2)
 }
 
 extern void
-virtual_pbsloadi(dill_stream s, int type, int junk, int dest, int src1, long imm)
+virtual_pbsloadi(dill_stream s, int type, int junk, int dest, int src1, IMM_TYPE imm)
 {
     virtual_insn i;
     i.class_code = iclass_loadstorei;
@@ -438,7 +439,7 @@ virtual_store(dill_stream s, int type, int junk, int dest, int src1, int src2)
 }
 
 extern void
-virtual_storei(dill_stream s, int type, int junk, int dest, int src1, long imm)
+virtual_storei(dill_stream s, int type, int junk, int dest, int src1, IMM_TYPE imm)
 {
     virtual_insn i;
     i.class_code = iclass_loadstorei;
@@ -461,7 +462,7 @@ virtual_mov(dill_stream s, int type, int junk, int dest, int src)
 }
 
 extern void
-virtual_pset(dill_stream s, int type, int junk, int dest, long imm)
+virtual_pset(dill_stream s, int type, int junk, int dest, IMM_TYPE imm)
 {
     virtual_insn i;
     i.class_code = iclass_set;
@@ -494,7 +495,7 @@ virtual_setf(dill_stream s, int type, int junk, int dest, double imm)
 }
 
 extern void
-virtual_reti(dill_stream s, int type, int junk, long imm)
+virtual_reti(dill_stream s, int type, int junk, IMM_TYPE imm)
 {
     virtual_insn i;
     i.class_code = iclass_reti;
@@ -527,7 +528,7 @@ virtual_mark_label(dill_stream s, int op, int type, int src1, int src2, int labe
 }
 
 static void
-virtual_branchi(dill_stream s, int op, int type, int src, long imm, int label)
+virtual_branchi(dill_stream s, int op, int type, int src, IMM_TYPE imm, int label)
 {
     virtual_insn i;
     i.class_code = iclass_branchi;
@@ -600,7 +601,7 @@ extern void virtual_push(dill_stream s, int type, int reg)
     INSN_OUT(s, i);
 }
 
-extern void virtual_pushi(dill_stream s, int type, long value)
+extern void virtual_pushi(dill_stream s, int type, IMM_TYPE value)
 {
     virtual_insn i;
     i.class_code = iclass_pushi;
@@ -628,7 +629,7 @@ extern void virtual_pushfi(dill_stream s, int type, double value)
 }
 
 extern void virtual_lea(dill_stream s, int junk1, int junk2, int dest, int src,
-			long imm)
+			IMM_TYPE imm)
 {
     virtual_insn i;
     i.class_code = iclass_lea;
@@ -639,7 +640,7 @@ extern void virtual_lea(dill_stream s, int junk1, int junk2, int dest, int src,
     INSN_OUT(s, i);
 }
 
-extern void virtual_special(dill_stream s, special_operations type, long param)
+extern void virtual_special(dill_stream s, special_operations type, IMM_TYPE param)
 {
     virtual_insn i;
     i.class_code = iclass_special;
@@ -662,8 +663,8 @@ int virtual_type_align[] = {
         2, /* US */
         4, /* I */
         4, /* U */
-        sizeof(unsigned long), /* UL */
-        sizeof(long), /* L */
+        sizeof(uintptr_t), /* UL */
+        sizeof(intptr_t), /* L */
         sizeof(char*), /* P */
         4, /* F */
         8, /* D */
@@ -679,8 +680,8 @@ int virtual_type_size[] = {
         2, /* US */
         4, /* I */
         4, /* U */
-        sizeof(unsigned long), /* UL */
-        sizeof(long), /* L */
+        sizeof(uintptr_t), /* UL */
+        sizeof(intptr_t), /* L */
         sizeof(char*), /* P */
         sizeof(float), /* F */
         sizeof(double), /* D */

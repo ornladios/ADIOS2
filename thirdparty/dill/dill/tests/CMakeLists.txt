@@ -1,4 +1,3 @@
-cmake_minimum_required(VERSION 2.8)
 
 set(TESTS regress ctest call-test t1 pkg_test)
 
@@ -11,7 +10,7 @@ include_directories(BEFORE
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/regress.c
-  COMMAND perl -w
+  COMMAND ${PERL_EXECUTABLE} -w
     ${CMAKE_CURRENT_SOURCE_DIR}/test-gen
     ${TEST_PERL_FLAGS} > regress.c
   MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/test-gen
@@ -19,7 +18,7 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/call-test.c
-  COMMAND perl -w
+  COMMAND ${PERL_EXECUTABLE} -w
     ${CMAKE_CURRENT_SOURCE_DIR}/call-gen ${TEST_PERL_FLAGS} > call-test.c
   MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/call-gen 
 )
@@ -29,8 +28,11 @@ foreach(TEST ${TESTS})
   add_test(NAME dill_${TEST} COMMAND dill_${TEST} ${TEST_PERL_FLAGS})
 endforeach()
 
-target_link_libraries(dill_regress m)
-set_target_properties(dill_regress PROPERTIES COMPILE_FLAGS "-O0")
+if(NOT (CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
+     CMAKE_C_SIMULATE_ID MATCHES "MSVC"))
+     target_link_libraries(dill_regress m)
+     set_target_properties(dill_regress PROPERTIES COMPILE_FLAGS "-O0")
+endif()
 
 add_executable(cplus cplus.cc)
 target_link_libraries(cplus dill ${DIS_LIBS})
