@@ -80,6 +80,7 @@ private:
                         char *dataOut);
 
     std::string m_VersionInfo;
+    static std::mutex m_Mutex;
 };
 
 } // end namespace compress
