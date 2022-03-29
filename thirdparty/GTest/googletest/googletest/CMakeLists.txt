@@ -46,14 +46,9 @@ endif()
 
 # Project version:
 
-if (CMAKE_VERSION VERSION_LESS 3.0)
-  project(gtest CXX C)
-  set(PROJECT_VERSION ${GOOGLETEST_VERSION})
-else()
-  cmake_policy(SET CMP0048 NEW)
-  project(gtest VERSION ${GOOGLETEST_VERSION} LANGUAGES CXX C)
-endif()
-cmake_minimum_required(VERSION 2.6.4)
+cmake_minimum_required(VERSION 3.5)
+cmake_policy(SET CMP0048 NEW)
+project(gtest VERSION ${GOOGLETEST_VERSION} LANGUAGES CXX C)
 
 if (POLICY CMP0063) # Visibility
   cmake_policy(SET CMP0063 NEW)
@@ -92,10 +87,13 @@ include(cmake/internal_utils.cmake)
 
 config_compiler_and_linker()  # Defined in internal_utils.cmake.
 
+# Needed to set the namespace for both the export targets and the
+# alias libraries
+set(cmake_package_name GTest CACHE INTERNAL "")
+
 # Create the CMake package file descriptors.
 if (INSTALL_GTEST)
   include(CMakePackageConfigHelpers)
-  set(cmake_package_name GTest)
   set(targets_export_name ${cmake_package_name}Targets CACHE INTERNAL "")
   set(generated_dir "${CMAKE_CURRENT_BINARY_DIR}/generated" CACHE INTERNAL "")
   set(cmake_files_install_dir "${CMAKE_INSTALL_LIBDIR}/cmake/${cmake_package_name}")
@@ -133,12 +131,16 @@ set_target_properties(gtest_main PROPERTIES VERSION ${GOOGLETEST_VERSION})
 # to the targets for when we are part of a parent build (ie being pulled
 # in via add_subdirectory() rather than being a standalone build).
 if (DEFINED CMAKE_VERSION AND NOT "${CMAKE_VERSION}" VERSION_LESS "2.8.11")
+  string(REPLACE ";" "$<SEMICOLON>" dirs "${gtest_build_include_dirs}")
   target_include_directories(gtest SYSTEM INTERFACE
-    "$<BUILD_INTERFACE:${gtest_build_include_dirs}>"
+    "$<BUILD_INTERFACE:${dirs}>"
     "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
   target_include_directories(gtest_main SYSTEM INTERFACE
-    "$<BUILD_INTERFACE:${gtest_build_include_dirs}>"
+    "$<BUILD_INTERFACE:${dirs}>"
     "$<INSTALL_INTERFACE:$<INSTALL_PREFIX>/${CMAKE_INSTALL_INCLUDEDIR}>")
+endif()
+if(CMAKE_SYSTEM_NAME MATCHES "QNX")
+  target_link_libraries(gtest PUBLIC regex)
 endif()
 target_link_libraries(gtest_main PUBLIC gtest)
 
@@ -183,20 +185,6 @@ if (gtest_build_tests)
   # This must be set in the root directory for the tests to be run by
   # 'make test' or ctest.
   enable_testing()
-
-  if (WIN32)
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/$<CONFIG>/RunTest.ps1"
-         CONTENT
-"$project_bin = \"${CMAKE_BINARY_DIR}/bin/$<CONFIG>\"
-$env:Path = \"$project_bin;$env:Path\"
-& $args")
-  elseif (MINGW OR CYGWIN)
-    file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/RunTest.ps1"
-         CONTENT
-"$project_bin = (cygpath --windows ${CMAKE_BINARY_DIR}/bin)
-$env:Path = \"$project_bin;$env:Path\"
-& $args")
-  endif()
 
   ############################################################
   # C++ tests built with standard compiler flags.

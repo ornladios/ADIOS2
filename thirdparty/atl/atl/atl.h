@@ -13,6 +13,10 @@ extern "C" {
 #endif
 #endif
 
+#ifndef _STDINT_H
+#include <stdint.h>
+#endif
+
 typedef int atom_t;
 
 /* opaque type for atom server handle */
@@ -49,7 +53,7 @@ typedef enum _attr_value_type { Attr_Undefined, Attr_Int4, Attr_Int8,
 /* opaque type for attr_lists */
 typedef struct _attr_list_struct *attr_list;
 
-typedef void *attr_value;
+typedef int64_t attr_value;
 
 typedef struct Attr_tmp_buffer *AttrBuffer;
 

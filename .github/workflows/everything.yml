@@ -131,7 +131,7 @@ jobs:
 
   linux_emu:
     needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    if: false # needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-latest
     container:

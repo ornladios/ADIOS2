@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 
+# The directory label is used for CDash to treat ATL as a subproject of GTKorvo
+set(CMAKE_DIRECTORY_LABELS ATL)
+
 project(ATL VERSION 2.2.1 LANGUAGES C)
 
 # Some boilerplate to setup nice output directories
@@ -32,6 +35,22 @@ if(NOT DEFINED ATL_ARCHIVE_COMPONENT)
 endif()
 if(NOT DEFINED ATL_HEADER_COMPONENT)
   set(ATL_HEADER_COMPONENT dev)
+endif()
+
+if(WIN32)
+  # Automagic to do the DLL / LIB song and dance
+  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+
+  # Silence MSVC warnings
+  if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
+     CMAKE_C_SIMULATE_ID MATCHES "MSVC")
+    add_definitions(
+      -D_CRT_SECURE_NO_DEPRECATE
+      -D_CRT_SECURE_NO_WARNINGS
+      -D_SCL_SECURE_NO_DEPRECATE
+      -D_WINSOCK_DEPRECATED_NO_WARNINGS
+      -D_CRT_NONSTDC_NO_DEPRECATE)
+  endif()
 endif()
 
 # Default to a RelWithDebInfo build if not specified
@@ -84,6 +103,9 @@ set(ATL_LIBRARY_PREFIX "" CACHE STRING
 mark_as_advanced(ATL_LIBRARY_PREFIX)
 
 add_library(atl atom.c attr.c lookup3.c tclHash.c)
+if(WIN32)
+  target_link_libraries(atl wsock32 ws2_32)
+endif()
 add_library(atl::atl ALIAS atl)
 option(ATL_INSTALL_HEADERS "Install ATL header files" ON)
 mark_as_advanced(ATL_INSTALL_HEADERS)
@@ -139,13 +161,20 @@ install(TARGETS atl
 
 option(ATL_LIBRARIES_ONLY "Don't built the ATL utility executables" OFF)
 if(NOT ATL_LIBRARIES_ONLY)
-  add_executable(atom_server atom_server.c)
-  target_link_libraries(atom_server atl)
-
+  if(NOT WIN32)
+    # Atom server not ported to windows
+    add_executable(atom_server atom_server.c)
+    target_link_libraries(atom_server atl)
+    install(TARGETS atom_server
+      RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT ${ATL_RUNTIME_COMPONENT})
+  endif()
   add_executable(attr_dump attr_dump.c)
   target_link_libraries(attr_dump atl)
+  if(WIN32)
+    target_link_libraries(attr_dump wsock32 ws2_32)
+  endif()
 
-  install(TARGETS atom_server attr_dump
+  install(TARGETS attr_dump
     RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}" COMPONENT ${ATL_RUNTIME_COMPONENT})
 endif()
 
@@ -194,6 +223,12 @@ install(
   COMPONENT ${ATL_HEADER_COMPONENT})
 
 set(CTEST_MEMORYCHECK_SUPPRESSIONS_FILE ${CMAKE_CURRENT_SOURCE_DIR}/atl.supp)
+
+configure_file(
+  ${PROJECT_SOURCE_DIR}/CTestCustom.cmake.in
+  ${PROJECT_BINARY_DIR}/CTestCustom.cmake
+  @ONLY
+)
 
 # Display status message for important variables
 option(ATL_QUIET "Suppress info output at the end of configure" OFF)

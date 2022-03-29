@@ -1,5 +1,4 @@
 #include "config.h"
-#include "atl.h"
 
 #undef NDEBUG
 #  include <assert.h>
@@ -9,6 +8,7 @@
 #    include <malloc.h>
 #  endif
 #  include <stdio.h>
+#  include <stdint.h>
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
@@ -21,22 +21,36 @@
 #    include <netinet/tcp.h>
 #    include <arpa/inet.h>
 #  else
-#    include <windows.h>
-#    include <winsock.h>
+#    include <winsock2.h>
+#    include <ws2tcpip.h>
+#    pragma comment(lib, "Ws2_32.lib")
 #  endif
 #  include <fcntl.h>
 
-#  include "unix_defs.h"
+#ifdef _MSC_VER
+    #define strdup _strdup
+    #include <io.h>
+#pragma warning(disable: 4996)
+#endif
 
+#include "atl.h"
 #include "atom_internal.h"
 
 #define MAXDATASIZE 100
 #include "tclHash.h"
 
+#ifndef HAVE_WINDOWS_H
+typedef int SOCKET;
+#else
+#define write(fs, addr, len) send(fs, addr, len, 0)
+#define read(fs, addr, len) recv(fs, addr, len, 0)
+#define close(fs) closesocket(fs);
+#endif
+
 /* opaque type for atom server handle */
 typedef struct _atom_server {
     int sockfd;
-    int tcp_fd;
+    SOCKET tcp_fd;
     int use_tcp;
     int no_server;
     struct hostent *he;
@@ -50,7 +64,9 @@ typedef struct _atom_server {
 static char *atom_server_host = NULL;
 static int establish_server_connection(atom_server as, int do_fallback);
 
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 
 #ifndef O_NONBLOCK
 #define O_NONBLOCK 0x80
@@ -82,12 +98,14 @@ int block;
 	}
     }
 #else
-    if (ioctlsocket(as->sockfd, FIONBIO, (unsigned long*)!block) != 0) {
+    u_long block_val = !block;
+    if (ioctlsocket(as->sockfd, FIONBIO, &block_val) != 0) {
 	perror("ioctlsocket");
 	exit(1);
     }
-    ioctlsocket(as->tcp_fd, FIONBIO, (unsigned long*)!block);
+    ioctlsocket(as->tcp_fd, FIONBIO, &block_val);
 #endif
+
 }
 
 static void
@@ -120,7 +138,7 @@ char *msg;
 			);
 		}
 	    }
-	    entry = Tcl_FindHashEntry(&as->value_hash_table, (char *) (long)atom);
+	    entry = Tcl_FindHashEntry(&as->value_hash_table, (char *) (int64_t)atom);
 	    if (entry != NULL) {
 		send_get_atom_msg_ptr atom_entry =
 		(send_get_atom_msg_ptr) Tcl_GetHashValue(entry);
@@ -176,7 +194,7 @@ send_get_atom_msg_ptr msg;
     Tcl_SetHashValue(entry, stored);
     /* enter into value hash table */
     entry = Tcl_CreateHashEntry(&as->value_hash_table,
-				(char *) (long) stored->atom, &new);
+				(char *) (int64_t) stored->atom, &new);
     if (!new) {
 	printf("Serious internal error in atom cache.  Duplicate value hash entry.\n");
 	exit(1);
@@ -193,9 +211,9 @@ atom_t atom;
 {
     send_get_atom_msg tmp_value;
     Tcl_HashEntry *entry = NULL, *entry2 = NULL;
-    int numbytes, len;
+    long numbytes, len;
     unsigned char buf[MAXDATASIZE];
-    unsigned int addr_len = sizeof(struct sockaddr);
+    socklen_t addr_len = sizeof(struct sockaddr);
     int new;
 
     entry = Tcl_FindHashEntry(&as->string_hash_table, str);
@@ -214,7 +232,7 @@ atom_t atom;
 	    return;
 	}
     }
-    entry2 = Tcl_FindHashEntry(&as->value_hash_table, (char *) (long) atom);
+    entry2 = Tcl_FindHashEntry(&as->value_hash_table, (char *) (int64_t) atom);
    if (entry2 != NULL) {
 	send_get_atom_msg_ptr atom_entry =
 	(send_get_atom_msg_ptr) Tcl_GetHashValue(entry2);
@@ -233,20 +251,21 @@ atom_t atom;
     if (as->no_server) return;
     if (!new) return;
     sprintf((char *)&buf[1], "A%d %s", atom, str);
-    len = strlen((char*)&buf[1]);
+    len = (long) strlen((char*)&buf[1]);
     if (as->use_tcp) {
 	set_blocking(as, 1);
-	buf[0] = len;
+	buf[0] = (unsigned char) len;
 	if (establish_server_connection(as, 1) == 0) return;
-	if ((numbytes = write(as->tcp_fd, buf, len+1)) != len +1) {
+	
+	if ((numbytes = write(as->tcp_fd, (char*)buf, len+1)) != len +1) {
 	    close(as->tcp_fd);
 	    return;
 	}
 	set_blocking(as, 0);
-	if (read(as->tcp_fd, buf, 1) != 1) {
+	if (read(as->tcp_fd, (char*)buf, 1) != 1) {
 	    return;
 	}
-	if (read(as->tcp_fd, &buf[1], buf[0]) != buf[0]) {
+	if (read(as->tcp_fd, (char*)&buf[1], buf[0]) != buf[0]) {
 	    return;
 	}
 	buf[buf[0]+1] = 0;
@@ -254,13 +273,13 @@ atom_t atom;
     } else {
 	if (as->their_addr.sin_addr.s_addr == 0) return;
 	set_blocking(as, 0);	/* set server fd nonblocking */
-	if ((numbytes = sendto(as->sockfd, &buf[1], len, 0,
+	if ((numbytes = sendto(as->sockfd, (char*)&buf[1], len, 0,
 			       (struct sockaddr *) &(as->their_addr), sizeof(struct sockaddr))) == -1) {
 	    /* don't try that again... */
 	    as->their_addr.sin_addr.s_addr = 0;
 	    return;
 	}
-	if ((numbytes = recvfrom(as->sockfd, &buf[1], MAXDATASIZE - 1, 0,
+	if ((numbytes = recvfrom(as->sockfd, (char*)&buf[1], MAXDATASIZE - 1, 0,
 				 (struct sockaddr *) &(as->their_addr), &addr_len)) != -1) {
 	    /* actually got a message back ! */
 	    buf[numbytes+1] = 0;
@@ -269,7 +288,7 @@ atom_t atom;
     }
 }
 
-static int atom_server_verbose = -1;
+static int atom_server_verbose = 1;
 
 static int
 fill_hostaddr(void *addr, char *hostname)
@@ -300,7 +319,7 @@ establish_server_connection(as, do_fallback)
 atom_server as;
 int do_fallback;
 {
-    int sock;
+    SOCKET sock;
     int delay_value = 1;
     char ping_char = 0;
 
@@ -317,6 +336,7 @@ int do_fallback;
 	/* reestablish connection, name_str is the machine name */
 	struct sockaddr_in sock_addr;
 
+	fprintf(stderr, "Establish server connection, write failed, creating socket\n");
 	if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 	    fprintf(stderr, "Failed to create socket for ATL atom server connection.  Not enough File Descriptors?\n");
 	    return 0;
@@ -324,6 +344,7 @@ int do_fallback;
 	
 	sock_addr.sin_family = AF_INET;
 		
+	fprintf(stderr, "Establish server connection, fill_host_addr\n");
 	if (fill_hostaddr(&sock_addr.sin_addr, atom_server_host) == 0) {
 	    fprintf(stderr, "Unknown Host \"%s\" specified as ATL atom server.\n",
 		    atom_server_host);
@@ -415,12 +436,12 @@ atom_t atom;
     int numbytes;
     char buf[MAXDATASIZE];
 
-    entry = Tcl_FindHashEntry(&as->value_hash_table, (char *) (long) atom);
+    entry = Tcl_FindHashEntry(&as->value_hash_table, (char *) (int64_t) atom);
 
     if (entry == NULL) {
 	sprintf(&buf[1], "N%d", atom);
 	if (establish_server_connection(as, 1) == 0) return NULL;
-	buf[0] = strlen(&buf[1]);
+	buf[0] = (char) strlen(&buf[1]);
 	if (write(as->tcp_fd, buf, buf[0]+1) != buf[0] + 1) {
 	    perror("write");
 	    return NULL;
@@ -441,9 +462,9 @@ atom_t atom;
 		handle_unexpected_msg(as, &buf[1]);
 	}
 
-	if (buf[2] == 0)
+	if (buf[2] == 0) {
 	    return NULL;
-
+	}
 	tmp_rec.atom_string = &buf[2];
 	tmp_rec.atom = atom;
 
@@ -583,7 +604,7 @@ free_atom_server(atom_server as)
   Tcl_HashEntry * entry = Tcl_FirstHashEntry(&as->string_hash_table, &search);
   while (entry) {
     send_get_atom_msg_ptr stored;
-    stored = Tcl_GetHashValue(entry);
+    stored = (send_get_atom_msg_ptr) Tcl_GetHashValue(entry);
     free(stored->atom_string);
     free(stored);
     entry = Tcl_NextHashEntry(&search);
@@ -620,7 +641,7 @@ atom_cache_type cache_style;
     } else {
 	as->their_addr.sin_addr = *((struct in_addr *) as->he->h_addr);
     }
-    if ((as->sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+    if ((as->sockfd = (int) socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
 	perror("socket");
 	exit(1);
     }

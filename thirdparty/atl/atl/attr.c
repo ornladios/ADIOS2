@@ -1,12 +1,11 @@
 #include "config.h"
 #include "stdio.h"
-#include "atl.h"
 
 #  include "config.h"
+#    include <ctype.h>
 #  ifdef HAVE_WINDOWS_H
 #    include <windows.h>
 #  else
-#    include <ctype.h>
 #    include <stdio.h>
 #    include <stdlib.h>
 #    include <string.h>
@@ -15,11 +14,20 @@
 #    endif
 #    include <unix_defs.h>
 #  endif
+#include <stdint.h>
+#ifdef _MSC_VER
+    #define strdup _strdup
+    #include <io.h>
+#pragma warning(disable: 4996)
+#endif
 
+#include "atl.h"
 #undef NDEBUG
 #include "assert.h"
 
+#ifdef HAVE_SYS_TIME_H
 #include "sys/time.h"
+#endif
 #include "atom_internal.h"
 
 #if SIZEOF_INT == 4
@@ -370,7 +378,7 @@ add_float_attr(attr_list list, atom_t attr_id, double fvalue)
 {
     attr_value_type t = Attr_Float4;
     attr_union tmp;
-    tmp.u.f = fvalue;
+    tmp.u.f = (float) fvalue;
     if (sizeof(float) == 8) t = Attr_Float8;
     if (sizeof(float) == 16) t = Attr_Float16;
     return add_pattr(list, attr_id, t, tmp);
@@ -431,7 +439,7 @@ set_float_attr(attr_list list, atom_t attr_id, double fvalue)
 {
     attr_value_type t = Attr_Float4;
     attr_union tmp;
-    tmp.u.f = fvalue;
+    tmp.u.f = (float) fvalue;
     if (sizeof(float) == 8) t = Attr_Float8;
     if (sizeof(float) == 16) t = Attr_Float16;
     return set_pattr(list, attr_id, t, tmp);
@@ -474,7 +482,7 @@ replace_float_attr(attr_list list, atom_t attr_id, double fvalue)
 {
     attr_value_type t = Attr_Float4;
     attr_union tmp;
-    tmp.u.f = fvalue;
+    tmp.u.f = (float) fvalue;
     if (sizeof(float) == 8) t = Attr_Float8;
     if (sizeof(float) == 16) t = Attr_Float16;
     return replace_pattr(list, attr_id, t, tmp);
@@ -588,13 +596,12 @@ add_attr(attr_list list, atom_t attr_id, attr_value_type val_type, attr_value va
 	    value.u.f = *(float*)&val;
 	    break;
 	}
-	break;
     case Attr_Opaque:
 	value.u.o = *(attr_opaque_p)&val;
 	break;
     case Attr_String:
     case Attr_List:
-	value.u.p = val;
+	value.u.p = (void*)val;
 	break;
     case Attr_Undefined:
 	break;
@@ -725,13 +732,12 @@ replace_attr(attr_list list, atom_t attr_id, attr_value_type val_type, attr_valu
             value.u.f = *(float*)&val;
             break;
         }
-        break;
     case Attr_Opaque:
         value.u.o = *(attr_opaque_p)&val;
         break;
     case Attr_String:
     case Attr_List:
-        value.u.p = val;
+        value.u.p = (void*)val;
         break;
     case Attr_Undefined:
         break;
@@ -825,7 +831,7 @@ query_attr(attr_list list, atom_t attr_id, attr_value_type *val_type_p, attr_val
 			(list->l.list.attributes[index].val_type == Attr_Int4)){
 			*((int*)value_p) = (int)(long)list->l.list.attributes[index].value.u.i;
 		    } else {
-			*value_p = (void*)list->l.list.attributes[index].value.u.l;
+			*value_p = list->l.list.attributes[index].value.u.l;
 		    }
 		}
 		return 1;
@@ -907,7 +913,7 @@ dump_attr_sublist(FILE *out, attr_list list, int indent)
     }
     for (i = 0; i < list->l.list.iattrs->int_attr_count; i++) {
 	int attr_id = list->l.list.iattrs->iattr[i].attr_id;
-	char c[15];
+	unsigned char c[30];
         char *attr_name = string_from_atom(global_as, attr_id), *print_name;
         int j;
 	memcpy(&c[0], &attr_id, 4);
@@ -927,7 +933,7 @@ dump_attr_sublist(FILE *out, attr_list list, int indent)
 		   ((ip & 0xff000000) >> 24), ((ip & 0x00ff0000) >> 16), 
 		   ((ip & 0x0000ff00) >> 8), (ip & 0x000000ff));
 	} else {
-	    char *print_id = &c[0];
+	    char *print_id = (char*) &c[0];
 	    if ((!isprint((int)c[0])) || (!isprint((int)c[1])) || (!isprint((int)c[2])) || 
 		(!isprint((int)c[3]))) {
 		sprintf(print_id, "0x%x", attr_id);
@@ -940,11 +946,11 @@ dump_attr_sublist(FILE *out, attr_list list, int indent)
 	
     for (i = 0; i < list->l.list.iattrs->other_attr_count; i++) {
 	int attr_id = list->l.list.attributes[i].attr_id;
-	char c[15];
+	unsigned char c[15];
 	char *attr_name = string_from_atom(global_as, attr_id);
         char *print_name;
         int j;
-	char *print_id = &c[0];
+	char *print_id = (char*)&c[0];
 	print_name = attr_name;
 	memcpy(&c[0], &attr_id, 4);
 	c[4] = 0;
@@ -1407,7 +1413,7 @@ get_attr(attr_list list,int index, atom_t *name,
 	if (index < list->l.list.iattrs->other_attr_count) {
 	    *name = list->l.list.attributes[index].attr_id;
 	    *val_type = list->l.list.attributes[index].val_type;
-	    *value = (void*)list->l.list.attributes[index].value.u.l;
+	    *value = (int64_t)list->l.list.attributes[index].value.u.l;
 	    return 1;
 	}
 	return 0;
@@ -1490,8 +1496,7 @@ free_attr_list(attr_list list)
                 free((char *)list->l.list.attributes[i].value.u.p);
                 break;
             case Attr_Opaque: {
-                attr_opaque o =
-                    (attr_opaque) list->l.list.attributes[i].value.u.o;
+                attr_opaque o = list->l.list.attributes[i].value.u.o;
                 if (o.buffer) {
                     free(o.buffer);
                 }
@@ -1646,7 +1651,7 @@ add_to_tmp_buffer(AttrBuffer buf, unsigned int size)
 	buf->tmp_buffer = malloc(tmp_size * sizeof(char));
 	if(buf->tmp_buffer) memset(buf->tmp_buffer, 0, tmp_size * sizeof(char));
     }
-    if (size > buf->tmp_buffer_size) {
+    if ((long)size > (long)buf->tmp_buffer_size) {
 	buf->tmp_buffer = realloc(buf->tmp_buffer, size);
 	memset (((char*)buf->tmp_buffer) + buf->tmp_buffer_size, 0, size - buf->tmp_buffer_size);
 	buf->tmp_buffer_size = size;
@@ -1859,7 +1864,7 @@ decode_attr_from_xmit(void * buf)
 	    if (l->l.list.attributes[i].val_type == Attr_String) {
 		char *value = malloc(len);
 		memcpy(value, optr, len);
-		l->l.list.attributes[i].value.u.p = (attr_value) value;
+		l->l.list.attributes[i].value.u.p = value;
 	    } else {
 		attr_opaque op;
 		op.length = len;

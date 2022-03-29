@@ -64,13 +64,12 @@ else()
   add_subdirectory(pugixml)
 endif()
 adios2_add_thirdparty_target(pugixml pugixml)
-if(ADIOS2_USE_EXTERNAL_NLOHMANN_JSON)
-  find_package(nlohmann_json REQUIRED)
-  adios2_add_thirdparty_target(nlohmann_json nlohmann_json::nlohmann_json)
-else()
-  add_subdirectory(nlohmann_json)
-  adios2_add_thirdparty_target(nlohmann_json nlohmann_json)
-endif()
+
+# ADIOS uses a wrapper header for nlohmann_json to suppress noisy compiler
+# warnings
+add_subdirectory(nlohmann_json)
+adios2_add_thirdparty_target(nlohmann_json nlohmann_json_wrapper)
+
 if(ADIOS2_USE_EXTERNAL_YAMLCPP)
   find_package(yaml-cpp REQUIRED)
 else()
