@@ -135,11 +135,5 @@ public:
      */
     DataType AttributeType(const std::string &name) const;
 };
-// Explicit declaration of the public template methods
-// Limits the types
-#define declare_template_instantiation(T)                                      \
-    extern template Variable<T> Group::InquireVariable<T>(const std::string &);
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
 }
 #endif // ADIOS2_BINDINGS_CXX11_CXX11_GROUP_H_
