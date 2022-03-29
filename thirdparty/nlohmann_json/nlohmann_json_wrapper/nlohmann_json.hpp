@@ -18,7 +18,7 @@ _Pragma("warning(disable:1011)")
 #pragma clang diagnostic ignored "-Wall"
 #endif
 
-#include <upstream/nlohmann/json.hpp>
+#include <nlohmann/json.hpp>
 
 #if defined(_MSC_VER) && !defined(__clang__)
 #pragma warning(pop)
