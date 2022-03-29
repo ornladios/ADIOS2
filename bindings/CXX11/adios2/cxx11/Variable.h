@@ -397,12 +397,6 @@ private:
     DoAllStepsBlocksInfoMap() const;
 };
 
-#define declare_template_instantiation(T)                                      \
-    extern template std::vector<typename Variable<T>::Info>                    \
-    Variable<T>::ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const;
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
 template <typename T>
 std::string ToString(const Variable<T> &variable);
 
