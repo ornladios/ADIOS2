@@ -12,6 +12,7 @@
 #define ADIOS2_OPERATOR_COMPRESS_COMPRESSSZ_H_
 
 #include "adios2/core/Operator.h"
+#include <mutex>
 
 namespace adios2
 {
@@ -80,6 +81,7 @@ private:
                         char *dataOut);
 
     std::string m_VersionInfo;
+    static std::mutex m_Mutex;
 };
 
 } // end namespace compress
