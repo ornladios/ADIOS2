@@ -3,8 +3,6 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-enable_language(CUDA)
-
 add_executable(CudaBP5WriteRead_cuda cudaBP5WriteRead.cu)
 target_link_libraries(CudaBP5WriteRead_cuda PUBLIC adios2::cxx11 CUDA::cudart)
 set_target_properties(CudaBP5WriteRead_cuda PROPERTIES CUDA_SEPARABLE_COMPILATION ON)

@@ -108,8 +108,6 @@ set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFF
 
 set(maybe_adios2_core_cuda)
 if(ADIOS2_HAVE_CUDA)
-  enable_language(CUDA)
-
   add_library(adios2_core_cuda helper/adiosCUDA.cu)
   set_target_properties(adios2_core_cuda PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON
