@@ -12,5 +12,9 @@
 #include <malloc.h>
 #endif
 
-extern pid_t getpid();
 extern char *getlogin();
+#ifdef _MSC_VER
+    #define strdup _strdup
+    #include <io.h>
+#pragma warning(disable: 4996)
+#endif

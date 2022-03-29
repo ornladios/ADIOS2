@@ -3,6 +3,7 @@
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
+#include <stdint.h>
 #include "atl.h"
 
 int
