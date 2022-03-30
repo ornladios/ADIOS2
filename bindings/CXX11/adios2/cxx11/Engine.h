@@ -458,48 +458,6 @@ private:
     core::Engine *m_Engine = nullptr;
 };
 
-#define declare_template_instantiation(T)                                      \
-                                                                               \
-    extern template typename Variable<T>::Span Engine::Put(                    \
-        Variable<T>, const bool, const T &);                                   \
-    extern template typename Variable<T>::Span Engine::Put(Variable<T>);       \
-    extern template void Engine::Get(Variable<T>, T **) const;
-
-ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
-#define declare_template_instantiation(T)                                      \
-    extern template void Engine::Put<T>(Variable<T>, const T *, const Mode);   \
-    extern template void Engine::Put<T>(const std::string &, const T *,        \
-                                        const Mode);                           \
-    extern template void Engine::Put<T>(Variable<T>, const T &, const Mode);   \
-    extern template void Engine::Put<T>(const std::string &, const T &,        \
-                                        const Mode);                           \
-                                                                               \
-    extern template void Engine::Get<T>(Variable<T>, T *, const Mode);         \
-    extern template void Engine::Get<T>(const std::string &, T *, const Mode); \
-    extern template void Engine::Get<T>(Variable<T>, T &, const Mode);         \
-    extern template void Engine::Get<T>(const std::string &, T &, const Mode); \
-                                                                               \
-    extern template void Engine::Get<T>(Variable<T>, std::vector<T> &,         \
-                                        const Mode);                           \
-    extern template void Engine::Get<T>(const std::string &, std::vector<T> &, \
-                                        const Mode);                           \
-                                                                               \
-    extern template void Engine::Get<T>(                                       \
-        Variable<T>, typename Variable<T>::Info & info, const Mode);           \
-    extern template void Engine::Get<T>(                                       \
-        const std::string &, typename Variable<T>::Info &info, const Mode);    \
-                                                                               \
-    extern template std::map<size_t, std::vector<typename Variable<T>::Info>>  \
-    Engine::AllStepsBlocksInfo(const Variable<T> variable) const;              \
-                                                                               \
-    extern template std::vector<typename Variable<T>::Info>                    \
-    Engine::BlocksInfo(const Variable<T> variable, const size_t step) const;
-
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
 std::string ToString(const Engine &engine);
 
 } // end namespace adios2

@@ -364,32 +364,6 @@ private:
     core::IO *m_IO = nullptr;
 };
 
-// Explicit declaration of the public template methods
-// Limits the types
-#define declare_template_instantiation(T)                                      \
-    extern template Variable<T> IO::DefineVariable(const std::string &,        \
-                                                   const Dims &, const Dims &, \
-                                                   const Dims &, const bool);  \
-                                                                               \
-    extern template Variable<T> IO::InquireVariable<T>(const std::string &);
-
-ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
-#define declare_template_instantiation(T)                                      \
-    extern template Attribute<T> IO::DefineAttribute(                          \
-        const std::string &, const T *, const size_t, const std::string &,     \
-        const std::string, const bool);                                        \
-                                                                               \
-    extern template Attribute<T> IO::DefineAttribute(                          \
-        const std::string &, const T &, const std::string &,                   \
-        const std::string, const bool);                                        \
-                                                                               \
-    extern template Attribute<T> IO::InquireAttribute<T>(                      \
-        const std::string &, const std::string &, const std::string);
-ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
-#undef declare_template_instantiation
-
 std::string ToString(const IO &io);
 
 } // end namespace adios2
