@@ -141,10 +141,10 @@ public:
      * variables from IO:DefineVariable<T> or IO:InquireVariable<T>.
      * Can be used with STL containers.
      */
-    Variable<T>() = default;
+    Variable() = default;
 
     /** Default, using RAII STL containers */
-    ~Variable<T>() = default;
+    ~Variable() = default;
 
     /** Checks if object is valid, e.g. if( variable ) { //..valid } */
     explicit operator bool() const noexcept;
@@ -389,7 +389,7 @@ public:
     using Span = adios2::detail::Span<T>;
 
 private:
-    Variable<T>(core::Variable<IOType> *variable);
+    Variable(core::Variable<IOType> *variable);
     core::Variable<IOType> *m_Variable = nullptr;
 
     std::vector<std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfo();
