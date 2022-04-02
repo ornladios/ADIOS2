@@ -25,7 +25,7 @@ void CommDummyError(const std::string &msg)
     helper::Log("Helper", "adiosCommDummy", "CommDummyError",
                 "CommDummy: a function returned error code '" + msg +
                     "'. Aborting!",
-                helper::LogMode::ERROR);
+                helper::FATALERROR);
     std::abort();
 }
 }
