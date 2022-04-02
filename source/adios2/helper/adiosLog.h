@@ -21,7 +21,7 @@ namespace helper
 enum LogMode : char
 {
     EXCEPTION = 'x',
-    ERROR = 'e',
+    FATALERROR = 'e',
     WARNING = 'w',
     INFO = 'i'
 };

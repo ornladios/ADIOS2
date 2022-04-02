@@ -218,9 +218,8 @@ void FileDrainerSingleThread::DrainThread()
                 catch (std::ios_base::failure &e)
                 {
                     helper::Log("BurstBuffer", "FileDrainerSingleThread",
-                                "DrainThread",
-                                "ADIOS THREAD ERROR: " + std::string(e.what()),
-                                helper::LogMode::ERROR);
+                                "DrainThread", std::string(e.what()),
+                                helper::FATALERROR);
                 }
             }
             break;

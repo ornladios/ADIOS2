@@ -141,7 +141,7 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
                         "ADIOS WARNING: Unknown parameter keyword '" + key +
                             "' with value '" + value +
                             "' passed to Blosc compression operator.",
-                        helper::ERROR);
+                        helper::FATALERROR);
         }
     }
 
