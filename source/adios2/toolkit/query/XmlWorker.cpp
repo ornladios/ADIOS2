@@ -149,8 +149,7 @@ QueryVar *XmlWorker::ParseVarNode(const pugi::xml_node &node,
     if (varType == DataType::None)
     {
         helper::Log("Query", "XmlWorker", "ParseVarNode",
-                    "No such variable: " + variableName,
-                    helper::LogMode::ERROR);
+                    "No such variable: " + variableName, helper::FATALERROR);
         helper::Throw<std::ios_base::failure>(
             "Toolkit", "query::XmlWorker", "ParseVarNode",
             "variable: " + variableName + " not found");
