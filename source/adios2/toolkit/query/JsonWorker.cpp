@@ -105,7 +105,7 @@ void JsonWorker::ParseJson()
         {
             helper::Log("Query", "JsonWorker", "ParseJson",
                         "No such variable: " + varName.dump(),
-                        helper::LogMode::ERROR);
+                        helper::FATALERROR);
             return nullptr;
         }
 

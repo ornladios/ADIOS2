@@ -134,7 +134,7 @@ StepStatus SscReaderGeneric::BeginStep(const StepMode stepMode,
                 {
                     helper::Log("Engine", "SscReader", "BeginStep",
                                 "unknown data type", m_ReaderRank, m_ReaderRank,
-                                0, m_Verbosity, helper::LogMode::ERROR);
+                                0, m_Verbosity, helper::FATALERROR);
                 }
             }
         }
@@ -306,7 +306,7 @@ void SscReaderGeneric::PerformGets()
                             helper::Log("Engine", "SscReader", "PerformGets",
                                         "unknown data type", m_ReaderRank,
                                         m_ReaderRank, 0, m_Verbosity,
-                                        helper::LogMode::ERROR);
+                                        helper::FATALERROR);
                         }
                     }
                 }

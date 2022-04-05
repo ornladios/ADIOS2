@@ -54,7 +54,7 @@ std::string MakeMessage(const std::string &component, const std::string &source,
     {
         m << warningColor << " [ADIOS2 WARNING]" << defaultColor;
     }
-    else if (mode == ERROR)
+    else if (mode == FATALERROR)
     {
         m << errorColor << " [ADIOS2 ERROR]" << defaultColor;
     }
@@ -102,7 +102,7 @@ void Log(const std::string &component, const std::string &source,
     if ((logRank >= 0 && commRank >= 0 && logRank != commRank) ||
         priority > verbosity ||
         (messages.find(message) != messages.end() &&
-         (mode == LogMode::ERROR || mode == LogMode::WARNING)))
+         (mode == LogMode::FATALERROR || mode == LogMode::WARNING)))
     {
         return;
     }
@@ -115,7 +115,7 @@ void Log(const std::string &component, const std::string &source,
     {
         std::cout << m;
     }
-    else if (mode == ERROR)
+    else if (mode == FATALERROR)
     {
         std::cerr << m;
     }

@@ -72,8 +72,7 @@ QueryVar *Worker::GetBasicVarQuery(adios2::core::IO &currentIO,
     if (varType == DataType::None)
     {
         helper::Log("Query", "Worker", "GetBasicVarQuery",
-                    "No such variable: " + variableName,
-                    helper::LogMode::ERROR);
+                    "No such variable: " + variableName, helper::FATALERROR);
         return nullptr;
     }
 #define declare_type(T)                                                        \

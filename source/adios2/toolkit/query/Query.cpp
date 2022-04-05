@@ -244,7 +244,7 @@ bool QueryVar::IsSelectionValid(adios2::Dims &shape) const
         helper::Log(
             "Query", "QueryVar", "IsSelectionValid",
             "Query selection dimension is different from shape dimension",
-            helper::LogMode::ERROR);
+            helper::FATALERROR);
         return false; // different dimension
     }
 
