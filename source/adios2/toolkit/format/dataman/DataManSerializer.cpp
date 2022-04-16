@@ -622,7 +622,6 @@ void DataManSerializer::Log(const int level, const std::string &message,
     }
 }
 
-template <>
 void DataManSerializer::PutData(
     const std::string *inputData, const std::string &varName,
     const Dims &varShape, const Dims &varStart, const Dims &varCount,
