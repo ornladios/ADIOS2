@@ -183,7 +183,10 @@ install(EXPORT enet-targets NAMESPACE enet::
 
 # Build documentation
 find_package(Doxygen)
-if(Doxygen_FOUND)
+cmake_dependent_option(BUILD_DOCS
+  "Build documentation." OFF 
+  "Doxygen_FOUND" OFF)
+if(BUILD_DOCS)
   doxygen_add_docs(enet_docs "${CMAKE_CURRENT_SOURCE_DIR}" ALL)
   install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/html" DESTINATION "${CMAKE_INSTALL_DOCDIR}" COMPONENT ${ENET_DOC_COMPONENT})
 endif()
