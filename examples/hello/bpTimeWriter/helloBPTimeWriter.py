@@ -26,9 +26,6 @@ adios = adios2.ADIOS(comm, adios2.DebugON)
 
 # IO
 bpIO = adios.DeclareIO("BPN2N")
-bpIO.SetEngine('bp3')
-
-fileID = bpIO.AddTransport('File', {'Library': 'fstream'})
 
 # Variables
 bpArray = bpIO.DefineVariable("bpArray", myArray, [size * nx], [rank * nx],
