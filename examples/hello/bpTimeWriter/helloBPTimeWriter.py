@@ -19,28 +19,35 @@ size = comm.Get_size()
 # User data
 myArray = np.array([0, 1, 2, 3, 4, 5, 6, 7, 8, 9])
 nx = myArray.size
+time = np.array([0.0])
 
 # ADIOS
 adios = adios2.ADIOS(comm, adios2.DebugON)
 
 # IO
 bpIO = adios.DeclareIO("BPN2N")
+bpIO.SetEngine('bp3')
+
+fileID = bpIO.AddTransport('File', {'Library': 'fstream'})
 
 # Variables
-bpArray = bpIO.DefineVariable("bpArray", [size * nx], [rank * nx], [nx],
-                              adios2.ConstantDims, myArray)
-bpTimeStep = bpIO.DefineVariable("bpTimeStep")
+bpArray = bpIO.DefineVariable("bpArray", myArray, [size * nx], [rank * nx], [nx],
+                              adios2.ConstantDims)
+bpTimeStep = bpIO.DefineVariable("bpTimeStep", time)
 
 # Engine
-bpFileWriter = bpIO.Open("myArray.bp", adios2.OpenModeWrite)
+bpFileWriter = bpIO.Open("myArray.bp", adios2.Mode.Write)
+# Doesn't work: bpFileWriter = bpIO.Open("myArray.bp", adios2.OpenModeWrite)
 # Doesn't work: bpFileWriter = bpIO.Open("myArray.bp", adiosOpenModeWrite,
 #                                                      MPI.COMM_WORLD)
+
 
 for t in range(0, 10):
     bpFileWriter.BeginStep()
     if rank == 0:
-        bpFileWriter.Put(bpTimeStep, np.array([t]))
-    bpFileWriter.Put(bpArray, myArray)
+        time[0] = t
+        bpFileWriter.Put(bpTimeStep, time)
+    bpFileWriter.Put(bpArray, myArray) #, adios2.Mode.Sync)
     bpFileWriter.EndStep()
 
 bpFileWriter.Close()
