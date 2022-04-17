@@ -31,8 +31,8 @@ bpIO.SetEngine('bp3')
 fileID = bpIO.AddTransport('File', {'Library': 'fstream'})
 
 # Variables
-bpArray = bpIO.DefineVariable("bpArray", myArray, [size * nx], [rank * nx], [nx],
-                              adios2.ConstantDims)
+bpArray = bpIO.DefineVariable("bpArray", myArray, [size * nx], [rank * nx],
+                              [nx], adios2.ConstantDims)
 bpTimeStep = bpIO.DefineVariable("bpTimeStep", time)
 
 # Engine
@@ -47,7 +47,7 @@ for t in range(0, 10):
     if rank == 0:
         time[0] = t
         bpFileWriter.Put(bpTimeStep, time)
-    bpFileWriter.Put(bpArray, myArray) #, adios2.Mode.Sync)
+    bpFileWriter.Put(bpArray, myArray)
     bpFileWriter.EndStep()
 
 bpFileWriter.Close()
