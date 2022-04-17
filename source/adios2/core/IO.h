@@ -28,7 +28,6 @@
 #include "adios2/core/CoreTypes.h"
 #include "adios2/core/Group.h"
 #include "adios2/core/Variable.h"
-#include "adios2/core/VariableCompound.h"
 
 namespace adios2
 {

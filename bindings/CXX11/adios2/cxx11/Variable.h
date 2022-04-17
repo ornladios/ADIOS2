@@ -26,8 +26,6 @@ class Group;  // friend
 namespace core
 {
 
-class VariableBase;
-
 template <class T>
 class Variable; // private implementation
 
