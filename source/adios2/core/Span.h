@@ -11,18 +11,7 @@
 #ifndef ADIOS2_CORE_SPAN_H_
 #define ADIOS2_CORE_SPAN_H_
 
-/// \cond EXCLUDE_FROM_DOXYGEN
-#include <map>
-#include <ostream> //std::ostream in MonitorGroups
-#include <string>
-#include <unordered_map>
-#include <vector>
-/// \endcond
-
-#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/VariableBase.h"
-#include "adios2/helper/adiosMath.h"
-#include "adios2/helper/adiosType.h"
 
 namespace adios2
 {
