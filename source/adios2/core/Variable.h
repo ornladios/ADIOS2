@@ -19,6 +19,7 @@
 #include <vector>
 /// \endcond
 
+#include "Span.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/VariableBase.h"
 #include "adios2/helper/adiosMath.h"
@@ -28,38 +29,6 @@ namespace adios2
 {
 namespace core
 {
-
-template <class T>
-class Span
-{
-public:
-    std::pair<size_t, size_t> m_MinMaxDataPositions;
-    std::pair<size_t, size_t> m_MinMaxMetadataPositions;
-
-    // internal position variables from which the engine
-    // can return a valid pointer any time
-    // BP5 needs two levels of reference, BP3/4 uses only one
-    size_t m_PayloadPosition = 0;
-    int m_BufferIdx = -1;
-
-    T m_Value = T{};
-
-    Span(Engine &engine, const size_t size);
-    ~Span() = default;
-
-    size_t Size() const noexcept;
-    T *Data() const noexcept;
-
-    T &At(const size_t position);
-    const T &At(const size_t position) const;
-
-    T &operator[](const size_t position);
-    const T &operator[](const size_t position) const;
-
-private:
-    Engine &m_Engine;
-    size_t m_Size = 0;
-};
 
 /**
  * @param Base (parent) class for template derived (child) class Variable.
