@@ -22,7 +22,6 @@ template <class T>
 class Span
 {
 public:
-    std::pair<size_t, size_t> m_MinMaxDataPositions;
     std::pair<size_t, size_t> m_MinMaxMetadataPositions;
 
     // internal position variables from which the engine
@@ -40,10 +39,8 @@ public:
     T *Data() const noexcept;
 
     T &At(const size_t position);
-    const T &At(const size_t position) const;
 
     T &operator[](const size_t position);
-    const T &operator[](const size_t position) const;
 
 private:
     Engine &m_Engine;
@@ -53,4 +50,4 @@ private:
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_CORE_SPAN_H_ */
+#endif // ADIOS2_CORE_SPAN_H_

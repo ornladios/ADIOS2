@@ -53,21 +53,6 @@ T &Span<T>::At(const size_t position)
 }
 
 template <class T>
-const T &Span<T>::At(const size_t position) const
-{
-    if (position > m_Size)
-    {
-        helper::Throw<std::invalid_argument>(
-            "Core", "Span", "At",
-            "position " + std::to_string(position) +
-                " is out of bounds for span of size " + std::to_string(m_Size) +
-                " , in call to const T& Span<T>::At");
-    }
-
-    return (*this)[position];
-}
-
-template <class T>
 T &Span<T>::operator[](const size_t position)
 {
     T &data = *m_Engine.BufferData<T>(m_BufferIdx,
@@ -75,15 +60,7 @@ T &Span<T>::operator[](const size_t position)
     return data;
 }
 
-template <class T>
-const T &Span<T>::operator[](const size_t position) const
-{
-    const T &data = *m_Engine.BufferData<T>(
-        m_BufferIdx, m_PayloadPosition + position * sizeof(T));
-    return data;
-}
-
 } // end namespace core
 } // end namespace adios2
 
-#endif /* ADIOS2_CORE_SPAN_TCC_ */
+#endif // ADIOS2_CORE_SPAN_TCC_
