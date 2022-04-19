@@ -4,6 +4,7 @@
  */
 #include <cstdint>
 #include <cstring>
+#include <stdint.h> /* SIZE_MAX */
 
 #include <iostream>
 #include <stdexcept>
@@ -61,7 +62,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     std::string varname1 = "r64";
 
-    size_t first_step = -1;
+    size_t first_step = SIZE_MAX;
     size_t total_steps = 0;
     while (engine1.BeginStep() == adios2::StepStatus::OK)
     {
@@ -104,7 +105,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         int result = validateSimpleForwardData(in_R64_1, step, myStart,
                                                myLength, writerSize * Nx);
-        if (first_step == -1)
+        if (first_step == SIZE_MAX)
         {
             std::cout << "My first step was step " << step << std::endl;
             first_step = step;

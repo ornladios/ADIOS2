@@ -82,7 +82,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 
     adios2::Engine engine1 = io1.Open(fname, adios2::Mode::Write);
 
-    for (size_t step = 0; step < NSteps; step++)
+    for (size_t step = 0; step < (size_t)NSteps; step++)
     {
 
         // Generate test data for each process uniquely
