@@ -212,6 +212,37 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
         return false;
     };
 
+    auto lf_SetStepDistributionModeParameter = [&](const std::string key,
+                                                   size_t &parameter) {
+        auto itKey = io.m_Parameters.find(key);
+        if (itKey != io.m_Parameters.end())
+        {
+            std::string method = itKey->second;
+            std::transform(method.begin(), method.end(), method.begin(),
+                           ::tolower);
+            if (method == "alltoall")
+            {
+                parameter = StepsAllToAll;
+            }
+            else if (method == "roundrobin")
+            {
+                parameter = StepsRoundRobin;
+            }
+            else if (method == "ondemand")
+            {
+                parameter = StepsOnDemand;
+            }
+            else
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Engine", "SstParamParser", "ParseParams",
+                    "Unknown Sst StepDistributionMode parameter \"" + method +
+                        "\"");
+            }
+            return true;
+        }
+        return false;
+    };
     auto lf_SetSpecPreloadModeParameter = [&](const std::string key,
                                               int &parameter) {
         auto itKey = io.m_Parameters.find(key);

@@ -88,8 +88,6 @@ int validateSimpleForwardData(std::vector<double> &data_forward, int step,
     int ret = 0;
     int64_t j = 100 * step + start;
 
-    std::cout << "Calling validate Simple data forward with step " << step
-              << ", start = " << start << ", count = " << count << std::endl;
     for (int i = 0; i < count; i++)
     {
         if (data_forward[i] != (double)j + i)

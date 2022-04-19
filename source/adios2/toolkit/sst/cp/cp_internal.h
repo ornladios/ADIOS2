@@ -18,6 +18,7 @@ typedef struct _CP_GlobalCMInfo
     CMFormat DeliverTimestepMetadataFormat;
     CMFormat PeerSetupFormat;
     CMFormat ReaderActivateFormat;
+    CMFormat ReaderRequestStepFormat;
     CMFormat ReleaseTimestepFormat;
     CMFormat LockReaderDefinitionsFormat;
     CMFormat CommPatternLockedFormat;
@@ -359,6 +360,15 @@ struct _ReaderActivateMsg
 };
 
 /*
+ * The ReaderRequestStep message informs the writer that this reader is now
+ * ready to receive a new step (Used in OnDemand step distribution mode)
+ */
+struct _ReaderRequestStepMsg
+{
+    void *WSR_Stream;
+};
+
+/*
  * The timestepMetadata message carries the metadata from all writer ranks.
  * One is sent to each reader in peer mode, between rank 0's in min mode.
  */
@@ -507,6 +517,9 @@ extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *msg_v,
 extern void CP_ReaderActivateHandler(CManager cm, CMConnection conn,
                                      void *msg_v, void *client_data,
                                      attr_list attrs);
+extern void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn,
+                                        void *msg_v, void *client_data,
+                                        attr_list attrs);
 extern void CP_TimestepMetadataHandler(CManager cm, CMConnection conn,
                                        void *msg_v, void *client_data,
                                        attr_list attrs);

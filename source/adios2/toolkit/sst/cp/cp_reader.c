@@ -2215,6 +2215,17 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, const float timeout_sec)
         Stream->CurrentMetadata = NULL;
     }
 
+    if (Stream->WriterConfigParams->StepDistributionMode == StepsOnDemand)
+    {
+        struct _ReaderRequestStepMsg Msg;
+        CP_verbose(Stream, PerRankVerbose,
+                   "Sending Reader Request Step messages to writer\n");
+        memset(&Msg, 0, sizeof(Msg));
+        sendOneToEachWriterRank(
+            Stream, Stream->CPInfo->SharedCM->ReaderRequestStepFormat, &Msg,
+            &Msg.WSR_Stream);
+    }
+
     SstStepMode mode = SstNextAvailable;
     if (Stream->ConfigParams->AlwaysProvideLatestTimestep)
     {

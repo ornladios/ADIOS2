@@ -2550,6 +2550,27 @@ void CP_ReaderActivateHandler(CManager cm, CMConnection conn, void *Msg_v,
     PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
+void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn, void *Msg_v,
+                                 void *client_data, attr_list attrs)
+{
+    PERFSTUBS_TIMER_START_FUNC(timer);
+    struct _ReaderRequestStepMsg *Msg = (struct _ReaderRequestStepMsg *)Msg_v;
+
+    WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
+    CP_verbose(CP_WSR_Stream->ParentStream, PerStepVerbose,
+               "Reader Request Step  message received "
+               "for Stream %p.\n",
+               CP_WSR_Stream);
+    STREAM_MUTEX_LOCK(CP_WSR_Stream->ParentStream);
+    CP_WSR_Stream->ReaderStatus = Established;
+    /*
+     * the main thread might be waiting for this
+     */
+    pthread_cond_signal(&CP_WSR_Stream->ParentStream->DataCondition);
+    STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
+}
+
 extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
                                       void *Msg_v, void *client_data,
                                       attr_list attrs)
