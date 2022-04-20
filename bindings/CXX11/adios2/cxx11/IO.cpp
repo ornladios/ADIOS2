@@ -165,6 +165,23 @@ std::string IO::EngineType() const
     return m_IO->m_EngineType;
 }
 
+VariableNT IO::DefineVariable(const DataType type, const std::string &name,
+                              const Dims &shape, const Dims &start,
+                              const Dims &count, const bool constantDims)
+{
+    helper::CheckForNullptr(m_IO, "for variable name " + name +
+                                      ", in call to IO::DefineVariable");
+#define declare_type(T)                                                        \
+    if (ToString(type) == GetType<T>())                                        \
+    {                                                                          \
+        return VariableNT(&m_IO->DefineVariable<typename TypeInfo<T>::IOType>( \
+            name, shape, start, count, constantDims));                         \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    else { return nullptr; }
+}
+
 // PRIVATE
 IO::IO(core::IO *io) : m_IO(io) {}
 

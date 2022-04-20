@@ -11,15 +11,16 @@
 #ifndef ADIOS2_BINDINGS_CXX11_CXX11_IO_H_
 #define ADIOS2_BINDINGS_CXX11_CXX11_IO_H_
 
+#if ADIOS2_USE_MPI
+#include <mpi.h>
+#endif
+
 #include "Attribute.h"
 #include "Engine.h"
 #include "Group.h"
 #include "Operator.h"
 #include "Variable.h"
-#if ADIOS2_USE_MPI
-#include <mpi.h>
-#endif
-
+#include "VariableNT.h"
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
 
@@ -151,6 +152,12 @@ public:
     DefineVariable(const std::string &name, const Dims &shape = Dims(),
                    const Dims &start = Dims(), const Dims &count = Dims(),
                    const bool constantDims = false);
+
+    VariableNT DefineVariable(const DataType type, const std::string &name,
+                              const Dims &shape = Dims(),
+                              const Dims &start = Dims(),
+                              const Dims &count = Dims(),
+                              const bool constantDims = false);
 
     /**
      * Retrieve a Variable object within current IO object

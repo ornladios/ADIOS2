@@ -80,4 +80,4 @@ Attribute<T> IO::InquireAttribute(const std::string &name,
 
 } // end namespace adios2
 
-#endif /* ADIOS2_BINDINGS_CXX11_CXX11_IO_TCC_ */
+#endif // ADIOS2_BINDINGS_CXX11_CXX11_IO_TCC_

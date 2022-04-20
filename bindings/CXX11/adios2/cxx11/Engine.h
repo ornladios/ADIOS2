@@ -13,6 +13,7 @@
 
 #include "Types.h"
 #include "Variable.h"
+#include "VariableNT.h"
 
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
@@ -140,6 +141,9 @@ public:
      */
     template <class T>
     void Put(Variable<T> variable, const T *data,
+             const Mode launch = Mode::Deferred);
+
+    void Put(VariableNT &variable, const void *data,
              const Mode launch = Mode::Deferred);
 
     /**

@@ -129,6 +129,24 @@ size_t Engine::Steps() const
 
 Engine::Engine(core::Engine *engine) : m_Engine(engine) {}
 
+void Engine::Put(VariableNT &variable, const void *data, const Mode launch)
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
+    helper::CheckForNullptr(variable.m_Variable,
+                            "for variable in call to Engine::Put");
+    std::string type = ToString(variable.m_Variable->m_Type);
+#define declare_type(T)                                                        \
+    if (type == GetType<T>())                                                  \
+    {                                                                          \
+        m_Engine->Put(                                                         \
+            *reinterpret_cast<core::Variable<T> *>(variable.m_Variable),       \
+            reinterpret_cast<const T *>(data), launch);                        \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    else {}
+}
+
 #define declare_template_instantiation(T)                                      \
                                                                                \
     template typename Variable<T>::Span Engine::Put(Variable<T>, const bool,   \
