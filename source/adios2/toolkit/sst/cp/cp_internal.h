@@ -172,13 +172,12 @@ struct _SstStream
     int QueueLimit;
     SstQueueFullPolicy QueueFullPolicy;
     int LastProvidedTimestep;
-    int NewReaderPresent;
     int WriterDefinitionsLocked;
     size_t NextRRDistribution;
 
     /* rendezvous condition */
     int FirstReaderCondition;
-    RequestQueue ReadRequestQueue;
+    RequestQueue ReaderRegisterQueue;
 
     int ReaderCount;
     WS_ReaderInfo *Readers;

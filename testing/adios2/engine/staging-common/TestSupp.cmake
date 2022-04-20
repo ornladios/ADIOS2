@@ -160,7 +160,7 @@ set (PreciousTimestepDiscard.3x2_TIMEOUT "300")
 # Writer StepDistributionModes.  Here we run the writer and three clients
 set (AllToAllDistribution.1x1x3_CMD "run_test.py.$<CONFIG> --test_protocol multi_client -nw 1 -nr 1 -w $<TARGET_FILE:TestDistributionWrite> -r $<TARGET_FILE:TestDistributionRead> --warg=RendezvousReaderCount=3,WENGINE_PARAMS")
 set (RoundRobinDistribution.1x1x3_CMD "run_test.py.$<CONFIG> --test_protocol multi_client -nw 1 -nr 1 -w $<TARGET_FILE:TestDistributionWrite> -r $<TARGET_FILE:TestDistributionRead> --warg=RendezvousReaderCount=3,WENGINE_PARAMS --warg=--round_robin --rarg=--round_robin")
-set (OnDemandDistribution.1x1x3_CMD "run_test.py.$<CONFIG> --test_protocol multi_client -nw 1 -nr 1 -w $<TARGET_FILE:TestDistributionWrite> -r $<TARGET_FILE:TestDistributionRead> --warg=RendezvousReaderCount=3,WENGINE_PARAMS --warg=--round_robin --rarg=--round_robin")
+set (OnDemandDistribution.1x1x3_CMD "run_test.py.$<CONFIG> --test_protocol multi_client -nw 1 -nr 1 -w $<TARGET_FILE:TestDistributionWrite> -r $<TARGET_FILE:TestDistributionRead> --warg=RendezvousReaderCount=3,WENGINE_PARAMS --warg=--on_demand --rarg=--on_demand")
 
 # Readers using BeginStep with timeout.  Here we run the writer with a longer delay to make the reader timeout
 set (TimeoutReader.1x1_CMD "run_test.py.$<CONFIG> --test_protocol one_client -nw 1 -nr 1 --rarg=--non_blocking --warg=--ms_delay --warg=2000")

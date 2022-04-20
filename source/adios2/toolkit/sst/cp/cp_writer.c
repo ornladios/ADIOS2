@@ -785,9 +785,9 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     if (Stream->Rank == 0)
     {
         STREAM_MUTEX_LOCK(Stream);
-        assert((Stream->ReadRequestQueue));
-        Req = Stream->ReadRequestQueue;
-        Stream->ReadRequestQueue = Req->Next;
+        assert((Stream->ReaderRegisterQueue));
+        Req = Stream->ReaderRegisterQueue;
+        Stream->ReaderRegisterQueue = Req->Next;
         Req->Next = NULL;
         STREAM_MUTEX_UNLOCK(Stream);
         struct _CombinedReaderInfo reader_data;
@@ -956,7 +956,6 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
         free(ret_data_block);
     if (pointers)
         free(pointers);
-    Stream->NewReaderPresent = 1;
     CP_verbose(Stream, PerStepVerbose,
                "Finish writer-side reader open protocol for reader %p, "
                "reader ready response pending\n",
@@ -1210,6 +1209,11 @@ static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
                                         Stream->NextRRDistribution);
         Stream->NextRRDistribution++;
     }
+    case StepsOnDemand:
+    {
+        if (Stream->ReaderCount == 0)
+            return;
+    }
     }
 }
 
@@ -1269,7 +1273,6 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
             }
             if (List->Timestep == TS)
             {
-                FFSFormatList SavedFormats = List->Msg->Formats;
                 if (List->Expired && !List->PreciousTimestep)
                 {
                     CP_verbose(Stream, TraceVerbose,
@@ -1280,22 +1283,12 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                     continue; /* skip timestep is expired, but not
                                  precious */
                 }
-                if (TS == Reader->StartingTimestep)
-                {
-                    /* For first Msg, send all previous formats */
-                    List->Msg->Formats = Stream->PreviousFormats;
-                }
                 CP_verbose(Stream, PerStepVerbose,
                            "Sending Queued TimestepMetadata for timestep %d, "
                            "reference count = %d\n",
                            TS, List->ReferenceCount);
 
                 SendTimestepEntryToSingleReader(Stream, List, Reader, -1);
-                if (TS == Reader->StartingTimestep)
-                {
-                    /* restore Msg format list */
-                    List->Msg->Formats = SavedFormats;
-                }
             }
             List = List->Next;
         }
@@ -1377,11 +1370,10 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         if (Stream->Rank == 0)
         {
             STREAM_MUTEX_LOCK(Stream);
-            if (Stream->ReadRequestQueue == NULL)
+            while (Stream->ReaderRegisterQueue == NULL)
             {
                 STREAM_CONDITION_WAIT(Stream);
             }
-            assert(Stream->ReadRequestQueue);
             STREAM_MUTEX_UNLOCK(Stream);
         }
         SMPI_Barrier(Stream->mpiComm);
@@ -1840,22 +1832,6 @@ static void *FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
     Stream->PreviousFormats =
         AddUniqueFormats(Stream->PreviousFormats, XmitFormats, /*copy*/ 1);
 
-    FormatListCount(Stream->PreviousFormats);
-
-    if (Stream->NewReaderPresent)
-    {
-        /*
-         *  If there is a new reader cohort, those ranks will need all prior
-         * FFS
-         * Format info.
-         */
-        Msg->Formats = Stream->PreviousFormats;
-        Stream->NewReaderPresent = 0;
-    }
-    else
-    {
-        Msg->Formats = XmitFormats;
-    }
     return MetadataFreeValue;
 }
 
@@ -2212,7 +2188,7 @@ extern void SstInternalProvideTimestep(
         RequestQueue ArrivingReader;
         void *MetadataFreeValue;
         STREAM_MUTEX_LOCK(Stream);
-        ArrivingReader = Stream->ReadRequestQueue;
+        ArrivingReader = Stream->ReaderRegisterQueue;
         QueueMaintenance(Stream);
         if (Stream->QueueFullPolicy == SstQueueFullDiscard)
         {
@@ -2481,9 +2457,9 @@ void queueReaderRegisterMsgAndNotify(SstStream Stream,
     New->Msg = Req;
     New->Conn = conn;
     New->Next = NULL;
-    if (Stream->ReadRequestQueue)
+    if (Stream->ReaderRegisterQueue)
     {
-        RequestQueue Last = Stream->ReadRequestQueue;
+        RequestQueue Last = Stream->ReaderRegisterQueue;
         while (Last->Next)
         {
             Last = Last->Next;
@@ -2492,7 +2468,7 @@ void queueReaderRegisterMsgAndNotify(SstStream Stream,
     }
     else
     {
-        Stream->ReadRequestQueue = New;
+        Stream->ReaderRegisterQueue = New;
     }
     STREAM_CONDITION_SIGNAL(Stream);
     STREAM_MUTEX_UNLOCK(Stream);
