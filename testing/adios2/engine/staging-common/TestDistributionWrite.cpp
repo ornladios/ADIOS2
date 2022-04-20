@@ -48,19 +48,21 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     adios2::IO io1 = adios.DeclareIO("TestIO");
 
     std::string varname1 = "r64";
+    std::string varname2 = "r64_2";
 
     // Declare 1D variables (NumOfProcesses * Nx)
     // The local process' part (start, count) can be defined now or later
     // before Write().
     unsigned int myStart1 = (int)Nx * mpiRank;
     unsigned int myCount1 = (int)Nx;
-    {
-        adios2::Dims shape1{static_cast<unsigned int>(Nx * mpiSize)};
-        adios2::Dims start1{static_cast<unsigned int>(myStart1)};
-        adios2::Dims count1{static_cast<unsigned int>(myCount1)};
+    adios2::Dims shape1{static_cast<unsigned int>(Nx * mpiSize)};
+    adios2::Dims start1{static_cast<unsigned int>(myStart1)};
+    adios2::Dims count1{static_cast<unsigned int>(myCount1)};
 
+    {
         //        auto var1 =
         (void)io1.DefineVariable<double>(varname1, shape1, start1, count1);
+        (void)io1.DefineVariable<double>(varname2, shape1, start1, count1);
         (void)io1.DefineVariable<size_t>("Step");
     }
 
@@ -106,6 +108,12 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 
         var1.SetSelection(sel1);
         engine1.Put(var1, data_forward.data(), sync);
+        if (step > 5)
+        {
+            auto var2 = io1.InquireVariable<double>(varname2);
+            var2.SetSelection(sel1);
+            engine1.Put(var2, data_forward.data(), sync);
+        }
         engine1.Put(step_var, step);
         engine1.EndStep();
     }

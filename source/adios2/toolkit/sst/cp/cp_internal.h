@@ -93,6 +93,7 @@ typedef struct _WS_ReaderInfo
     SstPreloadModeType PreloadMode;
     long PreloadModeActiveTimestep;
     long OldestUnreleasedTimestep;
+    size_t FormatSentCount;
     struct _SentTimestepRec *SentTimestepList;
     void *DP_WSR_Stream;
     int ReaderCohortSize;
@@ -173,6 +174,7 @@ struct _SstStream
     int LastProvidedTimestep;
     int NewReaderPresent;
     int WriterDefinitionsLocked;
+    size_t NextRRDistribution;
 
     /* rendezvous condition */
     int FirstReaderCondition;

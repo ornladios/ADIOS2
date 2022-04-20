@@ -1121,6 +1121,9 @@ static void DerefAllSentTimesteps(SstStream Stream, WS_ReaderInfo Reader)
     CP_verbose(Stream, PerRankVerbose, "DONE DEREFERENCING\n");
 }
 
+static FFSFormatList ReturnNthListEntry(FFSFormatList List, size_t Count);
+static size_t FormatListCount(FFSFormatList List);
+
 static void SendTimestepEntryToSingleReader(SstStream Stream,
                                             CPTimestepList Entry,
                                             WS_ReaderInfo CP_WSR_Stream,
@@ -1129,7 +1132,12 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
     STREAM_ASSERT_LOCKED(Stream);
     if (CP_WSR_Stream->ReaderStatus == Established)
     {
+        size_t PriorSent = CP_WSR_Stream->FormatSentCount;
         CP_WSR_Stream->LastSentTimestep = Entry->Timestep;
+        FFSFormatList ToSend =
+            ReturnNthListEntry(Stream->PreviousFormats, PriorSent);
+        Entry->Msg->Formats = ToSend;
+
         if (rank != -1)
         {
             CP_verbose(Stream, PerRankVerbose,
@@ -1163,6 +1171,7 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
         }
 
         Entry->Msg->PreloadMode = PMode;
+        CP_WSR_Stream->FormatSentCount += FormatListCount(ToSend);
         STREAM_MUTEX_LOCK(Stream);
         if (CP_WSR_Stream->ReaderStatus == Established)
             sendOneToWSRCohort(
@@ -1175,10 +1184,32 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
 static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
 {
     STREAM_ASSERT_LOCKED(Stream);
-    for (int i = 0; i < Stream->ReaderCount; i++)
+    switch (Stream->ConfigParams->StepDistributionMode)
     {
-        WS_ReaderInfo CP_WSR_Stream = Stream->Readers[i];
-        SendTimestepEntryToSingleReader(Stream, Entry, CP_WSR_Stream, i);
+    case StepsAllToAll:
+    {
+        for (int i = 0; i < Stream->ReaderCount; i++)
+        {
+            WS_ReaderInfo CP_WSR_Stream = Stream->Readers[i];
+            SendTimestepEntryToSingleReader(Stream, Entry, CP_WSR_Stream, i);
+        }
+        break;
+    }
+    case StepsRoundRobin:
+    {
+        if (Stream->ReaderCount == 0)
+            return;
+        if (Stream->NextRRDistribution >= Stream->ReaderCount)
+            Stream->NextRRDistribution = 0;
+        CP_verbose(Stream, PerRankVerbose,
+                   "Round Robin Distribution, step sent to reader %d\n",
+                   Stream->NextRRDistribution);
+        WS_ReaderInfo CP_WSR_Stream =
+            Stream->Readers[Stream->NextRRDistribution];
+        SendTimestepEntryToSingleReader(Stream, Entry, CP_WSR_Stream,
+                                        Stream->NextRRDistribution);
+        Stream->NextRRDistribution++;
+    }
     }
 }
 
@@ -1660,88 +1691,85 @@ void SstWriterClose(SstStream Stream)
     }
 }
 
-#ifdef NOTDEF
-static FFSFormatList AddUniqueFormats(FFSFormatList List,
-                                      FFSFormatList Candidates)
+static FFSFormatList ReturnNthListEntry(FFSFormatList List, size_t Count)
 {
-    while (Candidates)
+    while (List && Count)
     {
-        FFSFormatList Tmp = List;
-        int found = 0;
-        while (Tmp)
-        {
-            if ((Tmp->FormatIDRepLen == Candidates->FormatIDRepLen) &&
-                (memcmp(Tmp->FormatIDRep, Candidates->FormatIDRep,
-                        Tmp->FormatIDRepLen) == 0))
-            {
-                found++;
-                break;
-            }
-            Tmp = Tmp->Next;
-        }
-        if (!found)
-        {
-            FFSFormatList New = malloc(sizeof(*New));
-            memset(New, 0, sizeof(*New));
-            New->FormatServerRep = malloc(Candidates->FormatServerRepLen);
-            memcpy(New->FormatServerRep, Candidates->FormatServerRep,
-                   Candidates->FormatServerRepLen);
-            New->FormatServerRepLen = Candidates->FormatServerRepLen;
-            New->FormatIDRep = malloc(Candidates->FormatIDRepLen);
-            memcpy(New->FormatIDRep, Candidates->FormatIDRep,
-                   Candidates->FormatIDRepLen);
-            New->FormatIDRepLen = Candidates->FormatIDRepLen;
-            New->Next = List;
-            List = New;
-        }
-        Candidates = Candidates->Next;
+        Count--;
+        List = List->Next;
     }
     return List;
 }
-#endif
+
+static size_t FormatListCount(FFSFormatList List)
+{
+    FFSFormatList tmp = List;
+    size_t count = 0;
+    while (tmp)
+    {
+        count++;
+        tmp = tmp->Next;
+    }
+    return count;
+}
 
 static FFSFormatList AddUniqueFormats(FFSFormatList List,
                                       FFSFormatList Candidates, int copy)
 {
-    FFSFormatList Tmp = List;
-    FFSFormatList Ret = List;
-
-    // If nothing to add, return original
-    if (!Candidates)
-        return Ret;
-
-    // Add tail of candidates list first
-    Ret = AddUniqueFormats(List, Candidates->Next, copy);
-
-    while (Tmp)
+    while (Candidates)
     {
-        if ((Tmp->FormatIDRepLen == Candidates->FormatIDRepLen) &&
-            (memcmp(Tmp->FormatIDRep, Candidates->FormatIDRep,
-                    Tmp->FormatIDRepLen) == 0))
+        FFSFormatList Last = NULL;
+        FFSFormatList Tmp = List;
+        int Found = 0;
+        FFSFormatList ThisCandidate = Candidates;
+        while (Tmp)
         {
-            // Identical format already in List, don't add this one
-            return Ret;
+            if ((Tmp->FormatIDRepLen == ThisCandidate->FormatIDRepLen) &&
+                (memcmp(Tmp->FormatIDRep, ThisCandidate->FormatIDRep,
+                        Tmp->FormatIDRepLen) == 0))
+            {
+                // Identical format already in List, don't add this one
+                Found++;
+            }
+            Last = Tmp;
+            Tmp = Tmp->Next;
         }
-        Tmp = Tmp->Next;
+        Candidates = Candidates->Next;
+        if (!Found)
+        {
+            // New format not in list, add him to tail.
+            if (copy)
+            {
+                // Copy top Candidates entry before return
+                FFSFormatList Tmp = malloc(sizeof(*Tmp));
+                memset(Tmp, 0, sizeof(*Tmp));
+                Tmp->FormatServerRep =
+                    malloc(ThisCandidate->FormatServerRepLen);
+                memcpy(Tmp->FormatServerRep, ThisCandidate->FormatServerRep,
+                       ThisCandidate->FormatServerRepLen);
+                Tmp->FormatServerRepLen = ThisCandidate->FormatServerRepLen;
+                Tmp->FormatIDRep = malloc(ThisCandidate->FormatIDRepLen);
+                memcpy(Tmp->FormatIDRep, ThisCandidate->FormatIDRep,
+                       ThisCandidate->FormatIDRepLen);
+                Tmp->FormatIDRepLen = ThisCandidate->FormatIDRepLen;
+                ThisCandidate = Tmp;
+            }
+            else
+            {
+                // disconnect this guy so that he can become list end
+                ThisCandidate->Next = NULL;
+            }
+            if (Last)
+            {
+                Last->Next = ThisCandidate;
+            }
+            else
+            {
+                List = ThisCandidate;
+            }
+        }
     }
-    // New format not in list, add him to head and return.
-    if (copy)
-    {
-        // Copy top Candidates entry before return
-        FFSFormatList Tmp = malloc(sizeof(*Tmp));
-        memset(Tmp, 0, sizeof(*Tmp));
-        Tmp->FormatServerRep = malloc(Candidates->FormatServerRepLen);
-        memcpy(Tmp->FormatServerRep, Candidates->FormatServerRep,
-               Candidates->FormatServerRepLen);
-        Tmp->FormatServerRepLen = Candidates->FormatServerRepLen;
-        Tmp->FormatIDRep = malloc(Candidates->FormatIDRepLen);
-        memcpy(Tmp->FormatIDRep, Candidates->FormatIDRep,
-               Candidates->FormatIDRepLen);
-        Tmp->FormatIDRepLen = Candidates->FormatIDRepLen;
-        Candidates = Tmp;
-    }
-    Candidates->Next = Ret;
-    return Candidates;
+    return List;
 }
 
 static void *FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
@@ -1811,6 +1839,8 @@ static void *FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
 
     Stream->PreviousFormats =
         AddUniqueFormats(Stream->PreviousFormats, XmitFormats, /*copy*/ 1);
+
+    FormatListCount(Stream->PreviousFormats);
 
     if (Stream->NewReaderPresent)
     {
