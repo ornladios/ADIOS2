@@ -110,13 +110,51 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             std::cout << "My first step was step " << step << std::endl;
             first_step = step;
         }
-        total_steps++;
         if (result != 0)
         {
             std::cout << "Read Data Validation failed on node " << mpiRank
                       << " timestep " << step << std::endl;
         }
         EXPECT_EQ(result, 0);
+        if (OnDemand)
+        {
+            std::cout << "Reader " << first_step << " Got Step " << step
+                      << std::endl;
+            switch (first_step)
+            {
+            case 0:
+            {
+                int StepDelay[] = {1, 3, 5, 0, 0, 20};
+                int ExpectedStep[] = {0, 4, 7, 10, 12, 15};
+                EXPECT_EQ(ExpectedStep[total_steps], step);
+                std::cout << "Reader " << first_step << " Sleeping for "
+                          << StepDelay[total_steps] << std::endl;
+                sleep(StepDelay[total_steps]);
+                break;
+            }
+            case 1:
+            {
+                int StepDelay[] = {0, 0, 1, 5, 0, 0, 1, 10};
+                int ExpectedStep[] = {1, 3, 5, 8, 11, 14, 17, 19};
+                EXPECT_EQ(ExpectedStep[total_steps], step);
+                std::cout << "Reader " << first_step << " Sleeping for "
+                          << StepDelay[total_steps] << std::endl;
+                sleep(StepDelay[total_steps]);
+                break;
+            }
+            case 2:
+            {
+                int StepDelay[] = {3, 2, 4, 0, 0, 0, 0};
+                int ExpectedStep[] = {2, 6, 9, 13, 16, 18};
+                EXPECT_EQ(ExpectedStep[total_steps], step);
+                std::cout << "Reader " << first_step << " Sleeping for "
+                          << StepDelay[total_steps] << std::endl;
+                sleep(StepDelay[total_steps]);
+                break;
+            }
+            }
+        }
+        total_steps++;
     }
     if (RoundRobin)
     {
@@ -131,13 +169,17 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     }
     else if (OnDemand)
     {
-        if (first_step == 0)
+        switch (first_step)
         {
-            EXPECT_EQ(total_steps, 4);
-        }
-        else
-        {
-            EXPECT_EQ(total_steps, 3);
+        case 0:
+            EXPECT_EQ(total_steps, 6);
+            break;
+        case 1:
+            EXPECT_EQ(total_steps, 8);
+            break;
+        case 2:
+            EXPECT_EQ(total_steps, 6);
+            break;
         }
     }
     else

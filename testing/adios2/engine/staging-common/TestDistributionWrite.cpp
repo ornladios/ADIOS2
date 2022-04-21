@@ -116,8 +116,18 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         }
         engine1.Put(step_var, step);
         engine1.EndStep();
+        if (OnDemand)
+        {
+            if (step >= 2)
+            {
+                // send out first three quickly, so those (assume 3) guys find
+                // out who they are, then one every 2 sec
+                sleep(2);
+            }
+            if (step == 8)
+                sleep(10);
+        }
     }
-
     // Close the file
     engine1.Close();
 }
