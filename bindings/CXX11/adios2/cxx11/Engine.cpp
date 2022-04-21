@@ -147,6 +147,19 @@ void Engine::Put(VariableNT &variable, const void *data, const Mode launch)
     else {}
 }
 
+#define declare_type(T)                                                        \
+    void Engine::Put(VariableNT &variable, const T &datum, const Mode launch)  \
+    {                                                                          \
+        helper::CheckForNullptr(m_Engine, "in call to Engine::Put");           \
+        helper::CheckForNullptr(variable.m_Variable,                           \
+                                "for variable in call to Engine::Put");        \
+        m_Engine->Put(                                                         \
+            *reinterpret_cast<core::Variable<T> *>(variable.m_Variable),       \
+            datum, launch);                                                    \
+    }
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
 #define declare_template_instantiation(T)                                      \
                                                                                \
     template typename Variable<T>::Span Engine::Put(Variable<T>, const bool,   \

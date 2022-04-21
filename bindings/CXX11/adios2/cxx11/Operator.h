@@ -33,12 +33,6 @@ class Operator; // private implementation
 
 class Operator
 {
-    friend class ADIOS;
-    friend class IO;
-
-    template <class T>
-    friend class Variable;
-
 public:
     /**
      * Empty (default) constructor, use it as a placeholder for future
@@ -74,6 +68,13 @@ public:
     Params &Parameters() const;
 
 private:
+    friend class ADIOS;
+    friend class IO;
+
+    friend class VariableNT;
+    template <class T>
+    friend class Variable;
+
     Params *m_Parameters;
     std::string m_Type;
     Operator(const std::string &type, Params *params);

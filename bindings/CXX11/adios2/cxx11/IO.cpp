@@ -182,6 +182,22 @@ VariableNT IO::DefineVariable(const DataType type, const std::string &name,
     else { return nullptr; }
 }
 
+VariableNT IO::InquireVariable(const std::string &name)
+{
+    helper::CheckForNullptr(m_IO, "for variable name " + name +
+                                      ", in call to IO::InquireVariable");
+    auto type = m_IO->InquireVariableType(name);
+#define declare_type(T)                                                        \
+    if (ToString(type) == GetType<T>())                                        \
+    {                                                                          \
+        return VariableNT(                                                     \
+            m_IO->InquireVariable<typename TypeInfo<T>::IOType>(name));        \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    else { return nullptr; }
+}
+
 // PRIVATE
 IO::IO(core::IO *io) : m_IO(io) {}
 

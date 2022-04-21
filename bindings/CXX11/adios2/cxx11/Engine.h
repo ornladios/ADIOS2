@@ -179,6 +179,12 @@ public:
     void Put(Variable<T> variable, const T &datum,
              const Mode launch = Mode::Deferred);
 
+#define declare_type(T)                                                        \
+    void Put(VariableNT &variable, const T &datum,                             \
+             const Mode launch = Mode::Deferred);
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
     /**
      * Put data associated with a Variable in the Engine
      * Overloaded version that accepts variables names, and r-values and single
