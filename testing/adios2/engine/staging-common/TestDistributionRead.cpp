@@ -2,9 +2,11 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  */
+#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <stdint.h> /* SIZE_MAX */
+#include <thread>
 
 #include <iostream>
 #include <stdexcept>
@@ -129,7 +131,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
                 EXPECT_EQ(ExpectedStep[total_steps], step);
                 std::cout << "Reader " << first_step << " Sleeping for "
                           << StepDelay[total_steps] << std::endl;
-                sleep(StepDelay[total_steps]);
+                std::this_thread::sleep_for(
+                    std::chrono::seconds(StepDelay[total_steps]));
                 break;
             }
             case 1:
@@ -139,7 +142,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
                 EXPECT_EQ(ExpectedStep[total_steps], step);
                 std::cout << "Reader " << first_step << " Sleeping for "
                           << StepDelay[total_steps] << std::endl;
-                sleep(StepDelay[total_steps]);
+                std::this_thread::sleep_for(
+                    std::chrono::seconds(StepDelay[total_steps]));
                 break;
             }
             case 2:
@@ -149,7 +153,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
                 EXPECT_EQ(ExpectedStep[total_steps], step);
                 std::cout << "Reader " << first_step << " Sleeping for "
                           << StepDelay[total_steps] << std::endl;
-                sleep(StepDelay[total_steps]);
+                std::this_thread::sleep_for(
+                    std::chrono::seconds(StepDelay[total_steps]));
                 break;
             }
             }

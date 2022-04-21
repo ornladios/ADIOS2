@@ -2,9 +2,11 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  */
+#include <chrono>
 #include <cstdint>
 #include <cstring>
 #include <ctime>
+#include <thread>
 
 #include <iostream>
 #include <stdexcept>
@@ -122,10 +124,10 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
             {
                 // send out first three quickly, so those (assume 3) guys find
                 // out who they are, then one every 2 sec
-                sleep(2);
+                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             }
             if (step == 8)
-                sleep(10);
+                std::this_thread::sleep_for(std::chrono::milliseconds(10000));
         }
     }
     // Close the file
