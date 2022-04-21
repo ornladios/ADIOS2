@@ -46,12 +46,18 @@ typedef struct _CP_Info
 
 struct _ReaderRegisterMsg;
 
-typedef struct _RequestQueue
+typedef struct _RegisterQueue
 {
     struct _ReaderRegisterMsg *Msg;
     CMConnection Conn;
-    struct _RequestQueue *Next;
-} * RequestQueue;
+    struct _RegisterQueue *Next;
+} * RegisterQueue;
+
+typedef struct _StepRequest
+{
+    int RequestingReader;
+    struct _StepRequest *Next;
+} * StepRequest;
 
 typedef struct _CP_PeerConnection
 {
@@ -174,16 +180,18 @@ struct _SstStream
     int LastProvidedTimestep;
     int WriterDefinitionsLocked;
     size_t NextRRDistribution;
+    size_t LastDemandTimestep;
 
     /* rendezvous condition */
     int FirstReaderCondition;
-    RequestQueue ReaderRegisterQueue;
+    RegisterQueue ReaderRegisterQueue;
 
     int ReaderCount;
     WS_ReaderInfo *Readers;
     char *Filename;
     char *AbsoluteFilename;
     int GlobalOpRequired;
+    StepRequest StepRequestQueue;
 
     /* writer side marshal info */
     void *WriterMarshalData;

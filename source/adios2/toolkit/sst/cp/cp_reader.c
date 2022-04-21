@@ -810,7 +810,7 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
         }
     }
 
-    struct _TimestepMetadataList *New = malloc(sizeof(struct _RequestQueue));
+    struct _TimestepMetadataList *New = malloc(sizeof(struct _RegisterQueue));
     New->MetadataMsg = tsm;
     New->Next = NULL;
     if (Stream->Timesteps)

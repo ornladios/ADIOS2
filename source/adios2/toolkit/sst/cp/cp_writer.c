@@ -772,7 +772,7 @@ static void SubRefTimestep(SstStream Stream, long Timestep, int SetLast)
 
 WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
 {
-    RequestQueue Req;
+    RegisterQueue Req;
     reader_data_t ReturnData;
     void *free_block = NULL;
     int WriterResponseCondition = -1;
@@ -1213,6 +1213,27 @@ static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
     {
         if (Stream->ReaderCount == 0)
             return;
+    retry:
+        /* send this entry to the first queued request and delete that request
+         */
+        if (Stream->StepRequestQueue)
+        {
+            StepRequest Request = Stream->StepRequestQueue;
+            Stream->StepRequestQueue = Request->Next;
+            int RequestingReader = Request->RequestingReader;
+            free(Request);
+            if (Stream->Readers[RequestingReader]->ReaderStatus == Established)
+            {
+                SendTimestepEntryToSingleReader(
+                    Stream, Entry, Stream->Readers[RequestingReader],
+                    RequestingReader);
+                Stream->LastDemandTimestep = Entry->Timestep;
+            }
+            else
+            {
+                goto retry;
+            }
+        }
     }
     }
 }
@@ -1256,41 +1277,47 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                "Reader ready on WSR %p, Stream established, Starting %d "
                "LastProvided %d.\n",
                Reader, Reader->StartingTimestep, Stream->LastProvidedTimestep);
-    for (long TS = Reader->StartingTimestep; TS <= Stream->LastProvidedTimestep;
-         TS++)
+    if (Stream->ConfigParams->StepDistributionMode == StepsAllToAll)
     {
-        CPTimestepList List = Stream->QueuedTimesteps;
-        while (List)
+        for (long TS = Reader->StartingTimestep;
+             TS <= Stream->LastProvidedTimestep; TS++)
         {
-            CP_verbose(
-                Stream, TraceVerbose,
-                "In send queued, trying to send TS %ld, examining TS %ld\n", TS,
-                List->Timestep);
-            if (Reader->ReaderStatus != Established)
+            CPTimestepList List = Stream->QueuedTimesteps;
+            while (List)
             {
-                break; /* break out of while if we've fallen out of established
-                        */
-            }
-            if (List->Timestep == TS)
-            {
-                if (List->Expired && !List->PreciousTimestep)
+                CP_verbose(
+                    Stream, TraceVerbose,
+                    "In send queued, trying to send TS %ld, examining TS %ld\n",
+                    TS, List->Timestep);
+                if (Reader->ReaderStatus != Established)
                 {
-                    CP_verbose(Stream, TraceVerbose,
-                               "Reader send queued skipping  TS %d, expired "
-                               "and not precious\n",
-                               List->Timestep, TS);
-                    List = List->Next;
-                    continue; /* skip timestep is expired, but not
-                                 precious */
+                    break; /* break out of while if we've fallen out of
+                            * established
+                            */
                 }
-                CP_verbose(Stream, PerStepVerbose,
-                           "Sending Queued TimestepMetadata for timestep %d, "
-                           "reference count = %d\n",
-                           TS, List->ReferenceCount);
+                if (List->Timestep == TS)
+                {
+                    if (List->Expired && !List->PreciousTimestep)
+                    {
+                        CP_verbose(
+                            Stream, TraceVerbose,
+                            "Reader send queued skipping  TS %d, expired "
+                            "and not precious\n",
+                            List->Timestep, TS);
+                        List = List->Next;
+                        continue; /* skip timestep is expired, but not
+                                     precious */
+                    }
+                    CP_verbose(
+                        Stream, PerStepVerbose,
+                        "Sending Queued TimestepMetadata for timestep %d, "
+                        "reference count = %d\n",
+                        TS, List->ReferenceCount);
 
-                SendTimestepEntryToSingleReader(Stream, List, Reader, -1);
+                    SendTimestepEntryToSingleReader(Stream, List, Reader, -1);
+                }
+                List = List->Next;
             }
-            List = List->Next;
         }
     }
     STREAM_MUTEX_UNLOCK(Stream);
@@ -2185,7 +2212,7 @@ extern void SstInternalProvideTimestep(
     {
         int DiscardThisTimestep = 0;
         struct _ReturnMetadataInfo TimestepMetaData;
-        RequestQueue ArrivingReader;
+        RegisterQueue ArrivingReader;
         void *MetadataFreeValue;
         STREAM_MUTEX_LOCK(Stream);
         ArrivingReader = Stream->ReaderRegisterQueue;
@@ -2453,13 +2480,13 @@ void queueReaderRegisterMsgAndNotify(SstStream Stream,
                                      CMConnection conn)
 {
     STREAM_MUTEX_LOCK(Stream);
-    RequestQueue New = malloc(sizeof(struct _RequestQueue));
+    RegisterQueue New = malloc(sizeof(struct _RegisterQueue));
     New->Msg = Req;
     New->Conn = conn;
     New->Next = NULL;
     if (Stream->ReaderRegisterQueue)
     {
-        RequestQueue Last = Stream->ReaderRegisterQueue;
+        RegisterQueue Last = Stream->ReaderRegisterQueue;
         while (Last->Next)
         {
             Last = Last->Next;
@@ -2559,22 +2586,84 @@ void CP_ReaderActivateHandler(CManager cm, CMConnection conn, void *Msg_v,
 void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn, void *Msg_v,
                                  void *client_data, attr_list attrs)
 {
-    PERFSTUBS_TIMER_START_FUNC(timer);
     struct _ReaderRequestStepMsg *Msg = (struct _ReaderRequestStepMsg *)Msg_v;
 
     WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
+    SstStream Stream = CP_WSR_Stream->ParentStream;
     CP_verbose(CP_WSR_Stream->ParentStream, PerStepVerbose,
                "Reader Request Step  message received "
                "for Stream %p.\n",
                CP_WSR_Stream);
+    if (CP_WSR_Stream->ParentStream->ConfigParams->CPCommPattern ==
+        SstCPCommPeer)
+    {
+        assert(0);
+    }
+
     STREAM_MUTEX_LOCK(CP_WSR_Stream->ParentStream);
-    CP_WSR_Stream->ReaderStatus = Established;
-    /*
-     * the main thread might be waiting for this
-     */
-    pthread_cond_signal(&CP_WSR_Stream->ParentStream->DataCondition);
+    CPTimestepList List = Stream->QueuedTimesteps;
+    int RequestingReader = -1;
+    for (int i = 0; i < Stream->ReaderCount; i++)
+    {
+        if (CP_WSR_Stream == Stream->Readers[i])
+        {
+            RequestingReader = i;
+        }
+    }
+    while (List)
+    {
+        size_t NextTS = Stream->LastDemandTimestep + 1;
+        CP_verbose(
+            Stream, TraceVerbose,
+            "In RequestStepHandler, trying to send TS %ld, examining TS %ld\n",
+            NextTS, List->Timestep);
+        if (CP_WSR_Stream->ReaderStatus != Established)
+        {
+            break; /* break out of while if we've fallen out of established
+                    */
+        }
+        if (List->Timestep == NextTS)
+        {
+            if (List->Expired && !List->PreciousTimestep)
+            {
+                CP_verbose(Stream, TraceVerbose,
+                           "Reader send queued skipping  TS %d, expired "
+                           "and not precious\n",
+                           List->Timestep, NextTS);
+                List = List->Next;
+                continue; /* skip timestep is expired, but not
+                             precious */
+            }
+            CP_verbose(Stream, PerStepVerbose,
+                       "Sending Queued TimestepMetadata for timestep %d, "
+                       "reference count = %d\n",
+                       NextTS, List->ReferenceCount);
+
+            SendTimestepEntryToSingleReader(Stream, List, CP_WSR_Stream,
+                                            RequestingReader);
+            STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
+            return;
+        }
+        List = List->Next;
+    }
+
+    CP_verbose(Stream, TraceVerbose,
+               "In RequestStepHandler, queueing request\n");
+    assert(RequestingReader != -1);
+    StepRequest Request = calloc(sizeof(*Request), 1);
+    Request->RequestingReader = RequestingReader;
+    if (!Stream->StepRequestQueue)
+    {
+        Stream->StepRequestQueue = Request;
+    }
+    else
+    {
+        StepRequest Last = Stream->StepRequestQueue;
+        while (Last->Next)
+            Last = Last->Next;
+        Last->Next = Request;
+    }
     STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
-    PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
 extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
