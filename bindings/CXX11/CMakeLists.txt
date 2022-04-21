@@ -15,6 +15,7 @@ add_library(adios2_cxx11
   adios2/cxx11/Types.cpp
   adios2/cxx11/Types.tcc
   adios2/cxx11/Variable.cpp
+  adios2/cxx11/VariableNT.cpp
   adios2/cxx11/fstream/ADIOS2fstream.cpp
   adios2/cxx11/Group.cpp
   adios2/cxx11/Group.tcc
@@ -77,11 +78,12 @@ install(
 )
 
 install(
-  FILES adios2/cxx11/ADIOS.h 
+  FILES adios2/cxx11/ADIOS.h
         adios2/cxx11/ADIOS.inl
         adios2/cxx11/IO.h
         adios2/cxx11/Group.h
-        adios2/cxx11/Variable.h 
+        adios2/cxx11/Variable.h
+        adios2/cxx11/VariableNT.h
         adios2/cxx11/Attribute.h
         adios2/cxx11/Engine.h
         adios2/cxx11/Operator.h

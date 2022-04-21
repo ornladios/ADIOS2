@@ -400,4 +400,4 @@ std::string ToString(const Variable<T> &variable);
 
 } // end namespace adios2
 
-#endif /* ADIOS2_BINDINGS_CXX11_CXX11_VARIABLE_H_ */
+#endif // ADIOS2_BINDINGS_CXX11_CXX11_VARIABLE_H_
