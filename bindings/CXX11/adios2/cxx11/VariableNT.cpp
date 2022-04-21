@@ -9,6 +9,7 @@
  */
 
 #include "VariableNT.h"
+#include "Types.h"
 #include "adios2/core/VariableBase.h"
 #include "adios2/helper/adiosFunctions.h"
 
@@ -59,14 +60,23 @@ void VariableNT::SetStepSelection(const Box<size_t> &stepSelection)
     m_Variable->SetStepSelection(stepSelection);
 }
 
-/*
 size_t VariableNT::SelectionSize() const
 {
-    helper::CheckForNullptr(m_Variable,
-            "in call to VariableNT::SelectionSize");
-    return m_Variable->SelectionSize();
+    helper::CheckForNullptr(m_Variable, "in call to VariableNT::SelectionSize");
+    auto type = ToString(m_Variable->m_Type);
+#define declare_type(T)                                                        \
+    if (type == GetType<T>())                                                  \
+    {                                                                          \
+        return reinterpret_cast<core::Variable<T> *>(m_Variable)               \
+            ->SelectionSize();                                                 \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    helper::Throw<std::runtime_error>("bindings::CXX11", "VariableNT",
+                                      "SelectionSize",
+                                      "invalid data type " + type);
+    return 0;
 }
-*/
 
 std::string VariableNT::Name() const
 {
@@ -92,13 +102,21 @@ adios2::ShapeID VariableNT::ShapeID() const
     return m_Variable->m_ShapeID;
 }
 
-/*
 Dims VariableNT::Shape(const size_t step) const
 {
     helper::CheckForNullptr(m_Variable, "in call to VariableNT::Shape");
-    return m_Variable->Shape(step);
+    auto type = ToString(m_Variable->m_Type);
+#define declare_type(T)                                                        \
+    if (type == GetType<T>())                                                  \
+    {                                                                          \
+        return reinterpret_cast<core::Variable<T> *>(m_Variable)->Shape(step); \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    helper::Throw<std::runtime_error>("bindings::CXX11", "VariableNT", "Shape",
+                                      "invalid data type " + type);
+    return Dims();
 }
-*/
 
 Dims VariableNT::Start() const
 {
@@ -106,13 +124,21 @@ Dims VariableNT::Start() const
     return m_Variable->m_Start;
 }
 
-/*
 Dims VariableNT::Count() const
 {
     helper::CheckForNullptr(m_Variable, "in call to VariableNT::Count");
-    return m_Variable->Count();
+    auto type = ToString(m_Variable->m_Type);
+#define declare_type(T)                                                        \
+    if (type == GetType<T>())                                                  \
+    {                                                                          \
+        return reinterpret_cast<core::Variable<T> *>(m_Variable)->Count();     \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    helper::Throw<std::runtime_error>("bindings::CXX11", "VariableNT", "Count",
+                                      "invalid data type " + type);
+    return Dims();
 }
-*/
 
 size_t VariableNT::Steps() const
 {
