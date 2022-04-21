@@ -992,7 +992,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
                 if (longopt || dump)
                 {
                     fprintf(outf, "  attr   = ");
-                    if (entry.typeName == DataType::Compound)
+                    if (entry.typeName == DataType::Struct)
                     {
                         // not supported
                     }
@@ -1015,7 +1015,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
             }
             else
             {
-                if (entry.typeName == DataType::Compound)
+                if (entry.typeName == DataType::Struct)
                 {
                     // not supported
                 }

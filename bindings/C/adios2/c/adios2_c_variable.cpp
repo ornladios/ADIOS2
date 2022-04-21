@@ -320,7 +320,7 @@ adios2_error adios2_variable_shape(size_t *shape,
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
         const adios2::DataType typeCpp = variableBase->m_Type;
-        if (typeCpp == adios2::DataType::Compound)
+        if (typeCpp == adios2::DataType::Struct)
         {
             // not supported
         }
@@ -383,7 +383,7 @@ adios2_error adios2_variable_count(size_t *count,
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
         const adios2::DataType typeCpp = variableBase->m_Type;
-        if (typeCpp == adios2::DataType::Compound)
+        if (typeCpp == adios2::DataType::Struct)
         {
             // not supported
         }
@@ -460,7 +460,7 @@ adios2_error adios2_selection_size(size_t *size,
 
         const adios2::DataType typeCpp = variableBase->m_Type;
 
-        if (typeCpp == adios2::DataType::Compound)
+        if (typeCpp == adios2::DataType::Struct)
         {
             // not supported
         }
@@ -581,7 +581,7 @@ adios2_error adios2_variable_min(void *min, const adios2_variable *variable)
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
         const adios2::DataType type(variableBase->m_Type);
 
-        if (type == adios2::DataType::Compound)
+        if (type == adios2::DataType::Struct)
         {
             // not supported
         }
@@ -618,7 +618,7 @@ adios2_error adios2_variable_max(void *max, const adios2_variable *variable)
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
         const adios2::DataType type(variableBase->m_Type);
 
-        if (type == adios2::DataType::Compound)
+        if (type == adios2::DataType::Struct)
         {
             // not supported
         }

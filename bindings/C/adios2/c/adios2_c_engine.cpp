@@ -289,7 +289,7 @@ adios2_error adios2_put(adios2_engine *engine, adios2_variable *variable,
             mode, "only adios2_mode_deferred or adios2_mode_sync are valid, "
                   "in call to adios2_put");
 
-        if (type == adios2::DataType::Compound)
+        if (type == adios2::DataType::Struct)
         {
             // not supported
         }
@@ -342,7 +342,7 @@ adios2_error adios2_put_by_name(adios2_engine *engine,
         const adios2::DataType type(
             engineCpp->m_IO.InquireVariableType(variable_name));
 
-        if (type == adios2::DataType::Compound)
+        if (type == adios2::DataType::Struct)
         {
             // not supported
         }
@@ -428,7 +428,7 @@ adios2_error adios2_get(adios2_engine *engine, adios2_variable *variable,
 
         const adios2::DataType type(variableBase->m_Type);
 
-        if (type == adios2::DataType::Compound)
+        if (type == adios2::DataType::Struct)
         {
             // not supported
         }
@@ -483,7 +483,7 @@ adios2_error adios2_get_by_name(adios2_engine *engine,
         const adios2::DataType type(
             engineCpp->m_IO.InquireVariableType(variable_name));
 
-        if (type == adios2::DataType::Compound)
+        if (type == adios2::DataType::Struct)
         {
             // not supported
         }
@@ -725,7 +725,7 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
         }
 
         /* Call the big gun Engine::BlocksInfo<T> */
-        if (type == adios2::DataType::Compound)
+        if (type == adios2::DataType::Struct)
         {
             return varinfo;
         }

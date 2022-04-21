@@ -112,7 +112,7 @@ void InlineWriter::ResetVariables()
         const auto &name = varPair.first;
         const DataType type = m_IO.InquireVariableType(name);
 
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
 #define declare_type(T)                                                        \

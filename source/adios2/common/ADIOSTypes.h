@@ -147,7 +147,7 @@ enum class DataType
     DoubleComplex,
     String,
     Char,
-    Compound
+    Struct
 };
 
 /** Type of ArrayOrdering */

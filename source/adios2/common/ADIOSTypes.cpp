@@ -221,8 +221,8 @@ std::string ToString(DataType type)
         return "double complex";
     case DataType::String:
         return "string";
-    case DataType::Compound:
-        return "compound";
+    case DataType::Struct:
+        return "struct";
     }
     return std::string();
 }
@@ -304,7 +304,7 @@ void MinMaxStruct::Init(DataType Type)
     case DataType::FloatComplex:
     case DataType::DoubleComplex:
     case DataType::String:
-    case DataType::Compound:
+    case DataType::Struct:
         break;
     }
 }
@@ -363,7 +363,7 @@ void MinMaxStruct::Dump(DataType Type)
     case DataType::FloatComplex:
     case DataType::DoubleComplex:
     case DataType::String:
-    case DataType::Compound:
+    case DataType::Struct:
         break;
     }
 }

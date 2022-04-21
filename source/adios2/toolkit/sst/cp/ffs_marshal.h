@@ -15,7 +15,7 @@ enum DataType
     FloatComplex,
     DoubleComplex,
     String,
-    Compound
+    Struct
 };
 
 typedef struct _FFSWriterRec

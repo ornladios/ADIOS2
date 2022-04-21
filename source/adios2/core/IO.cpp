@@ -389,7 +389,7 @@ IO::GetAvailableVariables(const std::set<std::string> &keys) noexcept
         const std::string variableName = variablePair.first;
         const DataType type = InquireVariableType(variableName);
 
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
 #define declare_template_instantiation(T)                                      \
@@ -417,7 +417,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
         auto itVariable = m_Variables.find(variableName);
         const DataType type = InquireVariableType(itVariable);
 
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
         else
@@ -433,7 +433,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
     {
         const std::string &name = attributePair.first;
 
-        if (attributePair.second->m_Type == DataType::Compound)
+        if (attributePair.second->m_Type == DataType::Struct)
         {
         }
         else
@@ -463,7 +463,7 @@ DataType IO::InquireVariableType(const VarMap::const_iterator itVariable) const
 
     if (m_ReadStreaming)
     {
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
         else
@@ -778,7 +778,7 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
             continue;
         }
 
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
         else
@@ -809,7 +809,7 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
             continue;
         }
 
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
         else

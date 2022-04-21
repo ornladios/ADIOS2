@@ -364,7 +364,7 @@ void BP5Deserializer::ReverseDimensions(size_t *Dimensions, int count,
 void *BP5Deserializer::VarSetup(core::Engine *engine, const char *variableName,
                                 const DataType Type, void *data)
 {
-    if (Type == adios2::DataType::Compound)
+    if (Type == adios2::DataType::Struct)
     {
         return (void *)NULL;
     }
@@ -417,7 +417,7 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine,
         }
     }
 
-    if (Type == adios2::DataType::Compound)
+    if (Type == adios2::DataType::Struct)
     {
         return (void *)NULL;
     }
@@ -794,7 +794,7 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
             int ElemSize;
             BreakdownVarName(FieldList[i].field_name, &FieldName, &Type,
                              &ElemSize);
-            if (Type == adios2::DataType::Compound)
+            if (Type == adios2::DataType::Struct)
             {
                 return;
             }
@@ -831,7 +831,7 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
             *index(FieldType, '[') = 0;
             Type = (DataType)TranslateFFSType2ADIOS(FieldType,
                                                     FieldList[i].field_size);
-            if (Type == adios2::DataType::Compound)
+            if (Type == adios2::DataType::Struct)
             {
                 return;
             }
@@ -1643,7 +1643,7 @@ static void ApplyElementMinMax(MinMaxStruct &MinMax, DataType Type,
     case DataType::FloatComplex:
     case DataType::DoubleComplex:
     case DataType::String:
-    case DataType::Compound:
+    case DataType::Struct:
         break;
     }
 }
