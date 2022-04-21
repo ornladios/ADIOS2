@@ -509,7 +509,7 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead1D8NT)
         adios2::Engine bpReader =
             io.Open(fname, adios2::Mode::ReadRandomAccess);
 
-        auto var_iString = io.InquireVariable<std::string>("iString");
+        auto var_iString = io.InquireVariable("iString");
         EXPECT_TRUE(var_iString);
         ASSERT_EQ(var_iString.Shape().size(), 0);
         ASSERT_EQ(var_iString.Steps(), NSteps);
@@ -520,7 +520,7 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead1D8NT)
         ASSERT_EQ(var_i8.Steps(), NSteps);
         ASSERT_EQ(var_i8.Shape()[0], mpiSize * Nx);
 
-        auto var_i16 = io.InquireVariable<int16_t>("i16");
+        auto var_i16 = io.InquireVariable("i16");
         EXPECT_TRUE(var_i16);
         ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_i16.Steps(), NSteps);
@@ -532,7 +532,7 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead1D8NT)
         ASSERT_EQ(var_i32.Steps(), NSteps);
         ASSERT_EQ(var_i32.Shape()[0], mpiSize * Nx);
 
-        auto var_i64 = io.InquireVariable<int64_t>("i64");
+        auto var_i64 = io.InquireVariable("i64");
         EXPECT_TRUE(var_i64);
         ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_i64.Steps(), NSteps);
@@ -544,7 +544,7 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead1D8NT)
         ASSERT_EQ(var_u8.Steps(), NSteps);
         ASSERT_EQ(var_u8.Shape()[0], mpiSize * Nx);
 
-        auto var_u16 = io.InquireVariable<uint16_t>("u16");
+        auto var_u16 = io.InquireVariable("u16");
         EXPECT_TRUE(var_u16);
         ASSERT_EQ(var_u16.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_u16.Steps(), NSteps);
@@ -556,7 +556,7 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead1D8NT)
         ASSERT_EQ(var_u32.Steps(), NSteps);
         ASSERT_EQ(var_u32.Shape()[0], mpiSize * Nx);
 
-        auto var_u64 = io.InquireVariable<uint64_t>("u64");
+        auto var_u64 = io.InquireVariable("u64");
         EXPECT_TRUE(var_u64);
         ASSERT_EQ(var_u64.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_u64.Steps(), NSteps);
@@ -568,7 +568,7 @@ TEST_F(BPWriteReadVector, ADIOS2BPWriteRead1D8NT)
         ASSERT_EQ(var_r32.Steps(), NSteps);
         ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
 
-        auto var_r64 = io.InquireVariable<double>("r64");
+        auto var_r64 = io.InquireVariable("r64");
         EXPECT_TRUE(var_r64);
         ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_r64.Steps(), NSteps);

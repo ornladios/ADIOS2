@@ -160,6 +160,51 @@ void Engine::Put(VariableNT &variable, const void *data, const Mode launch)
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+void Engine::Get(VariableNT &variable, void *data, const Mode launch)
+{
+    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
+    adios2::helper::CheckForNullptr(variable.m_Variable,
+                                    "for variable in call to Engine::Get");
+    std::string type = ToString(variable.m_Variable->m_Type);
+#define declare_type(T)                                                        \
+    if (type == GetType<T>())                                                  \
+    {                                                                          \
+        m_Engine->Get(                                                         \
+            *reinterpret_cast<core::Variable<T> *>(variable.m_Variable),       \
+            reinterpret_cast<T *>(data), launch);                              \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    else {}
+}
+
+#define declare_type(T)                                                        \
+    void Engine::Get(VariableNT &variable, T &datum, const Mode launch)        \
+    {                                                                          \
+        adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");   \
+        adios2::helper::CheckForNullptr(                                       \
+            variable.m_Variable, "for variable in call to Engine::Get");       \
+        m_Engine->Get(                                                         \
+            *reinterpret_cast<core::Variable<T> *>(variable.m_Variable),       \
+            datum, launch);                                                    \
+    }
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T)                                                        \
+    void Engine::Get(VariableNT &variable, std::vector<T> &datum,              \
+                     const Mode launch)                                        \
+    {                                                                          \
+        adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");   \
+        adios2::helper::CheckForNullptr(                                       \
+            variable.m_Variable, "for variable in call to Engine::Get");       \
+        m_Engine->Get(                                                         \
+            *reinterpret_cast<core::Variable<T> *>(variable.m_Variable),       \
+            datum, launch);                                                    \
+    }
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
 #define declare_template_instantiation(T)                                      \
                                                                                \
     template typename Variable<T>::Span Engine::Put(Variable<T>, const bool,   \

@@ -229,6 +229,9 @@ public:
     template <class T>
     void Get(Variable<T> variable, T *data, const Mode launch = Mode::Deferred);
 
+    void Get(VariableNT &variable, void *data,
+             const Mode launch = Mode::Deferred);
+
     /**
      * Get data associated with a Variable from the Engine. Overloaded version
      * to get variable by name.
@@ -264,6 +267,18 @@ public:
     template <class T>
     void Get(Variable<T> variable, T &datum,
              const Mode launch = Mode::Deferred);
+
+#define declare_type(T)                                                        \
+    void Get(VariableNT &variable, T &datum,                                   \
+             const Mode launch = Mode::Deferred);
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T)                                                        \
+    void Get(VariableNT &variable, std::vector<T> &datum,                      \
+             const Mode launch = Mode::Deferred);
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
 
     /**
      * Get single value data associated with a Variable from the Engine
