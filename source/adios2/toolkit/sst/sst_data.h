@@ -57,6 +57,7 @@ typedef struct _SstStats
     MACRO(MarshalMethod, MarshalMethod, size_t, SstMarshalBP)                  \
     MACRO(verbose, Int, int, 0)                                                \
     MACRO(RegistrationMethod, RegMethod, size_t, 0)                            \
+    MACRO(StepDistributionMode, StepDistributionMode, size_t, StepsAllToAll)   \
     MACRO(DataTransport, String, char *, NULL)                                 \
     MACRO(WANDataTransport, String, char *, NULL)                              \
     MACRO(OpenTimeoutSecs, Int, int, 60)                                       \
@@ -91,6 +92,13 @@ typedef enum
     SpecPreloadOn,
     SpecPreloadAuto
 } SpeculativePreloadMode;
+
+typedef enum
+{
+    StepsAllToAll,
+    StepsRoundRobin,
+    StepsOnDemand
+} StepDistributionMode;
 
 struct _SstParams
 {

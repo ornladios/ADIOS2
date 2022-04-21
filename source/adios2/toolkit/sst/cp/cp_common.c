@@ -171,6 +171,8 @@ static char *SstQueueFullStr[] = {"Block", "Discard"};
 static char *SstCompressStr[] = {"None", "ZFP"};
 static char *SstCommPatternStr[] = {"Min", "Peer"};
 static char *SstPreloadModeStr[] = {"Off", "On", "Auto"};
+static char *SstStepDistributionModeStr[] = {"StepsAllToAll", "StepsRoundRobin",
+                                             "StepsOnDemand"};
 
 extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,
                           int ReaderSide)
@@ -188,6 +190,8 @@ extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,
                 (Params->QueueLimit == 0) ? "(unlimited)" : "");
         fprintf(stderr, "Param -   QueueFullPolicy=%s\n",
                 SstQueueFullStr[Params->QueueFullPolicy]);
+        fprintf(stderr, "Param -   StepDistributionMode=%s\n",
+                SstStepDistributionModeStr[Params->StepDistributionMode]);
     }
     fprintf(stderr, "Param -   DataTransport=%s\n",
             Params->DataTransport ? Params->DataTransport : "");
@@ -530,6 +534,16 @@ static FMField ReaderActivateList[] = {
 static FMStructDescRec ReaderActivateStructs[] = {
     {"ReaderActivate", ReaderActivateList, sizeof(struct _ReaderActivateMsg),
      NULL},
+    {NULL, NULL, 0, NULL}};
+
+static FMField ReaderRequestStepList[] = {
+    {"WSR_Stream", "integer", sizeof(void *),
+     FMOffset(struct _ReaderRequestStepMsg *, WSR_Stream)},
+    {NULL, NULL, 0, 0}};
+
+static FMStructDescRec ReaderRequestStepStructs[] = {
+    {"ReaderRequestStep", ReaderRequestStepList,
+     sizeof(struct _ReaderRequestStepMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField WriterCloseList[] = {
@@ -910,6 +924,11 @@ static void doCMFormatRegistration(CP_GlobalCMInfo CPInfo,
         CMregister_format(CPInfo->cm, ReaderActivateStructs);
     CMregister_handler(CPInfo->ReaderActivateFormat, CP_ReaderActivateHandler,
                        NULL);
+    CPInfo->ReaderRequestStepFormat =
+        CMregister_format(CPInfo->cm, ReaderRequestStepStructs);
+    CMregister_handler(CPInfo->ReaderRequestStepFormat,
+                       CP_ReaderRequestStepHandler, NULL);
+
     CPInfo->ReleaseTimestepFormat =
         CMregister_format(CPInfo->cm, ReleaseTimestepStructs);
     CMregister_handler(CPInfo->ReleaseTimestepFormat, CP_ReleaseTimestepHandler,

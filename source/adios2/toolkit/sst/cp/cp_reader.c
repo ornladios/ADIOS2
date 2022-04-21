@@ -810,7 +810,7 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream,
         }
     }
 
-    struct _TimestepMetadataList *New = malloc(sizeof(struct _RequestQueue));
+    struct _TimestepMetadataList *New = malloc(sizeof(struct _RegisterQueue));
     New->MetadataMsg = tsm;
     New->Next = NULL;
     if (Stream->Timesteps)
@@ -2213,6 +2213,17 @@ extern SstStatusValue SstAdvanceStep(SstStream Stream, const float timeout_sec)
         }
         free(Stream->CurrentMetadata);
         Stream->CurrentMetadata = NULL;
+    }
+
+    if (Stream->WriterConfigParams->StepDistributionMode == StepsOnDemand)
+    {
+        struct _ReaderRequestStepMsg Msg;
+        CP_verbose(Stream, PerRankVerbose,
+                   "Sending Reader Request Step messages to writer\n");
+        memset(&Msg, 0, sizeof(Msg));
+        sendOneToEachWriterRank(
+            Stream, Stream->CPInfo->SharedCM->ReaderRequestStepFormat, &Msg,
+            &Msg.WSR_Stream);
     }
 
     SstStepMode mode = SstNextAvailable;
