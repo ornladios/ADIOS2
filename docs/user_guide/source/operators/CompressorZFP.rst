@@ -1,8 +1,8 @@
 *************
-ZFPCompressor
+CompressorZFP
 *************
 
-The ``ZFPCompressor`` Operator is compressor that uses a lossy but optionally
+The ``CompressorZFP`` Operator is compressor that uses a lossy but optionally
 error-bounded compression to achieve high compression ratios.
 
 ZFP provides compressed-array classes that support high throughput read and
@@ -10,27 +10,27 @@ write random access to individual array elements. ZFP also supports serial and
 parallel (OpenMP and CUDA) compression of whole arrays, e.g., for applications
 that read and write large data sets to and from disk.
 
-ADIOS2 provides a ``ZFPCompressor`` operator that lets you compress an
+ADIOS2 provides a ``CompressorZFP`` operator that lets you compress an
 decompress variables. Below there is an example of how to invoke
-``ZFPCompressor`` operator:
+``CompressorZFP`` operator:
 
 .. code-block:: c++
 
     adios2::IO io = adios.DeclareIO("Output");
-    auto ZFPOp    = adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+    auto ZFPOp    = adios.DefineOperator("CompressorZFP", adios2::ops::LossyZFP);
 
     auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
     var_r32.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate, rate}});
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ZFPCompressor Specific parameters
+CompressorZFP Specific parameters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``ZFPCompressor`` operator accepts the following operator specific
+The ``CompressorZFP`` operator accepts the following operator specific
 parameters:
 
 +-------------------+---------------------------------------------+
-| ``ZFPCompressor`` available parameters                          |
+| ``CompressorZFP`` available parameters                          |
 +===================+=============================================+
 | ``accuracy``      | Fixed absolute error tolerance              |
 +-------------------+---------------------------------------------+
@@ -42,11 +42,11 @@ parameters:
 +-------------------+---------------------------------------------+
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-ZFPCompressor Execution Policy
+CompressorZFP Execution Policy
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``ZFPCompressor`` can run in multiple backend devices: GPUs (CUDA), OpenMP, and
-in the host CPU. By default ``ZFPCompressor`` will choose its backend following
+``CompressorZFP`` can run in multiple backend devices: GPUs (CUDA), OpenMP, and
+in the host CPU. By default ``CompressorZFP`` will choose its backend following
 the above order upon the availability of the device adapter.
 
 Exceptionally, if its corresponding ADIOS2 variable contains a CUDA memory

@@ -7,7 +7,6 @@ either from a ``adios2::Variable`` or a set of Variables in an ``adios2::IO``
 object.  Current supported operations are:
 
 1. Data compression/decompression, lossy and lossless.
-2. Callback functions (C++11 bindings only) supported by specific engines
 
 This section provides a description of the :ref:`Available Operators` in ADIOS2
 and their specific parameters to allow extra-control from the user. Parameters
@@ -24,6 +23,6 @@ Parameters are passed at:
 
 2. :ref:`Runtime Configuration Files` in the :ref:`ADIOS` component.
 
-.. include:: ZFPCompressor.rst
+.. include:: CompressorZFP.rst
 .. include:: plugin.rst
 .. include:: encryption.rst
