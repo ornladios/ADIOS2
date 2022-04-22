@@ -22,10 +22,22 @@ adios2::Mode adios2_ToMode(const adios2_mode mode, const std::string &hint)
     adios2::Mode modeCpp = adios2::Mode::Undefined;
     switch (mode)
     {
-    case (adios2_mode_deferred):
+    case adios2_mode_write:
+        modeCpp = adios2::Mode::Write;
+        break;
+    case adios2_mode_read:
+        modeCpp = adios2::Mode::Read;
+        break;
+    case adios2_mode_append:
+        modeCpp = adios2::Mode::Append;
+        break;
+    case adios2_mode_readRandomAccess:
+        modeCpp = adios2::Mode::ReadRandomAccess;
+        break;
+    case adios2_mode_deferred:
         modeCpp = adios2::Mode::Deferred;
         break;
-    case (adios2_mode_sync):
+    case adios2_mode_sync:
         modeCpp = adios2::Mode::Sync;
         break;
     default:
@@ -40,19 +52,22 @@ adios2_mode adios2_fromMode(const adios2::Mode mode, const std::string &hint)
     adios2_mode modeC = adios2_mode_undefined;
     switch (mode)
     {
-    case (adios2::Mode::Read):
-        modeC = adios2_mode_read;
-        break;
-    case (adios2::Mode::Write):
+    case adios2::Mode::Write:
         modeC = adios2_mode_write;
         break;
-    case (adios2::Mode::Append):
+    case adios2::Mode::Read:
+        modeC = adios2_mode_read;
+        break;
+    case adios2::Mode::Append:
         modeC = adios2_mode_append;
         break;
-    case (adios2::Mode::Deferred):
+    case adios2::Mode::ReadRandomAccess:
+        modeC = adios2_mode_readRandomAccess;
+        break;
+    case adios2::Mode::Deferred:
         modeC = adios2_mode_deferred;
         break;
-    case (adios2::Mode::Sync):
+    case adios2::Mode::Sync:
         modeC = adios2_mode_sync;
         break;
     default:
