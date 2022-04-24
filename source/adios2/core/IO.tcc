@@ -43,8 +43,7 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
         {
             helper::Throw<std::invalid_argument>(
                 "Core", "IO", "DefineVariable",
-                "variable " + name + " exists in IO object " + m_Name +
-                    ", in call to DefineVariable");
+                "variable " + name + " already defined in IO " + m_Name);
         }
     }
 

@@ -28,6 +28,7 @@
 #include "adios2/core/CoreTypes.h"
 #include "adios2/core/Group.h"
 #include "adios2/core/Variable.h"
+#include "adios2/core/VariableStruct.h"
 
 namespace adios2
 {
@@ -180,6 +181,13 @@ public:
     DefineVariable(const std::string &name, const Dims &shape = Dims(),
                    const Dims &start = Dims(), const Dims &count = Dims(),
                    const bool constantDims = false);
+
+    VariableStruct &DefineStructVariable(const std::string &name,
+                                         const size_t elementSize,
+                                         const Dims &shape = Dims(),
+                                         const Dims &start = Dims(),
+                                         const Dims &count = Dims(),
+                                         const bool constantDims = false);
 
     /**
      * @brief Define array attribute

@@ -182,6 +182,17 @@ VariableNT IO::DefineVariable(const DataType type, const std::string &name,
     else { return nullptr; }
 }
 
+VariableNT IO::DefineStructVariable(const std::string &name,
+                                    const size_t elementSize, const Dims &shape,
+                                    const Dims &start, const Dims &count,
+                                    const bool constantDims)
+{
+    helper::CheckForNullptr(m_IO, "for variable name " + name +
+                                      ", in call to IO::DefineStructVariable");
+    return VariableNT(&m_IO->DefineStructVariable(name, elementSize, shape,
+                                                  start, count, constantDims));
+}
+
 VariableNT IO::InquireVariable(const std::string &name)
 {
     helper::CheckForNullptr(m_IO, "for variable name " + name +

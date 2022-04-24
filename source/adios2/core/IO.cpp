@@ -850,6 +850,46 @@ void IO::CheckTransportType(const std::string type) const
     }
 }
 
+VariableStruct &IO::DefineStructVariable(const std::string &name,
+                                         const size_t elementSize,
+                                         const Dims &shape, const Dims &start,
+                                         const Dims &count,
+                                         const bool constantDims)
+{
+
+    PERFSTUBS_SCOPED_TIMER("IO::DefineStructVariable");
+
+    {
+        auto itVariable = m_Variables.find(name);
+        if (itVariable != m_Variables.end())
+        {
+            helper::Throw<std::invalid_argument>(
+                "Core", "IO", "DefineStructVariable",
+                "variable " + name + " already defined in IO " + m_Name);
+        }
+    }
+
+    auto itVariablePair = m_Variables.emplace(
+        name, std::unique_ptr<VariableBase>(new VariableStruct(
+                  name, elementSize, shape, start, count, constantDims)));
+
+    VariableStruct &variable =
+        static_cast<VariableStruct &>(*itVariablePair.first->second);
+
+    // check IO placeholder for variable operations
+    auto itOperations = m_VarOpsPlaceholder.find(name);
+    if (itOperations != m_VarOpsPlaceholder.end())
+    {
+        variable.m_Operations.reserve(itOperations->second.size());
+        for (auto &operation : itOperations->second)
+        {
+            variable.AddOperation(operation.first, operation.second);
+        }
+    }
+
+    return variable;
+}
+
 // Explicitly instantiate the necessary public template implementations
 #define define_template_instantiation(T)                                       \
     template Variable<T> &IO::DefineVariable<T>(const std::string &,           \

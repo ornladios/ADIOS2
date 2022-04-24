@@ -194,6 +194,23 @@ std::vector<Operator> VariableNT::Operations() const
     return operations;
 }
 
+void VariableNT::AddSubVariable(const std::string &name, const DataType type)
+{
+    helper::CheckForNullptr(m_Variable,
+                            "in call to VariableNT::AddSubVariable");
+    if (m_Variable->m_Type == DataType::Struct)
+    {
+        reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->AddSubVariable(name, type);
+    }
+    else
+    {
+        helper::Throw<std::runtime_error>(
+            "bindings::CXX11", "VariableNT", "AddSubVariable",
+            "non-struct variable does not support AddSubVariable");
+    }
+}
+
 void VariableNT::RemoveOperations()
 {
     helper::CheckForNullptr(m_Variable,
