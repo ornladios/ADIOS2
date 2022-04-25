@@ -23,7 +23,7 @@ class VariableStruct : public VariableBase
 {
 
 public:
-    const void *m_Data = nullptr;
+    void *m_Data = nullptr;
 
     VariableStruct(const std::string &name, const size_t elementSize,
                    const Dims &shape, const Dims &start, const Dims &count,
@@ -34,6 +34,10 @@ public:
     void AddSubVariable(const std::string &name, const DataType type);
 
     const std::vector<std::pair<std::string, DataType>> &SubVariableList();
+
+    void SetData(const void *data) noexcept;
+
+    void *GetData() const noexcept;
 
 private:
     std::vector<std::pair<std::string, DataType>> m_VarList;

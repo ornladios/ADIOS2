@@ -48,5 +48,12 @@ VariableStruct::SubVariableList()
     return m_VarList;
 }
 
+void VariableStruct::SetData(const void *data) noexcept
+{
+    m_Data = const_cast<void *>(data);
+}
+
+void *VariableStruct::GetData() const noexcept { return m_Data; }
+
 } // end namespace core
 } // end namespace adios2

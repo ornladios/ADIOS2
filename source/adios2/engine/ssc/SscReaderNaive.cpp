@@ -114,7 +114,37 @@ void SscReaderNaive::Close(const int transportIndex) {}
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void SscReaderNaive::GetDeferred(VariableStruct &variable, void *data) {}
+void SscReaderNaive::GetDeferred(VariableStruct &variable, void *data)
+{
+    variable.SetData(data);
+
+    Dims vStart = variable.m_Start;
+    Dims vCount = variable.m_Count;
+    Dims vShape = variable.m_Shape;
+
+    if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
+    {
+        std::reverse(vStart.begin(), vStart.end());
+        std::reverse(vCount.begin(), vCount.end());
+        std::reverse(vShape.begin(), vShape.end());
+    }
+
+    for (const auto &b : m_BlockMap[variable.m_Name])
+    {
+        if (b.shapeId == ShapeID::GlobalArray ||
+            b.shapeId == ShapeID::LocalArray)
+        {
+            helper::NdCopy(m_Buffer.data<char>() + b.bufferStart, b.start,
+                           b.count, true, true, reinterpret_cast<char *>(data),
+                           vStart, vCount, true, true, variable.m_ElementSize);
+        }
+        else if (b.shapeId == ShapeID::GlobalValue ||
+                 b.shapeId == ShapeID::LocalValue)
+        {
+            std::memcpy(data, m_Buffer.data() + b.bufferStart, b.bufferCount);
+        }
+    }
+}
 
 }
 }
