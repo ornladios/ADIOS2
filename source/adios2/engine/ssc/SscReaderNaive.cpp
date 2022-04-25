@@ -114,6 +114,8 @@ void SscReaderNaive::Close(const int transportIndex) {}
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+void SscReaderNaive::GetDeferred(VariableStruct &variable, void *data) {}
+
 }
 }
 }

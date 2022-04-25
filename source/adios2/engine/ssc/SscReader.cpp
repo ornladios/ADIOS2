@@ -121,6 +121,24 @@ void SscReader::DoClose(const int transportIndex)
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+void SscReader::DoGetSync(VariableStruct &variable, void *data)
+{
+    PERFSTUBS_SCOPED_TIMER_FUNC();
+    helper::Log("Engine", "SscReader", "GetSync", variable.m_Name,
+                m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
+    m_EngineInstance->GetDeferred(variable, data);
+    m_EngineInstance->PerformGets();
+}
+void SscReader::DoGetDeferred(VariableStruct &variable, void *data)
+{
+    PERFSTUBS_SCOPED_TIMER_FUNC();
+    helper::Log("Engine", "SscReader", "GetDeferred", variable.m_Name,
+                m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
+    m_EngineInstance->GetDeferred(variable, data);
+}
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

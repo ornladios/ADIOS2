@@ -47,6 +47,8 @@ public:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+    virtual void GetDeferred(VariableStruct &, void *) = 0;
+
 protected:
     void SyncMpiPattern(MPI_Comm comm);
 

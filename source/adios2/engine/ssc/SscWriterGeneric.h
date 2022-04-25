@@ -43,6 +43,8 @@ public:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+    void PutDeferred(VariableStruct &, const void *) final;
+
 private:
     MPI_Win m_MpiWin;
     std::thread m_EndStepThread;

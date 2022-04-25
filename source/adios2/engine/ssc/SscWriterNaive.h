@@ -43,6 +43,8 @@ public:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+    void PutDeferred(VariableStruct &, const void *) final;
+
 private:
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);

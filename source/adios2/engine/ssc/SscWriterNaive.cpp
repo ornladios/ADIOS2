@@ -101,6 +101,8 @@ void SscWriterNaive::Close(const int transportIndex)
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+void SscWriterNaive::PutDeferred(VariableStruct &variable, const void *data) {}
+
 }
 }
 }
