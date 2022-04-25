@@ -186,7 +186,7 @@ typename Variable<T>::BPInfo *Engine::Get(Variable<T> &variable,
                 ", only Mode::Deferred and Mode::Sync are valid");
     }
 
-    CommonChecks<T>(variable, info->Data, {{Mode::Read}}, "in call to Get");
+    CommonChecks(variable, info->Data, {{Mode::Read}}, "in call to Get");
 
     return info;
 }
@@ -261,24 +261,6 @@ Variable<T> &Engine::FindVariable(const std::string &variableName,
                                                  m_IO.m_Name + ", " + hint);
     }
     return *variable;
-}
-
-// PRIVATE
-template <class T>
-void Engine::CommonChecks(Variable<T> &variable, const T *data,
-                          const std::set<Mode> &modes,
-                          const std::string hint) const
-{
-    variable.CheckDimensions(hint);
-    CheckOpenModes(modes, " for variable " + variable.m_Name + ", " + hint);
-
-    // If no dimension has a zero count then there must be data to write.
-    if (std::find(variable.m_Count.begin(), variable.m_Count.end(), 0) ==
-        variable.m_Count.end())
-    {
-        helper::CheckForNullptr(
-            data, "for data argument in non-zero count block, " + hint);
-    }
 }
 
 } // end namespace core
