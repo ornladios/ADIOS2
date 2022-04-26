@@ -116,7 +116,7 @@ void SscWriter::DoClose(const int transportIndex)
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void SscWriter::DoPutSync(VariableStruct &variable, const void *data)
+void SscWriter::DoPutStructSync(VariableStruct &variable, const void *data)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     helper::Log("Engine", "SscWriter", "DoPutSync", variable.m_Name,
@@ -125,7 +125,7 @@ void SscWriter::DoPutSync(VariableStruct &variable, const void *data)
     m_EngineInstance->PutDeferred(variable, data);
     m_EngineInstance->PerformPuts();
 }
-void SscWriter::DoPutDeferred(VariableStruct &variable, const void *data)
+void SscWriter::DoPutStructDeferred(VariableStruct &variable, const void *data)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     helper::Log("Engine", "SscWriter", "DoPutDeferred", variable.m_Name,

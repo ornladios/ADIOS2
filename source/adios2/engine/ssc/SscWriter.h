@@ -44,8 +44,8 @@ private:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-    void DoPutSync(VariableStruct &, const void *) final;
-    void DoPutDeferred(VariableStruct &, const void *) final;
+    void DoPutStructSync(VariableStruct &, const void *) final;
+    void DoPutStructDeferred(VariableStruct &, const void *) final;
 
     void DoClose(const int transportIndex = -1) final;
 

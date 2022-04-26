@@ -104,10 +104,10 @@ void Engine::Put(VariableStruct &variable, const void *data, const Mode launch)
     switch (launch)
     {
     case Mode::Deferred:
-        DoPutDeferred(variable, data);
+        DoPutStructDeferred(variable, data);
         break;
     case Mode::Sync:
-        DoPutSync(variable, data);
+        DoPutStructSync(variable, data);
         break;
     default:
         helper::Throw<std::invalid_argument>(
@@ -125,10 +125,10 @@ void Engine::Get(VariableStruct &variable, void *data, const Mode launch)
     switch (launch)
     {
     case Mode::Deferred:
-        DoGetDeferred(variable, data);
+        DoGetStructDeferred(variable, data);
         break;
     case Mode::Sync:
-        DoGetSync(variable, data);
+        DoGetStructSync(variable, data);
         break;
     default:
         helper::Throw<std::invalid_argument>(
@@ -169,13 +169,13 @@ ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void Engine::DoPutSync(VariableStruct &, const void *)
+void Engine::DoPutStructSync(VariableStruct &, const void *)
 {
-    ThrowUp("DoPutSync for Struct Variable");
+    ThrowUp("DoPutStructSync");
 }
-void Engine::DoPutDeferred(VariableStruct &, const void *)
+void Engine::DoPutStructDeferred(VariableStruct &, const void *)
 {
-    ThrowUp("DoPutDeferred for Struct Variable");
+    ThrowUp("DoPutStructDeferred");
 }
 
 // DoGet*
@@ -204,11 +204,11 @@ void Engine::DoGetAbsoluteSteps(const VariableBase &variable,
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void Engine::DoGetSync(VariableStruct &, void *)
+void Engine::DoGetStructSync(VariableStruct &, void *)
 {
     ThrowUp("DoGetSync for Struct Variable");
 }
-void Engine::DoGetDeferred(VariableStruct &, void *)
+void Engine::DoGetStructDeferred(VariableStruct &, void *)
 {
     ThrowUp("DoGetDeferred for Struct Variable");
 }

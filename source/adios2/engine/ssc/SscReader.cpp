@@ -121,7 +121,7 @@ void SscReader::DoClose(const int transportIndex)
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void SscReader::DoGetSync(VariableStruct &variable, void *data)
+void SscReader::DoGetStructSync(VariableStruct &variable, void *data)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     helper::Log("Engine", "SscReader", "GetSync", variable.m_Name,
@@ -130,7 +130,7 @@ void SscReader::DoGetSync(VariableStruct &variable, void *data)
     m_EngineInstance->GetDeferred(variable, data);
     m_EngineInstance->PerformGets();
 }
-void SscReader::DoGetDeferred(VariableStruct &variable, void *data)
+void SscReader::DoGetStructDeferred(VariableStruct &variable, void *data)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     helper::Log("Engine", "SscReader", "GetDeferred", variable.m_Name,

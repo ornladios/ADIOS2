@@ -136,7 +136,8 @@ void SscReaderNaive::GetDeferred(VariableStruct &variable, void *data)
         {
             helper::NdCopy(m_Buffer.data<char>() + b.bufferStart, b.start,
                            b.count, true, true, reinterpret_cast<char *>(data),
-                           vStart, vCount, true, true, variable.m_ElementSize);
+                           vStart, vCount, true, true,
+                           static_cast<int>(variable.m_ElementSize));
         }
         else if (b.shapeId == ShapeID::GlobalValue ||
                  b.shapeId == ShapeID::LocalValue)

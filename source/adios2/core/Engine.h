@@ -532,8 +532,8 @@ protected:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-    virtual void DoPutSync(VariableStruct &, const void *);
-    virtual void DoPutDeferred(VariableStruct &, const void *);
+    virtual void DoPutStructSync(VariableStruct &, const void *);
+    virtual void DoPutStructDeferred(VariableStruct &, const void *);
 
 // Get
 #define declare_type(T)                                                        \
@@ -544,8 +544,8 @@ protected:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-    virtual void DoGetSync(VariableStruct &, void *);
-    virtual void DoGetDeferred(VariableStruct &, void *);
+    virtual void DoGetStructSync(VariableStruct &, void *);
+    virtual void DoGetStructDeferred(VariableStruct &, void *);
 
     virtual void DoClose(const int transportIndex) = 0;
 
