@@ -2,7 +2,6 @@ name: adios2-python-docs
 
 channels:
   - conda-forge
-  - williamfgc
 
 dependencies:
   - adios2-openmpi
@@ -10,7 +9,6 @@ dependencies:
   - docutils==0.17
   - python
   - sphinx=4
-#  - funcparserlib>=0.3.6
   - pip
   - pip:
     - blockdiag==3.0.0
