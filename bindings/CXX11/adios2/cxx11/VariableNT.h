@@ -174,7 +174,8 @@ public:
     size_t AddOperation(const std::string &type,
                         const adios2::Params &parameters = adios2::Params());
 
-    void AddSubVariable(const std::string &name, const DataType type);
+    void AddSubVariable(const std::string &name, const DataType type,
+                        const size_t size = 1);
 
     /**
      * Inspects current operators added with AddOperator

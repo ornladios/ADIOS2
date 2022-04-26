@@ -27,9 +27,9 @@ VariableStruct::VariableStruct(const std::string &name,
 }
 
 void VariableStruct::AddSubVariable(const std::string &name,
-                                    const DataType type)
+                                    const DataType type, const size_t size)
 {
-    if (m_SizeAdded + helper::GetDataTypeSize(type) > m_ElementSize)
+    if (m_SizeAdded + helper::GetDataTypeSize(type) * size > m_ElementSize)
     {
         helper::Throw<std::invalid_argument>(
             "core", "VariableStruct", "AddSubVariable",
@@ -38,14 +38,12 @@ void VariableStruct::AddSubVariable(const std::string &name,
                 " exceeded struct size " + std::to_string(m_ElementSize) +
                 " for struct variable " + m_Name);
     }
-    m_VarList.push_back({name, type});
-    m_SizeAdded += helper::GetDataTypeSize(type);
-}
-
-const std::vector<std::pair<std::string, DataType>> &
-VariableStruct::SubVariableList()
-{
-    return m_VarList;
+    m_TypeDefinition.emplace_back();
+    auto &d = m_TypeDefinition.back();
+    d.Name = name;
+    d.Type = type;
+    d.Size = size;
+    m_SizeAdded += helper::GetDataTypeSize(type) * size;
 }
 
 void VariableStruct::SetData(const void *data) noexcept

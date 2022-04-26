@@ -194,14 +194,15 @@ std::vector<Operator> VariableNT::Operations() const
     return operations;
 }
 
-void VariableNT::AddSubVariable(const std::string &name, const DataType type)
+void VariableNT::AddSubVariable(const std::string &name, const DataType type,
+                                const size_t size)
 {
     helper::CheckForNullptr(m_Variable,
                             "in call to VariableNT::AddSubVariable");
     if (m_Variable->m_Type == DataType::Struct)
     {
         reinterpret_cast<core::VariableStruct *>(m_Variable)
-            ->AddSubVariable(name, type);
+            ->AddSubVariable(name, type, size);
     }
     else
     {
