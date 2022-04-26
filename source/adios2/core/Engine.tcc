@@ -47,8 +47,7 @@ typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
 template <class T>
 void Engine::Put(Variable<T> &variable, const T *data, const Mode launch)
 {
-    CommonChecks(variable, data, {{Mode::Write, Mode::Append}},
-                 "in call to Put");
+    CommonChecks(variable, data, {Mode::Write, Mode::Append}, "in call to Put");
 
     switch (launch)
     {
@@ -93,7 +92,7 @@ void Engine::Put(const std::string &variableName, const T &datum,
 template <class T>
 void Engine::Get(Variable<T> &variable, T *data, const Mode launch)
 {
-    CommonChecks(variable, data, {{Mode::Read}, {Mode::ReadRandomAccess}},
+    CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess},
                  "in call to Get");
 
     switch (launch)
@@ -186,7 +185,7 @@ typename Variable<T>::BPInfo *Engine::Get(Variable<T> &variable,
                 ", only Mode::Deferred and Mode::Sync are valid");
     }
 
-    CommonChecks(variable, info->Data, {{Mode::Read}}, "in call to Get");
+    CommonChecks(variable, info->Data, {Mode::Read}, "in call to Get");
 
     return info;
 }

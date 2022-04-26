@@ -98,8 +98,7 @@ size_t Engine::DebugGetDataBufferSize() const
 
 void Engine::Put(VariableStruct &variable, const void *data, const Mode launch)
 {
-    CommonChecks(variable, data, {{Mode::Write, Mode::Append}},
-                 "in call to Put");
+    CommonChecks(variable, data, {Mode::Write, Mode::Append}, "in call to Put");
 
     switch (launch)
     {
@@ -119,7 +118,7 @@ void Engine::Put(VariableStruct &variable, const void *data, const Mode launch)
 
 void Engine::Get(VariableStruct &variable, void *data, const Mode launch)
 {
-    CommonChecks(variable, data, {{Mode::Read}, {Mode::ReadRandomAccess}},
+    CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess},
                  "in call to Get");
 
     switch (launch)
