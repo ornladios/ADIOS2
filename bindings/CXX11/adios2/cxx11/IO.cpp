@@ -206,6 +206,10 @@ VariableNT IO::InquireVariable(const std::string &name)
     }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+    else if (type == DataType::Struct)
+    {
+        return VariableNT(m_IO->InquireStructVariable(name));
+    }
     else { return nullptr; }
 }
 

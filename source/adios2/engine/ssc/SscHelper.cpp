@@ -19,35 +19,17 @@ namespace engine
 namespace ssc
 {
 
-size_t GetTypeSize(DataType type)
-{
-    if (type == DataType::None)
-    {
-        helper::Throw<std::runtime_error>("Engine", "SscHelper", "GetTypeSize",
-                                          "unknown data type");
-    }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>()) { return sizeof(T); }
-    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-    else
-    {
-        helper::Throw<std::runtime_error>("Engine", "SscHelper", "GetTypeSize",
-                                          "unknown data type");
-    }
-    return 0;
-}
-
-size_t TotalDataSize(const Dims &dims, DataType type, const ShapeID &shapeId)
+size_t TotalDataSize(const Dims &dims, const size_t elementSize,
+                     const ShapeID &shapeId)
 {
     if (shapeId == ShapeID::GlobalArray || shapeId == ShapeID::LocalArray)
     {
-        return std::accumulate(dims.begin(), dims.end(), GetTypeSize(type),
+        return std::accumulate(dims.begin(), dims.end(), elementSize,
                                std::multiplies<size_t>());
     }
     else if (shapeId == ShapeID::GlobalValue || shapeId == ShapeID::LocalValue)
     {
-        return GetTypeSize(type);
+        return elementSize;
     }
     helper::Throw<std::runtime_error>("Engine", "SscHelper", "TotalDataSize",
                                       "ShapeID not supported");
@@ -65,7 +47,7 @@ size_t TotalDataSize(const BlockVec &bv)
         }
         else
         {
-            s += TotalDataSize(b.count, b.type, b.shapeId);
+            s += TotalDataSize(b.count, b.elementSize, b.shapeId);
         }
     }
     return s;
@@ -141,6 +123,9 @@ void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
 
         output.value(pos) = static_cast<uint8_t>(b.type);
         ++pos;
+
+        output.value<uint64_t>(pos) = static_cast<uint64_t>(b.elementSize);
+        pos += 8;
 
         output.value(pos) = static_cast<uint8_t>(b.shape.size());
         ++pos;
@@ -314,6 +299,9 @@ void DeserializeVariable(const Buffer &input, const ShapeID shapeId,
     b.type = static_cast<DataType>(input[pos]);
     ++pos;
 
+    b.elementSize = input.value<uint64_t>(pos);
+    pos += 8;
+
     uint8_t shapeSize = input[pos];
     ++pos;
     b.shape.resize(shapeSize);
@@ -346,11 +334,24 @@ void DeserializeVariable(const Buffer &input, const ShapeID shapeId,
 
     if (regIO)
     {
-        if (b.type == DataType::None)
+        if (b.type == DataType::Struct)
         {
-            helper::Throw<std::runtime_error>("Engine", "SscHelper",
-                                              "Deserialize",
-                                              "unknown variable data type");
+            auto v = io.InquireStructVariable(b.name);
+            if (!v)
+            {
+                Dims vStart = b.start;
+                Dims vShape = b.shape;
+                if (io.m_ArrayOrder != ArrayOrdering::RowMajor)
+                {
+                    std::reverse(vStart.begin(), vStart.end());
+                    std::reverse(vShape.begin(), vShape.end());
+                }
+                if (b.shapeId == ShapeID::GlobalArray)
+                {
+                    io.DefineStructVariable(b.name, b.elementSize, vShape,
+                                            vStart, vShape);
+                }
+            }
         }
 #define declare_type(T)                                                        \
     else if (b.type == helper::GetDataType<T>())                               \
@@ -679,6 +680,7 @@ void PrintBlock(const BlockInfo &b, const std::string &label)
     std::cout << label << std::endl;
     std::cout << b.name << std::endl;
     std::cout << "    DataType : " << b.type << std::endl;
+    std::cout << "    ElementSize : " << b.elementSize << std::endl;
     PrintDims(b.shape, "    Shape : ");
     PrintDims(b.start, "    Start : ");
     PrintDims(b.count, "    Count : ");
@@ -693,6 +695,7 @@ void PrintBlockVec(const BlockVec &bv, const std::string &label)
     {
         std::cout << i.name << std::endl;
         std::cout << "    DataType : " << i.type << std::endl;
+        std::cout << "    ElementSize : " << i.elementSize << std::endl;
         PrintDims(i.shape, "    Shape : ");
         PrintDims(i.start, "    Start : ");
         PrintDims(i.count, "    Count : ");
@@ -712,6 +715,7 @@ void PrintBlockVecVec(const BlockVecVec &bvv, const std::string &label)
         {
             std::cout << "    " << i.name << std::endl;
             std::cout << "        DataType : " << i.type << std::endl;
+            std::cout << "        ElementSize : " << i.elementSize << std::endl;
             PrintDims(i.shape, "        Shape : ");
             PrintDims(i.start, "        Start : ");
             PrintDims(i.count, "        Count : ");

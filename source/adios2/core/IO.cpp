@@ -890,6 +890,43 @@ VariableStruct &IO::DefineStructVariable(const std::string &name,
     return variable;
 }
 
+VariableStruct *IO::InquireStructVariable(const std::string &name) noexcept
+{
+    PERFSTUBS_SCOPED_TIMER("IO::InquireStructVariable");
+
+    if (m_Variables.empty())
+    {
+        for (auto &e : m_Engines)
+        {
+            e.second->NotifyEngineNoVarsQuery();
+        }
+        return nullptr;
+    }
+
+    auto itVariable = m_Variables.find(name);
+
+    if (itVariable == m_Variables.end())
+    {
+        return nullptr;
+    }
+
+    if (itVariable->second->m_Type != DataType::Struct)
+    {
+        return nullptr;
+    }
+
+    VariableStruct *variable =
+        static_cast<VariableStruct *>(itVariable->second.get());
+    if (m_ReadStreaming)
+    {
+        if (!variable->IsValidStep(m_EngineStep + 1))
+        {
+            return nullptr;
+        }
+    }
+    return variable;
+}
+
 // Explicitly instantiate the necessary public template implementations
 #define define_template_instantiation(T)                                       \
     template Variable<T> &IO::DefineVariable<T>(const std::string &,           \

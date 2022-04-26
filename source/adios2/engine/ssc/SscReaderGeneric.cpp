@@ -332,7 +332,7 @@ bool SscReaderGeneric::SyncWritePattern()
     ssc::Deserialize(m_GlobalWritePatternBuffer, m_GlobalWritePattern, m_IO,
                      true, true);
 
-    if (m_Verbosity >= 20 && m_ReaderRank == 0)
+    if (m_Verbosity >= 10 && m_ReaderRank == 0)
     {
         ssc::PrintBlockVecVec(m_GlobalWritePattern, "Global Write Pattern");
     }

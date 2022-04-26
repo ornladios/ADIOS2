@@ -147,8 +147,9 @@ void SscWriterNaive::PutDeferred(VariableStruct &variable, const void *data)
         b.shape = vShape;
         b.start = vStart;
         b.count = vCount;
+        b.elementSize = variable.m_ElementSize;
         b.bufferStart = m_Buffer.size();
-        b.bufferCount = ssc::TotalDataSize(b.count, b.type, b.shapeId);
+        b.bufferCount = ssc::TotalDataSize(b.count, b.elementSize, b.shapeId);
         m_Buffer.resize(b.bufferStart + b.bufferCount);
         std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
         if (b.shapeId == ShapeID::GlobalValue ||

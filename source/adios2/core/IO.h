@@ -280,6 +280,8 @@ public:
     template <class T>
     Variable<T> *InquireVariable(const std::string &name) noexcept;
 
+    VariableStruct *InquireStructVariable(const std::string &name) noexcept;
+
     /**
      * @brief Returns the type of an existing variable as an string
      * @param name input variable name
