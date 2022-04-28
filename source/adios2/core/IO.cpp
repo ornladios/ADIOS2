@@ -851,7 +851,7 @@ void IO::CheckTransportType(const std::string type) const
 }
 
 VariableStruct &IO::DefineStructVariable(const std::string &name,
-                                         const size_t elementSize,
+                                         const StructDefinition &def,
                                          const Dims &shape, const Dims &start,
                                          const Dims &count,
                                          const bool constantDims)
@@ -871,7 +871,7 @@ VariableStruct &IO::DefineStructVariable(const std::string &name,
 
     auto itVariablePair = m_Variables.emplace(
         name, std::unique_ptr<VariableBase>(new VariableStruct(
-                  name, elementSize, shape, start, count, constantDims)));
+                  name, def, shape, start, count, constantDims)));
 
     VariableStruct &variable =
         static_cast<VariableStruct &>(*itVariablePair.first->second);

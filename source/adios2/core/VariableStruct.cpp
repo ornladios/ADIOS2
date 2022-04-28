@@ -17,33 +17,90 @@ namespace adios2
 namespace core
 {
 
-VariableStruct::VariableStruct(const std::string &name,
-                               const size_t elementSize, const Dims &shape,
-                               const Dims &start, const Dims &count,
-                               const bool constantDims)
-: VariableBase(name, DataType::Struct, elementSize, shape, start, count,
-               constantDims)
+StructDefinition::StructDefinition(const size_t structSize)
+: m_StructSize(structSize)
 {
 }
 
-void VariableStruct::AddSubVariable(const std::string &name,
-                                    const DataType type, const size_t size)
+void StructDefinition::AddItem(const std::string &name, const size_t offset,
+                               const DataType type, const size_t size)
 {
-    if (m_SizeAdded + helper::GetDataTypeSize(type) * size > m_ElementSize)
+    if (type == DataType::None || type == DataType::Struct)
     {
-        helper::Throw<std::invalid_argument>(
-            "core", "VariableStruct", "AddSubVariable",
-            "total sub-variable size " +
-                std::to_string(m_SizeAdded + helper::GetDataTypeSize(type)) +
-                " exceeded struct size " + std::to_string(m_ElementSize) +
-                " for struct variable " + m_Name);
+        helper::Throw<std::invalid_argument>("core",
+                                             "VariableStruct::StructDefinition",
+                                             "AddItem", "invalid data type");
     }
-    m_TypeDefinition.emplace_back();
-    auto &d = m_TypeDefinition.back();
+    if (offset < m_StructSize)
+    {
+        helper::Throw<std::invalid_argument>("core",
+                                             "VariableStruct::StructDefinition",
+                                             "AddItem", "invalid offset");
+    }
+    m_Definition.emplace_back();
+    auto &d = m_Definition.back();
     d.Name = name;
+    d.Offset = offset;
     d.Type = type;
     d.Size = size;
-    m_SizeAdded += helper::GetDataTypeSize(type) * size;
+    m_StructSize = offset + helper::GetDataTypeSize(type) * size;
+}
+
+size_t StructDefinition::StructSize() const noexcept { return m_StructSize; }
+
+size_t StructDefinition::Items() const noexcept { return m_Definition.size(); }
+
+std::string StructDefinition::Name(const size_t index) const
+{
+    if (index >= m_Definition.size())
+    {
+        helper::Throw<std::invalid_argument>("core",
+                                             "VariableStruct::StructDefinition",
+                                             "Name", "invalid index");
+    }
+    return m_Definition[index].Name;
+}
+
+size_t StructDefinition::Offset(const size_t index) const
+{
+    if (index >= m_Definition.size())
+    {
+        helper::Throw<std::invalid_argument>("core",
+                                             "VariableStruct::StructDefinition",
+                                             "Offset", "invalid index");
+    }
+    return m_Definition[index].Offset;
+}
+
+DataType StructDefinition::Type(const size_t index) const
+{
+    if (index >= m_Definition.size())
+    {
+        helper::Throw<std::invalid_argument>("core",
+                                             "VariableStruct::StructDefinition",
+                                             "Type", "invalid index");
+    }
+    return m_Definition[index].Type;
+}
+
+size_t StructDefinition::Size(const size_t index) const
+{
+    if (index >= m_Definition.size())
+    {
+        helper::Throw<std::invalid_argument>("core",
+                                             "VariableStruct::StructDefinition",
+                                             "Size", "invalid index");
+    }
+    return m_Definition[index].Size;
+}
+
+VariableStruct::VariableStruct(const std::string &name,
+                               const StructDefinition &def, const Dims &shape,
+                               const Dims &start, const Dims &count,
+                               const bool constantDims)
+: VariableBase(name, DataType::Struct, def.StructSize(), shape, start, count,
+               constantDims)
+{
 }
 
 void VariableStruct::SetData(const void *data) noexcept

@@ -16,6 +16,57 @@
 namespace adios2
 {
 
+StructDefinition::StructDefinition(core::StructDefinition *ptr)
+: m_StructDefinition(ptr)
+{
+}
+
+void StructDefinition::AddItem(const std::string &name, const size_t offset,
+                               const DataType type, const size_t size)
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::AddItem");
+    m_StructDefinition->AddItem(name, offset, type, size);
+}
+
+size_t StructDefinition::StructSize() const noexcept
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::StructSize");
+    return m_StructDefinition->StructSize();
+}
+
+size_t StructDefinition::Items() const noexcept
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::Items");
+    return m_StructDefinition->Items();
+}
+std::string StructDefinition::Name(const size_t index) const
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::Name");
+    return m_StructDefinition->Name(index);
+}
+size_t StructDefinition::Offset(const size_t index) const
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::Offset");
+    return m_StructDefinition->Offset(index);
+}
+DataType StructDefinition::Type(const size_t index) const
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::Type");
+    return m_StructDefinition->Type(index);
+}
+size_t StructDefinition::Size(const size_t index) const
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::Size");
+    return m_StructDefinition->Size(index);
+}
+
 VariableNT::VariableNT(core::VariableBase *variable) : m_Variable(variable) {}
 
 VariableNT::operator bool() const noexcept { return m_Variable != nullptr; }
@@ -192,24 +243,6 @@ std::vector<Operator> VariableNT::Operations() const
         operations.push_back(Operator(op->m_TypeString, &op->GetParameters()));
     }
     return operations;
-}
-
-void VariableNT::AddSubVariable(const std::string &name, const DataType type,
-                                const size_t size)
-{
-    helper::CheckForNullptr(m_Variable,
-                            "in call to VariableNT::AddSubVariable");
-    if (m_Variable->m_Type == DataType::Struct)
-    {
-        reinterpret_cast<core::VariableStruct *>(m_Variable)
-            ->AddSubVariable(name, type, size);
-    }
-    else
-    {
-        helper::Throw<std::runtime_error>(
-            "bindings::CXX11", "VariableNT", "AddSubVariable",
-            "non-struct variable does not support AddSubVariable");
-    }
 }
 
 void VariableNT::RemoveOperations()

@@ -183,7 +183,7 @@ public:
                    const bool constantDims = false);
 
     VariableStruct &DefineStructVariable(const std::string &name,
-                                         const size_t elementSize,
+                                         const StructDefinition &def,
                                          const Dims &shape = Dims(),
                                          const Dims &start = Dims(),
                                          const Dims &count = Dims(),

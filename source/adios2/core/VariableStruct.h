@@ -19,6 +19,33 @@ namespace adios2
 namespace core
 {
 
+class StructDefinition
+{
+public:
+    struct StructItemDefinition
+    {
+        std::string Name;
+        size_t Offset;
+        DataType Type;
+        size_t Size;
+    };
+
+    StructDefinition(const size_t structSize = 0);
+
+    void AddItem(const std::string &name, const size_t offset,
+                 const DataType type, const size_t size);
+    size_t StructSize() const noexcept;
+    size_t Items() const noexcept;
+    std::string Name(const size_t index) const;
+    size_t Offset(const size_t index) const;
+    DataType Type(const size_t index) const;
+    size_t Size(const size_t index) const;
+
+private:
+    std::vector<StructItemDefinition> m_Definition;
+    size_t m_StructSize;
+};
+
 class VariableStruct : public VariableBase
 {
 
@@ -48,23 +75,13 @@ public:
 
     std::vector<BPInfo> m_BlocksInfo;
 
-    struct VarList
-    {
-        std::string Name;
-        DataType Type;
-        size_t Size;
-    };
+    StructDefinition m_StructDefinition;
 
-    std::vector<VarList> m_TypeDefinition;
-
-    VariableStruct(const std::string &name, const size_t elementSize,
+    VariableStruct(const std::string &name, const StructDefinition &def,
                    const Dims &shape, const Dims &start, const Dims &count,
                    const bool constantDims);
 
     ~VariableStruct() = default;
-
-    void AddSubVariable(const std::string &name, const DataType type,
-                        const size_t size);
 
     void SetData(const void *data) noexcept;
 
