@@ -75,8 +75,6 @@ public:
 
     std::vector<BPInfo> m_BlocksInfo;
 
-    StructDefinition m_StructDefinition;
-
     VariableStruct(const std::string &name, const StructDefinition &def,
                    const Dims &shape, const Dims &start, const Dims &count,
                    const bool constantDims);
@@ -88,7 +86,7 @@ public:
     void *GetData() const noexcept;
 
 private:
-    size_t m_SizeAdded = 0;
+    const StructDefinition &m_StructDefinition;
 };
 
 } // end namespace core

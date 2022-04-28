@@ -99,7 +99,8 @@ VariableStruct::VariableStruct(const std::string &name,
                                const Dims &start, const Dims &count,
                                const bool constantDims)
 : VariableBase(name, DataType::Struct, def.StructSize(), shape, start, count,
-               constantDims)
+               constantDims),
+  m_StructDefinition(def)
 {
 }
 
