@@ -927,6 +927,43 @@ VariableStruct *IO::InquireStructVariable(const std::string &name) noexcept
     return variable;
 }
 
+VariableStruct *IO::InquireStructVariable(const std::string &name,
+                                          const StructDefinition &def) noexcept
+{
+    auto ret = InquireStructVariable(name);
+    if (ret == nullptr)
+    {
+        return nullptr;
+    }
+
+    if (ret->m_StructDefinition.Items() != def.Items())
+    {
+        return nullptr;
+    }
+
+    for (size_t i = 0; i < def.Items(); ++i)
+    {
+        if (ret->m_StructDefinition.Name(i) != def.Name(i))
+        {
+            return nullptr;
+        }
+        if (ret->m_StructDefinition.Offset(i) != def.Offset(i))
+        {
+            return nullptr;
+        }
+        if (ret->m_StructDefinition.Type(i) != def.Type(i))
+        {
+            return nullptr;
+        }
+        if (ret->m_StructDefinition.Size(i) != def.Size(i))
+        {
+            return nullptr;
+        }
+    }
+
+    return ret;
+}
+
 // Explicitly instantiate the necessary public template implementations
 #define define_template_instantiation(T)                                       \
     template Variable<T> &IO::DefineVariable<T>(const std::string &,           \

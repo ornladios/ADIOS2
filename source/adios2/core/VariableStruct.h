@@ -85,7 +85,6 @@ public:
 
     void *GetData() const noexcept;
 
-private:
     const StructDefinition &m_StructDefinition;
 };
 

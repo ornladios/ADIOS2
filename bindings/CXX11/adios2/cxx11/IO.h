@@ -177,6 +177,11 @@ public:
 
     VariableNT InquireVariable(const std::string &name);
 
+    VariableNT InquireStructVariable(const std::string &name);
+
+    VariableNT InquireStructVariable(const std::string &name,
+                                     const StructDefinition def);
+
     /**
      * @brief Define attribute inside io. Array input version
      * @param name unique attribute identifier IO object or for a Variable if

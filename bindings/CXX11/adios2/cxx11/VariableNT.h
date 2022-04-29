@@ -196,9 +196,6 @@ public:
     size_t AddOperation(const std::string &type,
                         const adios2::Params &parameters = adios2::Params());
 
-    void AddSubVariable(const std::string &name, const size_t offset,
-                        const DataType type, const size_t size = 1);
-
     /**
      * Inspects current operators added with AddOperator
      * @return vector of Variable<T>::OperatorInfo
@@ -210,6 +207,12 @@ public:
      * Provides the posibility to apply or not operators on a block basis.
      */
     void RemoveOperations();
+
+    size_t StructItems() const;
+    std::string StructItemName(const size_t index) const;
+    size_t StructItemOffset(const size_t index) const;
+    DataType StructItemType(const size_t index) const;
+    size_t StructItemSize(const size_t index) const;
 
 private:
     friend class IO;
