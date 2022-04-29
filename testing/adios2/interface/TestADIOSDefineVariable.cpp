@@ -655,6 +655,60 @@ TEST_F(ADIOSDefineVariableTest, DefineCheckType)
     EXPECT_EQ(io.VariableType("ul"), adios2::GetType<unsigned long>());
 }
 
+TEST_F(ADIOSDefineVariableTest, DefineStructVariable)
+{
+    const adios2::Dims shape = {10};
+    const adios2::Dims start = {0};
+    const adios2::Dims count = {10};
+
+    auto def1 = adios.DefineStruct("def1");
+    def1.AddItem("a", 0, adios2::DataType::Int8, 1);
+    def1.AddItem("b", 4, adios2::DataType::Int32, 5);
+
+    auto def2 = adios.DefineStruct("def2");
+    def2.AddItem("a", 0, adios2::DataType::Int8, 1);
+    def2.AddItem("b", 4, adios2::DataType::Int32, 5);
+    def2.AddItem("c", 24, adios2::DataType::Int32);
+    EXPECT_THROW(def2.AddItem("c", 27, adios2::DataType::Int32),
+                 std::invalid_argument);
+
+    auto structVar =
+        io.DefineStructVariable("particle", def1, shape, start, count);
+
+    EXPECT_EQ(structVar.Shape().size(), 1);
+    EXPECT_EQ(structVar.Start().size(), 1);
+    EXPECT_EQ(structVar.Count().size(), 1);
+    EXPECT_EQ(structVar.Name(), "particle");
+    EXPECT_EQ(structVar.Type(), "struct");
+    EXPECT_EQ(structVar.Sizeof(), 24);
+    EXPECT_EQ(structVar.StructItems(), 2);
+    EXPECT_EQ(structVar.StructItemName(0), "a");
+    EXPECT_EQ(structVar.StructItemName(1), "b");
+    EXPECT_EQ(structVar.StructItemOffset(0), 0);
+    EXPECT_EQ(structVar.StructItemOffset(1), 4);
+    EXPECT_EQ(structVar.StructItemType(0), adios2::DataType::Int8);
+    EXPECT_EQ(structVar.StructItemType(1), adios2::DataType::Int32);
+    EXPECT_EQ(structVar.StructItemSize(0), 1);
+    EXPECT_EQ(structVar.StructItemSize(1), 5);
+
+    EXPECT_THROW(structVar.StructItemName(2), std::invalid_argument);
+    EXPECT_THROW(structVar.StructItemOffset(2), std::invalid_argument);
+    EXPECT_THROW(structVar.StructItemType(2), std::invalid_argument);
+    EXPECT_THROW(structVar.StructItemSize(2), std::invalid_argument);
+
+    auto inquire1 = io.InquireVariable("particle");
+    EXPECT_TRUE(inquire1);
+
+    auto inquire2 = io.InquireStructVariable("particle");
+    EXPECT_TRUE(inquire2);
+
+    auto inquire3 = io.InquireStructVariable("particle", def1);
+    EXPECT_TRUE(inquire3);
+
+    auto inquire4 = io.InquireStructVariable("particle", def2);
+    EXPECT_FALSE(inquire4);
+}
+
 int main(int argc, char **argv)
 {
 #if ADIOS2_USE_MPI
