@@ -1920,7 +1920,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 
     // Absolute step is needed to access Shape of variable in a step
     // and also for StepSelection
-    size_t absstep = relative_to_absolute_step(variable, stepStart);
+    size_t absstep = relative_to_absolute_step(fp, variable, stepStart);
 
     // Get the shape of the variable for the starting step
     Dims shape;
@@ -3013,9 +3013,16 @@ void print_endline(void)
 }
 
 template <class T>
-size_t relative_to_absolute_step(core::Variable<T> *variable,
+size_t relative_to_absolute_step(core::Engine *fp, core::Variable<T> *variable,
                                  const size_t relstep)
 {
+    auto minBlocks = fp->MinBlocksInfo(*variable, relstep);
+
+    if (minBlocks)
+    {
+        return minBlocks->Step;
+    }
+
     const std::map<size_t, std::vector<size_t>> &indices =
         variable->m_AvailableStepBlockIndexOffsets;
     auto itStep = indices.begin();
