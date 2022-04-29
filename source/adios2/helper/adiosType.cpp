@@ -84,9 +84,9 @@ DataType GetDataTypeFromString(std::string const &type) noexcept
     {
         return DataType::String;
     }
-    if (type == "compound")
+    if (type == "struct")
     {
-        return DataType::Compound;
+        return DataType::Struct;
     }
     return DataType::None;
 }

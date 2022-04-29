@@ -75,7 +75,7 @@ pybind11::array Attribute::Data()
     helper::CheckForNullptr(m_Attribute, "in call to Attribute::Data");
     const adios2::DataType type = m_Attribute->m_Type;
 
-    if (type == adios2::DataType::Compound)
+    if (type == adios2::DataType::Struct)
     {
         // not supported
     }

@@ -338,7 +338,7 @@ char *BP5Serializer::TranslateADIOS2Type2FFS(const DataType Type)
     switch (Type)
     {
     case DataType::None:
-    case DataType::Compound:
+    case DataType::Struct:
         return NULL;
     case DataType::Int8:
     case DataType::Int16:
@@ -573,7 +573,7 @@ static void GetMinMax(const void *Data, size_t ElemCount, const DataType Type,
     MinMax.Init(Type);
     if (ElemCount == 0)
         return;
-    if (Type == DataType::Compound)
+    if (Type == DataType::Struct)
     {
     }
 #ifdef ADIOS2_HAVE_CUDA

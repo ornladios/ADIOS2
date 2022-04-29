@@ -96,6 +96,47 @@ size_t Engine::DebugGetDataBufferSize() const
     return 0;
 }
 
+void Engine::Put(VariableStruct &variable, const void *data, const Mode launch)
+{
+    CommonChecks(variable, data, {Mode::Write, Mode::Append}, "in call to Put");
+
+    switch (launch)
+    {
+    case Mode::Deferred:
+        DoPutStructDeferred(variable, data);
+        break;
+    case Mode::Sync:
+        DoPutStructSync(variable, data);
+        break;
+    default:
+        helper::Throw<std::invalid_argument>(
+            "Core", "Engine", "Put",
+            "invalid launch Mode for variable " + variable.m_Name +
+                ", only Mode::Deferred and Mode::Sync are valid");
+    }
+}
+
+void Engine::Get(VariableStruct &variable, void *data, const Mode launch)
+{
+    CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess},
+                 "in call to Get");
+
+    switch (launch)
+    {
+    case Mode::Deferred:
+        DoGetStructDeferred(variable, data);
+        break;
+    case Mode::Sync:
+        DoGetStructSync(variable, data);
+        break;
+    default:
+        helper::Throw<std::invalid_argument>(
+            "Core", "Engine", "Get",
+            "invalid launch Mode for variable " + variable.m_Name +
+                ", only Mode::Deferred and Mode::Sync are valid");
+    }
+}
+
 void Engine::EnterComputationBlock() noexcept {}
 void Engine::ExitComputationBlock() noexcept {}
 
@@ -127,6 +168,15 @@ ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+void Engine::DoPutStructSync(VariableStruct &, const void *)
+{
+    ThrowUp("DoPutStructSync");
+}
+void Engine::DoPutStructDeferred(VariableStruct &, const void *)
+{
+    ThrowUp("DoPutStructDeferred");
+}
+
 // DoGet*
 #define declare_type(T)                                                        \
     void Engine::DoGetSync(Variable<T> &, T *) { ThrowUp("DoGetSync"); }       \
@@ -152,6 +202,15 @@ void Engine::DoGetAbsoluteSteps(const VariableBase &variable,
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+void Engine::DoGetStructSync(VariableStruct &, void *)
+{
+    ThrowUp("DoGetSync for Struct Variable");
+}
+void Engine::DoGetStructDeferred(VariableStruct &, void *)
+{
+    ThrowUp("DoGetDeferred for Struct Variable");
+}
 
 #define declare_type(T)                                                        \
     std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
@@ -212,6 +271,22 @@ void Engine::CheckOpenModes(const std::set<Mode> &modes,
         helper::Throw<std::invalid_argument>("Core", "Engine", "CheckOpenModes",
                                              "Engine open mode not valid for " +
                                                  hint);
+    }
+}
+
+void Engine::CommonChecks(VariableBase &variable, const void *data,
+                          const std::set<Mode> &modes,
+                          const std::string hint) const
+{
+    variable.CheckDimensions(hint);
+    CheckOpenModes(modes, " for variable " + variable.m_Name + ", " + hint);
+
+    // If no dimension has a zero count then there must be data to write.
+    if (std::find(variable.m_Count.begin(), variable.m_Count.end(), 0) ==
+        variable.m_Count.end())
+    {
+        helper::CheckForNullptr(
+            data, "for data argument in non-zero count block, " + hint);
     }
 }
 

@@ -244,7 +244,7 @@ TEST_F(SscEngineTest, TestSscSuperLarge)
 {
     {
         std::string filename = "TestSscSuperLarge";
-        adios2::Params engineParams = {{"Verbose", "0"}};
+        adios2::Params engineParams = {{"Verbose", "10"}};
 
         int worldRank, worldSize;
         MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
@@ -277,7 +277,7 @@ TEST_F(SscEngineTest, TestSscSuperLarge)
 
     {
         std::string filename = "TestSscSuperLargeNaive";
-        adios2::Params engineParams = {{"Verbose", "0"},
+        adios2::Params engineParams = {{"Verbose", "10"},
                                        {"EngineMode", "naive"}};
 
         int worldRank, worldSize;

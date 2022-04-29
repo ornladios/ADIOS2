@@ -152,6 +152,10 @@ void SscWriterGeneric::Close(const int transportIndex)
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+void SscWriterGeneric::PutDeferred(VariableStruct &variable, const void *data)
+{
+}
+
 void SscWriterGeneric::EndStepFirst()
 {
     SyncWritePattern();

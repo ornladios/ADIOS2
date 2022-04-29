@@ -747,7 +747,7 @@ size_t BPSerializer::GetAttributesSizeInData(core::IO &io) const noexcept
             continue;
         }
 
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
 #define declare_type(T)                                                        \

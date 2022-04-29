@@ -614,7 +614,7 @@ BP4Deserializer::PerformGetsVariablesSubFileInfo(core::IO &io)
         const std::string variableName(subFileInfoPair.first);
         const DataType type(io.InquireVariableType(variableName));
 
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
 #define declare_type(T)                                                        \
@@ -636,7 +636,7 @@ void BP4Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
 {
     const DataType type(io.InquireVariableType(variableName));
 
-    if (type == DataType::Compound)
+    if (type == DataType::Struct)
     {
     }
 #define declare_type(T)                                                        \

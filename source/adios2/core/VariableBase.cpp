@@ -387,7 +387,7 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
         const std::string key =
             fullNameKeys ? attributeName : attributeName.substr(prefix.size());
 
-        if (itAttribute->second->m_Type == DataType::Compound)
+        if (itAttribute->second->m_Type == DataType::Struct)
         {
         }
         else
@@ -609,7 +609,7 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
 
 Dims VariableBase::GetShape(const size_t step)
 {
-    if (m_Type == DataType::Compound)
+    if (m_Type == DataType::Struct)
     {
         // not supported
     }

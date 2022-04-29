@@ -17,10 +17,32 @@
 
 namespace adios2
 {
+
 namespace core
 {
 class VariableBase;
+class StructDefinition;
 }
+
+class StructDefinition
+{
+
+public:
+    void AddItem(const std::string &name, const size_t offset,
+                 const DataType type, const size_t size);
+    size_t StructSize() const noexcept;
+    size_t Items() const noexcept;
+    std::string Name(const size_t index) const;
+    size_t Offset(const size_t index) const;
+    DataType Type(const size_t index) const;
+    size_t Size(const size_t index) const;
+
+private:
+    friend class ADIOS;
+    friend class IO;
+    StructDefinition(core::StructDefinition *ptr);
+    core::StructDefinition *m_StructDefinition;
+};
 
 class VariableNT
 {
@@ -185,6 +207,12 @@ public:
      * Provides the posibility to apply or not operators on a block basis.
      */
     void RemoveOperations();
+
+    size_t StructItems() const;
+    std::string StructItemName(const size_t index) const;
+    size_t StructItemOffset(const size_t index) const;
+    DataType StructItemType(const size_t index) const;
+    size_t StructItemSize(const size_t index) const;
 
 private:
     friend class IO;

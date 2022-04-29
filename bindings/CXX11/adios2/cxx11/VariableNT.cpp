@@ -16,6 +16,57 @@
 namespace adios2
 {
 
+StructDefinition::StructDefinition(core::StructDefinition *ptr)
+: m_StructDefinition(ptr)
+{
+}
+
+void StructDefinition::AddItem(const std::string &name, const size_t offset,
+                               const DataType type, const size_t size)
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::AddItem");
+    m_StructDefinition->AddItem(name, offset, type, size);
+}
+
+size_t StructDefinition::StructSize() const noexcept
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::StructSize");
+    return m_StructDefinition->StructSize();
+}
+
+size_t StructDefinition::Items() const noexcept
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::Items");
+    return m_StructDefinition->Items();
+}
+std::string StructDefinition::Name(const size_t index) const
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::Name");
+    return m_StructDefinition->Name(index);
+}
+size_t StructDefinition::Offset(const size_t index) const
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::Offset");
+    return m_StructDefinition->Offset(index);
+}
+DataType StructDefinition::Type(const size_t index) const
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::Type");
+    return m_StructDefinition->Type(index);
+}
+size_t StructDefinition::Size(const size_t index) const
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::Size");
+    return m_StructDefinition->Size(index);
+}
+
 VariableNT::VariableNT(core::VariableBase *variable) : m_Variable(variable) {}
 
 VariableNT::operator bool() const noexcept { return m_Variable != nullptr; }
@@ -199,6 +250,71 @@ void VariableNT::RemoveOperations()
     helper::CheckForNullptr(m_Variable,
                             "in call to VariableNT::RemoveOperations");
     m_Variable->RemoveOperations();
+}
+
+size_t VariableNT::StructItems() const
+{
+    helper::CheckForNullptr(m_Variable, "in call to VariableNT::StructItems");
+    if (m_Variable->m_Type != DataType::Struct)
+    {
+        helper::Throw<std::runtime_error>(
+            "bindings::CXX11", "VariableNT", "StructItems",
+            "invalid data type " + ToString(m_Variable->m_Type));
+    }
+    return reinterpret_cast<core::VariableStruct *>(m_Variable)
+        ->m_StructDefinition.Items();
+}
+std::string VariableNT::StructItemName(const size_t index) const
+{
+    helper::CheckForNullptr(m_Variable,
+                            "in call to VariableNT::StructItemName");
+    if (m_Variable->m_Type != DataType::Struct)
+    {
+        helper::Throw<std::runtime_error>(
+            "bindings::CXX11", "VariableNT", "StructItemName",
+            "invalid data type " + ToString(m_Variable->m_Type));
+    }
+    return reinterpret_cast<core::VariableStruct *>(m_Variable)
+        ->m_StructDefinition.Name(index);
+}
+size_t VariableNT::StructItemOffset(const size_t index) const
+{
+    helper::CheckForNullptr(m_Variable,
+                            "in call to VariableNT::StructItemOffset");
+    if (m_Variable->m_Type != DataType::Struct)
+    {
+        helper::Throw<std::runtime_error>(
+            "bindings::CXX11", "VariableNT", "StructItemOffset",
+            "invalid data type " + ToString(m_Variable->m_Type));
+    }
+    return reinterpret_cast<core::VariableStruct *>(m_Variable)
+        ->m_StructDefinition.Offset(index);
+}
+DataType VariableNT::StructItemType(const size_t index) const
+{
+    helper::CheckForNullptr(m_Variable,
+                            "in call to VariableNT::StructItemType");
+    if (m_Variable->m_Type != DataType::Struct)
+    {
+        helper::Throw<std::runtime_error>(
+            "bindings::CXX11", "VariableNT", "StructItemType",
+            "invalid data type " + ToString(m_Variable->m_Type));
+    }
+    return reinterpret_cast<core::VariableStruct *>(m_Variable)
+        ->m_StructDefinition.Type(index);
+}
+size_t VariableNT::StructItemSize(const size_t index) const
+{
+    helper::CheckForNullptr(m_Variable,
+                            "in call to VariableNT::StructItemSize");
+    if (m_Variable->m_Type != DataType::Struct)
+    {
+        helper::Throw<std::runtime_error>(
+            "bindings::CXX11", "VariableNT", "StructItemSize",
+            "invalid data type " + ToString(m_Variable->m_Type));
+    }
+    return reinterpret_cast<core::VariableStruct *>(m_Variable)
+        ->m_StructDefinition.Size(index);
 }
 
 } // end namespace adios2

@@ -261,7 +261,7 @@ adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name)
         const adios2::DataType type(ioCpp.InquireVariableType(name));
         adios2::core::VariableBase *variableCpp = nullptr;
 
-        if (type == adios2::DataType::Compound)
+        if (type == adios2::DataType::Struct)
         {
             // not supported
         }
@@ -311,7 +311,7 @@ adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
             const adios2::DataType type(it->second->m_Type);
             adios2::core::VariableBase *variable = nullptr;
 
-            if (type == adios2::DataType::Compound)
+            if (type == adios2::DataType::Struct)
             {
                 // not supported
             }
@@ -444,7 +444,7 @@ adios2_error adios2_inquire_group_variables(adios2_variable ***variables,
             const adios2::DataType type(it->second->m_Type);
             adios2::core::VariableBase *variable = nullptr;
 
-            if (type == adios2::DataType::Compound)
+            if (type == adios2::DataType::Struct)
             {
                 // not supported
             }
@@ -642,7 +642,7 @@ adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name)
         const adios2::DataType type(itAttribute->second->m_Type);
         adios2::core::AttributeBase *attributeCpp = nullptr;
 
-        if (type == adios2::DataType::Compound)
+        if (type == adios2::DataType::Struct)
         {
             // not supported
         }
@@ -703,7 +703,7 @@ adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
             const adios2::DataType type(it->second->m_Type);
             adios2::core::AttributeBase *attribute = nullptr;
 
-            if (type == adios2::DataType::Compound)
+            if (type == adios2::DataType::Struct)
             {
                 // not supported
             }
@@ -773,7 +773,7 @@ adios2_error adios2_inquire_group_attributes(adios2_attribute ***attributes,
             const adios2::DataType type(it->second->m_Type);
             adios2::core::AttributeBase *attribute = nullptr;
 
-            if (type == adios2::DataType::Compound)
+            if (type == adios2::DataType::Struct)
             {
                 // not supported
             }

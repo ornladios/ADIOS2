@@ -10,6 +10,7 @@
 
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/IO.h"
+#include "adios2/core/VariableStruct.h"
 #include "adios2/helper/adiosFunctions.h" //CheckForNullptr
 
 namespace adios2
@@ -82,6 +83,20 @@ Operator ADIOS::InquireOperator(const std::string name)
     {
         return Operator(op->first, &op->second);
     }
+}
+
+StructDefinition ADIOS::DefineStruct(const std::string &name)
+{
+    CheckPointer("for struct name " + name +
+                 ", in call to ADIOS::DefineStruct");
+    return StructDefinition(&m_ADIOS->DefineStruct(name));
+}
+
+StructDefinition ADIOS::InquireStruct(const std::string &name)
+{
+    CheckPointer("for struct name " + name +
+                 ", in call to ADIOS::InquireStruct");
+    return StructDefinition(m_ADIOS->InquireStruct(name));
 }
 
 bool ADIOS::RemoveIO(const std::string name)

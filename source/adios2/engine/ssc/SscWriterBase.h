@@ -44,6 +44,8 @@ public:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+    virtual void PutDeferred(VariableStruct &, const void *) = 0;
+
 protected:
     void SyncMpiPattern(MPI_Comm comm);
 

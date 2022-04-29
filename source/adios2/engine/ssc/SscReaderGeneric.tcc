@@ -42,6 +42,7 @@ void SscReaderGeneric::GetDeferredDeltaCommon(Variable<T> &variable, T *data)
     auto &b = m_LocalReadPattern.back();
     b.name = variable.m_Name;
     b.type = helper::GetDataType<T>();
+    b.elementSize = variable.m_ElementSize;
     b.shapeId = variable.m_ShapeID;
     b.start = vStart;
     b.count = vCount;
