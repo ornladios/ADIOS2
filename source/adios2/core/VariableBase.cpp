@@ -621,8 +621,6 @@ void VariableBase::CheckRandomAccess(const size_t step,
     }
 }
 
-Dims VariableBase::GetShape(const size_t step) const { return Shape(step); }
-
 Dims VariableBase::Shape(const size_t step) const
 {
     CheckRandomAccess(step, "Shape");

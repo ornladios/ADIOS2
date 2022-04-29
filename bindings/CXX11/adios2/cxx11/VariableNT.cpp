@@ -156,21 +156,7 @@ adios2::ShapeID VariableNT::ShapeID() const
 Dims VariableNT::Shape(const size_t step) const
 {
     helper::CheckForNullptr(m_Variable, "in call to VariableNT::Shape");
-    auto type = m_Variable->m_Type;
-#define declare_type(T)                                                        \
-    if (type == helper::GetDataType<T>())                                      \
-    {                                                                          \
-        return reinterpret_cast<core::Variable<T> *>(m_Variable)->Shape(step); \
-    }
-    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-    else if (type == DataType::Struct)
-    {
-        return reinterpret_cast<core::VariableStruct *>(m_Variable)->m_Shape;
-    }
-    helper::Throw<std::runtime_error>("bindings::CXX11", "VariableNT", "Shape",
-                                      "invalid data type " + ToString(type));
-    return Dims();
+    return m_Variable->Shape(step);
 }
 
 Dims VariableNT::Start() const

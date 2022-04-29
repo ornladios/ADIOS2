@@ -216,7 +216,6 @@ public:
     void CheckRandomAccessConflict(const std::string hint) const;
 
     Dims Shape(const size_t step = adios2::EngineCurrentStep) const;
-    Dims GetShape(const size_t step = adios2::EngineCurrentStep) const;
 
     /**
      * Get info for attributes associated with this variable. Attribute name
