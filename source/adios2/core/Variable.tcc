@@ -22,39 +22,6 @@ namespace core
 {
 
 template <class T>
-Dims Variable<T>::DoShape(const size_t step) const
-{
-    CheckRandomAccess(step, "Shape");
-
-    if (m_Engine)
-    {
-        // see if the engine implements Variable Shape inquiry
-        auto ShapePtr = m_Engine->VarShape(*this, step);
-        if (ShapePtr)
-        {
-            return *ShapePtr;
-        }
-    }
-    if (m_FirstStreamingStep && step == adios2::EngineCurrentStep)
-    {
-        return m_Shape;
-    }
-
-    if (m_Engine != nullptr && m_ShapeID == ShapeID::GlobalArray)
-    {
-        const size_t stepInput =
-            !m_FirstStreamingStep ? m_Engine->CurrentStep() : step;
-
-        const auto it = m_AvailableShapes.find(stepInput + 1);
-        if (it != m_AvailableShapes.end())
-        {
-            return it->second;
-        }
-    }
-    return m_Shape;
-}
-
-template <class T>
 Dims Variable<T>::DoCount() const
 {
     auto lf_Step = [&]() -> size_t {
@@ -240,21 +207,6 @@ Variable<T>::DoAllStepsBlocksInfo() const
     }
 
     return m_Engine->AllRelativeStepsBlocksInfo(*this);
-}
-
-template <class T>
-void Variable<T>::CheckRandomAccess(const size_t step,
-                                    const std::string hint) const
-{
-    if (!m_FirstStreamingStep && step != DefaultSizeT)
-    {
-        helper::Throw<std::invalid_argument>(
-            "Core", "Variable", "CheckRandomAccess",
-            "can't pass a step input in "
-            "streaming (BeginStep/EndStep)"
-            "mode for variable " +
-                m_Name + ", in call to Variable<T>::" + hint);
-    }
 }
 
 } // end namespace core
