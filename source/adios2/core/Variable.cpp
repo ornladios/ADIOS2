@@ -67,12 +67,6 @@ namespace core
     }                                                                          \
                                                                                \
     template <>                                                                \
-    Dims Variable<T>::Shape(const size_t step) const                           \
-    {                                                                          \
-        return DoShape(step);                                                  \
-    }                                                                          \
-                                                                               \
-    template <>                                                                \
     Dims Variable<T>::Count() const                                            \
     {                                                                          \
         return DoCount();                                                      \

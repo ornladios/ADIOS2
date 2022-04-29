@@ -215,7 +215,8 @@ public:
      */
     void CheckRandomAccessConflict(const std::string hint) const;
 
-    Dims GetShape(const size_t step = adios2::EngineCurrentStep);
+    Dims Shape(const size_t step = adios2::EngineCurrentStep) const;
+    Dims GetShape(const size_t step = adios2::EngineCurrentStep) const;
 
     /**
      * Get info for attributes associated with this variable. Attribute name
@@ -239,6 +240,8 @@ protected:
      *  SetSelection.
      * @param hint extra debugging info for the exception */
     void CheckDimensionsCommon(const std::string hint) const;
+
+    void CheckRandomAccess(const size_t step, const std::string hint) const;
 };
 
 } // end namespace core
