@@ -297,7 +297,8 @@ void SscReaderGeneric::PerformGets()
                                     m_Buffer.data<char>() + b.bufferStart,
                                     b.start, b.count, true, true,
                                     reinterpret_cast<char *>(br.data), br.start,
-                                    br.count, true, true, b.elementSize);
+                                    br.count, true, true,
+                                    static_cast<int>(b.elementSize));
                             }
                             else if (b.shapeId == ShapeID::GlobalValue ||
                                      b.shapeId == ShapeID::LocalValue)
@@ -547,7 +548,8 @@ void SscReaderGeneric::GetDeferred(VariableBase &variable, void *data)
                         helper::NdCopy(
                             m_Buffer.data<char>() + b.bufferStart, b.start,
                             b.count, true, true, reinterpret_cast<char *>(data),
-                            vStart, vCount, true, true, variable.m_ElementSize);
+                            vStart, vCount, true, true,
+                            static_cast<int>(variable.m_ElementSize));
                     }
                     else if (b.shapeId == ShapeID::GlobalValue ||
                              b.shapeId == ShapeID::LocalValue)
