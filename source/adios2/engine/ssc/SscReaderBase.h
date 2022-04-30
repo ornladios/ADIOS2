@@ -41,13 +41,12 @@ public:
     virtual void Close(const int transportIndex) = 0;
 
 #define declare_type(T)                                                        \
-    virtual void GetDeferred(Variable<T> &, T *) = 0;                          \
     virtual std::vector<typename Variable<T>::BPInfo> BlocksInfo(              \
         const Variable<T> &variable, const size_t step) const = 0;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-    virtual void GetDeferred(VariableStruct &, void *) = 0;
+    virtual void GetDeferred(VariableBase &, void *) = 0;
 
 protected:
     void SyncMpiPattern(MPI_Comm comm);

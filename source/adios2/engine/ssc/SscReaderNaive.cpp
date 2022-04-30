@@ -102,10 +102,6 @@ void SscReaderNaive::PerformGets() {}
 void SscReaderNaive::Close(const int transportIndex) {}
 
 #define declare_type(T)                                                        \
-    void SscReaderNaive::GetDeferred(Variable<T> &variable, T *data)           \
-    {                                                                          \
-        GetDeferredCommon(variable, data);                                     \
-    }                                                                          \
     std::vector<typename Variable<T>::BPInfo> SscReaderNaive::BlocksInfo(      \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
@@ -114,9 +110,27 @@ void SscReaderNaive::Close(const int transportIndex) {}
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void SscReaderNaive::GetDeferred(VariableStruct &variable, void *data)
+void SscReaderNaive::GetDeferred(VariableBase &variable, void *data)
 {
-    variable.SetData(data);
+
+    if (variable.m_Type == DataType::String)
+    {
+        auto *variableString = dynamic_cast<Variable<std::string> *>(&variable);
+        auto *dataString = reinterpret_cast<std::string *>(data);
+        for (const auto &b : m_BlockMap[variable.m_Name])
+        {
+            if (b.name == variable.m_Name)
+            {
+                *dataString = std::string(m_Buffer.data() + b.bufferStart,
+                                          m_Buffer.data() + b.bufferStart +
+                                              b.bufferCount);
+                variableString->m_Value = *dataString;
+                variableString->m_Min = *dataString;
+                variableString->m_Max = *dataString;
+            }
+        }
+        return;
+    }
 
     Dims vStart = variable.m_Start;
     Dims vCount = variable.m_Count;
