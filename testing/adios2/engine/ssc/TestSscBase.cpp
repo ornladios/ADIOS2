@@ -233,10 +233,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         }
     }
     auto attInt = io.InquireAttribute<int>("AttInt");
-    std::cout << "[Rank " + std::to_string(mpiRank) + "] Attribute received "
-              << attInt.Data()[0] << ", expected 110" << std::endl;
     ASSERT_EQ(110, attInt.Data()[0]);
-    ASSERT_NE(111, attInt.Data()[0]);
     engine.Close();
 }
 

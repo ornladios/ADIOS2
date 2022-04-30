@@ -26,7 +26,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
             const std::string &name)
 {
     size_t datasize =
-        std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1),
+        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
                         std::multiplies<size_t>());
     adios2::ADIOS adios(mpiComm);
     adios2::IO io = adios.DeclareIO("Test");
@@ -42,56 +42,75 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<double> myDoubles(datasize);
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
-    auto bpChars = io.DefineVariable<char>("bpChars", shape, start, shape);
+    auto bpChars = io.DefineVariable<char>("bpChars", shape, start, count);
     auto bpUChars =
-        io.DefineVariable<unsigned char>("bpUChars", shape, start, shape);
-    auto bpShorts = io.DefineVariable<short>("bpShorts", shape, start, shape);
+        io.DefineVariable<unsigned char>("bpUChars", shape, start, count);
+    auto bpShorts = io.DefineVariable<short>("bpShorts", shape, start, count);
     auto bpUShorts =
-        io.DefineVariable<unsigned short>("bpUShorts", shape, start, shape);
-    auto bpInts = io.DefineVariable<int>("bpInts", shape, start, shape);
+        io.DefineVariable<unsigned short>("bpUShorts", shape, start, count);
+    auto bpInts = io.DefineVariable<int>("bpInts", shape, start, count);
     auto bpUInts =
-        io.DefineVariable<unsigned int>("bpUInts", shape, start, shape);
-    auto bpFloats = io.DefineVariable<float>("bpFloats", shape, start, shape);
+        io.DefineVariable<unsigned int>("bpUInts", shape, start, count);
+    auto bpFloats = io.DefineVariable<float>("bpFloats", shape, start, count);
     auto bpDoubles =
-        io.DefineVariable<double>("bpDoubles", shape, start, shape);
+        io.DefineVariable<double>("bpDoubles", shape, start, count);
     auto bpComplexes = io.DefineVariable<std::complex<float>>(
-        "bpComplexes", shape, start, shape);
+        "bpComplexes", shape, start, count);
     auto bpDComplexes = io.DefineVariable<std::complex<double>>(
-        "bpDComplexes", shape, start, shape);
+        "bpDComplexes", shape, start, count);
     auto scalarInt = io.DefineVariable<int>("scalarInt");
     auto stringVar = io.DefineVariable<std::string>("stringVar");
+
+    auto particleDef = adios.DefineStruct("particle");
+    particleDef.AddItem("a", 0, adios2::DataType::Int8, 1);
+    particleDef.AddItem("b", 4, adios2::DataType::Int32, 4);
+    auto bpStruct =
+        io.DefineStructVariable("particles", particleDef, shape, start, count);
+    struct particle
+    {
+        int8_t a;
+        int b[4];
+    };
+    std::vector<particle> myParticles(datasize);
+    for (int i = 0; i < datasize; ++i)
+    {
+        myParticles[i].a = 5;
+        myParticles[i].b[0] = 0;
+        myParticles[i].b[1] = 10;
+        myParticles[i].b[2] = 20;
+        myParticles[i].b[3] = 30;
+    }
+
     io.DefineAttribute<int>("AttInt", 110);
     adios2::Engine engine = io.Open(name, adios2::Mode::Write);
     engine.LockWriterDefinitions();
     for (size_t i = 0; i < steps; ++i)
     {
         engine.BeginStep();
-        if (mpiRank == 0)
-        {
-            GenData(myChars, i, start, shape, shape);
-            GenData(myUChars, i, start, shape, shape);
-            GenData(myShorts, i, start, shape, shape);
-            GenData(myUShorts, i, start, shape, shape);
-            GenData(myInts, i, start, shape, shape);
-            GenData(myUInts, i, start, shape, shape);
-            GenData(myFloats, i, start, shape, shape);
-            GenData(myDoubles, i, start, shape, shape);
-            GenData(myComplexes, i, start, shape, shape);
-            GenData(myDComplexes, i, start, shape, shape);
-            engine.Put(bpChars, myChars.data(), adios2::Mode::Sync);
-            engine.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
-            engine.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
-            engine.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-            engine.Put(bpInts, myInts.data(), adios2::Mode::Sync);
-            engine.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
-            engine.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
-            engine.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-            engine.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-            engine.Put(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
-            engine.Put(scalarInt, static_cast<int>(i));
-            std::string s = "sample string sample string sample string";
-            engine.Put(stringVar, s);
-        }
+        GenData(myChars, i, start, count, shape);
+        GenData(myUChars, i, start, count, shape);
+        GenData(myShorts, i, start, count, shape);
+        GenData(myUShorts, i, start, count, shape);
+        GenData(myInts, i, start, count, shape);
+        GenData(myUInts, i, start, count, shape);
+        GenData(myFloats, i, start, count, shape);
+        GenData(myDoubles, i, start, count, shape);
+        GenData(myComplexes, i, start, count, shape);
+        GenData(myDComplexes, i, start, count, shape);
+        engine.Put(bpChars, myChars.data(), adios2::Mode::Sync);
+        engine.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
+        engine.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
+        engine.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
+        engine.Put(bpInts, myInts.data(), adios2::Mode::Sync);
+        engine.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
+        engine.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
+        engine.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
+        engine.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
+        engine.Put(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
+        engine.Put(bpStruct, myParticles.data());
+        engine.Put(scalarInt, static_cast<int>(i));
+        std::string s = "sample string sample string sample string";
+        engine.Put(stringVar, s);
         engine.EndStep();
     }
     engine.Close();
@@ -120,6 +139,12 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<double> myDoubles(datasize);
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
+    struct particle
+    {
+        int8_t a;
+        int b[4];
+    };
+    std::vector<particle> myParticles(datasize);
 
     engine.LockReaderSelections();
 
@@ -211,7 +236,6 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                        mpiRank);
             VerifyData(myDComplexes.data(), currentStep, start, count, shape,
                        mpiRank);
-
             std::string s;
             engine.Get(stringVar, s);
             engine.PerformGets();
@@ -224,6 +248,20 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             int i;
             engine.Get(scalarInt, &i);
             engine.PerformGets();
+
+            auto bpStruct = io.InquireVariable("particles");
+            bpStruct.SetSelection({start, count});
+            ASSERT_TRUE(bpStruct);
+            engine.Get(bpStruct, myParticles.data(), adios2::Mode::Sync);
+            for (int i = 0; i < datasize; ++i)
+            {
+                ASSERT_EQ(myParticles[i].a, 5);
+                ASSERT_EQ(myParticles[i].b[0], 0);
+                ASSERT_EQ(myParticles[i].b[1], 10);
+                ASSERT_EQ(myParticles[i].b[2], 20);
+                ASSERT_EQ(myParticles[i].b[3], 30);
+            }
+
             ASSERT_EQ(i, currentStep);
             engine.EndStep();
         }
@@ -240,10 +278,10 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     engine.Close();
 }
 
-TEST_F(SscEngineTest, TestSscZeroBlock)
+TEST_F(SscEngineTest, TestSscStruct)
 {
     {
-        std::string filename = "TestSscZeroBlock";
+        std::string filename = "TestSscStruct";
         adios2::Params engineParams = {{"Verbose", "0"}};
         int worldRank, worldSize;
         MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
@@ -268,7 +306,7 @@ TEST_F(SscEngineTest, TestSscZeroBlock)
         MPI_Barrier(MPI_COMM_WORLD);
     }
     {
-        std::string filename = "TestSscZeroBlock";
+        std::string filename = "TestSscStructNaive";
         adios2::Params engineParams = {{"Verbose", "0"},
                                        {"EngineMode", "naive"}};
         int worldRank, worldSize;
