@@ -72,7 +72,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         int b[4];
     };
     std::vector<particle> myParticles(datasize);
-    for (int i = 0; i < datasize; ++i)
+    for (size_t i = 0; i < datasize; ++i)
     {
         myParticles[i].a = 5;
         myParticles[i].b[0] = 0;
@@ -253,7 +253,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             bpStruct.SetSelection({start, count});
             ASSERT_TRUE(bpStruct);
             engine.Get(bpStruct, myParticles.data(), adios2::Mode::Sync);
-            for (int i = 0; i < datasize; ++i)
+            for (size_t i = 0; i < datasize; ++i)
             {
                 ASSERT_EQ(myParticles[i].a, 5);
                 ASSERT_EQ(myParticles[i].b[0], 0);
