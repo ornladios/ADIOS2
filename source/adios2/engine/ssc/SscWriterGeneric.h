@@ -39,11 +39,7 @@ public:
     void EndStep(const bool writerLocked) final;
     void Close(const int transportIndex) final;
 
-#define declare_type(T) void PutDeferred(Variable<T> &, const T *) final;
-    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-
-    void PutDeferred(VariableStruct &, const void *) final;
+    void PutDeferred(VariableBase &, const void *) final;
 
 private:
     MPI_Win m_MpiWin;
