@@ -264,49 +264,49 @@ void SscReaderGeneric::PerformGets()
                 {
                     if (b.name == br.name)
                     {
-                        if (b.type == DataType::String)
-                        {
-                            *reinterpret_cast<std::string *>(br.data) =
-                                std::string(b.value.begin(), b.value.end());
-                        }
-#define declare_type(T)                                                        \
-    else if (b.type == helper::GetDataType<T>())                               \
-    {                                                                          \
-        if (b.shapeId == ShapeID::GlobalArray ||                               \
-            b.shapeId == ShapeID::LocalArray)                                  \
-        {                                                                      \
-            bool empty = false;                                                \
-            for (const auto c : b.count)                                       \
-            {                                                                  \
-                if (c == 0)                                                    \
-                {                                                              \
-                    empty = true;                                              \
-                }                                                              \
-            }                                                                  \
-            if (empty)                                                         \
-            {                                                                  \
-                continue;                                                      \
-            }                                                                  \
-            helper::NdCopy(m_Buffer.data<char>() + b.bufferStart, b.start,     \
-                           b.count, true, true,                                \
-                           reinterpret_cast<char *>(br.data), br.start,        \
-                           br.count, true, true, sizeof(T));                   \
-        }                                                                      \
-        else if (b.shapeId == ShapeID::GlobalValue ||                          \
-                 b.shapeId == ShapeID::LocalValue)                             \
-        {                                                                      \
-            std::memcpy(br.data, m_Buffer.data() + b.bufferStart,              \
-                        b.bufferCount);                                        \
-        }                                                                      \
-    }
-                        ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-                        else
+                        if (b.type == DataType::None)
                         {
                             helper::Log("Engine", "SscReader", "PerformGets",
                                         "unknown data type", m_ReaderRank,
                                         m_ReaderRank, 0, m_Verbosity,
                                         helper::FATALERROR);
+                        }
+                        else if (b.type == DataType::String)
+                        {
+                            *reinterpret_cast<std::string *>(br.data) =
+                                std::string(b.value.begin(), b.value.end());
+                        }
+                        else
+                        {
+                            if (b.shapeId == ShapeID::GlobalArray ||
+                                b.shapeId == ShapeID::LocalArray)
+                            {
+                                bool empty = false;
+                                for (const auto c : b.count)
+                                {
+                                    if (c == 0)
+                                    {
+                                        empty = true;
+                                    }
+                                }
+                                if (empty)
+                                {
+                                    continue;
+                                }
+                                helper::NdCopy(
+                                    m_Buffer.data<char>() + b.bufferStart,
+                                    b.start, b.count, true, true,
+                                    reinterpret_cast<char *>(br.data), br.start,
+                                    br.count, true, true,
+                                    static_cast<int>(b.elementSize));
+                            }
+                            else if (b.shapeId == ShapeID::GlobalValue ||
+                                     b.shapeId == ShapeID::LocalValue)
+                            {
+                                std::memcpy(br.data,
+                                            m_Buffer.data() + b.bufferStart,
+                                            b.bufferCount);
+                            }
                         }
                     }
                 }
@@ -426,10 +426,6 @@ void SscReaderGeneric::Close(const int transportIndex)
 }
 
 #define declare_type(T)                                                        \
-    void SscReaderGeneric::GetDeferred(Variable<T> &variable, T *data)         \
-    {                                                                          \
-        GetDeferredCommon(variable, data);                                     \
-    }                                                                          \
     std::vector<typename Variable<T>::BPInfo> SscReaderGeneric::BlocksInfo(    \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
@@ -438,7 +434,141 @@ void SscReaderGeneric::Close(const int transportIndex)
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void SscReaderGeneric::GetDeferred(VariableStruct &variable, void *data) {}
+void SscReaderGeneric::GetDeferredDeltaCommon(VariableBase &variable,
+                                              void *data)
+{
+
+    Dims vStart = variable.m_Start;
+    Dims vCount = variable.m_Count;
+    Dims vShape = variable.m_Shape;
+
+    if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
+    {
+        std::reverse(vStart.begin(), vStart.end());
+        std::reverse(vCount.begin(), vCount.end());
+        std::reverse(vShape.begin(), vShape.end());
+    }
+
+    m_LocalReadPattern.emplace_back();
+    auto &b = m_LocalReadPattern.back();
+    b.name = variable.m_Name;
+    b.type = variable.m_Type;
+    b.elementSize = variable.m_ElementSize;
+    b.shapeId = variable.m_ShapeID;
+    b.start = vStart;
+    b.count = vCount;
+    b.shape = vShape;
+    b.bufferStart = 0;
+    b.bufferCount = 0;
+    b.data = data;
+    b.performed = false;
+
+    for (const auto &d : b.count)
+    {
+        if (d == 0)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Engine", "SscReader", "GetDeferredDeltaCommon",
+                "SetSelection count dimensions cannot be 0");
+        }
+    }
+}
+
+void SscReaderGeneric::GetDeferred(VariableBase &variable, void *data)
+{
+
+    if (variable.m_Type == DataType::String)
+    {
+        auto *dataString = reinterpret_cast<std::string *>(data);
+        if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
+            m_ReaderSelectionsLocked == false)
+        {
+            GetDeferredDeltaCommon(variable, data);
+        }
+        else
+        {
+            for (const auto &i : m_AllReceivingWriterRanks)
+            {
+                const auto &v = m_GlobalWritePattern[i.first];
+                for (const auto &b : v)
+                {
+                    if (b.name == variable.m_Name)
+                    {
+                        *dataString =
+                            std::string(b.value.begin(), b.value.end());
+                    }
+                }
+            }
+        }
+        return;
+    }
+
+    Dims vStart = variable.m_Start;
+    Dims vCount = variable.m_Count;
+    Dims vShape = variable.m_Shape;
+
+    if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
+    {
+        std::reverse(vStart.begin(), vStart.end());
+        std::reverse(vCount.begin(), vCount.end());
+        std::reverse(vShape.begin(), vShape.end());
+    }
+
+    if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
+        m_ReaderSelectionsLocked == false)
+    {
+        GetDeferredDeltaCommon(variable, data);
+    }
+    else
+    {
+
+        for (const auto &i : m_AllReceivingWriterRanks)
+        {
+            const auto &v = m_GlobalWritePattern[i.first];
+            for (const auto &b : v)
+            {
+                if (b.name == variable.m_Name)
+                {
+                    bool empty = false;
+                    for (const auto c : b.count)
+                    {
+                        if (c == 0)
+                        {
+                            empty = true;
+                        }
+                    }
+                    if (empty)
+                    {
+                        continue;
+                    }
+
+                    if (b.shapeId == ShapeID::GlobalArray ||
+                        b.shapeId == ShapeID::LocalArray)
+                    {
+                        helper::NdCopy(
+                            m_Buffer.data<char>() + b.bufferStart, b.start,
+                            b.count, true, true, reinterpret_cast<char *>(data),
+                            vStart, vCount, true, true,
+                            static_cast<int>(variable.m_ElementSize));
+                    }
+                    else if (b.shapeId == ShapeID::GlobalValue ||
+                             b.shapeId == ShapeID::LocalValue)
+                    {
+                        std::memcpy(data, m_Buffer.data() + b.bufferStart,
+                                    b.bufferCount);
+                    }
+                    else
+                    {
+                        helper::Log("Engine", "SscReader", "GetDeferredCommon",
+                                    "unknown ShapeID", m_ReaderRank,
+                                    m_ReaderRank, 0, m_Verbosity,
+                                    helper::LogMode::FATALERROR);
+                    }
+                }
+            }
+        }
+    }
+}
 
 }
 }
