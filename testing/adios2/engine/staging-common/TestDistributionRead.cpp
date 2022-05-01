@@ -19,6 +19,12 @@
 
 #include "ParseArgs.h"
 
+using Clock = std::chrono::steady_clock;
+using std::chrono::time_point;
+using std::chrono::duration_cast;
+using std::chrono::milliseconds;
+using std::this_thread::sleep_for;
+
 class CommonReadTest : public ::testing::Test
 {
 public:
@@ -60,7 +66,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     adios2::Engine engine1 = io1.Open(fname, adios2::Mode::Read);
 
-    std::vector<std::time_t> write_times;
+    time_point<Clock> startTime = Clock::now();
 
     std::string varname1 = "r64";
 
@@ -70,6 +76,13 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     {
         size_t writerSize;
         size_t step;
+        if (OnDemand && (total_steps > 0))
+        {
+            time_point<Clock> end = Clock::now();
+            milliseconds diff = duration_cast<milliseconds>(end - startTime);
+            std::cout << "Reader " << first_step << "Got an step at time "
+                      << diff.count() << "ms" << std::endl;
+        }
         auto var1 = io1.InquireVariable<double>(varname1);
 
         EXPECT_TRUE(var1);
@@ -126,35 +139,54 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             {
             case 0:
             {
-                int StepDelay[] = {1, 3, 5, 0, 0, 20};
+                double StepDelay[] = {1, 3, 5, 0, 0, 20};
                 int ExpectedStep[] = {0, 4, 7, 10, 12, 15};
                 EXPECT_EQ(ExpectedStep[total_steps], step);
                 std::cout << "Reader " << first_step << " Sleeping for "
                           << StepDelay[total_steps] << std::endl;
-                std::this_thread::sleep_for(
-                    std::chrono::seconds(StepDelay[total_steps]));
+                std::this_thread::sleep_for(std::chrono::milliseconds(
+                    (long)(StepDelay[total_steps] * 1000.0)));
+                time_point<Clock> end = Clock::now();
+                milliseconds diff =
+                    duration_cast<milliseconds>(end - startTime);
+                std::cout << "Reader " << first_step
+                          << "Doing begin step at time " << diff.count() << "ms"
+                          << std::endl;
+
                 break;
             }
             case 1:
             {
-                int StepDelay[] = {0, 0, 1, 5, 0, 0, 1, 10};
+                double StepDelay[] = {0, 0, 1.5, 5, 0, 0, 1, 10};
                 int ExpectedStep[] = {1, 3, 5, 8, 11, 14, 17, 19};
                 EXPECT_EQ(ExpectedStep[total_steps], step);
                 std::cout << "Reader " << first_step << " Sleeping for "
                           << StepDelay[total_steps] << std::endl;
-                std::this_thread::sleep_for(
-                    std::chrono::seconds(StepDelay[total_steps]));
+                std::this_thread::sleep_for(std::chrono::milliseconds(
+                    (long)(StepDelay[total_steps] * 1000.0)));
+                time_point<Clock> end = Clock::now();
+                milliseconds diff =
+                    duration_cast<milliseconds>(end - startTime);
+                std::cout << "Reader " << first_step
+                          << "Doing begin step at time " << diff.count() << "ms"
+                          << std::endl;
                 break;
             }
             case 2:
             {
-                int StepDelay[] = {3, 2, 4, 0, 0, 0, 0};
+                double StepDelay[] = {3, 2, 4, 0, 0, 0, 0};
                 int ExpectedStep[] = {2, 6, 9, 13, 16, 18};
                 EXPECT_EQ(ExpectedStep[total_steps], step);
                 std::cout << "Reader " << first_step << " Sleeping for "
                           << StepDelay[total_steps] << std::endl;
-                std::this_thread::sleep_for(
-                    std::chrono::seconds(StepDelay[total_steps]));
+                std::this_thread::sleep_for(std::chrono::milliseconds(
+                    (long)(StepDelay[total_steps] * 1000.0)));
+                time_point<Clock> end = Clock::now();
+                milliseconds diff =
+                    duration_cast<milliseconds>(end - startTime);
+                std::cout << "Reader " << first_step
+                          << "Doing begin step at time " << diff.count() << "ms"
+                          << std::endl;
                 break;
             }
             }
