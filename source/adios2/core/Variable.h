@@ -105,8 +105,6 @@ public:
 
     T *GetData() const noexcept;
 
-    size_t SubStreamsInfoSize();
-
     Dims Count() const;
 
     size_t SelectionSize() const;
