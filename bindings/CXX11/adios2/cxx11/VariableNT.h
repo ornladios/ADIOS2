@@ -214,6 +214,31 @@ public:
     DataType StructItemType(const size_t index) const;
     size_t StructItemSize(const size_t index) const;
 
+    union T
+    {
+        int8_t Int8;
+        uint8_t UInt8;
+        int16_t Int16;
+        uint16_t UInt16;
+        int32_t Int32;
+        uint32_t UInt32;
+        int64_t Int64;
+        uint64_t UInt64;
+        float Float;
+        double Double;
+        std::complex<float> Complex;
+        std::complex<double> DComplex;
+    };
+
+    T Min(const size_t step = adios2::DefaultSizeT) const;
+    T Max(const size_t step = adios2::DefaultSizeT) const;
+    std::pair<T, T> MinMax(const size_t step = adios2::DefaultSizeT) const;
+
+    double MinDouble(const size_t step = adios2::DefaultSizeT) const;
+    double MaxDouble(const size_t step = adios2::DefaultSizeT) const;
+    std::pair<double, double>
+    MinMaxDouble(const size_t step = adios2::DefaultSizeT) const;
+
 private:
     friend class IO;
     friend class Engine;
