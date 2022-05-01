@@ -17,10 +17,7 @@ namespace adios2
 namespace core
 {
 
-StructDefinition::StructDefinition(const size_t structSize)
-: m_StructSize(structSize)
-{
-}
+void StructDefinition::SetStructSize(const size_t size) { m_StructSize = size; }
 
 void StructDefinition::AddItem(const std::string &name, const size_t offset,
                                const DataType type, const size_t size)

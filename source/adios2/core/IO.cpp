@@ -964,6 +964,25 @@ VariableStruct *IO::InquireStructVariable(const std::string &name,
     return ret;
 }
 
+StructDefinition &IO::DefineStruct(const std::string &name)
+{
+    m_StructDefinitions[name] = StructDefinition();
+    return m_StructDefinitions[name];
+}
+
+StructDefinition *IO::InquireStruct(const std::string &name)
+{
+    auto it = m_StructDefinitions.find(name);
+    if (it == m_StructDefinitions.end())
+    {
+        return nullptr;
+    }
+    else
+    {
+        return &it->second;
+    }
+}
+
 // Explicitly instantiate the necessary public template implementations
 #define define_template_instantiation(T)                                       \
     template Variable<T> &IO::DefineVariable<T>(const std::string &,           \
