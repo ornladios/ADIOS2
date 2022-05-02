@@ -38,14 +38,14 @@ int main(int argc, char *argv[])
 
     // initialize adios2
     adios2::ADIOS adios(MPI_COMM_WORLD);
-    adios2::IO dataManIO = adios.DeclareIO("whatever");
-    dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters(
+    adios2::IO io = adios.DeclareIO("whatever");
+    io.SetEngine("DataMan");
+    io.SetParameters(
         {{"IPAddress", "127.0.0.1"}, {"Port", "12306"}, {"Timeout", "5"}});
 
     // open stream
-    adios2::Engine dataManReader =
-        dataManIO.Open("HelloDataMan", adios2::Mode::Read);
+    adios2::Engine engine =
+        io.Open("HelloDataMan", adios2::Mode::Read);
 
     // define variable
     adios2::Variable<float> floatArrayVar;
@@ -54,18 +54,18 @@ int main(int argc, char *argv[])
     std::vector<float> floatVector;
     while (true)
     {
-        auto status = dataManReader.BeginStep();
+        auto status = engine.BeginStep();
         if (status == adios2::StepStatus::OK)
         {
-            floatArrayVar = dataManIO.InquireVariable<float>("FloatArray");
+            floatArrayVar = io.InquireVariable<float>("FloatArray");
             auto shape = floatArrayVar.Shape();
             size_t datasize = std::accumulate(shape.begin(), shape.end(), 1,
                                               std::multiplies<size_t>());
             floatVector.resize(datasize);
-            dataManReader.Get<float>(floatArrayVar, floatVector.data(),
+            engine.Get<float>(floatArrayVar, floatVector.data(),
                                      adios2::Mode::Sync);
-            dataManReader.EndStep();
-            PrintData(floatVector, dataManReader.CurrentStep());
+            engine.EndStep();
+            PrintData(floatVector, engine.CurrentStep());
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     }
 
     // clean up
-    dataManReader.Close();
+    engine.Close();
     MPI_Finalize();
 
     return 0;

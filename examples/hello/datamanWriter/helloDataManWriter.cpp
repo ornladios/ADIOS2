@@ -62,33 +62,33 @@ int main(int argc, char *argv[])
 
     // initialize adios2
     adios2::ADIOS adios(MPI_COMM_WORLD);
-    adios2::IO dataManIO = adios.DeclareIO("whatever");
-    dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters({{"IPAddress", "127.0.0.1"},
+    adios2::IO io = adios.DeclareIO("whatever");
+    io.SetEngine("DataMan");
+    io.SetParameters({{"IPAddress", "127.0.0.1"},
                              {"Port", "12306"},
                              {"Timeout", "5"},
                              {"RendezvousReaderCount", "1"}});
 
     // open stream
-    adios2::Engine dataManWriter =
-        dataManIO.Open("HelloDataMan", adios2::Mode::Write);
+    adios2::Engine engine =
+        io.Open("HelloDataMan", adios2::Mode::Write);
 
     // define variable
     auto floatArrayVar =
-        dataManIO.DefineVariable<float>("FloatArray", shape, start, count);
+        io.DefineVariable<float>("FloatArray", shape, start, count);
 
     // write data
     for (size_t i = 0; i < steps; ++i)
     {
         auto floatVector = GenerateData<float>(i);
-        dataManWriter.BeginStep();
-        dataManWriter.Put(floatArrayVar, floatVector.data(),
+        engine.BeginStep();
+        engine.Put(floatArrayVar, floatVector.data(),
                           adios2::Mode::Sync);
-        PrintData(floatVector, dataManWriter.CurrentStep());
-        dataManWriter.EndStep();
+        PrintData(floatVector, engine.CurrentStep());
+        engine.EndStep();
     }
 
-    dataManWriter.Close();
+    engine.Close();
     MPI_Finalize();
 
     return 0;

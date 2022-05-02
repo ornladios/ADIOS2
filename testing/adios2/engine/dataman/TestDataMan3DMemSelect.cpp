@@ -95,19 +95,18 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
                                const adios2::Params &engineParams)
 {
     adios2::ADIOS adios;
-    adios2::IO dataManIO = adios.DeclareIO("WAN");
-    dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters(engineParams);
-    auto bpInts = dataManIO.DefineVariable<int>("bpInts", shape, start, count);
-    adios2::Engine dataManWriter =
-        dataManIO.Open("stream", adios2::Mode::Write);
+    adios2::IO io = adios.DeclareIO("WAN");
+    io.SetEngine("DataMan");
+    io.SetParameters(engineParams);
+    auto varInts = io.DefineVariable<int>("varInts", shape, start, count);
+    adios2::Engine engine = io.Open("stream", adios2::Mode::Write);
     for (size_t i = 0; i < steps; ++i)
     {
-        dataManWriter.BeginStep();
-        dataManWriter.Put(bpInts, writer_data.data(), adios2::Mode::Sync);
-        dataManWriter.EndStep();
+        engine.BeginStep();
+        engine.Put(varInts, writer_data.data(), adios2::Mode::Sync);
+        engine.EndStep();
     }
-    dataManWriter.Close();
+    engine.Close();
 }
 
 void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
@@ -116,26 +115,25 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                                const adios2::Params &engineParams)
 {
     adios2::ADIOS adios;
-    adios2::IO dataManIO = adios.DeclareIO("WAN");
-    dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters(engineParams);
-    adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
+    adios2::IO io = adios.DeclareIO("WAN");
+    io.SetEngine("DataMan");
+    io.SetParameters(engineParams);
+    adios2::Engine engine = io.Open("stream", adios2::Mode::Read);
     std::vector<int> myInts = reader_data;
     while (true)
     {
-        adios2::StepStatus status = dataManReader.BeginStep(StepMode::Read, 5);
+        adios2::StepStatus status = engine.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
         {
-            const auto &vars = dataManIO.AvailableVariables();
+            const auto &vars = io.AvailableVariables();
             ASSERT_EQ(vars.size(), 1);
-            size_t currentStep = dataManReader.CurrentStep();
-            adios2::Variable<int> bpInts =
-                dataManIO.InquireVariable<int>("bpInts");
-            bpInts.SetSelection({start, count});
-            bpInts.SetMemorySelection({memStart, memCount});
-            dataManReader.Get(bpInts, myInts.data(), adios2::Mode::Sync);
+            size_t currentStep = engine.CurrentStep();
+            adios2::Variable<int> varInts = io.InquireVariable<int>("varInts");
+            varInts.SetSelection({start, count});
+            varInts.SetMemorySelection({memStart, memCount});
+            engine.Get(varInts, myInts.data(), adios2::Mode::Sync);
             VerifyData(myInts.data(), currentStep, memStart, memCount, shape);
-            dataManReader.EndStep();
+            engine.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
@@ -146,7 +144,7 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
             continue;
         }
     }
-    dataManReader.Close();
+    engine.Close();
     print_lines = 0;
 }
 

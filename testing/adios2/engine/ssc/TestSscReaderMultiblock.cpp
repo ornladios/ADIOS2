@@ -29,9 +29,9 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
                         std::multiplies<size_t>());
     adios2::ADIOS adios(mpiComm);
-    adios2::IO dataManIO = adios.DeclareIO("WAN");
-    dataManIO.SetEngine("ssc");
-    dataManIO.SetParameters(engineParams);
+    adios2::IO io = adios.DeclareIO("WAN");
+    io.SetEngine("ssc");
+    io.SetParameters(engineParams);
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -42,28 +42,25 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<double> myDoubles(datasize);
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
-    auto bpChars =
-        dataManIO.DefineVariable<char>("bpChars", shape, start, count);
-    auto bpUChars = dataManIO.DefineVariable<unsigned char>("bpUChars", shape,
-                                                            start, count);
-    auto bpShorts =
-        dataManIO.DefineVariable<short>("bpShorts", shape, start, count);
-    auto bpUShorts = dataManIO.DefineVariable<unsigned short>(
-        "bpUShorts", shape, start, count);
-    auto bpInts = dataManIO.DefineVariable<int>("bpInts", shape, start, count);
-    auto bpUInts =
-        dataManIO.DefineVariable<unsigned int>("bpUInts", shape, start, count);
-    auto bpFloats =
-        dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
-    auto bpDoubles =
-        dataManIO.DefineVariable<double>("bpDoubles", shape, start, count);
-    auto bpComplexes = dataManIO.DefineVariable<std::complex<float>>(
-        "bpComplexes", shape, start, count);
-    auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
-        "bpDComplexes", shape, start, count);
-    auto scalarInt = dataManIO.DefineVariable<int>("scalarInt");
-    dataManIO.DefineAttribute<int>("AttInt", 110);
-    adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Write);
+    auto varChars = io.DefineVariable<char>("varChars", shape, start, count);
+    auto varUChars =
+        io.DefineVariable<unsigned char>("varUChars", shape, start, count);
+    auto varShorts = io.DefineVariable<short>("varShorts", shape, start, count);
+    auto varUShorts =
+        io.DefineVariable<unsigned short>("varUShorts", shape, start, count);
+    auto varInts = io.DefineVariable<int>("varInts", shape, start, count);
+    auto varUInts =
+        io.DefineVariable<unsigned int>("varUInts", shape, start, count);
+    auto varFloats = io.DefineVariable<float>("varFloats", shape, start, count);
+    auto varDoubles =
+        io.DefineVariable<double>("varDoubles", shape, start, count);
+    auto varComplexes = io.DefineVariable<std::complex<float>>(
+        "varComplexes", shape, start, count);
+    auto varDComplexes = io.DefineVariable<std::complex<double>>(
+        "varDComplexes", shape, start, count);
+    auto varIntScalar = io.DefineVariable<int>("varIntScalar");
+    io.DefineAttribute<int>("AttInt", 110);
+    adios2::Engine engine = io.Open(name, adios2::Mode::Write);
     engine.LockWriterDefinitions();
     for (size_t i = 0; i < steps; ++i)
     {
@@ -82,28 +79,28 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         GenData(myComplexes, i, startTmp, count, shape);
         GenData(myDComplexes, i, startTmp, count, shape);
 
-        bpChars.SetSelection({startTmp, count});
-        bpUChars.SetSelection({startTmp, count});
-        bpShorts.SetSelection({startTmp, count});
-        bpUShorts.SetSelection({startTmp, count});
-        bpInts.SetSelection({startTmp, count});
-        bpUInts.SetSelection({startTmp, count});
-        bpFloats.SetSelection({startTmp, count});
-        bpDoubles.SetSelection({startTmp, count});
-        bpComplexes.SetSelection({startTmp, count});
-        bpDComplexes.SetSelection({startTmp, count});
+        varChars.SetSelection({startTmp, count});
+        varUChars.SetSelection({startTmp, count});
+        varShorts.SetSelection({startTmp, count});
+        varUShorts.SetSelection({startTmp, count});
+        varInts.SetSelection({startTmp, count});
+        varUInts.SetSelection({startTmp, count});
+        varFloats.SetSelection({startTmp, count});
+        varDoubles.SetSelection({startTmp, count});
+        varComplexes.SetSelection({startTmp, count});
+        varDComplexes.SetSelection({startTmp, count});
 
-        engine.Put(bpChars, myChars.data(), adios2::Mode::Sync);
-        engine.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
-        engine.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
-        engine.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-        engine.Put(bpInts, myInts.data(), adios2::Mode::Sync);
-        engine.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
-        engine.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
-        engine.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-        engine.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-        engine.Put(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
-        engine.Put(scalarInt, static_cast<int>(i));
+        engine.Put(varChars, myChars.data(), adios2::Mode::Sync);
+        engine.Put(varUChars, myUChars.data(), adios2::Mode::Sync);
+        engine.Put(varShorts, myShorts.data(), adios2::Mode::Sync);
+        engine.Put(varUShorts, myUShorts.data(), adios2::Mode::Sync);
+        engine.Put(varInts, myInts.data(), adios2::Mode::Sync);
+        engine.Put(varUInts, myUInts.data(), adios2::Mode::Sync);
+        engine.Put(varFloats, myFloats.data(), adios2::Mode::Sync);
+        engine.Put(varDoubles, myDoubles.data(), adios2::Mode::Sync);
+        engine.Put(varComplexes, myComplexes.data(), adios2::Mode::Sync);
+        engine.Put(varDComplexes, myDComplexes.data(), adios2::Mode::Sync);
+        engine.Put(varIntScalar, static_cast<int>(i));
 
         startTmp = {(size_t)mpiRank * 2 + 1, 0};
 
@@ -118,28 +115,28 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         GenData(myComplexes, i, startTmp, count, shape);
         GenData(myDComplexes, i, startTmp, count, shape);
 
-        bpChars.SetSelection({startTmp, count});
-        bpUChars.SetSelection({startTmp, count});
-        bpShorts.SetSelection({startTmp, count});
-        bpUShorts.SetSelection({startTmp, count});
-        bpInts.SetSelection({startTmp, count});
-        bpUInts.SetSelection({startTmp, count});
-        bpFloats.SetSelection({startTmp, count});
-        bpDoubles.SetSelection({startTmp, count});
-        bpComplexes.SetSelection({startTmp, count});
-        bpDComplexes.SetSelection({startTmp, count});
+        varChars.SetSelection({startTmp, count});
+        varUChars.SetSelection({startTmp, count});
+        varShorts.SetSelection({startTmp, count});
+        varUShorts.SetSelection({startTmp, count});
+        varInts.SetSelection({startTmp, count});
+        varUInts.SetSelection({startTmp, count});
+        varFloats.SetSelection({startTmp, count});
+        varDoubles.SetSelection({startTmp, count});
+        varComplexes.SetSelection({startTmp, count});
+        varDComplexes.SetSelection({startTmp, count});
 
-        engine.Put(bpChars, myChars.data(), adios2::Mode::Sync);
-        engine.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
-        engine.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
-        engine.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-        engine.Put(bpInts, myInts.data(), adios2::Mode::Sync);
-        engine.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
-        engine.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
-        engine.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-        engine.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-        engine.Put(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
-        engine.Put(scalarInt, static_cast<int>(i));
+        engine.Put(varChars, myChars.data(), adios2::Mode::Sync);
+        engine.Put(varUChars, myUChars.data(), adios2::Mode::Sync);
+        engine.Put(varShorts, myShorts.data(), adios2::Mode::Sync);
+        engine.Put(varUShorts, myUShorts.data(), adios2::Mode::Sync);
+        engine.Put(varInts, myInts.data(), adios2::Mode::Sync);
+        engine.Put(varUInts, myUInts.data(), adios2::Mode::Sync);
+        engine.Put(varFloats, myFloats.data(), adios2::Mode::Sync);
+        engine.Put(varDoubles, myDoubles.data(), adios2::Mode::Sync);
+        engine.Put(varComplexes, myComplexes.data(), adios2::Mode::Sync);
+        engine.Put(varDComplexes, myDComplexes.data(), adios2::Mode::Sync);
+        engine.Put(varIntScalar, static_cast<int>(i));
 
         engine.EndStep();
     }
@@ -151,10 +148,10 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             const std::string &name)
 {
     adios2::ADIOS adios(mpiComm);
-    adios2::IO dataManIO = adios.DeclareIO("Test");
-    dataManIO.SetEngine("ssc");
-    dataManIO.SetParameters(engineParams);
-    adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Read);
+    adios2::IO io = adios.DeclareIO("Test");
+    io.SetEngine("ssc");
+    io.SetParameters(engineParams);
+    adios2::Engine engine = io.Open(name, adios2::Mode::Read);
     engine.LockReaderSelections();
 
     size_t datasize =
@@ -176,59 +173,58 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         adios2::StepStatus status = engine.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
         {
-            const auto &vars = dataManIO.AvailableVariables();
+            const auto &vars = io.AvailableVariables();
             ASSERT_EQ(vars.size(), 11);
             size_t currentStep = engine.CurrentStep();
-            adios2::Variable<char> bpChars =
-                dataManIO.InquireVariable<char>("bpChars");
-            adios2::Variable<unsigned char> bpUChars =
-                dataManIO.InquireVariable<unsigned char>("bpUChars");
-            adios2::Variable<short> bpShorts =
-                dataManIO.InquireVariable<short>("bpShorts");
-            adios2::Variable<unsigned short> bpUShorts =
-                dataManIO.InquireVariable<unsigned short>("bpUShorts");
-            adios2::Variable<int> bpInts =
-                dataManIO.InquireVariable<int>("bpInts");
-            adios2::Variable<unsigned int> bpUInts =
-                dataManIO.InquireVariable<unsigned int>("bpUInts");
-            adios2::Variable<float> bpFloats =
-                dataManIO.InquireVariable<float>("bpFloats");
-            adios2::Variable<double> bpDoubles =
-                dataManIO.InquireVariable<double>("bpDoubles");
-            adios2::Variable<std::complex<float>> bpComplexes =
-                dataManIO.InquireVariable<std::complex<float>>("bpComplexes");
-            adios2::Variable<std::complex<double>> bpDComplexes =
-                dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
-            auto scalarInt = dataManIO.InquireVariable<int>("scalarInt");
+            adios2::Variable<char> varChars =
+                io.InquireVariable<char>("varChars");
+            adios2::Variable<unsigned char> varUChars =
+                io.InquireVariable<unsigned char>("varUChars");
+            adios2::Variable<short> varShorts =
+                io.InquireVariable<short>("varShorts");
+            adios2::Variable<unsigned short> varUShorts =
+                io.InquireVariable<unsigned short>("varUShorts");
+            adios2::Variable<int> varInts = io.InquireVariable<int>("varInts");
+            adios2::Variable<unsigned int> varUInts =
+                io.InquireVariable<unsigned int>("varUInts");
+            adios2::Variable<float> varFloats =
+                io.InquireVariable<float>("varFloats");
+            adios2::Variable<double> varDoubles =
+                io.InquireVariable<double>("varDoubles");
+            adios2::Variable<std::complex<float>> varComplexes =
+                io.InquireVariable<std::complex<float>>("varComplexes");
+            adios2::Variable<std::complex<double>> varDComplexes =
+                io.InquireVariable<std::complex<double>>("varDComplexes");
+            auto varIntScalar = io.InquireVariable<int>("varIntScalar");
 
             int i;
-            engine.Get(scalarInt, &i, adios2::Mode::Sync);
+            engine.Get(varIntScalar, &i, adios2::Mode::Sync);
             ASSERT_EQ(i, currentStep);
 
             adios2::Dims startTmp = start;
             adios2::Dims countTmp = count;
             startTmp[0] = mpiRank * 2;
             countTmp[0] = 1;
-            bpChars.SetSelection({startTmp, countTmp});
-            bpUChars.SetSelection({startTmp, countTmp});
-            bpShorts.SetSelection({startTmp, countTmp});
-            bpUShorts.SetSelection({startTmp, countTmp});
-            bpInts.SetSelection({startTmp, countTmp});
-            bpUInts.SetSelection({startTmp, countTmp});
-            bpFloats.SetSelection({startTmp, countTmp});
-            bpDoubles.SetSelection({startTmp, countTmp});
-            bpComplexes.SetSelection({startTmp, countTmp});
-            bpDComplexes.SetSelection({startTmp, countTmp});
-            engine.Get(bpChars, myChars.data(), adios2::Mode::Sync);
-            engine.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
-            engine.Get(bpShorts, myShorts.data(), adios2::Mode::Sync);
-            engine.Get(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-            engine.Get(bpInts, myInts.data(), adios2::Mode::Sync);
-            engine.Get(bpUInts, myUInts.data(), adios2::Mode::Sync);
-            engine.Get(bpFloats, myFloats.data(), adios2::Mode::Sync);
-            engine.Get(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-            engine.Get(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-            engine.Get(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
+            varChars.SetSelection({startTmp, countTmp});
+            varUChars.SetSelection({startTmp, countTmp});
+            varShorts.SetSelection({startTmp, countTmp});
+            varUShorts.SetSelection({startTmp, countTmp});
+            varInts.SetSelection({startTmp, countTmp});
+            varUInts.SetSelection({startTmp, countTmp});
+            varFloats.SetSelection({startTmp, countTmp});
+            varDoubles.SetSelection({startTmp, countTmp});
+            varComplexes.SetSelection({startTmp, countTmp});
+            varDComplexes.SetSelection({startTmp, countTmp});
+            engine.Get(varChars, myChars.data(), adios2::Mode::Sync);
+            engine.Get(varUChars, myUChars.data(), adios2::Mode::Sync);
+            engine.Get(varShorts, myShorts.data(), adios2::Mode::Sync);
+            engine.Get(varUShorts, myUShorts.data(), adios2::Mode::Sync);
+            engine.Get(varInts, myInts.data(), adios2::Mode::Sync);
+            engine.Get(varUInts, myUInts.data(), adios2::Mode::Sync);
+            engine.Get(varFloats, myFloats.data(), adios2::Mode::Sync);
+            engine.Get(varDoubles, myDoubles.data(), adios2::Mode::Sync);
+            engine.Get(varComplexes, myComplexes.data(), adios2::Mode::Sync);
+            engine.Get(varDComplexes, myDComplexes.data(), adios2::Mode::Sync);
             VerifyData(myChars.data(), currentStep, startTmp, countTmp, shape,
                        mpiRank);
             VerifyData(myUChars.data(), currentStep, startTmp, countTmp, shape,
@@ -252,26 +248,26 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
             startTmp[0] = mpiRank * 2 + 1;
             countTmp[0] = 1;
-            bpChars.SetSelection({startTmp, countTmp});
-            bpUChars.SetSelection({startTmp, countTmp});
-            bpShorts.SetSelection({startTmp, countTmp});
-            bpUShorts.SetSelection({startTmp, countTmp});
-            bpInts.SetSelection({startTmp, countTmp});
-            bpUInts.SetSelection({startTmp, countTmp});
-            bpFloats.SetSelection({startTmp, countTmp});
-            bpDoubles.SetSelection({startTmp, countTmp});
-            bpComplexes.SetSelection({startTmp, countTmp});
-            bpDComplexes.SetSelection({startTmp, countTmp});
-            engine.Get(bpChars, myChars.data(), adios2::Mode::Sync);
-            engine.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
-            engine.Get(bpShorts, myShorts.data(), adios2::Mode::Sync);
-            engine.Get(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-            engine.Get(bpInts, myInts.data(), adios2::Mode::Sync);
-            engine.Get(bpUInts, myUInts.data(), adios2::Mode::Sync);
-            engine.Get(bpFloats, myFloats.data(), adios2::Mode::Sync);
-            engine.Get(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-            engine.Get(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-            engine.Get(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
+            varChars.SetSelection({startTmp, countTmp});
+            varUChars.SetSelection({startTmp, countTmp});
+            varShorts.SetSelection({startTmp, countTmp});
+            varUShorts.SetSelection({startTmp, countTmp});
+            varInts.SetSelection({startTmp, countTmp});
+            varUInts.SetSelection({startTmp, countTmp});
+            varFloats.SetSelection({startTmp, countTmp});
+            varDoubles.SetSelection({startTmp, countTmp});
+            varComplexes.SetSelection({startTmp, countTmp});
+            varDComplexes.SetSelection({startTmp, countTmp});
+            engine.Get(varChars, myChars.data(), adios2::Mode::Sync);
+            engine.Get(varUChars, myUChars.data(), adios2::Mode::Sync);
+            engine.Get(varShorts, myShorts.data(), adios2::Mode::Sync);
+            engine.Get(varUShorts, myUShorts.data(), adios2::Mode::Sync);
+            engine.Get(varInts, myInts.data(), adios2::Mode::Sync);
+            engine.Get(varUInts, myUInts.data(), adios2::Mode::Sync);
+            engine.Get(varFloats, myFloats.data(), adios2::Mode::Sync);
+            engine.Get(varDoubles, myDoubles.data(), adios2::Mode::Sync);
+            engine.Get(varComplexes, myComplexes.data(), adios2::Mode::Sync);
+            engine.Get(varDComplexes, myDComplexes.data(), adios2::Mode::Sync);
             VerifyData(myChars.data(), currentStep, startTmp, countTmp, shape,
                        mpiRank);
             VerifyData(myUChars.data(), currentStep, startTmp, countTmp, shape,
@@ -303,7 +299,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             break;
         }
     }
-    auto attInt = dataManIO.InquireAttribute<int>("AttInt");
+    auto attInt = io.InquireAttribute<int>("AttInt");
     ASSERT_EQ(110, attInt.Data()[0]);
     engine.Close();
 }
