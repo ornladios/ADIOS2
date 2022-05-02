@@ -5,7 +5,7 @@
 
 include(ADIOSFunctions)
 
-if(ADIOS2_HAVE_MPI)
+if(ADIOS2_HAVE_MPI AND NOT MSVC)
   gtest_add_tests_helper(Base MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBase.MPI "" TRUE)
 
@@ -60,13 +60,11 @@ if(ADIOS2_HAVE_MPI)
   gtest_add_tests_helper(Xgc2Way MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscXgc2Way.MPI "" TRUE)
 
-if(NOT MSVC)
   gtest_add_tests_helper(Xgc3Way MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscXgc3Way.MPI "" TRUE)
 
   gtest_add_tests_helper(Xgc3WayMatchedSteps MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscXgc3WayMatchedSteps.MPI "" TRUE)
-endif()
 
   gtest_add_tests_helper(VaryingSteps MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscVaryingSteps.MPI "" TRUE)

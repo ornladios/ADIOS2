@@ -28,7 +28,6 @@ std::vector<typename Variable<T>::BPInfo>
 SscReaderGeneric::BlocksInfoCommon(const Variable<T> &variable,
                                    const size_t step) const
 {
-
     std::vector<typename Variable<T>::BPInfo> ret;
 
     for (const auto &r : m_GlobalWritePattern)

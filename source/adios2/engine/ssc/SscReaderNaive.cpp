@@ -86,6 +86,50 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
                                     pos, b, m_IO, true);
                 b.bufferStart += start;
                 m_BlockMap[b.name].push_back(b);
+                if (b.shapeId == ShapeID::GlobalValue ||
+                    b.shapeId == ShapeID::LocalValue)
+                {
+                    std::vector<char> value(b.bufferCount);
+                    std::memcpy(value.data(), b.value.data(), b.value.size());
+
+                    if (b.type == DataType::String)
+                    {
+                        auto variable =
+                            m_IO.InquireVariable<std::string>(b.name);
+                        if (variable)
+                        {
+                            variable->m_Value =
+                                std::string(value.begin(), value.end());
+                            variable->m_Min =
+                                std::string(value.begin(), value.end());
+                            variable->m_Max =
+                                std::string(value.begin(), value.end());
+                        }
+                    }
+#define declare_type(T)                                                        \
+    else if (b.type == helper::GetDataType<T>())                               \
+    {                                                                          \
+        auto variable = m_IO.InquireVariable<T>(b.name);                       \
+        if (variable)                                                          \
+        {                                                                      \
+            std::memcpy(reinterpret_cast<char *>(&variable->m_Min),            \
+                        value.data(), value.size());                           \
+            std::memcpy(reinterpret_cast<char *>(&variable->m_Max),            \
+                        value.data(), value.size());                           \
+            std::memcpy(reinterpret_cast<char *>(&variable->m_Value),          \
+                        value.data(), value.size());                           \
+        }                                                                      \
+    }
+                    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+                    else
+                    {
+                        helper::Log("Engine", "SscReaderNaive", "BeginStep",
+                                    "unknown data type", m_ReaderRank,
+                                    m_ReaderRank, 0, m_Verbosity,
+                                    helper::FATALERROR);
+                    }
+                }
             }
         }
     }
