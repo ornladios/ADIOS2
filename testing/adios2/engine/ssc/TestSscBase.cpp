@@ -58,8 +58,8 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         "varComplexes", shape, start, count);
     auto varDComplexes = io.DefineVariable<std::complex<double>>(
         "varDComplexes", shape, start, count);
-    auto scalarInt = io.DefineVariable<int>("scalarInt");
-    auto stringVar = io.DefineVariable<std::string>("stringVar");
+    auto varIntScalar = io.DefineVariable<int>("varIntScalar");
+    auto varString = io.DefineVariable<std::string>("varString");
     io.DefineAttribute<int>("AttInt", 110);
     adios2::Engine engine = io.Open(name, adios2::Mode::Write);
     engine.LockWriterDefinitions();
@@ -86,9 +86,9 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         engine.Put(varDoubles, myDoubles.data(), adios2::Mode::Sync);
         engine.Put(varComplexes, myComplexes.data(), adios2::Mode::Sync);
         engine.Put(varDComplexes, myDComplexes.data(), adios2::Mode::Sync);
-        engine.Put(scalarInt, static_cast<int>(i));
+        engine.Put(varIntScalar, static_cast<int>(i));
         std::string s = "sample string sample string sample string";
-        engine.Put(stringVar, s);
+        engine.Put(varString, s);
         engine.EndStep();
     }
     engine.Close();
@@ -125,16 +125,16 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         adios2::StepStatus status = engine.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
         {
-            auto scalarInt = io.InquireVariable<int>("scalarInt");
+            auto varIntScalar = io.InquireVariable<int>("varIntScalar");
             auto blocksInfo =
-                engine.BlocksInfo(scalarInt, engine.CurrentStep());
+                engine.BlocksInfo(varIntScalar, engine.CurrentStep());
 
             for (const auto &bi : blocksInfo)
             {
                 ASSERT_EQ(bi.IsValue, true);
                 ASSERT_EQ(bi.Value, engine.CurrentStep());
-                ASSERT_EQ(scalarInt.Min(), engine.CurrentStep());
-                ASSERT_EQ(scalarInt.Max(), engine.CurrentStep());
+                ASSERT_EQ(varIntScalar.Min(), engine.CurrentStep());
+                ASSERT_EQ(varIntScalar.Max(), engine.CurrentStep());
             }
 
             const auto &vars = io.AvailableVariables();
@@ -159,8 +159,8 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 io.InquireVariable<std::complex<float>>("varComplexes");
             adios2::Variable<std::complex<double>> varDComplexes =
                 io.InquireVariable<std::complex<double>>("varDComplexes");
-            adios2::Variable<std::string> stringVar =
-                io.InquireVariable<std::string>("stringVar");
+            adios2::Variable<std::string> varString =
+                io.InquireVariable<std::string>("varString");
 
             varChars.SetSelection({start, count});
             varUChars.SetSelection({start, count});
@@ -211,16 +211,16 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                        mpiRank);
 
             std::string s;
-            engine.Get(stringVar, s);
+            engine.Get(varString, s);
             engine.PerformGets();
             ASSERT_EQ(s, "sample string sample string sample string");
-            ASSERT_EQ(stringVar.Min(),
+            ASSERT_EQ(varString.Min(),
                       "sample string sample string sample string");
-            ASSERT_EQ(stringVar.Max(),
+            ASSERT_EQ(varString.Max(),
                       "sample string sample string sample string");
 
             int i;
-            engine.Get(scalarInt, &i);
+            engine.Get(varIntScalar, &i);
             engine.PerformGets();
             ASSERT_EQ(i, currentStep);
             engine.EndStep();
