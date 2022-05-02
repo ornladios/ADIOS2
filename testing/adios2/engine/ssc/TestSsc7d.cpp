@@ -29,9 +29,9 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
                         std::multiplies<size_t>());
     adios2::ADIOS adios(mpiComm);
-    adios2::IO dataManIO = adios.DeclareIO("WAN");
-    dataManIO.SetEngine("ssc");
-    dataManIO.SetParameters(engineParams);
+    adios2::IO io = adios.DeclareIO("WAN");
+    io.SetEngine("ssc");
+    io.SetParameters(engineParams);
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -42,28 +42,24 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<double> myDoubles(datasize);
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
-    auto varChars =
-        dataManIO.DefineVariable<char>("varChars", shape, start, count);
-    auto varUChars = dataManIO.DefineVariable<unsigned char>("varUChars", shape,
-                                                             start, count);
-    auto varShorts =
-        dataManIO.DefineVariable<short>("varShorts", shape, start, count);
-    auto varUShorts = dataManIO.DefineVariable<unsigned short>(
-        "varUShorts", shape, start, count);
-    auto varInts =
-        dataManIO.DefineVariable<int>("varInts", shape, start, count);
+    auto varChars = io.DefineVariable<char>("varChars", shape, start, count);
+    auto varUChars =
+        io.DefineVariable<unsigned char>("varUChars", shape, start, count);
+    auto varShorts = io.DefineVariable<short>("varShorts", shape, start, count);
+    auto varUShorts =
+        io.DefineVariable<unsigned short>("varUShorts", shape, start, count);
+    auto varInts = io.DefineVariable<int>("varInts", shape, start, count);
     auto varUInts =
-        dataManIO.DefineVariable<unsigned int>("varUInts", shape, start, count);
-    auto varFloats =
-        dataManIO.DefineVariable<float>("varFloats", shape, start, count);
+        io.DefineVariable<unsigned int>("varUInts", shape, start, count);
+    auto varFloats = io.DefineVariable<float>("varFloats", shape, start, count);
     auto varDoubles =
-        dataManIO.DefineVariable<double>("varDoubles", shape, start, count);
-    auto varComplexes = dataManIO.DefineVariable<std::complex<float>>(
+        io.DefineVariable<double>("varDoubles", shape, start, count);
+    auto varComplexes = io.DefineVariable<std::complex<float>>(
         "varComplexes", shape, start, count);
-    auto varDComplexes = dataManIO.DefineVariable<std::complex<double>>(
+    auto varDComplexes = io.DefineVariable<std::complex<double>>(
         "varDComplexes", shape, start, count);
-    dataManIO.DefineAttribute<int>("AttInt", 110);
-    adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Write);
+    io.DefineAttribute<int>("AttInt", 110);
+    adios2::Engine engine = io.Open(name, adios2::Mode::Write);
     engine.LockWriterDefinitions();
     for (size_t i = 0; i < steps; ++i)
     {
@@ -98,10 +94,10 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             const std::string &name)
 {
     adios2::ADIOS adios(mpiComm);
-    adios2::IO dataManIO = adios.DeclareIO("Test");
-    dataManIO.SetEngine("ssc");
-    dataManIO.SetParameters(engineParams);
-    adios2::Engine engine = dataManIO.Open(name, adios2::Mode::Read);
+    adios2::IO io = adios.DeclareIO("Test");
+    io.SetEngine("ssc");
+    io.SetParameters(engineParams);
+    adios2::Engine engine = io.Open(name, adios2::Mode::Read);
 
     size_t datasize =
         std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1),
@@ -124,30 +120,28 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         adios2::StepStatus status = engine.BeginStep(StepMode::Read, 5);
         if (status == adios2::StepStatus::OK)
         {
-            const auto &vars = dataManIO.AvailableVariables();
+            const auto &vars = io.AvailableVariables();
             ASSERT_EQ(vars.size(), 10);
             size_t currentStep = engine.CurrentStep();
             adios2::Variable<char> varChars =
-                dataManIO.InquireVariable<char>("varChars");
+                io.InquireVariable<char>("varChars");
             adios2::Variable<unsigned char> varUChars =
-                dataManIO.InquireVariable<unsigned char>("varUChars");
+                io.InquireVariable<unsigned char>("varUChars");
             adios2::Variable<short> varShorts =
-                dataManIO.InquireVariable<short>("varShorts");
+                io.InquireVariable<short>("varShorts");
             adios2::Variable<unsigned short> varUShorts =
-                dataManIO.InquireVariable<unsigned short>("varUShorts");
-            adios2::Variable<int> varInts =
-                dataManIO.InquireVariable<int>("varInts");
+                io.InquireVariable<unsigned short>("varUShorts");
+            adios2::Variable<int> varInts = io.InquireVariable<int>("varInts");
             adios2::Variable<unsigned int> varUInts =
-                dataManIO.InquireVariable<unsigned int>("varUInts");
+                io.InquireVariable<unsigned int>("varUInts");
             adios2::Variable<float> varFloats =
-                dataManIO.InquireVariable<float>("varFloats");
+                io.InquireVariable<float>("varFloats");
             adios2::Variable<double> varDoubles =
-                dataManIO.InquireVariable<double>("varDoubles");
+                io.InquireVariable<double>("varDoubles");
             adios2::Variable<std::complex<float>> varComplexes =
-                dataManIO.InquireVariable<std::complex<float>>("varComplexes");
+                io.InquireVariable<std::complex<float>>("varComplexes");
             adios2::Variable<std::complex<double>> varDComplexes =
-                dataManIO.InquireVariable<std::complex<double>>(
-                    "varDComplexes");
+                io.InquireVariable<std::complex<double>>("varDComplexes");
 
             engine.Get(varChars, myChars.data(), adios2::Mode::Sync);
             engine.Get(varUChars, myUChars.data(), adios2::Mode::Sync);
