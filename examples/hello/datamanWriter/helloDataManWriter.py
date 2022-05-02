@@ -18,7 +18,7 @@ size = comm.Get_size()
 
 Nx = 10
 Ny = 10
-steps = 100000
+steps = 10000
 
 count = [Nx, Ny]
 start = [rank * Nx, 0]
@@ -31,22 +31,20 @@ for i in range(0, Nx):
         floatArray[i, j] = (start[0] + i) * shape[1] + (j + start[1])
 
 adios = adios2.ADIOS(comm)
-dataManIO = adios.DeclareIO("whatever")
-dataManIO.SetEngine("DataMan")
-dataManIO.SetParameters({"IPAddress": "127.0.0.1",
-                         "Port": "12306",
-                         "Timeout": "5"})
+io = adios.DeclareIO("whatever")
+io.SetEngine("DataMan")
+io.SetParameters({"IPAddress": "127.0.0.1", "Port": "12306", "Timeout": "5"})
 
-var = dataManIO.DefineVariable(
+var = io.DefineVariable(
     "FloatArray", floatArray, shape, start, count, adios2.ConstantDims)
 
-dataManWriter = dataManIO.Open('HelloDataMan', adios2.Mode.Write)
+engine = io.Open('HelloDataMan', adios2.Mode.Write)
 
 for i in range(steps):
     floatArray = floatArray + 1
     print("Step", i, floatArray)
-    dataManWriter.BeginStep()
-    dataManWriter.Put(var, floatArray)
-    dataManWriter.EndStep()
+    engine.BeginStep()
+    engine.Put(var, floatArray)
+    engine.EndStep()
 
-dataManWriter.Close()
+engine.Close()
