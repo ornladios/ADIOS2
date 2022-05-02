@@ -328,56 +328,73 @@ VariableNT::T VariableNT::Min(const size_t step) const
     helper::CheckForNullptr(m_Variable, "in call to VariableNT::Min");
     if (m_Variable->m_Type == DataType::Int8)
     {
-        return {.Int8 = reinterpret_cast<core::Variable<int8_t> *>(m_Variable)
-                            ->Min(step)};
+        VariableNT::T ret = {0};
+        ret.Int8 =
+            reinterpret_cast<core::Variable<int8_t> *>(m_Variable)->Min(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::UInt8)
     {
-        return {.UInt8 = reinterpret_cast<core::Variable<uint8_t> *>(m_Variable)
-                             ->Min(step)};
+        VariableNT::T ret = {0};
+        ret.UInt8 =
+            reinterpret_cast<core::Variable<uint8_t> *>(m_Variable)->Min(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::Int16)
     {
-        return {.Int16 = reinterpret_cast<core::Variable<int16_t> *>(m_Variable)
-                             ->Min(step)};
+        VariableNT::T ret = {0};
+        ret.Int16 =
+            reinterpret_cast<core::Variable<int16_t> *>(m_Variable)->Min(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::UInt16)
     {
-        return {.UInt16 =
-                    reinterpret_cast<core::Variable<uint16_t> *>(m_Variable)
-                        ->Min(step)};
+        VariableNT::T ret = {0};
+        ret.UInt16 =
+            reinterpret_cast<core::Variable<uint16_t> *>(m_Variable)->Min(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::Int32)
     {
-        return {.Int32 = reinterpret_cast<core::Variable<int32_t> *>(m_Variable)
-                             ->Min(step)};
+        VariableNT::T ret = {0};
+        ret.Int32 =
+            reinterpret_cast<core::Variable<int32_t> *>(m_Variable)->Min(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::UInt32)
     {
-        return {.UInt32 =
-                    reinterpret_cast<core::Variable<uint32_t> *>(m_Variable)
-                        ->Min(step)};
+        VariableNT::T ret = {0};
+        ret.UInt32 =
+            reinterpret_cast<core::Variable<uint32_t> *>(m_Variable)->Min(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::Int64)
     {
-        return {.Int64 = reinterpret_cast<core::Variable<int64_t> *>(m_Variable)
-                             ->Min(step)};
+        VariableNT::T ret = {0};
+        ret.Int64 =
+            reinterpret_cast<core::Variable<int64_t> *>(m_Variable)->Min(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::UInt64)
     {
-        return {.UInt64 =
-                    reinterpret_cast<core::Variable<uint64_t> *>(m_Variable)
-                        ->Min(step)};
+        VariableNT::T ret = {0};
+        ret.UInt64 =
+            reinterpret_cast<core::Variable<uint64_t> *>(m_Variable)->Min(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::Float)
     {
-        return {.Float = reinterpret_cast<core::Variable<float> *>(m_Variable)
-                             ->Min(step)};
+        VariableNT::T ret = {0};
+        ret.Float =
+            reinterpret_cast<core::Variable<float> *>(m_Variable)->Min(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::Double)
     {
-        return {.Double = reinterpret_cast<core::Variable<double> *>(m_Variable)
-                              ->Min(step)};
+        VariableNT::T ret = {0};
+        ret.Double =
+            reinterpret_cast<core::Variable<double> *>(m_Variable)->Min(step);
+        return ret;
     }
     helper::Throw<std::runtime_error>(
         "bindings::CXX11", "VariableNT", "Min",
@@ -391,56 +408,73 @@ VariableNT::T VariableNT::Max(const size_t step) const
     helper::CheckForNullptr(m_Variable, "in call to VariableNT::Max");
     if (m_Variable->m_Type == DataType::Int8)
     {
-        return {.Int8 = reinterpret_cast<core::Variable<int8_t> *>(m_Variable)
-                            ->Max(step)};
+        VariableNT::T ret = {0};
+        ret.Int8 =
+            reinterpret_cast<core::Variable<int8_t> *>(m_Variable)->Max(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::UInt8)
     {
-        return {.UInt8 = reinterpret_cast<core::Variable<uint8_t> *>(m_Variable)
-                             ->Max(step)};
+        VariableNT::T ret = {0};
+        ret.UInt8 =
+            reinterpret_cast<core::Variable<uint8_t> *>(m_Variable)->Max(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::Int16)
     {
-        return {.Int16 = reinterpret_cast<core::Variable<int16_t> *>(m_Variable)
-                             ->Max(step)};
+        VariableNT::T ret = {0};
+        ret.Int16 =
+            reinterpret_cast<core::Variable<int16_t> *>(m_Variable)->Max(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::UInt16)
     {
-        return {.UInt16 =
-                    reinterpret_cast<core::Variable<uint16_t> *>(m_Variable)
-                        ->Max(step)};
+        VariableNT::T ret = {0};
+        ret.UInt16 =
+            reinterpret_cast<core::Variable<uint16_t> *>(m_Variable)->Max(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::Int32)
     {
-        return {.Int32 = reinterpret_cast<core::Variable<int32_t> *>(m_Variable)
-                             ->Max(step)};
+        VariableNT::T ret = {0};
+        ret.Int32 =
+            reinterpret_cast<core::Variable<int32_t> *>(m_Variable)->Max(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::UInt32)
     {
-        return {.UInt32 =
-                    reinterpret_cast<core::Variable<uint32_t> *>(m_Variable)
-                        ->Max(step)};
+        VariableNT::T ret = {0};
+        ret.UInt32 =
+            reinterpret_cast<core::Variable<uint32_t> *>(m_Variable)->Max(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::Int64)
     {
-        return {.Int64 = reinterpret_cast<core::Variable<int64_t> *>(m_Variable)
-                             ->Max(step)};
+        VariableNT::T ret = {0};
+        ret.Int64 =
+            reinterpret_cast<core::Variable<int64_t> *>(m_Variable)->Max(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::UInt64)
     {
-        return {.UInt64 =
-                    reinterpret_cast<core::Variable<uint64_t> *>(m_Variable)
-                        ->Max(step)};
+        VariableNT::T ret = {0};
+        ret.UInt64 =
+            reinterpret_cast<core::Variable<uint64_t> *>(m_Variable)->Max(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::Float)
     {
-        return {.Float = reinterpret_cast<core::Variable<float> *>(m_Variable)
-                             ->Max(step)};
+        VariableNT::T ret = {0};
+        ret.Float =
+            reinterpret_cast<core::Variable<float> *>(m_Variable)->Max(step);
+        return ret;
     }
     else if (m_Variable->m_Type == DataType::Double)
     {
-        return {.Double = reinterpret_cast<core::Variable<double> *>(m_Variable)
-                              ->Max(step)};
+        VariableNT::T ret = {0};
+        ret.Double =
+            reinterpret_cast<core::Variable<double> *>(m_Variable)->Max(step);
+        return ret;
     }
     helper::Throw<std::runtime_error>(
         "bindings::CXX11", "VariableNT", "Max",
