@@ -19,9 +19,7 @@ size = comm.Get_size()
 adios = adios2.ADIOS(comm)
 io = adios.DeclareIO("whatever")
 io.SetEngine("DataMan")
-io.SetParameters({"IPAddress": "127.0.0.1",
-                         "Port": "12306",
-                         "Timeout": "5"})
+io.SetParameters({"IPAddress":"127.0.0.1","Port":"12306","Timeout":"5"})
 
 engine = io.Open('HelloDataMan', adios2.Mode.Read, comm)
 
