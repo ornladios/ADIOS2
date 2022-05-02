@@ -65,13 +65,12 @@ int main(int argc, char *argv[])
     adios2::IO io = adios.DeclareIO("whatever");
     io.SetEngine("DataMan");
     io.SetParameters({{"IPAddress", "127.0.0.1"},
-                             {"Port", "12306"},
-                             {"Timeout", "5"},
-                             {"RendezvousReaderCount", "1"}});
+                      {"Port", "12306"},
+                      {"Timeout", "5"},
+                      {"RendezvousReaderCount", "1"}});
 
     // open stream
-    adios2::Engine engine =
-        io.Open("HelloDataMan", adios2::Mode::Write);
+    adios2::Engine engine = io.Open("HelloDataMan", adios2::Mode::Write);
 
     // define variable
     auto floatArrayVar =
@@ -82,8 +81,7 @@ int main(int argc, char *argv[])
     {
         auto floatVector = GenerateData<float>(i);
         engine.BeginStep();
-        engine.Put(floatArrayVar, floatVector.data(),
-                          adios2::Mode::Sync);
+        engine.Put(floatArrayVar, floatVector.data(), adios2::Mode::Sync);
         PrintData(floatVector, engine.CurrentStep());
         engine.EndStep();
     }

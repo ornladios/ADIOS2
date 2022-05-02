@@ -44,8 +44,7 @@ int main(int argc, char *argv[])
         {{"IPAddress", "127.0.0.1"}, {"Port", "12306"}, {"Timeout", "5"}});
 
     // open stream
-    adios2::Engine engine =
-        io.Open("HelloDataMan", adios2::Mode::Read);
+    adios2::Engine engine = io.Open("HelloDataMan", adios2::Mode::Read);
 
     // define variable
     adios2::Variable<float> floatArrayVar;
@@ -63,7 +62,7 @@ int main(int argc, char *argv[])
                                               std::multiplies<size_t>());
             floatVector.resize(datasize);
             engine.Get<float>(floatArrayVar, floatVector.data(),
-                                     adios2::Mode::Sync);
+                              adios2::Mode::Sync);
             engine.EndStep();
             PrintData(floatVector, engine.CurrentStep());
         }
