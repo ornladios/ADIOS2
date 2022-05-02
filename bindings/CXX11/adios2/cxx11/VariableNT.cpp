@@ -253,7 +253,8 @@ size_t VariableNT::StructItems() const
     {
         helper::Throw<std::runtime_error>(
             "bindings::CXX11", "VariableNT", "StructItems",
-            "invalid data type " + ToString(m_Variable->m_Type));
+            "invalid data type " + ToString(m_Variable->m_Type) +
+                ", only Struct type supports this API");
     }
     return reinterpret_cast<core::VariableStruct *>(m_Variable)
         ->m_StructDefinition.Items();
@@ -266,7 +267,8 @@ std::string VariableNT::StructItemName(const size_t index) const
     {
         helper::Throw<std::runtime_error>(
             "bindings::CXX11", "VariableNT", "StructItemName",
-            "invalid data type " + ToString(m_Variable->m_Type));
+            "invalid data type " + ToString(m_Variable->m_Type) +
+                ", only Struct type supports this API");
     }
     return reinterpret_cast<core::VariableStruct *>(m_Variable)
         ->m_StructDefinition.Name(index);
@@ -279,7 +281,8 @@ size_t VariableNT::StructItemOffset(const size_t index) const
     {
         helper::Throw<std::runtime_error>(
             "bindings::CXX11", "VariableNT", "StructItemOffset",
-            "invalid data type " + ToString(m_Variable->m_Type));
+            "invalid data type " + ToString(m_Variable->m_Type) +
+                ", only Struct type supports this API");
     }
     return reinterpret_cast<core::VariableStruct *>(m_Variable)
         ->m_StructDefinition.Offset(index);
@@ -292,7 +295,8 @@ DataType VariableNT::StructItemType(const size_t index) const
     {
         helper::Throw<std::runtime_error>(
             "bindings::CXX11", "VariableNT", "StructItemType",
-            "invalid data type " + ToString(m_Variable->m_Type));
+            "invalid data type " + ToString(m_Variable->m_Type) +
+                ", only Struct type supports this API");
     }
     return reinterpret_cast<core::VariableStruct *>(m_Variable)
         ->m_StructDefinition.Type(index);
@@ -305,10 +309,309 @@ size_t VariableNT::StructItemSize(const size_t index) const
     {
         helper::Throw<std::runtime_error>(
             "bindings::CXX11", "VariableNT", "StructItemSize",
-            "invalid data type " + ToString(m_Variable->m_Type));
+            "invalid data type " + ToString(m_Variable->m_Type) +
+                ", only Struct type supports this API");
     }
     return reinterpret_cast<core::VariableStruct *>(m_Variable)
         ->m_StructDefinition.Size(index);
 }
 
+std::pair<VariableNT::T, VariableNT::T>
+VariableNT::MinMax(const size_t step) const
+{
+    helper::CheckForNullptr(m_Variable, "in call to VariableNT::MinMax");
+    return {Min(step), Max(step)};
+}
+
+VariableNT::T VariableNT::Min(const size_t step) const
+{
+    helper::CheckForNullptr(m_Variable, "in call to VariableNT::Min");
+    if (m_Variable->m_Type == DataType::Int8)
+    {
+        VariableNT::T ret = {0};
+        ret.Int8 =
+            reinterpret_cast<core::Variable<int8_t> *>(m_Variable)->Min(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::UInt8)
+    {
+        VariableNT::T ret = {0};
+        ret.UInt8 =
+            reinterpret_cast<core::Variable<uint8_t> *>(m_Variable)->Min(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::Int16)
+    {
+        VariableNT::T ret = {0};
+        ret.Int16 =
+            reinterpret_cast<core::Variable<int16_t> *>(m_Variable)->Min(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::UInt16)
+    {
+        VariableNT::T ret = {0};
+        ret.UInt16 =
+            reinterpret_cast<core::Variable<uint16_t> *>(m_Variable)->Min(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::Int32)
+    {
+        VariableNT::T ret = {0};
+        ret.Int32 =
+            reinterpret_cast<core::Variable<int32_t> *>(m_Variable)->Min(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::UInt32)
+    {
+        VariableNT::T ret = {0};
+        ret.UInt32 =
+            reinterpret_cast<core::Variable<uint32_t> *>(m_Variable)->Min(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::Int64)
+    {
+        VariableNT::T ret = {0};
+        ret.Int64 =
+            reinterpret_cast<core::Variable<int64_t> *>(m_Variable)->Min(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::UInt64)
+    {
+        VariableNT::T ret = {0};
+        ret.UInt64 =
+            reinterpret_cast<core::Variable<uint64_t> *>(m_Variable)->Min(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::Float)
+    {
+        VariableNT::T ret = {0};
+        ret.Float =
+            reinterpret_cast<core::Variable<float> *>(m_Variable)->Min(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::Double)
+    {
+        VariableNT::T ret = {0};
+        ret.Double =
+            reinterpret_cast<core::Variable<double> *>(m_Variable)->Min(step);
+        return ret;
+    }
+    helper::Throw<std::runtime_error>(
+        "bindings::CXX11", "VariableNT", "Min",
+        "invalid data type " + ToString(m_Variable->m_Type) +
+            ", only basic numeric types support this API");
+    return {0};
+}
+
+VariableNT::T VariableNT::Max(const size_t step) const
+{
+    helper::CheckForNullptr(m_Variable, "in call to VariableNT::Max");
+    if (m_Variable->m_Type == DataType::Int8)
+    {
+        VariableNT::T ret = {0};
+        ret.Int8 =
+            reinterpret_cast<core::Variable<int8_t> *>(m_Variable)->Max(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::UInt8)
+    {
+        VariableNT::T ret = {0};
+        ret.UInt8 =
+            reinterpret_cast<core::Variable<uint8_t> *>(m_Variable)->Max(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::Int16)
+    {
+        VariableNT::T ret = {0};
+        ret.Int16 =
+            reinterpret_cast<core::Variable<int16_t> *>(m_Variable)->Max(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::UInt16)
+    {
+        VariableNT::T ret = {0};
+        ret.UInt16 =
+            reinterpret_cast<core::Variable<uint16_t> *>(m_Variable)->Max(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::Int32)
+    {
+        VariableNT::T ret = {0};
+        ret.Int32 =
+            reinterpret_cast<core::Variable<int32_t> *>(m_Variable)->Max(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::UInt32)
+    {
+        VariableNT::T ret = {0};
+        ret.UInt32 =
+            reinterpret_cast<core::Variable<uint32_t> *>(m_Variable)->Max(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::Int64)
+    {
+        VariableNT::T ret = {0};
+        ret.Int64 =
+            reinterpret_cast<core::Variable<int64_t> *>(m_Variable)->Max(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::UInt64)
+    {
+        VariableNT::T ret = {0};
+        ret.UInt64 =
+            reinterpret_cast<core::Variable<uint64_t> *>(m_Variable)->Max(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::Float)
+    {
+        VariableNT::T ret = {0};
+        ret.Float =
+            reinterpret_cast<core::Variable<float> *>(m_Variable)->Max(step);
+        return ret;
+    }
+    else if (m_Variable->m_Type == DataType::Double)
+    {
+        VariableNT::T ret = {0};
+        ret.Double =
+            reinterpret_cast<core::Variable<double> *>(m_Variable)->Max(step);
+        return ret;
+    }
+    helper::Throw<std::runtime_error>(
+        "bindings::CXX11", "VariableNT", "Max",
+        "invalid data type " + ToString(m_Variable->m_Type) +
+            ", only basic numeric types support this API");
+    return {0};
+}
+
+double VariableNT::MinDouble(const size_t step) const
+{
+    helper::CheckForNullptr(m_Variable, "in call to VariableNT::MinDouble");
+    if (m_Variable->m_Type == DataType::Int8)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<int8_t> *>(m_Variable)->Min(step));
+    }
+    else if (m_Variable->m_Type == DataType::UInt8)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<uint8_t> *>(m_Variable)->Min(step));
+    }
+    else if (m_Variable->m_Type == DataType::Int16)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<int16_t> *>(m_Variable)->Min(step));
+    }
+    else if (m_Variable->m_Type == DataType::UInt16)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<uint16_t> *>(m_Variable)
+                ->Min(step));
+    }
+    else if (m_Variable->m_Type == DataType::Int32)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<int32_t> *>(m_Variable)->Min(step));
+    }
+    else if (m_Variable->m_Type == DataType::UInt32)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<uint32_t> *>(m_Variable)
+                ->Min(step));
+    }
+    else if (m_Variable->m_Type == DataType::Int64)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<int64_t> *>(m_Variable)->Min(step));
+    }
+    else if (m_Variable->m_Type == DataType::UInt64)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<uint64_t> *>(m_Variable)
+                ->Min(step));
+    }
+    else if (m_Variable->m_Type == DataType::Float)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<float> *>(m_Variable)->Min(step));
+    }
+    else if (m_Variable->m_Type == DataType::Double)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<double> *>(m_Variable)->Min(step));
+    }
+    helper::Throw<std::runtime_error>(
+        "bindings::CXX11", "VariableNT", "MinDouble",
+        "invalid data type " + ToString(m_Variable->m_Type) +
+            ", only basic numeric types support this API");
+    return 0;
+}
+
+double VariableNT::MaxDouble(const size_t step) const
+{
+    helper::CheckForNullptr(m_Variable, "in call to VariableNT::MaxDouble");
+    if (m_Variable->m_Type == DataType::Int8)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<int8_t> *>(m_Variable)->Max(step));
+    }
+    else if (m_Variable->m_Type == DataType::UInt8)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<uint8_t> *>(m_Variable)->Max(step));
+    }
+    else if (m_Variable->m_Type == DataType::Int16)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<int16_t> *>(m_Variable)->Max(step));
+    }
+    else if (m_Variable->m_Type == DataType::UInt16)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<uint16_t> *>(m_Variable)
+                ->Max(step));
+    }
+    else if (m_Variable->m_Type == DataType::Int32)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<int32_t> *>(m_Variable)->Max(step));
+    }
+    else if (m_Variable->m_Type == DataType::UInt32)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<uint32_t> *>(m_Variable)
+                ->Max(step));
+    }
+    else if (m_Variable->m_Type == DataType::Int64)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<int64_t> *>(m_Variable)->Max(step));
+    }
+    else if (m_Variable->m_Type == DataType::UInt64)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<uint64_t> *>(m_Variable)
+                ->Max(step));
+    }
+    else if (m_Variable->m_Type == DataType::Float)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<float> *>(m_Variable)->Max(step));
+    }
+    else if (m_Variable->m_Type == DataType::Double)
+    {
+        return static_cast<double>(
+            reinterpret_cast<core::Variable<double> *>(m_Variable)->Max(step));
+    }
+    helper::Throw<std::runtime_error>(
+        "bindings::CXX11", "VariableNT", "MaxDouble",
+        "invalid data type " + ToString(m_Variable->m_Type) +
+            ", only basic numeric types support this API");
+    return 0;
+}
+
+std::pair<double, double> VariableNT::MinMaxDouble(const size_t step) const
+{
+    helper::CheckForNullptr(m_Variable, "in call to VariableNT::MinMaxDouble");
+    return {MinDouble(step), MaxDouble(step)};
+}
 } // end namespace adios2
