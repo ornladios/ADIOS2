@@ -45,6 +45,9 @@ public:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+    std::vector<VariableStruct::BPInfo>
+    BlocksInfo(const VariableStruct &variable, const size_t step) const final;
+
     void GetDeferred(VariableBase &, void *) final;
 
 private:

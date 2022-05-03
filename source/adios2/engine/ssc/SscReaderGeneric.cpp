@@ -570,6 +570,38 @@ void SscReaderGeneric::GetDeferred(VariableBase &variable, void *data)
     }
 }
 
+std::vector<VariableStruct::BPInfo>
+SscReaderGeneric::BlocksInfo(const VariableStruct &variable,
+                             const size_t step) const
+{
+    std::vector<VariableStruct::BPInfo> ret;
+    size_t blockID = 0;
+    for (int i = 0; i < static_cast<int>(m_GlobalWritePattern.size()); ++i)
+    {
+        for (auto &v : m_GlobalWritePattern[i])
+        {
+            if (v.name == variable.m_Name)
+            {
+                ret.emplace_back();
+                auto &b = ret.back();
+                b.Start = v.start;
+                b.Count = v.count;
+                b.Shape = v.shape;
+                b.Step = m_CurrentStep;
+                b.StepsStart = m_CurrentStep;
+                b.StepsCount = 1;
+                b.WriterID = i;
+                b.BlockID = blockID;
+                if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
+                {
+                    b.IsReverseDims = true;
+                }
+                ++blockID;
+            }
+        }
+    }
+    return ret;
+}
 }
 }
 }
