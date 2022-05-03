@@ -229,6 +229,24 @@ std::vector<VariableNT::Info> Engine::BlocksInfo(const VariableNT &variable,
     std::vector<VariableNT::Info> ret;
     if (variable.m_Variable->m_Type == DataType::Struct)
     {
+        adios2::helper::CheckForNullptr(
+            m_Engine, "for Engine in call to Engine::BlocksInfo");
+        adios2::helper::CheckForNullptr(
+            variable.m_Variable, "for variable in call to Engine::BlocksInfo");
+        auto blocksInfo = m_Engine->BlocksInfo(
+            *reinterpret_cast<core::VariableStruct *>(variable.m_Variable),
+            step);
+        for (const auto &b : blocksInfo)
+        {
+            ret.emplace_back();
+            auto &br = ret.back();
+            br.Start = b.Start;
+            br.Count = b.Count;
+            br.WriterID = b.WriterID;
+            br.Step = b.Step;
+            br.IsReverseDims = b.IsReverseDims;
+            br.IsValue = b.IsValue;
+        }
     }
 #define declare_type(T)                                                        \
     else if (variable.m_Variable->m_Type == helper::GetDataType<T>())          \
@@ -265,6 +283,28 @@ Engine::AllStepsBlocksInfo(const VariableNT &variable) const
     std::map<size_t, std::vector<VariableNT::Info>> ret;
     if (variable.m_Variable->m_Type == DataType::Struct)
     {
+        adios2::helper::CheckForNullptr(
+            m_Engine, "for Engine in call to Engine::AllStepsBlocksInfo");
+        adios2::helper::CheckForNullptr(
+            variable.m_Variable,
+            "for variable in call to Engine::AllStepsBlocksInfo");
+        auto blocksInfo = m_Engine->AllStepsBlocksInfo(
+            *reinterpret_cast<core::VariableStruct *>(variable.m_Variable));
+        for (const auto &bv : blocksInfo)
+        {
+            auto &bvr = ret[bv.first];
+            for (const auto &b : bv.second)
+            {
+                bvr.emplace_back();
+                auto &br = bvr.back();
+                br.Start = b.Start;
+                br.Count = b.Count;
+                br.WriterID = b.WriterID;
+                br.Step = b.Step;
+                br.IsReverseDims = b.IsReverseDims;
+                br.IsValue = b.IsValue;
+            }
+        }
     }
 #define declare_type(T)                                                        \
     else if (variable.m_Variable->m_Type == helper::GetDataType<T>())          \

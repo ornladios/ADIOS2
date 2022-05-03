@@ -45,6 +45,8 @@ private:
 
     void DoGetStructSync(VariableStruct &, void *) final;
     void DoGetStructDeferred(VariableStruct &, void *) final;
+    std::vector<VariableStruct::BPInfo>
+    DoBlocksInfo(const VariableStruct &variable, const size_t step) const final;
 
     void DoClose(const int transportIndex = -1) final;
 

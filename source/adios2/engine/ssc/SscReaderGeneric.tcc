@@ -46,9 +46,7 @@ SscReaderGeneric::BlocksInfoCommon(const Variable<T> &variable,
                 b.StepsCount = 1;
                 if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
                 {
-                    std::reverse(b.Start.begin(), b.Start.end());
-                    std::reverse(b.Count.begin(), b.Count.end());
-                    std::reverse(b.Shape.begin(), b.Shape.end());
+                    b.IsReverseDims = true;
                 }
                 if (v.shapeId == ShapeID::GlobalValue ||
                     v.shapeId == ShapeID::LocalValue)

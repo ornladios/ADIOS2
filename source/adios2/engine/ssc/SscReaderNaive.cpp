@@ -205,6 +205,33 @@ void SscReaderNaive::GetDeferred(VariableBase &variable, void *data)
     }
 }
 
+std::vector<VariableStruct::BPInfo>
+SscReaderNaive::BlocksInfo(const VariableStruct &variable,
+                           const size_t step) const
+{
+    std::vector<VariableStruct::BPInfo> ret;
+    auto it = m_BlockMap.find(variable.m_Name);
+    if (it != m_BlockMap.end())
+    {
+        for (const auto &v : it->second)
+        {
+            ret.emplace_back();
+            auto &b = ret.back();
+            b.Start = v.start;
+            b.Count = v.count;
+            b.Shape = v.shape;
+            b.Step = m_CurrentStep;
+            b.StepsStart = m_CurrentStep;
+            b.StepsCount = 1;
+            if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
+            {
+                b.IsReverseDims = true;
+            }
+        }
+    }
+    return ret;
+}
+
 }
 }
 }
