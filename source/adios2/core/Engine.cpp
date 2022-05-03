@@ -238,21 +238,22 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 std::map<size_t, std::vector<VariableStruct::BPInfo>>
-Engine::DoAllStepsBlocksInfo(const VariableStruct &variable) const
+Engine::DoAllStepsBlocksInfoStruct(const VariableStruct &variable) const
 {
     ThrowUp("DoAllStepsBlocksInfo");
     return std::map<size_t, std::vector<VariableStruct::BPInfo>>();
 }
 
 std::vector<std::vector<VariableStruct::BPInfo>>
-Engine::DoAllRelativeStepsBlocksInfo(const VariableStruct &variable) const
+Engine::DoAllRelativeStepsBlocksInfoStruct(const VariableStruct &variable) const
 {
     ThrowUp("DoAllRelativeStepsBlocksInfo");
     return std::vector<std::vector<VariableStruct::BPInfo>>();
 }
 
 std::vector<VariableStruct::BPInfo>
-Engine::DoBlocksInfo(const VariableStruct &variable, const size_t step) const
+Engine::DoBlocksInfoStruct(const VariableStruct &variable,
+                           const size_t step) const
 {
     ThrowUp("DoBlocksInfo");
     return std::vector<VariableStruct::BPInfo>();
@@ -312,21 +313,22 @@ void Engine::CommonChecks(VariableBase &variable, const void *data,
 }
 
 std::map<size_t, std::vector<VariableStruct::BPInfo>>
-Engine::AllStepsBlocksInfo(const VariableStruct &variable) const
+Engine::AllStepsBlocksInfoStruct(const VariableStruct &variable) const
 {
-    return DoAllStepsBlocksInfo(variable);
+    return DoAllStepsBlocksInfoStruct(variable);
 }
 
 std::vector<std::vector<VariableStruct::BPInfo>>
-Engine::AllRelativeStepsBlocksInfo(const VariableStruct &variable) const
+Engine::AllRelativeStepsBlocksInfoStruct(const VariableStruct &variable) const
 {
-    return DoAllRelativeStepsBlocksInfo(variable);
+    return DoAllRelativeStepsBlocksInfoStruct(variable);
 }
 
 std::vector<VariableStruct::BPInfo>
-Engine::BlocksInfo(const VariableStruct &variable, const size_t step) const
+Engine::BlocksInfoStruct(const VariableStruct &variable,
+                         const size_t step) const
 {
-    return DoBlocksInfo(variable, step);
+    return DoBlocksInfoStruct(variable, step);
 }
 
 // PUBLIC TEMPLATE FUNCTIONS EXPANSION WITH SCOPED TYPES

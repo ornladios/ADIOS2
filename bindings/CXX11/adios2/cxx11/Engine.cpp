@@ -233,7 +233,7 @@ std::vector<VariableNT::Info> Engine::BlocksInfo(const VariableNT &variable,
             m_Engine, "for Engine in call to Engine::BlocksInfo");
         adios2::helper::CheckForNullptr(
             variable.m_Variable, "for variable in call to Engine::BlocksInfo");
-        auto blocksInfo = m_Engine->BlocksInfo(
+        auto blocksInfo = m_Engine->BlocksInfoStruct(
             *reinterpret_cast<core::VariableStruct *>(variable.m_Variable),
             step);
         for (const auto &b : blocksInfo)
@@ -288,7 +288,7 @@ Engine::AllStepsBlocksInfo(const VariableNT &variable) const
         adios2::helper::CheckForNullptr(
             variable.m_Variable,
             "for variable in call to Engine::AllStepsBlocksInfo");
-        auto blocksInfo = m_Engine->AllStepsBlocksInfo(
+        auto blocksInfo = m_Engine->AllStepsBlocksInfoStruct(
             *reinterpret_cast<core::VariableStruct *>(variable.m_Variable));
         for (const auto &bv : blocksInfo)
         {

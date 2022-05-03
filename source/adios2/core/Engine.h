@@ -406,7 +406,7 @@ public:
     AllStepsBlocksInfo(const Variable<T> &variable) const;
 
     std::map<size_t, std::vector<VariableStruct::BPInfo>>
-    AllStepsBlocksInfo(const VariableStruct &variable) const;
+    AllStepsBlocksInfoStruct(const VariableStruct &variable) const;
 
     /**
      * This function is internal, for public interface use
@@ -419,7 +419,7 @@ public:
     AllRelativeStepsBlocksInfo(const Variable<T> &variable) const;
 
     std::vector<std::vector<VariableStruct::BPInfo>>
-    AllRelativeStepsBlocksInfo(const VariableStruct &variable) const;
+    AllRelativeStepsBlocksInfoStruct(const VariableStruct &variable) const;
 
     /**
      * Extracts all available blocks information for a particular
@@ -435,7 +435,7 @@ public:
     BlocksInfo(const Variable<T> &variable, const size_t step) const;
 
     std::vector<VariableStruct::BPInfo>
-    BlocksInfo(const VariableStruct &variable, const size_t step) const;
+    BlocksInfoStruct(const VariableStruct &variable, const size_t step) const;
 
     /**
      * Get the absolute steps of a variable in a file. This is for
@@ -583,13 +583,13 @@ protected:
 #undef declare_type
 
     virtual std::map<size_t, std::vector<VariableStruct::BPInfo>>
-    DoAllStepsBlocksInfo(const VariableStruct &variable) const;
+    DoAllStepsBlocksInfoStruct(const VariableStruct &variable) const;
 
     virtual std::vector<std::vector<VariableStruct::BPInfo>>
-    DoAllRelativeStepsBlocksInfo(const VariableStruct &variable) const;
+    DoAllRelativeStepsBlocksInfoStruct(const VariableStruct &variable) const;
 
     virtual std::vector<VariableStruct::BPInfo>
-    DoBlocksInfo(const VariableStruct &variable, const size_t step) const;
+    DoBlocksInfoStruct(const VariableStruct &variable, const size_t step) const;
 
 #define declare_type(T, L)                                                     \
     virtual T *DoBufferData_##L(const int bufferIdx,                           \
