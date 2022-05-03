@@ -30,7 +30,7 @@ SscReaderGeneric::BlocksInfoCommon(const Variable<T> &variable,
 {
     std::vector<typename Variable<T>::BPInfo> ret;
     size_t blockID = 0;
-    for (int i = 0; i < m_GlobalWritePattern.size(); ++i)
+    for (int i = 0; i < static_cast<int>(m_GlobalWritePattern.size()); ++i)
     {
         for (auto &v : m_GlobalWritePattern[i])
         {
