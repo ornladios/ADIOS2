@@ -230,6 +230,17 @@ public:
         std::complex<double> DComplex;
     };
 
+    struct Info
+    {
+        adios2::Dims Start;
+        adios2::Dims Count;
+        int WriterID = 0;
+        size_t BlockID = 0;
+        size_t Step = 0;
+        bool IsReverseDims = false;
+        bool IsValue = false;
+    };
+
     T Min(const size_t step = adios2::DefaultSizeT) const;
     T Max(const size_t step = adios2::DefaultSizeT) const;
     std::pair<T, T> MinMax(const size_t step = adios2::DefaultSizeT) const;

@@ -430,6 +430,9 @@ public:
     std::map<size_t, std::vector<typename Variable<T>::Info>>
     AllStepsBlocksInfo(const Variable<T> variable) const;
 
+    std::map<size_t, std::vector<VariableNT::Info>>
+    AllStepsBlocksInfo(const VariableNT &variable) const;
+
     /**
      * Extracts all available blocks information for a particular
      * variable and step.
@@ -442,6 +445,9 @@ public:
     template <class T>
     std::vector<typename Variable<T>::Info>
     BlocksInfo(const Variable<T> variable, const size_t step) const;
+
+    std::vector<VariableNT::Info> BlocksInfo(const VariableNT &variable,
+                                             const size_t step) const;
 
     /**
      * Get the absolute steps of a variable in a file. This is for
