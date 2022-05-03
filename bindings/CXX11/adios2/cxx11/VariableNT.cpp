@@ -10,6 +10,7 @@
 
 #include "VariableNT.h"
 #include "Types.h"
+#include "Variable.h"
 #include "adios2/core/VariableBase.h"
 #include "adios2/helper/adiosFunctions.h"
 
