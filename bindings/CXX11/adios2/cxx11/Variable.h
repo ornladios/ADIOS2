@@ -381,14 +381,15 @@ public:
     std::map<size_t, std::vector<typename Variable<T>::Info>>
     AllStepsBlocksInfoMap() const;
 
-    std::vector<typename Variable<T>::Info>
-    ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const;
-
     using Span = adios2::detail::Span<T>;
 
 private:
-    Variable<T>(core::Variable<IOType> *variable);
     core::Variable<IOType> *m_Variable = nullptr;
+
+    std::vector<typename Variable<T>::Info>
+    ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const;
+
+    Variable<T>(core::Variable<IOType> *variable);
 
     std::vector<std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfo();
     std::map<size_t, std::vector<typename Variable<T>::Info>>
