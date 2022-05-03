@@ -210,6 +210,7 @@ SscReaderNaive::BlocksInfo(const VariableStruct &variable,
                            const size_t step) const
 {
     std::vector<VariableStruct::BPInfo> ret;
+    size_t blockID = 0;
     auto it = m_BlockMap.find(variable.m_Name);
     if (it != m_BlockMap.end())
     {
@@ -223,10 +224,12 @@ SscReaderNaive::BlocksInfo(const VariableStruct &variable,
             b.Step = m_CurrentStep;
             b.StepsStart = m_CurrentStep;
             b.StepsCount = 1;
+            b.BlockID = blockID;
             if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
             {
                 b.IsReverseDims = true;
             }
+            ++blockID;
         }
     }
     return ret;

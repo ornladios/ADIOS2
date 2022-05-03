@@ -13,6 +13,8 @@
 using namespace adios2;
 int mpiRank = 0;
 int mpiSize = 1;
+int worldRank = 0;
+int worldSize = 2;
 MPI_Comm mpiComm;
 
 class SscEngineTest : public ::testing::Test
@@ -262,6 +264,14 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 ASSERT_EQ(myParticles[i].b[2], 20);
                 ASSERT_EQ(myParticles[i].b[3], 30);
             }
+            auto structBlocks = engine.BlocksInfo(varStruct, currentStep);
+            ASSERT_EQ(structBlocks.size(), worldSize - mpiSize);
+            for (size_t i = 0; i < structBlocks.size(); ++i)
+            {
+                ASSERT_FALSE(structBlocks[i].IsValue);
+                ASSERT_FALSE(structBlocks[i].IsReverseDims);
+                ASSERT_EQ(structBlocks[i].Step, currentStep);
+            }
 
             ASSERT_EQ(i, currentStep);
             engine.EndStep();
@@ -284,9 +294,6 @@ TEST_F(SscEngineTest, TestSscStruct)
     {
         std::string filename = "TestSscStruct";
         adios2::Params engineParams = {{"Verbose", "0"}};
-        int worldRank, worldSize;
-        MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
-        MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
         int mpiGroup = worldRank / (worldSize / 2);
         MPI_Comm_split(MPI_COMM_WORLD, mpiGroup, worldRank, &mpiComm);
         MPI_Comm_rank(mpiComm, &mpiRank);
@@ -310,9 +317,6 @@ TEST_F(SscEngineTest, TestSscStruct)
         std::string filename = "TestSscStructNaive";
         adios2::Params engineParams = {{"Verbose", "0"},
                                        {"EngineMode", "naive"}};
-        int worldRank, worldSize;
-        MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
-        MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
         int mpiGroup = worldRank / (worldSize / 2);
         MPI_Comm_split(MPI_COMM_WORLD, mpiGroup, worldRank, &mpiComm);
         MPI_Comm_rank(mpiComm, &mpiRank);
@@ -337,7 +341,6 @@ TEST_F(SscEngineTest, TestSscStruct)
 int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);
-    int worldRank, worldSize;
     MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
     MPI_Comm_size(MPI_COMM_WORLD, &worldSize);
     ::testing::InitGoogleTest(&argc, argv);
