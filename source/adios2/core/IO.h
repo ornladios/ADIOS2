@@ -505,7 +505,7 @@ public:
     /** Inform about computation block through User->ADIOS */
     void ExitComputationBlock() noexcept;
 
-    StructDefinition &DefineStruct(const std::string &name);
+    StructDefinition &DefineStruct(const std::string &name, const size_t size);
     StructDefinition *InquireStruct(const std::string &name);
 
 private:

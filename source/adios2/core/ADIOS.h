@@ -132,7 +132,7 @@ public:
     std::pair<std::string, Params> *
     InquireOperator(const std::string &name) noexcept;
 
-    StructDefinition &DefineStruct(const std::string &name);
+    StructDefinition &DefineStruct(const std::string &name, const size_t size);
     StructDefinition *InquireStruct(const std::string &name);
 
     /**

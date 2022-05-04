@@ -661,11 +661,11 @@ TEST_F(ADIOSDefineVariableTest, DefineStructVariable)
     const adios2::Dims start = {0};
     const adios2::Dims count = {10};
 
-    auto def1 = adios.DefineStruct("def1");
+    auto def1 = adios.DefineStruct("def1", 24);
     def1.AddItem("a", 0, adios2::DataType::Int8, 1);
     def1.AddItem("b", 4, adios2::DataType::Int32, 5);
 
-    auto def2 = adios.DefineStruct("def2");
+    auto def2 = adios.DefineStruct("def2", 28);
     def2.AddItem("a", 0, adios2::DataType::Int8, 1);
     def2.AddItem("b", 4, adios2::DataType::Int32, 5);
     def2.AddItem("c", 24, adios2::DataType::Int32);

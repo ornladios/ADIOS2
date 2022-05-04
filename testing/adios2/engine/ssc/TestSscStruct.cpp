@@ -63,16 +63,16 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     auto varIntScalar = io.DefineVariable<int>("varIntScalar");
     auto varString = io.DefineVariable<std::string>("varString");
 
-    auto particleDef = adios.DefineStruct("particle");
-    particleDef.AddItem("a", 0, adios2::DataType::Int8, 1);
-    particleDef.AddItem("b", 4, adios2::DataType::Int32, 4);
-    auto varStruct =
-        io.DefineStructVariable("particles", particleDef, shape, start, count);
     struct particle
     {
         int8_t a;
         int b[4];
     };
+    auto particleDef = adios.DefineStruct("particle", sizeof(particle));
+    particleDef.AddItem("a", 0, adios2::DataType::Int8, 1);
+    particleDef.AddItem("b", 4, adios2::DataType::Int32, 4);
+    auto varStruct =
+        io.DefineStructVariable("particles", particleDef, shape, start, count);
     std::vector<particle> myParticles(datasize);
     for (size_t i = 0; i < datasize; ++i)
     {
