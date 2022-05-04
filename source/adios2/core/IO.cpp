@@ -930,7 +930,8 @@ VariableStruct *IO::InquireStructVariable(const std::string &name) noexcept
 }
 
 VariableStruct *IO::InquireStructVariable(const std::string &name,
-                                          const StructDefinition &def) noexcept
+                                          const StructDefinition &def,
+                                          const bool allowReorganize) noexcept
 {
     auto ret = InquireStructVariable(name);
     if (ret == nullptr)
@@ -949,7 +950,8 @@ VariableStruct *IO::InquireStructVariable(const std::string &name,
         {
             return nullptr;
         }
-        if (ret->m_StructDefinition.Offset(i) != def.Offset(i))
+        if (ret->m_StructDefinition.Offset(i) != def.Offset(i) &&
+            !allowReorganize)
         {
             return nullptr;
         }
