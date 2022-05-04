@@ -222,14 +222,13 @@ VariableNT IO::InquireStructVariable(const std::string &name)
 }
 
 VariableNT IO::InquireStructVariable(const std::string &name,
-                                     const StructDefinition def,
-                                     const bool allowReorganize)
+                                     const StructDefinition def)
 {
     helper::CheckForNullptr(m_IO, "for variable name " + name +
                                       ", in call to IO::InquireStructVariable");
 
-    return VariableNT(m_IO->InquireStructVariable(name, *def.m_StructDefinition,
-                                                  allowReorganize));
+    return VariableNT(
+        m_IO->InquireStructVariable(name, *def.m_StructDefinition));
 }
 
 // PRIVATE
