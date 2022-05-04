@@ -180,7 +180,8 @@ public:
     VariableNT InquireStructVariable(const std::string &name);
 
     VariableNT InquireStructVariable(const std::string &name,
-                                     const StructDefinition def);
+                                     const StructDefinition def,
+                                     const bool allowReorganize = false);
 
     /**
      * @brief Define attribute inside io. Array input version

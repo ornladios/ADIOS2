@@ -283,7 +283,8 @@ public:
     VariableStruct *InquireStructVariable(const std::string &name) noexcept;
 
     VariableStruct *InquireStructVariable(const std::string &name,
-                                          const StructDefinition &def) noexcept;
+                                          const StructDefinition &def,
+                                          const bool allowReorganize) noexcept;
 
     /**
      * @brief Returns the type of an existing variable as an string
