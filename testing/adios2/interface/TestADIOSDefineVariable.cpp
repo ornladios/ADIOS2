@@ -664,13 +664,16 @@ TEST_F(ADIOSDefineVariableTest, DefineStructVariable)
     auto def1 = adios.DefineStruct("def1", 24);
     def1.AddItem("a", 0, adios2::DataType::Int8, 1);
     def1.AddItem("b", 4, adios2::DataType::Int32, 5);
+    def1.Freeze();
+    EXPECT_THROW(def1.AddItem("c", 0, adios2::DataType::Int32),
+                 std::runtime_error);
 
     auto def2 = adios.DefineStruct("def2", 28);
     def2.AddItem("a", 0, adios2::DataType::Int8, 1);
     def2.AddItem("b", 4, adios2::DataType::Int32, 5);
     def2.AddItem("c", 24, adios2::DataType::Int32);
     EXPECT_THROW(def2.AddItem("c", 27, adios2::DataType::Int32),
-                 std::invalid_argument);
+                 std::runtime_error);
 
     auto structVar =
         io.DefineStructVariable("particle", def1, shape, start, count);

@@ -851,7 +851,7 @@ void IO::CheckTransportType(const std::string type) const
 }
 
 VariableStruct &IO::DefineStructVariable(const std::string &name,
-                                         const StructDefinition &def,
+                                         StructDefinition &def,
                                          const Dims &shape, const Dims &start,
                                          const Dims &count,
                                          const bool constantDims)
@@ -886,6 +886,8 @@ VariableStruct &IO::DefineStructVariable(const std::string &name,
             variable.AddOperation(operation.first, operation.second);
         }
     }
+
+    def.Freeze();
 
     return variable;
 }
