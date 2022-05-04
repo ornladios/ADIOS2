@@ -30,7 +30,7 @@ public:
         size_t Size;
     };
 
-    void SetStructSize(const size_t size);
+    StructDefinition(const size_t size);
     void AddItem(const std::string &name, const size_t offset,
                  const DataType type, const size_t size = 1);
     size_t StructSize() const noexcept;
