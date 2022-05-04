@@ -22,6 +22,12 @@ StructDefinition::StructDefinition(const size_t size) : m_StructSize(size) {}
 void StructDefinition::AddItem(const std::string &name, const size_t offset,
                                const DataType type, const size_t size)
 {
+    if (m_Frozen)
+    {
+        helper::Throw<std::runtime_error>(
+            "core", "VariableStruct::StructDefinition", "AddItem",
+            "struct definition already frozen");
+    }
     if (type == DataType::None || type == DataType::Struct)
     {
         helper::Throw<std::invalid_argument>("core",
@@ -30,9 +36,9 @@ void StructDefinition::AddItem(const std::string &name, const size_t offset,
     }
     if (offset + helper::GetDataTypeSize(type) * size > m_StructSize)
     {
-        helper::Throw<std::invalid_argument>("core",
-                                             "VariableStruct::StructDefinition",
-                                             "AddItem", "exceeded struct size");
+        helper::Throw<std::runtime_error>("core",
+                                          "VariableStruct::StructDefinition",
+                                          "AddItem", "exceeded struct size");
     }
     m_Definition.emplace_back();
     auto &d = m_Definition.back();
@@ -41,6 +47,8 @@ void StructDefinition::AddItem(const std::string &name, const size_t offset,
     d.Type = type;
     d.Size = size;
 }
+
+void StructDefinition::Freeze() noexcept { m_Frozen = true; }
 
 size_t StructDefinition::StructSize() const noexcept { return m_StructSize; }
 

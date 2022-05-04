@@ -29,6 +29,13 @@ void StructDefinition::AddItem(const std::string &name, const size_t offset,
     m_StructDefinition->AddItem(name, offset, type, size);
 }
 
+void StructDefinition::Freeze() noexcept
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::Freeze");
+    m_StructDefinition->Freeze();
+}
+
 size_t StructDefinition::StructSize() const noexcept
 {
     helper::CheckForNullptr(m_StructDefinition,
