@@ -51,6 +51,12 @@ void SscWriterNaive::EndStep(const bool writerLocked)
 
     if (m_WriterRank == 0)
     {
+        ssc::SerializeStructDefinitions(m_IO.m_ADIOS.StructDefinitions(),
+                                        m_Buffer);
+    }
+
+    if (m_WriterRank == m_WriterSize - 1)
+    {
         ssc::SerializeAttributes(m_IO, m_Buffer);
     }
 

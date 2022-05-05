@@ -228,6 +228,12 @@ void SerializeAttributes(IO &input, Buffer &output)
     }
 }
 
+void SerializeStructDefinitions(
+    const std::unordered_map<std::string, StructDefinition> &definitions,
+    Buffer &output)
+{
+}
+
 void DeserializeAttribute(const Buffer &input, uint64_t &pos, IO &io,
                           const bool regIO)
 {
@@ -396,8 +402,13 @@ void DeserializeVariable(const Buffer &input, const ShapeID shapeId,
     }
 }
 
+void DeserializeStructDefinitions(const Buffer &input, uint64_t &pos, IO &io,
+                                  const bool regIO)
+{
+}
+
 void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
-                 const bool regVars, const bool regAttrs)
+                 const bool regVars, const bool regAttrs, const bool regDefs)
 {
     for (auto &i : output)
     {
@@ -416,7 +427,11 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
         uint8_t shapeId = input[pos];
         ++pos;
 
-        if (shapeId == 66)
+        if (shapeId == 65)
+        {
+            DeserializeStructDefinitions(input, pos, io, regDefs);
+        }
+        else if (shapeId == 66)
         {
             DeserializeAttribute(input, pos, io, regAttrs);
         }

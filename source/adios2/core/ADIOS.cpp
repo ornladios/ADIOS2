@@ -220,6 +220,12 @@ StructDefinition *ADIOS::InquireStruct(const std::string &name)
     }
 }
 
+const std::unordered_map<std::string, StructDefinition> &
+ADIOS::StructDefinitions() const
+{
+    return m_StructDefinitions;
+}
+
 bool ADIOS::RemoveIO(const std::string name)
 {
     if (m_IOs.erase(name) == 1)

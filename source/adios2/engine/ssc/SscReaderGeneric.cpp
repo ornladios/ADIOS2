@@ -227,7 +227,7 @@ void SscReaderGeneric::PerformGets()
         m_ReaderSelectionsLocked == false)
     {
         ssc::Deserialize(m_GlobalWritePatternBuffer, m_GlobalWritePattern, m_IO,
-                         false, false);
+                         false, false, false);
         size_t oldSize = m_AllReceivingWriterRanks.size();
         m_AllReceivingWriterRanks =
             ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
@@ -330,7 +330,7 @@ bool SscReaderGeneric::SyncWritePattern()
     m_WriterDefinitionsLocked = m_GlobalWritePatternBuffer[1];
 
     ssc::Deserialize(m_GlobalWritePatternBuffer, m_GlobalWritePattern, m_IO,
-                     true, true);
+                     true, true, true);
 
     if (m_Verbosity >= 10 && m_ReaderRank == 0)
     {
@@ -356,7 +356,7 @@ void SscReaderGeneric::SyncReadPattern()
                            m_StreamComm);
 
     ssc::Deserialize(m_GlobalWritePatternBuffer, m_GlobalWritePattern, m_IO,
-                     true, true);
+                     true, true, true);
 
     m_AllReceivingWriterRanks =
         ssc::CalculateOverlap(m_GlobalWritePattern, m_LocalReadPattern);
