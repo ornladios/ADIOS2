@@ -18,6 +18,7 @@ typedef struct _CP_GlobalCMInfo
     CMFormat DeliverTimestepMetadataFormat;
     CMFormat PeerSetupFormat;
     CMFormat ReaderActivateFormat;
+    CMFormat ReaderRequestStepFormat;
     CMFormat ReleaseTimestepFormat;
     CMFormat LockReaderDefinitionsFormat;
     CMFormat CommPatternLockedFormat;
@@ -45,12 +46,18 @@ typedef struct _CP_Info
 
 struct _ReaderRegisterMsg;
 
-typedef struct _RequestQueue
+typedef struct _RegisterQueue
 {
     struct _ReaderRegisterMsg *Msg;
     CMConnection Conn;
-    struct _RequestQueue *Next;
-} * RequestQueue;
+    struct _RegisterQueue *Next;
+} * RegisterQueue;
+
+typedef struct _StepRequest
+{
+    int RequestingReader;
+    struct _StepRequest *Next;
+} * StepRequest;
 
 typedef struct _CP_PeerConnection
 {
@@ -92,6 +99,7 @@ typedef struct _WS_ReaderInfo
     SstPreloadModeType PreloadMode;
     long PreloadModeActiveTimestep;
     long OldestUnreleasedTimestep;
+    size_t FormatSentCount;
     struct _SentTimestepRec *SentTimestepList;
     void *DP_WSR_Stream;
     int ReaderCohortSize;
@@ -170,18 +178,20 @@ struct _SstStream
     int QueueLimit;
     SstQueueFullPolicy QueueFullPolicy;
     int LastProvidedTimestep;
-    int NewReaderPresent;
     int WriterDefinitionsLocked;
+    size_t NextRRDistribution;
+    size_t LastDemandTimestep;
 
     /* rendezvous condition */
     int FirstReaderCondition;
-    RequestQueue ReadRequestQueue;
+    RegisterQueue ReaderRegisterQueue;
 
     int ReaderCount;
     WS_ReaderInfo *Readers;
     char *Filename;
     char *AbsoluteFilename;
     int GlobalOpRequired;
+    StepRequest StepRequestQueue;
 
     /* writer side marshal info */
     void *WriterMarshalData;
@@ -359,6 +369,15 @@ struct _ReaderActivateMsg
 };
 
 /*
+ * The ReaderRequestStep message informs the writer that this reader is now
+ * ready to receive a new step (Used in OnDemand step distribution mode)
+ */
+struct _ReaderRequestStepMsg
+{
+    void *WSR_Stream;
+};
+
+/*
  * The timestepMetadata message carries the metadata from all writer ranks.
  * One is sent to each reader in peer mode, between rank 0's in min mode.
  */
@@ -507,6 +526,9 @@ extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *msg_v,
 extern void CP_ReaderActivateHandler(CManager cm, CMConnection conn,
                                      void *msg_v, void *client_data,
                                      attr_list attrs);
+extern void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn,
+                                        void *msg_v, void *client_data,
+                                        attr_list attrs);
 extern void CP_TimestepMetadataHandler(CManager cm, CMConnection conn,
                                        void *msg_v, void *client_data,
                                        attr_list attrs);

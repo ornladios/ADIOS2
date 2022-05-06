@@ -145,6 +145,35 @@ def do_one_client_test(writer_cmd, reader_cmd):
     return return_code
 
 
+def do_multi_client_test(writer_cmd, reader_cmd):
+    return_code = 0
+    writer = subprocess.Popen(writer_cmd)
+    reader1 = subprocess.Popen(reader_cmd)
+    reader2 = subprocess.Popen(reader_cmd)
+    reader3 = subprocess.Popen(reader_cmd)
+    print("TestDriver: Waiting for Reader1")
+    reader1.wait()
+    print("TestDriver: Reader1 exit status was " +
+          str(reader1.returncode))
+    print("TestDriver: Waiting for Reader2")
+    reader2.wait()
+    print("TestDriver: Reader2 exit status was " +
+          str(reader2.returncode))
+    print("TestDriver: Waiting for Reader3")
+    reader3.wait()
+    print("TestDriver: Reader3 exit status was " +
+          str(reader3.returncode))
+    if ((reader1.returncode + reader2.returncode + reader3.returncode) != 0):
+        print("TestDriver: A reader failed, causing test failure")
+        return_code = 1
+    writer.wait();
+    print("TestDriver: Writer exit status was " + str(writer.returncode))
+    if writer.returncode != 0:
+        print("TestDriver: Writer failed, causing test failure")
+        return_code = 1
+    return return_code
+
+
 def do_kill_writer_test(writer_cmd, reader_cmd, interval):
     return_code = 0
     print("TestDriver: Starting kill_writer test protocol")
@@ -260,7 +289,7 @@ parser.add_argument('--interval', type=int, default=5)
 parser.add_argument('--reader_delay', '-rd', type=int, default=0)
 parser.add_argument('--disable_mpmd', action='store_true')
 parser.add_argument('--test_protocol', '-tp', choices=[
-                    'simple', 'kill_readers', 'one_client',
+                    'simple', 'kill_readers', 'one_client', 'multi_client',
                     'kill_writer'], default='simple')
 parser.add_argument('engine', default='sst')
 parser.add_argument('filename', default='tmp')
@@ -367,6 +396,9 @@ elif args.test_protocol == 'kill_readers':
 
 elif args.test_protocol == 'one_client':
     return_code = do_one_client_test(writer_command_line, reader_command_line)
+
+elif args.test_protocol == 'multi_client':
+    return_code = do_multi_client_test(writer_command_line, reader_command_line)
 
 elif args.test_protocol == 'kill_writer':
     return_code = do_kill_writer_test(

@@ -772,7 +772,7 @@ static void SubRefTimestep(SstStream Stream, long Timestep, int SetLast)
 
 WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
 {
-    RequestQueue Req;
+    RegisterQueue Req;
     reader_data_t ReturnData;
     void *free_block = NULL;
     int WriterResponseCondition = -1;
@@ -785,9 +785,9 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     if (Stream->Rank == 0)
     {
         STREAM_MUTEX_LOCK(Stream);
-        assert((Stream->ReadRequestQueue));
-        Req = Stream->ReadRequestQueue;
-        Stream->ReadRequestQueue = Req->Next;
+        assert((Stream->ReaderRegisterQueue));
+        Req = Stream->ReaderRegisterQueue;
+        Stream->ReaderRegisterQueue = Req->Next;
         Req->Next = NULL;
         STREAM_MUTEX_UNLOCK(Stream);
         struct _CombinedReaderInfo reader_data;
@@ -956,7 +956,6 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
         free(ret_data_block);
     if (pointers)
         free(pointers);
-    Stream->NewReaderPresent = 1;
     CP_verbose(Stream, PerStepVerbose,
                "Finish writer-side reader open protocol for reader %p, "
                "reader ready response pending\n",
@@ -1121,6 +1120,9 @@ static void DerefAllSentTimesteps(SstStream Stream, WS_ReaderInfo Reader)
     CP_verbose(Stream, PerRankVerbose, "DONE DEREFERENCING\n");
 }
 
+static FFSFormatList ReturnNthListEntry(FFSFormatList List, size_t Count);
+static size_t FormatListCount(FFSFormatList List);
+
 static void SendTimestepEntryToSingleReader(SstStream Stream,
                                             CPTimestepList Entry,
                                             WS_ReaderInfo CP_WSR_Stream,
@@ -1129,7 +1131,12 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
     STREAM_ASSERT_LOCKED(Stream);
     if (CP_WSR_Stream->ReaderStatus == Established)
     {
+        size_t PriorSent = CP_WSR_Stream->FormatSentCount;
         CP_WSR_Stream->LastSentTimestep = Entry->Timestep;
+        FFSFormatList ToSend =
+            ReturnNthListEntry(Stream->PreviousFormats, PriorSent);
+        Entry->Msg->Formats = ToSend;
+
         if (rank != -1)
         {
             CP_verbose(Stream, PerRankVerbose,
@@ -1163,6 +1170,7 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
         }
 
         Entry->Msg->PreloadMode = PMode;
+        CP_WSR_Stream->FormatSentCount += FormatListCount(ToSend);
         STREAM_MUTEX_LOCK(Stream);
         if (CP_WSR_Stream->ReaderStatus == Established)
             sendOneToWSRCohort(
@@ -1175,10 +1183,58 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
 static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
 {
     STREAM_ASSERT_LOCKED(Stream);
-    for (int i = 0; i < Stream->ReaderCount; i++)
+    switch (Stream->ConfigParams->StepDistributionMode)
     {
-        WS_ReaderInfo CP_WSR_Stream = Stream->Readers[i];
-        SendTimestepEntryToSingleReader(Stream, Entry, CP_WSR_Stream, i);
+    case StepsAllToAll:
+    {
+        for (int i = 0; i < Stream->ReaderCount; i++)
+        {
+            WS_ReaderInfo CP_WSR_Stream = Stream->Readers[i];
+            SendTimestepEntryToSingleReader(Stream, Entry, CP_WSR_Stream, i);
+        }
+        break;
+    }
+    case StepsRoundRobin:
+    {
+        if (Stream->ReaderCount == 0)
+            return;
+        if (Stream->NextRRDistribution >= Stream->ReaderCount)
+            Stream->NextRRDistribution = 0;
+        CP_verbose(Stream, PerRankVerbose,
+                   "Round Robin Distribution, step sent to reader %d\n",
+                   Stream->NextRRDistribution);
+        WS_ReaderInfo CP_WSR_Stream =
+            Stream->Readers[Stream->NextRRDistribution];
+        SendTimestepEntryToSingleReader(Stream, Entry, CP_WSR_Stream,
+                                        Stream->NextRRDistribution);
+        Stream->NextRRDistribution++;
+    }
+    case StepsOnDemand:
+    {
+        if (Stream->ReaderCount == 0)
+            return;
+    retry:
+        /* send this entry to the first queued request and delete that request
+         */
+        if (Stream->StepRequestQueue)
+        {
+            StepRequest Request = Stream->StepRequestQueue;
+            Stream->StepRequestQueue = Request->Next;
+            int RequestingReader = Request->RequestingReader;
+            free(Request);
+            if (Stream->Readers[RequestingReader]->ReaderStatus == Established)
+            {
+                SendTimestepEntryToSingleReader(
+                    Stream, Entry, Stream->Readers[RequestingReader],
+                    RequestingReader);
+                Stream->LastDemandTimestep = Entry->Timestep;
+            }
+            else
+            {
+                goto retry;
+            }
+        }
+    }
     }
 }
 
@@ -1221,52 +1277,47 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                "Reader ready on WSR %p, Stream established, Starting %d "
                "LastProvided %d.\n",
                Reader, Reader->StartingTimestep, Stream->LastProvidedTimestep);
-    for (long TS = Reader->StartingTimestep; TS <= Stream->LastProvidedTimestep;
-         TS++)
+    if (Stream->ConfigParams->StepDistributionMode == StepsAllToAll)
     {
-        CPTimestepList List = Stream->QueuedTimesteps;
-        while (List)
+        for (long TS = Reader->StartingTimestep;
+             TS <= Stream->LastProvidedTimestep; TS++)
         {
-            CP_verbose(
-                Stream, TraceVerbose,
-                "In send queued, trying to send TS %ld, examining TS %ld\n", TS,
-                List->Timestep);
-            if (Reader->ReaderStatus != Established)
+            CPTimestepList List = Stream->QueuedTimesteps;
+            while (List)
             {
-                break; /* break out of while if we've fallen out of established
-                        */
-            }
-            if (List->Timestep == TS)
-            {
-                FFSFormatList SavedFormats = List->Msg->Formats;
-                if (List->Expired && !List->PreciousTimestep)
+                CP_verbose(
+                    Stream, TraceVerbose,
+                    "In send queued, trying to send TS %ld, examining TS %ld\n",
+                    TS, List->Timestep);
+                if (Reader->ReaderStatus != Established)
                 {
-                    CP_verbose(Stream, TraceVerbose,
-                               "Reader send queued skipping  TS %d, expired "
-                               "and not precious\n",
-                               List->Timestep, TS);
-                    List = List->Next;
-                    continue; /* skip timestep is expired, but not
-                                 precious */
+                    break; /* break out of while if we've fallen out of
+                            * established
+                            */
                 }
-                if (TS == Reader->StartingTimestep)
+                if (List->Timestep == TS)
                 {
-                    /* For first Msg, send all previous formats */
-                    List->Msg->Formats = Stream->PreviousFormats;
-                }
-                CP_verbose(Stream, PerStepVerbose,
-                           "Sending Queued TimestepMetadata for timestep %d, "
-                           "reference count = %d\n",
-                           TS, List->ReferenceCount);
+                    if (List->Expired && !List->PreciousTimestep)
+                    {
+                        CP_verbose(
+                            Stream, TraceVerbose,
+                            "Reader send queued skipping  TS %d, expired "
+                            "and not precious\n",
+                            List->Timestep, TS);
+                        List = List->Next;
+                        continue; /* skip timestep is expired, but not
+                                     precious */
+                    }
+                    CP_verbose(
+                        Stream, PerStepVerbose,
+                        "Sending Queued TimestepMetadata for timestep %d, "
+                        "reference count = %d\n",
+                        TS, List->ReferenceCount);
 
-                SendTimestepEntryToSingleReader(Stream, List, Reader, -1);
-                if (TS == Reader->StartingTimestep)
-                {
-                    /* restore Msg format list */
-                    List->Msg->Formats = SavedFormats;
+                    SendTimestepEntryToSingleReader(Stream, List, Reader, -1);
                 }
+                List = List->Next;
             }
-            List = List->Next;
         }
     }
     STREAM_MUTEX_UNLOCK(Stream);
@@ -1346,11 +1397,10 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         if (Stream->Rank == 0)
         {
             STREAM_MUTEX_LOCK(Stream);
-            if (Stream->ReadRequestQueue == NULL)
+            while (Stream->ReaderRegisterQueue == NULL)
             {
                 STREAM_CONDITION_WAIT(Stream);
             }
-            assert(Stream->ReadRequestQueue);
             STREAM_MUTEX_UNLOCK(Stream);
         }
         SMPI_Barrier(Stream->mpiComm);
@@ -1660,88 +1710,85 @@ void SstWriterClose(SstStream Stream)
     }
 }
 
-#ifdef NOTDEF
-static FFSFormatList AddUniqueFormats(FFSFormatList List,
-                                      FFSFormatList Candidates)
+static FFSFormatList ReturnNthListEntry(FFSFormatList List, size_t Count)
 {
-    while (Candidates)
+    while (List && Count)
     {
-        FFSFormatList Tmp = List;
-        int found = 0;
-        while (Tmp)
-        {
-            if ((Tmp->FormatIDRepLen == Candidates->FormatIDRepLen) &&
-                (memcmp(Tmp->FormatIDRep, Candidates->FormatIDRep,
-                        Tmp->FormatIDRepLen) == 0))
-            {
-                found++;
-                break;
-            }
-            Tmp = Tmp->Next;
-        }
-        if (!found)
-        {
-            FFSFormatList New = malloc(sizeof(*New));
-            memset(New, 0, sizeof(*New));
-            New->FormatServerRep = malloc(Candidates->FormatServerRepLen);
-            memcpy(New->FormatServerRep, Candidates->FormatServerRep,
-                   Candidates->FormatServerRepLen);
-            New->FormatServerRepLen = Candidates->FormatServerRepLen;
-            New->FormatIDRep = malloc(Candidates->FormatIDRepLen);
-            memcpy(New->FormatIDRep, Candidates->FormatIDRep,
-                   Candidates->FormatIDRepLen);
-            New->FormatIDRepLen = Candidates->FormatIDRepLen;
-            New->Next = List;
-            List = New;
-        }
-        Candidates = Candidates->Next;
+        Count--;
+        List = List->Next;
     }
     return List;
 }
-#endif
+
+static size_t FormatListCount(FFSFormatList List)
+{
+    FFSFormatList tmp = List;
+    size_t count = 0;
+    while (tmp)
+    {
+        count++;
+        tmp = tmp->Next;
+    }
+    return count;
+}
 
 static FFSFormatList AddUniqueFormats(FFSFormatList List,
                                       FFSFormatList Candidates, int copy)
 {
-    FFSFormatList Tmp = List;
-    FFSFormatList Ret = List;
-
-    // If nothing to add, return original
-    if (!Candidates)
-        return Ret;
-
-    // Add tail of candidates list first
-    Ret = AddUniqueFormats(List, Candidates->Next, copy);
-
-    while (Tmp)
+    while (Candidates)
     {
-        if ((Tmp->FormatIDRepLen == Candidates->FormatIDRepLen) &&
-            (memcmp(Tmp->FormatIDRep, Candidates->FormatIDRep,
-                    Tmp->FormatIDRepLen) == 0))
+        FFSFormatList Last = NULL;
+        FFSFormatList Tmp = List;
+        int Found = 0;
+        FFSFormatList ThisCandidate = Candidates;
+        while (Tmp)
         {
-            // Identical format already in List, don't add this one
-            return Ret;
+            if ((Tmp->FormatIDRepLen == ThisCandidate->FormatIDRepLen) &&
+                (memcmp(Tmp->FormatIDRep, ThisCandidate->FormatIDRep,
+                        Tmp->FormatIDRepLen) == 0))
+            {
+                // Identical format already in List, don't add this one
+                Found++;
+            }
+            Last = Tmp;
+            Tmp = Tmp->Next;
         }
-        Tmp = Tmp->Next;
+        Candidates = Candidates->Next;
+        if (!Found)
+        {
+            // New format not in list, add him to tail.
+            if (copy)
+            {
+                // Copy top Candidates entry before return
+                FFSFormatList Tmp = malloc(sizeof(*Tmp));
+                memset(Tmp, 0, sizeof(*Tmp));
+                Tmp->FormatServerRep =
+                    malloc(ThisCandidate->FormatServerRepLen);
+                memcpy(Tmp->FormatServerRep, ThisCandidate->FormatServerRep,
+                       ThisCandidate->FormatServerRepLen);
+                Tmp->FormatServerRepLen = ThisCandidate->FormatServerRepLen;
+                Tmp->FormatIDRep = malloc(ThisCandidate->FormatIDRepLen);
+                memcpy(Tmp->FormatIDRep, ThisCandidate->FormatIDRep,
+                       ThisCandidate->FormatIDRepLen);
+                Tmp->FormatIDRepLen = ThisCandidate->FormatIDRepLen;
+                ThisCandidate = Tmp;
+            }
+            else
+            {
+                // disconnect this guy so that he can become list end
+                ThisCandidate->Next = NULL;
+            }
+            if (Last)
+            {
+                Last->Next = ThisCandidate;
+            }
+            else
+            {
+                List = ThisCandidate;
+            }
+        }
     }
-    // New format not in list, add him to head and return.
-    if (copy)
-    {
-        // Copy top Candidates entry before return
-        FFSFormatList Tmp = malloc(sizeof(*Tmp));
-        memset(Tmp, 0, sizeof(*Tmp));
-        Tmp->FormatServerRep = malloc(Candidates->FormatServerRepLen);
-        memcpy(Tmp->FormatServerRep, Candidates->FormatServerRep,
-               Candidates->FormatServerRepLen);
-        Tmp->FormatServerRepLen = Candidates->FormatServerRepLen;
-        Tmp->FormatIDRep = malloc(Candidates->FormatIDRepLen);
-        memcpy(Tmp->FormatIDRep, Candidates->FormatIDRep,
-               Candidates->FormatIDRepLen);
-        Tmp->FormatIDRepLen = Candidates->FormatIDRepLen;
-        Candidates = Tmp;
-    }
-    Candidates->Next = Ret;
-    return Candidates;
+    return List;
 }
 
 static void *FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
@@ -1812,20 +1859,6 @@ static void *FillMetadataMsg(SstStream Stream, struct _TimestepMetadataMsg *Msg,
     Stream->PreviousFormats =
         AddUniqueFormats(Stream->PreviousFormats, XmitFormats, /*copy*/ 1);
 
-    if (Stream->NewReaderPresent)
-    {
-        /*
-         *  If there is a new reader cohort, those ranks will need all prior
-         * FFS
-         * Format info.
-         */
-        Msg->Formats = Stream->PreviousFormats;
-        Stream->NewReaderPresent = 0;
-    }
-    else
-    {
-        Msg->Formats = XmitFormats;
-    }
     return MetadataFreeValue;
 }
 
@@ -2179,10 +2212,10 @@ extern void SstInternalProvideTimestep(
     {
         int DiscardThisTimestep = 0;
         struct _ReturnMetadataInfo TimestepMetaData;
-        RequestQueue ArrivingReader;
+        RegisterQueue ArrivingReader;
         void *MetadataFreeValue;
         STREAM_MUTEX_LOCK(Stream);
-        ArrivingReader = Stream->ReadRequestQueue;
+        ArrivingReader = Stream->ReaderRegisterQueue;
         QueueMaintenance(Stream);
         if (Stream->QueueFullPolicy == SstQueueFullDiscard)
         {
@@ -2447,13 +2480,13 @@ void queueReaderRegisterMsgAndNotify(SstStream Stream,
                                      CMConnection conn)
 {
     STREAM_MUTEX_LOCK(Stream);
-    RequestQueue New = malloc(sizeof(struct _RequestQueue));
+    RegisterQueue New = malloc(sizeof(struct _RegisterQueue));
     New->Msg = Req;
     New->Conn = conn;
     New->Next = NULL;
-    if (Stream->ReadRequestQueue)
+    if (Stream->ReaderRegisterQueue)
     {
-        RequestQueue Last = Stream->ReadRequestQueue;
+        RegisterQueue Last = Stream->ReaderRegisterQueue;
         while (Last->Next)
         {
             Last = Last->Next;
@@ -2462,7 +2495,7 @@ void queueReaderRegisterMsgAndNotify(SstStream Stream,
     }
     else
     {
-        Stream->ReadRequestQueue = New;
+        Stream->ReaderRegisterQueue = New;
     }
     STREAM_CONDITION_SIGNAL(Stream);
     STREAM_MUTEX_UNLOCK(Stream);
@@ -2548,6 +2581,89 @@ void CP_ReaderActivateHandler(CManager cm, CMConnection conn, void *Msg_v,
     pthread_cond_signal(&CP_WSR_Stream->ParentStream->DataCondition);
     STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
     PERFSTUBS_TIMER_STOP_FUNC(timer);
+}
+
+void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn, void *Msg_v,
+                                 void *client_data, attr_list attrs)
+{
+    struct _ReaderRequestStepMsg *Msg = (struct _ReaderRequestStepMsg *)Msg_v;
+
+    WS_ReaderInfo CP_WSR_Stream = Msg->WSR_Stream;
+    SstStream Stream = CP_WSR_Stream->ParentStream;
+    CP_verbose(CP_WSR_Stream->ParentStream, PerStepVerbose,
+               "Reader Request Step  message received "
+               "for Stream %p.\n",
+               CP_WSR_Stream);
+    if (CP_WSR_Stream->ParentStream->ConfigParams->CPCommPattern ==
+        SstCPCommPeer)
+    {
+        assert(0);
+    }
+
+    STREAM_MUTEX_LOCK(CP_WSR_Stream->ParentStream);
+    CPTimestepList List = Stream->QueuedTimesteps;
+    int RequestingReader = -1;
+    for (int i = 0; i < Stream->ReaderCount; i++)
+    {
+        if (CP_WSR_Stream == Stream->Readers[i])
+        {
+            RequestingReader = i;
+        }
+    }
+    while (List)
+    {
+        size_t NextTS = Stream->LastDemandTimestep + 1;
+        CP_verbose(
+            Stream, TraceVerbose,
+            "In RequestStepHandler, trying to send TS %ld, examining TS %ld\n",
+            NextTS, List->Timestep);
+        if (CP_WSR_Stream->ReaderStatus != Established)
+        {
+            break; /* break out of while if we've fallen out of established
+                    */
+        }
+        if (List->Timestep == NextTS)
+        {
+            if (List->Expired && !List->PreciousTimestep)
+            {
+                CP_verbose(Stream, TraceVerbose,
+                           "Reader send queued skipping  TS %d, expired "
+                           "and not precious\n",
+                           List->Timestep, NextTS);
+                List = List->Next;
+                continue; /* skip timestep is expired, but not
+                             precious */
+            }
+            CP_verbose(Stream, PerStepVerbose,
+                       "Sending Queued TimestepMetadata for timestep %d, "
+                       "reference count = %d\n",
+                       NextTS, List->ReferenceCount);
+
+            SendTimestepEntryToSingleReader(Stream, List, CP_WSR_Stream,
+                                            RequestingReader);
+            STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
+            return;
+        }
+        List = List->Next;
+    }
+
+    CP_verbose(Stream, TraceVerbose,
+               "In RequestStepHandler, queueing request\n");
+    assert(RequestingReader != -1);
+    StepRequest Request = calloc(sizeof(*Request), 1);
+    Request->RequestingReader = RequestingReader;
+    if (!Stream->StepRequestQueue)
+    {
+        Stream->StepRequestQueue = Request;
+    }
+    else
+    {
+        StepRequest Last = Stream->StepRequestQueue;
+        while (Last->Next)
+            Last = Last->Next;
+        Last->Next = Request;
+    }
+    STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
 }
 
 extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
