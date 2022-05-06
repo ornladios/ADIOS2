@@ -78,7 +78,7 @@ size_t CompressBZIP2::Operate(const char *dataIn, const Dims &blockStart,
 
     unsigned int sourceOffset = 0;
     unsigned int batchInfoOffset = destOffset;
-    destOffset += batches * 4 * sizeof(unsigned int);
+    destOffset += static_cast<unsigned int>(batches * 4 * sizeof(unsigned int));
 
     for (size_t b = 0; b < batches; ++b)
     {

@@ -597,7 +597,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
                     "write buffer size needs to hold about " +
                         std::to_string(bufsize) + " bytes but max is set to " +
                         std::to_string(max_write_buffer_size),
-                    m_Rank, m_Rank, 0, 0, helper::LogMode::ERROR);
+                    m_Rank, m_Rank, 0, 0, helper::FATALERROR);
         return 1;
     }
 
@@ -608,7 +608,7 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io,
                         std::to_string(largest_block) +
                         " bytes but max is set to " +
                         std::to_string(max_read_buffer_size),
-                    m_Rank, m_Rank, 0, 0, helper::LogMode::ERROR);
+                    m_Rank, m_Rank, 0, 0, helper::FATALERROR);
         return 1;
     }
     return retval;
@@ -628,7 +628,7 @@ int Reorganize::ReadWrite(core::Engine &rStream, core::Engine &wStream,
                 std::to_string(nvars) +
                 ") to read does not match the number of processed variables (" +
                 std::to_string(varinfo.size()) + ")",
-            m_Rank, m_Rank, 0, 0, helper::LogMode::ERROR);
+            m_Rank, m_Rank, 0, 0, helper::FATALERROR);
     }
 
     /*
