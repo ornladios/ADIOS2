@@ -30,7 +30,6 @@
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
-#include "adios2/core/VariableCompound.h"
 #include "adios2/helper/adiosComm.h"
 
 namespace adios2
