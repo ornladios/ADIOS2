@@ -480,7 +480,6 @@ void DeserializeStructDefinitions(const Buffer &input, uint64_t &pos, IO &io,
         pos += 8;
         uint8_t items = input.value<uint8_t>(pos);
         ++pos;
-        bool defined = false;
         auto structDefinition = io.DefineStruct(defName, structSize);
         for (uint8_t j = 0; j < items; ++j)
         {

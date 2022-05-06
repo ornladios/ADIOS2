@@ -45,8 +45,8 @@ public:
 private:
     std::vector<StructItemDefinition> m_Definition;
     bool m_Frozen = false;
-    size_t m_StructSize;
     std::string m_Name;
+    size_t m_StructSize;
 };
 
 class VariableStruct : public VariableBase
