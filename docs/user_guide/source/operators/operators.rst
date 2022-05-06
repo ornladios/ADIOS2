@@ -25,3 +25,5 @@ Parameters are passed at:
 2. :ref:`Runtime Configuration Files` in the :ref:`ADIOS` component.
 
 .. include:: ZFPCompressor.rst
+.. include:: plugin.rst
+.. include:: encryption.rst
