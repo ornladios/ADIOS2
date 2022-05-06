@@ -21,11 +21,11 @@ target_link_libraries(Test.Engine.Common.MPI PRIVATE
 gtest_add_tests_helper(Common MPI_ONLY "" Engine. .File
   EXTRA_ARGS "File" "1"
 )
-                
+
 if(ADIOS2_HAVE_HDF5 AND HDF5_IS_PARALLEL)
   gtest_add_tests_helper(Common MPI_ONLY "" Engine. .HDF5
     EXTRA_ARGS "HDF5" "1"
-  )
+    )
 endif()
 
 if(ADIOS2_HAVE_SST)
@@ -39,7 +39,8 @@ endif()
 
 if(NOT MSVC)
   gtest_add_tests_helper(Common MPI_ONLY "" Engine. .SSC
-      EXTRA_ARGS "SSC" "0"
+    EXTRA_ARGS "SSC" "0"
+    )
 endif()
 
 )
