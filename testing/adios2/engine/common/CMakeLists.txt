@@ -43,8 +43,6 @@ if(NOT MSVC)
     )
 endif()
 
-)
-
 #if(ADIOS2_HAVE_DataMan)
 #  gtest_add_tests_helper(Common MPI_ONLY "" Engine. .DataMan
 #    EXTRA_ARGS "DataMan" "0"
