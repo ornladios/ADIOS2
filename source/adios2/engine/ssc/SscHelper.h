@@ -112,6 +112,7 @@ private:
 struct BlockInfo
 {
     std::string name;
+    std::string structDef;
     DataType type;
     size_t elementSize;
     ShapeID shapeId;

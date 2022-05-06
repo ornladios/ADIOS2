@@ -47,8 +47,6 @@ void SscWriterNaive::EndStep(const bool writerLocked)
     m_Buffer.value<uint64_t>() = m_Buffer.size();
     m_Buffer.value<uint64_t>(8) = m_Buffer.size();
 
-    ssc::SerializeVariables(m_Metadata, m_Buffer, m_WriterRank);
-
     if (m_WriterRank == 0)
     {
         ssc::SerializeStructDefinitions(m_IO.m_ADIOS.StructDefinitions(),
@@ -59,6 +57,8 @@ void SscWriterNaive::EndStep(const bool writerLocked)
     {
         ssc::SerializeAttributes(m_IO, m_Buffer);
     }
+
+    ssc::SerializeVariables(m_Metadata, m_Buffer, m_WriterRank);
 
     int localSize = static_cast<int>(m_Buffer.value<uint64_t>());
     std::vector<int> localSizes(m_WriterSize);
@@ -174,6 +174,11 @@ void SscWriterNaive::PutDeferred(VariableBase &variable, const void *data)
         {
             b.value.resize(variable.m_ElementSize);
             std::memcpy(b.value.data(), data, b.bufferCount);
+        }
+        if (variable.m_Type == DataType::Struct)
+        {
+            b.structDef = reinterpret_cast<VariableStruct *>(&variable)
+                              ->m_StructDefinition.Name();
         }
     }
 }

@@ -152,6 +152,15 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
     engine.LockReaderSelections();
 
+    auto particleDef1 = adios.DefineStruct("particle1", sizeof(particle));
+    particleDef1.AddItem("a", 0, adios2::DataType::Int8, 1);
+    particleDef1.AddItem("b", 4, adios2::DataType::Int32, 4);
+
+    auto particleDef2 = adios.DefineStruct("particle2", sizeof(particle) + 4);
+    particleDef2.AddItem("a", 0, adios2::DataType::Int8, 1);
+    particleDef2.AddItem("b", 4, adios2::DataType::Int32, 4);
+    particleDef2.AddItem("c", 20, adios2::DataType::Int32, 1);
+
     while (true)
     {
         adios2::StepStatus status = engine.BeginStep(StepMode::Read, 5);
@@ -254,25 +263,56 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             engine.Get(varIntScalar, &i);
             engine.PerformGets();
 
-            auto varStruct = io.InquireVariable("particles");
-            varStruct.SetSelection({start, count});
-            ASSERT_TRUE(varStruct);
-            engine.Get(varStruct, myParticles.data(), adios2::Mode::Sync);
-            for (size_t i = 0; i < datasize; ++i)
             {
-                ASSERT_EQ(myParticles[i].a, 5);
-                ASSERT_EQ(myParticles[i].b[0], 0);
-                ASSERT_EQ(myParticles[i].b[1], 10);
-                ASSERT_EQ(myParticles[i].b[2], 20);
-                ASSERT_EQ(myParticles[i].b[3], 30);
+                auto varStruct = io.InquireVariable("particles");
+                varStruct.SetSelection({start, count});
+                ASSERT_TRUE(varStruct);
+                engine.Get(varStruct, myParticles.data(), adios2::Mode::Sync);
+                for (size_t i = 0; i < datasize; ++i)
+                {
+                    ASSERT_EQ(myParticles[i].a, 5);
+                    ASSERT_EQ(myParticles[i].b[0], 0);
+                    ASSERT_EQ(myParticles[i].b[1], 10);
+                    ASSERT_EQ(myParticles[i].b[2], 20);
+                    ASSERT_EQ(myParticles[i].b[3], 30);
+                }
+                auto structBlocks = engine.BlocksInfo(varStruct, currentStep);
+                ASSERT_EQ(structBlocks.size(), worldSize - mpiSize);
+                for (size_t i = 0; i < structBlocks.size(); ++i)
+                {
+                    ASSERT_FALSE(structBlocks[i].IsValue);
+                    ASSERT_FALSE(structBlocks[i].IsReverseDims);
+                    ASSERT_EQ(structBlocks[i].Step, currentStep);
+                }
             }
-            auto structBlocks = engine.BlocksInfo(varStruct, currentStep);
-            ASSERT_EQ(structBlocks.size(), worldSize - mpiSize);
-            for (size_t i = 0; i < structBlocks.size(); ++i)
+
             {
-                ASSERT_FALSE(structBlocks[i].IsValue);
-                ASSERT_FALSE(structBlocks[i].IsReverseDims);
-                ASSERT_EQ(structBlocks[i].Step, currentStep);
+                auto varStruct =
+                    io.InquireStructVariable("particles", particleDef1);
+                varStruct.SetSelection({start, count});
+                ASSERT_TRUE(varStruct);
+                engine.Get(varStruct, myParticles.data(), adios2::Mode::Sync);
+                for (size_t i = 0; i < datasize; ++i)
+                {
+                    ASSERT_EQ(myParticles[i].a, 5);
+                    ASSERT_EQ(myParticles[i].b[0], 0);
+                    ASSERT_EQ(myParticles[i].b[1], 10);
+                    ASSERT_EQ(myParticles[i].b[2], 20);
+                    ASSERT_EQ(myParticles[i].b[3], 30);
+                }
+                auto structBlocks = engine.BlocksInfo(varStruct, currentStep);
+                ASSERT_EQ(structBlocks.size(), worldSize - mpiSize);
+                for (size_t i = 0; i < structBlocks.size(); ++i)
+                {
+                    ASSERT_FALSE(structBlocks[i].IsValue);
+                    ASSERT_FALSE(structBlocks[i].IsReverseDims);
+                    ASSERT_EQ(structBlocks[i].Step, currentStep);
+                }
+            }
+            {
+                auto varStruct =
+                    io.InquireStructVariable("particles", particleDef2);
+                ASSERT_FALSE(varStruct);
             }
 
             ASSERT_EQ(i, currentStep);

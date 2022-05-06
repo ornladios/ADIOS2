@@ -30,13 +30,14 @@ public:
         size_t Size;
     };
 
-    StructDefinition(const size_t size);
+    StructDefinition(const std::string &name, const size_t size);
     void AddItem(const std::string &name, const size_t offset,
                  const DataType type, const size_t size = 1);
     void Freeze() noexcept;
     size_t StructSize() const noexcept;
     size_t Items() const noexcept;
     std::string Name(const size_t index) const;
+    std::string Name() const noexcept;
     size_t Offset(const size_t index) const;
     DataType Type(const size_t index) const;
     size_t Size(const size_t index) const;
@@ -45,6 +46,7 @@ private:
     std::vector<StructItemDefinition> m_Definition;
     bool m_Frozen = false;
     size_t m_StructSize;
+    std::string m_Name;
 };
 
 class VariableStruct : public VariableBase

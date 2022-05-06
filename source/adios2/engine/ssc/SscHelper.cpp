@@ -124,6 +124,15 @@ void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
         output.value(pos) = static_cast<uint8_t>(b.type);
         ++pos;
 
+        if (b.type == DataType::Struct)
+        {
+            output.value(pos) = static_cast<uint8_t>(b.structDef.size());
+            ++pos;
+            std::memcpy(output.data(pos), b.structDef.data(),
+                        b.structDef.size());
+            pos += b.structDef.size();
+        }
+
         output.value<uint64_t>(pos) = static_cast<uint64_t>(b.elementSize);
         pos += 8;
 
@@ -180,6 +189,16 @@ void DeserializeVariable(const Buffer &input, const ShapeID shapeId,
     b.type = static_cast<DataType>(input[pos]);
     ++pos;
 
+    if (b.type == DataType::Struct)
+    {
+        uint8_t structDefSize = input.value<uint8_t>(pos);
+        ++pos;
+        std::vector<char> structDefChar(structDefSize);
+        std::memcpy(structDefChar.data(), input.data(pos), structDefSize);
+        pos += structDefSize;
+        b.structDef = std::string(structDefChar.begin(), structDefChar.end());
+    }
+
     b.elementSize = input.value<uint64_t>(pos);
     pos += 8;
 
@@ -229,9 +248,18 @@ void DeserializeVariable(const Buffer &input, const ShapeID shapeId,
                 }
                 if (b.shapeId == ShapeID::GlobalArray)
                 {
-                    auto def = io.DefineStruct(b.name, b.elementSize);
-                    io.DefineStructVariable(b.name, def, vShape, vStart,
-                                            vShape);
+                    auto def = io.InquireStruct(b.structDef);
+                    if (def == nullptr)
+                    {
+                        helper::Throw<std::runtime_error>(
+                            "Engine", "SscHelper", "DeserializeVariable",
+                            "struct type " + b.structDef + " not defined");
+                    }
+                    else
+                    {
+                        io.DefineStructVariable(b.name, *def, vShape, vStart,
+                                                vShape);
+                    }
                 }
             }
         }
@@ -452,6 +480,7 @@ void DeserializeStructDefinitions(const Buffer &input, uint64_t &pos, IO &io,
         pos += 8;
         uint8_t items = input.value<uint8_t>(pos);
         ++pos;
+        bool defined = false;
         auto structDefinition = io.DefineStruct(defName, structSize);
         for (uint8_t j = 0; j < items; ++j)
         {
@@ -468,7 +497,11 @@ void DeserializeStructDefinitions(const Buffer &input, uint64_t &pos, IO &io,
             pos += sizeof(DataType);
             size_t itemSize = input.value<uint64_t>(pos);
             pos += 8;
-            structDefinition.AddItem(itemName, itemOffset, itemType, itemSize);
+            if (structDefinition != nullptr)
+            {
+                structDefinition->AddItem(itemName, itemOffset, itemType,
+                                          itemSize);
+            }
         }
     }
 }
