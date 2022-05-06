@@ -40,13 +40,12 @@ public:
     void Close(const int transportIndex) final;
 
 #define declare_type(T)                                                        \
-    void GetDeferred(Variable<T> &, T *) final;                                \
     std::vector<typename Variable<T>::BPInfo> BlocksInfo(                      \
         const Variable<T> &variable, const size_t step) const final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-    void GetDeferred(VariableStruct &, void *) final;
+    void GetDeferred(VariableBase &, void *) final;
 
 private:
     bool m_StepBegun = false;
@@ -78,8 +77,7 @@ private:
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
-    template <class T>
-    void GetDeferredDeltaCommon(Variable<T> &variable, T *data);
+    void GetDeferredDeltaCommon(VariableBase &variable, void *data);
 };
 
 }
