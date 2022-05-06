@@ -106,9 +106,9 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     size_t datasize = std::accumulate(count.begin(), count.end(), 1,
                                       std::multiplies<size_t>());
     adios2::ADIOS adios;
-    adios2::IO dataManIO = adios.DeclareIO("WAN");
-    dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters(engineParams);
+    adios2::IO io = adios.DeclareIO("WAN");
+    io.SetEngine("DataMan");
+    io.SetParameters(engineParams);
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -119,31 +119,27 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     std::vector<double> myDoubles(datasize);
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
-    auto bpChars =
-        dataManIO.DefineVariable<char>("bpChars", shape, start, count);
-    auto bpUChars = dataManIO.DefineVariable<unsigned char>("bpUChars", shape,
-                                                            start, count);
-    auto bpShorts =
-        dataManIO.DefineVariable<short>("bpShorts", shape, start, count);
-    auto bpUShorts = dataManIO.DefineVariable<unsigned short>(
-        "bpUShorts", shape, start, count);
-    auto bpInts = dataManIO.DefineVariable<int>("bpInts", shape, start, count);
-    auto bpUInts =
-        dataManIO.DefineVariable<unsigned int>("bpUInts", shape, start, count);
-    auto bpFloats =
-        dataManIO.DefineVariable<float>("bpFloats", shape, start, count);
-    auto bpDoubles =
-        dataManIO.DefineVariable<double>("bpDoubles", shape, start, count);
-    auto bpComplexes = dataManIO.DefineVariable<std::complex<float>>(
-        "bpComplexes", shape, start, count);
-    auto bpDComplexes = dataManIO.DefineVariable<std::complex<double>>(
-        "bpDComplexes", shape, start, count);
-    dataManIO.DefineAttribute<int>("AttInt", 110);
-    adios2::Engine dataManWriter =
-        dataManIO.Open("stream", adios2::Mode::Write);
+    auto varChars = io.DefineVariable<char>("varChars", shape, start, count);
+    auto varUChars =
+        io.DefineVariable<unsigned char>("varUChars", shape, start, count);
+    auto varShorts = io.DefineVariable<short>("varShorts", shape, start, count);
+    auto varUShorts =
+        io.DefineVariable<unsigned short>("varUShorts", shape, start, count);
+    auto varInts = io.DefineVariable<int>("varInts", shape, start, count);
+    auto varUInts =
+        io.DefineVariable<unsigned int>("varUInts", shape, start, count);
+    auto varFloats = io.DefineVariable<float>("varFloats", shape, start, count);
+    auto varDoubles =
+        io.DefineVariable<double>("varDoubles", shape, start, count);
+    auto varComplexes = io.DefineVariable<std::complex<float>>(
+        "varComplexes", shape, start, count);
+    auto varDComplexes = io.DefineVariable<std::complex<double>>(
+        "varDComplexes", shape, start, count);
+    io.DefineAttribute<int>("AttInt", 110);
+    adios2::Engine engine = io.Open("stream", adios2::Mode::Write);
     for (size_t i = 0; i < steps; ++i)
     {
-        dataManWriter.BeginStep();
+        engine.BeginStep();
         GenData(myChars, i, start, count, shape);
         GenData(myUChars, i, start, count, shape);
         GenData(myShorts, i, start, count, shape);
@@ -154,20 +150,19 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
         GenData(myDoubles, i, start, count, shape);
         GenData(myComplexes, i, start, count, shape);
         GenData(myDComplexes, i, start, count, shape);
-        dataManWriter.Put(bpChars, myChars.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpUChars, myUChars.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpShorts, myShorts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpInts, myInts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-        dataManWriter.Put(bpDComplexes, myDComplexes.data(),
-                          adios2::Mode::Sync);
-        dataManWriter.EndStep();
+        engine.Put(varChars, myChars.data(), adios2::Mode::Sync);
+        engine.Put(varUChars, myUChars.data(), adios2::Mode::Sync);
+        engine.Put(varShorts, myShorts.data(), adios2::Mode::Sync);
+        engine.Put(varUShorts, myUShorts.data(), adios2::Mode::Sync);
+        engine.Put(varInts, myInts.data(), adios2::Mode::Sync);
+        engine.Put(varUInts, myUInts.data(), adios2::Mode::Sync);
+        engine.Put(varFloats, myFloats.data(), adios2::Mode::Sync);
+        engine.Put(varDoubles, myDoubles.data(), adios2::Mode::Sync);
+        engine.Put(varComplexes, myComplexes.data(), adios2::Mode::Sync);
+        engine.Put(varDComplexes, myDComplexes.data(), adios2::Mode::Sync);
+        engine.EndStep();
     }
-    dataManWriter.Close();
+    engine.Close();
 }
 
 void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
@@ -176,10 +171,10 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                                const adios2::Params &engineParams)
 {
     adios2::ADIOS adios;
-    adios2::IO dataManIO = adios.DeclareIO("WAN");
-    dataManIO.SetEngine("DataMan");
-    dataManIO.SetParameters(engineParams);
-    adios2::Engine dataManReader = dataManIO.Open("stream", adios2::Mode::Read);
+    adios2::IO io = adios.DeclareIO("WAN");
+    io.SetEngine("DataMan");
+    io.SetParameters(engineParams);
+    adios2::Engine engine = io.Open("stream", adios2::Mode::Read);
 
     size_t datasize = std::accumulate(memCount.begin(), memCount.end(), 1,
                                       std::multiplies<size_t>());
@@ -197,13 +192,13 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
     size_t currentStep;
     while (true)
     {
-        adios2::StepStatus status = dataManReader.BeginStep();
+        adios2::StepStatus status = engine.BeginStep();
         if (status == adios2::StepStatus::OK)
         {
             received_steps = true;
-            const auto &vars = dataManIO.AvailableVariables();
+            const auto &vars = io.AvailableVariables();
             ASSERT_EQ(vars.size(), 10);
-            currentStep = dataManReader.CurrentStep();
+            currentStep = engine.CurrentStep();
             GenData(myChars, currentStep, memStart, memCount, shape);
             GenData(myUChars, currentStep, memStart, memCount, shape);
             GenData(myShorts, currentStep, memStart, memCount, shape);
@@ -214,62 +209,59 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
             GenData(myDoubles, currentStep, memStart, memCount, shape);
             GenData(myComplexes, currentStep, memStart, memCount, shape);
             GenData(myDComplexes, currentStep, memStart, memCount, shape);
-            adios2::Variable<char> bpChars =
-                dataManIO.InquireVariable<char>("bpChars");
-            adios2::Variable<unsigned char> bpUChars =
-                dataManIO.InquireVariable<unsigned char>("bpUChars");
-            adios2::Variable<short> bpShorts =
-                dataManIO.InquireVariable<short>("bpShorts");
-            adios2::Variable<unsigned short> bpUShorts =
-                dataManIO.InquireVariable<unsigned short>("bpUShorts");
-            adios2::Variable<int> bpInts =
-                dataManIO.InquireVariable<int>("bpInts");
-            adios2::Variable<unsigned int> bpUInts =
-                dataManIO.InquireVariable<unsigned int>("bpUInts");
-            adios2::Variable<float> bpFloats =
-                dataManIO.InquireVariable<float>("bpFloats");
-            adios2::Variable<double> bpDoubles =
-                dataManIO.InquireVariable<double>("bpDoubles");
-            adios2::Variable<std::complex<float>> bpComplexes =
-                dataManIO.InquireVariable<std::complex<float>>("bpComplexes");
-            adios2::Variable<std::complex<double>> bpDComplexes =
-                dataManIO.InquireVariable<std::complex<double>>("bpDComplexes");
-            auto charsBlocksInfo = dataManReader.AllStepsBlocksInfo(bpChars);
+            adios2::Variable<char> varChars =
+                io.InquireVariable<char>("varChars");
+            adios2::Variable<unsigned char> varUChars =
+                io.InquireVariable<unsigned char>("varUChars");
+            adios2::Variable<short> varShorts =
+                io.InquireVariable<short>("varShorts");
+            adios2::Variable<unsigned short> varUShorts =
+                io.InquireVariable<unsigned short>("varUShorts");
+            adios2::Variable<int> varInts = io.InquireVariable<int>("varInts");
+            adios2::Variable<unsigned int> varUInts =
+                io.InquireVariable<unsigned int>("varUInts");
+            adios2::Variable<float> varFloats =
+                io.InquireVariable<float>("varFloats");
+            adios2::Variable<double> varDoubles =
+                io.InquireVariable<double>("varDoubles");
+            adios2::Variable<std::complex<float>> varComplexes =
+                io.InquireVariable<std::complex<float>>("varComplexes");
+            adios2::Variable<std::complex<double>> varDComplexes =
+                io.InquireVariable<std::complex<double>>("varDComplexes");
+            auto charsBlocksInfo = engine.AllStepsBlocksInfo(varChars);
 
-            bpChars.SetSelection({start, count});
-            bpUChars.SetSelection({start, count});
-            bpShorts.SetSelection({start, count});
-            bpUShorts.SetSelection({start, count});
-            bpInts.SetSelection({start, count});
-            bpUInts.SetSelection({start, count});
-            bpFloats.SetSelection({start, count});
-            bpDoubles.SetSelection({start, count});
-            bpComplexes.SetSelection({start, count});
-            bpDComplexes.SetSelection({start, count});
+            varChars.SetSelection({start, count});
+            varUChars.SetSelection({start, count});
+            varShorts.SetSelection({start, count});
+            varUShorts.SetSelection({start, count});
+            varInts.SetSelection({start, count});
+            varUInts.SetSelection({start, count});
+            varFloats.SetSelection({start, count});
+            varDoubles.SetSelection({start, count});
+            varComplexes.SetSelection({start, count});
+            varDComplexes.SetSelection({start, count});
 
-            bpChars.SetMemorySelection({memStart, memCount});
-            bpUChars.SetMemorySelection({memStart, memCount});
-            bpShorts.SetMemorySelection({memStart, memCount});
-            bpUShorts.SetMemorySelection({memStart, memCount});
-            bpInts.SetMemorySelection({memStart, memCount});
-            bpUInts.SetMemorySelection({memStart, memCount});
-            bpFloats.SetMemorySelection({memStart, memCount});
-            bpDoubles.SetMemorySelection({memStart, memCount});
-            bpComplexes.SetMemorySelection({memStart, memCount});
-            bpDComplexes.SetMemorySelection({memStart, memCount});
+            varChars.SetMemorySelection({memStart, memCount});
+            varUChars.SetMemorySelection({memStart, memCount});
+            varShorts.SetMemorySelection({memStart, memCount});
+            varUShorts.SetMemorySelection({memStart, memCount});
+            varInts.SetMemorySelection({memStart, memCount});
+            varUInts.SetMemorySelection({memStart, memCount});
+            varFloats.SetMemorySelection({memStart, memCount});
+            varDoubles.SetMemorySelection({memStart, memCount});
+            varComplexes.SetMemorySelection({memStart, memCount});
+            varDComplexes.SetMemorySelection({memStart, memCount});
 
-            dataManReader.Get(bpChars, myChars.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpUChars, myUChars.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpShorts, myShorts.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpInts, myInts.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpUInts, myUInts.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpFloats, myFloats.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-            dataManReader.Get(bpComplexes, myComplexes.data(),
-                              adios2::Mode::Sync);
-            dataManReader.Get(bpDComplexes, myDComplexes.data(),
-                              adios2::Mode::Sync);
+            engine.Get(varChars, myChars.data(), adios2::Mode::Sync);
+            engine.Get(varUChars, myUChars.data(), adios2::Mode::Sync);
+            engine.Get(varShorts, myShorts.data(), adios2::Mode::Sync);
+            engine.Get(varUShorts, myUShorts.data(), adios2::Mode::Sync);
+            engine.Get(varInts, myInts.data(), adios2::Mode::Sync);
+            engine.Get(varUInts, myUInts.data(), adios2::Mode::Sync);
+            engine.Get(varFloats, myFloats.data(), adios2::Mode::Sync);
+            engine.Get(varDoubles, myDoubles.data(), adios2::Mode::Sync);
+            engine.Get(varComplexes, myComplexes.data(), adios2::Mode::Sync);
+            engine.Get(varDComplexes, myDComplexes.data(), adios2::Mode::Sync);
             VerifyData(myChars.data(), currentStep, memStart, memCount, shape);
             VerifyData(myUChars.data(), currentStep, memStart, memCount, shape);
             VerifyData(myShorts.data(), currentStep, memStart, memCount, shape);
@@ -284,7 +276,7 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
                        shape);
             VerifyData(myDComplexes.data(), currentStep, memStart, memCount,
                        shape);
-            dataManReader.EndStep();
+            engine.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
@@ -297,10 +289,10 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
     }
     if (received_steps)
     {
-        auto attInt = dataManIO.InquireAttribute<int>("AttInt");
+        auto attInt = io.InquireAttribute<int>("AttInt");
         ASSERT_EQ(110, attInt.Data()[0]);
     }
-    dataManReader.Close();
+    engine.Close();
     print_lines = 0;
 }
 

@@ -132,7 +132,7 @@ StepStatus SscReaderGeneric::BeginStep(const StepMode stepMode,
 #undef declare_type
                 else
                 {
-                    helper::Log("Engine", "SscReader", "BeginStep",
+                    helper::Log("Engine", "SscReaderGeneric", "BeginStep",
                                 "unknown data type", m_ReaderRank, m_ReaderRank,
                                 0, m_Verbosity, helper::FATALERROR);
                 }
@@ -266,10 +266,10 @@ void SscReaderGeneric::PerformGets()
                     {
                         if (b.type == DataType::None)
                         {
-                            helper::Log("Engine", "SscReader", "PerformGets",
-                                        "unknown data type", m_ReaderRank,
-                                        m_ReaderRank, 0, m_Verbosity,
-                                        helper::FATALERROR);
+                            helper::Log("Engine", "SscReaderGeneric",
+                                        "PerformGets", "unknown data type",
+                                        m_ReaderRank, m_ReaderRank, 0,
+                                        m_Verbosity, helper::FATALERROR);
                         }
                         else if (b.type == DataType::String)
                         {
@@ -559,9 +559,9 @@ void SscReaderGeneric::GetDeferred(VariableBase &variable, void *data)
                     }
                     else
                     {
-                        helper::Log("Engine", "SscReader", "GetDeferredCommon",
-                                    "unknown ShapeID", m_ReaderRank,
-                                    m_ReaderRank, 0, m_Verbosity,
+                        helper::Log("Engine", "SscReaderGeneric",
+                                    "GetDeferredCommon", "unknown ShapeID",
+                                    m_ReaderRank, m_ReaderRank, 0, m_Verbosity,
                                     helper::LogMode::FATALERROR);
                     }
                 }
