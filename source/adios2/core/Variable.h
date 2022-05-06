@@ -107,8 +107,6 @@ public:
 
     size_t SubStreamsInfoSize();
 
-    Dims Shape(const size_t step = adios2::EngineCurrentStep) const;
-
     Dims Count() const;
 
     size_t SelectionSize() const;
@@ -123,8 +121,6 @@ public:
     AllStepsBlocksInfo() const;
 
 private:
-    Dims DoShape(const size_t step) const;
-
     Dims DoCount() const;
 
     size_t DoSelectionSize() const;
@@ -133,8 +129,6 @@ private:
 
     std::vector<std::vector<typename Variable<T>::BPInfo>>
     DoAllStepsBlocksInfo() const;
-
-    void CheckRandomAccess(const size_t step, const std::string hint) const;
 
     size_t WriterIndex;
 };
