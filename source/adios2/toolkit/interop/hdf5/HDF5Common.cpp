@@ -1629,7 +1629,11 @@ void HDF5Common::ReadAttrToIO(core::IO &io)
     H5O_info_t oinfo;
 
 #if H5_VERSION_GE(1, 11, 0)
+#if (defined H5_USE_16_API || defined H5_USE_18_API)
+    herr_t ret = H5Oget_info(m_FileId, &oinfo);
+#else
     herr_t ret = H5Oget_info(m_FileId, &oinfo, H5O_INFO_ALL);
+#endif
 #else
     herr_t ret = H5Oget_info(m_FileId, &oinfo);
 #endif
@@ -1685,7 +1689,11 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
 
     H5O_info_t oinfo;
 #if H5_VERSION_GE(1, 11, 0)
+#if (defined H5_USE_16_API || defined H5_USE_18_API)
+    herr_t ret = H5Oget_info(datasetId, &oinfo);
+#else
     herr_t ret = H5Oget_info(datasetId, &oinfo, H5O_INFO_ALL);
+#endif
 #else
     herr_t ret = H5Oget_info(datasetId, &oinfo);
 #endif
