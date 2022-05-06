@@ -29,10 +29,10 @@ SscReaderGeneric::BlocksInfoCommon(const Variable<T> &variable,
                                    const size_t step) const
 {
     std::vector<typename Variable<T>::BPInfo> ret;
-
-    for (const auto &r : m_GlobalWritePattern)
+    size_t blockID = 0;
+    for (int i = 0; i < static_cast<int>(m_GlobalWritePattern.size()); ++i)
     {
-        for (auto &v : r)
+        for (auto &v : m_GlobalWritePattern[i])
         {
             if (v.name == variable.m_Name)
             {
@@ -44,11 +44,11 @@ SscReaderGeneric::BlocksInfoCommon(const Variable<T> &variable,
                 b.Step = m_CurrentStep;
                 b.StepsStart = m_CurrentStep;
                 b.StepsCount = 1;
+                b.WriterID = i;
+                b.BlockID = blockID;
                 if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
                 {
-                    std::reverse(b.Start.begin(), b.Start.end());
-                    std::reverse(b.Count.begin(), b.Count.end());
-                    std::reverse(b.Shape.begin(), b.Shape.end());
+                    b.IsReverseDims = true;
                 }
                 if (v.shapeId == ShapeID::GlobalValue ||
                     v.shapeId == ShapeID::LocalValue)
@@ -68,6 +68,7 @@ SscReaderGeneric::BlocksInfoCommon(const Variable<T> &variable,
                                     v.bufferCount);
                     }
                 }
+                ++blockID;
             }
         }
     }

@@ -29,6 +29,7 @@ SscReaderNaive::BlocksInfoCommon(const Variable<T> &variable,
                                  const size_t step) const
 {
     std::vector<typename Variable<T>::BPInfo> ret;
+    size_t blockID = 0;
     auto it = m_BlockMap.find(variable.m_Name);
     if (it != m_BlockMap.end())
     {
@@ -42,11 +43,10 @@ SscReaderNaive::BlocksInfoCommon(const Variable<T> &variable,
             b.Step = m_CurrentStep;
             b.StepsStart = m_CurrentStep;
             b.StepsCount = 1;
+            b.BlockID = blockID;
             if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
             {
-                std::reverse(b.Start.begin(), b.Start.end());
-                std::reverse(b.Count.begin(), b.Count.end());
-                std::reverse(b.Shape.begin(), b.Shape.end());
+                b.IsReverseDims = true;
             }
             if (v.shapeId == ShapeID::GlobalValue ||
                 v.shapeId == ShapeID::LocalValue)
@@ -55,6 +55,7 @@ SscReaderNaive::BlocksInfoCommon(const Variable<T> &variable,
                 std::memcpy(reinterpret_cast<char *>(&b.Value), v.value.data(),
                             v.value.size());
             }
+            ++blockID;
         }
     }
     return ret;

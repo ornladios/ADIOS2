@@ -30,6 +30,7 @@
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/Variable.h"
+#include "adios2/core/VariableStruct.h"
 #include "adios2/helper/adiosComm.h"
 
 namespace adios2
@@ -404,6 +405,9 @@ public:
     std::map<size_t, std::vector<typename Variable<T>::BPInfo>>
     AllStepsBlocksInfo(const Variable<T> &variable) const;
 
+    std::map<size_t, std::vector<VariableStruct::BPInfo>>
+    AllStepsBlocksInfoStruct(const VariableStruct &variable) const;
+
     /**
      * This function is internal, for public interface use
      * Variable<T>::AllStepsBlocksInfo
@@ -413,6 +417,9 @@ public:
     template <class T>
     std::vector<std::vector<typename Variable<T>::BPInfo>>
     AllRelativeStepsBlocksInfo(const Variable<T> &variable) const;
+
+    std::vector<std::vector<VariableStruct::BPInfo>>
+    AllRelativeStepsBlocksInfoStruct(const VariableStruct &variable) const;
 
     /**
      * Extracts all available blocks information for a particular
@@ -426,6 +433,9 @@ public:
     template <class T>
     std::vector<typename Variable<T>::BPInfo>
     BlocksInfo(const Variable<T> &variable, const size_t step) const;
+
+    std::vector<VariableStruct::BPInfo>
+    BlocksInfoStruct(const VariableStruct &variable, const size_t step) const;
 
     /**
      * Get the absolute steps of a variable in a file. This is for
@@ -571,6 +581,15 @@ protected:
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+    virtual std::map<size_t, std::vector<VariableStruct::BPInfo>>
+    DoAllStepsBlocksInfoStruct(const VariableStruct &variable) const;
+
+    virtual std::vector<std::vector<VariableStruct::BPInfo>>
+    DoAllRelativeStepsBlocksInfoStruct(const VariableStruct &variable) const;
+
+    virtual std::vector<VariableStruct::BPInfo>
+    DoBlocksInfoStruct(const VariableStruct &variable, const size_t step) const;
 
 #define declare_type(T, L)                                                     \
     virtual T *DoBufferData_##L(const int bufferIdx,                           \

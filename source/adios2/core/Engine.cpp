@@ -237,6 +237,28 @@ void Engine::DoGetStructDeferred(VariableStruct &, void *)
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+std::map<size_t, std::vector<VariableStruct::BPInfo>>
+Engine::DoAllStepsBlocksInfoStruct(const VariableStruct &variable) const
+{
+    ThrowUp("DoAllStepsBlocksInfo");
+    return std::map<size_t, std::vector<VariableStruct::BPInfo>>();
+}
+
+std::vector<std::vector<VariableStruct::BPInfo>>
+Engine::DoAllRelativeStepsBlocksInfoStruct(const VariableStruct &variable) const
+{
+    ThrowUp("DoAllRelativeStepsBlocksInfo");
+    return std::vector<std::vector<VariableStruct::BPInfo>>();
+}
+
+std::vector<VariableStruct::BPInfo>
+Engine::DoBlocksInfoStruct(const VariableStruct &variable,
+                           const size_t step) const
+{
+    ThrowUp("DoBlocksInfo");
+    return std::vector<VariableStruct::BPInfo>();
+}
+
 #define declare_type(T, L)                                                     \
     T *Engine::DoBufferData_##L(const int bufferIdx,                           \
                                 const size_t payloadPosition,                  \
@@ -288,6 +310,25 @@ void Engine::CommonChecks(VariableBase &variable, const void *data,
         helper::CheckForNullptr(
             data, "for data argument in non-zero count block, " + hint);
     }
+}
+
+std::map<size_t, std::vector<VariableStruct::BPInfo>>
+Engine::AllStepsBlocksInfoStruct(const VariableStruct &variable) const
+{
+    return DoAllStepsBlocksInfoStruct(variable);
+}
+
+std::vector<std::vector<VariableStruct::BPInfo>>
+Engine::AllRelativeStepsBlocksInfoStruct(const VariableStruct &variable) const
+{
+    return DoAllRelativeStepsBlocksInfoStruct(variable);
+}
+
+std::vector<VariableStruct::BPInfo>
+Engine::BlocksInfoStruct(const VariableStruct &variable,
+                         const size_t step) const
+{
+    return DoBlocksInfoStruct(variable, step);
 }
 
 // PUBLIC TEMPLATE FUNCTIONS EXPANSION WITH SCOPED TYPES

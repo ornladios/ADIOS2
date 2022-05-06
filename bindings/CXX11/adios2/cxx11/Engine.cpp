@@ -223,6 +223,121 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
+std::vector<VariableNT::Info> Engine::BlocksInfo(const VariableNT &variable,
+                                                 const size_t step) const
+{
+    std::vector<VariableNT::Info> ret;
+    if (variable.m_Variable->m_Type == DataType::Struct)
+    {
+        adios2::helper::CheckForNullptr(
+            m_Engine, "for Engine in call to Engine::BlocksInfo");
+        adios2::helper::CheckForNullptr(
+            variable.m_Variable, "for variable in call to Engine::BlocksInfo");
+        auto blocksInfo = m_Engine->BlocksInfoStruct(
+            *reinterpret_cast<core::VariableStruct *>(variable.m_Variable),
+            step);
+        for (const auto &b : blocksInfo)
+        {
+            ret.emplace_back();
+            auto &br = ret.back();
+            br.Start = b.Start;
+            br.Count = b.Count;
+            br.WriterID = b.WriterID;
+            br.Step = b.Step;
+            br.IsReverseDims = b.IsReverseDims;
+            br.IsValue = b.IsValue;
+        }
+    }
+#define declare_type(T)                                                        \
+    else if (variable.m_Variable->m_Type == helper::GetDataType<T>())          \
+    {                                                                          \
+        auto blocksInfoT =                                                     \
+            BlocksInfo(Variable<T>(reinterpret_cast<core::Variable<T> *>(      \
+                           variable.m_Variable)),                              \
+                       step);                                                  \
+        for (const auto &b : blocksInfoT)                                      \
+        {                                                                      \
+            ret.emplace_back();                                                \
+            auto &br = ret.back();                                             \
+            br.Start = b.Start;                                                \
+            br.Count = b.Count;                                                \
+            br.WriterID = b.WriterID;                                          \
+            br.Step = b.Step;                                                  \
+            br.IsReverseDims = b.IsReverseDims;                                \
+            br.IsValue = b.IsValue;                                            \
+        }                                                                      \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    else
+    {
+        helper::Throw<std::runtime_error>("bindings::CXX11", "Engine",
+                                          "BlocksInfo", "invalid data type");
+    }
+    return ret;
+}
+
+std::map<size_t, std::vector<VariableNT::Info>>
+Engine::AllStepsBlocksInfo(const VariableNT &variable) const
+{
+    std::map<size_t, std::vector<VariableNT::Info>> ret;
+    if (variable.m_Variable->m_Type == DataType::Struct)
+    {
+        adios2::helper::CheckForNullptr(
+            m_Engine, "for Engine in call to Engine::AllStepsBlocksInfo");
+        adios2::helper::CheckForNullptr(
+            variable.m_Variable,
+            "for variable in call to Engine::AllStepsBlocksInfo");
+        auto blocksInfo = m_Engine->AllStepsBlocksInfoStruct(
+            *reinterpret_cast<core::VariableStruct *>(variable.m_Variable));
+        for (const auto &bv : blocksInfo)
+        {
+            auto &bvr = ret[bv.first];
+            for (const auto &b : bv.second)
+            {
+                bvr.emplace_back();
+                auto &br = bvr.back();
+                br.Start = b.Start;
+                br.Count = b.Count;
+                br.WriterID = b.WriterID;
+                br.Step = b.Step;
+                br.IsReverseDims = b.IsReverseDims;
+                br.IsValue = b.IsValue;
+            }
+        }
+    }
+#define declare_type(T)                                                        \
+    else if (variable.m_Variable->m_Type == helper::GetDataType<T>())          \
+    {                                                                          \
+        auto blocksInfoT = AllStepsBlocksInfo(Variable<T>(                     \
+            reinterpret_cast<core::Variable<T> *>(variable.m_Variable)));      \
+        for (const auto &bv : blocksInfoT)                                     \
+        {                                                                      \
+            auto &bvr = ret[bv.first];                                         \
+            for (const auto &b : bv.second)                                    \
+            {                                                                  \
+                bvr.emplace_back();                                            \
+                auto &br = bvr.back();                                         \
+                br.Start = b.Start;                                            \
+                br.Count = b.Count;                                            \
+                br.WriterID = b.WriterID;                                      \
+                br.Step = b.Step;                                              \
+                br.IsReverseDims = b.IsReverseDims;                            \
+                br.IsValue = b.IsValue;                                        \
+            }                                                                  \
+        }                                                                      \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+    else
+    {
+        helper::Throw<std::runtime_error>("bindings::CXX11", "Engine",
+                                          "AllStepsBlocksInfo",
+                                          "invalid data type");
+    }
+    return ret;
+}
+
 #define declare_template_instantiation(T)                                      \
     template void Engine::Put<T>(Variable<T>, const T *, const Mode);          \
     template void Engine::Put<T>(const std::string &, const T *, const Mode);  \

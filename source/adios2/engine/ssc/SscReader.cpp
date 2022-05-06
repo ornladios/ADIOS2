@@ -121,6 +121,13 @@ void SscReader::DoClose(const int transportIndex)
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+std::vector<VariableStruct::BPInfo>
+SscReader::DoBlocksInfoStruct(const VariableStruct &variable,
+                              const size_t step) const
+{
+    return m_EngineInstance->BlocksInfo(variable, step);
+}
+
 void SscReader::DoGetStructSync(VariableStruct &variable, void *data)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
