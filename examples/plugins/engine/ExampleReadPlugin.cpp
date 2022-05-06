@@ -88,7 +88,7 @@ void ExampleReadPlugin::Init()
         auto count = convertStrToDims(countStr);
 
         const DataType type = helper::GetDataTypeFromString(typeStr);
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
             // not supported
         }

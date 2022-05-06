@@ -182,20 +182,53 @@ VariableNT IO::DefineVariable(const DataType type, const std::string &name,
     else { return nullptr; }
 }
 
+VariableNT IO::DefineStructVariable(const std::string &name,
+                                    const StructDefinition &def,
+                                    const Dims &shape, const Dims &start,
+                                    const Dims &count, const bool constantDims)
+{
+    helper::CheckForNullptr(m_IO, "for variable name " + name +
+                                      ", in call to IO::DefineStructVariable");
+    return VariableNT(&m_IO->DefineStructVariable(
+        name, *def.m_StructDefinition, shape, start, count, constantDims));
+}
+
 VariableNT IO::InquireVariable(const std::string &name)
 {
     helper::CheckForNullptr(m_IO, "for variable name " + name +
                                       ", in call to IO::InquireVariable");
     auto type = m_IO->InquireVariableType(name);
 #define declare_type(T)                                                        \
-    if (ToString(type) == GetType<T>())                                        \
+    if (type == helper::GetDataType<T>())                                      \
     {                                                                          \
         return VariableNT(                                                     \
             m_IO->InquireVariable<typename TypeInfo<T>::IOType>(name));        \
     }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+    else if (type == DataType::Struct)
+    {
+        return VariableNT(m_IO->InquireStructVariable(name));
+    }
     else { return nullptr; }
+}
+
+VariableNT IO::InquireStructVariable(const std::string &name)
+{
+    helper::CheckForNullptr(m_IO, "for variable name " + name +
+                                      ", in call to IO::InquireStructVariable");
+
+    return VariableNT(m_IO->InquireStructVariable(name));
+}
+
+VariableNT IO::InquireStructVariable(const std::string &name,
+                                     const StructDefinition def)
+{
+    helper::CheckForNullptr(m_IO, "for variable name " + name +
+                                      ", in call to IO::InquireStructVariable");
+
+    return VariableNT(
+        m_IO->InquireStructVariable(name, *def.m_StructDefinition));
 }
 
 // PRIVATE

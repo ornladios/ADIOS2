@@ -389,7 +389,7 @@ IO::GetAvailableVariables(const std::set<std::string> &keys) noexcept
         const std::string variableName = variablePair.first;
         const DataType type = InquireVariableType(variableName);
 
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
 #define declare_template_instantiation(T)                                      \
@@ -417,7 +417,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
         auto itVariable = m_Variables.find(variableName);
         const DataType type = InquireVariableType(itVariable);
 
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
         else
@@ -433,7 +433,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
     {
         const std::string &name = attributePair.first;
 
-        if (attributePair.second->m_Type == DataType::Compound)
+        if (attributePair.second->m_Type == DataType::Struct)
         {
         }
         else
@@ -463,7 +463,7 @@ DataType IO::InquireVariableType(const VarMap::const_iterator itVariable) const
 
     if (m_ReadStreaming)
     {
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
         else
@@ -778,7 +778,7 @@ void IO::ResetVariablesStepSelection(const bool zeroStart,
             continue;
         }
 
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
         else
@@ -809,7 +809,7 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
             continue;
         }
 
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
         else
@@ -848,6 +848,120 @@ void IO::CheckTransportType(const std::string type) const
                 ", must be a single word for a supported transport type, in "
                 "call to IO AddTransport");
     }
+}
+
+VariableStruct &IO::DefineStructVariable(const std::string &name,
+                                         const StructDefinition &def,
+                                         const Dims &shape, const Dims &start,
+                                         const Dims &count,
+                                         const bool constantDims)
+{
+
+    PERFSTUBS_SCOPED_TIMER("IO::DefineStructVariable");
+
+    {
+        auto itVariable = m_Variables.find(name);
+        if (itVariable != m_Variables.end())
+        {
+            helper::Throw<std::invalid_argument>(
+                "Core", "IO", "DefineStructVariable",
+                "variable " + name + " already defined in IO " + m_Name);
+        }
+    }
+
+    auto itVariablePair = m_Variables.emplace(
+        name, std::unique_ptr<VariableBase>(new VariableStruct(
+                  name, def, shape, start, count, constantDims)));
+
+    VariableStruct &variable =
+        static_cast<VariableStruct &>(*itVariablePair.first->second);
+
+    // check IO placeholder for variable operations
+    auto itOperations = m_VarOpsPlaceholder.find(name);
+    if (itOperations != m_VarOpsPlaceholder.end())
+    {
+        variable.m_Operations.reserve(itOperations->second.size());
+        for (auto &operation : itOperations->second)
+        {
+            variable.AddOperation(operation.first, operation.second);
+        }
+    }
+
+    return variable;
+}
+
+VariableStruct *IO::InquireStructVariable(const std::string &name) noexcept
+{
+    PERFSTUBS_SCOPED_TIMER("IO::InquireStructVariable");
+
+    if (m_Variables.empty())
+    {
+        for (auto &e : m_Engines)
+        {
+            e.second->NotifyEngineNoVarsQuery();
+        }
+        return nullptr;
+    }
+
+    auto itVariable = m_Variables.find(name);
+
+    if (itVariable == m_Variables.end())
+    {
+        return nullptr;
+    }
+
+    if (itVariable->second->m_Type != DataType::Struct)
+    {
+        return nullptr;
+    }
+
+    VariableStruct *variable =
+        static_cast<VariableStruct *>(itVariable->second.get());
+    if (m_ReadStreaming)
+    {
+        if (!variable->IsValidStep(m_EngineStep + 1))
+        {
+            return nullptr;
+        }
+    }
+    return variable;
+}
+
+VariableStruct *IO::InquireStructVariable(const std::string &name,
+                                          const StructDefinition &def) noexcept
+{
+    auto ret = InquireStructVariable(name);
+    if (ret == nullptr)
+    {
+        return nullptr;
+    }
+
+    if (ret->m_StructDefinition.Items() != def.Items())
+    {
+        return nullptr;
+    }
+
+    for (size_t i = 0; i < def.Items(); ++i)
+    {
+        if (ret->m_StructDefinition.Name(i) != def.Name(i))
+        {
+            return nullptr;
+        }
+        if (ret->m_StructDefinition.Offset(i) != def.Offset(i))
+        {
+            return nullptr;
+        }
+        if (ret->m_StructDefinition.Type(i) != def.Type(i))
+        {
+            return nullptr;
+        }
+        if (ret->m_StructDefinition.Size(i) != def.Size(i))
+        {
+            return nullptr;
+        }
+    }
+
+    return ret;
 }
 
 // Explicitly instantiate the necessary public template implementations

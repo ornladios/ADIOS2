@@ -159,6 +159,13 @@ public:
                               const Dims &count = Dims(),
                               const bool constantDims = false);
 
+    VariableNT DefineStructVariable(const std::string &name,
+                                    const StructDefinition &def,
+                                    const Dims &shape = Dims(),
+                                    const Dims &start = Dims(),
+                                    const Dims &count = Dims(),
+                                    const bool constantDims = false);
+
     /**
      * Retrieve a Variable object within current IO object
      * @param name unique variable identifier within IO object
@@ -169,6 +176,11 @@ public:
     Variable<T> InquireVariable(const std::string &name);
 
     VariableNT InquireVariable(const std::string &name);
+
+    VariableNT InquireStructVariable(const std::string &name);
+
+    VariableNT InquireStructVariable(const std::string &name,
+                                     const StructDefinition def);
 
     /**
      * @brief Define attribute inside io. Array input version

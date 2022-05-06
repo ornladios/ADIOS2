@@ -43,6 +43,9 @@ private:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+    void DoGetStructSync(VariableStruct &, void *) final;
+    void DoGetStructDeferred(VariableStruct &, void *) final;
+
     void DoClose(const int transportIndex = -1) final;
 
     int m_Verbosity = 0;

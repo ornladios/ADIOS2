@@ -138,6 +138,9 @@ public:
     void Put(Variable<T> &variable, const T *data,
              const Mode launch = Mode::Deferred);
 
+    void Put(VariableStruct &variable, const void *data,
+             const Mode launch = Mode::Deferred);
+
     /**
      * @brief Put version that accepts a variable name as input parameter.
      * Throws an exception if variable is not found in IO that created the
@@ -218,6 +221,9 @@ public:
      */
     template <class T>
     void Get(Variable<T> &variable, T *data,
+             const Mode launch = Mode::Deferred);
+
+    void Get(VariableStruct &variable, void *data,
              const Mode launch = Mode::Deferred);
 
     /**
@@ -526,6 +532,9 @@ protected:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+    virtual void DoPutStructSync(VariableStruct &, const void *);
+    virtual void DoPutStructDeferred(VariableStruct &, const void *);
+
 // Get
 #define declare_type(T)                                                        \
     virtual void DoGetSync(Variable<T> &, T *);                                \
@@ -534,6 +543,9 @@ protected:
     virtual typename Variable<T>::BPInfo *DoGetBlockDeferred(Variable<T> &);
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+    virtual void DoGetStructSync(VariableStruct &, void *);
+    virtual void DoGetStructDeferred(VariableStruct &, void *);
 
     virtual void DoClose(const int transportIndex) = 0;
 
@@ -597,8 +609,7 @@ private:
      * @param modes acceptable modes
      * @param hint extra exception info
      */
-    template <class T>
-    void CommonChecks(Variable<T> &variable, const T *data,
+    void CommonChecks(VariableBase &variable, const void *data,
                       const std::set<Mode> &modes,
                       const std::string hint) const;
 

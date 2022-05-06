@@ -46,6 +46,8 @@ public:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+    void GetDeferred(VariableStruct &, void *) final;
+
 private:
     template <typename T>
     std::vector<typename Variable<T>::BPInfo>

@@ -1592,7 +1592,7 @@ void HDF5Common::WriteAttrFromIO(core::IO &io)
             continue;
         }
 
-        if (attrType == DataType::Compound)
+        if (attrType == DataType::Struct)
         {
             // not supported
         }

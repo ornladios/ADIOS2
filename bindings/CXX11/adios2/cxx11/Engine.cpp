@@ -134,9 +134,8 @@ void Engine::Put(VariableNT &variable, const void *data, const Mode launch)
     helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
     helper::CheckForNullptr(variable.m_Variable,
                             "for variable in call to Engine::Put");
-    std::string type = ToString(variable.m_Variable->m_Type);
 #define declare_type(T)                                                        \
-    if (type == GetType<T>())                                                  \
+    if (variable.m_Variable->m_Type == helper::GetDataType<T>())               \
     {                                                                          \
         m_Engine->Put(                                                         \
             *reinterpret_cast<core::Variable<T> *>(variable.m_Variable),       \
@@ -144,7 +143,12 @@ void Engine::Put(VariableNT &variable, const void *data, const Mode launch)
     }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-    else {}
+    else if (variable.m_Variable->m_Type == DataType::Struct)
+    {
+        m_Engine->Put(
+            *reinterpret_cast<core::VariableStruct *>(variable.m_Variable),
+            data, launch);
+    }
 }
 
 #define declare_type(T)                                                        \
@@ -165,9 +169,8 @@ void Engine::Get(VariableNT &variable, void *data, const Mode launch)
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
     adios2::helper::CheckForNullptr(variable.m_Variable,
                                     "for variable in call to Engine::Get");
-    std::string type = ToString(variable.m_Variable->m_Type);
 #define declare_type(T)                                                        \
-    if (type == GetType<T>())                                                  \
+    if (variable.m_Variable->m_Type == helper::GetDataType<T>())               \
     {                                                                          \
         m_Engine->Get(                                                         \
             *reinterpret_cast<core::Variable<T> *>(variable.m_Variable),       \
@@ -175,7 +178,12 @@ void Engine::Get(VariableNT &variable, void *data, const Mode launch)
     }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-    else {}
+    else if (variable.m_Variable->m_Type == DataType::Struct)
+    {
+        m_Engine->Get(
+            *reinterpret_cast<core::VariableStruct *>(variable.m_Variable),
+            data, launch);
+    }
 }
 
 #define declare_type(T)                                                        \

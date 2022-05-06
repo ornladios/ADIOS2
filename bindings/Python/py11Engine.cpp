@@ -57,7 +57,7 @@ void Engine::Put(Variable variable, const pybind11::array &array,
     const adios2::DataType type =
         helper::GetDataTypeFromString(variable.Type());
 
-    if (type == adios2::DataType::Compound)
+    if (type == adios2::DataType::Struct)
     {
         // not supported
     }
@@ -122,7 +122,7 @@ void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
     const adios2::DataType type =
         helper::GetDataTypeFromString(variable.Type());
 
-    if (type == adios2::DataType::Compound)
+    if (type == adios2::DataType::Struct)
     {
         // not supported
     }

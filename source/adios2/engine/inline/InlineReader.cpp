@@ -244,7 +244,7 @@ void InlineReader::SetDeferredVariablePointers()
     for (const auto &varName : m_DeferredVariables)
     {
         const DataType type = m_IO.InquireVariableType(varName);
-        if (type == DataType::Compound)
+        if (type == DataType::Struct)
         {
         }
 #define declare_type(T)                                                        \

@@ -99,7 +99,7 @@ void SscWriter::DoClose(const int transportIndex)
     void SscWriter::DoPutSync(Variable<T> &variable, const T *data)            \
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER_FUNC();                                         \
-        helper::Log("Engine", "SscWriter", "PutSync", variable.m_Name,         \
+        helper::Log("Engine", "SscWriter", "DoPutSync", variable.m_Name,       \
                     m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,   \
                     m_Verbosity, helper::LogMode::INFO);                       \
         m_EngineInstance->PutDeferred(variable, data);                         \
@@ -108,13 +108,31 @@ void SscWriter::DoClose(const int transportIndex)
     void SscWriter::DoPutDeferred(Variable<T> &variable, const T *data)        \
     {                                                                          \
         PERFSTUBS_SCOPED_TIMER_FUNC();                                         \
-        helper::Log("Engine", "SscWriter", "PutDeferred", variable.m_Name,     \
+        helper::Log("Engine", "SscWriter", "DoPutDeferred", variable.m_Name,   \
                     m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,   \
                     m_Verbosity, helper::LogMode::INFO);                       \
         m_EngineInstance->PutDeferred(variable, data);                         \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+void SscWriter::DoPutStructSync(VariableStruct &variable, const void *data)
+{
+    PERFSTUBS_SCOPED_TIMER_FUNC();
+    helper::Log("Engine", "SscWriter", "DoPutSync", variable.m_Name,
+                m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
+    m_EngineInstance->PutDeferred(variable, data);
+    m_EngineInstance->PerformPuts();
+}
+void SscWriter::DoPutStructDeferred(VariableStruct &variable, const void *data)
+{
+    PERFSTUBS_SCOPED_TIMER_FUNC();
+    helper::Log("Engine", "SscWriter", "DoPutDeferred", variable.m_Name,
+                m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5,
+                m_Verbosity, helper::LogMode::INFO);
+    m_EngineInstance->PutDeferred(variable, data);
+}
 
 void SscWriter::Flush(const int transportIndex) {}
 

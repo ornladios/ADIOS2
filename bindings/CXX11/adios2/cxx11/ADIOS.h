@@ -17,6 +17,7 @@
 
 #include "IO.h"
 #include "Operator.h"
+#include "VariableNT.h"
 
 #if ADIOS2_USE_MPI
 #include <mpi.h>
@@ -212,6 +213,9 @@ public:
      * object is false if name is not found
      */
     Operator InquireOperator(const std::string name);
+
+    StructDefinition DefineStruct(const std::string &name);
+    StructDefinition InquireStruct(const std::string &name);
 
     /**
      * Flushes all engines in write mode in all IOs created with the current

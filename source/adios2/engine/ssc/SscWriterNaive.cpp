@@ -101,6 +101,66 @@ void SscWriterNaive::Close(const int transportIndex)
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+void SscWriterNaive::PutDeferred(VariableStruct &variable, const void *data)
+{
+
+    if ((variable.m_ShapeID == ShapeID::GlobalValue ||
+         variable.m_ShapeID == ShapeID::LocalValue ||
+         variable.m_Type == DataType::String) &&
+        m_WriterRank != 0)
+    {
+        return;
+    }
+
+    variable.SetData(data);
+
+    Dims vStart = variable.m_Start;
+    Dims vCount = variable.m_Count;
+    Dims vShape = variable.m_Shape;
+
+    if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
+    {
+        std::reverse(vStart.begin(), vStart.end());
+        std::reverse(vCount.begin(), vCount.end());
+        std::reverse(vShape.begin(), vShape.end());
+    }
+
+    bool found = false;
+    for (const auto &b : m_Metadata)
+    {
+        if (b.name == variable.m_Name && ssc::AreSameDims(vStart, b.start) &&
+            ssc::AreSameDims(vCount, b.count) &&
+            ssc::AreSameDims(vShape, b.shape))
+        {
+            std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
+            found = true;
+        }
+    }
+
+    if (!found)
+    {
+        m_Metadata.emplace_back();
+        auto &b = m_Metadata.back();
+        b.name = variable.m_Name;
+        b.type = DataType::Struct;
+        b.shapeId = variable.m_ShapeID;
+        b.shape = vShape;
+        b.start = vStart;
+        b.count = vCount;
+        b.elementSize = variable.m_ElementSize;
+        b.bufferStart = m_Buffer.size();
+        b.bufferCount = ssc::TotalDataSize(b.count, b.elementSize, b.shapeId);
+        m_Buffer.resize(b.bufferStart + b.bufferCount);
+        std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
+        if (b.shapeId == ShapeID::GlobalValue ||
+            b.shapeId == ShapeID::LocalValue)
+        {
+            b.value.resize(variable.m_ElementSize);
+            std::memcpy(b.value.data(), data, b.bufferCount);
+        }
+    }
+}
+
 }
 }
 }

@@ -113,6 +113,7 @@ struct BlockInfo
 {
     std::string name;
     DataType type;
+    size_t elementSize;
     ShapeID shapeId;
     Dims shape;
     Dims start;
@@ -138,9 +139,8 @@ void PrintRankPosMap(const RankPosMap &m,
                      const std::string &label = std::string());
 void PrintMpiInfo(const MpiInfo &writersInfo, const MpiInfo &readersInfo);
 
-size_t GetTypeSize(const std::string &type);
-
-size_t TotalDataSize(const Dims &dims, DataType type, const ShapeID &shapeId);
+size_t TotalDataSize(const Dims &dims, const size_t elementSize,
+                     const ShapeID &shapeId);
 size_t TotalDataSize(const BlockVec &bv);
 
 RankPosMap CalculateOverlap(BlockVecVec &globalPattern,

@@ -59,7 +59,7 @@ size_t Variable::SelectionSize() const
     const adios2::DataType typeCpp = m_VariableBase->m_Type;
     size_t size = 0;
 
-    if (typeCpp == adios2::DataType::Compound)
+    if (typeCpp == adios2::DataType::Struct)
     {
         // not supported
     }
@@ -132,7 +132,7 @@ Dims Variable::Shape(const size_t step) const
     const adios2::DataType typeCpp = m_VariableBase->m_Type;
     Dims shape;
 
-    if (typeCpp == adios2::DataType::Compound)
+    if (typeCpp == adios2::DataType::Struct)
     {
         // not supported
     }
@@ -162,7 +162,7 @@ Dims Variable::Count() const
     const adios2::DataType typeCpp = m_VariableBase->m_Type;
     Dims count;
 
-    if (typeCpp == adios2::DataType::Compound)
+    if (typeCpp == adios2::DataType::Struct)
     {
         // not supported
     }

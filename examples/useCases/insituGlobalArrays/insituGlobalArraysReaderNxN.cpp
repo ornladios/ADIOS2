@@ -97,7 +97,7 @@ ProcessMetadata(int rank, const adios2::Engine &reader, adios2::IO &io,
             std::cout << "    Variable '" << name << "' type " << type
                       << " dimensions = " << shape << std::endl;
         }
-        if (type == "compound")
+        if (type == "struct")
         {
             // not supported
         }

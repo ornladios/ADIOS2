@@ -28,6 +28,7 @@
 #include "adios2/core/CoreTypes.h"
 #include "adios2/core/Group.h"
 #include "adios2/core/Variable.h"
+#include "adios2/core/VariableStruct.h"
 
 namespace adios2
 {
@@ -181,6 +182,13 @@ public:
                    const Dims &start = Dims(), const Dims &count = Dims(),
                    const bool constantDims = false);
 
+    VariableStruct &DefineStructVariable(const std::string &name,
+                                         const StructDefinition &def,
+                                         const Dims &shape = Dims(),
+                                         const Dims &start = Dims(),
+                                         const Dims &count = Dims(),
+                                         const bool constantDims = false);
+
     /**
      * @brief Define array attribute
      * @param name must be unique for the IO object
@@ -271,6 +279,11 @@ public:
      */
     template <class T>
     Variable<T> *InquireVariable(const std::string &name) noexcept;
+
+    VariableStruct *InquireStructVariable(const std::string &name) noexcept;
+
+    VariableStruct *InquireStructVariable(const std::string &name,
+                                          const StructDefinition &def) noexcept;
 
     /**
      * @brief Returns the type of an existing variable as an string
