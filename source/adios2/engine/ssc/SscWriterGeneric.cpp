@@ -302,9 +302,6 @@ void SscWriterGeneric::SyncWritePattern(bool finalStep)
     ssc::Buffer localBuffer(8);
     localBuffer.value<uint64_t>() = 8;
 
-    ssc::SerializeVariables(m_GlobalWritePattern[m_StreamRank], localBuffer,
-                            m_StreamRank);
-
     if (m_WriterRank == 0)
     {
         ssc::SerializeStructDefinitions(m_IO.m_ADIOS.StructDefinitions(),
@@ -315,6 +312,9 @@ void SscWriterGeneric::SyncWritePattern(bool finalStep)
     {
         ssc::SerializeAttributes(m_IO, localBuffer);
     }
+
+    ssc::SerializeVariables(m_GlobalWritePattern[m_StreamRank], localBuffer,
+                            m_StreamRank);
 
     ssc::Buffer globalBuffer;
 

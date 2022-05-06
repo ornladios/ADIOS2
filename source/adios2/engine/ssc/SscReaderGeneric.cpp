@@ -100,7 +100,6 @@ StepStatus SscReaderGeneric::BeginStep(const StepMode stepMode,
                     std::memcpy(value.data(), m_Buffer.data() + v.bufferStart,
                                 v.bufferCount);
                 }
-
                 if (v.type == DataType::String)
                 {
                     auto variable = m_IO.InquireVariable<std::string>(v.name);

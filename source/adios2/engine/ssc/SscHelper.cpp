@@ -164,131 +164,6 @@ void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
     }
 }
 
-void SerializeAttributes(IO &input, Buffer &output)
-{
-    const auto &attributeMap = input.GetAttributes();
-    for (const auto &attributePair : attributeMap)
-    {
-        uint64_t pos = output.value<uint64_t>();
-        output.resize(pos + 1024);
-
-        if (attributePair.second->m_Type == DataType::String)
-        {
-            const auto &attribute =
-                input.InquireAttribute<std::string>(attributePair.first);
-            output[pos] = 66;
-            ++pos;
-            output[pos] = static_cast<uint8_t>(attribute->m_Type);
-            ++pos;
-            output[pos] = static_cast<uint8_t>(attribute->m_Name.size());
-            ++pos;
-            std::memcpy(output.data(pos), attribute->m_Name.data(),
-                        attribute->m_Name.size());
-            pos += attribute->m_Name.size();
-            output.value<uint64_t>(pos) = attribute->m_DataSingleValue.size();
-            pos += 8;
-            std::memcpy(output.data(pos), attribute->m_DataSingleValue.data(),
-                        attribute->m_DataSingleValue.size());
-            pos += attribute->m_DataSingleValue.size();
-        }
-#define declare_type(T)                                                        \
-    else if (attributePair.second->m_Type == helper::GetDataType<T>())         \
-    {                                                                          \
-        const auto &attribute =                                                \
-            input.InquireAttribute<T>(attributePair.first);                    \
-        output[pos] = 66;                                                      \
-        ++pos;                                                                 \
-        output[pos] = static_cast<uint8_t>(attribute->m_Type);                 \
-        ++pos;                                                                 \
-        output[pos] = static_cast<uint8_t>(attribute->m_Name.size());          \
-        ++pos;                                                                 \
-        std::memcpy(output.data(pos), attribute->m_Name.data(),                \
-                    attribute->m_Name.size());                                 \
-        pos += attribute->m_Name.size();                                       \
-        if (attribute->m_IsSingleValue)                                        \
-        {                                                                      \
-            output.value<uint64_t>(pos) = sizeof(T);                           \
-            pos += 8;                                                          \
-            output.value<T>(pos) = attribute->m_DataSingleValue;               \
-            pos += sizeof(T);                                                  \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            uint64_t size = sizeof(T) * attribute->m_DataArray.size();         \
-            output.value<uint64_t>(pos) = size;                                \
-            pos += 8;                                                          \
-            std::memcpy(output.data(pos), attribute->m_DataArray.data(),       \
-                        size);                                                 \
-            pos += size;                                                       \
-        }                                                                      \
-    }
-        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
-        output.value<uint64_t>() = pos;
-    }
-}
-
-void SerializeStructDefinitions(
-    const std::unordered_map<std::string, StructDefinition> &definitions,
-    Buffer &output)
-{
-}
-
-void DeserializeAttribute(const Buffer &input, uint64_t &pos, IO &io,
-                          const bool regIO)
-{
-    const DataType type = static_cast<DataType>(input[pos]);
-    ++pos;
-
-    uint8_t nameSize = input[pos];
-    ++pos;
-
-    std::vector<char> namev(nameSize);
-    std::memcpy(namev.data(), input.data(pos), nameSize);
-    std::string name = std::string(namev.begin(), namev.end());
-    pos += nameSize;
-
-    uint64_t size = input.value<uint64_t>(pos);
-    pos += 8;
-
-    if (regIO)
-    {
-        const auto &attributes = io.GetAttributes();
-        auto it = attributes.find(name);
-        if (it == attributes.end())
-        {
-            int rank;
-            MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-            if (type == DataType::String)
-            {
-                io.DefineAttribute<std::string>(
-                    name, std::string(input.data<char>(pos), size));
-            }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        if (size == sizeof(T))                                                 \
-        {                                                                      \
-            io.DefineAttribute<T>(name, input.value<T>(pos));                  \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            io.DefineAttribute<T>(name, input.data<T>(pos), size / sizeof(T)); \
-        }                                                                      \
-    }
-            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
-#undef declare_type
-            else
-            {
-                helper::Throw<std::runtime_error>(
-                    "Engine", "SscHelper", "Deserialize",
-                    "unknown attribute data type");
-            }
-        }
-    }
-    pos += size;
-}
-
 void DeserializeVariable(const Buffer &input, const ShapeID shapeId,
                          uint64_t &pos, BlockInfo &b, IO &io, const bool regIO)
 {
@@ -402,9 +277,200 @@ void DeserializeVariable(const Buffer &input, const ShapeID shapeId,
     }
 }
 
+void SerializeAttributes(IO &input, Buffer &output)
+{
+    const auto &attributeMap = input.GetAttributes();
+    for (const auto &attributePair : attributeMap)
+    {
+        uint64_t pos = output.value<uint64_t>();
+        output.resize(pos + 1024);
+
+        if (attributePair.second->m_Type == DataType::String)
+        {
+            const auto &attribute =
+                input.InquireAttribute<std::string>(attributePair.first);
+            output[pos] = 66;
+            ++pos;
+            output[pos] = static_cast<uint8_t>(attribute->m_Type);
+            ++pos;
+            output[pos] = static_cast<uint8_t>(attribute->m_Name.size());
+            ++pos;
+            std::memcpy(output.data(pos), attribute->m_Name.data(),
+                        attribute->m_Name.size());
+            pos += attribute->m_Name.size();
+            output.value<uint64_t>(pos) = attribute->m_DataSingleValue.size();
+            pos += 8;
+            std::memcpy(output.data(pos), attribute->m_DataSingleValue.data(),
+                        attribute->m_DataSingleValue.size());
+            pos += attribute->m_DataSingleValue.size();
+        }
+#define declare_type(T)                                                        \
+    else if (attributePair.second->m_Type == helper::GetDataType<T>())         \
+    {                                                                          \
+        const auto &attribute =                                                \
+            input.InquireAttribute<T>(attributePair.first);                    \
+        output[pos] = 66;                                                      \
+        ++pos;                                                                 \
+        output[pos] = static_cast<uint8_t>(attribute->m_Type);                 \
+        ++pos;                                                                 \
+        output[pos] = static_cast<uint8_t>(attribute->m_Name.size());          \
+        ++pos;                                                                 \
+        std::memcpy(output.data(pos), attribute->m_Name.data(),                \
+                    attribute->m_Name.size());                                 \
+        pos += attribute->m_Name.size();                                       \
+        if (attribute->m_IsSingleValue)                                        \
+        {                                                                      \
+            output.value<uint64_t>(pos) = sizeof(T);                           \
+            pos += 8;                                                          \
+            output.value<T>(pos) = attribute->m_DataSingleValue;               \
+            pos += sizeof(T);                                                  \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            uint64_t size = sizeof(T) * attribute->m_DataArray.size();         \
+            output.value<uint64_t>(pos) = size;                                \
+            pos += 8;                                                          \
+            std::memcpy(output.data(pos), attribute->m_DataArray.data(),       \
+                        size);                                                 \
+            pos += size;                                                       \
+        }                                                                      \
+    }
+        ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+        output.value<uint64_t>() = pos;
+    }
+}
+
+void DeserializeAttribute(const Buffer &input, uint64_t &pos, IO &io,
+                          const bool regIO)
+{
+    const DataType type = static_cast<DataType>(input[pos]);
+    ++pos;
+
+    uint8_t nameSize = input[pos];
+    ++pos;
+
+    std::vector<char> namev(nameSize);
+    std::memcpy(namev.data(), input.data(pos), nameSize);
+    std::string name = std::string(namev.begin(), namev.end());
+    pos += nameSize;
+
+    uint64_t size = input.value<uint64_t>(pos);
+    pos += 8;
+
+    if (regIO)
+    {
+        const auto &attributes = io.GetAttributes();
+        auto it = attributes.find(name);
+        if (it == attributes.end())
+        {
+            int rank;
+            MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+            if (type == DataType::String)
+            {
+                io.DefineAttribute<std::string>(
+                    name, std::string(input.data<char>(pos), size));
+            }
+#define declare_type(T)                                                        \
+    else if (type == helper::GetDataType<T>())                                 \
+    {                                                                          \
+        if (size == sizeof(T))                                                 \
+        {                                                                      \
+            io.DefineAttribute<T>(name, input.value<T>(pos));                  \
+        }                                                                      \
+        else                                                                   \
+        {                                                                      \
+            io.DefineAttribute<T>(name, input.data<T>(pos), size / sizeof(T)); \
+        }                                                                      \
+    }
+            ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+            else
+            {
+                helper::Throw<std::runtime_error>(
+                    "Engine", "SscHelper", "Deserialize",
+                    "unknown attribute data type");
+            }
+        }
+    }
+    pos += size;
+}
+
+void SerializeStructDefinitions(
+    const std::unordered_map<std::string, StructDefinition> &definitions,
+    Buffer &output)
+{
+    uint64_t pos = output.value<uint64_t>();
+    output[pos] = 65;
+    ++pos;
+    output[pos] = static_cast<uint8_t>(definitions.size());
+    ++pos;
+    for (const auto &p : definitions)
+    {
+        output.resize(pos + 1024);
+        output[pos] = static_cast<uint8_t>(p.first.size());
+        ++pos;
+        std::memcpy(output.data(pos), p.first.data(), p.first.size());
+        pos += p.first.size();
+        output.value<uint64_t>(pos) = p.second.StructSize();
+        pos += 8;
+        output[pos] = static_cast<uint8_t>(p.second.Items());
+        ++pos;
+        for (size_t i = 0; i < p.second.Items(); ++i)
+        {
+            output[pos] = static_cast<uint8_t>(p.second.Name(i).size());
+            ++pos;
+            std::memcpy(output.data(pos), p.second.Name(i).data(),
+                        p.second.Name(i).size());
+            pos += p.second.Name(i).size();
+            output.value<uint64_t>(pos) = p.second.Offset(i);
+            pos += 8;
+            output.value<DataType>(pos) = p.second.Type(i);
+            pos += sizeof(DataType);
+            output.value<uint64_t>(pos) = p.second.Size(i);
+            pos += 8;
+        }
+    }
+    output.value<uint64_t>() = pos;
+}
+
 void DeserializeStructDefinitions(const Buffer &input, uint64_t &pos, IO &io,
                                   const bool regIO)
 {
+    uint8_t defs = input.value<uint8_t>(pos);
+    ++pos;
+    for (uint8_t i = 0; i < defs; ++i)
+    {
+        uint8_t nameSize = input.value<uint8_t>(pos);
+        ++pos;
+        std::vector<char> defNameChar(nameSize);
+        std::memcpy(defNameChar.data(), input.data(pos), nameSize);
+        std::string defName =
+            std::string(defNameChar.begin(), defNameChar.end());
+        pos += nameSize;
+        size_t structSize = input.value<uint64_t>(pos);
+        pos += 8;
+        uint8_t items = input.value<uint8_t>(pos);
+        ++pos;
+        auto structDefinition = io.DefineStruct(defName, structSize);
+        for (uint8_t j = 0; j < items; ++j)
+        {
+            nameSize = input.value<uint8_t>(pos);
+            ++pos;
+            defNameChar.resize(nameSize);
+            std::memcpy(defNameChar.data(), input.data(pos), nameSize);
+            std::string itemName =
+                std::string(defNameChar.begin(), defNameChar.end());
+            pos += nameSize;
+            size_t itemOffset = input.value<uint64_t>(pos);
+            pos += 8;
+            DataType itemType = input.value<DataType>(pos);
+            pos += sizeof(DataType);
+            size_t itemSize = input.value<uint64_t>(pos);
+            pos += 8;
+            structDefinition.AddItem(itemName, itemOffset, itemType, itemSize);
+        }
+    }
 }
 
 void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
