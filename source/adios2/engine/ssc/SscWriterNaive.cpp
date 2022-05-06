@@ -58,8 +58,7 @@ void SscWriterNaive::EndStep(const bool writerLocked)
     std::vector<int> localSizes(m_WriterSize);
     MPI_Gather(&localSize, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0,
                m_WriterComm);
-    size_t globalSize =
-        std::accumulate(localSizes.begin(), localSizes.end(), 0);
+    int globalSize = std::accumulate(localSizes.begin(), localSizes.end(), 0);
     ssc::Buffer globalBuffer(globalSize);
 
     std::vector<int> displs(m_WriterSize);
@@ -73,8 +72,8 @@ void SscWriterNaive::EndStep(const bool writerLocked)
 
     if (m_WriterRank == 0)
     {
-        MPI_Send(&globalSize, 1, MPI_UNSIGNED_LONG_LONG,
-                 m_ReaderMasterStreamRank, 0, m_StreamComm);
+        MPI_Send(&globalSize, 1, MPI_INT, m_ReaderMasterStreamRank, 0,
+                 m_StreamComm);
         MPI_Send(globalBuffer.data(), globalSize, MPI_CHAR,
                  m_ReaderMasterStreamRank, 0, m_StreamComm);
     }
@@ -83,12 +82,12 @@ void SscWriterNaive::EndStep(const bool writerLocked)
 void SscWriterNaive::Close(const int transportIndex)
 {
 
-    uint64_t globalSize = 1;
+    int globalSize = 1;
     ssc::Buffer globalBuffer(globalSize);
     if (m_WriterRank == 0)
     {
-        MPI_Send(&globalSize, 1, MPI_UNSIGNED_LONG_LONG,
-                 m_ReaderMasterStreamRank, 0, m_StreamComm);
+        MPI_Send(&globalSize, 1, MPI_INT, m_ReaderMasterStreamRank, 0,
+                 m_StreamComm);
         MPI_Send(globalBuffer.data(), globalSize, MPI_CHAR,
                  m_ReaderMasterStreamRank, 0, m_StreamComm);
     }

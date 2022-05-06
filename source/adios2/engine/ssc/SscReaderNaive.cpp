@@ -35,12 +35,12 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
 
     ++m_CurrentStep;
 
-    size_t globalSize;
+    int globalSize;
 
     if (m_ReaderRank == 0)
     {
-        MPI_Recv(&globalSize, 1, MPI_UNSIGNED_LONG_LONG,
-                 m_WriterMasterStreamRank, 0, m_StreamComm, MPI_STATUS_IGNORE);
+        MPI_Recv(&globalSize, 1, MPI_INT, m_WriterMasterStreamRank, 0,
+                 m_StreamComm, MPI_STATUS_IGNORE);
         m_Buffer.resize(globalSize);
         //        MPI_Recv(m_Buffer.data(), globalSize, MPI_CHAR,
         //        m_WriterMasterStreamRank, 0, m_StreamComm, MPI_STATUS_IGNORE);
@@ -51,7 +51,7 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
         std::memcpy(m_Buffer.data(), tmp.data(), globalSize);
     }
 
-    MPI_Bcast(&globalSize, 1, MPI_UNSIGNED_LONG_LONG, 0, m_ReaderComm);
+    MPI_Bcast(&globalSize, 1, MPI_INT, 0, m_ReaderComm);
     if (m_ReaderRank != 0)
     {
         m_Buffer.resize(globalSize);
