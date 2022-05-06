@@ -37,8 +37,11 @@ if(ADIOS2_HAVE_SST)
   )
 endif()
 
-gtest_add_tests_helper(Common MPI_ONLY "" Engine. .SSC
-    EXTRA_ARGS "SSC" "0"
+if(NOT MSVC)
+  gtest_add_tests_helper(Common MPI_ONLY "" Engine. .SSC
+      EXTRA_ARGS "SSC" "0"
+endif()
+
 )
 
 #if(ADIOS2_HAVE_DataMan)

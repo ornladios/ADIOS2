@@ -137,40 +137,42 @@ if(ADIOS2_RUN_MPI_MPMD_TESTS)
     #------------------------------------------
     #  Pipe2 SSC version
     #------------------------------------------
-    add_test(NAME Utils.IOTest.Pipe2.SSC
-      COMMAND ${MPIEXEC_COMMAND}
-        ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
-          -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
-          -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-SSC.xml -d 1 1
-          --strong-scaling
-        :
-        ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
-          -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
-          -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-SSC.xml -d 1 1
-          --strong-scaling 
-    )
-    set_tests_properties(Utils.IOTest.Pipe2.SSC PROPERTIES PROCESSORS 2)
-  
-    add_test(NAME Utils.IOTest.Pipe2.SSC.Dump
-      COMMAND ${CMAKE_COMMAND}
-        -DARG1=-laD
-        -DINPUT_FILE=pipe2_read.bp
-        -DOUTPUT_FILE=IOTest.Pipe2.SSC.bpls.txt
-        -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
-    )
-  
-    add_test(NAME Utils.IOTest.Pipe2.SSC.Validate
-      COMMAND ${DIFF_COMMAND} -u -w
-        ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.SSC.bpls.txt
-        IOTest.Pipe2.SSC.bpls.txt
-    )
-  
-    SetupTestPipeline(
-      Utils.IOTest.Pipe2.SSC
-      ";Dump;Validate"
-      TRUE
-    )
-  
+    if(NOT MSVC)
+      add_test(NAME Utils.IOTest.Pipe2.SSC
+        COMMAND ${MPIEXEC_COMMAND}
+          ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
+            -a 1 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+            -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-SSC.xml -d 1 1
+            --strong-scaling
+          :
+          ${MPIEXEC_NUMPROC_FLAG} 1 $<TARGET_FILE:adios_iotest>
+            -a 2 -c ${CMAKE_CURRENT_SOURCE_DIR}/pipe2.txt
+            -x ${CMAKE_CURRENT_SOURCE_DIR}/pipe2-SSC.xml -d 1 1
+            --strong-scaling 
+      )
+      set_tests_properties(Utils.IOTest.Pipe2.SSC PROPERTIES PROCESSORS 2)
+
+      add_test(NAME Utils.IOTest.Pipe2.SSC.Dump
+        COMMAND ${CMAKE_COMMAND}
+          -DARG1=-laD
+          -DINPUT_FILE=pipe2_read.bp
+          -DOUTPUT_FILE=IOTest.Pipe2.SSC.bpls.txt
+          -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
+      )
+
+      add_test(NAME Utils.IOTest.Pipe2.SSC.Validate
+        COMMAND ${DIFF_COMMAND} -u -w
+          ${CMAKE_CURRENT_SOURCE_DIR}/IOTest.Pipe2.SSC.bpls.txt
+          IOTest.Pipe2.SSC.bpls.txt
+      )
+
+      SetupTestPipeline(
+        Utils.IOTest.Pipe2.SSC
+        ";Dump;Validate"
+        TRUE
+      )
+    endif()
+
     #------------------------------------------
     #  Pipe2 SST version 
     #------------------------------------------
