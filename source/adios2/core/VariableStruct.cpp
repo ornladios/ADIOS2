@@ -17,7 +17,7 @@ namespace adios2
 namespace core
 {
 
-void StructDefinition::SetStructSize(const size_t size) { m_StructSize = size; }
+StructDefinition::StructDefinition(const size_t size) : m_StructSize(size) {}
 
 void StructDefinition::AddItem(const std::string &name, const size_t offset,
                                const DataType type, const size_t size)
@@ -28,11 +28,11 @@ void StructDefinition::AddItem(const std::string &name, const size_t offset,
                                              "VariableStruct::StructDefinition",
                                              "AddItem", "invalid data type");
     }
-    if (offset < m_StructSize)
+    if (offset + helper::GetDataTypeSize(type) * size > m_StructSize)
     {
         helper::Throw<std::invalid_argument>("core",
                                              "VariableStruct::StructDefinition",
-                                             "AddItem", "invalid offset");
+                                             "AddItem", "exceeded struct size");
     }
     m_Definition.emplace_back();
     auto &d = m_Definition.back();
@@ -40,7 +40,6 @@ void StructDefinition::AddItem(const std::string &name, const size_t offset,
     d.Offset = offset;
     d.Type = type;
     d.Size = size;
-    m_StructSize = offset + helper::GetDataTypeSize(type) * size;
 }
 
 size_t StructDefinition::StructSize() const noexcept { return m_StructSize; }

@@ -214,7 +214,7 @@ public:
      */
     Operator InquireOperator(const std::string name);
 
-    StructDefinition DefineStruct(const std::string &name);
+    StructDefinition DefineStruct(const std::string &name, const size_t size);
     StructDefinition InquireStruct(const std::string &name);
 
     /**

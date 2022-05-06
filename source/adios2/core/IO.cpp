@@ -964,10 +964,10 @@ VariableStruct *IO::InquireStructVariable(const std::string &name,
     return ret;
 }
 
-StructDefinition &IO::DefineStruct(const std::string &name)
+StructDefinition &IO::DefineStruct(const std::string &name, const size_t size)
 {
-    m_StructDefinitions[name] = StructDefinition();
-    return m_StructDefinitions[name];
+    return m_StructDefinitions.emplace(name, StructDefinition(size))
+        .first->second;
 }
 
 StructDefinition *IO::InquireStruct(const std::string &name)

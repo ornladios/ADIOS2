@@ -194,7 +194,8 @@ ADIOS::InquireOperator(const std::string &name) noexcept
     }
 }
 
-StructDefinition &ADIOS::DefineStruct(const std::string &name)
+StructDefinition &ADIOS::DefineStruct(const std::string &name,
+                                      const size_t size)
 {
     if (m_StructDefinitions.find(name) != m_StructDefinitions.end())
     {
@@ -202,7 +203,8 @@ StructDefinition &ADIOS::DefineStruct(const std::string &name)
                                              "Struct " + name +
                                                  " defined twice");
     }
-    return m_StructDefinitions[name];
+    return m_StructDefinitions.emplace(name, StructDefinition(size))
+        .first->second;
 }
 
 StructDefinition *ADIOS::InquireStruct(const std::string &name)

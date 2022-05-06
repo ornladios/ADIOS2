@@ -85,11 +85,11 @@ Operator ADIOS::InquireOperator(const std::string name)
     }
 }
 
-StructDefinition ADIOS::DefineStruct(const std::string &name)
+StructDefinition ADIOS::DefineStruct(const std::string &name, const size_t size)
 {
     CheckPointer("for struct name " + name +
                  ", in call to ADIOS::DefineStruct");
-    return StructDefinition(&m_ADIOS->DefineStruct(name));
+    return StructDefinition(&m_ADIOS->DefineStruct(name, size));
 }
 
 StructDefinition ADIOS::InquireStruct(const std::string &name)

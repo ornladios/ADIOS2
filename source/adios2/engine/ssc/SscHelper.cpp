@@ -348,8 +348,7 @@ void DeserializeVariable(const Buffer &input, const ShapeID shapeId,
                 }
                 if (b.shapeId == ShapeID::GlobalArray)
                 {
-                    auto def = io.DefineStruct(b.name);
-                    def.SetStructSize(b.elementSize);
+                    auto def = io.DefineStruct(b.name, b.elementSize);
                     io.DefineStructVariable(b.name, def, vShape, vStart,
                                             vShape);
                 }
