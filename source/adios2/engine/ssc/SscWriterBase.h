@@ -40,11 +40,7 @@ public:
     virtual void EndStep(const bool writerLocked) = 0;
     virtual void Close(const int transportIndex) = 0;
 
-#define declare_type(T) virtual void PutDeferred(Variable<T> &, const T *) = 0;
-    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-
-    virtual void PutDeferred(VariableStruct &, const void *) = 0;
+    virtual void PutDeferred(VariableBase &, const void *) = 0;
 
 protected:
     void SyncMpiPattern(MPI_Comm comm);

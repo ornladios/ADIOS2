@@ -8,7 +8,7 @@
  *      Author: Jason Wang
  */
 
-#include "SscWriterNaive.tcc"
+#include "SscWriterNaive.h"
 
 namespace adios2
 {
@@ -93,16 +93,29 @@ void SscWriterNaive::Close(const int transportIndex)
     }
 }
 
-#define declare_type(T)                                                        \
-    void SscWriterNaive::PutDeferred(Variable<T> &variable, const T *data)     \
-    {                                                                          \
-        PutDeferredCommon(variable, data);                                     \
-    }
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-
-void SscWriterNaive::PutDeferred(VariableStruct &variable, const void *data)
+void SscWriterNaive::PutDeferred(VariableBase &variable, const void *data)
 {
+
+    if (variable.m_Type == DataType::String)
+    {
+        const auto dataString = reinterpret_cast<const std::string *>(data);
+        m_Metadata.emplace_back();
+        auto &b = m_Metadata.back();
+        b.name = variable.m_Name;
+        b.type = DataType::String;
+        b.shapeId = variable.m_ShapeID;
+        b.shape = variable.m_Shape;
+        b.start = variable.m_Start;
+        b.count = variable.m_Count;
+        b.bufferStart = m_Buffer.size();
+        b.bufferCount = dataString->size();
+        m_Buffer.resize(b.bufferStart + b.bufferCount);
+        std::memcpy(m_Buffer.data() + b.bufferStart, dataString->data(),
+                    dataString->size());
+        b.value.resize(dataString->size());
+        std::memcpy(b.value.data(), dataString->data(), dataString->size());
+        return;
+    }
 
     if ((variable.m_ShapeID == ShapeID::GlobalValue ||
          variable.m_ShapeID == ShapeID::LocalValue ||
@@ -111,8 +124,6 @@ void SscWriterNaive::PutDeferred(VariableStruct &variable, const void *data)
     {
         return;
     }
-
-    variable.SetData(data);
 
     Dims vStart = variable.m_Start;
     Dims vCount = variable.m_Count;
@@ -142,7 +153,7 @@ void SscWriterNaive::PutDeferred(VariableStruct &variable, const void *data)
         m_Metadata.emplace_back();
         auto &b = m_Metadata.back();
         b.name = variable.m_Name;
-        b.type = DataType::Struct;
+        b.type = variable.m_Type;
         b.shapeId = variable.m_ShapeID;
         b.shape = vShape;
         b.start = vStart;
