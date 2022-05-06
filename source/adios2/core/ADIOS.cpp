@@ -199,11 +199,11 @@ StructDefinition &ADIOS::DefineStruct(const std::string &name,
 {
     if (m_StructDefinitions.find(name) != m_StructDefinitions.end())
     {
-        helper::Throw<std::invalid_argument>("Core", "ADIOS", "CheckOperator",
+        helper::Throw<std::invalid_argument>("Core", "ADIOS", "DefineStruct",
                                              "Struct " + name +
                                                  " defined twice");
     }
-    return m_StructDefinitions.emplace(name, StructDefinition(size))
+    return m_StructDefinitions.emplace(name, StructDefinition(name, size))
         .first->second;
 }
 
@@ -218,6 +218,12 @@ StructDefinition *ADIOS::InquireStruct(const std::string &name)
     {
         return &it->second;
     }
+}
+
+const std::unordered_map<std::string, StructDefinition> &
+ADIOS::StructDefinitions() const
+{
+    return m_StructDefinitions;
 }
 
 bool ADIOS::RemoveIO(const std::string name)

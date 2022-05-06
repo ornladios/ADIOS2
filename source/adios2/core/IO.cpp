@@ -968,10 +968,14 @@ VariableStruct *IO::InquireStructVariable(const std::string &name,
     return ret;
 }
 
-StructDefinition &IO::DefineStruct(const std::string &name, const size_t size)
+StructDefinition *IO::DefineStruct(const std::string &name, const size_t size)
 {
-    return m_StructDefinitions.emplace(name, StructDefinition(size))
-        .first->second;
+    if (m_StructDefinitions.find(name) != m_StructDefinitions.end())
+    {
+        return nullptr;
+    }
+    return &m_StructDefinitions.emplace(name, StructDefinition(name, size))
+                .first->second;
 }
 
 StructDefinition *IO::InquireStruct(const std::string &name)

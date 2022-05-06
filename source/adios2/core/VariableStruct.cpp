@@ -17,7 +17,10 @@ namespace adios2
 namespace core
 {
 
-StructDefinition::StructDefinition(const size_t size) : m_StructSize(size) {}
+StructDefinition::StructDefinition(const std::string &name, const size_t size)
+: m_Name(name), m_StructSize(size)
+{
+}
 
 void StructDefinition::AddItem(const std::string &name, const size_t offset,
                                const DataType type, const size_t size)
@@ -53,6 +56,8 @@ void StructDefinition::Freeze() noexcept { m_Frozen = true; }
 size_t StructDefinition::StructSize() const noexcept { return m_StructSize; }
 
 size_t StructDefinition::Items() const noexcept { return m_Definition.size(); }
+
+std::string StructDefinition::Name() const noexcept { return m_Name; }
 
 std::string StructDefinition::Name(const size_t index) const
 {

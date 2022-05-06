@@ -148,7 +148,6 @@ void SscWriterGeneric::PutDeferred(VariableBase &variable, const void *data)
 {
     if (variable.m_Type == DataType::String)
     {
-
         const auto dataString = reinterpret_cast<const std::string *>(data);
         bool found = false;
         for (const auto &b : m_GlobalWritePattern[m_StreamRank])
@@ -239,7 +238,6 @@ void SscWriterGeneric::PutDeferred(VariableBase &variable, const void *data)
             auto &b = m_GlobalWritePattern[m_StreamRank].back();
             b.name = variable.m_Name;
             b.type = variable.m_Type;
-            ;
             b.shapeId = variable.m_ShapeID;
             b.shape = vShape;
             b.start = vStart;
@@ -255,6 +253,11 @@ void SscWriterGeneric::PutDeferred(VariableBase &variable, const void *data)
             {
                 b.value.resize(variable.m_ElementSize);
                 std::memcpy(b.value.data(), data, b.bufferCount);
+            }
+            if (variable.m_Type == DataType::Struct)
+            {
+                b.structDef = reinterpret_cast<VariableStruct *>(&variable)
+                                  ->m_StructDefinition.Name();
             }
         }
         else
@@ -302,13 +305,19 @@ void SscWriterGeneric::SyncWritePattern(bool finalStep)
     ssc::Buffer localBuffer(8);
     localBuffer.value<uint64_t>() = 8;
 
-    ssc::SerializeVariables(m_GlobalWritePattern[m_StreamRank], localBuffer,
-                            m_StreamRank);
-
     if (m_WriterRank == 0)
+    {
+        ssc::SerializeStructDefinitions(m_IO.m_ADIOS.StructDefinitions(),
+                                        localBuffer);
+    }
+
+    if (m_WriterRank == m_WriterSize - 1)
     {
         ssc::SerializeAttributes(m_IO, localBuffer);
     }
+
+    ssc::SerializeVariables(m_GlobalWritePattern[m_StreamRank], localBuffer,
+                            m_StreamRank);
 
     ssc::Buffer globalBuffer;
 
@@ -318,7 +327,8 @@ void SscWriterGeneric::SyncWritePattern(bool finalStep)
     ssc::BroadcastMetadata(globalBuffer, m_WriterMasterStreamRank,
                            m_StreamComm);
 
-    ssc::Deserialize(globalBuffer, m_GlobalWritePattern, m_IO, false, false);
+    ssc::Deserialize(globalBuffer, m_GlobalWritePattern, m_IO, false, false,
+                     false);
 
     if (m_Verbosity >= 20 && m_WriterRank == 0)
     {
@@ -340,7 +350,8 @@ void SscWriterGeneric::SyncReadPattern()
 
     m_ReaderSelectionsLocked = globalBuffer[1];
 
-    ssc::Deserialize(globalBuffer, m_GlobalReadPattern, m_IO, false, false);
+    ssc::Deserialize(globalBuffer, m_GlobalReadPattern, m_IO, false, false,
+                     false);
     m_AllSendingReaderRanks = ssc::CalculateOverlap(
         m_GlobalReadPattern, m_GlobalWritePattern[m_StreamRank]);
     CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern, m_WriterRank,

@@ -134,6 +134,8 @@ public:
 
     StructDefinition &DefineStruct(const std::string &name, const size_t size);
     StructDefinition *InquireStruct(const std::string &name);
+    const std::unordered_map<std::string, StructDefinition> &
+    StructDefinitions() const;
 
     /**
      * DANGER ZONE: removes a particular IO. This will effectively eliminate any

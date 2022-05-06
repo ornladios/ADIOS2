@@ -74,7 +74,11 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
             uint8_t shapeId = m_Buffer[pos];
             ++pos;
 
-            if (shapeId == 66)
+            if (shapeId == 65)
+            {
+                DeserializeStructDefinitions(m_Buffer, pos, m_IO, true);
+            }
+            else if (shapeId == 66)
             {
                 DeserializeAttribute(m_Buffer, pos, m_IO, true);
             }
