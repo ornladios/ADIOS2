@@ -33,6 +33,7 @@ public:
     StructDefinition(const size_t size);
     void AddItem(const std::string &name, const size_t offset,
                  const DataType type, const size_t size = 1);
+    void Freeze() noexcept;
     size_t StructSize() const noexcept;
     size_t Items() const noexcept;
     std::string Name(const size_t index) const;
@@ -42,6 +43,7 @@ public:
 
 private:
     std::vector<StructItemDefinition> m_Definition;
+    bool m_Frozen = false;
     size_t m_StructSize;
 };
 

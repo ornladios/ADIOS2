@@ -73,6 +73,8 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     particleDef.AddItem("b", 4, adios2::DataType::Int32, 4);
     auto varStruct =
         io.DefineStructVariable("particles", particleDef, shape, start, count);
+    EXPECT_THROW(particleDef.AddItem("c", 4, adios2::DataType::Int32, 4),
+                 std::runtime_error);
     std::vector<particle> myParticles(datasize);
     for (size_t i = 0; i < datasize; ++i)
     {
