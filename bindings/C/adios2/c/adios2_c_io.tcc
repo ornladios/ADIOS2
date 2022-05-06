@@ -32,6 +32,10 @@ adios2::Mode adios2_ToOpenMode(const adios2_mode modeC)
         mode = adios2::Mode::Append;
         break;
 
+    case adios2_mode_readRandomAccess:
+        mode = adios2::Mode::ReadRandomAccess;
+        break;
+
     default:
         break;
     }

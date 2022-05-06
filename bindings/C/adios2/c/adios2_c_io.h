@@ -318,8 +318,8 @@ adios2_error adios2_remove_all_attributes(adios2_io *io);
  * MPI Collective function as it calls MPI_Comm_dup
  * @param io engine owner
  * @param name unique engine identifier
- * @param mode adios2_mode_write, adios2_mode_read, adios2_mode_append (not yet
- *             supported)
+ * @param mode adios2_mode_write, adios2_mode_read, adios2_mode_append, and
+ * adios2_mode_readRandomAccess
  * @return success: handler, failure: NULL
  */
 adios2_engine *adios2_open(adios2_io *io, const char *name,
@@ -331,8 +331,8 @@ adios2_engine *adios2_open(adios2_io *io, const char *name,
  * MPI Collective function as it calls MPI_Comm_dup
  * @param io engine owner
  * @param name unique engine identifier
- * @param mode adios2_mode_write, adios2_mode_read, adios2_mode_append (not yet
- *        supported)
+ * @param mode adios2_mode_write, adios2_mode_read, adios2_mode_append, and
+ * adios2_mode_readRandomAccess
  * @param comm communicator other than adios' handler comm. MPI only.
  * @return success: handler, failure: NULL
  */
