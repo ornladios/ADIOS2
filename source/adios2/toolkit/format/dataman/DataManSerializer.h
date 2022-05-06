@@ -93,6 +93,14 @@ public:
     void PutAttributes(core::IO &io);
 
     // put a variable for writer
+    void PutData(const std::string *inputData, const std::string &varName,
+                 const Dims &varShape, const Dims &varStart,
+                 const Dims &varCount, const Dims &varMemStart,
+                 const Dims &varMemCount, const std::string &doid,
+                 const size_t step, const int rank, const std::string &address,
+                 const std::vector<std::shared_ptr<core::Operator>> &ops,
+                 VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
+
     template <class T>
     void PutData(const T *inputData, const std::string &varName,
                  const Dims &varShape, const Dims &varStart,
