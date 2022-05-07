@@ -14,7 +14,7 @@ contains
 
     integer :: ierr
 
-    call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
+    call adios2_init(adios, MPI_COMM_WORLD, ierr)
 
   end subroutine testing_adios_init
 

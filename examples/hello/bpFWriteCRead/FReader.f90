@@ -21,7 +21,7 @@ program FReader
 
     if( irank == 0 ) then
         ! Create adios handler passing the communicator, debug mode and error flag
-        call adios2_init(adios, MPI_COMM_SELF, adios2_debug_mode_on, ierr)
+        call adios2_init(adios, MPI_COMM_SELF, ierr)
 
         ! Declare an IO process configuration inside adios
         call adios2_declare_io(io, adios, "FReader", ierr)

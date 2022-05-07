@@ -36,7 +36,7 @@ void LocalAggregate1D(const std::string substreams)
     std::vector<int32_t> inumbers(NSteps * Nx);
     std::vector<float> fnumbers(NSteps * Nx);
 
-    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD);
 
     // writer
     {
@@ -175,7 +175,7 @@ void LocalAggregate1DBlock0(const std::string substreams)
     std::vector<int32_t> inumbers(NSteps * Nx);
     std::vector<float> fnumbers(NSteps * Nx);
 
-    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD);
 
     // writer
     {

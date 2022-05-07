@@ -13,8 +13,8 @@ import adios2
 myArray = numpy.array([0, 1., 2., 3., 4., 5., 6., 7., 8., 9.])
 Nx = myArray.size
 
-#  debug mode
-adios = adios2.ADIOS(adios2.DebugON)
+#  adios
+adios = adios2.ADIOS()
 
 # ADIOS IO
 bpIO = adios.DeclareIO("BPFile_N2N")

@@ -165,7 +165,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
     // Write test data as if we were in Fortran (Column-major language)
     {
 
-        adios2::ADIOS adiosF("", "Fortran", true);
+        adios2::ADIOS adiosF("", "Fortran");
         adios2::IO ioWrite = adiosF.DeclareIO("TestIOWrite");
         if (!engineName.empty())
         {
@@ -212,7 +212,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
 
     // Read data pretending to be a Column-major language
     {
-        adios2::ADIOS adiosF("", "Fortran", true);
+        adios2::ADIOS adiosF("", "Fortran");
         adios2::IO ioRead = adiosF.DeclareIO("TestIOReadF");
         ioRead.SetEngine("File");
         adios2::Engine engine = ioRead.Open(filename, adios2::Mode::Read);
@@ -602,7 +602,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
 
     // Write test data using BP
     {
-        adios2::ADIOS adiosF("", "Fortran", true);
+        adios2::ADIOS adiosF("", "Fortran");
         adios2::IO ioWrite = adiosF.DeclareIO("TestIOWrite");
         if (!engineName.empty())
         {
@@ -651,7 +651,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
 
     // Read data pretending to be a Column-major language
     {
-        adios2::ADIOS adiosF("", "Fortran", true);
+        adios2::ADIOS adiosF("", "Fortran");
         adios2::IO ioRead = adiosF.DeclareIO("TestIORead");
         ioRead.SetEngine("File");
         adios2::Engine engine = ioRead.Open(filename, adios2::Mode::Read);

@@ -46,10 +46,9 @@ public:
      * Starting point for MPI apps. Creates an ADIOS object.
      * MPI Collective Operation as it call MPI_Comm_dup
      * @param comm defines domain scope from application
-     * @param debugMode is deprecated and has no effect on library behavior
      * @exception std::invalid_argument if user input is incorrect
      */
-    ADIOS(MPI_Comm comm, const bool debugMode = true);
+    ADIOS(MPI_Comm comm);
 
     /**
      * Starting point for MPI apps. Creates an ADIOS object allowing a
@@ -58,11 +57,9 @@ public:
      * configFile contents
      * @param configFile runtime config file
      * @param comm defines domain scope from application
-     * @param debugMode is deprecated and has no effect on library behavior
      * @exception std::invalid_argument if user input is incorrect
      */
-    ADIOS(const std::string &configFile, MPI_Comm comm,
-          const bool debugMode = true);
+    ADIOS(const std::string &configFile, MPI_Comm comm);
 
     /** extra constructor for R and other languages that use the
      * public C++ API but has data in column-major. Pass "" for configfile
@@ -74,7 +71,7 @@ public:
      *     e.g. adios2::ADIOS("", comm, "Fortran", false);
      */
     ADIOS(const std::string &configFile, MPI_Comm comm,
-          const std::string &hostLanguage, const bool debugMode);
+          const std::string &hostLanguage);
 #else
     // Client code that does not enable ADIOS2_USE_MPI may accidentally
     // try to pass a MPI_Comm instance to our constructor.  If the type
@@ -95,10 +92,9 @@ public:
      * Starting point for non-MPI serial apps. Creates an ADIOS object allowing
      * a runtime config file.
      * @param configFile runtime config file
-     * @param debugMode is deprecated and has no effect on library behavior
      * @exception std::invalid_argument if user input is incorrect
      */
-    ADIOS(const std::string &configFile, const bool debugMode = true);
+    ADIOS(const std::string &configFile);
 
     /**
      * Starting point for non-MPI serial apps. Creates an ADIOS object allowing
@@ -110,10 +106,9 @@ public:
 
     /**
      * Starting point for non-MPI apps. Creates an ADIOS object
-     * @param debugMode is deprecated and has no effect on library behavior
      * @exception std::invalid_argument if user input is incorrect
      */
-    ADIOS(const bool debugMode = true);
+    ADIOS();
 
     /** extra constructor for R and other languages that use the
      * public C++ API but has data in column-major. Pass "" for configfile
@@ -124,8 +119,7 @@ public:
      * treat all arrays column-major
      *    e.g. adios2::ADIOS("", "Fortran", false);
      */
-    ADIOS(const std::string &configFile, const std::string &hostLanguage,
-          const bool debugMode);
+    ADIOS(const std::string &configFile, const std::string &hostLanguage);
 
     /** object inspection true: valid object, false: invalid object */
     explicit operator bool() const noexcept;

@@ -113,8 +113,6 @@ adios2::py11::File OpenConfig(const std::string &name, const std::string mode,
 
 PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
 {
-    m.attr("DebugON") = true;
-    m.attr("DebugOFF") = false;
     m.attr("ConstantDims") = true;
     m.attr("VariableDims") = false;
     m.attr("LocalValueDim") = adios2::LocalValueDim;
@@ -231,24 +229,21 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
                  const bool opBool = adios ? true : false;
                  return opBool;
              })
-        .def(pybind11::init<const bool>(),
-             "adios2 module starting point "
-             "non-MPI, constructs an ADIOS class "
-             "object",
-             pybind11::arg("debugMode") = true)
-        .def(pybind11::init<const std::string &, const bool>(),
+        .def(pybind11::init(), "adios2 module starting point "
+                               "non-MPI, constructs an ADIOS class "
+                               "object")
+        .def(pybind11::init<const std::string &>(),
              "adios2 module starting point non-MPI, constructs an ADIOS class "
              "object",
-             pybind11::arg("configFile"), pybind11::arg("debugMode") = true)
+             pybind11::arg("configFile"))
 #if ADIOS2_USE_MPI
-        .def(pybind11::init<const adios2::py11::MPI4PY_Comm, const bool>(),
+        .def(pybind11::init<const adios2::py11::MPI4PY_Comm>(),
              "adios2 module starting point, constructs an ADIOS class object",
-             pybind11::arg("comm"), pybind11::arg("debugMode") = true)
+             pybind11::arg("comm"))
         .def(pybind11::init<const std::string &,
-                            const adios2::py11::MPI4PY_Comm, const bool>(),
+                            const adios2::py11::MPI4PY_Comm>(),
              "adios2 module starting point, constructs an ADIOS class object",
-             pybind11::arg("configFile"), pybind11::arg("comm"),
-             pybind11::arg("debugMode") = true)
+             pybind11::arg("configFile"), pybind11::arg("comm"))
 #endif
         .def("DeclareIO", &adios2::py11::ADIOS::DeclareIO,
              "spawn IO object component returning a IO object with a unique "

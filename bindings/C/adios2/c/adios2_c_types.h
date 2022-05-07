@@ -40,8 +40,7 @@ typedef enum
     adios2_error_none = 0,
 
     /**
-     * user input error, on when adios2_debug_mode_on is passed to adios2_init
-     * or adios2_init_config
+     * user input error
      */
     adios2_error_invalid_argument = 1,
 
@@ -61,12 +60,6 @@ typedef enum
     adios2_false = 0,
     adios2_true = 1,
 } adios2_bool;
-
-typedef enum
-{
-    adios2_debug_mode_off = 0,
-    adios2_debug_mode_on = 1,
-} adios2_debug_mode;
 
 typedef enum
 {

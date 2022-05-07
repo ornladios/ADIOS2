@@ -15,9 +15,9 @@ class ADIOSDefineAttributeTest : public ::testing::Test
 public:
 #if ADIOS2_USE_MPI
     ADIOSDefineAttributeTest()
-    : adios(MPI_COMM_WORLD, true), io(adios.DeclareIO("TestIO"))
+    : adios(MPI_COMM_WORLD), io(adios.DeclareIO("TestIO"))
 #else
-    ADIOSDefineAttributeTest() : adios(true), io(adios.DeclareIO("TestIO"))
+    ADIOSDefineAttributeTest() : adios(), io(adios.DeclareIO("TestIO"))
 #endif
     {
     }

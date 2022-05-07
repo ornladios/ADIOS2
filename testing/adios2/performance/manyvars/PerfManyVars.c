@@ -210,7 +210,7 @@ int main(int argc, char **argv)
     }
 
     alloc_vars();
-    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+    adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD);
     ioW = adios2_declare_io(adiosH, "multiblockwrite"); // group for writing
     ioR = adios2_declare_io(adiosH, "multiblockread");  // group for reading
     set_gdim();

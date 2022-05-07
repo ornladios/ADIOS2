@@ -14,22 +14,11 @@ module adios2_adios_init_mod
 
     interface adios2_init
 
-        module subroutine adios2_init_serial(adios, adios2_debug_mode, ierr)
-            type(adios2_adios), intent(out) :: adios
-            logical, intent(in) :: adios2_debug_mode
-            integer, intent(out) :: ierr
-        end subroutine
-        module subroutine adios2_init_debug_serial(adios, ierr)
+        module subroutine adios2_init_serial(adios, ierr)
             type(adios2_adios), intent(out) :: adios
             integer, intent(out) :: ierr
         end subroutine
-        module subroutine adios2_init_config_serial(adios, config_file, adios2_debug_mode, ierr)
-            type(adios2_adios), intent(out) :: adios
-            character*(*), intent(in) :: config_file
-            logical, intent(in) :: adios2_debug_mode
-            integer, intent(out) :: ierr
-        end subroutine
-        module subroutine adios2_init_config_debug_serial(adios, config_file, ierr)
+        module subroutine adios2_init_config_serial(adios, config_file, ierr)
             type(adios2_adios), intent(out) :: adios
             character*(*), intent(in) :: config_file
             integer, intent(out) :: ierr
@@ -37,25 +26,12 @@ module adios2_adios_init_mod
 
 # ifdef ADIOS2_HAVE_MPI_F
 
-        module subroutine adios2_init_mpi(adios, comm, adios2_debug_mode, ierr)
-            type(adios2_adios), intent(out) :: adios
-            integer, intent(in) :: comm
-            logical, intent(in) :: adios2_debug_mode
-            integer, intent(out) :: ierr
-        end subroutine
-        module subroutine adios2_init_debug_mpi(adios, comm, ierr)
+        module subroutine adios2_init_mpi(adios, comm, ierr)
             type(adios2_adios), intent(out) :: adios
             integer, intent(in) :: comm
             integer, intent(out) :: ierr
         end subroutine
-        module subroutine adios2_init_config_mpi(adios, config_file, comm, adios2_debug_mode, ierr)
-            type(adios2_adios), intent(out) :: adios
-            character*(*), intent(in) :: config_file
-            integer, intent(in) :: comm
-            logical, intent(in) :: adios2_debug_mode
-            integer, intent(out) :: ierr
-        end subroutine
-        module subroutine adios2_init_config_debug_mpi(adios, config_file, comm, ierr)
+        module subroutine adios2_init_config_mpi(adios, config_file, comm, ierr)
             type(adios2_adios), intent(out) :: adios
             character*(*), intent(in) :: config_file
             integer, intent(in) :: comm

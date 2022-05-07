@@ -12,11 +12,11 @@ class ADIOSInterfaceWriteTest : public ::testing::Test
 public:
 #if ADIOS2_USE_MPI
     ADIOSInterfaceWriteTest()
-    : adios(MPI_COMM_SELF, true), io(adios.DeclareIO("TestIO"))
+    : adios(MPI_COMM_SELF), io(adios.DeclareIO("TestIO"))
     {
     }
 #else
-    ADIOSInterfaceWriteTest() : adios(true), io(adios.DeclareIO("TestIO")) {}
+    ADIOSInterfaceWriteTest() : adios(), io(adios.DeclareIO("TestIO")) {}
 #endif
 
 protected:

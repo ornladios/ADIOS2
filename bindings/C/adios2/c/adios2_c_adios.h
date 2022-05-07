@@ -22,8 +22,8 @@ extern "C" {
 #endif
 
 #if ADIOS2_USE_MPI
-#define adios2_init(comm, debug_mode) adios2_init_mpi(comm)
-#define adios2_init_config(config_file, comm, debug_mode)                      \
+#define adios2_init(comm) adios2_init_mpi(comm)
+#define adios2_init_config(config_file, comm)                                  \
     adios2_init_config_mpi(config_file, comm)
 
 /**
@@ -45,9 +45,8 @@ adios2_adios *adios2_init_mpi(MPI_Comm comm);
  */
 adios2_adios *adios2_init_config_mpi(const char *config_file, MPI_Comm comm);
 #else
-#define adios2_init(debug_mode) adios2_init_serial()
-#define adios2_init_config(config_file, debug_mode)                            \
-    adios2_init_config_serial(config_file)
+#define adios2_init() adios2_init_serial()
+#define adios2_init_config(config_file) adios2_init_config_serial(config_file)
 #endif
 
 /**

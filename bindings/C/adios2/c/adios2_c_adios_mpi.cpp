@@ -17,7 +17,6 @@ extern "C" {
 // to be called from other languages, hidden from the public apis
 adios2_adios *adios2_init_config_glue_mpi(const char *config_file,
                                           MPI_Comm comm,
-                                          const adios2_debug_mode debug_mode,
                                           const char *host_language)
 {
     adios2_adios *adios = nullptr;
@@ -39,13 +38,12 @@ adios2_adios *adios2_init_config_glue_mpi(const char *config_file,
 
 adios2_adios *adios2_init_mpi(MPI_Comm comm)
 {
-    return adios2_init_config_glue_mpi("", comm, adios2_debug_mode_off, "C");
+    return adios2_init_config_glue_mpi("", comm, "C");
 }
 
 adios2_adios *adios2_init_config_mpi(const char *config_file, MPI_Comm comm)
 {
-    return adios2_init_config_glue_mpi(config_file, comm, adios2_debug_mode_off,
-                                       "C");
+    return adios2_init_config_glue_mpi(config_file, comm, "C");
 }
 
 } // end extern C

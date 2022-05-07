@@ -22,7 +22,7 @@ nx = myArray.size
 time = np.array([0.0])
 
 # ADIOS
-adios = adios2.ADIOS(comm, adios2.DebugON)
+adios = adios2.ADIOS(comm)
 
 # IO
 bpIO = adios.DeclareIO("BPN2N")

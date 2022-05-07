@@ -15,12 +15,12 @@ namespace adios2
 namespace py11
 {
 
-ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
+ADIOS::ADIOS(const std::string &configFile)
 : m_ADIOS(std::make_shared<adios2::core::ADIOS>(configFile, "Python"))
 {
 }
 
-ADIOS::ADIOS(const bool debugMode) : ADIOS("", "Python") {}
+ADIOS::ADIOS() : m_ADIOS(std::make_shared<adios2::core::ADIOS>("", "Python")) {}
 
 ADIOS::operator bool() const noexcept { return m_ADIOS ? true : false; }
 
