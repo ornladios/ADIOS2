@@ -1232,7 +1232,8 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
         if (longopt && !timestep)
         {
             fprintf(outf, " = ");
-            print_data(&variable->m_Value, 0, adiosvartype, false);
+            auto mm = variable->MinMax();
+            print_data(&mm.second, 0, adiosvartype, false);
         }
         fprintf(outf, "\n");
 
