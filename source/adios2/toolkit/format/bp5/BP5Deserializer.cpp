@@ -1812,7 +1812,10 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
                 writer_meta_base =
                     GetMetadataBase(VarRec, RelStep, WriterRank++);
             }
-            ApplyElementMinMax(MinMax, VarRec->Type, writer_meta_base);
+            if (writer_meta_base)
+            {
+                ApplyElementMinMax(MinMax, VarRec->Type, writer_meta_base);
+            }
         }
         else if (VarRec->OrigShapeID == ShapeID::LocalValue)
         {
@@ -1822,7 +1825,9 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
                 void *writer_meta_base =
                     GetMetadataBase(VarRec, RelStep, WriterRank);
                 if (writer_meta_base)
+                {
                     ApplyElementMinMax(MinMax, VarRec->Type, writer_meta_base);
+                }
             }
         }
     }
