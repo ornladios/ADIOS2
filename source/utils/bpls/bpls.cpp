@@ -3066,11 +3066,15 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
                 {
                     for (size_t k = 0; k < ndim; k++)
                     {
+                        size_t n =
+                            (minBlocks->WasLocalVar
+                                 ? reinterpret_cast<size_t>(minBlocks->Shape)
+                                 : minBlocks->Shape[k]);
                         if (firstStep)
                         {
-                            dims[k] = minBlocks->Shape[k];
+                            dims[k] = n;
                         }
-                        else if (dims[k] != minBlocks->Shape[k])
+                        else if (dims[k] != n)
                         {
                             dims[k] = 0;
                         }
@@ -3365,20 +3369,26 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 
                     for (size_t k = 0; k < ndim; k++)
                     {
-                        if (blocks[j].Count[k])
+                        size_t c =
+                            (minBlocksInfo->WasLocalVar
+                                 ? reinterpret_cast<size_t>(blocks[j].Count)
+                                 : blocks[j].Count[k]);
+
+                        if (c)
                         {
+                            size_t s =
+                                (minBlocksInfo->WasLocalVar
+                                     ? reinterpret_cast<size_t>(blocks[j].Start)
+                                     : blocks[j].Start[k]);
                             if (variable->m_ShapeID == ShapeID::GlobalArray)
                             {
-                                fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
-                                        blocks[j].Start[k], ndigits_dims[k],
-                                        blocks[j].Start[k] +
-                                            blocks[j].Count[k] - 1);
+                                fprintf(outf, "%*zu:%*zu", ndigits_dims[k], s,
+                                        ndigits_dims[k], s + c - 1);
                             }
                             else
                             {
                                 // blockStart is empty vector for LocalArrays
-                                fprintf(outf, "0:%*zu", ndigits_dims[k],
-                                        blocks[j].Count[k] - 1);
+                                fprintf(outf, "0:%*zu", ndigits_dims[k], c - 1);
                             }
                         }
                         else
@@ -3412,10 +3422,20 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     fprintf(outf, "\n");
                     if (dump)
                     {
-                        readVarBlock(
-                            fp, io, variable, RelStep, j,
-                            Dims(blocks[j].Count, blocks[j].Count + ndim),
-                            Dims(blocks[j].Start, blocks[j].Start + ndim));
+                        if (minBlocksInfo->WasLocalVar)
+                        {
+                            readVarBlock(
+                                fp, io, variable, RelStep, j,
+                                {reinterpret_cast<size_t>(blocks[j].Count)},
+                                {reinterpret_cast<size_t>(blocks[j].Start)});
+                        }
+                        else
+                        {
+                            readVarBlock(
+                                fp, io, variable, RelStep, j,
+                                Dims(blocks[j].Count, blocks[j].Count + ndim),
+                                Dims(blocks[j].Start, blocks[j].Start + ndim));
+                        }
                     }
                 }
             }
