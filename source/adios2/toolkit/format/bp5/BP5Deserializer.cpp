@@ -1485,6 +1485,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
             if (writer_meta_base)
             {
                 MinBlockInfo Blk;
+                Blk.MinMax.Init(VarRec->Type);
                 Blk.WriterID = WriterRank;
                 Blk.BlockID = Id++;
                 Blk.BufferP = writer_meta_base;
@@ -1492,6 +1493,11 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
                 {
                     Blk.Count = (size_t *)1;
                     Blk.Start = (size_t *)WriterRank;
+                }
+                if (writer_meta_base)
+                {
+                    ApplyElementMinMax(Blk.MinMax, VarRec->Type,
+                                       writer_meta_base);
                 }
                 MV->BlocksInfo.push_back(Blk);
             }
