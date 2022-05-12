@@ -993,6 +993,14 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void BP5Reader::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Close");
+    if (m_OpenMode == Mode::ReadRandomAccess)
+    {
+        PerformGets();
+    }
+    else if (m_BetweenStepPairs)
+    {
+        EndStep();
+    }
     m_DataFileManager.CloseFiles();
     m_MDFileManager.CloseFiles();
 }

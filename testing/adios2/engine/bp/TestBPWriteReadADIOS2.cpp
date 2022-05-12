@@ -2081,6 +2081,220 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteReadEmptyProcess)
 #endif
 }
 
+TEST_F(BPWriteReadTestADIOS2, GetDeferredInClose)
+{
+    // Test if Get() will retrieve data in Close()
+    const std::string fname("GetDeferredInClose.bp");
+
+    int mpiRank = 0, mpiSize = 1;
+
+    const std::size_t Nx = 10;
+
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+    std::vector<int64_t> localData(Nx);
+    std::iota(localData.begin(), localData.end(), mpiRank * Nx);
+
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("StartCountWrite");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+
+        io.DefineVariable<int64_t>(
+            "range", {static_cast<std::size_t>(Nx * mpiSize)},
+            {static_cast<std::size_t>(Nx * mpiRank)}, {Nx});
+
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        bpWriter.Put<int64_t>("range", localData.data());
+        bpWriter.Close();
+    }
+    // Reader
+    {
+        adios2::IO io = adios.DeclareIO("StartCountRead");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+
+        adios2::Engine bpReader =
+            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Variable<int64_t> varRange =
+            io.InquireVariable<int64_t>("range");
+
+        std::vector<int64_t> readData(Nx);
+        varRange.SetSelection({{static_cast<std::size_t>(Nx * mpiRank)}, {Nx}});
+        bpReader.Get(varRange, readData);
+        bpReader.Close();
+
+        for (size_t j = 0; j < Nx; ++j)
+        {
+            EXPECT_EQ(localData[j], readData[j]);
+        }
+    }
+}
+
+TEST_F(BPWriteReadTestADIOS2, GetDeferredInEndStep)
+{
+    // Test if Get() will retrieve data in EndStep()
+    const std::string fname("GetDeferredInEndStep.bp");
+
+    int mpiRank = 0, mpiSize = 1;
+
+    const std::size_t Nx = 10;
+
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+    std::vector<int64_t> localData(Nx);
+    std::iota(localData.begin(), localData.end(), mpiRank * Nx);
+
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("StartCountWrite");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+
+        io.DefineVariable<int64_t>(
+            "range", {static_cast<std::size_t>(Nx * mpiSize)},
+            {static_cast<std::size_t>(Nx * mpiRank)}, {Nx});
+
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        bpWriter.Put<int64_t>("range", localData.data());
+        bpWriter.Close();
+    }
+    // Reader
+    {
+        adios2::IO io = adios.DeclareIO("StartCountRead");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        bpReader.BeginStep();
+        adios2::Variable<int64_t> varRange =
+            io.InquireVariable<int64_t>("range");
+
+        std::vector<int64_t> readData(Nx);
+        varRange.SetSelection({{static_cast<std::size_t>(Nx * mpiRank)}, {Nx}});
+        bpReader.Get(varRange, readData);
+        bpReader.EndStep();
+        for (size_t j = 0; j < Nx; ++j)
+        {
+            EXPECT_EQ(localData[j], readData[j]);
+        }
+        bpReader.Close();
+    }
+}
+
+TEST_F(BPWriteReadTestADIOS2, GetDeferredWithoutEndStep)
+{
+    // Test if Get() will retrieve data in Close() when EndStep() is not called
+    const std::string fname("GetDeferredWithoutEndStep.bp");
+
+    int mpiRank = 0, mpiSize = 1;
+
+    const std::size_t Nx = 10;
+
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+    std::vector<int64_t> localData(Nx);
+    std::iota(localData.begin(), localData.end(), mpiRank * Nx);
+
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("StartCountWrite");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+
+        io.DefineVariable<int64_t>(
+            "range", {static_cast<std::size_t>(Nx * mpiSize)},
+            {static_cast<std::size_t>(Nx * mpiRank)}, {Nx});
+
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        bpWriter.Put<int64_t>("range", localData.data());
+        bpWriter.Close();
+    }
+    // Reader
+    {
+        adios2::IO io = adios.DeclareIO("StartCountRead");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        if (!engineParameters.empty())
+        {
+            io.SetParameters(engineParameters);
+        }
+
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+        bpReader.BeginStep();
+        adios2::Variable<int64_t> varRange =
+            io.InquireVariable<int64_t>("range");
+
+        std::vector<int64_t> readData(Nx);
+        varRange.SetSelection({{static_cast<std::size_t>(Nx * mpiRank)}, {Nx}});
+        bpReader.Get(varRange, readData);
+        /* Missing call to bpReader.EndStep(); */
+        bpReader.Close();
+
+        for (size_t j = 0; j < Nx; ++j)
+        {
+            EXPECT_EQ(localData[j], readData[j]);
+        }
+    }
+}
+
 //******************************************************************************
 // main
 //******************************************************************************
