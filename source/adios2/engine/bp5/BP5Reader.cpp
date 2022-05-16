@@ -11,7 +11,12 @@
 
 #include <adios2-perfstubs-interface.h>
 
+#include <chrono>
 #include <errno.h>
+
+using TP = std::chrono::high_resolution_clock::time_point;
+#define NOW() std::chrono::high_resolution_clock::now();
+#define DURATION(T1, T2) static_cast<double>((T2 - T1).count()) / 1000000000.0;
 
 namespace adios2
 {
@@ -193,11 +198,18 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
     // check if subfile is already opened
     if (m_DataFileManager.m_Transports.count(SubfileNum) == 0)
     {
-        const std::string subFileName = GetBPSubStreamName(
-            m_Name, SubfileNum, m_Minifooter.HasSubFiles, true);
+        // std::cout << "... Lock Transports ...";
+        std::unique_lock<std::mutex> guard(m_TransportsMutex);
+        if (m_DataFileManager.m_Transports.count(SubfileNum) == 0)
+        {
+            const std::string subFileName = GetBPSubStreamName(
+                m_Name, SubfileNum, m_Minifooter.HasSubFiles, true);
 
-        m_DataFileManager.OpenFileID(subFileName, SubfileNum, Mode::Read,
-                                     {{"transport", "File"}}, false);
+            // std::cout << " Open " << subFileName;
+            m_DataFileManager.OpenFileID(subFileName, SubfileNum, Mode::Read,
+                                         {{"transport", "File"}}, false);
+        }
+        // std::cout << std::endl;
     }
 
     size_t InfoStartPos =
@@ -233,16 +245,91 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
 
 void BP5Reader::PerformGets()
 {
+    auto lf_CompareReqSubfile =
+        [&](adios2::format::BP5Deserializer::ReadRequest &r1,
+            adios2::format::BP5Deserializer::ReadRequest &r2) -> bool {
+        return (m_WriterMap[m_WriterMapIndex[r1.Timestep]]
+                    .RankToSubfile[r1.WriterRank] <
+                m_WriterMap[m_WriterMapIndex[r2.Timestep]]
+                    .RankToSubfile[r2.WriterRank]);
+    };
+
+    auto lf_Reader =
+        [&](std::vector<adios2::format::BP5Deserializer::ReadRequest>
+                ReadRequests,
+            size_t startReq, size_t nReq) -> bool {
+        for (size_t r = startReq; r < startReq + nReq; ++r)
+        {
+            const auto &Req = ReadRequests[r];
+            ReadData(Req.WriterRank, Req.Timestep, Req.StartOffset,
+                     Req.ReadLength, Req.DestinationAddr);
+            m_BP5Deserializer->FinalizeGet(Req);
+        }
+        return true;
+    };
+
+    // TP start = NOW();
     PERFSTUBS_SCOPED_TIMER("BP5Reader::PerformGets");
     auto ReadRequests = m_BP5Deserializer->GenerateReadRequests();
-    // Potentially optimize read requests, make contiguous, etc.
-    for (const auto &Req : ReadRequests)
+    size_t nRequest = ReadRequests.size();
+
+    // TP startRead = NOW();
+    // double sortTime = 0.0;
+    if (m_Parameters.Threads > 1 && nRequest > 1)
     {
-        ReadData(Req.WriterRank, Req.Timestep, Req.StartOffset, Req.ReadLength,
-                 Req.DestinationAddr);
+        // TP startSort = NOW();
+        std::sort(ReadRequests.begin(), ReadRequests.end(),
+                  lf_CompareReqSubfile);
+        // TP endSort = NOW();
+        // sortTime = DURATION(startSort, endSort);
+        size_t nThreads =
+            (m_Parameters.Threads < nRequest ? m_Parameters.Threads : nRequest);
+        size_t startReq = 0, n, rem;
+        n = nRequest / nThreads;
+        rem = nRequest % nThreads;
+        std::vector<std::future<bool>> futures(nThreads - 1);
+        // launch Threads-1 threads to process subsets of requests,
+        // then main thread process the last subset
+        for (size_t tid = 0; tid < nThreads - 1; ++tid)
+        {
+            size_t nReq = n;
+            if (tid < rem)
+            {
+                ++nReq;
+            }
+            futures[tid] = std::async(std::launch::async, lf_Reader,
+                                      ReadRequests, startReq, nReq);
+            startReq += nReq;
+        }
+        // main thread runs last subset of reads
+        lf_Reader(ReadRequests, startReq, nRequest - startReq);
+
+        // wait for all async threads
+        for (auto &f : futures)
+        {
+            f.get();
+        }
+        // clear pending requests inside deserializer
+        {
+            std::vector<adios2::format::BP5Deserializer::ReadRequest> empty;
+            m_BP5Deserializer->FinalizeGets(empty);
+        }
+    }
+    else
+    {
+        for (const auto &Req : ReadRequests)
+        {
+            ReadData(Req.WriterRank, Req.Timestep, Req.StartOffset,
+                     Req.ReadLength, Req.DestinationAddr);
+        }
+        m_BP5Deserializer->FinalizeGets(ReadRequests);
     }
 
-    m_BP5Deserializer->FinalizeGets(ReadRequests);
+    /*TP end = NOW();
+    double t1 = DURATION(start, end);
+    double t2 = DURATION(startRead, end);
+    std::cout << " -> PerformGets() total = " << t1 << "s, Read loop = " << t2
+              << "s, sort = " << sortTime << "s" << std::endl;*/
 }
 
 // PRIVATE
