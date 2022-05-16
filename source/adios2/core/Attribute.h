@@ -31,7 +31,7 @@ public:
      * Copy constructor (enforces zero-padding)
      * @param other
      */
-    Attribute<T>(const Attribute<T> &other);
+    Attribute(const Attribute<T> &other);
 
     /**
      * Data array constructor
@@ -40,7 +40,7 @@ public:
      * @param elements
      * @param allowModifications
      */
-    Attribute<T>(const std::string &name, const T *data, const size_t elements,
+    Attribute(const std::string &name, const T *data, const size_t elements,
                  const bool allowModification);
 
     /**
@@ -50,10 +50,10 @@ public:
      * @param elements
      * @param allowModifications
      */
-    Attribute<T>(const std::string &name, const T &data,
+    Attribute(const std::string &name, const T &data,
                  const bool allowModification);
 
-    ~Attribute<T>() = default;
+    ~Attribute() = default;
 
     /**
      * Modification of an existing attribute (array)
