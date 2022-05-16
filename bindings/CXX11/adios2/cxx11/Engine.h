@@ -402,6 +402,12 @@ public:
     void EndStep();
 
     /**
+     * Returns True if engine status is between BeginStep()/EndStep() pair,
+     * False otherwise.
+     */
+    bool BetweenStepPairs();
+
+    /**
      * Manually flush to underlying transport to guarantee data is moved
      * @param transportIndex
      */

@@ -105,6 +105,12 @@ public:
     virtual size_t CurrentStep() const;
 
     /**
+     * Returns current status information for each engine.
+     * @return if between BeginStep/EndStep() pair
+     */
+    bool BetweenStepPairs() const;
+
+    /**
      * Put signature that pre-allocates a Variable in Buffer returning a Span of
      * the payload memory from variable.m_Count
      * @param variable input variable to be allocated
