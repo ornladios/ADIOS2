@@ -43,8 +43,8 @@ public:
      * attributes from IO:DefineAttribute<T> or IO:InquireAttribute<T>.
      * Can be used with STL containers.
      */
-    Attribute<T>() = default;
-    ~Attribute<T>() = default;
+    Attribute() = default;
+    ~Attribute() = default;
 
     /** Checks if object is valid, e.g. if( attribute ) { //..valid } */
     explicit operator bool() const noexcept;
@@ -74,7 +74,7 @@ public:
     bool IsValue() const;
 
 private:
-    Attribute<T>(core::Attribute<IOType> *attribute);
+    Attribute(core::Attribute<IOType> *attribute);
     core::Attribute<IOType> *m_Attribute = nullptr;
 };
 
