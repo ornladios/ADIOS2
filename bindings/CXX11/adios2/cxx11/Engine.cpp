@@ -52,6 +52,12 @@ StepStatus Engine::BeginStep()
     return m_Engine->BeginStep();
 }
 
+bool Engine::BetweenStepPairs()
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::BetweenStepPairs");
+    return m_Engine->BetweenStepPairs();
+}
+
 StepStatus Engine::BeginStep(const StepMode mode, const float timeoutSeconds)
 {
     helper::CheckForNullptr(

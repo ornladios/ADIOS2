@@ -85,6 +85,8 @@ void Engine::LockWriterDefinitions() noexcept
     m_WriterDefinitionsLocked = true;
 }
 
+bool Engine::BetweenStepPairs() const { return m_BetweenStepPairs; }
+
 void Engine::LockReaderSelections() noexcept
 {
     m_ReaderSelectionsLocked = true;

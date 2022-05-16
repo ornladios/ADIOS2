@@ -226,6 +226,27 @@ adios2_error adios2_begin_step(adios2_engine *engine,
     }
 }
 
+adios2_error adios2_between_step_pairs(size_t *between_step_pairs,
+                                       const adios2_engine *engine)
+{
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            engine, "for adios2_engine, in call to adios2_between_step_pairs");
+
+        const adios2::core::Engine *engineCpp =
+            reinterpret_cast<const adios2::core::Engine *>(engine);
+
+        *between_step_pairs = engineCpp->BetweenStepPairs();
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_between_step_pairs"));
+    }
+}
+
 adios2_error adios2_current_step(size_t *current_step,
                                  const adios2_engine *engine)
 {
