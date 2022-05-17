@@ -186,7 +186,8 @@ void BP5Reader::EndStep()
     PerformGets();
 }
 
-void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
+void BP5Reader::ReadData(adios2::transportman::TransportMan &FileManager,
+                         const size_t WriterRank, const size_t Timestep,
                          const size_t StartOffset, const size_t Length,
                          char *Destination)
 {
@@ -196,20 +197,15 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
         m_WriterMap[m_WriterMapIndex[Timestep]].RankToSubfile[WriterRank]);
 
     // check if subfile is already opened
-    if (m_DataFileManager.m_Transports.count(SubfileNum) == 0)
+    if (FileManager.m_Transports.count(SubfileNum) == 0)
     {
-        // std::cout << "... Lock Transports ...";
-        std::unique_lock<std::mutex> guard(m_TransportsMutex);
-        if (m_DataFileManager.m_Transports.count(SubfileNum) == 0)
+        if (FileManager.m_Transports.count(SubfileNum) == 0)
         {
             const std::string subFileName = GetBPSubStreamName(
                 m_Name, SubfileNum, m_Minifooter.HasSubFiles, true);
-
-            // std::cout << " Open " << subFileName;
-            m_DataFileManager.OpenFileID(subFileName, SubfileNum, Mode::Read,
-                                         {{"transport", "File"}}, false);
+            FileManager.OpenFileID(subFileName, SubfileNum, Mode::Read,
+                                   {{"transport", "File"}}, false);
         }
-        // std::cout << std::endl;
     }
 
     size_t InfoStartPos =
@@ -229,8 +225,8 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
                                         m_Minifooter.IsLittleEndian);
         if (ThisDataSize > RemainingLength)
             ThisDataSize = RemainingLength;
-        m_DataFileManager.ReadFile(Destination, ThisDataSize,
-                                   ThisDataPos + Offset, SubfileNum);
+        FileManager.ReadFile(Destination, ThisDataSize, ThisDataPos + Offset,
+                             SubfileNum);
         Destination += ThisDataSize;
         RemainingLength -= ThisDataSize;
         Offset = 0;
@@ -239,8 +235,8 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
     }
     ThisDataPos = helper::ReadValue<uint64_t>(
         m_MetadataIndex.m_Buffer, ThisFlushInfo, m_Minifooter.IsLittleEndian);
-    m_DataFileManager.ReadFile(Destination, RemainingLength,
-                               ThisDataPos + Offset, SubfileNum);
+    FileManager.ReadFile(Destination, RemainingLength, ThisDataPos + Offset,
+                         SubfileNum);
 }
 
 void BP5Reader::PerformGets()
@@ -255,13 +251,14 @@ void BP5Reader::PerformGets()
     };
 
     auto lf_Reader =
-        [&](std::vector<adios2::format::BP5Deserializer::ReadRequest>
+        [&](adios2::transportman::TransportMan FileManager,
+            std::vector<adios2::format::BP5Deserializer::ReadRequest>
                 ReadRequests,
             size_t startReq, size_t nReq) -> bool {
         for (size_t r = startReq; r < startReq + nReq; ++r)
         {
             const auto &Req = ReadRequests[r];
-            ReadData(Req.WriterRank, Req.Timestep, Req.StartOffset,
+            ReadData(FileManager, Req.WriterRank, Req.Timestep, Req.StartOffset,
                      Req.ReadLength, Req.DestinationAddr);
             m_BP5Deserializer->FinalizeGet(Req);
         }
@@ -288,6 +285,9 @@ void BP5Reader::PerformGets()
         n = nRequest / nThreads;
         rem = nRequest % nThreads;
         std::vector<std::future<bool>> futures(nThreads - 1);
+        helper::Comm singleComm;
+        std::vector<transportman::TransportMan> fileManagers(
+            nThreads - 1, transportman::TransportMan(singleComm));
         // launch Threads-1 threads to process subsets of requests,
         // then main thread process the last subset
         for (size_t tid = 0; tid < nThreads - 1; ++tid)
@@ -297,12 +297,15 @@ void BP5Reader::PerformGets()
             {
                 ++nReq;
             }
-            futures[tid] = std::async(std::launch::async, lf_Reader,
-                                      ReadRequests, startReq, nReq);
+            fileManagers[tid];
+            futures[tid] =
+                std::async(std::launch::async, lf_Reader, fileManagers[tid],
+                           ReadRequests, startReq, nReq);
             startReq += nReq;
         }
         // main thread runs last subset of reads
-        lf_Reader(ReadRequests, startReq, nRequest - startReq);
+        lf_Reader(m_DataFileManager, ReadRequests, startReq,
+                  nRequest - startReq);
 
         // wait for all async threads
         for (auto &f : futures)
@@ -319,8 +322,8 @@ void BP5Reader::PerformGets()
     {
         for (const auto &Req : ReadRequests)
         {
-            ReadData(Req.WriterRank, Req.Timestep, Req.StartOffset,
-                     Req.ReadLength, Req.DestinationAddr);
+            ReadData(m_DataFileManager, Req.WriterRank, Req.Timestep,
+                     Req.StartOffset, Req.ReadLength, Req.DestinationAddr);
         }
         m_BP5Deserializer->FinalizeGets(ReadRequests);
     }

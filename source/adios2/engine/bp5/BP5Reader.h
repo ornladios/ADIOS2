@@ -237,14 +237,10 @@ private:
 
     void InstallMetaMetaData(format::BufferSTL MetaMetadata);
     void InstallMetadataForTimestep(size_t Step);
-    void ReadData(const size_t WriterRank, const size_t Timestep,
+    void ReadData(adios2::transportman::TransportMan &FileManager,
+                  const size_t WriterRank, const size_t Timestep,
                   const size_t StartOffset, const size_t Length,
                   char *Destination);
-
-    /** Mutex for m_Transports.
-     * Used in PerformGets inside ReadData for opening subfiles, as multiple
-     * threads may want a subfile */
-    std::mutex m_TransportsMutex;
 
     struct WriterMapStruct
     {
