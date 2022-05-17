@@ -1227,88 +1227,96 @@ BP5Deserializer::GenerateReadRequests()
     return Ret;
 }
 
-void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> Reads)
+void BP5Deserializer::FinalizeGet(const ReadRequest &Read)
+{
+    auto Req = PendingRequests[Read.ReqIndex];
+    /*std::cout << "    Req: block = " << Req.BlockID << " step = " << Req.Step
+              << " var = " << Req.VarRec->VarName << " start = " << Req.Start
+              << " count = " << Req.Count << " dest "
+              << reinterpret_cast<size_t>(Req.Data) << std::endl;*/
+    int ElementSize = Req.VarRec->ElementSize;
+    MetaArrayRec *writer_meta_base =
+        (MetaArrayRec *)GetMetadataBase(Req.VarRec, Req.Step, Read.WriterRank);
+
+    size_t *GlobalDimensions = writer_meta_base->Shape;
+    int DimCount = writer_meta_base->Dims;
+    std::vector<size_t> ZeroSel(DimCount);
+    size_t *RankOffset = &writer_meta_base->Offsets[DimCount * Read.BlockID];
+    size_t *RankSize = &writer_meta_base->Count[DimCount * Read.BlockID];
+    std::vector<size_t> ZeroRankOffset(DimCount);
+    std::vector<size_t> ZeroGlobalDimensions(DimCount);
+    const size_t *SelOffset = NULL;
+    const size_t *SelSize = NULL;
+    char *IncomingData = Read.DestinationAddr;
+    char *VirtualIncomingData = Read.DestinationAddr - Read.OffsetInBlock;
+    std::vector<char> decompressBuffer;
+    if (Req.VarRec->Operator != NULL)
+    {
+        size_t DestSize = Req.VarRec->ElementSize;
+        for (size_t dim = 0; dim < Req.VarRec->DimCount; dim++)
+        {
+            DestSize *=
+                writer_meta_base
+                    ->Count[dim + Read.BlockID * writer_meta_base->Dims];
+        }
+        decompressBuffer.resize(DestSize);
+        core::Decompress(IncomingData,
+                         ((MetaArrayRecOperator *)writer_meta_base)
+                             ->DataLengths[Read.BlockID],
+                         decompressBuffer.data());
+        IncomingData = decompressBuffer.data();
+        VirtualIncomingData = IncomingData;
+    }
+    if (Req.Start.size())
+    {
+        SelOffset = Req.Start.data();
+    }
+    if (Req.Count.size())
+    {
+        SelSize = Req.Count.data();
+    }
+    if (Req.RequestType == Local)
+    {
+        RankOffset = ZeroRankOffset.data();
+        GlobalDimensions = ZeroGlobalDimensions.data();
+        if (SelSize == NULL)
+        {
+            SelSize = RankSize;
+        }
+        if (SelOffset == NULL)
+        {
+            SelOffset = ZeroSel.data();
+        }
+        for (int i = 0; i < DimCount; i++)
+        {
+            GlobalDimensions[i] = RankSize[i];
+        }
+    }
+
+    auto inStart = adios2::Dims(RankOffset, RankOffset + DimCount);
+    auto inCount = adios2::Dims(RankSize, RankSize + DimCount);
+    auto outStart = adios2::Dims(SelOffset, SelOffset + DimCount);
+    auto outCount = adios2::Dims(SelSize, SelSize + DimCount);
+    if (!m_ReaderIsRowMajor)
+    {
+        std::reverse(inStart.begin(), inStart.end());
+        std::reverse(inCount.begin(), inCount.end());
+        std::reverse(outStart.begin(), outStart.end());
+        std::reverse(outCount.begin(), outCount.end());
+    }
+
+    helper::NdCopy(VirtualIncomingData, inStart, inCount, true, true,
+                   (char *)Req.Data, outStart, outCount, true, true,
+                   ElementSize, Dims(), Dims(), Dims(), Dims(), false,
+                   Req.MemSpace);
+    free((char *)Read.DestinationAddr);
+}
+
+void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> &Reads)
 {
     for (const auto &Read : Reads)
     {
-        auto Req = PendingRequests[Read.ReqIndex];
-        int ElementSize = Req.VarRec->ElementSize;
-        MetaArrayRec *writer_meta_base = (MetaArrayRec *)GetMetadataBase(
-            Req.VarRec, Req.Step, Read.WriterRank);
-
-        size_t *GlobalDimensions = writer_meta_base->Shape;
-        int DimCount = writer_meta_base->Dims;
-        std::vector<size_t> ZeroSel(DimCount);
-        size_t *RankOffset =
-            &writer_meta_base->Offsets[DimCount * Read.BlockID];
-        size_t *RankSize = &writer_meta_base->Count[DimCount * Read.BlockID];
-        std::vector<size_t> ZeroRankOffset(DimCount);
-        std::vector<size_t> ZeroGlobalDimensions(DimCount);
-        const size_t *SelOffset = NULL;
-        const size_t *SelSize = NULL;
-        char *IncomingData = Read.DestinationAddr;
-        char *VirtualIncomingData = Read.DestinationAddr - Read.OffsetInBlock;
-        std::vector<char> decompressBuffer;
-        if (Req.VarRec->Operator != NULL)
-        {
-            size_t DestSize = Req.VarRec->ElementSize;
-            for (size_t dim = 0; dim < Req.VarRec->DimCount; dim++)
-            {
-                DestSize *=
-                    writer_meta_base
-                        ->Count[dim + Read.BlockID * writer_meta_base->Dims];
-            }
-            decompressBuffer.resize(DestSize);
-            core::Decompress(IncomingData,
-                             ((MetaArrayRecOperator *)writer_meta_base)
-                                 ->DataLengths[Read.BlockID],
-                             decompressBuffer.data());
-            IncomingData = decompressBuffer.data();
-            VirtualIncomingData = IncomingData;
-        }
-        if (Req.Start.size())
-        {
-            SelOffset = Req.Start.data();
-        }
-        if (Req.Count.size())
-        {
-            SelSize = Req.Count.data();
-        }
-        if (Req.RequestType == Local)
-        {
-            RankOffset = ZeroRankOffset.data();
-            GlobalDimensions = ZeroGlobalDimensions.data();
-            if (SelSize == NULL)
-            {
-                SelSize = RankSize;
-            }
-            if (SelOffset == NULL)
-            {
-                SelOffset = ZeroSel.data();
-            }
-            for (int i = 0; i < DimCount; i++)
-            {
-                GlobalDimensions[i] = RankSize[i];
-            }
-        }
-
-        auto inStart = adios2::Dims(RankOffset, RankOffset + DimCount);
-        auto inCount = adios2::Dims(RankSize, RankSize + DimCount);
-        auto outStart = adios2::Dims(SelOffset, SelOffset + DimCount);
-        auto outCount = adios2::Dims(SelSize, SelSize + DimCount);
-        if (!m_ReaderIsRowMajor)
-        {
-            std::reverse(inStart.begin(), inStart.end());
-            std::reverse(inCount.begin(), inCount.end());
-            std::reverse(outStart.begin(), outStart.end());
-            std::reverse(outCount.begin(), outCount.end());
-        }
-
-        helper::NdCopy(VirtualIncomingData, inStart, inCount, true, true,
-                       (char *)Req.Data, outStart, outCount, true, true,
-                       ElementSize, Dims(), Dims(), Dims(), Dims(), false,
-                       Req.MemSpace);
-        free((char *)Read.DestinationAddr);
+        FinalizeGet(Read);
     }
     PendingRequests.clear();
 }

@@ -62,7 +62,8 @@ public:
                         size_t Step);
 
     std::vector<ReadRequest> GenerateReadRequests();
-    void FinalizeGets(std::vector<ReadRequest>);
+    void FinalizeGet(const ReadRequest &);
+    void FinalizeGets(std::vector<ReadRequest> &);
 
     MinVarInfo *AllRelativeStepsMinBlocksInfo(const VariableBase &var);
     MinVarInfo *AllStepsMinBlocksInfo(const VariableBase &var);
