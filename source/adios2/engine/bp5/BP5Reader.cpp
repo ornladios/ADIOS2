@@ -1015,7 +1015,7 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
                     m_FilteredMetadataInfo.push_back(
                         std::make_pair(minfo_pos, minfo_size));
                 }
-                minfo_pos = MetadataPos;
+                minfo_pos = MetadataPos + MetadataSize;
                 minfo_size = 0;
             }
 
@@ -1046,6 +1046,7 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
     {
         m_FilteredMetadataInfo.push_back(std::make_pair(minfo_pos, minfo_size));
     }
+
     return position;
 }
 
