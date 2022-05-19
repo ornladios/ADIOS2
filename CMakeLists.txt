@@ -56,6 +56,15 @@ if(WIN32)
   endif()
 endif()
 
+# -O3 is known to crash some flavors of clang 14.
+if(CMAKE_C_COMPILER_ID MATCHES "Clang" AND
+   CMAKE_C_COMPILER_VERSION VERSION_GREATER_EQUAL 14.0.0)
+  foreach(_var_suffix IN ITEMS "" _DEBUG _RELEASE _RELWITHDEBINFO _MINSIZEREL)
+    string(REGEX REPLACE "-O(2|3)" "-O" CMAKE_C_FLAGS${_var_suffix}
+      "${CMAKE_C_FLAGS${_var_suffix}}")
+  endforeach()
+endif()
+
 # Setup shared library defaults.  If explicitly specified somehow, then default 
 # to that.  Otherwise base the default on whether or not shared libs are even
 # supported.
