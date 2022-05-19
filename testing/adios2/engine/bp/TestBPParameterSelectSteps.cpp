@@ -89,12 +89,16 @@ public:
         adios2::Dims count{static_cast<unsigned int>(Nx)};
 
         auto var0 = ioWrite.DefineVariable<int32_t>("var", shape, start, count);
+        auto var1 = ioWrite.DefineVariable<size_t>("step");
         for (size_t step = 0; step < NSteps; ++step)
         {
             int s = static_cast<int>(step);
             auto d = GenerateData(s, mpiRank, mpiSize);
             engine.BeginStep();
+            std::string aname = "a" + std::to_string(step);
+            ioWrite.DefineAttribute<size_t>(aname, step);
             engine.Put(var0, d.data());
+            engine.Put(var1, step);
             engine.EndStep();
         }
         engine.Close();
@@ -144,16 +148,27 @@ TEST_P(BPParameterSelectStepsP, Read)
     EXPECT_EQ(nsteps, absoluteSteps.size());
 
     adios2::Variable<int> var = ioRead.InquireVariable<int32_t>("var");
+    adios2::Variable<size_t> varStep = ioRead.InquireVariable<size_t>("step");
 
-    for (size_t step = 0; step < nsteps; step++)
+    for (size_t readStep = 0; readStep < nsteps; readStep++)
     {
-        var.SetStepSelection(adios2::Box<size_t>(step, 1));
+        var.SetStepSelection(adios2::Box<size_t>(readStep, 1));
         std::vector<int> res;
         var.SetSelection({{Nx * mpiRank}, {Nx}});
         engine_s.Get<int>(var, res, adios2::Mode::Sync);
-        int s = static_cast<int>(absoluteSteps[step]);
+        int s = static_cast<int>(absoluteSteps[readStep]);
         auto d = GenerateData(s, mpiRank, mpiSize);
         EXPECT_EQ(res[0], d[0]);
+
+        varStep.SetStepSelection(adios2::Box<size_t>(readStep, 1));
+        size_t stepInFile;
+        engine_s.Get<size_t>(varStep, stepInFile);
+        EXPECT_EQ(stepInFile, absoluteSteps[readStep]);
+
+        std::string aname = "a" + std::to_string(absoluteSteps[readStep]);
+        adios2::Attribute<size_t> a = ioRead.InquireAttribute<size_t>(aname);
+        size_t stepInAttribute = a.Data()[0];
+        EXPECT_EQ(stepInAttribute, absoluteSteps[readStep]);
     }
 
     engine_s.Close();
@@ -201,20 +216,24 @@ TEST_P(BPParameterSelectStepsP, Stream)
     adios2::Dims count{static_cast<unsigned int>(Nx)};
 
     auto var0 = ioWrite.DefineVariable<int32_t>("var", shape, start, count);
+    auto var1 = ioWrite.DefineVariable<size_t>("step");
 
     for (size_t step = 0; step < NSteps; ++step)
     {
         int s = static_cast<int>(step);
         auto d = GenerateData(s, mpiRank, mpiSize);
         writer.BeginStep();
+        std::string aname = "a" + std::to_string(step);
+        ioWrite.DefineAttribute<size_t>(aname, step);
         writer.Put(var0, d.data());
+        writer.Put(var1, step);
         writer.EndStep();
 
         if (!mpiRank)
         {
             std::cout << "Writer done step " << step << std::endl;
         }
-        auto status = reader.BeginStep(adios2::StepMode::Read, 1.0f);
+        auto status = reader.BeginStep(adios2::StepMode::Read, 0.0f);
         if (!mpiRank)
         {
             std::cout << "Reader BeginStep() step " << step << " status "
@@ -237,6 +256,19 @@ TEST_P(BPParameterSelectStepsP, Stream)
             int s = static_cast<int>(absoluteSteps[readStep]);
             auto d = GenerateData(s, mpiRank, mpiSize);
             EXPECT_EQ(res[0], d[0]);
+
+            adios2::Variable<size_t> varStep =
+                ioRead.InquireVariable<size_t>("step");
+            size_t stepInFile;
+            reader.Get<size_t>(varStep, stepInFile);
+            EXPECT_EQ(stepInFile, absoluteSteps[readStep]);
+
+            std::string aname = "a" + std::to_string(absoluteSteps[readStep]);
+            adios2::Attribute<size_t> a =
+                ioRead.InquireAttribute<size_t>(aname);
+            size_t stepInAttribute = a.Data()[0];
+            EXPECT_EQ(stepInAttribute, absoluteSteps[readStep]);
+
             reader.EndStep();
         }
         else
