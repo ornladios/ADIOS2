@@ -157,7 +157,6 @@ void TimeAggregation1D8(const std::string flushstepscount)
             bpWriter.Put(var_u64, currentTestData.U64.data());
             bpWriter.Put(var_r32, currentTestData.R32.data());
             bpWriter.Put(var_r64, currentTestData.R64.data());
-            bpWriter.PerformPuts();
 
             bpWriter.EndStep();
         }
@@ -493,7 +492,6 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
             bpWriter.Put(var_u64, currentTestData.U64.data());
             bpWriter.Put(var_r32, currentTestData.R32.data());
             bpWriter.Put(var_r64, currentTestData.R64.data());
-            bpWriter.PerformPuts();
 
             bpWriter.EndStep();
         }
