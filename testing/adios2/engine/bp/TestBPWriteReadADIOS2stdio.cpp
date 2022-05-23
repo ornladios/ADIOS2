@@ -166,7 +166,6 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead1D8)
             bpWriter.Put(var_r64, currentTestData.R64.data());
             bpWriter.Put(var_cr32, currentTestData.CR32.data());
             bpWriter.Put(var_cr64, currentTestData.CR64.data());
-            bpWriter.PerformPuts();
 
             bpWriter.EndStep();
         }
@@ -514,7 +513,6 @@ TEST_F(BPWriteReadTestADIOS2stdio, ADIOS2BPWriteRead2D2x4)
             bpWriter.Put(var_r64, currentTestData.R64.data());
             bpWriter.Put(var_cr32, currentTestData.CR32.data());
             bpWriter.Put(var_cr64, currentTestData.CR64.data());
-            bpWriter.PerformPuts();
 
             bpWriter.EndStep();
         }

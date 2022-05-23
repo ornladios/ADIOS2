@@ -133,7 +133,6 @@ TEST_F(NullWriteReadTests, NullWriteRead1D8)
             nullWriter.Put(var_u64, currentTestData.U64.data());
             nullWriter.Put(var_r32, currentTestData.R32.data());
             nullWriter.Put(var_r64, currentTestData.R64.data());
-            nullWriter.PerformPuts();
             nullWriter.EndStep();
         }
 

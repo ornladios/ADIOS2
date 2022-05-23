@@ -83,7 +83,6 @@ int main(int argc, char *argv[])
         else
         {
             writer.Put<float>(var, myFloats.data());
-            writer.PerformPuts();
         }
 
         /** Engine becomes unreachable after this*/
