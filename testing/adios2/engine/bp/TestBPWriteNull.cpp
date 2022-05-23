@@ -167,7 +167,6 @@ TEST_F(BPWriteNullTest, BPWrite1D1x8)
             bpWriter.Put(var_r64, currentTestData.R64.data());
             bpWriter.Put(var_cr32, currentTestData.CR32.data());
             bpWriter.Put(var_cr64, currentTestData.CR64.data());
-            bpWriter.PerformPuts();
 
             bpWriter.EndStep();
         }
@@ -320,7 +319,6 @@ TEST_F(BPWriteNullTest, BPWrite2D2x4)
             bpWriter.Put(var_r64, currentTestData.R64.data());
             bpWriter.Put(var_cr32, currentTestData.CR32.data());
             bpWriter.Put(var_cr64, currentTestData.CR64.data());
-            bpWriter.PerformPuts();
 
             bpWriter.EndStep();
         }

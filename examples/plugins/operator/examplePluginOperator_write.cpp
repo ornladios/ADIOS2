@@ -70,7 +70,6 @@ int main(int argc, char *argv[])
         adios2::Engine writer = io.Open("testOperator.bp", adios2::Mode::Write);
 
         writer.Put<double>(var, myDoubles.data());
-        writer.PerformPuts();
 
         /** Engine becomes unreachable after this*/
         writer.Close();
