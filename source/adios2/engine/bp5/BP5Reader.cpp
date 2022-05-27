@@ -358,8 +358,8 @@ void BP5Reader::PerformGets()
                                       fileManagers[tid], maxOpenFiles);
         }
         // main thread runs last subset of reads
-        auto tMain = lf_Reader(m_DataFileManager, maxOpenFiles);
-        {
+        /*auto tMain = */ lf_Reader(m_DataFileManager, maxOpenFiles);
+        /*{
             double tSubfile = std::get<0>(tMain);
             double tRead = std::get<1>(tMain);
             double tCopy = std::get<2>(tMain);
@@ -368,14 +368,14 @@ void BP5Reader::PerformGets()
                       << tSubfile + tRead + tCopy << "s, subfile = " << tSubfile
                       << "s, read = " << tRead << "s, copy = " << tCopy
                       << ", nReads = " << nReads << std::endl;
-        }
+        }*/
 
         // wait for all async threads
         int tid = 1;
         for (auto &f : futures)
         {
-            auto t = f.get();
-            double tSubfile = std::get<0>(t);
+            /*auto t = */ f.get();
+            /*double tSubfile = std::get<0>(t);
             double tRead = std::get<1>(t);
             double tCopy = std::get<2>(t);
             size_t nReads = std::get<3>(t);
@@ -383,7 +383,7 @@ void BP5Reader::PerformGets()
                       << " total = " << tSubfile + tRead + tCopy
                       << "s, subfile = " << tSubfile << "s, read = " << tRead
                       << "s, copy = " << tCopy << ", nReads = " << nReads
-                      << std::endl;
+                      << std::endl;*/
             ++tid;
         }
     }
