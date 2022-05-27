@@ -1083,9 +1083,11 @@ static size_t CalcBlockLength(const size_t dimensionsSize, const size_t *count)
 }
 
 std::vector<BP5Deserializer::ReadRequest>
-BP5Deserializer::GenerateReadRequests()
+BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
+                                      size_t *maxReadSize)
 {
     std::vector<BP5Deserializer::ReadRequest> Ret;
+    *maxReadSize = 0;
 
     for (size_t ReqIndex = 0; ReqIndex < PendingRequests.size(); ReqIndex++)
     {
@@ -1122,7 +1124,14 @@ BP5Deserializer::GenerateReadRequests()
                         helper::GetDataTypeSize(Req->VarRec->Type) *
                         CalcBlockLength(Req->VarRec->DimCount,
                                         &writer_meta_base->Count[StartDim]);
-                    RR.DestinationAddr = (char *)malloc(RR.ReadLength);
+                    RR.DestinationAddr = nullptr;
+                    if (doAllocTempBuffers)
+                    {
+                        RR.DestinationAddr = (char *)malloc(RR.ReadLength);
+                    }
+                    *maxReadSize =
+                        (*maxReadSize < RR.ReadLength ? RR.ReadLength
+                                                      : *maxReadSize);
                     RR.Internal = NULL;
                     RR.OffsetInBlock = 0;
                     RR.ReqIndex = ReqIndex;
@@ -1170,7 +1179,15 @@ BP5Deserializer::GenerateReadRequests()
                                 writer_meta_base->DataLocation[Block];
                             RR.ReadLength =
                                 writer_meta_base->DataLengths[Block];
-                            RR.DestinationAddr = (char *)malloc(RR.ReadLength);
+                            RR.DestinationAddr = nullptr;
+                            if (doAllocTempBuffers)
+                            {
+                                RR.DestinationAddr =
+                                    (char *)malloc(RR.ReadLength);
+                            }
+                            *maxReadSize =
+                                (*maxReadSize < RR.ReadLength ? RR.ReadLength
+                                                              : *maxReadSize);
                             RR.Internal = NULL;
                             RR.ReqIndex = ReqIndex;
                             RR.BlockID = Block;
@@ -1212,7 +1229,15 @@ BP5Deserializer::GenerateReadRequests()
                                 StartOffsetInBlock;
                             RR.ReadLength =
                                 EndOffsetInBlock - StartOffsetInBlock;
-                            RR.DestinationAddr = (char *)malloc(RR.ReadLength);
+                            RR.DestinationAddr = nullptr;
+                            if (doAllocTempBuffers)
+                            {
+                                RR.DestinationAddr =
+                                    (char *)malloc(RR.ReadLength);
+                            }
+                            *maxReadSize =
+                                (*maxReadSize < RR.ReadLength ? RR.ReadLength
+                                                              : *maxReadSize);
                             RR.Internal = NULL;
                             RR.OffsetInBlock = StartOffsetInBlock;
                             RR.ReqIndex = ReqIndex;
@@ -1227,7 +1252,7 @@ BP5Deserializer::GenerateReadRequests()
     return Ret;
 }
 
-void BP5Deserializer::FinalizeGet(const ReadRequest &Read)
+void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
 {
     auto Req = PendingRequests[Read.ReqIndex];
     /*std::cout << "    Req: block = " << Req.BlockID << " step = " << Req.Step
@@ -1309,14 +1334,17 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read)
                    (char *)Req.Data, outStart, outCount, true, true,
                    ElementSize, Dims(), Dims(), Dims(), Dims(), false,
                    Req.MemSpace);
-    free((char *)Read.DestinationAddr);
+    if (freeAddr)
+    {
+        free((char *)Read.DestinationAddr);
+    }
 }
 
 void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> &Reads)
 {
     for (const auto &Read : Reads)
     {
-        FinalizeGet(Read);
+        FinalizeGet(Read, true);
     }
     PendingRequests.clear();
 }

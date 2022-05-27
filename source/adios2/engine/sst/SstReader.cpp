@@ -640,7 +640,9 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_gets)
 
 void SstReader::BP5PerformGets()
 {
-    auto ReadRequests = m_BP5Deserializer->GenerateReadRequests();
+    size_t maxReadSize;
+    auto ReadRequests =
+        m_BP5Deserializer->GenerateReadRequests(true, &maxReadSize);
     std::vector<void *> sstReadHandlers;
     for (const auto &Req : ReadRequests)
     {

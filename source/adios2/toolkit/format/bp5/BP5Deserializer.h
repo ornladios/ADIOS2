@@ -61,8 +61,17 @@ public:
     bool QueueGetSingle(core::VariableBase &variable, void *DestData,
                         size_t Step);
 
-    std::vector<ReadRequest> GenerateReadRequests();
-    void FinalizeGet(const ReadRequest &);
+    /* generate read requests. return vector of requests AND the size of
+     * the largest allocation block necessary for reading.
+     * input flag: true allocates a temporary buffer for each read request
+     * unless the request can go directly to user memory.
+     * False will not allocate a temporary buffer
+     * (RR.DestinationAddress==nullptr) but may also assign the user memory
+     * pointer for direct read in
+     */
+    std::vector<ReadRequest> GenerateReadRequests(const bool doAllocTempBuffers,
+                                                  size_t *maxReadSize);
+    void FinalizeGet(const ReadRequest &, const bool freeAddr);
     void FinalizeGets(std::vector<ReadRequest> &);
 
     MinVarInfo *AllRelativeStepsMinBlocksInfo(const VariableBase &var);

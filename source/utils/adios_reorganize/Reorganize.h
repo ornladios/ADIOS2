@@ -75,8 +75,8 @@ private:
     std::string rmethodname;      // ADIOS read method
     std::string rmethodparam_str; // ADIOS read method parameter string
 
-    static const size_t max_read_buffer_size = 1024 * 1024 * 1024;
-    static const size_t max_write_buffer_size = 1024 * 1024 * 1024;
+    static const size_t max_read_buffer_size = 16 * 1024 * 1024 * 1024ULL;
+    static const size_t max_write_buffer_size = 16 * 1024 * 1024 * 1024ULL;
 
     // will stop if no data found for this time (-1: never stop)
     static const int timeout_sec = 300;
