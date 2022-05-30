@@ -200,35 +200,37 @@ void BP5Reader::ReadData(const size_t WriterRank, const size_t Timestep,
                                      {{"transport", "File"}}, false);
     }
 
+    /* Each block is in exactly one flush. The StartOffset was calculated
+       as if all the flushes were in a single contiguous block in file.
+    */
     size_t InfoStartPos =
         DataPosPos + (WriterRank * (2 * FlushCount + 1) * sizeof(uint64_t));
-    size_t ThisFlushInfo = InfoStartPos;
-    size_t RemainingLength = Length;
-    size_t ThisDataPos;
-    size_t Offset = StartOffset;
+    size_t SumDataSize = 0; // count in contiguous space
     for (size_t flush = 0; flush < FlushCount; flush++)
     {
-
-        ThisDataPos =
-            helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, ThisFlushInfo,
+        size_t ThisDataPos =
+            helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
                                         m_Minifooter.IsLittleEndian);
         size_t ThisDataSize =
-            helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, ThisFlushInfo,
+            helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
                                         m_Minifooter.IsLittleEndian);
-        if (ThisDataSize > RemainingLength)
-            ThisDataSize = RemainingLength;
-        m_DataFileManager.ReadFile(Destination, ThisDataSize,
-                                   ThisDataPos + Offset, SubfileNum);
-        Destination += ThisDataSize;
-        RemainingLength -= ThisDataSize;
-        Offset = 0;
-        if (RemainingLength == 0)
+
+        if (StartOffset < SumDataSize + ThisDataSize)
+        {
+            // discount offsets of skipped flushes
+            size_t Offset = StartOffset - SumDataSize;
+            m_DataFileManager.ReadFile(Destination, Length,
+                                       ThisDataPos + Offset, SubfileNum);
             return;
+        }
+        SumDataSize += ThisDataSize;
     }
-    ThisDataPos = helper::ReadValue<uint64_t>(
-        m_MetadataIndex.m_Buffer, ThisFlushInfo, m_Minifooter.IsLittleEndian);
-    m_DataFileManager.ReadFile(Destination, RemainingLength,
-                               ThisDataPos + Offset, SubfileNum);
+
+    size_t ThisDataPos = helper::ReadValue<uint64_t>(
+        m_MetadataIndex.m_Buffer, InfoStartPos, m_Minifooter.IsLittleEndian);
+    size_t Offset = StartOffset - SumDataSize;
+    m_DataFileManager.ReadFile(Destination, Length, ThisDataPos + Offset,
+                               SubfileNum);
 }
 
 void BP5Reader::PerformGets()
