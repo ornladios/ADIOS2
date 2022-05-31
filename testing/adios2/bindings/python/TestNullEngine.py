@@ -5,8 +5,8 @@
 # TestNullEngine.py
 #
 #
-#  Created on: Apr 11th, 2019
-#      Author: William F Godoy godoywf@ornl.gov
+# Created on : Apr 11th, 2019
+# Author : William F Godoy godoywf @ornl.gov
 #
 
 from mpi4py import MPI
@@ -48,10 +48,8 @@ status = nullWriter.BeginStep()
 assert(status == adios2.StepStatus.OK)
 
 nullWriter.Put(varTemperature, temperatures)
-nullWriter.PerformPuts()
 nullWriter.EndStep()
 nullWriter.Close()
-
 
 # ADIOS2 read
 ioRead = adios.DeclareIO("ioReader")

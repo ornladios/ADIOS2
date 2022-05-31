@@ -19,7 +19,7 @@ BP5 is designed to use less memory than BP4. The buffer it manages is a list of 
 Second, BP5 can add a large user variable as a chunk to this list without copying it at all and use it directly to write (or send to aggregator). `Put(..., adios2::Mode::Deferred)` will handle the user data directly, unless its size is below a threshold (see parameter **MinDeferredSize**). 
 
 .. note::
-    Do not call `PerformPuts()` when using BP5, because this call forces copying all user data into the internal buffer before writing, eliminating all benefits of zero-copy that BP5 provides. 
+    Do not call `PerformPuts()` when using BP5, because this call forces copying all user data into the internal buffer before writing, eliminating all benefits of zero-copy that BP5 provides when operating with large buffers.  Instead, consider using Put() with the Sync option if you want to force ADIOS to copy data immediately.  Alternatively, BP5 offers PerformDataWrite(), an collective operation that actually moves data to storage, potentially freeing up buffer and application memory.
 
 Third, BP5 is using a shared memory segment on each compute node for aggregation, instead of MPI. The best settings for the shared memory is 4GB (see parameter **MaxShmSize**), enough place for two chunks with the POSIX write limit. More is useless but can be smaller if a system/application cannot allow this much space for aggregation (but there will be more write calls to disk as a result).
 
