@@ -111,15 +111,13 @@ if(ADIOS2_HAVE_CUDA)
   add_library(adios2_core_cuda helper/adiosCUDA.cu)
   set_target_properties(adios2_core_cuda PROPERTIES
     CUDA_SEPARABLE_COMPILATION ON
-    CUDA_STANDARD 14
-    CUDA_STANDARD_REQUIRED ON
     CUDA_VISIBILITY_PRESET hidden
     VISIBILITY_INLINES_HIDDEN ON
     INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>"
     EXPORT_NAME core_cuda
     OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_cuda
     )
-
+  target_compile_features(adios2_core_cuda PRIVATE cuda_std_14)
   target_link_libraries(adios2_core PRIVATE adios2_core_cuda CUDA::cudart CUDA::cuda_driver)
   set(maybe_adios2_core_cuda adios2_core_cuda)
 endif()
