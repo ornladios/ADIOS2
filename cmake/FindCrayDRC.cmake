@@ -13,18 +13,18 @@
 if(NOT (PC_CrayDRC_FOUND STREQUAL "IGNORE"))
   find_package(PkgConfig)
   if(PKG_CONFIG_FOUND)
-    set(_CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH})
+    set(_CrayDRC_CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH})
     if(CrayDRC_ROOT)
       list(INSERT CMAKE_PREFIX_PATH 0 "${CrayDRC_ROOT}")
     elseif(NOT ENV{CrayDRC_ROOT} STREQUAL "")
       list(INSERT CMAKE_PREFIX_PATH 0 "$ENV{CrayDRC_ROOT}")
     endif()
-    set(PKG_CONFIG_USE_CMAKE_PREFIX_PATH ON)
+    set(PKG_CONFIG_USE_CrayDRC_CMAKE_PREFIX_PATH ON)
 
     pkg_check_modules(PC_CrayDRC cray-drc)
 
-    set(CMAKE_PREFIX_PATH ${_CMAKE_PREFIX_PATH})
-    unset(_CMAKE_PREFIX_PATH)
+    set(CMAKE_PREFIX_PATH ${_CrayDRC_CMAKE_PREFIX_PATH})
+    unset(_CrayDRC_CMAKE_PREFIX_PATH)
 
     if(PC_CrayDRC_FOUND)
       if(BUILD_SHARED_LIBS)
