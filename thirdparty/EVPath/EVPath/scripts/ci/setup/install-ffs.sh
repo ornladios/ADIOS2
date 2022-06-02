@@ -12,7 +12,7 @@ if [[ "${OS}" =~ "Windows" ]]
 then
   extra_cmake_args="-DFFS_USE_DILL:BOOL=OFF"
 else
-  extra_cmake_args=""
+  extra_cmake_args="-DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON"
   export dill_ROOT="${PWD}/dill/install"
 fi
 

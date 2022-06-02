@@ -1960,9 +1960,10 @@ int size;
 }
 
 #if !defined(HAVE_DILL_H)
-int ffs_putreg(void* s, int reg, int type) {}
-int ffs_getreg(dill_stream s, int *reg_p, int type, int var_tmp){}
-int ffs_localb(void*s, int size) {}
+typedef void *dill_stream;
+int ffs_putreg(void* s, int reg, int type) {return 0;}
+int ffs_getreg(dill_stream s, int *reg_p, int type, int var_tmp){return 0;}
+int ffs_localb(void*s, int size) {return 0;}
 extern
  conv_routine
 generate_conversion(conv, src_alignment, dest_alignment)

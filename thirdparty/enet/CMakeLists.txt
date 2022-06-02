@@ -8,6 +8,8 @@ set(ENET_RUNTIME_COMPONENT adios2_enet-runtime)
 set(ENET_LIBRARY_COMPONENT adios2_enet-libraries)
 set(ENET_ARCHIVE_COMPONENT adios2_enet-development)
 set(ENET_HEADER_COMPONENT adios2_enet-development)
+set(ENET_INSTALL_PKGCONFIG OFF)
+set(BUILD_DOCS OFF)
 
 add_subdirectory(enet)
 set(enet_DIR ${CMAKE_CURRENT_BINARY_DIR}/enet CACHE INTERNAL "")

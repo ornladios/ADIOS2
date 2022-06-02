@@ -18,7 +18,7 @@
 #include <sys/wait.h>
 #endif
 
-#define MSG_COUNT 50
+#define MSG_COUNT 25
 
 typedef struct _complex_rec {
     double r;
@@ -50,7 +50,7 @@ typedef struct _simple_rec {
     double double_field;
     char char_field;
     int scan_sum;
-    int vec_count;
+    long vec_count;
     FFSEncodeVector vecs;
 } simple_rec, *simple_rec_ptr;
 
@@ -79,7 +79,7 @@ static FMField simple_field_list[] =
     {"scan_sum", "integer",
      sizeof(int), FMOffset(simple_rec_ptr, scan_sum)},
     {"vec_count", "integer",
-     sizeof(int), FMOffset(simple_rec_ptr, vec_count)},
+     sizeof(long), FMOffset(simple_rec_ptr, vec_count)},
     {"vecs", "EventVecElem[vec_count]", sizeof(struct FFSEncodeVec), 
      FMOffset(simple_rec_ptr, vecs)},
     {NULL, NULL, 0, 0},
@@ -95,8 +95,8 @@ static FMStructDescRec simple_format_list[] =
     {NULL, NULL}
 };
 
-static int size = 0;
-static int vecs = 1;
+static size_t size = 100000;
+static size_t vecs = 1;
 
 static
 void 
@@ -137,8 +137,10 @@ generate_record(simple_rec_ptr event)
     event->vec_count = vecs;
     event->vecs = malloc(sizeof(event->vecs[0]) * vecs);
     memset(event->vecs, 0, sizeof(event->vecs[0]) * vecs);
+    printf("Vecs = %ld\n", vecs);
     for (i=0; i < vecs; i++) {
 	event->vecs[i].iov_len = size/vecs;
+        printf("Vec_len = %ld\n", size/vecs);
 	event->vecs[i].iov_base = malloc(event->vecs[i].iov_len);
 	memset(event->vecs[i].iov_base, 0, event->vecs[i].iov_len);
     }
@@ -227,14 +229,14 @@ static atom_t CM_TRANSPORT;
 static char *transport = NULL;
 
 #define PARSE_EXTRA_ARGS } else if (strcmp(&argv[1][1], "size") == 0) {\
-	    if (sscanf(argv[2], "%d", &size) != 1) {\
+	    if (sscanf(argv[2], "%zu", &size) != 1) {\
 		printf("Unparseable argument to -size, %s\n", argv[2]);\
 	    }\
 	    if (vecs == 0) { vecs = 1; printf("vecs not 1\n");}\
 	    argv++;\
 	    argc--;\
 	} else 	if (strcmp(&argv[1][1], "vecs") == 0) {\
-	    if (sscanf(argv[2], "%d", &vecs) != 1) {\
+	    if (sscanf(argv[2], "%zu", &vecs) != 1) {\
 		printf("Unparseable argument to -vecs, %s\n", argv[2]);\
 	    }\
 	    argv++;\
@@ -252,6 +254,7 @@ main(int argc, char **argv)
     int i;
 
     PARSE_ARGS();
+    (void) transport;
 
     srand48(getpid());
     CM_TRANSPORT = attr_atom_from_string("CM_TRANSPORT");
@@ -349,8 +352,8 @@ do_regression_master_test()
     int forked = 0;
     attr_list contact_list;
     char *string_list;
-    char size_str[4];
-    char vec_str[4];
+    char size_str[40];
+    char vec_str[40];
     CMFormat format;
     int message_count = 0;
     int expected_count = MSG_COUNT;
@@ -382,10 +385,10 @@ do_regression_master_test()
     string_list = attr_list_to_string(contact_list);
     free_attr_list(contact_list);
     args[2] = "-size";
-    sprintf(&size_str[0], "%d", size);
+    sprintf(&size_str[0], "%zu", size);
     args[3] = size_str;
     args[4] = "-vecs";
-    sprintf(&vec_str[0], "%d", vecs);
+    sprintf(&vec_str[0], "%zu", vecs);
     args[5] = vec_str;
     args[6] = string_list;
 

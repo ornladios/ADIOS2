@@ -447,7 +447,9 @@ print INT<<EOF;
 #include "string.h"
 #include "stdlib.h"
 #include "ffs.h"
+#ifdef HAVE_COD_H
 #include "cod.h"
+#endif
 #include "atl.h"
 #include "evpath.h"
 #include "cm_internal.h"

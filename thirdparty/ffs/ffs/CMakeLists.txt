@@ -189,15 +189,18 @@ target_include_directories(ffs PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/ffs>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-option(FFS_USE_DILL "Enable Dill code generation" ON)
-if(FFS_USE_DILL)
-  find_package(dill 2.3.1 REQUIRED)
+find_package(dill 2.3.1 QUIET)
+
+option(FFS_USE_DILL "Enable Dill code generation" ${DILL_FOUND})
+
+if (DILL_FOUND)
   set(HAVE_DILL_H ON)
   option(FFS_CONVERSION_GENERATION_DEFAULT "Enable dynamic code generation" ${DILL_HAS_NATIVE_DCG})
   mark_as_advanced(FFS_CONVERSION_GENERATION_DEFAULT)
   set(DO_DCG TRUE)
   target_link_libraries(ffs PRIVATE dill::dill)
   list(APPEND _pkg_config_private_reqs "dill >= ${dill_VERSION}")
+  set(COD_INSTALL_FILE "cod/cod.h")
 endif()
 
 option(FFS_USE_ATL "Enable the use of ATL" ON)
@@ -303,7 +306,7 @@ endif()
 option(FFS_INSTALL_HEADERS "Install FFS header files" ON)
 mark_as_advanced(FFS_INSTALL_HEADERS)
 if(FFS_INSTALL_HEADERS)
-  install(FILES fm/fm.h cod/cod.h ${CMAKE_CURRENT_BINARY_DIR}/ffs/ffs.h
+  install(FILES fm/fm.h ${COD_INSTALL_FILE} ${CMAKE_CURRENT_BINARY_DIR}/ffs/ffs.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
     COMPONENT ${FFS_HEADER_COMPONENT})
 endif()

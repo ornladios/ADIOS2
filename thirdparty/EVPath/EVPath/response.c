@@ -13,7 +13,21 @@
 #endif
 
 #include "evpath.h"
+#ifdef HAVE_COD_H
 #include "cod.h"
+#else
+#define cod_code void*
+#define cod_exec_context void*
+#define cod_assoc_client_data(x, y, z) 0
+#define cod_get_client_data(x, y) NULL
+#define cod_create_exec_context(x) 0
+#define cod_exec_context_free(x) 0
+#define cod_code_free(x) 0
+#define cod_assoc_externs(x,y) 0
+#define cod_parse_for_context(x,y) 0
+#define cod_set_closure(x,y,z) 0
+#define cod_add_int_constant_to_parse_context(name, i, context) 0
+#endif
 #include "cm_internal.h"
 #include "dlloader.h"
 
@@ -350,7 +364,7 @@ install_response_handler(CManager cm, int stone_id, char *response_spec,
 	    in_list[format_count2].field_list = NULL;
 	    struct_list[j] = in_list;
 	    if (struct_list[j]->field_list == NULL) {  /* anonymous */
-		free(struct_list[j]->format_name);
+		free((void*)struct_list[j]->format_name);
 		free(in_list);
 		struct_list[j] = NULL;
 		list_count--;
@@ -579,9 +593,11 @@ filter_wrapper(CManager cm, struct _event_item *event, void *client_data,
     ev_state.out_count = out_count;
     ev_state.out_stones = out_stones;
     if (ec != NULL) {
+#ifdef HAVE_COD_H
 	cod_assoc_client_data(ec, 0x34567890, (long)&ev_state);
 
 	ret = ((int(*)(cod_exec_context, void *, attr_list))instance->u.filter.code->func)(ec, event->decoded_event, attrs);
+#endif
     } else {
 	/* DLL-based handler */
 	ret = ((int(*)(void *, attr_list))instance->u.filter.func_ptr)(event->decoded_event, attrs);
@@ -603,6 +619,7 @@ router_wrapper(CManager cm, struct _event_item *event, void *client_data,
     if (instance->u.filter.func_ptr) {
 	ret = ((int(*)(void *, attr_list))instance->u.filter.func_ptr)(event->decoded_event, attrs);
     } else {
+#ifdef HAVE_COD_H
 	int (*func)(cod_exec_context, void *, attr_list) =
 	    (int(*)(cod_exec_context, void *, attr_list))instance->u.filter.code->func;
 	cod_exec_context ec = instance->u.filter.ec;
@@ -614,6 +631,7 @@ router_wrapper(CManager cm, struct _event_item *event, void *client_data,
 	ev_state.out_stones = out_stones;
 	cod_assoc_client_data(ec, 0x34567890, (long)&ev_state);
 	ret = (func)(ec, event->decoded_event, attrs);
+#endif
     }
     if (ret >= 0) {
 	if (ret >= out_count) {
@@ -667,9 +685,11 @@ transform_wrapper(CManager cm, struct _event_item *event, void *client_data,
     }
     memset(out_event, 0, instance->u.transform.out_size);
     if (ec != NULL) {
+#ifdef HAVE_COD_H
 	func = (int(*)(cod_exec_context, void *, void*, attr_list, attr_list))instance->u.transform.code->func;
 	cod_assoc_client_data(ec, 0x34567890, (long)&ev_state);
 	ret = func(ec, event->decoded_event, out_event, attrs, output_attrs);
+#endif
     } else {
 	/* DLL-based handler */
 	ret = ((int(*)(void *, void *, attr_list, attr_list))instance->u.transform.func_ptr)(event->decoded_event, out_event, attrs, output_attrs);
@@ -1050,6 +1070,7 @@ static int
 queued_wrapper(CManager cm, struct _queue *queue, queue_item *item,
                 void *client_data, int out_count, int *out_stones)
 {
+#ifdef HAVE_COD_H
     response_instance instance = (response_instance)client_data;
     int(*func)(cod_exec_context) =  /* XXX wrong type */
 	(int(*)(cod_exec_context))instance->u.queued.code->func;
@@ -1071,6 +1092,9 @@ queued_wrapper(CManager cm, struct _queue *queue, queue_item *item,
     func(ec);
 
     return ev_state.did_output;
+#else
+    return 0;
+#endif
 }
 
 static response_instance
@@ -1091,7 +1115,7 @@ FMStructDescList list;
     while(list[format_count].format_name != NULL) format_count++;
 
     for (format = 0; format < format_count; format++) {
-	free(list[format].format_name);
+	free((void*)list[format].format_name);
 	free_FMfield_list(list[format].field_list);
     }
     free(list);
@@ -1427,7 +1451,7 @@ response_data_free(CManager cm, void *resp_void)
 	      FMStructDescList list = resp->u.multityped.struct_list[i];
 	      int j = 0;
 	      while (list[j].format_name != NULL) {
-		  free(list[j].format_name);
+		  free((void*)list[j].format_name);
 		  free_FMfield_list(list[j].field_list);
 		  j++;
 	      }
@@ -1929,7 +1953,7 @@ add_queued_constants(cod_parse_context context, FMFormat *formats)
     }
 }
 
-
+#ifdef HAVE_COD_H
 extern sm_ref
 cod_build_type_node(const char *name, FMFieldList field_list);
 extern sm_ref
@@ -2334,3 +2358,11 @@ generate_multityped_code(CManager cm, struct response_spec *mrd, stone_type ston
     return instance;
 }
 
+#else
+static response_instance
+generate_filter_code(CManager cm, struct response_spec *mrd, stone_type stone,
+		     FMFormat format){return NULL;}
+static response_instance
+generate_multityped_code(CManager cm, struct response_spec *mrd, stone_type stone,
+			 FMFormat *formats){return NULL;}
+#endif

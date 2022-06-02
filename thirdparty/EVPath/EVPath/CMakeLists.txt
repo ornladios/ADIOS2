@@ -12,6 +12,11 @@ if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
 
+# Enable imported targets as library dependencies for CHECK_INCLUDE_FILE
+if(POLICY CMP0075)
+  cmake_policy(SET CMP0075 NEW)
+endif()
+
 # Let option(...) setings work with non-cache variables.  Useful for including
 # EVPath as a third party dependency in another project.
 # CMake v3.13
@@ -197,15 +202,26 @@ cmake_dependent_option(EVPATH_TRANSPORT_MODULES
 list(INSERT CMAKE_PREFIX_PATH 0 ${CMAKE_INSTALL_PREFIX})
 find_package(atl 2.2.1 REQUIRED)
 find_package(ffs 1.5.1 REQUIRED)
-find_package(dill 2.3.1 REQUIRED)
-target_link_libraries(EVPath PUBLIC atl::atl ffs::ffs PRIVATE dill::dill)
-
 _pkg_get_target_prefix(atl::atl atl_PREFIX)
 _pkg_get_target_prefix(ffs::ffs ffs_PREFIX)
-_pkg_get_target_prefix(dill::dill dill_PREFIX)
-list(APPEND _pkg_config_pfxs "${atl_PREFIX}" "${ffs_PREFIX}" "${dill_PREFIX}")
-list(APPEND _pkg_config_reqs "atl >= ${atl_VERSION}" "ffs >= ${ffs_VERSION}")
-list(APPEND _pkg_config_private_reqs "dill >= ${dill_VERSION}")
+list(APPEND _pkg_config_pfxs "${atl_PREFIX}" "${ffs_PREFIX}")
+
+if(TARGET ffs) # The unaliased target exists so it's built by us
+  set(HAVE_COD_H TRUE CACHE INTERNAL "" FORCE)
+else()
+  set(CMAKE_REQUIRED_LIBRARIES ffs::ffs)
+  CHECK_INCLUDE_FILE(cod.h HAVE_COD_H)
+  unset(CMAKE_REQUIRED_LIBRARIES)
+endif()
+if (HAVE_COD_H)
+   find_package(dill 2.3.1 REQUIRED)
+   target_link_libraries(EVPath PUBLIC atl::atl ffs::ffs PRIVATE dill::dill)
+   _pkg_get_target_prefix(dill::dill dill_PREFIX)
+   list(APPEND _pkg_config_private_reqs "dill >= ${dill_VERSION}")
+   list(APPEND _pkg_config_pfxs "${dill_PREFIX}")
+else()
+   target_link_libraries(EVPath PUBLIC atl::atl ffs::ffs)
+endif()
 
 find_package(Threads)
 if(Threads_FOUND)

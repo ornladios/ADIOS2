@@ -5007,10 +5007,10 @@ static uint64_t ENET_SIMPLE_CAS(uint64_t *ptr, uint64_t oldvalue, uint64_t newva
                 if (result->ai_family == AF_INET) {
                     struct sockaddr_in * sin = (struct sockaddr_in *) result->ai_addr;
 
-                    ((uint32_t *)&address->host.s6_addr)[0] = 0;
-                    ((uint32_t *)&address->host.s6_addr)[1] = 0;
-                    ((uint32_t *)&address->host.s6_addr)[2] = htonl(0xffff);
-                    ((uint32_t *)&address->host.s6_addr)[3] = sin->sin_addr.s_addr;
+                    *((uint32_t *)&address->host.s6_addr) = 0;
+                    *(((uint32_t *)&address->host.s6_addr) + 1) = 0;
+                    *(((uint32_t *)&address->host.s6_addr) + 2) = htonl(0xffff);
+                    *(((uint32_t *)&address->host.s6_addr) + 3) = sin->sin_addr.s_addr;
 
                     freeaddrinfo(resultList);
 

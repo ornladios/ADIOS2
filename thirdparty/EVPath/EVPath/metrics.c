@@ -35,7 +35,12 @@
 
 #include "evpath.h"
 #include "cm_internal.h"
+#ifdef HAVE_COD_H
 #include "cod.h"
+#else
+#define cod_assoc_externs(x,y)
+#define cod_parse_for_context(x,y)
+#endif
 #include <fcntl.h>
 
 /*#define CPU_FREQ_SCALING_MAX_FREQ "/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq"*/

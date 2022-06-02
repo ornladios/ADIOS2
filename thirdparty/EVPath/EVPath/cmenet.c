@@ -32,8 +32,8 @@ extern void ZPLENETdummy() {  // for warning suppression
      (void) enet_socket_listen(0, 0) ;
      (void) enet_socket_accept(0, NULL) ;
      (void) enet_socket_connect(0, NULL) ;
-     (void) enet_socket_get_option(0, 1, NULL) ;
-     (void) enet_socket_shutdown(0, 1) ;
+     (void) enet_socket_get_option(0, (ENetSocketOption) 1, NULL) ;
+     (void) enet_socket_shutdown(0, (ENetSocketShutdown) 1) ;
      (void) enet_socketset_select(0, NULL, NULL, 0) ;
      (void) enet_address_get_host(NULL, NULL, 0 ) ;
      (void) enet_host_get_peers_count( NULL) ;
@@ -631,10 +631,10 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
 		       int_port_num);
 #else
         char straddr[INET6_ADDRSTRLEN];
-        ((enet_uint32 *)&host_ipv6.s6_addr)[0] = 0;
-        ((enet_uint32 *)&host_ipv6.s6_addr)[1] = 0;
-        ((enet_uint32 *)&host_ipv6.s6_addr)[2] = htonl(0xffff);
-        ((enet_uint32 *)&host_ipv6.s6_addr)[3] = htonl(host_ip);
+        *((enet_uint32 *)&host_ipv6.s6_addr) = 0;
+        *(((enet_uint32 *)&host_ipv6.s6_addr) + 1) = 0;
+        *(((enet_uint32 *)&host_ipv6.s6_addr) + 2) = htonl(0xffff);
+        *(((enet_uint32 *)&host_ipv6.s6_addr) + 3) = htonl(host_ip);
         inet_ntop(AF_INET6, &host_ipv6, straddr,
                   sizeof(straddr));
 
@@ -1099,7 +1099,7 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
 #ifdef NEED_IOVEC_DEFINE
 struct iovec {
     void *iov_base;
-    int iov_len;
+    size_t iov_len;
 };
 
 #endif
@@ -1111,8 +1111,8 @@ extern
 #endif
 void *
 INTERFACE_NAME(read_block_func)(CMtrans_services svc,
-			      enet_conn_data_ptr conn_data, int *actual_len,
-			      int *offset_ptr)
+                                enet_conn_data_ptr conn_data, ssize_t *actual_len,
+                                ssize_t *offset_ptr)
 {
     CMbuffer cb;
 
@@ -1166,10 +1166,10 @@ extern
 #endif
 int
 INTERFACE_NAME(writev_func)(CMtrans_services svc, enet_conn_data_ptr ecd,
-			  struct iovec *iov, int iovcnt, attr_list attrs)
+			  struct iovec *iov, size_t iovcnt, attr_list attrs)
 {
-    int i;
-    int length = 0;
+    size_t i;
+    size_t length = 0;
 
     (void) attrs;
     for (i = 0; i < iovcnt; i++) {
@@ -1280,6 +1280,7 @@ INTERFACE_NAME(initialize)(CManager cm, CMtrans_services svc,
 	CM_NETWORK_POSTFIX = attr_atom_from_string("CM_NETWORK_POSTFIX");
 	CM_ENET_CONN_TIMEOUT = attr_atom_from_string("CM_ENET_CONN_TIMEOUT");
 	CM_ENET_CONN_REUSE = attr_atom_from_string("CM_ENET_CONN_REUSE");
+        (void)CM_NETWORK_POSTFIX;
 	atom_init++;
     }
     if (env) {

@@ -182,6 +182,7 @@ main(int argc, char **argv)
     int regression_master = 1;
 
     PARSE_ARGS();
+    (void)regression;
 
     srand48(getpid());
     CM_TRANSPORT = attr_atom_from_string("CM_TRANSPORT");

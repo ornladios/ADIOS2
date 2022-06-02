@@ -523,7 +523,7 @@ void *arg2;
 	assert(CM_LOCKED(svc, sd->cm));
     }
     if (sd == NULL) {
-	init_select_data(svc, (select_data_ptr*)sdp, NULL);
+	init_select_data(svc, (select_data_ptr*)sdp, (CManager)NULL);
 	sd = *((select_data_ptr *)sdp);
     }
     sd->select_consistency_number++;
@@ -577,7 +577,7 @@ void *arg2;
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
     if (sd == NULL) {
-	init_select_data(svc, (select_data_ptr*)sdp, NULL);
+	init_select_data(svc, (select_data_ptr*)sdp, (CManager)NULL);
 	sd = *((select_data_ptr *)sdp);
     }
     if (sd->cm) {
@@ -643,7 +643,7 @@ void *arg2;
     select_data_ptr sd = *((select_data_ptr *)sdp);
     periodic_task_handle handle = malloc(sizeof(struct _periodic_task));
     if (sd == NULL) {
-	init_select_data(svc, (select_data_ptr*)sdp, NULL);
+	init_select_data(svc, (select_data_ptr*)sdp, (CManager)NULL);
 	sd = *((select_data_ptr *)sdp);
     }
 
@@ -698,7 +698,7 @@ void *arg2;
     select_data_ptr sd = *((select_data_ptr *)sdp);
     periodic_task_handle handle = malloc(sizeof(struct _periodic_task));
     if (sd == NULL) {
-	init_select_data(svc, (select_data_ptr*)sdp, NULL);
+	init_select_data(svc, (select_data_ptr*)sdp, (CManager)NULL);
 	sd = *((select_data_ptr *)sdp);
     }
 
@@ -799,7 +799,7 @@ int fd;
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
     if (sd == NULL) {
-	init_select_data(svc, (select_data_ptr*)sdp, NULL);
+	init_select_data(svc, (select_data_ptr*)sdp, (CManager)NULL);
 	sd = *((select_data_ptr *)sdp);
     }
     sd->select_consistency_number++;
@@ -1046,7 +1046,7 @@ void *client_data;
 {
     select_data_ptr sd = *((select_data_ptr *)client_data);
     if (sd == NULL) {
-	init_select_data(svc, (select_data_ptr*)client_data, NULL);
+	init_select_data(svc, (select_data_ptr*)client_data, (CManager)NULL);
 	sd = *((select_data_ptr *)client_data);
     }
     if (sd->cm) {
@@ -1063,7 +1063,7 @@ void *client_data;
 {
     select_data_ptr sd = *((select_data_ptr *)client_data);
     if (sd == NULL) {
-	init_select_data(svc, (select_data_ptr*)client_data, NULL);
+	init_select_data(svc, (select_data_ptr*)client_data, (CManager)NULL);
 	sd = *((select_data_ptr *)client_data);
     }
     if (sd->cm) {

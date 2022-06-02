@@ -198,14 +198,21 @@ typedef struct _stone {
     stall_callback *unstall_callbacks;
 } *stone_type;
     
-#ifdef __COD__H__
+#ifndef HAVE_COD_H
+struct _ecl_code_struct;
+typedef struct extern_entry {
+    /*! the textual name of the external entry */
+    char *extern_name;
+    /*! the address of the external entry */
+    void *extern_value;
+} cod_extern_entry;
+#define COD_EXTERN_ENTRY_DEFINED
+#endif
+typedef struct extern_entry cod_extern_entry;
 typedef struct _extern_routine_struct {
     char *extern_decl;
     cod_extern_entry *externs;
 } *extern_routines;
-#else
-typedef void *extern_routines;
-#endif
 
 typedef struct _lookup_table_elem {
     int global_id;
