@@ -96,6 +96,9 @@
 /* Define to 1 if you have the <sys/epoll.h> header file. */
 #cmakedefine HAVE_SYS_EPOLL_H
 
+/* Define to 1 if you have the <cod.h> header file. */
+#cmakedefine HAVE_COD_H
+
 /* Define to 1 if you have the <sys/select.h> header file. */
 #cmakedefine HAVE_SYS_SELECT_H
 

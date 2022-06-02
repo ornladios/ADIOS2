@@ -22,7 +22,9 @@
 #include "evpath.h"
 #include "cm_internal.h"
 #include "cm_transport.h"
+#ifdef HAVE_COD_H
 #include "cod.h"
+#endif
 
 /* 
  * Creates the context of conversion for the incoming 'format',

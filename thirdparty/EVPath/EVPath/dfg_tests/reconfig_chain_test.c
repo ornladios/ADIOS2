@@ -80,6 +80,7 @@ join_handler(EVmaster master, char *identifier, void* available_sources, void *a
 	if (strcmp(identifier, "origin") == 0) {
 	    canon_name = strdup("origin");
 	} else if (client_count < static_node_count) {
+	    canon_name = malloc(25);
 	    sprintf(canon_name, "client%d", client_count-1);
 	} else {
 	    canon_name = strdup("terminal");
@@ -99,7 +100,7 @@ join_handler(EVmaster master, char *identifier, void* available_sources, void *a
 	
 	EVdfg_assign_node(src, "origin");
 	for (i=1; i < static_node_count -1; i++) {
-	    char str[10];
+	    char str[20];
 	    char *filter;
 	    filter = create_filter_action_spec(NULL, filter_func);
 	    tmp = EVdfg_create_stone(dfg, filter);

@@ -154,7 +154,7 @@ thin_data_available(void *cmv, void * conn_datav)
 	    if (cd->format_list[i] == NULL) continue;
 	    while((cd->format_list[i])[j].format_name != NULL) {
 		int k = 0;
-		free(cd->format_list[i][j].format_name);
+		free((void*)cd->format_list[i][j].format_name);
 		while (cd->format_list[i][j].field_list[k].field_name != NULL) {
 		    free((char*)cd->format_list[i][j].field_list[k].field_name);
 		    free((char*)cd->format_list[i][j].field_list[k].field_type);

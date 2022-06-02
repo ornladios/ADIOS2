@@ -86,7 +86,6 @@ trans_test_upcall(CManager cm, void *buffer, long length, int type, attr_list li
 	    get_int_attr(list, CM_TRANS_TEST_TAKE_RECEIVE_BUFFER, &take);
 	}
 	return NULL;
-	break;
     case 1:
 	/* body message */
 	if (verbose) printf("Body message %d received from node %d, length %ld\n", *(int*)buffer, 
@@ -127,7 +126,6 @@ trans_test_upcall(CManager cm, void *buffer, long length, int type, attr_list li
 	    received_counts[((int*)buffer)[1]]++;
 	}
 	return NULL;
-	break;
     case 2: {
 	/* test finalize */
 	attr_list ret = create_attr_list();
@@ -181,7 +179,6 @@ trans_test_upcall(CManager cm, void *buffer, long length, int type, attr_list li
 	    CMCondition_signal(cm, global_exit_condition);
 	}
 	return ret;
-	break;
     }
     default:
 	printf("Bad type in trans_test_upcall, %d\n", type);
@@ -313,7 +310,7 @@ main(argc, argv)
 	} else if (strcmp(&argv[1][1], "size") == 0) {
 	    char *endptr;
 	    if (!argv[2]) {
-		printf("Bad -size argument \"%s\"\n", argv[2]);
+		printf("No argument to -size\n");
 		usage();
 	    }
 	    size = strtol(argv[2], &endptr, 10);

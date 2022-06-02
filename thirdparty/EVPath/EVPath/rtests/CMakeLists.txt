@@ -1,4 +1,8 @@
-set(TESTS evtest extract_test remote_terminal_test)
+if (HAVE_COD_H)
+   set(TESTS evtest extract_test remote_terminal_test)
+else()
+   set(TESTS)
+endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 

@@ -1217,6 +1217,7 @@ libcmsockets_LTX_initialize(CManager cm, CMtrans_services svc, transport_entry t
 	CM_PEER_CONN_PORT = attr_atom_from_string("PEER_CONN_PORT");
 	CM_PEER_IP = attr_atom_from_string("PEER_IP");
 	CM_PEER_HOSTNAME = attr_atom_from_string("PEER_HOSTNAME");
+	(void)CM_PEER_HOSTNAME;
 	CM_PEER_LISTEN_PORT = attr_atom_from_string("PEER_LISTEN_PORT");
 	CM_TRANSPORT_RELIABLE = attr_atom_from_string("CM_TRANSPORT_RELIABLE");
 	atom_init++;

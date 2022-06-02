@@ -47,6 +47,8 @@ enum {
     DILL_ERR   /* no type */
 };
 #define dill_type_size(c, t)  0
+#define dill_type_align(c, t) 1
+#define dill_alloc_label(c, n) 0
 #endif
 #include "cod.h"
 #include "cod_internal.h"
@@ -95,10 +97,9 @@ static int is_comparison_operator(sm_ref expr);
 static void cg_branch_if_false(dill_stream s, sm_ref pred, dill_mark_label_type label, cod_code descr, int reverse);
 static int is_complex_type(sm_ref expr);
 static int is_static_var(sm_ref expr);
-int cg_get_size(dill_stream s, sm_ref node);
-
 extern int cod_sm_get_type(sm_ref node);
 #endif
+int cg_get_size(dill_stream s, sm_ref node);
 extern int is_array(sm_ref expr);
 
 static int inst_count_guess = 0;
@@ -352,6 +353,7 @@ generate_arg_str(sm_ref net)
     return arg_str;
 }
 
+#ifdef HAVE_DILL_H
 int
 cg_get_size(dill_stream s, sm_ref node) {
 
@@ -420,6 +422,12 @@ cg_get_size(dill_stream s, sm_ref node) {
     }
     return 0;
 }
+#else
+int cg_get_size(dill_stream s, sm_ref node)
+{
+    return 0;
+}
+#endif
 
 static void cg_generate_static_block(dill_stream s, cod_code descr);
 

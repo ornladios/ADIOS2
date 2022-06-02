@@ -495,6 +495,7 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
 	char *port_range = getenv(IPCONFIG_ENVVAR_PREFIX "PORT_RANGE");
 	CM_IP_INTERFACE = attr_atom_from_string("IP_INTERFACE");
 	CM_IP_PORT = attr_atom_from_string("IP_PORT");
+	(void) CM_IP_PORT;
 	atom_init++;
 	first_call = 0;
 	determined_hostname[0] = 0;

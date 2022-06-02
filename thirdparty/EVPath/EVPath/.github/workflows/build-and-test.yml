@@ -8,6 +8,10 @@ on:
     branches: 
     - master 
 
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   linux:
     # The jobs should run pretty quick; anything over 30m essentially means
@@ -24,17 +28,17 @@ jobs:
       fail-fast: false
       matrix:
         buildtype: [ release, debug ]
-        os: [ centos7, centos8, ubuntu1604, ubuntu1804, ubuntu2004 ]
+        os: [ centos7, alma8, ubuntu1604, ubuntu1804, ubuntu2004 ]
         compiler: [ clang, gcc, nvhpc ]
         exclude:
-          - { os: centos8, compiler: nvhpc }
+          - { os: alma8, compiler: nvhpc }
           - { os: ubuntu1604, compiler: nvhpc }
           - { os: ubuntu1804, compiler: nvhpc }
         include:
         - os: centos7
           container: centos:7
-        - os: centos8
-          container: centos:8
+        - os: alma8
+          container: almalinux:8
         - os: ubuntu1604
           container: ubuntu:16.04
         - os: ubuntu1804

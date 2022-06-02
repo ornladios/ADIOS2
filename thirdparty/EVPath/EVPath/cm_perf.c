@@ -482,6 +482,7 @@ init_atoms()
 	CM_TRANS_TEST_REUSE_WRITE_BUFFER = attr_atom_from_string("CM_TRANS_TEST_REUSE_WRITE_BUFFER");
 	CM_TRANS_TEST_DURATION = attr_atom_from_string("CM_TRANS_TEST_DURATION_SECS");
 	CM_TRANS_MEGABITS_SEC = attr_atom_from_string("CM_TRANS_MEGABITS_SEC");
+	(void)CM_TRANS_MEGABITS_SEC;
     }
 }
 

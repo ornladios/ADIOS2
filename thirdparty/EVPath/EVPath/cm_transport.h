@@ -11,6 +11,9 @@ extern "C" {
 #include "cm_schedule.h"
 #endif
 
+#include <stddef.h>
+#include "sys/types.h"
+
 typedef struct _transport_item *transport_entry;
 typedef struct _transport_item *CMTransport;
 
@@ -58,12 +61,12 @@ typedef CMTaskHandle (*CMTransport_add_period_task)(CManager cm,
 typedef void (*CMTransport_remove_periodic)(CMTaskHandle cmt);
 typedef void (*CMTransport_add_poll)(CManager cm, CMPollFunc func,
 				     void *client_data);
-typedef CMbuffer (*CMTransport_get_data_buffer)(CManager cm, int length);
+typedef CMbuffer (*CMTransport_get_data_buffer)(CManager cm, ssize_t length);
 typedef void (*CMTransport_return_data_buffer)(CManager cm, CMbuffer cmb);
 typedef void (*CMTransport_connection_close)(CMConnection conn);
 typedef void *(*CMTransport_get_transport_data)(CMConnection conn);
 typedef void (*CMTransport_action_pending_write)(CMConnection conn);
-typedef CMbuffer (*CMTransport_create_data_buffer)(CManager cm, void *buffer, int length);
+typedef CMbuffer (*CMTransport_create_data_buffer)(CManager cm, void *buffer, ssize_t length);
 typedef int (*CMTransport_modify_global_lock)(CManager cm, const char *file, int line);
 typedef void (*CMTransport_add_buffer_to_pending_queue)(CManager cm, CMConnection conn, CMbuffer buf, long length);
 typedef void (*CMTransport_cond_wait_CM_lock)(CManager cm, void *cond, char *file, int line);
@@ -123,20 +126,20 @@ typedef attr_list (*CMTransport_listen_func)(CManager cm,
 					     attr_list listen_info);
 typedef void *(*CMTransport_read_block_func)(CMtrans_services svc,
 					     void *conn_data,
-					     int *actual, int *offset);
+					     ssize_t *actual, ssize_t *offset);
 typedef int (*CMTransport_read_to_buffer_func)(CMtrans_services svc,
 					       void *conn_data,
 					       void *buffer,
-					       int len, int block_flag);
+					       ssize_t len, int block_flag);
 typedef int (*CMTransport_writev_func)(CMtrans_services svc,
 				       void *transport_data,
-				       void *buffer, int len,
+				       void *buffer, ssize_t len,
 				       attr_list attrs);
 
 typedef void (*CMcompletion_notify_func)(void *client_data);
 typedef int (*CMTransport_writev_complete_notify_func)(CMtrans_services svc,
 						       void *transport_data,
-						       void *buffer, int len,
+						       void *buffer, ssize_t len,
 						       attr_list attrs, CMcompletion_notify_func func,
 						       void *client_data);
 typedef void (*CMTransport_shutdown_conn_func)(CMtrans_services svc,

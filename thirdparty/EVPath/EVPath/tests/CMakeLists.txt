@@ -1,4 +1,8 @@
-set (TESTS evtest bulktest http_test filter_test router_test router_test2 no_type_router_test filter2_test transform_test auto_test extract_test submit_test thin_test rawtest rawtest2 multi_thread multiq_test split_test executing_stone_test)
+if (HAVE_COD_H)
+  set (TESTS evtest bulktest http_test filter_test router_test router_test2 no_type_router_test filter2_test transform_test auto_test extract_test submit_test thin_test rawtest rawtest2 multi_thread multiq_test split_test executing_stone_test)
+else()
+  set (TESTS evtest bulktest http_test)
+endif()
 set (NO_INST_PROGS thin_client)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
@@ -11,8 +15,10 @@ foreach(T ${TESTS})
   add_test(NAME ${T} COMMAND ${T})
   file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/evtests.tsts "${T}\n" )
 endforeach()
-target_link_libraries(rawtest ffs::ffs)
-target_link_libraries(rawtest2 ffs::ffs)
+if (HAVE_COD_H)
+  target_link_libraries(rawtest ffs::ffs)
+  target_link_libraries(rawtest2 ffs::ffs)
+endif()
 
 add_test(NAME evtest_SELF COMMAND evtest)
 set_property(TEST evtest_SELF PROPERTY

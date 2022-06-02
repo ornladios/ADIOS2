@@ -45,7 +45,19 @@
 /* Assert warning */
 #  pragma warning (disable: 181)
 #endif
+#ifndef HAVE_COD_H
 struct _ecl_code_struct;
+typedef void *cod_parse_context;
+#ifndef EV_INTERNAL_H
+typedef struct extern_entry {
+    /*! the textual name of the external entry */
+    char *extern_name;
+    /*! the address of the external entry */
+    void *extern_value;
+} cod_extern_entry;
+typedef cod_extern_entry *cod_extern_list;
+#endif
+#endif
 
 
 typedef struct _DelaySizeMtx {
@@ -350,10 +362,10 @@ extern int CMpbio_send_format_preload(FMFormat ioformat, CMConnection conn);
 extern void CMformat_preload(CMConnection conn, CMFormat format);
 extern void CMinit_local_formats(CManager cm);
 
-extern CMbuffer cm_get_data_buf(CManager cm, int length);
+extern CMbuffer cm_get_data_buf(CManager cm, ssize_t length);
 extern void cm_return_data_buf(CManager cm, CMbuffer cmb);
-extern CMbuffer cm_create_transport_buffer(CManager cmb, void* buffer, int length);
-extern CMbuffer cm_create_transport_and_link_buffer(CManager cmb, void* buffer, int length);
+extern CMbuffer cm_create_transport_buffer(CManager cmb, void* buffer, ssize_t length);
+extern CMbuffer cm_create_transport_and_link_buffer(CManager cmb, void* buffer, ssize_t length);
 
 extern CMincoming_format_list CMidentify_rollbackCMformat 
 (CManager cm, char *data_buffer);
@@ -521,11 +533,7 @@ extern void INT_CMusleep(CManager cm, int usecs);
 extern void INT_CM_insert_contact_info(CManager cm, attr_list attrs);
 extern void INT_CM_fd_add_select(CManager cm, int fd, select_func handler_func, void *param1, void *param2);
 extern void INT_CMstart_read_thread(CMConnection conn);
-#ifdef __COD__H__
 extern void INT_EVadd_standard_routines(CManager cm, char *extern_string, cod_extern_entry *externs);
-#else
-extern void INT_EVadd_standard_routines(CManager cm, char *extern_string, void *externs);
-#endif
 extern void INT_EVadd_standard_structs(CManager cm, FMStructDescList *lists);
 extern void INT_EVregister_close_handler(CManager cm, EVStoneCloseHandlerFunc handler, void *client_data );
 extern void CMwake_server_thread(CManager cm);

@@ -82,6 +82,9 @@ enum {
     DILL_EC,
     DILL_ERR   /* no type */
 };
+typedef void *dill_stream;
+#define dill_create_stream() 0
+#define dill_type_size(c, s) 0
 #endif
 #if defined(_MSC_VER)
 #define strdup _strdup

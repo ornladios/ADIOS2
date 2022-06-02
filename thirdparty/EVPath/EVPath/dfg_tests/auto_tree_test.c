@@ -67,7 +67,7 @@ be_test_master(int argc, char **argv)
     nodes = malloc(sizeof(nodes[0]) * (node_count+1));
 
     for (i=0; i < node_count; i++) {
-	nodes[i] = malloc(ndig+2);
+	nodes[i] = malloc(ndig+10);
 	sprintf(nodes[i], "N%d", i+1);
     }
     nodes[node_count] = NULL;

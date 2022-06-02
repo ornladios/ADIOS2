@@ -135,7 +135,7 @@ be_test_master(int argc, char **argv)
     nodes = malloc(sizeof(nodes[0]) * (node_count+1));
     stones = malloc(sizeof(stones[0]) * (node_count+1));
     for (i=0; i < node_count; i++) {
-	nodes[i] = malloc(5);
+	nodes[i] = malloc(20);
 	if (i == ( node_count / 2 )) {
 	    sprintf(nodes[i], "D%d", i);  /* this one will die early */
 	} else {

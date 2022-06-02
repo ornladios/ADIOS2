@@ -1,23 +1,27 @@
-set (TESTS context_test context_test2 fortran_test get_set_test no_leaf_test)
+set (TESTS context_test context_test2 fortran_test get_set_test)
 set (PROGS ffs_write ffs_index_test ffs_file_test test_file_unique)
+
+if (DILL_FOUND)
+  list (APPEND TESTS no_leaf_test)
+
+  ADD_EXECUTABLE(marshal_test marshal_test.c)
+  TARGET_LINK_LIBRARIES(marshal_test ffs)
+  ADD_TEST(NAME marshal_test COMMAND marshal_test)
+
+  ADD_EXECUTABLE(marshal_test2 marshal_test2.c)
+  TARGET_LINK_LIBRARIES(marshal_test2 ffs)
+  ADD_TEST(NAME marshal_test2 COMMAND marshal_test2)
+endif()
+
+ADD_EXECUTABLE(adios2_bug adios2_bug.c)
+TARGET_LINK_LIBRARIES(adios2_bug ffs)
+ADD_TEST(NAME adios2_bug COMMAND adios2_bug)
 
 foreach (TEST ${TESTS} )
     ADD_EXECUTABLE(${TEST} ${TEST}.c test_funcs.c)
     TARGET_LINK_LIBRARIES(${TEST} ffs)
     ADD_TEST(NAME ${TEST} COMMAND ${TEST})
 endforeach()
-
-ADD_EXECUTABLE(marshal_test marshal_test.c)
-TARGET_LINK_LIBRARIES(marshal_test ffs)
-ADD_TEST(NAME marshal_test COMMAND marshal_test)
-
-ADD_EXECUTABLE(marshal_test2 marshal_test2.c)
-TARGET_LINK_LIBRARIES(marshal_test2 ffs)
-ADD_TEST(NAME marshal_test2 COMMAND marshal_test2)
-
-ADD_EXECUTABLE(adios2_bug adios2_bug.c)
-TARGET_LINK_LIBRARIES(adios2_bug ffs)
-ADD_TEST(NAME adios2_bug COMMAND adios2_bug)
 
 foreach (PROG ${PROGS} )
     ADD_EXECUTABLE(${PROG} ${PROG}.c test_funcs.c)

@@ -101,7 +101,7 @@ typedef struct udp_connection_data {
     int udp_port;
     struct sockaddr_in dest_addr;
     CMbuffer read_buffer;
-    int read_buf_len;
+    size_t read_buf_len;
     udp_transport_data_ptr utd;
     CMConnection conn;
     attr_list attrs;
@@ -335,7 +335,7 @@ libcmudp_data_available(void *vtrans, void *vinput)
 {
     transport_entry trans = vtrans;
     int input_fd = (long)vinput;
-    int nbytes;
+    ssize_t nbytes;
     udp_transport_data_ptr utd = (udp_transport_data_ptr) trans->trans_data;
     udp_conn_data_ptr ucd = utd->connections;
     struct sockaddr_in addr;
@@ -613,7 +613,7 @@ attr_list listen_info;
 #ifdef NEED_IOVEC_DEFINE
 struct iovec {
     void *iov_base;
-    int iov_len;
+    size_t iov_len;
 };
 
 #endif
@@ -627,8 +627,8 @@ extern void *
 libcmudp_LTX_read_block_func(svc, ucd, actual_len, offset_ptr)
 CMtrans_services svc;
 udp_conn_data_ptr ucd;
-int *actual_len;
-int *offset_ptr;
+size_t *actual_len;
+size_t *offset_ptr;
 {
     *actual_len = ucd->read_buf_len;
     *offset_ptr = 0;
@@ -646,7 +646,7 @@ libcmudp_LTX_writev_func(svc, ucd, iov, iovcnt, attrs)
 CMtrans_services svc;
 udp_conn_data_ptr ucd;
 struct iovec *iov;
-int iovcnt;
+size_t iovcnt;
 attr_list attrs;
 {
     int fd = ucd->utd->socket_fd;

@@ -513,7 +513,7 @@ conn_read_to_buffer(CMConnection conn, void *buffer, int length)
 	}
     } else {
 	void *tmp_buffer;
-	int actual;
+	ssize_t actual;
 	tmp_buffer = trans->read_block_func(&CMstatic_trans_svcs, 
 					    conn->transport_data,
 					    &actual, NULL);
