@@ -7,7 +7,7 @@ ADIOS2 supports passing an optional runtime configuration file to the :ref:`ADIO
 This file contains key-value pairs equivalent to the compile time ``IO::SetParameters`` (``adios2_set_parameter`` in C, Fortran), and ``IO::AddTransport`` (``adios2_set_transport_parameter`` in C, Fortran). 
 
 Each ``Engine`` and ``Operator`` must provide a set of available parameters as described in the :ref:`Supported Engines` section.
-Up to version v2.8.0 only XML is supported, v2.8.0 and beyond support XML as well as YAML.
+Prior to version v2.6.0 only XML is supported; v2.6.0 and later support both XML and YAML.
 
 .. warning::
 
