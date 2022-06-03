@@ -63,10 +63,11 @@ void Comm::GathervArrays(const T *source, size_t sourceCount,
             displs[countsSize - 1] + counts[countsSize - 1];
         if (totalElements > 2147483648)
         {
-            std::runtime_error(
+            helper::ThrowNested<std::runtime_error>(
+                "Helper", "adiosComm", "GathervVectors",
                 "ERROR: GathervArrays does not support gathering more than "
                 "2^31 elements. Here it was tasked with " +
-                std::to_string(totalElements) + " elements\n");
+                    std::to_string(totalElements) + " elements\n");
         }
     }
     this->Gatherv(source, sourceCount, destination, counts, displs.data(),
