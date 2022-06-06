@@ -583,7 +583,7 @@ void BP3Deserializer::PostDataRead(
             subStreamBoxInfo.IntersectionBox.second);
         helper::DimsArray blockStart(subStreamBoxInfo.BlockBox.first);
         helper::DimsArray blockCount(subStreamBoxInfo.BlockBox.second);
-        helper::CoreDims memoryStart(blockInfoStart); // don't copy
+        helper::DimsArray memoryStart(blockInfoStart);
         for (size_t d = 0; d < intersectStart.size(); d++)
         {
             // change {intersect,block}Count from [start, end] to {start, count}
