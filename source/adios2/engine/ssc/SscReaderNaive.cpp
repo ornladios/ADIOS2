@@ -180,15 +180,15 @@ void SscReaderNaive::GetDeferred(VariableBase &variable, void *data)
         return;
     }
 
-    Dims vStart = variable.m_Start;
-    Dims vCount = variable.m_Count;
-    Dims vShape = variable.m_Shape;
+    helper::DimsArray vStart(variable.m_Start);
+    helper::DimsArray vCount(variable.m_Count);
+    // Dims vShape = variable.m_Shape;
 
     if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
     {
         std::reverse(vStart.begin(), vStart.end());
         std::reverse(vCount.begin(), vCount.end());
-        std::reverse(vShape.begin(), vShape.end());
+        // std::reverse(vShape.begin(), vShape.end());
     }
 
     for (const auto &b : m_BlockMap[variable.m_Name])
@@ -196,9 +196,10 @@ void SscReaderNaive::GetDeferred(VariableBase &variable, void *data)
         if (b.shapeId == ShapeID::GlobalArray ||
             b.shapeId == ShapeID::LocalArray)
         {
-            helper::NdCopy(m_Buffer.data<char>() + b.bufferStart, b.start,
-                           b.count, true, true, reinterpret_cast<char *>(data),
-                           vStart, vCount, true, true,
+            helper::NdCopy(m_Buffer.data<char>() + b.bufferStart,
+                           helper::CoreDims(b.start), helper::CoreDims(b.count),
+                           true, true, reinterpret_cast<char *>(data), vStart,
+                           vCount, true, true,
                            static_cast<int>(variable.m_ElementSize));
         }
         else if (b.shapeId == ShapeID::GlobalValue ||

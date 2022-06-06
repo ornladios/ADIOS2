@@ -294,9 +294,11 @@ void SscReaderGeneric::PerformGets()
                                 }
                                 helper::NdCopy(
                                     m_Buffer.data<char>() + b.bufferStart,
-                                    b.start, b.count, true, true,
-                                    reinterpret_cast<char *>(br.data), br.start,
-                                    br.count, true, true,
+                                    helper::CoreDims(b.start),
+                                    helper::CoreDims(b.count), true, true,
+                                    reinterpret_cast<char *>(br.data),
+                                    helper::CoreDims(br.start),
+                                    helper::CoreDims(br.count), true, true,
                                     static_cast<int>(b.elementSize));
                             }
                             else if (b.shapeId == ShapeID::GlobalValue ||
@@ -502,9 +504,9 @@ void SscReaderGeneric::GetDeferred(VariableBase &variable, void *data)
         return;
     }
 
-    Dims vStart = variable.m_Start;
-    Dims vCount = variable.m_Count;
-    Dims vShape = variable.m_Shape;
+    helper::DimsArray vStart(variable.m_Start);
+    helper::DimsArray vCount(variable.m_Count);
+    helper::DimsArray vShape(variable.m_Shape);
 
     if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
     {
@@ -545,9 +547,11 @@ void SscReaderGeneric::GetDeferred(VariableBase &variable, void *data)
                         b.shapeId == ShapeID::LocalArray)
                     {
                         helper::NdCopy(
-                            m_Buffer.data<char>() + b.bufferStart, b.start,
-                            b.count, true, true, reinterpret_cast<char *>(data),
-                            vStart, vCount, true, true,
+                            m_Buffer.data<char>() + b.bufferStart,
+                            helper::CoreDims(b.start),
+                            helper::CoreDims(b.count), true, true,
+                            reinterpret_cast<char *>(data), vStart, vCount,
+                            true, true,
                             static_cast<int>(variable.m_ElementSize));
                     }
                     else if (b.shapeId == ShapeID::GlobalValue ||

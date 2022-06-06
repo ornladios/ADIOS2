@@ -18,13 +18,12 @@
 /// \endcond
 
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/helper/adiosType.h"
 
 namespace adios2
 {
 namespace helper
 {
-
-const size_t MAX_DIMS = 32;
 
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
 template <class T>
@@ -255,12 +254,14 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const std::string hint,
  *                 stack/simulated stack which has more overhead for the algm.
  */
 
-int NdCopy(const char *in, const Dims &inStart, const Dims &inCount,
+int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
            const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
-           const Dims &outStart, const Dims &outCount, const bool outIsRowMajor,
-           const bool outIsLittleEndian, const int typeSize,
-           const Dims &inMemStart = Dims(), const Dims &inMemCount = Dims(),
-           const Dims &outMemStart = Dims(), const Dims &outMemCount = Dims(),
+           const CoreDims &outStart, const CoreDims &outCount,
+           const bool outIsRowMajor, const bool outIsLittleEndian,
+           const int typeSize, const CoreDims &inMemStart = CoreDims(),
+           const CoreDims &inMemCount = CoreDims(),
+           const CoreDims &outMemStart = CoreDims(),
+           const CoreDims &outMemCount = CoreDims(),
            const bool safeMode = false,
            MemorySpace MemSpace = MemorySpace::Host);
 

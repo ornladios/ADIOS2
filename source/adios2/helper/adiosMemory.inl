@@ -696,8 +696,8 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const std::string hint,
 // independent of the number of dimensions.
 static inline void
 NdCopyRecurDFSeqPadding(size_t curDim, const char *&inOvlpBase,
-                        char *&outOvlpBase, Dims &inOvlpGapSize,
-                        Dims &outOvlpGapSize, Dims &ovlpCount,
+                        char *&outOvlpBase, CoreDims &inOvlpGapSize,
+                        CoreDims &outOvlpGapSize, CoreDims &ovlpCount,
                         size_t &minContDim, size_t &blockSize)
 {
     // note: all elements in and below this node are contiguous on input and
@@ -740,8 +740,8 @@ NdCopyRecurDFSeqPadding(size_t curDim, const char *&inOvlpBase,
 
 static inline void
 NdCopyRecurDFSeqPaddingRevEndian(size_t curDim, const char *&inOvlpBase,
-                                 char *&outOvlpBase, Dims &inOvlpGapSize,
-                                 Dims &outOvlpGapSize, Dims &ovlpCount,
+                                 char *&outOvlpBase, CoreDims &inOvlpGapSize,
+                                 CoreDims &outOvlpGapSize, CoreDims &ovlpCount,
                                  size_t minCountDim, size_t blockSize,
                                  size_t elmSize, size_t numElmsPerBlock)
 {
@@ -779,12 +779,11 @@ NdCopyRecurDFSeqPaddingRevEndian(size_t curDim, const char *&inOvlpBase,
 // used for buffer of Column major
 // the memory address calculation complexity for copying each element is
 // minimized to average O(1), which is independent of the number of dimensions.
-static inline void NdCopyRecurDFNonSeqDynamic(size_t curDim, const char *inBase,
-                                              char *outBase,
-                                              Dims &inRltvOvlpSPos,
-                                              Dims &outRltvOvlpSPos,
-                                              Dims &inStride, Dims &outStride,
-                                              Dims &ovlpCount, size_t elmSize)
+static inline void
+NdCopyRecurDFNonSeqDynamic(size_t curDim, const char *inBase, char *outBase,
+                           CoreDims &inRltvOvlpSPos, CoreDims &outRltvOvlpSPos,
+                           CoreDims &inStride, CoreDims &outStride,
+                           CoreDims &ovlpCount, size_t elmSize)
 {
     if (curDim == inStride.size())
     {
@@ -811,9 +810,9 @@ static inline void NdCopyRecurDFNonSeqDynamic(size_t curDim, const char *inBase,
 // minimized to average O(1), which is independent of the number of dimensions.
 
 static inline void NdCopyRecurDFNonSeqDynamicRevEndian(
-    size_t curDim, const char *inBase, char *outBase, Dims &inRltvOvlpSPos,
-    Dims &outRltvOvlpSPos, Dims &inStride, Dims &outStride, Dims &ovlpCount,
-    size_t elmSize)
+    size_t curDim, const char *inBase, char *outBase, CoreDims &inRltvOvlpSPos,
+    CoreDims &outRltvOvlpSPos, CoreDims &inStride, CoreDims &outStride,
+    CoreDims &ovlpCount, size_t elmSize)
 {
     if (curDim == inStride.size())
     {
@@ -836,13 +835,12 @@ static inline void NdCopyRecurDFNonSeqDynamicRevEndian(
     }
 }
 
-static inline void NdCopyIterDFSeqPadding(const char *&inOvlpBase,
-                                          char *&outOvlpBase,
-                                          Dims &inOvlpGapSize,
-                                          Dims &outOvlpGapSize, Dims &ovlpCount,
-                                          size_t minContDim, size_t blockSize)
+static inline void
+NdCopyIterDFSeqPadding(const char *&inOvlpBase, char *&outOvlpBase,
+                       CoreDims &inOvlpGapSize, CoreDims &outOvlpGapSize,
+                       CoreDims &ovlpCount, size_t minContDim, size_t blockSize)
 {
-    Dims pos(ovlpCount.size(), 0);
+    DimsArray pos(ovlpCount.size(), (size_t)0);
     size_t curDim = 0;
     while (true)
     {
@@ -869,11 +867,11 @@ static inline void NdCopyIterDFSeqPadding(const char *&inOvlpBase,
 }
 
 static inline void NdCopyIterDFSeqPaddingRevEndian(
-    const char *&inOvlpBase, char *&outOvlpBase, Dims &inOvlpGapSize,
-    Dims &outOvlpGapSize, Dims &ovlpCount, size_t minContDim, size_t blockSize,
-    size_t elmSize, size_t numElmsPerBlock)
+    const char *&inOvlpBase, char *&outOvlpBase, CoreDims &inOvlpGapSize,
+    CoreDims &outOvlpGapSize, CoreDims &ovlpCount, size_t minContDim,
+    size_t blockSize, size_t elmSize, size_t numElmsPerBlock)
 {
-    Dims pos(ovlpCount.size(), 0);
+    DimsArray pos(ovlpCount.size(), (size_t)0);
     size_t curDim = 0;
     while (true)
     {
@@ -905,13 +903,13 @@ static inline void NdCopyIterDFSeqPaddingRevEndian(
     }
 }
 static inline void NdCopyIterDFDynamic(const char *inBase, char *outBase,
-                                       Dims &inRltvOvlpSPos,
-                                       Dims &outRltvOvlpSPos, Dims &inStride,
-                                       Dims &outStride, Dims &ovlpCount,
-                                       size_t elmSize)
+                                       CoreDims &inRltvOvlpSPos,
+                                       CoreDims &outRltvOvlpSPos,
+                                       CoreDims &inStride, CoreDims &outStride,
+                                       CoreDims &ovlpCount, size_t elmSize)
 {
     size_t curDim = 0;
-    Dims pos(ovlpCount.size() + 1, 0);
+    DimsArray pos(ovlpCount.size() + 1, (size_t)0);
     std::vector<const char *> inAddr(ovlpCount.size() + 1);
     inAddr[0] = inBase;
     std::vector<char *> outAddr(ovlpCount.size() + 1);
@@ -942,15 +940,13 @@ static inline void NdCopyIterDFDynamic(const char *inBase, char *outBase,
     }
 }
 
-static inline void NdCopyIterDFDynamicRevEndian(const char *inBase,
-                                                char *outBase,
-                                                Dims &inRltvOvlpSPos,
-                                                Dims &outRltvOvlpSPos,
-                                                Dims &inStride, Dims &outStride,
-                                                Dims &ovlpCount, size_t elmSize)
+static inline void NdCopyIterDFDynamicRevEndian(
+    const char *inBase, char *outBase, CoreDims &inRltvOvlpSPos,
+    CoreDims &outRltvOvlpSPos, CoreDims &inStride, CoreDims &outStride,
+    CoreDims &ovlpCount, size_t elmSize)
 {
     size_t curDim = 0;
-    Dims pos(ovlpCount.size() + 1, 0);
+    DimsArray pos(ovlpCount.size() + 1, (size_t)0);
     std::vector<const char *> inAddr(ovlpCount.size() + 1);
     inAddr[0] = inBase;
     std::vector<char *> outAddr(ovlpCount.size() + 1);
