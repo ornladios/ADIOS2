@@ -577,11 +577,13 @@ void BP3Deserializer::PostDataRead(
                 "MemorySelection");
         }
 
-        auto intersectStart = subStreamBoxInfo.IntersectionBox.first;
-        auto intersectCount = subStreamBoxInfo.IntersectionBox.second;
-        auto blockStart = subStreamBoxInfo.BlockBox.first;
-        auto blockCount = subStreamBoxInfo.BlockBox.second;
-        auto memoryStart = blockInfoStart;
+        helper::DimsArray intersectStart(
+            subStreamBoxInfo.IntersectionBox.first);
+        helper::DimsArray intersectCount(
+            subStreamBoxInfo.IntersectionBox.second);
+        helper::DimsArray blockStart(subStreamBoxInfo.BlockBox.first);
+        helper::DimsArray blockCount(subStreamBoxInfo.BlockBox.second);
+        helper::CoreDims memoryStart(blockInfoStart); // don't copy
         for (size_t d = 0; d < intersectStart.size(); d++)
         {
             // change {intersect,block}Count from [start, end] to {start, count}
@@ -595,7 +597,8 @@ void BP3Deserializer::PostDataRead(
                        intersectCount, true, true,
                        reinterpret_cast<char *>(blockInfo.Data), intersectStart,
                        intersectCount, true, true, sizeof(T), intersectStart,
-                       blockCount, memoryStart, blockInfo.MemoryCount, false);
+                       blockCount, memoryStart,
+                       helper::CoreDims(blockInfo.MemoryCount), false);
     }
     else
     {

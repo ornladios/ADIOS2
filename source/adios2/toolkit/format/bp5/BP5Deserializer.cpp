@@ -11,6 +11,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/core/VariableBase.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosType.h"
 
 #include "BP5Deserializer.h"
 #include "BP5Deserializer.tcc"
@@ -35,6 +36,8 @@
 #include <limits.h>
 #include <math.h>
 #include <string.h>
+
+using namespace adios2::helper;
 
 #ifdef _WIN32
 #pragma warning(disable : 4250)
@@ -1318,10 +1321,10 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         }
     }
 
-    auto inStart = adios2::Dims(RankOffset, RankOffset + DimCount);
-    auto inCount = adios2::Dims(RankSize, RankSize + DimCount);
-    auto outStart = adios2::Dims(SelOffset, SelOffset + DimCount);
-    auto outCount = adios2::Dims(SelSize, SelSize + DimCount);
+    DimsArray inStart(DimCount, RankOffset);
+    DimsArray inCount(DimCount, RankSize);
+    DimsArray outStart(DimCount, SelOffset);
+    DimsArray outCount(DimCount, SelSize);
     if (!m_ReaderIsRowMajor)
     {
         std::reverse(inStart.begin(), inStart.end());
@@ -1332,8 +1335,8 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
 
     helper::NdCopy(VirtualIncomingData, inStart, inCount, true, true,
                    (char *)Req.Data, outStart, outCount, true, true,
-                   ElementSize, Dims(), Dims(), Dims(), Dims(), false,
-                   Req.MemSpace);
+                   ElementSize, CoreDims(), CoreDims(), CoreDims(), CoreDims(),
+                   false, Req.MemSpace);
     if (freeAddr)
     {
         free((char *)Read.DestinationAddr);
