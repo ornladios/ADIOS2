@@ -110,6 +110,12 @@ public:
     const size_t &operator[](size_t index) const { return DimensSpan[index]; }
     size_t &operator[](size_t index) { return DimensSpan[index]; }
     CoreDims() : DimCount(0), DimensSpan(NULL) {}
+
+    // Warning!!! CoreDims is essentially a Span.  It does not own the
+    // memory that its [] operators access.  Users must ensure that
+    // memory remains valid as long as it is necessary.  If you don't
+    // know the memory will be valid the entire time, use the
+    // DimsArray class which copies the dimension data.
     CoreDims(std::vector<size_t> vec)
     : DimCount(vec.size()), DimensSpan(vec.data())
     {
@@ -119,7 +125,7 @@ public:
     {
     }
 
-    const size_t size() const { return DimCount; }
+    size_t size() const { return DimCount; }
     bool empty() const { return DimCount == 0; }
     // iterator
     typedef const size_t *const_iterator;
