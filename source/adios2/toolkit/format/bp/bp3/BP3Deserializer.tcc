@@ -598,7 +598,7 @@ void BP3Deserializer::PostDataRead(
                        reinterpret_cast<char *>(blockInfo.Data), intersectStart,
                        intersectCount, true, true, sizeof(T), intersectStart,
                        blockCount, memoryStart,
-                       helper::CoreDims(blockInfo.MemoryCount), false);
+                       helper::DimsArray(blockInfo.MemoryCount), false);
     }
     else
     {
