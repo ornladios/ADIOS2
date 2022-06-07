@@ -193,6 +193,9 @@ BP5Reader::ReadData(adios2::transportman::TransportMan &FileManager,
                     const size_t Timestep, const size_t StartOffset,
                     const size_t Length, char *Destination)
 {
+    /*
+     * Warning: this function is called by multiple threads
+     */
     size_t FlushCount = m_MetadataIndexTable[Timestep][2];
     size_t DataPosPos = m_MetadataIndexTable[Timestep][3];
     size_t SubfileNum = static_cast<size_t>(
@@ -215,42 +218,40 @@ BP5Reader::ReadData(adios2::transportman::TransportMan &FileManager,
     TP endSubfile = NOW();
     double timeSubfile = DURATION(startSubfile, endSubfile);
 
+    /* Each block is in exactly one flush. The StartOffset was calculated
+       as if all the flushes were in a single contiguous block in file.
+    */
     TP startRead = NOW();
     size_t InfoStartPos =
         DataPosPos + (WriterRank * (2 * FlushCount + 1) * sizeof(uint64_t));
-    size_t ThisFlushInfo = InfoStartPos;
-    size_t RemainingLength = Length;
-    size_t ThisDataPos;
-    size_t Offset = StartOffset;
+    size_t SumDataSize = 0; // count in contiguous space
     for (size_t flush = 0; flush < FlushCount; flush++)
     {
-
-        ThisDataPos =
-            helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, ThisFlushInfo,
+        size_t ThisDataPos =
+            helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
                                         m_Minifooter.IsLittleEndian);
         size_t ThisDataSize =
-            helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, ThisFlushInfo,
+            helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, InfoStartPos,
                                         m_Minifooter.IsLittleEndian);
-        if (ThisDataSize > RemainingLength)
-            ThisDataSize = RemainingLength;
-        FileManager.ReadFile(Destination, ThisDataSize, ThisDataPos + Offset,
-                             SubfileNum);
-        Destination += ThisDataSize;
-        RemainingLength -= ThisDataSize;
-        Offset = 0;
-        if (RemainingLength == 0)
+
+        if (StartOffset < SumDataSize + ThisDataSize)
         {
-            break;
+            // discount offsets of skipped flushes
+            size_t Offset = StartOffset - SumDataSize;
+            FileManager.ReadFile(Destination, Length, ThisDataPos + Offset,
+                                 SubfileNum);
+            TP endRead = NOW();
+            double timeRead = DURATION(startRead, endRead);
+            return std::make_pair(timeSubfile, timeRead);
         }
+        SumDataSize += ThisDataSize;
     }
-    if (RemainingLength > 0)
-    {
-        ThisDataPos =
-            helper::ReadValue<uint64_t>(m_MetadataIndex.m_Buffer, ThisFlushInfo,
-                                        m_Minifooter.IsLittleEndian);
-        FileManager.ReadFile(Destination, RemainingLength, ThisDataPos + Offset,
-                             SubfileNum);
-    }
+
+    size_t ThisDataPos = helper::ReadValue<uint64_t>(
+        m_MetadataIndex.m_Buffer, InfoStartPos, m_Minifooter.IsLittleEndian);
+    size_t Offset = StartOffset - SumDataSize;
+    FileManager.ReadFile(Destination, Length, ThisDataPos + Offset, SubfileNum);
+
     TP endRead = NOW();
     double timeRead = DURATION(startRead, endRead);
     return std::make_pair(timeSubfile, timeRead);
