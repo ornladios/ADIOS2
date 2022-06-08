@@ -14,7 +14,7 @@
 
 #include <chrono>
 #include <errno.h>
-#include <threads.h>
+#include <thread>
 
 using TP = std::chrono::high_resolution_clock::time_point;
 #define NOW() std::chrono::high_resolution_clock::now();
