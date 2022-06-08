@@ -12,6 +12,7 @@
 #include <ctime>
 #include <stdexcept> // std::runtime_error, std::exception
 #include <system_error>
+#include <thread>
 
 #include <adios2sys/SystemTools.hxx>
 
@@ -179,6 +180,43 @@ char BPVersion(const std::string &name, helper::Comm &comm,
     }
     version = comm.BroadcastValue(version);
     return version;
+}
+
+unsigned int NumHardwareThreadsPerNode()
+{
+    unsigned int processor_count = std::thread::hardware_concurrency();
+    if (processor_count == 0)
+    {
+#ifdef _WIN32
+        SYSTEM_INFO sysinfo;
+        GetSystemInfo(&sysinfo);
+        processor_count = sysinfo.dwNumberOfProcessors;
+#else
+#ifdef APPLE
+        int nm[2];
+        size_t len = 4;
+        uint32_t count;
+
+        nm[0] = CTL_HW;
+        nm[1] = HW_AVAILCPU;
+        sysctl(nm, 2, &count, &len, NULL, 0);
+
+        if (count < 1)
+        {
+            nm[1] = HW_NCPU;
+            sysctl(nm, 2, &count, &len, NULL, 0);
+            if (count < 1)
+            {
+                count = 1;
+            }
+        }
+        processor_count = count;
+#else
+        processor_count = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+#endif
+    }
+    return processor_count;
 }
 
 } // end namespace helper
