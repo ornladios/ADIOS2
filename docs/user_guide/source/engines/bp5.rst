@@ -127,12 +127,13 @@ This engine allows the user to fine tune the buffering operations through the fo
 
    #. **MaxOpenFilesAtOnce**: Specify how many subfiles a process can keep open at once. Default is unlimited. If a dataset contains more subfiles than how many open file descriptors the system allows (see *ulimit -n*) then one can either try to raise that system limit (set it with *ulimit -n*), or set this parameter to force the reader to close some subfiles to stay within the limits.
    
+   #. **Threads**: Read side: Specify how many threads one process can use to speed up reading. The default value is *0*, to let the engine estimate the number of threads based on how many processes are running on the compute node and how many hardware threads are available on the compute node but it will use maximum 16 threads. Value *1* forces the engine to read everything within the main thread of the process. Other values specify the exact number of threads the engine can use. Although multithreaded reading works in a single *Get(adios2::Mode::Sync)* call if the read selection spans multiple data blocks in the file, the best parallelization is achieved by using deferred mode and reading everything in *PerformGets()/EndStep()*.   
 
 ============================== ===================== ===========================================================
  **Key**                       **Value Format**      **Default** and Examples
 ============================== ===================== ===========================================================
  OpenTimeoutSecs                float                 **0** for *ReadRandomAccess* mode, **3600** for *Read* mode, ``10.0``, ``5``
- BeginStepPollingFrequencySecs  float                 **1**, ``10.0`` 
+ BeginStepPollingFrequencySecs  float                 **1**, 10.0 
  AggregationType                string                **TwoLevelShm**, EveryoneWritesSerial, EveryoneWrites
  NumAggregators                 integer >= 1          **0 (one file per compute node)**
  AggregatorRatio                integer >= 1          not used unless set
@@ -151,8 +152,9 @@ This engine allows the user to fine tune the buffering operations through the fo
  DirectIO                       string On/Off         **Off**, On, true, false
  DirectIOAlignOffset            integer >= 0          **512**
  DirectIOAlignBuffer            integer >= 0          set to DirectIOAlignOffset if unset
- StatsLevel                     integer, 0 or 1       **1**, ``0``
+ StatsLevel                     integer, 0 or 1       **1**, 0
  MaxOpenFilesAtOnce             integer >= 0          **UINT_MAX**, 1024, 1
+ Threads                        integer >= 0          **0**, 1, 32
 ============================== ===================== ===========================================================
 
 

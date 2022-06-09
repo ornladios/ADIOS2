@@ -22,7 +22,6 @@
 
 #include <chrono>
 #include <map>
-#include <mutex>
 #include <vector>
 
 namespace adios2
@@ -255,6 +254,11 @@ private:
     std::map<uint64_t, WriterMapStruct> m_WriterMap;
     // step -> writermap index (for all steps)
     std::vector<uint64_t> m_WriterMapIndex;
+
+    /* Communicator connecting ranks on each Compute Node.
+       Only used to calculate the number of threads available for reading */
+    helper::Comm m_NodeComm;
+    unsigned int m_Threads;
 };
 
 } // end namespace engine

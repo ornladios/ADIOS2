@@ -212,7 +212,6 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
             // fill in the variable with values from starting index to
             // starting index + count
             bpWriter.BeginStep();
-            bpWriter.Put(var_i16, currentTestData.I16.data());
             bpWriter.Put(var_iString, currentTestData.S1);
             bpWriter.Put(var_i8, currentTestData.I8.data());
             bpWriter.Put(var_i16, currentTestData.I16.data());
@@ -365,7 +364,6 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
             // fill in the variable with values from starting index to
             // starting index + count
             bpAppender.BeginStep();
-            bpAppender.Put(var_i16, currentTestData.I16.data());
             bpAppender.Put(var_iString, currentTestData.S1);
             bpAppender.Put(var_i8, currentTestData.I8.data());
             bpAppender.Put(var_i16, currentTestData.I16.data());

@@ -159,7 +159,7 @@ public:
     MACRO(ReaderShortCircuitReads, Bool, bool, false)                          \
     MACRO(StatsLevel, UInt, unsigned int, 1)                                   \
     MACRO(StatsBlockSize, SizeBytes, size_t, DefaultStatsBlockSize)            \
-    MACRO(Threads, UInt, unsigned int, 1)                                      \
+    MACRO(Threads, UInt, unsigned int, 0)                                      \
     MACRO(MaxOpenFilesAtOnce, UInt, unsigned int, UINT_MAX)
 
     struct BP5Params

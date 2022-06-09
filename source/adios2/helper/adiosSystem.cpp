@@ -12,6 +12,7 @@
 #include <ctime>
 #include <stdexcept> // std::runtime_error, std::exception
 #include <system_error>
+#include <thread>
 
 #include <adios2sys/SystemTools.hxx>
 
@@ -179,6 +180,11 @@ char BPVersion(const std::string &name, helper::Comm &comm,
     }
     version = comm.BroadcastValue(version);
     return version;
+}
+
+unsigned int NumHardwareThreadsPerNode()
+{
+    return std::thread::hardware_concurrency();
 }
 
 } // end namespace helper

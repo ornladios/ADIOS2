@@ -14,6 +14,8 @@
 
 #include <chrono>
 #include <errno.h>
+#include <mutex>
+#include <thread>
 
 using TP = std::chrono::high_resolution_clock::time_point;
 #define NOW() std::chrono::high_resolution_clock::now();
@@ -331,15 +333,14 @@ void BP5Reader::PerformGets()
 
     // TP startRead = NOW();
     // double sortTime = 0.0;
-    if (m_Parameters.Threads > 1 && nRequest > 1)
+    if (m_Threads > 1 && nRequest > 1)
     {
         // TP startSort = NOW();
         std::sort(ReadRequests.begin(), ReadRequests.end(),
                   lf_CompareReqSubfile);
         // TP endSort = NOW();
         // sortTime = DURATION(startSort, endSort);
-        size_t nThreads =
-            (m_Parameters.Threads < nRequest ? m_Parameters.Threads : nRequest);
+        size_t nThreads = (m_Threads < nRequest ? m_Threads : nRequest);
 
         size_t maxOpenFiles = helper::SetWithinLimit(
             (size_t)m_Parameters.MaxOpenFilesAtOnce / nThreads, (size_t)1,
@@ -469,6 +470,24 @@ void BP5Reader::InitParameters()
         else
         {
             m_Parameters.OpenTimeoutSecs = 3600.0f;
+        }
+    }
+
+    m_Threads = m_Parameters.Threads;
+    if (m_Threads == 0)
+    {
+        helper::Comm m_NodeComm =
+            m_Comm.GroupByShm("creating per-node comm at BP5 Open(read)");
+        unsigned int NodeSize = static_cast<unsigned int>(m_NodeComm.Size());
+        unsigned int NodeThreadSize = helper::NumHardwareThreadsPerNode();
+        if (NodeThreadSize > 0)
+        {
+            m_Threads =
+                helper::SetWithinLimit(NodeThreadSize / NodeSize, 1U, 16U);
+        }
+        else
+        {
+            m_Threads = helper::SetWithinLimit(8U / NodeSize, 1U, 8U);
         }
     }
 }

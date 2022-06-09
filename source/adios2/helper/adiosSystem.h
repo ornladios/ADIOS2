@@ -79,6 +79,12 @@ bool IsHDF5File(const std::string &name, helper::Comm &comm,
                 const std::vector<Params> &transportsParameters) noexcept;
 char BPVersion(const std::string &name, helper::Comm &comm,
                const std::vector<Params> &transportsParameters) noexcept;
+
+/** Return the number of available hardware threads on the node.
+ * It might return 0 if the detection does not work
+ */
+unsigned int NumHardwareThreadsPerNode();
+
 } // end namespace helper
 } // end namespace adios2
 

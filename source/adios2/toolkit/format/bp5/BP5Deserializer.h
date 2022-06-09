@@ -18,6 +18,8 @@
 #include "ffs.h"
 #include "fm.h"
 
+#include <mutex>
+
 #ifdef _WIN32
 #pragma warning(disable : 4250)
 #endif
@@ -217,6 +219,10 @@ private:
     void *GetMetadataBase(BP5VarRec *VarRec, size_t Step,
                           size_t WriterRank) const;
     size_t CurTimestep = 0;
+
+    /* We assume operators are not thread-safe, call Decompress() one at a time
+     */
+    std::mutex mutexDecompress;
 };
 
 } // end namespace format
