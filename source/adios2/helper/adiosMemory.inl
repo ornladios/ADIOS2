@@ -100,11 +100,11 @@ void CudaMemCopyFromBuffer(T *GPUbuffer, size_t position, const char *source,
 }
 
 static inline void NdCopyCUDA(const char *&inOvlpBase, char *&outOvlpBase,
-                              Dims &inOvlpGapSize, Dims &outOvlpGapSize,
-                              Dims &ovlpCount, size_t minContDim,
+                              CoreDims &inOvlpGapSize, CoreDims &outOvlpGapSize,
+                              CoreDims &ovlpCount, size_t minContDim,
                               size_t blockSize)
 {
-    Dims pos(ovlpCount.size(), 0);
+    DimsArray pos(ovlpCount.size(), (size_t)0);
     size_t curDim = 0;
     while (true)
     {
