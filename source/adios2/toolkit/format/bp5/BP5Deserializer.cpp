@@ -1288,10 +1288,13 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
                     ->Count[dim + Read.BlockID * writer_meta_base->Dims];
         }
         decompressBuffer.resize(DestSize);
-        core::Decompress(IncomingData,
-                         ((MetaArrayRecOperator *)writer_meta_base)
-                             ->DataLengths[Read.BlockID],
-                         decompressBuffer.data());
+        {
+            std::lock_guard<std::mutex> lockGuard(mutexDecompress);
+            core::Decompress(IncomingData,
+                             ((MetaArrayRecOperator *)writer_meta_base)
+                                 ->DataLengths[Read.BlockID],
+                             decompressBuffer.data());
+        }
         IncomingData = decompressBuffer.data();
         VirtualIncomingData = IncomingData;
     }

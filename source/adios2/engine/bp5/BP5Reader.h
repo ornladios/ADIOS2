@@ -22,7 +22,6 @@
 
 #include <chrono>
 #include <map>
-#include <mutex>
 #include <vector>
 
 namespace adios2
