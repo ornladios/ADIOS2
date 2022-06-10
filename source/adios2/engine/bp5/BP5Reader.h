@@ -150,7 +150,7 @@ private:
                       const Seconds &pollSeconds,
                       const Seconds &timeoutSeconds);
 
-    bool ReadActiveFlag(std::vector<char> &buffer);
+    bool ReadActiveFlag(helper::adiosvec<char> &buffer);
 
     /* Parse metadata.
      *

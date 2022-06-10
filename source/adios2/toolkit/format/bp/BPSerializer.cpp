@@ -91,7 +91,7 @@ std::string BPSerializer::GetRankProfilingJSON(
     return rankLog;
 }
 
-std::vector<char>
+helper::adiosvec<char>
 BPSerializer::AggregateProfilingJSON(const std::string &rankLog) const
 {
     // Gather sizes
@@ -99,7 +99,7 @@ BPSerializer::AggregateProfilingJSON(const std::string &rankLog) const
     std::vector<size_t> rankLogsSizes = m_Comm.GatherValues(rankLogSize);
 
     // Gatherv JSON per rank
-    std::vector<char> profilingJSON(3);
+    helper::adiosvec<char> profilingJSON(3);
     const std::string header("[\n");
     const std::string footer("\n]\n");
     size_t gatheredSize = 0;
@@ -129,7 +129,7 @@ BPSerializer::AggregateProfilingJSON(const std::string &rankLog) const
 }
 
 void BPSerializer::PutNameRecord(const std::string name,
-                                 std::vector<char> &buffer) noexcept
+                                 helper::adiosvec<char> &buffer) noexcept
 {
     const uint16_t length = static_cast<uint16_t>(name.size());
     helper::InsertToBuffer(buffer, &length);
@@ -137,7 +137,7 @@ void BPSerializer::PutNameRecord(const std::string name,
 }
 
 void BPSerializer::PutNameRecord(const std::string name,
-                                 std::vector<char> &buffer,
+                                 helper::adiosvec<char> &buffer,
                                  size_t &position) noexcept
 {
     const uint16_t length = static_cast<uint16_t>(name.length());
@@ -148,7 +148,7 @@ void BPSerializer::PutNameRecord(const std::string name,
 void BPSerializer::PutDimensionsRecord(const Dims &localDimensions,
                                        const Dims &globalDimensions,
                                        const Dims &offsets,
-                                       std::vector<char> &buffer) noexcept
+                                       helper::adiosvec<char> &buffer) noexcept
 {
     if (offsets.empty())
     {
@@ -172,11 +172,11 @@ void BPSerializer::PutDimensionsRecord(const Dims &localDimensions,
 void BPSerializer::PutDimensionsRecord(const Dims &localDimensions,
                                        const Dims &globalDimensions,
                                        const Dims &offsets,
-                                       std::vector<char> &buffer,
+                                       helper::adiosvec<char> &buffer,
                                        size_t &position,
                                        const bool isCharacteristic) noexcept
 {
-    auto lf_CopyDimension = [](std::vector<char> &buffer, size_t &position,
+    auto lf_CopyDimension = [](helper::adiosvec<char> &buffer, size_t &position,
                                const size_t dimension,
                                const bool isCharacteristic) {
         if (!isCharacteristic)
@@ -222,11 +222,12 @@ void BPSerializer::PutDimensionsRecord(const Dims &localDimensions,
 void BPSerializer::PutMinifooter(const uint64_t pgIndexStart,
                                  const uint64_t variablesIndexStart,
                                  const uint64_t attributesIndexStart,
-                                 std::vector<char> &buffer, size_t &position,
-                                 const bool addSubfiles)
+                                 helper::adiosvec<char> &buffer,
+                                 size_t &position, const bool addSubfiles)
 {
     auto lf_CopyVersionChar = [](const std::string version,
-                                 std::vector<char> &buffer, size_t &position) {
+                                 helper::adiosvec<char> &buffer,
+                                 size_t &position) {
         helper::CopyToBuffer(buffer, position, version.c_str());
     };
 
@@ -361,7 +362,7 @@ void BPSerializer::MergeSerializeIndices(
         &nameRankIndices,
     helper::Comm const &comm, BufferSTL &bufferSTL)
 {
-    auto lf_GetCharacteristics = [&](const std::vector<char> &buffer,
+    auto lf_GetCharacteristics = [&](const helper::adiosvec<char> &buffer,
                                      size_t &position, const uint8_t dataType,
                                      uint8_t &count, uint32_t &length,
                                      uint32_t &timeStep)
@@ -581,7 +582,7 @@ void BPSerializer::MergeSerializeIndices(
         uint64_t setsCount = 0;
         unsigned int currentTimeStep = 1;
         bool marching = true;
-        std::vector<char> sorted;
+        helper::adiosvec<char> sorted;
 
         while (marching)
         {
@@ -848,7 +849,8 @@ BPSerializer::SerialElementIndex &BPSerializer::GetSerialElementIndex(
 
 #define declare_template_instantiation(T)                                      \
     template void BPSerializer::PutAttributeCharacteristicValueInIndex(        \
-        uint8_t &, const core::Attribute<T> &, std::vector<char> &) noexcept;  \
+        uint8_t &, const core::Attribute<T> &,                                 \
+        helper::adiosvec<char> &) noexcept;                                    \
                                                                                \
     template size_t BPSerializer::GetAttributeSizeInData(                      \
         const core::Attribute<T> &) const noexcept;                            \
@@ -864,15 +866,16 @@ ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #define declare_template_instantiation(T)                                      \
                                                                                \
     template void BPSerializer::PutCharacteristicRecord(                       \
-        const uint8_t, uint8_t &, const T &, std::vector<char> &) noexcept;    \
+        const uint8_t, uint8_t &, const T &,                                   \
+        helper::adiosvec<char> &) noexcept;                                    \
                                                                                \
     template void BPSerializer::PutCharacteristicRecord(                       \
-        const uint8_t, uint8_t &, const T &, std::vector<char> &,              \
+        const uint8_t, uint8_t &, const T &, helper::adiosvec<char> &,         \
         size_t &) noexcept;                                                    \
                                                                                \
     template void BPSerializer::PutCharacteristicOperation(                    \
         const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
-        std::vector<char> &) noexcept;                                         \
+        helper::adiosvec<char> &) noexcept;                                    \
                                                                                \
     template void BPSerializer::PutOperationPayloadInBuffer(                   \
         const core::Variable<T> &,                                             \

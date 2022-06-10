@@ -109,7 +109,7 @@ std::string JSONProfiler::GetRankProfilingJSON(
     return rankLog;
 }
 
-std::vector<char>
+helper::adiosvec<char>
 JSONProfiler::AggregateProfilingJSON(const std::string &rankLog) const
 {
     // Gather sizes
@@ -117,7 +117,7 @@ JSONProfiler::AggregateProfilingJSON(const std::string &rankLog) const
     std::vector<size_t> rankLogsSizes = m_Comm.GatherValues(rankLogSize);
 
     // Gatherv JSON per rank
-    std::vector<char> profilingJSON(3);
+    helper::adiosvec<char> profilingJSON(3);
     const std::string header("[\n");
     const std::string footer("\n]\n");
     size_t gatheredSize = 0;

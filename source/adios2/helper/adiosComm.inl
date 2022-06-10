@@ -110,6 +110,42 @@ void Comm::GathervVectors(const std::vector<T> &in, std::vector<T> &out,
 }
 
 template <class T>
+void Comm::GathervVectors(const helper::adiosvec<T> &in,
+                          helper::adiosvec<T> &out, size_t &position,
+                          int rankDestination) const
+{
+    const size_t inSize = in.size();
+    const std::vector<size_t> counts =
+        this->GatherValues(inSize, rankDestination);
+
+    size_t gatheredSize = 0;
+
+    int rank = this->Rank();
+
+    if (rank == rankDestination) // pre-allocate vector
+    {
+        gatheredSize = std::accumulate(counts.begin(), counts.end(), size_t(0));
+
+        const size_t newSize = position + gatheredSize;
+        try
+        {
+            out.reserve(newSize); // to avoid power of 2 growth
+            out.resize(newSize);
+        }
+        catch (...)
+        {
+            helper::ThrowNested<std::runtime_error>(
+                "Helper", "adiosComm", "GathervVectors",
+                "buffer overflow when resizing to " + std::to_string(newSize));
+        }
+    }
+
+    this->GathervArrays(in.data(), in.size(), counts.data(), counts.size(),
+                        out.data() + position, rankDestination);
+    position += gatheredSize;
+}
+
+template <class T>
 std::vector<T> Comm::AllGatherValues(const T source) const
 {
     int size = this->Size();
@@ -150,6 +186,29 @@ std::string Comm::BroadcastValue(const std::string &input,
 
 template <class T>
 void Comm::BroadcastVector(std::vector<T> &vector, const int rankSource) const
+{
+    if (this->Size() == 1)
+    {
+        return;
+    }
+
+    // First Broadcast the size, then the contents
+    size_t inputSize = this->BroadcastValue(vector.size(), rankSource);
+
+    if (rankSource != this->Rank())
+    {
+        vector.resize(inputSize);
+    }
+
+    if (inputSize > 0)
+    {
+        this->Bcast(vector.data(), inputSize, rankSource);
+    }
+}
+
+template <class T>
+void Comm::BroadcastVector(helper::adiosvec<T> &vector,
+                           const int rankSource) const
 {
     if (this->Size() == 1)
     {

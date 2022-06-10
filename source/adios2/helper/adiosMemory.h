@@ -37,7 +37,7 @@ void CopyEndianReverse(const char *src, const size_t payloadStride, T *dest);
  * @param elements number of elements of source type
  */
 template <class T>
-void InsertToBuffer(std::vector<char> &buffer, const T *source,
+void InsertToBuffer(helper::adiosvec<char> &buffer, const T *source,
                     const size_t elements = 1) noexcept;
 
 #ifdef ADIOS2_HAVE_CUDA
@@ -45,7 +45,7 @@ void InsertToBuffer(std::vector<char> &buffer, const T *source,
  * Copies data from a GPU buffer to a specific location in the adios buffer
  */
 template <class T>
-void CopyFromGPUToBuffer(std::vector<char> &dest, size_t &position,
+void CopyFromGPUToBuffer(helper::adiosvec<char> &dest, size_t &position,
                          const T *source, const size_t elements = 1) noexcept;
 template <class T>
 void CudaMemCopyToBuffer(char *dest, size_t position, const T *GPUbuffer,
@@ -74,8 +74,8 @@ void MemcpyBufferToGPU(char *GPUbuffer, const char *src, size_t byteCount);
  * @param elements number of elements of source type
  */
 template <class T>
-void CopyToBuffer(std::vector<char> &buffer, size_t &position, const T *source,
-                  const size_t elements = 1) noexcept;
+void CopyToBuffer(helper::adiosvec<char> &buffer, size_t &position,
+                  const T *source, const size_t elements = 1) noexcept;
 
 /**
  * Copies data to a specific location in the buffer updating position using
@@ -88,13 +88,14 @@ void CopyToBuffer(std::vector<char> &buffer, size_t &position, const T *source,
  * @param threads number of threads sharing the copy load
  */
 template <class T>
-void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
+void CopyToBufferThreads(helper::adiosvec<char> &buffer, size_t &position,
                          const T *source, const size_t elements = 1,
                          const unsigned int threads = 1) noexcept;
 
 template <class T>
-void ReverseCopyFromBuffer(const std::vector<char> &buffer, size_t &position,
-                           T *destination, const size_t elements = 1) noexcept;
+void ReverseCopyFromBuffer(const helper::adiosvec<char> &buffer,
+                           size_t &position, T *destination,
+                           const size_t elements = 1) noexcept;
 
 /**
  * Copy memory from a buffer at a certain input position
@@ -105,7 +106,7 @@ void ReverseCopyFromBuffer(const std::vector<char> &buffer, size_t &position,
  * @param elements  number of elements of destination type
  */
 template <class T>
-void CopyFromBuffer(const std::vector<char> &buffer, size_t &position,
+void CopyFromBuffer(const helper::adiosvec<char> &buffer, size_t &position,
                     T *destination, const size_t elements = 1) noexcept;
 
 /**
@@ -114,18 +115,19 @@ void CopyFromBuffer(const std::vector<char> &buffer, size_t &position,
  * @param element to be added to buffer
  */
 template <class T>
-void InsertU64(std::vector<char> &buffer, const T element) noexcept;
+void InsertU64(helper::adiosvec<char> &buffer, const T element) noexcept;
 
 template <class T>
-T ReadValue(const std::vector<char> &buffer, size_t &position,
+T ReadValue(const helper::adiosvec<char> &buffer, size_t &position,
             const bool isLittleEndian = true) noexcept;
 
 /** Read in 'nElems' elements from buffer into output array
  * output must be pre-allocated.
  */
 template <class T>
-void ReadArray(const std::vector<char> &buffer, size_t &position, T *output,
-               const size_t nElems, const bool isLittleEndian = true) noexcept;
+void ReadArray(const helper::adiosvec<char> &buffer, size_t &position,
+               T *output, const size_t nElems,
+               const bool isLittleEndian = true) noexcept;
 
 /**
  * General function to copy memory between blocks of different type and start
@@ -190,7 +192,7 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
 
 template <class T>
 void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
-                          const std::vector<char> &contiguousMemory,
+                          const helper::adiosvec<char> &contiguousMemory,
                           const Box<Dims> &blockBox,
                           const Box<Dims> &intersectionBox,
                           const bool isRowMajor = true,
@@ -211,8 +213,12 @@ void CopyContiguousMemory(const char *src, const size_t stride, T *dest,
  * @param end
  */
 template <class T>
-void ClipVector(std::vector<T> &vec, const size_t start,
+void ClipVector(helper::adiosvec<T> &vec, const size_t start,
                 const size_t end) noexcept;
+
+template <class T>
+void Resize(helper::adiosvec<T> &vec, const size_t dataSize,
+            const std::string hint, T value = T());
 
 template <class T>
 void Resize(std::vector<T> &vec, const size_t dataSize, const std::string hint,

@@ -23,7 +23,7 @@ template <>
 inline void BPSerializer::PutAttributeCharacteristicValueInIndex(
     uint8_t &characteristicsCounter,
     const core::Attribute<std::string> &attribute,
-    std::vector<char> &buffer) noexcept
+    helper::adiosvec<char> &buffer) noexcept
 {
     const uint8_t characteristicID =
         static_cast<uint8_t>(CharacteristicID::characteristic_value);

@@ -74,7 +74,8 @@ public:
                          const std::vector<adios2::profiling::IOChrono *>
                              &transportsProfilers) noexcept;
 
-    std::vector<char> AggregateProfilingJSON(const std::string &rankLog) const;
+    helper::adiosvec<char>
+    AggregateProfilingJSON(const std::string &rankLog) const;
 
 private:
     IOChrono m_Profiler;

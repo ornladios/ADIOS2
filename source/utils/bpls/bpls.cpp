@@ -31,6 +31,7 @@
 #include <errno.h>
 
 #include "adios2/helper/adiosLog.h"
+#include "adios2/helper/adiosType.h"
 
 #if defined(__GNUC__) && !(defined(__ICC) || defined(__INTEL_COMPILER))
 #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) < 40900
@@ -268,7 +269,7 @@ bool introspectAsHDF5File(std::ifstream &f, const std::string &name) noexcept
 bool introspectAsBPFile(std::ifstream &f, const std::string &name) noexcept
 {
     const int MFOOTERSIZE = 56;
-    std::vector<char> buffer(MFOOTERSIZE, 0);
+    helper::adiosvec<char> buffer(MFOOTERSIZE);
     f.seekg(0, f.end);
     auto flength = f.tellg();
     if (flength < MFOOTERSIZE)

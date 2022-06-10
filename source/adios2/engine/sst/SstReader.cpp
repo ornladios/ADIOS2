@@ -682,7 +682,7 @@ void SstReader::PerformGets()
     else if (m_WriterMarshalMethod == SstMarshalBP)
     {
         std::vector<void *> sstReadHandlers;
-        std::vector<std::vector<char>> buffers;
+        std::vector<helper::adiosvec<char>> buffers;
         size_t iter = 0;
 
         if (m_BP3Deserializer->m_DeferredVariables.empty())

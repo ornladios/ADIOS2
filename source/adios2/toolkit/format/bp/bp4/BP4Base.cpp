@@ -194,7 +194,7 @@ size_t BP4Base::GetBPIndexSizeInData(const std::string &variableName,
 
 // PROTECTED
 BP4Base::ElementIndexHeader
-BP4Base::ReadElementIndexHeader(const std::vector<char> &buffer,
+BP4Base::ReadElementIndexHeader(const helper::adiosvec<char> &buffer,
                                 size_t &position,
                                 const bool isLittleEndian) const noexcept
 {

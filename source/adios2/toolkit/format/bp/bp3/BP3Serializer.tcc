@@ -492,7 +492,7 @@ template <class T>
 void BP3Serializer::PutBoundsRecord(const bool singleValue,
                                     const Stats<T> &stats,
                                     uint8_t &characteristicsCounter,
-                                    std::vector<char> &buffer) noexcept
+                                    helper::adiosvec<char> &buffer) noexcept
 {
     if (singleValue)
     {
@@ -515,7 +515,7 @@ template <class T>
 void BP3Serializer::PutBoundsRecord(const bool singleValue,
                                     const Stats<T> &stats,
                                     uint8_t &characteristicsCounter,
-                                    std::vector<char> &buffer,
+                                    helper::adiosvec<char> &buffer,
                                     size_t &position) noexcept
 {
     if (singleValue)
@@ -545,7 +545,7 @@ template <>
 inline void BP3Serializer::PutVariableCharacteristics(
     const core::Variable<std::string> &variable,
     const core::Variable<std::string>::BPInfo &blockInfo,
-    const Stats<std::string> &stats, std::vector<char> &buffer,
+    const Stats<std::string> &stats, helper::adiosvec<char> &buffer,
     typename core::Variable<std::string>::Span * /*span*/) noexcept
 {
     const size_t characteristicsCountPosition = buffer.size();
@@ -600,7 +600,8 @@ template <class T>
 void BP3Serializer::PutVariableCharacteristics(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::BPInfo &blockInfo, const Stats<T> &stats,
-    std::vector<char> &buffer, typename core::Variable<T>::Span *span) noexcept
+    helper::adiosvec<char> &buffer,
+    typename core::Variable<T>::Span *span) noexcept
 {
     // going back at the end
     const size_t characteristicsCountPosition = buffer.size();
@@ -680,7 +681,7 @@ template <class T>
 void BP3Serializer::PutVariableCharacteristics(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::BPInfo &blockInfo, const Stats<T> &stats,
-    std::vector<char> &buffer, size_t &position) noexcept
+    helper::adiosvec<char> &buffer, size_t &position) noexcept
 {
     // going back at the end
     const size_t characteristicsCountPosition = position;

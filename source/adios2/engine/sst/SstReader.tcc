@@ -26,7 +26,7 @@ namespace engine
 template <class T>
 void SstReader::ReadVariableBlocksRequests(
     Variable<T> &variable, std::vector<void *> &sstReadHandlers,
-    std::vector<std::vector<char>> &buffers)
+    std::vector<helper::adiosvec<char>> &buffers)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
@@ -122,9 +122,9 @@ void SstReader::ReadVariableBlocksRequests(
 }
 
 template <class T>
-void SstReader::ReadVariableBlocksFill(Variable<T> &variable,
-                                       std::vector<std::vector<char>> &buffers,
-                                       size_t &iter)
+void SstReader::ReadVariableBlocksFill(
+    Variable<T> &variable, std::vector<helper::adiosvec<char>> &buffers,
+    size_t &iter)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 

@@ -49,7 +49,8 @@ public:
      * @param rankProfilingJSON
      * @return profiling.json
      */
-    std::vector<char> AggregateProfilingJSON(const std::string &rankLog) const;
+    helper::adiosvec<char>
+    AggregateProfilingJSON(const std::string &rankLog) const;
 
     void UpdateOffsetsInMetadata();
 
@@ -62,21 +63,20 @@ protected:
     virtual void SerializeDataBuffer(core::IO &io) noexcept = 0;
 
     template <class T>
-    void
-    PutAttributeCharacteristicValueInIndex(uint8_t &characteristicsCounter,
-                                           const core::Attribute<T> &attribute,
-                                           std::vector<char> &buffer) noexcept;
+    void PutAttributeCharacteristicValueInIndex(
+        uint8_t &characteristicsCounter, const core::Attribute<T> &attribute,
+        helper::adiosvec<char> &buffer) noexcept;
 
     template <class T>
     void PutCharacteristicRecord(const uint8_t characteristicID,
                                  uint8_t &characteristicsCounter,
                                  const T &value,
-                                 std::vector<char> &buffer) noexcept;
+                                 helper::adiosvec<char> &buffer) noexcept;
 
     template <class T>
     void PutCharacteristicRecord(const uint8_t characteristicID,
                                  uint8_t &characteristicsCounter,
-                                 const T &value, std::vector<char> &buffer,
+                                 const T &value, helper::adiosvec<char> &buffer,
                                  size_t &position) noexcept;
 
     template <class T>
@@ -85,24 +85,24 @@ protected:
                             const bool sourceRowMajor) noexcept;
 
     void PutNameRecord(const std::string name,
-                       std::vector<char> &buffer) noexcept;
+                       helper::adiosvec<char> &buffer) noexcept;
 
-    void PutNameRecord(const std::string name, std::vector<char> &buffer,
+    void PutNameRecord(const std::string name, helper::adiosvec<char> &buffer,
                        size_t &position) noexcept;
 
     void PutDimensionsRecord(const Dims &localDimensions,
                              const Dims &globalDimensions, const Dims &offsets,
-                             std::vector<char> &buffer) noexcept;
+                             helper::adiosvec<char> &buffer) noexcept;
 
     void PutDimensionsRecord(const Dims &localDimensions,
                              const Dims &globalDimensions, const Dims &offsets,
-                             std::vector<char> &buffer, size_t &position,
+                             helper::adiosvec<char> &buffer, size_t &position,
                              const bool isCharacteristic = false) noexcept;
 
     void PutMinifooter(const uint64_t pgIndexStart,
                        const uint64_t variablesIndexStart,
                        const uint64_t attributesIndexStart,
-                       std::vector<char> &buffer, size_t &position,
+                       helper::adiosvec<char> &buffer, size_t &position,
                        const bool addSubfiles = false);
 
     void MergeSerializeIndices(
@@ -113,7 +113,7 @@ protected:
     template <class T>
     void UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
                                            const DataTypes dataType,
-                                           std::vector<char> &buffer);
+                                           helper::adiosvec<char> &buffer);
 
     uint32_t GetFileIndex() const noexcept;
 
@@ -149,7 +149,7 @@ protected:
     void PutCharacteristicOperation(
         const core::Variable<T> &variable,
         const typename core::Variable<T>::BPInfo &blockInfo,
-        std::vector<char> &buffer) noexcept;
+        helper::adiosvec<char> &buffer) noexcept;
 
     template <class T>
     void PutOperationPayloadInBuffer(

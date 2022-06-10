@@ -40,7 +40,8 @@ void BP4Serializer::MakeHeader(BufferSTL &b, const std::string fileType,
                                const bool isActive)
 {
     auto lf_CopyVersionChar = [](const std::string version,
-                                 std::vector<char> &buffer, size_t &position) {
+                                 helper::adiosvec<char> &buffer,
+                                 size_t &position) {
         helper::CopyToBuffer(buffer, position, version.c_str());
     };
 
@@ -154,9 +155,9 @@ void BP4Serializer::PutProcessGroupIndex(
     const std::vector<std::string> &transportsTypes) noexcept
 {
     m_Profiler.Start("buffering");
-    std::vector<char> &metadataBuffer = m_MetadataSet.PGIndex.Buffer;
+    helper::adiosvec<char> &metadataBuffer = m_MetadataSet.PGIndex.Buffer;
 
-    std::vector<char> &dataBuffer = m_Data.m_Buffer;
+    helper::adiosvec<char> &dataBuffer = m_Data.m_Buffer;
     size_t &dataPosition = m_Data.m_Position;
     const size_t pgBeginPosition = dataPosition;
 
@@ -439,7 +440,7 @@ void BP4Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
     auto lf_FlattenIndices =
         [](const uint32_t count, const uint64_t length,
            const std::unordered_map<std::string, SerialElementIndex> &indices,
-           std::vector<char> &buffer, size_t &position) {
+           helper::adiosvec<char> &buffer, size_t &position) {
             helper::CopyToBuffer(buffer, position, &count);
             helper::CopyToBuffer(buffer, position, &length);
 
@@ -611,7 +612,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
         [&](std::unordered_map<size_t,
                                std::vector<std::tuple<size_t, size_t, size_t>>>
                 &pgIndicesInfo,
-            const int rankSource, const std::vector<char> &serialized,
+            const int rankSource, const helper::adiosvec<char> &serialized,
             const size_t position, const size_t endPosition) {
             size_t stepStartPosition = position;
             size_t stepBuffersize = 0;
@@ -694,7 +695,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
             }
         };
 
-    auto lf_GetCharacteristics = [&](const std::vector<char> &buffer,
+    auto lf_GetCharacteristics = [&](const helper::adiosvec<char> &buffer,
                                      size_t &position, const uint8_t dataType,
                                      uint8_t &count, uint32_t &length,
                                      uint32_t &timeStep)
@@ -746,7 +747,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                 std::unordered_map<std::string,
                                    std::vector<std::tuple<size_t, size_t>>>>
                 &indicesInfo,
-            const int rankSource, const std::vector<char> &serialized,
+            const int rankSource, const helper::adiosvec<char> &serialized,
             const size_t position, const size_t endPosition)
 
     {
@@ -820,7 +821,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                 std::unordered_map<std::string,
                                    std::vector<std::tuple<size_t, size_t>>>>
                 &indicesInfo,
-            const int rankSource, const std::vector<char> &serialized,
+            const int rankSource, const helper::adiosvec<char> &serialized,
             const size_t position, const size_t endPosition)
 
     {
@@ -889,7 +890,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
 
     auto lf_LocateAllIndices =
         [&](const int rankSource, const std::vector<size_t> headerInfo,
-            const std::vector<char> &serialized, const size_t position)
+            const helper::adiosvec<char> &serialized, const size_t position)
 
     {
         const size_t rankIndicesSize = headerInfo[0];
@@ -931,7 +932,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
                 std::unordered_map<std::string,
                                    std::vector<std::tuple<size_t, size_t>>>>
                 &attrIndicesInfo,
-            const std::vector<char> &serialized) {
+            const helper::adiosvec<char> &serialized) {
             auto &position = outBufferSTL.m_Position;
             auto &buffer = outBufferSTL.m_Buffer;
 
@@ -1098,7 +1099,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
     if (rank == 0)
     {
         const size_t serializedSize = inBufferSTL.m_Position;
-        const std::vector<char> &serialized = inBufferSTL.m_Buffer;
+        const helper::adiosvec<char> &serialized = inBufferSTL.m_Buffer;
         size_t serializedPosition = 0;
         std::vector<size_t> headerInfo(4);
         const bool isLittleEndian = helper::IsLittleEndian();
@@ -1126,7 +1127,7 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
     if (rank == 0)
     {
         auto &buffer = outBufferSTL.m_Buffer;
-        const std::vector<char> &serialized = inBufferSTL.m_Buffer;
+        const helper::adiosvec<char> &serialized = inBufferSTL.m_Buffer;
 
         size_t totalStep = m_PGIndicesInfo.size();
         size_t perStepExtraSize = 16 + 12 + 12;

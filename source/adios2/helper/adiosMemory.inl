@@ -67,7 +67,7 @@ inline void CopyEndianReverse<std::complex<double>>(const char *src,
 #endif
 
 template <class T>
-void InsertToBuffer(std::vector<char> &buffer, const T *source,
+void InsertToBuffer(helper::adiosvec<char> &buffer, const T *source,
                     const size_t elements) noexcept
 {
     const char *src = reinterpret_cast<const char *>(source);
@@ -76,7 +76,7 @@ void InsertToBuffer(std::vector<char> &buffer, const T *source,
 
 #ifdef ADIOS2_HAVE_CUDA
 template <class T>
-void CopyFromGPUToBuffer(std::vector<char> &dest, size_t &position,
+void CopyFromGPUToBuffer(helper::adiosvec<char> &dest, size_t &position,
                          const T *GPUbuffer, const size_t elements) noexcept
 {
     CudaMemCopyToBuffer(dest.data(), position, GPUbuffer, elements * sizeof(T));
@@ -132,8 +132,8 @@ static inline void NdCopyCUDA(const char *&inOvlpBase, char *&outOvlpBase,
 #endif
 
 template <class T>
-void CopyToBuffer(std::vector<char> &buffer, size_t &position, const T *source,
-                  const size_t elements) noexcept
+void CopyToBuffer(helper::adiosvec<char> &buffer, size_t &position,
+                  const T *source, const size_t elements) noexcept
 {
     const char *src = reinterpret_cast<const char *>(source);
     std::copy(src, src + elements * sizeof(T), buffer.begin() + position);
@@ -141,7 +141,7 @@ void CopyToBuffer(std::vector<char> &buffer, size_t &position, const T *source,
 }
 
 template <class T>
-void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
+void CopyToBufferThreads(helper::adiosvec<char> &buffer, size_t &position,
                          const T *source, const size_t elements,
                          const unsigned int threads) noexcept
 {
@@ -204,7 +204,7 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
 }
 
 template <class T>
-inline void ReverseCopyFromBuffer(const std::vector<char> &buffer,
+inline void ReverseCopyFromBuffer(const helper::adiosvec<char> &buffer,
                                   size_t &position, T *destination,
                                   const size_t elements) noexcept
 {
@@ -215,7 +215,7 @@ inline void ReverseCopyFromBuffer(const std::vector<char> &buffer,
 }
 
 template <class T>
-void CopyFromBuffer(const std::vector<char> &buffer, size_t &position,
+void CopyFromBuffer(const helper::adiosvec<char> &buffer, size_t &position,
                     T *destination, size_t elements) noexcept
 {
     std::copy(buffer.begin() + position,
@@ -225,14 +225,14 @@ void CopyFromBuffer(const std::vector<char> &buffer, size_t &position,
 }
 
 template <class T>
-void InsertU64(std::vector<char> &buffer, const T element) noexcept
+void InsertU64(helper::adiosvec<char> &buffer, const T element) noexcept
 {
     const uint64_t element64 = static_cast<uint64_t>(element);
     InsertToBuffer(buffer, &element64, 1);
 }
 
 template <class T>
-inline T ReadValue(const std::vector<char> &buffer, size_t &position,
+inline T ReadValue(const helper::adiosvec<char> &buffer, size_t &position,
                    const bool isLittleEndian) noexcept
 {
     T value;
@@ -254,7 +254,7 @@ inline T ReadValue(const std::vector<char> &buffer, size_t &position,
 
 template <>
 inline std::complex<float>
-ReadValue<std::complex<float>>(const std::vector<char> &buffer,
+ReadValue<std::complex<float>>(const helper::adiosvec<char> &buffer,
                                size_t &position,
                                const bool isLittleEndian) noexcept
 {
@@ -278,7 +278,7 @@ ReadValue<std::complex<float>>(const std::vector<char> &buffer,
 
 template <>
 inline std::complex<double>
-ReadValue<std::complex<double>>(const std::vector<char> &buffer,
+ReadValue<std::complex<double>>(const helper::adiosvec<char> &buffer,
                                 size_t &position,
                                 const bool isLittleEndian) noexcept
 {
@@ -301,7 +301,7 @@ ReadValue<std::complex<double>>(const std::vector<char> &buffer,
 }
 
 template <class T>
-inline void ReadArray(const std::vector<char> &buffer, size_t &position,
+inline void ReadArray(const helper::adiosvec<char> &buffer, size_t &position,
                       T *output, const size_t nElems,
                       const bool isLittleEndian) noexcept
 {
@@ -320,7 +320,7 @@ inline void ReadArray(const std::vector<char> &buffer, size_t &position,
 }
 
 template <>
-inline void ReadArray<std::complex<float>>(const std::vector<char> &buffer,
+inline void ReadArray<std::complex<float>>(const helper::adiosvec<char> &buffer,
                                            size_t &position,
                                            std::complex<float> *output,
                                            const size_t nElems,
@@ -341,11 +341,11 @@ inline void ReadArray<std::complex<float>>(const std::vector<char> &buffer,
 }
 
 template <>
-inline void ReadArray<std::complex<double>>(const std::vector<char> &buffer,
-                                            size_t &position,
-                                            std::complex<double> *output,
-                                            const size_t nElems,
-                                            const bool isLittleEndian) noexcept
+inline void
+ReadArray<std::complex<double>>(const helper::adiosvec<char> &buffer,
+                                size_t &position, std::complex<double> *output,
+                                const size_t nElems,
+                                const bool isLittleEndian) noexcept
 {
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     if (IsLittleEndian() != isLittleEndian)
@@ -362,7 +362,7 @@ inline void ReadArray<std::complex<double>>(const std::vector<char> &buffer,
 }
 
 template <class T>
-void ClipVector(std::vector<T> &vec, const size_t start,
+void ClipVector(helper::adiosvec<T> &vec, const size_t start,
                 const size_t end) noexcept
 {
     vec.resize(end);
@@ -623,7 +623,7 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
 
 template <class T>
 void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
-                          const std::vector<char> &contiguousMemory,
+                          const helper::adiosvec<char> &contiguousMemory,
                           const Box<Dims> &blockBox,
                           const Box<Dims> &intersectionBox,
                           const bool isRowMajor, const bool reverseDimensions,
@@ -662,6 +662,25 @@ void CopyContiguousMemory(const char *src, const size_t payloadStride, T *dest,
 #else
     std::copy(src, src + payloadStride, reinterpret_cast<char *>(dest));
 #endif
+}
+
+template <class T>
+void Resize(helper::adiosvec<T> &vec, const size_t dataSize,
+            const std::string hint, T value)
+{
+    try
+    {
+        // avoid power of 2 capacity growth
+        vec.reserve(dataSize);
+        vec.resize(dataSize, value);
+    }
+    catch (...)
+    {
+        helper::ThrowNested<std::runtime_error>(
+            "Helper", "adiosMemory", "Resize",
+            "buffer overflow when resizing to " + std::to_string(dataSize) +
+                " bytes, " + hint);
+    }
 }
 
 template <class T>
@@ -910,9 +929,9 @@ static inline void NdCopyIterDFDynamic(const char *inBase, char *outBase,
 {
     size_t curDim = 0;
     DimsArray pos(ovlpCount.size() + 1, (size_t)0);
-    std::vector<const char *> inAddr(ovlpCount.size() + 1);
+    helper::adiosvec<const char *> inAddr(ovlpCount.size() + 1);
     inAddr[0] = inBase;
-    std::vector<char *> outAddr(ovlpCount.size() + 1);
+    helper::adiosvec<char *> outAddr(ovlpCount.size() + 1);
     outAddr[0] = outBase;
     while (true)
     {
@@ -947,9 +966,9 @@ static inline void NdCopyIterDFDynamicRevEndian(
 {
     size_t curDim = 0;
     DimsArray pos(ovlpCount.size() + 1, (size_t)0);
-    std::vector<const char *> inAddr(ovlpCount.size() + 1);
+    helper::adiosvec<const char *> inAddr(ovlpCount.size() + 1);
     inAddr[0] = inBase;
-    std::vector<char *> outAddr(ovlpCount.size() + 1);
+    helper::adiosvec<char *> outAddr(ovlpCount.size() + 1);
     outAddr[0] = outBase;
     while (true)
     {

@@ -38,9 +38,9 @@ void BP3Serializer::PutProcessGroupIndex(
     const std::vector<std::string> &transportsTypes) noexcept
 {
     m_Profiler.Start("buffering");
-    std::vector<char> &metadataBuffer = m_MetadataSet.PGIndex.Buffer;
+    helper::adiosvec<char> &metadataBuffer = m_MetadataSet.PGIndex.Buffer;
 
-    std::vector<char> &dataBuffer = m_Data.m_Buffer;
+    helper::adiosvec<char> &dataBuffer = m_Data.m_Buffer;
     size_t &dataPosition = m_Data.m_Position;
 
     m_MetadataSet.DataPGLengthPosition = dataPosition;
@@ -293,7 +293,7 @@ void BP3Serializer::SerializeMetadataInData(const bool updateAbsolutePosition,
     auto lf_FlattenIndices =
         [](const uint32_t count, const uint64_t length,
            const std::unordered_map<std::string, SerialElementIndex> &indices,
-           std::vector<char> &buffer, size_t &position) {
+           helper::adiosvec<char> &buffer, size_t &position) {
             helper::CopyToBuffer(buffer, position, &count);
             helper::CopyToBuffer(buffer, position, &length);
 
@@ -470,7 +470,7 @@ BP3Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
     auto lf_DeserializeIndices =
         [&](std::unordered_map<std::string, std::vector<SerialElementIndex>>
                 &deserialized,
-            const int rankSource, const std::vector<char> &serialized,
+            const int rankSource, const helper::adiosvec<char> &serialized,
             const size_t position, const size_t endPosition,
             const bool isRankConstant)
 
@@ -526,7 +526,7 @@ BP3Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
 
     auto lf_DeserializeAllIndices =
         [&](const int rankSource, const std::vector<size_t> headerInfo,
-            const std::vector<char> &serialized, const size_t position)
+            const helper::adiosvec<char> &serialized, const size_t position)
 
     {
         PERFSTUBS_SCOPED_TIMER_FUNC();
@@ -616,7 +616,7 @@ BP3Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
     {
         PERFSTUBS_SCOPED_TIMER_FUNC();
         const size_t serializedSize = bufferSTL.m_Position;
-        const std::vector<char> &serialized = bufferSTL.m_Buffer;
+        const helper::adiosvec<char> &serialized = bufferSTL.m_Buffer;
         size_t serializedPosition = 0;
         std::vector<size_t> headerInfo(4);
         const bool isLittleEndian = helper::IsLittleEndian();

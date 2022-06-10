@@ -21,7 +21,7 @@ namespace format
 template <class T>
 inline void BPSerializer::PutAttributeCharacteristicValueInIndex(
     uint8_t &characteristicsCounter, const core::Attribute<T> &attribute,
-    std::vector<char> &buffer) noexcept
+    helper::adiosvec<char> &buffer) noexcept
 {
     const uint8_t characteristicID = CharacteristicID::characteristic_value;
 
@@ -40,10 +40,9 @@ inline void BPSerializer::PutAttributeCharacteristicValueInIndex(
 }
 
 template <class T>
-void BPSerializer::PutCharacteristicRecord(const uint8_t characteristicID,
-                                           uint8_t &characteristicsCounter,
-                                           const T &value,
-                                           std::vector<char> &buffer) noexcept
+void BPSerializer::PutCharacteristicRecord(
+    const uint8_t characteristicID, uint8_t &characteristicsCounter,
+    const T &value, helper::adiosvec<char> &buffer) noexcept
 {
     const uint8_t id = characteristicID;
     helper::InsertToBuffer(buffer, &id);
@@ -55,7 +54,7 @@ template <class T>
 void BPSerializer::PutCharacteristicRecord(const uint8_t characteristicID,
                                            uint8_t &characteristicsCounter,
                                            const T &value,
-                                           std::vector<char> &buffer,
+                                           helper::adiosvec<char> &buffer,
                                            size_t &position) noexcept
 {
     const uint8_t id = characteristicID;
@@ -105,9 +104,9 @@ inline void BPSerializer::PutPayloadInBuffer(
 
 // PRIVATE
 template <class T>
-void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
-                                                     const DataTypes dataType,
-                                                     std::vector<char> &buffer)
+void BPSerializer::UpdateIndexOffsetsCharacteristics(
+    size_t &currentPosition, const DataTypes dataType,
+    helper::adiosvec<char> &buffer)
 {
     const bool isLittleEndian = helper::IsLittleEndian();
 
@@ -366,7 +365,7 @@ template <class T>
 void BPSerializer::PutCharacteristicOperation(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::BPInfo &blockInfo,
-    std::vector<char> &buffer) noexcept
+    helper::adiosvec<char> &buffer) noexcept
 {
     const std::string type = blockInfo.Operations[0]->m_TypeString;
     const uint8_t typeLength = static_cast<uint8_t>(type.size());

@@ -559,7 +559,7 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
         {
             const size_t maxIdxSize =
                 idxFileSize - m_MDIndexFileAlreadyReadSize;
-            std::vector<char> idxbuf(maxIdxSize);
+            helper::adiosvec<char> idxbuf(maxIdxSize);
             m_MDIndexFileManager.ReadFile(idxbuf.data(), maxIdxSize,
                                           m_MDIndexFileAlreadyReadSize);
             size_t newIdxSize;
@@ -685,7 +685,8 @@ bool BP4Reader::CheckWriterActive()
     size_t flag = 0;
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
-        std::vector<char> header(m_BP4Deserializer.m_IndexHeaderSize, '\0');
+        helper::adiosvec<char> header(m_BP4Deserializer.m_IndexHeaderSize,
+                                      '\0');
         m_MDIndexFileManager.ReadFile(
             header.data(), m_BP4Deserializer.m_IndexHeaderSize, 0, 0);
         bool active = m_BP4Deserializer.ReadActiveFlag(header);

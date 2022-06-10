@@ -118,7 +118,7 @@ size_t BP3Base::GetBPIndexSizeInData(const std::string &variableName,
 
 // PROTECTED
 BP3Base::ElementIndexHeader
-BP3Base::ReadElementIndexHeader(const std::vector<char> &buffer,
+BP3Base::ReadElementIndexHeader(const helper::adiosvec<char> &buffer,
                                 size_t &position,
                                 const bool isLittleEndian) const noexcept
 {

@@ -54,13 +54,14 @@ public:
 
 private:
     template <class T>
-    void ReadVariableBlocksRequests(Variable<T> &variable,
-                                    std::vector<void *> &sstReadHandlers,
-                                    std::vector<std::vector<char>> &buffers);
+    void
+    ReadVariableBlocksRequests(Variable<T> &variable,
+                               std::vector<void *> &sstReadHandlers,
+                               std::vector<helper::adiosvec<char>> &buffers);
 
     template <class T>
     void ReadVariableBlocksFill(Variable<T> &variable,
-                                std::vector<std::vector<char>> &buffers,
+                                std::vector<helper::adiosvec<char>> &buffers,
                                 size_t &iter);
 
     template <class T>
