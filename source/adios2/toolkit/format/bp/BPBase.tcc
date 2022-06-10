@@ -24,8 +24,9 @@ namespace format
 
 template <class T>
 BPBase::Characteristics<T> BPBase::ReadElementIndexCharacteristics(
-    const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
-    const bool untilTimeStep, const bool isLittleEndian) const
+    const helper::adiosvec<char> &buffer, size_t &position,
+    const DataTypes dataType, const bool untilTimeStep,
+    const bool isLittleEndian) const
 {
     Characteristics<T> characteristics;
     characteristics.EntryCount =
@@ -42,8 +43,9 @@ BPBase::Characteristics<T> BPBase::ReadElementIndexCharacteristics(
 // String specialization
 template <>
 inline void
-BPBase::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
-                             const DataTypes dataType, const bool untilTimeStep,
+BPBase::ParseCharacteristics(const helper::adiosvec<char> &buffer,
+                             size_t &position, const DataTypes dataType,
+                             const bool untilTimeStep,
                              Characteristics<std::string> &characteristics,
                              const bool isLittleEndian) const
 {
@@ -190,7 +192,7 @@ BPBase::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
 }
 
 template <class T>
-inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
+inline void BPBase::ParseCharacteristics(const helper::adiosvec<char> &buffer,
                                          size_t &position,
                                          const DataTypes /*dataType*/,
                                          const bool untilTimeStep,
@@ -519,9 +521,9 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
             const size_t metadataLength = static_cast<size_t>(
                 helper::ReadValue<uint16_t>(buffer, position, isLittleEndian));
 
-            characteristics.Statistics.Op.Metadata =
-                std::vector<char>(buffer.begin() + position,
-                                  buffer.begin() + position + metadataLength);
+            characteristics.Statistics.Op.Metadata = helper::adiosvec<char>(
+                buffer.begin() + position,
+                buffer.begin() + position + metadataLength);
             position += metadataLength;
 
             characteristics.Statistics.Op.IsActive = true;

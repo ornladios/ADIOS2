@@ -32,8 +32,7 @@ void BufferSTL::Resize(const size_t size, const std::string hint)
         // doing this will effectively replace the STL GNU default power of 2
         // reallocation.
         m_Buffer.reserve(size);
-        // must initialize memory (secure)
-        m_Buffer.resize(size, '\0');
+        m_Buffer.resize(size);
     }
     catch (...)
     {
@@ -87,7 +86,7 @@ size_t BufferSTL::GetAvailableSize() const
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-void BufferSTL::Delete() { std::vector<char>().swap(m_Buffer); }
+void BufferSTL::Delete() { helper::adiosvec<char>().swap(m_Buffer); }
 
 size_t BufferSTL::DebugGetSize() const { return m_Buffer.size(); };
 

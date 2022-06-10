@@ -138,10 +138,9 @@ protected:
      */
     size_t m_LastVarLengthPosInBuffer = 0;
 
-    ElementIndexHeader
-    ReadElementIndexHeader(const std::vector<char> &buffer, size_t &position,
-                           const bool isLittleEndian = true) const
-        noexcept final;
+    ElementIndexHeader ReadElementIndexHeader(
+        const helper::adiosvec<char> &buffer, size_t &position,
+        const bool isLittleEndian = true) const noexcept final;
 
 private:
     std::string GetBPSubStreamName(const std::string &name, const size_t id,

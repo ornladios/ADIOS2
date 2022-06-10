@@ -302,7 +302,7 @@ void BP3Writer::WriteProfilingJSONFile()
                                    transportTypes, transportProfilers) +
                                ",\n");
 
-    const std::vector<char> profilingJSON(
+    const helper::adiosvec<char> profilingJSON(
         m_BP3Serializer.AggregateProfilingJSON(lineJSON));
 
     if (m_BP3Serializer.m_RankMPI == 0)

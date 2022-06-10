@@ -171,7 +171,7 @@ void BP4Deserializer::SetVariableBlockInfo(
             const bool isRowMajor)
 
     {
-        const std::vector<char> &buffer = bufferSTL.m_Buffer;
+        const helper::adiosvec<char> &buffer = bufferSTL.m_Buffer;
 
         size_t position = blockIndexOffset;
 
@@ -289,7 +289,7 @@ void BP4Deserializer::SetVariableBlockInfo(
             const bool isRowMajor)
 
     {
-        const std::vector<char> &buffer = bufferSTL.m_Buffer;
+        const helper::adiosvec<char> &buffer = bufferSTL.m_Buffer;
 
         size_t position = blockIndexOffset;
 
@@ -625,7 +625,7 @@ BP4Deserializer::BlocksInfo(const core::Variable<T> &variable,
 template <class T>
 void BP4Deserializer::ClipContiguousMemory(
     typename core::Variable<T>::BPInfo &blockInfo,
-    const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
+    const helper::adiosvec<char> &contiguousMemory, const Box<Dims> &blockBox,
     const Box<Dims> &intersectionBox) const
 {
     helper::ClipContiguousMemory(
@@ -638,7 +638,7 @@ void BP4Deserializer::ClipContiguousMemory(
 template <>
 inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
     const ElementIndexHeader &header, core::Engine &engine,
-    const std::vector<char> &buffer, size_t position, size_t step) const
+    const helper::adiosvec<char> &buffer, size_t position, size_t step) const
 {
     const size_t initialPosition = position;
 
@@ -790,7 +790,7 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
 template <class T>
 void BP4Deserializer::DefineVariableInEngineIOPerStep(
     const ElementIndexHeader &header, core::Engine &engine,
-    const std::vector<char> &buffer, size_t position, size_t step) const
+    const helper::adiosvec<char> &buffer, size_t position, size_t step) const
 {
     const size_t initialPosition = position;
 
@@ -1043,7 +1043,7 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
 template <class T>
 void BP4Deserializer::DefineAttributeInEngineIO(
     const ElementIndexHeader &header, core::Engine &engine,
-    const std::vector<char> &buffer, size_t position) const
+    const helper::adiosvec<char> &buffer, size_t position) const
 {
     const Characteristics<T> characteristics =
         ReadElementIndexCharacteristics<T>(

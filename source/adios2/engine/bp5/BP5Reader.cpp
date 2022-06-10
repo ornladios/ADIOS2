@@ -302,7 +302,7 @@ void BP5Reader::PerformGets()
         double readTotal = 0.0;
         double subfileTotal = 0.0;
         size_t nReads = 0;
-        std::vector<char> buf(maxReadSize);
+        helper::adiosvec<char> buf(maxReadSize);
 
         while (true)
         {
@@ -393,7 +393,7 @@ void BP5Reader::PerformGets()
     {
         size_t maxOpenFiles = helper::SetWithinLimit(
             (size_t)m_Parameters.MaxOpenFilesAtOnce, (size_t)1, MaxSizeT);
-        std::vector<char> buf(maxReadSize);
+        helper::adiosvec<char> buf(maxReadSize);
         for (auto &Req : ReadRequests)
         {
             if (!Req.DestinationAddr)
@@ -1070,7 +1070,7 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
     return position;
 }
 
-bool BP5Reader::ReadActiveFlag(std::vector<char> &buffer)
+bool BP5Reader::ReadActiveFlag(helper::adiosvec<char> &buffer)
 {
     if (buffer.size() < m_ActiveFlagPosition)
     {
@@ -1094,7 +1094,7 @@ bool BP5Reader::CheckWriterActive()
         auto fsize = m_MDIndexFileManager.GetFileSize(0);
         if (fsize >= m_IndexHeaderSize)
         {
-            std::vector<char> header(m_IndexHeaderSize, '\0');
+            helper::adiosvec<char> header(m_IndexHeaderSize, '\0');
             m_MDIndexFileManager.ReadFile(header.data(), m_IndexHeaderSize, 0,
                                           0);
             bool active = ReadActiveFlag(header);

@@ -317,7 +317,7 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
                                                  size_t step)
 {
     auto lf_ReadElementIndexPerStep = [&](core::Engine &engine,
-                                          const std::vector<char> &buffer,
+                                          const helper::adiosvec<char> &buffer,
                                           size_t position, size_t step) {
         const ElementIndexHeader header = ReadElementIndexHeader(
             buffer, position, m_Minifooter.IsLittleEndian);
@@ -504,7 +504,7 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
                                                   size_t step)
 {
     auto lf_ReadElementIndex = [&](core::Engine &engine,
-                                   const std::vector<char> &buffer,
+                                   const helper::adiosvec<char> &buffer,
                                    size_t position) {
         const ElementIndexHeader header = ReadElementIndexHeader(
             buffer, position, m_Minifooter.IsLittleEndian);
@@ -630,7 +630,7 @@ BP4Deserializer::PerformGetsVariablesSubFileInfo(core::IO &io)
 }
 
 void BP4Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
-                                 const std::vector<char> &contiguousMemory,
+                                 const helper::adiosvec<char> &contiguousMemory,
                                  const Box<Dims> &blockBox,
                                  const Box<Dims> &intersectionBox) const
 {
@@ -655,7 +655,7 @@ void BP4Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
 #undef declare_type
 }
 
-bool BP4Deserializer::ReadActiveFlag(std::vector<char> &buffer)
+bool BP4Deserializer::ReadActiveFlag(helper::adiosvec<char> &buffer)
 {
     if (buffer.size() < m_ActiveFlagPosition)
     {
@@ -682,7 +682,7 @@ bool BP4Deserializer::ReadActiveFlag(std::vector<char> &buffer)
         core::Variable<T> &, typename core::Variable<T>::BPInfo &) const;      \
                                                                                \
     template void BP4Deserializer::ClipContiguousMemory<T>(                    \
-        typename core::Variable<T>::BPInfo &, const std::vector<char> &,       \
+        typename core::Variable<T>::BPInfo &, const helper::adiosvec<char> &,  \
         const Box<Dims> &, const Box<Dims> &) const;                           \
                                                                                \
     template void BP4Deserializer::GetValueFromMetadata(                       \

@@ -1021,13 +1021,13 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
     return Ret;
 }
 
-std::vector<char> BP5Serializer::CopyMetadataToContiguous(
+helper::adiosvec<char> BP5Serializer::CopyMetadataToContiguous(
     const std::vector<BP5Base::MetaMetaInfoBlock> NewMetaMetaBlocks,
     const format::Buffer *MetaEncodeBuffer,
     const format::Buffer *AttributeEncodeBuffer, uint64_t DataSize,
     uint64_t WriterDataPos) const
 {
-    std::vector<char> Ret;
+    helper::adiosvec<char> Ret;
     uint64_t RetSize = 0;
     size_t Position = 0;
     size_t MetadataEncodeBufferAlignedSize =
@@ -1100,7 +1100,7 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
 }
 
 std::vector<core::iovec> BP5Serializer::BreakoutContiguousMetadata(
-    std::vector<char> *Aggregate, const std::vector<size_t> Counts,
+    helper::adiosvec<char> *Aggregate, const std::vector<size_t> Counts,
     std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks,
     std::vector<core::iovec> &AttributeBlocks, std::vector<uint64_t> &DataSizes,
     std::vector<uint64_t> &WriterDataPositions) const

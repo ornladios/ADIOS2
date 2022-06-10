@@ -20,6 +20,7 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosType.h"
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
 #include "adios2/toolkit/format/buffer/Buffer.h"
 #include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
@@ -42,7 +43,7 @@ public:
     struct SerialElementIndex
     {
         /** buffer containing the metadata index, start with 500bytes */
-        std::vector<char> Buffer;
+        helper::adiosvec<char> Buffer;
 
         /** number of characteristics sets (time and spatial aggregation) */
         uint64_t Count = 0;
@@ -290,7 +291,7 @@ public:
      * Indices:
      * [threadID][bufferID]
      */
-    std::map<size_t, std::map<size_t, std::vector<char>>> m_ThreadBuffers;
+    std::map<size_t, std::map<size_t, helper::adiosvec<char>>> m_ThreadBuffers;
 
     /**
      * Default constructor
@@ -486,7 +487,7 @@ protected:
     /** holds extra metadata for operations in BP buffer */
     struct BPOpInfo
     {
-        std::vector<char> Metadata;
+        helper::adiosvec<char> Metadata;
         // pre-operator dimensions
         Dims PreShape;
         Dims PreCount;
@@ -580,7 +581,7 @@ protected:
      * @return populated PGIndex struct
      */
     ProcessGroupIndex ReadProcessGroupIndexHeader(
-        const std::vector<char> &buffer, size_t &position,
+        const helper::adiosvec<char> &buffer, size_t &position,
         const bool isLittleEndian = true) const noexcept;
 
     /**
@@ -592,7 +593,8 @@ protected:
      * @return populated PGIndex struct
      */
     virtual ElementIndexHeader
-    ReadElementIndexHeader(const std::vector<char> &buffer, size_t &position,
+    ReadElementIndexHeader(const helper::adiosvec<char> &buffer,
+                           size_t &position,
                            const bool isLittleEndian = true) const noexcept = 0;
 
     /**
@@ -606,7 +608,7 @@ protected:
      */
     template <class T>
     Characteristics<T>
-    ReadElementIndexCharacteristics(const std::vector<char> &buffer,
+    ReadElementIndexCharacteristics(const helper::adiosvec<char> &buffer,
                                     size_t &position, const DataTypes dataType,
                                     const bool untilTimeStep = false,
                                     const bool isLittleEndian = true) const;
@@ -618,7 +620,8 @@ protected:
      * @param position input start position, output as end element
      * @return populated string
      */
-    std::string ReadBPString(const std::vector<char> &buffer, size_t &position,
+    std::string ReadBPString(const helper::adiosvec<char> &buffer,
+                             size_t &position,
                              const bool isLittleEndian = true) const noexcept;
 
 private:
@@ -627,8 +630,8 @@ private:
      * struct for a variable block
      */
     template <class T>
-    void ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
-                              const DataTypes dataType,
+    void ParseCharacteristics(const helper::adiosvec<char> &buffer,
+                              size_t &position, const DataTypes dataType,
                               const bool untilTimeStep,
                               Characteristics<T> &characteristics,
                               const bool isLittleEndian = true) const;

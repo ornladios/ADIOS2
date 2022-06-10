@@ -89,14 +89,14 @@ public:
 
     core::Engine *m_Engine = NULL;
 
-    std::vector<char> CopyMetadataToContiguous(
+    helper::adiosvec<char> CopyMetadataToContiguous(
         const std::vector<MetaMetaInfoBlock> NewmetaMetaBlocks,
         const format::Buffer *MetaEncodeBuffer,
         const format::Buffer *AttributeEncodeBuffer, uint64_t DataSize,
         uint64_t WriterDataPos) const;
 
     std::vector<core::iovec> BreakoutContiguousMetadata(
-        std::vector<char> *Aggregate, const std::vector<size_t> Counts,
+        helper::adiosvec<char> *Aggregate, const std::vector<size_t> Counts,
         std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks,
         std::vector<core::iovec> &AttributeBlocks,
         std::vector<uint64_t> &DataSizes,

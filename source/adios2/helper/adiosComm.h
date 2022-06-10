@@ -8,6 +8,7 @@
 #ifndef ADIOS2_HELPER_ADIOSCOMM_H_
 #define ADIOS2_HELPER_ADIOSCOMM_H_
 
+#include <adios2/helper/adiosType.h>
 #include <memory>
 #include <string>
 #include <vector>
@@ -184,6 +185,10 @@ public:
     template <class T>
     void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
                         size_t &position, int rankDestination = 0) const;
+
+    template <class T>
+    void GathervVectors(const helper::adiosvec<T> &in, helper::adiosvec<T> &out,
+                        size_t &position, int rankDestination = 0) const;
     /**
      * Perform AllGather for source value
      * @param source input
@@ -202,6 +207,10 @@ public:
 
     template <class T>
     void BroadcastVector(std::vector<T> &vector,
+                         const int rankSource = 0) const;
+
+    template <class T>
+    void BroadcastVector(helper::adiosvec<T> &vector,
                          const int rankSource = 0) const;
 
     std::string BroadcastFile(const std::string &fileName,

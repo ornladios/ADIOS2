@@ -14,6 +14,7 @@
 #include "adios2/toolkit/format/buffer/Buffer.h"
 
 #include "adios2/common/ADIOSMacros.h"
+#include "adios2/helper/adiosType.h"
 
 namespace adios2
 {
@@ -23,7 +24,7 @@ namespace format
 class BufferSTL : public Buffer
 {
 public:
-    std::vector<char> m_Buffer;
+    helper::adiosvec<char> m_Buffer;
 
     BufferSTL();
     ~BufferSTL() = default;

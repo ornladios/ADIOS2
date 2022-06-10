@@ -405,7 +405,7 @@ size_t BPBase::GetProcessGroupIndexSize(const std::string name,
 }
 
 BPBase::ProcessGroupIndex
-BPBase::ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
+BPBase::ReadProcessGroupIndexHeader(const helper::adiosvec<char> &buffer,
                                     size_t &position,
                                     const bool isLittleEndian) const noexcept
 {
@@ -424,7 +424,7 @@ BPBase::ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
     return index;
 }
 
-std::string BPBase::ReadBPString(const std::vector<char> &buffer,
+std::string BPBase::ReadBPString(const helper::adiosvec<char> &buffer,
                                  size_t &position,
                                  const bool isLittleEndian) const noexcept
 {
@@ -478,7 +478,7 @@ BPBase::TransformTypeEnum(const std::string transformType) const noexcept
 
 #define declare_template_instantiation(T)                                      \
     template BPBase::Characteristics<T>                                        \
-    BPBase::ReadElementIndexCharacteristics(const std::vector<char> &,         \
+    BPBase::ReadElementIndexCharacteristics(const helper::adiosvec<char> &,    \
                                             size_t &, const BPBase::DataTypes, \
                                             const bool, const bool) const;
 

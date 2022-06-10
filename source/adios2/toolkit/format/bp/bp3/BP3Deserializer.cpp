@@ -190,7 +190,7 @@ void BP3Deserializer::ParseVariablesIndex(const BufferSTL &bufferSTL,
                                           core::Engine &engine)
 {
     auto lf_ReadElementIndex = [&](core::Engine &engine,
-                                   const std::vector<char> &buffer,
+                                   const helper::adiosvec<char> &buffer,
                                    size_t position) {
         const ElementIndexHeader header = ReadElementIndexHeader(
             buffer, position, m_Minifooter.IsLittleEndian);
@@ -290,7 +290,7 @@ void BP3Deserializer::ParseAttributesIndex(const BufferSTL &bufferSTL,
                                            core::Engine &engine)
 {
     auto lf_ReadElementIndex = [&](core::Engine &engine,
-                                   const std::vector<char> &buffer,
+                                   const helper::adiosvec<char> &buffer,
                                    size_t position) {
         const ElementIndexHeader header = ReadElementIndexHeader(
             buffer, position, m_Minifooter.IsLittleEndian);
@@ -377,7 +377,7 @@ BP3Deserializer::PerformGetsVariablesSubFileInfo(core::IO &io)
 }
 
 void BP3Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
-                                 const std::vector<char> &contiguousMemory,
+                                 const helper::adiosvec<char> &contiguousMemory,
                                  const Box<Dims> &blockBox,
                                  const Box<Dims> &intersectionBox) const
 {
@@ -413,7 +413,7 @@ void BP3Deserializer::ClipMemory(const std::string &variableName, core::IO &io,
         core::Variable<T> &, typename core::Variable<T>::BPInfo &) const;      \
                                                                                \
     template void BP3Deserializer::ClipContiguousMemory<T>(                    \
-        typename core::Variable<T>::BPInfo &, const std::vector<char> &,       \
+        typename core::Variable<T>::BPInfo &, const helper::adiosvec<char> &,  \
         const Box<Dims> &, const Box<Dims> &) const;                           \
                                                                                \
     template void BP3Deserializer::GetValueFromMetadata(                       \

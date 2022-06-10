@@ -550,7 +550,7 @@ void BP4Writer::WriteProfilingJSONFile()
                                    transportTypes, transportProfilers) +
                                ",\n");
 
-    const std::vector<char> profilingJSON(
+    const helper::adiosvec<char> profilingJSON(
         m_BP4Serializer.AggregateProfilingJSON(lineJSON));
 
     if (m_BP4Serializer.m_RankMPI == 0)

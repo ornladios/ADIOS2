@@ -137,8 +137,8 @@ public:
                                      const bool inMetadataBuffer);
 
 private:
-    std::vector<char> m_SerializedIndices;
-    std::vector<char> m_GatheredSerializedIndices;
+    helper::adiosvec<char> m_SerializedIndices;
+    helper::adiosvec<char> m_GatheredSerializedIndices;
 
     /** aggregate pg rank indices */
     std::unordered_map<size_t, std::vector<std::tuple<size_t, size_t, size_t>>>
@@ -222,27 +222,28 @@ private:
     void PutVariableCharacteristics(
         const core::Variable<T> &variable,
         const typename core::Variable<T>::BPInfo &blockInfo,
-        const Stats<T> &stats, std::vector<char> &buffer,
+        const Stats<T> &stats, helper::adiosvec<char> &buffer,
         typename core::Variable<T>::Span *span) noexcept;
 
     template <class T>
     void PutVariableCharacteristicsInData(
         const core::Variable<T> &variable,
         const typename core::Variable<T>::BPInfo &blockInfo,
-        const Stats<T> &stats, std::vector<char> &buffer,
+        const Stats<T> &stats, helper::adiosvec<char> &buffer,
         size_t &position) noexcept;
 
     /** Writes min max */
     template <class T>
     void PutBoundsRecord(const bool singleValue, const Stats<T> &stats,
                          uint8_t &characteristicsCounter,
-                         std::vector<char> &buffer) noexcept;
+                         helper::adiosvec<char> &buffer) noexcept;
 
     /** Overloaded version for data buffer */
     template <class T>
     void PutBoundsRecord(const bool singleValue, const Stats<T> &stats,
                          uint8_t &characteristicsCounter,
-                         std::vector<char> &buffer, size_t &position) noexcept;
+                         helper::adiosvec<char> &buffer,
+                         size_t &position) noexcept;
 
     /**
      * Wraps up the data buffer serialization in m_HeapBuffer and fills the pg

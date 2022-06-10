@@ -129,7 +129,7 @@ public:
      */
     template <class T>
     void ClipContiguousMemory(typename core::Variable<T>::BPInfo &blockInfo,
-                              const std::vector<char> &contiguousMemory,
+                              const helper::adiosvec<char> &contiguousMemory,
                               const Box<Dims> &blockBox,
                               const Box<Dims> &intersectionBox) const;
 
@@ -173,11 +173,11 @@ public:
 
     // TODO : will deprecate
     void ClipMemory(const std::string &variableName, core::IO &io,
-                    const std::vector<char> &contiguousMemory,
+                    const helper::adiosvec<char> &contiguousMemory,
                     const Box<Dims> &blockBox,
                     const Box<Dims> &intersectionBox) const;
 
-    bool ReadActiveFlag(std::vector<char> &buffer);
+    bool ReadActiveFlag(helper::adiosvec<char> &buffer);
 
     // TODO: will deprecate
     bool m_PerformedGets = false;
@@ -216,13 +216,13 @@ private:
     template <class T>
     void DefineVariableInEngineIOPerStep(const ElementIndexHeader &header,
                                          core::Engine &engine,
-                                         const std::vector<char> &buffer,
+                                         const helper::adiosvec<char> &buffer,
                                          size_t position, size_t step) const;
 
     template <class T>
     void DefineAttributeInEngineIO(const ElementIndexHeader &header,
                                    core::Engine &engine,
-                                   const std::vector<char> &buffer,
+                                   const helper::adiosvec<char> &buffer,
                                    size_t position) const;
 
     template <class T>

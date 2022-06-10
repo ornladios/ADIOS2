@@ -340,7 +340,7 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
         bufsize += 1 + (4 + m_Comm.Size()) * sizeof(uint64_t);
     }
 
-    std::vector<char> buf(bufsize);
+    helper::adiosvec<char> buf(bufsize);
     size_t pos = 0;
     uint64_t d;
     unsigned char record;
@@ -524,14 +524,16 @@ void BP5Writer::EndStep()
     WriteData(databuf);
     m_Profiler.Stop("AWD");
 
-    std::vector<char> MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
-        TSInfo.NewMetaMetaBlocks, TSInfo.MetaEncodeBuffer,
-        TSInfo.AttributeEncodeBuffer, m_ThisTimestepDataSize, m_StartDataPos);
+    helper::adiosvec<char> MetaBuffer =
+        m_BP5Serializer.CopyMetadataToContiguous(
+            TSInfo.NewMetaMetaBlocks, TSInfo.MetaEncodeBuffer,
+            TSInfo.AttributeEncodeBuffer, m_ThisTimestepDataSize,
+            m_StartDataPos);
 
     size_t LocalSize = MetaBuffer.size();
     std::vector<size_t> RecvCounts = m_Comm.GatherValues(LocalSize, 0);
 
-    std::vector<char> *RecvBuffer = new std::vector<char>;
+    helper::adiosvec<char> *RecvBuffer = new helper::adiosvec<char>;
     if (m_Comm.Rank() == 0)
     {
         uint64_t TotalSize = 0;
@@ -1087,11 +1089,12 @@ void BP5Writer::InitTransports()
 }
 
 /*generate the header for the metadata index file*/
-void BP5Writer::MakeHeader(std::vector<char> &buffer, size_t &position,
+void BP5Writer::MakeHeader(helper::adiosvec<char> &buffer, size_t &position,
                            const std::string fileType, const bool isActive)
 {
     auto lf_CopyVersionChar = [](const std::string version,
-                                 std::vector<char> &buffer, size_t &position) {
+                                 helper::adiosvec<char> &buffer,
+                                 size_t &position) {
         helper::CopyToBuffer(buffer, position, version.c_str());
     };
 
@@ -1541,7 +1544,7 @@ void BP5Writer::FlushProfiler()
         m_Profiler.GetRankProfilingJSON(transportTypes, transportProfilers) +
         ",\n");
 
-    const std::vector<char> profilingJSON(
+    const helper::adiosvec<char> profilingJSON(
         m_Profiler.AggregateProfilingJSON(lineJSON));
 
     if (m_RankMPI == 0)
