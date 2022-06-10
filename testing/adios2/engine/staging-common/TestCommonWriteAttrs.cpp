@@ -216,7 +216,11 @@ int main(int argc, char **argv)
     result = RUN_ALL_TESTS();
 
 #if ADIOS2_USE_MPI
+#ifdef CRAY_MPICH_VERSION
+    MPI_Barrier(MPI_COMM_WORLD);
+#else
     MPI_Finalize();
+#endif
 #endif
 
     return result;

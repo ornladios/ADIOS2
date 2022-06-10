@@ -276,7 +276,11 @@ program TestSstRead
 
 
 #if ADIOS2_USE_MPI
+#ifdef CRAY_MPICH_VERSION
+  call MPI_Barrier(MPI_COMM_WORLD)
+#else
   call MPI_Finalize(ierr)
+#endif
 #endif
 
 

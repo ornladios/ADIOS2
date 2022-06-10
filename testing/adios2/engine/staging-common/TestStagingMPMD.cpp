@@ -393,6 +393,11 @@ int main(int argc, char **argv)
     int result;
     result = RUN_ALL_TESTS();
 
+#ifdef CRAY_MPICH_VERSION
+    MPI_Barrier(MPI_COMM_WORLD);
+#else
     MPI_Finalize();
+#endif
+
     return result;
 }
