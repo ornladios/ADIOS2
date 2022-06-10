@@ -114,6 +114,9 @@ jobs:
             compiler: cuda
             parallel: serial
             constrains: build_only
+          - os: el8
+            compiler: gcc10
+            parallel: mpich
 
     steps:
       - uses: actions/checkout@v3
