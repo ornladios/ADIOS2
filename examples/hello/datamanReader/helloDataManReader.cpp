@@ -32,7 +32,8 @@ void PrintData(std::vector<T> &data, size_t step)
 int main(int argc, char *argv[])
 {
     // initialize MPI
-    MPI_Init(&argc, &argv);
+    int provided;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 

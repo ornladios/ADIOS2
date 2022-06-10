@@ -195,14 +195,18 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
 
 int main(int argc, char **argv)
 {
-#if ADIOS2_USE_MPI
-    MPI_Init(nullptr, nullptr);
-#endif
-
     int result;
     ::testing::InitGoogleTest(&argc, argv);
 
     ParseArgs(argc, argv);
+
+#if ADIOS2_USE_MPI
+    int provided;
+    int thread_support_level = (engine == "SST" || engine == "sst")
+                                   ? MPI_THREAD_MULTIPLE
+                                   : MPI_THREAD_SINGLE;
+    MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);
+#endif
 
     result = RUN_ALL_TESTS();
 

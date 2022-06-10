@@ -483,7 +483,8 @@ INSTANTIATE_TEST_SUITE_P(NxM, TestManyVars,
 int main(int argc, char **argv)
 {
 #if ADIOS2_USE_MPI
-    MPI_Init(&argc, &argv);
+    int provided;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
 #endif
     ::testing::InitGoogleTest(&argc, argv);
 

@@ -364,13 +364,21 @@ int main(int argc, char **argv)
     std::thread threadTimeout(threadTimeoutRun, 300);
     threadTimeout.detach();
 
-    MPI_Init(&argc, &argv);
+    int provided;
     ::testing::InitGoogleTest(&argc, argv);
 
+    engineName = std::string(argv[1]);
+
+    int threadSupportLevel = MPI_THREAD_SINGLE;
+    if (engineName == "SST")
+    {
+        threadSupportLevel = MPI_THREAD_MULTIPLE;
+    }
+
+    MPI_Init_thread(&argc, &argv, threadSupportLevel, &provided);
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 
-    engineName = std::string(argv[1]);
     if (argc > 2)
     {
         engineParams = ParseEngineParams(argv[2]);

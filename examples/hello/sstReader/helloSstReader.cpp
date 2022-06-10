@@ -27,7 +27,8 @@ int main(int argc, char *argv[])
     int size;
 
 #if ADIOS2_USE_MPI
-    MPI_Init(&argc, &argv);
+    int provide;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provide);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #else

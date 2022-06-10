@@ -520,7 +520,8 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, DoubleOpenException)
 int main(int argc, char **argv)
 {
 #ifdef TEST_HDF5_MPI
-    MPI_Init(nullptr, nullptr);
+    int provided;
+    MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
 #endif
 
     int result;

@@ -245,8 +245,19 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 
 int main(int argc, char **argv)
 {
+    int result;
+    ::testing::InitGoogleTest(&argc, argv);
+
+    DelayMS = 0; // zero for common writer
+
+    ParseArgs(argc, argv);
+
 #if ADIOS2_USE_MPI
-    MPI_Init(nullptr, nullptr);
+    int provided;
+    int thread_support_level = (engine == "SST" || engine == "sst")
+                                   ? MPI_THREAD_MULTIPLE
+                                   : MPI_THREAD_SINGLE;
+    MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);
 
     int key;
     MPI_Comm_rank(MPI_COMM_WORLD, &key);
@@ -254,13 +265,6 @@ int main(int argc, char **argv)
     const unsigned int color = 1;
     MPI_Comm_split(MPI_COMM_WORLD, color, key, &testComm);
 #endif
-
-    int result;
-    ::testing::InitGoogleTest(&argc, argv);
-
-    DelayMS = 0; // zero for common writer
-
-    ParseArgs(argc, argv);
 
     result = RUN_ALL_TESTS();
 

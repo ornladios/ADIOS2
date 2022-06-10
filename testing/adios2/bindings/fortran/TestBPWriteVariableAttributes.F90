@@ -15,7 +15,8 @@ program TestBPWriteVariableAttributes
     integer :: ierr, i
 
     ! Launch MPI
-    call MPI_Init(ierr)
+    INTEGER provided
+    call MPI_Init_thread(MPI_THREAD_MULTIPLE, provided, ierr)
 
     ! Create adios handler passing the communicator, debug mode and error flag
     call adios2_init(adios, MPI_COMM_WORLD, ierr)

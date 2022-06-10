@@ -1115,7 +1115,8 @@ TEST_F(H5VolWriteReadTest, H5VolWriteHDF5Read2D4x2)
 int main(int argc, char **argv)
 {
 #ifdef TEST_HDF5_MPI
-    MPI_Init(nullptr, nullptr);
+    int provided;
+    MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
 #endif
 
     int result;

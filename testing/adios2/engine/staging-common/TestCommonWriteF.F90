@@ -42,7 +42,7 @@ program TestSstWrite
   integer(kind = 8)::localtime
 
 #if ADIOS2_USE_MPI
-  integer::testComm, color, key
+  integer::testComm, color, key, provided, threadSupportLevel
 #endif
 
   allocate(variables(20))
@@ -61,8 +61,13 @@ program TestSstWrite
   endif
 
 #if ADIOS2_USE_MPI
+  threadSupportLevel = MPI_THREAD_SINGLE;
+  if (engine == "SST") then
+      threadSupportLevel = MPI_THREAD_MULTIPLE;
+  endif
+
   !Launch MPI
-  call MPI_Init(ierr)
+  call MPI_Init_thread(threadSupportLevel, provided, ierr)
 
   call MPI_Comm_rank(MPI_COMM_WORLD, key, ierr);
 

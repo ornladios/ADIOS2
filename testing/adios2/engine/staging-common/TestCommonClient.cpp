@@ -388,14 +388,17 @@ TEST_F(SstReadTest, ADIOS2SstRead)
 
 int main(int argc, char **argv)
 {
-#if ADIOS2_USE_MPI
-    MPI_Init(nullptr, nullptr);
-#endif
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
     DelayMS = 500; // smaller default for common client
     ParseArgs(argc, argv);
+#if ADIOS2_USE_MPI
+    int provided;
+    int thread_support_level =
+        (engine == "SST") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
+    MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);
+#endif
     result = RUN_ALL_TESTS();
 
 #if ADIOS2_USE_MPI

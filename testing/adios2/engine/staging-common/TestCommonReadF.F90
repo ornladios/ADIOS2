@@ -45,7 +45,7 @@ program TestSstRead
   integer(kind = 8), dimension(:), allocatable::shape_in
 
 #if ADIOS2_USE_MPI
-  integer::key, color, testComm
+  integer::key, color, testComm, provided, threadSupportLevel
 #endif
 
   allocate(variables(20))
@@ -67,15 +67,20 @@ program TestSstRead
   insteps = 0;
 
 #if ADIOS2_USE_MPI
+  threadSupportLevel = MPI_THREAD_SINGLE;
+  if (engine == "SST") then
+      threadSupportLevel = MPI_THREAD_MULTIPLE;
+  endif
+
   !Launch MPI
-  call MPI_Init(ierr) 
+  call MPI_Init_thread(threadSupportLevel, provided, ierr)
 
   call MPI_Comm_rank(MPI_COMM_WORLD, key, ierr);
 
   color = 2
   call MPI_Comm_split(MPI_COMM_WORLD, color, key, testComm, ierr);
 
-  call MPI_Comm_rank(testComm, irank, ierr) 
+  call MPI_Comm_rank(testComm, irank, ierr)
   call MPI_Comm_size(testComm, isize, ierr)
 
   !Create adios handler passing the communicator, debug mode and error flag

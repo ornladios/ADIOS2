@@ -10,12 +10,12 @@ add_test(NAME HeatTransfer.SST.BP.MxN
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:heatTransfer_write_adios2>
         ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_sst_bp.xml
-        Write.bp 2 2 10 10 10 10
+        Write.bp 2 2 10 10 10 10 SST
     :
     ${MPIEXEC_NUMPROC_FLAG} 3
       $<TARGET_FILE:heatTransfer_read>
         ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_sst_bp.xml
-        Write.bp Read.bp 1 3
+        Write.bp Read.bp 1 3 SST
 )
 set_tests_properties(HeatTransfer.SST.BP.MxN PROPERTIES PROCESSORS 7)
 
