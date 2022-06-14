@@ -139,10 +139,10 @@ public:
      * variables from IO:DefineVariable<T> or IO:InquireVariable<T>.
      * Can be used with STL containers.
      */
-    Variable<T>() = default;
+    Variable() = default;
 
     /** Default, using RAII STL containers */
-    ~Variable<T>() = default;
+    ~Variable() = default;
 
     /** Checks if object is valid, e.g. if( variable ) { //..valid } */
     explicit operator bool() const noexcept;
@@ -389,7 +389,7 @@ private:
     std::vector<typename Variable<T>::Info>
     ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const;
 
-    Variable<T>(core::Variable<IOType> *variable);
+    Variable(core::Variable<IOType> *variable);
 
     std::vector<std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfo();
     std::map<size_t, std::vector<typename Variable<T>::Info>>
