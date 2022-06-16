@@ -77,6 +77,10 @@ int main(int argc, char *argv[])
         adios2::Variable<double> varGlobalArray =
             io.DefineVariable<double>("GlobalArray", {(unsigned int)nproc, Nx});
 
+        adios2::Variable<size_t> varStep = io.DefineVariable<size_t>("step");
+
+        io.DefineAttribute<int>("nsteps", NSTEPS);
+
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.
         adios2::Engine writer = io.Open("globalArray.bp", adios2::Mode::Write);
@@ -96,6 +100,7 @@ int main(int argc, char *argv[])
             varGlobalArray.SetSelection(adios2::Box<adios2::Dims>(
                 {static_cast<size_t>(rank), 0}, {1, static_cast<size_t>(Nx)}));
             writer.Put<double>(varGlobalArray, row.data());
+            writer.Put<size_t>(varStep, step);
 
             // Indicate we are done for this step.
             // Disk I/O will be performed during this call unless

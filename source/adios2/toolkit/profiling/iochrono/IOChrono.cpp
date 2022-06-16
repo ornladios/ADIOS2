@@ -42,7 +42,11 @@ JSONProfiler::JSONProfiler(helper::Comm const &comm) : m_Comm(comm)
     AddTimerWatch("buffering");
     AddTimerWatch("endstep");
     AddTimerWatch("PP");
-    AddTimerWatch("meta_gather");
+    AddTimerWatch("meta_gather1", false);
+    AddTimerWatch("meta_gather2", false);
+    AddTimerWatch("meta_lvl1");
+    AddTimerWatch("meta_lvl2");
+    AddTimerWatch("close_ts");
     AddTimerWatch("AWD");
     AddTimerWatch("WaitOnAsync");
 
@@ -51,10 +55,10 @@ JSONProfiler::JSONProfiler(helper::Comm const &comm) : m_Comm(comm)
     m_RankMPI = m_Comm.Rank();
 }
 
-void JSONProfiler::AddTimerWatch(const std::string &name)
+void JSONProfiler::AddTimerWatch(const std::string &name, const bool trace)
 {
     const TimeUnit timerUnit = DefaultTimeUnitEnum;
-    m_Profiler.m_Timers.emplace(name, profiling::Timer(name, timerUnit));
+    m_Profiler.m_Timers.emplace(name, profiling::Timer(name, timerUnit, trace));
 }
 
 std::string JSONProfiler::GetRankProfilingJSON(

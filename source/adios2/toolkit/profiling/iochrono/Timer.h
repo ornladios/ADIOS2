@@ -36,7 +36,7 @@ public:
     /** process name */
     const std::string m_Process;
 
-    bool m_Always = false;
+    bool m_Trace = false;
     /** process elapsed time */
     int64_t m_ProcessTime = 0;
 
@@ -51,7 +51,8 @@ public:
      * @param process name of process to be measured
      * @param timeUnit (mus, ms, s, etc.) from ADIOSTypes.h TimeUnit
      */
-    Timer(const std::string process, const TimeUnit timeUnit);
+    Timer(const std::string process, const TimeUnit timeUnit,
+          const bool trace = false);
 
     ~Timer() = default;
 
@@ -70,23 +71,28 @@ public:
     void AddDetail()
     {
         m_nCalls++;
-        auto relative = std::chrono::duration_cast<std::chrono::microseconds>(
-                            m_InitialTime - m_ADIOS2ProgStart)
-                            .count();
-        auto micros = std::chrono::duration_cast<std::chrono::microseconds>(
-                          m_ElapsedTime - m_InitialTime)
-                          .count();
-
-        if ((micros > 10000) || m_Always)
+        if (m_Trace)
         {
-            if (m_Details.size() > 0)
-                m_Details += ",";
+            auto relative =
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                    m_InitialTime - m_ADIOS2ProgStart)
+                    .count();
+            auto micros = std::chrono::duration_cast<std::chrono::microseconds>(
+                              m_ElapsedTime - m_InitialTime)
+                              .count();
 
-            std::ostringstream ss;
+            if ((micros > 10000))
+            {
+                if (m_Details.size() > 0)
+                    m_Details += ",";
 
-            ss << "\"" << relative / 1000.0 << "+" << micros / 1000.0 << "\"";
+                std::ostringstream ss;
 
-            m_Details += ss.str();
+                ss << "\"" << relative / 1000.0 << "+" << micros / 1000.0
+                   << "\"";
+
+                m_Details += ss.str();
+            }
         }
     }
 

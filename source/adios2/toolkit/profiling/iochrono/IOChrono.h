@@ -64,7 +64,7 @@ class JSONProfiler
 public:
     JSONProfiler(helper::Comm const &comm);
     void Gather();
-    void AddTimerWatch(const std::string &);
+    void AddTimerWatch(const std::string &, const bool trace = false);
 
     void Start(const std::string process) { m_Profiler.Start(process); };
     void Stop(const std::string process) { m_Profiler.Stop(process); };

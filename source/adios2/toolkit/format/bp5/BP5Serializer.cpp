@@ -1023,102 +1023,124 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
 
 std::vector<char> BP5Serializer::CopyMetadataToContiguous(
     const std::vector<BP5Base::MetaMetaInfoBlock> NewMetaMetaBlocks,
-    const format::Buffer *MetaEncodeBuffer,
-    const format::Buffer *AttributeEncodeBuffer, uint64_t DataSize,
-    uint64_t WriterDataPos) const
+    const std::vector<core::iovec> &MetaEncodeBuffers,
+    const std::vector<core::iovec> &AttributeEncodeBuffers,
+    const std::vector<uint64_t> &DataSizes,
+    const std::vector<uint64_t> &WriterDataPositions) const
 {
     std::vector<char> Ret;
     uint64_t RetSize = 0;
     size_t Position = 0;
-    size_t MetadataEncodeBufferAlignedSize =
-        ((MetaEncodeBuffer->m_FixedSize + 7) & ~0x7);
-    size_t AttributeEncodeBufferAlignedSize = 0;
-    int32_t NMMBCount = NewMetaMetaBlocks.size();
-    RetSize += sizeof(NMMBCount); // NMMB count
+    const uint64_t NMMBCount = NewMetaMetaBlocks.size();
+    const uint64_t MBCount = MetaEncodeBuffers.size();
+    const uint64_t ABCount = AttributeEncodeBuffers.size();
+    const uint64_t DSCount = DataSizes.size();
+    const uint64_t WDPCount = WriterDataPositions.size();
 
+    // count sizes
+    RetSize += sizeof(NMMBCount); // NMMB count
     for (auto &n : NewMetaMetaBlocks)
     {
         RetSize += 2 * sizeof(RetSize); // sizes
         RetSize += n.MetaMetaInfoLen + n.MetaMetaIDLen;
     }
-    RetSize += sizeof(int64_t); // MencodeLen
-    RetSize += MetadataEncodeBufferAlignedSize;
-    RetSize += sizeof(int64_t); // AttrEncodeLen
-    if (AttributeEncodeBuffer)
+    RetSize += sizeof(MBCount); // Number of var blocks
+    for (auto &m : MetaEncodeBuffers)
     {
-        AttributeEncodeBufferAlignedSize =
-            ((AttributeEncodeBuffer->m_FixedSize + 7) & ~0x7);
-        RetSize += AttributeEncodeBufferAlignedSize;
+        RetSize += sizeof(uint64_t); // MencodeLen
+        size_t AlignedSize = ((m.iov_len + 7) & ~0x7);
+        RetSize += AlignedSize;
     }
-    RetSize += sizeof(DataSize);
-    RetSize += sizeof(WriterDataPos);
+    RetSize += sizeof(ABCount); // Number of attr blocks
+    for (auto &a : AttributeEncodeBuffers)
+    {
+        RetSize += sizeof(uint64_t); // AttrEncodeLen
+        size_t AlignedSize = ((a.iov_len + 7) & ~0x7);
+        RetSize += AlignedSize;
+    }
+    RetSize += sizeof(DSCount);
+    RetSize += DataSizes.size() * sizeof(uint64_t);
+    RetSize += sizeof(WDPCount);
+    RetSize += WriterDataPositions.size() * sizeof(uint64_t);
     Ret.resize(RetSize);
 
+    // copy
     helper::CopyToBuffer(Ret, Position, &NMMBCount);
-
     for (auto &n : NewMetaMetaBlocks)
     {
-        int64_t IDLen = n.MetaMetaIDLen;
-        int64_t InfoLen = n.MetaMetaInfoLen;
+        uint64_t IDLen = n.MetaMetaIDLen;
+        uint64_t InfoLen = n.MetaMetaInfoLen;
         helper::CopyToBuffer(Ret, Position, &IDLen);
         helper::CopyToBuffer(Ret, Position, &InfoLen);
         helper::CopyToBuffer(Ret, Position, n.MetaMetaID, IDLen);
         helper::CopyToBuffer(Ret, Position, n.MetaMetaInfo, InfoLen);
     }
 
-    int64_t MEBSize = MetadataEncodeBufferAlignedSize;
-    helper::CopyToBuffer(Ret, Position, &MEBSize);
-    helper::CopyToBuffer(Ret, Position, MetaEncodeBuffer->Data(),
-                         MetaEncodeBuffer->m_FixedSize);
-    if (MetaEncodeBuffer->m_FixedSize != MetadataEncodeBufferAlignedSize)
+    helper::CopyToBuffer(Ret, Position, &MBCount);
+    for (auto &m : MetaEncodeBuffers)
     {
-        uint64_t zero = 0;
-        helper::CopyToBuffer(Ret, Position, (char *)&zero,
-                             MetadataEncodeBufferAlignedSize -
-                                 MetaEncodeBuffer->m_FixedSize);
-    }
-    int64_t AEBSize = 0;
-    if (AttributeEncodeBuffer)
-        AEBSize = AttributeEncodeBufferAlignedSize;
-    helper::CopyToBuffer(Ret, Position, &AEBSize);
-    if (AttributeEncodeBuffer)
-    {
-        helper::CopyToBuffer(Ret, Position, AttributeEncodeBuffer->Data(),
-                             AttributeEncodeBuffer->m_FixedSize);
-        if (AttributeEncodeBuffer->m_FixedSize !=
-            AttributeEncodeBufferAlignedSize)
+        size_t AlignedSize = ((m.iov_len + 7) & ~0x7);
+        helper::CopyToBuffer(Ret, Position, &AlignedSize);
+        helper::CopyToBuffer(Ret, Position, (const char *)m.iov_base,
+                             m.iov_len);
+        if (m.iov_len != AlignedSize)
         {
             uint64_t zero = 0;
             helper::CopyToBuffer(Ret, Position, (char *)&zero,
-                                 AttributeEncodeBufferAlignedSize -
-                                     AttributeEncodeBuffer->m_FixedSize);
+                                 AlignedSize - m.iov_len);
         }
     }
-    helper::CopyToBuffer(Ret, Position, &DataSize);
-    helper::CopyToBuffer(Ret, Position, &WriterDataPos);
+
+    helper::CopyToBuffer(Ret, Position, &ABCount);
+    for (auto &a : AttributeEncodeBuffers)
+    {
+        if (a.iov_base)
+        {
+            size_t AlignedSize = ((a.iov_len + 7) & ~0x7);
+            helper::CopyToBuffer(Ret, Position, &AlignedSize);
+            helper::CopyToBuffer(Ret, Position, (const char *)a.iov_base,
+                                 a.iov_len);
+            if (a.iov_len != AlignedSize)
+            {
+                uint64_t zero = 0;
+                helper::CopyToBuffer(Ret, Position, (char *)&zero,
+                                     AlignedSize - a.iov_len);
+            }
+        }
+        else
+        {
+            size_t ZeroSize = 0;
+            helper::CopyToBuffer(Ret, Position, &ZeroSize);
+        }
+    }
+
+    helper::CopyToBuffer(Ret, Position, &DSCount);
+    helper::CopyToBuffer(Ret, Position, DataSizes.data(), DSCount);
+    helper::CopyToBuffer(Ret, Position, &WDPCount);
+    helper::CopyToBuffer(Ret, Position, WriterDataPositions.data(), WDPCount);
     return Ret;
 }
 
 std::vector<core::iovec> BP5Serializer::BreakoutContiguousMetadata(
-    std::vector<char> *Aggregate, const std::vector<size_t> Counts,
+    std::vector<char> &Aggregate, const std::vector<size_t> Counts,
     std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks,
     std::vector<core::iovec> &AttributeBlocks, std::vector<uint64_t> &DataSizes,
     std::vector<uint64_t> &WriterDataPositions) const
 {
     size_t Position = 0;
     std::vector<core::iovec> MetadataBlocks;
-    MetadataBlocks.reserve(Counts.size());
-    DataSizes.resize(Counts.size());
+    // MetadataBlocks.reserve(Counts.size());
+    // DataSizes.resize(Counts.size());
     for (size_t Rank = 0; Rank < Counts.size(); Rank++)
     {
-        int32_t NMMBCount;
-        helper::CopyFromBuffer(*Aggregate, Position, &NMMBCount);
-        for (int i = 0; i < NMMBCount; i++)
+        uint64_t NMMBCount, MBCount, ABCount, DSCount, WDPCount;
+        helper::CopyFromBuffer(Aggregate, Position, &NMMBCount);
+        for (uint64_t i = 0; i < NMMBCount; i++)
         {
             uint64_t IDLen;
             uint64_t InfoLen;
-            helper::CopyFromBuffer(*Aggregate, Position, &IDLen);
-            helper::CopyFromBuffer(*Aggregate, Position, &InfoLen);
+            helper::CopyFromBuffer(Aggregate, Position, &IDLen);
+            helper::CopyFromBuffer(Aggregate, Position, &InfoLen);
             uint64_t IDPosition = Position;
             uint64_t InfoPosition = Position + IDLen;
             Position = InfoPosition + InfoLen;
@@ -1127,29 +1149,47 @@ std::vector<core::iovec> BP5Serializer::BreakoutContiguousMetadata(
             {
                 if (o.MetaMetaIDLen != IDLen)
                     continue;
-                if (std::memcmp(o.MetaMetaID, Aggregate->data() + IDPosition,
+                if (std::memcmp(o.MetaMetaID, Aggregate.data() + IDPosition,
                                 IDLen) == 0)
                     Found = true;
             }
             if (!Found)
             {
-                MetaMetaInfoBlock New = {Aggregate->data() + InfoPosition,
-                                         InfoLen,
-                                         Aggregate->data() + IDPosition, IDLen};
+                MetaMetaInfoBlock New = {Aggregate.data() + InfoPosition,
+                                         InfoLen, Aggregate.data() + IDPosition,
+                                         IDLen};
                 UniqueMetaMetaBlocks.push_back(New);
             }
         }
-        uint64_t MEBSize;
-        helper::CopyFromBuffer(*Aggregate, Position, &MEBSize);
-        MetadataBlocks.push_back({Aggregate->data() + Position, MEBSize});
-        Position += MEBSize;
-        uint64_t AEBSize;
-        helper::CopyFromBuffer(*Aggregate, Position, &AEBSize);
-        AttributeBlocks.push_back({Aggregate->data() + Position, AEBSize});
-        Position += AEBSize;
-        helper::CopyFromBuffer(*Aggregate, Position, &DataSizes[Rank]);
-        helper::CopyFromBuffer(*Aggregate, Position,
-                               &WriterDataPositions[Rank]);
+        helper::CopyFromBuffer(Aggregate, Position, &MBCount);
+        for (uint64_t i = 0; i < MBCount; ++i)
+        {
+            uint64_t MEBSize;
+            helper::CopyFromBuffer(Aggregate, Position, &MEBSize);
+            MetadataBlocks.push_back({Aggregate.data() + Position, MEBSize});
+            Position += MEBSize;
+        }
+        helper::CopyFromBuffer(Aggregate, Position, &ABCount);
+        for (uint64_t i = 0; i < ABCount; ++i)
+        {
+            uint64_t AEBSize;
+            helper::CopyFromBuffer(Aggregate, Position, &AEBSize);
+            AttributeBlocks.push_back({Aggregate.data() + Position, AEBSize});
+            Position += AEBSize;
+        }
+        uint64_t element;
+        helper::CopyFromBuffer(Aggregate, Position, &DSCount);
+        for (uint64_t i = 0; i < DSCount; ++i)
+        {
+            helper::CopyFromBuffer(Aggregate, Position, &element);
+            DataSizes.push_back(element);
+        }
+        helper::CopyFromBuffer(Aggregate, Position, &WDPCount);
+        for (uint64_t i = 0; i < WDPCount; ++i)
+        {
+            helper::CopyFromBuffer(Aggregate, Position, &element);
+            WriterDataPositions.push_back(element);
+        }
     }
     return MetadataBlocks;
 }

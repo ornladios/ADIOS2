@@ -19,7 +19,9 @@
 #include <adios2-perfstubs-interface.h>
 
 #include <ctime>
+#include <iomanip> // setw
 #include <iostream>
+#include <memory> // make_shared
 
 namespace adios2
 {
@@ -501,6 +503,8 @@ void BP5Writer::EndStep()
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP5Writer::EndStep");
     m_Profiler.Start("endstep");
+
+    m_Profiler.Start("close_ts");
     MarshalAttributes();
 
     // true: advances step
@@ -509,9 +513,9 @@ void BP5Writer::EndStep()
 
     /* TSInfo includes NewMetaMetaBlocks, the MetaEncodeBuffer, the
      * AttributeEncodeBuffer and the data encode Vector */
-    /* the first */
 
     m_ThisTimestepDataSize += TSInfo.DataBuffer->Size();
+    m_Profiler.Stop("close_ts");
 
     m_Profiler.Start("AWD");
     // TSInfo destructor would delete the DataBuffer so we need to save it
@@ -524,44 +528,120 @@ void BP5Writer::EndStep()
     WriteData(databuf);
     m_Profiler.Stop("AWD");
 
-    std::vector<char> MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
-        TSInfo.NewMetaMetaBlocks, TSInfo.MetaEncodeBuffer,
-        TSInfo.AttributeEncodeBuffer, m_ThisTimestepDataSize, m_StartDataPos);
-
-    size_t LocalSize = MetaBuffer.size();
-    std::vector<size_t> RecvCounts = m_Comm.GatherValues(LocalSize, 0);
-
-    std::vector<char> *RecvBuffer = new std::vector<char>;
-    if (m_Comm.Rank() == 0)
+    /*
+     * Two-step metadata aggregation
+     */
+    m_Profiler.Start("meta_lvl1");
+    std::vector<char> MetaBuffer;
+    core::iovec m{TSInfo.MetaEncodeBuffer->Data(),
+                  TSInfo.MetaEncodeBuffer->m_FixedSize};
+    core::iovec a{nullptr, 0};
+    if (TSInfo.AttributeEncodeBuffer)
     {
-        uint64_t TotalSize = 0;
-        for (auto &n : RecvCounts)
-            TotalSize += n;
-        RecvBuffer->resize(TotalSize);
+        a = {TSInfo.AttributeEncodeBuffer->Data(),
+             TSInfo.AttributeEncodeBuffer->m_FixedSize};
     }
+    MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
+        TSInfo.NewMetaMetaBlocks, {m}, {a}, {m_ThisTimestepDataSize},
+        {m_StartDataPos});
 
-    m_Profiler.Start("meta_gather");
-    m_Comm.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
-                         RecvCounts.size(), RecvBuffer->data(), 0);
-    m_Profiler.Stop("meta_gather");
-
-    if (m_Comm.Rank() == 0)
-    {
-        std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
-        std::vector<uint64_t> DataSizes;
-        std::vector<core::iovec> AttributeBlocks;
-        auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
-            RecvBuffer, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks,
-            DataSizes, m_WriterDataPos);
-        WriteMetaMetadata(UniqueMetaMetaBlocks);
-        m_LatestMetaDataPos = m_MetaDataPos;
-        m_LatestMetaDataSize = WriteMetadata(Metadata, AttributeBlocks);
-        if (!m_Parameters.AsyncWrite)
+    if (m_Aggregator->m_Comm.Size() > 1)
+    { // level 1
+        m_Profiler.Start("meta_gather1");
+        size_t LocalSize = MetaBuffer.size();
+        std::vector<size_t> RecvCounts =
+            m_Aggregator->m_Comm.GatherValues(LocalSize, 0);
+        std::vector<char> RecvBuffer;
+        if (m_Aggregator->m_Comm.Rank() == 0)
         {
-            WriteMetadataFileIndex(m_LatestMetaDataPos, m_LatestMetaDataSize);
+            uint64_t TotalSize = 0;
+            for (auto &n : RecvCounts)
+                TotalSize += n;
+            RecvBuffer.resize(TotalSize);
+            /*std::cout << "MD Lvl-1: rank " << m_Comm.Rank() << " gather "
+                      << TotalSize << " bytes from aggregator group"
+                      << std::endl;*/
         }
-    }
-    delete RecvBuffer;
+        m_Aggregator->m_Comm.GathervArrays(MetaBuffer.data(), LocalSize,
+                                           RecvCounts.data(), RecvCounts.size(),
+                                           RecvBuffer.data(), 0);
+        m_Profiler.Stop("meta_gather1");
+        if (m_Aggregator->m_Comm.Rank() == 0)
+        {
+            std::vector<format::BP5Base::MetaMetaInfoBlock>
+                UniqueMetaMetaBlocks;
+            std::vector<uint64_t> DataSizes;
+            std::vector<uint64_t> WriterDataPositions;
+            std::vector<core::iovec> AttributeBlocks;
+            auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
+                RecvBuffer, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks,
+                DataSizes, WriterDataPositions);
+
+            MetaBuffer.clear();
+            MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
+                UniqueMetaMetaBlocks, Metadata, AttributeBlocks, DataSizes,
+                WriterDataPositions);
+        }
+    } // level 1
+    m_Profiler.Stop("meta_lvl1");
+    m_Profiler.Start("meta_lvl2");
+    // level 2
+    if (m_Aggregator->m_Comm.Rank() == 0)
+    {
+        std::vector<char> RecvBuffer;
+        std::vector<char> *buf;
+        std::vector<size_t> RecvCounts;
+        size_t LocalSize = MetaBuffer.size();
+        if (m_CommAggregators.Size() > 1)
+        {
+            m_Profiler.Start("meta_gather2");
+            RecvCounts = m_CommAggregators.GatherValues(LocalSize, 0);
+            if (m_CommAggregators.Rank() == 0)
+            {
+                uint64_t TotalSize = 0;
+                for (auto &n : RecvCounts)
+                    TotalSize += n;
+                RecvBuffer.resize(TotalSize);
+                /*std::cout << "MD Lvl-2: rank " << m_Comm.Rank() << " gather "
+                          << TotalSize << " bytes from aggregator group"
+                          << std::endl;*/
+            }
+
+            m_CommAggregators.GathervArrays(
+                MetaBuffer.data(), LocalSize, RecvCounts.data(),
+                RecvCounts.size(), RecvBuffer.data(), 0);
+            buf = &RecvBuffer;
+            m_Profiler.Stop("meta_gather2");
+        }
+        else
+        {
+            buf = &MetaBuffer;
+            RecvCounts.push_back(LocalSize);
+        }
+
+        if (m_CommAggregators.Rank() == 0)
+        {
+            std::vector<format::BP5Base::MetaMetaInfoBlock>
+                UniqueMetaMetaBlocks;
+            std::vector<uint64_t> DataSizes;
+            std::vector<core::iovec> AttributeBlocks;
+            m_WriterDataPos.resize(0);
+            auto Metadata = m_BP5Serializer.BreakoutContiguousMetadata(
+                *buf, RecvCounts, UniqueMetaMetaBlocks, AttributeBlocks,
+                DataSizes, m_WriterDataPos);
+            assert(m_WriterDataPos.size() ==
+                   static_cast<size_t>(m_Comm.Size()));
+            WriteMetaMetadata(UniqueMetaMetaBlocks);
+            m_LatestMetaDataPos = m_MetaDataPos;
+            m_LatestMetaDataSize = WriteMetadata(Metadata, AttributeBlocks);
+            if (!m_Parameters.AsyncWrite)
+            {
+                WriteMetadataFileIndex(m_LatestMetaDataPos,
+                                       m_LatestMetaDataSize);
+            }
+        }
+    } // level 2
+    m_Profiler.Stop("meta_lvl2");
 
     if (m_Parameters.AsyncWrite)
     {
@@ -934,6 +1014,13 @@ void BP5Writer::InitAggregator()
         m_Aggregator =
             static_cast<aggregator::MPIAggregator *>(&m_AggregatorTwoLevelShm);
     }
+
+    /* comm for Aggregators only.
+     *  We are only interested in the chain of rank 0s
+     */
+    int color = m_Aggregator->m_Comm.Rank();
+    m_CommAggregators =
+        m_Comm.Split(color, 0, "creating level 2 chain of aggregators at Open");
 }
 
 void BP5Writer::InitTransports()

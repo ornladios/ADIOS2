@@ -196,6 +196,8 @@ private:
     bool m_IAmDraining = false;
     bool m_IAmWritingData = false;
     helper::Comm *DataWritingComm; // processes that write the same data file
+    // aggregators only (valid if m_Aggregator->m_Comm.Rank() == 0)
+    helper::Comm m_CommAggregators;
     adios2::profiling::JSONProfiler m_Profiler;
 
 private:

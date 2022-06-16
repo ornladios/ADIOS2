@@ -17,13 +17,13 @@ namespace adios2
 namespace profiling
 {
 
-Timer::Timer(const std::string process, const TimeUnit timeUnit)
+Timer::Timer(const std::string process, const TimeUnit timeUnit,
+             const bool trace)
 : m_Process(process), m_TimeUnit(timeUnit),
   m_LocalTimeDate(helper::LocalTimeDate())
 {
-    std::size_t found = m_Process.find("gather");
-    if (found != std::string::npos)
-        m_Always = true;
+    if (trace)
+        m_Trace = true;
 }
 
 void Timer::Resume() noexcept
