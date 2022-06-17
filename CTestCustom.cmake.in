@@ -19,6 +19,7 @@ list(APPEND CTEST_CUSTOM_WARNING_EXCEPTION
   "was built for newer macOS version"
   "warning generated"
   "warnings generated"
+  "warning: template parameter ... is not used in declaring the parameter types of function template"
 )
 list(APPEND CTEST_CUSTOM_COVERAGE_EXCLUDE
   ".*/thirdparty/.*"

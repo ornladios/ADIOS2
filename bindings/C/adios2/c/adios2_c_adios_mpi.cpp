@@ -41,9 +41,20 @@ adios2_adios *adios2_init_mpi(MPI_Comm comm)
     return adios2_init_config_glue_mpi("", comm, "C");
 }
 
+adios2_adios *adios2_init_mpi_debug(MPI_Comm comm, adios2_debug_mode)
+{
+    return adios2_init_mpi(comm);
+}
+
 adios2_adios *adios2_init_config_mpi(const char *config_file, MPI_Comm comm)
 {
     return adios2_init_config_glue_mpi(config_file, comm, "C");
+}
+
+adios2_adios *adios2_init_config_mpi_debug(const char *config_file,
+                                           MPI_Comm comm, adios2_debug_mode)
+{
+    return adios2_init_config_mpi(config_file, comm);
 }
 
 } // end extern C

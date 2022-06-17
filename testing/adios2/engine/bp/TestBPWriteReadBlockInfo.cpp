@@ -839,9 +839,9 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
 
     {
 #if ADIOS2_USE_MPI
-        adios2_adios *adiosH = adios2_init(MPI_COMM_WORLD);
+        adios2_adios *adiosH = adios2_init_mpi(MPI_COMM_WORLD);
 #else
-        adios2_adios *adiosH = adios2_init();
+        adios2_adios *adiosH = adios2_init_serial();
 #endif
         adios2_io *ioR = adios2_declare_io(adiosH, "ReadIO");
         if (!engineName.empty())

@@ -17,7 +17,7 @@ int main(int argc, char **argv)
 {
     MPI_Init(&argc, &argv);
 
-    adios2_adios *adios = adios2_init(MPI_COMM_WORLD);
+    adios2_adios *adios = adios2_init_mpi(MPI_COMM_WORLD);
     if (!adios)
     {
         fprintf(stderr, "adios2_init() failed\n");

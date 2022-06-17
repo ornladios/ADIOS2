@@ -65,9 +65,20 @@ adios2_adios *adios2_init_serial()
     return adios2_init_config_glue_serial("", "C");
 }
 
+adios2_adios *adios2_init_serial_debug(adios2_debug_mode)
+{
+    return adios2_init_serial();
+}
+
 adios2_adios *adios2_init_config_serial(const char *config_file)
 {
     return adios2_init_config_glue_serial(config_file, "C");
+}
+
+adios2_adios *adios2_init_config_serial_debug(const char *config_file,
+                                              adios2_debug_mode)
+{
+    return adios2_init_config_serial(config_file);
 }
 
 adios2_io *adios2_declare_io(adios2_adios *adios, const char *name)

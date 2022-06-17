@@ -20,8 +20,6 @@ ADIOS::ADIOS(const std::string &configFile)
 {
 }
 
-ADIOS::ADIOS(const char *configFile) : ADIOS(std::string(configFile), "C++") {}
-
 ADIOS::ADIOS() : ADIOS("", "C++") {}
 
 ADIOS::ADIOS(const std::string &configFile, const std::string &hostLanguage)
