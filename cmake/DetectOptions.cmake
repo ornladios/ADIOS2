@@ -180,6 +180,18 @@ if(CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
   set(ADIOS2_HAVE_CUDA TRUE)
 endif()
 
+# Kokkos
+if(ADIOS2_USE_Kokkos)
+  if(ADIOS2_USE_Kokkos STREQUAL AUTO)
+    find_package(Kokkos QUIET)
+  else()
+    find_package(Kokkos REQUIRED)
+  endif()
+endif()
+if(Kokkos_FOUND)
+  set(ADIOS2_HAVE_Kokkos TRUE)
+endif()
+
 # Fortran
 if(ADIOS2_USE_Fortran STREQUAL AUTO)
   include(CheckLanguage)
