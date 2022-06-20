@@ -25,6 +25,10 @@ set_property(TARGET adios2_cxx11 PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUF
 target_link_libraries(adios2_cxx11 PRIVATE adios2_core adios2::thirdparty::pugixml)
 target_compile_features(adios2_cxx11 INTERFACE ${ADIOS2_CXX11_FEATURES})
 
+if(ADIOS2_HAVE_Kokkos)
+    target_link_libraries(adios2_cxx11 PUBLIC Kokkos::kokkos)
+endif()
+
 target_include_directories(adios2_cxx11
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>

@@ -18,6 +18,10 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
 
+#ifdef ADIOS2_HAVE_KOKKOS
+#include <Kokkos_Core.hpp>
+#endif
+
 namespace adios2
 {
 
@@ -210,6 +214,25 @@ public:
      * this may relieve memory pressure by clearing ADIOS buffers.  It is a
      * collective call and can only be called between Begin/EndStep pairs. */
     void PerformDataWrite();
+
+#ifdef ADIOS2_HAVE_KOKKOS
+    /** Get and Put functions for Kokkos buffers */
+    template <class T>
+    void Put(Variable<T> variable, Kokkos::View<T *> data,
+             const Mode launch = Mode::Deferred);
+
+    template <class T>
+    void Put(const std::string &variableName, Kokkos::View<T *> data,
+             const Mode launch = Mode::Deferred);
+
+    template <class T>
+    void Get(Variable<T> variable, Kokkos::View<T *> data,
+             const Mode launch = Mode::Deferred);
+
+    template <class T>
+    void Get(const std::string &variableName, Kokkos::View<T *> data,
+             const Mode launch = Mode::Deferred);
+#endif
 
     /**
      * Get data associated with a Variable from the Engine

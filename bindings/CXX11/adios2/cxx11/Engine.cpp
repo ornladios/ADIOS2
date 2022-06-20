@@ -344,6 +344,20 @@ Engine::AllStepsBlocksInfo(const VariableNT &variable) const
     return ret;
 }
 
+#ifdef ADIOS2_HAVE_KOKKOS
+#define declare_template_instantiation(T)                                      \
+    template void Engine::Put<T>(Variable<T>, Kokkos::View<T *>, const Mode);  \
+    template void Engine::Put<T>(const std::string &, Kokkos::View<T *>,       \
+                                 const Mode);                                  \
+                                                                               \
+    template void Engine::Get<T>(Variable<T>, Kokkos::View<T *>, const Mode);  \
+    template void Engine::Get<T>(const std::string &, Kokkos::View<T *>,       \
+                                 const Mode);
+
+ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+#endif
+
 #define declare_template_instantiation(T)                                      \
     template void Engine::Put<T>(Variable<T>, const T *, const Mode);          \
     template void Engine::Put<T>(const std::string &, const T *, const Mode);  \
