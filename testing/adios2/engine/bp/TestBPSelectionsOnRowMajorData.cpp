@@ -339,7 +339,7 @@ TEST_F(ADIOSSelectionRowMajorTest, 2D)
 
     // Read data pretending to be a Column-major language
     {
-        adios2::ADIOS adiosF("", "Fortran", true);
+        adios2::ADIOS adiosF("", "Fortran");
         adios2::IO ioRead = adiosF.DeclareIO("TestIOReadF");
         ioRead.SetEngine("File");
         adios2::Engine engine = ioRead.Open(filename, adios2::Mode::Read);
@@ -836,7 +836,7 @@ TEST_F(ADIOSSelectionRowMajorTest, 3D)
 
     // Read data pretending to be a Column-major language
     {
-        adios2::ADIOS adiosF("", "Fortran", true);
+        adios2::ADIOS adiosF("", "Fortran");
         adios2::IO ioRead = adiosF.DeclareIO("TestIOReadF");
         ioRead.SetEngine("File");
         adios2::Engine engine = ioRead.Open(filename, adios2::Mode::Read);

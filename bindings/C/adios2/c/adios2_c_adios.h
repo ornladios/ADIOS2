@@ -22,9 +22,9 @@ extern "C" {
 #endif
 
 #if ADIOS2_USE_MPI
-#define adios2_init(comm, debug_mode) adios2_init_mpi(comm)
-#define adios2_init_config(config_file, comm, debug_mode)                      \
-    adios2_init_config_mpi(config_file, comm)
+#define adios2_init(comm, debug) adios2_init_mpi_debug(comm, debug)
+#define adios2_init_config(config_file, comm, debug)                           \
+    adios2_init_config_mpi_debug(config_file, comm, debug)
 
 /**
  * Starting point for MPI apps. Creates an ADIOS handler.
@@ -33,6 +33,9 @@ extern "C" {
  * @return success: handler, failure: NULL
  */
 adios2_adios *adios2_init_mpi(MPI_Comm comm);
+
+ADIOS2_DEPRECATED
+adios2_adios *adios2_init_mpi_debug(MPI_Comm comm, adios2_debug_mode);
 
 /**
  * Starting point for MPI apps. Creates an ADIOS handler allowing a runtime
@@ -44,10 +47,15 @@ adios2_adios *adios2_init_mpi(MPI_Comm comm);
  * @return success: handler, failure: NULL
  */
 adios2_adios *adios2_init_config_mpi(const char *config_file, MPI_Comm comm);
+
+ADIOS2_DEPRECATED
+adios2_adios *adios2_init_config_mpi_debug(const char *config_file,
+                                           MPI_Comm comm, adios2_debug_mode);
+
 #else
-#define adios2_init(debug_mode) adios2_init_serial()
-#define adios2_init_config(config_file, debug_mode)                            \
-    adios2_init_config_serial(config_file)
+#define adios2_init(debug) adios2_init_serial_debug(debug)
+#define adios2_init_config(config_file, debug)                                 \
+    adios2_init_config_serial_debug(config_file, debug)
 #endif
 
 /**
@@ -57,12 +65,19 @@ adios2_adios *adios2_init_config_mpi(const char *config_file, MPI_Comm comm);
  */
 adios2_adios *adios2_init_serial(void);
 
+ADIOS2_DEPRECATED
+adios2_adios *adios2_init_serial_debug(adios2_debug_mode);
+
 /**
  * Initialize an ADIOS struct pointer handler in a serial, non-MPI application.
  * Doesn't require a runtime config file.
  * @return success: handler, failure: NULL
  */
 adios2_adios *adios2_init_config_serial(const char *config_file);
+
+ADIOS2_DEPRECATED
+adios2_adios *adios2_init_config_serial_debug(const char *config_file,
+                                              adios2_debug_mode);
 
 /**
  * Declares a new io handler

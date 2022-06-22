@@ -20,7 +20,7 @@ myArray = numpy.array([0., 1., 2., 3., 4., 5., 6., 7., 8., 9.])
 Nx = myArray.size
 
 # ADIOS config file, MPI communicator, debug mode
-adios = adios2.ADIOS("helloBPWriter.xml", comm, adios2.DebugON)
+adios = adios2.ADIOS("helloBPWriter.xml", comm)
 
 # ADIOS IO, name must be the same as in helloBPWriter.xml for runtime settings
 bpIO = adios.DeclareIO("BPFile_N2N")

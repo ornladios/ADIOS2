@@ -15,17 +15,14 @@
 
 namespace adios2
 {
-ADIOS::ADIOS(const std::string &configFile, const bool debugMode)
+ADIOS::ADIOS(const std::string &configFile)
 : m_ADIOS(std::make_shared<core::ADIOS>(configFile, "C++"))
 {
 }
 
-ADIOS::ADIOS(const char *configFile) : ADIOS(std::string(configFile), "C++") {}
+ADIOS::ADIOS() : ADIOS("", "C++") {}
 
-ADIOS::ADIOS(const bool debugMode) : ADIOS("", "C++") {}
-
-ADIOS::ADIOS(const std::string &configFile, const std::string &hostLanguage,
-             const bool debugMode)
+ADIOS::ADIOS(const std::string &configFile, const std::string &hostLanguage)
 : m_ADIOS(std::make_shared<core::ADIOS>(configFile, hostLanguage))
 {
 }

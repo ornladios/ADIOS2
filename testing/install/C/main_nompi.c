@@ -13,10 +13,10 @@
 
 int main(void)
 {
-    adios2_adios *adios = adios2_init(adios2_debug_mode_on);
+    adios2_adios *adios = adios2_init_serial();
     if (!adios)
     {
-        fprintf(stderr, "adios2_init() failed\n");
+        fprintf(stderr, "adios2_init_serial() failed\n");
         return 1;
     }
     adios2_finalize(adios);

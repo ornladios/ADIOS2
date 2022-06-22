@@ -16,7 +16,7 @@ import adios2
 # Test data
 data = SmallTestData()
 
-adios = adios2.ADIOS(adios2.DebugON)
+adios = adios2.ADIOS()
 
 bpIO = adios.DeclareIO("NPTypes")
 

@@ -54,7 +54,7 @@ program TestBPWriteMemorySelectionRead2D
   data_r4 = -1.0
   data_r8 = -1.0_8
 
-  call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
+  call adios2_init(adios, MPI_COMM_WORLD, ierr)
 
   ! Writer
   call adios2_declare_io(ioPut, adios, 'MemSelWriter', ierr)

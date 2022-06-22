@@ -13,6 +13,8 @@
 #define ADIOS2_VERSION_PATCH @ADIOS2_VERSION_PATCH@
 #cmakedefine ADIOS2_VERSION_TWEAK @ADIOS2_VERSION_TWEAK@
 
+#define ADIOS2_VERSION (ADIOS2_VERSION_MAJOR* 10000 + ADIOS2_VERSION_MINOR * 100 + ADIOS2_VERSION_PATCH)
+
 /*
  * ADIOS Build Information:
  *
@@ -37,6 +39,16 @@
 
 #if ADIOS2_USE_MPI && !defined(ADIOS2_HAVE_MPI)
 #  error "ADIOS2 was not built with MPI enabled."
+#endif
+
+#ifndef ADIOS2_DEPRECATED
+#  if defined(__GNUC__) || defined (__clang__)
+#    define ADIOS2_DEPRECATED __attribute__((deprecated))
+#  elif defined(_MSC_VER)
+#    define ADIOS2_DEPRECATED __declspec(deprecated)
+#  else
+#    define ADIOS2_DEPRECATED
+#  endif
 #endif
 
 #endif /* ADIOSCONFIG_H_ */

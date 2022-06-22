@@ -15,28 +15,24 @@ extern "C" {
 #endif
 
 // this function is not exposed in the public APIs
-extern adios2_adios *
-adios2_init_config_glue_serial(const char *config_file,
-                               const adios2_debug_mode debug_mode,
-                               const char *host_language);
+extern adios2_adios *adios2_init_config_glue_serial(const char *config_file,
+                                                    const char *host_language);
 
 void FC_GLOBAL(adios2_init_config_serial_f2c,
                ADIOS2_INIT_CONFIG_SERIAL_F2C)(adios2_adios **adios,
                                               const char *config_file,
-                                              const int *debug_mode, int *ierr)
+                                              int *ierr)
 {
-    *adios = adios2_init_config_glue_serial(
-        config_file, static_cast<adios2_debug_mode>(*debug_mode), "Fortran");
+    *adios = adios2_init_config_glue_serial(config_file, "Fortran");
     *ierr = (*adios == NULL) ? static_cast<int>(adios2_error_exception)
                              : static_cast<int>(adios2_error_none);
 }
 
 void FC_GLOBAL(adios2_init_serial_f2c,
-               ADIOS2_INIT_SERIAL_F2C)(adios2_adios **adios,
-                                       const int *debug_mode, int *ierr)
+               ADIOS2_INIT_SERIAL_F2C)(adios2_adios **adios, int *ierr)
 {
     FC_GLOBAL(adios2_init_config_serial_f2c, ADIOS2_INIT_CONFIG_SERIAL_F2C)
-    (adios, "", debug_mode, ierr);
+    (adios, "", ierr);
 }
 
 void FC_GLOBAL(adios2_declare_io_f2c,

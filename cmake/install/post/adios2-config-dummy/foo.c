@@ -11,9 +11,9 @@ void foo(void)
 {
 #ifdef WITH_ADIOS2
 #if ADIOS2_USE_MPI
-    adios2_adios *ctx = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+    adios2_adios *ctx = adios2_init_mpi(MPI_COMM_WORLD);
 #else
-    adios2_adios *ctx = adios2_init(adios2_debug_mode_on);
+    adios2_adios *ctx = adios2_init_serial();
 #endif
 #endif
 }

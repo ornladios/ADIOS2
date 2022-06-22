@@ -14,6 +14,7 @@
 #include <functional>
 #include <memory>
 #include <string>
+#include <type_traits>
 
 #include "IO.h"
 #include "Operator.h"
@@ -41,15 +42,23 @@ class ADIOS
 {
 
 public:
+    template <class T>
+    using enable_if_bool =
+        typename std::enable_if<std::is_same<T, bool>::value, bool>::type;
+
 #if ADIOS2_USE_MPI
     /**
      * Starting point for MPI apps. Creates an ADIOS object.
      * MPI Collective Operation as it call MPI_Comm_dup
      * @param comm defines domain scope from application
-     * @param debugMode is deprecated and has no effect on library behavior
      * @exception std::invalid_argument if user input is incorrect
      */
-    ADIOS(MPI_Comm comm, const bool debugMode = true);
+    ADIOS(MPI_Comm comm);
+
+    template <typename TDebugMode, enable_if_bool<TDebugMode> Enable = true>
+    ADIOS2_DEPRECATED ADIOS(MPI_Comm comm, TDebugMode) : ADIOS(comm)
+    {
+    }
 
     /**
      * Starting point for MPI apps. Creates an ADIOS object allowing a
@@ -58,11 +67,16 @@ public:
      * configFile contents
      * @param configFile runtime config file
      * @param comm defines domain scope from application
-     * @param debugMode is deprecated and has no effect on library behavior
      * @exception std::invalid_argument if user input is incorrect
      */
-    ADIOS(const std::string &configFile, MPI_Comm comm,
-          const bool debugMode = true);
+    ADIOS(const std::string &configFile, MPI_Comm comm);
+
+    template <typename TDebugMode, enable_if_bool<TDebugMode> Enable = true>
+    ADIOS2_DEPRECATED ADIOS(const std::string &configFile, MPI_Comm comm,
+                            TDebugMode)
+    : ADIOS(configFile, comm)
+    {
+    }
 
     /** extra constructor for R and other languages that use the
      * public C++ API but has data in column-major. Pass "" for configfile
@@ -74,46 +88,41 @@ public:
      *     e.g. adios2::ADIOS("", comm, "Fortran", false);
      */
     ADIOS(const std::string &configFile, MPI_Comm comm,
-          const std::string &hostLanguage, const bool debugMode);
-#else
-    // Client code that does not enable ADIOS2_USE_MPI may accidentally
-    // try to pass a MPI_Comm instance to our constructor.  If the type
-    // the MPI library uses to implement MPI_Comm happens to be convertible
-    // to one of the types offered by our serial constructors (e.g. 'bool'),
-    // the invocation will appear to succeed but will ignore the
-    // communicator passed.  Add explicitly deleted constructors that have
-    // better conversions for common MPI_Comm types.
+          const std::string &hostLanguage);
 
-    // openmpi uses 'ompi_communicator_t*' for MPI_Comm
-    ADIOS(void *define_ADIOS2_USE_MPI_to_use_MPI_constructor) = delete;
+    template <typename TDebugMode, enable_if_bool<TDebugMode> Enable = true>
+    ADIOS2_DEPRECATED ADIOS(const std::string &configFile, MPI_Comm comm,
+                            const std::string &hostLanguage, TDebugMode)
+    : ADIOS(configFile, comm, hostLanguage)
+    {
+    }
 
-    // mpich uses 'int' for MPI_Comm
-    ADIOS(int define_ADIOS2_USE_MPI_to_use_MPI_constructor) = delete;
 #endif
 
     /**
      * Starting point for non-MPI serial apps. Creates an ADIOS object allowing
      * a runtime config file.
      * @param configFile runtime config file
-     * @param debugMode is deprecated and has no effect on library behavior
      * @exception std::invalid_argument if user input is incorrect
      */
-    ADIOS(const std::string &configFile, const bool debugMode = true);
+    ADIOS(const std::string &configFile);
 
-    /**
-     * Starting point for non-MPI serial apps. Creates an ADIOS object allowing
-     * a runtime config file.
-     * @param configFile runtime config file
-     * @exception std::invalid_argument if user input is incorrect
-     */
-    ADIOS(const char *configFile);
+    template <typename TDebugMode, enable_if_bool<TDebugMode> Enable = true>
+    ADIOS2_DEPRECATED ADIOS(const std::string &configFile, TDebugMode)
+    : ADIOS(configFile)
+    {
+    }
 
     /**
      * Starting point for non-MPI apps. Creates an ADIOS object
-     * @param debugMode is deprecated and has no effect on library behavior
      * @exception std::invalid_argument if user input is incorrect
      */
-    ADIOS(const bool debugMode = true);
+    ADIOS();
+
+    template <typename TDebugMode, enable_if_bool<TDebugMode> Enable = true>
+    ADIOS2_DEPRECATED ADIOS(TDebugMode) : ADIOS()
+    {
+    }
 
     /** extra constructor for R and other languages that use the
      * public C++ API but has data in column-major. Pass "" for configfile
@@ -124,8 +133,14 @@ public:
      * treat all arrays column-major
      *    e.g. adios2::ADIOS("", "Fortran", false);
      */
-    ADIOS(const std::string &configFile, const std::string &hostLanguage,
-          const bool debugMode);
+    ADIOS(const std::string &configFile, const std::string &hostLanguage);
+
+    template <typename TDebugMode, enable_if_bool<TDebugMode> Enable = true>
+    ADIOS2_DEPRECATED ADIOS(const std::string &configFile,
+                            const std::string &hostLanguage, TDebugMode)
+    : ADIOS(configFile, hostLanguage)
+    {
+    }
 
     /** object inspection true: valid object, false: invalid object */
     explicit operator bool() const noexcept;

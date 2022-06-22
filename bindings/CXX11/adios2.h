@@ -15,13 +15,11 @@
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
 
+// DEPRECATED: Debug mode will be removed in a future release
 namespace adios2
 {
-
-// adios alias values and types.  These not used internally and deprecated.
 constexpr bool DebugON = true;
 constexpr bool DebugOFF = false;
-
 } // end namespace adios2
 
 #include "adios2/cxx11/ADIOS.h"

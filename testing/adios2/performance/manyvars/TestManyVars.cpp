@@ -252,10 +252,9 @@ public:
 
         alloc_vars();
 #if ADIOS2_USE_MPI
-        adios2_adios *adiosH =
-            adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+        adios2_adios *adiosH = adios2_init_mpi(MPI_COMM_WORLD);
 #else
-        adios2_adios *adiosH = adios2_init(adios2_debug_mode_on);
+        adios2_adios *adiosH = adios2_init_serial();
 #endif
 
         ioW = adios2_declare_io(adiosH, "multiblockwrite"); // group for writing

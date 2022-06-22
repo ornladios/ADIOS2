@@ -14,14 +14,13 @@ namespace adios2
 namespace py11
 {
 
-ADIOS::ADIOS(const std::string &configFile, MPI4PY_Comm mpiComm,
-             const bool debugMode)
+ADIOS::ADIOS(const std::string &configFile, MPI4PY_Comm mpiComm)
 : m_ADIOS(std::make_shared<adios2::core::ADIOS>(
       configFile, helper::CommDupMPI(mpiComm), "Python"))
 {
 }
 
-ADIOS::ADIOS(MPI4PY_Comm mpiComm, const bool debugMode) : ADIOS("", mpiComm) {}
+ADIOS::ADIOS(MPI4PY_Comm mpiComm) : ADIOS("", mpiComm) {}
 
 } // end namespace py11
 } // end namespace adios2

@@ -29,12 +29,11 @@ class ADIOS
 
 public:
 #if ADIOS2_USE_MPI
-    ADIOS(const std::string &configFile, MPI4PY_Comm comm,
-          const bool debugMode = true);
-    ADIOS(MPI4PY_Comm comm, const bool debugMode = true);
+    ADIOS(const std::string &configFile, MPI4PY_Comm comm);
+    ADIOS(MPI4PY_Comm comm);
 #endif
-    ADIOS(const std::string &configFile, const bool debugMode = true);
-    ADIOS(const bool debugMode);
+    ADIOS(const std::string &configFile);
+    ADIOS();
     ~ADIOS() = default;
 
     /** object inspection true: valid object, false: invalid object */

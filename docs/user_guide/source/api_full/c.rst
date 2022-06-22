@@ -33,8 +33,7 @@ Each error will issue a more detailed description in the standard error output: 
        adios2_error_none = 0,
 
        /**
-        * user input error, on when adios2_debug_mode_on is passed to adios2_init
-        * or adios2_init_config
+        * user input error
         */
        adios2_error_invalid_argument = 1,
    

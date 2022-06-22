@@ -44,9 +44,9 @@ TEST_F(NullWriteReadTests_C_API, NullWriteRead1D8)
     // Write test data using BP
 
 #if ADIOS2_USE_MPI
-    adios2_adios *adios = adios2_init(MPI_COMM_WORLD, adios2_debug_mode_on);
+    adios2_adios *adios = adios2_init_mpi(MPI_COMM_WORLD);
 #else
-    adios2_adios *adios = adios2_init(adios2_debug_mode_on);
+    adios2_adios *adios = adios2_init_serial();
 #endif
     {
         adios2_io *io = adios2_declare_io(adios, "WriteNull");

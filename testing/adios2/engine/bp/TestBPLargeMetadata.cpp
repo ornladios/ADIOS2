@@ -111,9 +111,9 @@ TEST_F(BPLargeMetadata, ManyLongStrings)
     const std::size_t NVars = 100;
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD, true);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(true);
+    adios2::ADIOS adios;
 #endif
 
     adios2::IO io = adios.DeclareIO("myIO");

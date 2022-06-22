@@ -19,7 +19,7 @@ program TestBPReadGlobalsByName
     call MPI_Comm_size(MPI_COMM_WORLD, isize, ierr)
 
     ! Start adios2
-    call adios2_init(adios, MPI_COMM_SELF, adios2_debug_mode_on, ierr)
+    call adios2_init(adios, MPI_COMM_SELF, ierr)
 
     ! writer
     call adios2_declare_io(ioWrite, adios, "FWriter", ierr)

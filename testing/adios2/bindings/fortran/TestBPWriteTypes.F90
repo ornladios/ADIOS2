@@ -59,9 +59,9 @@ program TestBPWriteTypes
 
      ! Create adios handler passing the communicator, debug mode and error flag
 #if ADIOS2_USE_MPI
-     call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
+     call adios2_init(adios, MPI_COMM_WORLD, ierr)
 #else
-     call adios2_init(adios, adios2_debug_mode_on, ierr)
+     call adios2_init(adios, ierr)
 #endif
      if( adios%valid .eqv. .false. ) stop 'Invalid adios2_init'
 

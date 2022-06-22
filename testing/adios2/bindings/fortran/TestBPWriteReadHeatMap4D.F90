@@ -62,7 +62,7 @@ program TestBPWriteReadHeatMap4D
   temperatures_r8 = 1.0_8
 
   ! Start adios2 Writer
-  call adios2_init(adios, MPI_COMM_WORLD, adios2_debug_mode_on, ierr)
+  call adios2_init(adios, MPI_COMM_WORLD, ierr)
   call adios2_declare_io(ioPut, adios, 'HeatMapWrite', ierr)
 
   call adios2_define_variable(var_temperatures(1), ioPut, &
