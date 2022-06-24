@@ -107,7 +107,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [el8]
-        compiler: [gcc8, gcc9, gcc10, gcc11, icc, oneapi, nvhpc222]
+        compiler: [gcc8, gcc9, gcc10, gcc11, gcc12, icc, oneapi, nvhpc222]
         parallel: [serial, mpi]
 
     steps:
