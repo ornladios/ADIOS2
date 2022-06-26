@@ -1693,6 +1693,10 @@ void add_format(FMFormat f, FMFormat* sorted, FMFormat *visited, FMFormat* stack
     /* if n has not been visited yet then */
     if (!on_list(f, visited)) {
 	FMFormat tmp[100];
+	FMFormat *tmp_list = &tmp[0];
+	if (f->field_count >= (sizeof(tmp)/sizeof(tmp[0]))) {
+	    tmp_list = malloc(f->field_count * sizeof(tmp[0]));
+	}
 	int count = 0;
 	int i;
         /* mark n as visited */
@@ -1701,15 +1705,16 @@ void add_format(FMFormat f, FMFormat* sorted, FMFormat *visited, FMFormat* stack
 	/* get subfields and sort them by name for predictability */
 	for (i=0; i < f->field_count; i++) {
 	    if (f->field_subformats[i] != NULL) {
-		tmp[count++] = f->field_subformats[i];
+		tmp_list[count++] = f->field_subformats[i];
 	    }
 	}
-	qsort(&tmp[0], count, sizeof(tmp[0]), compare_by_name_FMFormat);
+	qsort(&tmp_list[0], count, sizeof(tmp_list[0]), compare_by_name_FMFormat);
 
 	for (i=0; i < count; i++) {
-	    add_format(tmp[i], sorted, visited, stack);
+	    add_format(tmp_list[i], sorted, visited, stack);
 	}
 	add_to_list(f, sorted);
+	if (tmp_list != &tmp[0]) free(tmp_list);
     }
 }
 

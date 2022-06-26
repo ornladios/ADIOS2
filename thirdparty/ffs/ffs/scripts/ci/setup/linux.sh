@@ -2,7 +2,7 @@
 
 case ${GH_YML_JOBNAME} in
   centos7*) PKG_CMD=yum ;;
-  centos8*) PKG_CMD=dnf ;;
+  centos8*|alma8*) PKG_CMD=dnf ;;
   ubuntu*)  PKG_CMD=apt-get ;;
 esac
 
@@ -10,7 +10,7 @@ esac
 # Baseline dependencies
 ########################################
 case ${GH_YML_JOBNAME} in
-  centos*) PKGS="epel-release make curl perl bison flex" ;;
+  centos*|alma*) PKGS="epel-release make curl perl bison flex" ;;
   ubuntu*)
     export DEBIAN_FRONTEND=noninteractive
     apt-get update
@@ -26,7 +26,7 @@ case ${GH_YML_JOBNAME} in
   centos7*)
     curl -L https://copr.fedorainfracloud.org/coprs/g/git-maint/git/repo/epel-7/group_git-maint-git-epel-7.repo > /etc/yum.repos.d/group_git-maint-git-epel-7.repo
     ;;
-  centos8*)
+  centos8*|alma8*)
     curl -L https://copr.fedorainfracloud.org/coprs/g/git-maint/git/repo/epel-8/group_git-maint-git-epel-8.repo > /etc/yum.repos.d/group_git-maint-git-epel-8.repo
     ;;
   ubuntu*)
@@ -41,13 +41,13 @@ ${PKG_CMD} install -y git
 # Compilers
 ########################################
 case ${GH_YML_JOBNAME} in
-  centos*-clang) PKGS="clang gcc gcc-c++" ;;
-  centos*-gcc)   PKGS="gcc gcc-c++" ;;
-  centos*-nvhpc) PKGS="gcc gcc-c++" ;;
-  ubuntu*-clang) PKGS="clang gcc g++" ;;
-  ubuntu*-gcc)   PKGS="gcc g++" ;;
-  ubuntu*-nvhpc) PKGS="gcc g++" ;;
+  centos*|alma*)   PKGS="gcc gcc-c++" ;;
+  ubuntu*)   PKGS="gcc g++" ;;
 esac
+if [ "${GH_YML_JOBNAME##*-}" = "clang" ]
+then
+  PKGS="clang ${PKGS}"
+fi
 ${PKG_CMD} install -y ${PKGS}
 
 

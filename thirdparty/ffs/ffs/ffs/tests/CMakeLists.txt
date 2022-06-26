@@ -1,4 +1,10 @@
-set (TESTS context_test context_test2 fortran_test get_set_test)
+if (NO_CONTEXT_TESTS) 
+   set (TESTS "")
+else()
+   set (TESTS context_test context_test2 fortran_test)
+endif()
+
+list (APPEND TESTS get_set_test)
 set (PROGS ffs_write ffs_index_test ffs_file_test test_file_unique)
 
 if (DILL_FOUND)
@@ -37,11 +43,13 @@ FILE(GLOB CTOS ${FFS_SOURCE_DIR}/ffs/output_dir/context_test_output*.bin)
 FILE(GLOB FOS ${FFS_SOURCE_DIR}/ffs/output_dir/file_output*.bin)
 FILE(GLOB IOS ${FFS_SOURCE_DIR}/ffs/output_dir/index_output*.bin)
 
-ADD_TEST(NAME write_context_output
-  COMMAND context_test -w ${FFS_BINARY_DIR}/ffs/tests/context_test_output.bin)
-ADD_TEST(NAME context_output_unique
-  COMMAND test_file_unique
-    ${FFS_BINARY_DIR}/ffs/tests/context_test_output.bin ${CTOS})
+if (NOT NO_CONTEXT_TESTS) 
+   ADD_TEST(NAME write_context_output
+     COMMAND context_test -w ${FFS_BINARY_DIR}/ffs/tests/context_test_output.bin)
+   ADD_TEST(NAME context_output_unique
+     COMMAND test_file_unique
+      ${FFS_BINARY_DIR}/ffs/tests/context_test_output.bin ${CTOS})
+endif()
 ADD_TEST(NAME write_file_output
   COMMAND ffs_write ${FFS_BINARY_DIR}/ffs/tests/file_output.bin)
 ADD_TEST(NAME file_output_unique
@@ -60,11 +68,13 @@ LIST(APPEND IOS index_output.bin)
 LIST(APPEND IOS index_reopen_output.bin)
 LIST(REMOVE_DUPLICATES IOS)
 
+if (NOT NO_CONTEXT_TESTS) 
 foreach	(CTOUT ${CTOS})
     GET_FILENAME_COMPONENT(BASENAME ${CTOUT} NAME)
     ADD_TEST(NAME CTOUT_${BASENAME} COMMAND context_test -r ${CTOUT})
     set_property(TEST CTOUT_${BASENAME} APPEND PROPERTY DEPENDS write_context_output)
 endforeach()
+endif()
 
 foreach	(FOUT ${FOS})
     GET_FILENAME_COMPONENT(BASENAME ${FOUT} NAME)
