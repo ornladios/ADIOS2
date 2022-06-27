@@ -245,17 +245,6 @@ char *BP5Serializer::BuildVarName(const char *base_name, const ShapeID Shape,
     return Ret;
 }
 
-static char *BuildShortName(const ShapeID Shape, const int Index,
-                            const char *Suffix)
-{
-
-    const char *Prefix = NamePrefix(Shape);
-    int Len = strlen(Prefix) + 2 + strlen(Suffix) + 16;
-    char *Ret = (char *)malloc(Len);
-    sprintf(Ret, "%s_%d_%s", Prefix, Index, Suffix);
-    return Ret;
-}
-
 static char *BuildLongName(const char *base_name, const ShapeID Shape,
                            const int type, const int element_size)
 {
