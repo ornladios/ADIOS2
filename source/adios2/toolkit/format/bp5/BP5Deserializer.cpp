@@ -171,39 +171,35 @@ void BP5Deserializer::BreakdownVarName(const char *Name, char **base_name_p,
     *base_name_p = strdup(NameStart);
 }
 
+void BP5Deserializer::BreakdownFieldType(const char *FieldType, bool &Operator,
+                                         bool &MinMax)
+{
+    assert(FieldType[0] == 'M'); // sanity check, should start with "MetaArray"
+    FieldType += strlen("MetaArray");
+    if (FieldType == 0)
+        return;
+    if (FieldType[0] == 'O')
+    {
+        Operator = true;
+        FieldType += strlen("Op");
+    }
+    if (FieldType[0] == 'M')
+    {
+        MinMax = true;
+    }
+}
+
 void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
-                                         DataType *type_p, int *element_size_p,
-                                         char **Operator, bool *MinMax)
+                                         DataType *type_p, int *element_size_p)
 {
     int Type;
     int ElementSize;
     const char *NameStart = strchr(strchr(Name + 4, '_') + 1, '_') + 1;
     // + 3 to skip BP5_ or bp5_ prefix
     sscanf(Name + 4, "%d_%d", &ElementSize, &Type);
-    const char *Plus = index(Name, '+');
-    *Operator = NULL;
-    *MinMax = false;
-    while (Plus && (*Plus == '+'))
-    {
-        int Len;
-        if (sscanf(Plus, "+%dO", &Len) == 1)
-        { // Operator Spec
-            *Operator = (char *)malloc(Len + 1);
-            const char *OpStart = index(Plus, 'O') + 1;
-            memcpy(*Operator, index(Plus, 'O') + 1, Len);
-            (*Operator)[Len] = 0;
-            Plus = OpStart + Len;
-        }
-        else if (strncmp(Plus, "+MM", 3) == 0)
-        {
-            *MinMax = true;
-            Plus += 3;
-        }
-    }
     *element_size_p = ElementSize;
     *type_p = (DataType)Type;
     *base_name_p = strdup(NameStart);
-    *(rindex(*base_name_p, '_')) = 0;
 }
 
 BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByKey(void *Key) const
@@ -283,10 +279,11 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             char *ArrayName;
             DataType Type;
             int ElementSize;
-            char *Operator = NULL;
+            bool Operator = false;
             bool MinMax = false;
-            BreakdownArrayName(FieldList[i + 4].field_name, &ArrayName, &Type,
-                               &ElementSize, &Operator, &MinMax);
+            BreakdownFieldType(FieldList[i].field_type, Operator, MinMax);
+            BreakdownArrayName(FieldList[i].field_name, &ArrayName, &Type,
+                               &ElementSize);
             VarRec = LookupVarByName(ArrayName);
             if (!VarRec)
             {
@@ -294,7 +291,8 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
                 VarRec->Type = Type;
                 VarRec->ElementSize = ElementSize;
                 VarRec->OrigShapeID = C->OrigShapeID;
-                VarRec->Operator = Operator;
+                if (Operator)
+                    VarRec->Operator = strdup("SomeOperator");
                 C->ElementSize = ElementSize;
             }
             C->VarRec = VarRec;
@@ -307,9 +305,8 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             {
 
                 VarRec->MinMaxOffset = MetaRecFields * sizeof(void *);
-                MetaRecFields++;
             }
-            i += MetaRecFields;
+            i++;
             free(ArrayName);
         }
         else
@@ -657,24 +654,6 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 {
                     VarRec->PerWriterBlockStart[WriterRank + 1] =
                         VarRec->PerWriterBlockStart[WriterRank] + BlockCount;
-                }
-                if (VarRec->MinMaxOffset != SIZE_MAX)
-                {
-                    MinMaxStruct MinMax;
-                    MinMax.Init(VarRec->Type);
-                    for (size_t B = 0; B < BlockCount; B++)
-                    {
-                        void *MMs = *(void **)(((char *)meta_base) +
-                                               VarRec->MinMaxOffset);
-                        char *BlockMinAddr =
-                            (((char *)MMs) + 2 * B * VarRec->ElementSize);
-                        char *BlockMaxAddr =
-                            (((char *)MMs) + (2 * B + 1) * VarRec->ElementSize);
-                        ApplyElementMinMax(MinMax, VarRec->Type,
-                                           (void *)BlockMinAddr);
-                        ApplyElementMinMax(MinMax, VarRec->Type,
-                                           (void *)BlockMaxAddr);
-                    }
                 }
             }
         }
@@ -1121,7 +1100,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                     RR.Timestep = Req->Step;
                     RR.WriterRank = WriterRank;
                     RR.StartOffset =
-                        writer_meta_base->DataLocation[NeededBlock];
+                        writer_meta_base->DataBlockLocation[NeededBlock];
 
                     RR.ReadLength =
                         helper::GetDataTypeSize(Req->VarRec->Type) *
@@ -1179,9 +1158,9 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                             RR.Timestep = Req->Step;
                             RR.WriterRank = WriterRank;
                             RR.StartOffset =
-                                writer_meta_base->DataLocation[Block];
+                                writer_meta_base->DataBlockLocation[Block];
                             RR.ReadLength =
-                                writer_meta_base->DataLengths[Block];
+                                writer_meta_base->DataBlockSize[Block];
                             RR.DestinationAddr = nullptr;
                             if (doAllocTempBuffers)
                             {
@@ -1228,7 +1207,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                             RR.Timestep = Req->Step;
                             RR.WriterRank = WriterRank;
                             RR.StartOffset =
-                                writer_meta_base->DataLocation[Block] +
+                                writer_meta_base->DataBlockLocation[Block] +
                                 StartOffsetInBlock;
                             RR.ReadLength =
                                 EndOffsetInBlock - StartOffsetInBlock;
@@ -1292,7 +1271,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
             std::lock_guard<std::mutex> lockGuard(mutexDecompress);
             core::Decompress(IncomingData,
                              ((MetaArrayRecOperator *)writer_meta_base)
-                                 ->DataLengths[Read.BlockID],
+                                 ->DataBlockSize[Read.BlockID],
                              decompressBuffer.data());
         }
         IncomingData = decompressBuffer.data();
