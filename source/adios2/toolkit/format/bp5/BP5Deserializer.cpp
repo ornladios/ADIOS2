@@ -174,7 +174,7 @@ void BP5Deserializer::BreakdownVarName(const char *Name, char **base_name_p,
 void BP5Deserializer::BreakdownFieldType(const char *FieldType, bool &Operator,
                                          bool &MinMax)
 {
-    assert(FieldType[0] == 'M'); // sanity check, should start with "MetaArray"
+    // should start with "MetaArray"
     FieldType += strlen("MetaArray");
     if (FieldType == 0)
         return;
