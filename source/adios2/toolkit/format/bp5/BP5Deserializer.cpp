@@ -174,6 +174,12 @@ void BP5Deserializer::BreakdownVarName(const char *Name, char **base_name_p,
 void BP5Deserializer::BreakdownFieldType(const char *FieldType, bool &Operator,
                                          bool &MinMax)
 {
+    if (FieldType[0] != 'M')
+    {
+        throw std::runtime_error(
+            "BP5 unable to parse metadata, likely old version");
+    }
+
     // should start with "MetaArray"
     FieldType += strlen("MetaArray");
     if (FieldType == 0)
