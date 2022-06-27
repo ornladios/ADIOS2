@@ -1,5 +1,6 @@
 string(APPEND dashboard_cache "
 BUILD_TESTING:BOOL=ON
+NO_CONTEXT_TESTS:BOOL=ON
 ")
 
 if(POLICY CMP0057)
