@@ -83,7 +83,7 @@ static FMField MetaArrayRecOperatorMM1List[] = {
         "DataBlockSize", "integer[BlockCount]", sizeof(size_t),
         FMOffset(BP5Base::MetaArrayRecOperator *, DataBlockSize)},
     {"MinMax", "char[2][BlockCount]", 1,
-     FMOffset(BP5Base::MetaArrayRecMM *, MinMax)},
+     FMOffset(BP5Base::MetaArrayRecOperatorMM *, MinMax)},
     {NULL, NULL, 0, 0}};
 static FMField MetaArrayRecMM2List[] = {
     BASE_FIELD_ENTRIES{"MinMax", "char[4][BlockCount]", 1,
