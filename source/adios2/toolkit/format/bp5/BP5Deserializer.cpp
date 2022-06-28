@@ -1531,6 +1531,8 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
                 Blk.WriterID = WriterRank;
                 Blk.BlockID = Id++;
                 Blk.BufferP = writer_meta_base;
+                Blk.Start = NULL;
+                Blk.Count = NULL;
                 if (VarRec->OrigShapeID == ShapeID::LocalValue)
                 {
                     Blk.Count = (size_t *)1;

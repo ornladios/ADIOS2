@@ -724,10 +724,13 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
                         memcpy(b[i].Start, minBlocksInfo->BlocksInfo[i].Start,
                                sizeof(size_t) * minBlocksInfo->Dims);
                     }
-                    b[i].Count =
-                        (size_t *)malloc(sizeof(size_t) * minBlocksInfo->Dims);
-                    memcpy(b[i].Count, minBlocksInfo->BlocksInfo[i].Count,
-                           sizeof(size_t) * minBlocksInfo->Dims);
+                    if (minBlocksInfo->BlocksInfo[i].Count)
+                    {
+                        b[i].Count = (size_t *)malloc(sizeof(size_t) *
+                                                      minBlocksInfo->Dims);
+                        memcpy(b[i].Count, minBlocksInfo->BlocksInfo[i].Count,
+                               sizeof(size_t) * minBlocksInfo->Dims);
+                    }
                 }
                 if (minBlocksInfo->IsValue)
                 {
