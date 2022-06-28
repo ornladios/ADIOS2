@@ -195,6 +195,40 @@ void BP5Deserializer::BreakdownFieldType(const char *FieldType, bool &Operator,
     }
 }
 
+void BP5Deserializer::BreakdownV1ArrayName(const char *Name, char **base_name_p,
+                                           DataType *type_p,
+                                           int *element_size_p, bool &Operator,
+                                           bool &MinMax)
+{
+    int Type;
+    int ElementSize;
+
+    const char *NameStart = strchr(strchr(Name + 4, '_') + 1, '_') + 1;
+    // + 3 to skip BP5_ or bp5_ prefix
+    sscanf(Name + 4, "%d_%d", &ElementSize, &Type);
+    const char *Plus = index(Name, '+');
+    MinMax = false;
+    while (Plus && (*Plus == '+'))
+    {
+        int Len;
+        if (sscanf(Plus, "+%dO", &Len) == 1)
+        { // Operator Spec
+            Operator = true;
+            const char *OpStart = index(Plus, 'O') + 1;
+            Plus = OpStart + Len;
+        }
+        else if (strncmp(Plus, "+MM", 3) == 0)
+        {
+            MinMax = true;
+            Plus += 3;
+        }
+    }
+    *element_size_p = ElementSize;
+    *type_p = (DataType)Type;
+    *base_name_p = strdup(NameStart);
+    *(rindex(*base_name_p, '_')) = 0;
+}
+
 void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
                                          DataType *type_p, int *element_size_p)
 {
@@ -287,9 +321,20 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             int ElementSize;
             bool Operator = false;
             bool MinMax = false;
-            BreakdownFieldType(FieldList[i].field_type, Operator, MinMax);
-            BreakdownArrayName(FieldList[i].field_name, &ArrayName, &Type,
-                               &ElementSize);
+            bool V1_fields = true;
+            if (FieldList[i].field_type[0] == 'M')
+                V1_fields = false;
+            if (V1_fields)
+            {
+                BreakdownV1ArrayName(FieldList[i + 4].field_name, &ArrayName,
+                                     &Type, &ElementSize, Operator, MinMax);
+            }
+            else
+            {
+                BreakdownFieldType(FieldList[i].field_type, Operator, MinMax);
+                BreakdownArrayName(FieldList[i].field_name, &ArrayName, &Type,
+                                   &ElementSize);
+            }
             VarRec = LookupVarByName(ArrayName);
             if (!VarRec)
             {
@@ -311,8 +356,16 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             {
 
                 VarRec->MinMaxOffset = MetaRecFields * sizeof(void *);
+                MetaRecFields++;
             }
-            i++;
+            if (V1_fields)
+            {
+                i += MetaRecFields;
+            }
+            else
+            {
+                i++;
+            }
             free(ArrayName);
         }
         else

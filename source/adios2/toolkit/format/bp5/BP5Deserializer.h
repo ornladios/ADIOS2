@@ -186,6 +186,9 @@ private:
                             bool &MinMax);
     void BreakdownArrayName(const char *Name, char **base_name_p,
                             DataType *type_p, int *element_size_p);
+    void BreakdownV1ArrayName(const char *Name, char **base_name_p,
+                              DataType *type_p, int *element_size_p,
+                              bool &Operator, bool &MinMax);
     void *VarSetup(core::Engine *engine, const char *variableName,
                    const DataType type, void *data);
     void *ArrayVarSetup(core::Engine *engine, const char *variableName,
