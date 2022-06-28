@@ -708,17 +708,22 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
                 b[i].BlockID = minBlocksInfo->BlocksInfo[i].BlockID;
                 if (minBlocksInfo->WasLocalVar)
                 {
-                    b[i].Start = NULL;
+                    b[i].Start = (size_t *)malloc(sizeof(size_t));
+                    b[i].Start[0] =
+                        (intptr_t)minBlocksInfo->BlocksInfo[i].Start;
                     b[i].Count = (size_t *)malloc(sizeof(size_t));
                     b[i].Count[0] =
                         (intptr_t)minBlocksInfo->BlocksInfo[i].Count;
                 }
                 else
                 {
-                    b[i].Start =
-                        (size_t *)malloc(sizeof(size_t) * minBlocksInfo->Dims);
-                    memcpy(b[i].Start, minBlocksInfo->BlocksInfo[i].Start,
-                           sizeof(size_t) * minBlocksInfo->Dims);
+                    if (minBlocksInfo->BlocksInfo[i].Start)
+                    {
+                        b[i].Start = (size_t *)malloc(sizeof(size_t) *
+                                                      minBlocksInfo->Dims);
+                        memcpy(b[i].Start, minBlocksInfo->BlocksInfo[i].Start,
+                               sizeof(size_t) * minBlocksInfo->Dims);
+                    }
                     b[i].Count =
                         (size_t *)malloc(sizeof(size_t) * minBlocksInfo->Dims);
                     memcpy(b[i].Count, minBlocksInfo->BlocksInfo[i].Count,
