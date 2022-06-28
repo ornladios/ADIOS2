@@ -16,6 +16,9 @@
 
 #include "adios2/common/ADIOSTypes.h"
 
+#ifdef ADIOS2_HAVE_KOKKOS
+#include <Kokkos_Core.hpp>
+#endif
 /**
  <pre>
  The ADIOS_FOREACH_TYPE_1ARG macro assumes the given argument is a macro which
@@ -265,5 +268,37 @@
 #define ADIOS2_iterators_functions(DATA_FUNCTION, SIZE_FUNCTION)               \
     iterator begin() noexcept { return iterator(DATA_FUNCTION); }              \
     iterator end() noexcept { return iterator(DATA_FUNCTION + SIZE_FUNCTION); }
+
+#if defined(ADIOS2_HAVE_KOKKOS) && defined(KOKKOS_ENABLE_CUDA)
+#define ADIOS2_FOREACH_KOKKOS_TYPE_2ARGS(MACRO)                                \
+    MACRO(int32_t, Kokkos::CudaSpace)                                          \
+    MACRO(uint32_t, Kokkos::CudaSpace)                                         \
+    MACRO(int64_t, Kokkos::CudaSpace)                                          \
+    MACRO(uint64_t, Kokkos::CudaSpace)                                         \
+    MACRO(float, Kokkos::CudaSpace)                                            \
+    MACRO(double, Kokkos::CudaSpace)                                           \
+    MACRO(int32_t, Kokkos::CudaHostPinnedSpace)                                \
+    MACRO(uint32_t, Kokkos::CudaHostPinnedSpace)                               \
+    MACRO(int64_t, Kokkos::CudaHostPinnedSpace)                                \
+    MACRO(uint64_t, Kokkos::CudaHostPinnedSpace)                               \
+    MACRO(float, Kokkos::CudaHostPinnedSpace)                                  \
+    MACRO(double, Kokkos::CudaHostPinnedSpace)                                 \
+    MACRO(int32_t, Kokkos::CudaUVMSpace)                                       \
+    MACRO(uint32_t, Kokkos::CudaUVMSpace)                                      \
+    MACRO(int64_t, Kokkos::CudaUVMSpace)                                       \
+    MACRO(uint64_t, Kokkos::CudaUVMSpace)                                      \
+    MACRO(float, Kokkos::CudaUVMSpace)                                         \
+    MACRO(double, Kokkos::CudaUVMSpace)
+#endif
+
+#ifdef ADIOS2_HAVE_KOKKOS
+#define ADIOS2_FOREACH_KOKKOS_TYPE_2ARGS(MACRO)                                \
+    MACRO(int32_t, Kokkos::HostSpace)                                          \
+    MACRO(uint32_t, Kokkos::HostSpace)                                         \
+    MACRO(int64_t, Kokkos::HostSpace)                                          \
+    MACRO(uint64_t, Kokkos::HostSpace)                                         \
+    MACRO(float, Kokkos::HostSpace)                                            \
+    MACRO(double, Kokkos::HostSpace)
+#endif
 
 #endif /* ADIOS2_ADIOSMACROS_H */

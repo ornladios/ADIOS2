@@ -217,20 +217,12 @@ public:
 
 #ifdef ADIOS2_HAVE_KOKKOS
     /** Get and Put functions for Kokkos buffers */
-    template <class T>
-    void Put(Variable<T> variable, Kokkos::View<T *> data,
+    template <class T, class MemSpace>
+    void Put(Variable<T> variable, Kokkos::View<T *, MemSpace> data,
              const Mode launch = Mode::Deferred);
 
-    template <class T>
-    void Put(const std::string &variableName, Kokkos::View<T *> data,
-             const Mode launch = Mode::Deferred);
-
-    template <class T>
-    void Get(Variable<T> variable, Kokkos::View<T *> data,
-             const Mode launch = Mode::Deferred);
-
-    template <class T>
-    void Get(const std::string &variableName, Kokkos::View<T *> data,
+    template <class T, class MemSpace>
+    void Get(Variable<T> variable, Kokkos::View<T *, MemSpace> data,
              const Mode launch = Mode::Deferred);
 #endif
 

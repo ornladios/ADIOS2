@@ -107,6 +107,10 @@ add_library(adios2_core
 set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
 set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core)
 
+if(ADIOS2_HAVE_Kokkos)
+  target_link_libraries(adios2_core PUBLIC Kokkos::kokkos)
+endif()
+
 set(maybe_adios2_core_cuda)
 if(ADIOS2_HAVE_CUDA)
   add_library(adios2_core_cuda helper/adiosCUDA.cu)

@@ -138,18 +138,8 @@ void Engine::Put(const std::string &variableName, const T &datum,
 }
 
 #ifdef ADIOS2_HAVE_KOKKOS
-template <class T>
-void Engine::Put(const std::string &variableName, Kokkos::View<T *> data,
-                 const Mode launch)
-{
-    using IOType = typename TypeInfo<T>::IOType;
-    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Put");
-    m_Engine->Put(variableName, reinterpret_cast<const IOType *>(data.data()),
-                  launch);
-}
-
-template <class T>
-void Engine::Put(Variable<T> variable, Kokkos::View<T *> data,
+template <class T, class MemSpace>
+void Engine::Put(Variable<T> variable, Kokkos::View<T *, MemSpace> data,
                  const Mode launch)
 {
     using IOType = typename TypeInfo<T>::IOType;
@@ -259,8 +249,8 @@ void Engine::Get(Variable<T> variable, T **data) const
 }
 
 #ifdef ADIOS2_HAVE_KOKKOS
-template <class T>
-void Engine::Get(Variable<T> variable, Kokkos::View<T *> data,
+template <class T, class MemSpace>
+void Engine::Get(Variable<T> variable, Kokkos::View<T *, MemSpace> data,
                  const Mode launch)
 {
     adios2::helper::CheckForNullptr(variable.m_Variable,
@@ -268,16 +258,6 @@ void Engine::Get(Variable<T> variable, Kokkos::View<T *> data,
     using IOType = typename TypeInfo<T>::IOType;
     adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
     m_Engine->Get(*variable.m_Variable, reinterpret_cast<IOType *>(data.data()),
-                  launch);
-}
-
-template <class T>
-void Engine::Get(const std::string &variableName, Kokkos::View<T *> data,
-                 const Mode launch)
-{
-    using IOType = typename TypeInfo<T>::IOType;
-    adios2::helper::CheckForNullptr(m_Engine, "in call to Engine::Get");
-    m_Engine->Get(variableName, reinterpret_cast<IOType *>(data.data()),
                   launch);
 }
 #endif
