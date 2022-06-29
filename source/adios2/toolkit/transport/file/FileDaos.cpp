@@ -194,13 +194,13 @@ public:
 
             // std::cout << "single process start daos_pool_connect..." <<
             // std::endl;
-            rc = daos_pool_connect(UUID, Group.c_str(), poolFlags, &poh, NULL,
+            rc = daos_pool_connect(uuid_c, Group.c_str(), poolFlags, &poh, NULL,
                                    NULL);
             CheckDAOSReturnCode(rc);
             // std::cout << "single process daos_pool_connect succeeded!" <<
             // std::endl;
 
-            rc = daos_cont_open(poh, CUUID, contFlags, &coh, NULL, NULL);
+            rc = daos_cont_open(poh, cuuid_c, contFlags, &coh, NULL, NULL);
             CheckDAOSReturnCode(rc);
             // std::cout << "single process daos_cont_open succeeded!" <<
             // std::endl;
@@ -220,12 +220,12 @@ public:
             if (comm.Rank() == 0)
             {
                 // std::cout << "start daos_pool_connect..." << std::endl;
-                rc = daos_pool_connect(UUID, Group.c_str(), poolFlags, &poh,
+                rc = daos_pool_connect(uuid_c, Group.c_str(), poolFlags, &poh,
                                        NULL, NULL);
                 CheckDAOSReturnCode(rc);
                 // std::cout << "daos_pool_connect succeeded!" << std::endl;
 
-                rc = daos_cont_open(poh, CUUID, contFlags, &coh, NULL, NULL);
+                rc = daos_cont_open(poh, cuuid_c, contFlags, &coh, NULL, NULL);
                 CheckDAOSReturnCode(rc);
                 // std::cout << "daos_cont_open succeeded!" << std::endl;
 
