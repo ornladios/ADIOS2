@@ -717,6 +717,7 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
                 }
                 else
                 {
+                    b[i].Start = b[i].Count = NULL;
                     if (minBlocksInfo->BlocksInfo[i].Start)
                     {
                         b[i].Start = (size_t *)malloc(sizeof(size_t) *
