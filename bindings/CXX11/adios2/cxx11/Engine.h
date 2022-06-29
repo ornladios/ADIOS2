@@ -19,7 +19,7 @@
 #include "adios2/common/ADIOSTypes.h"
 
 #ifdef ADIOS2_HAVE_KOKKOS
-#include <Kokkos_Core.hpp>
+#include <Kokkos_Core_fwd.hpp>
 #endif
 
 namespace adios2
