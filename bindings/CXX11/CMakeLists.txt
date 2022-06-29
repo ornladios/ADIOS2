@@ -84,6 +84,7 @@ install(
 install(
   FILES adios2/cxx11/ADIOS.h
         adios2/cxx11/ADIOS.inl
+        adios2/cxx11/ADIOSMacros.h
         adios2/cxx11/IO.h
         adios2/cxx11/Group.h
         adios2/cxx11/Variable.h

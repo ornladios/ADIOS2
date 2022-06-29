@@ -9,6 +9,7 @@
  */
 
 #include "Engine.h"
+#include "ADIOSMacros.h"
 #include "Engine.tcc"
 
 #include "adios2/core/Engine.h"
