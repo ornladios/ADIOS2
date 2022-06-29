@@ -245,39 +245,13 @@ char *BP5Serializer::BuildVarName(const char *base_name, const ShapeID Shape,
     return Ret;
 }
 
-static char *BuildShortName(const ShapeID Shape, const int Index,
-                            const char *Suffix)
-{
-
-    const char *Prefix = NamePrefix(Shape);
-    int Len = strlen(Prefix) + 2 + strlen(Suffix) + 16;
-    char *Ret = (char *)malloc(Len);
-    sprintf(Ret, "%s_%d_%s", Prefix, Index, Suffix);
-    return Ret;
-}
-
 static char *BuildLongName(const char *base_name, const ShapeID Shape,
-                           const int type, const int element_size,
-                           const char *Operator, bool MinMax)
+                           const int type, const int element_size)
 {
     const char *Prefix = NamePrefix(Shape);
     int Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
     char *Ret = (char *)malloc(Len);
     sprintf(Ret, "%s_%d_%d", Prefix, element_size, type);
-    if (Operator && (strcmp(Operator, "") != 0))
-    {
-        Len +=
-            5 +
-            strlen(Operator); // for "+%d%s" where %d is len of operator string
-        Ret = (char *)realloc(Ret, Len);
-        sprintf(&Ret[strlen(Ret)], "+%zuO%s", strlen(Operator), Operator);
-    }
-    if (MinMax)
-    {
-        Len += 3;
-        Ret = (char *)realloc(Ret, Len);
-        strcat(Ret, "+MM");
-    }
     strcat(Ret, "_");
     strcat(Ret, base_name);
     return Ret;
@@ -453,63 +427,50 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
         // and Offsets matching _MetaArrayRec
         char *LongName =
-            BuildLongName(Name, VB->m_ShapeID, (int)Type, ElemSize,
-                          OperatorType, /* minmax */ (m_StatsLevel > 0));
-        char *DimsName = BuildShortName(VB->m_ShapeID, Info.RecCount, "Dims");
-        char *BlockCountName =
-            BuildShortName(VB->m_ShapeID, Info.RecCount, "BlockCount");
-        char *ArrayDBCount =
-            BuildShortName(VB->m_ShapeID, Info.RecCount, "DBCount");
-        char *CountName = ConcatName(LongName, "Count");
-        char *ShapeName = BuildShortName(VB->m_ShapeID, Info.RecCount, "Shape");
-        char *OffsetsName =
-            BuildShortName(VB->m_ShapeID, Info.RecCount, "Offsets");
-        char *LocationsName =
-            BuildShortName(VB->m_ShapeID, Info.RecCount, "DataLocations");
-        char *LengthsName =
-            BuildShortName(VB->m_ShapeID, Info.RecCount, "DataLengths");
-        char *MinMaxName =
-            BuildShortName(VB->m_ShapeID, Info.RecCount, "MinMax");
-        AddField(&Info.MetaFields, &Info.MetaFieldCount, DimsName,
-                 DataType::Int64, sizeof(size_t));
-        Rec->MetaOffset = Info.MetaFields[Info.MetaFieldCount - 1].field_offset;
-        AddField(&Info.MetaFields, &Info.MetaFieldCount, BlockCountName,
-                 DataType::Int64, sizeof(size_t));
-        AddField(&Info.MetaFields, &Info.MetaFieldCount, ArrayDBCount,
-                 DataType::Int64, sizeof(size_t));
-        AddFixedArrayField(&Info.MetaFields, &Info.MetaFieldCount, ShapeName,
-                           DataType::Int64, sizeof(size_t), DimCount);
-        AddVarArrayField(&Info.MetaFields, &Info.MetaFieldCount, CountName,
-                         DataType::Int64, sizeof(size_t), ArrayDBCount);
-        AddVarArrayField(&Info.MetaFields, &Info.MetaFieldCount, OffsetsName,
-                         DataType::Int64, sizeof(size_t), ArrayDBCount);
-        AddVarArrayField(&Info.MetaFields, &Info.MetaFieldCount, LocationsName,
-                         DataType::Int64, sizeof(size_t), BlockCountName);
-        size_t Offset = sizeof(MetaArrayRec);
+            BuildLongName(Name, VB->m_ShapeID, (int)Type, ElemSize);
+
+        const char *ArrayTypeName = "MetaArray";
+        int FieldSize = sizeof(MetaArrayRec);
         if (VB->m_Operations.size())
         {
-            AddVarArrayField(&Info.MetaFields, &Info.MetaFieldCount,
-                             LengthsName, DataType::Int64, sizeof(size_t),
-                             BlockCountName);
-            Offset += sizeof(void *);
+            ArrayTypeName = "MetaArrayOp";
+            FieldSize = sizeof(MetaArrayRecOperator);
         }
         if (m_StatsLevel > 0)
         {
-            Rec->MinMaxOffset = Offset;
-            AddDoubleArrayField(&Info.MetaFields, &Info.MetaFieldCount,
-                                MinMaxName, Type, ElemSize, BlockCountName);
+            char MMArrayName[40] = {0};
+            strcat(MMArrayName, ArrayTypeName);
+            switch (ElemSize)
+            {
+            case 1:
+                strcat(MMArrayName, "MM1");
+                break;
+            case 2:
+                strcat(MMArrayName, "MM2");
+                break;
+            case 4:
+                strcat(MMArrayName, "MM4");
+                break;
+            case 8:
+                strcat(MMArrayName, "MM8");
+                break;
+            case 16:
+                strcat(MMArrayName, "MM16");
+                break;
+            }
+            Rec->MinMaxOffset = FieldSize;
+            FieldSize += sizeof(char *);
+            AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, LongName,
+                           MMArrayName, FieldSize);
         }
+        else
+        {
+            AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, LongName,
+                           ArrayTypeName, FieldSize);
+        }
+        Rec->MetaOffset = Info.MetaFields[Info.MetaFieldCount - 1].field_offset;
         Rec->OperatorType = OperatorType;
         free(LongName);
-        free(DimsName);
-        free(ArrayDBCount);
-        free(BlockCountName);
-        free(ShapeName);
-        free(CountName);
-        free(OffsetsName);
-        free(LocationsName);
-        free(LengthsName);
-        free(MinMaxName);
         RecalcMarshalStorageSize();
 
         // Changing the formats renders these invalid
@@ -562,7 +523,7 @@ void BP5Serializer::DumpDeferredBlocks(bool forceCopyDeferred)
             m_PriorDataBufferSizeTotal +
             CurDataBuffer->AddToVec(Def.DataSize, Def.Data, Def.AlignReq,
                                     forceCopyDeferred);
-        MetaEntry->DataLocation[Def.BlockID] = DataOffset;
+        MetaEntry->DataBlockLocation[Def.BlockID] = DataOffset;
     }
     DeferredExterns.clear();
 }
@@ -629,7 +590,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         /*
          * If this is a big external block, we'll do everything except add it to
          * the BufferV now, saving enough information to add it and patch back
-         * the DataLocation in the metadata in DumpDeferredBlocks()
+         * the DataBlockLocation in the metadata in DumpDeferredBlocks()
          */
         DeferAddToVec = true;
     }
@@ -730,14 +691,14 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             MetaEntry->DBCount = DimCount;
             MetaEntry->Count = CopyDims(DimCount, Count);
             MetaEntry->BlockCount = 1;
-            MetaEntry->DataLocation = (size_t *)malloc(sizeof(size_t));
-            MetaEntry->DataLocation[0] = DataOffset;
+            MetaEntry->DataBlockLocation = (size_t *)malloc(sizeof(size_t));
+            MetaEntry->DataBlockLocation[0] = DataOffset;
             if (Rec->OperatorType)
             {
                 MetaArrayRecOperator *OpEntry =
                     (MetaArrayRecOperator *)MetaEntry;
-                OpEntry->DataLengths = (size_t *)malloc(sizeof(size_t));
-                OpEntry->DataLengths[0] = CompressedSize;
+                OpEntry->DataBlockSize = (size_t *)malloc(sizeof(size_t));
+                OpEntry->DataBlockSize[0] = CompressedSize;
             }
             if (Offsets)
                 MetaEntry->Offsets = CopyDims(DimCount, Offsets);
@@ -776,17 +737,20 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             MetaEntry->BlockCount++;
             MetaEntry->Count =
                 AppendDims(MetaEntry->Count, PreviousDBCount, DimCount, Count);
-            MetaEntry->DataLocation =
-                (size_t *)realloc(MetaEntry->DataLocation,
+            MetaEntry->DataBlockLocation =
+                (size_t *)realloc(MetaEntry->DataBlockLocation,
                                   MetaEntry->BlockCount * sizeof(size_t));
-            MetaEntry->DataLocation[MetaEntry->BlockCount - 1] = DataOffset;
+            MetaEntry->DataBlockLocation[MetaEntry->BlockCount - 1] =
+                DataOffset;
             if (Rec->OperatorType)
             {
                 MetaArrayRecOperator *OpEntry =
                     (MetaArrayRecOperator *)MetaEntry;
-                OpEntry->DataLengths = (size_t *)realloc(
-                    OpEntry->DataLengths, OpEntry->BlockCount * sizeof(size_t));
-                OpEntry->DataLengths[OpEntry->BlockCount - 1] = CompressedSize;
+                OpEntry->DataBlockSize =
+                    (size_t *)realloc(OpEntry->DataBlockSize,
+                                      OpEntry->BlockCount * sizeof(size_t));
+                OpEntry->DataBlockSize[OpEntry->BlockCount - 1] =
+                    CompressedSize;
             }
             if (m_StatsLevel > 0)
             {
@@ -907,10 +871,33 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
     if (!Info.MetaFormat && Info.MetaFieldCount)
     {
         MetaMetaInfoBlock Block;
-        FMStructDescRec struct_list[4] = {
+        FMStructDescRec struct_list[20] = {
             {NULL, NULL, 0, NULL},
             {"complex4", fcomplex_field_list, sizeof(fcomplex_struct), NULL},
             {"complex8", dcomplex_field_list, sizeof(dcomplex_struct), NULL},
+            {"MetaArray", MetaArrayRecListPtr, sizeof(MetaArrayRec), NULL},
+            {"MetaArrayOp", MetaArrayRecOperatorListPtr,
+             sizeof(MetaArrayRecOperator), NULL},
+            {"MetaArrayMM1", MetaArrayRecMM1ListPtr, sizeof(MetaArrayRecMM),
+             NULL},
+            {"MetaArrayOpMM1", MetaArrayRecOperatorMM1ListPtr,
+             sizeof(MetaArrayRecOperatorMM), NULL},
+            {"MetaArrayMM2", MetaArrayRecMM2ListPtr, sizeof(MetaArrayRecMM),
+             NULL},
+            {"MetaArrayOpMM2", MetaArrayRecOperatorMM2ListPtr,
+             sizeof(MetaArrayRecOperatorMM), NULL},
+            {"MetaArrayMM4", MetaArrayRecMM4ListPtr, sizeof(MetaArrayRecMM),
+             NULL},
+            {"MetaArrayOpMM4", MetaArrayRecOperatorMM4ListPtr,
+             sizeof(MetaArrayRecOperatorMM), NULL},
+            {"MetaArrayMM8", MetaArrayRecMM8ListPtr, sizeof(MetaArrayRecMM),
+             NULL},
+            {"MetaArrayOpMM8", MetaArrayRecOperatorMM8ListPtr,
+             sizeof(MetaArrayRecOperatorMM), NULL},
+            {"MetaArrayMM16", MetaArrayRecMM16ListPtr, sizeof(MetaArrayRecMM),
+             NULL},
+            {"MetaArrayOpMM16", MetaArrayRecOperatorMM16ListPtr,
+             sizeof(MetaArrayRecOperatorMM), NULL},
             {NULL, NULL, 0, NULL}};
         struct_list[0].format_name = "MetaData";
         struct_list[0].field_list = Info.MetaFields;
@@ -989,7 +976,7 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
             new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
     }
 
-    //    FMdump_encoded_data(Info.MetaFormat, MetaDataBlock, 1024000);
+    // FMdump_encoded_data(Info.MetaFormat, MetaDataBlock, 1024000);
     /* free all those copied dimensions, etc */
     MBase = (struct BP5MetadataInfoStruct *)Metadata;
     size_t *tmp = MBase->BitField;
