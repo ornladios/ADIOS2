@@ -459,6 +459,10 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     // Close the file
     engine.Close();
+    if (TestVarDestruction)
+    {
+        EXPECT_FALSE(io.InquireVariable<std::complex<float>>("c32"));
+    }
 }
 
 //******************************************************************************
