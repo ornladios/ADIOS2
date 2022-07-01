@@ -33,6 +33,7 @@ int LongFirstDelay = 0;
 int FirstTimestepMustBeZero = 0;
 int LockGeometry = 0;
 bool VaryingDataSize = false;
+bool TestVarDestruction = false;
 bool AdvancingAttrs = false;
 int NoData = 0;
 int NoDataNode = -1;
@@ -153,6 +154,10 @@ void ParseArgs(int argc, char **argv)
         else if (std::string(argv[1]) == "--shared_io")
         {
             SharedIO = true;
+        }
+        else if (std::string(argv[1]) == "--var_destruction")
+        {
+            TestVarDestruction = true;
         }
         else if (std::string(argv[1]) == "--shared_var")
         {

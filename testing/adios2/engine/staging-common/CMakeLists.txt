@@ -105,7 +105,7 @@ if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
    endforeach()
 endif()
 
-set (SIMPLE_TESTS "1x1;1x1DefSync")
+set (SIMPLE_TESTS "1x1;1x1DefSync;1x1VarDestruction")
 set (BP5File_ONLY_TESTS "1x1DataWrite")
 
 set (SIMPLE_FORTRAN_TESTS "")
@@ -196,6 +196,8 @@ if(NOT WIN32)    # not on windows
     list (FILTER BP_TESTS EXCLUDE REGEX ".*NoData$")
     # BP3 and BP4 don't do PerformDataWrite
     list (FILTER BP_TESTS EXCLUDE REGEX ".*DataWrite.*")
+    # BP3 and BP4 don't do VarDestruction
+    list (FILTER BP_TESTS EXCLUDE REGEX ".*VarDestruction.*")
     foreach(test ${BP_TESTS})
         add_common_test(${test} BP4)
     endforeach()
@@ -254,6 +256,8 @@ if(NOT MSVC)    # not on windows
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*SharedVar.BPS$")
     # Local fail with BP4_streaming*
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*Local.BPS$")
+    # BP3 and BP4 don't do VarDestruction
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*VarDestruction.*")
     # Fortran scalar reads don't work for BP4 streaming
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX "(FtoF|CtoF).*")
     # Local Vars have a heisen failure for BP4 streaming
@@ -296,6 +300,8 @@ if(NOT MSVC)    # not on windows
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*NoReaderNoWait.FS$")
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*1x1DefSync.*")
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*Flush.*")
+    # BP3 and BP4 don't do VarDestruction
+    list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*VarDestruction.*")
 
     foreach(test ${FILESTREAM_TESTS})
         add_common_test(${test} FileStream)
@@ -321,6 +327,8 @@ if(NOT MSVC AND ADIOS2_HAVE_HDF5 AND (NOT ADIOS2_HAVE_MPI OR HDF5_IS_PARALLEL)) 
     list (FILTER HDF5_TESTS EXCLUDE REGEX "[2345]x")
     # The nobody-writes-data-in-a-timestep tests don't work with HDF5
     list (FILTER HDF5_TESTS EXCLUDE REGEX ".*HalfNoData$")
+    # The variables with HDF5 reads persist
+    list (FILTER HDF5_TESTS EXCLUDE REGEX ".*VarDestruction.*")
     foreach(test ${HDF5_TESTS})
         add_common_test(${test} HDF5)
     endforeach()

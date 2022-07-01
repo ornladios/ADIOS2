@@ -1473,6 +1473,9 @@ BP5Deserializer::~BP5Deserializer()
     }
     for (auto &VarRec : VarByName)
     {
+        /* remove any variables that we've created from our IO */
+        m_Engine->m_IO.RemoveVariable(VarRec.second->VarName);
+
         free(VarRec.second->VarName);
         if (VarRec.second->Operator)
             free(VarRec.second->Operator);
