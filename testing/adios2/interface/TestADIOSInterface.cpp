@@ -462,8 +462,10 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put2File)
         writer.Put(var, &myData[b][0], TypeParam::PutMode);
     }
 
-    reader.Close();
+    // Close the writer before the reader because the var goes away when the
+    // reader does
     writer.Close();
+    reader.Close();
     this->CheckOutput(filename);
 }
 
