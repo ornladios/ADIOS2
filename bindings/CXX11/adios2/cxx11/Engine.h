@@ -35,13 +35,13 @@ struct is_container : std::false_type
 
 template <typename C>
 struct is_container<
-    C, std::conditional_t<
+    C, typename std::conditional<
            false,
            void_t<typename C::value_type, typename C::size_type,
                   decltype(const_cast<const typename C::value_type *>(
                       std::declval<C>().data())),
                   decltype(std::declval<C>().size())>,
-           void>> : public std::true_type
+           void>::type> : public std::true_type
 {
 };
 
@@ -174,9 +174,10 @@ public:
      */
     template <
         class T, class C,
-        typename = std::enable_if_t<
+        typename = typename std::enable_if<
             detail::is_container<C>::value &&
-            std::is_same<std::remove_cv_t<typename C::value_type>, T>::value>>
+            std::is_same<typename std::remove_cv<typename C::value_type>::type,
+                         T>::value>::type>
     void Put(Variable<T> variable, const C &container,
              const Mode launch = Mode::Deferred)
     {
