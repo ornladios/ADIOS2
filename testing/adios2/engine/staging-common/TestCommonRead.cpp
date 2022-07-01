@@ -461,6 +461,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     engine.Close();
     if (TestVarDestruction)
     {
+        // Engine close should delete was was created by the reader, not other
+        // vars
         EXPECT_FALSE(io.InquireVariable<std::complex<float>>("c32"));
     }
 }

@@ -22,6 +22,7 @@
 #include <memory> //std::shared_ptr
 #include <set>
 #include <string>
+#include <unordered_set>
 #include <vector>
 /// \endcond
 
@@ -511,6 +512,9 @@ public:
     /** Inform about computation block through User->ADIOS->IO */
     virtual void ExitComputationBlock() noexcept;
 
+    void RegisterCreatedVariable(const VariableBase *var);
+    void RemoveCreatedVars();
+
 protected:
     /** from ADIOS class passed to Engine created with Open
      *  if no communicator is passed */
@@ -623,6 +627,8 @@ protected:
     bool m_BetweenStepPairs = false;
 
 private:
+    std::unordered_set<const VariableBase *> m_CreatedVars;
+
     /** Throw exception by Engine virtual functions not implemented/supported by
      *  a derived  class */
     void ThrowUp(const std::string function) const;

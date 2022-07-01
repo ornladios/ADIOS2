@@ -300,7 +300,7 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
     case adios2::StepMode::Read:
         break;
     }
-    m_IO.RemoveAllVariables();
+    RemoveCreatedVars();
     result = SstAdvanceStep(m_Input, timeout_sec);
     if (result == SstEndOfStream)
     {
@@ -356,7 +356,7 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
             i++;
         }
 
-        m_IO.RemoveAllVariables();
+        RemoveCreatedVars();
         m_BP5Deserializer->SetupForStep(
             SstCurrentStep(m_Input),
             static_cast<size_t>(m_CurrentStepMetaData->WriterCohortSize));
@@ -421,7 +421,7 @@ StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
                     (*m_CurrentStepMetaData->WriterMetadata)->block,
                     (*m_CurrentStepMetaData->WriterMetadata)->DataSize);
 
-        m_IO.RemoveAllVariables();
+        RemoveCreatedVars();
         m_BP3Deserializer->ParseMetadata(m_BP3Deserializer->m_Metadata, *this);
         m_IO.ResetVariablesStepSelection(true,
                                          "in call to SST Reader BeginStep");
