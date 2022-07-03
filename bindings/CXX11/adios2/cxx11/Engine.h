@@ -28,14 +28,14 @@ template <class...>
 using void_t = void;
 
 template <typename C, typename = void>
-struct is_container : std::false_type
+struct is_ndarray : std::false_type
 {
 };
 
 template <typename C>
-struct is_container<C, void_t<typename C::value_type, typename C::size_type,
-                              decltype(std::declval<C>().data()),
-                              decltype(std::declval<C>().size())>>
+struct is_ndarray<C, void_t<typename C::value_type, typename C::size_type,
+                            decltype(std::declval<C>().data()),
+                            decltype(std::declval<C>().size())>>
 : public std::true_type
 {
 };
@@ -173,13 +173,13 @@ public:
     template <
         class T, class C,
         typename = typename std::enable_if<
-            detail::is_container<C>::value &&
+            detail::is_ndarray<C>::value &&
             std::is_same<typename std::remove_cv<typename C::value_type>::type,
                          T>::value>::type>
-    void Put(Variable<T> variable, const C &container,
+    void Put(Variable<T> variable, const C &ndarray,
              const Mode launch = Mode::Deferred)
     {
-        Put(variable, const_cast<const T *>(container.data()), launch);
+        Put(variable, const_cast<const T *>(ndarray.data()), launch);
     }
 
     /**
