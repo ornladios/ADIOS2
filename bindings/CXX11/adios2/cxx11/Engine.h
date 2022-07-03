@@ -181,17 +181,14 @@ public:
      * @param launch mode policy
      */
     template <class T, class C,
-              typename =
-                  typename std::enable_if<ndarray_traits<const C>::value>::type>
+              typename = typename std::enable_if<
+                  ndarray_traits<const C>::value &&
+                  std::is_same<typename std::remove_cv<typename ndarray_traits<
+                                   const C>::value_type>::type,
+                               T>::value>::type>
     void Put(Variable<T> variable, const C &ndarray,
              const Mode launch = Mode::Deferred)
     {
-        static_assert(
-            std::is_same<typename std::remove_cv<typename ndarray_traits<
-                             const C>::value_type>::type,
-                         T>::value,
-            "In Put(): Passed data structure value_type does not match "
-            "variable data type.");
         auto mem_space = ndarray_traits<const C>::memory_space;
         if (mem_space != adios2::MemorySpace::Detect)
         {
@@ -295,18 +292,15 @@ public:
      * @param launch mode policy
      * @exception std::invalid_argument for invalid variable or nullptr data
      */
-    template <
-        class T, class C,
-        typename = typename std::enable_if<ndarray_traits<C>::value>::type>
+    template <class T, class C,
+              typename = typename std::enable_if<
+                  ndarray_traits<const C>::value &&
+                  std::is_same<typename std::remove_cv<typename ndarray_traits<
+                                   const C>::value_type>::type,
+                               T>::value>::type>
     void Get(Variable<T> variable, C &ndarray,
              const Mode launch = Mode::Deferred)
     {
-        static_assert(
-            std::is_same<typename std::remove_cv<
-                             typename ndarray_traits<C>::value_type>::type,
-                         T>::value,
-            "In Get(): Passed data structure value_type does not match "
-            "variable data type.");
         auto mem_space = ndarray_traits<const C>::memory_space;
         if (mem_space != adios2::MemorySpace::Detect)
         {
