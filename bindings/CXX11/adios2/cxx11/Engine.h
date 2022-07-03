@@ -27,7 +27,7 @@ namespace detail
 template <class...>
 using void_t = void;
 
-}
+} // end namespace detail
 
 template <typename C, typename = void>
 struct ndarray_traits : std::false_type
@@ -38,7 +38,11 @@ template <typename C>
 struct ndarray_traits<
     C, detail::void_t<typename C::value_type, typename C::pointer,
                       typename C::size_type, decltype(std::declval<C>().data()),
-                      decltype(std::declval<C>().size())>> : std::true_type
+                      decltype(std::declval<C>().size()),
+                      // don't match std::vector since it's handled separately
+                      typename std::enable_if<!std::is_same<
+                          C, std::vector<typename C::value_type>>::type>>>
+: std::true_type
 {
     using value_type = typename C::value_type;
     using pointer = typename C::pointer;
