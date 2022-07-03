@@ -43,6 +43,7 @@ struct ndarray_traits<
     using value_type = typename C::value_type;
     using pointer = typename C::pointer;
     using size_type = typename C::size_type;
+    static constexpr auto memory_space = adios2::MemorySpace::Detect;
 
     static pointer data(C &c) { return c.data(); }
     static size_type size(C &c) { return c.size(); }
@@ -175,6 +176,9 @@ public:
 
     /**
      * Put data associated with a container-like thing, e.g., a Kokkos::View
+     * @param variable contains variable metadata information
+     * @param ndarray user data that is multi-dimensional array-like
+     * @param launch mode policy
      */
     template <class T, class C,
               typename =
@@ -188,6 +192,11 @@ public:
                          T>::value,
             "In Put(): Passed data structure value_type does not match "
             "variable data type.");
+        auto mem_space = ndarray_traits<const C>::memory_space;
+        if (mem_space != adios2::MemorySpace::Detect)
+        {
+            variable.SetMemorySpace(mem_space);
+        }
         Put(variable,
             const_cast<const T *>(ndarray_traits<const C>::data(ndarray)),
             launch);
@@ -278,6 +287,33 @@ public:
 
     void Get(VariableNT &variable, void *data,
              const Mode launch = Mode::Deferred);
+
+    /**
+     * Get data associated with a Variable from the Engine
+     * @param variable contains variable metadata information
+     * @param ndarray user data that is multi-dimensional array-like
+     * @param launch mode policy
+     * @exception std::invalid_argument for invalid variable or nullptr data
+     */
+    template <
+        class T, class C,
+        typename = typename std::enable_if<ndarray_traits<C>::value>::type>
+    void Get(Variable<T> variable, C &ndarray,
+             const Mode launch = Mode::Deferred)
+    {
+        static_assert(
+            std::is_same<typename std::remove_cv<
+                             typename ndarray_traits<C>::value_type>::type,
+                         T>::value,
+            "In Get(): Passed data structure value_type does not match "
+            "variable data type.");
+        auto mem_space = ndarray_traits<const C>::memory_space;
+        if (mem_space != adios2::MemorySpace::Detect)
+        {
+            variable.SetMemorySpace(mem_space);
+        }
+        Get(variable, ndarray_traits<const C>::data(ndarray), launch);
+    }
 
     /**
      * Get data associated with a Variable from the Engine. Overloaded version
