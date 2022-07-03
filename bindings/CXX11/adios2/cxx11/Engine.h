@@ -27,20 +27,26 @@ namespace detail
 template <class...>
 using void_t = void;
 
+}
+
 template <typename C, typename = void>
-struct is_ndarray : std::false_type
+struct ndarray_traits : std::false_type
 {
 };
 
 template <typename C>
-struct is_ndarray<C, void_t<typename C::value_type, typename C::size_type,
-                            decltype(std::declval<C>().data()),
-                            decltype(std::declval<C>().size())>>
-: public std::true_type
+struct ndarray_traits<
+    C, detail::void_t<typename C::value_type, typename C::pointer,
+                      typename C::size_type, decltype(std::declval<C>().data()),
+                      decltype(std::declval<C>().size())>> : std::true_type
 {
-};
+    using value_type = typename C::value_type;
+    using pointer = typename C::pointer;
+    using size_type = typename C::size_type;
 
-}
+    static pointer data(C &c) { return c.data(); }
+    static size_type size(C &c) { return c.size(); }
+};
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 // forward declare
@@ -170,16 +176,21 @@ public:
     /**
      * Put data associated with a container-like thing, e.g., a Kokkos::View
      */
-    template <
-        class T, class C,
-        typename = typename std::enable_if<
-            detail::is_ndarray<C>::value &&
-            std::is_same<typename std::remove_cv<typename C::value_type>::type,
-                         T>::value>::type>
+    template <class T, class C,
+              typename =
+                  typename std::enable_if<ndarray_traits<const C>::value>::type>
     void Put(Variable<T> variable, const C &ndarray,
              const Mode launch = Mode::Deferred)
     {
-        Put(variable, const_cast<const T *>(ndarray.data()), launch);
+        static_assert(
+            std::is_same<typename std::remove_cv<typename ndarray_traits<
+                             const C>::value_type>::type,
+                         T>::value,
+            "In Put(): Passed data structure value_type does not match "
+            "variable data type.");
+        Put(variable,
+            const_cast<const T *>(ndarray_traits<const C>::data(ndarray)),
+            launch);
     }
 
     /**
