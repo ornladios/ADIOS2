@@ -23,10 +23,9 @@ namespace adios2
 
 namespace detail
 {
-template <typename... Ts>
-struct void_t
-{
-};
+
+template <class...>
+using void_t = void;
 
 template <typename C, typename = void>
 struct is_container : std::false_type
@@ -34,14 +33,10 @@ struct is_container : std::false_type
 };
 
 template <typename C>
-struct is_container<
-    C, typename std::conditional<
-           false,
-           void_t<typename C::value_type, typename C::size_type,
-                  decltype(const_cast<const typename C::value_type *>(
-                      std::declval<C>().data())),
-                  decltype(std::declval<C>().size())>,
-           void>::type> : public std::true_type
+struct is_container<C, void_t<typename C::value_type, typename C::size_type,
+                              decltype(std::declval<C>().data()),
+                              decltype(std::declval<C>().size())>>
+: public std::true_type
 {
 };
 
@@ -169,6 +164,9 @@ public:
     void Put(Variable<T> variable, const T *data,
              const Mode launch = Mode::Deferred);
 
+    void Put(VariableNT &variable, const void *data,
+             const Mode launch = Mode::Deferred);
+
     /**
      * Put data associated with a container-like thing, e.g., a Kokkos::View
      */
@@ -183,9 +181,6 @@ public:
     {
         Put(variable, const_cast<const T *>(container.data()), launch);
     }
-
-    void Put(VariableNT &variable, const void *data,
-             const Mode launch = Mode::Deferred);
 
     /**
      * Put data associated with a Variable in the Engine
