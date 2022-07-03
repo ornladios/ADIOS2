@@ -89,6 +89,7 @@ install(
         adios2/cxx11/Operator.h
         adios2/cxx11/Query.h
         adios2/cxx11/Types.h
+        adios2/cxx11/kokkos_interop.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/cxx11
   COMPONENT adios2_cxx11-development
 )
