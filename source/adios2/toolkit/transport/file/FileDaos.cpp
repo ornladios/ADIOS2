@@ -31,7 +31,7 @@
 
 #define CheckDAOSReturnCode(r) CheckDAOSReturnCodeF((r), __FILE__, __LINE__)
 #define DefaultMaxDFSBatchSize 8589934592
-
+#define DAOS_VERSION 2
 namespace adios2
 {
 namespace transport
@@ -194,13 +194,21 @@ public:
 
             // std::cout << "single process start daos_pool_connect..." <<
             // std::endl;
+#if DAOS_VERSION == 2
             rc = daos_pool_connect(uuid_c, Group.c_str(), poolFlags, &poh, NULL,
                                    NULL);
+#else
+            rc = daos_pool_connect(UUID, Group.c_str(), poolFlags, &poh, NULL,
+                                   NULL);
+#endif
             CheckDAOSReturnCode(rc);
             // std::cout << "single process daos_pool_connect succeeded!" <<
             // std::endl;
-
+#if DAOS_VERSION == 2
             rc = daos_cont_open(poh, cuuid_c, contFlags, &coh, NULL, NULL);
+#else
+            rc = daos_cont_open(poh, CUUID, contFlags, &coh, NULL, NULL);
+#endif
             CheckDAOSReturnCode(rc);
             // std::cout << "single process daos_cont_open succeeded!" <<
             // std::endl;
@@ -220,12 +228,20 @@ public:
             if (comm.Rank() == 0)
             {
                 // std::cout << "start daos_pool_connect..." << std::endl;
+#if DAOS_VERSION == 2
                 rc = daos_pool_connect(uuid_c, Group.c_str(), poolFlags, &poh,
                                        NULL, NULL);
+#else
+                rc = daos_pool_connect(UUID, Group.c_str(), poolFlags, &poh,
+                                       NULL, NULL);
+#endif
                 CheckDAOSReturnCode(rc);
                 // std::cout << "daos_pool_connect succeeded!" << std::endl;
-
+#if DAOS_VERSION == 2
                 rc = daos_cont_open(poh, cuuid_c, contFlags, &coh, NULL, NULL);
+#else
+                rc = daos_cont_open(poh, CUUID, contFlags, &coh, NULL, NULL);
+#endif
                 CheckDAOSReturnCode(rc);
                 // std::cout << "daos_cont_open succeeded!" << std::endl;
 
@@ -976,3 +992,4 @@ void FileDaos::Truncate(const size_t length)
 
 } // end namespace transport
 } // end namespace adios2
+#undef DAOS_VERSION
