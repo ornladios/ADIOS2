@@ -12,16 +12,6 @@ namespace detail
 {
 
 template <typename T>
-struct is_kokkos_view : std::false_type
-{
-};
-
-template <typename... Ts>
-struct is_kokkos_view<Kokkos::View<Ts...>> : std::true_type
-{
-};
-
-template <typename T>
 struct memspace_kokkos_to_adios2;
 
 template <>
@@ -43,8 +33,8 @@ struct memspace_kokkos_to_adios2<Kokkos::CudaSpace>
 } // namespace detail
 
 template <typename T>
-struct ndarray_traits<T, typename std::enable_if<detail::is_kokkos_view<
-                             typename std::remove_cv<T>::type>::value>::type>
+struct ndarray_traits<T,
+                      typename std::enable_if<Kokkos::is_view<T>::value>::type>
 : std::true_type
 {
     using value_type = typename T::value_type;
