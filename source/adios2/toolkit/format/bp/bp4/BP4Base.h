@@ -61,6 +61,9 @@ public:
     static constexpr size_t m_ActiveFlagPosition = 38;
     static constexpr size_t m_VersionTagPosition = 0;
     static constexpr size_t m_VersionTagLength = 32;
+    static constexpr size_t m_VersionMajorPosition = 32;
+    static constexpr size_t m_VersionMinorPosition = 33;
+    static constexpr size_t m_VersionPatchPosition = 34;
 
     /**
      * Unique constructor

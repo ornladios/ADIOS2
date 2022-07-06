@@ -3,13 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(interface)
-add_subdirectory(engine)
-add_subdirectory(transports)
-add_subdirectory(bindings)
-add_subdirectory(xml)
-add_subdirectory(yaml)
-add_subdirectory(performance)
-add_subdirectory(helper)
-add_subdirectory(hierarchy)
-add_subdirectory(backward_compatibility)
+gtest_add_tests_helper(ReadOldCompressed MPI_NONE BP4 Engine.BP. .BP4
+  WORKING_DIRECTORY  ${CMAKE_CURRENT_SOURCE_DIR} EXTRA_ARGS "BP4"
+)
+
