@@ -31,7 +31,6 @@
 
 #define CheckDAOSReturnCode(r) CheckDAOSReturnCodeF((r), __FILE__, __LINE__)
 #define DefaultMaxDFSBatchSize 8589934592
-#define DAOS_VERSION 2
 namespace adios2
 {
 namespace transport
@@ -194,7 +193,7 @@ public:
 
             // std::cout << "single process start daos_pool_connect..." <<
             // std::endl;
-#if DAOS_VERSION == 2
+#if DAOS_API_VERSION_MAJOR == 2
             rc = daos_pool_connect(uuid_c, Group.c_str(), poolFlags, &poh, NULL,
                                    NULL);
 #else
@@ -204,7 +203,7 @@ public:
             CheckDAOSReturnCode(rc);
             // std::cout << "single process daos_pool_connect succeeded!" <<
             // std::endl;
-#if DAOS_VERSION == 2
+#if DAOS_API_VERSION_MAJOR == 2
             rc = daos_cont_open(poh, cuuid_c, contFlags, &coh, NULL, NULL);
 #else
             rc = daos_cont_open(poh, CUUID, contFlags, &coh, NULL, NULL);
@@ -228,7 +227,7 @@ public:
             if (comm.Rank() == 0)
             {
                 // std::cout << "start daos_pool_connect..." << std::endl;
-#if DAOS_VERSION == 2
+#if DAOS_API_VERSION_MAJOR == 2
                 rc = daos_pool_connect(uuid_c, Group.c_str(), poolFlags, &poh,
                                        NULL, NULL);
 #else
@@ -237,7 +236,7 @@ public:
 #endif
                 CheckDAOSReturnCode(rc);
                 // std::cout << "daos_pool_connect succeeded!" << std::endl;
-#if DAOS_VERSION == 2
+#if DAOS_API_VERSION_MAJOR == 2
                 rc = daos_cont_open(poh, cuuid_c, contFlags, &coh, NULL, NULL);
 #else
                 rc = daos_cont_open(poh, CUUID, contFlags, &coh, NULL, NULL);
@@ -992,4 +991,3 @@ void FileDaos::Truncate(const size_t length)
 
 } // end namespace transport
 } // end namespace adios2
-#undef DAOS_VERSION
