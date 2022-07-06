@@ -21,6 +21,7 @@
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/aggregator/mpi/MPIChain.h"
+#include "adios2/toolkit/format/bp/bpBackCompatOperation/BPBackCompatOperation.h"
 #include "adios2/toolkit/format/buffer/Buffer.h"
 #include "adios2/toolkit/format/buffer/heap/BufferSTL.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
@@ -144,6 +145,10 @@ public:
         uint64_t VarsIndexStart = 0;
         uint64_t AttributesIndexStart = 0;
         int8_t Version = -1;
+        uint8_t ADIOSVersionMajor = 0;
+        uint8_t ADIOSVersionMinor = 0;
+        uint8_t ADIOSVersionPatch = 0;
+        uint32_t ADIOSVersion = 0; // major*1M + minor*1k + patch e.g. 2007001
         bool IsLittleEndian = true;
         bool HasSubFiles = false;
 
@@ -471,6 +476,14 @@ protected:
      */
     TransformTypes TransformTypeEnum(const std::string transformType) const
         noexcept;
+
+    /**
+     * Returns the proper derived class for BPOperation based on type
+     * @param type input, must be a supported type under BPOperation
+     * @return derived class if supported, false pointer if type not supported
+     */
+    std::shared_ptr<BPBackCompatOperation>
+    SetBPBackCompatOperation(const std::string type) const noexcept;
 
     struct ProcessGroupIndex
     {
