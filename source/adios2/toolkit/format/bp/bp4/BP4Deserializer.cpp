@@ -114,6 +114,23 @@ void BP4Deserializer::ParseMetadataIndex(BufferSTL &bufferSTL,
         // This has no flag in BP4 header. Always true
         m_Minifooter.HasSubFiles = true;
 
+        // Writer's ADIOS version
+        position = m_VersionMajorPosition;
+        uint8_t ascii = helper::ReadValue<uint8_t>(buffer, position,
+                                                   m_Minifooter.IsLittleEndian);
+        m_Minifooter.ADIOSVersionMajor = ascii - (uint8_t)'0';
+        position = m_VersionMinorPosition;
+        ascii = helper::ReadValue<uint8_t>(buffer, position,
+                                           m_Minifooter.IsLittleEndian);
+        m_Minifooter.ADIOSVersionMinor = ascii - (uint8_t)'0';
+        position = m_VersionPatchPosition;
+        ascii = helper::ReadValue<uint8_t>(buffer, position,
+                                           m_Minifooter.IsLittleEndian);
+        m_Minifooter.ADIOSVersionPatch = ascii - (uint8_t)'0';
+        m_Minifooter.ADIOSVersion = m_Minifooter.ADIOSVersionMajor * 1000000 +
+                                    m_Minifooter.ADIOSVersionMinor * 1000 +
+                                    m_Minifooter.ADIOSVersionPatch;
+
         // BP version
         position = m_BPVersionPosition;
         m_Minifooter.Version = helper::ReadValue<uint8_t>(

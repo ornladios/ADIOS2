@@ -158,8 +158,30 @@ void BP4Deserializer::SetVariableBlockInfo(
         blockOperation.PreSizeOf = sizeof(T);
 
         // read metadata from supported type and populate Info
-        std::memcpy(&blockOperation.PayloadSize, bpOpInfo.Metadata.data() + 8,
-                    8);
+        if (m_Minifooter.ADIOSVersion >= 2008000)
+        {
+            std::memcpy(&blockOperation.PayloadSize,
+                        bpOpInfo.Metadata.data() + 8, 8);
+        }
+        else
+        {
+            // Files made before 2.8 have incompatible compression operators
+            // Add backward compatible fixes here to parse compression metadata
+            // directly from the BP4 metadata format
+            std::shared_ptr<BPBackCompatOperation> bpOp =
+                SetBPBackCompatOperation(bpOpInfo.Type);
+            if (bpOp)
+            {
+                bpOp->GetMetadata(bpOpInfo.Metadata, blockOperation.Info);
+                blockOperation.PayloadSize = static_cast<size_t>(
+                    std::stoull(blockOperation.Info.at("OutputSize")));
+            }
+            else
+            {
+                std::memcpy(&blockOperation.PayloadSize,
+                            bpOpInfo.Metadata.data() + 8, 8);
+            }
+        }
 
         subStreamInfo.OperationsInfo.push_back(std::move(blockOperation));
     };
@@ -520,34 +542,43 @@ void BP4Deserializer::PostDataRead(
 {
     if (subStreamBoxInfo.OperationsInfo.size() > 0)
     {
-        const helper::BlockOperationInfo &blockOperationInfo =
-            InitPostOperatorBlockData(subStreamBoxInfo.OperationsInfo);
-
-        const size_t preOpPayloadSize =
-            helper::GetTotalSize(blockOperationInfo.PreCount) *
-            blockOperationInfo.PreSizeOf;
-        m_ThreadBuffers[threadID][0].resize(preOpPayloadSize);
-
-        // get original block back
-        char *preOpData = m_ThreadBuffers[threadID][0].data();
-        const char *postOpData = m_ThreadBuffers[threadID][1].data();
-
-        std::shared_ptr<core::Operator> op = nullptr;
-        for (auto &o : blockInfo.Operations)
+        if (m_Minifooter.ADIOSVersion >= 2008000)
         {
-            if (o->m_Category == "compress" || o->m_Category == "plugin")
-            {
-                op = o;
-                break;
-            }
-        }
-        core::Decompress(postOpData, blockOperationInfo.PayloadSize, preOpData,
-                         op);
+            const helper::BlockOperationInfo &blockOperationInfo =
+                InitPostOperatorBlockData(subStreamBoxInfo.OperationsInfo);
 
-        // clip block to match selection
-        helper::ClipVector(m_ThreadBuffers[threadID][0],
-                           subStreamBoxInfo.Seeks.first,
-                           subStreamBoxInfo.Seeks.second);
+            const size_t preOpPayloadSize =
+                helper::GetTotalSize(blockOperationInfo.PreCount) *
+                blockOperationInfo.PreSizeOf;
+            m_ThreadBuffers[threadID][0].resize(preOpPayloadSize);
+
+            // get original block back
+            char *preOpData = m_ThreadBuffers[threadID][0].data();
+            const char *postOpData = m_ThreadBuffers[threadID][1].data();
+
+            std::shared_ptr<core::Operator> op = nullptr;
+            for (auto &o : blockInfo.Operations)
+            {
+                if (o->m_Category == "compress" || o->m_Category == "plugin")
+                {
+                    op = o;
+                    break;
+                }
+            }
+            core::Decompress(postOpData, blockOperationInfo.PayloadSize,
+                             preOpData, op);
+
+            // clip block to match selection
+            helper::ClipVector(m_ThreadBuffers[threadID][0],
+                               subStreamBoxInfo.Seeks.first,
+                               subStreamBoxInfo.Seeks.second);
+        }
+        else
+        {
+            // Files made before 2.8 have incompatible compression operators
+            // Add backward compatible fixes in the function below
+            BackCompatDecompress(subStreamBoxInfo, threadID);
+        }
     }
 
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
@@ -568,6 +599,48 @@ void BP4Deserializer::PostDataRead(
         m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
         subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
         endianReverse, blockInfo.IsGPU);
+}
+
+void BP4Deserializer::BackCompatDecompress(
+    const helper::SubStreamBoxInfo &subStreamBoxInfo, const size_t threadID)
+{
+    // Files made before 2.8 have incompatible compression operators
+    // Add backward compatible fixes here
+    const helper::BlockOperationInfo &blockOperationInfo =
+        InitPostOperatorBlockData(subStreamBoxInfo.OperationsInfo);
+
+    const size_t preOpPayloadSize =
+        helper::GetTotalSize(blockOperationInfo.PreCount) *
+        blockOperationInfo.PreSizeOf;
+    m_ThreadBuffers[threadID][0].resize(preOpPayloadSize);
+
+    std::string opType = blockOperationInfo.Info.at("Type");
+
+    // get original block back
+    char *preOpData = m_ThreadBuffers[threadID][0].data();
+    const char *postOpData = m_ThreadBuffers[threadID][1].data();
+    // get the right bp4Op
+    std::shared_ptr<BPBackCompatOperation> bp4Op =
+        SetBPBackCompatOperation(opType);
+
+    if (bp4Op)
+    {
+        bp4Op->GetData(postOpData, blockOperationInfo, preOpData);
+        // clip block to match selection
+        helper::ClipVector(m_ThreadBuffers[threadID][0],
+                           subStreamBoxInfo.Seeks.first,
+                           subStreamBoxInfo.Seeks.second);
+    }
+    else
+    {
+        helper::Throw<std::runtime_error>(
+            "Toolkit", "format::bp::BP4Deserializer", "PostDataRead",
+            "This file was created by pre-ADIOS 2.8.0 using "
+            "compression type " +
+                opType +
+                ", for which there is no backward compatible reader in this "
+                "ADIOS version");
+    }
 }
 
 template <class T>

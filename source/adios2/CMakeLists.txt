@@ -77,6 +77,7 @@ add_library(adios2_core
   toolkit/format/bp/bp4/BP4Base.cpp
   toolkit/format/bp/bp4/BP4Serializer.cpp toolkit/format/bp/bp4/BP4Serializer.tcc
   toolkit/format/bp/bp4/BP4Deserializer.cpp toolkit/format/bp/bp4/BP4Deserializer.tcc
+  toolkit/format/bp/bpBackCompatOperation/compress/BPBackCompatBlosc.cpp
 
   toolkit/profiling/iochrono/Timer.cpp
   toolkit/profiling/iochrono/IOChrono.cpp
