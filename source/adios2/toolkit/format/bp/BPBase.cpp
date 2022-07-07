@@ -13,6 +13,8 @@
 
 #include "adios2/helper/adiosFunctions.h"
 
+#include "adios2/toolkit/format/bp/bpBackCompatOperation/compress/BPBackCompatBlosc.h"
+
 namespace adios2
 {
 namespace format
@@ -486,6 +488,17 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
 size_t BPBase::DebugGetDataBufferSize() const { return m_Data.DebugGetSize(); }
+
+std::shared_ptr<BPBackCompatOperation>
+BPBase::SetBPBackCompatOperation(const std::string type) const noexcept
+{
+    std::shared_ptr<BPBackCompatOperation> bpOp;
+    if (type == "blosc")
+    {
+        bpOp = std::make_shared<BPBackCompatBlosc>();
+    }
+    return bpOp;
+}
 
 } // end namespace format
 } // end namespace adios2

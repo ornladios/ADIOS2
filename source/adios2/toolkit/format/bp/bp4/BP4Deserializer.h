@@ -119,6 +119,9 @@ public:
                       const bool isRowMajorDestination,
                       const size_t threadID = 0);
 
+    void BackCompatDecompress(const helper::SubStreamBoxInfo &subStreamBoxInfo,
+                              const size_t threadID = 0);
+
     /**
      * Clips and assigns memory to blockInfo.Data from a contiguous memory
      * input
