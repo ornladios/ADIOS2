@@ -44,7 +44,7 @@ public:
     BP5Writer(IO &io, const std::string &name, const Mode mode,
               helper::Comm comm);
 
-    ~BP5Writer() = default;
+    ~BP5Writer();
 
     StepStatus BeginStep(StepMode mode,
                          const float timeoutSeconds = -1.0) final;

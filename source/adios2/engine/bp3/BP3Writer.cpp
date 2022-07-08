@@ -33,6 +33,16 @@ BP3Writer::BP3Writer(IO &io, const std::string &name, const Mode mode,
     PERFSTUBS_SCOPED_TIMER("BP3Writer::Open");
     m_IO.m_ReadStreaming = false;
     Init();
+    m_IsOpen = true;
+}
+
+BP3Writer::~BP3Writer()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 StepStatus BP3Writer::BeginStep(StepMode mode, const float timeoutSeconds)

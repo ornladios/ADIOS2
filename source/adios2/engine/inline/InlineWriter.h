@@ -41,7 +41,7 @@ public:
     InlineWriter(IO &adios, const std::string &name, const Mode mode,
                  helper::Comm comm);
 
-    ~InlineWriter() = default;
+    ~InlineWriter();
 
     StepStatus BeginStep(StepMode mode,
                          const float timeoutSeconds = -1.0) final;

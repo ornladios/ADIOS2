@@ -26,7 +26,7 @@ class SscReader : public Engine
 public:
     SscReader(IO &adios, const std::string &name, const Mode mode,
               helper::Comm comm);
-    ~SscReader() = default;
+    ~SscReader();
     StepStatus BeginStep(
         StepMode stepMode = StepMode::Read,
         const float timeoutSeconds = std::numeric_limits<float>::max()) final;

@@ -50,8 +50,16 @@ DataSpacesWriter::DataSpacesWriter(IO &io, const std::string &name,
     ret = adios_dataspaces_init(&mpiComm, &m_data);
     if (ret < 0)
         fprintf(stderr, "Unable to connect to DataSpaces. Err: %d\n", ret);
+    else
+        m_IsOpen = true;
 }
-DataSpacesWriter::~DataSpacesWriter() {}
+
+DataSpacesWriter::~DataSpacesWriter() if (m_IsOpen)
+{
+    DestructorClose(m_FailVerbose);
+}
+m_IsOpen = false;
+}
 
 StepStatus DataSpacesWriter::BeginStep(StepMode mode, const float timeout_sec)
 {

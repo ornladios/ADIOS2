@@ -27,7 +27,7 @@ class SscWriter : public Engine
 public:
     SscWriter(IO &io, const std::string &name, const Mode mode,
               helper::Comm comm);
-    ~SscWriter() = default;
+    ~SscWriter();
 
     StepStatus BeginStep(
         StepMode mode,

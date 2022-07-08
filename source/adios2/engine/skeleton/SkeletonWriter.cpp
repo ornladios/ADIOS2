@@ -34,6 +34,16 @@ SkeletonWriter::SkeletonWriter(IO &io, const std::string &name, const Mode mode,
         std::cout << "Skeleton Writer " << m_WriterRank << " Open(" << m_Name
                   << ")." << std::endl;
     }
+    m_IsOpen = true;
+}
+
+SkeletonWriter::~SkeletonWriter()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 StepStatus SkeletonWriter::BeginStep(StepMode mode, const float timeoutSeconds)

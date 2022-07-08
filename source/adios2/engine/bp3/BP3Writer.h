@@ -37,7 +37,7 @@ public:
     BP3Writer(IO &io, const std::string &name, const Mode mode,
               helper::Comm comm);
 
-    ~BP3Writer() = default;
+    ~BP3Writer();
 
     StepStatus BeginStep(StepMode mode,
                          const float timeoutSeconds = -1.0) final;

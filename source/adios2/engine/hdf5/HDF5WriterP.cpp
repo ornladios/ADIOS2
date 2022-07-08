@@ -25,6 +25,7 @@ HDF5WriterP::HDF5WriterP(IO &io, const std::string &name, const Mode mode,
 {
     m_IO.m_ReadStreaming = false;
     Init();
+    m_IsOpen = true;
 }
 
 HDF5WriterP::~HDF5WriterP() { DoClose(); }

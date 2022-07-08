@@ -36,6 +36,7 @@ MhsReader::MhsReader(IO &io, const std::string &name, const Mode mode,
         m_SubEngines.emplace_back(&m_SubIOs.back()->Open(
             m_Name + ".tier" + std::to_string(i), adios2::Mode::Read));
     }
+    m_IsOpen = true;
 }
 
 MhsReader::~MhsReader()
@@ -44,6 +45,11 @@ MhsReader::~MhsReader()
     {
         m_IO.m_ADIOS.RemoveIO("SubIO" + std::to_string(i));
     }
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 StepStatus MhsReader::BeginStep(const StepMode mode, const float timeoutSeconds)

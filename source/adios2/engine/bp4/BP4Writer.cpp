@@ -41,6 +41,17 @@ BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
     m_IO.m_ReadStreaming = false;
 
     Init();
+
+    m_IsOpen = true;
+}
+
+BP4Writer::~BP4Writer()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 StepStatus BP4Writer::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -447,6 +458,7 @@ void BP4Writer::DestructorClose(bool Verbose) noexcept
     }
     // at least close metadata index file
     UpdateActiveFlag(false);
+    m_IsOpen = false;
 }
 
 void BP4Writer::DoClose(const int transportIndex)

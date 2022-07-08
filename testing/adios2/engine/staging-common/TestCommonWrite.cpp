@@ -237,7 +237,10 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     }
 
     // Close the file
-    engine.Close();
+    if (!DontClose)
+    {
+        engine.Close();
+    }
 }
 
 int main(int argc, char **argv)

@@ -55,7 +55,7 @@ protected:
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
 protected:
-    void DestructorClose(bool Verbose) noexcept final{};
+    void DestructorClose(bool Verbose) noexcept final;
 
 private:
     struct NullReaderImpl;

@@ -108,6 +108,7 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         m_PublishThreadActive = true;
         m_PublishThread = std::thread(&DataManWriter::PublishThread, this);
     }
+    m_IsOpen = true;
 }
 
 DataManWriter::~DataManWriter()

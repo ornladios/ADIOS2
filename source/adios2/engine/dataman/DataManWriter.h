@@ -96,12 +96,6 @@ private:
     void PutDeferredCommon(Variable<T> &variable, const T *values);
 
     void DoClose(const int transportIndex = -1) final;
-
-    /**
-     * Called if destructor is called on an open engine.  Should warn or take
-     * any non-complex measure that might help recover.
-     */
-    void DestructorClose(bool Verbose) noexcept final{};
 };
 
 } // end namespace engine

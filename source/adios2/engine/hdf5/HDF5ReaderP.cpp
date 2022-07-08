@@ -42,6 +42,7 @@ HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode,
     }
 
     Init();
+    m_IsOpen = true;
 }
 
 HDF5ReaderP::~HDF5ReaderP()

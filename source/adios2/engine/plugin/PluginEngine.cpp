@@ -64,6 +64,7 @@ PluginEngine::PluginEngine(core::IO &io, const std::string &name,
         pluginManager.GetEngineDestroyFun(pluginNameIt->second);
     m_Impl->m_Plugin = m_Impl->m_HandleCreate(io, pluginNameIt->second, mode,
                                               comm.Duplicate());
+    m_IsOpen = true;
 }
 
 PluginEngine::~PluginEngine() { m_Impl->m_HandleDestroy(m_Impl->m_Plugin); }

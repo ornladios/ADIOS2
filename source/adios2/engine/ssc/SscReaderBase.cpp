@@ -32,7 +32,7 @@ SscReaderBase::SscReaderBase(IO &io, const std::string &name, const Mode mode,
     SyncMpiPattern(comm);
 }
 
-SscReaderBase::~SscReaderBase() {}
+SscReaderBase::~SscReaderBase() = default;
 
 void SscReaderBase::SyncMpiPattern(MPI_Comm comm)
 {

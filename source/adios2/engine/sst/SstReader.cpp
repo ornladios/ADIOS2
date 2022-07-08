@@ -269,10 +269,16 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
                                  arrayBlocksInfoCallback);
 
     delete[] cstr;
+    m_IsOpen = true;
 }
 
 SstReader::~SstReader()
 {
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+
     if (m_BP5Deserializer)
         delete m_BP5Deserializer;
     SstStreamDestroy(m_Input);
@@ -292,6 +298,7 @@ void SstReader::DestructorClose(bool Verbose) noexcept
                      "send\" warning from a connected SST Writer."
                   << std::endl;
     }
+    m_IsOpen = false;
 }
 
 StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)

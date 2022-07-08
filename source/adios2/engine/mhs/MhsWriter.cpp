@@ -56,6 +56,7 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
         m_SubEngines.emplace_back(&m_SubIOs.back()->Open(
             m_Name + ".tier" + std::to_string(i), adios2::Mode::Write));
     }
+    m_IsOpen = true;
 }
 
 MhsWriter::~MhsWriter()
@@ -64,6 +65,11 @@ MhsWriter::~MhsWriter()
     {
         m_IO.m_ADIOS.RemoveIO("SubIO" + std::to_string(i));
     }
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 StepStatus MhsWriter::BeginStep(StepMode mode, const float timeoutSeconds)

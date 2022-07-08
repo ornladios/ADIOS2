@@ -112,6 +112,7 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     {
         m_RequesterThread = std::thread(&DataManReader::RequestThread, this);
     }
+    m_IsOpen = true;
 }
 
 DataManReader::~DataManReader()

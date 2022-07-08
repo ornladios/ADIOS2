@@ -44,6 +44,7 @@ BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode,
     m_IO.m_ReadStreaming = false;
 
     Init();
+    m_IsOpen = true;
 }
 
 StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -1537,6 +1538,16 @@ void BP5Writer::DestructorClose(bool Verbose) noexcept
     }
     // close metadata index file
     UpdateActiveFlag(false);
+    m_IsOpen = false;
+}
+
+BP5Writer::~BP5Writer()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 void BP5Writer::DoClose(const int transportIndex)

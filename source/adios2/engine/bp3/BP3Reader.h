@@ -38,7 +38,7 @@ public:
     BP3Reader(IO &io, const std::string &name, const Mode mode,
               helper::Comm comm);
 
-    ~BP3Reader() = default;
+    ~BP3Reader();
 
     StepStatus BeginStep(StepMode mode = StepMode::Read,
                          const float timeoutSeconds = -1.0) final;

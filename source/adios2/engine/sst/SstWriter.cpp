@@ -117,9 +117,17 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
         SstWriterInitMetadataCallback(m_Output, this, AssembleMetadata,
                                       FreeAssembledMetadata);
     }
+    m_IsOpen = true;
 }
 
-SstWriter::~SstWriter() { SstStreamDestroy(m_Output); }
+SstWriter::~SstWriter()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    SstStreamDestroy(m_Output);
+}
 
 StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
@@ -413,11 +421,11 @@ void SstWriter::DestructorClose(bool Verbose) noexcept
     {
         std::cerr << "SST Writer \"" << m_Name
                   << "\" Destroyed without a prior Close()." << std::endl;
-        std::cerr
-            << "This may result in loss of data and/or \"unexpected close\" or "
-               "\"failed to send\" warning from a connected SST Writer."
-            << std::endl;
+        std::cerr << "This may result in loss of data and/or disconnect "
+                     "warnings for a connected SST Reader."
+                  << std::endl;
     }
+    m_IsOpen = false;
     // should at least call control plane to remove contact file
 }
 

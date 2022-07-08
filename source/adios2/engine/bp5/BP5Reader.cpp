@@ -36,18 +36,25 @@ BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode,
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     Init();
+    m_IsOpen = true;
 }
 
 BP5Reader::~BP5Reader()
 {
     if (m_BP5Deserializer)
         delete m_BP5Deserializer;
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 void BP5Reader::DestructorClose(bool Verbose) noexcept
 {
     // Nothing special needs to be done to "close" a BP5 reader during shutdown
     // if it hasn't already been Closed
+    m_IsOpen = false;
 }
 
 void BP5Reader::InstallMetadataForTimestep(size_t Step)
