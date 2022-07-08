@@ -52,6 +52,8 @@ public:
 
     bool IsInsideStep() const;
 
+    void DestructorClose(bool Verbose) noexcept final{};
+
 private:
     int m_Verbosity = 0;
     int m_WriterRank; // my rank in the writers' comm

@@ -49,6 +49,12 @@ private:
 
     void DoClose(const int transportIndex = -1) final;
 
+    /**
+     * Called if destructor is called on an open engine.  Should warn or take
+     * any non-complex measure that might help recover.
+     */
+    void DestructorClose(bool Verbose) noexcept final{};
+
     int m_Verbosity = 0;
     std::string m_EngineMode = "generic";
     std::shared_ptr<ssc::SscWriterBase> m_EngineInstance;

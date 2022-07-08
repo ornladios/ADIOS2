@@ -49,6 +49,9 @@ public:
 
     void PerformGets() final;
 
+protected:
+    void DestructorClose(bool Verbose) noexcept {};
+
 private:
     format::BP3Deserializer m_BP3Deserializer;
     transportman::TransportMan m_FileManager;

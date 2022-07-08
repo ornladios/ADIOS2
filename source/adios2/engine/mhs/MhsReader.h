@@ -48,6 +48,12 @@ private:
 
     void DoClose(const int transportIndex = -1);
 
+    /**
+     * Called if destructor is called on an open engine.  Should warn or take
+     * any non-complex measure that might help recover.
+     */
+    void DestructorClose(bool Verbose) noexcept final{};
+
     template <class T>
     void GetSyncCommon(Variable<T> &variable, T *data);
 

@@ -95,6 +95,12 @@ private:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+    /**
+     * Called if destructor is called on an open engine.  Should warn or take
+     * any non-complex measure that might help recover.
+     */
+    void DestructorClose(bool Verbose) noexcept final;
+
     void DoClose(const int transportIndex = -1) final;
 
     template <class T>

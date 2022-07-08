@@ -278,6 +278,22 @@ SstReader::~SstReader()
     SstStreamDestroy(m_Input);
 }
 
+/**
+ * Called if destructor is called on an open engine.  Should warn or take any
+ * non-complex measure that might help recover.
+ */
+void SstReader::DestructorClose(bool Verbose) noexcept
+{
+    if (Verbose)
+    {
+        std::cerr << "SST Reader \"" << m_Name
+                  << "\" Destroyed without a prior Close()." << std::endl;
+        std::cerr << "This may result in \"unexpected close\" or \"failed to "
+                     "send\" warning from a connected SST Writer."
+                  << std::endl;
+    }
+}
+
 StepStatus SstReader::BeginStep(StepMode Mode, const float timeout_sec)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();

@@ -57,6 +57,9 @@ protected:
 
     void DoClose(const int transportIndex) override;
 
+protected:
+    void DestructorClose(bool Verbose) noexcept final{};
+
 private:
     struct NullWriterImpl;
     std::unique_ptr<NullWriterImpl> Impl;

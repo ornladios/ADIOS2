@@ -255,6 +255,8 @@ private:
     // step -> writermap index (for all steps)
     std::vector<uint64_t> m_WriterMapIndex;
 
+    void DestructorClose(bool Verbose) noexcept;
+
     /* Communicator connecting ranks on each Compute Node.
        Only used to calculate the number of threads available for reading */
     helper::Comm m_NodeComm;

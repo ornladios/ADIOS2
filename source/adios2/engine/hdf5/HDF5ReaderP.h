@@ -71,6 +71,12 @@ private:
 
     void DoClose(const int transportIndex = -1) final;
 
+    /**
+     * Called if destructor is called on an open engine.  Should warn or take
+     * any non-complex measure that might help recover.
+     */
+    void DestructorClose(bool Verbose) noexcept final{};
+
     template <class T>
     size_t ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &variable,
                        T *values);

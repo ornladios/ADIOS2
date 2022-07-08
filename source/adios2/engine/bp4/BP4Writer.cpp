@@ -437,6 +437,18 @@ void BP4Writer::DoFlush(const bool isFinal, const int transportIndex)
     }
 }
 
+void BP4Writer::DestructorClose(bool Verbose) noexcept
+{
+    if (Verbose)
+    {
+        std::cerr << "BP4 Writer \"" << m_Name
+                  << "\" Destroyed without a prior Close()." << std::endl;
+        std::cerr << "This may result in corrupt output." << std::endl;
+    }
+    // at least close metadata index file
+    UpdateActiveFlag(false);
+}
+
 void BP4Writer::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP4Writer::Close");

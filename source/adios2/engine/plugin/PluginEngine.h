@@ -55,6 +55,10 @@ protected:
 
     void DoClose(const int transportIndex = -1) override;
 
+    // probably should go to plugin if this is to be used for non-trivial
+    // engines
+    void DestructorClose(bool Verbose) noexcept final{};
+
 private:
     struct Impl;
     std::unique_ptr<Impl> m_Impl;

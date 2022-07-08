@@ -1527,6 +1527,18 @@ void BP5Writer::Flush(const int transportIndex) {}
 
 void BP5Writer::PerformDataWrite() { FlushData(false); }
 
+void BP5Writer::DestructorClose(bool Verbose) noexcept
+{
+    if (Verbose)
+    {
+        std::cerr << "BP5 Writer \"" << m_Name
+                  << "\" Destroyed without a prior Close()." << std::endl;
+        std::cerr << "This may result in corrupt output." << std::endl;
+    }
+    // close metadata index file
+    UpdateActiveFlag(false);
+}
+
 void BP5Writer::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Writer::Close");

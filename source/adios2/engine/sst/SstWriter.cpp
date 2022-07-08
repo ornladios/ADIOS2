@@ -403,6 +403,24 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 void SstWriter::DoClose(const int transportIndex) { SstWriterClose(m_Output); }
 
+/**
+ * Called if destructor is called on an open engine.  Should warn or take any
+ * non-complex measure that might help recover.
+ */
+void SstWriter::DestructorClose(bool Verbose) noexcept
+{
+    if (Verbose)
+    {
+        std::cerr << "SST Writer \"" << m_Name
+                  << "\" Destroyed without a prior Close()." << std::endl;
+        std::cerr
+            << "This may result in loss of data and/or \"unexpected close\" or "
+               "\"failed to send\" warning from a connected SST Writer."
+            << std::endl;
+    }
+    // should at least call control plane to remove contact file
+}
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

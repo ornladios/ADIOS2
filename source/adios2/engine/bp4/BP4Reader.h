@@ -50,6 +50,9 @@ public:
 
     void PerformGets() final;
 
+protected:
+    void DestructorClose(bool Verbose) noexcept {};
+
 private:
     format::BP4Deserializer m_BP4Deserializer;
     /* transport manager for metadata file */

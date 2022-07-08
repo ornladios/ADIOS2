@@ -200,6 +200,9 @@ private:
     helper::Comm m_CommAggregators;
     adios2::profiling::JSONProfiler m_Profiler;
 
+protected:
+    virtual void DestructorClose(bool Verbose) noexcept;
+
 private:
     // updated during WriteMetaData
     uint64_t m_MetaDataPos = 0;

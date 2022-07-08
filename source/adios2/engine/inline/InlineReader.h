@@ -57,6 +57,8 @@ public:
     template <typename T>
     void Get(Variable<T> &, T **) const;
 
+    void DestructorClose(bool Verbose) noexcept final{};
+
 private:
     const InlineWriter *GetWriter() const;
     int m_Verbosity = 0;

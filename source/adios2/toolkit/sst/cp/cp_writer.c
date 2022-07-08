@@ -2677,6 +2677,14 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
     int ReaderNum = -1;
 
     STREAM_MUTEX_LOCK(ParentStream);
+    if (ParentStream->Status == Destroyed)
+    {
+        CP_verbose(ParentStream, PerRankVerbose,
+                   "Writer-side Rank received a "
+                   "timestep release event on destroyed stream %p, ignored\n");
+        STREAM_MUTEX_UNLOCK(ParentStream);
+        return;
+    }
     for (int i = 0; i < ParentStream->ReaderCount; i++)
     {
         if (Reader == ParentStream->Readers[i])

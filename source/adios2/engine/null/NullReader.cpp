@@ -90,6 +90,8 @@ void NullReader::PerformGets()
     return;
 }
 
+void DestructorClose(bool Verbose) {}
+
 void NullReader::DoClose(const int)
 {
     if (!Impl->IsOpen)

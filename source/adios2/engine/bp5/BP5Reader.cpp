@@ -44,6 +44,12 @@ BP5Reader::~BP5Reader()
         delete m_BP5Deserializer;
 }
 
+void BP5Reader::DestructorClose(bool Verbose) noexcept
+{
+    // Nothing special needs to be done to "close" a BP5 reader during shutdown
+    // if it hasn't already been Closed
+}
+
 void BP5Reader::InstallMetadataForTimestep(size_t Step)
 {
     size_t pgstart = m_MetadataIndexTable[Step][0];

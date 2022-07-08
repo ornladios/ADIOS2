@@ -54,6 +54,9 @@ protected:
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
 
+protected:
+    void DestructorClose(bool Verbose) noexcept final{};
+
 private:
     struct NullReaderImpl;
     std::unique_ptr<NullReaderImpl> Impl;

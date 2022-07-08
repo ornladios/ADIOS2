@@ -48,6 +48,9 @@ public:
 
     size_t DebugGetDataBufferSize() const final;
 
+protected:
+    void DestructorClose(bool Verbose) noexcept {};
+
 private:
     /** Single object controlling BP buffering */
     format::BP3Serializer m_BP3Serializer;
