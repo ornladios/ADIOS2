@@ -462,9 +462,12 @@ void HDF5NativeReader::ReadVar(const std::string varName, void *dataArray,
                 "Unable to create a selection for dataset" + varName);
         }
 
+        /*
         hsize_t dimsm[1];
         dimsm[0] = memspaceSize;
         hid_t memspace = H5Screate_simple(1, dimsm, NULL);
+        */
+        hid_t memspace = H5S_ALL;
 
         hid_t ret = H5Dread(dataSetId, h5type, memspace, dataspace, H5P_DEFAULT,
                             dataArray);

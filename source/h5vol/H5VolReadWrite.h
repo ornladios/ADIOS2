@@ -51,13 +51,13 @@ static herr_t H5VL_adios2_datatype_close(void *dt, hid_t H5_ATTR_UNUSED dxpl_id,
 // Define H5VOL functions
 //
 static const H5VL_class_t H5VL_adios2_def = {
-    H5VL_ADIOS2_VERSION,
+    H5VL_VERSION, /* Version # of connector, needed for v1.13 */
     (H5VL_class_value_t)H5VL_ADIOS2_VALUE,
-    H5VL_ADIOS2_NAME,   /* name */
-    0,                  /* Version # of connector */
-    H5VL_CAP_FLAG_NONE, /* Capability flags for connector */
-    H5VL_adios2_init,   /* initialize */
-    H5VL_adios2_term,   /* terminate */
+    H5VL_ADIOS2_NAME,    /* name */
+    H5VL_ADIOS2_VERSION, /* version of this vol, not as important  */
+    H5VL_CAP_FLAG_NONE,  /* Capability flags for connector */
+    H5VL_adios2_init,    /* initialize */
+    H5VL_adios2_term,    /* terminate */
     {
         /* info_cls */
         (size_t)0, /* info size    */
