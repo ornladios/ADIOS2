@@ -467,7 +467,7 @@ void HDF5NativeReader::ReadVar(const std::string varName, void *dataArray,
         dimsm[0] = memspaceSize;
         hid_t memspace = H5Screate_simple(1, dimsm, NULL);
         */
-        memspace = H5S_ALL;
+        hid_t memspace = H5S_ALL;
 
         hid_t ret = H5Dread(dataSetId, h5type, memspace, dataspace, H5P_DEFAULT,
                             dataArray);
