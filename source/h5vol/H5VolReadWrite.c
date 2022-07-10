@@ -143,7 +143,8 @@ void gInitADIOS2(hid_t acc_tpl)
     MPI_Initialized(&flag);
     if (!flag)
     {
-        SHOW_ERROR_MSG("H5VL_ADIOS2: Error: MPI is not initialized");
+      RANK_ZERO_MSG("H5VL_ADIOS2 WARNING: MPI is not initialized, will use Serial ADIOS\n");
+      m_ADIOS2=adios2_init_serial();
     }
     else
     {
@@ -879,6 +880,10 @@ herr_t gADIOS2ReadVar(H5VL_VarDef_t *varDef)
 
         adios2_set_selection(varDef->m_Variable, varDef->m_DimCount, start,
                              count);
+
+	if (varDef->m_MemSpaceID > 0) {
+	  RANK_ZERO_MSG("\n## No memory space is supported. Expect limited support when VOL supports BP5. \n");
+	}
     }
     adios2_get(varDef->m_Engine, varDef->m_Variable, varDef->m_Data,
                adios2_mode_sync);

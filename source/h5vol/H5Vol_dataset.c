@@ -96,6 +96,7 @@ herr_t H5VL_adios2_dataset_read(void *dset, hid_t mem_type_id,
 
     var->m_HyperSlabID = file_space_id;
     var->m_MemSpaceID = mem_space_id;
+
     var->m_Data = buf;
     return gADIOS2ReadVar(var);
 }
@@ -111,16 +112,14 @@ herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_args_t *args,
     {
     case H5VL_DATASET_GET_SPACE:
     {
-        hid_t *ret_id = (hid_t *)args->args.get_space.space_id;
-        *ret_id = H5Scopy(varDef->m_ShapeID);
-        REQUIRE_SUCC_MSG((*ret_id >= 0), -1,
-                         "H5VOL-ADIOS2: Unable to get space id.");
+        REQUIRE_SUCC_MSG((varDef->m_ShapeID >= 0), -1,
+			  "H5VOL-ADIOS2: Unable to get space id.");
+        args->args.get_space.space_id = H5Scopy(varDef->m_ShapeID);
         break;
     }
     case H5VL_DATASET_GET_TYPE:
     {
-        hid_t *ret_id = (hid_t *)args->args.get_type.type_id;
-        *ret_id = H5Tcopy(varDef->m_TypeID);
+        args->args.get_type.type_id  = H5Tcopy(varDef->m_TypeID);
         break;
     }
     default:
@@ -141,8 +140,17 @@ herr_t H5VL_adios2_dataset_write(void *dset, hid_t mem_type_id,
 
     // H5VL_VarDef_t *varDef = (H5VL_VarDef_t *)dset;
     varDef->m_Data = (void *)buf;
-    varDef->m_MemSpaceID = mem_space_id;
-    varDef->m_HyperSlabID = file_space_id;
+
+    if (file_space_id > 0)
+      varDef->m_HyperSlabID = file_space_id;
+    else
+      varDef->m_HyperSlabID = varDef->m_ShapeID;
+
+    if (mem_space_id > 0)
+      varDef->m_MemSpaceID = mem_space_id;
+    else
+      varDef->m_MemSpaceID = varDef->m_ShapeID;
+
     varDef->m_PropertyID = plist_id;
 
     gADIOS2CreateVar(vol->m_FileIO, varDef);
