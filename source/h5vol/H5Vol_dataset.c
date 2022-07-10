@@ -113,13 +113,13 @@ herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_args_t *args,
     case H5VL_DATASET_GET_SPACE:
     {
         REQUIRE_SUCC_MSG((varDef->m_ShapeID >= 0), -1,
-			  "H5VOL-ADIOS2: Unable to get space id.");
+                         "H5VOL-ADIOS2: Unable to get space id.");
         args->args.get_space.space_id = H5Scopy(varDef->m_ShapeID);
         break;
     }
     case H5VL_DATASET_GET_TYPE:
     {
-        args->args.get_type.type_id  = H5Tcopy(varDef->m_TypeID);
+        args->args.get_type.type_id = H5Tcopy(varDef->m_TypeID);
         break;
     }
     default:
@@ -142,14 +142,14 @@ herr_t H5VL_adios2_dataset_write(void *dset, hid_t mem_type_id,
     varDef->m_Data = (void *)buf;
 
     if (file_space_id > 0)
-      varDef->m_HyperSlabID = file_space_id;
+        varDef->m_HyperSlabID = file_space_id;
     else
-      varDef->m_HyperSlabID = varDef->m_ShapeID;
+        varDef->m_HyperSlabID = varDef->m_ShapeID;
 
     if (mem_space_id > 0)
-      varDef->m_MemSpaceID = mem_space_id;
+        varDef->m_MemSpaceID = mem_space_id;
     else
-      varDef->m_MemSpaceID = varDef->m_ShapeID;
+        varDef->m_MemSpaceID = varDef->m_ShapeID;
 
     varDef->m_PropertyID = plist_id;
 
