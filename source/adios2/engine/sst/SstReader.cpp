@@ -68,6 +68,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
             &(Reader->m_IO.DefineVariable<T>(variableName));                   \
         variable->SetData((T *)data);                                          \
         variable->m_AvailableStepsCount = 1;                                   \
+        Reader->RegisterCreatedVariable(variable);                             \
         return (void *)variable;                                               \
     }
 
@@ -163,6 +164,7 @@ SstReader::SstReader(IO &io, const std::string &name, const Mode mode,
         Variable<T> *variable = &(Reader->m_IO.DefineVariable<T>(              \
             variableName, VecShape, VecStart, VecCount));                      \
         variable->m_AvailableStepsCount = 1;                                   \
+        Reader->RegisterCreatedVariable(variable);                             \
         return (void *)variable;                                               \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
