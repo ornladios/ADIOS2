@@ -261,6 +261,7 @@ void BP3Reader::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP3Reader::Close");
     PerformGets();
+    RemoveCreatedVars();
     m_SubFileManager.CloseFiles();
     m_FileManager.CloseFiles();
 }

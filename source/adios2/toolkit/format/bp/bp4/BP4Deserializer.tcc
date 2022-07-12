@@ -774,6 +774,7 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
         variable = &engine.m_IO.DefineVariable<std::string>(variableName);
+        engine.RegisterCreatedVariable(variable);
         variable->m_Value =
             characteristics.Statistics.Value; // assigning first step
 
@@ -1001,6 +1002,7 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
                     variableName + ", in call to Open");
         } // end switch
 
+        engine.RegisterCreatedVariable(variable);
         if (characteristics.Statistics.IsValue)
         {
             variable->m_Value = characteristics.Statistics.Value;

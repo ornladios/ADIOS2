@@ -695,6 +695,7 @@ inline void BP3Deserializer::DefineVariableInEngineIO<std::string>(
     {
         std::lock_guard<std::mutex> lock(m_Mutex);
         variable = &engine.m_IO.DefineVariable<std::string>(variableName);
+        engine.RegisterCreatedVariable(variable);
         variable->m_Value =
             characteristics.Statistics.Value; // assigning first step
 
@@ -845,6 +846,8 @@ void BP3Deserializer::DefineVariableInEngineIO(const ElementIndexHeader &header,
                 "invalid ShapeID or not yet supported for variable " +
                     variableName + ", in call to Open");
         } // end switch
+
+        engine.RegisterCreatedVariable(variable);
 
         if (characteristics.Statistics.IsValue)
         {

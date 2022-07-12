@@ -218,6 +218,20 @@ void Engine::DoPutStructDeferred(VariableStruct &, const void *)
         return nullptr;                                                        \
     }
 
+void Engine::RegisterCreatedVariable(const VariableBase *var)
+{
+    m_CreatedVars.insert(var);
+}
+
+void Engine::RemoveCreatedVars()
+{
+    for (auto &VarRec : m_CreatedVars)
+    {
+        m_IO.RemoveVariable(VarRec->m_Name);
+    }
+    m_CreatedVars.clear();
+}
+
 void Engine::DoGetAbsoluteSteps(const VariableBase &variable,
                                 std::vector<size_t> &keys) const
 {

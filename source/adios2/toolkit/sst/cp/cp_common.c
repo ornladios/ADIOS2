@@ -16,6 +16,71 @@
 char *SSTStreamStatusStr[] = {"NotOpen",    "Opening",    "Established",
                               "PeerClosed", "PeerFailed", "Closed"};
 
+#ifdef MUTEX_DEBUG
+#define STREAM_MUTEX_LOCK(Stream)                                              \
+    {                                                                          \
+        fprintf(stderr, "(PID %lx, TID %lx) CP_COMMON Trying lock line %d\n",  \
+                (long)getpid(), (long)gettid(), __LINE__);                     \
+        pthread_mutex_lock(&Stream->DataLock);                                 \
+        Stream->Locked++;                                                      \
+        fprintf(stderr, "(PID %lx, TID %lx) CP_COMMON Got lock\n",             \
+                (long)getpid(), (long)gettid());                               \
+    }
+
+#define STREAM_MUTEX_UNLOCK(Stream)                                            \
+    {                                                                          \
+        fprintf(stderr, "(PID %lx, TID %lx) CP_COMMON UNlocking line %d\n",    \
+                (long)getpid(), (long)gettid(), __LINE__);                     \
+        Stream->Locked--;                                                      \
+        pthread_mutex_unlock(&Stream->DataLock);                               \
+    }
+#define STREAM_CONDITION_WAIT(Stream)                                          \
+    {                                                                          \
+        fprintf(                                                               \
+            stderr,                                                            \
+            "(PID %lx, TID %lx) CP_COMMON Dropping Condition Lock line %d\n",  \
+            (long)getpid(), (long)gettid(), __LINE__);                         \
+        Stream->Locked = 0;                                                    \
+        pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);          \
+        fprintf(                                                               \
+            stderr,                                                            \
+            "(PID %lx, TID %lx) CP_COMMON Acquired Condition Lock line %d\n",  \
+            (long)getpid(), (long)gettid(), __LINE__);                         \
+        Stream->Locked = 1;                                                    \
+    }
+#define STREAM_CONDITION_SIGNAL(Stream)                                        \
+    {                                                                          \
+        assert(Stream->Locked == 1);                                           \
+        fprintf(stderr,                                                        \
+                "(PID %lx, TID %lx) CP_COMMON Signalling Condition line %d\n", \
+                (long)getpid(), (long)gettid(), __LINE__);                     \
+        pthread_cond_signal(&Stream->DataCondition);                           \
+    }
+
+#define STREAM_ASSERT_LOCKED(Stream)                                           \
+    {                                                                          \
+        assert(Stream->Locked == 1);                                           \
+    }
+#else
+#define STREAM_MUTEX_LOCK(Stream)                                              \
+    {                                                                          \
+        pthread_mutex_lock(&Stream->DataLock);                                 \
+    }
+#define STREAM_MUTEX_UNLOCK(Stream)                                            \
+    {                                                                          \
+        pthread_mutex_unlock(&Stream->DataLock);                               \
+    }
+#define STREAM_CONDITION_WAIT(Stream)                                          \
+    {                                                                          \
+        pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);          \
+    }
+#define STREAM_CONDITION_SIGNAL(Stream)                                        \
+    {                                                                          \
+        pthread_cond_signal(&Stream->DataCondition);                           \
+    }
+#define STREAM_ASSERT_LOCKED(Stream)
+#endif
+
 void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
 {
     if (Params->RendezvousReaderCount >= 0)
@@ -1127,9 +1192,9 @@ extern void SstStreamDestroy(SstStream Stream)
      * in a safe way after all streams have been destroyed
      */
     struct _SstStream StackStream;
-    pthread_mutex_lock(&Stream->DataLock);
     CP_verbose(Stream, PerStepVerbose, "Destroying stream %p, name %s\n",
                Stream, Stream->Filename);
+    STREAM_MUTEX_LOCK(Stream);
     StackStream = *Stream;
     Stream->Status = Destroyed;
     struct _TimestepMetadataList *Next = Stream->Timesteps;
@@ -1141,7 +1206,7 @@ extern void SstStreamDestroy(SstStream Stream)
     }
     if (Stream->DP_Stream)
     {
-        pthread_mutex_unlock(&Stream->DataLock);
+        STREAM_MUTEX_UNLOCK(Stream);
         if (Stream->Role == ReaderRole)
         {
             Stream->DP_Interface->destroyReader(&Svcs, Stream->DP_Stream);
@@ -1150,7 +1215,7 @@ extern void SstStreamDestroy(SstStream Stream)
         {
             Stream->DP_Interface->destroyWriter(&Svcs, Stream->DP_Stream);
         }
-        pthread_mutex_lock(&Stream->DataLock);
+        STREAM_MUTEX_LOCK(Stream);
     }
     if (Stream->Readers)
     {
@@ -1276,7 +1341,7 @@ extern void SstStreamDestroy(SstStream Stream)
     FreeCustomStructs(&Stream->CPInfo->CustomStructs);
     free(Stream->CPInfo);
 
-    pthread_mutex_unlock(&Stream->DataLock);
+    STREAM_MUTEX_UNLOCK(Stream);
     //   Stream is free'd in LastCall
 
     pthread_mutex_lock(&StateMutex);
