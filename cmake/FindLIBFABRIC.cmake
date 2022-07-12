@@ -8,7 +8,7 @@
 
 ######################################################
 
-# This is a bit of a wierd pattern but it allows to bypass pkg-config and
+# This is a bit of a weird pattern but it allows to bypass pkg-config and
 # manually specify library information
 if(NOT (PC_LIBFABRIC_FOUND STREQUAL "IGNORE"))
   find_package(PkgConfig)
