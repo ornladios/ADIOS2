@@ -72,7 +72,7 @@ Once ADIOS2 is installed refer to:
 
 ## Releases
 
-* Latest release: [v2.8.1](https://github.com/ornladios/ADIOS2/releases/tag/v2.81)
+* Latest release: [v2.8.2](https://github.com/ornladios/ADIOS2/releases/tag/v2.8.2)
 
 * Previous releases: [https://github.com/ornladios/ADIOS2/releases](https://github.com/ornladios/ADIOS2/releases)
 
