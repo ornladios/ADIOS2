@@ -37,7 +37,7 @@ public:
     SkeletonWriter(IO &adios, const std::string &name, const Mode mode,
                    helper::Comm comm);
 
-    ~SkeletonWriter() = default;
+    ~SkeletonWriter();
 
     StepStatus BeginStep(StepMode mode,
                          const float timeoutSeconds = -1.0) final;
@@ -71,6 +71,12 @@ private:
      * transportIndex is bounds-checked.
      */
     void DoClose(const int transportIndex = -1) final;
+
+    /**
+     * Called if destructor is called on an open engine.  Should warn or take
+     * any non-complex measure that might help recover.
+     */
+    void DestructorClose(bool Verbose) noexcept final{};
 
     /**
      * Common function for primitive PutSync, puts variables in buffer

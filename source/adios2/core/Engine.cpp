@@ -26,9 +26,16 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name,
 : m_EngineType(engineType), m_IO(io), m_Name(name), m_OpenMode(openMode),
   m_Comm(std::move(comm))
 {
+    m_FailVerbose = (m_Comm.Rank() == 0);
 }
 
-Engine::~Engine() {}
+Engine::~Engine()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+}
 
 Engine::operator bool() const noexcept { return !m_IsClosed; }
 
@@ -69,12 +76,28 @@ void Engine::Close(const int transportIndex)
 {
     DoClose(transportIndex);
 
+    m_IsOpen = false;
+
     if (transportIndex == -1)
     {
         m_Comm.Free("freeing comm in Engine " + m_Name + ", in call to Close");
         m_IsClosed = true;
     }
 }
+
+/**
+ * Called if destructor is called on an open engine.  Should warn or take any
+ * non-complex measure that might help recover.
+ */
+void Engine::DestructorClose(bool Verbose) noexcept
+{
+    if (Verbose)
+    {
+        std::cerr << "Engine \"" << m_Name
+                  << "\" destroyed without a prior Close()." << std::endl;
+        std::cerr << "This may have negative consequences." << std::endl;
+    }
+};
 
 void Engine::Flush(const int /*transportIndex*/) { ThrowUp("Flush"); }
 

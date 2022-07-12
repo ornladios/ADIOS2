@@ -44,6 +44,7 @@ int DataSize = 5 * 1024 * 1024 / 8; /* DefaultMinDeferredSize is 4*1024*1024
                                        This should be more than that. */
 bool RoundRobin = false;
 bool OnDemand = false;
+bool DontClose = false;
 
 std::string shutdown_name = "DieTest";
 adios2::Mode GlobalWriteMode = adios2::Mode::Deferred;
@@ -321,6 +322,10 @@ void ParseArgs(int argc, char **argv)
         else if (std::string(argv[1]) == "--flush")
         {
             Flush++;
+        }
+        else if (std::string(argv[1]) == "--dont_close")
+        {
+            DontClose = true;
         }
         else if (std::string(argv[1]) == "--disable_mpmd")
         {

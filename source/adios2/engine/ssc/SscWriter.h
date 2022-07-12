@@ -27,7 +27,7 @@ class SscWriter : public Engine
 public:
     SscWriter(IO &io, const std::string &name, const Mode mode,
               helper::Comm comm);
-    ~SscWriter() = default;
+    ~SscWriter();
 
     StepStatus BeginStep(
         StepMode mode,
@@ -48,6 +48,12 @@ private:
     void DoPutStructDeferred(VariableStruct &, const void *) final;
 
     void DoClose(const int transportIndex = -1) final;
+
+    /**
+     * Called if destructor is called on an open engine.  Should warn or take
+     * any non-complex measure that might help recover.
+     */
+    void DestructorClose(bool Verbose) noexcept final{};
 
     int m_Verbosity = 0;
     std::string m_EngineMode = "generic";

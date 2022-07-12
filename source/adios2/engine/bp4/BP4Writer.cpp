@@ -41,6 +41,17 @@ BP4Writer::BP4Writer(IO &io, const std::string &name, const Mode mode,
     m_IO.m_ReadStreaming = false;
 
     Init();
+
+    m_IsOpen = true;
+}
+
+BP4Writer::~BP4Writer()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 StepStatus BP4Writer::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -435,6 +446,19 @@ void BP4Writer::DoFlush(const bool isFinal, const int transportIndex)
     {
         WriteData(isFinal, transportIndex);
     }
+}
+
+void BP4Writer::DestructorClose(bool Verbose) noexcept
+{
+    if (Verbose)
+    {
+        std::cerr << "BP4 Writer \"" << m_Name
+                  << "\" Destroyed without a prior Close()." << std::endl;
+        std::cerr << "This may result in corrupt output." << std::endl;
+    }
+    // at least close metadata index file
+    UpdateActiveFlag(false);
+    m_IsOpen = false;
 }
 
 void BP4Writer::DoClose(const int transportIndex)

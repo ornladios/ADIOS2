@@ -563,7 +563,21 @@ protected:
     virtual void DoGetStructSync(VariableStruct &, void *);
     virtual void DoGetStructDeferred(VariableStruct &, void *);
 
+    /**
+     * Closes a particular transport, or all if transportIndex = -1 (default).
+     * @param transportIndex index returned from IO AddTransport, default (-1) =
+     * all
+     */
     virtual void DoClose(const int transportIndex) = 0;
+
+    /** if the current engine has had a successful open, but is not yet Close()d
+     */
+    bool m_IsOpen = false;
+
+    /** true if not MPI or rank0 with mpi, so warn */
+    bool m_FailVerbose = true;
+
+    virtual void DestructorClose(bool Verbose) noexcept;
 
     /**
      * Called by string Put/Get versions and deferred modes

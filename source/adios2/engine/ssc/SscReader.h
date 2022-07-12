@@ -26,7 +26,7 @@ class SscReader : public Engine
 public:
     SscReader(IO &adios, const std::string &name, const Mode mode,
               helper::Comm comm);
-    ~SscReader() = default;
+    ~SscReader();
     StepStatus BeginStep(
         StepMode stepMode = StepMode::Read,
         const float timeoutSeconds = std::numeric_limits<float>::max()) final;
@@ -50,6 +50,12 @@ private:
                        const size_t step) const final;
 
     void DoClose(const int transportIndex = -1) final;
+
+    /**
+     * Called if destructor is called on an open engine.  Should warn or take
+     * any non-complex measure that might help recover.
+     */
+    void DestructorClose(bool Verbose) noexcept final{};
 
     int m_Verbosity = 0;
     std::string m_EngineMode = "generic";

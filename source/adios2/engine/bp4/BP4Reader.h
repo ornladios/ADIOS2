@@ -39,7 +39,7 @@ public:
     BP4Reader(IO &io, const std::string &name, const Mode mode,
               helper::Comm comm);
 
-    virtual ~BP4Reader() = default;
+    virtual ~BP4Reader();
 
     StepStatus BeginStep(StepMode mode = StepMode::Read,
                          const float timeoutSeconds = -1.0) final;
@@ -49,6 +49,9 @@ public:
     void EndStep() final;
 
     void PerformGets() final;
+
+protected:
+    void DestructorClose(bool Verbose) noexcept {};
 
 private:
     format::BP4Deserializer m_BP4Deserializer;

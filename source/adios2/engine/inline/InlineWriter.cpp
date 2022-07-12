@@ -36,6 +36,16 @@ InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
         std::cout << "Inline Writer " << m_WriterRank << " Open(" << m_Name
                   << ")." << std::endl;
     }
+    m_IsOpen = true;
+}
+
+InlineWriter::~InlineWriter()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 const InlineReader *InlineWriter::GetReader() const

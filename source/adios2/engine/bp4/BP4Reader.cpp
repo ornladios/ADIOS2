@@ -34,6 +34,16 @@ BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode,
     helper::Log("Engine", "BP4Reader", "Open", m_Name, 0, m_Comm.Rank(), 5,
                 m_Verbosity, helper::LogMode::INFO);
     Init();
+    m_IsOpen = true;
+}
+
+BP4Reader::~BP4Reader()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)

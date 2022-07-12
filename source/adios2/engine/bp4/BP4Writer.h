@@ -38,7 +38,7 @@ public:
     BP4Writer(IO &io, const std::string &name, const Mode mode,
               helper::Comm comm);
 
-    ~BP4Writer() = default;
+    ~BP4Writer();
 
     StepStatus BeginStep(StepMode mode,
                          const float timeoutSeconds = -1.0) final;
@@ -48,6 +48,9 @@ public:
     void Flush(const int transportIndex = -1) final;
 
     size_t DebugGetDataBufferSize() const final;
+
+protected:
+    void DestructorClose(bool Verbose) noexcept;
 
 private:
     /** Single object controlling BP buffering */

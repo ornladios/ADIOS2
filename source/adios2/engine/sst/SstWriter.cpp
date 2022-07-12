@@ -117,9 +117,17 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
         SstWriterInitMetadataCallback(m_Output, this, AssembleMetadata,
                                       FreeAssembledMetadata);
     }
+    m_IsOpen = true;
 }
 
-SstWriter::~SstWriter() { SstStreamDestroy(m_Output); }
+SstWriter::~SstWriter()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    SstStreamDestroy(m_Output);
+}
 
 StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
 {
@@ -402,6 +410,24 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void SstWriter::DoClose(const int transportIndex) { SstWriterClose(m_Output); }
+
+/**
+ * Called if destructor is called on an open engine.  Should warn or take any
+ * non-complex measure that might help recover.
+ */
+void SstWriter::DestructorClose(bool Verbose) noexcept
+{
+    if (Verbose)
+    {
+        std::cerr << "SST Writer \"" << m_Name
+                  << "\" Destroyed without a prior Close()." << std::endl;
+        std::cerr << "This may result in loss of data and/or disconnect "
+                     "warnings for a connected SST Reader."
+                  << std::endl;
+    }
+    m_IsOpen = false;
+    // should at least call control plane to remove contact file
+}
 
 } // end namespace engine
 } // end namespace core

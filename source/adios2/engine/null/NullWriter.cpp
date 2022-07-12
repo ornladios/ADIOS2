@@ -22,9 +22,17 @@ NullWriter::NullWriter(IO &io, const std::string &name, const Mode mode,
 : Engine("NullWriter", io, name, mode, std::move(comm)),
   Impl(new NullWriter::NullWriterImpl)
 {
+    m_IsOpen = true;
 }
 
-NullWriter::~NullWriter() = default;
+NullWriter::~NullWriter()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
+}
 
 StepStatus NullWriter::BeginStep(StepMode mode, const float timeoutSeconds)
 {

@@ -44,7 +44,7 @@ public:
     BP5Writer(IO &io, const std::string &name, const Mode mode,
               helper::Comm comm);
 
-    ~BP5Writer() = default;
+    ~BP5Writer();
 
     StepStatus BeginStep(StepMode mode,
                          const float timeoutSeconds = -1.0) final;
@@ -199,6 +199,9 @@ private:
     // aggregators only (valid if m_Aggregator->m_Comm.Rank() == 0)
     helper::Comm m_CommAggregators;
     adios2::profiling::JSONProfiler m_Profiler;
+
+protected:
+    virtual void DestructorClose(bool Verbose) noexcept;
 
 private:
     // updated during WriteMetaData

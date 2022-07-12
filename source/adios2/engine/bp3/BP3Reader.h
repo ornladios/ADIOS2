@@ -38,7 +38,7 @@ public:
     BP3Reader(IO &io, const std::string &name, const Mode mode,
               helper::Comm comm);
 
-    ~BP3Reader() = default;
+    ~BP3Reader();
 
     StepStatus BeginStep(StepMode mode = StepMode::Read,
                          const float timeoutSeconds = -1.0) final;
@@ -48,6 +48,9 @@ public:
     void EndStep() final;
 
     void PerformGets() final;
+
+protected:
+    void DestructorClose(bool Verbose) noexcept {};
 
 private:
     format::BP3Deserializer m_BP3Deserializer;

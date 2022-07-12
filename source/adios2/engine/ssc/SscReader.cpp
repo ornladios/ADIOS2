@@ -45,6 +45,16 @@ SscReader::SscReader(IO &io, const std::string &name, const Mode mode,
         m_EngineInstance = std::make_shared<ssc::SscReaderNaive>(
             io, name, mode, CommAsMPI(m_Comm));
     }
+    m_IsOpen = true;
+}
+
+SscReader::~SscReader()
+{
+    if (adios2::core::Engine::m_IsOpen)
+    {
+        DestructorClose(adios2::core::Engine::m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 StepStatus SscReader::BeginStep(StepMode stepMode, const float timeoutSeconds)

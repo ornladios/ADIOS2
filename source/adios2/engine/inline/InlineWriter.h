@@ -41,7 +41,7 @@ public:
     InlineWriter(IO &adios, const std::string &name, const Mode mode,
                  helper::Comm comm);
 
-    ~InlineWriter() = default;
+    ~InlineWriter();
 
     StepStatus BeginStep(StepMode mode,
                          const float timeoutSeconds = -1.0) final;
@@ -51,6 +51,8 @@ public:
     void Flush(const int transportIndex = -1) final;
 
     bool IsInsideStep() const;
+
+    void DestructorClose(bool Verbose) noexcept final{};
 
 private:
     int m_Verbosity = 0;

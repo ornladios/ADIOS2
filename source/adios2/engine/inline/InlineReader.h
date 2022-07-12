@@ -45,7 +45,7 @@ public:
     InlineReader(IO &adios, const std::string &name, const Mode mode,
                  helper::Comm comm);
 
-    ~InlineReader() = default;
+    ~InlineReader();
     StepStatus BeginStep(StepMode mode = StepMode::Read,
                          const float timeoutSeconds = -1.0) final;
     void PerformGets() final;
@@ -56,6 +56,8 @@ public:
 
     template <typename T>
     void Get(Variable<T> &, T **) const;
+
+    void DestructorClose(bool Verbose) noexcept final{};
 
 private:
     const InlineWriter *GetWriter() const;

@@ -22,9 +22,17 @@ NullReader::NullReader(IO &io, const std::string &name, const Mode mode,
 : Engine("NullReader", io, name, mode, std::move(comm)),
   Impl(new NullReader::NullReaderImpl)
 {
+    m_IsOpen = true;
 }
 
-NullReader::~NullReader() = default;
+NullReader::~NullReader()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
+}
 
 StepStatus NullReader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
@@ -89,6 +97,8 @@ void NullReader::PerformGets()
 
     return;
 }
+
+void NullReader::DestructorClose(bool Verbose) noexcept { m_IsOpen = false; }
 
 void NullReader::DoClose(const int)
 {

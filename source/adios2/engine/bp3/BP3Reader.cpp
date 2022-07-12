@@ -28,6 +28,16 @@ BP3Reader::BP3Reader(IO &io, const std::string &name, const Mode mode,
 {
     PERFSTUBS_SCOPED_TIMER("BP3Reader::Open");
     Init();
+    m_IsOpen = true;
+}
+
+BP3Reader::~BP3Reader()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)

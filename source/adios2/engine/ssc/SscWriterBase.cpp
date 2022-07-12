@@ -40,7 +40,7 @@ SscWriterBase::SscWriterBase(IO &io, const std::string &name, const Mode mode,
     SyncMpiPattern(comm);
 }
 
-SscWriterBase::~SscWriterBase() {}
+SscWriterBase::~SscWriterBase() = default;
 
 void SscWriterBase::SyncMpiPattern(MPI_Comm comm)
 {

@@ -64,9 +64,20 @@ DataSpacesReader::DataSpacesReader(IO &io, const std::string &name,
     {
         fprintf(stderr, "DataSpaces did not initialize properly %d\n", ret);
     }
+    else
+    {
+        m_IsOpen = true;
+    }
 }
 
-DataSpacesReader::~DataSpacesReader() {}
+DataSpacesReader::~DataSpacesReader()
+{
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
+}
 
 StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 {

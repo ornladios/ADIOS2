@@ -33,6 +33,7 @@ SkeletonReader::SkeletonReader(IO &io, const std::string &name, const Mode mode,
         std::cout << "Skeleton Reader " << m_ReaderRank << " Open(" << m_Name
                   << ") in constructor." << std::endl;
     }
+    m_IsOpen = true;
 }
 
 SkeletonReader::~SkeletonReader()
@@ -43,6 +44,11 @@ SkeletonReader::~SkeletonReader()
         std::cout << "Skeleton Reader " << m_ReaderRank << " deconstructor on "
                   << m_Name << "\n";
     }
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 StepStatus SkeletonReader::BeginStep(const StepMode mode,
