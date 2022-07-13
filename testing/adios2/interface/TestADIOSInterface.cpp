@@ -339,7 +339,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutMixed)
     using T = typename TestFixture::DataType;
 
     std::string filename = "multi_putmixed.bp";
-    this->m_Io.SetEngine("BP3");
+    this->m_Io.SetEngine("BP4");
     auto writer = this->m_Io.Open(filename, adios2::Mode::Write);
     auto var = this->m_Io.template DefineVariable<T>("var", this->m_Shape);
     MyData<T> myData(this->m_Selections);
@@ -369,7 +369,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutZeroCopy)
     using T = typename TestFixture::DataType;
 
     std::string filename = "multi_putzerocopy.bp";
-    this->m_Io.SetEngine("BP3");
+    this->m_Io.SetEngine("BP4");
     auto writer = this->m_Io.Open(filename, adios2::Mode::Write);
     auto var = this->m_Io.template DefineVariable<T>("var", this->m_Shape);
     MyDataView<T> myData(this->m_Selections);
@@ -409,7 +409,7 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, PutZeroCopyMixed)
     using T = typename TestFixture::DataType;
 
     std::string filename = "multi_putzerocopymixed.bp";
-    this->m_Io.SetEngine("BP3");
+    this->m_Io.SetEngine("BP4");
     auto writer = this->m_Io.Open(filename, adios2::Mode::Write);
     auto var = this->m_Io.template DefineVariable<T>("var", this->m_Shape);
 
@@ -445,10 +445,10 @@ TYPED_TEST(ADIOS2_CXX11_API_MultiBlock, Put2File)
 {
     using T = typename TypeParam::DataType;
 
-    this->GenerateOutput("multi_2f_input.bp", "BP3");
+    this->GenerateOutput("multi_2f_input.bp", "BP4");
 
     std::string filename = "multi_put2file.bp";
-    this->m_Io.SetEngine("BP3");
+    this->m_Io.SetEngine("BP4");
     auto writer = this->m_Io.Open(filename, adios2::Mode::Write);
     auto reader = this->m_Io.Open("multi_2f_input.bp", adios2::Mode::Read);
     auto var = this->m_Io.template InquireVariable<T>("var");
