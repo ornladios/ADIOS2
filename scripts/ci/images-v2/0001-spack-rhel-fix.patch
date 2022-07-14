@@ -1,0 +1,11 @@
+--- lib/spack/spack/solver/concretize.lp
++++ lib/spack/spack/solver/concretize.lp
+@@ -718,6 +718,9 @@
+ % catalina binaries can be used on bigsur. Direction is package -> dependency.
+ os_compatible("bigsur", "catalina").
+
++os_compatible("rocky8", "centos8").
++os_compatible("centos8", "rocky8").
++
+ % If an OS is set explicitly respect the value
+ node_os(Package, OS) :- node_os_set(Package, OS), node(Package).

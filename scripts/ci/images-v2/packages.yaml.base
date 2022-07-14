@@ -1,6 +1,6 @@
 packages:
   all:
-    target: [haswell]
+    target: [x86_64]
   cmake:
     variants: ~ownlibs
   adios2:
