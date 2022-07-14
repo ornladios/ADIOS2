@@ -125,11 +125,11 @@ void ZFPRateCUDA(const std::string rate)
                            std::bind(std::minus<float>(), std::placeholders::_1,
                                      INCREMENT));
 
-            for (int i = 0; i < NxTotal; i++)
+            for (size_t i = 0; i < NxTotal; i++)
             {
                 char msg[1 << 8] = {0};
-                sprintf(msg, "t=%d i=%d rank=%d r32o=%f r32s=%f", t, i, mpiRank,
-                        r32o[i], r32s[i]);
+                sprintf(msg, "t=%d i=%zu rank=%d r32o=%f r32s=%f", t, i,
+                        mpiRank, r32o[i], r32s[i]);
                 ASSERT_LT(std::abs(r32o[i] - r32s[i]), EPSILON) << msg;
             }
         }
