@@ -1,4 +1,5 @@
-FROM ornladios/adios2:ci-spack-el8-base
+ARG BASE_IMAGE=ornladios/adios2:ci-spack-el8-base
+FROM $BASE_IMAGE
 
 # Install the gcc fortran compiler missing from the base image
 RUN dnf install -y gcc-gfortran && \
@@ -8,4 +9,5 @@ RUN dnf install -y gcc-gfortran && \
 RUN . /opt/spack/share/spack/setup-env.sh && \
     spack compiler rm --scope system gcc && \
     spack compiler add --scope system && \
-    spack config --scope system add "packages:all:compiler:[gcc]"
+    spack config --scope system add "packages:all:compiler:[gcc]" && \
+    spack external find --scope system --not-buildable cuda

@@ -2,39 +2,54 @@ ARG COMPILER_IMG_BASE
 FROM ornladios/adios2:ci-spack-el8-${COMPILER_IMG_BASE}-base
 
 ARG EXTRA_VARIANTS
-RUN sed "s|variants: +blosc|variants: ${EXTRA_VARIANTS} +blosc|" \
-      -i /etc/spack/packages.yaml && \
-    sed "s|variants: api=|variants: ${EXTRA_VARIANTS} api=|" \
-      -i /etc/spack/packages.yaml
+ARG CUDA_VARIANT
+RUN sed \
+    -e "s|packages:|packages:\n  zfp:\n    variants: ${CUDA_VARIANT} +shared|" \
+    -e "s|variants: +blosc|variants: ${EXTRA_VARIANTS} +blosc|" \
+    -e "s|variants: api=|variants: ${EXTRA_VARIANTS} api=|" \
+    -i /etc/spack/packages.yaml
 
 # Build dependencies
 ARG COMPILER_SPACK_ID
 RUN . /etc/profile.d/modules.sh && \
     . /opt/spack/share/spack/setup-env.sh && \
+    spack spec --reuse adios2%${COMPILER_SPACK_ID} ^rhash%gcc && \
     spack install \
-      --fail-fast \
-      -v \
-      -j$(grep -c '^processor' /proc/cpuinfo) \
-      libsodium%${COMPILER_SPACK_ID} && \
-    spack install \
+      --no-checksum \
+      --reuse \
       --fail-fast \
       -v \
       -j$(grep -c '^processor' /proc/cpuinfo) \
       --only dependencies \
       adios2%${COMPILER_SPACK_ID} ^rhash%gcc && \
+    spack spec --reuse libsodium%${COMPILER_SPACK_ID} && \
+    spack install \
+      --no-checksum \
+      --reuse \
+      --fail-fast \
+      -v \
+      -j$(grep -c '^processor' /proc/cpuinfo) \
+      libsodium%${COMPILER_SPACK_ID} && \
     spack clean -a
 
 # Setup modules
 RUN . /opt/spack/share/spack/setup-env.sh && \
     spack env create --without-view adios2-ci && \
+    spack -e adios2-ci config add concretizer:unify:true && \
     spack -e adios2-ci add $(spack find --format "/{hash}") && \
+    spack -e adios2-ci rm cuda && \
     spack -e adios2-ci install && \
-    rm -rf /root/.spack && \
     spack env activate adios2-ci && \
     spack env deactivate && \
+    rm -rf /root/.spack && \
     spack -e adios2-ci env loads
 
 # Setup default login environment
-RUN echo 'source /opt/spack/share/spack/setup-env.sh' > /etc/profile.d/zz-adios2-ci-env.sh && \
-    echo 'module use ${SPACK_ROOT}/share/spack/modules/linux-almalinux8-haswell' >> /etc/profile.d/zz-adios2-ci-env.sh && \
+RUN . /opt/spack/share/spack/setup-env.sh && \
+    echo 'source /opt/spack/share/spack/setup-env.sh' >> /etc/profile.d/zz-adios2-ci-env.sh && \
+    echo "module use ${SPACK_ROOT}/share/spack/modules/$(spack debug report | grep -Po 'Platform:\*\*\s\K.*')" >> /etc/profile.d/zz-adios2-ci-env.sh && \
     echo 'source ${SPACK_ROOT}/var/spack/environments/adios2-ci/loads' >> /etc/profile.d/zz-adios2-ci-env.sh
+
+# Enable CUDA in Spack if enabled
+COPY spack-external-cuda-addon.bash /root/spack-external-cuda-addon.bash
+RUN test x"${CUDA_VARIANT}" == x"+cuda" && . /root/spack-external-cuda-addon.bash
