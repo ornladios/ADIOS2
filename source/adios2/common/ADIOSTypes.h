@@ -215,7 +215,7 @@ struct MinBlockInfo
 struct MinVarInfo
 {
     size_t Step;
-    bool WasLocalVar;
+    bool WasLocalValue; // writer: localValue -> reader: 1D global array
     int Dims;
     size_t *Shape;
     bool IsValue = false;
