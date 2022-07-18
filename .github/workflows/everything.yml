@@ -109,6 +109,11 @@ jobs:
         os: [el8]
         compiler: [gcc8, gcc9, gcc10, gcc11, icc, oneapi, nvhpc222]
         parallel: [serial, mpi]
+        include:
+          - os: el8
+            compiler: cuda
+            parallel: serial
+            constrains: build_only
 
     steps:
       - uses: actions/checkout@v3
@@ -127,6 +132,7 @@ jobs:
       - name: Build
         run: gha/scripts/ci/gh-actions/run.sh build
       - name: Test
+        if: ${{ matrix.constrains != 'build_only' }}
         run: gha/scripts/ci/gh-actions/run.sh test
 
   linux_emu:
