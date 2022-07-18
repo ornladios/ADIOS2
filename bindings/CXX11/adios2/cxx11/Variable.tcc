@@ -167,7 +167,7 @@ Variable<T>::ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const
         {
             blockInfo.Start.reserve(coreVarInfo->Dims);
             blockInfo.Count.reserve(coreVarInfo->Dims);
-            if (coreVarInfo->WasLocalVar)
+            if (coreVarInfo->WasLocalValue)
             {
                 /* Start and count are really values, not pointers */
                 blockInfo.Start.push_back((size_t)coreBlockInfo.Start);

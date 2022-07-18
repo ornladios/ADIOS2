@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
         // Get io settings from the config file or
         // create one with default settings here
         adios2::IO io = adios.DeclareIO("Output");
-        io.SetEngine("BP3");
+        io.SetEngine("BP5");
         io.SetParameters({{"verbose", "4"}});
 
         /*
