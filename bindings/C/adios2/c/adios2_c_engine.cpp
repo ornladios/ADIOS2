@@ -649,7 +649,7 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
             auto *b = varinfo->BlocksInfo;
 
             varinfo->Dims = minBlocksInfo->Dims;
-            if (minBlocksInfo->WasLocalVar)
+            if (minBlocksInfo->WasLocalValue)
             {
                 varinfo->Shape = (size_t *)malloc(sizeof(size_t));
                 varinfo->Shape[0] = (intptr_t)minBlocksInfo->Shape;
@@ -670,7 +670,7 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine,
             {
                 b[i].WriterID = minBlocksInfo->BlocksInfo[i].WriterID;
                 b[i].BlockID = minBlocksInfo->BlocksInfo[i].BlockID;
-                if (minBlocksInfo->WasLocalVar)
+                if (minBlocksInfo->WasLocalValue)
                 {
                     b[i].Start = (size_t *)malloc(sizeof(size_t));
                     b[i].Start[0] =

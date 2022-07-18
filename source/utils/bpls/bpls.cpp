@@ -3069,7 +3069,7 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
                     for (size_t k = 0; k < ndim; k++)
                     {
                         size_t n =
-                            (minBlocks->WasLocalVar
+                            (minBlocks->WasLocalValue
                                  ? reinterpret_cast<size_t>(minBlocks->Shape)
                                  : minBlocks->Shape[k]);
                         if (firstStep)
@@ -3291,8 +3291,8 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     // first step
     if (minBlocksInfo)
     {
-        delete minBlocksInfo;
         size_t laststep = minBlocksInfo->Step; // used relative last step above
+        delete minBlocksInfo;
         int ndigits_nsteps = ndigits(laststep);
         if (variable->m_ShapeID == ShapeID::GlobalValue ||
             variable->m_ShapeID == ShapeID::LocalValue)
@@ -3381,18 +3381,18 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     for (size_t k = 0; k < ndim; k++)
                     {
                         size_t c =
-                            (minBlocksInfo->WasLocalVar
+                            (minBlocksInfo->WasLocalValue
                                  ? reinterpret_cast<size_t>(blocks[j].Count)
                                  : blocks[j].Count[k]);
 
                         if (c)
                         {
-                            size_t s =
-                                (minBlocksInfo->WasLocalVar
-                                     ? reinterpret_cast<size_t>(blocks[j].Start)
-                                     : blocks[j].Start[k]);
                             if (variable->m_ShapeID == ShapeID::GlobalArray)
                             {
+                                size_t s = (minBlocksInfo->WasLocalValue
+                                                ? reinterpret_cast<size_t>(
+                                                      blocks[j].Start)
+                                                : blocks[j].Start[k]);
                                 fprintf(outf, "%*zu:%*zu", ndigits_dims[k], s,
                                         ndigits_dims[k], s + c - 1);
                             }
@@ -3433,20 +3433,28 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     fprintf(outf, "\n");
                     if (dump)
                     {
-                        if (minBlocksInfo->WasLocalVar)
+                        Dims s, c;
+                        if (variable->m_ShapeID == ShapeID::GlobalArray)
                         {
-                            readVarBlock(
-                                fp, io, variable, RelStep, j,
-                                {reinterpret_cast<size_t>(blocks[j].Count)},
-                                {reinterpret_cast<size_t>(blocks[j].Start)});
+                            if (minBlocksInfo->WasLocalValue)
+                            {
+                                c = {reinterpret_cast<size_t>(blocks[j].Count)};
+                                s = {reinterpret_cast<size_t>(blocks[j].Start)};
+                            }
+                            else
+                            {
+                                c = Dims(blocks[j].Count,
+                                         blocks[j].Count + ndim);
+                                s = Dims(blocks[j].Start,
+                                         blocks[j].Start + ndim);
+                            }
                         }
                         else
                         {
-                            readVarBlock(
-                                fp, io, variable, RelStep, j,
-                                Dims(blocks[j].Count, blocks[j].Count + ndim),
-                                Dims(blocks[j].Start, blocks[j].Start + ndim));
+                            c = Dims(blocks[j].Count, blocks[j].Count + ndim);
+                            s = Dims(0, ndim);
                         }
+                        readVarBlock(fp, io, variable, RelStep, j, c, s);
                     }
                 }
             }
