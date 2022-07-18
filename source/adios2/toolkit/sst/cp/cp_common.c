@@ -1257,21 +1257,6 @@ extern void SstStreamDestroy(SstStream Stream)
         Stream->Readers = NULL;
     }
 
-    if (Stream->DP_Stream)
-    {
-        pthread_mutex_unlock(&Stream->DataLock);
-        if (Stream->Role == ReaderRole)
-        {
-            Stream->DP_Interface->destroyReader(&Svcs, Stream->DP_Stream);
-        }
-        else
-        {
-            Stream->DP_Interface->destroyWriter(&Svcs, Stream->DP_Stream);
-        }
-        Stream->DP_Stream = NULL;
-        pthread_mutex_lock(&Stream->DataLock);
-    }
-
     FFSFormatList FFSList = Stream->PreviousFormats;
     Stream->PreviousFormats = NULL;
     free(Stream->ReleaseList);
