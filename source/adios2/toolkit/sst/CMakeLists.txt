@@ -39,6 +39,11 @@ if(ADIOS2_HAVE_ZFP)
   target_link_libraries(sst PRIVATE zfp::zfp)
 endif()
 
+if(ADIOS2_HAVE_MPI)
+  target_sources(sst PRIVATE dp/mpi_dp.c)
+  target_link_libraries(sst PRIVATE MPI::MPI_C)
+endif()
+
 # Set library version information
 set_target_properties(sst PROPERTIES
   OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_sst
@@ -54,6 +59,7 @@ set(SST_CONFIG_OPTS
   FI_GNI
   CRAY_DRC
   NVStream
+  MPI
 )
 include(SSTFunctions)
 GenerateSSTHeaderConfig(${SST_CONFIG_OPTS})

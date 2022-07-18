@@ -157,7 +157,7 @@ the underlying network communication mechanism to use for exchanging
 data in SST.  Generally this is chosen by SST based upon what is
 available on the current platform.  However, specifying this engine
 parameter allows overriding SST's choice.  Current allowed values are
-**"RDMA"** and **"WAN"**.  (**ib** and **fabric** are accepted as
+**"MPI"**, **"RDMA"**, and **"WAN"**.  (**ib** and **fabric** are accepted as
 equivalent to **RDMA** and **evpath** is equivalent to **WAN**.)
 Generally both the reader and writer should be using the same network
 transport, and the network transport chosen may be dictated by the
@@ -288,7 +288,7 @@ BeginStep timeouts) and writer-side rules (like queue limit behavior) apply.
  QueueLimit                      integer             **0** (no queue limits)
  QueueFullPolicy                 string              **Block**, Discard
  ReserveQueueLimit               integer             **0** (no queue limits)
- DataTransport                   string              **default varies by platform**, RDMA, WAN
+ DataTransport                   string              **default varies by platform**, MPI, RDMA, WAN
  WANDataTransport                string              **sockets**, enet, ib
  ControlTransport                string              **TCP**, Scalable
  NetworkInterface                string              **NULL**

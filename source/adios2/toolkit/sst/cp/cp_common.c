@@ -1208,6 +1208,7 @@ extern void SstStreamDestroy(SstStream Stream)
         free(Stream->Timesteps);
         Stream->Timesteps = Next;
     }
+
     if (Stream->DP_Stream)
     {
         STREAM_MUTEX_UNLOCK(Stream);
@@ -1219,8 +1220,10 @@ extern void SstStreamDestroy(SstStream Stream)
         {
             Stream->DP_Interface->destroyWriter(&Svcs, Stream->DP_Stream);
         }
+        Stream->DP_Stream = NULL;
         STREAM_MUTEX_LOCK(Stream);
     }
+
     if (Stream->Readers)
     {
         for (int i = 0; i < Stream->ReaderCount; i++)
@@ -1252,6 +1255,21 @@ extern void SstStreamDestroy(SstStream Stream)
         Stream->ReaderCount = 0;
         free(Stream->Readers);
         Stream->Readers = NULL;
+    }
+
+    if (Stream->DP_Stream)
+    {
+        pthread_mutex_unlock(&Stream->DataLock);
+        if (Stream->Role == ReaderRole)
+        {
+            Stream->DP_Interface->destroyReader(&Svcs, Stream->DP_Stream);
+        }
+        else
+        {
+            Stream->DP_Interface->destroyWriter(&Svcs, Stream->DP_Stream);
+        }
+        Stream->DP_Stream = NULL;
+        pthread_mutex_lock(&Stream->DataLock);
     }
 
     FFSFormatList FFSList = Stream->PreviousFormats;

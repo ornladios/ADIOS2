@@ -1475,6 +1475,14 @@ static void CloseWSRStream(CManager cm, void *WSR_Stream_v)
                "Delayed task Moving Reader stream %p to status %s\n",
                CP_WSR_Stream, SSTStreamStatusStr[PeerClosed]);
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
+
+    if (strncmp("mpi", ParentStream->ConfigParams->DataTransport, 3) == 0 &&
+        CP_WSR_Stream->DP_WSR_Stream)
+    {
+        CP_WSR_Stream->ParentStream->DP_Interface->destroyWriterPerReader(
+            &Svcs, CP_WSR_Stream->DP_WSR_Stream);
+        CP_WSR_Stream->DP_WSR_Stream = NULL;
+    }
     STREAM_MUTEX_UNLOCK(ParentStream);
 }
 
@@ -1525,6 +1533,18 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
             // move to fully closed state later
             CMfree(CMadd_delayed_task(ParentStream->CPInfo->SharedCM->cm, 2, 0,
                                       CloseWSRStream, CP_WSR_Stream));
+        }
+        else
+        {
+            if (strncmp("mpi", ParentStream->ConfigParams->DataTransport, 3) ==
+                    0 &&
+                CP_WSR_Stream->DP_WSR_Stream)
+            {
+                CP_WSR_Stream->ParentStream->DP_Interface
+                    ->destroyWriterPerReader(&Svcs,
+                                             CP_WSR_Stream->DP_WSR_Stream);
+                CP_WSR_Stream->DP_WSR_Stream = NULL;
+            }
         }
     }
     CP_verbose(ParentStream, PerStepVerbose,
