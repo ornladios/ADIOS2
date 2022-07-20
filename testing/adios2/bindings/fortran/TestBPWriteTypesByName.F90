@@ -17,7 +17,8 @@
      integer(kind=8), dimension(:), allocatable :: shape_in
 
      ! Launch MPI
-     call MPI_Init(ierr)
+     INTEGER provided
+     call MPI_Init_thread(MPI_THREAD_MULTIPLE, provided, ierr)
      call MPI_Comm_rank(MPI_COMM_WORLD, irank, ierr)
      call MPI_Comm_size(MPI_COMM_WORLD, isize, ierr)
 

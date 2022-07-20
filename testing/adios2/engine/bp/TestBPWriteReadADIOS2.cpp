@@ -2300,7 +2300,8 @@ TEST_F(BPWriteReadTestADIOS2, GetDeferredWithoutEndStep)
 int main(int argc, char **argv)
 {
 #if ADIOS2_USE_MPI
-    MPI_Init(nullptr, nullptr);
+    int provided;
+    MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
 #endif
 
     int result;

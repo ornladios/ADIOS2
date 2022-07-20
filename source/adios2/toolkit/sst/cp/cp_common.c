@@ -131,6 +131,10 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         {
             Params->DataTransport = strdup("rdma");
         }
+        else
+        {
+            Params->DataTransport = strdup(SelectedTransport);
+        }
         free(SelectedTransport);
     }
     if (Params->ControlTransport == NULL)
@@ -1204,6 +1208,7 @@ extern void SstStreamDestroy(SstStream Stream)
         free(Stream->Timesteps);
         Stream->Timesteps = Next;
     }
+
     if (Stream->DP_Stream)
     {
         STREAM_MUTEX_UNLOCK(Stream);
@@ -1215,8 +1220,10 @@ extern void SstStreamDestroy(SstStream Stream)
         {
             Stream->DP_Interface->destroyWriter(&Svcs, Stream->DP_Stream);
         }
+        Stream->DP_Stream = NULL;
         STREAM_MUTEX_LOCK(Stream);
     }
+
     if (Stream->Readers)
     {
         for (int i = 0; i < Stream->ReaderCount; i++)

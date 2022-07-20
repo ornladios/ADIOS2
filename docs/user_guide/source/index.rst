@@ -38,6 +38,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    advanced/memory_management
    advanced/gpu_aware
    advanced/plugins
+   advanced/ecp_hardware
    
 .. toctree::
    :caption: Ecosystem Tools

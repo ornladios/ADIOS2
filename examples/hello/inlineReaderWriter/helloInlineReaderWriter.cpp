@@ -83,7 +83,8 @@ int main(int argc, char *argv[])
 {
     int rank = 0, size = 1;
 #if ADIOS2_USE_MPI
-    MPI_Init(&argc, &argv);
+    int provided;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     adios2::ADIOS adios(MPI_COMM_WORLD);

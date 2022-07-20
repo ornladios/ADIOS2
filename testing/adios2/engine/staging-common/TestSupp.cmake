@@ -270,12 +270,15 @@ function(add_common_test basename engine)
     endif()
     set (timeout "${${basename}_TIMEOUT}")
     if ("${timeout}" STREQUAL "")
-       set (timeout "60")
+      if (DEFINED MPIEXEC_EXECUTABLE AND "${MPIEXEC_EXECUTABLE}" MATCHES "srun")
+        set (timeout "1000")
+      else()
+        set (timeout "60")
+      endif()
     endif()
 
     set_tests_properties(${testname} PROPERTIES
         TIMEOUT ${timeout} ${${basename}_PROPERTIES}
-        RUN_SERIAL TRUE
     )
 endfunction()
 

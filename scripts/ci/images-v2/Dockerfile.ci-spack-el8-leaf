@@ -1,6 +1,10 @@
 ARG COMPILER_IMG_BASE
 FROM ornladios/adios2:ci-spack-el8-${COMPILER_IMG_BASE}-base
 
+ARG MPI_FLAVOR=openmpi
+RUN sed "s|^packages:$|&\n  mpich:\n    version: [3.3.2]\n    variants: device=ch3 netmod=tcp|" \
+      -i /etc/spack/packages.yaml
+
 ARG EXTRA_VARIANTS
 ARG CUDA_VARIANT
 RUN sed \
@@ -8,6 +12,11 @@ RUN sed \
     -e "s|variants: +blosc|variants: ${EXTRA_VARIANTS} +blosc|" \
     -e "s|variants: api=|variants: ${EXTRA_VARIANTS} api=|" \
     -i /etc/spack/packages.yaml
+
+ARG MPI_FLAVOR=openmpi
+RUN sed "s|^\(\s\+\)all:.*|&\n\1  providers:\n\1    mpi: [${MPI_FLAVOR}]|" \
+      -i /etc/spack/packages.yaml && \
+      cat /etc/spack/packages.yaml
 
 # Build dependencies
 ARG COMPILER_SPACK_ID

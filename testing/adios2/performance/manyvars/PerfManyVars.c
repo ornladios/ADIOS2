@@ -156,7 +156,8 @@ int main(int argc, char **argv)
 {
     int err, i;
 
-    MPI_Init(&argc, &argv);
+    int provided;
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);
 

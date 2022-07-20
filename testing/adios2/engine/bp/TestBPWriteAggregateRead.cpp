@@ -1002,7 +1002,8 @@ INSTANTIATE_TEST_SUITE_P(Substreams, BPWriteAggregateReadTest,
 
 int main(int argc, char **argv)
 {
-    MPI_Init(nullptr, nullptr);
+    int provided;
+    MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);

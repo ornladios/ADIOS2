@@ -151,7 +151,8 @@ program main
   external testing_adios_io_engine
   external testing_adios_io_engine_default
 
-  call MPI_Init(ierr)
+  INTEGER provided
+  call MPI_Init_thread(MPI_THREAD_MULTIPLE, provided, ierr)
 
   call testing_adios_io_engine()
   call testing_adios_io_engine_default()

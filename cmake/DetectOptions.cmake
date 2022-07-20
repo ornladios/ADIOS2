@@ -369,6 +369,9 @@ if(ADIOS2_USE_SST AND NOT WIN32)
       set(ADIOS2_SST_HAVE_CRAY_DRC TRUE)
     endif()
   endif()
+  if(ADIOS2_HAVE_MPI)
+    set(ADIOS2_SST_HAVE_MPI TRUE)
+  endif()
 endif()
 
 # DAOS
