@@ -152,6 +152,8 @@ program main
   external testing_adios_io_engine_default
 
   INTEGER provided
+
+  ! MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
   call MPI_Init_thread(MPI_THREAD_MULTIPLE, provided, ierr)
 
   call testing_adios_io_engine()

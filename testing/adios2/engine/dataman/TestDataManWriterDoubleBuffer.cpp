@@ -299,6 +299,8 @@ int main(int argc, char **argv)
 {
 #if ADIOS2_USE_MPI
     int mpi_provided;
+
+    // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &mpi_provided);
     if (mpi_provided != MPI_THREAD_MULTIPLE)
     {

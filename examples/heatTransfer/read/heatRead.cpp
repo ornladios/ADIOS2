@@ -70,6 +70,7 @@ int main(int argc, char *argv[])
         threadSupportLevel = MPI_THREAD_MULTIPLE;
     }
 
+    // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(&argc, &argv, threadSupportLevel, &provided);
 
     /* When writer and reader is launched together with a single mpirun command,

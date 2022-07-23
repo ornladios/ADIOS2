@@ -25,6 +25,8 @@ int main(int argc, char *argv[])
 
 #if ADIOS2_USE_MPI
     int provide;
+
+    // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provide);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
