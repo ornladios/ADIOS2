@@ -150,7 +150,6 @@ TEST_F(TestThreads, Basic)
     auto read_fut = std::async(std::launch::async, Read, BaseName, 0);
     auto write_fut = std::async(std::launch::async, Write, BaseName, 0);
     bool reader_success = read_fut.get();
-    sleep(1);
     bool writer_success = write_fut.get();
     EXPECT_TRUE(reader_success);
     EXPECT_TRUE(writer_success);
