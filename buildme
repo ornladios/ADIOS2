@@ -1,0 +1,57 @@
+#!/bin/bash
+
+source /etc/profile.d/z00_lmod.sh
+module load cuda/10.2
+module load gcc/8.3.1
+module load cmake/3.23.1 # to avoid cmake FindMPI problem
+
+set -x
+
+installdir=`pwd`/install
+#rm -rf $installdir
+
+# download SCR-v3.0.1 release
+if [ ! -f scr-v3.0.1.tgz ] ; then
+  wget https://github.com/LLNL/scr/releases/download/v3.0.1/scr-v3.0.1.tgz
+  if [ ! -d scr-v3.0.1 ] ; then
+    tar -xzf scr-v3.0.1.tgz
+  fi
+fi
+
+# build SCR-v3.0.1 in debug mode
+pushd scr-v3.0.1
+  installdir_scr=`pwd`/install
+  rm -rf $installdir_scr
+
+  rm -rf build
+  mkdir build
+  pushd build
+    cmake \
+      -DCMAKE_INSTALL_PREFIX=$installdir_scr \
+      -DCMAKE_BUILD_TYPE=Debug \
+      -DSCR_RESOURCE_MANAGER=LSF \
+      ..
+    make -j
+    make install
+  popd
+popd
+
+# build ADIOS2 and point to the above SCR installation
+rm -rf build
+mkdir build
+cd build
+cmake \
+  -DCMAKE_INSTALL_PREFIX=$installdir \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_VERBOSE_MAKEFILE=ON \
+  -DADIOS2_USE_MPI=ON \
+  -DADIOS2_USE_HDF5=OFF \
+  -DADIOS2_USE_CUDA=OFF \
+  -DADIOS2_USE_Fortran=OFF \
+  -DADIOS2_USE_Python=OFF \
+  -DSCR_ROOT=$installdir_scr \
+  ..
+
+make -j
+
+make install
