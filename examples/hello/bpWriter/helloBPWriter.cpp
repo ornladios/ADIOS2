@@ -19,6 +19,8 @@
 #include <mpi.h>
 #endif
 
+#include "scr.h"
+
 int main(int argc, char *argv[])
 {
     int rank, size;
@@ -27,6 +29,7 @@ int main(int argc, char *argv[])
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    SCR_Init();
 #else
     rank = 0;
     size = 1;
@@ -68,6 +71,10 @@ int main(int argc, char *argv[])
                         // variable
 
         std::string filename = "myVector_cpp.bp";
+
+        int scr_valid = 1;
+        SCR_Start_output(filename.c_str(), SCR_FLAG_CHECKPOINT);
+
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpFileWriter = bpIO.Open(filename, adios2::Mode::Write);
 
@@ -84,6 +91,8 @@ int main(int argc, char *argv[])
                       << " to disk. It can now be read by running "
                          "./bin/hello_bpReader.\n";
         }
+
+        SCR_Complete_output(scr_valid);
     }
     catch (std::invalid_argument &e)
     {
@@ -111,6 +120,7 @@ int main(int argc, char *argv[])
     }
 
 #if ADIOS2_USE_MPI
+    SCR_Finalize();
     MPI_Finalize();
 #endif
 

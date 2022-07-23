@@ -19,6 +19,8 @@
 
 #include <adios2.h>
 
+#include "scr.h"
+
 int main(int argc, char *argv[])
 {
     int provided;
@@ -27,6 +29,40 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     std::string filename = "myVector_cpp.bp";
+
+    // Since ADIOS2 engine introspects the directory structure to determine the file format,
+    // flush any cached dataset to restart from the parallel file system.
+    // Collective over MPI_COMM_WORLD.
+    SCR_Config("SCR_GLOBAL_RESTART=1");
+
+    // SCR attempts to load an application's most recent checkpoint by default.
+    // The user can specify a particular checkpoint by name by setting SCR_CURRENT.
+    // Collective over MPI_COMM_WORLD.
+    SCR_Configf("SCR_CURRENT=%s", filename.c_str());
+
+    SCR_Init();
+
+    // Query whether SCR successfully loaded a restart, and if so, its name.
+    // Collective over MPI_COMM_WORLD.
+    // Both parameters are output.
+    // The first parameter is set to 1 if SCR loaded a checkpoint, 0 otherwise.
+    // The second parameter will hold the name of the checkpoint if one was loaded.
+    // The name returned is the same string provided in SCR_Start_output when the checkpoint was created.
+    int have_restart;
+    char scr_dset[SCR_MAX_FILENAME];
+    SCR_Have_restart(&have_restart, scr_dset);
+
+    // Start a restart phase.
+    // Collective over MPI_COMM_WORLD.
+    // Should only be called if SCR_Have_restart indicates that SCR loaded a checkpoint.
+    // For convenience, SCR_Start_restart returns the name of the checkpoint again.
+    // This will match the name returned by SCR_Have_restart.
+    //SCR_Start_restart(scr_dset);
+
+    // Each process should track whether it reads its data successfully.
+    // Set to 0 if calling process fails to read its data.
+    int scr_valid = 1;
+
     try
     {
         /** ADIOS class factory of IO class objects */
@@ -138,6 +174,14 @@ int main(int argc, char *argv[])
         MPI_Abort(MPI_COMM_WORLD, 1);
     }
 
+    // Complete restart phase.
+    // Collective over MPI_COMM_WORLD.
+    // Each process should indicate whether it successfully read its data.
+    // An allreduce determines whether all ranks succeeded.
+    // If any failed, SCR will attempt to load up the next most recent checkpoint, if any.
+    //SCR_Complete_restart(scr_valid);
+
+    SCR_Finalize();
     MPI_Finalize();
 
     return 0;

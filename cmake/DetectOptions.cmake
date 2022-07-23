@@ -290,6 +290,15 @@ if(IME_FOUND)
   set(ADIOS2_HAVE_IME TRUE)
 endif()
 
+# SCR (Scalable Checkpoint/Restart Library)
+if(ADIOS2_USE_SCR STREQUAL AUTO)
+  find_package(SCR)
+elseif(ADIOS2_USE_SCR)
+  find_package(SCR REQUIRED)
+endif()
+if(SCR_FOUND)
+  set(ADIOS2_HAVE_SCR TRUE)
+endif()
 
 # Python
 

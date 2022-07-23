@@ -20,6 +20,8 @@
 #include <ctime>
 #include <iostream>
 
+#include "scr.h"
+
 namespace adios2
 {
 namespace core
@@ -201,6 +203,24 @@ void BP4Writer::InitParameters()
     m_DrainBB = m_WriteToBB && m_BP4Serializer.m_Parameters.BurstBufferDrain;
 }
 
+std::string scrRoute(std::string name)
+{
+    char scr_name[SCR_MAX_FILENAME];
+    SCR_Route_file(name.c_str(), scr_name);
+    std::string s(scr_name);
+    return s;
+}
+
+std::vector<std::string> scrRouteFiles(const std::vector<std::string> files)
+{
+    std::vector<std::string> newFiles;
+    for (const auto &name : files)
+    {
+        newFiles.push_back(scrRoute(name));
+    }
+    return newFiles;
+}
+
 void BP4Writer::InitTransports()
 {
     // TODO need to add support for aggregators here later
@@ -241,9 +261,15 @@ void BP4Writer::InitTransports()
                 m_BP4Serializer.m_RankMPI);
             m_FileDrainer.Start();
         }
+        if (m_SCR)
+        {
+            m_SubStreamNames = scrRouteFiles(m_SubStreamNames);
+        }
     }
 
     /* Create the directories either on target or burst buffer if used */
+    if (! m_SCR)
+    {
     m_BP4Serializer.m_Profiler.Start("mkdir");
     m_FileDataManager.MkDirsBarrier(
         m_SubStreamNames, m_IO.m_TransportsParameters,
@@ -256,6 +282,7 @@ void BP4Writer::InitTransports()
                                         m_BP4Serializer.m_Parameters.NodeLocal);
     }
     m_BP4Serializer.m_Profiler.Stop("mkdir");
+    }
 
     if (m_BP4Serializer.m_Aggregator.m_IsAggregator)
     {
@@ -294,6 +321,10 @@ void BP4Writer::InitTransports()
 
         m_MetadataFileNames =
             m_BP4Serializer.GetBPMetadataFileNames(transportsNames);
+        if (m_SCR)
+        {
+            m_MetadataFileNames = scrRouteFiles(m_MetadataFileNames);
+        }
 
         for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
         {
@@ -305,6 +336,10 @@ void BP4Writer::InitTransports()
 
         m_MetadataIndexFileNames =
             m_BP4Serializer.GetBPMetadataIndexFileNames(transportsNames);
+        if (m_SCR)
+        {
+            m_MetadataIndexFileNames = scrRouteFiles(m_MetadataIndexFileNames);
+        }
 
         m_FileMetadataIndexManager.OpenFiles(
             m_MetadataIndexFileNames, m_OpenMode, m_IO.m_TransportsParameters,
@@ -607,6 +642,10 @@ void BP4Writer::WriteProfilingJSONFile()
             else
             {
                 profileFileName = bpBaseNames[0] + "_profiling.json";
+            }
+            if (m_SCR)
+            {
+                profileFileName = scrRoute(profileFileName);
             }
             profilingJSONStream.Open(profileFileName, Mode::Write);
             profilingJSONStream.Write(profilingJSON.data(),

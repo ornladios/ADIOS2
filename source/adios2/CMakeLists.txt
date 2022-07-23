@@ -348,6 +348,10 @@ if(ADIOS2_HAVE_IME)
   target_link_libraries(adios2_core PRIVATE IME::IME)
 endif()
 
+if(ADIOS2_HAVE_SCR)
+  target_link_libraries(adios2_core PRIVATE SCR::SCR)
+endif()
+
 if(ADIOS2_HAVE_MPI)
   set(maybe_adios2_c_mpi adios2_c_mpi)
   set(maybe_adios2_cxx11_mpi adios2_cxx11_mpi)

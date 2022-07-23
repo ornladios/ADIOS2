@@ -65,6 +65,8 @@ private:
     /* transport manager for managing the metadata index file */
     transportman::TransportMan m_FileMetadataIndexManager;
 
+    bool m_SCR = true;
+
     /*
      *  Burst buffer variables
      */
