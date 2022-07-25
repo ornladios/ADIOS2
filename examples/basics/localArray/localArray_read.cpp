@@ -119,7 +119,6 @@ int main(int argc, char *argv[])
          * Inline uses single IO for write/read */
         adios2::IO io = adios.DeclareIO("Input");
 
-        io.SetEngine("BP3");
         io.SetParameters({{"verbose", "4"}});
 
         adios2::Engine reader = io.Open("localArray.bp", adios2::Mode::Read);

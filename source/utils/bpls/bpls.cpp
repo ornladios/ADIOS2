@@ -3058,16 +3058,18 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
 
         if (minBlocks)
         {
-            delete minBlocks;
             for (size_t step = 0; step < nsteps; step++)
             {
-                minBlocks = fp->MinBlocksInfo(*variable, step);
+                if (step > 0)
+                {
+                    minBlocks = fp->MinBlocksInfo(*variable, step);
+                }
                 if (minBlocks->Shape)
                 {
                     for (size_t k = 0; k < ndim; k++)
                     {
                         size_t n =
-                            (minBlocks->WasLocalVar
+                            (minBlocks->WasLocalValue
                                  ? reinterpret_cast<size_t>(minBlocks->Shape)
                                  : minBlocks->Shape[k]);
                         if (firstStep)
@@ -3083,34 +3085,36 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
                 }
                 delete minBlocks;
             }
-            return dims;
         }
-        const std::map<size_t, std::vector<size_t>> &indices =
-            variable->m_AvailableStepBlockIndexOffsets;
-        auto itStep = indices.begin();
-
-        for (size_t step = 0; step < nsteps; step++)
+        else
         {
-            const size_t absstep = itStep->first;
-            Dims d = variable->Shape(absstep - 1);
-            if (d.empty())
-            {
-                continue;
-            }
+            const std::map<size_t, std::vector<size_t>> &indices =
+                variable->m_AvailableStepBlockIndexOffsets;
+            auto itStep = indices.begin();
 
-            for (size_t k = 0; k < ndim; k++)
+            for (size_t step = 0; step < nsteps; step++)
             {
-                if (firstStep)
+                const size_t absstep = itStep->first;
+                Dims d = variable->Shape(absstep - 1);
+                if (d.empty())
                 {
-                    dims[k] = d[k];
+                    continue;
                 }
-                else if (dims[k] != d[k])
+
+                for (size_t k = 0; k < ndim; k++)
                 {
-                    dims[k] = 0;
+                    if (firstStep)
+                    {
+                        dims[k] = d[k];
+                    }
+                    else if (dims[k] != d[k])
+                    {
+                        dims[k] = 0;
+                    }
                 }
+                firstStep = false;
+                ++itStep;
             }
-            firstStep = false;
-            ++itStep;
         }
     }
     return dims;
@@ -3149,26 +3153,29 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
                 firstBlock = false;
             }
         }
-        std::vector<typename core::Variable<T>::BPInfo> blocks =
-            fp->BlocksInfo(*variable, fp->CurrentStep());
-        if (!blocks.empty())
+        else
         {
-            nblocks = blocks.size();
-            bool firstBlock = true;
-            for (size_t j = 0; j < nblocks; j++)
+            std::vector<typename core::Variable<T>::BPInfo> blocks =
+                fp->BlocksInfo(*variable, fp->CurrentStep());
+            if (!blocks.empty())
             {
-                for (size_t k = 0; k < ndim; k++)
+                nblocks = blocks.size();
+                bool firstBlock = true;
+                for (size_t j = 0; j < nblocks; j++)
                 {
-                    if (firstBlock)
+                    for (size_t k = 0; k < ndim; k++)
                     {
-                        dims[k] = blocks[j].Count[k];
+                        if (firstBlock)
+                        {
+                            dims[k] = blocks[j].Count[k];
+                        }
+                        else if (dims[k] != blocks[j].Count[k])
+                        {
+                            dims[k] = 0;
+                        }
                     }
-                    else if (dims[k] != blocks[j].Count[k])
-                    {
-                        dims[k] = 0;
-                    }
+                    firstBlock = false;
                 }
-                firstBlock = false;
             }
         }
     }
@@ -3184,14 +3191,16 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
         if (minBlocksInfo)
         {
             dims.resize(minBlocksInfo->Dims);
-            delete minBlocksInfo;
             size_t RelStep = 0;
             for (RelStep = 0; RelStep < variable->m_AvailableStepsCount;
                  RelStep++)
             {
-                minBlocksInfo = fp->MinBlocksInfo(*variable, RelStep);
+                if (RelStep > 0)
+                {
+                    minBlocksInfo = fp->MinBlocksInfo(*variable, RelStep);
+                }
 
-                auto coreBlocksInfo = minBlocksInfo->BlocksInfo;
+                auto &coreBlocksInfo = minBlocksInfo->BlocksInfo;
                 if (firstStep)
                 {
                     nblocks = coreBlocksInfo.size();
@@ -3224,40 +3233,42 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
                 firstStep = false;
             }
         }
-
-        std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
-            allblocks = fp->AllStepsBlocksInfo(*variable);
-
-        for (auto &blockpair : allblocks)
+        else
         {
-            std::vector<typename adios2::core::Variable<T>::BPInfo> &blocks =
-                blockpair.second;
-            const size_t blocksSize = blocks.size();
-            if (firstStep)
-            {
-                nblocks = blocksSize;
-            }
-            else if (nblocks != blocksSize)
-            {
-                nblocks = 0;
-            }
+            std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
+                allblocks = fp->AllStepsBlocksInfo(*variable);
 
-            for (size_t j = 0; j < blocksSize; j++)
+            for (auto &blockpair : allblocks)
             {
-                for (size_t k = 0; k < ndim; k++)
+                std::vector<typename adios2::core::Variable<T>::BPInfo>
+                    &blocks = blockpair.second;
+                const size_t blocksSize = blocks.size();
+                if (firstStep)
                 {
-                    if (firstBlock)
-                    {
-                        dims[k] = blocks[j].Count[k];
-                    }
-                    else if (dims[k] != blocks[j].Count[k])
-                    {
-                        dims[k] = 0;
-                    }
+                    nblocks = blocksSize;
                 }
-                firstBlock = false;
+                else if (nblocks != blocksSize)
+                {
+                    nblocks = 0;
+                }
+
+                for (size_t j = 0; j < blocksSize; j++)
+                {
+                    for (size_t k = 0; k < ndim; k++)
+                    {
+                        if (firstBlock)
+                        {
+                            dims[k] = blocks[j].Count[k];
+                        }
+                        else if (dims[k] != blocks[j].Count[k])
+                        {
+                            dims[k] = 0;
+                        }
+                    }
+                    firstBlock = false;
+                }
+                firstStep = false;
             }
-            firstStep = false;
         }
     }
     return std::make_pair(nblocks, dims);
@@ -3280,8 +3291,8 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     // first step
     if (minBlocksInfo)
     {
-        delete minBlocksInfo;
         size_t laststep = minBlocksInfo->Step; // used relative last step above
+        delete minBlocksInfo;
         int ndigits_nsteps = ndigits(laststep);
         if (variable->m_ShapeID == ShapeID::GlobalValue ||
             variable->m_ShapeID == ShapeID::LocalValue)
@@ -3370,18 +3381,18 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     for (size_t k = 0; k < ndim; k++)
                     {
                         size_t c =
-                            (minBlocksInfo->WasLocalVar
+                            (minBlocksInfo->WasLocalValue
                                  ? reinterpret_cast<size_t>(blocks[j].Count)
                                  : blocks[j].Count[k]);
 
                         if (c)
                         {
-                            size_t s =
-                                (minBlocksInfo->WasLocalVar
-                                     ? reinterpret_cast<size_t>(blocks[j].Start)
-                                     : blocks[j].Start[k]);
                             if (variable->m_ShapeID == ShapeID::GlobalArray)
                             {
+                                size_t s = (minBlocksInfo->WasLocalValue
+                                                ? reinterpret_cast<size_t>(
+                                                      blocks[j].Start)
+                                                : blocks[j].Start[k]);
                                 fprintf(outf, "%*zu:%*zu", ndigits_dims[k], s,
                                         ndigits_dims[k], s + c - 1);
                             }
@@ -3422,20 +3433,28 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     fprintf(outf, "\n");
                     if (dump)
                     {
-                        if (minBlocksInfo->WasLocalVar)
+                        Dims s, c;
+                        if (variable->m_ShapeID == ShapeID::GlobalArray)
                         {
-                            readVarBlock(
-                                fp, io, variable, RelStep, j,
-                                {reinterpret_cast<size_t>(blocks[j].Count)},
-                                {reinterpret_cast<size_t>(blocks[j].Start)});
+                            if (minBlocksInfo->WasLocalValue)
+                            {
+                                c = {reinterpret_cast<size_t>(blocks[j].Count)};
+                                s = {reinterpret_cast<size_t>(blocks[j].Start)};
+                            }
+                            else
+                            {
+                                c = Dims(blocks[j].Count,
+                                         blocks[j].Count + ndim);
+                                s = Dims(blocks[j].Start,
+                                         blocks[j].Start + ndim);
+                            }
                         }
                         else
                         {
-                            readVarBlock(
-                                fp, io, variable, RelStep, j,
-                                Dims(blocks[j].Count, blocks[j].Count + ndim),
-                                Dims(blocks[j].Start, blocks[j].Start + ndim));
+                            c = Dims(blocks[j].Count, blocks[j].Count + ndim);
+                            s = Dims(0, ndim);
                         }
+                        readVarBlock(fp, io, variable, RelStep, j, c, s);
                     }
                 }
             }
