@@ -2298,42 +2298,6 @@ format_server fs;
 FMContext iocontext;
 FMStructDescList str_list;
 {
-#ifdef NOT_DEF
-    FMFormat ioformat = new_IOFormat();
-    IOFormatRep iofr;
-    int field_count = 0;
-    int junk;
-
-    while (field_list[field_count].field_name != NULL) field_count++;
-    ioformat->context = (FMContext) iocontext;
-    ioformat->body->server_format_rep = NULL;
-    ioformat->body->format_name = strdup(format_name);
-    
-    ioformat->body->field_count = field_count;
-    ioformat->body->variant = FALSE;
-    ioformat->body->record_length = 
-	struct_size_field_list(field_list, sizeof(char*));
-    ioformat->body->IOversion = CURRENT_IO_VERSION;
-    ioformat->body->field_list = copy_field_list(field_list);;
-    ioformat->body->pointer_size = sizeof(char*);
-    ioformat->body->var_list = NULL;
-    ioformat->body->opt_info = NULL;
-    if (opt_info != NULL) {
-	int count = 0, i;
-	while(opt_info[count].info_type != 0) count++;
-	ioformat->body->opt_info = malloc(sizeof(opt_info[0]) * (count+1));
-	for (i=0; i< count; i++) {
-	    ioformat->body->opt_info[i].info_type = opt_info[i].info_type;
-	    ioformat->body->opt_info[i].info_len = opt_info[i].info_len;
-	    ioformat->body->opt_info[i].info_block = 
-		malloc(opt_info[i].info_len);
-	    memcpy(ioformat->body->opt_info[i].info_block,
-		   opt_info[i].info_block, opt_info[i].info_len);
-	}
-	memset(&ioformat->body->opt_info[count], 0, sizeof(opt_info[0]));
-    }
-    generate_var_list(ioformat, NULL);
-#endif
     FMFormat ioformat = register_data_format(iocontext, str_list);
     IOFormatRep iofr = malloc(sizeof(*iofr));
     int junk;
