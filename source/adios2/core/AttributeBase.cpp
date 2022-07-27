@@ -40,5 +40,11 @@ Params AttributeBase::GetInfo() const noexcept
     return info;
 }
 
+bool AttributeBase::Equals(const void *values, const size_t elements) const
+    noexcept
+{
+    return this->DoEqual(values, elements);
+}
+
 } // end namespace core
 } // end namespace adios2
