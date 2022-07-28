@@ -145,6 +145,35 @@ std::string Attribute<T>::DoGetInfoValue() const noexcept
     return value;
 }
 
+template <typename T>
+bool Attribute<T>::DoEqual(const void *values, const size_t elements) const
+    noexcept
+{
+    if (m_Elements != elements)
+    {
+        return false;
+    }
+
+    const T *data = reinterpret_cast<const T *>(values);
+
+    if (m_IsSingleValue)
+    {
+        return (*data == m_DataSingleValue);
+    }
+    else
+    {
+        for (size_t i = 0; i < elements; ++i)
+        {
+            if (data[i] != m_DataArray[i])
+            {
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
 } // end namespace core
 } // end namespace adios2
 

@@ -54,8 +54,16 @@ public:
 
     Params GetInfo() const noexcept;
 
+    /**
+     * Compare Attribute's current value with input
+     * @return true if they equal, false otherwise
+     */
+    bool Equals(const void *values, const size_t elements) const noexcept;
+
 private:
     virtual std::string DoGetInfoValue() const noexcept = 0;
+    virtual bool DoEqual(const void *values, const size_t elements) const
+        noexcept = 0;
 };
 
 } // end namespace core
