@@ -51,12 +51,19 @@ InlineWriter::~InlineWriter()
 const InlineReader *InlineWriter::GetReader() const
 {
     const auto &engine_map = m_IO.GetEngines();
-    if (engine_map.size() != 2)
+    if (engine_map.size() == 1)
+    {
+        // it should be fine for a writer to be created and start running,
+        // without the reader having been created. This is necessary to run
+        // correctly with ParaView Catalyst Live.
+        return nullptr;
+    }
+    else if (engine_map.size() > 2)
     {
         helper::Throw<std::runtime_error>(
             "Engine", "InlineWriter", "GetReader",
-            "There must be exactly one reader and one "
-            "writer for the inline engine.");
+            "There must be only one inline writer and at most "
+            "one inline reader.");
     }
 
     std::shared_ptr<Engine> e = engine_map.begin()->second;
@@ -87,7 +94,7 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     }
 
     auto reader = GetReader();
-    if (reader->IsInsideStep())
+    if (reader && reader->IsInsideStep())
     {
         m_InsideStep = false;
         return StepStatus::NotReady;
