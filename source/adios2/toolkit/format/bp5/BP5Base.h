@@ -85,11 +85,6 @@ public:
         const char *Name = NULL;
         size_t TotalElementSize = 0;
         char *Values;
-        ~PrimitiveTypeAttr()
-        {
-            free((void *)Name);
-            free((void *)Values);
-        }
     };
 
     struct StringArrayAttr
@@ -97,12 +92,6 @@ public:
         const char *Name = NULL;
         size_t ElementCount = 0;
         const char **Values = NULL;
-        ~StringArrayAttr()
-        {
-            free((void *)Name);
-            for (size_t i = 0; i < ElementCount; i++)
-                free((void *)Values[i]);
-        };
     };
 
     struct BP5AttrStruct

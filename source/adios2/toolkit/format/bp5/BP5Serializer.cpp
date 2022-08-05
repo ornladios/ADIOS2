@@ -1130,6 +1130,9 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
             new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
         //	FMdump_encoded_data(GenericAttributeFormat, AttributeBlock,
         // 1024000);
+        FMfree_var_rec_elements(GenericAttributeFormat, PendingAttrs);
+        delete (PendingAttrs);
+        PendingAttrs = nullptr;
     }
 
     // FMdump_encoded_data(Info.MetaFormat, MetaDataBlock, 1024000);
