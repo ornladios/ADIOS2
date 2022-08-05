@@ -173,6 +173,8 @@ private:
     void PerformPutCommon(Variable<T> &variable);
 
     void NotifyEngineAttribute(std::string name, DataType type) noexcept;
+    virtual void NotifyEngineAttribute(std::string name, AttributeBase *attr,
+                                       void *Data) noexcept;
 };
 
 } // end namespace engine

@@ -763,8 +763,6 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
                                            size_t BlockLen, size_t Step)
 {
     static int DumpMetadata = -1;
-    FMFieldList FieldList;
-    FMStructDescList FormatList;
     void *BaseData;
     FFSTypeHandle FFSformat;
 
