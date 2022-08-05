@@ -172,8 +172,6 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
 
             e.second->NotifyEngineAttribute(
                 globalName, itAttributePair.first->second.get(), Data);
-            std::cout << "In Notify First element of array is " << *(T *)Data
-                      << std::endl;
         }
         return static_cast<Attribute<T> &>(*itAttributePair.first->second);
     }
@@ -246,8 +244,6 @@ IO::DefineAttribute(const std::string &name, const T *array,
         for (auto &e : m_Engines)
         {
             e.second->NotifyEngineAttribute(globalName, &a, Data);
-            std::cout << "In Notify First element of array is " << *(T *)Data
-                      << std::endl;
         }
         return static_cast<Attribute<T> &>(*itAttributePair.first->second);
     }

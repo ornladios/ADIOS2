@@ -930,8 +930,6 @@ void BP5Serializer::SoloSerializeAttribute(const char *Name,
         ThisAttr->Values = (char *)malloc(ThisAttr->TotalElementSize);
         std::memcpy((void *)ThisAttr->Values, (void *)Array,
                     ThisAttr->TotalElementSize);
-        std::cout << "Setting First element of array is "
-                  << *(double *)ThisAttr->Values << std::endl;
     }
 }
 
