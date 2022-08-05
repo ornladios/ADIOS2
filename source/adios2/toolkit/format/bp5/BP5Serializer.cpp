@@ -865,6 +865,76 @@ void BP5Serializer::MarshalAttribute(const char *Name, const DataType Type,
     }
 }
 
+void BP5Serializer::SoloSerializeAttribute(const char *Name,
+                                           const DataType Type,
+                                           size_t ElemCount, const void *Data)
+{
+    if (!PendingAttrs)
+        PendingAttrs = new (BP5AttrStruct);
+    char *TmpName = (char *)malloc(strlen(Name) + 2);
+    TmpName[0] = '0' + (int)Type;
+    if (ElemCount != (size_t)-1)
+        TmpName[0] += 18; // indicates an array
+    strcpy(&TmpName[1], Name);
+    if (Type == DataType::String)
+    {
+        PendingAttrs->StrAttrCount++;
+        PendingAttrs->StrAttrs = (struct StringArrayAttr *)realloc(
+            PendingAttrs->StrAttrs,
+            sizeof(StringArrayAttr) * PendingAttrs->StrAttrCount);
+        StringArrayAttr *ThisAttr =
+            &PendingAttrs->StrAttrs[PendingAttrs->StrAttrCount - 1];
+        memset(ThisAttr, 0, sizeof(*ThisAttr));
+        ThisAttr->Name = TmpName;
+        if (ElemCount == (size_t)-1)
+        {
+            std::string *Str = (std::string *)Data;
+            ThisAttr->ElementCount = 1;
+            ThisAttr->Values = (const char **)malloc(sizeof(char *));
+            ThisAttr->Values[0] = Str->c_str();
+        }
+        else
+        {
+            std::string *StrArray = (std::string *)Data;
+            ThisAttr->ElementCount = ElemCount;
+            ThisAttr->Values =
+                (const char **)malloc(sizeof(char *) * ElemCount);
+            for (size_t i = 0; i < ElemCount; i++)
+            {
+                ThisAttr->Values[i] = StrArray[i].c_str();
+            }
+        }
+    }
+    else
+    {
+        if ((Type == DataType::None) || (Type == DataType::Struct))
+        {
+            helper::Throw<std::logic_error>(
+                "Toolkit", "format::BP5Serializer",
+                "doesn't support this type of Attribute", ToString(Type));
+        }
+        char *Array = (char *)Data;
+        PendingAttrs->PrimAttrCount++;
+        PendingAttrs->PrimAttrs = (struct PrimitiveTypeAttr *)realloc(
+            PendingAttrs->PrimAttrs,
+            sizeof(PrimitiveTypeAttr) * PendingAttrs->PrimAttrCount);
+        PrimitiveTypeAttr *ThisAttr =
+            &PendingAttrs->PrimAttrs[PendingAttrs->PrimAttrCount - 1];
+        if (ElemCount == (size_t)-1)
+        {
+            ElemCount = 1;
+        }
+        memset(ThisAttr, 0, sizeof(*ThisAttr));
+        ThisAttr->Name = TmpName;
+        ThisAttr->TotalElementSize = ElemCount * DataTypeSize[(int)Type];
+        ThisAttr->Values = (char *)malloc(ThisAttr->TotalElementSize);
+        std::memcpy((void *)ThisAttr->Values, (void *)Array,
+                    ThisAttr->TotalElementSize);
+        std::cout << "Setting First element of array is "
+                  << *(double *)ThisAttr->Values << std::endl;
+    }
+}
+
 void BP5Serializer::InitStep(BufferV *DataBuffer)
 {
     if (CurDataBuffer != NULL)
@@ -1023,6 +1093,8 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
         new BufferFFS(MetaEncodeBuffer, MetaDataBlock, MetaDataSize);
 
     BufferFFS *AttrData = NULL;
+
+    // old way of doing attributes
     if (NewAttribute && Info.AttributeFields)
     {
         AttributeEncodeBuffer = create_FFSBuffer();
@@ -1031,6 +1103,33 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
                       Info.AttributeData, &AttributeSize);
         AttrData =
             new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
+    }
+
+    if (PendingAttrs)
+    {
+        if (!GenericAttributeFormat)
+        {
+            MetaMetaInfoBlock Block;
+            GenericAttributeFormat =
+                register_data_format(Info.LocalFMContext, &attr_struct_list[0]);
+            Info.AttributeFormat = GenericAttributeFormat;
+            int size;
+            Block.MetaMetaInfo =
+                get_server_rep_FMformat(GenericAttributeFormat, &size);
+            Block.MetaMetaInfoLen = size;
+            Block.MetaMetaID =
+                get_server_ID_FMformat(GenericAttributeFormat, &size);
+            Block.MetaMetaIDLen = size;
+            Formats.push_back(Block);
+        }
+        AttributeEncodeBuffer = create_FFSBuffer();
+        void *AttributeBlock =
+            FFSencode(AttributeEncodeBuffer, GenericAttributeFormat,
+                      PendingAttrs, &AttributeSize);
+        AttrData =
+            new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
+        //	FMdump_encoded_data(GenericAttributeFormat, AttributeBlock,
+        // 1024000);
     }
 
     // FMdump_encoded_data(Info.MetaFormat, MetaDataBlock, 1024000);

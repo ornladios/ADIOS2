@@ -115,6 +115,8 @@ private:
     /** Notify the engine when a new attribute is defined or modified. Called
      * from IO.tcc
      */
+    void NotifyEngineAttribute(std::string name, AttributeBase *Attr,
+                               void *data) noexcept;
 
     void EnterComputationBlock() noexcept;
     /** Inform about computation block through User->ADIOS->IO */

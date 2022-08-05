@@ -172,6 +172,13 @@ void Engine::InitTransports() {}
 
 void Engine::NotifyEngineAttribute(std::string name, DataType type) noexcept {}
 
+// if not overriden, default to name/type version
+void Engine::NotifyEngineAttribute(std::string name, AttributeBase *attr,
+                                   void *Data) noexcept
+{
+    NotifyEngineAttribute(name, attr->m_Type);
+}
+
 void Engine::NotifyEngineNoVarsQuery() {}
 
 // DoPut*

@@ -422,7 +422,25 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
 
 void BP5Writer::NotifyEngineAttribute(std::string name, DataType type) noexcept
 {
-    m_MarshalAttributesNecessary = true;
+    helper::Throw<std::invalid_argument>(
+        "BP5Writer", "Engine", "ThrowUp",
+        "Engine does not support NotifyEngineAttribute");
+}
+
+void BP5Writer::NotifyEngineAttribute(std::string name, AttributeBase *Attr,
+                                      void *data) noexcept
+{
+    if (Attr->m_IsSingleValue)
+    {
+        m_BP5Serializer.SoloSerializeAttribute(name.c_str(), Attr->m_Type,
+                                               (size_t)-1, data);
+    }
+    else
+    {
+        m_BP5Serializer.SoloSerializeAttribute(name.c_str(), Attr->m_Type,
+                                               Attr->m_Elements, data);
+    }
+    m_MarshalAttributesNecessary = false;
 }
 
 void BP5Writer::MarshalAttributes()

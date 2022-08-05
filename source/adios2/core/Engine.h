@@ -501,6 +501,8 @@ public:
      */
     virtual void NotifyEngineAttribute(std::string name,
                                        DataType type) noexcept;
+    virtual void NotifyEngineAttribute(std::string name, AttributeBase *attr,
+                                       void *Data) noexcept;
 
     /** Notify the engine when InquireVariable is called when the IO is empty.
      * Called from IO.tcc

@@ -126,31 +126,34 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
     auto itExistingAttribute = m_Attributes.find(globalName);
     if (itExistingAttribute != m_Attributes.end())
     {
-        if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
+        if (helper::ValueToString(value) !=
+            itExistingAttribute->second->GetInfo()["Value"])
         {
-            if (!itExistingAttribute->second->Equals(
-                    static_cast<const void *>(&value), 1))
+            if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
             {
-
                 Attribute<T> &a =
                     static_cast<Attribute<T> &>(*itExistingAttribute->second);
+
                 a.Modify(value);
+                void *Data = &a.m_DataSingleValue;
+                if (a.m_DataArray.size() != 0)
+                    Data = a.m_DataArray.data();
                 for (auto &e : m_Engines)
                 {
                     e.second->NotifyEngineAttribute(
-                        globalName, itExistingAttribute->second->m_Type);
+                        globalName, itExistingAttribute->second.get(), Data);
                 }
             }
-        }
-        else
-        {
-            helper::Throw<std::invalid_argument>(
-                "Core", "IO", "DefineAttribute",
-                "modifiable attribute " + globalName +
-                    " has been defined with type " +
-                    ToString(itExistingAttribute->second->m_Type) +
-                    ". Type cannot be changed to " +
-                    ToString(helper::GetDataType<T>()));
+            else
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Core", "IO", "DefineAttribute",
+                    "modifiable attribute " + globalName +
+                        " has been defined with type " +
+                        ToString(itExistingAttribute->second->m_Type) +
+                        ". Type cannot be changed to " +
+                        ToString(helper::GetDataType<T>()));
+            }
         }
         return static_cast<Attribute<T> &>(*itExistingAttribute->second);
     }
@@ -161,8 +164,16 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
                             globalName, value, allowModification)));
         for (auto &e : m_Engines)
         {
+            Attribute<T> &a =
+                static_cast<Attribute<T> &>(*itAttributePair.first->second);
+            void *Data = &a.m_DataSingleValue;
+            if (a.m_DataArray.size() != 0)
+                Data = a.m_DataArray.data();
+
             e.second->NotifyEngineAttribute(
-                globalName, itAttributePair.first->second->m_Type);
+                globalName, itAttributePair.first->second.get(), Data);
+            std::cout << "In Notify First element of array is " << *(T *)Data
+                      << std::endl;
         }
         return static_cast<Attribute<T> &>(*itAttributePair.first->second);
     }
@@ -191,31 +202,36 @@ IO::DefineAttribute(const std::string &name, const T *array,
     auto itExistingAttribute = m_Attributes.find(globalName);
     if (itExistingAttribute != m_Attributes.end())
     {
-        if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
-        {
-            if (!itExistingAttribute->second->Equals(
-                    static_cast<const void *>(array), elements))
-            {
+        const std::string arrayValues(
+            "{ " +
+            helper::VectorToCSV(std::vector<T>(array, array + elements)) +
+            " }");
 
+        if (itExistingAttribute->second->GetInfo()["Value"] != arrayValues)
+        {
+            if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
+            {
                 Attribute<T> &a =
                     static_cast<Attribute<T> &>(*itExistingAttribute->second);
                 a.Modify(array, elements);
+                void *Data = &a.m_DataSingleValue;
+                if (a.m_DataArray.size() != 0)
+                    Data = a.m_DataArray.data();
                 for (auto &e : m_Engines)
                 {
-                    e.second->NotifyEngineAttribute(
-                        globalName, itExistingAttribute->second->m_Type);
+                    e.second->NotifyEngineAttribute(globalName, &a, Data);
                 }
             }
-        }
-        else
-        {
-            helper::Throw<std::invalid_argument>(
-                "Core", "IO", "DefineAttribute",
-                "modifiable attribute " + globalName +
-                    " has been defined with type " +
-                    ToString(itExistingAttribute->second->m_Type) +
-                    ". Type cannot be changed to " +
-                    ToString(helper::GetDataType<T>()));
+            else
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Core", "IO", "DefineAttribute",
+                    "modifiable attribute " + globalName +
+                        " has been defined with type " +
+                        ToString(itExistingAttribute->second->m_Type) +
+                        ". Type cannot be changed to " +
+                        ToString(helper::GetDataType<T>()));
+            }
         }
         return static_cast<Attribute<T> &>(*itExistingAttribute->second);
     }
@@ -224,10 +240,14 @@ IO::DefineAttribute(const std::string &name, const T *array,
         auto itAttributePair = m_Attributes.emplace(
             globalName, std::unique_ptr<AttributeBase>(new Attribute<T>(
                             globalName, array, elements, allowModification)));
+        Attribute<T> &a =
+            static_cast<Attribute<T> &>(*itAttributePair.first->second);
+        void *Data = (void *)array;
         for (auto &e : m_Engines)
         {
-            e.second->NotifyEngineAttribute(
-                globalName, itAttributePair.first->second->m_Type);
+            e.second->NotifyEngineAttribute(globalName, &a, Data);
+            std::cout << "In Notify First element of array is " << *(T *)Data
+                      << std::endl;
         }
         return static_cast<Attribute<T> &>(*itAttributePair.first->second);
     }

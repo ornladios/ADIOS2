@@ -158,22 +158,17 @@ DataType BP5Deserializer::TranslateFFSType2ADIOS(const char *Type, int size)
     return DataType::None;
 }
 
-const char *BP5Deserializer::BreakdownVarName(const char *Name,
-                                              DataType *type_p,
-                                              int *element_size_p)
+void BP5Deserializer::BreakdownVarName(const char *Name, char **base_name_p,
+                                       DataType *type_p, int *element_size_p)
 {
-    // const char *NameStart = strchr(strchr(Name + 4, '_') + 1, '_') + 1;
-    // sscanf(Name + 4, "%d_%d", &ElementSize, &Type);
-    /* string formatted as bp5_%d_%d_actualname */
-    char *p;
-    // + 3 to skip BP5_ or bp5_ prefix
-    long n = strtol(Name + 4, &p, 10);
-    *element_size_p = static_cast<int>(n);
-    ++p; // skip '_'
-    long Type = strtol(p, &p, 10);
+    int Type;
+    int ElementSize;
+    const char *NameStart = strchr(strchr(Name + 4, '_') + 1, '_') + 1;
+    // + 4 to skip BP5_ or bp5_ prefix
+    sscanf(Name + 4, "%d_%d_", &ElementSize, &Type);
+    *element_size_p = ElementSize;
     *type_p = (DataType)Type;
-    ++p; // skip '_'
-    return p;
+    *base_name_p = strdup(NameStart);
 }
 
 void BP5Deserializer::BreakdownFieldType(const char *FieldType, bool &Operator,
@@ -237,16 +232,14 @@ void BP5Deserializer::BreakdownV1ArrayName(const char *Name, char **base_name_p,
 void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
                                          DataType *type_p, int *element_size_p)
 {
-    /* string formatted as bp5_%d_%d_actualname */
-    char *p;
+    int Type;
+    int ElementSize;
+    const char *NameStart = strchr(strchr(Name + 4, '_') + 1, '_') + 1;
     // + 3 to skip BP5_ or bp5_ prefix
-    long n = strtol(Name + 4, &p, 10);
-    *element_size_p = static_cast<int>(n);
-    ++p; // skip '_'
-    long Type = strtol(p, &p, 10);
+    sscanf(Name + 4, "%d_%d", &ElementSize, &Type);
+    *element_size_p = ElementSize;
     *type_p = (DataType)Type;
-    ++p; // skip '_'
-    *base_name_p = strdup(p);
+    *base_name_p = strdup(NameStart);
 }
 
 BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByKey(void *Key) const
@@ -778,11 +771,6 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
     if (BlockLen == 0)
         return;
 
-    if (Step != m_LastAttrStep)
-    {
-        m_Engine->m_IO.RemoveAllAttributes();
-        m_LastAttrStep = Step;
-    }
     FFSformat =
         FFSTypeHandle_from_encode(ReaderFFSContext, (char *)AttributeBlock);
     if (!FFSformat)
@@ -828,20 +816,50 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
         FMdump_data(FMFormat_of_original(FFSformat), BaseData, 1024000);
         printf("\n\n");
     }
+    if (strcmp(name_of_FMformat(FMFormat_of_original(FFSformat)),
+               "GenericAttributes") == 0)
+    {
+        InstallAttributesV2(FFSformat, BaseData, Step);
+    }
+    else if (strcmp(name_of_FMformat(FMFormat_of_original(FFSformat)),
+                    "Attributes") == 0)
+    {
+        InstallAttributesV1(FFSformat, BaseData, Step);
+    }
+    else
+    {
+        helper::Throw<std::logic_error>("Toolkit", "format::BP5Deserializer",
+                                        "InstallAttributeData",
+                                        "Internal error or file corruption, "
+                                        "not able to install this format");
+    }
+}
+
+void BP5Deserializer::InstallAttributesV1(FFSTypeHandle FFSformat,
+                                          void *BaseData, size_t Step)
+{
+    FMFieldList FieldList;
+    FMStructDescList FormatList;
+
+    if (Step != m_LastAttrStep)
+    {
+        m_Engine->m_IO.RemoveAllAttributes();
+        m_LastAttrStep = Step;
+    }
     FormatList = format_list_of_FMFormat(FMFormat_of_original(FFSformat));
     FieldList = FormatList[0].field_list;
     int i = 0;
     while (FieldList[i].field_name)
     {
-
+        char *FieldName;
         void *field_data = (char *)BaseData + FieldList[i].field_offset;
 
         if (!NameIndicatesAttrArray(FieldList[i].field_name))
         {
             DataType Type;
             int ElemSize;
-            const char *FieldName =
-                BreakdownVarName(FieldList[i].field_name, &Type, &ElemSize);
+            BreakdownVarName(FieldList[i].field_name, &FieldName, &Type,
+                             &ElemSize);
             if (Type == adios2::DataType::Struct)
             {
                 return;
@@ -865,6 +883,7 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
                 std::cout << "Loading attribute matched no type "
                           << ToString(Type) << std::endl;
             }
+            free(FieldName);
             i++;
         }
         else
@@ -911,6 +930,101 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
             }
             free(FieldName);
             i++;
+        }
+    }
+}
+
+void BP5Deserializer::InstallAttributesV2(FFSTypeHandle FFSformat,
+                                          void *BaseData, size_t Step)
+{
+    BP5AttrStruct *Attrs = (BP5AttrStruct *)BaseData;
+
+    auto lf_BreakdownTypeArray = [](const char *Name, DataType &Type,
+                                    bool &Array) {
+        Type = (DataType)(Name[0] - '0');
+        Array = false;
+        if ((int)Type > 18)
+        {
+            Type = (DataType)((int)Type - 18);
+            Array = true;
+        }
+    };
+
+    for (size_t i = 0; i < Attrs->PrimAttrCount; i++)
+    {
+        PrimitiveTypeAttr *ThisAttr = &Attrs->PrimAttrs[i];
+        bool Array;
+        DataType Type;
+        lf_BreakdownTypeArray(ThisAttr->Name, Type, Array);
+        const char *Name = &ThisAttr->Name[1];
+        if (Array)
+        {
+            if (Type == adios2::DataType::Struct)
+            {
+                return;
+            }
+#define declare_type(T)                                                        \
+    else if (Type == helper::GetDataType<T>())                                 \
+    {                                                                          \
+        m_Engine->m_IO.DefineAttribute<T>(Name, (T *)ThisAttr->Values,         \
+                                          ThisAttr->TotalElementSize /         \
+                                              DataTypeSize[(int)Type],         \
+                                          "", "/", true);                      \
+    }
+
+            ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+            else
+            {
+                std::cout << "Loading attribute matched no type "
+                          << ToString(Type) << std::endl;
+            }
+        }
+        else
+        {
+            if (Type == adios2::DataType::Struct)
+            {
+                return;
+            }
+#define declare_type(T)                                                        \
+    else if (Type == helper::GetDataType<T>())                                 \
+    {                                                                          \
+        m_Engine->m_IO.DefineAttribute<T>(Name, *(T *)ThisAttr->Values, "",    \
+                                          "/", true);                          \
+    }
+
+            ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+            else
+            {
+                std::cout << "Loading attribute matched no type "
+                          << ToString(Type) << std::endl;
+            }
+        }
+    }
+    for (size_t i = 0; i < Attrs->StrAttrCount; i++)
+    {
+        auto *ThisAttr = &Attrs->StrAttrs[i];
+        bool Array;
+        DataType Type;
+        lf_BreakdownTypeArray(ThisAttr->Name, Type, Array);
+        const char *Name = &ThisAttr->Name[1];
+        if (Array)
+        {
+            std::vector<std::string> array;
+            array.resize(ThisAttr->ElementCount);
+            const char **str_array = ThisAttr->Values;
+            for (size_t i = 0; i < ThisAttr->ElementCount; i++)
+            {
+                array[i].assign(str_array[i]);
+            }
+            m_Engine->m_IO.DefineAttribute<std::string>(
+                Name, array.data(), array.size(), "", "/", true);
+        }
+        else
+        {
+            m_Engine->m_IO.DefineAttribute<std::string>(
+                Name, ThisAttr->Values[0], "", "/", true);
         }
     }
 }
@@ -1302,10 +1416,6 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
 void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
 {
     auto Req = PendingRequests[Read.ReqIndex];
-    /*std::cout << "    Req: block = " << Req.BlockID << " step = " << Req.Step
-              << " var = " << Req.VarRec->VarName << " start = " << Req.Start
-              << " count = " << Req.Count << " dest "
-              << reinterpret_cast<size_t>(Req.Data) << std::endl;*/
     int ElementSize = Req.VarRec->ElementSize;
     MetaArrayRec *writer_meta_base =
         (MetaArrayRec *)GetMetadataBase(Req.VarRec, Req.Step, Read.WriterRank);

@@ -66,6 +66,8 @@ public:
                  bool Sync, BufferV::BufferPos *span);
     void MarshalAttribute(const char *Name, const DataType Type,
                           size_t ElemSize, size_t ElemCount, const void *Data);
+    void SoloSerializeAttribute(const char *Name, const DataType Type,
+                                size_t ElemCount, const void *Data);
 
     /*
      *  InitStep must be called with an appropriate BufferV subtype before a
@@ -153,6 +155,8 @@ private:
         int AttributeSize = 0;
     };
 
+    FMFormat GenericAttributeFormat = NULL;
+
     struct DeferredExtern
     {
         size_t MetaOffset;
@@ -174,6 +178,8 @@ private:
         const size_t BlockNum;
     };
     std::vector<DeferredSpanMinMax> DefSpanMinMax;
+
+    BP5AttrStruct *PendingAttrs = nullptr;
 
     FFSWriterMarshalBase Info;
     void *MetadataBuf = NULL;
