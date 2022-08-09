@@ -20,7 +20,9 @@
 #include <ctime>
 #include <iostream>
 
+#ifdef ADIOS2_HAVE_SCR
 #include "scr.h"
+#endif
 
 namespace adios2
 {
@@ -203,12 +205,16 @@ void BP4Writer::InitParameters()
     m_DrainBB = m_WriteToBB && m_BP4Serializer.m_Parameters.BurstBufferDrain;
 }
 
-std::string scrRoute(std::string name)
+std::string scrRouteFile(std::string name)
 {
+#ifdef ADIOS2_HAVE_SCR
     char scr_name[SCR_MAX_FILENAME];
     SCR_Route_file(name.c_str(), scr_name);
     std::string s(scr_name);
     return s;
+#else
+    return name;
+#endif
 }
 
 std::vector<std::string> scrRouteFiles(const std::vector<std::string> files)
@@ -216,7 +222,7 @@ std::vector<std::string> scrRouteFiles(const std::vector<std::string> files)
     std::vector<std::string> newFiles;
     for (const auto &name : files)
     {
-        newFiles.push_back(scrRoute(name));
+        newFiles.push_back(scrRouteFile(name));
     }
     return newFiles;
 }
@@ -645,7 +651,7 @@ void BP4Writer::WriteProfilingJSONFile()
             }
             if (m_SCR)
             {
-                profileFileName = scrRoute(profileFileName);
+                profileFileName = scrRouteFile(profileFileName);
             }
             profilingJSONStream.Open(profileFileName, Mode::Write);
             profilingJSONStream.Write(profilingJSON.data(),
