@@ -58,16 +58,24 @@ std::complex<double> in_scalar_C64;
 
 double data_scalar_R64;
 
-void generateSimpleForwardData(std::vector<double> &data_forward, int step,
-                               int start, int count, int total_size)
+void generateSimpleForwardData(double *data_forward, int step, int start,
+                               int count, int total_size)
 {
     int64_t j = 100 * step + start;
 
-    data_forward.clear();
     for (int i = 0; i < count; i++)
     {
-        data_forward.push_back((double)j + i);
+        data_forward[i] = ((double)j + i);
     }
+}
+
+void generateSimpleForwardData(std::vector<double> &data_forward, int step,
+                               int start, int count, int total_size)
+{
+    data_forward.clear();
+    data_forward.resize(count);
+    generateSimpleForwardData(data_forward.data(), step, start, count,
+                              total_size);
 }
 
 void generateSimpleReverseData(std::vector<double> &data_reverse, int step,

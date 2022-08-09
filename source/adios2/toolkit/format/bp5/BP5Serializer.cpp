@@ -568,6 +568,17 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                             BufferV::BufferPos *Span)
 {
 
+    auto lf_QueueSpanMinMax = [&](const format::BufferV::BufferPos Data,
+                                  const size_t ElemCount, const DataType Type,
+                                  const MemorySpace MemSpace,
+                                  const size_t MetaOffset,
+                                  const size_t MinMaxOffset,
+                                  const size_t BlockNum) {
+        DeferredSpanMinMax entry = {Data,       ElemCount,    Type,    MemSpace,
+                                    MetaOffset, MinMaxOffset, BlockNum};
+        DefSpanMinMax.push_back(entry);
+    };
+
     core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
 
     BP5MetadataInfoStruct *MBase;
@@ -709,9 +720,18 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                 void **MMPtrLoc =
                     (void **)(((char *)MetaEntry) + Rec->MinMaxOffset);
                 *MMPtrLoc = (void *)malloc(ElemSize * 2);
-                memcpy(*MMPtrLoc, &MinMax.MinUnion, ElemSize);
-                memcpy(((char *)*MMPtrLoc) + ElemSize, &MinMax.MaxUnion,
-                       ElemSize);
+                if (!Span)
+                {
+                    memcpy(*MMPtrLoc, &MinMax.MinUnion, ElemSize);
+                    memcpy(((char *)*MMPtrLoc) + ElemSize, &MinMax.MaxUnion,
+                           ElemSize);
+                }
+                else
+                {
+                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type,
+                                       MemSpace, Rec->MetaOffset,
+                                       Rec->MinMaxOffset, 0 /*BlockNum*/);
+                }
             }
             if (DeferAddToVec)
             {
@@ -758,13 +778,24 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                     (void **)(((char *)MetaEntry) + Rec->MinMaxOffset);
                 *MMPtrLoc = (void *)realloc(*MMPtrLoc, MetaEntry->BlockCount *
                                                            ElemSize * 2);
-                memcpy(((char *)*MMPtrLoc) +
-                           ElemSize * (2 * (MetaEntry->BlockCount - 1)),
-                       &MinMax.MinUnion, ElemSize);
-                memcpy(((char *)*MMPtrLoc) +
-                           ElemSize * (2 * (MetaEntry->BlockCount - 1) + 1),
-                       &MinMax.MaxUnion, ElemSize);
+                if (!Span)
+                {
+                    memcpy(((char *)*MMPtrLoc) +
+                               ElemSize * (2 * (MetaEntry->BlockCount - 1)),
+                           &MinMax.MinUnion, ElemSize);
+                    memcpy(((char *)*MMPtrLoc) +
+                               ElemSize * (2 * (MetaEntry->BlockCount - 1) + 1),
+                           &MinMax.MaxUnion, ElemSize);
+                }
+                else
+                {
+                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type,
+                                       MemSpace, Rec->MetaOffset,
+                                       Rec->MinMaxOffset,
+                                       MetaEntry->BlockCount /*BlockNum*/);
+                }
             }
+
             if (DeferAddToVec)
             {
                 DeferredExterns.push_back({Rec->MetaOffset,
@@ -845,6 +876,29 @@ void BP5Serializer::InitStep(BufferV *DataBuffer)
     m_PriorDataBufferSizeTotal = 0;
 }
 
+void BP5Serializer::ProcessDeferredMinMax()
+{
+    for (auto &Def : DefSpanMinMax)
+    {
+        MinMaxStruct MinMax;
+        MinMax.Init(Def.Type);
+        void *Ptr = reinterpret_cast<void *>(
+            GetPtr(Def.Data.bufferIdx, Def.Data.posInBuffer));
+        GetMinMax(Ptr, Def.ElemCount, Def.Type, MinMax, Def.MemSpace);
+
+        MetaArrayRecMM *MetaEntry =
+            (MetaArrayRecMM *)((char *)(MetadataBuf) + Def.MetaOffset);
+        void **MMPtrLoc = (void **)(((char *)MetaEntry) + Def.MinMaxOffset);
+        int ElemSize = helper::GetDataTypeSize(Def.Type);
+
+        memcpy(((char *)*MMPtrLoc) + ElemSize * (2 * (Def.BlockNum)),
+               &MinMax.MinUnion, ElemSize);
+        memcpy(((char *)*MMPtrLoc) + ElemSize * (2 * (Def.BlockNum) + 1),
+               &MinMax.MaxUnion, ElemSize);
+    }
+    DefSpanMinMax.clear();
+}
+
 BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer,
                                        bool forceCopyDeferred)
 {
@@ -859,6 +913,7 @@ BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer,
     m_PriorDataBufferSizeTotal += CurDataBuffer->AddToVec(
         0, NULL, m_BufferBlockSize, true); //  output block size aligned
 
+    ProcessDeferredMinMax();
     BufferV *tmp = CurDataBuffer;
     CurDataBuffer = DataBuffer;
     return tmp;
@@ -959,6 +1014,8 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
         0, NULL, m_BufferBlockSize, true); //  output block size aligned
 
     MBase->DataBlockSize += m_PriorDataBufferSizeTotal;
+
+    ProcessDeferredMinMax();
 
     void *MetaDataBlock = FFSencode(MetaEncodeBuffer, Info.MetaFormat,
                                     MetadataBuf, &MetaDataSize);
