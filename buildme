@@ -1,8 +1,8 @@
 #!/bin/bash
 
-source /etc/profile.d/z00_lmod.sh
-module load cuda/10.2
-module load gcc/8.3.1
+#source /etc/profile.d/z00_lmod.sh
+#module load cuda/10.2
+#module load gcc/8.3.1
 module load cmake/3.23.1 # to avoid cmake FindMPI problem
 
 set -x
@@ -30,6 +30,7 @@ pushd scr-v3.0.1
       -DCMAKE_INSTALL_PREFIX=$installdir_scr \
       -DCMAKE_BUILD_TYPE=Debug \
       -DSCR_RESOURCE_MANAGER=LSF \
+      -DENABLE_PDSH=OFF \
       ..
     make -j
     make install
