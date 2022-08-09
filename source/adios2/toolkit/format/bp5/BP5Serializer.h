@@ -87,6 +87,12 @@ public:
     TimestepInfo CloseTimestep(int timestep, bool forceCopyDeferred = false);
     void PerformPuts(bool forceCopyDeferred = false);
 
+    /*
+     * internal use  This calculates statistics on data that isn't available
+     * until it's ready to be written to disk
+     */
+    void ProcessDeferredMinMax();
+
     core::Engine *m_Engine = NULL;
 
     std::vector<char> CopyMetadataToContiguous(
@@ -156,6 +162,18 @@ private:
         size_t AlignReq;
     };
     std::vector<DeferredExtern> DeferredExterns;
+
+    struct DeferredSpanMinMax
+    {
+        const BufferV::BufferPos Data;
+        const size_t ElemCount;
+        const DataType Type;
+        const MemorySpace MemSpace;
+        const size_t MetaOffset;
+        const size_t MinMaxOffset;
+        const size_t BlockNum;
+    };
+    std::vector<DeferredSpanMinMax> DefSpanMinMax;
 
     FFSWriterMarshalBase Info;
     void *MetadataBuf = NULL;

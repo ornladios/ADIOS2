@@ -20,9 +20,11 @@ foreach(helper
     TestCommonWriteAttrs
     TestCommonWriteLocal
     TestCommonWriteShared
+    TestCommonSpanWrite
     TestDistributionWrite
     TestDefSyncWrite
     TestCommonRead
+    TestCommonSpanRead
     TestCommonReadR64
     TestCommonReadLocal
     TestCommonReadShared
@@ -105,7 +107,7 @@ if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
    endforeach()
 endif()
 
-set (SIMPLE_TESTS "1x1;1x1DefSync;1x1VarDestruction")
+set (SIMPLE_TESTS "1x1;1x1DefSync;1x1VarDestruction;1x1.SpanMinMax")
 set (BP5File_ONLY_TESTS "1x1DataWrite")
 
 set (SIMPLE_FORTRAN_TESTS "")
@@ -150,6 +152,7 @@ SET (BASIC_SST_TESTS "")
 if(ADIOS2_HAVE_SST)
   list (APPEND BASIC_SST_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS} ${SST_SPECIFIC_TESTS})
   list (REMOVE_ITEM BASIC_SST_TESTS 1x1DefSync 1x1Flush)
+  list (REMOVE_ITEM BASIC_SST_TESTS 1x1.SpanMinMax)
 endif()
 
 
