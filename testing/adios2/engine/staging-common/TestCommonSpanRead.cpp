@@ -98,8 +98,9 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         int result = validateSimpleForwardData(in_R64, t, myStart, myLength,
                                                writerSize * Nx);
 
-        std::cout << "On step " << t << " Min was " << VarMin << "   Max was "
-                  << VarMax << std::endl;
+        EXPECT_EQ(VarMin, t * 100);
+        EXPECT_EQ(VarMax, t * 100 + writerSize * 10 - 1);
+
         if (result != 0)
         {
             std::cout << "Read Data Validation failed on node " << mpiRank

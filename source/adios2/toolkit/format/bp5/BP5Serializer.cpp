@@ -896,6 +896,7 @@ void BP5Serializer::ProcessDeferredMinMax()
         memcpy(((char *)*MMPtrLoc) + ElemSize * (2 * (Def.BlockNum) + 1),
                &MinMax.MaxUnion, ElemSize);
     }
+    DefSpanMinMax.clear();
 }
 
 BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer,
