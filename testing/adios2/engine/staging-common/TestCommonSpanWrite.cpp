@@ -52,8 +52,8 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     // Declare 1D variables (NumOfProcesses * Nx)
     // The local process' part (start, count) can be defined now or later
     // before Write().
-    unsigned int myStart = (int)Nx * mpiRank, myStart2 = (int)Nx * mpiRank;
-    unsigned int myCount = (int)Nx, myCount2 = (int)Nx;
+    unsigned int myStart = (int)Nx * mpiRank;
+    unsigned int myCount = (int)Nx;
     {
         adios2::Dims shape{static_cast<unsigned int>(Nx * mpiSize)};
         adios2::Dims start{static_cast<unsigned int>(myStart)};
@@ -84,7 +84,6 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         // Write each one
         // fill in the variable with values from starting index to
         // starting index + count
-        const adios2::Mode sync = GlobalWriteMode;
 
         var.SetSelection(sel);
 
