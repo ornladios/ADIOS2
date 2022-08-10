@@ -127,7 +127,7 @@ public:
         {"name", "string", sizeof(char *), FMOffset(PrimitiveTypeAttr *, Name)},
         {"TotalElementSize", "integer", sizeof(size_t),
          FMOffset(PrimitiveTypeAttr *, TotalElementSize)},
-        {"Values", "char[TotalElementSize]", 16,
+        {"Values", "char[TotalElementSize]", 1,
          FMOffset(PrimitiveTypeAttr *, Values)},
         {NULL, NULL, 0, 0}};
 
