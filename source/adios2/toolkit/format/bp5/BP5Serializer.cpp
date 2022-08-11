@@ -891,7 +891,7 @@ void BP5Serializer::SoloSerializeAttribute(const char *Name,
             std::string *Str = (std::string *)Data;
             ThisAttr->ElementCount = 1;
             ThisAttr->Values = (const char **)malloc(sizeof(char *));
-            ThisAttr->Values[0] = Str->c_str();
+            ThisAttr->Values[0] = strdup(Str->c_str());
         }
         else
         {
@@ -901,7 +901,7 @@ void BP5Serializer::SoloSerializeAttribute(const char *Name,
                 (const char **)malloc(sizeof(char *) * ElemCount);
             for (size_t i = 0; i < ElemCount; i++)
             {
-                ThisAttr->Values[i] = StrArray[i].c_str();
+	        ThisAttr->Values[i] = strdup(StrArray[i].c_str());
             }
         }
     }
