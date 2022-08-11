@@ -884,7 +884,7 @@ void BP5Serializer::SoloSerializeAttribute(const char *Name,
             sizeof(StringArrayAttr) * PendingAttrs->StrAttrCount);
         StringArrayAttr *ThisAttr =
             &PendingAttrs->StrAttrs[PendingAttrs->StrAttrCount - 1];
-        memset(ThisAttr, 0, sizeof(*ThisAttr));
+        memset((void *)ThisAttr, 0, sizeof(*ThisAttr));
         ThisAttr->Name = TmpName;
         if (ElemCount == (size_t)-1)
         {
@@ -924,7 +924,7 @@ void BP5Serializer::SoloSerializeAttribute(const char *Name,
         {
             ElemCount = 1;
         }
-        memset(ThisAttr, 0, sizeof(*ThisAttr));
+        memset((void *)ThisAttr, 0, sizeof(*ThisAttr));
         ThisAttr->Name = TmpName;
         ThisAttr->TotalElementSize = ElemCount * DataTypeSize[(int)Type];
         ThisAttr->Values = (char *)malloc(ThisAttr->TotalElementSize);
