@@ -901,7 +901,7 @@ void BP5Serializer::SoloSerializeAttribute(const char *Name,
                 (const char **)malloc(sizeof(char *) * ElemCount);
             for (size_t i = 0; i < ElemCount; i++)
             {
-	        ThisAttr->Values[i] = strdup(StrArray[i].c_str());
+                ThisAttr->Values[i] = strdup(StrArray[i].c_str());
             }
         }
     }
