@@ -81,7 +81,6 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
             const std::string name(attributePair.first);
             auto baseAttr = &attributePair.second;
             const DataType type((*baseAttr)->m_Type);
-            int element_count = -1;
 
             if (!attributePair.second->m_IsSingleValue)
             {
