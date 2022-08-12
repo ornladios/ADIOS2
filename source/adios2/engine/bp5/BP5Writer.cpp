@@ -81,6 +81,7 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
             const std::string name(attributePair.first);
             auto baseAttr = &attributePair.second;
             const DataType type((*baseAttr)->m_Type);
+            int element_count = -1;
 
             if (!attributePair.second->m_IsSingleValue)
             {
@@ -104,7 +105,8 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
                     data_addr = &attribute.m_DataArray[0];
                 }
                 m_BP5Serializer.SoloSerializeAttribute(
-                    name.c_str(), attribute.m_Type, (size_t)-1, data_addr);
+                    name.c_str(), attribute.m_Type, (size_t)element_count,
+                    data_addr);
             }
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
