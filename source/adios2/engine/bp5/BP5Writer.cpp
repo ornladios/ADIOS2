@@ -72,6 +72,62 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
         }
     }
 
+    if ((m_WriterStep == 0) && !getenv("OldAttr"))
+    {
+	const auto &attributes = m_IO.GetAttributes();
+
+	for (const auto &attributePair : attributes)
+	{
+	    const std::string name(attributePair.first);
+	    auto baseAttr = &attributePair.second;
+	    const DataType type((*baseAttr)->m_Type);
+	    int element_count = -1;
+
+	    if (!attributePair.second->m_IsSingleValue)
+	    {
+		element_count = (*baseAttr)->m_Elements;
+	    }
+
+	    if (type == DataType::None)
+	    {
+	    }
+	    else if (type == helper::GetDataType<std::string>())
+	    {
+		core::Attribute<std::string> &attribute =
+		    *m_IO.InquireAttribute<std::string>(name);
+		void *data_addr;
+		if (attribute.m_IsSingleValue)
+		{
+		    data_addr = (void *)&attribute.m_DataSingleValue;
+		}
+		else
+		{
+		    data_addr = &attribute.m_DataArray[0];
+		}
+		m_BP5Serializer.SoloSerializeAttribute(name.c_str(), attribute.m_Type,
+						   (size_t)-1, data_addr);
+	    }
+#define declare_type(T)                                                        \
+	    else if (type == helper::GetDataType<T>())			\
+	    {								\
+		core::Attribute<T> &attribute = *m_IO.InquireAttribute<T>(name); \
+		int element_count = -1;					\
+		void *data_addr = &attribute.m_DataSingleValue;		\
+		if (!attribute.m_IsSingleValue)				\
+		{							\
+		    element_count = attribute.m_Elements;		\
+		    data_addr = attribute.m_DataArray.data();		\
+		}							\
+		m_BP5Serializer.SoloSerializeAttribute(name.c_str(), attribute.m_Type, \
+						       element_count, data_addr); \
+	    }
+
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+	    }
+    }
+
+	
     if (m_Parameters.AsyncWrite)
     {
         m_AsyncWriteLock.lock();
@@ -430,6 +486,11 @@ void BP5Writer::NotifyEngineAttribute(std::string name, DataType type) noexcept
 void BP5Writer::NotifyEngineAttribute(std::string name, AttributeBase *Attr,
                                       void *data) noexcept
 {
+    if (getenv("OldAttr")) {
+	    m_MarshalAttributesNecessary = true;
+	    return;
+    }
+
     if (Attr->m_IsSingleValue)
     {
         m_BP5Serializer.SoloSerializeAttribute(name.c_str(), Attr->m_Type,
