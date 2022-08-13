@@ -865,7 +865,7 @@ void BP5Serializer::MarshalAttribute(const char *Name, const DataType Type,
     }
 }
 
-void BP5Serializer::NewSerializeAttribute(const core::AttributeBase &baseAttr)
+void BP5Serializer::OnetimeMarshalAttribute(const core::AttributeBase &baseAttr)
 {
     const char *Name = baseAttr.m_Name.c_str();
     const DataType Type = baseAttr.m_Type;
@@ -905,11 +905,12 @@ void BP5Serializer::NewSerializeAttribute(const core::AttributeBase &baseAttr)
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(per_type_code)
 #undef per_type_code
 
-    NewSerializeAttribute(Name, Type, ElemCount, Data);
+    OnetimeMarshalAttribute(Name, Type, ElemCount, Data);
 }
 
-void BP5Serializer::NewSerializeAttribute(const char *Name, const DataType Type,
-                                          size_t ElemCount, const void *Data)
+void BP5Serializer::OnetimeMarshalAttribute(const char *Name,
+                                            const DataType Type,
+                                            size_t ElemCount, const void *Data)
 {
     if (!PendingAttrs)
         PendingAttrs = new (BP5AttrStruct);

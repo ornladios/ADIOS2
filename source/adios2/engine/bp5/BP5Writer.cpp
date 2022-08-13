@@ -78,7 +78,7 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 
         for (const auto &attributePair : attributes)
         {
-            m_BP5Serializer.NewSerializeAttribute(*(attributePair.second));
+            m_BP5Serializer.OnetimeMarshalAttribute(*(attributePair.second));
         }
     }
 
@@ -446,7 +446,7 @@ void BP5Writer::NotifyEngineAttribute(std::string name, AttributeBase *Attr,
         return;
     }
 
-    m_BP5Serializer.NewSerializeAttribute(*Attr);
+    m_BP5Serializer.OnetimeMarshalAttribute(*Attr);
     m_MarshalAttributesNecessary = false;
 }
 

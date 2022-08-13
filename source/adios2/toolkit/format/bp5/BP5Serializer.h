@@ -64,11 +64,31 @@ public:
                  size_t ElemSize, size_t DimCount, const size_t *Shape,
                  const size_t *Count, const size_t *Offsets, const void *Data,
                  bool Sync, BufferV::BufferPos *span);
+    /*
+     * BP5 has two attribute marshalling methods.  The first,
+     * MarshallAttribute(), creates new MetaMetadata whenever a new
+     * attribute gets marshalled, and produces AttributeData that
+     * contains all extant attributes (so that only the most recent
+     * need be installed to the Deserializer).  The second,
+     * OnetimeMarshalAttribute(), produces MetaMetadata only on the
+     * first timestep, and produces AttributeData that contains only
+     * the attributes that were created or modified on that step (that
+     * is, each timesteps attribute data only contains the delta from
+     * the prior step).  Therefore for timestep X to have the right
+     * attributes *all* attribute data created prior to timestep X
+     * needs to be provided to the Deserializer (not just the most
+     * recent, as with the other approach).  The first approach is
+     * generally more space efficient and convenient for engines,
+     * provided that attributes are few and new attributes are rare.
+     * However, it performs very poorly if, for example, new
+     * attributes are produced on every timestep.  In the latter case,
+     * OnetimeMarshalAttribute() is by far better.
+     */
     void MarshalAttribute(const char *Name, const DataType Type,
                           size_t ElemSize, size_t ElemCount, const void *Data);
-    void NewSerializeAttribute(const core::AttributeBase &baseAttr);
-    void NewSerializeAttribute(const char *Name, const DataType Type,
-                               size_t ElemCount, const void *Data);
+    void OnetimeMarshalAttribute(const core::AttributeBase &baseAttr);
+    void OnetimeMarshalAttribute(const char *Name, const DataType Type,
+                                 size_t ElemCount, const void *Data);
 
     /*
      *  InitStep must be called with an appropriate BufferV subtype before a
