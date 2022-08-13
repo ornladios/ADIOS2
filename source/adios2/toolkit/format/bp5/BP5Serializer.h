@@ -66,7 +66,8 @@ public:
                  bool Sync, BufferV::BufferPos *span);
     void MarshalAttribute(const char *Name, const DataType Type,
                           size_t ElemSize, size_t ElemCount, const void *Data);
-    void SoloSerializeAttribute(const char *Name, const DataType Type,
+    void NewSerializeAttribute(const core::AttributeBase &baseAttr);
+    void NewSerializeAttribute(const char *Name, const DataType Type,
                                 size_t ElemCount, const void *Data);
 
     /*
