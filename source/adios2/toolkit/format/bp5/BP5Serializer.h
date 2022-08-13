@@ -68,7 +68,7 @@ public:
                           size_t ElemSize, size_t ElemCount, const void *Data);
     void NewSerializeAttribute(const core::AttributeBase &baseAttr);
     void NewSerializeAttribute(const char *Name, const DataType Type,
-                                size_t ElemCount, const void *Data);
+                               size_t ElemCount, const void *Data);
 
     /*
      *  InitStep must be called with an appropriate BufferV subtype before a

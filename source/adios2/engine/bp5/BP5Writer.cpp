@@ -78,8 +78,8 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
 
         for (const auto &attributePair : attributes)
         {
-	    m_BP5Serializer.NewSerializeAttribute(*(attributePair.second));
-	}
+            m_BP5Serializer.NewSerializeAttribute(*(attributePair.second));
+        }
     }
 
     if (m_Parameters.AsyncWrite)

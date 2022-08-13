@@ -871,32 +871,35 @@ void BP5Serializer::NewSerializeAttribute(const core::AttributeBase &baseAttr)
     const DataType Type = baseAttr.m_Type;
     size_t ElemCount = baseAttr.m_Elements;
     const void *Data = nullptr;
-    if (baseAttr.m_IsSingleValue) ElemCount = (size_t) -1;
+    if (baseAttr.m_IsSingleValue)
+        ElemCount = (size_t)-1;
     if (Type == DataType::None)
     {
-	return;
+        return;
     }
     else if (Type == helper::GetDataType<std::string>())
     {
-	const core::Attribute<std::string> *attribute = dynamic_cast<const core::Attribute<std::string>*>(&baseAttr);
-	if (attribute->m_IsSingleValue)
-	{
-	    Data = (void *)&attribute->m_DataSingleValue;
-	}
-	else
-	{
-	    Data = &(attribute->m_DataArray[0]);
-	}
+        const core::Attribute<std::string> *attribute =
+            dynamic_cast<const core::Attribute<std::string> *>(&baseAttr);
+        if (attribute->m_IsSingleValue)
+        {
+            Data = (void *)&attribute->m_DataSingleValue;
+        }
+        else
+        {
+            Data = &(attribute->m_DataArray[0]);
+        }
     }
-#define per_type_code(T)                                                        \
-    else if (Type == helper::GetDataType<T>())				\
-    {								\
-	const core::Attribute<T> *attribute = dynamic_cast<const core::Attribute<T>*>(&baseAttr);\
-	Data = (void*)(&attribute->m_DataSingleValue);		\
-	if (!attribute->m_IsSingleValue)				\
-	{								\
-	    Data = (void*)attribute->m_DataArray.data();		\
-	}								\
+#define per_type_code(T)                                                       \
+    else if (Type == helper::GetDataType<T>())                                 \
+    {                                                                          \
+        const core::Attribute<T> *attribute =                                  \
+            dynamic_cast<const core::Attribute<T> *>(&baseAttr);               \
+        Data = (void *)(&attribute->m_DataSingleValue);                        \
+        if (!attribute->m_IsSingleValue)                                       \
+        {                                                                      \
+            Data = (void *)attribute->m_DataArray.data();                      \
+        }                                                                      \
     }
 
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(per_type_code)
@@ -904,10 +907,9 @@ void BP5Serializer::NewSerializeAttribute(const core::AttributeBase &baseAttr)
 
     NewSerializeAttribute(Name, Type, ElemCount, Data);
 }
-    
-void BP5Serializer::NewSerializeAttribute(const char *Name,
-                                           const DataType Type,
-                                           size_t ElemCount, const void *Data)
+
+void BP5Serializer::NewSerializeAttribute(const char *Name, const DataType Type,
+                                          size_t ElemCount, const void *Data)
 {
     if (!PendingAttrs)
         PendingAttrs = new (BP5AttrStruct);
