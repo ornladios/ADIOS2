@@ -12,16 +12,12 @@
 #include <sstream>
 #include <zfp.h>
 
-/* CMake will make sure zfp >= 5.0.1 */
-#if ZFP_VERSION_RELEASE > 1 && !defined(ZFP_DEFAULT_EXECUTION_POLICY)
-
-/* ZFP will default to SERIAL if CUDA is not available */
+/* CMake will make sure zfp >= 0.5.3
+   ZFP will default to SERIAL if CUDA is not available */
 #ifdef ADIOS2_HAVE_ZFP_CUDA
 #define ZFP_DEFAULT_EXECUTION_POLICY zfp_exec_cuda
 #else
 #define ZFP_DEFAULT_EXECUTION_POLICY zfp_exec_serial
-#endif
-
 #endif
 
 namespace adios2
@@ -80,7 +76,7 @@ size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart,
     PutParameter(bufferOut, bufferOutOffset,
                  static_cast<uint8_t>(ZFP_VERSION_MINOR));
     PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(ZFP_VERSION_RELEASE));
+                 static_cast<uint8_t>(ZFP_VERSION_PATCH));
     PutParameters(bufferOut, bufferOutOffset, m_Parameters);
     // zfp V1 metadata end
 
@@ -302,7 +298,6 @@ zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
     auto itPrecision = parameters.find("precision");
     const bool hasPrecision = itPrecision != parameters.end();
 
-#if ZFP_VERSION_RELEASE > 1
     auto itBackend = parameters.find("backend");
     const bool hasBackend = itBackend != parameters.end();
 
@@ -332,7 +327,6 @@ zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
 
         zfp_stream_set_execution(stream, policy);
     }
-#endif
 
     if ((hasAccuracy && hasPrecision) || (hasAccuracy && hasRate) ||
         (hasPrecision && hasRate) ||
