@@ -41,6 +41,8 @@ public:
     void PerformPuts() final;
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
+    void NotifyEngineAttribute(std::string name, AttributeBase *Attr,
+                               void *data) noexcept;
 
     /**
      * Called if destructor is called on an open engine.  Should warn or take
@@ -85,7 +87,7 @@ private:
     SstStream m_Output;
     long m_WriterStep = -1;
     bool m_DefinitionsNotified = false;
-    size_t m_MarshaledAttributesCount = 0;
+    bool m_MarshalAttributesNecessary = true; // first time through, marshal
     struct _SstParams Params;
 
     void MarshalAttributes();

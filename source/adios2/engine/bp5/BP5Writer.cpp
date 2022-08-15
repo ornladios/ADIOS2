@@ -72,7 +72,7 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
         }
     }
 
-    if ((m_WriterStep == 0) && !getenv("OldAttr"))
+    if ((m_WriterStep == 0) && m_Parameters.UseOneTimeAttributes)
     {
         const auto &attributes = m_IO.GetAttributes();
 
@@ -440,7 +440,7 @@ void BP5Writer::NotifyEngineAttribute(std::string name, DataType type) noexcept
 void BP5Writer::NotifyEngineAttribute(std::string name, AttributeBase *Attr,
                                       void *data) noexcept
 {
-    if (getenv("OldAttr"))
+    if (!m_Parameters.UseOneTimeAttributes)
     {
         m_MarshalAttributesNecessary = true;
         return;
