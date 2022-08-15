@@ -41,6 +41,7 @@ public:
     void PerformPuts() final;
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
+    void NotifyEngineAttribute(std::string name, DataType type) noexcept;
     void NotifyEngineAttribute(std::string name, AttributeBase *Attr,
                                void *data) noexcept;
 

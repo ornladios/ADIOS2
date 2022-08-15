@@ -254,6 +254,13 @@ void SstWriter::MarshalAttributes()
     m_MarshalAttributesNecessary = false;
 }
 
+void SstWriter::NotifyEngineAttribute(std::string name, DataType type) noexcept
+{
+    helper::Throw<std::invalid_argument>(
+        "SstWriter", "Engine", "ThrowUp",
+        "Engine does not support NotifyEngineAttribute");
+}
+
 void SstWriter::NotifyEngineAttribute(std::string name, AttributeBase *Attr,
                                       void *data) noexcept
 {
