@@ -299,7 +299,7 @@ void DeserializeVariable(const Buffer &input, const ShapeID shapeId,
         else
         {
             helper::Throw<std::runtime_error>("Engine", "SscHelper",
-                                              "Deserialize",
+                                              "DeserializeVariable",
                                               "unknown variable data type");
         }
     }
@@ -416,7 +416,7 @@ void DeserializeAttribute(const Buffer &input, uint64_t &pos, IO &io,
             else
             {
                 helper::Throw<std::runtime_error>(
-                    "Engine", "SscHelper", "Deserialize",
+                    "Engine", "SscHelper", "DeserializeAttribute",
                     "unknown attribute data type");
             }
         }
@@ -428,6 +428,10 @@ void SerializeStructDefinitions(
     const std::unordered_map<std::string, StructDefinition> &definitions,
     Buffer &output)
 {
+    if (definitions.empty())
+    {
+        return;
+    }
     uint64_t pos = output.value<uint64_t>();
     output[pos] = 65;
     ++pos;
