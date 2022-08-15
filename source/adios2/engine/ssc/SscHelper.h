@@ -119,6 +119,8 @@ struct BlockInfo
     Dims shape;
     Dims start;
     Dims count;
+    Dims memStart;
+    Dims memCount;
     size_t bufferStart;
     size_t bufferCount;
     std::vector<char> value;

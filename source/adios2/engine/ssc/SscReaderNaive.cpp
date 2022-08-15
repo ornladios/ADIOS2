@@ -182,13 +182,15 @@ void SscReaderNaive::GetDeferred(VariableBase &variable, void *data)
 
     helper::DimsArray vStart(variable.m_Start);
     helper::DimsArray vCount(variable.m_Count);
-    // Dims vShape = variable.m_Shape;
+    helper::DimsArray vMemStart(variable.m_MemoryStart);
+    helper::DimsArray vMemCount(variable.m_MemoryCount);
 
     if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
     {
         std::reverse(vStart.begin(), vStart.end());
         std::reverse(vCount.begin(), vCount.end());
-        // std::reverse(vShape.begin(), vShape.end());
+        std::reverse(vMemStart.begin(), vMemStart.end());
+        std::reverse(vMemCount.begin(), vMemCount.end());
     }
 
     for (const auto &b : m_BlockMap[variable.m_Name])
@@ -200,7 +202,9 @@ void SscReaderNaive::GetDeferred(VariableBase &variable, void *data)
                            helper::CoreDims(b.start), helper::CoreDims(b.count),
                            true, true, reinterpret_cast<char *>(data), vStart,
                            vCount, true, true,
-                           static_cast<int>(variable.m_ElementSize));
+                           static_cast<int>(variable.m_ElementSize),
+                           helper::CoreDims(b.start), helper::CoreDims(b.count),
+                           vMemStart, vMemCount);
         }
         else if (b.shapeId == ShapeID::GlobalValue ||
                  b.shapeId == ShapeID::LocalValue)

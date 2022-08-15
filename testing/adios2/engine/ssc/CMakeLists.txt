@@ -9,6 +9,9 @@ if(ADIOS2_HAVE_MPI AND NOT MSVC)
   gtest_add_tests_helper(Base MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscBase.MPI "" TRUE)
 
+  gtest_add_tests_helper(3DMemSelect MPI_ONLY Ssc Engine.SSC. "")
+  SetupTestPipeline(Engine.SSC.SscEngineTest.TestSsc3DMemSelect.MPI "" TRUE)
+
   gtest_add_tests_helper(Struct MPI_ONLY Ssc Engine.SSC. "")
   SetupTestPipeline(Engine.SSC.SscEngineTest.TestSscStruct.MPI "" TRUE)
 

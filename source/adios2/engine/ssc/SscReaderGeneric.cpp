@@ -299,7 +299,11 @@ void SscReaderGeneric::PerformGets()
                                     reinterpret_cast<char *>(br.data),
                                     helper::CoreDims(br.start),
                                     helper::CoreDims(br.count), true, true,
-                                    static_cast<int>(b.elementSize));
+                                    static_cast<int>(b.elementSize),
+                                    helper::CoreDims(b.start),
+                                    helper::CoreDims(b.count),
+                                    helper::CoreDims(br.memStart),
+                                    helper::CoreDims(br.memCount));
                             }
                             else if (b.shapeId == ShapeID::GlobalValue ||
                                      b.shapeId == ShapeID::LocalValue)
@@ -442,12 +446,16 @@ void SscReaderGeneric::GetDeferredDeltaCommon(VariableBase &variable,
     Dims vStart = variable.m_Start;
     Dims vCount = variable.m_Count;
     Dims vShape = variable.m_Shape;
+    Dims vMemStart = variable.m_MemoryStart;
+    Dims vMemCount = variable.m_MemoryCount;
 
     if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
     {
         std::reverse(vStart.begin(), vStart.end());
         std::reverse(vCount.begin(), vCount.end());
         std::reverse(vShape.begin(), vShape.end());
+        std::reverse(vMemStart.begin(), vMemStart.end());
+        std::reverse(vMemCount.begin(), vMemCount.end());
     }
 
     m_LocalReadPattern.emplace_back();
@@ -459,6 +467,8 @@ void SscReaderGeneric::GetDeferredDeltaCommon(VariableBase &variable,
     b.start = vStart;
     b.count = vCount;
     b.shape = vShape;
+    b.memStart = vMemStart;
+    b.memCount = vMemCount;
     b.bufferStart = 0;
     b.bufferCount = 0;
     b.data = data;
@@ -507,12 +517,16 @@ void SscReaderGeneric::GetDeferred(VariableBase &variable, void *data)
     helper::DimsArray vStart(variable.m_Start);
     helper::DimsArray vCount(variable.m_Count);
     helper::DimsArray vShape(variable.m_Shape);
+    helper::DimsArray vMemStart(variable.m_MemoryStart);
+    helper::DimsArray vMemCount(variable.m_MemoryCount);
 
     if (m_IO.m_ArrayOrder != ArrayOrdering::RowMajor)
     {
         std::reverse(vStart.begin(), vStart.end());
         std::reverse(vCount.begin(), vCount.end());
         std::reverse(vShape.begin(), vShape.end());
+        std::reverse(vMemStart.begin(), vMemStart.end());
+        std::reverse(vMemCount.begin(), vMemCount.end());
     }
 
     if (m_CurrentStep == 0 || m_WriterDefinitionsLocked == false ||
@@ -546,13 +560,15 @@ void SscReaderGeneric::GetDeferred(VariableBase &variable, void *data)
                     if (b.shapeId == ShapeID::GlobalArray ||
                         b.shapeId == ShapeID::LocalArray)
                     {
-                        helper::NdCopy(
-                            m_Buffer.data<char>() + b.bufferStart,
-                            helper::CoreDims(b.start),
-                            helper::CoreDims(b.count), true, true,
-                            reinterpret_cast<char *>(data), vStart, vCount,
-                            true, true,
-                            static_cast<int>(variable.m_ElementSize));
+                        helper::NdCopy(m_Buffer.data<char>() + b.bufferStart,
+                                       helper::CoreDims(b.start),
+                                       helper::CoreDims(b.count), true, true,
+                                       reinterpret_cast<char *>(data), vStart,
+                                       vCount, true, true,
+                                       static_cast<int>(variable.m_ElementSize),
+                                       helper::CoreDims(b.start),
+                                       helper::CoreDims(b.count), vMemStart,
+                                       vMemCount);
                     }
                     else if (b.shapeId == ShapeID::GlobalValue ||
                              b.shapeId == ShapeID::LocalValue)
