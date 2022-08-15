@@ -880,6 +880,12 @@ void BP4Writer::NotifyEngineAttribute(std::string name, DataType type) noexcept
     m_BP4Serializer.m_SerializedAttributes.erase(name);
 }
 
+void BP4Writer::NotifyEngineAttribute(std::string name, AttributeBase *attr,
+                                      void *Data) noexcept
+{
+    NotifyEngineAttribute(name, attr->m_Type);
+}
+
 } // end namespace engine
 } // end namespace core
 } // end namespace adios2

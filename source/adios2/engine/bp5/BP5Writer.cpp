@@ -72,6 +72,16 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
         }
     }
 
+    if ((m_WriterStep == 0) && m_Parameters.UseOneTimeAttributes)
+    {
+        const auto &attributes = m_IO.GetAttributes();
+
+        for (const auto &attributePair : attributes)
+        {
+            m_BP5Serializer.OnetimeMarshalAttribute(*(attributePair.second));
+        }
+    }
+
     if (m_Parameters.AsyncWrite)
     {
         m_AsyncWriteLock.lock();
@@ -422,7 +432,22 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
 
 void BP5Writer::NotifyEngineAttribute(std::string name, DataType type) noexcept
 {
-    m_MarshalAttributesNecessary = true;
+    helper::Throw<std::invalid_argument>(
+        "BP5Writer", "Engine", "ThrowUp",
+        "Engine does not support NotifyEngineAttribute");
+}
+
+void BP5Writer::NotifyEngineAttribute(std::string name, AttributeBase *Attr,
+                                      void *data) noexcept
+{
+    if (!m_Parameters.UseOneTimeAttributes)
+    {
+        m_MarshalAttributesNecessary = true;
+        return;
+    }
+
+    m_BP5Serializer.OnetimeMarshalAttribute(*Attr);
+    m_MarshalAttributesNecessary = false;
 }
 
 void BP5Writer::MarshalAttributes()

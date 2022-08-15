@@ -80,6 +80,82 @@ public:
         size_t DataBlockSize;
     };
 
+    struct PrimitiveTypeAttr
+    {
+        const char *Name = NULL;
+        size_t TotalElementSize = 0;
+        char *Values;
+    };
+
+    struct StringArrayAttr
+    {
+        const char *Name = NULL;
+        size_t ElementCount = 0;
+        const char **Values = NULL;
+    };
+
+    struct BP5AttrStruct
+    {
+        size_t PrimAttrCount = 0;
+        struct PrimitiveTypeAttr *PrimAttrs =
+            (struct PrimitiveTypeAttr *)malloc(1);
+        size_t StrAttrCount = 0;
+        struct StringArrayAttr *StrAttrs = (struct StringArrayAttr *)malloc(1);
+    };
+
+    size_t DataTypeSize[(int)DataType::Struct + 1] = {
+        0,                   // None
+        1,                   // Int8
+        2,                   // Int16
+        4,                   // Int32
+        8,                   // Int64
+        1,                   // UInt8
+        2,                   // UInt16
+        4,                   // UInt32
+        8,                   // UInt64
+        sizeof(float),       // Float
+        sizeof(double),      // Double
+        sizeof(long double), // LongDouble
+        sizeof(cfloat),      // FloatComplex
+        sizeof(cdouble),     // DoubleComplex
+        0,                   // String
+        1,                   // Char
+        0,                   // Struct
+    };
+
+    FMField prim_attr_field_list[4] = {
+        {"name", "string", sizeof(char *), FMOffset(PrimitiveTypeAttr *, Name)},
+        {"TotalElementSize", "integer", sizeof(size_t),
+         FMOffset(PrimitiveTypeAttr *, TotalElementSize)},
+        {"Values", "char[TotalElementSize]", 1,
+         FMOffset(PrimitiveTypeAttr *, Values)},
+        {NULL, NULL, 0, 0}};
+
+    FMField string_attr_field_list[4] = {
+        {"name", "string", sizeof(char *), FMOffset(StringArrayAttr *, Name)},
+        {"ElementCount", "integer", sizeof(size_t),
+         FMOffset(StringArrayAttr *, ElementCount)},
+        {"Values", "string[ElementCount]", sizeof(char *),
+         FMOffset(StringArrayAttr *, Values)},
+        {NULL, NULL, 0, 0}};
+
+    FMField bp5_attr_field_list[5] = {
+        {"PrimAttrCount", "integer", sizeof(size_t),
+         FMOffset(BP5AttrStruct *, PrimAttrCount)},
+        {"PrimAttrs", "PrimAttr[PrimAttrCount]", sizeof(PrimitiveTypeAttr),
+         FMOffset(BP5AttrStruct *, PrimAttrs)},
+        {"StrAttrCount", "integer", sizeof(size_t),
+         FMOffset(BP5AttrStruct *, StrAttrCount)},
+        {"StrAttrs", "StrAttr[StrAttrCount]", sizeof(StringArrayAttr),
+         FMOffset(BP5AttrStruct *, StrAttrs)},
+        {NULL, NULL, 0, 0}};
+
+    FMStructDescRec attr_struct_list[4] = {
+        {"GenericAttributes", bp5_attr_field_list, sizeof(BP5AttrStruct), NULL},
+        {"PrimAttr", prim_attr_field_list, sizeof(PrimitiveTypeAttr), NULL},
+        {"StrAttr", string_attr_field_list, sizeof(StringArrayAttr), NULL},
+        {NULL, NULL, 0, NULL}};
+
     void BP5BitfieldSet(struct BP5MetadataInfoStruct *MBase, int Bit) const;
     int BP5BitfieldTest(struct BP5MetadataInfoStruct *MBase, int Bit) const;
     FMField *MetaArrayRecListPtr;

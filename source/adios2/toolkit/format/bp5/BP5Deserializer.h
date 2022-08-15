@@ -57,6 +57,11 @@ public:
                          size_t WriterRank, size_t Step = SIZE_MAX);
     void InstallAttributeData(void *AttributeBlock, size_t BlockLen,
                               size_t Step = SIZE_MAX);
+    void InstallAttributesV1(FFSTypeHandle FFSformat, void *BaseData,
+                             size_t Step);
+    void InstallAttributesV2(FFSTypeHandle FFSformat, void *BaseData,
+                             size_t Step);
+
     void SetupForStep(size_t Step, size_t WriterCount);
     // return from QueueGet is true if a sync is needed to fill the data
     bool QueueGet(core::VariableBase &variable, void *DestData);
@@ -180,8 +185,8 @@ private:
     BP5VarRec *LookupVarByName(const char *Name);
     BP5VarRec *CreateVarRec(const char *ArrayName);
     void ReverseDimensions(size_t *Dimensions, int count, int times);
-    const char *BreakdownVarName(const char *Name, DataType *type_p,
-                                 int *element_size_p);
+    void BreakdownVarName(const char *Name, char **base_name_p,
+                          DataType *type_p, int *element_size_p);
     void BreakdownFieldType(const char *FieldType, bool &Operator,
                             bool &MinMax);
     void BreakdownArrayName(const char *Name, char **base_name_p,

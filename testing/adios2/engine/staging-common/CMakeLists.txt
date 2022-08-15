@@ -107,7 +107,7 @@ if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
    endforeach()
 endif()
 
-set (SIMPLE_TESTS "1x1;1x1DefSync;1x1VarDestruction;1x1.SpanMinMax")
+set (SIMPLE_TESTS "1x1;1x1.Attrs;1x1DefSync;1x1VarDestruction;1x1.SpanMinMax")
 set (BP5File_ONLY_TESTS "1x1DataWrite")
 
 set (SIMPLE_FORTRAN_TESTS "")

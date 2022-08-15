@@ -77,6 +77,7 @@ typedef struct _SstStats
     MACRO(SpeculativePreloadMode, SpecPreloadMode, int, SpecPreloadAuto)       \
     MACRO(SpecAutoNodeThreshold, Int, int, 1)                                  \
     MACRO(ReaderShortCircuitReads, Bool, int, 0)                               \
+    MACRO(UseOneTimeAttributes, Bool, int, 0)                                  \
     MACRO(ControlModule, String, char *, NULL)
 
 typedef enum
