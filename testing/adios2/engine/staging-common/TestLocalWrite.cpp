@@ -31,8 +31,6 @@ void ReadVariable(const std::string &name, adios2::IO &io,
         dataSet.resize(blocksInfo.size());
 
         // schedule a read operation for each block separately
-        int i = 0;
-
         for (auto &info : blocksInfo)
         {
             variable.SetBlockSelection(info.BlockID);
@@ -47,6 +45,10 @@ void ReadVariable(const std::string &name, adios2::IO &io,
                   << std::endl;
     }
 }
+
+#if ADIOS2_USE_MPI
+MPI_Comm testComm;
+#endif
 
 class CommonWriteTest : public ::testing::Test
 {

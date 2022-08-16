@@ -57,6 +57,10 @@ static void ReadVariable(const std::string &name, adios2::IO &io,
     }
 }
 
+#if ADIOS2_USE_MPI
+MPI_Comm testComm;
+#endif
+
 class CommonWriteTest : public ::testing::Test
 {
 public:
