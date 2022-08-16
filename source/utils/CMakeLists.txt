@@ -11,7 +11,9 @@ configure_file(
 
 # BPLS
 add_executable(bpls ./bpls/bpls.cpp)
-target_link_libraries(bpls adios2_core adios2sys adios2::thirdparty::pugixml)
+target_link_libraries(bpls
+                      PUBLIC adios2_core adios2sys
+                      PRIVATE adios2::thirdparty::pugixml $<$<PLATFORM_ID:Windows>:shlwapi>)
 target_include_directories(bpls PRIVATE ${PROJECT_BINARY_DIR})
 set_property(TARGET bpls PROPERTY OUTPUT_NAME bpls${ADIOS2_EXECUTABLE_SUFFIX})
 install(TARGETS bpls EXPORT adios2
