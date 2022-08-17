@@ -59,12 +59,10 @@ public:
 // ADIOS2 COMMON write
 TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 {
-    // form a mpiSize * Nx 1D array
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
-    MPI_Comm_size(testComm, &mpiSize);
 #endif
 
     // Write test data using ADIOS2
