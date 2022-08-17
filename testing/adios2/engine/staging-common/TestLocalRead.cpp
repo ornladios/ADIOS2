@@ -68,11 +68,6 @@ public:
 // ADIOS2 COMMON write
 TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 {
-    int mpiRank = 0;
-
-#if ADIOS2_USE_MPI
-    MPI_Comm_rank(testComm, &mpiRank);
-#endif
 
     // Write test data using ADIOS2
 
