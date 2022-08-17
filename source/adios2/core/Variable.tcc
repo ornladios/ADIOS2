@@ -65,6 +65,7 @@ Dims Variable<T>::DoCount() const
             {
                 D[i] = DimsPtr[i];
             }
+            delete MVI;
             return D;
         }
 
