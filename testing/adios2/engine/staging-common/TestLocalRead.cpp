@@ -59,14 +59,14 @@ static void ReadVariable(const std::string &name, adios2::IO &io,
 MPI_Comm testComm;
 #endif
 
-class CommonWriteTest : public ::testing::Test
+class LocalReadTest : public ::testing::Test
 {
 public:
-    CommonWriteTest() = default;
+    LocalReadTest() = default;
 };
 
 // ADIOS2 COMMON write
-TEST_F(CommonWriteTest, ADIOS2CommonWrite)
+TEST_F(LocalReadTest, ADIOS2LocalRead)
 {
 
     // Write test data using ADIOS2
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
     int key;
     MPI_Comm_rank(MPI_COMM_WORLD, &key);
 
-    const unsigned int color = 1;
+    const unsigned int color = 2;
     MPI_Comm_split(MPI_COMM_WORLD, color, key, &testComm);
 #endif
 
