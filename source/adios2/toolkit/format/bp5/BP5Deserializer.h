@@ -184,7 +184,7 @@ private:
     BP5VarRec *LookupVarByKey(void *Key) const;
     BP5VarRec *LookupVarByName(const char *Name);
     BP5VarRec *CreateVarRec(const char *ArrayName);
-    void ReverseDimensions(size_t *Dimensions, int count, int times);
+    void ReverseDimensions(size_t *Dimensions, size_t count, size_t times);
     void BreakdownVarName(const char *Name, char **base_name_p,
                           DataType *type_p, int *element_size_p);
     void BreakdownFieldType(const char *FieldType, bool &Operator,

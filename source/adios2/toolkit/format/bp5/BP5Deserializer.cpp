@@ -404,13 +404,13 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
     return ret;
 }
 
-void BP5Deserializer::ReverseDimensions(size_t *Dimensions, int count,
-                                        int times)
+void BP5Deserializer::ReverseDimensions(size_t *Dimensions, size_t count,
+                                        size_t times)
 {
-    int Offset = 0;
-    for (int j = 0; j < times; j++)
+    size_t Offset = 0;
+    for (size_t j = 0; j < times; j++)
     {
-        for (int i = 0; i < count / 2; i++)
+        for (size_t i = 0; i < count / 2; i++)
         {
             size_t tmp = Dimensions[Offset + i];
             Dimensions[Offset + i] = Dimensions[Offset + count - i - 1];
@@ -672,11 +672,14 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             {
                 /* if we're getting data from someone of the other array gender,
                  * switcheroo */
-                ReverseDimensions(meta_base->Shape, meta_base->Dims, 1);
                 ReverseDimensions(meta_base->Count, meta_base->Dims,
                                   BlockCount);
-                ReverseDimensions(meta_base->Offsets, meta_base->Dims,
-                                  BlockCount);
+                if (ControlFields[i].OrigShapeID == ShapeID::GlobalArray)
+                {
+                    ReverseDimensions(meta_base->Shape, meta_base->Dims, 1);
+                    ReverseDimensions(meta_base->Offsets, meta_base->Dims,
+                                      BlockCount);
+                }
             }
             if ((WriterRank == 0) || (VarRec->GlobalDims == NULL))
             {
