@@ -17,7 +17,7 @@
 void ReadVariable(const std::string &name, adios2::IO &io,
                   adios2::Engine &reader, size_t step)
 {
-    adios2::Variable<int8_t> variable = io.InquireVariable<int8_t>(name);
+    adios2::Variable<double> variable = io.InquireVariable<double>(name);
 
     if (variable)
     {
@@ -27,7 +27,7 @@ void ReadVariable(const std::string &name, adios2::IO &io,
                   << " blocks in step " << step << std::endl;
 
         // create a data vector for each block
-        std::vector<int8_t> dataSet;
+        std::vector<double> dataSet;
         dataSet.resize(blocksInfo.size());
 
         // schedule a read operation for each block separately
@@ -71,7 +71,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 
     // v0 has the same size on every process at every step
     const size_t Nglobal = 40;
-    std::vector<int8_t> v0(Nglobal);
+    std::vector<double> v0(Nglobal);
 
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(testComm);
@@ -83,8 +83,8 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     io.SetEngine(engine);
     io.SetParameters(engineParams);
 
-    adios2::Variable<int8_t> varV0 =
-        io.DefineVariable<int8_t>("v0", {}, {}, {Nglobal});
+    adios2::Variable<double> varV0 =
+        io.DefineVariable<double>("v0", {}, {}, {Nglobal});
 
     adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
 
@@ -100,7 +100,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
             {
                 v0[i] = mpiRank * 1.0 + step * 0.1;
             }
-            writer.Put<int8_t>(varV0, v0.data(), adios2::Mode::Sync);
+            writer.Put<double>(varV0, v0.data(), adios2::Mode::Sync);
         }
 
         writer.EndStep();

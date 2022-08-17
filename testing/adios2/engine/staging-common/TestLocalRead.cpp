@@ -26,7 +26,7 @@
 static void ReadVariable(const std::string &name, adios2::IO &io,
                          adios2::Engine &reader, size_t step)
 {
-    adios2::Variable<int8_t> variable = io.InquireVariable<int8_t>(name);
+    adios2::Variable<double> variable = io.InquireVariable<double>(name);
 
     if (variable)
     {
@@ -36,7 +36,7 @@ static void ReadVariable(const std::string &name, adios2::IO &io,
                   << " blocks in step " << step << std::endl;
 
         // create a data vector for each block
-        std::vector<int8_t> dataSet;
+        std::vector<double> dataSet;
         dataSet.resize(blocksInfo.size());
 
         // schedule a read operation for each block separately
