@@ -54,11 +54,13 @@ DataSpacesWriter::DataSpacesWriter(IO &io, const std::string &name,
         m_IsOpen = true;
 }
 
-DataSpacesWriter::~DataSpacesWriter() if (m_IsOpen)
+DataSpacesWriter::~DataSpacesWriter()
 {
-    DestructorClose(m_FailVerbose);
-}
-m_IsOpen = false;
+    if (m_IsOpen)
+    {
+        DestructorClose(m_FailVerbose);
+    }
+    m_IsOpen = false;
 }
 
 StepStatus DataSpacesWriter::BeginStep(StepMode mode, const float timeout_sec)
