@@ -89,7 +89,7 @@ endif()
 
 # ZFP
 if(ADIOS2_USE_ZFP)
-  find_package(ZFP 1.0.0 CONFIG)
+  find_package(ZFP 1.0.0 CONFIG QUIET)
   if(NOT ZFP_FOUND)
     if(ADIOS2_USE_ZFP STREQUAL AUTO)
       find_package(ZFP 0.5.3 CONFIG)
