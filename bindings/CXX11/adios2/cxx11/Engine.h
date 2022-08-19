@@ -226,6 +226,8 @@ public:
     void Put(Variable<T> variable, AdiosView<T> const &data,
              const Mode launch = Mode::Deferred)
     {
+        auto mem_space = data.memory_space();
+        variable.SetMemorySpace(mem_space);
         Put(variable, static_cast<T *>(data.data()), launch);
     }
 
@@ -443,6 +445,8 @@ public:
     void Get(Variable<T> variable, AdiosView<T> const &data,
              const Mode launch = Mode::Deferred)
     {
+        auto mem_space = data.memory_space();
+        variable.SetMemorySpace(mem_space);
         Get(variable, data.data(), launch);
     }
 
