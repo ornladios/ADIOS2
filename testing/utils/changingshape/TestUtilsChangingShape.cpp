@@ -32,6 +32,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
+
+    // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);

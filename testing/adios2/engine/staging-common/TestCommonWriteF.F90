@@ -67,6 +67,8 @@ program TestSstWrite
   endif
 
   !Launch MPI
+
+  ! MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
   call MPI_Init_thread(threadSupportLevel, provided, ierr)
 
   call MPI_Comm_rank(MPI_COMM_WORLD, key, ierr);

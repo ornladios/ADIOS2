@@ -157,6 +157,8 @@ int main(int argc, char **argv)
     int err, i;
 
     int provided;
+
+    // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
     MPI_Comm_rank(comm, &rank);
     MPI_Comm_size(comm, &size);

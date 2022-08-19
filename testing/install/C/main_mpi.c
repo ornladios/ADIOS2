@@ -16,6 +16,8 @@
 int main(int argc, char **argv)
 {
     int provided;
+
+    // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
 
     adios2_adios *adios = adios2_init_mpi(MPI_COMM_WORLD);

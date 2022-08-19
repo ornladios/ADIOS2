@@ -375,6 +375,7 @@ int main(int argc, char **argv)
         threadSupportLevel = MPI_THREAD_MULTIPLE;
     }
 
+    // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(&argc, &argv, threadSupportLevel, &provided);
     MPI_Comm_rank(MPI_COMM_WORLD, &wrank);
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);

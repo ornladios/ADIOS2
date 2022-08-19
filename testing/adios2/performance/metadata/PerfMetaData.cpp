@@ -523,6 +523,8 @@ int main(int argc, char **argv)
     if (UseMPI)
     {
         int provided;
+
+        // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
         MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
 
         MPI_Comm_rank(MPI_COMM_WORLD, &key);
