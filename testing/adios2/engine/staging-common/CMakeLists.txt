@@ -340,6 +340,8 @@ if(NOT MSVC AND ADIOS2_HAVE_HDF5 AND (NOT ADIOS2_HAVE_MPI OR HDF5_IS_PARALLEL)) 
     list (FILTER HDF5_TESTS EXCLUDE REGEX ".*VarDestruction.*")
     # The No span supoprt with HDF5
     list (FILTER HDF5_TESTS EXCLUDE REGEX ".*SpanMinMax.*")
+    # HDF5 doesn't do Modifiable Attributes
+    list (FILTER HDF5_TESTS EXCLUDE REGEX ".*ModAttr.*")
     foreach(test ${HDF5_TESTS})
         add_common_test(${test} HDF5)
     endforeach()
