@@ -42,6 +42,7 @@ int EarlyExit = 0;
 int LocalCount = 1;
 int DataSize = 5 * 1024 * 1024 / 8; /* DefaultMinDeferredSize is 4*1024*1024
                                        This should be more than that. */
+bool ModifiableAttributes = false;
 bool RoundRobin = false;
 bool OnDemand = false;
 bool DontClose = false;
@@ -121,6 +122,10 @@ void ParseArgs(int argc, char **argv)
         {
             IncreasingDelay = 1;
             NonBlockingBeginStep = 1;
+        }
+        else if (std::string(argv[1]) == "--modifiable_attributes")
+        {
+            ModifiableAttributes = true;
         }
         else if (std::string(argv[1]) == "--expect_contiguous_time")
         {
