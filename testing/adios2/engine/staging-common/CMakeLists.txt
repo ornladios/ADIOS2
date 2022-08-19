@@ -109,7 +109,7 @@ if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
    endforeach()
 endif()
 
-set (SIMPLE_TESTS "1x1;1x1.Attrs;1x1DefSync;1x1VarDestruction;1x1.SpanMinMax;1x1.Local2")
+set (SIMPLE_TESTS "1x1;1x1.Attrs;1x1.ModAttrs;1x1DefSync;1x1VarDestruction;1x1.SpanMinMax;1x1.Local2")
 set (BP5File_ONLY_TESTS "1x1DataWrite")
 
 set (SIMPLE_FORTRAN_TESTS "")
@@ -201,6 +201,8 @@ if(NOT WIN32)    # not on windows
     list (FILTER BP_TESTS EXCLUDE REGEX ".*NoData$")
     # BP3 and BP4 don't do PerformDataWrite
     list (FILTER BP_TESTS EXCLUDE REGEX ".*DataWrite.*")
+    # BP3 and BP4 don't do Modifiable Attributes
+    list (FILTER BP_TESTS EXCLUDE REGEX ".*ModAttr.*")
     # BP3 and BP4 don't do VarDestruction
     list (FILTER BP_TESTS EXCLUDE REGEX ".*VarDestruction.*")
     foreach(test ${BP_TESTS})
@@ -271,6 +273,8 @@ if(NOT MSVC)    # not on windows
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*NoData.BPS$")
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*1x1DefSync.*")
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*Flush.*")
+    # BP3 and BP4 don't do Modifiable Attributes
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*ModAttr.*")
     
     foreach(test ${BP4_STREAM_TESTS})
         add_common_test(${test} BP4_stream)

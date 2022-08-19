@@ -118,7 +118,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     io.DefineAttribute<int64_t>(i64_Single, data_I64.front());
 
     io.DefineAttribute<float>(r32_Single, data_R32.front());
-    io.DefineAttribute<double>(r64_Single, data_R64.front());
+    io.DefineAttribute<double>(r64_Single, (double)3.14159, "", "/", true);
 
     // Create the Engine
     io.SetEngine(engine);
@@ -185,6 +185,9 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         // Advance to the next time step
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
+        if (ModifiableAttributes)
+            io.DefineAttribute<double>(
+                r64_Single, (double)3.14159 + (double)step, "", "/", true);
         engine.EndStep();
     }
 

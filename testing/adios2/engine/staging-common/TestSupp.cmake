@@ -132,6 +132,7 @@ set (1x1.Modes_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestComm
 
 # 1x1.Attrs tests writing and reading of attributes defined before Open
 set (1x1.Attrs_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteAttrs> -r $<TARGET_FILE:TestCommonReadAttrs>")
+set (1x1.ModAttrs_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWriteAttrs> -r $<TARGET_FILE:TestCommonReadAttrs> --rarg=--modifiable_attributes --warg=--modifiable_attributes")
 
 # Basic Fortran tests, Fortran to C, C to Fortran and Fortran to Fortran
 set (FtoC.1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1  -w $<TARGET_FILE:TestCommonWrite_f>")

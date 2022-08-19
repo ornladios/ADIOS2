@@ -155,7 +155,14 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         ASSERT_EQ(attr_r64.Name(), r64_Single);
         ASSERT_EQ(attr_r64.Data().size() == 1, true);
         ASSERT_EQ(attr_r64.Type(), adios2::GetType<double>());
-        ASSERT_EQ(attr_r64.Data().front(), data_R64.front());
+        if (ModifiableAttributes)
+        {
+            ASSERT_EQ(attr_r64.Data().front(), (double)3.14159 + (double)t);
+        }
+        else
+        {
+            ASSERT_EQ(attr_r64.Data().front(), (double)3.14159);
+        }
 
         auto scalar_r64 = io.InquireVariable<double>("scalar_r64");
         EXPECT_TRUE(scalar_r64);
