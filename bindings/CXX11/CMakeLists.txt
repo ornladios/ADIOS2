@@ -80,12 +80,14 @@ install(
 install(
   FILES adios2/cxx11/ADIOS.h
         adios2/cxx11/ADIOS.inl
+        adios2/cxx11/ADIOSView.h
         adios2/cxx11/IO.h
         adios2/cxx11/Group.h
         adios2/cxx11/Variable.h
         adios2/cxx11/VariableNT.h
         adios2/cxx11/Attribute.h
         adios2/cxx11/Engine.h
+        adios2/cxx11/KokkosView.h
         adios2/cxx11/Operator.h
         adios2/cxx11/Query.h
         adios2/cxx11/Types.h
