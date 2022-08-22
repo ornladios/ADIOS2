@@ -271,10 +271,15 @@ static void MpiInitialize()
 
     if (provided != MPI_THREAD_MULTIPLE)
     {
-        fprintf(stderr,
-                "MPI init without MPI_THREAD_MULTIPLE (Externally "
-                "initialized:%s)\n",
-                IsInitialized ? "true" : "false");
+        int rank;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        if (!rank)
+        {
+            fprintf(stderr,
+                    "MPI init without MPI_THREAD_MULTIPLE (Externally "
+                    "initialized:%s)\n",
+                    IsInitialized ? "true" : "false");
+        }
     }
 }
 
