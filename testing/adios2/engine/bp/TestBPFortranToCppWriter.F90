@@ -4,7 +4,7 @@ program TestBPFortranToCppWriter
    implicit none
 
 #ifndef __GFORTRAN__
-#ifndef __GNUC__
+#if !defined(__GNUC__) || defined(_CRAYFTN)
    interface
       integer function iargc()
       end function iargc
