@@ -29,23 +29,24 @@ struct memspace_kokkos_to_adios2<Kokkos::CudaSpace>
 
 } // namespace detail
 
-template <class T>
-class AdiosView
+template <class T, class... Parameters>
+class AdiosView<Kokkos::View<T, Parameters...>>
 {
-    T *pointer;
+    using data_type = typename Kokkos::View<T, Parameters...>::value_type;
+    data_type *pointer;
     adios2::MemorySpace mem_space;
 
 public:
-    template <class D, class... P>
-    AdiosView(Kokkos::View<D, P...> v)
+    template <class... P>
+    AdiosView(Kokkos::View<T, P...> v)
     {
         pointer = v.data();
         mem_space = detail::memspace_kokkos_to_adios2<
-            typename Kokkos::View<D, P...>::memory_space>::value;
+            typename Kokkos::View<T, P...>::memory_space>::value;
     }
 
-    T *data() { return pointer; }
-    T *data() const { return pointer; }
+    data_type const *data() const { return pointer; }
+    data_type *data() { return pointer; }
     adios2::MemorySpace memory_space() const { return mem_space; }
 };
 
