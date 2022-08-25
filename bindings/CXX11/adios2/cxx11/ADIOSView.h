@@ -3,8 +3,12 @@
 
 namespace adios2
 {
-template <class T>
-class AdiosView;
+template <typename T, class... Parameters>
+class AdiosView
+{
+public:
+    AdiosView() = delete;
+};
 }
 
 #endif /* ADIOS2_BINDINGS_CXX11_CXX11_ADIOS_VIEW_H_ */

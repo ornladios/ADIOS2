@@ -212,23 +212,15 @@ public:
      * always sync
      */
     template <class T, typename U,
-              class = typename std::enable_if<!std::is_same<
-                  U, std::vector<typename U::value_type>>::value>::type>
+              class = typename std::enable_if<
+                  std::is_convertible<U, AdiosView<U>>::value>::type>
     void Put(Variable<T> variable, U const &data,
              const Mode launch = Mode::Deferred)
     {
-        Put(variable, static_cast<AdiosView<T>>(data), launch);
-    }
-
-    /* Level of indirection needed to be able to pass a Kokkos::View without
-     * explicitly passing the data type*/
-    template <class T>
-    void Put(Variable<T> variable, AdiosView<T> const &data,
-             const Mode launch = Mode::Deferred)
-    {
-        auto mem_space = data.memory_space();
+        auto adios_data = static_cast<AdiosView<U>>(data);
+        auto mem_space = adios_data.memory_space();
         variable.SetMemorySpace(mem_space);
-        Put(variable, static_cast<T *>(data.data()), launch);
+        Put(variable, adios_data.data(), launch);
     }
 
     /** Perform all Put calls in Deferred mode up to this point.  Specifically,
@@ -431,23 +423,15 @@ public:
      * always sync
      */
     template <class T, typename U,
-              class = typename std::enable_if<!std::is_same<
-                  U, std::vector<typename U::value_type>>::value>::type>
+              class = typename std::enable_if<
+                  std::is_convertible<U, AdiosView<U>>::value>::type>
     void Get(Variable<T> variable, U const &data,
              const Mode launch = Mode::Deferred)
     {
-        Get(variable, static_cast<AdiosView<T>>(data), launch);
-    }
-
-    /* Level of indirection needed to be able to pass a Kokkos::View without
-     * explicitly passing the data type*/
-    template <class T>
-    void Get(Variable<T> variable, AdiosView<T> const &data,
-             const Mode launch = Mode::Deferred)
-    {
-        auto mem_space = data.memory_space();
+        auto adios_data = static_cast<AdiosView<U>>(data);
+        auto mem_space = adios_data.memory_space();
         variable.SetMemorySpace(mem_space);
-        Get(variable, data.data(), launch);
+        Get(variable, adios_data.data(), launch);
     }
 
     /** Perform all Get calls in Deferred mode up to this point */
