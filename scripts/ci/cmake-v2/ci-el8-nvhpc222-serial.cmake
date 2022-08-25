@@ -22,7 +22,6 @@ CMAKE_CXX_FLAGS:STRING=--brief_diagnostics
 #CMAKE_Fortran_FLAGS:STRING=-warn errors
 ")
 
-set(CTEST_TEST_ARGS PARALLEL_LEVEL 1)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
 include(${CMAKE_CURRENT_LIST_DIR}/ci-common.cmake)
