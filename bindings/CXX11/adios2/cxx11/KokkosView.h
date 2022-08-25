@@ -1,5 +1,5 @@
-#ifndef ADIOS2_BINDINGS_CXX11_CXX11_ADIOS_KOKKOS_H_
-#define ADIOS2_BINDINGS_CXX11_CXX11_ADIOS_KOKKOS_H_
+#ifndef ADIOS2_BINDINGS_CXX11_CXX11_KOKKOS_VIEW_H_
+#define ADIOS2_BINDINGS_CXX11_CXX11_KOKKOS_VIEW_H_
 
 #include <Kokkos_Core.hpp>
 
@@ -46,7 +46,6 @@ public:
 
     T *data() { return pointer; }
     T *data() const { return pointer; }
-    adios2::MemorySpace memory_space() { return mem_space; }
     adios2::MemorySpace memory_space() const { return mem_space; }
 };
 
