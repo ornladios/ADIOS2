@@ -3,7 +3,5 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-find_package(Kokkos)
-
 add_executable(KokkosWriteRead kokkosWriteRead.cpp)
 target_link_libraries(KokkosWriteRead PUBLIC adios2::cxx11 Kokkos::kokkos)
