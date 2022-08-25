@@ -10,6 +10,10 @@ add_subdirectory(useCases)
 add_subdirectory(inlineMWE)
 add_subdirectory(plugins)
 
+if(Kokkos_ROOT)
+  add_subdirectory(kokkos)
+endif()
+
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(heatTransfer)
 endif()
