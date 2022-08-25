@@ -1,11 +1,11 @@
-# Client maintainer: chuck.atkins@kitware.com
+# Client maintainer: vicente.bolea@kitware.com
 set(ENV{CC}  clang)
 set(ENV{CXX} clang++)
 set(ENV{FC}  gfortran-11)
 
 set(dashboard_cache "
 ADIOS2_USE_Fortran:BOOL=ON
-ADIOS2_USE_MPI:BOOL=ON
+ADIOS2_USE_MPI:BOOL=OFF
 ADISO2_USE_Python:BOOL=ON
 
 CMAKE_C_FLAGS:STRING=-Wall

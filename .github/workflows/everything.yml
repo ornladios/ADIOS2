@@ -215,18 +215,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos10_15, macos11, macos11_12sdk]
+        os: [macos11, macos12]
         parallel: [serial]
         include:
-          - os: macos10_15
-            image: macos-10.15
-            compiler: xcode12_1_1
           - os: macos11
             image: macos-11
             compiler: xcode13_0
-          - os: macos11_12sdk
-            image: macos-11
-            compiler: xcode13_2_1
+          - os: macos12
+            image: macos-12
+            compiler: xcode13_4_1
 
     steps:
       - uses: actions/checkout@v3
