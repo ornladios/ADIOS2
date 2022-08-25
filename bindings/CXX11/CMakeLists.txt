@@ -5,6 +5,7 @@
 
 add_library(adios2_cxx11
   adios2/cxx11/ADIOS.cpp
+  adios2/cxx11/ADIOSView.h
   adios2/cxx11/Attribute.cpp
   adios2/cxx11/Engine.cpp
   adios2/cxx11/Engine.tcc
@@ -20,6 +21,7 @@ add_library(adios2_cxx11
   adios2/cxx11/Group.cpp
   adios2/cxx11/Group.tcc
 )
+
 set_property(TARGET adios2_cxx11 PROPERTY EXPORT_NAME cxx11)
 set_property(TARGET adios2_cxx11 PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_cxx11)
 target_link_libraries(adios2_cxx11 PRIVATE adios2_core adios2::thirdparty::pugixml)
