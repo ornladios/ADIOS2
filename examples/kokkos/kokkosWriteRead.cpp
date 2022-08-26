@@ -37,9 +37,15 @@ int BPWrite(const std::string fname, const size_t N, int nSteps,
     size = 1;
 #endif
     // Initialize the simulation data
-    Kokkos::View<float *, Kokkos::HostSpace> gpuSimData("simBuffer", N);
+    using mem_space = Kokkos::DefaultExecutionSpace::memory_space;
+    Kokkos::View<float *, mem_space> gpuSimData("simBuffer", N);
+    if (rank == 0)
+    {
+        Kokkos::DefaultExecutionSpace exe_space;
+        std::cout << "Write 6k floats with " << engine
+                  << " on memory space: " << exe_space.name() << std::endl;
+    }
 
-    // Set up the ADIOS structures
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
@@ -70,8 +76,10 @@ int BPWrite(const std::string fname, const size_t N, int nSteps,
         bpWriter.EndStep();
 
         // Update values in the simulation data
-        Kokkos::parallel_for("updateBuffer", N,
-                             KOKKOS_LAMBDA(int i) { gpuSimData(i) += 5; });
+        Kokkos::parallel_for(
+            "updateBuffer",
+            Kokkos::RangePolicy<Kokkos::DefaultExecutionSpace>(0, N),
+            KOKKOS_LAMBDA(int i) { gpuSimData(i) += 5; });
     }
 
     bpWriter.Close();
@@ -103,7 +111,15 @@ int BPRead(const std::string fname, const size_t N, int nSteps,
     adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
     unsigned int step = 0;
-    Kokkos::View<float *, Kokkos::HostSpace> gpuSimData("simBuffer", N);
+    if (rank == 0)
+    {
+        Kokkos::DefaultExecutionSpace exe_space;
+        std::cout << "Read 6k floats with " << engine
+                  << " on memory space: " << exe_space.name() << std::endl;
+    }
+
+    using mem_space = Kokkos::DefaultExecutionSpace::memory_space;
+    Kokkos::View<float *, mem_space> gpuSimData("simBuffer", N);
     for (; bpReader.BeginStep() == adios2::StepStatus::OK; ++step)
     {
         auto data = io.InquireVariable<float>("data");
@@ -143,9 +159,6 @@ int main(int argc, char **argv)
         for (auto engine : list_of_engines)
         {
             const std::string fname(engine + "Kokkos.bp");
-            if (rank == 0)
-                std::cout << "Write/Read array of 6k floats using " << engine
-                          << std::endl;
             ret += BPWrite(fname, N, nSteps, engine);
             ret += BPRead(fname, N, nSteps, engine);
         }
