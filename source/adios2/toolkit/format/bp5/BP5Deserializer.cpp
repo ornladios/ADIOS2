@@ -158,17 +158,22 @@ DataType BP5Deserializer::TranslateFFSType2ADIOS(const char *Type, int size)
     return DataType::None;
 }
 
-void BP5Deserializer::BreakdownVarName(const char *Name, char **base_name_p,
-                                       DataType *type_p, int *element_size_p)
+const char *BP5Deserializer::BreakdownVarName(const char *Name,
+                                              DataType *type_p,
+                                              int *element_size_p)
 {
-    int Type;
-    int ElementSize;
-    const char *NameStart = strchr(strchr(Name + 4, '_') + 1, '_') + 1;
-    // + 4 to skip BP5_ or bp5_ prefix
-    sscanf(Name + 4, "%d_%d_", &ElementSize, &Type);
-    *element_size_p = ElementSize;
+    // const char *NameStart = strchr(strchr(Name + 4, '_') + 1, '_') + 1;
+    // sscanf(Name + 4, "%d_%d", &ElementSize, &Type);
+    /* string formatted as bp5_%d_%d_actualname */
+    char *p;
+    // + 3 to skip BP5_ or bp5_ prefix
+    long n = strtol(Name + 4, &p, 10);
+    *element_size_p = static_cast<int>(n);
+    ++p; // skip '_'
+    long Type = strtol(p, &p, 10);
     *type_p = (DataType)Type;
-    *base_name_p = strdup(NameStart);
+    ++p; // skip '_'
+    return p;
 }
 
 void BP5Deserializer::BreakdownFieldType(const char *FieldType, bool &Operator,
@@ -232,14 +237,16 @@ void BP5Deserializer::BreakdownV1ArrayName(const char *Name, char **base_name_p,
 void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
                                          DataType *type_p, int *element_size_p)
 {
-    int Type;
-    int ElementSize;
-    const char *NameStart = strchr(strchr(Name + 4, '_') + 1, '_') + 1;
+    /* string formatted as bp5_%d_%d_actualname */
+    char *p;
     // + 3 to skip BP5_ or bp5_ prefix
-    sscanf(Name + 4, "%d_%d", &ElementSize, &Type);
-    *element_size_p = ElementSize;
+    long n = strtol(Name + 4, &p, 10);
+    *element_size_p = static_cast<int>(n);
+    ++p; // skip '_'
+    long Type = strtol(p, &p, 10);
     *type_p = (DataType)Type;
-    *base_name_p = strdup(NameStart);
+    ++p; // skip '_'
+    *base_name_p = strdup(p);
 }
 
 BP5Deserializer::BP5VarRec *BP5Deserializer::LookupVarByKey(void *Key) const
@@ -852,15 +859,14 @@ void BP5Deserializer::InstallAttributesV1(FFSTypeHandle FFSformat,
     int i = 0;
     while (FieldList[i].field_name)
     {
-        char *FieldName;
         void *field_data = (char *)BaseData + FieldList[i].field_offset;
 
         if (!NameIndicatesAttrArray(FieldList[i].field_name))
         {
             DataType Type;
             int ElemSize;
-            BreakdownVarName(FieldList[i].field_name, &FieldName, &Type,
-                             &ElemSize);
+            const char *FieldName =
+                BreakdownVarName(FieldList[i].field_name, &Type, &ElemSize);
             if (Type == adios2::DataType::Struct)
             {
                 return;
@@ -884,7 +890,6 @@ void BP5Deserializer::InstallAttributesV1(FFSTypeHandle FFSformat,
                 std::cout << "Loading attribute matched no type "
                           << ToString(Type) << std::endl;
             }
-            free(FieldName);
             i++;
         }
         else
