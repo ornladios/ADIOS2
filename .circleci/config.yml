@@ -18,7 +18,7 @@ defaults: &defaults
         name: Sanitize
         command: bash source/scripts/ci/circle/run.sh memcheck
 
-version: 2
+version: 2.1
 
 jobs:
   "fedora-ubsan":
@@ -39,7 +39,6 @@ jobs:
       - image: ornladios/adios2:ci-fedora-tsan
 
 workflows:
-  version: 2
   sanitizers:
     jobs:
       - "fedora-ubsan"
