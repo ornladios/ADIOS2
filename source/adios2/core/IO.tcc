@@ -126,10 +126,10 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
     auto itExistingAttribute = m_Attributes.find(globalName);
     if (itExistingAttribute != m_Attributes.end())
     {
-        if (helper::ValueToString(value) !=
-            itExistingAttribute->second->GetInfo()["Value"])
+        if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
         {
-            if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
+            if (!itExistingAttribute->second->Equals(
+                    static_cast<const void *>(&value), 1))
             {
                 Attribute<T> &a =
                     static_cast<Attribute<T> &>(*itExistingAttribute->second);
@@ -144,16 +144,16 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
                         globalName, itExistingAttribute->second.get(), Data);
                 }
             }
-            else
-            {
-                helper::Throw<std::invalid_argument>(
-                    "Core", "IO", "DefineAttribute",
-                    "modifiable attribute " + globalName +
-                        " has been defined with type " +
-                        ToString(itExistingAttribute->second->m_Type) +
-                        ". Type cannot be changed to " +
-                        ToString(helper::GetDataType<T>()));
-            }
+        }
+        else
+        {
+            helper::Throw<std::invalid_argument>(
+                "Core", "IO", "DefineAttribute",
+                "modifiable attribute " + globalName +
+                    " has been defined with type " +
+                    ToString(itExistingAttribute->second->m_Type) +
+                    ". Type cannot be changed to " +
+                    ToString(helper::GetDataType<T>()));
         }
         return static_cast<Attribute<T> &>(*itExistingAttribute->second);
     }
@@ -200,14 +200,10 @@ IO::DefineAttribute(const std::string &name, const T *array,
     auto itExistingAttribute = m_Attributes.find(globalName);
     if (itExistingAttribute != m_Attributes.end())
     {
-        const std::string arrayValues(
-            "{ " +
-            helper::VectorToCSV(std::vector<T>(array, array + elements)) +
-            " }");
-
-        if (itExistingAttribute->second->GetInfo()["Value"] != arrayValues)
+        if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
         {
-            if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
+            if (!itExistingAttribute->second->Equals(
+                    static_cast<const void *>(array), elements))
             {
                 Attribute<T> &a =
                     static_cast<Attribute<T> &>(*itExistingAttribute->second);
@@ -220,16 +216,16 @@ IO::DefineAttribute(const std::string &name, const T *array,
                     e.second->NotifyEngineAttribute(globalName, &a, Data);
                 }
             }
-            else
-            {
-                helper::Throw<std::invalid_argument>(
-                    "Core", "IO", "DefineAttribute",
-                    "modifiable attribute " + globalName +
-                        " has been defined with type " +
-                        ToString(itExistingAttribute->second->m_Type) +
-                        ". Type cannot be changed to " +
-                        ToString(helper::GetDataType<T>()));
-            }
+        }
+        else
+        {
+            helper::Throw<std::invalid_argument>(
+                "Core", "IO", "DefineAttribute",
+                "modifiable attribute " + globalName +
+                    " has been defined with type " +
+                    ToString(itExistingAttribute->second->m_Type) +
+                    ". Type cannot be changed to " +
+                    ToString(helper::GetDataType<T>()));
         }
         return static_cast<Attribute<T> &>(*itExistingAttribute->second);
     }
