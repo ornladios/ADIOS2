@@ -1,4 +1,4 @@
-# Client maintainer: chuck.atkins@kitware.com
+# Client maintainer: vicente.bolea@kitware.com
 set(ENV{CC}  clang)
 set(ENV{CXX} clang++)
 set(ENV{FC}  gfortran-11)
