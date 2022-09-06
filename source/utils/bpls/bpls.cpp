@@ -49,7 +49,6 @@
 #ifdef _WIN32
 #include "shlwapi.h"
 #include "windows.h"
-#pragma comment(lib, "shlwapi.lib")
 #pragma warning(disable : 4101) // unreferenced local variable
 #else
 #include <fnmatch.h>
