@@ -120,7 +120,7 @@ if(ADIOS2_HAVE_CUDA)
     OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_cuda
     )
   target_compile_features(adios2_core_cuda PRIVATE cuda_std_14)
-  target_link_libraries(adios2_core PRIVATE adios2_core_cuda CUDA::cudart CUDA::cuda_driver)
+  target_link_libraries(adios2_core PRIVATE adios2_core_cuda CUDA::cudart)
   set(maybe_adios2_core_cuda adios2_core_cuda)
 endif()
 
