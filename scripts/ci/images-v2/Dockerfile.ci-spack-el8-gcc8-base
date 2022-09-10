@@ -9,5 +9,4 @@ RUN dnf install -y gcc-gfortran && \
 RUN . /opt/spack/share/spack/setup-env.sh && \
     spack compiler rm --scope system gcc && \
     spack compiler add --scope system && \
-    spack config --scope system add "packages:all:compiler:[gcc]" && \
-    spack external find --scope system --not-buildable cuda
+    spack config --scope system add "packages:all:compiler:[gcc]"

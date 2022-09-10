@@ -1,0 +1,13 @@
+$# Run this with pyexpander --eval "flavor=xxyzz"
+$default(compiler_spack_id="gcc",device_flavor="BASE")\
+spack:
+  specs:
+    - libsodium%$(compiler_spack_id)
+$if(device_flavor == "CUDA")\
+    - kokkos@3.6.01%gcc+cuda+wrapper cuda_arch=52
+$endif\
+  view: true
+  config:
+    checksum: false
+  concretizer:
+    unify: false

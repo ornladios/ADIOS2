@@ -8,12 +8,11 @@ RUN dnf install -y dnf-plugins-core && \
     dnf install -y epel-release
 RUN dnf install -y \
         bzip2 curl file gcc-c++ gcc git gnupg2 gzip \
-        make patch tcl unzip which xz patchelf diffutils tar Lmod \
+        make patch tcl unzip which xz patchelf diffutils findutils tar Lmod \
         python3 python3-pip
 RUN dnf clean all
 
-RUN git clone -b v0.18.0 https://github.com/spack/spack.git /opt/spack
-COPY packages.yaml.base /etc/spack/packages.yaml
+RUN git clone -b v0.18.1 https://github.com/spack/spack.git /opt/spack
 COPY modules.yaml /etc/spack/modules.yaml
 COPY 0001-spack-rhel-fix.patch /root/0001-spack-rhel-fix.patch
 
@@ -26,5 +25,5 @@ RUN . /opt/spack/share/spack/setup-env.sh && \
     spack compiler find --scope system && \
     spack clean -a && \
     spack mirror add E4S https://cache.e4s.io && \
-    spack buildcache keys -it && \
+    spack buildcache keys --install --trust && \
     spack spec zlib
