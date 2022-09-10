@@ -1,0 +1,16 @@
+packages:
+  all:
+    target: [haswell]
+    providers:
+      mpi: [$(mpi_flavor)]
+  adios2:
+    variants: $(mpi_variant)+blosc+bzip2+zfp+sz+png+sst+dataman+ssc+hdf5+python+fortran
+  cmake:
+    version: [3.22.4]
+  mpich:
+    version: [3.3.2]
+    variants: device=ch3 netmod=tcp
+$if(device_flavor == "CUDA")\
+  zfp:
+    variants: +cuda+shared
+$endif\

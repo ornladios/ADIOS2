@@ -1,22 +1,27 @@
+# vim: ft=dockerfile
 ARG COMPILER_IMG_BASE
+FROM almalinux/almalinux:8 AS builder
+
+WORKDIR /root
+
+RUN dnf update -y && \
+    dnf install -y python3-pip && \
+    pip3 install pyexpander
+
+COPY packages.yaml.in packages.yaml.in
+COPY specs.yaml.in specs.yaml.in
+
+ARG DEVICE_FLAVOR=cpu
+ARG MPI_VARIANT=~mpi
+ARG MPI_FLAVOR=openmpi
+
+RUN expander.py --eval "device_flavor=\"${DEVICE_FLAVOR}\"" specs.yaml.in > specs.yaml && \
+    expander.py --eval "device_flavor=\"${DEVICE_FLAVOR}\";mpi_variant=\"${MPI_VARIANT}\";mpi_flavor=\"${MPI_FLAVOR}\"" packages.yaml.in > packages.yaml
+
 FROM ornladios/adios2:ci-spack-el8-${COMPILER_IMG_BASE}-base
 
-ARG MPI_FLAVOR=openmpi
-RUN sed "s|^packages:$|&\n  mpich:\n    version: [3.3.2]\n    variants: device=ch3 netmod=tcp|" \
-      -i /etc/spack/packages.yaml
-
-ARG EXTRA_VARIANTS
-ARG CUDA_VARIANT
-RUN sed \
-    -e "s|packages:|packages:\n  zfp:\n    variants: ${CUDA_VARIANT} +shared|" \
-    -e "s|variants: +blosc|variants: ${EXTRA_VARIANTS} +blosc|" \
-    -e "s|variants: api=|variants: ${EXTRA_VARIANTS} api=|" \
-    -i /etc/spack/packages.yaml
-
-ARG MPI_FLAVOR=openmpi
-RUN sed "s|^\(\s\+\)all:.*|&\n\1  providers:\n\1    mpi: [${MPI_FLAVOR}]|" \
-      -i /etc/spack/packages.yaml && \
-      cat /etc/spack/packages.yaml
+COPY --from=builder /root/packages.yaml /etc/spack/packages.yaml
+COPY --from=builder /root/specs.yaml /tmp/specs.yaml
 
 # Build dependencies
 ARG COMPILER_SPACK_ID
@@ -25,40 +30,25 @@ RUN . /etc/profile.d/modules.sh && \
     spack spec --reuse adios2%${COMPILER_SPACK_ID} ^rhash%gcc && \
     spack install \
       --no-checksum \
-      --reuse \
       --fail-fast \
       -v \
-      -j$(grep -c '^processor' /proc/cpuinfo) \
+      -j$((2 * $(grep -c '^processor' /proc/cpuinfo))) \
       --only dependencies \
       adios2%${COMPILER_SPACK_ID} ^rhash%gcc && \
-    spack spec --reuse libsodium%${COMPILER_SPACK_ID} && \
-    spack install \
-      --no-checksum \
-      --reuse \
-      --fail-fast \
-      -v \
-      -j$(grep -c '^processor' /proc/cpuinfo) \
-      libsodium%${COMPILER_SPACK_ID} && \
     spack clean -a
 
 # Setup modules
 RUN . /opt/spack/share/spack/setup-env.sh && \
-    spack env create --without-view adios2-ci && \
-    spack -e adios2-ci config add concretizer:unify:true && \
-    spack -e adios2-ci add $(spack find --format "/{hash}") && \
-    spack -e adios2-ci rm cuda && \
-    spack -e adios2-ci install && \
-    spack env activate adios2-ci && \
-    spack env deactivate && \
-    rm -rf /root/.spack && \
-    spack -e adios2-ci env loads
+    spack env create adios2-ci /tmp/specs.yaml && \
+    spack -e adios2-ci add $(spack find --implicit --format "/{hash}") && \
+    spack -e adios2-ci concretize --force --fresh && \
+    spack -e adios2-ci install \
+      --no-checksum \
+      --fail-fast \
+      -v \
+      -j$((2 * $(grep -c '^processor' /proc/cpuinfo)))
 
 # Setup default login environment
-RUN . /opt/spack/share/spack/setup-env.sh && \
-    echo 'source /opt/spack/share/spack/setup-env.sh' >> /etc/profile.d/zz-adios2-ci-env.sh && \
-    echo "module use ${SPACK_ROOT}/share/spack/modules/$(spack debug report | grep -Po 'Platform:\*\*\s\K.*')" >> /etc/profile.d/zz-adios2-ci-env.sh && \
-    echo 'source ${SPACK_ROOT}/var/spack/environments/adios2-ci/loads' >> /etc/profile.d/zz-adios2-ci-env.sh
-
-# Enable CUDA in Spack if enabled
-COPY spack-external-cuda-addon.bash /root/spack-external-cuda-addon.bash
-RUN test x"${CUDA_VARIANT}" == x"+cuda" && . /root/spack-external-cuda-addon.bash
+RUN . /etc/profile.d/modules.sh && \
+    echo "source /opt/spack/share/spack/setup-env.sh" >> /etc/profile.d/zz-adios2-ci-env.sh && \
+    echo "spack env activate adios2-ci" >> /etc/profile.d/zz-adios2-ci-env.sh

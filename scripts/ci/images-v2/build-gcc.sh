@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e
+set -x
 
 BASE_DIR=$(dirname $(readlink -f ${BASH_SOURCE}))
 source "${BASE_DIR}/build-functions.sh"
@@ -11,7 +12,9 @@ do
     ornladios/adios2:ci-spack-el8-gcc${ver}-base \
     ornladios/adios2:ci-spack-el8-gcc${ver}-serial \
     Dockerfile.ci-spack-el8-leaf \
-    "--build-arg COMPILER=gcc${ver} --build-arg EXTRA_VARIANTS=~mpi"
+    "--build-arg COMPILER_IMG_BASE=gcc${ver}
+     --build-arg COMPILER_SPACK_ID=gcc
+     --build-arg=MPI_VARIANT=~mpi"
   then
     echo "Error: Failed to build gcc${ver}-serial image"
     exit 3
@@ -22,7 +25,9 @@ do
     ornladios/adios2:ci-spack-el8-gcc${ver}-base \
     ornladios/adios2:ci-spack-el8-gcc${ver}-mpi \
     Dockerfile.ci-spack-el8-leaf \
-    "--build-arg COMPILER=gcc${ver} --build-arg EXTRA_VARIANTS=+mpi"
+    "--build-arg COMPILER_IMG_BASE=gcc${ver}
+     --build-arg COMPILER_SPACK_ID=gcc
+     --build-arg=MPI_VARIANT=+mpi"
   then
     echo "Error: Failed to build gcc${ver}-mpi image"
     exit 3
