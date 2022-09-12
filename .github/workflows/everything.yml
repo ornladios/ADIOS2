@@ -127,7 +127,9 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
       - name: Setup
-        run: gha/scripts/ci/gh-actions/linux-setup.sh
+        run: |
+          echo "${GITHUB_WORKSPACE}/../.local/bin" >> $GITHUB_PATH
+          gha/scripts/ci/gh-actions/linux-setup.sh
       - name: Update
         run: gha/scripts/ci/gh-actions/run.sh update
       - name: Configure

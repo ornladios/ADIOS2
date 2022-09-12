@@ -2,7 +2,7 @@
 
 include(ProcessorCount)
 ProcessorCount(NCPUS)
-math(EXPR N2CPUS "${NCPUS}*2")
+math(EXPR N2CPUS "${NCPUS}*4")
 
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
@@ -26,6 +26,6 @@ CMAKE_Fortran_FLAGS:STRING=-Wall
 ")
 
 set(CTEST_TEST_ARGS PARALLEL_LEVEL ${NCPUS})
-set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
+set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
 include(${CMAKE_CURRENT_LIST_DIR}/ci-common.cmake)
