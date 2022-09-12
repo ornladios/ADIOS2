@@ -4,7 +4,7 @@ spack:
   specs:
     - libsodium%$(compiler_spack_id)
 $if(device_flavor == "CUDA")\
-    - kokkos@3.6.01%gcc+cuda+wrapper cuda_arch=52
+    - kokkos@3.6.01%gcc+cuda+wrapper+cuda_lambda cuda_arch=52
 $endif\
   view: true
   config:
