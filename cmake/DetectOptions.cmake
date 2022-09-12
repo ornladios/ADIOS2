@@ -428,6 +428,16 @@ if(Sodium_FOUND)
   set(ADIOS2_HAVE_Sodium TRUE)
 endif()
 
+# Catalyst stub library for ParaViewFidesEngine plugin for in situ vis
+if(ADIOS2_USE_Catalyst STREQUAL AUTO)
+  find_package(catalyst 2.0 QUIET)
+elseif(ADIOS2_USE_Catalyst)
+  find_package(catalyst 2.0 REQUIRED)
+endif()
+if(catalyst_FOUND)
+  set(ADIOS2_HAVE_Catalyst TRUE)
+endif()
+
 # Multithreading
 find_package(Threads REQUIRED)
 
