@@ -11,6 +11,7 @@
 #ifndef ADIOS2_BINDINGS_CXX11_CXX11_ENGINE_H_
 #define ADIOS2_BINDINGS_CXX11_CXX11_ENGINE_H_
 
+#include "ADIOSView.h"
 #include "Types.h"
 #include "Variable.h"
 #include "VariableNT.h"
@@ -201,6 +202,27 @@ public:
     void Put(const std::string &variableName, const T &datum,
              const Mode launch = Mode::Deferred);
 
+    /**
+     * The next two Put functions are used to accept a variable, and an
+     * AdiosViews which is a placeholder for Kokkos::View
+     * @param variable contains variable metadata information
+     * @param data represents any user defined object that is not a vector (used
+     * for an AdiosView)
+     * @param launch mode policy, optional for API consistency, internally is
+     * always sync
+     */
+    template <class T, typename U,
+              class = typename std::enable_if<
+                  std::is_convertible<U, AdiosView<U>>::value>::type>
+    void Put(Variable<T> variable, U const &data,
+             const Mode launch = Mode::Deferred)
+    {
+        auto adios_data = static_cast<AdiosView<U>>(data);
+        auto mem_space = adios_data.memory_space();
+        variable.SetMemorySpace(mem_space);
+        Put(variable, adios_data.data(), launch);
+    }
+
     /** Perform all Put calls in Deferred mode up to this point.  Specifically,
      * this causes Deferred data to be copied into ADIOS internal buffers as if
      * the Put had been done in Sync mode. */
@@ -390,6 +412,27 @@ public:
      **/
     template <class T>
     void Get(Variable<T> variable, T **data) const;
+
+    /**
+     * The next two Get functions are used to accept a variable, and an
+     * AdiosViews which is a placeholder for Kokkos::View
+     * @param variable contains variable metadata information
+     * @param data represents any user defined object that is not a vector (used
+     * for an AdiosView)
+     * @param launch mode policy, optional for API consistency, internally is
+     * always sync
+     */
+    template <class T, typename U,
+              class = typename std::enable_if<
+                  std::is_convertible<U, AdiosView<U>>::value>::type>
+    void Get(Variable<T> variable, U const &data,
+             const Mode launch = Mode::Deferred)
+    {
+        auto adios_data = static_cast<AdiosView<U>>(data);
+        auto mem_space = adios_data.memory_space();
+        variable.SetMemorySpace(mem_space);
+        Get(variable, adios_data.data(), launch);
+    }
 
     /** Perform all Get calls in Deferred mode up to this point */
     void PerformGets();
