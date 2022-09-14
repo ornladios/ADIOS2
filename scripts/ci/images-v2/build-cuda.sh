@@ -12,7 +12,7 @@ if ! build_squash \
     Dockerfile.ci-spack-el8-leaf \
     "--build-arg=COMPILER_IMG_BASE=${build_conf}
      --build-arg=COMPILER_SPACK_ID=gcc
-     --build-arg=DEVICE_FLAVOR=CUDA
+     --build-arg=DEVICE=CUDA
      --build-arg=MPI_VARIANT=~mpi"
 then
   echo "Error: Failed to build ci-spack-el8 leaf image"

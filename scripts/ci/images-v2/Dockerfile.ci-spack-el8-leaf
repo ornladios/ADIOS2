@@ -1,6 +1,8 @@
 # vim: ft=dockerfile
 ARG COMPILER_IMG_BASE
+
 FROM almalinux/almalinux:8 AS builder
+ARG COMPILER_IMG_BASE
 
 WORKDIR /root
 
@@ -11,17 +13,21 @@ RUN dnf update -y && \
 COPY packages.yaml.in packages.yaml.in
 COPY specs.yaml.in specs.yaml.in
 
-ARG DEVICE_FLAVOR=cpu
+ARG DEVICE=cpu
 ARG MPI_VARIANT=~mpi
-ARG MPI_FLAVOR=openmpi
+ARG MPI_PROVIDER=openmpi
+ARG COMPILER_SPACK_ID
 
-RUN expander.py --eval "device_flavor=\"${DEVICE_FLAVOR}\"" specs.yaml.in > specs.yaml && \
-    expander.py --eval "device_flavor=\"${DEVICE_FLAVOR}\";mpi_variant=\"${MPI_VARIANT}\";mpi_flavor=\"${MPI_FLAVOR}\"" packages.yaml.in > packages.yaml
+RUN expander.py --eval \
+    "COMPILER=\"${COMPILER_SPACK_ID}\";COMPILER_IMG_BASE=\"${COMPILER_IMG_BASE}\";DEVICE=\"${DEVICE}\";MPI_VARIANT=\"${MPI_VARIANT}\"" \
+    specs.yaml.in > specs.yaml && \
+    expander.py --eval \
+    "DEVICE=\"${DEVICE}\";MPI_VARIANT=\"${MPI_VARIANT}\";MPI_PROVIDER=\"${MPI_PROVIDER}\"" \
+    packages.yaml.in > packages.yaml
 
 FROM ornladios/adios2:ci-spack-el8-${COMPILER_IMG_BASE}-base
 
 COPY --from=builder /root/packages.yaml /etc/spack/packages.yaml
-COPY --from=builder /root/specs.yaml /tmp/specs.yaml
 
 # Build dependencies
 ARG COMPILER_SPACK_ID
@@ -36,6 +42,8 @@ RUN . /etc/profile.d/modules.sh && \
       --only dependencies \
       adios2%${COMPILER_SPACK_ID} ^rhash%gcc && \
     spack clean -a
+
+COPY --from=builder /root/specs.yaml /tmp/specs.yaml
 
 # Setup modules
 RUN . /opt/spack/share/spack/setup-env.sh && \

@@ -1,10 +1,12 @@
-$# Run this with pyexpander --eval "flavor=xxyzz"
-$default(compiler_spack_id="gcc",device_flavor="BASE")\
+$default(COMPILER="gcc",COMPILER_IMG_BASE="",DEVICE="BASE")\
 spack:
   specs:
-    - libsodium%$(compiler_spack_id)
-$if(device_flavor == "CUDA")\
+    - libsodium%$(COMPILER)
+$if(DEVICE == "CUDA")\
     - kokkos@3.6.01%gcc+cuda+wrapper+cuda_lambda cuda_arch=52
+$endif\
+$if(COMPILER_IMG_BASE == "gcc10")\
+    - libcatalyst@3f7871c0a2e737cb9ed35fc1c2208456fcc00a0e%$(COMPILER)$(MPI_VARIANT)
 $endif\
   view: true
   config:

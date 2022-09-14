@@ -1,0 +1,33 @@
+From 617c2907f9744bbb04e1eb1d750318a24e0cd2b2 Mon Sep 17 00:00:00 2001
+From: Vicente Adolfo Bolea Sanchez <vicente.bolea@kitware.com>
+Date: Tue, 13 Sep 2022 17:20:58 -0400
+Subject: [PATCH] libcatalyst: use git instead of fixed urls
+
+---
+ var/spack/repos/builtin/packages/libcatalyst/package.py | 6 +-----
+ 1 file changed, 1 insertion(+), 5 deletions(-)
+
+diff --git a/var/spack/repos/builtin/packages/libcatalyst/package.py b/var/spack/repos/builtin/packages/libcatalyst/package.py
+index 808d3541f96b..4abf82d3ea44 100644
+--- a/var/spack/repos/builtin/packages/libcatalyst/package.py
++++ b/var/spack/repos/builtin/packages/libcatalyst/package.py
+@@ -11,7 +11,7 @@ class Libcatalyst(CMakePackage):
+     scientific data producers) to analyze and visualize data in situ."""
+ 
+     homepage = 'https://gitlab.kitware.com/paraview/catalyst'
+-    url      = "https://gitlab.kitware.com/paraview/catalyst/-/archive/{0}/catalyst-{0}.tar.bz2"
++    git = "https://gitlab.kitware.com/paraview/catalyst.git"
+ 
+     maintainers = ['mathstuf']
+ 
+@@ -26,10 +26,6 @@ class Libcatalyst(CMakePackage):
+     # TODO: catalyst doesn't support an external conduit
+     # depends_on('conduit')
+ 
+-    def url_for_version(self, version):
+-        _urlfmt  = self.url
+-        return _urlfmt.format(version)
+-
+     def cmake_args(self):
+         """Populate cmake arguments for libcatalyst."""
+         args = [
