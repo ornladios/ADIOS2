@@ -13,6 +13,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosFunctions.h" //CheckIndexRange
 #include "adios2/helper/adiosMath.h"      // SetWithinLimit
+#include "adios2/helper/adiosMemory.h"    // NdCopy
 #include "adios2/toolkit/format/buffer/chunk/ChunkV.h"
 #include "adios2/toolkit/format/buffer/malloc/MallocV.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
@@ -1726,6 +1727,87 @@ void BP5Writer::FlushProfiler()
 size_t BP5Writer::DebugGetDataBufferSize() const
 {
     return m_BP5Serializer.DebugGetDataBufferSize();
+}
+
+void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
+{
+    if (!m_BetweenStepPairs)
+    {
+        BeginStep(StepMode::Update);
+    }
+
+    // if the user buffer is allocated on the GPU always use sync mode
+    if (variable.IsCUDAPointer(values))
+        sync = true;
+
+    size_t *Shape = NULL;
+    size_t *Start = NULL;
+    size_t *Count = NULL;
+    size_t DimCount = variable.m_Count.size();
+
+    if (variable.m_ShapeID == ShapeID::GlobalArray)
+    {
+        Shape = variable.m_Shape.data();
+        Count = variable.m_Count.data();
+        Start = variable.m_Start.data();
+    }
+    else if (variable.m_ShapeID == ShapeID::LocalArray)
+    {
+        Count = variable.m_Count.data();
+    }
+
+    if (!sync)
+    {
+        /* If arrays is small, force copying to internal buffer to aggregate
+         * small writes */
+        size_t n = helper::GetTotalSize(variable.m_Count) *
+                   helper::GetDataTypeSize(variable.m_Type);
+        if (n < m_Parameters.MinDeferredSize)
+        {
+            sync = true;
+        }
+    }
+
+    if (!variable.m_MemoryCount.empty())
+    {
+        int DimCount = variable.m_Count.size();
+        std::vector<size_t> ZeroDims(DimCount);
+        // get a temporary span then fill with memselection now
+        format::BufferV::BufferPos bp5span(0, 0, 0);
+        m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
+                                variable.m_Type, variable.m_ElementSize,
+                                DimCount, Shape, Count, Start, nullptr, false,
+                                &bp5span);
+        void *ptr =
+            m_BP5Serializer.GetPtr(bp5span.bufferIdx, bp5span.posInBuffer);
+
+        const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+
+        helper::NdCopy(
+            (const char *)values, helper::CoreDims(ZeroDims),
+            variable.m_MemoryCount, sourceRowMajor, false, (char *)ptr,
+            variable.m_MemoryStart, variable.m_Count, sourceRowMajor, false,
+            helper::GetDataTypeSize(variable.m_Type), helper::CoreDims(),
+            helper::CoreDims(), helper::CoreDims(), helper::CoreDims(),
+            false /* safemode */, MemorySpace::Host);
+    }
+    else
+    {
+        if (variable.m_Type == DataType::String)
+        {
+            std::string &source = *(std::string *)values;
+            void *p = &(source[0]);
+            m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
+                                    variable.m_Type, variable.m_ElementSize,
+                                    DimCount, Shape, Count, Start, &p, sync,
+                                    nullptr);
+        }
+        else
+            m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
+                                    variable.m_Type, variable.m_ElementSize,
+                                    DimCount, Shape, Count, Start, values, sync,
+                                    nullptr);
+    }
 }
 
 #define declare_type(T)                                                        \

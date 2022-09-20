@@ -140,8 +140,7 @@ private:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-    template <class T>
-    void PutCommon(Variable<T> &variable, const T *data, bool sync);
+    void PutCommon(VariableBase &variable, const void *data, bool sync);
 
 #define declare_type(T, L)                                                     \
     T *DoBufferData_##L(const int bufferIdx, const size_t payloadPosition,     \
