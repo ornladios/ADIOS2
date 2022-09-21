@@ -243,6 +243,12 @@ template <typename T>
 void Comm::Send(const T *buf, size_t count, int dest, int tag,
                 const std::string &hint) const
 {
+    if (dest < 0 || dest > m_Impl->Size() - 1)
+    {
+        throw std::runtime_error(
+            "Invalid MPI dest rank in Send: " + std::to_string(dest) +
+            " for a communicator of size " + std::to_string(m_Impl->Size()));
+    }
     return m_Impl->Send(buf, count, CommImpl::GetDatatype<T>(), dest, tag,
                         hint);
 }
@@ -251,6 +257,12 @@ template <typename T>
 Comm::Status Comm::Recv(T *buf, size_t count, int source, int tag,
                         const std::string &hint) const
 {
+    if (source < 0 || source > m_Impl->Size() - 1)
+    {
+        throw std::runtime_error(
+            "Invalid MPI source rank in Recv: " + std::to_string(source) +
+            " for a communicator of size " + std::to_string(m_Impl->Size()));
+    }
     return m_Impl->Recv(buf, count, CommImpl::GetDatatype<T>(), source, tag,
                         hint);
 }
@@ -268,6 +280,12 @@ template <typename T>
 Comm::Req Comm::Isend(const T *buffer, const size_t count, int dest, int tag,
                       const std::string &hint) const
 {
+    if (dest < 0 || dest > m_Impl->Size() - 1)
+    {
+        throw std::runtime_error(
+            "Invalid MPI dest rank in Isend: " + std::to_string(dest) +
+            " for a communicator of size " + std::to_string(m_Impl->Size()));
+    }
     return m_Impl->Isend(buffer, count, CommImpl::GetDatatype<T>(), dest, tag,
                          hint);
 }
@@ -276,6 +294,12 @@ template <typename T>
 Comm::Req Comm::Irecv(T *buffer, const size_t count, int source, int tag,
                       const std::string &hint) const
 {
+    if (source < 0 || source > m_Impl->Size() - 1)
+    {
+        throw std::runtime_error(
+            "Invalid MPI source rank in Irecv: " + std::to_string(source) +
+            " for a communicator of size " + std::to_string(m_Impl->Size()));
+    }
     return m_Impl->Irecv(buffer, count, CommImpl::GetDatatype<T>(), source, tag,
                          hint);
 }

@@ -201,7 +201,7 @@ void MPIShmChain::HandshakeLinks_Start(helper::Comm &comm, HandshakeStruct &hs)
     else // rank 0 receives from last
     {
         hs.recvRequest = comm.Irecv(
-            &hs.recvToken, 1, rank - 1, 0,
+            &hs.recvToken, 1, comm.Size() - 1, 0,
             "Irecv handshake with neighbor, MPIChain aggregator, at Open");
     }
 }
