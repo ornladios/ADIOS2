@@ -149,6 +149,11 @@ private:
     ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 
+    void DoPutStructSync(VariableStruct &, const void *) final;
+    void DoPutStructDeferred(VariableStruct &, const void *) final;
+
+    void PutStruct(VariableStruct &, const void *, bool);
+
     void FlushData(const bool isFinal = false);
 
     void DoClose(const int transportIndex = -1) final;

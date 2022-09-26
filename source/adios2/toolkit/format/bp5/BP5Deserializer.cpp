@@ -173,6 +173,11 @@ const char *BP5Deserializer::BreakdownVarName(const char *Name,
     long Type = strtol(p, &p, 10);
     *type_p = (DataType)Type;
     ++p; // skip '_'
+    if (*type_p == DataType::Struct)
+    {
+        p = index(p, '_');
+        ++p;
+    }
     return p;
 }
 
@@ -235,7 +240,8 @@ void BP5Deserializer::BreakdownV1ArrayName(const char *Name, char **base_name_p,
 }
 
 void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
-                                         DataType *type_p, int *element_size_p)
+                                         DataType *type_p, int *element_size_p,
+                                         FMFormat *Format)
 {
     /* string formatted as bp5_%d_%d_actualname */
     char *p;
@@ -246,6 +252,26 @@ void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
     long Type = strtol(p, &p, 10);
     *type_p = (DataType)Type;
     ++p; // skip '_'
+    if (*type_p == DataType::Struct)
+    {
+        char Buffer[100]; // Biggest ID should be 12
+        int i = 0;
+        while (*p != '_')
+        {
+            unsigned int byt;
+            sscanf(p, "%02x", &byt);
+            Buffer[i] = byt;
+            i++;
+            p += 2;
+        }
+        ++p; // skip '_'
+        *Format =
+            FMformat_from_ID(FMContext_from_FFS(ReaderFFSContext), &Buffer[0]);
+    }
+    else
+    {
+        *Format = NULL;
+    }
     *base_name_p = strdup(p);
 }
 
@@ -329,6 +355,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             bool Operator = false;
             bool MinMax = false;
             bool V1_fields = true;
+            FMFormat StructFormat = NULL;
             if (FieldList[i].field_type[0] == 'M')
                 V1_fields = false;
             if (V1_fields)
@@ -340,7 +367,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             {
                 BreakdownFieldType(FieldList[i].field_type, Operator, MinMax);
                 BreakdownArrayName(FieldList[i].field_name, &ArrayName, &Type,
-                                   &ElementSize);
+                                   &ElementSize, &StructFormat);
             }
             VarRec = LookupVarByName(ArrayName);
             if (!VarRec)
@@ -349,6 +376,24 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
                 VarRec->Type = Type;
                 VarRec->ElementSize = ElementSize;
                 VarRec->OrigShapeID = C->OrigShapeID;
+                if (StructFormat)
+                {
+                    core::StructDefinition *Def = new core::StructDefinition(
+                        name_of_FMformat(StructFormat), ElementSize);
+
+                    FMStructDescList StructList =
+                        format_list_of_FMFormat(StructFormat);
+                    FMFieldList List = StructList[0].field_list;
+                    while (List->field_name != NULL)
+                    {
+                        DataType Type = TranslateFFSType2ADIOS(
+                            List->field_type, List->field_size);
+                        Def->AddItem(List->field_name, List->field_offset, Type,
+                                     List->field_size);
+                        List++;
+                    }
+                    VarRec->Def = Def;
+                }
                 if (Operator)
                     VarRec->Operator = strdup("SomeOperator");
                 C->ElementSize = ElementSize;
@@ -454,7 +499,7 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine,
                                      const char *variableName,
                                      const DataType type, int DimCount,
                                      size_t *Shape, size_t *Start,
-                                     size_t *Count)
+                                     size_t *Count, core::StructDefinition *Def)
 {
     std::vector<size_t> VecShape;
     std::vector<size_t> VecStart;
@@ -485,7 +530,10 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine,
 
     if (Type == adios2::DataType::Struct)
     {
-        return (void *)NULL;
+        core::VariableStruct *variable = &(engine->m_IO.DefineStructVariable(
+            variableName, *Def, VecShape, VecStart, VecCount));
+
+        return (void *)variable;
     }
 #define declare_type(T)                                                        \
     else if (Type == helper::GetDataType<T>())                                 \
@@ -697,7 +745,8 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             {
                 VarRec->Variable = ArrayVarSetup(
                     m_Engine, VarRec->VarName, VarRec->Type, meta_base->Dims,
-                    meta_base->Shape, meta_base->Offsets, meta_base->Count);
+                    meta_base->Shape, meta_base->Offsets, meta_base->Count,
+                    VarRec->Def);
                 static_cast<VariableBase *>(VarRec->Variable)->m_Engine =
                     m_Engine;
                 VarByKey[VarRec->Variable] = VarRec;
@@ -736,9 +785,9 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                     // reader
                     size_t zero = 0;
                     size_t writerSize = writerCohortSize;
-                    VarRec->Variable =
-                        ArrayVarSetup(m_Engine, VarRec->VarName, VarRec->Type,
-                                      1, &writerSize, &zero, &writerSize);
+                    VarRec->Variable = ArrayVarSetup(
+                        m_Engine, VarRec->VarName, VarRec->Type, 1, &writerSize,
+                        &zero, &writerSize, VarRec->Def);
                     auto VB = static_cast<VariableBase *>(VarRec->Variable);
                     static_cast<VariableBase *>(VarRec->Variable)->m_Engine =
                         m_Engine;
@@ -1363,6 +1412,8 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                         }
                         else
                         {
+                            VariableBase *VB = static_cast<VariableBase *>(
+                                Req->VarRec->Variable);
                             for (size_t Dim = 0; Dim < Req->VarRec->DimCount;
                                  Dim++)
                             {
@@ -1370,7 +1421,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                                     writer_meta_base->Offsets[StartDim + Dim];
                             }
                             size_t StartOffsetInBlock =
-                                helper::GetDataTypeSize(Req->VarRec->Type) *
+                                VB->m_ElementSize *
                                 LinearIndex(Req->VarRec->DimCount,
                                             &writer_meta_base->Count[StartDim],
                                             &intersectionstart[0],
@@ -1382,7 +1433,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                                     intersectioncount[Dim] - 1;
                             }
                             size_t EndOffsetInBlock =
-                                helper::GetDataTypeSize(Req->VarRec->Type) *
+                                VB->m_ElementSize *
                                 (LinearIndex(Req->VarRec->DimCount,
                                              &writer_meta_base->Count[StartDim],
                                              &intersectionstart[0],

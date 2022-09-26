@@ -1198,6 +1198,18 @@ void BP5Reader::DoGetAbsoluteSteps(const VariableBase &variable,
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+void BP5Reader::DoGetStructSync(VariableStruct &variable, void *data)
+{
+    PERFSTUBS_SCOPED_TIMER("BP5Reader::Get");
+    GetSyncCommon(variable, data);
+}
+
+void BP5Reader::DoGetStructDeferred(VariableStruct &variable, void *data)
+{
+    PERFSTUBS_SCOPED_TIMER("BP5Reader::Get");
+    GetDeferredCommon(variable, data);
+}
+
 void BP5Reader::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Close");

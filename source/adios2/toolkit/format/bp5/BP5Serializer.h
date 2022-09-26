@@ -177,6 +177,7 @@ private:
     };
 
     FMFormat GenericAttributeFormat = NULL;
+    std::vector<FMFormat> NewStructFormats;
 
     struct DeferredExtern
     {

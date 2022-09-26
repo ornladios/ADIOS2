@@ -205,11 +205,12 @@ private:
 
     void DoClose(const int transportIndex = -1) final;
 
-    template <class T>
-    void GetSyncCommon(Variable<T> &variable, T *data);
+    void GetSyncCommon(VariableBase &variable, void *data);
 
-    template <class T>
-    void GetDeferredCommon(Variable<T> &variable, T *data);
+    void GetDeferredCommon(VariableBase &variable, void *data);
+
+    void DoGetStructSync(VariableStruct &, void *);
+    void DoGetStructDeferred(VariableStruct &, void *);
 
     template <class T>
     void ReadVariableBlocks(Variable<T> &variable);

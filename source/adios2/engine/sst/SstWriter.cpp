@@ -166,6 +166,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
         {
             m_BP5Serializer = std::unique_ptr<format::BP5Serializer>(
                 new format::BP5Serializer());
+            m_BP5Serializer->m_StatsLevel = Params.StatsLevel;
         }
         m_BP5Serializer->InitStep(new format::MallocV("SstWriter", true));
         m_BP5Serializer->m_Engine = this;
@@ -434,6 +435,57 @@ void SstWriter::Init()
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+void SstWriter::PutStructCommon(VariableBase &variable, const void *data)
+{
+    size_t *Shape = NULL;
+    size_t *Start = NULL;
+    size_t *Count = NULL;
+    size_t DimCount = 0;
+
+    if (m_BetweenStepPairs == false)
+    {
+        helper::Throw<std::logic_error>("Engine", "SstWriter", "PutSyncCommon",
+                                        "When using the SST engine in ADIOS2, "
+                                        "Put() calls must appear between "
+                                        "BeginStep/EndStep pairs");
+    }
+
+    if (Params.MarshalMethod != SstMarshalBP5)
+    {
+        helper::Throw<std::logic_error>(
+            "Engine", "SstWriter", "PutStructCommon",
+            "Support for struct types only exists when using BP5 marshalling");
+    }
+
+    if (variable.m_ShapeID == ShapeID::GlobalArray)
+    {
+        DimCount = variable.m_Shape.size();
+        Shape = variable.m_Shape.data();
+        Start = variable.m_Start.data();
+        Count = variable.m_Count.data();
+    }
+    else if (variable.m_ShapeID == ShapeID::LocalArray)
+    {
+        DimCount = variable.m_Count.size();
+        Count = variable.m_Count.data();
+    }
+    m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(),
+                             variable.m_Type, variable.m_ElementSize, DimCount,
+                             Shape, Count, Start, data, true, nullptr);
+}
+
+void SstWriter::DoPutStructSync(VariableStruct &variable, const void *data)
+{
+    PutStructCommon(variable, data);
+}
+
+void SstWriter::DoPutStructDeferred(VariableStruct &variable, const void *data)
+{
+    PutStructCommon(variable, data);
+}
+
+void PutStruct(VariableStruct &, const void *, bool);
 
 void SstWriter::DoClose(const int transportIndex) { SstWriterClose(m_Output); }
 

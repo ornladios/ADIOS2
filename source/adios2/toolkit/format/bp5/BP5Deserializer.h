@@ -103,6 +103,7 @@ private:
         char *VarName = NULL;
         size_t DimCount = 0;
         ShapeID OrigShapeID;
+        core::StructDefinition *Def = nullptr;
         char *Operator = NULL;
         DataType Type;
         int ElementSize = 0;
@@ -190,7 +191,8 @@ private:
     void BreakdownFieldType(const char *FieldType, bool &Operator,
                             bool &MinMax);
     void BreakdownArrayName(const char *Name, char **base_name_p,
-                            DataType *type_p, int *element_size_p);
+                            DataType *type_p, int *element_size_p,
+                            FMFormat *Format);
     void BreakdownV1ArrayName(const char *Name, char **base_name_p,
                               DataType *type_p, int *element_size_p,
                               bool &Operator, bool &MinMax);
@@ -198,7 +200,8 @@ private:
                    const DataType type, void *data);
     void *ArrayVarSetup(core::Engine *engine, const char *variableName,
                         const DataType type, int DimCount, size_t *Shape,
-                        size_t *Start, size_t *Count);
+                        size_t *Start, size_t *Count,
+                        core::StructDefinition *Def);
     void MapGlobalToLocalIndex(size_t Dims, const size_t *GlobalIndex,
                                const size_t *LocalOffsets, size_t *LocalIndex);
     size_t RelativeToAbsoluteStep(const BP5VarRec *VarRec, size_t RelStep);

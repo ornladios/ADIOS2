@@ -63,6 +63,7 @@ find_package(PythonInterp REQUIRED)
 set (STAGING_COMMON_TEST_SUPP_VERBOSE OFF)
 
 set (1x1_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1")
+set (1x1Struct_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 -r $<TARGET_FILE:TestStructRead> -w $<TARGET_FILE:TestStructWrite> ")
 set (1x1GetSync_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=--read_mode --rarg=sync")
 set (1x1DontCloseWriter_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=--dont_close")
 set (1x1DontCloseReader_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=--dont_close")
