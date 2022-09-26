@@ -1756,12 +1756,21 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
         Count = variable.m_Count.data();
     }
 
+    size_t ObjSize;
+    if (variable.m_Type == DataType::Struct)
+    {
+        ObjSize = variable.m_ElementSize;
+    }
+    else
+    {
+        ObjSize = helper::GetDataTypeSize(variable.m_Type);
+    }
+
     if (!sync)
     {
         /* If arrays is small, force copying to internal buffer to aggregate
          * small writes */
-        size_t n = helper::GetTotalSize(variable.m_Count) *
-                   helper::GetDataTypeSize(variable.m_Type);
+        size_t n = helper::GetTotalSize(variable.m_Count) * ObjSize;
         if (n < m_Parameters.MinDeferredSize)
         {
             sync = true;
@@ -1787,9 +1796,8 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
             (const char *)values, helper::CoreDims(ZeroDims),
             variable.m_MemoryCount, sourceRowMajor, false, (char *)ptr,
             variable.m_MemoryStart, variable.m_Count, sourceRowMajor, false,
-            helper::GetDataTypeSize(variable.m_Type), helper::CoreDims(),
-            helper::CoreDims(), helper::CoreDims(), helper::CoreDims(),
-            false /* safemode */, MemorySpace::Host);
+            ObjSize, helper::CoreDims(), helper::CoreDims(), helper::CoreDims(),
+            helper::CoreDims(), false /* safemode */, MemorySpace::Host);
     }
     else
     {
@@ -1846,6 +1854,16 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
+
+void BP5Writer::DoPutStructSync(VariableStruct &variable, const void *data)
+{
+    PutCommon(variable, data, true);
+}
+
+void BP5Writer::DoPutStructDeferred(VariableStruct &variable, const void *data)
+{
+    PutCommon(variable, data, false);
+}
 
 } // end namespace engine
 } // end namespace core

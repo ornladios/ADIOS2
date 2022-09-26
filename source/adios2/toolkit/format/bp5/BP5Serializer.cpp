@@ -246,12 +246,23 @@ char *BP5Serializer::BuildVarName(const char *base_name, const ShapeID Shape,
 }
 
 static char *BuildLongName(const char *base_name, const ShapeID Shape,
-                           const int type, const int element_size)
+                           const int type, const int element_size,
+                           const char *StructID)
 {
     const char *Prefix = NamePrefix(Shape);
-    int Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
+    int StructIDLen = 0;
+    if (StructID)
+        StructIDLen = strlen(StructID);
+    int Len = strlen(base_name) + 3 + strlen(Prefix) + StructIDLen + 16;
     char *Ret = (char *)malloc(Len);
-    sprintf(Ret, "%s_%d_%d", Prefix, element_size, type);
+    if (StructID)
+    {
+        sprintf(Ret, "%s_%d_%d_%s", Prefix, element_size, type, StructID);
+    }
+    else
+    {
+        sprintf(Ret, "%s_%d_%d", Prefix, element_size, type);
+    }
     strcat(Ret, "_");
     strcat(Ret, base_name);
     return Ret;
@@ -403,6 +414,44 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
     Rec->DimCount = DimCount;
     Rec->Type = (int)Type;
     Rec->OperatorType = NULL;
+    char *TextStructID = NULL;
+    if (Type == DataType::Struct)
+    {
+        core::VariableStruct *VS =
+            static_cast<core::VariableStruct *>(Variable);
+        const core::StructDefinition *SD = &VS->m_StructDefinition;
+        FMField *List = (FMField *)malloc((SD->Items() + 1) * sizeof(List[0]));
+        for (size_t i = 0; i < SD->Items(); i++)
+        {
+            List[i].field_name = strdup(SD->Name(i).c_str());
+            List[i].field_type = TranslateADIOS2Type2FFS(SD->Type(i));
+            List[i].field_size = SD->Size(i);
+            List[i].field_offset = SD->Offset(i);
+        }
+        List[SD->Items()] = {NULL, NULL, 0, 0};
+
+        FMStructDescRec struct_list[4] = {
+            {NULL, NULL, 0, NULL},
+            {"complex4", fcomplex_field_list, sizeof(fcomplex_struct), NULL},
+            {"complex8", dcomplex_field_list, sizeof(dcomplex_struct), NULL},
+            {NULL, NULL, 0, NULL}};
+        struct_list[0].format_name = strdup(SD->Name().c_str());
+        struct_list[0].field_list = List;
+        struct_list[0].struct_size = SD->StructSize();
+
+        FMFormat Format =
+            register_data_format(Info.LocalFMContext, &struct_list[0]);
+
+        int IDLength;
+        char *ServerID = get_server_ID_FMformat(Format, &IDLength);
+        TextStructID = (char *)malloc(IDLength * 2 + 1);
+        for (int i = 0; i < IDLength; i++)
+        {
+            sprintf(&TextStructID[i * 2], "%02x",
+                    ((unsigned char *)ServerID)[i]);
+        }
+        NewStructFormats.push_back(Format);
+    }
     if (DimCount == 0)
     {
         // simple field, only add base value FMField to metadata
@@ -426,8 +475,8 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         }
         // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
         // and Offsets matching _MetaArrayRec
-        char *LongName =
-            BuildLongName(Name, VB->m_ShapeID, (int)Type, ElemSize);
+        char *LongName = BuildLongName(Name, VB->m_ShapeID, (int)Type, ElemSize,
+                                       TextStructID);
 
         const char *ArrayTypeName = "MetaArray";
         int FieldSize = sizeof(MetaArrayRec);
@@ -1104,6 +1153,18 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
         Block.MetaMetaIDLen = size;
         Formats.push_back(Block);
     }
+    for (auto Format : NewStructFormats)
+    {
+        MetaMetaInfoBlock Block;
+        int size;
+        Block.MetaMetaInfo = get_server_rep_FMformat(Format, &size);
+        Block.MetaMetaInfoLen = size;
+        Block.MetaMetaID = get_server_ID_FMformat(Format, &size);
+        Block.MetaMetaIDLen = size;
+        Formats.push_back(Block);
+    }
+    NewStructFormats.clear();
+
     // Encode Metadata and Data to create contiguous data blocks
     FFSBuffer MetaEncodeBuffer = create_FFSBuffer();
     FFSBuffer AttributeEncodeBuffer = NULL;

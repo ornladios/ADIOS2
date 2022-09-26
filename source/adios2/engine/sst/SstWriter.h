@@ -61,6 +61,11 @@ private:
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
+    void DoPutStructSync(VariableStruct &, const void *) final;
+    void DoPutStructDeferred(VariableStruct &, const void *) final;
+
+    void PutStructCommon(VariableBase &, const void *);
+
     template <class T>
     void PutSyncCommon(Variable<T> &variable, const T *values);
 

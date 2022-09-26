@@ -663,6 +663,51 @@ void SstReader::Init()
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_gets)
 #undef declare_gets
 
+void SstReader::DoGetStructSync(VariableStruct &variable, void *data)
+{
+    PERFSTUBS_SCOPED_TIMER("BP5Reader::Get");
+    if (m_WriterMarshalMethod != SstMarshalBP5)
+    {
+        helper::Throw<std::runtime_error>(
+            "Engine", "SstReader", "GetStructSync",
+            "SST only supports struct transmission when BP5 marshalling is "
+            "selected");
+    }
+    bool need_sync = m_BP5Deserializer->QueueGet(variable, data);
+    if (need_sync)
+        BP5PerformGets();
+}
+
+void SstReader::DoGetStructDeferred(VariableStruct &variable, void *data)
+{
+    PERFSTUBS_SCOPED_TIMER("SstReader::Get");
+    if (m_WriterMarshalMethod != SstMarshalBP5)
+    {
+        helper::Throw<std::runtime_error>(
+            "Engine", "SstReader", "GetStructSync",
+            "SST only supports struct transmission when BP5 marshalling is "
+            "selected");
+    }
+    m_BP5Deserializer->QueueGet(variable, data);
+}
+
+Dims *SstReader::VarShape(const VariableBase &Var, const size_t Step) const
+{
+    if (m_WriterMarshalMethod != SstMarshalBP5)
+        return nullptr;
+
+    return m_BP5Deserializer->VarShape(Var, Step);
+}
+
+bool SstReader::VariableMinMax(const VariableBase &Var, const size_t Step,
+                               MinMaxStruct &MinMax)
+{
+    if (m_WriterMarshalMethod != SstMarshalBP5)
+        return false;
+
+    return m_BP5Deserializer->VariableMinMax(Var, Step, MinMax);
+}
+
 void SstReader::BP5PerformGets()
 {
     size_t maxReadSize;

@@ -65,10 +65,22 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         }
         else
         {
-            m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(),
-                                     variable.m_Type, variable.m_ElementSize,
-                                     DimCount, Shape, Count, Start, values,
-                                     true, nullptr);
+            if (variable.m_Type == DataType::String)
+            {
+                std::string &source = *(std::string *)values;
+                void *p = &(source[0]);
+                m_BP5Serializer->Marshal(
+                    (void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                    variable.m_ElementSize, DimCount, Shape, Count, Start, &p,
+                    true, nullptr);
+            }
+            else
+            {
+                m_BP5Serializer->Marshal(
+                    (void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                    variable.m_ElementSize, DimCount, Shape, Count, Start,
+                    values, true, nullptr);
+            }
         }
     }
     else if (Params.MarshalMethod == SstMarshalBP)

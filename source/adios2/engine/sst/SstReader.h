@@ -51,6 +51,9 @@ public:
     void PerformGets();
     void Flush(const int transportIndex = -1) final;
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
+    Dims *VarShape(const VariableBase &, const size_t Step) const;
+    bool VariableMinMax(const VariableBase &, const size_t Step,
+                        MinMaxStruct &MinMax);
 
 private:
     template <class T>
@@ -94,6 +97,9 @@ private:
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+
+    void DoGetStructSync(VariableStruct &, void *);
+    void DoGetStructDeferred(VariableStruct &, void *);
 
     /**
      * Called if destructor is called on an open engine.  Should warn or take

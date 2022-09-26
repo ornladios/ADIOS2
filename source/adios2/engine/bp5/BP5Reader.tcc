@@ -22,16 +22,14 @@ namespace core
 namespace engine
 {
 
-template <class T>
-inline void BP5Reader::GetSyncCommon(Variable<T> &variable, T *data)
+inline void BP5Reader::GetSyncCommon(VariableBase &variable, void *data)
 {
     bool need_sync = m_BP5Deserializer->QueueGet(variable, data);
     if (need_sync)
         PerformGets();
 }
 
-template <class T>
-void BP5Reader::GetDeferredCommon(Variable<T> &variable, T *data)
+void BP5Reader::GetDeferredCommon(VariableBase &variable, void *data)
 {
     (void)m_BP5Deserializer->QueueGet(variable, data);
 }
