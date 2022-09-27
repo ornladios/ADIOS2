@@ -4,10 +4,10 @@
 #------------------------------------------------------------------------------#
 
 cmake_minimum_required(VERSION 3.6)
-project(adios_fortran_test Fortran)
+project(adios_fortran_test Fortran C)
 enable_testing()
 
-find_package(adios2 REQUIRED)
+find_package(adios2 COMPONENTS Fortran REQUIRED)
 
 # Test using serial Fortran bindings through adios2::fortran target.
 add_executable(adios_fortran_test main_nompi_check.F90)
