@@ -6,7 +6,7 @@ packages:
   adios2:
     variants: $(MPI_VARIANT)+blosc+bzip2+zfp+sz+png+sst+dataman+ssc+hdf5+python+fortran
   cmake:
-    version: [3.22.4]
+    version: [3.24]
   mpich:
     version: [3.3.2]
     variants: device=ch3 netmod=tcp
