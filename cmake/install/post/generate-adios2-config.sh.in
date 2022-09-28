@@ -58,8 +58,16 @@ function prefixify() {
   echo "$@" | sed "s|${PREFIX}|\${ADIOS2_PREFIX}|g"
 }
 
-PREFIX="${DESTDIR}$1"
+PREFIX="$1"
+
+if [ "${1:0:1}" != "/" ]
+then
+  # Convert relative paths to absolute based on DESTDIR
+  PREFIX="${DESTDIR:-$(pwd)}/$1"
+fi
+
 shift
+
 CMAKE="@CMAKE_COMMAND@"
 SOURCE_DIR="@ADIOS2_SOURCE_DIR@/cmake/install/post/adios2-config-dummy"
 BUILD_DIR=$(mktemp -d)
@@ -78,10 +86,10 @@ then
   export FC="@MPI_Fortran_COMPILER@"
 fi
 
-EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -Dadios2_DIR=${PREFIX}/@CMAKE_INSTALL_CMAKEDIR@"
+export adios2_DIR="${PREFIX}/@CMAKE_INSTALL_CMAKEDIR@"
 if [ -n "@CMAKE_PREFIX_PATH@" ]
 then
-  EXTRA_CMAKE_ARGS="${EXTRA_CMAKE_ARGS} -DCMAKE_PREFIX_PATH=@CMAKE_PREFIX_PATH@"
+  export CMAKE_PREFIX_PATH="@CMAKE_PREFIX_PATH@:${CMAKE_PREFIX_PATH}"
 fi
 
 echo "Configuring adios2-config@ADIOS2_EXECUTABLE_SUFFIX@ dummy CMake project"

@@ -19,8 +19,8 @@ sudo xcode-select --switch /Applications/Xcode_${XCODE_VER}.app
 echo "Installing CMake"
 
 {
-  readonly version="3.23.3"
-  readonly checksum="45cda7b87cad41ac407fc150e4682b85c3eb45b1977d8e89319cb3a9a6f341f3"
+  readonly version="3.24.2"
+  readonly checksum="efb11a78c064dd7c54a50b8da247254d252112c402c6e48cb7db3f9c84a4e5ad"
   readonly pkg="cmake-${version}-macos-universal.tar.gz"
   echo "${checksum}  ${pkg}" > cmake.sha256sum
 
