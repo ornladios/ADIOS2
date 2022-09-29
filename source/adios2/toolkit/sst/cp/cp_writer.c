@@ -1180,6 +1180,8 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
     }
 }
 
+static void SendCloseMsgs(SstStream Stream);
+
 static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
 {
     STREAM_ASSERT_LOCKED(Stream);
@@ -1224,10 +1226,15 @@ static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
             free(Request);
             if (Stream->Readers[RequestingReader]->ReaderStatus == Established)
             {
+                Stream->LastDemandTimestep = Entry->Timestep;
                 SendTimestepEntryToSingleReader(
                     Stream, Entry, Stream->Readers[RequestingReader],
                     RequestingReader);
-                Stream->LastDemandTimestep = Entry->Timestep;
+                if (Stream->LastDemandTimestep == Stream->CloseTimestepCount)
+                {
+                    /* send if all timesteps have been send OnDemand */
+                    SendCloseMsgs(Stream);
+                }
             }
             else
             {
@@ -1554,6 +1561,21 @@ static void CP_PeerFailCloseWSReader(WS_ReaderInfo CP_WSR_Stream,
     QueueMaintenance(ParentStream);
 }
 
+static void SendCloseMsgs(SstStream Stream)
+{
+    struct _WriterCloseMsg Msg;
+    STREAM_ASSERT_LOCKED(Stream);
+    memset(&Msg, 0, sizeof(Msg));
+    Msg.FinalTimestep = Stream->LastProvidedTimestep;
+    CP_verbose(
+        Stream, PerStepVerbose,
+        "SstWriterClose, Sending Close at Timestep %d, one to each reader\n",
+        Msg.FinalTimestep);
+
+    sendOneToEachReaderRank(Stream, Stream->CPInfo->SharedCM->WriterCloseFormat,
+                            &Msg, &Msg.RS_Stream);
+}
+
 /*
 On writer close:
    RemovePreciousTag on any timestep in queue
@@ -1569,19 +1591,15 @@ On writer close:
 */
 void SstWriterClose(SstStream Stream)
 {
-    struct _WriterCloseMsg Msg;
     struct timeval CloseTime, Diff;
-    memset(&Msg, 0, sizeof(Msg));
+    Stream->CloseTimestepCount = Stream->WriterTimestep;
     STREAM_MUTEX_LOCK(Stream);
-    Msg.FinalTimestep = Stream->LastProvidedTimestep;
-    CP_verbose(
-        Stream, PerStepVerbose,
-        "SstWriterClose, Sending Close at Timestep %d, one to each reader\n",
-        Msg.FinalTimestep);
-
-    sendOneToEachReaderRank(Stream, Stream->CPInfo->SharedCM->WriterCloseFormat,
-                            &Msg, &Msg.RS_Stream);
-
+    if ((Stream->ConfigParams->StepDistributionMode != StepsOnDemand) ||
+        (Stream->LastDemandTimestep == Stream->CloseTimestepCount))
+    {
+        /* send if not OnDemand, or if all timesteps have been send OnDemand */
+        SendCloseMsgs(Stream);
+    }
     UntagPreciousTimesteps(Stream);
     Stream->ConfigParams->ReserveQueueLimit = 0;
     QueueMaintenance(Stream);
@@ -2659,8 +2677,14 @@ void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn, void *Msg_v,
                        "reference count = %d\n",
                        NextTS, List->ReferenceCount);
 
+            Stream->LastDemandTimestep = List->Timestep;
             SendTimestepEntryToSingleReader(Stream, List, CP_WSR_Stream,
                                             RequestingReader);
+            if (Stream->LastDemandTimestep == Stream->CloseTimestepCount)
+            {
+                /* send if all timesteps have been send OnDemand */
+                SendCloseMsgs(Stream);
+            }
             STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
             return;
         }

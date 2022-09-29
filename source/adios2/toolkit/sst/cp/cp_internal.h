@@ -181,6 +181,7 @@ struct _SstStream
     int WriterDefinitionsLocked;
     size_t NextRRDistribution;
     size_t LastDemandTimestep;
+    size_t CloseTimestepCount;
 
     /* rendezvous condition */
     int FirstReaderCondition;
