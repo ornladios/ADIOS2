@@ -36,6 +36,8 @@ foreach(helper
     TestLocalRead
     TestStructWrite
     TestStructRead
+    TestOnDemandWrite
+    TestOnDemandRead
     )
   add_executable(${helper} ${helper}.cpp)
 
@@ -144,7 +146,7 @@ set (ALL_SIMPLE_TESTS "")
 list (APPEND ALL_SIMPLE_TESTS ${SIMPLE_TESTS} ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_MPI_TESTS} ${SIMPLE_ZFP_TESTS})
 
 set (SST_SPECIFIC_TESTS  "")
-list (APPEND SST_SPECIFIC_TESTS  "1x1.SstRUDP;1x1.LocalMultiblock;RoundRobinDistribution.1x1x3;AllToAllDistribution.1x1x3")
+list (APPEND SST_SPECIFIC_TESTS  "1x1.SstRUDP;1x1.LocalMultiblock;RoundRobinDistribution.1x1x3;AllToAllDistribution.1x1x3;OnDemandSingle.1x1")
 if (ADIOS2_HAVE_MPI)
   list (APPEND SST_SPECIFIC_TESTS  "2x3.SstRUDP;2x1.LocalMultiblock;5x3.LocalMultiblock;")
 endif()
