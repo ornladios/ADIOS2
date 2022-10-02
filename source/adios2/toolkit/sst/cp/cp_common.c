@@ -387,6 +387,29 @@ static FMStructDescRec CP_DP_WriterArrayStructs[] = {
     {"SstParams", NULL, sizeof(struct _SstParams), NULL},
     {NULL, NULL, 0, NULL}};
 
+static FMField CP_DPQueryList[] = {
+    {"writer_ID", "integer", sizeof(void *),
+     FMOffset(struct _DPQueryMsg *, WriterFile)},
+    {"writer_response_condition", "integer", sizeof(int),
+     FMOffset(struct _DPQueryMsg *, WriterResponseCondition)},
+    {NULL, NULL, 0, 0}};
+
+static FMStructDescRec CP_DPQueryStructs[] = {
+    {"DPQuery", CP_DPQueryList, sizeof(struct _DPQueryMsg), NULL},
+    {NULL, NULL, 0, NULL}};
+
+static FMField CP_DPQueryResponseList[] = {
+    {"writer_response_condition", "integer", sizeof(int),
+     FMOffset(struct _DPQueryResponseMsg *, WriterResponseCondition)},
+    {"writer_data_plane", "string", sizeof(char *),
+     FMOffset(struct _DPQueryResponseMsg *, OperativeDP)},
+    {NULL, NULL, 0, 0}};
+
+static FMStructDescRec CP_DPQueryResponseStructs[] = {
+    {"DPQueryResponse", CP_DPQueryResponseList,
+     sizeof(struct _DPQueryResponseMsg), NULL},
+    {NULL, NULL, 0, NULL}};
+
 static FMField CP_ReaderRegisterList[] = {
     {"writer_ID", "integer", sizeof(void *),
      FMOffset(struct _ReaderRegisterMsg *, WriterFile)},
@@ -954,8 +977,48 @@ static void FreeCustomStructs(CP_StructList *List)
     free(List->CustomStructList);
 }
 
-static void doCMFormatRegistration(CP_GlobalCMInfo CPInfo,
-                                   CP_DP_Interface DPInfo)
+static void doPrelimCMFormatRegistration(CP_GlobalCMInfo CPInfo)
+{
+    CPInfo->PeerSetupFormat = CMregister_format(CPInfo->cm, PeerSetupStructs);
+    CMregister_handler(CPInfo->PeerSetupFormat, CP_PeerSetupHandler, NULL);
+
+    CPInfo->DPQueryFormat = CMregister_format(CPInfo->cm, CP_DPQueryStructs);
+    CMregister_handler(CPInfo->DPQueryFormat, CP_DPQueryHandler, NULL);
+    CPInfo->DPQueryResponseFormat =
+        CMregister_format(CPInfo->cm, CP_DPQueryResponseStructs);
+    CMregister_handler(CPInfo->DPQueryResponseFormat, CP_DPQueryResponseHandler,
+                       NULL);
+    CPInfo->ReaderActivateFormat =
+        CMregister_format(CPInfo->cm, ReaderActivateStructs);
+    CMregister_handler(CPInfo->ReaderActivateFormat, CP_ReaderActivateHandler,
+                       NULL);
+    CPInfo->ReaderRequestStepFormat =
+        CMregister_format(CPInfo->cm, ReaderRequestStepStructs);
+    CMregister_handler(CPInfo->ReaderRequestStepFormat,
+                       CP_ReaderRequestStepHandler, NULL);
+
+    CPInfo->ReleaseTimestepFormat =
+        CMregister_format(CPInfo->cm, ReleaseTimestepStructs);
+    CMregister_handler(CPInfo->ReleaseTimestepFormat, CP_ReleaseTimestepHandler,
+                       NULL);
+    CPInfo->LockReaderDefinitionsFormat =
+        CMregister_format(CPInfo->cm, LockReaderDefinitionsStructs);
+    CMregister_handler(CPInfo->LockReaderDefinitionsFormat,
+                       CP_LockReaderDefinitionsHandler, NULL);
+    CPInfo->CommPatternLockedFormat =
+        CMregister_format(CPInfo->cm, CommPatternLockedStructs);
+    CMregister_handler(CPInfo->CommPatternLockedFormat,
+                       CP_CommPatternLockedHandler, NULL);
+    CPInfo->WriterCloseFormat =
+        CMregister_format(CPInfo->cm, WriterCloseStructs);
+    CMregister_handler(CPInfo->WriterCloseFormat, CP_WriterCloseHandler, NULL);
+    CPInfo->ReaderCloseFormat =
+        CMregister_format(CPInfo->cm, ReaderCloseStructs);
+    CMregister_handler(CPInfo->ReaderCloseFormat, CP_ReaderCloseHandler, NULL);
+}
+
+static void doFinalCMFormatRegistration(CP_GlobalCMInfo CPInfo,
+                                        CP_DP_Interface DPInfo)
 {
     FMStructDescList FullReaderRegisterStructs, FullWriterResponseStructs,
         CombinedTimestepMetadataStructs;
@@ -985,37 +1048,6 @@ static void doCMFormatRegistration(CP_GlobalCMInfo CPInfo,
     CMregister_handler(CPInfo->DeliverTimestepMetadataFormat,
                        CP_TimestepMetadataHandler, NULL);
     AddCustomStruct(&CPInfo->CustomStructs, CombinedTimestepMetadataStructs);
-
-    CPInfo->PeerSetupFormat = CMregister_format(CPInfo->cm, PeerSetupStructs);
-    CMregister_handler(CPInfo->PeerSetupFormat, CP_PeerSetupHandler, NULL);
-
-    CPInfo->ReaderActivateFormat =
-        CMregister_format(CPInfo->cm, ReaderActivateStructs);
-    CMregister_handler(CPInfo->ReaderActivateFormat, CP_ReaderActivateHandler,
-                       NULL);
-    CPInfo->ReaderRequestStepFormat =
-        CMregister_format(CPInfo->cm, ReaderRequestStepStructs);
-    CMregister_handler(CPInfo->ReaderRequestStepFormat,
-                       CP_ReaderRequestStepHandler, NULL);
-
-    CPInfo->ReleaseTimestepFormat =
-        CMregister_format(CPInfo->cm, ReleaseTimestepStructs);
-    CMregister_handler(CPInfo->ReleaseTimestepFormat, CP_ReleaseTimestepHandler,
-                       NULL);
-    CPInfo->LockReaderDefinitionsFormat =
-        CMregister_format(CPInfo->cm, LockReaderDefinitionsStructs);
-    CMregister_handler(CPInfo->LockReaderDefinitionsFormat,
-                       CP_LockReaderDefinitionsHandler, NULL);
-    CPInfo->CommPatternLockedFormat =
-        CMregister_format(CPInfo->cm, CommPatternLockedStructs);
-    CMregister_handler(CPInfo->CommPatternLockedFormat,
-                       CP_CommPatternLockedHandler, NULL);
-    CPInfo->WriterCloseFormat =
-        CMregister_format(CPInfo->cm, WriterCloseStructs);
-    CMregister_handler(CPInfo->WriterCloseFormat, CP_WriterCloseHandler, NULL);
-    CPInfo->ReaderCloseFormat =
-        CMregister_format(CPInfo->cm, ReaderCloseStructs);
-    CMregister_handler(CPInfo->ReaderCloseFormat, CP_ReaderCloseHandler, NULL);
 }
 
 static void doFFSFormatRegistration(CP_Info CPInfo, CP_DP_Interface DPInfo)
@@ -1422,7 +1454,15 @@ static void CP_versionError(CMConnection conn, char *formatName)
                     "with the same version of ADIOS2.\n");
 }
 
-extern CP_Info CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule)
+extern void FinalizeCPInfo(CP_Info StreamCP, CP_DP_Interface DPInfo)
+{
+    pthread_mutex_lock(&StateMutex);
+    doFinalCMFormatRegistration(SharedCMInfo, DPInfo);
+    doFFSFormatRegistration(StreamCP, DPInfo);
+    pthread_mutex_unlock(&StateMutex);
+}
+
+extern CP_Info CP_getCPInfo(char *ControlModule)
 {
     CP_Info StreamCP;
 
@@ -1501,7 +1541,7 @@ extern CP_Info CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule)
                 CP_WriterResponseStructs[i].field_list = CP_SstParamsList;
             }
         }
-        doCMFormatRegistration(SharedCMInfo, DPInfo);
+        doPrelimCMFormatRegistration(SharedCMInfo);
     }
     SharedCMInfoRefCount++;
     pthread_mutex_unlock(&StateMutex);
@@ -1510,8 +1550,6 @@ extern CP_Info CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule)
     StreamCP->SharedCM = SharedCMInfo;
     StreamCP->fm_c = create_local_FMcontext();
     StreamCP->ffs_c = create_FFSContext_FM(StreamCP->fm_c);
-
-    doFFSFormatRegistration(StreamCP, DPInfo);
 
     return StreamCP;
 }

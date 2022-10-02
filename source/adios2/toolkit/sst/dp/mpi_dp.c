@@ -978,5 +978,6 @@ extern CP_DP_Interface LoadMpiDP()
         .notifyConnFailure = MpiNotifyConnFailure,
     };
 
+    mpiDPInterface.DPName = "mpi";
     return &mpiDPInterface;
 }

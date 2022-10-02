@@ -1346,6 +1346,8 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     SMPI_Comm_rank(Stream->mpiComm, &Stream->Rank);
     SMPI_Comm_size(Stream->mpiComm, &Stream->CohortSize);
 
+    Stream->CPInfo = CP_getCPInfo(Stream->ConfigParams->ControlModule);
+
     //    printf("WRITER main program thread PID is %lx, TID %lx in writer
     //    open\n",
     //           (long)getpid(), (long)gettid());
@@ -1360,8 +1362,7 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         return NULL;
     }
 
-    Stream->CPInfo =
-        CP_getCPInfo(Stream->DP_Interface, Stream->ConfigParams->ControlModule);
+    FinalizeCPInfo(Stream->CPInfo, Stream->DP_Interface);
 
     if (Stream->RendezvousReaderCount > 0)
     {
@@ -2560,6 +2561,32 @@ void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *Msg_v,
                CP_WSR_Stream);
     CP_PeerFailCloseWSReader(CP_WSR_Stream, PeerClosed);
     STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
+}
+
+void CP_DPQueryHandler(CManager cm, CMConnection conn, void *Msg_v,
+                       void *client_data, attr_list attrs)
+{
+    PERFSTUBS_REGISTER_THREAD();
+    PERFSTUBS_TIMER_START_FUNC(timer);
+    SstStream Stream;
+    int res;
+    struct _DPQueryMsg *Msg = (struct _DPQueryMsg *)Msg_v;
+    struct _DPQueryResponseMsg response;
+    Stream = Msg->WriterFile;
+    memset(&response, 0, sizeof(response));
+    response.WriterResponseCondition = Msg->WriterResponseCondition;
+    response.OperativeDP = Stream->DP_Interface->DPName;
+    res = CMwrite(conn, Stream->CPInfo->SharedCM->DPQueryResponseFormat,
+                  &response);
+    if (res != 1)
+    {
+        CP_verbose(
+            Stream, PerStepVerbose,
+            "Message failed to send to unregistered reader on writer %p\n",
+            Stream);
+    }
+
     PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 

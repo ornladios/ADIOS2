@@ -2271,6 +2271,7 @@ static void RdmaReleaseTimestepPerReader(CP_Services Svcs,
 
 extern NO_SANITIZE_THREAD CP_DP_Interface LoadRdmaDP()
 {
+    RdmaDPInterface.DPName = "rdma";
     RdmaDPInterface.ReaderContactFormats = RdmaReaderContactStructs;
     RdmaDPInterface.WriterContactFormats = RdmaWriterContactStructs;
     RdmaDPInterface.TimestepInfoFormats = RdmaBufferHandleStructs;

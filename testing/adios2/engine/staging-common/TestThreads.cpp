@@ -146,7 +146,7 @@ public:
 TEST_F(TestThreads, Basic)
 {
     using namespace std;
-    std::string BaseName = engine;
+    std::string BaseName = engine + "_P" + std::to_string(getpid());
     auto read_fut = std::async(std::launch::async, Read, BaseName, 0);
     auto write_fut = std::async(std::launch::async, Write, BaseName, 0);
     bool reader_success = read_fut.get();

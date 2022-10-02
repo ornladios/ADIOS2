@@ -338,6 +338,7 @@ typedef void (*CP_DP_UnGetPriorityFunc)(CP_Services Svcs, void *CP_Stream);
 
 struct _CP_DP_Interface
 {
+    char *DPName;
     FMStructDescList ReaderContactFormats;
     FMStructDescList WriterContactFormats;
     FMStructDescList TimestepInfoFormats;

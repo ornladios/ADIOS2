@@ -13,6 +13,8 @@ typedef struct _CP_GlobalCMInfo
 {
     /* exchange info */
     CManager cm;
+    CMFormat DPQueryFormat;
+    CMFormat DPQueryResponseFormat;
     CMFormat ReaderRegisterFormat;
     CMFormat WriterResponseFormat;
     CMFormat DeliverTimestepMetadataFormat;
@@ -297,6 +299,27 @@ struct _MetadataPlusDPInfo
 };
 
 /*
+ * Data Plane Query messages are sent from reader rank 0 to writer rank 0
+ * and represent the reader asking what DP the writer is using
+ */
+struct _DPQueryMsg
+{
+    void *WriterFile;
+    int WriterResponseCondition;
+};
+
+/*
+ * Data Plane Query responses messages are sent from writer rank 0 to reader
+ * rank 0 and tell the reader what Data plane the writer is using (and which the
+ * reader should use);
+ */
+struct _DPQueryResponseMsg
+{
+    int WriterResponseCondition;
+    char *OperativeDP;
+};
+
+/*
  * Reader register messages are sent from reader rank 0 to writer rank 0
  * They contain basic info, plus contact information for each reader rank
  */
@@ -501,7 +524,8 @@ typedef struct _MetadataPlusDPInfo *MetadataPlusDPInfo;
 extern atom_t CM_TRANSPORT_ATOM;
 
 void CP_validateParams(SstStream stream, SstParams Params, int Writer);
-extern CP_Info CP_getCPInfo(CP_DP_Interface DPInfo, char *ControlModule);
+extern void FinalizeCPInfo(CP_Info Info, CP_DP_Interface DPInfo);
+extern CP_Info CP_getCPInfo(char *ControlModule);
 extern char *CP_GetContactString(SstStream s, attr_list DPAttrs);
 extern SstStream CP_newStream();
 extern void SstInternalProvideTimestep(
@@ -516,6 +540,11 @@ void **CP_consolidateDataToAll(SstStream stream, void *local_info,
                                FFSTypeHandle type, void **ret_data_block);
 void *CP_distributeDataFromRankZero(SstStream stream, void *root_info,
                                     FFSTypeHandle type, void **ret_data_block);
+extern void CP_DPQueryHandler(CManager cm, CMConnection conn, void *msg_v,
+                              void *client_data, attr_list attrs);
+extern void CP_DPQueryResponseHandler(CManager cm, CMConnection conn,
+                                      void *msg_v, void *client_data,
+                                      attr_list attrs);
 extern void CP_ReaderRegisterHandler(CManager cm, CMConnection conn,
                                      void *msg_v, void *client_data,
                                      attr_list attrs);

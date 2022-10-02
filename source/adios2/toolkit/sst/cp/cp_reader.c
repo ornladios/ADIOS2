@@ -464,6 +464,8 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     char *Filename = strdup(Name);
     CMConnection rank0_to_rank0_conn = NULL;
     void *WriterFileID;
+    char NeededDataPlane[32] = {
+        0}; // Don't name a data plane longer than 31 chars
 
     Stream = CP_newStream();
     Stream->Role = ReaderRole;
@@ -475,11 +477,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     CP_validateParams(Stream, Params, 0 /* reader */);
     Stream->ConfigParams = Params;
 
-    Stream->DP_Interface =
-        SelectDP(&Svcs, Stream, Stream->ConfigParams, Stream->Rank);
-
-    Stream->CPInfo =
-        CP_getCPInfo(Stream->DP_Interface, Stream->ConfigParams->ControlModule);
+    Stream->CPInfo = CP_getCPInfo(Stream->ConfigParams->ControlModule);
 
     Stream->FinalTimestep = INT_MAX; /* set this on close */
     Stream->LastDPNotifiedTimestep = -1;
@@ -496,6 +494,71 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         free(Filename);
         return NULL;
     }
+
+    if (Stream->Rank == 0)
+    {
+        struct _DPQueryMsg DPQuery;
+        memset(&DPQuery, 0, sizeof(DPQuery));
+
+        DPQuery.WriterFile = WriterFileID;
+        DPQuery.WriterResponseCondition =
+            CMCondition_get(Stream->CPInfo->SharedCM->cm, rank0_to_rank0_conn);
+
+        CMCondition_set_client_data(Stream->CPInfo->SharedCM->cm,
+                                    DPQuery.WriterResponseCondition,
+                                    &NeededDataPlane[0]);
+
+        if (CMwrite(rank0_to_rank0_conn,
+                    Stream->CPInfo->SharedCM->DPQueryFormat, &DPQuery) != 1)
+        {
+            CP_verbose(
+                Stream, CriticalVerbose,
+                "DPQuery message failed to send to writer in SstReaderOpen\n");
+        }
+
+        /* wait for "go" from writer */
+        CP_verbose(
+            Stream, PerRankVerbose,
+            "Waiting for writer DPResponse message in SstReadOpen(\"%s\")\n",
+            Filename, DPQuery.WriterResponseCondition);
+        CMCondition_wait(Stream->CPInfo->SharedCM->cm,
+                         DPQuery.WriterResponseCondition);
+        CP_verbose(Stream, PerRankVerbose,
+                   "finished wait writer DPresponse message in read_open, "
+                   "WRITER is using \"%s\" DataPlane\n",
+                   &NeededDataPlane[0]);
+
+        // NeededDP should now contain the name of the dataplane the writer is
+        // using
+        SMPI_Bcast(&NeededDataPlane[0], sizeof(NeededDataPlane), SMPI_CHAR, 0,
+                   Stream->mpiComm);
+    }
+    else
+    {
+        SMPI_Bcast(&NeededDataPlane[0], sizeof(NeededDataPlane), SMPI_CHAR, 0,
+                   Stream->mpiComm);
+    }
+    {
+        char *RequestedDP = Stream->ConfigParams->DataTransport;
+        Stream->ConfigParams->DataTransport = strdup(&NeededDataPlane[0]);
+        Stream->DP_Interface =
+            SelectDP(&Svcs, Stream, Stream->ConfigParams, Stream->Rank);
+        if (Stream->DP_Interface)
+            if (strcmp(Stream->DP_Interface->DPName, &NeededDataPlane[0]) != 0)
+            {
+                fprintf(stderr,
+                        "The writer is using the %s DataPlane for SST data "
+                        "transport, but the reader has failed to load this "
+                        "transport.  Communication cannot occur.  See the SST "
+                        "DataTransport engine parameter to force a match.",
+                        NeededDataPlane);
+                return NULL;
+            }
+        if (RequestedDP)
+            free(RequestedDP);
+    }
+
+    FinalizeCPInfo(Stream->CPInfo, Stream->DP_Interface);
 
     Stream->DP_Stream = Stream->DP_Interface->initReader(
         &Svcs, Stream, &dpInfo, Stream->ConfigParams, WriterContactAttributes,
@@ -1020,6 +1083,42 @@ void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *Msg_v,
     response_ptr =
         CMCondition_get_client_data(cm, Msg->WriterResponseCondition);
     *response_ptr = Msg;
+
+    /* wake the main thread */
+    CMCondition_signal(cm, Msg->WriterResponseCondition);
+    PERFSTUBS_TIMER_STOP_FUNC(timer);
+}
+
+// CP_DPQueryResponseHandler is called by the network handler thread to
+// handle DPQueryResponse messages.  One of these will be sent to rank0
+// reader from rank0 writer in response to the DPQuery message.
+// It will find rank0 writer in CMCondition_wait().  It's only action
+// is to associate the incoming response message to the CMcondition
+// we're waiting on,m so no locking is necessary.
+void CP_DPQueryResponseHandler(CManager cm, CMConnection conn, void *Msg_v,
+                               void *client_data, attr_list attrs)
+{
+    PERFSTUBS_REGISTER_THREAD();
+    PERFSTUBS_TIMER_START_FUNC(timer);
+    struct _DPQueryResponseMsg *Msg = (struct _DPQueryResponseMsg *)Msg_v;
+    char *NeededDP_ptr;
+
+    //    fprintf(stderr, "Received a writer_response message for condition
+    //    %d\n",
+    //            Msg->WriterResponseCondition);
+    //    fprintf(stderr, "The responding writer has cohort of size %d :\n",
+    //            Msg->writer_CohortSize);
+    //    for (int i = 0; i < Msg->writer_CohortSize; i++) {
+    //        fprintf(stderr, " rank %d CP contact info: %s, %p\n", i,
+    //                Msg->CP_WriterInfo[i]->ContactInfo,
+    //                Msg->CP_WriterInfo[i]->WriterID);
+    //    }
+
+    /* attach the message to the CMCondition so it an be retrieved by the main
+     * thread */
+    NeededDP_ptr =
+        CMCondition_get_client_data(cm, Msg->WriterResponseCondition);
+    strcpy(NeededDP_ptr, Msg->OperativeDP);
 
     /* wake the main thread */
     CMCondition_signal(cm, Msg->WriterResponseCondition);

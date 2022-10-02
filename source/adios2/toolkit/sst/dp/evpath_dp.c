@@ -1529,6 +1529,7 @@ static int EvpathGetPriority(CP_Services Svcs, void *CP_Stream,
 
 extern NO_SANITIZE_THREAD CP_DP_Interface LoadEVpathDP()
 {
+    evpathDPInterface.DPName = "evpath";
     evpathDPInterface.ReaderContactFormats = EvpathReaderContactStructs;
     evpathDPInterface.WriterContactFormats = EvpathWriterContactStructs;
     evpathDPInterface.TimestepInfoFormats = NULL; // EvpathTimestepInfoStructs;
