@@ -747,7 +747,7 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
                                     FFSTypeHandle Type, void **RetDataBlock)
 {
     FFSBuffer Buf = create_FFSBuffer();
-    int DataSize;
+    size_t DataSize;
     size_t *RecvCounts = NULL;
     char *Buffer;
 
@@ -759,8 +759,7 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
     {
         RecvCounts = malloc(Stream->CohortSize * sizeof(*RecvCounts));
     }
-    size_t DataSz = DataSize;
-    SMPI_Gather(&DataSz, 1, SMPI_SIZE_T, RecvCounts, 1, SMPI_SIZE_T, 0,
+    SMPI_Gather(&DataSize, 1, SMPI_SIZE_T, RecvCounts, 1, SMPI_SIZE_T, 0,
                 Stream->mpiComm);
 
     /*
@@ -831,8 +830,10 @@ void *CP_distributeDataFromRankZero(SstStream Stream, void *root_info,
     if (Stream->Rank == 0)
     {
         FFSBuffer Buf = create_FFSBuffer();
+        size_t encodeSize;
         char *tmp =
-            FFSencode(Buf, FMFormat_of_original(Type), root_info, &DataSize);
+            FFSencode(Buf, FMFormat_of_original(Type), root_info, &encodeSize);
+        DataSize = (int)encodeSize;
         SMPI_Bcast(&DataSize, 1, SMPI_INT, 0, Stream->mpiComm);
         SMPI_Bcast(tmp, DataSize, SMPI_CHAR, 0, Stream->mpiComm);
         Buffer = malloc(DataSize);
@@ -860,7 +861,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
                                FFSTypeHandle Type, void **RetDataBlock)
 {
     FFSBuffer Buf = create_FFSBuffer();
-    int DataSize;
+    size_t DataSize;
     size_t *RecvCounts;
     char *Buffer;
 
@@ -870,8 +871,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
 
     RecvCounts = malloc(Stream->CohortSize * sizeof(*RecvCounts));
 
-    size_t DataSz = DataSize;
-    SMPI_Allgather(&DataSz, 1, SMPI_SIZE_T, RecvCounts, 1, SMPI_SIZE_T,
+    SMPI_Allgather(&DataSize, 1, SMPI_SIZE_T, RecvCounts, 1, SMPI_SIZE_T,
                    Stream->mpiComm);
 
     /*
