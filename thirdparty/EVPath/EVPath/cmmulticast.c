@@ -393,7 +393,7 @@ attr_list listen_info;
 #ifdef NEED_IOVEC_DEFINE
 struct iovec {
     void *iov_base;
-    int iov_len;
+    size_t iov_len;
 };
 
 #endif

@@ -201,7 +201,7 @@ cmake_dependent_option(EVPATH_TRANSPORT_MODULES
 
 list(INSERT CMAKE_PREFIX_PATH 0 ${CMAKE_INSTALL_PREFIX})
 find_package(atl 2.2.1 REQUIRED)
-find_package(ffs 1.5.1 REQUIRED)
+find_package(ffs 2.0.0 REQUIRED)
 _pkg_get_target_prefix(atl::atl atl_PREFIX)
 _pkg_get_target_prefix(ffs::ffs ffs_PREFIX)
 list(APPEND _pkg_config_pfxs "${atl_PREFIX}" "${ffs_PREFIX}")

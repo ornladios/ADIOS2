@@ -2284,6 +2284,11 @@ timeout_conn(CManager cm, void *client_data)
 	 byte_swap = 1;
      case 0x004d4400:  /* CMD\0 */
 	 break;
+     case 0x00444d01: /* \1DMC reversed byte order long msg*/
+	 byte_swap = 1;
+     case 0x004d4401:  /* CMD\1 long msg*/
+	 short_length = 0;
+	 break;
      case 0x00414d00: /* \0AMC reversed byte order */
 	 byte_swap = 1;
      case 0x004d4100:  /* CMA\0 */
@@ -2356,6 +2361,9 @@ timeout_conn(CManager cm, void *client_data)
 	     skip = 4;
 	 } else {
 	     header_len = 16;
+	 }
+	 if (!short_length) {
+	     header_len += 4; /* extra data length bytes */
 	 }
      } else {
 	 if (short_length) {
@@ -2446,13 +2454,25 @@ timeout_conn(CManager cm, void *client_data)
 	 data_length -= 8;  /* subtract off header size */
      }
      if (event_msg) {
-	 if (byte_swap) {
-	     ((char*)&stone_id)[0] = base[11];
-	     ((char*)&stone_id)[1] = base[10];
-	     ((char*)&stone_id)[2] = base[9];
-	     ((char*)&stone_id)[3] = base[8];
-	 } else {
-	     stone_id = ((int *) base)[2];
+	 char *stone_base = base;
+	 if (header_len == 16) {
+	     if (byte_swap) {
+		 ((char*)&stone_id)[0] = stone_base[11];
+		 ((char*)&stone_id)[1] = stone_base[10];
+		 ((char*)&stone_id)[2] = stone_base[9];
+		 ((char*)&stone_id)[3] = stone_base[8];
+	     } else {
+		 stone_id = ((int *) stone_base)[2];
+	     }
+	 } else if (header_len == 20) {
+	     if (byte_swap) {
+		 ((char*)&stone_id)[0] = stone_base[15];
+		 ((char*)&stone_id)[1] = stone_base[14];
+		 ((char*)&stone_id)[2] = stone_base[13];
+		 ((char*)&stone_id)[3] = stone_base[12];
+	     } else {
+		 stone_id = ((int *) stone_base)[3];
+	     }
 	 }
      }
 
@@ -2698,28 +2718,33 @@ timeout_conn(CManager cm, void *client_data)
      cm_return_data_buf(cm, buf);
  }
 
- void
- INT_CMregister_handler(CMFormat format, CMHandlerFunc handler,
-			void *client_data)
- {
-     CManager cm = format->cm;
-     int i;
-     format->handler = handler;
-     format->client_data = client_data;
+void
+INT_CMregister_handler(CMFormat format, CMHandlerFunc handler,
+		       void *client_data)
+{
+    CManager cm = format->cm;
+    int i;
+    format->handler = handler;
+    format->client_data = client_data;
 
-     for (i=0; i< cm->in_format_count; i++) {
-	 if (cm->in_formats[i].format == format->ffsformat) {
-	     if (!cm->in_formats[i].handler) {
-		 cm->in_formats[i].handler = handler;
-		 cm->in_formats[i].client_data = client_data;
-	     } else if ((cm->in_formats[i].handler != handler) ||
-			(cm->in_formats[i].client_data != client_data)) {
-		 fprintf(stderr, "Warning, CMregister_handler() called multiple times for the same format with different handler or client_data\n");
-		 fprintf(stderr, "Repeated calls will be ignored\n");
-	     }
-	 }
-     }
- }
+    for (i=0; i< cm->in_format_count; i++) {
+	if (strcmp(name_of_FMformat(FMFormat_of_original(cm->in_formats[i].format)), format->format_name) == 0) {
+	    if (format->registration_pending) {
+	        CMcomplete_format_registration(format, 1);
+	    }
+	    if (cm->in_formats[i].format == format->ffsformat) {
+	        if (!cm->in_formats[i].handler) {
+		    cm->in_formats[i].handler = handler;
+		    cm->in_formats[i].client_data = client_data;
+		} else if ((cm->in_formats[i].handler != handler) ||
+			   (cm->in_formats[i].client_data != client_data)) {
+		    fprintf(stderr, "Warning, CMregister_handler() called multiple times for the same format with different handler or client_data\n");
+		    fprintf(stderr, "Repeated calls will be ignored\n");
+		}
+	    }
+	}
+    }
+}
 
 extern void
 INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
@@ -3202,14 +3227,18 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
  INT_CMwrite_attr(CMConnection conn, CMFormat format, void *data, 
 		  attr_list attrs)
  {
-     /* GSE MUST FIX for LONG */
+     void *header_ptr = NULL;
+     int header_len = 0;
      int no_attr_header[2] = {0x434d4400, 0};  /* CMD\0 in first entry */
-     int attr_header[4] = {0x434d4100, 0x434d4100, 0, 0};  /* CMA\0 in first entry */
+     int no_attr_long_header[4] = {0x434d4401, 0x434d4401, 0, 0};  /* CMD\1 in first entry, pad to 16 */
+     int attr_header[4] = {0x434d4100, 0x434d4100, 0, 0};  /* CMA\0 in first entry, pad to 16 */
+     int attr_long_header[4] = {0x434d4101, 0, 0, 0};  /* CMA\1 in first entry */
      FFSEncodeVector vec;
      size_t length = 0, vec_count = 0, actual;
      int do_write = 1;
      void *encoded_attrs = NULL;
      int attrs_present = 0;
+     int long_message = 0;
      CManager cm = conn->cm;
 
      /* ensure conn is open */
@@ -3279,13 +3308,38 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	 length += vec[vec_count].iov_len;
 	 vec_count++;
      }
-     no_attr_header[1] = length;
-     attr_header[2] = length;
+     if ((length & 0x7fffffff) == 0) {
+	 long_message = 1;
+     }
      if (attrs != NULL) {
 	 attrs_present++;
+     }
+     if (!long_message) {
+	 if (attrs_present) {
+	     attr_header[2] = length;
+	     header_ptr = &attr_header;
+	     header_len = sizeof(attr_header);
+	 } else {
+	     no_attr_header[1] = length;
+	     header_ptr = &no_attr_header;
+	     header_len = sizeof(no_attr_header);
+	 }
+     } else {
+	 if (attrs_present) {
+	     memcpy((void*) &attr_long_header[1], &length, sizeof(length));
+	     header_ptr = &attr_long_header;
+	     header_len = sizeof(attr_long_header);
+	 } else {
+	     memcpy((void*) &attr_long_header[2], &length, sizeof(length));
+	     header_ptr = no_attr_header;
+	     header_len = sizeof(no_attr_header);
+	 }
+     }	 
+     if (attrs_present) {
 	 encoded_attrs = encode_attr_for_xmit(attrs, conn->attr_encode_buffer,
 					      &attr_header[3]);
 	 attr_header[3] = (attr_header[3] +7) & -8;  /* round up to even 8 */
+	 attr_long_header[3] = (attr_header[3] +7) & -8;  /* round up to even 8 */
      }
      CMtrace_out(conn->cm, CMDataVerbose, "CM - Total write size is %zu bytes data + %d bytes attrs\n", length, attr_header[3]);
      if (cm_write_hook != NULL) {
@@ -3298,9 +3352,9 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 	 if (vec_count >= sizeof(static_vec)/ sizeof(static_vec[0])) {
 	     tmp_vec = INT_CMmalloc((vec_count+1) * sizeof(*tmp_vec));
 	 }
+	 tmp_vec[0].iov_base = header_ptr;
+	 tmp_vec[0].iov_len = header_len;
 	 if (attrs == NULL) {
-	     tmp_vec[0].iov_base = &no_attr_header;
-	     tmp_vec[0].iov_len = sizeof(no_attr_header);
 	     memcpy(&tmp_vec[1], vec, sizeof(*tmp_vec) * vec_count);
 	     vec_count++;
 	     byte_count += sizeof(no_attr_header);
@@ -3308,8 +3362,6 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 			 "Writing %zu vectors, total %zu bytes in writev\n", 
 			 vec_count, byte_count);
 	 } else {
-	     tmp_vec[0].iov_base = &attr_header;
-	     tmp_vec[0].iov_len = sizeof(attr_header);
 	     tmp_vec[1].iov_base = encoded_attrs;
 	     tmp_vec[1].iov_len = attr_header[3];
 	     memcpy(&tmp_vec[2], vec, sizeof(*tmp_vec) * vec_count);
@@ -3483,6 +3535,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 			 "Writing %zu vectors, total %zu bytes (including attrs) in writev\n", 
 			 vec_count, byte_count);
 	 }
+	 char *header_ptr = (char*)&header[0];
 	 actual = INT_CMwrite_raw(conn, tmp_vec, vec, vec_count, byte_count, attrs,
 				     vec == &preencoded_vec[0]);
 	 if (tmp_vec != &static_vec[0]) {
