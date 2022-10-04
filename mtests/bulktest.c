@@ -50,7 +50,7 @@ typedef struct _simple_rec {
     double double_field;
     char char_field;
     int scan_sum;
-    int vec_count;
+    size_t vec_count;
     FFSEncodeVector vecs;
 } simple_rec, *simple_rec_ptr;
 
@@ -79,7 +79,7 @@ static FMField simple_field_list[] =
     {"scan_sum", "integer",
      sizeof(int), FMOffset(simple_rec_ptr, scan_sum)},
     {"vec_count", "integer",
-     sizeof(int), FMOffset(simple_rec_ptr, vec_count)},
+     sizeof(size_t), FMOffset(simple_rec_ptr, vec_count)},
     {"vecs", "EventVecElem[vec_count]", sizeof(struct FFSEncodeVec), 
      FMOffset(simple_rec_ptr, vecs)},
     {NULL, NULL, 0, 0},
@@ -103,7 +103,7 @@ static FMStructDescRec simple_format_list[] =
     {NULL, NULL}
 };
 
-static int size = 400;
+static size_t size = 400;
 static int vecs = 20;
 int quiet = 1;
 
@@ -137,7 +137,7 @@ generate_record(simple_rec_ptr event)
     event->vec_count = vecs;
     event->vecs = malloc(sizeof(event->vecs[0]) * vecs);
     memset(event->vecs, 0, sizeof(event->vecs[0]) * vecs);
-    if (quiet <= 0) printf("Sending %d vecs of size %d\n", vecs, size/vecs);
+    if (quiet <= 0) printf("Sending %d vecs of size %zu\n", vecs, (size_t)size/vecs);
     for (i=0; i < vecs; i++) {
 	event->vecs[i].iov_len = size/vecs;
 	event->vecs[i].iov_base = malloc(event->vecs[i].iov_len);
@@ -196,6 +196,10 @@ simple_handler(CManager cm, CMConnection conn, void *vevent, void *client_data,
 	printf("	long_field = %ld\n", event->long_field);
 	printf("	double_field = %g\n", event->double_field);
 	printf("	char_field = %c\n", event->char_field);
+        printf(" 	Vec_count = %zu\n", event->vec_count);
+        if (event->vec_count >= 1) {
+            printf("	Vec size = %zu\n", event->vecs[0].iov_len);
+        }
 	printf("Data was received with attributes : \n");
 	dump_attr_list(attrs);
     }
@@ -219,7 +223,7 @@ static atom_t CM_TRANSPORT;
 static char *transport;
 
 #define PARSE_EXTRA_ARGS } else if (strcmp(&argv[1][1], "size") == 0) {\
-	    if (sscanf(argv[2], "%d", &size) != 1) {\
+	    if (sscanf(argv[2], "%zu", &size) != 1) {\
 		printf("Unparseable argument to -size, %s\n", argv[2]);\
 	    }\
 	    if (vecs == 0) { vecs = 1; printf("vecs not 1\n");}\
@@ -387,7 +391,7 @@ do_regression_master_test()
     string_list = attr_list_to_string(contact_list);
     free_attr_list(contact_list);
     args[2] = "-size";
-    sprintf(&size_str[0], "%d", size);
+    sprintf(&size_str[0], "%zu", size);
     args[3] = size_str;
     args[4] = "-vecs";
     sprintf(&vec_str[0], "%d", vecs);

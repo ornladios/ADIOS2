@@ -857,7 +857,7 @@ attr_list listen_info;
 #ifdef NEED_IOVEC_DEFINE
 struct iovec {
     void *iov_base;
-    int iov_len;
+    size_t iov_len;
 };
 
 #endif
@@ -912,10 +912,10 @@ libcmsockets_LTX_read_to_buffer_func(svc, scd, buffer, requested_len,
 CMtrans_services svc;
 socket_conn_data_ptr scd;
 void *buffer;
-int requested_len;
+ssize_t requested_len;
 int non_blocking;
 {
-    int left, iget;
+    ssize_t left, iget;
 
     int fdflags = fcntl(scd->fd, F_GETFL, 0);
     if (fdflags == -1) {
@@ -927,7 +927,7 @@ int non_blocking;
     } else {
 	svc->trace_out(scd->sd->cm, "CMSocket fd %d state nonblock", scd->fd);
     }
-    svc->trace_out(scd->sd->cm, "CMSocket read of %d bytes on fd %d, non_block %d", requested_len,
+    svc->trace_out(scd->sd->cm, "CMSocket read of %zd bytes on fd %d, non_block %d", requested_len,
 		   scd->fd, non_blocking);
     if (non_blocking && (scd->block_state == Block)) {
 	svc->trace_out(scd->sd->cm, "CMSocket switch to non-blocking fd %d",
@@ -993,20 +993,25 @@ int non_blocking;
 
 #ifndef HAVE_WRITEV
 static
-int 
+ssize_t
 writev(fd, iov, iovcnt)
 int fd;
 struct iovec *iov;
 int iovcnt;
 {
-    int wrote = 0;
+    ssize_t wrote = 0;
     int i;
+    printf("tmp Writev iovcnt %d\n", iovcnt);
     for (i = 0; i < iovcnt; i++) {
-	int left = iov[i].iov_len;
-	int iget = 0;
+	size_t left = iov[i].iov_len;
+	ssize_t iget = 0;
 
+	printf("Writing block[%d] of len %zu, startig at %p\n", i, left, iov[i].iov_base);
 	while (left > 0) {
-	    iget = write(fd, (char *) iov[i].iov_base + iov[i].iov_len - left, left);
+	    errno = 0;
+	    size_t this_write = left;
+	    char *this_base = iov[i].iov_base + iov[i].iov_len - left;
+	    iget = write(fd, this_base, this_write);
 	    if (iget == -1) {
 		int lerrno = errno;
 		if ((lerrno != EWOULDBLOCK) &&
@@ -1015,10 +1020,6 @@ int iovcnt;
 		    /* serious error */
 		    return -1;
 		} else {
-		    if (lerrno == EWOULDBLOCK) {
-			printf("CMSockets write Would block, fd %d, length %d",
-				       fd, left);
-		    }
 		    iget = 0;
 		}
 	    }
@@ -1030,6 +1031,20 @@ int iovcnt;
 }
 #endif
 
+int long_writev(svc, scd, iovs, iovcnt)
+CMtrans_services svc;
+socket_conn_data_ptr scd;
+void *iovs;
+int iovcnt;
+{
+    assert(0);   // for right now, don't try this
+}
+
+#ifndef MAX_RW_COUNT
+// Not actually defined outside the kernel as far as I know  - GSE
+#define MAX_RW_COUNT 0x7ffff000
+#endif
+
 extern int
 libcmsockets_LTX_writev_func(svc, scd, iovs, iovcnt, attrs)
 CMtrans_services svc;
@@ -1039,19 +1054,25 @@ int iovcnt;
 attr_list attrs;
 {
     int fd = scd->fd;
-    int left = 0;
-    int iget = 0;
-    int iovleft, i;
+    ssize_t left = 0;
+    ssize_t iget = 0;
+    ssize_t iovleft, i;
     iovleft = iovcnt;
     struct iovec * iov = (struct iovec*) iovs;
     /* sum lengths */
-    for (i = 0; i < iovcnt; i++)
+    for (i = 0; i < iovcnt; i++) {
 	left += iov[i].iov_len;
+    }
 
-    svc->trace_out(scd->sd->cm, "CMSocket writev of %d bytes on fd %d",
+    svc->trace_out(scd->sd->cm, "CMSocket writev of %zd bytes on fd %d",
 		   left, fd);
+    if (left > MAX_RW_COUNT) {
+	// more to write than unix lets us do in one call
+	return long_writev(svc, scd, iovs, iovcnt);
+    }
+		    
     while (left > 0) {
-	int write_count = iovleft;
+	size_t write_count = iovleft;
 	if (write_count > IOV_MAX)
 	    write_count = IOV_MAX;
 	iget = writev(fd, (struct iovec *) &iov[iovcnt - iovleft],
@@ -1108,9 +1129,9 @@ int iovcnt;
 attr_list attrs;
 {
     int fd = scd->fd;
-    int init_bytes, left = 0;
-    int iget = 0;
-    int iovleft, i;
+    ssize_t init_bytes, left = 0;
+    ssize_t iget = 0;
+    ssize_t iovleft, i;
     struct iovec * iov = (struct iovec*) iovs;
     iovleft = iovcnt;
 
@@ -1120,12 +1141,12 @@ attr_list attrs;
 
     init_bytes = left;
 
-    svc->trace_out(scd->sd->cm, "CMSocket Non-blocking writev of %d bytes on fd %d",
+    svc->trace_out(scd->sd->cm, "CMSocket Non-blocking writev of %zd bytes on fd %d",
 		   left, fd);
     set_block_state(svc, scd, Non_Block);
     while (left > 0) {
-	int write_count = iovleft;
-	int this_write_bytes = 0;
+	ssize_t write_count = iovleft;
+	ssize_t this_write_bytes = 0;
 	if (write_count > IOV_MAX)
 	    write_count = IOV_MAX;
 	for (i = 0; i < write_count; i++)
