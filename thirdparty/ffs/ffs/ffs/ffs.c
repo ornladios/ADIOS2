@@ -18,20 +18,20 @@ quick_get_ulong(FMFieldPtr iofield, void *data);
 void
 quick_put_ulong(FMFieldPtr iofield, unsigned long value, void *data);
 
-static long add_to_tmp_buffer(FFSBuffer buf, int size);
-static int
-final_variant_size_for_record(int input_record_len, IOConversionPtr conv);
+static ssize_t add_to_tmp_buffer(FFSBuffer buf, size_t size);
+static int64_t
+final_variant_size_for_record(int64_t input_record_len, IOConversionPtr conv);
 
 static void byte_swap(char *data, int size);
 
 typedef struct addr_list {
     void *addr;
-    int offset;
+    ssize_t offset;
 } addr_list_entry;
 
 typedef struct encode_state {
     int copy_all;
-    int output_len;
+    int64_t output_len;
     int iovec_is_stack;
     int iovcnt;
     internal_iovec *iovec;
@@ -52,11 +52,11 @@ void
 setup_header(FFSBuffer buf, FMFormat f, estate s) 
 {
     int header_size = f->server_ID.length;
-    long tmp_data;	/* offset for header */
+    ssize_t tmp_data;	/* offset for header */
     int align_pad;
 
     if (f->variant) {
-	header_size += sizeof(FILE_INT);	/* length info */
+	header_size += 8;	/* length info */
     }
     align_pad = (8 - header_size) & 0x7;	/* align to 8 */
     header_size += align_pad;
@@ -111,11 +111,11 @@ ensure_writev_room(estate s, int add_count)
 }
 
 
-int
-allocate_tmp_space(estate s, FFSBuffer buf, int length, int req_alignment, int *tmp_data_loc)
+size_t
+allocate_tmp_space(estate s, FFSBuffer buf, size_t length, int req_alignment, size_t *tmp_data_loc)
 {
     int pad = (req_alignment - s->output_len) & (req_alignment -1);  /*  only works if req_align is power of two */
-    long tmp_data, msg_offset;
+    size_t tmp_data, msg_offset;
     switch (req_alignment) {
     case 1: case 2: case 4: case 8: case 16: break;
     default:
@@ -123,7 +123,7 @@ allocate_tmp_space(estate s, FFSBuffer buf, int length, int req_alignment, int *
     }
     ensure_writev_room(s, 2);
     tmp_data = add_to_tmp_buffer(buf, length + pad);
-    if (tmp_data == -1) return -1;
+    if (tmp_data == (size_t)-1) return (size_t) -1;
     if (pad != 0) {
 	if (s->iovec[s->iovcnt-1].iov_base == NULL) {
 	    /* last was tmp too */
@@ -143,11 +143,11 @@ allocate_tmp_space(estate s, FFSBuffer buf, int length, int req_alignment, int *
     return msg_offset;
 }
 
-int
-copy_data_to_tmp(estate s, FFSBuffer buf, void *data, int length, int req_alignment, int *tmp_data_loc)
+size_t
+copy_data_to_tmp(estate s, FFSBuffer buf, void *data, size_t length, int req_alignment, size_t *tmp_data_loc)
 {
-    int tmp_data;
-    int msg_offset = allocate_tmp_space(s, buf, length, req_alignment, &tmp_data);
+    size_t tmp_data;
+    size_t msg_offset = allocate_tmp_space(s, buf, length, req_alignment, &tmp_data);
     if (length != 0) {
 	memcpy((char*)buf->tmp_buffer + tmp_data, data, length);
 	s->iovec[s->iovcnt].iov_len = length;
@@ -162,11 +162,11 @@ copy_data_to_tmp(estate s, FFSBuffer buf, void *data, int length, int req_alignm
 /*
  *  same as copy_data_to_tmp, except doesn't actually copy the data.  This is used for FFS_NO_LEAF_COPY.
  */
-int
-reserve_space_for_data_in_tmp(estate s, FFSBuffer buf, void *data, int length, int req_alignment, int *tmp_data_loc)
+size_t
+reserve_space_for_data_in_tmp(estate s, FFSBuffer buf, void *data, size_t length, int req_alignment, size_t *tmp_data_loc)
 {
-    int tmp_data;
-    int msg_offset = allocate_tmp_space(s, buf, length, req_alignment, &tmp_data);
+    size_t tmp_data;
+    size_t msg_offset = allocate_tmp_space(s, buf, length, req_alignment, &tmp_data);
     if (length != 0) {
 	s->iovec[s->iovcnt].iov_len = length;
 	s->iovec[s->iovcnt].iov_offset = tmp_data;
@@ -177,10 +177,10 @@ reserve_space_for_data_in_tmp(estate s, FFSBuffer buf, void *data, int length, i
     return msg_offset;
 }
 
-int
-add_data_iovec(estate s, FFSBuffer buf, void *data, int length, int req_alignment)
+size_t
+add_data_iovec(estate s, FFSBuffer buf, void *data, size_t length, int req_alignment)
 {
-    int msg_offset;
+    size_t msg_offset;
     int pad = (req_alignment - s->output_len) & (req_alignment -1);  /*  only works if req_align is power of two */
     switch (req_alignment) {
     case 1: case 2: case 4: case 8: case 16: break;
@@ -217,16 +217,16 @@ init_encode_state(estate state)
 }
 
 static int
-handle_subfields(FFSBuffer buf, FMFormat f, estate s, int data_offset);
+handle_subfields(FFSBuffer buf, FMFormat f, estate s, size_t data_offset);
 
 static char *
-FFSencode_internal(FFSBuffer b, FMFormat fmformat, void *data, int *buf_size, int flags)
+FFSencode_internal(FFSBuffer b, FMFormat fmformat, void *data, size_t *buf_size, int flags)
 {
     internal_iovec stack_iov_array[STACK_ARRAY_SIZE];
     addr_list_entry stack_addr_list[STACK_ARRAY_SIZE];
     struct encode_state state;
     init_encode_state(&state);
-    int base_offset = 0;
+    size_t base_offset = 0;
     int header_size;
 
     state.iovec_is_stack = 1;
@@ -252,7 +252,7 @@ FFSencode_internal(FFSBuffer b, FMFormat fmformat, void *data, int *buf_size, in
     if (fmformat->variant || state.copy_all) {
 	base_offset = copy_data_to_tmp(&state, b, data, 
 				       fmformat->record_length, 1, NULL);
-	if (base_offset == -1) return NULL;
+	if (base_offset == (size_t) -1) return NULL;
     }
 
     if (!fmformat->variant) {
@@ -266,18 +266,16 @@ FFSencode_internal(FFSBuffer b, FMFormat fmformat, void *data, int *buf_size, in
 	state.addr_list_cnt++;
     }
 
-    if (copy_data_to_tmp(&state, b, NULL, 0, 8, NULL) == -1) {   /* force 64-bit align for var */
-	return NULL;
-    }
+    copy_data_to_tmp(&state, b, NULL, 0, 8, NULL);   /* force 64-bit align for var */
+
     if (!handle_subfields(b, fmformat, &state, base_offset)) return NULL;
 
     {
 	/* fill in actual length of data marshalled after header */
 	char *tmp_data = b->tmp_buffer;
-	int record_len = state.output_len - header_size;
-	int len_align_pad = (4 - fmformat->server_ID.length) & 3;
-	tmp_data += fmformat->server_ID.length + len_align_pad;
-	memcpy(tmp_data, &record_len, 4);
+	uint64_t record_len = state.output_len - header_size;
+	tmp_data += fmformat->server_ID.length;
+	memcpy(tmp_data, &record_len, 8);
     }
     free_addr_list(&state);
     *buf_size = state.output_len;
@@ -288,13 +286,13 @@ FFSencode_internal(FFSBuffer b, FMFormat fmformat, void *data, int *buf_size, in
 }
 
 char *
-FFSencode(FFSBuffer b, FMFormat fmformat, void *data, int *buf_size)
+FFSencode(FFSBuffer b, FMFormat fmformat, void *data, size_t *buf_size)
 {
     return FFSencode_internal(b, fmformat, data, buf_size, /*flags*/ 0);
 }
 
 char *
-FFSencode_no_leaf_copy(FFSBuffer b, FMFormat fmformat, void *data, int *buf_size)
+FFSencode_no_leaf_copy(FFSBuffer b, FMFormat fmformat, void *data, size_t *buf_size)
 {
     return FFSencode_internal(b, fmformat, data, buf_size, /*flags*/ FFS_NO_LEAF_COPY);
 }
@@ -303,7 +301,7 @@ static FFSEncodeVector
 fixup_output_vector(FFSBuffer b, estate s)
 {
     int size = (s->iovcnt + 5) * sizeof(struct FFSEncodeVec);
-    long tmp_vec_offset = add_to_tmp_buffer(b, size);
+    ssize_t tmp_vec_offset = add_to_tmp_buffer(b, size);
     FFSEncodeVector ret;
     /* buffer will not be realloc'd after this */
     int i;
@@ -367,7 +365,7 @@ static int
 search_addr_list(estate s, void *addr)
 {
     int i;
-    int previous_offset = -1;
+    size_t previous_offset = (size_t) -1;
     for (i=0; i < s->addr_list_cnt; i++) {
 	if (s->addr_list[i].addr == addr) {
 	    previous_offset = s->addr_list[i].offset;
@@ -429,24 +427,22 @@ FFSencode_vector(FFSBuffer b, FMFormat fmformat, void *data)
 	state.addr_list_cnt++;
     }
 
-    if (copy_data_to_tmp(&state, b, NULL, 0, 8, NULL) == -1) {   /* force 64-bit align for var */
-	return NULL;
-    }
+    copy_data_to_tmp(&state, b, NULL, 0, 8, NULL);   /* force 64-bit align for var */
+
     if (!handle_subfields(b, fmformat, &state, base_offset)) return NULL;
     {
 	/* fill in actual length of data marshalled after header */
 	char *tmp_data = b->tmp_buffer;
-	int record_len = state.output_len - header_size;
-	int len_align_pad = (4 - fmformat->server_ID.length) & 3;
-	tmp_data += fmformat->server_ID.length + len_align_pad;
-	memcpy(tmp_data, &record_len, 4);
+	int64_t record_len = state.output_len - header_size;
+	tmp_data += fmformat->server_ID.length;
+	memcpy(tmp_data, &record_len, 8);
     }
     free_addr_list(&state);
     return fixup_output_vector(b, &state);
 }
 
 static int
-handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent_offset, FMTypeDesc *t);
+handle_subfield(FFSBuffer buf, FMFormat f, estate s, size_t data_offset, size_t parent_offset, FMTypeDesc *t);
 
 extern int
 field_is_flat(FMFormat f, FMTypeDesc *t)
@@ -470,7 +466,7 @@ field_is_flat(FMFormat f, FMTypeDesc *t)
 }
 
 static int
-handle_subfields(FFSBuffer buf, FMFormat f, estate s, int data_offset)
+handle_subfields(FFSBuffer buf, FMFormat f, estate s, size_t data_offset)
 {
     int i;
     /* if base is not variant (I.E. doesn't contain addresses), return;*/
@@ -504,7 +500,7 @@ set_dynamic_array_size(FMFormat f, FFSBuffer buf, int parent_offset, FMTypeDesc 
 }
 
 
-static int
+static size_t
 determine_size(FMFormat f, FFSBuffer buf, int parent_offset, FMTypeDesc *t)
 {
     switch (t->type) {
@@ -512,7 +508,7 @@ determine_size(FMFormat f, FFSBuffer buf, int parent_offset, FMTypeDesc *t)
     case FMType_string:
 	return f->pointer_size;
     case FMType_array: {
-	int size = 1;
+	size_t size = 1;
 	while (t->type == FMType_array) {
 	    if (t->static_size == 0) {
 		struct _FMgetFieldStruct src_spec;
@@ -520,7 +516,7 @@ determine_size(FMFormat f, FFSBuffer buf, int parent_offset, FMTypeDesc *t)
 		memset(&src_spec, 0, sizeof(src_spec));
 		src_spec.size = f->field_list[field].field_size;
 		src_spec.offset = f->field_list[field].field_offset;
-		int tmp = quick_get_ulong(&src_spec, (char*)buf->tmp_buffer + parent_offset);
+		size_t tmp = quick_get_ulong(&src_spec, (char*)buf->tmp_buffer + parent_offset);
 		size = size * tmp;
 	    } else {
 		size *= t->static_size;
@@ -535,18 +531,19 @@ determine_size(FMFormat f, FFSBuffer buf, int parent_offset, FMTypeDesc *t)
     case FMType_simple:
 	return f->field_list[t->field_index].field_size;
     }
-    return -1;
+    assert(FALSE);
+    return (size_t)-1;
 }
 
 static int
-handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent_offset, FMTypeDesc *t)
+handle_subfield(FFSBuffer buf, FMFormat f, estate s, size_t data_offset, size_t parent_offset, FMTypeDesc *t)
 {
 
     switch (t->type) {
     case FMType_pointer:
     {
 	struct _FMgetFieldStruct src_spec;
-	int size, new_offset, tmp_data_loc;
+	size_t size, new_offset, tmp_data_loc;
 	char *ptr_value;
 	field_marshal_info marshal_info;
 
@@ -568,8 +565,8 @@ handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent
 	}
 
 	if (f->recursive) {
-	    int previous_offset = search_addr_list(s, ptr_value);
-	    if (previous_offset != -1) {
+	    size_t previous_offset = search_addr_list(s, ptr_value);
+	    if (previous_offset != (size_t)-1) {
 		quick_put_ulong(&src_spec, previous_offset,
 				(char*)buf->tmp_buffer + data_offset);
 		return 1;
@@ -592,7 +589,6 @@ handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent
 		} else {
 		    new_offset = copy_data_to_tmp(s, buf, ptr_value, size, 8, &tmp_data_loc);
 		}
-		if (new_offset == -1) return 0;
 	    }
 	} else {
 	    /* can't leave data where it sits */
@@ -601,8 +597,8 @@ handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent
 	       3. return value is number of elements copied
 	       4. adjust size of temporary to reflect actual data copied
 	    */
-	    int element_size = determine_size(f, buf, parent_offset, t->next->next);
-	    int element_count = size / element_size;
+	    size_t element_size = determine_size(f, buf, parent_offset, t->next->next);
+	    size_t element_count = size / element_size;
 	    cod_exec_context ec = marshal_info->ec;
 	    struct subsample_marshal_data smd;
 	    new_offset = allocate_tmp_space(s, buf, size, 8, &tmp_data_loc);
@@ -639,7 +635,7 @@ handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent
     {
 	struct _FMgetFieldStruct src_spec;
 	char *ptr_value;
-	int size, str_offset;
+	size_t size, str_offset;
 	memset(&src_spec, 0, sizeof(src_spec));
 	src_spec.size = f->pointer_size;
 	ptr_value = quick_get_pointer(&src_spec, (char*)buf->tmp_buffer + data_offset);
@@ -650,7 +646,7 @@ handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent
 	    str_offset = add_data_iovec(s, buf, ptr_value, size, 1);
 	} else {
 	    str_offset = copy_data_to_tmp(s, buf, ptr_value, size, 1, NULL);
-	    if (str_offset == -1) return 0;
+	    if (str_offset == (size_t) -1) return 0;
 	}
 	quick_put_ulong(&src_spec, str_offset - s->saved_offset_difference,
 			(char*)buf->tmp_buffer + data_offset);
@@ -658,8 +654,8 @@ handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent
     }
     case FMType_array:
     {
-	int elements = 1, i;
-	int element_size;
+	size_t elements = 1, i;
+	size_t element_size;
 	FMTypeDesc *next = t;
 	while (next->type == FMType_array) {
 	    if (next->static_size == 0) {
@@ -668,7 +664,7 @@ handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent
 		memset(&src_spec, 0, sizeof(src_spec));
 		src_spec.size = f->field_list[field].field_size;
 		src_spec.offset = f->field_list[field].field_offset;
-		int tmp = quick_get_ulong(&src_spec, (char*)buf->tmp_buffer + parent_offset);
+		size_t tmp = quick_get_ulong(&src_spec, (char*)buf->tmp_buffer + parent_offset);
 		elements = elements * tmp;
 	    } else {
 		elements = elements * next->static_size;
@@ -678,7 +674,7 @@ handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent
 	element_size = determine_size(f, buf, parent_offset, next);
 	if (field_is_flat(f, next)) return 1;
 	for (i = 0; i < elements ; i++) {
-	    int element_offset = data_offset + i * element_size;
+	    size_t element_offset = data_offset + i * element_size;
 	    if (!handle_subfield(buf, f, s, element_offset, parent_offset, next)) return 0;
 	}
 	break;
@@ -696,12 +692,13 @@ handle_subfield(FFSBuffer buf, FMFormat f, estate s, int data_offset, int parent
 }
 
 extern FFSEncodeVector
-copy_vector_to_FFSBuffer(FFSBuffer buf, FFSEncodeVector vec) {
-    long vec_offset = (char *) vec - (char *)buf->tmp_buffer;
+copy_vector_to_FFSBuffer(FFSBuffer buf, FFSEncodeVector vec)
+{
+    ssize_t vec_offset = (char *) vec - (char *)buf->tmp_buffer;
 
     if (((char*)vec < (char*)buf->tmp_buffer)
         || ((char*)vec >= (char*)buf->tmp_buffer + buf->tmp_buffer_size)) {
-        int i, remainder;
+        size_t i, remainder;
         for (i = 0; vec[i].iov_base; ++i);
         vec_offset = add_to_tmp_buffer(buf, (i + 2) * sizeof(*vec));
 	remainder = vec_offset % sizeof(*vec);
@@ -730,7 +727,7 @@ copy_all_to_FFSBuffer(FFSBuffer buf, FFSEncodeVector vec)
     assert(((unsigned long)vec >= (unsigned long)buf->tmp_buffer) && 
 	   ((unsigned long)vec < (unsigned long)buf->tmp_buffer + buf->tmp_buffer_size));
     {
-        int already_in[vec_count];
+        size_t already_in[vec_count];
 	while (vec[i].iov_base != NULL) {
 	    if (((char*)vec[i].iov_base >= (char*)buf->tmp_buffer) &&
 		((char*)vec[i].iov_base < (char*)buf->tmp_buffer + buf->tmp_buffer_size)) {
@@ -752,12 +749,12 @@ copy_all_to_FFSBuffer(FFSBuffer buf, FFSEncodeVector vec)
 	    FFSEncodeVector v = (void*)((long) buf->tmp_buffer + vec_offset);
 	    if (already_in[i] == 0) {
 	        /* if this is an external buffer, copy it */
-	        long offset = add_to_tmp_buffer(buf, v[i].iov_len);
+	        ssize_t offset = add_to_tmp_buffer(buf, v[i].iov_len);
 		char * data = (char *) buf->tmp_buffer + offset;
 		/* add_to_tmp_buffer() might have remapped vector */
 		v = (void*)((char *) buf->tmp_buffer + vec_offset);
 		memcpy(data, v[i].iov_base, v[i].iov_len);
-		v[i].iov_base = (void*)(long)(offset + 1);
+		v[i].iov_base = (void*)(intptr_t)(offset + 1);
 	    }
 	    i++;
 	}
@@ -972,7 +969,7 @@ FFSset_fixed_target(FFSContext c, FMStructDescList struct_list)
 }
 
 extern FFSTypeHandle
-FFSset_simple_target(FFSContext c, char *format_name, FMFieldList field_list, int struct_size)
+FFSset_simple_target(FFSContext c, char *format_name, FMFieldList field_list, size_t struct_size)
 {
     FMStructDescRec struct_list[2];
     struct_list[0].format_name = format_name;
@@ -1017,7 +1014,7 @@ typedef struct _conversion_action {
     void *dest_address;
     void *src_string_address;
     void *final_string_address;
-    int base_string_offset;
+    size_t base_string_offset;
 } conversion_action, *conversion_action_ptr;
 
 static int
@@ -1105,23 +1102,23 @@ FFSdecode_in_place_possible(FFSTypeHandle format)
 static int
 set_conversion_params(ioformat, input_record_len, conv, params)
 FFSTypeHandle ioformat;
-int input_record_len;
+int64_t input_record_len;
 IOConversionPtr conv;
 conversion_action_ptr params;
 {
     FFSContext c = ioformat->context;
-    int final_base_size;
-    int src_base_size;
-    int possible_converted_variant_size;
-    int orig_variant_size;
+    size_t final_base_size;
+    size_t src_base_size;
+    int64_t possible_converted_variant_size;
+    int64_t orig_variant_size;
 
-    long dest_offset;
+    ssize_t dest_offset;
     void *dest_address;
-    long src_offset;
+    ssize_t src_offset;
     void *src_address;
-    long src_string_offset;
+    ssize_t src_string_offset;
     void *src_string_address;
-    long final_string_offset;
+    ssize_t final_string_offset;
     void *final_string_address;
 
     final_base_size = expand_size_to_align(ioformat->body->record_length + conv->base_size_delta);
@@ -1134,7 +1131,7 @@ conversion_action_ptr params;
     /* set base dest values */
     if (params->final_base == NULL) {
 	/* need memory for at least the base record in temp area */
-	int buffer_required = Max(final_base_size, src_base_size);
+	int64_t buffer_required = Max(final_base_size, src_base_size);
 	dest_offset = add_to_tmp_buffer(&c->tmp, buffer_required);
 	dest_address = NULL;
 	if (dest_offset == -1) return 0;
@@ -1159,7 +1156,7 @@ conversion_action_ptr params;
 	     * either the source is not in memory or it is the same as 
 	     * where we want the record to end up.  Need temporary space.
 	     */
-	    int source_base_size = expand_size_to_align(ioformat->body->record_length);
+	    int64_t source_base_size = expand_size_to_align(ioformat->body->record_length);
 	    src_offset = add_to_tmp_buffer(&c->tmp, source_base_size);
 	    src_address = NULL;
 	    if (src_offset == -1) return 0;
@@ -1181,7 +1178,7 @@ conversion_action_ptr params;
 	 * memory so we can modify the base if necessary.
 	 */
 	int align_pad = (8 - ioformat->body->record_length) & 0x7;
-	int buffer_required = Max(possible_converted_variant_size + align_pad,
+	int64_t buffer_required = Max(possible_converted_variant_size + align_pad,
 				  orig_variant_size + align_pad);
 	buffer_required = expand_size_to_align(buffer_required);
 	final_string_offset = add_to_tmp_buffer(&c->tmp, buffer_required);
@@ -1210,7 +1207,7 @@ conversion_action_ptr params;
 	     * either the source is not in memory or it is the same as 
 	     * where we want the record to end up.  Need temporary space.
 	     */
-	    int source_variant_size =	/* plus possible alignment of 8 */
+	    int64_t source_variant_size =	/* plus possible alignment of 8 */
 		input_record_len - ioformat->body->record_length + 8;
 	    src_string_offset = add_to_tmp_buffer(&c->tmp, source_variant_size);
 	    src_string_address = NULL;
@@ -1243,9 +1240,9 @@ conversion_action_ptr params;
     return 1;
 }
 
-static int
+static int64_t
 final_variant_size_for_record(input_record_len, conv)
-int input_record_len;
+int64_t input_record_len;
 IOConversionPtr conv;
 {
     return (int) ((input_record_len - conv->ioformat->body->record_length)
@@ -1257,7 +1254,7 @@ FFS_decode_length_format(FFSContext context, FFSTypeHandle ioformat,
 			 long record_length)
 {
     IOConversionPtr conv;
-    int variant_part, final_base_size, src_base_size;
+    int64_t variant_part, final_base_size, src_base_size;
 
     if (ioformat == NULL)
 	return -1;
@@ -1288,7 +1285,11 @@ FFSheader_size(FFSTypeHandle ioformat)
     int header_size = ioformat->body->server_ID.length;
     int align_pad;
     if (ioformat->body->variant) {
-	header_size += sizeof(FILE_INT);
+	if (ioformat->body->IOversion <= 3) {
+	    header_size += 4;
+	} else {
+	    header_size += 8;  // length info
+	}
     }
     align_pad = (8 - header_size) & 0x7;
     return header_size + align_pad;
@@ -1311,7 +1312,7 @@ int to_buffer;
 {
     FFSContext iofile = ioformat->context;
     IOConversionPtr conv;
-    int input_record_len;
+    int64_t input_record_len;
     IOConversionStruct null_conv;
     int align_pad;
     int header_size = FFSheader_size(ioformat);
@@ -1338,14 +1339,23 @@ int to_buffer;
 	return 0;
 
     if (ioformat->body->variant) {
-	FILE_INT record_len;
-	int len_align_pad = (4 - ioformat->body->server_ID.length) & 3;
-	FILE_INT *len_ptr = (FILE_INT *) (src + ioformat->body->server_ID.length +
-					  len_align_pad);
-	memcpy(&record_len, len_ptr, sizeof(FILE_INT));
-	if (ioformat->body->byte_reversal)
-	    byte_swap((char *) &record_len, 4);
-	input_record_len = record_len;
+	if (ioformat->body->IOversion <= 3) {
+	    FILE_INT record_len;
+	    int len_align_pad = (4 - ioformat->body->server_ID.length) & 3;
+	    FILE_INT *len_ptr = (FILE_INT *) (src + ioformat->body->server_ID.length +
+					      len_align_pad);
+	    memcpy(&record_len, len_ptr, 4);
+	    if (ioformat->body->byte_reversal)
+		byte_swap((char *) &record_len, 4);
+	    input_record_len = record_len;
+	} else {
+	    uint64_t record_len;
+	    uint64_t *len_ptr = (uint64_t *) (src + ioformat->body->server_ID.length);
+	    memcpy(&record_len, len_ptr, 8);
+	    if (ioformat->body->byte_reversal)
+		byte_swap((char *) &record_len, 8);
+	    input_record_len = record_len;
+	}
     } else {
 	input_record_len = ioformat->body->record_length;
     }
@@ -1508,7 +1518,7 @@ create_FFSBuffer()
 }
 
 FFSBuffer
-create_fixed_FFSBuffer(char *buffer, int size)
+create_fixed_FFSBuffer(char *buffer, size_t size)
 {
     FFSBuffer buf = malloc(sizeof(struct _FFSBuffer));
     buf->tmp_buffer = buffer;
@@ -1530,7 +1540,7 @@ extern
 char *
 make_tmp_buffer(buf, size)
 FFSBuffer buf;
-int size;
+int64_t size;
 {
     if (buf->tmp_buffer_size < 0) {
 	/* fixed size buffer */
@@ -1538,7 +1548,7 @@ int size;
 	return buf->tmp_buffer;
     }
     if (buf->tmp_buffer_size == 0) {
-	int tmp_size = Max(size, TMP_BUFFER_INIT_SIZE);
+	int64_t tmp_size = Max(size, TMP_BUFFER_INIT_SIZE);
 	buf->tmp_buffer = malloc(tmp_size);
 	buf->tmp_buffer_size = tmp_size;
     }
@@ -1555,10 +1565,10 @@ int size;
 }
 
 static
-long
+ssize_t
 add_to_tmp_buffer(buf, size)
 FFSBuffer buf;
-int size;
+size_t size;
 {
     long old_size = buf->tmp_buffer_in_use_size;
     size += old_size;
@@ -1568,7 +1578,7 @@ int size;
 	if (size > (-buf->tmp_buffer_size)) return -1;
     } else {
 	if (buf->tmp_buffer_size == 0) {
-	    int tmp_size = Max(size, TMP_BUFFER_INIT_SIZE);
+	    int64_t tmp_size = Max(size, TMP_BUFFER_INIT_SIZE);
 	    buf->tmp_buffer = malloc(tmp_size);
 	}
 	if (size > buf->tmp_buffer_size) {

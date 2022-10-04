@@ -6,8 +6,6 @@
 						 * magic */
 #define MAGIC_FLOAT 0.0078125
 	/* random float */
-#define CURRENT_IO_VERSION set_ffs_version()
-extern int set_ffs_version();
 #ifndef FALSE
 #define FALSE 0
 #define TRUE 1
@@ -35,8 +33,8 @@ struct _FFSBuffer {
 
 typedef struct _internal_iovec {
     void *iov_base;
-    int iov_offset;
-    int iov_len;
+    size_t iov_offset;
+    size_t iov_len;
 } internal_iovec;
 
 struct _IOContextStruct {
@@ -191,7 +189,7 @@ set_IOconversion_for_format(FFSContext iofile, FMFormat file_ioformat,
 
 extern
 char *
-make_tmp_buffer(FFSBuffer buf, int size);
+make_tmp_buffer(FFSBuffer buf, int64_t size);
 
 extern int
 FFS_decode_length_format(FFSContext context, FFSTypeHandle ioformat, 

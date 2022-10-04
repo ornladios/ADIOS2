@@ -104,7 +104,7 @@ char **argv;
     clock_gettime(CLOCK_MONOTONIC, &start);
     FFSBuffer b = create_FFSBuffer();
     
-    int buf_size;
+    size_t buf_size;
     char *encode = FFSencode(b, format, buf, &buf_size);
     FFSTypeHandle th = FFSTypeHandle_from_encode(fc, encode);
     clock_gettime(CLOCK_MONOTONIC, &stop);

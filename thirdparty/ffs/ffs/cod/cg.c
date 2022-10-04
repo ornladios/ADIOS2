@@ -1039,7 +1039,7 @@ cg_decl(dill_stream s, sm_ref decl, cod_code descr)
 	    if (typ && (typ->node_type == cod_struct_type_decl) &&
 	        (typ->node.struct_type_decl.encode_info != NULL)) {
 		/* for encoded parameters, skip header */
-		dill_addpi(s, lvar, lvar, 16);
+		dill_addpi(s, lvar, lvar, 24);
 	    }
 	    if ((ctype != NULL) && (ctype->node_type == cod_array_type_decl)){
 		/* array param */

@@ -740,7 +740,10 @@ int character_limit;
     int ret;
     int header_size = format->server_ID.length;
     if (format->variant) {
-	header_size += sizeof(INT4);
+	if (format->IOversion <= 3) 
+	    header_size += sizeof(INT4);
+	else 
+	    header_size += 8;
     }
     header_size += (8 - header_size) & 0x7;
     data = (char*)data + header_size;
@@ -774,7 +777,10 @@ FMheader_skip(FMContext c, void *data)
     int header_size = format->server_ID.length;
 
     if (format->variant) {
-	header_size += sizeof(INT4);
+	if (format->IOversion <= 3) 
+	    header_size += sizeof(INT4);
+	else 
+	    header_size += 8;
     }
     header_size += (8 - header_size) & 0x7;
     data = (char*)data + header_size;
@@ -789,7 +795,10 @@ FMfdump_encoded_XML(void *out, FMContext c, void *data, int limit)
     struct dump_state state;
 
     if (format->variant) {
-	header_size += sizeof(INT4);
+	if (format->IOversion <= 3) 
+	    header_size += sizeof(INT4);
+	else 
+	    header_size += 8;
     }
     header_size += (8 - header_size) & 0x7;
     data = (char*)data + header_size;

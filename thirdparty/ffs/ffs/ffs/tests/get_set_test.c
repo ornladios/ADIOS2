@@ -36,7 +36,7 @@ char **argv;
     FMContext context;
     FMFormat third_format;
     FFSBuffer buf;
-    int buf_size;
+    size_t buf_size;
     
     /* setup a test record to play with */
     test_rec.integer_field = -15;

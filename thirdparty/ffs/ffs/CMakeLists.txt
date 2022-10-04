@@ -7,7 +7,7 @@ if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
 
-project(FFS VERSION 1.6.0)
+project(FFS VERSION 2.0.0)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
