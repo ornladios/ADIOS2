@@ -816,6 +816,7 @@ static int DaosGetPriority(CP_Services Svcs, void *CP_Stream,
 extern CP_DP_Interface LoadDaosDP()
 {
     memset(&daosDPInterface, 0, sizeof(daosDPInterface));
+    daosDPInterface.DPName = "daos";
     daosDPInterface.ReaderContactFormats = DaosReaderContactStructs;
     daosDPInterface.WriterContactFormats = DaosWriterContactStructs;
     daosDPInterface.TimestepInfoFormats = NULL; // DaosTimestepInfoStructs;
