@@ -98,7 +98,7 @@ char **argv;
     void* (*func2)(void*);
     FMFormat format;
     FFSBuffer buf;
-    int buf_size;
+    size_t buf_size;
     int test_array1[10][5];
     double test_array2[10];
     int x, y;

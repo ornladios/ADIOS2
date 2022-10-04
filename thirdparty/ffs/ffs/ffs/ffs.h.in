@@ -36,6 +36,8 @@ extern "C" {
 #include "atl.h"
 #endif
 
+#include <stddef.h>
+#include <stdint.h>
 
 
 typedef struct _FFSBuffer *FFSBuffer;
@@ -52,11 +54,11 @@ typedef struct _FFSIndexItem *FFSIndexItem;
 extern FFSContext create_FFSContext_FM(FMContext fmc);
 
 extern FFSBuffer create_FFSBuffer();
-extern FFSBuffer create_fixed_FFSBuffer(char *buffer, int size);
+extern FFSBuffer create_fixed_FFSBuffer(char *buffer, size_t size);
 extern void free_FFSBuffer(FFSBuffer buf);
 
 extern char *
-FFSencode(FFSBuffer b, FMFormat ioformat, void *data, int *buf_size);
+FFSencode(FFSBuffer b, FMFormat ioformat, void *data, size_t *buf_size);
 
 typedef struct FFSEncodeVec {
     void *iov_base;
@@ -67,7 +69,7 @@ extern FFSEncodeVector
 FFSencode_vector(FFSBuffer b, FMFormat fmformat, void *data);
 
 extern char *
-FFSencode_no_leaf_copy(FFSBuffer b, FMFormat fmformat, void *data, int *buf_size);
+FFSencode_no_leaf_copy(FFSBuffer b, FMFormat fmformat, void *data, size_t *buf_size);
 
 extern int FFSdecode_in_place_possible(FFSTypeHandle);
 

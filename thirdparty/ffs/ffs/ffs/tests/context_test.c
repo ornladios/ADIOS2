@@ -52,7 +52,7 @@ char **argv;
     FMFormat embedded_rec_ioformat, fifth_rec_ioformat, triangle_ioformat;
     FMStructDescRec str_list[5];
     char *xfer_buffer;
-    int buf_size;
+    size_t buf_size;
     first_rec rec1;
     first_rec array1[10];
     second_rec rec2;

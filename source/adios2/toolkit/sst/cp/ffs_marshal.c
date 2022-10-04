@@ -1591,9 +1591,9 @@ extern void SstFFSWriterEndStep(SstStream Stream, size_t Timestep)
     struct _SstData DataRec;
     struct _SstData MetaDataRec;
     struct _SstData AttributeRec;
-    int MetaDataSize;
-    int DataSize;
-    int AttributeSize = 0;
+    size_t MetaDataSize;
+    size_t DataSize;
+    size_t AttributeSize = 0;
     struct FFSMetadataInfoStruct *MBase;
     if (Info->DataFormat)
     {
