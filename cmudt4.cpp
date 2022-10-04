@@ -767,7 +767,7 @@ libcmudt4_LTX_non_blocking_listen(CManager cm, CMtrans_services svc,
 struct iovec
 {
     void *iov_base;
-    int iov_len;
+    long iov_len;
 };
 
 #endif
