@@ -165,8 +165,8 @@ static void RemoveNameFromExitList(const char *FileName)
     }
 }
 
-static void writeContactInfoFile(const char *Name, SstStream Stream,
-                                 attr_list DPAttrs)
+static int writeContactInfoFile(const char *Name, SstStream Stream,
+                                attr_list DPAttrs)
 {
     char *Contact = buildContactInfo(Stream, DPAttrs);
     char *TmpName = malloc(strlen(Name) + strlen(".tmp") + 1);
@@ -180,6 +180,14 @@ static void writeContactInfoFile(const char *Name, SstStream Stream,
     sprintf(TmpName, "%s.tmp", Name);
     sprintf(FileName, "%s" SST_POSTFIX, Name);
     WriterInfo = fopen(TmpName, "w");
+    if (!WriterInfo)
+    {
+        fprintf(stderr,
+                "Failed to create contact file \"%s\", is directory or "
+                "filesystem read-only?\n",
+                FileName);
+        return 0;
+    }
     fprintf(WriterInfo, "%s", SSTMAGICV0);
     fprintf(WriterInfo, "%s", Contact);
     fclose(WriterInfo);
@@ -189,6 +197,7 @@ static void writeContactInfoFile(const char *Name, SstStream Stream,
     free(TmpName);
     free(FileName);
     AddNameToExitList(Stream->AbsoluteFilename);
+    return 1;
 }
 
 static void writeContactInfoScreen(const char *Name, SstStream Stream,
@@ -208,21 +217,23 @@ static void writeContactInfoScreen(const char *Name, SstStream Stream,
     free(Contact);
 }
 
-static void registerContactInfo(const char *Name, SstStream Stream,
-                                attr_list DPAttrs)
+static int registerContactInfo(const char *Name, SstStream Stream,
+                               attr_list DPAttrs)
 {
     switch (Stream->RegistrationMethod)
     {
     case SstRegisterFile:
-        writeContactInfoFile(Name, Stream, DPAttrs);
+        return writeContactInfoFile(Name, Stream, DPAttrs);
         break;
     case SstRegisterScreen:
         writeContactInfoScreen(Name, Stream, DPAttrs);
+        return 1;
         break;
     case SstRegisterCloud:
         /* not yet */
         break;
     }
+    return 0;
 }
 
 static void removeContactInfoFile(SstStream Stream)
@@ -1380,7 +1391,8 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 
     if (Stream->Rank == 0)
     {
-        registerContactInfo(Filename, Stream, DPAttrs);
+        if (registerContactInfo(Filename, Stream, DPAttrs) == 0)
+            return NULL;
     }
 
     if (Stream->Rank == 0)
