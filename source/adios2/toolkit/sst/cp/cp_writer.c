@@ -224,11 +224,9 @@ static int registerContactInfo(const char *Name, SstStream Stream,
     {
     case SstRegisterFile:
         return writeContactInfoFile(Name, Stream, DPAttrs);
-        break;
     case SstRegisterScreen:
         writeContactInfoScreen(Name, Stream, DPAttrs);
         return 1;
-        break;
     case SstRegisterCloud:
         /* not yet */
         break;
