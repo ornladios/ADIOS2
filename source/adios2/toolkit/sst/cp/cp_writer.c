@@ -1224,6 +1224,11 @@ static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
     {
         if (Stream->ReaderCount == 0)
             return;
+        if (Stream->LastDemandTimestep == Entry->Timestep)
+            // This timestep got sent already (during a lock gap after entry
+            // into the queue when a timestep request was received). Don't send
+            // it again OnDemand
+            return;
     retry:
         /* send this entry to the first queued request and delete that request
          */

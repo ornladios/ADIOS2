@@ -1565,6 +1565,7 @@ SstStream CP_newStream()
     Stream->WriterTimestep = -1; // Filled in by ProvideTimestep
     Stream->ReaderTimestep = -1; // first beginstep will get us timestep 0
     Stream->CloseTimestepCount = (size_t)-1;
+    Stream->LastDemandTimestep = (size_t)-1;
     Stream->LastReleasedTimestep = -1;
     Stream->DiscardPriorTimestep =
         -1; // Timesteps prior to this discarded/released upon arrival

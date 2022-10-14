@@ -77,6 +77,9 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     else if (OnDemand)
     {
         engineParams["StepDistributionMode"] = "OnDemand";
+        std::cout << "Running this test in OnDemand mode may produce "
+                     "unpredictable results.  Not suitable for CI."
+                  << std::endl;
     }
     else
     {
