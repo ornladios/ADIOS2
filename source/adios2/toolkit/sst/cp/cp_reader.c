@@ -521,8 +521,14 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
             Stream, PerRankVerbose,
             "Waiting for writer DPResponse message in SstReadOpen(\"%s\")\n",
             Filename, DPQuery.WriterResponseCondition);
-        CMCondition_wait(Stream->CPInfo->SharedCM->cm,
-                         DPQuery.WriterResponseCondition);
+        int result = CMCondition_wait(Stream->CPInfo->SharedCM->cm,
+                                      DPQuery.WriterResponseCondition);
+        if (result == 0)
+        {
+            fprintf(stderr, "The writer exited before contact could be made, "
+                            "SST Open failed.\n");
+            return NULL;
+        }
         CP_verbose(Stream, PerRankVerbose,
                    "finished wait writer DPresponse message in read_open, "
                    "WRITER is using \"%s\" DataPlane\n",
@@ -632,8 +638,14 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
             Stream, PerRankVerbose,
             "Waiting for writer response message in SstReadOpen(\"%s\")\n",
             Filename, ReaderRegister.WriterResponseCondition);
-        CMCondition_wait(Stream->CPInfo->SharedCM->cm,
-                         ReaderRegister.WriterResponseCondition);
+        int result = CMCondition_wait(Stream->CPInfo->SharedCM->cm,
+                                      ReaderRegister.WriterResponseCondition);
+        if (result == 0)
+        {
+            fprintf(stderr, "The writer exited before the SST Reader Open "
+                            "could be completed.\n");
+            return NULL;
+        }
         CP_verbose(Stream, PerRankVerbose,
                    "finished wait writer response message in read_open\n");
 
@@ -1455,8 +1467,13 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, long LastTimestep)
                            "SstAdvanceStep installing precious "
                            "metadata for discarded TS %d\n",
                            Next->MetadataMsg->Timestep);
-                FFSMarshalInstallPreciousMetadata(Stream, Next->MetadataMsg);
-                if (Stream->WriterConfigParams->MarshalMethod == SstMarshalBP5)
+                if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
+                {
+                    FFSMarshalInstallPreciousMetadata(Stream,
+                                                      Next->MetadataMsg);
+                }
+                else if (Stream->WriterConfigParams->MarshalMethod ==
+                         SstMarshalBP5)
                 {
                     AddFormatsToMetaMetaInfo(Stream, Next->MetadataMsg);
                     AddAttributesToAttrDataList(Stream, Next->MetadataMsg);

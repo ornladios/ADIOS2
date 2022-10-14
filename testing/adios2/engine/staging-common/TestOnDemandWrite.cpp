@@ -58,7 +58,8 @@ TEST_F(SstOnDemandWriteTest, ADIOS2SstOnDemandWrite)
         adios2::IO sstIO = adios.DeclareIO("sstOnDemand");
 
         sstIO.SetEngine(engine);
-        sstIO.SetParameters({{"AlwaysProvideLatestTimestep", "true"}});
+        engineParams["StepDistributionMode"] = "OnDemand";
+        sstIO.SetParameters(engineParams);
         std::vector<adios2::Variable<float>> sstFloats(variablesSize);
         for (int v = 0; v < variablesSize; ++v)
         {
@@ -67,6 +68,7 @@ TEST_F(SstOnDemandWriteTest, ADIOS2SstOnDemandWrite)
             sstFloats[v] = sstIO.DefineVariable<float>(namev, {size * Nx},
                                                        {rank * Nx}, {Nx});
         }
+        auto stepVar = sstIO.DefineVariable<int>("Step");
 
         adios2::Engine sstWriter = sstIO.Open(fname, adios2::Mode::Write);
         double put_time = 0;
@@ -87,6 +89,7 @@ TEST_F(SstOnDemandWriteTest, ADIOS2SstOnDemandWrite)
                           << v << " " << myFloats[v * Nx] << std::endl;
 #endif
             }
+            sstWriter.Put<int>(stepVar, timeStep);
             sstWriter.EndStep();
         }
         auto end_step = std::chrono::steady_clock::now();

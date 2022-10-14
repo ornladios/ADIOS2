@@ -57,6 +57,9 @@ TEST_F(SstOnDemandReadTest, ADIOS2SstOnDemandRead)
         std::vector<float> myFloats(variablesSize * Nx);
         while (sstReader.BeginStep() == adios2::StepStatus::OK)
         {
+            adios2::Variable<int> stepVar = sstIO.InquireVariable<int>("Step");
+            int writerStep;
+
             for (int v = 0; v < variablesSize; ++v)
             {
                 std::string namev("sstFloats");
@@ -71,6 +74,7 @@ TEST_F(SstOnDemandReadTest, ADIOS2SstOnDemandRead)
                 get_time += (end_get - start_get).count() / 1000;
                 // std::this_thread::sleep_for (std::chrono::seconds(1));
             }
+            sstReader.Get(stepVar, writerStep);
             sstReader.EndStep();
             steps += 1;
 #ifdef DEBUG

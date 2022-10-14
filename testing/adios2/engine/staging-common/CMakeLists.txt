@@ -8,14 +8,14 @@ find_package(Threads REQUIRED)
 if(ADIOS2_HAVE_SST)
   gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.FFS" EXTRA_ARGS "SST" "MarshalMethod=FFS")
   gtest_add_tests_helper(StagingMPMD MPI_ONLY "" Engine.Staging. ".SST.BP" EXTRA_ARGS "SST" "MarshalMethod=BP")
+  gtest_add_tests_helper(OnDemandMPI MPI_ONLY "" Engine.Staging. ".SST" EXTRA_ARGS "SST" "OnDemandContact")
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".SST.FFS" EXTRA_ARGS "SST"  "--engine_params" "MarshalMethod=FFS")
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".SST.BP" EXTRA_ARGS "SST"  "--engine_params" "MarshalMethod=BP")
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".BP4_stream" EXTRA_ARGS "BP4"  "--engine_params" "OpenTimeoutSecs=5")
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".FileStream" EXTRA_ARGS "FileStream")
 endif()
 
-foreach(helper
-    TestCommonWrite
+set (PROGS TestCommonWrite
     TestCommonWriteModes
     TestCommonWriteAttrs
     TestCommonWriteLocal
@@ -37,8 +37,9 @@ foreach(helper
     TestStructWrite
     TestStructRead
     TestOnDemandWrite
-    TestOnDemandRead
-    )
+    TestOnDemandRead)
+
+foreach(helper ${PROGS} )
   add_executable(${helper} ${helper}.cpp)
 
   # Workaround for multiple versions of FindSst
