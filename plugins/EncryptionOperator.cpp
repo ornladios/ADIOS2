@@ -96,9 +96,10 @@ EncryptionOperator::~EncryptionOperator() {}
 __attribute__((no_sanitize("memory")))
 #endif
 #endif
-size_t EncryptionOperator::Operate(const char *dataIn, const Dims &blockStart,
-                                   const Dims &blockCount, const DataType type,
-                                   char *bufferOut)
+size_t
+EncryptionOperator::Operate(const char *dataIn, const Dims &blockStart,
+                            const Dims &blockCount, const DataType type,
+                            char *bufferOut)
 {
     if (!Impl->KeyValid)
     {
@@ -143,8 +144,9 @@ size_t EncryptionOperator::Operate(const char *dataIn, const Dims &blockStart,
 __attribute__((no_sanitize("memory")))
 #endif
 #endif
-size_t EncryptionOperator::InverseOperate(const char *bufferIn,
-                                          const size_t sizeIn, char *dataOut)
+size_t
+EncryptionOperator::InverseOperate(const char *bufferIn, const size_t sizeIn,
+                                   char *dataOut)
 {
     size_t offset = 0;
 
