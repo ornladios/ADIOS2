@@ -121,17 +121,6 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         }
         engine1.Put(step_var, step);
         engine1.EndStep();
-        if (OnDemand)
-        {
-            if (step >= 2)
-            {
-                // send out first three quickly, so those (assume 3) guys find
-                // out who they are, then one every 2 sec
-                std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-            }
-            if (step == 8)
-                std::this_thread::sleep_for(std::chrono::milliseconds(10000));
-        }
     }
     // Close the file
     engine1.Close();

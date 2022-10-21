@@ -1171,6 +1171,8 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
                        Entry->Timestep,
                        CP_WSR_Stream->PreloadModeActiveTimestep, PMode);
         }
+        Entry->Msg->PreloadMode = PMode;
+        CP_WSR_Stream->FormatSentCount += FormatListCount(ToSend);
         STREAM_MUTEX_UNLOCK(Stream);
         if (Stream->DP_Interface->readerRegisterTimestep)
         {
@@ -1178,8 +1180,6 @@ static void SendTimestepEntryToSingleReader(SstStream Stream,
                 &Svcs, CP_WSR_Stream->DP_WSR_Stream, Entry->Timestep, PMode);
         }
 
-        Entry->Msg->PreloadMode = PMode;
-        CP_WSR_Stream->FormatSentCount += FormatListCount(ToSend);
         STREAM_MUTEX_LOCK(Stream);
         if (CP_WSR_Stream->ReaderStatus == Established)
             sendOneToWSRCohort(
@@ -1224,11 +1224,6 @@ static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
     {
         if (Stream->ReaderCount == 0)
             return;
-        if (Stream->LastDemandTimestep == Entry->Timestep)
-            // This timestep got sent already (during a lock gap after entry
-            // into the queue when a timestep request was received). Don't send
-            // it again OnDemand
-            return;
     retry:
         /* send this entry to the first queued request and delete that request
          */
@@ -1244,7 +1239,8 @@ static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
                 SendTimestepEntryToSingleReader(
                     Stream, Entry, Stream->Readers[RequestingReader],
                     RequestingReader);
-                if (Stream->LastDemandTimestep == Stream->CloseTimestepCount)
+                if ((Stream->CloseTimestepCount != (size_t)-1) &&
+                    (Stream->LastDemandTimestep == Stream->CloseTimestepCount))
                 {
                     /* send if all timesteps have been send OnDemand */
                     SendCloseMsgs(Stream);
@@ -2250,6 +2246,7 @@ extern void SstInternalProvideTimestep(
     Entry->FreeTimestep = FreeTimestep;
     Entry->FreeClientData = FreeClientData;
     Entry->Next = Stream->QueuedTimesteps;
+    Entry->InProgressFlag = 1;
     Stream->QueuedTimesteps = Entry;
     Stream->QueuedTimestepCount++;
     Stream->Stats.TimestepsCreated++;
@@ -2405,6 +2402,7 @@ extern void SstInternalProvideTimestep(
 
         STREAM_MUTEX_LOCK(Stream);
         SendTimestepEntryToReaders(Stream, Entry);
+        Entry->InProgressFlag = 0;
         SubRefTimestep(Stream, Entry->Timestep, 0);
         QueueMaintenance(Stream);
         STREAM_MUTEX_UNLOCK(Stream);
@@ -2702,7 +2700,7 @@ void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn, void *Msg_v,
             break; /* break out of while if we've fallen out of established
                     */
         }
-        if (List->Timestep == NextTS)
+        if ((List->Timestep == NextTS) && !List->InProgressFlag)
         {
             if (List->Expired && !List->PreciousTimestep)
             {
