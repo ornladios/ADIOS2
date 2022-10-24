@@ -446,7 +446,7 @@ std::string BPBase::ReadBPString(const std::vector<char> &buffer,
 // static members
 const std::set<std::string> BPBase::m_TransformTypes = {
     {"unknown", "none", "identity", "bzip2", "sz", "zfp", "mgard", "png",
-     "blosc", "sirius", "mgardplus", "plugin"}};
+     "blosc", "blosc2", "sirius", "mgardplus", "plugin"}};
 
 const std::map<int, std::string> BPBase::m_TransformTypesToNames = {
     {transform_unknown, "unknown"},
@@ -458,6 +458,7 @@ const std::map<int, std::string> BPBase::m_TransformTypesToNames = {
     {transform_png, "png"},
     {transform_bzip2, "bzip2"},
     {transform_blosc, "blosc"},
+    {transform_blosc2, "blosc2"},
     {transform_sirius, "sirius"},
     {transform_mgardplus, "mgardplus"},
     {transform_plugin, "plugin"}};
