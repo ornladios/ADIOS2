@@ -244,6 +244,11 @@ if(ADIOS2_HAVE_Blosc)
   target_link_libraries(adios2_core PRIVATE Blosc::Blosc)
 endif()
 
+if(ADIOS2_HAVE_Blosc2)
+  target_sources(adios2_core PRIVATE operator/compress/CompressBlosc2.cpp)
+  target_link_libraries(adios2_core PRIVATE Blosc2::Blosc2)
+endif()
+
 if(ADIOS2_HAVE_BZip2)
   target_sources(adios2_core PRIVATE operator/compress/CompressBZIP2.cpp)
   target_link_libraries(adios2_core PRIVATE BZip2::BZip2)
