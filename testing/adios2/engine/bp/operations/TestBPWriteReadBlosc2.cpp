@@ -17,7 +17,7 @@
 std::string engineName; // comes from command line
 
 void Blosc2Accuracy1D(const std::string accuracy, const std::string threshold,
-                     const std::string doshuffle)
+                      const std::string doshuffle)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
@@ -71,17 +71,17 @@ void Blosc2Accuracy1D(const std::string accuracy, const std::string threshold,
             "r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
-        adios2::Operator Blosc2Op =
-            adios.DefineOperator("Blosc2Compressor", adios2::ops::LosslessBlosc2);
+        adios2::Operator Blosc2Op = adios.DefineOperator(
+            "Blosc2Compressor", adios2::ops::LosslessBlosc2);
 
-        var_r32.AddOperation(Blosc2Op,
-                             {{adios2::ops::blosc2::key::clevel, accuracy},
-                              {adios2::ops::blosc2::key::threshold, threshold},
-                              {adios2::ops::blosc2::key::doshuffle, doshuffle}});
-        var_r64.AddOperation(Blosc2Op,
-                             {{adios2::ops::blosc2::key::clevel, accuracy},
-                              {adios2::ops::blosc2::key::threshold, threshold},
-                              {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r32.AddOperation(
+            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
+                       {adios2::ops::blosc2::key::threshold, threshold},
+                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r64.AddOperation(
+            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
+                       {adios2::ops::blosc2::key::threshold, threshold},
+                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -158,7 +158,7 @@ void Blosc2Accuracy1D(const std::string accuracy, const std::string threshold,
 }
 
 void Blosc2Accuracy2D(const std::string accuracy, const std::string threshold,
-                     const std::string doshuffle)
+                      const std::string doshuffle)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
@@ -213,17 +213,17 @@ void Blosc2Accuracy2D(const std::string accuracy, const std::string threshold,
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator Blosc2Op =
-            adios.DefineOperator("Blosc2Compressor", adios2::ops::LosslessBlosc2);
+        adios2::Operator Blosc2Op = adios.DefineOperator(
+            "Blosc2Compressor", adios2::ops::LosslessBlosc2);
 
-        var_r32.AddOperation(Blosc2Op,
-                             {{adios2::ops::blosc2::key::clevel, accuracy},
-                              {adios2::ops::blosc2::key::threshold, threshold},
-                              {adios2::ops::blosc2::key::doshuffle, doshuffle}});
-        var_r64.AddOperation(Blosc2Op,
-                             {{adios2::ops::blosc2::key::clevel, accuracy},
-                              {adios2::ops::blosc2::key::threshold, threshold},
-                              {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r32.AddOperation(
+            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
+                       {adios2::ops::blosc2::key::threshold, threshold},
+                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r64.AddOperation(
+            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
+                       {adios2::ops::blosc2::key::threshold, threshold},
+                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -302,7 +302,7 @@ void Blosc2Accuracy2D(const std::string accuracy, const std::string threshold,
 }
 
 void Blosc2Accuracy3D(const std::string accuracy, const std::string threshold,
-                     const std::string doshuffle)
+                      const std::string doshuffle)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
@@ -358,17 +358,17 @@ void Blosc2Accuracy3D(const std::string accuracy, const std::string threshold,
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator Blosc2Op =
-            adios.DefineOperator("Blosc2Compressor", adios2::ops::LosslessBlosc2);
+        adios2::Operator Blosc2Op = adios.DefineOperator(
+            "Blosc2Compressor", adios2::ops::LosslessBlosc2);
 
-        var_r32.AddOperation(Blosc2Op,
-                             {{adios2::ops::blosc2::key::clevel, accuracy},
-                              {adios2::ops::blosc2::key::threshold, threshold},
-                              {adios2::ops::blosc2::key::doshuffle, doshuffle}});
-        var_r64.AddOperation(Blosc2Op,
-                             {{adios2::ops::blosc2::key::clevel, accuracy},
-                              {adios2::ops::blosc2::key::threshold, threshold},
-                              {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r32.AddOperation(
+            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
+                       {adios2::ops::blosc2::key::threshold, threshold},
+                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r64.AddOperation(
+            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
+                       {adios2::ops::blosc2::key::threshold, threshold},
+                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -448,8 +448,9 @@ void Blosc2Accuracy3D(const std::string accuracy, const std::string threshold,
     }
 }
 
-void Blosc2Accuracy1DSel(const std::string accuracy, const std::string threshold,
-                        const std::string doshuffle)
+void Blosc2Accuracy1DSel(const std::string accuracy,
+                         const std::string threshold,
+                         const std::string doshuffle)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
@@ -503,17 +504,17 @@ void Blosc2Accuracy1DSel(const std::string accuracy, const std::string threshold
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator Blosc2Op =
-            adios.DefineOperator("Blosc2Compressor", adios2::ops::LosslessBlosc2);
+        adios2::Operator Blosc2Op = adios.DefineOperator(
+            "Blosc2Compressor", adios2::ops::LosslessBlosc2);
 
-        var_r32.AddOperation(Blosc2Op,
-                             {{adios2::ops::blosc2::key::clevel, accuracy},
-                              {adios2::ops::blosc2::key::threshold, threshold},
-                              {adios2::ops::blosc2::key::doshuffle, doshuffle}});
-        var_r64.AddOperation(Blosc2Op,
-                             {{adios2::ops::blosc2::key::clevel, accuracy},
-                              {adios2::ops::blosc2::key::threshold, threshold},
-                              {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r32.AddOperation(
+            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
+                       {adios2::ops::blosc2::key::threshold, threshold},
+                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r64.AddOperation(
+            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
+                       {adios2::ops::blosc2::key::threshold, threshold},
+                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -589,8 +590,9 @@ void Blosc2Accuracy1DSel(const std::string accuracy, const std::string threshold
     }
 }
 
-void Blosc2Accuracy2DSel(const std::string accuracy, const std::string threshold,
-                        const std::string doshuffle)
+void Blosc2Accuracy2DSel(const std::string accuracy,
+                         const std::string threshold,
+                         const std::string doshuffle)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
@@ -645,17 +647,17 @@ void Blosc2Accuracy2DSel(const std::string accuracy, const std::string threshold
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator Blosc2Op =
-            adios.DefineOperator("Blosc2Compressor", adios2::ops::LosslessBlosc2);
+        adios2::Operator Blosc2Op = adios.DefineOperator(
+            "Blosc2Compressor", adios2::ops::LosslessBlosc2);
 
-        var_r32.AddOperation(Blosc2Op,
-                             {{adios2::ops::blosc2::key::clevel, accuracy},
-                              {adios2::ops::blosc2::key::threshold, threshold},
-                              {adios2::ops::blosc2::key::doshuffle, doshuffle}});
-        var_r64.AddOperation(Blosc2Op,
-                             {{adios2::ops::blosc2::key::clevel, accuracy},
-                              {adios2::ops::blosc2::key::threshold, threshold},
-                              {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r32.AddOperation(
+            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
+                       {adios2::ops::blosc2::key::threshold, threshold},
+                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r64.AddOperation(
+            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
+                       {adios2::ops::blosc2::key::threshold, threshold},
+                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -733,8 +735,9 @@ void Blosc2Accuracy2DSel(const std::string accuracy, const std::string threshold
     }
 }
 
-void Blosc2Accuracy3DSel(const std::string accuracy, const std::string threshold,
-                        const std::string doshuffle)
+void Blosc2Accuracy3DSel(const std::string accuracy,
+                         const std::string threshold,
+                         const std::string doshuffle)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
@@ -790,17 +793,17 @@ void Blosc2Accuracy3DSel(const std::string accuracy, const std::string threshold
                                                  adios2::ConstantDims);
 
         // add operations
-        adios2::Operator Blosc2Op =
-            adios.DefineOperator("Blosc2Compressor", adios2::ops::LosslessBlosc2);
+        adios2::Operator Blosc2Op = adios.DefineOperator(
+            "Blosc2Compressor", adios2::ops::LosslessBlosc2);
 
-        var_r32.AddOperation(Blosc2Op,
-                             {{adios2::ops::blosc2::key::clevel, accuracy},
-                              {adios2::ops::blosc2::key::doshuffle, doshuffle},
-                              {adios2::ops::blosc2::key::threshold, threshold}});
-        var_r64.AddOperation(Blosc2Op,
-                             {{adios2::ops::blosc2::key::clevel, accuracy},
-                              {adios2::ops::blosc2::key::threshold, threshold},
-                              {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r32.AddOperation(
+            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
+                       {adios2::ops::blosc2::key::doshuffle, doshuffle},
+                       {adios2::ops::blosc2::key::threshold, threshold}});
+        var_r64.AddOperation(
+            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
+                       {adios2::ops::blosc2::key::threshold, threshold},
+                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -883,7 +886,7 @@ void Blosc2Accuracy3DSel(const std::string accuracy, const std::string threshold
 }
 
 class BPWriteReadBlosc2 : public ::testing::TestWithParam<
-                             std::tuple<std::string, std::string, std::string>>
+                              std::tuple<std::string, std::string, std::string>>
 {
 public:
     BPWriteReadBlosc2() = default;
@@ -894,32 +897,32 @@ public:
 TEST_P(BPWriteReadBlosc2, ADIOS2BPWriteReadBlosc21D)
 {
     Blosc2Accuracy1D(std::get<0>(GetParam()), std::get<1>(GetParam()),
-                    std::get<2>(GetParam()));
+                     std::get<2>(GetParam()));
 }
 TEST_P(BPWriteReadBlosc2, ADIOS2BPWriteReadBlosc22D)
 {
     Blosc2Accuracy2D(std::get<0>(GetParam()), std::get<1>(GetParam()),
-                    std::get<2>(GetParam()));
+                     std::get<2>(GetParam()));
 }
 TEST_P(BPWriteReadBlosc2, ADIOS2BPWriteReadBlosc23D)
 {
     Blosc2Accuracy3D(std::get<0>(GetParam()), std::get<1>(GetParam()),
-                    std::get<2>(GetParam()));
+                     std::get<2>(GetParam()));
 }
 TEST_P(BPWriteReadBlosc2, ADIOS2BPWriteReadBlosc21DSel)
 {
     Blosc2Accuracy1DSel(std::get<0>(GetParam()), std::get<1>(GetParam()),
-                       std::get<2>(GetParam()));
+                        std::get<2>(GetParam()));
 }
 TEST_P(BPWriteReadBlosc2, ADIOS2BPWriteReadBlosc22DSel)
 {
     Blosc2Accuracy2DSel(std::get<0>(GetParam()), std::get<1>(GetParam()),
-                       std::get<2>(GetParam()));
+                        std::get<2>(GetParam()));
 }
 TEST_P(BPWriteReadBlosc2, ADIOS2BPWriteReadBlosc23DSel)
 {
     Blosc2Accuracy3DSel(std::get<0>(GetParam()), std::get<1>(GetParam()),
-                       std::get<2>(GetParam()));
+                        std::get<2>(GetParam()));
 }
 
 INSTANTIATE_TEST_SUITE_P(
