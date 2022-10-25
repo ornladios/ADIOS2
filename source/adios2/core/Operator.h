@@ -37,6 +37,7 @@ public:
         COMPRESS_SZ = 6,
         COMPRESS_ZFP = 7,
         COMPRESS_MGARDPLUS = 8,
+        COMPRESS_BLOSC2 = 9,
         CALLBACK_SIGNATURE1 = 51,
         CALLBACK_SIGNATURE2 = 52,
         PLUGIN_INTERFACE = 53,

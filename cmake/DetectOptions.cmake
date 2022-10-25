@@ -77,6 +77,16 @@ if(BLOSC_FOUND)
   set(ADIOS2_HAVE_Blosc TRUE)
 endif()
 
+# Blosc2
+if(ADIOS2_USE_Blosc2 STREQUAL AUTO)
+  find_package(Blosc2 2.4)
+elseif(ADIOS2_USE_Blosc2)
+  find_package(Blosc2 2.4 REQUIRED)
+endif()
+if(BLOSC2_FOUND)
+  set(ADIOS2_HAVE_Blosc2 TRUE)
+endif()
+
 # BZip2
 if(ADIOS2_USE_BZip2 STREQUAL AUTO)
   find_package(BZip2)
