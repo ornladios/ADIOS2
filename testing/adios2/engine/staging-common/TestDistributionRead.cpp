@@ -66,8 +66,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     adios2::Engine engine1 = io1.Open(fname, adios2::Mode::Read);
 
-    time_point<Clock> startTime = Clock::now();
-
     std::string varname1 = "r64";
 
     size_t first_step = SIZE_MAX;
@@ -76,13 +74,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     {
         size_t writerSize;
         size_t step;
-        if (OnDemand && (total_steps > 0))
-        {
-            time_point<Clock> end = Clock::now();
-            milliseconds diff = duration_cast<milliseconds>(end - startTime);
-            std::cout << "Reader " << first_step << "Got an step at time "
-                      << diff.count() << "ms" << std::endl;
-        }
         auto var1 = io1.InquireVariable<double>(varname1);
 
         EXPECT_TRUE(var1);
@@ -122,7 +113,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
                                                myLength, writerSize * Nx);
         if (first_step == SIZE_MAX)
         {
-            std::cout << "My first step was step " << step << std::endl;
             first_step = step;
         }
         if (result != 0)
@@ -131,66 +121,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
                       << " timestep " << step << std::endl;
         }
         EXPECT_EQ(result, 0);
-        if (OnDemand)
-        {
-            std::cout << "Reader " << first_step << " Got Step " << step
-                      << std::endl;
-            switch (first_step)
-            {
-            case 0:
-            {
-                double StepDelay[] = {1, 3, 5, 0, 0, 20};
-                int ExpectedStep[] = {0, 4, 7, 10, 12, 15};
-                EXPECT_EQ(ExpectedStep[total_steps], step);
-                std::cout << "Reader " << first_step << " Sleeping for "
-                          << StepDelay[total_steps] << std::endl;
-                std::this_thread::sleep_for(std::chrono::milliseconds(
-                    (long)(StepDelay[total_steps] * 1000.0)));
-                time_point<Clock> end = Clock::now();
-                milliseconds diff =
-                    duration_cast<milliseconds>(end - startTime);
-                std::cout << "Reader " << first_step
-                          << "Doing begin step at time " << diff.count() << "ms"
-                          << std::endl;
-
-                break;
-            }
-            case 1:
-            {
-                double StepDelay[] = {0, 0, 1.5, 5, 0, 0, 1, 10};
-                int ExpectedStep[] = {1, 3, 5, 8, 11, 14, 17, 19};
-                EXPECT_EQ(ExpectedStep[total_steps], step);
-                std::cout << "Reader " << first_step << " Sleeping for "
-                          << StepDelay[total_steps] << std::endl;
-                std::this_thread::sleep_for(std::chrono::milliseconds(
-                    (long)(StepDelay[total_steps] * 1000.0)));
-                time_point<Clock> end = Clock::now();
-                milliseconds diff =
-                    duration_cast<milliseconds>(end - startTime);
-                std::cout << "Reader " << first_step
-                          << "Doing begin step at time " << diff.count() << "ms"
-                          << std::endl;
-                break;
-            }
-            case 2:
-            {
-                double StepDelay[] = {3, 2, 4, 0, 0, 0, 0};
-                int ExpectedStep[] = {2, 6, 9, 13, 16, 18};
-                EXPECT_EQ(ExpectedStep[total_steps], step);
-                std::cout << "Reader " << first_step << " Sleeping for "
-                          << StepDelay[total_steps] << std::endl;
-                std::this_thread::sleep_for(std::chrono::milliseconds(
-                    (long)(StepDelay[total_steps] * 1000.0)));
-                time_point<Clock> end = Clock::now();
-                milliseconds diff =
-                    duration_cast<milliseconds>(end - startTime);
-                std::cout << "Reader " << first_step
-                          << "Doing begin step at time " << diff.count() << "ms"
-                          << std::endl;
-                break;
-            }
-            }
-        }
         total_steps++;
     }
     if (RoundRobin)
@@ -206,18 +136,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     }
     else if (OnDemand)
     {
-        switch (first_step)
-        {
-        case 0:
-            EXPECT_EQ(total_steps, 6);
-            break;
-        case 1:
-            EXPECT_EQ(total_steps, 8);
-            break;
-        case 2:
-            EXPECT_EQ(total_steps, 6);
-            break;
-        }
+        std::cout << " Total steps received is " << total_steps << std::endl;
     }
     else
     {
