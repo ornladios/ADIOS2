@@ -459,6 +459,7 @@ void TransportMan::CloseFiles(const int transportIndex)
         CheckFile(itTransport, ", in call to CloseFiles with index " +
                                    std::to_string(transportIndex));
         itTransport->second->Close();
+        m_Transports.erase(itTransport);
     }
 }
 
