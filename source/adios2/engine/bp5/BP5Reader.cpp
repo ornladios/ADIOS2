@@ -503,6 +503,12 @@ void BP5Reader::InitParameters()
             m_Threads = helper::SetWithinLimit(8U / NodeSize, 1U, 8U);
         }
     }
+
+    size_t limit = helper::RaiseLimitNoFile();
+    if (m_Parameters.MaxOpenFilesAtOnce > limit - 8)
+    {
+        m_Parameters.MaxOpenFilesAtOnce = limit - 8;
+    }
 }
 
 bool BP5Reader::SleepOrQuit(const TimePoint &timeoutInstant,

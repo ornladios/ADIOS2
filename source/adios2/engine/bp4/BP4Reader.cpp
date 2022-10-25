@@ -193,6 +193,8 @@ void BP4Reader::Init()
     m_BP4Deserializer.Init(m_IO.m_Parameters, "in call to BP4::Open to write");
     InitTransports();
 
+    helper::RaiseLimitNoFile();
+
     /* Do a collective wait for the file(s) to appear within timeout.
        Make sure every process comes to the same conclusion */
     const Seconds timeoutSeconds(

@@ -85,6 +85,11 @@ char BPVersion(const std::string &name, helper::Comm &comm,
  */
 unsigned int NumHardwareThreadsPerNode();
 
+/** Attempt to raise the limit of number of files opened at once
+ *  Return: the limit on number of open files
+ */
+size_t RaiseLimitNoFile();
+
 } // end namespace helper
 } // end namespace adios2
 

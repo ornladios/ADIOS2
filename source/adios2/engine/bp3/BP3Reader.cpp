@@ -156,6 +156,7 @@ void BP3Reader::Init()
     // if IO was involved in reading before this flag may be true now
     m_IO.m_ReadStreaming = false;
 
+    helper::RaiseLimitNoFile();
     InitTransports();
     InitBuffer();
 }
