@@ -11,10 +11,13 @@
 #include <chrono> //system_clock, now
 #include <ctime>
 #include <stdexcept> // std::runtime_error, std::exception
-#include <sys/resource.h>
-#include <sys/time.h>
 #include <system_error>
 #include <thread>
+
+#ifndef _WIN32
+#include <sys/resource.h> // getrlimits, setrlimits
+#include <sys/time.h>
+#endif
 
 #include <adios2sys/SystemTools.hxx>
 
@@ -191,6 +194,9 @@ unsigned int NumHardwareThreadsPerNode()
 
 size_t RaiseLimitNoFile()
 {
+#ifdef _WIN32
+    return _setmaxstdio(8192);
+#else
     static size_t raisedLimit = 0;
     static bool firstCallRaiseLimit = true;
 
@@ -232,6 +238,7 @@ size_t RaiseLimitNoFile()
         firstCallRaiseLimit = false;
     }
     return raisedLimit;
+#endif
 }
 
 } // end namespace helper
