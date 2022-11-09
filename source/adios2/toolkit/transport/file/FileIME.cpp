@@ -89,14 +89,14 @@ void FileIME::Open(const std::string &name, const Mode openMode,
     m_OpenMode = openMode;
     switch (m_OpenMode)
     {
-    case (Mode::Write):
+    case Mode::Write:
         ProfilerStart("open");
         m_FileDescriptor = ime_client_native2_open(
             m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
         ProfilerStop("open");
         break;
 
-    case (Mode::Append):
+    case Mode::Append:
         ProfilerStart("open");
         m_FileDescriptor =
             ime_client_native2_open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
@@ -104,7 +104,7 @@ void FileIME::Open(const std::string &name, const Mode openMode,
         ProfilerStop("open");
         break;
 
-    case (Mode::Read):
+    case Mode::Read:
         ProfilerStart("open");
         m_FileDescriptor =
             ime_client_native2_open(m_Name.c_str(), O_RDONLY, 0000);

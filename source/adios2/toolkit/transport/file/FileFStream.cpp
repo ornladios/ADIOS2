@@ -60,7 +60,7 @@ void FileFStream::Open(const std::string &name, const Mode openMode,
 
     switch (m_OpenMode)
     {
-    case (Mode::Write):
+    case Mode::Write:
         if (async)
         {
             m_IsOpening = true;
@@ -76,17 +76,15 @@ void FileFStream::Open(const std::string &name, const Mode openMode,
         }
         break;
 
-    case (Mode::Append):
+    case Mode::Append:
         ProfilerStart("open");
-        // m_FileStream.open(name, std::fstream::in | std::fstream::out |
-        //                            std::fstream::binary);
         m_FileStream.open(name, std::fstream::in | std::fstream::out |
                                     std::fstream::binary);
         m_FileStream.seekp(0, std::ios_base::end);
         ProfilerStop("open");
         break;
 
-    case (Mode::Read):
+    case Mode::Read:
         ProfilerStart("open");
         m_FileStream.open(name, std::fstream::in | std::fstream::binary);
         ProfilerStop("open");
@@ -130,7 +128,7 @@ void FileFStream::OpenChain(const std::string &name, Mode openMode,
     m_OpenMode = openMode;
     switch (m_OpenMode)
     {
-    case (Mode::Write):
+    case Mode::Write:
         if (async && chainComm.Size() == 1)
         {
             m_IsOpening = true;
@@ -155,7 +153,7 @@ void FileFStream::OpenChain(const std::string &name, Mode openMode,
         }
         break;
 
-    case (Mode::Append):
+    case Mode::Append:
         ProfilerStart("open");
         m_FileStream.open(name, std::fstream::in | std::fstream::out |
                                     std::fstream::binary);
@@ -163,7 +161,7 @@ void FileFStream::OpenChain(const std::string &name, Mode openMode,
         ProfilerStop("open");
         break;
 
-    case (Mode::Read):
+    case Mode::Read:
         ProfilerStart("open");
         m_FileStream.open(name, std::fstream::in | std::fstream::binary);
         ProfilerStop("open");
