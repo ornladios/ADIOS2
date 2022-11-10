@@ -73,7 +73,7 @@ void FileStdio::Open(const std::string &name, const Mode openMode,
 
     switch (m_OpenMode)
     {
-    case (Mode::Write):
+    case Mode::Write:
         if (async)
         {
             m_IsOpening = true;
@@ -86,13 +86,12 @@ void FileStdio::Open(const std::string &name, const Mode openMode,
             m_File = std::fopen(name.c_str(), "wb");
         }
         break;
-    case (Mode::Append):
+    case Mode::Append:
         errno = 0;
         m_File = std::fopen(name.c_str(), "rwb");
-        // m_File = std::fopen(name.c_str(), "a+b");
         std::fseek(m_File, 0, SEEK_END);
         break;
-    case (Mode::Read):
+    case Mode::Read:
         errno = 0;
         m_File = std::fopen(name.c_str(), "rb");
         break;
@@ -133,7 +132,7 @@ void FileStdio::OpenChain(const std::string &name, Mode openMode,
     m_OpenMode = openMode;
     switch (m_OpenMode)
     {
-    case (Mode::Write):
+    case Mode::Write:
         if (async)
         {
             m_IsOpening = true;
@@ -146,13 +145,12 @@ void FileStdio::OpenChain(const std::string &name, Mode openMode,
             m_File = std::fopen(name.c_str(), "wb");
         }
         break;
-    case (Mode::Append):
+    case Mode::Append:
         errno = 0;
         m_File = std::fopen(name.c_str(), "rwb");
-        // m_File = std::fopen(name.c_str(), "a+b");
         std::fseek(m_File, 0, SEEK_END);
         break;
-    case (Mode::Read):
+    case Mode::Read:
         errno = 0;
         m_File = std::fopen(name.c_str(), "rb");
         break;
