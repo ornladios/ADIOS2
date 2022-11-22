@@ -85,6 +85,18 @@ struct ParaViewFidesEngine::EngineImpl
         node["catalyst/state/time"].set(timestep);
         node["catalyst/channels/fides/type"].set(std::string("fides"));
 
+        // options to set up the fides reader in paraview
+        std::ostringstream address;
+        address << &Io;
+
+        node["catalyst/fides/json_file"].set(this->JSONFileName);
+        node["catalyst/fides/data_source_io/source"].set(std::string("source"));
+        node["catalyst/fides/data_source_io/address"].set(address.str());
+        node["catalyst/fides/data_source_path/source"].set(
+            std::string("source"));
+        node["catalyst/fides/data_source_path/path"].set(
+            std::string("DataReader"));
+
         // catalyst requires the data node on a channel, but we don't actually
         // need it when using fides, so just create a dummy object to pass
         // the validation in catalyst
