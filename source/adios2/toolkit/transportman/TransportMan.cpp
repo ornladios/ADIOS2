@@ -110,10 +110,10 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
 {
     for (size_t i = 0; i < fileNames.size(); ++i)
     {
-        const Params &parameters = parametersVector[i];
-        const std::string type = parameters.at("transport");
+        const Params &parameters = helper::LowerCaseParams(parametersVector[i]);
+        const std::string type = helper::LowerCase(parameters.at("transport"));
 
-        if (type == "File" || type == "file")
+        if (type == "file")
         {
             std::shared_ptr<Transport> file = OpenFileTransport(
                 fileNames[i], openMode, parameters, profile, false, m_Comm);
@@ -129,10 +129,10 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
 {
     for (size_t i = 0; i < fileNames.size(); ++i)
     {
-        const Params &parameters = parametersVector[i];
-        const std::string type = parameters.at("transport");
+        const Params &parameters = helper::LowerCaseParams(parametersVector[i]);
+        const std::string type = helper::LowerCase(parameters.at("transport"));
 
-        if (type == "File" || type == "file")
+        if (type == "file")
         {
             std::shared_ptr<Transport> file = OpenFileTransport(
                 fileNames[i], openMode, parameters, profile, true, chainComm);
@@ -146,7 +146,8 @@ void TransportMan::OpenFileID(const std::string &name, const size_t id,
                               const bool profile)
 {
     std::shared_ptr<Transport> file =
-        OpenFileTransport(name, mode, parameters, profile, false, m_Comm);
+        OpenFileTransport(name, mode, helper::LowerCaseParams(parameters),
+                          profile, false, m_Comm);
     m_Transports.insert({id, file});
 }
 
@@ -509,7 +510,8 @@ bool TransportMan::FileExists(const std::string &name, const Params &parameters,
     try
     {
         std::shared_ptr<Transport> file = OpenFileTransport(
-            name, Mode::Read, parameters, profile, false, m_Comm);
+            name, Mode::Read, helper::LowerCaseParams(parameters), profile,
+            false, m_Comm);
         exists = true;
         file->Close();
     }
@@ -524,10 +526,11 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
     const std::string &fileName, const Mode openMode, const Params &parameters,
     const bool profile, const bool useComm, const helper::Comm &chainComm)
 {
+    // This function expects Params with lower case keys!!!
+
     auto lf_GetBuffered = [&](const std::string bufferedDefault) -> bool {
         bool bufferedValue;
         std::string bufferedValueStr(bufferedDefault);
-        helper::SetParameterValue("Buffered", parameters, bufferedValueStr);
         helper::SetParameterValue("buffered", parameters, bufferedValueStr);
         {
             std::stringstream ss(bufferedValueStr);
@@ -562,7 +565,7 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
             }
         }
 #ifndef _WIN32
-        else if (library == "POSIX" || library == "posix")
+        else if (library == "posix")
         {
             transport = std::make_shared<transport::FilePOSIX>(m_Comm);
             if (lf_GetBuffered("false"))
@@ -574,7 +577,7 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
         }
 #endif
 #ifdef ADIOS2_HAVE_DAOS
-        else if (library == "Daos" || library == "daos")
+        else if (library == "daos")
         {
             transport = std::make_shared<transport::FileDaos>(m_Comm);
             if (lf_GetBuffered("false"))
@@ -586,12 +589,12 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
         }
 #endif
 #ifdef ADIOS2_HAVE_IME
-        else if (library == "IME" || library == "ime")
+        else if (library == "ime")
         {
             transport = std::make_shared<transport::FileIME>(m_Comm);
         }
 #endif
-        else if (library == "NULL" || library == "null")
+        else if (library == "null")
         {
             transport = std::make_shared<transport::NullTransport>(m_Comm);
             if (lf_GetBuffered("false"))
@@ -612,7 +615,6 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
     auto lf_GetLibrary = [](const std::string defaultLibrary,
                             const Params &parameters) -> std::string {
         std::string library(defaultLibrary);
-        helper::SetParameterValue("Library", parameters, library);
         helper::SetParameterValue("library", parameters, library);
         return library;
     };
@@ -620,7 +622,6 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
     auto lf_GetTimeUnits = [&](const std::string defaultTimeUnit,
                                const Params &parameters) -> TimeUnit {
         std::string profileUnits(defaultTimeUnit);
-        helper::SetParameterValue("ProfileUnits", parameters, profileUnits);
         helper::SetParameterValue("profileunits", parameters, profileUnits);
         return helper::StringToTimeUnit(profileUnits);
     };
@@ -628,7 +629,6 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
     auto lf_GetAsyncOpen = [&](const std::string defaultAsync,
                                const Params &parameters) -> bool {
         std::string AsyncOpen = defaultAsync;
-        helper::SetParameterValue("AsyncOpen", parameters, AsyncOpen);
         helper::SetParameterValue("asyncopen", parameters, AsyncOpen);
         return helper::StringTo<bool>(AsyncOpen, "");
     };
@@ -636,14 +636,15 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
     auto lf_GetDirectIO = [&](const std::string defaultValue,
                               const Params &parameters) -> bool {
         std::string directio = defaultValue;
-        helper::SetParameterValue("DirectIO", parameters, directio);
+        helper::SetParameterValue("directio", parameters, directio);
         return helper::StringTo<bool>(directio, "");
     };
 
     // BODY OF FUNCTION starts here
     std::shared_ptr<Transport> transport;
-    lf_SetFileTransport(lf_GetLibrary(DefaultFileLibrary, parameters),
-                        transport);
+    const std::string library =
+        helper::LowerCase(lf_GetLibrary(DefaultFileLibrary, parameters));
+    lf_SetFileTransport(library, transport);
 
     // Default or user ProfileUnits in parameters
     if (profile)
