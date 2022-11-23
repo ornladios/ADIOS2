@@ -142,9 +142,9 @@ size_t CompressPNG::Operate(const char *dataIn, const Dims &blockStart,
                                                    nullptr, nullptr, nullptr);
     png_infop pngInfo = png_create_info_struct(pngWrite);
 
-    const uint32_t bytesPerPixel = ndims == 3
-                                       ? static_cast<uint32_t>(blockCount[2])
-                                       : helper::GetDataTypeSize(type);
+    const uint32_t bytesPerPixel =
+        ndims == 3 ? static_cast<uint32_t>(blockCount[2])
+                   : static_cast<uint32_t>(helper::GetDataTypeSize(type));
 
     const uint32_t width = static_cast<uint32_t>(blockCount[1]);
     const uint32_t height = static_cast<uint32_t>(blockCount[0]);
