@@ -19,7 +19,7 @@ std::string engineName; // comes from command line
 template <class T>
 static T Random100()
 {
-    return std::rand() % 100;
+    return static_cast<T>(std::rand() % 100);
 }
 
 void PNGAccuracy2D(const std::string compressionLevel)
