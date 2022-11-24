@@ -1219,6 +1219,7 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
             Req.Count = variable.m_Count;
         }
         Req.Data = DestData;
+        Req.MemSpace = MemSpace;
         Req.Step = Step;
         PendingRequests.push_back(Req);
     }
@@ -1298,6 +1299,26 @@ static size_t CalcBlockLength(const size_t dimensionsSize, const size_t *count)
     return len;
 }
 
+/*
+ * Return true if for Req and data source info given by offsets and count,
+ * this a transfer of a contiguous block of memory into another
+ * contiguous block of memory.  In its current usage, its OK if this
+ * function returns false in circumstances where the data is really
+ * contiguous, but it should never return true when it is not
+ * contiguous.
+ */
+bool BP5Deserializer::IsContiguousTransfer(BP5ArrayRequest *Req,
+                                           size_t *offsets, size_t *count)
+{
+    /*
+     * All 1 dimensional requests in ADIOS involve the transfer of
+     * contiguous blocks.  Multidimensional requests may or may not
+     * involve contiguous blocks, but for now all multimensional
+     * requests are assumed to be non-contiguous.
+     */
+    return (Req->VarRec->DimCount == 1);
+}
+
 std::vector<BP5Deserializer::ReadRequest>
 BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                                       size_t *maxReadSize)
@@ -1308,6 +1329,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
     for (size_t ReqIndex = 0; ReqIndex < PendingRequests.size(); ReqIndex++)
     {
         auto Req = &PendingRequests[ReqIndex];
+        VariableBase *VB = static_cast<VariableBase *>(Req->VarRec->Variable);
         if (Req->RequestType == Local)
         {
             const size_t writerCohortSize = WriterCohortSize(Req->Step);
@@ -1336,20 +1358,41 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                     RR.StartOffset =
                         writer_meta_base->DataBlockLocation[NeededBlock];
 
+                    RR.DirectToAppMemory = IsContiguousTransfer(
+                        Req, &writer_meta_base->Offsets[StartDim],
+                        &writer_meta_base->Count[StartDim]);
                     RR.ReadLength =
                         helper::GetDataTypeSize(Req->VarRec->Type) *
                         CalcBlockLength(Req->VarRec->DimCount,
                                         &writer_meta_base->Count[StartDim]);
-                    RR.DestinationAddr = nullptr;
-                    if (doAllocTempBuffers)
-                    {
-                        RR.DestinationAddr = (char *)malloc(RR.ReadLength);
-                    }
-                    *maxReadSize =
-                        (*maxReadSize < RR.ReadLength ? RR.ReadLength
-                                                      : *maxReadSize);
-                    RR.Internal = NULL;
                     RR.OffsetInBlock = 0;
+                    if (RR.DirectToAppMemory)
+                    {
+                        RR.DestinationAddr = (char *)Req->Data;
+                        if (Req->Start.size() != 0)
+                        {
+                            RR.ReadLength =
+                                helper::GetDataTypeSize(Req->VarRec->Type) *
+                                CalcBlockLength(Req->VarRec->DimCount,
+                                                Req->Count.data());
+                            /* DirectToAppMemory handles only 1D, so offset calc
+                             * is 1D only for the moment */
+                            RR.StartOffset +=
+                                helper::GetDataTypeSize(Req->VarRec->Type) *
+                                Req->Start[0];
+                        }
+                    }
+                    else
+                    {
+                        RR.DestinationAddr = nullptr;
+                        if (doAllocTempBuffers)
+                        {
+                            RR.DestinationAddr = (char *)malloc(RR.ReadLength);
+                        }
+                        *maxReadSize =
+                            (*maxReadSize < RR.ReadLength ? RR.ReadLength
+                                                          : *maxReadSize);
+                    }
                     RR.ReqIndex = ReqIndex;
                     RR.BlockID = NeededBlock;
                     Ret.push_back(RR);
@@ -1375,6 +1418,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                      Block++)
                 {
                     std::array<size_t, helper::MAX_DIMS> intersectionstart;
+                    std::array<size_t, helper::MAX_DIMS> intersectionend;
                     std::array<size_t, helper::MAX_DIMS> intersectioncount;
 
                     size_t StartDim = Block * Req->VarRec->DimCount;
@@ -1404,7 +1448,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                             *maxReadSize =
                                 (*maxReadSize < RR.ReadLength ? RR.ReadLength
                                                               : *maxReadSize);
-                            RR.Internal = NULL;
+                            RR.DirectToAppMemory = false;
                             RR.ReqIndex = ReqIndex;
                             RR.BlockID = Block;
                             RR.OffsetInBlock = 0;
@@ -1412,8 +1456,6 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                         }
                         else
                         {
-                            VariableBase *VB = static_cast<VariableBase *>(
-                                Req->VarRec->Variable);
                             for (size_t Dim = 0; Dim < Req->VarRec->DimCount;
                                  Dim++)
                             {
@@ -1429,14 +1471,15 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                             for (size_t Dim = 0; Dim < Req->VarRec->DimCount;
                                  Dim++)
                             {
-                                intersectionstart[Dim] +=
-                                    intersectioncount[Dim] - 1;
+                                intersectionend[Dim] = intersectionstart[Dim] +
+                                                       intersectioncount[Dim] -
+                                                       1;
                             }
                             size_t EndOffsetInBlock =
                                 VB->m_ElementSize *
                                 (LinearIndex(Req->VarRec->DimCount,
                                              &writer_meta_base->Count[StartDim],
-                                             &intersectionstart[0],
+                                             &intersectionend[0],
                                              m_ReaderIsRowMajor) +
                                  1);
                             ReadRequest RR;
@@ -1447,16 +1490,40 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                                 StartOffsetInBlock;
                             RR.ReadLength =
                                 EndOffsetInBlock - StartOffsetInBlock;
-                            RR.DestinationAddr = nullptr;
-                            if (doAllocTempBuffers)
+                            RR.DirectToAppMemory = IsContiguousTransfer(
+                                Req, &writer_meta_base->Offsets[StartDim],
+                                &writer_meta_base->Count[StartDim]);
+                            if (RR.DirectToAppMemory)
                             {
+                                /*
+                                 * DirectToAppMemory handles only 1D, so offset
+                                 * calc is 1D only for the moment ContigOffset
+                                 * handles the case where our destination is not
+                                 * the start of the destination memory (because
+                                 * some other block filled in that start)
+                                 */
+
+                                ssize_t ContigOffset =
+                                    (writer_meta_base->Offsets[StartDim + 0] -
+                                     Req->Start[0]) *
+                                    VB->m_ElementSize;
+                                if (ContigOffset < 0)
+                                    ContigOffset = 0;
                                 RR.DestinationAddr =
-                                    (char *)malloc(RR.ReadLength);
+                                    (char *)Req->Data + ContigOffset;
                             }
-                            *maxReadSize =
-                                (*maxReadSize < RR.ReadLength ? RR.ReadLength
-                                                              : *maxReadSize);
-                            RR.Internal = NULL;
+                            else
+                            {
+                                RR.DestinationAddr = nullptr;
+                                if (doAllocTempBuffers)
+                                {
+                                    RR.DestinationAddr =
+                                        (char *)malloc(RR.ReadLength);
+                                }
+                                *maxReadSize = (*maxReadSize < RR.ReadLength
+                                                    ? RR.ReadLength
+                                                    : *maxReadSize);
+                            }
                             RR.OffsetInBlock = StartOffsetInBlock;
                             RR.ReqIndex = ReqIndex;
                             RR.BlockID = Block;
@@ -1473,6 +1540,11 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
 void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
 {
     auto Req = PendingRequests[Read.ReqIndex];
+
+    // if we could do this, nothing else to do
+    if (Read.DirectToAppMemory)
+        return;
+
     int ElementSize = Req.VarRec->ElementSize;
     MetaArrayRec *writer_meta_base =
         (MetaArrayRec *)GetMetadataBase(Req.VarRec, Req.Step, Read.WriterRank);

@@ -47,7 +47,7 @@ public:
         size_t StartOffset;
         size_t ReadLength;
         char *DestinationAddr;
-        void *Internal;
+        bool DirectToAppMemory;
         size_t ReqIndex;
         size_t OffsetInBlock;
         size_t BlockID;
@@ -230,6 +230,9 @@ private:
     std::vector<BP5ArrayRequest> PendingRequests;
     void *GetMetadataBase(BP5VarRec *VarRec, size_t Step,
                           size_t WriterRank) const;
+    bool IsContiguousTransfer(BP5ArrayRequest *Req, size_t *offsets,
+                              size_t *count);
+
     size_t CurTimestep = 0;
 
     /* We assume operators are not thread-safe, call Decompress() one at a time
