@@ -156,6 +156,7 @@ adios_option(MHS        "Enable support for MHS" AUTO)
 adios_option(SST        "Enable support for SST" AUTO)
 adios_option(BP5        "Enable support for BP5" AUTO)
 adios_option(ZeroMQ     "Enable support for ZeroMQ" AUTO)
+adios_option(SCR        "Enable support for SCR" AUTO)
 adios_option(HDF5       "Enable support for the HDF5 engine" AUTO)
 adios_option(IME        "Enable support for DDN IME transport" AUTO)
 adios_option(Python     "Enable support for Python bindings" AUTO)
@@ -225,7 +226,7 @@ endif()
 
 
 set(ADIOS2_CONFIG_OPTS
-    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST CUDA Fortran MPI Python Blosc Blosc2 BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem ZeroMQ Profiling Endian_Reverse
+    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST CUDA Fortran MPI Python Blosc Blosc2 BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME SCR O_DIRECT Sodium Catalyst SysVShMem ZeroMQ Profiling Endian_Reverse
 )
 
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})

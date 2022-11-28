@@ -195,6 +195,16 @@ if(CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
   set(ADIOS2_HAVE_CUDA TRUE)
 endif()
 
+# SCR (Scalable Checkpoint/Restart Library)
+if(ADIOS2_USE_SCR STREQUAL AUTO)
+  find_package(SCR)
+elseif(ADIOS2_USE_SCR)
+  find_package(SCR REQUIRED)
+endif()
+if(SCR_FOUND)
+  set(ADIOS2_HAVE_SCR TRUE)
+endif()
+
 # Fortran
 if(ADIOS2_USE_Fortran STREQUAL AUTO)
   include(CheckLanguage)
