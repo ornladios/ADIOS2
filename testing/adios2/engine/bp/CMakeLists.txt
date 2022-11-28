@@ -115,6 +115,13 @@ bp_gtest_add_tests_helper(WriteReadVector MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAttributesMultirank MPI_ALLOW)
 bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
 
+if(ADIOS2_HAVE_SCR)
+  bp_gtest_add_tests_helper(WriteReadSCR MPI_ALLOW)
+  foreach(tgt ${Test.Engine.BP.WriteReadSCR-TARGETS})
+    target_link_libraries(${tgt} SCR::SCR)
+  endforeach()
+endif()
+
 if(ADIOS2_HAVE_BP5)
   set(BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.Serial")
 
