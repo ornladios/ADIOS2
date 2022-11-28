@@ -65,6 +65,12 @@ private:
     /* transport manager for managing the metadata index file */
     transportman::TransportMan m_FileMetadataIndexManager;
 
+#ifdef ADIOS2_HAVE_SCR
+    static constexpr bool m_SCR = true;
+#else
+    static constexpr bool m_SCR = false;
+#endif
+
     /*
      *  Burst buffer variables
      */
