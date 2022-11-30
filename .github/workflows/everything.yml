@@ -282,6 +282,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
+      - name: (WORKAROUND for windows-2022=20221120.1)) Remove Perl Strawberry
+        run: rm -rf C:/Strawberry/
       - name: Setup
         shell: pwsh
         run: gha/scripts/ci/gh-actions/windows-setup.ps1
