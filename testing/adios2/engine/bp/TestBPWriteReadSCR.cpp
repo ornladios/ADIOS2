@@ -35,25 +35,17 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR1D)
     // form a mpiSize * Nx 1D array
     const std::string fname("SCRBPWriteRead1D8.bp");
 
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank, mpiSize;
     // Number of rows
     const size_t Nx = 8;
 
     // Number of steps
     const size_t NSteps = 3;
-
-#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
 
     // Write test data using BP
-
-#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
-#else
-    adios2::ADIOS adios;
-#endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -411,7 +403,7 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR2D)
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
     const std::string fname("SCRBPWriteRead2D2x4Test.bp");
 
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank, mpiSize;
     // Number of rows
     const std::size_t Nx = 4;
 
@@ -420,19 +412,11 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR2D)
 
     // Number of steps
     const std::size_t NSteps = 3;
-
-#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
 
     // Write test data using ADIOS2
-
-#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
-#else
-    adios2::ADIOS adios;
-#endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -743,14 +727,11 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR10)
     // form a 10D NumberOfProcess x 2 x ... x 2) array
     const std::string fname("SCRBPWriteRead10D2x2Test.bp");
 
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank, mpiSize;
     // Number of steps
     const std::size_t NSteps = 3;
-
-#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
-#endif
 
     size_t NX = static_cast<unsigned int>(mpiSize);
     size_t OX = static_cast<unsigned int>(mpiRank);
@@ -762,12 +743,7 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR10)
     std::array<std::complex<double>, 512> CR64w, CR64r;
 
     // Write test data using ADIOS2
-
-#if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
-#else
-    adios2::ADIOS adios;
-#endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -935,19 +911,15 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCRDeferred)
 {
     const std::string fname("SCRBPWriteReadDeferred.bp");
 
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank, mpiSize;
     const size_t Nx = 8;
     const std::size_t Ny = 2;
     const size_t NSteps = 3;
 
-#if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 
     adios2::ADIOS adios(MPI_COMM_WORLD);
-#else
-    adios2::ADIOS adios;
-#endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
         const adios2::Dims shape_1d{static_cast<size_t>(Nx * mpiSize)};
@@ -1068,13 +1040,9 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCRDeferred)
 
 int main(int argc, char **argv)
 {
-#if ADIOS2_USE_MPI
     int provided;
-
-    // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
     SCR_Init();
-#endif
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
@@ -1089,10 +1057,8 @@ int main(int argc, char **argv)
     }
     result = RUN_ALL_TESTS();
 
-#if ADIOS2_USE_MPI
     SCR_Finalize();
     MPI_Finalize();
-#endif
 
     return result;
 }
