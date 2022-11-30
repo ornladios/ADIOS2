@@ -148,6 +148,42 @@ void BP4Writer::Flush(const int transportIndex)
 }
 
 // PRIVATE
+#ifdef ADIOS2_HAVE_SCR
+void InitSCR(const std::string fname)
+{
+    SCR_Start_output(fname.c_str(), SCR_FLAG_CHECKPOINT);
+}
+
+void CloseSCR(const std::string fname)
+{
+    int scr_valid = 1;
+    SCR_Complete_output(scr_valid);
+}
+#endif
+
+std::string SCRRouteFile(std::string name)
+{
+#ifdef ADIOS2_HAVE_SCR
+    char scr_name[SCR_MAX_FILENAME];
+    SCR_Route_file(name.c_str(), scr_name);
+
+    std::string s(scr_name);
+    return s;
+#else
+    return name;
+#endif
+}
+
+std::vector<std::string> AddSCRRouteInfo(const std::vector<std::string> files)
+{
+    std::vector<std::string> newFiles;
+    for (const auto &name : files)
+    {
+        newFiles.push_back(SCRRouteFile(name));
+    }
+    return newFiles;
+}
+
 void BP4Writer::Init()
 {
     InitParameters();
@@ -160,6 +196,10 @@ void BP4Writer::Init()
     }
     InitTransports();
     InitBPBuffer();
+#ifdef ADIOS2_HAVE_SCR
+    if (m_SCR)
+        InitSCR(m_Name);
+#endif
 }
 
 #define declare_type(T)                                                        \
@@ -203,29 +243,7 @@ void BP4Writer::InitParameters()
                                  "in call to BP4::Open to write");
     m_WriteToBB = !(m_BP4Serializer.m_Parameters.BurstBufferPath.empty());
     m_DrainBB = m_WriteToBB && m_BP4Serializer.m_Parameters.BurstBufferDrain;
-}
-
-std::string SCRRouteFile(std::string name)
-{
-#ifdef ADIOS2_HAVE_SCR
-    char scr_name[SCR_MAX_FILENAME];
-    SCR_Route_file(name.c_str(), scr_name);
-
-    std::string s(scr_name);
-    return s;
-#else
-    return name;
-#endif
-}
-
-std::vector<std::string> AddSCRRouteInfo(const std::vector<std::string> files)
-{
-    std::vector<std::string> newFiles;
-    for (const auto &name : files)
-    {
-        newFiles.push_back(SCRRouteFile(name));
-    }
-    return newFiles;
+    m_SCR = helper::GetParameter(m_IO.m_Parameters, "UseSCR", m_Verbosity);
 }
 
 void BP4Writer::InitTransports()
@@ -584,6 +602,10 @@ void BP4Writer::DoClose(const int transportIndex)
         m_FileDrainer.Finish();
     }
     // m_BP4Serializer.DeleteBuffers();
+#ifdef ADIOS2_HAVE_SCR
+    if (m_SCR)
+        CloseSCR(m_Name);
+#endif
 }
 
 void BP4Writer::WriteProfilingJSONFile()
