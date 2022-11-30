@@ -124,16 +124,11 @@ void FileIME::Open(const std::string &name, const Mode openMode,
 
 void FileIME::SetParameters(const Params &parameters)
 {
-    for (const auto &pair : parameters)
+    auto param = params.find("synctopfs");
+    if (param != params.end())
     {
-        const std::string key = helper::LowerCase(pair.first);
-        const std::string value = helper::LowerCase(pair.second);
-
-        if (key == "synctopfs")
-        {
-            m_SyncToPFS =
-                helper::StringTo<bool>(value, " in Parameter key=SyncToPFS");
-        }
+        m_SyncToPFS =
+            helper::StringTo<bool>(value, " in Parameter key=SyncToPFS");
     }
 }
 

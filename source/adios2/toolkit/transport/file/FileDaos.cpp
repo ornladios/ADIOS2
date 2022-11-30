@@ -350,7 +350,7 @@ void FileDaos::SetParameters(const Params &params)
     // If neither config mechanisms are available then an error is thrown
 
     {
-        auto param = params.find("SingleProcess");
+        auto param = params.find("singleprocess");
         if (param != params.end())
         {
             std::string singleProc = param->second;
