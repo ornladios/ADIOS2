@@ -53,6 +53,7 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR1D)
         {
             io.SetParameter("ProfileUnits", "Microseconds");
             io.SetParameters("Threads=2, CollectiveMetadata = OFF");
+            io.SetParameters({{"UseSCR", "1"}});
             adios2::Params parameters = io.Parameters();
 
             auto ProfileUnits = parameters.find("ProfileUnits");
@@ -134,8 +135,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR1D)
 
         io.AddTransport("file");
 
-        int scr_valid = 1;
-        SCR_Start_output(fname.c_str(), SCR_FLAG_CHECKPOINT);
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         EXPECT_EQ(bpWriter.OpenMode(), adios2::Mode::Write);
@@ -203,7 +202,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR1D)
 
         // Close the file
         bpWriter.Close();
-        SCR_Complete_output(scr_valid);
     }
 
     {
@@ -218,8 +216,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR1D)
             io.SetParameters(engineParameters);
         }
 
-        int scr_valid = 1;
-        SCR_Start_output(fname.c_str(), SCR_FLAG_CHECKPOINT);
         adios2::Engine bpReader =
             io.Open(fname, adios2::Mode::ReadRandomAccess);
 
@@ -392,7 +388,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR1D)
             }
         }
         bpReader.Close();
-        SCR_Complete_output(scr_valid);
     }
 }
 
@@ -459,6 +454,7 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR2D)
             EXPECT_TRUE(var_r64);
         }
 
+        io.SetParameters({{"UseSCR", "1"}});
         if (!engineName.empty())
         {
             io.SetEngine(engineName);
@@ -474,8 +470,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR2D)
         }
         io.AddTransport("file");
 
-        int scr_valid = 1;
-        SCR_Start_output(fname.c_str(), SCR_FLAG_CHECKPOINT);
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -533,7 +527,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR2D)
 
         // Close the file
         bpWriter.Close();
-        SCR_Complete_output(scr_valid);
     }
 
     {
@@ -548,8 +541,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR2D)
             io.SetParameters(engineParameters);
         }
 
-        int scr_valid = 1;
-        SCR_Start_output(fname.c_str(), SCR_FLAG_CHECKPOINT);
         adios2::Engine bpReader =
             io.Open(fname, adios2::Mode::ReadRandomAccess);
 
@@ -716,7 +707,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR2D)
             }
         }
         bpReader.Close();
-        SCR_Complete_output(scr_valid);
     }
 }
 
@@ -757,6 +747,7 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR10)
             EXPECT_TRUE(var_c64);
         }
 
+        io.SetParameters({{"UseSCR", "1"}});
         if (!engineName.empty())
         {
             io.SetEngine(engineName);
@@ -773,8 +764,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR10)
 
         io.AddTransport("file");
 
-        int scr_valid = 1;
-        SCR_Start_output(fname.c_str(), SCR_FLAG_CHECKPOINT);
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -812,7 +801,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR10)
 
         // Close the file
         bpWriter.Close();
-        SCR_Complete_output(scr_valid);
     }
 
     {
@@ -827,8 +815,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR10)
             io.SetParameters(engineParameters);
         }
 
-        int scr_valid = 1;
-        SCR_Start_output(fname.c_str(), SCR_FLAG_CHECKPOINT);
         adios2::Engine bpReader =
             io.Open(fname, adios2::Mode::ReadRandomAccess);
 
@@ -902,7 +888,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCR10)
             }
         }
         bpReader.Close();
-        SCR_Complete_output(scr_valid);
     }
 }
 
@@ -933,6 +918,7 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCRDeferred)
         auto var_2d_i32 =
             io.DefineVariable<int32_t>("i32_2d", shape_2d, start_2d, count_2d);
 
+        io.SetParameters({{"UseSCR", "1"}});
         if (!engineName.empty())
         {
             io.SetEngine(engineName);
@@ -942,8 +928,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCRDeferred)
             io.SetEngine("BPFile");
         }
         io.AddTransport("file");
-        int scr_valid = 1;
-        SCR_Start_output(fname.c_str(), SCR_FLAG_CHECKPOINT);
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -967,7 +951,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCRDeferred)
         }
 
         bpWriter.Close();
-        SCR_Complete_output(scr_valid);
     }
 
     {
@@ -977,8 +960,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCRDeferred)
         {
             io.SetEngine(engineName);
         }
-        int scr_valid = 1;
-        SCR_Start_output(fname.c_str(), SCR_FLAG_CHECKPOINT);
         adios2::Engine bpReader =
             io.Open(fname, adios2::Mode::ReadRandomAccess);
 
@@ -1030,7 +1011,6 @@ TEST_F(BPWriteReadTestSCR, ADIOS2BPWriteReadSCRDeferred)
             }
         }
         bpReader.Close();
-        SCR_Complete_output(scr_valid);
     }
 }
 
