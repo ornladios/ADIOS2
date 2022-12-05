@@ -14,7 +14,6 @@ The time dimension is the first dimension then.
   --dump      | -d           Dump matched variables/attributes
                                To match attributes too, add option -a
   --regexp    | -e           Treat masks as extended regular expressions
-  --plot      | -p           Dumps the histogram information that can be read by gnuplot
   --output    | -o <path>    Print to a file instead of stdout
   --start     | -s "spec"    Offset indices in each dimension 
                                (default is 0 for all dimensions) 
@@ -29,7 +28,11 @@ The time dimension is the first dimension then.
                                instead of the default. E.g. "%6.3f"
   --hidden_attrs             Show hidden ADIOS attributes in the file
   --decomp    | -D           Show decomposition of variables as layed out in file
-
+  --transport-parameters | -T         Specify File transport parameters
+                                      e.g. "Library=stdio"
+  --engine               | -E <name>  Specify ADIOS Engine
+  --engine-params        | -P string  Specify ADIOS Engine Parameters
+                                      e.g. "SelectSteps=0:n:2"
   Examples for slicing:
   -s "0,0,0"   -c "1,99,1":  Print 100 elements (of the 2nd dimension).
   -s "0,0"     -c "1,-1":    Print the whole 2nd dimension however large it is.

@@ -80,6 +80,10 @@ char *vfile;              // file name to bpls
 std::string start;        // dimension spec starting points
 std::string count;        // dimension spec counts
 std::string format;       // format string for one data element (e.g. %6.2f)
+std::string
+    transport_params; // Transport parameters (e.g. "Library=stdio,verbose=3")
+std::string engine_name;   // Engine name (e.g. "BP5")
+std::string engine_params; // Engine parameters (e.g. "SelectSteps=0:5:2")
 
 // Flags from arguments or defaults
 bool dump; // dump data not just list info(flag == 1)
@@ -144,8 +148,6 @@ void display_help()
         "-a\n"
         "  --regexp    | -e           Treat masks as extended regular "
         "expressions\n"
-        "  --plot      | -p           Dumps the histogram information that can "
-        "be read by gnuplot\n"
         "  --output    | -o <path>    Print to a file instead of stdout\n"
         /*
            "  --xml    | -x            # print as xml instead of ascii text\n"
@@ -169,12 +171,13 @@ void display_help()
         "file\n"
         "  --decomp    | -D           Show decomposition of variables as layed "
         "out in file\n"
-        /*
-           "  --time    | -t N [M]      # print data for timesteps N..M only (or
-           only N)\n"
-           "                              default is to print all available
-           timesteps\n"
-         */
+        "  --transport-parameters | -T         Specify File transport "
+        "parameters\n"
+        "                                      e.g. \"Library=stdio\"\n"
+        "  --engine               | -E <name>  Specify ADIOS Engine\n"
+        "  --engine-params        | -P string  Specify ADIOS Engine "
+        "Parameters\n"
+        "                                      e.g. \"SelectSteps=0:n:2\""
         "\n"
         "  Examples for slicing:\n"
         "  -s \"0,0,0\"   -c \"1,99,1\":  Print 100 elements (of the 2nd "
@@ -607,6 +610,16 @@ int bplsMain(int argc, char *argv[])
         "Print version information (add -verbose for additional"
         " information)");
     arg.AddBooleanArgument("-V", &show_version, "");
+    arg.AddArgument(
+        "--transport-parameters", argT::SPACE_ARGUMENT, &transport_params,
+        "| -T string    Specify File transport parameters manually");
+    arg.AddArgument("-T", argT::SPACE_ARGUMENT, &transport_params, "");
+    arg.AddArgument("--engine", argT::SPACE_ARGUMENT, &engine_name,
+                    "| -E string    Specify ADIOS Engine manually");
+    arg.AddArgument("-E", argT::SPACE_ARGUMENT, &engine_name, "");
+    arg.AddArgument("--engine-params", argT::SPACE_ARGUMENT, &engine_params,
+                    "| -P string    Specify ADIOS Engine Parameters manually");
+    arg.AddArgument("-P", argT::SPACE_ARGUMENT, &engine_params, "");
 
     if (!arg.Parse())
     {
@@ -1543,7 +1556,29 @@ int doList(const char *path)
         io.SetParameter("StreamReader", "true");
     }
     core::Engine *fp = nullptr;
-    std::vector<std::string> engineList = getEnginesList(path);
+
+    if (!transport_params.empty())
+    {
+        auto p = helper::BuildParametersMap(transport_params, '=', ',');
+        io.AddTransport("File", p);
+    }
+
+    std::vector<std::string> engineList;
+    if (engine_name.empty())
+    {
+        engineList = getEnginesList(path);
+    }
+    else
+    {
+        engineList.push_back(engine_name);
+    }
+
+    if (!engine_params.empty())
+    {
+        auto p = helper::BuildParametersMap(engine_params, '=', ',');
+        io.SetParameters(p);
+    }
+
     for (auto &engineName : engineList)
     {
         if (verbose > 2)
