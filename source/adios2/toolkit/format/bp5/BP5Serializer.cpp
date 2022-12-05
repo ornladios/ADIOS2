@@ -239,7 +239,7 @@ char *BP5Serializer::BuildVarName(const char *base_name, const ShapeID Shape,
     }
     else
     {
-        sprintf(Ret, "%s_%d_%d_", Prefix, element_size, type);
+        snprintf(Ret, Len, "%s_%d_%d_", Prefix, element_size, type);
         strcat(Ret, base_name);
     }
     return Ret;
@@ -257,11 +257,11 @@ static char *BuildLongName(const char *base_name, const ShapeID Shape,
     char *Ret = (char *)malloc(Len);
     if (StructID)
     {
-        sprintf(Ret, "%s_%d_%d_%s", Prefix, element_size, type, StructID);
+        snprintf(Ret, Len, "%s_%d_%d_%s", Prefix, element_size, type, StructID);
     }
     else
     {
-        sprintf(Ret, "%s_%d_%d", Prefix, element_size, type);
+        snprintf(Ret, Len, "%s_%d_%d", Prefix, element_size, type);
     }
     strcat(Ret, "_");
     strcat(Ret, base_name);
@@ -286,7 +286,7 @@ char *BP5Serializer::BuildArrayDimsName(const char *base_name, const int type,
     const char *Prefix = NamePrefix(ShapeID::GlobalArray);
     int Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
     char *Ret = (char *)malloc(Len);
-    sprintf(Ret, "%s%d_%d_", Prefix, element_size, type);
+    snprintf(Ret, Len, "%s%d_%d_", Prefix, element_size, type);
     strcat(Ret, base_name);
     strcat(Ret, "Dims");
     return Ret;
@@ -299,7 +299,7 @@ char *BP5Serializer::BuildArrayDBCountName(const char *base_name,
     const char *Prefix = NamePrefix(ShapeID::GlobalArray);
     int Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
     char *Ret = (char *)malloc(Len);
-    sprintf(Ret, "%s%d_%d_", Prefix, element_size, type);
+    snprintf(Ret, Len, "%s%d_%d_", Prefix, element_size, type);
     strcat(Ret, base_name);
     strcat(Ret, "DBCount");
     return Ret;
@@ -312,7 +312,7 @@ char *BP5Serializer::BuildArrayBlockCountName(const char *base_name,
     const char *Prefix = NamePrefix(ShapeID::GlobalArray);
     int Len = strlen(base_name) + 3 + strlen(Prefix) + 24;
     char *Ret = (char *)malloc(Len);
-    sprintf(Ret, "%s%d_%d_", Prefix, element_size, type);
+    snprintf(Ret, Len, "%s%d_%d_", Prefix, element_size, type);
     strcat(Ret, base_name);
     strcat(Ret, "BlockCount");
     return Ret;
@@ -364,7 +364,8 @@ void BP5Serializer::AddFixedArrayField(FMFieldList *FieldP, int *CountP,
 {
     const char *TransType = TranslateADIOS2Type2FFS(Type);
     char *TypeWithArray = (char *)malloc(strlen(TransType) + 16);
-    sprintf(TypeWithArray, "*(%s[%d])", TransType, DimCount);
+    snprintf(TypeWithArray, strlen(TransType) + 16, "*(%s[%d])", TransType,
+             DimCount);
     free((void *)TransType);
     AddSimpleField(FieldP, CountP, Name, TypeWithArray, sizeof(void *));
     free(TypeWithArray);
@@ -378,7 +379,8 @@ void BP5Serializer::AddVarArrayField(FMFieldList *FieldP, int *CountP,
     char *TransType = TranslateADIOS2Type2FFS(Type);
     char *TypeWithArray =
         (char *)malloc(strlen(TransType) + strlen(SizeField) + 8);
-    sprintf(TypeWithArray, "%s[%s]", TransType, SizeField);
+    snprintf(TypeWithArray, strlen(TransType) + strlen(SizeField) + 8, "%s[%s]",
+             TransType, SizeField);
     free(TransType);
     AddSimpleField(FieldP, CountP, Name, TypeWithArray, sizeof(void *));
     free(TypeWithArray);
@@ -392,7 +394,8 @@ void BP5Serializer::AddDoubleArrayField(FMFieldList *FieldP, int *CountP,
     char *TransType = TranslateADIOS2Type2FFS(Type);
     char *TypeWithArray =
         (char *)malloc(strlen(TransType) + strlen(SizeField) + 8);
-    sprintf(TypeWithArray, "%s[2][%s]", TransType, SizeField);
+    snprintf(TypeWithArray, strlen(TransType) + strlen(SizeField) + 8,
+             "%s[2][%s]", TransType, SizeField);
     AddSimpleField(FieldP, CountP, Name, TypeWithArray, sizeof(void *));
     free(TransType);
     free(TypeWithArray);
@@ -447,8 +450,8 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         TextStructID = (char *)malloc(IDLength * 2 + 1);
         for (int i = 0; i < IDLength; i++)
         {
-            sprintf(&TextStructID[i * 2], "%02x",
-                    ((unsigned char *)ServerID)[i]);
+            snprintf(&TextStructID[i * 2], 3, "%02x",
+                     ((unsigned char *)ServerID)[i]);
         }
         NewStructFormats.push_back(Format);
     }

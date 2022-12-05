@@ -781,7 +781,7 @@ static DP_WSR_Stream EvpathInitWriterPerReader(CP_Services Svcs,
         (EvpathReaderContactInfo *)providedReaderInfo_v;
 
     SMPI_Comm_rank(comm, &Rank);
-    sprintf(EvpathContactString, "Writer Rank %d, test contact", Rank);
+    snprintf(EvpathContactString, 64, "Writer Rank %d, test contact", Rank);
 
     WSR_Stream->WS_Stream = WS_Stream; /* pointer to writer struct */
     WSR_Stream->PeerCohort = PeerCohort;

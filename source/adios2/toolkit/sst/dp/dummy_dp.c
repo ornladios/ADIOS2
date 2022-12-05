@@ -199,7 +199,8 @@ static DP_RS_Stream DummyInitReader(CP_Services Svcs, void *CP_Stream,
 
     SMPI_Comm_rank(comm, &Stream->Rank);
 
-    sprintf(DummyContactString, "Reader Rank %d, test contact", Stream->Rank);
+    snprintf(DummyContactString, 64, "Reader Rank %d, test contact",
+             Stream->Rank);
 
     /*
      * add a handler for read reply messages
@@ -377,7 +378,7 @@ static DP_WSR_Stream DummyInitWriterPerReader(CP_Services Svcs,
         (DummyReaderContactInfo *)providedReaderInfo_v;
 
     SMPI_Comm_rank(comm, &Rank);
-    sprintf(DummyContactString, "Writer Rank %d, test contact", Rank);
+    snprintf(DummyContactString, 64, "Writer Rank %d, test contact", Rank);
 
     WSR_Stream->WS_Stream = WS_Stream; /* pointer to writer struct */
     WSR_Stream->PeerCohort = PeerCohort;
@@ -580,8 +581,8 @@ static void DummyProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
         malloc(sizeof(struct _DummyPerTimestepInfo));
 
     Info->CheckString = malloc(64);
-    sprintf(Info->CheckString, "Dummy info for timestep %ld from rank %d",
-            Timestep, Stream->Rank);
+    snprintf(Info->CheckString, 64, "Dummy info for timestep %ld from rank %d",
+             Timestep, Stream->Rank);
     Info->CheckInt = Stream->Rank * 1000 + Timestep;
     Entry->Data = Data;
     Entry->Timestep = Timestep;

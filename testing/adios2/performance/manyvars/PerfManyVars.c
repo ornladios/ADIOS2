@@ -91,12 +91,12 @@ void alloc_vars()
     }
 
     char fmt[16];
-    sprintf(fmt, "v%%%d.%dd", digit, digit);
+    snprintf(fmt, sizeof(fmt), "v%%%d.%dd", digit, digit);
     printf("fmt=[%s]\n", fmt);
     for (i = 0; i < NVARS; i++)
     {
         // sprintf(varnames[i], "v%-*d", digit, i);
-        sprintf(varnames[i], fmt, i);
+        snprintf(varnames[i], 16, fmt, i);
     }
     printf("varname[0]=%s\n", varnames[0]);
     printf("varname[%d]=%s\n", NVARS - 1, varnames[NVARS - 1]);

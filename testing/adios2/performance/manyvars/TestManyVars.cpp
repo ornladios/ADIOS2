@@ -188,10 +188,10 @@ public:
         }
 
         char fmt[32];
-        sprintf(fmt, "v%%%d.%dd", digit, digit);
+        snprintf(fmt, sizeof(fmt), "v%%%d.%dd", digit, digit);
         for (size_t i = 0; i < NVARS; i++)
         {
-            sprintf(varnames[i], fmt, i);
+            snprintf(varnames[i], 16, fmt, i);
         }
     }
 
