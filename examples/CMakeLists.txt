@@ -9,6 +9,7 @@ add_subdirectory(query)
 add_subdirectory(useCases)
 add_subdirectory(inlineMWE)
 add_subdirectory(plugins)
+add_subdirectory(fides)
 
 find_package(Kokkos QUIET)
 if(Kokkos_FOUND)
