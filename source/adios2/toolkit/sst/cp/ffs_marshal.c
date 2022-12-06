@@ -53,7 +53,7 @@ static char *BuildVarName(const char *base_name, const int type,
 {
     int Len = strlen(base_name) + 2 + strlen("SST_") + 16;
     char *Ret = malloc(Len);
-    sprintf(Ret, "SST%d_%d_", element_size, type);
+    snprintf(Ret, Len, "SST%d_%d_", element_size, type);
     strcat(Ret, base_name);
     return Ret;
 }
@@ -75,7 +75,7 @@ static char *BuildArrayDimsName(const char *base_name, const int type,
 {
     int Len = strlen(base_name) + 3 + strlen("SST_") + 16;
     char *Ret = malloc(Len);
-    sprintf(Ret, "SST%d_%d_", element_size, type);
+    snprintf(Ret, Len, "SST%d_%d_", element_size, type);
     strcat(Ret, base_name);
     strcat(Ret, "Dims");
     return Ret;
@@ -86,7 +86,7 @@ static char *BuildArrayDBCountName(const char *base_name, const int type,
 {
     int Len = strlen(base_name) + 3 + strlen("SST_") + 16;
     char *Ret = malloc(Len);
-    sprintf(Ret, "SST%d_%d_", element_size, type);
+    snprintf(Ret, Len, "SST%d_%d_", element_size, type);
     strcat(Ret, base_name);
     strcat(Ret, "DBCount");
     return Ret;
@@ -300,7 +300,8 @@ static void AddFixedArrayField(FMFieldList *FieldP, int *CountP,
 {
     const char *TransType = TranslateADIOS2Type2FFS(Type);
     char *TypeWithArray = malloc(strlen(TransType) + 16);
-    sprintf(TypeWithArray, "*(%s[%d])", TransType, DimCount);
+    snprintf(TypeWithArray, strlen(TransType) + 16, "*(%s[%d])", TransType,
+             DimCount);
     free((void *)TransType);
     AddSimpleField(FieldP, CountP, Name, TypeWithArray, sizeof(void *));
     free(TypeWithArray);
@@ -311,7 +312,8 @@ static void AddVarArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
 {
     char *TransType = TranslateADIOS2Type2FFS(Type);
     char *TypeWithArray = malloc(strlen(TransType) + strlen(SizeField) + 8);
-    sprintf(TypeWithArray, "%s[%s]", TransType, SizeField);
+    snprintf(TypeWithArray, strlen(TransType) + strlen(SizeField) + 8, "%s[%s]",
+             TransType, SizeField);
     free(TransType);
     AddSimpleField(FieldP, CountP, Name, TypeWithArray, sizeof(void *));
     free(TypeWithArray);
@@ -887,7 +889,8 @@ static void IssueReadRequests(SstStream Stream, FFSArrayRequest Reqs)
                 realloc(Info->WriterInfo[WriterRank].RawBuffer, DataSize);
 
             char tmpstr[256] = {0};
-            sprintf(tmpstr, "Request to rank %d, bytes", WriterRank);
+            snprintf(tmpstr, sizeof(tmpstr), "Request to rank %d, bytes",
+                     WriterRank);
             PERFSTUBS_SAMPLE_COUNTER(tmpstr, (double)DataSize);
             Info->WriterInfo[WriterRank].ReadHandle = SstReadRemoteMemory(
                 Stream, WriterRank, Stream->ReaderTimestep, 0, DataSize,

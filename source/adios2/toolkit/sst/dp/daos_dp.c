@@ -620,7 +620,7 @@ static void *DaosReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     char *StringName = malloc(20);
     void *NVBlock;
     char *BaseAddr;
-    sprintf(StringName, "Timestep_%ld", Timestep);
+    snprintf(StringName, 20, "Timestep_%ld", Timestep);
     BaseAddr =
         NULL; // nvs_get_with_malloc(Stream->writer_nvs[Rank], StringName, 1);
 
@@ -714,7 +714,7 @@ static void DaosProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
 
     char *StringName = malloc(20);
     void *NVBlock;
-    sprintf(StringName, "Timestep_%ld", Timestep);
+    snprintf(StringName, 20, "Timestep_%ld", Timestep);
     NVBlock = NULL; // nvs_alloc(Stream->nvs, &Data->DataSize, StringName);
     memcpy(NVBlock, Data->block, Data->DataSize);
     // nvs_snapshot_(Stream->nvs, &Stream->Rank);

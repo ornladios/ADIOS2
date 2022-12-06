@@ -389,7 +389,7 @@ adios2_error adios2_inquire_subgroups(char ***results, const char *full_prefix,
         for (auto &m : subGrpNames)
         {
             (*results)[i] = (char *)malloc(m.size() + 1);
-            sprintf((*results)[i], "%s", m.c_str());
+            snprintf((*results)[i], m.size() + 1, "%s", m.c_str());
             (*results)[i][m.size()] = '\0';
             i++;
         }

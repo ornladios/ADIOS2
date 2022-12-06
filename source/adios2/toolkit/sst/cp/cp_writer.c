@@ -96,7 +96,7 @@ static char *buildContactInfo(SstStream Stream, attr_list DPAttrs)
 {
     char *Contact = CP_GetContactString(Stream, DPAttrs);
     char *FullInfo = malloc(strlen(Contact) + 20);
-    sprintf(FullInfo, "%p:%s", (void *)Stream, Contact);
+    snprintf(FullInfo, strlen(Contact) + 20, "%p:%s", (void *)Stream, Contact);
     free(Contact);
     return FullInfo;
 }
@@ -177,8 +177,9 @@ static int writeContactInfoFile(const char *Name, SstStream Stream,
      * write the contact information file with a temporary name before
      * renaming it to the final version to help prevent partial reads
      */
-    sprintf(TmpName, "%s.tmp", Name);
-    sprintf(FileName, "%s" SST_POSTFIX, Name);
+    snprintf(TmpName, strlen(Name) + strlen(".tmp") + 1, "%s.tmp", Name);
+    snprintf(FileName, strlen(Name) + strlen(SST_POSTFIX) + 1, "%s" SST_POSTFIX,
+             Name);
     WriterInfo = fopen(TmpName, "w");
     if (!WriterInfo)
     {
@@ -1656,7 +1657,7 @@ void SstWriterClose(SstStream Stream)
                                List->Timestep, List->Expired,
                                List->PreciousTimestep, List->ReferenceCount,
                                Stream->QueuedTimestepCount);
-                    sprintf(tmp, "%ld ", List->Timestep);
+                    snprintf(tmp, sizeof(tmp), "%ld ", List->Timestep);
                     StringList = realloc(StringList,
                                          strlen(StringList) + strlen(tmp) + 1);
                     strcat(StringList, tmp);

@@ -128,8 +128,8 @@ void ZFPRateCUDA(const std::string rate)
             for (size_t i = 0; i < NxTotal; i++)
             {
                 char msg[1 << 8] = {0};
-                sprintf(msg, "t=%d i=%zu rank=%d r32o=%f r32s=%f", t, i,
-                        mpiRank, r32o[i], r32s[i]);
+                snprintf(msg, sizeof(msg), "t=%d i=%zu rank=%d r32o=%f r32s=%f",
+                         t, i, mpiRank, r32o[i], r32s[i]);
                 ASSERT_LT(std::abs(r32o[i] - r32s[i]), EPSILON) << msg;
             }
         }

@@ -112,7 +112,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
             dspaces_client_t *client = get_client_handle();
             char meta_str[256];
             unsigned int metalen;
-            sprintf(meta_str, "VARMETA@%s", fstr);
+            snprintf(meta_str, sizeof(meta_str), "VARMETA@%s", fstr);
             int err = dspaces_get_meta(*client, meta_str, META_MODE_NEXT,
                                        m_CurrentStep, &bcast_array[1],
                                        (void **)&buffer, &metalen);
@@ -131,7 +131,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
             dspaces_client_t *client = get_client_handle();
             char meta_str[256];
             unsigned int metalen;
-            sprintf(meta_str, "VARMETA@%s", fstr);
+            snprintf(meta_str, sizeof(meta_str), "VARMETA@%s", fstr);
             int err = dspaces_get_meta(*client, meta_str, META_MODE_LAST,
                                        m_CurrentStep, &bcast_array[1],
                                        (void **)&buffer, &metalen);

@@ -1544,7 +1544,7 @@ int doList(const char *path)
         adios_verbose = 3; // print info lines
     if (verbose > 2)
         adios_verbose = 4; // print debug lines
-    sprintf(init_params, "verbose=%d", adios_verbose);
+    snprintf(init_params, sizeof(init_params), "verbose=%d", adios_verbose);
     if (hidden_attrs)
         strcat(init_params, ";show_hidden_attrs");
 
@@ -2967,10 +2967,12 @@ int print_dataset(const void *data, const DataType vartype, uint64_t *s,
         {
             if (!noindex && tdims > 0)
             {
-                sprintf(idxstr, "    (%*" PRIu64, ndigits[0], ids[0]);
+                snprintf(idxstr, sizeof(idxstr), "    (%*" PRIu64, ndigits[0],
+                         ids[0]);
                 for (i = 1; i < tdims; i++)
                 {
-                    sprintf(buf, ",%*" PRIu64, ndigits[i], ids[i]);
+                    snprintf(buf, sizeof(buf), ",%*" PRIu64, ndigits[i],
+                             ids[i]);
                     strcat(idxstr, buf);
                 }
                 strcat(idxstr, ")    ");
