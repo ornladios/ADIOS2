@@ -65,6 +65,8 @@ protected:
     int m_WriterMasterStreamRank;
     int m_ReaderMasterStreamRank;
 
+    std::unordered_map<std::string, StructDefinition> m_StructDefinitions;
+
     ssc::Buffer m_Buffer;
 
     int64_t m_CurrentStep = -1;

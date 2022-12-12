@@ -76,7 +76,8 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
 
             if (shapeId == 65)
             {
-                DeserializeStructDefinitions(m_Buffer, pos, m_IO, true);
+                DeserializeStructDefinitions(m_Buffer, pos, m_IO, true,
+                                             m_StructDefinitions);
             }
             else if (shapeId == 66)
             {
@@ -87,7 +88,7 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
                 pos += 4;
                 ssc::BlockInfo b;
                 DeserializeVariable(m_Buffer, static_cast<ShapeID>(shapeId),
-                                    pos, b, m_IO, true);
+                                    pos, b, m_IO, true, m_StructDefinitions);
                 b.bufferStart += start;
                 m_BlockMap[b.name].push_back(b);
                 if (b.shapeId == ShapeID::GlobalValue ||

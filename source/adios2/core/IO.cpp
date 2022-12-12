@@ -968,29 +968,6 @@ VariableStruct *IO::InquireStructVariable(const std::string &name,
     return ret;
 }
 
-StructDefinition *IO::DefineStruct(const std::string &name, const size_t size)
-{
-    if (m_StructDefinitions.find(name) != m_StructDefinitions.end())
-    {
-        return nullptr;
-    }
-    return &m_StructDefinitions.emplace(name, StructDefinition(name, size))
-                .first->second;
-}
-
-StructDefinition *IO::InquireStruct(const std::string &name)
-{
-    auto it = m_StructDefinitions.find(name);
-    if (it == m_StructDefinitions.end())
-    {
-        return nullptr;
-    }
-    else
-    {
-        return &it->second;
-    }
-}
-
 // Explicitly instantiate the necessary public template implementations
 #define define_template_instantiation(T)                                       \
     template Variable<T> &IO::DefineVariable<T>(const std::string &,           \
