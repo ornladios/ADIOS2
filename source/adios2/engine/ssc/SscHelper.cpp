@@ -173,8 +173,10 @@ void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
     }
 }
 
-void DeserializeVariable(const Buffer &input, const ShapeID shapeId,
-                         uint64_t &pos, BlockInfo &b, IO &io, const bool regIO)
+void DeserializeVariable(
+    const Buffer &input, const ShapeID shapeId, uint64_t &pos, BlockInfo &b,
+    IO &io, const bool regIO,
+    std::unordered_map<std::string, StructDefinition> &StructDefs)
 {
     b.shapeId = static_cast<ShapeID>(shapeId);
 
@@ -248,7 +250,12 @@ void DeserializeVariable(const Buffer &input, const ShapeID shapeId,
                 }
                 if (b.shapeId == ShapeID::GlobalArray)
                 {
-                    auto def = io.InquireStruct(b.structDef);
+                    StructDefinition *def = nullptr;
+                    auto it = StructDefs.find(b.structDef);
+                    if (it != StructDefs.end())
+                    {
+                        def = &it->second;
+                    }
                     if (def == nullptr)
                     {
                         helper::Throw<std::runtime_error>(
@@ -466,8 +473,9 @@ void SerializeStructDefinitions(
     output.value<uint64_t>() = pos;
 }
 
-void DeserializeStructDefinitions(const Buffer &input, uint64_t &pos, IO &io,
-                                  const bool regIO)
+void DeserializeStructDefinitions(
+    const Buffer &input, uint64_t &pos, IO &io, const bool regIO,
+    std::unordered_map<std::string, StructDefinition> &StructDefs)
 {
     uint8_t defs = input.value<uint8_t>(pos);
     ++pos;
@@ -484,7 +492,14 @@ void DeserializeStructDefinitions(const Buffer &input, uint64_t &pos, IO &io,
         pos += 8;
         uint8_t items = input.value<uint8_t>(pos);
         ++pos;
-        auto structDefinition = io.DefineStruct(defName, structSize);
+        StructDefinition *structDefinition = nullptr;
+        if (StructDefs.find(defName) == StructDefs.end())
+        {
+            structDefinition =
+                &StructDefs
+                     .emplace(defName, StructDefinition(defName, structSize))
+                     .first->second;
+        }
         for (uint8_t j = 0; j < items; ++j)
         {
             nameSize = input.value<uint8_t>(pos);
@@ -510,7 +525,8 @@ void DeserializeStructDefinitions(const Buffer &input, uint64_t &pos, IO &io,
 }
 
 void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
-                 const bool regVars, const bool regAttrs, const bool regDefs)
+                 const bool regVars, const bool regAttrs, const bool regDefs,
+                 std::unordered_map<std::string, StructDefinition> &StructDefs)
 {
     for (auto &i : output)
     {
@@ -531,7 +547,7 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
 
         if (shapeId == 65)
         {
-            DeserializeStructDefinitions(input, pos, io, regDefs);
+            DeserializeStructDefinitions(input, pos, io, regDefs, StructDefs);
         }
         else if (shapeId == 66)
         {
@@ -545,7 +561,7 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
             auto &b = output[rank].back();
 
             DeserializeVariable(input, static_cast<ShapeID>(shapeId), pos, b,
-                                io, regVars);
+                                io, regVars, StructDefs);
         }
     }
 }

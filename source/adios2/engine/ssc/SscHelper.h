@@ -154,14 +154,18 @@ void SerializeAttributes(IO &input, Buffer &output);
 void SerializeStructDefinitions(
     const std::unordered_map<std::string, StructDefinition> &definitions,
     Buffer &output);
-void DeserializeVariable(const Buffer &input, const ShapeID shapeId,
-                         uint64_t &pos, BlockInfo &b, IO &io, const bool regIO);
+void DeserializeVariable(
+    const Buffer &input, const ShapeID shapeId, uint64_t &pos, BlockInfo &b,
+    IO &io, const bool regIO,
+    std::unordered_map<std::string, StructDefinition> &StructDefs);
 void DeserializeAttribute(const Buffer &input, uint64_t &pos, IO &io,
                           const bool regIO);
-void DeserializeStructDefinitions(const Buffer &input, uint64_t &pos, IO &io,
-                                  const bool regIO);
+void DeserializeStructDefinitions(
+    const Buffer &input, uint64_t &pos, IO &io, const bool regIO,
+    std::unordered_map<std::string, StructDefinition> &StructDefs);
 void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
-                 const bool regVars, const bool regAttrs, const bool regDefs);
+                 const bool regVars, const bool regAttrs, const bool regDefs,
+                 std::unordered_map<std::string, StructDefinition> &StructDefs);
 void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
                        MPI_Comm comm, const bool finalStep, const bool locked);
 void BroadcastMetadata(Buffer &globalBuffer, const int root, MPI_Comm comm);

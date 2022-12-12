@@ -506,9 +506,6 @@ public:
     /** Inform about computation block through User->ADIOS */
     void ExitComputationBlock() noexcept;
 
-    StructDefinition *DefineStruct(const std::string &name, const size_t size);
-    StructDefinition *InquireStruct(const std::string &name);
-
 private:
     /** true: exist in config file (XML) */
     const bool m_InConfigFile = false;
@@ -523,10 +520,6 @@ private:
     AttrMap m_Attributes;
 
     std::map<std::string, std::shared_ptr<Engine>> m_Engines;
-
-    // for reader engines to register temporary struct definitions parsed from
-    // step metadata, and then use them to define variables in IO.
-    std::unordered_map<std::string, StructDefinition> m_StructDefinitions;
 
     /** Checks if attribute exists, called from DefineAttribute different
      *  signatures */
