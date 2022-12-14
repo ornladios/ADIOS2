@@ -367,4 +367,42 @@ void MinMaxStruct::Dump(DataType Type)
         break;
     }
 }
+
+int TypeElementSize(DataType adiosvartype)
+{
+    switch (adiosvartype)
+    {
+    case DataType::UInt8:
+        return 1;
+    case DataType::Int8:
+        return 1;
+    case DataType::String:
+        return -1;
+    case DataType::UInt16:
+        return 2;
+    case DataType::Int16:
+        return 2;
+    case DataType::UInt32:
+        return 4;
+    case DataType::Int32:
+        return 4;
+    case DataType::UInt64:
+        return 8;
+    case DataType::Int64:
+        return 8;
+    case DataType::Float:
+        return 4;
+    case DataType::Double:
+        return 8;
+    case DataType::FloatComplex:
+        return 8;
+    case DataType::DoubleComplex:
+        return 16;
+    case DataType::LongDouble:
+        return 16;
+    default:
+        return -1;
+    }
+}
+
 } // end namespace adios2

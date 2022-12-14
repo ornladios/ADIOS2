@@ -78,13 +78,15 @@ TEST_F(StructReadTest, ADIOS2StructRead)
     engine.LockReaderSelections();
 
     auto particleDef1 = adios.DefineStruct("particle1", sizeof(particle));
-    particleDef1.AddItem("a", 0, adios2::DataType::Int8, 1);
-    particleDef1.AddItem("b", 4, adios2::DataType::Int32, 4);
+    particleDef1.AddField("a", offsetof(particle, a), adios2::DataType::Int8);
+    particleDef1.AddField("b", offsetof(particle, b), adios2::DataType::Int32,
+                          4);
 
     auto particleDef2 = adios.DefineStruct("particle2", sizeof(particle) + 4);
-    particleDef2.AddItem("a", 0, adios2::DataType::Int8, 1);
-    particleDef2.AddItem("b", 4, adios2::DataType::Int32, 4);
-    particleDef2.AddItem("c", 20, adios2::DataType::Int32, 1);
+    particleDef2.AddField("a", offsetof(particle, a), adios2::DataType::Int8);
+    particleDef2.AddField("b", offsetof(particle, b), adios2::DataType::Int32,
+                          4);
+    particleDef2.AddField("c", 20, adios2::DataType::Int32); // arbitrary offset
 
     while (true)
     {

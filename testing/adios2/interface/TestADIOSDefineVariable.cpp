@@ -661,22 +661,33 @@ TEST_F(ADIOSDefineVariableTest, DefineStructVariable)
     const adios2::Dims start = {0};
     const adios2::Dims count = {10};
 
-    auto def1 = adios.DefineStruct("def1", 24);
-    def1.AddItem("a", 0, adios2::DataType::Int8, 1);
-    def1.AddItem("b", 4, adios2::DataType::Int32, 5);
-    def1.Freeze();
-    EXPECT_THROW(def1.AddItem("c", 0, adios2::DataType::Int32),
+    typedef struct def1
+    {
+        int8_t a;
+        int32_t b[5];
+    } def1;
+    auto struct1 = adios.DefineStruct("def1", sizeof(def1));
+    struct1.AddField("a", offsetof(def1, a), adios2::DataType::Int8);
+    struct1.AddField("b", offsetof(def1, b), adios2::DataType::Int32, 5);
+    struct1.Freeze();
+    EXPECT_THROW(struct1.AddField("c", 0, adios2::DataType::Int32),
                  std::runtime_error);
 
-    auto def2 = adios.DefineStruct("def2", 28);
-    def2.AddItem("a", 0, adios2::DataType::Int8, 1);
-    def2.AddItem("b", 4, adios2::DataType::Int32, 5);
-    def2.AddItem("c", 24, adios2::DataType::Int32);
-    EXPECT_THROW(def2.AddItem("c", 27, adios2::DataType::Int32),
+    typedef struct def2
+    {
+        int8_t a;
+        int32_t b[5];
+        int32_t c;
+    } def2;
+    auto struct2 = adios.DefineStruct("def2", sizeof(def2));
+    struct2.AddField("a", offsetof(def2, a), adios2::DataType::Int8);
+    struct2.AddField("b", offsetof(def2, b), adios2::DataType::Int32, 5);
+    struct2.AddField("c", 24, adios2::DataType::Int32);
+    EXPECT_THROW(struct2.AddField("c", 27, adios2::DataType::Int32),
                  std::runtime_error);
 
     auto structVar =
-        io.DefineStructVariable("particle", def1, shape, start, count);
+        io.DefineStructVariable("particle", struct1, shape, start, count);
 
     EXPECT_EQ(structVar.Shape().size(), 1);
     EXPECT_EQ(structVar.Start().size(), 1);
@@ -684,20 +695,20 @@ TEST_F(ADIOSDefineVariableTest, DefineStructVariable)
     EXPECT_EQ(structVar.Name(), "particle");
     EXPECT_EQ(structVar.Type(), "struct");
     EXPECT_EQ(structVar.Sizeof(), 24);
-    EXPECT_EQ(structVar.StructItems(), 2);
-    EXPECT_EQ(structVar.StructItemName(0), "a");
-    EXPECT_EQ(structVar.StructItemName(1), "b");
-    EXPECT_EQ(structVar.StructItemOffset(0), 0);
-    EXPECT_EQ(structVar.StructItemOffset(1), 4);
-    EXPECT_EQ(structVar.StructItemType(0), adios2::DataType::Int8);
-    EXPECT_EQ(structVar.StructItemType(1), adios2::DataType::Int32);
-    EXPECT_EQ(structVar.StructItemSize(0), 1);
-    EXPECT_EQ(structVar.StructItemSize(1), 5);
+    EXPECT_EQ(structVar.StructFields(), 2);
+    EXPECT_EQ(structVar.StructFieldName(0), "a");
+    EXPECT_EQ(structVar.StructFieldName(1), "b");
+    EXPECT_EQ(structVar.StructFieldOffset(0), 0);
+    EXPECT_EQ(structVar.StructFieldOffset(1), offsetof(def1, b));
+    EXPECT_EQ(structVar.StructFieldType(0), adios2::DataType::Int8);
+    EXPECT_EQ(structVar.StructFieldType(1), adios2::DataType::Int32);
+    EXPECT_EQ(structVar.StructFieldElementCount(0), 1);
+    EXPECT_EQ(structVar.StructFieldElementCount(1), 5);
 
-    EXPECT_THROW(structVar.StructItemName(2), std::invalid_argument);
-    EXPECT_THROW(structVar.StructItemOffset(2), std::invalid_argument);
-    EXPECT_THROW(structVar.StructItemType(2), std::invalid_argument);
-    EXPECT_THROW(structVar.StructItemSize(2), std::invalid_argument);
+    EXPECT_THROW(structVar.StructFieldName(2), std::invalid_argument);
+    EXPECT_THROW(structVar.StructFieldOffset(2), std::invalid_argument);
+    EXPECT_THROW(structVar.StructFieldType(2), std::invalid_argument);
+    EXPECT_THROW(structVar.StructFieldElementCount(2), std::invalid_argument);
 
     auto inquire1 = io.InquireVariable("particle");
     EXPECT_TRUE(inquire1);
@@ -705,10 +716,10 @@ TEST_F(ADIOSDefineVariableTest, DefineStructVariable)
     auto inquire2 = io.InquireStructVariable("particle");
     EXPECT_TRUE(inquire2);
 
-    auto inquire3 = io.InquireStructVariable("particle", def1);
+    auto inquire3 = io.InquireStructVariable("particle", struct1);
     EXPECT_TRUE(inquire3);
 
-    auto inquire4 = io.InquireStructVariable("particle", def2);
+    auto inquire4 = io.InquireStructVariable("particle", struct2);
     EXPECT_FALSE(inquire4);
 }
 

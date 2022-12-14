@@ -93,11 +93,13 @@ TEST_F(StructWriteTest, ADIOS2CommonWrite)
         int b[4];
     };
     auto particleDef = adios.DefineStruct("particle", sizeof(particle));
-    particleDef.AddItem("a", 0, adios2::DataType::Int8, 1);
-    particleDef.AddItem("b", 4, adios2::DataType::Int32, 4);
+    particleDef.AddField("a", offsetof(struct particle, a),
+                         adios2::DataType::Int8);
+    particleDef.AddField("b", offsetof(struct particle, b),
+                         adios2::DataType::Int32, 4);
     auto varStruct =
         io.DefineStructVariable("particles", particleDef, shape, start, count);
-    EXPECT_THROW(particleDef.AddItem("c", 4, adios2::DataType::Int32, 4),
+    EXPECT_THROW(particleDef.AddField("c", 4, adios2::DataType::Int32),
                  std::runtime_error);
     std::vector<particle> myParticles(datasize);
     for (size_t i = 0; i < datasize; ++i)

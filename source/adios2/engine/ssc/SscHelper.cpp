@@ -453,9 +453,9 @@ void SerializeStructDefinitions(
         pos += p.first.size();
         output.value<uint64_t>(pos) = p.second.StructSize();
         pos += 8;
-        output[pos] = static_cast<uint8_t>(p.second.Items());
+        output[pos] = static_cast<uint8_t>(p.second.Fields());
         ++pos;
-        for (size_t i = 0; i < p.second.Items(); ++i)
+        for (size_t i = 0; i < p.second.Fields(); ++i)
         {
             output[pos] = static_cast<uint8_t>(p.second.Name(i).size());
             ++pos;
@@ -466,7 +466,7 @@ void SerializeStructDefinitions(
             pos += 8;
             output.value<DataType>(pos) = p.second.Type(i);
             pos += sizeof(DataType);
-            output.value<uint64_t>(pos) = p.second.Size(i);
+            output.value<uint64_t>(pos) = p.second.ElementCount(i);
             pos += 8;
         }
     }
@@ -517,8 +517,8 @@ void DeserializeStructDefinitions(
             pos += 8;
             if (structDefinition != nullptr)
             {
-                structDefinition->AddItem(itemName, itemOffset, itemType,
-                                          itemSize);
+                structDefinition->AddField(itemName, itemOffset, itemType,
+                                           itemSize);
             }
         }
     }
