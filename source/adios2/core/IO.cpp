@@ -939,12 +939,12 @@ VariableStruct *IO::InquireStructVariable(const std::string &name,
         return nullptr;
     }
 
-    if (ret->m_StructDefinition.Items() != def.Items())
+    if (ret->m_StructDefinition.Fields() != def.Fields())
     {
         return nullptr;
     }
 
-    for (size_t i = 0; i < def.Items(); ++i)
+    for (size_t i = 0; i < def.Fields(); ++i)
     {
         if (ret->m_StructDefinition.Name(i) != def.Name(i))
         {
@@ -959,7 +959,7 @@ VariableStruct *IO::InquireStructVariable(const std::string &name,
         {
             return nullptr;
         }
-        if (ret->m_StructDefinition.Size(i) != def.Size(i))
+        if (ret->m_StructDefinition.ElementCount(i) != def.ElementCount(i))
         {
             return nullptr;
         }

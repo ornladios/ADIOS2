@@ -28,15 +28,15 @@ class StructDefinition
 {
 
 public:
-    void AddItem(const std::string &name, const size_t offset,
-                 const DataType type, const size_t size = 1);
+    void AddField(const std::string &name, const size_t offset,
+                  const DataType type, const size_t size = 1);
     void Freeze() noexcept;
     size_t StructSize() const noexcept;
-    size_t Items() const noexcept;
+    size_t Fields() const noexcept;
     std::string Name(const size_t index) const;
     size_t Offset(const size_t index) const;
     DataType Type(const size_t index) const;
-    size_t Size(const size_t index) const;
+    size_t ElementCount(const size_t index) const;
 
 private:
     friend class ADIOS;
@@ -209,11 +209,11 @@ public:
      */
     void RemoveOperations();
 
-    size_t StructItems() const;
-    std::string StructItemName(const size_t index) const;
-    size_t StructItemOffset(const size_t index) const;
-    DataType StructItemType(const size_t index) const;
-    size_t StructItemSize(const size_t index) const;
+    size_t StructFields() const;
+    std::string StructFieldName(const size_t index) const;
+    size_t StructFieldOffset(const size_t index) const;
+    DataType StructFieldType(const size_t index) const;
+    size_t StructFieldElementCount(const size_t index) const;
 
     union T
     {
