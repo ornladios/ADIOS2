@@ -296,6 +296,12 @@ template <typename T, typename Enable = void>
 struct TypeInfo;
 
 /**
+ *  Return the actual size in bytes of elements of the given type.  Returns -1
+ * for strings.
+ */
+int TypeElementSize(DataType adiosvartype);
+
+/**
  * ToString
  * makes a string from an enum class like ShapeID etc, for debugging etc
  * It is also overloaded elsewhere to allow for a readable representation of

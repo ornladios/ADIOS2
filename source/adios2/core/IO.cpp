@@ -939,12 +939,12 @@ VariableStruct *IO::InquireStructVariable(const std::string &name,
         return nullptr;
     }
 
-    if (ret->m_StructDefinition.Items() != def.Items())
+    if (ret->m_StructDefinition.Fields() != def.Fields())
     {
         return nullptr;
     }
 
-    for (size_t i = 0; i < def.Items(); ++i)
+    for (size_t i = 0; i < def.Fields(); ++i)
     {
         if (ret->m_StructDefinition.Name(i) != def.Name(i))
         {
@@ -959,36 +959,13 @@ VariableStruct *IO::InquireStructVariable(const std::string &name,
         {
             return nullptr;
         }
-        if (ret->m_StructDefinition.Size(i) != def.Size(i))
+        if (ret->m_StructDefinition.ElementCount(i) != def.ElementCount(i))
         {
             return nullptr;
         }
     }
 
     return ret;
-}
-
-StructDefinition *IO::DefineStruct(const std::string &name, const size_t size)
-{
-    if (m_StructDefinitions.find(name) != m_StructDefinitions.end())
-    {
-        return nullptr;
-    }
-    return &m_StructDefinitions.emplace(name, StructDefinition(name, size))
-                .first->second;
-}
-
-StructDefinition *IO::InquireStruct(const std::string &name)
-{
-    auto it = m_StructDefinitions.find(name);
-    if (it == m_StructDefinitions.end())
-    {
-        return nullptr;
-    }
-    else
-    {
-        return &it->second;
-    }
 }
 
 // Explicitly instantiate the necessary public template implementations

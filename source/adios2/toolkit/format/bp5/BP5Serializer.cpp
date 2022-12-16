@@ -423,22 +423,31 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         core::VariableStruct *VS =
             static_cast<core::VariableStruct *>(Variable);
         const core::StructDefinition *SD = &VS->m_StructDefinition;
-        FMField *List = (FMField *)malloc((SD->Items() + 1) * sizeof(List[0]));
-        for (size_t i = 0; i < SD->Items(); i++)
+        FMField *List = (FMField *)malloc((SD->Fields() + 1) * sizeof(List[0]));
+        for (size_t i = 0; i < SD->Fields(); i++)
         {
             List[i].field_name = strdup(SD->Name(i).c_str());
             List[i].field_type = TranslateADIOS2Type2FFS(SD->Type(i));
-            List[i].field_size = SD->Size(i);
+            List[i].field_size = TypeElementSize(SD->Type(i));
             List[i].field_offset = SD->Offset(i);
+            if (SD->ElementCount(i) != 1)
+            {
+                size_t Len = strlen(List[i].field_type) + 10;
+                char *Tmp = (char *)malloc(Len);
+                snprintf(Tmp, Len, "%s[%d]", List[i].field_type,
+                         (int)SD->ElementCount(i));
+                free((void *)List[i].field_type);
+                List[i].field_type = Tmp;
+            }
         }
-        List[SD->Items()] = {NULL, NULL, 0, 0};
+        List[SD->Fields()] = {NULL, NULL, 0, 0};
 
         FMStructDescRec struct_list[4] = {
             {NULL, NULL, 0, NULL},
             {"complex4", fcomplex_field_list, sizeof(fcomplex_struct), NULL},
             {"complex8", dcomplex_field_list, sizeof(dcomplex_struct), NULL},
             {NULL, NULL, 0, NULL}};
-        struct_list[0].format_name = strdup(SD->Name().c_str());
+        struct_list[0].format_name = strdup(SD->StructName().c_str());
         struct_list[0].field_list = List;
         struct_list[0].struct_size = SD->StructSize();
 

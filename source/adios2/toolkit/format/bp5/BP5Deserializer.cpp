@@ -386,10 +386,24 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
                     FMFieldList List = StructList[0].field_list;
                     while (List->field_name != NULL)
                     {
-                        DataType Type = TranslateFFSType2ADIOS(
-                            List->field_type, List->field_size);
-                        Def->AddItem(List->field_name, List->field_offset, Type,
-                                     List->field_size);
+                        char *ind = (char *)index(List->field_type, '[');
+                        if (!ind)
+                        {
+                            DataType Type = TranslateFFSType2ADIOS(
+                                List->field_type, List->field_size);
+                            Def->AddField(List->field_name, List->field_offset,
+                                          Type);
+                        }
+                        else
+                        {
+                            *ind = 0; // terminate string temporarily
+                            DataType Type = TranslateFFSType2ADIOS(
+                                List->field_type, List->field_size);
+                            size_t Count = strtol(ind + 1, NULL, 10);
+                            Def->AddField(List->field_name, List->field_offset,
+                                          Type, Count);
+                            *ind = '['; // restore string
+                        }
                         List++;
                     }
                     VarRec->Def = Def;

@@ -22,42 +22,42 @@ StructDefinition::StructDefinition(const std::string &name, const size_t size)
 {
 }
 
-void StructDefinition::AddItem(const std::string &name, const size_t offset,
-                               const DataType type, const size_t size)
+void StructDefinition::AddField(const std::string &name, const size_t offset,
+                                const DataType type, const size_t elementcount)
 {
     if (m_Frozen)
     {
         helper::Throw<std::runtime_error>(
-            "core", "VariableStruct::StructDefinition", "AddItem",
+            "core", "VariableStruct::StructDefinition", "AddField",
             "struct definition already frozen");
     }
     if (type == DataType::None || type == DataType::Struct)
     {
         helper::Throw<std::invalid_argument>("core",
                                              "VariableStruct::StructDefinition",
-                                             "AddItem", "invalid data type");
+                                             "AddField", "invalid data type");
     }
-    if (offset + helper::GetDataTypeSize(type) * size > m_StructSize)
+    if (offset + helper::GetDataTypeSize(type) * elementcount > m_StructSize)
     {
         helper::Throw<std::runtime_error>("core",
                                           "VariableStruct::StructDefinition",
-                                          "AddItem", "exceeded struct size");
+                                          "AddField", "exceeded struct size");
     }
     m_Definition.emplace_back();
     auto &d = m_Definition.back();
     d.Name = name;
     d.Offset = offset;
     d.Type = type;
-    d.Size = size;
+    d.ElementCount = elementcount;
 }
 
 void StructDefinition::Freeze() noexcept { m_Frozen = true; }
 
 size_t StructDefinition::StructSize() const noexcept { return m_StructSize; }
 
-size_t StructDefinition::Items() const noexcept { return m_Definition.size(); }
+size_t StructDefinition::Fields() const noexcept { return m_Definition.size(); }
 
-std::string StructDefinition::Name() const noexcept { return m_Name; }
+std::string StructDefinition::StructName() const noexcept { return m_Name; }
 
 std::string StructDefinition::Name(const size_t index) const
 {
@@ -92,15 +92,15 @@ DataType StructDefinition::Type(const size_t index) const
     return m_Definition[index].Type;
 }
 
-size_t StructDefinition::Size(const size_t index) const
+size_t StructDefinition::ElementCount(const size_t index) const
 {
     if (index >= m_Definition.size())
     {
         helper::Throw<std::invalid_argument>("core",
                                              "VariableStruct::StructDefinition",
-                                             "Size", "invalid index");
+                                             "ElementCount", "invalid index");
     }
-    return m_Definition[index].Size;
+    return m_Definition[index].ElementCount;
 }
 
 VariableStruct::VariableStruct(const std::string &name,

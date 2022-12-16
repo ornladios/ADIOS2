@@ -22,28 +22,28 @@ namespace core
 class StructDefinition
 {
 public:
-    struct StructItemDefinition
+    struct StructFieldDefinition
     {
         std::string Name;
         size_t Offset;
         DataType Type;
-        size_t Size;
+        size_t ElementCount;
     };
 
     StructDefinition(const std::string &name, const size_t size);
-    void AddItem(const std::string &name, const size_t offset,
-                 const DataType type, const size_t size = 1);
+    void AddField(const std::string &name, const size_t offset,
+                  const DataType type, const size_t size = 1);
     void Freeze() noexcept;
     size_t StructSize() const noexcept;
-    size_t Items() const noexcept;
+    std::string StructName() const noexcept;
+    size_t Fields() const noexcept;
     std::string Name(const size_t index) const;
-    std::string Name() const noexcept;
     size_t Offset(const size_t index) const;
     DataType Type(const size_t index) const;
-    size_t Size(const size_t index) const;
+    size_t ElementCount(const size_t index) const;
 
 private:
-    std::vector<StructItemDefinition> m_Definition;
+    std::vector<StructFieldDefinition> m_Definition;
     bool m_Frozen = false;
     std::string m_Name;
     size_t m_StructSize;

@@ -41,6 +41,8 @@ public:
 
     void PutDeferred(VariableBase &, const void *) final;
 
+    std::unordered_map<std::string, StructDefinition> m_StructDefinitions;
+
 private:
     MPI_Win m_MpiWin;
     std::thread m_EndStepThread;

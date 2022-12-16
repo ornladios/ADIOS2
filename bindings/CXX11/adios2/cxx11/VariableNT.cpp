@@ -21,12 +21,12 @@ StructDefinition::StructDefinition(core::StructDefinition *ptr)
 {
 }
 
-void StructDefinition::AddItem(const std::string &name, const size_t offset,
-                               const DataType type, const size_t size)
+void StructDefinition::AddField(const std::string &name, const size_t offset,
+                                const DataType type, const size_t size)
 {
     helper::CheckForNullptr(m_StructDefinition,
-                            "in call to StructDefinition::AddItem");
-    m_StructDefinition->AddItem(name, offset, type, size);
+                            "in call to StructDefinition::AddField");
+    m_StructDefinition->AddField(name, offset, type, size);
 }
 
 void StructDefinition::Freeze() noexcept
@@ -43,11 +43,11 @@ size_t StructDefinition::StructSize() const noexcept
     return m_StructDefinition->StructSize();
 }
 
-size_t StructDefinition::Items() const noexcept
+size_t StructDefinition::Fields() const noexcept
 {
     helper::CheckForNullptr(m_StructDefinition,
-                            "in call to StructDefinition::Items");
-    return m_StructDefinition->Items();
+                            "in call to StructDefinition::Fields");
+    return m_StructDefinition->Fields();
 }
 std::string StructDefinition::Name(const size_t index) const
 {
@@ -67,11 +67,11 @@ DataType StructDefinition::Type(const size_t index) const
                             "in call to StructDefinition::Type");
     return m_StructDefinition->Type(index);
 }
-size_t StructDefinition::Size(const size_t index) const
+size_t StructDefinition::ElementCount(const size_t index) const
 {
     helper::CheckForNullptr(m_StructDefinition,
-                            "in call to StructDefinition::Size");
-    return m_StructDefinition->Size(index);
+                            "in call to StructDefinition::ElementCount");
+    return m_StructDefinition->ElementCount(index);
 }
 
 VariableNT::VariableNT(core::VariableBase *variable) : m_Variable(variable) {}
@@ -253,74 +253,74 @@ void VariableNT::RemoveOperations()
     m_Variable->RemoveOperations();
 }
 
-size_t VariableNT::StructItems() const
+size_t VariableNT::StructFields() const
 {
-    helper::CheckForNullptr(m_Variable, "in call to VariableNT::StructItems");
+    helper::CheckForNullptr(m_Variable, "in call to VariableNT::StructFields");
     if (m_Variable->m_Type != DataType::Struct)
     {
         helper::Throw<std::runtime_error>(
-            "bindings::CXX11", "VariableNT", "StructItems",
+            "bindings::CXX11", "VariableNT", "StructFields",
             "invalid data type " + ToString(m_Variable->m_Type) +
                 ", only Struct type supports this API");
     }
     return reinterpret_cast<core::VariableStruct *>(m_Variable)
-        ->m_StructDefinition.Items();
+        ->m_StructDefinition.Fields();
 }
-std::string VariableNT::StructItemName(const size_t index) const
+std::string VariableNT::StructFieldName(const size_t index) const
 {
     helper::CheckForNullptr(m_Variable,
-                            "in call to VariableNT::StructItemName");
+                            "in call to VariableNT::StructFieldName");
     if (m_Variable->m_Type != DataType::Struct)
     {
         helper::Throw<std::runtime_error>(
-            "bindings::CXX11", "VariableNT", "StructItemName",
+            "bindings::CXX11", "VariableNT", "StructFieldName",
             "invalid data type " + ToString(m_Variable->m_Type) +
                 ", only Struct type supports this API");
     }
     return reinterpret_cast<core::VariableStruct *>(m_Variable)
         ->m_StructDefinition.Name(index);
 }
-size_t VariableNT::StructItemOffset(const size_t index) const
+size_t VariableNT::StructFieldOffset(const size_t index) const
 {
     helper::CheckForNullptr(m_Variable,
-                            "in call to VariableNT::StructItemOffset");
+                            "in call to VariableNT::StructFieldOffset");
     if (m_Variable->m_Type != DataType::Struct)
     {
         helper::Throw<std::runtime_error>(
-            "bindings::CXX11", "VariableNT", "StructItemOffset",
+            "bindings::CXX11", "VariableNT", "StructFieldOffset",
             "invalid data type " + ToString(m_Variable->m_Type) +
                 ", only Struct type supports this API");
     }
     return reinterpret_cast<core::VariableStruct *>(m_Variable)
         ->m_StructDefinition.Offset(index);
 }
-DataType VariableNT::StructItemType(const size_t index) const
+DataType VariableNT::StructFieldType(const size_t index) const
 {
     helper::CheckForNullptr(m_Variable,
-                            "in call to VariableNT::StructItemType");
+                            "in call to VariableNT::StructFieldType");
     if (m_Variable->m_Type != DataType::Struct)
     {
         helper::Throw<std::runtime_error>(
-            "bindings::CXX11", "VariableNT", "StructItemType",
+            "bindings::CXX11", "VariableNT", "StructFieldType",
             "invalid data type " + ToString(m_Variable->m_Type) +
                 ", only Struct type supports this API");
     }
     return reinterpret_cast<core::VariableStruct *>(m_Variable)
         ->m_StructDefinition.Type(index);
 }
-size_t VariableNT::StructItemSize(const size_t index) const
+size_t VariableNT::StructFieldElementCount(const size_t index) const
 {
     helper::CheckForNullptr(m_Variable,
-                            "in call to VariableNT::StructItemSize");
+                            "in call to VariableNT::StructFieldElementCount");
     if (m_Variable->m_Type != DataType::Struct)
     {
         helper::Throw<std::runtime_error>(
-            "bindings::CXX11", "VariableNT", "StructItemSize",
+            "bindings::CXX11", "VariableNT", "StructFieldElementCount",
             "invalid data type " + ToString(m_Variable->m_Type) +
                 ", only Struct type supports this API");
     }
     return reinterpret_cast<core::VariableStruct *>(m_Variable)
-        ->m_StructDefinition.Size(index);
+        ->m_StructDefinition.ElementCount(index);
 }
 
 std::pair<VariableNT::T, VariableNT::T>
