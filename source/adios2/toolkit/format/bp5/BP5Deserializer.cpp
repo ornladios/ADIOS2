@@ -2,7 +2,7 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * BP5Serializer.h
+ * BP5Deserializer.h
  *
  */
 
@@ -1357,10 +1357,12 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                     RR.WriterRank = WriterRank;
                     RR.StartOffset =
                         writer_meta_base->DataBlockLocation[NeededBlock];
-
-                    RR.DirectToAppMemory = IsContiguousTransfer(
-                        Req, &writer_meta_base->Offsets[StartDim],
-                        &writer_meta_base->Count[StartDim]);
+                    if (Req->MemSpace != MemorySpace::Host)
+                        RR.DirectToAppMemory = false;
+                    else
+                        RR.DirectToAppMemory = IsContiguousTransfer(
+                            Req, &writer_meta_base->Offsets[StartDim],
+                            &writer_meta_base->Count[StartDim]);
                     RR.ReadLength =
                         helper::GetDataTypeSize(Req->VarRec->Type) *
                         CalcBlockLength(Req->VarRec->DimCount,
@@ -1490,9 +1492,12 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers,
                                 StartOffsetInBlock;
                             RR.ReadLength =
                                 EndOffsetInBlock - StartOffsetInBlock;
-                            RR.DirectToAppMemory = IsContiguousTransfer(
-                                Req, &writer_meta_base->Offsets[StartDim],
-                                &writer_meta_base->Count[StartDim]);
+                            if (Req->MemSpace != MemorySpace::Host)
+                                RR.DirectToAppMemory = false;
+                            else
+                                RR.DirectToAppMemory = IsContiguousTransfer(
+                                    Req, &writer_meta_base->Offsets[StartDim],
+                                    &writer_meta_base->Count[StartDim]);
                             if (RR.DirectToAppMemory)
                             {
                                 /*
