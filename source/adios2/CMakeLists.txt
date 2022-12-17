@@ -161,6 +161,10 @@ if(ADIOS2_HAVE_DAOS)
   target_link_libraries(adios2_core PRIVATE DAOS::DAOS)
 endif()
 
+if(ADIOS2_HAVE_SCR)
+  target_link_libraries(adios2_core PRIVATE SCR::SCR)
+endif()
+
 if(ADIOS2_HAVE_MPI)
     add_library(adios2_core_mpi
         core/IOMPI.cpp
