@@ -50,11 +50,13 @@ public:
     /** Variable -> sizeof(T),
      *  VariableStruct -> from constructor sizeof(struct) */
     const size_t m_ElementSize;
+    /* User requested memory space and the detected memory space */
 #ifdef ADIOS2_HAVE_CUDA
-    MemorySpace m_MemorySpace = MemorySpace::Detect;
+    MemorySpace m_MemSpaceRequested = MemorySpace::Detect;
 #else
-    MemorySpace m_MemorySpace = MemorySpace::Host;
+    MemorySpace m_MemSpaceRequested = MemorySpace::Host;
 #endif
+    MemorySpace m_MemSpaceDetected = MemorySpace::Detect;
 
     ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
     size_t m_BlockID = 0; ///< current block ID for local variables, global = 0
@@ -121,13 +123,19 @@ public:
     size_t TotalSize() const noexcept;
 
     /**
-     * Check if buffer is allocated on CUDA space
+     * Detect the memory space where a buffer was allocated and return it
      * @param pointer to the user data
      */
-    bool IsCUDAPointer(const void *ptr);
+    MemorySpace DetectMemorySpace(const void *ptr);
 
     /**
-     * Set the memory space
+     * Get the memory space where a given buffers was allocated
+     * @param pointer to the user data
+     */
+    MemorySpace GetMemorySpace(const void *ptr);
+
+    /**
+     * Set the memory space where user buffers will be allocated
      * @param the memory space where the expected buffers were allocated
      */
     void SetMemorySpace(const MemorySpace mem);

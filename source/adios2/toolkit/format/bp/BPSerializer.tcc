@@ -74,7 +74,7 @@ inline void BPSerializer::PutPayloadInBuffer(
     m_Profiler.Start("memcpy");
 
 #ifdef ADIOS2_HAVE_CUDA
-    if (blockInfo.IsGPU)
+    if (blockInfo.MemSpace == MemorySpace::CUDA)
     {
         helper::CopyFromGPUToBuffer(m_Data.m_Buffer, m_Data.m_Position,
                                     blockInfo.Data, blockSize);

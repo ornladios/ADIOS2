@@ -81,7 +81,7 @@ public:
         SelectionType Selection = SelectionType::BoundingBox;
         bool IsValue = false;
         bool IsReverseDims = false;
-        bool IsGPU = false;
+        MemorySpace MemSpace = MemorySpace::Host;
     };
 
     /** use for multiblock info */

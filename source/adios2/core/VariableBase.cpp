@@ -43,30 +43,45 @@ VariableBase::VariableBase(const std::string &name, const DataType type,
     InitShapeType();
 }
 
-bool VariableBase::IsCUDAPointer(const void *ptr)
-{
-    if (m_MemorySpace == MemorySpace::CUDA)
-        return true;
-    if (m_MemorySpace == MemorySpace::Host)
-        return false;
-
-#ifdef ADIOS2_HAVE_CUDA
-    cudaPointerAttributes attr;
-    cudaPointerGetAttributes(&attr, ptr);
-    return attr.type == cudaMemoryTypeDevice;
-#else
-    return false;
-#endif
-}
-
 size_t VariableBase::TotalSize() const noexcept
 {
     return helper::GetTotalSize(m_Count);
 }
 
+MemorySpace VariableBase::DetectMemorySpace(const void *ptr)
+{
+    if (m_MemSpaceRequested != MemorySpace::Detect)
+    {
+        m_MemSpaceDetected = m_MemSpaceRequested;
+        return m_MemSpaceRequested;
+    }
+
+    // if the user requested MemorySpace::Detect
+#ifdef ADIOS2_HAVE_CUDA
+    cudaPointerAttributes attr;
+    cudaPointerGetAttributes(&attr, ptr);
+    if (attr.type == cudaMemoryTypeDevice)
+    {
+        m_MemSpaceDetected = MemorySpace::CUDA;
+        return MemorySpace::CUDA;
+    }
+#endif
+    m_MemSpaceDetected = MemorySpace::Host;
+    return MemorySpace::Host;
+}
+
+MemorySpace VariableBase::GetMemorySpace(const void *ptr)
+{
+    if (m_MemSpaceDetected == MemorySpace::Detect)
+        m_MemSpaceDetected = DetectMemorySpace(ptr);
+    return m_MemSpaceDetected;
+}
+
 void VariableBase::SetMemorySpace(const MemorySpace mem)
 {
-    m_MemorySpace = mem;
+    m_MemSpaceRequested = mem;
+    // reset the detected memory space
+    m_MemSpaceDetected = MemorySpace::Detect;
 }
 
 void VariableBase::SetShape(const adios2::Dims &shape)
