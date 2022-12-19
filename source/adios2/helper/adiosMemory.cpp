@@ -15,10 +15,6 @@
 
 #include "adios2/helper/adiosType.h"
 
-#ifdef ADIOS2_HAVE_CUDA
-#include <cuda_runtime.h>
-#endif
-
 namespace adios2
 {
 namespace helper
@@ -719,18 +715,5 @@ uint64_t PaddingToAlignOffset(uint64_t offset, uint64_t alignment_size)
     }
     return padSize;
 }
-
-#ifdef ADIOS2_HAVE_CUDA
-void MemcpyGPUToBuffer(void *dst, const char *GPUbuffer, size_t byteCount)
-{
-    cudaMemcpy(dst, GPUbuffer, byteCount, cudaMemcpyDeviceToHost);
-}
-
-void MemcpyBufferToGPU(char *GPUbuffer, const char *src, size_t byteCount)
-{
-    cudaMemcpy(GPUbuffer, src, byteCount, cudaMemcpyHostToDevice);
-}
-#endif
-
 } // end namespace helper
 } // end namespace adios2

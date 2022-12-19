@@ -1,21 +1,29 @@
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
- *
- * adiosCUDA.cpp
- *
- *  Created on: May 9, 2021
- *      Author: Ana Gainaru gainarua@ornl.gov
  */
 
 #ifndef ADIOS2_HELPER_ADIOSCUDA_CU_
 #define ADIOS2_HELPER_ADIOSCUDA_CU_
 
 #include "adios2/common/ADIOSMacros.h"
+#include <cuda_runtime.h>
 #include <thrust/device_ptr.h>
 #include <thrust/extrema.h>
 
 #include "adiosCUDA.h"
+
+void adios2::helper::CUDAMemcpyGPUToBuffer(void *dst, const char *GPUbuffer,
+                                           size_t byteCount)
+{
+    cudaMemcpy(dst, GPUbuffer, byteCount, cudaMemcpyDeviceToHost);
+}
+
+void adios2::helper::CUDAMemcpyBufferToGPU(char *GPUbuffer, const char *src,
+                                           size_t byteCount)
+{
+    cudaMemcpy(GPUbuffer, src, byteCount, cudaMemcpyHostToDevice);
+}
 
 namespace
 {

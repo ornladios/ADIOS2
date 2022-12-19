@@ -21,6 +21,7 @@
 #include <thread>
 /// \endcond
 
+#include "adios2/helper/adiosCUDA.h"
 #include "adios2/helper/adiosMath.h"
 #include "adios2/helper/adiosSystem.h"
 #include "adios2/helper/adiosType.h"
@@ -88,7 +89,7 @@ void CudaMemCopyToBuffer(char *dest, size_t position, const T *GPUbuffer,
                          const size_t size) noexcept
 {
     const char *buffer = reinterpret_cast<const char *>(GPUbuffer);
-    MemcpyGPUToBuffer(dest + position, buffer, size);
+    helper::CUDAMemcpyGPUToBuffer(dest + position, buffer, size);
 }
 
 template <class T>
@@ -96,7 +97,7 @@ void CudaMemCopyFromBuffer(T *GPUbuffer, size_t position, const char *source,
                            const size_t size) noexcept
 {
     char *dest = reinterpret_cast<char *>(GPUbuffer);
-    MemcpyBufferToGPU(dest, source + position, size);
+    helper::CUDAMemcpyBufferToGPU(dest, source + position, size);
 }
 
 static inline void NdCopyCUDA(const char *&inOvlpBase, char *&outOvlpBase,
