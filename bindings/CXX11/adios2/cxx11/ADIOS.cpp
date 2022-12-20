@@ -82,20 +82,6 @@ Operator ADIOS::InquireOperator(const std::string name)
     }
 }
 
-StructDefinition ADIOS::DefineStruct(const std::string &name, const size_t size)
-{
-    CheckPointer("for struct name " + name +
-                 ", in call to ADIOS::DefineStruct");
-    return StructDefinition(&m_ADIOS->DefineStruct(name, size));
-}
-
-StructDefinition ADIOS::InquireStruct(const std::string &name)
-{
-    CheckPointer("for struct name " + name +
-                 ", in call to ADIOS::InquireStruct");
-    return StructDefinition(m_ADIOS->InquireStruct(name));
-}
-
 bool ADIOS::RemoveIO(const std::string name)
 {
     CheckPointer("for io name " + name + ", in call to ADIOS::RemoveIO");

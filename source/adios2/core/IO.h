@@ -286,6 +286,8 @@ public:
     InquireStructVariable(const std::string &name, const StructDefinition &def,
                           const bool allowReorganize = false) noexcept;
 
+    StructDefinition &DefineStruct(const std::string &name, const size_t size);
+
     /**
      * @brief Returns the type of an existing variable as an string
      * @param name input variable name

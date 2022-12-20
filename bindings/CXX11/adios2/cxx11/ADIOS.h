@@ -229,9 +229,6 @@ public:
      */
     Operator InquireOperator(const std::string name);
 
-    StructDefinition DefineStruct(const std::string &name, const size_t size);
-    StructDefinition InquireStruct(const std::string &name);
-
     /**
      * Flushes all engines in write mode in all IOs created with the current
      * ADIOS object. If no IO or Engine exist, it does nothing.
