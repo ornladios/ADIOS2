@@ -132,10 +132,12 @@ public:
     std::pair<std::string, Params> *
     InquireOperator(const std::string &name) noexcept;
 
-    StructDefinition &DefineStruct(const std::string &name, const size_t size);
-    StructDefinition *InquireStruct(const std::string &name);
-    const std::unordered_map<std::string, StructDefinition> &
-    StructDefinitions() const;
+    /*
+     * StructDefinitions are defined using the operators in the IO,
+     * but they are emplaced into a set in the ADIOS to give them
+     * global scope
+     */
+    std::unordered_map<std::string, StructDefinition> m_StructDefinitions;
 
     /**
      * DANGER ZONE: removes a particular IO. This will effectively eliminate any
@@ -180,8 +182,6 @@ private:
 
     /** operators created with DefineOperator */
     std::unordered_map<std::string, std::pair<std::string, Params>> m_Operators;
-
-    std::unordered_map<std::string, StructDefinition> m_StructDefinitions;
 
     /** Flag for Enter/ExitComputationBlock */
     bool enteredComputationBlock = false;

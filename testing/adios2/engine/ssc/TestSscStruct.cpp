@@ -68,7 +68,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
         int8_t a;
         int b[4];
     };
-    auto particleDef = adios.DefineStruct("particle", sizeof(particle));
+    auto particleDef = io.DefineStruct("particle", sizeof(particle));
     particleDef.AddField("a", offsetof(struct particle, a),
                          adios2::DataType::Int8); // simple field
     particleDef.AddField("b", offsetof(struct particle, b),
@@ -154,13 +154,13 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
 
     engine.LockReaderSelections();
 
-    auto particleDef1 = adios.DefineStruct("particle1", sizeof(particle));
+    auto particleDef1 = io.DefineStruct("particle1", sizeof(particle));
     particleDef1.AddField("a", offsetof(struct particle, a),
                           adios2::DataType::Int8);
     particleDef1.AddField("b", offsetof(struct particle, b),
                           adios2::DataType::Int32, 4);
 
-    auto particleDef2 = adios.DefineStruct("particle2", sizeof(particle) + 4);
+    auto particleDef2 = io.DefineStruct("particle2", sizeof(particle) + 4);
     particleDef2.AddField("a", offsetof(struct particle, a),
                           adios2::DataType::Int8, 1);
     particleDef2.AddField("b", offsetof(struct particle, b),

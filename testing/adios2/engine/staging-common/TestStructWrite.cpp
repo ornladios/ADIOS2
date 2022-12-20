@@ -92,7 +92,7 @@ TEST_F(StructWriteTest, ADIOS2CommonWrite)
         int8_t a;
         int b[4];
     };
-    auto particleDef = adios.DefineStruct("particle", sizeof(particle));
+    auto particleDef = io.DefineStruct("particle", sizeof(particle));
     particleDef.AddField("a", offsetof(struct particle, a),
                          adios2::DataType::Int8);
     particleDef.AddField("b", offsetof(struct particle, b),

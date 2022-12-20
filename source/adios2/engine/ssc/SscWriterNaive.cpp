@@ -49,7 +49,7 @@ void SscWriterNaive::EndStep(const bool writerLocked)
 
     if (m_WriterRank == 0)
     {
-        ssc::SerializeStructDefinitions(m_IO.m_ADIOS.StructDefinitions(),
+        ssc::SerializeStructDefinitions(m_IO.m_ADIOS.m_StructDefinitions,
                                         m_Buffer);
     }
 
