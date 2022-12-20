@@ -168,6 +168,11 @@ if(NOT @BUILD_SHARED_LIBS@)
       find_dependency(LIBFABRIC)
     endif()
 
+    set(ADIOS2_SST_HAVE_UCX @ADIOS2_SST_HAVE_UCX@)
+    if(ADIOS2_SST_HAVE_UCX)
+      find_dependency(UCX)
+    endif()
+
     find_dependency(EVPath)
     add_library(adios2::thirdparty::EVPath INTERFACE IMPORTED)
     set_target_properties(adios2::thirdparty::EVPath PROPERTIES

@@ -13,6 +13,9 @@
 #ifdef SST_HAVE_LIBFABRIC
 extern CP_DP_Interface LoadRdmaDP();
 #endif /* SST_HAVE_LIBFABRIC */
+#ifdef SST_HAVE_UCX
+extern CP_DP_Interface LoadUcxDP();
+#endif /* SST_HAVE_UCX */
 #ifdef SST_HAVE_DAOS
 extern CP_DP_Interface LoadDaosDP();
 #endif /* SST_HAVE_LIBFABRIC */
@@ -65,6 +68,10 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
     List =
         AddDPPossibility(Svcs, CP_Stream, List, LoadRdmaDP(), "rdma", Params);
 #endif /* SST_HAVE_LIBFABRIC */
+
+#ifdef SST_HAVE_UCX
+    List = AddDPPossibility(Svcs, CP_Stream, List, LoadUcxDP(), "ucx", Params);
+#endif /* SST_HAVE_UCX */
 
 #ifdef SST_HAVE_DAOS
     List =

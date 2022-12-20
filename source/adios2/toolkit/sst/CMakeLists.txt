@@ -28,6 +28,12 @@ if(ADIOS2_SST_HAVE_LIBFABRIC)
   endif()
 endif()
 
+if(ADIOS2_SST_HAVE_UCX)
+  target_sources(sst PRIVATE dp/ucx_dp.c)
+  target_link_libraries(sst
+                  PRIVATE ucx::ucx)
+endif()
+
 if(ADIOS2_HAVE_DAOS)
   target_sources(sst PRIVATE dp/daos_dp.c)
   target_link_libraries(sst PRIVATE DAOS::DAOS)
@@ -56,6 +62,7 @@ set_target_properties(sst PROPERTIES
 #------------------------------------------------------------------------------#
 set(SST_CONFIG_OPTS
   LIBFABRIC
+  UCX
   FI_GNI
   CRAY_DRC
   NVStream
