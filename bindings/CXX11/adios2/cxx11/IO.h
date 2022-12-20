@@ -159,6 +159,8 @@ public:
                               const Dims &count = Dims(),
                               const bool constantDims = false);
 
+    StructDefinition DefineStruct(const std::string &name, const size_t size);
+
     VariableNT DefineStructVariable(const std::string &name,
                                     const StructDefinition &def,
                                     const Dims &shape = Dims(),

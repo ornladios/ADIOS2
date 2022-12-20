@@ -666,7 +666,7 @@ TEST_F(ADIOSDefineVariableTest, DefineStructVariable)
         int8_t a;
         int32_t b[5];
     } def1;
-    auto struct1 = adios.DefineStruct("def1", sizeof(def1));
+    auto struct1 = io.DefineStruct("def1", sizeof(def1));
     struct1.AddField("a", offsetof(def1, a), adios2::DataType::Int8);
     struct1.AddField("b", offsetof(def1, b), adios2::DataType::Int32, 5);
     struct1.Freeze();
@@ -679,7 +679,7 @@ TEST_F(ADIOSDefineVariableTest, DefineStructVariable)
         int32_t b[5];
         int32_t c;
     } def2;
-    auto struct2 = adios.DefineStruct("def2", sizeof(def2));
+    auto struct2 = io.DefineStruct("def2", sizeof(def2));
     struct2.AddField("a", offsetof(def2, a), adios2::DataType::Int8);
     struct2.AddField("b", offsetof(def2, b), adios2::DataType::Int32, 5);
     struct2.AddField("c", 24, adios2::DataType::Int32);

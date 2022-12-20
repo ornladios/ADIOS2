@@ -194,38 +194,6 @@ ADIOS::InquireOperator(const std::string &name) noexcept
     }
 }
 
-StructDefinition &ADIOS::DefineStruct(const std::string &name,
-                                      const size_t size)
-{
-    if (m_StructDefinitions.find(name) != m_StructDefinitions.end())
-    {
-        helper::Throw<std::invalid_argument>("Core", "ADIOS", "DefineStruct",
-                                             "Struct " + name +
-                                                 " defined twice");
-    }
-    return m_StructDefinitions.emplace(name, StructDefinition(name, size))
-        .first->second;
-}
-
-StructDefinition *ADIOS::InquireStruct(const std::string &name)
-{
-    auto it = m_StructDefinitions.find(name);
-    if (it == m_StructDefinitions.end())
-    {
-        return nullptr;
-    }
-    else
-    {
-        return &it->second;
-    }
-}
-
-const std::unordered_map<std::string, StructDefinition> &
-ADIOS::StructDefinitions() const
-{
-    return m_StructDefinitions;
-}
-
 bool ADIOS::RemoveIO(const std::string name)
 {
     if (m_IOs.erase(name) == 1)

@@ -307,7 +307,7 @@ void SscWriterGeneric::SyncWritePattern(bool finalStep)
 
     if (m_WriterRank == 0)
     {
-        ssc::SerializeStructDefinitions(m_IO.m_ADIOS.StructDefinitions(),
+        ssc::SerializeStructDefinitions(m_IO.m_ADIOS.m_StructDefinitions,
                                         localBuffer);
     }
 
