@@ -1737,7 +1737,7 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
     }
 
     // if the user buffer is allocated on the GPU always use sync mode
-    if (variable.GetMemorySpace(values) != MemorySpace::Host)
+    if (variable.DetectMemorySpace(values) != MemorySpace::Host)
         sync = true;
 
     size_t *Shape = NULL;

@@ -155,13 +155,13 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
 void ChunkV::CopyDataToBuffer(const size_t size, const void *buf, size_t pos,
                               MemorySpace MemSpace)
 {
-#ifdef ADIOS2_HAVE_CUDA
-    if (MemSpace == MemorySpace::CUDA)
+    if (MemSpace != MemorySpace::Host)
     {
-        helper::CudaMemCopyToBuffer(m_TailChunk->Ptr, pos, buf, size);
+#ifdef ADIOS2_HAVE_CUDA
+        helper::CopyFromGPUToBuffer(m_TailChunk->Ptr, pos, buf, MemSpace, size);
+#endif
         return;
     }
-#endif
     memcpy(m_TailChunk->Ptr + pos, buf, size);
 }
 

@@ -75,35 +75,46 @@ void InsertToBuffer(std::vector<char> &buffer, const T *source,
     buffer.insert(buffer.end(), src, src + elements * sizeof(T));
 }
 
-#ifdef ADIOS2_HAVE_CUDA
 template <class T>
 void CopyFromGPUToBuffer(std::vector<char> &dest, size_t &position,
-                         const T *GPUbuffer, const size_t elements) noexcept
+                         const T *GPUbuffer, MemorySpace memSpace,
+                         const size_t elements) noexcept
 {
-    CudaMemCopyToBuffer(dest.data(), position, GPUbuffer, elements * sizeof(T));
+    CopyFromGPUToBuffer(dest.data(), position, GPUbuffer, memSpace,
+                        elements * sizeof(T));
     position += elements * sizeof(T);
 }
 
 template <class T>
-void CudaMemCopyToBuffer(char *dest, size_t position, const T *GPUbuffer,
-                         const size_t size) noexcept
+void CopyFromGPUToBuffer(char *dest, size_t position, const T *GPUbuffer,
+                         MemorySpace memSpace, const size_t size) noexcept
 {
-    const char *buffer = reinterpret_cast<const char *>(GPUbuffer);
-    helper::CUDAMemcpyGPUToBuffer(dest + position, buffer, size);
+#ifdef ADIOS2_HAVE_CUDA
+    if (memSpace == MemorySpace::CUDA)
+    {
+        const char *buffer = reinterpret_cast<const char *>(GPUbuffer);
+        helper::CUDAMemcpyGPUToBuffer(dest + position, buffer, size);
+    }
+#endif
 }
 
 template <class T>
-void CudaMemCopyFromBuffer(T *GPUbuffer, size_t position, const char *source,
-                           const size_t size) noexcept
+void CopyFromBufferToGPU(T *GPUbuffer, size_t position, const char *source,
+                         MemorySpace memSpace, const size_t size) noexcept
 {
-    char *dest = reinterpret_cast<char *>(GPUbuffer);
-    helper::CUDAMemcpyBufferToGPU(dest, source + position, size);
+#ifdef ADIOS2_HAVE_CUDA
+    if (memSpace == MemorySpace::CUDA)
+    {
+        char *dest = reinterpret_cast<char *>(GPUbuffer);
+        helper::CUDAMemcpyBufferToGPU(dest, source + position, size);
+    }
+#endif
 }
 
-static inline void NdCopyCUDA(const char *&inOvlpBase, char *&outOvlpBase,
-                              CoreDims &inOvlpGapSize, CoreDims &outOvlpGapSize,
-                              CoreDims &ovlpCount, size_t minContDim,
-                              size_t blockSize)
+static inline void NdCopyGPU(const char *&inOvlpBase, char *&outOvlpBase,
+                             CoreDims &inOvlpGapSize, CoreDims &outOvlpGapSize,
+                             CoreDims &ovlpCount, size_t minContDim,
+                             size_t blockSize, MemorySpace memSpace)
 {
     DimsArray pos(ovlpCount.size(), (size_t)0);
     size_t curDim = 0;
@@ -114,7 +125,7 @@ static inline void NdCopyCUDA(const char *&inOvlpBase, char *&outOvlpBase,
             pos[curDim]++;
             curDim++;
         }
-        CudaMemCopyFromBuffer(outOvlpBase, 0, inOvlpBase, blockSize);
+        CopyFromBufferToGPU(outOvlpBase, 0, inOvlpBase, memSpace, blockSize);
         inOvlpBase += blockSize;
         outOvlpBase += blockSize;
         do
@@ -130,7 +141,6 @@ static inline void NdCopyCUDA(const char *&inOvlpBase, char *&outOvlpBase,
         } while (pos[curDim] == ovlpCount[curDim]);
     }
 }
-#endif
 
 template <class T>
 void CopyToBuffer(std::vector<char> &buffer, size_t &position, const T *source,
@@ -640,17 +650,17 @@ template <class T>
 void CopyContiguousMemory(const char *src, const size_t payloadStride, T *dest,
                           const bool endianReverse, const MemorySpace memSpace)
 {
-#ifdef ADIOS2_HAVE_CUDA
-    if (memSpace == MemorySpace::CUDA)
+    if (memSpace != MemorySpace::Host)
     {
         if (endianReverse)
             helper::Throw<std::invalid_argument>(
                 "Helper", "Memory", "CopyContiguousMemory",
                 "Direct byte order reversal not supported for GPU buffers");
-        CudaMemCopyFromBuffer(dest, 0, src, payloadStride);
+#ifdef ADIOS2_HAVE_CUDA
+        CopyFromBufferToGPU(dest, 0, src, memSpace, payloadStride);
+#endif
         return;
     }
-#endif
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     if (endianReverse)
     {
