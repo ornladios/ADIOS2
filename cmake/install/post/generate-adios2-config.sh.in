@@ -87,6 +87,13 @@ then
 fi
 
 export adios2_DIR="${PREFIX}/@CMAKE_INSTALL_CMAKEDIR@"
+
+# Sometimes package managers build in root jails
+if [ ! -d "${adios2_DIR}" ]
+then
+  adios2_DIR="@CMAKE_BINARY_DIR@/${PREFIX}/@CMAKE_INSTALL_CMAKEDIR@"
+fi
+
 if [ -n "@CMAKE_PREFIX_PATH@" ]
 then
   export CMAKE_PREFIX_PATH="@CMAKE_PREFIX_PATH@:${CMAKE_PREFIX_PATH}"
