@@ -385,7 +385,24 @@ if(ADIOS2_USE_SST AND NOT WIN32)
     endif()
   endif()
   if(ADIOS2_HAVE_MPI)
-    set(ADIOS2_SST_HAVE_MPI TRUE)
+    set(CMAKE_REQUIRED_LIBRARIES MPI::MPI_C)
+    include(CheckCSourceRuns)
+    check_c_source_runs([=[
+        #include <mpi.h>
+        #include <stdlib.h>
+
+        #if !defined(MPICH)
+        #error "MPICH is the only supported library"
+        #endif
+
+        int main()
+        {
+          MPI_Init_thread(NULL, NULL, MPI_THREAD_MULTIPLE, NULL);
+          MPI_Open_port(MPI_INFO_NULL, malloc(sizeof(char) * MPI_MAX_PORT_NAME));
+          MPI_Finalize();
+        }]=]
+    ADIOS2_HAVE_MPI_CLIENT_SERVER)
+    unset(CMAKE_REQUIRED_LIBRARIES)
   endif()
 endif()
 
