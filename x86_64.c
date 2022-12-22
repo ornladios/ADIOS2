@@ -710,6 +710,8 @@ x86_64_save_restore_op(dill_stream s, int save_restore, int type, int reg)
 }
 
 /*
+ *     This is linux convention.  Windows is different.
+ *
  * register   use  			       preserved across function calls
  *  %rax temporary register; with variable arguments
  *        passes information about the
@@ -758,7 +760,11 @@ Register Offset
 %xmm15 288
 
 */
+#ifndef USE_WINDOWS_CALLS
 static int arg_regs[] = {RDI, RSI, RDX, RCX, R8, R9};
+#else
+static int arg_regs[] = {RCX, RDX, R8, R9};
+#endif
 
 static void
 save_required_regs(dill_stream s, int force)
@@ -2250,7 +2256,7 @@ static void internal_push(dill_stream s, int type, int immediate,
 	}	    
     }
     if ((arg.type != DILL_D) && (arg.type != DILL_F)) {
-      if (smi->int_arg_count < 6) {
+      if (smi->int_arg_count < sizeof(arg_regs) / sizeof(arg_regs[0])) {
 	arg.is_register = 1;
 	arg.in_reg = arg.out_reg = arg_regs[smi->int_arg_count];
 	smi->int_arg_count++;
@@ -2604,7 +2610,7 @@ x86_64_flush(void *base, void *limit)
 	    asm volatile ("clflush (%0)" : /* */ : "r" (ptr));
 #endif
 #else
-		_mm_clflush(ptr);
+	    _mm_clflush((const void *) ptr);
 #endif
 	    ptr = (char *)ptr + 8;
 	}
@@ -2854,8 +2860,14 @@ x86_64_count_insn(dill_stream s, int start, int end)
     return end - start;
 }
 extern int
-x86_64_init_disassembly_info(dill_stream s, void * ptr){return 0;}
-extern int x86_64_print_insn(dill_stream s, void *info_ptr, void *insn){return 0;}
+x86_64_init_disassembly_info(dill_stream s, void * ptr){return 1;}
+unsigned int x86_64_disassemble(unsigned char *bytes, unsigned int max, int offset, char *output);
+extern int x86_64_print_insn(dill_stream s, void *info_ptr, void *insn){
+    char out[128] = "";
+    int ret = x86_64_disassemble(insn, sizeof(out), 0, out);
+    printf("%s", out);
+    return ret;
+}
 #endif
 
 extern void
