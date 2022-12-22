@@ -6,8 +6,6 @@
 #ifndef ADIOS2_HELPER_ADIOSCUDA_H_
 #define ADIOS2_HELPER_ADIOSCUDA_H_
 
-#include <cstddef>
-
 namespace adios2
 {
 namespace helper
