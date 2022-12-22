@@ -15,10 +15,6 @@
 
 #include "adios2/helper/adiosType.h"
 
-#ifdef ADIOS2_HAVE_CUDA
-#include <cuda_runtime.h>
-#endif
-
 namespace adios2
 {
 namespace helper
@@ -453,15 +449,13 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
         // algorithm used.
         if (inIsLittleEndian == outIsLittleEndian)
         {
-#ifdef ADIOS2_HAVE_CUDA
-            if (MemSpace == MemorySpace::CUDA)
+            if (MemSpace != MemorySpace::Host)
             {
-                helper::NdCopyCUDA(inOvlpBase, outOvlpBase, inOvlpGapSize,
-                                   outOvlpGapSize, ovlpCount, minContDim,
-                                   blockSize);
+                helper::NdCopyGPU(inOvlpBase, outOvlpBase, inOvlpGapSize,
+                                  outOvlpGapSize, ovlpCount, minContDim,
+                                  blockSize, MemSpace);
                 return 0;
             }
-#endif
             // most efficient algm
             // warning: number of function stacks used is number of dimensions
             // of data.
@@ -484,14 +478,12 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
         // different endianess mode
         else
         {
-#ifdef ADIOS2_HAVE_CUDA
-            if (MemSpace == MemorySpace::CUDA)
+            if (MemSpace != MemorySpace::Host)
             {
                 helper::Throw<std::invalid_argument>(
                     "Helper", "Memory", "CopyContiguousMemory",
                     "Direct byte order reversal not supported for GPU buffers");
             }
-#endif
             if (!safeMode)
             {
                 NdCopyRecurDFSeqPaddingRevEndian(
@@ -515,14 +507,12 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
     // padding
     else
     {
-#ifdef ADIOS2_HAVE_CUDA
-        if (MemSpace == MemorySpace::CUDA)
+        if (MemSpace != MemorySpace::Host)
         {
             helper::Throw<std::invalid_argument>(
                 "Helper", "Memory", "CopyContiguousMemory",
                 "Direct byte order reversal not supported for GPU buffers");
         }
-#endif
         //        CoreDims revInCount(inCount);
         //        CoreDims revOutCount(outCount);
         //
@@ -719,18 +709,5 @@ uint64_t PaddingToAlignOffset(uint64_t offset, uint64_t alignment_size)
     }
     return padSize;
 }
-
-#ifdef ADIOS2_HAVE_CUDA
-void MemcpyGPUToBuffer(void *dst, const char *GPUbuffer, size_t byteCount)
-{
-    cudaMemcpy(dst, GPUbuffer, byteCount, cudaMemcpyDeviceToHost);
-}
-
-void MemcpyBufferToGPU(char *GPUbuffer, const char *src, size_t byteCount)
-{
-    cudaMemcpy(GPUbuffer, src, byteCount, cudaMemcpyHostToDevice);
-}
-#endif
-
 } // end namespace helper
 } // end namespace adios2

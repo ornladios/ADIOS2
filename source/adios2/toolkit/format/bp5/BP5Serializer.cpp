@@ -694,9 +694,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
     }
     else
     {
-        MemorySpace MemSpace = MemorySpace::Host;
-        if (VB->IsCUDAPointer(Data))
-            MemSpace = MemorySpace::CUDA;
+        MemorySpace MemSpace = VB->GetMemorySpace(Data);
         MetaArrayRec *MetaEntry =
             (MetaArrayRec *)((char *)(MetadataBuf) + Rec->MetaOffset);
         size_t ElemCount = CalcSize(DimCount, Count);

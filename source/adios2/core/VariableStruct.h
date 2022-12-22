@@ -73,7 +73,7 @@ public:
         SelectionType Selection = SelectionType::BoundingBox;
         bool IsValue = false;
         bool IsReverseDims = false;
-        bool IsGPU = false;
+        MemorySpace MemSpace = MemorySpace::Host;
     };
 
     std::vector<BPInfo> m_BlocksInfo;

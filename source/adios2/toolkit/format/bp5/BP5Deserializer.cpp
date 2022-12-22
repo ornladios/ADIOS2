@@ -1203,9 +1203,7 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
         }
         return false;
     }
-    MemorySpace MemSpace = MemorySpace::Host;
-    if (variable.IsCUDAPointer(DestData))
-        MemSpace = MemorySpace::CUDA;
+    MemorySpace MemSpace = variable.GetMemorySpace(DestData);
     if ((variable.m_SelectionType == adios2::SelectionType::BoundingBox) &&
         (variable.m_ShapeID == ShapeID::GlobalArray))
     {
