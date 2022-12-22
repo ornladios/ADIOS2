@@ -143,11 +143,14 @@
    */
 #cmakedefine USE_MEMBAR
 
-/* Define this is mmap should be used instead of malloc() for code memory */
+/* Define this if mmap should be used instead of malloc() for code memory */
 #cmakedefine USE_MMAP_CODE_SEG
 
-/* Define this is VirtualProtect should be used to change memory protections */
+/* Define this if VirtualProtect should be used to change memory protections */
 #cmakedefine USE_VIRTUAL_PROTECT
+
+/* Define this if windows calling convention should be used */
+#cmakedefine USE_WINDOWS_CALLS
 
 /* Define if byteorder is bigendian */
 #cmakedefine WORDS_BIGENDIAN
