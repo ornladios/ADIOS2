@@ -18,6 +18,72 @@ std::string engineName; // comes from command line
 const float EPSILON = std::numeric_limits<float>::epsilon();
 const float INCREMENT = 10.0f;
 
+void CUDAWrongMemSpace()
+{
+    const std::string fname("BPWRCUFail.bp");
+    const size_t Nx = 5;
+
+    adios2::ADIOS adios;
+    std::vector<float> r32s(Nx, .0f);
+    std::iota(r32s.begin(), r32s.end(), .0f);
+    { // write
+        adios2::IO io = adios.DeclareIO("TestIO");
+        const adios2::Dims shape{Nx};
+        const adios2::Dims start{0};
+        const adios2::Dims count{Nx};
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+        auto var_r32_cpu =
+            io.DefineVariable<float>("r32cpu", shape, start, count);
+
+        float *gpuSimData = nullptr;
+        cudaMalloc(&gpuSimData, Nx * sizeof(float));
+        cudaMemcpy(gpuSimData, (float *)&r32s[0], Nx * sizeof(float),
+                   cudaMemcpyHostToDevice);
+
+        io.SetEngine("BP5");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        bpWriter.BeginStep();
+        var_r32.SetMemorySpace(adios2::MemorySpace::Host);
+        EXPECT_DEATH(bpWriter.Put(var_r32, gpuSimData), "");
+        var_r32_cpu.SetMemorySpace(adios2::MemorySpace::CUDA);
+        bpWriter.Put(var_r32_cpu, r32s.data());
+        bpWriter.EndStep();
+
+        bpWriter.Close();
+    }
+    { // read
+        adios2::IO io = adios.DeclareIO("ReadIO");
+        io.SetEngine("BP5");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+
+        bpReader.BeginStep();
+        auto var_r32 = io.InquireVariable<float>("r32cpu");
+        EXPECT_TRUE(var_r32);
+
+        std::vector<float> r32o(Nx);
+        float *gpuSimData;
+        cudaMalloc(&gpuSimData, Nx * sizeof(float));
+        var_r32.SetMemorySpace(adios2::MemorySpace::Host);
+        EXPECT_THROW(bpReader.Get(var_r32, gpuSimData, adios2::Mode::Sync),
+                     std::ios_base::failure);
+        var_r32.SetMemorySpace(adios2::MemorySpace::CUDA);
+        EXPECT_THROW(bpReader.Get(var_r32, r32o.data(), adios2::Mode::Sync),
+                     std::ios_base::failure);
+        // bpReader.EndStep();
+        // bpReader.Close();
+    }
+}
+
 void CUDADetectMemSpace(const std::string mode)
 {
     const std::string fname("BPWRCUDetect" + mode + ".bp");
@@ -276,6 +342,7 @@ public:
 
 TEST_P(BPWRCUDA, ADIOS2BPWRCUDA1D) { CUDAWriteReadMPI1D(GetParam()); }
 TEST_P(BPWRCUDA, ADIOS2BPCUDADetect) { CUDADetectMemSpace(GetParam()); }
+TEST_P(BPWRCUDA, ADIOS2BPCUDAWrong) { CUDAWrongMemSpace(); }
 
 INSTANTIATE_TEST_SUITE_P(CudaRW, BPWRCUDA,
                          ::testing::Values("deferred", "sync"));
