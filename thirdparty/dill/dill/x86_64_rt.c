@@ -52,7 +52,7 @@ x86_64_flush(void *base, void *limit)
 	    asm volatile ("clflush (%0)" : /* */ : "r" (ptr));
 #endif
 #else
-        _mm_clflush(ptr);
+	    _mm_clflush((const void *) ptr);
 #endif
 	    ptr = (char *)ptr + 8;
 	}
