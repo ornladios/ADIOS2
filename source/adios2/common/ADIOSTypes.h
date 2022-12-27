@@ -37,7 +37,9 @@ enum class MemorySpace
 {
     Detect, ///< Detect the memory space automatically
     Host,   ///< Host memory space (default)
+#ifdef ADIOS2_HAVE_CUDA
     CUDA    ///< CUDA memory spaces
+#endif
 };
 
 /** Variable shape type identifier, assigned automatically from the signature of
