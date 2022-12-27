@@ -51,12 +51,13 @@ public:
      *  VariableStruct -> from constructor sizeof(struct) */
     const size_t m_ElementSize;
     /* User requested memory space and the detected memory space */
-#ifdef ADIOS2_HAVE_CUDA
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
     MemorySpace m_MemSpaceRequested = MemorySpace::Detect;
+    MemorySpace m_MemSpaceDetected = MemorySpace::Detect;
 #else
     MemorySpace m_MemSpaceRequested = MemorySpace::Host;
+    MemorySpace m_MemSpaceDetected = MemorySpace::Host;
 #endif
-    MemorySpace m_MemSpaceDetected = MemorySpace::Detect;
 
     ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
     size_t m_BlockID = 0; ///< current block ID for local variables, global = 0

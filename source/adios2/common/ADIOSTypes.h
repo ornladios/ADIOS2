@@ -35,10 +35,12 @@ namespace adios2
 /** Memory space for the user provided buffers */
 enum class MemorySpace
 {
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
     Detect, ///< Detect the memory space automatically
-    Host,   ///< Host memory space (default)
+#endif
+    Host, ///< Host memory space
 #ifdef ADIOS2_HAVE_CUDA
-    CUDA    ///< CUDA memory spaces
+    CUDA ///< CUDA memory spaces
 #endif
 };
 

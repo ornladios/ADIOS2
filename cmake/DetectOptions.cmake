@@ -193,6 +193,7 @@ endif()
 if(CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
   enable_language(CUDA)
   set(ADIOS2_HAVE_CUDA TRUE)
+  set(ADIOS2_HAVE_GPU_Support TRUE)
 endif()
 
 # Fortran

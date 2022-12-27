@@ -50,13 +50,14 @@ size_t VariableBase::TotalSize() const noexcept
 
 MemorySpace VariableBase::DetectMemorySpace(const void *ptr)
 {
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
     if (m_MemSpaceRequested != MemorySpace::Detect)
     {
         m_MemSpaceDetected = m_MemSpaceRequested;
         return m_MemSpaceRequested;
     }
+#endif
 
-    // if the user requested MemorySpace::Detect
 #ifdef ADIOS2_HAVE_CUDA
     cudaPointerAttributes attr;
     cudaPointerGetAttributes(&attr, ptr);
@@ -72,16 +73,21 @@ MemorySpace VariableBase::DetectMemorySpace(const void *ptr)
 
 MemorySpace VariableBase::GetMemorySpace(const void *ptr)
 {
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
     if (m_MemSpaceDetected == MemorySpace::Detect)
         m_MemSpaceDetected = DetectMemorySpace(ptr);
     return m_MemSpaceDetected;
+#endif
+    return MemorySpace::Host;
 }
 
 void VariableBase::SetMemorySpace(const MemorySpace mem)
 {
     m_MemSpaceRequested = mem;
     // reset the detected memory space
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
     m_MemSpaceDetected = MemorySpace::Detect;
+#endif
 }
 
 void VariableBase::SetShape(const adios2::Dims &shape)
