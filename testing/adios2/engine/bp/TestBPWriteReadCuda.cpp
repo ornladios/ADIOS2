@@ -18,10 +18,189 @@ std::string engineName; // comes from command line
 const float EPSILON = std::numeric_limits<float>::epsilon();
 const float INCREMENT = 10.0f;
 
-void RateCUDA(const std::string mode)
+void CUDAWrongMemSpace()
 {
-    // Each process would write a 1x8 array and all processes would
-    // form a mpiSize * Nx 1D array
+    const std::string fname("BPWRCUFail.bp");
+    const size_t Nx = 5;
+
+    adios2::ADIOS adios;
+    std::vector<float> r32s(Nx, .0f);
+    std::iota(r32s.begin(), r32s.end(), .0f);
+    { // write
+        adios2::IO io = adios.DeclareIO("TestIO");
+        const adios2::Dims shape{Nx};
+        const adios2::Dims start{0};
+        const adios2::Dims count{Nx};
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+        auto var_r32_cpu =
+            io.DefineVariable<float>("r32cpu", shape, start, count);
+
+        float *gpuSimData = nullptr;
+        cudaMalloc(&gpuSimData, Nx * sizeof(float));
+        cudaMemcpy(gpuSimData, (float *)&r32s[0], Nx * sizeof(float),
+                   cudaMemcpyHostToDevice);
+
+        io.SetEngine("BP5");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        bpWriter.BeginStep();
+        var_r32.SetMemorySpace(adios2::MemorySpace::Host);
+        EXPECT_DEATH(bpWriter.Put(var_r32, gpuSimData), "");
+        var_r32_cpu.SetMemorySpace(adios2::MemorySpace::CUDA);
+        bpWriter.Put(var_r32_cpu, r32s.data());
+        bpWriter.EndStep();
+
+        bpWriter.Close();
+    }
+    { // read
+        adios2::IO io = adios.DeclareIO("ReadIO");
+        io.SetEngine("BP5");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+
+        bpReader.BeginStep();
+        auto var_r32 = io.InquireVariable<float>("r32cpu");
+        EXPECT_TRUE(var_r32);
+
+        std::vector<float> r32o(Nx);
+        float *gpuSimData;
+        cudaMalloc(&gpuSimData, Nx * sizeof(float));
+        var_r32.SetMemorySpace(adios2::MemorySpace::Host);
+        EXPECT_THROW(bpReader.Get(var_r32, gpuSimData, adios2::Mode::Sync),
+                     std::ios_base::failure);
+        var_r32.SetMemorySpace(adios2::MemorySpace::CUDA);
+        EXPECT_THROW(bpReader.Get(var_r32, r32o.data(), adios2::Mode::Sync),
+                     std::ios_base::failure);
+        // bpReader.EndStep();
+        // bpReader.Close();
+    }
+}
+
+void CUDADetectMemSpace(const std::string mode)
+{
+    const std::string fname("BPWRCUDetect" + mode + ".bp");
+    adios2::Mode ioMode = adios2::Mode::Deferred;
+    if (mode == "Sync")
+        ioMode = adios2::Mode::Sync;
+
+    // Number of rows
+    const size_t Nx = 5;
+    // Number of columns
+    const size_t Ny = 2;
+    const size_t NTotal = Nx * Ny;
+    // Number of steps
+    const size_t NSteps = 10;
+
+    adios2::ADIOS adios;
+    // simulation data
+    std::vector<float> r32s(NTotal, .0f);
+    std::iota(r32s.begin(), r32s.end(), .0f);
+
+    { // write
+        adios2::IO io = adios.DeclareIO("TestIO");
+        const adios2::Dims shape{Ny, Nx};
+        const adios2::Dims start{0, 0};
+        const adios2::Dims count{Ny, Nx};
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+        EXPECT_TRUE(var_r32);
+
+        float *gpuSimData = nullptr;
+        cudaMalloc(&gpuSimData, NTotal * sizeof(float));
+        cudaMemcpy(gpuSimData, (float *)&r32s[0], NTotal * sizeof(float),
+                   cudaMemcpyHostToDevice);
+
+        io.SetEngine("BP5");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            // Update values in the simulation data
+            cuda_increment(NTotal, 1, 0, gpuSimData, INCREMENT);
+            std::transform(r32s.begin(), r32s.end(), r32s.begin(),
+                           std::bind(std::plus<float>(), std::placeholders::_1,
+                                     INCREMENT));
+
+            bpWriter.BeginStep();
+            if (step % 2 == 0)
+                bpWriter.Put(var_r32, gpuSimData, ioMode);
+            else
+                bpWriter.Put(var_r32, r32s.data(), ioMode);
+            bpWriter.EndStep();
+        }
+
+        bpWriter.Close();
+    }
+    // reset the initial data
+    std::iota(r32s.begin(), r32s.end(), .0f);
+    { // read
+        adios2::IO io = adios.DeclareIO("ReadIO");
+        io.SetEngine("BP5");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+
+        unsigned int t = 0;
+        for (; bpReader.BeginStep() == adios2::StepStatus::OK; ++t)
+        {
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Shape()[0], Ny);
+            ASSERT_EQ(var_r32.Shape()[1], Nx);
+
+            std::vector<float> r32o(NTotal);
+            float *gpuSimData;
+            cudaMalloc(&gpuSimData, NTotal * sizeof(float));
+            if (t % 2 == 0)
+            {
+                bpReader.Get(var_r32, r32o.data(), ioMode);
+                bpReader.EndStep();
+            }
+            else
+            {
+                bpReader.Get(var_r32, gpuSimData, ioMode);
+                bpReader.EndStep();
+                cudaMemcpy(r32o.data(), gpuSimData, NTotal * sizeof(float),
+                           cudaMemcpyDeviceToHost);
+            }
+            // Remove INCREMENT from each element
+            std::transform(r32o.begin(), r32o.end(), r32o.begin(),
+                           std::bind(std::minus<float>(), std::placeholders::_1,
+                                     (t + 1) * INCREMENT));
+
+            for (size_t i = 0; i < NTotal; i++)
+            {
+                char msg[1 << 8] = {0};
+                snprintf(msg, sizeof(msg), "t=%d i=%zu r32o=%f r32s=%f", t, i,
+                         r32o[i], r32s[i]);
+                ASSERT_LT(std::abs(r32o[i] - r32s[i]), EPSILON) << msg;
+            }
+        }
+        EXPECT_EQ(t, NSteps);
+
+        bpReader.Close();
+    }
+}
+
+void CUDAWriteReadMPI1D(const std::string mode)
+{
     const std::string fname("BPWRCU1D_" + mode + ".bp");
     adios2::Mode ioMode = adios2::Mode::Deferred;
     if (mode == "Sync")
@@ -29,9 +208,8 @@ void RateCUDA(const std::string mode)
 
     // Number of rows
     const size_t Nx = 100;
-
     // Number of steps
-    const size_t NSteps = 1;
+    const size_t NSteps = 10;
 
     int mpiRank = 0, mpiSize = 1;
 #if ADIOS2_USE_MPI
@@ -119,12 +297,11 @@ void RateCUDA(const std::string mode)
             auto var_r32 = io.InquireVariable<float>("r32");
             EXPECT_TRUE(var_r32);
             ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
-            ASSERT_EQ(var_r32.Steps(), NSteps);
             ASSERT_EQ(var_r32.Shape()[0], NxTotal);
 
             auto mmR32 = std::minmax_element(r32s.begin(), r32s.end());
-            EXPECT_EQ(var_r32.Min() - INCREMENT, *mmR32.first);
-            EXPECT_EQ(var_r32.Max() - INCREMENT, *mmR32.second);
+            EXPECT_EQ(var_r32.Min() - (t + 1) * INCREMENT, *mmR32.first);
+            EXPECT_EQ(var_r32.Max() - (t + 1) * INCREMENT, *mmR32.second);
 
             std::vector<float> r32o(NxTotal);
             float *gpuSimData;
@@ -138,7 +315,7 @@ void RateCUDA(const std::string mode)
             // Remove INCREMENT from each element
             std::transform(r32o.begin(), r32o.end(), r32o.begin(),
                            std::bind(std::minus<float>(), std::placeholders::_1,
-                                     INCREMENT));
+                                     (t + 1) * INCREMENT));
 
             for (size_t i = 0; i < NxTotal; i++)
             {
@@ -163,9 +340,12 @@ public:
     virtual void TearDown() {}
 };
 
-TEST_P(BPWRCUDA, ADIOS2BPWRCUDA) { RateCUDA(GetParam()); }
+TEST_P(BPWRCUDA, ADIOS2BPWRCUDA1D) { CUDAWriteReadMPI1D(GetParam()); }
+TEST_P(BPWRCUDA, ADIOS2BPCUDADetect) { CUDADetectMemSpace(GetParam()); }
+TEST_P(BPWRCUDA, ADIOS2BPCUDAWrong) { CUDAWrongMemSpace(); }
 
-INSTANTIATE_TEST_SUITE_P(Rate, BPWRCUDA, ::testing::Values("deferred", "sync"));
+INSTANTIATE_TEST_SUITE_P(CudaRW, BPWRCUDA,
+                         ::testing::Values("deferred", "sync"));
 
 int main(int argc, char **argv)
 {
