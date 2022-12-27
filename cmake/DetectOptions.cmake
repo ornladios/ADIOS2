@@ -470,6 +470,16 @@ if(catalyst_FOUND)
   set(ADIOS2_HAVE_Catalyst TRUE)
 endif()
 
+# AWS S3
+if(ADIOS2_USE_AWSSDK STREQUAL AUTO)
+    find_package(AWSSDK QUIET COMPONENTS s3)
+elseif(ADIOS2_USE_AWSSDK)
+    find_package(AWSSDK REQUIRED COMPONENTS s3)
+endif()
+if(AWSSDK_FOUND)
+    set(ADIOS2_HAVE_AWSSDK TRUE)
+endif()
+
 # Multithreading
 find_package(Threads REQUIRED)
 

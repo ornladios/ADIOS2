@@ -36,8 +36,8 @@ using namespace adios2::format;
 BP5Writer::BP5Writer(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
 : Engine("BP5Writer", io, name, mode, std::move(comm)), m_BP5Serializer(),
-  m_FileDataManager(m_Comm), m_FileMetadataManager(m_Comm),
-  m_FileMetadataIndexManager(m_Comm), m_FileMetaMetadataManager(m_Comm),
+  m_FileDataManager(io, m_Comm), m_FileMetadataManager(io, m_Comm),
+  m_FileMetadataIndexManager(io, m_Comm), m_FileMetaMetadataManager(io, m_Comm),
   m_Profiler(m_Comm)
 {
     m_EngineStart = Now();

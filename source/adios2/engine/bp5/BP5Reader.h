@@ -261,7 +261,9 @@ private:
     /* Communicator connecting ranks on each Compute Node.
        Only used to calculate the number of threads available for reading */
     helper::Comm m_NodeComm;
+    helper::Comm singleComm;
     unsigned int m_Threads;
+    std::vector<transportman::TransportMan> fileManagers; // manager per thread
 };
 
 } // end namespace engine

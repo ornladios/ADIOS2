@@ -26,8 +26,9 @@ namespace engine
 BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
 : Engine("BP4Reader", io, name, mode, std::move(comm)),
-  m_BP4Deserializer(m_Comm), m_MDFileManager(m_Comm), m_DataFileManager(m_Comm),
-  m_MDIndexFileManager(m_Comm), m_ActiveFlagFileManager(m_Comm)
+  m_BP4Deserializer(m_Comm), m_MDFileManager(io, m_Comm),
+  m_DataFileManager(io, m_Comm), m_MDIndexFileManager(io, m_Comm),
+  m_ActiveFlagFileManager(io, m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP4Reader::Open");
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
@@ -825,6 +826,7 @@ void BP4Reader::DoClose(const int transportIndex)
 
     m_DataFileManager.CloseFiles();
     m_MDFileManager.CloseFiles();
+    m_MDIndexFileManager.CloseFiles();
 }
 
 #define declare_type(T)                                                        \
