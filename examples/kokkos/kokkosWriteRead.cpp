@@ -23,7 +23,7 @@
         }                                                                      \
     } while (false)
 
-int BPWrite(const std::string fname, const size_t N, int nSteps,
+int BPWrite(const std::string fname, const size_t N, size_t nSteps,
             const std::string engine)
 {
     int rank, size;
@@ -86,18 +86,16 @@ int BPWrite(const std::string fname, const size_t N, int nSteps,
     return 0;
 }
 
-int BPRead(const std::string fname, const size_t N, int nSteps,
+int BPRead(const std::string fname, const size_t N, size_t nSteps,
            std::string engine)
 {
-    int rank, size;
+    int rank;
 #if ADIOS2_USE_MPI
     int provided;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
 #else
     rank = 0;
-    size = 1;
 #endif
     // Create ADIOS structures
 #if ADIOS2_USE_MPI
@@ -148,7 +146,8 @@ int main(int argc, char **argv)
 {
     const std::vector<std::string> list_of_engines = {"BPFile", "BP5"};
     const size_t N = 6000;
-    int nSteps = 10, ret = 0, rank = 0;
+    size_t nSteps = 10;
+    int ret = 0, rank = 0;
 #if ADIOS2_USE_MPI
     int provided;
     MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);

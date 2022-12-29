@@ -38,6 +38,10 @@ class Engine
     friend class IO;
     friend class QueryWorker;
 
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    void CheckMemorySpace(MemorySpace variableMem, MemorySpace bufferMem);
+#endif
+
 public:
     /**
      * Empty (default) constructor, use it as a placeholder for future
@@ -217,10 +221,13 @@ public:
     void Put(Variable<T> variable, U const &data,
              const Mode launch = Mode::Deferred)
     {
-        auto adios_data = static_cast<AdiosView<U>>(data);
-        auto mem_space = adios_data.memory_space();
-        variable.SetMemorySpace(mem_space);
-        Put(variable, adios_data.data(), launch);
+        auto bufferView = static_cast<AdiosView<U>>(data);
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+        auto bufferMem = bufferView.memory_space();
+        auto variableMem = variable.GetMemorySpace();
+        CheckMemorySpace(variableMem, bufferMem);
+#endif
+        Put(variable, bufferView.data(), launch);
     }
 
     /** Perform all Put calls in Deferred mode up to this point.  Specifically,

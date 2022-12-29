@@ -50,13 +50,13 @@ public:
     /** Variable -> sizeof(T),
      *  VariableStruct -> from constructor sizeof(struct) */
     const size_t m_ElementSize;
-    /* User requested memory space and the detected memory space */
-#ifdef ADIOS2_HAVE_CUDA
-    MemorySpace m_MemSpaceRequested = MemorySpace::Detect;
+
+    /* User requested memory space */
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    MemorySpace m_MemSpace = MemorySpace::Detect;
 #else
-    MemorySpace m_MemSpaceRequested = MemorySpace::Host;
+    MemorySpace m_MemSpace = MemorySpace::Host;
 #endif
-    MemorySpace m_MemSpaceDetected = MemorySpace::Detect;
 
     ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
     size_t m_BlockID = 0; ///< current block ID for local variables, global = 0
@@ -121,12 +121,6 @@ public:
      * @return number of elements
      */
     size_t TotalSize() const noexcept;
-
-    /**
-     * Detect the memory space where a buffer was allocated and return it
-     * @param pointer to the user data
-     */
-    MemorySpace DetectMemorySpace(const void *ptr);
 
     /**
      * Get the memory space where a given buffers was allocated

@@ -12,11 +12,19 @@
 #include "Engine.tcc"
 
 #include "adios2/core/Engine.h"
-
 #include "adios2/helper/adiosFunctions.h"
 
 namespace adios2
 {
+
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+void Engine::CheckMemorySpace(MemorySpace variableMem, MemorySpace bufferMem)
+{
+    if (variableMem != MemorySpace::Detect && variableMem != bufferMem)
+        helper::Throw<std::runtime_error>("CXX-Bindings", "Engine", "Put",
+                                          "Memory space mismatch");
+}
+#endif
 
 Engine::operator bool() const noexcept
 {
