@@ -49,7 +49,7 @@ namespace core
         info.StepsCount = stepsCount;                                          \
         info.Data = const_cast<T *>(data);                                     \
         info.Operations = m_Operations;                                        \
-        info.MemSpace = DetectMemorySpace((void *)data);                       \
+        info.MemSpace = GetMemorySpace((void *)data);                          \
         m_BlocksInfo.push_back(info);                                          \
         return m_BlocksInfo.back();                                            \
     }                                                                          \

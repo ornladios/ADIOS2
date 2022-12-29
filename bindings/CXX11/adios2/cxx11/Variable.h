@@ -155,6 +155,12 @@ public:
     void SetMemorySpace(const MemorySpace mem);
 
     /**
+     * Get the memory space that was set by the application
+     * @return the memory space stored in the Variable object
+     */
+    MemorySpace GetMemorySpace();
+
+    /**
      * Set new shape, care must be taken when reading back the variable for
      * different steps. Only applies to Global arrays.
      * @param shape new shape dimensions array
