@@ -42,9 +42,9 @@ namespace core
 class ADIOS::GlobalServices
 {
 public:
-    GlobalServices() { std::cout << "ADIOS Global() " << std::endl; }
+    GlobalServices() {}
 
-    ~GlobalServices() { std::cout << "ADIOS ~Global()" << std::endl; }
+    ~GlobalServices() {}
 
     void CheckStatus()
     {
@@ -60,12 +60,9 @@ public:
 
     void Finalize()
     {
-        std::cout << "ADIOS Global Finalize() Enter" << std::endl;
 #ifdef ADIOS2_HAVE_AWSSDK
         if (isAWSInitialized)
         {
-            std::cout << "ADIOS Global Finalize() call Aws::ShutdownAPI"
-                      << std::endl;
             Aws::ShutdownAPI(options);
             isAWSInitialized = false;
         }
@@ -76,11 +73,8 @@ public:
 #ifdef ADIOS2_HAVE_AWSSDK
     void Init_AWS_API()
     {
-        std::cout << "ADIOS Global Init_AWS_API() Enter" << std::endl;
         if (!isAWSInitialized)
         {
-            std::cout << "ADIOS Global Init_AWS_API() call Aws::InitAPI"
-                      << std::endl;
             options.loggingOptions.logLevel =
                 Aws::Utils::Logging::LogLevel::Debug;
             Aws::InitAPI(options);
