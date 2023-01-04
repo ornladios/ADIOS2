@@ -397,7 +397,7 @@ foreach(opt IN LISTS ADIOS2_CONFIG_OPTS)
   endif()
 endforeach()
 
-if (ADIOS2_HAVE_SST AND ADIOS2_SST_HAVE_LIBFABRIC) 
+if (ADIOS2_HAVE_SST AND (ADIOS2_SST_HAVE_LIBFABRIC OR ADIOS2_SST_HAVE_UCX))
 message("    RDMA Transport for Staging: Available")
 else()
 message("    RDMA Transport for Staging: Unconfigured")

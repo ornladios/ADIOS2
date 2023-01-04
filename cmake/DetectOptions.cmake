@@ -405,6 +405,10 @@ if(ADIOS2_USE_SST AND NOT WIN32)
     ADIOS2_HAVE_MPI_CLIENT_SERVER)
     unset(CMAKE_REQUIRED_LIBRARIES)
   endif()
+  find_package(UCX)
+  if(UCX_FOUND)
+    set(ADIOS2_SST_HAVE_UCX TRUE)
+  endif()
 endif()
 
 # DAOS

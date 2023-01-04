@@ -131,6 +131,10 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         {
             Params->DataTransport = strdup("rdma");
         }
+        else if (strcmp(SelectedTransport, "ucx") == 0)
+        {
+            Params->DataTransport = strdup("ucx");
+        }
         else
         {
             Params->DataTransport = strdup(SelectedTransport);
