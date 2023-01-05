@@ -104,6 +104,7 @@ private:
         size_t DimCount = 0;
         ShapeID OrigShapeID;
         core::StructDefinition *Def = nullptr;
+        core::StructDefinition *ReaderDef = nullptr;
         char *Operator = NULL;
         DataType Type;
         int ElementSize = 0;
@@ -201,7 +202,8 @@ private:
     void *ArrayVarSetup(core::Engine *engine, const char *variableName,
                         const DataType type, int DimCount, size_t *Shape,
                         size_t *Start, size_t *Count,
-                        core::StructDefinition *Def);
+                        core::StructDefinition *Def,
+                        core::StructDefinition *ReaderDef);
     void MapGlobalToLocalIndex(size_t Dims, const size_t *GlobalIndex,
                                const size_t *LocalOffsets, size_t *LocalIndex);
     size_t RelativeToAbsoluteStep(const BP5VarRec *VarRec, size_t RelStep);

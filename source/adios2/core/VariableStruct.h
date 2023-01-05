@@ -41,6 +41,7 @@ public:
     size_t Offset(const size_t index) const;
     DataType Type(const size_t index) const;
     size_t ElementCount(const size_t index) const;
+    void *BindingsStructDefinition = nullptr;
 
 private:
     std::vector<StructFieldDefinition> m_Definition;
@@ -88,7 +89,12 @@ public:
 
     void *GetData() const noexcept;
 
-    const StructDefinition &m_StructDefinition;
+    StructDefinition *m_WriteStructDefinition;
+    StructDefinition *m_ReadStructDefinition;
+
+    StructDefinition *GetWriteStructDef() noexcept;
+    StructDefinition *GetReadStructDef() noexcept;
+    void SetReadStructDef(const StructDefinition *def);
 };
 
 } // end namespace core

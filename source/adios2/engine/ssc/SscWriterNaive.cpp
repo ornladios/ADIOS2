@@ -178,7 +178,7 @@ void SscWriterNaive::PutDeferred(VariableBase &variable, const void *data)
         if (variable.m_Type == DataType::Struct)
         {
             b.structDef = reinterpret_cast<VariableStruct *>(&variable)
-                              ->m_StructDefinition.StructName();
+                              ->m_WriteStructDefinition->StructName();
         }
     }
 }

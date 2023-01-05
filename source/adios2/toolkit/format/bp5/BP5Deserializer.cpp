@@ -513,7 +513,8 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine,
                                      const char *variableName,
                                      const DataType type, int DimCount,
                                      size_t *Shape, size_t *Start,
-                                     size_t *Count, core::StructDefinition *Def)
+                                     size_t *Count, core::StructDefinition *Def,
+                                     core::StructDefinition *ReaderDef)
 {
     std::vector<size_t> VecShape;
     std::vector<size_t> VecStart;
@@ -546,7 +547,7 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine,
     {
         core::VariableStruct *variable = &(engine->m_IO.DefineStructVariable(
             variableName, *Def, VecShape, VecStart, VecCount));
-
+        variable->m_ReadStructDefinition = ReaderDef;
         return (void *)variable;
     }
 #define declare_type(T)                                                        \
@@ -760,7 +761,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 VarRec->Variable = ArrayVarSetup(
                     m_Engine, VarRec->VarName, VarRec->Type, meta_base->Dims,
                     meta_base->Shape, meta_base->Offsets, meta_base->Count,
-                    VarRec->Def);
+                    VarRec->Def, VarRec->ReaderDef);
                 static_cast<VariableBase *>(VarRec->Variable)->m_Engine =
                     m_Engine;
                 VarByKey[VarRec->Variable] = VarRec;
@@ -801,7 +802,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                     size_t writerSize = writerCohortSize;
                     VarRec->Variable = ArrayVarSetup(
                         m_Engine, VarRec->VarName, VarRec->Type, 1, &writerSize,
-                        &zero, &writerSize, VarRec->Def);
+                        &zero, &writerSize, VarRec->Def, VarRec->ReaderDef);
                     auto VB = static_cast<VariableBase *>(VarRec->Variable);
                     static_cast<VariableBase *>(VarRec->Variable)->m_Engine =
                         m_Engine;
@@ -1108,6 +1109,13 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
     {
         BP5VarRec *VarRec = VarByKey[&variable];
         bool ret = false;
+        if (variable.m_Type == adios2::DataType::Struct)
+        {
+            // capture specified local structure
+            VarRec->ReaderDef = dynamic_cast<core::VariableStruct *>(&variable)
+                                    ->m_ReadStructDefinition;
+        }
+
         if (variable.m_StepsStart + variable.m_StepsCount >
             VarRec->AbsStepFromRel.size())
         {
@@ -1175,6 +1183,13 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
                                      void *DestData, size_t Step)
 {
     BP5VarRec *VarRec = VarByKey[&variable];
+    if (variable.m_Type == adios2::DataType::Struct)
+    {
+        // capture specified local structure
+        VarRec->ReaderDef = dynamic_cast<core::VariableStruct *>(&variable)
+                                ->m_ReadStructDefinition;
+    }
+
     if (VarRec->OrigShapeID == ShapeID::GlobalValue)
     {
         const size_t writerCohortSize = WriterCohortSize(Step);

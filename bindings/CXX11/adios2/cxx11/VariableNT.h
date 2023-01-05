@@ -41,6 +41,7 @@ public:
 private:
     friend class ADIOS;
     friend class IO;
+    friend class VariableNT;
     StructDefinition(core::StructDefinition *ptr);
     core::StructDefinition *m_StructDefinition;
 };
@@ -250,6 +251,10 @@ public:
     double MaxDouble(const size_t step = adios2::DefaultSizeT) const;
     std::pair<double, double>
     MinMaxDouble(const size_t step = adios2::DefaultSizeT) const;
+
+    StructDefinition *GetWriteStructDef() noexcept;
+    StructDefinition *GetReadStructDef() noexcept;
+    void SetReadStructDef(const StructDefinition &def);
 
 private:
     friend class IO;

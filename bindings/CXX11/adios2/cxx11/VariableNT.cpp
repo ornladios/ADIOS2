@@ -19,6 +19,7 @@ namespace adios2
 StructDefinition::StructDefinition(core::StructDefinition *ptr)
 : m_StructDefinition(ptr)
 {
+    ptr->BindingsStructDefinition = this;
 }
 
 void StructDefinition::AddField(const std::string &name, const size_t offset,
@@ -263,8 +264,13 @@ size_t VariableNT::StructFields() const
             "invalid data type " + ToString(m_Variable->m_Type) +
                 ", only Struct type supports this API");
     }
-    return reinterpret_cast<core::VariableStruct *>(m_Variable)
-        ->m_StructDefinition.Fields();
+    if (reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_ReadStructDefinition)
+        return reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_ReadStructDefinition->Fields();
+    else
+        return reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_WriteStructDefinition->Fields();
 }
 std::string VariableNT::StructFieldName(const size_t index) const
 {
@@ -277,8 +283,13 @@ std::string VariableNT::StructFieldName(const size_t index) const
             "invalid data type " + ToString(m_Variable->m_Type) +
                 ", only Struct type supports this API");
     }
-    return reinterpret_cast<core::VariableStruct *>(m_Variable)
-        ->m_StructDefinition.Name(index);
+    if (reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_ReadStructDefinition)
+        return reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_ReadStructDefinition->Name(index);
+    else
+        return reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_WriteStructDefinition->Name(index);
 }
 size_t VariableNT::StructFieldOffset(const size_t index) const
 {
@@ -291,8 +302,13 @@ size_t VariableNT::StructFieldOffset(const size_t index) const
             "invalid data type " + ToString(m_Variable->m_Type) +
                 ", only Struct type supports this API");
     }
-    return reinterpret_cast<core::VariableStruct *>(m_Variable)
-        ->m_StructDefinition.Offset(index);
+    if (reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_ReadStructDefinition)
+        return reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_ReadStructDefinition->Offset(index);
+    else
+        return reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_WriteStructDefinition->Offset(index);
 }
 DataType VariableNT::StructFieldType(const size_t index) const
 {
@@ -305,8 +321,13 @@ DataType VariableNT::StructFieldType(const size_t index) const
             "invalid data type " + ToString(m_Variable->m_Type) +
                 ", only Struct type supports this API");
     }
-    return reinterpret_cast<core::VariableStruct *>(m_Variable)
-        ->m_StructDefinition.Type(index);
+    if (reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_ReadStructDefinition)
+        return reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_ReadStructDefinition->Type(index);
+    else
+        return reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_WriteStructDefinition->Type(index);
 }
 size_t VariableNT::StructFieldElementCount(const size_t index) const
 {
@@ -319,8 +340,13 @@ size_t VariableNT::StructFieldElementCount(const size_t index) const
             "invalid data type " + ToString(m_Variable->m_Type) +
                 ", only Struct type supports this API");
     }
-    return reinterpret_cast<core::VariableStruct *>(m_Variable)
-        ->m_StructDefinition.ElementCount(index);
+    if (reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_ReadStructDefinition)
+        return reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_ReadStructDefinition->ElementCount(index);
+    else
+        return reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->m_WriteStructDefinition->ElementCount(index);
 }
 
 std::pair<VariableNT::T, VariableNT::T>
@@ -621,4 +647,59 @@ std::pair<double, double> VariableNT::MinMaxDouble(const size_t step) const
     helper::CheckForNullptr(m_Variable, "in call to VariableNT::MinMaxDouble");
     return {MinDouble(step), MaxDouble(step)};
 }
+
+StructDefinition *VariableNT::GetWriteStructDef() noexcept
+{
+    helper::CheckForNullptr(m_Variable,
+                            "in call to VariableNT::StructFieldElementCount");
+    if (m_Variable->m_Type != DataType::Struct)
+    {
+        helper::Throw<std::runtime_error>(
+            "bindings::CXX11", "VariableNT", "StructFieldElementCount",
+            "invalid data type " + ToString(m_Variable->m_Type) +
+                ", only Struct type supports this API");
+    }
+    core::StructDefinition *CoreSD =
+        reinterpret_cast<core::VariableStruct *>(m_Variable)
+            ->GetWriteStructDef();
+    if (CoreSD->BindingsStructDefinition)
+        return (StructDefinition *)CoreSD->BindingsStructDefinition;
+    return new StructDefinition(CoreSD);
+}
+
+StructDefinition *VariableNT::GetReadStructDef() noexcept
+{
+    helper::CheckForNullptr(m_Variable,
+                            "in call to VariableNT::StructFieldElementCount");
+    if (m_Variable->m_Type != DataType::Struct)
+    {
+        helper::Throw<std::runtime_error>(
+            "bindings::CXX11", "VariableNT", "StructFieldElementCount",
+            "invalid data type " + ToString(m_Variable->m_Type) +
+                ", only Struct type supports this API");
+    }
+    auto CoreSD = reinterpret_cast<core::VariableStruct *>(m_Variable)
+                      ->GetReadStructDef();
+    if (!CoreSD)
+        return nullptr;
+    if (CoreSD->BindingsStructDefinition)
+        return (StructDefinition *)CoreSD->BindingsStructDefinition;
+    return new StructDefinition(CoreSD);
+}
+
+void VariableNT::SetReadStructDef(const StructDefinition &def)
+{
+    helper::CheckForNullptr(m_Variable,
+                            "in call to VariableNT::StructFieldElementCount");
+    if (m_Variable->m_Type != DataType::Struct)
+    {
+        helper::Throw<std::runtime_error>(
+            "bindings::CXX11", "VariableNT", "StructFieldElementCount",
+            "invalid data type " + ToString(m_Variable->m_Type) +
+                ", only Struct type supports this API");
+    }
+    reinterpret_cast<core::VariableStruct *>(m_Variable)
+        ->SetReadStructDef(def.m_StructDefinition);
+}
+
 } // end namespace adios2

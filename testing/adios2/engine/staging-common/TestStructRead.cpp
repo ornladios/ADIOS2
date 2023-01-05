@@ -77,17 +77,6 @@ TEST_F(StructReadTest, ADIOS2StructRead)
 
     engine.LockReaderSelections();
 
-    auto particleDef1 = io.DefineStruct("particle1", sizeof(particle));
-    particleDef1.AddField("a", offsetof(particle, a), adios2::DataType::Int8);
-    particleDef1.AddField("b", offsetof(particle, b), adios2::DataType::Int32,
-                          4);
-
-    auto particleDef2 = io.DefineStruct("particle2", sizeof(particle) + 4);
-    particleDef2.AddField("a", offsetof(particle, a), adios2::DataType::Int8);
-    particleDef2.AddField("b", offsetof(particle, b), adios2::DataType::Int32,
-                          4);
-    particleDef2.AddField("c", 20, adios2::DataType::Int32); // arbitrary offset
-
     while (true)
     {
         adios2::StepStatus status = engine.BeginStep(StepMode::Read, 5);
@@ -213,8 +202,20 @@ TEST_F(StructReadTest, ADIOS2StructRead)
             }
 
             {
-                auto varStruct =
-                    io.InquireStructVariable("particles", particleDef1);
+                auto varStruct = io.InquireStructVariable("particles");
+                if (varStruct && (varStruct.GetReadStructDef() == nullptr))
+                {
+                    auto WriteStruct = varStruct.GetWriteStructDef();
+                    (void)WriteStruct; // unused here, but available if needed
+                    auto particleDef1 =
+                        io.DefineStruct("particle1", sizeof(particle));
+                    particleDef1.AddField("a", offsetof(particle, a),
+                                          adios2::DataType::Int8);
+                    particleDef1.AddField("b", offsetof(particle, b),
+                                          adios2::DataType::Int32, 4);
+                    varStruct.SetReadStructDef(particleDef1);
+                }
+
                 varStruct.SetSelection({start, count});
                 ASSERT_TRUE(varStruct);
                 engine.Get(varStruct, myParticles.data(), adios2::Mode::Sync);
@@ -226,23 +227,7 @@ TEST_F(StructReadTest, ADIOS2StructRead)
                     ASSERT_EQ(myParticles[i].b[2], 20);
                     ASSERT_EQ(myParticles[i].b[3], 30);
                 }
-                /*                auto structBlocks =
-                engine.BlocksInfo(varStruct, currentStep);
-                ASSERT_EQ(structBlocks.size(), mpiSize);
-                for (size_t i = 0; i < structBlocks.size(); ++i)
-                {
-                    ASSERT_FALSE(structBlocks[i].IsValue);
-                    ASSERT_FALSE(structBlocks[i].IsReverseDims);
-                    ASSERT_EQ(structBlocks[i].Step, currentStep);
-                }
-                */
             }
-            {
-                auto varStruct =
-                    io.InquireStructVariable("particles", particleDef2);
-                ASSERT_FALSE(varStruct);
-            }
-
             ASSERT_EQ(i, currentStep);
             engine.EndStep();
         }
