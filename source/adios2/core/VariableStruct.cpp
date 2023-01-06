@@ -111,6 +111,7 @@ VariableStruct::VariableStruct(const std::string &name,
                constantDims)
 {
     m_WriteStructDefinition = const_cast<StructDefinition *>(&def);
+    m_ReadStructDefinition = nullptr;
 }
 
 void VariableStruct::SetData(const void *data) noexcept
