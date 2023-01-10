@@ -30,9 +30,10 @@ namespace engine
 
 BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode,
                      helper::Comm comm)
-: Engine("BP5Reader", io, name, mode, std::move(comm)), m_MDFileManager(m_Comm),
-  m_DataFileManager(m_Comm), m_MDIndexFileManager(m_Comm),
-  m_FileMetaMetadataManager(m_Comm), m_ActiveFlagFileManager(m_Comm)
+: Engine("BP5Reader", io, name, mode, std::move(comm)),
+  m_MDFileManager(io, m_Comm), m_DataFileManager(io, m_Comm),
+  m_MDIndexFileManager(io, m_Comm), m_FileMetaMetadataManager(io, m_Comm),
+  m_ActiveFlagFileManager(io, m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     Init();
@@ -228,7 +229,8 @@ BP5Reader::ReadData(adios2::transportman::TransportMan &FileManager,
             FileManager.CloseFiles((int)m->first);
         }
         FileManager.OpenFileID(subFileName, SubfileNum, Mode::Read,
-                               {{"transport", "File"}}, false);
+                               m_IO.m_TransportsParameters[0],
+                               /*{{"transport", "File"}},*/ false);
     }
     TP endSubfile = NOW();
     double timeSubfile = DURATION(startSubfile, endSubfile);
@@ -308,8 +310,7 @@ void BP5Reader::PerformGets()
         return reqidx;
     };
 
-    auto lf_Reader = [&](adios2::transportman::TransportMan FileManager,
-                         const size_t maxOpenFiles)
+    auto lf_Reader = [&](const int FileManagerID, const size_t maxOpenFiles)
         -> std::tuple<double, double, double, size_t> {
         double copyTotal = 0.0;
         double readTotal = 0.0;
@@ -329,9 +330,10 @@ void BP5Reader::PerformGets()
             {
                 Req.DestinationAddr = buf.data();
             }
-            std::pair<double, double> t = ReadData(
-                FileManager, maxOpenFiles, Req.WriterRank, Req.Timestep,
-                Req.StartOffset, Req.ReadLength, Req.DestinationAddr);
+            std::pair<double, double> t =
+                ReadData(fileManagers[FileManagerID], maxOpenFiles,
+                         Req.WriterRank, Req.Timestep, Req.StartOffset,
+                         Req.ReadLength, Req.DestinationAddr);
 
             TP startCopy = NOW();
             m_BP5Deserializer->FinalizeGet(Req, false);
@@ -361,19 +363,16 @@ void BP5Reader::PerformGets()
 
         std::vector<std::future<std::tuple<double, double, double, size_t>>>
             futures(nThreads - 1);
-        helper::Comm singleComm;
-        std::vector<transportman::TransportMan> fileManagers(
-            nThreads - 1, transportman::TransportMan(singleComm));
+
         // launch Threads-1 threads to process subsets of requests,
         // then main thread process the last subset
         for (size_t tid = 0; tid < nThreads - 1; ++tid)
         {
-            fileManagers[tid];
-            futures[tid] = std::async(std::launch::async, lf_Reader,
-                                      fileManagers[tid], maxOpenFiles);
+            futures[tid] = std::async(std::launch::async, lf_Reader, tid + 1,
+                                      maxOpenFiles);
         }
         // main thread runs last subset of reads
-        /*auto tMain = */ lf_Reader(m_DataFileManager, maxOpenFiles);
+        /*auto tMain = */ lf_Reader(0, maxOpenFiles);
         /*{
             double tSubfile = std::get<0>(tMain);
             double tRead = std::get<1>(tMain);
@@ -502,6 +501,15 @@ void BP5Reader::InitParameters()
         {
             m_Threads = helper::SetWithinLimit(8U / NodeSize, 1U, 8U);
         }
+    }
+
+    // Create m_Threads-1  extra file managers to be used by threads
+    // The main thread uses the DataFileManager pushed here to vector[0]
+    fileManagers.push_back(m_DataFileManager);
+    for (unsigned int i = 0; i < m_Threads - 1; ++i)
+    {
+        fileManagers.push_back(transportman::TransportMan(
+            transportman::TransportMan(m_IO, singleComm)));
     }
 
     size_t limit = helper::RaiseLimitNoFile();
@@ -1229,6 +1237,12 @@ void BP5Reader::DoClose(const int transportIndex)
     }
     m_DataFileManager.CloseFiles();
     m_MDFileManager.CloseFiles();
+    m_MDIndexFileManager.CloseFiles();
+    m_FileMetaMetadataManager.CloseFiles();
+    for (unsigned int i = 1; i < m_Threads; ++i)
+    {
+        fileManagers[i].CloseFiles();
+    }
 }
 
 // DoBlocksInfo will not be called because MinBlocksInfo is operative

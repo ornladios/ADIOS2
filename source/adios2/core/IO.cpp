@@ -580,7 +580,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
                     /* We need to figure out the type of file
                      * from the file itself
                      */
-                    if (helper::IsHDF5File(name, comm, m_TransportsParameters))
+                    if (helper::IsHDF5File(name, *this, comm,
+                                           m_TransportsParameters))
                     {
                         engineTypeLC = "hdf5";
                     }
