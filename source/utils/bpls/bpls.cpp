@@ -1533,10 +1533,28 @@ int doList(const char *path)
     if (verbose > 1)
         printf("\nADIOS Open: read header info from %s\n", path);
 
-    if (!adios2sys::SystemTools::FileExists(path))
+    std::string tpl = helper::LowerCase(transport_params);
+    bool remoteFile = (tpl.find("awssdk") != std::string::npos);
+    if (remoteFile)
     {
-        fprintf(stderr, "\nError: input path %s does not exist\n", path);
-        return 4;
+        if (engine_name.empty())
+        {
+            fprintf(
+                stderr,
+                "\nError: For remote file access you must specify the engine "
+                "explicitly with -E parameter, e.g. -E bp5 or -E bp4 or -E "
+                "bp3.\nVirtual engines like BPFile or FileStream do not know "
+                "which engine to use.\n");
+            return 8;
+        }
+    }
+    else
+    {
+        if (!adios2sys::SystemTools::FileExists(path))
+        {
+            fprintf(stderr, "\nError: input path %s does not exist\n", path);
+            return 4;
+        }
     }
 
     // initialize BP reader
