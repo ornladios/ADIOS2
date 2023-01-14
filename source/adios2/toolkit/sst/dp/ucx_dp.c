@@ -47,7 +47,6 @@
 
 #include "dp_interface.h"
 
-static pthread_mutex_t ucx_fabric_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ucx_wsr_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ucx_ts_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -104,9 +103,6 @@ static ucs_status_t init_fabric(struct fabric_state *fabric,
     ucp_worker_params_t worker_params;
     ucp_config_t *config;
     ucs_status_t status = UCS_ERR_LAST;
-    /* UCP handler objects */
-    ucp_context_h ucp_context;
-    ucp_worker_h ucp_worker;
 
     memset(&ucp_params, 0, sizeof(ucp_params));
     memset(&worker_params, 0, sizeof(worker_params));
@@ -257,12 +253,10 @@ static DP_RS_Stream UcxInitReader(CP_Services Svcs, void *CP_Stream,
 {
     Ucx_RS_Stream Stream = malloc(sizeof(struct _Ucx_RS_Stream));
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
-    FabricState Fabric;
     ucs_status_t status;
 
     memset(Stream, 0, sizeof(*Stream));
-    Stream->Fabric = calloc(1, sizeof(*Fabric));
-    Fabric = Stream->Fabric;
+    Stream->Fabric = calloc(1, sizeof(*Stream->Fabric));
 
     /*
      * save the CP_stream value of later use
@@ -300,7 +294,6 @@ static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream,
 {
     Ucx_WS_Stream Stream = malloc(sizeof(struct _Ucx_WS_Stream));
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
-    int ret;
     ucs_status_t status;
 
     memset(Stream, 0, sizeof(struct _Ucx_WS_Stream));
@@ -330,8 +323,6 @@ UcxInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_Stream_v,
     Ucx_WSR_Stream WSR_Stream = malloc(sizeof(*WSR_Stream));
     FabricState Fabric = WS_Stream->Fabric;
     UcxWriterContactInfo ContactInfo;
-
-    int i;
 
     WSR_Stream->WS_Stream = WS_Stream; /* pointer to writer struct */
     WSR_Stream->PeerCohort = PeerCohort;
@@ -446,7 +437,7 @@ static void *UcxReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     ret->Rank = Rank;
     ret->Length = Length;
     ret->Pending = 1;
-    Addr = Info->Block + Offset;
+    Addr = (uint8_t *)Info->Block + Offset;
     Svcs->verbose(
         RS_Stream->CP_Stream, DPTraceVerbose,
         "Remote read target is Rank %d, EP = %p (Offset = %zi, Length = %zi)\n",
@@ -544,9 +535,6 @@ static void UcxProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     UcxBufferHandle Info = malloc(sizeof(struct _UcxBufferHandle));
     FabricState Fabric = Stream->Fabric;
     ucs_status_t status;
-    ucp_worker_h ucp_worker;
-    ucp_address_t *ucp_address;
-    size_t address_length = 0;
 
     Entry->Data = malloc(sizeof(*Data));
     memcpy(Entry->Data, Data, sizeof(*Data));
@@ -619,7 +607,6 @@ static void UcxReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     FabricState Fabric = Stream->Fabric;
     TimestepList *List = &Stream->Timesteps;
     TimestepList ReleaseTSL;
-    UcxBufferHandle Info;
 
     Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "Releasing timestep %ld\n",
                   Timestep);
@@ -681,8 +668,6 @@ static void UcxDestroyWriterPerReader(CP_Services Svcs,
     Ucx_WSR_Stream WSR_Stream = {0};
     memcpy(&WSR_Stream, &WSR_Stream_v, sizeof(Ucx_WSR_Stream));
     Ucx_WS_Stream WS_Stream = WSR_Stream->WS_Stream;
-    UcxWriterContactInfo WriterContactInfo = {0};
-    int j = 0;
 
     pthread_mutex_lock(&ucx_wsr_mutex);
     for (int i = 0; i < WS_Stream->ReaderCount; i++)
@@ -702,7 +687,6 @@ static void UcxDestroyWriterPerReader(CP_Services Svcs,
 
     if (WSR_Stream->WriterContactInfo)
     {
-        WriterContactInfo = WSR_Stream->WriterContactInfo;
         free(WSR_Stream->WriterContactInfo);
     }
 
