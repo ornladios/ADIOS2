@@ -176,7 +176,7 @@ if(NOT @BUILD_SHARED_LIBS@)
 
     set(ADIOS2_SST_HAVE_UCX @ADIOS2_SST_HAVE_UCX@)
     if(ADIOS2_SST_HAVE_UCX)
-      find_dependency(UCX)
+      find_dependency(UCX 1.9.0)
     endif()
 
     find_dependency(EVPath)

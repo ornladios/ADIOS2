@@ -161,6 +161,7 @@ adios_option(IME        "Enable support for DDN IME transport" AUTO)
 adios_option(Python     "Enable support for Python bindings" AUTO)
 adios_option(Fortran    "Enable support for Fortran bindings" AUTO)
 adios_option(SysVShMem  "Enable support for SysV Shared Memory IPC on *NIX" AUTO)
+adios_option(UCX        "Enable support for UCX DataPlane in SST" AUTO)
 adios_option(Profiling  "Enable support for profiling" AUTO)
 adios_option(Endian_Reverse "Enable support for Little/Big Endian Interoperability" AUTO)
 adios_option(Sodium     "Enable support for Sodium for encryption" AUTO)
@@ -227,7 +228,7 @@ endif()
 
 set(ADIOS2_CONFIG_OPTS
     BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST CUDA Fortran MPI Python Blosc Blosc2 
-    BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem ZeroMQ 
+    BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX ZeroMQ 
     Profiling Endian_Reverse GPU_Support AWSSDK
 )
 
