@@ -52,24 +52,40 @@ if(NOT (PC_UCX_FOUND STREQUAL "IGNORE"))
       set(UCX_INCLUDE_DIRS ${PC_UCX${_PC_TYPE}_INCLUDE_DIRS})
       set(UCX_LIBRARIES ${PC_UCX${_PC_TYPE}_LINK_LIBRARIES})
       set(UCX_LIBRARY_DIRS ${PC_UCX${_PC_TYPE}_LIBRARY_DIRS})
+      set(UCX_FOUND ${PC_UCX_FOUND})
     endif()
   endif()
 endif()
 
+if(NOT ${PC_UCX_VERSION})
+  set(_UCX_VER_FILE "${UCX_INCLUDE_DIRS}/ucp/api/ucp_version.h")
+  if(EXISTS "${_UCX_VER_FILE}")
+    file(READ "${_UCX_VER_FILE}" _ver)
+    string(REGEX MATCH "#define UCP_API_MAJOR *([0-9]*)" _ ${_ver})
+    set(_major ${CMAKE_MATCH_1})
+    string(REGEX MATCH "#define UCP_API_MINOR *([0-9]*)" _ ${_ver})
+    set(_minor ${CMAKE_MATCH_1})
+    set(UCX_VERSION "${_major}.${_minor}")
+  endif()
+else()
+  set(UCX_VERSION ${PC_UCX_VERSION})
+endif()
+
 include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set LIBXML2_FOUND to TRUE
+# handle the QUIETLY and REQUIRED arguments and set UCX_FOUND to TRUE
 # if all listed variables are TRUE
-find_package_handle_standard_args(UCX DEFAULT_MSG UCX_LIBRARIES)
+find_package_handle_standard_args(UCX 
+    FOUND_VAR UCX_FOUND
+    VERSION_VAR UCX_VERSION
+    REQUIRED_VARS UCX_LIBRARIES)
 
 if(UCX_FOUND)
-  message("Found UCX: ")
   if(NOT TARGET ucx::ucx)
     add_library(ucx::ucx INTERFACE IMPORTED)
     if(UCX_INCLUDE_DIRS)
       set_target_properties(ucx::ucx PROPERTIES
         INTERFACE_INCLUDE_DIRECTORIES "${UCX_INCLUDE_DIRS}"
       )
-      message("'${UCX_INCLUDE_DIRS}'")
     endif()
     if(UCX_LIBRARIES)
       set_target_properties(ucx::ucx PROPERTIES
