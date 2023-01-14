@@ -437,7 +437,7 @@ static void *UcxReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     ret->Rank = Rank;
     ret->Length = Length;
     ret->Pending = 1;
-    Addr = (uint8_t*)Info->Block + Offset;
+    Addr = (uint8_t *)Info->Block + Offset;
     Svcs->verbose(
         RS_Stream->CP_Stream, DPTraceVerbose,
         "Remote read target is Rank %d, EP = %p (Offset = %zi, Length = %zi)\n",
@@ -823,4 +823,3 @@ extern NO_SANITIZE_THREAD CP_DP_Interface LoadUcxDP()
     UcxDPInterface.unGetPriority = UcxUnGetPriority;
     return &UcxDPInterface;
 }
-
