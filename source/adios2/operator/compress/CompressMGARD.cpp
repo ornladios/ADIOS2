@@ -139,28 +139,14 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
         }
     }
 
-    size_t sizeOut = 0;
-    void *compressedData = nullptr;
+    // let mgard know the output buffer size
+    size_t sizeOut =
+        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+    void *compressedData = bufferOut + bufferOutOffset;
     mgard_x::compress(mgardDim, mgardType, mgardCount, tolerance, s,
-                      errorBoundType, dataIn, compressedData, sizeOut, false);
+                      errorBoundType, dataIn, compressedData, sizeOut, true);
 
-    if (bufferOutOffset + sizeOut >
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type)))
-    {
-        CompressNull c({});
-        bufferOutOffset =
-            c.Operate(dataIn, blockStart, blockCount, type, bufferOut);
-    }
-    else
-    {
-        std::memcpy(bufferOut + bufferOutOffset, compressedData, sizeOut);
-        bufferOutOffset += sizeOut;
-    }
-
-    if (compressedData)
-    {
-        free(compressedData);
-    }
+    bufferOutOffset += sizeOut;
 
     return bufferOutOffset;
 }
@@ -199,14 +185,9 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     try
     {
-        void *dataOutVoid = nullptr;
+        void *dataOutVoid = dataOut;
         mgard_x::decompress(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
-                            dataOutVoid, false);
-        std::memcpy(dataOut, dataOutVoid, sizeOut);
-        if (dataOutVoid)
-        {
-            free(dataOutVoid);
-        }
+                            dataOutVoid, true);
     }
     catch (...)
     {
