@@ -102,7 +102,8 @@ class MatchResultListener {
  private:
   ::std::ostream* const stream_;
 
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MatchResultListener);
+  MatchResultListener(const MatchResultListener&) = delete;
+  MatchResultListener& operator=(const MatchResultListener&) = delete;
 };
 
 inline MatchResultListener::~MatchResultListener() {}
@@ -220,7 +221,8 @@ class DummyMatchResultListener : public MatchResultListener {
   DummyMatchResultListener() : MatchResultListener(nullptr) {}
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(DummyMatchResultListener);
+  DummyMatchResultListener(const DummyMatchResultListener&) = delete;
+  DummyMatchResultListener& operator=(const DummyMatchResultListener&) = delete;
 };
 
 // A match result listener that forwards the explanation to a given
@@ -232,7 +234,9 @@ class StreamMatchResultListener : public MatchResultListener {
       : MatchResultListener(os) {}
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(StreamMatchResultListener);
+  StreamMatchResultListener(const StreamMatchResultListener&) = delete;
+  StreamMatchResultListener& operator=(const StreamMatchResultListener&) =
+      delete;
 };
 
 struct SharedPayloadBase {
@@ -299,17 +303,18 @@ class MatcherBase : private MatcherDescriberInterface {
   }
 
  protected:
-  MatcherBase() : vtable_(nullptr) {}
+  MatcherBase() : vtable_(nullptr), buffer_() {}
 
   // Constructs a matcher from its implementation.
   template <typename U>
-  explicit MatcherBase(const MatcherInterface<U>* impl) {
+  explicit MatcherBase(const MatcherInterface<U>* impl)
+      : vtable_(nullptr), buffer_() {
     Init(impl);
   }
 
   template <typename M, typename = typename std::remove_reference<
                             M>::type::is_gtest_matcher>
-  MatcherBase(M&& m) {  // NOLINT
+  MatcherBase(M&& m) : vtable_(nullptr), buffer_() {  // NOLINT
     Init(std::forward<M>(m));
   }
 
@@ -837,7 +842,7 @@ class MatchesRegexMatcher {
   template <class MatcheeStringType>
   bool MatchAndExplain(const MatcheeStringType& s,
                        MatchResultListener* /* listener */) const {
-    const std::string& s2(s);
+    const std::string s2(s);
     return full_match_ ? RE::FullMatch(s2, *regex_)
                        : RE::PartialMatch(s2, *regex_);
   }

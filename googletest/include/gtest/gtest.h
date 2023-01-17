@@ -50,9 +50,14 @@
 #define GOOGLETEST_INCLUDE_GTEST_GTEST_H_
 
 #include <cstddef>
+#include <cstdint>
+#include <iomanip>
 #include <limits>
 #include <memory>
 #include <ostream>
+#include <set>
+#include <sstream>
+#include <string>
 #include <type_traits>
 #include <vector>
 
@@ -190,6 +195,17 @@ void ReportFailureInUnknownLocation(TestPartResult::Type result_type,
                                     const std::string& message);
 std::set<std::string>* GetIgnoredParameterizedTestSuites();
 
+// A base class that prevents subclasses from being copyable.
+// We do this instead of using '= delete' so as to avoid triggering warnings
+// inside user code regarding any of our declarations.
+class GTestNonCopyable {
+ public:
+  GTestNonCopyable() = default;
+  GTestNonCopyable(const GTestNonCopyable &) = delete;
+  GTestNonCopyable &operator=(const GTestNonCopyable &) = delete;
+  ~GTestNonCopyable() = default;
+};
+
 }  // namespace internal
 
 // The friend relationship of some of these classes is cyclic.
@@ -285,7 +301,7 @@ class GTEST_API_ Test {
   // SetUp/TearDown method of Environment objects registered with Google
   // Test) will be output as attributes of the <testsuites> element.
   static void RecordProperty(const std::string& key, const std::string& value);
-  static void RecordProperty(const std::string& key, int value);
+  static void RecordProperty(const std::string& key, int64_t value);
 
  protected:
   // Creates a Test object.
@@ -339,7 +355,8 @@ class GTEST_API_ Test {
   virtual Setup_should_be_spelled_SetUp* Setup() { return nullptr; }
 
   // We disallow copying Tests.
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(Test);
+  Test(const Test&) = delete;
+  Test& operator=(const Test&) = delete;
 };
 
 typedef internal::TimeInMillis TimeInMillis;
@@ -497,7 +514,8 @@ class GTEST_API_ TestResult {
   TimeInMillis elapsed_time_;
 
   // We disallow copying TestResult.
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(TestResult);
+  TestResult(const TestResult&) = delete;
+  TestResult& operator=(const TestResult&) = delete;
 };  // class TestResult
 
 // A TestInfo object stores the following information about a test:
@@ -643,7 +661,8 @@ class GTEST_API_ TestInfo {
   // test for the second time.
   TestResult result_;
 
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(TestInfo);
+  TestInfo(const TestInfo&) = delete;
+  TestInfo& operator=(const TestInfo&) = delete;
 };
 
 // A test suite, which consists of a vector of TestInfos.
@@ -852,7 +871,8 @@ class GTEST_API_ TestSuite {
   TestResult ad_hoc_test_result_;
 
   // We disallow copying TestSuites.
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(TestSuite);
+  TestSuite(const TestSuite&) = delete;
+  TestSuite& operator=(const TestSuite&) = delete;
 };
 
 // An Environment object is capable of setting up and tearing down an
@@ -1072,7 +1092,8 @@ class GTEST_API_ TestEventListeners {
   TestEventListener* default_xml_generator_;
 
   // We disallow copying TestEventListeners.
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(TestEventListeners);
+  TestEventListeners(const TestEventListeners&) = delete;
+  TestEventListeners& operator=(const TestEventListeners&) = delete;
 };
 
 // A UnitTest consists of a vector of TestSuites.
@@ -1279,7 +1300,8 @@ class GTEST_API_ UnitTest {
   internal::UnitTestImpl* impl_;
 
   // We disallow copying UnitTest.
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(UnitTest);
+  UnitTest(const UnitTest&) = delete;
+  UnitTest& operator=(const UnitTest&) = delete;
 };
 
 // A convenient wrapper for adding an environment for the test
@@ -1597,12 +1619,14 @@ class GTEST_API_ AssertHelper {
     std::string const message;
 
    private:
-    GTEST_DISALLOW_COPY_AND_ASSIGN_(AssertHelperData);
+    AssertHelperData(const AssertHelperData&) = delete;
+    AssertHelperData& operator=(const AssertHelperData&) = delete;
   };
 
   AssertHelperData* const data_;
 
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(AssertHelper);
+  AssertHelper(const AssertHelper&) = delete;
+  AssertHelper& operator=(const AssertHelper&) = delete;
 };
 
 }  // namespace internal
@@ -1617,7 +1641,7 @@ class GTEST_API_ AssertHelper {
 // the GetParam() method.
 //
 // Use it with one of the parameter generator defining functions, like Range(),
-// Values(), ValuesIn(), Bool(), and Combine().
+// Values(), ValuesIn(), Bool(), Combine(), and ConvertGenerator<T>().
 //
 // class FooTest : public ::testing::TestWithParam<int> {
 //  protected:
@@ -1715,9 +1739,9 @@ class TestWithParam : public Test, public WithParamInterface<T> {};
 #define GTEST_FAIL() GTEST_FATAL_FAILURE_("Failed")
 
 // Like GTEST_FAIL(), but at the given source file location.
-#define GTEST_FAIL_AT(file, line)         \
-  GTEST_MESSAGE_AT_(file, line, "Failed", \
-                    ::testing::TestPartResult::kFatalFailure)
+#define GTEST_FAIL_AT(file, line)                \
+  return GTEST_MESSAGE_AT_(file, line, "Failed", \
+                           ::testing::TestPartResult::kFatalFailure)
 
 // Define this macro to 1 to omit the definition of FAIL(), which is a
 // generic name and clashes with some other libraries.
@@ -2053,10 +2077,9 @@ class GTEST_API_ ScopedTrace {
  private:
   void PushTrace(const char* file, int line, std::string message);
 
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(ScopedTrace);
-} GTEST_ATTRIBUTE_UNUSED_;  // A ScopedTrace object does its job in its
-                            // c'tor and d'tor.  Therefore it doesn't
-                            // need to be used otherwise.
+  ScopedTrace(const ScopedTrace&) = delete;
+  ScopedTrace& operator=(const ScopedTrace&) = delete;
+};
 
 // Causes a trace (including the source file path, the current line
 // number, and the given message) to be included in every test failure
@@ -2180,9 +2203,16 @@ constexpr bool StaticAssertTypeEq() noexcept {
 #define TEST_F(test_fixture, test_name) GTEST_TEST_F(test_fixture, test_name)
 #endif
 
-// Returns a path to temporary directory.
-// Tries to determine an appropriate directory for the platform.
+// Returns a path to a temporary directory, which should be writable. It is
+// implementation-dependent whether or not the path is terminated by the
+// directory-separator character.
 GTEST_API_ std::string TempDir();
+
+// Returns a path to a directory that contains ancillary data files that might
+// be used by tests. It is implementation dependent whether or not the path is
+// terminated by the directory-separator character. The directory and the files
+// in it should be considered read-only.
+GTEST_API_ std::string SrcDir();
 
 #ifdef _MSC_VER
 #pragma warning(pop)

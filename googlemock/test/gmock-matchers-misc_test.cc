@@ -106,7 +106,8 @@ class NotCopyable {
  private:
   int value_;
 
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(NotCopyable);
+  NotCopyable(const NotCopyable&) = delete;
+  NotCopyable& operator=(const NotCopyable&) = delete;
 };
 
 TEST(ByRefTest, AllowsNotCopyableConstValueInMatchers) {
@@ -636,7 +637,9 @@ TEST(FormatMatcherDescriptionTest, WorksForEmptyDescription) {
       FormatMatcherDescription(false, "IsInRange", {"a", "b"}, {"5", "8"}));
 }
 
-TEST(MatcherTupleTest, ExplainsMatchFailure) {
+INSTANTIATE_GTEST_MATCHER_TEST_P(MatcherTupleTest);
+
+TEST_P(MatcherTupleTestP, ExplainsMatchFailure) {
   stringstream ss1;
   ExplainMatchFailureTupleTo(
       std::make_tuple(Matcher<char>(Eq('a')), GreaterThan(5)),
@@ -1377,6 +1380,8 @@ TEST(MatcherPnMacroTest, CanUseMatcherTypedParameterInValue) {
 
 // Tests Contains().Times().
 
+INSTANTIATE_GTEST_MATCHER_TEST_P(ContainsTimes);
+
 TEST(ContainsTimes, ListMatchesWhenElementQuantityMatches) {
   list<int> some_list;
   some_list.push_back(3);
@@ -1396,7 +1401,7 @@ TEST(ContainsTimes, ListMatchesWhenElementQuantityMatches) {
   EXPECT_THAT(list<int>{}, Not(Contains(_)));
 }
 
-TEST(ContainsTimes, ExplainsMatchResultCorrectly) {
+TEST_P(ContainsTimesP, ExplainsMatchResultCorrectly) {
   const int a[2] = {1, 2};
   Matcher<const int(&)[2]> m = Contains(2).Times(3);
   EXPECT_EQ(
@@ -1501,6 +1506,8 @@ TEST(AllOfArrayTest, Matchers) {
   EXPECT_THAT(1, AllOfArray({Ge(0), Ge(1)}));
 }
 
+INSTANTIATE_GTEST_MATCHER_TEST_P(AnyOfArrayTest);
+
 TEST(AnyOfArrayTest, BasicForms) {
   // Iterator
   std::vector<int> v0{};
@@ -1553,8 +1560,8 @@ TEST(AnyOfArrayTest, Matchers) {
   EXPECT_THAT(1, Not(AllOfArray({Lt(0), Lt(1)})));
 }
 
-TEST(AnyOfArrayTest, ExplainsMatchResultCorrectly) {
-  // AnyOfArray and AllOfArry use the same underlying template-template,
+TEST_P(AnyOfArrayTestP, ExplainsMatchResultCorrectly) {
+  // AnyOfArray and AllOfArray use the same underlying template-template,
   // thus it is sufficient to test one here.
   const std::vector<int> v0{};
   const std::vector<int> v1{1};
@@ -1606,6 +1613,20 @@ TEST(MatcherPMacroTest, WorksOnMoveOnlyType) {
   std::unique_ptr<int> p(new int(3));
   EXPECT_THAT(p, UniquePointee(3));
   EXPECT_THAT(p, Not(UniquePointee(2)));
+}
+
+MATCHER(EnsureNoUnusedButMarkedUnusedWarning, "") { return (arg % 2) == 0; }
+
+TEST(MockMethodMockFunctionTest, EnsureNoUnusedButMarkedUnusedWarning) {
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic error "-Wused-but-marked-unused"
+#endif
+  // https://github.com/google/googletest/issues/4055
+  EXPECT_THAT(0, EnsureNoUnusedButMarkedUnusedWarning());
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 }
 
 #if GTEST_HAS_EXCEPTIONS

@@ -27,6 +27,12 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+// Silence C4503 (decorated name length exceeded) for MSVC.
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4503)
+#endif
+
 // Google Mock - a framework for writing C++ mock classes.
 //
 // This file tests the function mocker classes.
@@ -202,7 +208,8 @@ class MockFoo : public FooInterface {
   MOCK_METHOD(int, RefQualifiedOverloaded, (), (ref(&&), override));
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockFoo);
+  MockFoo(const MockFoo&) = delete;
+  MockFoo& operator=(const MockFoo&) = delete;
 };
 
 class LegacyMockFoo : public FooInterface {
@@ -274,7 +281,8 @@ class LegacyMockFoo : public FooInterface {
   int RefQualifiedOverloaded() && override { return 0; }
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(LegacyMockFoo);
+  LegacyMockFoo(const LegacyMockFoo&) = delete;
+  LegacyMockFoo& operator=(const LegacyMockFoo&) = delete;
 };
 
 #ifdef _MSC_VER
@@ -492,7 +500,8 @@ class MockB {
   MOCK_METHOD(void, DoB, ());
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockB);
+  MockB(const MockB&) = delete;
+  MockB& operator=(const MockB&) = delete;
 };
 
 class LegacyMockB {
@@ -502,7 +511,8 @@ class LegacyMockB {
   MOCK_METHOD0(DoB, void());
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(LegacyMockB);
+  LegacyMockB(const LegacyMockB&) = delete;
+  LegacyMockB& operator=(const LegacyMockB&) = delete;
 };
 
 template <typename T>
@@ -557,7 +567,8 @@ class MockStack : public StackInterface<T> {
   MOCK_METHOD((std::map<int, int>), ReturnTypeWithComma, (int), (const));
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockStack);
+  MockStack(const MockStack&) = delete;
+  MockStack& operator=(const MockStack&) = delete;
 };
 
 template <typename T>
@@ -575,7 +586,8 @@ class LegacyMockStack : public StackInterface<T> {
   MOCK_CONST_METHOD1_T(ReturnTypeWithComma, std::map<int, int>(int));  // NOLINT
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(LegacyMockStack);
+  LegacyMockStack(const LegacyMockStack&) = delete;
+  LegacyMockStack& operator=(const LegacyMockStack&) = delete;
 };
 
 template <typename T>
@@ -645,7 +657,8 @@ class MockStackWithCallType : public StackInterfaceWithCallType<T> {
               (Calltype(STDMETHODCALLTYPE), override, const));
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockStackWithCallType);
+  MockStackWithCallType(const MockStackWithCallType&) = delete;
+  MockStackWithCallType& operator=(const MockStackWithCallType&) = delete;
 };
 
 template <typename T>
@@ -659,7 +672,9 @@ class LegacyMockStackWithCallType : public StackInterfaceWithCallType<T> {
   MOCK_CONST_METHOD0_T_WITH_CALLTYPE(STDMETHODCALLTYPE, GetTop, const T&());
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(LegacyMockStackWithCallType);
+  LegacyMockStackWithCallType(const LegacyMockStackWithCallType&) = delete;
+  LegacyMockStackWithCallType& operator=(const LegacyMockStackWithCallType&) =
+      delete;
 };
 
 template <typename T>
@@ -709,7 +724,9 @@ class MockOverloadedOnArgNumber {
   MY_MOCK_METHODS1_;
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockOverloadedOnArgNumber);
+  MockOverloadedOnArgNumber(const MockOverloadedOnArgNumber&) = delete;
+  MockOverloadedOnArgNumber& operator=(const MockOverloadedOnArgNumber&) =
+      delete;
 };
 
 class LegacyMockOverloadedOnArgNumber {
@@ -719,7 +736,10 @@ class LegacyMockOverloadedOnArgNumber {
   LEGACY_MY_MOCK_METHODS1_;
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(LegacyMockOverloadedOnArgNumber);
+  LegacyMockOverloadedOnArgNumber(const LegacyMockOverloadedOnArgNumber&) =
+      delete;
+  LegacyMockOverloadedOnArgNumber& operator=(
+      const LegacyMockOverloadedOnArgNumber&) = delete;
 };
 
 template <typename T>
@@ -751,7 +771,9 @@ class MockOverloadedOnConstness {
   MY_MOCK_METHODS2_;
 
  private:
-  GTEST_DISALLOW_COPY_AND_ASSIGN_(MockOverloadedOnConstness);
+  MockOverloadedOnConstness(const MockOverloadedOnConstness&) = delete;
+  MockOverloadedOnConstness& operator=(const MockOverloadedOnConstness&) =
+      delete;
 };
 
 TEST(MockMethodOverloadedMockMethodTest, CanOverloadOnConstnessInMacroBody) {
@@ -934,6 +956,21 @@ TEST(MockMethodMockFunctionTest, MockMethodSizeOverhead) {
   EXPECT_EQ(sizeof(LegacyMockMethodSizes0), sizeof(LegacyMockMethodSizes4));
 
   EXPECT_EQ(sizeof(LegacyMockMethodSizes0), sizeof(MockMethodSizes0));
+}
+
+TEST(MockMethodMockFunctionTest, EnsureNoUnusedMemberFunction) {
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic error "-Wunused-member-function"
+#endif
+  // https://github.com/google/googletest/issues/4052
+  struct Foo {
+    MOCK_METHOD(void, foo, ());
+  };
+  EXPECT_CALL(Foo(), foo()).Times(0);
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 }
 
 void hasTwoParams(int, int);
