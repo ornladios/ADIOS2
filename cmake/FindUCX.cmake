@@ -25,8 +25,9 @@
 #                    variable, it will override any setting specified
 #                    as an environment variable.
 
-# This is a bit of a wierd pattern but it allows to bypass pkg-config and
 # manually specify library information
+include(FindPackageHandleStandardArgs)
+
 if(NOT (PC_UCX_FOUND STREQUAL "IGNORE"))
   find_package(PkgConfig)
   if(PKG_CONFIG_FOUND)
@@ -53,31 +54,86 @@ if(NOT (PC_UCX_FOUND STREQUAL "IGNORE"))
       set(UCX_LIBRARIES ${PC_UCX${_PC_TYPE}_LINK_LIBRARIES})
       set(UCX_LIBRARY_DIRS ${PC_UCX${_PC_TYPE}_LIBRARY_DIRS})
       set(UCX_FOUND ${PC_UCX_FOUND})
+      set(UCX_VERSION ${PC_UVX_VERSION})
     endif()
   endif()
-endif()
 
-if(NOT ${PC_UCX_VERSION})
-  set(_UCX_VER_FILE "${UCX_INCLUDE_DIRS}/ucp/api/ucp_version.h")
-  if(EXISTS "${_UCX_VER_FILE}")
-    file(READ "${_UCX_VER_FILE}" _ver)
+  # handle the QUIETLY and REQUIRED arguments and set UCX_FOUND to TRUE
+  # if all listed variables are TRUE
+  find_package_handle_standard_args(UCX 
+      FOUND_VAR UCX_FOUND
+      VERSION_VAR UCX_VERSION
+      REQUIRED_VARS UCX_LIBRARIES)
+
+
+else()
+
+  find_path(ucx_ucp_INCLUDE_DIR
+     NAMES ucp/api/ucp.h
+     PATH_SUFFIXES include
+     PATHS ${PC_ucx_INCLUDEDIR} "/opt/ucx/" ${UCX_DIR}
+  )
+  message (STATUS "ucx_ucp_include dir is ${ucx_ucp_INCLUDE_DIR}")
+  find_path(ucx_uct_INCLUDE_DIR
+    NAMES uct/api/uct.h
+    PATH_SUFFIXES include
+    PATHS ${PC_ucx_INCLUDEDIR} "/opt/ucx/include" ${UCX_DIR}
+  )
+  find_path(ucx_ucs_INCLUDE_DIR
+    NAMES ucs/config/global_opts.h
+    PATH_SUFFIXES include
+    PATHS ${PC_ucx_INCLUDEDIR} "/opt/ucx/include" ${UCX_DIR}
+  )
+
+  find_library(ucx_ucp_LIBRARY
+    NAMES ucp
+    PATH_SUFFIXES lib
+    PATHS ${PC_ucx_LIBDIR} "/opt/ucx/lib" ${UCX_DIR}
+  )
+  find_library(ucx_uct_LIBRARY
+    NAMES uct
+    PATH_SUFFIXES lib
+    PATHS ${PC_ucx_LIBDIR} "/opt/ucx/lib" ${UCX_DIR}
+  )
+  find_library(ucx_ucs_LIBRARY
+    NAMES ucs
+    PATH_SUFFIXES lib
+    PATHS ${PC_ucx_LIBDIR} "/opt/ucx/lib" ${UCX_DIR}
+  )
+
+  set(_ucx_VER_FILE "${ucp_INCLUDE_DIR}/ucp/api/ucp_version.h")
+  if(EXISTS "${_ucx_VER_FILE}")
+    file(READ "${_ucx_VER_FILE}" _ver)
     string(REGEX MATCH "#define UCP_API_MAJOR *([0-9]*)" _ ${_ver})
     set(_major ${CMAKE_MATCH_1})
     string(REGEX MATCH "#define UCP_API_MINOR *([0-9]*)" _ ${_ver})
     set(_minor ${CMAKE_MATCH_1})
     set(UCX_VERSION "${_major}.${_minor}")
   endif()
-else()
-  set(UCX_VERSION ${PC_UCX_VERSION})
-endif()
 
-include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set UCX_FOUND to TRUE
-# if all listed variables are TRUE
-find_package_handle_standard_args(UCX 
+  find_package_handle_standard_args(UCX
     FOUND_VAR UCX_FOUND
+    REQUIRED_VARS
+      ucx_ucp_LIBRARY
+      ucx_uct_LIBRARY
+      ucx_ucs_LIBRARY
+      ucx_ucp_INCLUDE_DIR
+      ucx_uct_INCLUDE_DIR
     VERSION_VAR UCX_VERSION
-    REQUIRED_VARS UCX_LIBRARIES)
+  )
+
+  if(UCX_FOUND)
+    set(UCX_LIBRARIES
+      ${ucx_ucp_LIBRARY}
+      ${ucx_uct_LIBRARY}
+      ${ucx_ucs_LIBRARY}
+    )
+    set(UCX_INCLUDE_DIRS
+      ${ucx_ucp_INCLUDE_DIR}
+      ${ucx_uct_INCLUDE_DIR}
+    )
+  endif()
+endif()
 
 if(UCX_FOUND)
   if(NOT TARGET ucx::ucx)
