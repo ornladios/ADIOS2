@@ -853,15 +853,9 @@ void IO::CheckTransportType(const std::string type) const
 
 StructDefinition &IO::DefineStruct(const std::string &name, const size_t size)
 {
-    if (m_ADIOS.m_StructDefinitions.find(name) !=
-        m_ADIOS.m_StructDefinitions.end())
-    {
-        helper::Throw<std::invalid_argument>(
-            "Core", "IO", "DefineStruct", "Struct " + name + " defined twice");
-    }
     return m_ADIOS.m_StructDefinitions
         .emplace(name, StructDefinition(name, size))
-        .first->second;
+        ->second;
 }
 
 VariableStruct &IO::DefineStructVariable(const std::string &name,

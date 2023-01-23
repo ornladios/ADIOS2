@@ -238,10 +238,6 @@ VariableNT IO::InquireStructVariable(const std::string &name,
         m_IO->InquireStructVariable(name, *def.m_StructDefinition));
 }
 
-StructDefinition *GetWriteStructDef(VariableNT var) noexcept;
-StructDefinition *GetReadStructDef(VariableNT var) noexcept;
-void SetReadStructDef(VariableNT var, const StructDefinition &def);
-
 // PRIVATE
 IO::IO(core::IO *io) : m_IO(io) {}
 

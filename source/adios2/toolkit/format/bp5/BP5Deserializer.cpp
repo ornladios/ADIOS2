@@ -1111,9 +1111,8 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
         bool ret = false;
         if (variable.m_Type == adios2::DataType::Struct)
         {
-            // capture specified local structure
-            VarRec->ReaderDef = dynamic_cast<core::VariableStruct *>(&variable)
-                                    ->m_ReadStructDefinition;
+            StructQueueReadChecks(
+                dynamic_cast<core::VariableStruct *>(&variable), VarRec);
         }
 
         if (variable.m_StepsStart + variable.m_StepsCount >
@@ -1179,15 +1178,42 @@ bool BP5Deserializer::GetSingleValueFromMetadata(core::VariableBase &variable,
     return true;
 }
 
+void BP5Deserializer::StructQueueReadChecks(core::VariableStruct *variable,
+                                            BP5VarRec *VarRec)
+{
+    auto EngineReadDef = VarRec->ReaderDef;
+    // If there is no ReadDefinition, that's an error
+    if (!variable->m_ReadStructDefinition)
+        helper::Throw<std::logic_error>(
+            "Toolkit", "format::BP5Deserializer", "QueueGet",
+            "ReadStructure not defined for variable " + variable->m_Name);
+
+    // If there was a prior read def and the current is the same, that's fine
+    if (variable->m_ReadStructDefinition == EngineReadDef)
+        return;
+
+    // If there was a prior read definition and this one is different, throw
+    if (EngineReadDef)
+        helper::Throw<std::logic_error>(
+            "Toolkit", "format::BP5Deserializer", "QueueGet",
+            "ReadStructure definition for variable " + variable->m_Name +
+                " changed from prior definition.  Unsupported.");
+
+    // Check to see if the read definition is compatible with the write
+    // definition (and the engine can support the transformation)
+
+    // OK, use this
+    VarRec->ReaderDef = variable->m_ReadStructDefinition;
+}
+
 bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
                                      void *DestData, size_t Step)
 {
     BP5VarRec *VarRec = VarByKey[&variable];
     if (variable.m_Type == adios2::DataType::Struct)
     {
-        // capture specified local structure
-        VarRec->ReaderDef = dynamic_cast<core::VariableStruct *>(&variable)
-                                ->m_ReadStructDefinition;
+        StructQueueReadChecks(dynamic_cast<core::VariableStruct *>(&variable),
+                              VarRec);
     }
 
     if (VarRec->OrigShapeID == ShapeID::GlobalValue)

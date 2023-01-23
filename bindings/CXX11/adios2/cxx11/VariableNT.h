@@ -32,18 +32,20 @@ public:
                   const DataType type, const size_t size = 1);
     void Freeze() noexcept;
     size_t StructSize() const noexcept;
+    std::string StructName() const noexcept;
     size_t Fields() const noexcept;
     std::string Name(const size_t index) const;
     size_t Offset(const size_t index) const;
     DataType Type(const size_t index) const;
     size_t ElementCount(const size_t index) const;
+    explicit operator bool() const { return (m_StructDefinition != nullptr); }
 
 private:
     friend class ADIOS;
     friend class IO;
     friend class VariableNT;
-    StructDefinition(core::StructDefinition *ptr);
-    core::StructDefinition *m_StructDefinition;
+    StructDefinition(core::StructDefinition *ptr = nullptr);
+    core::StructDefinition *m_StructDefinition = nullptr;
 };
 
 class VariableNT
@@ -252,8 +254,8 @@ public:
     std::pair<double, double>
     MinMaxDouble(const size_t step = adios2::DefaultSizeT) const;
 
-    StructDefinition *GetWriteStructDef() noexcept;
-    StructDefinition *GetReadStructDef() noexcept;
+    StructDefinition GetWriteStructDef() noexcept;
+    StructDefinition GetReadStructDef() noexcept;
     void SetReadStructDef(const StructDefinition &def);
 
 private:

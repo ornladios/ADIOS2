@@ -211,6 +211,8 @@ private:
     bool GetSingleValueFromMetadata(core::VariableBase &variable,
                                     BP5VarRec *VarRec, void *DestData,
                                     size_t Step, size_t WriterRank);
+    void StructQueueReadChecks(core::VariableStruct *variable,
+                               BP5VarRec *VarRec);
 
     enum RequestTypeEnum
     {

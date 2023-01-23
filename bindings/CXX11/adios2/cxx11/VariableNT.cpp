@@ -19,7 +19,6 @@ namespace adios2
 StructDefinition::StructDefinition(core::StructDefinition *ptr)
 : m_StructDefinition(ptr)
 {
-    ptr->BindingsStructDefinition = this;
 }
 
 void StructDefinition::AddField(const std::string &name, const size_t offset,
@@ -42,6 +41,13 @@ size_t StructDefinition::StructSize() const noexcept
     helper::CheckForNullptr(m_StructDefinition,
                             "in call to StructDefinition::StructSize");
     return m_StructDefinition->StructSize();
+}
+
+std::string StructDefinition::StructName() const noexcept
+{
+    helper::CheckForNullptr(m_StructDefinition,
+                            "in call to StructDefinition::StructName");
+    return m_StructDefinition->StructName();
 }
 
 size_t StructDefinition::Fields() const noexcept
@@ -648,7 +654,7 @@ std::pair<double, double> VariableNT::MinMaxDouble(const size_t step) const
     return {MinDouble(step), MaxDouble(step)};
 }
 
-StructDefinition *VariableNT::GetWriteStructDef() noexcept
+StructDefinition VariableNT::GetWriteStructDef() noexcept
 {
     helper::CheckForNullptr(m_Variable,
                             "in call to VariableNT::StructFieldElementCount");
@@ -662,12 +668,10 @@ StructDefinition *VariableNT::GetWriteStructDef() noexcept
     core::StructDefinition *CoreSD =
         reinterpret_cast<core::VariableStruct *>(m_Variable)
             ->GetWriteStructDef();
-    if (CoreSD->BindingsStructDefinition)
-        return (StructDefinition *)CoreSD->BindingsStructDefinition;
-    return new StructDefinition(CoreSD);
+    return StructDefinition(CoreSD);
 }
 
-StructDefinition *VariableNT::GetReadStructDef() noexcept
+StructDefinition VariableNT::GetReadStructDef() noexcept
 {
     helper::CheckForNullptr(m_Variable,
                             "in call to VariableNT::StructFieldElementCount");
@@ -680,11 +684,7 @@ StructDefinition *VariableNT::GetReadStructDef() noexcept
     }
     auto CoreSD = reinterpret_cast<core::VariableStruct *>(m_Variable)
                       ->GetReadStructDef();
-    if (!CoreSD)
-        return nullptr;
-    if (CoreSD->BindingsStructDefinition)
-        return (StructDefinition *)CoreSD->BindingsStructDefinition;
-    return new StructDefinition(CoreSD);
+    return StructDefinition(CoreSD);
 }
 
 void VariableNT::SetReadStructDef(const StructDefinition &def)

@@ -41,7 +41,6 @@ public:
     size_t Offset(const size_t index) const;
     DataType Type(const size_t index) const;
     size_t ElementCount(const size_t index) const;
-    void *BindingsStructDefinition = nullptr;
 
 private:
     std::vector<StructFieldDefinition> m_Definition;

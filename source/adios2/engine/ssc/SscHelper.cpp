@@ -432,7 +432,7 @@ void DeserializeAttribute(const Buffer &input, uint64_t &pos, IO &io,
 }
 
 void SerializeStructDefinitions(
-    const std::unordered_map<std::string, StructDefinition> &definitions,
+    const std::unordered_multimap<std::string, StructDefinition> &definitions,
     Buffer &output)
 {
     if (definitions.empty())

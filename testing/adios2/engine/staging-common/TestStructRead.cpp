@@ -176,46 +176,65 @@ TEST_F(StructReadTest, ADIOS2StructRead)
             engine.PerformGets();
 
             {
-                auto varStruct = io.InquireVariable("particles");
-                varStruct.SetSelection({start, count});
-                ASSERT_TRUE(varStruct);
-                engine.Get(varStruct, myParticles.data(), adios2::Mode::Sync);
-                for (size_t i = 0; i < datasize; ++i)
-                {
-                    ASSERT_EQ(myParticles[i].a, 5);
-                    ASSERT_EQ(myParticles[i].b[0], 0);
-                    ASSERT_EQ(myParticles[i].b[1], 10);
-                    ASSERT_EQ(myParticles[i].b[2], 20);
-                    ASSERT_EQ(myParticles[i].b[3], 30);
-                }
-                /********                auto structBlocks =
-                   engine.BlocksInfo(varStruct, currentStep);
-                                ASSERT_EQ(structBlocks.size(), mpiSize);
-                                for (size_t i = 0; i < structBlocks.size(); ++i)
-                                {
-                                    ASSERT_FALSE(structBlocks[i].IsValue);
-                                    ASSERT_FALSE(structBlocks[i].IsReverseDims);
-                                    ASSERT_EQ(structBlocks[i].Step,
-                   currentStep);
-                                }
-                */
-            }
-
-            {
                 auto varStruct = io.InquireStructVariable("particles");
-                if (varStruct && (varStruct.GetReadStructDef() == nullptr))
+                StructDefinition ReadStruct = varStruct.GetReadStructDef();
+                if (varStruct && !ReadStruct)
                 {
-                    auto WriteStruct = varStruct.GetWriteStructDef();
-                    (void)WriteStruct; // unused here, but available if needed
+                    // can't do a Get without setting the read structure
+                    EXPECT_THROW(engine.Get(varStruct, myParticles.data(),
+                                            adios2::Mode::Sync),
+                                 std::logic_error);
+
+                    StructDefinition WriteStruct =
+                        varStruct.GetWriteStructDef();
+                    ASSERT_TRUE(WriteStruct);
+                    std::cout << std::endl
+                              << "Writer side structure was named \""
+                              << WriteStruct.StructName() << "\" and has size "
+                              << WriteStruct.StructSize() << std::endl;
+                    for (size_t i = 0; i < WriteStruct.Fields(); i++)
+                    {
+                        std::cout << "\tField " << i << " - Name: \""
+                                  << WriteStruct.Name(i)
+                                  << "\", Offset: " << WriteStruct.Offset(i)
+                                  << ", Type: " << WriteStruct.Type(i)
+                                  << ", ElementCount : "
+                                  << WriteStruct.ElementCount(i) << std::endl;
+                    }
+                    std::cout << std::endl;
                     auto particleDef1 =
-                        io.DefineStruct("particle1", sizeof(particle));
+                        io.DefineStruct("particle", sizeof(particle));
                     particleDef1.AddField("a", offsetof(particle, a),
                                           adios2::DataType::Int8);
                     particleDef1.AddField("b", offsetof(particle, b),
                                           adios2::DataType::Int32, 4);
                     varStruct.SetReadStructDef(particleDef1);
                 }
+                else if (varStruct)
+                {
+                    // set this already, but try something else
+                    static bool first = true;
+                    if (first)
+                    {
+                        first = false;
+                        StructDefinition SaveDef = varStruct.GetReadStructDef();
+                        ASSERT_TRUE(SaveDef);
+                        auto particleDef2 =
+                            io.DefineStruct("particle", sizeof(particle));
+                        particleDef2.AddField("a", offsetof(particle, a),
+                                              adios2::DataType::Int8);
+                        particleDef2.AddField("c", offsetof(particle, b),
+                                              adios2::DataType::Int32, 4);
+                        varStruct.SetReadStructDef(particleDef2);
 
+                        // can't change the read structure
+                        EXPECT_THROW(engine.Get(varStruct, myParticles.data(),
+                                                adios2::Mode::Sync),
+                                     std::logic_error);
+                        // restore the old one so we can succeed below
+                        varStruct.SetReadStructDef(SaveDef);
+                    }
+                }
                 varStruct.SetSelection({start, count});
                 ASSERT_TRUE(varStruct);
                 engine.Get(varStruct, myParticles.data(), adios2::Mode::Sync);
