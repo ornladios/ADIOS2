@@ -12,7 +12,7 @@
 #include "CompressBlosc.h"
 
 extern "C" {
-#include <blosc.h>
+#include <blosc2.h>
 }
 
 #include "adios2/helper/adiosFunctions.h"
@@ -54,22 +54,22 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
     const size_t sizeIn =
         helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
 
-    // blosc V1 metadata
+    // blosc2 V1 metadata
     PutParameter(bufferOut, bufferOutOffset, sizeIn);
     PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(BLOSC_VERSION_MAJOR));
+                 static_cast<uint8_t>(BLOSC2_VERSION_MAJOR));
     PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(BLOSC_VERSION_MINOR));
+                 static_cast<uint8_t>(BLOSC2_VERSION_MINOR));
     PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(BLOSC_VERSION_RELEASE));
-    // blosc V1 metadata end
+                 static_cast<uint8_t>(BLOSC2_VERSION_RELEASE));
+    // blosc2 V1 metadata end
 
     bool useMemcpy = false;
 
     // input size under this bound will not compress
     size_t thresholdSize = 128;
 
-    blosc_init();
+    blosc2_init();
 
     size_t threads = 1; // defaults
     int compressionLevel = 1;
@@ -166,7 +166,7 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
 
     if (!useMemcpy)
     {
-        const int result = blosc_set_compressor(compressor.c_str());
+        const int result = blosc1_set_compressor(compressor.c_str());
         if (result == -1)
         {
             helper::Throw<std::invalid_argument>(
@@ -174,24 +174,23 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
                 "blosc library linked does not support compressor " +
                     compressor);
         }
-        blosc_set_nthreads(threads);
-        blosc_set_blocksize(blockSize);
+        blosc2_set_nthreads(threads);
+        blosc1_set_blocksize(blockSize);
 
         uint32_t chunk = 0;
         for (; inputOffset < sizeIn; ++chunk)
         {
             size_t inputChunkSize =
                 std::min(sizeIn - inputOffset,
-                         static_cast<size_t>(BLOSC_MAX_BUFFERSIZE));
+                         static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
             bloscSize_t maxIntputSize =
                 static_cast<bloscSize_t>(inputChunkSize);
 
-            bloscSize_t maxChunkSize = maxIntputSize + BLOSC_MAX_OVERHEAD;
+            bloscSize_t maxChunkSize = maxIntputSize + BLOSC2_MAX_OVERHEAD;
 
-            bloscSize_t compressedChunkSize =
-                blosc_compress(compressionLevel, doShuffle, typesize,
-                               maxIntputSize, dataIn + inputOffset,
-                               bufferOut + bufferOutOffset, maxChunkSize);
+            bloscSize_t compressedChunkSize = blosc2_compress(
+                compressionLevel, doShuffle, typesize, dataIn + inputOffset,
+                maxIntputSize, bufferOut + bufferOutOffset, maxChunkSize);
 
             if (compressedChunkSize > 0)
                 bufferOutOffset += static_cast<size_t>(compressedChunkSize);
@@ -220,7 +219,7 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
         headerPtr->SetNumChunks(0u);
     }
 
-    blosc_destroy();
+    blosc2_destroy();
     return bufferOutOffset;
 }
 
@@ -239,7 +238,7 @@ size_t CompressBlosc::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else if (bufferVersion == 2)
     {
-        // TODO: if a Version 2 blosc buffer is being implemented, put it here
+        // TODO: if a Version 2 blosc2 buffer is being implemented, put it here
         // and keep the DecompressV1 routine for backward compatibility
     }
     else
@@ -325,7 +324,7 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
 
     if (isCompressed)
     {
-        blosc_init();
+        blosc2_init();
 
         size_t threads = 1; // defaults
         for (const auto &itParameter : m_Parameters)
@@ -338,17 +337,17 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
                     value, "when setting Blosc nthreads parameter\n"));
             }
         }
-        blosc_set_nthreads(threads);
+        blosc2_set_nthreads(threads);
 
         while (inputOffset < inputDataSize)
         {
             /* move over the size of the compressed data */
             const char *in_ptr = inputDataBuff + inputOffset;
 
-            /** read the size of the compress block from the blosc meta data
+            /** read the size of the compress block from the blosc2 meta data
              *
-             * blosc meta data format (all little endian):
-             *   - 1 byte blosc format version
+             * blosc2 meta data format (all little endian):
+             *   - 1 byte blosc2 format version
              *   - 1 byte blosclz format version
              *   - 1 byte flags
              *   - 1 byte typesize
@@ -365,12 +364,12 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
 
             size_t outputChunkSize =
                 std::min(uncompressedSize - currentOutputSize,
-                         static_cast<size_t>(BLOSC_MAX_BUFFERSIZE));
+                         static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
             bloscSize_t max_output_size =
                 static_cast<bloscSize_t>(outputChunkSize);
 
-            bloscSize_t decompressdSize =
-                blosc_decompress(in_ptr, out_ptr, max_output_size);
+            bloscSize_t decompressdSize = blosc2_decompress(
+                in_ptr, max_inputDataSize, out_ptr, max_output_size);
 
             if (decompressdSize > 0)
                 currentOutputSize += static_cast<size_t>(decompressdSize);
@@ -383,7 +382,7 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
             }
             inputOffset += static_cast<size_t>(max_inputDataSize);
         }
-        blosc_destroy();
+        blosc2_destroy();
     }
     else
     {
@@ -402,7 +401,7 @@ size_t CompressBlosc::DecompressOldFormat(const char *bufferIn,
                                           const size_t sizeIn, char *dataOut,
                                           const size_t sizeOut) const
 {
-    blosc_init();
+    blosc2_init();
     size_t threads = 1; // defaults
     for (const auto &itParameter : m_Parameters)
     {
@@ -414,9 +413,10 @@ size_t CompressBlosc::DecompressOldFormat(const char *bufferIn,
                 value, "when setting Blosc nthreads parameter\n"));
         }
     }
-    blosc_set_nthreads(threads);
-    const int decompressedSize = blosc_decompress(bufferIn, dataOut, sizeOut);
-    blosc_destroy();
+    blosc2_set_nthreads(threads);
+    const int decompressedSize =
+        blosc2_decompress(bufferIn, sizeIn, dataOut, sizeOut);
+    blosc2_destroy();
     return static_cast<size_t>(decompressedSize);
 }
 

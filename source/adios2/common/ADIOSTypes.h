@@ -480,8 +480,8 @@ constexpr char blockSize100k_9[] = "9";
 } // end namespace bzip2
 #endif
 
-// BBlosc PARAMETERS
-#ifdef ADIOS2_HAVE_BLOSC
+// Blosc PARAMETERS
+#ifdef ADIOS2_HAVE_BLOSC2
 
 constexpr char LosslessBlosc[] = "blosc";
 namespace blosc
@@ -525,54 +525,6 @@ constexpr char doshuffle_bitshuffle[] = "BLOSC_BITSHUFFLE";
 } // end namespace value
 
 } // end namespace blosc
-
-#endif
-
-// Blosc2 PARAMETERS
-#ifdef ADIOS2_HAVE_BLOSC2
-
-constexpr char LosslessBlosc2[] = "blosc2";
-namespace blosc2
-{
-
-namespace key
-{
-constexpr char nthreads[] = "nthreads";
-constexpr char compressor[] = "compressor";
-constexpr char clevel[] = "clevel";
-constexpr char doshuffle[] = "doshuffle";
-constexpr char blocksize[] = "blocksize";
-constexpr char threshold[] = "threshold";
-}
-
-namespace value
-{
-
-constexpr char compressor_blosclz[] = "blosclz";
-constexpr char compressor_lz4[] = "lz4";
-constexpr char compressor_lz4hc[] = "lz4hc";
-constexpr char compressor_snappy[] = "snappy";
-constexpr char compressor_zlib[] = "zlib";
-constexpr char compressor_zstd[] = "zstd";
-
-constexpr char clevel_0[] = "0";
-constexpr char clevel_1[] = "1";
-constexpr char clevel_2[] = "2";
-constexpr char clevel_3[] = "3";
-constexpr char clevel_4[] = "4";
-constexpr char clevel_5[] = "5";
-constexpr char clevel_6[] = "6";
-constexpr char clevel_7[] = "7";
-constexpr char clevel_8[] = "8";
-constexpr char clevel_9[] = "9";
-
-constexpr char doshuffle_shuffle[] = "BLOSC_SHUFFLE";
-constexpr char doshuffle_noshuffle[] = "BLOSC_NOSHUFFLE";
-constexpr char doshuffle_bitshuffle[] = "BLOSC_BITSHUFFLE";
-
-} // end namespace value
-
-} // end namespace blosc2
 
 #endif
 

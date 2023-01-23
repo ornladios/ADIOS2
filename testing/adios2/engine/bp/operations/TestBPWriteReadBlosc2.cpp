@@ -72,16 +72,16 @@ void Blosc2Accuracy1D(const std::string accuracy, const std::string threshold,
 
         // add operations
         adios2::Operator Blosc2Op = adios.DefineOperator(
-            "Blosc2Compressor", adios2::ops::LosslessBlosc2);
+            "Blosc2Compressor", adios2::ops::LosslessBlosc);
 
-        var_r32.AddOperation(
-            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
-                       {adios2::ops::blosc2::key::threshold, threshold},
-                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
-        var_r64.AddOperation(
-            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
-                       {adios2::ops::blosc2::key::threshold, threshold},
-                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r32.AddOperation(Blosc2Op,
+                             {{adios2::ops::blosc::key::clevel, accuracy},
+                              {adios2::ops::blosc::key::threshold, threshold},
+                              {adios2::ops::blosc::key::doshuffle, doshuffle}});
+        var_r64.AddOperation(Blosc2Op,
+                             {{adios2::ops::blosc::key::clevel, accuracy},
+                              {adios2::ops::blosc::key::threshold, threshold},
+                              {adios2::ops::blosc::key::doshuffle, doshuffle}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -214,16 +214,16 @@ void Blosc2Accuracy2D(const std::string accuracy, const std::string threshold,
 
         // add operations
         adios2::Operator Blosc2Op = adios.DefineOperator(
-            "Blosc2Compressor", adios2::ops::LosslessBlosc2);
+            "Blosc2Compressor", adios2::ops::LosslessBlosc);
 
-        var_r32.AddOperation(
-            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
-                       {adios2::ops::blosc2::key::threshold, threshold},
-                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
-        var_r64.AddOperation(
-            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
-                       {adios2::ops::blosc2::key::threshold, threshold},
-                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r32.AddOperation(Blosc2Op,
+                             {{adios2::ops::blosc::key::clevel, accuracy},
+                              {adios2::ops::blosc::key::threshold, threshold},
+                              {adios2::ops::blosc::key::doshuffle, doshuffle}});
+        var_r64.AddOperation(Blosc2Op,
+                             {{adios2::ops::blosc::key::clevel, accuracy},
+                              {adios2::ops::blosc::key::threshold, threshold},
+                              {adios2::ops::blosc::key::doshuffle, doshuffle}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -359,16 +359,16 @@ void Blosc2Accuracy3D(const std::string accuracy, const std::string threshold,
 
         // add operations
         adios2::Operator Blosc2Op = adios.DefineOperator(
-            "Blosc2Compressor", adios2::ops::LosslessBlosc2);
+            "Blosc2Compressor", adios2::ops::LosslessBlosc);
 
-        var_r32.AddOperation(
-            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
-                       {adios2::ops::blosc2::key::threshold, threshold},
-                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
-        var_r64.AddOperation(
-            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
-                       {adios2::ops::blosc2::key::threshold, threshold},
-                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r32.AddOperation(Blosc2Op,
+                             {{adios2::ops::blosc::key::clevel, accuracy},
+                              {adios2::ops::blosc::key::threshold, threshold},
+                              {adios2::ops::blosc::key::doshuffle, doshuffle}});
+        var_r64.AddOperation(Blosc2Op,
+                             {{adios2::ops::blosc::key::clevel, accuracy},
+                              {adios2::ops::blosc::key::threshold, threshold},
+                              {adios2::ops::blosc::key::doshuffle, doshuffle}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -505,16 +505,16 @@ void Blosc2Accuracy1DSel(const std::string accuracy,
 
         // add operations
         adios2::Operator Blosc2Op = adios.DefineOperator(
-            "Blosc2Compressor", adios2::ops::LosslessBlosc2);
+            "Blosc2Compressor", adios2::ops::LosslessBlosc);
 
-        var_r32.AddOperation(
-            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
-                       {adios2::ops::blosc2::key::threshold, threshold},
-                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
-        var_r64.AddOperation(
-            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
-                       {adios2::ops::blosc2::key::threshold, threshold},
-                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r32.AddOperation(Blosc2Op,
+                             {{adios2::ops::blosc::key::clevel, accuracy},
+                              {adios2::ops::blosc::key::threshold, threshold},
+                              {adios2::ops::blosc::key::doshuffle, doshuffle}});
+        var_r64.AddOperation(Blosc2Op,
+                             {{adios2::ops::blosc::key::clevel, accuracy},
+                              {adios2::ops::blosc::key::threshold, threshold},
+                              {adios2::ops::blosc::key::doshuffle, doshuffle}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -648,16 +648,16 @@ void Blosc2Accuracy2DSel(const std::string accuracy,
 
         // add operations
         adios2::Operator Blosc2Op = adios.DefineOperator(
-            "Blosc2Compressor", adios2::ops::LosslessBlosc2);
+            "Blosc2Compressor", adios2::ops::LosslessBlosc);
 
-        var_r32.AddOperation(
-            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
-                       {adios2::ops::blosc2::key::threshold, threshold},
-                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
-        var_r64.AddOperation(
-            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
-                       {adios2::ops::blosc2::key::threshold, threshold},
-                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r32.AddOperation(Blosc2Op,
+                             {{adios2::ops::blosc::key::clevel, accuracy},
+                              {adios2::ops::blosc::key::threshold, threshold},
+                              {adios2::ops::blosc::key::doshuffle, doshuffle}});
+        var_r64.AddOperation(Blosc2Op,
+                             {{adios2::ops::blosc::key::clevel, accuracy},
+                              {adios2::ops::blosc::key::threshold, threshold},
+                              {adios2::ops::blosc::key::doshuffle, doshuffle}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -794,16 +794,16 @@ void Blosc2Accuracy3DSel(const std::string accuracy,
 
         // add operations
         adios2::Operator Blosc2Op = adios.DefineOperator(
-            "Blosc2Compressor", adios2::ops::LosslessBlosc2);
+            "Blosc2Compressor", adios2::ops::LosslessBlosc);
 
-        var_r32.AddOperation(
-            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
-                       {adios2::ops::blosc2::key::doshuffle, doshuffle},
-                       {adios2::ops::blosc2::key::threshold, threshold}});
-        var_r64.AddOperation(
-            Blosc2Op, {{adios2::ops::blosc2::key::clevel, accuracy},
-                       {adios2::ops::blosc2::key::threshold, threshold},
-                       {adios2::ops::blosc2::key::doshuffle, doshuffle}});
+        var_r32.AddOperation(Blosc2Op,
+                             {{adios2::ops::blosc::key::clevel, accuracy},
+                              {adios2::ops::blosc::key::doshuffle, doshuffle},
+                              {adios2::ops::blosc::key::threshold, threshold}});
+        var_r64.AddOperation(Blosc2Op,
+                             {{adios2::ops::blosc::key::clevel, accuracy},
+                              {adios2::ops::blosc::key::threshold, threshold},
+                              {adios2::ops::blosc::key::doshuffle, doshuffle}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -929,22 +929,22 @@ INSTANTIATE_TEST_SUITE_P(
     Blosc2Accuracy, BPWriteReadBlosc2,
     ::testing::Combine(
         // test compression level
-        ::testing::Values(adios2::ops::blosc2::value::clevel_1,
-                          adios2::ops::blosc2::value::clevel_2,
-                          adios2::ops::blosc2::value::clevel_3,
-                          adios2::ops::blosc2::value::clevel_4,
-                          adios2::ops::blosc2::value::clevel_5,
-                          adios2::ops::blosc2::value::clevel_6,
-                          adios2::ops::blosc2::value::clevel_7,
-                          adios2::ops::blosc2::value::clevel_8,
-                          adios2::ops::blosc2::value::clevel_9),
+        ::testing::Values(adios2::ops::blosc::value::clevel_1,
+                          adios2::ops::blosc::value::clevel_2,
+                          adios2::ops::blosc::value::clevel_3,
+                          adios2::ops::blosc::value::clevel_4,
+                          adios2::ops::blosc::value::clevel_5,
+                          adios2::ops::blosc::value::clevel_6,
+                          adios2::ops::blosc::value::clevel_7,
+                          adios2::ops::blosc::value::clevel_8,
+                          adios2::ops::blosc::value::clevel_9),
         // test threshold: 128 is equal to the default, 1 GiB is used to disable
         // compression
         ::testing::Values("128", "1073741824"),
         // test shuffling
-        ::testing::Values(adios2::ops::blosc2::value::doshuffle_shuffle,
-                          adios2::ops::blosc2::value::doshuffle_noshuffle,
-                          adios2::ops::blosc2::value::doshuffle_bitshuffle)));
+        ::testing::Values(adios2::ops::blosc::value::doshuffle_shuffle,
+                          adios2::ops::blosc::value::doshuffle_noshuffle,
+                          adios2::ops::blosc::value::doshuffle_bitshuffle)));
 
 int main(int argc, char **argv)
 {

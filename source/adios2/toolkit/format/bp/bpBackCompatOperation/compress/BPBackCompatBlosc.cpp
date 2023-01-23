@@ -12,10 +12,10 @@
 
 #include "adios2/helper/adiosFunctions.h"
 
-#ifdef ADIOS2_HAVE_BLOSC
+#ifdef ADIOS2_HAVE_BLOSC2
 #include "adios2/operator/compress/CompressBlosc.h"
 extern "C" {
-#include <blosc.h>
+#include <blosc2.h>
 }
 #endif
 
@@ -43,7 +43,7 @@ void BPBackCompatBlosc::GetData(
     const char *input, const helper::BlockOperationInfo &blockOperationInfo,
     char *dataOutput) const
 {
-#ifdef ADIOS2_HAVE_BLOSC
+#ifdef ADIOS2_HAVE_BLOSC2
     core::compress::CompressBlosc op((Params()));
     const size_t sizeOut = (sizeof(size_t) == 8)
                                ? static_cast<size_t>(helper::StringTo<uint64_t>(
@@ -65,7 +65,7 @@ void BPBackCompatBlosc::GetData(
 #endif
 }
 
-#ifdef ADIOS2_HAVE_BLOSC
+#ifdef ADIOS2_HAVE_BLOSC2
 
 size_t BPBackCompatBlosc::Decompress(const void *bufferIn, const size_t sizeIn,
                                      void *dataOut, const size_t sizeOut,
@@ -115,7 +115,7 @@ size_t BPBackCompatBlosc::DecompressChunkedFormat(const void *bufferIn,
 
     if (isCompressed)
     {
-        blosc_init();
+        blosc2_init();
         uint8_t *outputBuff = reinterpret_cast<uint8_t *>(dataOut);
 
         while (inputOffset < inputDataSize)
@@ -143,12 +143,12 @@ size_t BPBackCompatBlosc::DecompressChunkedFormat(const void *bufferIn,
 
             size_t outputChunkSize =
                 std::min(uncompressedSize - currentOutputSize,
-                         static_cast<size_t>(BLOSC_MAX_BUFFERSIZE));
+                         static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
             bloscSize_t max_output_size =
                 static_cast<bloscSize_t>(outputChunkSize);
 
             bloscSize_t decompressdSize =
-                blosc_decompress(in_ptr, out_ptr, max_output_size);
+                blosc1_decompress(in_ptr, out_ptr, max_output_size);
 
             if (decompressdSize > 0)
                 currentOutputSize += static_cast<size_t>(decompressdSize);
@@ -160,7 +160,7 @@ size_t BPBackCompatBlosc::DecompressChunkedFormat(const void *bufferIn,
             }
             inputOffset += static_cast<size_t>(max_inputDataSize);
         }
-        blosc_destroy();
+        blosc2_destroy();
     }
     else
     {
@@ -181,13 +181,13 @@ size_t BPBackCompatBlosc::DecompressOldFormat(const void *bufferIn,
                                               const size_t sizeOut,
                                               Params &info) const
 {
-    blosc_init();
-    const int decompressedSize = blosc_decompress(bufferIn, dataOut, sizeOut);
-    blosc_destroy();
+    blosc2_init();
+    const int decompressedSize = blosc1_decompress(bufferIn, dataOut, sizeOut);
+    blosc2_destroy();
     return static_cast<size_t>(decompressedSize);
 }
 
-#endif // ADIOS2_HAVE_BLOSC
+#endif // ADIOS2_HAVE_BLOSC2
 
 } // end namespace format
 } // end namespace adios2
