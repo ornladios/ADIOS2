@@ -26,6 +26,10 @@ namespace helper
 {
 class Comm;
 }
+namespace core
+{
+class IO;
+}
 namespace transportman
 {
 
@@ -46,7 +50,7 @@ public:
      * Unique base constructor
      * @param comm
      */
-    TransportMan(helper::Comm &comm);
+    TransportMan(core::IO &IO, helper::Comm &comm);
 
     virtual ~TransportMan() = default;
 
@@ -215,6 +219,7 @@ public:
                     const bool profile);
 
 protected:
+    core::IO &m_IO;
     helper::Comm const &m_Comm;
 
     std::shared_ptr<Transport>

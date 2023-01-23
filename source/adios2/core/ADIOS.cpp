@@ -11,6 +11,7 @@
 #include "ADIOS.h"
 
 #include <algorithm> // std::transform
+#include <atomic>
 #include <fstream>
 #include <ios> //std::ios_base::failure
 #include <mutex>
@@ -27,18 +28,77 @@
 #include "adios2/operator/callback/Signature1.h"
 #include "adios2/operator/callback/Signature2.h"
 
+#ifdef ADIOS2_HAVE_AWSSDK
+#include <aws/core/Aws.h>
+#include <aws/core/utils/logging/LogLevel.h>
+Aws::SDKOptions awdSDKOptions;
+#endif
+
 namespace adios2
 {
 namespace core
 {
 
+class ADIOS::GlobalServices
+{
+public:
+    GlobalServices() {}
+
+    ~GlobalServices() {}
+
+    void CheckStatus()
+    {
+        if (wasGlobalShutdown)
+        {
+            helper::Throw<std::logic_error>(
+                "Core", "ADIOS::GlobalServices", "CheckStatus",
+                "Global Services was already shutdown. Make sure there is one "
+                "true global ADIOS object that is created first and destructed "
+                "last to ensure Global services are initialized only once");
+        }
+    }
+
+    void Finalize()
+    {
+#ifdef ADIOS2_HAVE_AWSSDK
+        if (isAWSInitialized)
+        {
+            Aws::ShutdownAPI(options);
+            isAWSInitialized = false;
+        }
+#endif
+        wasGlobalShutdown = true;
+    }
+
+#ifdef ADIOS2_HAVE_AWSSDK
+    void Init_AWS_API()
+    {
+        if (!isAWSInitialized)
+        {
+            options.loggingOptions.logLevel =
+                Aws::Utils::Logging::LogLevel::Debug;
+            Aws::InitAPI(options);
+            isAWSInitialized = true;
+        }
+    }
+    Aws::SDKOptions options;
+    bool isAWSInitialized = false;
+#endif
+
+    bool wasGlobalShutdown = false;
+};
+
+ADIOS::GlobalServices ADIOS::m_GlobalServices;
+
 std::mutex PerfStubsMutex;
+static std::atomic_uint adios_refcount(0);
 
 ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
              const std::string hostLanguage)
 : m_HostLanguage(hostLanguage), m_Comm(std::move(comm)),
   m_ConfigFile(configFile)
 {
+    ++adios_refcount;
 #ifdef PERFSTUBS_USE_TIMERS
     {
         std::lock_guard<std::mutex> lck(PerfStubsMutex);
@@ -86,7 +146,14 @@ ADIOS::ADIOS(const std::string hostLanguage)
 {
 }
 
-ADIOS::~ADIOS() = default;
+ADIOS::~ADIOS()
+{
+    --adios_refcount;
+    if (!adios_refcount)
+    {
+        m_GlobalServices.Finalize();
+    }
+}
 
 IO &ADIOS::DeclareIO(const std::string name, const ArrayOrdering ArrayOrder)
 {
@@ -225,6 +292,14 @@ void ADIOS::XMLInit(const std::string &configFileXML)
 void ADIOS::YAMLInit(const std::string &configFileYAML)
 {
     helper::ParseConfigYAML(*this, configFileYAML, m_IOs);
+}
+
+void ADIOS::Global_init_AWS_API()
+{
+    m_GlobalServices.CheckStatus();
+#ifdef ADIOS2_HAVE_AWSSDK
+    m_GlobalServices.Init_AWS_API();
+#endif
 }
 
 } // end namespace core

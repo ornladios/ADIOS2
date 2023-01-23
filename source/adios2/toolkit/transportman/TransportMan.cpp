@@ -26,6 +26,9 @@
 #ifdef ADIOS2_HAVE_IME
 #include "adios2/toolkit/transport/file/FileIME.h"
 #endif
+#ifdef ADIOS2_HAVE_AWSSDK
+#include "adios2/toolkit/transport/file/FileAWSSDK.h"
+#endif
 
 #ifdef _WIN32
 #pragma warning(disable : 4503) // length of std::function inside std::async
@@ -40,7 +43,10 @@ namespace adios2
 namespace transportman
 {
 
-TransportMan::TransportMan(helper::Comm &comm) : m_Comm(comm) {}
+TransportMan::TransportMan(core::IO &io, helper::Comm &comm)
+: m_IO(io), m_Comm(comm)
+{
+}
 
 void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
                                  const std::vector<Params> &parametersVector,
@@ -592,6 +598,12 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
         else if (library == "ime")
         {
             transport = std::make_shared<transport::FileIME>(m_Comm);
+        }
+#endif
+#ifdef ADIOS2_HAVE_AWSSDK
+        else if (library == "awssdk")
+        {
+            transport = std::make_shared<transport::FileAWSSDK>(m_Comm);
         }
 #endif
         else if (library == "null")

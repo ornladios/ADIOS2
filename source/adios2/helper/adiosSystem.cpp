@@ -126,7 +126,7 @@ int ExceptionToError(const std::string &function)
     }
 }
 
-bool IsHDF5File(const std::string &name, helper::Comm &comm,
+bool IsHDF5File(const std::string &name, core::IO &io, helper::Comm &comm,
                 const std::vector<Params> &transportsParameters) noexcept
 {
     bool isHDF5 = false;
@@ -134,7 +134,7 @@ bool IsHDF5File(const std::string &name, helper::Comm &comm,
     {
         try
         {
-            transportman::TransportMan tm(comm);
+            transportman::TransportMan tm(io, comm);
             if (transportsParameters.empty())
             {
                 std::vector<Params> defaultTransportParameters(1);

@@ -18,6 +18,7 @@
 /// \endcond
 
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/core/IO.h"
 #include "adios2/helper/adiosComm.h"
 
 namespace adios2
@@ -75,7 +76,7 @@ bool IsZeroIndexed(const std::string hostLanguage) noexcept;
  */
 int ExceptionToError(const std::string &function);
 
-bool IsHDF5File(const std::string &name, helper::Comm &comm,
+bool IsHDF5File(const std::string &name, core::IO &io, helper::Comm &comm,
                 const std::vector<Params> &transportsParameters) noexcept;
 char BPVersion(const std::string &name, helper::Comm &comm,
                const std::vector<Params> &transportsParameters) noexcept;
