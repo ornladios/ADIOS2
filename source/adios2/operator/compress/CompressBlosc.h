@@ -93,19 +93,19 @@ private:
 
     ADIOS2_CLASS_PACKED(DataHeader)
     {
-        /** compatible to the first 4 byte of blosc header
+        /** compatible to the first 4 byte of blosc2 header
          *
-         *   blosc meta data format (all little endian):
-         *   - 1 byte blosc format version
-         *   - 1 byte blosclz format version
+         *   blosc2 meta data format (all little endian):
+         *   - 1 byte blosc2 format version
+         *   - 1 byte blosc2lz format version
          *   - 1 byte flags
          *   - 1 byte typesize
          *
-         * If zero we writing the new adios blosc format which can handle more
+         * If zero we writing the new adios blosc2 format which can handle more
          * than 2GiB data chunks.
          */
         uint32_t format = 0u;
-        /** number of blosc chunks within the data blob
+        /** number of blosc2 chunks within the data blob
          *
          * If zero the data is not compressed and must be decompressed by using
          * 'memcpy'

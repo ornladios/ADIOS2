@@ -125,8 +125,26 @@ void BP3Deserializer::ParseMinifooter(const BufferSTL &bufferSTL)
 
     position = bufferSize - m_MetadataSet.MiniFooterSize;
 
+    // Writer's ADIOS version
     m_Minifooter.VersionTag.assign(&buffer[position], 28);
-    position += 28;
+    position += 24;
+    m_Minifooter.ADIOSVersionMajor =
+        helper::ReadValue<uint8_t>(buffer, position,
+                                   m_Minifooter.IsLittleEndian) -
+        (uint8_t)'0';
+    m_Minifooter.ADIOSVersionMinor =
+        helper::ReadValue<uint8_t>(buffer, position,
+                                   m_Minifooter.IsLittleEndian) -
+        (uint8_t)'0';
+    m_Minifooter.ADIOSVersionPatch =
+        helper::ReadValue<uint8_t>(buffer, position,
+                                   m_Minifooter.IsLittleEndian) -
+        (uint8_t)'0';
+    m_Minifooter.ADIOSVersion = m_Minifooter.ADIOSVersionMajor * 1000000 +
+                                m_Minifooter.ADIOSVersionMinor * 1000 +
+                                m_Minifooter.ADIOSVersionPatch;
+    ++position;
+    ;
 
     m_Minifooter.PGIndexStart = helper::ReadValue<uint64_t>(
         buffer, position, m_Minifooter.IsLittleEndian);

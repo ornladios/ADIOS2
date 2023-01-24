@@ -14,12 +14,8 @@
 #include "adios2/operator/plugin/PluginOperator.h"
 #include <numeric>
 
-#ifdef ADIOS2_HAVE_BLOSC
-#include "adios2/operator/compress/CompressBlosc.h"
-#endif
-
 #ifdef ADIOS2_HAVE_BLOSC2
-#include "adios2/operator/compress/CompressBlosc2.h"
+#include "adios2/operator/compress/CompressBlosc.h"
 #endif
 
 #ifdef ADIOS2_HAVE_BZIP2
@@ -80,8 +76,6 @@ std::string OperatorTypeToString(const Operator::OperatorType type)
         return "zfp";
     case Operator::PLUGIN_INTERFACE:
         return "plugin";
-    case Operator::COMPRESS_BLOSC2:
-        return "blosc2";
     default:
         return "null";
     }
@@ -96,7 +90,7 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type,
 
     if (typeLowerCase == "blosc")
     {
-#ifdef ADIOS2_HAVE_BLOSC
+#ifdef ADIOS2_HAVE_BLOSC2
         ret = std::make_shared<compress::CompressBlosc>(parameters);
 #endif
     }
@@ -151,12 +145,6 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type,
     else if (typeLowerCase == "plugin")
     {
         ret = std::make_shared<plugin::PluginOperator>(parameters);
-    }
-    else if (typeLowerCase == "blosc2")
-    {
-#ifdef ADIOS2_HAVE_BLOSC2
-        ret = std::make_shared<compress::CompressBlosc2>(parameters);
-#endif
     }
     else if (typeLowerCase == "null")
     {

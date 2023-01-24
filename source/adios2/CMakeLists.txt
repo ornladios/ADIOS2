@@ -244,13 +244,8 @@ if(ADIOS2_HAVE_DataSpaces)
   target_link_libraries(adios2_core_mpi PRIVATE DataSpaces::DataSpaces)
 endif()
 
-if(ADIOS2_HAVE_Blosc)
-  target_sources(adios2_core PRIVATE operator/compress/CompressBlosc.cpp)
-  target_link_libraries(adios2_core PRIVATE Blosc::Blosc)
-endif()
-
 if(ADIOS2_HAVE_Blosc2)
-  target_sources(adios2_core PRIVATE operator/compress/CompressBlosc2.cpp)
+  target_sources(adios2_core PRIVATE operator/compress/CompressBlosc.cpp)
   target_link_libraries(adios2_core PRIVATE Blosc2::Blosc2)
 endif()
 

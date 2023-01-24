@@ -60,10 +60,6 @@ if(ADIOS2_HAVE_PNG)
   bp_gtest_add_tests_helper(WriteReadPNG MPI_ALLOW)
 endif()
 
-if(ADIOS2_HAVE_Blosc)
-  bp_gtest_add_tests_helper(WriteReadBlosc MPI_ALLOW)
-endif()
-
 if(ADIOS2_HAVE_Blosc2)
   bp_gtest_add_tests_helper(WriteReadBlosc2 MPI_ALLOW)
 endif()

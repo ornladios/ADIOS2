@@ -67,16 +67,6 @@ function(lists_get_prefix listVars outVar)
   set(${outVar} "${prefix}" PARENT_SCOPE)
 endfunction()
 
-# Blosc
-if(ADIOS2_USE_Blosc STREQUAL AUTO)
-  find_package(Blosc 1.7)
-elseif(ADIOS2_USE_Blosc)
-  find_package(Blosc 1.7 REQUIRED)
-endif()
-if(BLOSC_FOUND)
-  set(ADIOS2_HAVE_Blosc TRUE)
-endif()
-
 # Blosc2
 if(ADIOS2_USE_Blosc2 STREQUAL AUTO)
   find_package(Blosc2 2.4)
