@@ -37,14 +37,17 @@ std::string MakeMessage(const std::string &component, const std::string &source,
 
     auto timeNow =
         std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    std::string timeStr(std::ctime(&timeNow));
 
-    if (timeStr[timeStr.size() - 1] == '\n')
-    {
-        timeStr.resize(timeStr.size() - 1);
-    }
+    char buf[30];
+    struct tm now_tm;
+#ifdef _WIN32
+    localtime_s(&now_tm, &now);
+#else
+    localtime_r(&timeNow, &now_tm);
+#endif
+    strftime(buf, sizeof(buf), "%a %b %d %H:%M:%S %Y", &now_tm);
 
-    m << timeColor << "[" << timeStr << "]";
+    m << timeColor << "[" << buf << "]";
 
     if (mode == INFO)
     {
