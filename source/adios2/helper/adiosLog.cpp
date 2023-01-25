@@ -41,7 +41,7 @@ std::string MakeMessage(const std::string &component, const std::string &source,
     char buf[30];
     struct tm now_tm;
 #ifdef _WIN32
-    localtime_s(&now_tm, &now);
+    localtime_s(&now_tm, &timeNow);
 #else
     localtime_r(&timeNow, &now_tm);
 #endif
