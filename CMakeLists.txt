@@ -92,10 +92,13 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the type of build." FORCE)
 endif()
 
+if(NOT CMAKE_CXX_STANDARD)
 # Force C++11 (No extensions) and C99
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+
 if(NOT MSVC)
   set(CMAKE_C_STANDARD 99)
   set(CMAKE_C_STANDARD_REQUIRED True)
@@ -169,8 +172,10 @@ adios_option(AWSSDK     "Enable support for S3 compatible storage using AWS SDK'
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_CUDA)
-    set(CMAKE_CUDA_STANDARD 11)
-    set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
+    if(NOT CMAKE_CUDA_STANDARD)
+        set(CMAKE_CUDA_STANDARD 11)
+        set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
+    endif()
     if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
         # Mininum common non-deprecated architecture
         set(CMAKE_CUDA_ARCHITECTURES 52)
