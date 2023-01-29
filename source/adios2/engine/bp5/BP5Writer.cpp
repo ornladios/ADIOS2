@@ -956,7 +956,8 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
         }
         case IndexRecord::StepRecord:
         {
-            m_AppendMetadataIndexPos = position;
+            m_AppendMetadataIndexPos = position - sizeof(unsigned char) -
+                                       sizeof(uint64_t); // pos of RecordID
             const uint64_t MetadataPos =
                 helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
             position += sizeof(uint64_t); // MetadataSize
