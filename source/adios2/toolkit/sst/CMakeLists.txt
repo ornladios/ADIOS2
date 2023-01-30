@@ -45,7 +45,7 @@ if(ADIOS2_HAVE_ZFP)
   target_link_libraries(sst PRIVATE zfp::zfp)
 endif()
 
-if(ADIOS2_HAVE_MPI_CLIENT_SERVER)
+if(ADIOS2_SST_HAVE_MPI)
   target_sources(sst PRIVATE dp/mpi_dp.c)
   target_link_libraries(sst PRIVATE MPI::MPI_C)
 endif()
