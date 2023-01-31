@@ -88,7 +88,12 @@ public:
 
     void *GetData() const noexcept;
 
-    const StructDefinition &m_StructDefinition;
+    StructDefinition *m_WriteStructDefinition;
+    StructDefinition *m_ReadStructDefinition;
+
+    StructDefinition *GetWriteStructDef() noexcept;
+    StructDefinition *GetReadStructDef() noexcept;
+    void SetReadStructDef(const StructDefinition *def);
 };
 
 } // end namespace core

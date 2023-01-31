@@ -137,7 +137,7 @@ public:
      * but they are emplaced into a set in the ADIOS to give them
      * global scope
      */
-    std::unordered_map<std::string, StructDefinition> m_StructDefinitions;
+    std::unordered_multimap<std::string, StructDefinition> m_StructDefinitions;
 
     /**
      * DANGER ZONE: removes a particular IO. This will effectively eliminate any

@@ -152,7 +152,7 @@ RankPosMap CalculateOverlap(BlockVecVec &globalPattern,
 void SerializeVariables(const BlockVec &input, Buffer &output, const int rank);
 void SerializeAttributes(IO &input, Buffer &output);
 void SerializeStructDefinitions(
-    const std::unordered_map<std::string, StructDefinition> &definitions,
+    const std::unordered_multimap<std::string, StructDefinition> &definitions,
     Buffer &output);
 void DeserializeVariable(
     const Buffer &input, const ShapeID shapeId, uint64_t &pos, BlockInfo &b,

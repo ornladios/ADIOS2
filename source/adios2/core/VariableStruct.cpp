@@ -108,9 +108,10 @@ VariableStruct::VariableStruct(const std::string &name,
                                const Dims &start, const Dims &count,
                                const bool constantDims)
 : VariableBase(name, DataType::Struct, def.StructSize(), shape, start, count,
-               constantDims),
-  m_StructDefinition(def)
+               constantDims)
 {
+    m_WriteStructDefinition = const_cast<StructDefinition *>(&def);
+    m_ReadStructDefinition = nullptr;
 }
 
 void VariableStruct::SetData(const void *data) noexcept
@@ -119,6 +120,21 @@ void VariableStruct::SetData(const void *data) noexcept
 }
 
 void *VariableStruct::GetData() const noexcept { return m_Data; }
+
+StructDefinition *VariableStruct::GetWriteStructDef() noexcept
+{
+    return m_WriteStructDefinition;
+}
+
+StructDefinition *VariableStruct::GetReadStructDef() noexcept
+{
+    return m_ReadStructDefinition;
+}
+
+void VariableStruct::SetReadStructDef(const StructDefinition *def)
+{
+    m_ReadStructDefinition = (StructDefinition *)def;
+}
 
 } // end namespace core
 } // end namespace adios2

@@ -422,7 +422,9 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
     {
         core::VariableStruct *VS =
             static_cast<core::VariableStruct *>(Variable);
-        const core::StructDefinition *SD = &VS->m_StructDefinition;
+        core::StructDefinition *SD = VS->m_WriteStructDefinition;
+        if (VS->m_ReadStructDefinition)
+            SD = VS->m_ReadStructDefinition; // Data has been converted to this
         FMField *List = (FMField *)malloc((SD->Fields() + 1) * sizeof(List[0]));
         for (size_t i = 0; i < SD->Fields(); i++)
         {
