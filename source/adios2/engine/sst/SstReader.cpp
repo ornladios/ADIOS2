@@ -691,12 +691,13 @@ void SstReader::DoGetStructDeferred(VariableStruct &variable, void *data)
     m_BP5Deserializer->QueueGet(variable, data);
 }
 
-Dims *SstReader::VarShape(const VariableBase &Var, const size_t Step) const
+bool SstReader::VarShape(const VariableBase &Var, const size_t Step,
+                         Dims &Shape) const
 {
     if (m_WriterMarshalMethod != SstMarshalBP5)
-        return nullptr;
+        return false;
 
-    return m_BP5Deserializer->VarShape(Var, Step);
+    return m_BP5Deserializer->VarShape(Var, Step, Shape);
 }
 
 bool SstReader::VariableMinMax(const VariableBase &Var, const size_t Step,

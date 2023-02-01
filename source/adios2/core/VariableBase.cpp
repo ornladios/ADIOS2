@@ -628,12 +628,10 @@ Dims VariableBase::Shape(const size_t step) const
 
     if (m_Engine)
     {
+        Dims tmp;
         // see if the engine implements Variable Shape inquiry
-        auto ShapePtr = m_Engine->VarShape(*this, step);
-        if (ShapePtr)
-        {
-            return *ShapePtr;
-        }
+        if (m_Engine->VarShape(*this, step, tmp))
+            return tmp;
     }
     if (m_FirstStreamingStep && step == adios2::EngineCurrentStep)
     {

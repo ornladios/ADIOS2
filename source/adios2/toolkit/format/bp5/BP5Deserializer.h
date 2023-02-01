@@ -84,7 +84,7 @@ public:
     MinVarInfo *AllRelativeStepsMinBlocksInfo(const VariableBase &var);
     MinVarInfo *AllStepsMinBlocksInfo(const VariableBase &var);
     MinVarInfo *MinBlocksInfo(const VariableBase &Var, const size_t Step);
-    Dims *VarShape(const VariableBase &, const size_t Step) const;
+    bool VarShape(const VariableBase &, const size_t Step, Dims &Shape) const;
     bool VariableMinMax(const VariableBase &var, const size_t Step,
                         MinMaxStruct &MinMax);
     void GetAbsoluteSteps(const VariableBase &variable,

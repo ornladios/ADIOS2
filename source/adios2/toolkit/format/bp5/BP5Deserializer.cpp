@@ -2100,13 +2100,13 @@ void BP5Deserializer::GetAbsoluteSteps(const VariableBase &Var,
     }
 }
 
-Dims *BP5Deserializer::VarShape(const VariableBase &Var,
-                                const size_t RelStep) const
+bool BP5Deserializer::VarShape(const VariableBase &Var, const size_t RelStep,
+                               Dims &Shape) const
 {
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
     if (VarRec->OrigShapeID != ShapeID::GlobalArray)
     {
-        return nullptr;
+        return false;
     }
     size_t AbsStep = RelStep;
     if (m_RandomAccessMode)
@@ -2127,16 +2127,15 @@ Dims *BP5Deserializer::VarShape(const VariableBase &Var,
             (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
         if (writer_meta_base && writer_meta_base->Shape)
         {
-            Dims *Shape = new Dims();
-            Shape->reserve(writer_meta_base->Dims);
+            Shape.resize(writer_meta_base->Dims);
             for (size_t i = 0; i < writer_meta_base->Dims; i++)
             {
-                Shape->push_back(writer_meta_base->Shape[i]);
+                Shape[i] = writer_meta_base->Shape[i];
             }
-            return Shape;
+            return true;
         }
     }
-    return nullptr;
+    return false;
 }
 
 bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
