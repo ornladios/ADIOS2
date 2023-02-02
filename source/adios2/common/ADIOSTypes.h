@@ -386,6 +386,7 @@ namespace mgard
 {
 namespace key
 {
+constexpr char mode[] = "mode";
 constexpr char tolerance[] = "tolerance";
 constexpr char accuracy[] = "accuracy";
 constexpr char s[] = "s";
