@@ -498,6 +498,7 @@ void *BP5Deserializer::VarSetup(core::Engine *engine, const char *variableName,
     {                                                                          \
         core::Variable<T> *variable =                                          \
             &(engine->m_IO.DefineVariable<T>(variableName));                   \
+        engine->RegisterCreatedVariable(variable);                             \
         variable->SetData((T *)data);                                          \
         variable->m_AvailableStepsCount = 1;                                   \
         return (void *)variable;                                               \
@@ -547,6 +548,7 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine,
     {
         core::VariableStruct *variable = &(engine->m_IO.DefineStructVariable(
             variableName, *Def, VecShape, VecStart, VecCount));
+        engine->RegisterCreatedVariable(variable);
         variable->m_ReadStructDefinition = ReaderDef;
         return (void *)variable;
     }
@@ -555,6 +557,7 @@ void *BP5Deserializer::ArrayVarSetup(core::Engine *engine,
     {                                                                          \
         core::Variable<T> *variable =                                          \
             &(engine->m_IO.DefineVariable<T>(variableName));                   \
+        engine->RegisterCreatedVariable(variable);                             \
         variable->m_Shape = VecShape;                                          \
         variable->m_Start = VecStart;                                          \
         variable->m_Count = VecCount;                                          \
