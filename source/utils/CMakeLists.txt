@@ -44,7 +44,7 @@ set(adios_reorganize_srcs
   Utils.cpp
   )
 if(ADIOS2_HAVE_MGARD)
-  set(maybe_mgard MGARD::MGARD)
+  set(maybe_mgard mgard::mgard)
 else()
   set(maybe_mgard)
 endif()

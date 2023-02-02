@@ -50,6 +50,16 @@ endif()
 if(ADIOS2_HAVE_MGARD)
   bp_gtest_add_tests_helper(WriteReadMGARD MPI_ALLOW)
   bp_gtest_add_tests_helper(WriteReadMGARDPlus MPI_ALLOW)
+  if(ADIOS2_HAVE_CUDA AND MGARD_ENABLE_CUDA)
+    gtest_add_tests_helper(WriteReadMGARDCuda MPI_ALLOW BP Engine.BP. .BP4
+      WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
+      )
+
+    foreach(tgt ${Test.Engine.BP.WriteReadMGARDCuda-TARGETS})
+      target_sources(${tgt} PRIVATE CudaRoutines.cu)
+      target_link_libraries(${tgt} CUDA::cudart)
+    endforeach()
+  endif()
 endif()
 
 if(ADIOS2_HAVE_BZip2)

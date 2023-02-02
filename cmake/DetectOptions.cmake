@@ -150,9 +150,9 @@ endif()
 
 # MGARD
 if(ADIOS2_USE_MGARD STREQUAL AUTO)
-  find_package(MGARD)
+  find_package(mgard)
 elseif(ADIOS2_USE_MGARD)
-  find_package(MGARD REQUIRED)
+  find_package(mgard REQUIRED)
 endif()
 if(MGARD_FOUND)
   set(ADIOS2_HAVE_MGARD TRUE)
