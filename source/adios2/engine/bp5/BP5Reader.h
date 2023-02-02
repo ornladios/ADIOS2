@@ -57,7 +57,8 @@ public:
     void PerformGets() final;
 
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
-    Dims *VarShape(const VariableBase &, const size_t Step) const;
+    bool VarShape(const VariableBase &Var, const size_t Step,
+                  Dims &Shape) const;
     bool VariableMinMax(const VariableBase &, const size_t Step,
                         MinMaxStruct &MinMax);
 

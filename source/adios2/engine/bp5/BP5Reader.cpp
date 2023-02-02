@@ -684,9 +684,10 @@ MinVarInfo *BP5Reader::MinBlocksInfo(const VariableBase &Var,
     return m_BP5Deserializer->MinBlocksInfo(Var, Step);
 }
 
-Dims *BP5Reader::VarShape(const VariableBase &Var, const size_t Step) const
+bool BP5Reader::VarShape(const VariableBase &Var, const size_t Step,
+                         Dims &Shape) const
 {
-    return m_BP5Deserializer->VarShape(Var, Step);
+    return m_BP5Deserializer->VarShape(Var, Step, Shape);
 }
 
 bool BP5Reader::VariableMinMax(const VariableBase &Var, const size_t Step,
