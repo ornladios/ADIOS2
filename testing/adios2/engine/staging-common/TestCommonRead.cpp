@@ -85,7 +85,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         }
         ts = std::chrono::steady_clock::now();
         adios2::StepStatus status = engine.BeginStep();
-        auto av = io.AvailableVariables();
         Seconds timeBeginStep = std::chrono::steady_clock::now() - ts;
         begin_statuses.push_back(status);
         begin_times.push_back(timeBeginStep);
@@ -94,6 +93,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         {
             break;
         }
+        auto av = io.AvailableVariables();
+
         const size_t currentStep = engine.CurrentStep();
         EXPECT_EQ(currentStep, t);
 
