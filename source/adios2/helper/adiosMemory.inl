@@ -146,6 +146,11 @@ template <class T>
 void CopyToBuffer(std::vector<char> &buffer, size_t &position, const T *source,
                   const size_t elements) noexcept
 {
+    if (elements == 0)
+    {
+        return;
+    }
+
     const char *src = reinterpret_cast<const char *>(source);
     std::copy(src, src + elements * sizeof(T), buffer.begin() + position);
     position += elements * sizeof(T);
