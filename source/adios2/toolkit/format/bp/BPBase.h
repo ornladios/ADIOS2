@@ -621,6 +621,7 @@ protected:
     Characteristics<T>
     ReadElementIndexCharacteristics(const std::vector<char> &buffer,
                                     size_t &position, const DataTypes dataType,
+                                    size_t &joinedArrayShapePos,
                                     const bool untilTimeStep = false,
                                     const bool isLittleEndian = true) const;
 
@@ -644,6 +645,7 @@ private:
                               const DataTypes dataType,
                               const bool untilTimeStep,
                               Characteristics<T> &characteristics,
+                              size_t &joinedArrayShapePos,
                               const bool isLittleEndian = true) const;
 };
 

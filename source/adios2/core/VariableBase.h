@@ -91,6 +91,8 @@ public:
     size_t m_StepsStart = 0;
     size_t m_StepsCount = 1;
 
+    size_t m_JoinedDimPos = 0; // the joined dimension in a  JoinedArray
+
     /** Index Metadata Position in a serial metadata buffer */
     size_t m_IndexStart = 0;
 

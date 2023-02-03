@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 #endif
-    const int NSTEPS = 5;
+    const int NSTEPS = 3;
 
     // generate different random numbers on each process,
     // but always the same sequence at each run
@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
         // Get io settings from the config file or
         // create one with default settings here
         adios2::IO io = adios.DeclareIO("Output");
+        io.SetEngine("BP4");
 
         /*
          * Define joinable local array: type, name, global and local size
@@ -81,6 +82,9 @@ int main(int argc, char *argv[])
          */
         adios2::Variable<double> varTable = io.DefineVariable<double>(
             "table", {adios2::JoinedDim, Ncols}, {}, {Nrows, Ncols});
+
+        // adios2::Operator op = adios.DefineOperator("blosc", "blosc");
+        // varTable.AddOperation(op, {{"clevel", std::to_string(1)}});
 
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.
@@ -95,7 +99,7 @@ int main(int argc, char *argv[])
                 for (unsigned int col = 0; col < Ncols; col++)
                 {
                     mytable[row * Ncols + col] = static_cast<double>(
-                        rank * 1.0 + row * 0.1 + col * 0.01);
+                        step * 10.0 + rank * 1.0 + row * 0.1 + col * 0.01);
                 }
             }
 

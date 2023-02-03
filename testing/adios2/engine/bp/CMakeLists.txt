@@ -191,6 +191,9 @@ gtest_add_tests_helper(StepsInSituGlobalArray MPI_ALLOW BP Engine.BP. .BP4
 gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .BP4
   WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
 )
+gtest_add_tests_helper(JoinedArray MPI_ALLOW BP Engine.BP. .BP4
+  WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
+)
 
 gtest_add_tests_helper(InquireVariableException MPI_ALLOW BP Engine.BP. .BP4
   WORKING_DIRECTORY ${BP4_DIR}
