@@ -709,8 +709,10 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
 #define make_case(T)                                                           \
     case (TypeTraits<T>::type_enum):                                           \
     {                                                                          \
+        size_t irrelevant;                                                     \
         const auto characteristics = ReadElementIndexCharacteristics<T>(       \
-            buffer, position, TypeTraits<T>::type_enum, true, isLittleEndian); \
+            buffer, position, TypeTraits<T>::type_enum, irrelevant, true,      \
+            isLittleEndian);                                                   \
         count = characteristics.EntryCount;                                    \
         length = characteristics.EntryLength;                                  \
         timeStep = characteristics.Statistics.Step;                            \
@@ -721,9 +723,11 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
 
         case (type_string_array):
         {
+            size_t irrelevant;
             const auto characteristics =
                 ReadElementIndexCharacteristics<std::string>(
-                    buffer, position, type_string_array, true, isLittleEndian);
+                    buffer, position, type_string_array, irrelevant, true,
+                    isLittleEndian);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;

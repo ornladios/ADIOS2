@@ -25,7 +25,8 @@ namespace format
 template <class T>
 BPBase::Characteristics<T> BPBase::ReadElementIndexCharacteristics(
     const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
-    const bool untilTimeStep, const bool isLittleEndian) const
+    size_t &joinedArrayShapePos, const bool untilTimeStep,
+    const bool isLittleEndian) const
 {
     Characteristics<T> characteristics;
     characteristics.EntryCount =
@@ -34,21 +35,21 @@ BPBase::Characteristics<T> BPBase::ReadElementIndexCharacteristics(
         helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
 
     ParseCharacteristics(buffer, position, dataType, untilTimeStep,
-                         characteristics, isLittleEndian);
+                         characteristics, joinedArrayShapePos, isLittleEndian);
 
     return characteristics;
 }
 
 // String specialization
 template <>
-inline void
-BPBase::ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
-                             const DataTypes dataType, const bool untilTimeStep,
-                             Characteristics<std::string> &characteristics,
-                             const bool isLittleEndian) const
+inline void BPBase::ParseCharacteristics(
+    const std::vector<char> &buffer, size_t &position, const DataTypes dataType,
+    const bool untilTimeStep, Characteristics<std::string> &characteristics,
+    size_t &joinedArrayShapePos, const bool isLittleEndian) const
 {
     const size_t start = position;
     size_t localPosition = 0;
+    joinedArrayShapePos = 0; // irrelevant here
 
     bool foundTimeStep = false;
 
@@ -195,12 +196,14 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
                                          const DataTypes /*dataType*/,
                                          const bool untilTimeStep,
                                          Characteristics<T> &characteristics,
+                                         size_t &joinedArrayShapePos,
                                          const bool isLittleEndian) const
 {
     const size_t start = position;
     size_t localPosition = 0;
 
     bool foundTimeStep = false;
+    bool foundJoinedDim = false;
     size_t dimensionsSize = 0; // get it from dimensions characteristics
 
     while (localPosition < characteristics.EntryLength)
@@ -356,9 +359,25 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
                     static_cast<size_t>(helper::ReadValue<uint64_t>(
                         buffer, position, isLittleEndian)));
 
-                characteristics.Shape.push_back(
+                uint64_t shape =
                     static_cast<size_t>(helper::ReadValue<uint64_t>(
-                        buffer, position, isLittleEndian)));
+                        buffer, position, isLittleEndian));
+                characteristics.Shape.push_back(shape);
+
+                if (shape == JoinedDim)
+                {
+                    if (foundJoinedDim)
+                    {
+                        helper::Throw<std::invalid_argument>(
+                            "Toolkit", "format::bp::BPBase",
+                            "ParseCharacteristics",
+                            "Invalid Joined Array definition with multiple "
+                            "JoinedDim in Shape.");
+                    }
+                    foundJoinedDim = true;
+                    // this is the Joined Array Start value that must be updated
+                    joinedArrayShapePos = position;
+                }
 
                 characteristics.Start.push_back(
                     static_cast<size_t>(helper::ReadValue<uint64_t>(
@@ -395,9 +414,12 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
                 characteristics.Count.clear();
                 characteristics.EntryShapeID = ShapeID::GlobalValue;
             }
+            else if (foundJoinedDim)
+            {
+                characteristics.EntryShapeID = ShapeID::JoinedArray;
+            }
             else
             {
-                // TODO joined dimension
                 characteristics.EntryShapeID = ShapeID::GlobalArray;
             }
 

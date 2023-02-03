@@ -150,16 +150,25 @@ void BPSerializer::PutDimensionsRecord(const Dims &localDimensions,
                                        const Dims &offsets,
                                        std::vector<char> &buffer) noexcept
 {
-    if (offsets.empty())
-    {
+    if (offsets.empty() && globalDimensions.empty())
+    { // local array
         for (const auto localDimension : localDimensions)
         {
             helper::InsertU64(buffer, localDimension);
             buffer.insert(buffer.end(), 2 * sizeof(uint64_t), '\0');
         }
     }
+    else if (offsets.empty())
+    { // joined array has no offsets but has global dims
+        for (unsigned int d = 0; d < localDimensions.size(); ++d)
+        {
+            helper::InsertU64(buffer, localDimensions[d]);
+            helper::InsertU64(buffer, globalDimensions[d]);
+            buffer.insert(buffer.end(), sizeof(uint64_t), '\0');
+        }
+    }
     else
-    {
+    { // global array
         for (unsigned int d = 0; d < localDimensions.size(); ++d)
         {
             helper::InsertU64(buffer, localDimensions[d]);
@@ -191,7 +200,7 @@ void BPSerializer::PutDimensionsRecord(const Dims &localDimensions,
     };
 
     // BODY Starts here
-    if (offsets.empty())
+    if (offsets.empty() && globalDimensions.empty())
     {
         unsigned int globalBoundsSkip = 18;
         if (isCharacteristic)
@@ -204,6 +213,19 @@ void BPSerializer::PutDimensionsRecord(const Dims &localDimensions,
             lf_CopyDimension(buffer, position, localDimension,
                              isCharacteristic);
             position += globalBoundsSkip;
+        }
+    }
+    else if (offsets.empty())
+    {
+        // joined array has no offsets but has global dims
+        size_t zeroOffset = 0;
+        for (unsigned int d = 0; d < localDimensions.size(); ++d)
+        {
+            lf_CopyDimension(buffer, position, localDimensions[d],
+                             isCharacteristic);
+            lf_CopyDimension(buffer, position, globalDimensions[d],
+                             isCharacteristic);
+            lf_CopyDimension(buffer, position, zeroOffset, isCharacteristic);
         }
     }
     else
@@ -376,8 +398,10 @@ void BPSerializer::MergeSerializeIndices(
 #define make_case(T)                                                           \
     case (TypeTraits<T>::type_enum):                                           \
     {                                                                          \
+        size_t irrelevant;                                                     \
         const auto characteristics = ReadElementIndexCharacteristics<T>(       \
-            buffer, position, TypeTraits<T>::type_enum, true, isLittleEndian); \
+            buffer, position, TypeTraits<T>::type_enum, irrelevant, true,      \
+            isLittleEndian);                                                   \
         count = characteristics.EntryCount;                                    \
         length = characteristics.EntryLength;                                  \
         timeStep = characteristics.Statistics.Step;                            \
@@ -388,9 +412,11 @@ void BPSerializer::MergeSerializeIndices(
 
         case (type_string_array):
         {
+            size_t irrelevant;
             const auto characteristics =
                 ReadElementIndexCharacteristics<std::string>(
-                    buffer, position, type_string_array, true, isLittleEndian);
+                    buffer, position, type_string_array, irrelevant, true,
+                    isLittleEndian);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;

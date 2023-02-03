@@ -482,7 +482,8 @@ BPBase::TransformTypeEnum(const std::string transformType) const noexcept
     template BPBase::Characteristics<T>                                        \
     BPBase::ReadElementIndexCharacteristics(const std::vector<char> &,         \
                                             size_t &, const BPBase::DataTypes, \
-                                            const bool, const bool) const;
+                                            size_t &, const bool, const bool)  \
+        const;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

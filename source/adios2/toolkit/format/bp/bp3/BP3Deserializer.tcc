@@ -39,11 +39,12 @@ void BP3Deserializer::GetSyncVariableDataFromStream(core::Variable<T> &variable,
 
     auto &buffer = bufferSTL.m_Buffer;
     size_t position = itStep->second.front();
+    size_t irrelevant;
 
     const Characteristics<T> characteristics =
         ReadElementIndexCharacteristics<T>(buffer, position,
-                                           TypeTraits<T>::type_enum, false,
-                                           m_Minifooter.IsLittleEndian);
+                                           TypeTraits<T>::type_enum, irrelevant,
+                                           false, m_Minifooter.IsLittleEndian);
 
     const size_t payloadOffset = characteristics.Statistics.PayloadOffset;
     variable.m_Data = reinterpret_cast<T *>(&buffer[payloadOffset]);
@@ -193,11 +194,12 @@ void BP3Deserializer::SetVariableBlockInfo(
         const std::vector<char> &buffer = bufferSTL.m_Buffer;
 
         size_t position = blockIndexOffset;
+        size_t irrelevant;
 
         const Characteristics<T> blockCharacteristics =
-            ReadElementIndexCharacteristics<T>(buffer, position,
-                                               TypeTraits<T>::type_enum, false,
-                                               m_Minifooter.IsLittleEndian);
+            ReadElementIndexCharacteristics<T>(
+                buffer, position, TypeTraits<T>::type_enum, irrelevant, false,
+                m_Minifooter.IsLittleEndian);
         // check if they intersect
         helper::SubStreamBoxInfo subStreamInfo;
 
@@ -311,11 +313,12 @@ void BP3Deserializer::SetVariableBlockInfo(
         const std::vector<char> &buffer = bufferSTL.m_Buffer;
 
         size_t position = blockIndexOffset;
+        size_t irrelevant;
 
         const Characteristics<T> blockCharacteristics =
-            ReadElementIndexCharacteristics<T>(buffer, position,
-                                               TypeTraits<T>::type_enum, false,
-                                               m_Minifooter.IsLittleEndian);
+            ReadElementIndexCharacteristics<T>(
+                buffer, position, TypeTraits<T>::type_enum, irrelevant, false,
+                m_Minifooter.IsLittleEndian);
 
         // check if they intersect
         helper::SubStreamBoxInfo subStreamInfo;
@@ -486,10 +489,11 @@ void BP3Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
         for (size_t b = blocksStart; b < blocksStart + blocksCount; ++b)
         {
             size_t localPosition = positions[b];
+            size_t irrelevant;
             const Characteristics<T> characteristics =
-                ReadElementIndexCharacteristics<T>(buffer, localPosition,
-                                                   type_string, false,
-                                                   m_Minifooter.IsLittleEndian);
+                ReadElementIndexCharacteristics<T>(
+                    buffer, localPosition, type_string, irrelevant, false,
+                    m_Minifooter.IsLittleEndian);
 
             data[dataCounter] = characteristics.Statistics.Value;
             ++dataCounter;
@@ -753,11 +757,12 @@ inline void BP3Deserializer::DefineVariableInEngineIO<std::string>(
     const std::vector<char> &buffer, size_t position) const
 {
     const size_t initialPosition = position;
+    size_t irrelevant;
 
     const Characteristics<std::string> characteristics =
         ReadElementIndexCharacteristics<std::string>(
-            buffer, position, static_cast<DataTypes>(header.DataType), false,
-            m_Minifooter.IsLittleEndian);
+            buffer, position, static_cast<DataTypes>(header.DataType),
+            irrelevant, false, m_Minifooter.IsLittleEndian);
 
     const std::string variableName =
         header.Path.empty() ? header.Name
@@ -807,12 +812,13 @@ inline void BP3Deserializer::DefineVariableInEngineIO<std::string>(
     while (position < endPosition)
     {
         const size_t subsetPosition = position;
+        size_t irrelevant;
 
         // read until step is found
         const Characteristics<std::string> subsetCharacteristics =
             ReadElementIndexCharacteristics<std::string>(
                 buffer, position, static_cast<DataTypes>(header.DataType),
-                false, m_Minifooter.IsLittleEndian);
+                irrelevant, false, m_Minifooter.IsLittleEndian);
 
         const bool isNextStep =
             stepsFound.insert(subsetCharacteristics.Statistics.Step).second;
@@ -862,11 +868,12 @@ void BP3Deserializer::DefineVariableInEngineIO(const ElementIndexHeader &header,
                                                size_t position) const
 {
     const size_t initialPosition = position;
+    size_t irrelevant;
 
     const Characteristics<T> characteristics =
         ReadElementIndexCharacteristics<T>(
-            buffer, position, static_cast<DataTypes>(header.DataType), false,
-            m_Minifooter.IsLittleEndian);
+            buffer, position, static_cast<DataTypes>(header.DataType),
+            irrelevant, false, m_Minifooter.IsLittleEndian);
 
     const std::string variableName =
         header.Path.empty() ? header.Name
@@ -951,12 +958,13 @@ void BP3Deserializer::DefineVariableInEngineIO(const ElementIndexHeader &header,
     while (position < endPosition)
     {
         const size_t subsetPosition = position;
+        size_t irrelevant;
 
         // read until step is found
         const Characteristics<T> subsetCharacteristics =
             ReadElementIndexCharacteristics<T>(
                 buffer, position, static_cast<DataTypes>(header.DataType),
-                false, m_Minifooter.IsLittleEndian);
+                irrelevant, false, m_Minifooter.IsLittleEndian);
 
         const T blockMin = characteristics.Statistics.IsValue
                                ? subsetCharacteristics.Statistics.Value
@@ -1038,10 +1046,11 @@ void BP3Deserializer::DefineAttributeInEngineIO(
     const ElementIndexHeader &header, core::Engine &engine,
     const std::vector<char> &buffer, size_t position) const
 {
+    size_t irrelevant;
     const Characteristics<T> characteristics =
         ReadElementIndexCharacteristics<T>(
-            buffer, position, static_cast<DataTypes>(header.DataType), false,
-            m_Minifooter.IsLittleEndian);
+            buffer, position, static_cast<DataTypes>(header.DataType),
+            irrelevant, false, m_Minifooter.IsLittleEndian);
 
     std::string attributeName(header.Name);
     if (!header.Path.empty())
@@ -1108,10 +1117,11 @@ BP3Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
         // blockPosition gets updated by Read, can't be const
         for (size_t blockPosition : blockStarts)
         {
+            size_t irrelevant;
             const Characteristics<T> blockCharacteristics =
                 ReadElementIndexCharacteristics<T>(
-                    buffer, blockPosition, TypeTraits<T>::type_enum, false,
-                    m_Minifooter.IsLittleEndian);
+                    buffer, blockPosition, TypeTraits<T>::type_enum, irrelevant,
+                    false, m_Minifooter.IsLittleEndian);
 
             // check if they intersect
             helper::SubFileInfo info;
@@ -1165,11 +1175,12 @@ BP3Deserializer::BlocksInfoCommon(
     for (const size_t blockIndexOffset : blocksIndexOffsets)
     {
         size_t position = blockIndexOffset;
+        size_t irrelevant;
 
         const Characteristics<T> blockCharacteristics =
-            ReadElementIndexCharacteristics<T>(m_Metadata.m_Buffer, position,
-                                               TypeTraits<T>::type_enum, false,
-                                               m_Minifooter.IsLittleEndian);
+            ReadElementIndexCharacteristics<T>(
+                m_Metadata.m_Buffer, position, TypeTraits<T>::type_enum,
+                irrelevant, false, m_Minifooter.IsLittleEndian);
 
         typename core::Variable<T>::BPInfo blockInfo;
         blockInfo.Shape = blockCharacteristics.Shape;
