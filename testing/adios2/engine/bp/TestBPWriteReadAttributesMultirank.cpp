@@ -55,6 +55,9 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
+        io.DefineAttribute<std::string>("GlobalAttribute",
+                                        "Defined on all ranks");
+
         auto var = io.DefineVariable<int>(varpath);
         auto attr = io.DefineAttribute<std::string>(attrpath, desc);
         (void)var;
