@@ -841,12 +841,14 @@ void BP4Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
 
             lf_GetCharacteristics(serialized, indexPosition, header.DataType,
                                   count, length, timeStep);
-            if (indicesInfo[timeStep][header.Name].size() == 1)
-            {
-                return;
-            }
 
             size_t attrIndexBufferSize = static_cast<size_t>(header.Length) + 4;
+
+            if (indicesInfo[timeStep][header.Name].size() == 1)
+            {
+                localPosition += attrIndexBufferSize;
+                continue;
+            }
 
             auto stepSearch = indicesInfo.find(timeStep);
             if (stepSearch == indicesInfo.end())
