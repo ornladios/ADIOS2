@@ -293,6 +293,11 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params,
         Svcs->verbose(CP_Stream, DPCriticalVerbose,
                       "accessing domain failed with %d (%s). This is fatal.\n",
                       result, fi_strerror(result));
+        fprintf(
+            stderr,
+            "SST RDMA Dataplane failure.  fi_domain() has failed, which may "
+            "mean that libfabric is defaulting to the wrong interface.  Check "
+            "your FABRIC_IFACE environment variable (or specify one).\n");
         return;
     }
     info->ep_attr->type = FI_EP_RDM;
