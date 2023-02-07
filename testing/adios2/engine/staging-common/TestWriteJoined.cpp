@@ -60,6 +60,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 #endif
     adios2::IO outIO = adios.DeclareIO("Output");
 
+    EXPECT_LE(mpiSize, nblocksPerProcess.size());
     outIO.SetEngine(engine);
     outIO.SetParameters(engineParams);
 

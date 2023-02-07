@@ -43,15 +43,9 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     // form a mpiSize * Nx 1D array
     int mpiRank = 0, mpiSize = 1;
 
-    int TimeGapDetected = 0;
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
     MPI_Comm_size(testComm, &mpiSize);
-    const int nblocks = (mpiRank < static_cast<int>(nblocksPerProcess.size())
-                             ? nblocksPerProcess[mpiRank]
-                             : 1);
-#else
-    const int nblocks = nblocksPerProcess[0];
 #endif
 
     // Write test data using ADIOS2
@@ -70,7 +64,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     if (!mpiRank)
     {
-        std::cout << "Reading as stream with BeginStep/EndStep:" << std::endl;
+        std::cout << "Reading as stream with BeginStep/EndStep on " << mpiSize
+                  << "processes :" << std::endl;
     }
 
     int step = 0;
@@ -106,7 +101,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             std::vector<double> data(Nrows * Ncols);
             reader.Get(var, data.data());
             reader.PerformGets();
-            for (size_t i = 0; i < Nrows; ++i)
+            for (size_t i = 0; i < (size_t)Nrows; ++i)
             {
                 for (size_t j = 0; j < Ncols; ++j)
                 {
