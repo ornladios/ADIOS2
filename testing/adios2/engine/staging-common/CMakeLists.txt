@@ -36,6 +36,8 @@ set (PROGS TestCommonWrite
     TestLocalRead
     TestStructWrite
     TestStructRead
+    TestWriteJoined
+    TestReadJoined
     TestOnDemandWrite
     TestOnDemandRead)
 
@@ -114,7 +116,7 @@ if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
    endforeach()
 endif()
 
-set (SIMPLE_TESTS "1x1;1x1.Attrs;1x1.ModAttrs;1x1DefSync;1x1VarDestruction;1x1.SpanMinMax;1x1.Local2;1x1Struct")
+set (SIMPLE_TESTS "1x1;1x1.Attrs;1x1.ModAttrs;1x1DefSync;1x1VarDestruction;1x1.SpanMinMax;1x1.Local2;1x1Struct;1x1Joined")
 set (BP5File_ONLY_TESTS "1x1DataWrite")
 
 set (SIMPLE_FORTRAN_TESTS "")
@@ -131,7 +133,7 @@ endif()
 set (SIMPLE_MPI_TESTS "")
 set (SIMPLE_MPI_FORTRAN_TESTS "")
 if (ADIOS2_HAVE_MPI)
-  set (SIMPLE_MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;3x5LockGeometry;2x1.Local;1x2.Local;3x5.Local;5x3.Local;1x1.LocalVarying;5x3.LocalVarying;2x1ZeroDataVar;2x1ZeroDataR64;2x2.NoData;2x2.HalfNoData;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync;3x5EarlyExit")
+  set (SIMPLE_MPI_TESTS "2x1;1x2;3x5;5x3;DelayedReader_3x5;3x5LockGeometry;2x1.Local;1x2.Local;3x5.Local;5x3.Local;1x1.LocalVarying;5x3.LocalVarying;2x1ZeroDataVar;2x1ZeroDataR64;2x2.NoData;2x2.HalfNoData;2x1.SharedNothing;2x1.SharedIO;2x1.SharedVar;2x1.SharedNothingSync;2x1.SharedIOSync;2x1.SharedVarSync;3x5EarlyExit;;5x1Joined")
   list (APPEND SPECIAL_TESTS "2x1.NoPreload;2x3.ForcePreload;PreciousTimestep.3x2;PreciousTimestepDiscard.3x2")
   if (ADIOS2_HAVE_Fortran)
     set (SIMPLE_MPI_FORTRAN_TESTS "FtoC.3x5;CtoF.3x5;FtoF.3x5")
@@ -169,6 +171,9 @@ MutateTestSet( COMM_MIN_SST_TESTS "CommMin" writer "CPCommPattern=Min" "${BASIC_
 
 # temporarily remove PreciousTimestep CommPeer tests
 list (REMOVE_ITEM COMM_PEER_SST_TESTS "PreciousTimestep")
+
+# no SSE engine does Joined
+list (FILTER COMM_MIN_SST_TESTS EXCLUDE REGEX "Joined*")
 
 MutateTestSet( FFS_SST_TESTS "FFS" writer "MarshalMethod=FFS" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 MutateTestSet( FFS_SST_TESTS "BP5" writer "MarshalMethod=BP5" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
@@ -220,6 +225,8 @@ if(NOT WIN32)    # not on windows
     endforeach()
     # BP3 fails to handle lots of timesteps
     list (FILTER BP_TESTS EXCLUDE REGEX "Bulk.*")
+    # BP3 doesn't do Joined
+    list (FILTER BP_TESTS EXCLUDE REGEX "Joined.*")
     foreach(test ${BP_TESTS})
         add_common_test(${test} BP3)
     endforeach()
@@ -228,6 +235,8 @@ endif()
 #  BP5 tests
 if(ADIOS2_HAVE_BP5)
     set (BP5_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
+    # BP5 doesn't do Joined
+    list (FILTER BP5_TESTS EXCLUDE REGEX "Joined.*")
     # Delayed reader not worth testing on file engines
     list (FILTER BP5_TESTS EXCLUDE REGEX "DelayedReader")
     # Discard not a feature of BP5
@@ -253,6 +262,8 @@ if(NOT MSVC)    # not on windows
     # BP4 streaming tests start with all the simple tests, but with a timeout added on open
     LIST (APPEND BP4_STREAM_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
     MutateTestSet( BP4_STREAM_TESTS "BPS" reader "OpenTimeoutSecs=10,BeginStepPollingFrequencySecs=0.1" "${BP4_STREAM_TESTS}")
+    # no BP4 streaming doesn't do Joined?
+    list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX "Joined*")
     # SharedVars fail with BP4_streaming*
     list (FILTER BP4_STREAM_TESTS EXCLUDE REGEX ".*SharedVar.BPS$")
    # Discard not a feature of BP4
@@ -325,6 +336,8 @@ if(NOT MSVC)    # not on windows
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*VarDestruction.*")
     # BP3 and BP4 don't do structs
     list (FILTER FILESTREAM_TESTS EXCLUDE REGEX ".*1x1Struct.*")
+    # no FileStream doesn't do Joined
+    list (FILTER FILESTREAM_TESTS EXCLUDE REGEX "Joined*")
 
     foreach(test ${FILESTREAM_TESTS})
         add_common_test(${test} FileStream)
@@ -358,6 +371,9 @@ if(NOT MSVC AND ADIOS2_HAVE_HDF5 AND (NOT ADIOS2_HAVE_MPI OR HDF5_IS_PARALLEL)) 
     list (FILTER HDF5_TESTS EXCLUDE REGEX ".*ModAttr.*")
     # HDF5 engine doesn't do structs (but HDF5 does)
     list (FILTER HDF5_TESTS EXCLUDE REGEX ".*1x1Struct.*")
+    # HDF5 doesn't do Joined
+    list (FILTER HDF5_TESTS EXCLUDE REGEX "Joined*")
+
     foreach(test ${HDF5_TESTS})
         add_common_test(${test} HDF5)
     endforeach()
