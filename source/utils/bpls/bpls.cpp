@@ -1534,7 +1534,8 @@ int doList(const char *path)
         printf("\nADIOS Open: read header info from %s\n", path);
 
     std::string tpl = helper::LowerCase(transport_params);
-    bool remoteFile = (tpl.find("awssdk") != std::string::npos);
+    bool remoteFile = (tpl.find("awssdk") != std::string::npos) ||
+                      (tpl.find("daos") != std::string::npos);
     if (remoteFile)
     {
         if (engine_name.empty())
