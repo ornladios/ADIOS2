@@ -1801,6 +1801,11 @@ void *BP5Deserializer::GetMetadataBase(BP5VarRec *VarRec, size_t Step,
     MetaArrayRec *writer_meta_base = NULL;
     if (m_RandomAccessMode)
     {
+        if (Step >= m_ControlArray.size() ||
+            WriterRank >= m_ControlArray[Step].size())
+        {
+            return NULL; // we don't have this rank in this step
+        }
         ControlInfo *CI =
             m_ControlArray[Step][WriterRank]; // writer control array
         if (((*CI->MetaFieldOffset).size() <= VarRec->VarNum) ||
