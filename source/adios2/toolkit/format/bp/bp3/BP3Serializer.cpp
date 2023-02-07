@@ -482,13 +482,13 @@ BP3Serializer::AggregateCollectiveMetadataIndices(helper::Comm const &comm,
             size_t indexPosition = localPosition;
             const ElementIndexHeader header = ReadElementIndexHeader(
                 serialized, indexPosition, helper::IsLittleEndian());
-            if (isRankConstant && deserialized.count(header.Name) == 1)
-            {
-                return;
-            }
-
             const size_t bufferSize = static_cast<size_t>(header.Length) + 4;
 
+            if (isRankConstant && deserialized.count(header.Name) == 1)
+            {
+                localPosition += bufferSize;
+                continue;
+            }
             std::vector<BP3Base::SerialElementIndex> *deserializedIndexes =
                 nullptr;
             auto search = deserialized.find(header.Name);
