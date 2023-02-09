@@ -42,9 +42,10 @@ size_t GetTotalSize(const Dims &dimensions,
  * @param max
  */
 template <class T>
-void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
-                        const Dims &count, const bool isRowMajor, T &min,
-                        T &max) noexcept;
+void GetMinMaxSelection(
+    const T *values, const Dims &shape, const Dims &start, const Dims &count,
+    const bool isRowMajor, T &min, T &max,
+    const MemorySpace memSpace = MemorySpace::Host) noexcept;
 
 /**
  * Gets the min and max from a values array of primitive types (not including
@@ -55,7 +56,8 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
  * @param max of values
  */
 template <class T>
-void GetMinMax(const T *values, const size_t size, T &min, T &max) noexcept;
+void GetMinMax(const T *values, const size_t size, T &min, T &max,
+               const MemorySpace memSpace) noexcept;
 
 /**
  * Version for complex types of GetMinMax, gets the "doughnut" range between min
@@ -82,7 +84,8 @@ void GetMinMaxComplex(const std::complex<T> *values, const size_t size,
  */
 template <class T>
 void GetMinMaxThreads(const T *values, const size_t size, T &min, T &max,
-                      const unsigned int threads = 1) noexcept;
+                      const unsigned int threads = 1,
+                      const MemorySpace memSpace = MemorySpace::Host) noexcept;
 
 /**
  * Overloaded version of GetMinMaxThreads for complex types
@@ -310,9 +313,10 @@ Box<Dims> GetSubBlock(const Dims &count, const BlockDivisionInfo &info,
  * pairs)
  */
 template <class T>
-void GetMinMaxSubblocks(const T *values, const Dims &count,
-                        const BlockDivisionInfo &info, std::vector<T> &MinMaxs,
-                        T &bmin, T &bmax, const unsigned int threads) noexcept;
+void GetMinMaxSubblocks(
+    const T *values, const Dims &count, const BlockDivisionInfo &info,
+    std::vector<T> &MinMaxs, T &bmin, T &bmax, const unsigned int threads,
+    const MemorySpace memSpace = MemorySpace::Host) noexcept;
 
 /**
  * @brief Return a value within the min/max limits

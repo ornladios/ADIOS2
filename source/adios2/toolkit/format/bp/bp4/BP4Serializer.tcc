@@ -149,9 +149,9 @@ void BP4Serializer::PutSpanMetadata(
             helper::DivideBlock(blockInfo.Count, m_Parameters.StatsBlockSize,
                                 helper::BlockDivisionMethod::Contiguous);
         // set stats MinMaxs with the correct size
-        helper::GetMinMaxSubblocks(span.Data(), blockInfo.Count,
-                                   stats.SubBlockInfo, stats.MinMaxs, stats.Min,
-                                   stats.Max, m_Parameters.Threads);
+        helper::GetMinMaxSubblocks(
+            span.Data(), blockInfo.Count, stats.SubBlockInfo, stats.MinMaxs,
+            stats.Min, stats.Max, m_Parameters.Threads, blockInfo.MemSpace);
         m_Profiler.Stop("minmax");
 
         // Put min/max blocks in variable index
@@ -340,7 +340,7 @@ BP4Serializer::GetBPStats(const bool singleValue,
     {
         const size_t size = helper::GetTotalSize(blockInfo.Count);
         if (!std::is_same<T, long double>::value)
-            helper::CUDAMinMax(blockInfo.Data, size, stats.Min, stats.Max);
+            helper::GPUMinMax(blockInfo.Data, size, stats.Min, stats.Max);
         return stats;
     }
 #endif
@@ -354,9 +354,9 @@ BP4Serializer::GetBPStats(const bool singleValue,
             helper::DivideBlock(blockInfo.Count, m_Parameters.StatsBlockSize,
                                 helper::BlockDivisionMethod::Contiguous);
         // set stats MinMaxs with the correct size
-        helper::GetMinMaxSubblocks(blockInfo.Data, blockInfo.Count,
-                                   stats.SubBlockInfo, stats.MinMaxs, stats.Min,
-                                   stats.Max, m_Parameters.Threads);
+        helper::GetMinMaxSubblocks(
+            blockInfo.Data, blockInfo.Count, stats.SubBlockInfo, stats.MinMaxs,
+            stats.Min, stats.Max, m_Parameters.Threads, blockInfo.MemSpace);
         return stats;
     }
 
@@ -378,14 +378,16 @@ BP4Serializer::GetBPStats(const bool singleValue,
                 helper::BlockDivisionMethod::Contiguous);
             helper::GetMinMaxSubblocks(
                 blockInfo.Data, blockInfo.Count, stats.SubBlockInfo,
-                stats.MinMaxs, stats.Min, stats.Max, m_Parameters.Threads);
+                stats.MinMaxs, stats.Min, stats.Max, m_Parameters.Threads,
+                blockInfo.MemSpace);
         }
         else
         {
             // non-contiguous memory min/max
             helper::GetMinMaxSelection(blockInfo.Data, blockInfo.MemoryCount,
                                        blockInfo.MemoryStart, blockInfo.Count,
-                                       isRowMajor, stats.Min, stats.Max);
+                                       isRowMajor, stats.Min, stats.Max,
+                                       blockInfo.MemSpace);
         }
         m_Profiler.Stop("minmax");
     }

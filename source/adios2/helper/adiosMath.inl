@@ -20,6 +20,8 @@
 #include <thread>
 
 #include "adios2/common/ADIOSMacros.h"
+#include "adios2/helper/adiosGPUFunctions.h"
+#include "adiosLog.h"
 
 namespace adios2
 {
@@ -29,11 +31,11 @@ namespace helper
 template <class T>
 void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
                         const Dims &count, const bool isRowMajor, T &min,
-                        T &max) noexcept
+                        T &max, const MemorySpace memSpace) noexcept
 {
     auto lf_MinMaxRowMajor = [](const T *values, const Dims &shape,
                                 const Dims &start, const Dims &count, T &min,
-                                T &max) {
+                                T &max, const MemorySpace memSpace) {
         // loop through selection box contiguous part
         const size_t dimensions = shape.size();
         const size_t stride = count.back();
@@ -50,7 +52,8 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
                 Dims(shape.size(), 0), shape, currentPoint, true);
 
             T minStride, maxStride;
-            GetMinMax(values + startOffset, stride, minStride, maxStride);
+            GetMinMax(values + startOffset, stride, minStride, maxStride,
+                      memSpace);
 
             if (firstStep)
             {
@@ -98,7 +101,7 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
 
     auto lf_MinMaxColumnMajor = [](const T *values, const Dims &shape,
                                    const Dims &start, const Dims &count, T &min,
-                                   T &max) {
+                                   T &max, const MemorySpace memSpace) {
         // loop through selection box contiguous part
         const size_t dimensions = shape.size();
         const size_t stride = count.front();
@@ -115,7 +118,8 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
                 Dims(shape.size(), 0), shape, currentPoint, false);
 
             T minStride, maxStride;
-            GetMinMax(values + startOffset, stride, minStride, maxStride);
+            GetMinMax(values + startOffset, stride, minStride, maxStride,
+                      memSpace);
 
             if (firstStep)
             {
@@ -168,24 +172,31 @@ void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start,
         const size_t startOffset =
             helper::LinearIndex(Dims(1, 0), shape, start, isRowMajor);
         const size_t totalSize = helper::GetTotalSize(count);
-        GetMinMax(values + startOffset, totalSize, min, max);
+        GetMinMax(values + startOffset, totalSize, min, max, memSpace);
         return;
     }
 
     if (isRowMajor)
     {
-        lf_MinMaxRowMajor(values, shape, start, count, min, max);
+        lf_MinMaxRowMajor(values, shape, start, count, min, max, memSpace);
     }
     else
     {
-        lf_MinMaxColumnMajor(values, shape, start, count, min, max);
+        lf_MinMaxColumnMajor(values, shape, start, count, min, max, memSpace);
     }
 }
 
 template <class T>
-inline void GetMinMax(const T *values, const size_t size, T &min,
-                      T &max) noexcept
+inline void GetMinMax(const T *values, const size_t size, T &min, T &max,
+                      const MemorySpace memSpace) noexcept
 {
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    if (memSpace == MemorySpace::GPU)
+    {
+        helper::GPUMinMax(values, size, min, max);
+        return;
+    }
+#endif
     auto bounds = std::minmax_element(values, values + size);
     min = *bounds.first;
     max = *bounds.second;
@@ -193,17 +204,35 @@ inline void GetMinMax(const T *values, const size_t size, T &min,
 
 template <>
 inline void GetMinMax(const std::complex<float> *values, const size_t size,
-                      std::complex<float> &min,
-                      std::complex<float> &max) noexcept
+                      std::complex<float> &min, std::complex<float> &max,
+                      const MemorySpace memSpace) noexcept
 {
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    if (memSpace == MemorySpace::GPU)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Helper", "MathFunctions", "GetMinMaxThreads",
+            "Computing MinMax for GPU arrays of complex numbers is not "
+            "supported");
+    }
+#endif
     GetMinMaxComplex(values, size, min, max);
 }
 
 template <>
 inline void GetMinMax(const std::complex<double> *values, const size_t size,
-                      std::complex<double> &min,
-                      std::complex<double> &max) noexcept
+                      std::complex<double> &min, std::complex<double> &max,
+                      const MemorySpace memSpace) noexcept
 {
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    if (memSpace == MemorySpace::GPU)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Helper", "MathFunctions", "GetMinMaxThreads",
+            "Computing MinMax for GPU arrays of complex numbers is not "
+            "supported");
+    }
+#endif
     GetMinMaxComplex(values, size, min, max);
 }
 
@@ -238,7 +267,8 @@ void GetMinMaxComplex(const std::complex<T> *values, const size_t size,
 
 template <class T>
 void GetMinMaxThreads(const T *values, const size_t size, T &min, T &max,
-                      const unsigned int threads) noexcept
+                      const unsigned int threads,
+                      const MemorySpace memSpace) noexcept
 {
     if (size == 0)
     {
@@ -247,7 +277,7 @@ void GetMinMaxThreads(const T *values, const size_t size, T &min, T &max,
 
     if (threads == 1 || size < 1000000)
     {
-        GetMinMax(values, size, min, max);
+        GetMinMax(values, size, min, max, memSpace);
         return;
     }
 
@@ -269,13 +299,13 @@ void GetMinMaxThreads(const T *values, const size_t size, T &min, T &max,
         {
             getMinMaxThreads.push_back(
                 std::thread(GetMinMax<T>, &values[position], last,
-                            std::ref(mins[t]), std::ref(maxs[t])));
+                            std::ref(mins[t]), std::ref(maxs[t]), memSpace));
         }
         else
         {
             getMinMaxThreads.push_back(
                 std::thread(GetMinMax<T>, &values[position], stride,
-                            std::ref(mins[t]), std::ref(maxs[t])));
+                            std::ref(mins[t]), std::ref(maxs[t]), memSpace));
         }
     }
 
@@ -294,8 +324,18 @@ void GetMinMaxThreads(const T *values, const size_t size, T &min, T &max,
 template <class T>
 void GetMinMaxThreads(const std::complex<T> *values, const size_t size,
                       std::complex<T> &min, std::complex<T> &max,
-                      const unsigned int threads) noexcept
+                      const unsigned int threads, MemorySpace memSpace) noexcept
 {
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    if (memSpace == MemorySpace::GPU)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Helper", "MathFunctions", "GetMinMaxThreads",
+            "Computing MinMax for GPU arrays of complex numbers is not "
+            "supported");
+    }
+#endif
+
     if (size == 0)
     {
         return;
@@ -350,7 +390,8 @@ void GetMinMaxThreads(const std::complex<T> *values, const size_t size,
 template <class T>
 void GetMinMaxSubblocks(const T *values, const Dims &count,
                         const BlockDivisionInfo &info, std::vector<T> &MinMaxs,
-                        T &bmin, T &bmax, const unsigned int threads) noexcept
+                        T &bmin, T &bmax, const unsigned int threads,
+                        const MemorySpace memSpace) noexcept
 {
     const int ndim = static_cast<int>(count.size());
     const size_t nElems = helper::GetTotalSize(count);
@@ -362,7 +403,7 @@ void GetMinMaxSubblocks(const T *values, const Dims &count,
         {
             return;
         }
-        GetMinMaxThreads(values, nElems, bmin, bmax, threads);
+        GetMinMaxThreads(values, nElems, bmin, bmax, threads, memSpace);
         MinMaxs[0] = bmin;
         MinMaxs[1] = bmax;
     }
@@ -389,7 +430,7 @@ void GetMinMaxSubblocks(const T *values, const Dims &count,
             }
             T vmin, vmax;
             const size_t nElemsSub = helper::GetTotalSize(box.second);
-            GetMinMax(values + pos, nElemsSub, vmin, vmax);
+            GetMinMax(values + pos, nElemsSub, vmin, vmax, memSpace);
             MinMaxs[2 * b] = vmin;
             MinMaxs[2 * b + 1] = vmax;
             if (b == 0)
