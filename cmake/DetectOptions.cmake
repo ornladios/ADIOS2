@@ -170,8 +170,27 @@ endif()
 
 set(mpi_find_components C)
 
-# Cuda
-if(ADIOS2_USE_CUDA)
+# Kokkos
+if(ADIOS2_USE_Kokkos)
+  if(ADIOS2_USE_Kokkos STREQUAL AUTO)
+    find_package(Kokkos QUIET)
+  else()
+    find_package(Kokkos REQUIRED)
+  endif()
+  if(NOT Kokkos_ENABLE_CUDA AND (ADIOS2_USE_CUDA STREQUAL ON))
+    set(ADIOS2_USE_Kokkos FALSE)
+  else()
+    if(Kokkos_FOUND)
+      set(ADIOS2_HAVE_Kokkos TRUE)
+    endif()
+    if(Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL)
+	    set(ADIOS2_HAVE_GPU_Support TRUE)
+    endif()
+  endif()
+endif()
+
+# CUDA
+if(ADIOS2_USE_CUDA AND NOT Kokkos_ENABLE_CUDA)
   include(CheckLanguage)
   check_language(CUDA)
   if(ADIOS2_USE_CUDA STREQUAL AUTO)

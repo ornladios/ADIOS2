@@ -214,7 +214,7 @@ gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .FileStream
   WORKING_DIRECTORY ${FS_DIR} EXTRA_ARGS "FileStream"
 )
 
-if(ADIOS2_HAVE_CUDA)
+if(ADIOS2_HAVE_CUDA OR Kokkos_ENABLE_CUDA)
   gtest_add_tests_helper(WriteReadCuda MPI_ALLOW BP Engine.BP. .BP4
     WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
   )
@@ -232,12 +232,20 @@ if(ADIOS2_HAVE_CUDA)
   endif()
 
   foreach(tgt ${Test.Engine.BP.WriteReadCuda-TARGETS})
-    target_sources(${tgt} PRIVATE operations/CudaRoutines.cu)
-    target_link_libraries(${tgt} CUDA::cudart)
+    target_sources(${tgt} PUBLIC operations/CudaRoutines.cu)
+	if(ADIOS2_HAVE_CUDA)
+        target_link_libraries(${tgt} CUDA::cudart)
+    elseif(Kokkos_ENABLE_CUDA)
+        target_link_libraries(${tgt} Kokkos::kokkos)
+	endif()
   endforeach()
 
   foreach(tgt ${Test.Engine.BP.SelectionsCuda-TARGETS})
-    target_sources(${tgt} PRIVATE operations/CudaRoutines.cu)
-    target_link_libraries(${tgt} CUDA::cudart)
+    target_sources(${tgt} PUBLIC operations/CudaRoutines.cu)
+	if(ADIOS2_HAVE_CUDA)
+        target_link_libraries(${tgt} CUDA::cudart)
+    elseif(Kokkos_ENABLE_CUDA)
+        target_link_libraries(${tgt} Kokkos::kokkos)
+	endif()
   endforeach()
 endif()
