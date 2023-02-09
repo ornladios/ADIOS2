@@ -157,7 +157,7 @@ void ChunkV::CopyDataToBuffer(const size_t size, const void *buf, size_t pos,
 {
     if (MemSpace != MemorySpace::Host)
     {
-#ifdef ADIOS2_HAVE_CUDA
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
         helper::CopyFromGPUToBuffer(m_TailChunk->Ptr, pos, buf, MemSpace, size);
 #endif
         return;

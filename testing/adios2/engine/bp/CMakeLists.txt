@@ -4,6 +4,10 @@
 # ------------------------------------------------------------------------------#
 include(ADIOSFunctions)
 
+if(ADIOS2_HAVE_CUDA OR Kokkos_ENABLE_CUDA)
+  enable_language(CUDA)
+endif()
+
 set(BP3_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp3)
 set(BP4_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp4)
 set(BP5_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp5)

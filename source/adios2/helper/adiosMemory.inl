@@ -656,7 +656,7 @@ void CopyContiguousMemory(const char *src, const size_t payloadStride, T *dest,
             helper::Throw<std::invalid_argument>(
                 "Helper", "Memory", "CopyContiguousMemory",
                 "Direct byte order reversal not supported for GPU buffers");
-#ifdef ADIOS2_HAVE_CUDA
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
         CopyFromBufferToGPU(dest, 0, src, memSpace, payloadStride);
 #endif
         return;

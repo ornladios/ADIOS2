@@ -75,7 +75,7 @@ inline void BPSerializer::PutPayloadInBuffer(
 
     if (blockInfo.MemSpace != MemorySpace::Host)
     {
-#ifdef ADIOS2_HAVE_CUDA
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
         helper::CopyFromGPUToBuffer(m_Data.m_Buffer, m_Data.m_Position,
                                     blockInfo.Data, blockInfo.MemSpace,
                                     blockSize);
