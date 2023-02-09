@@ -124,6 +124,11 @@ if(ADIOS2_HAVE_CUDA)
   set(maybe_adios2_core_cuda adios2_core_cuda)
 endif()
 
+if(ADIOS2_HAVE_Kokkos)
+  target_sources(adios2_core PRIVATE helper/adiosKokkos.h helper/adiosKokkos.cpp)
+  target_link_libraries(adios2_core PRIVATE Kokkos::kokkos)
+endif()
+
 target_include_directories(adios2_core
   PUBLIC
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
