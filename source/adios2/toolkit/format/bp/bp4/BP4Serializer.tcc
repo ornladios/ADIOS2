@@ -339,7 +339,8 @@ BP4Serializer::GetBPStats(const bool singleValue,
     if (blockInfo.MemSpace == MemorySpace::CUDA)
     {
         const size_t size = helper::GetTotalSize(blockInfo.Count);
-        helper::CUDAMinMax(blockInfo.Data, size, stats.Min, stats.Max);
+        if (!std::is_same<T, long double>::value)
+            helper::CUDAMinMax(blockInfo.Data, size, stats.Min, stats.Max);
         return stats;
     }
 #endif
