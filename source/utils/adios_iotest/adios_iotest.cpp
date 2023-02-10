@@ -19,13 +19,7 @@
 int main(int argc, char *argv[])
 {
     int provided;
-    int threadSupportLevel = MPI_THREAD_SINGLE;
-
-    if (std::string(argv[1]) == "SST")
-    {
-        threadSupportLevel = MPI_THREAD_MULTIPLE;
-    }
-
+    int threadSupportLevel = MPI_THREAD_MULTIPLE;
     MPI_Init_thread(&argc, &argv, threadSupportLevel, &provided);
 
     Settings settings;
