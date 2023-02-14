@@ -157,7 +157,7 @@ the underlying network communication mechanism to use for exchanging
 data in SST.  Generally this is chosen by SST based upon what is
 available on the current platform.  However, specifying this engine
 parameter allows overriding SST's choice.  Current allowed values are
-**"UCX"**,**"MPI"**, **"RDMA"**, and **"WAN"**.  (**ib** and **fabric** are accepted as
+**"UCX"**, **"MPI"**, **"RDMA"**, and **"WAN"**.  (**ib** and **fabric** are accepted as
 equivalent to **RDMA** and **evpath** is equivalent to **WAN**.)
 Generally both the reader and writer should be using the same network
 transport, and the network transport chosen may be dictated by the
@@ -219,7 +219,7 @@ plane, this parameter controls the libfabric interface choice.
 12. ``FirstTimestepPrecious``: Default **FALSE**.
 FirstTimestepPrecious is a boolean parameter that affects the queueing
 of the first timestep presented to the SST Writer engine. If
-FirstTimestepPrecious is **TRUE***, then the first timestep is
+FirstTimestepPrecious is **TRUE**, then the first timestep is
 effectively never removed from the output queue and will be presented
 as a first timestep to any reader that joins at a later time.  This
 can be used to convey run parameters or other information that every
@@ -235,7 +235,7 @@ This value is interpreted by only by the SST Writer engine.
 13. ``AlwaysProvideLatestTimestep``: Default **FALSE**.
 AlwaysProvideLatestTimestep is a boolean parameter that affects what
 of the available timesteps will be provided to the reader engine.  If
-AlwaysProvideLatestTimestep is **TRUE***, then if there are multiple
+AlwaysProvideLatestTimestep is **TRUE**, then if there are multiple
 timesteps available to the reader, older timesteps will be skipped and
 the reader will see only the newest available upon BeginStep.
 This value is interpreted by only by the SST Reader engine.

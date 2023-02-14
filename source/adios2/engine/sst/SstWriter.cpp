@@ -183,6 +183,8 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     return StepStatus::OK;
 }
 
+size_t SstWriter::CurrentStep() const { return m_WriterStep; }
+
 void SstWriter::MarshalAttributes()
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
