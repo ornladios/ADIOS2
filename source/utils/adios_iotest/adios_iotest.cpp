@@ -18,17 +18,27 @@
 
 int main(int argc, char *argv[])
 {
-    int provided;
-    int threadSupportLevel = MPI_THREAD_MULTIPLE;
-    MPI_Init_thread(&argc, &argv, threadSupportLevel, &provided);
-
     Settings settings;
 
     /* Check input arguments. Quit if something is wrong. */
-    if (settings.processArguments(argc, argv, MPI_COMM_WORLD) ||
-        settings.extraArgumentChecks())
+    if (settings.processArguments(argc, argv))
     {
-        MPI_Finalize();
+        return 1;
+    }
+
+    int provided;
+    int threadSupportLevel = MPI_THREAD_SINGLE;
+    if (settings.multithreadedMPI)
+    {
+        threadSupportLevel = MPI_THREAD_MULTIPLE;
+    }
+    MPI_Init_thread(&argc, &argv, threadSupportLevel, &provided);
+
+    settings.initDecomp(MPI_COMM_WORLD);
+
+    // MPI-dependent argument checks
+    if (settings.extraArgumentChecks())
+    {
         return 1;
     }
 

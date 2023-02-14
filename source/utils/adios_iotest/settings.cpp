@@ -31,12 +31,13 @@ struct option options[] = {{"help", no_argument, NULL, 'h'},
                            {"weak-scaling", no_argument, NULL, 'w'},
                            {"timer", no_argument, NULL, 't'},
                            {"fixed", no_argument, NULL, 'F'},
+                           {"multithreaded-mpi", no_argument, NULL, 'T'},
 #ifdef ADIOS2_HAVE_HDF5_PARALLEL
                            {"hdf5", no_argument, NULL, 'H'},
 #endif
                            {NULL, 0, NULL, 0}};
 
-static const char *optstring = "-hvswtFHa:c:d:D:x:p:";
+static const char *optstring = "-hvswtTFHa:c:d:D:x:p:";
 
 size_t Settings::ndigits(size_t n) const
 {
@@ -74,6 +75,7 @@ void Settings::displayHelp()
         << "  -v         increase verbosity\n"
         << "  -h         display this help\n"
         << "  -F         turn on fixed I/O pattern explicitly\n"
+        << "  -T         turn on multi-threaded MPI (needed by SST/MPI)\n"
         << "  -p         specify the path of the output explicitly\n"
         << "  -t         print and dump the timing measured by the I/O "
            "timer\n\n";
@@ -206,6 +208,9 @@ int Settings::processArgs(int argc, char *argv[])
         case 'F':
             fixedPattern = true;
             break;
+        case 'T':
+            multithreadedMPI = true;
+            break;
         case 'h':
             if (!myRank)
             {
@@ -318,13 +323,27 @@ int Settings::processArgs(int argc, char *argv[])
     return 0;
 }
 
-int Settings::processArguments(int argc, char *argv[], MPI_Comm worldComm)
+int Settings::processArguments(int argc, char *argv[])
 {
     int retval = 0;
     try
     {
         retval = processArgs(argc, argv);
+    }
+    catch (std::exception &e) // command-line argument errors
+    {
+        std::cout << "ERROR : " << e.what() << std::endl;
+        displayHelp();
+        retval = 1;
+    }
+    return retval;
+}
 
+int Settings::initDecomp(MPI_Comm worldComm)
+{
+    int retval = 0;
+    try
+    {
         int wrank;
         MPI_Comm_rank(worldComm, &wrank);
         MPI_Comm_split(worldComm, static_cast<int>(appId), wrank, &appComm);
