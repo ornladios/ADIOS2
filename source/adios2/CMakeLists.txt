@@ -41,6 +41,7 @@ add_library(adios2_core
   helper/adiosYAML.cpp
   helper/adiosLog.cpp
   helper/adiosRangeFilter.cpp
+  helper/adiosGPUFunctions.cpp
 
 #engine derived classes
   engine/bp3/BP3Reader.cpp engine/bp3/BP3Reader.tcc
@@ -120,8 +121,36 @@ if(ADIOS2_HAVE_CUDA)
     OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_cuda
     )
   target_compile_features(adios2_core_cuda PRIVATE cuda_std_14)
-  target_link_libraries(adios2_core PRIVATE adios2_core_cuda CUDA::cudart)
+  target_link_libraries(adios2_core PUBLIC adios2_core_cuda PRIVATE CUDA::cudart)
   set(maybe_adios2_core_cuda adios2_core_cuda)
+endif()
+
+set(maybe_adios2_core_kokkos)
+if(ADIOS2_HAVE_Kokkos)
+  add_library(adios2_core_kokkos helper/adiosKokkos.h helper/adiosKokkos.cpp)
+
+  set_target_properties(adios2_core_kokkos PROPERTIES
+    VISIBILITY_INLINES_HIDDEN ON
+    INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>"
+    EXPORT_NAME core_kokkos
+    OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_kokkos
+    )
+
+  if(Kokkos_ENABLE_CUDA)
+    set_property(SOURCE helper/adiosKokkos.cpp PROPERTY LANGUAGE CUDA)
+    set_property(SOURCE helper/adiosKokkos.cpp APPEND PROPERTY COMPILE_FLAGS "--extended-lambda")
+
+    set_target_properties(adios2_core_kokkos PROPERTIES
+      CUDA_SEPARABLE_COMPILATION ON
+      CUDA_VISIBILITY_PRESET hidden
+      )
+    target_compile_features(adios2_core_kokkos PRIVATE cuda_std_14)
+  endif()
+
+  target_link_libraries(adios2_core_kokkos PRIVATE Kokkos::kokkos)
+  target_link_libraries(adios2_core PRIVATE adios2_core_kokkos)
+
+  set(maybe_adios2_core_kokkos adios2_core_kokkos)
 endif()
 
 target_include_directories(adios2_core
@@ -412,7 +441,7 @@ install(DIRECTORY toolkit/
 )
 
 # Library installation
-install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_cuda} EXPORT adios2Exports
+install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_cuda} ${maybe_adios2_core_kokkos} EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-development

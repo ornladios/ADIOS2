@@ -166,7 +166,7 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
                 var.SetSelection({start, count});
                 cudaMemcpy(gpuSimData, b, C1 * C2 * sizeof(double),
                            cudaMemcpyHostToDevice);
-                var.SetMemorySpace(adios2::MemorySpace::CUDA);
+                var.SetMemorySpace(adios2::MemorySpace::GPU);
                 engine.Put(var, gpuSimData, adios2::Mode::Sync);
             }
         }
@@ -199,7 +199,7 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
             double *gpuRet;
             cudaMalloc(&gpuRet, DIM1 * DIM2 * sizeof(double));
             var.SetSelection({s, c});
-            var.SetMemorySpace(adios2::MemorySpace::CUDA);
+            var.SetMemorySpace(adios2::MemorySpace::GPU);
             engine.Get<double>(var, gpuRet, adios2::Mode::Sync);
             cudaMemcpy(res.data(), gpuRet, DIM1 * DIM2 * sizeof(double),
                        cudaMemcpyDeviceToHost);
@@ -216,7 +216,7 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
             double *gpuRet;
             cudaMalloc(&gpuRet, c[0] * c[1] * sizeof(double));
             var.SetSelection({s, c});
-            var.SetMemorySpace(adios2::MemorySpace::CUDA);
+            var.SetMemorySpace(adios2::MemorySpace::GPU);
             engine.Get<double>(var, gpuRet, adios2::Mode::Sync);
             cudaMemcpy(res.data(), gpuRet, c[0] * c[1] * sizeof(double),
                        cudaMemcpyDeviceToHost);
@@ -233,7 +233,7 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
             double *gpuRet;
             cudaMalloc(&gpuRet, c[0] * c[1] * sizeof(double));
             var.SetSelection({s, c});
-            var.SetMemorySpace(adios2::MemorySpace::CUDA);
+            var.SetMemorySpace(adios2::MemorySpace::GPU);
             engine.Get<double>(var, gpuRet, adios2::Mode::Sync);
             cudaMemcpy(res.data(), gpuRet, c[0] * c[1] * sizeof(double),
                        cudaMemcpyDeviceToHost);
@@ -256,7 +256,7 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
             double *gpuRet;
             cudaMalloc(&gpuRet, c[0] * c[1] * sizeof(double));
             var.SetSelection({s, c});
-            var.SetMemorySpace(adios2::MemorySpace::CUDA);
+            var.SetMemorySpace(adios2::MemorySpace::GPU);
             engine.Get<double>(var, gpuRet, adios2::Mode::Sync);
             cudaMemcpy(res.data(), gpuRet, c[0] * c[1] * sizeof(double),
                        cudaMemcpyDeviceToHost);
@@ -276,7 +276,7 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
             double *gpuRet;
             cudaMalloc(&gpuRet, c[0] * c[1] * sizeof(double));
             var.SetSelection({s, c});
-            var.SetMemorySpace(adios2::MemorySpace::CUDA);
+            var.SetMemorySpace(adios2::MemorySpace::GPU);
             engine.Get<double>(var, gpuRet, adios2::Mode::Sync);
             cudaMemcpy(res.data(), gpuRet, c[0] * c[1] * sizeof(double),
                        cudaMemcpyDeviceToHost);

@@ -24,9 +24,7 @@
 #include "adios2/helper/adiosString.h"
 #include "adios2/operator/OperatorFactory.h"
 
-#ifdef ADIOS2_HAVE_CUDA
-#include <cuda_runtime.h>
-#endif
+#include "adios2/helper/adiosGPUFunctions.h"
 
 namespace adios2
 {
@@ -55,14 +53,10 @@ MemorySpace VariableBase::GetMemorySpace(const void *ptr)
     {
         return m_MemSpace;
     }
-#endif
 
-#ifdef ADIOS2_HAVE_CUDA
-    cudaPointerAttributes attr;
-    cudaPointerGetAttributes(&attr, ptr);
-    if (attr.type == cudaMemoryTypeDevice)
+    if (helper::IsGPUBuffer(ptr))
     {
-        return MemorySpace::CUDA;
+        return MemorySpace::GPU;
     }
 #endif
     return MemorySpace::Host;

@@ -13,7 +13,7 @@
 
 #include "adiosCUDA.h"
 
-void adios2::helper::CUDAMemcpyGPUToBuffer(void *dst, const char *GPUbuffer,
+void adios2::helper::CUDAMemcpyGPUToBuffer(char *dst, const char *GPUbuffer,
                                            size_t byteCount)
 {
     cudaMemcpy(dst, GPUbuffer, byteCount, cudaMemcpyDeviceToHost);
@@ -52,6 +52,17 @@ void CUDAMinMaxImpl(const std::complex<double> * /*values*/,
                     std::complex<double> & /*max*/)
 {
 }
+}
+
+bool adios2::helper::CUDAIsGPUBuffer(const void *ptr)
+{
+    cudaPointerAttributes attr;
+    cudaPointerGetAttributes(&attr, ptr);
+    if (attr.type == cudaMemoryTypeDevice)
+    {
+        return true;
+    }
+    return false;
 }
 
 template <class T>

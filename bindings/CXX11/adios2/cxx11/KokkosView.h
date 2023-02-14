@@ -17,24 +17,24 @@ struct memspace_kokkos_to_adios2<Kokkos::HostSpace>
     static constexpr adios2::MemorySpace value = adios2::MemorySpace::Host;
 };
 
-#if defined(KOKKOS_ENABLE_CUDA) && defined(ADIOS2_HAVE_CUDA)
+#if defined(KOKKOS_ENABLE_CUDA) || defined(ADIOS2_HAVE_CUDA)
 
 template <>
 struct memspace_kokkos_to_adios2<Kokkos::CudaSpace>
 {
-    static constexpr adios2::MemorySpace value = adios2::MemorySpace::CUDA;
+    static constexpr adios2::MemorySpace value = adios2::MemorySpace::GPU;
 };
 
 template <>
 struct memspace_kokkos_to_adios2<Kokkos::CudaUVMSpace>
 {
-    static constexpr adios2::MemorySpace value = adios2::MemorySpace::CUDA;
+    static constexpr adios2::MemorySpace value = adios2::MemorySpace::GPU;
 };
 
 template <>
 struct memspace_kokkos_to_adios2<Kokkos::CudaHostPinnedSpace>
 {
-    static constexpr adios2::MemorySpace value = adios2::MemorySpace::CUDA;
+    static constexpr adios2::MemorySpace value = adios2::MemorySpace::GPU;
 };
 
 #endif

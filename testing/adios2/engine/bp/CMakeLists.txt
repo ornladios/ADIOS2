@@ -4,6 +4,10 @@
 # ------------------------------------------------------------------------------#
 include(ADIOSFunctions)
 
+if(ADIOS2_HAVE_CUDA OR Kokkos_ENABLE_CUDA)
+  enable_language(CUDA)
+endif()
+
 set(BP3_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp3)
 set(BP4_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp4)
 set(BP5_DIR ${CMAKE_CURRENT_BINARY_DIR}/bp5)
@@ -210,7 +214,7 @@ gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .FileStream
   WORKING_DIRECTORY ${FS_DIR} EXTRA_ARGS "FileStream"
 )
 
-if(ADIOS2_HAVE_CUDA)
+if(ADIOS2_HAVE_CUDA OR Kokkos_ENABLE_CUDA)
   gtest_add_tests_helper(WriteReadCuda MPI_ALLOW BP Engine.BP. .BP4
     WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
   )

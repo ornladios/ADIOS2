@@ -27,10 +27,13 @@ ADIOS2_EXPORT void CUDAMinMax(const T *values, const size_t size, T &min,
 /**
  * Wrapper around cudaMemcpy needed for isolating CUDA interface dependency
  */
-ADIOS2_EXPORT void CUDAMemcpyGPUToBuffer(void *dst, const char *GPUbuffer,
-                                         size_t byteCount);
-ADIOS2_EXPORT void CUDAMemcpyBufferToGPU(char *GPUbuffer, const char *src,
-                                         size_t byteCount);
+ADIOS2_EXPORT
+void CUDAMemcpyGPUToBuffer(char *dst, const char *GPUbuffer, size_t byteCount);
+ADIOS2_EXPORT
+void CUDAMemcpyBufferToGPU(char *GPUbuffer, const char *src, size_t byteCount);
+
+ADIOS2_EXPORT
+bool CUDAIsGPUBuffer(const void *ptr);
 
 } // helper
 } // adios2

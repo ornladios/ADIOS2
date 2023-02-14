@@ -231,7 +231,8 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
 #ifdef NO_STAT
     size_t valuesSize = adios2::helper::GetTotalSize(variable.m_Count);
     T min, max;
-    adios2::helper::GetMinMaxThreads(values, valuesSize, min, max, 1);
+    adios2::helper::GetMinMaxThreads(values, valuesSize, min, max, 1,
+                                     variable.m_MemSpace);
 
     int chainSize = chain.size();
     hid_t parentId = m_GroupId;

@@ -39,8 +39,8 @@ enum class MemorySpace
     Detect, ///< Detect the memory space automatically
 #endif
     Host, ///< Host memory space
-#ifdef ADIOS2_HAVE_CUDA
-    CUDA ///< CUDA memory spaces
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    GPU ///< GPU memory space
 #endif
 };
 

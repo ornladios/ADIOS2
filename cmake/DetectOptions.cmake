@@ -170,7 +170,33 @@ endif()
 
 set(mpi_find_components C)
 
-# Cuda
+if(ADIOS_USE_Kokkos AND ADIOS_USE_CUDA)
+  message(FATAL_ERROR "ADIOS2_USE_Kokkos is incompatible with ADIOS_USE_CUDA")
+endif()
+
+# Kokkos
+if(ADIOS2_USE_Kokkos)
+  if(ADIOS2_USE_Kokkos STREQUAL AUTO)
+    find_package(Kokkos QUIET)
+  else()
+    find_package(Kokkos REQUIRED)
+  endif()
+  if(Kokkos_FOUND)
+    set(ADIOS2_HAVE_Kokkos TRUE)
+    if(Kokkos_ENABLE_CUDA OR Kokkos_ENABLE_HIP OR Kokkos_ENABLE_SYCL)
+      if(Kokkos_ENABLE_CUDA)
+        find_package(CUDAToolkit REQUIRED)
+        enable_language(CUDA)
+      endif()
+      if(Kokkos_ENABLE_HIP)
+        enable_language(HIP)
+      endif()
+      set(ADIOS2_HAVE_GPU_Support TRUE)
+    endif()
+  endif()
+endif()
+
+# CUDA
 if(ADIOS2_USE_CUDA)
   include(CheckLanguage)
   check_language(CUDA)
@@ -180,6 +206,7 @@ if(ADIOS2_USE_CUDA)
     find_package(CUDAToolkit REQUIRED)
   endif()
 endif()
+
 if(CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
   enable_language(CUDA)
   set(ADIOS2_HAVE_CUDA TRUE)

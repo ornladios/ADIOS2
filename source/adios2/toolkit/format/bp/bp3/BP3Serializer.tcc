@@ -124,7 +124,7 @@ void BP3Serializer::PutSpanMetadata(
         m_Profiler.Start("minmax");
         T min, max;
         helper::GetMinMaxThreads(span.Data(), span.Size(), min, max,
-                                 m_Parameters.Threads);
+                                 m_Parameters.Threads, variable.m_MemSpace);
         m_Profiler.Stop("minmax");
 
         // Put min/max in variable index
@@ -314,13 +314,15 @@ BP3Serializer::GetBPStats(const bool singleValue,
             const std::size_t valuesSize =
                 helper::GetTotalSize(blockInfo.Count);
             helper::GetMinMaxThreads(blockInfo.Data, valuesSize, stats.Min,
-                                     stats.Max, m_Parameters.Threads);
+                                     stats.Max, m_Parameters.Threads,
+                                     blockInfo.MemSpace);
         }
         else // non-contiguous memory min/max
         {
             helper::GetMinMaxSelection(blockInfo.Data, blockInfo.MemoryCount,
                                        blockInfo.MemoryStart, blockInfo.Count,
-                                       isRowMajor, stats.Min, stats.Max);
+                                       isRowMajor, stats.Min, stats.Max,
+                                       blockInfo.MemSpace);
         }
         m_Profiler.Stop("minmax");
     }

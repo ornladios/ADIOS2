@@ -44,7 +44,7 @@ int BPWrite(const std::string fname, const size_t N, int nSteps)
 
         // Start IO step every write step
         bpWriter.BeginStep();
-        data.SetMemorySpace(adios2::MemorySpace::CUDA);
+        data.SetMemorySpace(adios2::MemorySpace::GPU);
         bpWriter.Put(data, gpuSimData);
         bpWriter.EndStep();
 
@@ -85,7 +85,7 @@ int BPRead(const std::string fname, const size_t N, int nSteps)
     for (size_t step = 0; step < write_step; step++)
     {
         data.SetStepSelection({step, 1});
-        data.SetMemorySpace(adios2::MemorySpace::CUDA);
+        data.SetMemorySpace(adios2::MemorySpace::GPU);
         bpReader.Get(data, gpuSimData, adios2::Mode::Deferred);
         bpReader.PerformGets();
         cudaMemcpy(simData.data(), gpuSimData, N * sizeof(float),
