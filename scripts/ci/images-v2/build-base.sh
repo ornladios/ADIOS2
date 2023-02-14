@@ -5,7 +5,7 @@ source "${BASE_DIR}/build-functions.sh"
 
 message1 "Building ci-spack-el8 base image"
 if ! build_squash \
-  almalinux/almalinux:8 \
+  almalinux:8 \
   ornladios/adios2:ci-spack-el8-base \
   Dockerfile.ci-spack-el8-base
 then
