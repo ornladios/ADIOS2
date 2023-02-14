@@ -42,6 +42,7 @@ public:
     bool ioTimer = false;        // used to measure io time
     bool fixedPattern = false;   // should Lock definitions?
     bool isRatioDecomp = false;
+    bool multithreadedMPI = false; // turn on MT-enabled MPI
     IOLib iolib = IOLib::ADIOS;
     //   process decomposition
     std::vector<size_t> processDecomp = {1, 1, 1, 1, 1, 1, 1, 1,
@@ -56,7 +57,8 @@ public:
 
     Settings() = default;
     ~Settings() = default;
-    int processArguments(int argc, char *argv[], MPI_Comm worldComm);
+    int processArguments(int argc, char *argv[]);
+    int initDecomp(MPI_Comm worldComm);
     int extraArgumentChecks();
     size_t stringToNumber(const std::string &varName, const char *arg) const;
     int parseCSDecomp(const char *arg);
