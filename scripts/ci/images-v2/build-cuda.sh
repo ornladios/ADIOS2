@@ -4,10 +4,20 @@ set -ex
 BASE_DIR=$(dirname $(readlink -f ${BASH_SOURCE}))
 source "${BASE_DIR}/build-functions.sh"
 
-message1 "Building ci-spack-el8 leaf image"
-build_conf=gcc8
+message1 "Building cuda base image"
 if ! build_squash \
-    ornladios/adios2:ci-spack-el8-gcc8-base \
+  ornladios/adios2:ci-spack-el8-base \
+  ornladios/adios2:ci-spack-el8-cuda-base \
+  Dockerfile.ci-spack-el8-cuda-base
+then
+  echo "Error: Failed to build cuda base image"
+  exit 3
+fi
+
+message1 "Building ci-spack-el8 leaf image"
+build_conf=cuda
+if ! build_squash \
+    ornladios/adios2:ci-spack-el8-cuda-base \
     ornladios/adios2:ci-spack-el8-cuda-serial \
     Dockerfile.ci-spack-el8-leaf \
     "--build-arg=COMPILER_IMG_BASE=${build_conf}

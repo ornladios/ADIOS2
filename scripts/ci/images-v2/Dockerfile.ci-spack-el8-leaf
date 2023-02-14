@@ -1,7 +1,7 @@
 # vim: ft=dockerfile
 ARG COMPILER_IMG_BASE
 
-FROM almalinux/almalinux:8 AS builder
+FROM almalinux:8 AS builder
 ARG COMPILER_IMG_BASE
 
 WORKDIR /root
