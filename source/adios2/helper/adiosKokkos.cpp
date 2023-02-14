@@ -60,7 +60,7 @@ namespace adios2
 {
 namespace helper
 {
-void MemcpyGPUToBuffer(char *dst, const char *GPUbuffer, size_t byteCount)
+void KokkosMemcpyGPUToBuffer(char *dst, const char *GPUbuffer, size_t byteCount)
 {
 #ifdef KOKKOS_ENABLE_CUDA
     KokkosDeepCopy<Kokkos::CudaSpace>(GPUbuffer, dst, byteCount);
@@ -70,7 +70,7 @@ void MemcpyGPUToBuffer(char *dst, const char *GPUbuffer, size_t byteCount)
 #endif
 }
 
-void MemcpyBufferToGPU(char *GPUbuffer, const char *src, size_t byteCount)
+void KokkosMemcpyBufferToGPU(char *GPUbuffer, const char *src, size_t byteCount)
 {
 #ifdef KOKKOS_ENABLE_CUDA
     KokkosDeepCopy<Kokkos::CudaSpace>(src, GPUbuffer, byteCount);
@@ -80,7 +80,7 @@ void MemcpyBufferToGPU(char *GPUbuffer, const char *src, size_t byteCount)
 #endif
 }
 
-bool IsGPUbuffer(const void *ptr)
+bool KokkosIsGPUBuffer(const void *ptr)
 {
 #ifdef KOKKOS_ENABLE_CUDA
     cudaPointerAttributes attr;
@@ -100,7 +100,7 @@ void KokkosInit() { Kokkos::initialize(); }
 bool KokkosIsInitialized() { return Kokkos::is_initialized(); }
 
 template <class T>
-void GPUMinMax(const T *values, const size_t size, T &min, T &max)
+void KokkosMinMax(const T *values, const size_t size, T &min, T &max)
 {
     KokkosMinMaxImpl(values, size, min, max);
 }
@@ -109,7 +109,7 @@ void GPUMinMax(const T *values, const size_t size, T &min, T &max)
 }
 
 #define declare_type(T)                                                        \
-    template void adios2::helper::GPUMinMax(                                   \
+    template void adios2::helper::KokkosMinMax(                                \
         const T *values, const size_t size, T &min, T &max);
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type

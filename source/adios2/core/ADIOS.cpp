@@ -34,6 +34,10 @@
 Aws::SDKOptions awdSDKOptions;
 #endif
 
+#ifdef ADIOS2_HAVE_KOKKOS
+#include "adios2/helper/adiosKokkos.h"
+#endif
+
 namespace adios2
 {
 namespace core

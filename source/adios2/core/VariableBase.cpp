@@ -54,7 +54,7 @@ MemorySpace VariableBase::GetMemorySpace(const void *ptr)
         return m_MemSpace;
     }
 
-    if (helper::IsGPUbuffer(ptr))
+    if (helper::IsGPUBuffer(ptr))
     {
         return MemorySpace::GPU;
     }

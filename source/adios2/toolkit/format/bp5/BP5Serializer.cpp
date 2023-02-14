@@ -605,8 +605,8 @@ static void GetMinMax(const void *Data, size_t ElemCount, const DataType Type,
     {                                                                          \
         const T *values = (const T *)Data;                                     \
         if (!std::is_same<T, long double>::value)                              \
-            helper::GPUMinMax(values, ElemCount, MinMax.MinUnion.field_##N,   \
-                               MinMax.MaxUnion.field_##N);                     \
+            helper::GPUMinMax(values, ElemCount, MinMax.MinUnion.field_##N,    \
+                              MinMax.MaxUnion.field_##N);                      \
     }
     ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(pertype)
 #undef pertype

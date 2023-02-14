@@ -13,14 +13,14 @@
 
 #include "adiosCUDA.h"
 
-void adios2::helper::MemcpyGPUToBuffer(char *dst, const char *GPUbuffer,
-                                       size_t byteCount)
+void adios2::helper::CUDAMemcpyGPUToBuffer(char *dst, const char *GPUbuffer,
+                                           size_t byteCount)
 {
     cudaMemcpy(dst, GPUbuffer, byteCount, cudaMemcpyDeviceToHost);
 }
 
-void adios2::helper::MemcpyBufferToGPU(char *GPUbuffer, const char *src,
-                                       size_t byteCount)
+void adios2::helper::CUDAMemcpyBufferToGPU(char *GPUbuffer, const char *src,
+                                           size_t byteCount)
 {
     cudaMemcpy(GPUbuffer, src, byteCount, cudaMemcpyHostToDevice);
 }
@@ -54,7 +54,7 @@ void CUDAMinMaxImpl(const std::complex<double> * /*values*/,
 }
 }
 
-bool adios2::helper::IsGPUbuffer(const void *ptr)
+bool adios2::helper::CUDAIsGPUBuffer(const void *ptr)
 {
     cudaPointerAttributes attr;
     cudaPointerGetAttributes(&attr, ptr);
@@ -66,14 +66,14 @@ bool adios2::helper::IsGPUbuffer(const void *ptr)
 }
 
 template <class T>
-void adios2::helper::GPUMinMax(const T *values, const size_t size, T &min,
-                               T &max)
+void adios2::helper::CUDAMinMax(const T *values, const size_t size, T &min,
+                                T &max)
 {
     CUDAMinMaxImpl(values, size, min, max);
 }
 
 #define declare_type(T)                                                        \
-    template void adios2::helper::GPUMinMax(                                   \
+    template void adios2::helper::CUDAMinMax(                                  \
         const T *values, const size_t size, T &min, T &max);
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
