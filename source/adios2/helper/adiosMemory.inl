@@ -21,7 +21,7 @@
 #include <thread>
 /// \endcond
 
-#include "adios2/helper/adiosCUDA.h"
+#include "adios2/helper/adiosGPUFunctions.h"
 #include "adios2/helper/adiosMath.h"
 #include "adios2/helper/adiosSystem.h"
 #include "adios2/helper/adiosType.h"
@@ -89,11 +89,11 @@ template <class T>
 void CopyFromGPUToBuffer(char *dest, size_t position, const T *GPUbuffer,
                          MemorySpace memSpace, const size_t size) noexcept
 {
-#ifdef ADIOS2_HAVE_CUDA
-    if (memSpace == MemorySpace::CUDA)
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    if (memSpace == MemorySpace::GPU)
     {
         const char *buffer = reinterpret_cast<const char *>(GPUbuffer);
-        helper::CUDAMemcpyGPUToBuffer(dest + position, buffer, size);
+        helper::MemcpyGPUToBuffer(dest + position, buffer, size);
     }
 #endif
 }
@@ -102,11 +102,11 @@ template <class T>
 void CopyFromBufferToGPU(T *GPUbuffer, size_t position, const char *source,
                          MemorySpace memSpace, const size_t size) noexcept
 {
-#ifdef ADIOS2_HAVE_CUDA
-    if (memSpace == MemorySpace::CUDA)
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    if (memSpace == MemorySpace::GPU)
     {
         char *dest = reinterpret_cast<char *>(GPUbuffer);
-        helper::CUDAMemcpyBufferToGPU(dest, source + position, size);
+        helper::MemcpyBufferToGPU(dest, source + position, size);
     }
 #endif
 }
@@ -650,17 +650,17 @@ template <class T>
 void CopyContiguousMemory(const char *src, const size_t payloadStride, T *dest,
                           const bool endianReverse, const MemorySpace memSpace)
 {
-    if (memSpace != MemorySpace::Host)
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    if (memSpace == MemorySpace::GPU)
     {
         if (endianReverse)
             helper::Throw<std::invalid_argument>(
                 "Helper", "Memory", "CopyContiguousMemory",
                 "Direct byte order reversal not supported for GPU buffers");
-#ifdef ADIOS2_HAVE_CUDA
         CopyFromBufferToGPU(dest, 0, src, memSpace, payloadStride);
-#endif
         return;
     }
+#endif
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     if (endianReverse)
     {

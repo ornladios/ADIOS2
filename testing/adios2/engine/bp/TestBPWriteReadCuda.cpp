@@ -50,7 +50,7 @@ void CUDAWrongMemSpace()
         bpWriter.BeginStep();
         var_r32.SetMemorySpace(adios2::MemorySpace::Host);
         EXPECT_DEATH(bpWriter.Put(var_r32, gpuSimData), "");
-        var_r32_cpu.SetMemorySpace(adios2::MemorySpace::CUDA);
+        var_r32_cpu.SetMemorySpace(adios2::MemorySpace::GPU);
         bpWriter.Put(var_r32_cpu, r32s.data());
         bpWriter.EndStep();
 
@@ -76,7 +76,7 @@ void CUDAWrongMemSpace()
         var_r32.SetMemorySpace(adios2::MemorySpace::Host);
         EXPECT_THROW(bpReader.Get(var_r32, gpuSimData, adios2::Mode::Sync),
                      std::ios_base::failure);
-        var_r32.SetMemorySpace(adios2::MemorySpace::CUDA);
+        var_r32.SetMemorySpace(adios2::MemorySpace::GPU);
         EXPECT_THROW(bpReader.Get(var_r32, r32o.data(), adios2::Mode::Sync),
                      std::ios_base::failure);
         // bpReader.EndStep();
@@ -266,7 +266,7 @@ void CUDAWriteReadMPI1D(const std::string mode)
                                      INCREMENT));
 
             bpWriter.BeginStep();
-            var_r32.SetMemorySpace(adios2::MemorySpace::CUDA);
+            var_r32.SetMemorySpace(adios2::MemorySpace::GPU);
             bpWriter.Put(var_r32, gpuSimData, ioMode);
             var_r32_host.SetMemorySpace(adios2::MemorySpace::Host);
             bpWriter.Put(var_r32_host, simData.data(), ioMode);
@@ -306,7 +306,7 @@ void CUDAWriteReadMPI1D(const std::string mode)
             std::vector<float> r32o(NxTotal);
             float *gpuSimData;
             cudaMalloc(&gpuSimData, NxTotal * sizeof(float));
-            var_r32.SetMemorySpace(adios2::MemorySpace::CUDA);
+            var_r32.SetMemorySpace(adios2::MemorySpace::GPU);
             bpReader.Get(var_r32, gpuSimData, ioMode);
             bpReader.EndStep();
             cudaMemcpy(r32o.data(), gpuSimData, NxTotal * sizeof(float),
