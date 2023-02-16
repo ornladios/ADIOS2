@@ -205,12 +205,11 @@ if(ADIOS2_USE_CUDA)
   else()
     find_package(CUDAToolkit REQUIRED)
   endif()
-endif()
-
-if(CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
-  enable_language(CUDA)
-  set(ADIOS2_HAVE_CUDA TRUE)
-  set(ADIOS2_HAVE_GPU_Support TRUE)
+  if(CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND)
+    enable_language(CUDA)
+    set(ADIOS2_HAVE_CUDA TRUE)
+    set(ADIOS2_HAVE_GPU_Support TRUE)
+  endif()
 endif()
 
 # Fortran

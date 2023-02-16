@@ -136,12 +136,12 @@ if(ADIOS2_HAVE_Kokkos)
     OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_kokkos
     )
 
+  kokkos_compilation(SOURCE helper/adiosKokkos.cpp)
   if(Kokkos_ENABLE_CUDA)
     set_property(SOURCE helper/adiosKokkos.cpp PROPERTY LANGUAGE CUDA)
     set_property(SOURCE helper/adiosKokkos.cpp APPEND PROPERTY COMPILE_FLAGS "--extended-lambda")
 
     set_target_properties(adios2_core_kokkos PROPERTIES
-      CUDA_SEPARABLE_COMPILATION ON
       CUDA_VISIBILITY_PRESET hidden
       )
     target_compile_features(adios2_core_kokkos PRIVATE cuda_std_14)
