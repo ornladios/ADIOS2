@@ -12,15 +12,15 @@ The build requires that you have the MEX compiler ('mex') in the path.
 
 Finally, you need 
 1) to set MATLABPATH to this Matlab build directory (or wherever you copy the .m and .mexa64 files) and 
-2) to force Matlab to use the same stdc++ library as what ADIOS was built with (in contrast to the Matlab executable). You can do this at startup of Matlab:
+2) if necessary, to force Matlab to use the same stdc++ library as what ADIOS was built with (in contrast to the Matlab executable). You can do this at startup of Matlab:
 
 $ cd $ADIOS_INSTALL_DIR/lib
-$ ldd libadios2.so
+$ ldd libadios2_c.so
         libstdc++.so.6 => /usr/lib64/libstdc++.so.6 (0x00002adb84068000)
 
 $ export LD_LIBRARY_PATH=$ADIOS_INSTALL_DIR/lib:$LD_LIBRARY_PATH
 $ export MATLABPATH=<your Matlab/ directory>
-$ LD_PRELOAD=/usr/lib64/libstdc++.so.6.0.24     matlab -nojvm -nodesktop -nosplash
+$ LD_PRELOAD=/usr/lib64/libstdc++.so.6     matlab -nojvm -nodesktop -nosplash
 
 
 In the Matlab/test directory there is a sample file and test script. The test function should complete without errors (provided your current directory is Matlab/test)
