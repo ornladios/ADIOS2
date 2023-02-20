@@ -146,7 +146,8 @@ adios_option(SZ         "Enable support for SZ transforms" AUTO)
 adios_option(LIBPRESSIO "Enable support for LIBPRESSIO transforms" AUTO)
 adios_option(MGARD      "Enable support for MGARD transforms" AUTO)
 adios_option(PNG        "Enable support for PNG transforms" AUTO)
-adios_option(CUDA       "Enable support for Cuda" AUTO)
+adios_option(CUDA       "Enable support for Cuda" OFF)
+adios_option(Kokkos     "Enable support for Kokkos" OFF)
 adios_option(MPI        "Enable support for MPI" AUTO)
 adios_option(DAOS       "Enable support for DAOS" AUTO)
 adios_option(DataMan    "Enable support for DataMan" AUTO)
@@ -226,9 +227,9 @@ endif()
 
 
 set(ADIOS2_CONFIG_OPTS
-    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST CUDA Fortran MPI Python Blosc2 
+    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python Blosc2
     BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX ZeroMQ 
-    Profiling Endian_Reverse GPU_Support AWSSDK
+    Profiling Endian_Reverse AWSSDK GPU_Support CUDA Kokkos Kokkos_CUDA Kokkos_HIP
 )
 
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
