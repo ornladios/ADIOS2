@@ -37,7 +37,8 @@ ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 template <typename T>
 void GetGPUMinMax(const T *values, const size_t size, T &min, T &max) noexcept
 {
-    helper::GPUMinMax(values, size, min, max);
+    if (!std::is_same<T, long double>::value)
+        helper::GPUMinMax(values, size, min, max);
 }
 #endif
 
