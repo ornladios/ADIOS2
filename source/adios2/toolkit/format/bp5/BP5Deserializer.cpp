@@ -592,9 +592,16 @@ void BP5Deserializer::SetupForStep(size_t Step, size_t WriterCount)
         {
             m_Engine->m_IO.RemoveVariable(RecPair.second->VarName);
             RecPair.second->Variable = NULL;
+            if (RecPair.second->OrigShapeID == ShapeID::JoinedArray)
+            {
+                auto VarRec = RecPair.second;
+                VarRec->JoinedDimen = SIZE_MAX;
+                VarRec->LastJoinedOffset = NULL;
+                VarRec->LastJoinedShape = NULL;
+            }
         }
-        m_CurrentWriterCohortSize = WriterCount;
     }
+    m_CurrentWriterCohortSize = WriterCount;
 }
 
 size_t BP5Deserializer::WriterCohortSize(size_t Step) const
@@ -693,6 +700,15 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             MetadataBaseArray[Step] = m_MetadataBaseAddrs;
             m_FreeableMBA = nullptr;
         }
+
+        JoinedDimArray.resize(Step + 1);
+        if (JoinedDimArray[Step] == nullptr)
+        {
+            m_JoinedDimenOffsetArrays = new std::vector<void *>();
+            m_JoinedDimenOffsetArrays->resize(writerCohortSize);
+            JoinedDimArray[Step] = m_JoinedDimenOffsetArrays;
+            m_FreeableMBA = nullptr;
+        }
     }
     else
     {
@@ -705,8 +721,55 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
         {
             m_MetadataBaseAddrs->resize(writerCohortSize);
         }
+
+        if (!m_JoinedDimenOffsetArrays)
+        {
+            m_JoinedDimenOffsetArrays = new std::vector<void *>();
+            m_FreeableMBA = m_JoinedDimenOffsetArrays;
+        }
+        if (writerCohortSize > m_JoinedDimenOffsetArrays->size())
+        {
+            m_JoinedDimenOffsetArrays->resize(writerCohortSize);
+        }
     }
     (*m_MetadataBaseAddrs)[WriterRank] = BaseData;
+
+    size_t JoinedDimenTotal = 0;
+    for (int i = 0; i < Control->ControlCount; i++)
+    {
+        size_t FieldOffset = ControlFields[i].FieldOffset;
+        BP5VarRec *VarRec = ControlFields[i].VarRec;
+        void *field_data = (char *)BaseData + FieldOffset;
+        if (!BP5BitfieldTest((BP5MetadataInfoStruct *)BaseData, i))
+        {
+            continue;
+        }
+        if (ControlFields[i].OrigShapeID == ShapeID::JoinedArray)
+        {
+            MetaArrayRec *meta_base = (MetaArrayRec *)field_data;
+            JoinedDimenTotal += meta_base->DBCount;
+            if (VarRec->JoinedDimen == SIZE_MAX)
+            {
+                for (size_t i = 0; i < meta_base->Dims; i++)
+                {
+                    if (meta_base->Shape[i] == JoinedDim)
+                    {
+                        VarRec->JoinedDimen = i;
+                    }
+                }
+            }
+        }
+    }
+
+    //  Allocate memory to hold new offset values for Joined Arrays
+    size_t CurJoinedDimenOffset = 0;
+    size_t *JoinedDimenOffsetArray = NULL;
+    if (JoinedDimenTotal)
+        JoinedDimenOffsetArray = (size_t *)malloc(
+            JoinedDimenTotal * writerCohortSize * sizeof(size_t));
+
+    // store this away so it can be deallocated later
+    (*m_JoinedDimenOffsetArrays)[WriterRank] = JoinedDimenOffsetArray;
 
     for (int i = 0; i < Control->ControlCount; i++)
     {
@@ -735,7 +798,8 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             }
         }
         if ((ControlFields[i].OrigShapeID == ShapeID::GlobalArray) ||
-            (ControlFields[i].OrigShapeID == ShapeID::LocalArray))
+            (ControlFields[i].OrigShapeID == ShapeID::LocalArray) ||
+            (ControlFields[i].OrigShapeID == ShapeID::JoinedArray))
         {
             MetaArrayRec *meta_base = (MetaArrayRec *)field_data;
             size_t BlockCount =
@@ -747,11 +811,15 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                  * switcheroo */
                 ReverseDimensions(meta_base->Count, meta_base->Dims,
                                   BlockCount);
-                if (ControlFields[i].OrigShapeID == ShapeID::GlobalArray)
+                if ((ControlFields[i].OrigShapeID == ShapeID::GlobalArray) ||
+                    (ControlFields[i].OrigShapeID == ShapeID::JoinedArray))
                 {
                     ReverseDimensions(meta_base->Shape, meta_base->Dims, 1);
-                    ReverseDimensions(meta_base->Offsets, meta_base->Dims,
-                                      BlockCount);
+                    if (ControlFields[i].OrigShapeID == ShapeID::GlobalArray)
+                    {
+                        ReverseDimensions(meta_base->Offsets, meta_base->Dims,
+                                          BlockCount);
+                    }
                 }
             }
             if ((WriterRank == 0) || (VarRec->GlobalDims == NULL))
@@ -759,6 +827,52 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 // use the shape from rank 0 (or first non-NULL)
                 VarRec->GlobalDims = meta_base->Shape;
             }
+            if (ControlFields[i].OrigShapeID == ShapeID::JoinedArray)
+            {
+                // setup Offsets
+                meta_base->Offsets =
+                    &JoinedDimenOffsetArray[CurJoinedDimenOffset];
+                CurJoinedDimenOffset += meta_base->DBCount;
+
+                for (size_t b = 0; b < BlockCount; b++)
+                {
+                    size_t PreviousJoinedOffset = 0;
+                    if (VarRec->LastJoinedShape != NULL)
+                    {
+                        // Offset of this new block is the prior total size,
+                        // stored in Shape
+                        PreviousJoinedOffset =
+                            VarRec->LastJoinedShape[VarRec->JoinedDimen];
+                    }
+                    else
+                    {
+                        // We're going to track the accumulated Joined Shape in
+                        // whatever Shape metadata entry we selected for
+                        // GlobalDims (might be rank 0, might be other)
+                        VarRec->LastJoinedShape = VarRec->GlobalDims;
+                        // overwrite the JoinedDimen value in that entry
+                        VarRec->LastJoinedShape[VarRec->JoinedDimen] = 0;
+                    }
+                    VarRec->LastJoinedShape[VarRec->JoinedDimen] +=
+                        meta_base->Count[(b * meta_base->Dims) +
+                                         VarRec->JoinedDimen];
+                    for (size_t i = 0; i < meta_base->Dims; i++)
+                    {
+                        if (i == VarRec->JoinedDimen)
+                        {
+                            meta_base->Offsets[(b * meta_base->Dims) + i] =
+                                PreviousJoinedOffset;
+                        }
+                        else
+                        {
+                            meta_base->Offsets[(b * meta_base->Dims) + i] = 0;
+                        }
+                    }
+                    VarRec->LastJoinedOffset =
+                        &meta_base->Offsets[(b * meta_base->Dims)];
+                }
+            }
+
             if (!VarRec->Variable)
             {
                 VarRec->Variable = ArrayVarSetup(
@@ -832,6 +946,27 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             static_cast<VariableBase *>(VarRec->Variable)
                 ->m_AvailableStepsCount++;
             VarRec->LastTSAdded = Step;
+        }
+    }
+    if (WriterRank == (m_CurrentWriterCohortSize - 1))
+    {
+        // do step finalization procedures
+        if (!m_RandomAccessMode)
+        {
+            for (auto RecPair : VarByKey)
+            {
+                if (RecPair.second->Variable != NULL)
+                    if (RecPair.second->OrigShapeID == ShapeID::JoinedArray)
+                    {
+                        auto VarRec = RecPair.second;
+                        VariableBase *Var =
+                            static_cast<VariableBase *>(VarRec->Variable);
+                        for (size_t i = 0; i < VarRec->DimCount; i++)
+                        {
+                            Var->m_Shape[i] = VarRec->GlobalDims[i];
+                        }
+                    }
+            }
         }
     }
 }
@@ -1249,7 +1384,8 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
     }
     MemorySpace MemSpace = variable.GetMemorySpace(DestData);
     if ((variable.m_SelectionType == adios2::SelectionType::BoundingBox) &&
-        (variable.m_ShapeID == ShapeID::GlobalArray))
+        ((variable.m_ShapeID == ShapeID::GlobalArray) ||
+         (variable.m_ShapeID == ShapeID::JoinedArray)))
     {
         BP5ArrayRequest Req;
         Req.VarRec = VarRec;
@@ -2112,7 +2248,8 @@ bool BP5Deserializer::VarShape(const VariableBase &Var, const size_t RelStep,
                                Dims &Shape) const
 {
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
-    if (VarRec->OrigShapeID != ShapeID::GlobalArray)
+    if (!((VarRec->OrigShapeID == ShapeID::GlobalArray) ||
+          (VarRec->OrigShapeID == ShapeID::JoinedArray)))
     {
         return false;
     }
@@ -2151,6 +2288,7 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
 {
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
     if ((VarRec->OrigShapeID == ShapeID::LocalArray) ||
+        (VarRec->OrigShapeID == ShapeID::JoinedArray) ||
         (VarRec->OrigShapeID == ShapeID::GlobalArray))
     {
         if (VarRec->MinMaxOffset == SIZE_MAX)
@@ -2174,6 +2312,7 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
     for (size_t RelStep = StartStep; RelStep < StopStep; RelStep++)
     {
         if ((VarRec->OrigShapeID == ShapeID::LocalArray) ||
+            (VarRec->OrigShapeID == ShapeID::JoinedArray) ||
             (VarRec->OrigShapeID == ShapeID::GlobalArray))
         {
             for (size_t WriterRank = 0; WriterRank < writerCohortSize;

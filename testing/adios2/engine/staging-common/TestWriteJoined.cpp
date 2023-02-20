@@ -111,6 +111,8 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         }
         if (mpiRank == 0)
         {
+            std::cout << "Writer Generating " << nTotalRows[step] << " in total"
+                      << std::endl;
             writer.Put(rows_var, nTotalRows[step]);
         }
         for (int block = 0; block < nblocks; ++block)

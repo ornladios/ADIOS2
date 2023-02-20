@@ -90,6 +90,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         int Nrows;
         reader.Get(rows_var, Nrows);
+        std::cout << "Reader expecting " << Nrows << std::endl;
         EXPECT_EQ(var.Shape()[0], Nrows);
         EXPECT_EQ(var.Shape()[1], Ncols);
 
