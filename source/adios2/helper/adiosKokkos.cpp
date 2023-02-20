@@ -95,7 +95,16 @@ bool IsGPUbuffer(const void *ptr)
 
 void KokkosFinalize() { Kokkos::finalize(); }
 
-void KokkosInit() { Kokkos::initialize(); }
+void KokkosInit()
+{
+    Kokkos::InitializationSettings settings;
+#ifdef ADIOS2_HAVE_KOKKOS_CUDA
+    int device_id;
+    cudaGetDevice(&device_id);
+    settings.set_device_id(device_id);
+#endif
+    Kokkos::initialize(settings);
+}
 
 bool KokkosIsInitialized() { return Kokkos::is_initialized(); }
 
