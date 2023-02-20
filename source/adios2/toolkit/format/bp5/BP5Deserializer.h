@@ -102,6 +102,9 @@ private:
         void *Variable = NULL;
         char *VarName = NULL;
         size_t DimCount = 0;
+        size_t JoinedDimen = SIZE_MAX;
+        size_t *LastJoinedOffset = NULL;
+        size_t *LastJoinedShape = NULL;
         ShapeID OrigShapeID;
         core::StructDefinition *Def = nullptr;
         core::StructDefinition *ReaderDef = nullptr;
@@ -170,12 +173,17 @@ private:
         nullptr; // may be a pointer into MetadataBaseArray or m_FreeableMBA
     std::vector<void *> *m_FreeableMBA = nullptr;
 
+    std::vector<void *> *m_JoinedDimenOffsetArrays = nullptr;
+
     // for random access mode, for each timestep, for each writerrank, what
     // metameta info applies to the metadata
     std::vector<std::vector<ControlInfo *>> m_ControlArray;
     // for random access mode, for each timestep, for each writerrank, base
     // address of the metadata
     std::vector<std::vector<void *> *> MetadataBaseArray;
+    // for random access mode, for each timestep, for each writerrank, base
+    // address of the joined dim arrays
+    std::vector<std::vector<void *> *> JoinedDimArray;
 
     ControlInfo *ControlBlocks = nullptr;
     ControlInfo *GetPriorControl(FMFormat Format);

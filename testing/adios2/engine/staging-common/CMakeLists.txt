@@ -235,8 +235,6 @@ endif()
 #  BP5 tests
 if(ADIOS2_HAVE_BP5)
     set (BP5_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
-    # BP5 doesn't do Joined
-    list (FILTER BP5_TESTS EXCLUDE REGEX "Joined.*")
     # Delayed reader not worth testing on file engines
     list (FILTER BP5_TESTS EXCLUDE REGEX "DelayedReader")
     # Discard not a feature of BP5
