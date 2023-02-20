@@ -95,7 +95,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         nTotalRows[step] = nMyTotalRows[step];
 #if ADIOS2_USE_MPI
         MPI_Allreduce(&(nMyTotalRows[step]), &(nTotalRows[step]), 1, MPI_INT,
-                      MPI_SUM, MPI_COMM_WORLD);
+                      MPI_SUM, testComm);
 #endif
 
         if (!mpiRank)

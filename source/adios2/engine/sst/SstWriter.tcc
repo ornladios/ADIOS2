@@ -52,6 +52,12 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
             Start = variable.m_Start.data();
             Count = variable.m_Count.data();
         }
+        else if (variable.m_ShapeID == ShapeID::JoinedArray)
+        {
+            DimCount = variable.m_Shape.size();
+            Shape = variable.m_Shape.data();
+            Count = variable.m_Count.data();
+        }
         else if (variable.m_ShapeID == ShapeID::LocalArray)
         {
             DimCount = variable.m_Count.size();
