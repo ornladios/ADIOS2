@@ -833,6 +833,13 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 meta_base->Offsets =
                     &JoinedDimenOffsetArray[CurJoinedDimenOffset];
                 CurJoinedDimenOffset += meta_base->DBCount;
+
+                std::cout << "Count array is ";
+                for (size_t b = 0; b < meta_base->DBCount; b++)
+                {
+                    std::cout << meta_base->Count[b] << ", ";
+                }
+                std::cout << std::endl;
                 for (size_t b = 0; b < BlockCount; b++)
                 {
                     size_t PreviousJoinedOffset = 0;
@@ -852,23 +859,27 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                         // overwrite the JoinedDimen value in that entry
                         VarRec->LastJoinedShape[VarRec->JoinedDimen] = 0;
                     }
+                    std::cout << "Adding count "
+                              << meta_base->Count[(b * meta_base->Dims) +
+                                                  VarRec->JoinedDimen]
+                              << " to Shape" << std::endl;
                     VarRec->LastJoinedShape[VarRec->JoinedDimen] +=
-                        meta_base->Count[(b * VarRec->DimCount) +
+                        meta_base->Count[(b * meta_base->Dims) +
                                          VarRec->JoinedDimen];
                     for (size_t i = 0; i < meta_base->Dims; i++)
                     {
                         if (i == VarRec->JoinedDimen)
                         {
-                            meta_base->Offsets[(b * VarRec->DimCount) + i] =
+                            meta_base->Offsets[(b * meta_base->Dims) + i] =
                                 PreviousJoinedOffset;
                         }
                         else
                         {
-                            meta_base->Offsets[(b * VarRec->DimCount) + i] = 0;
+                            meta_base->Offsets[(b * meta_base->Dims) + i] = 0;
                         }
                     }
                     VarRec->LastJoinedOffset =
-                        &meta_base->Offsets[(b * VarRec->DimCount)];
+                        &meta_base->Offsets[(b * meta_base->Dims)];
                 }
             }
 
