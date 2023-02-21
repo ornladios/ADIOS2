@@ -61,13 +61,6 @@ typedef enum
     adios2_true = 1,
 } adios2_bool;
 
-/* DEPRECATED: Debug mode will be removed in a future release */
-typedef enum
-{
-    adios2_debug_mode_off = 0,
-    adios2_debug_mode_on = 1,
-} adios2_debug_mode;
-
 typedef enum
 {
     adios2_constant_dims_false = 0,

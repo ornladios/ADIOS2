@@ -89,20 +89,12 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS2 components desc
    .. code-block:: fortran
 
       ! MPI versions
-      ! Debug mode = ON (.true.) by default
       subroutine adios2_init(adios, comm, ierr)
       subroutine adios2_init(adios, config_file, comm, ierr)
       
-      subroutine adios2_init(adios, comm, adios2_debug_mode, ierr)
-      subroutine adios2_init(adios, config_file, comm, adios2_debug_mode, ierr)
-      
       ! Non-MPI serial versions
-      ! Debug mode = ON (.true.) by default
       subroutine adios2_init(adios, ierr)
       subroutine adios2_init(adios, config_file, ierr) 
-      
-      subroutine adios2_init(adios, adios2_debug_mode, ierr)
-      subroutine adios2_init(adios, config_file, adios2_debug_mode, ierr)
    
       ! WHERE:
       
