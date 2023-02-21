@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
 
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
+    bool success = false;
     try
     {
         /** ADIOS class factory of IO class objects */
@@ -108,6 +109,7 @@ int main(int argc, char *argv[])
 
         /** Engine becomes unreachable after this*/
         reader.Close();
+        success = true;
     }
     catch (std::invalid_argument &e)
     {
@@ -125,5 +127,5 @@ int main(int argc, char *argv[])
         std::cout << e.what() << "\n";
     }
 
-    return 0;
+    return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }
