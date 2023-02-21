@@ -169,7 +169,7 @@ adios_option(Catalyst   "Enable support for in situ visualization plugin using P
 adios_option(AWSSDK     "Enable support for S3 compatible storage using AWS SDK's S3 module" AUTO)
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
-if(ADIOS2_HAVE_CUDA)
+if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
     set(CMAKE_CUDA_STANDARD 11)
     set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
     if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
