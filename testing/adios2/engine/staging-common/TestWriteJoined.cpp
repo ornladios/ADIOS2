@@ -95,7 +95,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         nTotalRows[step] = nMyTotalRows[step];
 #if ADIOS2_USE_MPI
         MPI_Allreduce(&(nMyTotalRows[step]), &(nTotalRows[step]), 1, MPI_INT,
-                      MPI_SUM, MPI_COMM_WORLD);
+                      MPI_SUM, testComm);
 #endif
 
         if (!mpiRank)
@@ -111,6 +111,8 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         }
         if (mpiRank == 0)
         {
+            std::cout << "Writer Generating " << nTotalRows[step] << " in total"
+                      << std::endl;
             writer.Put(rows_var, nTotalRows[step]);
         }
         for (int block = 0; block < nblocks; ++block)

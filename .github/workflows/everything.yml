@@ -97,7 +97,7 @@ jobs:
       image: ornladios/adios2:ci-spack-el8-${{ matrix.compiler }}-${{ matrix.parallel }}
       options: --shm-size=1g
       env:
-        GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+        GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.gpu_backend }}${{ matrix.compiler }}-${{ matrix.parallel }}
         GH_YML_BASE_OS: Linux
         GH_YML_MATRIX_OS: ${{ matrix.os }}
         GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
@@ -113,6 +113,11 @@ jobs:
           - os: el8
             compiler: cuda
             parallel: serial
+            constrains: build_only
+          - os: el8
+            compiler: cuda
+            parallel: serial
+            gpu_backend: kokkos
             constrains: build_only
           - os: el8
             compiler: gcc10

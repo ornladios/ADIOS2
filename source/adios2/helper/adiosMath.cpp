@@ -18,12 +18,29 @@
 #include <numeric>    //std::accumulate
 #include <utility>    //std::pair
 
+#include "adios2/common/ADIOSMacros.h"
+#include "adios2/helper/adiosGPUFunctions.h"
 #include "adios2/helper/adiosString.h" //DimsToString
 
 namespace adios2
 {
 namespace helper
 {
+
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+#define declare_type(T)                                                        \
+    template void GetGPUMinMax(const T *values, const size_t size, T &min,     \
+                               T &max);
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+template <typename T>
+void GetGPUMinMax(const T *values, const size_t size, T &min, T &max) noexcept
+{
+    if (!std::is_same<T, long double>::value)
+        helper::GPUMinMax(values, size, min, max);
+}
+#endif
 
 size_t GetTotalSize(const Dims &dimensions, const size_t elementSize) noexcept
 {

@@ -210,7 +210,7 @@ gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .FileStream
   WORKING_DIRECTORY ${FS_DIR} EXTRA_ARGS "FileStream"
 )
 
-if(ADIOS2_HAVE_CUDA)
+if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
   gtest_add_tests_helper(WriteReadCuda MPI_ALLOW BP Engine.BP. .BP4
     WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
   )

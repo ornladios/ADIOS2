@@ -41,6 +41,12 @@ void BP5Writer::PutCommonSpan(Variable<T> &variable,
         Start = variable.m_Start.data();
         Count = variable.m_Count.data();
     }
+    else if (variable.m_ShapeID == ShapeID::JoinedArray)
+    {
+        Shape = variable.m_Shape.data();
+        DimCount = variable.m_Count.size();
+        Count = variable.m_Count.data();
+    }
     else if (variable.m_ShapeID == ShapeID::LocalArray)
     {
         DimCount = variable.m_Count.size();

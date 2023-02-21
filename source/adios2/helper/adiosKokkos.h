@@ -3,8 +3,10 @@
  * accompanying file Copyright.txt for details.
  */
 
-#ifndef ADIOS2_HELPER_ADIOSCUDA_H_
-#define ADIOS2_HELPER_ADIOSCUDA_H_
+#ifndef ADIOS2_HELPER_ADIOSKOKKOS_H_
+#define ADIOS2_HELPER_ADIOSKOKKOS_H_
+
+#include <cstddef>
 
 namespace adios2
 {
@@ -31,9 +33,12 @@ ADIOS2_EXPORT void MemcpyGPUToBuffer(char *dst, const char *GPUbuffer,
 ADIOS2_EXPORT void MemcpyBufferToGPU(char *GPUbuffer, const char *src,
                                      size_t byteCount);
 
+ADIOS2_EXPORT void KokkosFinalize();
+ADIOS2_EXPORT void KokkosInit();
+ADIOS2_EXPORT bool KokkosIsInitialized();
 ADIOS2_EXPORT bool IsGPUbuffer(const void *ptr);
 
 } // helper
 } // adios2
 
-#endif /* ADIOS2_HELPER_ADIOSCUDA_H_ */
+#endif /* ADIOS2_HELPER_ADIOSKOKKOS_H_ */

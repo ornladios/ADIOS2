@@ -1756,6 +1756,11 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
     {
         Count = variable.m_Count.data();
     }
+    else if (variable.m_ShapeID == ShapeID::JoinedArray)
+    {
+        Count = variable.m_Count.data();
+        Shape = variable.m_Shape.data();
+    }
 
     size_t ObjSize;
     if (variable.m_Type == DataType::Struct)

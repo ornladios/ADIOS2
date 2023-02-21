@@ -85,6 +85,19 @@ public:
     bool isAWSInitialized = false;
 #endif
 
+#ifdef ADIOS2_HAVE_KOKKOS
+    void Init_Kokkos_API()
+    {
+        if (isKokkosInitialized)
+            return;
+        if (helper::KokkosIsInitialized())
+            return;
+        helper::KokkosInit();
+        std::atexit(helper::KokkosFinalize);
+        isKokkosInitialized = true;
+    }
+    bool isKokkosInitialized = false;
+#endif
     bool wasGlobalShutdown = false;
 };
 
@@ -129,6 +142,9 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
             YAMLInit(configFile);
         }
     }
+#ifdef ADIOS2_HAVE_KOKKOS
+    m_GlobalServices.Init_Kokkos_API();
+#endif
 }
 
 ADIOS::ADIOS(const std::string configFile, const std::string hostLanguage)

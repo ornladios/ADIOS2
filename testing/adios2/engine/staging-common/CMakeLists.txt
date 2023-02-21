@@ -172,15 +172,15 @@ MutateTestSet( COMM_MIN_SST_TESTS "CommMin" writer "CPCommPattern=Min" "${BASIC_
 # temporarily remove PreciousTimestep CommPeer tests
 list (REMOVE_ITEM COMM_PEER_SST_TESTS "PreciousTimestep")
 
-# no SSE engine does Joined
-list (FILTER COMM_MIN_SST_TESTS EXCLUDE REGEX "Joined*")
-
 MutateTestSet( FFS_SST_TESTS "FFS" writer "MarshalMethod=FFS" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
-MutateTestSet( FFS_SST_TESTS "BP5" writer "MarshalMethod=BP5" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
+MutateTestSet( BP5_SST_TESTS "BP5" writer "MarshalMethod=BP5" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 MutateTestSet( BP_SST_TESTS "BP" writer "MarshalMethod=BP" "${COMM_MIN_SST_TESTS};${COMM_PEER_SST_TESTS}" )
 
+# no SSE engine does Joined
+list (FILTER BP_SST_TESTS EXCLUDE REGEX "Joined*")
+
 set (SST_TESTS "")
-LIST (APPEND SST_TESTS ${FFS_SST_TESTS} ${BP_SST_TESTS})
+LIST (APPEND SST_TESTS ${BP5_SST_TESTS} ${BP_SST_TESTS})
 
 # Zero Data tests are unreliable with SST and BP marshaling
 list (FILTER SST_TESTS EXCLUDE REGEX "2x1ZeroData.*BP")
@@ -235,8 +235,6 @@ endif()
 #  BP5 tests
 if(ADIOS2_HAVE_BP5)
     set (BP5_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
-    # BP5 doesn't do Joined
-    list (FILTER BP5_TESTS EXCLUDE REGEX "Joined.*")
     # Delayed reader not worth testing on file engines
     list (FILTER BP5_TESTS EXCLUDE REGEX "DelayedReader")
     # Discard not a feature of BP5

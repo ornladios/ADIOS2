@@ -81,7 +81,7 @@ void ZFPRateCUDA(const std::string rate)
             cuda_increment(Nx, 1, 0, gpuSimData, INCREMENT);
 
             bpWriter.BeginStep();
-            var_r32.SetMemorySpace(adios2::MemorySpace::CUDA);
+            var_r32.SetMemorySpace(adios2::MemorySpace::GPU);
             bpWriter.Put(var_r32, gpuSimData);
             bpWriter.EndStep();
         }
