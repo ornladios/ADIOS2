@@ -1,0 +1,17 @@
+# KW's stuff
+**/CMakeLists.txt        @vicentebolea @caitlinross
+*.cmake                  @vicentebolea @caitlinross
+
+# Vicente's stuff
+*.sh @vicentebolea
+*.bash @vicentebolea
+*.in @vicentebolea
+*.yml @vicentebolea
+*.yaml @vicentebolea
+*.in @vicentebolea
+*.json @vicentebolea
+*.txt  @vicentebolea
+scripts/ @vicentebolea
+.github/ @vicentebolea
+.circleci/ @vicentebolea
+source/adios2/toolkit/sst/dp/mpi_dp.c @vicentebolea
