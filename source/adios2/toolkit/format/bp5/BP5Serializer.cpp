@@ -11,7 +11,6 @@
 #include "adios2/core/IO.h"
 #include "adios2/core/VariableBase.h"
 #include "adios2/helper/adiosFunctions.h"
-#include "adios2/helper/adiosMemory.h"
 #include "adios2/toolkit/format/buffer/ffs/BufferFFS.h"
 
 #include <stddef.h> // max_align_t
@@ -600,15 +599,14 @@ static void GetMinMax(const void *Data, size_t ElemCount, const DataType Type,
     if (Type == DataType::Struct)
     {
     }
-#ifdef ADIOS2_HAVE_CUDA
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
 #define pertype(T, N)                                                          \
-    else if (MemSpace == MemorySpace::CUDA &&                                  \
-             Type == helper::GetDataType<T>())                                 \
+    else if (MemSpace == MemorySpace::GPU && Type == helper::GetDataType<T>()) \
     {                                                                          \
         const T *values = (const T *)Data;                                     \
         if (!std::is_same<T, long double>::value)                              \
-            helper::CUDAMinMax(values, ElemCount, MinMax.MinUnion.field_##N,   \
-                               MinMax.MaxUnion.field_##N);                     \
+            helper::GPUMinMax(values, ElemCount, MinMax.MinUnion.field_##N,    \
+                              MinMax.MaxUnion.field_##N);                      \
     }
     ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(pertype)
 #undef pertype

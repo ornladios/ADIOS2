@@ -149,9 +149,9 @@ void BP4Serializer::PutSpanMetadata(
             helper::DivideBlock(blockInfo.Count, m_Parameters.StatsBlockSize,
                                 helper::BlockDivisionMethod::Contiguous);
         // set stats MinMaxs with the correct size
-        helper::GetMinMaxSubblocks(span.Data(), blockInfo.Count,
-                                   stats.SubBlockInfo, stats.MinMaxs, stats.Min,
-                                   stats.Max, m_Parameters.Threads);
+        helper::GetMinMaxSubblocks(
+            span.Data(), blockInfo.Count, stats.SubBlockInfo, stats.MinMaxs,
+            stats.Min, stats.Max, m_Parameters.Threads, blockInfo.MemSpace);
         m_Profiler.Stop("minmax");
 
         // Put min/max blocks in variable index
@@ -335,16 +335,6 @@ BP4Serializer::GetBPStats(const bool singleValue,
     stats.Step = m_MetadataSet.TimeStep;
     stats.FileIndex = GetFileIndex();
 
-#ifdef ADIOS2_HAVE_CUDA
-    if (blockInfo.MemSpace == MemorySpace::CUDA)
-    {
-        const size_t size = helper::GetTotalSize(blockInfo.Count);
-        if (!std::is_same<T, long double>::value)
-            helper::CUDAMinMax(blockInfo.Data, size, stats.Min, stats.Max);
-        return stats;
-    }
-#endif
-
     // support span
     if (blockInfo.Data == nullptr && m_Parameters.StatsLevel > 0)
     {
@@ -354,9 +344,9 @@ BP4Serializer::GetBPStats(const bool singleValue,
             helper::DivideBlock(blockInfo.Count, m_Parameters.StatsBlockSize,
                                 helper::BlockDivisionMethod::Contiguous);
         // set stats MinMaxs with the correct size
-        helper::GetMinMaxSubblocks(blockInfo.Data, blockInfo.Count,
-                                   stats.SubBlockInfo, stats.MinMaxs, stats.Min,
-                                   stats.Max, m_Parameters.Threads);
+        helper::GetMinMaxSubblocks(
+            blockInfo.Data, blockInfo.Count, stats.SubBlockInfo, stats.MinMaxs,
+            stats.Min, stats.Max, m_Parameters.Threads, blockInfo.MemSpace);
         return stats;
     }
 
@@ -378,14 +368,16 @@ BP4Serializer::GetBPStats(const bool singleValue,
                 helper::BlockDivisionMethod::Contiguous);
             helper::GetMinMaxSubblocks(
                 blockInfo.Data, blockInfo.Count, stats.SubBlockInfo,
-                stats.MinMaxs, stats.Min, stats.Max, m_Parameters.Threads);
+                stats.MinMaxs, stats.Min, stats.Max, m_Parameters.Threads,
+                blockInfo.MemSpace);
         }
         else
         {
             // non-contiguous memory min/max
             helper::GetMinMaxSelection(blockInfo.Data, blockInfo.MemoryCount,
                                        blockInfo.MemoryStart, blockInfo.Count,
-                                       isRowMajor, stats.Min, stats.Max);
+                                       isRowMajor, stats.Min, stats.Max,
+                                       blockInfo.MemSpace);
         }
         m_Profiler.Stop("minmax");
     }
