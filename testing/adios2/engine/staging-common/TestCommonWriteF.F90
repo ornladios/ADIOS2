@@ -105,7 +105,7 @@ program TestSstWrite
   count_time = (/ 1 /)
 
 #if ADIOS2_USE_MPI
-  !Create adios handler passing the communicator, debug mode and error flag
+  !Create adios handler passing the communicator and error flag
   call adios2_init(adios, testComm, ierr)
 #else
   call adios2_init(adios, ierr)
