@@ -81,3 +81,14 @@ If the ``SetMemorySpace`` function is used, the ADIOS2 library will not detect a
 
 Underneath, ADIOS2 uses the backend used at build time to transfer the data. If ADIOS2 was build with CUDA, only CUDA buffers can be provided. If ADIOS2 was build with Kokkos (with CUDA enabled) only CUDA buffers can be provided. If ADIOS2 was build with Kokkos (with HIP enabled) only HIP buffers can be provided.
 
+Using Kokkos buffers
+--------------------------
+
+ADIOS2 supports GPU buffers provided in the form of ``Kokkos::View`` directly in the Put/Get calls. The memory space can be automatically detected or provided by the user, in the same way as in the CUDA example.
+
+.. code-block:: c++
+
+   Kokkos::View<float *, Kokkos::CudaSpace> gpuSimData("data", N);
+   bpWriter.Put(data, gpuSimData);
+
+If the CUDA backend is being used (and not Kokkos) to enable GPU support in ADIOS2, Kokkos applications can still directly pass ``Kokkos::View`` as long as the correct external header is included: ``#include <adios2/cxx11/KokkosView.h>``.
