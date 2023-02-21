@@ -304,6 +304,10 @@ add_subdirectory(plugins)
 #------------------------------------------------------------------------------#
 option(ADIOS2_BUILD_EXAMPLES "Build examples" ON)
 option(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL "Build experimental examples" OFF)
+
+cmake_dependent_option(ADIOS2_BUILD_EXAMPLE_KOKKOSVIEW
+  "Build KokkosView example" ON "ADIOS2_HAVE_Kokkos" OFF)
+
 if(ADIOS2_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()

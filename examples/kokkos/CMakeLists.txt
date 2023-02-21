@@ -3,6 +3,10 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+if(NOT Kokkos_FOUND)
+  find_package(Kokkos REQUIRED)
+endif()
+
 add_executable(KokkosWriteRead kokkosWriteRead.cpp)
 target_link_libraries(KokkosWriteRead PUBLIC adios2::cxx11 Kokkos::kokkos)
 
