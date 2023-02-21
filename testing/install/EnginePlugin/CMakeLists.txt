@@ -23,6 +23,9 @@ add_library(PluginEngineRead
 )
 target_link_libraries(PluginEngineRead adios2::cxx11 adios2::core)
 
+file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}" plugin_path)
+set(ENV{ADIOS2_PLUGIN_PATH} "${plugin_path}")
+
 # add write test
 add_executable(adios_plugin_engine_write_test
   ../../../examples/plugins/engine/examplePluginEngine_write.cpp
