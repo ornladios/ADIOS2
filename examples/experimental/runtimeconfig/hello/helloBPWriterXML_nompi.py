@@ -14,7 +14,7 @@ import adios2
 myArray = numpy.array([0., 1., 2., 3., 4., 5., 6., 7., 8., 9.])
 Nx = myArray.size
 
-# ADIOS config file, debug mode
+# ADIOS config file
 adios = adios2.ADIOS("helloBPWriter.xml")
 
 # ADIOS IO, name must be the same as in helloBPWriter.xml for runtime settings

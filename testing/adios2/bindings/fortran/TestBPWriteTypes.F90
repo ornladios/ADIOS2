@@ -60,7 +60,7 @@ program TestBPWriteTypes
      if( bpWriter%valid .eqv. .true. ) stop 'Invalid engine default'
 
 
-     ! Create adios handler passing the communicator, debug mode and error flag
+     ! Create adios handler passing the communicator and error flag
 #if ADIOS2_USE_MPI
      call adios2_init(adios, MPI_COMM_WORLD, ierr)
 #else

@@ -27,9 +27,7 @@ module adios2_adios_init_serial_mod
 #ifndef ADIOS2_HAVE_FORTRAN_SUBMODULES
     interface adios2_init
         module procedure adios2_init_serial
-        module procedure adios2_init_debug_serial
         module procedure adios2_init_config_serial
-        module procedure adios2_init_config_debug_serial
     end interface
 #endif
     external adios2_init_config_serial_f2c
@@ -44,16 +42,6 @@ contains
         call adios2_init_config_serial(adios, char(0), ierr)
     end subroutine
 
-    ADIOS2_MODULE_PROCEDURE subroutine adios2_init_debug_serial( &
-            adios, adios2_debug_mode, ierr)
-        type(adios2_adios), intent(out) :: adios
-        logical, intent(in) :: adios2_debug_mode
-        integer, intent(out) :: ierr
-
-        UNUSED_ARG(adios2_debug_mode)
-        call adios2_init_serial(adios, ierr)
-    end subroutine
-
     ADIOS2_MODULE_PROCEDURE subroutine adios2_init_config_serial( &
             adios, config_file, ierr)
         type(adios2_adios), intent(out) :: adios
@@ -63,17 +51,6 @@ contains
 
         call adios2_init_config_serial_f2c(adios%f2c, config_file, ierr)
         if( ierr == 0 ) adios%valid = .true.
-    end subroutine
-
-    ADIOS2_MODULE_PROCEDURE subroutine adios2_init_config_debug_serial( &
-            adios, config_file, adios2_debug_mode, ierr)
-        type(adios2_adios), intent(out) :: adios
-        character*(*), intent(in) :: config_file
-        logical, intent(in) :: adios2_debug_mode
-        integer, intent(out) :: ierr
-
-        UNUSED_ARG(adios2_debug_mode)
-        call adios2_init_config_serial(adios, config_file, ierr)
     end subroutine
 
 #ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES

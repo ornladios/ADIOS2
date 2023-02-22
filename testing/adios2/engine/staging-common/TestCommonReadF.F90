@@ -85,13 +85,13 @@ program TestSstRead
   call MPI_Comm_rank(testComm, irank, ierr)
   call MPI_Comm_size(testComm, isize, ierr)
 
-  !Create adios handler passing the communicator, debug mode and error flag
+  !Create adios handler passing the communicator and error flag
   call adios2_init(adios, testComm, ierr)
 #else
   irank = 0;
   isize = 1;
 
-  !Create adios handler passing the debug mode and error flag
+  !Create adios handler passing the error flag
   call adios2_init(adios, ierr)
 #endif
   !!!!!!!!!!!!!!!!!!!!!!!!! READER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

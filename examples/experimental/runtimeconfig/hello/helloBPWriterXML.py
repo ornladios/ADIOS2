@@ -19,7 +19,7 @@ size = comm.Get_size()
 myArray = numpy.array([0., 1., 2., 3., 4., 5., 6., 7., 8., 9.])
 Nx = myArray.size
 
-# ADIOS config file, MPI communicator, debug mode
+# ADIOS config file, MPI communicator
 adios = adios2.ADIOS("helloBPWriter.xml", comm)
 
 # ADIOS IO, name must be the same as in helloBPWriter.xml for runtime settings

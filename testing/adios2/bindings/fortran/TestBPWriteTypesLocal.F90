@@ -41,7 +41,7 @@
      count_dims(1) = inx
      changing_count_dims(1) = inx
 
-     ! Create adios handler passing the communicator, debug mode and error flag
+     ! Create adios handler passing the communicator and error flag
      call adios2_init(adios, MPI_COMM_WORLD, ierr)
 
      !!!!!!!!!!!!!!!!!!!!!!!!! WRITER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

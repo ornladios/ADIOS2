@@ -11,10 +11,6 @@
 module adios2_parameters_mod
     implicit none
 
-    ! DEPRECATED Debug mode
-    logical, parameter :: adios2_debug_mode_on = .true.
-    logical, parameter :: adios2_debug_mode_off = .false.
-
     ! Types
     integer, parameter :: adios2_type_unknown = -1
 
