@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=almalinux/almalinux:8
+ARG BASE_IMAGE=almalinux:8
 FROM $BASE_IMAGE
 
 RUN dnf upgrade -y && \
