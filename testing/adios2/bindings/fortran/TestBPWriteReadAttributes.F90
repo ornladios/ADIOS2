@@ -37,7 +37,7 @@ program TestBPWriteAttributes
     ! MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     call MPI_Init_thread(MPI_THREAD_MULTIPLE, provided, ierr)
 
-    ! Create adios handler passing the communicator, debug mode and error flag
+    ! Create adios handler passing the communicator and error flag
     call adios2_init(adios, MPI_COMM_WORLD, ierr)
 
     !!!!!!!!!!!!!!!!!!!!!!!!! WRITER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

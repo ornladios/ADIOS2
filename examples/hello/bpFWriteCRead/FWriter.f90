@@ -39,7 +39,7 @@ program FWriter
     count_dims(1) = inx
     count_dims(2) = iny
 
-    ! Create adios handler passing the communicator, debug mode and error flag
+    ! Create adios handler passing the communicator and error flag
     call adios2_init(adios, MPI_COMM_WORLD, ierr)
 
     ! Declare an IO process configuration inside adios

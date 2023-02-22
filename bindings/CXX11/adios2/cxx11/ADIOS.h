@@ -55,11 +55,6 @@ public:
      */
     ADIOS(MPI_Comm comm);
 
-    template <typename TDebugMode, enable_if_bool<TDebugMode> Enable = true>
-    ADIOS2_DEPRECATED ADIOS(MPI_Comm comm, TDebugMode) : ADIOS(comm)
-    {
-    }
-
     /**
      * Starting point for MPI apps. Creates an ADIOS object allowing a
      * runtime config file.
@@ -70,13 +65,6 @@ public:
      * @exception std::invalid_argument if user input is incorrect
      */
     ADIOS(const std::string &configFile, MPI_Comm comm);
-
-    template <typename TDebugMode, enable_if_bool<TDebugMode> Enable = true>
-    ADIOS2_DEPRECATED ADIOS(const std::string &configFile, MPI_Comm comm,
-                            TDebugMode)
-    : ADIOS(configFile, comm)
-    {
-    }
 
     /** extra constructor for R and other languages that use the
      * public C++ API but has data in column-major. Pass "" for configfile
@@ -90,13 +78,6 @@ public:
     ADIOS(const std::string &configFile, MPI_Comm comm,
           const std::string &hostLanguage);
 
-    template <typename TDebugMode, enable_if_bool<TDebugMode> Enable = true>
-    ADIOS2_DEPRECATED ADIOS(const std::string &configFile, MPI_Comm comm,
-                            const std::string &hostLanguage, TDebugMode)
-    : ADIOS(configFile, comm, hostLanguage)
-    {
-    }
-
 #endif
 
     /**
@@ -107,22 +88,11 @@ public:
      */
     ADIOS(const std::string &configFile);
 
-    template <typename TDebugMode, enable_if_bool<TDebugMode> Enable = true>
-    ADIOS2_DEPRECATED ADIOS(const std::string &configFile, TDebugMode)
-    : ADIOS(configFile)
-    {
-    }
-
     /**
      * Starting point for non-MPI apps. Creates an ADIOS object
      * @exception std::invalid_argument if user input is incorrect
      */
     ADIOS();
-
-    template <typename TDebugMode, enable_if_bool<TDebugMode> Enable = true>
-    ADIOS2_DEPRECATED ADIOS(TDebugMode) : ADIOS()
-    {
-    }
 
     /** extra constructor for R and other languages that use the
      * public C++ API but has data in column-major. Pass "" for configfile
@@ -134,13 +104,6 @@ public:
      *    e.g. adios2::ADIOS("", "Fortran", false);
      */
     ADIOS(const std::string &configFile, const std::string &hostLanguage);
-
-    template <typename TDebugMode, enable_if_bool<TDebugMode> Enable = true>
-    ADIOS2_DEPRECATED ADIOS(const std::string &configFile,
-                            const std::string &hostLanguage, TDebugMode)
-    : ADIOS(configFile, hostLanguage)
-    {
-    }
 
     /** object inspection true: valid object, false: invalid object */
     explicit operator bool() const noexcept;

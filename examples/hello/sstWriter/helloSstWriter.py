@@ -7,7 +7,7 @@ comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
-# ADIOS MPI Communicator, debug mode
+# ADIOS MPI Communicator
 adios = adios2.ADIOS(comm)
 
 # ADIOS IO
