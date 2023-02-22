@@ -37,7 +37,7 @@ When building ADIOS2 with CUDA enabled, the user is responsible with setting the
 Building with Kokkos enabled
 --------------------------
 
-The Kokkos library can be used to enable GPU within ADIOS2. Based on how Kokkos is build, either the CUDA or HIP backend will be enabled. Building with Kokkos requires ``-DADIOS2_USE_Kokkos=ON``. The user is not responsible to set the ``CMAKE_CUDA_ARCHITECTURES`` since it will be detected from the Kokkos installation.
+The Kokkos library can be used to enable GPU within ADIOS2. Based on how Kokkos is build, either the CUDA or HIP backend will be enabled. Building with Kokkos requires ``-DADIOS2_USE_Kokkos=ON``. The user is responsible to set the ``CMAKE_CUDA_ARCHITECTURES`` to the same architecture used when configuring the Kokkos library it links against.
 
 .. note::
     Kokkos version >= 3.7 is required to enable the GPU backend in ADIOS2
