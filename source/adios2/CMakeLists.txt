@@ -436,6 +436,8 @@ install(DIRECTORY toolkit/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/toolkit COMPONENT adios2_core-development
   FILES_MATCHING PATTERN "*/*.h"
   PATTERN "*/*.inl"
+  REGEX "sst/util" EXCLUDE
+  REGEX "sst/dp" EXCLUDE
 )
 
 # Library installation
