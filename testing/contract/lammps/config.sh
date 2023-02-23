@@ -15,5 +15,5 @@ cmake \
   -DBUILD_LIB=no \
   -DBUILD_DOC=no \
   -DLAMMPS_SIZES=smallbig \
-  -DPKG_USER-ADIOS=yes \
+  -DPKG_ADIOS=yes \
   ${source_dir}/cmake
