@@ -382,8 +382,8 @@ jobs:
             repo: ornladios/ADIOS2-Examples
             ref: master
           - code: lammps
-            repo: lammps/lammps
-            ref: patch_10Feb2021
+            repo: pnorbert/lammps
+            ref: fix-deprecated-adios-init
           - code: scorpio
             repo: E3SM-Project/scorpio
             ref: scorpio-v1.2.1
