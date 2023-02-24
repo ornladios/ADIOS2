@@ -376,17 +376,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        code: [examples, lammps, scorpio, tau]
+        code: [examples, lammps, tau]
         include:
           - code: examples
             repo: ornladios/ADIOS2-Examples
             ref: master
           - code: lammps
-            repo: lammps/lammps
-            ref: patch_10Feb2021
-          - code: scorpio
-            repo: E3SM-Project/scorpio
-            ref: scorpio-v1.2.1
+            repo: pnorbert/lammps
+            ref: fix-deprecated-adios-init
           - code: tau
             repo: ornladios/ADIOS2-Examples
             ref: master
