@@ -552,7 +552,7 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS2 components desc
    
    .. code-block:: fortran
    
-      subroutine adios2_remove_variable(io, ierr)
+      subroutine adios2_remove_all_variables(io, ierr)
         
       ! WHERE:
       
