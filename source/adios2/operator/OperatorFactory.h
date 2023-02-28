@@ -21,7 +21,7 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type,
                                        const Params &parameters);
 
 size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut,
-                  std::shared_ptr<Operator> op = nullptr);
+                  MemorySpace memSpace, std::shared_ptr<Operator> op = nullptr);
 
 } // end namespace core
 } // end namespace adios2

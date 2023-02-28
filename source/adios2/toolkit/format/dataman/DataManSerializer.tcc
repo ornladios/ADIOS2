@@ -252,7 +252,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 decompressBuffer.reserve(
                     helper::GetTotalSize(j.count, sizeof(T)));
                 core::Decompress(j.buffer->data() + j.position, j.size,
-                                 decompressBuffer.data());
+                                 decompressBuffer.data(), MemorySpace::Host);
                 decompressed = true;
                 input_data = decompressBuffer.data();
             }
