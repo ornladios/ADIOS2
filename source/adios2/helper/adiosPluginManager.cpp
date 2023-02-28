@@ -115,8 +115,15 @@ bool PluginManager::LoadPlugin(const std::string &pluginName,
     {
         return OpenPlugin(pluginName, pluginLibrary, "");
     }
-    auto pathsSplit =
-        adios2sys::SystemTools::SplitString(allPluginPaths, ':', false);
+
+#ifdef _WIN32
+    char platform_separator = ';';
+#else
+    char platform_separator = ':';
+#endif
+
+    auto pathsSplit = adios2sys::SystemTools::SplitString(
+        allPluginPaths, platform_separator, false);
 
     bool loaded = false;
     auto pathIt = pathsSplit.begin();
@@ -126,9 +133,11 @@ bool PluginManager::LoadPlugin(const std::string &pluginName,
         {
             loaded = OpenPlugin(pluginName, pluginLibrary, *pathIt);
         }
-        catch (...)
+        catch (std::exception &e)
         {
-            std::cout << "catch block\n";
+            helper::Log("Plugins", "PluginManager", "LoadPlugin",
+                        std::string("Exception caught: ") + e.what(),
+                        helper::LogMode::WARNING);
             loaded = false;
         }
         ++pathIt;

@@ -23,8 +23,11 @@ add_library(PluginEngineRead
 )
 target_link_libraries(PluginEngineRead adios2::cxx11 adios2::core)
 
-file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}" plugin_path)
-set(ENV{ADIOS2_PLUGIN_PATH} "${plugin_path}")
+if (WIN32)
+  file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/Debug" plugin_path)
+else()
+  set(plugin_path "${CMAKE_CURRENT_BINARY_DIR}")
+endif()
 
 # add write test
 add_executable(adios_plugin_engine_write_test
@@ -32,6 +35,9 @@ add_executable(adios_plugin_engine_write_test
 )
 target_link_libraries(adios_plugin_engine_write_test adios2::cxx11)
 add_test(NAME adios_plugin_engine_write_test COMMAND adios_plugin_engine_write_test)
+set_tests_properties(adios_plugin_engine_write_test PROPERTIES
+  ENVIRONMENT ADIOS2_PLUGIN_PATH=${plugin_path}
+  )
 
 # add read test
 add_executable(adios_plugin_engine_read_test
@@ -40,5 +46,7 @@ add_executable(adios_plugin_engine_read_test
 target_link_libraries(adios_plugin_engine_read_test adios2::cxx11)
 add_test(NAME adios_plugin_engine_read_test COMMAND adios_plugin_engine_read_test)
 set_tests_properties(adios_plugin_engine_read_test PROPERTIES
-    DEPENDS adios_plugin_engine_write_test)
+  ENVIRONMENT ADIOS2_PLUGIN_PATH=${plugin_path}
+  DEPENDS adios_plugin_engine_write_test
+)
 
