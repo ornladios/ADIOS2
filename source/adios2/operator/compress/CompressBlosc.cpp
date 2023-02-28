@@ -212,16 +212,18 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
         }
     }
 
+    headerSize = bufferOutOffset;
     if (useMemcpy)
     {
-        std::memcpy(bufferOut + bufferOutOffset, dataIn + inputOffset, sizeIn);
-        bufferOutOffset += sizeIn;
         headerPtr->SetNumChunks(0u);
+        bufferOutOffset = 0; // indicate that the operator was not applied
     }
 
     blosc2_destroy();
     return bufferOutOffset;
 }
+
+size_t CompressBlosc::GetHeaderSize() const { return headerSize; }
 
 size_t CompressBlosc::InverseOperate(const char *bufferIn, const size_t sizeIn,
                                      char *dataOut)

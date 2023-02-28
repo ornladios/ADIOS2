@@ -67,8 +67,11 @@ public:
 
     bool IsDataTypeValid(const DataType type) const final;
 
+    size_t GetHeaderSize() const;
+
 private:
     using bloscSize_t = int32_t;
+    size_t headerSize = 0;
 
     /** Decompress chunked data */
     size_t DecompressChunkedFormat(const char *bufferIn, const size_t sizeIn,

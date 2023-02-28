@@ -191,6 +191,10 @@ void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
                           const bool endianReverse = false,
                           const MemorySpace memSpace = MemorySpace::Host);
 
+size_t CopyMemoryWithOpHeader(const char *src, const Dims &blockCount,
+                              const DataType type, char *dest,
+                              size_t headerSize, const MemorySpace memSpace);
+
 template <class T>
 void CopyContiguousMemory(const char *src, const size_t stride, T *dest,
                           const bool endianReverse = false,
