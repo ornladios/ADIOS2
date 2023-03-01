@@ -85,20 +85,30 @@ void *H5VL_adios2_dataset_open(void *obj, const H5VL_loc_params_t *loc_params,
     return result;
 }
 
-herr_t H5VL_adios2_dataset_read(void *dset, hid_t mem_type_id,
-                                hid_t mem_space_id, hid_t file_space_id,
-                                hid_t plist_id, void *buf, void **req)
+herr_t H5VL_adios2_dataset_read(size_t count, void *dset_array[],
+                                hid_t mem_type_id_array[],
+                                hid_t mem_space_id_array[],
+                                hid_t file_space_id_array[], hid_t dxpl_id,
+                                void *buf_array[],
+                                void **req) // last parameter is not unused
+                                            // void *dset, hid_t mem_type_id,
+// hid_t mem_space_id, hid_t file_space_id,
+// hid_t plist_id, void *buf, void **req)
 {
-    REQUIRE_NOT_NULL_ERR(dset, -1);
-    H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)dset;
+    for (size_t i = 0; i < count; i++)
+    {
+        REQUIRE_NOT_NULL_ERR(dset_array[i], -1);
+        H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)(dset_array[i]);
 
-    H5VL_VarDef_t *var = (H5VL_VarDef_t *)(vol->m_ObjPtr);
+        H5VL_VarDef_t *var = (H5VL_VarDef_t *)(vol->m_ObjPtr);
 
-    var->m_HyperSlabID = file_space_id;
-    var->m_MemSpaceID = mem_space_id;
+        var->m_HyperSlabID = file_space_id_array[i];
+        var->m_MemSpaceID = mem_space_id_array[i];
 
-    var->m_Data = buf;
-    return gADIOS2ReadVar(var);
+        var->m_Data = buf_array[i];
+        gADIOS2ReadVar(var);
+    }
+    return 0;
 }
 
 herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_args_t *args,
@@ -130,30 +140,40 @@ herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_args_t *args,
     return 0;
 }
 
+herr_t H5VL_adios2_dataset_write(size_t count, void *dset_array[],
+                                 hid_t mem_type_id_array[],
+                                 hid_t mem_space_id_array[],
+                                 hid_t file_space_id_array[], hid_t dxpl_id,
+                                 const void *buf_array[], void **req)
+/*
 herr_t H5VL_adios2_dataset_write(void *dset, hid_t mem_type_id,
                                  hid_t mem_space_id, hid_t file_space_id,
                                  hid_t plist_id, const void *buf, void **req)
+*/
 {
-    REQUIRE_NOT_NULL_ERR(dset, -1);
-    H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)dset;
-    H5VL_VarDef_t *varDef = (H5VL_VarDef_t *)(vol->m_ObjPtr);
+    for (size_t i = 0; i < count; i++)
+    {
+        REQUIRE_NOT_NULL_ERR(dset_array[0], -1);
+        H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)(dset_array[0]);
+        H5VL_VarDef_t *varDef = (H5VL_VarDef_t *)(vol->m_ObjPtr);
 
-    // H5VL_VarDef_t *varDef = (H5VL_VarDef_t *)dset;
-    varDef->m_Data = (void *)buf;
+        // H5VL_VarDef_t *varDef = (H5VL_VarDef_t *)dset;
+        varDef->m_Data = (void *)(buf_array[i]);
 
-    if (file_space_id > 0)
-        varDef->m_HyperSlabID = file_space_id;
-    else
-        varDef->m_HyperSlabID = varDef->m_ShapeID;
+        if (file_space_id_array[i] > 0)
+            varDef->m_HyperSlabID = file_space_id_array[i];
+        else
+            varDef->m_HyperSlabID = varDef->m_ShapeID;
 
-    if (mem_space_id > 0)
-        varDef->m_MemSpaceID = mem_space_id;
-    else
-        varDef->m_MemSpaceID = varDef->m_ShapeID;
+        if (mem_space_id_array[i] > 0)
+            varDef->m_MemSpaceID = mem_space_id_array[i];
+        else
+            varDef->m_MemSpaceID = varDef->m_ShapeID;
 
-    varDef->m_PropertyID = plist_id;
+        varDef->m_PropertyID = dxpl_id; // plist_id;
 
-    gADIOS2CreateVar(vol->m_FileIO, varDef);
+        gADIOS2CreateVar(vol->m_FileIO, varDef);
+    }
     return 0;
 }
 

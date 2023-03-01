@@ -167,17 +167,20 @@ extern void *H5VL_adios2_dataset_open(void *obj,
                                       const char *name, hid_t dapl_id,
                                       hid_t dxpl_id, void **req);
 
-extern herr_t H5VL_adios2_dataset_read(void *dset, hid_t mem_type_id,
-                                       hid_t mem_space_id, hid_t file_space_id,
-                                       hid_t plist_id, void *buf, void **req);
+extern herr_t H5VL_adios2_dataset_read(size_t count, void *dset[],
+                                       hid_t mem_type_id[],
+                                       hid_t mem_space_id[],
+                                       hid_t file_space_id[], hid_t dxpl_id,
+                                       void *buf[], void **req);
 
 extern herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_args_t *args,
                                       hid_t dxpl_id, void **req);
 
-extern herr_t H5VL_adios2_dataset_write(void *dset, hid_t mem_type_id,
-                                        hid_t mem_space_id, hid_t file_space_id,
-                                        hid_t plist_id, const void *buf,
-                                        void **req);
+extern herr_t H5VL_adios2_dataset_write(size_t count, void *dset[],
+                                        hid_t mem_type_id[],
+                                        hid_t mem_space_id[],
+                                        hid_t file_space_id[], hid_t dxpl_id,
+                                        const void *buf[], void **req);
 
 extern herr_t H5VL_adios2_dataset_close(void *dset, hid_t dxpl_id, void **req);
 
