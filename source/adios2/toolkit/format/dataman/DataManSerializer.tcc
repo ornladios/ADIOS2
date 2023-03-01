@@ -200,7 +200,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                                const size_t step, const Dims &varMemStart,
                                const Dims &varMemCount)
 {
-    PERFSTUBS_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER_FUNC()
 
     DmvVecPtr vec = nullptr;
 
@@ -223,7 +223,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
     }
 
     bool decompressed = false;
-    char *input_data = nullptr;
+    char const *input_data = nullptr;
 
     for (const auto &j : *vec)
     {
@@ -279,10 +279,15 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                         sizeof(T), j.start, j.count, varMemStart, varMemCount);
                 }
             }
-            if (j.shape.empty() or (j.shape.size() == 1 and j.shape[0] == 1))
+            /* single values */
+            else if (j.shape.empty() or (j.shape.size() == 1 and j.shape[0] == 1))
             {
                 std::memcpy(reinterpret_cast<char *>(outputData), input_data,
                             sizeof(T));
+            }
+            else
+            {
+            /* error to log: unknown type of data */
             }
         }
     }
