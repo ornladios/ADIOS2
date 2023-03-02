@@ -257,7 +257,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 input_data += j.position;
             }
 
-            if (j.shape.size() > 0 and j.shape[0] > 1 and j.start.size() > 0 and
+            if (j.shape.size() > 0 and (j.shape[0] > 1 or j.shape[1] > 1) and j.start.size() > 0 and
                 j.start.size() == j.count.size() and
                 j.start.size() == varStart.size() and
                 j.start.size() == varCount.size())
@@ -282,12 +282,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
             if (j.shape.empty() or (j.shape.size() == 1 and j.shape[0] == 1))
             {
                 std::memcpy(reinterpret_cast<char *>(outputData), input_data,
-                            varCount[0] * sizeof(T));
-            }
-            else if (j.shape.size() == 2 and j.shape[0] == 1)
-            {
-                std::memcpy(reinterpret_cast<char *>(outputData), input_data,
-                            varCount[1] * sizeof(T));
+                            sizeof(T));
             }
         }
     }
