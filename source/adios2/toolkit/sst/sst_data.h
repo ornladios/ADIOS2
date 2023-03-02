@@ -54,7 +54,7 @@ typedef struct _SstStats
 } * SstStats;
 
 #define SST_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
-    MACRO(MarshalMethod, MarshalMethod, size_t, SstMarshalBP)                  \
+    MACRO(MarshalMethod, MarshalMethod, size_t, SstMarshalBP5)                 \
     MACRO(verbose, Int, int, 0)                                                \
     MACRO(RegistrationMethod, RegMethod, size_t, 0)                            \
     MACRO(StepDistributionMode, StepDistributionMode, size_t, StepsAllToAll)   \
