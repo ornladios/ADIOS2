@@ -173,9 +173,17 @@ if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
     set(CMAKE_CUDA_STANDARD 11)
     set(CMAKE_CUDA_STANDARD_REQUIRED TRUE)
     if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
-        # Mininum common non-deprecated architecture
-        set(CMAKE_CUDA_ARCHITECTURES 52)
+        if(DEFINED Kokkos_CUDA_ARCHITECTURES)
+            set(CMAKE_CUDA_ARCHITECTURES Kokkos_CUDA_ARCHITECTURES)
+        else()
+            # Mininum common non-deprecated architecture
+            set(CMAKE_CUDA_ARCHITECTURES 52)
+        endif()
     endif()
+endif()
+
+if(NOT DEFINED CMAKE_HIP_ARCHITECTURES AND DEFINED Kokkos_HIP_ARCHITECTURES)
+    set(CMAKE_HIP_ARCHITECTURES Kokkos_HIP_ARCHITECTURES)
 endif()
 
 if(ADIOS2_HAVE_MPI)
