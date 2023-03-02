@@ -90,11 +90,9 @@ herr_t H5VL_adios2_dataset_read(size_t count, void *dset_array[],
                                 hid_t mem_space_id_array[],
                                 hid_t file_space_id_array[], hid_t dxpl_id,
                                 void *buf_array[],
-                                void **req) // last parameter is not unused
-                                            // void *dset, hid_t mem_type_id,
-// hid_t mem_space_id, hid_t file_space_id,
-// hid_t plist_id, void *buf, void **req)
+                                void **req) // last parameter is unused as in h5
 {
+    herr_t returnValue = 0;
     for (size_t i = 0; i < count; i++)
     {
         REQUIRE_NOT_NULL_ERR(dset_array[i], -1);
@@ -106,9 +104,10 @@ herr_t H5VL_adios2_dataset_read(size_t count, void *dset_array[],
         var->m_MemSpaceID = mem_space_id_array[i];
 
         var->m_Data = buf_array[i];
-        gADIOS2ReadVar(var);
+        if (gADIOS2ReadVar(var) < 0)
+	  returnValue = -1;
     }
-    return 0;
+    return returnValue;
 }
 
 herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_args_t *args,
@@ -145,11 +144,6 @@ herr_t H5VL_adios2_dataset_write(size_t count, void *dset_array[],
                                  hid_t mem_space_id_array[],
                                  hid_t file_space_id_array[], hid_t dxpl_id,
                                  const void *buf_array[], void **req)
-/*
-herr_t H5VL_adios2_dataset_write(void *dset, hid_t mem_type_id,
-                                 hid_t mem_space_id, hid_t file_space_id,
-                                 hid_t plist_id, const void *buf, void **req)
-*/
 {
     for (size_t i = 0; i < count; i++)
     {
@@ -157,7 +151,6 @@ herr_t H5VL_adios2_dataset_write(void *dset, hid_t mem_type_id,
         H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)(dset_array[0]);
         H5VL_VarDef_t *varDef = (H5VL_VarDef_t *)(vol->m_ObjPtr);
 
-        // H5VL_VarDef_t *varDef = (H5VL_VarDef_t *)dset;
         varDef->m_Data = (void *)(buf_array[i]);
 
         if (file_space_id_array[i] > 0)
