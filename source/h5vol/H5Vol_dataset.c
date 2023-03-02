@@ -105,7 +105,7 @@ herr_t H5VL_adios2_dataset_read(size_t count, void *dset_array[],
 
         var->m_Data = buf_array[i];
         if (gADIOS2ReadVar(var) < 0)
-	  returnValue = -1;
+            returnValue = -1;
     }
     return returnValue;
 }
