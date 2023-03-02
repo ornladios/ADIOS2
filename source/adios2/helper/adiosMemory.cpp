@@ -20,6 +20,16 @@ namespace adios2
 namespace helper
 {
 
+size_t CopyMemoryWithOpHeader(const char *src, const Dims &blockCount,
+                              const DataType type, char *dest,
+                              size_t destOffset, const MemorySpace memSpace)
+{
+    const size_t sizeIn = GetTotalSize(blockCount, GetDataTypeSize(type));
+    CopyContiguousMemory(src, sizeIn, dest + destOffset,
+                         /* endianReverse */ false, memSpace);
+    return destOffset + sizeIn;
+}
+
 namespace
 {
 

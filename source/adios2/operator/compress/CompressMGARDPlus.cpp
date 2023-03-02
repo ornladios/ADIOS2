@@ -54,6 +54,11 @@ size_t CompressMGARDPlus::Operate(const char *dataIn, const Dims &blockStart,
     CompressMGARD mgard(m_Parameters);
     size_t mgardBufferSize = mgard.Operate(dataIn, blockStart, blockCount, type,
                                            bufferOut + bufferOutOffset);
+    if (mgardBufferSize == 0)
+    {
+        headerSize += (bufferOutOffset + mgard.GetHeaderSize());
+        return 0;
+    }
 
     if (*reinterpret_cast<OperatorType *>(bufferOut + bufferOutOffset) ==
         COMPRESS_MGARD)
@@ -90,6 +95,8 @@ size_t CompressMGARDPlus::Operate(const char *dataIn, const Dims &blockStart,
     return bufferOutOffset;
 }
 
+size_t CompressMGARDPlus::GetHeaderSize() const { return headerSize; }
+
 size_t CompressMGARDPlus::DecompressV1(const char *bufferIn,
                                        const size_t sizeIn, char *dataOut)
 {
@@ -114,6 +121,7 @@ size_t CompressMGARDPlus::DecompressV1(const char *bufferIn,
     // sizeOut. Here you may want to do your magic to change the decompressed
     // data somehow to improve its accuracy :)
 
+    headerSize += (bufferInOffset + mgard.GetHeaderSize());
     return sizeOut;
 }
 
@@ -124,6 +132,7 @@ size_t CompressMGARDPlus::InverseOperate(const char *bufferIn,
     const uint8_t bufferVersion =
         GetParameter<uint8_t>(bufferIn, bufferInOffset);
     bufferInOffset += 2; // skip two reserved bytes
+    headerSize = bufferInOffset;
 
     if (bufferVersion == 1)
     {

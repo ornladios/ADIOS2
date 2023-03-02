@@ -405,10 +405,16 @@ void BPSerializer::PutOperationPayloadInBuffer(
     const core::Variable<T> &variable,
     const typename core::Variable<T>::BPInfo &blockInfo)
 {
-    const size_t outputSize = blockInfo.Operations[0]->Operate(
+    size_t outputSize = blockInfo.Operations[0]->Operate(
         reinterpret_cast<char *>(blockInfo.Data), blockInfo.Start,
         blockInfo.Count, variable.m_Type,
         m_Data.m_Buffer.data() + m_Data.m_Position);
+
+    if (outputSize == 0) // the operator was not applied
+        outputSize = helper::CopyMemoryWithOpHeader(
+            reinterpret_cast<char *>(blockInfo.Data), blockInfo.Count,
+            variable.m_Type, m_Data.m_Buffer.data() + m_Data.m_Position,
+            blockInfo.Operations[0]->GetHeaderSize(), blockInfo.MemSpace);
 
     m_Data.m_Position += outputSize;
     m_Data.m_AbsolutePosition += outputSize;

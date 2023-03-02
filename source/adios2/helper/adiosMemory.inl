@@ -650,6 +650,11 @@ template <class T>
 void CopyContiguousMemory(const char *src, const size_t payloadStride, T *dest,
                           const bool endianReverse, const MemorySpace memSpace)
 {
+    if (payloadStride == 0)
+    {
+        return;
+    }
+
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
     if (memSpace == MemorySpace::GPU)
     {
