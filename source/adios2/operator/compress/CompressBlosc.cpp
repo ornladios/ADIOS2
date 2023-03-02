@@ -232,7 +232,7 @@ size_t CompressBlosc::InverseOperate(const char *bufferIn, const size_t sizeIn,
     const uint8_t bufferVersion =
         GetParameter<uint8_t>(bufferIn, bufferInOffset);
     bufferInOffset += 2; // skip two reserved bytes
-    headerSize += bufferInOffset;
+    headerSize = bufferInOffset;
 
     if (bufferVersion == 1)
     {

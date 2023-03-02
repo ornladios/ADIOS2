@@ -103,6 +103,14 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     double s = 0.0;
     auto errorBoundType = mgard_x::error_bound_type::REL;
 
+    // input size under this bound will not compress
+    size_t thresholdSize = 100000;
+
+    auto itThreshold = m_Parameters.find("threshold");
+    if (itThreshold != m_Parameters.end())
+    {
+        thresholdSize = std::stod(itThreshold->second);
+    }
     auto itAccuracy = m_Parameters.find("accuracy");
     if (itAccuracy != m_Parameters.end())
     {
@@ -142,14 +150,25 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     // let mgard know the output buffer size
     size_t sizeOut =
         helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+
+    if (sizeOut < thresholdSize)
+    {
+        /* disable compression and add marker in the header*/
+        PutParameter(bufferOut, bufferOutOffset, false);
+        headerSize = bufferOutOffset;
+        return 0;
+    }
+
+    PutParameter(bufferOut, bufferOutOffset, true);
     void *compressedData = bufferOut + bufferOutOffset;
     mgard_x::compress(mgardDim, mgardType, mgardCount, tolerance, s,
                       errorBoundType, dataIn, compressedData, sizeOut, true);
-
     bufferOutOffset += sizeOut;
 
     return bufferOutOffset;
 }
+
+size_t CompressMGARD::GetHeaderSize() const { return headerSize; }
 
 size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
                                    char *dataOut)
@@ -175,6 +194,8 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
         std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
         ". Please make sure a compatible version is used for decompression.";
 
+    const bool isCompressed = GetParameter<bool>(bufferIn, bufferInOffset);
+
     size_t sizeOut =
         helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
 
@@ -183,19 +204,24 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
         sizeOut /= 2;
     }
 
-    try
+    if (isCompressed)
     {
-        void *dataOutVoid = dataOut;
-        mgard_x::decompress(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
-                            dataOutVoid, true);
-    }
-    catch (...)
-    {
-        helper::Throw<std::runtime_error>("Operator", "CompressMGARD",
-                                          "DecompressV1", m_VersionInfo);
+        try
+        {
+            void *dataOutVoid = dataOut;
+            mgard_x::decompress(bufferIn + bufferInOffset,
+                                sizeIn - bufferInOffset, dataOutVoid, true);
+        }
+        catch (...)
+        {
+            helper::Throw<std::runtime_error>("Operator", "CompressMGARD",
+                                              "DecompressV1", m_VersionInfo);
+        }
+        return sizeOut;
     }
 
-    return sizeOut;
+    headerSize += bufferInOffset;
+    return 0;
 }
 
 size_t CompressMGARD::InverseOperate(const char *bufferIn, const size_t sizeIn,
@@ -205,6 +231,7 @@ size_t CompressMGARD::InverseOperate(const char *bufferIn, const size_t sizeIn,
     const uint8_t bufferVersion =
         GetParameter<uint8_t>(bufferIn, bufferInOffset);
     bufferInOffset += 2; // skip two reserved bytes
+    headerSize = bufferInOffset;
 
     if (bufferVersion == 1)
     {
