@@ -182,6 +182,10 @@ if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
     endif()
 endif()
 
+if(NOT DEFINED CMAKE_HIP_ARCHITECTURES AND DEFINED Kokkos_HIP_ARCHITECTURES)
+    set(CMAKE_HIP_ARCHITECTURES Kokkos_HIP_ARCHITECTURES)
+endif()
+
 if(ADIOS2_HAVE_MPI)
   if(MPIEXEC_MAX_NUMPROCS LESS 4 AND "$ENV{OMPI_MCA_rmaps_base_oversubscribe}")
     message(STATUS "OpenMPI oversubscribe detected: raising MPIEXEC_MAX_NUMPROCS to 4 for testing")
