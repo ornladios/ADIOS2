@@ -280,14 +280,15 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 }
             }
             /* single values */
-            else if (j.shape.empty() or (j.shape.size() == 1 and j.shape[0] == 1))
+            else if (j.shape.empty() or
+                     (j.shape.size() == 1 and j.shape[0] == 1))
             {
                 std::memcpy(reinterpret_cast<char *>(outputData), input_data,
                             sizeof(T));
             }
             else
             {
-            /* error to log: unknown type of data */
+                /* error to log: unknown data type */
             }
         }
     }
