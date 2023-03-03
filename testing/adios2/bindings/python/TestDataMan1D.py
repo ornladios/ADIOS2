@@ -35,9 +35,8 @@ class TestDataMan1D(unittest.TestCase):
         r.join()
         s.join()
 
-
     def thread_send(self):
-        data = np.full(shape = [self.Nx], fill_value = self.fill_value)
+        data = np.full(shape=[self.Nx], fill_value=self.fill_value)
         shape = data.shape
         count = shape
         start = (0,) * len(shape)
@@ -48,7 +47,8 @@ class TestDataMan1D(unittest.TestCase):
 
         wan.SetParameters(self.conf)
         writer = wan.Open("testdata", adios2.Mode.Write)
-        sendbuffer = wan.DefineVariable("np_data", data, shape, start, count, adios2.ConstantDims)
+        sendbuffer = wan.DefineVariable("np_data", data, shape,
+                                        start, count, adios2.ConstantDims)
         self.assertIsNotNone(sendbuffer)
         if sendbuffer:
             writer.BeginStep()
@@ -81,8 +81,9 @@ class TestDataMan1D(unittest.TestCase):
                 raise StopIteration()
             reader.EndStep()
         reader.Close()
-        self.assertTrue(all(
-             [data[i] == self.fill_value for i in range(len(data))]))
+        self.assertTrue(all([data[i] == self.fill_value for i
+                             in range(len(data))]))
+
 
 if __name__ == '__main__':
     unittest.main()
