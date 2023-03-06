@@ -288,7 +288,10 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
             }
             else
             {
-                /* error to log: unknown data type */
+                throw std::runtime_error(
+                    "DataManSerializer::GeData end with Step \" + "
+                    "std::to_string(step) +\n"
+                    "                        \" Var \" + varName failed");
             }
         }
     }
