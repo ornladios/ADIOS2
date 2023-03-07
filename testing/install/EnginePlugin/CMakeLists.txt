@@ -13,15 +13,27 @@ option(BUILD_SHARED_LIBS "build shared libs" ON)
 
 #---------- Engine Plugin Tests
 
+include(GenerateExportHeader)
+
 add_library(PluginEngineWrite
   ../../../examples/plugins/engine/ExampleWritePlugin.cpp
 )
 target_link_libraries(PluginEngineWrite adios2::cxx11 adios2::core)
+generate_export_header(PluginEngineWrite BASE_NAME plugin_engine_write)
+target_include_directories(PluginEngineWrite PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:include>
+)
 
 add_library(PluginEngineRead
   ../../../examples/plugins/engine/ExampleReadPlugin.cpp
 )
 target_link_libraries(PluginEngineRead adios2::cxx11 adios2::core)
+generate_export_header(PluginEngineRead BASE_NAME plugin_engine_read)
+target_include_directories(PluginEngineRead PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<INSTALL_INTERFACE:include>
+)
 
 if (WIN32)
   file(TO_NATIVE_PATH "${CMAKE_CURRENT_BINARY_DIR}/Debug" plugin_path)
