@@ -73,6 +73,7 @@ int main(int argc, char *argv[])
             adios2::Params params;
             params["PluginName"] = "WritePlugin";
             params["PluginLibrary"] = "PluginEngineWrite";
+            params["verbose"] = "5";
             io.SetParameters(params);
         }
         adios2::Engine writer = io.Open("TestPlugin", adios2::Mode::Write);

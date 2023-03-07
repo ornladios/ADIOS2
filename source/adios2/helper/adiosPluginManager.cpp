@@ -135,9 +135,11 @@ bool PluginManager::LoadPlugin(const std::string &pluginName,
         }
         catch (std::exception &e)
         {
+            // this is not necessarily an error, because you could have
+            // multiple paths in ADIOS2_PLUGIN_PATH variable
             helper::Log("Plugins", "PluginManager", "LoadPlugin",
-                        std::string("Exception caught: ") + e.what(),
-                        helper::LogMode::WARNING);
+                        std::string("OpenPlugin failed: ") + e.what(), 5,
+                        m_Impl->m_Verbosity, helper::LogMode::INFO);
             loaded = false;
         }
         ++pathIt;
@@ -233,6 +235,9 @@ bool PluginManager::OpenPlugin(const std::string &pluginName,
                     m_Impl->m_Verbosity, helper::LogMode::INFO);
         return true;
     }
+    helper::Throw<std::runtime_error>(
+        "Plugins", "PluginManager", "OpenPlugin",
+        "Unable to locate Create/Destroy symbols in library " + pluginLibrary);
     return false;
 }
 

@@ -77,6 +77,7 @@ int main(int argc, char *argv[])
             adios2::Params params;
             params["PluginName"] = "ReadPlugin";
             params["PluginLibrary"] = "PluginEngineRead";
+            params["verbose"] = "5";
             io.SetParameters(params);
         }
         adios2::Engine reader = io.Open("TestPlugin", adios2::Mode::Read);

@@ -57,6 +57,7 @@ PluginEngine::PluginEngine(core::IO &io, const std::string &name,
     }
 
     auto &pluginManager = PluginManager::GetInstance();
+    pluginManager.SetParameters(m_IO.m_Parameters);
     pluginManager.LoadPlugin(pluginNameIt->second, pluginLibIt->second);
     m_Impl->m_HandleCreate =
         pluginManager.GetEngineCreateFun(pluginNameIt->second);
