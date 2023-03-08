@@ -51,7 +51,10 @@ public:
 
     bool IsDataTypeValid(const DataType type) const final;
 
+    size_t GetHeaderSize() const;
+
 private:
+    size_t headerSize = 0;
     /**
      * Decompress function for V1 buffer. Do NOT remove even if the buffer
      * version is updated. Data might be still in lagacy formats. This function

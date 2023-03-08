@@ -169,7 +169,7 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type,
 }
 
 size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut,
-                  std::shared_ptr<Operator> op)
+                  MemorySpace memSpace, std::shared_ptr<Operator> op)
 {
     Operator::OperatorType compressorType;
     std::memcpy(&compressorType, bufferIn, 1);
@@ -177,7 +177,15 @@ size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut,
     {
         op = MakeOperator(OperatorTypeToString(compressorType), {});
     }
-    return op->InverseOperate(bufferIn, sizeIn, dataOut);
+    size_t sizeOut = op->InverseOperate(bufferIn, sizeIn, dataOut);
+    if (sizeOut == 0) // the inverse operator was not applied
+    {
+        size_t headerSize = op->GetHeaderSize();
+        sizeOut = sizeIn - headerSize;
+        helper::CopyContiguousMemory(bufferIn + headerSize, sizeOut, dataOut,
+                                     /*endianReverse*/ false, memSpace);
+    }
+    return sizeOut;
 }
 
 } // end namespace core

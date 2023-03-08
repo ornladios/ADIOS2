@@ -1773,7 +1773,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
             core::Decompress(IncomingData,
                              ((MetaArrayRecOperator *)writer_meta_base)
                                  ->DataBlockSize[Read.BlockID],
-                             decompressBuffer.data());
+                             decompressBuffer.data(), Req.MemSpace);
         }
         IncomingData = decompressBuffer.data();
         VirtualIncomingData = IncomingData;

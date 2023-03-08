@@ -98,6 +98,8 @@ Dims Operator::ConvertDims(const Dims &dimensions, const DataType type,
     return ret;
 }
 
+size_t Operator::GetHeaderSize() const { return 0; }
+
 // PRIVATE
 void Operator::CheckCallbackType(const std::string type) const
 {

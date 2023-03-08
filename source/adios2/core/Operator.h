@@ -68,6 +68,8 @@ public:
                               const std::string &, const size_t, const Dims &,
                               const Dims &, const Dims &) const;
 
+    virtual size_t GetHeaderSize() const;
+
     /**
      * @param dataIn
      * @param blockStart
