@@ -228,7 +228,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
     }
 
     bool decompressed = false;
-    char *input_data = nullptr;
+    char const *input_data = nullptr;
 
     for (const auto &j : *vec)
     {
@@ -261,11 +261,17 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
             {
                 input_data += j.position;
             }
-
-            if (j.shape.size() > 0 and j.shape[0] > 1 and j.start.size() > 0 and
-                j.start.size() == j.count.size() and
-                j.start.size() == varStart.size() and
-                j.start.size() == varCount.size())
+            /* single values */
+            if (j.shape.empty() or
+                std::all_of(j.shape.begin(), j.shape.end(),
+                            [&](size_t i) { return i == 1; }))
+            {
+                std::memcpy(reinterpret_cast<char *>(outputData), input_data,
+                            sizeof(T));
+            }
+            else if (j.start.size() > 0 and j.start.size() == j.count.size() and
+                     j.start.size() == varStart.size() and
+                     j.start.size() == varCount.size())
             {
                 if (m_ContiguousMajor)
                 {
@@ -284,10 +290,12 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                         sizeof(T), j.start, j.count, varMemStart, varMemCount);
                 }
             }
-            if (j.shape.empty() or (j.shape.size() == 1 and j.shape[0] == 1))
+            else
             {
-                std::memcpy(reinterpret_cast<char *>(outputData), input_data,
-                            sizeof(T));
+                throw std::runtime_error(
+                    "DataManSerializer::GeData end with Step \" + "
+                    "std::to_string(step) +\n"
+                    "                        \" Var \" + varName failed");
             }
         }
     }
