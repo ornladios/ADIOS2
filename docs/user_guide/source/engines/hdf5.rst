@@ -28,3 +28,13 @@ We can  pass options to HDF5 API from  ADIOS xml configuration. Currently we sup
 	<parameter key="H5ChunkVar" value="VarName1 VarName2"/>
 
 We suggest to read HDF5 documentation before appling these options.
+
+After the subfile feature is introduced  in HDF5 version 1.14, the ADIOS2 HDF5 engine will use subfiles as the default h5 format as it improves I/O in general (for example, see https://escholarship.org/uc/item/6fs7s3jb)
+
+Useful parameters from the  HDF lirbary to tune subfiles are:
+.. code-block:: xml
+		
+H5FD_SUBFILING_IOC_PER_NODE (num of subfiles per node)
+    set H5FD_SUBFILING_IOC_PER_NODE to 0 if the regular h5 file is prefered, before using ADIOS2 HDF5 engine. 
+H5FD_SUBFILING_STRIPE_SIZE
+H5FD_IOC_THREAD_POOL_SIZE
