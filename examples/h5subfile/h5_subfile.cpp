@@ -151,9 +151,9 @@ void readMe(adios2::IO &h5IO, int rank, int size, const char *fileName)
     const std::map<std::string, adios2::Params> variables =
         h5IO.AvailableVariables();
 
-    if (  0 == rank )
-      std::cout << " Num Vars: " << variables.size() << std::endl;
-    
+    if (0 == rank)
+        std::cout << " Num Vars: " << variables.size() << std::endl;
+
     for (const auto &variablePair : variables)
     {
         std::cout << "Name: " << variablePair.first;
@@ -184,10 +184,10 @@ void readMe(adios2::IO &h5IO, int rank, int size, const char *fileName)
 
     const std::map<std::string, adios2::Params> attributes =
         h5IO.AvailableAttributes();
-    
+
     if (0 == rank)
-      std::cout << "Num Attrs:" << attributes.size() << std::endl;
-    
+        std::cout << "Num Attrs:" << attributes.size() << std::endl;
+
     for (const auto &attrPair : attributes)
     {
         std::cout << "AttrName: " << attrPair.first;
