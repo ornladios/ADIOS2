@@ -131,6 +131,35 @@ If ``ADIOS2_PLUGIN_PATH`` is not set, and a path is not specified when loading y
 .. note::
     The ``ADIOS2_PLUGIN_PATH`` environment variable can contain multiple paths, which must be separated with a ``:``.
 
+
+When building on Windows, you will likely need to explicitly export the Create and Destroy symbols for your plugin, as symbols are invisible by default on Windows.
+To do this in a portable way across platforms, you can add something similar to the following lines to your CMakeLists.txt:
+
+.. code-block:: cmake
+
+    include(GenerateExportHeader)
+    generate_export_header(PluginEngineWrite BASE_NAME plugin_engine_write)
+    target_include_directories(PluginEngineWrite PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+        $<INSTALL_INTERFACE:include>)
+
+
+Then in your plugin header, you'll need to ``#include "plugin_engine_write_export.h"``. Then edit your function defintions as follows:
+
+.. code-block:: c++
+
+    extern "C" {
+
+    PLUGIN_ENGINE_WRITE_EXPORT adios2::plugin::ExampleWritePlugin *
+        EngineCreate(adios2::core::IO &io, const std::string &name,
+                 const adios2::Mode mode, adios2::helper::Comm comm);
+
+    PLUGIN_ENGINE_WRITE_EXPORT void
+        EngineDestroy(adios2::plugin::ExampleWritePlugin * obj);
+
+    }
+
+
 ***********************************
 Using Your Plugin in an Application
 ***********************************
