@@ -222,6 +222,23 @@ void HDF5Common::Init(const std::string &name, helper::Comm const &comm,
     std::string ts0;
     StaticGetAdiosStepString(ts0, 0);
 
+#ifdef H5_HAVE_SUBFILING_VFD
+    bool useMPI = false;
+    const char *temp = getenv("H5FD_SUBFILING_IOC_PER_NODE");
+
+    if (NULL != temp)
+    {
+        int itemp = -1;
+        sscanf(temp, "%d", &itemp);
+        if (0 == itemp)
+            useMPI = true;
+    }
+
+    if (!useMPI)
+        H5Pset_fapl_subfiling(m_PropertyListId, NULL);
+#else
+    bool useMPI = true;
+#endif
     if (toWrite)
     {
         /*
