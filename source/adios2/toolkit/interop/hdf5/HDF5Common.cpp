@@ -236,8 +236,6 @@ void HDF5Common::Init(const std::string &name, helper::Comm const &comm,
 
     if (!useMPI)
         H5Pset_fapl_subfiling(m_PropertyListId, NULL);
-#else
-    bool useMPI = true;
 #endif
     if (toWrite)
     {
