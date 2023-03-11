@@ -45,7 +45,6 @@ void writeMe(adios2::IO &hdf5IO, int rank, int size, const char *testFileName)
 
     if (size % 2 == 0)
     {
-        std::cout << "All ranks " << std::endl;
         // all Ranks must call Put
         /** Write variable for buffering */
         for (int i = 0; i < nsteps; i++)
@@ -58,7 +57,6 @@ void writeMe(adios2::IO &hdf5IO, int rank, int size, const char *testFileName)
     }
     else
     {
-        std::cout << "one rank " << std::endl;
         // using collective Begin/EndStep() to run the
         // collective HDF5 calls. Now Ranks can skip writting if no data
         // presented
