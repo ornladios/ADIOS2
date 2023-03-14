@@ -15,6 +15,8 @@
 #ifndef EXAMPLEREADPLUGIN_H_
 #define EXAMPLEREADPLUGIN_H_
 
+#include "plugin_engine_read_export.h"
+
 #include <fstream>
 #include <string>
 
@@ -80,11 +82,11 @@ private:
 
 extern "C" {
 
-adios2::plugin::ExampleReadPlugin *EngineCreate(adios2::core::IO &io,
-                                                const std::string &name,
-                                                const adios2::Mode mode,
-                                                adios2::helper::Comm comm);
-void EngineDestroy(adios2::plugin::ExampleReadPlugin *obj);
+PLUGIN_ENGINE_READ_EXPORT adios2::plugin::ExampleReadPlugin *
+EngineCreate(adios2::core::IO &io, const std::string &name,
+             const adios2::Mode mode, adios2::helper::Comm comm);
+PLUGIN_ENGINE_READ_EXPORT void
+EngineDestroy(adios2::plugin::ExampleReadPlugin *obj);
 }
 
 #endif /* EXAMPLEREADPLUGIN_H_ */

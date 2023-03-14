@@ -72,6 +72,7 @@ void PluginOperator::PluginInit(const std::string &pluginName,
     }
 
     auto &pluginManager = PluginManager::GetInstance();
+    pluginManager.SetParameters(m_Parameters);
     pluginManager.LoadPlugin(pluginName, pluginLibrary);
 
     m_Impl->m_HandleCreate = pluginManager.GetOperatorCreateFun(pluginName);

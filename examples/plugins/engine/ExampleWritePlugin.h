@@ -14,6 +14,8 @@
 #ifndef EXAMPLEWRITEPLUGIN_H_
 #define EXAMPLEWRITEPLUGIN_H_
 
+#include "plugin_engine_write_export.h"
+
 #include <fstream>
 #include <memory>
 #include <string>
@@ -81,11 +83,11 @@ private:
 
 extern "C" {
 
-adios2::plugin::ExampleWritePlugin *EngineCreate(adios2::core::IO &io,
-                                                 const std::string &name,
-                                                 const adios2::Mode mode,
-                                                 adios2::helper::Comm comm);
-void EngineDestroy(adios2::plugin::ExampleWritePlugin *obj);
+PLUGIN_ENGINE_WRITE_EXPORT adios2::plugin::ExampleWritePlugin *
+EngineCreate(adios2::core::IO &io, const std::string &name,
+             const adios2::Mode mode, adios2::helper::Comm comm);
+PLUGIN_ENGINE_WRITE_EXPORT void
+EngineDestroy(adios2::plugin::ExampleWritePlugin *obj);
 }
 
 #endif /* EXAMPLEWRITEPLUGIN_H_ */
