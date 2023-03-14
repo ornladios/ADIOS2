@@ -31,6 +31,8 @@ We suggest to read HDF5 documentation before appling these options.
 
 After the subfile feature is introduced  in HDF5 version 1.14, the ADIOS2 HDF5 engine will use subfiles as the default h5 format as it improves I/O in general (for example, see https://escholarship.org/uc/item/6fs7s3jb)
 
+To use the subfile feature, client needs to support MPI_Init_thread with MPI_THREAD_MULTIPLE. 
+
 Useful parameters from the  HDF lirbary to tune subfiles are:
 .. code-block:: xml
 		
