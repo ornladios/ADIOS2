@@ -1,10 +1,7 @@
 from mpi4py import MPI
 import numpy as np
 import adios2
-import sys
 import os
-import math
-import matplotlib.pyplot as plt
 
 # MPI
 comm = MPI.COMM_WORLD
@@ -14,6 +11,7 @@ size = comm.Get_size()
 configFile = './defaultConfig.xml'
 queryFile = './sampleQuery.xml'
 dataPath = './heat.bp'
+
 
 def doAnalysis(reader, touched_blocks, varList):
     print(" Step: ", reader.CurrentStep(),
@@ -33,6 +31,7 @@ def doAnalysis(reader, touched_blocks, varList):
                 data[var].extend(values)
                 # do analysis with data here
 
+
 def runQuery():
     adios = adios2.ADIOS(configFile, comm, True)
     queryIO = adios.DeclareIO("query")
@@ -41,18 +40,19 @@ def runQuery():
 
     touched_blocks = []
 
-    var = [queryIO.InquireVariable("T")]
-
     print("Num steps: ", reader.Steps())
 
     while (reader.BeginStep() == adios2.StepStatus.OK):
         # say only rank 0 wants to process result
+        var = [queryIO.InquireVariable("T")]
+
         if (rank == 0):
             touched_blocks = w.GetResult()
             doAnalysis(reader, touched_blocks, var)
 
     reader.EndStep()
     reader.Close()
+
 
 def createConfigFile():
     print(".. Writing config file to: ", configFile)
@@ -70,6 +70,7 @@ def createConfigFile():
 
     file1.writelines(xmlContent)
     file1.close()
+
 
 def createQueryFile():
     print(".. Writing query file to: ", queryFile)

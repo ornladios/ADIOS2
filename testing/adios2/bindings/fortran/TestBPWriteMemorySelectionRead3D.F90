@@ -27,6 +27,7 @@ program TestBPWriteMemorySelectionRead3D
   integer(kind=8), dimension(3) :: memory_start, memory_count
   integer :: ierr, irank, isize, nx, ny, nz, nsteps, s, step_status
   integer(kind=8) :: ghost_x, ghost_y, ghost_z, i, j, k, current_step
+  integer(kind=8) :: expected_min, expected_max
 
   call MPI_INIT(ierr)
   call MPI_COMM_RANK(MPI_COMM_WORLD, irank, ierr)
@@ -149,15 +150,20 @@ program TestBPWriteMemorySelectionRead3D
 
     if(step_status == adios2_step_status_end_of_stream) exit
 
+    call adios2_current_step(current_step, bpReader, ierr)
+
+    expected_min = current_step
+    expected_max = current_step
+
     call adios2_inquire_variable(vars_in(1), ioGet, 'var_i1', ierr)
     if( vars_in(1)%valid .eqv. .false. ) stop 'i1 invalid error'
     if( vars_in(1)%name /= 'var_i1' ) stop 'i1 name error'
     if( vars_in(1)%type /= adios2_type_integer1 ) stop 'i1 type error'
     if( vars_in(1)%ndims /= 3 ) stop 'i1 dims error'
     call adios2_variable_min(min_i1, vars_in(1), ierr)
-    if(min_i1 /= 0 ) stop 'i1 min error'
+    if(min_i1 /= expected_min ) stop 'i1 min error'
     call adios2_variable_max(max_i1, vars_in(1), ierr)
-    if(max_i1 /= nsteps-1 ) stop 'i1 max error'
+    if(max_i1 /= expected_max ) stop 'i1 max error'
 
     call adios2_inquire_variable(vars_in(2), ioGet, 'var_i2', ierr)
     if( vars_in(2)%valid .eqv. .false. ) stop 'i2 invalid error'
@@ -165,9 +171,9 @@ program TestBPWriteMemorySelectionRead3D
     if( vars_in(2)%type /= adios2_type_integer2 ) stop 'i2 type error'
     if( vars_in(2)%ndims /= 3 ) stop 'i2 dims error'
     call adios2_variable_min(min_i2, vars_in(2), ierr)
-    if(min_i2 /= 0 ) stop 'i2 min error'
+    if(min_i2 /= expected_min ) stop 'i2 min error'
     call adios2_variable_max(max_i2, vars_in(2), ierr)
-    if(max_i2 /= nsteps-1 ) stop 'i2 max error'
+    if(max_i2 /= expected_max ) stop 'i2 max error'
 
     call adios2_inquire_variable(vars_in(3), ioGet, 'var_i4', ierr)
     if( vars_in(3)%valid .eqv. .false. ) stop 'i4 invalid error'
@@ -175,9 +181,9 @@ program TestBPWriteMemorySelectionRead3D
     if( vars_in(3)%type /= adios2_type_integer4 ) stop 'i4 type error'
     if( vars_in(3)%ndims /= 3 ) stop 'i4 dims error'
     call adios2_variable_min(min_i4, vars_in(3), ierr)
-    if(min_i4 /= 0 ) stop 'i4 min error'
+    if(min_i4 /= expected_min ) stop 'i4 min error'
     call adios2_variable_max(max_i4, vars_in(3), ierr)
-    if(max_i4 /= nsteps-1 ) stop 'i4 max error'
+    if(max_i4 /= expected_max ) stop 'i4 max error'
 
     call adios2_inquire_variable(vars_in(4), ioGet, 'var_i8', ierr)
     if( vars_in(4)%valid .eqv. .false. ) stop 'i8 invalid error'
@@ -185,9 +191,9 @@ program TestBPWriteMemorySelectionRead3D
     if( vars_in(4)%type /= adios2_type_integer8 ) stop 'i8 type error'
     if( vars_in(4)%ndims /= 3 ) stop 'i8 dims error'
     call adios2_variable_min(min_i8, vars_in(4), ierr)
-    if(min_i8 /= 0 ) stop 'i8 min error'
+    if(min_i8 /= expected_min ) stop 'i8 min error'
     call adios2_variable_max(max_i8, vars_in(4), ierr)
-    if(max_i8 /= nsteps-1 ) stop 'i8 max error'
+    if(max_i8 /= expected_max ) stop 'i8 max error'
 
     call adios2_inquire_variable(vars_in(5), ioGet, 'var_r4', ierr)
     if( vars_in(5)%valid .eqv. .false. ) stop 'r4 invalid error'
@@ -195,9 +201,9 @@ program TestBPWriteMemorySelectionRead3D
     if( vars_in(5)%type /= adios2_type_real ) stop 'r4 type error'
     if( vars_in(5)%ndims /= 3 ) stop 'r4 dims error'
     call adios2_variable_min(min_r4, vars_in(5), ierr)
-    if(min_r4 /= 0 ) stop 'r4 min error'
+    if(min_r4 /= float(expected_min) ) stop 'r4 min error'
     call adios2_variable_max(max_r4, vars_in(5), ierr)
-    if(max_r4 /= nsteps-1 ) stop 'r4 max error'
+    if(max_r4 /= float(expected_max) ) stop 'r4 max error'
 
     call adios2_inquire_variable(vars_in(6), ioGet, 'var_r8', ierr)
     if( vars_in(6)%valid .eqv. .false. ) stop 'r8 invalid error'
@@ -205,9 +211,9 @@ program TestBPWriteMemorySelectionRead3D
     if( vars_in(6)%type /= adios2_type_dp ) stop 'r8 type error'
     if( vars_in(6)%ndims /= 3 ) stop 'r8 dims error'
     call adios2_variable_min(min_r8, vars_in(6), ierr)
-    if(min_r8 /= 0 ) stop 'r8 min error'
+    if(min_r8 /= float(expected_min) ) stop 'r8 min error'
     call adios2_variable_max(max_r8, vars_in(6), ierr)
-    if(max_r8 /= nsteps-1 ) stop 'r8 max error'
+    if(max_r8 /= float(expected_max) ) stop 'r8 max error'
 
     call adios2_get(bpReader, 'var_i1', in_data_i1, ierr)
     call adios2_get(bpReader, 'var_i2', in_data_i2, ierr)
@@ -216,8 +222,6 @@ program TestBPWriteMemorySelectionRead3D
     call adios2_get(bpReader, 'var_r4', in_data_r4, ierr)
     call adios2_get(bpReader, 'var_r8', in_data_r8, ierr)
     call adios2_end_step(bpReader, ierr)
-
-    call adios2_current_step(current_step, bpReader, ierr)
 
     do k=1,isize*nz
       do j=1,ny

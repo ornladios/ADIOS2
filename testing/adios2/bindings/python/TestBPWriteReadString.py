@@ -66,7 +66,7 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
                 fh.write("string_variable", "written {}".format(i))
                 fh.end_step()
 
-        with adios2.open(fileName, "r", comm) as fh:
+        with adios2.open(fileName, "rra", comm) as fh:
             n = fh.steps()
             name = "string_variable"
             result = fh.read_string(name, 0, n)

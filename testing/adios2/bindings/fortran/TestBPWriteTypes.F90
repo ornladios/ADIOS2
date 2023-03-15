@@ -185,7 +185,7 @@ program TestBPWriteTypes
      if( bpWriter%valid .eqv. .false. ) stop 'Invalid adios2_engine post-open'
      if( TRIM(bpWriter%name) /= "ftypes.bp") stop 'Invalid adios2_engine name'
 
-     if( TRIM(bpWriter%type) /= 'BP4Writer') then
+     if( TRIM(bpWriter%type) /= 'BP5Writer') then
         write(*,*) 'Engine Type ', TRIM(bpWriter%type)
         stop 'Invalid adios2_engine type'
      end if
@@ -233,7 +233,7 @@ program TestBPWriteTypes
      ! Declare io reader
      call adios2_declare_io(ioRead, adios, "ioRead", ierr)
      ! Open bpReader engine
-     call adios2_open(bpReader, ioRead, "ftypes.bp", adios2_mode_read, ierr)
+     call adios2_open(bpReader, ioRead, "ftypes.bp", adios2_mode_readRandomAccess, ierr)
 
      call adios2_steps(nsteps, bpReader, ierr)
      if(nsteps /= 3) stop 'ftypes.bp must have 3 steps'

@@ -67,7 +67,7 @@ For an example file refer to `adios2 config file example in our repo. <https://g
      
      Engine:
         # If Type is missing or commented out, default Engine is picked up
-        Type: "BP4"
+        Type: "BP5"
         # optional engine parameters
         key1: value1
         key2: value2

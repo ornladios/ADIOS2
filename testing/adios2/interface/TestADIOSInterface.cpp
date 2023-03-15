@@ -129,8 +129,14 @@ TEST_F(ADIOS2_CXX11_API, APIToString)
     EXPECT_EQ(ToString(attribute), "Attribute<float>(Name: \"attr_float\")");
 
     auto engine = io.Open("test.bp", adios2::Mode::Write);
+#if defined(_WIN64) || defined(_WIN32)
+    // default staying BP4 for now
     EXPECT_EQ(ToString(engine),
               "Engine(Name: \"test.bp\", Type: \"BP4Writer\")");
+#else
+    EXPECT_EQ(ToString(engine),
+              "Engine(Name: \"test.bp\", Type: \"BP5Writer\")");
+#endif
 }
 
 TEST_F(ADIOS2_CXX11_API, operatorLL)
@@ -157,7 +163,13 @@ TEST_F(ADIOS2_CXX11_API_IO, Engine)
 
     adios2::Engine engine = m_Io.Open("types.bp", adios2::Mode::Write);
     EXPECT_EQ(engine.Name(), "types.bp");
+#if defined(_WIN64) || defined(_WIN32)
+    // default staying BP4 for now
     EXPECT_EQ(engine.Type(), "BP4Writer");
+#else
+    EXPECT_EQ(engine.Type(), "BP5Writer");
+#endif
+    engine.Close();
 }
 
 TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
@@ -167,7 +179,13 @@ TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
 
     adios2::Engine engine = m_Io.Open("types.bp", adios2::Mode::Write);
     EXPECT_EQ(engine.Name(), "types.bp");
+#if defined(_WIN64) || defined(_WIN32)
+    // default staying BP4 for now
     EXPECT_EQ(engine.Type(), "BP4Writer");
+#else
+    EXPECT_EQ(engine.Type(), "BP5Writer");
+#endif
+    engine.Close();
 }
 
 template <class T>
@@ -295,10 +313,12 @@ public:
 #else
         auto engine = io.Open(filename, adios2::Mode::Read);
 #endif
+        engine.BeginStep();
         auto var = io.template InquireVariable<DataType>("var");
         auto shape = var.Shape();
         std::vector<DataType> data(shape[0]);
         engine.Get(var, data, adios2::Mode::Sync);
+        engine.EndStep();
         engine.Close();
         m_Ad.RemoveIO("CXX11_API_CheckOutput");
 

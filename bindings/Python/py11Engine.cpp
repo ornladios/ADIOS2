@@ -254,6 +254,93 @@ Engine::BlocksInfo(std::string &var_name, const size_t step) const
     // Grab the specified variable object and get its type string
     adios2::DataType var_type = m_Engine->GetIO().InquireVariableType(var_name);
 
+    MinVarInfo *minBlocksInfo = nullptr;
+    auto itVariable = m_Engine->m_IO.GetVariables().find(var_name);
+    auto Variable = itVariable->second.get();
+    minBlocksInfo = m_Engine->MinBlocksInfo(*Variable, 0);
+    if (minBlocksInfo)
+    {
+        for (auto &info : minBlocksInfo->BlocksInfo)
+        {
+            std::map<std::string, std::string> info_map;
+            std::stringstream start_ss;
+            std::cout << "Info loop" << std::endl;
+            for (size_t i = 0; i < (size_t)minBlocksInfo->Dims; ++i)
+            {
+                if (i != 0)
+                    start_ss << ",";
+                start_ss << info.Start[i];
+            }
+            info_map["Start"] = start_ss.str();
+            std::stringstream count_ss;
+            for (size_t i = 0; i < (size_t)minBlocksInfo->Dims; ++i)
+            {
+                if (i != 0)
+                    count_ss << ",";
+                count_ss << info.Count[i];
+            }
+            info_map["Count"] = count_ss.str();
+            info_map["WriterID"] = std::to_string(info.WriterID);
+            info_map["BlockID"] = std::to_string(info.BlockID);
+            info_map["IsValue"] = minBlocksInfo->IsValue ? "True" : "False";
+            std::ostringstream osMax, osMin;
+            switch (var_type)
+            {
+            case DataType::Int8:
+                osMax << info.MinMax.MaxUnion.field_int8;
+                osMin << info.MinMax.MinUnion.field_int8;
+                break;
+            case DataType::Int16:
+                osMax << info.MinMax.MaxUnion.field_int16;
+                osMin << info.MinMax.MinUnion.field_int16;
+                break;
+            case DataType::Int32:
+                osMax << info.MinMax.MaxUnion.field_int32;
+                osMin << info.MinMax.MinUnion.field_int32;
+                break;
+            case DataType::Int64:
+                osMax << info.MinMax.MaxUnion.field_int64;
+                osMin << info.MinMax.MinUnion.field_int64;
+                break;
+            case DataType::UInt8:
+                osMax << info.MinMax.MaxUnion.field_uint8;
+                osMin << info.MinMax.MinUnion.field_uint8;
+                break;
+            case DataType::UInt16:
+                osMax << info.MinMax.MaxUnion.field_uint16;
+                osMin << info.MinMax.MinUnion.field_uint16;
+                break;
+            case DataType::UInt32:
+                osMax << info.MinMax.MaxUnion.field_uint32;
+                osMin << info.MinMax.MinUnion.field_uint32;
+                break;
+            case DataType::UInt64:
+                osMax << info.MinMax.MaxUnion.field_uint64;
+                osMin << info.MinMax.MinUnion.field_uint64;
+                break;
+            case DataType::Float:
+                osMax << info.MinMax.MaxUnion.field_float;
+                osMin << info.MinMax.MinUnion.field_float;
+                break;
+            case DataType::Double:
+                osMax << info.MinMax.MaxUnion.field_double;
+                osMin << info.MinMax.MinUnion.field_double;
+                break;
+            case DataType::LongDouble:
+                osMax << info.MinMax.MaxUnion.field_ldouble;
+                osMin << info.MinMax.MinUnion.field_ldouble;
+                break;
+            default:
+                break;
+            }
+            info_map["Max"] = osMax.str();
+            info_map["Min"] = osMin.str();
+            info_map["IsReverseDims"] =
+                minBlocksInfo->IsReverseDims ? "True" : "False";
+            rv.push_back(info_map);
+        }
+        return rv;
+    }
     // Use the macro incantation to call the right instantiation of
     // core::BlocksInfo<>() Note that we are flatting the Dims type items, and
     // returning everything as a dictionary of strings.
@@ -296,6 +383,7 @@ Engine::BlocksInfo(std::string &var_name, const size_t step) const
             rv.push_back(info_map);                                            \
         }                                                                      \
     }
+
     ADIOS2_FOREACH_PYTHON_TYPE_1ARG(GET_BLOCKS_INFO)
 #undef GET_BLOCKS_INFO
     else
