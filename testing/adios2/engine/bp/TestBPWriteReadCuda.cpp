@@ -199,6 +199,107 @@ void CUDADetectMemSpace(const std::string mode)
     }
 }
 
+void CUDAWriteReadMemorySelection()
+{
+    const std::string fname("BPWRCUSel1D.bp");
+    const size_t Nx = 10;
+    const size_t NSteps = 2;
+    const size_t ghostCells = 1;
+    std::vector<float> r32s(Nx + 2 * ghostCells);
+    std::iota(r32s.begin(), r32s.end(), .0f);
+
+    adios2::ADIOS adios;
+    {
+        // cuda simulation buffer
+        float *gpuSimData = nullptr;
+        cudaMalloc(&gpuSimData, (Nx + 2 * ghostCells) * sizeof(float));
+        cudaMemcpy(gpuSimData, r32s.data(),
+                   (Nx + 2 * ghostCells) * sizeof(float),
+                   cudaMemcpyHostToDevice);
+
+        adios2::IO io = adios.DeclareIO("TestIO");
+        io.SetEngine("BP5");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
+        const adios2::Dims shape{static_cast<size_t>(Nx)};
+        const adios2::Dims start{static_cast<size_t>(0)};
+        const adios2::Dims count{Nx};
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+
+        const adios2::Dims memoryStart = {ghostCells};
+        const adios2::Dims memoryCount = {Nx + 2 * ghostCells};
+        var_r32.SetMemorySelection({memoryStart, memoryCount});
+
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            cuda_increment(Nx + 2 * ghostCells, 1, 0, gpuSimData, INCREMENT);
+
+            bpWriter.BeginStep();
+            var_r32.SetMemorySpace(adios2::MemorySpace::GPU);
+            bpWriter.Put(var_r32, gpuSimData);
+            bpWriter.EndStep();
+        }
+
+        bpWriter.Close();
+    }
+    {
+        // remove ghost cells from the input vector when checking correctness
+        r32s.erase(r32s.begin(), r32s.begin() + ghostCells);
+        r32s.erase(r32s.end() - ghostCells, r32s.end());
+
+        adios2::IO io = adios.DeclareIO("ReadIO");
+        io.SetEngine("BP5");
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+
+        unsigned int t = 0;
+        for (; bpReader.BeginStep() == adios2::StepStatus::OK; ++t)
+        {
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Shape()[0], Nx);
+
+            auto mmR32 = std::minmax_element(r32s.begin(), r32s.end());
+            EXPECT_EQ(var_r32.Min() - (t + 1) * INCREMENT, *mmR32.first);
+            EXPECT_EQ(var_r32.Max() - (t + 1) * INCREMENT, *mmR32.second);
+
+            std::vector<float> r32o(Nx);
+            float *gpuSimData;
+            cudaMalloc(&gpuSimData, Nx * sizeof(float));
+            var_r32.SetMemorySpace(adios2::MemorySpace::GPU);
+            bpReader.Get(var_r32, gpuSimData);
+            bpReader.EndStep();
+            cudaMemcpy(r32o.data(), gpuSimData, Nx * sizeof(float),
+                       cudaMemcpyDeviceToHost);
+
+            // Remove INCREMENT from each element
+            std::transform(r32o.begin(), r32o.end(), r32o.begin(),
+                           std::bind(std::minus<float>(), std::placeholders::_1,
+                                     (t + 1) * INCREMENT));
+            for (size_t i = 0; i < Nx; i++)
+            {
+                char msg[1 << 8] = {0};
+                snprintf(msg, sizeof(msg), "t=%d i=%zu r32o=%f r32s=%f", t, i,
+                         r32o[i], r32s[i]);
+                ASSERT_LT(std::abs(r32o[i] - r32s[i]), EPSILON) << msg;
+            }
+        }
+        EXPECT_EQ(t, NSteps);
+
+        bpReader.Close();
+    }
+}
+
 void CUDAWriteReadMPI1D(const std::string mode)
 {
     const std::string fname("BPWRCU1D_" + mode + ".bp");
@@ -343,6 +444,7 @@ public:
 TEST_P(BPWRCUDA, ADIOS2BPWRCUDA1D) { CUDAWriteReadMPI1D(GetParam()); }
 TEST_P(BPWRCUDA, ADIOS2BPCUDADetect) { CUDADetectMemSpace(GetParam()); }
 TEST_P(BPWRCUDA, ADIOS2BPCUDAWrong) { CUDAWrongMemSpace(); }
+TEST_P(BPWRCUDA, ADIOS2BPCUDAMemSel) { CUDAWriteReadMemorySelection(); }
 
 INSTANTIATE_TEST_SUITE_P(CudaRW, BPWRCUDA,
                          ::testing::Values("deferred", "sync"));
