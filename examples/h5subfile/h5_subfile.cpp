@@ -26,7 +26,6 @@ void writeMe(adios2::IO &hdf5IO, int rank, int size, const char *testFileName)
     std::vector<float> myFloats(Nx * Ny, 0.1 * rank);
     std::vector<int> myInts(Nx * Ny, 1 + rank);
 
-    hdf5IO.SetEngine("HDF5");
     hdf5IO.SetParameter("IdleH5Writer",
                         "true"); // set this if not all ranks are writting
 
@@ -141,8 +140,6 @@ void ReadVarData(adios2::IO h5IO, adios2::Engine &h5Reader,
 
 void readMe(adios2::IO &h5IO, int rank, int size, const char *fileName)
 {
-    h5IO.SetEngine("HDF5");
-
     /** Engine derived class, spawned to start IO operations */
     adios2::Engine h5Reader = h5IO.Open(fileName, adios2::Mode::Read);
 
@@ -245,14 +242,18 @@ int main(int argc, char *argv[])
         adios2::ADIOS adios(MPI_COMM_WORLD);
         adios2::IO writerIO = adios.DeclareIO("HDFFileIOWriter");
 
-        const char *testName = "test.h5";
-        writeMe(writerIO, rank, size, testName);
+        std::string testName = "test.h5";
+        if (argc > 1)
+            testName = argv[1];
+
+        writeMe(writerIO, rank, size, testName.c_str());
 
         MPI_Barrier(MPI_COMM_WORLD);
 
         sleep(10);
+
         adios2::IO readerIO = adios.DeclareIO("HDFFileIOReader");
-        // readMe (readerIO, rank, size, testName);
+        readMe(readerIO, rank, size, testName.c_str());
     }
     catch (std::invalid_argument &e)
     {
