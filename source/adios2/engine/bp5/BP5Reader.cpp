@@ -1251,6 +1251,9 @@ void BP5Reader::DoClose(const int transportIndex)
     std::vector<typename Variable<T>::BPInfo> BP5Reader::DoBlocksInfo(         \
         const Variable<T> &variable, const size_t step) const                  \
     {                                                                          \
+        helper::Throw<std::logic_error>(                                       \
+            "Engine", "BP5Reader", "DoBlocksInfo",                             \
+            "Internal DoBlocksInfo should not be called in BP5Reader");        \
         return std::vector<typename Variable<T>::BPInfo>();                    \
     }
 
