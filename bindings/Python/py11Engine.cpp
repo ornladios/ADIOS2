@@ -129,6 +129,12 @@ void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
+        if (!array.dtype().is(pybind11::dtype::of<T>()))                       \
+        {                                                                      \
+            throw std::invalid_argument(                                       \
+                "In ADIOS2 Get - Type mismatch between Python buffer and "     \
+                "incoming data.");                                             \
+        }                                                                      \
         m_Engine->Get(                                                         \
             *dynamic_cast<core::Variable<T> *>(variable.m_VariableBase),       \
             reinterpret_cast<T *>(const_cast<void *>(array.data())), launch);  \
