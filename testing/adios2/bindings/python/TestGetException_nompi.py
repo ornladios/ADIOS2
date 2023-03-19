@@ -26,7 +26,7 @@ def writer():
     logging.info(f"        data dtypes: {data.dtype!s}")
     shape = data.shape
     count = shape
-    start = (0,)*len(shape)
+    start = (0,) * len(shape)
     logging.info(f"        data on writer side {data!s}")
 
     adios_io = adios2.ADIOS()
