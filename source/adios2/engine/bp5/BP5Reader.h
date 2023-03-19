@@ -216,13 +216,6 @@ private:
     template <class T>
     void ReadVariableBlocks(Variable<T> &variable);
 
-#define declare_type(T)                                                        \
-    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(                    \
-        const Variable<T> &variable, const size_t step) const final;
-
-    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-
     size_t DoSteps() const final;
 
     void DoGetAbsoluteSteps(const VariableBase &variable,
