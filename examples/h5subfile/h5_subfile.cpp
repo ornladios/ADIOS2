@@ -30,11 +30,11 @@ void writeMe(adios2::IO &hdf5IO, int rank, int size, const char *testFileName)
                         "true"); // set this if not all ranks are writting
 
     adios2::Variable<float> h5Floats = hdf5IO.DefineVariable<float>(
-        "h5Floats", {size * Nx, size * Ny}, {rank * Nx, rank * Ny}, {Nx, Ny},
+        "h5Floats", {size * Nx, size * Ny}, {rank * Nx, 0}, {Nx, size * Ny},
         adios2::ConstantDims);
 
     adios2::Variable<int> h5Ints = hdf5IO.DefineVariable<int>(
-        "h5Ints", {size * Nx, size * Ny}, {rank * Nx, rank * Ny}, {Nx, Ny},
+        "h5Ints", {size * Nx, size * Ny}, {rank * Nx, 0}, {Nx, size * Ny},
         adios2::ConstantDims);
 
     /** Engine derived class, spawned to start IO operations */
@@ -246,14 +246,23 @@ int main(int argc, char *argv[])
         if (argc > 1)
             testName = argv[1];
 
-        writeMe(writerIO, rank, size, testName.c_str());
+        if (1 == testName.size())
+        {
+            writerIO.SetEngine("NullCore");
+            writeMe(writerIO, rank, size, "null.bp");
+        }
+        else
+        {
+            writeMe(writerIO, rank, size, testName.c_str());
+        }
 
-        MPI_Barrier(MPI_COMM_WORLD);
-
-        sleep(10);
-
-        adios2::IO readerIO = adios.DeclareIO("HDFFileIOReader");
-        readMe(readerIO, rank, size, testName.c_str());
+        // read back  if required
+        if (argc > 2)
+        {
+            MPI_Barrier(MPI_COMM_WORLD);
+            adios2::IO readerIO = adios.DeclareIO("HDFFileIOReader");
+            readMe(readerIO, rank, size, testName.c_str());
+        }
     }
     catch (std::invalid_argument &e)
     {
