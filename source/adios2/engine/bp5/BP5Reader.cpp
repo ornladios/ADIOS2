@@ -1246,17 +1246,6 @@ void BP5Reader::DoClose(const int transportIndex)
     }
 }
 
-// DoBlocksInfo will not be called because MinBlocksInfo is operative
-#define declare_type(T)                                                        \
-    std::vector<typename Variable<T>::BPInfo> BP5Reader::DoBlocksInfo(         \
-        const Variable<T> &variable, const size_t step) const                  \
-    {                                                                          \
-        return std::vector<typename Variable<T>::BPInfo>();                    \
-    }
-
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-
 size_t BP5Reader::DoSteps() const { return m_StepsCount; }
 
 void BP5Reader::NotifyEngineNoVarsQuery()
