@@ -23,8 +23,8 @@ void writeMe(adios2::IO &hdf5IO, int rank, int size, const char *testFileName)
     const std::size_t Nx = 1000;
     const std::size_t Ny = 1000;
 
-    std::vector<float> myFloats(Nx * Ny, 0.1 * rank);
-    std::vector<int> myInts(Nx * Ny, 1 + rank);
+    std::vector<float> myFloats(Nx * Ny * size, 0.1 * rank);
+    std::vector<int> myInts(Nx * Ny * size, 1 + rank);
 
     hdf5IO.SetParameter("IdleH5Writer",
                         "true"); // set this if not all ranks are writting
