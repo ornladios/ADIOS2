@@ -736,6 +736,12 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             CompressedSize = VB->m_Operations[0]->Operate(
                 (const char *)Data, tmpOffsets, tmpCount, (DataType)Rec->Type,
                 CompressedData);
+            // if the operator was not applied
+            if (CompressedSize == 0)
+                CompressedSize = helper::CopyMemoryWithOpHeader(
+                    (const char *)Data, tmpCount, (DataType)Rec->Type,
+                    CompressedData, VB->m_Operations[0]->GetHeaderSize(),
+                    MemSpace);
             CurDataBuffer->DownsizeLastAlloc(AllocSize, CompressedSize);
         }
         else if (Span == nullptr)

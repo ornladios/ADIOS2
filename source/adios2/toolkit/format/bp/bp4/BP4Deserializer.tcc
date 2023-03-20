@@ -570,7 +570,7 @@ void BP4Deserializer::PostDataRead(
                 }
             }
             core::Decompress(postOpData, blockOperationInfo.PayloadSize,
-                             preOpData, op);
+                             preOpData, blockInfo.MemSpace, op);
 
             // clip block to match selection
             helper::ClipVector(m_ThreadBuffers[threadID][0],

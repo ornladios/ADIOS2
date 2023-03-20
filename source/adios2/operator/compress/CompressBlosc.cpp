@@ -212,16 +212,18 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
         }
     }
 
+    headerSize = bufferOutOffset;
     if (useMemcpy)
     {
-        std::memcpy(bufferOut + bufferOutOffset, dataIn + inputOffset, sizeIn);
-        bufferOutOffset += sizeIn;
         headerPtr->SetNumChunks(0u);
+        bufferOutOffset = 0; // indicate that the operator was not applied
     }
 
     blosc2_destroy();
     return bufferOutOffset;
 }
+
+size_t CompressBlosc::GetHeaderSize() const { return headerSize; }
 
 size_t CompressBlosc::InverseOperate(const char *bufferIn, const size_t sizeIn,
                                      char *dataOut)
@@ -230,6 +232,7 @@ size_t CompressBlosc::InverseOperate(const char *bufferIn, const size_t sizeIn,
     const uint8_t bufferVersion =
         GetParameter<uint8_t>(bufferIn, bufferInOffset);
     bufferInOffset += 2; // skip two reserved bytes
+    headerSize = bufferInOffset;
 
     if (bufferVersion == 1)
     {
@@ -263,6 +266,7 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     size_t bufferInOffset = 0;
     size_t sizeOut = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
+    bool isCompressed = true;
 
     m_VersionInfo =
         " Data is compressed using BLOSC Version " +
@@ -294,18 +298,26 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
             DecompressOldFormat(bufferIn + bufferInOffset,
                                 sizeIn - bufferInOffset, dataOut, sizeOut);
     }
+    if (decompressedSize == 0) // the decompression was not applied
+    {
+        isCompressed = false;
+        decompressedSize = bufferDecompressedSize;
+    }
     if (decompressedSize != sizeOut)
     {
         helper::Throw<std::runtime_error>("Operator", "CompressBlosc",
                                           "DecompressV1", m_VersionInfo);
     }
+    headerSize += sizeIn - sizeOut;
+    if (!isCompressed)
+        return 0; // indicate that the inverse operator was not applied
     return sizeOut;
 }
 
 size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
                                               const size_t sizeIn,
                                               char *dataOut,
-                                              const size_t sizeOut) const
+                                              const size_t sizeOut)
 {
     const DataHeader *dataPtr = reinterpret_cast<const DataHeader *>(bufferIn);
     uint32_t num_chunks = dataPtr->GetNumChunks();
@@ -386,9 +398,8 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
     }
     else
     {
-        std::memcpy(dataOut, inputDataBuff, inputDataSize);
-        currentOutputSize = inputDataSize;
-        inputOffset += inputDataSize;
+        bufferDecompressedSize = inputDataSize;
+        return 0; // the inverse operator was not applied
     }
 
     assert(currentOutputSize == uncompressedSize);

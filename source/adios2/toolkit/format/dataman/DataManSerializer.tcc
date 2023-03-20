@@ -143,6 +143,11 @@ void DataManSerializer::PutData(
         datasize = ops[0]->Operate(reinterpret_cast<const char *>(inputData),
                                    varStart, varCount, helper::GetDataType<T>(),
                                    m_CompressBuffer.data());
+        if (datasize == 0) // operator was not applied
+            datasize = helper::CopyMemoryWithOpHeader(
+                reinterpret_cast<const char *>(inputData), varCount,
+                helper::GetDataType<T>(), m_CompressBuffer.data(),
+                ops[0]->GetHeaderSize(), MemorySpace::Host);
         compressed = true;
     }
 
@@ -247,7 +252,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 decompressBuffer.reserve(
                     helper::GetTotalSize(j.count, sizeof(T)));
                 core::Decompress(j.buffer->data() + j.position, j.size,
-                                 decompressBuffer.data());
+                                 decompressBuffer.data(), MemorySpace::Host);
                 decompressed = true;
                 input_data = decompressBuffer.data();
             }

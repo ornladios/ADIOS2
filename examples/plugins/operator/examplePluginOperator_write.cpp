@@ -41,6 +41,7 @@ int main(int argc, char *argv[])
     };
     const std::size_t Nx = myDoubles.size();
 
+    bool success = false;
     try
     {
         /** ADIOS class factory of IO class objects */
@@ -73,6 +74,7 @@ int main(int argc, char *argv[])
 
         /** Engine becomes unreachable after this*/
         writer.Close();
+        success = true;
     }
     catch (std::invalid_argument &e)
     {
@@ -90,5 +92,5 @@ int main(int argc, char *argv[])
         std::cout << e.what() << "\n";
     }
 
-    return 0;
+    return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

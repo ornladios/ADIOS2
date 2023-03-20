@@ -118,7 +118,13 @@ inline void BP4Serializer::PutVariablePayload(
     }
     else
     {
-        PutOperationPayloadInBuffer(variable, blockInfo);
+        const bool isZeroCount =
+            std::all_of(blockInfo.Count.begin(), blockInfo.Count.end(),
+                        [](const size_t i) { return i == 0; });
+        if (!isZeroCount)
+        {
+            PutOperationPayloadInBuffer(variable, blockInfo);
+        }
     }
 
     /* Now we can update the varLength including payload size including the

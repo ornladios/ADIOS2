@@ -52,6 +52,7 @@ int main(int argc, char *argv[])
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     const std::size_t Nx = myFloats.size();
 
+    bool success = false;
     try
     {
         /** ADIOS class factory of IO class objects */
@@ -72,6 +73,7 @@ int main(int argc, char *argv[])
             adios2::Params params;
             params["PluginName"] = "WritePlugin";
             params["PluginLibrary"] = "PluginEngineWrite";
+            params["verbose"] = "5";
             io.SetParameters(params);
         }
         adios2::Engine writer = io.Open("TestPlugin", adios2::Mode::Write);
@@ -83,10 +85,12 @@ int main(int argc, char *argv[])
         else
         {
             writer.Put<float>(var, myFloats.data());
+            writer.PerformPuts();
         }
 
         /** Engine becomes unreachable after this*/
         writer.Close();
+        success = true;
     }
     catch (std::invalid_argument &e)
     {
@@ -104,5 +108,5 @@ int main(int argc, char *argv[])
         std::cout << e.what() << "\n";
     }
 
-    return 0;
+    return success ? EXIT_SUCCESS : EXIT_FAILURE;
 }

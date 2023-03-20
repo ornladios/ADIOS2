@@ -291,6 +291,7 @@ BeginStep timeouts) and writer-side rules (like queue limit behavior) apply.
  DataTransport                   string              **default varies by platform**, UCX, MPI, RDMA, WAN
  WANDataTransport                string              **sockets**, enet, ib
  ControlTransport                string              **TCP**, Scalable
+ MarshalMethod                   string              **BP5**, BP, FFS
  NetworkInterface                string              **NULL**
  ControlInterface                string              **NULL**
  DataInterface                   string              **NULL**

@@ -1803,7 +1803,7 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
             variable.m_MemoryCount, sourceRowMajor, false, (char *)ptr,
             variable.m_MemoryStart, variable.m_Count, sourceRowMajor, false,
             ObjSize, helper::CoreDims(), helper::CoreDims(), helper::CoreDims(),
-            helper::CoreDims(), false /* safemode */, MemorySpace::Host);
+            helper::CoreDims(), false /* safemode */, variable.m_MemSpace);
     }
     else
     {
