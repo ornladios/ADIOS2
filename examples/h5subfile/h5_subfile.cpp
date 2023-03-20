@@ -20,27 +20,38 @@
 void writeMe(adios2::IO &hdf5IO, int rank, int size, const char *testFileName)
 {
     /** Application variable */
-    const std::size_t Nx = 1000;
-    const std::size_t Ny = 1000;
+    int scale = 1;
 
-    std::vector<float> myFloats(Nx * Ny * size, 0.1 * rank);
-    std::vector<int> myInts(Nx * Ny * size, 1 + rank);
+    const char *temp = std::getenv("TEST_SCALE");
+    if (NULL != temp)
+    {
+        int itemp = -1;
+        sscanf(temp, "%d", &itemp);
+        if (itemp > 1)
+            scale = itemp;
+    }
+
+    const std::size_t Nx = 1024;
+    const std::size_t Ny = 1024 * scale;
+
+    std::vector<float> myFloats(Nx * Ny, 0.1 * rank);
+    std::vector<int> myInts(Nx * Ny, 1 + rank);
 
     hdf5IO.SetParameter("IdleH5Writer",
                         "true"); // set this if not all ranks are writting
 
     adios2::Variable<float> h5Floats = hdf5IO.DefineVariable<float>(
-        "h5Floats", {size * Nx, size * Ny}, {rank * Nx, 0}, {Nx, size * Ny},
+        "h5Floats", {size * Nx, Ny}, {rank * Nx, 0}, {Nx, Ny},
         adios2::ConstantDims);
 
-    adios2::Variable<int> h5Ints = hdf5IO.DefineVariable<int>(
-        "h5Ints", {size * Nx, size * Ny}, {rank * Nx, 0}, {Nx, size * Ny},
-        adios2::ConstantDims);
+    adios2::Variable<int> h5Ints =
+        hdf5IO.DefineVariable<int>("h5Ints", {size * Nx, Ny}, {rank * Nx, 0},
+                                   {Nx, Ny}, adios2::ConstantDims);
 
     /** Engine derived class, spawned to start IO operations */
     adios2::Engine hdf5Writer = hdf5IO.Open(testFileName, adios2::Mode::Write);
 
-    int nsteps = 3;
+    int nsteps = 5;
 
     if (size % 2 == 0)
     {
