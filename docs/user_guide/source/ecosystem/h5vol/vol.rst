@@ -5,7 +5,7 @@ Disclaimer
 
 The Virtual Object Layer (VOL) is a feature introduced in recent release of  HDF5 1.12 (https://hdf5.wiki/index.php/New_Features_in_HDF5_Release_1.12). 
 
-So please do make sure your HDF5 version supports VOL. 
+So please do make sure your HDF5 version supports the latest VOL. 
 
 Once the ADIOS VOL is compiled, There are two ways to apply it: 
 
