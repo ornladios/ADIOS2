@@ -9,7 +9,6 @@
  */
 #include "Group.h"
 #include "Group.tcc"
-#include <iostream>
 #include <memory>
 #include <set>
 #include <string>
@@ -59,16 +58,6 @@ Group *Group::InquireGroup(std::string groupName)
     m_Gr->mapPtr = this->mapPtr;
     return m_Gr.get();
 }
-void Group::PrintTree()
-{
-    for (auto k : mapPtr->treeMap)
-    {
-        std::cout << k.first << "=>";
-        for (auto v : k.second)
-            std::cout << v << " ";
-        std::cout << std::endl;
-    }
-}
 
 void Group::BuildTree()
 {
@@ -83,16 +72,7 @@ void Group::BuildTree()
         else
             tokens.insert(tokens.begin(), ADIOS_root);
         currentPath = ADIOS_root;
-
-        if (tokens.size() == 0)
-        {
-            // record = "group". Handled by default case
-        }
-        else if (tokens.size() == 1)
-        {
-            // case record = "/group1" or "group/"
-        }
-        else
+        if (tokens.size() > 1)
         {
             std::string key = tokens[0];
             for (size_t level = 1; level < tokens.size(); level++)
@@ -112,15 +92,6 @@ void Group::BuildTree()
     {
         std::vector<std::string> tokens =
             split(attributePair.first, groupDelimiter);
-
-        if (tokens.size() == 0)
-        {
-            // record = "group". Handled by default case
-        }
-        else if (tokens.size() == 1)
-        {
-            // case record = "/group1" or "group/"
-        }
         if (tokens.size() > 1)
         {
             std::string key = tokens[0];
@@ -141,9 +112,8 @@ std::vector<std::string> Group::AvailableVariables()
 {
     // look into map
     std::set<std::string> val = mapPtr->treeMap[currentPath];
-    // TODODG check that currentPath exists
     std::vector<std::string> available_variables;
-    for (auto v : val)
+    for (auto const &v : val)
     {
         if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) ==
             mapPtr->treeMap.end())
@@ -168,7 +138,7 @@ std::vector<std::string> Group::AvailableAttributes()
     std::set<std::string> val = mapPtr->treeMap[currentPath];
     // TODODG check that currentPath exists
     std::vector<std::string> available_attributes;
-    for (auto v : val)
+    for (auto const &v : val)
     {
         if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) ==
             mapPtr->treeMap.end())
@@ -192,13 +162,11 @@ std::vector<std::string> Group::AvailableGroups()
 
     std::vector<std::string> available_groups;
     std::set<std::string> val = mapPtr->treeMap[currentPath];
+    for (auto const &v : val)
     {
-        for (auto v : val)
-        {
-            if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) !=
-                mapPtr->treeMap.end())
-                available_groups.push_back(v);
-        }
+        if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) !=
+            mapPtr->treeMap.end())
+            available_groups.push_back(v);
     }
     return available_groups;
 }

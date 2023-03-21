@@ -39,23 +39,11 @@ class Group
 {
     friend class IO;
 
-private:
     Group(core::Group *group);
     core::Group *m_Group = nullptr;
 
 public:
     ~Group();
-    /**
-     * @brief Builds map that represents tree structure from m_Variable and
-     * m_Attributes from IO class
-     * @param
-     */
-    void BuildTree();
-    /**
-     * @brief Prints map that represents tree structure
-     * @param
-     */
-    void PrintTree();
     /**
      * @brief returns available groups on the path set
      * @param
@@ -91,11 +79,6 @@ public:
      * @return new group object
      */
     Group InquireGroup(std::string group_name);
-    /**
-     * @brief returns  a reference to the map representing the tree stucture
-     * @param delimiter symbol
-     */
-    std::map<std::string, std::set<std::string>> &getTreeMap();
     /**
      * @brief Gets an existing variable of primitive type by name. A wrapper for
      * the corresponding function of the IO class

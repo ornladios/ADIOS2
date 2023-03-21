@@ -37,6 +37,10 @@ private:
     std::shared_ptr<TreeMap> mapPtr = nullptr;
     /** root of the tree */
     const std::string ADIOS_root = "_ADIOS_ROOT_";
+    /** a pointer to a Group Object */
+    std::shared_ptr<Group> m_Gr;
+    /** reference to object that created current Group */
+    IO &m_IO;
 
 public:
     /**
@@ -52,19 +56,12 @@ public:
     Group(const Group &G);
     /** destructor */
     ~Group();
-    /** a pointer to a Group Object */
-    std::shared_ptr<Group> m_Gr;
     /**
      * @brief Builds map that represents tree structure from m_Variable and
      * m_Attributes from IO class
      * @param
      */
     void BuildTree();
-    /**
-     * @brief Prints map that represents tree structure
-     * @param
-     */
-    void PrintTree();
     /**
      * @brief returns available groups on the path set
      * @param
@@ -110,8 +107,6 @@ public:
      * @param delimiter symbol
      */
     std::map<std::string, std::set<std::string>> &getTreeMap();
-    /** reference to object that created current Group */
-    IO &m_IO;
     /**
      * @brief Gets an existing variable of primitive type by name. A wrapper for
      * the corresponding function of the IO class
