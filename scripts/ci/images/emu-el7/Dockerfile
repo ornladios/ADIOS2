@@ -35,7 +35,7 @@ FROM ${TARGET_ARCH_DOCKER}/centos:centos7
 # Grab a fully static node.js binary
 # to run various CI actions
 ########################################
-COPY --from=ornladios/adios2:node12-static /node /x86_64/bin/node
+COPY  --from=ornladios/adios2:node12-static /node /x86_64/bin/node
 
 ########################################
 # Build up a minimal busybox shell

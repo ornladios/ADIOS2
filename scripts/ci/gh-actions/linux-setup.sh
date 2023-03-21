@@ -3,7 +3,7 @@
 set -ex
 
 export CI_ROOT_DIR="${GITHUB_WORKSPACE}/.."
-export CI_SOURCE_DIR="${GITHUB_WORKSPACE}"
+export CI_SOURCE_DIR="${GITHUB_WORKSPACE}/source"
 
 declare -r local_scripts_dir="$(dirname -- $0)/config"
 
