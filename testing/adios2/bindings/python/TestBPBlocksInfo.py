@@ -28,7 +28,7 @@ count = [Nx, Ny]
 start = [rank * Nx, 0]
 shape = [size * Nx, Ny]
 
-temperatures = np.zeros(count, dtype=int)
+temperatures = np.zeros(count, dtype=np.int32)
 
 for i in range(0, Nx):
     for j in range(0, Ny):

@@ -27,7 +27,7 @@ count = [Nx, Ny]
 start = [rank * Nx, 0]
 shape = [size * Nx, Ny]
 
-temperatures = np.zeros(count, dtype=int)
+temperatures = np.zeros(count, dtype=np.int32)
 
 for i in range(0, Nx):
     for j in range(0, Ny):
@@ -61,7 +61,7 @@ if rank == 0:
     readSize = [4, 4]
 
     var_inTemperature.SetSelection([readOffset, readSize])
-    inTemperatures = np.zeros(readSize, dtype=int)
+    inTemperatures = np.zeros(readSize, dtype=np.int32)
     ibpStream.Get(var_inTemperature, inTemperatures, adios2.Mode.Sync)
     ibpStream.Close()
 
@@ -69,5 +69,5 @@ if rank == 0:
     expected = np.array([[22, 23, 24, 25],
                          [32, 33, 34, 35],
                          [42, 43, 44, 45],
-                         [52, 53, 54, 55]], int)
+                         [52, 53, 54, 55]], np.int32)
     assert np.array_equal(inTemperatures, expected)
