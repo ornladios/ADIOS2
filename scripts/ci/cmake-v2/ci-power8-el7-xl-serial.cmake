@@ -1,4 +1,4 @@
-# Client maintainer: chuck.atkins@kitware.com
+# Client maintainer: vicente.bolea@kitware.com
 
 set(ENV{CC}  xlc)
 set(ENV{CXX} xlc++)
@@ -20,6 +20,7 @@ ADIOS2_USE_ZFP:BOOL=ON
 set(CTEST_TEST_ARGS
   INCLUDE "^(Interface|Install)"
 )
+
 set(CTEST_TEST_TIMEOUT 300)
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
