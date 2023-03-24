@@ -21,17 +21,6 @@ Group Group::InquireGroup(std::string group_name)
     auto m = m_Group->InquireGroup(group_name);
     return Group(m);
 }
-void Group::PrintTree()
-{
-    m_Group->PrintTree();
-    return;
-}
-
-void Group::BuildTree()
-{
-    m_Group->BuildTree();
-    return;
-}
 std::vector<std::string> Group::AvailableVariables()
 {
     return m_Group->AvailableVariables();
@@ -43,11 +32,6 @@ std::vector<std::string> Group::AvailableAttributes()
 std::vector<std::string> Group::AvailableGroups()
 {
     return m_Group->AvailableGroups();
-}
-
-std::map<std::string, std::set<std::string>> &Group::getTreeMap()
-{
-    return m_Group->getTreeMap();
 }
 
 std::string Group::InquirePath() { return m_Group->InquirePath(); }
@@ -64,7 +48,8 @@ DataType Group::AttributeType(const std::string &name) const
     helper::CheckForNullptr(m_Group, "in call to IO::AttributeType");
     return m_Group->InquireAttributeType(name);
 }
-Group::~Group(){};
+Group::~Group() = default;
+;
 // Explicit declaration of the public template methods
 // Limits the types
 #define declare_template_instantiation(T)                                      \
