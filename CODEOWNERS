@@ -15,3 +15,8 @@ scripts/ @vicentebolea
 .github/ @vicentebolea
 .circleci/ @vicentebolea
 source/adios2/toolkit/sst/dp/mpi_dp.c @vicentebolea
+
+# GPU-aware specific files
+source/adios2/helper/adiosKokkos.* @anagainaru
+source/adios2/helper/adiosCUDA.* @anagainaru
+source/adios2/helper/adiosGPUFunctions.h @anagainaru
