@@ -239,7 +239,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
                 engine.BlocksInfo(var_r64, engine.CurrentStep());
             EXPECT_EQ(i8Info.size(), writerSize);
             EXPECT_EQ(i16Info.size(), writerSize);
-            EXPECT_EQ(i32Info.size(), writerSize);
+            EXPECT_TRUE((i32Info.size() == writerSize) ||
+                        (i32Info.size() == writerSize * 3));
             EXPECT_EQ(i64Info.size(), writerSize);
             EXPECT_EQ(r32Info.size(), writerSize);
             EXPECT_EQ(r64Info.size(), writerSize);

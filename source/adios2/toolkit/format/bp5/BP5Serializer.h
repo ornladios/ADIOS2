@@ -219,6 +219,7 @@ private:
                                  DataType Type, size_t ElemSize,
                                  size_t DimCount);
     void ValidateWriterRec(BP5WriterRec Rec, void *Variable);
+    void CollectFinalShapeValues();
     void RecalcMarshalStorageSize();
     void RecalcAttributeStorageSize();
     void AddSimpleField(FMFieldList *FieldP, int *CountP, const char *Name,
