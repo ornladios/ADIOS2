@@ -32,7 +32,7 @@ program TestBPWriteReadHeatMapSZ2D
 
   integer(kind=8), dimension(2) :: ishape, istart, icount
   integer(kind=8), dimension(2) :: sel_start, sel_count
-  integer :: ierr, irank, isize
+  integer :: ierr, irank, isize, step_status
   integer :: in1, in2
   integer :: i1, i2
 
@@ -138,6 +138,9 @@ program TestBPWriteReadHeatMapSZ2D
     call adios2_open(bpReader, ioGet, 'HeatMapSZ2D_f.bp', &
                      adios2_mode_read, MPI_COMM_SELF, ierr)
 
+    call adios2_begin_step(bpReader, adios2_step_mode_read, -1., &
+                           step_status, ierr)
+
     call adios2_inquire_variable(var_temperaturesIn(1), ioGet, &
                                  'temperatures_i1', ierr)
     call adios2_inquire_variable(var_temperaturesIn(2), ioGet, &
@@ -187,6 +190,8 @@ program TestBPWriteReadHeatMapSZ2D
     call adios2_get(bpReader, var_temperaturesIn(4), sel_temperatures_i8, ierr)
     call adios2_get(bpReader, var_temperaturesIn(5), sel_temperatures_r4, ierr)
     call adios2_get(bpReader, var_temperaturesIn(6), sel_temperatures_r8, ierr)
+
+    call adios2_end_step(bpReader, ierr)
 
     call adios2_close(bpReader, ierr)
 

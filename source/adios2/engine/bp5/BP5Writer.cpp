@@ -1785,10 +1785,16 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
 
     if (!variable.m_MemoryCount.empty())
     {
+        const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+        helper::DimsArray MemoryStart(variable.m_MemoryStart);
+        helper::DimsArray MemoryCount(variable.m_MemoryCount);
+        helper::DimsArray varCount(variable.m_Count);
+
         int DimCount = variable.m_Count.size();
         std::vector<size_t> ZeroDims(DimCount);
         // get a temporary span then fill with memselection now
         format::BufferV::BufferPos bp5span(0, 0, 0);
+
         m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
                                 variable.m_Type, variable.m_ElementSize,
                                 DimCount, Shape, Count, Start, nullptr, false,
@@ -1796,14 +1802,18 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
         void *ptr =
             m_BP5Serializer.GetPtr(bp5span.bufferIdx, bp5span.posInBuffer);
 
-        const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
-
-        helper::NdCopy(
-            (const char *)values, helper::CoreDims(ZeroDims),
-            variable.m_MemoryCount, sourceRowMajor, false, (char *)ptr,
-            variable.m_MemoryStart, variable.m_Count, sourceRowMajor, false,
-            ObjSize, helper::CoreDims(), helper::CoreDims(), helper::CoreDims(),
-            helper::CoreDims(), false /* safemode */, variable.m_MemSpace);
+        if (!sourceRowMajor)
+        {
+            std::reverse(MemoryStart.begin(), MemoryStart.end());
+            std::reverse(MemoryCount.begin(), MemoryCount.end());
+            std::reverse(varCount.begin(), varCount.end());
+        }
+        helper::NdCopy((const char *)values, helper::CoreDims(ZeroDims),
+                       MemoryCount, sourceRowMajor, false, (char *)ptr,
+                       MemoryStart, varCount, sourceRowMajor, false, ObjSize,
+                       helper::CoreDims(), helper::CoreDims(),
+                       helper::CoreDims(), helper::CoreDims(),
+                       false /* safemode */, variable.m_MemSpace);
     }
     else
     {

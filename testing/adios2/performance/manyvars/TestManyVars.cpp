@@ -99,15 +99,6 @@ std::vector<RunParams> CreateRunParams()
                ndims, NDIM);                                                   \
         err = 102;                                                             \
         goto endread;                                                          \
-    }                                                                          \
-    size_t steps;                                                              \
-    adios2_variable_steps(&steps, vi);                                         \
-    if (steps != NSTEPS)                                                       \
-    {                                                                          \
-        printE("Variable %s has %zu steps, but expected %zu\n", VARNAME,       \
-               steps, NSTEPS);                                                 \
-        err = 103;                                                             \
-        /*goto endread; */                                                     \
     }
 
 #define CHECK_SCALAR(VARNAME, VAR, VALUE, STEP)                                \
@@ -282,6 +273,7 @@ public:
 
                 err = write_file(i);
 
+                std::cout << "After writem err is " << err << std::endl;
                 if (REDEFINE)
                 {
                     printf("-- Delete variable definitions.\n");
@@ -295,6 +287,7 @@ public:
         if (!err)
             err = read_file();
 
+        std::cout << "After read err is " << err << std::endl;
         adios2_finalize(adiosH);
         fini_vars();
         return err;

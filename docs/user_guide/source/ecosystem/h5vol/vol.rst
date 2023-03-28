@@ -51,7 +51,7 @@ Internal
 
 
 
-..  To choose what ADIOS2 Engine to use, set env variable: ADIOS2_ENGINE (default is BP4)
+..  To choose what ADIOS2 Engine to use, set env variable: ADIOS2_ENGINE (default is BP5)
 
 
 
