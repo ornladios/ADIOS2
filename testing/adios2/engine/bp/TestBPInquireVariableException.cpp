@@ -8,6 +8,8 @@
 #include <limits>
 #include <stdexcept>
 
+std::string engineName;
+
 class ADIOSInquireVariableException : public ::testing::Test
 {
 public:
@@ -16,7 +18,7 @@ public:
 
 TEST_F(ADIOSInquireVariableException, Read)
 {
-    std::string filename = "ADIOSInquireVariableException.bp";
+    std::string filename = "ADIOSInquireVariableException";
 
     // Number of steps
     const std::size_t NSteps = 5;
@@ -36,7 +38,8 @@ TEST_F(ADIOSInquireVariableException, Read)
         adios2::ADIOS adios;
 #endif
         adios2::IO io_w = adios.DeclareIO("Test");
-        io_w.SetEngine("BPFile");
+        std::cout << "Setting engine name to " << engineName << std::endl;
+        io_w.SetEngine(engineName);
 
         adios2::Engine writer = io_w.Open(filename, adios2::Mode::Write);
         const std::size_t Nx = 10;
@@ -57,14 +60,15 @@ TEST_F(ADIOSInquireVariableException, Read)
         writer.Close();
 
         adios2::IO io_r = adios.DeclareIO("TestIO");
-        io_r.SetEngine("FileStream");
+        io_r.SetParameters({{"StreamReader", "true"}});
         auto reader = io_r.Open(filename, adios2::Mode::Read);
         auto var = io_r.InquireVariable<int32_t>("variable1");
-
+        std::cout << "Engine type is " << reader.Type() << std::endl;
         for (size_t step = 0; step < NSteps; step++)
         {
             reader.BeginStep();
             std::vector<int32_t> myInts;
+            std::cout << "in step " << step << std::endl;
             EXPECT_THROW(reader.Get<int32_t>(var, myInts, adios2::Mode::Sync);
                          , std::invalid_argument);
             reader.EndStep();
@@ -81,6 +85,11 @@ int main(int argc, char **argv)
     MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
 #endif
     ::testing::InitGoogleTest(&argc, argv);
+    if (argc > 1)
+    {
+        engineName = std::string(argv[1]);
+    }
+
     int result = RUN_ALL_TESTS();
 #if ADIOS2_USE_MPI
     MPI_Finalize();

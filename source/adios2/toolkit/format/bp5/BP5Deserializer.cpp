@@ -780,172 +780,190 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
         {
             continue;
         }
-        if (!m_RandomAccessMode)
+        try
         {
-            if (writerCohortSize > VarRec->PerWriterBlockStart.size())
+            if (!m_RandomAccessMode)
             {
-                VarRec->PerWriterBlockStart.resize(writerCohortSize);
-                VarRec->PerWriterMetaFieldOffset.resize(writerCohortSize);
-            }
-            VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
-        }
-        else
-        {
-            if ((VarRec->AbsStepFromRel.size() == 0) ||
-                (VarRec->AbsStepFromRel.back() != Step))
-            {
-                VarRec->AbsStepFromRel.push_back(Step);
-            }
-        }
-        if ((ControlFields[i].OrigShapeID == ShapeID::GlobalArray) ||
-            (ControlFields[i].OrigShapeID == ShapeID::LocalArray) ||
-            (ControlFields[i].OrigShapeID == ShapeID::JoinedArray))
-        {
-            MetaArrayRec *meta_base = (MetaArrayRec *)field_data;
-            size_t BlockCount =
-                meta_base->Dims ? meta_base->DBCount / meta_base->Dims : 1;
-            if ((meta_base->Dims > 1) &&
-                (m_WriterIsRowMajor != m_ReaderIsRowMajor))
-            {
-                /* if we're getting data from someone of the other array gender,
-                 * switcheroo */
-                ReverseDimensions(meta_base->Count, meta_base->Dims,
-                                  BlockCount);
-                if ((ControlFields[i].OrigShapeID == ShapeID::GlobalArray) ||
-                    (ControlFields[i].OrigShapeID == ShapeID::JoinedArray))
+                if (writerCohortSize > VarRec->PerWriterBlockStart.size())
                 {
-                    ReverseDimensions(meta_base->Shape, meta_base->Dims, 1);
-                    if (ControlFields[i].OrigShapeID == ShapeID::GlobalArray)
-                    {
-                        ReverseDimensions(meta_base->Offsets, meta_base->Dims,
-                                          BlockCount);
-                    }
+                    VarRec->PerWriterBlockStart.resize(writerCohortSize);
+                    VarRec->PerWriterMetaFieldOffset.resize(writerCohortSize);
+                }
+                VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
+            }
+            else
+            {
+                if ((VarRec->AbsStepFromRel.size() == 0) ||
+                    (VarRec->AbsStepFromRel.back() != Step))
+                {
+                    VarRec->AbsStepFromRel.push_back(Step);
                 }
             }
-            if ((WriterRank == 0) || (VarRec->GlobalDims == NULL))
+            if ((ControlFields[i].OrigShapeID == ShapeID::GlobalArray) ||
+                (ControlFields[i].OrigShapeID == ShapeID::LocalArray) ||
+                (ControlFields[i].OrigShapeID == ShapeID::JoinedArray))
             {
-                // use the shape from rank 0 (or first non-NULL)
-                VarRec->GlobalDims = meta_base->Shape;
-            }
-            if (ControlFields[i].OrigShapeID == ShapeID::JoinedArray)
-            {
-                // setup Offsets
-                meta_base->Offsets =
-                    &JoinedDimenOffsetArray[CurJoinedDimenOffset];
-                CurJoinedDimenOffset += meta_base->DBCount;
-
-                for (size_t b = 0; b < BlockCount; b++)
+                MetaArrayRec *meta_base = (MetaArrayRec *)field_data;
+                size_t BlockCount =
+                    meta_base->Dims ? meta_base->DBCount / meta_base->Dims : 1;
+                if ((meta_base->Dims > 1) &&
+                    (m_WriterIsRowMajor != m_ReaderIsRowMajor))
                 {
-                    size_t PreviousJoinedOffset = 0;
-                    if (VarRec->LastJoinedShape != NULL)
+                    /* if we're getting data from someone of the other array
+                     * gender, switcheroo */
+                    ReverseDimensions(meta_base->Count, meta_base->Dims,
+                                      BlockCount);
+                    if ((ControlFields[i].OrigShapeID ==
+                         ShapeID::GlobalArray) ||
+                        (ControlFields[i].OrigShapeID == ShapeID::JoinedArray))
                     {
-                        // Offset of this new block is the prior total size,
-                        // stored in Shape
-                        PreviousJoinedOffset =
-                            VarRec->LastJoinedShape[VarRec->JoinedDimen];
-                    }
-                    else
-                    {
-                        // We're going to track the accumulated Joined Shape in
-                        // whatever Shape metadata entry we selected for
-                        // GlobalDims (might be rank 0, might be other)
-                        VarRec->LastJoinedShape = VarRec->GlobalDims;
-                        // overwrite the JoinedDimen value in that entry
-                        VarRec->LastJoinedShape[VarRec->JoinedDimen] = 0;
-                    }
-                    VarRec->LastJoinedShape[VarRec->JoinedDimen] +=
-                        meta_base->Count[(b * meta_base->Dims) +
-                                         VarRec->JoinedDimen];
-                    for (size_t i = 0; i < meta_base->Dims; i++)
-                    {
-                        if (i == VarRec->JoinedDimen)
+                        ReverseDimensions(meta_base->Shape, meta_base->Dims, 1);
+                        if (ControlFields[i].OrigShapeID ==
+                            ShapeID::GlobalArray)
                         {
-                            meta_base->Offsets[(b * meta_base->Dims) + i] =
-                                PreviousJoinedOffset;
+                            ReverseDimensions(meta_base->Offsets,
+                                              meta_base->Dims, BlockCount);
+                        }
+                    }
+                }
+                if ((WriterRank == 0) || (VarRec->GlobalDims == NULL))
+                {
+                    // use the shape from rank 0 (or first non-NULL)
+                    VarRec->GlobalDims = meta_base->Shape;
+                }
+                if (ControlFields[i].OrigShapeID == ShapeID::JoinedArray)
+                {
+                    // setup Offsets
+                    meta_base->Offsets =
+                        &JoinedDimenOffsetArray[CurJoinedDimenOffset];
+                    CurJoinedDimenOffset += meta_base->DBCount;
+
+                    for (size_t b = 0; b < BlockCount; b++)
+                    {
+                        size_t PreviousJoinedOffset = 0;
+                        if (VarRec->LastJoinedShape != NULL)
+                        {
+                            // Offset of this new block is the prior total size,
+                            // stored in Shape
+                            PreviousJoinedOffset =
+                                VarRec->LastJoinedShape[VarRec->JoinedDimen];
                         }
                         else
                         {
-                            meta_base->Offsets[(b * meta_base->Dims) + i] = 0;
+                            // We're going to track the accumulated Joined Shape
+                            // in whatever Shape metadata entry we selected for
+                            // GlobalDims (might be rank 0, might be other)
+                            VarRec->LastJoinedShape = VarRec->GlobalDims;
+                            // overwrite the JoinedDimen value in that entry
+                            VarRec->LastJoinedShape[VarRec->JoinedDimen] = 0;
                         }
+                        VarRec->LastJoinedShape[VarRec->JoinedDimen] +=
+                            meta_base->Count[(b * meta_base->Dims) +
+                                             VarRec->JoinedDimen];
+                        for (size_t i = 0; i < meta_base->Dims; i++)
+                        {
+                            if (i == VarRec->JoinedDimen)
+                            {
+                                meta_base->Offsets[(b * meta_base->Dims) + i] =
+                                    PreviousJoinedOffset;
+                            }
+                            else
+                            {
+                                meta_base->Offsets[(b * meta_base->Dims) + i] =
+                                    0;
+                            }
+                        }
+                        VarRec->LastJoinedOffset =
+                            &meta_base->Offsets[(b * meta_base->Dims)];
                     }
-                    VarRec->LastJoinedOffset =
-                        &meta_base->Offsets[(b * meta_base->Dims)];
                 }
-            }
 
-            if (!VarRec->Variable)
-            {
-                VarRec->Variable = ArrayVarSetup(
-                    m_Engine, VarRec->VarName, VarRec->Type, meta_base->Dims,
-                    meta_base->Shape, meta_base->Offsets, meta_base->Count,
-                    VarRec->Def, VarRec->ReaderDef);
-                static_cast<VariableBase *>(VarRec->Variable)->m_Engine =
-                    m_Engine;
-                VarByKey[VarRec->Variable] = VarRec;
-                VarRec->LastTSAdded = Step; // starts at 1
-                if (!meta_base->Shape)
+                if (!VarRec->Variable)
                 {
-                    static_cast<VariableBase *>(VarRec->Variable)->m_ShapeID =
-                        ShapeID::LocalArray;
-                }
-            }
-
-            VarRec->DimCount = meta_base->Dims;
-            if (!m_RandomAccessMode)
-            {
-                if (WriterRank == 0)
-                {
-                    VarRec->PerWriterBlockStart[WriterRank] = 0;
-                    if (writerCohortSize > 1)
-                        VarRec->PerWriterBlockStart[WriterRank + 1] =
-                            BlockCount;
-                }
-                if (WriterRank < static_cast<size_t>(writerCohortSize - 1))
-                {
-                    VarRec->PerWriterBlockStart[WriterRank + 1] =
-                        VarRec->PerWriterBlockStart[WriterRank] + BlockCount;
-                }
-            }
-        }
-        else
-        {
-            if (!VarRec->Variable)
-            {
-                if (ControlFields[i].OrigShapeID == ShapeID::LocalValue)
-                {
-                    // Local single values show up as global arrays on the
-                    // reader
-                    size_t zero = 0;
-                    size_t writerSize = writerCohortSize;
                     VarRec->Variable = ArrayVarSetup(
-                        m_Engine, VarRec->VarName, VarRec->Type, 1, &writerSize,
-                        &zero, &writerSize, VarRec->Def, VarRec->ReaderDef);
-                    auto VB = static_cast<VariableBase *>(VarRec->Variable);
+                        m_Engine, VarRec->VarName, VarRec->Type,
+                        meta_base->Dims, meta_base->Shape, meta_base->Offsets,
+                        meta_base->Count, VarRec->Def, VarRec->ReaderDef);
                     static_cast<VariableBase *>(VarRec->Variable)->m_Engine =
                         m_Engine;
-                    VB->m_ShapeID = ShapeID::GlobalArray;
+                    VarByKey[VarRec->Variable] = VarRec;
+                    VarRec->LastTSAdded = Step; // starts at 1
+                    if (!meta_base->Shape)
+                    {
+                        static_cast<VariableBase *>(VarRec->Variable)
+                            ->m_ShapeID = ShapeID::LocalArray;
+                    }
                 }
-                else
+
+                VarRec->DimCount = meta_base->Dims;
+                if (!m_RandomAccessMode)
                 {
-                    // Global single value
-                    VarRec->Variable = VarSetup(m_Engine, VarRec->VarName,
-                                                VarRec->Type, field_data);
-                    static_cast<VariableBase *>(VarRec->Variable)->m_Engine =
-                        m_Engine;
+                    if (WriterRank == 0)
+                    {
+                        VarRec->PerWriterBlockStart[WriterRank] = 0;
+                        if (writerCohortSize > 1)
+                            VarRec->PerWriterBlockStart[WriterRank + 1] =
+                                BlockCount;
+                    }
+                    if (WriterRank < static_cast<size_t>(writerCohortSize - 1))
+                    {
+                        VarRec->PerWriterBlockStart[WriterRank + 1] =
+                            VarRec->PerWriterBlockStart[WriterRank] +
+                            BlockCount;
+                    }
                 }
-                VarByKey[VarRec->Variable] = VarRec;
+            }
+            else
+            {
+                if (!VarRec->Variable)
+                {
+                    if (ControlFields[i].OrigShapeID == ShapeID::LocalValue)
+                    {
+                        // Local single values show up as global arrays on the
+                        // reader
+                        size_t zero = 0;
+                        size_t writerSize = writerCohortSize;
+                        VarRec->Variable = ArrayVarSetup(
+                            m_Engine, VarRec->VarName, VarRec->Type, 1,
+                            &writerSize, &zero, &writerSize, VarRec->Def,
+                            VarRec->ReaderDef);
+                        auto VB = static_cast<VariableBase *>(VarRec->Variable);
+                        static_cast<VariableBase *>(VarRec->Variable)
+                            ->m_Engine = m_Engine;
+                        VB->m_ShapeID = ShapeID::GlobalArray;
+                    }
+                    else
+                    {
+                        // Global single value
+                        VarRec->Variable = VarSetup(m_Engine, VarRec->VarName,
+                                                    VarRec->Type, field_data);
+                        static_cast<VariableBase *>(VarRec->Variable)
+                            ->m_Engine = m_Engine;
+                    }
+                    VarByKey[VarRec->Variable] = VarRec;
+                    VarRec->LastTSAdded = Step;
+                }
+            }
+            if (VarRec->FirstTSSeen == SIZE_MAX)
+            {
+                VarRec->FirstTSSeen = Step;
+            }
+            if (m_RandomAccessMode && (VarRec->LastTSAdded != Step))
+            {
+                static_cast<VariableBase *>(VarRec->Variable)
+                    ->m_AvailableStepsCount++;
                 VarRec->LastTSAdded = Step;
             }
         }
-        if (VarRec->FirstTSSeen == SIZE_MAX)
+        catch (const std::invalid_argument &e)
         {
-            VarRec->FirstTSSeen = Step;
-        }
-        if (m_RandomAccessMode && (VarRec->LastTSAdded != Step))
-        {
-            static_cast<VariableBase *>(VarRec->Variable)
-                ->m_AvailableStepsCount++;
-            VarRec->LastTSAdded = Step;
+            // We'll catch here if a variable creation encounters a duplicate
+            // variable name in the IO
+            helper::Throw<std::logic_error>(
+                "Toolkit", "format::BP5Deserializer", "InstallMetaData",
+                "Variable " + std::string(VarRec->VarName) +
+                    " already defined in IO.  BP5 readers will not overwrite "
+                    "already-defined variables on read.");
         }
     }
     if (WriterRank == (m_CurrentWriterCohortSize - 1))

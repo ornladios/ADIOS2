@@ -6,6 +6,7 @@
 
 #include <ios>
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include <adios2.h>
@@ -14,7 +15,10 @@
 
 __global__ void update_array(float *vect, int val) { vect[blockIdx.x] += val; }
 
-int BPWrite(const std::string fname, const size_t N, int nSteps)
+std::string engine("BP5");
+
+int BPWrite(const std::string fname, const size_t N, int nSteps,
+            const std::string engine)
 {
     // Initialize the simulation data
     float *gpuSimData;
@@ -24,7 +28,7 @@ int BPWrite(const std::string fname, const size_t N, int nSteps)
     // Set up the ADIOS structures
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("WriteIO");
-    io.SetEngine("BP5");
+    io.SetEngine(engine);
 
     // Declare an array for the ADIOS data of size (NumOfProcesses * N)
     const adios2::Dims shape{static_cast<size_t>(N)};
@@ -56,12 +60,13 @@ int BPWrite(const std::string fname, const size_t N, int nSteps)
     return 0;
 }
 
-int BPRead(const std::string fname, const size_t N, int nSteps)
+int BPRead(const std::string fname, const size_t N, int nSteps,
+           const std::string engine)
 {
     // Create ADIOS structures
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("ReadIO");
-    io.SetEngine("BP5");
+    io.SetEngine(engine);
 
     adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -92,13 +97,17 @@ int BPRead(const std::string fname, const size_t N, int nSteps)
 
 int main(int argc, char **argv)
 {
-    const std::string fname("CudaBp5wr.bp");
+    if (argv[1])
+        engine = argv[1];
+    std::cout << "Using engine " << engine << std::endl;
+
+    const std::string fname("Cuda" + engine + "wr.bp");
     const int device_id = 1;
     cudaSetDevice(device_id);
     const size_t N = 6000;
     int nSteps = 10, ret = 0;
 
-    ret += BPWrite(fname, N, nSteps);
-    ret += BPRead(fname, N, nSteps);
+    ret += BPWrite(fname, N, nSteps, engine);
+    ret += BPRead(fname, N, nSteps, engine);
     return ret;
 }

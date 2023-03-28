@@ -401,6 +401,42 @@ void BP5Serializer::AddDoubleArrayField(FMFieldList *FieldP, int *CountP,
     (*FieldP)[*CountP - 1].field_size = ElementSize;
 }
 
+void BP5Serializer::ValidateWriterRec(BP5Serializer::BP5WriterRec Rec,
+                                      void *Variable)
+{
+    core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
+    if ((VB->m_Operations.size() == 0) && Rec->OperatorType)
+    {
+        // removed operator case
+        helper::Throw<std::logic_error>(
+            "Toolkit", "format::BP5Serializer", "Marshal",
+            "BP5 does not support removing operators after the first Put()");
+    }
+    else if ((VB->m_Operations.size() > 0) && !Rec->OperatorType)
+    {
+        // removed operator case
+        helper::Throw<std::logic_error>(
+            "Toolkit", "format::BP5Serializer", "Marshal",
+            "BP5 does not support adding operators after the first Put()");
+    }
+    else if (VB->m_Operations.size() > 1)
+    {
+        // removed operator case
+        helper::Throw<std::logic_error>(
+            "Toolkit", "format::BP5Serializer", "Marshal",
+            "BP5 does not support multiple operators");
+    }
+    else if (Rec->OperatorType && VB->m_Operations.size() &&
+             (VB->m_Operations[0]->m_TypeString !=
+              std::string(Rec->OperatorType)))
+    {
+        // removed operator case
+        helper::Throw<std::logic_error>(
+            "Toolkit", "format::BP5Serializer", "Marshal",
+            "BP5 does not support changing operators after the first Put()");
+    }
+}
+
 BP5Serializer::BP5WriterRec
 BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
                                size_t ElemSize, size_t DimCount)
@@ -657,7 +693,10 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
     {
         Rec = CreateWriterRec(Variable, Name, Type, ElemSize, DimCount);
     }
-
+    else
+    {
+        ValidateWriterRec(Rec, Variable);
+    }
     if (!Sync && (Rec->DimCount != 0) && !Span && !Rec->OperatorType)
     {
         /*

@@ -239,7 +239,7 @@ If you'd like to load your operator plugin through an XML config file, the follo
                     <parameter key="SecretKeyFile" value="test-key" />
                 </operation>
             </variable>
-            <engine type="BP4">
+            <engine type="BP5">
             </engine>
         </io>
     </adios-config>

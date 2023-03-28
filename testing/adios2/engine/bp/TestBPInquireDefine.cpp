@@ -129,10 +129,11 @@ TEST_F(ADIOSInquireDefineTest, Read)
             adios2::Engine engine_s = ioRead.Open(filename, adios2::Mode::Read);
             EXPECT_TRUE(engine_s);
 
-            auto var_gr = ioRead.InquireVariable<int>("global_variable");
+            adios2::Variable<int> var_gr;
             for (auto step = 0; step < NSteps; step++)
             {
                 engine_s.BeginStep();
+                var_gr = ioRead.InquireVariable<int>("global_variable");
                 auto var0r = ioRead.InquireVariable<int32_t>("variable0");
                 auto var1r = ioRead.InquireVariable<int32_t>("variable1");
                 auto var2r = ioRead.InquireVariable<int32_t>("variable2");

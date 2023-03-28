@@ -594,8 +594,13 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         }
         else
         {
+#ifdef ADIOS2_HAVE_BP5
+            // File default for writing: BP5
+            engineTypeLC = "bp5";
+#else
             // File default for writing: BP4
             engineTypeLC = "bp4";
+#endif
         }
     }
 

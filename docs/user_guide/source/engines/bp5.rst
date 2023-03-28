@@ -3,8 +3,9 @@ BP5
 ***
 
 The BP5 Engine writes and reads files in ADIOS2 native binary-pack (bp version 5) format. 
-This is a new format for ADIOS 2.8 which improves on the metadata operations and the memory consumption 
-of the older BP4/BP3 formats. Compared to the older format, BP5 provides three main advantages:
+This was a new format for ADIOS 2.8, improving on the metadata operations and the memory consumption 
+of the older BP4/BP3 formats. BP5 is the default file format as of
+ADIOS 2.9.  As compared to the older format, BP5 provides three main advantages:
 
   * **Lower memory** consumption. Deferred Puts will use user buffer for I/O wherever possible thus saving on a memory copy. 
     Aggregation uses a fixed-size shared-memory segment on each compute node instead of using MPI to send data from one process to another. 
@@ -14,7 +15,7 @@ of the older BP4/BP3 formats. Compared to the older format, BP5 provides three m
     Restart can append to an existing series by truncating unwanted steps. Readers can filter out unwanted steps to only see and process a 
     limited set of steps. Just like as in BP4, existing steps cannot be corrupted by appending new steps.
 
-In 2.8 BP5 is a brand new file format and engine. It still does **NOT** support some functionality of BP4:
+In 2.8 BP5 was a brand new file format and engine. It still does **NOT** support some functionality of BP4:
 
   * **Burst buffer support** for writing data.
 

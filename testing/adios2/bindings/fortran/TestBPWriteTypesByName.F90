@@ -123,6 +123,9 @@
      ! Open bpReader engine
      call adios2_open(bpReader, ioRead, "ftypes.bp", adios2_mode_read, ierr)
 
+     call adios2_begin_step(bpReader, adios2_step_mode_read, -1., &
+                            step_status, ierr)
+
      call adios2_inquire_variable(variables(1), ioRead, "var_I8", ierr)
      if (variables(1)%name /= 'var_I8') stop 'var_I8 not recognized'
      if (variables(1)%type /= adios2_type_integer1) stop 'var_I8 type not recognized'
@@ -164,6 +167,8 @@
      call adios2_variable_shape( shape_in, ndims,  variables(6), ierr)
      if (ndims /= 1) stop 'var_R64 ndims is not 1'
      if (shape_in(1) /= isize*inx) stop 'var_R64 shape_in read failed'
+
+     call adios2_end_step(bpReader, ierr)
 
      call adios2_close(bpReader, ierr)
 
