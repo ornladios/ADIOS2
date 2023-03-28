@@ -28,7 +28,7 @@ count = [Nx, Ny]
 start = [rank * Nx, 0]
 shape = [size * Nx, Ny]
 
-temperatures = np.zeros(count, dtype=np.int)
+temperatures = np.zeros(count, dtype=np.int32)
 
 for i in range(0, Nx):
     for j in range(0, Ny):
@@ -48,7 +48,8 @@ obpStream.Close()
 
 if rank == 0:
     ioRead = adios.DeclareIO("ioReader")
-    ibpStream = ioRead.Open('HeatMap2D_py.bp', adios2.Mode.Read, MPI.COMM_SELF)
+    ibpStream = ioRead.Open('HeatMap2D_py.bp', adios2.Mode.ReadRandomAccess,
+                            MPI.COMM_SELF)
     var_inTemperature = ioRead.InquireVariable("temperature2D")
 
     info = ibpStream.BlocksInfo("temperature2D", 0)

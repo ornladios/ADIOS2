@@ -83,13 +83,25 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 
             engine.EndStep();
         }
+        auto EngineName = engine.Type();
+
         engine.Close();
 
-        engine = io.Open(filename, adios2::Mode::Read);
+        if (EngineName == "BP5Writer")
+        {
+            engine = io.Open(filename, adios2::Mode::Read);
+            EXPECT_THROW(engine.BeginStep(), std::logic_error);
+        }
+        adios2::IO io2 = adios.DeclareIO("ReadIO");
+        io2.SetEngine("BPFile");
+
+        io2.AddTransport("file");
+        engine = io2.Open(filename, adios2::Mode::Read);
+
         for (size_t step = 0; step < NSteps; step++)
         {
             engine.BeginStep();
-            auto g = io.InquireGroup('/');
+            auto g = io2.InquireGroup('/');
             auto res = g.AvailableGroups();
             EXPECT_EQ(res[0], "group1");
             res = g.AvailableVariables();
@@ -108,7 +120,7 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
             res = g.AvailableAttributes();
             EXPECT_EQ(res.size(), 0);
 
-            g = io.InquireGroup('/');
+            g = io2.InquireGroup('/');
             auto var = g.InquireVariable<int32_t>("variable6");
             EXPECT_TRUE(var);
             if (var)

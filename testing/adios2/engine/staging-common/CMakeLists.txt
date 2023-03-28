@@ -15,7 +15,7 @@ if(ADIOS2_HAVE_SST)
   gtest_add_tests_helper(Threads MPI_NONE "" Engine.Staging. ".FileStream" EXTRA_ARGS "FileStream")
 endif()
 
-set (PROGS TestCommonWrite
+set (PROGS TestCommonWrite TestShapeChangingWrite
     TestCommonWriteModes
     TestCommonWriteAttrs
     TestCommonWriteLocal
@@ -117,7 +117,7 @@ if(ADIOS2_HAVE_MPI AND MPIEXEC_EXECUTABLE)
 endif()
 
 set (SIMPLE_TESTS "1x1;1x1.Attrs;1x1.ModAttrs;1x1DefSync;1x1VarDestruction;1x1.SpanMinMax;1x1.Local2;1x1Struct;1x1Joined")
-set (BP5File_ONLY_TESTS "1x1DataWrite")
+set (BP5File_ONLY_TESTS "1x1DataWrite;1x1.ShapeChange")
 
 set (SIMPLE_FORTRAN_TESTS "")
 if(ADIOS2_HAVE_Fortran)
@@ -234,7 +234,7 @@ endif()
 
 #  BP5 tests
 if(ADIOS2_HAVE_BP5)
-    set (BP5_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS})
+    set (BP5_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS} ${BP5File_ONLY_TESTS})
     # Delayed reader not worth testing on file engines
     list (FILTER BP5_TESTS EXCLUDE REGEX "DelayedReader")
     # Discard not a feature of BP5

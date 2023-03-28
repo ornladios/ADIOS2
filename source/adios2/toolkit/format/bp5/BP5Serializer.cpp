@@ -401,6 +401,42 @@ void BP5Serializer::AddDoubleArrayField(FMFieldList *FieldP, int *CountP,
     (*FieldP)[*CountP - 1].field_size = ElementSize;
 }
 
+void BP5Serializer::ValidateWriterRec(BP5Serializer::BP5WriterRec Rec,
+                                      void *Variable)
+{
+    core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
+    if ((VB->m_Operations.size() == 0) && Rec->OperatorType)
+    {
+        // removed operator case
+        helper::Throw<std::logic_error>(
+            "Toolkit", "format::BP5Serializer", "Marshal",
+            "BP5 does not support removing operators after the first Put()");
+    }
+    else if ((VB->m_Operations.size() > 0) && !Rec->OperatorType)
+    {
+        // removed operator case
+        helper::Throw<std::logic_error>(
+            "Toolkit", "format::BP5Serializer", "Marshal",
+            "BP5 does not support adding operators after the first Put()");
+    }
+    else if (VB->m_Operations.size() > 1)
+    {
+        // removed operator case
+        helper::Throw<std::logic_error>(
+            "Toolkit", "format::BP5Serializer", "Marshal",
+            "BP5 does not support multiple operators");
+    }
+    else if (Rec->OperatorType && VB->m_Operations.size() &&
+             (VB->m_Operations[0]->m_TypeString !=
+              std::string(Rec->OperatorType)))
+    {
+        // removed operator case
+        helper::Throw<std::logic_error>(
+            "Toolkit", "format::BP5Serializer", "Marshal",
+            "BP5 does not support changing operators after the first Put()");
+    }
+}
+
 BP5Serializer::BP5WriterRec
 BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
                                size_t ElemSize, size_t DimCount)
@@ -412,6 +448,7 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
     if (Type == DataType::String)
         ElemSize = sizeof(char *);
     Rec->Key = Variable;
+    Rec->Shape = VB->m_ShapeID;
     Rec->FieldID = Info.RecCount;
     Rec->DimCount = DimCount;
     Rec->Type = (int)Type;
@@ -657,7 +694,10 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
     {
         Rec = CreateWriterRec(Variable, Name, Type, ElemSize, DimCount);
     }
-
+    else
+    {
+        ValidateWriterRec(Rec, Variable);
+    }
     if (!Sync && (Rec->DimCount != 0) && !Span && !Rec->OperatorType)
     {
         /*
@@ -762,6 +802,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         if (!AlreadyWritten)
         {
             if (Shape)
+                // this will be overwritten in EndStep with the final shape
                 MetaEntry->Shape = CopyDims(DimCount, Shape);
             else
                 MetaEntry->Shape = NULL;
@@ -810,15 +851,10 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         {
             /* already got some metadata, add blocks */
             size_t PreviousDBCount = MetaEntry->DBCount;
-            //  Assume shape is still valid   (modify this if shape /global
-            //  dimensions can change )
-            // Also assume Dims is always right and consistent, otherwise,
-            // bad things
-            if (Shape && MetaEntry->Shape)
-            {
-                // Shape can change with later writes, so must overwrite
-                memcpy(MetaEntry->Shape, Shape, DimCount * sizeof(Shape[0]));
-            }
+            //
+            // we don't snag shape again here, because we're going to grab it at
+            // EndStep
+            //
             MetaEntry->DBCount += DimCount;
             MetaEntry->BlockCount++;
             MetaEntry->Count =
@@ -1096,9 +1132,34 @@ BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer,
     return tmp;
 }
 
+void BP5Serializer::CollectFinalShapeValues()
+{
+    for (int i = 0; i < Info.RecCount; i++)
+    {
+        BP5WriterRec Rec = &Info.RecList[i];
+        if (Rec->Shape == ShapeID::GlobalArray)
+        {
+            core::VariableBase *VB =
+                static_cast<core::VariableBase *>(Rec->Key);
+            struct BP5MetadataInfoStruct *MBase =
+                (struct BP5MetadataInfoStruct *)MetadataBuf;
+            int AlreadyWritten = BP5BitfieldTest(MBase, Rec->FieldID);
+            if (!AlreadyWritten)
+                continue;
+
+            MetaArrayRec *MetaEntry =
+                (MetaArrayRec *)((char *)(MetadataBuf) + Rec->MetaOffset);
+
+            memcpy(MetaEntry->Shape, VB->Shape().data(),
+                   Rec->DimCount * sizeof(size_t));
+        }
+    }
+}
+
 BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
                                                          bool forceCopyDeferred)
 {
+    // EndStep()
     std::vector<MetaMetaInfoBlock> Formats;
     if (!Info.MetaFormat && Info.MetaFieldCount)
     {
@@ -1205,6 +1266,8 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
     MBase->DataBlockSize += m_PriorDataBufferSizeTotal;
 
     ProcessDeferredMinMax();
+
+    CollectFinalShapeValues();
 
     void *MetaDataBlock = FFSencode(MetaEncodeBuffer, Info.MetaFormat,
                                     MetadataBuf, &MetaDataSize);

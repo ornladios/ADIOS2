@@ -143,7 +143,7 @@ writer.Close()
 # Start reader
 ioReader = adios.DeclareIO("reader")
 
-reader = ioReader.Open("npTypes.bp", adios2.Mode.Read)
+reader = ioReader.Open("npTypes.bp", adios2.Mode.ReadRandomAccess)
 
 attrString = ioReader.InquireAttribute("attrString")
 attrI8 = ioReader.InquireAttribute("attrI8")

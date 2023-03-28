@@ -69,7 +69,7 @@ Variable<T>::DoAllStepsBlocksInfoMap() const
     MinVarInfo *minBlocksInfo = nullptr;
     minBlocksInfo = m_Variable->m_Engine->MinBlocksInfo(*m_Variable, 0);
     if (!minBlocksInfo)
-        throw std::logic_error("no implemented");
+        throw std::logic_error("not implemented");
     std::map<size_t, std::vector<typename Variable<T>::Info>>
         allStepsBlocksInfo;
 

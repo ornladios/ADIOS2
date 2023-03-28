@@ -8,7 +8,7 @@ The following I/O uses cases are supported by virtual engine names:
 
 1. ``File``: File I/O (Default engine).
 
-   This sets up the I/O for files. If the file name passed in Open() ends with ".bp", then the BP4 engine will be used starting in v2.5.0.
+   This sets up the I/O for files. If the file name passed in Open() ends with ".bp", then the BP5 engine will be used starting in v2.9.0.
    If it ends with ".h5", the HDF5 engine will be used. For old .bp files (BP version 3 format), the BP3 engine 
    will be used for reading (v2.4.0 and below). 
 
@@ -46,16 +46,16 @@ Virtual Engine Setups
 
 These are the actual settings in ADIOS when a virtual engine is selected. The parameters below can be modified before the Open call. 
 
-1. ``File``. Refer to the parameter settings for these engines of ``BP4``, ``BP3`` and ``HDF5`` engines earlier in this section. 
+1. ``File``. Refer to the parameter settings for these engines of
+   ``BP5``, ``BP4``, ``BP3`` and ``HDF5`` engines earlier in this section. 
 
-2. ``FileStream``. The engine is ``BP4``. The parameters are set to:
+2. ``FileStream``. The engine is ``BP5``. The parameters are set to:
 
 ============================== ===================== ===========================================================
  **Key**                       **Value Format**      **Default** and Examples
 ============================== ===================== ===========================================================
  OpenTimeoutSecs                float                 **3600**  (wait for up to an hour)
  BeginStepPollingFrequencySecs  float                 **1**     (poll the file system with 1 second frequency
- StreamReader                   bool                  **On**    (process metadata in streaming mode)
 ============================== ===================== ===========================================================
 
 3. ``InSituAnalysis``. The engine is ``SST``. The parameters are set to:

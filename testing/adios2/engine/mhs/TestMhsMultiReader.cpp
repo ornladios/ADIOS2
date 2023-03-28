@@ -47,36 +47,38 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
 
-    const auto &vars = io.AvailableVariables();
-    std::cout << "All available variables : ";
-    for (const auto &var : vars)
-    {
-        std::cout << var.first << ", ";
-    }
-    std::cout << std::endl;
-
-    ASSERT_EQ(vars.size(), 10);
-
-    adios2::Variable<char> bpChars = io.InquireVariable<char>("bpChars");
-    adios2::Variable<unsigned char> bpUChars =
-        io.InquireVariable<unsigned char>("bpUChars");
-    adios2::Variable<short> bpShorts = io.InquireVariable<short>("bpShorts");
-    adios2::Variable<unsigned short> bpUShorts =
-        io.InquireVariable<unsigned short>("bpUShorts");
-    adios2::Variable<int> bpInts = io.InquireVariable<int>("bpInts");
-    adios2::Variable<unsigned int> bpUInts =
-        io.InquireVariable<unsigned int>("bpUInts");
-    adios2::Variable<float> bpFloats = io.InquireVariable<float>("bpFloats");
-    adios2::Variable<double> bpDoubles =
-        io.InquireVariable<double>("bpDoubles");
-    adios2::Variable<std::complex<float>> bpComplexes =
-        io.InquireVariable<std::complex<float>>("bpComplexes");
-    adios2::Variable<std::complex<double>> bpDComplexes =
-        io.InquireVariable<std::complex<double>>("bpDComplexes");
-
     for (size_t step = 0; step < 10; step++)
     {
         readerEngine.BeginStep();
+
+        const auto &vars = io.AvailableVariables();
+        std::cout << "All available variables : ";
+        for (const auto &var : vars)
+        {
+            std::cout << var.first << ", ";
+        }
+        std::cout << std::endl;
+
+        ASSERT_EQ(vars.size(), 10);
+
+        adios2::Variable<char> bpChars = io.InquireVariable<char>("bpChars");
+        adios2::Variable<unsigned char> bpUChars =
+            io.InquireVariable<unsigned char>("bpUChars");
+        adios2::Variable<short> bpShorts =
+            io.InquireVariable<short>("bpShorts");
+        adios2::Variable<unsigned short> bpUShorts =
+            io.InquireVariable<unsigned short>("bpUShorts");
+        adios2::Variable<int> bpInts = io.InquireVariable<int>("bpInts");
+        adios2::Variable<unsigned int> bpUInts =
+            io.InquireVariable<unsigned int>("bpUInts");
+        adios2::Variable<float> bpFloats =
+            io.InquireVariable<float>("bpFloats");
+        adios2::Variable<double> bpDoubles =
+            io.InquireVariable<double>("bpDoubles");
+        adios2::Variable<std::complex<float>> bpComplexes =
+            io.InquireVariable<std::complex<float>>("bpComplexes");
+        adios2::Variable<std::complex<double>> bpDComplexes =
+            io.InquireVariable<std::complex<double>>("bpDComplexes");
 
         bpChars.SetSelection({start, shape});
         bpUChars.SetSelection({start, shape});
