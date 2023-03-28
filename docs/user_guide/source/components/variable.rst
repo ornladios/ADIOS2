@@ -109,6 +109,8 @@ They are defined by passing the ``adios2::LocalValueDim`` enum as follows:
       //...
       engine.Put<int32_t>(varProcessID, rank);
 
+These values become visible on the reader as a single merged 1-D
+Global Array whose size is determined by the number of writer ranks.
 
 4. **Local Array**:
 Arrays that are local to the MPI process.
@@ -123,3 +125,41 @@ The size of each process selection should be discovered by the reading applicati
 
    Constants are not handled separately from step-varying values in ADIOS2.
    Simply write them only once from one rank.
+
+5. **Joined Array**:
+Joined arrays are a variation of the Local Array described above.
+Where LocalArrays are only available to the reader via their block
+number, JoinedArrays are merged into a single global array whose
+global dimensions are determined by the sum of the contributions of
+each writer rank.   Specifically:  JoinedArrays are N-dimensional
+arrays where one (and only one) specific dimension is the Joined
+dimension.  (The other dimensions must be constant and the same across
+all contributions.)  When defining a Joined variable, one specifies a
+shape parameter that give the dimensionality of the array with the
+special constant ``adios2::JoinedDim`` in the dimension to be joined.
+Unlike a Global Array definition, the start parameter must be an empty
+Dims value.
+For example, the definition below defines a 2-D Joined array where the
+first dimension is the one along which blocks will be joined and the
+2nd dimension is 5.  Here this rank is contributing two rows to this array.
+   .. code-block:: c++
+    auto var = outIO.DefineVariable<double>("table", {adios2::JoinedDim, 5},
+                                            {}, {2, 5});
+
+If each of N writer ranks were to declare a variable like this and do
+a single Put() in a timestep, the reader-side GlobalArray would have
+shape {2*N, 5} and all normal reader-side GlobalArray operations would
+be applicable to it.  
+
+
+
+
+.. note::
+
+   JoinedArrays are currently only supported by BP4 and BP5 engines,
+   as well as the SST engine with BP5 marshalling.
+   
+
+
+
+
