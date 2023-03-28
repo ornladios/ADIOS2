@@ -3,7 +3,7 @@ program TestBPReadGlobalsByName
     use adios2
     implicit none
 
-    integer :: irank, isize, ierr
+    integer :: irank, isize, ierr, step_status
     integer(kind=4) :: diag_1d_nsp
     real(kind=8) :: sml_outpsi
 
@@ -44,8 +44,13 @@ program TestBPReadGlobalsByName
     ! reader
     call adios2_declare_io(ioRead, adios, "FReader", ierr)
     call adios2_open(reader, ioRead, "f0analysis_static.bp", adios2_mode_read, ierr)
+    call adios2_begin_step(reader, adios2_step_mode_read, -1., &
+                           step_status, ierr)
+
     call adios2_get(reader, "diag_1d_nsp", diag_1d_nsp, ierr)
     call adios2_get(reader, "sml_outpsi", sml_outpsi, ierr)
+    call adios2_end_step(reader, ierr)
+
     call adios2_close(reader, ierr)
 
     call adios2_finalize(adios, ierr)

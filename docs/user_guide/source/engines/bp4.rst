@@ -3,7 +3,7 @@ BP4
 ***
 
 The BP4 Engine writes and reads files in ADIOS2 native binary-pack (bp version 4) format. 
-This is a new format for ADIOS 2.x which improves on the metadata operations of the older BP3 format. 
+This was a new format for ADIOS 2.5 and improved on the metadata operations of the older BP3 format. 
 Compared to the older format, BP4 provides three main advantages:
 
   * Fast and safe **appending** of multiple output steps into the same file. Better performance than writing new files each step. 

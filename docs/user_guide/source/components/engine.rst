@@ -572,7 +572,7 @@ If the ``SetEngine`` function is not invoked the default engine is the ``BPFile`
 +-------------------------+---------+---------------------------------------------+
 | Application             | Engine  | Description                                 |
 +-------------------------+---------+---------------------------------------------+
-| File                    | BP4     | DEFAULT write/read ADIOS2 native bp files   |
+| File                    | BP5     | DEFAULT write/read ADIOS2 native bp files   |
 |                         |         |                                             |
 |                         | HDF5    | write/read interoperability with HDF5 files |
 +-------------------------+---------+---------------------------------------------+

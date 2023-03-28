@@ -40,7 +40,8 @@ class TestAdiosSelectSteps(unittest.TestCase):
         adios = adios2.ADIOS()
         ioReadBP = adios.DeclareIO("hellopy")
         ioReadBP.SetParameter(TESTDATA_FILENAME, param_string)
-        fh = ioReadBP.Open(TESTDATA_FILENAME, adios2.Mode.Read, comm)
+        fh = ioReadBP.Open(TESTDATA_FILENAME,
+                           adios2.Mode.ReadRandomAccess, comm)
         var = ioReadBP.InquireVariable("step")
         var.SetSelection([[0], [size * Nx]])
         var.SetStepSelection([0, len(selected_steps)])

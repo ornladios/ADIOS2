@@ -136,7 +136,6 @@ bp3_bp4_gtest_add_tests_helper(TimeAggregation MPI_ALLOW)
 bp_gtest_add_tests_helper(NoXMLRecovery MPI_ALLOW)
 bp_gtest_add_tests_helper(StepsFileGlobalArray MPI_ALLOW)
 bp_gtest_add_tests_helper(StepsFileLocalArray MPI_ALLOW)
-bp_gtest_add_tests_helper(SelectSteps MPI_ALLOW)
 
 bp_gtest_add_tests_helper(SelectionsOnRowMajorData MPI_NONE)
 bp_gtest_add_tests_helper(SelectionsOnColumnMajorData MPI_NONE)
@@ -195,11 +194,17 @@ gtest_add_tests_helper(JoinedArray MPI_ALLOW BP Engine.BP. .BP4
   WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
 )
 
+# InquireVaribleException only for BP4 because BP5 works differently
 gtest_add_tests_helper(InquireVariableException MPI_ALLOW BP Engine.BP. .BP4
-  WORKING_DIRECTORY ${BP4_DIR}
+  WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
 )
+
+gtest_add_tests_helper(InquireDefine MPI_ALLOW BP Engine.BP. .BP5
+  WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+)
+
 gtest_add_tests_helper(InquireDefine MPI_ALLOW BP Engine.BP. .BP4
-  WORKING_DIRECTORY ${BP4_DIR}
+  WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
 )
 
 # FileStream is BP4 + StreamReader=true

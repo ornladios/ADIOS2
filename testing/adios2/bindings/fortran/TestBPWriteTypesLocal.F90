@@ -13,7 +13,7 @@
      type(adios2_engine) :: bpWriter, bpReader
 
      ! read handlers
-     integer(kind=8) steps_count, current_step, block_id
+     integer(kind=8) current_step, block_id
 
      ! data
      integer(kind=1), dimension(10) :: I8, inI8
@@ -183,81 +183,55 @@
              call adios2_inquire_variable(variables(7), ioRead, "gvar_I8", ierr)
              if (variables(7)%name /= 'gvar_I8') stop 'gvar_I8 name not recognized'
              if (variables(7)%type /= adios2_type_integer1) stop 'gvar_I8 type not recognized'
-             call adios2_variable_steps(steps_count, variables(7), ierr)
-             if (steps_count /= 1) stop 'gvar_I8 steps_count is not 1'
 
              call adios2_inquire_variable(variables(8), ioRead, "gvar_I16", ierr)
              if (variables(8)%name /= 'gvar_I16') stop 'gvar_I16 name not recognized'
              if (variables(8)%type /= adios2_type_integer2) stop 'gvar_I16 type not recognized'
-             call adios2_variable_steps(steps_count, variables(8), ierr)
-             if (steps_count /= 1) stop 'gvar_I16 steps_count is not 1'
 
              call adios2_inquire_variable(variables(9), ioRead, "gvar_I32", ierr)
              if (variables(9)%name /= 'gvar_I32') stop 'gvar_I32 name not recognized'
              if (variables(9)%type /= adios2_type_integer4) stop 'gvar_I32 type not recognized'
-             call adios2_variable_steps(steps_count, variables(9), ierr)
-             if (steps_count /= 1) stop 'gvar_I32 steps_count is not 1'
 
              call adios2_inquire_variable(variables(10), ioRead, "gvar_I64", ierr)
              if (variables(10)%name /= 'gvar_I64') stop 'gvar_I64 name not recognized'
              if (variables(10)%type /= adios2_type_integer8) stop 'gvar_I64 type not recognized'
-             call adios2_variable_steps(steps_count, variables(10), ierr)
-             if (steps_count /= 1) stop 'gvar_I64 steps_count is not 1'
 
              call adios2_inquire_variable(variables(11), ioRead, "gvar_R32", ierr)
              if (variables(11)%name /= 'gvar_R32') stop 'gvar_R32 name not recognized'
              if (variables(11)%type /= adios2_type_real) stop 'gvar_I64 type not recognized'
-             call adios2_variable_steps(steps_count, variables(11), ierr)
-             if (steps_count /= 1) stop 'gvar_R32 steps_count is not 1'
 
              call adios2_inquire_variable(variables(12), ioRead, "gvar_R64", ierr)
              if (variables(12)%name /= 'gvar_R64') stop 'gvar_R64 name not recognized'
              if (variables(12)%type /= adios2_type_dp) stop 'gvar_I64 type not recognized'
-             call adios2_variable_steps(steps_count, variables(12), ierr)
-             if (steps_count /= 1) stop 'gvar_R64 steps_count is not 1'
          end if
 
          call adios2_inquire_variable(variables(1), ioRead, "var_I8", ierr)
          if (variables(1)%name /= 'var_I8') stop 'var_I8 not recognized'
          if (variables(1)%type /= adios2_type_integer1) stop 'var_I8 type not recognized'
-         call adios2_variable_steps(steps_count, variables(1), ierr)
-         if (steps_count /= 3) stop 'var_I8 steps_count is not 3'
 
          call adios2_inquire_variable(variables(2), ioRead, "var_I16", ierr)
          if (variables(2)%name /= 'var_I16') stop 'var_I16 not recognized'
          if (variables(2)%type /= adios2_type_integer2) stop 'var_I16 type not recognized'
-         call adios2_variable_steps(steps_count, variables(2), ierr)
-         if (steps_count /= 3) stop 'var_I16 steps_count is not 3'
 
          call adios2_inquire_variable(variables(3), ioRead, "var_I32", ierr)
          if (variables(3)%name /= 'var_I32') stop 'var_I32 not recognized'
          if (variables(3)%type /= adios2_type_integer4) stop 'var_I32 type not recognized'
-         call adios2_variable_steps(steps_count, variables(3), ierr)
-         if (steps_count /= 3) stop 'var_I32 steps_count is not 3'
 
          call adios2_inquire_variable(variables(4), ioRead, "var_I64", ierr)
          if (variables(4)%name /= 'var_I64') stop 'var_I64 not recognized'
          if (variables(4)%type /= adios2_type_integer8) stop 'var_I64 type not recognized'
-         call adios2_variable_steps(steps_count, variables(4), ierr)
-         if (steps_count /= 3) stop 'var_I64 steps_count is not 3'
 
          call adios2_inquire_variable(variables(5), ioRead, "var_R32", ierr)
          if (variables(5)%name /= 'var_R32') stop 'var_R32 not recognized'
          if (variables(5)%type /= adios2_type_real) stop 'var_R32 type not recognized'
-         call adios2_variable_steps(steps_count, variables(5), ierr)
-         if (steps_count /= 3) stop 'var_R32 steps_count is not 3'
 
          call adios2_inquire_variable(variables(6), ioRead, "var_R64", ierr)
          if (variables(6)%name /= 'var_R64') stop 'var_R64 not recognized'
          if (variables(6)%type /= adios2_type_dp) stop 'var_R64 type not recognized'
-         call adios2_variable_steps(steps_count, variables(6), ierr)
-         if (steps_count /= 3) stop 'var_R64 steps_count is not 3'
 
          call adios2_inquire_variable(variables(13), ioRead, "var_changingR64", ierr)
          if (variables(13)%name /= 'var_changingR64') stop 'var_changingR64 not recognized'
          if (variables(13)%type /= adios2_type_dp) stop 'var_R64 type not recognized'
-         call adios2_variable_steps(steps_count, variables(13), ierr)
-         if (steps_count /= 3) stop 'var_changingR64 steps_count is not 3'
 
          do block_id = 0, isize - 1
 

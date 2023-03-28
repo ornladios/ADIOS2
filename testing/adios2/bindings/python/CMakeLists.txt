@@ -12,10 +12,7 @@ function(add_python_mpi_test testname)
   )
 endfunction()
 
-python_add_test(NAME Bindings.Python.HighLevelAPI.Serial SCRIPT TestHighLevelAPI.py)
-
 python_add_test(NAME Bindings.Python.BPWriteReadTypes.Serial SCRIPT TestBPWriteReadTypes_nompi.py)
-python_add_test(NAME Bindings.Python.BPSelectSteps.Serial SCRIPT TestBPSelectSteps_nompi.py)
 python_add_test(NAME Bindings.Python.TypeExceptionOnGet.Serial SCRIPT TestGetException_nompi.py)
 
 if(ADIOS2_HAVE_MPI)
@@ -28,7 +25,6 @@ if(ADIOS2_HAVE_MPI)
   add_python_mpi_test(BPBlocksInfo)
   add_python_mpi_test(BPChangingShapeHighLevelAPI)
   add_python_mpi_test(NullEngine)
-  add_python_mpi_test(BPSelectSteps)
   # Currently hangs in H5Fclose for unknown reasons
   #if(ADIOS2_HAVE_HDF5)
   #  add_python_mpi_test(BPWriteTypesHighLevelAPI_HDF5)

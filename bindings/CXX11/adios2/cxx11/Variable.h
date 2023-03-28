@@ -263,13 +263,13 @@ public:
     adios2::Dims Count() const;
 
     /**
-     * For read mode, inspect the number of available steps
+     * For readRandomAccess mode, inspect the number of available steps
      * @return available steps
      */
     size_t Steps() const;
 
     /**
-     * For read mode, inspect the start step for available steps
+     * For readRandomAccess mode, inspect the start step for available steps
      * @return available start step
      */
     size_t StepsStart() const;

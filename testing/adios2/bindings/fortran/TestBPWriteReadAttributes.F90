@@ -111,7 +111,7 @@ program TestBPWriteAttributes
     !!!!!!!!!!!!!!!!!!!!!!!!! READER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     call adios2_declare_io(ioRead, adios, "ioRead", ierr)
 
-    call adios2_open(bpReader, ioRead, 'fattr_types.bp', adios2_mode_read, ierr)
+    call adios2_open(bpReader, ioRead, 'fattr_types.bp', adios2_mode_readRandomAccess, ierr)
 
 
    ! Test getting list of attribute names
