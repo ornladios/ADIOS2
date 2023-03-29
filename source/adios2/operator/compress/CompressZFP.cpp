@@ -304,6 +304,21 @@ zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
     zfp_stream_set_execution(stream, ZFP_DEFAULT_EXECUTION_POLICY);
     isSerial = ZFP_DEFAULT_EXECUTION_POLICY == zfp_exec_serial;
 
+#ifdef ADIOS2_HAVE_ZFP_CUDA
+    if (hasAccuracy)
+    {
+        helper::Throw<std::runtime_error>(
+            "Operator", "CompressZFP", "GetZfpField",
+            "The CUDA backend in ZFP cannot use the 'accuracy' parameter");
+    }
+    if (hasPrecision)
+    {
+        helper::Throw<std::runtime_error>(
+            "Operator", "CompressZFP", "GetZfpField",
+            "The CUDA backend in ZFP cannot use the 'precisiom' parameter");
+    }
+#endif
+
     if (hasBackend)
     {
         auto policy = ZFP_DEFAULT_EXECUTION_POLICY;
