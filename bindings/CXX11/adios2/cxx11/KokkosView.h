@@ -39,6 +39,26 @@ struct memspace_kokkos_to_adios2<Kokkos::CudaHostPinnedSpace>
 
 #endif
 
+#if defined(KOKKOS_ENABLE_HIP) && defined(ADIOS2_HAVE_GPU_SUPPORT)
+template <>
+struct memspace_kokkos_to_adios2<Kokkos::Experimental::HIPSpace>
+{
+    static constexpr adios2::MemorySpace value = adios2::MemorySpace::GPU;
+};
+
+template <>
+struct memspace_kokkos_to_adios2<Kokkos::Experimental::HIPHostPinnedSpace>
+{
+    static constexpr adios2::MemorySpace value = adios2::MemorySpace::GPU;
+};
+
+template <>
+struct memspace_kokkos_to_adios2<Kokkos::Experimental::HIPManagedSpace>
+{
+    static constexpr adios2::MemorySpace value = adios2::MemorySpace::GPU;
+};
+#endif
+
 } // namespace detail
 
 template <class T, class... Parameters>
