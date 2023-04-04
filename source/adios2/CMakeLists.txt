@@ -189,7 +189,13 @@ if (ADIOS2_HAVE_BP5 OR ADIOS2_HAVE_SST)
 endif()
 
 if(ADIOS2_HAVE_DAOS)
-  target_sources(adios2_core PRIVATE toolkit/transport/file/FileDaos.cpp)
+  target_sources(adios2_core PRIVATE toolkit/transport/file/FileDaos.cpp
+    engine/daos/DaosEngine.cpp
+    engine/daos/DaosWriter_EveryoneWrites_Async.cpp
+    engine/daos/DaosWriter_TwoLevelShm_Async.cpp
+    engine/daos/DaosWriter_TwoLevelShm.cpp
+    engine/daos/DaosReader.cpp engine/daos/DaosReader.tcc
+    engine/daos/DaosWriter.cpp engine/daos/DaosWriter.tcc)
   target_link_libraries(adios2_core PRIVATE DAOS::DAOS)
 endif()
 

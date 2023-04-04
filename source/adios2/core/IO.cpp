@@ -51,6 +51,11 @@
 #include "adios2/engine/sst/SstWriter.h"
 #endif
 
+#ifdef ADIOS2_HAVE_DAOS // external dependencies
+#include "adios2/engine/daos/DaosReader.h"
+#include "adios2/engine/daos/DaosWriter.h"
+#endif
+
 namespace adios2
 {
 namespace core
@@ -98,6 +103,14 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
 #else
      IO::NoEngineEntry("ERROR: this version didn't compile with "
                        "Sst library, can't use Sst engine\n")
+#endif
+    },
+    {"daos",
+#ifdef ADIOS2_HAVE_DAOS
+     {IO::MakeEngine<engine::DaosReader>, IO::MakeEngine<engine::DaosWriter>}
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "DAOS library, can't use DAOS engine\n")
 #endif
     },
     {"effis",
