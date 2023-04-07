@@ -1,16 +1,19 @@
 # KW's stuff
-**/CMakeLists.txt        @vicentebolea @caitlinross
-*.cmake                  @vicentebolea @caitlinross
+CMakeLists.txt @vicentebolea @caitlinross
+
+# Caitlin's stuff
+plugins/ @caitlinross
 
 # Vicente's stuff
-*.sh @vicentebolea
 *.bash @vicentebolea
-*.in @vicentebolea
-*.yml @vicentebolea
-*.yaml @vicentebolea
+*.cmake @vicentebolea
 *.in @vicentebolea
 *.json @vicentebolea
+*.sh @vicentebolea
 *.txt  @vicentebolea
+*.yaml @vicentebolea
+*.yml @vicentebolea
+cmake/ @vicentebolea
 scripts/ @vicentebolea
 .github/ @vicentebolea
 .circleci/ @vicentebolea
