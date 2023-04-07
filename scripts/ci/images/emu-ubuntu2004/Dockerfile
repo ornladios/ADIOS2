@@ -5,6 +5,12 @@
 #
 #   docker run --rm --privileged multiarch/qemu-user-static:register --reset
 #
+# You need to use docker buildx to build this image:
+#  - You might need to download the docker-buildx binary and install it in your system.
+#  - docker buildx create --boostrap --platform ppc64le --driver docker-container --name builder
+#  - docker buildx use builder
+#  - docker buildx build --platform ppc64le --load -t ornladios/adios2:ci-x86_64-power8-ubuntu20.04 <this_directory>
+#
 # To build this image you want to set the following build args:
 #   TARGET_ARCH_SYSTEM=ppc64le - The CPU architecture of the target system.
 #   TARGET_ARCH_DOCKER=ppc64le - The CPU architecture if the target system as
@@ -24,12 +30,12 @@ ARG TARGET_ARCH_DOCKER=ppc64le
 ########################################
 # QEMU image with emulation binaries
 ########################################
-FROM multiarch/qemu-user-static:x86_64-${TARGET_ARCH_SYSTEM} AS qemu
+FROM multiarch/qemu-user-static:x86_64-${TARGET_ARCH_SYSTEM}-5.2.0-2 AS qemu
 
 ########################################
 # Base image
 ########################################
-FROM ${TARGET_ARCH_DOCKER}/almalinux:8
+FROM ${TARGET_ARCH_DOCKER}/ubuntu:20.04
 
 ########################################
 # Grab a fully static node.js binary
