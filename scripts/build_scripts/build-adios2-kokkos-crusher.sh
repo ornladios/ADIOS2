@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2191
 
 module load rocm/5.4.0
 module load gcc/11.2.0

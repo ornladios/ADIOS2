@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2191
 
 module load gcc/10.2
 module load cuda/11.5

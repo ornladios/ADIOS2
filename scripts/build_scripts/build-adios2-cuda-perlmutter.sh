@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2191
 
 module load cudatoolkit/11.7
 module load gcc/11.2.0
