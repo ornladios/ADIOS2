@@ -82,6 +82,9 @@ jobs:
       - name: Python
         working-directory: source
         run: ../gha/scripts/ci/scripts/run-flake8.sh
+      - name: Shell
+        working-directory: source
+        run: ../gha/scripts/ci/scripts/run-shellcheck.sh
 
 
 #######################################
