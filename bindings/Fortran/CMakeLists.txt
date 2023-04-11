@@ -78,7 +78,7 @@ endif()
 # Set library version information
 set_target_properties(adios2_fortran PROPERTIES
   VERSION ${ADIOS2_LIBRARY_VERSION}
-  SOVERSION ${ADIOS2_VERSION_MAJOR}
+  SOVERSION ${ADIOS2_LIBRARY_SOVERSION}
 )
 
 add_library(adios2::fortran ALIAS adios2_fortran)
@@ -109,7 +109,7 @@ if(ADIOS2_HAVE_MPI)
     target_compile_definitions(adios2_fortran_mpi PRIVATE "$<$<COMPILE_LANGUAGE:Fortran>:ADIOS2_HAVE_FORTRAN_SUBMODULES;ADIOS2_HAVE_MPI_F>")
     set_target_properties(adios2_fortran_mpi PROPERTIES
       VERSION ${ADIOS2_LIBRARY_VERSION}
-      SOVERSION ${ADIOS2_VERSION_MAJOR}
+      SOVERSION ${ADIOS2_LIBRARY_SOVERSION}
     )
     set_property(TARGET adios2_fortran_mpi PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_fortran_mpi)
   else()

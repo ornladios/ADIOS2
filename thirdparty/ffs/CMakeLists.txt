@@ -18,5 +18,6 @@ set(FFS_HEADER_COMPONENT adios2_ffs-development)
 
 add_subdirectory(ffs)
 set(ffs_DIR ${CMAKE_CURRENT_BINARY_DIR}/ffs CACHE INTERNAL "")
+setup_libversion_dir(ffs)
 
 message_end_thirdparty()

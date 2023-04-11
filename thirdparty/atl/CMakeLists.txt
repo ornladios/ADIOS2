@@ -15,5 +15,6 @@ set(ATL_HEADER_COMPONENT adios2_atl-development)
 
 add_subdirectory(atl)
 set(atl_DIR ${CMAKE_CURRENT_BINARY_DIR}/atl CACHE INTERNAL "")
+setup_libversion_dir(atl)
 
 message_end_thirdparty()

@@ -408,7 +408,7 @@ set_target_properties(
   adios2_core ${maybe_adios2_core_mpi}
   PROPERTIES
   VERSION ${ADIOS2_LIBRARY_VERSION}
-  SOVERSION ${ADIOS2_VERSION_MAJOR}
+  SOVERSION ${ADIOS2_LIBRARY_SOVERSION}
 )
 
 install(FILES common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl

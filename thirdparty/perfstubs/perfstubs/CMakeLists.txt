@@ -5,7 +5,11 @@ configure_file(
 
 add_library(perfstubs perfstubs_api/timer.c)
 
-set_property(TARGET perfstubs PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_perfstubs)
+set_target_properties(perfstubs PROPERTIES
+  OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_perfstubs
+  VERSION ${ADIOS2_LIBRARY_VERSION}
+  SOVERSION ${ADIOS2_LIBRARY_SOVERSION}
+)
 
 target_link_libraries(perfstubs INTERFACE dl m)
 

@@ -13,5 +13,6 @@ set(BUILD_DOCS OFF)
 
 add_subdirectory(enet)
 set(enet_DIR ${CMAKE_CURRENT_BINARY_DIR}/enet CACHE INTERNAL "")
+setup_libversion_dir(enet)
 
 message_end_thirdparty()

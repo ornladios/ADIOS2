@@ -14,5 +14,6 @@ set(DILL_HEADER_COMPONENT adios2_dill-development)
 
 add_subdirectory(dill)
 set(dill_DIR ${CMAKE_CURRENT_BINARY_DIR}/dill CACHE INTERNAL "")
+setup_libversion_dir(dill)
 
 message_end_thirdparty()

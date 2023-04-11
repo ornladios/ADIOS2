@@ -54,7 +54,7 @@ endif()
 set_target_properties(sst PROPERTIES
   OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_sst
   VERSION ${ADIOS2_LIBRARY_VERSION}
-  SOVERSION ${ADIOS2_VERSION_MAJOR}
+  SOVERSION ${ADIOS2_LIBRARY_SOVERSION}
 )
 
 #------------------------------------------------------------------------------#
