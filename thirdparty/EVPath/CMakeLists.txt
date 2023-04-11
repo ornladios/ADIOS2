@@ -18,5 +18,6 @@ set(EVPATH_HEADER_COMPONENT adios2_evpath-development)
 
 add_subdirectory(EVPath)
 set(EVPath_DIR ${CMAKE_CURRENT_BINARY_DIR}/EVPath CACHE INTERNAL "")
+setup_libversion_dir(EVPath)
 
 message_end_thirdparty()

@@ -58,7 +58,7 @@ set_target_properties(
   adios2_cxx11 ${maybe_adios2_cxx11_mpi}
   PROPERTIES
   VERSION ${ADIOS2_LIBRARY_VERSION}
-  SOVERSION ${ADIOS2_VERSION_MAJOR}
+  SOVERSION ${ADIOS2_LIBRARY_SOVERSION}
 )
 
 install(TARGETS adios2_cxx11 ${maybe_adios2_cxx11_mpi} EXPORT adios2CXX11Exports

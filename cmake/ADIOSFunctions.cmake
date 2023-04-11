@@ -38,6 +38,9 @@ function(setup_version BASE)
   endif()
 
   set(ADIOS2_LIBRARY_VERSION ${BASE} PARENT_SCOPE)
+
+  string(REGEX MATCH "^([0-9]+\.[0-9]+)" ignore ${BASE})
+  set(ADIOS2_LIBRARY_SOVERSION ${CMAKE_MATCH_1} PARENT_SCOPE)
 endfunction()
 
 function(adios_option name description default)
@@ -224,3 +227,19 @@ program main
 end program
 ]] ${var} SRC_EXT F90)
 endmacro()
+
+# Set VERSION/SOVERSION of every shared library target in the given directory
+# to be the same as the ADIOS VERSION/SOVERSION.  This is important for the
+# third-party libraries bundled with ADIOS2.
+function(setup_libversion_dir dir)
+  get_directory_property(DIR_TARGETS DIRECTORY "${dir}" BUILDSYSTEM_TARGETS)
+  foreach(target ${DIR_TARGETS})
+    get_target_property(type ${target} TYPE)
+    if (${type} STREQUAL "SHARED_LIBRARY")
+      set_target_properties(${target} PROPERTIES
+          VERSION ${ADIOS2_LIBRARY_VERSION}
+          SOVERSION ${ADIOS2_LIBRARY_SOVERSION}
+      )
+    endif()
+  endforeach()
+endfunction()
