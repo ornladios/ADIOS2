@@ -134,6 +134,17 @@ public:
     typedef size_t *iterator;
     iterator begin() { return &DimensSpan[0]; }
     iterator end() { return &DimensSpan[DimCount]; }
+    friend std::ostream &operator<<(std::ostream &os, const CoreDims &m)
+    {
+        os << "{";
+        for (size_t i = 0; i < m.size(); i++)
+        {
+            os << m[i];
+            if (i < m.size() - 1)
+                os << ", ";
+        }
+        return os << "}";
+    }
 };
 
 class DimsArray : public CoreDims
