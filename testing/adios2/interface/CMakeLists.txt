@@ -26,6 +26,9 @@ gtest_add_tests_helper(DefineVariable MPI_ALLOW ADIOS Interface. "")
 gtest_add_tests_helper(DefineAttribute MPI_ALLOW ADIOS Interface. "")
 gtest_add_tests_helper(Selection MPI_NONE ADIOS Interface.  .BP3
     WORKING_DIRECTORY ${BP3_DIR} EXTRA_ARGS "BP3")
-gtest_add_tests_helper(Selection MPI_NONE ADIOS Interface.  .BPfile
-    WORKING_DIRECTORY ${BPfile_DIR} EXTRA_ARGS "BPfile")
+#  Some selection only supported by BP3 and BP5.  BPfile might default to BP4, so don't run
+if(ADIOS2_HAVE_BP5)
+    gtest_add_tests_helper(Selection MPI_NONE ADIOS Interface.  .BPfile
+    		           WORKING_DIRECTORY ${BPfile_DIR} EXTRA_ARGS "BPfile")
+endif()
 gtest_add_tests_helper(NoMpi MPI_NONE ADIOS Interface. "")
