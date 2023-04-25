@@ -136,7 +136,7 @@ void HeatTransfer::exchange(MPI_Comm comm)
 {
     // Build a custom MPI type for the column vector to allow strided access
     MPI_Datatype tColumnVector;
-    MPI_Type_vector(m_s.ndx + 2, 1, m_s.ndy + 2, MPI_REAL8, &tColumnVector);
+    MPI_Type_vector(m_s.ndx + 2, 1, m_s.ndy + 2, MPI_DOUBLE, &tColumnVector);
     MPI_Type_commit(&tColumnVector);
 
     // Exchange ghost cells, in the order left-right-up-down
@@ -184,14 +184,14 @@ void HeatTransfer::exchange(MPI_Comm comm)
     {
         // std::cout << "Rank " << m_s.rank << " send down to rank "
         //          << m_s.rank_down << std::endl;
-        MPI_Send(m_TCurrent[m_s.ndx], m_s.ndy + 2, MPI_REAL8, m_s.rank_down,
+        MPI_Send(m_TCurrent[m_s.ndx], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_down,
                  tag, comm);
     }
     if (m_s.rank_up >= 0)
     {
         // std::cout << "Rank " << m_s.rank << " receive from above from rank "
         //          << m_s.rank_up << std::endl;
-        MPI_Recv(m_TCurrent[0], m_s.ndy + 2, MPI_REAL8, m_s.rank_up, tag, comm,
+        MPI_Recv(m_TCurrent[0], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_up, tag, comm,
                  &status);
     }
 
@@ -202,13 +202,13 @@ void HeatTransfer::exchange(MPI_Comm comm)
         // std::cout << "Rank " << m_s.rank << " send up to rank " <<
         // m_s.rank_up
         //          << std::endl;
-        MPI_Send(m_TCurrent[1], m_s.ndy + 2, MPI_REAL8, m_s.rank_up, tag, comm);
+        MPI_Send(m_TCurrent[1], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_up, tag, comm);
     }
     if (m_s.rank_down >= 0)
     {
         // std::cout << "Rank " << m_s.rank << " receive from below from rank "
         //          << m_s.rank_down << std::endl;
-        MPI_Recv(m_TCurrent[m_s.ndx + 1], m_s.ndy + 2, MPI_REAL8, m_s.rank_down,
+        MPI_Recv(m_TCurrent[m_s.ndx + 1], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_down,
                  tag, comm, &status);
     }
 }
