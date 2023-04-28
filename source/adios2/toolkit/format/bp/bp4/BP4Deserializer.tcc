@@ -598,11 +598,55 @@ void BP4Deserializer::PostDataRead(
             ? Dims(blockInfo.Count.size(), 0)
             : blockInfo.Start;
 
-    helper::ClipContiguousMemory(
-        blockInfo.Data, blockInfoStart, blockInfo.Count,
-        m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
-        subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
-        endianReverse, blockInfo.MemSpace);
+    if (!blockInfo.MemoryStart.empty())
+    {
+        if (endianReverse)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::bp::BP4Deserializer", "PostDataRead",
+                "endianReverse "
+                "not supported with MemorySelection");
+        }
+
+        if (m_ReverseDimensions)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::bp::BP4Deserializer", "PostDataRead",
+                "ReverseDimensions not supported with "
+                "MemorySelection");
+        }
+
+        helper::DimsArray intersectStart(
+            subStreamBoxInfo.IntersectionBox.first);
+        helper::DimsArray intersectCount(
+            subStreamBoxInfo.IntersectionBox.second);
+        helper::DimsArray blockStart(subStreamBoxInfo.BlockBox.first);
+        helper::DimsArray blockCount(subStreamBoxInfo.BlockBox.second);
+        helper::DimsArray memoryStart(blockInfoStart);
+        for (size_t d = 0; d < intersectStart.size(); d++)
+        {
+            // change {intersect,block}Count from [start, end] to {start, count}
+            intersectCount[d] -= (intersectStart[d] - 1);
+            blockCount[d] -= (blockStart[d] - 1);
+            // shift everything by MemoryStart
+            intersectStart[d] += blockInfo.MemoryStart[d];
+            blockStart[d] += blockInfo.MemoryStart[d];
+        }
+        helper::NdCopy(m_ThreadBuffers[threadID][0].data(), intersectStart,
+                       intersectCount, true, true,
+                       reinterpret_cast<char *>(blockInfo.Data), intersectStart,
+                       intersectCount, true, true, sizeof(T), intersectStart,
+                       blockCount, memoryStart,
+                       helper::DimsArray(blockInfo.MemoryCount), false);
+    }
+    else
+    {
+        helper::ClipContiguousMemory(
+            blockInfo.Data, blockInfoStart, blockInfo.Count,
+            m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
+            subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
+            endianReverse, blockInfo.MemSpace);
+    }
 }
 
 void BP4Deserializer::BackCompatDecompress(

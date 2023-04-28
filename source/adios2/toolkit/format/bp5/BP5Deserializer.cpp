@@ -1473,7 +1473,9 @@ static bool IntersectionStartCount(const size_t dimensionsSize,
         outstart[d] = intersectionStart;
         outcount[d] = intersectionEnd - intersectionStart + 1;
         if (outcount[d] == 0)
+        {
             return false;
+        }
     }
     return true;
 }
@@ -1822,22 +1824,79 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         }
     }
 
+    VariableBase *VB = static_cast<VariableBase *>(Req.VarRec->Variable);
     DimsArray inStart(DimCount, RankOffset);
     DimsArray inCount(DimCount, RankSize);
     DimsArray outStart(DimCount, SelOffset);
     DimsArray outCount(DimCount, SelSize);
+    DimsArray outMemStart(VB->m_MemoryStart);
+    DimsArray outMemCount(VB->m_MemoryCount);
     if (!m_ReaderIsRowMajor)
     {
         std::reverse(inStart.begin(), inStart.end());
         std::reverse(inCount.begin(), inCount.end());
         std::reverse(outStart.begin(), outStart.end());
         std::reverse(outCount.begin(), outCount.end());
+        std::reverse(outMemStart.begin(), outMemStart.end());
+        std::reverse(outMemCount.begin(), outMemCount.end());
     }
 
-    helper::NdCopy(VirtualIncomingData, inStart, inCount, true, true,
-                   (char *)Req.Data, outStart, outCount, true, true,
-                   ElementSize, CoreDims(), CoreDims(), CoreDims(), CoreDims(),
-                   false, Req.MemSpace);
+    if (VB->m_MemoryStart.size() > 0)
+    {
+#ifdef NOTDEF // haven't done endinness for BP5
+        if (endianReverse)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::bp::BP5Deserializer", "PostDataRead",
+                "endianReverse "
+                "not supported with MemorySelection");
+        }
+        if (m_ReaderIsRowMajor)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::bp::BP5Deserializer", "PostDataRead",
+                "ReverseDimensions not supported with "
+                "MemorySelection");
+        }
+#endif
+
+        const Box<Dims> selectionBox =
+            helper::StartEndBox(Dims(outStart.begin(), outStart.end()),
+                                Dims(outCount.begin(), outCount.end()));
+        const Box<Dims> BlockBox =
+            helper::StartEndBox(Dims(inStart.begin(), inStart.end()),
+                                Dims(inCount.begin(), inCount.end()));
+        const Box<Dims> IntersectionBox =
+            helper::IntersectionBox(selectionBox, BlockBox);
+        VirtualIncomingData =
+            Read.DestinationAddr; //  Don't do the fake offset thing
+        helper::DimsArray intersectStart(IntersectionBox.first);
+        helper::DimsArray intersectCount(IntersectionBox.second);
+        helper::DimsArray blockStart(BlockBox.first);
+        helper::DimsArray blockCount(BlockBox.second);
+        helper::DimsArray memoryStart(DimCount, SelOffset);
+        helper::DimsArray memoryCount(VB->m_MemoryCount);
+        for (size_t d = 0; d < intersectStart.size(); d++)
+        {
+            // change {intersect,block}Count from [start, end] to {start, count}
+            intersectCount[d] -= (intersectStart[d] - 1);
+            blockCount[d] -= (blockStart[d] - 1);
+            // shift everything by MemoryStart
+            intersectStart[d] += VB->m_MemoryStart[d];
+            blockStart[d] += VB->m_MemoryStart[d];
+        }
+        helper::NdCopy(VirtualIncomingData, intersectStart, intersectCount,
+                       true, true, (char *)Req.Data, intersectStart,
+                       intersectCount, true, true, ElementSize, intersectStart,
+                       blockCount, memoryStart, memoryCount, false);
+    }
+    else
+    {
+        helper::NdCopy(VirtualIncomingData, inStart, inCount, true, true,
+                       (char *)Req.Data, outStart, outCount, true, true,
+                       ElementSize, CoreDims(), CoreDims(), CoreDims(),
+                       CoreDims(), false, Req.MemSpace);
+    }
     if (freeAddr)
     {
         free((char *)Read.DestinationAddr);

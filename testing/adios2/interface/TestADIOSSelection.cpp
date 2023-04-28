@@ -129,6 +129,8 @@ MultiArray<T, 2> makeArray(std::initializer_list<std::initializer_list<T>> t)
     return arr;
 }
 
+std::string engine = "BPfile"; // default if no argument
+
 TEST(MultiArray, Constructor)
 {
     using MultiArrayT = MultiArray<double, 4>;
@@ -247,7 +249,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionNone)
     // clang-format on
 
     // write
-    m_IOWriter.SetEngine("BP3");
+    m_IOWriter.SetEngine(engine);
     auto writer =
         m_IOWriter.Open("test_selection_none.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -257,11 +259,12 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionNone)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
-    m_IOReader.SetEngine("BP3");
     auto engine = m_IOReader.Open("test_selection_none.bp", adios2::Mode::Read);
+    engine.BeginStep();
     var = m_IOReader.InquireVariable<DataType>("var");
     var.SetSelection({{0, 0}, {3, 4}});
     engine.Get(var, arr_read.data());
+    engine.EndStep();
     engine.Close();
 
     EXPECT_EQ(arr_read, ref);
@@ -279,7 +282,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionWrite)
     // clang-format on
 
     // write
-    m_IOWriter.SetEngine("BP3");
+    m_IOWriter.SetEngine(engine);
     auto writer =
         m_IOWriter.Open("test_selection_write.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -289,12 +292,13 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionWrite)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
-    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_selection_write.bp", adios2::Mode::Read);
+    engine.BeginStep();
     var = m_IOReader.InquireVariable<DataType>("var");
     var.SetSelection({{0, 0}, {3, 4}});
     engine.Get(var, arr_read.data());
+    engine.EndStep();
     engine.Close();
 
     EXPECT_EQ(arr_read, ref);
@@ -312,7 +316,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionWriteStart)
     // clang-format on
 
     // write
-    m_IOWriter.SetEngine("BP3");
+    m_IOWriter.SetEngine(engine);
     auto writer =
         m_IOWriter.Open("test_selection_write_start.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -322,12 +326,13 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionWriteStart)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
-    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_selection_write_start.bp", adios2::Mode::Read);
+    engine.BeginStep();
     var = m_IOReader.InquireVariable<DataType>("var");
     var.SetSelection({{0, 0}, {3, 4}});
     engine.Get(var, arr_read.data());
+    engine.EndStep();
     engine.Close();
 
     EXPECT_EQ(arr_read, ref);
@@ -344,7 +349,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionRead)
 			  {20., 21.}});
     // clang-format on
 
-    m_IOWriter.SetEngine("BP3");
+    m_IOWriter.SetEngine(engine);
     auto writer =
         m_IOWriter.Open("test_selection_read.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -354,11 +359,12 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionRead)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
-    m_IOReader.SetEngine("BP3");
     auto engine = m_IOReader.Open("test_selection_read.bp", adios2::Mode::Read);
+    engine.BeginStep();
     var = m_IOReader.InquireVariable<DataType>("var");
     var.SetSelection({{0, 0}, {3, 2}});
     engine.Get(var, arr_read.data());
+    engine.EndStep();
     engine.Close();
 
     EXPECT_EQ(arr_read, ref);
@@ -376,7 +382,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionReadStart)
     // clang-format on
 
     // write
-    m_IOWriter.SetEngine("BP3");
+    m_IOWriter.SetEngine(engine);
     auto writer =
         m_IOWriter.Open("test_selection_read_start.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -386,12 +392,13 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionReadStart)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
-    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_selection_read_start.bp", adios2::Mode::Read);
+    engine.BeginStep();
     var = m_IOReader.InquireVariable<DataType>("var");
     var.SetSelection({{0, 2}, {3, 2}});
     engine.Get(var, arr_read.data());
+    engine.EndStep();
     engine.Close();
 
     EXPECT_EQ(arr_read, ref);
@@ -411,7 +418,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionNone)
     // clang-format on
 
     // write
-    m_IOWriter.SetEngine("BP3");
+    m_IOWriter.SetEngine(engine);
     auto writer =
         m_IOWriter.Open("test_mem_selection_none.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -422,12 +429,13 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionNone)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
-    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_mem_selection_none.bp", adios2::Mode::Read);
+    engine.BeginStep();
     var = m_IOReader.InquireVariable<DataType>("var");
     var.SetSelection({{0, 0}, {3, 4}});
     engine.Get(var, arr_read.data());
+    engine.EndStep();
     engine.Close();
 
     EXPECT_EQ(arr_read, ref);
@@ -447,7 +455,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWrite)
     // clang-format on
 
     // write
-    m_IOWriter.SetEngine("BP3");
+    m_IOWriter.SetEngine(engine);
     auto writer =
         m_IOWriter.Open("test_mem_selection_write.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -458,12 +466,13 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWrite)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
-    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_mem_selection_write.bp", adios2::Mode::Read);
+    engine.BeginStep();
     var = m_IOReader.InquireVariable<DataType>("var");
     var.SetSelection({{0, 0}, {3, 2}});
     engine.Get(var, arr_read.data());
+    engine.EndStep();
     engine.Close();
 
     EXPECT_EQ(arr_read, ref);
@@ -483,7 +492,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWriteStart)
     // clang-format on
 
     // write
-    m_IOWriter.SetEngine("BP3");
+    m_IOWriter.SetEngine(engine);
     auto writer = m_IOWriter.Open("test_mem_selection_write_start.bp",
                                   adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -494,12 +503,13 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionWriteStart)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
-    m_IOReader.SetEngine("BP3");
     auto engine = m_IOReader.Open("test_mem_selection_write_start.bp",
                                   adios2::Mode::Read);
+    engine.BeginStep();
     var = m_IOReader.InquireVariable<DataType>("var");
     var.SetSelection({{0, 0}, {3, 2}});
     engine.Get(var, arr_read.data());
+    engine.EndStep();
     engine.Close();
 
     EXPECT_EQ(arr_read, ref);
@@ -518,7 +528,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionRead)
 			  {0.,  0.,  0., 0.}});
     // clang-format on
 
-    m_IOWriter.SetEngine("BP3");
+    m_IOWriter.SetEngine(engine);
     auto writer =
         m_IOWriter.Open("test_mem_selection_read.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -528,13 +538,14 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionRead)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
-    m_IOReader.SetEngine("BP3");
     auto engine =
         m_IOReader.Open("test_mem_selection_read.bp", adios2::Mode::Read);
+    engine.BeginStep();
     var = m_IOReader.InquireVariable<DataType>("var");
     var.SetSelection({{0, 0}, {3, 2}});
     var.SetMemorySelection({{1, 1}, {5, 4}});
     engine.Get(var, arr_read.data());
+    engine.EndStep();
     engine.Close();
 
     EXPECT_EQ(arr_read, ref);
@@ -553,7 +564,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionReadStart)
 			  {0.,  0.,  0., 0.}});
     // clang-format on
 
-    m_IOWriter.SetEngine("BP3");
+    m_IOWriter.SetEngine(engine);
     auto writer = m_IOWriter.Open("test_mem_selection_read_start.bp",
                                   adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {3, 4});
@@ -563,9 +574,8 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionReadStart)
 
     // read back
     auto arr_read = MultiArrayT(ref.dims());
-    m_IOReader.SetEngine("BP3");
-    auto engine =
-        m_IOReader.Open("test_mem_selection_read_start.bp", adios2::Mode::Read);
+    auto engine = m_IOReader.Open("test_mem_selection_read_start.bp",
+                                  adios2::Mode::ReadRandomAccess);
     var = m_IOReader.InquireVariable<DataType>("var");
     var.SetSelection({{0, 2}, {3, 2}});
     var.SetMemorySelection({{1, 1}, {5, 4}});
@@ -590,7 +600,7 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionComplex)
 			  {0.,  0.,  0., 0.}});
     // clang-format on
 
-    m_IOWriter.SetEngine("BP3");
+    m_IOWriter.SetEngine(engine);
     auto writer =
         m_IOWriter.Open("test_mem_selection_complex.bp", adios2::Mode::Write);
     auto var = m_IOWriter.DefineVariable<DataType>("var", {4, 4});
@@ -611,9 +621,8 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionComplex)
 
     // read back center block, with bits from every block written
     auto arr_read = MultiArrayT(ref.dims());
-    m_IOReader.SetEngine("BP3");
-    auto engine =
-        m_IOReader.Open("test_mem_selection_complex.bp", adios2::Mode::Read);
+    auto engine = m_IOReader.Open("test_mem_selection_complex.bp",
+                                  adios2::Mode::ReadRandomAccess);
     var = m_IOReader.InquireVariable<DataType>("var");
     var.SetSelection({{1, 1}, {2, 2}});
     var.SetMemorySelection({{1, 1}, {4, 4}});
@@ -626,5 +635,10 @@ TEST_F(ADIOS2_CXX11_API_Selection, MemorySelectionComplex)
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
+    if (argc > 1)
+    {
+        engine = argv[1];
+        std::cout << "Running with engine " << engine << std::endl;
+    }
     return RUN_ALL_TESTS();
 }
