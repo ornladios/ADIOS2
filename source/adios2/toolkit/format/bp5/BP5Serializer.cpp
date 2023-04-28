@@ -894,7 +894,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                     lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type,
                                        MemSpace, Rec->MetaOffset,
                                        Rec->MinMaxOffset,
-                                       MetaEntry->BlockCount /*BlockNum*/);
+                                       MetaEntry->BlockCount - 1 /*BlockNum*/);
                 }
             }
 
