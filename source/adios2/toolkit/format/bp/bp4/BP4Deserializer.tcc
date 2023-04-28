@@ -603,7 +603,7 @@ void BP4Deserializer::PostDataRead(
         if (endianReverse)
         {
             helper::Throw<std::invalid_argument>(
-                "Toolkit", "format::bp::BP3Deserializer", "PostDataRead",
+                "Toolkit", "format::bp::BP4Deserializer", "PostDataRead",
                 "endianReverse "
                 "not supported with MemorySelection");
         }
@@ -611,7 +611,7 @@ void BP4Deserializer::PostDataRead(
         if (m_ReverseDimensions)
         {
             helper::Throw<std::invalid_argument>(
-                "Toolkit", "format::bp::BP3Deserializer", "PostDataRead",
+                "Toolkit", "format::bp::BP4Deserializer", "PostDataRead",
                 "ReverseDimensions not supported with "
                 "MemorySelection");
         }
