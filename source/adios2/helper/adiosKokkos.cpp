@@ -111,6 +111,11 @@ void KokkosInit()
     cudaGetDevice(&device_id);
     settings.set_device_id(device_id);
 #endif
+#ifdef ADIOS2_HAVE_KOKKOS_HIP
+    int device_id;
+    hipGetDevice(&device_id);
+    settings.set_device_id(device_id);
+#endif
     Kokkos::initialize(settings);
 }
 
