@@ -90,6 +90,14 @@ bool IsGPUbuffer(const void *ptr)
         return true;
     }
 #endif
+#ifdef ADIOS2_HAVE_KOKKOS_HIP
+    hipPointerAttribute_t attr;
+    hipPointerGetAttributes(&attr, ptr);
+    if (attr.memoryType == hipMemoryTypeDevice)
+    {
+        return true;
+    }
+#endif
     return false;
 }
 
