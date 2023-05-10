@@ -547,12 +547,14 @@ void BP5Writer::EndStep()
     m_Profiler.Start("AWD");
     // TSInfo destructor would delete the DataBuffer so we need to save it
     // for async IO and let the writer free it up when not needed anymore
-    adios2::format::BufferV *databuf = TSInfo.DataBuffer;
-    TSInfo.DataBuffer = NULL;
     m_AsyncWriteLock.lock();
     m_flagRush = false;
     m_AsyncWriteLock.unlock();
-    WriteData(databuf);
+
+    // WriteData will free TSInfo.DataBuffer
+    WriteData(TSInfo.DataBuffer);
+    TSInfo.DataBuffer = NULL;
+
     m_Profiler.Stop("AWD");
 
     /*
