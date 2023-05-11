@@ -86,7 +86,10 @@ then
   export FC="@MPI_Fortran_COMPILER@"
 fi
 
-export adios2_DIR="${PREFIX}/@CMAKE_INSTALL_CMAKEDIR@"
+if [ -z "$adios2_DIR" ]
+then
+  export adios2_DIR="${PREFIX}/@CMAKE_INSTALL_CMAKEDIR@"
+fi
 
 # Sometimes package managers build in root jails
 if [ ! -d "${adios2_DIR}" ]
