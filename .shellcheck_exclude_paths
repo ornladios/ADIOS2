@@ -8,7 +8,6 @@ scripts/ci/gh-actions/get-changed-files.sh
 scripts/ci/gh-actions/linux-setup.sh
 scripts/ci/gh-actions/macos-setup.sh
 scripts/ci/gh-actions/run.sh
-scripts/ci/gitlab-ci/run.sh
 scripts/ci/images-v2/build-base.sh
 scripts/ci/images-v2/build-clang-base.sh
 scripts/ci/images-v2/build-clang.sh

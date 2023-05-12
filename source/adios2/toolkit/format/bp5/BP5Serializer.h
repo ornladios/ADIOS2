@@ -36,17 +36,9 @@ public:
     struct TimestepInfo
     {
         std::vector<MetaMetaInfoBlock> NewMetaMetaBlocks;
-        Buffer *MetaEncodeBuffer;
-        Buffer *AttributeEncodeBuffer;
-        BufferV *DataBuffer;
-
-        ~TimestepInfo()
-        {
-            delete MetaEncodeBuffer;
-            if (AttributeEncodeBuffer)
-                delete AttributeEncodeBuffer;
-            delete DataBuffer;
-        }
+        std::shared_ptr<Buffer> MetaEncodeBuffer;
+        std::shared_ptr<Buffer> AttributeEncodeBuffer;
+        BufferV* DataBuffer;
     };
 
     typedef struct _MetadataInfo

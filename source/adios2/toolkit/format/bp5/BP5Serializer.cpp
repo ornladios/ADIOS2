@@ -1333,19 +1333,27 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
     MBase->BitField = tmp;
     NewAttribute = false;
 
-    struct TimestepInfo Ret
-    {
-        Formats, Metadata, AttrData, CurDataBuffer
-    };
+    struct TimestepInfo Ret;
+    Ret.NewMetaMetaBlocks = Formats;
+    Ret.MetaEncodeBuffer.reset(Metadata);
+    Ret.AttributeEncodeBuffer.reset(AttrData);
+    Ret.DataBuffer = CurDataBuffer;
     CurDataBuffer = NULL;
+
     if (Info.AttributeFields)
+    {
         free_FMfield_list(Info.AttributeFields);
-    Info.AttributeFields = NULL;
+        Info.AttributeFields = NULL;
+    }
     Info.AttributeFieldCount = 0;
+
     if (Info.AttributeData)
+    {
         free(Info.AttributeData);
-    Info.AttributeData = NULL;
+        Info.AttributeData = NULL;
+    }
     Info.AttributeSize = 0;
+
     return Ret;
 }
 
