@@ -23,7 +23,6 @@ cmake -S "$WORKDIR/kokkos-$VERSION" -B "$WORKDIR/kokkos_build" \
   "-DCMAKE_CXX_STANDARD:STRING=17" \
   "-DCMAKE_CXX_EXTENSIONS:BOOL=OFF" \
   "-DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=ON" \
-  "-DCMAKE_CXX_COMPILER:STRING=$WORKDIR/kokkos-$VERSION/bin/nvcc_wrapper" \
   $*
 
 cmake --build "$WORKDIR/kokkos_build"
