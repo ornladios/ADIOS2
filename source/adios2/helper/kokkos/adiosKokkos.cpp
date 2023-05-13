@@ -13,10 +13,10 @@
 
 namespace
 {
-template <class MemSpace>
 void KokkosDeepCopy(const char *src, char *dst, size_t byteCount)
 {
-    Kokkos::View<const char *, MemSpace,
+    using mem_space = Kokkos::DefaultExecutionSpace::memory_space;
+    Kokkos::View<const char *, mem_space,
                  Kokkos::MemoryTraits<Kokkos::Unmanaged>>
         srcView(src, byteCount);
     Kokkos::View<char *, Kokkos::HostSpace,
@@ -62,22 +62,12 @@ namespace helper
 {
 void MemcpyGPUToBuffer(char *dst, const char *GPUbuffer, size_t byteCount)
 {
-#ifdef ADIOS2_HAVE_KOKKOS_CUDA
-    KokkosDeepCopy<Kokkos::CudaSpace>(GPUbuffer, dst, byteCount);
-#endif
-#ifdef ADIOS2_HAVE_KOKKOS_HIP
-    KokkosDeepCopy<Kokkos::Experimental::HIPSpace>(GPUbuffer, dst, byteCount);
-#endif
+    KokkosDeepCopy(GPUbuffer, dst, byteCount);
 }
 
 void MemcpyBufferToGPU(char *GPUbuffer, const char *src, size_t byteCount)
 {
-#ifdef ADIOS2_HAVE_KOKKOS_CUDA
-    KokkosDeepCopy<Kokkos::CudaSpace>(src, GPUbuffer, byteCount);
-#endif
-#ifdef ADIOS2_HAVE_KOKKOS_HIP
-    KokkosDeepCopy<Kokkos::Experimental::HIPSpace>(src, GPUbuffer, byteCount);
-#endif
+    KokkosDeepCopy(src, GPUbuffer, byteCount);
 }
 
 bool IsGPUbuffer(const void *ptr)
