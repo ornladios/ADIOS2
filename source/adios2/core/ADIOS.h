@@ -25,6 +25,9 @@
 #include "adios2/core/VariableStruct.h"
 #include "adios2/helper/adiosComm.h"
 
+// Campaign Manager as Global Service
+#include <adios2/engine/campaign/CampaignManager.h>
+
 namespace adios2
 {
 namespace core
@@ -182,6 +185,9 @@ private:
 
     /** operators created with DefineOperator */
     std::unordered_map<std::string, std::pair<std::string, Params>> m_Operators;
+
+    /** campaign manager */
+    engine::CampaignManager campaignManager;
 
     /** Flag for Enter/ExitComputationBlock */
     bool enteredComputationBlock = false;

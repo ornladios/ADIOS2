@@ -55,6 +55,9 @@ add_library(adios2_core
   engine/inline/InlineReader.cpp engine/inline/InlineReader.tcc
   engine/inline/InlineWriter.cpp engine/inline/InlineWriter.tcc
 
+  engine/campaign/CampaignManager.cpp 
+  engine/campaign/CampaignReader.cpp engine/campaign/CampaignReader.tcc
+
   engine/null/NullWriter.cpp engine/null/NullWriter.tcc
   engine/null/NullReader.cpp engine/null/NullReader.tcc
 
