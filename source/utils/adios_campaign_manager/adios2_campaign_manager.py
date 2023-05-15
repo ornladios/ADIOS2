@@ -16,7 +16,6 @@ from time import time
 
 ADIOS_ACA_VERSION = "1.0"
 
-
 def SetupArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -39,7 +38,6 @@ def SetupArgs():
     parser.add_argument("--hostname", "-n",
                         help="Host name unique for hosts in a campaign",
                         required=False)
-
     args = parser.parse_args()
 
     # default values
@@ -134,7 +132,6 @@ def AddDatasetToArchive(args: dict, dataset: str, cur: sqlite3.Cursor, hostID: i
         ct = statres.st_ctime
         curDS = cur.execute('insert into bpdataset values (?, ?, ?, ?)',
                             (hostID, dirID, dataset, ct))
-
         dsID = curDS.lastrowid
         cwd = getcwd()
         chdir(dataset)
@@ -155,7 +152,6 @@ def ProcessJsonFile(args: dict, jsonlist: list, cur: sqlite3.Cursor, hostID: int
             if "name" in entry:
                 AddDatasetToArchive(
                     args, entry['name'], cur, hostID, dirID)
-
         else:
             print(f"WARNING: your object is not a dictionary, skip : {entry}")
 

@@ -159,7 +159,6 @@ void CampaignReader::InitParameters()
 void CampaignReader::InitTransports()
 {
     int rc;
-    rc = sqlite3_open(m_Name.c_str(), &m_DB);
     if (rc)
     {
         std::string dbmsg(sqlite3_errmsg(m_DB));

@@ -582,7 +582,6 @@ elseif(ADIOS2_USE_Campaign)
   endif()
 endif()  
 
-
 # Multithreading
 find_package(Threads REQUIRED)
 
