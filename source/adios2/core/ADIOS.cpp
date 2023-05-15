@@ -103,12 +103,15 @@ public:
 ADIOS::GlobalServices ADIOS::m_GlobalServices;
 
 std::mutex PerfStubsMutex;
-static std::atomic_uint adios_refcount(0);
+static std::atomic_uint adios_refcount(0); // adios objects at the same time
+static std::atomic_uint adios_count(0);    // total adios objects during runtime
 
 ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string hostLanguage)
-: m_HostLanguage(hostLanguage), m_Comm(std::move(comm)), m_ConfigFile(configFile)
+: m_HostLanguage(hostLanguage), m_Comm(std::move(comm)), m_ConfigFile(configFile),
+  campaignManager(m_Comm)
 {
     ++adios_refcount;
+    ++adios_count;
 #ifdef PERFSTUBS_USE_TIMERS
     {
         std::lock_guard<std::mutex> lck(PerfStubsMutex);
@@ -140,6 +143,12 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string 
 #ifdef ADIOS2_HAVE_KOKKOS
     m_GlobalServices.Init_Kokkos_API();
 #endif
+    std::string campaignName = "campaign";
+    if (adios_count > 1)
+    {
+        campaignName = "campaign" + std::to_string(adios_count);
+    }
+    campaignManager.Open(campaignName);
 }
 
 ADIOS::ADIOS(const std::string configFile, const std::string hostLanguage)
@@ -161,6 +170,7 @@ ADIOS::~ADIOS()
     {
         m_GlobalServices.Finalize();
     }
+    campaignManager.Close();
 }
 
 IO &ADIOS::DeclareIO(const std::string name, const ArrayOrdering ArrayOrder)
