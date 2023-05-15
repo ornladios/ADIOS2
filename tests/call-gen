@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
 	s2l = rand() + 1;
 
     s1f = (float)rand() / rand();
-    s2f = (float)rand() / (rand()+1) * ((rand()%1) ? 1. : -1.);
+    s2f = (float)rand() / (float) ((rand()+1) * ((rand()%1) ? 1. : -1.));
 
     s1d = (double)rand() / rand();
     s2d = (double)rand() / (rand()+1) * ((rand()%1) ? 1. : -1.);

@@ -2,7 +2,6 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "dill.h"
-#include "dill_internal.h"
 #ifdef HAVE_SYS_MMAN_H
 #include "sys/mman.h"
 #endif
@@ -14,12 +13,13 @@
 #include <memoryapi.h>
 #include <intrin.h>
 #endif
+#include "dill_internal.h"
 #include "x86.h"
 
-extern double dill_x86_64_hidden_ULtoD(unsigned long a)
+extern double dill_x86_64_hidden_ULtoD(size_t a)
 { return (double) a; }
-extern unsigned long dill_x86_64_hidden_DtoUL(double a)
-{ unsigned long l = a; return l; }
+extern size_t dill_x86_64_hidden_DtoUL(double a)
+{ size_t l = (long) a; return l; }
 
 static xfer_entry x86_64_xfer_recs[5] = {
     {"dill_x86_64_hidden_ULtoD", dill_x86_64_hidden_ULtoD},

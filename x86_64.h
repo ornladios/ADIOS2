@@ -141,17 +141,6 @@ if (c->dill_debug) dump_cur_dill_insn(c);\
  c->p->cur_ip = ((char*)c->p->cur_ip)+10;	\
 } while (0)
 
-#ifdef LINUX_KERNEL_MODULE
-#undef EAX
-#undef ECX
-#undef EDX
-#undef EBX
-#undef ESP
-#undef EBP
-#undef ESI
-#undef EDI
-#endif
-
 enum {
     AL = 0, CL, DL, BL, AH, CH, DH, BH,   /* r8 */
     AX = 0, CX, DX, BX, SP, BP, SI, DI,   /* r16 */
@@ -187,7 +176,7 @@ typedef struct x86_64_mach_info {
 
 extern int x86_64_type_align[];
 extern int x86_64_type_size[];
-extern void *gen_x86_64_mach_info();
+extern void *gen_x86_64_mach_info(dill_stream s);
 extern void x86_64_arith3(dill_stream c, int op, int commut, int dest, int src1, int src2);
 extern void x86_64_arith2(dill_stream c, int op, int subop, int dest, int src);
 extern void x86_64_mul(dill_stream c, int signed, int imm, int dest, int src1, IMM_TYPE src2);

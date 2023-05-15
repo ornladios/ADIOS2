@@ -1,40 +1,13 @@
 #include "config.h"
 
-#ifdef LINUX_KERNEL_MODULE
-#ifndef MODULE
-#define MODULE
-#endif
-#ifndef __KERNEL__
-#define __KERNEL__
-#endif
-#include <linux/kernel.h>
-#include <linux/module.h>
-#endif
-
 #undef NDEBUG
 #include "assert.h"
 
-#ifndef LINUX_KERNEL_MODULE
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 #include <string.h>
-#else
-#include "kdill.h"
-#define fprintf(fmt, args...)	printk(args)
-#define printf	printk
-#define malloc (void *)DAllocMM
-#define free(a) DFreeMM((addrs_t) a)
-#endif
 
-/*
- * GANEV: note that we have to include "x86_64.h" _after_ including
- * "kdill.h" because it needs to #undef and then re-#define a few
- * symbols (namely, EAX, EBX, etc. defined in <asm/ptrace.h>
- */
 #include "dill.h"
 #include "dill_internal.h"
 #include "x86_64.h"
@@ -551,12 +524,7 @@ x86_64_sxmov(dill_stream s, int typ, int src, int dest)
     }
 }
 
-extern void x86_64_farith2(s, b1, typ, dest, src)
-dill_stream s;
-int b1;
-int typ;
-int dest;
-int src;
+extern void x86_64_farith2(dill_stream s, int b1, int typ, int dest, int src)
 {
     /* this is fneg */
     int rex = 0;
@@ -574,13 +542,7 @@ int src;
     BYTE_OUT1R3(s, op, rex, 0x0f, 0x5c, ModRM(0x3, dest, src));
 }
 
-extern void x86_64_farith(s, b1, typ, dest, src1, src2)
-dill_stream s;
-int b1;
-int typ;
-int dest;
-int src1;
-int src2;
+extern void x86_64_farith(dill_stream s, int b1, int typ, int dest, int src1, int src2)
 {
     int rex = 0;
     int op = 0xf3;
@@ -819,10 +781,20 @@ generate_prefix_code(dill_stream s, int force, int ar_size, dill_reg *arglist)
 	int came_in_a_reg = 0;
 	switch (args[i].type) {
 	case DILL_D: case DILL_F:
+#ifdef USE_WINDOWS_CALLS
+	    came_in_a_reg = (float_arg_count + int_arg_count) < 4;
+	    float_arg_count++;
+#else
 	    came_in_a_reg = (float_arg_count++ < 8);
+#endif
 	    break;
 	default:
+#ifdef USE_WINDOWS_CALLS
+	    came_in_a_reg = (float_arg_count + int_arg_count) < 4;
+	    int_arg_count++;
+#else
 	    came_in_a_reg = (int_arg_count++ < 6);
+#endif
 	    break;
 	}
 	if (came_in_a_reg && (args[i].in_reg == -1)) {
@@ -835,13 +807,25 @@ generate_prefix_code(dill_stream s, int force, int ar_size, dill_reg *arglist)
 	if (came_in_a_reg && args[i].is_register) {
 	    switch(args[i].type) {
 	    case DILL_D: case DILL_F:
+#ifdef USE_WINDOWS_CALLS
+		x86_64_movd(s, args[i].in_reg, float_arg_count + int_arg_count - 1);
+#else
 	        x86_64_movd(s, args[i].in_reg, float_arg_count-1);
+#endif
 		break;
 	    case DILL_UC: case DILL_C: case DILL_US: case DILL_S:
-	      x86_64_sxmov(s, args[i].type, args[i].in_reg, arg_regs[int_arg_count-1]);
+#ifdef USE_WINDOWS_CALLS
+		x86_64_sxmov(s, args[i].type, args[i].in_reg, arg_regs[float_arg_count + int_arg_count - 1]);
+#else
+		x86_64_sxmov(s, args[i].type, args[i].in_reg, arg_regs[int_arg_count-1]);
+#endif
 	      break;
 	    default:
+#ifdef USE_WINDOWS_CALLS
+	      x86_64_movl(s, args[i].in_reg, arg_regs[int_arg_count + float_arg_count- 1]);
+#else
 	      x86_64_movl(s, args[i].in_reg, arg_regs[int_arg_count-1]);
+#endif
 	      break;
 	    }
 	    continue;
@@ -883,10 +867,20 @@ x86_64_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list a
 	args[i].out_reg = -1;
 	args[i].is_register = 0;
 	if (arglist != NULL) arglist[i] = -1;
+#ifdef USE_WINDOWS_CALLS
+	if ((args[i].type != DILL_F) && (args[i].type != DILL_D) && (int_arg_count + float_arg_count < 4)) {
+	    cur_arg_offset += roundup(type_info[(int)args[i].type].size, smi->stack_align);
+#else
 	if ((args[i].type != DILL_F) && (args[i].type != DILL_D) && (int_arg_count < 6)) {
+#endif
+
 	    args[i].offset = smi->save_base + int_arg_count*8;
 	    int_arg_count++;
+#ifdef USE_WINDOWS_CALLS
+	    if (int_arg_count + float_arg_count <= 4) {
+#else
 	    if (int_arg_count <= 4) {
+#endif
 	        dill_reg tmp_reg;
 	        if (dill_raw_getreg(s, &tmp_reg, args[i].type, DILL_VAR)) {
 		    args[i].in_reg = tmp_reg;
@@ -894,12 +888,22 @@ x86_64_proc_start(dill_stream s, char *subr_name, int arg_count, arg_info_list a
 		    args[i].is_register = 1;
 		}
 	    } else {
-	        if (int_arg_count <= (sizeof(arg_regs) / sizeof(arg_regs[0]))) {
+#ifdef USE_WINDOWS_CALLS
+	        if (int_arg_count + float_arg_count <= (sizeof(arg_regs) / sizeof(arg_regs[0]))) {
+#else
+		if (int_arg_count <= (sizeof(arg_regs) / sizeof(arg_regs[0]))) {
+#endif
 		  args[i].is_register = 1;
 		  args[i].in_reg = arg_regs[int_arg_count-1];
 		}
 	    }
+#ifdef USE_WINDOWS_CALLS
+	} else if (((args[i].type == DILL_F) || (args[i].type == DILL_D)) && (int_arg_count + float_arg_count < 4)) {
+	    cur_arg_offset += roundup(type_info[(int)args[i].type].size, smi->stack_align);
+#else
 	} else if (((args[i].type == DILL_F) || (args[i].type == DILL_D)) && (float_arg_count < 8)) {
+#endif
+
 	    args[i].offset = smi->save_base + BEGIN_FLOAT_SAVE + float_arg_count*8;
 	    float_arg_count++;
 	    if (float_arg_count <= 4) {
@@ -973,9 +977,7 @@ static unsigned char ld_opcodes[] = {
     0x8b, /* DILL_EC */
 };
 
-static void x86_64_clear(s, dest)
-dill_stream s;
-int dest;
+static void x86_64_clear(dill_stream s, int dest)
 {
     int rex = REX_W;
     if (dest > RDI) rex |= REX_B | REX_R;
@@ -1055,9 +1057,9 @@ x86_64_ploadi(dill_stream s, int type, int junk, int dest, int src, IMM_TYPE off
 	    }
 	} else {
 	    if (float_op != 0) {
-		BYTE_OUT1R4I(s, float_op, rex, 0x0f, 0x10, ModRM(0x2, tmp_dest, 0x4), SIB(0,4,src), offset);
+		BYTE_OUT1R4I(s, float_op, rex, 0x0f, 0x10, ModRM(0x2, tmp_dest, 0x4), SIB(0,4,src), (int) offset);
 	    } else {
-		BYTE_OUT3IR(s, rex, opcode, ModRM(0x2, tmp_dest, 0x4), SIB(0,4,src),offset);
+		BYTE_OUT3IR(s, rex, opcode, ModRM(0x2, tmp_dest, 0x4), SIB(0,4,src), (int)offset);
 	    }
 	}
     } else {
@@ -1076,9 +1078,9 @@ x86_64_ploadi(dill_stream s, int type, int junk, int dest, int src, IMM_TYPE off
 	} else if (((offset & 0xffffffff80000000) == 0) ||
 		   ((offset & 0xffffffff80000000) == 0xffffffff80000000)) {
 	    if (float_op != 0) {
-		BYTE_OUT1R3I(s, float_op, rex, 0x0f, 0x10, ModRM(0x2, tmp_dest, src), offset);
+		BYTE_OUT1R3I(s, float_op, rex, 0x0f, 0x10, ModRM(0x2, tmp_dest, src), (int) offset);
 	    } else {
-		BYTE_OUT2IR(s, rex, opcode, ModRM(0x2, tmp_dest, src), offset);
+		BYTE_OUT2IR(s, rex, opcode, ModRM(0x2, tmp_dest, src), (int) offset);
 	    }
 	} else {
 	    /* really big offset */
@@ -1370,9 +1372,9 @@ x86_64_pstorei(dill_stream s, int type, int junk, int dest, int src, IMM_TYPE of
 	    }
 	} else {
 	    if (float_op != 0) {
-		BYTE_OUT1R4I(s, float_op, rex, 0x0f, 0x11, ModRM(0x2, dest, 0x4), SIB(0,4,src), offset);
+		BYTE_OUT1R4I(s, float_op, rex, 0x0f, 0x11, ModRM(0x2, dest, 0x4), SIB(0,4,src), (int) offset);
 	    } else {
-		BYTE_OUT3IR(s, rex, st_opcodes[type], ModRM(0x2, dest, 0x4), SIB(0,4,src),offset);
+		BYTE_OUT3IR(s, rex, st_opcodes[type], ModRM(0x2, dest, 0x4), SIB(0,4,src), (int)offset);
 	    }
 	}
     } else {
@@ -1392,9 +1394,9 @@ x86_64_pstorei(dill_stream s, int type, int junk, int dest, int src, IMM_TYPE of
 		   ((offset & 0xffffffff80000000) == 0xffffffff80000000)) {
 	    /* safe INT offset using only low 31 bits */
 	    if (float_op != 0) {
-		BYTE_OUT1R3I(s, float_op, rex, 0x0f, 0x11, ModRM(0x2, dest, src), offset);
+		BYTE_OUT1R3I(s, float_op, rex, 0x0f, 0x11, ModRM(0x2, dest, src), (int)offset);
 	    } else {
-		BYTE_OUT2IR(s, rex, st_opcodes[type], ModRM(0x2, dest, src), offset);
+		BYTE_OUT2IR(s, rex, st_opcodes[type], ModRM(0x2, dest, src), (int)offset);
 	    }
 	} else {
 	    x86_64_push_reg(s, src);
@@ -1445,8 +1447,8 @@ x86_64_pstore(dill_stream s, int type, int junk, int dest, int src1, int src2)
     }
 }
 
-extern double dill_x86_64_hidden_ULtoD(unsigned long a);
-extern unsigned long dill_x86_64_hidden_DtoUL(double a);
+extern double dill_x86_64_hidden_ULtoD(size_t a);
+extern size_t dill_x86_64_hidden_DtoUL(double a);
 
 extern void x86_64_div(dill_stream s, int op3, int op, int dest, int src1, 
 		      int src2)
@@ -1464,13 +1466,7 @@ x86_64_mov(dill_stream s, int type, int junk, int dest, int src)
     x86_64_pmov(s, type, dest, src);
 }
 
-extern void x86_64_arith3(s, op, typ, dest, src1, src2)
-dill_stream s;
-int op;
-int typ;
-int dest;
-int src1;
-int src2;
+extern void x86_64_arith3(dill_stream s, int op, int typ, int dest, int src1, int src2)
 {
     int commut = ( op != 0x2b);   /* subtract not commutative */
     int rex = 0;
@@ -1505,12 +1501,7 @@ int src2;
     }
 }
 
-extern void x86_64_arith2(s, op, subop, dest, src)
-dill_stream s;
-int op;
-int subop;
-int dest;
-int src;
+extern void x86_64_arith2(dill_stream s, int op, int subop, int dest, int src)
 {
     if (op == 0) {
 	int tmp_dest = dest;
@@ -1541,12 +1532,7 @@ int src;
     }
 }
 
-extern void x86_64_bswap(s, junk, typ, dest, src)
-dill_stream s;
-int junk;
-int typ;
-int dest;
-int src;
+extern void x86_64_bswap(dill_stream s, int junk, int typ, int dest, int src)
 {
     int rex = 0;
     switch(typ) {
@@ -1587,14 +1573,9 @@ int src;
     }
 }
 
-extern void x86_64_mul(s, sign, imm, dest, src1, src2)
-dill_stream s;
-int sign;
-int imm;
-int dest;
-int src1;
-IMM_TYPE src2;
+extern void x86_64_mul(dill_stream s, int sign, int imm, int dest, int src1, IMM_TYPE imm_src2)
 {
+	int src2 = (int)imm_src2;
     int rex = REX_W;
     /* make src1 be EAX */
     if (dest != EAX) {
@@ -1617,10 +1598,10 @@ IMM_TYPE src2;
 	BYTE_OUT2R(s, rex, 0xf7, ModRM(0x3, sign ? 0x5 : 0x4, src2));
     } else {
 	/* src2 is really immediate */
-	if (sign && ((src2 & 0xffffffff80000000) == 0)) {
-	    BYTE_OUT2IR(s, rex, 0x69, ModRM(0x3, 0, EAX), src2);
+	if (sign && ((imm_src2 & 0xffffffff80000000) == 0)) {
+	    BYTE_OUT2IR(s, rex, 0x69, ModRM(0x3, 0, EAX), (int)imm_src2);
 	} else {
-	    x86_64_setl(s, EDX, src2);
+	    x86_64_setl(s, EDX, imm_src2);
 	    BYTE_OUT2R(s, rex, 0xf7, ModRM(0x3, 0x4, EDX));
 	}
     }
@@ -1633,13 +1614,7 @@ IMM_TYPE src2;
     }
 }
 
-extern void x86_64_div_modi(s, div, type, dest, src1, imm)
-dill_stream s;
-int div;
-int type;
-int dest;
-int src1;
-IMM_TYPE imm;
+extern void x86_64_div_modi(dill_stream s, int div, int type, int dest, int src1, IMM_TYPE imm)
 {
     x86_64_push_reg(s, EBP);
     x86_64_setl(s, EBP, imm);
@@ -1647,13 +1622,7 @@ IMM_TYPE imm;
     x86_64_pop_reg(s, EBP);
 }
 
-extern void x86_64_div_mod(s, div, type, dest, src1, src2)
-dill_stream s;
-int div;
-int type;
-int dest;
-int src1;
-int src2;
+extern void x86_64_div_mod(dill_stream s, int div, int type, int dest, int src1, int src2)
 {
     int tmp_src2 = src2;
     int rex = 0;
@@ -1720,13 +1689,7 @@ static int group1_eax_op[] = {
     0x3d /* cmp */
 };
 
-extern void x86_64_arith3i(s, op, typ, dest, src, imm)
-dill_stream s;
-int op;
-int typ;
-int dest;
-int src;
-IMM_TYPE imm;
+extern void x86_64_arith3i(dill_stream s, int op, int typ, int dest, int src, IMM_TYPE imm)
 {
     int rex = 0;
     if ((typ == DILL_L) || (typ == DILL_UL) || (typ == DILL_P)) {
@@ -1748,11 +1711,11 @@ IMM_TYPE imm;
     if ((0xffffffff80000000 & imm) == 0) {
 	/* int-sized immediate */
 	if (dest == EAX) {
-	    BYTE_OUT1IR(s, rex, group1_eax_op[op], imm);
+	    BYTE_OUT1IR(s, rex, group1_eax_op[op], (int)imm);
 	} else {
 	    int rex2 = rex;
 	    if (dest > RDI) rex2 |= REX_B;
-	    BYTE_OUT2IR(s, rex2, 0x81, ModRM(0x3, op, dest), imm);
+	    BYTE_OUT2IR(s, rex2, 0x81, ModRM(0x3, op, dest), (int)imm);
 	}
     } else {
 	int tmp_reg = dest;
@@ -1779,13 +1742,7 @@ IMM_TYPE imm;
     }
 }
 
-extern void x86_64_shift(s, op, type, dest, src1, src2)
-dill_stream s;
-int op;
-int type;
-int dest;
-int src1;
-int src2;
+extern void x86_64_shift(dill_stream s, int op, int type, int dest, int src1, int src2)
 {
     int tmp_dest = dest;
     int rex = 0;
@@ -1814,13 +1771,7 @@ int src2;
     }
 }
 
-extern void x86_64_shifti(s, op, type, dest, src, imm)
-dill_stream s;
-int op;
-int type;
-int dest;
-int src;
-IMM_TYPE imm;
+extern void x86_64_shifti(dill_stream s, int op, int type, int dest, int src, IMM_TYPE imm)
 {
     int rex = 0;
     if ((type == DILL_L) || (type == DILL_UL) || (type == DILL_P)) {
@@ -2151,7 +2102,7 @@ x86_64_comparei(dill_stream s, int op, int type, int dest, int src, IMM_TYPE imm
     }
     if (src > RDI) rex |= REX_B;
     if (imm < 0xffffffff) {
-	BYTE_OUT2IR(s, rex, 0x81, ModRM(0x3, 0x7, src), imm);  /* cmp */
+	BYTE_OUT2IR(s, rex, 0x81, ModRM(0x3, 0x7, src), (int)imm);  /* cmp */
     } else {
 	x86_64_setl(s, EAX, imm);
 	BYTE_OUT2R(s, rex, 0x39, ModRM(0x3, EAX, src));
@@ -2179,7 +2130,7 @@ extern void x86_64_jump_to_reg(dill_stream s, unsigned long reg)
 
 extern void x86_64_jump_to_imm(dill_stream s, void *imm)
 {
-    x86_64_seti(s, EAX, (intptr_t) imm);
+    x86_64_seti(s, EAX, (int) (intptr_t) imm);
     BYTE_OUT2(s, 0xff, ModRM(0x3, 0x4, EAX));
 }
 
@@ -2256,9 +2207,19 @@ static void internal_push(dill_stream s, int type, int immediate,
 	}	    
     }
     if ((arg.type != DILL_D) && (arg.type != DILL_F)) {
+#ifndef USE_WINDOWS_CALLS
       if (smi->int_arg_count < sizeof(arg_regs) / sizeof(arg_regs[0])) {
+#else
+      if (smi->float_arg_count + smi->int_arg_count < sizeof(arg_regs)/sizeof(arg_regs[0])) {
+#endif
 	arg.is_register = 1;
 	arg.in_reg = arg.out_reg = arg_regs[smi->int_arg_count];
+#ifdef USE_WINDOWS_CALLS
+	arg.in_reg = arg.out_reg = arg_regs[smi->int_arg_count + smi->float_arg_count];
+	arg.offset = smi->cur_arg_offset;
+	smi->cur_arg_offset +=
+	    roundup(type_info[(int)arg.type].size, smi->stack_align);
+#endif
 	smi->int_arg_count++;
       } else {
 	arg.is_register = 0;
@@ -2267,9 +2228,19 @@ static void internal_push(dill_stream s, int type, int immediate,
 	  roundup(type_info[(int)arg.type].size, smi->stack_align);
       }
     } else {
+#ifndef USE_WINDOWS_CALLS
       if (smi->float_arg_count < 8) {
+#else
+      if (smi->float_arg_count + smi->int_arg_count < 4) {
+#endif
 	arg.is_register = 1;
 	arg.in_reg = arg.out_reg = smi->float_arg_count;
+#ifdef USE_WINDOWS_CALLS
+	arg.in_reg = arg.out_reg = smi->float_arg_count + smi->int_arg_count;
+	arg.offset = smi->cur_arg_offset;
+	smi->cur_arg_offset +=
+	    roundup(type_info[(int)arg.type].size, smi->stack_align);
+#endif	
 	smi->float_arg_count++;
       } else {
 	arg.is_register = 0;
@@ -2280,7 +2251,7 @@ static void internal_push(dill_stream s, int type, int immediate,
     }
     if (arg.is_register == 0) {
 	if (arg.offset == 0) {
-	  smi->call_backpatch_offset = (char*)s->p->cur_ip - (char*)s->p->code_base;
+	  smi->call_backpatch_offset = (int)((char*)s->p->cur_ip - (char*)s->p->code_base);
 	  dill_subli(s, ESP, ESP, 0x70909090);   /* tentative for backpatch */
 	  smi->call_stack_space = 128;
 	}
@@ -2303,7 +2274,7 @@ static void internal_push(dill_stream s, int type, int immediate,
 	} else {
 	    /* need to handle DILL_F upconvert to DILL_D here? */
 	    x86_64_pstorei(s, arg.type, 0, *(int*)value_ptr, ESP, 
-			   arg.offset);
+			   (IMM_TYPE)arg.offset);
 	}
     } else {
 	if ((type != DILL_F) && (type != DILL_D)) {
@@ -2317,19 +2288,36 @@ static void internal_push(dill_stream s, int type, int immediate,
 	    if (arg.is_immediate) {
 		if ((type == DILL_F) || (type == DILL_D)) {
 		    /* set appropriate register */
-		    x86_64_setf(s, type, 0, arg.out_reg, 
-			       *(double*)value_ptr);
+#ifdef USE_WINDOWS_CALLS
+		    x86_64_setf(s, type, 0, arg.out_reg,
+			*(double*)value_ptr);
+		    x86_64_setl(s, arg_regs[arg.out_reg], *(IMM_TYPE*)value_ptr);
+#else
+		    x86_64_setf(s, type, 0, arg.out_reg,
+			*(double*)value_ptr);
+#endif
 		} else {
 		    x86_64_setl(s, arg.out_reg, *(intptr_t*)value_ptr);
 		}
-	    } else {
+	    }
+	    else {
 		/* move to the appropriate float reg */
 		if ((type == DILL_F) && (arg.type == DILL_D)) {
 		    /* special case for upconverting varidiac args */
 		    x86_64_convert(s, DILL_F, DILL_D, arg.out_reg, *(int*)value_ptr);
-		} else {
+		}
+		else {
 		    x86_64_mov(s, type, 0, arg.out_reg, *(int*)value_ptr);
 		}
+#ifdef USE_WINDOWS_CALLS
+		{
+		    int rex = REX_W;
+		    if (arg_regs[arg.out_reg] > RDI) rex |= REX_B;
+		    if (arg.out_reg > RDI) rex |= REX_R;
+		    // move float reg to corresponding integer
+		    BYTE_OUT1R3(s, 0x66, rex, 0x0f, 0x7e, ModRM(0x3, arg.out_reg, arg_regs[arg.out_reg]));
+		}	
+#endif
 	    }
 
 	}
@@ -2379,13 +2367,29 @@ extern void x86_64_pushfi(dill_stream s, int type, double value)
 extern int x86_64_calli(dill_stream s, int type, void *xfer_address, const char *name)
 {
     int rex = REX_W;
+    int i;
     int tmp_call_reg = R11;
     if (tmp_call_reg > RDI) rex |= REX_B;
     
     /* save temporary registers */
+    for (i=XMM8; i < XMM15 ; i+=1) {
+	if (dill_mustsave(&s->p->tmp_f, i)) {
+	    x86_64_save_restore_op(s, 0, DILL_D, i);
+	}
+    }
+
+    /* save temporary registers */
     dill_mark_call_location(s, name, xfer_address);
     BYTE_OUT1LR(s, rex, 0xb8 + (0x7 & tmp_call_reg), 0);		/* setl */
-    return x86_64_callr(s, type, R11);
+    int ret_reg = x86_64_callr(s, type, R11);
+
+    /* restore temporary registers */
+    for (i=XMM8; i < XMM15 ; i+=1) {
+	if (dill_mustsave(&s->p->tmp_f, i)) {
+	    x86_64_save_restore_op(s, 1, DILL_D, i);
+	}
+    }
+    return ret_reg;
 }
 
 extern int x86_64_callr(dill_stream s, int type, int src)
@@ -2452,8 +2456,8 @@ x86_64_branchi(dill_stream s, int op, int type, int src, IMM_TYPE imm, int label
     default:
 /*	BYTE_OUT2(s, 0x39, ModRM(0x3, src2, src1));*/
 	if (src > RDI) rex |= REX_B;
-	if (imm < 0x7fffffff) {
-	    BYTE_OUT2IR(s, rex, 0x81, ModRM(0x3, 0x7, src), imm);  /* cmp */
+	if (((uintptr_t)imm) < 0x7fffffff) {
+	    BYTE_OUT2IR(s, rex, 0x81, ModRM(0x3, 0x7, src), (int)imm);  /* cmp */
 	} else {
 	    x86_64_setl(s, EAX, imm);
 	    BYTE_OUT2R(s, rex, 0x39, ModRM(0x3, EAX, src));
@@ -2508,7 +2512,7 @@ extern void x86_64_reti(dill_stream s, int data1, int data2, IMM_TYPE imm)
     case DILL_US:
     case DILL_I:
     case DILL_U:
-	x86_64_seti(s, EAX, imm);
+	x86_64_seti(s, EAX, (int)imm);
 	break;
     case DILL_L:
     case DILL_UL:
@@ -2573,7 +2577,7 @@ x86_64_emit_save(dill_stream s)
     void *save_ip = s->p->cur_ip;
     int ar_size = smi->act_rec_size;
     int prefix_size;
-    ar_size = roundup(ar_size, 16) + 8;
+    ar_size = roundup(ar_size, 16) + 8 + 32;
 
     s->p->cur_ip = (char*)s->p->code_base;
 
@@ -2631,8 +2635,7 @@ x86_64_flush(void *base, void *limit)
 #endif
 }    
 extern void
-x86_64_end(s)
-dill_stream s;
+x86_64_end(dill_stream s)
 {
     x86_64_proc_ret(s);
     x86_64_branch_link(s);
@@ -2643,8 +2646,7 @@ dill_stream s;
 }
 
 extern void
-x86_64_package_end(s)
-dill_stream s;
+x86_64_package_end(dill_stream s)
 {
     x86_64_proc_ret(s);
     x86_64_branch_link(s);
@@ -2653,10 +2655,7 @@ dill_stream s;
 }
 
 extern void *
-x86_64_clone_code(s, new_base, available_size)
-dill_stream s;
-void *new_base;
-int available_size;
+x86_64_clone_code(dill_stream s, void *new_base, int available_size)
 {
     int size = dill_code_size(s);
     void *old_base = s->p->code_base;
@@ -2675,6 +2674,8 @@ int available_size;
     s->p->code_base = old_base;
     s->p->cur_ip = (char*)old_base + size;
     s->p->fp = old_base;
+	x86_64_flush(new_base, (char*)new_base + size);
+
     return new_base;
 }
 
@@ -2686,7 +2687,7 @@ x86_64_pset(dill_stream s, int type, int junk, int dest, IMM_TYPE imm)
 	x86_64_setl(s, dest, imm);
 	break;
     default:
-	x86_64_seti(s, dest, imm);
+	x86_64_seti(s, dest, (int) imm);
 	break;
     }
     s->p->used_frame++;
@@ -2706,7 +2707,7 @@ x86_64_setf(dill_stream s, int type, int junk, int dest, double imm)
     } b;
     if (type == DILL_F) {
 	int rex = 0;
-	a.f = imm;
+	a.f = (float) imm;
 	x86_64_seti(s, EAX, a.i);
 	if (dest > RDI) rex |= REX_R;
 	BYTE_OUT1R3(s, 0x66, rex, 0x0f, 0x6e, ModRM(0x3, dest, EAX));
@@ -2736,8 +2737,7 @@ x86_64_reg_init(dill_stream s)
 }
 
 extern void*
-gen_x86_64_mach_info(s)
-dill_stream s;
+gen_x86_64_mach_info(dill_stream s)
 {
     x86_64_mach_info smi = malloc(sizeof(*smi));
     if (s->p->mach_info != NULL) {
@@ -2862,7 +2862,7 @@ x86_64_count_insn(dill_stream s, int start, int end)
 extern int
 x86_64_init_disassembly_info(dill_stream s, void * ptr){return 1;}
 unsigned int x86_64_disassemble(unsigned char *bytes, unsigned int max, int offset, char *output);
-extern int x86_64_print_insn(dill_stream s, void *info_ptr, void *insn){
+extern int x86_64_print_insn(dill_stream s, void* info_ptr, void* insn) {
     char out[128] = "";
     int ret = x86_64_disassemble(insn, sizeof(out), 0, out);
     printf("%s", out);

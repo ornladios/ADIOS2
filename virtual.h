@@ -16,8 +16,8 @@ typedef struct bitv {
 } *bit_vec;
 
 typedef struct basic_block {
-    int start;
-    int end;
+    ssize_t start;
+    ssize_t end;
     int label;
     int end_branch_label;
     int fall_through;
@@ -41,7 +41,7 @@ typedef struct mach_info {
     int prefix_code_start;
 } *virtual_mach_info;
 
-extern int dill_type_of(dill_stream c, int vreg);
+extern int dill_type_of(dill_stream c, size_t vreg);
 extern void
 virtual_proc_start(dill_stream c, char *subr_name, int arg_count,
 		   arg_info_list args, dill_reg *arglist);

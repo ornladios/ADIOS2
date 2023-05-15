@@ -2,36 +2,19 @@
 #include <assert.h>
 #include "config.h"
 #include "dill.h"
-#include "dill_internal.h"
-#include "virtual.h"
-#ifndef LINUX_KERNEL_MODULE
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 #include <assert.h>
+#ifdef _MSC_VER
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
 #else
-#ifdef LINUX_KERNEL_MODULE
-#ifndef __KERNEL__
-#define __KERNEL__
+#include <unistd.h>
 #endif
-#endif
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include "kdill.h"
-#include "library.h"
-
-#define printf	printk
-#define fprintf(file, args...)	printk (args)
-#define malloc (void *)DAllocMM
-#define realloc(a,b) (void *)DReallocMM((addrs_t)a, b)
-#define free(a) DFreeMM((addrs_t) a)
-#define qsort _quicksort
-#endif
+#include "dill_internal.h"
+#include "virtual.h"
 
 extern char *arith3_name[];
 extern char *arith2_name[];
@@ -513,8 +496,8 @@ add_pred(basic_block bb, int pred)
 static void
 dump_bb(dill_stream c, struct basic_block *bb, int i)
 {
-    int j;
-    printf("\nBasic block %d, start %d, end %d, label %d, fall %d, branch_to %d\n",
+    size_t j;
+    printf("\nBasic block %d, start %zd, end %zd, label %d, fall %d, branch_to %d\n",
 	   i, bb->start, bb->end, 
 	   bb->label, bb->fall_through,
 	   bb->end_branch_label);
@@ -532,8 +515,8 @@ dump_bb(dill_stream c, struct basic_block *bb, int i)
     if (bb->is_loop_start) printf(" - LOOP_START");
     if (bb->is_loop_end) printf(" - LOOP_END");
     printf("\n");
-    for (j = bb->start; j <= bb->end; j++) {
-	printf(" %d - ", j);
+    for (j = (size_t)bb->start; j <= (size_t)bb->end; j++) {
+	printf(" %zd - ", j);
 	virtual_print_insn(c, NULL, ((char *)c->p->virtual.code_base) + 
 			   j * sizeof(virtual_insn));
 	printf("\n");
@@ -824,8 +807,8 @@ insn_uses(virtual_insn *insn, int *used)
     case iclass_call: {
 	int reg = insn->insn_code & 0x10;
 	if (reg != 0) {
-	    long imm = (long) insn->opnds.calli.imm_l;
-	    int src1_vreg = imm;
+	    size_t imm = (size_t) insn->opnds.calli.imm_l;
+	    int src1_vreg = (int) imm;
 	    used[0] = src1_vreg;
 	}
 	break;
@@ -1006,8 +989,8 @@ insn_use_test(virtual_insn *insn, int vreg)
     case iclass_call:{
 	int reg = insn->insn_code & 0x10;
 	if (reg != 0) {
-	    long imm = (long) insn->opnds.calli.imm_l;
-	    int src1_vreg = imm;
+	    size_t imm = (size_t) insn->opnds.calli.imm_l;
+	    int src1_vreg = (int)imm;
 	    if (vreg == src1_vreg) return 1;
 	}
 	break;
@@ -1195,7 +1178,7 @@ build_bbs(dill_stream c, void *vinsns, void *prefix_begin, void *code_end)
 	i = ((char*)prefix_begin - (char*)insns)/sizeof(virtual_insn);
 	bb->start = i;
 	while((insn = &insns[i++]) < (virtual_insn *)code_end) {
-	    build_bb_body(c, insn, i, insns);
+	    build_bb_body(c, insn, (int)i, insns);
 	}
 	bb = &vmi->bblist[vmi->bbcount];
 	i -= 1;
@@ -1204,7 +1187,7 @@ build_bbs(dill_stream c, void *vinsns, void *prefix_begin, void *code_end)
     i = 0;
     bb->start = i;
     while((insn = &insns[i++]) < (virtual_insn *)prefix_begin) {
-	build_bb_body(c, insn, i, insns);
+	build_bb_body(c, insn, (int)i, insns);
     }
     bb = &vmi->bblist[vmi->bbcount];
     end_bb(bb, -1, 0);
@@ -1221,9 +1204,9 @@ build_bbs(dill_stream c, void *vinsns, void *prefix_begin, void *code_end)
     for (i=0; i < vmi->bbcount; i++) {
 	basic_block bb = &vmi->bblist[i];
 	if (bb->fall_through) {
-	    bb->succ_list[bb->succ_count] = i+1;
+	    bb->succ_list[bb->succ_count] = (int) i+1;
 	    bb->succ_count++;
-	    add_pred(&vmi->bblist[i+1], i);
+	    add_pred(&vmi->bblist[i+1], (int)i);
 	}
 	if (bb->end_branch_label != -1) {
 	    int j;
@@ -1231,7 +1214,7 @@ build_bbs(dill_stream c, void *vinsns, void *prefix_begin, void *code_end)
 		if (vmi->bblist[j].label == bb->end_branch_label) {
 		    bb->succ_list[bb->succ_count] = j;
 		    bb->succ_count++;
-		    add_pred(&vmi->bblist[j], i);
+		    add_pred(&vmi->bblist[j], (int)i);
 		    j = vmi->bbcount;
 		}
 	    }
@@ -1355,8 +1338,8 @@ do_use_def_count(dill_stream c, basic_block bb, virtual_insn *insns, int loc)
 	    set_defined(c, insn->opnds.calli.src);
 	}
 	if (reg != 0) {
-	    long imm = (long)insn->opnds.calli.imm_l;
-	    int src1_vreg = imm;
+	    size_t imm = (size_t)insn->opnds.calli.imm_l;
+	    int src1_vreg = (int)imm;
 	    set_used(c, src1_vreg);
 	}
 	break;
@@ -1767,7 +1750,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	   virtual_mach_info vmi)
 {
     int label_xlate = 0;
-    int i, j = 0;
+    size_t i, j = 0;
     virtual_insn *ip;
     if (count_verbose == -1) {
 	count_verbose = (getenv ("DILL_COUNTS") != NULL);
@@ -1778,9 +1761,9 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	int last_dest_vreg = -1;
 	int last_store_loc = 0;
 	int insn_start = (int)((char*)c->p->cur_ip - (char *)c->p->code_base);
-	int insn_count = bb->end - bb->start;
+	int insn_count = (int)(bb->end - bb->start);
 	foreach_bit(bb->regs_defined, (bv_func) emit_getreg, bb, c);
-	for (j = bb->start; j <= bb->end; j++) {
+	for (j = (size_t)bb->start; j <= (size_t)bb->end; j++) {
 	    int loc;
 	    ip = &((virtual_insn *)insns)[j];
 	    loc = (int)((char*)ip - (char*)insns);
@@ -2412,20 +2395,20 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		if (typ != DILL_V) dest_preg = preg_of(c, next_bb, dest_vreg);
 		if (reg != 0) {
 		    intptr_t src1_vreg = ip->opnds.calli.imm_l;
-		    int src1_preg = preg_of(c, bb, src1_vreg);
+		    int src1_preg = preg_of(c, bb, (int)src1_vreg);
 		    if (src1_preg == -1) {
 			/* load src1 */
 			if ((last_dest_vreg == src1_vreg) && 
-			    (tmp_for_vreg(c, 0, src1_vreg) != -1)) {
-			    if (has_single_def_use(c, src1_vreg)) {
+			    (tmp_for_vreg(c, 0, (int)src1_vreg) != -1)) {
+			    if (has_single_def_use(c, (int)src1_vreg)) {
 				if (c->dill_debug) {
 				    printf(" -- Eliminating previous store -- \n");
 				}
 				c->p->cur_ip = (char*)c->p->code_base + last_store_loc;
 			    }
-			    src1_preg = tmp_for_vreg(c, 0, src1_vreg);
+			    src1_preg = tmp_for_vreg(c, 0, (int)src1_vreg);
 			} else {
-			    src1_preg = load_oprnd(c, 0, src1_vreg);
+			    src1_preg = load_oprnd(c, 0, (int)src1_vreg);
 			}
 		    }
 		    rr = dill_pcallr(c, typ, src1_preg);
@@ -2512,7 +2495,7 @@ emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	foreach_bit(bb->regs_defined, (bv_func)emit_putreg, bb, c);
 	if (count_verbose) {
 	    int insn_end = (int)( (char*)c->p->cur_ip - (char*)c->p->code_base);
-	    printf("Basic Block %d, %d virtual instructions, %d physical instructions\n",
+	    printf("Basic Block %zd, %d virtual instructions, %d physical instructions\n",
 		   i, insn_count, c->j->count_insn(c, insn_start, insn_end));
 	}
     }
@@ -3000,7 +2983,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	   virtual_mach_info vmi)
 {
     int label_xlate = 0;
-    int i, j = 0;
+    size_t i, j = 0;
     reg_state state;
 
     if (count_verbose == -1) {
@@ -3016,7 +2999,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
     }
     for (i = 0; i < vmi->bbcount; i++) {
 	basic_block bb = &vmi->bblist[i];
-	int insn_count = bb->end - bb->start;
+	int insn_count = (int)(bb->end - bb->start);
 	int insn_start;
 	for (j=0; j < c->p->vreg_count; j++) {
 	    c->p->vregs[j].assign_loc = -1;
@@ -3034,17 +3017,17 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	    state.param_info[j].update_in_reg = 0;
 	    state.param_info[j].value_in_mem = -1;
 	}
-	for (j = bb->start; j <= bb->end; j++) {
+	for (j = (size_t)bb->start; j <= (size_t)bb->end; j++) {
 	    virtual_insn *ip = &((virtual_insn *)insns)[j];
-	    update_vreg_info(&state, bb, ip, j);
+	    update_vreg_info(&state, bb, ip, (int)j);
 	}
 	for (j=0; j < c->p->vreg_count; j++) {
-	    if (get_last_use(&state, j + 100) == -1) continue;
+	    if (get_last_use(&state, (int)j + 100) == -1) continue;
 	    c->p->vregs[j].use_metric *= insn_count;
 	    c->p->vregs[j].use_metric /= (c->p->vregs[j].last_use - 
 					  c->p->vregs[j].value_in_mem +1);
 	    c->p->vregs[j].value_in_mem = 
-		bit_vec_is_set(bb->regs_used, j);
+		bit_vec_is_set(bb->regs_used, (int)j);
 	}
 	for (j=0; j < c->p->c_param_count; j++) {
 	    if (c->p->c_param_args[j].is_register) {
@@ -3059,11 +3042,11 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	}
 	reset_reg_state(&state);
 	if (c->dill_debug) {
-	    printf("============= Starting basic block %d ===========\n", i);
-	    dump_bb(c, bb, i);
+	    printf("============= Starting basic block %zd ===========\n", i);
+	    dump_bb(c, bb, (int)i);
 	}
 	insn_start = (int)((char*)c->p->cur_ip - (char*)c->p->code_base);
-	for (j = bb->start; j <= bb->end; j++) {
+	for (j = (size_t)bb->start; j <= (size_t)bb->end; j++) {
 	    virtual_insn *ip;
 	    int vused[3];
 	    int vdest;
@@ -3097,17 +3080,17 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 		    /* only used here, use the ret ret */
 		    c->p->vregs[state.ret_vreg - 100].in_reg = state.ret_reg;
 		} else {
-		    int tmp = select_reg(&state, state.ret_vreg, j, 0);
+		    int tmp = select_reg(&state, state.ret_vreg, (int)j, 0);
 		    ( c->j->mov)(c, dill_type_of(c, state.ret_vreg), 0, tmp, 
 				 state.ret_reg);
 		}
 		state.ret_vreg = -1;
 	    }
 	    for(i=0; (i < 3) && (vused[i] != -1); i++) {
-		pused[i] = select_reg(&state, vused[i], j, 1/*src*/);
+		pused[i] = select_reg(&state, vused[i], (int)j, 1/*src*/);
 	    }
 	    if (vdest != -1) {
-		pdest = select_reg(&state, vdest, j, 0/*dest*/);
+		pdest = select_reg(&state, vdest, (int)j, 0/*dest*/);
 	    }
 	    if (c->dill_debug && ((vdest != -1) || (vused[0] != -1))) {
 		printf("\tvregs\t\t");
@@ -3329,7 +3312,7 @@ new_emit_insns(dill_stream c, void *insns, label_translation_table ltable,
 	spill_current_pregs(&state);
 	if (count_verbose) {
 	    int insn_end =  (int)((char*)c->p->cur_ip - (char*)c->p->code_base);
-	    printf("Basic Block %d, %d virtual instructions, %d physical instructions\n",
+	    printf("Basic Block %zd, %d virtual instructions, %d physical instructions\n",
 		   i, insn_count, c->j->count_insn(c, insn_start, insn_end));
 	}
     }
@@ -3357,12 +3340,12 @@ static void
 apply_to_each(dill_stream c, void *insns, virtual_mach_info vmi,
 	      apply_func func)
 {
-    int i, j = 0;
+    size_t i, j = 0;
 
     for (i = 0; i < vmi->bbcount; i++) {
 	basic_block bb = &vmi->bblist[i];
-	for (j = bb->start; j <= bb->end; j++) {
-	    (func)(c, bb, insns, j);
+	for (j = (size_t)bb->start; j <= (size_t)bb->end; j++) {
+	    (func)(c, bb, insns, (int)j);
 	}
     }
 }
@@ -3613,7 +3596,7 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		ip->opnds.a3i.dest = dest_vreg;
 		break;
 	    case DILL_UL: 
-		ip->opnds.a3i.u.imm = (unsigned long) set.imm;
+		ip->opnds.a3i.u.imm = (uintptr_t) set.imm;
 		ip->opnds.a3i.dest = dest_vreg;
 		break;
 	    case DILL_P:
@@ -3630,7 +3613,7 @@ const_prop_ip(dill_stream c, basic_block bb, virtual_insn *ip, virtual_insn *set
 		case DILL_UC: case DILL_US:
 		case DILL_U: case DILL_UL:
 		    ip->opnds.sf.imm = (double)
-			(unsigned long) set.imm;
+			(uintptr_t) set.imm;
 		    break;
 		default:
 		    ip->opnds.sf.imm = (double) set.imm;
@@ -4301,7 +4284,7 @@ virtual_insn_count(dill_stream c)
 void init_code_block(dill_stream s);
 	    
 extern void
-virtual_reti(dill_stream s, int type, int junk, long imm);
+virtual_reti(dill_stream s, int type, int junk, IMM_TYPE imm);
 
 extern void dill_begin_prefix_code(dill_stream s)
 {
@@ -4345,6 +4328,7 @@ virtual_do_end(dill_stream s, int package)
 	do_emulation = 1;
 #endif
     }
+    s->p->virtual.code_base = s->p->code_base;
     if (vmi->prefix_code_start == -1) prefix_begin = code_end;
     build_bbs(s, insns, prefix_begin, code_end);
 

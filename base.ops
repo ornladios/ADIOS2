@@ -64,7 +64,11 @@ print HOUT "#define dill_jpi(s, dest_imm) (s->j->jpi)(s, dest_imm)\n";
 print HOUT "#define dill_jalp(s, return_addr_reg, target) (s->j->jal)(s, return_addr_reg, target)\n";
 
 print HOUT "#define dill_special(s, type, param) if (s->j->special) (s->j->special)(s, type, param)\n";
-
+print HOUT "#if defined(_MSC_VER) && !defined(DILL_SRC)\n";
+print HOUT "#define DILL_DECLSPEC    __declspec(dllimport)\n";
+print HOUT "#else\n";
+print HOUT "#define DILL_DECLSPEC\n";
+print HOUT "#endif\n";
 print COUT "\n/* This file is generated from base.ops.  Do not edit directly. */\n\n";
 print COUT "#include \"dill.h\"\n";
 print COUT "\nchar *arith3_name[] = \{".substr($enum_a3,2). "\};\n";
@@ -72,7 +76,7 @@ print COUT "\nchar *arith2_name[] = \{".substr($enum_a2,2). "\};\n";
 foreach $key (sort keys %poly_array) {
    $poly_array{$key} .= " ";
    print COUT "int dill_${key}_poly_map[] = {\n";
-   print HOUT "extern int dill_${key}_poly_map[];\n";
+   print HOUT "extern DILL_DECLSPEC int dill_${key}_poly_map[];\n";
    print HOUT "#define dill_P$key(s, typ, dest, src1, src2) (s->j->jmp_a3)[dill_${key}_poly_map[typ]](s, s->j->a3_data[dill_${key}_poly_map[typ]].data1, s->j->a3_data[dill_${key}_poly_map[typ]].data2, dest, src1, src2)\n";
    foreach (split(' ', "c uc s us i u l ul p f d v b")) {
        $typ = $_;

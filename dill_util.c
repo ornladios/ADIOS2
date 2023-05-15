@@ -3,21 +3,9 @@
 #ifndef NATIVE_ARCH
 #define NATIVE_ARCH "UNKNOWN"
 #endif
-#ifdef LINUX_KERNEL_MODULE
-#ifndef MODULE
-#define MODULE
-#endif
-#ifndef __KERNEL__
-#define __KERNEL__
-#endif
-#include <linux/kernel.h>
-#include <linux/module.h>
-#endif
 
 #include "dill.h"
-#include "dill_internal.h"
 
-#ifndef LINUX_KERNEL_MODULE
 #include <ctype.h>
 #include <stdio.h>
 #ifdef HAVE_MALLOC_H
@@ -25,7 +13,10 @@
 #endif
 #include <string.h>
 #include <stdint.h>
-#ifdef HAVE_UNISTD_H
+#ifdef _MSC_VER
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#else
 #include <unistd.h>
 #endif
 #include <stdlib.h>
@@ -33,20 +24,7 @@
 #ifdef USE_MMAP_CODE_SEG
 #include <sys/mman.h>
 #endif
-#else
-#include <linux/string.h>
-#include <linux/ctype.h>
-#include "kdill.h"
-
-#define malloc (void *)DAllocMM
-#define free(a) DFreeMM((addrs_t)a)
-#define realloc(a,b) (void *)DReallocMM((addrs_t)a, b)
-#define fprintf(fmt, args...)	printk(args)
-#define printf	printk
-#define exit sys_exit
-#undef USE_MMAP_CODE_SEG
-extern char *getenv(const char *name);
-#endif
+#include "dill_internal.h"
 
 static char *DILL_version = "DILL Version "DILL_VERSION"\n";
 
@@ -58,6 +36,7 @@ extern void init_code_block(dill_stream s);
 static void free_code_blocks(dill_stream s);
 
 #define END_OF_CODE_BUFFER 60
+
 
 static void
 reset_regset(reg_set* regs)
@@ -494,7 +473,7 @@ dill_get_handle(dill_stream s)
     }
     handle->fp = (void(*)())s->p->fp;
     handle->ref_count = 1;
-    handle->size = size;
+    handle->size = (int) size;
     handle->code_base = native_base;
     /* below used for libffi emulation */
     handle->emu_args = s->p->emu_args;
@@ -549,7 +528,7 @@ dill_build_package(dill_stream s, int *pkg_len)
     ((struct dill_pkg_1 *)pkg)->pkg_version = 1;
     ((struct dill_pkg_1 *)pkg)->symbol_count = t->call_count;
     for (i = 0; i < t->call_count; i++) {
-	int call_len = sizeof(int) + strlen(t->call_locs[i].xfer_name) + 1;
+	int call_len = (int) (sizeof(int) + strlen(t->call_locs[i].xfer_name) + 1);
 	char *call_loc;
 
 	call_len = (call_len + 7) & -8;  /* round up to mod 8 */
@@ -1489,6 +1468,13 @@ dump_cur_dill_insn(dill_stream s)
 extern void
 dump_cur_dill_insn(dill_stream s)
 {
+    struct disassemble_info info;
+    s->j->init_disassembly(s, &info);
+
+    void* p = s->p->cur_ip;
+    printf("%p  - %x - ", p, (unsigned)*(int*)p);
+    (void) s->j->print_insn(s, &info, (void*)p);
+    printf("\n");
 }
 #endif
 
@@ -1568,3 +1554,21 @@ dill_dump(dill_stream s)
     }
 }
 
+#undef malloc
+#undef realloc
+
+extern void* dill_malloc(size_t size)
+{
+    void* tmp = malloc(size);
+    if (tmp) return tmp;
+    fprintf(stderr, "Dill out of memory, exiting\n");
+    exit(1);
+}
+
+extern void* dill_realloc(void* ptr, size_t size)
+{
+    void* tmp = realloc(ptr, size);
+    if (tmp) return tmp;
+    fprintf(stderr, "Dill out of memory, exiting\n");
+    exit(1);
+}

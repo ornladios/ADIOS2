@@ -741,7 +741,7 @@ OUTPUT:
 	}
 
 	if (((unsigned int)(bytes - base)) <= max) {
-		return bytes - base;
+		return (unsigned int) (bytes - base);
 	}
 
 ILLEGAL:

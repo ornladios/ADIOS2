@@ -20,7 +20,7 @@ void a () {
     dill_reg a;
     dill_exec_ctx ec;
     dill_exec_handle handle;
-    int (*ip)();
+    int (*ip)(dill_exec_ctx, int);
     int result;
     dill_start_proc(s, "a_gen", DILL_I, "%EC%i");
     
@@ -32,7 +32,7 @@ void a () {
     dill_addii(s, a, a, 20);
     dill_reti(s, a);
     handle = dill_finalize(s);
-    ip = (int(*)())dill_get_fp(handle);
+    ip = (int(*)(dill_exec_ctx, int))dill_get_fp(handle);
     
     if (verbose) dill_dump(s);
      
@@ -51,7 +51,7 @@ void b () {
     dill_reg a;
     dill_exec_ctx ec;
     dill_exec_handle handle;
-    int (*ip)();
+    int (*ip)(dill_exec_ctx, int);
     int result;
     dill_start_proc(s, "a_gen", DILL_I, "%EC%i");
     
@@ -63,7 +63,7 @@ void b () {
     dill_addii(s, a, a, 1);
     dill_reti(s, a);
     handle = dill_finalize(s);
-    ip = (int(*)())dill_get_fp(handle);
+    ip = (int(*)(dill_exec_ctx, int))dill_get_fp(handle);
     
     if (verbose) dill_dump(s);
      

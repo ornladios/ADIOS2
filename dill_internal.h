@@ -1,3 +1,12 @@
+#define malloc(size) dill_malloc(size)
+#define realloc(ptr, size) dill_realloc(ptr, size)
+
+#include <stddef.h>
+#include <stdint.h>
+
+extern void *dill_malloc(size_t size);
+extern void *dill_realloc(void *ptr, size_t size);
+
 extern void extend_dill_stream(dill_stream s);
 extern void dump_cur_dill_insn(dill_stream s);
 extern jmp_table alloc_dill_jump_table(void);
@@ -196,10 +205,10 @@ struct reg_type {
 	    unsigned int u;
 	} u;
 	struct {
-	    long l;
+	    intptr_t l;
 	} l;
 	struct {
-	    unsigned long ul;
+	    uintptr_t ul;
 	} ul;
 	struct {
 	    void * p;
@@ -220,7 +229,7 @@ struct calling_param {
 
 struct client_data_struct {
     int key;
-    long value;
+    intptr_t value;
 };
 
 struct dec {
