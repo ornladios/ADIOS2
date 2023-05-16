@@ -15,6 +15,7 @@
 #ifndef ADIOS2_ENGINE_CAMPAIGNMANAGER_H_
 #define ADIOS2_ENGINE_CAMPAIGNMANAGER_H_
 
+#include "CampaignData.h"
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/helper/adiosComm.h"
 
@@ -41,6 +42,7 @@ private:
     bool m_Opened = false;
     int m_WriterRank;
     int m_Verbosity = 5;
+    CampaignMap cmap;
 };
 
 } // end namespace engine
