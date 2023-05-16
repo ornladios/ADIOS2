@@ -126,28 +126,14 @@ endif()
 
 set(maybe_adios2_core_kokkos)
 if(ADIOS2_HAVE_Kokkos)
-  add_library(adios2_core_kokkos helper/adiosKokkos.h helper/adiosKokkos.cpp)
-
-  set_target_properties(adios2_core_kokkos PROPERTIES
-    VISIBILITY_INLINES_HIDDEN ON
-    INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>"
-    EXPORT_NAME core_kokkos
-    OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_kokkos
-    )
-
-  kokkos_compilation(SOURCE helper/adiosKokkos.cpp)
-  if(Kokkos_ENABLE_CUDA)
-    set_property(SOURCE helper/adiosKokkos.cpp PROPERTY LANGUAGE CUDA)
-    set_property(SOURCE helper/adiosKokkos.cpp APPEND PROPERTY COMPILE_FLAGS "--extended-lambda")
-    set_target_properties(adios2_core_kokkos PROPERTIES
-      CUDA_VISIBILITY_PRESET hidden
-      )
-    target_compile_features(adios2_core_kokkos PRIVATE cuda_std_17)
-  endif()
-
-  target_link_libraries(adios2_core_kokkos PRIVATE Kokkos::kokkos)
+  # Kokkos imposes us to set our CMAKE_CXX_COMPILER to Kokkos_CXX_COMPILER.
+  # The problem is that we do not want this for the whole project and with
+  # CMake we cannot set the CXX_COMPILER for a single target. The solution is
+  # to move the adios2 module that uses Kokkos to its independent subdir and
+  # set there CMAKE_CXX_COMPILER, which is possible (and scoped to that subdir)
+  # in cmake.
+  add_subdirectory(helper/kokkos)
   target_link_libraries(adios2_core PRIVATE adios2_core_kokkos)
-
   set(maybe_adios2_core_kokkos adios2_core_kokkos)
 endif()
 
