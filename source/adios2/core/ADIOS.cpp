@@ -110,7 +110,7 @@ static std::atomic_uint adios_count(0);    // total adios objects during runtime
 ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
              const std::string hostLanguage)
 : m_HostLanguage(hostLanguage), m_Comm(std::move(comm)),
-  m_ConfigFile(configFile), campaignManager(m_Comm)
+  m_ConfigFile(configFile), m_CampaignManager(m_Comm)
 {
     ++adios_refcount;
     ++adios_count;
@@ -152,7 +152,7 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
     {
         campaignName = "campaign" + std::to_string(adios_count);
     }
-    campaignManager.Open(campaignName);
+    m_CampaignManager.Open(campaignName);
 }
 
 ADIOS::ADIOS(const std::string configFile, const std::string hostLanguage)
@@ -177,7 +177,7 @@ ADIOS::~ADIOS()
     {
         m_GlobalServices.Finalize();
     }
-    campaignManager.Close();
+    m_CampaignManager.Close();
 }
 
 IO &ADIOS::DeclareIO(const std::string name, const ArrayOrdering ArrayOrder)
@@ -317,6 +317,12 @@ void ADIOS::XMLInit(const std::string &configFileXML)
 void ADIOS::YAMLInit(const std::string &configFileYAML)
 {
     helper::ParseConfigYAML(*this, configFileYAML, m_IOs);
+}
+
+void ADIOS::RecordOutputStep(const std::string &name, const size_t step,
+                             const double time)
+{
+    m_CampaignManager.Record(name, step, time);
 }
 
 void ADIOS::Global_init_AWS_API()

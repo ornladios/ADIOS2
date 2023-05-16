@@ -695,6 +695,10 @@ void BP5Writer::EndStep()
     m_Profiler.Stop("ES");
     m_WriterStep++;
     m_EndStepEnd = Now();
+    if (!m_RankMPI)
+    {
+        m_IO.m_ADIOS.RecordOutputStep(m_Name, UnknownStep, UnknownTime);
+    }
     /* Seconds ts2 = Now() - m_EngineStart;
      std::cout << "END STEP ended at: " << ts2.count() << std::endl;*/
 }

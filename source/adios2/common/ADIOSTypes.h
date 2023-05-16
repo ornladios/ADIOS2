@@ -284,6 +284,9 @@ constexpr bool end_step = true;
 constexpr bool LocalValue = true;
 constexpr bool GlobalValue = false;
 
+constexpr size_t UnknownStep = MaxU64;
+constexpr double UnknownTime = std::numeric_limits<double>::infinity();
+
 using Dims = std::vector<size_t>;
 using Params = std::map<std::string, std::string>;
 using vParams = std::vector<std::pair<std::string, Params>>;
