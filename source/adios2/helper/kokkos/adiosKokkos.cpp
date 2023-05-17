@@ -93,6 +93,15 @@ bool IsGPUbuffer(const void *ptr)
         return true;
     }
 #endif
+#ifdef ADIOS2_HAVE_KOKKOS_SYCL
+    auto ret =
+        sycl::address_space_cast<sycl::access::address_space::global_space,
+                                 sycl::access::decorated::no>(ptr);
+    if (ret != nullptr)
+    {
+        return true;
+    }
+#endif
     return false;
 }
 
@@ -115,6 +124,7 @@ void KokkosInit()
         settings.set_device_id(device_id);
     }
 #endif
+    // GetDevice not supported for SYCL, use the default device
     Kokkos::initialize(settings);
 }
 
