@@ -10,6 +10,7 @@ add_subdirectory(useCases)
 add_subdirectory(inlineMWE)
 add_subdirectory(plugins)
 add_subdirectory(fides)
+add_subdirectory(campaign)
 
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(heatTransfer)
