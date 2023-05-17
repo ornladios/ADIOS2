@@ -43,6 +43,10 @@ void KokkosMinMaxImpl(const char * /*values*/, const size_t /*size*/,
                       char & /*min*/, char & /*max*/)
 {
 }
+void KokkosMinMaxImpl(const long double * /*values*/, const size_t /*size*/,
+                      long double & /*min*/, long double & /*max*/)
+{
+}
 void KokkosMinMaxImpl(const std::complex<float> * /*values*/,
                       const size_t /*size*/, std::complex<float> & /*min*/,
                       std::complex<float> & /*max*/)
