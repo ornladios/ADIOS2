@@ -237,7 +237,7 @@ endif()
 set(ADIOS2_CONFIG_OPTS
     BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python Blosc2
     BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX ZeroMQ 
-    Profiling Endian_Reverse AWSSDK GPU_Support CUDA Kokkos Kokkos_CUDA Kokkos_HIP
+    Profiling Endian_Reverse AWSSDK GPU_Support CUDA Kokkos Kokkos_CUDA Kokkos_HIP Kokkos_SYCL
 )
 
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})

@@ -9,55 +9,16 @@ namespace detail
 {
 
 template <typename T>
-struct memspace_kokkos_to_adios2;
+struct memspace_kokkos_to_adios2
+{
+    static constexpr adios2::MemorySpace value = adios2::MemorySpace::GPU;
+};
 
 template <>
 struct memspace_kokkos_to_adios2<Kokkos::HostSpace>
 {
     static constexpr adios2::MemorySpace value = adios2::MemorySpace::Host;
 };
-
-#if defined(KOKKOS_ENABLE_CUDA) && defined(ADIOS2_HAVE_GPU_SUPPORT)
-
-template <>
-struct memspace_kokkos_to_adios2<Kokkos::CudaSpace>
-{
-    static constexpr adios2::MemorySpace value = adios2::MemorySpace::GPU;
-};
-
-template <>
-struct memspace_kokkos_to_adios2<Kokkos::CudaUVMSpace>
-{
-    static constexpr adios2::MemorySpace value = adios2::MemorySpace::GPU;
-};
-
-template <>
-struct memspace_kokkos_to_adios2<Kokkos::CudaHostPinnedSpace>
-{
-    static constexpr adios2::MemorySpace value = adios2::MemorySpace::GPU;
-};
-
-#endif
-
-#if defined(KOKKOS_ENABLE_HIP) && defined(ADIOS2_HAVE_GPU_SUPPORT)
-template <>
-struct memspace_kokkos_to_adios2<Kokkos::Experimental::HIPSpace>
-{
-    static constexpr adios2::MemorySpace value = adios2::MemorySpace::GPU;
-};
-
-template <>
-struct memspace_kokkos_to_adios2<Kokkos::Experimental::HIPHostPinnedSpace>
-{
-    static constexpr adios2::MemorySpace value = adios2::MemorySpace::GPU;
-};
-
-template <>
-struct memspace_kokkos_to_adios2<Kokkos::Experimental::HIPManagedSpace>
-{
-    static constexpr adios2::MemorySpace value = adios2::MemorySpace::GPU;
-};
-#endif
 
 } // namespace detail
 
