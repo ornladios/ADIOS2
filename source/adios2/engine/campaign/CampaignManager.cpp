@@ -16,12 +16,50 @@
 
 #include <iostream>
 
+#include <nlohmann_json.hpp>
+
 namespace adios2
 {
 namespace core
 {
 namespace engine
 {
+
+static std::string CMapToJson(const CampaignMap &cmap, const int rank,
+                              const std::string name)
+{
+    nlohmann::json j = nlohmann::json::array();
+    std::cout << "Campaign Manager " << rank << " Close(" << name
+              << ")\nCampaign";
+    for (auto &r : cmap)
+    {
+        nlohmann::json c =
+            nlohmann::json{{"name", r.first},
+                           {"varying_deltas", r.second.varying_deltas},
+                           {"delta_step", r.second.delta_step},
+                           {"delta_time", r.second.delta_time},
+                           {"steps", r.second.steps},
+                           {"times", r.second.times}};
+        std::cout << "name = " << r.first << "\n";
+        std::cout << "   varying_deltas = " << r.second.varying_deltas << "\n";
+        std::cout << "   delta_step     = " << r.second.delta_step << "\n";
+        std::cout << "   delta_time     = " << r.second.delta_time << "\n";
+        std::cout << "   steps          = {";
+        for (const auto s : r.second.steps)
+        {
+            std::cout << s << " ";
+        }
+        std::cout << "}\n";
+        std::cout << "   times          = {";
+        for (const auto t : r.second.times)
+        {
+            std::cout << t << " ";
+        }
+        std::cout << "}\n";
+        j.push_back(c);
+    }
+    return nlohmann::to_string(j);
+}
 
 CampaignManager::CampaignManager(adios2::helper::Comm &comm)
 {
@@ -53,7 +91,7 @@ void CampaignManager::Open(const std::string &name)
         std::cout << "Campaign Manager " << m_WriterRank << " Open(" << name
                   << ")\n";
     }
-    m_Opened = true;
+    m_Name = name + "_" + std::to_string(m_WriterRank) + ".json";
 }
 
 void CampaignManager::Record(const std::string &name, const size_t step,
@@ -103,7 +141,7 @@ void CampaignManager::Record(const std::string &name, const size_t step,
 
 void CampaignManager::Close()
 {
-    if (m_Verbosity == 5)
+    /*if (m_Verbosity == 5)
     {
         std::cout << "Campaign Manager " << m_WriterRank
                   << " Close()\nCampaign";
@@ -127,8 +165,16 @@ void CampaignManager::Close()
             }
             std::cout << "}\n";
         }
+    }*/
+    if (!cmap.empty())
+    {
+        m_Output.open(m_Name, std::ofstream::out);
+        m_Opened = true;
+        m_Output << std::setw(4) << CMapToJson(cmap, m_WriterRank, m_Name)
+                 << std::endl;
+        m_Output.close();
+        m_Opened = false;
     }
-    m_Opened = false;
 }
 
 } // end namespace engine

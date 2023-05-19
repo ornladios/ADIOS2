@@ -19,6 +19,8 @@
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/helper/adiosComm.h"
 
+#include <fstream>
+
 namespace adios2
 {
 namespace core
@@ -40,9 +42,11 @@ public:
 
 private:
     bool m_Opened = false;
+    std::string m_Name;
     int m_WriterRank;
     int m_Verbosity = 5;
     CampaignMap cmap;
+    std::ofstream m_Output;
 };
 
 } // end namespace engine
