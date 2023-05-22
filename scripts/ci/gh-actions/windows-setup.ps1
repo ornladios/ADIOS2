@@ -10,38 +10,39 @@ Write-Host "::endgroup::"
 
 if($Env:GH_YML_MATRIX_PARALLEL -eq "mpi")
 {
-  $rooturl = "https://github.com/microsoft/Microsoft-MPI/releases/download"
-    $version = "10.1.1"
-    $baseurl = "$rooturl/v$version"
+  # This is taken from the MSMPI VCPKG
+  $baseurl = "https://download.microsoft.com/download/a/5/2/a5207ca5-1203-491a-8fb8-906fd68ae623"
+  $version = "10.1.12498"
 
-    $tempdir    = $Env:RUNNER_TEMP
-    $msmpisdk   = Join-Path $tempdir msmpisdk.msi
-    $msmpisetup = Join-Path $tempdir msmpisetup.exe
+  $tempdir    = $Env:RUNNER_TEMP
+  $msmpisdk   = Join-Path $tempdir msmpisdk.msi
+  $msmpisetup = Join-Path $tempdir msmpisetup.exe
 
-    Write-Host "::group::Downloading Microsoft MPI SDK $version"
-    Invoke-WebRequest "$baseurl/msmpisdk.msi"   -OutFile $msmpisdk
-    Write-Host "::endgroup::"
-    Write-Host "::group::Installing Microsoft MPI SDK $version"
-    Start-Process msiexec.exe -ArgumentList "/quiet /passive /qn /i $msmpisdk" -Wait
-    Write-Host "::endgroup::"
+  Write-Host "::group::Downloading Microsoft MPI SDK $version"
+  Invoke-WebRequest "$baseurl/msmpisdk.msi" -OutFile $msmpisdk
+  Write-Host "::endgroup::"
+  Write-Host "::group::Installing Microsoft MPI SDK $version"
+  Start-Process msiexec.exe -ArgumentList "/quiet /passive /qn /i $msmpisdk" -Wait
+  Write-Host "::endgroup::"
 
-    Write-Host "::group::Downloading Microsoft MPI Runtime $version"
-    Invoke-WebRequest "$baseurl/msmpisetup.exe" -OutFile $msmpisetup
-    Write-Host "::endgroup::"
-    Write-Host "::group::Installing Microsoft MPI Runtime $version"
-    Start-Process $msmpisetup -ArgumentList "-unattend" -Wait
-    Write-Host "::endgroup::"
+  Write-Host "::group::Downloading Microsoft MPI Runtime $version"
 
-    if ($Env:GITHUB_ENV) {
-      Write-Host '::group::Adding environment variables to $GITHUB_ENV'
-        $envlist = @("MSMPI_BIN", "MSMPI_INC", "MSMPI_LIB32", "MSMPI_LIB64")
-        foreach ($name in $envlist) {
-          $value = [Environment]::GetEnvironmentVariable($name, "Machine")
-            Write-Host "$name=$value"
-            Add-Content $Env:GITHUB_ENV "$name=$value"
-        }
-      Write-Host "::endgroup::"
-    }
+  Invoke-WebRequest "$baseurl/msmpisetup.exe" -OutFile $msmpisetup
+  Write-Host "::endgroup::"
+  Write-Host "::group::Installing Microsoft MPI Runtime $version"
+  Start-Process $msmpisetup -ArgumentList "-unattend" -Wait
+  Write-Host "::endgroup::"
+
+  if ($Env:GITHUB_ENV) {
+    Write-Host '::group::Adding environment variables to $GITHUB_ENV'
+      $envlist = @("MSMPI_BIN", "MSMPI_INC", "MSMPI_LIB32", "MSMPI_LIB64")
+      foreach ($name in $envlist) {
+        $value = [Environment]::GetEnvironmentVariable($name, "Machine")
+          Write-Host "$name=$value"
+          Add-Content $Env:GITHUB_ENV "$name=$value"
+      }
+    Write-Host "::endgroup::"
+  }
 
   if ($Env:GITHUB_PATH) {
     Write-Host '::group::Adding $MSMPI_BIN to $GITHUB_PATH'
