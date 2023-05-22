@@ -61,6 +61,9 @@ private:
     /** Manages the optional collective metadata files */
     transportman::TransportMan m_FileMetadataManager;
 
+    // true if BeginStep was ever called
+    bool m_DidBeginStep = false;
+
     void Init() final;
 
     /** Parses parameters from IO SetParameters */

@@ -58,6 +58,9 @@ private:
     // EndStep must call PerformGets if necessary
     bool m_NeedPerformGets = false;
 
+    std::vector<adios2::core::IO *> m_IOs;
+    std::vector<adios2::core::Engine *> m_Engines;
+
     void Init() final; ///< called from constructor, gets the selected Skeleton
                        /// transport method from settings
     void InitParameters() final;
@@ -82,6 +85,13 @@ private:
 
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);
+
+    /**
+     * Create a new variable with name `name` in `io`
+     * based on an existing variable.
+     */
+    template <class T>
+    void DuplicateVariable(Variable<T> *variable, IO &io, std::string &name);
 };
 
 } // end namespace engine

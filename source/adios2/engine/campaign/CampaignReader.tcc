@@ -22,6 +22,25 @@ namespace core
 namespace engine
 {
 
+template <class T>
+inline void CampaignReader::DuplicateVariable(Variable<T> *variable, IO &io,
+                                              std::string &name)
+{
+    auto &v = io.DefineVariable<T>(name, variable->Shape());
+    v.m_AvailableStepsCount = variable->GetAvailableStepsCount();
+    v.m_AvailableStepsStart = variable->GetAvailableStepsStart();
+    v.m_ShapeID = variable->m_ShapeID;
+    v.m_SingleValue = variable->m_SingleValue;
+    v.m_ReadAsJoined = variable->m_ReadAsJoined;
+    v.m_ReadAsLocalValue = variable->m_ReadAsLocalValue;
+    v.m_RandomAccess = variable->m_RandomAccess;
+    v.m_MemSpace = variable->m_MemSpace;
+    v.m_JoinedDimPos = variable->m_JoinedDimPos;
+    v.m_AvailableStepBlockIndexOffsets =
+        variable->m_AvailableStepBlockIndexOffsets;
+    v.m_AvailableShapes = variable->m_AvailableShapes;
+}
+
 template <>
 inline void CampaignReader::GetSyncCommon(Variable<std::string> &variable,
                                           std::string *data)

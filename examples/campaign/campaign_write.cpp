@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
         if (rank == 0)
         {
             ioFirstRank = adiosAll.DeclareIO("OutputFirst");
-            ioFirstRank.SetEngine("BP5");
+            ioFirstRank.SetEngine("BP4");
         }
         if (rank == nproc - 1)
         {
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
             ioLastRank.SetEngine("BP5");
         }
         ioStep = adiosAll.DeclareIO("OutputStep");
-        ioStep.SetEngine("BP4");
+        ioStep.SetEngine("BP3");
 
         ioNew = adiosAll.DeclareIO("OutputNew");
 #ifdef ADIOS2_USE_HDF5

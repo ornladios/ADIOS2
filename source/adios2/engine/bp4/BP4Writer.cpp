@@ -64,6 +64,7 @@ StepStatus BP4Writer::BeginStep(StepMode mode, const float timeoutSeconds)
     m_BP4Serializer.m_DeferredVariables.clear();
     m_BP4Serializer.m_DeferredVariablesDataSize = 0;
     m_IO.m_ReadStreaming = false;
+    m_DidBeginStep = true;
     return StepStatus::OK;
 }
 
@@ -128,6 +129,11 @@ void BP4Writer::EndStep()
     if (currentStep % flushStepsCount == 0)
     {
         Flush();
+    }
+
+    if (m_BP4Serializer.m_RankMPI == 0)
+    {
+        m_IO.m_ADIOS.RecordOutputStep(m_Name, UnknownStep, UnknownTime);
     }
 }
 
@@ -539,6 +545,11 @@ void BP4Writer::DoClose(const int transportIndex)
     {
         /* Signal the BB thread that no more work is coming */
         m_FileDrainer.Finish();
+    }
+
+    if (!m_DidBeginStep && m_BP4Serializer.m_RankMPI == 0)
+    {
+        m_IO.m_ADIOS.RecordOutputStep(m_Name, UnknownStep, UnknownTime);
     }
     // m_BP4Serializer.DeleteBuffers();
 }

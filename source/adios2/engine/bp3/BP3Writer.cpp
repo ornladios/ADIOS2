@@ -51,6 +51,7 @@ StepStatus BP3Writer::BeginStep(StepMode mode, const float timeoutSeconds)
     m_BP3Serializer.m_DeferredVariables.clear();
     m_BP3Serializer.m_DeferredVariablesDataSize = 0;
     m_IO.m_ReadStreaming = false;
+    m_DidBeginStep = true;
     return StepStatus::OK;
 }
 
@@ -109,6 +110,11 @@ void BP3Writer::EndStep()
     if (currentStep % flushStepsCount == 0)
     {
         Flush();
+    }
+
+    if (m_BP3Serializer.m_RankMPI == 0)
+    {
+        m_IO.m_ADIOS.RecordOutputStep(m_Name, UnknownStep, UnknownTime);
     }
 }
 
@@ -279,6 +285,11 @@ void BP3Writer::DoClose(const int transportIndex)
     }
 
     m_BP3Serializer.DeleteBuffers();
+
+    if (!m_DidBeginStep && m_BP3Serializer.m_RankMPI == 0)
+    {
+        m_IO.m_ADIOS.RecordOutputStep(m_Name, UnknownStep, UnknownTime);
+    }
 }
 
 void BP3Writer::WriteProfilingJSONFile()

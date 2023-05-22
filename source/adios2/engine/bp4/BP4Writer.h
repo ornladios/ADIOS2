@@ -92,6 +92,8 @@ private:
     std::vector<std::string> m_ActiveFlagFileNames;
 
     int m_Verbosity = 0;
+    // true if BeginStep was ever called
+    bool m_DidBeginStep = false;
 
     void Init() final;
 
