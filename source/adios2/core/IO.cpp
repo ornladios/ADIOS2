@@ -26,6 +26,7 @@
 #include "adios2/engine/bp5/BP5Reader.h"
 #include "adios2/engine/bp5/BP5Writer.h"
 #endif
+#include "adios2/engine/campaign/CampaignReader.h"
 #include "adios2/engine/inline/InlineReader.h"
 #include "adios2/engine/inline/InlineWriter.h"
 #include "adios2/engine/mhs/MhsReader.h"
@@ -135,6 +136,9 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
      {IO::NoEngine("ERROR: nullcore engine does not support read mode"),
       IO::MakeEngine<engine::NullWriter>}},
     {"plugin", {IO::MakeEngine<plugin::PluginEngine>, IO::MakeEngine<plugin::PluginEngine>}},
+    {"campaign",
+     {IO::MakeEngine<engine::CampaignReader>,
+      IO::NoEngine("ERROR: campaign engine does not support write mode")}},
 };
 
 // Synchronize access to the factory in case one thread is
