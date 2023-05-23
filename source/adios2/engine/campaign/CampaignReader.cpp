@@ -12,6 +12,7 @@
 #include "CampaignReader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
+#include <adios2-perfstubs-interface.h>
 
 #include <fstream>
 #include <iostream>
@@ -176,6 +177,8 @@ void CampaignReader::InitTransports()
 
         auto vmap = io.GetAvailableVariables();
         auto amap = io.GetAvailableAttributes();
+        VarInternalInfo internalInfo(nullptr, m_IOs.size() - 1,
+                                     m_Engines.size() - 1);
 
         for (auto &vr : vmap)
         {
@@ -192,22 +195,10 @@ void CampaignReader::InitTransports()
     else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> *vi = io.InquireVariable<T>(vname);                        \
-        DuplicateVariable(vi, m_IO, newname);                                  \
+        Variable<T> v =                                                        \
+            DuplicateVariable(vi, m_IO, newname, &e, internalInfo);            \
     }
-            /*
-                v.m_AvailableStepsCount = vi->GetAvailableStepsCount(); \
-                v.m_AvailableStepsStart = vi->GetAvailableStepsStart(); \
-                v.m_ShapeID = vi->m_ShapeID; \
-                v.m_SingleValue = vi->m_SingleValue; \
-                v.m_ReadAsJoined = vi->m_ReadAsJoined; \
-                v.m_ReadAsLocalValue = vi->m_ReadAsLocalValue; \
-                v.m_RandomAccess = vi->m_RandomAccess; \
-                v.m_MemSpace = vi->m_MemSpace; \
-                v.m_JoinedDimPos = vi->m_JoinedDimPos; \
-                v.m_AvailableStepBlockIndexOffsets = \
-                    vi->m_AvailableStepBlockIndexOffsets; \
-                v.m_AvailableShapes = vi->m_AvailableShapes; \
-            */
+
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         }
@@ -228,6 +219,72 @@ void CampaignReader::DoClose(const int transportIndex)
         ep->Close();
     }
 }
+
+// Remove the engine name from the var name, which must be of pattern
+// <engineName>/<original var name>
+/*static std::string RemoveEngineName(const std::string &varName,
+                                    const std::string &engineName)
+{
+    auto le = engineName.size() + 1;
+    auto v = varName.substr(le);
+    return v;
+}*/
+
+MinVarInfo *CampaignReader::MinBlocksInfo(const VariableBase &Var,
+                                          size_t Step) const
+{
+    auto it = m_VarInternalInfo.find(Var.m_Name);
+    if (it != m_VarInternalInfo.end())
+    {
+        VariableBase *vb =
+            reinterpret_cast<VariableBase *>(it->second.originalVar);
+        Engine *e = m_Engines[it->second.engineIdx];
+        MinVarInfo *MV = e->MinBlocksInfo(*vb, Step);
+        if (MV)
+        {
+            return MV;
+        }
+    }
+    return nullptr;
+}
+
+#define declare_type(T)                                                        \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
+    CampaignReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const    \
+    {                                                                          \
+        PERFSTUBS_SCOPED_TIMER("CampaignReader::AllStepsBlocksInfo");          \
+        auto it = m_VarInternalInfo.find(variable.m_Name);                     \
+        Variable<T> *v =                                                       \
+            reinterpret_cast<Variable<T> *>(it->second.originalVar);           \
+        Engine *e = m_Engines[it->second.engineIdx];                           \
+        return e->AllStepsBlocksInfo(*v);                                      \
+    }                                                                          \
+                                                                               \
+    std::vector<std::vector<typename Variable<T>::BPInfo>>                     \
+    CampaignReader::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable)  \
+        const                                                                  \
+    {                                                                          \
+        PERFSTUBS_SCOPED_TIMER("CampaignReader::AllRelativeStepsBlocksInfo");  \
+        auto it = m_VarInternalInfo.find(variable.m_Name);                     \
+        Variable<T> *v =                                                       \
+            reinterpret_cast<Variable<T> *>(it->second.originalVar);           \
+        Engine *e = m_Engines[it->second.engineIdx];                           \
+        return e->AllRelativeStepsBlocksInfo(variable);                        \
+    }                                                                          \
+                                                                               \
+    std::vector<typename Variable<T>::BPInfo> CampaignReader::DoBlocksInfo(    \
+        const Variable<T> &variable, const size_t step) const                  \
+    {                                                                          \
+        PERFSTUBS_SCOPED_TIMER("CampaignReader::BlocksInfo");                  \
+        auto it = m_VarInternalInfo.find(variable.m_Name);                     \
+        Variable<T> *v =                                                       \
+            reinterpret_cast<Variable<T> *>(it->second.originalVar);           \
+        Engine *e = m_Engines[it->second.engineIdx];                           \
+        return e->BlocksInfo(variable, step);                                  \
+    }
+
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
 
 } // end namespace engine
 } // end namespace core

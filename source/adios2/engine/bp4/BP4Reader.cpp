@@ -840,7 +840,7 @@ void BP4Reader::DoClose(const int transportIndex)
     std::vector<std::vector<typename Variable<T>::BPInfo>>                     \
     BP4Reader::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const \
     {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("BP3Reader::AllRelativeStepsBlocksInfo");       \
+        PERFSTUBS_SCOPED_TIMER("BP4Reader::AllRelativeStepsBlocksInfo");       \
         return m_BP4Deserializer.AllRelativeStepsBlocksInfo(variable);         \
     }                                                                          \
                                                                                \

@@ -48,18 +48,32 @@ public:
     size_t CurrentStep() const final;
     void EndStep() final;
 
+    MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
+
 private:
     int m_Verbosity = 0;
     int m_ReaderRank; // my rank in the readers' comm
 
-    // step info should be received from the writer side in BeginStep()
-    int m_CurrentStep = -1;
+    int m_CurrentStep = 0;
+    bool m_FirstStep = true;
 
     // EndStep must call PerformGets if necessary
     bool m_NeedPerformGets = false;
 
     std::vector<adios2::core::IO *> m_IOs;
     std::vector<adios2::core::Engine *> m_Engines;
+
+    struct VarInternalInfo
+    {
+        void *originalVar; // Variable<T> in the actual IO
+        size_t ioIdx;      // actual IO in m_IOs
+        size_t engineIdx;  // actual engine in m_Engines
+        VarInternalInfo(void *p, size_t i, size_t e)
+        : originalVar(p), ioIdx(i), engineIdx(e)
+        {
+        }
+    };
+    std::unordered_map<std::string, VarInternalInfo> m_VarInternalInfo;
 
     void Init() final; ///< called from constructor, gets the selected Skeleton
                        /// transport method from settings
@@ -73,6 +87,19 @@ private:
 #undef declare_type
 
     void DoClose(const int transportIndex = -1);
+
+#define declare_type(T)                                                        \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
+    DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
+                                                                               \
+    std::vector<std::vector<typename Variable<T>::BPInfo>>                     \
+    DoAllRelativeStepsBlocksInfo(const Variable<T> &) const final;             \
+                                                                               \
+    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(                    \
+        const Variable<T> &variable, const size_t step) const final;
+
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
 
     /**
      * Called if destructor is called on an open engine.  Should warn or take
@@ -91,7 +118,9 @@ private:
      * based on an existing variable.
      */
     template <class T>
-    void DuplicateVariable(Variable<T> *variable, IO &io, std::string &name);
+    Variable<T> DuplicateVariable(Variable<T> *variable, IO &io,
+                                  std::string &name, Engine *e,
+                                  VarInternalInfo &vii);
 };
 
 } // end namespace engine

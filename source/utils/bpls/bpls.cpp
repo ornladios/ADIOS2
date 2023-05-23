@@ -3146,29 +3146,31 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
             const std::map<size_t, std::vector<size_t>> &indices =
                 variable->m_AvailableStepBlockIndexOffsets;
             auto itStep = indices.begin();
-
-            for (size_t step = 0; step < nsteps; step++)
+            if (itStep != indices.end())
             {
-                const size_t absstep = itStep->first;
-                Dims d = variable->Shape(absstep - 1);
-                if (d.empty())
+                for (size_t step = 0; step < nsteps; step++)
                 {
-                    continue;
-                }
+                    const size_t absstep = itStep->first;
+                    Dims d = variable->Shape(absstep - 1);
+                    if (d.empty())
+                    {
+                        continue;
+                    }
 
-                for (size_t k = 0; k < ndim; k++)
-                {
-                    if (firstStep)
+                    for (size_t k = 0; k < ndim; k++)
                     {
-                        dims[k] = d[k];
+                        if (firstStep)
+                        {
+                            dims[k] = d[k];
+                        }
+                        else if (dims[k] != d[k])
+                        {
+                            dims[k] = 0;
+                        }
                     }
-                    else if (dims[k] != d[k])
-                    {
-                        dims[k] = 0;
-                    }
+                    firstStep = false;
+                    ++itStep;
                 }
-                firstStep = false;
-                ++itStep;
             }
         }
     }
