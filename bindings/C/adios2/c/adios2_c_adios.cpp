@@ -17,6 +17,21 @@
 extern "C" {
 #endif
 
+char *adios2_version_str(void)
+{
+    char *str = (char *)malloc(sizeof(ADIOS2_VERSION_STR));
+    snprintf(str, sizeof(ADIOS2_VERSION_STR), ADIOS2_VERSION_STR);
+    return str;
+}
+
+void adios2_version(adios2_version_struct *s)
+{
+    s->major = ADIOS2_VERSION_MAJOR;
+    s->minor = ADIOS2_VERSION_MINOR;
+    s->patch = ADIOS2_VERSION_PATCH;
+    s->tweak = ADIOS2_VERSION_TWEAK;
+}
+
 adios2::ArrayOrdering adios2_ToArrayOrdering(const adios2_arrayordering Corder)
 {
     adios2::ArrayOrdering order = adios2::ArrayOrdering::Auto;

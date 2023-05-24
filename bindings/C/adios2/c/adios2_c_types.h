@@ -180,6 +180,14 @@ typedef struct
     adios2_blockinfo *BlocksInfo;
 } adios2_varinfo;
 
+typedef struct
+{
+    int major;
+    int minor;
+    int patch;
+    int tweak;
+} adios2_version_struct;
+
 #ifdef __cplusplus
 } // end extern C
 #endif

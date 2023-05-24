@@ -36,6 +36,15 @@ void check_handler(const void *handler, const char *message)
 
 int main(int argc, char *argv[])
 {
+    adios2_version_struct s;
+    adios2_version(&s);
+    printf("ADIOS version as struct %d.%d.%d.%d\n", s.major, s.minor, s.patch,
+           s.tweak);
+
+    char *vstr = adios2_version_str();
+    printf("ADIOS version as string %s\n", vstr);
+    free(vstr);
+
     int rank, size;
 
 #if ADIOS2_USE_MPI

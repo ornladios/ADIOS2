@@ -21,6 +21,20 @@
 extern "C" {
 #endif
 
+/**
+ * Return library version as string in major.minor.patch.tweak format
+ * String is allocated in the library, must be freed by caller.
+ */
+char *adios2_version_str(void);
+
+/**
+ * Return library version in a struct of major, minor, patch, tweak.
+ * Usage:
+ *      adios2_version_struct s;
+ *      adios2_version(&s);
+ */
+void adios2_version(adios2_version_struct *s);
+
 #if ADIOS2_USE_MPI
 #define adios2_init(comm) adios2_init_mpi(comm)
 #define adios2_init_config(config_file, comm)                                  \
