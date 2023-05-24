@@ -116,19 +116,6 @@ void CampaignReader::EndStep()
 
 // PRIVATE
 
-#define declare_type(T)                                                        \
-    void CampaignReader::DoGetSync(Variable<T> &variable, T *data)             \
-    {                                                                          \
-        GetSyncCommon(variable, data);                                         \
-    }                                                                          \
-    void CampaignReader::DoGetDeferred(Variable<T> &variable, T *data)         \
-    {                                                                          \
-        GetDeferredCommon(variable, data);                                     \
-    }
-
-ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
-#undef declare_type
-
 void CampaignReader::Init()
 {
     InitParameters();
@@ -195,8 +182,7 @@ void CampaignReader::InitTransports()
     else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
         Variable<T> *vi = io.InquireVariable<T>(vname);                        \
-        Variable<T> v =                                                        \
-            DuplicateVariable(vi, m_IO, newname, &e, internalInfo);            \
+        Variable<T> v = DuplicateVariable(vi, m_IO, newname, internalInfo);    \
     }
 
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -249,6 +235,22 @@ MinVarInfo *CampaignReader::MinBlocksInfo(const VariableBase &Var,
 }
 
 #define declare_type(T)                                                        \
+    void CampaignReader::DoGetSync(Variable<T> &variable, T *data)             \
+    {                                                                          \
+        PERFSTUBS_SCOPED_TIMER("CampaignReader::Get");                         \
+        auto p = TranslateToActualVariable(variable);                          \
+        p.second->Get(*p.first, data, adios2::Mode::Sync);                     \
+    }                                                                          \
+    void CampaignReader::DoGetDeferred(Variable<T> &variable, T *data)         \
+    {                                                                          \
+        PERFSTUBS_SCOPED_TIMER("CampaignReader::Get");                         \
+        auto it = m_VarInternalInfo.find(variable.m_Name);                     \
+        Variable<T> *v =                                                       \
+            reinterpret_cast<Variable<T> *>(it->second.originalVar);           \
+        Engine *e = m_Engines[it->second.engineIdx];                           \
+        e->Get(*v, data, adios2::Mode::Deferred);                              \
+    }                                                                          \
+                                                                               \
     std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
     CampaignReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const    \
     {                                                                          \
@@ -269,7 +271,7 @@ MinVarInfo *CampaignReader::MinBlocksInfo(const VariableBase &Var,
         Variable<T> *v =                                                       \
             reinterpret_cast<Variable<T> *>(it->second.originalVar);           \
         Engine *e = m_Engines[it->second.engineIdx];                           \
-        return e->AllRelativeStepsBlocksInfo(variable);                        \
+        return e->AllRelativeStepsBlocksInfo(*v);                              \
     }                                                                          \
                                                                                \
     std::vector<typename Variable<T>::BPInfo> CampaignReader::DoBlocksInfo(    \
@@ -280,8 +282,13 @@ MinVarInfo *CampaignReader::MinBlocksInfo(const VariableBase &Var,
         Variable<T> *v =                                                       \
             reinterpret_cast<Variable<T> *>(it->second.originalVar);           \
         Engine *e = m_Engines[it->second.engineIdx];                           \
-        return e->BlocksInfo(variable, step);                                  \
+        return e->BlocksInfo(*v, step);                                        \
     }
+
+ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+
+#define declare_type(T)
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
