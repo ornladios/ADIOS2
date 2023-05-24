@@ -32,6 +32,8 @@ extern herr_t H5VL_adios2_beginstep(const char *engine_name, adios2_step_mode m)
 
 extern herr_t H5VL_adios2_endstep(const char *engine_nane);
 
+static herr_t H5VL_adios2_introspect_get_cap_flags(const void *info, uint64_t *cap_flags);
+
 static herr_t H5VL_adios2_introspect_opt_query(void *obj, H5VL_subclass_t cls, int opt_type,
                                                uint64_t *supported)
 {
@@ -51,11 +53,11 @@ static herr_t H5VL_adios2_datatype_close(void *dt, hid_t H5_ATTR_UNUSED dxpl_id,
 static const H5VL_class_t H5VL_adios2_def = {
     H5VL_VERSION, /* Version # of connector, needed for v1.13 */
     (H5VL_class_value_t)H5VL_ADIOS2_VALUE,
-    H5VL_ADIOS2_NAME,    /* name */
-    H5VL_ADIOS2_VERSION, /* version of this vol, not as important  */
-    H5VL_CAP_FLAG_NONE,  /* Capability flags for connector */
-    H5VL_adios2_init,    /* initialize */
-    H5VL_adios2_term,    /* terminate */
+    H5VL_ADIOS2_NAME,      /* name */
+    H5VL_ADIOS2_VERSION,   /* version of this vol, not as important  */
+    H5VL_ADIOS2_CAP_FLAGS, /* Capability flags for connector */
+    H5VL_adios2_init,      /* initialize */
+    H5VL_adios2_term,      /* terminate */
     {
         /* info_cls */
         (size_t)0, /* info size    */
@@ -117,8 +119,8 @@ static const H5VL_class_t H5VL_adios2_def = {
     {
         /* introspect_cls */
         NULL, // H5VL_pass_through_introspect_get_conn_cls,  /* get_conn_cls */
-        NULL, /* get_cap_flags */
-        H5VL_adios2_introspect_opt_query, /* opt_query */
+        H5VL_adios2_introspect_get_cap_flags, /* get_cap_flags */
+        H5VL_adios2_introspect_opt_query,     /* opt_query */
     },
     {
         /* request_cls */
@@ -144,5 +146,11 @@ static const H5VL_class_t H5VL_adios2_def = {
     },
     NULL /*/optional*/
 };
+
+static herr_t H5VL_adios2_introspect_get_cap_flags(const void *info, uint64_t *cap_flags)
+{
+    *cap_flags = H5VL_adios2_def.cap_flags;
+    return 0;
+}
 
 #endif // ADIOS_VOL_WRITER_H
