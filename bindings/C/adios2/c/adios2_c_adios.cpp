@@ -29,7 +29,6 @@ void adios2_version(adios2_version_struct *s)
     s->major = ADIOS2_VERSION_MAJOR;
     s->minor = ADIOS2_VERSION_MINOR;
     s->patch = ADIOS2_VERSION_PATCH;
-    s->tweak = ADIOS2_VERSION_TWEAK;
 }
 
 adios2::ArrayOrdering adios2_ToArrayOrdering(const adios2_arrayordering Corder)

@@ -38,8 +38,7 @@ int main(int argc, char *argv[])
 {
     adios2_version_struct s;
     adios2_version(&s);
-    printf("ADIOS version as struct %d.%d.%d.%d\n", s.major, s.minor, s.patch,
-           s.tweak);
+    printf("ADIOS version as struct %d.%d.%d\n", s.major, s.minor, s.patch);
 
     char *vstr = adios2_version_str();
     printf("ADIOS version as string %s\n", vstr);

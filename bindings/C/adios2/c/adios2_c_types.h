@@ -185,7 +185,6 @@ typedef struct
     int major;
     int minor;
     int patch;
-    int tweak;
 } adios2_version_struct;
 
 #ifdef __cplusplus
