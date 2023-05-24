@@ -107,20 +107,21 @@ private:
      */
     void DestructorClose(bool Verbose) noexcept final{};
 
-    template <class T>
-    void GetSyncCommon(Variable<T> &variable, T *data);
-
-    template <class T>
-    void GetDeferredCommon(Variable<T> &variable, T *data);
-
     /**
      * Create a new variable with name `name` in `io`
      * based on an existing variable.
      */
     template <class T>
     Variable<T> DuplicateVariable(Variable<T> *variable, IO &io,
-                                  std::string &name, Engine *e,
-                                  VarInternalInfo &vii);
+                                  std::string &name, VarInternalInfo &vii);
+
+    /**
+     * Create a new variable with name `name` in `io`
+     * based on an existing variable.
+     */
+    template <class T>
+    std::pair<Variable<T> *, Engine *>
+    TranslateToActualVariable(Variable<T> &variable);
 };
 
 } // end namespace engine
