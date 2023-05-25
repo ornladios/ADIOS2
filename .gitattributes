@@ -4,7 +4,7 @@
 .hooks*          export-ignore
 
 # Custom attribute to mark sources as using the kwsys C code style.
-[attr]kwsys-c-style  whitespace=tab-in-indent  format.clang-format
+[attr]kwsys-c-style  whitespace=tab-in-indent  format.clang-format=15
 
 /GitSetup        export-ignore
 /*.sh            export-ignore eol=lf

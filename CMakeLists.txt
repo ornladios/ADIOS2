@@ -88,17 +88,7 @@
 # any outside mailing list and no documentation of the change will be
 # written.
 
-cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
-foreach(p
-    CMP0056 # CMake 3.2, Honor link flags in try_compile() source-file signature.
-    CMP0063 # CMake 3.3, Honor visibility properties for all target types.
-    CMP0067 # CMake 3.8, Honor language standard in try_compile source-file signature.
-    CMP0069 # CMake 3.9, INTERPROCEDURAL_OPTIMIZATION is enforced when enabled.
-    )
-  if(POLICY ${p})
-    cmake_policy(SET ${p} NEW)
-  endif()
-endforeach()
+cmake_minimum_required(VERSION 3.9...3.22 FATAL_ERROR)
 
 # Some configure checks depend upon the deployment target. Clear checks when
 # the deployment target changes.
@@ -211,11 +201,7 @@ endif()
 
 # Enable testing if building standalone.
 if(KWSYS_STANDALONE)
-  include(Dart)
-  mark_as_advanced(BUILD_TESTING DART_ROOT TCL_TCLSH)
-  if(BUILD_TESTING)
-    enable_testing()
-  endif()
+  include(CTest)
 endif()
 
 # Choose default shared/static build if not specified.
@@ -640,8 +626,8 @@ endif()
 # Build a list of classes and headers we need to implement the
 # selected components.  Initialize with required components.
 set(KWSYS_CLASSES)
-set(KWSYS_H_FILES Configure SharedForward)
-set(KWSYS_HXX_FILES Configure String)
+set(KWSYS_H_FILES Configure)
+set(KWSYS_HXX_FILES Configure)
 
 # Add selected C++ classes.
 set(cppclasses
@@ -1048,6 +1034,10 @@ if(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
     set_property(TARGET ${KWSYS_NAMESPACE}TestsCxx PROPERTY CXX_INCLUDE_WHAT_YOU_USE "")
     set_property(TARGET ${KWSYS_NAMESPACE}TestsCxx PROPERTY LABELS ${KWSYS_LABELS_EXE})
     target_link_libraries(${KWSYS_NAMESPACE}TestsCxx ${KWSYS_TARGET_LINK})
+    get_property(_isMultiConfig GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+    if(_isMultiConfig)
+      set_property(TARGET ${KWSYS_NAMESPACE}TestsCxx APPEND PROPERTY COMPILE_DEFINITIONS BUILD_CONFIG="$<CONFIG>")
+    endif()
 
     set(TEST_SYSTEMTOOLS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
     set(TEST_SYSTEMTOOLS_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}")
@@ -1111,7 +1101,7 @@ if(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
     # Some Apple compilers produce bad optimizations in this source.
     if(APPLE AND CMAKE_C_COMPILER_ID MATCHES "^(GNU|LLVM)$")
       set(testProcess_COMPILE_FLAGS "${testProcess_COMPILE_FLAGS} -O0")
-    elseif(CMAKE_C_COMPILER_ID STREQUAL "XL")
+    elseif(CMAKE_C_COMPILER_ID MATCHES "^(XL|XLClang)$")
       # Tell IBM XL not to warn about our test infinite loop
       if(CMAKE_SYSTEM MATCHES "Linux.*ppc64le"
          AND CMAKE_C_COMPILER_VERSION VERSION_LESS "16.1.0"
@@ -1127,16 +1117,6 @@ if(KWSYS_STANDALONE OR CMake_SOURCE_DIR)
       set(testProcess_COMPILE_FLAGS "${testProcess_COMPILE_FLAGS} -DCRASH_USING_ABORT")
     endif()
     set_property(SOURCE testProcess.c PROPERTY COMPILE_FLAGS "${testProcess_COMPILE_FLAGS}")
-
-    # Test SharedForward
-    configure_file(${PROJECT_SOURCE_DIR}/testSharedForward.c.in
-                   ${PROJECT_BINARY_DIR}/testSharedForward.c @ONLY IMMEDIATE)
-    add_executable(${KWSYS_NAMESPACE}TestSharedForward
-                   ${PROJECT_BINARY_DIR}/testSharedForward.c)
-    set_property(TARGET ${KWSYS_NAMESPACE}TestSharedForward PROPERTY LABELS ${KWSYS_LABELS_EXE})
-    add_dependencies(${KWSYS_NAMESPACE}TestSharedForward ${KWSYS_TARGET_C_LINK})
-    add_test(kwsys.testSharedForward ${EXEC_DIR}/${KWSYS_NAMESPACE}TestSharedForward 1)
-    set_property(TEST kwsys.testSharedForward PROPERTY LABELS ${KWSYS_LABELS_TEST})
 
     # Configure some test properties.
     if(KWSYS_STANDALONE)
