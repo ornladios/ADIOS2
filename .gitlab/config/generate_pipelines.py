@@ -49,7 +49,7 @@ parser.add_argument(
     '-d', '--days', type=int, default=1,
     help='How many days back to search for commits')
 parser.add_argument(
-    '-m', '--max', type=int, default=3,
+    '-m', '--max', type=int, default=2,
     help='Maximum amount of pipelines computed')
 parser.add_argument(
     '-f', '--template_file', required=True,
