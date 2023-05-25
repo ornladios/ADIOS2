@@ -38,4 +38,6 @@ then
   ci_original_sha=$(git rev-parse "${CI_COMMIT_REF}^2")
   export CI_ORIGINAL_SHA="$ci_original_sha"
   export CI_UPDATE_ARGS="-DCTEST_UPDATE_VERSION_OVERRIDE=${CI_ORIGINAL_SHA}"
+else
+  export CI_ORIGINAL_SHA="${CI_COMMIT_REF}"
 fi
