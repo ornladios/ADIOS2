@@ -21,6 +21,7 @@
     CUDAHOSTCXX:          "g++"
     CUSTOM_CI_BUILDS_DIR: "/gpfs/wolf/csc303/scratch/vbolea/ci/adios2"
     GITLAB_SITE:          "OLCF Ascent"
+    CI_BIN_DIR:           "$CI_PROJECT_DIR/build"
     SCHEDULER_PARAMETERS: -P CSC303 -W 1:00 -nnodes 1 -alloc_flags gpudefault
   before_script:
     - *setup_env_ecpci
@@ -68,18 +69,22 @@ ascent-kokkos-cuda:
       libffi
       hdf5
       cmake
+    KOKKOS_VER: 3.7.01
+    Kokkos_DIR: "$CI_PROJECT_DIR/deps/kokkos_install"
+    # Cmake would not install a RPATH inside the source dir
+    LD_LIBRARY_PATH: "$Kokkos_DIR/lib64/:$LD_LIBRARY_PATH"
     KOKKOS_OPTS: >-
       -DKokkos_ARCH_POWER9=ON
       -DKokkos_ARCH_VOLTA70=ON
       -DKokkos_ENABLE_CUDA=ON
       -DKokkos_ENABLE_CUDA_LAMBDA=ON
-      -DCMAKE_INSTALL_PREFIX:PATH=$CI_BUILDS_DIR/kokkos_install
-
-    Kokkos_DIR: $CI_BUILDS_DIR/kokkos_install
+      -DCMAKE_INSTALL_PREFIX:PATH=$Kokkos_DIR
+      -DCMAKE_CXX_COMPILER:STRING=$CI_PROJECT_DIR/deps/kokkos-$KOKKOS_VER/bin/nvcc_wrapper
   before_script:
     - *setup_env_ecpci
+    - mkdir -p "$CI_PROJECT_DIR/deps"
     - ccache -z
-    - .gitlab/kokkos.sh "$CI_BUILDS_DIR" "3.7.01" $KOKKOS_OPTS
+    - .gitlab/config/kokkos.sh "$CI_PROJECT_DIR/deps" "$KOKKOS_VER" $KOKKOS_OPTS
   extends:
     - .ascent-common
 
@@ -127,4 +132,4 @@ sync-github-prs:
     CUSTOM_CI_BUILDS_DIR: "/gpfs/wolf/csc303/scratch/vbolea/ci/adios2"
   script:
     - export PATH="/gpfs/wolf/csc303/scratch/vbolea/ci/utils:$PATH"
-    - SpackCIBridge.py ornladios/ADIOS2 git@code.ornl.gov:ecpcitest/adios2.git https://code.ornl.gov/ ecpcitest/adios2 --prereq-check=format --prereq-check=git_checks
+    - .gitlab/config/SpackCIBridge.py ornladios/ADIOS2 git@code.ornl.gov:ecpcitest/adios2.git https://code.ornl.gov/ ecpcitest/adios2 --prereq-check=format --prereq-check=git_checks
