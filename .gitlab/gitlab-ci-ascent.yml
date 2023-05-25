@@ -128,7 +128,6 @@ sync-github-prs:
   only:
     - schedules
   variables:
-    GIT_STRATEGY: none
     CUSTOM_CI_BUILDS_DIR: "/gpfs/wolf/csc303/scratch/vbolea/ci/adios2"
   script:
     - export PATH="/gpfs/wolf/csc303/scratch/vbolea/ci/utils:$PATH"
