@@ -37,9 +37,9 @@ int gUtilADIOS2GetDim(hid_t space_id);
 // h5 uses hsize_t for dimensions (unsigned long long)
 // adios uses size_t
 //
-void gUtilConvert(hsize_t *fromH5, size_t *to, uint ndims);
+void gUtilConvert(hsize_t *fromH5, size_t *to, size_t ndims);
 
-int gUtilADIOS2GetShape(hid_t space_id, size_t *shape, uint ndims);
+int gUtilADIOS2GetShape(hid_t space_id, size_t *shape, size_t ndims);
 
 int gUtilADIOS2GetBlockInfo(hid_t hyperSlab_id, size_t *start, size_t *count,
                             hsize_t ndims);
