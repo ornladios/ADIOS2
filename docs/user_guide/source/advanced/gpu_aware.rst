@@ -5,7 +5,7 @@
 The ``Put`` and ``Get`` functions in the BP4 and BP5 engines can receive user buffers allocated on the host or the device in both Sync and Deferred modes.
 
 .. note::
-    Currently only CUDA and HIP allocated buffers are supported for device data.
+    CUDA, HIP and SYCL allocated buffers are supported for device data.
 
 If ADIOS2 is built without GPU support, only buffers allocated on the host are supported. If ADIOS2 is built with any GPU support, by default, the library will automatically detect where does the buffer memory physically resides.
 
@@ -37,7 +37,7 @@ When building ADIOS2 with CUDA enabled, the user is responsible with setting the
 Building with Kokkos enabled
 --------------------------
 
-The Kokkos library can be used to enable GPU within ADIOS2. Based on how Kokkos is build, either the CUDA or HIP backend will be enabled. Building with Kokkos requires ``-DADIOS2_USE_Kokkos=ON``. The user is responsible to set the ``CMAKE_CUDA_ARCHITECTURES`` to the same architecture used when configuring the Kokkos library it links against.
+The Kokkos library can be used to enable GPU within ADIOS2. Based on how Kokkos is build, either the CUDA, HIP or SYCL backend will be enabled. Building with Kokkos requires ``-DADIOS2_USE_Kokkos=ON``. The ``CMAKE_CUDA_ARCHITECTURES`` is set automanically to point to the same architecture used when configuring the Kokkos library.
 
 .. note::
     Kokkos version >= 3.7 is required to enable the GPU backend in ADIOS2
@@ -71,7 +71,7 @@ If the ``SetMemorySpace`` function is used, the ADIOS2 library will not detect a
 
 .. code-block:: c++
 
-    variable.SetMemorySpace(adios2::MemorySpace::CUDA);
+    data.SetMemorySpace(adios2::MemorySpace::GPU);
     for (size_t step = 0; step < nSteps; ++step)
     {
         bpWriter.BeginStep();
@@ -79,10 +79,14 @@ If the ``SetMemorySpace`` function is used, the ADIOS2 library will not detect a
         bpWriter.EndStep();
     }
 
-Underneath, ADIOS2 uses the backend used at build time to transfer the data. If ADIOS2 was build with CUDA, only CUDA buffers can be provided. If ADIOS2 was build with Kokkos (with CUDA enabled) only CUDA buffers can be provided. If ADIOS2 was build with Kokkos (with HIP enabled) only HIP buffers can be provided.
+Underneath, ADIOS2 relies on the backend used at build time to transfer the data. If ADIOS2 was build with CUDA, only CUDA buffers can be provided. If ADIOS2 was build with Kokkos (with CUDA enabled) only CUDA buffers can be provided. If ADIOS2 was build with Kokkos (with HIP enabled) only HIP buffers can be provided.
 
-Using Kokkos buffers
---------------------------
+.. note::
+    The SYCL backend in Kokkos can be used to run on Nvida, AMD and Intel GPUs
+
+
+Kokkos applications
+--------------------
 
 ADIOS2 supports GPU buffers provided in the form of ``Kokkos::View`` directly in the Put/Get calls. The memory space can be automatically detected or provided by the user, in the same way as in the CUDA example.
 
@@ -92,3 +96,13 @@ ADIOS2 supports GPU buffers provided in the form of ``Kokkos::View`` directly in
    bpWriter.Put(data, gpuSimData);
 
 If the CUDA backend is being used (and not Kokkos) to enable GPU support in ADIOS2, Kokkos applications can still directly pass ``Kokkos::View`` as long as the correct external header is included: ``#include <adios2/cxx11/KokkosView.h>``.
+
+***************
+Build scripts
+***************
+
+The `scripts/build_scripts` folder contains scripts for building ADIOS2 with CUDA or Kokkos backends for several DOE system: Summit (OLCF Nvidia), Crusher (OLCFi AMD), Perlmutter (NERSC Nvidia), Polaris (ALCF Nvidia).
+
+.. note::
+    Perlmutter requires Kokkos >= 4.0
+
