@@ -517,9 +517,6 @@ class SpackCIBridge(object):
             if not pipelines:
                 continue
             for sha, pipeline in pipelines.items():
-                # Pass on schedule builds
-                if pipeline['source'] == 'schedule':
-                    continue
                 post_data = self.make_status_for_pipeline(pipeline)
                 if not post_data:
                     continue
