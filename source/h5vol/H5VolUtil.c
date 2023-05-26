@@ -56,16 +56,16 @@ void *safe_ralloc(void *ptr, size_t newsize, unsigned long line)
     return p;
 }
 
-void gUtilConvert(hsize_t *fromH5, size_t *to, uint ndims)
+void gUtilConvert(hsize_t *fromH5, size_t *to, size_t ndims)
 {
-    uint i = 0;
+    size_t i = 0;
     for (i = 0; i < ndims; i++)
     {
         to[i] = fromH5[i];
     }
 }
 
-int gUtilADIOS2GetShape(hid_t space_id, size_t *shape, uint ndims)
+int gUtilADIOS2GetShape(hid_t space_id, size_t *shape, size_t ndims)
 {
     if (gUtilADIOS2IsScalar(space_id))
     {
