@@ -71,8 +71,7 @@ extern int my_yy_input();
 #endif
 static
 int
-is_defined_type(id)
-char *id;
+is_defined_type(char *id)
 {
     int i = 0;
     while(types && types[i]) {
@@ -83,8 +82,7 @@ char *id;
 }
 static
 int
-is_enumeration_constant(id)
-char *id;
+is_enumeration_constant(char *id)
 {
     int i = 0;
     while(enums && enums[i]) {
@@ -329,7 +327,7 @@ static char *create_string_from_yytext()
 
 static void check_strbuf()
 {
-    int cur_len = string_buf_ptr - string_buffer;
+    intptr_t cur_len = string_buf_ptr - string_buffer;
     if ((cur_len + 1) == buffer_len) {
 	buffer_len += 20;
 	string_buffer = realloc(string_buffer, buffer_len + 1);
@@ -429,19 +427,14 @@ char **enum_constants;
 static YY_BUFFER_STATE bb = NULL;
 
 static void
-reset_types_table(defined_types, enumerated_constants)
-char **defined_types;
-char **enumerated_constants;
+reset_types_table(char **defined_types, char **enumerated_constants)
 {
     types = defined_types;
     enums = enumerated_constants;
 }
 
 static void
-setup_for_string_parse(string, defined_types, enum_constants)
-const char *string;
-char **defined_types;
-char **enum_constants;
+setup_for_string_parse(const char *string, char **defined_types, char **enum_constants)
 {
     types = defined_types;
     enums = enum_constants;

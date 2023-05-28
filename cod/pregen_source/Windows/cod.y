@@ -1,5 +1,8 @@
 %{
 #include "config.h"
+#ifdef __NVCOMPILER
+#pragma diag_suppress 550, 111, 941
+#endif
 #if defined (__INTEL_COMPILER)
 #  pragma warning (disable: 2215)
 #endif
@@ -31,10 +34,6 @@ int cod_kplugins_integration = 0;
 #include <stdlib.h>
 #endif
 #endif
-#include "fm.h"
-#include "fm_internal.h"
-#include "cod.h"
-#include "cod_internal.h"
 #undef NDEBUG
 #include "assert.h"
 #ifndef LINUX_KERNEL_MODULE
@@ -58,6 +57,10 @@ int cod_kplugins_integration = 0;
     #define OP_DBL_Digs (DBL_DIG + 3)
   #endif
 #endif
+#include "fm.h"
+#include "fm_internal.h"
+#include "cod.h"
+#include "cod_internal.h"
 #include "structs.h"
 #ifdef HAVE_DILL_H
 #include "dill.h"
@@ -79,9 +82,17 @@ enum {
     DILL_EC,
     DILL_ERR   /* no type */
 };
+typedef void *dill_stream;
+#define dill_create_stream() 0
+#define dill_type_size(c, s) 0
 #endif
 #if defined(_MSC_VER)
 #define strdup _strdup
+#define isatty _isatty
+#define fileno _fileno
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <io.h>
 #endif
 #ifndef LINUX_KERNEL_MODULE
 #ifdef STDC_HEADERS
@@ -106,14 +117,17 @@ char *strdup(const char *s)
 	return p;
 }
 #endif
+#ifdef _MSC_VER
+#undef strncpy
+#endif
 #define YY_NO_INPUT
 
 static char*
 gen_anon()
 {
     static int anon_count = 0;
-    char *ret = malloc(strlen("Anonymous-xxxxxxxxxxxxxxxxx"));
-    sprintf(ret, "Anonymous-%d", anon_count++);
+    char *ret = malloc(40);
+    snprintf(ret, 40, "Anonymous-%d", anon_count++);
     return ret;
 }
 
@@ -1866,6 +1880,9 @@ constant :
 	;
 
 %%
+#ifdef _MSC_VER
+#define YY_NO_UNISTD_H
+#endif
 #include "lex.yy.c"
 
 typedef struct scope *scope_ptr;
@@ -1930,7 +1947,7 @@ cod_preprocessor(char *input, cod_parse_context context, int*white)
 {
     char *out;
     char *ptr;
-    if (index(input, '#') == NULL) return NULL;
+    if (strchr(input, '#') == NULL) return NULL;
     out = strdup(input);
     ptr = out;
     *white = 0;
@@ -1944,10 +1961,10 @@ cod_preprocessor(char *input, cod_parse_context context, int*white)
 		char *include_end;
 		ptr += 8;
 		while(isspace(*ptr)) ptr++;
-		line_end = index(ptr, '\n');
+		line_end = strchr(ptr, '\n');
 		if (line_end) *line_end = 0;
 		if ((*ptr == '<') || (*ptr == '"')) {
-		    include_end = (*ptr == '<') ? index(ptr, '>') : index((ptr+1), '"');
+		    include_end = (*ptr == '<') ? strchr(ptr, '>') : strchr((ptr+1), '"');
 		    if (!include_end) {
 			printf("improper #include, \"%s\"\n", ptr);
 			goto skip;
@@ -1968,10 +1985,10 @@ cod_preprocessor(char *input, cod_parse_context context, int*white)
 	}
     skip:
 	/* skip to next line */
-	ptr = index(ptr, '\n');
+	ptr = strchr(ptr, '\n');
 	while (ptr && (*(ptr - 1) == '\'')) {
 	    /* continued line */
-	    ptr = index(ptr, '\n');
+	    ptr = strchr(ptr, '\n');
 	}
     }
     { 
@@ -1986,9 +2003,7 @@ cod_preprocessor(char *input, cod_parse_context context, int*white)
 }
 	
 int
-cod_parse_for_globals(code, context)
-char *code;
-cod_parse_context context;
+cod_parse_for_globals(char *code, cod_parse_context context)
 {
     int ret;
     context->alloc_globals = 1;
@@ -1997,9 +2012,7 @@ cod_parse_context context;
     return ret;
 }
 int
-cod_parse_for_context(code, context)
-char *code;
-cod_parse_context context;
+cod_parse_for_context(char *code, cod_parse_context context)
 {
     sm_list decls;
     int ret;
@@ -2064,12 +2077,10 @@ static int include_prefix(char *code)
 	    break;
 	}
     }
-    return tmp - code;
+    return (int)(intptr_t)(tmp - code);
 }
 cod_code
-cod_code_gen(code, context)
-char *code;
-cod_parse_context context;
+cod_code_gen(char *code, cod_parse_context context)
 {
     sm_ref tmp, tmp2;
     cod_code ret_code;
@@ -2080,7 +2091,7 @@ cod_parse_context context;
     if (code != NULL) {
 	if ((bracket = include_prefix(code))) {
 	    char *prefix = malloc(bracket+1), *tmp;
-	    strncpy(prefix, code, bracket);
+	    strncpy(prefix, code, bracket + 1);
 	    prefix[bracket] = 0;
 	    tmp = prefix;
 	    while(isspace(*tmp)) tmp++;
@@ -2132,7 +2143,7 @@ cod_parse_context context;
     tmp->node.compound_statement.decls = NULL;
     tmp2->node.compound_statement.decls = NULL;
     cod_rfree(tmp2);
-    ret_code->func = (void(*)())(long)func;
+    ret_code->func = (void(*)(void))(intptr_t)func;
     return ret_code;
 }
 
@@ -2150,9 +2161,7 @@ cod_dump(cod_code code)
     
 
 int
-cod_code_verify(code, context)
-char *code;
-cod_parse_context context;
+cod_code_verify(char *code, cod_parse_context context)
 {
     sm_ref tmp;
 
@@ -2190,8 +2199,7 @@ cod_parse_context context;
 }
 
 extern void 
-cod_code_free(code)
-cod_code code;
+cod_code_free(cod_code code)
 {
     if (code->code_memory_block) free(code->code_memory_block);
     if (code->data) free(code->data);
@@ -2251,7 +2259,7 @@ print_context(cod_parse_context context, int line, int character)
 	offset = character - 40;
     }
     line_copy = copy_line(line_begin + offset);
-    line_len = strlen(line_copy);
+    line_len = (int)strlen(line_copy);
     if (line_len > 60) {
 	line_copy[60] = 0;
     }
@@ -2268,8 +2276,7 @@ print_context(cod_parse_context context, int line, int character)
     context->error_func(context->client_data, "^\n");
 }
 
-void yyerror(str)
-char *str;
+void yyerror(char *str)
 {
     char tmp_str[100];
     sprintf(tmp_str, "## Error %s\n", str);
@@ -2463,8 +2470,7 @@ struct scope {
 
 
 extern cod_parse_context
-cod_copy_context(context)
-cod_parse_context context;
+cod_copy_context(cod_parse_context context)
 {
     int i, count;
     int type_count = 0;
@@ -2501,8 +2507,7 @@ cod_parse_context context;
 extern void dump_scope(scope_ptr scope);
 
 extern cod_parse_context
-cod_copy_globals(context)
-cod_parse_context context;
+cod_copy_globals(cod_parse_context context)
 {
     int i, count;
     int type_count = 0;
@@ -2841,7 +2846,7 @@ determine_op_type(cod_parse_context context, sm_ref expr,
     if ((left_type == DILL_UL) || (right_type == DILL_UL)) return DILL_UL;
     if ((left_type == DILL_L) || (right_type == DILL_L)) {
 	/* GSE -bug  This test should be for *generated* target, not host */
-	if (sizeof(long) > sizeof(unsigned int)) {
+	if (sizeof(intptr_t) > sizeof(unsigned int)) {
 	    /* Long can represent all values of unsigned int */
 	    return DILL_L;
 	} else {
@@ -3192,7 +3197,7 @@ type_list_to_string(cod_parse_context context, sm_list type_list, int *size)
 	*size = sizeof(int);
 	return strdup("integer");
     case DILL_L:
-	*size = sizeof(long);
+	*size = sizeof(intptr_t);
 	return strdup("integer");
     case DILL_S:
 	*size = sizeof(short);
@@ -3201,7 +3206,7 @@ type_list_to_string(cod_parse_context context, sm_list type_list, int *size)
 	*size = sizeof(int);
 	return strdup("unsigned integer");
     case DILL_UL:
-	*size = sizeof(long);
+	*size = sizeof(intptr_t);
 	return strdup("unsigned integer");
     case DILL_US:
 	*size = sizeof(short);
@@ -4105,7 +4110,7 @@ unsigned long, long long, unsigned long long
 */
 
     long i;
-    int len = strlen(val);
+    int len = (int)strlen(val);
     int hex = 0;
     int specified_unsgned = 0, specified_lng = 0;
     if (val[0] == '0') {
@@ -5604,9 +5609,7 @@ cod_remove_defined_types(cod_parse_context context, int count)
 }
 
 void
-cod_add_defined_type(id, context)
-char *id;
-cod_parse_context context;
+cod_add_defined_type(char *id, cod_parse_context context)
 {
     int count = 0;
     while(context->defined_types && context->defined_types[count]) count++;
@@ -5623,9 +5626,7 @@ cod_parse_context context;
 }
 
 void
-cod_add_enum_const(id, context)
-char *id;
-cod_parse_context context;
+cod_add_enum_const(char *id, cod_parse_context context)
 {
     int count = 0;
     while(context->enumerated_constants && context->enumerated_constants[count]) count++;
@@ -5666,9 +5667,7 @@ cod_add_struct_type(FMStructDescList format_list,
 }
 
 static int
-str_to_data_type(str, size)
-char *str;
-int size;
+str_to_data_type(char *str, int size)
 {
     char *tmp = malloc(strlen(str) + 1);
     char *free_str = tmp;
@@ -5690,7 +5689,7 @@ int size;
     }
     if ((strcmp(str, "integer") == 0) || (strcmp(str, "enumeration") == 0)) {
 	free(free_str);
-	if (size == sizeof(long)) {
+	if (size == sizeof(intptr_t)) {
 	    return DILL_L;
 	} else if (size == sizeof(int)) {
 	    return DILL_I;
@@ -5703,7 +5702,7 @@ int size;
 	}
     } else if (strcmp(str, "unsigned integer") == 0) {
 	free(free_str);
-	if (size == sizeof(long)) {
+	if (size == sizeof(intptr_t)) {
 	    return DILL_UL;
 	} else if (size == sizeof(int)) {
 	    return DILL_U;
@@ -5738,9 +5737,7 @@ int size;
 }
 
 static int
-array_str_to_data_type(str, size)
-char *str;
-int size;
+array_str_to_data_type(char *str, int size)
 {
     int ret_type;
     char field_type[1024];
@@ -5760,14 +5757,8 @@ int size;
 }
 
 static sm_ref
-build_subtype_nodes(context, decl, f, desc, err, scope, must_free_p)
-cod_parse_context context;
-sm_ref decl;
-field* f;
-FMTypeDesc *desc;
-int *err;
-scope_ptr scope;
-int *must_free_p;
+build_subtype_nodes(cod_parse_context context, sm_ref decl, field* f, FMTypeDesc *desc,
+		    int *err, scope_ptr scope, int *must_free_p)
 {
     sm_ref ret = NULL;
     sm_ref subtype = NULL;
@@ -5863,8 +5854,8 @@ int *must_free_p;
 	ret->node.reference_type_decl.cg_referenced_type = DILL_ERR;
 	ret->node.reference_type_decl.sm_complex_referenced_type = subtype;
 	if (must_free_flag) {
-	    if (ret->node.array_type_decl.freeable_complex_element_type) {
-	        cod_rfree(ret->node.array_type_decl.freeable_complex_element_type);
+	    if (ret->node.reference_type_decl.freeable_complex_referenced_type) {
+	        cod_rfree(ret->node.reference_type_decl.freeable_complex_referenced_type);
 	    }
 	    ret->node.reference_type_decl.freeable_complex_referenced_type = subtype;
 	}
@@ -5890,16 +5881,8 @@ int *must_free_p;
 }
 
 static void
-build_type_nodes(context, decl, f, fields, cg_size, cg_type, desc, err, scope)
-cod_parse_context context;
-sm_ref decl;
-field* f;
-sm_list fields;
-int cg_size;
-int cg_type;
-FMTypeDesc* desc;
-int *err;
-scope_ptr scope;
+build_type_nodes(cod_parse_context context, sm_ref decl, field* f, sm_list fields,
+		 int cg_size, int cg_type, FMTypeDesc* desc, int *err, scope_ptr scope)
 {
     int must_free_flag = 0;
     sm_ref complex_type = build_subtype_nodes(context, decl, f, desc, err, scope, &must_free_flag);
@@ -5913,13 +5896,7 @@ scope_ptr scope;
 }
 
 static int
-semanticize_array_element_node(context, array, super_type, base_type_spec, 
-			       scope)
-cod_parse_context context;
-sm_ref array;
-sm_ref super_type;
-sm_list base_type_spec;
-scope_ptr scope;
+semanticize_array_element_node(cod_parse_context context, sm_ref array, sm_ref super_type, sm_list base_type_spec, scope_ptr scope)
 {
     if (array->node.array_type_decl.size_expr != NULL) {
 	if (!is_constant_expr(array->node.array_type_decl.size_expr)) {
@@ -5987,10 +5964,7 @@ scope_ptr scope;
 }	
 
 static int
-semanticize_array_type_node(context, array, scope)
-cod_parse_context context;
-sm_ref array;
-scope_ptr scope;
+semanticize_array_type_node(cod_parse_context context, sm_ref array, scope_ptr scope)
 {
     if (!array->node.array_type_decl.dimensions) {
         array->node.array_type_decl.dimensions = malloc(sizeof(dimen_s));
@@ -6494,7 +6468,7 @@ static void
 uniqueify_names(FMStructDescList list, char *prefix)
 {
     int i = 0;
-    int prefix_len = strlen(prefix);
+    int prefix_len = (int)strlen(prefix);
     while (list[i].format_name != NULL) {
 	int j = 0;
 	FMFieldList fl = list[i].field_list;
@@ -6502,14 +6476,14 @@ uniqueify_names(FMStructDescList list, char *prefix)
 	    malloc(strlen(list[i].format_name) + prefix_len + 1);
 	strcpy(new_name, prefix);
 	strcpy(new_name + prefix_len, list[i].format_name);
-	free(list[i].format_name);
+	free((char*)list[i].format_name);
 	list[i].format_name = new_name;
 	while (fl[j].field_name != 0) {
-	    int field_type_len = strlen(fl[j].field_type);
+	    int field_type_len = (int)strlen(fl[j].field_type);
 	    char *bracket = strchr(fl[j].field_type, '[');
 	    int k;
 	    if (bracket != NULL) {
-		field_type_len = (long) bracket - (long) fl[j].field_type;
+		field_type_len = (int)((intptr_t) bracket - (intptr_t) fl[j].field_type);
 	    }
 	    for (k = 0; k < i; k++) {
 		char *new_type;
@@ -6597,9 +6571,10 @@ get_constant_float_value(cod_parse_context context, sm_ref expr)
     default:
 	assert(FALSE);
     }
+	return 0.0;
 }
 
-static long
+static intptr_t
 get_constant_long_value(cod_parse_context context, sm_ref expr)
 {
     double dresult;
@@ -6618,6 +6593,7 @@ get_constant_long_value(cod_parse_context context, sm_ref expr)
     default:
 	assert(FALSE);
     }
+	return -1;
 }
 
 extern sm_ref
@@ -6711,7 +6687,7 @@ evaluate_constant_return_expr(cod_parse_context context, sm_ref expr, int *free_
 		is_ivalue=1;
 		break;
 	    case  op_eq:
-		ivalue = left_val = right_val;
+		ivalue = left_val == right_val;
 		is_ivalue=1;
 		break;
 	    case  op_neq:
@@ -6756,7 +6732,7 @@ evaluate_constant_return_expr(cod_parse_context context, sm_ref expr, int *free_
 	    *free_result = 1;
 	} else {
 	    /* we get an integer result */
-	    long left_val = 0, right_val = 0, value;
+	    intptr_t left_val = 0, right_val = 0, value;
 	    char str_val[40];
 	    if (expr->node.operator.left)
 		left_val = get_constant_long_value(context, left);
@@ -6835,7 +6811,7 @@ evaluate_constant_return_expr(cod_parse_context context, sm_ref expr, int *free_
 	    }
 	    ret = cod_new_constant();
 	    ret->node.constant.token = integer_constant;
-	    sprintf(str_val, "%ld", value);
+	    sprintf(str_val, "%Id", value);
 	    ret->node.constant.const_val = strdup(str_val);
 	    *free_result = 1;
 	}
@@ -6857,5 +6833,6 @@ evaluate_constant_return_expr(cod_parse_context context, sm_ref expr, int *free_
     default:
 	assert(FALSE);
     }
+	return NULL;
 }
 	

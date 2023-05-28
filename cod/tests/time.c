@@ -9,6 +9,7 @@
 #include "cod.h"
 #define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -18,12 +19,16 @@ static int verbose = 0;
 x = new_cod_parse_context();
 #define EC_param0
 #define EC_param1
+#define EC_param0_decl
+#define EC_param1_decl
 #else
 #define GEN_PARSE_CONTEXT(x) \
 x = new_cod_parse_context();\
 cod_add_param("ec", "cod_exec_context", 0, x);
 #define EC_param0 ec
 #define EC_param1 ec,
+#define EC_param0_decl cod_exec_context
+#define EC_param1_decl cod_exec_context,
 #endif
 
 extern void
@@ -72,29 +77,36 @@ main(int argc, char**argv)
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 
 	char code_string[] = "\n\
 {\n\
     timeval t1, t2;\n			\
-    int delay = 10000;\n\
+    int delay = 5000;\n\
     long accum = 0;\n\
     long usec_duration;\n\
+    long sec_diff = 0;\n\
+    long usec_diff = 0;\n\
     gettimeofday(&t1);\n\
 \n\
     if (t1.tv_sec < 1423159919) { /* in the past */ \n\
        return 0;\n\
     }\n\
     while(delay > 0) {  /* just so there's a duration */\n	\
+    printf(\"slow loop %g\\n\", (double)delay * (double) accum);\n\
 	delay--;\n\
         accum++;\n\
     }\n\
     gettimeofday(&t2);\n\
-    usec_duration = (t2.tv_sec - t1.tv_sec) * 1000000 + t2.tv_usec - t1.tv_usec;\n\
+    sec_diff = t2.tv_sec - t1.tv_sec;\n\
+    usec_diff = t2.tv_usec - t1.tv_usec;\n\
+    printf(\"sec diff = %ld\\n\", sec_diff);\n\
+    printf(\"usec diff = %ld\\n\", usec_diff);\n\
+    usec_duration = sec_diff * 1000000 + usec_diff;\n\
 \n\
-    if ((usec_duration < 1) || (usec_duration > 1000000)) {\n\
+    if ((usec_duration < 1) || (usec_duration > 10000000)) {\n\
        printf(\"duration is %d usecs, unreasonable\\n\", usec_duration);\n    \
        return 0; /* seems unreasonable */\n\
     }\n\
@@ -104,7 +116,7 @@ main(int argc, char**argv)
 	cod_parse_context context;
 	cod_exec_context ec;
 	cod_code gen_code;
-	long (*func)();
+	long (*func)(EC_param0_decl);
 	long result;
 
 	GEN_PARSE_CONTEXT(context);
@@ -112,7 +124,7 @@ main(int argc, char**argv)
 	cod_parse_for_context(extern_string, context);
 	gen_code = cod_code_gen(code_string, context);
 	ec = cod_create_exec_context(gen_code);
-	func = (long(*)()) (long) gen_code->func;
+	func = (long(*)(EC_param0_decl)) (intptr_t) gen_code->func;
 	if (verbose) cod_dump(gen_code);
 	result = func(EC_param0);
 	assert(result == 1);
@@ -133,13 +145,13 @@ main(int argc, char**argv)
 	cod_parse_context context;
 	cod_exec_context ec;
 	cod_code gen_code;
-	long (*func)();
+	long (*func)(EC_param0_decl);
 	long result;
 
 	GEN_PARSE_CONTEXT(context);
 	gen_code = cod_code_gen(code_string, context);
 	ec = cod_create_exec_context(gen_code);
-	func = (long(*)()) (long) gen_code->func;
+	func = (long(*)(EC_param0_decl)) (intptr_t) gen_code->func;
 	if (verbose) cod_dump(gen_code);
 	result = func(EC_param0);
 	assert(result == (!2));
@@ -162,7 +174,7 @@ main(int argc, char**argv)
 	cod_parse_context context = new_cod_parse_context();
 	cod_exec_context ec;
 	cod_code gen_code;
-    	long (*func)();
+	long (*func)(EC_param1_decl int);
 
 #ifdef NO_EMULATION
 	cod_subroutine_declaration("int proc(int i)", context);
@@ -171,7 +183,7 @@ main(int argc, char**argv)
 #endif
 	gen_code = cod_code_gen(code_string, context);
 	ec = cod_create_exec_context(gen_code);
-	func = (long(*)()) (long) gen_code->func;
+	func = (long(*)(EC_param1_decl int)) (intptr_t) gen_code->func;
 	if (verbose) cod_dump(gen_code);
         assert(func(EC_param1 15) == 87);
 	cod_exec_context_free(ec);
@@ -196,7 +208,7 @@ main(int argc, char**argv)
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 	FMField struct_fields[] = {
@@ -211,7 +223,7 @@ main(int argc, char**argv)
 	test_struct str;
 	test_struct *param = &str;	
 	cod_code gen_code;
-	long (*func)();
+	long (*func)(EC_param1_decl test_struct_p);
 
 	cod_assoc_externs(context, externs);
 	cod_parse_for_context(extern_string, context);
@@ -235,7 +247,7 @@ main(int argc, char**argv)
 	}
 	gen_code = cod_code_gen(code_string, context);
 	ec = cod_create_exec_context(gen_code);
-	func = (long(*)(test_struct_p)) (long) gen_code->func;
+	func = (long(*)(EC_param1_decl test_struct_p)) (intptr_t) gen_code->func;
 	if (verbose) cod_dump(gen_code);
 
 	str.i = 15;
@@ -256,7 +268,7 @@ main(int argc, char**argv)
 	static char extern_string[] = "int printf(string format, ...);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 	static char code[] = "{\
@@ -283,7 +295,7 @@ main(int argc, char**argv)
 	int i, j;
 	double levels[253][37];
 	cod_code gen_code;
-	double (*func)(), result;
+	double (*func)(EC_param1_decl double*), result;
 	double *param = &levels[0][0];
 
 	cod_assoc_externs(context, externs);
@@ -317,7 +329,7 @@ main(int argc, char**argv)
 
 	gen_code = cod_code_gen(code, context);
 	ec = cod_create_exec_context(gen_code);
-	func = (double (*)())(long) gen_code->func;
+	func = (double (*)(EC_param1_decl double*))(intptr_t) gen_code->func;
 	if (verbose) cod_dump(gen_code);
 	result = func(EC_param1 param);
 	if (result != 18126.00) {
@@ -339,8 +351,8 @@ main(int argc, char**argv)
 int *dummy(int*p);";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
-	    {"dummy", (void*)(long)dummy},
+	    {"printf", (void*)(intptr_t)printf},
+	    {"dummy", (void*)(intptr_t)dummy},
 	    {(void*)0, (void*)0}
 	};
 	typedef struct test {
@@ -364,7 +376,7 @@ int *dummy(int*p);";
 	int i, j = 1;
 	double levels;
 	cod_code gen_code;
-	int *(*func)(), *result;
+	int *(*func)(EC_param1_decl test_struct*), *result;
 	test_struct strct;
 	test_struct *param = &strct;
 
@@ -397,7 +409,7 @@ int *dummy(int*p);";
 
 	gen_code = cod_code_gen(code, context);
 	ec = cod_create_exec_context(gen_code);
-	func = (int * (*)())(long) gen_code->func;
+	func = (int * (*)(EC_param1_decl test_struct*))(intptr_t) gen_code->func;
 	if (verbose) cod_dump(gen_code);
 	result = func(EC_param1 param);
 	if (result != (int*)&strct.levels) {

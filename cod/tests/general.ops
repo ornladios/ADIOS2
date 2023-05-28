@@ -5,9 +5,10 @@ sub upperc {
     return $_;
 }
 
-%c_types = ('c', 'signed char', 'uc', 'unsigned char', 's', 'short', 'us', 'unsigned short', 'i', 'int', 'u', 'unsigned int', 'l', 'long', 'ul', 'unsigned long', 'p', 'char*', 'f', 'float', 'd', 'double');
-%rand_types = ('c', 'l', 'uc', 'l', 's', 'l', 'us', 'l', 'i', 'l', 'u', 'l', 'l', 'l', 'ul', 'l', 'p', '(char *)l', 'f', 'd', 'd', 'd');
-%c_print_formats = ('c', '%d', 'uc', '%u', 's', '%d', 'us', '%u', 'i', '%d', 'u', '%u', 'l', '%ld', 'ul', '%lu', 'p', '%lx', 'f', '%g', 'd', '%g');
+%c_types = ('c', 'signed char', 'uc', 'unsigned char', 's', 'short', 'us', 'unsigned short', 'i', 'int', 'u', 'unsigned int', 'l', 'intptr_t', 'ul', 'uintptr_t', 'p', 'char*', 'f', 'float', 'd', 'double');
+%cod_types = ('c', 'signed char', 'uc', 'unsigned char', 's', 'short', 'us', 'unsigned short', 'i', 'int', 'u', 'unsigned int', 'l', 'long', 'ul', 'unsigned long', 'p', 'char*', 'f', 'float', 'd', 'double');
+%rand_types = ('c', 'l', 'uc', 'l', 's', 'l', 'us', 'l', 'i', 'l', 'u', 'l', 'l', 'l', 'ul', 'l', 'p', '(intptr_t)l', 'f', 'd', 'd', 'd');
+%c_print_formats = ('c', '%d', 'uc', '%u', 's', '%d', 'us', '%u', 'i', '%d', 'u', '%u', 'l', '%zd', 'ul', '%zu', 'p', '%lx', 'f', '%g', 'd', '%g');
 %drisc_arg_formats = ('c', '%i', 'uc', '%u', 's', '%i', 'us', '%u', 'i', '%i', 'u', '%u', 'l', '%l', 'ul', '%ul', 'p', '%p', 'f', '%f', 'd', '%d');
 
 %type_masks = ('c', "f", 'uc', "f", 's', "f ff fff", 'us', "f ff fff", 'i', "f ff fff ffff fffff ffffff fffffff", 'u', "f ff fff ffff fffff ffffff fffffff", 'l', "f ff fff ffff fffff ffffff fffffff", 'ul', "f ff fff ffff fffff ffffff fffffff");
@@ -77,7 +78,9 @@ sub arith_insn {
           foreach(split(' ', $type_list)) {
 	    $t2 = ${_};
 	    $c_type1 = $c_types{$t1};
+	    $cod_type1 = $cod_types{$t1};
 	    $c_type2 = $c_types{$t2};
+	    $cod_type2 = $cod_types{$t2};
 	    $c_pformat1 = $c_print_formats{$t1};
 	    $c_pformat2 = $c_print_formats{$t2};
 	    $line = __LINE__ + 3;
@@ -132,6 +135,9 @@ sub arith_insn {
 	    if (($t1 eq "uc") || ($t1 eq "us") || ($t1 eq "u") || ($t1 eq "ul")) {
 		$result_if = "if ((expected_result == 0) || (expected_result == ($c_type1) 0x$type_max{$t1}) || (expected_result == ($c_type1) 0x$type_max2{$t1})) continue;\n	$result_if";
 	    }
+	    if (($t1 eq "ul") && (($t2 eq "d") || ($t2 eq "f"))) {
+		$result_if = "if (source1_ul > ((ssize_t)11<<52)) continue;\n 	$result_if";
+	    }
 	    if (($t1 eq "uc") && ($c_op eq "/")) {
 		$range_decl .= "\n	    unsigned int expect_int;";
 		$div_continue .= "\n	    expect_int = (unsigned int) $expected_value;";
@@ -142,8 +148,8 @@ print COUT<<EOF;
       (strcmp(only_run_test, "${t1}${c_op}${t2}") == 0)) {
      int i, j;
      static char code[] = \"{\\n\\
-       $c_type1 a = p1;\\n\\
-       $c_type2 b = p2;\\n\\
+       $cod_type1 a = p1;\\n\\
+       $cod_type2 b = p2;\\n\\
        return a $c_op b;\\n\\
      }\";
 
@@ -159,10 +165,10 @@ print COUT<<EOF;
     cod_assoc_externs(context, externs);
     cod_parse_for_context(extern_string, context);
 
-    cod_subroutine_declaration("$c_type1 proc($c_type1 p1, $c_type2 p2)",
+    cod_subroutine_declaration("$cod_type1 proc($cod_type1 p1, $cod_type2 p2)",
 			       context);
     gen_code = cod_code_gen(code, context);
-    proc = ($c_type1 (*)($c_type1, $c_type2))(long)gen_code->func;
+    proc = ($c_type1 (*)($c_type1, $c_type2))(intptr_t)gen_code->func;
 
 
     for (i=0 ; i < sizeof($vals1)/sizeof($vals1\[0\]) ; i++) {
@@ -814,6 +820,7 @@ print COUT<<EOF;
 #include "../config.h"
 #include "../cod.h"
 #include "stdio.h"
+#include <stdint.h>
 #include "string.h"
 #include "math.h"
 
@@ -823,6 +830,10 @@ print COUT<<EOF;
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define kill(x,y) 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#endif
 #else
 extern double drand48();
 extern long lrand48();
@@ -944,7 +955,7 @@ EOF
 	print COUT "    br_src${dr_type}_vals[5] = ($c_type) -((long)rand1_$dr_type) - 1;\n";
     }
     print COUT "    externs[0].extern_name = \"printf\";\n";
-    print COUT "    externs[0].extern_value = (void*)(long)printf;\n";
+    print COUT "    externs[0].extern_value = (void*)(intptr_t)printf;\n";
     print COUT "    externs[1].extern_name = (void*)0;\n";
     print COUT "    externs[1].extern_value = (void*)0;\n";
     print COUT "}\n";

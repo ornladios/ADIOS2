@@ -126,6 +126,9 @@
 /* The number of bytes in type long long */
 #define SIZEOF_LONG_LONG @SIZEOF_LONG_LONG@
 
+/* The number of bytes in type size_t */
+#define SIZEOF_SIZE_T @SIZEOF_SIZE_T@
+
 /* Define to `int' if <sys/types.h> does not define. */
 #cmakedefine pid_t
 

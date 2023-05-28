@@ -20,13 +20,7 @@
 #define gen_fatal(str) do {fprintf(stderr, "%s\n", str); exit(0);} while (0)
 
 iogen_oprnd
-gen_operand(src_reg, offset, size, data_type, aligned, byte_swap)
-dill_reg src_reg;
-int offset;
-int size;
-FMdata_type data_type;
-int aligned;
-int byte_swap;
+gen_operand(dill_reg src_reg, size_t offset, int size, FMdata_type data_type, int aligned, int byte_swap)
 {
     iogen_oprnd ret_val;
     ret_val.address = 1;
@@ -41,9 +35,7 @@ int byte_swap;
 }
 
 void
-gen_load(c, src_oprnd)
-dill_stream c;
-iogen_oprnd_ptr src_oprnd;
+gen_load(dill_stream c, iogen_oprnd_ptr src_oprnd)
 {
     iogen_oprnd tmp_val;
     tmp_val = gen_fetch(c, 
@@ -54,13 +46,8 @@ iogen_oprnd_ptr src_oprnd;
 }
 
 iogen_oprnd
-gen_bswap_fetch(c, src_reg, offset, size, data_type, aligned)
-dill_stream c;
-dill_reg src_reg;
-int offset;
-int size;
-FMdata_type data_type;
-int aligned;
+gen_bswap_fetch(dill_stream c, dill_reg src_reg, size_t offset,
+		int size, FMdata_type data_type, int aligned)
 {
     iogen_oprnd ret_val;
     ret_val.address = 0;
@@ -95,8 +82,8 @@ int aligned;
 	    REG_DEBUG(("get %d in gen_Fetch\n", _vrr(ret_val.vc_reg)));
 	    dill_ldbsii(c, ret_val.vc_reg, src_reg, offset);
 	    break;
-#if SIZEOF_LONG != 4
-	case SIZEOF_LONG:
+#if SIZEOF_SIZE_T != 4
+	case SIZEOF_SIZE_T:
 	    if (!ffs_getreg(c, &ret_val.vc_reg, DILL_L, DILL_TEMP))
 		gen_fatal("gen fetch out of registers \n");
 	    REG_DEBUG(("get %d in gen_Fetch\n", _vrr(ret_val.vc_reg)));
@@ -167,8 +154,8 @@ int aligned;
 	    REG_DEBUG(("get %d in gen_Fetch\n", _vrr(ret_val.vc_reg)));
 	    dill_ldbsui(c, ret_val.vc_reg, src_reg, offset);
 	    break;
-#if SIZEOF_LONG != 4
-	case SIZEOF_LONG:
+#if SIZEOF_SIZE_T != 4
+	case SIZEOF_SIZE_T:
 	    if (!ffs_getreg(c, &ret_val.vc_reg, DILL_UL, DILL_TEMP))
 		gen_fatal("gen fetch out of registers \n");
 	    REG_DEBUG(("get %d in gen_Fetch\n", _vrr(ret_val.vc_reg)));
@@ -231,8 +218,8 @@ gen_set(dill_stream c, int size, char* value)
 	REG_DEBUG(("get %d in gen_Fetch\n", _vrr(ret_val.vc_reg)));
 	dill_seti(c, ret_val.vc_reg, *((int*)value));
 	break;
-#if SIZEOF_LONG != 4
-    case SIZEOF_LONG:
+#if SIZEOF_SIZE_T != 4
+    case SIZEOF_SIZE_T:
 	if (!ffs_getreg(c, &ret_val.vc_reg, DILL_L, DILL_TEMP))
 	    gen_fatal("gen fetch out of registers \n");
 	REG_DEBUG(("get %d in gen_Fetch\n", _vrr(ret_val.vc_reg)));
@@ -261,14 +248,8 @@ gen_set(dill_stream c, int size, char* value)
 }
    
 iogen_oprnd
-gen_fetch(c, src_reg, offset, size, data_type, aligned, byte_swap)
-dill_stream c;
-dill_reg src_reg;
-int offset;
-int size;
-FMdata_type data_type;
-int aligned;
-int byte_swap;
+gen_fetch(dill_stream c, dill_reg src_reg, size_t offset, size_t size,
+	  FMdata_type data_type, int aligned, int byte_swap)
 {
     iogen_oprnd ret_val;
 
@@ -276,13 +257,13 @@ int byte_swap;
     if (dill_has_ldbs(c)) {
 	/* have byte swap load extension */
 	if (byte_swap && (data_type != float_type)) {
-	    return gen_bswap_fetch(c, src_reg, offset, size, data_type, 
+	    return gen_bswap_fetch(c, src_reg, offset, (int)size, data_type, 
 				   aligned);
 	}
     }
 #endif
     ret_val.address = 0;
-    ret_val.size = size;
+    ret_val.size = (int)size;
     ret_val.data_type = data_type;
     ret_val.offset = 0;
     ret_val.aligned = 0;
@@ -313,8 +294,8 @@ int byte_swap;
 	    REG_DEBUG(("get %d in gen_Fetch\n", _vrr(ret_val.vc_reg)));
 	    dill_ldii(c, ret_val.vc_reg, src_reg, offset);
 	    break;
-#if SIZEOF_LONG != 4
-	case SIZEOF_LONG:
+#if SIZEOF_SIZE_T != 4
+	case SIZEOF_SIZE_T:
 	    if (!ffs_getreg(c, &ret_val.vc_reg, DILL_L, DILL_TEMP))
 		gen_fatal("gen fetch out of registers \n");
 	    REG_DEBUG(("get %d in gen_Fetch\n", _vrr(ret_val.vc_reg)));
@@ -361,8 +342,8 @@ int byte_swap;
 	    REG_DEBUG(("get %d in gen_Fetch\n", _vrr(ret_val.vc_reg)));
 	    dill_ldui(c, ret_val.vc_reg, src_reg, offset);
 	    break;
-#if SIZEOF_LONG != 4
-	case SIZEOF_LONG:
+#if SIZEOF_SIZE_T != 4
+	case SIZEOF_SIZE_T:
 	    if (!ffs_getreg(c, &ret_val.vc_reg, DILL_UL, DILL_TEMP))
 		gen_fatal("gen fetch out of registers \n");
 	    REG_DEBUG(("get %d in gen_Fetch\n", _vrr(ret_val.vc_reg)));
@@ -423,9 +404,7 @@ int byte_swap;
 }
 
 void
-gen_byte_swap(c, src_oprnd)
-dill_stream c;
-iogen_oprnd_ptr src_oprnd;
+gen_byte_swap(dill_stream c, iogen_oprnd_ptr src_oprnd)
 {
     iogen_oprnd swap_oprnd;
     if (src_oprnd->address) {
@@ -460,7 +439,7 @@ iogen_oprnd_ptr src_oprnd;
 	dill_bswapi(c, swap_oprnd.vc_reg, swap_oprnd.vc_reg);
 	break;
     case 8:
-	if (sizeof(long) == 4) {
+	if (sizeof(size_t) == 4) {
 	    /* swap top and bottom */
 	    dill_reg tmp_reg = swap_oprnd.vc_reg;
 	    swap_oprnd.vc_reg = swap_oprnd.vc_reg2;
@@ -491,14 +470,8 @@ iogen_oprnd_ptr src_oprnd;
 }
 
 void
-gen_store(c, src, dest_reg, offset, size, data_type, aligned)
-dill_stream c;
-iogen_oprnd src;
-dill_reg dest_reg;
-int offset;
-int size;
-FMdata_type data_type;
-int aligned;
+gen_store(dill_stream c, iogen_oprnd src, dill_reg dest_reg, ssize_t offset,
+	  int size, FMdata_type data_type, int aligned)
 {
     assert(src.size == size);
 
@@ -519,8 +492,8 @@ int aligned;
 	case 4:		/* sizeof int */
 	    dill_stii(c, src.vc_reg, dest_reg, offset);
 	    break;
-#if SIZEOF_LONG != 4
-	case SIZEOF_LONG:
+#if SIZEOF_SIZE_T != 4
+	case SIZEOF_SIZE_T:
 	    dill_stli(c, src.vc_reg, dest_reg, offset);
 	    break;
 #else
@@ -550,8 +523,8 @@ int aligned;
 	case 4:		/* sizeof int */
 	    dill_stui(c, src.vc_reg, dest_reg, offset);
 	    break;
-#if SIZEOF_LONG != 4
-	case SIZEOF_LONG:
+#if SIZEOF_SIZE_T != 4
+	case SIZEOF_SIZE_T:
 	    dill_stuli(c, src.vc_reg, dest_reg, offset);
 	    break;
 #else
@@ -586,14 +559,8 @@ int aligned;
 }
 
 void
-gen_memcpy(c, src, src_offset, dest, dest_offset, size, const_size)
-dill_stream c;
-dill_reg src;
-int src_offset;
-dill_reg dest;
-int dest_offset;
-dill_reg size;
-int const_size;
+gen_memcpy(dill_stream c, dill_reg src, size_t src_offset, dill_reg dest,
+	   size_t dest_offset, dill_reg size, int const_size)
 {
     dill_reg final_src, final_dest;
     if (src_offset != 0) {
@@ -625,9 +592,7 @@ int const_size;
 }
 
 void
-free_oprnd(c, oprnd)
-dill_stream c;
-iogen_oprnd oprnd;
+free_oprnd(dill_stream c, iogen_oprnd oprnd)
 {
     REG_DEBUG(("put %d in free\n", _vrr(oprnd.vc_reg)));
     switch (oprnd.data_type) {
@@ -647,8 +612,8 @@ iogen_oprnd oprnd;
 	case 4:		/* sizeof int */
 	    ffs_putreg(c, oprnd.vc_reg, DILL_I);
 	    break;
-#if SIZEOF_LONG != 4
-	case SIZEOF_LONG:
+#if SIZEOF_SIZE_T != 4
+	case SIZEOF_SIZE_T:
 	    ffs_putreg(c, oprnd.vc_reg, DILL_L);
 	    break;
 #else
@@ -673,8 +638,8 @@ iogen_oprnd oprnd;
 	case 4:		/* sizeof int */
 	    ffs_putreg(c, oprnd.vc_reg, DILL_U);
 	    break;
-#if SIZEOF_LONG != 4
-	case SIZEOF_LONG:
+#if SIZEOF_SIZE_T != 4
+	case SIZEOF_SIZE_T:
 	    ffs_putreg(c, oprnd.vc_reg, DILL_UL);
 	    break;
 #else
@@ -704,10 +669,7 @@ iogen_oprnd oprnd;
 }
 
 iogen_oprnd
-gen_type_conversion(c, src_oprnd, data_type)
-dill_stream c;
-iogen_oprnd src_oprnd;
-FMdata_type data_type;
+gen_type_conversion(dill_stream c, iogen_oprnd src_oprnd, FMdata_type data_type)
 {
     iogen_oprnd result_oprnd = src_oprnd;
     dill_reg at;  /* temporary */
@@ -718,7 +680,7 @@ FMdata_type data_type;
 	assert(FALSE);
 	break;
     case integer_type:
-	result_oprnd.size = sizeof(long);
+	result_oprnd.size = sizeof(size_t);
 	if (!ffs_getreg(c, &result_oprnd.vc_reg, DILL_L, DILL_TEMP))
 	    gen_fatal("gen type convert out of registers \n");
 	REG_DEBUG(("get %d in type_convert\n", _vrr(result_oprnd.vc_reg)));
@@ -742,7 +704,7 @@ FMdata_type data_type;
 		dill_cvu2l(c, result_oprnd.vc_reg, src_oprnd.vc_reg);
 		break;
 	    case 8:
-#if SIZEOF_LONG == 8
+#if SIZEOF_SIZE_T == 8
 		dill_cvul2l(c, result_oprnd.vc_reg, src_oprnd.vc_reg);
 #else
 		result_oprnd.size = 8;
@@ -799,7 +761,7 @@ FMdata_type data_type;
 		dill_cvi2ul(c, result_oprnd.vc_reg, src_oprnd.vc_reg);
 		break;
 	    case 8:
-#if SIZEOF_LONG == 8
+#if SIZEOF_SIZE_T == 8
 		dill_cvl2ul(c, result_oprnd.vc_reg, src_oprnd.vc_reg);
 #else
 		result_oprnd.size = 8;
@@ -861,7 +823,7 @@ FMdata_type data_type;
 		ffs_putreg(c, at, DILL_L);
 		break;
 	    case 8:
-#if SIZEOF_LONG == 8
+#if SIZEOF_SIZE_T == 8
 		dill_cvl2d(c, result_oprnd.vc_reg, src_oprnd.vc_reg);
 #else
 		{
@@ -900,7 +862,7 @@ FMdata_type data_type;
 		dill_cvi2d(c, result_oprnd.vc_reg, src_oprnd.vc_reg);
 		break;
 	    case 8:
-#if SIZEOF_LONG == 8
+#if SIZEOF_SIZE_T == 8
 		dill_cvl2d(c, result_oprnd.vc_reg, src_oprnd.vc_reg);
 #else
 		{
@@ -936,10 +898,7 @@ FMdata_type data_type;
 }
 
 iogen_oprnd
-gen_size_conversion(c, src_oprnd, size)
-dill_stream c;
-iogen_oprnd src_oprnd;
-int size;
+gen_size_conversion(dill_stream c, iogen_oprnd src_oprnd, int size)
 {
     iogen_oprnd result_oprnd = src_oprnd;
     dill_reg at;  /* temporary */
@@ -1001,7 +960,7 @@ int size;
 	    }
 	    break;
 	case 8:
-#if SIZEOF_LONG == 8
+#if SIZEOF_SIZE_T == 8
 	    if (!ffs_getreg(c, &result_oprnd.vc_reg, DILL_L, DILL_TEMP))
 		gen_fatal("gen size convert out of registers \n");
 	    REG_DEBUG(("get %d in size convert\n", _vrr(result_oprnd.vc_reg)));
@@ -1099,7 +1058,7 @@ int size;
 	    }
 	    break;
 	case 8:
-#if SIZEOF_LONG == 8
+#if SIZEOF_SIZE_T == 8
 	    if (!ffs_getreg(c, &result_oprnd.vc_reg, DILL_UL, DILL_TEMP))
 		gen_fatal("gen size convert out of registers \n");
 	    REG_DEBUG(("get %d in size convert\n", _vrr(result_oprnd.vc_reg)));

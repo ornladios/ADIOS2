@@ -23,9 +23,7 @@ write_encoded_FFSfile(FFSFile f, void *data, DATA_LEN_TYPE byte_size, FFSContext
 		      attr_list attrs);
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     FFSFile in_file = NULL, out_file = NULL;
     int buffer_size = 1024;

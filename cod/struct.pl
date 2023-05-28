@@ -284,7 +284,7 @@ sub gen_copy {
 sub gen_srcpos {
     my($houtfile, $coutfile) = @_;
     print $houtfile "extern srcpos cod_get_srcpos(sm_ref expr);\n";
-    print $coutfile "extern srcpos cod_get_srcpos(expr)\nsm_ref expr;\n{\n";
+    print $coutfile "extern srcpos cod_get_srcpos(sm_ref expr)\n{\n";
     print $coutfile "    switch(expr->node_type) {\n";
     foreach my $name (@display_order) {
 	foreach my $field ( @{$structs{$name}->{order}} ) {

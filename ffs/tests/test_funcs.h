@@ -1,3 +1,12 @@
+#ifdef _MSC_VER
+#define strdup(s) _strdup(s)
+#define open(x,y,z) _open(x,y,z)
+#define read(x,y,z) _read(x,y,z)
+#define write(x,y,z) _write(x,y,z)
+#define close(x) _close(x)
+#define unlink(x) _unlink(x)
+#include <io.h>
+#endif
 typedef struct _newer_rec {
     int ganzzahl;
     double gleitkommazahl;
