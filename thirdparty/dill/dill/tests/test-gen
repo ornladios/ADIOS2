@@ -208,6 +208,12 @@ sub emit_unary {
 	$insni = "$insn" . "i";
 
 	$cast1 = ($t eq "p") ? "" : "";
+	if (($op eq '-') and ($t eq "u")) {
+		$op = '(unsigned) - (int)';
+	}
+	if (($op eq '-') and ($t eq "ul")) {
+		$op = '(uintptr_t) - (intptr_t)';
+	}
 	$upt = "\U$t\E";
 print<<EOF;
     {
@@ -860,7 +866,7 @@ EOF
 
 
 sub prologue {
-	print "int dill_errors;\n#include <math.h>\n#include \"string.h\"\n#include \"dill.h\"\n#include <stdlib.h>\n#include <stdio.h>\n\n";
+	print "int dill_errors;\n#include <math.h>\n#include \"string.h\"\n#include \"dill.h\"\n#include <stdlib.h>\n#include <stdio.h>\n#include <stdint.h>\n\n";
 
 print<<EOF;
 
@@ -955,8 +961,8 @@ loop:
     if(!(s2s = rand() - rand()))
 	s2s = rand() + 1;
 
-    s1f = (float)rand() / rand();
-    s2f = (float)rand() / (rand()+1) * ((rand()%1) ? 1. : -1.);
+    s1f = (float)rand() / (float)rand();
+    s2f = (float)rand() / (float)((rand()+1) * ((rand()%1) ? 1. : -1.));
 
     s1d = (double)rand() / rand();
     s2d = (double)rand() / (rand()+1) * ((rand()%1) ? 1. : -1.);

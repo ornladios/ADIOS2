@@ -1,7 +1,5 @@
 #include "config.h"
 #include "dill.h"
-#include "dill_internal.h"
-#include "virtual.h"
 #undef NDEBUG
 #include "assert.h"
 #include <stdint.h>
@@ -12,10 +10,17 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#ifdef _MSC_VER
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#else
+#include <unistd.h>
+#endif
 
 #define PREG(ec, reg) ((reg < 100) ? &ec->p[reg] : &ec->r[reg-100])
 
-
+#include "dill_internal.h"
+#include "virtual.h"
 #include "vm_include.c"
 #ifdef BUILD_EMULATOR
 #include <ffi.h>

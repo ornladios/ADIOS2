@@ -34,9 +34,12 @@ if(NOT (CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
      set_target_properties(dill_regress PROPERTIES COMPILE_FLAGS "-O0")
 endif()
 
-add_executable(cplus cplus.cc)
-target_link_libraries(cplus dill ${DIS_LIBS})
-add_test(NAME dill_cplus COMMAND cplus)
+if(NOT (CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
+     CMAKE_C_SIMULATE_ID MATCHES "MSVC"))
+    add_executable(cplus cplus.cc)
+    target_link_libraries(cplus dill ${DIS_LIBS})
+    add_test(NAME dill_cplus COMMAND cplus)
+endif()
 
 add_executable(stest stest.c)
 target_link_libraries(stest dill ${DIS_LIBS})
