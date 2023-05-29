@@ -42,10 +42,6 @@ public:
 
         ~TimestepInfo()
         {
-            delete MetaEncodeBuffer;
-            if (AttributeEncodeBuffer)
-                delete AttributeEncodeBuffer;
-            delete DataBuffer;
         }
     };
 
