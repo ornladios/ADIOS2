@@ -1,5 +1,6 @@
 #ifndef FFS_INTERNAL_H
 #include "../fm/fm.h"
+#include "../fm/fm_internal.h"
 
 #define MAGIC_NUMBER 0x4356ffa9	/* random magic */
 #define REVERSE_MAGIC_NUMBER 0xa9ff5643		/* byte reversed random
@@ -25,10 +26,17 @@ extern short bswap_16(short s);
 extern int bswap_32(int l);
 #endif
 
+#if defined(_MSC_VER) && !defined(strdup)
+#define strdup _strdup
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#define strncpy(to, from, len) strcpy_s(to, len, from)
+#endif
+
 struct _FFSBuffer {
     void *tmp_buffer;
-    long tmp_buffer_size;
-    long tmp_buffer_in_use_size;
+    ssize_t tmp_buffer_size;
+    ssize_t tmp_buffer_in_use_size;
 };
 
 typedef struct _internal_iovec {
@@ -67,7 +75,7 @@ struct _FFSTypeHandle {
 
 struct _IOgetFieldStruct {
     int offset;
-    int size;
+    size_t size;
     FMdata_type data_type;
     unsigned char byte_swap;
     unsigned char src_float_format;
@@ -85,7 +93,7 @@ typedef enum {
 typedef struct _IOconvFieldStruct {
     struct _FMgetFieldStruct src_field;
     FMVarInfoStruct *iovar;
-    int dest_offset;
+    ssize_t dest_offset;
     int dest_size;
     void *default_value;
     row_column_swap_type rc_swap;
@@ -99,7 +107,7 @@ typedef struct _IOConversionStruct {
     int notify_of_format_change;
     FMFieldList native_field_list;
     int conv_count;
-    int base_size_delta;	/* native size - file record length */
+    size_t base_size_delta;	/* native size - file record length */
     double max_var_expansion;
     int target_pointer_size;
     FFSContext context;
@@ -112,7 +120,7 @@ typedef struct _IOConversionStruct {
     conv_routine conv_func2;
     conv_routine conv_func1;
     int required_alignment;
-    int string_offset_size;
+    size_t string_offset_size;
     int converted_strings;
     IOconvFieldStruct conversions[1];
 } IOConversionStruct;
@@ -191,9 +199,9 @@ extern
 char *
 make_tmp_buffer(FFSBuffer buf, int64_t size);
 
-extern int
+extern size_t
 FFS_decode_length_format(FFSContext context, FFSTypeHandle ioformat, 
-			 long record_length);
+			 size_t record_length);
 extern void
 FFS_determine_conversion(FFSContext c, FFSTypeHandle format);
 

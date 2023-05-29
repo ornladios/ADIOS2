@@ -82,9 +82,7 @@ FFS_determine_conversion(FFSContext c, FFSTypeHandle format)
 }
 
 static int
-IO_field_type_eq(str1, str2)
-const char *str1;
-const char *str2;
+IO_field_type_eq(const char *str1, const char *str2)
 {
     FMdata_type t1, t2;
     long t1_count, t2_count;
@@ -101,8 +99,8 @@ const char *str2;
 	char *colon2 = strchr(tmp_str2, ':');
 	char *lparen1 = strchr(str1, '[');
 	char *lparen2 = strchr(str2, '[');
-	int count1 = 0;
-	int count2 = 0;
+	intptr_t count1 = 0;
+	intptr_t count2 = 0;
 
 	if (colon1 != NULL) {
 	    count1 = colon1 - tmp_str1;
@@ -133,13 +131,7 @@ const char *str2;
  * Returns FFSformat_order
  * */
 static FMformat_order
-FMformat_cmp_diff(format1, format2, diff1, diff2)
-FMFormat format1;
-FMFormat format2;
-int *diff1;			/* Number of fields present in format1 and 
-				 * not in format2 */
-int *diff2;			/* Number of fields present in format2 and 
-				 * not in format1 */
+FMformat_cmp_diff(FMFormat format1, FMFormat format2, int *diff1, int *diff2)
 {
     FMformat_order tmp_result = Format_Equal;
     FMFieldList orig_field_list1 = format1->field_list;
@@ -439,13 +431,10 @@ FMformat_compat_cmp2(FMFormat format, FMFormat *formatList,
 }
 
 extern void *
-FFScreate_compat_info(prior_format, xform_code, len_p)
-FMFormat prior_format;
-char *xform_code;
-int *len_p;
+FFScreate_compat_info(FMFormat prior_format, char *xform_code, size_t *len_p)
 {
     char *block;
-    int block_len = strlen(xform_code) + prior_format->server_ID.length +1;
+    size_t block_len = strlen(xform_code) + prior_format->server_ID.length +1;
     block = malloc(block_len);
 
     memcpy(block, prior_format->server_ID.value,

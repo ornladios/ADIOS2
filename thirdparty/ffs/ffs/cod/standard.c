@@ -22,18 +22,17 @@
 #include "structs.h"
 #undef NDEBUG
 #include "assert.h"
-#ifndef LINUX_KERNEL_MODULE
 #include <ctype.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
 #endif
 #include <string.h>
-#else
-#include <linux/ctype.h>
-#include <linux/string.h>
-#include <linux/mm.h>
-#endif
+
+#ifndef _MSC_VER
 #include <sys/time.h>
+#else
+#define strdup _strdup
+#endif
 #ifndef LINUX_KERNEL_MODULE
 #ifdef HAVE_ATL_H
 #include "atl.h"
@@ -183,21 +182,54 @@ static void close_ffs_file(FFSFile fname)
     close_FFSfile(fname);
 }
 
-int
-gettimeofday_wrapper(struct timeval * tp)
-{
-    int ret = gettimeofday(tp, NULL);
-    return ret;
-}
-
-
-#include <sys/time.h>
 typedef struct chr_time {
     double d1;
     double d2;
     double d3;
 } chr_time;
 
+#ifdef _MSC_VER
+#include <Windows.h>
+#include <stdint.h> // portable: uint64_t   MSVC: __int64 
+
+#ifndef _WINSOCKAPI_
+// MSVC defines this in winsock2.h!?
+typedef struct timeval {
+    long tv_sec;
+    long tv_usec;
+} timeval;
+#endif
+
+int gettimeofday(struct timeval* tp, struct timezone* tzp)
+{
+    // Note: some broken versions only have 8 trailing zero's, the correct epoch has 9 trailing zero's
+    // This magic number is the number of 100 nanosecond intervals since January 1, 1601 (UTC)
+    // until 00:00:00 January 1, 1970 
+    static const uint64_t EPOCH = ((uint64_t)116444736000000000ULL);
+
+    SYSTEMTIME  system_time;
+    FILETIME    file_time;
+    uint64_t    time;
+
+    GetSystemTime(&system_time);
+    SystemTimeToFileTime(&system_time, &file_time);
+    time = ((uint64_t)file_time.dwLowDateTime);
+    time += ((uint64_t)file_time.dwHighDateTime) << 32;
+
+    tp->tv_sec = (long)((time - EPOCH) / 10000000L);
+    tp->tv_usec = (long)(system_time.wMilliseconds * 1000);
+    return 0;
+}
+#else
+#include <sys/time.h>
+#endif
+
+int
+gettimeofday_wrapper(struct timeval* tp)
+{
+    int ret = gettimeofday(tp, NULL);
+    return ret;
+}
 
 static void
 chr_get_time( chr_time *time)
@@ -347,35 +379,35 @@ static cod_extern_entry internal_externs[] =
 static cod_extern_entry externs[] = 
 {
 #ifdef HAVE_ATL_H
-    {"attr_set", (void*)(long)attr_set},
-    {"create_attr_list", (void*)(long)attr_create_list},
-    {"copy_attr_list", (void*)(long)attr_copy_list},
-    {"free_attr_list", (void*)(long)attr_free_list},
-    {"set_int_attr", (void*)(long)std_set_int_attr},
-    {"set_long_attr", (void*)(long)std_set_long_attr},
-    {"set_double_attr", (void*)(long)std_set_double_attr},
-    {"set_float_attr", (void*)(long)std_set_float_attr},
-    {"set_string_attr", (void*)(long)std_set_string_attr},
-    {"attr_ivalue", (void*)(long)attr_ivalue},
-    {"attr_lvalue", (void*)(long)attr_lvalue},
-    {"attr_dvalue", (void*)(long)attr_dvalue},
-    {"attr_fvalue", (void*)(long)attr_fvalue},
-    {"attr_svalue", (void*)(long)attr_svalue},
+    {"attr_set", (void*)(intptr_t)attr_set},
+    {"create_attr_list", (void*)(intptr_t)attr_create_list},
+    {"copy_attr_list", (void*)(intptr_t)attr_copy_list},
+    {"free_attr_list", (void*)(intptr_t)attr_free_list},
+    {"set_int_attr", (void*)(intptr_t)std_set_int_attr},
+    {"set_long_attr", (void*)(intptr_t)std_set_long_attr},
+    {"set_double_attr", (void*)(intptr_t)std_set_double_attr},
+    {"set_float_attr", (void*)(intptr_t)std_set_float_attr},
+    {"set_string_attr", (void*)(intptr_t)std_set_string_attr},
+    {"attr_ivalue", (void*)(intptr_t)attr_ivalue},
+    {"attr_lvalue", (void*)(intptr_t)attr_lvalue},
+    {"attr_dvalue", (void*)(intptr_t)attr_dvalue},
+    {"attr_fvalue", (void*)(intptr_t)attr_fvalue},
+    {"attr_svalue", (void*)(intptr_t)attr_svalue},
 #endif
-    {"chr_get_time", (void*)(long)chr_get_time},
-    {"chr_timer_diff", (void*)(long)chr_timer_diff},
-    {"chr_timer_eq_zero", (void*)(long)chr_timer_eq_zero},
-    {"chr_timer_sum", (void*)(long)chr_timer_sum},
-    {"chr_timer_start", (void*)(long)chr_timer_start},
-    {"chr_timer_stop", (void*)(long)chr_timer_stop},
-    {"chr_time_to_nanosecs", (void*)(long)chr_time_to_nanosecs},
-    {"chr_time_to_microsecs", (void*)(long)chr_time_to_microsecs},
-    {"chr_time_to_millisecs", (void*)(long)chr_time_to_millisecs},
-    {"chr_time_to_secs", (void*)(long)chr_time_to_secs},
-    {"chr_approx_resolution", (void*)(long)chr_approx_resolution},
-    {"gettimeofday", (void*)(long)gettimeofday_wrapper},
-    {"open_ffs", (void*)(long)open_ffs_file},
-    {"close_ffs", (void*)(long)close_ffs_file},
+    {"chr_get_time", (void*)(intptr_t)chr_get_time},
+    {"chr_timer_diff", (void*)(intptr_t)chr_timer_diff},
+    {"chr_timer_eq_zero", (void*)(intptr_t)chr_timer_eq_zero},
+    {"chr_timer_sum", (void*)(intptr_t)chr_timer_sum},
+    {"chr_timer_start", (void*)(intptr_t)chr_timer_start},
+    {"chr_timer_stop", (void*)(intptr_t)chr_timer_stop},
+    {"chr_time_to_nanosecs", (void*)(intptr_t)chr_time_to_nanosecs},
+    {"chr_time_to_microsecs", (void*)(intptr_t)chr_time_to_microsecs},
+    {"chr_time_to_millisecs", (void*)(intptr_t)chr_time_to_millisecs},
+    {"chr_time_to_secs", (void*)(intptr_t)chr_time_to_secs},
+    {"chr_approx_resolution", (void*)(intptr_t)chr_approx_resolution},
+    {"gettimeofday", (void*)(intptr_t)gettimeofday_wrapper},
+    {"open_ffs", (void*)(intptr_t)open_ffs_file},
+    {"close_ffs", (void*)(intptr_t)close_ffs_file},
     {(void*)0, (void*)0}
 };
 
@@ -433,35 +465,35 @@ cod_add_standard_elements(cod_parse_context context)
 #endif /* LINUX_KERNEL_MODULE */
 
 #if NO_DYNAMIC_LINKING
-#define sym(x) (void*)(long)x
+#define sym(x) (void*)(intptr_t)x
 #else
 #define sym(x) (void*)0
 #endif
 
 static cod_extern_entry string_externs[] = 
 {
-    {"memchr", (void*)(long)memchr},
-    {"memcmp", (void*)(long)memcmp},
-    {"memcpy", (void*)(long)memcpy},
-    {"memmove", (void*)(long)memmove},
-    {"memset", (void*)(long)memset},
-    {"strcat", (void*)(long)strcat},
-    {"strchr", (void*)(long)strchr},
-    {"strcmp", (void*)(long)strcmp},
-    {"strcoll", (void*)(long)strcoll},
-    {"strcpy", (void*)(long)strcpy},
-    {"strcspn", (void*)(long)strcspn},
-    {"strerror", (void*)(long)strerror},
-    {"strlen", (void*)(long)strlen},
-    {"strncat", (void*)(long)strncat},
-    {"strncmp", (void*)(long)strncmp},
-    {"strncpy", (void*)(long)strncpy},
-    {"strpbrk", (void*)(long)strpbrk},
-    {"strrchr", (void*)(long)strrchr},
-    {"strspn", (void*)(long)strspn},
-    {"strstr", (void*)(long)strstr},
-    {"strtok", (void*)(long)strtok},
-    {"strxfrm", (void*)(long)strxfrm},
+    {"memchr", (void*)(intptr_t)memchr},
+    {"memcmp", (void*)(intptr_t)memcmp},
+    {"memcpy", (void*)(intptr_t)memcpy},
+    {"memmove", (void*)(intptr_t)memmove},
+    {"memset", (void*)(intptr_t)memset},
+    {"strcat", (void*)(intptr_t)strcat},
+    {"strchr", (void*)(intptr_t)strchr},
+    {"strcmp", (void*)(intptr_t)strcmp},
+    {"strcoll", (void*)(intptr_t)strcoll},
+    {"strcpy", (void*)(intptr_t)strcpy},
+    {"strcspn", (void*)(intptr_t)strcspn},
+    {"strerror", (void*)(intptr_t)strerror},
+    {"strlen", (void*)(intptr_t)strlen},
+    {"strncat", (void*)(intptr_t)strncat},
+    {"strncmp", (void*)(intptr_t)strncmp},
+    {"strncpy", (void*)(intptr_t)strncpy},
+    {"strpbrk", (void*)(intptr_t)strpbrk},
+    {"strrchr", (void*)(intptr_t)strrchr},
+    {"strspn", (void*)(intptr_t)strspn},
+    {"strstr", (void*)(intptr_t)strstr},
+    {"strtok", (void*)(intptr_t)strtok},
+    {"strxfrm", (void*)(intptr_t)strxfrm},
     {NULL, NULL}
 };
 
@@ -491,14 +523,16 @@ int	 strxfrm(char *s1, const char *s2, int size);\n\
 
 static cod_extern_entry strings_externs[] = 
 {
-    {"bcmp", (void*)(long)bcmp},
-    {"bcopy", (void*)(long)bcopy},
-    {"bzero", (void*)(long)bzero},
-    {"index", (void*)(long)index},
-    {"rindex", (void*)(long)rindex},
-    {"ffs", (void*)(long)ffs},
-    {"strcasecmp", (void*)(long)strcasecmp},
-    {"strncasecmp", (void*)(long)strncasecmp},
+#ifndef _MSC_VER
+    {"bcmp", (void*)(intptr_t)bcmp},
+    {"bcopy", (void*)(intptr_t)bcopy},
+    {"bzero", (void*)(intptr_t)bzero},
+    {"index", (void*)(intptr_t)index},
+    {"rindex", (void*)(intptr_t)rindex},
+    {"ffs", (void*)(intptr_t)ffs},
+    {"strcasecmp", (void*)(intptr_t)strcasecmp},
+    {"strncasecmp", (void*)(intptr_t)strncasecmp},
+#endif
     {NULL, NULL}
 };
 
@@ -651,7 +685,7 @@ static void dlload_externs(char *libname, cod_extern_entry *externs);
 extern void
 cod_process_include(char *name, cod_parse_context context)
 {
-    int char_count = index(name, '.') - name;
+    intptr_t char_count = strchr(name, '.') - name;
     if (char_count < 0) char_count = strlen(name);
     if (strncmp(name, "string", char_count) == 0) {
 	cod_assoc_externs(context, string_externs);
@@ -668,7 +702,10 @@ cod_process_include(char *name, cod_parse_context context)
     }
 
 }
+#if !NO_DYNAMIC_LINKING
 #include <dlfcn.h>
+#endif
+
 static void 
 dlload_externs(char *libname, cod_extern_entry *externs)
 {

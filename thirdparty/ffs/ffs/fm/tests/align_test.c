@@ -135,9 +135,7 @@ do_test(FMStructDescList list)
 
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     if (argc > 1) {
 	if (strcmp(argv[1], "-v") == 0) {

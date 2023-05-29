@@ -57,8 +57,7 @@
 #include <assert.h>
 
 static void
-die_with_error(sig)
-int sig;
+die_with_error(int sig)
 {
     fprintf(stderr, "Format server not responding.  Timeout.\n");
     exit(1);
@@ -76,9 +75,7 @@ static int no_log = 0;
 
 extern void ffs_set_no_log(int in_no_log);
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     int i;
     int fs_port = DEFAULT_FS_PORT;

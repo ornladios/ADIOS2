@@ -24,9 +24,7 @@ extern int sleep();
 extern int (*establish_server_connection_ptr)(FMContext fmc, action_t action);
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     FMContext context = create_FMcontext();
     FMFormat ioformat = NULL;

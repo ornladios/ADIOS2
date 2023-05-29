@@ -260,9 +260,7 @@ typedef enum {
 #define combine(a,b) ((int)(a) * 10 + (int)(b))
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     FFSFile in_file = NULL, out_file = NULL;
     int buffer_size = 1024;
