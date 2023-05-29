@@ -168,7 +168,7 @@ build:crusher-cray:
     "https://api.github.com/repos/${STATUS_PROJECT}/statuses/${CI_ORIGINAL_SHA}"
     -d "{\"state\":\"${CI_JOB_NAME}\", \"context\":\"${STATUS_NAME}\",\"target_url\":\"${CI_PIPELINE_URL}\",\"description\":\"${STATUS_DESC}\"}"
   environment:
-    name: reporting-github
+    name: report-$DOWNSTREAM_COMMIT_SHA
 
 pending:
   stage: pre
