@@ -234,7 +234,7 @@ typedef struct _EVclient_sources {
 
 typedef struct _ev_handler_activation_rec {
     struct _ev_handler_activation_rec *prev;
-    pthread_t thread_id;
+    thr_thread_t thread_id;
     EVstone stone_id;
     struct _ev_handler_activation_rec *next;
 } ev_handler_activation_rec, *ev_handler_activation_ptr;
@@ -325,7 +325,7 @@ extern void REVPinit(CManager cm);
 extern int
 internal_write_event(CMConnection conn, CMFormat format, 
 		     void *remote_path_id, int path_len, event_item *event,
-		     attr_list attrs, long *event_len_p);
+		     attr_list attrs, size_t *event_len_p);
 extern EVaction
 INT_EVassoc_mutated_imm_action(CManager cm, EVstone stone, EVaction act_num,
 			       EVImmediateHandlerFunc func, void *client_data,
@@ -372,7 +372,7 @@ extern void
 INT_EVsubmit_general(EVsource source, void *data, EVFreeFunction free_func,
 		 attr_list attrs);
 extern void
-INT_EVsubmit_encoded(CManager cm, EVstone stone, void *data, int data_len, attr_list attrs);
+INT_EVsubmit_encoded(CManager cm, EVstone stone, void *data, size_t data_len, attr_list attrs);
 extern EVsource
 
 INT_EVcreate_submit_handle_free(CManager cm, EVstone stone, FMStructDescList data_format,

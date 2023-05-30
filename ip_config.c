@@ -6,11 +6,16 @@
 #ifdef HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
-#include <sys/socket.h>
 #ifdef HAVE_WINDOWS_H
-#include <winsock.h>
+#include <winsock2.h>
+#include <Ws2def.h>
+#include <ws2tcpip.h>
 #define __ANSI_CPP__
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN 50
+#endif
 #else
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
@@ -19,7 +24,9 @@
 #include <ctype.h>
 #endif
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string.h>
 #include <stdio.h>
 #ifdef STDC_HEADERS
@@ -50,7 +57,7 @@ static int ipv4_is_loopback(int addr)
 static void dump_output(int length_estimate, char *format, ...);
 
 static int
-get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *interface)
+get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *iface)
 {
     struct hostent *host = NULL;
     char hostname_buf[256];
@@ -102,30 +109,30 @@ get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *interfac
 		//	    inet_ntop(family, tmp, buf, sizeof(buf)));
 	    }
 	}
-	if (!interface) interface = getenv(IPCONFIG_ENVVAR_PREFIX "INTERFACE");
-	if (interface != NULL) {
-	    trace_func(trace_data, "CM<IP_CONFIG> searching for interface %s\n", interface);
-	    if (first_call) dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG interface %s requested\n", interface);
+	if (!iface) iface = getenv(IPCONFIG_ENVVAR_PREFIX "INTERFACE");
+	if (iface != NULL) {
+	    trace_func(trace_data, "CM<IP_CONFIG> searching for interface %s\n", iface);
+	    if (first_call) dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG interface %s requested\n", iface);
 	    for (if_addr = if_addrs; if_addr != NULL; if_addr = if_addr->ifa_next) {
 	        int family;
 		uint32_t IP;
 	        if (!if_addr->ifa_addr) continue;
 		family = if_addr->ifa_addr->sa_family;
 		if (family != AF_INET) continue;  /* currently not looking for ipv6 */
-		if (strncmp(if_addr->ifa_name, interface, strlen(interface)) != 0) continue;
+		if (strncmp(if_addr->ifa_name, iface, strlen(iface)) != 0) continue;
 		tmp = &((struct sockaddr_in *)if_addr->ifa_addr)->sin_addr;
 		trace_func(trace_data, "CM<IP_CONFIG> Interface specified, returning ->%s : %s",
 			   if_addr->ifa_name,
 			   inet_ntop(family, tmp, buf, sizeof(buf)));
 		if (first_call)
-		dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG interface %s found, using IP %s\n", interface,
+		dump_output(1023, "\t" IPCONFIG_ENVVAR_PREFIX "IP_CONFIG interface %s found, using IP %s\n", iface,
 			   inet_ntop(family, tmp, buf, sizeof(buf)));
 		IP = ntohl(*(uint32_t*)tmp);
 		free(if_addrs);
 		first_call = 0;
 		return IP;
 	    }
-	    printf("Warning!  " IPCONFIG_ENVVAR_PREFIX "INTERFACE specified as \"%s\", but no active interface by that name found\n", interface);
+	    printf("Warning!  " IPCONFIG_ENVVAR_PREFIX "INTERFACE specified as \"%s\", but no active interface by that name found\n", iface);
 	}
 	    
 	first_call = 0;
@@ -166,7 +173,7 @@ get_self_ip_iface(CMTransport_trace trace_func, void* trace_data, char *interfac
     }
 #endif	
     gethostname(hostname_buf, sizeof(hostname_buf));
-    if (index(hostname_buf, '.') != NULL) {
+    if (strchr(hostname_buf, '.') != NULL) {
 	/* don't even check for host if not fully qualified */
 	host = gethostbyname(hostname_buf);
     }
@@ -387,7 +394,7 @@ get_qual_hostname(char *buf, int len, attr_list attrs,
 	}
     }
     if (network_string != NULL) {
-	int name_len = strlen(buf) + 2 + strlen(network_string);
+	size_t name_len = strlen(buf) + 2 + strlen(network_string);
 	char *new_name_str = malloc(name_len);
 	char *first_dot = strchr(buf, '.');
 
@@ -469,13 +476,22 @@ dump_output(int length_estimate, char *format, ...)
 #endif
     vsprintf(tmp, format, ap);
     va_end(ap);
-    IP_config_output_len += strlen(tmp);
+    IP_config_output_len += (int)strlen(tmp);
     if (free_tmp) free(tmp);
 }
 
 #ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 255
 #endif
+#ifdef _MSC_VER
+static int inet_aton(const char* cp, struct in_addr* addr)
+{
+    addr->s_addr = inet_addr(cp);
+    return (addr->s_addr == INADDR_NONE) ? 0 : 1;
+}
+#endif
+
+
 extern void
 get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int *port_range_high_p, 
 	      int *use_hostname_p, attr_list attrs, CMTransport_trace trace_func, void *trace_data)
@@ -487,7 +503,7 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
     static int use_hostname = 0;
     char hostname_to_use[HOST_NAME_MAX+1];
     int IP_to_use;
-    char *interface = NULL;
+    char *iface = NULL;
 
     if (first_call) {
 	char *preferred_hostname = getenv(IPCONFIG_ENVVAR_PREFIX "HOSTNAME");
@@ -587,10 +603,10 @@ get_IP_config(char *hostname_buf, int len, int* IP_p, int *port_range_low_p, int
     }
 
 
-    if (get_string_attr(attrs, CM_IP_INTERFACE, &interface)) {
+    if (get_string_attr(attrs, CM_IP_INTERFACE, &iface)) {
 	/* don't use predetermined stuff ! */
 	get_qual_hostname(hostname_to_use, sizeof(hostname_to_use) - 1 , attrs, NULL, trace_func, trace_data);
-	IP_to_use = get_self_ip_iface(trace_func, trace_data, interface);
+	IP_to_use = get_self_ip_iface(trace_func, trace_data, iface);
     } else {
 	strcpy(hostname_to_use, determined_hostname);
 	IP_to_use = determined_IP;

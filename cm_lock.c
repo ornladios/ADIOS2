@@ -1,13 +1,11 @@
 #include "config.h"
 
-#ifndef MODULE
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#else
-#include "kernel/kcm.h"
-#include "kernel/library.h"
 #endif
+
 #include "ffs.h"
 
 #include "atl.h"

@@ -4,8 +4,10 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <stdio.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <strings.h>
+#endif
+#include <string.h>
 
 #ifdef HAVE_COD_H
 #include "cod.h"
@@ -79,15 +81,135 @@ static void free_master_msg(EVmaster_msg *msg);
 static void free_dfg_state(EVdfg_configuration state);
 
 static void free_attrs_msg(EVflush_attrs_reconfig_ptr msg);
-static FMStructDescRec EVdfg_conn_shutdown_format_list[];
-static FMStructDescRec EVdfg_deploy_ack_format_list[];
-static FMStructDescRec EVdfg_flush_attrs_reconfig_format_list[];
-static FMStructDescRec EVdfg_node_join_format_list[];
-static FMStructDescRec EVdfg_ready_format_list[];
-static FMStructDescRec EVdfg_deploy_format_list[];
-static FMStructDescRec EVdfg_deploy_ack_format_list[];
-static FMStructDescRec EVclient_shutdown_format_list[];
-static FMStructDescRec EVclient_shutdown_contribution_format_list[];
+
+static FMField EVleaf_element_flds[] = {
+    {"name", "string", sizeof(char*), FMOffset(leaf_element*, name)},
+    {"FMtype", "string", sizeof(char*), FMOffset(leaf_element*, FMtype)},
+    {NULL, NULL, 0, 0}
+};
+
+static FMField EVnode_join_msg_flds[] = {
+    {"node_name", "string", sizeof(char*), FMOffset(EVnode_join_ptr, node_name)},
+    {"contact_string", "string", sizeof(char*), FMOffset(EVnode_join_ptr, contact_string)},
+    {"source_count", "integer", sizeof(int), FMOffset(EVnode_join_ptr, source_count)},
+    {"sink_count", "integer", sizeof(int), FMOffset(EVnode_join_ptr, sink_count)},
+    {"sources", "source_element[source_count]", sizeof(leaf_element), FMOffset(EVnode_join_ptr, sources)},
+    {"sinks", "sink_element[sink_count]", sizeof(leaf_element), FMOffset(EVnode_join_ptr, sinks)},
+    {NULL, NULL, 0, 0}
+};
+
+static FMStructDescRec EVdfg_node_join_format_list[] = {
+    {"EVdfg_node_join", EVnode_join_msg_flds, sizeof(EVnode_join_msg), NULL},
+    {"sink_element", EVleaf_element_flds, sizeof(leaf_element), NULL},
+    {"source_element", EVleaf_element_flds, sizeof(leaf_element), NULL},
+    {NULL, NULL, 0, NULL}
+};
+
+static FMField EVready_msg_flds[] = {
+    {"node_id", "integer", sizeof(int), FMOffset(EVready_ptr, node_id)},
+    {NULL, NULL, 0, 0}
+};
+
+static FMStructDescRec EVdfg_ready_format_list[] = {
+    {"EVdfg_ready", EVready_msg_flds, sizeof(EVready_msg), NULL},
+    {NULL, NULL, 0, NULL}
+};
+
+static FMField EVdeploy_ack_msg_flds[] = {
+    {"node_id", "string", sizeof(char*), FMOffset(EVdeploy_ack_ptr, node_id)},
+    {NULL, NULL, 0, 0}
+};
+
+static FMStructDescRec EVdfg_deploy_ack_format_list[] = {
+    {"EVdfg_deploy_ack", EVdeploy_ack_msg_flds, sizeof(EVdeploy_ack_msg), NULL},
+    {NULL, NULL, 0, NULL}
+};
+
+static FMField EVshutdown_msg_flds[] = {
+    {"value", "integer", sizeof(int), FMOffset(EVshutdown_ptr, value)},
+    {NULL, NULL, 0, 0}
+};
+
+static FMStructDescRec EVclient_shutdown_format_list[] = {
+    {"EVclient_shutdown", EVshutdown_msg_flds, sizeof(EVshutdown_msg), NULL},
+    {NULL, NULL, 0, NULL}
+};
+
+static FMField EVshutdown_contribution_msg_flds[] = {
+    {"value", "integer", sizeof(int), FMOffset(EVshutdown_contribution_ptr, value)},
+    {NULL, NULL, 0, 0}
+};
+
+static FMStructDescRec EVclient_shutdown_contribution_format_list[] = {
+    {"EVclient_shutdown_contribution", EVshutdown_contribution_msg_flds, sizeof(EVshutdown_contribution_msg), NULL},
+    {NULL, NULL, 0, NULL}
+};
+
+static FMField EVconn_shutdown_msg_flds[] = {
+    {"stone", "integer", sizeof(int), FMOffset(EVconn_shutdown_ptr, stone)},
+    {NULL, NULL, 0, 0}
+};
+
+static FMStructDescRec EVdfg_conn_shutdown_format_list[] = {
+    {"EVdfg_conn_shutdown", EVconn_shutdown_msg_flds, sizeof(EVconn_shutdown_msg), NULL},
+    {NULL, NULL, 0, NULL}
+};
+
+static FMField EVattr_stone_flds[] = {
+    {"stone", "integer", sizeof(long), FMOffset(EVattr_stone_ptr, stone)},
+    {"attr_str", "string", sizeof(char*), FMOffset(EVattr_stone_ptr, attr_str)},
+    {NULL, NULL, 0, 0}
+};
+
+static FMField EVflush_attrs_reconfig_msg_flds[] = {
+    {"reconfig", "integer", sizeof(int), FMOffset(EVflush_attrs_reconfig_ptr, reconfig)},
+    {"count", "integer", sizeof(long), FMOffset(EVflush_attrs_reconfig_ptr, count)},
+    {"attr_stone_list", "attr_stone_element[count]", sizeof(EVattr_stone_struct), FMOffset(EVflush_attrs_reconfig_ptr, attr_stone_list)},
+    {NULL, NULL, 0, 0}
+};
+
+static FMStructDescRec EVdfg_flush_attrs_reconfig_format_list[] = {
+    {"EVflush_attrs_reconfig", EVflush_attrs_reconfig_msg_flds, sizeof(EVflush_attrs_reconfig_msg), NULL},
+    {"attr_stone_element", EVattr_stone_flds, sizeof(EVattr_stone_struct), NULL},
+    {NULL, NULL, 0, NULL}
+};
+
+static FMField EVdfg_stone_flds[] = {
+    {"global_stone_id", "integer", sizeof(int),
+     FMOffset(deploy_msg_stone, global_stone_id)},
+    {"attrs", "string", sizeof(char*),
+     FMOffset(deploy_msg_stone, attrs)},
+    {"period_secs", "integer", sizeof(int),
+     FMOffset(deploy_msg_stone, period_secs)},
+    {"period_usecs", "integer", sizeof(int),
+     FMOffset(deploy_msg_stone, period_usecs)},
+    {"out_count", "integer", sizeof(int),
+     FMOffset(deploy_msg_stone, out_count)},
+    {"out_links", "integer[out_count]", sizeof(int),
+     FMOffset(deploy_msg_stone, out_links)},
+    {"action", "string", sizeof(char*),
+     FMOffset(deploy_msg_stone, action)},
+    {"extra_actions", "integer", sizeof(int),
+     FMOffset(deploy_msg_stone, extra_actions)},
+    {"xactions", "string[extra_actions]", sizeof(char*),
+     FMOffset(deploy_msg_stone, xactions)},
+    {NULL, NULL, 0, 0}
+};
+
+static FMField EVdfg_deploy_msg_flds[] = {
+    {"canonical_name", "string", sizeof(char*),
+     FMOffset(EVdfg_deploy_ptr, canonical_name)},
+    {"stone_count", "integer", sizeof(int),
+     FMOffset(EVdfg_deploy_ptr, stone_count)},
+    {"stone_list", "EVdfg_deploy_stone[stone_count]", sizeof(struct _EVdfg_msg_stone), FMOffset(EVdfg_deploy_ptr, stone_list)},
+    {NULL, NULL, 0, 0}
+};
+
+static FMStructDescRec EVdfg_deploy_format_list[] = {
+    {"EVdfg_deploy", EVdfg_deploy_msg_flds, sizeof(EVdfg_deploy_msg), NULL},
+    {"EVdfg_deploy_stone", EVdfg_stone_flds, sizeof(struct _EVdfg_msg_stone), NULL},
+    {NULL, NULL, 0, NULL}
+};
 
 
 /* msg action model
@@ -176,9 +298,10 @@ EVdfg_stone
 INT_EVdfg_create_source_stone(EVdfg dfg, char *source_name)
 {
     EVdfg_stone tmp;
-    int len = strlen(source_name) + strlen("source:");
+    size_t len = strlen(source_name) + strlen("source:");
     char *act = malloc(len + 1);
-    strcpy(stpcpy(&act[0], "source:"), source_name);
+    strcpy(&act[0], "source:");
+    strcat(&act[0], source_name);
     tmp = INT_EVdfg_create_stone(dfg, &act[0]);
     free(act);
     return tmp;
@@ -187,9 +310,10 @@ INT_EVdfg_create_source_stone(EVdfg dfg, char *source_name)
 extern void 
 INT_EVdfg_add_sink_action(EVdfg_stone stone, char *sink_name)
 {
-    int len = strlen(sink_name) + strlen("sink:");
+    size_t len = strlen(sink_name) + strlen("sink:");
     char *act = malloc(len + 1);
-    strcpy(stpcpy(&act[0], "sink:"), sink_name);
+    strcpy(&act[0], "sink:");
+    strcat(&act[0], sink_name);
     INT_EVdfg_add_action(stone, &act[0]);
     free(act);
 }
@@ -198,9 +322,10 @@ EVdfg_stone
 INT_EVdfg_create_sink_stone(EVdfg dfg, char *sink_name)
 {
     EVdfg_stone tmp;
-    int len = strlen(sink_name) + strlen("sink:");
+    size_t len = strlen(sink_name) + strlen("sink:");
     char *act = malloc(len + 1);
-    strcpy(stpcpy(&act[0], "sink:"), sink_name);
+    strcpy(&act[0], "sink:");
+    strcat(&act[0], sink_name);
     tmp = INT_EVdfg_create_stone(dfg, &act[0]);
     free(act);
     return tmp;
@@ -1636,6 +1761,7 @@ INT_EVclient_ready_wait(EVclient client)
     client->ready_condition = -1;
     CMtrace_out(client->cm, EVdfgVerbose, "DFG %p ready wait released\n", client);
     return 1;
+
 }
 
 extern int
@@ -1835,8 +1961,8 @@ dfg_assoc_client(CManager cm, char* node_name, char *master_contact, EVmaster ma
 	fprintf(stderr, "Only one call to EVclient_assoc() or EVclient_assoc_local() per CManager allowed.\n");
 	return NULL;
     }
-    dfg_extern_map[0].extern_value = (void*)(long)cod_EVdfg_trigger_reconfig;
-    dfg_extern_map[1].extern_value = (void*)(long)cod_EVdfg_flush_attrs;
+    dfg_extern_map[0].extern_value = (void*)(intptr_t)cod_EVdfg_trigger_reconfig;
+    dfg_extern_map[1].extern_value = (void*)(intptr_t)cod_EVdfg_flush_attrs;
 
     INT_EVadd_standard_routines(cm, dfg_extern_string, dfg_extern_map);
 
@@ -2769,132 +2895,3 @@ check_all_nodes_registered(EVmaster master)
     dfg->deployed_stone_count = dfg->stone_count;
     master->old_node_count = master->node_count;
 }
-
-static FMField EVleaf_element_flds[] = {
-    {"name", "string", sizeof(char*), FMOffset(leaf_element*, name)},
-    {"FMtype", "string", sizeof(char*), FMOffset(leaf_element*, FMtype)},
-    {NULL, NULL, 0, 0}
-};
-
-static FMField EVnode_join_msg_flds[] = {
-    {"node_name", "string", sizeof(char*), FMOffset(EVnode_join_ptr, node_name)},
-    {"contact_string", "string", sizeof(char*), FMOffset(EVnode_join_ptr, contact_string)},
-    {"source_count", "integer", sizeof(int), FMOffset(EVnode_join_ptr, source_count)},
-    {"sink_count", "integer", sizeof(int), FMOffset(EVnode_join_ptr, sink_count)},
-    {"sources", "source_element[source_count]", sizeof(leaf_element), FMOffset(EVnode_join_ptr, sources)},
-    {"sinks", "sink_element[sink_count]", sizeof(leaf_element), FMOffset(EVnode_join_ptr, sinks)},
-    {NULL, NULL, 0, 0}
-};
-
-static FMStructDescRec EVdfg_node_join_format_list[] = {
-    {"EVdfg_node_join", EVnode_join_msg_flds, sizeof(EVnode_join_msg), NULL},
-    {"sink_element", EVleaf_element_flds, sizeof(leaf_element), NULL},
-    {"source_element", EVleaf_element_flds, sizeof(leaf_element), NULL},
-    {NULL, NULL, 0, NULL}
-};
-
-static FMField EVready_msg_flds[] = {
-    {"node_id", "integer", sizeof(int), FMOffset(EVready_ptr, node_id)},
-    {NULL, NULL, 0, 0}
-};
-
-static FMStructDescRec EVdfg_ready_format_list[] = {
-    {"EVdfg_ready", EVready_msg_flds, sizeof(EVready_msg), NULL},
-    {NULL, NULL, 0, NULL}
-};
-
-static FMField EVdeploy_ack_msg_flds[] = {
-    {"node_id", "string", sizeof(char*), FMOffset(EVdeploy_ack_ptr, node_id)},
-    {NULL, NULL, 0, 0}
-};
-
-static FMStructDescRec EVdfg_deploy_ack_format_list[] = {
-    {"EVdfg_deploy_ack", EVdeploy_ack_msg_flds, sizeof(EVdeploy_ack_msg), NULL},
-    {NULL, NULL, 0, NULL}
-};
-
-static FMField EVshutdown_msg_flds[] = {
-    {"value", "integer", sizeof(int), FMOffset(EVshutdown_ptr, value)},
-    {NULL, NULL, 0, 0}
-};
-
-static FMStructDescRec EVclient_shutdown_format_list[] = {
-    {"EVclient_shutdown", EVshutdown_msg_flds, sizeof(EVshutdown_msg), NULL},
-    {NULL, NULL, 0, NULL}
-};
-
-static FMField EVshutdown_contribution_msg_flds[] = {
-    {"value", "integer", sizeof(int), FMOffset(EVshutdown_contribution_ptr, value)},
-    {NULL, NULL, 0, 0}
-};
-
-static FMStructDescRec EVclient_shutdown_contribution_format_list[] = {
-    {"EVclient_shutdown_contribution", EVshutdown_contribution_msg_flds, sizeof(EVshutdown_contribution_msg), NULL},
-    {NULL, NULL, 0, NULL}
-};
-
-static FMField EVconn_shutdown_msg_flds[] = {
-    {"stone", "integer", sizeof(int), FMOffset(EVconn_shutdown_ptr, stone)},
-    {NULL, NULL, 0, 0}
-};
-
-static FMStructDescRec EVdfg_conn_shutdown_format_list[] = {
-    {"EVdfg_conn_shutdown", EVconn_shutdown_msg_flds, sizeof(EVconn_shutdown_msg), NULL},
-    {NULL, NULL, 0, NULL}
-};
-
-static FMField EVattr_stone_flds[] = {
-    {"stone", "integer", sizeof(long), FMOffset(EVattr_stone_ptr, stone)},
-    {"attr_str", "string", sizeof(char*), FMOffset(EVattr_stone_ptr, attr_str)},
-    {NULL, NULL, 0, 0}
-};
-
-static FMField EVflush_attrs_reconfig_msg_flds[] = {
-    {"reconfig", "integer", sizeof(int), FMOffset(EVflush_attrs_reconfig_ptr, reconfig)},
-    {"count", "integer", sizeof(long), FMOffset(EVflush_attrs_reconfig_ptr, count)},
-    {"attr_stone_list", "attr_stone_element[count]", sizeof(EVattr_stone_struct), FMOffset(EVflush_attrs_reconfig_ptr, attr_stone_list)},
-    {NULL, NULL, 0, 0}
-};
-
-static FMStructDescRec EVdfg_flush_attrs_reconfig_format_list[] = {
-    {"EVflush_attrs_reconfig", EVflush_attrs_reconfig_msg_flds, sizeof(EVflush_attrs_reconfig_msg), NULL},
-    {"attr_stone_element", EVattr_stone_flds, sizeof(EVattr_stone_struct), NULL},
-    {NULL, NULL, 0, NULL}
-};
-
-static FMField EVdfg_stone_flds[] = {
-    {"global_stone_id", "integer", sizeof(int), 
-     FMOffset(deploy_msg_stone, global_stone_id)},
-    {"attrs", "string", sizeof(char*), 
-     FMOffset(deploy_msg_stone, attrs)},
-    {"period_secs", "integer", sizeof(int),
-     FMOffset(deploy_msg_stone, period_secs)},
-    {"period_usecs", "integer", sizeof(int),
-     FMOffset(deploy_msg_stone, period_usecs)},
-    {"out_count", "integer", sizeof(int), 
-     FMOffset(deploy_msg_stone, out_count)},
-    {"out_links", "integer[out_count]", sizeof(int), 
-     FMOffset(deploy_msg_stone, out_links)},
-    {"action", "string", sizeof(char*), 
-     FMOffset(deploy_msg_stone, action)},
-    {"extra_actions", "integer", sizeof(int), 
-     FMOffset(deploy_msg_stone, extra_actions)},
-    {"xactions", "string[extra_actions]", sizeof(char*), 
-     FMOffset(deploy_msg_stone, xactions)},
-    {NULL, NULL, 0, 0}
-};
-
-static FMField EVdfg_deploy_msg_flds[] = {
-    {"canonical_name", "string", sizeof(char*),
-     FMOffset(EVdfg_deploy_ptr, canonical_name)},
-    {"stone_count", "integer", sizeof(int),
-     FMOffset(EVdfg_deploy_ptr, stone_count)},
-    {"stone_list", "EVdfg_deploy_stone[stone_count]", sizeof(struct _EVdfg_msg_stone), FMOffset(EVdfg_deploy_ptr, stone_list)},
-    {NULL, NULL, 0, 0}
-};
-
-static FMStructDescRec EVdfg_deploy_format_list[] = {
-    {"EVdfg_deploy", EVdfg_deploy_msg_flds, sizeof(EVdfg_deploy_msg), NULL},
-    {"EVdfg_deploy_stone", EVdfg_stone_flds, sizeof(struct _EVdfg_msg_stone), NULL},
-    {NULL, NULL, 0, NULL}
-};

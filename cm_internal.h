@@ -1,7 +1,7 @@
 #ifndef __I_O__
 #include <ffs.h>
 #endif
-#ifndef _SYS_TIME_H
+#ifdef HAVE_SYS_TIME_H
 #include "sys/time.h"
 #endif
 #ifndef _CM_SCHEDULE_H
@@ -11,6 +11,7 @@
 #include "config.h"
 #endif
 
+#ifndef _MSC_VER
 #include <pthread.h>
 #define thr_mutex_t pthread_mutex_t
 #define thr_thread_t pthread_t
@@ -18,7 +19,7 @@
 #define thr_thread_self() pthread_self()
 #define thr_thread_exit(status) pthread_exit(status);
 #define thr_thread_detach(thread) pthread_detach(thread);
-#define thr_thread_yield() pthread_yield();
+#define thr_thread_yield() sched_yield()
 #define thr_thread_join(t, s) pthread_join(t, s)
 #define thr_mutex_init(m) pthread_mutex_init(&m, NULL);
 #define thr_mutex_lock(m) pthread_mutex_lock(&m);
@@ -29,6 +30,29 @@
 #define thr_condition_signal(c) pthread_cond_signal(&c);
 #define thr_condition_broadcast(c) pthread_cond_broadcast(&c);
 #define thr_condition_free(c) pthread_cond_destroy(&c);
+#define thr_thread_create(w,x,y,z) pthread_create(w,x,y,z);
+#else
+//#include <mutex>
+#include <Windows.h>
+#define thr_mutex_t HANDLE
+#define thr_thread_t DWORD
+#define thr_condition_t HANDLE
+#define thr_thread_create(w,x,y,z) 0
+#define thr_thread_self() GetCurrentThreadId()
+#define thr_thread_exit(status) 
+#define thr_thread_detach(thread) 
+#define thr_thread_yield() 
+#define thr_thread_join(t, s)
+#define thr_mutex_init(m) 
+#define thr_mutex_lock(m)
+#define thr_mutex_unlock(m)
+#define thr_mutex_free(m)
+#define thr_condition_init(c)
+#define thr_condition_wait(c, m)
+#define thr_condition_signal(c)
+#define thr_condition_broadcast(c) 
+#define thr_condition_free(c) 
+#endif
 
 #include <ev_internal.h>
 
@@ -221,9 +245,9 @@ typedef struct _CMControlList {
 
 struct queued_data_rec {
     char rem_header[32];
-    int rem_header_len;
+    size_t rem_header_len;
     char *rem_attr_base;
-    int rem_attr_len;
+    size_t rem_attr_len;
     FFSEncodeVector vector_data;
     CMbuffer buffer_to_free;
 };
@@ -267,14 +291,14 @@ struct _CMConnection {
 
     CMCloseHandlerList close_list;
 
-    int write_callback_len;
+    size_t write_callback_len;
     CMConnHandlerList write_callbacks;
     AttrBuffer attr_encode_buffer;
 
     char header_buffer[HEADER_BUFFER_SIZE];		/* holds data until we know final size */
     CMbuffer message_buffer;    /* final destination of buffer */
-    long buffer_full_point;	/* data required for buffer to be full */
-    long buffer_data_end;	/* last point with valid data in buffer */
+    size_t buffer_full_point;	/* data required for buffer to be full */
+    size_t buffer_data_end;	/* last point with valid data in buffer */
 
     attr_list characteristics;
     chr_time bandwidth_start_time;
@@ -335,14 +359,14 @@ extern void CMtransport_trace(CManager cm, const char *format, ...);
 extern void CMtransport_verbose(CManager cm, CMTraceType trace, const char *format, ...);
 
 extern void
-CM_fd_add_select(CManager cm, int fd, select_list_func handler_func,
+CM_fd_add_select(CManager cm, SOCKET fd, select_list_func handler_func,
 		       void *param1, void *param2);
 
 extern void
-CM_fd_write_select(CManager cm, int fd, select_list_func handler_func,
+CM_fd_write_select(CManager cm, SOCKET fd, select_list_func handler_func,
 			 void *param1, void *param2);
 
-extern void CM_fd_remove_select(CManager cm, int fd);
+extern void CM_fd_remove_select(CManager cm, SOCKET fd);
 
 extern CMConnection
 CMConnection_create(transport_entry trans, void *transport_data,
@@ -379,7 +403,7 @@ internal_add_shutdown_task(CManager cm, CMPollFunc func, void *client_data, int 
 extern void
 internal_cm_network_submit(CManager cm, CMbuffer cm_data_buf, 
 			   attr_list attrs, CMConnection conn, 
-			   void *buffer, int length, int stone_id);
+			   void *buffer, size_t length, int stone_id);
 #define CMcreate_attr_list(cm) CMint_create_attr_list(cm, __FILE__, __LINE__)
 #define INT_CMfree_attr_list(cm, l) CMint_free_attr_list(cm, l, __FILE__, __LINE__)
 #define CMadd_ref_attr_list(cm, l) CMint_add_ref_attr_list(cm, l, __FILE__, __LINE__)
@@ -394,8 +418,10 @@ extern attr_list CMint_attr_copy_list(CManager cm, attr_list l, char *file, int 
 extern void CMint_attr_merge_lists(CManager cm, attr_list l1, attr_list l2, 
 					char *file, int line);
 extern attr_list CMint_decode_attr_from_xmit(CManager cm, void * buf, char *file, int line);
-extern void* INT_CMrealloc(void *ptr, int size);
-extern void* INT_CMmalloc(int size);
+extern void* INT_CMrealloc(void *ptr, size_t size);
+extern void* INT_CMmalloc(size_t size);
+#define malloc(x) INT_CMmalloc(x)
+#define realloc(ptr, size) INT_CMrealloc(ptr, size)
 extern void INT_CMfree(void *ptr);
 extern void INT_CMadd_shutdown_task(CManager cm, CMPollFunc func, void *client_data, int task_type);
 extern void INT_CManager_close(CManager cm);
@@ -479,7 +505,7 @@ INT_CMregister_write_callback(CMConnection conn,
 				CMWriteCallbackFunc handler,
 				void *client_data);
 extern void
-INT_CMunregister_write_callback(CMConnection conn, int id);
+INT_CMunregister_write_callback(CMConnection conn, SOCKET id);
 extern void
 INT_CMadd_poll(CManager cm, CMPollFunc func, void *client_data);
 extern void
@@ -531,7 +557,7 @@ INT_CMprobe_bandwidth(CMConnection conn, long size, attr_list attrs);
 extern int INT_CMConnection_write_would_block(CMConnection conn);
 extern void INT_CMusleep(CManager cm, int usecs);
 extern void INT_CM_insert_contact_info(CManager cm, attr_list attrs);
-extern void INT_CM_fd_add_select(CManager cm, int fd, select_func handler_func, void *param1, void *param2);
+extern void INT_CM_fd_add_select(CManager cm, SOCKET fd, select_func handler_func, void *param1, void *param2);
 extern void INT_CMstart_read_thread(CMConnection conn);
 extern void INT_EVadd_standard_routines(CManager cm, char *extern_string, cod_extern_entry *externs);
 extern void INT_EVadd_standard_structs(CManager cm, FMStructDescList *lists);
@@ -543,6 +569,21 @@ extern int CMtrace_PID;
 extern int CMtrace_init(CManager cm, CMTraceType t);
 extern void INT_CMTrace_file_id(int ID);
 #define CMtrace_on(cm, trace_type)  ((cm->CMTrace_file == NULL) ? CMtrace_init(cm, trace_type) : CMtrace_val[trace_type])
+#ifdef _MSC_VER
+#define getpid() _getpid()
+#include <process.h>
+#include <time.h>
+#define CLOCK_MONOTONIC 1
+static int clock_gettime(int cl, struct timespec* spec)
+{
+    __int64 wintime; GetSystemTimeAsFileTime((FILETIME*)&wintime);
+    wintime -= 116444736000000000i64;  //1jan1601 to 1jan1970
+    spec->tv_sec = (long)(wintime / 10000000i64);           //seconds
+    spec->tv_nsec = wintime % 10000000i64 * 100;      //nano-seconds
+    return 0;
+}
+#define HAVE_CLOCK_GETTIME
+#endif
 #ifdef HAVE_CLOCK_GETTIME
 #define TRACE_TIME_DECL struct timespec ts
 #define TRACE_TIME_GET clock_gettime(CLOCK_MONOTONIC, &ts)
@@ -552,15 +593,16 @@ extern void INT_CMTrace_file_id(int ID);
 #define TRACE_TIME_GET gettimeofday(&tv, NULL)
 #define TRACE_TIME_PRINTDETAILS "%lld.%.6ld - ", (long long)tv.tv_sec, (long)tv.tv_usec
 #endif
+
 #define CMtrace_out(cm, trace_type, ...) {TRACE_TIME_DECL ; (CMtrace_on(cm,trace_type) ? (CMtrace_PID ? fprintf(cm->CMTrace_file, "P%lxT%lx - ", (long) getpid(), (long)thr_thread_self()) : 0) , CMtrace_timing? TRACE_TIME_GET,fprintf(cm->CMTrace_file, TRACE_TIME_PRINTDETAILS):0, fprintf(cm->CMTrace_file, __VA_ARGS__) : 0);fflush(cm->CMTrace_file);}
-extern void CMdo_performance_response(CMConnection conn, long length, int func,
+extern void CMdo_performance_response(CMConnection conn, size_t length, int func,
 				      int byte_swap, char *buffer);
 extern int
 INT_CMwrite_raw(CMConnection conn, FFSEncodeVector full_vec, FFSEncodeVector data_vec,
-                long vec_count, long byte_count, attr_list attrs, int data_vec_stack);
+                long vec_count, size_t byte_count, attr_list attrs, int data_vec_stack);
 int
 INT_CMwrite_raw_notify(CMConnection conn, FFSEncodeVector full_vec, FFSEncodeVector data_vec,
-		       long vec_count, long byte_count, attr_list attrs, int data_vec_stack,
+		       long vec_count, size_t byte_count, attr_list attrs, int data_vec_stack,
 		       CMcompletion_notify_func notify_func, void *notify_client_data);
 extern void
 INT_CMConnection_dereference(CMConnection conn);

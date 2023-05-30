@@ -8,13 +8,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
 #include "evpath.h"
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
+#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
 #else
 #include <sys/wait.h>
 #endif
@@ -145,7 +148,7 @@ simple_handler(CManager cm, void *vevent, void *client_data, attr_list attrs)
 static FFSContext c = NULL;
 
 static int
-raw_handler(CManager cm, void *vevent, int len, void *client_data,
+raw_handler(CManager cm, void *vevent, size_t len, void *client_data,
 	    attr_list attrs)
 {
     FFSTypeHandle f;
@@ -290,7 +293,7 @@ do_regression_master_test()
     srand48(1);
 
     handle = EValloc_stone(cm);
-    EVassoc_raw_terminal_action(cm, handle, raw_handler, &message_count);
+    EVassoc_raw_terminal_action(cm, handle, (EVRawHandlerFunc) raw_handler, &message_count);
     
     /* do a local test */
     generate_record(&data);

@@ -3,10 +3,11 @@
 #include <sys/types.h>
 
 #ifdef HAVE_WINDOWS_H
+#include <winsock2.h>
 #include <windows.h>
-#include <winsock.h>
 #include <sys/timeb.h>
 #define getpid()	_getpid()
+#define close(x) closesocket(x)
 #else
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -52,12 +53,40 @@
 #include <atl.h>
 #include "evpath.h"
 #include "cm_transport.h"
+#include "cm_internal.h"
 #include "ev_select.h"
+#ifdef HAVE_PTHREAD_H
 #include <pthread.h>
+#endif
+#ifdef HAVE_SCHED_H
 #include <sched.h>
-#define thr_thread_t pthread_t
-#define thr_thread_self() pthread_self()
-#define thr_thread_yield() sched_yield()
+#endif
+#undef realloc
+#undef malloc
+
+extern void*
+select_realloc(void* ptr, size_t size)
+{
+    void* tmp = realloc(ptr, size);
+    if ((tmp == 0) && (size != 0)) {
+	printf("Realloc failed on ptr %p, size %zd\n", ptr, size);
+	perror("realloc");
+    }
+    return tmp;
+}
+
+extern void*
+select_malloc(size_t size)
+{
+    void* tmp = malloc(size);
+    if ((tmp == 0) && (size != 0)) {
+	printf("Malloc failed on size %zd\n", size);
+	perror("malloc");
+    }
+    return tmp;
+}
+#define realloc(ptr, size) select_realloc(ptr, size)
+#define malloc(size) select_malloc(size)
 
 #ifndef SOCKET_ERROR
 #define SOCKET_ERROR -1
@@ -107,14 +136,13 @@ static WORD wVersionRequested = MAKEWORD(1, 1);
 static WSADATA wsaData;
 int nErrorStatus;
 static char*WSAerror_str(int err);
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
+#endif
 #endif
 
 static void
-init_select_data(svc, sdp, cm)
-CMtrans_services svc;
-select_data_ptr *sdp;
-CManager cm;
+init_select_data(CMtrans_services svc, select_data_ptr *sdp, CManager cm)
 {
     select_data_ptr sd = malloc(sizeof(struct select_data));
     *sdp = sd;
@@ -122,7 +150,7 @@ CManager cm;
     EVPATH_FD_ZERO((fd_set *) sd->fdset);
     sd->write_set = svc->malloc_func(sizeof(fd_set));
     EVPATH_FD_ZERO((fd_set *) sd->write_set);
-    sd->server_thread =  (thr_thread_t) NULL;
+    sd->server_thread =  (thr_thread_t)(intptr_t) NULL;
     sd->closed = 0;
     sd->sel_item_max = 0;
     sd->select_items = (FunctionListElement *) svc->malloc_func(sizeof(FunctionListElement));
@@ -157,9 +185,7 @@ typedef struct _periodic_task {
 } task_handle_s;
 
 static void
-free_select_data(svc, sdp)
-CMtrans_services svc;
-select_data_ptr *sdp;
+free_select_data(CMtrans_services svc, select_data_ptr *sdp)
 {
     periodic_task_handle tasks;
     select_data_ptr sd = *sdp;
@@ -186,10 +212,7 @@ select_data_ptr *sdp;
 	((tvp)->tv_usec cmp (uvp)->tv_usec))))
 
 static void
-set_soonest_timeout(timeout, task_list, now)
-struct timeval *timeout;
-periodic_task_handle task_list;
-struct timeval now;
+set_soonest_timeout(struct timeval *timeout, periodic_task_handle task_list, struct timeval now)
 {
     struct timeval this_delay;
     if (task_list == NULL) return;
@@ -212,10 +235,7 @@ struct timeval now;
 }
 
 static void
-increment_time(time, increment_sec, increment_usec)
-struct timeval *time;
-int increment_sec;
-int increment_usec;
+increment_time(struct timeval *time, int increment_sec, int increment_usec)
 {
     time->tv_usec += increment_usec;
     time->tv_sec += increment_sec;
@@ -229,11 +249,7 @@ static void
 shutdown_wake_mechanism(select_data_ptr sd);
 
 static void
-socket_select(svc, sd, timeout_sec, timeout_usec)
-CMtrans_services svc;
-select_data_ptr sd;
-int timeout_sec;
-int timeout_usec;
+socket_select(CMtrans_services svc, select_data_ptr sd, int timeout_sec, int timeout_usec)
 {
     int i, res;
     fd_set rd_set, wr_set;
@@ -241,7 +257,7 @@ int timeout_usec;
     int tmp_select_consistency_number = sd->select_consistency_number;
 
     if (sd->closed) {
-	sd->server_thread =  (thr_thread_t) NULL; 
+	sd->server_thread =  (thr_thread_t)(intptr_t) NULL; 
 	return;
     }
 
@@ -249,7 +265,7 @@ int timeout_usec;
 	/* assert CM is locked */
 	assert(CM_LOCKED(svc, sd->cm));
     }
-    if (sd->server_thread ==  (thr_thread_t) NULL) {
+    if (sd->server_thread ==  (thr_thread_t)(intptr_t) NULL) {
 	/* no server thread set, must be this one */
 	sd->server_thread = thr_thread_self();
     }
@@ -272,7 +288,7 @@ int timeout_usec;
 	 */
 	struct _timeb nowb;
 	_ftime(&nowb);
-	now.tv_sec = nowb.time;
+	now.tv_sec = (long)nowb.time;
 	now.tv_usec = nowb.millitm * 1000;
 #endif
 	if (timeout_usec >= 1000000) {
@@ -302,7 +318,7 @@ int timeout_usec;
 	ACQUIRE_CM_LOCK(svc, sd->cm);
     }
     if (sd->closed) {
-	sd->server_thread =  (thr_thread_t) NULL; 
+	sd->server_thread =  (thr_thread_t)(intptr_t) NULL; 
 	return;
     }
 #ifndef HAVE_WINDOWS_H
@@ -380,7 +396,7 @@ int timeout_usec;
 	if (errno_val == WSAEINTR || errno_val == WSAEINVAL) {
 	    return;
 	} else {
-	    fprintf(stderr, "select failed, errno %d\n", 
+	    fprintf(stderr, "select failed, errno %s\n", 
 		    WSAerror_str(errno_val));
 	}
 	return;
@@ -421,7 +437,7 @@ int timeout_usec;
     if (res != 0) {
 	for (i = 0; i <= sd->sel_item_max; i++) {
 	    if (sd->closed) {
-		sd->server_thread =  (thr_thread_t) NULL; 
+		sd->server_thread = (thr_thread_t)(intptr_t) NULL;
 		return;
 	    }
 	    if (FD_ISSET(i, &wr_set)) {
@@ -468,7 +484,7 @@ int timeout_usec;
 	 */
 	struct _timeb nowb;
 	_ftime(&nowb);
-	now.tv_sec = nowb.time;
+	now.tv_sec = (long) nowb.time;
 	now.tv_usec = nowb.millitm * 1000;
 #endif
 	while (this_periodic_task != NULL ) {
@@ -509,13 +525,7 @@ int timeout_usec;
 }
 
 extern void
-libcmselect_LTX_add_select(svc, sdp, fd, func, arg1, arg2)
-CMtrans_services svc;
-select_data_ptr *sdp;
-int fd;
-select_list_func func;
-void *arg1;
-void *arg2;
+libcmselect_LTX_add_select(CMtrans_services svc, select_data_ptr *sdp, int fd, select_list_func func, void *arg1, void *arg2)
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
     if (sd->cm) {
@@ -567,13 +577,7 @@ void *arg2;
 }
 
 extern void
-libcmselect_LTX_write_select(svc, sdp, fd, func, arg1, arg2)
-CMtrans_services svc;
-select_data_ptr *sdp;
-int fd;
-select_list_func func;
-void *arg1;
-void *arg2;
+libcmselect_LTX_write_select(CMtrans_services svc, select_data_ptr *sdp, int fd, select_list_func func, void *arg1, void *arg2)
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
     if (sd == NULL) {
@@ -630,15 +634,7 @@ void *arg2;
 }
 
 extern periodic_task_handle
-libcmselect_LTX_add_periodic(svc, sdp, interval_sec, interval_usec,
-			     func, arg1, arg2)
-CMtrans_services svc;
-select_data_ptr *sdp;
-int interval_sec;
-int interval_usec;
-select_list_func func;
-void *arg1;
-void *arg2;
+libcmselect_LTX_add_periodic(CMtrans_services svc, select_data_ptr *sdp, int interval_sec, int interval_usec, select_list_func func, void *arg1, void *arg2)
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
     periodic_task_handle handle = malloc(sizeof(struct _periodic_task));
@@ -663,7 +659,7 @@ void *arg2;
     {
 	struct _timeb nowb;
 	_ftime(&nowb);
-	handle->next_time.tv_sec = nowb.time;
+	handle->next_time.tv_sec = (long)nowb.time;
 	handle->next_time.tv_usec = nowb.millitm * 1000;
     }
 #endif
@@ -685,15 +681,7 @@ void *arg2;
 
 
 extern periodic_task_handle
-libcmselect_LTX_add_delayed_task(svc, sdp, delay_sec, delay_usec, 
-				 func, arg1, arg2)
-CMtrans_services svc;
-select_data_ptr *sdp;
-int delay_sec;
-int delay_usec;
-select_list_func func;
-void *arg1;
-void *arg2;
+libcmselect_LTX_add_delayed_task(CMtrans_services svc, select_data_ptr *sdp, int delay_sec, int delay_usec, select_list_func func, void *arg1, void *arg2)
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
     periodic_task_handle handle = malloc(sizeof(struct _periodic_task));
@@ -718,8 +706,8 @@ void *arg2;
 	 */
 	struct _timeb nowb;
 	_ftime(&nowb);
-	handle->next_time.tv_sec = nowb.time;
-	handle->next_time.tv_usec = nowb.millitm * 1000;
+	handle->next_time.tv_sec = (long)nowb.time;
+	handle->next_time.tv_usec = (long)(nowb.millitm * 1000);
     }
 #endif
     increment_time(&handle->next_time, delay_sec, delay_usec);
@@ -739,9 +727,7 @@ void *arg2;
 }
 
 static int
-remove_periodic_task(sd, handle)
-select_data_ptr sd;
-periodic_task_handle handle;
+remove_periodic_task(select_data_ptr sd, periodic_task_handle handle)
 {
     periodic_task_handle list, last = NULL;
     list = sd->periodic_task_list;
@@ -779,10 +765,7 @@ periodic_task_handle handle;
 
 
 extern void
-libcmselect_LTX_remove_periodic(svc, sdp, handle)
-CMtrans_services svc;
-select_data_ptr *sdp;
-periodic_task_handle handle;
+libcmselect_LTX_remove_periodic(CMtrans_services svc, select_data_ptr *sdp, periodic_task_handle handle)
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
     if (sd == NULL) return;
@@ -792,10 +775,7 @@ periodic_task_handle handle;
 }
 
 extern void
-libcmselect_LTX_remove_select(svc, sdp, fd)
-CMtrans_services svc;
-select_data_ptr *sdp;
-int fd;
+libcmselect_LTX_remove_select(CMtrans_services svc, select_data_ptr *sdp, int fd)
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
     if (sd == NULL) {
@@ -811,8 +791,7 @@ int fd;
 }
 
 static void
-shutdown_wake_mechanism(sd)
-select_data_ptr sd;
+shutdown_wake_mechanism(select_data_ptr sd)
 {
     if (sd->wake_read_fd == -1) return;
     close(sd->wake_read_fd);
@@ -820,12 +799,10 @@ select_data_ptr sd;
     sd->wake_read_fd = sd->wake_write_fd = -1;
 }
 
-static void read_wake_fd(fd_as_ptr, junk)
-void *fd_as_ptr;
-void *junk;
+static void read_wake_fd(void *fd_as_ptr, void *junk)
 {
     char buffer;
-    int fd = (int) (long)fd_as_ptr;
+    SOCKET fd = (SOCKET) (intptr_t)fd_as_ptr;
 #ifdef HAVE_WINDOWS_H
     recv(fd, &buffer, 1, 0);
 #else
@@ -901,13 +878,13 @@ int err;
 
 int
 pipe(filedes)
-int filedes[2];
+SOCKET filedes[2];
 {
     
     int length;
     struct sockaddr_in sock_addr;
     int sock_opt_val = 1;
-    int sock1, sock2, conn_sock;
+    SOCKET sock1, sock2, conn_sock;
     unsigned long block = TRUE;
     int delay_value = 1;
    
@@ -989,9 +966,7 @@ int filedes[2];
 #endif
 
 static void
-setup_wake_mechanism(svc, sdp)
-CMtrans_services svc;
-select_data_ptr *sdp;
+setup_wake_mechanism(CMtrans_services svc, select_data_ptr *sdp)
 {
     int filedes[2];
 
@@ -1010,13 +985,11 @@ select_data_ptr *sdp;
     svc->verbose(sd->cm, CMSelectVerbose, "CMSelect Adding read_wake_fd as action on fd %d",
 		   sd->wake_read_fd);
     libcmselect_LTX_add_select(svc, sdp, sd->wake_read_fd, read_wake_fd, 
-			       (void*)(long)sd->wake_read_fd, NULL);
+			       (void*)(intptr_t)sd->wake_read_fd, NULL);
 }
 
 extern void
-libcmselect_LTX_wake_function(svc, sdp)
-CMtrans_services svc;
-select_data_ptr *sdp;
+libcmselect_LTX_wake_function(CMtrans_services svc, select_data_ptr *sdp)
 {
     if (*sdp != NULL) {
 	wake_server_thread(*sdp);
@@ -1024,8 +997,7 @@ select_data_ptr *sdp;
 }
 
 static void
-wake_server_thread(sd)
-select_data_ptr sd;
+wake_server_thread(select_data_ptr sd)
 {
     static char buffer = 'W';  /* doesn't matter what we write */
     if (sd->wake_write_fd != -1) {
@@ -1040,9 +1012,7 @@ select_data_ptr sd;
 }
 
 extern void
-libcmselect_LTX_blocking_function(svc, client_data)
-CMtrans_services svc;
-void *client_data;
+libcmselect_LTX_blocking_function(CMtrans_services svc, void *client_data)
 {
     select_data_ptr sd = *((select_data_ptr *)client_data);
     if (sd == NULL) {
@@ -1057,9 +1027,7 @@ void *client_data;
 }
 
 extern void
-libcmselect_LTX_polling_function(svc, client_data)
-CMtrans_services svc;
-void *client_data;
+libcmselect_LTX_polling_function(CMtrans_services svc, void *client_data)
 {
     select_data_ptr sd = *((select_data_ptr *)client_data);
     if (sd == NULL) {
@@ -1074,10 +1042,7 @@ void *client_data;
 }
 
 extern void
-libcmselect_LTX_select_initialize(svc, cm, client_data)
-CMtrans_services svc;
-CManager cm;
-void *client_data;
+libcmselect_LTX_select_initialize(CMtrans_services svc, CManager cm, void *client_data)
 {
     if (*((select_data_ptr *)client_data) == NULL) {
 	init_select_data(svc, (select_data_ptr*)client_data, cm);
@@ -1085,10 +1050,7 @@ void *client_data;
 }
 
 extern void
-libcmselect_LTX_select_shutdown(svc, cm, client_data)
-CMtrans_services svc;
-CManager cm;
-void *client_data;
+libcmselect_LTX_select_shutdown(CMtrans_services svc, CManager cm, void *client_data)
 {
     select_data_ptr *sdp = client_data;
     select_data_ptr sd = *sdp;
@@ -1101,10 +1063,7 @@ void *client_data;
 }
 
 extern void
-libcmselect_LTX_select_free(svc, cm, client_data)
-CMtrans_services svc;
-CManager cm;
-void *client_data;
+libcmselect_LTX_select_free(CMtrans_services svc, CManager cm, void *client_data)
 {
     select_data_ptr *sdp = client_data;
     select_data_ptr sd = *sdp;
@@ -1119,9 +1078,7 @@ void *client_data;
 }
 
 extern void
-libcmselect_LTX_select_stop(svc, client_data)
-CMtrans_services svc;
-void *client_data;
+libcmselect_LTX_select_stop(CMtrans_services svc, void *client_data)
 {
     if (*((select_data_ptr *)client_data) != NULL) {
 	(*((select_data_ptr*)client_data))->closed = 1;

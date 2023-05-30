@@ -22,10 +22,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
 #include "evpath.h"
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
-
+#endif
+#ifdef _MSC_VER
+#define drand48() (((double)rand())/((double)RAND_MAX))
+#define lrand48() rand()
+#define srand48(x)
+#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
+#endif
 typedef struct _msg_rec {
     char *contact_list;
     int message_id;
@@ -133,7 +142,7 @@ main(int argc, char **argv)
 
     PARSE_ARGS();
 
-    srand48(getpid());
+    srand(getpid());
     CM_TRANSPORT = attr_atom_from_string("CM_TRANSPORT");
 
     if (regression && regression_master) {
