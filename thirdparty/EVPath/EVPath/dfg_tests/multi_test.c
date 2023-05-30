@@ -70,7 +70,7 @@ void
 generate_a_record(rec_a_ptr event)
 {
     /* always even */
-    event->a_field = ((int) lrand48() % 50) * 2;
+    event->a_field = ((int) rand() % 50) * 2;
 }
 
 static
@@ -78,7 +78,7 @@ void
 generate_b_record(rec_b_ptr event)
 {
     /* always odd */
-    event->b_field = ((int) lrand48() % 50) * 2 + 1;
+    event->b_field = ((int) rand() % 50) * 2 + 1;
 }
 
 static

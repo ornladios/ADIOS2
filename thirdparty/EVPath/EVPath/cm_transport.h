@@ -4,7 +4,7 @@
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
 #endif
-#ifndef _SYS_TIME_H
+#ifdef HAVE_SYS_TIME_H
 #include "sys/time.h"
 #endif
 #ifndef _CM_SCHEDULE_H
@@ -13,13 +13,22 @@ extern "C" {
 
 #include <stddef.h>
 #include "sys/types.h"
+#ifdef _MSC_VER
+#include <BaseTsd.h>
+    typedef SSIZE_T ssize_t;
+#else
+#include <unistd.h>
+#ifndef SOCKET
+#define SOCKET int
+#endif
+#endif
 
 typedef struct _transport_item *transport_entry;
 typedef struct _transport_item *CMTransport;
 
 typedef struct _CMbuffer {
     void *buffer;
-    long size;
+    size_t size;
     int ref_count;
     struct _CMbuffer *next;
     void (*return_callback)(void *);
@@ -31,21 +40,21 @@ typedef enum _CMTraceType {
     CMLastTraceType /* add before this one */
 } CMTraceType;
 
-typedef void *(*CMTransport_malloc_func)(int);
-typedef void *(*CMTransport_realloc_func)(void*, int);
+typedef void *(*CMTransport_malloc_func)(size_t);
+typedef void *(*CMTransport_realloc_func)(void*, size_t);
 typedef void (*CMTransport_free_func)(void*);
 typedef void (*CMTransport_wake_comm_thread_func)(CManager cm);
 typedef void (*CMTransport_condition_signal_func)(CManager cm, int condition);
 
 typedef void (*select_list_func)(void *, void*);
 
-typedef void (*CMAddSelectFunc)(void *svcs, void *select_data, int fd,
+typedef void (*CMAddSelectFunc)(void *svcs, void *select_data, SOCKET fd,
 				select_list_func func,
 				void *param1, void *param2);
 
-typedef void (*CMTransport_fd_add_select)(CManager cm, int fd, select_list_func handler_func,
+typedef void (*CMTransport_fd_add_select)(CManager cm, SOCKET fd, select_list_func handler_func,
 					  void *param1, void *param2);
-typedef void (*CMTransport_fd_remove_select)(CManager cm, int fd);
+typedef void (*CMTransport_fd_remove_select)(CManager cm, SOCKET fd);
 typedef void (*CMTransport_trace)(CManager cm, const char *format, ...);
 typedef void (*CMTransport_verbose)(CManager cm, CMTraceType trace, const char *format, ...);
 typedef CMConnection (*CMTransport_conn_create)(transport_entry trans,
@@ -70,7 +79,7 @@ typedef CMbuffer (*CMTransport_create_data_buffer)(CManager cm, void *buffer, ss
 typedef int (*CMTransport_modify_global_lock)(CManager cm, const char *file, int line);
 typedef void (*CMTransport_add_buffer_to_pending_queue)(CManager cm, CMConnection conn, CMbuffer buf, long length);
 typedef void (*CMTransport_cond_wait_CM_lock)(CManager cm, void *cond, char *file, int line);
-typedef void (*CMRemoveSelectFunc)(void *svcs, void *select_data, int fd);
+typedef void (*CMRemoveSelectFunc)(void *svcs, void *select_data, SOCKET fd);
 typedef struct _periodic_task *periodic_task_handle;
 
 typedef periodic_task_handle (*CMAddPeriodicFunc) 

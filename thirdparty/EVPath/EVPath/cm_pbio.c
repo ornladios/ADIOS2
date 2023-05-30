@@ -3,10 +3,12 @@
 #ifndef MODULE
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string.h>
 #ifdef HAVE_WINDOWS_H
-#include <winsock.h>
+#include <winsock2.h>
 #else
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -127,7 +129,7 @@ static int
 CMpbio_send_format_request(char *format_ID, int format_ID_length,
 			   CMConnection conn, int cond);
 extern int CM_pbio_query(CMConnection conn, CMTransport trans,
-			 char *buffer, long length);
+			 char *buffer, size_t length);
 
 static int
 request_in_pending(CManager cm, void *format_ID, int format_id_length)
@@ -540,7 +542,7 @@ byte_swap(char *data, int size)
 }
 
 extern int
-CM_pbio_query(CMConnection conn, CMTransport trans, char *buffer, long length)
+CM_pbio_query(CMConnection conn, CMTransport trans, char *buffer, size_t length)
 {
     struct pbio_exchange_msg tmp_msg;
     struct pbio_exchange_msg *msg;

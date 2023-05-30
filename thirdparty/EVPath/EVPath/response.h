@@ -1,4 +1,4 @@
-extern int response_data_free(); 
+extern int response_data_free(CManager cm, void *resp_void);
 
 extern void *
 install_response_handler(CManager cm, int stone_id, char *response_spec, 

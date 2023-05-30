@@ -5,8 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <strings.h>
+#include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <time.h>
 
 #include "evpath.h"
@@ -1253,7 +1255,7 @@ decode_action(CManager cm, event_item *event, response_cache_element *act)
 	    void *decode_buffer;
 	    if (!FFSdecode_in_place(act->o.decode.context,
 				    event->encoded_event, 
-				    (void**) (long) &decode_buffer)) {
+				    (void**) (intptr_t) &decode_buffer)) {
 		printf("Decode failed\n");
 		return 0;
 	    }
@@ -1263,7 +1265,7 @@ decode_action(CManager cm, event_item *event, response_cache_element *act)
 	    event->reference_format = act->o.decode.target_reference_format;
 	    return event;
 	} else {
-	    int decoded_length = FFS_est_decode_length(act->o.decode.context, 
+	    size_t decoded_length = FFS_est_decode_length(act->o.decode.context, 
 						       event->encoded_event,
 						       event->event_len);
 	    CMbuffer cm_decode_buf = cm_get_data_buf(cm, decoded_length);
@@ -1284,7 +1286,7 @@ decode_action(CManager cm, event_item *event, response_cache_element *act)
     case Event_App_Owned:
     {
 	/* can't do anything with the old event, make a new one */
-	int decoded_length = FFS_est_decode_length(act->o.decode.context, 
+	size_t decoded_length = FFS_est_decode_length(act->o.decode.context, 
 						   event->encoded_event,
 						   event->event_len);
 	event_item *new_event = get_free_event(evp);
@@ -1434,9 +1436,9 @@ fdump_action(FILE* out, stone_type stone, response_cache_element *resp, int a, c
     fprintf(out, "\n");
     switch(act->action_type) {
     case Action_Bridge:
-	fprintf(out, "  Target: %s: connection %lx, remote_stone_id %d\n",
+	fprintf(out, "  Target: %s: connection %p, remote_stone_id %d\n",
 	       (act->o.bri.remote_path ? act->o.bri.remote_path : "NULL" ),
-	       (long)(void*)act->o.bri.conn, act->o.bri.remote_stone_id);
+	       (void*)act->o.bri.conn, act->o.bri.remote_stone_id);
 	if (act->o.bri.conn != NULL) fdump_attr_list(out, act->o.bri.conn->attrs);
 	if (act->o.bri.conn_failed) fprintf(out, "Connection has FAILED!\n");
 	break;
@@ -1486,8 +1488,8 @@ static void
 fdump_stone(FILE* out, stone_type stone)
 {
     int i;
-    fprintf(out, "Dump stone ID %d, local addr %lx, default action %d\n",
-	    stone->local_id, (long)stone, stone->default_action);
+    fprintf(out, "Dump stone ID %d, local addr %p, default action %d\n",
+	    stone->local_id, stone, stone->default_action);
     fprintf(out, "       Target Stones:");
     {
 	int i;
@@ -1616,7 +1618,7 @@ static void
 push_activation_record_on_stack(CManager cm, ev_handler_activation_ptr rec)
 {
     event_path_data evp = cm->evp;
-    rec->thread_id = pthread_self();
+    rec->thread_id = thr_thread_self();
     if (evp->activation_stack != NULL) {
 	evp->activation_stack->prev = rec;
     }
@@ -1630,7 +1632,7 @@ pop_activation_record_from_stack(CManager cm, ev_handler_activation_ptr rec)
 {
     event_path_data evp = cm->evp;
     ev_handler_activation_ptr tmp;
-    pthread_t self = pthread_self();
+    thr_thread_t self = thr_thread_self();
     if (!evp->activation_stack) {
 	printf("Activation stack inconsistency!  No records!\n"); 
 	return;
@@ -1661,7 +1663,7 @@ find_activation_record_from_stack(CManager cm)
 {
     event_path_data evp = cm->evp;
     ev_handler_activation_ptr tmp;
-    pthread_t self = pthread_self();
+    thr_thread_t self = thr_thread_self();
     tmp = evp->activation_stack;
     while(tmp) {
 	if (tmp->thread_id == self) {
@@ -1746,7 +1748,7 @@ process_events_stone(CManager cm, int s, action_class c)
                 char *tmp = NULL;
                 if (event->reference_format)
                     tmp = global_name_of_FMFormat(event->reference_format);
-                printf("No action found for event %lx submitted to \n", (long)event);
+                printf("No action found for event %p submitted to \n", event);
 		print_stone_identifier(evp, s);
 		printf("\n");
                 dump_stone(stone_struct(evp, s));
@@ -1782,7 +1784,7 @@ process_events_stone(CManager cm, int s, action_class c)
 		resp = &stone->response_cache[resp_id];
 	    }
 	    if (CMtrace_on(cm, EVerbose)) {
-		fprintf(cm->CMTrace_file, "next action event %lx on ", (long)event);
+		fprintf(cm->CMTrace_file, "next action event %p on ", event);
 		fprint_stone_identifier(cm->CMTrace_file, evp, s);
 		fprintf(cm->CMTrace_file, " action type is %s, reference_format is %p (%s), stage is %d, requires_decoded is %d\n",
 			action_str[resp->action_type], resp->reference_format, 
@@ -2046,7 +2048,7 @@ static void
 stone_close_handler(CManager cm, CMConnection conn, void *client_data)
 {
     event_path_data evp = cm->evp;
-    int s = (long)client_data;  /* stone ID */
+    int s = (int)(intptr_t)client_data;  /* stone ID */
     int a = 0;
     stone_type stone;
     EVStoneCloseHandlerFunc handler = NULL;
@@ -2181,7 +2183,7 @@ do_bridge_action(CManager cm, int s)
             return -1;
         }
         INT_CMconn_register_close_handler(conn, stone_close_handler, 
-                                          (void*)(long)s);
+                                          (void*)(intptr_t)s);
     }
     while (stone->queue->queue_head != NULL) {
 	int ret = 1;
@@ -2214,7 +2216,7 @@ do_bridge_action(CManager cm, int s)
 	    }*/
 	}
 	event_item *event = dequeue_event(cm, stone);
-	long event_length = 0;
+	size_t event_length = 0;
 	if (act->o.bri.conn == NULL) {
 	    CMtrace_out(cm, EVerbose, "Bridge stone %x has closed connection\n", s);
 	} else {
@@ -2260,7 +2262,7 @@ do_bridge_action(CManager cm, int s)
 	} else {
 	    static atom_t EV_EVENT_COUNT = -1;
 	    static atom_t EV_EVENT_LSUM = -1;
-	    int length_sum = 0;
+	    size_t length_sum = 0;
 	    int event_count = 0;
 	    if (EV_EVENT_COUNT == -1) {
 		EV_EVENT_COUNT = attr_atom_from_string("EV_EVENT_COUNT");
@@ -2270,12 +2272,12 @@ do_bridge_action(CManager cm, int s)
 		stone->stone_attrs = create_attr_list();
 	    } else {
 		get_int_attr(stone->stone_attrs, EV_EVENT_COUNT, &event_count);
-		get_int_attr(stone->stone_attrs, EV_EVENT_LSUM, &length_sum);
+		get_long_attr(stone->stone_attrs, EV_EVENT_LSUM, &length_sum);
 	    }
 	    event_count++;
 	    length_sum += event_length;
 	    set_int_attr(stone->stone_attrs, EV_EVENT_COUNT, event_count);
-	    set_int_attr(stone->stone_attrs, EV_EVENT_LSUM, length_sum);
+	    set_long_attr(stone->stone_attrs, EV_EVENT_LSUM, length_sum);
 	}
     }
     stone->is_outputting = 0;
@@ -2519,7 +2521,7 @@ INT_EVassoc_bridge_action(CManager cm, EVstone stone_num, attr_list contact_list
             return -1;
         }
         INT_CMconn_register_close_handler(conn, stone_close_handler, 
-                                          (void*)(long)stone_num);
+                                          (void*)(intptr_t)stone_num);
     }
     stone->proto_actions = realloc(stone->proto_actions, 
 				   (action_num + 1) * 
@@ -3158,7 +3160,7 @@ EVregister_format_set(CManager cm, FMStructDescList list)
 static void
 EVauto_submit_func(CManager cm, void* vstone)
 {
-    int stone_num = (long) vstone;
+    int stone_num = (int)(intptr_t) vstone;
     event_item *event;
     CManager_lock(cm);
     event = get_free_event(cm->evp);
@@ -3213,7 +3215,7 @@ INT_EVenable_auto_stone(CManager cm, EVstone stone_num, int period_sec,
     }
     handle = INT_CMadd_periodic_task(cm, period_sec, period_usec,
 				     EVauto_submit_func, 
-				     (void*)(long)stone_num);
+				     (void*)(intptr_t)stone_num);
     stone->periodic_handle = handle;
     if (CMtrace_on(cm, EVerbose)) {
 	fprintf(cm->CMTrace_file, "Enabling auto events on ");
@@ -3271,7 +3273,7 @@ reference_event(event_item *event)
 extern void
 internal_cm_network_submit(CManager cm, CMbuffer cm_data_buf, 
 			   attr_list attrs, CMConnection conn, 
-			   void *buffer, int length, int stone_id)
+			   void *buffer, size_t length, int stone_id)
 {
     event_path_data evp = cm->evp;
     event_item *event = get_free_event(evp);
@@ -3444,7 +3446,7 @@ INT_EVsubmit(EVsource source, void *data, attr_list attrs)
 }
 
 void
-INT_EVsubmit_encoded(CManager cm, EVstone stone, void *data, int data_len, attr_list attrs)
+INT_EVsubmit_encoded(CManager cm, EVstone stone, void *data, size_t data_len, attr_list attrs)
 {
     event_path_data evp = cm->evp;
     event_item *event = get_free_event(evp);
@@ -3470,7 +3472,7 @@ free_evp(CManager cm, void *not_used)
     event_path_data evp = cm->evp;
     int s;
     (void)not_used;
-    CMtrace_out(cm, CMFreeVerbose, "Freeing evpath information, evp %lx\n", (long) evp);
+    CMtrace_out(cm, CMFreeVerbose, "Freeing evpath information, evp %p\n", evp);
     for (s = 0 ; s < evp->stone_count; s++) {
 	INT_EVfree_stone(cm, s + evp->stone_base_num);
     }
@@ -3521,9 +3523,9 @@ EVPinit(CManager cm)
 	 * just so that we're more likely to catch mitmatched stone/CM
 	 * combos in threaded situations.
 	*/
-	srand48(time(NULL));
+	srand((int)time(NULL));
 	while (cm->evp->stone_base_num == 0) {
-	    cm->evp->stone_base_num = lrand48() & 0xffff;
+	    cm->evp->stone_base_num = rand() & 0xffff;
 	}
     }
     CMtrace_out(cm, EVerbose, "INITATED EVPATH, base stone num is %x\n", 
@@ -3574,8 +3576,8 @@ INT_EVtake_event_buffer(CManager cm, void *event)
     }
     if (cur == NULL) {
 	fprintf(stderr,
-		"Event address (%lx) in INT_EVtake_event_buffer does not match currently executing event on this CM.\n",
-		(long) event);
+		"Event address (%p) in INT_EVtake_event_buffer does not match currently executing event on this CM.\n",
+		event);
 	return 0;
     }
 
@@ -3630,8 +3632,8 @@ INT_EVreturn_event_buffer(CManager cm, void *event)
 	last = tmp;
 	tmp = tmp->next;
     }
-    fprintf(stderr, "Event %lx not found in taken events list\n",
-	    (long) event);
+    fprintf(stderr, "Event %p not found in taken events list\n",
+	    event);
 }
 
 extern FMFormat

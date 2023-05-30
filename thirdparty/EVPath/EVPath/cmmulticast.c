@@ -3,9 +3,11 @@
 #include <sys/types.h>
 
 #ifdef HAVE_WINDOWS_H
+#include <winsock2.h>
+#include <ws2ipdef.h>
 #include <windows.h>
-#include <winsock.h>
 #define getpid()	_getpid()
+#define close(x) closesocket(x)
 #else
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -95,8 +97,8 @@ typedef struct multicast_transport_data {
 typedef struct mcast_connection_data {
     int mcast_IP;
     int mcast_port;
-    int input_fd;
-    int output_fd;
+    SOCKET input_fd;
+    SOCKET output_fd;
     struct sockaddr_in output_addr;
     struct sockaddr_in my_addr;
     char read_buffer[MSGBUFSIZE];
@@ -106,11 +108,7 @@ typedef struct mcast_connection_data {
     multicast_transport_data_ptr mtd;
 } *mcast_conn_data_ptr;
 
-#ifdef WSAEWOULDBLOCK
-#define EWOULDBLOCK WSAEWOULDBLOCK
-#define EAGAIN WSAEINPROGRESS
-#define EINTR WSAEINTR
-#define errno GetLastError()
+#ifdef _MSC_VER
 #define read(fd, buf, len) recv(fd, buf, len, 0)
 #define write(fd, buf, len) send(fd, buf, len, 0)
 #endif
@@ -183,11 +181,11 @@ libcmmulticast_LTX_shutdown_conn(CMtrans_services svc, mcast_conn_data_ptr mcd)
 
 #include "qual_hostname.c"
 
-static int
+static SOCKET
 initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, mcast_conn_data_ptr mcast_conn_data, attr_list conn_attr_list, int no_more_redirect)
 {
     int one = 1;
-    int input_fd, output_fd;
+    SOCKET input_fd, output_fd;
     int int_port_num;
     u_short port_num;
     multicast_transport_data_ptr mtd = (multicast_transport_data_ptr) trans->trans_data;
@@ -199,7 +197,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
 
     (void) no_more_redirect;
     if (!query_attr(attrs, CM_MCAST_ADDR, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *) (long) &mcast_ip)) {
+    /* value pointer */ (attr_value *) (intptr_t) &mcast_ip)) {
 	svc->trace_out(cm, "CMMulticast transport found no MCAST_ADDR attribute");
 	/* wasn't there */
 	mcast_ip = 0;
@@ -210,7 +208,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
 	return -1;
 
     if (!query_attr(attrs, CM_MCAST_PORT, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *) (long) &int_port_num)) {
+    /* value pointer */ (attr_value *) (intptr_t) &int_port_num)) {
 	svc->trace_out(cm, "CMMulticast transport found no MCAST_PORT attribute");
 	return -1;
     } else {
@@ -246,7 +244,7 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
     /* use setsockopt() to request that the kernel join a multicast group */
     mreq.imr_multiaddr.s_addr = htonl(mcast_ip);
     mreq.imr_interface.s_addr = htonl(INADDR_ANY);
-    if (setsockopt(input_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &mreq, sizeof(mreq)) < 0) {
+    if (setsockopt(input_fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const char*) & mreq, sizeof(mreq)) < 0) {
 	perror("setsockopt");
 	exit(1);
     }
@@ -320,7 +318,7 @@ libcmmulticast_LTX_initiate_conn(CManager cm,CMtrans_services svc, transport_ent
     mcast_conn_data_ptr mcast_conn_data = create_mcast_conn_data(svc);
     attr_list conn_attr_list = create_attr_list();
     CMConnection conn;
-    int sock;
+    SOCKET sock;
 
     if ((sock = initiate_conn(cm, svc, trans, attrs, mcast_conn_data, conn_attr_list, 0)) < 0)
 	return NULL;
@@ -354,12 +352,12 @@ libcmmulticast_LTX_connection_eq(CManager cm, CMtrans_services svc, transport_en
     int requested_IP = -1;
 
     if (!query_attr(attrs, CM_MCAST_PORT, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *) (long) &int_port_num)) {
+    /* value pointer */ (attr_value *) (intptr_t) &int_port_num)) {
 	svc->trace_out(cm, "Conn Eq CMMulticast transport found no MCAST_PORT attribute");
 	return 0;
     }
     if (!query_attr(attrs, CM_MCAST_ADDR, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *) (long) &requested_IP)) {
+    /* value pointer */ (attr_value *) (intptr_t) &requested_IP)) {
 	svc->trace_out(cm, "CMMulticast transport found no MCAST_ADDR attribute");
     }
     svc->trace_out(cm, "CMMulticast Conn_eq comparing IP/ports %x/%d and %x/%d",
@@ -376,11 +374,7 @@ libcmmulticast_LTX_connection_eq(CManager cm, CMtrans_services svc, transport_en
 
 
 extern attr_list
-libcmmulticast_LTX_non_blocking_listen(cm, svc, trans, listen_info)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list listen_info;
+libcmmulticast_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transport_entry trans, attr_list listen_info)
 {
     /* meaningless in muticast */
     return NULL;
@@ -404,11 +398,7 @@ struct iovec {
  *  that are more efficient if they allocate their own buffer space.
  */
 extern void *
-libcmmulticast_LTX_read_func(svc, mcd, requested_len, actual_len)
-CMtrans_services svc;
-mcast_conn_data_ptr mcd;
-int requested_len;
-int *actual_len;
+libcmmulticast_LTX_read_func(CMtrans_services svc, mcast_conn_data_ptr mcd, int requested_len, int *actual_len)
 {
     char *ret = &mcd->read_buffer[mcd->read_pointer];
     *actual_len = requested_len;
@@ -420,7 +410,10 @@ int *actual_len;
 /* this is not defined in some places where it should be.  Conservative. */
 #define IOV_MAX 16
 #endif
-
+#ifdef _MSC_VER
+#define msghdr _WSAMSG
+#include <ws2def.h>
+#endif
 extern int
 libcmmulticast_LTX_writev_func(svc, mcd, iov, iovcnt, attrs)
 CMtrans_services svc;
@@ -429,11 +422,12 @@ struct iovec *iov;
 int iovcnt;
 attr_list attrs;
 {
-    int fd = mcd->output_fd;
+    SOCKET fd = mcd->output_fd;
     struct sockaddr_in addr = mcd->output_addr;
     struct msghdr msg;
     svc->trace_out(mcd->mtd->cm, "CMMcast writev of %d vectors on fd %d",
 		   iovcnt, fd);
+#ifndef _MSC_VER
     memset(&msg, 0, sizeof(msg));
     msg.msg_name = (void*)&addr;
     msg.msg_namelen = sizeof(addr);
@@ -443,6 +437,7 @@ attr_list attrs;
 	perror("write sendmsg");
 	exit(1);
     }
+#endif
     if (mcd->my_addr.sin_port == 0) {
 	unsigned int nl;
 	int IP = get_self_ip_addr(NULL, svc);

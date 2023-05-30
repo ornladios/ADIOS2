@@ -2,12 +2,30 @@
 #include "stdlib.h"
 #include "chr_time.h"
 
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#ifdef _MSC_VER
+#include <winsock2.h>
+#include <time.h>
+#include <sys/timeb.h>
+#endif
 
 extern void
 chr_get_time( chr_time *time)
 {
-    gettimeofday((struct timeval *) time, NULL);
+#ifndef HAVE_WINDOWS_H
+    gettimeofday((struct timeval*)time, NULL);
+#else
+    /* GSE...  No gettimeofday on windows.  
+     * Must use _ftime, get millisec time, convert to usec.  Bleh.
+     */
+    struct _timeb nowb;
+    _ftime(&nowb);
+    ((struct timeval*)time)->tv_sec = (long)nowb.time;
+    ((struct timeval*)time)->tv_usec = nowb.millitm * 1000;
+#endif
+    //    gettimeofday((struct timeval *) time, NULL);
 }
 
 extern void
@@ -22,7 +40,18 @@ chr_timer_stop( chr_time *time)
     struct timeval now;
     struct timeval duration;
 
-    gettimeofday(&now, NULL);
+#ifndef HAVE_WINDOWS_H
+    gettimeofday((struct timeval*)&now, NULL);
+#else
+    /* GSE...  No gettimeofday on windows.
+     * Must use _ftime, get millisec time, convert to usec.  Bleh.
+     */
+    struct _timeb nowb;
+    _ftime(&nowb);
+    ((struct timeval*)&now)->tv_sec = (long)nowb.time;
+    ((struct timeval*)&now)->tv_usec = nowb.millitm * 1000;
+#endif
+//    gettimeofday(&now, NULL);
     chr_timer_diff((chr_time*)&duration, (chr_time*)&now, time);
     *((struct timeval *) time) = duration;
 }
@@ -96,12 +125,24 @@ chr_time_to_nanosecs(chr_time *time)
 extern double
 chr_approx_resolution()
 {
-    struct timeval start, stop, diff;
+    struct timeval diff;
+#ifndef HAVE_WINDOWS_H
+    struct timeval start, stop;
     gettimeofday(&start, NULL);
     gettimeofday(&stop, NULL);
     while(start.tv_usec == stop.tv_usec) {
 	gettimeofday(&stop, NULL);
     }
     chr_timer_diff((chr_time*)&diff, (chr_time*)&stop, (chr_time*)&start);
+#else
+    struct _timeb start, stop;
+    _ftime(&start);
+    _ftime(&stop);
+    while (start.millitm == stop.millitm) {
+	_ftime(&stop);
+    }
+    diff.tv_sec = 0;
+    diff.tv_usec = (stop.millitm - start.millitm) * 1000;
+#endif
     return chr_time_to_secs((chr_time*)&diff);
 }

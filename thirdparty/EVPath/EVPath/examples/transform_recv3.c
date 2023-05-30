@@ -110,8 +110,8 @@ int main(int argc, char **argv)
 					    trans_func);
     trans_spec2 = create_transform_action_spec(second_format_list, output_format_list,
 					    trans_func2);
-    encoded_trans_spec = atl_base64_encode(trans_spec, strlen(trans_spec) + 1);
-    encoded_trans_spec2 = atl_base64_encode(trans_spec2, strlen(trans_spec2) + 1);
+    encoded_trans_spec = atl_base64_encode(trans_spec, (unsigned int) strlen(trans_spec) + 1);
+    encoded_trans_spec2 = atl_base64_encode(trans_spec2, (unsigned int) strlen(trans_spec2) + 1);
     printf("Contact list \"%d:%s:%s:%s\"\n", stone, string_list, encoded_trans_spec,
 	   encoded_trans_spec2);
     free(trans_spec);

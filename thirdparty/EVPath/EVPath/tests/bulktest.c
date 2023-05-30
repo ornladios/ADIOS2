@@ -10,15 +10,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include <arpa/inet.h>
 #include "evpath.h"
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
+#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
 #else
 #include <sys/wait.h>
+#include <arpa/inet.h>
 #endif
 
 #define MSG_COUNT 30
@@ -292,10 +293,10 @@ main(int argc, char **argv)
 	        printf("Missing --ssh destination\n");
 		usage();
 	    }
-	    first_colon = index(argv[2], ':');
+	    first_colon = strchr(argv[2], ':');
 	    if (first_colon) {
 	        *first_colon = 0;
-		second_colon = index(first_colon+1, ':');
+		second_colon = strchr(first_colon+1, ':');
 	    } else {
 	        second_colon = NULL;
 	    }
@@ -500,19 +501,19 @@ static int
 do_regression_master_test()
 {
     CManager cm;
-    char *args[20] = {"bulktest", "-c", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+    char* args[20] = { "bulktest", "-c", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
     int last_arg = 2;
     int exit_state;
     int forked = 0;
     attr_list contact_list, listen_list = NULL;
-    char *string_list, *postfix;
+    char* string_list, * postfix;
     char size_str[40];
     char vec_str[40];
     char msg_str[40];
     EVstone handle;
     int done = 0;
 #ifdef HAVE_WINDOWS_H
-    SetTimer(NULL, 5, 1000, (TIMERPROC) fail_and_die);
+    SetTimer(NULL, 5, 1000, (TIMERPROC)fail_and_die);
 #else
     struct sigaction sigact;
     sigact.sa_flags = 0;
@@ -522,49 +523,52 @@ do_regression_master_test()
     sigaction(SIGALRM, &sigact, NULL);
     alarm(300);
 #endif
+
     cm = CManager_create();
     forked = CMfork_comm_thread(cm);
     if (transport || ((transport = getenv("CMTransport")) != NULL)) {
 	listen_list = create_attr_list();
 	add_attr(listen_list, CM_TRANSPORT, Attr_String,
-		 (attr_value) strdup(transport));
+	    (attr_value)strdup(transport));
     }
     if ((postfix = getenv("CMNetworkPostfix")) != NULL) {
 	if (listen_list == NULL) listen_list = create_attr_list();
 	add_attr(listen_list, CM_NETWORK_POSTFIX, Attr_String,
-		 (attr_value) strdup(postfix));
+	    (attr_value)strdup(postfix));
     }
     CMlisten_specific(cm, listen_list);
     if (listen_list) free_attr_list(listen_list);
     contact_list = CMget_contact_list(cm);
     if (transport != NULL) {
-      char *actual_transport = NULL;
-      get_string_attr(contact_list, CM_TRANSPORT, &actual_transport);
-      if (!actual_transport || (strncmp(actual_transport, transport, strlen(actual_transport)) != 0)) {
-	printf("Failed to load transport \"%s\"\n", transport);
-	exit(1);
-      }
+	char* actual_transport = NULL;
+	get_string_attr(contact_list, CM_TRANSPORT, &actual_transport);
+	if (!actual_transport || (strncmp(actual_transport, transport, strlen(actual_transport)) != 0)) {
+	    printf("Failed to load transport \"%s\"\n", transport);
+	    exit(1);
+	}
     }
+
     if (contact_list) {
 	string_list = attr_list_to_string(contact_list);
 	free_attr_list(contact_list);
-    } else {
+    }
+    else {
 	/* must be multicast, hardcode a contact list */
 #define HELLO_PORT 12345
 #define HELLO_GROUP "225.0.0.37"
 	int addr;
-	(void) inet_aton(HELLO_GROUP, (struct in_addr *)&addr);
+	(void)inet_aton(HELLO_GROUP, (struct in_addr*)&addr);
 	contact_list = create_attr_list();
 	add_attr(contact_list, CM_MCAST_ADDR, Attr_Int4,
-		 (attr_value) (long)addr);
+	    (attr_value)(long)addr);
 	add_attr(contact_list, CM_MCAST_PORT, Attr_Int4,
-		 (attr_value) HELLO_PORT);
+	    (attr_value)HELLO_PORT);
 	add_attr(contact_list, CM_TRANSPORT, Attr_String,
-		 (attr_value) "multicast");
-	(void) CMinitiate_conn(cm, contact_list);
+	    (attr_value)"multicast");
+	(void)CMinitiate_conn(cm, contact_list);
 	string_list = attr_list_to_string(contact_list);
 	free_attr_list(contact_list);
-    }	
+    }
     args[last_arg++] = "-size";
     sprintf(&size_str[0], "%d", size);
     args[last_arg++] = size_str;
@@ -580,7 +584,8 @@ do_regression_master_test()
     if (quiet <= 0) {
 	if (forked) {
 	    printf("Forked a communication thread\n");
-	} else {
+	}
+	else {
 	    printf("Doing non-threaded communication handling\n");
 	}
     }
@@ -600,11 +605,11 @@ do_regression_master_test()
 	    perror("cwait");
 	}
 	if (exit_state == 0) {
-	    if (quiet <= 0) 
+	    if (quiet <= 0)
 		printf("Subproc exitted\n");
 	} else {
 	    printf("Single remote subproc exit with status %d\n",
-		   exit_state);
+		exit_state);
 	}
 #else
 	int result;
@@ -622,20 +627,22 @@ do_regression_master_test()
 	if (result == subproc_proc) {
 	    if (WIFEXITED(exit_state)) {
 		if (WEXITSTATUS(exit_state) == 0) {
-		    if (quiet <= 0) 
+		    if (quiet <= 0)
 			printf("Subproc exited\n");
-		} else {
-		    printf("Single remote subproc exit with status %d\n",
-			   WEXITSTATUS(exit_state));
 		}
-	    } else if (WIFSIGNALED(exit_state)) {
+		else {
+		    printf("Single remote subproc exit with status %d\n",
+			WEXITSTATUS(exit_state));
+		}
+	    }
+	    else if (WIFSIGNALED(exit_state)) {
 		printf("Single remote subproc died with signal %d\n",
-		       WTERMSIG(exit_state));
+		    WTERMSIG(exit_state));
 	    }
 	    done++;
 	}
-    }
 #endif
+    }
     if (msg_count != msg_limit) {
 	int i = 10;
 	while ((i >= 0) && (msg_count != msg_limit)) {
@@ -646,8 +653,8 @@ do_regression_master_test()
     free(string_list);
     CManager_close(cm);
     if (message_count != expected_count) {
-	printf ("failure, received %d messages instead of %d\n",
-		message_count, expected_count);
+	printf("failure, received %d messages instead of %d\n",
+	    message_count, expected_count);
     }
     return !(message_count == expected_count);
 }

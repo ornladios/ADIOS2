@@ -17,6 +17,13 @@
 #else
 #define MPI_Finalize()
 #endif
+#ifdef _MSC_VER
+#define pid_t intptr_t
+#include <process.h>
+#include <windows.h>
+#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
+
+#endif
 
 static atom_t CM_TRANS_TEST_SIZE = 10240;
 static atom_t CM_TRANS_TEST_VECS = 4;
@@ -40,7 +47,7 @@ static int received_count = 0;
 static int *received_counts = NULL;
 static int taken_corrupt = 0;
 static int expected_count = -1;
-static long write_size = -1;
+static size_t write_size = (size_t)( - 1);
 static int verbose = 0;
 static int take = 0;
 static int size_error = 0;
@@ -52,13 +59,13 @@ static int me = 0;
 static int install_schedule = 0;
 typedef struct _buf_list {
     int checksum;
-    long length;
+    size_t length;
     void *buffer;
 } *buf_list;
 
 chr_time bandwidth_start_time;
 attr_list
-trans_test_upcall(CManager cm, void *buffer, long length, int type, attr_list list)
+trans_test_upcall(CManager cm, void *buffer, size_t length, int type, attr_list list)
 {
     static buf_list buffer_list = NULL;
     static int buffer_count = 0;
@@ -88,10 +95,10 @@ trans_test_upcall(CManager cm, void *buffer, long length, int type, attr_list li
 	return NULL;
     case 1:
 	/* body message */
-	if (verbose) printf("Body message %d received from node %d, length %ld\n", *(int*)buffer, 
+	if (verbose) printf("Body message %d received from node %d, length %zd\n", *(int*)buffer, 
 			    ((int*)buffer)[1], length);
 	if (length != (write_size - 12 /* test protocol swallows a little as header */)) {
-	    printf("Error in body delivery size, expected %ld, got %ld\n", write_size - 12, length);
+	    printf("Error in body delivery size, expected %zd, got %zd\n", write_size - 12, length);
 	    size_error++;
 	}
 	if (use_mpi) {
@@ -161,7 +168,7 @@ trans_test_upcall(CManager cm, void *buffer, long length, int type, attr_list li
 	set_double_attr(list, CM_TRANS_TEST_DURATION,
 			chr_time_to_secs(&bandwidth_start_time));
 	if (get_double_attr(list, CM_TRANS_TEST_DURATION, &secs)) {
-	    long size = received_count * write_size * (np-1);
+	    size_t size = received_count * write_size * (np-1);
 	    double megabits = (double)size*8 / ((double)1000*1000);
 	    double megabits_sec = megabits / secs;
 	    set_double_attr(ret, CM_TRANS_MEGABITS_SEC, megabits_sec);
@@ -196,7 +203,7 @@ fail_and_die(int signal)
     (void)signal;
     fprintf(stderr, "Trans_test failed to complete in reasonable time, increase from -timeout %d\n", timeout);
     fprintf(stderr, "Stats are : vec_count = %d, size = %ld, msg_count = %d, reuse_write = %d, received_count = %d\n", vec_count, size, msg_count, reuse_write, received_count);
-    fprintf(stderr, "    reuse_write = %d, received_count = %d, taken_corrupt = %d, expected_count = %d, write_size = %ld, size_error = %d\n", reuse_write, received_count, taken_corrupt, expected_count, write_size, size_error);
+    fprintf(stderr, "    reuse_write = %d, received_count = %d, taken_corrupt = %d, expected_count = %d, write_size = %zd, size_error = %d\n", reuse_write, received_count, taken_corrupt, expected_count, write_size, size_error);
     if (subproc_proc != 0) {
 	kill(subproc_proc, 9);
     }
@@ -209,7 +216,7 @@ pid_t
 run_subprocess(char **args)
 {
 #ifdef HAVE_WINDOWS_H
-    int child;
+    intptr_t child;
     child = _spawnv(_P_NOWAIT, args[0], args);
     if (child == -1) {
 	printf("failed for cmtest\n");
@@ -418,7 +425,9 @@ main(argc, argv)
 #else
     me = 0;
 #endif
-
+#ifdef HAVE_WINDOWS_H
+    SetTimer(NULL, 5, timeout, (TIMERPROC)fail_and_die);
+#else
     struct sigaction sigact;
     sigact.sa_flags = 0;
     sigact.sa_handler = fail_and_die;
@@ -426,6 +435,7 @@ main(argc, argv)
     sigaddset(&sigact.sa_mask, SIGALRM);
     sigaction(SIGALRM, &sigact, NULL);
     alarm(timeout);
+#endif
 
     cm = CManager_create();
     CMinstall_perf_upcall(cm, trans_test_upcall);

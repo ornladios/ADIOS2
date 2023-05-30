@@ -3,8 +3,10 @@
 #include <sys/types.h>
 
 #ifdef HAVE_WINDOWS_H
+#include <winsock2.h>
 #include <windows.h>
-#include <winsock.h>
+#include <process.h>
+#include <time.h>
 #define getpid()	_getpid()
 #else
 #include <time.h>
@@ -45,6 +47,8 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <errno.h>
+#else
+#include <ws2tcpip.h>
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -86,7 +90,7 @@ typedef struct socket_client_data {
     CManager cm;
     char *hostname;
     int listen_count;
-    int *listen_fds;
+    SOCKET *listen_fds;
     int *listen_ports;
     attr_list characteristics;
     CMtrans_services svc;
@@ -97,19 +101,17 @@ typedef enum {Block, Non_Block} socket_block_state;
 typedef struct socket_connection_data {
     int remote_IP;
     int remote_contact_port;
-    int fd;
+    SOCKET fd;
     socket_client_data_ptr sd;
     socket_block_state block_state;
     CMConnection conn;
 } *socket_conn_data_ptr;
 
-#ifdef WSAEWOULDBLOCK
-#define EWOULDBLOCK WSAEWOULDBLOCK
-#define EAGAIN WSAEINPROGRESS
-#define EINTR WSAEINTR
-#define errno GetLastError()
+#ifdef _MSC_VER
 #define read(fd, buf, len) recv(fd, buf, len, 0)
 #define write(fd, buf, len) send(fd, buf, len, 0)
+#define close(x) closesocket(x)
+#define INST_ADDRSTRLEN 50
 #endif
 
 static atom_t CM_FD = -1;
@@ -127,15 +129,14 @@ static atom_t CM_IP_ADDR = -1;
 #define TIMING_GUARD_STOP gettimeofday(&t1, NULL);    timersub(&t1, &t0, &diff); if (diff.tv_sec > 0) fprintf(stderr, "TIME GUARD at %s:%d exceeded, time was was <%ld.%06ld> secs\n", __FILE__, __LINE__, (long)diff.tv_sec, (long)diff.tv_usec);}
 
 static int
-check_host(hostname, sin_addr)
-char *hostname;
-void *sin_addr;
+check_host(char *hostname, void *sin_addr)
 {
     struct hostent *host_addr;
     host_addr = gethostbyname(hostname);
     if (host_addr == NULL) {
 	struct in_addr addr;
-	if (inet_aton(hostname, &addr) == 0) {
+	if (inet_pton(PF_INET, hostname, &addr) == 0) {
+//	if (inet_aton(hostname, &addr) == 0) {
 	    /* 
 	     *  not translatable as a hostname or 
 	     * as a dot-style string IP address
@@ -151,8 +152,7 @@ void *sin_addr;
 }
 
 static socket_conn_data_ptr 
-create_socket_conn_data(svc)
-CMtrans_services svc;
+create_socket_conn_data(CMtrans_services svc)
 {
     socket_conn_data_ptr socket_conn_data =
     svc->malloc_func(sizeof(struct socket_connection_data));
@@ -203,20 +203,22 @@ int fd;
 
 #endif
 
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN 50
+#endif
+
 /* 
  * Accept socket connection
  */
 static void
-socket_accept_conn(void_trans, void_conn_sock)
-void *void_trans;
-void *void_conn_sock;
+socket_accept_conn(void *void_trans, void *void_conn_sock)
 {
     transport_entry trans = (transport_entry) void_trans;
-    int conn_sock = (int) (long) void_conn_sock;
+    int conn_sock = (int) (intptr_t) void_conn_sock;
     socket_client_data_ptr sd = (socket_client_data_ptr) trans->trans_data;
     CMtrans_services svc = sd->svc;
     socket_conn_data_ptr socket_conn_data;
-    int sock;
+    SOCKET sock;
     struct sockaddr sock_addr;
     unsigned int sock_len = sizeof(sock_addr);
     int int_port_num;
@@ -262,24 +264,24 @@ void *void_conn_sock;
     socket_conn_data->conn = conn;
 
     add_attr(conn_attr_list, CM_FD, Attr_Int4,
-	     (attr_value) (long)sock);
+	     (attr_value) (intptr_t)sock);
 
     sock_len = sizeof(sock_addr);
     memset(&sock_addr, 0, sock_len);
     getsockname(sock, (struct sockaddr *) &sock_addr, &sock_len);
     int_port_num = ntohs(((struct sockaddr_in *) &sock_addr)->sin_port);
     add_attr(conn_attr_list, CM_THIS_CONN_PORT, Attr_Int4,
-	     (attr_value) (long)int_port_num);
+	     (attr_value) (intptr_t)int_port_num);
 
     memset(&sock_addr, 0, sizeof(sock_addr));
     sock_len = sizeof(sock_addr);
     if (getpeername(sock, &sock_addr, &sock_len) == 0) {
 	int_port_num = ntohs(((struct sockaddr_in *) &sock_addr)->sin_port);
 	add_attr(conn_attr_list, CM_PEER_CONN_PORT, Attr_Int4,
-		 (attr_value) (long)int_port_num);
+		 (attr_value) (intptr_t)int_port_num);
 	socket_conn_data->remote_IP = ntohl(((struct sockaddr_in *) &sock_addr)->sin_addr.s_addr);
 	add_attr(conn_attr_list, CM_PEER_IP, Attr_Int4,
-		 (attr_value) (long)socket_conn_data->remote_IP);
+		 (attr_value) (intptr_t)socket_conn_data->remote_IP);
     }
     {
         char str[INET_ADDRSTRLEN];
@@ -295,7 +297,7 @@ void *void_conn_sock;
     socket_conn_data->remote_contact_port =
 	ntohs(socket_conn_data->remote_contact_port);
     add_attr(conn_attr_list, CM_PEER_LISTEN_PORT, Attr_Int4,
-	     (attr_value) (long)socket_conn_data->remote_contact_port);
+	     (attr_value) (intptr_t)socket_conn_data->remote_contact_port);
     svc->trace_out(sd->cm, "Remote host (IP %x) is listening at port %d\n",
 		   socket_conn_data->remote_IP,
 		   socket_conn_data->remote_contact_port);
@@ -310,9 +312,7 @@ void *void_conn_sock;
 }
 
 extern void
-libcmsockets_LTX_shutdown_conn(svc, scd)
-CMtrans_services svc;
-socket_conn_data_ptr scd;
+libcmsockets_LTX_shutdown_conn(CMtrans_services svc, socket_conn_data_ptr scd)
 {
     svc->connection_deref(scd->conn);
     svc->fd_remove_select(scd->sd->cm, scd->fd);
@@ -339,16 +339,10 @@ is_private_10(int IP)
     return ((IP & 0xff000000) == 0x0A000000);	/* equal 10.x.x.x */
 }
 
-static int
-initiate_conn(cm, svc, trans, attrs, socket_conn_data, conn_attr_list)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
-socket_conn_data_ptr socket_conn_data;
-attr_list conn_attr_list;
+static SOCKET
+initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, socket_conn_data_ptr socket_conn_data, attr_list conn_attr_list)
 {
-    int sock;
+    SOCKET sock;
 
 #ifdef TCP_NODELAY
     int delay_value = 1;
@@ -373,14 +367,14 @@ attr_list conn_attr_list;
 	assert(CM_LOCKED(svc, sd->cm));
     }
     if (!query_attr(attrs, CM_IP_HOSTNAME, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_name)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_name)) {
 	svc->trace_out(cm, "TCP/IP transport found no IP_HOST attribute");
 	host_name = NULL;
     } else {
         svc->trace_out(cm, "TCP/IP transport connect to host %s", host_name);
     }
     if (!query_attr(attrs, CM_IP_ADDR, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_ip)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_ip)) {
 	svc->trace_out(cm, "TCP/IP transport found no IP_ADDR attribute");
 	/* wasn't there */
 	host_ip = 0;
@@ -391,7 +385,7 @@ attr_list conn_attr_list;
 	return -1;
 
     if (!query_attr(attrs, CM_IP_PORT, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & int_port_num)) {
+    /* value pointer */ (attr_value *)(intptr_t) & int_port_num)) {
 	svc->trace_out(cm, "TCP/IP transport found no IP_PORT attribute");
 	return -1;
     } else {
@@ -487,7 +481,7 @@ attr_list conn_attr_list;
 	if (sd->listen_count) {
 	    local_listen_port = htons(sd->listen_ports[0]);
 	}
-	if (write(sock, &local_listen_port, 4) != 4) {
+	if (write(sock, (const char *) & local_listen_port, 4) != 4) {
 	    svc->trace_out(cm, "Write failed\n");
 	    return -1;
 	}
@@ -499,14 +493,14 @@ attr_list conn_attr_list;
     socket_conn_data->sd = sd;
 
     add_attr(conn_attr_list, CM_FD, Attr_Int4,
-	     (attr_value) (long)sock);
+	     (attr_value) (intptr_t)sock);
     sock_len = sizeof(sock_addr);
     getsockname(sock, (struct sockaddr *) &sock_addr, &sock_len);
     int_port_num = ntohs(((struct sockaddr_in *) &sock_addr)->sin_port);
     add_attr(conn_attr_list, CM_THIS_CONN_PORT, Attr_Int4,
-	     (attr_value) (long)int_port_num);
+	     (attr_value) (intptr_t)int_port_num);
     add_attr(conn_attr_list, CM_PEER_IP, Attr_Int4,
-	     (attr_value) (long)socket_conn_data->remote_IP);
+	     (attr_value) (intptr_t)socket_conn_data->remote_IP);
     return sock;
 }
 
@@ -517,16 +511,12 @@ attr_list conn_attr_list;
  * (name_str stores the machine name).
  */
 extern CMConnection
-libcmsockets_LTX_initiate_conn(cm, svc, trans, attrs)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
+libcmsockets_LTX_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs)
 {
     socket_conn_data_ptr socket_conn_data = create_socket_conn_data(svc);
     attr_list conn_attr_list = create_attr_list();
     CMConnection conn;
-    int sock;
+    SOCKET sock;
     socket_client_data_ptr sd = trans->trans_data;
 
     if (sd->cm) {
@@ -537,7 +527,7 @@ attr_list attrs;
 	return NULL;
 
     add_attr(conn_attr_list, CM_PEER_LISTEN_PORT, Attr_Int4,
-	     (attr_value) (long)socket_conn_data->remote_contact_port);
+	     (attr_value) (intptr_t)socket_conn_data->remote_contact_port);
     conn = svc->connection_create(trans, socket_conn_data, conn_attr_list);
     socket_conn_data->conn = conn;
 
@@ -561,11 +551,7 @@ attr_list attrs;
  * same as ours and if the IP_PORT matches the one we are listening on.
  */
 extern int
-libcmsockets_LTX_self_check(cm, svc, trans, attrs)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
+libcmsockets_LTX_self_check(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs)
 {
 
     socket_client_data_ptr sd = trans->trans_data;
@@ -582,18 +568,18 @@ attr_list attrs;
 	if (IP == 0) IP = INADDR_LOOPBACK;
     }
     if (!query_attr(attrs, CM_IP_HOSTNAME, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_name)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_name)) {
 	svc->trace_out(cm, "CMself check TCP/IP transport found no IP_HOST attribute");
 	host_name = NULL;
     }
     if (!query_attr(attrs, CM_IP_ADDR, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_addr)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_addr)) {
 	svc->trace_out(cm, "CMself check TCP/IP transport found no IP_ADDR attribute");
 	if (host_name == NULL) return 0;
 	host_addr = 0;
     }
     if (!query_attr(attrs, CM_IP_PORT, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & int_port_num)) {
+    /* value pointer */ (attr_value *)(intptr_t) & int_port_num)) {
 	svc->trace_out(cm, "CMself check TCP/IP transport found no IP_PORT attribute");
 	return 0;
     }
@@ -620,12 +606,7 @@ attr_list attrs;
 }
 
 extern int
-libcmsockets_LTX_connection_eq(cm, svc, trans, attrs, scd)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
-socket_conn_data_ptr scd;
+libcmsockets_LTX_connection_eq(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, socket_conn_data_ptr scd)
 {
 
     int int_port_num;
@@ -633,16 +614,16 @@ socket_conn_data_ptr scd;
     char *host_name = NULL;
 
     if (!query_attr(attrs, CM_IP_HOSTNAME, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_name)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_name)) {
 	svc->trace_out(cm, "TCP/IP transport found no IP_HOST attribute");
     }
     if (!query_attr(attrs, CM_IP_PORT, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & int_port_num)) {
+    /* value pointer */ (attr_value *)(intptr_t) & int_port_num)) {
 	svc->trace_out(cm, "Conn Eq TCP/IP transport found no IP_PORT attribute");
 	return 0;
     }
     if (!query_attr(attrs, CM_IP_ADDR, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & requested_IP)) {
+    /* value pointer */ (attr_value *)(intptr_t) & requested_IP)) {
 	svc->trace_out(cm, "TCP/IP transport found no IP_ADDR attribute");
     }
     if (requested_IP == -1) {
@@ -668,17 +649,13 @@ socket_conn_data_ptr scd;
  * Create an IP socket for connection from other CMs
  */
 extern attr_list
-libcmsockets_LTX_non_blocking_listen(cm, svc, trans, listen_info)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list listen_info;
+libcmsockets_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transport_entry trans, attr_list listen_info)
 {
     socket_client_data_ptr sd = trans->trans_data;
     unsigned int length;
     struct sockaddr_in sock_addr;
     int sock_opt_val = 1;
-    int conn_sock = 0;
+    SOCKET conn_sock = 0;
     int attr_port_num = 0;
     u_short port_num = 0;
     int port_range_low, port_range_high;
@@ -695,7 +672,7 @@ attr_list listen_info;
      */
     if (listen_info != NULL
 	&& !query_attr(listen_info, CM_IP_PORT,
-		       NULL, (attr_value *)(long) & attr_port_num)) {
+		       NULL, (attr_value *)(intptr_t) & attr_port_num)) {
 	port_num = 0;
     } else {
 	if (attr_port_num > USHRT_MAX || attr_port_num < 0) {
@@ -758,14 +735,14 @@ attr_list listen_info;
 		return NULL;
 	    }
 	} else {
-	    long seedval = time(NULL) + getpid();
+	    long seedval = (long) time(NULL) + getpid();
 	    /* port num is free.  Constrain to range to standards */
 	    int size = port_range_high - port_range_low;
 	    int tries = 30;
 	    int result = SOCKET_ERROR;
-	    srand48(seedval);
+	    srand(seedval);
 	    while (tries > 0) {
-		int target = port_range_low + size * drand48();
+		int target = port_range_low + (rand() % size);
 		sock_addr.sin_port = htons(target);
 		svc->trace_out(cm, "CMSocket trying to bind port %d", target);
 		result = bind(conn_sock, (struct sockaddr *) &sock_addr,
@@ -774,7 +751,7 @@ attr_list listen_info;
 		if (result != SOCKET_ERROR) tries = 0;
 		if (tries%5 == 4) {
 		    /* try reseeding in case we're in sync with another process */
-		    srand48(time(NULL) + getpid());
+		    srand((int)time(NULL) + (int)getpid());
 		}
 		if (tries == 20) {
 		    /* damn, tried a lot, increase the range (This might violate specified range) */
@@ -796,8 +773,8 @@ attr_list listen_info;
 	    return NULL;
 	}
 	svc->trace_out(cm, "CMSockets Adding socket_accept_conn as action on fd %d", conn_sock);
-	svc->fd_add_select(cm, conn_sock, socket_accept_conn,
-			   (void *) trans, (void *) (long)conn_sock);
+	svc->fd_add_select(cm, conn_sock, (select_list_func)socket_accept_conn,
+			   (void *) trans, (void *) (intptr_t)conn_sock);
 
 	length = sizeof(sock_addr);
 	if (getsockname(conn_sock, (struct sockaddr *) &sock_addr, &length) < 0) {
@@ -833,7 +810,7 @@ attr_list listen_info;
 	sd->hostname = strdup(host_name);
 	if ((IP != 0) && (!use_hostname)) {
 	    add_attr(ret_list, CM_IP_ADDR, Attr_Int4,
-		     (attr_value) (long)IP);
+		     (attr_value) (intptr_t)IP);
 	}
 	if ((getenv("CMSocketsUseHostname") != NULL) || 
 	    use_hostname) {
@@ -844,7 +821,7 @@ attr_list listen_info;
 		     (attr_value)INADDR_LOOPBACK);
 	}
 	add_attr(ret_list, CM_IP_PORT, Attr_Int4,
-		 (attr_value) (long)int_port_num);
+		 (attr_value) (intptr_t)int_port_num);
 
 	return ret_list;
     }
@@ -863,11 +840,7 @@ struct iovec {
 #endif
 
 extern void
-libcmsockets_LTX_set_write_notify(trans, svc, scd, enable)
-transport_entry trans;
-CMtrans_services svc;
-socket_conn_data_ptr scd;
-int enable;
+libcmsockets_LTX_set_write_notify(transport_entry trans, CMtrans_services svc, socket_conn_data_ptr scd, int enable)
 {
     if (enable != 0) {
 	svc->fd_write_select(trans->cm, scd->fd, (select_list_func) trans->write_possible,
@@ -883,6 +856,7 @@ static void
 set_block_state(CMtrans_services svc, socket_conn_data_ptr scd,
 		socket_block_state needed_block_state)
 {
+#ifndef _MSC_VER
     int fdflags = fcntl(scd->fd, F_GETFL, 0);
     if (fdflags == -1) {
 	perror("getflags\n");
@@ -904,24 +878,22 @@ set_block_state(CMtrans_services svc, socket_conn_data_ptr scd,
 	svc->trace_out(scd->sd->cm, "CMSocket switch fd %d to nonblocking",
 		       scd->fd);
     }
+#else
+#endif
 }
 
-extern int
-libcmsockets_LTX_read_to_buffer_func(svc, scd, buffer, requested_len, 
-				     non_blocking)
-CMtrans_services svc;
-socket_conn_data_ptr scd;
-void *buffer;
-ssize_t requested_len;
-int non_blocking;
+extern ssize_t
+libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr scd, void *buffer, ssize_t requested_len, int non_blocking)
 {
     ssize_t left, iget;
-
+#ifndef _MSC_VER
+    // GSE
     int fdflags = fcntl(scd->fd, F_GETFL, 0);
     if (fdflags == -1) {
 	perror("getflags\n");
 	return -1;
     }
+#endif
     if (scd->block_state == Block) {
 	svc->trace_out(scd->sd->cm, "CMSocket fd %d state block", scd->fd);
     } else {
@@ -934,7 +906,7 @@ int non_blocking;
 		       scd->fd);
 	set_block_state(svc, scd, Non_Block);
     }
-    iget = read(scd->fd, (char *) buffer, requested_len);
+    iget = read(scd->fd, (char *) buffer, (int)requested_len);
     if ((iget == -1) || (iget == 0)) {
 	int lerrno = errno;
 	if ((lerrno != EWOULDBLOCK) &&
@@ -957,7 +929,7 @@ int non_blocking;
     while (left > 0) {
 	int lerrno;
 	iget = read(scd->fd, (char *) buffer + requested_len - left,
-		    left);
+		    (int)left);
 	lerrno = errno;
 	if (iget == -1) {
 	    if ((lerrno != EWOULDBLOCK) &&
@@ -1010,8 +982,8 @@ int iovcnt;
 	while (left > 0) {
 	    errno = 0;
 	    size_t this_write = left;
-	    char *this_base = iov[i].iov_base + iov[i].iov_len - left;
-	    iget = write(fd, this_base, this_write);
+	    char *this_base = ((char*)iov[i].iov_base) + iov[i].iov_len - left;
+	    iget = write(fd, this_base, (int)this_write);
 	    if (iget == -1) {
 		int lerrno = errno;
 		if ((lerrno != EWOULDBLOCK) &&
@@ -1031,13 +1003,10 @@ int iovcnt;
 }
 #endif
 
-int long_writev(svc, scd, iovs, iovcnt)
-CMtrans_services svc;
-socket_conn_data_ptr scd;
-void *iovs;
-int iovcnt;
+int long_writev(CMtrans_services svc, socket_conn_data_ptr scd, void *iovs, int iovcnt)
 {
     assert(0);   // for right now, don't try this
+    return 0;
 }
 
 #ifndef MAX_RW_COUNT
@@ -1045,15 +1014,10 @@ int iovcnt;
 #define MAX_RW_COUNT 0x7ffff000
 #endif
 
-extern int
-libcmsockets_LTX_writev_func(svc, scd, iovs, iovcnt, attrs)
-CMtrans_services svc;
-socket_conn_data_ptr scd;
-void *iovs;
-int iovcnt;
-attr_list attrs;
+extern ssize_t
+libcmsockets_LTX_writev_func(CMtrans_services svc, socket_conn_data_ptr scd, void *iovs, int iovcnt, attr_list attrs)
 {
-    int fd = scd->fd;
+    SOCKET fd = scd->fd;
     ssize_t left = 0;
     ssize_t iget = 0;
     ssize_t iovleft, i;
@@ -1120,7 +1084,7 @@ attr_list attrs;
 }
 
 /* non blocking version */
-extern int
+extern size_t
 libcmsockets_LTX_NBwritev_func(svc, scd, iovs, iovcnt, attrs)
 CMtrans_services svc;
 socket_conn_data_ptr scd;
@@ -1128,7 +1092,7 @@ void *iovs;
 int iovcnt;
 attr_list attrs;
 {
-    int fd = scd->fd;
+    SOCKET fd = scd->fd;
     ssize_t init_bytes, left = 0;
     ssize_t iget = 0;
     ssize_t iovleft, i;
@@ -1180,8 +1144,8 @@ attr_list attrs;
 int socket_global_init = 0;
 
 #ifdef HAVE_WINDOWS_H
-/* Winsock init stuff, ask for ver 1.1 */
-static WORD wVersionRequested = MAKEWORD(1, 1);
+/* Winsock init stuff, ask for ver 2.2 */
+static WORD wVersionRequested = MAKEWORD(2, 2);
 static WSADATA wsaData;
 #endif
 
@@ -1275,9 +1239,9 @@ cmsockets_add_static_transport(CManager cm, CMtrans_services svc)
     transport->cm = cm;
     transport->transport_init = (CMTransport_func)libcmsockets_LTX_initialize;
     transport->listen = (CMTransport_listen_func)libcmsockets_LTX_non_blocking_listen;
-    transport->initiate_conn = (CMConnection(*)())libcmsockets_LTX_initiate_conn;
-    transport->self_check = (int(*)())libcmsockets_LTX_self_check;
-    transport->connection_eq = (int(*)())libcmsockets_LTX_connection_eq;
+    transport->initiate_conn = (CMTransport_conn_func)libcmsockets_LTX_initiate_conn;
+    transport->self_check = (CMTransport_self_check_func)libcmsockets_LTX_self_check;
+    transport->connection_eq = (CMTransport_connection_eq_func)libcmsockets_LTX_connection_eq;
     transport->shutdown_conn = (CMTransport_shutdown_conn_func)libcmsockets_LTX_shutdown_conn;
     transport->read_to_buffer_func = (CMTransport_read_to_buffer_func)libcmsockets_LTX_read_to_buffer_func;
     transport->read_block_func = (CMTransport_read_block_func)NULL;

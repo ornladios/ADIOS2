@@ -41,7 +41,7 @@ int main(int argc, char **argv)
     string_list = attr_list_to_string(CMget_contact_list(cm));
     filter_spec = create_filter_action_spec(simple_format_list, 
 					    "{ return input.integer_field % 2;}");
-    encoded_filter_spec = atl_base64_encode(filter_spec, strlen(filter_spec) + 1);
+    encoded_filter_spec = atl_base64_encode(filter_spec, (unsigned int) strlen(filter_spec) + 1);
     printf("Contact list \"%d:%s:%s\"\n", stone, string_list, encoded_filter_spec);
     free(filter_spec);
     free(encoded_filter_spec);

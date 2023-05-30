@@ -12,7 +12,7 @@
 #endif
 #include <stdlib.h>
 #ifdef HAVE_WINDOWS_H
-#include <winsock.h>
+#include <winsock2.h>
 #define __ANSI_CPP__
 #else
 #include <netinet/in.h>
@@ -60,7 +60,7 @@ static atom_t CM_TRANS_MEGABITS_SEC = -1;
 #define CMRegressivePerfBandwidthResult  (unsigned int) 0xf9
 
 void
-CMdo_performance_response(CMConnection conn, long length, int func,
+CMdo_performance_response(CMConnection conn, size_t length, int func,
 			  int byte_swap, char *buffer)
 {
     /* part of length was read already */
@@ -89,7 +89,7 @@ CMdo_performance_response(CMConnection conn, long length, int func,
 	    tmp_vec[1].iov_len = length - sizeof(header);
 	    tmp_vec[1].iov_base = buffer;
 
-	    CMtrace_out(conn->cm, CMTransportVerbose, "CM - responding to latency probe of %ld bytes\n", length);
+	    CMtrace_out(conn->cm, CMTransportVerbose, "CM - responding to latency probe of %zd bytes\n", length);
 	    actual = INT_CMwrite_raw(conn, tmp_vec, tmp_vec + 1, 2, length, NULL, 0);
 	    if (actual != 2) {
 		printf("perf write failed\n");
@@ -230,7 +230,7 @@ CMdo_performance_response(CMConnection conn, long length, int func,
 		if (upcall_result) {
 		    str_list = attr_list_to_string(upcall_result);
 		    free_attr_list(upcall_result);
-		    tmp_vec[1].iov_len = header[4] = strlen(str_list) + 1;
+		    tmp_vec[1].iov_len = header[4] = (int)strlen(str_list) + 1;
 		    tmp_vec[1].iov_base = str_list;
 		    header[2] += header[4];
 		}
@@ -558,7 +558,7 @@ INT_CMtest_transport(CMConnection conn, attr_list how)
     char *attr_str = attr_list_to_string(how);
 
     
-    start_size = strlen(attr_str) + sizeof(header) + 1;
+    start_size = (int)strlen(attr_str) + (int)sizeof(header) + 1;
     /* CMP\0 in first entry for CMPerformance message */
     ((int*)header)[0] = 0x434d5000;
     /* size in second entry, high byte gives CMPerf operation */
@@ -603,7 +603,7 @@ INT_CMtest_transport(CMConnection conn, attr_list how)
 		/* for each vector, give it unique data */
 		int j;
 		for (j=0; j < ((each + repeat_count) /sizeof(int)); j++) {
-		    ((int*)tmp_vec[count+1].iov_base)[j] = lrand48();
+		    ((int*)tmp_vec[count+1].iov_base)[j] = rand();
 		}
 	    }
 	    if (tmp_vec[1].iov_len > tmp_vec[0].iov_len) {
