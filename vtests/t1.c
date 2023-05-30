@@ -21,7 +21,7 @@ void a () {
     dill_reg a,b,p3,d,e,f;
     dill_exec_ctx ec;
     dill_exec_handle handle;
-     int (*ip)();
+    int (*ip)(dill_exec_ctx, int , int );
 
      dill_start_proc(s, "a_gen", DILL_I, "%EC%i%i");
 
@@ -47,7 +47,7 @@ void a () {
      dill_addi(s, f, f, e);
      dill_reti(s, f);
      handle = dill_finalize(s);
-     ip = (int(*)())dill_get_fp(handle);
+     ip = (int(*)(dill_exec_ctx, int, int))dill_get_fp(handle);
 
 #ifdef USE_MMAP_CODE_SEG
 #ifndef MAP_ANONYMOUS
