@@ -109,6 +109,14 @@ Engine IO::Open(const std::string &name, const Mode mode)
                             "for engine " + name + ", in call to IO::Open");
     return Engine(&m_IO->Open(name, mode));
 }
+
+Engine IO::Open(const std::string &name, const char *md, const size_t mdsize)
+{
+    helper::CheckForNullptr(m_IO,
+                            "for engine " + name + ", in call to IO::Open");
+    return Engine(&m_IO->Open(name, md, mdsize));
+}
+
 Group IO::InquireGroup(char delimiter)
 {
     return Group(&m_IO->CreateGroup(delimiter));

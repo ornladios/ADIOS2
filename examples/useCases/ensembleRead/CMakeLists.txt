@@ -3,6 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(insituGlobalArrays)
-add_subdirectory(ensembleRead)
-
+if(ADIOS2_HAVE_MPI)
+  add_executable(ensembleRead ensembleRead.cpp)
+  target_link_libraries(ensembleRead adios2::cxx11_mpi MPI::MPI_C)
+endif()

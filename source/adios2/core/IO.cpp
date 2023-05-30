@@ -37,6 +37,7 @@
 #include "adios2/engine/skeleton/SkeletonWriter.h"
 
 #include "adios2/helper/adiosComm.h"
+#include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosFunctions.h" //BuildParametersMap
 #include "adios2/helper/adiosString.h"
 #include <adios2sys/SystemTools.hxx> // FileIsDirectory()
@@ -72,7 +73,8 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
      {IO::MakeEngine<engine::BP4Reader>, IO::MakeEngine<engine::BP4Writer>}},
     {"bp5",
 #ifdef ADIOS2_HAVE_BP5
-     {IO::MakeEngine<engine::BP5Reader>, IO::MakeEngine<engine::BP5Writer>}
+     {IO::MakeEngine<engine::BP5Reader>, IO::MakeEngine<engine::BP5Writer>,
+      IO::MakeEngineWithMD<engine::BP5Reader>}
 #else
      IO::NoEngineEntry("ERROR: this version didn't compile with "
                        "BP5 library, can't use BP5 engine\n")
@@ -516,7 +518,8 @@ void IO::AddOperation(const std::string &variable,
     m_VarOpsPlaceholder[variable].push_back({operatorType, parameters});
 }
 
-Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
+Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm,
+                 const char *md, const size_t mdsize)
 {
     PERFSTUBS_SCOPED_TIMER("IO::Open");
     auto itEngineFound = m_Engines.find(name);
@@ -684,8 +687,13 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
     auto f = FactoryLookup(engineTypeLC);
     if (f != Factory.end())
     {
-        if ((mode_to_use == Mode::Read) ||
-            (mode_to_use == Mode::ReadRandomAccess))
+        if (md && mode_to_use == Mode::ReadRandomAccess)
+        {
+            engine = f->second.MakeReaderWithMD(*this, name, mode_to_use,
+                                                std::move(comm), md, mdsize);
+        }
+        else if ((mode_to_use == Mode::Read) ||
+                 (mode_to_use == Mode::ReadRandomAccess))
         {
             engine =
                 f->second.MakeReader(*this, name, mode_to_use, std::move(comm));
@@ -718,6 +726,15 @@ Engine &IO::Open(const std::string &name, const Mode mode)
 {
     return Open(name, mode, m_ADIOS.GetComm().Duplicate());
 }
+
+Engine &IO::Open(const std::string &name, const char *md, const size_t mdsize)
+{
+    const Mode mode = Mode::ReadRandomAccess;
+    // helper::Comm comm;
+    // std::cout << "Open comm rank = " << comm.Rank();
+    return Open(name, mode, helper::CommDummy(), md, mdsize);
+}
+
 Group &IO::CreateGroup(char delimiter)
 {
     m_Gr = std::make_shared<Group>("", delimiter, *this);
