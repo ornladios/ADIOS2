@@ -6,7 +6,7 @@
 #endif
 
 #ifdef ADIOS2_HAVE_KOKKOS
-#include "adios2/helper/adiosKokkos.h"
+#include "adios2/helper/kokkos/adiosKokkos.h"
 #endif
 
 #endif /* ADIOS2_HELPER_ADIOSGPUFUNCTIONS_H_ */
