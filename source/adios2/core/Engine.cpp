@@ -29,6 +29,15 @@ Engine::Engine(const std::string engineType, IO &io, const std::string &name,
     m_FailVerbose = (m_Comm.Rank() == 0);
 }
 
+Engine::Engine(const std::string engineType, IO &io, const std::string &name,
+               const Mode openMode, helper::Comm comm, const char *md,
+               const size_t mdsize)
+: m_EngineType(engineType), m_IO(io), m_Name(name), m_OpenMode(openMode),
+  m_Comm(std::move(comm))
+{
+    ThrowUp("Engine with metadata in memory");
+}
+
 Engine::~Engine()
 {
     if (m_IsOpen)
@@ -42,6 +51,13 @@ Engine::operator bool() const noexcept { return !m_IsClosed; }
 IO &Engine::GetIO() noexcept { return m_IO; }
 
 Mode Engine::OpenMode() const noexcept { return m_OpenMode; }
+
+void Engine::GetMetadata(char **md, size_t *size)
+{
+    ThrowUp("GetMetadata");
+    *md = nullptr;
+    *size = 0;
+}
 
 StepStatus Engine::BeginStep()
 {

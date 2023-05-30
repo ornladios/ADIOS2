@@ -207,6 +207,8 @@ public:
 
     void SeekTo(const size_t start, const int transportIndex = -1);
 
+    size_t CurrentPos(const int transportIndex);
+
     void Truncate(const size_t length, const int transportIndex = -1);
 
     /**

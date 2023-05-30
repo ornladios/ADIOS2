@@ -361,6 +361,18 @@ void FileFStream::Seek(const size_t start)
     }
 }
 
+size_t FileFStream::CurrentPos()
+{
+    if (m_OpenMode == Mode::Write || m_OpenMode == Mode::Append)
+    {
+        return static_cast<size_t>(m_FileStream.tellp());
+    }
+    else
+    {
+        return static_cast<size_t>(m_FileStream.tellg());
+    }
+}
+
 void FileFStream::Truncate(const size_t length)
 {
 #if __cplusplus >= 201703L

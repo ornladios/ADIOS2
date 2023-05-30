@@ -39,7 +39,12 @@ public:
     BP4Reader(IO &io, const std::string &name, const Mode mode,
               helper::Comm comm);
 
+    BP4Reader(IO &io, const std::string &name, const Mode mode,
+              helper::Comm comm, const char *md, const size_t mdsize);
+
     virtual ~BP4Reader();
+
+    void GetMetadata(char **md, size_t *size) final;
 
     StepStatus BeginStep(StepMode mode = StepMode::Read,
                          const float timeoutSeconds = -1.0) final;
@@ -89,8 +94,11 @@ private:
 
     int m_Verbosity = 0;
 
+    bool readMetadataFromFile = true;
+
     void Init();
     void InitTransports();
+    void ProcessMetadataFromMemory(const char *md);
 
     /* Sleep up to pollSeconds time if we have not reached timeoutInstant.
      * Return true if slept

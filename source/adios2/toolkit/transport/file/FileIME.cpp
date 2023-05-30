@@ -354,6 +354,12 @@ void FileIME::Seek(const size_t start)
     }
 }
 
+size_t FileIME::CurrentPos()
+{
+    return static_cast<size_t>(
+        ime_client_native2_lseek(m_FileDescriptor, 0, SEEK_CUR));
+}
+
 void FileIME::Truncate(const size_t length)
 {
     helper::Throw<std::ios_base::failure>(
