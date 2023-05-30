@@ -64,6 +64,8 @@ public:
 
     void Seek(const size_t start = MaxSizeT) final;
 
+    size_t CurrentPos() final { return m_SeekPos; };
+
     void Truncate(const size_t length) final;
 
     void MkDir(const std::string &fileName) final;

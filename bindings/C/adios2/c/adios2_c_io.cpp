@@ -913,6 +913,24 @@ adios2_engine *adios2_open(adios2_io *io, const char *name, const adios2_mode mo
     return engine;
 }
 
+adios2_engine *adios2_open_with_metadata(adios2_io *io, const char *name,
+                                         const char *md, const size_t mdsize)
+{
+    adios2_engine *engine = nullptr;
+    try
+    {
+        adios2::helper::CheckForNullptr(
+            io, "for adios2_io, in call to adios2_open_with_metadata");
+        engine = reinterpret_cast<adios2_engine *>(
+            &reinterpret_cast<adios2::core::IO *>(io)->Open(name, md, mdsize));
+    }
+    catch (...)
+    {
+        adios2::helper::ExceptionToError("adios2_open_with_metadata");
+    }
+    return engine;
+}
+
 adios2_error adios2_flush_all_engines(adios2_io *io)
 {
     try

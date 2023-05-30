@@ -424,6 +424,11 @@ void FileStdio::Seek(const size_t start)
     }
 }
 
+size_t FileStdio::CurrentPos()
+{
+    return static_cast<size_t>(std::ftell(m_File));
+}
+
 #ifdef _WIN32
 void FileStdio::Truncate(const size_t length)
 {

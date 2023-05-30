@@ -57,6 +57,8 @@ public:
 
     void Seek(const size_t start = MaxSizeT) override;
 
+    size_t CurrentPos() override { return 0; };
+
     void Truncate(const size_t length) override;
 
 protected:

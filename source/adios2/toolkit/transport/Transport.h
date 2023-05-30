@@ -144,6 +144,8 @@ public:
 
     virtual void Seek(const size_t start = MaxSizeT) = 0;
 
+    virtual size_t CurrentPos() = 0;
+
     virtual void Truncate(const size_t length) = 0;
 
     virtual void MkDir(const std::string &fileName) = 0;

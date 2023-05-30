@@ -5,3 +5,5 @@
 
 add_subdirectory(fidesOneCell)
 add_subdirectory(insituGlobalArrays)
+add_subdirectory(ensembleRead)
+
