@@ -62,23 +62,6 @@ BP4Reader::~BP4Reader()
     m_IsOpen = false;
 }
 
-static void DumpToFile(const std::string fname, const char *buf, size_t n)
-{
-    std::fstream f;
-    f.open(fname,
-           std::fstream::out | std::fstream::binary | std::fstream::trunc);
-    f.write(buf, n);
-    f.close();
-}
-
-static void PrintSTLBufInfo(const std::string name, const format::BufferSTL &b)
-{
-    std::cout << name << ": size =" << b.DebugGetSize()
-              << " abs pos = " << b.m_AbsolutePosition
-              << " pos = " << b.m_Position << " type = " << b.m_Type
-              << " fixed = " << b.m_FixedSize << std::endl;
-}
-
 void BP4Reader::GetMetadata(char **md, size_t *size)
 {
     uint64_t sizes[2] = {m_BP4Deserializer.m_Metadata.m_Buffer.size(),
@@ -87,7 +70,6 @@ void BP4Reader::GetMetadata(char **md, size_t *size)
     size_t mdsize = sizes[0] + sizes[1] + 2 * sizeof(uint64_t);
     *md = (char *)malloc(mdsize);
     *size = mdsize;
-    size_t pos = 0;
     char *p = *md;
     memcpy(p, sizes, sizeof(sizes));
     p += sizeof(sizes);
@@ -95,13 +77,6 @@ void BP4Reader::GetMetadata(char **md, size_t *size)
     p += sizes[0];
     memcpy(p, m_BP4Deserializer.m_MetadataIndex.m_Buffer.data(), sizes[1]);
     p += sizes[1];
-
-    // DumpToFile("get_md", m_Metadata.m_Buffer.data(), sizes[0]);
-    // DumpToFile("get_mdidx", m_MetadataIndex.m_Buffer.data(), sizes[2]);
-    // DumpToFile("get_output", md.data(), md.size());
-    // std::cout << "GetMetadata:\n";
-    // PrintSTLBufInfo("  Md   ", m_Metadata);
-    // PrintSTLBufInfo("  Mdidx", m_MetadataIndex);
 }
 
 StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -629,8 +604,6 @@ void BP4Reader::ProcessMetadataFromMemory(const char *md)
     memcpy(&size_mdidx, p, sizeof(uint64_t));
     p = p + sizeof(uint64_t);
 
-    // DumpToFile("process_input", md, 24 + size_mdidx + size_md);
-
     std::string hint("when processing metadata from memory");
     size_t pos = 0;
 
@@ -638,34 +611,12 @@ void BP4Reader::ProcessMetadataFromMemory(const char *md)
     helper::CopyToBuffer(m_BP4Deserializer.m_Metadata.m_Buffer, pos, p,
                          size_md);
     p = p + size_md;
-    // DumpToFile("process_md", m_BP4Deserializer.m_Metadata.m_Buffer.data(),
-    // size_md);
 
     pos = 0;
     m_BP4Deserializer.m_MetadataIndex.Resize(size_mdidx, hint);
     helper::CopyToBuffer(m_BP4Deserializer.m_MetadataIndex.m_Buffer, pos, p,
                          size_mdidx);
     p = p + size_mdidx;
-    // DumpToFile("process_mdidx",
-    // m_BP4Deserializer.m_MetadataIndex.m_Buffer.data(), size_mdidx);
-
-    // std::cout << "ProcessMetadataFromMemory:\n";
-    // PrintSTLBufInfo("  Md   ", m_Metadata);
-    // PrintSTLBufInfo("  Mmd  ", m_MetaMetadata);
-    // PrintSTLBufInfo("  Mdidx", m_MetadataIndex);
-
-    /* Check */
-    // std::vector<char> test;
-    // GetMetadata(test);
-    /*for (size_t i = 0; i < test.size(); ++i)
-    {
-        if (test[i] != md[i])
-        {
-            std::cout << "MD mismatch at index " << i
-                      << " md=" << (unsigned int)md[i]
-                      << " test=" << (unsigned int)test[i] << "\n";
-        }
-    }*/
 
     /* Parse metadata index table */
     m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex, 0,
