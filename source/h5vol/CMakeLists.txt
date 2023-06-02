@@ -9,6 +9,21 @@ if(CMAKE_C_COMPILER_ID MATCHES "^(GNU)$")
   string(APPEND CMAKE_C_FLAGS " -Wno-format-zero-length")
 endif()
 
+include(CheckIncludeFiles)
+check_include_files(unistd.h HAVE_UNISTD_H)
+check_include_files(windows.h HAVE_WINDOWS_H)
+
+message("- HAVE_UNISTD?  ${HAVE_UNISTD_H} ")
+message("- HAVE_WINDOWS? ${HAVE_WINDOWS_H}")
+
+if (HAVE_UNISTD_H)
+   add_definitions(-DHAVE_UNISTD_H)
+endif()
+
+if (HAVE_WINDOWS_H)
+   add_definitions(-DHAVE_WINDOWS_H)
+endif()
+
 add_library(adios2_h5vol
   H5VolReadWrite.c
   H5Vol.c
