@@ -208,8 +208,7 @@ int main(int argc, char *argv[])
 
     /* "Open" data by passing metadata to the adios engine */
     auto now = Now();
-    adios2::Engine reader = reader =
-        io.Open(fname, fileMetadata, fileMetadataSize);
+    adios2::Engine reader = io.Open(fname, fileMetadata, fileMetadataSize);
     Seconds opentime = Now() - now;
     free(fileMetadata);
 
