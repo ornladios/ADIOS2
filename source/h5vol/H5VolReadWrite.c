@@ -16,7 +16,14 @@
 #include "H5VolReadWrite.h"
 
 #include "H5VolUtil.h"
+
+#ifdef HAVE_UNISTD_H
 #include <unistd.h> // sleep
+#elif defined HAVE_WINDOWS_H
+#include <windows.h>
+#define sleep(x) Sleep(1000 * (x))
+#endif
+
 // these are in h5private.h
 #define SUCCEED 1
 #define FAIL 0
