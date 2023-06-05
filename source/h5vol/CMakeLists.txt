@@ -13,9 +13,6 @@ include(CheckIncludeFiles)
 check_include_files(unistd.h HAVE_UNISTD_H)
 check_include_files(windows.h HAVE_WINDOWS_H)
 
-message("- HAVE_UNISTD?  ${HAVE_UNISTD_H} ")
-message("- HAVE_WINDOWS? ${HAVE_WINDOWS_H}")
-
 if (HAVE_UNISTD_H)
    add_definitions(-DHAVE_UNISTD_H)
 endif()
