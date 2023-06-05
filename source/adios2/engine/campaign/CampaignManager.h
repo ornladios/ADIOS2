@@ -47,6 +47,7 @@ private:
     int m_Verbosity = 5;
     CampaignMap cmap;
     std::ofstream m_Output;
+    const std::string m_CampaignDir = "adios-campaign";
 };
 
 } // end namespace engine

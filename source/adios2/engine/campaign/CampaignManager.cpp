@@ -69,6 +69,7 @@ CampaignManager::CampaignManager(adios2::helper::Comm &comm)
         std::cout << "Campaign Manager " << m_WriterRank
                   << " constructor called" << std::endl;
     }
+    helper::CreateDirectory(m_CampaignDir);
 }
 
 CampaignManager::~CampaignManager()
@@ -86,12 +87,13 @@ CampaignManager::~CampaignManager()
 
 void CampaignManager::Open(const std::string &name)
 {
+    m_Name = m_CampaignDir + "/" + name + "_" + std::to_string(m_WriterRank) +
+             ".json";
     if (m_Verbosity == 5)
     {
-        std::cout << "Campaign Manager " << m_WriterRank << " Open(" << name
+        std::cout << "Campaign Manager " << m_WriterRank << " Open(" << m_Name
                   << ")\n";
     }
-    m_Name = name + "_" + std::to_string(m_WriterRank) + ".json";
 }
 
 void CampaignManager::Record(const std::string &name, const size_t step,

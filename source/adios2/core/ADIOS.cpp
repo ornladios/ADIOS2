@@ -147,11 +147,7 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm,
 #ifdef ADIOS2_HAVE_KOKKOS
     m_GlobalServices.Init_Kokkos_API();
 #endif
-    std::string campaignName = "campaign";
-    if (adios_count > 1)
-    {
-        campaignName = "campaign" + std::to_string(adios_count);
-    }
+    std::string campaignName = "campaign_" + std::to_string(adios_count);
     m_CampaignManager.Open(campaignName);
 }
 
