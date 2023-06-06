@@ -12,6 +12,7 @@
 #endif
 #define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 int
@@ -51,7 +52,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 	/* test external call */
@@ -70,7 +71,7 @@ main(int argc, char **argv)
 	cod_subroutine_declaration("void proc(int i, double d, string s)", 
 				   context);
 	gen_code = cod_code_gen(code, context);
-	func = (void (*)(int, double, char*))(long)gen_code->func;
+	func = (void (*)(int, double, char*))(intptr_t)gen_code->func;
 	printf("Expect -> \"values are is %d, %g, %s\"\n", 5, 3.14159, "hello!");
 	(func)(5, (double)3.14159, "hello!");
 	
@@ -89,7 +90,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 	static char code[] = "{\
@@ -142,7 +143,7 @@ main(int argc, char **argv)
 	    write_buffer(write_file, &formats[0], &tmp, test_num);
 	}
 	gen_code = cod_code_gen(code, context);
-	func = (double (*)(test_struct_p))(long) gen_code->func;
+	func = (double (*)(test_struct_p))(intptr_t) gen_code->func;
 	assert((func)(param) == 46.00);
 	free(tmp.vals);
 	cod_code_free(gen_code);
@@ -160,7 +161,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 	static char code[] = "{\
@@ -214,7 +215,7 @@ main(int argc, char **argv)
 	    write_buffer(write_file, &formats[0], &tmp, test_num);
 	}
 	gen_code = cod_code_gen(code, context);
-	func = (int (*)(test_struct_p))(long) gen_code->func;
+	func = (int (*)(test_struct_p))(intptr_t) gen_code->func;
 	assert((func)(param) == 145);
 	free(tmp.vals);
 	cod_code_free(gen_code);
@@ -231,7 +232,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 	static char code[] = "{\
@@ -283,7 +284,7 @@ main(int argc, char **argv)
 	    write_buffer(write_file, &formats[0], &tmp, test_num);
 	}
 	gen_code = cod_code_gen(code, context);
-	func = (double (*)(test_struct_p))(long) gen_code->func;
+	func = (double (*)(test_struct_p))(intptr_t) gen_code->func;
 	assert((func)(param) == 46.00);
 	free(tmp.vals);
 	cod_code_free(gen_code);
@@ -301,7 +302,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 	static char code[] = "{\
@@ -355,7 +356,7 @@ main(int argc, char **argv)
 	    write_buffer(write_file, &formats[0], &tmp, test_num);
 	}
 	gen_code = cod_code_gen(code, context);
-	func = (double (*)(test_struct_p))(long) gen_code->func;
+	func = (double (*)(test_struct_p))(intptr_t) gen_code->func;
 	assert((func)(param) == 46.00);
 	free(tmp.vals);
 	cod_code_free(gen_code);
@@ -378,8 +379,8 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
-	    {"malloc", (void*)(long)malloc},
+	    {"printf", (void*)(intptr_t)printf},
+	    {"malloc", (void*)(intptr_t)malloc},
 	    {(void*)0, (void*)0}
 	};
 	static char code[] = "{\
@@ -433,7 +434,7 @@ return testing;\n\
 	    write_buffer(write_file, &formats[0], &tmp, test_num);
 	}
 	gen_code = cod_code_gen(code, context);
-	func = (double (*)(test_struct_p))(long) gen_code->func;
+	func = (double (*)(test_struct_p))(intptr_t) gen_code->func;
 	assert((func)(param) == 46.00);
 	(void)func;
 	free(tmp.vals);

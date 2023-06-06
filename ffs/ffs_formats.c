@@ -13,7 +13,9 @@
 #endif
 #include <sys/types.h>
 #include <ctype.h>
-extern char *getenv(const char *name);
+#ifdef HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
 
 #ifdef DO_DCG
 #include "dill.h"
@@ -115,8 +117,7 @@ local_size(int field_index, FMFormat f, FMTypeDesc *type,
 }
 
 static int
-min_align_size(size)
-int size;
+min_align_size(int size)
 {
     int align_size = 8;		/* conservative on current machines */
     switch (size) {
@@ -138,9 +139,7 @@ int size;
 }
 
 static int
-min_align_type(typ, size)
-FMdata_type typ;
-int size;
+min_align_type(FMdata_type typ, int size)
 {
 #ifndef DO_DCG
     return min_align_size(size);

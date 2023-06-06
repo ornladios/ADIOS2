@@ -13,6 +13,7 @@
 #endif
 #include <sys/types.h>
 #include <ctype.h>
+#include <stdint.h>
 
 #ifdef HAVE_DILL_H
 #include "dill.h"
@@ -95,8 +96,7 @@ static char *float_format_str[] = {
 static int IO_shut_up = 0;
 
 static int
-min_align_size(size)
-int size;
+min_align_size(int size)
 {
     int align_size = 8;		/* conservative on current machines */
     switch (size) {
@@ -172,8 +172,7 @@ init_float_formats()
 	
 
 void
-FFSfree_conversion(conv)
-IOConversionPtr conv;
+FFSfree_conversion(IOConversionPtr conv)
 {
     int i;
     for (i = 0; i < conv->conv_count; i++) {
@@ -206,10 +205,7 @@ IOConversionPtr conv;
  * */
 
 static void
-field_name_strip_get_default(io_field, out_field_name, default_val)
-const FMField *io_field;
-char *out_field_name;
-void **default_val;
+field_name_strip_get_default(const FMField *io_field, char *out_field_name, void **default_val)
 {
     char *s, *s1;
     char *base_type = base_data_type(io_field->field_type);
@@ -282,21 +278,9 @@ find_field_for_conv(char *field_name, FMFieldList fields, int cur_field, void *s
 
 static
 IOConversionPtr
-create_conversion(src_ioformat, target_field_list, target_struct_size,
-		  pointer_size, byte_reversal, target_fp_format,
-		  initial_conversion, target_column_major,
-		  string_offset_size, converted_strings, target_list)
-FFSTypeHandle src_ioformat;
-FMFieldList target_field_list;
-int target_struct_size;
-int pointer_size;
-int byte_reversal;
-FMfloat_format target_fp_format;
-IOconversion_type initial_conversion;
-int target_column_major;
-int string_offset_size;
-int converted_strings;
-FMStructDescList target_list; 
+create_conversion(FFSTypeHandle src_ioformat, FMFieldList target_field_list, int target_struct_size, int pointer_size,
+		  int byte_reversal, FMfloat_format target_fp_format, IOconversion_type initial_conversion,
+		  int target_column_major, int string_offset_size, int converted_strings, FMStructDescList target_list)
 {
     int target_field_count = count_FMfield(target_field_list);
     FMFieldList nfl_sort = copy_field_list(target_field_list);
@@ -609,10 +593,10 @@ FMStructDescList target_list;
 		}
 	    } else {
 		
-		fprintf(stderr, "Unknown field type for field %s ->\"%s\", format %lx\n",
+		fprintf(stderr, "Unknown field type for field %s ->\"%s\", format %p\n",
 			input_field.field_name,
 			src_ioformat->body->field_list[input_index].field_type,
-			(long)src_ioformat);
+			src_ioformat);
 		FFSfree_conversion(conv_ptr);
 		return NULL;
 	    }
@@ -665,14 +649,8 @@ FMStructDescList target_list;
 
 extern
 void
-set_general_IOconversion_for_format(iofile, file_ioformat, native_field_list,
-				    native_struct_size, pointer_size, target_list)
-FFSContext iofile;
-FFSTypeHandle file_ioformat;
-FMFieldList native_field_list;
-int native_struct_size;
-int pointer_size;
-FMStructDescList target_list;
+set_general_IOconversion_for_format(FFSContext iofile, FFSTypeHandle file_ioformat, FMFieldList native_field_list,
+				    int native_struct_size, int pointer_size, FMStructDescList target_list)
 {
     IOConversionPtr conv_ptr;
     IOconversion_type conv_type = none_required;
@@ -704,10 +682,7 @@ FMStructDescList target_list;
 }
 
 static int
-set_conversion_from_list(iocontext, ioformat, struct_list)
-FFSContext iocontext;
-FFSTypeHandle ioformat;
-FMStructDescList struct_list;
+set_conversion_from_list(FFSContext iocontext, FFSTypeHandle ioformat, FMStructDescList struct_list)
 {
     int i = 0;
     while(struct_list[i].format_name != NULL) {
@@ -764,10 +739,7 @@ static void link_conversion_sets(FFSTypeHandle ioformat){}
 
 extern
 void
-establish_conversion(iocontext, ioformat, struct_list)
-FFSContext iocontext;
-FFSTypeHandle ioformat;
-FMStructDescList struct_list;
+establish_conversion(FFSContext iocontext, FFSTypeHandle ioformat, FMStructDescList struct_list)
 {
     int use_package = 0;
 
@@ -780,12 +752,7 @@ FMStructDescList struct_list;
 }
 
 extern void
-ffs_internal_convert_field(src_spec, src, dest_type, dest_size, dest)
-FMFieldPtr src_spec;
-void *src;
-FMdata_type dest_type;
-int dest_size;
-void *dest;
+ffs_internal_convert_field(FMFieldPtr src_spec, void *src, FMdata_type dest_type, int dest_size, void *dest)
 {
     int float_OK = 1;
     if (dest_type == float_type) {
@@ -833,10 +800,13 @@ void *dest;
 		*dest_field = (short) tmp;
 	    } else if (dest_size == sizeof(int)) {
 		int *dest_field = (int *) dest;
-		*dest_field = tmp;
+		*dest_field = (int) tmp;
 	    } else if (dest_size == sizeof(long)) {
-		long *dest_field = (long *) dest;
-		*dest_field = tmp;
+		long* dest_field = (long*)dest;
+		*dest_field = (long)tmp;
+	    } else if (dest_size == sizeof(size_t)) {
+		size_t* dest_field = (size_t*)dest;
+		*dest_field = (long)tmp;
 #if SIZEOF_LONG_LONG != 0
 	    } else if (dest_size == sizeof(long long)) {
 		long long lltmp = tmp;
@@ -847,7 +817,7 @@ void *dest;
 	}
     case char_type:
 	{
-	    char tmp = get_big_int(src_spec, src);
+	    char tmp = (char)get_big_int(src_spec, src);
 	    char *dest_field = (char *) dest;
 	    *dest_field = tmp;
 	    break;
@@ -855,7 +825,7 @@ void *dest;
     case boolean_type:
     case enumeration_type:
 	{
-	    int tmp = get_big_int(src_spec, src);
+	    int tmp = (int) get_big_int(src_spec, src);
 	    int *dest_field = (int *) dest;
 	    *dest_field = tmp;
 	    break;
@@ -870,10 +840,10 @@ void *dest;
 		unsigned short *dest_field = (unsigned short *) dest;
 		*dest_field = (unsigned short) tmp;
 	    } else if (dest_size == sizeof(int)) {
-		unsigned int *dest_field = (unsigned int *) dest;
-		*dest_field = tmp;
-	    } else if (dest_size == sizeof(long)) {
-		unsigned long *dest_field = (unsigned long *) dest;
+		unsigned int* dest_field = (unsigned int*)dest;
+		*dest_field = (unsigned int)tmp;
+	    } else if (dest_size == sizeof(size_t)) {
+		size_t* dest_field = (size_t*)dest;
 		*dest_field = tmp;
 #if SIZEOF_LONG_LONG != 0
 	    } else if (dest_size == sizeof(long long)) {
@@ -933,10 +903,10 @@ typedef struct conv_status {
     void *dest;
     void *src_pointer_base;
     void *dest_pointer_base;
-    int   src_offset_adjust;
-    int   dest_offset_adjust;
-    int   cur_offset;
-    int *control_value;
+    ssize_t   src_offset_adjust;
+    ssize_t   dest_offset_adjust;
+    size_t   cur_offset;
+    size_t   *control_value;
     int target_pointer_size;
     int src_pointer_size;
     int register_args;
@@ -946,7 +916,7 @@ typedef struct conv_status {
 typedef struct run_time_conv_status {
     void *src_pointer_base;
     void *dest_pointer_base;
-    int   dest_offset_adjust;
+    ssize_t   dest_offset_adjust;
 } *RTConvStatus;
 
 static void
@@ -954,9 +924,7 @@ internal_convert_record(IOConversionPtr conv, ConvStatus conv_status,
 			void *src, void *dest, int data_already_copied);
 
 static void
-print_IOConversion(conv_ptr, indent)
-IOConversionPtr conv_ptr;
-int indent;
+print_IOConversion(IOConversionPtr conv_ptr, int indent)
 {
     int i;
     int ind;
@@ -988,12 +956,12 @@ int indent;
     }
     for (ind = 0; ind < indent; ind++)
 	printf("    ");
-    printf(" base_size_delta=%d, max_var_exp=%g, target_pointer_size=%d, string_offset=%d, converted_strings=%d\n",
+    printf(" base_size_delta=%zd, max_var_exp=%g, target_pointer_size=%d, string_offset=%zd, converted_strings=%d\n",
 	   conv_ptr->base_size_delta, conv_ptr->max_var_expansion,
 	   conv_ptr->target_pointer_size, conv_ptr->string_offset_size,
 	   conv_ptr->converted_strings);
-    printf(" conversion_function= %lx, required_align=%d\n",
-	   (long) conv_ptr->conv_func, conv_ptr->required_alignment);
+    printf(" conversion_function= %p, required_align=%d\n",
+	   conv_ptr->conv_func, conv_ptr->required_alignment);
     for (ind = 0; ind < indent; ind++)
 	printf("    ");
     printf("  There are %d conversions registered:\n", conv_ptr->conv_count);
@@ -1042,7 +1010,7 @@ int indent;
 	for (ind = 0; ind < indent; ind++)
 	    printf("    ");
 	if (conv_ptr->conversions[i].default_value == NULL) {
-	    printf("    Src offset : %d    size %d\n", src_field->offset,
+	    printf("    Src offset : %zd    size %d\n", src_field->offset,
 		   src_field->size);
 	} else {
 	    int j;
@@ -1054,7 +1022,7 @@ int indent;
 	}
 	for (ind = 0; ind < indent; ind++)
 	    printf("    ");
-	printf("    Dst offset : %d    size %d\n",
+	printf("    Dst offset : %zd    size %d\n",
 	       conv_ptr->conversions[i].dest_offset,
 	       conv_ptr->conversions[i].dest_size);
 	if (conv_ptr->conversions[i].subconversion) {
@@ -1072,9 +1040,7 @@ int indent;
 }
 
 static void
-print_IOConversion_as_XML(conv_ptr, indent)
-IOConversionPtr conv_ptr;
-int indent;
+print_IOConversion_as_XML(IOConversionPtr conv_ptr, int indent)
 {
     int i;
     int ind;
@@ -1107,10 +1073,10 @@ int indent;
     }
     for (ind = 0; ind < indent; ind++)
 	printf("    ");
-    printf("<baseSizeDelta>%d</baseSizeDelta>\n", conv_ptr->base_size_delta);
+    printf("<baseSizeDelta>%zd</baseSizeDelta>\n", conv_ptr->base_size_delta);
     printf("<maxVarExpansion>%g</maxVarExpansion>\n", conv_ptr->max_var_expansion);
     printf("<targetPointerSize>%d</targetPointerSize>\n", conv_ptr->target_pointer_size);
-    printf("<stringOffsetSize>%d</stringOffsetSize>\n", conv_ptr->string_offset_size);
+    printf("<stringOffsetSize>%zd</stringOffsetSize>\n", conv_ptr->string_offset_size);
     printf("<convertedStrings>%d</convertedStrings>\n", conv_ptr->converted_strings);
     for (ind = 0; ind < indent; ind++)
 	printf("    ");
@@ -1151,12 +1117,12 @@ int indent;
 	}
 	for (ind = 0; ind < indent; ind++)
 	    printf("    ");
-	printf("<sourceOffset>%d</sourceOffset><sourceSize>%d</sourceSize>\n",
+	printf("<sourceOffset>%zd</sourceOffset><sourceSize>%d</sourceSize>\n",
 	       src_field->offset,
 	       src_field->size);
 	for (ind = 0; ind < indent; ind++)
 	    printf("    ");
-	printf("<destOffset>%d</destOffset><destSize>%d</destSize>\n",
+	printf("<destOffset>%zd</destOffset><destSize>%d</destSize>\n",
 	       conv_ptr->conversions[i].dest_offset,
 	       conv_ptr->conversions[i].dest_size);
 	if (conv_ptr->conversions[i].subconversion) {
@@ -1175,26 +1141,19 @@ int indent;
 
 
 extern void
-dump_IOConversion(conv_ptr)
-IOConversionPtr conv_ptr;
+dump_IOConversion(IOConversionPtr conv_ptr)
 {
     print_IOConversion(conv_ptr, 0);
 }
 
 extern void
-dump_IOConversion_as_XML(conv_ptr)
-IOConversionPtr conv_ptr;
+dump_IOConversion_as_XML(IOConversionPtr conv_ptr)
 {
     print_IOConversion_as_XML(conv_ptr, 0);
 }
 
 void
-FFSconvert_record(conv, src, dest, final_string_base, src_string_base)
-IOConversionPtr conv;
-void *src;
-void *dest;
-void *final_string_base;
-void *src_string_base;
+FFSconvert_record(IOConversionPtr conv, void *src, void *dest, void *final_string_base, void *src_string_base)
 {
     struct conv_status cs;
     if (src_string_base == NULL) {
@@ -1206,13 +1165,13 @@ void *src_string_base;
 	    int i;
 	    int limit = 30;
 	    int *tmp = (int *) (((char *) src_string_base) -
-				(((long) src_string_base) % 4));
+				(((intptr_t) src_string_base) % 4));
 	    printf("record of type \"%s\", contents :\n", 
 		   conv->ioformat->body->format_name);
 	    if (limit * sizeof(int) > conv->ioformat->body->record_length)
 		limit = conv->ioformat->body->record_length / sizeof(int);
 	    for (i = 0; i < limit; i += 4) {
-		printf("%lx: %8x %8x %8x %8x\n", (long) ((char *) src) + (i * 4),
+		printf("%p: %8x %8x %8x %8x\n", ((char *) src) + (i * 4),
 		       ((int *) src)[i], ((int *) src)[i + 1],
 		       ((int *) src)[i + 2], ((int *) src)[i + 3]);
 	    }
@@ -1233,7 +1192,7 @@ void *src_string_base;
 		    }
 		}
 */		for (i = 0; i < limit; i += 4) {
-		    printf("%lx: %8x %8x %8x %8x\n", (long) ((char *) tmp) + (i * 4),
+		    printf("%p: %8x %8x %8x %8x\n", ((char *) tmp) + (i * 4),
 			   ((int *) tmp)[i],
 			   ((int *) tmp)[i + 1],
 			   ((int *) tmp)[i + 2],
@@ -1243,14 +1202,14 @@ void *src_string_base;
 	}
 	rtcs.src_pointer_base = src_string_base;
 	rtcs.dest_pointer_base = final_string_base;
-	rtcs.dest_offset_adjust = -conv->string_offset_size;
+	rtcs.dest_offset_adjust = -(ssize_t) conv->string_offset_size;
 	conv->conv_func(src, dest, &rtcs);
 	return;
     } else {
 	cs.src_pointer_base = src_string_base;
 	cs.dest_pointer_base = final_string_base;
-	cs.src_offset_adjust = -conv->string_offset_size;
-	cs.dest_offset_adjust = -conv->string_offset_size;
+	cs.src_offset_adjust = -(ssize_t)conv->string_offset_size;
+	cs.dest_offset_adjust = -(ssize_t)conv->string_offset_size;
 	cs.cur_offset = 0;
 	cs.control_value = NULL;
 	cs.target_pointer_size = conv->target_pointer_size;
@@ -1261,20 +1220,21 @@ void *src_string_base;
 }
 
 void
-transpose_array(int *dimens, char *src, char *dest, int source_column_major,
+transpose_array(size_t *dimens, char *src, char *dest, int source_column_major,
 		FMdata_type dest_type, int dest_size, 
 		FMFieldPtr src_spec)
 {
     int dimen_count = 0;
-    int *index;
-    int i, cur_index;
-    int jump = 1;
+    size_t *index;
+    size_t i;
+    ssize_t cur_index;
+    size_t jump = 1;
 
     while (dimens[dimen_count] != 0) dimen_count++;
     struct _FMgetFieldStruct tmp_spec = *src_spec;
 
     if (dimen_count <= 1) return;
-    index = malloc(sizeof(int) * dimen_count);
+    index = malloc(sizeof(index[0]) * dimen_count);
     for(i = 0; i< dimen_count; i++) {
 	index[i] = 0;
     }
@@ -1285,8 +1245,8 @@ transpose_array(int *dimens, char *src, char *dest, int source_column_major,
     }
     while(index[0] < dimens[0]) {
 	if (cur_index == (dimen_count-1)) {
-	    int col_index_base = 0;
-	    int row_index_base = 0;
+	    size_t col_index_base = 0;
+	    size_t row_index_base = 0;
 	    int i;
 	    void * dest_field;
 	    if (dimen_count >= 2) {
@@ -1353,7 +1313,7 @@ transpose_array(int *dimens, char *src, char *dest, int source_column_major,
     free(index);
 }
 
-static long
+static size_t
 get_offset_for_addr(char *src_field_addr, ConvStatus conv_status, 
 		    IOconvFieldStruct *conv)
 {
@@ -1377,7 +1337,7 @@ convert_address_field(char *src_field_addr, char **output_source_ptr,
     int dest_size = conv_status->target_pointer_size;
     char *output_dest = NULL;
     char *output_source = NULL;
-    int offset = get_offset_for_addr(src_field_addr, conv_status,
+    size_t offset = get_offset_for_addr(src_field_addr, conv_status,
 				     conv);
     if (offset != 0) {
 	int align_tmp = 0;
@@ -1387,7 +1347,7 @@ convert_address_field(char *src_field_addr, char **output_source_ptr,
 	output_dest = (char*)conv_status->dest_pointer_base + offset + 
 	    conv_status->dest_offset_adjust;
 	
-	if ((align_tmp = (((unsigned long)output_dest) % required_alignment)) != 0) {
+	if ((align_tmp = (((uintptr_t)output_dest) % required_alignment)) != 0) {
 	    output_dest += (required_alignment - align_tmp);
 	    conv_status->dest_offset_adjust += (required_alignment - align_tmp);
 	}
@@ -1402,7 +1362,7 @@ convert_address_field(char *src_field_addr, char **output_source_ptr,
 
 
 static void
-new_convert_address_field(int offset, char **output_source_ptr,
+new_convert_address_field(size_t offset, char **output_source_ptr,
 		      char *dest_field_addr, char **output_dest_ptr,
 		      ConvStatus conv_status, int required_alignment)
 {
@@ -1418,7 +1378,7 @@ new_convert_address_field(int offset, char **output_source_ptr,
 	output_dest = (char*)conv_status->dest_pointer_base + offset + 
 	    conv_status->dest_offset_adjust;
 	
-	if ((align_tmp = (((unsigned long)output_dest) % required_alignment)) != 0) {
+	if ((align_tmp = (((uintptr_t)output_dest) % required_alignment)) != 0) {
 	    output_dest += (required_alignment - align_tmp);
 	    conv_status->dest_offset_adjust += (required_alignment - align_tmp);
 	}
@@ -1431,7 +1391,7 @@ new_convert_address_field(int offset, char **output_source_ptr,
     }
 }
 
-static int
+static ssize_t
 decode_size_delta(ConvStatus conv_status, 
 		  IOconvFieldStruct *conv, FMTypeDesc *type_desc)
 {
@@ -1470,7 +1430,6 @@ item_size(ConvStatus conv_status,
     return 0;
 }
 
-
 static void
 new_convert_field(char *src_field_addr, char *dest_field_addr, 
 		  ConvStatus conv_status, 
@@ -1480,7 +1439,7 @@ new_convert_field(char *src_field_addr, char *dest_field_addr,
     switch(type_desc->type) {
     case FMType_pointer: {
 	char *new_src, *new_dest;
-	int offset = get_offset_for_addr(src_field_addr, conv_status, 
+	size_t offset = get_offset_for_addr(src_field_addr, conv_status, 
 					 conv);
 	new_convert_address_field(offset, &new_src, dest_field_addr, 
 			      &new_dest, conv_status, 8);
@@ -1538,7 +1497,7 @@ new_convert_field(char *src_field_addr, char *dest_field_addr,
 	break;
     }
     case FMType_array: {
-	int elements = 1, i;
+	size_t elements = 1, i;
 	char *new_src = src_field_addr;
 	char *new_dest = dest_field_addr;
 	FMTypeDesc *next = type_desc;
@@ -1553,8 +1512,8 @@ new_convert_field(char *src_field_addr, char *dest_field_addr,
 	}
 	if (conv->rc_swap == no_row_column_swap) {
 	    if (!data_already_copied) {
-		int base_delta = decode_size_delta(conv_status, conv, next);
-		int total_delta = base_delta * elements;
+		ssize_t base_delta = decode_size_delta(conv_status, conv, next);
+		size_t total_delta = base_delta * elements;
 		conv_status->dest_offset_adjust += total_delta;
 		if (conv_status->global_conv->conversion_type == copy_dynamic_portion) {
 		    int base_size = item_size(conv_status, conv, next);
@@ -1595,7 +1554,7 @@ new_convert_field(char *src_field_addr, char *dest_field_addr,
 	    int source_column_major = 
 		(conv->rc_swap == swap_source_column_major);
 	    int dimen_count = conv->iovar->dimen_count;
-	    int *dimens = malloc(sizeof(int) * (dimen_count + 1));
+	    size_t *dimens = malloc(sizeof(dimens[0]) * (dimen_count + 1));
 	    int i = 0;
 	    FMdata_type dest_type = conv->src_field.data_type;
 	    int dest_size = conv->dest_size;
@@ -1625,22 +1584,18 @@ new_convert_field(char *src_field_addr, char *dest_field_addr,
 }
 
 static void
-internal_convert_record(conv, conv_status, src, dest, data_already_copied)
-IOConversionPtr conv;
-ConvStatus conv_status;
-void *src;
-void *dest;
-int data_already_copied;
+internal_convert_record(IOConversionPtr conv, ConvStatus conv_status, void *src,
+			void *dest, int data_already_copied)
 {
     int i;
-    int *control_value = NULL;
+    size_t *control_value = NULL;
     if (conv->conversion_type == none_required) return;
     for (i = 0; i < conv->conv_count; i++) {
 	FMTypeDesc *next = &conv->conversions[i].iovar->type_desc;
 	while (next != NULL) {
 	    if ((next->type == FMType_array) && 
 		(next->static_size == 0)) {
-		long elements;
+		size_t elements;
 		FMFormat f = conv->ioformat->body;
 		int field = next->control_field_index;
 		struct _FMgetFieldStruct tmp_src_spec;
@@ -1652,7 +1607,7 @@ int data_already_copied;
 		elements = get_big_int(&tmp_src_spec, src);
 		if (control_value == NULL) {
 		    int j;
-		    control_value = (int *) malloc(sizeof(int) * f->field_count);
+		    control_value = (size_t *) malloc(sizeof(control_value[0]) * f->field_count);
 		    for (j = 0; j < f->field_count; j++)
 			control_value[j] = 0;
 		    conv_status->control_value = control_value;
@@ -1702,9 +1657,7 @@ int data_already_copied;
 
 
 static MAX_INTEGER_TYPE
-get_big_int(iofield, data)
-FMFieldPtr iofield;
-void *data;
+get_big_int(FMFieldPtr iofield, void *data)
 {
     if (iofield->data_type == integer_type) {
 	if (iofield->size == sizeof(char)) {
@@ -1731,7 +1684,7 @@ void *data;
 	    return tmp;
 	} else if (iofield->size == 2 * sizeof(long)) {
 	    long tmp;
-	    int low_bytes_offset = iofield->offset;
+	    size_t low_bytes_offset = iofield->offset;
 	    if (WORDS_BIGENDIAN) {
 		if (!iofield->byte_swap) {
 		    low_bytes_offset += sizeof(long);
@@ -1771,9 +1724,7 @@ void *data;
 }
 
 static MAX_UNSIGNED_TYPE
-get_big_unsigned(iofield, data)
-FMFieldPtr iofield;
-void *data;
+get_big_unsigned(FMFieldPtr iofield, void *data)
 {
     if ((iofield->data_type == unsigned_type) || 
 	(iofield->data_type == enumeration_type) || 
@@ -1802,7 +1753,7 @@ void *data;
 	    return tmp;
 	} else if (iofield->size == 2 * sizeof(long)) {
 	    unsigned long tmp;
-	    int low_bytes_offset = iofield->offset;
+	    size_t low_bytes_offset = iofield->offset;
 	    if (WORDS_BIGENDIAN) {
 		if (!iofield->byte_swap) {
 		    low_bytes_offset += sizeof(long);
@@ -1870,9 +1821,7 @@ float_conversion(unsigned char*value, int size, FMfloat_format src_format,
 }
 
 static MAX_FLOAT_TYPE
-get_big_float(iofield, data)
-FMFieldPtr iofield;
-void *data;
+get_big_float(FMFieldPtr iofield, void *data)
 {
     if (iofield->data_type == float_type) {
 	if (iofield->size == sizeof(float)) {
@@ -1946,9 +1895,7 @@ void *data;
 }
 
 static void
-byte_swap(data, size)
-char *data;
-int size;
+byte_swap(char *data, int size)
 {
     int i;
     assert((size % 2) == 0);
@@ -1966,10 +1913,7 @@ int ffs_getreg(dill_stream s, int *reg_p, int type, int var_tmp){return 0;}
 int ffs_localb(void*s, int size) {return 0;}
 extern
  conv_routine
-generate_conversion(conv, src_alignment, dest_alignment)
-IOConversionPtr conv;
-int src_alignment;
-int dest_alignment;
+generate_conversion(IOConversionPtr conv, int src_alignment, int dest_alignment)
 {
     return NULL;
 }
@@ -1979,8 +1923,7 @@ int dest_alignment;
 #define max(x,y) (x<y?y:x)
 
 static int
-drisc_type(field)
-struct _FMgetFieldStruct *field;
+drisc_type(struct _FMgetFieldStruct *field)
 {
     switch(field->data_type) {
     case integer_type:
@@ -2017,9 +1960,7 @@ struct _FMgetFieldStruct *field;
 }
 
 static int
-conv_required_alignment(c, conv)
-dill_stream c;
-IOConversionPtr conv;
+conv_required_alignment(dill_stream c, IOConversionPtr conv)
 {
     if (conv->conv_count == 0) return 0;
     return conv->ioformat->body->alignment;
@@ -2116,14 +2057,10 @@ static void NO_SANITIZE_THREAD read_generation_environment_variables(void)
 
 
 extern
- conv_routine
-generate_conversion(conv, src_alignment, dest_alignment)
-IOConversionPtr conv;
-int src_alignment;
-int dest_alignment;
+conv_routine
+generate_conversion(IOConversionPtr conv, int src_alignment, int dest_alignment)
 {
     dill_stream c = NULL;
-    dill_exec_handle conversion_handle;
     void (*conversion_routine)();
     dill_reg args[6];
     dill_reg tmp_regs[10];
@@ -2213,7 +2150,7 @@ int dest_alignment;
     if (debug_code_generation()) {
 	if (register_args) {
 	    dill_reg src_pointer_base, dest_pointer_base, dest_offset_adjust;	    dill_scallv(c, (void*)printf, "printf", "%P%P%p%p%p",
-		     "convert for %s called with src= %lx, dest %lx, rt_conv_status =%lx\n",
+		     "convert for %s called with src= %p, dest %p, rt_conv_status =%p\n",
 		     format_name, args[0], args[1], args[2]);
 	    ffs_getreg(c, &src_pointer_base, DILL_P, DILL_VAR);
 	    dill_ldpi(c, src_pointer_base, args[2], FMOffset(RTConvStatus,src_pointer_base));
@@ -2222,7 +2159,7 @@ int dest_alignment;
 	    ffs_getreg(c, &dest_offset_adjust, DILL_I, DILL_VAR);
 	    dill_ldpi(c, dest_offset_adjust, args[2], FMOffset(RTConvStatus,dest_offset_adjust));
 	    dill_scallv(c, (void*)printf, "printf", "%P%p%p%p",
-		     "rt_conv_status is src_pointer_base= %lx, dest_pointer_base=%lx, dest_offset_adjust =%lx\n",
+		     "rt_conv_status is src_pointer_base= %p, dest_pointer_base=%p, dest_offset_adjust =%zd\n",
 		     src_pointer_base, dest_pointer_base, dest_offset_adjust);
 	} else {
 #ifdef HAVE_DILL_H	    
@@ -2232,11 +2169,11 @@ int dest_alignment;
 	    }
 #endif
 	    dill_scallv(c, (void*)printf, "printf", "%P%P%p%p",
-		     "convert for %s called with src= %lx, dest %lx\n",
+		     "convert for %s called with src= %p, dest %p\n",
 		     format_name, args[0], args[1]);
 	    dill_ldpi(c, v_at, dill_lp(c), args[2]);
 	    dill_scallv(c, (void*)printf, "printf", "%P%p",
-		     "               rt_conv_status %lx\n",
+		     "               rt_conv_status %p\n",
 		     v_at);
 #ifdef HAVE_DILL_H	    
 	    dill_raw_putreg(c, v_at, DILL_I);
@@ -2268,7 +2205,7 @@ int dest_alignment;
 	    dill_anduli(c, tmp, args[0], mask);
 	    dill_beqli(c, tmp, 0, zero_target);
 	    dill_scallv(c, (void*)printf, "printf", "%P%P%p%I",
-		    "convert for %s called with bad align src= %lx, align is %d\n",
+		    "convert for %s called with bad align src= %p, align is %d\n",
 		    format_name, args[0], conv->required_alignment);
 	    dill_mark_label(c, zero_target);
 	}
@@ -2276,8 +2213,8 @@ int dest_alignment;
     
     cs.src_pointer_base = 0;
     cs.dest_pointer_base = 0;
-    cs.src_offset_adjust = -conv->string_offset_size;
-    cs.dest_offset_adjust = -conv->string_offset_size;
+    cs.src_offset_adjust = -(ssize_t)conv->string_offset_size;
+    cs.dest_offset_adjust = -(ssize_t)conv->string_offset_size;
     cs.cur_offset = 0;
     cs.control_value = NULL;
     cs.target_pointer_size = conv->target_pointer_size;
@@ -2295,7 +2232,11 @@ int dest_alignment;
 	dill_free_stream(c);
 	return NULL;
     } else {
+	dill_exec_handle conversion_handle;
+
 	conversion_handle = dill_finalize(c);
+	dill_free_handle(conversion_handle);
+	conversion_handle = dill_get_handle(c);
 	conv->free_data = conversion_handle;
 	conv->free_func = (void(*)(void*))&dill_free_handle;
 	conversion_routine = (void(*)()) dill_get_fp(conversion_handle);
@@ -2311,8 +2252,8 @@ int dest_alignment;
 
 static void
 gen_mem_float_conv(dill_stream c, struct _FMgetFieldStruct src, int src_addr, 
-		   int src_offset, int assume_align,
-		   int dest_reg, int dest_offset,
+		   size_t src_offset, int assume_align,
+		   int dest_reg, size_t dest_offset,
 		   int dest_size, int dst_aligned)
 {
     FMfloat_format src_format = (FMfloat_format) src.src_float_format;
@@ -2459,17 +2400,9 @@ gen_mem_float_conv(dill_stream c, struct _FMgetFieldStruct src, int src_addr,
 }
 	    
 static void
-gen_simple_field_conv(c, tmp_spec, assume_align, src_addr, src_offset, 
-		      dest_size, dest_type, dest_addr, dest_offset)
-dill_stream c;
-struct _FMgetFieldStruct tmp_spec;
-int assume_align;
-dill_reg src_addr;
-int src_offset;
-int dest_size;
-FMdata_type dest_type;
-dill_reg dest_addr;
-int dest_offset;
+gen_simple_field_conv(dill_stream c, struct _FMgetFieldStruct tmp_spec, int assume_align,
+		      dill_reg src_addr, size_t src_offset, int dest_size,
+		      FMdata_type dest_type, dill_reg dest_addr, size_t dest_offset)
 {
     /* simple conversion */
     iogen_oprnd src_oprnd;
@@ -2556,25 +2489,11 @@ int dest_offset;
 }
 
 static void
-gen_convert_address_field(c, tmp_spec, assume_align, src_addr, src_offset,
-			  dest_size, dest_addr, dest_offset, string_offset_size,
-			  rt_conv_status, base_size_delta, 
-			  string_src_reg, string_dest_reg, register_args, null_target)
-dill_stream c;
-struct _FMgetFieldStruct tmp_spec;
-int assume_align;
-dill_reg src_addr;
-int src_offset;
-int dest_size;
-dill_reg dest_addr;
-int dest_offset;
-int string_offset_size;
-dill_reg rt_conv_status;
-int base_size_delta;
-dill_reg *string_src_reg;
-dill_reg *string_dest_reg;
-int register_args;
-int null_target;
+gen_convert_address_field(dill_stream c, struct _FMgetFieldStruct tmp_spec, int assume_align,
+			  dill_reg src_addr, size_t src_offset, size_t dest_size, dill_reg dest_addr,
+			  size_t dest_offset, size_t string_offset_size, dill_reg rt_conv_status,
+			  size_t base_size_delta, dill_reg *string_src_reg, dill_reg *string_dest_reg,
+			  int register_args, int null_target)
 {
     iogen_oprnd src_oprnd;
     int src_drisc_type;
@@ -2609,7 +2528,7 @@ int null_target;
 	}
 #ifdef VERBOSE
 	dill_scallv(c, (void*)printf, "printf", "%P%i%p%I",
-		    "Fetched msgptr %d from address %lx offset %d\n", src_oprnd.vc_reg,
+		    "Fetched msgptr %d from address %p offset %d\n", src_oprnd.vc_reg,
 		    src_addr, src_offset);
 #endif
 
@@ -2654,7 +2573,7 @@ int null_target;
 	    iogen_oprnd tmp_oprnd;
 	    printf("Doing gen size conversion\n");
 	    tmp_oprnd = gen_size_conversion(c, src_oprnd,
-					    dest_size);
+					    (int)dest_size);
 	    free_oprnd(c, src_oprnd);
 	    src_oprnd = tmp_oprnd;
 	}
@@ -2667,19 +2586,10 @@ int null_target;
 }
 
 static void
-generate_convert_field(c, conv_status, src_addr, src_offset, 
-		       dest_addr, dest_offset,
-		       rt_conv_status, conv, type_desc, data_already_copied)
-dill_stream c;
-ConvStatus conv_status;
-dill_reg src_addr;
-int src_offset;
-dill_reg dest_addr;
-int dest_offset;
-dill_reg rt_conv_status;
-IOconvFieldStruct *conv;
-FMTypeDesc *type_desc;
-int data_already_copied;
+generate_convert_field(dill_stream c, ConvStatus conv_status, dill_reg src_addr,
+		       size_t src_offset, dill_reg dest_addr, size_t dest_offset,
+		       dill_reg rt_conv_status, IOconvFieldStruct *conv, FMTypeDesc *type_desc,
+		       int data_already_copied)
 {
     switch(type_desc->type) {
     case FMType_pointer: {
@@ -2728,7 +2638,7 @@ int data_already_copied;
 	
 #ifdef VERBOSE
 	dill_scallv(c, (void*)printf, "printf", "%P%p",
-		    "storing POINTER value %lx\n",actual_dest_reg);
+		    "storing POINTER value %p\n",actual_dest_reg);
 #endif
 	dill_stpi(c, actual_dest_reg, dest_addr, dest_offset);
 
@@ -2750,7 +2660,7 @@ int data_already_copied;
 	if (!data_already_copied) {
 #ifdef VERBOSE
 	    dill_scallv(c, (void*)printf, "printf", "%P%p%p",
-			"Calling Strcpy with args %lx, %lx\n",actual_dest_reg, actual_src_reg);
+			"Calling Strcpy with args %p, %p\n",actual_dest_reg, actual_src_reg);
 
 #endif
 	    dill_scallv(c, (void*)strcpy, "strcpy", "%p%p", actual_dest_reg, actual_src_reg);
@@ -2789,7 +2699,7 @@ int data_already_copied;
 		       new_src, new_dest));
 	    if (debug_code_generation()) {
 /*	        VCALL2V(printf, "%P%p",
-	    "After subroutine call, new src_string_base is %lx\n", src_string_base);*/
+	    "After subroutine call, new src_string_base is %p\n", src_string_base);*/
 	    }
 	    ffs_putreg(c, new_src, DILL_P);
 	    ffs_putreg(c, new_dest, DILL_P);
@@ -2905,7 +2815,7 @@ int data_already_copied;
 	    next = type_desc;
 	    while (next->type == FMType_array) {
 		if (next->static_size == 0) {
-		    dill_reg addr_reg = (dill_reg)(long)conv_status->control_value;
+		    dill_reg addr_reg = (dill_reg)(intptr_t)conv_status->control_value;
 		    dill_reg val;
 		    int field = next->control_field_index;
 		    ffs_getreg(c, &val, DILL_I, DILL_TEMP);
@@ -2915,7 +2825,7 @@ int data_already_copied;
 		next = next->next;
 	    }
 	    if (!data_already_copied) {
-		int base_delta = decode_size_delta(conv_status, conv, next);
+		ssize_t base_delta = decode_size_delta(conv_status, conv, next);
 		if (conv_status->global_conv->conversion_type == copy_dynamic_portion) {
 		    int base_size = item_size(conv_status, conv, next);
 		    dill_reg size;
@@ -2923,7 +2833,7 @@ int data_already_copied;
 		    dill_mulii(c, size, loop_var, base_size);
 #ifdef VERBOSE
 		    dill_scallv(c, (void*)printf, "printf", "%P%p%p",
-				"Calling Memcpy with args %lx, %lx, %d\n",dest_addr, src_addr, size);
+				"Calling Memcpy with args %p, %p, %d\n",dest_addr, src_addr, size);
 #endif
 		    dill_scallv(c, (void*)memcpy, "memcpy", "%p%p%i",
 				dest_addr, src_addr, size);
@@ -2935,7 +2845,7 @@ int data_already_copied;
 		    dill_mulii(c, delta, loop_var, base_delta);
 #ifdef VERBOSE
 		    dill_scallv(c, (void*)printf, "printf", "%P%p",
-				"Adjusting dest_pointer_base by %lx\n", delta);
+				"Adjusting dest_pointer_base by %p\n", delta);
 #endif
 		    dill_ldpi(c, dest_src_ptr, rt_conv_status, FMOffset(RTConvStatus,dest_pointer_base));
 		    dill_addp(c, dest_src_ptr, dest_src_ptr, delta);
@@ -2944,7 +2854,7 @@ int data_already_copied;
 	    }
 
 	    if (debug_code_generation()) {
-		dill_scallv(c, (void*)printf, "printf", "%P%S%p",
+		dill_scallv(c, (void*)printf, "printf", "%P%P%p",
 			    "format %s, field Initial loopvar = %x\n", conv_status->global_conv->ioformat->body->format_name, loop_var);
 	    }
 	    
@@ -3022,7 +2932,7 @@ int data_already_copied;
 		if (next->static_size != 0) {
 		    dill_seti(c, tmp, next->static_size);
 		} else {
-		    dill_reg addr_reg = (dill_reg)(long)conv_status->control_value;
+		    dill_reg addr_reg = (dill_reg)(intptr_t)conv_status->control_value;
 		    int field = next->control_field_index;
 		    dill_ldii(c, tmp, addr_reg, field*sizeof(int));
 		}
@@ -3055,13 +2965,8 @@ int data_already_copied;
 }
 
 extern void
-new_generate_conversion_code(c, conv_status, conv, args, assume_align, register_args)
-dill_stream c;
-ConvStatus conv_status;
-IOConversionPtr conv;
-dill_reg *args;
-int assume_align;
-int register_args;
+new_generate_conversion_code(dill_stream c, ConvStatus conv_status, IOConversionPtr conv, dill_reg *args,
+			     int assume_align, int register_args)
 {
     int i;
     dill_reg src_addr = args[0];
@@ -3114,7 +3019,7 @@ int register_args;
 #else
 		    addr_reg = dill_getreg(c, DILL_P);
 		    dill_virtual_lea(c, addr_reg, control_base);
-		    conv_status->control_value = (int*)(long)addr_reg;
+		    conv_status->control_value = (size_t*)(intptr_t)addr_reg;
 	        }
 	    assert(addr_reg != -1);
 	        gen_store(c, src_oprnd, addr_reg, field*sizeof(int),
@@ -3129,8 +3034,8 @@ int register_args;
 	FMFieldPtr src_spec = &conv->conversions[i].src_field;
 	FMTypeDesc *type_desc = &conv->conversions[i].iovar->type_desc;
 	int byte_swap = conv->conversions[i].src_field.byte_swap;
-	int dest_offset = conv->conversions[i].dest_offset;
-	int src_offset = src_spec->offset;
+	size_t dest_offset = conv->conversions[i].dest_offset;
+	size_t src_offset = src_spec->offset;
 	int elements = 
 	    get_static_array_element_count(conv->conversions[i].iovar);
 	if (conv->conversions[i].src_field.size == 1) byte_swap = 0;

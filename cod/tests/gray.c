@@ -2,6 +2,7 @@
 #include "cod.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdint.h>
 
 #define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 
@@ -66,7 +67,7 @@ void doOneTest(void (*f)(), int step)
 	 */
 	func = (long (*)(unsigned char *, unsigned char *,
 			 unsigned long,	  unsigned long,
-			 unsigned char *)) (long) f;
+			 unsigned char *)) (intptr_t) f;
 		
 	/* pre-clear the output buffer */
 	for(p=output; p < output + sizeof(output); ) *p++ = 0x0;
@@ -91,8 +92,8 @@ void doOneTest(void (*f)(), int step)
 	}
 
 	/* first, the easy size check */
-	if (result != sizeof(gray)) { printf("result is %ld, not %ld\n", result,
-					     (long)sizeof(gray));}
+	if (result != sizeof(gray)) { printf("result is %ld, not %zu\n", result,
+					     sizeof(gray));}
 	assert(result == sizeof(gray));
 
         /* then compare the whole image w/ expected gray */
@@ -180,7 +181,7 @@ main(int argc, char **argv)
     static char extern_string[] = "int printf(string format, ...);";
     static cod_extern_entry externs[] = 
 	{
-            {"printf", (void*)(long)printf},
+            {"printf", (void*)(intptr_t)printf},
             {(void*)0, (void*)0}
         };
     

@@ -51,13 +51,13 @@ typedef struct _FFSTypeHandle *FFSTypeHandle;
 typedef struct _FFSIndexItem *FFSIndexItem;
 
 #define create_FFSContext() create_FFSContext_FM(NULL)
-extern FFSContext create_FFSContext_FM(FMContext fmc);
+extern FFS_DECLSPEC FFSContext create_FFSContext_FM(FMContext fmc);
 
-extern FFSBuffer create_FFSBuffer();
-extern FFSBuffer create_fixed_FFSBuffer(char *buffer, size_t size);
-extern void free_FFSBuffer(FFSBuffer buf);
+extern FFS_DECLSPEC FFSBuffer create_FFSBuffer();
+extern FFS_DECLSPEC FFSBuffer create_fixed_FFSBuffer(char *buffer, size_t size);
+extern FFS_DECLSPEC void free_FFSBuffer(FFSBuffer buf);
 
-extern char *
+extern FFS_DECLSPEC char *
 FFSencode(FFSBuffer b, FMFormat ioformat, void *data, size_t *buf_size);
 
 typedef struct FFSEncodeVec {
@@ -65,133 +65,133 @@ typedef struct FFSEncodeVec {
     @UIO_SIZE_T_TYPE@ iov_len;
 } *FFSEncodeVector;
 
-extern FFSEncodeVector
+extern FFS_DECLSPEC FFSEncodeVector
 FFSencode_vector(FFSBuffer b, FMFormat fmformat, void *data);
 
-extern char *
+extern FFS_DECLSPEC char *
 FFSencode_no_leaf_copy(FFSBuffer b, FMFormat fmformat, void *data, size_t *buf_size);
 
-extern int FFSdecode_in_place_possible(FFSTypeHandle);
+extern FFS_DECLSPEC int FFSdecode_in_place_possible(FFSTypeHandle);
 
-extern FFSTypeHandle FFSTypeHandle_from_encode(FFSContext c, char *b);
+extern FFS_DECLSPEC FFSTypeHandle FFSTypeHandle_from_encode(FFSContext c, char *b);
 
-extern FFSTypeHandle FFSTypeHandle_by_index(FFSContext c, int index);
+extern FFS_DECLSPEC FFSTypeHandle FFSTypeHandle_by_index(FFSContext c, int index);
 
-extern char * FFSTypeHandle_name(FFSTypeHandle f);
+extern FFS_DECLSPEC char * FFSTypeHandle_name(FFSTypeHandle f);
 
-extern void
+extern FFS_DECLSPEC void
 establish_conversion(FFSContext c, FFSTypeHandle f,
 			   FMStructDescList struct_list);
 
-extern int
+extern FFS_DECLSPEC int
 FFShas_conversion(FFSTypeHandle format);
 
-extern long
-FFS_est_decode_length(FFSContext context, char *encoded, long record_length);
+extern FFS_DECLSPEC size_t
+FFS_est_decode_length(FFSContext context, char *encoded, size_t record_length);
 
-extern int
+extern FFS_DECLSPEC int
 FFSdecode_in_place(FFSContext context, char *encode, void **dest_ptr);
 
-extern int
+extern FFS_DECLSPEC int
 FFSdecode_to_buffer(FFSContext context, char *encode, void *dest);
 
-extern int
+extern FFS_DECLSPEC int
 FFSdecode(FFSContext context, char *encode, char *dest);
 
-extern FFSTypeHandle
+extern FFS_DECLSPEC FFSTypeHandle
 FFSset_fixed_target(FFSContext c, FMStructDescList struct_list);
 
-extern FFSTypeHandle
+extern FFS_DECLSPEC FFSTypeHandle
 FFS_target_from_encode(FFSContext c, char *data);
 
-extern FMFormat 
+extern FFS_DECLSPEC FMFormat 
 FMFormat_of_original(FFSTypeHandle h);
 
-extern FFSEncodeVector
+extern FFS_DECLSPEC FFSEncodeVector
 copy_all_to_FFSBuffer(FFSBuffer buf, FFSEncodeVector vec);
 
-extern FFSEncodeVector
+extern FFS_DECLSPEC FFSEncodeVector
 copy_vector_to_FFSBuffer(FFSBuffer buf, FFSEncodeVector vec);
 
-extern FMContext
+extern FFS_DECLSPEC FMContext
 FMContext_from_FFS(FFSContext c);
 
-extern void
+extern FFS_DECLSPEC void
 free_FFSContext(FFSContext c);
 
-extern FMStructDescList
+extern FFS_DECLSPEC FMStructDescList
 get_localized_formats(FMFormat f);
 
 /*  file interface follows*/
 
-extern FFSFile
+extern FFS_DECLSPEC FFSFile
 open_FFSfile(const char *path, const char *flags);
 
-extern FFSFile
+extern FFS_DECLSPEC FFSFile
 open_FFSfd(void *fd, const char *flags);
 
-extern void
+extern FFS_DECLSPEC void
 close_FFSfile(FFSFile file);
 
-extern void
+extern FFS_DECLSPEC void
 free_FFSfile(FFSFile file);
 
-extern int
+extern FFS_DECLSPEC int
 write_FFSfile(FFSFile f, FMFormat format, void *data);
 
-extern int
+extern FFS_DECLSPEC int
 write_FFSfile_attrs(FFSFile f, FMFormat format, void *data, attr_list attrs);
 
-extern int
+extern FFS_DECLSPEC int
 write_comment_FFSfile(FFSFile f, const char *comment);
 
-extern long
+extern FFS_DECLSPEC size_t
 FFSfile_next_decode_length(FFSFile iofile);
 
 typedef enum {
     FFSerror=1, FFSend=2, FFSdata=4, FFSformat=8, FFScomment=16, FFSindex=32
 } FFSRecordType;
 
-extern void
+extern FFS_DECLSPEC void
 FFSset_visible(FFSFile ffsfile, int bitmap);
 
-extern FFSRecordType
+extern FFS_DECLSPEC FFSRecordType
 FFSnext_record_type(FFSFile ffsfile);
 
-extern long
+extern FFS_DECLSPEC size_t
 FFSnext_data_length(FFSFile file);
 
-extern FFSTypeHandle
+extern FFS_DECLSPEC FFSTypeHandle
 FFSnext_type_handle(FFSFile ffsfile);
 
-extern char *
+extern FFS_DECLSPEC char *
 FFSread_comment(FFSFile ffsfile);
 
-extern int
+extern FFS_DECLSPEC int
 FFSread(FFSFile ffsfile, void *dest);
 
-extern int
+extern FFS_DECLSPEC int
 FFSread_attr(FFSFile file, void *dest, attr_list *attr);
 
-extern int
+extern FFS_DECLSPEC int
 FFSread_to_buffer(FFSFile file, FFSBuffer b,  void **dest);
 
-extern attr_list
+extern FFS_DECLSPEC attr_list
 FFSattrs_from_last_read(FFSFile file);
 
-extern FFSTypeHandle
+extern FFS_DECLSPEC FFSTypeHandle
 FFSread_format(FFSFile ffsfile);
 
-extern FFSIndexItem
+extern FFS_DECLSPEC FFSIndexItem
 FFSread_index(FFSFile ffsfile);
 
-extern FFSContext
+extern FFS_DECLSPEC FFSContext
 FFSContext_of_file(FFSFile f);
 
-extern FMContext
+extern FFS_DECLSPEC FMContext
 FMContext_of_file(FFSFile f);
 
-extern int
+extern FFS_DECLSPEC int
 FFSseek(FFSFile file, int data_item);
 
 #if defined(__cplusplus) || defined(c_plusplus)

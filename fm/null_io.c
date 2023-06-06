@@ -101,22 +101,22 @@ void *conn;
     
 }
 
-IOinterface_func os_file_read_func = null_read_func;
-IOinterface_func os_file_write_func = null_write_func;
-/*IOinterface_funcv os_file_readv_func = unix_readv_func;
-  IOinterface_funcv os_file_writev_func = unix_writev_func;*/
+IOinterface_func ffs_file_read_func = (IOinterface_func)null_read_func;
+IOinterface_func ffs_file_write_func = (IOinterface_func)null_write_func;
+/*IOinterface_funcv ffs_file_readv_func = unix_readv_func;
+  IOinterface_funcv ffs_file_writev_func = unix_writev_func;*/
 
-IOinterface_func os_read_func = null_read_func;
-IOinterface_func os_write_func = null_write_func;
-/*IOinterface_funcv os_readv_func = unix_readv_func;
-  IOinterface_funcv os_writev_func = unix_writev_func;*/
+IOinterface_func ffs_read_func = (IOinterface_func) null_read_func;
+IOinterface_func ffs_write_func = (IOinterface_func)null_write_func;
+/*IOinterface_funcv ffs_readv_func = unix_readv_func;
+  IOinterface_funcv ffs_writev_func = unix_writev_func;*/
 #ifndef IOV_MAX
 #define IOV_MAX 16
 #endif
-int os_max_iov = IOV_MAX;
-IOinterface_close os_close_func = null_close_func;
-IOinterface_poll  os_poll_func = null_poll_func;
-IOinterface_open os_file_open_func = null_file_open_func;
-IOinterface_func os_server_read_func = null_read_func;
-IOinterface_func os_server_write_func = null_write_func;
-IOinterface_init os_sockets_init_func = NULL;
+int ffs_max_iov = IOV_MAX;
+IOinterface_close ffs_close_func = (IOinterface_close)null_close_func;
+IOinterface_poll  ffs_poll_func = (IOinterface_poll)null_poll_func;
+IOinterface_open ffs_file_open_func = (IOinterface_open)null_file_open_func;
+IOinterface_func ffs_server_read_func = (IOinterface_func)null_read_func;
+IOinterface_func ffs_server_write_func = (IOinterface_func)null_write_func;
+IOinterface_init ffs_sockets_init_func = NULL;
