@@ -121,11 +121,11 @@ attr_ivalue(attr_list l, char *name)
     return i;
 }
 
-static long
+static ssize_t
 attr_lvalue(attr_list l, char *name)
 {
     atom_t atom = attr_atom_from_string(name);
-    long lo = 0;
+    ssize_t lo = 0;
     if (atom == 0 ) return 0;
     
     get_long_attr(l, atom, &lo);
