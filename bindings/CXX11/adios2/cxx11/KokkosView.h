@@ -8,6 +8,7 @@ namespace adios2
 namespace detail
 {
 
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
 template <typename T>
 struct memspace_kokkos_to_adios2
 {
@@ -19,6 +20,13 @@ struct memspace_kokkos_to_adios2<Kokkos::HostSpace>
 {
     static constexpr adios2::MemorySpace value = adios2::MemorySpace::Host;
 };
+#else
+template <typename T>
+struct memspace_kokkos_to_adios2
+{
+    static constexpr adios2::MemorySpace value = adios2::MemorySpace::Host;
+};
+#endif
 
 } // namespace detail
 
