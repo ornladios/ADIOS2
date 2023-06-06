@@ -20,10 +20,13 @@
 
 #include "test_funcs.h"
 
-static void test_receive (char *buffer, int buf_size, int finished,
+#include <sys/types.h>
+#include <sys/stat.h>
+
+static void test_receive (char *buffer, size_t buf_size, int finished,
 			       int test_level);
-static void test_all_receive (char *buffer, int buf_size, int finished);
-static void write_buffer (char *buf, int size);
+static void test_all_receive (char *buffer, size_t buf_size, int finished);
+static void write_buffer (char *buf, size_t size);
 static void read_test_only();
 
 static int write_output = 0;
@@ -35,9 +38,7 @@ static char *test_only = NULL;
 static FFSContext rcv_context = NULL;
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     FMContext src_context;
     FFSBuffer buffer;
@@ -75,7 +76,7 @@ char **argv;
 	if (fail) exit(1);
 	exit(0);
     }
-    src_context = create_FMcontext(NULL);
+    src_context = create_FMcontext();
     
     set_array_order_FMContext(src_context, 1);
     fortran_array_ioformat = register_data_format(src_context,
@@ -104,8 +105,7 @@ char **argv;
 #endif
 
 static char *
-get_buffer(size_p)
-int *size_p;
+get_buffer(int *size_p)
 {
     static int file_fd = 0;
     static char *buffer = NULL;
@@ -175,33 +175,32 @@ read_test_only()
 static FFSTypeHandle multi_array_ioformat;
 
 static void
-set_targets(context)
-FFSContext context;
+set_targets(FFSContext context)
 {
     multi_array_ioformat = FFSset_fixed_target(context, multi_array_format_list);
 }
 
 
-int base_size_func(FFSContext context, char *src, int rec_len,
-		   int native_struct_size)
+size_t base_size_func(FFSContext context, char *src, size_t rec_len,
+		   size_t native_struct_size)
 {
     return native_struct_size;
 }
 
-int total_size_func(FFSContext context, char *src, int rec_len, 
-		    int native_struct_size)
+size_t total_size_func(FFSContext context, char *src, size_t rec_len, 
+		    size_t native_struct_size)
 {
     return FFS_est_decode_length(context, src, rec_len);
 }
 
 static int 
-decode_in_place(FFSContext context, char *src, int src_len, void *dest)
+decode_in_place(FFSContext context, char *src, size_t src_len, void *dest)
 {
     if (FFSdecode_in_place_possible(FFSTypeHandle_from_encode(context, src))) {
 	int ret, header_len;
 	char *real_dest;
 	ret = FFSdecode_in_place(context, src, (void**)&real_dest);
-	header_len = real_dest - src;
+	header_len = (int)(intptr_t)(real_dest - src);
 	memcpy(dest, real_dest, src_len - header_len);
 	return ret;
     } else {
@@ -210,22 +209,22 @@ decode_in_place(FFSContext context, char *src, int src_len, void *dest)
 }
 
 static int
-decode_IOcontext_wrapper(FFSContext context, char *src, int src_len, void *dest)
+decode_IOcontext_wrapper(FFSContext context, char *src, size_t src_len, void *dest)
 {
     return FFSdecode(context, src, dest);
 }
 
 static int
-decode_to_buffer_IOcontext_wrapper(FFSContext context, char *src, int src_len,
+decode_to_buffer_IOcontext_wrapper(FFSContext context, char *src, size_t src_len,
 				   void *dest)
 {
     return FFSdecode_to_buffer(context, src, dest);
 }
 
-typedef int (*size_func_t)(FFSContext context, char *src, int buf_size, 
-				   int nativ_struct);
+typedef size_t (*size_func_t)(FFSContext context, char *src, size_t buf_size, 
+				   size_t nativ_struct);
 
-typedef int (*decode_func_t)(FFSContext context, char *src, int src_len, 
+typedef int (*decode_func_t)(FFSContext context, char *src, size_t src_len, 
 				   void *dest);
 
 size_func_t size_funcs[] = {base_size_func, total_size_func, total_size_func};
@@ -237,10 +236,7 @@ decode_func_t decode_funcs[] = {decode_IOcontext_wrapper,
 #define NUM_TESTS 3
 
 static void
-test_all_receive(buffer, buf_size, finished)
-char *buffer;
-int buf_size;
-int finished;
+test_all_receive(char *buffer, size_t buf_size, int finished)
 {
     int test_type = 0;
     char *tmp_buffer = malloc(buf_size);
@@ -252,8 +248,7 @@ int finished;
 }
 	
 static void*
-get_mem(size)
-int size;
+get_mem(size_t size)
 {
     char *buffer;
     unsigned int beef = 0xdeadbeef;
@@ -264,9 +259,7 @@ int size;
 }
 
 static void
-check_mem(size, buffer)
-int size;
-char *buffer;
+check_mem(size_t size, char *buffer)
 {
     unsigned int beef = 0xdeadbeef;
     if (memcmp(buffer+size, &beef, 4) != 0) {
@@ -276,11 +269,7 @@ char *buffer;
 
     
 static void
-test_receive(buffer, buf_size, finished, test_level)
-char *buffer;
-int buf_size;
-int finished;
-int test_level;
+test_receive(char *buffer, size_t buf_size, int finished, int test_level)
 {
     static FFSContext c = NULL;
 
@@ -300,7 +289,7 @@ int test_level;
 	    exit(1);
 	}
 	if (buffer_format == multi_array_ioformat) {
-	    int size = size_func(c, buffer, buf_size, 
+	    size_t size = size_func(c, buffer, buf_size, 
 				 sizeof(multi_array));
 	    multi_array_rec2 *read_data = get_mem(size);
 	    memset(read_data, 0, size);
@@ -331,9 +320,7 @@ int test_level;
 }
 
 static void
-write_buffer(buf, size)
-char *buf;
-int size;
+write_buffer(char *buf, size_t size)
 {
     static int file_fd = 0;
     unsigned short ssize;
@@ -343,10 +330,10 @@ int size;
     if (file_fd == 0) {
 	file_fd = open(output_file, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, 0777);
     }
-    ssize = size;
+    ssize = (unsigned short) size;
     csize = ssize & 0xff;
     if (write(file_fd, &csize, 1) != 1) exit(1);/* low byte of 2-byte size */
     csize = ((ssize >> 8) & 0xff);
     if (write(file_fd, &csize, 1) != 1) exit(1);/* high byte of 2-byte size */
-    if (write(file_fd, buf, size) != size) exit(1);
+    if (write(file_fd, buf, (int)size) != size) exit(1);
 }

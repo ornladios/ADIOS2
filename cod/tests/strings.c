@@ -2,6 +2,7 @@
 #include "cod.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
@@ -30,10 +31,10 @@ char *strstr(char* s1, char *s2);\n\
 void free(void *pointer);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
-	    {"malloc", (void*)(long)malloc},
-	    {"strstr", (void*)(long)strstr},
-	    {"free", (void*)(long)free},
+	    {"printf", (void*)(intptr_t)printf},
+	    {"malloc", (void*)(intptr_t)malloc},
+	    {"strstr", (void*)(intptr_t)strstr},
+	    {"free", (void*)(intptr_t)free},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
@@ -48,7 +49,7 @@ void free(void *pointer);\n";
 	if (gen_code == NULL) {
 	    printf("Code generation failed for test 2\n");
 	} else {
-	    func = (char*(*)(char*)) (long) gen_code->func;
+	    func = (char*(*)(char*)) (intptr_t) gen_code->func;
 	    result = func("I'd really like a cream soda please!");
 	    assert(strcmp("soda please!", result) == 0);
 	    cod_code_free(gen_code);

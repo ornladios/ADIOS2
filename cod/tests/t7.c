@@ -15,6 +15,7 @@
 #endif
 #define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 static int verbose = 0;
@@ -23,12 +24,16 @@ static int verbose = 0;
 x = new_cod_parse_context();
 #define EC_param0
 #define EC_param1
+#define EC_param0_decl
+#define EC_param1_decl
 #else
 #define GEN_PARSE_CONTEXT(x) \
 x = new_cod_parse_context();\
 cod_add_param("ec", "cod_exec_context", 0, x);
 #define EC_param0 ec
 #define EC_param1 ec,
+#define EC_param0_decl cod_exec_context
+#define EC_param1_decl cod_exec_context,
 #endif
 
 typedef struct _multi_array_rec {
@@ -142,8 +147,8 @@ main(int argc, char **argv)
 	int submit(cod_exec_context ec, int port, void *d, cod_type_spec dt);";
 	static cod_extern_entry externs[] =
 	    {
-		{"printf", (void*)(long)printf},
-		{"submit", (void*)(long)submit},
+		{"printf", (void*)(intptr_t)printf},
+		{"submit", (void*)(intptr_t)submit},
 		{(void*)0, (void*)0}
 	    };
 	static char code[] = "{\n\
@@ -206,11 +211,11 @@ main(int argc, char **argv)
     cod_subroutine_declaration("void proc(cod_exec_context ec, simple *input)", context);
    
     gen_code = cod_code_gen(code, context);
-    func = (void (*)(cod_exec_context, void*))(long)gen_code->func;
+    func = (void (*)(cod_exec_context, void*))(intptr_t)gen_code->func;
 
     cod_dump(gen_code);
     ec = cod_create_exec_context(gen_code);
-    printf("Main ec is %lx\n", (long) ec);
+    printf("Main ec is %p\n", ec);
     func(ec, &multi_array);
     cod_exec_context_free(ec);
     cod_code_free(gen_code);
@@ -234,13 +239,13 @@ main(int argc, char **argv)
 	cod_parse_context context;
 	cod_exec_context ec;
 	cod_code gen_code;
-	long (*func)();
+	long (*func)(EC_param0_decl);
 	long result;
 
 	GEN_PARSE_CONTEXT(context);
 	gen_code = cod_code_gen(code_string, context);
 	ec = cod_create_exec_context(gen_code);
-	func = (long(*)()) (long) gen_code->func;
+	func = (long(*)(EC_param0_decl)) (intptr_t) gen_code->func;
 	if (verbose) cod_dump(gen_code);
 	result = func(EC_param0);
 	assert(result == 8);

@@ -10,6 +10,7 @@
 #endif
 #define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 struct order_header {
@@ -190,7 +191,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 	/* test external call */
@@ -306,7 +307,7 @@ main(int argc, char **argv)
 
 	}
 	gen_code = cod_code_gen(code, context);
-	func = (void (*)(void*,void*))(long)gen_code->func;
+	func = (void (*)(void*,void*))(intptr_t)gen_code->func;
 	memset(&out_order, 0, sizeof(out_order));
 	(func)((void*)param, (void*)&out_order);
 	if (out_order.station_id != order.station_id) {

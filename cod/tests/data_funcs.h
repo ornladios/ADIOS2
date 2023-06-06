@@ -1,4 +1,7 @@
 #include "fm.h"
+#ifdef _MSC_VER
+#define strdup(s) _strdup(s)
+#endif
 extern void
 write_buffer(char *filename, FMStructDescList desc, void *data, 
              int test_num);

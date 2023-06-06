@@ -8,6 +8,7 @@
 #endif
 #define assert(EX) ((EX) ? (void)0 : (fprintf(stderr, "\"%s\" failed, file %s, line %d\n", #EX, __FILE__, __LINE__), exit(1)))
 #include <stdio.h>
+#include <stdint.h>
 #include <string.h>
 
 typedef struct
@@ -58,7 +59,7 @@ main()
     static char extern_string[] = "int printf(string format, ...);";
     static cod_extern_entry externs[] =
     {
-        {"printf", (void*)(long)printf},
+        {"printf", (void*)(intptr_t)printf},
         {(void*)0, (void*)0}
     };
     static char code[] = "{\n\
@@ -83,7 +84,7 @@ main()
     cod_subroutine_declaration("int proc(FrameData *output)", context);
    
     gen_code = cod_code_gen(code, context);
-    func = (void (*)(void*))(long)gen_code->func;
+    func = (void (*)(void*))(intptr_t)gen_code->func;
 
     data.num_points = 0;
     data.image_data = NULL;
