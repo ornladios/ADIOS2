@@ -16,6 +16,12 @@ extern "C" {
 #ifndef _STDINT_H
 #include <stdint.h>
 #endif
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#else
+#include <sys/types.h>
+#endif
 
 typedef int atom_t;
 
@@ -117,7 +123,7 @@ extern int set_int_attr (attr_list attrs, atom_t attr_id,
 			      int value );
 
 extern int set_long_attr (attr_list attrs, atom_t attr_id, 
-			      long value );
+			      ssize_t value );
 
 extern int set_string_attr (attr_list attrs, atom_t attr_id, 
 				 char *string );
@@ -150,7 +156,7 @@ extern int query_attr ( attr_list attrs, atom_t attr_id,
 			    attr_value_type *val_type_p, attr_value *value_p);
 
 extern int get_int_attr ( attr_list attrs, atom_t attr_id, int *value_p);
-extern int get_long_attr ( attr_list attrs, atom_t attr_id, long *value_p);
+extern int get_long_attr ( attr_list attrs, atom_t attr_id, ssize_t *value_p);
 extern int get_double_attr ( attr_list attrs, atom_t attr_id, double *value_p);
 extern int get_float_attr ( attr_list attrs, atom_t attr_id, float *value_p);
 extern int get_string_attr ( attr_list attrs, atom_t attr_id, char **value_p);
