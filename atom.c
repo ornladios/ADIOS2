@@ -72,9 +72,7 @@ static int establish_server_connection(atom_server as, int do_fallback);
 #define O_NONBLOCK 0x80
 #endif
 static void
-set_blocking(as, block)
-atom_server as;
-int block;
+set_blocking(atom_server as, int block)
 {
     if (block && ((as->flags & O_NONBLOCK) == 0)) {
 	return;			/* already blocking */
@@ -109,9 +107,7 @@ int block;
 }
 
 static void
-handle_unexpected_msg(as, msg)
-atom_server as;
-char *msg;
+handle_unexpected_msg(atom_server as, char *msg)
 {
     switch (msg[0]) {
     case 'E':{
@@ -167,9 +163,7 @@ char *msg;
 
 static
 int
-enter_atom_into_cache(as, msg)
-atom_server as;
-send_get_atom_msg_ptr msg;
+enter_atom_into_cache(atom_server as, send_get_atom_msg_ptr msg)
 {
     int new;
     char *str;
@@ -204,10 +198,7 @@ send_get_atom_msg_ptr msg;
 }
 
 void
-set_string_and_atom(as, str, atom)
-atom_server as;
-char *str;
-atom_t atom;
+set_string_and_atom(atom_server as, char *str, atom_t atom)
 {
     send_get_atom_msg tmp_value;
     Tcl_HashEntry *entry = NULL, *entry2 = NULL;
@@ -315,9 +306,7 @@ fill_hostaddr(void *addr, char *hostname)
 }
 
 static int
-establish_server_connection(as, do_fallback)
-atom_server as;
-int do_fallback;
+establish_server_connection(atom_server as, int do_fallback)
 {
     SOCKET sock;
     int delay_value = 1;
@@ -411,9 +400,7 @@ extern atom_t ATLget_hash(const char *str);
 
 extern
  atom_t
-atom_from_string(as, str)
-atom_server as;
-char *str;
+atom_from_string(atom_server as, char *str)
 {
     atom_t atom;
 
@@ -426,9 +413,7 @@ char *str;
 
 extern
 char *
-string_from_atom(as, atom)
-atom_server as;
-atom_t atom;
+string_from_atom(atom_server as, atom_t atom)
 {
     send_get_atom_msg tmp_rec;
     send_get_atom_msg_ptr stored;
@@ -482,8 +467,7 @@ atom_t atom;
 
 extern
 char *
-get_server_id(as)
-atom_server as;
+get_server_id(atom_server as)
 {
     return as->server_id;
 }
@@ -615,8 +599,7 @@ free_atom_server(atom_server as)
 }
 
 atom_server
-init_atom_server(cache_style)
-atom_cache_type cache_style;
+init_atom_server(atom_cache_type cache_style)
 {
     atom_server as = (atom_server) malloc(sizeof(atom_server_struct));
 
