@@ -2,12 +2,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#ifndef HAVE_WINDOWS_H
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <string.h>
 #include <unistd.h>
+#else
+#include <WinSock2.h>
+#include <windows.h>
+#define drand48() (((double)rand())/((double)RAND_MAX))
+#define lrand48() rand()
+#define srand48(x)
+#define close(x) closesocket(x)
+#endif
+#include <string.h>
 #include "ffs.h"
 
 typedef struct _simple_rec {
@@ -40,7 +49,10 @@ FMStructDescRec thin_formats[] = {
     {"thin_message", simple_field_list, sizeof(simple_rec), NULL},
     {NULL, NULL, 0, NULL}};
 
-static int do_connection(char* host, int port);
+#ifndef _MSC_VER
+#define SOCKET int
+#endif
+static SOCKET do_connection(char* host, int port);
 static void generate_record (simple_rec_ptr event);
 
 int
@@ -53,7 +65,7 @@ main(int argc, char **argv)
     FMFormat ioformat;
     FMContext fmc;
     simple_rec rec;
-    long conn;
+    SOCKET conn;
     char *comment = strdup("Stone xxxxx");
 
     if ((argc != 4) || (sscanf(argv[2], "%d", &remote_port) != 1)
@@ -69,7 +81,7 @@ main(int argc, char **argv)
 	printf("Connection to %s:%d failed\n", remote_host, remote_port);
 	exit(1);
     }
-    out_connection = open_FFSfd((void*)conn, "w");
+    out_connection = open_FFSfd((void*)(intptr_t)conn, "w");
 
     sprintf(comment, "Stone %d", stone);
     write_comment_FFSfile(out_connection, comment);
@@ -83,7 +95,7 @@ main(int argc, char **argv)
     return 0;
 }
 
-int
+SOCKET
 do_connection(char * remote_host, int port)
 {
     struct hostent *host_addr;
@@ -91,7 +103,7 @@ do_connection(char * remote_host, int port)
 
     memset((char*)&sin, 0, sizeof(sin));
 
-    int conn = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    SOCKET conn = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     if (conn == -1) return -1;
 

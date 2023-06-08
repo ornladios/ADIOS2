@@ -3,8 +3,8 @@
 #include <sys/types.h>
 
 #ifdef HAVE_WINDOWS_H
+#include <winsock2.h>
 #include <windows.h>
-#include <winsock.h>
 #define getpid()    _getpid()
 #else
 #include <time.h>

@@ -2,12 +2,22 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#ifdef HAVE_WINSOCK2_H
+#include <winsock2.h>
+#include <windows.h>
+#define drand48() (((double)rand())/((double)RAND_MAX))
+#define lrand48() rand()
+#define srand48(x)
+#else
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include "evpath.h"
 #include "cm_internal.h"
 
@@ -31,7 +41,7 @@ EVthin_socket_listen(CManager cm,  char **hostname_p, int *port_p)
     unsigned int length;
     struct sockaddr_in sock_addr;
     int sock_opt_val = 1;
-    int conn_sock;
+    SOCKET conn_sock;
     int int_port_num = 0;
     u_short port_num = 0;
     char host_name[256];
@@ -52,14 +62,14 @@ EVthin_socket_listen(CManager cm,  char **hostname_p, int *port_p)
 	return 0;
     }
     {
-	long seedval = time(NULL) + getpid();
+	long seedval = (long)time(NULL) + (long)getpid();
 	/* port num is free.  Constrain to range to standards */
 	int size = high_bound - low_bound;
 	int tries = 30;
 	int result = SOCKET_ERROR;
 	srand48(seedval);
 	while (tries > 0) {
-	    int target = low_bound + size * drand48();
+	    int target = low_bound + (int)(size * drand48());
 	    sock_addr.sin_port = htons(target);
 	    CMtrace_out(cm, CMConnectionVerbose, "CMSocket trying to bind port %d", target);
 	    result = bind(conn_sock, (struct sockaddr *) &sock_addr,
@@ -105,7 +115,7 @@ EVthin_socket_listen(CManager cm,  char **hostname_p, int *port_p)
     /* set the port num as one we can be contacted at */
     
     CM_fd_add_select(cm, conn_sock, socket_accept_thin_client,
-		    (void *) cm, (void *) (long)conn_sock);
+		    (void *) cm, (void *) (intptr_t)conn_sock);
     
 
     //    int_port_num = (unsigned short)(ntohs(sock_addr.sin_port));
@@ -120,7 +130,7 @@ EVthin_socket_listen(CManager cm,  char **hostname_p, int *port_p)
 
 typedef struct thin_conn {
     FFSFile ffsfile;
-    int fd;
+    SOCKET fd;
     int target_stone;
     int format_count;
     FMStructDescList *format_list;
@@ -200,7 +210,7 @@ thin_data_available(void *cmv, void * conn_datav)
     }
     case FFSdata: {
 	FFSTypeHandle next_format = FFSnext_type_handle(cd->ffsfile);
-	int len = FFSnext_data_length(cd->ffsfile);
+	size_t len = FFSnext_data_length(cd->ffsfile);
 	int format_num = FMformat_index(FMFormat_of_original(next_format));
 	void *data = malloc(len);
 	FFSread(cd->ffsfile, data);
@@ -238,8 +248,8 @@ static void
 socket_accept_thin_client(void *cmv, void * sockv)
 {
     CManager cm = (CManager) cmv;
-    int conn_sock = (int) (long)sockv;
-    int sock;
+    SOCKET conn_sock = (int) (intptr_t)sockv;
+    SOCKET sock;
     struct sockaddr sock_addr;
     unsigned int sock_len = sizeof(sock_addr);
     int int_port_num;
@@ -287,7 +297,7 @@ socket_accept_thin_client(void *cmv, void * sockv)
     (void) int_port_num;
     cd = malloc(sizeof(*cd));
     memset(cd, 0, sizeof(*cd));
-    cd->ffsfile = open_FFSfd((void*)(long)sock, "r");
+    cd->ffsfile = open_FFSfd((void*)(intptr_t)sock, "r");
     cd->fd = sock;
     cd->src_list = malloc(sizeof(cd->src_list[0]));
     cd->src_list[0] = NULL;
