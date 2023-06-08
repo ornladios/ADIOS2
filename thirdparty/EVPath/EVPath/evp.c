@@ -1332,7 +1332,7 @@ encode_event(CManager cm, event_item *event)
     event->encoded_event = 
 	FFSencode(event->ioBuffer, event->reference_format,
 		  event->decoded_event,
-		  &event->event_len);
+		  (size_t*)&event->event_len);
     event->event_encoded = 1;
 }
 
@@ -2262,7 +2262,7 @@ do_bridge_action(CManager cm, int s)
 	} else {
 	    static atom_t EV_EVENT_COUNT = -1;
 	    static atom_t EV_EVENT_LSUM = -1;
-	    size_t length_sum = 0;
+	    ssize_t length_sum = 0;
 	    int event_count = 0;
 	    if (EV_EVENT_COUNT == -1) {
 		EV_EVENT_COUNT = attr_atom_from_string("EV_EVENT_COUNT");

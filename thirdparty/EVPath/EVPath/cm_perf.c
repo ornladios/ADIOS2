@@ -524,7 +524,7 @@ INT_CMtest_transport(CMConnection conn, attr_list how)
     struct FFSEncodeVec *write_vec;
     struct FFSEncodeVec *tmp_vec, *header_vec;
     int header[6];
-    long size;
+    ssize_t size;
     int vecs = 1;
     int verbose = 0;
     int repeat_count = 1;
@@ -573,7 +573,7 @@ INT_CMtest_transport(CMConnection conn, attr_list how)
     ((int*)header)[5] = 0;
     INT_CMCondition_set_client_data( conn->cm, cond, &result);
 
-    CMtrace_out(conn->cm, CMTransportVerbose, "CM - Initiating transport test of %ld bytes, %d messages\n", size, repeat_count);
+    CMtrace_out(conn->cm, CMTransportVerbose, "CM - Initiating transport test of %zd bytes, %d messages\n", size, repeat_count);
 
     CMtrace_out(conn->cm, CMTransportVerbose, "CM - transport test, sending first message\n");
 
@@ -590,7 +590,7 @@ INT_CMtest_transport(CMConnection conn, attr_list how)
     }
 
     tmp_vec = NULL;
-    int each = (size + vecs - 1) / vecs;
+    size_t each = (size + vecs - 1) / vecs;
     for (i=0; i <repeat_count; i++) {
 	if (tmp_vec == NULL) {
 	    tmp_vec = malloc(sizeof(tmp_vec[0]) * (vecs + 2));  /* at least 2 */

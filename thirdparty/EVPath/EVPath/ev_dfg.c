@@ -1582,7 +1582,7 @@ INT_EVdfg_create(EVmaster master)
 
 extern char *INT_EVmaster_get_contact_list(EVmaster master)
 {
-    attr_list listen_list, contact_list = NULL;
+    attr_list contact_list = NULL;
     atom_t CM_TRANSPORT = attr_atom_from_string("CM_TRANSPORT");
     atom_t CM_ENET_CONN_TIMEOUT = attr_atom_from_string("CM_ENET_CONN_TIMEOUT");
     CManager cm = master->cm;
@@ -1590,7 +1590,7 @@ extern char *INT_EVmaster_get_contact_list(EVmaster master)
 
     /* use enet transport if available */
 #if defined(ENET_FOUND) || defined(ZPL_ENET_AVAILABLE)
-    listen_list = create_attr_list();
+    attr_list listen_list = create_attr_list();
 #if defined(ENET_FOUND)
     add_string_attr(listen_list, CM_TRANSPORT, strdup("enet"));
 #elif defined(ZPL_ENET_AVAILABLE)

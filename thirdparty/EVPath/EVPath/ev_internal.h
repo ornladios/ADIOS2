@@ -8,7 +8,7 @@ typedef struct _event_item {
     int event_encoded;
     event_pkg_contents contents;
     void *encoded_event;
-    size_t event_len;
+    ssize_t event_len;
     void *decoded_event;
     FFSEncodeVector encoded_eventv;
     FMFormat reference_format;

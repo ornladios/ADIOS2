@@ -42,7 +42,7 @@
 #define thr_thread_exit(status) 
 #define thr_thread_detach(thread) 
 #define thr_thread_yield() 
-#define thr_thread_join(t, s)
+#define thr_thread_join(t, s) (void)s
 #define thr_mutex_init(m) 
 #define thr_mutex_lock(m)
 #define thr_mutex_unlock(m)

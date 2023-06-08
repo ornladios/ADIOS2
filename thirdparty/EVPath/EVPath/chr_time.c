@@ -14,7 +14,7 @@
 extern void
 chr_get_time( chr_time *time)
 {
-#ifndef HAVE_WINDOWS_H
+#ifdef HAVE_GETTIMEOFDAY
     gettimeofday((struct timeval*)time, NULL);
 #else
     /* GSE...  No gettimeofday on windows.  

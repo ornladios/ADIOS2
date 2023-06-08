@@ -415,19 +415,15 @@ libcmmulticast_LTX_read_func(CMtrans_services svc, mcast_conn_data_ptr mcd, int 
 #include <ws2def.h>
 #endif
 extern int
-libcmmulticast_LTX_writev_func(svc, mcd, iov, iovcnt, attrs)
-CMtrans_services svc;
-mcast_conn_data_ptr mcd;
-struct iovec *iov;
-int iovcnt;
-attr_list attrs;
+libcmmulticast_LTX_writev_func(CMtrans_services svc, mcast_conn_data_ptr mcd, struct iovec *iov, int iovcnt, attr_list attrs)
 {
     SOCKET fd = mcd->output_fd;
+#ifndef _MSC_VER
+    // no real equivalent on windows
     struct sockaddr_in addr = mcd->output_addr;
     struct msghdr msg;
     svc->trace_out(mcd->mtd->cm, "CMMcast writev of %d vectors on fd %d",
 		   iovcnt, fd);
-#ifndef _MSC_VER
     memset(&msg, 0, sizeof(msg));
     msg.msg_name = (void*)&addr;
     msg.msg_namelen = sizeof(addr);
@@ -467,9 +463,7 @@ free_mcast_data(CManager cm, void *mtdv)
 }
 
 extern void *
-libcmmulticast_LTX_initialize(cm, svc)
-CManager cm;
-CMtrans_services svc;
+libcmmulticast_LTX_initialize(CManager cm, CMtrans_services svc)
 {
     static int atom_init = 0;
 

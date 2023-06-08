@@ -9,6 +9,21 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
+#ifdef _MSC_VER
+#include <sys/types.h>
+#include <sys/timeb.h>
+#endif
+#ifndef timersub
+#define timersub(a, b, result) \
+        do { \
+                (result)->tv_sec = (a)->tv_sec - (b)->tv_sec; \
+                (result)->tv_usec = (a)->tv_usec - (b)->tv_usec; \
+                if ((result)->tv_usec < 0) { \
+                        --(result)->tv_sec; \
+                        (result)->tv_usec += 1000000; \
+                } \
+        } while (0)
+#endif // timersub
 
 #include "evpath.h"
 #include "ev_dfg.h"
@@ -47,7 +62,17 @@ event_handler(CManager cm, void *vevent, void *client_data, attr_list attrs)
     (void)cm;
     (void)client_data;
     if (quiet <= 0) printf("In handler for stone %d\n", EVexecuting_stone(cm));
-    gettimeofday(&now, NULL);
+#ifdef HAVE_GETTIMEOFDAY
+    gettimeofday((struct timeval*)&now, NULL);
+#else
+    /* GSE...  No gettimeofday on windows.
+     * Must use _ftime, get millisec time, convert to usec.  Bleh.
+     */
+    struct _timeb nowb;
+    _ftime(&nowb);
+    ((struct timeval*)&now)->tv_sec = (long)nowb.time;
+    ((struct timeval*)&now)->tv_usec = nowb.millitm * 1000;
+#endif
     timersub(&now, &event->submit_time, &delay);
     if (quiet <= 0) {
         printf("Now is %ld.%06d, sent %ld.%06d\n", (long)now.tv_sec, (int)now.tv_usec, (long)event->submit_time.tv_sec, (int)event->submit_time.tv_usec);
