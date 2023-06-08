@@ -135,6 +135,7 @@ if(UNIX)
   target_sources(enet PRIVATE unix.c)
 elseif(WIN32)
   target_sources(enet PRIVATE win32.c)
+  target_link_libraries(enet wsock32 ws2_32 winmm)
 endif()
 target_include_directories(enet PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
