@@ -27,8 +27,9 @@ template <class T>
 typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
                                         const bool initialize, const T &value)
 {
-    CheckOpenModes({{Mode::Write}}, " for variable " + variable.m_Name +
-                                        ", in call to Variable<T>::Span Put");
+    CheckOpenModes({{Mode::Write, Mode::Append}},
+                   " for variable " + variable.m_Name +
+                       ", in call to Variable<T>::Span Put");
     if (!variable.m_Operations.empty())
     {
         helper::Throw<std::invalid_argument>(
