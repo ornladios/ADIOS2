@@ -21,8 +21,11 @@
 #define pid_t intptr_t
 #include <process.h>
 #include <windows.h>
+#include <direct.h>
+#include <sys/timeb.h>
+#include <time.h>
 #define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
-
+#define getcwd(x,y) _getcwd(x,y)
 #endif
 
 static atom_t CM_TRANS_TEST_SIZE = 10240;
@@ -88,7 +91,7 @@ trans_test_upcall(CManager cm, void *buffer, size_t length, int type, attr_list 
 	}
 	if (list) {
 	    get_int_attr(list, CM_TRANS_TEST_REPEAT, &expected_count);
-	    get_long_attr(list, CM_TRANS_TEST_SIZE, &write_size);
+	    get_long_attr(list, CM_TRANS_TEST_SIZE, (ssize_t*) &write_size);
 	    get_int_attr(list, CM_TRANS_TEST_VERBOSE, &verbose);
 	    get_int_attr(list, CM_TRANS_TEST_TAKE_RECEIVE_BUFFER, &take);
 	}
@@ -264,9 +267,7 @@ usage()
 }
 
 int
-main(argc, argv)
-    int argc;
-    char **argv;
+main(int argc, char **argv)
 {
     CManager cm;
     CMConnection conn = NULL;
@@ -497,7 +498,17 @@ main(argc, argv)
 	    openings[1].duration.tv_sec = 4; openings[1].duration.tv_usec = 0;
 	    openings[2].offset.tv_sec = 0; openings[2].offset.tv_usec = 0;
 	    openings[2].duration.tv_sec = 0; openings[2].duration.tv_usec = 0;
-	    gettimeofday(&now, NULL);
+#ifdef HAVE_GETTIMEOFDAY
+	    gettimeofday((struct timeval*)&now, NULL);
+#else
+	    /* GSE...  No gettimeofday on windows.
+	     * Must use _ftime, get millisec time, convert to usec.  Bleh.
+	     */
+	    struct _timeb nowb;
+	    _ftime(&nowb);
+	    ((struct timeval*)&now)->tv_sec = (long)nowb.time;
+	    ((struct timeval*)&now)->tv_usec = nowb.millitm * 1000;
+#endif
 	    now.tv_sec--;
 	    CMinstall_pull_schedule(cm, &now, &period, &openings[0]);
 	}

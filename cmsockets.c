@@ -1084,13 +1084,8 @@ libcmsockets_LTX_writev_func(CMtrans_services svc, socket_conn_data_ptr scd, voi
 }
 
 /* non blocking version */
-extern size_t
-libcmsockets_LTX_NBwritev_func(svc, scd, iovs, iovcnt, attrs)
-CMtrans_services svc;
-socket_conn_data_ptr scd;
-void *iovs;
-int iovcnt;
-attr_list attrs;
+extern ssize_t
+libcmsockets_LTX_NBwritev_func(CMtrans_services svc, socket_conn_data_ptr scd, void *iovs, int iovcnt, attr_list attrs)
 {
     SOCKET fd = scd->fd;
     ssize_t init_bytes, left = 0;

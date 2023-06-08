@@ -211,9 +211,7 @@ static int inet_aton(const char* cp, struct in_addr* addr)
 #endif
 
 static int
-check_host(hostname, sin_addr)
-char *hostname;
-void *sin_addr;
+check_host(char *hostname, void *sin_addr)
 {
     struct hostent *host_addr;
     host_addr = gethostbyname(hostname);
@@ -235,13 +233,7 @@ void *sin_addr;
 }
 
 static int
-initiate_udp_conn(cm, svc, trans, attrs, udp_conn_data, conn_attr_list)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
-udp_conn_data_ptr udp_conn_data;
-attr_list conn_attr_list;
+initiate_udp_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, udp_conn_data_ptr udp_conn_data, attr_list conn_attr_list)
 {
     int int_port_num;
     udp_transport_data_ptr utd = (udp_transport_data_ptr) trans->trans_data;
@@ -335,7 +327,7 @@ static void
 libcmudp_data_available(void *vtrans, void *vinput)
 {
     transport_entry trans = vtrans;
-    SOCKET input_fd = (SOCKET) vinput;
+    SOCKET input_fd = (SOCKET) (intptr_t) vinput;
     ssize_t nbytes;
     udp_transport_data_ptr utd = (udp_transport_data_ptr) trans->trans_data;
     udp_conn_data_ptr ucd = utd->connections;
@@ -399,11 +391,7 @@ libcmudp_data_available(void *vtrans, void *vinput)
  * Initiate a connection to a udp group.
  */
 extern CMConnection
-libcmudp_LTX_initiate_conn(cm, svc, trans, attrs)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
+libcmudp_LTX_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs)
 {
     udp_conn_data_ptr udp_conn_data = create_udp_conn_data(svc);
     attr_list conn_attr_list = create_attr_list();
@@ -432,11 +420,7 @@ attr_list attrs;
  * indicated by the attribute list, would we be connecting to ourselves?
  */
 extern int
-libcmudp_LTX_self_check(cm, svc, trans, attrs)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
+libcmudp_LTX_self_check(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs)
 {
     udp_transport_data_ptr utd = trans->trans_data;
     int host_addr;
@@ -483,12 +467,7 @@ attr_list attrs;
 }
 
 extern int
-libcmudp_LTX_connection_eq(cm, svc, trans, attrs, ucd)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
-udp_conn_data_ptr ucd;
+libcmudp_LTX_connection_eq(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, udp_conn_data_ptr ucd)
 {
 
     int int_port_num;
@@ -532,11 +511,7 @@ udp_conn_data_ptr ucd;
 
 
 extern attr_list
-libcmudp_LTX_non_blocking_listen(cm, svc, trans, listen_info)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list listen_info;
+libcmudp_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transport_entry trans, attr_list listen_info)
 {
     udp_transport_data_ptr utd = trans->trans_data;
     int int_port_num = 0;
@@ -625,11 +600,7 @@ struct iovec {
  *  that are more efficient if they allocate their own buffer space.
  */
 extern void *
-libcmudp_LTX_read_block_func(svc, ucd, actual_len, offset_ptr)
-CMtrans_services svc;
-udp_conn_data_ptr ucd;
-size_t *actual_len;
-size_t *offset_ptr;
+libcmudp_LTX_read_block_func(CMtrans_services svc, udp_conn_data_ptr ucd, size_t *actual_len, size_t *offset_ptr)
 {
     *actual_len = ucd->read_buf_len;
     *offset_ptr = 0;
@@ -643,15 +614,9 @@ size_t *offset_ptr;
 #endif
 
 extern int
-libcmudp_LTX_writev_func(svc, ucd, iov, iovcnt, attrs)
-CMtrans_services svc;
-udp_conn_data_ptr ucd;
-struct iovec *iov;
-size_t iovcnt;
-attr_list attrs;
+libcmudp_LTX_writev_func(CMtrans_services svc, udp_conn_data_ptr ucd, struct iovec *iov, size_t iovcnt, attr_list attrs)
 {
     SOCKET fd = ucd->utd->socket_fd;
-    struct sockaddr_in addr = ucd->dest_addr;
     if (ucd->utd->socket_fd == -1) {
 	if ((ucd->utd->socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 	    perror("socket");
@@ -662,6 +627,7 @@ attr_list attrs;
     svc->trace_out(ucd->utd->cm, "CMUdp writev of %d vectors on fd %d",
 		   iovcnt, fd);
 #ifndef _MSC_VER
+    struct sockaddr_in addr = ucd->dest_addr;
     struct msghdr msg;
     memset(&msg, 0, sizeof(msg));
     msg.msg_name = (void*)&addr;
@@ -673,6 +639,7 @@ attr_list attrs;
 	exit(1);
     }
 #else
+    // no reimplementation for windows currently
 #endif
     return (int)iovcnt;
 }
@@ -694,9 +661,7 @@ free_udp_data(CManager cm, void *utdv)
 }
 
 extern void *
-libcmudp_LTX_initialize(cm, svc)
-CManager cm;
-CMtrans_services svc;
+libcmudp_LTX_initialize(CManager cm, CMtrans_services svc)
 {
     static int atom_init = 0;
 

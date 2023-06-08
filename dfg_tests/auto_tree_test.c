@@ -35,7 +35,7 @@ int generate_record() {
     return getpid();
 }
 static cod_extern_entry externs[] = { 
-    {"generate_record", (void *) (long) generate_record},
+    {"generate_record", (void *) (intptr_t) generate_record},
     {NULL, NULL}
 };
 static char extern_string[] = "int generate_record();\0\0";

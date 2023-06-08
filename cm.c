@@ -1183,19 +1183,19 @@ CManager_free(CManager cm)
  extern int
  INT_CMConnection_set_character(CMConnection conn, attr_list attrs)
  {
-     long interval_value;
+     ssize_t interval_value;
      if (attrs == NULL) return 0;
      if (get_long_attr(attrs, CM_BW_MEASURE_INTERVAL, &interval_value)) {
 	 bw_measure_data data;
 	 int previous_interval;
 	 CMTaskHandle task = NULL;
 	 if ((interval_value <= 1) || (interval_value > 60*60*8)) {
-	     printf("Bad CM_BW_MEASURE_INTERVAL, %ld seconds\n",
+	     printf("Bad CM_BW_MEASURE_INTERVAL, %zd seconds\n",
 		    interval_value);
 	     return 0;
 	 }
 
-	 CMtrace_out(conn->cm, CMLowLevelVerbose,"CM_BW_MEASURE_INTERVAL set, interval is %ld\n", interval_value);
+	 CMtrace_out(conn->cm, CMLowLevelVerbose,"CM_BW_MEASURE_INTERVAL set, interval is %zd\n", interval_value);
 	 if (conn->characteristics && 
 	     (get_int_attr(conn->characteristics, CM_BW_MEASURE_INTERVAL,
 			   &previous_interval) != 0)) {
@@ -1206,7 +1206,7 @@ CManager_free(CManager cm)
 	     }
 	     CMtrace_out(conn->cm, CMLowLevelVerbose,"CM_BW_MEASURE_INTERVAL prior interval is %d, killing prior task.\n", previous_interval);
 	     get_long_attr(conn->characteristics, CM_BW_MEASURE_TASK,
-			   (long*)(intptr_t)&prior_task);
+			   (ssize_t*)(intptr_t)&prior_task);
 	     if (prior_task) {
 		 INT_CMremove_task(prior_task);
 		 set_long_attr(conn->characteristics, CM_BW_MEASURE_TASK, (intptr_t)0);
@@ -1235,13 +1235,13 @@ CManager_free(CManager cm)
 				   (void*)data);
 	 free(task);
 	 /* schedule tasks periodically */
-	 task = INT_CMadd_periodic_task(conn->cm, interval_value, 0, 
+	 task = INT_CMadd_periodic_task(conn->cm, (int)interval_value, 0, 
 				    do_bw_measure, (void*)data);
 	 if (conn->characteristics == NULL) {
 	     conn->characteristics = CMcreate_attr_list(conn->cm);
 	 }
 	 set_int_attr(conn->characteristics, CM_BW_MEASURE_INTERVAL,
-		      interval_value);
+		      (int)interval_value);
 	 set_long_attr(conn->characteristics, CM_BW_MEASURE_TASK, (intptr_t)task);
 
 	 return 1;
@@ -1316,7 +1316,7 @@ INT_CMConnection_failed(CMConnection conn)
     CMconn_fail_conditions(conn);
     conn->trans->shutdown_conn(&CMstatic_trans_svcs, conn->transport_data);
     get_long_attr(conn->characteristics, CM_BW_MEASURE_TASK, 
-		  (long*)(intptr_t)&prior_task);
+		  (ssize_t*)(intptr_t)&prior_task);
     if (prior_task) {
 	INT_CMremove_task(prior_task);
 	set_long_attr(conn->characteristics, CM_BW_MEASURE_TASK, (intptr_t)0);
@@ -3242,7 +3242,7 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
      void *header_ptr = NULL;
      int header_len = 0;
      int no_attr_header[2] = {0x434d4400, 0};  /* CMD\0 in first entry */
-     int no_attr_long_header[4] = {0x434d4401, 0x434d4401, 0, 0};  /* CMD\1 in first entry, pad to 16 */
+//  not yet impl     int no_attr_long_header[4] = {0x434d4401, 0x434d4401, 0, 0};  /* CMD\1 in first entry, pad to 16 */
      int attr_header[4] = {0x434d4100, 0x434d4100, 0, 0};  /* CMA\0 in first entry, pad to 16 */
      int attr_long_header[4] = {0x434d4101, 0, 0, 0};  /* CMA\1 in first entry */
      FFSEncodeVector vec;
@@ -3547,7 +3547,6 @@ INT_CMregister_invalid_message_handler(CManager cm, CMUnregCMHandler handler)
 			 "Writing %lu vectors, total %zu bytes (including attrs) in writev\n", 
 			 vec_count, byte_count);
 	 }
-	 char *header_ptr = (char*)&header[0];
 	 actual = INT_CMwrite_raw(conn, tmp_vec, vec, vec_count, byte_count, attrs,
 				     vec == &preencoded_vec[0]);
 	 if (tmp_vec != &static_vec[0]) {

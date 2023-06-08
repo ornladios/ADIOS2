@@ -14,9 +14,7 @@
 #endif
 
 int
-main(argc, argv)
-    int argc;
-    char **argv;
+main(int argc, char **argv)
 {
     CManager cm;
     CMConnection conn = NULL;
