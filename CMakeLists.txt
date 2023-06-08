@@ -42,6 +42,24 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE RelWithDebInfo)
 endif()
 
+if(WIN32)
+  # Automagic to do the DLL / LIB song and dance
+  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+
+  # Silence MSVC warnings
+  if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
+     CMAKE_C_SIMULATE_ID MATCHES "MSVC")
+    add_definitions(
+      -D_CRT_SECURE_NO_DEPRECATE
+      -D_CRT_SECURE_NO_WARNINGS
+      -D_SCL_SECURE_NO_DEPRECATE
+      -D_WINSOCK_DEPRECATED_NO_WARNINGS
+      -D_CRT_NONSTDC_NO_DEPRECATE
+      -DENET_SRC)
+    set (MSVC_PERL_FLAGS "-msvc-long")
+  endif()
+endif()
+
 include(CMakeDependentOption)
 
 # Setup shared library defaults.  If explicitly specified somehow, then default
@@ -111,6 +129,7 @@ if(UNIX)
   target_sources(enet PRIVATE unix.c)
 elseif(WIN32)
   target_sources(enet PRIVATE win32.c)
+  target_link_libraries(enet wsock32 ws2_32 winmm)
 endif()
 target_include_directories(enet PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
