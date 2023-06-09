@@ -254,7 +254,7 @@ void e () {
      dill_addii(s, l,k,3);
      dill_reti(s, l);
      handle = dill_finalize(s);
-     ip = (int(*)())dill_get_fp(handle);
+     ip = (int(*)(int (*)(int, int), int, int, int, int, int, int, int, int, int))dill_get_fp(handle);
 
      if (verbose) dill_dump(s);
 
