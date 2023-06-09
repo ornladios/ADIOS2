@@ -134,6 +134,10 @@ int main() {
 	if (target == (void*)-1) perror("mmap");
 #else
 	target = (void*)malloc(dill_code_size(s));
+	if (!target) {
+	    printf("out of memory\n");
+	    return 1;
+	}
 #endif
 	ip = (int (*)()) dill_clone_code(s, target, dill_code_size(s));
 	dill_free_stream(s);

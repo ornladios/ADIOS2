@@ -102,7 +102,7 @@ sub arith_insn {
 	    if (defined($c_src1_values{$full_op})) {
 		$vals = $c_src1_values{$full_op};
 		print COUT "    for (i=0 ; i < sizeof($vals)/sizeof($vals\[0\]) ; i++) {\n";
-		print COUT "        $c_type source1_$_ = $vals\[i\];\n";
+		print COUT "        $c_type source1_$_ = ($c_type) $vals\[i\];\n";
 	    } else {
 		print COUT "    {\n";
 		print COUT "        $c_type source1_$_ = rand1_$_;\n";
@@ -110,7 +110,7 @@ sub arith_insn {
 	    if (defined($c_src2_values{$full_op})) {
 		$vals = $c_src2_values{$full_op};
 		print COUT "        for (j=0 ; j < sizeof($vals)/sizeof($vals\[0\]) ; j++) {\n";
-		print COUT "            $c_type source2_$_ = $vals\[j\];\n";
+		print COUT "            $c_type source2_$_ = ($c_type) $vals\[j\];\n";
 	    } else {
 		print COUT "        {\n";
 		print COUT "            $c_type source2_$_ = rand2_$_;\n";
@@ -243,6 +243,13 @@ sub arith2_insn {
 	    $c_pformat = $c_print_formats{${_}};
 	    $arg_str = "$drisc_arg_formats{${_}}";
 	    $full_op = "${dill_op}${_}";
+		if (($c_op eq '-') and ($_ eq "u")) {
+		    $actual_op = '(unsigned) - (int)';
+	    } elsif (($c_op eq '-') and ($_ eq "ul")) {
+		    $actual_op = '(uintptr_t) - (intptr_t)';
+	    } else {
+            $actual_op = $c_op;
+        }
 	    print COUT "\n    /* test for dill_$dill_op${_} */\n";
 	    print COUT "    if (verbose) printf(\"test for dill_$dill_op${_}\");\n";
 	    if (defined($c_src1_values{$full_op})) {
@@ -273,7 +280,7 @@ print COUT<<EOF;
 	    
 	    h = dill_finalize(c);
 	    proc = ($c_type(*)(dill_exec_ctx, $c_type)) dill_get_fp(h);
-	    expected_result = $c_op source1_$_;
+	    expected_result = $actual_op source1_$_;
 
 	    ec = dill_get_exec_context(c);
 	    result = proc(ec, source1_$_);
@@ -341,7 +348,7 @@ sub arithi_insn {
 	    if (defined($c_src2_values{$full_op})) {
 		$vals = $c_src2_values{$full_op};
 		print COUT "        for (j=0 ; j < sizeof($vals)/sizeof($vals\[0\]) ; j++) {\n";
-		print COUT "            $c_type source2_$_ = $vals\[j\];\n";
+		print COUT "            $c_type source2_$_ = ($c_type)$vals\[j\];\n";
 	    } else {
 		print COUT "        {\n";
 		print COUT "            $c_type source2_$_ = rand2_$_;\n";
@@ -437,7 +444,7 @@ print COUT<<EOF;
 	    dill_ret${_}(c, dest);
 	    
 	    h = dill_finalize(c);
-	    proc = ($c_type(*)()) dill_get_fp(h);
+	    proc = ($c_type(*)(dill_exec_ctx, $c_type)) dill_get_fp(h);
 	    expected_result = source1_$_ $c_op source2_l;
 
 	    ec = dill_get_exec_context(c);
@@ -1061,6 +1068,7 @@ print COUT<<EOF;
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif
+#include <stdint.h>
 
 #ifdef _MSC_VER
 #include <stdlib.h>
@@ -1079,14 +1087,14 @@ main(int argc, char **argv)
 {
     dill_stream c = dill_create_stream();
     int failed = 0, verbose = 0;
-    int i, j;
+    size_t i, j;
 EOF
 # print COUT "# line ". (__LINE__ + 2) . " \"general.ops\"\n";
     foreach $dill_type (keys %c_types) {
         $c_type = $c_types{$dill_type};
         $rand_type = $rand_types{$dill_type};
-        print COUT "    $c_type rand1_$dill_type = ${rand_type}rand48();\n";
-	print COUT "    $c_type rand2_$dill_type = ${rand_type}rand48();\n";
+        print COUT "    $c_type rand1_$dill_type = ($c_type)${rand_type}rand48();\n";
+	print COUT "    $c_type rand2_$dill_type = ($c_type)${rand_type}rand48();\n";
 	print COUT "    $c_type src1${dill_type}_vals[2];\n";
 	print COUT "    $c_type src2${dill_type}_vals[2];\n";
 	print COUT "    $c_type br_src${dill_type}_vals[6];\n";
@@ -1110,21 +1118,23 @@ EOF
 	print COUT "    src2${dill_type}_vals[0] = rand2_$dill_type;\n";
 	print COUT "    src2${dill_type}_vals[1] = -rand2_$dill_type;\n";
     }
+	%u_casts = ('uc', '(char)', 'us', '(short)', 'u', '(int)', 'ul', '(intptr_t)');
     foreach $dill_type (split(' ', "uc us u ul")) {
         $c_type = $c_types{$dill_type};
+
 	print COUT "    src1${dill_type}_vals[0] = ($c_type) rand1_$dill_type;\n";
-	print COUT "    src1${dill_type}_vals[1] = ($c_type) -rand1_$dill_type;\n";
+	print COUT "    src1${dill_type}_vals[1] = ($c_type) - $u_casts{$dill_type} rand1_$dill_type;\n";
 	print COUT "    src2${dill_type}_vals[0] = ($c_type) rand2_$dill_type;\n";
-	print COUT "    src2${dill_type}_vals[1] = ($c_type) -rand2_$dill_type;\n";
+	print COUT "    src2${dill_type}_vals[1] = ($c_type) - $u_casts{$dill_type} rand2_$dill_type;\n";
     }
     foreach $dill_type (split(' ', "uc c us s i u l ul d f")) {
         $c_type = $c_types{$dill_type};
 	print COUT "    br_src${dill_type}_vals[0] = ($c_type) rand1_$dill_type;\n";
-	print COUT "    br_src${dill_type}_vals[1] = ($c_type) -rand1_$dill_type;\n";
+	print COUT "    br_src${dill_type}_vals[1] = ($c_type) - $u_casts{$dill_type} rand1_$dill_type;\n";
 	print COUT "    br_src${dill_type}_vals[2] = ($c_type) rand1_$dill_type + 1;\n";
-	print COUT "    br_src${dill_type}_vals[3] = ($c_type) -rand1_$dill_type + 1;\n";
+	print COUT "    br_src${dill_type}_vals[3] = ($c_type) -($u_casts{$dill_type} rand1_$dill_type) + 1;\n";
 	print COUT "    br_src${dill_type}_vals[4] = ($c_type) rand1_$dill_type - 1;\n";
-	print COUT "    br_src${dill_type}_vals[5] = ($c_type) -rand1_$dill_type - 1;\n";
+	print COUT "    br_src${dill_type}_vals[5] = ($c_type) -($u_casts{$dill_type} rand1_$dill_type) - 1;\n";
     }
     $dill_type = 'p';
     $c_type = $c_types{'p'};
