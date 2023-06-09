@@ -621,7 +621,19 @@ print REVP<<EOF;
 #ifdef LT_LIBPREFIX
 #include "ltdl.h"
 #else
+#ifdef _MSC_VER
+#include <windows.h>
+#define RTLD_GLOBAL 1
+#define RTLD_LAZY 2
+extern void* dlopen(const char* filename, int flags);
+extern int dlclose(void* handle);
+extern void* dlsym(void* handle, const char* name);
+extern const char* dlerror(void);
+
+#else
 #include <dlfcn.h>
+#endif
+
 #define lt_dlopen(x) dlopen(x, 0)
 #define lt_dlsym(x, y) dlsym(x, y)
 #define lt_dlhandle void*
@@ -631,7 +643,6 @@ print REVP<<EOF;
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
-#include <dlfcn.h>
 #ifdef	__cplusplus
 extern "C" \{
 #endif
@@ -796,7 +807,7 @@ extern FMStructDescList
 REVPlookup_format_structs(CManager cm, char *format_name)
 {
     FMFormat format;
-    int slen = strlen(format_name);
+    int slen = (int)strlen(format_name);
     int i;
     unsigned char *id = malloc(slen/2);
     for (i=0; i < slen/2; i++) {

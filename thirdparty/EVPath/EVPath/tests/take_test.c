@@ -481,8 +481,8 @@ do_regression_master_test()
 	    }
 	    done++;
 	}
-    }
 #endif
+    }
     if (msg_count != MSG_COUNT) {
 	int i = 10;
 	while ((i >= 0) && (msg_count != MSG_COUNT)) {

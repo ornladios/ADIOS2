@@ -14,6 +14,8 @@
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
+#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
+
 #else
 #include <sys/wait.h>
 #endif
@@ -96,7 +98,7 @@ static FMStructDescRec simple_format_list[] =
 };
 
 static size_t size = 100000;
-static size_t vecs = 1;
+static long vecs = 1;
 
 static
 void 
@@ -140,7 +142,7 @@ generate_record(simple_rec_ptr event)
     printf("Vecs = %ld\n", vecs);
     for (i=0; i < vecs; i++) {
 	event->vecs[i].iov_len = size/vecs;
-        printf("Vec_len = %ld\n", size/vecs);
+        printf("Vec_len = %zd\n", size/vecs);
 	event->vecs[i].iov_base = malloc(event->vecs[i].iov_len);
 	memset(event->vecs[i].iov_base, 0, event->vecs[i].iov_len);
     }
@@ -236,11 +238,11 @@ static char *transport = NULL;
 	    argv++;\
 	    argc--;\
 	} else 	if (strcmp(&argv[1][1], "vecs") == 0) {\
-	    if (sscanf(argv[2], "%zu", &vecs) != 1) {\
+	    if (sscanf(argv[2], "%lu", &vecs) != 1) {\
 		printf("Unparseable argument to -vecs, %s\n", argv[2]);\
 	    }\
 	    argv++;\
-	    argc--;
+	    argc--;\
 
 #include "support.c"
 
@@ -388,7 +390,7 @@ do_regression_master_test()
     sprintf(&size_str[0], "%zu", size);
     args[3] = size_str;
     args[4] = "-vecs";
-    sprintf(&vec_str[0], "%zu", vecs);
+    sprintf(&vec_str[0], "%lu", vecs);
     args[5] = vec_str;
     args[6] = string_list;
 
@@ -447,8 +449,8 @@ do_regression_master_test()
 	    }
 	    done++;
 	}
-    }
 #endif
+    }
     if (msg_count != MSG_COUNT) {
 	int i = 10;
 	while ((i >= 0) && (msg_count != MSG_COUNT)) {
