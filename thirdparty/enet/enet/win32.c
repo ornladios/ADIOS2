@@ -8,6 +8,7 @@
 #include "enet/enet.h"
 #include <windows.h>
 #include <mmsystem.h>
+#include <ws2ipdef.h>
 
 static enet_uint32 timeBase = 0;
 
@@ -231,6 +232,10 @@ enet_socket_set_option (ENetSocket socket, ENetSocketOption option, int value)
             result = setsockopt (socket, IPPROTO_TCP, TCP_NODELAY, (char *) & value, sizeof (int));
             break;
 
+        case ENET_SOCKOPT_TTL:
+            result = setsockopt (socket, IPPROTO_IP, IP_TTL, (char *) & value, sizeof (int));
+            break;
+
         default:
             break;
     }
@@ -246,6 +251,11 @@ enet_socket_get_option (ENetSocket socket, ENetSocketOption option, int * value)
         case ENET_SOCKOPT_ERROR:
             len = sizeof(int);
             result = getsockopt (socket, SOL_SOCKET, SO_ERROR, (char *) value, & len);
+            break;
+
+        case ENET_SOCKOPT_TTL:
+            len = sizeof(int);
+            result = getsockopt (socket, IPPROTO_IP, IP_TTL, (char *) value, & len);
             break;
 
         default:
@@ -316,7 +326,7 @@ enet_socket_send (ENetSocket socket,
                   size_t bufferCount)
 {
     struct sockaddr_in sin;
-    DWORD sentLength;
+    DWORD sentLength = 0;
 
     if (address != NULL)
     {
@@ -354,7 +364,7 @@ enet_socket_receive (ENetSocket socket,
 {
     INT sinLength = sizeof (struct sockaddr_in);
     DWORD flags = 0,
-          recvLength;
+          recvLength = 0;
     struct sockaddr_in sin;
 
     if (WSARecvFrom (socket,
