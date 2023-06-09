@@ -26,9 +26,7 @@
     */
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     third_rec test_rec;
     void *data_ptr, *tmp_ptr, *encode_buffer, *base_data;

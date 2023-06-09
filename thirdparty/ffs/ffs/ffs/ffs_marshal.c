@@ -95,9 +95,9 @@ install_drop_code(FMFormat f, char *field, char*code_str)
      * some compilers think it isn't a static initialization to put this
      * in the structure above, so do it explicitly.
      */
-    externs[0].extern_value = (void *) (long) printf;
-    externs[1].extern_value = (void *) (long) malloc;
-    externs[2].extern_value = (void *) (long) free;
+    externs[0].extern_value = (void *) (intptr_t) printf;
+    externs[1].extern_value = (void *) (intptr_t) malloc;
+    externs[2].extern_value = (void *) (intptr_t) free;
 
 
     for (i=0; i< f->field_count; i++) {
@@ -169,10 +169,10 @@ install_subsample_code(FMFormat f, char *field, char*code_str)
      * some compilers think it isn't a static initialization to put this
      * in the structure above, so do it explicitly.
      */
-    externs[0].extern_value = (void *) (long) printf;
-    externs[1].extern_value = (void *) (long) malloc;
-    externs[2].extern_value = (void *) (long) memcpy;
-    externs[3].extern_value = (void *) (long) copy_array_element;
+    externs[0].extern_value = (void *) (intptr_t) printf;
+    externs[1].extern_value = (void *) (intptr_t) malloc;
+    externs[2].extern_value = (void *) (intptr_t) memcpy;
+    externs[3].extern_value = (void *) (intptr_t) copy_array_element;
 
 
     for (i=0; i< f->field_count; i++) {

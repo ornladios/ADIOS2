@@ -14,7 +14,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <limits.h>
-#include <strings.h>
+#include <string.h>
 #include "assert.h"
 #include "fm.h"
 #include "fm_internal.h"
@@ -30,13 +30,13 @@ extern FMfloat_format fm_my_float_format;
 
 typedef struct addr_list {
     void *addr;
-    int offset;
+    size_t offset;
 } addr_list_entry;
 
 typedef struct dump_state {
     int encoded;
-    int output_len;
-    int output_limit;
+    size_t output_len;
+    ssize_t output_limit;
     int use_XML;
     int indent;
     char *offset_base;
@@ -54,14 +54,12 @@ typedef struct dump_state {
 }*dstate;
 
 static void free_addr_list(dstate s);
-static int search_addr_list(dstate s, void *addr);
-static void add_to_addr_list(dstate s, void *addr, int offset);
-static int dump_subfields(void *base, FMFormat f, dstate s, int data_offset);
+static ssize_t search_addr_list(dstate s, void *addr);
+static void add_to_addr_list(dstate s, void *addr, size_t offset);
+static int dump_subfields(void *base, FMFormat f, dstate s, size_t data_offset);
 
 static void
-byte_swap(data, size)
-char *data;
-int size;
+byte_swap(char *data, int size)
 {
     int i;
     assert((size % 2) == 0);
@@ -73,7 +71,7 @@ int size;
 }
 
 extern int
-dump_output(dstate s, int length_estimate, char *format, ...)
+dump_output(dstate s, size_t length_estimate, char *format, ...)
 {
     char buf[1024];
     char *tmp = &buf[0];
@@ -81,7 +79,7 @@ dump_output(dstate s, int length_estimate, char *format, ...)
     int free_tmp = 0;
     int use_buf = 1;
     if ((s->output_limit != -1) && 
-	(s->output_len + length_estimate > s->output_limit)) {
+	(s->output_len + length_estimate > (size_t)s->output_limit)) {
 	return 0;
     }
     if (s->output_string != NULL) {
@@ -100,7 +98,7 @@ dump_output(dstate s, int length_estimate, char *format, ...)
 #else
     va_start(ap);
 #endif
-    vsprintf(tmp, format, ap);
+    vsnprintf(tmp, sizeof(buf), format, ap);
     va_end(ap);
     s->output_len += strlen(tmp);
     if (s->use_file_out) {
@@ -125,14 +123,13 @@ set_bigendian () {
   words_bigendian = (u.c[sizeof (long) - 1] == 1);
   return words_bigendian;
 }
-
+#ifndef WORDS_BIGENDIAN
 #define WORDS_BIGENDIAN ((words_bigendian == -1) ? set_bigendian() : words_bigendian)
+#endif
 #endif
 
 static unsigned long
-quick_get_ulong(iofield, data)
-FMFieldPtr iofield;
-void *data;
+quick_get_ulong(FMFieldPtr iofield, void *data)
 {
     data = (void *) ((char *) data + iofield->offset);
     /* only used when field type is an integer and aligned by its size */
@@ -169,9 +166,7 @@ void *data;
 }
 
 static void *
-quick_get_pointer(field, data)
-FMFieldPtr field;
-void *data;
+quick_get_pointer(FMFieldPtr field, void *data)
 {
     union {
 	void *p;
@@ -239,20 +234,13 @@ static int
 internal_dump_data(FMFormat format, void *data, dstate state);
 
 extern int
-FMdump_data(format, data, character_limit)
-FMFormat format;
-void *data;
-int character_limit;
+FMdump_data(FMFormat format, void *data, int character_limit)
 {
     return FMfdump_data(stdout, format, data, character_limit);
 }
 
 extern int
-FMfdump_data(out, format, data, character_limit)
-void *out;
-FMFormat format;
-void *data;
-int character_limit;
+FMfdump_data(void *out, FMFormat format, void *data, int character_limit)
 {
     int ret;
     struct dump_state state;
@@ -288,7 +276,7 @@ internal_dump_data(FMFormat format, void *data, dstate state)
 }
 
 static int
-dump_subfield(void *base, FMFormat f, dstate s, int data_offset, void* parent_base, FMTypeDesc *t);
+dump_subfield(void *base, FMFormat f, dstate s, size_t data_offset, void* parent_base, FMTypeDesc *t);
 
 #define FALSE 0
 #define TRUE 1
@@ -356,12 +344,12 @@ stop_field(dstate s, FMFieldList f, FMTypeDesc *t)
 }
 
 static int
-dump_subfields(void *base, FMFormat f, dstate s, int data_offset)
+dump_subfields(void *base, FMFormat f, dstate s, size_t data_offset)
 {
     int i;
 
     for (i = 0; i < f->field_count; i++) {
-	int subfield_offset = data_offset + f->field_list[i].field_offset;
+	size_t subfield_offset = data_offset + f->field_list[i].field_offset;
 	FMFieldList fmfield = &f->field_list[i];
 	int ret;
 	start_field(s, fmfield, &f->var_list[i].type_desc);
@@ -370,7 +358,7 @@ dump_subfields(void *base, FMFormat f, dstate s, int data_offset)
 			      &f->var_list[i].type_desc);
 	stop_field(s, fmfield, &f->var_list[i].type_desc);
 	if (ret != 1) return 0;
-	if ((s->output_limit != -1) && (s->output_len >= s->output_limit)) return 0;
+	if ((s->output_limit != -1) && (s->output_len >= (size_t)s->output_limit)) return 0;
     }
     return 1;
 }
@@ -414,18 +402,8 @@ determine_dump_size(FMFormat f, void *data, void* parent_base, FMTypeDesc *t)
 
 
 static int
-sdump_value(s, field_type, field_size, field_offset, top_format, data,
-	    string_base, byte_reversal, float_format, encode)
-dstate s;
-const char *field_type;
-int field_size;
-int field_offset;
-FMFormat top_format;
-void *data;
-void *string_base;
-int byte_reversal;
-int float_format;
-int encode;
+sdump_value(dstate s, const char *field_type, int field_size, size_t field_offset, FMFormat top_format,
+	    void *data, void *string_base, int byte_reversal, int float_format, int encode)
 {
     FMgetFieldStruct descr;  /*OK */
     long junk;
@@ -438,7 +416,7 @@ int encode;
 
     if (descr.data_type == integer_type) {
 	if (field_size <= sizeof(long)) {
-	    long tmp = get_FMlong(&descr, data);
+	    size_t tmp = get_FMlong(&descr, data);
 	    dump_output(s, 25, "%ld ", tmp);
 	} else if (field_size == 2 * sizeof(long) && field_size == 8) {
 	    unsigned long low_long;
@@ -456,7 +434,7 @@ int encode;
 	}
     } else if (descr.data_type == unsigned_type) {
 	if (field_size <= sizeof(unsigned long)) {
-	    unsigned long tmp = get_FMulong(&descr, data);
+	    ssize_t tmp = get_FMulong(&descr, data);
 	    dump_output(s, 25, "%lu ", tmp);
 	} else if (field_size == 2 * sizeof(long) && field_size == 8) {
 	    unsigned long low_long, high_long;
@@ -472,10 +450,10 @@ int encode;
 	    dump_output(s, 20, "+uint size %u+ ", field_size);
 	}
     } else if (descr.data_type == enumeration_type) {
-	unsigned long tmp = get_FMulong(&descr, data);
+	size_t tmp = get_FMulong(&descr, data);
 	dump_output(s, 25, "%lu ", tmp);
     } else if (descr.data_type == boolean_type) {
-	unsigned long tmp = get_FMulong(&descr, data);
+	size_t tmp = get_FMulong(&descr, data);
 	dump_output(s, 25, "%lu ", tmp);
 	if (tmp == 0) {
 	    dump_output(s, 5, "false ");
@@ -525,16 +503,16 @@ int encode;
 }
 
 static int
-dump_subfield(void*base, FMFormat f, dstate s, int data_offset, void* parent_base, FMTypeDesc *t)
+dump_subfield(void*base, FMFormat f, dstate s, size_t data_offset, void* parent_base, FMTypeDesc *t)
 {
 
-    if ((s->output_limit != -1) && (s->output_len > s->output_limit)) return 0;
+    if ((s->output_limit != -1) && (s->output_len > (size_t)s->output_limit)) return 0;
 
     switch (t->type) {
     case FMType_pointer:
     {
 	struct _FMgetFieldStruct src_spec;
-	int new_offset;
+	size_t new_offset;
 	char *ptr_value;
 	memset(&src_spec, 0, sizeof(src_spec));
 	src_spec.size = f->pointer_size;
@@ -550,16 +528,16 @@ dump_subfield(void*base, FMFormat f, dstate s, int data_offset, void* parent_bas
 #if defined (__INTEL_COMPILER)
 #  pragma warning (disable: 810)
 #endif
-	  new_offset = (long) ptr_value;
+	  new_offset =  (intptr_t) ptr_value;
 #if defined (__INTEL_COMPILER)
 #  pragma warning (default: 810)
 #endif
-	    ptr_value = (long)ptr_value + s->offset_base;
+	    ptr_value = (intptr_t)ptr_value + s->offset_base;
 	} else {
-	    new_offset = ptr_value - s->offset_base;
+	    new_offset = (intptr_t)ptr_value - (intptr_t)s->offset_base;
 	}
 	if (f->recursive) {
-	    int previous_offset = search_addr_list(s, ptr_value);
+	    ssize_t previous_offset = search_addr_list(s, ptr_value);
 	    if (previous_offset != -1) {
 		/* already visited this */
 		return 1;
@@ -583,7 +561,7 @@ dump_subfield(void*base, FMFormat f, dstate s, int data_offset, void* parent_bas
 	    dump_output(s, 5, "NULL ");
 	} else {
 	    if (s->encoded) {
-		ptr_value = (long)ptr_value + s->offset_base;
+		ptr_value = (intptr_t)ptr_value + s->offset_base;
 	    }
 	    dump_output(s, strlen(ptr_value) + 2, "\"%s\"", ptr_value);
 	}
@@ -610,7 +588,7 @@ dump_subfield(void*base, FMFormat f, dstate s, int data_offset, void* parent_bas
 	}
 	element_size = determine_dump_size(f, base, parent_base, next);
 	for (i = 0; i < elements ; i++) {
-	    int element_offset = data_offset + i * element_size;
+	    size_t element_offset = data_offset + i * element_size;
 	    if (!dump_subfield(base, f, s, element_offset, parent_base, next)) return 0;
 	}
 	break;
@@ -628,7 +606,7 @@ dump_subfield(void*base, FMFormat f, dstate s, int data_offset, void* parent_bas
     }
     case FMType_simple: {
 	FMFieldList fmfield = &f->field_list[t->field_index];
-	int field_offset = data_offset;
+	size_t field_offset = data_offset;
 	int field_size = fmfield->field_size;
 	const char *field_type = fmfield->field_type;
 	int byte_reversal = f->byte_reversal;
@@ -644,7 +622,7 @@ dump_subfield(void*base, FMFormat f, dstate s, int data_offset, void* parent_bas
 }
 
 static void
-add_to_addr_list(dstate s, void *addr, int offset)
+add_to_addr_list(dstate s, void *addr, size_t offset)
 {
     if (s->addr_list_is_stack) {
 	if (s->addr_list_cnt == STACK_ARRAY_SIZE) {
@@ -669,11 +647,11 @@ add_to_addr_list(dstate s, void *addr, int offset)
     s->addr_list_cnt++;
 }
 
-static int
+static ssize_t
 search_addr_list(dstate s, void *addr)
 {
     int i;
-    int previous_offset = -1;
+    ssize_t previous_offset = -1;
     for (i=0; i < s->addr_list_cnt; i++) {
 	if (s->addr_list[i].addr == addr) {
 	    previous_offset = s->addr_list[i].offset;
@@ -692,10 +670,7 @@ free_addr_list(dstate s)
 }
 
 extern int
-dump_raw_FMrecord(fmc,format, data)
-FMContext fmc;
-FMFormat format;
-void *data;
+dump_raw_FMrecord(FMContext fmc, FMFormat format, void *data)
 {
     struct dump_state state;
     init_dump_state(&state);
@@ -710,10 +685,7 @@ void *data;
 }
 
 extern char *
-dump_raw_FMrecord_to_string(fmc,format, data)
-FMContext fmc;
-FMFormat format;
-void *data;
+dump_raw_FMrecord_to_string(FMContext fmc, FMFormat format, void *data)
 {
     struct dump_state state;
     init_dump_state(&state);
@@ -731,11 +703,7 @@ void *data;
 }
 
 extern int
-FMfdump_encoded_data(out, format, data, character_limit)
-void *out;
-FMFormat format;
-void *data;
-int character_limit;
+FMfdump_encoded_data(void *out, FMFormat format, void *data, int character_limit)
 {
     int ret;
     int header_size = format->server_ID.length;
@@ -762,10 +730,7 @@ int character_limit;
 }
 
 extern int
-FMdump_encoded_data(format, data, character_limit)
-FMFormat format;
-void *data;
-int character_limit;
+FMdump_encoded_data(FMFormat format, void *data, int character_limit)
 {
     return FMfdump_encoded_data((void*)stdout, format, data, character_limit);
 }
@@ -826,10 +791,7 @@ FMdump_encoded_XML(FMContext c, void *data, int limit)
 }
 
 extern void
-dump_unencoded_FMrecord_as_XML(fmc, format, data)
-FMContext fmc;
-FMFormat format;
-void *data;
+dump_unencoded_FMrecord_as_XML(FMContext fmc, FMFormat format, void *data)
 {
     struct dump_state state;
     if (FMhas_XML_info(format)) {

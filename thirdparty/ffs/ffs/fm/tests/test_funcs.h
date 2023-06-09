@@ -332,3 +332,7 @@ extern char *nested_xml;
 extern char *event_xml;
 extern char *event_vec_xml;
 extern char *multi_array_xml;
+#if defined(_MSC_VER)
+#define strdup _strdup
+#define snprintf sprintf_s
+#endif
