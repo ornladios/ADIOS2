@@ -2,6 +2,10 @@ static char *ssh_args[6]={NULL, NULL, NULL, NULL, NULL, NULL};
 static char remote_directory[1024] = "";
 static char *argv0;
 static int no_fork = 0;
+#ifdef _MSC_VER
+#define pid_t intptr_t
+#include <process.h>
+#endif
 
 static void
 usage()
@@ -34,10 +38,10 @@ usage()
 	        printf("Missing --ssh destination\n");\
 		usage();\
 	    }\
-	    first_colon = index(argv[2], ':');\
+	    first_colon = strchr(argv[2], ':');\
 	    if (first_colon) {\
 	        *first_colon = 0;\
-		second_colon = index(first_colon+1, ':');\
+		second_colon = strchr(first_colon+1, ':');\
 	    } else {\
 	        second_colon = NULL;\
 	    }\
@@ -86,12 +90,20 @@ usage()
 	argc--;\
     }
 
+#ifdef _MSC_VER
+static int inet_aton(const char* cp, struct in_addr* addr)
+{
+    addr->s_addr = inet_addr(cp);
+    return (addr->s_addr == INADDR_NONE) ? 0 : 1;
+}
+#endif
+
 pid_t
 run_subprocess(char **args)
 {
     char **run_args = args;
 #ifdef HAVE_WINDOWS_H
-    int child;
+    intptr_t child;
     child = _spawnv(_P_NOWAIT, "./evtest.exe", args);
     if (child == -1) {
 	printf("failed for evtest\n");
@@ -112,7 +124,7 @@ run_subprocess(char **args)
 	    i++;
 	}
 	if (remote_directory[0] != 0) {
-	  if (rindex(argv0, '/')) argv0 = rindex(argv0, '/') + 1;
+	  if (strrchr(argv0, '/')) argv0 = strrchr(argv0, '/') + 1;
 	  run_args[i] = malloc(strlen(remote_directory) + 
 			       strlen(argv0) + 4);
 	  strcpy(run_args[i], remote_directory);

@@ -1,11 +1,75 @@
 #include "config.h"
+#ifndef _MSC_VER
 #include <dlfcn.h>
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "dlloader.h"
 
 static char **search_list = NULL;
+#ifdef _MSC_VER
+#include <windows.h>
+
+static struct {
+    long lasterror;
+    const char* err_rutin;
+} var = {
+    0,
+    NULL
+};
+
+void* dlopen(const char* filename, int flags)
+{
+    HINSTANCE hInst;
+
+    hInst = LoadLibrary(filename);
+    if (hInst == NULL) {
+	var.lasterror = GetLastError();
+	var.err_rutin = "dlopen";
+    }
+    return hInst;
+}
+
+int dlclose(void* handle)
+{
+    BOOL ok;
+    int rc = 0;
+
+    ok = FreeLibrary((HINSTANCE)handle);
+    if (!ok) {
+	var.lasterror = GetLastError();
+	var.err_rutin = "dlclose";
+	rc = -1;
+    }
+    return rc;
+}
+
+void* dlsym(void* handle, const char* name)
+{
+    FARPROC fp;
+
+    fp = GetProcAddress((HINSTANCE)handle, name);
+    if (!fp) {
+	var.lasterror = GetLastError();
+	var.err_rutin = "dlsym";
+    }
+    return (void*)(intptr_t)fp;
+}
+
+const char* dlerror(void)
+{
+    static char errstr[88];
+
+    if (var.lasterror) {
+	sprintf(errstr, "%s error #%ld", var.err_rutin, var.lasterror);
+	return errstr;
+    }
+    else {
+	return NULL;
+    }
+}
+#endif
 
 void
 CMdladdsearchdir(char *string)
@@ -33,6 +97,7 @@ CMset_dlopen_verbose(int verbose)
 {
     dlopen_verbose = verbose;
 }
+#undef dlopen
 
 void *
 CMdlopen(void *CMTrace_filev, char *in_lib, int mode)
@@ -48,13 +113,13 @@ CMdlopen(void *CMTrace_filev, char *in_lib, int mode)
     if (dlopen_verbose == -1) {
 	dlopen_verbose = (getenv("CMTransportVerbose") != NULL);
     }
-    tmp = rindex(in_lib, '.');
+    tmp = strrchr(in_lib, '.');
     if (dlopen_verbose) fprintf(CMTrace_file, "Trying to dlopen %s\n", in_lib);
     if (tmp && (strcmp(tmp, ".la") == 0)) {
 	/* can't open .la files */
 	lib = malloc(strlen(in_lib) + strlen(MODULE_EXT) + 8);
 	strcpy(lib, in_lib);
-	strcpy(rindex(lib, '.'), MODULE_EXT);
+	strcpy(strrchr(lib, '.'), MODULE_EXT);
 	if (dlopen_verbose) fprintf(CMTrace_file, "Dlopen module name replaced, now %s\n", lib);
     } else {
 	lib = strdup(in_lib);
@@ -64,7 +129,7 @@ CMdlopen(void *CMTrace_filev, char *in_lib, int mode)
         char *tmp = malloc(strlen(list[0]) + strlen(lib) + 2);
 	sprintf(tmp, "%s/%s", list[0], lib);
 	handle = dlopen(tmp, RTLD_LAZY);
-	char *err = dlerror();
+	const char *err = dlerror();
 	if (dlopen_verbose) {
 	    if (err) {
 		fprintf(CMTrace_file, "Failed to dlopen %s, error is %s\n", tmp, err);
@@ -78,7 +143,7 @@ CMdlopen(void *CMTrace_filev, char *in_lib, int mode)
     }
     if (!handle) {
         handle = dlopen(lib, RTLD_LAZY);
-	char *err = dlerror();
+	const char *err = dlerror();
 	if (dlopen_verbose) {
 	    if (err) {
 		fprintf(CMTrace_file, "Failed to dlopen %s, error is %s\n", tmp, err);
@@ -89,7 +154,7 @@ CMdlopen(void *CMTrace_filev, char *in_lib, int mode)
     }
     if (!handle) return NULL;
     dlh = malloc(sizeof(*dlh));
-    tmp = rindex(lib, '/'); /* find name start */
+    tmp = strrchr(lib, '/'); /* find name start */
     if (!tmp) tmp = lib;
 
     char *cm_lib_prefix;
@@ -104,7 +169,7 @@ CMdlopen(void *CMTrace_filev, char *in_lib, int mode)
       dlh->lib_prefix = malloc(strlen(tmp) + 4);
       strcpy(dlh->lib_prefix, tmp);
     }
-    tmp = rindex(dlh->lib_prefix, '.');
+    tmp = strrchr(dlh->lib_prefix, '.');
     strcpy(tmp, "_LTX_");  /* kill postfix, add _LTX_ */
     dlh->dlopen_handle = handle;
     free(lib);

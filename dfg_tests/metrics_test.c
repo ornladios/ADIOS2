@@ -1,10 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "config.h"
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <string.h>
 
-#include "config.h"
 #include "cod.h"
 #include "ev_dfg.h"
 #include "test_support.h"

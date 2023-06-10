@@ -8,6 +8,13 @@
 #include "ev_dfg.h"
 #include "test_support.h"
 
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#define drand48() (((double)rand())/((double)RAND_MAX))
+#define lrand48() rand()
+#define srand48(x)
+#endif
+
 static int status;
 static EVclient test_client;
 

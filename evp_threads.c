@@ -5,8 +5,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <strings.h>
+#include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 
 #include "evpath.h"
 #include "cm_internal.h"

@@ -7,6 +7,9 @@
 extern "C" {
 #endif
 
+#ifdef _MSC_VER
+#include <winsock2.h>
+#endif
 typedef struct _avail_period {
     struct timeval offset;
     struct timeval duration;

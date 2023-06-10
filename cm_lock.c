@@ -1,20 +1,18 @@
 #include "config.h"
 
-#ifndef MODULE
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#else
-#include "kernel/kcm.h"
-#include "kernel/library.h"
 #endif
+#include "config.h"
+
 #include "ffs.h"
 
 #include "atl.h"
 #include "evpath.h"
 #include "chr_time.h"
 #include "cm_internal.h"
-#include "config.h"
 #undef NDEBUG
 #include "assert.h"
 

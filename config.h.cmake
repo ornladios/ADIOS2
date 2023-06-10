@@ -135,8 +135,8 @@
 /* Define to 1 if you have the <windows.h> header file. */
 #cmakedefine HAVE_WINDOWS_H
 
-/* Define to 1 if you have the <winsock.h> header file. */
-#cmakedefine HAVE_WINSOCK_H
+/* Define to 1 if you have the <winsock2.h> header file. */
+#cmakedefine HAVE_WINSOCK2_H
 
 /* The size of `int', as computed by sizeof. */
 #define SIZEOF_INT @SIZEOF_INT@
