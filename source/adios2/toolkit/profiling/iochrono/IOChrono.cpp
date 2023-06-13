@@ -40,15 +40,21 @@ JSONProfiler::JSONProfiler(helper::Comm const &comm) : m_Comm(comm)
     m_Profiler.m_IsActive = true; // default is true
 
     AddTimerWatch("buffering");
-    AddTimerWatch("endstep");
+    AddTimerWatch("ES");
     AddTimerWatch("PP");
-    AddTimerWatch("meta_gather1", false);
-    AddTimerWatch("meta_gather2", false);
-    AddTimerWatch("meta_lvl1");
-    AddTimerWatch("meta_lvl2");
-    AddTimerWatch("close_ts");
-    AddTimerWatch("AWD");
+    AddTimerWatch("ES_meta1_gather", false);
+    AddTimerWatch("ES_meta2_gather", false);
+
+    AddTimerWatch("ES_meta1");
+    AddTimerWatch("ES_meta2");
+
+    AddTimerWatch("ES_close");
+    AddTimerWatch("ES_AWD");
     AddTimerWatch("WaitOnAsync");
+    AddTimerWatch("BS_WaitOnAsync");
+    AddTimerWatch("DC_WaitOnAsync1");
+    AddTimerWatch("DC_WaitOnAsync2");
+    AddTimerWatch("PDW");
 
     m_Profiler.m_Bytes.emplace("buffering", 0);
 
@@ -83,9 +89,6 @@ std::string JSONProfiler::GetRankProfilingJSON(
     std::replace(timeDate.begin(), timeDate.end(), ' ', '_');
 
     rankLog += ", \"start\":\"" + timeDate + "\"";
-    // rankLog += ", \"threads\":" + std::to_string(m_Parameters.Threads);
-    rankLog +=
-        ", \"bytes\":" + std::to_string(profiler.m_Bytes.at("buffering"));
 
     for (const auto &timerPair : profiler.m_Timers)
     {
@@ -101,6 +104,9 @@ std::string JSONProfiler::GetRankProfilingJSON(
     {
         rankLog += ", \"transport_" + std::to_string(t) + "\":{";
         rankLog += "\"type\":\"" + transportsTypes[t] + "\"";
+
+        size_t wBytes = transportsProfilers[t]->m_Bytes.at("write");
+        rankLog += ", \"wbytes\":" + std::to_string(wBytes);
 
         for (const auto &transportTimerPair : transportsProfilers[t]->m_Timers)
         {

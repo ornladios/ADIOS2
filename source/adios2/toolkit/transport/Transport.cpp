@@ -107,6 +107,14 @@ void Transport::Flush()
 
 size_t Transport::GetSize() { return 0; }
 
+void Transport::ProfilerWriteBytes(size_t bytes) noexcept
+{
+    if (m_Profiler.m_IsActive)
+    {
+        m_Profiler.m_Bytes.at("write") += bytes;
+    }
+}
+
 void Transport::ProfilerStart(const std::string process) noexcept
 {
     if (m_Profiler.m_IsActive)

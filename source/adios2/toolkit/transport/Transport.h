@@ -155,6 +155,7 @@ public:
     virtual void MkDir(const std::string &fileName) = 0;
 
 protected:
+    void ProfilerWriteBytes(size_t bytes) noexcept;
     void ProfilerStart(const std::string process) noexcept;
 
     void ProfilerStop(const std::string process) noexcept;
