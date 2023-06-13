@@ -91,7 +91,7 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
         TimePoint wait_start = Now();
         if (m_WriteFuture.valid())
         {
-            m_Profiler.Start("WaitOnAsync");
+            m_Profiler.Start("BS_WaitOnAsync");
             m_WriteFuture.get();
             m_Comm.Barrier();
             AsyncWriteDataCleanup();
@@ -110,7 +110,7 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
                               << std::endl;
                 }
             }
-            m_Profiler.Stop("WaitOnAsync");
+            m_Profiler.Stop("BS_WaitOnAsync");
         }
     }
 
@@ -529,9 +529,9 @@ void BP5Writer::EndStep()
       std::cout << "END STEP starts at: " << ts.count() << std::endl; */
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP5Writer::EndStep");
-    m_Profiler.Start("endstep");
+    m_Profiler.Start("ES");
 
-    m_Profiler.Start("close_ts");
+    m_Profiler.Start("ES_close");
     MarshalAttributes();
 
     // true: advances step
@@ -542,9 +542,9 @@ void BP5Writer::EndStep()
      * AttributeEncodeBuffer and the data encode Vector */
 
     m_ThisTimestepDataSize += TSInfo.DataBuffer->Size();
-    m_Profiler.Stop("close_ts");
+    m_Profiler.Stop("ES_close");
 
-    m_Profiler.Start("AWD");
+    m_Profiler.Start("ES_AWD");
     // TSInfo destructor would delete the DataBuffer so we need to save it
     // for async IO and let the writer free it up when not needed anymore
     m_AsyncWriteLock.lock();
@@ -555,12 +555,12 @@ void BP5Writer::EndStep()
     WriteData(TSInfo.DataBuffer);
     TSInfo.DataBuffer = NULL;
 
-    m_Profiler.Stop("AWD");
+    m_Profiler.Stop("ES_AWD");
 
     /*
      * Two-step metadata aggregation
      */
-    m_Profiler.Start("meta_lvl1");
+    m_Profiler.Start("ES_meta1");
     std::vector<char> MetaBuffer;
     core::iovec m{TSInfo.MetaEncodeBuffer->Data(),
                   TSInfo.MetaEncodeBuffer->m_FixedSize};
@@ -576,7 +576,7 @@ void BP5Writer::EndStep()
 
     if (m_Aggregator->m_Comm.Size() > 1)
     { // level 1
-        m_Profiler.Start("meta_gather1");
+        m_Profiler.Start("ES_meta1_gather");
         size_t LocalSize = MetaBuffer.size();
         std::vector<size_t> RecvCounts =
             m_Aggregator->m_Comm.GatherValues(LocalSize, 0);
@@ -594,7 +594,7 @@ void BP5Writer::EndStep()
         m_Aggregator->m_Comm.GathervArrays(MetaBuffer.data(), LocalSize,
                                            RecvCounts.data(), RecvCounts.size(),
                                            RecvBuffer.data(), 0);
-        m_Profiler.Stop("meta_gather1");
+        m_Profiler.Stop("ES_meta1_gather");
         if (m_Aggregator->m_Comm.Rank() == 0)
         {
             std::vector<format::BP5Base::MetaMetaInfoBlock>
@@ -612,8 +612,8 @@ void BP5Writer::EndStep()
                 WriterDataPositions);
         }
     } // level 1
-    m_Profiler.Stop("meta_lvl1");
-    m_Profiler.Start("meta_lvl2");
+    m_Profiler.Stop("ES_meta1");
+    m_Profiler.Start("ES_meta2");
     // level 2
     if (m_Aggregator->m_Comm.Rank() == 0)
     {
@@ -623,7 +623,7 @@ void BP5Writer::EndStep()
         size_t LocalSize = MetaBuffer.size();
         if (m_CommAggregators.Size() > 1)
         {
-            m_Profiler.Start("meta_gather2");
+            m_Profiler.Start("ES_meta2_gather");
             RecvCounts = m_CommAggregators.GatherValues(LocalSize, 0);
             if (m_CommAggregators.Rank() == 0)
             {
@@ -640,7 +640,7 @@ void BP5Writer::EndStep()
                 MetaBuffer.data(), LocalSize, RecvCounts.data(),
                 RecvCounts.size(), RecvBuffer.data(), 0);
             buf = &RecvBuffer;
-            m_Profiler.Stop("meta_gather2");
+            m_Profiler.Stop("ES_meta2_gather");
         }
         else
         {
@@ -670,7 +670,7 @@ void BP5Writer::EndStep()
             }
         }
     } // level 2
-    m_Profiler.Stop("meta_lvl2");
+    m_Profiler.Stop("ES_meta2");
 
     if (m_Parameters.AsyncWrite)
     {
@@ -685,7 +685,7 @@ void BP5Writer::EndStep()
         }
     }
 
-    m_Profiler.Stop("endstep");
+    m_Profiler.Stop("ES");
     m_WriterStep++;
     m_EndStepEnd = Now();
     /* Seconds ts2 = Now() - m_EngineStart;
@@ -1555,7 +1555,11 @@ void BP5Writer::FlushData(const bool isFinal)
 
 void BP5Writer::Flush(const int transportIndex) {}
 
-void BP5Writer::PerformDataWrite() { FlushData(false); }
+void BP5Writer::PerformDataWrite() {
+  m_Profiler.Start("PDW");
+  FlushData(false);
+  m_Profiler.Stop("PDW");
+}
 
 void BP5Writer::DestructorClose(bool Verbose) noexcept
 {
@@ -1597,13 +1601,13 @@ void BP5Writer::DoClose(const int transportIndex)
     Seconds wait(0.0);
     if (m_WriteFuture.valid())
     {
-        m_Profiler.Start("WaitOnAsync");
+        m_Profiler.Start("DC_WaitOnAsync1");
         m_AsyncWriteLock.lock();
         m_flagRush = true;
         m_AsyncWriteLock.unlock();
         m_WriteFuture.get();
         wait += Now() - wait_start;
-        m_Profiler.Stop("WaitOnAsync");
+        m_Profiler.Stop("DC_WaitOnAsync1");
     }
 
     m_FileDataManager.CloseFiles(transportIndex);
@@ -1621,7 +1625,7 @@ void BP5Writer::DoClose(const int transportIndex)
     if (m_Parameters.AsyncWrite)
     {
         // wait until all process' writing thread completes
-        m_Profiler.Start("WaitOnAsync");
+        m_Profiler.Start("DC_WaitOnAsync2");
         wait_start = Now();
         m_Comm.Barrier();
         AsyncWriteDataCleanup();
@@ -1631,7 +1635,7 @@ void BP5Writer::DoClose(const int transportIndex)
             std::cout << "Close waited " << wait.count()
                       << " seconds on async threads" << std::endl;
         }
-        m_Profiler.Stop("WaitOnAsync");
+        m_Profiler.Stop("DC_WaitOnAsync2");
     }
 
     if (m_Comm.Rank() == 0)

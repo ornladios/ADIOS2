@@ -256,6 +256,7 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
         while (size > 0)
         {
             ProfilerStart("write");
+            ProfilerWriteBytes(size);
             errno = 0;
             const auto writtenSize = write(m_FileDescriptor, buffer, size);
             m_Errno = errno;
@@ -349,6 +350,8 @@ void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
         {
             written = static_cast<size_t>(ret);
         }
+
+        ProfilerWriteBytes(written);
 
         if (written < nBytesExpected)
         {
