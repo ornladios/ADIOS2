@@ -146,66 +146,6 @@ jobs:
         if: ${{ matrix.constrains != 'build_only' }}
         run: gha/scripts/ci/gh-actions/run.sh test
 
-  linux_emu:
-    needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0 &&
-        (
-        contains('refs/heads/master', github.ref) ||
-        contains('refs/heads/release_', github.ref)
-        )
-
-    runs-on: ubuntu-latest
-    container:
-      image: ${{ matrix.container }}
-      options: --privileged --shm-size=1g
-      env:
-        GH_YML_JOBNAME: ${{ matrix.cpu }}-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
-        GH_YML_BASE_OS: Linux
-        GH_YML_MATRIX_OS: ${{ matrix.os }}
-        GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
-        GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        cpu: [power8]
-        os: [el7]
-        compiler: [xl]
-        parallel: [serial]
-        include:
-          - cpu: power8
-            os: el7
-            compiler: xl
-            parallel: serial
-            container: ornladios/adios2:ci-x86_64-power8-el7-xl
-            arch: ppc64le
-
-    steps:
-      - name: Emulation Setup
-        run: /x86_64/bin/register --reset --targets ${{ matrix.arch }}
-        env:
-          PATH: /x86_64/bin
-      - name: Node.js Setup
-        run: mount --bind /x86_64/bin/node /__e/node12/bin/node
-      - uses: actions/checkout@v2
-        with:
-          path: gha
-      - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: source
-      - name: Setup
-        run: gha/scripts/ci/gh-actions/linux-setup.sh
-      - name: Update
-        run: gha/scripts/ci/gh-actions/run.sh update
-      - name: Configure
-        run: gha/scripts/ci/gh-actions/run.sh configure
-      - name: Build
-        run: gha/scripts/ci/gh-actions/run.sh build
-      - name: Test
-        run: gha/scripts/ci/gh-actions/run.sh test
-
-
   macos:
     needs: [format, git_checks]
     if: needs.git_checks.outputs.num_code_changes > 0
@@ -430,7 +370,7 @@ jobs:
 #######################################
 
   build_and_test:
-    needs: [linux, linux_emu, macos, docker, contract]
+    needs: [linux, macos, docker, contract]
     runs-on: ubuntu-latest
     steps:
       - run: echo "All required jobs complete"
