@@ -20,7 +20,6 @@ scripts/ci/images-v2/build-intel.sh
 scripts/ci/images-v2/build-mpich.sh
 scripts/ci/images-v2/build-nvhpc.sh
 scripts/ci/images-v2/build.sh
-scripts/ci/images/build-emu-power8-image.sh
 scripts/ci/images/build-native-images.sh
 scripts/ci/images/emu-el7/entrypoint.sh
 scripts/ci/images/emu-el7/qemu-binfmt-conf.sh
@@ -35,7 +34,6 @@ scripts/ci/setup-run/ci-el8-icc.sh
 scripts/ci/setup-run/ci-el8-nvhpc222-mpi.sh
 scripts/ci/setup-run/ci-el8-nvhpc222.sh
 scripts/ci/setup-run/ci-el8-oneapi.sh
-scripts/ci/setup/ci-power8-el7-xl-serial.sh
 scripts/dashboard/nightly/aaargh.sh
 scripts/dashboard/nightly/cori.sh
 scripts/dashboard/nightly/summitdev.sh
