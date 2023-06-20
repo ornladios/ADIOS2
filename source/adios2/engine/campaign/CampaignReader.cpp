@@ -12,6 +12,7 @@
 #include "CampaignReader.tcc"
 
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
+#include "adios2/helper/adiosNetwork.h"   // GetFQDN
 #include <adios2-perfstubs-interface.h>
 
 #include <fstream>
@@ -142,12 +143,36 @@ void CampaignReader::InitParameters()
                     "integer in the range [0,5], in call to "
                     "Open or Engine constructor");
         }
+        if (key == "hostname")
+        {
+            m_Hostname = pair.second;
+        }
     }
+
+    if (m_Hostname.empty())
+    {
+        m_Hostname = helper::GetClusterName();
+    }
+    // std::cout << "My Hostname is " << m_Hostname << std::endl;
 }
+
+static int sqlcb_host(void *NotUsed, int argc, char **argv, char **azColName)
+{
+    for (int i = 0; i < argc; i++)
+    {
+        std::cout << azColName[i] << " = " << (argv[i] ? argv[i] : "NULL")
+                  << std::endl;
+    }
+    std::cout << std::endl;
+    return 0;
+};
 
 void CampaignReader::InitTransports()
 {
-    int rc = sqlite3_open(m_Name.c_str(), &m_DB);
+    int rc;
+    char *zErrMsg = 0;
+
+    rc = sqlite3_open(m_Name.c_str(), &m_DB);
     if (rc)
     {
         std::string dbmsg(sqlite3_errmsg(m_DB));
@@ -155,6 +180,14 @@ void CampaignReader::InitTransports()
         helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "Open",
                                              "Cannot open database" + m_Name +
                                                  ": " + dbmsg);
+    }
+
+    std::string sqlcmd = "SELECT hostname, longhostname FROM host";
+    rc = sqlite3_exec(m_DB, sqlcmd.c_str(), sqlcb_host, 0, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        std::cout << "SQL error: " << zErrMsg << std::endl;
+        sqlite3_free(zErrMsg);
     }
 
     std::string cs = m_Comm.BroadcastFile(m_Name, "broadcast campaign file");
