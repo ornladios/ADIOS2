@@ -25,6 +25,10 @@
 #include <sys/ioctl.h>  //AvailableIpAddresses() ioctl
 #include <unistd.h>     //AvailableIpAddresses() close
 
+#include <netdb.h>      //getFQDN
+#include <sys/socket.h> //getFQDN
+#include <sys/types.h>  //getFQDN
+
 #include <nlohmann_json.hpp>
 
 namespace adios2
@@ -79,6 +83,71 @@ AvailableIpAddresses() noexcept
     if_freenameindex(head);
     close(socket_handler);
     return ips;
+}
+
+std::string GetFQDN() noexcept
+{
+    char hostname[1024];
+#ifdef WIN32
+    TCHAR infoBuf[1024];
+    DWORD bufCharCount = sizeof(hostname);
+    memset(hostname, 0, sizeof(hostname));
+    if (GetComputerName(infoBuf, &bufCharCount))
+    {
+        for (i = 0; i < sizeof(hostname); i++)
+        {
+            hostname[i] = infoBuf[i];
+        }
+    }
+    else
+    {
+        strcpy(hostname, "Unknown_Host_Name");
+    }
+#else
+    struct addrinfo hints, *info, *p;
+    int gai_result;
+
+    hostname[1023] = '\0';
+    gethostname(hostname, 1023);
+
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_CANONNAME;
+
+    if ((gai_result = getaddrinfo(hostname, NULL, &hints, &info)) == 0)
+    {
+        for (p = info; p != NULL; p = p->ai_next)
+        {
+            printf("hostname: %s\n", p->ai_canonname);
+            if (strchr(p->ai_canonname, '.') != NULL)
+            {
+                strncpy(hostname, p->ai_canonname, sizeof(hostname));
+                break;
+            }
+        }
+    }
+    else
+    {
+        strcpy(hostname, "Unknown_Host_Name");
+    }
+    freeaddrinfo(info);
+#endif
+    return std::string(hostname);
+}
+
+std::string GetClusterName() noexcept
+{
+    std::string fqdn = GetFQDN();
+    if (fqdn.rfind("login", 0) == 0)
+    {
+        fqdn.erase(0, fqdn.find('.') + 1);
+    }
+    if (fqdn.rfind("batch", 0) == 0)
+    {
+        fqdn.erase(0, fqdn.find('.') + 1);
+    }
+    return fqdn.substr(0, fqdn.find('.'));
 }
 
 void HandshakeWriter(Comm const &comm, size_t &appID,

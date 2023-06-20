@@ -36,6 +36,19 @@ class Comm;
  */
 std::vector<std::string> AvailableIpAddresses() noexcept;
 
+/**
+ * returns the (a) fully qualified domain name of the current machine.
+ * the result is "Unknown_Host_Name" if fqdn is not found
+ */
+std::string GetFQDN() noexcept;
+
+/**
+ * returns a hostname from an FQDN but not the login* or batch* name,
+ * instead the second part from such names
+ * e.g. (login01.summit.ornl.gov -> summit)
+ */
+std::string GetClusterName() noexcept;
+
 void HandshakeWriter(Comm const &comm, size_t &appID,
                      std::vector<std::string> &fullAddresses,
                      const std::string &name, const std::string &engineName,
