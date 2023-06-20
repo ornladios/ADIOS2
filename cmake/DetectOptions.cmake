@@ -525,6 +525,16 @@ if(AWSSDK_FOUND)
     set(ADIOS2_HAVE_AWSSDK TRUE)
 endif()
 
+# sqlite3
+if(ADIOS2_USE_SQLite3 STREQUAL AUTO)
+    find_package(SQLite3)
+elseif(ADIOS2_USE_SQLite3)
+    find_package(SQLite3 REQUIRED)
+endif()
+if(SQLite3_FOUND)
+    set(ADIOS2_HAVE_SQLite3 TRUE)
+endif()
+
 # Multithreading
 find_package(Threads REQUIRED)
 
