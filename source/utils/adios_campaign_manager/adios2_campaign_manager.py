@@ -3,15 +3,19 @@
 import argparse
 import glob
 import json
-import zipfile
+import sqlite3
+import zlib
 from io import StringIO
-from os import getcwd, remove
+from os import getcwd, remove, stat
 from os.path import basename, exists, isdir
 from re import sub
 from socket import getfqdn
 from subprocess import check_call
+from time import time
 
 # from adios2.adios2_campaign_manager import *
+
+ADIOS_ACM_VERSION = "1.0"
 
 
 def SetupArgs():
@@ -59,25 +63,6 @@ def CheckLocalCampaignDir(args):
         exit(1)
 
 
-def DeleteFileFromArchive(args: dict, filename: str, campaignArchive: list):
-    cmd = ['zip', '-d', args.CampaignFileName] + [filename]
-    check_call(cmd)
-    # reload the modified archive
-    campaignArchive[0] = zipfile.ZipFile(args.CampaignFileName, mode="a",
-                                         compression=zipfile.ZIP_DEFLATED, allowZip64=True)
-
-
-def AddJsonToArchive(args: dict, jsondict: dict, campaignArchive: list, content: list):
-    filename = "campaign.json"
-    print(f"Add {filename} to archive: {campaignArchive[0].filename}")
-    if (filename in content):
-        print(f"Found existing {filename} in archive")
-        DeleteFileFromArchive(args, filename, campaignArchive)
-
-    jsonStr = json.dumps(jsondict)
-    campaignArchive[0].writestr(filename, jsonStr)
-
-
 def IsADIOSDataset(dataset):
     if not isdir(dataset):
         return False
@@ -88,35 +73,84 @@ def IsADIOSDataset(dataset):
     return True
 
 
-def AddFileToArchiveIfItExists(args: dict, filename: str, campaignArchive: list):
-    if (exists(filename)):
-        campaignArchive[0].write(filename)
+def compressFile(f):
+    compObj = zlib.compressobj()
+    compressed = bytearray()
+    blocksize = 1073741824  # 1GB #1024*1048576
+    len_orig = 0
+    len_compressed = 0
+    block = f.read(blocksize)
+    while block:
+        len_orig += len(block)
+        cBlock = compObj.compress(block)
+        compressed += cBlock
+        len_compressed += len(cBlock)
+        block = f.read(blocksize)
+    cBlock = compObj.flush()
+    compressed += cBlock
+    len_compressed += len(cBlock)
+
+    return compressed, len_orig, len_compressed
 
 
-def AddDatasetToArchive(args: dict, dataset: str, campaignArchive: list):
+def decompressBuffer(buf: bytearray):
+    data = zlib.decompress(buf)
+    return data
+
+
+def AddFileToArchive(args: dict, filename: str, cur: sqlite3.Cursor, dsID: int):
+    compressed = 1
+    try:
+        f = open(filename, 'rb')
+        compressed_data, len_orig, len_compressed = compressFile(f)
+
+    except IOError:
+        print(f"ERROR While reading file {filename}")
+        return
+
+    statres = stat(filename)
+    ct = statres.st_ctime_ns
+
+    cur.execute('insert into bpfile values (?, ?, ?, ?, ?, ?, ?)',
+                (dsID, filename, compressed, len_orig, len_compressed, ct, compressed_data))
+    con.commit()
+
+    # test
+    # if (filename == "dataAll.bp/md.0"):
+    #    data = decompressBuffer(compressed_data)
+    #    of = open("dataAll.bp-md.0", "wb")
+    #    of.write(data)
+    #    of.close()
+
+
+def AddDatasetToArchive(args: dict, dataset: str, cur: sqlite3.Cursor, hostID: int, dirID: int):
     if (IsADIOSDataset(dataset)):
         print(f"Add dataset {dataset} to archive")
+        statres = stat(dataset)
+        ct = statres.st_ctime_ns
+        curDS = cur.execute('insert into bpdataset values (?, ?, ?, ?)',
+                            (hostID, dirID, dataset, ct))
+
+        dsID = curDS.lastrowid
         mdFileList = glob.glob(dataset + '/*md.*')
-        for f in mdFileList:
-            if (exists(f)):
-                campaignArchive[0].write(f)
+        profileList = glob.glob(dataset + '/profiling.json')
+        files = mdFileList+profileList
+        for f in files:
+            AddFileToArchive(args, f, cur, dsID)
     else:
-        print(f"Dataset {dataset} is not an ADIOS dataset. Skip")
+        print(f"WARNING: Dataset {dataset} is not an ADIOS dataset. Skip")
 
 
-def ProcessJsonFile(args, jsonlist, campaignArchive):
-    #    with open(jsonfile) as f:
-    #        d = json.load(f)
-    #print(f"Process {jsondata}:")
-    #d = json.load(jsonIO.getvalue())
+def ProcessJsonFile(args: dict, jsonlist: list, cur: sqlite3.Cursor, hostID: int, dirID: int):
     for entry in jsonlist:
         print(f"Process entry {entry}:")
         if isinstance(entry, dict):
             if "name" in entry:
-                AddDatasetToArchive(args, entry['name'], campaignArchive)
+                AddDatasetToArchive(
+                    args, entry['name'], cur, hostID, dirID)
 
         else:
-            print("your object is not a dictionary")
+            print(f"WARNING: your object is not a dictionary, skip : {entry}")
 
 
 def MergeJsonFiles(jsonfiles: list):
@@ -161,46 +195,51 @@ if __name__ == "__main__":
 
     if (args.command == "create"):
         print("Create archive")
-        mode = 'x'
         if exists(args.CampaignFileName):
             print(f"ERROR: archive {args.CampaignFileName} already exist")
             exit(1)
     elif (args.command == "update"):
-        print("Update archive is not implemented yet")
-        exit(2)
-        mode = 'a'
+        print("Update archive")
         if not exists(args.CampaignFileName):
             print(f"ERROR: archive {args.CampaignFileName} does not exist")
             exit(1)
 
-    campaignArchive = zipfile.ZipFile(args.CampaignFileName, mode=mode,
-                                      compression=zipfile.ZIP_DEFLATED, allowZip64=True)
-    content = campaignArchive.namelist()
+    con = sqlite3.connect(args.CampaignFileName)
+    cur = con.cursor()
+    if (args.command == "create"):
+        epoch = int(time())
+        cur.execute(
+            "create table info(id TEXT, name TEXT, version TEXT, ctime INT)")
+        cur.execute('insert into info values (?, ?, ?, ?)',
+                    ("ACM", "ADIOS Campaign Archive", ADIOS_ACM_VERSION, epoch))
+        cur.execute("create table host" +
+                    "(hostname TEXT PRIMARY KEY, longhostname TEXT)")
+        cur.execute("create table directory" +
+                    "(hostid INT, name TEXT, PRIMARY KEY (hostid, name))")
+        cur.execute("create table bpdataset" +
+                    "(hostid INT, dirid INT, name TEXT, ctime INT" +
+                    ", PRIMARY KEY (hostid, dirid, name))")
+        cur.execute("create table bpfile" +
+                    "(bpdatasetid INT, name TEXT, compression INT, lenorig INT" +
+                    ", lencompressed INT, ctime INT, data BLOB" +
+                    ", PRIMARY KEY (bpdatasetid, name))")
 
     longHostName, shortHostName = GetHostName()
+    rootdir = getcwd()
+    curHost = cur.execute('insert into host values (?, ?)',
+                          (shortHostName, longHostName))
+    hostID = curHost.lastrowid
 
-    # Pass archive in a list in case it has to be reopened (after delete)
-    clist = [campaignArchive]
-    print(f"Archive list: {content}")
+    curDir = cur.execute('insert into directory values (?, ?)',
+                         (hostID, rootdir))
+    dirID = curDir.lastrowid
+    con.commit()
+
     jsonlist = MergeJsonFiles(jsonFileList)
-    jsondict = {
-        "id": "ACM",
-        "name": "ADIOS Campaign Archive",
-        "version": "1.0",
-        "stores": [
-            {
-              "hostname": shortHostName,
-              "longhostname": longHostName,
-              "rootdir": getcwd(),
-              "files": jsonlist
-            }
-        ]}
 
-    print(f"Merged json = {jsondict}")
-    AddJsonToArchive(args, jsondict, clist, content)
-    ProcessJsonFile(args, jsonlist, clist)
-#    for jsonfile in jsonFileList:
-#        AddJsonToArchive(args, jsonfile, clist, content)
-#        ProcessJsonFile(args, jsonfile, clist)
+    print(f"Merged json = {jsonlist}")
+    ProcessJsonFile(args, jsonlist, cur, hostID, dirID)
 
-    campaignArchive.close()
+    con.commit()
+    cur.close()
+    con.close()
