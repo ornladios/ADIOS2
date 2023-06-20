@@ -18,6 +18,8 @@
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosFunctions.h"
 
+#include <sqlite3.h>
+
 namespace adios2
 {
 namespace core
@@ -105,7 +107,7 @@ private:
      * Called if destructor is called on an open engine.  Should warn or take
      * any non-complex measure that might help recover.
      */
-    void DestructorClose(bool Verbose) noexcept final{};
+    void DestructorClose(bool Verbose) noexcept final;
 
     /**
      * Create a new variable with name `name` in `io`
@@ -122,6 +124,8 @@ private:
     template <class T>
     std::pair<Variable<T> *, Engine *>
     TranslateToActualVariable(Variable<T> &variable);
+
+    sqlite3 *m_DB;
 };
 
 } // end namespace engine
