@@ -10,7 +10,7 @@
  * some existing outputs get appended to (at some specific step) and some
  * other new outputs are created.
  *
- * Campaign management handles BP3/BP4/BP5 and HDF5 outputs
+ * Campaign management handles BP4/BP5  outputs
  *
  * Outputs:
  *   dataAll.bp:      written by every process
@@ -166,7 +166,7 @@ int main(int argc, char *argv[])
             ioLastRank.SetEngine("BP5");
         }
         ioStep = adiosAll.DeclareIO("OutputStep");
-        ioStep.SetEngine("BP3");
+        ioStep.SetEngine("BP4");
 
         ioNew = adiosAll.DeclareIO("OutputNew");
 #ifdef ADIOS2_USE_HDF5
