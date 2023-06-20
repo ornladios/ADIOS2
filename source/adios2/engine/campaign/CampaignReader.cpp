@@ -45,7 +45,7 @@ CampaignReader::~CampaignReader()
     /* CampaignReader destructor does close and finalize */
     if (m_Verbosity == 5)
     {
-        std::cout << "Campaign Reader " << m_ReaderRank << " deconstructor on "
+        std::cout << "Campaign Reader " << m_ReaderRank << " destructor on "
                   << m_Name << "\n";
     }
     if (m_IsOpen)
@@ -147,6 +147,16 @@ void CampaignReader::InitParameters()
 
 void CampaignReader::InitTransports()
 {
+    int rc = sqlite3_open(m_Name.c_str(), &m_DB);
+    if (rc)
+    {
+        std::string dbmsg(sqlite3_errmsg(m_DB));
+        sqlite3_close(m_DB);
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "Open",
+                                             "Cannot open database" + m_Name +
+                                                 ": " + dbmsg);
+    }
+
     std::string cs = m_Comm.BroadcastFile(m_Name, "broadcast campaign file");
     nlohmann::json js = nlohmann::json::parse(cs);
     std::cout << "JSON rank " << m_ReaderRank << ": " << js.size() << std::endl;
@@ -204,6 +214,13 @@ void CampaignReader::DoClose(const int transportIndex)
     {
         ep->Close();
     }
+    sqlite3_close(m_DB);
+    m_IsOpen = false;
+}
+
+void CampaignReader::DestructorClose(bool Verbose) noexcept
+{
+    sqlite3_close(m_DB);
 }
 
 // Remove the engine name from the var name, which must be of pattern
