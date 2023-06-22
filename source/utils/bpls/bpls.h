@@ -14,6 +14,8 @@
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h"
 
+#include "adios2/core/adios2_libinfo.h"
+
 #include <map>
 
 namespace adios2
