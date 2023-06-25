@@ -140,7 +140,7 @@ static const char *aaf[] = {
 #ifdef ADIOS2_HAVE_KOKKOS_SYCL
     ", SYCL"
 #endif
-    ")"
+    ")",
 #endif // ADIOS2_HAVE_KOKKOS
 
 #ifdef ADIOS2_HAVE_CUDA
