@@ -57,7 +57,7 @@ static const char *aae[] = {"BP3",
                             "Skeleton",
                             nullptr};
 
-void adios2_available_engines(int *nentries, char const ***list)
+void adios2_available_engines(int *nentries, char const *const **list)
 {
     int ne = 0;
     while (aae[ne] != nullptr)
@@ -99,7 +99,7 @@ static const char *aao[] = {
     "None",
     nullptr};
 
-void adios2_available_operators(int *nentries, char const ***list)
+void adios2_available_operators(int *nentries, char const *const **list)
 {
     int no = 0;
     while (aao[no] != nullptr)
@@ -148,7 +148,7 @@ static const char *aaf[] = {
 #endif
     nullptr};
 
-void adios2_available_features(int *nentries, char const ***list)
+void adios2_available_features(int *nentries, char const *const **list)
 {
     int nf = 0;
     while (aaf[nf] != nullptr)
@@ -157,8 +157,6 @@ void adios2_available_features(int *nentries, char const ***list)
     *list = aaf;
     return;
 }
-
-void adios2_free_list(int nentries, char const ***list) {}
 
 #ifdef __cplusplus
 } // end extern C

@@ -248,7 +248,7 @@ void print_bpls_version()
         printf("Target Arch:   %s\n", ADIOS_INFO_ARCH);
 
         int nengines;
-        char const **list_engines;
+        char const *const *list_engines;
         adios2_available_engines(&nengines, &list_engines);
         printf("Available engines = %d:", nengines);
         for (int i = 0; i < nengines; ++i)
@@ -260,10 +260,9 @@ void print_bpls_version()
             }
         }
         printf("\n");
-        adios2_free_list(nengines, &list_engines);
 
         int noperators;
-        char const **list_operators;
+        char const *const *list_operators;
         adios2_available_operators(&noperators, &list_operators);
         printf("Available operators = %d:", noperators);
         for (int i = 0; i < noperators; ++i)
@@ -275,10 +274,9 @@ void print_bpls_version()
             }
         }
         printf("\n");
-        adios2_free_list(noperators, &list_operators);
 
         int nfeatures;
-        char const **list_features;
+        char const *const *list_features;
         adios2_available_features(&nfeatures, &list_features);
         printf("Available features = %d:", nfeatures);
         for (int i = 0; i < nfeatures; ++i)
@@ -290,7 +288,6 @@ void print_bpls_version()
             }
         }
         printf("\n");
-        adios2_free_list(nfeatures, &list_features);
     }
 }
 
