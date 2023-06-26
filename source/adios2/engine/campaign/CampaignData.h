@@ -3,7 +3,7 @@
  * accompanying file Copyright.txt for details.
  *
  * CampaignData.h
- * Campaign data struct
+ * Campaign data from database
  *
  *  Created on: May 16, 2023
  *      Author: Norbert Podhorszki pnorbert@ornl.gov
@@ -16,6 +16,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <sqlite3.h>
+
 namespace adios2
 {
 namespace core
@@ -23,25 +25,38 @@ namespace core
 namespace engine
 {
 
-struct CampaignRecord
+struct CampaignHost
 {
-    std::vector<size_t> steps;
-    size_t delta_step;
-    std::vector<double> times;
-    double delta_time;
-    bool varying_deltas;
-
-    CampaignRecord() : delta_step(0), delta_time(0.0), varying_deltas(false){};
-
-    CampaignRecord(size_t step, double time)
-    : delta_step(0), delta_time(0.0), varying_deltas(false)
-    {
-        steps.push_back(step);
-        times.push_back(time);
-    };
+    std::string hostname;
+    std::string longhostname;
+    std::vector<std::string> directory;
 };
 
-using CampaignMap = std::unordered_map<std::string, CampaignRecord>;
+struct CampaignBPFile
+{
+    std::string name;
+    size_t bpDatasetIdx;
+    bool compressed;
+    size_t lengthOriginal;
+    size_t lengthCompressed;
+};
+
+struct CampaignBPDataset
+{
+    std::string name;
+    size_t hostIdx;
+    size_t dirIdx;
+    std::vector<CampaignBPFile> files;
+};
+
+struct CampaignData
+{
+    std::string version;
+    std::vector<CampaignHost> hosts;
+    std::vector<CampaignBPDataset> bpdatasets;
+};
+
+void ReadCampaignData(sqlite3 *db, CampaignData &cd);
 
 } // end namespace engine
 } // end namespace core

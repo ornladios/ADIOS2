@@ -168,7 +168,10 @@ if (ADIOS2_HAVE_SST)
 endif()
    
 if(ADIOS2_HAVE_SQLite3)
-  target_sources(adios2_core PRIVATE engine/campaign/CampaignReader.cpp engine/campaign/CampaignReader.tcc)
+  target_sources(adios2_core PRIVATE 
+          engine/campaign/CampaignReader.cpp 
+          engine/campaign/CampaignReader.tcc 
+          engine/campaign/CampaignData.cpp)
   target_link_libraries(adios2_core PRIVATE SQLite::SQLite3)
 endif()
 

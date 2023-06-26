@@ -12,6 +12,7 @@
 #ifndef ADIOS2_ENGINE_CAMPAIGNREADER_H_
 #define ADIOS2_ENGINE_CAMPAIGNREADER_H_
 
+#include "CampaignData.h"
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/Engine.h"
@@ -127,6 +128,7 @@ private:
     TranslateToActualVariable(Variable<T> &variable);
 
     sqlite3 *m_DB;
+    CampaignData m_CampaignData;
 };
 
 } // end namespace engine

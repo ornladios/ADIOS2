@@ -156,17 +156,6 @@ void CampaignReader::InitParameters()
     // std::cout << "My Hostname is " << m_Hostname << std::endl;
 }
 
-static int sqlcb_host(void *NotUsed, int argc, char **argv, char **azColName)
-{
-    for (int i = 0; i < argc; i++)
-    {
-        std::cout << azColName[i] << " = " << (argv[i] ? argv[i] : "NULL")
-                  << std::endl;
-    }
-    std::cout << std::endl;
-    return 0;
-};
-
 void CampaignReader::InitTransports()
 {
     int rc;
@@ -182,45 +171,72 @@ void CampaignReader::InitTransports()
                                                  ": " + dbmsg);
     }
 
-    std::string sqlcmd = "SELECT hostname, longhostname FROM host";
-    rc = sqlite3_exec(m_DB, sqlcmd.c_str(), sqlcb_host, 0, &zErrMsg);
-    if (rc != SQLITE_OK)
+    ReadCampaignData(m_DB, m_CampaignData);
+
+    std::cout << "Local hostname = " << m_Hostname << "\n";
+    std::cout << "Database result:\n  version = " << m_CampaignData.version
+              << "\n  hosts:\n";
+
+    for (size_t hostidx = 0; hostidx < m_CampaignData.hosts.size(); ++hostidx)
     {
-        std::cout << "SQL error: " << zErrMsg << std::endl;
-        sqlite3_free(zErrMsg);
+        CampaignHost &h = m_CampaignData.hosts[hostidx];
+        std::cout << "    host =" << h.hostname
+                  << "  long name = " << h.longhostname << "  directories: \n";
+        for (size_t diridx = 0; diridx < h.directory.size(); ++diridx)
+        {
+            std::cout << "      dir = " << h.directory[diridx] << "\n";
+        }
+    }
+    std::cout << "  datasets:\n";
+    for (auto &ds : m_CampaignData.bpdatasets)
+    {
+        std::cout << "    " << m_CampaignData.hosts[ds.hostIdx].hostname << ":"
+                  << m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx]
+                  << PathSeparator << ds.name << "\n";
+        for (auto &bpf : ds.files)
+        {
+            std::cout << "      file: " << bpf.name << "\n";
+        }
     }
 
-    std::string cs = m_Comm.BroadcastFile(m_Name, "broadcast campaign file");
-    nlohmann::json js = nlohmann::json::parse(cs);
-    std::cout << "JSON rank " << m_ReaderRank << ": " << js.size() << std::endl;
+    // std::string cs = m_Comm.BroadcastFile(m_Name, "broadcast campaign file");
+    // nlohmann::json js = nlohmann::json::parse(cs);
+    // std::cout << "JSON rank " << m_ReaderRank << ": " << js.size() <<
+    // std::endl;
     int i = 0;
-    for (auto &jf : js)
+    for (auto &ds : m_CampaignData.bpdatasets)
     {
-        std::cout << jf << std::endl;
-        adios2::core::IO &io =
-            m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(i));
-        adios2::core::Engine &e =
-            io.Open(jf["name"], m_OpenMode, m_Comm.Duplicate());
-
-        m_IOs.push_back(&io);
-        m_Engines.push_back(&e);
-
-        auto vmap = io.GetAvailableVariables();
-        auto amap = io.GetAvailableAttributes();
-        VarInternalInfo internalInfo(nullptr, m_IOs.size() - 1,
-                                     m_Engines.size() - 1);
-
-        for (auto &vr : vmap)
+        if (m_CampaignData.hosts[ds.hostIdx].hostname == m_Hostname)
         {
-            auto vname = vr.first;
-            std::string fname = jf["name"];
-            std::string newname = fname + "/" + vname;
+            std::string localPath =
+                m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] +
+                PathSeparator + ds.name;
+            std::cout << "Open local file " << localPath << "\n";
 
-            const DataType type = io.InquireVariableType(vname);
+            adios2::core::IO &io =
+                m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(i));
+            adios2::core::Engine &e =
+                io.Open(localPath, m_OpenMode, m_Comm.Duplicate());
 
-            if (type == DataType::Struct)
+            m_IOs.push_back(&io);
+            m_Engines.push_back(&e);
+
+            auto vmap = io.GetAvailableVariables();
+            auto amap = io.GetAvailableAttributes();
+            VarInternalInfo internalInfo(nullptr, m_IOs.size() - 1,
+                                         m_Engines.size() - 1);
+
+            for (auto &vr : vmap)
             {
-            }
+                auto vname = vr.first;
+                std::string fname = ds.name;
+                std::string newname = fname + "/" + vname;
+
+                const DataType type = io.InquireVariableType(vname);
+
+                if (type == DataType::Struct)
+                {
+                }
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
@@ -228,10 +244,18 @@ void CampaignReader::InitTransports()
         Variable<T> v = DuplicateVariable(vi, m_IO, newname, internalInfo);    \
     }
 
-            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+                ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
+            }
         }
-
+        else
+        {
+            std::string remotePath =
+                m_CampaignData.hosts[ds.hostIdx].hostname + ":" +
+                m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] +
+                PathSeparator + ds.name;
+            std::cout << "Cannot yet Open remote file " << remotePath << "\n";
+        }
         ++i;
     }
 }

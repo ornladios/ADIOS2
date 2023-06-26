@@ -25,7 +25,7 @@ namespace core
 namespace engine
 {
 
-static std::string CMapToJson(const CampaignMap &cmap, const int rank,
+static std::string CMapToJson(const CampaignRecordMap &cmap, const int rank,
                               const std::string name)
 {
     nlohmann::json j = nlohmann::json::array();

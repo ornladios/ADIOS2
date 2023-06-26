@@ -6,7 +6,7 @@ import json
 import sqlite3
 import zlib
 from io import StringIO
-from os import getcwd, remove, stat
+from os import chdir, getcwd, remove, stat
 from os.path import basename, exists, isdir
 from re import sub
 from socket import getfqdn
@@ -132,11 +132,14 @@ def AddDatasetToArchive(args: dict, dataset: str, cur: sqlite3.Cursor, hostID: i
                             (hostID, dirID, dataset, ct))
 
         dsID = curDS.lastrowid
-        mdFileList = glob.glob(dataset + '/*md.*')
-        profileList = glob.glob(dataset + '/profiling.json')
+        cwd = getcwd()
+        chdir(dataset)
+        mdFileList = glob.glob('*md.*')
+        profileList = glob.glob('profiling.json')
         files = mdFileList+profileList
         for f in files:
             AddFileToArchive(args, f, cur, dsID)
+        chdir(cwd)
     else:
         print(f"WARNING: Dataset {dataset} is not an ADIOS dataset. Skip")
 
