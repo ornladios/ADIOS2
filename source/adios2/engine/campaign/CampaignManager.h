@@ -15,7 +15,7 @@
 #ifndef ADIOS2_ENGINE_CAMPAIGNMANAGER_H_
 #define ADIOS2_ENGINE_CAMPAIGNMANAGER_H_
 
-#include "CampaignData.h"
+#include "CampaignRecord.h"
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/helper/adiosComm.h"
 
@@ -45,7 +45,7 @@ private:
     std::string m_Name;
     int m_WriterRank;
     int m_Verbosity = 5;
-    CampaignMap cmap;
+    CampaignRecordMap cmap;
     std::ofstream m_Output;
     const std::string m_CampaignDir = "adios-campaign";
 };
