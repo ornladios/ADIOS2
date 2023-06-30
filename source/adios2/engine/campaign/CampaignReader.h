@@ -54,9 +54,10 @@ public:
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
 
 private:
-    int m_Verbosity = 0;    // runtime parameter Verbose
-    std::string m_Hostname; // runtime parameter Hostname
-    int m_ReaderRank;       // my rank in the readers' comm
+    int m_Verbosity = 0;              // runtime parameter Verbose
+    std::string m_Hostname;           // runtime parameter Hostname
+    std::string m_CachePath = "/tmp"; // runtime parameter CachePath
+    int m_ReaderRank;                 // my rank in the readers' comm
 
     int m_CurrentStep = 0;
     bool m_FirstStep = true;

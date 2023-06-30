@@ -13,6 +13,7 @@
 
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
 #include "adios2/helper/adiosNetwork.h"   // GetFQDN
+#include "adios2/helper/adiosSystem.h"    // CreateDirectory
 #include <adios2-perfstubs-interface.h>
 
 #include <fstream>
@@ -147,6 +148,10 @@ void CampaignReader::InitParameters()
         {
             m_Hostname = pair.second;
         }
+        if (key == "cachepath")
+        {
+            m_CachePath = pair.second;
+        }
     }
 
     if (m_Hostname.empty())
@@ -206,37 +211,56 @@ void CampaignReader::InitTransports()
     int i = 0;
     for (auto &ds : m_CampaignData.bpdatasets)
     {
-        if (m_CampaignData.hosts[ds.hostIdx].hostname == m_Hostname)
+        std::string localPath;
+        if (m_CampaignData.hosts[ds.hostIdx].hostname != m_Hostname)
         {
-            std::string localPath =
+            std::string remotePath =
+                m_CampaignData.hosts[ds.hostIdx].hostname + ":" +
                 m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] +
                 PathSeparator + ds.name;
-            std::cout << "Open local file " << localPath << "\n";
-
-            adios2::core::IO &io =
-                m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(i));
-            adios2::core::Engine &e =
-                io.Open(localPath, m_OpenMode, m_Comm.Duplicate());
-
-            m_IOs.push_back(&io);
-            m_Engines.push_back(&e);
-
-            auto vmap = io.GetAvailableVariables();
-            auto amap = io.GetAvailableAttributes();
-            VarInternalInfo internalInfo(nullptr, m_IOs.size() - 1,
-                                         m_Engines.size() - 1);
-
-            for (auto &vr : vmap)
+            std::cout << "Open remote file " << remotePath << "\n";
+            localPath = m_CachePath + PathSeparator +
+                        m_CampaignData.hosts[ds.hostIdx].hostname +
+                        PathSeparator + ds.name;
+            helper::CreateDirectory(localPath);
+            for (auto &bpf : ds.files)
             {
-                auto vname = vr.first;
-                std::string fname = ds.name;
-                std::string newname = fname + "/" + vname;
+                std::cout << "     save file " << remotePath << "/" << bpf.name
+                          << " to " << localPath << "/" << bpf.name << "\n";
+                SaveToFile(m_DB, localPath + PathSeparator + bpf.name, bpf);
+            }
+        }
+        else
+        {
+            localPath = m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] +
+                        PathSeparator + ds.name;
+            std::cout << "Open local file " << localPath << "\n";
+        }
 
-                const DataType type = io.InquireVariableType(vname);
+        adios2::core::IO &io =
+            m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(i));
+        adios2::core::Engine &e =
+            io.Open(localPath, m_OpenMode, m_Comm.Duplicate());
 
-                if (type == DataType::Struct)
-                {
-                }
+        m_IOs.push_back(&io);
+        m_Engines.push_back(&e);
+
+        auto vmap = io.GetAvailableVariables();
+        auto amap = io.GetAvailableAttributes();
+        VarInternalInfo internalInfo(nullptr, m_IOs.size() - 1,
+                                     m_Engines.size() - 1);
+
+        for (auto &vr : vmap)
+        {
+            auto vname = vr.first;
+            std::string fname = ds.name;
+            std::string newname = fname + "/" + vname;
+
+            const DataType type = io.InquireVariableType(vname);
+
+            if (type == DataType::Struct)
+            {
+            }
 #define declare_type(T)                                                        \
     else if (type == helper::GetDataType<T>())                                 \
     {                                                                          \
@@ -244,17 +268,8 @@ void CampaignReader::InitTransports()
         Variable<T> v = DuplicateVariable(vi, m_IO, newname, internalInfo);    \
     }
 
-                ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-            }
-        }
-        else
-        {
-            std::string remotePath =
-                m_CampaignData.hosts[ds.hostIdx].hostname + ":" +
-                m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] +
-                PathSeparator + ds.name;
-            std::cout << "Cannot yet Open remote file " << remotePath << "\n";
         }
         ++i;
     }
