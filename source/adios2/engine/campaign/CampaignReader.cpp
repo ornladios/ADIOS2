@@ -225,8 +225,9 @@ void CampaignReader::InitTransports()
             helper::CreateDirectory(localPath);
             for (auto &bpf : ds.files)
             {
-                std::cout << "     save file " << remotePath << "/" << bpf.name
-                          << " to " << localPath << "/" << bpf.name << "\n";
+                /*std::cout << "     save file " << remotePath << "/" <<
+                   bpf.name
+                          << " to " << localPath << "/" << bpf.name << "\n";*/
                 SaveToFile(m_DB, localPath + PathSeparator + bpf.name, bpf);
             }
         }
