@@ -12,6 +12,8 @@
 #ifndef ADIOS2_ENGINE_CAMPAIGNDATA_H_
 #define ADIOS2_ENGINE_CAMPAIGNDATA_H_
 
+#include <fstream>
+#include <iostream>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -57,6 +59,9 @@ struct CampaignData
 };
 
 void ReadCampaignData(sqlite3 *db, CampaignData &cd);
+
+void SaveToFile(sqlite3 *db, const std::string &path,
+                const CampaignBPFile &bpfile);
 
 } // end namespace engine
 } // end namespace core
