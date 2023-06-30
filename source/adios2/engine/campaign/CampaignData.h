@@ -41,6 +41,7 @@ struct CampaignBPFile
     bool compressed;
     size_t lengthOriginal;
     size_t lengthCompressed;
+    long ctime;
 };
 
 struct CampaignBPDataset
