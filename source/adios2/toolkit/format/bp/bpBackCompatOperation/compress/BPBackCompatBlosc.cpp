@@ -142,8 +142,8 @@ size_t BPBackCompatBlosc::DecompressChunkedFormat(const void *bufferIn,
             uint8_t *out_ptr = outputBuff + currentOutputSize;
 
             size_t outputChunkSize =
-                std::min(uncompressedSize - currentOutputSize,
-                         static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
+                std::min<size_t>(uncompressedSize - currentOutputSize,
+                                 static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
             bloscSize_t max_output_size =
                 static_cast<bloscSize_t>(outputChunkSize);
 

@@ -181,8 +181,8 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
         for (; inputOffset < sizeIn; ++chunk)
         {
             size_t inputChunkSize =
-                std::min(sizeIn - inputOffset,
-                         static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
+                std::min<size_t>(sizeIn - inputOffset,
+                                 static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
             bloscSize_t maxIntputSize =
                 static_cast<bloscSize_t>(inputChunkSize);
 
@@ -375,8 +375,8 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
             char *out_ptr = dataOut + currentOutputSize;
 
             size_t outputChunkSize =
-                std::min(uncompressedSize - currentOutputSize,
-                         static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
+                std::min<size_t>(uncompressedSize - currentOutputSize,
+                                 static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
             bloscSize_t max_output_size =
                 static_cast<bloscSize_t>(outputChunkSize);
 
