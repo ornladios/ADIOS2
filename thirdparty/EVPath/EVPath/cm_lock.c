@@ -5,6 +5,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include "config.h"
 
 #include "ffs.h"
 
@@ -12,7 +13,6 @@
 #include "evpath.h"
 #include "chr_time.h"
 #include "cm_internal.h"
-#include "config.h"
 #undef NDEBUG
 #include "assert.h"
 

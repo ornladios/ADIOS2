@@ -88,7 +88,7 @@ void BP5Writer::AsyncWriteOwnData(AsyncWriteInfo *info,
     size_t wrote = 0;
     size_t block = 0;
     size_t temp_offset = 0;
-    size_t max_size = std::max(1024 * 1024UL, totalsize / 100UL);
+    size_t max_size = std::max((size_t)1024 * 1024UL, totalsize / 100UL);
 
     bool firstWrite = seekOnFirstWrite;
     while (block < nBlocks)

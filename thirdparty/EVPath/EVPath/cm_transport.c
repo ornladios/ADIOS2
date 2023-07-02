@@ -10,13 +10,13 @@
 #include <atl.h>
 #include <evpath.h>
 #include "chr_time.h"
-#include <cm_internal.h>
-#include <cm_transport.h>
 #if !NO_DYNAMIC_LINKING
 #include "dlloader.h"
 #endif
 #undef NDEBUG
 #include "assert.h"
+#include <cm_internal.h>
+#include <cm_transport.h>
 
 extern struct CMtrans_services_s CMstatic_trans_svcs;
 /* const lt_dlsymlist lt_preloaded_symbols[1] = { { 0, 0 } }; */

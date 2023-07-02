@@ -617,7 +617,6 @@ print REVP<<EOF;
 #include "atl.h"
 #include "evpath.h"
 #include "stdio.h"
-#include "cm_internal.h"
 #ifdef LT_LIBPREFIX
 #include "ltdl.h"
 #else
@@ -643,6 +642,7 @@ extern const char* dlerror(void);
 #include "stdio.h"
 #include "string.h"
 #include "stdlib.h"
+#include "cm_internal.h"
 #ifdef	__cplusplus
 extern "C" \{
 #endif

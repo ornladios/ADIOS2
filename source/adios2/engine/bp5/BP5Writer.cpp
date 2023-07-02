@@ -160,6 +160,7 @@ void BP5Writer::WriteMetaMetadata(
         m_FileMetaMetadataManager.WriteFiles((char *)b.MetaMetaInfo,
                                              b.MetaMetaInfoLen);
     }
+    m_FileMetaMetadataManager.FlushFiles();
 }
 
 uint64_t
@@ -205,6 +206,8 @@ BP5Writer::WriteMetadata(const std::vector<core::iovec> &MetaDataBlocks,
         m_FileMetadataManager.WriteFiles((char *)b.iov_base, b.iov_len);
         MetaDataSize += b.iov_len;
     }
+
+    m_FileMetadataManager.FlushFiles();
 
     m_MetaDataPos += MetaDataSize;
     return MetaDataSize;
@@ -272,6 +275,7 @@ void BP5Writer::WriteData(format::BufferV *Data)
                     std::to_string(m_Parameters.AggregationType) +
                     "is not supported in BP5");
         }
+        m_FileDataManager.FlushFiles();
         delete Data;
     }
 }
@@ -337,8 +341,6 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data,
 void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
                                        uint64_t MetaDataSize)
 {
-    m_FileMetadataManager.FlushFiles();
-
     // bufsize: Step record
     size_t bufsize =
         1 + (4 + ((FlushPosSizeInfo.size() * 2) + 1) * m_Comm.Size()) *
@@ -407,7 +409,6 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
     }
 
     m_FileMetadataIndexManager.WriteFiles((char *)buf.data(), buf.size());
-
 #ifdef DUMPDATALOCINFO
     std::cout << "Flush count is :" << FlushPosSizeInfo.size() << std::endl;
     std::cout << "Write Index positions = {" << std::endl;
@@ -427,6 +428,8 @@ void BP5Writer::WriteMetadataFileIndex(uint64_t MetaDataPos,
     }
     std::cout << "}" << std::endl;
 #endif
+    m_FileMetadataIndexManager.FlushFiles();
+
     /* reset for next timestep */
     FlushPosSizeInfo.clear();
 }
@@ -472,7 +475,7 @@ void BP5Writer::MarshalAttributes()
 
         if (!attributePair.second->m_IsSingleValue)
         {
-            element_count = (*baseAttr)->m_Elements;
+            element_count = (int)(*baseAttr)->m_Elements;
         }
 
         if (type == DataType::None)
@@ -511,7 +514,7 @@ void BP5Writer::MarshalAttributes()
         void *data_addr = &attribute.m_DataSingleValue;                        \
         if (!attribute.m_IsSingleValue)                                        \
         {                                                                      \
-            element_count = attribute.m_Elements;                              \
+            element_count = (int)attribute.m_Elements;                         \
             data_addr = attribute.m_DataArray.data();                          \
         }                                                                      \
         m_BP5Serializer.MarshalAttribute(attribute.m_Name.c_str(), type,       \
@@ -536,7 +539,7 @@ void BP5Writer::EndStep()
 
     // true: advances step
     auto TSInfo = m_BP5Serializer.CloseTimestep(
-        m_WriterStep, m_Parameters.AsyncWrite || m_Parameters.DirectIO);
+        (int)m_WriterStep, m_Parameters.AsyncWrite || m_Parameters.DirectIO);
 
     /* TSInfo includes NewMetaMetaBlocks, the MetaEncodeBuffer, the
      * AttributeEncodeBuffer and the data encode Vector */
@@ -684,6 +687,10 @@ void BP5Writer::EndStep()
             m_AsyncWriteLock.unlock();
         }
     }
+    m_FileMetadataIndexManager.FlushFiles();
+    m_FileMetadataManager.FlushFiles();
+    m_FileMetaMetadataManager.FlushFiles();
+    m_FileDataManager.FlushFiles();
 
     m_Profiler.Stop("endstep");
     m_WriterStep++;
@@ -752,7 +759,8 @@ void BP5Writer::InitParameters()
         {
             size_t k =
                 m_Parameters.StripeSize / m_Parameters.DirectIOAlignOffset + 1;
-            m_Parameters.StripeSize = k * m_Parameters.DirectIOAlignOffset;
+            m_Parameters.StripeSize =
+                (unsigned int)(k * m_Parameters.DirectIOAlignOffset);
         }
         if (m_Parameters.BufferChunkSize % m_Parameters.DirectIOAlignOffset)
         {
@@ -852,12 +860,12 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
         {
         case IndexRecord::WriterMapRecord:
         {
-            m_AppendWriterCount =
-                helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-            m_AppendAggregatorCount =
-                helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-            m_AppendSubfileCount =
-                helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
+            m_AppendWriterCount = (uint32_t)helper::ReadValue<uint64_t>(
+                buffer, position, IsLittleEndian);
+            m_AppendAggregatorCount = (uint32_t)helper::ReadValue<uint64_t>(
+                buffer, position, IsLittleEndian);
+            m_AppendSubfileCount = (uint32_t)helper::ReadValue<uint64_t>(
+                buffer, position, IsLittleEndian);
             if (m_AppendSubfileCount > nDataFiles)
             {
                 nDataFiles = m_AppendSubfileCount;
@@ -939,12 +947,12 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
         {
         case IndexRecord::WriterMapRecord:
         {
-            m_AppendWriterCount =
-                helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-            m_AppendAggregatorCount =
-                helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
-            m_AppendSubfileCount =
-                helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
+            m_AppendWriterCount = (uint32_t)helper::ReadValue<uint64_t>(
+                buffer, position, IsLittleEndian);
+            m_AppendAggregatorCount = (uint32_t)helper::ReadValue<uint64_t>(
+                buffer, position, IsLittleEndian);
+            m_AppendSubfileCount = (uint32_t)helper::ReadValue<uint64_t>(
+                buffer, position, IsLittleEndian);
 
             // Get the process -> subfile map
             writerToFileMap.clear();
@@ -1792,8 +1800,8 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
         helper::DimsArray MemoryCount(variable.m_MemoryCount);
         helper::DimsArray varCount(variable.m_Count);
 
-        int DimCount = variable.m_Count.size();
-        std::vector<size_t> ZeroDims(DimCount);
+        int DimCount = (int)variable.m_Count.size();
+        helper::DimsArray ZeroDims(DimCount, (size_t)0);
         // get a temporary span then fill with memselection now
         format::BufferV::BufferPos bp5span(0, 0, 0);
 
@@ -1812,8 +1820,8 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
         }
         helper::NdCopy((const char *)values, helper::CoreDims(ZeroDims),
                        MemoryCount, sourceRowMajor, false, (char *)ptr,
-                       MemoryStart, varCount, sourceRowMajor, false, ObjSize,
-                       helper::CoreDims(), helper::CoreDims(),
+                       MemoryStart, varCount, sourceRowMajor, false,
+                       (int)ObjSize, helper::CoreDims(), helper::CoreDims(),
                        helper::CoreDims(), helper::CoreDims(),
                        false /* safemode */, variable.m_MemSpace);
     }

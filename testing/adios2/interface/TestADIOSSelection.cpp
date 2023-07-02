@@ -98,6 +98,7 @@ std::ostream &operator<<(std::ostream &os, const MultiArray<T, 2> &arr)
         for (size_t j = 0; j < dims[1]; j++)
         {
             os << " " << std::setw(2) << arr[{i, j}];
+            os << " (" << std::hex << *(int64_t*)&arr[{i, j}] << std::dec << ")";
         }
         if (i < dims[0] - 1)
         {
@@ -240,10 +241,10 @@ public:
 TEST_F(ADIOS2_CXX11_API_Selection, SelectionNone)
 {
     // clang-format off
-    auto arr = makeArray({{ 0.,  1.,  2.,  3.},
+    MultiArrayT arr = makeArray({{ 0.,  1.,  2.,  3.},
 	                  {10., 11., 12., 13.},
 			  {20., 21., 22., 23.}});
-    auto ref = makeArray({{ 0.,  1.,  2.,  3.},
+    MultiArrayT ref = makeArray({{ 0.,  1.,  2.,  3.},
 	                  {10., 11., 12., 13.},
 	                  {20., 21., 22., 23.}});
     // clang-format on
@@ -266,7 +267,6 @@ TEST_F(ADIOS2_CXX11_API_Selection, SelectionNone)
     engine.Get(var, arr_read.data());
     engine.EndStep();
     engine.Close();
-
     EXPECT_EQ(arr_read, ref);
 }
 

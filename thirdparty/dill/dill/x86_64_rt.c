@@ -9,9 +9,9 @@
 #include "memory.h"
 #endif
 #ifdef USE_VIRTUAL_PROTECT
+#include <windows.h>
 #include <intrin.h>
 #include <memoryapi.h>
-#include <windows.h>
 #endif
 #include "dill_internal.h"
 #include "x86.h"

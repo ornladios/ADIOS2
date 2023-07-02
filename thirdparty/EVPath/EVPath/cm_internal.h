@@ -570,7 +570,6 @@ extern int CMtrace_init(CManager cm, CMTraceType t);
 extern void INT_CMTrace_file_id(int ID);
 #define CMtrace_on(cm, trace_type)  ((cm->CMTrace_file == NULL) ? CMtrace_init(cm, trace_type) : CMtrace_val[trace_type])
 #ifdef _MSC_VER
-#define getpid() _getpid()
 #include <process.h>
 #include <time.h>
 #define CLOCK_MONOTONIC 1

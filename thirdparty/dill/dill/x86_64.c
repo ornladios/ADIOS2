@@ -2941,9 +2941,9 @@ x86_64_emit_save(dill_stream s)
 }
 
 #ifdef USE_VIRTUAL_PROTECT
+#include <windows.h>
 #include <intrin.h>
 #include <memoryapi.h>
-#include <windows.h>
 #endif
 
 static void

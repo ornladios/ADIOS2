@@ -6,8 +6,6 @@
 #include <winsock2.h>
 #include <windows.h>
 #include <sys/timeb.h>
-#define getpid()	_getpid()
-#define close(x) closesocket(x)
 #else
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -49,17 +47,21 @@
 #ifdef HAVE_MEMORY_H
 #include <memory.h>
 #endif
+#ifdef HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
+#ifdef HAVE_SCHED_H
+#include <sched.h>
+#endif
 
 #include <atl.h>
 #include "evpath.h"
 #include "cm_transport.h"
 #include "cm_internal.h"
 #include "ev_select.h"
-#ifdef HAVE_PTHREAD_H
-#include <pthread.h>
-#endif
-#ifdef HAVE_SCHED_H
-#include <sched.h>
+#ifdef _MSC_VER
+#define getpid()	_getpid()
+#define close(x) closesocket(x)
 #endif
 #undef realloc
 #undef malloc
