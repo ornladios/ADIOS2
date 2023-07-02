@@ -1,6 +1,13 @@
 #ifndef FM_INTERNAL_H
 #define FM_INTERNAL_H
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#define strncpy(dest, src, size) strcpy_s(dest, size, src)
+#define snprintf sprintf_s
+#endif
+
 #define MAGIC_NUMBER 0x4356ffa9	/* random magic */
 #define REVERSE_MAGIC_NUMBER 0xa9ff5643		/* byte reversed random
 						 * magic */
@@ -91,7 +98,7 @@ extern FMTypeDesc*
 gen_FMTypeDesc(FMFieldList fl, int field, const char *typ);
 
 typedef struct _FMgetFieldStruct {
-    int offset;
+    size_t offset;
     int size;
     FMdata_type data_type;
     unsigned char byte_swap;
@@ -262,17 +269,21 @@ typedef struct {
 
 #define MAX_UNSIGNED_TYPE unsigned MAX_INTEGER_TYPE
 
-typedef int (*IOinterface_func)(void *conn, void *buffer, int length,
+typedef int (*IOinterface_func)(void *conn, void *buffer, size_t length,
 				      int *errno_p, char **result_p);
 
 #if !defined(HAVE_IOVEC_DEFINE) && !defined(_STRUCT_IOVEC) && !(defined(_BITS_UIO_H))
-#define HAVE_IOVEC_DEFINE
+#define _STRUCT_IOVEC
 struct	iovec {
     const void *iov_base;
-    long iov_len;
+    size_t iov_len;
 };
 #else
+#ifdef _MSC_VER
+#include "winsock.h"
+#else
 #include <sys/socket.h>
+#endif
 #endif
 
 typedef int (*IOinterface_funcv)(void *conn, struct iovec *iov, 
@@ -286,20 +297,12 @@ typedef int (*IOinterface_poll)(void *conn);
 typedef void *(*IOinterface_open)(const char *path,
 					const char *flag_str, 
 					int *input, int *output);
+typedef int (*IOinterface_lseek)(void* conn, size_t pos, int cmd);
 typedef void (*IOinterface_init)(void );
 
-extern IOinterface_func os_file_read_func;
-extern IOinterface_func os_file_write_func;
-
-extern IOinterface_func os_read_func;
-extern IOinterface_func os_write_func;
-extern int os_max_iov;
-extern IOinterface_close os_close_func;
-extern IOinterface_poll os_poll_func;
-extern IOinterface_open os_file_open_func;
-extern IOinterface_func os_server_read_func;
-extern IOinterface_func os_server_write_func;
-extern IOinterface_init os_sockets_init_func;
+extern IOinterface_func ffs_server_read_func;
+extern IOinterface_func ffs_server_write_func;
+extern IOinterface_init ffs_sockets_init_func;
 
 extern int version_of_format_ID(void *server_ID);
 extern int FFS_gen_authentication (unsigned char *outbuf);
@@ -321,4 +324,12 @@ extern void dump_FMFormat(FMFormat ioformat);
 extern int format_server_restarted(FMContext context);
 extern int FMhas_XML_info(FMFormat format);
 extern int get_internal_format_server_identifier(format_server fs);
+
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
+#define malloc(x) ffs_malloc(x)
+#define realloc(ptr, s) ffs_realloc(ptr, s)
+void* ffs_malloc(size_t s);
+void* ffs_realloc(void* ptr, size_t s);
 #endif

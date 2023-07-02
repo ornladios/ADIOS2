@@ -64,6 +64,8 @@ enum {
 
 #if defined(_MSC_VER)
 #define strdup _strdup
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
 #endif
 
 typedef struct _opnd_enc_info {
@@ -339,15 +341,15 @@ generate_arg_str(sm_ref net)
 	arg_count = 0;
     }
     for (i = 0; i < arg_count ; i++) {
-	int len;
+	size_t len;
 	if (arg_types[i] == -1) {
 	    printf("Arg %d not declared\n", i);
 	    return arg_str;
 	}
 	len = strlen(arg_str) + 8;
 	arg_str = realloc(arg_str, len);
-	strcat(arg_str, "%");
-	strcat(arg_str, arg_type_str[arg_types[i]]);
+	strncat(arg_str, "%", len);
+	strncat(arg_str, arg_type_str[arg_types[i]], len);
     }
     free(arg_types);
     return arg_str;
@@ -432,11 +434,7 @@ int cg_get_size(dill_stream s, sm_ref node)
 static void cg_generate_static_block(dill_stream s, cod_code descr);
 
 extern void *
-cod_cg_net(net, ret_type, offset_p, code_descriptor)
-sm_ref net;
-int ret_type;
-unsigned int *offset_p;
-cod_code code_descriptor;
+cod_cg_net(sm_ref net, int ret_type, unsigned int *offset_p, cod_code code_descriptor)
 {
     void *init_func;
     static int debug_cg = -1;
@@ -446,7 +444,7 @@ cod_code code_descriptor;
     dill_exec_handle handle;
 #endif
     if (debug_cg == -1) {
-	debug_cg = (int)(long)(getenv("COD_DEBUG"));
+	debug_cg = (int)(intptr_t)(getenv("COD_DEBUG"));
     }
 #if defined(HAVE_DILL_H)
     arg_str = generate_arg_str(net);
@@ -853,7 +851,7 @@ evaluate_simple_init_and_assign(dill_stream s, sm_ref init, int cg_type, void *v
 	    assert(FALSE);
 	}
     } else {
-	long l;
+	ssize_t l;
 	char *val = const_val->node.constant.const_val;
 	if (const_val->node.constant.token == character_constant) {
 	    if (*val == 'L') val++ ;
@@ -866,11 +864,11 @@ evaluate_simple_init_and_assign(dill_stream s, sm_ref init, int cg_type, void *v
 		val++;
 		switch(*val) {
 		case '0': case '1': case '2': case '3': case '4': case '5': case '6': case '7':
-		    if (sscanf(val, "%lo", &l) != 1) 
+		    if (sscanf(val, "%zo", &l) != 1) 
 			printf("octal char sscanf failed %s\n", val);
 		    break;
 		case 'x':
-		    if (sscanf(val+1, "%lx", &l) != 1) 
+		    if (sscanf(val+1, "%zx", &l) != 1) 
 			printf("hex char sscanf failed, %s\n", val);
 		    break;
 		case '\\':
@@ -912,14 +910,14 @@ evaluate_simple_init_and_assign(dill_stream s, sm_ref init, int cg_type, void *v
 		/* hex or octal */
 		if (val[1] == 'x') {
 		    /* hex */
-		    if (sscanf(val+2, "%lx", &l) != 1) 
+		    if (sscanf(val+2, "%zx", &l) != 1) 
 			printf("sscanf failed\n");
 		} else {
-		    if (sscanf(val, "%lo", &l) != 1) 
+		    if (sscanf(val, "%zo", &l) != 1) 
 			printf("sscanf failed\n");
 		}
 	    } else {
-		if (sscanf(val, "%ld", &l) != 1) 
+		if (sscanf(val, "%zd", &l) != 1) 
 		    printf("sscanf failed\n");
 	    }
 	}
@@ -937,16 +935,16 @@ evaluate_simple_init_and_assign(dill_stream s, sm_ref init, int cg_type, void *v
 	    *(unsigned short *)(var_base) = (unsigned short)l;
 	    break;
 	case DILL_I:
-	    *(int *)(var_base) = l;
+	    *(int *)(var_base) = (int)l;
 	    break;
 	case DILL_U:
-	    *(unsigned int *)(var_base) = l;
+	    *(unsigned int *)(var_base) = (unsigned int)l;
 	    break;
 	case DILL_L:
-	    *(long *)(var_base) = l;
+	    *(ssize_t *)(var_base) = l;
 	    break;
 	case DILL_UL:
-	    *(unsigned long *)(var_base) = l;
+	    *(size_t *)(var_base) = l;
 	    break;
 	case DILL_P:
 	    *(void **)(var_base) = (void*)l;
@@ -1004,14 +1002,14 @@ cg_decl(dill_stream s, sm_ref decl, cod_code descr)
 	if (decl->node.declaration.static_var && !is_block_type) {
 	    /* do SIMPLE statics */
 	    decl->node.declaration.cg_address = 
-		(void*)(long)descr->static_size_required;
+		(void*)(ssize_t)descr->static_size_required;
 	    descr->static_size_required += 8; 
 	    if (descr->data == NULL) {
 		descr->data = malloc(descr->static_size_required);
 	    } else {
 		descr->data = realloc(descr->data, descr->static_size_required);
 	    }
-	    var_base = (char*)descr->data + (long)decl->node.declaration.cg_address;
+	    var_base = (char*)descr->data + (intptr_t)decl->node.declaration.cg_address;
 	}
 	if (var_base) {
 	    if (decl->node.declaration.init_value == NULL) {
@@ -1074,16 +1072,16 @@ cg_decl(dill_stream s, sm_ref decl, cod_code descr)
 		    /* array */
 		    if (decl->node.declaration.static_var) {
 			decl->node.declaration.cg_address = 
-			    (void*)(long)descr->static_size_required;
+			    (void*)(ssize_t)descr->static_size_required;
 			descr->static_size_required += ctype->node.array_type_decl.cg_static_size * ctype->node.array_type_decl.cg_element_size;
 			if (descr->data == NULL) {
 			    descr->data = malloc(descr->static_size_required);
 			} else {
 			    descr->data = realloc(descr->data, descr->static_size_required);
 			}
-			var_base = (char*)descr->data + (long)decl->node.declaration.cg_address;
+			var_base = (char*)descr->data + (intptr_t)decl->node.declaration.cg_address;
 			lvar = dill_getreg(s, DILL_P);
-			dill_addpi(s, lvar, cg_get_static_block(s, descr), (long)decl->node.declaration.cg_address);  /* op_i_addpi */
+			dill_addpi(s, lvar, cg_get_static_block(s, descr), (intptr_t)decl->node.declaration.cg_address);  /* op_i_addpi */
 		    } else {
 			dill_reg block =
 			    dill_getvblock(s, ctype->node.array_type_decl.cg_static_size * ctype->node.array_type_decl.cg_element_size);
@@ -1093,14 +1091,14 @@ cg_decl(dill_stream s, sm_ref decl, cod_code descr)
 		} else if (!is_block_type) {
 		    if (decl->node.declaration.static_var) {
 			decl->node.declaration.cg_address = 
-			    (void*)(long)descr->static_size_required;
+			    (void*)(ssize_t)descr->static_size_required;
 			descr->static_size_required += cg_get_size(s, decl);
 			if (descr->data == NULL) {
 			    descr->data = malloc(descr->static_size_required);
 			} else {
 			    descr->data = realloc(descr->data, descr->static_size_required);
 			}
-			var_base = (char*)descr->data + (long)decl->node.declaration.cg_address;
+			var_base = (char*)descr->data + (intptr_t)decl->node.declaration.cg_address;
 		    } else if ((decl->node.declaration.addr_taken) || 
 			       (ctype && (ctype->node_type == cod_struct_type_decl))) {
 		        /* make sure it's in memory if its address is taken */
@@ -1115,14 +1113,14 @@ cg_decl(dill_stream s, sm_ref decl, cod_code descr)
 		    assert(struct_type->node_type == cod_struct_type_decl);
 		    if (decl->node.declaration.static_var) {
 			decl->node.declaration.cg_address = 
-			    (void*)(long)descr->static_size_required;
+			    (void*)(ssize_t)descr->static_size_required;
 			descr->static_size_required += cg_get_size(s, decl);
 			if (descr->data == NULL) {
 			    descr->data = malloc(descr->static_size_required);
 			} else {
 			    descr->data = realloc(descr->data, descr->static_size_required);
 			}
-			var_base = (char*)descr->data + (long)decl->node.declaration.cg_address;
+			var_base = (char*)descr->data + (intptr_t)decl->node.declaration.cg_address;
 		    } else {
 			if ((struct_type->node.struct_type_decl.cg_size % dill_type_align(s, DILL_D)) != 0) {
 			    int struct_size = struct_type->node.struct_type_decl.cg_size;
@@ -2415,7 +2413,7 @@ cod_expand_dyn_array(void *base_addr, long new_size, long old_size, long struct_
     static int debug_cg = -1;
 
     if (debug_cg == -1) {
-	debug_cg = (int)(long)(getenv("COD_DEBUG"));
+	debug_cg = (int)(intptr_t)(getenv("COD_DEBUG"));
     }
     if (debug_cg) {
 	printf("cod_expand_dyn_array, base_addr %p, old_base %p, new_size %ld, old_size %ld, struct_size %ld\n",
@@ -2616,7 +2614,7 @@ cg_expr(dill_stream s, sm_ref expr, int need_assignable, cod_code descr)
 	    dill_reg static_block;
 	    if (expr->node.declaration.static_var) {
 		static_block = cg_get_static_block(s, descr);
-		dill_addpi(s, lvar, static_block, (long)expr->node.declaration.cg_address);  /* op_i_addpi */
+		dill_addpi(s, lvar, static_block, (intptr_t)expr->node.declaration.cg_address);  /* op_i_addpi */
 	    } else {
 		dill_setp(s, lvar, expr->node.declaration.cg_address);  /* op_i_addpi */
 	    }
@@ -3904,7 +3902,7 @@ cod_create_exec_context(cod_code code)
 	void *block = malloc(code->static_size_required);
 	/* copy initialized data */
 	memcpy(block, code->data, code->static_size_required);
-	dill_assoc_client_data(cod_ctx->ec, 0x23234, (long)block);
+	dill_assoc_client_data(cod_ctx->ec, 0x23234, (intptr_t)block);
 	cod_ctx->static_data = block;
     } else {
 	cod_ctx->static_data = NULL;
@@ -3948,12 +3946,12 @@ extern int cod_install_state(cod_exec_context ec, void *state, int length)
 }
 
 extern void
-cod_assoc_client_data(cod_exec_context ec, int key, long value)
+cod_assoc_client_data(cod_exec_context ec, int key, intptr_t value)
 {
     dill_assoc_client_data(ec->ec, key, value);
 }
 
-extern long
+extern intptr_t
 cod_get_client_data(cod_exec_context ec, int key)
 {
     return dill_get_client_data(ec->ec, key);

@@ -144,8 +144,7 @@ char *event_vec_xml = "\
 </EventVector>\n";
 
 int
-first_rec_eq(r1, r2)
-first_rec *r1, *r2;
+first_rec_eq(first_rec *r1, first_rec *r2)
 {
     if (r1->integer_field != r2->integer_field)
 	return 0;
@@ -157,8 +156,7 @@ first_rec *r1, *r2;
 }
 
 int
-second_rec_eq(r1, r2)
-second_rec *r1, *r2;
+second_rec_eq(second_rec *r1, second_rec *r2)
 {
     if (r1->integer_field != r2->integer_field) {
 	printf("integer_field 1 is %d (0x%x), integer_field 2 is %d (0x%x)\n",
@@ -201,8 +199,7 @@ second_rec *r1, *r2;
 }
 
 int
-third_rec_eq(r1, r2)
-third_rec *r1, *r2;
+third_rec_eq(third_rec *r1, third_rec *r2)
 {
     if (r1->integer_field != r2->integer_field) {
 	printf("integer field 1 is %d (0x%x), integer_field 2 is %d (0x%x)\n",
@@ -276,8 +273,7 @@ third_rec *r1, *r2;
 #define ARRAY_SIZE 14
 
 int
-fourth_rec_eq(r1, r2)
-fourth_rec *r1, *r2;
+fourth_rec_eq(fourth_rec *r1, fourth_rec *r2)
 {
     int i, j;
     if (r1->ifield != r2->ifield) {
@@ -302,8 +298,7 @@ fourth_rec *r1, *r2;
 }
 
 int
-emb_rec_eq(r1, r2)
-embedded_rec *r1, *r2;
+emb_rec_eq(embedded_rec *r1, embedded_rec *r2)
 {
     if (r1->ifield != r2->ifield) {
 	printf("ifield 1 is %d (%x), ifield 2 is %d (%x)\n",
@@ -334,8 +329,7 @@ embedded_rec *r1, *r2;
 }
 
 int
-fifth_rec_eq(r1, r2)
-fifth_rec *r1, *r2;
+fifth_rec_eq(fifth_rec *r1, fifth_rec *r2)
 {
     int i;
     for (i = 0; i < 4; i++) {
@@ -348,8 +342,7 @@ fifth_rec *r1, *r2;
 }
 
 int
-sixth_rec_eq(r1, r2)
-sixth_rec *r1, *r2;
+sixth_rec_eq(sixth_rec *r1, sixth_rec *r2)
 {
     int i;
     if (r1->icount != r2->icount)
@@ -394,8 +387,7 @@ sixth_rec *r1, *r2;
 }
 
 int
-nested_rec_eq(r1, r2)
-nested_rec *r1, *r2;
+nested_rec_eq(nested_rec *r1, nested_rec *r2)
 {
     if (r1->integer_field != r2->integer_field) {
 	printf("nested, R1 integer = %d, R2 %d\n", r1->integer_field,
@@ -425,8 +417,7 @@ nested_rec *r1, *r2;
 }
     
 int
-later_rec_eq(r1, r2)
-later_rec *r1, *r2;
+later_rec_eq(later_rec *r1, later_rec *r2)
 {
     if (r1->integer_field != r2->integer_field)
 	return 0;
@@ -444,8 +435,7 @@ later_rec *r1, *r2;
 }
 
 int
-ninth_rec_eq(r1, r2)
-ninth_rec *r1, *r2;
+ninth_rec_eq(ninth_rec *r1, ninth_rec *r2)
 {
     int i;
     if (r1->vec_length != r2->vec_length)
@@ -464,8 +454,7 @@ ninth_rec *r1, *r2;
 }
 
 int
-string_array_eq(r1, r2)
-string_array_rec *r1, *r2;
+string_array_eq(string_array_rec *r1, string_array_rec *r2)
 {
     int i;
     if (r1->array_len != r2->array_len)
@@ -1058,9 +1047,9 @@ init_written_data()
 
     k = 0;
     for (i = 1; i < 20; i += 5) {
-	rec6_array[k].string = malloc(10);
-	memset(rec6_array[k].string, 0, 10);
-	sprintf(rec6_array[k].string, "variant%d", i);
+	rec6_array[k].string = malloc(20);
+	memset(rec6_array[k].string, 0, 20);
+	snprintf(rec6_array[k].string, 20, "variant%d", i);
 	rec6_array[k].icount = 2 * i;
 	rec6_array[k].var_int_array = malloc(sizeof(((sixth_rec_ptr) 0)->var_int_array[0]) * rec6_array[k].icount);
 	rec6_array[k].var_double_array = malloc(sizeof(double) * rec6_array[k].icount);
@@ -1071,9 +1060,9 @@ init_written_data()
 	    rec6_array[k].var_string_array[j].integer_field = 345 * j;
 	    rec6_array[k].var_string_array[j].short_field = j;
 	    rec6_array[k].var_string_array[j].long_field = 785 * j;
-	    rec6_array[k].var_string_array[j].string = malloc(15);
-	    memset(rec6_array[k].var_string_array[j].string, 0, 15);
-	    sprintf(rec6_array[k].var_string_array[j].string,
+	    rec6_array[k].var_string_array[j].string = malloc(25);
+	    memset(rec6_array[k].var_string_array[j].string, 0, 25);
+	    snprintf(rec6_array[k].var_string_array[j].string, 25,
 		    "substring%d", j);
 	    rec6_array[k].var_string_array[j].double_field = 3.1415 * j;
 	    rec6_array[k].var_string_array[j].char_field = 'a' + 2 * j;

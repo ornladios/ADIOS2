@@ -30,9 +30,7 @@ extern char *
 dump_raw_FMrecord_to_string(FMContext fmc, FMFormat format, void *data);
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     FFSFile ffsfile = NULL;
     int buffer_size = 1024;

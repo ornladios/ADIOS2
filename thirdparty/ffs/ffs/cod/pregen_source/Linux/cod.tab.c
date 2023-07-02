@@ -238,9 +238,12 @@
 
 
 /* Copy the first part of user declarations.  */
-#line 1 "cod/cod.y"
+#line 1 "cod.y"
 
 #include "config.h"
+#ifdef __NVCOMPILER
+#pragma diag_suppress 550, 111, 941
+#endif
 #if defined (__INTEL_COMPILER)
 #  pragma warning (disable: 2215)
 #endif
@@ -272,10 +275,6 @@ int cod_kplugins_integration = 0;
 #include <stdlib.h>
 #endif
 #endif
-#include "fm.h"
-#include "fm_internal.h"
-#include "cod.h"
-#include "cod_internal.h"
 #undef NDEBUG
 #include "assert.h"
 #ifndef LINUX_KERNEL_MODULE
@@ -299,6 +298,10 @@ int cod_kplugins_integration = 0;
     #define OP_DBL_Digs (DBL_DIG + 3)
   #endif
 #endif
+#include "fm.h"
+#include "fm_internal.h"
+#include "cod.h"
+#include "cod_internal.h"
 #include "structs.h"
 #ifdef HAVE_DILL_H
 #include "dill.h"
@@ -320,9 +323,17 @@ enum {
     DILL_EC,
     DILL_ERR   /* no type */
 };
+typedef void *dill_stream;
+#define dill_create_stream() 0
+#define dill_type_size(c, s) 0
 #endif
 #if defined(_MSC_VER)
 #define strdup _strdup
+#define isatty _isatty
+#define fileno _fileno
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <io.h>
 #endif
 #ifndef LINUX_KERNEL_MODULE
 #ifdef STDC_HEADERS
@@ -347,14 +358,17 @@ char *strdup(const char *s)
 	return p;
 }
 #endif
+#ifdef _MSC_VER
+#undef strncpy
+#endif
 #define YY_NO_INPUT
 
 static char*
 gen_anon()
 {
     static int anon_count = 0;
-    char *ret = malloc(strlen("Anonymous-xxxxxxxxxxxxxxxxx"));
-    sprintf(ret, "Anonymous-%d", anon_count++);
+    char *ret = malloc(40);
+    snprintf(ret, 40, "Anonymous-%d", anon_count++);
     return ret;
 }
 
@@ -444,7 +458,7 @@ cod_dup_list(sm_list list)
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 187 "cod/cod.y"
+#line 201 "cod.y"
 {
     lx_info info;
     sm_ref reference;
@@ -453,7 +467,7 @@ typedef union YYSTYPE
     char *string;
 }
 /* Line 193 of yacc.c.  */
-#line 457 "/Users/eisen/prog/ffs/build/cod.tab.c"
+#line 471 "cod.tab.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -466,7 +480,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 470 "/Users/eisen/prog/ffs/build/cod.tab.c"
+#line 484 "cod.tab.c"
 
 #ifdef short
 # undef short
@@ -836,27 +850,27 @@ static const yytype_int16 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint16 yyrline[] =
 {
-       0,   344,   344,   348,   354,   360,   362,   369,   371,   378,
-     385,   392,   398,   404,   411,   421,   427,   441,   442,   449,
-     456,   463,   470,   485,   488,   491,   494,   497,   500,   506,
-     507,   516,   518,   527,   536,   547,   549,   558,   569,   571,
-     580,   591,   593,   602,   611,   620,   631,   633,   642,   653,
-     655,   666,   668,   679,   681,   692,   694,   705,   707,   718,
-     720,   731,   733,   735,   737,   739,   741,   743,   745,   747,
-     749,   751,   756,   759,   770,   772,   782,   786,   791,   810,
-     817,   809,   900,   906,   911,   917,   922,   928,   933,   941,
-     943,   959,   964,   969,   978,   983,   988,   993,   998,  1003,
-    1008,  1013,  1018,  1023,  1028,  1033,  1036,  1042,  1045,  1048,
-    1054,  1055,  1061,  1062,  1074,  1075,  1126,  1131,  1143,  1146,
-    1152,  1157,  1163,  1171,  1178,  1185,  1192,  1199,  1209,  1215,
-    1225,  1231,  1239,  1247,  1249,  1263,  1272,  1275,  1284,  1293,
-    1300,  1310,  1318,  1326,  1334,  1348,  1359,  1370,  1381,  1401,
-    1406,  1419,  1420,  1435,  1441,  1456,  1465,  1504,  1505,  1551,
-    1555,  1560,  1565,  1570,  1578,  1586,  1599,  1615,  1620,  1625,
-    1638,  1644,  1653,  1659,  1662,  1665,  1671,  1676,  1677,  1678,
-    1679,  1680,  1681,  1688,  1695,  1698,  1706,  1708,  1722,  1727,
-    1732,  1738,  1744,  1753,  1757,  1767,  1776,  1793,  1803,  1813,
-    1827,  1829,  1832,  1839,  1846,  1853,  1860
+       0,   358,   358,   362,   368,   374,   376,   383,   385,   392,
+     399,   406,   412,   418,   425,   435,   441,   455,   456,   463,
+     470,   477,   484,   499,   502,   505,   508,   511,   514,   520,
+     521,   530,   532,   541,   550,   561,   563,   572,   583,   585,
+     594,   605,   607,   616,   625,   634,   645,   647,   656,   667,
+     669,   680,   682,   693,   695,   706,   708,   719,   721,   732,
+     734,   745,   747,   749,   751,   753,   755,   757,   759,   761,
+     763,   765,   770,   773,   784,   786,   796,   800,   805,   824,
+     831,   823,   914,   920,   925,   931,   936,   942,   947,   955,
+     957,   973,   978,   983,   992,   997,  1002,  1007,  1012,  1017,
+    1022,  1027,  1032,  1037,  1042,  1047,  1050,  1056,  1059,  1062,
+    1068,  1069,  1075,  1076,  1088,  1089,  1140,  1145,  1157,  1160,
+    1166,  1171,  1177,  1185,  1192,  1199,  1206,  1213,  1223,  1229,
+    1239,  1245,  1253,  1261,  1263,  1277,  1286,  1289,  1298,  1307,
+    1314,  1324,  1332,  1340,  1348,  1362,  1373,  1384,  1395,  1415,
+    1420,  1433,  1434,  1449,  1455,  1470,  1479,  1518,  1519,  1565,
+    1569,  1574,  1579,  1584,  1592,  1600,  1613,  1629,  1634,  1639,
+    1652,  1658,  1667,  1673,  1676,  1679,  1685,  1690,  1691,  1692,
+    1693,  1694,  1695,  1702,  1709,  1712,  1720,  1722,  1736,  1741,
+    1746,  1752,  1758,  1767,  1771,  1781,  1790,  1807,  1817,  1827,
+    1841,  1843,  1846,  1853,  1860,  1867,  1874
 };
 #endif
 
@@ -2137,21 +2151,21 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 344 "cod/cod.y"
+#line 358 "cod.y"
     {
 	    yyparse_value = (sm_ref)(yyvsp[(1) - (1)].list);
 	;}
     break;
 
   case 3:
-#line 348 "cod/cod.y"
+#line 362 "cod.y"
     {
 	    yyparse_value = (yyvsp[(1) - (1)].reference);
 	;}
     break;
 
   case 4:
-#line 354 "cod/cod.y"
+#line 368 "cod.y"
     {
 	    (yyval.reference) = cod_new_identifier();
 	    (yyval.reference)->node.identifier.id = (yyvsp[(1) - (1)].info).string;
@@ -2160,12 +2174,12 @@ yyreduce:
     break;
 
   case 6:
-#line 363 "cod/cod.y"
+#line 377 "cod.y"
     { (yyval.reference) = (yyvsp[(2) - (3)].reference); ;}
     break;
 
   case 8:
-#line 371 "cod/cod.y"
+#line 385 "cod.y"
     {
 	    (yyval.reference) = cod_new_element_ref();
 	    (yyval.reference)->node.element_ref.lx_srcpos = (yyvsp[(2) - (4)].info).lx_srcpos;
@@ -2175,7 +2189,7 @@ yyreduce:
     break;
 
   case 9:
-#line 378 "cod/cod.y"
+#line 392 "cod.y"
     {
 	    (yyval.reference) = cod_new_field_ref();
 	    (yyval.reference)->node.field_ref.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2185,7 +2199,7 @@ yyreduce:
     break;
 
   case 10:
-#line 385 "cod/cod.y"
+#line 399 "cod.y"
     {
 	    (yyval.reference) = cod_new_subroutine_call();
 	    (yyval.reference)->node.subroutine_call.lx_srcpos = (yyvsp[(2) - (4)].info).lx_srcpos;
@@ -2195,7 +2209,7 @@ yyreduce:
     break;
 
   case 11:
-#line 392 "cod/cod.y"
+#line 406 "cod.y"
     {
 	    (yyval.reference) = cod_new_subroutine_call();
 	    (yyval.reference)->node.subroutine_call.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2205,7 +2219,7 @@ yyreduce:
     break;
 
   case 12:
-#line 398 "cod/cod.y"
+#line 412 "cod.y"
     {
 	    (yyval.reference) = cod_new_field_ref();
 	    (yyval.reference)->node.field_ref.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2215,7 +2229,7 @@ yyreduce:
     break;
 
   case 13:
-#line 404 "cod/cod.y"
+#line 418 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (2)].info).lx_srcpos;
@@ -2226,7 +2240,7 @@ yyreduce:
     break;
 
   case 14:
-#line 411 "cod/cod.y"
+#line 425 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (2)].info).lx_srcpos;
@@ -2237,7 +2251,7 @@ yyreduce:
     break;
 
   case 15:
-#line 421 "cod/cod.y"
+#line 435 "cod.y"
     {
 		(yyval.list) = malloc(sizeof(struct list_struct));
 		(yyval.list)->node = (yyvsp[(1) - (1)].reference);
@@ -2246,7 +2260,7 @@ yyreduce:
     break;
 
   case 16:
-#line 427 "cod/cod.y"
+#line 441 "cod.y"
     {
 	    sm_list tmp = (yyvsp[(1) - (3)].list);
 	    while (tmp->next != NULL) {
@@ -2260,7 +2274,7 @@ yyreduce:
     break;
 
   case 18:
-#line 442 "cod/cod.y"
+#line 456 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(1) - (2)].info).lx_srcpos;
@@ -2271,7 +2285,7 @@ yyreduce:
     break;
 
   case 19:
-#line 449 "cod/cod.y"
+#line 463 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(1) - (2)].info).lx_srcpos;
@@ -2282,7 +2296,7 @@ yyreduce:
     break;
 
   case 20:
-#line 456 "cod/cod.y"
+#line 470 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(1) - (2)].info).lx_srcpos;
@@ -2293,7 +2307,7 @@ yyreduce:
     break;
 
   case 21:
-#line 463 "cod/cod.y"
+#line 477 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(1) - (2)].info).lx_srcpos;
@@ -2304,7 +2318,7 @@ yyreduce:
     break;
 
   case 22:
-#line 470 "cod/cod.y"
+#line 484 "cod.y"
     {
 	    /* dummy up a cast to hold the sm_list of the type */
 	    sm_ref cast = cod_new_cast();
@@ -2321,49 +2335,49 @@ yyreduce:
     break;
 
   case 23:
-#line 485 "cod/cod.y"
+#line 499 "cod.y"
     {
 	    (yyval.info).op = op_address;
 	;}
     break;
 
   case 24:
-#line 488 "cod/cod.y"
+#line 502 "cod.y"
     {
 	    (yyval.info).op = op_deref;
 	;}
     break;
 
   case 25:
-#line 491 "cod/cod.y"
+#line 505 "cod.y"
     {
 	    (yyval.info).op = op_plus;
 	;}
     break;
 
   case 26:
-#line 494 "cod/cod.y"
+#line 508 "cod.y"
     {
 	    (yyval.info).op = op_minus;
 	;}
     break;
 
   case 27:
-#line 497 "cod/cod.y"
+#line 511 "cod.y"
     {
 	    (yyval.info).op = op_not;
 	;}
     break;
 
   case 28:
-#line 500 "cod/cod.y"
+#line 514 "cod.y"
     {
 	    (yyval.info).op = op_log_neg;
 	  ;}
     break;
 
   case 30:
-#line 507 "cod/cod.y"
+#line 521 "cod.y"
     {
 	    (yyval.reference) = cod_new_cast();
 	    (yyval.reference)->node.cast.lx_srcpos = (yyvsp[(1) - (4)].info).lx_srcpos;
@@ -2373,7 +2387,7 @@ yyreduce:
     break;
 
   case 32:
-#line 519 "cod/cod.y"
+#line 533 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2384,7 +2398,7 @@ yyreduce:
     break;
 
   case 33:
-#line 528 "cod/cod.y"
+#line 542 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2395,7 +2409,7 @@ yyreduce:
     break;
 
   case 34:
-#line 537 "cod/cod.y"
+#line 551 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2406,7 +2420,7 @@ yyreduce:
     break;
 
   case 36:
-#line 550 "cod/cod.y"
+#line 564 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.op = op_plus;
@@ -2417,7 +2431,7 @@ yyreduce:
     break;
 
   case 37:
-#line 559 "cod/cod.y"
+#line 573 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2428,7 +2442,7 @@ yyreduce:
     break;
 
   case 39:
-#line 572 "cod/cod.y"
+#line 586 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2439,7 +2453,7 @@ yyreduce:
     break;
 
   case 40:
-#line 581 "cod/cod.y"
+#line 595 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2450,7 +2464,7 @@ yyreduce:
     break;
 
   case 42:
-#line 594 "cod/cod.y"
+#line 608 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2461,7 +2475,7 @@ yyreduce:
     break;
 
   case 43:
-#line 603 "cod/cod.y"
+#line 617 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2472,7 +2486,7 @@ yyreduce:
     break;
 
   case 44:
-#line 612 "cod/cod.y"
+#line 626 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2483,7 +2497,7 @@ yyreduce:
     break;
 
   case 45:
-#line 621 "cod/cod.y"
+#line 635 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2494,7 +2508,7 @@ yyreduce:
     break;
 
   case 47:
-#line 634 "cod/cod.y"
+#line 648 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2505,7 +2519,7 @@ yyreduce:
     break;
 
   case 48:
-#line 643 "cod/cod.y"
+#line 657 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2516,7 +2530,7 @@ yyreduce:
     break;
 
   case 50:
-#line 656 "cod/cod.y"
+#line 670 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2527,7 +2541,7 @@ yyreduce:
     break;
 
   case 52:
-#line 669 "cod/cod.y"
+#line 683 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2538,7 +2552,7 @@ yyreduce:
     break;
 
   case 54:
-#line 682 "cod/cod.y"
+#line 696 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2549,7 +2563,7 @@ yyreduce:
     break;
 
   case 56:
-#line 695 "cod/cod.y"
+#line 709 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2560,7 +2574,7 @@ yyreduce:
     break;
 
   case 58:
-#line 708 "cod/cod.y"
+#line 722 "cod.y"
     {
 	    (yyval.reference) = cod_new_operator();
 	    (yyval.reference)->node.operator.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2571,7 +2585,7 @@ yyreduce:
     break;
 
   case 60:
-#line 721 "cod/cod.y"
+#line 735 "cod.y"
     {
 	    (yyval.reference) = cod_new_conditional_operator();
 	    (yyval.reference)->node.conditional_operator.lx_srcpos = (yyvsp[(2) - (5)].info).lx_srcpos;
@@ -2582,67 +2596,67 @@ yyreduce:
     break;
 
   case 61:
-#line 732 "cod/cod.y"
+#line 746 "cod.y"
     { (yyval.info) = (yyvsp[(1) - (1)].info); (yyval.info).op = op_eq;;}
     break;
 
   case 62:
-#line 734 "cod/cod.y"
+#line 748 "cod.y"
     { (yyval.info) = (yyvsp[(1) - (1)].info); (yyval.info).op = op_mult;;}
     break;
 
   case 63:
-#line 736 "cod/cod.y"
+#line 750 "cod.y"
     { (yyval.info) = (yyvsp[(1) - (1)].info); (yyval.info).op = op_div;;}
     break;
 
   case 64:
-#line 738 "cod/cod.y"
+#line 752 "cod.y"
     { (yyval.info) = (yyvsp[(1) - (1)].info); (yyval.info).op = op_modulus;;}
     break;
 
   case 65:
-#line 740 "cod/cod.y"
+#line 754 "cod.y"
     { (yyval.info) = (yyvsp[(1) - (1)].info); (yyval.info).op = op_plus;;}
     break;
 
   case 66:
-#line 742 "cod/cod.y"
+#line 756 "cod.y"
     { (yyval.info) = (yyvsp[(1) - (1)].info); (yyval.info).op = op_minus;;}
     break;
 
   case 67:
-#line 744 "cod/cod.y"
+#line 758 "cod.y"
     { (yyval.info) = (yyvsp[(1) - (1)].info); (yyval.info).op = op_left_shift;;}
     break;
 
   case 68:
-#line 746 "cod/cod.y"
+#line 760 "cod.y"
     { (yyval.info) = (yyvsp[(1) - (1)].info); (yyval.info).op = op_right_shift;;}
     break;
 
   case 69:
-#line 748 "cod/cod.y"
+#line 762 "cod.y"
     { (yyval.info) = (yyvsp[(1) - (1)].info); (yyval.info).op = op_arith_and;;}
     break;
 
   case 70:
-#line 750 "cod/cod.y"
+#line 764 "cod.y"
     { (yyval.info) = (yyvsp[(1) - (1)].info); (yyval.info).op = op_arith_xor;;}
     break;
 
   case 71:
-#line 752 "cod/cod.y"
+#line 766 "cod.y"
     { (yyval.info) = (yyvsp[(1) - (1)].info); (yyval.info).op = op_arith_or;;}
     break;
 
   case 72:
-#line 757 "cod/cod.y"
+#line 771 "cod.y"
     { (yyval.reference) = (yyvsp[(1) - (1)].reference);;}
     break;
 
   case 73:
-#line 760 "cod/cod.y"
+#line 774 "cod.y"
     {
 	    (yyval.reference) = cod_new_assignment_expression();
 	    (yyval.reference)->node.assignment_expression.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2653,12 +2667,12 @@ yyreduce:
     break;
 
   case 74:
-#line 771 "cod/cod.y"
+#line 785 "cod.y"
     {(yyval.reference) = (yyvsp[(1) - (1)].reference);;}
     break;
 
   case 75:
-#line 773 "cod/cod.y"
+#line 787 "cod.y"
     {
 	    (yyval.reference) = cod_new_comma_expression();
 	    (yyval.reference)->node.comma_expression.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -2668,7 +2682,7 @@ yyreduce:
     break;
 
   case 77:
-#line 786 "cod/cod.y"
+#line 800 "cod.y"
     {
 		(yyval.list) = malloc(sizeof(struct list_struct));
 		(yyval.list)->node = (yyvsp[(1) - (1)].reference);
@@ -2677,7 +2691,7 @@ yyreduce:
     break;
 
   case 78:
-#line 791 "cod/cod.y"
+#line 805 "cod.y"
     {
 	    sm_list tmp = (yyvsp[(1) - (3)].list);
 	    while (tmp->next != NULL) {
@@ -2692,7 +2706,7 @@ yyreduce:
     break;
 
   case 79:
-#line 810 "cod/cod.y"
+#line 824 "cod.y"
     { 
 		 if (parsing_type) {
 		     yyparse_value = (sm_ref) (yyvsp[(1) - (1)].list);
@@ -2702,7 +2716,7 @@ yyreduce:
     break;
 
   case 80:
-#line 817 "cod/cod.y"
+#line 831 "cod.y"
     {  /* stop here if we're just doing a proc decl */
 		if (parsing_param_spec) {
 		    (yyval.reference) = (yyvsp[(3) - (3)].list)->node;
@@ -2733,7 +2747,7 @@ yyreduce:
     break;
 
   case 81:
-#line 845 "cod/cod.y"
+#line 859 "cod.y"
     {
 		(yyval.list) = (yyvsp[(3) - (5)].list);
 		sm_list dtmp = (yyvsp[(3) - (5)].list);
@@ -2792,14 +2806,14 @@ yyreduce:
     break;
 
   case 82:
-#line 900 "cod/cod.y"
+#line 914 "cod.y"
     {
 	    (yyval.list) = (yyvsp[(1) - (2)].list);
 	;}
     break;
 
   case 83:
-#line 906 "cod/cod.y"
+#line 920 "cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[(1) - (1)].reference);
@@ -2808,7 +2822,7 @@ yyreduce:
     break;
 
   case 84:
-#line 911 "cod/cod.y"
+#line 925 "cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[(1) - (2)].reference);
@@ -2818,7 +2832,7 @@ yyreduce:
     break;
 
   case 85:
-#line 917 "cod/cod.y"
+#line 931 "cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[(1) - (1)].reference);
@@ -2827,7 +2841,7 @@ yyreduce:
     break;
 
   case 86:
-#line 922 "cod/cod.y"
+#line 936 "cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[(1) - (2)].reference);
@@ -2837,7 +2851,7 @@ yyreduce:
     break;
 
   case 87:
-#line 928 "cod/cod.y"
+#line 942 "cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[(1) - (1)].reference);
@@ -2846,7 +2860,7 @@ yyreduce:
     break;
 
   case 88:
-#line 933 "cod/cod.y"
+#line 947 "cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[(1) - (2)].reference);
@@ -2856,7 +2870,7 @@ yyreduce:
     break;
 
   case 90:
-#line 944 "cod/cod.y"
+#line 958 "cod.y"
     {
 		if ((yyvsp[(1) - (3)].reference)->node_type == cod_declaration) {
 		    (yyvsp[(1) - (3)].reference)->node.declaration.init_value = (yyvsp[(3) - (3)].reference);
@@ -2872,7 +2886,7 @@ yyreduce:
     break;
 
   case 91:
-#line 959 "cod/cod.y"
+#line 973 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2881,7 +2895,7 @@ yyreduce:
     break;
 
   case 92:
-#line 964 "cod/cod.y"
+#line 978 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2890,7 +2904,7 @@ yyreduce:
     break;
 
   case 93:
-#line 969 "cod/cod.y"
+#line 983 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2899,7 +2913,7 @@ yyreduce:
     break;
 
   case 94:
-#line 978 "cod/cod.y"
+#line 992 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2908,7 +2922,7 @@ yyreduce:
     break;
 
   case 95:
-#line 983 "cod/cod.y"
+#line 997 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2917,7 +2931,7 @@ yyreduce:
     break;
 
   case 96:
-#line 988 "cod/cod.y"
+#line 1002 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2926,7 +2940,7 @@ yyreduce:
     break;
 
   case 97:
-#line 993 "cod/cod.y"
+#line 1007 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2935,7 +2949,7 @@ yyreduce:
     break;
 
   case 98:
-#line 998 "cod/cod.y"
+#line 1012 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2944,7 +2958,7 @@ yyreduce:
     break;
 
   case 99:
-#line 1003 "cod/cod.y"
+#line 1017 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2953,7 +2967,7 @@ yyreduce:
     break;
 
   case 100:
-#line 1008 "cod/cod.y"
+#line 1022 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2962,7 +2976,7 @@ yyreduce:
     break;
 
   case 101:
-#line 1013 "cod/cod.y"
+#line 1027 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2971,7 +2985,7 @@ yyreduce:
     break;
 
   case 102:
-#line 1018 "cod/cod.y"
+#line 1032 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2980,7 +2994,7 @@ yyreduce:
     break;
 
   case 103:
-#line 1023 "cod/cod.y"
+#line 1037 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2989,7 +3003,7 @@ yyreduce:
     break;
 
   case 104:
-#line 1028 "cod/cod.y"
+#line 1042 "cod.y"
     {
 	    (yyval.reference) = cod_new_identifier();
 	    (yyval.reference)->node.identifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -2998,49 +3012,49 @@ yyreduce:
     break;
 
   case 105:
-#line 1033 "cod/cod.y"
+#line 1047 "cod.y"
     {
 	    (yyval.reference) = (yyvsp[(1) - (1)].reference);
 	;}
     break;
 
   case 106:
-#line 1036 "cod/cod.y"
+#line 1050 "cod.y"
     {
 	    (yyval.reference) = (yyvsp[(1) - (1)].reference);
 	;}
     break;
 
   case 107:
-#line 1042 "cod/cod.y"
+#line 1056 "cod.y"
     {
 	    (yyval.reference) = cod_build_parsed_type_node(yycontext, (yyvsp[(2) - (5)].info).string, (yyvsp[(4) - (5)].list));
 	;}
     break;
 
   case 108:
-#line 1045 "cod/cod.y"
+#line 1059 "cod.y"
     {
 	    (yyval.reference) = cod_build_parsed_type_node(yycontext, strdup("anon"), (yyvsp[(3) - (4)].list));
 	;}
     break;
 
   case 109:
-#line 1048 "cod/cod.y"
+#line 1062 "cod.y"
     {
 	    (yyval.reference) = cod_build_parsed_type_node(yycontext, (yyvsp[(2) - (2)].info).string, NULL);
 	;}
     break;
 
   case 111:
-#line 1055 "cod/cod.y"
+#line 1069 "cod.y"
     {
             yyerror("UNIONs not supported!");
 	;}
     break;
 
   case 113:
-#line 1062 "cod/cod.y"
+#line 1076 "cod.y"
     {
 	    sm_list tmp = (yyvsp[(1) - (2)].list);
 	    while (tmp->next != NULL) {
@@ -3052,12 +3066,12 @@ yyreduce:
     break;
 
   case 114:
-#line 1074 "cod/cod.y"
+#line 1088 "cod.y"
     { ;}
     break;
 
   case 115:
-#line 1075 "cod/cod.y"
+#line 1089 "cod.y"
     {
 	    sm_list type_spec = (yyvsp[(1) - (3)].list);
 	    sm_list decl_list = (yyvsp[(2) - (3)].list);
@@ -3108,7 +3122,7 @@ yyreduce:
     break;
 
   case 116:
-#line 1126 "cod/cod.y"
+#line 1140 "cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[(1) - (1)].reference);
@@ -3117,7 +3131,7 @@ yyreduce:
     break;
 
   case 117:
-#line 1131 "cod/cod.y"
+#line 1145 "cod.y"
     {
 	    sm_list tmp = (yyvsp[(1) - (3)].list);
 	    while (tmp->next != NULL) {
@@ -3131,7 +3145,7 @@ yyreduce:
     break;
 
   case 119:
-#line 1146 "cod/cod.y"
+#line 1160 "cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[(1) - (2)].reference);
@@ -3141,7 +3155,7 @@ yyreduce:
     break;
 
   case 120:
-#line 1152 "cod/cod.y"
+#line 1166 "cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[(1) - (1)].reference);
@@ -3150,7 +3164,7 @@ yyreduce:
     break;
 
   case 121:
-#line 1157 "cod/cod.y"
+#line 1171 "cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[(1) - (2)].reference);
@@ -3160,7 +3174,7 @@ yyreduce:
     break;
 
   case 122:
-#line 1163 "cod/cod.y"
+#line 1177 "cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[(1) - (1)].reference);
@@ -3169,7 +3183,7 @@ yyreduce:
     break;
 
   case 123:
-#line 1171 "cod/cod.y"
+#line 1185 "cod.y"
     {
 	    (yyval.reference) = cod_new_enum_type_decl();
 	    (yyval.reference)->node.enum_type_decl.id = gen_anon();
@@ -3180,7 +3194,7 @@ yyreduce:
     break;
 
   case 124:
-#line 1178 "cod/cod.y"
+#line 1192 "cod.y"
     {
 	    (yyval.reference) = cod_new_enum_type_decl();
 	    (yyval.reference)->node.enum_type_decl.id = gen_anon();
@@ -3191,7 +3205,7 @@ yyreduce:
     break;
 
   case 125:
-#line 1185 "cod/cod.y"
+#line 1199 "cod.y"
     {
 	    (yyval.reference) = cod_new_enum_type_decl();
 	    (yyval.reference)->node.enum_type_decl.id = (yyvsp[(2) - (5)].info).string;
@@ -3202,7 +3216,7 @@ yyreduce:
     break;
 
   case 126:
-#line 1192 "cod/cod.y"
+#line 1206 "cod.y"
     {
 	    (yyval.reference) = cod_new_enum_type_decl();
 	    (yyval.reference)->node.enum_type_decl.id = (yyvsp[(2) - (6)].info).string;
@@ -3213,7 +3227,7 @@ yyreduce:
     break;
 
   case 127:
-#line 1199 "cod/cod.y"
+#line 1213 "cod.y"
     {
 	    (yyval.reference) = cod_new_enum_type_decl();
 	    (yyval.reference)->node.enum_type_decl.id = (yyvsp[(2) - (2)].info).string;
@@ -3224,7 +3238,7 @@ yyreduce:
     break;
 
   case 128:
-#line 1209 "cod/cod.y"
+#line 1223 "cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[(1) - (1)].reference);
@@ -3234,7 +3248,7 @@ yyreduce:
     break;
 
   case 129:
-#line 1215 "cod/cod.y"
+#line 1229 "cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[(3) - (3)].reference);
@@ -3244,7 +3258,7 @@ yyreduce:
     break;
 
   case 130:
-#line 1225 "cod/cod.y"
+#line 1239 "cod.y"
     {
 	    (yyval.reference) = cod_new_enumerator();
 	    (yyval.reference)->node.enumerator.id = (yyvsp[(1) - (3)].info).string;
@@ -3253,7 +3267,7 @@ yyreduce:
     break;
 
   case 131:
-#line 1231 "cod/cod.y"
+#line 1245 "cod.y"
     {
 	    (yyval.reference) = cod_new_enumerator();
 	    (yyval.reference)->node.enumerator.id = (yyvsp[(1) - (1)].info).string;
@@ -3262,7 +3276,7 @@ yyreduce:
     break;
 
   case 132:
-#line 1239 "cod/cod.y"
+#line 1253 "cod.y"
     {
 	    (yyval.reference) = cod_new_type_specifier();
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -3271,7 +3285,7 @@ yyreduce:
     break;
 
   case 134:
-#line 1249 "cod/cod.y"
+#line 1263 "cod.y"
     {
 	    (yyval.reference) = (yyvsp[(2) - (2)].reference);
 	    if ((yyval.reference)->node_type == cod_declaration) {
@@ -3286,7 +3300,7 @@ yyreduce:
     break;
 
   case 135:
-#line 1263 "cod/cod.y"
+#line 1277 "cod.y"
     {
 		(yyval.reference) = cod_new_declaration();
 		(yyval.reference)->node.declaration.param_num = -1;
@@ -3299,14 +3313,14 @@ yyreduce:
     break;
 
   case 136:
-#line 1272 "cod/cod.y"
+#line 1286 "cod.y"
     {
 	    (yyval.reference) = (yyvsp[(2) - (3)].reference);
 	;}
     break;
 
   case 137:
-#line 1275 "cod/cod.y"
+#line 1289 "cod.y"
     {
 		(yyval.reference) = cod_new_declaration();
 		(yyval.reference)->node.declaration.param_num = -1;
@@ -3319,7 +3333,7 @@ yyreduce:
     break;
 
   case 138:
-#line 1284 "cod/cod.y"
+#line 1298 "cod.y"
     {
 		(yyval.reference) = cod_new_declaration();
 		(yyval.reference)->node.declaration.param_num = -1;
@@ -3332,7 +3346,7 @@ yyreduce:
     break;
 
   case 139:
-#line 1293 "cod/cod.y"
+#line 1307 "cod.y"
     {
 		(yyval.reference) = cod_new_array_type_decl();
 		(yyval.reference)->node.array_type_decl.lx_srcpos = (yyvsp[(2) - (4)].info).lx_srcpos;
@@ -3343,7 +3357,7 @@ yyreduce:
     break;
 
   case 140:
-#line 1300 "cod/cod.y"
+#line 1314 "cod.y"
     {
 		(yyval.reference) = cod_new_array_type_decl();
 		(yyval.reference)->node.array_type_decl.lx_srcpos = (yyvsp[(2) - (3)].info).lx_srcpos;
@@ -3354,7 +3368,7 @@ yyreduce:
     break;
 
   case 141:
-#line 1310 "cod/cod.y"
+#line 1324 "cod.y"
     {
 	    sm_ref star = cod_new_type_specifier();
 	    star->node.type_specifier.lx_srcpos = (yyvsp[(1) - (1)].info).lx_srcpos;
@@ -3366,7 +3380,7 @@ yyreduce:
     break;
 
   case 142:
-#line 1318 "cod/cod.y"
+#line 1332 "cod.y"
     {
 	    sm_ref star = cod_new_type_specifier();
 	    star->node.type_specifier.lx_srcpos = (yyvsp[(1) - (2)].info).lx_srcpos;
@@ -3378,7 +3392,7 @@ yyreduce:
     break;
 
   case 143:
-#line 1326 "cod/cod.y"
+#line 1340 "cod.y"
     {
 	    sm_ref star = cod_new_type_specifier();
 	    star->node.type_specifier.lx_srcpos = (yyvsp[(1) - (2)].info).lx_srcpos;
@@ -3390,7 +3404,7 @@ yyreduce:
     break;
 
   case 144:
-#line 1334 "cod/cod.y"
+#line 1348 "cod.y"
     {
 	    sm_list tmp = (yyvsp[(2) - (3)].list);
 	    sm_ref star = cod_new_type_specifier();
@@ -3408,7 +3422,7 @@ yyreduce:
     break;
 
   case 145:
-#line 1348 "cod/cod.y"
+#line 1362 "cod.y"
     {
 	    sm_ref star = cod_new_type_specifier();
 	    if(!cod_segmented_pointers) { 
@@ -3423,7 +3437,7 @@ yyreduce:
     break;
 
   case 146:
-#line 1359 "cod/cod.y"
+#line 1373 "cod.y"
     {
 	    sm_ref star = cod_new_type_specifier();
 	    if(!cod_segmented_pointers) {
@@ -3438,7 +3452,7 @@ yyreduce:
     break;
 
   case 147:
-#line 1370 "cod/cod.y"
+#line 1384 "cod.y"
     {
 	    sm_ref star = cod_new_type_specifier();
 	    if(!cod_segmented_pointers) {
@@ -3453,7 +3467,7 @@ yyreduce:
     break;
 
   case 148:
-#line 1381 "cod/cod.y"
+#line 1395 "cod.y"
     {
 	    sm_list tmp = (yyvsp[(2) - (3)].list);
 	    sm_ref star = cod_new_type_specifier();
@@ -3474,7 +3488,7 @@ yyreduce:
     break;
 
   case 149:
-#line 1401 "cod/cod.y"
+#line 1415 "cod.y"
     {
 	    (yyval.list) = malloc(sizeof(struct list_struct));
 	    (yyval.list)->node = (yyvsp[(1) - (1)].reference);
@@ -3483,7 +3497,7 @@ yyreduce:
     break;
 
   case 150:
-#line 1406 "cod/cod.y"
+#line 1420 "cod.y"
     {
 	    sm_list tmp = (yyvsp[(1) - (2)].list);
 	    while (tmp->next != NULL) {
@@ -3497,7 +3511,7 @@ yyreduce:
     break;
 
   case 152:
-#line 1420 "cod/cod.y"
+#line 1434 "cod.y"
     {
 	    sm_list tmp = (yyvsp[(1) - (3)].list);
 	    sm_ref id = cod_new_declaration();
@@ -3513,7 +3527,7 @@ yyreduce:
     break;
 
   case 153:
-#line 1435 "cod/cod.y"
+#line 1449 "cod.y"
     {
 		(yyval.list) = malloc(sizeof(struct list_struct));
 		(yyval.list)->node = (yyvsp[(1) - (1)].reference);
@@ -3522,7 +3536,7 @@ yyreduce:
     break;
 
   case 154:
-#line 1441 "cod/cod.y"
+#line 1455 "cod.y"
     {
 	    sm_list tmp = (yyvsp[(1) - (3)].list);
 	    while (tmp->next != NULL) {
@@ -3536,7 +3550,7 @@ yyreduce:
     break;
 
   case 155:
-#line 1456 "cod/cod.y"
+#line 1470 "cod.y"
     {
 	    (yyval.reference) = cod_new_declaration();
 	    (yyval.reference)->node.declaration.param_num = -1;
@@ -3549,7 +3563,7 @@ yyreduce:
     break;
 
   case 156:
-#line 1465 "cod/cod.y"
+#line 1479 "cod.y"
     {
 		(yyval.reference) = (yyvsp[(2) - (2)].reference);
 		if ((yyval.reference)->node_type == cod_declaration) {
@@ -3590,7 +3604,7 @@ yyreduce:
     break;
 
   case 158:
-#line 1505 "cod/cod.y"
+#line 1519 "cod.y"
     {
 	    sm_list tmp = (yyvsp[(1) - (2)].list);
 	    while (tmp->next != NULL) {
@@ -3602,7 +3616,7 @@ yyreduce:
     break;
 
   case 160:
-#line 1556 "cod/cod.y"
+#line 1570 "cod.y"
     { 
 	    (yyval.reference) = cod_new_initializer_list();
 	    (yyval.reference)->node.initializer_list.initializers = (yyvsp[(2) - (3)].list);
@@ -3610,7 +3624,7 @@ yyreduce:
     break;
 
   case 161:
-#line 1561 "cod/cod.y"
+#line 1575 "cod.y"
     { 
 	    (yyval.reference) = cod_new_initializer_list();
 	    (yyval.reference)->node.initializer_list.initializers = (yyvsp[(2) - (4)].list);
@@ -3618,12 +3632,12 @@ yyreduce:
     break;
 
   case 162:
-#line 1565 "cod/cod.y"
+#line 1579 "cod.y"
     { (yyval.reference) = (yyvsp[(1) - (1)].reference);;}
     break;
 
   case 163:
-#line 1570 "cod/cod.y"
+#line 1584 "cod.y"
     {
 	    sm_ref initializer = cod_new_initializer();
 	    initializer->node.initializer.designation = (yyvsp[(1) - (2)].list);
@@ -3635,7 +3649,7 @@ yyreduce:
     break;
 
   case 164:
-#line 1578 "cod/cod.y"
+#line 1592 "cod.y"
     {
 	    sm_ref initializer = cod_new_initializer();
 	    initializer->node.initializer.designation = NULL;
@@ -3647,7 +3661,7 @@ yyreduce:
     break;
 
   case 165:
-#line 1586 "cod/cod.y"
+#line 1600 "cod.y"
     {
 	    sm_list tmp = (yyvsp[(1) - (4)].list);
 	    sm_ref initializer = cod_new_initializer();
@@ -3664,7 +3678,7 @@ yyreduce:
     break;
 
   case 166:
-#line 1599 "cod/cod.y"
+#line 1613 "cod.y"
     {
 	    sm_list tmp = (yyvsp[(1) - (3)].list);
 	    sm_ref initializer = cod_new_initializer();
@@ -3681,12 +3695,12 @@ yyreduce:
     break;
 
   case 167:
-#line 1616 "cod/cod.y"
+#line 1630 "cod.y"
     { (yyval.list) = (yyvsp[(1) - (2)].list);;}
     break;
 
   case 168:
-#line 1620 "cod/cod.y"
+#line 1634 "cod.y"
     {
 		(yyval.list) = malloc(sizeof(struct list_struct));
 		(yyval.list)->node = (yyvsp[(1) - (1)].reference);
@@ -3695,7 +3709,7 @@ yyreduce:
     break;
 
   case 169:
-#line 1625 "cod/cod.y"
+#line 1639 "cod.y"
     {
 	    sm_list tmp = (yyvsp[(1) - (2)].list);
 	    while (tmp->next != NULL) {
@@ -3709,7 +3723,7 @@ yyreduce:
     break;
 
   case 170:
-#line 1639 "cod/cod.y"
+#line 1653 "cod.y"
     { 
 	    (yyval.reference) = cod_new_designator();
 	    (yyval.reference)->node.designator.expression = (yyvsp[(2) - (3)].reference);
@@ -3718,7 +3732,7 @@ yyreduce:
     break;
 
   case 171:
-#line 1645 "cod/cod.y"
+#line 1659 "cod.y"
     { 
 	    (yyval.reference) = cod_new_designator();
 	    (yyval.reference)->node.designator.expression = NULL;
@@ -3727,7 +3741,7 @@ yyreduce:
     break;
 
   case 172:
-#line 1653 "cod/cod.y"
+#line 1667 "cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[(1) - (1)].reference);
@@ -3737,21 +3751,21 @@ yyreduce:
     break;
 
   case 173:
-#line 1659 "cod/cod.y"
+#line 1673 "cod.y"
     {
 	    (yyval.list) = (yyvsp[(1) - (1)].list);
 	   ;}
     break;
 
   case 174:
-#line 1662 "cod/cod.y"
+#line 1676 "cod.y"
     {
 	      (yyval.list) = NULL;
 	  ;}
     break;
 
   case 175:
-#line 1665 "cod/cod.y"
+#line 1679 "cod.y"
     {
 	    sm_list tmp = malloc(sizeof(struct list_struct));
 	    tmp->node = (yyvsp[(2) - (2)].reference);
@@ -3761,14 +3775,14 @@ yyreduce:
     break;
 
   case 176:
-#line 1671 "cod/cod.y"
+#line 1685 "cod.y"
     {
 	    (yyval.list) = cod_append_list((yyvsp[(1) - (2)].list), (yyvsp[(2) - (2)].list));
 	;}
     break;
 
   case 183:
-#line 1688 "cod/cod.y"
+#line 1702 "cod.y"
     {
 	    (yyval.reference) = cod_new_label_statement();
 	    (yyval.reference)->node.label_statement.name =  (yyvsp[(1) - (3)].info).string;
@@ -3777,14 +3791,14 @@ yyreduce:
     break;
 
   case 184:
-#line 1695 "cod/cod.y"
+#line 1709 "cod.y"
     {
 	    (yyval.reference) = cod_new_compound_statement();
 	;}
     break;
 
   case 185:
-#line 1698 "cod/cod.y"
+#line 1712 "cod.y"
     {
 	    int count = (yyvsp[(1) - (3)].info).type_stack_count;
 	    (yyval.reference) = cod_new_compound_statement();
@@ -3794,12 +3808,12 @@ yyreduce:
     break;
 
   case 186:
-#line 1706 "cod/cod.y"
+#line 1720 "cod.y"
     { (yyval.list) = (yyvsp[(1) - (1)].list); ;}
     break;
 
   case 187:
-#line 1708 "cod/cod.y"
+#line 1722 "cod.y"
     {
 	    if ((yyvsp[(1) - (2)].list) == NULL) {
 		(yyval.list) = (yyvsp[(2) - (2)].list);
@@ -3815,7 +3829,7 @@ yyreduce:
     break;
 
   case 188:
-#line 1722 "cod/cod.y"
+#line 1736 "cod.y"
     {
 	    (yyval.reference) = cod_new_return_statement();
 	    (yyval.reference)->node.return_statement.expression = (yyvsp[(2) - (3)].reference);
@@ -3824,7 +3838,7 @@ yyreduce:
     break;
 
   case 189:
-#line 1727 "cod/cod.y"
+#line 1741 "cod.y"
     {
 	    (yyval.reference) = cod_new_return_statement();
 	    (yyval.reference)->node.return_statement.expression = NULL;
@@ -3833,7 +3847,7 @@ yyreduce:
     break;
 
   case 190:
-#line 1732 "cod/cod.y"
+#line 1746 "cod.y"
     {
 	    (yyval.reference) = cod_new_jump_statement();
 	    (yyval.reference)->node.jump_statement.continue_flag = 1;
@@ -3843,7 +3857,7 @@ yyreduce:
     break;
 
   case 191:
-#line 1738 "cod/cod.y"
+#line 1752 "cod.y"
     {
 	    (yyval.reference) = cod_new_jump_statement();
 	    (yyval.reference)->node.jump_statement.continue_flag = 0;
@@ -3853,7 +3867,7 @@ yyreduce:
     break;
 
   case 192:
-#line 1744 "cod/cod.y"
+#line 1758 "cod.y"
     {
 	    (yyval.reference) = cod_new_jump_statement();
 	    (yyval.reference)->node.jump_statement.continue_flag = 0;
@@ -3863,14 +3877,14 @@ yyreduce:
     break;
 
   case 193:
-#line 1753 "cod/cod.y"
+#line 1767 "cod.y"
     {
 	    (yyval.reference) = NULL;
 	;}
     break;
 
   case 194:
-#line 1757 "cod/cod.y"
+#line 1771 "cod.y"
     { 
 	    (yyval.reference) = cod_new_expression_statement();
 	    (yyval.reference)->node.expression_statement.expression = (yyvsp[(1) - (2)].reference);
@@ -3878,7 +3892,7 @@ yyreduce:
     break;
 
   case 195:
-#line 1768 "cod/cod.y"
+#line 1782 "cod.y"
     { 
 	    (yyval.reference) = cod_new_selection_statement();
 	    (yyval.reference)->node.selection_statement.lx_srcpos = (yyvsp[(1) - (5)].info).lx_srcpos;
@@ -3889,7 +3903,7 @@ yyreduce:
     break;
 
   case 196:
-#line 1777 "cod/cod.y"
+#line 1791 "cod.y"
     { 
 	    (yyval.reference) = cod_new_selection_statement();
 	    (yyval.reference)->node.selection_statement.lx_srcpos = (yyvsp[(1) - (7)].info).lx_srcpos;
@@ -3900,7 +3914,7 @@ yyreduce:
     break;
 
   case 197:
-#line 1794 "cod/cod.y"
+#line 1808 "cod.y"
     { 
 	    (yyval.reference) = cod_new_iteration_statement();
 	    (yyval.reference)->node.iteration_statement.lx_srcpos = (yyvsp[(1) - (9)].info).lx_srcpos;
@@ -3912,7 +3926,7 @@ yyreduce:
     break;
 
   case 198:
-#line 1804 "cod/cod.y"
+#line 1818 "cod.y"
     { 
 	    (yyval.reference) = cod_new_iteration_statement();
 	    (yyval.reference)->node.iteration_statement.lx_srcpos = (yyvsp[(1) - (5)].info).lx_srcpos;
@@ -3924,7 +3938,7 @@ yyreduce:
     break;
 
   case 199:
-#line 1814 "cod/cod.y"
+#line 1828 "cod.y"
     { 
 	    (yyval.reference) = cod_new_iteration_statement();
 	    (yyval.reference)->node.iteration_statement.lx_srcpos = (yyvsp[(1) - (7)].info).lx_srcpos;
@@ -3937,12 +3951,12 @@ yyreduce:
     break;
 
   case 200:
-#line 1827 "cod/cod.y"
+#line 1841 "cod.y"
     { (yyval.reference) = NULL; ;}
     break;
 
   case 202:
-#line 1832 "cod/cod.y"
+#line 1846 "cod.y"
     {
 	    (yyval.reference) = cod_new_constant();
 	    (yyval.reference)->node.constant.token = integer_constant;
@@ -3952,7 +3966,7 @@ yyreduce:
     break;
 
   case 203:
-#line 1839 "cod/cod.y"
+#line 1853 "cod.y"
     {
 	    (yyval.reference) = cod_new_constant();
 	    (yyval.reference)->node.constant.token = floating_constant;
@@ -3962,7 +3976,7 @@ yyreduce:
     break;
 
   case 204:
-#line 1846 "cod/cod.y"
+#line 1860 "cod.y"
     {
 	    (yyval.reference) = cod_new_constant();
 	    (yyval.reference)->node.constant.token = string_constant;
@@ -3972,7 +3986,7 @@ yyreduce:
     break;
 
   case 205:
-#line 1853 "cod/cod.y"
+#line 1867 "cod.y"
     {
 	    (yyval.reference) = cod_new_constant();
 	    (yyval.reference)->node.constant.token = character_constant;
@@ -3982,7 +3996,7 @@ yyreduce:
     break;
 
   case 206:
-#line 1860 "cod/cod.y"
+#line 1874 "cod.y"
     {
 	    (yyval.reference) = cod_new_constant();
 	    (yyval.reference)->node.constant.token = character_constant;
@@ -3993,7 +4007,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 3997 "/Users/eisen/prog/ffs/build/cod.tab.c"
+#line 4011 "cod.tab.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -4207,8 +4221,11 @@ yyreturn:
 }
 
 
-#line 1868 "cod/cod.y"
+#line 1882 "cod.y"
 
+#ifdef _MSC_VER
+#define YY_NO_UNISTD_H
+#endif
 #include "lex.yy.c"
 
 typedef struct scope *scope_ptr;
@@ -4273,7 +4290,7 @@ cod_preprocessor(char *input, cod_parse_context context, int*white)
 {
     char *out;
     char *ptr;
-    if (index(input, '#') == NULL) return NULL;
+    if (strchr(input, '#') == NULL) return NULL;
     out = strdup(input);
     ptr = out;
     *white = 0;
@@ -4287,10 +4304,10 @@ cod_preprocessor(char *input, cod_parse_context context, int*white)
 		char *include_end;
 		ptr += 8;
 		while(isspace(*ptr)) ptr++;
-		line_end = index(ptr, '\n');
+		line_end = strchr(ptr, '\n');
 		if (line_end) *line_end = 0;
 		if ((*ptr == '<') || (*ptr == '"')) {
-		    include_end = (*ptr == '<') ? index(ptr, '>') : index((ptr+1), '"');
+		    include_end = (*ptr == '<') ? strchr(ptr, '>') : strchr((ptr+1), '"');
 		    if (!include_end) {
 			printf("improper #include, \"%s\"\n", ptr);
 			goto skip;
@@ -4311,10 +4328,10 @@ cod_preprocessor(char *input, cod_parse_context context, int*white)
 	}
     skip:
 	/* skip to next line */
-	ptr = index(ptr, '\n');
+	ptr = strchr(ptr, '\n');
 	while (ptr && (*(ptr - 1) == '\'')) {
 	    /* continued line */
-	    ptr = index(ptr, '\n');
+	    ptr = strchr(ptr, '\n');
 	}
     }
     { 
@@ -4329,9 +4346,7 @@ cod_preprocessor(char *input, cod_parse_context context, int*white)
 }
 	
 int
-cod_parse_for_globals(code, context)
-char *code;
-cod_parse_context context;
+cod_parse_for_globals(char *code, cod_parse_context context)
 {
     int ret;
     context->alloc_globals = 1;
@@ -4340,9 +4355,7 @@ cod_parse_context context;
     return ret;
 }
 int
-cod_parse_for_context(code, context)
-char *code;
-cod_parse_context context;
+cod_parse_for_context(char *code, cod_parse_context context)
 {
     sm_list decls;
     int ret;
@@ -4407,12 +4420,10 @@ static int include_prefix(char *code)
 	    break;
 	}
     }
-    return tmp - code;
+    return (int)(intptr_t)(tmp - code);
 }
 cod_code
-cod_code_gen(code, context)
-char *code;
-cod_parse_context context;
+cod_code_gen(char *code, cod_parse_context context)
 {
     sm_ref tmp, tmp2;
     cod_code ret_code;
@@ -4423,7 +4434,7 @@ cod_parse_context context;
     if (code != NULL) {
 	if ((bracket = include_prefix(code))) {
 	    char *prefix = malloc(bracket+1), *tmp;
-	    strncpy(prefix, code, bracket);
+	    strncpy(prefix, code, bracket + 1);
 	    prefix[bracket] = 0;
 	    tmp = prefix;
 	    while(isspace(*tmp)) tmp++;
@@ -4475,7 +4486,7 @@ cod_parse_context context;
     tmp->node.compound_statement.decls = NULL;
     tmp2->node.compound_statement.decls = NULL;
     cod_rfree(tmp2);
-    ret_code->func = (void(*)())(long)func;
+    ret_code->func = (void(*)(void))(intptr_t)func;
     return ret_code;
 }
 
@@ -4493,9 +4504,7 @@ cod_dump(cod_code code)
     
 
 int
-cod_code_verify(code, context)
-char *code;
-cod_parse_context context;
+cod_code_verify(char *code, cod_parse_context context)
 {
     sm_ref tmp;
 
@@ -4533,8 +4542,7 @@ cod_parse_context context;
 }
 
 extern void 
-cod_code_free(code)
-cod_code code;
+cod_code_free(cod_code code)
 {
     if (code->code_memory_block) free(code->code_memory_block);
     if (code->data) free(code->data);
@@ -4594,7 +4602,7 @@ print_context(cod_parse_context context, int line, int character)
 	offset = character - 40;
     }
     line_copy = copy_line(line_begin + offset);
-    line_len = strlen(line_copy);
+    line_len = (int)strlen(line_copy);
     if (line_len > 60) {
 	line_copy[60] = 0;
     }
@@ -4611,8 +4619,7 @@ print_context(cod_parse_context context, int line, int character)
     context->error_func(context->client_data, "^\n");
 }
 
-void yyerror(str)
-char *str;
+void yyerror(char *str)
 {
     char tmp_str[100];
     sprintf(tmp_str, "## Error %s\n", str);
@@ -4806,8 +4813,7 @@ struct scope {
 
 
 extern cod_parse_context
-cod_copy_context(context)
-cod_parse_context context;
+cod_copy_context(cod_parse_context context)
 {
     int i, count;
     int type_count = 0;
@@ -4844,8 +4850,7 @@ cod_parse_context context;
 extern void dump_scope(scope_ptr scope);
 
 extern cod_parse_context
-cod_copy_globals(context)
-cod_parse_context context;
+cod_copy_globals(cod_parse_context context)
 {
     int i, count;
     int type_count = 0;
@@ -5184,7 +5189,7 @@ determine_op_type(cod_parse_context context, sm_ref expr,
     if ((left_type == DILL_UL) || (right_type == DILL_UL)) return DILL_UL;
     if ((left_type == DILL_L) || (right_type == DILL_L)) {
 	/* GSE -bug  This test should be for *generated* target, not host */
-	if (sizeof(long) > sizeof(unsigned int)) {
+	if (sizeof(intptr_t) > sizeof(unsigned int)) {
 	    /* Long can represent all values of unsigned int */
 	    return DILL_L;
 	} else {
@@ -5535,7 +5540,7 @@ type_list_to_string(cod_parse_context context, sm_list type_list, int *size)
 	*size = sizeof(int);
 	return strdup("integer");
     case DILL_L:
-	*size = sizeof(long);
+	*size = sizeof(intptr_t);
 	return strdup("integer");
     case DILL_S:
 	*size = sizeof(short);
@@ -5544,7 +5549,7 @@ type_list_to_string(cod_parse_context context, sm_list type_list, int *size)
 	*size = sizeof(int);
 	return strdup("unsigned integer");
     case DILL_UL:
-	*size = sizeof(long);
+	*size = sizeof(intptr_t);
 	return strdup("unsigned integer");
     case DILL_US:
 	*size = sizeof(short);
@@ -6448,7 +6453,7 @@ unsigned long, long long, unsigned long long
 */
 
     long i;
-    int len = strlen(val);
+    int len = (int)strlen(val);
     int hex = 0;
     int specified_unsgned = 0, specified_lng = 0;
     if (val[0] == '0') {
@@ -7947,9 +7952,7 @@ cod_remove_defined_types(cod_parse_context context, int count)
 }
 
 void
-cod_add_defined_type(id, context)
-char *id;
-cod_parse_context context;
+cod_add_defined_type(char *id, cod_parse_context context)
 {
     int count = 0;
     while(context->defined_types && context->defined_types[count]) count++;
@@ -7966,9 +7969,7 @@ cod_parse_context context;
 }
 
 void
-cod_add_enum_const(id, context)
-char *id;
-cod_parse_context context;
+cod_add_enum_const(char *id, cod_parse_context context)
 {
     int count = 0;
     while(context->enumerated_constants && context->enumerated_constants[count]) count++;
@@ -8009,9 +8010,7 @@ cod_add_struct_type(FMStructDescList format_list,
 }
 
 static int
-str_to_data_type(str, size)
-char *str;
-int size;
+str_to_data_type(char *str, int size)
 {
     char *tmp = malloc(strlen(str) + 1);
     char *free_str = tmp;
@@ -8033,7 +8032,7 @@ int size;
     }
     if ((strcmp(str, "integer") == 0) || (strcmp(str, "enumeration") == 0)) {
 	free(free_str);
-	if (size == sizeof(long)) {
+	if (size == sizeof(intptr_t)) {
 	    return DILL_L;
 	} else if (size == sizeof(int)) {
 	    return DILL_I;
@@ -8046,7 +8045,7 @@ int size;
 	}
     } else if (strcmp(str, "unsigned integer") == 0) {
 	free(free_str);
-	if (size == sizeof(long)) {
+	if (size == sizeof(intptr_t)) {
 	    return DILL_UL;
 	} else if (size == sizeof(int)) {
 	    return DILL_U;
@@ -8081,9 +8080,7 @@ int size;
 }
 
 static int
-array_str_to_data_type(str, size)
-char *str;
-int size;
+array_str_to_data_type(char *str, int size)
 {
     int ret_type;
     char field_type[1024];
@@ -8103,14 +8100,8 @@ int size;
 }
 
 static sm_ref
-build_subtype_nodes(context, decl, f, desc, err, scope, must_free_p)
-cod_parse_context context;
-sm_ref decl;
-field* f;
-FMTypeDesc *desc;
-int *err;
-scope_ptr scope;
-int *must_free_p;
+build_subtype_nodes(cod_parse_context context, sm_ref decl, field* f, FMTypeDesc *desc,
+		    int *err, scope_ptr scope, int *must_free_p)
 {
     sm_ref ret = NULL;
     sm_ref subtype = NULL;
@@ -8206,8 +8197,8 @@ int *must_free_p;
 	ret->node.reference_type_decl.cg_referenced_type = DILL_ERR;
 	ret->node.reference_type_decl.sm_complex_referenced_type = subtype;
 	if (must_free_flag) {
-	    if (ret->node.array_type_decl.freeable_complex_element_type) {
-	        cod_rfree(ret->node.array_type_decl.freeable_complex_element_type);
+	    if (ret->node.reference_type_decl.freeable_complex_referenced_type) {
+	        cod_rfree(ret->node.reference_type_decl.freeable_complex_referenced_type);
 	    }
 	    ret->node.reference_type_decl.freeable_complex_referenced_type = subtype;
 	}
@@ -8233,16 +8224,8 @@ int *must_free_p;
 }
 
 static void
-build_type_nodes(context, decl, f, fields, cg_size, cg_type, desc, err, scope)
-cod_parse_context context;
-sm_ref decl;
-field* f;
-sm_list fields;
-int cg_size;
-int cg_type;
-FMTypeDesc* desc;
-int *err;
-scope_ptr scope;
+build_type_nodes(cod_parse_context context, sm_ref decl, field* f, sm_list fields,
+		 int cg_size, int cg_type, FMTypeDesc* desc, int *err, scope_ptr scope)
 {
     int must_free_flag = 0;
     sm_ref complex_type = build_subtype_nodes(context, decl, f, desc, err, scope, &must_free_flag);
@@ -8256,13 +8239,7 @@ scope_ptr scope;
 }
 
 static int
-semanticize_array_element_node(context, array, super_type, base_type_spec, 
-			       scope)
-cod_parse_context context;
-sm_ref array;
-sm_ref super_type;
-sm_list base_type_spec;
-scope_ptr scope;
+semanticize_array_element_node(cod_parse_context context, sm_ref array, sm_ref super_type, sm_list base_type_spec, scope_ptr scope)
 {
     if (array->node.array_type_decl.size_expr != NULL) {
 	if (!is_constant_expr(array->node.array_type_decl.size_expr)) {
@@ -8330,10 +8307,7 @@ scope_ptr scope;
 }	
 
 static int
-semanticize_array_type_node(context, array, scope)
-cod_parse_context context;
-sm_ref array;
-scope_ptr scope;
+semanticize_array_type_node(cod_parse_context context, sm_ref array, scope_ptr scope)
 {
     if (!array->node.array_type_decl.dimensions) {
         array->node.array_type_decl.dimensions = malloc(sizeof(dimen_s));
@@ -8837,7 +8811,7 @@ static void
 uniqueify_names(FMStructDescList list, char *prefix)
 {
     int i = 0;
-    int prefix_len = strlen(prefix);
+    int prefix_len = (int)strlen(prefix);
     while (list[i].format_name != NULL) {
 	int j = 0;
 	FMFieldList fl = list[i].field_list;
@@ -8845,14 +8819,14 @@ uniqueify_names(FMStructDescList list, char *prefix)
 	    malloc(strlen(list[i].format_name) + prefix_len + 1);
 	strcpy(new_name, prefix);
 	strcpy(new_name + prefix_len, list[i].format_name);
-	free(list[i].format_name);
+	free((char*)list[i].format_name);
 	list[i].format_name = new_name;
 	while (fl[j].field_name != 0) {
-	    int field_type_len = strlen(fl[j].field_type);
+	    int field_type_len = (int)strlen(fl[j].field_type);
 	    char *bracket = strchr(fl[j].field_type, '[');
 	    int k;
 	    if (bracket != NULL) {
-		field_type_len = (long) bracket - (long) fl[j].field_type;
+		field_type_len = (int)((intptr_t) bracket - (intptr_t) fl[j].field_type);
 	    }
 	    for (k = 0; k < i; k++) {
 		char *new_type;
@@ -8940,9 +8914,10 @@ get_constant_float_value(cod_parse_context context, sm_ref expr)
     default:
 	assert(FALSE);
     }
+	return 0.0;
 }
 
-static long
+static intptr_t
 get_constant_long_value(cod_parse_context context, sm_ref expr)
 {
     double dresult;
@@ -8961,6 +8936,7 @@ get_constant_long_value(cod_parse_context context, sm_ref expr)
     default:
 	assert(FALSE);
     }
+	return -1;
 }
 
 extern sm_ref
@@ -9054,7 +9030,7 @@ evaluate_constant_return_expr(cod_parse_context context, sm_ref expr, int *free_
 		is_ivalue=1;
 		break;
 	    case  op_eq:
-		ivalue = left_val = right_val;
+		ivalue = left_val == right_val;
 		is_ivalue=1;
 		break;
 	    case  op_neq:
@@ -9099,7 +9075,7 @@ evaluate_constant_return_expr(cod_parse_context context, sm_ref expr, int *free_
 	    *free_result = 1;
 	} else {
 	    /* we get an integer result */
-	    long left_val = 0, right_val = 0, value;
+	    intptr_t left_val = 0, right_val = 0, value;
 	    char str_val[40];
 	    if (expr->node.operator.left)
 		left_val = get_constant_long_value(context, left);
@@ -9178,7 +9154,7 @@ evaluate_constant_return_expr(cod_parse_context context, sm_ref expr, int *free_
 	    }
 	    ret = cod_new_constant();
 	    ret->node.constant.token = integer_constant;
-	    sprintf(str_val, "%ld", value);
+	    sprintf(str_val, "%zd", value);
 	    ret->node.constant.const_val = strdup(str_val);
 	    *free_result = 1;
 	}
@@ -9200,6 +9176,7 @@ evaluate_constant_return_expr(cod_parse_context context, sm_ref expr, int *free_
     default:
 	assert(FALSE);
     }
+	return NULL;
 }
 	
 
