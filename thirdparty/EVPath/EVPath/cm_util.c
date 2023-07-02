@@ -209,8 +209,8 @@ CMint_create_attr_list(CManager cm, char *file, int line)
 {
     attr_list list = create_attr_list();
     (void)cm;
-    CMtrace_out(cm, CMAttrVerbose, "Creating attr list %lx at %s:%d\n", 
-		(long)list, file, line);
+    CMtrace_out(cm, CMAttrVerbose, "Creating attr list %p at %s:%d\n", 
+		list, file, line);
     return list;
 }
 
@@ -219,8 +219,8 @@ CMint_free_attr_list(CManager cm, attr_list l, char *file, int line)
 {
     int count = attr_list_ref_count(l);
     (void)cm;
-    CMtrace_out(cm, CMAttrVerbose, "Freeing attr list %lx at %s:%d, ref count was %d\n", 
-		(long)l, file, line, count);
+    CMtrace_out(cm, CMAttrVerbose, "Freeing attr list %p at %s:%d, ref count was %d\n", 
+		l, file, line, count);
     free_attr_list(l);
 }
 
@@ -232,8 +232,8 @@ CMint_add_ref_attr_list(CManager cm, attr_list l, char *file, int line)
     (void)cm;
     if (l == NULL) return NULL;
     count = attr_list_ref_count(l);
-    CMtrace_out(cm, CMAttrVerbose, "Adding ref attr list %lx at %s:%d, ref count now %d\n", 
-		(long)l, file, line, count+1);
+    CMtrace_out(cm, CMAttrVerbose, "Adding ref attr list %p at %s:%d, ref count now %d\n", 
+		l, file, line, count+1);
     return add_ref_attr_list(l);
 }
 
@@ -242,8 +242,8 @@ CMint_attr_copy_list(CManager cm, attr_list l, char *file, int line)
 {
     attr_list ret = attr_copy_list(l);
     (void)cm;
-    CMtrace_out(cm, CMAttrVerbose, "Copy attr list %lx at %s:%d, new list %p\n", 
-		(long)l, file, line, ret);
+    CMtrace_out(cm, CMAttrVerbose, "Copy attr list %p at %s:%d, new list %p\n", 
+		l, file, line, ret);
     return ret;
 }
 
@@ -262,26 +262,33 @@ CMint_decode_attr_from_xmit(CManager cm, void * buf, char *file, int line)
 {
     attr_list l = decode_attr_from_xmit(buf);
     (void)cm;
-    CMtrace_out(cm, CMAttrVerbose, "decode attr list from xmit at %s:%d, new list %lx\n", 
-		file, line, (long)l);
+    CMtrace_out(cm, CMAttrVerbose, "decode attr list from xmit at %s:%d, new list %p\n", 
+		file, line, l);
     return l;
 }
+#undef realloc
+#undef malloc
 
 extern void*
-INT_CMrealloc(void *ptr, int size)
+INT_CMrealloc(void *ptr, size_t size)
 {
     void *tmp = realloc(ptr, size);
     if ((tmp == 0) && (size != 0)) {
-	printf("Realloc failed on ptr %lx, size %d\n", (long)ptr, size);
+	printf("Realloc failed on ptr %p, size %zd\n", ptr, size);
 	perror("realloc");
     }
     return tmp;
 }
 
 extern void*
-INT_CMmalloc(int size)
+INT_CMmalloc(size_t size)
 {
-    return malloc(size);
+    void* tmp = malloc(size);
+    if ((tmp == 0) && (size != 0)) {
+	printf("Malloc failed on size %zd\n", size);
+	perror("malloc");
+    }
+    return tmp;
 }
 
 extern void

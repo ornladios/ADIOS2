@@ -11,15 +11,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include <arpa/inet.h>
 #include "evpath.h"
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
+#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
 #else
 #include <sys/wait.h>
+#include <arpa/inet.h>
 #endif
 
 typedef struct _complex_rec {
@@ -179,8 +180,8 @@ main(int argc, char **argv)
 
     PARSE_ARGS();
 
-    if (rindex(argv0, '/')) {
-	char *last_slash = rindex(argv0, '/');
+    if (strrchr(argv0, '/')) {
+	char *last_slash = strrchr(argv0, '/');
 	*last_slash = 0;
 	EVadd_dll_search_dir(argv0);
 	*last_slash = '/';

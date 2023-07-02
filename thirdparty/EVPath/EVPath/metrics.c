@@ -4,11 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <strings.h>
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
 #include <sys/stat.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -16,6 +17,14 @@
 
 #ifdef HAVE_SYSINFO
 #include <sys/sysinfo.h>
+#endif
+
+#ifdef _MSC_VER
+#define open _open
+#define read _read
+#define close _close
+#include <sys/timeb.h>
+#include <time.h>
 #endif
 
 #ifdef HAVE_MAC_SYSCTL
@@ -85,8 +94,8 @@ char * skip_token (const char *p)
 
 int slurpfile(const char *filename, char *buffer, int buflen)
 {
+#ifndef _MSC_VER
     int fd, read_len;
-
     fd = open(filename, O_RDONLY);
     if(fd < 0) {
 	printf("open() error on file %s \n", filename); 
@@ -104,6 +113,9 @@ int slurpfile(const char *filename, char *buffer, int buflen)
     buffer[read_len] = '\0';
     close(fd);
     return read_len;
+#else
+    return 0;
+#endif
 }
 
 char *update_file(struct sensor_slurp *sf) {
@@ -172,6 +184,7 @@ unsigned long total_jiffies_func ( void ) {
 
 void cpu_and_core_usage_func (double usage[])
 {
+#ifndef _MSC_VER
    char *p;
    int n, numcores, i;
    numcores = num_cpustates_func();
@@ -215,7 +228,7 @@ void cpu_and_core_usage_func (double usage[])
         p = skip_whitespace(p);
 
    }
-	
+#endif
 }
 
 double cpu_user_func ( void )
@@ -339,7 +352,7 @@ double cpu_idle_func ( void )
 }
 
 /**************NET FUNCTIONS*****************/
-long received_bytes(char *interface)
+long received_bytes(char *iface)
 {
 	static long r_bytes=0;
 #ifdef HAVE_MAC_SYSCTL
@@ -356,7 +369,7 @@ long received_bytes(char *interface)
 	mib[5] = 0;
 	
 	mlen = 6;
-	ifindex = if_nametoindex(interface);
+	ifindex = if_nametoindex(iface);
 	sysctl(mib,mlen,NULL,&vlen,NULL,0);
 	buf = malloc(vlen);
 	sysctl(mib,mlen,buf,&vlen,NULL,0);
@@ -380,10 +393,10 @@ long received_bytes(char *interface)
 #else
 	char *temp_if;
 	char *p;
-	if(interface == NULL)
+	if(iface == NULL)
 	   temp_if = strdup("eth0");
 	else
-	   temp_if = strdup((const char *)interface);
+	   temp_if = strdup((const char *)iface);
 	sensor_slurp proc_net = { "/proc/net/dev" };
 	p = update_file(&proc_net);
 	while (p && strncmp(p,temp_if,strlen(temp_if)))
@@ -400,7 +413,7 @@ long received_bytes(char *interface)
 	return r_bytes;
 }
 
-long sent_bytes(char *interface)
+long sent_bytes(char *iface)
 {
 	long s_bytes;
 #ifdef HAVE_MAC_SYSCTL
@@ -418,7 +431,7 @@ long sent_bytes(char *interface)
 	mib[5] = 0;
 	
 	mlen = 6;
-	ifindex = if_nametoindex(interface);
+	ifindex = if_nametoindex(iface);
 	sysctl(mib,mlen,NULL,&vlen,NULL,0);
 	buf = malloc(vlen);
 	sysctl(mib,mlen,buf,&vlen,NULL,0);
@@ -441,10 +454,10 @@ long sent_bytes(char *interface)
         char *temp_if;
         char *p;
 	int  i=0;
-        if(interface == NULL)
+        if(iface == NULL)
            temp_if = strdup("eth0");
         else
-           temp_if = strdup((const char *)interface);
+           temp_if = strdup((const char *)iface);
         sensor_slurp proc_net = { "/proc/net/dev" };
         p = update_file(&proc_net);
 	while (p && strncmp(p,temp_if,strlen(temp_if)))
@@ -470,7 +483,7 @@ long sent_bytes(char *interface)
  * bandwidth is returned. On OS X the two calls have to be atleast 425 microseconds apart.
  * */
 
-double net_bw(char *interface, char *stage)
+double net_bw(char *iface, char *stage)
 {
 	static long old_s_bytes, new_s_bytes, old_r_bytes, new_r_bytes, start_time, end_time;
 	long s_bytes, r_bytes;
@@ -490,7 +503,7 @@ double net_bw(char *interface, char *stage)
 	mib[5] = 0;
 	
 	mlen = 6;
-	ifindex = if_nametoindex(interface);
+	ifindex = if_nametoindex(iface);
 	sysctl(mib,mlen,NULL,&vlen,NULL,0);
 	buf = malloc(vlen);
 	sysctl(mib,mlen,buf,&vlen,NULL,0);
@@ -518,14 +531,24 @@ double net_bw(char *interface, char *stage)
 	char *temp_if;
 	char *p;
 
-	if(interface == NULL)
+	if(iface == NULL)
 		temp_if = strdup("eth0");
 	else
-		temp_if = strdup((const char*)interface);
+		temp_if = strdup((const char*)iface);
 	sensor_slurp proc_net = { "/proc/net/dev" };
         p = update_file(&proc_net);
-	gettimeofday(&t,NULL);
+#ifndef HAVE_WINDOWS_H
+	gettimeofday(&t, NULL);
+#else
+	/* GSE...  No gettimeofday on windows.
+	 * Must use _ftime, get millisec time, convert to usec.  Bleh.
+	 */
 
+	struct _timeb nowb;
+	_ftime(&nowb);
+	t.tv_sec = (long)nowb.time;
+	t.tv_usec = nowb.millitm * 1000;
+#endif
         while (p && strncmp(p,temp_if,strlen(temp_if)))
         {
                 p = skip_token(p);
@@ -580,6 +603,7 @@ double dgettimeofday( void )
 
 /**************OS FUNCTIONS**************/
 char*  os_type() {
+#ifndef _MSC_VER
   static struct utsname output;
   static int first = 1;
   if (first) {
@@ -587,9 +611,13 @@ char*  os_type() {
     first = 0;
   }
   return strdup(output.sysname);
+#else
+    return strdup("Windows");
+#endif
 }
 
 char*  os_release() {
+#ifndef _MSC_VER
   static struct utsname output;
   static int first = 1;
   if (first) {
@@ -597,6 +625,9 @@ char*  os_release() {
     first = 0;
   }
   return strdup(output.release);
+#else
+    return strdup("Windows Release");
+#endif
 }
 
 /* Should probably test if gethostname & uname exist on box before using them.... */
@@ -979,22 +1010,22 @@ add_metrics_routines(stone_type stone, cod_parse_context context)
      * some compilers think it isn't a static initialization to put this
      * in the structure above, so do it explicitly.
      */
-    externs[0].extern_value = (void *) (long) dgettimeofday;
-    externs[1].extern_value = (void *) (long) hw_cpus;
-    externs[2].extern_value = (void *) (long) hw_cpu_min_freq;
-    externs[3].extern_value = (void *) (long) hw_cpu_max_freq;
-    externs[4].extern_value = (void *) (long) hw_cpu_curr_freq;
-    externs[5].extern_value = (void *) (long) os_type;
-    externs[6].extern_value = (void *) (long) os_release;
-    externs[7].extern_value = (void *) (long) hostname;
-    externs[8].extern_value = (void *) (long) stat_uptime;
-    externs[9].extern_value = (void *) (long) stat_loadavg_one;
-    externs[10].extern_value = (void *) (long) stat_loadavg_five;
-    externs[11].extern_value = (void *) (long) stat_loadavg_fifteen;
-    externs[12].extern_value = (void *) (long) vm_mem_total;
-    externs[13].extern_value = (void *) (long) vm_mem_free;
-    externs[14].extern_value = (void *) (long) vm_swap_total;
-    externs[15].extern_value = (void *) (long) vm_swap_free;
+    externs[0].extern_value = (void *) (intptr_t) dgettimeofday;
+    externs[1].extern_value = (void *) (intptr_t) hw_cpus;
+    externs[2].extern_value = (void *) (intptr_t) hw_cpu_min_freq;
+    externs[3].extern_value = (void *) (intptr_t) hw_cpu_max_freq;
+    externs[4].extern_value = (void *) (intptr_t) hw_cpu_curr_freq;
+    externs[5].extern_value = (void *) (intptr_t) os_type;
+    externs[6].extern_value = (void *) (intptr_t) os_release;
+    externs[7].extern_value = (void *) (intptr_t) hostname;
+    externs[8].extern_value = (void *) (intptr_t) stat_uptime;
+    externs[9].extern_value = (void *) (intptr_t) stat_loadavg_one;
+    externs[10].extern_value = (void *) (intptr_t) stat_loadavg_five;
+    externs[11].extern_value = (void *) (intptr_t) stat_loadavg_fifteen;
+    externs[12].extern_value = (void *) (intptr_t) vm_mem_total;
+    externs[13].extern_value = (void *) (intptr_t) vm_mem_free;
+    externs[14].extern_value = (void *) (intptr_t) vm_swap_total;
+    externs[15].extern_value = (void *) (intptr_t) vm_swap_free;
 
     cod_assoc_externs(context, externs);
     cod_parse_for_context(extern_string, context);

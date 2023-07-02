@@ -5,13 +5,118 @@
 #endif
 
 #undef NDEBUG
+#ifdef HAVE_WINDOWS_H
+#include <winsock2.h>
+#include <windows.h>
+#include <process.h>
+#include <time.h>
+#define getpid()	_getpid()
+#else
+#include <time.h>
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_TIMES_H
+#include <sys/times.h>
+#endif
+#include <sys/socket.h>
+#ifdef HAVE_SYS_SOCKIO_H
+#include <sys/sockio.h>
+#endif
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+#ifdef HAVE_SYS_UN_H
+#include <sys/un.h>
+#endif
+#ifdef HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#endif
+#ifdef HAVE_HOSTLIB_H
+#include "hostLib.h"
+#endif
+#ifdef HAVE_STREAMS_UN_H
+#include <streams/un.h>
+#endif
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+#endif
+#include <stdio.h>
+#include <fcntl.h>
+#ifndef HAVE_WINDOWS_H
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <errno.h>
+#else
+#include <windows.h>
+#define drand48() (((double)rand())/((double)RAND_MAX))
+#define lrand48() rand()
+#define srand48(x)
+#include <ws2tcpip.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#undef NDEBUG
 #include <assert.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 #include <limits.h>
+#ifdef HAVE_MEMORY_H
+#include <memory.h>
+#endif
+
+#include <atl.h>
+#include "evpath.h"
+#include "cm_transport.h"
+#include "ev_select.h"
+
+#ifndef _MSC_VER
 #include <pthread.h>
-#include <sys/types.h>
+#define thr_mutex_t pthread_mutex_t
+#define thr_thread_t pthread_t
+#define thr_condition_t pthread_cond_t
+#define thr_thread_self() pthread_self()
+#define thr_thread_exit(status) pthread_exit(status);
+#define thr_thread_detach(thread) pthread_detach(thread);
+#define thr_thread_yield() sched_yield()
+#define thr_thread_join(t, s) pthread_join(t, s)
+#define thr_mutex_init(m) pthread_mutex_init(&m, NULL);
+#define thr_mutex_lock(m) pthread_mutex_lock(&m);
+#define thr_mutex_unlock(m) pthread_mutex_unlock(&m);
+#define thr_mutex_free(m) pthread_mutex_destroy(&m);
+#define thr_condition_init(c) pthread_cond_init(&c, NULL);
+#define thr_condition_wait(c, m) pthread_cond_wait(&c, &m);
+#define thr_condition_signal(c) pthread_cond_signal(&c);
+#define thr_condition_broadcast(c) pthread_cond_broadcast(&c);
+#define thr_condition_free(c) pthread_cond_destroy(&c);
+#define thr_thread_create(w,x,y,z) pthread_create(w,x,y,z);
+#else
+//#include <mutex>
+#include <Windows.h>
+#define thr_mutex_t HANDLE
+#define thr_thread_t DWORD
+#define thr_condition_t HANDLE
+#define thr_thread_create(w,x,y,z) 0
+#define thr_thread_self() GetCurrentThreadId()
+#define thr_thread_exit(status) 
+#define thr_thread_detach(thread) 
+#define thr_thread_yield() 
+#define thr_thread_join(t, s) (void)s
+#define thr_mutex_init(m)
+#define thr_mutex_lock(m)
+#define thr_mutex_unlock(m)
+#define thr_mutex_free(m)
+#define thr_condition_init(c)
+#define thr_condition_wait(c, m)
+#define thr_condition_signal(c)
+#define thr_condition_broadcast(c) 
+#define thr_condition_free(c) 
+#endif
 
 #ifdef USE_ZPL_ENET
 #define ENET_IMPLEMENTATION
@@ -83,18 +188,19 @@ extern void ZPLENETdummy() {  // for warning suppression
 #define INTERFACE_NAME(NAME) libcmenet_LTX_ ## NAME
 #include <enet/enet.h>
 #endif
+#ifndef _MSC_VER
 #include <arpa/inet.h>
+#endif
 #include <time.h>
+#ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
  
 #ifdef __MACH__
 #include <mach/clock.h>
 #include <mach/mach.h>
 #endif
 
-#include <atl.h>
-#include "evpath.h"
-#include "cm_transport.h"
 
 
 typedef struct _queued_data {
@@ -120,7 +226,7 @@ typedef struct enet_client_data {
     int wake_read_fd;
     enet_uint32 last_host_service_zero_return;
     CMTaskHandle periodic_handle;
-    pthread_mutex_t enet_lock;
+    thr_mutex_t enet_lock;
     int enet_locked;
     struct enet_connection_data *pending_connections;
 } *enet_client_data_ptr;
@@ -174,7 +280,7 @@ static void
 IntENET_lock(enet_client_data_ptr ecd, char *file, int line)
 {
 //    if (file) printf("(PID %lx, TID %lx) Trying ENET Lock at %s, line %d\n", (long) getpid(), (long)gettid(), file, line);
-    pthread_mutex_lock(&ecd->enet_lock);
+    thr_mutex_lock(ecd->enet_lock);
 //    if (file) printf("GOT ENET Lock at %s, line %d\n", file, line);
     ecd->enet_locked++;
 }
@@ -184,7 +290,7 @@ IntENET_unlock(enet_client_data_ptr ecd, char *file, int line)
 {
 //    if (file) printf("(PID %lx, TID %lx) ENET Unlock at %s, line %d\n", (long) getpid(), (long)gettid(), file, line);
     ecd->enet_locked--;
-    pthread_mutex_unlock(&ecd->enet_lock);
+    thr_mutex_unlock(ecd->enet_lock);
 }
 
 static int
@@ -243,7 +349,7 @@ handle_packet(CManager cm, CMtrans_services svc, transport_entry trans, enet_con
     CMbuffer cb;
     svc->trace_out(cm, "A packet of length %u was received.\n",
                    (unsigned int) packet->dataLength);
-    econn_d->read_buffer_len = packet->dataLength;
+    econn_d->read_buffer_len = (int) packet->dataLength;
     cb = svc->create_data_and_link_buffer(cm, 
                                           packet->data, 
                                           econn_d->read_buffer_len);
@@ -504,7 +610,7 @@ enet_accept_conn(enet_client_data_ptr ecd, transport_entry trans,
 	svc->trace_out(trans->cm, "Accepted ENET RUDP connection from UNKNOWN host");
     }
     add_attr(conn_attr_list, CM_PEER_LISTEN_PORT, Attr_Int4,
-	     (attr_value) (long)enet_conn_data->remote_contact_port);
+	     (attr_value) (intptr_t)enet_conn_data->remote_contact_port);
 #ifndef USE_IPV6
     struct in_addr addr;
     addr.s_addr = htonl(enet_conn_data->remote_IP);
@@ -560,14 +666,14 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     }
 
     if (!query_attr(attrs, CM_ENET_HOSTNAME, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_name)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_name)) {
 	svc->trace_out(cm, TPORT " transport found no CM_ENET_HOSTNAME attribute");
 	host_name = NULL;
     } else {
         svc->trace_out(cm, TPORT " transport connect to host %s", host_name);
     }
     if (!query_attr(attrs, CM_ENET_ADDR, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_ip)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_ip)) {
 	svc->trace_out(cm, "CMEnet transport found no CM_ENET_ADDR attribute");
 	/* wasn't there */
 	host_ip = 0;
@@ -581,7 +687,7 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     }
 
     if (!query_attr(attrs, CM_ENET_PORT, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & int_port_num)) {
+    /* value pointer */ (attr_value *)(intptr_t) & int_port_num)) {
 	svc->trace_out(cm, "CMEnet transport found no CM_ENET_PORT attribute");
 	return 0;
     } else {
@@ -589,13 +695,13 @@ enet_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans,
     }
 
     if (!query_attr(attrs, CM_ENET_CONN_TIMEOUT, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & timeout)) {
+    /* value pointer */ (attr_value *)(intptr_t) & timeout)) {
 	svc->trace_out(cm, "CMEnet transport found no CM_ENET_CONN_TIMEOUT attribute");
     } else {
         svc->trace_out(cm, "CMEnet transport connection timeout set to %d msecs", timeout);
     }
     if (!query_attr(attrs, CM_ENET_CONN_REUSE, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & conn_reuse)) {
+    /* value pointer */ (attr_value *)(intptr_t) & conn_reuse)) {
 	svc->trace_out(cm, "CMEnet transport found no CM_ENET_CONN_REUSE attribute");
     } else {
         svc->trace_out(cm, "CMEnet transport connection reuse set to %d", conn_reuse);
@@ -750,7 +856,7 @@ INTERFACE_NAME(finalize_conn_nonblocking)(CManager cm, CMtrans_services svc,
     }
 
     add_attr(conn_attr_list, CM_PEER_LISTEN_PORT, Attr_Int4,
-	     (attr_value) (long)final_conn_data->remote_contact_port);
+	     (attr_value) (intptr_t)final_conn_data->remote_contact_port);
     conn = svc->connection_create(trans, final_conn_data, conn_attr_list);
     final_conn_data->conn = conn;
     free_attr_list(conn_attr_list);
@@ -792,18 +898,18 @@ INTERFACE_NAME(self_check)(CManager cm, CMtrans_services svc,
 	IP = ntohl(INADDR_LOOPBACK);
     }
     if (!query_attr(attrs, CM_ENET_HOSTNAME, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_name)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_name)) {
 	svc->trace_out(cm, "CMself check CMEnet transport found no CM_ENET_HOSTNAME attribute");
 	host_name = NULL;
     }
     if (!query_attr(attrs, CM_ENET_ADDR, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_addr)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_addr)) {
 	svc->trace_out(cm, "CMself check CMEnet transport found no CM_ENET_ADDR attribute");
 	if (host_name == NULL) return 0;
 	host_addr = 0;
     }
     if (!query_attr(attrs, CM_ENET_PORT, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & int_port_num)) {
+    /* value pointer */ (attr_value *)(intptr_t) & int_port_num)) {
 	svc->trace_out(cm, "CMself check CMEnet transport found no CM_ENET_PORT attribute");
 	return 0;
     }
@@ -842,16 +948,16 @@ INTERFACE_NAME(connection_eq)(CManager cm, CMtrans_services svc,
 
     (void) trans;
     if (!query_attr(attrs, CM_ENET_HOSTNAME, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_name)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_name)) {
 	svc->trace_out(cm, "CMEnet transport found no CM_ENET_HOST attribute");
     }
     if (!query_attr(attrs, CM_ENET_PORT, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & int_port_num)) {
+    /* value pointer */ (attr_value *)(intptr_t) & int_port_num)) {
 	svc->trace_out(cm, "Conn Eq CMenet transport found no CM_ENET_PORT attribute");
 	return 0;
     }
     if (!query_attr(attrs, CM_ENET_ADDR, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & requested_IP)) {
+    /* value pointer */ (attr_value *)(intptr_t) & requested_IP)) {
 	svc->trace_out(cm, "CMENET transport found no CM_ENET_ADDR attribute");
     }
     if (requested_IP == -1) {
@@ -912,7 +1018,7 @@ build_listen_attrs(CManager cm, CMtrans_services svc, enet_client_data_ptr ecd,
     }
     if ((IP != 0) && !use_hostname) {
 	add_attr(ret_list, CM_ENET_ADDR, Attr_Int4,
-		 (attr_value) (long)IP);
+		 (attr_value) (intptr_t)IP);
     }
     if ((getenv("CMEnetsUseHostname") != NULL) || 
 	use_hostname) {
@@ -922,7 +1028,7 @@ build_listen_attrs(CManager cm, CMtrans_services svc, enet_client_data_ptr ecd,
         add_int_attr(ret_list, CM_ENET_ADDR, INADDR_LOOPBACK);
     }
     add_attr(ret_list, CM_ENET_PORT, Attr_Int4,
-	     (attr_value) (long)int_port_num);
+	     (attr_value) (intptr_t)int_port_num);
     
     add_attr(ret_list, CM_TRANSPORT, Attr_String,
 	     (attr_value) strdup(TRANSPORT_STRING));
@@ -972,7 +1078,7 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
      */
     if (listen_info != NULL
 	&& !query_attr(listen_info, CM_ENET_PORT,
-		       NULL, (attr_value *)(long) & attr_port_num)) {
+		       NULL, (attr_value *)(intptr_t) & attr_port_num)) {
 	port_num = 0;
     } else {
 	if (attr_port_num > USHRT_MAX || attr_port_num < 0) {
@@ -1042,17 +1148,16 @@ INTERFACE_NAME(non_blocking_listen)(CManager cm, CMtrans_services svc,
             svc->trace_out(cm, "CMEnet is listening on port %d\n", address.port);
         } else {
             /* specified port range */
-            long seedval = time(NULL) + getpid();
             /* port num is free.  Constrain to range 26000 : 26100 */
             int size;
             int tries;
-            srand48(seedval);
+            srand48(time(NULL) + getpid());
 
         restart:
             size = high_bound - low_bound;
             tries = 10;
             while (tries > 0) {
-                int target = low_bound + size * drand48();
+                int target = low_bound + (int)(size * drand48());
                 address.port = target;
                 
                 svc->trace_out(cm, "CMEnet trying to bind port %d", target);
@@ -1206,7 +1311,7 @@ INTERFACE_NAME(writev_func)(CMtrans_services svc, enet_conn_data_ptr ecd,
 
     wake_enet_server_thread(ecd->ecd);
 
-    return iovcnt;
+    return (int)iovcnt;
 }
 
 
@@ -1243,6 +1348,159 @@ shutdown_enet_thread
         ENETunlock(ecd);
     }
 }
+
+#ifdef HAVE_WINDOWS_H
+static char*
+WSAerror_str(err)
+int err;
+{
+    switch(err) {
+    case WSAEINTR: return "WSAEINTR";
+    case WSAEBADF: return "WSAEBADF";
+    case WSAEACCES: return "WSAEACCES";
+    case WSAEFAULT: return "WSAEFAULT";
+    case WSAEINVAL: return "WSAEINVAL";
+    case WSAEMFILE: return "WSAEMFILE";
+    case WSAEWOULDBLOCK: return "WSAEWOULDBLOCK";
+    case WSAEINPROGRESS: return "WSAEINPROGRESS";
+    case WSAEALREADY: return "WSAEALREADY";
+    case WSAENOTSOCK: return "WSAENOTSOCK";
+    case WSAEDESTADDRREQ: return "WSAEDESTADDRREQ";
+    case WSAEMSGSIZE: return "WSAEMSGSIZE";
+    case WSAEPROTOTYPE: return "WSAEPROTOTYPE";
+    case WSAENOPROTOOPT: return "WSAENOPROTOOPT";
+    case WSAEPROTONOSUPPORT: return "WSAEPROTONOSUPPORT";
+    case WSAESOCKTNOSUPPORT: return "WSAESOCKTNOSUPPORT";
+    case WSAEOPNOTSUPP: return "WSAEOPNOTSUPP";
+    case WSAEPFNOSUPPORT: return "WSAEPFNOSUPPORT";
+    case WSAEAFNOSUPPORT: return "WSAEAFNOSUPPORT";
+    case WSAEADDRINUSE: return "WSAEADDRINUSE";
+    case WSAEADDRNOTAVAIL: return "WSAEADDRNOTAVAIL";
+    case WSAENETDOWN: return "WSAENETDOWN";
+    case WSAENETUNREACH: return "WSAENETUNREACH";
+    case WSAENETRESET: return "WSAENETRESET";
+    case WSAECONNABORTED: return "WSAECONNABORTED";
+    case WSAECONNRESET: return "WSAECONNRESET";
+    case WSAENOBUFS: return "WSAENOBUFS";
+    case WSAEISCONN: return "WSAEISCONN";
+    case WSAENOTCONN: return "WSAENOTCONN";
+    case WSAESHUTDOWN: return "WSAESHUTDOWN";
+    case WSAETOOMANYREFS: return "WSAETOOMANYREFS";
+    case WSAETIMEDOUT: return "WSAETIMEDOUT";
+    case WSAECONNREFUSED: return "WSAECONNREFUSED";
+    case WSAELOOP: return "WSAELOOP";
+    case WSAENAMETOOLONG: return "WSAENAMETOOLONG";
+    case WSAEHOSTDOWN: return "WSAEHOSTDOWN";
+    case WSAEHOSTUNREACH: return "WSAEHOSTUNREACH";
+    case WSAENOTEMPTY: return "WSAENOTEMPTY";
+    case WSAEPROCLIM: return "WSAEPROCLIM";
+    case WSAEUSERS: return "WSAEUSERS";
+    case WSAEDQUOT: return "WSAEDQUOT";
+    case WSAESTALE: return "WSAESTALE";
+    case WSAEREMOTE: return "WSAEREMOTE";
+    case WSAEDISCON: return "WSAEDISCON";
+    case WSASYSNOTREADY: return "WSASYSNOTREADY";
+    case WSAVERNOTSUPPORTED: return "WSAVERNOTSUPPORTED";
+    case WSANOTINITIALISED: return "WSANOTINITIALISED";
+    default: return "Unknown Winsock error";
+    }
+}
+/*
+ *  Note.  Unfortunately, the _pipe() function on WinNT 
+ *  produces FDs that you can't use in select().  This ruins what we want
+ *  this pipe for, which is to wake up a thread sleeping in select().
+ *  So, we need to introduce a pipe function that returns two socket FDs.
+ *  NT Sux.
+ */
+
+int
+pipe(filedes)
+SOCKET filedes[2];
+{
+    
+    int length;
+    struct sockaddr_in sock_addr;
+    int sock_opt_val = 1;
+    SOCKET sock1, sock2, conn_sock;
+    unsigned long block = TRUE;
+    int delay_value = 1;
+   
+    conn_sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (conn_sock == SOCKET_ERROR) {
+	fprintf(stderr, "Cannot open INET socket\n");
+	return -1;
+    }
+    sock_addr.sin_family = PF_INET;
+    sock_addr.sin_addr.s_addr = INADDR_ANY;
+    sock_addr.sin_port = 0;
+    if (bind(conn_sock, (struct sockaddr *) &sock_addr,
+	     sizeof sock_addr) == SOCKET_ERROR) {
+	fprintf(stderr, "Cannot bind INET socket\n");
+	return -1;
+    }
+    length = sizeof sock_addr;
+    if (getsockname(conn_sock, (struct sockaddr *) &sock_addr, &length) < 0) {
+	fprintf(stderr, "Cannot get socket name\n");
+	return -1;
+    }
+    /* begin listening for conns */
+    if (listen(conn_sock, FD_SETSIZE)) {
+	fprintf(stderr, "listen failed\n");
+	return -1;
+    }
+
+/* send sock */
+    if ((sock1 = socket(AF_INET, SOCK_STREAM, 0)) == SOCKET_ERROR) {
+	return -1;
+    }
+    sock_addr.sin_addr.s_addr = 0x0100007f;  /* loopback */
+    sock_addr.sin_family = PF_INET;
+    if (ioctlsocket(sock1, FIONBIO, &block) != 0) {
+	printf("ioctl failed\n");
+    }
+    if (connect(sock1, (struct sockaddr *) &sock_addr,
+		sizeof sock_addr) == SOCKET_ERROR) {
+	int err = WSAGetLastError();
+	if (err != WSAEWOULDBLOCK) {
+	    printf("unexpected error from connect, %s\n", WSAerror_str(err));
+	}
+    }
+
+    if ((sock2 = accept(conn_sock, (struct sockaddr *) 0, (int *) 0)) == SOCKET_ERROR) {
+	    int err = WSAGetLastError();
+	    printf("err was %s\n", WSAerror_str(err));
+    }
+    
+    setsockopt(sock2, IPPROTO_TCP, TCP_NODELAY, (char *) &delay_value,
+	       sizeof(delay_value));
+    {
+	fd_set stXcptFDS,stWriteFDS;
+	struct timeval stTimeOut;	/* for select() timeout (none) */
+	int wRet;
+
+	EVPATH_FD_ZERO((fd_set FAR*)&(stXcptFDS));
+	EVPATH_FD_ZERO((fd_set FAR*)&(stWriteFDS));
+	FD_SET(sock1, (fd_set FAR*)&(stWriteFDS));
+	FD_SET(sock1, (fd_set FAR*)&(stXcptFDS));
+	stTimeOut.tv_sec  = 10;
+	stTimeOut.tv_usec = 0;
+	wRet = select(-1, NULL, 
+		      (fd_set FAR*)&(stWriteFDS),
+		      (fd_set FAR*)&(stXcptFDS), 
+		      NULL);
+	if (wRet == SOCKET_ERROR) {
+	    int err = WSAGetLastError();
+	    printf("err was %s\n", WSAerror_str(err));
+	}
+    }
+    setsockopt(sock1, IPPROTO_TCP, TCP_NODELAY, (char *) &delay_value,
+	       sizeof(delay_value));
+
+    filedes[0] = sock1;
+    filedes[1] = sock2;
+    return 0;
+}
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -1289,7 +1547,7 @@ INTERFACE_NAME(initialize)(CManager cm, CMtrans_services svc,
     }
     enet_data = (enet_client_data_ptr) svc->malloc_func(sizeof(struct enet_client_data));
     memset(enet_data, 0, sizeof(struct enet_client_data));
-    pthread_mutex_init(&enet_data->enet_lock, NULL);
+    thr_mutex_init(enet_data->enet_lock);
     enet_data->enet_locked = 0;
     enet_data->cm = cm;
     enet_data->hostname = NULL;

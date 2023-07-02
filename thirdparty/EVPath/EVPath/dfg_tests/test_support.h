@@ -1,4 +1,8 @@
 #include "evpath.h"
+#ifdef _MSC_VER
+#define pid_t intptr_t
+#include <process.h>
+#endif
 
 typedef struct _complex_rec {
     double r;

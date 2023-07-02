@@ -7,13 +7,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
 #include "ev_dfg.h"
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
+#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
+#define waitpid(x, tmp, z) {   WaitForSingleObject(OpenProcess(0,0,(DWORD)x), INFINITE);    GetExitCodeProcess(OpenProcess(0,0,(DWORD)x), tmp);}
 #else
 #include <sys/wait.h>
 #endif
@@ -139,7 +143,7 @@ run_subprocess(char **args)
 {
     static int count = 0;
 #ifdef HAVE_WINDOWS_H
-    int child;
+    intptr_t child;
     child = _spawnv(_P_NOWAIT, "./evtest.exe", args);
     if (child == -1) {
 	printf("failed for evtest\n");
@@ -284,10 +288,10 @@ main(int argc, char **argv)
 	        printf("Missing --ssh destination\n");
 		usage();
 	    }
-	    first_colon = index(argv[2], ':');
+	    first_colon = strchr(argv[2], ':');
 	    if (first_colon) {
 	        *first_colon = 0;
-		second_colon = index(first_colon+1, ':');
+		second_colon = strchr(first_colon+1, ':');
 	    } else {
 	        second_colon = NULL;
 	    }
@@ -328,7 +332,7 @@ main(int argc, char **argv)
 	argc--;
     }
     if (remote_directory[0] != 0) {
-        if (rindex(argv0, '/')) argv0 = rindex(argv0, '/') + 1;
+        if (strrchr(argv0, '/')) argv0 = strrchr(argv0, '/') + 1;
         subproc_args[cur_subproc_arg] = malloc(strlen(remote_directory) + 
 					       strlen(argv0) + 4);
 	strcpy(subproc_args[cur_subproc_arg], remote_directory);

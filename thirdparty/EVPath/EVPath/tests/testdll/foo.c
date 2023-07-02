@@ -4,7 +4,12 @@
 #if defined (__INTEL_COMPILER)
 #  pragma warning (disable: 1418)
 #endif
-
+#ifdef _MSC_VER
+#include <stdlib.h>
+#define srand48(s) srand(s)
+#define drand48() (rand()*(1./RAND_MAX))
+#define lrand48() ((long long)rand() << 32 | rand())
+#endif
 typedef struct _complex_rec {
     double r;
     double i;
