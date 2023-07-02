@@ -22,6 +22,9 @@
 #ifdef _WIN32
 #pragma warning(disable : 4250)
 #endif
+#ifdef _MSC_VER
+#define strdup(x) _strdup(x)
+#endif
 
 namespace adios2
 {
@@ -121,7 +124,7 @@ void BP5Serializer::RecalcAttributeStorageSize()
         Info.AttributeData = realloc(Info.AttributeData, NewAttributeSize + 8);
         memset((char *)(Info.AttributeData) + Info.AttributeSize, 0,
                NewAttributeSize - Info.AttributeSize);
-        Info.AttributeSize = NewAttributeSize;
+        Info.AttributeSize = (int) NewAttributeSize;
     }
 }
 
@@ -228,7 +231,7 @@ char *BP5Serializer::BuildVarName(const char *base_name, const ShapeID Shape,
 {
 
     const char *Prefix = NamePrefix(Shape);
-    int Len = strlen(base_name) + 2 + strlen(Prefix) + 16;
+    auto Len = strlen(base_name) + 2 + strlen(Prefix) + 16;
     char *Ret = (char *)malloc(Len);
     if (element_size == 0)
     {
@@ -245,22 +248,22 @@ char *BP5Serializer::BuildVarName(const char *base_name, const ShapeID Shape,
 }
 
 static char *BuildLongName(const char *base_name, const ShapeID Shape,
-                           const int type, const int element_size,
+                           const int type, const size_t element_size,
                            const char *StructID)
 {
     const char *Prefix = NamePrefix(Shape);
-    int StructIDLen = 0;
+    size_t StructIDLen = 0;
     if (StructID)
         StructIDLen = strlen(StructID);
-    int Len = strlen(base_name) + 3 + strlen(Prefix) + StructIDLen + 16;
+    size_t Len = strlen(base_name) + 3 + strlen(Prefix) + StructIDLen + 16;
     char *Ret = (char *)malloc(Len);
     if (StructID)
     {
-        snprintf(Ret, Len, "%s_%d_%d_%s", Prefix, element_size, type, StructID);
+        snprintf(Ret, Len, "%s_%zd_%d_%s", Prefix, element_size, type, StructID);
     }
     else
     {
-        snprintf(Ret, Len, "%s_%d_%d", Prefix, element_size, type);
+        snprintf(Ret, Len, "%s_%zd_%d", Prefix, element_size, type);
     }
     strcat(Ret, "_");
     strcat(Ret, base_name);
@@ -283,7 +286,7 @@ char *BP5Serializer::BuildArrayDimsName(const char *base_name, const int type,
                                         const int element_size)
 {
     const char *Prefix = NamePrefix(ShapeID::GlobalArray);
-    int Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
+    size_t Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
     char *Ret = (char *)malloc(Len);
     snprintf(Ret, Len, "%s%d_%d_", Prefix, element_size, type);
     strcat(Ret, base_name);
@@ -296,7 +299,7 @@ char *BP5Serializer::BuildArrayDBCountName(const char *base_name,
                                            const int element_size)
 {
     const char *Prefix = NamePrefix(ShapeID::GlobalArray);
-    int Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
+    size_t Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
     char *Ret = (char *)malloc(Len);
     snprintf(Ret, Len, "%s%d_%d_", Prefix, element_size, type);
     strcat(Ret, base_name);
@@ -309,7 +312,7 @@ char *BP5Serializer::BuildArrayBlockCountName(const char *base_name,
                                               const int element_size)
 {
     const char *Prefix = NamePrefix(ShapeID::GlobalArray);
-    int Len = strlen(base_name) + 3 + strlen(Prefix) + 24;
+    size_t Len = strlen(base_name) + 3 + strlen(Prefix) + 24;
     char *Ret = (char *)malloc(Len);
     snprintf(Ret, Len, "%s%d_%d_", Prefix, element_size, type);
     strcat(Ret, base_name);
@@ -450,7 +453,7 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
     Rec->Key = Variable;
     Rec->Shape = VB->m_ShapeID;
     Rec->FieldID = Info.RecCount;
-    Rec->DimCount = DimCount;
+    Rec->DimCount = (int)DimCount;
     Rec->Type = (int)Type;
     Rec->OperatorType = NULL;
     char *TextStructID = NULL;
@@ -467,7 +470,7 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
             List[i].field_name = strdup(SD->Name(i).c_str());
             List[i].field_type = TranslateADIOS2Type2FFS(SD->Type(i));
             List[i].field_size = TypeElementSize(SD->Type(i));
-            List[i].field_offset = SD->Offset(i);
+            List[i].field_offset = (int)SD->Offset(i);
             if (SD->ElementCount(i) != 1)
             {
                 size_t Len = strlen(List[i].field_type) + 10;
@@ -487,7 +490,7 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
             {NULL, NULL, 0, NULL}};
         struct_list[0].format_name = strdup(SD->StructName().c_str());
         struct_list[0].field_list = List;
-        struct_list[0].struct_size = SD->StructSize();
+        struct_list[0].struct_size = (int)SD->StructSize();
 
         FMFormat Format =
             register_data_format(Info.LocalFMContext, &struct_list[0]);
@@ -508,7 +511,7 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         char *SstName = BuildVarName(Name, VB->m_ShapeID, 0,
                                      0); // size and type in full field spec
         AddField(&Info.MetaFields, &Info.MetaFieldCount, SstName, Type,
-                 ElemSize);
+                 (int)ElemSize);
         free(SstName);
         RecalcMarshalStorageSize();
         Rec->MetaOffset = Info.MetaFields[Info.MetaFieldCount - 1].field_offset;
@@ -930,9 +933,9 @@ void BP5Serializer::MarshalAttribute(const char *Name, const DataType Type,
     {
         // simple field, only simple attribute name and value
         char *SstName =
-            BuildVarName(Name, ShapeID::GlobalValue, (int)Type, ElemSize);
+            BuildVarName(Name, ShapeID::GlobalValue, (int)Type, (int)ElemSize);
         AddField(&Info.AttributeFields, &Info.AttributeFieldCount, SstName,
-                 Type, ElemSize);
+                 Type, (int)ElemSize);
         free(SstName);
         RecalcAttributeStorageSize();
         int DataOffset =
@@ -952,7 +955,7 @@ void BP5Serializer::MarshalAttribute(const char *Name, const DataType Type,
         int CountOffset =
             Info.AttributeFields[Info.AttributeFieldCount - 1].field_offset;
         AddVarArrayField(&Info.AttributeFields, &Info.AttributeFieldCount,
-                         ArrayName, Type, ElemSize, ElemCountName);
+                         ArrayName, Type, (int)ElemSize, ElemCountName);
         int DataOffset =
             Info.AttributeFields[Info.AttributeFieldCount - 1].field_offset;
         free(ElemCountName);
@@ -1102,7 +1105,7 @@ void BP5Serializer::ProcessDeferredMinMax()
         MetaArrayRecMM *MetaEntry =
             (MetaArrayRecMM *)((char *)(MetadataBuf) + Def.MetaOffset);
         void **MMPtrLoc = (void **)(((char *)MetaEntry) + Def.MinMaxOffset);
-        int ElemSize = helper::GetDataTypeSize(Def.Type);
+        auto ElemSize = helper::GetDataTypeSize(Def.Type);
 
         memcpy(((char *)*MMPtrLoc) + ElemSize * (2 * (Def.BlockNum)),
                &MinMax.MinUnion, ElemSize);

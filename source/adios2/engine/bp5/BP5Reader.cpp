@@ -368,7 +368,7 @@ void BP5Reader::PerformGets()
         // then main thread process the last subset
         for (size_t tid = 0; tid < nThreads - 1; ++tid)
         {
-            futures[tid] = std::async(std::launch::async, lf_Reader, tid + 1,
+            futures[tid] = std::async(std::launch::async, lf_Reader, (int)(tid + 1),
                                       maxOpenFiles);
         }
         // main thread runs last subset of reads
@@ -513,9 +513,9 @@ void BP5Reader::InitParameters()
     }
 
     size_t limit = helper::RaiseLimitNoFile();
-    if (m_Parameters.MaxOpenFilesAtOnce > limit - 8)
+    if (m_Parameters.MaxOpenFilesAtOnce > (unsigned int) limit - 8)
     {
-        m_Parameters.MaxOpenFilesAtOnce = limit - 8;
+        m_Parameters.MaxOpenFilesAtOnce = (unsigned int) limit - 8;
     }
 }
 
@@ -986,11 +986,11 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
         {
             auto p = m_WriterMap.emplace(m_StepsCount, WriterMapStruct());
             auto &s = p.first->second;
-            s.WriterCount = helper::ReadValue<uint64_t>(
+            s.WriterCount = (uint32_t)helper::ReadValue<uint64_t>(
                 buffer, position, m_Minifooter.IsLittleEndian);
-            s.AggregatorCount = helper::ReadValue<uint64_t>(
+            s.AggregatorCount = (uint32_t)helper::ReadValue<uint64_t>(
                 buffer, position, m_Minifooter.IsLittleEndian);
-            s.SubfileCount = helper::ReadValue<uint64_t>(
+            s.SubfileCount = (uint32_t)helper::ReadValue<uint64_t>(
                 buffer, position, m_Minifooter.IsLittleEndian);
             // Get the process -> subfile map
             s.RankToSubfile.reserve(s.WriterCount);
