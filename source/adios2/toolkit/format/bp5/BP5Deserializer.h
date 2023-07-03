@@ -250,6 +250,7 @@ private:
     /* We assume operators are not thread-safe, call Decompress() one at a time
      */
     std::mutex mutexDecompress;
+    std::vector<void *> *m_FreeableJDOA = nullptr;
 };
 
 } // end namespace format
