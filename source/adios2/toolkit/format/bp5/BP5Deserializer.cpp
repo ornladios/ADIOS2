@@ -708,7 +708,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             m_JoinedDimenOffsetArrays = new std::vector<void *>();
             m_JoinedDimenOffsetArrays->resize(writerCohortSize);
             JoinedDimArray[Step] = m_JoinedDimenOffsetArrays;
-            m_FreeableMBA = nullptr;
+            m_FreeableJDOA = nullptr;
         }
     }
     else
@@ -726,7 +726,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
         if (!m_JoinedDimenOffsetArrays)
         {
             m_JoinedDimenOffsetArrays = new std::vector<void *>();
-            m_FreeableMBA = m_JoinedDimenOffsetArrays;
+            m_FreeableJDOA = m_JoinedDimenOffsetArrays;
         }
         if (writerCohortSize > m_JoinedDimenOffsetArrays->size())
         {
@@ -2003,7 +2003,13 @@ BP5Deserializer::~BP5Deserializer()
         delete VarRec.second;
     }
     if (m_FreeableMBA)
+    {
         delete m_FreeableMBA;
+    }
+    if (m_FreeableJDOA)
+    {
+        delete m_FreeableJDOA;
+    }
     for (auto &step : MetadataBaseArray)
     {
         delete step;

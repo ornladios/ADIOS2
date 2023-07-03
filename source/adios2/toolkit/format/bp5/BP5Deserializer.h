@@ -174,6 +174,7 @@ private:
     std::vector<void *> *m_FreeableMBA = nullptr;
 
     std::vector<void *> *m_JoinedDimenOffsetArrays = nullptr;
+    std::vector<void *> *m_FreeableJDOA = nullptr;
 
     // for random access mode, for each timestep, for each writerrank, what
     // metameta info applies to the metadata
