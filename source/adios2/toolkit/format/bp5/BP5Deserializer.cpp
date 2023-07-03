@@ -41,6 +41,7 @@ using namespace adios2::helper;
 
 #ifdef _WIN32
 #pragma warning(disable : 4250)
+#define strdup(x) _strdup(x)
 #endif
 
 namespace adios2
@@ -57,7 +58,7 @@ void BP5Deserializer::InstallMetaMetaData(MetaMetaInfoBlock &MM)
     memcpy(FormatID, MM.MetaMetaID, MM.MetaMetaIDLen);
     memcpy(MetaMetaInfo, MM.MetaMetaInfo, MM.MetaMetaInfoLen);
     load_external_format_FMcontext(FMContext_from_FFS(ReaderFFSContext),
-                                   FormatID, MM.MetaMetaIDLen, MetaMetaInfo);
+                                   FormatID, (int) MM.MetaMetaIDLen, MetaMetaInfo);
     free(FormatID);
 }
 
@@ -82,7 +83,7 @@ bool BP5Deserializer::NameIndicatesArray(const char *Name)
 
 bool BP5Deserializer::NameIndicatesAttrArray(const char *Name)
 {
-    int Len = strlen(Name);
+    auto Len = strlen(Name);
     return (strcmp("ElemCount", Name + Len - 9) == 0);
 }
 
@@ -175,7 +176,7 @@ const char *BP5Deserializer::BreakdownVarName(const char *Name,
     ++p; // skip '_'
     if (*type_p == DataType::Struct)
     {
-        p = index(p, '_');
+        p = strchr(p, '_');
         ++p;
     }
     return p;
@@ -216,7 +217,7 @@ void BP5Deserializer::BreakdownV1ArrayName(const char *Name, char **base_name_p,
     const char *NameStart = strchr(strchr(Name + 4, '_') + 1, '_') + 1;
     // + 3 to skip BP5_ or bp5_ prefix
     sscanf(Name + 4, "%d_%d", &ElementSize, &Type);
-    const char *Plus = index(Name, '+');
+    const char *Plus = strchr(Name, '+');
     MinMax = false;
     while (Plus && (*Plus == '+'))
     {
@@ -224,7 +225,7 @@ void BP5Deserializer::BreakdownV1ArrayName(const char *Name, char **base_name_p,
         if (sscanf(Plus, "+%dO", &Len) == 1)
         { // Operator Spec
             Operator = true;
-            const char *OpStart = index(Plus, 'O') + 1;
+            const char *OpStart = strchr(Plus, 'O') + 1;
             Plus = OpStart + Len;
         }
         else if (strncmp(Plus, "+MM", 3) == 0)
@@ -236,7 +237,7 @@ void BP5Deserializer::BreakdownV1ArrayName(const char *Name, char **base_name_p,
     *element_size_p = ElementSize;
     *type_p = (DataType)Type;
     *base_name_p = strdup(NameStart);
-    *(rindex(*base_name_p, '_')) = 0;
+    *(strrchr(*base_name_p, '_')) = 0;
 }
 
 void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p,
@@ -386,7 +387,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
                     FMFieldList List = StructList[0].field_list;
                     while (List->field_name != NULL)
                     {
-                        char *ind = (char *)index(List->field_type, '[');
+                        char *ind = (char *)strchr(List->field_type, '[');
                         if (!ind)
                         {
                             DataType Type = TranslateFFSType2ADIOS(
@@ -426,7 +427,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             }
             if (V1_fields)
             {
-                i += MetaRecFields;
+                i += (int)MetaRecFields;
             }
             else
             {
@@ -655,7 +656,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
     }
     else
     {
-        int DecodedLength = FFS_est_decode_length(
+        auto DecodedLength = FFS_est_decode_length(
             ReaderFFSContext, (char *)MetadataBlock, BlockLen);
         BaseData = malloc(DecodedLength);
         FFSdecode_to_buffer(ReaderFFSContext, (char *)MetadataBlock, BaseData);
@@ -707,7 +708,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             m_JoinedDimenOffsetArrays = new std::vector<void *>();
             m_JoinedDimenOffsetArrays->resize(writerCohortSize);
             JoinedDimArray[Step] = m_JoinedDimenOffsetArrays;
-            m_FreeableMBA = nullptr;
+            m_FreeableJDOA = nullptr;
         }
     }
     else
@@ -725,7 +726,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
         if (!m_JoinedDimenOffsetArrays)
         {
             m_JoinedDimenOffsetArrays = new std::vector<void *>();
-            m_FreeableMBA = m_JoinedDimenOffsetArrays;
+            m_FreeableJDOA = m_JoinedDimenOffsetArrays;
         }
         if (writerCohortSize > m_JoinedDimenOffsetArrays->size())
         {
@@ -882,7 +883,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
                 {
                     VarRec->Variable = ArrayVarSetup(
                         m_Engine, VarRec->VarName, VarRec->Type,
-                        meta_base->Dims, meta_base->Shape, meta_base->Offsets,
+                        (int)meta_base->Dims, meta_base->Shape, meta_base->Offsets,
                         meta_base->Count, VarRec->Def, VarRec->ReaderDef);
                     static_cast<VariableBase *>(VarRec->Variable)->m_Engine =
                         m_Engine;
@@ -957,6 +958,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
         }
         catch (const std::invalid_argument &e)
         {
+            (void)e;
             // We'll catch here if a variable creation encounters a duplicate
             // variable name in the IO
             helper::Throw<std::logic_error>(
@@ -1025,7 +1027,7 @@ void BP5Deserializer::InstallAttributeData(void *AttributeBlock,
     }
     else
     {
-        int DecodedLength = FFS_est_decode_length(
+        auto DecodedLength = FFS_est_decode_length(
             ReaderFFSContext, (char *)AttributeBlock, BlockLen);
         BaseData = malloc(DecodedLength);
         FFSBuffer decode_buf =
@@ -1120,7 +1122,7 @@ void BP5Deserializer::InstallAttributesV1(FFSTypeHandle FFSformat,
             i++;
             char *FieldName = strdup(FieldList[i].field_name + 4); // skip BP5_
             char *FieldType = strdup(FieldList[i].field_type);
-            *index(FieldType, '[') = 0;
+            *strchr(FieldType, '[') = 0;
             Type = (DataType)TranslateFFSType2ADIOS(FieldType,
                                                     FieldList[i].field_size);
             if (Type == adios2::DataType::Struct)
@@ -1767,7 +1769,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         (MetaArrayRec *)GetMetadataBase(Req.VarRec, Req.Step, Read.WriterRank);
 
     size_t *GlobalDimensions = writer_meta_base->Shape;
-    int DimCount = writer_meta_base->Dims;
+    auto DimCount = writer_meta_base->Dims;
     std::vector<size_t> ZeroSel(DimCount);
     size_t *RankOffset = &writer_meta_base->Offsets[DimCount * Read.BlockID];
     size_t *RankSize = &writer_meta_base->Count[DimCount * Read.BlockID];
@@ -1818,7 +1820,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         {
             SelOffset = ZeroSel.data();
         }
-        for (int i = 0; i < DimCount; i++)
+        for (int i = 0; i < (int) DimCount; i++)
         {
             GlobalDimensions[i] = RankSize[i];
         }
@@ -1929,7 +1931,7 @@ int BP5Deserializer::FindOffset(size_t Dims, const size_t *Size,
     int Offset = 0;
     for (size_t i = 0; i < Dims; i++)
     {
-        Offset = Index[i] + (Size[i] * Offset);
+        Offset = (int)(Index[i] + (Size[i] * Offset));
     }
     return Offset;
 }
@@ -2001,7 +2003,13 @@ BP5Deserializer::~BP5Deserializer()
         delete VarRec.second;
     }
     if (m_FreeableMBA)
+    {
         delete m_FreeableMBA;
+    }
+    if (m_FreeableJDOA)
+    {
+        delete m_FreeableJDOA;
+    }
     for (auto &step : MetadataBaseArray)
     {
         delete step;
@@ -2030,7 +2038,7 @@ void *BP5Deserializer::GetMetadataBase(BP5VarRec *VarRec, size_t Step,
         size_t CI_VarIndex = (*CI->CIVarIndex)[VarRec->VarNum];
         BP5MetadataInfoStruct *BaseData =
             (BP5MetadataInfoStruct *)(*MetadataBaseArray[Step])[WriterRank];
-        if (!BP5BitfieldTest(BaseData, CI_VarIndex))
+        if (!BP5BitfieldTest(BaseData, (int)CI_VarIndex))
         {
             // Var appears in CI, but wasn't written on this step
             return NULL;
@@ -2058,12 +2066,12 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
 {
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
 
-    MinVarInfo *MV = new MinVarInfo(VarRec->DimCount, VarRec->GlobalDims);
+    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, VarRec->GlobalDims);
 
     const size_t writerCohortSize = WriterCohortSize(Step);
     size_t Id = 0;
     MV->Step = Step;
-    MV->Dims = VarRec->DimCount;
+    MV->Dims = (int)VarRec->DimCount;
     MV->Shape = NULL;
     MV->IsReverseDims =
         ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
@@ -2093,7 +2101,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
             {
                 MinBlockInfo Blk;
                 Blk.MinMax.Init(VarRec->Type);
-                Blk.WriterID = WriterRank;
+                Blk.WriterID = (int)WriterRank;
                 Blk.BlockID = Id++;
                 Blk.BufferP = writer_meta_base;
                 Blk.Start = NULL;
@@ -2157,7 +2165,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
             if (writer_meta_base->Count)
                 Count = writer_meta_base->Count + (i * MV->Dims);
             MinBlockInfo Blk;
-            Blk.WriterID = WriterRank;
+            Blk.WriterID = (int)WriterRank;
             Blk.BlockID = Id++;
             Blk.Start = Offsets;
             Blk.Count = Count;
@@ -2285,7 +2293,7 @@ size_t BP5Deserializer::RelativeToAbsoluteStep(const BP5VarRec *VarRec,
             BaseData = (BP5MetadataInfoStruct
                             *)(*MetadataBaseArray[AbsStep])[WriterRank];
             if (BP5BitfieldTest((BP5MetadataInfoStruct *)BaseData,
-                                VarRec->VarNum))
+                                (int)VarRec->VarNum))
             {
                 // variable appeared on this step
                 RelStep--;

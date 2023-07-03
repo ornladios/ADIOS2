@@ -29,21 +29,19 @@
 #include "fm_internal.h"
 #include "assert.h"
 
-#ifndef tolower
+#if !defined(tolower) & !defined(_MSC_VER)
 extern int tolower(int);
 #endif
 
 extern FMfloat_format fm_my_float_format;
-static long get_offset(void *, int, int);
+static size_t get_offset(void *, int, int);
 static MAX_UNSIGNED_TYPE get_big_unsigned(FMFieldPtr field, void *data);
 static MAX_FLOAT_TYPE get_big_float(FMFieldPtr field, void *data);
 
 static int get_long_warn = 0;
 
 static void
-byte_swap(data, size)
-char *data;
-int size;
+byte_swap(char *data, int size)
 {
     int i;
     assert((size % 2) == 0);
@@ -55,9 +53,7 @@ int size;
 }
 
 static MAX_INTEGER_TYPE
-get_big_int(field, data)
-FMFieldPtr field;
-void *data;
+get_big_int(FMFieldPtr field, void *data)
 {
     if (field->data_type == integer_type) {
 	if (field->size == sizeof(char)) {
@@ -76,15 +72,15 @@ void *data;
 	    if (field->byte_swap)
 		byte_swap((char *) &tmp, (int) sizeof(int));
 	    return (long) tmp;
-	} else if (field->size == sizeof(long)) {
-	    long tmp;
-	    memcpy(&tmp, (char *) data + field->offset, sizeof(long));
+	} else if (field->size == sizeof(size_t)) {
+	    size_t tmp;
+	    memcpy(&tmp, (char *) data + field->offset, sizeof(size_t));
 	    if (field->byte_swap)
-		byte_swap((char *) &tmp, (int)sizeof(long));
+		byte_swap((char *) &tmp, (int)sizeof(size_t));
 	    return tmp;
 	} else if (field->size == 2 * sizeof(long)) {
 	    long tmp;
-	    int low_bytes_offset = field->offset;
+	    size_t low_bytes_offset = field->offset;
 	    if (WORDS_BIGENDIAN) {
 		if (!field->byte_swap) {
 		    low_bytes_offset += sizeof(long);
@@ -124,9 +120,7 @@ void *data;
 }
 
 static MAX_UNSIGNED_TYPE
-get_big_unsigned(field, data)
-FMFieldPtr field;
-void *data;
+get_big_unsigned(FMFieldPtr field, void *data)
 {
     if ((field->data_type == unsigned_type) || 
 	(field->data_type == enumeration_type) || 
@@ -147,15 +141,15 @@ void *data;
 	    if (field->byte_swap)
 		byte_swap((char *) &tmp, (int)sizeof(int));
 	    return (MAX_UNSIGNED_TYPE) tmp;
-	} else if (field->size == sizeof(long)) {
-	    unsigned long tmp;
-	    memcpy(&tmp, (char *) data + field->offset, sizeof(long));
+	} else if (field->size == sizeof(size_t)) {
+	    size_t tmp;
+	    memcpy(&tmp, (char *) data + field->offset, sizeof(size_t));
 	    if (field->byte_swap)
-		byte_swap((char *) &tmp, (int)sizeof(long));
+		byte_swap((char *) &tmp, (int)sizeof(size_t));
 	    return tmp;
 	} else if (field->size == 2 * sizeof(long)) {
 	    unsigned long tmp;
-	    int low_bytes_offset = field->offset;
+	    size_t low_bytes_offset = field->offset;
 	    if (WORDS_BIGENDIAN) {
 		if (!field->byte_swap) {
 		    low_bytes_offset += sizeof(long);
@@ -224,9 +218,7 @@ float_conversion(unsigned char*value, int size, FMfloat_format src_format,
 }
 
 static MAX_FLOAT_TYPE
-get_big_float(field, data)
-FMFieldPtr field;
-void *data;
+get_big_float(FMFieldPtr field, void *data)
 {
     if (field->data_type == float_type) {
 	if (field->size == sizeof(float)) {
@@ -301,19 +293,15 @@ void *data;
 }
 
 extern float
-get_FMfloat(field, data)
-FMFieldPtr field;
-void *data;
+get_FMfloat(FMFieldPtr field, void *data)
 {
     float tmp;
-    tmp = get_big_float(field, data);
+    tmp = (float)get_big_float(field, data);
     return tmp;
 }
 
 extern double
-get_FMdouble(field, data)
-FMFieldPtr field;
-void *data;
+get_FMdouble(FMFieldPtr field, void *data)
 {
     double tmp;
     tmp = get_big_float(field, data);
@@ -323,9 +311,7 @@ void *data;
 
 #if SIZEOF_LONG_DOUBLE != 0
 extern long double
-get_FMlong_double(field, data)
-FMFieldPtr field;
-void *data;
+get_FMlong_double(FMFieldPtr field, void *data)
 {
     long double tmp;
     tmp = get_big_float(field, data);
@@ -334,74 +320,58 @@ void *data;
 #endif
 
 extern short
-get_FMshort(field, data)
-FMFieldPtr field;
-void *data;
+get_FMshort(FMFieldPtr field, void *data)
 {
-    short tmp = get_big_int(field, data);
+    short tmp = (short)get_big_int(field, data);
     return tmp;
 }
 
 extern unsigned short
-get_FMushort(field, data)
-FMFieldPtr field;
-void *data;
+get_FMushort(FMFieldPtr field, void *data)
 {
-    unsigned short tmp = get_big_unsigned(field, data);
+    unsigned short tmp = (unsigned short) get_big_unsigned(field, data);
     return tmp;
 }
 
 extern int
-get_FMint(field, data)
-FMFieldPtr field;
-void *data;
+get_FMint(FMFieldPtr field, void *data)
 {
-    int tmp= get_big_int(field, data);
+    int tmp = (int) get_big_int(field, data);
     return tmp;
 }
 
 extern unsigned int
-get_FMuint(field, data)
-FMFieldPtr field;
-void *data;
+get_FMuint(FMFieldPtr field, void *data)
 {
-    unsigned int tmp = get_big_unsigned(field, data);
+    unsigned int tmp = (unsigned int) get_big_unsigned(field, data);
     return tmp;
 }
 
 
-extern long
-get_FMlong(field, data)
-FMFieldPtr field;
-void *data;
+extern size_t
+get_FMlong(FMFieldPtr field, void *data)
 {
-    long tmp = get_big_int(field, data);
+    ssize_t tmp = get_big_int(field, data);
     return tmp;
 }
 
-extern unsigned long
-get_FMulong(field, data)
-FMFieldPtr field;
-void *data;
+extern size_t
+get_FMulong(FMFieldPtr field, void *data)
 {
-    unsigned long tmp = get_big_unsigned(field, data);
+    size_t tmp = get_big_unsigned(field, data);
     return tmp;
 }
 
 #if SIZEOF_LONG_LONG != 0
 extern long long
-get_FMlong_long(field, data)
-FMFieldPtr field;
-void *data;
+get_FMlong_long(FMFieldPtr field, void *data)
 {
     long long tmp= get_big_int(field, data);
     return tmp;
 }
 
 extern unsigned long long
-get_FMulong_long(field, data)
-FMFieldPtr field;
-void *data;
+get_FMulong_long(FMFieldPtr field, void *data)
 {
     unsigned long long tmp = get_big_unsigned(field, data);
     return tmp;
@@ -410,19 +380,15 @@ void *data;
 #endif
 
 extern void
-get_FMlong8(field, data, low_long, high_long)
-FMFieldPtr field;
-void *data;
-unsigned long *low_long;
-long *high_long;
+get_FMlong8(FMFieldPtr field, void *data, unsigned long *low_long, long *high_long)
 {
     *low_long = 0;
     if (high_long)
 	*high_long = 0;
     if (field->data_type == integer_type) {
 	if (field->size == 2 * sizeof(long)) {
-	    int low_bytes_offset = field->offset;
-	    int high_bytes_offset = field->offset;
+	    size_t low_bytes_offset = field->offset;
+	    size_t high_bytes_offset = field->offset;
 	    FMgetFieldStruct tmp_field;  /*OK */
 	    tmp_field = *field;
 	    if (WORDS_BIGENDIAN) {
@@ -440,15 +406,15 @@ long *high_long;
 	    }
 	    tmp_field.size = sizeof(long);
 	    tmp_field.offset = low_bytes_offset;
-	    *low_long = get_FMulong(&tmp_field, data);
+	    *low_long = (unsigned long) get_FMulong(&tmp_field, data);
 	    if (high_long) {
 		tmp_field = *field;
 		tmp_field.size = sizeof(long);
 		tmp_field.offset = high_bytes_offset;
-		*high_long = get_FMlong(&tmp_field, data);
+		*high_long = (long) get_FMlong(&tmp_field, data);
 	    }
 	} else {
-	    *low_long = get_FMlong(field, data);
+	    *low_long = (long) get_FMlong(field, data);
 	}
     } else if (field->data_type == float_type) {
 	MAX_FLOAT_TYPE tmp;
@@ -461,19 +427,15 @@ long *high_long;
 }
 
 extern int
-get_FMulong8(field, data, low_long, high_long)
-FMFieldPtr field;
-void *data;
-unsigned long *low_long;
-unsigned long *high_long;
+get_FMulong8(FMFieldPtr field, void *data, unsigned long *low_long, unsigned long *high_long)
 {
     *low_long = 0;
     if (high_long)
 	*high_long = 0;
     if (field->data_type == unsigned_type) {
 	if (field->size == 2 * sizeof(long)) {
-	    int low_bytes_offset = field->offset;
-	    int high_bytes_offset = field->offset;
+	    size_t low_bytes_offset = field->offset;
+	    size_t high_bytes_offset = field->offset;
 	    FMgetFieldStruct tmp_field;  /*OK */
 	    tmp_field = *field;
 	    if (WORDS_BIGENDIAN) {
@@ -491,16 +453,16 @@ unsigned long *high_long;
 	    }
 	    tmp_field.size = sizeof(unsigned long);
 	    tmp_field.offset = low_bytes_offset;
-	    *low_long = get_FMulong(&tmp_field, data);
+	    *low_long = (unsigned long) get_FMulong(&tmp_field, data);
 	    if (high_long) {
 		tmp_field = *field;
 		tmp_field.size = sizeof(unsigned long);
 		tmp_field.offset = high_bytes_offset;
-		*high_long = get_FMulong(&tmp_field, data);
+		*high_long = (unsigned long) get_FMulong(&tmp_field, data);
 	    }
 	    return 0;
 	} else {
-	    *low_long = get_FMulong(field, data);
+	    *low_long = (unsigned long) get_FMulong(field, data);
 	    return 0;
 	}
     } else if (field->data_type == integer_type) {
@@ -521,9 +483,7 @@ unsigned long *high_long;
 }
 
 extern char
-get_FMchar(field, data)
-FMFieldPtr field;
-void *data;
+get_FMchar(FMFieldPtr field, void *data)
 {
     if (field->data_type == char_type) {
 	return (char) *((char *) data + field->offset);
@@ -536,9 +496,7 @@ void *data;
 }
 
 extern int
-get_FMenum(field, data)
-FMFieldPtr field;
-void *data;
+get_FMenum(FMFieldPtr field, void *data)
 {
     FMgetFieldStruct tmp_field;  /*OK */
     tmp_field = *field;
@@ -547,24 +505,19 @@ void *data;
 }
 
 extern char *
-get_FMstring(field, data)
-FMFieldPtr field;
-void *data;
+get_FMstring(FMFieldPtr field, void *data)
 {
     return get_FMstring_base(field, data, data);
 }
 
 extern char *
-get_FMstring_base(field, data, string_base)
-FMFieldPtr field;
-void *data;
-void *string_base;
+get_FMstring_base(FMFieldPtr field, void *data, void *string_base)
 {
-    unsigned long offset = get_offset((void *) ((char *) data + field->offset),
+    uintptr_t offset = get_offset((void *) ((char *) data + field->offset),
 			     field->size, field->byte_swap);
     if (offset == 0) {
 	return NULL;
-    } else if (offset > (unsigned long) data) {		/* probably *
+    } else if (offset > (uintptr_t) data) {		/* probably *
 							 * converted *
 							 * string */
 	return (char *) offset;
@@ -574,13 +527,9 @@ void *string_base;
 }
 
 extern void *
-get_FMaddr(field, data, string_base, encode)
-FMFieldPtr field;
-void *data;
-void *string_base;
-int encode;
+get_FMaddr(FMFieldPtr field, void *data, void *string_base, int encode)
 {
-    unsigned long offset = get_offset((void *) ((char *) data + field->offset),
+    uintptr_t offset = get_offset((void *) ((char *) data + field->offset),
 			     field->size, field->byte_swap);
     if (offset == 0) {
 	return NULL;
@@ -591,11 +540,8 @@ int encode;
     }
 }
 
-static long
-get_offset(data, size, swap)
-void *data;
-int size;
-int swap;
+static size_t
+get_offset(void *data, int size, int swap)
 {
     FMgetFieldStruct field;  /*OK */
     field.offset = 0;
@@ -605,16 +551,14 @@ int swap;
     if (size == sizeof(int)) {
 	return get_FMlong(&field, data);
     } else {
-	field.offset = size - sizeof(long);
-	field.size = sizeof(long);
+	field.offset = size - sizeof(size_t);
+	field.size = sizeof(size_t);
 	return get_FMlong(&field, data);
     }
 }
 
 extern int
-FM_field_type_eq(str1, str2)
-const char *str1;
-const char *str2;
+FM_field_type_eq(const char *str1, const char *str2)
 {
     FMdata_type t1, t2;
     long t1_count, t2_count;
@@ -631,8 +575,8 @@ const char *str2;
 	char *colon2 = strchr(tmp_str2, ':');
 	char *lparen1 = strchr(str1, '[');
 	char *lparen2 = strchr(str2, '[');
-	int count1 = 0;
-	int count2 = 0;
+	intptr_t count1 = 0;
+	intptr_t count2 = 0;
 
 	if (colon1 != NULL) {
 	    count1 = colon1 - tmp_str1;
@@ -658,11 +602,7 @@ const char *str2;
 }
 
 extern int
-IOget_array_size_dimen(str, fields, dimen, control_field)
-const char *str;
-FMFieldList fields;
-int dimen;
-int *control_field;
+IOget_array_size_dimen(const char *str, FMFieldList fields, int dimen, int *control_field)
 {
     char *left_paren, *end;
     long static_size;
@@ -725,9 +665,7 @@ int *control_field;
 }
 
 extern FMFieldPtr
-get_FMfieldPtrFromList(field_list, fieldname)
-FMFieldList field_list;
-const char *fieldname;
+get_FMfieldPtrFromList(FMFieldList field_list, const char *fieldname)
 {
     int index;
     FMFieldPtr ret_val;
@@ -797,7 +735,7 @@ get_FMfieldInt_by_name(FMFieldList field_list, const char *fieldname, void *data
     return get_FMint(&descr, data);
 }
 
-extern long
+extern size_t
 get_FMfieldLong_by_name(FMFieldList field_list, const char *fieldname, void *data)
 {
     int index;
@@ -839,7 +777,7 @@ get_FMPtrField_by_name(FMFieldList field_list, const char *fieldname, void *data
     field.size = sizeof(void*);
     field.byte_swap = 0;
 
-    unsigned long offset = get_offset((void *) ((char *) data + field.offset),
+    size_t offset = get_offset((void *) ((char *) data + field.offset),
 			     field.size, field.byte_swap);
     if (offset == 0) {
 	return NULL;
@@ -869,9 +807,7 @@ set_FMPtrField_by_name(FMFieldList field_list, const char *fieldname, void *data
 }
 
 extern FMFieldPtr
-get_FMfieldPtr(format, fieldname)
-FMFormat format;
-const char *fieldname;
+get_FMfieldPtr(FMFormat format, const char *fieldname)
 {
     int index;
     FMFieldPtr ret_val;
@@ -908,9 +844,7 @@ const char *fieldname;
 }
 
 extern FMFieldPtr
-get_local_FieldPtr(format, fieldname)
-FMFormat format;
-const char *fieldname;
+get_local_FieldPtr(FMFormat format, const char *fieldname)
 {
     FMFieldPtr ret_val = get_FMfieldPtr(format, fieldname);
 

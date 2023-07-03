@@ -153,8 +153,7 @@ char *event_vec_xml = "\
 </EventVector>\n";
 
 int
-first_rec_eq(r1, r2)
-first_rec *r1, *r2;
+first_rec_eq(first_rec *r1, first_rec *r2)
 {
     if (r1->integer_field != r2->integer_field)
 	return 0;
@@ -166,8 +165,7 @@ first_rec *r1, *r2;
 }
 
 int
-second_rec_eq(r1, r2)
-second_rec *r1, *r2;
+second_rec_eq(second_rec *r1, second_rec *r2)
 {
     if (r1->integer_field != r2->integer_field) {
 	printf("integer_field 1 is %d (0x%x), integer_field 2 is %d (0x%x)\n",
@@ -210,8 +208,7 @@ second_rec *r1, *r2;
 }
 
 int
-third_rec_eq(r1, r2)
-third_rec *r1, *r2;
+third_rec_eq(third_rec *r1, third_rec *r2)
 {
     if (r1->integer_field != r2->integer_field) {
 	printf("integer field 1 is %d (0x%x), integer_field 2 is %d (0x%x)\n",
@@ -285,8 +282,7 @@ third_rec *r1, *r2;
 #define ARRAY_SIZE 14
 
 int
-fourth_rec_eq(r1, r2)
-fourth_rec *r1, *r2;
+fourth_rec_eq(fourth_rec *r1, fourth_rec *r2)
 {
     int i, j;
     if (r1->ifield != r2->ifield) {
@@ -311,8 +307,7 @@ fourth_rec *r1, *r2;
 }
 
 int
-emb_rec_eq(r1, r2)
-embedded_rec *r1, *r2;
+emb_rec_eq(embedded_rec *r1, embedded_rec *r2)
 {
     if (r1->ifield != r2->ifield) {
 	printf("ifield 1 is %d (%x), ifield 2 is %d (%x)\n",
@@ -343,8 +338,7 @@ embedded_rec *r1, *r2;
 }
 
 int
-fifth_rec_eq(r1, r2)
-fifth_rec *r1, *r2;
+fifth_rec_eq(fifth_rec *r1, fifth_rec *r2)
 {
     int i;
     for (i = 0; i < 4; i++) {
@@ -357,8 +351,7 @@ fifth_rec *r1, *r2;
 }
 
 int
-sixth_rec_eq(r1, r2)
-sixth_rec *r1, *r2;
+sixth_rec_eq(sixth_rec *r1, sixth_rec *r2)
 {
     int i;
     if (r1->icount != r2->icount)
@@ -403,8 +396,7 @@ sixth_rec *r1, *r2;
 }
 
 int
-nested_rec_eq(r1, r2)
-nested_rec *r1, *r2;
+nested_rec_eq(nested_rec *r1, nested_rec *r2)
 {
     if (r1->integer_field != r2->integer_field) {
 	printf("nested, R1 integer = %d, R2 %d\n", r1->integer_field,
@@ -434,8 +426,7 @@ nested_rec *r1, *r2;
 }
     
 int
-later_rec_eq(r1, r2)
-later_rec *r1, *r2;
+later_rec_eq(later_rec *r1, later_rec *r2)
 {
     if (r1->integer_field != r2->integer_field)
 	return 0;
@@ -453,8 +444,7 @@ later_rec *r1, *r2;
 }
 
 int
-ninth_rec_eq(r1, r2)
-ninth_rec *r1, *r2;
+ninth_rec_eq(ninth_rec *r1, ninth_rec *r2)
 {
     int i;
     if (r1->vec_length != r2->vec_length)
@@ -473,8 +463,7 @@ ninth_rec *r1, *r2;
 }
 
 int
-string_array_eq(r1, r2)
-string_array_rec *r1, *r2;
+string_array_eq(string_array_rec *r1, string_array_rec *r2)
 {
     int i;
     if (r1->array_len != r2->array_len)
@@ -1488,13 +1477,13 @@ init_written_data()
     reader_pointer_array[0] = malloc(sizeof(struct _cp_init_info));
     reader_pointer_array[0]->contact_info = "contact info 1";
     reader_pointer_array[0]->target_stone = 101;
-    reader_pointer_array[0]->reader_ID = (void*)0xdead0001;
+    reader_pointer_array[0]->reader_ID = (void*)(intptr_t)0xdead0001;
     reader_pointer_array[1] = malloc(sizeof(struct _cp_init_info));
     reader_pointer_array[1]->contact_info = "contact info 2";
     reader_pointer_array[1]->target_stone = 102;
-    reader_pointer_array[1]->reader_ID = (void*)0xdead0002;
+    reader_pointer_array[1]->reader_ID = (void*)(intptr_t)0xdead0002;
     
-    reader_register.writer_file = (void*)0xdeadbeef;
+    reader_register.writer_file = (void*)(intptr_t)0xdeadbeef;
     reader_register.writer_response_condition = 13;
     reader_register.reader_cohort_size = 2;
     reader_register.CP_reader_info = &reader_pointer_array[0];

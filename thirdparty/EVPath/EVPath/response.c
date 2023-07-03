@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <memory.h>
-#include <strings.h>
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
@@ -116,16 +115,16 @@ add_FMfieldlist_to_string(char *str, FMStructDescRec *f)
 {
     int index, field_count = 0;
     FMFieldList list = f->field_list;
-    int len = strlen(str);
+    int len = (int) strlen(str);
     char *tmp_str;
-    len += strlen(f->format_name) + 5 + 35 + 20;
+    len += (int)strlen(f->format_name) + 5 + 35 + 20;
     str = realloc(str, len);
     while(list && (list[field_count].field_name != NULL)) field_count++;
     tmp_str = str + strlen(str);
     sprintf(tmp_str, "FMFormat \"%s\" StructSize %d FieldCount %d\n",
 	    f->format_name, f->struct_size, field_count);
     for (index = 0; index < field_count; index++) {
-	len += strlen(list[index].field_name) +strlen(list[index].field_type) + 50;
+	len += (int)strlen(list[index].field_name) + (int) strlen(list[index].field_type) + 50;
 	str = realloc(str, len);
 	tmp_str = str + strlen(str);
 	sprintf(tmp_str, "    FMField \"%s\" \"%s\" %d %d\n",
@@ -423,9 +422,9 @@ create_terminal_action_spec(FMStructDescList format_list)
 char *
 INT_create_bridge_action_spec(int stone_id, char *contact)
 {
-    int size = strlen(contact);
+    int size = (int) strlen(contact);
     char *output;
-    size += strlen("Bridge Action") + 20;
+    size += (int) strlen("Bridge Action") + 20;
     output = malloc(size);
     sprintf(output, "Bridge Action %d %s", stone_id, contact);
     return output;
@@ -594,7 +593,7 @@ filter_wrapper(CManager cm, struct _event_item *event, void *client_data,
     ev_state.out_stones = out_stones;
     if (ec != NULL) {
 #ifdef HAVE_COD_H
-	cod_assoc_client_data(ec, 0x34567890, (long)&ev_state);
+	cod_assoc_client_data(ec, 0x34567890, (intptr_t)&ev_state);
 
 	ret = ((int(*)(cod_exec_context, void *, attr_list))instance->u.filter.code->func)(ec, event->decoded_event, attrs);
 #endif
@@ -629,7 +628,7 @@ router_wrapper(CManager cm, struct _event_item *event, void *client_data,
 	ev_state.cur_event = event;
 	ev_state.out_count = out_count;
 	ev_state.out_stones = out_stones;
-	cod_assoc_client_data(ec, 0x34567890, (long)&ev_state);
+	cod_assoc_client_data(ec, 0x34567890, (intptr_t)&ev_state);
 	ret = (func)(ec, event->decoded_event, attrs);
 #endif
     }
@@ -687,7 +686,7 @@ transform_wrapper(CManager cm, struct _event_item *event, void *client_data,
     if (ec != NULL) {
 #ifdef HAVE_COD_H
 	func = (int(*)(cod_exec_context, void *, void*, attr_list, attr_list))instance->u.transform.code->func;
-	cod_assoc_client_data(ec, 0x34567890, (long)&ev_state);
+	cod_assoc_client_data(ec, 0x34567890, (intptr_t)&ev_state);
 	ret = func(ec, event->decoded_event, out_event, attrs, output_attrs);
 #endif
     } else {
@@ -1087,7 +1086,7 @@ queued_wrapper(CManager cm, struct _queue *queue, queue_item *item,
     ev_state.item = item;
     ev_state.instance = instance;
     ev_state.did_output = 0;
-    cod_assoc_client_data(ec, 0x34567890, (long)&ev_state);
+    cod_assoc_client_data(ec, 0x34567890, (intptr_t)&ev_state);
 
     func(ec);
 
@@ -1106,8 +1105,7 @@ generate_multityped_code(CManager cm, struct response_spec *mrd, stone_type ston
 
 extern
 void
-free_struct_list(list)
-FMStructDescList list;
+free_struct_list(FMStructDescList list)
 {
     int format_count = 0;
     int format;
@@ -1702,6 +1700,21 @@ internal_cod_submit(cod_exec_context ec, int port, void *data, void *type_info)
     internal_cod_submit_general(ec, port, data, type_info, NULL, NULL);
 }
 
+#ifdef _MSC_VER
+static long lrand48()
+{
+    return rand();
+}
+
+static double drand48() {
+    return (double)(rand()) / (double)(RAND_MAX);
+}
+static void
+sleep(int t)
+{
+    Sleep(t * 1000);
+}
+#endif
 static void
 add_standard_routines(stone_type stone, cod_parse_context context)
 {
@@ -1744,19 +1757,20 @@ add_standard_routines(stone_type stone, cod_parse_context context)
      * some compilers think it isn't a static initialization to put this
      * in the structure above, so do it explicitly.
      */
-    externs[0].extern_value = (void *) (long) printf;
-    externs[1].extern_value = (void *) (long) malloc;
-    externs[2].extern_value = (void *) (long) free;
-    externs[3].extern_value = (void *) (long) lrand48;
-    externs[4].extern_value = (void *) (long) drand48;
-    externs[5].extern_value = (void *) (long) &stone->stone_attrs;
-    externs[6].extern_value = (void *) (long) &internal_cod_submit;
-    externs[7].extern_value = (void *) (long) &internal_cod_submit_attr;
-    externs[8].extern_value = (void *) (long) &internal_cod_submit_general;
-    externs[9].extern_value = (void *) (long) &sleep;
-    externs[10].extern_value = (void *) (long) &cod_max_output;
-    externs[11].extern_value = (void *) (long) &cod_target_stone_on_port;
-    externs[12].extern_value = (void *) (long) &cod_ev_get_stone_attrs;
+
+    externs[0].extern_value = (void *) (intptr_t) printf;
+    externs[1].extern_value = (void *) (intptr_t) malloc;
+    externs[2].extern_value = (void *) (intptr_t) free;
+    externs[3].extern_value = (void *) (intptr_t) lrand48;
+    externs[4].extern_value = (void *) (intptr_t) drand48;
+    externs[5].extern_value = (void *) (intptr_t) &stone->stone_attrs;
+    externs[6].extern_value = (void *) (intptr_t) &internal_cod_submit;
+    externs[7].extern_value = (void *) (intptr_t) &internal_cod_submit_attr;
+    externs[8].extern_value = (void *) (intptr_t) &internal_cod_submit_general;
+    externs[9].extern_value = (void *) (intptr_t) &sleep;
+    externs[10].extern_value = (void *) (intptr_t) &cod_max_output;
+    externs[11].extern_value = (void *) (intptr_t) &cod_target_stone_on_port;
+    externs[12].extern_value = (void *) (intptr_t) &cod_ev_get_stone_attrs;
 
     cod_assoc_externs(context, externs);
     cod_parse_for_context(extern_string, context);
@@ -1840,7 +1854,7 @@ add_typed_queued_routines(cod_parse_context context, int index, const char *fmt_
 	 * the index here is the index of the queue itself, 
 	 * while the index in the calls above is the index of the referenced queue item 
 	 */
-	cod_set_closure(cur->extern_name, (void*)(long)index, context);
+	cod_set_closure(cur->extern_name, (void*)(intptr_t)index, context);
         free(cur->extern_name);
     }
     free(externs);
@@ -1860,7 +1874,7 @@ add_typed_queued_routines(cod_parse_context context, int index, const char *fmt_
 	     * the index here is the index of the queue itself, 
 	     * while the index in the calls above is the index of the referenced queue item 
 	     */
-	    cod_set_closure(cur->extern_name, (void*)(long)index, context);
+	    cod_set_closure(cur->extern_name, (void*)(intptr_t)index, context);
 	    free(cur->extern_name);
 	}
     }
@@ -1927,11 +1941,11 @@ add_queued_routines(cod_parse_context context, FMFormat *formats)
 
     cod_assoc_externs(context, externs);
     cod_parse_for_context(extern_string, context);
-    cod_set_closure("EVdiscard_full", (void*)(long)-1, context);
-    cod_set_closure("EVdiscard_and_submit_full", (void*)(long)-1, context);
-    cod_set_closure("EVget_attrs_full", (void*)(long)-1, context);
-    cod_set_closure("EVdata_full", (void*)(long)-1, context);
-    cod_set_closure("EVcount_full", (void*)(long)-1, context);
+    cod_set_closure("EVdiscard_full", (void*)(intptr_t)-1, context);
+    cod_set_closure("EVdiscard_and_submit_full", (void*)(intptr_t)-1, context);
+    cod_set_closure("EVget_attrs_full", (void*)(intptr_t)-1, context);
+    cod_set_closure("EVdata_full", (void*)(intptr_t)-1, context);
+    cod_set_closure("EVcount_full", (void*)(intptr_t)-1, context);
 
     for (cur = formats, i = 0; *cur; ++cur, ++i) {
         add_typed_queued_routines(context, i, name_of_FMformat(*cur));
@@ -1960,7 +1974,7 @@ extern sm_ref
 cod_build_param_node(const char *id, sm_ref typ, int param_num);
 extern void
 cod_add_decl_to_parse_context(const char *name, sm_ref item, cod_parse_context context);
-extern void
+extern FFS_DECLSPEC void
 cod_add_param(const char *id, const char *typ, int param_num,
 	      cod_parse_context context);
 

@@ -164,14 +164,22 @@ sub arith_insn {
 
 sub arith2_insn {
     local ($ops, $type_list, $subr) = @_;
+    %src1_cast = ('u', '(unsigned int)');
     foreach(split(' ', $ops)) {
 	$op = $_;
 	$c_op = $c_operations{$op};
 	foreach(split(' ', $type_list)) {
+        if (($c_op eq '-') and ($_ eq "u")) {
+		    $actual_op = '(unsigned) - (int)';
+	    } elsif (($c_op eq '-') and ($_ eq "ul")) {
+		    $actual_op = '(uintptr_t) - (intptr_t)';
+	    } else {
+            $actual_op = $c_op;
+        }
 	    $jmp_a2_assigns = $jmp_a2_assigns . "\t  ${mach}_jump_table->jmp_a2[dill_jmp_${op}${_}] = $subr;\n";
 	    $jmp_a2_assigns = $jmp_a2_assigns . "\t  ${mach}_jump_table->a2_data[dill_jmp_${op}${_}].data1 = dill_jmp_${op}${_};\n";
 	    $jmp_a2_assigns = $jmp_a2_assigns . "\t  ${mach}_jump_table->a2_data[dill_jmp_${op}${_}].data2 = 0;\n";
-	    $vm_a2_code .= "\t  case dill_jmp_${op}${_}:  dest->u.${_}.${_} = $c_op $src_cast{$_} src->u.${_}.${_}; break;\n";
+	    $vm_a2_code .= "\t  case dill_jmp_${op}${_}:  dest->u.${_}.${_} = $actual_op $src_cast{$_} src->u.${_}.${_}; break;\n";
 	}
     }
 }
@@ -179,6 +187,7 @@ sub arith2_insn {
 sub arithi_insn {
     local ($ops, $type_list, $subr, $code1, $code2) = @_;
     %src1_cast = ('p', '(char*)');
+    %src2_cast = ('i', '(int)', 'u', '(unsigned int)');
     foreach(split(' ', $ops)) {
 	$op = $_;
 	$c_op = $c_operations{$op};
@@ -209,6 +218,7 @@ sub branch_insn {
 
 sub branchi_insn {
     local($ops, $types, $subr) = @_;
+    %src1_cast = ('u', '(unsigned int)', 'ul', '(uintptr_t)', 'p', '(IMM_TYPE)');
     foreach (split(' ', $ops)) {
 	$op = $_;
 	$c_op = $c_operations{$op};
@@ -236,7 +246,7 @@ sub compare_insn {
 
 sub convert {
     local($from_types, $to_types) = @_;
-    %src_cast = ('pul', '(IMM_TYPE)', 'ulp', '(void*)');
+    %src_cast = ('pul', '(IMM_TYPE)', 'ulp', '(void*)', 'c', '(char)', 's', '(short)', 'uc', '(unsigned char)', 'us', '(unsigned short)', 'i', '(int)', 'u', '(unsigned int)', 'l', '(intptr_t)', 'ul', '(uintptr_t)', 'f', '(float)', 'd', '(double)');
     %convert_right = ('c', 'src->u.c.c', 's', '((short)(0xffff & src->u.s.s))', 'i', '((int)(0xffffffff & src->u.i.i))', 'uc', '((unsigned char)(0xff & src->u.uc.uc))', 'us', '((unsigned short)(0xffff & src->u.us.us))', 'u', '((unsigned int)(0xffffffff & src->u.u.u))', 'l', 'src->u.l.l', 'ul', '(UIMM_TYPE)src->u.ul.ul', 'd', 'src->u.d.d', 'f', 'src->u.f.f', 'p', 'src->u.l.l');
     foreach (split(' ', $from_types)) {
 	$from = $_;
@@ -246,7 +256,7 @@ sub convert {
 	    }
 	    $dest_fld = ${_};
 	    if ($_ eq "p") {$dest_fld = "ul";}
-	    $vm_cvt_code .= "\tcase CONV(DILL_" . &upperc(${from}) . ", DILL_" . &upperc($_) . "): dest->u.${dest_fld}.${dest_fld} = $convert_right{$from}; break;\n";
+	    $vm_cvt_code .= "\tcase CONV(DILL_" . &upperc(${from}) . ", DILL_" . &upperc($_) . "): dest->u.${dest_fld}.${dest_fld} = $src_cast{$_} $convert_right{$from}; break;\n";
 	}
     }
 }
@@ -278,36 +288,19 @@ print COUT<<EOF;
 
 #include "config.h"
 #include "dill.h"
-#include "dill_internal.h"
-#include "virtual.h"
-#ifndef LINUX_KERNEL_MODULE
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
-#ifdef HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 #include <assert.h>
+#ifdef _MSC_VER
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
 #else
-#ifdef LINUX_KERNEL_MODULE
-#ifndef __KERNEL__
-#define __KERNEL__
+#include <unistd.h>
 #endif
-#endif
-#include <linux/kernel.h>
-#include <linux/module.h>
-#include <linux/string.h>
-#include "kdill.h"
-#include "library.h"
-
-#define printf	printk
-#define fprintf(file, args...)	printk (args)
-#define malloc (void *)DAllocMM
-#define realloc(a,b) (void *)DReallocMM((addrs_t)a, b)
-#define free(a) DFreeMM((addrs_t) a)
-#define qsort _quicksort
-#endif
+#include "dill_internal.h"
+#include "virtual.h"
 
 static void 
 dill_varith3(dill_stream s, int op3, int op, int dest, int src1, int src2)

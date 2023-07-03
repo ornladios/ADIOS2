@@ -57,7 +57,7 @@ typedef struct _CMTaskHandle *CMTaskHandle;
  * and a pointer to their locations.
  */
 typedef struct buf_entry {
-    long length;	/*!< length of the encoded buffer */
+    size_t length;	/*!< length of the encoded buffer */
     void *buffer;	/*!< base address of the encoded buffer */
 } *EVevent_list;
 
@@ -590,7 +590,7 @@ extern void CMreturn_buffer (CManager cm, void *data);
  *   Otherwise return the number of additional bytes necessary.
  */
 typedef int (*CMNonCMHandler) (CMConnection conn, CMTransport transport,
-			       char *buffer, long length);
+			       char *buffer, size_t length);
 
 /*!
  * register a handler for raw (non-CM) messages.
@@ -842,7 +842,7 @@ typedef void (*select_func) (void *param1, void*param2);
  * \param param2 The value to be passed as param2 to the handler_func.
  */
 extern void
-CM_fd_add_select (CManager cm, int fd, select_func handler_func,
+CM_fd_add_select (CManager cm, SOCKET fd, select_func handler_func,
 		  void *param1, void *param2);
 
 /*!
@@ -1182,7 +1182,7 @@ typedef int (*EVSimpleHandlerFunc) (CManager cm, void *message, void *client_dat
  * was delivered with.  These are determined by the transport and may
  * include those specified in CMwrite_attr() when the data was written.
  */
-typedef int (*EVRawHandlerFunc) (CManager cm, void *message, int msg_len, void *client_data,
+typedef int (*EVRawHandlerFunc) (CManager cm, void *message, size_t msg_len, void *client_data,
 				 attr_list attrs);
 
 /*!
@@ -1927,7 +1927,7 @@ EVsubmit_general(EVsource source, void *data, EVFreeFunction free_func,
  *
  */
 extern void
-EVsubmit_encoded(CManager cm, EVstone stone, void *data, int data_len,
+EVsubmit_encoded(CManager cm, EVstone stone, void *data, size_t data_len,
 		 attr_list attrs);
 
 /*!
@@ -2377,7 +2377,7 @@ CMtest_transport(CMConnection conn, attr_list how);
  * contain the final values of testing.
  *
  */
-typedef attr_list (*CMperf_upcall)(CManager cm, void *buffer, long length, int type, attr_list list);
+typedef attr_list (*CMperf_upcall)(CManager cm, void *buffer, size_t length, int type, attr_list list);
 
 /*!
  * install the callback function to support transport testing

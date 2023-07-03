@@ -14,6 +14,8 @@
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
+#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
+
 #else
 #include <sys/wait.h>
 #endif
@@ -188,7 +190,11 @@ simple_handler(CManager cm, CMConnection conn, void *vevent, void *client_data,
 	       (int) sum, (int) scan_sum);
     }
     msg_count++;
+#ifdef _MSC_VER
+    Sleep(10);
+#else
     usleep(10000);
+#endif
     if ((quiet <= -1) || (sum != scan_sum)) {
 	printf("In the handler, event data is :\n");
 	printf("	integer_field = %d\n", event->integer_field);
@@ -453,8 +459,8 @@ do_regression_master_test()
 	    }
 	    done++;
 	}
-    }
 #endif
+    }
     if (msg_count != MSG_COUNT) {
 	int i = 10;
 	while ((i >= 0) && (msg_count != MSG_COUNT)) {

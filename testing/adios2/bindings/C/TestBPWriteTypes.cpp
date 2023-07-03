@@ -181,12 +181,7 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         char *engineType = new char[engineTypeSize + 1]();
         adios2_engine_get_type(engineType, &engineTypeSize, engineH);
 
-#if defined(_WIN64) || defined(_WIN32)
-        // default staying BP4 for now
-        EXPECT_EQ(std::string(engineType, engineTypeSize), "BP4Writer");
-#else
         EXPECT_EQ(std::string(engineType, engineTypeSize), "BP5Writer");
-#endif
 
         adios2_close(engineH);
 
@@ -207,12 +202,7 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         adios2_mode m;
         adios2_error e = adios2_engine_openmode(&m, engineH);
         EXPECT_EQ(e, adios2_error_none);
-#if defined(_WIN64) || defined(_WIN32)
-        // default staying BP4 for now
-        EXPECT_EQ(m, adios2_mode_read);
-#else
         EXPECT_EQ(m, adios2_mode_readRandomAccess);
-#endif
 
         adios2_bool result;
         char name[30];

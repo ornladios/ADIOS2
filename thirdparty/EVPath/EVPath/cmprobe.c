@@ -9,11 +9,12 @@
 #include <string.h>
 #include "evpath.h"
 #include <errno.h>
+#ifdef _MSC_VER
+#define sleep(x) Sleep(x*1000)
+#endif
 
 int
-main(argc, argv)
-    int argc;
-    char **argv;
+main(int argc, char **argv)
 {
     CManager cm;
     CMConnection conn = NULL;

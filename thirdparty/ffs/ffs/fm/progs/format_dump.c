@@ -24,23 +24,18 @@ extern int sleep();
 extern int (*establish_server_connection_ptr)(FMContext fmc, action_t action);
 
 static int
-serverAtomicWrite(fd, buffer, length)
-void* fd;
-void *buffer;
-int length;
+serverAtomicWrite(void* fd, void *buffer, int length)
 {
      char *junk_result_str;
      int junk_errno;
-     return os_server_write_func(fd, buffer, length, &junk_errno,
+     return ffs_server_write_func(fd, buffer, length, &junk_errno,
 				&junk_result_str);
 }
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
-    FMContext context = create_FMcontext(NULL);
+    FMContext context = create_FMcontext();
     char format_dump_char = 'D';
 
 /*    if (os_sockets_init_func != NULL) os_sockets_init_func();*/

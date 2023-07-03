@@ -6,16 +6,15 @@
 extern "C" {
 #endif
 
-#if defined(FUNCPROTO) || defined(__STDC__) || defined(__cplusplus) || defined(c_plusplus)
-#ifndef ARGS
-#define ARGS(args) args
-#endif
+#ifndef FFS_DECL_SPEC
+#if defined(_MSC_VER) && !defined(FFS_SRC)
+#define FFS_DECLSPEC    __declspec(dllimport)
 #else
-#ifndef ARGS
-#define ARGS(args) (/*args*/)
+#define FFS_DECLSPEC
 #endif
 #endif
 
+#include <stdint.h>
 
 /*!
  * cod_parse_context is the basic handle controlling generation of
@@ -113,7 +112,7 @@ typedef cod_extern_entry *cod_extern_list;
  * \return Will return a new initialized cod_parse_context unless there is
  * no available memory.
  */
-extern cod_parse_context new_cod_parse_context(void);
+extern FFS_DECLSPEC cod_parse_context new_cod_parse_context(void);
 
 /*!
  * Free a handle to an cod_parse_context.
@@ -122,7 +121,7 @@ extern cod_parse_context new_cod_parse_context(void);
  * Calling this routine frees all memory associated with the parse context,
  * but not that of code that has been generated from this context.
  */
-extern void cod_free_parse_context ARGS((cod_parse_context context));
+extern FFS_DECLSPEC void cod_free_parse_context(cod_parse_context context);
 
 /*!
  * Associate a set of "name, external address" pairs with a parse context 
@@ -136,8 +135,8 @@ extern void cod_free_parse_context ARGS((cod_parse_context context));
  * \param externs the list of "name, external address" pairs to be
  *  associated.  This list should be terminated with a {NULL, 0} pair.
  */
-extern void cod_assoc_externs ARGS((cod_parse_context context,
-				    cod_extern_list externs));
+extern FFS_DECLSPEC void cod_assoc_externs(cod_parse_context context,
+				    cod_extern_list externs);
 
 /*!
  * \brief This is used to establish the parameter profile and return type 
@@ -152,7 +151,7 @@ extern void cod_assoc_externs ARGS((cod_parse_context context,
  * 	"int proc(double d, int *i)"
  *  
  */
-extern void
+extern FFS_DECLSPEC void
 cod_subroutine_declaration(const char *decl, cod_parse_context context);
 
 /*!
@@ -164,7 +163,7 @@ cod_subroutine_declaration(const char *decl, cod_parse_context context);
  *  the structure.
  * \param context the context in which the type is to be made available.
  */
-extern void cod_add_simple_struct_type(const char *name, FMFieldList field_list, 
+extern FFS_DECLSPEC void cod_add_simple_struct_type(const char *name, FMFieldList field_list, 
 				       cod_parse_context context);
 
 /*!
@@ -175,7 +174,7 @@ extern void cod_add_simple_struct_type(const char *name, FMFieldList field_list,
  *  the structures.
  * \param context the context in which the type is to be made available.
  */
-extern void cod_add_struct_type(FMStructDescList format_list, 
+extern FFS_DECLSPEC void cod_add_struct_type(FMStructDescList format_list, 
 				cod_parse_context context);
 
 /*!
@@ -186,7 +185,7 @@ extern void cod_add_struct_type(FMStructDescList format_list,
  * \param param_num the numeral of the new parameter (0 is first)
  * \param context the context in which the subroutine is being declared.
  */
-extern void
+extern FFS_DECLSPEC void
 cod_add_param(const char *id, const char *typ, int param_num, 
 	      cod_parse_context context);
 
@@ -200,7 +199,7 @@ cod_add_param(const char *id, const char *typ, int param_num,
  * \param context the context in which the subroutine is being declared.
  */
 #ifdef __FM__
-extern void
+extern FFS_DECLSPEC void
 cod_add_encoded_param(const char *id, char *data, int param_num, 
 		      FMContext c, cod_parse_context context);
 #endif
@@ -211,7 +210,7 @@ cod_add_encoded_param(const char *id, char *data, int param_num,
  * \param typ the data type of the return value.
  * \param context the context in which the subroutine is being declared.
  */
-extern void
+extern FFS_DECLSPEC void
 cod_set_return_type(char *typ, cod_parse_context context);
 
 /*!
@@ -247,7 +246,7 @@ typedef struct _cod_code_struct {
  * \param code the string representing the function body.
  * \param context the context in which the function body is to be generated.
  */
-cod_code cod_code_gen ARGS((char *code, cod_parse_context context));
+cod_code cod_code_gen(char *code, cod_parse_context context);
 
 /*!
  * perform syntactical and semantic checking of a function body without
@@ -256,7 +255,7 @@ cod_code cod_code_gen ARGS((char *code, cod_parse_context context));
  * \param code the string representing the function body.
  * \param context the context in which the function body is to be checked.
  */
-int cod_code_verify ARGS((char *code, cod_parse_context context));
+int cod_code_verify(char *code, cod_parse_context context);
 
 /*!
  * Free all resources associated with the generated code associated with the
@@ -264,7 +263,7 @@ int cod_code_verify ARGS((char *code, cod_parse_context context));
  *
  * \param code the handle to the resources that will be free'd.
  */
-extern void cod_code_free ARGS((cod_code code));
+extern FFS_DECLSPEC void cod_code_free(cod_code code);
 
 /*!
  * create an execution context associated with a code block
@@ -272,7 +271,7 @@ extern void cod_code_free ARGS((cod_code code));
  * \param code the handle to the code bloc
  * \return the created execution context
  */
-extern cod_exec_context cod_create_exec_context ARGS((cod_code code));
+extern FFS_DECLSPEC cod_exec_context cod_create_exec_context(cod_code code);
 
 /*!
  * Free all resources associated with the generated code associated with the
@@ -280,7 +279,7 @@ extern cod_exec_context cod_create_exec_context ARGS((cod_code code));
  *
  * \param code the handle to the resources that will be free'd.
  */
-extern void cod_exec_context_free ARGS((cod_exec_context ec));
+extern FFS_DECLSPEC void cod_exec_context_free(cod_exec_context ec);
 
 /*!
  * Associate application-level data with an execution context.  This is
@@ -292,7 +291,7 @@ extern void cod_exec_context_free ARGS((cod_exec_context ec));
  * \param key the value that will serve as a key to retrieve the data
  * \param value the 'long' data that will be associated with the key
  */
-extern void cod_assoc_client_data(cod_exec_context ec, int key, long value);
+extern FFS_DECLSPEC void cod_assoc_client_data(cod_exec_context ec, int key, intptr_t value);
 
 /*!
  * Retrieve application-level data with an execution context.  This is
@@ -306,7 +305,7 @@ extern void cod_assoc_client_data(cod_exec_context ec, int key, long value);
  * \param key the value that will serve as a key to retrieve the data
  * \return the 'long' data that was associated with the key
  */
-extern long cod_get_client_data(cod_exec_context ec, int key);
+extern FFS_DECLSPEC intptr_t cod_get_client_data(cod_exec_context ec, int key);
 
 /*!
  * Extract static state from an execution context.  
@@ -316,7 +315,7 @@ extern long cod_get_client_data(cod_exec_context ec, int key);
  *  the length of the returned state block
  * \return a pointer to the extracted state
  */
-extern void *cod_extract_state(cod_exec_context ec, int *length_p);
+extern FFS_DECLSPEC void *cod_extract_state(cod_exec_context ec, int *length_p);
 
 /*!
  * Install static state into an execution context.  
@@ -326,7 +325,7 @@ extern void *cod_extract_state(cod_exec_context ec, int *length_p);
  * \param state_size the size of the state block
  * \return 1 on success, 0 on failure
  */
-extern int cod_install_state(cod_exec_context ec, void *state, int length);
+extern FFS_DECLSPEC int cod_install_state(cod_exec_context ec, void *state, int length);
 
 /*!
  * \brief This parses a string to determine what external
@@ -338,7 +337,7 @@ extern int cod_install_state(cod_exec_context ec, void *state, int length);
  * \param context The parse context in which the declarations should be
  * visible.
 */
-int cod_parse_for_context ARGS((char *code, cod_parse_context context));
+int cod_parse_for_context(char *code, cod_parse_context context);
 
 /*!
  * \brief This parses a string to setup global variables that are 
@@ -350,14 +349,14 @@ int cod_parse_for_context ARGS((char *code, cod_parse_context context));
  * \param context The parse context in which the declarations should be
  * visible.
 */
-int cod_parse_for_globals ARGS((char *code, cod_parse_context context));
+int cod_parse_for_globals(char *code, cod_parse_context context);
 
 /*!
  * Duplicate a handle to an cod_parse_context.
  *
  * \param context the cod_parse_context to be duplicated.
  */
-extern cod_parse_context cod_copy_context ARGS((cod_parse_context context));
+extern FFS_DECLSPEC cod_parse_context cod_copy_context(cod_parse_context context);
 
 /*!
  * Duplicate a handle to an cod_parse_context, specifically adapting the results to 
@@ -366,7 +365,7 @@ extern cod_parse_context cod_copy_context ARGS((cod_parse_context context));
  *
  * \param context the cod_parse_context to be duplicated.
  */
-extern cod_parse_context cod_copy_globals ARGS((cod_parse_context context));
+extern FFS_DECLSPEC cod_parse_context cod_copy_globals(cod_parse_context context);
 
 /*!
  *  err_out_func_t is a function pointer type.   Functions matching this
@@ -375,7 +374,7 @@ extern cod_parse_context cod_copy_globals ARGS((cod_parse_context context));
  *    cod_set_error_func()
  *  \param string the textual representation of the error.
 */
-typedef void (*err_out_func_t) ARGS((void *client_data, char *string));
+typedef void (*err_out_func_t)(void *client_data, char *string);
 
 /*!
  * cod_set_error_func establishes a new error output routine for COD.
@@ -385,8 +384,8 @@ typedef void (*err_out_func_t) ARGS((void *client_data, char *string));
  *  \param context the context in which errors are to be captured
  *  \param err_func the function to be called when errors occur
  */
-void cod_set_error_func ARGS((cod_parse_context context, 
-			      err_out_func_t err_func));
+void cod_set_error_func(cod_parse_context context, 
+			      err_out_func_t err_func);
 
 /*!
  * cod_set_dont_coerce_return restricts COD to more strict type matching for expressions and return values
@@ -394,14 +393,14 @@ void cod_set_error_func ARGS((cod_parse_context context,
  *  \param context the context to restrict
  *  \param value True if coercion is not to be applied to return values, false by default
  */
-void cod_set_dont_coerce_return ARGS((cod_parse_context context, int value));
+void cod_set_dont_coerce_return(cod_parse_context context, int value);
 
 /*!
  * This will dump (to stdout) a disassembled version of the 
  * machine code that has been generated
  *  \param code the cod_code handle containing the code to be dumped.
  */
-void cod_dump ARGS((cod_code code));
+void cod_dump(cod_code code);
 
 /*!
  * This will generate rollback code for message morphing 
@@ -409,8 +408,8 @@ void cod_dump ARGS((cod_code code));
  *  \param format2 the old format. This is the format of the output message.
  *  \param xform_code  The COD code string that transforms data from format1 to format2.
  */
-extern cod_code
-gen_rollback_code ARGS((FMStructDescList format1, FMStructDescList format2, char *xform_code));
+extern FFS_DECLSPEC cod_code
+gen_rollback_code(FMStructDescList format1, FMStructDescList format2, char *xform_code);
 
 /*!
  * \brief This is used to add an integer constant available in a particular context.
@@ -418,8 +417,8 @@ gen_rollback_code ARGS((FMStructDescList format1, FMStructDescList format2, char
  * \param value The value of the constant
  * \param context the context in which this is to be created
 */
-extern void cod_add_int_constant_to_parse_context ARGS((const char *id, int value,
-    cod_parse_context context)); 
+extern FFS_DECLSPEC void cod_add_int_constant_to_parse_context(const char *id, int value,
+    cod_parse_context context); 
 
 /*!
  * \brief Sets what value cod_closure_context will send to a subroutine.
@@ -427,7 +426,7 @@ extern void cod_add_int_constant_to_parse_context ARGS((const char *id, int valu
  * \param value The value to send
  * \param context The context in which the subroutine has been declared.
 */
-extern void cod_set_closure ARGS((char *name, void* value, cod_parse_context context));
+extern FFS_DECLSPEC void cod_set_closure(char *name, void* value, cod_parse_context context);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }
