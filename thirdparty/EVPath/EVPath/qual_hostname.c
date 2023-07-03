@@ -6,11 +6,11 @@
 #ifdef HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
-#include <sys/socket.h>
 #ifdef HAVE_WINDOWS_H
-#include <winsock.h>
+#include <winsock2.h>
 #define __ANSI_CPP__
 #else
+#include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/if.h>
@@ -364,7 +364,7 @@ get_qual_hostname(void *cm, char *buf, int len, CMtrans_services svc, attr_list 
 	}
     }
     if (network_string != NULL) {
-	int name_len = strlen(buf) + 2 + strlen(network_string);
+	size_t name_len = strlen(buf) + 2 + strlen(network_string);
 	char *new_name_str = svc->malloc_func(name_len);
 	char *first_dot = strchr(buf, '.');
 

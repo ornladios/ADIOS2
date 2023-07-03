@@ -76,7 +76,7 @@ int main(int argc, char **argv)
     trans_spec = create_transform_action_spec(simple_format_list, output_format_list,
 					    trans_func);
     printf("trns spec is %s\n", trans_spec);
-    encoded_trans_spec = atl_base64_encode(trans_spec, strlen(trans_spec) + 1);
+    encoded_trans_spec = atl_base64_encode(trans_spec, (unsigned int) strlen(trans_spec) + 1);
     printf("Contact list \"%d:%s:%s\"\n", stone, string_list, encoded_trans_spec);
     free(trans_spec);
     free(encoded_trans_spec);

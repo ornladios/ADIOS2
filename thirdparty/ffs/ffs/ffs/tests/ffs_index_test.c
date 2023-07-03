@@ -19,18 +19,14 @@
 static int verbose = 0;
 static char *test_only = NULL;
 
-int
-size_func_sizeof(iofile, size)
-FFSFile iofile;
-int size;
+size_t
+size_func_sizeof(FFSFile iofile, size_t size)
 {
     return size;
 }
 
-int
-size_func_next_size(iofile, size)
-FFSFile iofile;
-int size;
+size_t
+size_func_next_size(FFSFile iofile, size_t size)
 {
     return FFSfile_next_decode_length(iofile);
 }
@@ -38,19 +34,13 @@ int size;
 attr_list last_attrs = NULL;
 
 int
-read_func_no_buffer(iofile, data, size)
-FFSFile iofile;
-void *data;
-int size;
+read_func_no_buffer(FFSFile iofile, void *data, size_t size)
 {
     return FFSread_attr(iofile, data, &last_attrs);
 }
 
 int
-read_func_buffer(iofile, data, size)
-FFSFile iofile;
-void *data;
-int size;
+read_func_buffer(FFSFile iofile, void *data, size_t size)
 {
     FFSBuffer b = create_fixed_FFSBuffer(data, size);
     int ret = FFSread_to_buffer(iofile, b, NULL);
@@ -68,8 +58,7 @@ static FFSTypeHandle multi_array_ioformat, triangle_ioformat, add_action_ioforma
 static FFSTypeHandle node_ioformat, embedded_rec_ioformat;
 
 static void
-set_targets(context)
-FFSContext context;
+set_targets(FFSContext context)
 {
     if ((test_only == NULL) || (strcmp(test_only, "first_rec") == 0))
 	first_rec_ioformat = FFSset_fixed_target(context, first_format_list);
@@ -116,10 +105,7 @@ FFSContext context;
 }
 
 void
-do_test(input_file, size_func, read_func)
-char *input_file;
-int (*size_func) (FFSFile, int);
-int (*read_func) ();
+do_test(char *input_file, size_t (*size_func) (FFSFile, size_t), int (*read_func) (FFSFile iofile, void *data, size_t size))
 {
     FFSFile iofile;
     int item_count = 0;
@@ -217,7 +203,7 @@ int (*read_func) ();
 		    exit(1);
 		}
 	    } else if (FFSnext_type_handle(iofile) == second_rec_ioformat) {
-		int size = size_func(iofile, sizeof(second_rec));
+		size_t size = size_func(iofile, sizeof(second_rec));
 		second_rec *read_data = malloc(size);
 		int iter_attr = -1;
 		memset(read_data, 0, size);
@@ -235,7 +221,7 @@ int (*read_func) ();
 		second_rec_count++;
 		free(read_data);
 	    } else if (FFSnext_type_handle(iofile) == third_rec_ioformat) {
-		int size = size_func(iofile, sizeof(third_rec));
+		size_t size = size_func(iofile, sizeof(third_rec));
 		third_rec *read_data = malloc(size);
 		int iter_attr = -1;
 		memset(read_data, 0, size);
@@ -250,7 +236,7 @@ int (*read_func) ();
 		free(read_data);
 		third_rec_count++;
 	    } else if (FFSnext_type_handle(iofile) == fourth_rec_ioformat) {
-		int size = size_func(iofile, sizeof(fourth_rec));
+		size_t size = size_func(iofile, sizeof(fourth_rec));
 		fourth_rec *read_data = malloc(size);
 		memset(read_data, 0, size);
 		if (!read_func(iofile, read_data, size))
@@ -266,7 +252,7 @@ int (*read_func) ();
 		printf("Emb Rec failure\n");
 		FFSread(iofile, NULL);
 	    } else if (FFSnext_type_handle(iofile) == fifth_rec_ioformat) {
-		int size = size_func(iofile, sizeof(fifth_rec));
+		size_t size = size_func(iofile, sizeof(fifth_rec));
 		fifth_rec *read_data = malloc(size);
 		int iter_attr = -1;
 		memset(read_data, 0, size);
@@ -280,7 +266,7 @@ int (*read_func) ();
 		free(read_data);
 		fifth_rec_count++;
 	    } else if (FFSnext_type_handle(iofile) == sixth_rec_ioformat) {
-		int size = size_func(iofile, sizeof(sixth_rec));
+		size_t size = size_func(iofile, sizeof(sixth_rec));
 		sixth_rec *read_data = malloc(size);
 		memset(read_data, 0, size);
 		if (!read_func(iofile, read_data, size))
@@ -291,7 +277,7 @@ int (*read_func) ();
 		}
 		free(read_data);
 	    } else if (FFSnext_type_handle(iofile) == nested_rec_ioformat) {
-		int size = size_func(iofile, sizeof(nested_rec));
+		size_t size = size_func(iofile, sizeof(nested_rec));
 		nested_rec *read_data = malloc(size);
 		memset(read_data, 0, size);
 		if (!read_func(iofile, read_data, size))
@@ -303,7 +289,7 @@ int (*read_func) ();
 		}
 		free(read_data);
 	    } else if (FFSnext_type_handle(iofile) == later_rec_ioformat) {
-		int size = size_func(iofile, sizeof(later_rec));
+		size_t size = size_func(iofile, sizeof(later_rec));
 		later_rec *read_data = malloc(size);
 		memset(read_data, 0, size);
 		if (!read_func(iofile, read_data, size))
@@ -314,7 +300,7 @@ int (*read_func) ();
 		}
 		free(read_data);
 	    } else if (FFSnext_type_handle(iofile) == ninth_rec_ioformat) {
-		int size = size_func(iofile, sizeof(ninth_rec));
+		size_t size = size_func(iofile, sizeof(ninth_rec));
 		ninth_rec *read_data = malloc(size);
 		memset(read_data, 0, size);
 		if (!read_func(iofile, read_data, size))
@@ -325,7 +311,7 @@ int (*read_func) ();
 		}
 		free(read_data);
 	    } else if (FFSnext_type_handle(iofile) == string_array_ioformat) {
-		int size = size_func(iofile, sizeof(string_array_rec));
+		size_t size = size_func(iofile, sizeof(string_array_rec));
 		string_array_rec *read_data = malloc(size);
 		memset(read_data, 0, size);
 		if (!read_func(iofile, read_data, size))
@@ -405,9 +391,7 @@ int (*read_func) ();
 
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     int i;
     char *input_file = "test_output";

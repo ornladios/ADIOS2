@@ -22,7 +22,7 @@ get_marshal_info(FMFormat f, FMTypeDesc *t);
 
 struct subsample_marshal_data {
     int element_count;
-    int element_size;
+    size_t element_size;
     void *src_ptr;
     void *dst_ptr;
     int marshalled_count;

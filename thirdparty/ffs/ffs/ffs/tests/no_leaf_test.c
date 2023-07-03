@@ -84,9 +84,7 @@ FMStructDescRec data_struct_list[] = {
 };
     
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     data_struct data;
     void *encode_buffer, *base_of_encoded_array1, *base_of_encoded_array2;
@@ -106,8 +104,8 @@ char **argv;
     /* setup a test record to play with */
     data.s1.x = data.s2.x = data.x = 10;
     data.s1.y = data.y = 5;
-    data.s1.array1 = (void*)(0xdeadbeef);    /* should get a seg fault if we dereference this */
-    data.s2.array2 = (void*)(0xD15EA5E);    /* should get a seg fault if we dereference this */
+    data.s1.array1 = (void*)(intptr_t)(0xdeadbeef);    /* should get a seg fault if we dereference this */
+    data.s2.array2 = (void*)(intptr_t)(0xD15EA5E);    /* should get a seg fault if we dereference this */
 
 
     /* register a format so we can do more stuff */
@@ -124,11 +122,11 @@ char **argv;
     cod_set_return_type("Struct_array1", cod_context);
     
     gen_code1 = cod_code_gen("{return encode.s1.array1;}", cod_context);
-    func1 = (void*(*)(void*)) (long) gen_code1->func;
+    func1 = (void*(*)(void*)) (intptr_t) gen_code1->func;
     base_of_encoded_array1 = func1(encode_buffer);
     
     gen_code2 = cod_code_gen("{return encode.s2.array2;}", cod_context);
-    func2 = (void*(*)(void*)) (long) gen_code2->func;
+    func2 = (void*(*)(void*)) (intptr_t) gen_code2->func;
     base_of_encoded_array2 = func2(encode_buffer);
 
     for (x=0; x < 10; x++) {

@@ -11,7 +11,7 @@
 #endif
 #include <stdlib.h>
 #ifdef HAVE_WINDOWS_H
-#include <winsock.h>
+#include <winsock2.h>
 #define __ANSI_CPP__
 #else
 #include <netinet/in.h>

@@ -8,15 +8,18 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include <arpa/inet.h>
 #include "evpath.h"
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
+#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
 #else
 #include <sys/wait.h>
+#include <arpa/inet.h>
 #endif
 
 typedef struct _complex_rec {
@@ -208,7 +211,7 @@ main(int argc, char **argv)
 #define HELLO_PORT 12345
 #define HELLO_GROUP "225.0.0.37"
 	    int addr;
-	    (void) inet_aton(HELLO_GROUP, (struct in_addr *)&addr);
+	    (void) inet_pton(AF_INET, HELLO_GROUP, (struct in_addr *)&addr);
 	    contact_list = create_attr_list();
 	    add_attr(contact_list, CM_MCAST_ADDR, Attr_Int4,
 		     (attr_value) (long)addr);

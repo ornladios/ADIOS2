@@ -1,27 +1,22 @@
 #include "config.h"
 
-#ifndef MODULE
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#else
-#include "kernel/kcm.h"
-#include "kernel/cm_kernel.h"
-#include "kernel/library.h"
-/* don't pull in sys/types if MODULE is defined */
-#define _SYS_TYPES_H
 #endif
+
 #include <atl.h>
 #include <evpath.h>
 #include "chr_time.h"
-#include <cm_internal.h>
-#include <cm_transport.h>
 #if !NO_DYNAMIC_LINKING
 #include "dlloader.h"
 #endif
 #undef NDEBUG
 #include "assert.h"
+#include <cm_internal.h>
+#include <cm_transport.h>
 
 extern struct CMtrans_services_s CMstatic_trans_svcs;
 /* const lt_dlsymlist lt_preloaded_symbols[1] = { { 0, 0 } }; */
@@ -159,15 +154,15 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 	lt_dlsym(handle, "initialize");
     transport->listen = (CMTransport_listen_func)
 	lt_dlsym(handle, "non_blocking_listen");
-    transport->initiate_conn = (CMConnection(*)())
+    transport->initiate_conn = (CMTransport_conn_func)
 	lt_dlsym(handle, "initiate_conn");
     transport->initiate_conn_nonblocking = (CMTransport_NBconn_func)
 	lt_dlsym(handle, "initiate_conn_nonblocking");
-    transport->finalize_conn_nonblocking = (CMConnection(*)())
+    transport->finalize_conn_nonblocking = (CMTransport_NBconn_final_func)
 	lt_dlsym(handle, "finalize_conn_nonblocking");
-    transport->self_check = (int (*)()) lt_dlsym(handle, "self_check");
+    transport->self_check = (CMTransport_self_check_func) lt_dlsym(handle, "self_check");
     transport->connection_eq =
-	(int (*)()) lt_dlsym(handle, "connection_eq");
+	(CMTransport_connection_eq_func) lt_dlsym(handle, "connection_eq");
     transport->shutdown_conn = (CMTransport_shutdown_conn_func)
 	lt_dlsym(handle, "shutdown_conn");
     transport->read_to_buffer_func = (CMTransport_read_to_buffer_func)

@@ -26,8 +26,6 @@
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
-#include <net/if.h>
-#include <sys/ioctl.h>
 #ifdef HAVE_SOCKLIB_H
 #include "sockLib.h"
 #include "hostLib.h"
@@ -39,6 +37,8 @@
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
+#include <net/if.h>
+#include <sys/ioctl.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
@@ -56,6 +56,7 @@
 #include "assert.h"
 #include "fm.h"
 #include "fm_internal.h"
+#include "io_interface.h"
 
 #else
 #include "config.h"
@@ -96,6 +97,10 @@
 
 typedef enum {Raw, Authenticated} Server_Protocol;
 #define CIPHER_BUF_SIZE 1024
+#ifdef _MSC_VER
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
 
 static int
 fill_hostaddr(void *addr, char *hostname, Server_Protocol *protocol)
@@ -160,11 +165,9 @@ extern int
 server_write_header(FMContext fmc, int enc_len, unsigned char *enc_buffer);
 
 extern int
-establish_server_connection(iofile, action)
-FMContext iofile;
-action_t action;
+establish_server_connection(FMContext iofile, action_t action)
 {
-    int sock;
+    SOCKET sock;
     int ret;
     Server_Protocol protocol = Raw;
     int conn_is_dead = 0;
@@ -174,14 +177,7 @@ action_t action;
 #else
     struct socket *socket;	
 #endif
-
-    if (format_server_verbose == -1) {
-	if (getenv("FORMAT_SERVER_VERBOSE") == NULL) {
-	    format_server_verbose = 0;
-	} else {
-	    format_server_verbose = 1;
-	}
-    }
+    if (ffs_sockets_init_func) ffs_sockets_init_func();
 
     if (iofile->server_fd != (void*)-1) {
 #ifndef MODULE
@@ -198,12 +194,12 @@ action_t action;
 #endif
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
-	FD_SET( (int)(long)iofile->server_fd, &rd_set);
+	FD_SET( (int)(intptr_t)iofile->server_fd, &rd_set);
 	ret = select(FD_SETSIZE, &rd_set, (fd_set*)NULL, 
 		     (fd_set *) NULL, &timeout);
 	if (ret == -1) {
 	    if (format_server_verbose)
-	      printf("Dead connection, Select return is %d, server fd is %ld, errno is %d\n", ret, (long)iofile->server_fd, errno);
+	      printf("Dead connection, Select return is %d, server fd is %p, errno is %d\n", ret, (void*)(intptr_t)iofile->server_fd, errno);
 	    conn_is_dead = 1;
 	}
 #else
@@ -323,9 +319,9 @@ action_t action;
 	setsockopt(sock, IPPROTO_TCP, TCP_NODELAY, (char *) &delay_value,
 		   sizeof(delay_value));
 	delay_value = 1;
-	setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &delay_value, sizeof(delay_value));
+	setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (const char *)& delay_value, sizeof(delay_value));
 #endif
-	iofile->server_fd = (void*) (long) sock;
+	iofile->server_fd = (void*) (intptr_t) sock;
 	
 	if (protocol == Authenticated) {
 	    unsigned char outbuf[CIPHER_BUF_SIZE];

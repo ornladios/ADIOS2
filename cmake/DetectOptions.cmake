@@ -451,7 +451,7 @@ if(DAOS_FOUND)
 endif()
 
 # BP5
-if(ADIOS2_USE_BP5 AND NOT WIN32)
+if(ADIOS2_USE_BP5)
   set(ADIOS2_HAVE_BP5 TRUE)
 endif()
 

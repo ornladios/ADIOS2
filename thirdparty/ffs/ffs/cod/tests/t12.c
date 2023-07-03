@@ -1,6 +1,7 @@
 #include "config.h"
 #include "cod.h"
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_MALLOC_H
@@ -48,12 +49,12 @@ main(int argc, char **argv)
 	static char extern_string[] = "int printf(string format, ...);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
 	cod_code gen_code;
-	long (*func)();
+	long (*func)(cod_exec_context);
 	long result;
 
 	cod_assoc_externs(context, externs);
@@ -68,7 +69,7 @@ main(int argc, char **argv)
 	    void *state;
 	    int state_size = 0;
 	    ec = cod_create_exec_context(gen_code);
-	    func = (long(*)()) (long) gen_code->func;
+	    func = (long(*)(cod_exec_context)) (intptr_t) gen_code->func;
 	    result = func(ec);
 	    if (verbose) printf("Run number after first run is %ld, expected 1\nGrabbing state...", result);
 	    assert(result == 1);
@@ -132,12 +133,12 @@ main(int argc, char **argv)
 	static char extern_string[] = "int printf(string format, ...);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
 	cod_code gen_code;
-	long (*func)();
+	long (*func)(cod_exec_context);
 	long result;
 
 	cod_assoc_externs(context, externs);
@@ -152,7 +153,7 @@ main(int argc, char **argv)
 	    void *state;
 	    int state_size = 0;
 	    ec = cod_create_exec_context(gen_code);
-	    func = (long(*)()) (long) gen_code->func;
+	    func = (long(*)(cod_exec_context)) (intptr_t) gen_code->func;
 	    result = func(ec);
 	    assert(result == 0);
 	    
