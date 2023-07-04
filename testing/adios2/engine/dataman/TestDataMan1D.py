@@ -6,7 +6,7 @@
 # TestDataMan1D.py: test for 1D data transfer by reading in Python
 #  Created on: March 3, 2023
 #      Author: Dmitry Ganyushin ganyushindi@ornl.gov
-from multiprocessing import Process
+import multiprocessing
 import unittest
 import numpy as np
 import adios2
@@ -28,8 +28,8 @@ class TestDataMan1D(unittest.TestCase):
 
     def test_run(self):
 
-        s = Process(target=self.thread_send)
-        r = Process(target=self.thread_receive)
+        s = multiprocessing.Process(target=self.thread_send)
+        r = multiprocessing.Process(target=self.thread_receive)
 
         s.start()
         r.start()
@@ -88,4 +88,5 @@ class TestDataMan1D(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    multiprocessing.set_start_method("fork")
     unittest.main()
