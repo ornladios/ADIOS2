@@ -44,7 +44,7 @@ brew install c-blosc
 echo "Installing python3"
 brew install python numpy
 
-if [[ "$GH_YML_JOBNAME" =~ -mpi ]]
+if [[ "$GH_YML_JOBNAME" =~ -ompi ]]
 then
   echo "Installing OpenMPI"
   brew install openmpi mpi4py

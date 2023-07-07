@@ -5,7 +5,7 @@ set(ENV{CXXFLAGS} /WX)
 
 set(dashboard_cache "
 ADIOS2_USE_Fortran:BOOL=OFF
-ADIOS2_USE_MPI:BOOL=OFF
+ADIOS2_USE_MPI:BOOL=ON
 ")
 
 set(CTEST_CMAKE_GENERATOR "Visual Studio 17 2022")

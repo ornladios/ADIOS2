@@ -1,0 +1,6 @@
+spack:
+  view: true
+  config:
+    checksum: false
+  concretizer:
+    unify: false
