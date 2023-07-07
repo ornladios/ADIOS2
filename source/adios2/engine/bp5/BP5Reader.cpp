@@ -385,20 +385,9 @@ void BP5Reader::PerformGets()
         }*/
 
         // wait for all async threads
-        int tid = 1;
         for (auto &f : futures)
         {
-            /*auto t = */ f.get();
-            /*double tSubfile = std::get<0>(t);
-            double tRead = std::get<1>(t);
-            double tCopy = std::get<2>(t);
-            size_t nReads = std::get<3>(t);
-            std::cout << " -> PerformGets() thread " << tid
-                      << " total = " << tSubfile + tRead + tCopy
-                      << "s, subfile = " << tSubfile << "s, read = " << tRead
-                      << "s, copy = " << tCopy << ", nReads = " << nReads
-                      << std::endl;*/
-            ++tid;
+            f.get();
         }
     }
     else

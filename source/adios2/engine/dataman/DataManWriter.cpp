@@ -365,7 +365,6 @@ void DataManWriter::Handshake()
 
 void DataManWriter::ReplyThread()
 {
-    int readerCount = 0;
     while (m_ReplyThreadActive)
     {
         auto request = m_Replier.ReceiveRequest();
@@ -384,7 +383,6 @@ void DataManWriter::ReplyThread()
             else if (r == "Ready")
             {
                 m_Replier.SendReply("OK", 2);
-                ++readerCount;
             }
             else if (r == "Step")
             {
