@@ -37,6 +37,8 @@
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include "adios2/toolkit/transport/file/FileStdio.h"
 #include "adios2/toolkit/transport/null/NullTransport.h"
+//TODODG make if
+#include "adios2/toolkit/transport/file/FileHTTP.h"
 
 namespace adios2
 {
@@ -606,6 +608,16 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
             transport = std::make_shared<transport::FileAWSSDK>(m_Comm);
         }
 #endif
+        else if (library == "http")
+        {
+            transport = std::make_shared<transport::FileHTTP>(m_Comm);
+            if (lf_GetBuffered("false"))
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "TransportMan", "OpenFileTransport",
+                    library + " transport does not support buffered I/O.");
+            }
+        }
         else if (library == "null")
         {
             transport = std::make_shared<transport::NullTransport>(m_Comm);
