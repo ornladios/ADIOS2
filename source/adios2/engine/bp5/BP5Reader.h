@@ -18,6 +18,7 @@
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosRangeFilter.h"
 #include "adios2/toolkit/format/bp5/BP5Deserializer.h"
+#include "adios2/toolkit/remote/Remote.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
 #include <chrono>
@@ -96,6 +97,7 @@ private:
 
     /* transport manager for managing the active flag file */
     transportman::TransportMan m_ActiveFlagFileManager;
+    Remote m_Remote;
     bool m_WriterIsActive = true;
 
     /** used for per-step reads, TODO: to be moved to BP5Deserializer */
@@ -249,6 +251,10 @@ private:
     std::map<uint64_t, WriterMapStruct> m_WriterMap;
     // step -> writermap index (for all steps)
     std::vector<uint64_t> m_WriterMapIndex;
+
+    void PerformLocalGets();
+
+    void PerformRemoteGets();
 
     void DestructorClose(bool Verbose) noexcept;
 

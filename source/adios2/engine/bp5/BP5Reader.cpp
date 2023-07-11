@@ -33,7 +33,7 @@ BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode,
 : Engine("BP5Reader", io, name, mode, std::move(comm)),
   m_MDFileManager(io, m_Comm), m_DataFileManager(io, m_Comm),
   m_MDIndexFileManager(io, m_Comm), m_FileMetaMetadataManager(io, m_Comm),
-  m_ActiveFlagFileManager(io, m_Comm)
+  m_ActiveFlagFileManager(io, m_Comm), m_Remote()
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     Init();
@@ -276,6 +276,31 @@ BP5Reader::ReadData(adios2::transportman::TransportMan &FileManager,
 
 void BP5Reader::PerformGets()
 {
+    if (m_Remote)
+    {
+        PerformRemoteGets();
+    }
+    else
+    {
+        PerformLocalGets();
+    }
+}
+
+void BP5Reader::PerformRemoteGets()
+{
+    std::cout << "Perform all remote Gets" << std::endl;
+
+    // TP startGenerate = NOW();
+    auto GetRequests = m_BP5Deserializer->PendingGetRequests;
+    for (auto &Req : GetRequests)
+    {
+
+        m_Remote.Get(Req.VarName, Req.Step, Req.Count, Req.Start, Req.Data);
+    }
+}
+
+void BP5Reader::PerformLocalGets()
+{
     auto lf_CompareReqSubfile =
         [&](adios2::format::BP5Deserializer::ReadRequest &r1,
             adios2::format::BP5Deserializer::ReadRequest &r2) -> bool {
@@ -368,8 +393,8 @@ void BP5Reader::PerformGets()
         // then main thread process the last subset
         for (size_t tid = 0; tid < nThreads - 1; ++tid)
         {
-            futures[tid] = std::async(std::launch::async, lf_Reader, (int)(tid + 1),
-                                      maxOpenFiles);
+            futures[tid] = std::async(std::launch::async, lf_Reader,
+                                      (int)(tid + 1), maxOpenFiles);
         }
         // main thread runs last subset of reads
         /*auto tMain = */ lf_Reader(0, maxOpenFiles);
@@ -457,6 +482,13 @@ void BP5Reader::Init()
     TimePoint timeoutInstant = Now() + timeoutSeconds;
     OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
     UpdateBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
+
+    //  This isn't how we'll trigger remote ops in the end, but a temporary
+    //  solution
+    if (getenv("DoRemote"))
+    {
+        m_Remote.Open("localhost", 26200, m_Name, m_OpenMode);
+    }
 }
 
 void BP5Reader::InitParameters()
@@ -502,9 +534,9 @@ void BP5Reader::InitParameters()
     }
 
     size_t limit = helper::RaiseLimitNoFile();
-    if (m_Parameters.MaxOpenFilesAtOnce > (unsigned int) limit - 8)
+    if (m_Parameters.MaxOpenFilesAtOnce > (unsigned int)limit - 8)
     {
-        m_Parameters.MaxOpenFilesAtOnce = (unsigned int) limit - 8;
+        m_Parameters.MaxOpenFilesAtOnce = (unsigned int)limit - 8;
     }
 }
 

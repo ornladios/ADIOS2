@@ -94,6 +94,26 @@ public:
     const bool m_ReaderIsRowMajor;
     core::Engine *m_Engine = NULL;
 
+    enum RequestTypeEnum
+    {
+        Global = 0,
+        Local = 1
+    };
+
+    struct BP5ArrayRequest
+    {
+        void *VarRec = NULL;
+        char *VarName;
+        enum RequestTypeEnum RequestType;
+        size_t Step;
+        size_t BlockID;
+        Dims Start;
+        Dims Count;
+        MemorySpace MemSpace;
+        void *Data;
+    };
+    std::vector<BP5ArrayRequest> PendingGetRequests;
+
 private:
     size_t m_VarCount = 0;
     struct BP5VarRec
@@ -223,24 +243,6 @@ private:
     void StructQueueReadChecks(core::VariableStruct *variable,
                                BP5VarRec *VarRec);
 
-    enum RequestTypeEnum
-    {
-        Global = 0,
-        Local = 1
-    };
-
-    struct BP5ArrayRequest
-    {
-        BP5VarRec *VarRec = NULL;
-        enum RequestTypeEnum RequestType;
-        size_t Step;
-        size_t BlockID;
-        Dims Start;
-        Dims Count;
-        MemorySpace MemSpace;
-        void *Data;
-    };
-    std::vector<BP5ArrayRequest> PendingRequests;
     void *GetMetadataBase(BP5VarRec *VarRec, size_t Step,
                           size_t WriterRank) const;
     bool IsContiguousTransfer(BP5ArrayRequest *Req, size_t *offsets,

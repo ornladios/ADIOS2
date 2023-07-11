@@ -156,6 +156,13 @@ if(ADIOS2_HAVE_AWSSDK)
   target_link_libraries(adios2_core PRIVATE ${AWSSDK_LINK_LIBRARIES})
 endif()
 
+if (ADIOS2_HAVE_SST)
+  # EVPath-enabled remote file transport
+  target_sources(adios2_core PRIVATE toolkit/remote/Remote.cpp toolkit/remote/remote_common.cpp toolkit/transport/file/FileRemote.cpp)
+  target_link_libraries(adios2_core PRIVATE EVPath::EVPath)
+  add_subdirectory(toolkit/remote)
+endif()
+   
 if (ADIOS2_HAVE_BP5)
   target_sources(adios2_core PRIVATE
     engine/bp5/BP5Engine.cpp
