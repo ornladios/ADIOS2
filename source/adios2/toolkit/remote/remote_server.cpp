@@ -74,7 +74,6 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent,
     open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
     CMwrite(conn, ev_state->OpenResponseFormat, &open_response_msg);
     FileMap[f->m_ID] = f;
-    std::cout << "Wrote response" << open_msg->FileName << std::endl;
 }
 
 static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent,
@@ -84,8 +83,6 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent,
     AnonADIOSFile *f = FileMap[GetMsg->FileHandle];
     struct Remote_evpath_state *ev_state =
         static_cast<struct Remote_evpath_state *>(client_data);
-    std::cout << "GetRequest for variable " << GetMsg->VarName << " at step "
-              << GetMsg->Step << std::endl;
     if (f->currentStep == -1)
     {
         f->m_engine->BeginStep();
@@ -101,7 +98,6 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent,
 
     std::string VarName = std::string(GetMsg->VarName);
     adios2::DataType TypeOfVar = f->m_io->InquireVariableType(VarName);
-    std::cout << "Variable is of type " << TypeOfVar << std::endl;
     if (GetMsg->Count)
     {
         // set count
@@ -127,8 +123,8 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent,
         Response.ReadResponseCondition = GetMsg->GetResponseCondition;         \
         Response.Dest =                                                        \
             GetMsg->Dest; /* final data destination in client memory space */  \
-        std::cout << "Returning " << Response.Size << " for Get(" << VarName   \
-                  << ")" << std::endl;                                         \
+        std::cout << "Returning " << Response.Size << " bytes for Get<"        \
+                  << TypeOfVar << ">(" << VarName << ")" << std::endl;         \
         CMwrite(conn, ev_state->ReadResponseFormat, &Response);                \
     }
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)

@@ -194,10 +194,8 @@ size_t FileRemote::GetSize()
     case Mode::Write:
     case Mode::Append:
         return 0;
-        break;
     case Mode::Read:
         return m_Size;
-        break;
     default:
         return 0;
     }

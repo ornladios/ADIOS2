@@ -557,7 +557,6 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
 
     auto lf_SetFileTransport = [&](const std::string library,
                                    std::shared_ptr<Transport> &transport) {
-        std::cout << "Library is " << library << std::endl;
         if (library == "stdio")
         {
             transport = std::make_shared<transport::FileStdio>(m_Comm);

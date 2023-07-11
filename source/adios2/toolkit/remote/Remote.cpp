@@ -34,9 +34,6 @@ void ReadResponseHandler(CManager cm, CMConnection conn, void *vevent,
 {
     RemoteCommon::ReadResponseMsg read_response_msg =
         static_cast<RemoteCommon::ReadResponseMsg>(vevent);
-    std::cout << "Got an read response with " << read_response_msg->Size
-              << " bytes of data" << std::endl;
-
     memcpy(read_response_msg->Dest, read_response_msg->ReadData,
            read_response_msg->Size);
     CMCondition_signal(cm, read_response_msg->ReadResponseCondition);
