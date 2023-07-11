@@ -1,0 +1,52 @@
+# vim: ft=dockerfile
+FROM ecpe4s/ubuntu20.04:23.02
+
+COPY packages.yaml /etc/spack/packages.yaml
+COPY specs.yaml /tmp/specs.yaml
+
+RUN . /spack/share/spack/setup-env.sh && \
+    export ADIOS_SPEC_NO_MPI="adios2~mpi" && \
+    export ADIOS_SPEC_OPENMPI="adios2+mpi^openmpi@4.1.4" && \
+    export ADIOS_SPEC_MPICH="adios2+mpi^mpich device=ch3 netmod=tcp" && \
+    spack env create adios2-ci-serial /tmp/specs.yaml && \
+    spack -e adios2-ci-serial add ${ADIOS_SPEC_NO_MPI} && \
+    spack -e adios2-ci-serial concretize && \
+    spack -e adios2-ci-serial install \
+      --include-build-deps \
+      --no-check-signature \
+      --fail-fast \
+      --only dependencies \
+      -j$(grep -c '^processor' /proc/cpuinfo) && \
+    spack env create adios2-ci-ompi /tmp/specs.yaml && \
+    spack -e adios2-ci-ompi add ${ADIOS_SPEC_OPENMPI} && \
+    spack -e adios2-ci-ompi concretize && \
+    spack -e adios2-ci-ompi install \
+      --include-build-deps \
+      --no-check-signature \
+      --fail-fast \
+      --only dependencies \
+      -j$(grep -c '^processor' /proc/cpuinfo) && \
+    spack env create adios2-ci-mpich /tmp/specs.yaml && \
+    spack -e adios2-ci-mpich add ${ADIOS_SPEC_MPICH} && \
+    spack -e adios2-ci-mpich concretize && \
+    spack -e adios2-ci-mpich install \
+      --include-build-deps \
+      --no-check-signature \
+      --fail-fast \
+      --only dependencies \
+      -j$(grep -c '^processor' /proc/cpuinfo) && \
+    spack clean -a && \
+    echo "source /spack/share/spack/setup-env.sh" >> /etc/profile.d/zz-spack.sh
+
+### Other missing packages (compared to el8 base):
+RUN apt-get remove -y \
+    gcc-9 \
+    g++-9 \
+    gfortran-9 && \
+    apt-get autoremove --purge -y && \
+    apt-get clean && \
+    update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-11 100 && \
+    update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-11 100 && \
+    update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-11 100
+
+ENTRYPOINT ["/bin/bash", "--login"]

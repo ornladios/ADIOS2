@@ -1,5 +1,3 @@
-# Client maintainer: chuck.atkins@kitware.com
-
 set(ENV{CC}  cl)
 set(ENV{CXX} cl)
 set(ENV{CFLAGS} /WX)

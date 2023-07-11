@@ -8,7 +8,7 @@ Write-Host "::group::Installing NumPy"
 pip install "numpy>=1.19"
 Write-Host "::endgroup::"
 
-if($Env:GH_YML_MATRIX_PARALLEL -eq "mpi")
+if($Env:GH_YML_MATRIX_PARALLEL -eq "ompi")
 {
   # This is taken from the MSMPI VCPKG
   $baseurl = "https://download.microsoft.com/download/a/5/2/a5207ca5-1203-491a-8fb8-906fd68ae623"

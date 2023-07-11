@@ -69,7 +69,7 @@ export TMPDIR="${RUNNER_TEMP}/tmp"
 mkdir -p "${TMPDIR}"
 
 # OpenMPI specific setup and workarounds
-if [[ "${GH_YML_MATRIX_PARALLEL}" =~ mpi && "${GH_YML_BASE_OS}" != "Windows" ]]
+if [[ "${GH_YML_MATRIX_PARALLEL}" =~ ompi && "${GH_YML_BASE_OS}" != "Windows" ]]
 then
   # Quiet some warnings from OpenMPI
   export OMPI_MCA_btl_base_warn_component_unused=0
