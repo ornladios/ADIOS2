@@ -56,6 +56,15 @@ adios2_error adios2_engine_get_type(char *type, size_t *size,
 adios2_error adios2_engine_openmode(adios2_mode *mode,
                                     const adios2_engine *engine);
 
+/** Serialize all metadata right after engine is created, which can be
+ * delivered to other processes to open the same file for reading without
+ * opening and reading in metadata again.
+ * @return metadata (pointer to allocated memory) and size of metadata
+ * the pointer must be deallocated by user using free()
+ */
+adios2_error adios2_engine_get_metadata(adios2_engine *engine, char **md,
+                                        size_t *size);
+
 /**
  * @brief Begin a logical adios2 step stream
  * Check each engine documentation for MPI collective/non-collective

@@ -53,6 +53,8 @@ public:
 
     void Seek(const size_t start = MaxSizeT) final;
 
+    size_t CurrentPos() final { return 0; };
+
     void MkDir(const std::string &fileName) final;
 
 private:
