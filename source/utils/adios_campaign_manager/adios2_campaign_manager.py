@@ -5,6 +5,7 @@ import glob
 import json
 import sqlite3
 import zlib
+from datetime import datetime, timezone
 from io import StringIO
 from os import chdir, getcwd, remove, stat
 from os.path import basename, exists, isdir
@@ -21,7 +22,7 @@ ADIOS_ACM_VERSION = "1.0"
 def SetupArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "command", help="Command: create/update/delete", choices=['create', 'update', 'delete'])
+        "command", help="Command: create/update/delete", choices=['create', 'update', 'delete', 'info'])
     parser.add_argument("--verbose", "-v",
                         help="More verbosity", action="count")
     parser.add_argument("--project", "-p",
@@ -113,7 +114,7 @@ def AddFileToArchive(args: dict, filename: str, cur: sqlite3.Cursor, dsID: int):
         return
 
     statres = stat(filename)
-    ct = statres.st_ctime_ns
+    ct = statres.st_ctime
 
     cur.execute('insert into bpfile values (?, ?, ?, ?, ?, ?, ?)',
                 (dsID, filename, compressed, len_orig, len_compressed, ct, compressed_data))
@@ -131,7 +132,7 @@ def AddDatasetToArchive(args: dict, dataset: str, cur: sqlite3.Cursor, hostID: i
     if (IsADIOSDataset(dataset)):
         print(f"Add dataset {dataset} to archive")
         statres = stat(dataset)
-        ct = statres.st_ctime_ns
+        ct = statres.st_ctime
         curDS = cur.execute('insert into bpdataset values (?, ?, ?, ?)',
                             (hostID, dirID, dataset, ct))
 
@@ -160,14 +161,6 @@ def ProcessJsonFile(args: dict, jsonlist: list, cur: sqlite3.Cursor, hostID: int
             print(f"WARNING: your object is not a dictionary, skip : {entry}")
 
 
-def MergeJsonFiles(jsonfiles: list):
-    result = list()
-    for f1 in jsonfiles:
-        with open(f1, 'r') as infile:
-            result.extend(json.load(infile))
-    return result
-
-
 def GetHostName():
     host = getfqdn()
     if host.startswith("login"):
@@ -191,6 +184,83 @@ def AddHostName(longHostName, shortHostName):
         hostID = curHost.lastrowid
         print(f"Inserted host {shortHostName} into database, rowid = {hostID}")
     return hostID
+
+
+def Info(args: dict, cur: sqlite3.Cursor):
+    res = cur.execute('select id, name, version, ctime from info')
+    info = res.fetchone()
+    t = datetime.fromtimestamp(float(info[3]))
+    print(f"{info[1]}, version {info[2]}, created on {t}")
+
+    res = cur.execute('select rowid, hostname, longhostname from host')
+    hosts = res.fetchall()
+    for host in hosts:
+        print(f"hostname = {host[1]}   longhostname = {host[2]}")
+        res2 = cur.execute(
+            'select rowid, name from directory where hostid = "'+str(host[0])+'"')
+        dirs = res2.fetchall()
+        for dir in dirs:
+            print(f"    dir = {dir[1]}")
+            res3 = cur.execute(
+                'select rowid, name, ctime from bpdataset where hostid = "'+str(host[0]) +
+                '" and dirid = "'+str(dir[0])+'"')
+            bpdatasets = res2.fetchall()
+            for bpdataset in bpdatasets:
+                t = datetime.fromtimestamp(float(bpdataset[2]))
+                print(f"        dataset = {bpdataset[1]}     created on {t}")
+
+
+def Update(args: dict, cur: sqlite3.Cursor):
+    longHostName, shortHostName = GetHostName()
+    if args.hostname != None:
+        shortHostName = args.hostname
+
+    hostID = AddHostName(longHostName, shortHostName)
+
+    rootdir = getcwd()
+    # curHost = cur.execute('insert into host values (?, ?)',
+    #                      (shortHostName, longHostName))
+    # hostID = curHost.lastrowid
+
+    curDir = cur.execute('insert into directory values (?, ?)',
+                         (hostID, rootdir))
+    dirID = curDir.lastrowid
+    con.commit()
+
+    jsonlist = MergeJsonFiles(jsonFileList)
+
+    print(f"Merged json = {jsonlist}")
+    ProcessJsonFile(args, jsonlist, cur, hostID, dirID)
+
+    con.commit()
+
+
+def Create(args: dict, cur: sqlite3.Cursor):
+    epoch = int(time())
+    cur.execute(
+        "create table info(id TEXT, name TEXT, version TEXT, ctime INT)")
+    cur.execute('insert into info values (?, ?, ?, ?)',
+                ("ACM", "ADIOS Campaign Archive", ADIOS_ACM_VERSION, epoch))
+    cur.execute("create table host" +
+                "(hostname TEXT PRIMARY KEY, longhostname TEXT)")
+    cur.execute("create table directory" +
+                "(hostid INT, name TEXT, PRIMARY KEY (hostid, name))")
+    cur.execute("create table bpdataset" +
+                "(hostid INT, dirid INT, name TEXT, ctime INT" +
+                ", PRIMARY KEY (hostid, dirid, name))")
+    cur.execute("create table bpfile" +
+                "(bpdatasetid INT, name TEXT, compression INT, lenorig INT" +
+                ", lencompressed INT, ctime INT, data BLOB" +
+                ", PRIMARY KEY (bpdatasetid, name))")
+    Update(args, cur)
+
+
+def MergeJsonFiles(jsonfiles: list):
+    result = list()
+    for f1 in jsonfiles:
+        with open(f1, 'r') as infile:
+            result.extend(json.load(infile))
+    return result
 
 
 if __name__ == "__main__":
@@ -220,53 +290,23 @@ if __name__ == "__main__":
         if exists(args.CampaignFileName):
             print(f"ERROR: archive {args.CampaignFileName} already exist")
             exit(1)
-    elif (args.command == "update"):
-        print("Update archive")
+    elif (args.command == "update" or args.command == 'info'):
+        print(f"{args.command} archive")
         if not exists(args.CampaignFileName):
             print(f"ERROR: archive {args.CampaignFileName} does not exist")
             exit(1)
 
     con = sqlite3.connect(args.CampaignFileName)
     cur = con.cursor()
-    if (args.command == "create"):
-        epoch = int(time())
-        cur.execute(
-            "create table info(id TEXT, name TEXT, version TEXT, ctime INT)")
-        cur.execute('insert into info values (?, ?, ?, ?)',
-                    ("ACM", "ADIOS Campaign Archive", ADIOS_ACM_VERSION, epoch))
-        cur.execute("create table host" +
-                    "(hostname TEXT PRIMARY KEY, longhostname TEXT)")
-        cur.execute("create table directory" +
-                    "(hostid INT, name TEXT, PRIMARY KEY (hostid, name))")
-        cur.execute("create table bpdataset" +
-                    "(hostid INT, dirid INT, name TEXT, ctime INT" +
-                    ", PRIMARY KEY (hostid, dirid, name))")
-        cur.execute("create table bpfile" +
-                    "(bpdatasetid INT, name TEXT, compression INT, lenorig INT" +
-                    ", lencompressed INT, ctime INT, data BLOB" +
-                    ", PRIMARY KEY (bpdatasetid, name))")
 
-    longHostName, shortHostName = GetHostName()
-    if args.hostname != None:
-        shortHostName = args.hostname
+    if (args.command == "info"):
+        Info(args, cur)
 
-    hostID = AddHostName(longHostName, shortHostName)
+    elif (args.command == "create"):
+        Create(args, cur)
 
-    rootdir = getcwd()
-    # curHost = cur.execute('insert into host values (?, ?)',
-    #                      (shortHostName, longHostName))
-    #hostID = curHost.lastrowid
+    elif (args.command == "update"):
+        Update(args, cur)
 
-    curDir = cur.execute('insert into directory values (?, ?)',
-                         (hostID, rootdir))
-    dirID = curDir.lastrowid
-    con.commit()
-
-    jsonlist = MergeJsonFiles(jsonFileList)
-
-    print(f"Merged json = {jsonlist}")
-    ProcessJsonFile(args, jsonlist, cur, hostID, dirID)
-
-    con.commit()
     cur.close()
     con.close()
