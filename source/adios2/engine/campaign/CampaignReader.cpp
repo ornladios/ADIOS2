@@ -178,29 +178,35 @@ void CampaignReader::InitTransports()
 
     ReadCampaignData(m_DB, m_CampaignData);
 
-    std::cout << "Local hostname = " << m_Hostname << "\n";
-    std::cout << "Database result:\n  version = " << m_CampaignData.version
-              << "\n  hosts:\n";
+    if (m_Verbosity == 1)
+    {
+        std::cout << "Local hostname = " << m_Hostname << "\n";
+        std::cout << "Database result:\n  version = " << m_CampaignData.version
+                  << "\n  hosts:\n";
 
-    for (size_t hostidx = 0; hostidx < m_CampaignData.hosts.size(); ++hostidx)
-    {
-        CampaignHost &h = m_CampaignData.hosts[hostidx];
-        std::cout << "    host =" << h.hostname
-                  << "  long name = " << h.longhostname << "  directories: \n";
-        for (size_t diridx = 0; diridx < h.directory.size(); ++diridx)
+        for (size_t hostidx = 0; hostidx < m_CampaignData.hosts.size();
+             ++hostidx)
         {
-            std::cout << "      dir = " << h.directory[diridx] << "\n";
+            CampaignHost &h = m_CampaignData.hosts[hostidx];
+            std::cout << "    host =" << h.hostname
+                      << "  long name = " << h.longhostname
+                      << "  directories: \n";
+            for (size_t diridx = 0; diridx < h.directory.size(); ++diridx)
+            {
+                std::cout << "      dir = " << h.directory[diridx] << "\n";
+            }
         }
-    }
-    std::cout << "  datasets:\n";
-    for (auto &ds : m_CampaignData.bpdatasets)
-    {
-        std::cout << "    " << m_CampaignData.hosts[ds.hostIdx].hostname << ":"
-                  << m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx]
-                  << PathSeparator << ds.name << "\n";
-        for (auto &bpf : ds.files)
+        std::cout << "  datasets:\n";
+        for (auto &ds : m_CampaignData.bpdatasets)
         {
-            std::cout << "      file: " << bpf.name << "\n";
+            std::cout << "    " << m_CampaignData.hosts[ds.hostIdx].hostname
+                      << ":"
+                      << m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx]
+                      << PathSeparator << ds.name << "\n";
+            for (auto &bpf : ds.files)
+            {
+                std::cout << "      file: " << bpf.name << "\n";
+            }
         }
     }
 
@@ -218,7 +224,10 @@ void CampaignReader::InitTransports()
                 m_CampaignData.hosts[ds.hostIdx].hostname + ":" +
                 m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] +
                 PathSeparator + ds.name;
-            std::cout << "Open remote file " << remotePath << "\n";
+            if (m_Verbosity == 1)
+            {
+                std::cout << "Open remote file " << remotePath << "\n";
+            }
             localPath = m_CachePath + PathSeparator +
                         m_CampaignData.hosts[ds.hostIdx].hostname +
                         PathSeparator + ds.name;
@@ -235,7 +244,10 @@ void CampaignReader::InitTransports()
         {
             localPath = m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] +
                         PathSeparator + ds.name;
-            std::cout << "Open local file " << localPath << "\n";
+            if (m_Verbosity == 1)
+            {
+                std::cout << "Open local file " << localPath << "\n";
+            }
         }
 
         adios2::core::IO &io =

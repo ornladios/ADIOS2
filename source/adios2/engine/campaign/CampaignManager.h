@@ -44,7 +44,7 @@ private:
     bool m_Opened = false;
     std::string m_Name;
     int m_WriterRank;
-    int m_Verbosity = 5;
+    int m_Verbosity = 0;
     CampaignRecordMap cmap;
     std::ofstream m_Output;
     const std::string m_CampaignDir = "adios-campaign";
