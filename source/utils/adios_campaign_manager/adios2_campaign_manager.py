@@ -36,6 +36,10 @@ def SetupArgs():
     parser.add_argument("--campaign_store", "-c",
                         help="Path to local campaign store",
                         required=True)
+    parser.add_argument("--hostname", "-n",
+                        help="Host name unique for hosts in a campaign",
+                        required=False)
+
     args = parser.parse_args()
 
     # default values
@@ -174,6 +178,21 @@ def GetHostName():
     return host, shorthost
 
 
+def AddHostName(longHostName, shortHostName):
+    res = cur.execute(
+        'select rowid from host where hostname = "' + shortHostName + '"')
+    row = res.fetchone()
+    if row != None:
+        hostID = row[0]
+        print(f"Found host {shortHostName} in database, rowid = {hostID}")
+    else:
+        curHost = cur.execute('insert into host values (?, ?)',
+                              (shortHostName, longHostName))
+        hostID = curHost.lastrowid
+        print(f"Inserted host {shortHostName} into database, rowid = {hostID}")
+    return hostID
+
+
 if __name__ == "__main__":
 
     args = SetupArgs()
@@ -228,10 +247,15 @@ if __name__ == "__main__":
                     ", PRIMARY KEY (bpdatasetid, name))")
 
     longHostName, shortHostName = GetHostName()
+    if args.hostname != None:
+        shortHostName = args.hostname
+
+    hostID = AddHostName(longHostName, shortHostName)
+
     rootdir = getcwd()
-    curHost = cur.execute('insert into host values (?, ?)',
-                          (shortHostName, longHostName))
-    hostID = curHost.lastrowid
+    # curHost = cur.execute('insert into host values (?, ?)',
+    #                      (shortHostName, longHostName))
+    #hostID = curHost.lastrowid
 
     curDir = cur.execute('insert into directory values (?, ?)',
                          (hostID, rootdir))

@@ -74,7 +74,7 @@ static int sqlcb_bpdataset(void *p, int argc, char **argv, char **azColName)
     CampaignBPDataset cds;
     size_t hostid = helper::StringToSizeT(std::string(argv[0]),
                                           "SQL callback convert text to int");
-    size_t dirid = helper::StringToSizeT(std::string(argv[0]),
+    size_t dirid = helper::StringToSizeT(std::string(argv[1]),
                                          "SQL callback convert text to int");
     cds.hostIdx = hostid - 1; // SQL rows start from 1, vector idx start from 0
     cds.dirIdx = dirid - 1;
