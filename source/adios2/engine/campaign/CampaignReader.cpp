@@ -190,7 +190,7 @@ void CampaignReader::InitTransports()
             CampaignHost &h = m_CampaignData.hosts[hostidx];
             std::cout << "    host =" << h.hostname
                       << "  long name = " << h.longhostname
-                      << "  directories: \n";
+                      << "\n  directories: \n";
             for (size_t diridx = 0; diridx < h.directory.size(); ++diridx)
             {
                 std::cout << "      dir = " << h.directory[diridx] << "\n";
