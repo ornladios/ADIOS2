@@ -277,14 +277,6 @@ if __name__ == "__main__":
             print(f"ERROR: archive {args.CampaignFileName} does not exist")
             exit(1)
 
-    CheckLocalCampaignDir(args)
-
-    # List the local campaign directory
-    jsonFileList = glob.glob(args.LocalCampaignDir + '/*.json')
-    if len(jsonFileList) == 0:
-        print("There are no campaign data files in  " + args.LocalCampaignDir)
-        exit(2)
-
     if (args.command == "create"):
         print("Create archive")
         if exists(args.CampaignFileName):
@@ -301,12 +293,18 @@ if __name__ == "__main__":
 
     if (args.command == "info"):
         Info(args, cur)
+    else:
+        CheckLocalCampaignDir(args)
+        # List the local campaign directory
+        jsonFileList = glob.glob(args.LocalCampaignDir + '/*.json')
+        if len(jsonFileList) == 0:
+            print("There are no campaign data files in  " + args.LocalCampaignDir)
+            exit(2)
 
-    elif (args.command == "create"):
-        Create(args, cur)
-
-    elif (args.command == "update"):
-        Update(args, cur)
+        if (args.command == "create"):
+            Create(args, cur)
+        elif (args.command == "update"):
+            Update(args, cur)
 
     cur.close()
     con.close()
