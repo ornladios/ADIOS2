@@ -187,8 +187,10 @@ void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
 
 void FileHTTP::Read(char *buffer, size_t size, size_t start)
 {
+    /* not using BUFSIZ, the server might use another value for that */
+    const size_t BUF_SIZE = 8192;
     enum CONSTEXPR { MAX_REQUEST_LEN = 1024};
-    char request[MAX_REQUEST_LEN];
+    char request[MAX_REQUEST_LEN] = {'\0'};
     int request_len =
         snprintf(request, MAX_REQUEST_LEN, request_template, m_Name.c_str(),
                  m_hostname.c_str(), start, start + size - 1);
@@ -218,12 +220,16 @@ void FileHTTP::Read(char *buffer, size_t size, size_t start)
     }
 
     /* Read the response. */
-    while ((nbytes_total = read(m_socketFileDescriptor, buffer, size)) > 0) {
+    size_t bytes_recd = 0;
+    while (bytes_recd < size){
+        nbytes_total = read(m_socketFileDescriptor, buffer + bytes_recd, std::min(size - bytes_recd, BUF_SIZE));
+        if (nbytes_total == -1) {
+            perror("read");
+            exit(EXIT_FAILURE);
+        }
+        bytes_recd += nbytes_total;
     }
-    if (nbytes_total == -1) {
-        perror("read");
-        exit(EXIT_FAILURE);
-    }
+
     close(m_socketFileDescriptor);
     return;
 
@@ -234,7 +240,7 @@ size_t FileHTTP::GetSize()
     char request_template[] = "GET %s HTTP/1.1\r\nHost: %s\r\nContent-Length: bytes\r\n\r\n";
     enum CONSTEXPR { MAX_REQUEST_LEN = 1024, BUF_SIZE = 128};
     char request[MAX_REQUEST_LEN];
-    char buffer[BUF_SIZE];
+    char buffer[BUF_SIZE] ={'\0'};
     int request_len =
         snprintf(request, MAX_REQUEST_LEN, request_template, m_Name.c_str(),
                  m_hostname.c_str());
@@ -264,8 +270,7 @@ size_t FileHTTP::GetSize()
     }
 
     /* Read the response. */
-    while ((nbytes_total = read(m_socketFileDescriptor, buffer, BUF_SIZE)) > 0) {
-    }
+    while ((nbytes_total = read(m_socketFileDescriptor, buffer, BUF_SIZE)) > 0);
     if (nbytes_total == -1) {
         perror("read");
         exit(EXIT_FAILURE);
