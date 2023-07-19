@@ -29,8 +29,8 @@ static std::string CMapToJson(const CampaignRecordMap &cmap, const int rank,
                               const std::string name)
 {
     nlohmann::json j = nlohmann::json::array();
-    std::cout << "Campaign Manager " << rank << " Close(" << name
-              << ")\nCampaign";
+    /*std::cout << "Campaign Manager " << rank << " Close(" << name
+              << ")\nCampaign";*/
     for (auto &r : cmap)
     {
         nlohmann::json c =
@@ -40,7 +40,7 @@ static std::string CMapToJson(const CampaignRecordMap &cmap, const int rank,
                            {"delta_time", r.second.delta_time},
                            {"steps", r.second.steps},
                            {"times", r.second.times}};
-        std::cout << "name = " << r.first << "\n";
+        /*std::cout << "name = " << r.first << "\n";
         std::cout << "   varying_deltas = " << r.second.varying_deltas << "\n";
         std::cout << "   delta_step     = " << r.second.delta_step << "\n";
         std::cout << "   delta_time     = " << r.second.delta_time << "\n";
@@ -55,7 +55,7 @@ static std::string CMapToJson(const CampaignRecordMap &cmap, const int rank,
         {
             std::cout << t << " ";
         }
-        std::cout << "}\n";
+        std::cout << "}\n";*/
         j.push_back(c);
     }
     return nlohmann::to_string(j);
