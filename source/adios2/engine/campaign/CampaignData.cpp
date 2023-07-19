@@ -224,21 +224,22 @@ int inflateToFile(const unsigned char *source, const size_t blobsize,
 
     /* decompress until deflate stream ends or end of file */
     unsigned char *p = const_cast<unsigned char *>(source);
-    std::cout << "   Inflate = " << (void *)p << " size = " << blobsize << "\n";
+    // std::cout << "   Inflate = " << (void *)p << " size = " << blobsize <<
+    // "\n";
     do
     {
         strm.avail_in = (uInt)(blobsize > CHUNK ? CHUNK : blobsize);
         strm.next_in = p;
 
-        std::cout << "     next_in = " << (void *)strm.next_in
-                  << " avail_in = " << strm.avail_in << "\n";
+        // std::cout << "     next_in = " << (void *)strm.next_in
+        //          << " avail_in = " << strm.avail_in << "\n";
         /* run inflate() on input until output buffer not full */
         do
         {
             strm.avail_out = CHUNK;
             strm.next_out = out.data();
-            std::cout << "     next_out = " << (void *)strm.next_out
-                      << " avail_out = " << strm.avail_out << "\n";
+            // std::cout << "     next_out = " << (void *)strm.next_out
+            //          << " avail_out = " << strm.avail_out << "\n";
             ret = inflate(&strm, Z_NO_FLUSH);
             switch (ret)
             {
@@ -251,7 +252,7 @@ int inflateToFile(const unsigned char *source, const size_t blobsize,
                 return ret;
             }
             have = CHUNK - strm.avail_out;
-            std::cout << "     have = " << have << "\n";
+            // std::cout << "     have = " << have << "\n";
             dest->write(reinterpret_cast<char *>(out.data()), have);
 
         } while (strm.avail_out == 0);
