@@ -161,6 +161,7 @@ public:
     MACRO(StatsBlockSize, SizeBytes, size_t, DefaultStatsBlockSize)            \
     MACRO(Threads, UInt, unsigned int, 0)                                      \
     MACRO(UseOneTimeAttributes, Bool, bool, true)                              \
+    MACRO(RemoteDataPath, String, std::string, "")                             \
     MACRO(MaxOpenFilesAtOnce, UInt, unsigned int, UINT_MAX)
 
     struct BP5Params

@@ -482,9 +482,12 @@ void BP5Reader::Init()
 
     //  This isn't how we'll trigger remote ops in the end, but a temporary
     //  solution
-    if (getenv("DoRemote"))
+    if (!m_Parameters.RemoteDataPath.empty())
     {
-        m_Remote.Open("localhost", 26200, m_Name, m_OpenMode);
+        // std::cout << "  Remote Path = " << m_Parameters.RemoteDataPath
+        //          << std::endl;
+        m_Remote.Open("localhost", 26200, m_Parameters.RemoteDataPath,
+                      m_OpenMode);
     }
 }
 

@@ -218,15 +218,16 @@ void CampaignReader::InitTransports()
     for (auto &ds : m_CampaignData.bpdatasets)
     {
         std::string localPath;
+        std::string remotePath;
         if (m_CampaignData.hosts[ds.hostIdx].hostname != m_Hostname)
         {
-            std::string remotePath =
-                m_CampaignData.hosts[ds.hostIdx].hostname + ":" +
-                m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] +
-                PathSeparator + ds.name;
+            remotePath = m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] +
+                         PathSeparator + ds.name;
+            std::string remoteURL =
+                m_CampaignData.hosts[ds.hostIdx].hostname + ":" + remotePath;
             if (m_Verbosity == 1)
             {
-                std::cout << "Open remote file " << remotePath << "\n";
+                std::cout << "Open remote file " << remoteURL << "\n";
             }
             localPath = m_CachePath + PathSeparator +
                         m_CampaignData.hosts[ds.hostIdx].hostname +
@@ -234,7 +235,7 @@ void CampaignReader::InitTransports()
             helper::CreateDirectory(localPath);
             for (auto &bpf : ds.files)
             {
-                /*std::cout << "     save file " << remotePath << "/" <<
+                /*std::cout << "     save file " << remoteURL << "/" <<
                    bpf.name
                           << " to " << localPath << "/" << bpf.name << "\n";*/
                 SaveToFile(m_DB, localPath + PathSeparator + bpf.name, bpf);
@@ -252,6 +253,11 @@ void CampaignReader::InitTransports()
 
         adios2::core::IO &io =
             m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(i));
+
+        if (!remotePath.empty())
+        {
+            io.SetParameter("RemoteDataPath", remotePath);
+        }
         adios2::core::Engine &e =
             io.Open(localPath, m_OpenMode, m_Comm.Duplicate());
 
