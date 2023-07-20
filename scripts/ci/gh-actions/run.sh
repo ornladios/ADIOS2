@@ -39,7 +39,7 @@ fi
 export CI_BIN_DIR="${CI_ROOT_DIR}/${GH_YML_JOBNAME}"
 
 STEP=$1
-CTEST_SCRIPT=gha/scripts/ci/cmake-v2/ci-${GH_YML_JOBNAME}.cmake
+CTEST_SCRIPT=gha/scripts/ci/cmake/ci-${GH_YML_JOBNAME}.cmake
 
 # Update and Test steps enable an extra step
 CTEST_STEP_ARGS="-Ddashboard_do_${STEP}=ON"

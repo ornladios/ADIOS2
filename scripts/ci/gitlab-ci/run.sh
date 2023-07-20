@@ -4,7 +4,7 @@ set -e
 
 source scripts/ci/gitlab-ci/setup-vars.sh
 
-readonly CTEST_SCRIPT=scripts/ci/cmake-v2/ci-${CI_JOB_NAME}.cmake
+readonly CTEST_SCRIPT=scripts/ci/cmake/ci-${CI_JOB_NAME}.cmake
 if [ ! -f "$CTEST_SCRIPT" ]
 then
   echo "[E] Variable files does not exits: $CTEST_SCRIPT"
