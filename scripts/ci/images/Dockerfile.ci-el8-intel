@@ -42,9 +42,9 @@ RUN dnf install -y \
 COPY oneAPI.repo /etc/yum.repos.d/
 RUN pip3 install numpy && \
     dnf install -y \
-        intel-oneapi-compiler-dpcpp-cpp \
-        intel-oneapi-compiler-fortran \
-        intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
+        intel-oneapi-compiler-dpcpp-cpp-2023.1.0 \
+        intel-oneapi-compiler-fortran-2023.1.0 \
+        intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-2023.1.0
 RUN dnf clean all
 
 # Setup module files for the compilers
