@@ -9,6 +9,7 @@ RUN dnf install -y dnf-plugins-core && \
 
 RUN dnf install -y \
         bzip2-devel \
+        ccache \
         curl \
         diffutils \
         file \

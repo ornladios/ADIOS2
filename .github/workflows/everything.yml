@@ -13,6 +13,17 @@
 # may have made it to the target branch after the pull_request was started.
 #######################################
 
+#######################################
+# Note regarding restore/save of cache for use by ccache:
+#
+# We only save cache on main branch runs. PR workflows only consume the
+# cache to avoid exceeding the 10 GB limit, which can cause cache thrashing.
+# Also, we only save the cache if there was *not* an exact match when cache
+# was restored. This avoids attempting to write to an existing cache key,
+# which results in failure to save the cache. While failure to save doesn't
+# cause job failures, it seems a waste and is easily avoidable.
+#######################################
+
 name: GitHub Actions
 
 on:
@@ -105,6 +116,10 @@ jobs:
         GH_YML_MATRIX_OS: ${{ matrix.os }}
         GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
         GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
+        CCACHE_BASEDIR: "${GITHUB_WORKSPACE}"
+        CCACHE_DIR: "${GITHUB_WORKSPACE}/.ccache"
+        CCACHE_COMPRESS: true
+        CCACHE_COMPRESSLEVEL: 6
 
     strategy:
       fail-fast: false
@@ -131,6 +146,16 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        id: restore-cache
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+      - name: Configure cache
+        run: ccache -z
       - name: Setup
         run: gha/scripts/ci/gh-actions/linux-setup.sh
       - name: Update
@@ -139,6 +164,15 @@ jobs:
         run: gha/scripts/ci/gh-actions/run.sh configure
       - name: Build
         run: gha/scripts/ci/gh-actions/run.sh build
+      - name: Print ccache statistics
+        run: ccache -s
+      - name: Save cache
+        uses: actions/cache/save@v3
+        if: github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit == 'false'
+        id: save-cache
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
       - name: Test
         run: gha/scripts/ci/gh-actions/run.sh test
 
@@ -156,6 +190,10 @@ jobs:
         GH_YML_MATRIX_OS: ${{ matrix.os }}
         GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
         GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
+        CCACHE_BASEDIR: "${GITHUB_WORKSPACE}"
+        CCACHE_DIR: "${GITHUB_WORKSPACE}/.ccache"
+        CCACHE_COMPRESS: true
+        CCACHE_COMPRESSLEVEL: 6
 
     strategy:
       fail-fast: false
@@ -172,6 +210,16 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        id: restore-cache
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+      - name: Configure cache
+        run: ccache -z
       - name: Setup
         run: gha/scripts/ci/gh-actions/linux-setup.sh
       - name: Update
@@ -180,6 +228,15 @@ jobs:
         run: gha/scripts/ci/gh-actions/run.sh configure
       - name: Build
         run: gha/scripts/ci/gh-actions/run.sh build
+      - name: Print ccache statistics
+        run: ccache -s
+      - name: Save cache
+        uses: actions/cache/save@v3
+        if: github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit == 'false'
+        id: save-cache
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
       - name: Test
         run: gha/scripts/ci/gh-actions/run.sh test
 
@@ -194,6 +251,10 @@ jobs:
       GH_YML_MATRIX_OS: ${{ matrix.os }}
       GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
       GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
+      CCACHE_BASEDIR: "${GITHUB_WORKSPACE}"
+      CCACHE_DIR: "${GITHUB_WORKSPACE}/.ccache"
+      CCACHE_COMPRESS: true
+      CCACHE_COMPRESSLEVEL: 6
 
     strategy:
       fail-fast: false
@@ -218,15 +279,33 @@ jobs:
           path: source
       - name: Setup
         run: gha/scripts/ci/gh-actions/macos-setup.sh
+      - name: Restore cache
+        uses: actions/cache/restore@v3
+        id: restore-cache
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+      - name: Configure cache
+        run: ccache -z
       - name: Update
         run: gha/scripts/ci/gh-actions/run.sh update
       - name: Configure
         run: gha/scripts/ci/gh-actions/run.sh configure
       - name: Build
         run: gha/scripts/ci/gh-actions/run.sh build
+      - name: Print ccache statistics
+        run: ccache -s
+      - name: Save cache
+        uses: actions/cache/save@v3
+        if: github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit == 'false'
+        id: save-cache
+        with:
+          path: .ccache
+          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
       - name: Test
         run: gha/scripts/ci/gh-actions/run.sh test
-
 
   windows:
     needs: [format, git_checks]

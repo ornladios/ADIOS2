@@ -39,7 +39,9 @@ RUN . /spack/share/spack/setup-env.sh && \
     echo "source /spack/share/spack/setup-env.sh" >> /etc/profile.d/zz-spack.sh
 
 ### Other missing packages (compared to el8 base):
-RUN apt-get remove -y \
+RUN apt-get update && apt-get install -y \
+    ccache && \
+    apt-get remove -y \
     gcc-9 \
     g++-9 \
     gfortran-9 && \

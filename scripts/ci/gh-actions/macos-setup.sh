@@ -44,6 +44,9 @@ brew install c-blosc
 echo "Installing python3"
 brew install python numpy
 
+echo "Installing ccache"
+brew install ccache
+
 if [[ "$GH_YML_JOBNAME" =~ -ompi ]]
 then
   echo "Installing OpenMPI"
