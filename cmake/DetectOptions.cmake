@@ -318,6 +318,18 @@ elseif(ADIOS2_USE_HDF5)
     message(FATAL_ERROR "MPI is disabled but parallel HDF5 is detected.")
   endif()
   set(ADIOS2_HAVE_HDF5 TRUE)
+
+  # HDF5 VOL requires 1.13+
+  if(ADIOS2_USE_HDF5_VOL AND ADIOS2_HAVE_HDF5)
+    if(HDF5_VERSION GREATER_EQUAL 1.14)
+      set(ADIOS2_HAVE_HDF5_VOL TRUE)
+    else()
+      set(ADIOS2_HAVE_HDF5_VOL FALSE)
+      if(ADIOS2_USE_HDF5_VOL STREQUAL ON)
+        message(FATAL_ERROR "ADIOS HDF5_VOL requires HDF5>=1.14+")
+      endif()
+    endif()
+  endif()
 endif()
 
 # IME
