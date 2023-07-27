@@ -87,6 +87,8 @@ add_library(adios2_core
   toolkit/query/XmlWorker.cpp
   toolkit/query/BlockIndex.cpp
 
+  toolkit/remote/Remote.cpp
+
   toolkit/transport/Transport.cpp
   toolkit/transport/file/FileStdio.cpp
   toolkit/transport/file/FileFStream.cpp
@@ -158,7 +160,7 @@ endif()
 
 if (ADIOS2_HAVE_SST)
   # EVPath-enabled remote file transport
-  target_sources(adios2_core PRIVATE toolkit/remote/Remote.cpp toolkit/remote/remote_common.cpp toolkit/transport/file/FileRemote.cpp)
+  target_sources(adios2_core PRIVATE toolkit/remote/remote_common.cpp toolkit/transport/file/FileRemote.cpp)
   target_link_libraries(adios2_core PRIVATE EVPath::EVPath)
   add_subdirectory(toolkit/remote)
 endif()

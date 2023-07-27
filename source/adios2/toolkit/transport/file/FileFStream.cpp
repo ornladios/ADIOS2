@@ -10,6 +10,9 @@
 #include "FileFStream.h"
 #include "adios2/helper/adiosLog.h"
 #include <cstdio> // remove
+#include <iostream>
+#include <sys/stat.h>
+
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <ios> // std::ios_base::failure
@@ -276,17 +279,15 @@ void FileFStream::Read(char *buffer, size_t size, size_t start)
 
 size_t FileFStream::GetSize()
 {
-    WaitForOpen();
-    const auto currentPosition = m_FileStream.tellg();
-    m_FileStream.seekg(0, std::ios_base::end);
-    const std::streampos size = m_FileStream.tellg();
-    if (static_cast<int>(size) == -1)
+    struct stat st;
+    auto ret = stat(m_Name.c_str(), &st);
+    if (ret < 0)
     {
         helper::Throw<std::ios_base::failure>(
             "Toolkit", "transport::file::FileFStream", "GetSize",
             "couldn't get size of " + m_Name + " file");
     }
-    m_FileStream.seekg(currentPosition);
+    off_t size = st.st_size;
     return static_cast<size_t>(size);
 }
 

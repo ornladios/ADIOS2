@@ -44,14 +44,15 @@ public:
 
     typedef int GetHandle;
 
-    GetHandle Get(char *VarName, size_t Step, Dims &Count, Dims &Start,
-                  void *dest);
+    GetHandle Get(char *VarName, size_t Step, size_t BlockID, Dims &Count,
+                  Dims &Start, void *dest);
 
     bool WaitForGet(GetHandle handle);
 
     GetHandle Read(size_t Start, size_t Size, void *Dest);
 
     int64_t m_ID;
+    size_t m_Size;
 
 private:
 #ifdef ADIOS2_HAVE_SST
@@ -60,6 +61,45 @@ private:
     CMConnection m_conn;
 #endif
     bool m_Active = false;
+};
+
+class CManagerSingleton
+{
+public:
+#ifdef ADIOS2_HAVE_SST
+    CManager m_cm = NULL;
+#endif
+    static CManagerSingleton &Instance()
+    {
+        // Since it's a static variable, if the class has already been created,
+        // it won't be created again.
+        // And it **is** thread-safe in C++11.
+        static CManagerSingleton myInstance;
+
+        // Return a reference to our instance.
+        return myInstance;
+    }
+
+    // delete copy and move constructors and assign operators
+    CManagerSingleton(CManagerSingleton const &) = delete; // Copy construct
+    CManagerSingleton(CManagerSingleton &&) = delete;      // Move construct
+    CManagerSingleton &
+    operator=(CManagerSingleton const &) = delete;               // Copy assign
+    CManagerSingleton &operator=(CManagerSingleton &&) = delete; // Move assign
+
+    // Any other public methods.
+
+protected:
+#ifdef ADIOS2_HAVE_SST
+    CManagerSingleton() { m_cm = CManager_create(); }
+
+    ~CManagerSingleton() { CManager_close(m_cm); }
+#else
+    CManagerSingleton() {}
+
+    ~CManagerSingleton() {}
+#endif
+    // And any other protected methods.
 };
 
 } // end namespace adios2

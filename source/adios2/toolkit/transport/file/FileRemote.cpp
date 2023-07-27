@@ -52,19 +52,7 @@ void FileRemote::SetParameters(const Params &params)
     }
 }
 
-void FileRemote::WaitForOpen()
-{
-    if (m_IsOpening)
-    {
-        if (m_OpenFuture.valid())
-        {
-            // m_FileDescriptor = m_OpenFuture.get();
-        }
-        m_IsOpening = false;
-        CheckFile("couldn't open file " + m_Name + ", in call to Remote open");
-        m_IsOpen = true;
-    }
-}
+void FileRemote::WaitForOpen() {}
 
 void FileRemote::SetUpCache()
 {
@@ -87,7 +75,6 @@ void FileRemote::Open(const std::string &name, const Mode openMode,
                       const bool async, const bool directio)
 {
     m_Name = name;
-    std::cout << "In FileRemote Open" << std::endl;
     size_t pos = name.find(PathSeparator);
     if (pos == std::string::npos)
     {
@@ -109,19 +96,14 @@ void FileRemote::Open(const std::string &name, const Mode openMode,
     case Mode::Read:
     {
         ProfilerStart("open");
-        m_Remote.Open("localhost", 26200, m_Name, m_OpenMode);
+        m_Remote.OpenSimpleFile("localhost", 26200, m_Name);
         ProfilerStop("open");
+        m_Size = m_Remote.m_Size;
         break;
     }
     default:
         CheckFile("unknown open mode for file " + m_Name +
                   ", in call to Remote open");
-    }
-
-    if (!m_IsOpening)
-    {
-        CheckFile("couldn't open file " + m_Name + ", in call to Remote open");
-        m_IsOpen = true;
     }
 }
 
@@ -206,7 +188,6 @@ void FileRemote::Flush() {}
 void FileRemote::Close()
 {
     WaitForOpen();
-    std::cout << "FileRemote::Close(" << m_Name << ") Enter" << std::endl;
     ProfilerStart("close");
     errno = 0;
     m_Errno = errno;

@@ -6,11 +6,10 @@ namespace adios2
 namespace RemoteCommon
 {
 
-enum REVPFileMode
+enum RemoteFileMode
 {
-    REVPOpen,
-    REVPOpenReadComplete,
-    REVPWrite
+    RemoteOpen,
+    RemoteOpenRandomAccess,
 };
 /*
  */
@@ -18,16 +17,28 @@ typedef struct _OpenFileMsg
 {
     int OpenResponseCondition;
     char *FileName;
-    REVPFileMode Mode;
-} * OpenFileMsg;
+    RemoteFileMode Mode;
+} *OpenFileMsg;
 
 typedef struct _OpenResponseMsg
 {
     int OpenResponseCondition;
     int64_t FileHandle;
+} *OpenResponseMsg;
+
+typedef struct _OpenSimpleFileMsg
+{
+    int OpenResponseCondition;
+    char *FileName;
+} *OpenSimpleFileMsg;
+
+typedef struct _OpenSimpleResponseMsg
+{
+    int OpenResponseCondition;
+    int64_t FileHandle;
     size_t FileSize;    // may be used for Contents size
     char *FileContents; // used for OpenReadComplete mode
-} * OpenResponseMsg;
+} *OpenSimpleResponseMsg;
 
 /*
  */
@@ -38,11 +49,12 @@ typedef struct _GetRequestMsg
     int64_t FileHandle;
     char *VarName;
     size_t Step;
+    int64_t BlockID;
     int DimCount;
     size_t *Count;
     size_t *Start;
     void *Dest;
-} * GetRequestMsg;
+} *GetRequestMsg;
 
 /*
  */
@@ -53,7 +65,7 @@ typedef struct _ReadRequestMsg
     size_t Offset;
     size_t Size;
     void *Dest;
-} * ReadRequestMsg;
+} *ReadRequestMsg;
 
 /*
  * Reader register messages are sent from reader rank 0 to writer rank 0
@@ -65,14 +77,14 @@ typedef struct _ReadResponseMsg
     void *Dest;
     size_t Size;
     char *ReadData;
-} * ReadResponseMsg;
+} *ReadResponseMsg;
 
 /*
  */
 typedef struct _CloseFileMsg
 {
     void *FileHandle;
-} * CloseFileMsg;
+} *CloseFileMsg;
 
 enum VerbosityLevel
 {
@@ -92,7 +104,9 @@ struct Remote_evpath_state
 {
     CManager cm;
     CMFormat OpenFileFormat;
+    CMFormat OpenSimpleFileFormat;
     CMFormat OpenResponseFormat;
+    CMFormat OpenSimpleResponseFormat;
     CMFormat GetRequestFormat;
     CMFormat ReadRequestFormat;
     CMFormat ReadResponseFormat;

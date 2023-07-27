@@ -23,7 +23,7 @@
 #ifdef ADIOS2_HAVE_DAOS
 #include "adios2/toolkit/transport/file/FileDaos.h"
 #endif
-#ifdef NOTDEF_ADIOS2_HAVE_SST
+#ifdef ADIOS2_HAVE_SST
 #include "adios2/toolkit/transport/file/FileRemote.h"
 #endif
 #ifdef ADIOS2_HAVE_IME
@@ -597,7 +597,7 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
             }
         }
 #endif
-#ifdef NOTDEF_ADIOS2_HAVE_SST
+#ifdef ADIOS2_HAVE_SST
         else if (library == "remote")
         {
             transport = std::make_shared<transport::FileRemote>(m_Comm);
@@ -671,7 +671,10 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
     std::shared_ptr<Transport> transport;
     const std::string library =
         helper::LowerCase(lf_GetLibrary(DefaultFileLibrary, parameters));
-    lf_SetFileTransport(library, transport);
+    if (getenv("DoFileRemote") && (openMode == Mode::Read))
+        lf_SetFileTransport("remote", transport);
+    else
+        lf_SetFileTransport(library, transport);
 
     // Default or user ProfileUnits in parameters
     if (profile)

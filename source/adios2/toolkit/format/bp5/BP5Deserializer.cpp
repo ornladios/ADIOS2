@@ -1263,7 +1263,7 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
 {
     if (!m_RandomAccessMode)
     {
-        return QueueGetSingle(variable, DestData, CurTimestep);
+        return QueueGetSingle(variable, DestData, CurTimestep, CurTimestep);
     }
     else
     {
@@ -1301,7 +1301,7 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
                 if (GetMetadataBase(VarRec, AbsStep, WriterRank))
                 {
                     // This writer wrote on this timestep
-                    ret = QueueGetSingle(variable, DestData, AbsStep);
+                    ret = QueueGetSingle(variable, DestData, AbsStep, RelStep);
                     size_t increment =
                         variable.TotalSize() * variable.m_ElementSize;
                     DestData = (void *)((char *)DestData + increment);
@@ -1367,7 +1367,8 @@ void BP5Deserializer::StructQueueReadChecks(core::VariableStruct *variable,
 }
 
 bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
-                                     void *DestData, size_t Step)
+                                     void *DestData, size_t AbsStep,
+                                     size_t RelStep)
 {
     BP5VarRec *VarRec = VarByKey[&variable];
     if (variable.m_Type == adios2::DataType::Struct)
@@ -1378,10 +1379,10 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
 
     if (VarRec->OrigShapeID == ShapeID::GlobalValue)
     {
-        const size_t writerCohortSize = WriterCohortSize(Step);
+        const size_t writerCohortSize = WriterCohortSize(AbsStep);
         for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
         {
-            if (GetSingleValueFromMetadata(variable, VarRec, DestData, Step,
+            if (GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep,
                                            WriterRank))
                 return false;
         }
@@ -1394,8 +1395,8 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
              WriterRank < variable.m_Count[0] + variable.m_Start[0];
              WriterRank++)
         {
-            (void)GetSingleValueFromMetadata(variable, VarRec, DestData, Step,
-                                             WriterRank);
+            (void)GetSingleValueFromMetadata(variable, VarRec, DestData,
+                                             AbsStep, WriterRank);
             DestData = (char *)DestData +
                        variable.m_ElementSize; // use variable.m_ElementSize
                                                // because it's the size in local
@@ -1413,10 +1414,11 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
         Req.VarRec = VarRec;
         Req.VarName = (char *)variable.m_Name.c_str();
         Req.RequestType = Global;
-        Req.BlockID = variable.m_BlockID;
+        Req.BlockID = (size_t)-1;
         Req.Count = variable.m_Count;
         Req.Start = variable.m_Start;
-        Req.Step = Step;
+        Req.Step = AbsStep;
+        Req.RelStep = RelStep;
         Req.MemSpace = MemSpace;
         Req.Data = DestData;
         PendingGetRequests.push_back(Req);
@@ -1427,17 +1429,18 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
         BP5ArrayRequest Req;
         Req.VarRec = VarByKey[&variable];
         Req.VarName = (char *)variable.m_Name.c_str();
-        std::cout << "Setting varname to " << variable.m_Name << std::endl;
         Req.RequestType = Local;
         Req.BlockID = variable.m_BlockID;
         if (variable.m_SelectionType == adios2::SelectionType::BoundingBox)
         {
+            Req.BlockID = (size_t)-1;
             Req.Start = variable.m_Start;
             Req.Count = variable.m_Count;
         }
         Req.Data = DestData;
         Req.MemSpace = MemSpace;
-        Req.Step = Step;
+        Req.Step = AbsStep;
+        Req.RelStep = RelStep;
         PendingGetRequests.push_back(Req);
     }
     else

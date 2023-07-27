@@ -284,18 +284,22 @@ void BP5Reader::PerformGets()
     {
         PerformLocalGets();
     }
+
+    // clear pending requests inside deserializer
+    {
+        std::vector<adios2::format::BP5Deserializer::ReadRequest> empty;
+        m_BP5Deserializer->FinalizeGets(empty);
+    }
 }
 
 void BP5Reader::PerformRemoteGets()
 {
-    std::cout << "Perform all remote Gets" << std::endl;
-
     // TP startGenerate = NOW();
     auto GetRequests = m_BP5Deserializer->PendingGetRequests;
     for (auto &Req : GetRequests)
     {
-
-        m_Remote.Get(Req.VarName, Req.Step, Req.Count, Req.Start, Req.Data);
+        m_Remote.Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count,
+                     Req.Start, Req.Data);
     }
 }
 
@@ -432,13 +436,6 @@ void BP5Reader::PerformLocalGets()
             m_BP5Deserializer->FinalizeGet(Req, false);
         }
     }
-
-    // clear pending requests inside deserializer
-    {
-        std::vector<adios2::format::BP5Deserializer::ReadRequest> empty;
-        m_BP5Deserializer->FinalizeGets(empty);
-    }
-
     /*TP end = NOW();
     double t1 = DURATION(start, end);
     double t2 = DURATION(startRead, end);
@@ -1003,8 +1000,7 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
 
         switch (recordID)
         {
-        case IndexRecord::WriterMapRecord:
-        {
+        case IndexRecord::WriterMapRecord: {
             auto p = m_WriterMap.emplace(m_StepsCount, WriterMapStruct());
             auto &s = p.first->second;
             s.WriterCount = (uint32_t)helper::ReadValue<uint64_t>(
@@ -1025,8 +1021,7 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
             m_LastWriterCount = s.WriterCount;
             break;
         }
-        case IndexRecord::StepRecord:
-        {
+        case IndexRecord::StepRecord: {
             std::vector<uint64_t> ptrs;
             const uint64_t MetadataPos = helper::ReadValue<uint64_t>(
                 buffer, position, m_Minifooter.IsLittleEndian);

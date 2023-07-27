@@ -66,7 +66,7 @@ public:
     // return from QueueGet is true if a sync is needed to fill the data
     bool QueueGet(core::VariableBase &variable, void *DestData);
     bool QueueGetSingle(core::VariableBase &variable, void *DestData,
-                        size_t Step);
+                        size_t AbsStep, size_t RelStep);
 
     /* generate read requests. return vector of requests AND the size of
      * the largest allocation block necessary for reading.
@@ -105,7 +105,8 @@ public:
         void *VarRec = NULL;
         char *VarName;
         enum RequestTypeEnum RequestType;
-        size_t Step;
+        size_t Step;    // local operations use absolute steps
+        size_t RelStep; // preserve Relative Step for remote
         size_t BlockID;
         Dims Start;
         Dims Count;
