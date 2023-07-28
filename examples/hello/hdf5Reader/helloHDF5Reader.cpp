@@ -17,8 +17,7 @@
 #include <adios2.h>
 
 template <class T>
-void ReadData(adios2::IO h5IO, adios2::Engine &h5Reader,
-              const std::string &name)
+void ReadData(adios2::IO h5IO, adios2::Engine &h5Reader, const std::string &name)
 {
     adios2::Variable<T> var = h5IO.InquireVariable<T>(name);
 
@@ -100,8 +99,7 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine h5Reader = h5IO.Open(filename, adios2::Mode::Read);
 
-        const std::map<std::string, adios2::Params> variables =
-            h5IO.AvailableVariables();
+        const std::map<std::string, adios2::Params> variables = h5IO.AvailableVariables();
 
         for (const auto &variablePair : variables)
         {
@@ -110,8 +108,7 @@ int main(int argc, char *argv[])
 
             for (const auto &parameter : variablePair.second)
             {
-                std::cout << "\t" << parameter.first << ": " << parameter.second
-                          << "\n";
+                std::cout << "\t" << parameter.first << ": " << parameter.second << "\n";
                 if (parameter.second == "double")
                 {
                     ReadData<double>(h5IO, h5Reader, variablePair.first);
@@ -132,8 +129,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        const std::map<std::string, adios2::Params> attributes =
-            h5IO.AvailableAttributes();
+        const std::map<std::string, adios2::Params> attributes = h5IO.AvailableAttributes();
 
         for (const auto &attrPair : attributes)
         {
@@ -142,8 +138,7 @@ int main(int argc, char *argv[])
 
             for (const auto &parameter : attrPair.second)
             {
-                std::cout << "\t" << parameter.first << ": " << parameter.second
-                          << "\n";
+                std::cout << "\t" << parameter.first << ": " << parameter.second << "\n";
                 if (parameter.second == "double")
                 {
                     // ReadData<double>(h5IO, h5Reader, variablePair.first);
@@ -169,8 +164,7 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)

@@ -19,13 +19,11 @@
 
 #include <adios2.h>
 
-void DoAnalysis(adios2::IO &inlineIO, adios2::Engine &inlineReader, int rank,
-                unsigned int step)
+void DoAnalysis(adios2::IO &inlineIO, adios2::Engine &inlineReader, int rank, unsigned int step)
 {
     inlineReader.BeginStep();
     /////////////////////READ
-    adios2::Variable<float> inlineFloats000 =
-        inlineIO.InquireVariable<float>("inlineFloats000");
+    adios2::Variable<float> inlineFloats000 = inlineIO.InquireVariable<float>("inlineFloats000");
 
     adios2::Variable<std::string> inlineString =
         inlineIO.InquireVariable<std::string>("inlineString");
@@ -34,8 +32,8 @@ void DoAnalysis(adios2::IO &inlineIO, adios2::Engine &inlineReader, int rank,
     {
         auto blocksInfo = inlineReader.BlocksInfo(inlineFloats000, step);
 
-        std::cout << "Data StepsStart " << inlineFloats000.StepsStart()
-                  << " from rank " << rank << ": ";
+        std::cout << "Data StepsStart " << inlineFloats000.StepsStart() << " from rank " << rank
+                  << ": ";
         for (auto &info : blocksInfo)
         {
             // bp file reader would see all blocks, inline only sees local
@@ -46,8 +44,7 @@ void DoAnalysis(adios2::IO &inlineIO, adios2::Engine &inlineReader, int rank,
             // info passed by reference
             // engine must remember data pointer (or info) to fill it out at
             // PerformGets()
-            inlineReader.Get<float>(inlineFloats000, info,
-                                    adios2::Mode::Deferred);
+            inlineReader.Get<float>(inlineFloats000, info, adios2::Mode::Deferred);
         }
         inlineReader.PerformGets();
 
@@ -128,19 +125,17 @@ int main(int argc, char *argv[])
             }
             namev += std::to_string(v);
 
-            inlineFloats[v] = inlineIO.DefineVariable<float>(
-                namev, {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
+            inlineFloats[v] = inlineIO.DefineVariable<float>(namev, {size * Nx}, {rank * Nx}, {Nx},
+                                                             adios2::ConstantDims);
         }
 
         /** global single value variable: name */
         adios2::Variable<unsigned int> inlineTimeStep =
             inlineIO.DefineVariable<unsigned int>("timeStep");
 
-        adios2::Engine inlineWriter =
-            inlineIO.Open("myWriteID", adios2::Mode::Write);
+        adios2::Engine inlineWriter = inlineIO.Open("myWriteID", adios2::Mode::Write);
 
-        adios2::Engine inlineReader =
-            inlineIO.Open("myReadID", adios2::Mode::Read);
+        adios2::Engine inlineReader = inlineIO.Open("myReadID", adios2::Mode::Read);
 
         for (unsigned int timeStep = 0; timeStep < 3; ++timeStep)
         {
@@ -159,9 +154,8 @@ int main(int argc, char *argv[])
                 inlineWriter.Put(inlineFloats[v], myFloats.data());
             }
 
-            const std::string myString(
-                "Hello from rank: " + std::to_string(rank) +
-                " and timestep: " + std::to_string(timeStep));
+            const std::string myString("Hello from rank: " + std::to_string(rank) +
+                                       " and timestep: " + std::to_string(timeStep));
 
             if (rank == 0)
             {

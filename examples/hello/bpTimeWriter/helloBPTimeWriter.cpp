@@ -51,8 +51,7 @@ int main(int argc, char *argv[])
             const unsigned int variablesSize = 10;
             std::vector<adios2::Variable<float>> bpFloats(variablesSize);
 
-            adios2::Variable<std::string> bpString =
-                bpIO.DefineVariable<std::string>("bpString");
+            adios2::Variable<std::string> bpString = bpIO.DefineVariable<std::string>("bpString");
 
             for (unsigned int v = 0; v < variablesSize; ++v)
             {
@@ -67,9 +66,8 @@ int main(int argc, char *argv[])
                 }
                 namev += std::to_string(v);
 
-                bpFloats[v] =
-                    bpIO.DefineVariable<float>(namev, {size * Nx}, {rank * Nx},
-                                               {Nx}, adios2::ConstantDims);
+                bpFloats[v] = bpIO.DefineVariable<float>(namev, {size * Nx}, {rank * Nx}, {Nx},
+                                                         adios2::ConstantDims);
             }
 
             /** global single value variable: name */
@@ -77,8 +75,7 @@ int main(int argc, char *argv[])
                 bpIO.DefineVariable<unsigned int>("timeStep");
 
             /** Engine derived class, spawned to start IO operations */
-            adios2::Engine bpWriter =
-                bpIO.Open("myVector.bp", adios2::Mode::Write);
+            adios2::Engine bpWriter = bpIO.Open("myVector.bp", adios2::Mode::Write);
 
             for (unsigned int timeStep = 0; timeStep < 3; ++timeStep)
             {
@@ -96,9 +93,8 @@ int main(int argc, char *argv[])
                     // and myFloats[0] == 9, 10, or 11
                     bpWriter.Put<float>(bpFloats[v], myFloats.data());
                 }
-                const std::string myString(
-                    "Hello from rank: " + std::to_string(rank) +
-                    " and timestep: " + std::to_string(timeStep));
+                const std::string myString("Hello from rank: " + std::to_string(rank) +
+                                           " and timestep: " + std::to_string(timeStep));
 
                 if (rank == 0)
                 {
@@ -118,11 +114,9 @@ int main(int argc, char *argv[])
             //            {
             adios2::IO ioReader = adios.DeclareIO("bpReader");
 
-            adios2::Engine bpReader =
-                ioReader.Open("myVector.bp", adios2::Mode::Read);
+            adios2::Engine bpReader = ioReader.Open("myVector.bp", adios2::Mode::Read);
 
-            adios2::Variable<float> bpFloats000 =
-                ioReader.InquireVariable<float>("bpFloats000");
+            adios2::Variable<float> bpFloats000 = ioReader.InquireVariable<float>("bpFloats000");
 
             adios2::Variable<std::string> bpString =
                 ioReader.InquireVariable<std::string>("bpString");
@@ -135,8 +129,8 @@ int main(int argc, char *argv[])
                 std::vector<float> data(bpFloats000.SelectionSize());
                 bpReader.Get(bpFloats000, data.data(), adios2::Mode::Sync);
 
-                std::cout << "Data timestep " << bpFloats000.StepsStart()
-                          << " from rank " << rank << ": ";
+                std::cout << "Data timestep " << bpFloats000.StepsStart() << " from rank " << rank
+                          << ": ";
                 for (const auto datum : data)
                 {
                     std::cout << datum << " ";
@@ -162,8 +156,7 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)

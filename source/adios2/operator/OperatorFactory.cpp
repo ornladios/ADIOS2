@@ -81,8 +81,7 @@ std::string OperatorTypeToString(const Operator::OperatorType type)
     }
 }
 
-std::shared_ptr<Operator> MakeOperator(const std::string &type,
-                                       const Params &parameters)
+std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &parameters)
 {
     std::shared_ptr<Operator> ret = nullptr;
 
@@ -152,24 +151,23 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type,
     }
     else
     {
-        helper::Throw<std::invalid_argument>(
-            "Operator", "OperatorFactory", "MakeOperator",
-            "ADIOS2 does not support " + typeLowerCase + " operation");
+        helper::Throw<std::invalid_argument>("Operator", "OperatorFactory", "MakeOperator",
+                                             "ADIOS2 does not support " + typeLowerCase +
+                                                 " operation");
     }
 
     if (ret == nullptr)
     {
-        helper::Throw<std::invalid_argument>(
-            "Operator", "OperatorFactory", "MakeOperator",
-            "ADIOS2 didn't compile with " + typeLowerCase +
-                " library, operator not added");
+        helper::Throw<std::invalid_argument>("Operator", "OperatorFactory", "MakeOperator",
+                                             "ADIOS2 didn't compile with " + typeLowerCase +
+                                                 " library, operator not added");
     }
 
     return ret;
 }
 
-size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut,
-                  MemorySpace memSpace, std::shared_ptr<Operator> op)
+size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut, MemorySpace memSpace,
+                  std::shared_ptr<Operator> op)
 {
     Operator::OperatorType compressorType;
     std::memcpy(&compressorType, bufferIn, 1);

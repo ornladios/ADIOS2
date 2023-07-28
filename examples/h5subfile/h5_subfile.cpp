@@ -41,12 +41,10 @@ void writeMe(adios2::IO &hdf5IO, int rank, int size, const char *testFileName)
                         "true"); // set this if not all ranks are writting
 
     adios2::Variable<float> h5Floats = hdf5IO.DefineVariable<float>(
-        "h5Floats", {size * Nx, Ny}, {rank * Nx, 0}, {Nx, Ny},
-        adios2::ConstantDims);
+        "h5Floats", {size * Nx, Ny}, {rank * Nx, 0}, {Nx, Ny}, adios2::ConstantDims);
 
-    adios2::Variable<int> h5Ints =
-        hdf5IO.DefineVariable<int>("h5Ints", {size * Nx, Ny}, {rank * Nx, 0},
-                                   {Nx, Ny}, adios2::ConstantDims);
+    adios2::Variable<int> h5Ints = hdf5IO.DefineVariable<int>(
+        "h5Ints", {size * Nx, Ny}, {rank * Nx, 0}, {Nx, Ny}, adios2::ConstantDims);
 
     /** Engine derived class, spawned to start IO operations */
     adios2::Engine hdf5Writer = hdf5IO.Open(testFileName, adios2::Mode::Write);
@@ -87,23 +85,17 @@ void writeMe(adios2::IO &hdf5IO, int rank, int size, const char *testFileName)
     hdf5IO.DefineAttribute<std::string>("adios2_schema/version_minor",
                                         std::to_string(ADIOS2_VERSION_MINOR));
     hdf5IO.DefineAttribute<std::string>("/adios2_schema/mesh/type", "explicit");
-    hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension0",
-                                         m_globalDims[0]);
-    hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension1",
-                                         m_globalDims[1]);
-    hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension2",
-                                         m_globalDims[2]);
-    hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension3",
-                                         m_globalDims[3]);
-    hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension-num",
-                                         m_globalDims.size());
+    hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension0", m_globalDims[0]);
+    hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension1", m_globalDims[1]);
+    hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension2", m_globalDims[2]);
+    hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension3", m_globalDims[3]);
+    hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension-num", m_globalDims.size());
 
     hdf5Writer.Close();
 }
 
 template <class T>
-void ReadVarData(adios2::IO h5IO, adios2::Engine &h5Reader,
-                 const std::string &name)
+void ReadVarData(adios2::IO h5IO, adios2::Engine &h5Reader, const std::string &name)
 {
     adios2::Variable<T> var = h5IO.InquireVariable<T>(name);
 
@@ -154,8 +146,7 @@ void readMe(adios2::IO &h5IO, int rank, int size, const char *fileName)
     /** Engine derived class, spawned to start IO operations */
     adios2::Engine h5Reader = h5IO.Open(fileName, adios2::Mode::Read);
 
-    const std::map<std::string, adios2::Params> variables =
-        h5IO.AvailableVariables();
+    const std::map<std::string, adios2::Params> variables = h5IO.AvailableVariables();
 
     if (0 == rank)
         std::cout << " Num Vars: " << variables.size() << std::endl;
@@ -167,8 +158,7 @@ void readMe(adios2::IO &h5IO, int rank, int size, const char *fileName)
 
         for (const auto &parameter : variablePair.second)
         {
-            std::cout << "\t" << parameter.first << ": " << parameter.second
-                      << "\n";
+            std::cout << "\t" << parameter.first << ": " << parameter.second << "\n";
             if (parameter.second == "double")
             {
                 ReadVarData<double>(h5IO, h5Reader, variablePair.first);
@@ -188,8 +178,7 @@ void readMe(adios2::IO &h5IO, int rank, int size, const char *fileName)
         }
     } // variables
 
-    const std::map<std::string, adios2::Params> attributes =
-        h5IO.AvailableAttributes();
+    const std::map<std::string, adios2::Params> attributes = h5IO.AvailableAttributes();
 
     if (0 == rank)
         std::cout << "Num Attrs:" << attributes.size() << std::endl;
@@ -201,8 +190,7 @@ void readMe(adios2::IO &h5IO, int rank, int size, const char *fileName)
 
         for (const auto &parameter : attrPair.second)
         {
-            std::cout << "\t" << parameter.first << ": " << parameter.second
-                      << "\n";
+            std::cout << "\t" << parameter.first << ": " << parameter.second << "\n";
 
             if (parameter.second == "double")
             {
@@ -277,15 +265,13 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout
-            << "IO System base failure exception, STOPPING PROGRAM from rank "
-            << rank << "\n";
+        std::cout << "IO System base failure exception, STOPPING PROGRAM from rank " << rank
+                  << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)

@@ -62,8 +62,7 @@ void ADIOS::ExitComputationBlock() noexcept
 Operator ADIOS::DefineOperator(const std::string name, const std::string type,
                                const Params &parameters)
 {
-    CheckPointer("for operator name " + name +
-                 ", in call to ADIOS::DefineOperator");
+    CheckPointer("for operator name " + name + ", in call to ADIOS::DefineOperator");
     auto op = &m_ADIOS->DefineOperator(name, type, parameters);
     return Operator(op->first, &op->second);
 }

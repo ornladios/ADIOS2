@@ -29,13 +29,13 @@
 #include "dmalloc.h"
 #endif
 
-#define log(...)                                                               \
-    fprintf(stderr, "[rank=%3.3d, line %d]: ", rank, __LINE__);                \
-    fprintf(stderr, __VA_ARGS__);                                              \
+#define log(...)                                                                                   \
+    fprintf(stderr, "[rank=%3.3d, line %d]: ", rank, __LINE__);                                    \
+    fprintf(stderr, __VA_ARGS__);                                                                  \
     fflush(stderr);
-#define printE(...)                                                            \
-    fprintf(stderr, "[rank=%3.3d, line %d]: ERROR: ", rank, __LINE__);         \
-    fprintf(stderr, __VA_ARGS__);                                              \
+#define printE(...)                                                                                \
+    fprintf(stderr, "[rank=%3.3d, line %d]: ERROR: ", rank, __LINE__);                             \
+    fprintf(stderr, __VA_ARGS__);                                                                  \
     fflush(stderr);
 
 int NVARS = 1;
@@ -264,9 +264,8 @@ void define_vars()
      * Offsets will change at writing for each block. */
     for (i = 0; i < NVARS; i++)
     {
-        varW[i] = adios2_define_variable(ioW, varnames[i], adios2_type_int32_t,
-                                         2, shape, start, count,
-                                         adios2_constant_dims_false);
+        varW[i] = adios2_define_variable(ioW, varnames[i], adios2_type_int32_t, 2, shape, start,
+                                         count, adios2_constant_dims_false);
     }
 }
 
@@ -304,51 +303,49 @@ int write_file(int step)
     return 0;
 }
 
-#define CHECK_VARINFO(VARNAME, NDIM, NSTEPS)                                   \
-    vi = adios2_inquire_variable(ioR, VARNAME);                                \
-    if (vi == NULL)                                                            \
-    {                                                                          \
-        printE("No such variable: %s\n", VARNAME);                             \
-        err = 101;                                                             \
-        goto endread;                                                          \
-    }                                                                          \
-    size_t ndims;                                                              \
-    adios2_variable_ndims(&ndims, vi);                                         \
-                                                                               \
-    if (ndims != NDIM)                                                         \
-    {                                                                          \
-        printE("Variable %s has %zu dimensions, but expected %u\n", VARNAME,   \
-               ndims, NDIM);                                                   \
-        err = 102;                                                             \
-        goto endread;                                                          \
-    }                                                                          \
-    size_t steps;                                                              \
-    adios2_variable_steps(&steps, vi);                                         \
-    if (steps != NSTEPS)                                                       \
-    {                                                                          \
-        printE("Variable %s has %zu steps, but expected %u\n", VARNAME, steps, \
-               NSTEPS);                                                        \
-        err = 103;                                                             \
-        /*goto endread; */                                                     \
+#define CHECK_VARINFO(VARNAME, NDIM, NSTEPS)                                                       \
+    vi = adios2_inquire_variable(ioR, VARNAME);                                                    \
+    if (vi == NULL)                                                                                \
+    {                                                                                              \
+        printE("No such variable: %s\n", VARNAME);                                                 \
+        err = 101;                                                                                 \
+        goto endread;                                                                              \
+    }                                                                                              \
+    size_t ndims;                                                                                  \
+    adios2_variable_ndims(&ndims, vi);                                                             \
+                                                                                                   \
+    if (ndims != NDIM)                                                                             \
+    {                                                                                              \
+        printE("Variable %s has %zu dimensions, but expected %u\n", VARNAME, ndims, NDIM);         \
+        err = 102;                                                                                 \
+        goto endread;                                                                              \
+    }                                                                                              \
+    size_t steps;                                                                                  \
+    adios2_variable_steps(&steps, vi);                                                             \
+    if (steps != NSTEPS)                                                                           \
+    {                                                                                              \
+        printE("Variable %s has %zu steps, but expected %u\n", VARNAME, steps, NSTEPS);            \
+        err = 103;                                                                                 \
+        /*goto endread; */                                                                         \
     }
 
-#define CHECK_SCALAR(VARNAME, VAR, VALUE, STEP)                                \
-    if (VAR != VALUE)                                                          \
-    {                                                                          \
-        printE(#VARNAME " step %d: wrote %d but read %d\n", STEP, VALUE, VAR); \
-        err = 104;                                                             \
-        /*goto endread;*/                                                      \
+#define CHECK_SCALAR(VARNAME, VAR, VALUE, STEP)                                                    \
+    if (VAR != VALUE)                                                                              \
+    {                                                                                              \
+        printE(#VARNAME " step %d: wrote %d but read %d\n", STEP, VALUE, VAR);                     \
+        err = 104;                                                                                 \
+        /*goto endread;*/                                                                          \
     }
 
-#define CHECK_ARRAY(VARNAME, A, N, VALUE, STEP, BLOCK, i)                      \
-    for (i = 0; i < N; i++)                                                    \
-        if (A[i] != VALUE)                                                     \
-        {                                                                      \
-            printE("%s[%d] step %d block %d: wrote %d but read %d\n", VARNAME, \
-                   i, STEP, BLOCK, VALUE, A[i]);                               \
-            err = 104;                                                         \
-            /*goto endread;*/                                                  \
-            break;                                                             \
+#define CHECK_ARRAY(VARNAME, A, N, VALUE, STEP, BLOCK, i)                                          \
+    for (i = 0; i < N; i++)                                                                        \
+        if (A[i] != VALUE)                                                                         \
+        {                                                                                          \
+            printE("%s[%d] step %d block %d: wrote %d but read %d\n", VARNAME, i, STEP, BLOCK,     \
+                   VALUE, A[i]);                                                                   \
+            err = 104;                                                                             \
+            /*goto endread;*/                                                                      \
+            break;                                                                                 \
         }
 
 void reset_readvars()
@@ -421,19 +418,16 @@ int read_file()
                 for (i = 0; i < NVARS; i++)
                 {
                     tsb = MPI_Wtime();
-                    adios2_variable *varH =
-                        adios2_inquire_variable(ioR, varnames[i]);
+                    adios2_variable *varH = adios2_inquire_variable(ioR, varnames[i]);
                     adios2_set_selection(varH, 2, start, count);
                     adios2_get(engineR, varH, r2, adios2_mode_sync);
                     ts += MPI_Wtime() - tsb;
-                    CHECK_ARRAY(varnames[i], r2, ldim1 * ldim2, v, step, block,
-                                iMacro)
+                    CHECK_ARRAY(varnames[i], r2, ldim1 * ldim2, v, step, block, iMacro)
                 }
             }
             else
             {
-                printf("-- ERROR: Could not get Step %d, status = %d\n", i,
-                       status);
+                printf("-- ERROR: Could not get Step %d, status = %d\n", i, status);
             }
         }
         adios2_end_step(engineR);

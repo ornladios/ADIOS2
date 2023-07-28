@@ -20,8 +20,7 @@ namespace
 {
 
 template <class T>
-inline void AssignStep1D(const size_t step, std::vector<T> &vector,
-                         const size_t ghostCells = 0)
+inline void AssignStep1D(const size_t step, std::vector<T> &vector, const size_t ghostCells = 0)
 {
     std::for_each(vector.begin() + ghostCells, vector.end() - ghostCells,
                   [step](T &value) { value = static_cast<T>(step); });
@@ -31,17 +30,15 @@ template <typename Float>
 void AssignStep1D(const size_t step, std::vector<std::complex<Float>> &vector,
                   const size_t ghostCells)
 {
-    std::for_each(vector.begin() + ghostCells, vector.end() - ghostCells,
-                  [step](std::complex<Float> &value) {
-                      value = std::complex<Float>(static_cast<Float>(step),
-                                                  static_cast<Float>(step));
-                  });
+    std::for_each(
+        vector.begin() + ghostCells, vector.end() - ghostCells, [step](std::complex<Float> &value) {
+            value = std::complex<Float>(static_cast<Float>(step), static_cast<Float>(step));
+        });
 }
 
 template <class T>
-inline void AssignStep2D(const size_t step, std::vector<T> &vector,
-                         const size_t Nx, const size_t Ny,
-                         const size_t ghostCellsX, const size_t ghostCellsY)
+inline void AssignStep2D(const size_t step, std::vector<T> &vector, const size_t Nx,
+                         const size_t Ny, const size_t ghostCellsX, const size_t ghostCellsY)
 {
     for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
     {
@@ -56,9 +53,8 @@ inline void AssignStep2D(const size_t step, std::vector<T> &vector,
 }
 
 template <typename Float>
-void AssignStep2D(const size_t step, std::vector<std::complex<Float>> &vector,
-                  const size_t Nx, const size_t Ny, const size_t ghostCellsX,
-                  const size_t ghostCellsY)
+void AssignStep2D(const size_t step, std::vector<std::complex<Float>> &vector, const size_t Nx,
+                  const size_t Ny, const size_t ghostCellsX, const size_t ghostCellsY)
 {
     for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
     {
@@ -67,22 +63,19 @@ void AssignStep2D(const size_t step, std::vector<std::complex<Float>> &vector,
         for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
         {
             const size_t index = indexJ + i;
-            vector[index] = std::complex<Float>(static_cast<Float>(step),
-                                                static_cast<Float>(step));
+            vector[index] = std::complex<Float>(static_cast<Float>(step), static_cast<Float>(step));
         }
     }
 }
 
 template <class T>
-inline void AssignStep3D(const size_t step, std::vector<T> &vector,
-                         const size_t Nx, const size_t Ny, const size_t Nz,
-                         const size_t ghostCellsX, const size_t ghostCellsY,
-                         const size_t ghostCellsZ)
+inline void AssignStep3D(const size_t step, std::vector<T> &vector, const size_t Nx,
+                         const size_t Ny, const size_t Nz, const size_t ghostCellsX,
+                         const size_t ghostCellsY, const size_t ghostCellsZ)
 {
     for (size_t k = ghostCellsZ; k < Nz + ghostCellsZ; ++k)
     {
-        const size_t indexK =
-            k * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
+        const size_t indexK = k * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
 
         for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
         {
@@ -98,15 +91,13 @@ inline void AssignStep3D(const size_t step, std::vector<T> &vector,
 }
 
 template <typename Float>
-void AssignStep3D(const size_t step, std::vector<std::complex<Float>> &vector,
-                  const size_t Nx, const size_t Ny, const size_t Nz,
-                  const size_t ghostCellsX, const size_t ghostCellsY,
-                  const size_t ghostCellsZ)
+void AssignStep3D(const size_t step, std::vector<std::complex<Float>> &vector, const size_t Nx,
+                  const size_t Ny, const size_t Nz, const size_t ghostCellsX,
+                  const size_t ghostCellsY, const size_t ghostCellsZ)
 {
     for (size_t k = ghostCellsZ; k < Nz + ghostCellsZ; ++k)
     {
-        const size_t indexK =
-            k * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
+        const size_t indexK = k * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
 
         for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
         {
@@ -115,8 +106,8 @@ void AssignStep3D(const size_t step, std::vector<std::complex<Float>> &vector,
             for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
             {
                 const size_t index = indexK + indexJ + i;
-                vector[index] = std::complex<Float>(static_cast<Float>(step),
-                                                    static_cast<Float>(step));
+                vector[index] =
+                    std::complex<Float>(static_cast<Float>(step), static_cast<Float>(step));
             }
         }
     }
@@ -126,8 +117,7 @@ void AssignStep3D(const size_t step, std::vector<std::complex<Float>> &vector,
 
 void HDF5Steps1D(const size_t ghostCells)
 {
-    const std::string fname("HDF5Steps1D_" + std::to_string(ghostCells) +
-                            ".h5");
+    const std::string fname("HDF5Steps1D_" + std::to_string(ghostCells) + ".h5");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -164,10 +154,8 @@ void HDF5Steps1D(const size_t ghostCells)
         auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
-        auto var_cr32 =
-            io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
-                                                                start, count);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
 
         const adios2::Dims memoryStart = {ghostCells};
         const adios2::Dims memoryCount = {Nx + 2 * ghostCells};
@@ -187,10 +175,8 @@ void HDF5Steps1D(const size_t ghostCells)
         std::vector<int64_t> dataI64(Nx + 2 * ghostCells, -1);
         std::vector<float> dataR32(Nx + 2 * ghostCells, -1.f);
         std::vector<double> dataR64(Nx + 2 * ghostCells, -1.);
-        std::vector<std::complex<float>> dataCR32(Nx + 2 * ghostCells,
-                                                  {-1.f, -1.f});
-        std::vector<std::complex<double>> dataCR64(Nx + 2 * ghostCells,
-                                                   {-1., -1.});
+        std::vector<std::complex<float>> dataCR32(Nx + 2 * ghostCells, {-1.f, -1.f});
+        std::vector<std::complex<double>> dataCR64(Nx + 2 * ghostCells, {-1., -1.});
 
         adios2::Engine h5Writer = io.Open(fname, adios2::Mode::Write);
 
@@ -318,38 +304,28 @@ void HDF5Steps1D(const size_t ghostCells)
             EXPECT_EQ(R32.front(), static_cast<float>(step));
             EXPECT_EQ(R64.front(), static_cast<double>(step));
             EXPECT_EQ(CR32.front(),
-                      std::complex<float>(static_cast<float>(step),
-                                          static_cast<float>(step)));
+                      std::complex<float>(static_cast<float>(step), static_cast<float>(step)));
             EXPECT_EQ(CR64.front(),
-                      std::complex<double>(static_cast<double>(step),
-                                           static_cast<double>(step)));
+                      std::complex<double>(static_cast<double>(step), static_cast<double>(step)));
 
-            EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(),
-                                         std::not_equal_to<int8_t>()),
+            EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(), std::not_equal_to<int8_t>()),
                       I8.end());
-            EXPECT_EQ(std::adjacent_find(I16.begin(), I16.end(),
-                                         std::not_equal_to<int16_t>()),
+            EXPECT_EQ(std::adjacent_find(I16.begin(), I16.end(), std::not_equal_to<int16_t>()),
                       I16.end());
-            EXPECT_EQ(std::adjacent_find(I32.begin(), I32.end(),
-                                         std::not_equal_to<int32_t>()),
+            EXPECT_EQ(std::adjacent_find(I32.begin(), I32.end(), std::not_equal_to<int32_t>()),
                       I32.end());
-            EXPECT_EQ(std::adjacent_find(I64.begin(), I64.end(),
-                                         std::not_equal_to<int64_t>()),
+            EXPECT_EQ(std::adjacent_find(I64.begin(), I64.end(), std::not_equal_to<int64_t>()),
                       I64.end());
-            EXPECT_EQ(std::adjacent_find(R32.begin(), R32.end(),
-                                         std::not_equal_to<float>()),
+            EXPECT_EQ(std::adjacent_find(R32.begin(), R32.end(), std::not_equal_to<float>()),
                       R32.end());
-            EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(),
-                                         std::not_equal_to<double>()),
+            EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(), std::not_equal_to<double>()),
                       R64.end());
-            EXPECT_EQ(
-                std::adjacent_find(CR32.begin(), CR32.end(),
-                                   std::not_equal_to<std::complex<float>>()),
-                CR32.end());
-            EXPECT_EQ(
-                std::adjacent_find(CR64.begin(), CR64.end(),
-                                   std::not_equal_to<std::complex<double>>()),
-                CR64.end());
+            EXPECT_EQ(std::adjacent_find(CR32.begin(), CR32.end(),
+                                         std::not_equal_to<std::complex<float>>()),
+                      CR32.end());
+            EXPECT_EQ(std::adjacent_find(CR64.begin(), CR64.end(),
+                                         std::not_equal_to<std::complex<double>>()),
+                      CR64.end());
         }
 
         h5Reader.Close();
@@ -358,8 +334,7 @@ void HDF5Steps1D(const size_t ghostCells)
 
 void HDF5Steps2D4x2(const size_t ghostCells)
 {
-    const std::string fname("HDF5Steps2D4x2_" + std::to_string(ghostCells) +
-                            ".h5");
+    const std::string fname("HDF5Steps2D4x2_" + std::to_string(ghostCells) + ".h5");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -400,14 +375,11 @@ void HDF5Steps2D4x2(const size_t ghostCells)
         auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
-        auto var_cr32 =
-            io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
-                                                                start, count);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
 
         const adios2::Dims memoryStart = {ghostCellsY, ghostCellsX};
-        const adios2::Dims memoryCount = {Ny + 2 * ghostCellsY,
-                                          Nx + 2 * ghostCellsX};
+        const adios2::Dims memoryCount = {Ny + 2 * ghostCellsY, Nx + 2 * ghostCellsX};
 
         var_i8.SetMemorySelection({memoryStart, memoryCount});
         var_i16.SetMemorySelection({memoryStart, memoryCount});
@@ -564,38 +536,28 @@ void HDF5Steps2D4x2(const size_t ghostCells)
             EXPECT_EQ(R32.front(), static_cast<float>(step));
             EXPECT_EQ(R64.front(), static_cast<double>(step));
             EXPECT_EQ(CR32.front(),
-                      std::complex<float>(static_cast<float>(step),
-                                          static_cast<float>(step)));
+                      std::complex<float>(static_cast<float>(step), static_cast<float>(step)));
             EXPECT_EQ(CR64.front(),
-                      std::complex<double>(static_cast<double>(step),
-                                           static_cast<double>(step)));
+                      std::complex<double>(static_cast<double>(step), static_cast<double>(step)));
 
-            EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(),
-                                         std::not_equal_to<int8_t>()),
+            EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(), std::not_equal_to<int8_t>()),
                       I8.end());
-            EXPECT_EQ(std::adjacent_find(I16.begin(), I16.end(),
-                                         std::not_equal_to<int16_t>()),
+            EXPECT_EQ(std::adjacent_find(I16.begin(), I16.end(), std::not_equal_to<int16_t>()),
                       I16.end());
-            EXPECT_EQ(std::adjacent_find(I32.begin(), I32.end(),
-                                         std::not_equal_to<int32_t>()),
+            EXPECT_EQ(std::adjacent_find(I32.begin(), I32.end(), std::not_equal_to<int32_t>()),
                       I32.end());
-            EXPECT_EQ(std::adjacent_find(I64.begin(), I64.end(),
-                                         std::not_equal_to<int64_t>()),
+            EXPECT_EQ(std::adjacent_find(I64.begin(), I64.end(), std::not_equal_to<int64_t>()),
                       I64.end());
-            EXPECT_EQ(std::adjacent_find(R32.begin(), R32.end(),
-                                         std::not_equal_to<float>()),
+            EXPECT_EQ(std::adjacent_find(R32.begin(), R32.end(), std::not_equal_to<float>()),
                       R32.end());
-            EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(),
-                                         std::not_equal_to<double>()),
+            EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(), std::not_equal_to<double>()),
                       R64.end());
-            EXPECT_EQ(
-                std::adjacent_find(CR32.begin(), CR32.end(),
-                                   std::not_equal_to<std::complex<float>>()),
-                CR32.end());
-            EXPECT_EQ(
-                std::adjacent_find(CR64.begin(), CR64.end(),
-                                   std::not_equal_to<std::complex<double>>()),
-                CR64.end());
+            EXPECT_EQ(std::adjacent_find(CR32.begin(), CR32.end(),
+                                         std::not_equal_to<std::complex<float>>()),
+                      CR32.end());
+            EXPECT_EQ(std::adjacent_find(CR64.begin(), CR64.end(),
+                                         std::not_equal_to<std::complex<double>>()),
+                      CR64.end());
         }
 
         h5Reader.Close();
@@ -604,8 +566,7 @@ void HDF5Steps2D4x2(const size_t ghostCells)
 
 void HDF5Steps3D8x2x4(const size_t ghostCells)
 {
-    const std::string fname("HDF5Steps3D8x2x4_" + std::to_string(ghostCells) +
-                            ".h5");
+    const std::string fname("HDF5Steps3D8x2x4_" + std::to_string(ghostCells) + ".h5");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -648,15 +609,12 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
         auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
-        auto var_cr32 =
-            io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
-                                                                start, count);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
 
-        const adios2::Dims memoryStart = {ghostCellsZ, ghostCellsY,
-                                          ghostCellsX};
-        const adios2::Dims memoryCount = {
-            Nz + 2 * ghostCellsZ, Ny + 2 * ghostCellsY, Nx + 2 * ghostCellsX};
+        const adios2::Dims memoryStart = {ghostCellsZ, ghostCellsY, ghostCellsX};
+        const adios2::Dims memoryCount = {Nz + 2 * ghostCellsZ, Ny + 2 * ghostCellsY,
+                                          Nx + 2 * ghostCellsX};
 
         var_i8.SetMemorySelection({memoryStart, memoryCount});
         var_i16.SetMemorySelection({memoryStart, memoryCount});
@@ -667,8 +625,8 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
         var_cr32.SetMemorySelection({memoryStart, memoryCount});
         var_cr64.SetMemorySelection({memoryStart, memoryCount});
 
-        const size_t dataSize = (Nz + 2 * ghostCellsZ) *
-                                (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
+        const size_t dataSize =
+            (Nz + 2 * ghostCellsZ) * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
         std::vector<int8_t> dataI8(dataSize, -1);
         std::vector<int16_t> dataI16(dataSize, -1);
         std::vector<int32_t> dataI32(dataSize, -1);
@@ -682,22 +640,14 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
 
         for (size_t i = 0; i < NSteps; ++i)
         {
-            AssignStep3D(i, dataI8, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataI16, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataI32, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataI64, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataR32, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataR64, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataCR32, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataCR64, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
+            AssignStep3D(i, dataI8, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataI16, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataI32, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataI64, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataR32, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataR64, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataCR32, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataCR64, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
 
             h5Writer.BeginStep();
             h5Writer.Put(var_i8, dataI8.data());
@@ -838,13 +788,11 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
 
             EXPECT_EQ(R64.front(), static_cast<double>(currentStep));
 
-            EXPECT_EQ(CR32.front(),
-                      std::complex<float>(static_cast<float>(currentStep),
-                                          static_cast<float>(currentStep)));
+            EXPECT_EQ(CR32.front(), std::complex<float>(static_cast<float>(currentStep),
+                                                        static_cast<float>(currentStep)));
 
-            EXPECT_EQ(CR64.front(),
-                      std::complex<double>(static_cast<double>(currentStep),
-                                           static_cast<double>(currentStep)));
+            EXPECT_EQ(CR64.front(), std::complex<double>(static_cast<double>(currentStep),
+                                                         static_cast<double>(currentStep)));
 
             const size_t dataSize = mpiSize * Nz * Ny * Nx;
             EXPECT_EQ(I8.size(), dataSize);
@@ -863,38 +811,28 @@ void HDF5Steps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(R32.front(), static_cast<float>(step));
             EXPECT_EQ(R64.front(), static_cast<double>(step));
             EXPECT_EQ(CR32.front(),
-                      std::complex<float>(static_cast<float>(step),
-                                          static_cast<float>(step)));
+                      std::complex<float>(static_cast<float>(step), static_cast<float>(step)));
             EXPECT_EQ(CR64.front(),
-                      std::complex<double>(static_cast<double>(step),
-                                           static_cast<double>(step)));
+                      std::complex<double>(static_cast<double>(step), static_cast<double>(step)));
 
-            EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(),
-                                         std::not_equal_to<int8_t>()),
+            EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(), std::not_equal_to<int8_t>()),
                       I8.end());
-            EXPECT_EQ(std::adjacent_find(I16.begin(), I16.end(),
-                                         std::not_equal_to<int16_t>()),
+            EXPECT_EQ(std::adjacent_find(I16.begin(), I16.end(), std::not_equal_to<int16_t>()),
                       I16.end());
-            EXPECT_EQ(std::adjacent_find(I32.begin(), I32.end(),
-                                         std::not_equal_to<int32_t>()),
+            EXPECT_EQ(std::adjacent_find(I32.begin(), I32.end(), std::not_equal_to<int32_t>()),
                       I32.end());
-            EXPECT_EQ(std::adjacent_find(I64.begin(), I64.end(),
-                                         std::not_equal_to<int64_t>()),
+            EXPECT_EQ(std::adjacent_find(I64.begin(), I64.end(), std::not_equal_to<int64_t>()),
                       I64.end());
-            EXPECT_EQ(std::adjacent_find(R32.begin(), R32.end(),
-                                         std::not_equal_to<float>()),
+            EXPECT_EQ(std::adjacent_find(R32.begin(), R32.end(), std::not_equal_to<float>()),
                       R32.end());
-            EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(),
-                                         std::not_equal_to<double>()),
+            EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(), std::not_equal_to<double>()),
                       R64.end());
-            EXPECT_EQ(
-                std::adjacent_find(CR32.begin(), CR32.end(),
-                                   std::not_equal_to<std::complex<float>>()),
-                CR32.end());
-            EXPECT_EQ(
-                std::adjacent_find(CR64.begin(), CR64.end(),
-                                   std::not_equal_to<std::complex<double>>()),
-                CR64.end());
+            EXPECT_EQ(std::adjacent_find(CR32.begin(), CR32.end(),
+                                         std::not_equal_to<std::complex<float>>()),
+                      CR32.end());
+            EXPECT_EQ(std::adjacent_find(CR64.begin(), CR64.end(),
+                                         std::not_equal_to<std::complex<double>>()),
+                      CR64.end());
         }
 
         h5Reader.Close();
@@ -909,23 +847,13 @@ public:
     virtual void TearDown() {}
 };
 
-TEST_P(HDF5WriteMemSelReadVector, HDF5MemorySelectionSteps1D)
-{
-    HDF5Steps1D(GetParam());
-}
+TEST_P(HDF5WriteMemSelReadVector, HDF5MemorySelectionSteps1D) { HDF5Steps1D(GetParam()); }
 
-TEST_P(HDF5WriteMemSelReadVector, HDF5MemorySelectionSteps2D4x2)
-{
-    HDF5Steps2D4x2(GetParam());
-}
+TEST_P(HDF5WriteMemSelReadVector, HDF5MemorySelectionSteps2D4x2) { HDF5Steps2D4x2(GetParam()); }
 
-TEST_P(HDF5WriteMemSelReadVector, HDF5MemorySelectionSteps3D4x2x8)
-{
-    HDF5Steps3D8x2x4(GetParam());
-}
+TEST_P(HDF5WriteMemSelReadVector, HDF5MemorySelectionSteps3D4x2x8) { HDF5Steps3D8x2x4(GetParam()); }
 
-INSTANTIATE_TEST_SUITE_P(ghostCells, HDF5WriteMemSelReadVector,
-                         ::testing::Values(1));
+INSTANTIATE_TEST_SUITE_P(ghostCells, HDF5WriteMemSelReadVector, ::testing::Values(1));
 
 int main(int argc, char **argv)
 {

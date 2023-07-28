@@ -16,10 +16,9 @@ namespace adios2
 namespace format
 {
 
-BufferV::BufferV(const std::string type, const bool AlwaysCopy,
-                 const size_t MemAlign, const size_t MemBlockSize)
-: m_Type(type), m_MemAlign(MemAlign), m_MemBlockSize(MemBlockSize),
-  m_AlwaysCopy(AlwaysCopy)
+BufferV::BufferV(const std::string type, const bool AlwaysCopy, const size_t MemAlign,
+                 const size_t MemBlockSize)
+: m_Type(type), m_MemAlign(MemAlign), m_MemBlockSize(MemBlockSize), m_AlwaysCopy(AlwaysCopy)
 {
 }
 

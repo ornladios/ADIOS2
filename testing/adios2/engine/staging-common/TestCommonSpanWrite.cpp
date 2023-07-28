@@ -88,8 +88,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         var.SetSelection(sel);
 
         adios2::Variable<double>::Span VarSpan = engine.Put(var);
-        generateSimpleForwardData(VarSpan.data(), (int)step, myStart, myCount,
-                                  (int)Nx * mpiSize);
+        generateSimpleForwardData(VarSpan.data(), (int)step, myStart, myCount, (int)Nx * mpiSize);
 
         engine.EndStep();
     }
@@ -107,9 +106,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);
 
     int key;

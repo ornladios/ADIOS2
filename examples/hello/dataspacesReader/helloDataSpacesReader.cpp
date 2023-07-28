@@ -52,13 +52,10 @@ int main(int argc, char *argv[])
         adios2::IO dataSpacesIO = adios.DeclareIO("myIO");
         dataSpacesIO.SetEngine("DATASPACES");
 
-        adios2::Engine dataSpacesReader =
-            dataSpacesIO.Open("helloDataSpaces", adios2::Mode::Read);
+        adios2::Engine dataSpacesReader = dataSpacesIO.Open("helloDataSpaces", adios2::Mode::Read);
         dataSpacesReader.BeginStep();
-        adios2::Variable<float> bpFloats =
-            dataSpacesIO.InquireVariable<float>("bpFloats");
-        std::cout << "Incoming variable is of size " << bpFloats.Shape()[0]
-                  << "\n";
+        adios2::Variable<float> bpFloats = dataSpacesIO.InquireVariable<float>("bpFloats");
+        std::cout << "Incoming variable is of size " << bpFloats.Shape()[0] << "\n";
         const std::size_t total_size = bpFloats.Shape()[0];
         const std::size_t my_start = (total_size / size) * rank;
         const std::size_t my_count = (total_size / size);
@@ -81,8 +78,7 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)

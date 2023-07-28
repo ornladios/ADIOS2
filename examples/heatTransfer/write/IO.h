@@ -21,8 +21,7 @@ class IO
 public:
     IO(const Settings &s, MPI_Comm comm);
     ~IO();
-    void write(int step, const HeatTransfer &ht, const Settings &s,
-               MPI_Comm comm);
+    void write(int step, const HeatTransfer &ht, const Settings &s, MPI_Comm comm);
 
 private:
     std::string m_outputfilename;
@@ -31,9 +30,8 @@ private:
     // default is add suffix if not already there
     // if rank and step is specified, it will create a unique file name for that
     // rank and step
-    std::string MakeFilename(const std::string &outputfile,
-                             const std::string &suffix, int rank = -1,
-                             int step = -1)
+    std::string MakeFilename(const std::string &outputfile, const std::string &suffix,
+                             int rank = -1, int step = -1)
     {
         std::string name;
         const size_t ss = outputfile.size();
@@ -49,8 +47,7 @@ private:
             }
 
             // otherwise check whether suffix is already there
-            if ((ss > suffix.size()) &&
-                outputfile.find(suffix) != ss - suffix.size())
+            if ((ss > suffix.size()) && outputfile.find(suffix) != ss - suffix.size())
             {
                 name += suffix;
             }
@@ -59,8 +56,7 @@ private:
         {
             // we need a unique name here
             name = outputfile;
-            if ((ss > suffix.size()) &&
-                outputfile.find(suffix) == ss - suffix.size())
+            if ((ss > suffix.size()) && outputfile.find(suffix) == ss - suffix.size())
             {
                 name = outputfile.substr(0, ss - suffix.size());
             }

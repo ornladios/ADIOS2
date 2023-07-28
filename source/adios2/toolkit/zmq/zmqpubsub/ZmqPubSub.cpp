@@ -41,52 +41,45 @@ void ZmqPubSub::OpenPublisher(const std::string &address)
     m_ZmqContext = zmq_ctx_new();
     if (not m_ZmqContext)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub",
-                                          "OpenPublisher",
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub", "OpenPublisher",
                                           "creating zmq context failed");
     }
 
     m_ZmqSocket = zmq_socket(m_ZmqContext, ZMQ_PUB);
     if (not m_ZmqSocket)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub",
-                                          "OpenPublisher",
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub", "OpenPublisher",
                                           "creating zmq socket failed");
     }
 
     int error = zmq_bind(m_ZmqSocket, address.c_str());
     if (error)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub",
-                                          "OpenPublisher",
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub", "OpenPublisher",
                                           "binding zmq socket failed");
     }
 }
 
-void ZmqPubSub::OpenSubscriber(const std::string &address,
-                               const size_t bufferSize)
+void ZmqPubSub::OpenSubscriber(const std::string &address, const size_t bufferSize)
 {
     m_ZmqContext = zmq_ctx_new();
     if (not m_ZmqContext)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub",
-                                          "OpenSubscriber",
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub", "OpenSubscriber",
                                           "creating zmq context failed");
     }
 
     m_ZmqSocket = zmq_socket(m_ZmqContext, ZMQ_SUB);
     if (not m_ZmqSocket)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub",
-                                          "OpenSubscriber",
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub", "OpenSubscriber",
                                           "creating zmq socket failed");
     }
 
     int error = zmq_connect(m_ZmqSocket, address.c_str());
     if (error)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub",
-                                          "OpenSubscriber",
+        helper::Throw<std::runtime_error>("Toolkit", "ZmqPubSub", "OpenSubscriber",
                                           "connecting zmq socket failed");
     }
 
@@ -105,8 +98,7 @@ void ZmqPubSub::Send(std::shared_ptr<std::vector<char>> buffer)
 
 std::shared_ptr<std::vector<char>> ZmqPubSub::Receive()
 {
-    int ret = zmq_recv(m_ZmqSocket, m_ReceiverBuffer.data(),
-                       m_ReceiverBuffer.size(), ZMQ_DONTWAIT);
+    int ret = zmq_recv(m_ZmqSocket, m_ReceiverBuffer.data(), m_ReceiverBuffer.size(), ZMQ_DONTWAIT);
     if (ret > 0)
     {
         auto buff = std::make_shared<std::vector<char>>(ret);

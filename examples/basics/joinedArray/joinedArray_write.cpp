@@ -80,8 +80,8 @@ int main(int argc, char *argv[])
          * Starting offset can be an empty vector
          * Only one global dimension can be joined
          */
-        adios2::Variable<double> varTable = io.DefineVariable<double>(
-            "table", {adios2::JoinedDim, Ncols}, {}, {Nrows, Ncols});
+        adios2::Variable<double> varTable =
+            io.DefineVariable<double>("table", {adios2::JoinedDim, Ncols}, {}, {Nrows, Ncols});
 
         // adios2::Operator op = adios.DefineOperator("blosc", "blosc");
         // varTable.AddOperation(op, {{"clevel", std::to_string(1)}});
@@ -98,8 +98,8 @@ int main(int argc, char *argv[])
             {
                 for (unsigned int col = 0; col < Ncols; col++)
                 {
-                    mytable[row * Ncols + col] = static_cast<double>(
-                        step * 10.0 + rank * 1.0 + row * 0.1 + col * 0.01);
+                    mytable[row * Ncols + col] =
+                        static_cast<double>(step * 10.0 + rank * 1.0 + row * 0.1 + col * 0.01);
                 }
             }
 

@@ -237,10 +237,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         ASSERT_EQ(var_time.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_time.Shape()[0], writerSize);
 
-        long unsigned int myStart =
-            (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
-        long unsigned int myLength =
-            (long unsigned int)((writerSize * Nx + mpiSize - 1) / mpiSize);
+        long unsigned int myStart = (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
+        long unsigned int myLength = (long unsigned int)((writerSize * Nx + mpiSize - 1) / mpiSize);
 
         if (myStart + myLength > writerSize * Nx)
         {
@@ -312,8 +310,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         int result = validateCommonTestData(myStart, myLength, t, !var_c32);
         if (result != 0)
         {
-            std::cout << "Read Data Validation failed on node " << mpiRank
-                      << " timestep " << t << std::endl;
+            std::cout << "Read Data Validation failed on node " << mpiRank << " timestep " << t
+                      << std::endl;
         }
         EXPECT_EQ(result, 0);
         write_times.push_back(write_time);
@@ -322,19 +320,17 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     if (!mpiRank)
     {
-        std::cout << "Reader Open took " << std::fixed << std::setprecision(9)
-                  << timeOpen.count() << " seconds" << std::endl;
+        std::cout << "Reader Open took " << std::fixed << std::setprecision(9) << timeOpen.count()
+                  << " seconds" << std::endl;
         for (size_t i = 0; i < begin_times.size(); ++i)
         {
-            std::cout << "Reader BeginStep t = " << i
-                      << " had status = " << begin_statuses[i] << " after "
-                      << std::fixed << std::setprecision(9)
-                      << begin_times[i].count() << " seconds" << std::endl;
+            std::cout << "Reader BeginStep t = " << i << " had status = " << begin_statuses[i]
+                      << " after " << std::fixed << std::setprecision(9) << begin_times[i].count()
+                      << " seconds" << std::endl;
         }
     }
 
-    if ((write_times.size() > 1) &&
-        ((write_times.back() - write_times.front()) > 1))
+    if ((write_times.size() > 1) && ((write_times.back() - write_times.front()) > 1))
     {
         TimeGapDetected++;
     }
@@ -368,9 +364,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

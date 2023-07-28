@@ -24,15 +24,15 @@ namespace engine
 {
 
 template <class T>
-void SstReader::ReadVariableBlocksRequests(
-    Variable<T> &variable, std::vector<void *> &sstReadHandlers,
-    std::vector<std::vector<char>> &buffers)
+void SstReader::ReadVariableBlocksRequests(Variable<T> &variable,
+                                           std::vector<void *> &sstReadHandlers,
+                                           std::vector<std::vector<char>> &buffers)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
-    const bool endianReverse = helper::IsLittleEndian() !=
-                               m_BP3Deserializer->m_Minifooter.IsLittleEndian;
+    const bool endianReverse =
+        helper::IsLittleEndian() != m_BP3Deserializer->m_Minifooter.IsLittleEndian;
 #else
     constexpr bool endianReverse = false;
 #endif
@@ -43,8 +43,7 @@ void SstReader::ReadVariableBlocksRequests(
         T *originalBlockData = blockInfo.Data;
         for (const auto &stepPair : blockInfo.StepBlockSubStreamsInfo)
         {
-            const std::vector<helper::SubStreamBoxInfo> &subStreamsInfo =
-                stepPair.second;
+            const std::vector<helper::SubStreamBoxInfo> &subStreamsInfo = stepPair.second;
             for (const helper::SubStreamBoxInfo &subStreamInfo : subStreamsInfo)
             {
                 const size_t rank = subStreamInfo.SubStreamID;
@@ -60,16 +59,14 @@ void SstReader::ReadVariableBlocksRequests(
                     char *buffer = nullptr;
                     size_t payloadSize = 0, payloadStart = 0;
 
-                    m_BP3Deserializer->PreDataRead(
-                        variable, blockInfo, subStreamInfo, buffer, payloadSize,
-                        payloadStart, threadID);
+                    m_BP3Deserializer->PreDataRead(variable, blockInfo, subStreamInfo, buffer,
+                                                   payloadSize, payloadStart, threadID);
 
                     std::stringstream ss;
                     ss << "SST Bytes Read from remote rank " << rank;
                     PERFSTUBS_SAMPLE_COUNTER(ss.str().c_str(), payloadSize);
-                    auto ret = SstReadRemoteMemory(m_Input, rank, CurrentStep(),
-                                                   payloadStart, payloadSize,
-                                                   buffer, dp_info);
+                    auto ret = SstReadRemoteMemory(m_Input, rank, CurrentStep(), payloadStart,
+                                                   payloadSize, buffer, dp_info);
                     sstReadHandlers.push_back(ret);
                 }
                 // if remote data buffer is not compressed
@@ -82,20 +79,17 @@ void SstReader::ReadVariableBlocksRequests(
                     // if both input and output are contiguous memory then
                     // directly issue SstRead and put data in place
                     if (helper::IsIntersectionContiguousSubarray(
-                            subStreamInfo.BlockBox,
-                            subStreamInfo.IntersectionBox,
+                            subStreamInfo.BlockBox, subStreamInfo.IntersectionBox,
                             m_BP3Deserializer->m_IsRowMajor, dummy) &&
                         helper::IsIntersectionContiguousSubarray(
-                            helper::StartEndBox(
-                                blockInfo.Start, blockInfo.Count,
-                                m_BP3Deserializer->m_ReverseDimensions),
-                            subStreamInfo.IntersectionBox,
-                            m_BP3Deserializer->m_IsRowMajor, elementOffset))
+                            helper::StartEndBox(blockInfo.Start, blockInfo.Count,
+                                                m_BP3Deserializer->m_ReverseDimensions),
+                            subStreamInfo.IntersectionBox, m_BP3Deserializer->m_IsRowMajor,
+                            elementOffset))
                     {
-                        auto ret = SstReadRemoteMemory(
-                            m_Input, rank, CurrentStep(), writerBlockStart,
-                            writerBlockSize, blockInfo.Data + elementOffset,
-                            dp_info);
+                        auto ret = SstReadRemoteMemory(m_Input, rank, CurrentStep(),
+                                                       writerBlockStart, writerBlockSize,
+                                                       blockInfo.Data + elementOffset, dp_info);
                         sstReadHandlers.push_back(ret);
                     }
                     // if either input or output is not contiguous memory then
@@ -105,9 +99,9 @@ void SstReader::ReadVariableBlocksRequests(
                         // batch all read requests
                         buffers.emplace_back();
                         buffers.back().resize(writerBlockSize);
-                        auto ret = SstReadRemoteMemory(
-                            m_Input, rank, CurrentStep(), writerBlockStart,
-                            writerBlockSize, buffers.back().data(), dp_info);
+                        auto ret =
+                            SstReadRemoteMemory(m_Input, rank, CurrentStep(), writerBlockStart,
+                                                writerBlockSize, buffers.back().data(), dp_info);
                         sstReadHandlers.push_back(ret);
                     }
                 }
@@ -123,14 +117,13 @@ void SstReader::ReadVariableBlocksRequests(
 
 template <class T>
 void SstReader::ReadVariableBlocksFill(Variable<T> &variable,
-                                       std::vector<std::vector<char>> &buffers,
-                                       size_t &iter)
+                                       std::vector<std::vector<char>> &buffers, size_t &iter)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
-    const bool endianReverse = helper::IsLittleEndian() !=
-                               m_BP3Deserializer->m_Minifooter.IsLittleEndian;
+    const bool endianReverse =
+        helper::IsLittleEndian() != m_BP3Deserializer->m_Minifooter.IsLittleEndian;
 #else
     constexpr bool endianReverse = false;
 #endif
@@ -142,8 +135,7 @@ void SstReader::ReadVariableBlocksFill(Variable<T> &variable,
         T *originalBlockData = blockInfo.Data;
         for (const auto &stepPair : blockInfo.StepBlockSubStreamsInfo)
         {
-            const std::vector<helper::SubStreamBoxInfo> &subStreamsInfo =
-                stepPair.second;
+            const std::vector<helper::SubStreamBoxInfo> &subStreamsInfo = stepPair.second;
             for (const helper::SubStreamBoxInfo &subStreamInfo : subStreamsInfo)
             {
                 // if remote data buffer is compressed
@@ -170,10 +162,9 @@ void SstReader::ReadVariableBlocksFill(Variable<T> &variable,
                     //    subStreamInfo.BlockBox,
                     //    subStreamInfo.IntersectionBox);
 
-                    m_BP3Deserializer->PostDataRead(
-                        variable, blockInfo, subStreamInfo,
-                        (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor),
-                        threadID);
+                    m_BP3Deserializer->PostDataRead(variable, blockInfo, subStreamInfo,
+                                                    (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor),
+                                                    threadID);
                     ++iter;
                 }
                 // if remote data buffer is not compressed
@@ -183,21 +174,18 @@ void SstReader::ReadVariableBlocksFill(Variable<T> &variable,
                     // if both input and output are contiguous memory then
                     // directly issue SstRead and put data in place
                     if (helper::IsIntersectionContiguousSubarray(
-                            subStreamInfo.BlockBox,
-                            subStreamInfo.IntersectionBox,
+                            subStreamInfo.BlockBox, subStreamInfo.IntersectionBox,
                             m_BP3Deserializer->m_IsRowMajor, dummy) == false ||
                         helper::IsIntersectionContiguousSubarray(
-                            helper::StartEndBox(
-                                blockInfo.Start, blockInfo.Count,
-                                m_BP3Deserializer->m_ReverseDimensions),
-                            subStreamInfo.IntersectionBox,
-                            m_BP3Deserializer->m_IsRowMajor, dummy) == false)
+                            helper::StartEndBox(blockInfo.Start, blockInfo.Count,
+                                                m_BP3Deserializer->m_ReverseDimensions),
+                            subStreamInfo.IntersectionBox, m_BP3Deserializer->m_IsRowMajor,
+                            dummy) == false)
                     {
                         size_t blockID = 0;
                         m_BP3Deserializer->ClipContiguousMemory<T>(
                             variable.m_BlocksInfo.at(blockID), buffers[iter],
-                            subStreamInfo.BlockBox,
-                            subStreamInfo.IntersectionBox);
+                            subStreamInfo.BlockBox, subStreamInfo.IntersectionBox);
                         ++iter;
                     }
                 }

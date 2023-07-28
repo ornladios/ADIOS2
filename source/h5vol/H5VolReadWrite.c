@@ -34,14 +34,14 @@ static adios2_adios *m_ADIOS2 = NULL;
 // static adios2_io *m_IO = NULL;
 static int m_MPIRank = 0;
 
-#define RANK_ZERO_MSG(...)                                                     \
-    {                                                                          \
-        if (0 == m_MPIRank)                                                    \
-        {                                                                      \
-            fprintf(stderr, "## VOL info:");                                   \
-            fprintf(stderr, __VA_ARGS__);                                      \
-            fflush(stderr);                                                    \
-        }                                                                      \
+#define RANK_ZERO_MSG(...)                                                                         \
+    {                                                                                              \
+        if (0 == m_MPIRank)                                                                        \
+        {                                                                                          \
+            fprintf(stderr, "## VOL info:");                                                       \
+            fprintf(stderr, __VA_ARGS__);                                                          \
+            fflush(stderr);                                                                        \
+        }                                                                                          \
     }
 
 void gGenerateFullPath(char *fullPath, const char *parentPath, const char *name)
@@ -49,8 +49,7 @@ void gGenerateFullPath(char *fullPath, const char *parentPath, const char *name)
     size_t ps = strlen(parentPath);
     size_t ns = strlen(name);
     size_t length = ps;
-    bool startsWithDotSlash =
-        ((ns > 1) && ('/' == name[1]) && ('.' == name[0]));
+    bool startsWithDotSlash = ((ns > 1) && ('/' == name[1]) && ('.' == name[0]));
 
     if ('/' == parentPath[ps - 1])
     {
@@ -218,8 +217,7 @@ void loadPath(H5VL_ObjDef_t *result, const char *name, H5VL_ObjDef_t *parent)
 
 H5VL_ObjDef_t *initVolObj(H5VL_ObjDef_t *parent)
 {
-    H5VL_ObjDef_t *result =
-        (H5VL_ObjDef_t *)SAFE_CALLOC(1, sizeof(H5VL_ObjDef_t));
+    H5VL_ObjDef_t *result = (H5VL_ObjDef_t *)SAFE_CALLOC(1, sizeof(H5VL_ObjDef_t));
     result->m_Parent = parent;
 
     result->m_ObjPtr = NULL;
@@ -386,12 +384,10 @@ bool gRemoveUnderGrp(H5VL_ObjDef_t *owner, const char *obj_name)
 
     if (ROOT == owner->m_ObjType)
     {
-        if (adios2_error_none ==
-            adios2_remove_attribute(&result, owner->m_FileIO, obj_name))
+        if (adios2_error_none == adios2_remove_attribute(&result, owner->m_FileIO, obj_name))
             if (adios2_true == result)
                 return true;
-        if (adios2_error_none ==
-            adios2_remove_variable(&result, owner->m_FileIO, obj_name))
+        if (adios2_error_none == adios2_remove_variable(&result, owner->m_FileIO, obj_name))
             if (adios2_true == result)
                 return true;
         return false;
@@ -404,12 +400,10 @@ bool gRemoveUnderGrp(H5VL_ObjDef_t *owner, const char *obj_name)
     gGenerateFullPath(fullPath, owner->m_Path, obj_name);
     // sprintf(fullPath, "%s/%s", owner->m_Path, obj_name);
 
-    if (adios2_error_none ==
-        adios2_remove_attribute(&result, owner->m_FileIO, fullPath))
+    if (adios2_error_none == adios2_remove_attribute(&result, owner->m_FileIO, fullPath))
         if (adios2_true == result)
             return true;
-    if (adios2_error_none ==
-        adios2_remove_variable(&result, owner->m_FileIO, fullPath))
+    if (adios2_error_none == adios2_remove_variable(&result, owner->m_FileIO, fullPath))
         if (adios2_true == result)
             return true;
 
@@ -475,9 +469,7 @@ H5VL_ObjDef_t *gGetVarObjDef(const char *name, H5VL_ObjDef_t *vol)
         {
             if (name[strlen(name) - 1] != '/')
             {
-                SHOW_ERROR_MSG(
-                    "H5VL_ADIOS2: Error: No such variable: %s in file\n ",
-                    name);
+                SHOW_ERROR_MSG("H5VL_ADIOS2: Error: No such variable: %s in file\n ", name);
                 return NULL;
             }
 
@@ -491,8 +483,7 @@ H5VL_ObjDef_t *gGetVarObjDef(const char *name, H5VL_ObjDef_t *vol)
                 return NULL;
             }
         }
-        H5VL_VarDef_t *varDef =
-            gCreateVarDef(name, handle->m_Engine, var, -1, -1);
+        H5VL_VarDef_t *varDef = gCreateVarDef(name, handle->m_Engine, var, -1, -1);
         return gVarToVolObj(varDef, vol);
     }
 
@@ -507,8 +498,7 @@ H5VL_ObjDef_t *gGetVarObjDef(const char *name, H5VL_ObjDef_t *vol)
     adios2_variable *var = gADIOS2InqVar(vol->m_FileIO, fullPath);
     if (NULL == var)
     {
-        SHOW_ERROR_MSG("H5VL_ADIOS2: Error: No such variable:: %s in file\n ",
-                       fullPath);
+        SHOW_ERROR_MSG("H5VL_ADIOS2: Error: No such variable:: %s in file\n ", fullPath);
         return NULL;
     }
 
@@ -518,8 +508,7 @@ H5VL_ObjDef_t *gGetVarObjDef(const char *name, H5VL_ObjDef_t *vol)
         if (curr->m_Parent == NULL)
         {
             H5VL_VarDef_t *varDef = gCreateVarDef(
-                fullPath, ((H5VL_FileDef_t *)(curr->m_ObjPtr))->m_Engine, var,
-                -1, -1);
+                fullPath, ((H5VL_FileDef_t *)(curr->m_ObjPtr))->m_Engine, var, -1, -1);
 
             return gVarToVolObj(varDef, vol);
         }
@@ -534,8 +523,7 @@ H5VL_ObjDef_t *gGetVarObjDef(const char *name, H5VL_ObjDef_t *vol)
 
 H5VL_AttrDef_t *gCreateAttrDef(const char *name, hid_t type_id, hid_t space_id)
 {
-    H5VL_AttrDef_t *attrDef =
-        (H5VL_AttrDef_t *)SAFE_CALLOC(1, sizeof(H5VL_AttrDef_t));
+    H5VL_AttrDef_t *attrDef = (H5VL_AttrDef_t *)SAFE_CALLOC(1, sizeof(H5VL_AttrDef_t));
     attrDef->m_Attribute = NULL;
     attrDef->m_Size = 0;
 
@@ -555,17 +543,15 @@ H5VL_AttrDef_t *gCreateAttrDef(const char *name, hid_t type_id, hid_t space_id)
     return attrDef;
 }
 
-H5VL_VarDef_t *gCreateVarDef(const char *name, adios2_engine *engine,
-                             adios2_variable *var, hid_t space_id,
-                             hid_t type_id)
+H5VL_VarDef_t *gCreateVarDef(const char *name, adios2_engine *engine, adios2_variable *var,
+                             hid_t space_id, hid_t type_id)
 {
     if ((-1 == type_id) && (NULL == var))
     {
         printf("UNABLE to create var with unknown var _and_ unknown type");
         return NULL;
     }
-    H5VL_VarDef_t *varDef =
-        (H5VL_VarDef_t *)SAFE_CALLOC(1, sizeof(H5VL_VarDef_t));
+    H5VL_VarDef_t *varDef = (H5VL_VarDef_t *)SAFE_CALLOC(1, sizeof(H5VL_VarDef_t));
     varDef->m_Name = (char *)SAFE_CALLOC(strlen(name) + 1, sizeof(char));
     sprintf(varDef->m_Name, "%s", name);
 
@@ -626,8 +612,7 @@ H5VL_VarDef_t *gCreateVarDef(const char *name, adios2_engine *engine,
 
 H5VL_GroupDef_t *gCreateGroupDef(const char *name)
 {
-    H5VL_GroupDef_t *grp =
-        (H5VL_GroupDef_t *)SAFE_CALLOC(1, sizeof(H5VL_GroupDef_t));
+    H5VL_GroupDef_t *grp = (H5VL_GroupDef_t *)SAFE_CALLOC(1, sizeof(H5VL_GroupDef_t));
 
     grp->m_Name = (char *)SAFE_CALLOC(strlen(name) + 1, sizeof(char));
     sprintf(grp->m_Name, "%s", name);
@@ -641,8 +626,7 @@ size_t gGetBranchNameLength(H5VL_ObjDef_t *vol, size_t namelen)
         if ('/' == (vol->m_Path)[strlen(vol->m_Path) - 1])
             return namelen - strlen(vol->m_Path); // minus parent path
         else
-            return namelen - strlen(vol->m_Path) -
-                   1; // minus parent path & seperator
+            return namelen - strlen(vol->m_Path) - 1; // minus parent path & seperator
     else
         return namelen;
 }
@@ -653,11 +637,9 @@ void gGetBranchName(H5VL_ObjDef_t *vol, const char *fullPath, char *name)
 
     if ('/' == (vol->m_Path)[strlen(vol->m_Path) - 1])
         // minus parent path & seperator
-        strncpy(name, fullPath + strlen(vol->m_Path),
-                namelen - strlen(vol->m_Path));
+        strncpy(name, fullPath + strlen(vol->m_Path), namelen - strlen(vol->m_Path));
     else
-        strncpy(name, fullPath + strlen(vol->m_Path) + 1,
-                namelen - strlen(vol->m_Path) - 1);
+        strncpy(name, fullPath + strlen(vol->m_Path) + 1, namelen - strlen(vol->m_Path) - 1);
 }
 
 //
@@ -759,8 +741,7 @@ void gLoadContent(H5VL_ObjDef_t *obj)
         if ((ROOT == obj->m_ObjType) || (GROUP == obj->m_ObjType))
         {
             adios2_variable **adios_vars;
-            adios2_inquire_group_variables(&adios_vars, obj->m_Path, &nvars,
-                                           obj->m_FileIO);
+            adios2_inquire_group_variables(&adios_vars, obj->m_Path, &nvars, obj->m_FileIO);
 
             obj->m_NumVars = nvars;
             if (nvars > 0)
@@ -772,8 +753,7 @@ void gLoadContent(H5VL_ObjDef_t *obj)
         if (ATTR != obj->m_ObjType)
         {
             adios2_attribute **adios_attrs;
-            adios2_inquire_group_attributes(&adios_attrs, obj->m_Path, &nattrs,
-                                            obj->m_FileIO);
+            adios2_inquire_group_attributes(&adios_attrs, obj->m_Path, &nattrs, obj->m_FileIO);
 
             obj->m_NumAttrs = nattrs;
             if (nattrs > 0)
@@ -792,8 +772,8 @@ void gLoadSubGroups(H5VL_ObjDef_t *obj)
         if (obj->m_NumSubGroups > 0)
             return;
 
-        adios2_inquire_subgroups(&(obj->m_SubGroupNames), obj->m_Path,
-                                 &(obj->m_NumSubGroups), obj->m_FileIO);
+        adios2_inquire_subgroups(&(obj->m_SubGroupNames), obj->m_Path, &(obj->m_NumSubGroups),
+                                 obj->m_FileIO);
         return;
     }
 }
@@ -894,21 +874,17 @@ herr_t gADIOS2ReadVar(H5VL_VarDef_t *varDef)
     if (varDim > 0)
     {
         size_t start[varDim], count[varDim];
-        if (H5VL_CODE_FAIL == gUtilADIOS2GetBlockInfo(varDef->m_HyperSlabID,
-                                                      start, count, varDim))
+        if (H5VL_CODE_FAIL == gUtilADIOS2GetBlockInfo(varDef->m_HyperSlabID, start, count, varDim))
             return -1;
 
-        adios2_set_selection(varDef->m_Variable, varDef->m_DimCount, start,
-                             count);
+        adios2_set_selection(varDef->m_Variable, varDef->m_DimCount, start, count);
 
         if (varDef->m_MemSpaceID > 0)
         {
-            RANK_ZERO_MSG(
-                "\n## No memory space is supported for reading in ADIOS...\n");
+            RANK_ZERO_MSG("\n## No memory space is supported for reading in ADIOS...\n");
         }
     }
-    adios2_get(varDef->m_Engine, varDef->m_Variable, varDef->m_Data,
-               adios2_mode_sync);
+    adios2_get(varDef->m_Engine, varDef->m_Variable, varDef->m_Data, adios2_mode_sync);
 
     return 0;
 }
@@ -926,8 +902,7 @@ adios2_variable *gADIOS2DefineVar(adios2_io *io, H5VL_VarDef_t *varDef)
 
         if (0 == varDim)
         { //  scalar
-            variable = adios2_define_variable(io, varDef->m_Name, varType,
-                                              varDim, NULL, NULL, NULL,
+            variable = adios2_define_variable(io, varDef->m_Name, varType, varDim, NULL, NULL, NULL,
                                               adios2_constant_dims_true);
         }
         else
@@ -937,9 +912,8 @@ adios2_variable *gADIOS2DefineVar(adios2_io *io, H5VL_VarDef_t *varDef)
             size_t shape[varDim];
             gUtilADIOS2GetShape(varDef->m_ShapeID, shape, varDim);
 
-            variable = adios2_define_variable(io, varDef->m_Name, varType,
-                                              varDim, shape, NULL, NULL,
-                                              adios2_constant_dims_false);
+            variable = adios2_define_variable(io, varDef->m_Name, varType, varDim, shape, NULL,
+                                              NULL, adios2_constant_dims_false);
         }
     }
 
@@ -958,9 +932,8 @@ adios2_variable *gADIOS2CreateVar(adios2_io *io, H5VL_VarDef_t *varDef)
         adios2_type varType = gUtilADIOS2Type(varDef->m_TypeID);
         if (adios2_type_unknown == varType)
         {
-            SHOW_ERROR_MSG(
-                "... ERROR! Unsupported type. Cannot identify var type.  %s\n",
-                varDef->m_Name);
+            SHOW_ERROR_MSG("... ERROR! Unsupported type. Cannot identify var type.  %s\n",
+                           varDef->m_Name);
             return NULL;
         }
 
@@ -968,8 +941,7 @@ adios2_variable *gADIOS2CreateVar(adios2_io *io, H5VL_VarDef_t *varDef)
 
         if (0 == varDim)
         { //  scalar
-            variable = adios2_define_variable(io, varDef->m_Name, varType,
-                                              varDim, NULL, NULL, NULL,
+            variable = adios2_define_variable(io, varDef->m_Name, varType, varDim, NULL, NULL, NULL,
                                               adios2_constant_dims_true);
         }
         else
@@ -980,13 +952,12 @@ adios2_variable *gADIOS2CreateVar(adios2_io *io, H5VL_VarDef_t *varDef)
             gUtilADIOS2GetShape(varDef->m_ShapeID, shape, varDim);
 
             size_t start[varDim], count[varDim];
-            if (H5VL_CODE_FAIL == gUtilADIOS2GetBlockInfo(varDef->m_HyperSlabID,
-                                                          start, count, varDim))
+            if (H5VL_CODE_FAIL ==
+                gUtilADIOS2GetBlockInfo(varDef->m_HyperSlabID, start, count, varDim))
                 return NULL;
 
-            variable = adios2_define_variable(io, varDef->m_Name, varType,
-                                              varDim, shape, start, count,
-                                              adios2_constant_dims_true);
+            variable = adios2_define_variable(io, varDef->m_Name, varType, varDim, shape, start,
+                                              count, adios2_constant_dims_true);
         }
     }
 
@@ -996,34 +967,29 @@ adios2_variable *gADIOS2CreateVar(adios2_io *io, H5VL_VarDef_t *varDef)
         if (varDim > 0)
         {
             size_t start[varDim], count[varDim];
-            if (H5VL_CODE_FAIL == gUtilADIOS2GetBlockInfo(varDef->m_HyperSlabID,
-                                                          start, count, varDim))
+            if (H5VL_CODE_FAIL ==
+                gUtilADIOS2GetBlockInfo(varDef->m_HyperSlabID, start, count, varDim))
                 return NULL;
             adios2_set_selection(variable, varDim, start, count);
 
-            if ((varDef->m_MemSpaceID > 0) &&
-                (varDef->m_MemSpaceID != varDef->m_ShapeID))
+            if ((varDef->m_MemSpaceID > 0) && (varDef->m_MemSpaceID != varDef->m_ShapeID))
             {
-                RANK_ZERO_MSG(
-                    "\n## No support of memory space for writing in ADIOS.\n");
+                RANK_ZERO_MSG("\n## No support of memory space for writing in ADIOS.\n");
             }
         }
-        adios2_put(varDef->m_Engine, variable, varDef->m_Data,
-                   adios2_mode_sync);
+        adios2_put(varDef->m_Engine, variable, varDef->m_Data, adios2_mode_sync);
     }
 
     return variable;
 }
 
-adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input,
-                                    const char *fullPath)
+adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input, const char *fullPath)
 {
     adios2_type attrType = gUtilADIOS2Type(input->m_TypeID);
 
     if (adios2_type_unknown == attrType)
     {
-        SHOW_ERROR_MSG("... ERROR Unsupported type. Cannot create attr %s\n",
-                       fullPath);
+        SHOW_ERROR_MSG("... ERROR Unsupported type. Cannot create attr %s\n", fullPath);
         return NULL;
     }
 
@@ -1065,8 +1031,8 @@ adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input,
                    input->m_Name, isVariableSize, strSize);
             */
             if (isVariableSize)
-                return adios2_define_attribute_array(io, fullPath, attrType,
-                                                     (input->m_Data), shape[0]);
+                return adios2_define_attribute_array(io, fullPath, attrType, (input->m_Data),
+                                                     shape[0]);
             else
             {
                 int i;
@@ -1075,14 +1041,13 @@ adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input,
                 for (i = 0; i < shape[0]; i++)
                 {
                     arrayOfStr[i] = malloc(sizeof(char) * strSize + 1);
-                    strncpy(arrayOfStr[i],
-                            (char *)(input->m_Data) + strSize * i, strSize);
+                    strncpy(arrayOfStr[i], (char *)(input->m_Data) + strSize * i, strSize);
                     arrayOfStr[i][strSize] = '\0';
 
                     // printf(".... output attr: %d, [%s]", i, arrayOfStr[i]);
                 }
-                adios2_attribute *result = adios2_define_attribute_array(
-                    io, fullPath, attrType, arrayOfStr, shape[0]);
+                adios2_attribute *result =
+                    adios2_define_attribute_array(io, fullPath, attrType, arrayOfStr, shape[0]);
                 for (i = 0; i < shape[0]; i++)
                     free(arrayOfStr[i]);
                 return result;
@@ -1091,8 +1056,7 @@ adios2_attribute *gADIOS2CreateAttr(adios2_io *io, H5VL_AttrDef_t *input,
         else
             // return adios2_define_attribute_array(io, fullPath, attrType,
             // &(input->m_Data), shape[0]);
-            return adios2_define_attribute_array(io, fullPath, attrType,
-                                                 (input->m_Data), shape[0]);
+            return adios2_define_attribute_array(io, fullPath, attrType, (input->m_Data), shape[0]);
     }
 }
 
@@ -1116,8 +1080,7 @@ hid_t H5VL_adios_register(void)
         H5VL_ADIOS_g = H5VLregister_connector(&H5VL_adios2_def, H5P_DEFAULT);
         if (H5VL_ADIOS_g <= 0)
         {
-            SHOW_ERROR_MSG(
-                "  [ECP ADIOS VOL ERROR] with H5VLregister_connector\n");
+            SHOW_ERROR_MSG("  [ECP ADIOS VOL ERROR] with H5VLregister_connector\n");
             return -1;
         }
     }

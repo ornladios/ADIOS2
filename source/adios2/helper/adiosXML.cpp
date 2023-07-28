@@ -30,23 +30,19 @@ namespace adios2
 namespace helper
 {
 
-void ParseConfigXML(
-    core::ADIOS &adios, const std::string &configFileXML,
-    std::map<std::string, core::IO> &ios,
-    std::unordered_map<std::string, std::pair<std::string, Params>> &operators)
+void ParseConfigXML(core::ADIOS &adios, const std::string &configFileXML,
+                    std::map<std::string, core::IO> &ios,
+                    std::unordered_map<std::string, std::pair<std::string, Params>> &operators)
 {
-    const std::string hint("for config file " + configFileXML +
-                           " in call to ADIOS constructor");
+    const std::string hint("for config file " + configFileXML + " in call to ADIOS constructor");
 
     auto lf_FileContents = [&](const std::string &configXML) -> std::string {
         const std::string fileContents(adios.GetComm().BroadcastFile(
-            configXML,
-            "when parsing configXML file, in call to the ADIOS constructor"));
+            configXML, "when parsing configXML file, in call to the ADIOS constructor"));
 
         if (fileContents.empty())
         {
-            helper::Throw<std::invalid_argument>("Helper", "AdiosXML",
-                                                 "ParseConfigXML",
+            helper::Throw<std::invalid_argument>("Helper", "AdiosXML", "ParseConfigXML",
                                                  "empty config xml file");
         }
         return fileContents;
@@ -60,8 +56,8 @@ void ParseConfigXML(
             helper::XMLAttribute("type", operatorNode, hint);
 
         std::string typeLowerCase = std::string(type->value());
-        std::transform(typeLowerCase.begin(), typeLowerCase.end(),
-                       typeLowerCase.begin(), ::tolower);
+        std::transform(typeLowerCase.begin(), typeLowerCase.end(), typeLowerCase.begin(),
+                       ::tolower);
 
         const Params parameters = helper::XMLGetParameters(operatorNode, hint);
 
@@ -69,8 +65,7 @@ void ParseConfigXML(
     };
 
     // node is the variable node
-    auto lf_IOVariableXML = [&](const pugi::xml_node &node,
-                                core::IO &currentIO) {
+    auto lf_IOVariableXML = [&](const pugi::xml_node &node, core::IO &currentIO) {
         const std::string variableName =
             std::string(helper::XMLAttribute("name", node, hint)->value());
 
@@ -86,8 +81,8 @@ void ParseConfigXML(
             {
                 helper::Throw<std::invalid_argument>(
                     "Helper", "AdiosXML", "ParseConfigXML",
-                    "operator (" + std::string(opName->value()) +
-                        ") and type (" + std::string(opType->value()) +
+                    "operator (" + std::string(opName->value()) + ") and type (" +
+                        std::string(opType->value()) +
                         ") attributes can't coexist in <operation> element "
                         "inside <variable name=\"" +
                         variableName + "\"> element");
@@ -115,8 +110,8 @@ void ParseConfigXML(
                     helper::Throw<std::invalid_argument>(
                         "Helper", "AdiosXML", "ParseConfigXML",
                         "operator " + std::string(opName->value()) +
-                            " not previously defined, from variable " +
-                            variableName + " inside io " + currentIO.m_Name);
+                            " not previously defined, from variable " + variableName +
+                            " inside io " + currentIO.m_Name);
                 }
                 type = itOperator->second.first;
                 params = itOperator->second.second;
@@ -132,20 +127,17 @@ void ParseConfigXML(
                 params[p.first] = p.second;
             }
 
-            currentIO.m_VarOpsPlaceholder[variableName].push_back(
-                {type, params});
+            currentIO.m_VarOpsPlaceholder[variableName].push_back({type, params});
         }
     };
 
     auto lf_IOXML = [&](const pugi::xml_node &io) {
-        const std::unique_ptr<pugi::xml_attribute> ioName =
-            helper::XMLAttribute("name", io, hint);
+        const std::unique_ptr<pugi::xml_attribute> ioName = helper::XMLAttribute("name", io, hint);
 
         // Build the IO object
-        auto itCurrentIO = ios.emplace(
-            std::piecewise_construct, std::forward_as_tuple(ioName->value()),
-            std::forward_as_tuple(adios, ioName->value(), true,
-                                  adios.m_HostLanguage));
+        auto itCurrentIO =
+            ios.emplace(std::piecewise_construct, std::forward_as_tuple(ioName->value()),
+                        std::forward_as_tuple(adios, ioName->value(), true, adios.m_HostLanguage));
         core::IO &currentIO = itCurrentIO.first->second;
 
         // must be unique per io
@@ -179,8 +171,7 @@ void ParseConfigXML(
 
     // BODY OF FUNCTION
     const std::string fileContents = lf_FileContents(configFileXML);
-    const std::unique_ptr<pugi::xml_document> document =
-        helper::XMLDocument(fileContents, hint);
+    const std::unique_ptr<pugi::xml_document> document = helper::XMLDocument(fileContents, hint);
 
     // must be unique
     const std::unique_ptr<pugi::xml_node> config =

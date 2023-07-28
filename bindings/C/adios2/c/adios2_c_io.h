@@ -54,8 +54,7 @@ adios2_error adios2_set_parameters(adios2_io *io, const char *parameters);
  * @param value parameter value
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_set_parameter(adios2_io *io, const char *key,
-                                  const char *value);
+adios2_error adios2_set_parameter(adios2_io *io, const char *key, const char *value);
 
 /**
  * Return IO parameter value string and length without '\0\ character
@@ -70,8 +69,7 @@ adios2_error adios2_set_parameter(adios2_io *io, const char *key,
  * untouched
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_get_parameter(char *value, size_t *size,
-                                  const adios2_io *io, const char *key);
+adios2_error adios2_get_parameter(char *value, size_t *size, const adios2_io *io, const char *key);
 
 /**
  * @brief Clear all parameters.
@@ -90,8 +88,7 @@ adios2_error adios2_clear_parameters(adios2_io *io);
  *             CAN'T use the keywords "Transport" or "transport"
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_add_transport(size_t *transport_index, adios2_io *io,
-                                  const char *type);
+adios2_error adios2_add_transport(size_t *transport_index, adios2_io *io, const char *type);
 
 /**
  * @brief Set a single parameter to an existing transport identified
@@ -103,8 +100,7 @@ adios2_error adios2_add_transport(size_t *transport_index, adios2_io *io,
  * @param value parameter value
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_set_transport_parameter(adios2_io *io,
-                                            const size_t transport_index,
+adios2_error adios2_set_transport_parameter(adios2_io *io, const size_t transport_index,
                                             const char *key, const char *value);
 
 /**
@@ -121,11 +117,10 @@ adios2_error adios2_set_transport_parameter(adios2_io *io,
  * after definition
  * @return success: handler, failure: NULL
  */
-adios2_variable *
-adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
-                       const size_t ndims, const size_t *shape,
-                       const size_t *start, const size_t *count,
-                       const adios2_constant_dims constant_dims);
+adios2_variable *adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
+                                        const size_t ndims, const size_t *shape,
+                                        const size_t *start, const size_t *count,
+                                        const adios2_constant_dims constant_dims);
 
 /**
  * @brief Retrieve a variable handler within current io handler
@@ -144,15 +139,15 @@ adios2_variable *adios2_inquire_variable(adios2_io *io, const char *name);
  * @param io handler to variables io owner
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_inquire_all_variables(adios2_variable ***variables,
-                                          size_t *size, adios2_io *io);
+adios2_error adios2_inquire_all_variables(adios2_variable ***variables, size_t *size,
+                                          adios2_io *io);
 
 /*
  * list all variables under full_group_name
  */
 adios2_error adios2_inquire_group_variables(adios2_variable ***variables,
-                                            const char *full_group_name,
-                                            size_t *size, adios2_io *io);
+                                            const char *full_group_name, size_t *size,
+                                            adios2_io *io);
 
 /**
  * @brief Define an attribute value inside io
@@ -162,8 +157,7 @@ adios2_error adios2_inquire_group_variables(adios2_variable ***variables,
  * @param value attribute single value
  * @return success: handler, failure: NULL
  */
-adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
-                                          const adios2_type type,
+adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name, const adios2_type type,
                                           const void *value);
 
 /**
@@ -176,8 +170,7 @@ adios2_attribute *adios2_define_attribute(adios2_io *io, const char *name,
  * @return success: handler, failure: NULL
  */
 adios2_attribute *adios2_define_attribute_array(adios2_io *io, const char *name,
-                                                const adios2_type type,
-                                                const void *data,
+                                                const adios2_type type, const void *data,
                                                 const size_t size);
 
 /**
@@ -192,9 +185,10 @@ adios2_attribute *adios2_define_attribute_array(adios2_io *io, const char *name,
  * @param separator hierarchy separator (e.g. "/" in variable_name/name )
  * @return success: handler, failure: NULL
  */
-adios2_attribute *adios2_define_variable_attribute(
-    adios2_io *io, const char *name, const adios2_type type, const void *value,
-    const char *variable_name, const char *separator);
+adios2_attribute *adios2_define_variable_attribute(adios2_io *io, const char *name,
+                                                   const adios2_type type, const void *value,
+                                                   const char *variable_name,
+                                                   const char *separator);
 
 /**
  * Define an attribute array associated to an existing variable by its name
@@ -208,9 +202,11 @@ adios2_attribute *adios2_define_variable_attribute(
  * @param separator hierarchy separator (e.g. "/" in variable/attribute )
  * @return success: handler, failure: NULL
  */
-adios2_attribute *adios2_define_variable_attribute_array(
-    adios2_io *io, const char *name, const adios2_type type, const void *data,
-    const size_t size, const char *variable_name, const char *separator);
+adios2_attribute *adios2_define_variable_attribute_array(adios2_io *io, const char *name,
+                                                         const adios2_type type, const void *data,
+                                                         const size_t size,
+                                                         const char *variable_name,
+                                                         const char *separator);
 
 /**
  * Returns a handler to a previously defined attribute by name
@@ -228,8 +224,7 @@ adios2_attribute *adios2_inquire_attribute(adios2_io *io, const char *name);
  * @param separator hierarchy separator (e.g. "/" in variable/attribute )
  * @return found: handler, not found: NULL
  */
-adios2_attribute *adios2_inquire_variable_attribute(adios2_io *io,
-                                                    const char *name,
+adios2_attribute *adios2_inquire_variable_attribute(adios2_io *io, const char *name,
                                                     const char *variable_name,
                                                     const char *separator);
 /**
@@ -241,18 +236,16 @@ adios2_attribute *adios2_inquire_variable_attribute(adios2_io *io,
  * @param io handler to attributes io owner
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes,
-                                           size_t *size, adios2_io *io);
+adios2_error adios2_inquire_all_attributes(adios2_attribute ***attributes, size_t *size,
+                                           adios2_io *io);
 adios2_error adios2_inquire_group_attributes(adios2_attribute ***attributes,
-                                             const char *full_prefix,
-                                             size_t *size, adios2_io *io);
+                                             const char *full_prefix, size_t *size, adios2_io *io);
 
 /**
  * Return a list of list sub group names
  *
  */
-adios2_error adios2_inquire_subgroups(char ***subGroupNames,
-                                      const char *full_prefix, size_t *size,
+adios2_error adios2_inquire_subgroups(char ***subGroupNames, const char *full_prefix, size_t *size,
                                       adios2_io *io);
 
 /**
@@ -264,8 +257,7 @@ adios2_error adios2_inquire_subgroups(char ***subGroupNames,
  * @param name unique variable name within io handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_remove_variable(adios2_bool *result, adios2_io *io,
-                                    const char *name);
+adios2_error adios2_remove_variable(adios2_bool *result, adios2_io *io, const char *name);
 
 /**
  * @brief DANGEROUS! Removes all existing variables in current IO object.
@@ -301,8 +293,7 @@ char **adios2_available_attributes(adios2_io *io, size_t *size);
  * @param name unique attribute name within io handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_remove_attribute(adios2_bool *result, adios2_io *io,
-                                     const char *name);
+adios2_error adios2_remove_attribute(adios2_bool *result, adios2_io *io, const char *name);
 
 /**
  * @brief DANGEROUS! Removes all existing attributes in current IO object.
@@ -322,8 +313,7 @@ adios2_error adios2_remove_all_attributes(adios2_io *io);
  * adios2_mode_readRandomAccess
  * @return success: handler, failure: NULL
  */
-adios2_engine *adios2_open(adios2_io *io, const char *name,
-                           const adios2_mode mode);
+adios2_engine *adios2_open(adios2_io *io, const char *name, const adios2_mode mode);
 
 #if ADIOS2_USE_MPI
 /**
@@ -336,8 +326,8 @@ adios2_engine *adios2_open(adios2_io *io, const char *name,
  * @param comm communicator other than adios' handler comm. MPI only.
  * @return success: handler, failure: NULL
  */
-adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
-                                    const adios2_mode mode, MPI_Comm comm);
+adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name, const adios2_mode mode,
+                                    MPI_Comm comm);
 #endif
 
 /**
@@ -359,8 +349,7 @@ adios2_error adios2_flush_all_engines(adios2_io *io);
  * @param io handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_engine_type(char *engine_type, size_t *size,
-                                const adios2_io *io);
+adios2_error adios2_engine_type(char *engine_type, size_t *size, const adios2_io *io);
 
 adios2_engine *adios2_get_engine(adios2_io *io, const char *name);
 

@@ -24,10 +24,7 @@
 Command::Command(Operation operation) : op(operation) {}
 Command::~Command() {}
 
-CommandSleep::CommandSleep(size_t time)
-: Command(Operation::Sleep), sleepTime_us(time)
-{
-}
+CommandSleep::CommandSleep(size_t time) : Command(Operation::Sleep), sleepTime_us(time) {}
 CommandSleep::~CommandSleep() {}
 
 CommandBusy::CommandBusy(size_t cycles, size_t time)
@@ -42,10 +39,9 @@ CommandWrite::CommandWrite(std::string stream, std::string group)
 }
 CommandWrite::~CommandWrite() {}
 
-CommandRead::CommandRead(std::string stream, std::string group,
-                         const float timeoutSec)
-: Command(Operation::Read), stepMode(adios2::StepMode::Read),
-  streamName(stream), groupName(group), timeout_sec(timeoutSec)
+CommandRead::CommandRead(std::string stream, std::string group, const float timeoutSec)
+: Command(Operation::Read), stepMode(adios2::StepMode::Read), streamName(stream), groupName(group),
+  timeout_sec(timeoutSec)
 {
 }
 CommandRead::~CommandRead() {}
@@ -64,8 +60,8 @@ std::vector<std::string> LineToWords(const std::string &line)
 {
     std::vector<std::string> tokens;
     std::istringstream iss(line);
-    std::copy(std::istream_iterator<std::string>(iss),
-              std::istream_iterator<std::string>(), back_inserter(tokens));
+    std::copy(std::istream_iterator<std::string>(iss), std::istream_iterator<std::string>(),
+              back_inserter(tokens));
     return tokens;
 }
 
@@ -79,15 +75,13 @@ bool isComment(std::string &s)
     return comment;
 }
 
-size_t stringToSizet(std::vector<std::string> &words, size_t pos,
-                     std::string lineID)
+size_t stringToSizet(std::vector<std::string> &words, size_t pos, std::string lineID)
 {
     if (words.size() < pos + 1)
     {
         adios2::helper::Throw<std::invalid_argument>(
             "Utils::adios_iotest", "processConfig", "stringToSizet",
-            "Line for " + lineID +
-                " is invalid. Missing value at word position " +
+            "Line for " + lineID + " is invalid. Missing value at word position " +
                 std::to_string(pos + 1));
     }
 
@@ -103,15 +97,13 @@ size_t stringToSizet(std::vector<std::string> &words, size_t pos,
     return n;
 }
 
-double stringToDouble(std::vector<std::string> &words, size_t pos,
-                      std::string lineID)
+double stringToDouble(std::vector<std::string> &words, size_t pos, std::string lineID)
 {
     if (words.size() < pos + 1)
     {
         adios2::helper::Throw<std::invalid_argument>(
             "Utils::adios_iotest", "processConfig", "stringToDouble",
-            "Line for " + lineID +
-                " is invalid. Missing floating point value at word position " +
+            "Line for " + lineID + " is invalid. Missing floating point value at word position " +
                 std::to_string(pos + 1));
     }
 
@@ -122,8 +114,7 @@ double stringToDouble(std::vector<std::string> &words, size_t pos,
     {
         adios2::helper::Throw<std::invalid_argument>(
             "Utils::adios_iotest", "processConfig", "stringToDouble",
-            "Invalid floating point value given for " + lineID + ": " +
-                words[pos]);
+            "Invalid floating point value given for " + lineID + ": " + words[pos]);
     }
     return d;
 }
@@ -176,8 +167,7 @@ std::string DimsToString(const adios2::Dims &dims) noexcept
     return s;
 }
 
-size_t processDecomp(std::string &word, const Settings &settings,
-                     std::string decompID)
+size_t processDecomp(std::string &word, const Settings &settings, std::string decompID)
 {
     size_t decomp = 1;
     std::string w(word);
@@ -213,9 +203,8 @@ size_t processDecomp(std::string &word, const Settings &settings,
         {
             adios2::helper::Throw<std::invalid_argument>(
                 "Utils::adios_iotest", "processConfig", "processDecomp",
-                "Invalid identifier '" + std::string(1, c) + "' for " +
-                    decompID + " in character position " +
-                    std::to_string(i + 1) +
+                "Invalid identifier '" + std::string(1, c) + "' for " + decompID +
+                    " in character position " + std::to_string(i + 1) +
                     ". Only accepted characters are XYZVW and 1");
         }
     }
@@ -231,14 +220,12 @@ size_t getTypeSize(std::string &type)
             return t.second;
         }
     }
-    adios2::helper::Throw<std::invalid_argument>(
-        "Utils::adios_iotest", "processConfig", "getTypeSize",
-        "Type '" + type + "' is invalid. ");
+    adios2::helper::Throw<std::invalid_argument>("Utils::adios_iotest", "processConfig",
+                                                 "getTypeSize", "Type '" + type + "' is invalid. ");
     return 0;
 }
 
-VariableInfo processArray(std::vector<std::string> &words,
-                          const Settings &settings)
+VariableInfo processArray(std::vector<std::string> &words, const Settings &settings)
 {
     if (words.size() < 4)
     {
@@ -252,8 +239,7 @@ VariableInfo processArray(std::vector<std::string> &words,
     ov.type = words[1];
     ov.elemsize = getTypeSize(ov.type);
     ov.name = words[2];
-    ov.ndim =
-        stringToSizet(words, 3, "number of dimensions of array " + ov.name);
+    ov.ndim = stringToSizet(words, 3, "number of dimensions of array " + ov.name);
     ov.readFromInput = false;
 
     if (words.size() < 4 + 2 * ov.ndim)
@@ -269,13 +255,11 @@ VariableInfo processArray(std::vector<std::string> &words,
     {
         if (settings.isStrongScaling)
         {
-            ov.shape.push_back(stringToSizet(
-                words, 4 + i, "dimension " + std::to_string(i + 1)));
+            ov.shape.push_back(stringToSizet(words, 4 + i, "dimension " + std::to_string(i + 1)));
         }
         else
         {
-            ov.count.push_back(stringToSizet(
-                words, 4 + i, "dimension " + std::to_string(i + 1)));
+            ov.count.push_back(stringToSizet(words, 4 + i, "dimension " + std::to_string(i + 1)));
         }
     }
 
@@ -292,10 +276,9 @@ VariableInfo processArray(std::vector<std::string> &words,
         adios2::helper::Throw<std::invalid_argument>(
             "Utils::adios_iotest", "processConfig", "processArray",
             "Invalid decomposition for array '" + ov.name +
-                "'. The product of the decompositions (here " +
-                std::to_string(nprocDecomp) +
-                ") must equal the number of processes (here " +
-                std::to_string(settings.nProc) + ")");
+                "'. The product of the decompositions (here " + std::to_string(nprocDecomp) +
+                ") must equal the number of processes (here " + std::to_string(settings.nProc) +
+                ")");
     }
     return ov;
 }
@@ -311,9 +294,8 @@ void printConfig(const Config &cfg)
         std::cout << "    Group " << mapIt.first << ":" << std::endl;
         for (const auto &vi : mapIt.second)
         {
-            std::cout << "        " << vi->type << "  " << vi->name
-                      << DimsToString(vi->shape) << "  decomposed as "
-                      << DimsToString(vi->decomp) << std::endl;
+            std::cout << "        " << vi->type << "  " << vi->name << DimsToString(vi->shape)
+                      << "  decomposed as " << DimsToString(vi->decomp) << std::endl;
         }
         std::cout << std::endl;
     }
@@ -330,21 +312,20 @@ void printConfig(const Config &cfg)
         {
         case Operation::Sleep: {
             auto cmdS = dynamic_cast<const CommandSleep *>(cmd.get());
-            std::cout << "        Sleep for " << cmdS->sleepTime_us
-                      << " microseconds " << std::endl;
+            std::cout << "        Sleep for " << cmdS->sleepTime_us << " microseconds "
+                      << std::endl;
             break;
         }
         case Operation::Busy: {
             auto cmdS = dynamic_cast<const CommandBusy *>(cmd.get());
-            std::cout << "          Be busy for " << cmdS->cycles
-                      << " compute cycles with " << cmdS->busyTime_us
-                      << " microseconds of computation each " << std::endl;
+            std::cout << "          Be busy for " << cmdS->cycles << " compute cycles with "
+                      << cmdS->busyTime_us << " microseconds of computation each " << std::endl;
             break;
         }
         case Operation::Write: {
             auto cmdW = dynamic_cast<CommandWrite *>(cmd.get());
-            std::cout << "        Write to output " << cmdW->streamName
-                      << " the group " << cmdW->groupName;
+            std::cout << "        Write to output " << cmdW->streamName << " the group "
+                      << cmdW->groupName;
             auto grpIt = cfg.groupVariablesMap.find(cmdW->groupName);
             if (cmdW->variables.size() < grpIt->second.size())
             {
@@ -369,8 +350,7 @@ void printConfig(const Config &cfg)
                 std::cout << "latest step from ";
             }
 
-            std::cout << cmdR->streamName << " using the group "
-                      << cmdR->groupName;
+            std::cout << cmdR->streamName << " using the group " << cmdR->groupName;
             if (!cmdR->variables.empty())
             {
                 std::cout << " with selected variables:  ";
@@ -397,8 +377,8 @@ void printVarMaps(Config &cfg, std::string &groupName)
     for (auto &v : grpIt->second)
     {
         std::cout << "     variable name first = " << v.first
-                  << " second->name = " << v.second->name
-                  << " type = " << v.second->type << std::endl;
+                  << " second->name = " << v.second->name << " type = " << v.second->type
+                  << std::endl;
     }
 }
 
@@ -412,8 +392,8 @@ void globalChecks(const Config &cfg, const Settings &settings)
             {
                 adios2::helper::Throw<std::invalid_argument>(
                     "Utils::adios_iotest", "processConfig", "globalChecks",
-                    "Name used in conditional is not a read stream: '" +
-                        cmd->conditionalStream + "'");
+                    "Name used in conditional is not a read stream: '" + cmd->conditionalStream +
+                        "'");
             }
         }
     }
@@ -423,16 +403,14 @@ void globalChecks(const Config &cfg, const Settings &settings)
         {
             adios2::helper::Throw<std::invalid_argument>(
                 "Utils::adios_iotest", "processConfig", "globalChecks",
-                "Name used in step over command is not a read stream: '" +
-                    it.first + "' ");
+                "Name used in step over command is not a read stream: '" + it.first + "' ");
         }
     }
 }
 
 Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
 {
-    unsigned int verbose0 =
-        (settings.myRank ? 0 : settings.verbose); // only rank 0 prints info
+    unsigned int verbose0 = (settings.myRank ? 0 : settings.verbose); // only rank 0 prints info
     std::ifstream configFile(settings.configFileName);
     if (!configFile.is_open())
     {
@@ -442,16 +420,14 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
     }
     if (verbose0)
     {
-        std::cout << "Process config file " << settings.configFileName
-                  << std::endl;
+        std::cout << "Process config file " << settings.configFileName << std::endl;
     }
 
     Config cfg;
     std::string currentGroup;
     int currentAppId = -1;
     std::vector<std::shared_ptr<VariableInfo>> *currentVarList = nullptr;
-    std::map<std::string, std::shared_ptr<VariableInfo>> *currentVarMap =
-        nullptr;
+    std::map<std::string, std::shared_ptr<VariableInfo>> *currentVarMap = nullptr;
     std::vector<std::string> lines = FileToLines(configFile);
     for (auto &line : lines)
     {
@@ -459,8 +435,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
         ++*currentConfigLineNumber;
         if (verbose0 > 1)
         {
-            std::cout << "config " << *currentConfigLineNumber << ": " << line
-                      << std::endl;
+            std::cout << "config " << *currentConfigLineNumber << ": " << line << std::endl;
         }
         std::vector<std::string> words = LineToWords(line);
         if (!words.empty() && !isComment(words[0]))
@@ -503,16 +478,13 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                 currentGroup = words[1];
                 if (verbose0)
                 {
-                    std::cout << "--> New variable group: " << currentGroup
-                              << std::endl;
+                    std::cout << "--> New variable group: " << currentGroup << std::endl;
                 }
                 auto it1 = cfg.groupVariableListMap.emplace(
-                    currentGroup,
-                    std::initializer_list<std::shared_ptr<VariableInfo>>{});
+                    currentGroup, std::initializer_list<std::shared_ptr<VariableInfo>>{});
                 currentVarList = &it1.first->second;
                 std::map<std::string, std::shared_ptr<VariableInfo>> emptymap;
-                auto it2 =
-                    cfg.groupVariablesMap.emplace(currentGroup, emptymap);
+                auto it2 = cfg.groupVariablesMap.emplace(currentGroup, emptymap);
                 currentVarMap = &it2.first->second;
             }
             else if (key == "app")
@@ -520,12 +492,10 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                 currentAppId = static_cast<int>(stringToSizet(words, 1, "app"));
                 if (verbose0)
                 {
-                    std::cout << "--> Application ID is set to: "
-                              << currentAppId;
+                    std::cout << "--> Application ID is set to: " << currentAppId;
                     if (currentAppId != static_cast<int>(settings.appId))
                     {
-                        std::cout << "  Ignore commands set for this ID"
-                                  << std::endl;
+                        std::cout << "  Ignore commands set for this ID" << std::endl;
                     }
                     else
                     {
@@ -542,8 +512,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                     {
                         if (cfg.nSteps)
                         {
-                            std::cout << "--> Steps is set to: " << cfg.nSteps
-                                      << std::endl;
+                            std::cout << "--> Steps is set to: " << cfg.nSteps << std::endl;
                         }
                         else
                         {
@@ -564,9 +533,8 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                     double d = stringToDouble(words, 1, "sleep");
                     if (verbose0)
                     {
-                        std::cout
-                            << "--> Command Sleep for: " << std::setprecision(7)
-                            << d << " seconds" << std::endl;
+                        std::cout << "--> Command Sleep for: " << std::setprecision(7) << d
+                                  << " seconds" << std::endl;
                     }
                     size_t t_us = static_cast<size_t>(d * 1000000);
                     auto cmd = std::make_shared<CommandSleep>(t_us);
@@ -578,14 +546,12 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             {
                 if (currentAppId == static_cast<int>(settings.appId))
                 {
-                    size_t cycles =
-                        static_cast<int>(stringToSizet(words, 1, "busy"));
+                    size_t cycles = static_cast<int>(stringToSizet(words, 1, "busy"));
                     double d = stringToDouble(words, 2, "busy");
                     if (verbose0)
                     {
-                        std::cout << "--> Command Busy for: " << cycles
-                                  << " cycles with " << std::setprecision(7)
-                                  << d << " seconds computation each"
+                        std::cout << "--> Command Busy for: " << cycles << " cycles with "
+                                  << std::setprecision(7) << d << " seconds computation each"
                                   << std::endl;
                     }
                     size_t t_us = static_cast<size_t>(d * 1000000);
@@ -601,8 +567,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                     if (words.size() < 3)
                     {
                         adios2::helper::Throw<std::invalid_argument>(
-                            "Utils::adios_iotest", "processConfig",
-                            "processConfig",
+                            "Utils::adios_iotest", "processConfig", "processConfig",
                             "Line for 'write' is invalid. Need at least output "
                             "name and group name ");
                     }
@@ -612,10 +577,8 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                     if (grpIt == cfg.groupVariablesMap.end())
                     {
                         adios2::helper::Throw<std::invalid_argument>(
-                            "Utils::adios_iotest", "processConfig",
-                            "processConfig",
-                            "Group '" + groupName +
-                                "' used in 'write' command is undefined. ");
+                            "Utils::adios_iotest", "processConfig", "processConfig",
+                            "Group '" + groupName + "' used in 'write' command is undefined. ");
                     }
 
                     if (verbose0)
@@ -623,8 +586,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         std::cout << "--> Command Write output = " << fileName
                                   << "  group = " << groupName << std::endl;
                     }
-                    auto cmd =
-                        std::make_shared<CommandWrite>(fileName, groupName);
+                    auto cmd = std::make_shared<CommandWrite>(fileName, groupName);
                     cmd->conditionalStream = conditionalStream;
                     cfg.commands.push_back(cmd);
 
@@ -636,8 +598,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         if (vIt == grpIt->second.end())
                         {
                             adios2::helper::Throw<std::invalid_argument>(
-                                "Utils::adios_iotest", "processConfig",
-                                "processConfig",
+                                "Utils::adios_iotest", "processConfig", "processConfig",
                                 "Group '" + groupName +
                                     "' used in 'write' command has no variable "
                                     "'" +
@@ -667,14 +628,12 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                     if (words.size() < 4)
                     {
                         adios2::helper::Throw<std::invalid_argument>(
-                            "Utils::adios_iotest", "processConfig",
-                            "processConfig",
+                            "Utils::adios_iotest", "processConfig", "processConfig",
                             "Line for 'read' is invalid. Need at least 3 "
                             "arguments: mode, output name, group name ");
                     }
                     std::string mode(words[1]);
-                    std::transform(mode.begin(), mode.end(), mode.begin(),
-                                   ::tolower);
+                    std::transform(mode.begin(), mode.end(), mode.begin(), ::tolower);
                     std::string streamName(words[2]);
                     std::string groupName(words[3]);
                     if (verbose0)
@@ -685,16 +644,13 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                     if (grpIt == cfg.groupVariablesMap.end())
                     {
                         adios2::helper::Throw<std::invalid_argument>(
-                            "Utils::adios_iotest", "processConfig",
-                            "processConfig",
-                            "Group '" + groupName +
-                                "' used in 'read' command is undefined. ");
+                            "Utils::adios_iotest", "processConfig", "processConfig",
+                            "Group '" + groupName + "' used in 'read' command is undefined. ");
                     }
                     if (mode != "next" && mode != "latest")
                     {
                         adios2::helper::Throw<std::invalid_argument>(
-                            "Utils::adios_iotest", "processConfig",
-                            "processConfig",
+                            "Utils::adios_iotest", "processConfig", "processConfig",
                             "Mode (1st argument) for 'read' is invalid. It "
                             "must be either 'next' or 'latest'");
                     }
@@ -712,8 +668,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
 
                     if (verbose0)
                     {
-                        std::cout << "--> Command Read mode = " << mode
-                                  << "  input = " << words[2]
+                        std::cout << "--> Command Read mode = " << mode << "  input = " << words[2]
                                   << "  group = " << groupName << " timeout = ";
                         if (d < 0.0)
                         {
@@ -725,8 +680,8 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         }
                         std::cout << std::endl;
                     }
-                    auto cmd = std::make_shared<CommandRead>(
-                        streamName, groupName, static_cast<float>(d));
+                    auto cmd =
+                        std::make_shared<CommandRead>(streamName, groupName, static_cast<float>(d));
                     cmd->conditionalStream = conditionalStream;
                     cfg.commands.push_back(cmd);
                     cfg.condMap[streamName] = adios2::StepStatus::OK;
@@ -739,8 +694,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         if (vIt == grpIt->second.end())
                         {
                             adios2::helper::Throw<std::invalid_argument>(
-                                "Utils::adios_iotest", "processConfig",
-                                "processConfig",
+                                "Utils::adios_iotest", "processConfig", "processConfig",
                                 "Group '" + groupName +
                                     "' used in 'write' command has no variable "
                                     "'" +
@@ -748,13 +702,11 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         }
                         if (verbose0)
                         {
-                            std::cout << "       select variable = "
-                                      << vIt->second->name << std::endl;
-                            std::cout << "       DEBUG variable = "
-                                      << vIt->second->name
+                            std::cout << "       select variable = " << vIt->second->name
+                                      << std::endl;
+                            std::cout << "       DEBUG variable = " << vIt->second->name
                                       << " type = " << vIt->second->type
-                                      << " varmap = "
-                                      << static_cast<void *>(vIt->second.get())
+                                      << " varmap = " << static_cast<void *>(vIt->second.get())
                                       << std::endl;
                         }
                         cmd->variables.push_back(vIt->second);
@@ -778,14 +730,12 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             {
                 // process config line and get global array info
                 std::shared_ptr<VariableInfo> ovp =
-                    std::make_shared<VariableInfo>(
-                        processArray(words, settings));
+                    std::make_shared<VariableInfo>(processArray(words, settings));
                 ovp->datasize = ovp->elemsize;
                 // Position of rank in N-dim space
                 std::vector<size_t> pos(ovp->ndim);
                 // Calculate rank's position in N-dim space
-                decompRowMajor(ovp->ndim, settings.myRank, ovp->decomp.data(),
-                               pos.data());
+                decompRowMajor(ovp->ndim, settings.myRank, ovp->decomp.data(), pos.data());
 
                 if (settings.isStrongScaling)
                 {
@@ -832,27 +782,25 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                     auto grpIt = cfg.groupVariablesMap.find(currentGroup);
                     auto vIt = grpIt->second.find(ovp->name);
                     std::cout << "       DEBUG variable = " << vIt->second->name
-                              << " type = " << vIt->second->type << " varmap = "
-                              << static_cast<void *>(vIt->second.get())
+                              << " type = " << vIt->second->type
+                              << " varmap = " << static_cast<void *>(vIt->second.get())
                               << std::endl;
                 }
                 if (settings.verbose > 2)
                 {
                     std::cout << "--> rank = " << settings.myRank
-                              << ": Variable array name = " << ovp->name
-                              << " type = " << ovp->type
+                              << ": Variable array name = " << ovp->name << " type = " << ovp->type
                               << " elemsize = " << ovp->elemsize
                               << " local datasize = " << ovp->datasize
                               << " shape = " << DimsToString(ovp->shape)
                               << " start = " << DimsToString(ovp->start)
-                              << " count = " << DimsToString(ovp->count)
-                              << std::endl;
+                              << " count = " << DimsToString(ovp->count) << std::endl;
                 }
                 else if (verbose0)
                 {
                     std::cout << "--> Variable array name = " << ovp->name
-                              << " type = " << ovp->type
-                              << " elemsize = " << ovp->elemsize << std::endl;
+                              << " type = " << ovp->type << " elemsize = " << ovp->elemsize
+                              << std::endl;
                 }
             }
             else if (key == "link")
@@ -870,14 +818,12 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                 {
                     adios2::helper::Throw<std::invalid_argument>(
                         "Utils::adios_iotest", "processConfig", "processConfig",
-                        "Group '" + groupName +
-                            "' used in 'link' command is undefined. ");
+                        "Group '" + groupName + "' used in 'link' command is undefined. ");
                 }
 
                 if (verbose0)
                 {
-                    std::cout << "--> Link variables from group = " << groupName
-                              << ": ";
+                    std::cout << "--> Link variables from group = " << groupName << ": ";
                 }
 
                 // parse the optional variable list
@@ -890,8 +836,7 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
                         if (vIt == grpIt->second.end())
                         {
                             adios2::helper::Throw<std::invalid_argument>(
-                                "Utils::adios_iotest", "processConfig",
-                                "processConfig",
+                                "Utils::adios_iotest", "processConfig", "processConfig",
                                 "Group '" + groupName +
                                     "' used in 'link' command has no variable "
                                     "'" +
@@ -928,9 +873,9 @@ Config processConfig(const Settings &settings, size_t *currentConfigLineNumber)
             }
             else
             {
-                adios2::helper::Throw<std::invalid_argument>(
-                    "Utils::adios_iotest", "processConfig", "processConfig",
-                    "Unrecognized keyword '" + key + "'.");
+                adios2::helper::Throw<std::invalid_argument>("Utils::adios_iotest", "processConfig",
+                                                             "processConfig",
+                                                             "Unrecognized keyword '" + key + "'.");
             }
         }
     }

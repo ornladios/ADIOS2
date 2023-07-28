@@ -64,8 +64,7 @@ TEST_F(SstOnDemandReadTest, ADIOS2SstOnDemandRead)
             {
                 std::string namev("sstFloats");
                 namev += std::to_string(v);
-                adios2::Variable<float> sstFloats =
-                    sstIO.InquireVariable<float>(namev);
+                adios2::Variable<float> sstFloats = sstIO.InquireVariable<float>(namev);
 
                 sstFloats.SetSelection(sel);
                 auto start_get = std::chrono::steady_clock::now();
@@ -81,23 +80,20 @@ TEST_F(SstOnDemandReadTest, ADIOS2SstOnDemandRead)
             size_t currentStep = sstReader.CurrentStep();
             for (unsigned int v = 0; v < variablesSize; ++v)
             {
-                std::cout << name << ": Get step " << currentStep << " variable"
-                          << v << " " << myFloats[v * Nx] << std::endl;
+                std::cout << name << ": Get step " << currentStep << " variable" << v << " "
+                          << myFloats[v * Nx] << std::endl;
             }
 #endif
         }
         auto end_step = std::chrono::steady_clock::now();
-        double total_time =
-            ((double)(end_step - start_step).count()) / (size * 1000.0);
+        double total_time = ((double)(end_step - start_step).count()) / (size * 1000.0);
         get_time /= size;
 
         double global_get_sum = 0;
         double global_sum = 0;
 #if ADIOS2_USE_MPI
-        MPI_Reduce(&get_time, &global_get_sum, 1, MPI_DOUBLE, MPI_SUM, 0,
-                   testComm);
-        MPI_Reduce(&total_time, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0,
-                   testComm);
+        MPI_Reduce(&get_time, &global_get_sum, 1, MPI_DOUBLE, MPI_SUM, 0, testComm);
+        MPI_Reduce(&total_time, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, testComm);
 #else
         global_sum = total_time;
         global_get_sum = get_time;
@@ -106,17 +102,15 @@ TEST_F(SstOnDemandReadTest, ADIOS2SstOnDemandRead)
         // Time in microseconds
         if (rank == 0)
         {
-            std::cout << "SST,Read," << size << "," << Nx << ","
-                      << variablesSize << "," << steps << "," << global_get_sum
-                      << "," << global_sum << std::endl;
+            std::cout << "SST,Read," << size << "," << Nx << "," << variablesSize << "," << steps
+                      << "," << global_get_sum << "," << global_sum << std::endl;
         }
         EXPECT_EQ(NSteps, steps);
         sstReader.Close();
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
@@ -145,9 +139,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

@@ -54,8 +54,7 @@ AvailableIpAddresses() noexcept
         close(socket_handler);
         return ips;
     }
-    for (struct if_nameindex *p = head;
-         !(p->if_index == 0 && p->if_name == NULL); ++p)
+    for (struct if_nameindex *p = head; !(p->if_index == 0 && p->if_name == NULL); ++p)
     {
         struct ifreq req;
         strncpy(req.ifr_name, p->if_name, IFNAMSIZ);
@@ -69,8 +68,7 @@ AvailableIpAddresses() noexcept
             close(socket_handler);
             return ips;
         }
-        const std::string ip =
-            inet_ntoa(((struct sockaddr_in *)&req.ifr_addr)->sin_addr);
+        const std::string ip = inet_ntoa(((struct sockaddr_in *)&req.ifr_addr)->sin_addr);
         if (ip != "127.0.0.1")
         {
             ips.emplace_back(ip);
@@ -81,11 +79,9 @@ AvailableIpAddresses() noexcept
     return ips;
 }
 
-void HandshakeWriter(Comm const &comm, size_t &appID,
-                     std::vector<std::string> &fullAddresses,
-                     const std::string &name, const std::string &engineName,
-                     const int basePort, const int channelsPerRank,
-                     const int maxRanksPerNode, const int maxAppsPerNode)
+void HandshakeWriter(Comm const &comm, size_t &appID, std::vector<std::string> &fullAddresses,
+                     const std::string &name, const std::string &engineName, const int basePort,
+                     const int channelsPerRank, const int maxRanksPerNode, const int maxAppsPerNode)
 {
 
     int mpiRank = comm.Rank();
@@ -131,8 +127,7 @@ void HandshakeWriter(Comm const &comm, size_t &appID,
             auto size = numRead.GetSize();
             std::vector<char> numAppsChar(size);
             numRead.Read(numAppsChar.data(), numAppsChar.size());
-            appID =
-                1 + stoi(std::string(numAppsChar.begin(), numAppsChar.end()));
+            appID = 1 + stoi(std::string(numAppsChar.begin(), numAppsChar.end()));
             numRead.Close();
         }
         catch (...)
@@ -155,19 +150,16 @@ void HandshakeWriter(Comm const &comm, size_t &appID,
     {
         std::string addr =
             "tcp://" + ip + ":" +
-            std::to_string(basePort + (100 * appID) +
-                           (mpiRank % 1000) * channelsPerRank + i) +
+            std::to_string(basePort + (100 * appID) + (mpiRank % 1000) * channelsPerRank + i) +
             "\0";
         fullAddresses.push_back(addr);
     }
     nlohmann::json localAddressesJson = fullAddresses;
     std::string localAddressesStr = localAddressesJson.dump();
     std::vector<char> localAddressesChar(64 * channelsPerRank, '\0');
-    std::memcpy(localAddressesChar.data(), localAddressesStr.c_str(),
-                localAddressesStr.size());
+    std::memcpy(localAddressesChar.data(), localAddressesStr.c_str(), localAddressesStr.size());
     std::vector<char> globalAddressesChar(64 * channelsPerRank * mpiSize, '\0');
-    comm.GatherArrays(localAddressesChar.data(), 64 * channelsPerRank,
-                      globalAddressesChar.data());
+    comm.GatherArrays(localAddressesChar.data(), 64 * channelsPerRank, globalAddressesChar.data());
 
     // Writing handshake file
     if (mpiRank == 0)
@@ -175,8 +167,7 @@ void HandshakeWriter(Comm const &comm, size_t &appID,
         nlohmann::json globalAddressesJson;
         for (int i = 0; i < mpiSize; ++i)
         {
-            auto j = nlohmann::json::parse(
-                &globalAddressesChar[i * 64 * channelsPerRank]);
+            auto j = nlohmann::json::parse(&globalAddressesChar[i * 64 * channelsPerRank]);
             for (auto &i : j)
             {
                 globalAddressesJson.push_back(i);
@@ -194,8 +185,7 @@ void HandshakeWriter(Comm const &comm, size_t &appID,
     }
 }
 
-void HandshakeReader(Comm const &comm, size_t &appID,
-                     std::vector<std::string> &fullAddresses,
+void HandshakeReader(Comm const &comm, size_t &appID, std::vector<std::string> &fullAddresses,
                      const std::string &name, const std::string &engineName)
 {
     const std::string engineLockFilename = name + "." + engineName + ".lock";

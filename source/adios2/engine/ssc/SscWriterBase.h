@@ -28,12 +28,10 @@ class SscWriterBase
 {
 
 public:
-    SscWriterBase(IO &io, const std::string &name, const Mode mode,
-                  MPI_Comm comm);
+    SscWriterBase(IO &io, const std::string &name, const Mode mode, MPI_Comm comm);
     virtual ~SscWriterBase();
 
-    virtual StepStatus BeginStep(const StepMode mode,
-                                 const float timeoutSeconds,
+    virtual StepStatus BeginStep(const StepMode mode, const float timeoutSeconds,
                                  const bool writerLocked) = 0;
     virtual size_t CurrentStep() = 0;
     virtual void PerformPuts() = 0;

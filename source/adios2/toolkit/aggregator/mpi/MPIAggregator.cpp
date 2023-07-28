@@ -39,8 +39,7 @@ void MPIAggregator::Close()
 }
 
 // PROTECTED
-void MPIAggregator::InitComm(const size_t subStreams,
-                             helper::Comm const &parentComm)
+void MPIAggregator::InitComm(const size_t subStreams, helper::Comm const &parentComm)
 {
     int parentRank = parentComm.Rank();
     int parentSize = parentComm.Size();
@@ -59,8 +58,7 @@ void MPIAggregator::InitComm(const size_t subStreams,
     if (process >= firstInSmallGroups)
     {
         m_SubStreamIndex = r + (process - firstInSmallGroups) / q;
-        m_AggregatorRank =
-            static_cast<int>(firstInSmallGroups + (m_SubStreamIndex - r) * q);
+        m_AggregatorRank = static_cast<int>(firstInSmallGroups + (m_SubStreamIndex - r) * q);
     }
     else
     {

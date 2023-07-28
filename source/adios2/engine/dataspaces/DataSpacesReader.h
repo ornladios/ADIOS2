@@ -30,14 +30,12 @@ class DataSpacesReader : public Engine
 {
 
 public:
-    DataSpacesReader(IO &adios, const std::string &name, const Mode openMode,
-                     helper::Comm comm);
+    DataSpacesReader(IO &adios, const std::string &name, const Mode openMode, helper::Comm comm);
 
     ~DataSpacesReader();
     StepStatus BeginStep();
-    StepStatus BeginStep(
-        StepMode mode,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode mode,
+                         const float timeoutSeconds = std::numeric_limits<float>::max()) final;
     size_t CurrentStep() const final;
     void EndStep() final;
 
@@ -73,15 +71,14 @@ private:
         };
         */
     const std::map<int, std::string> ds_to_varType = {
-        {1, "int8_t"},          {2, "uint8_t"},      {3, "int16_t"},
-        {4, "uint16_t"},        {5, "int32_t"},      {6, "uint32_t"},
-        {7, "int64_t"},         {8, "uint64_t"},     {9, "float"},
-        {10, "double"},         {11, "long double"}, {12, "complex float"},
+        {1, "int8_t"},          {2, "uint8_t"},  {3, "int16_t"},      {4, "uint16_t"},
+        {5, "int32_t"},         {6, "uint32_t"}, {7, "int64_t"},      {8, "uint64_t"},
+        {9, "float"},           {10, "double"},  {11, "long double"}, {12, "complex float"},
         {13, "complex double"}, {14, "string"},
     };
 
-#define declare_type(T)                                                        \
-    void DoGetSync(Variable<T> &, T *) final;                                  \
+#define declare_type(T)                                                                            \
+    void DoGetSync(Variable<T> &, T *) final;                                                      \
     void DoGetDeferred(Variable<T> &, T *) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

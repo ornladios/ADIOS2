@@ -51,8 +51,7 @@ public:
         if (size > m_Capacity)
         {
             m_Capacity = size * 2;
-            m_Buffer =
-                reinterpret_cast<uint8_t *>(realloc(m_Buffer, m_Capacity));
+            m_Buffer = reinterpret_cast<uint8_t *>(realloc(m_Buffer, m_Capacity));
         }
         if (m_Buffer == nullptr)
         {
@@ -65,10 +64,7 @@ public:
     {
         return *reinterpret_cast<T *>(m_Buffer + pos);
     }
-    uint8_t &value(const size_t pos = 0)
-    {
-        return *reinterpret_cast<uint8_t *>(m_Buffer + pos);
-    }
+    uint8_t &value(const size_t pos = 0) { return *reinterpret_cast<uint8_t *>(m_Buffer + pos); }
     template <typename T>
     T value(const size_t pos = 0) const
     {
@@ -88,20 +84,14 @@ public:
     {
         return reinterpret_cast<const T *>(m_Buffer + pos);
     }
-    uint8_t *data(const size_t pos = 0)
-    {
-        return reinterpret_cast<uint8_t *>(m_Buffer + pos);
-    }
+    uint8_t *data(const size_t pos = 0) { return reinterpret_cast<uint8_t *>(m_Buffer + pos); }
     const uint8_t *data(const size_t pos = 0) const
     {
         return reinterpret_cast<const uint8_t *>(m_Buffer + pos);
     }
     size_t size() const { return m_Size; }
     uint8_t &operator[](const size_t pos) { return *(m_Buffer + pos); }
-    const uint8_t &operator[](const size_t pos) const
-    {
-        return *(m_Buffer + pos);
-    }
+    const uint8_t &operator[](const size_t pos) const { return *(m_Buffer + pos); }
 
 private:
     size_t m_Capacity = 0;
@@ -134,57 +124,44 @@ using MpiInfo = std::vector<std::vector<int>>;
 
 void PrintDims(const Dims &dims, const std::string &label = std::string());
 void PrintBlock(const BlockInfo &b, const std::string &label = std::string());
-void PrintBlockVec(const BlockVec &bv,
-                   const std::string &label = std::string());
-void PrintBlockVecVec(const BlockVecVec &bvv,
-                      const std::string &label = std::string());
-void PrintRankPosMap(const RankPosMap &m,
-                     const std::string &label = std::string());
+void PrintBlockVec(const BlockVec &bv, const std::string &label = std::string());
+void PrintBlockVecVec(const BlockVecVec &bvv, const std::string &label = std::string());
+void PrintRankPosMap(const RankPosMap &m, const std::string &label = std::string());
 void PrintMpiInfo(const MpiInfo &writersInfo, const MpiInfo &readersInfo);
 
-size_t TotalDataSize(const Dims &dims, const size_t elementSize,
-                     const ShapeID &shapeId);
+size_t TotalDataSize(const Dims &dims, const size_t elementSize, const ShapeID &shapeId);
 size_t TotalDataSize(const BlockVec &bv);
 
-RankPosMap CalculateOverlap(BlockVecVec &globalPattern,
-                            const BlockVec &localPattern);
+RankPosMap CalculateOverlap(BlockVecVec &globalPattern, const BlockVec &localPattern);
 
 void SerializeVariables(const BlockVec &input, Buffer &output, const int rank);
 void SerializeAttributes(IO &input, Buffer &output);
 void SerializeStructDefinitions(
-    const std::unordered_multimap<std::string, StructDefinition> &definitions,
-    Buffer &output);
-void DeserializeVariable(
-    const Buffer &input, const ShapeID shapeId, uint64_t &pos, BlockInfo &b,
-    IO &io, const bool regIO,
-    std::unordered_map<std::string, StructDefinition> &StructDefs);
-void DeserializeAttribute(const Buffer &input, uint64_t &pos, IO &io,
-                          const bool regIO);
-void DeserializeStructDefinitions(
-    const Buffer &input, uint64_t &pos, IO &io, const bool regIO,
-    std::unordered_map<std::string, StructDefinition> &StructDefs);
-void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
-                 const bool regVars, const bool regAttrs, const bool regDefs,
+    const std::unordered_multimap<std::string, StructDefinition> &definitions, Buffer &output);
+void DeserializeVariable(const Buffer &input, const ShapeID shapeId, uint64_t &pos, BlockInfo &b,
+                         IO &io, const bool regIO,
+                         std::unordered_map<std::string, StructDefinition> &StructDefs);
+void DeserializeAttribute(const Buffer &input, uint64_t &pos, IO &io, const bool regIO);
+void DeserializeStructDefinitions(const Buffer &input, uint64_t &pos, IO &io, const bool regIO,
+                                  std::unordered_map<std::string, StructDefinition> &StructDefs);
+void Deserialize(const Buffer &input, BlockVecVec &output, IO &io, const bool regVars,
+                 const bool regAttrs, const bool regDefs,
                  std::unordered_map<std::string, StructDefinition> &StructDefs);
-void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
-                       MPI_Comm comm, const bool finalStep, const bool locked);
+void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer, MPI_Comm comm,
+                       const bool finalStep, const bool locked);
 void BroadcastMetadata(Buffer &globalBuffer, const int root, MPI_Comm comm);
 
-void MPI_Gatherv64OneSidedPush(
-    const void *sendbuf, uint64_t sendcount, MPI_Datatype sendtype,
-    void *recvbuf, const uint64_t *recvcounts, const uint64_t *displs,
-    MPI_Datatype recvtype, int root, MPI_Comm comm,
-    const int chunksize = std::numeric_limits<int>::max());
-void MPI_Gatherv64OneSidedPull(
-    const void *sendbuf, uint64_t sendcount, MPI_Datatype sendtype,
-    void *recvbuf, const uint64_t *recvcounts, const uint64_t *displs,
-    MPI_Datatype recvtype, int root, MPI_Comm comm,
-    const int chunksize = std::numeric_limits<int>::max());
-void MPI_Gatherv64(const void *sendbuf, uint64_t sendcount,
-                   MPI_Datatype sendtype, void *recvbuf,
-                   const uint64_t *recvcounts, const uint64_t *displs,
-                   MPI_Datatype recvtype, int root, MPI_Comm comm,
-                   const int chunksize = std::numeric_limits<int>::max());
+void MPI_Gatherv64OneSidedPush(const void *sendbuf, uint64_t sendcount, MPI_Datatype sendtype,
+                               void *recvbuf, const uint64_t *recvcounts, const uint64_t *displs,
+                               MPI_Datatype recvtype, int root, MPI_Comm comm,
+                               const int chunksize = std::numeric_limits<int>::max());
+void MPI_Gatherv64OneSidedPull(const void *sendbuf, uint64_t sendcount, MPI_Datatype sendtype,
+                               void *recvbuf, const uint64_t *recvcounts, const uint64_t *displs,
+                               MPI_Datatype recvtype, int root, MPI_Comm comm,
+                               const int chunksize = std::numeric_limits<int>::max());
+void MPI_Gatherv64(const void *sendbuf, uint64_t sendcount, MPI_Datatype sendtype, void *recvbuf,
+                   const uint64_t *recvcounts, const uint64_t *displs, MPI_Datatype recvtype,
+                   int root, MPI_Comm comm, const int chunksize = std::numeric_limits<int>::max());
 
 bool AreSameDims(const Dims &a, const Dims &b);
 

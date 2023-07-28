@@ -17,8 +17,7 @@
 
 #include "adios2/helper/adiosLog.h"
 
-hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode,
-                       MPI_Comm comm)
+hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode, MPI_Comm comm)
 : Stream(streamName, mode), comm(comm)
 {
     hid_t acc_tpl = H5Pcreate(H5P_FILE_ACCESS);
@@ -27,9 +26,8 @@ hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode,
 
     if (ret < 0)
     {
-        adios2::helper::Throw<std::runtime_error>(
-            "Utils::adios_iotest", "hdf5Stream", "hdf5Stream",
-            "Unable to call set_fapl_mpio");
+        adios2::helper::Throw<std::runtime_error>("Utils::adios_iotest", "hdf5Stream", "hdf5Stream",
+                                                  "Unable to call set_fapl_mpio");
     }
     // int myRank;
     // MPI_Comm_rank(comm, &myRank);
@@ -40,8 +38,7 @@ hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode,
     if (mode == adios2::Mode::Write)
     {
         // timeStart = MPI_Wtime();
-        h5file =
-            H5Fcreate(streamName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, acc_tpl);
+        h5file = H5Fcreate(streamName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, acc_tpl);
         // timeEnd = MPI_Wtime();
     }
     else
@@ -66,9 +63,8 @@ hdf5Stream::hdf5Stream(const std::string &streamName, const adios2::Mode mode,
     ret = H5Pclose(acc_tpl);
     if (ret < 0)
     {
-        adios2::helper::Throw<std::runtime_error>(
-            "Utils::adios_iotest", "hdf5Stream", "hdf5Stream",
-            "Unable to call set_fapl_mpio");
+        adios2::helper::Throw<std::runtime_error>("Utils::adios_iotest", "hdf5Stream", "hdf5Stream",
+                                                  "Unable to call set_fapl_mpio");
     }
 }
 
@@ -119,14 +115,13 @@ void hdf5Stream::defineHDF5Array(const std::shared_ptr<VariableInfo> ov)
     H5Pset_chunk(cparms, ndim, count.data());
 
     hid_t dataset;
-    dataset = H5Dcreate2(h5file, ov->name.c_str(), hdf5Type(ov->type),
-                         dataspace, H5P_DEFAULT, cparms, H5P_DEFAULT);
+    dataset = H5Dcreate2(h5file, ov->name.c_str(), hdf5Type(ov->type), dataspace, H5P_DEFAULT,
+                         cparms, H5P_DEFAULT);
     varmap.emplace(std::make_pair(ov->name, hdf5VarInfo(dataset, dataspace)));
     H5Pclose(cparms);
 }
 
-void hdf5Stream::putHDF5Array(const std::shared_ptr<VariableInfo> ov,
-                              size_t step)
+void hdf5Stream::putHDF5Array(const std::shared_ptr<VariableInfo> ov, size_t step)
 {
     /* note: step starts from 1 */
     const auto it = varmap.find(ov->name);
@@ -147,24 +142,21 @@ void hdf5Stream::putHDF5Array(const std::shared_ptr<VariableInfo> ov,
 
     H5Dset_extent(vi.dataset, dims.data());
     hid_t filespace = H5Dget_space(vi.dataset);
-    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start.data(), NULL,
-                        count.data(), NULL);
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start.data(), NULL, count.data(), NULL);
     hid_t dxpl_id = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(dxpl_id, H5FD_MPIO_COLLECTIVE);
     hid_t memspace = H5Screate_simple(ndim, count.data(), NULL);
-    H5Dwrite(vi.dataset, hdf5Type(ov->type), memspace, filespace, dxpl_id,
-             ov->data.data());
+    H5Dwrite(vi.dataset, hdf5Type(ov->type), memspace, filespace, dxpl_id, ov->data.data());
     H5Pclose(dxpl_id);
     H5Sclose(filespace);
     H5Sclose(memspace);
 }
-void hdf5Stream::Write(CommandWrite *cmdW, Config &cfg,
-                       const Settings &settings, size_t step)
+void hdf5Stream::Write(CommandWrite *cmdW, Config &cfg, const Settings &settings, size_t step)
 {
     if (!settings.myRank && settings.verbose)
     {
-        std::cout << "    Write to HDF5 output " << cmdW->streamName
-                  << " the group " << cmdW->groupName;
+        std::cout << "    Write to HDF5 output " << cmdW->streamName << " the group "
+                  << cmdW->groupName;
         if (!cmdW->variables.empty())
         {
             std::cout << " with selected variables:  ";
@@ -176,10 +168,8 @@ void hdf5Stream::Write(CommandWrite *cmdW, Config &cfg,
         std::cout << std::endl;
     }
 
-    const double div =
-        pow(10.0, static_cast<double>(settings.ndigits(cfg.nSteps - 1)));
-    double myValue = static_cast<double>(settings.myRank) +
-                     static_cast<double>(step - 1) / div;
+    const double div = pow(10.0, static_cast<double>(settings.ndigits(cfg.nSteps - 1)));
+    double myValue = static_cast<double>(settings.myRank) + static_cast<double>(step - 1) / div;
 
     for (auto ov : cmdW->variables)
     {
@@ -192,8 +182,7 @@ void hdf5Stream::Write(CommandWrite *cmdW, Config &cfg,
         {
             if (!settings.myRank && settings.verbose)
             {
-                std::cout << "        Define array  " << ov->name
-                          << "  for output" << std::endl;
+                std::cout << "        Define array  " << ov->name << "  for output" << std::endl;
             }
             defineHDF5Array(ov);
         }
@@ -204,8 +193,7 @@ void hdf5Stream::Write(CommandWrite *cmdW, Config &cfg,
         {
             if (!settings.myRank && settings.verbose)
             {
-                std::cout << "        Fill array  " << ov->name
-                          << "  for output" << std::endl;
+                std::cout << "        Fill array  " << ov->name << "  for output" << std::endl;
             }
             fillArray(ov, myValue);
         }
@@ -232,14 +220,12 @@ void hdf5Stream::Write(CommandWrite *cmdW, Config &cfg,
         MPI_Allreduce(&writeTime, &minWriteTime, 1, MPI_DOUBLE, MPI_MIN, comm);
         if (settings.myRank == 0)
         {
-            std::cout << "        Max write time = " << maxWriteTime
-                      << std::endl;
-            std::cout << "        Min write time = " << minWriteTime
-                      << std::endl;
+            std::cout << "        Max write time = " << maxWriteTime << std::endl;
+            std::cout << "        Min write time = " << minWriteTime << std::endl;
             std::ofstream wr_perf_log;
             wr_perf_log.open("write_perf.txt", std::ios::app);
-            wr_perf_log << std::to_string(maxWriteTime) + ", " +
-                               std::to_string(minWriteTime) + "\n";
+            wr_perf_log << std::to_string(maxWriteTime) + ", " + std::to_string(minWriteTime) +
+                               "\n";
             wr_perf_log.close();
         }
     }
@@ -254,14 +240,12 @@ void hdf5Stream::getHDF5Array(std::shared_ptr<VariableInfo> ov, size_t step)
         dataset = H5Dopen2(h5file, ov->name.c_str(), H5P_DEFAULT);
         if (dataset == -1)
         {
-            std::cout << "        Variable " << ov->name
-                      << " is not in the file: " << std::endl;
+            std::cout << "        Variable " << ov->name << " is not in the file: " << std::endl;
             ov->readFromInput = false;
             return;
         }
         filespace = H5Dget_space(dataset);
-        varmap.emplace(
-            std::make_pair(ov->name, hdf5VarInfo(dataset, filespace)));
+        varmap.emplace(std::make_pair(ov->name, hdf5VarInfo(dataset, filespace)));
     }
     else
     {
@@ -291,8 +275,7 @@ void hdf5Stream::getHDF5Array(std::shared_ptr<VariableInfo> ov, size_t step)
     hid_t memspace = H5Screate_simple(ndim, count.data(), NULL);
     hid_t dxpl_id = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(dxpl_id, H5FD_MPIO_COLLECTIVE);
-    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start.data(), NULL,
-                        count.data(), NULL);
+    H5Sselect_hyperslab(filespace, H5S_SELECT_SET, start.data(), NULL, count.data(), NULL);
     void *buf = reinterpret_cast<void *>(ov->data.data());
     H5Dread(dataset, hdf5Type(ov->type), memspace, filespace, dxpl_id, buf);
 
@@ -301,8 +284,8 @@ void hdf5Stream::getHDF5Array(std::shared_ptr<VariableInfo> ov, size_t step)
     ov->readFromInput = true;
 }
 
-adios2::StepStatus hdf5Stream::Read(CommandRead *cmdR, Config &cfg,
-                                    const Settings &settings, size_t step)
+adios2::StepStatus hdf5Stream::Read(CommandRead *cmdR, Config &cfg, const Settings &settings,
+                                    size_t step)
 {
     if (!settings.myRank && settings.verbose)
     {
@@ -339,8 +322,7 @@ adios2::StepStatus hdf5Stream::Read(CommandRead *cmdR, Config &cfg,
         nSteps = dims[0];
         if (!settings.myRank && settings.verbose)
         {
-            std::cout << "        Number of steps in file: " << nSteps
-                      << std::endl;
+            std::cout << "        Number of steps in file: " << nSteps << std::endl;
         }
         H5Sclose(filespace);
         H5Dclose(dataset);
@@ -384,8 +366,7 @@ adios2::StepStatus hdf5Stream::Read(CommandRead *cmdR, Config &cfg,
             std::cout << "        Min read time = " << minReadTime << std::endl;
             std::ofstream rd_perf_log;
             rd_perf_log.open("read_perf.txt", std::ios::app);
-            rd_perf_log << std::to_string(maxReadTime) + ", " +
-                               std::to_string(minReadTime) + "\n";
+            rd_perf_log << std::to_string(maxReadTime) + ", " + std::to_string(minReadTime) + "\n";
             rd_perf_log.close();
         }
     }

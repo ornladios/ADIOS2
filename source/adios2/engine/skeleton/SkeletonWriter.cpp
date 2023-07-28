@@ -23,16 +23,14 @@ namespace core
 namespace engine
 {
 
-SkeletonWriter::SkeletonWriter(IO &io, const std::string &name, const Mode mode,
-                               helper::Comm comm)
+SkeletonWriter::SkeletonWriter(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("SkeletonWriter", io, name, mode, std::move(comm))
 {
     m_WriterRank = m_Comm.Rank();
     Init();
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Writer " << m_WriterRank << " Open(" << m_Name
-                  << ")." << std::endl;
+        std::cout << "Skeleton Writer " << m_WriterRank << " Open(" << m_Name << ")." << std::endl;
     }
     m_IsOpen = true;
 }
@@ -51,8 +49,8 @@ StepStatus SkeletonWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     m_CurrentStep++; // 0 is the first step
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Writer " << m_WriterRank
-                  << "   BeginStep() new step " << m_CurrentStep << "\n";
+        std::cout << "Skeleton Writer " << m_WriterRank << "   BeginStep() new step "
+                  << m_CurrentStep << "\n";
     }
     return StepStatus::OK;
 }
@@ -61,8 +59,8 @@ size_t SkeletonWriter::CurrentStep() const
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Writer " << m_WriterRank
-                  << "   CurrentStep() returns " << m_CurrentStep << "\n";
+        std::cout << "Skeleton Writer " << m_WriterRank << "   CurrentStep() returns "
+                  << m_CurrentStep << "\n";
     }
     return m_CurrentStep;
 }
@@ -72,8 +70,7 @@ void SkeletonWriter::PerformPuts()
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Writer " << m_WriterRank
-                  << "     PerformPuts()\n";
+        std::cout << "Skeleton Writer " << m_WriterRank << "     PerformPuts()\n";
     }
     m_NeedPerformPuts = false;
 }
@@ -99,15 +96,15 @@ void SkeletonWriter::Flush(const int transportIndex)
 
 // PRIVATE
 
-#define declare_type(T)                                                        \
-    void SkeletonWriter::DoPutSync(Variable<T> &variable, const T *data)       \
-    {                                                                          \
-        PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));   \
-        variable.m_BlocksInfo.clear();                                         \
-    }                                                                          \
-    void SkeletonWriter::DoPutDeferred(Variable<T> &variable, const T *data)   \
-    {                                                                          \
-        PutDeferredCommon(variable, data);                                     \
+#define declare_type(T)                                                                            \
+    void SkeletonWriter::DoPutSync(Variable<T> &variable, const T *data)                           \
+    {                                                                                              \
+        PutSyncCommon(variable, variable.SetBlockInfo(data, CurrentStep()));                       \
+        variable.m_BlocksInfo.clear();                                                             \
+    }                                                                                              \
+    void SkeletonWriter::DoPutDeferred(Variable<T> &variable, const T *data)                       \
+    {                                                                                              \
+        PutDeferredCommon(variable, data);                                                         \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -132,11 +129,10 @@ void SkeletonWriter::InitParameters()
         {
             m_Verbosity = std::stoi(value);
             if (m_Verbosity < 0 || m_Verbosity > 5)
-                helper::Throw<std::invalid_argument>(
-                    "Engine", "SkeletonWriter", "InitParameters",
-                    "Method verbose argument must be an "
-                    "integer in the range [0,5], in call to "
-                    "Open or Engine constructor");
+                helper::Throw<std::invalid_argument>("Engine", "SkeletonWriter", "InitParameters",
+                                                     "Method verbose argument must be an "
+                                                     "integer in the range [0,5], in call to "
+                                                     "Open or Engine constructor");
         }
     }
 }
@@ -150,8 +146,7 @@ void SkeletonWriter::DoClose(const int transportIndex)
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Writer " << m_WriterRank << " Close(" << m_Name
-                  << ")\n";
+        std::cout << "Skeleton Writer " << m_WriterRank << " Close(" << m_Name << ")\n";
     }
 }
 

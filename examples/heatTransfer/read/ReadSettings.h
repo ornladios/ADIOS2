@@ -33,10 +33,8 @@ public:
     unsigned int posy; // Position of this process in Y dimension
 
     // Calculated in DecomposeArray
-    std::vector<size_t>
-        readsize; // Local array size in X-Y dimensions per process
-    std::vector<size_t>
-        offset; // Offset of local array in X-Y dimensions on this process
+    std::vector<size_t> readsize; // Local array size in X-Y dimensions per process
+    std::vector<size_t> offset;   // Offset of local array in X-Y dimensions on this process
 
     ReadSettings(int argc, char *argv[], int rank, int nproc);
     void DecomposeArray(int gndx, int gndy);

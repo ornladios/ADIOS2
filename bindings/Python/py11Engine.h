@@ -45,18 +45,15 @@ public:
 
     explicit operator bool() const noexcept;
 
-    StepStatus BeginStep(const StepMode mode,
-                         const float timeoutSeconds = -1.f);
+    StepStatus BeginStep(const StepMode mode, const float timeoutSeconds = -1.f);
     StepStatus BeginStep();
 
-    void Put(Variable variable, const pybind11::array &array,
-             const Mode launch = Mode::Deferred);
+    void Put(Variable variable, const pybind11::array &array, const Mode launch = Mode::Deferred);
     void Put(Variable variable, const std::string &string);
     void PerformPuts();
     void PerformDataWrite();
 
-    void Get(Variable variable, pybind11::array &array,
-             const Mode launch = Mode::Deferred);
+    void Get(Variable variable, pybind11::array &array, const Mode launch = Mode::Deferred);
     std::string Get(Variable variable, const Mode launch = Mode::Deferred);
 
     void PerformGets();
@@ -75,8 +72,8 @@ public:
     void LockWriterDefinitions() const;
     void LockReaderSelections() const;
 
-    std::vector<std::map<std::string, std::string>>
-    BlocksInfo(std::string &string, const size_t step) const;
+    std::vector<std::map<std::string, std::string>> BlocksInfo(std::string &string,
+                                                               const size_t step) const;
 
 private:
     Engine(core::Engine *engine);

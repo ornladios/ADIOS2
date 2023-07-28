@@ -34,9 +34,8 @@ struct iovec
 };
 
 typedef std::chrono::duration<double> Seconds;
-typedef std::chrono::time_point<
-    std::chrono::steady_clock,
-    std::chrono::duration<double, std::chrono::steady_clock::period>>
+typedef std::chrono::time_point<std::chrono::steady_clock,
+                                std::chrono::duration<double, std::chrono::steady_clock::period>>
     TimePoint;
 
 inline TimePoint Now() { return std::chrono::steady_clock::now(); }

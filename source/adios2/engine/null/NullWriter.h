@@ -28,13 +28,11 @@ class NullWriter : public core::Engine
 {
 
 public:
-    NullWriter(IO &io, const std::string &name, const Mode mode,
-               helper::Comm comm);
+    NullWriter(IO &io, const std::string &name, const Mode mode, helper::Comm comm);
 
     virtual ~NullWriter();
 
-    StepStatus BeginStep(StepMode mode,
-                         const float timeoutSeconds = -1.0) override;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0) override;
     size_t CurrentStep() const override;
     void EndStep() override;
     void PerformPuts() override;
@@ -42,15 +40,15 @@ public:
 
 protected:
     // Put
-#define declare_type(T)                                                        \
-    void DoPut(Variable<T> &variable, typename Variable<T>::Span &span,        \
-               const bool initialize, const T &value) override;
+#define declare_type(T)                                                                            \
+    void DoPut(Variable<T> &variable, typename Variable<T>::Span &span, const bool initialize,     \
+               const T &value) override;
 
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-#define declare_type(T)                                                        \
-    void DoPutSync(Variable<T> &, const T *) override;                         \
+#define declare_type(T)                                                                            \
+    void DoPutSync(Variable<T> &, const T *) override;                                             \
     void DoPutDeferred(Variable<T> &, const T *) override;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

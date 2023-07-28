@@ -19,14 +19,12 @@ namespace engine
 namespace ssc
 {
 
-SscWriterGeneric::SscWriterGeneric(IO &io, const std::string &name,
-                                   const Mode mode, MPI_Comm comm)
+SscWriterGeneric::SscWriterGeneric(IO &io, const std::string &name, const Mode mode, MPI_Comm comm)
 : SscWriterBase(io, name, mode, comm)
 {
 }
 
-StepStatus SscWriterGeneric::BeginStep(const StepMode mode,
-                                       const float timeoutSeconds,
+StepStatus SscWriterGeneric::BeginStep(const StepMode mode, const float timeoutSeconds,
                                        const bool writerLocked)
 {
 
@@ -54,8 +52,8 @@ StepStatus SscWriterGeneric::BeginStep(const StepMode mode,
     {
         if (m_WriterDefinitionsLocked && m_ReaderSelectionsLocked)
         {
-            MPI_Waitall(static_cast<int>(m_MpiRequests.size()),
-                        m_MpiRequests.data(), MPI_STATUSES_IGNORE);
+            MPI_Waitall(static_cast<int>(m_MpiRequests.size()), m_MpiRequests.data(),
+                        MPI_STATUSES_IGNORE);
             m_MpiRequests.clear();
         }
         else
@@ -80,8 +78,7 @@ void SscWriterGeneric::EndStep(const bool writerLocked)
     {
         if (m_Threading)
         {
-            m_EndStepThread =
-                std::thread(&SscWriterGeneric::EndStepFirst, this);
+            m_EndStepThread = std::thread(&SscWriterGeneric::EndStepFirst, this);
         }
         else
         {
@@ -98,8 +95,7 @@ void SscWriterGeneric::EndStep(const bool writerLocked)
         {
             if (m_Threading)
             {
-                m_EndStepThread = std::thread(
-                    &SscWriterGeneric::EndStepConsequentFlexible, this);
+                m_EndStepThread = std::thread(&SscWriterGeneric::EndStepConsequentFlexible, this);
             }
             else
             {
@@ -120,8 +116,8 @@ void SscWriterGeneric::Close(const int transportIndex)
     {
         if (m_CurrentStep > 0)
         {
-            MPI_Waitall(static_cast<int>(m_MpiRequests.size()),
-                        m_MpiRequests.data(), MPI_STATUSES_IGNORE);
+            MPI_Waitall(static_cast<int>(m_MpiRequests.size()), m_MpiRequests.data(),
+                        MPI_STATUSES_IGNORE);
             m_MpiRequests.clear();
         }
 
@@ -131,11 +127,9 @@ void SscWriterGeneric::Close(const int transportIndex)
         for (const auto &i : m_AllSendingReaderRanks)
         {
             requests.emplace_back();
-            MPI_Isend(m_Buffer.data(), 1, MPI_CHAR, i.first, 0, m_StreamComm,
-                      &requests.back());
+            MPI_Isend(m_Buffer.data(), 1, MPI_CHAR, i.first, 0, m_StreamComm, &requests.back());
         }
-        MPI_Waitall(static_cast<int>(requests.size()), requests.data(),
-                    MPI_STATUS_IGNORE);
+        MPI_Waitall(static_cast<int>(requests.size()), requests.data(), MPI_STATUS_IGNORE);
     }
     else
     {
@@ -185,21 +179,18 @@ void SscWriterGeneric::PutDeferred(VariableBase &variable, const void *data)
                 std::memcpy(m_Buffer.data() + b.bufferStart, dataString->data(),
                             dataString->size());
                 b.value.resize(dataString->size());
-                std::memcpy(b.value.data(), dataString->data(),
-                            dataString->size());
+                std::memcpy(b.value.data(), dataString->data(), dataString->size());
             }
             else
             {
-                helper::Throw<std::invalid_argument>(
-                    "Engine", "SSCWriter", "PutDeferredCommon",
-                    "IO pattern changed after locking");
+                helper::Throw<std::invalid_argument>("Engine", "SSCWriter", "PutDeferredCommon",
+                                                     "IO pattern changed after locking");
             }
         }
         return;
     }
 
-    if ((variable.m_ShapeID == ShapeID::GlobalValue ||
-         variable.m_ShapeID == ShapeID::LocalValue ||
+    if ((variable.m_ShapeID == ShapeID::GlobalValue || variable.m_ShapeID == ShapeID::LocalValue ||
          variable.m_Type == DataType::String) &&
         m_WriterRank != 0)
     {
@@ -221,8 +212,7 @@ void SscWriterGeneric::PutDeferred(VariableBase &variable, const void *data)
     for (const auto &b : m_GlobalWritePattern[m_StreamRank])
     {
         if (b.name == variable.m_Name && ssc::AreSameDims(vStart, b.start) &&
-            ssc::AreSameDims(vCount, b.count) &&
-            ssc::AreSameDims(vShape, b.shape))
+            ssc::AreSameDims(vCount, b.count) && ssc::AreSameDims(vShape, b.shape))
         {
             std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
             found = true;
@@ -244,12 +234,10 @@ void SscWriterGeneric::PutDeferred(VariableBase &variable, const void *data)
             b.count = vCount;
             b.elementSize = variable.m_ElementSize;
             b.bufferStart = m_Buffer.size();
-            b.bufferCount =
-                ssc::TotalDataSize(b.count, b.elementSize, b.shapeId);
+            b.bufferCount = ssc::TotalDataSize(b.count, b.elementSize, b.shapeId);
             m_Buffer.resize(b.bufferStart + b.bufferCount);
             std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
-            if (b.shapeId == ShapeID::GlobalValue ||
-                b.shapeId == ShapeID::LocalValue)
+            if (b.shapeId == ShapeID::GlobalValue || b.shapeId == ShapeID::LocalValue)
             {
                 b.value.resize(variable.m_ElementSize);
                 std::memcpy(b.value.data(), data, b.bufferCount);
@@ -262,9 +250,8 @@ void SscWriterGeneric::PutDeferred(VariableBase &variable, const void *data)
         }
         else
         {
-            helper::Throw<std::invalid_argument>(
-                "Engine", "SSCWriter", "PutDeferredCommon",
-                "IO pattern changed after locking");
+            helper::Throw<std::invalid_argument>("Engine", "SSCWriter", "PutDeferredCommon",
+                                                 "IO pattern changed after locking");
         }
     }
 }
@@ -272,8 +259,7 @@ void SscWriterGeneric::PutDeferred(VariableBase &variable, const void *data)
 void SscWriterGeneric::EndStepFirst()
 {
     SyncWritePattern();
-    MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
-                   m_StreamComm, &m_MpiWin);
+    MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL, m_StreamComm, &m_MpiWin);
     MPI_Win_free(&m_MpiWin);
     SyncReadPattern();
 }
@@ -283,32 +269,29 @@ void SscWriterGeneric::EndStepConsequentFixed()
     for (const auto &i : m_AllSendingReaderRanks)
     {
         m_MpiRequests.emplace_back();
-        MPI_Isend(m_Buffer.data(), static_cast<int>(m_Buffer.size()), MPI_CHAR,
-                  i.first, 0, m_StreamComm, &m_MpiRequests.back());
+        MPI_Isend(m_Buffer.data(), static_cast<int>(m_Buffer.size()), MPI_CHAR, i.first, 0,
+                  m_StreamComm, &m_MpiRequests.back());
     }
 }
 
 void SscWriterGeneric::EndStepConsequentFlexible()
 {
     SyncWritePattern();
-    MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL,
-                   m_StreamComm, &m_MpiWin);
+    MPI_Win_create(m_Buffer.data(), m_Buffer.size(), 1, MPI_INFO_NULL, m_StreamComm, &m_MpiWin);
 }
 
 void SscWriterGeneric::SyncWritePattern(bool finalStep)
 {
 
-    helper::Log("Engine", "SscWriter", "SyncWritePattern", "",
-                m_Verbosity >= 10 ? m_WriterRank : 0, m_WriterRank, 5,
-                m_Verbosity, helper::LogMode::INFO);
+    helper::Log("Engine", "SscWriter", "SyncWritePattern", "", m_Verbosity >= 10 ? m_WriterRank : 0,
+                m_WriterRank, 5, m_Verbosity, helper::LogMode::INFO);
 
     ssc::Buffer localBuffer(8);
     localBuffer.value<uint64_t>() = 8;
 
     if (m_WriterRank == 0)
     {
-        ssc::SerializeStructDefinitions(m_IO.m_ADIOS.m_StructDefinitions,
-                                        localBuffer);
+        ssc::SerializeStructDefinitions(m_IO.m_ADIOS.m_StructDefinitions, localBuffer);
     }
 
     if (m_WriterRank == m_WriterSize - 1)
@@ -316,19 +299,17 @@ void SscWriterGeneric::SyncWritePattern(bool finalStep)
         ssc::SerializeAttributes(m_IO, localBuffer);
     }
 
-    ssc::SerializeVariables(m_GlobalWritePattern[m_StreamRank], localBuffer,
-                            m_StreamRank);
+    ssc::SerializeVariables(m_GlobalWritePattern[m_StreamRank], localBuffer, m_StreamRank);
 
     ssc::Buffer globalBuffer;
 
     ssc::AggregateMetadata(localBuffer, globalBuffer, m_WriterComm, finalStep,
                            m_WriterDefinitionsLocked);
 
-    ssc::BroadcastMetadata(globalBuffer, m_WriterMasterStreamRank,
-                           m_StreamComm);
+    ssc::BroadcastMetadata(globalBuffer, m_WriterMasterStreamRank, m_StreamComm);
 
-    ssc::Deserialize(globalBuffer, m_GlobalWritePattern, m_IO, false, false,
-                     false, m_StructDefinitions);
+    ssc::Deserialize(globalBuffer, m_GlobalWritePattern, m_IO, false, false, false,
+                     m_StructDefinitions);
 
     if (m_Verbosity >= 20 && m_WriterRank == 0)
     {
@@ -339,21 +320,19 @@ void SscWriterGeneric::SyncWritePattern(bool finalStep)
 void SscWriterGeneric::SyncReadPattern()
 {
 
-    helper::Log("Engine", "SscWriter", "SyncReadPattern", "",
-                m_Verbosity >= 10 ? m_WriterRank : 0, m_WriterRank, 5,
-                m_Verbosity, helper::LogMode::INFO);
+    helper::Log("Engine", "SscWriter", "SyncReadPattern", "", m_Verbosity >= 10 ? m_WriterRank : 0,
+                m_WriterRank, 5, m_Verbosity, helper::LogMode::INFO);
 
     ssc::Buffer globalBuffer;
 
-    ssc::BroadcastMetadata(globalBuffer, m_ReaderMasterStreamRank,
-                           m_StreamComm);
+    ssc::BroadcastMetadata(globalBuffer, m_ReaderMasterStreamRank, m_StreamComm);
 
     m_ReaderSelectionsLocked = globalBuffer[1];
 
-    ssc::Deserialize(globalBuffer, m_GlobalReadPattern, m_IO, false, false,
-                     false, m_StructDefinitions);
-    m_AllSendingReaderRanks = ssc::CalculateOverlap(
-        m_GlobalReadPattern, m_GlobalWritePattern[m_StreamRank]);
+    ssc::Deserialize(globalBuffer, m_GlobalReadPattern, m_IO, false, false, false,
+                     m_StructDefinitions);
+    m_AllSendingReaderRanks =
+        ssc::CalculateOverlap(m_GlobalReadPattern, m_GlobalWritePattern[m_StreamRank]);
     CalculatePosition(m_GlobalWritePattern, m_GlobalReadPattern, m_WriterRank,
                       m_AllSendingReaderRanks);
 
@@ -365,8 +344,7 @@ void SscWriterGeneric::SyncReadPattern()
             if (i == m_WriterRank)
             {
                 ssc::PrintRankPosMap(m_AllSendingReaderRanks,
-                                     "Rank Pos Map for Writer " +
-                                         std::to_string(m_WriterRank));
+                                     "Rank Pos Map for Writer " + std::to_string(m_WriterRank));
             }
         }
         MPI_Barrier(m_WriterComm);
@@ -374,15 +352,13 @@ void SscWriterGeneric::SyncReadPattern()
 }
 
 void SscWriterGeneric::CalculatePosition(ssc::BlockVecVec &writerVecVec,
-                                         ssc::BlockVecVec &readerVecVec,
-                                         const int writerRank,
+                                         ssc::BlockVecVec &readerVecVec, const int writerRank,
                                          ssc::RankPosMap &allOverlapRanks)
 {
     for (auto &overlapRank : allOverlapRanks)
     {
         auto &readerRankMap = readerVecVec[overlapRank.first];
-        auto currentReaderOverlapWriterRanks =
-            CalculateOverlap(writerVecVec, readerRankMap);
+        auto currentReaderOverlapWriterRanks = CalculateOverlap(writerVecVec, readerRankMap);
         size_t bufferPosition = 0;
         for (int rank = 0; rank < static_cast<int>(writerVecVec.size()); ++rank)
         {
@@ -400,13 +376,11 @@ void SscWriterGeneric::CalculatePosition(ssc::BlockVecVec &writerVecVec,
                 currentReaderOverlapWriterRanks[rank].first = bufferPosition;
                 auto &bv = writerVecVec[rank];
                 size_t currentRankTotalSize = TotalDataSize(bv) + 1;
-                currentReaderOverlapWriterRanks[rank].second =
-                    currentRankTotalSize;
+                currentReaderOverlapWriterRanks[rank].second = currentRankTotalSize;
                 bufferPosition += currentRankTotalSize;
             }
         }
-        allOverlapRanks[overlapRank.first] =
-            currentReaderOverlapWriterRanks[writerRank];
+        allOverlapRanks[overlapRank.first] = currentReaderOverlapWriterRanks[writerRank];
     }
 }
 

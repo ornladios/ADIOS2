@@ -68,30 +68,23 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead1D8)
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
         }
 
@@ -118,8 +111,8 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead1D8)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
@@ -137,8 +130,7 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead1D8)
             // Make a 1D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
             const adios2::Box<adios2::Dims> sel1({mpiRank * Nx}, {Nx / 2});
-            const adios2::Box<adios2::Dims> sel2({mpiRank * Nx + Nx / 2},
-                                                 {Nx - Nx / 2});
+            const adios2::Box<adios2::Dims> sel2({mpiRank * Nx + Nx / 2}, {Nx - Nx / 2});
 
             bpWriter.BeginStep();
             bpWriter.Put(var_iString, currentTestData.S1);
@@ -208,8 +200,7 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead1D8)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -326,8 +317,8 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead1D8)
             var_r64.SetStepSelection({t, 1});
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             bpReader.Get(var_iString, IString);
 
@@ -417,30 +408,23 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead2D2x4)
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
         }
 
@@ -460,8 +444,8 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead2D2x4)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
@@ -478,11 +462,11 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead2D2x4)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            const adios2::Box<adios2::Dims> sel1(
-                {0, static_cast<size_t>(mpiRank * Nx)}, {Ny / 2, Nx});
+            const adios2::Box<adios2::Dims> sel1({0, static_cast<size_t>(mpiRank * Nx)},
+                                                 {Ny / 2, Nx});
 
-            const adios2::Box<adios2::Dims> sel2(
-                {Ny / 2, static_cast<size_t>(mpiRank * Nx)}, {Ny - Ny / 2, Nx});
+            const adios2::Box<adios2::Dims> sel2({Ny / 2, static_cast<size_t>(mpiRank * Nx)},
+                                                 {Ny - Ny / 2, Nx});
 
             bpWriter.BeginStep();
             bpWriter.Put(var_iString, currentTestData.S1);
@@ -552,8 +536,7 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead2D2x4)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -693,8 +676,8 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead2D2x4)
             bpReader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString, currentTestData.S1);
 
@@ -762,34 +745,26 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead2D4x2)
                                static_cast<unsigned int>(mpiSize * Nx)};
             adios2::Dims start{static_cast<unsigned int>(0),
                                static_cast<unsigned int>(mpiRank * Nx)};
-            adios2::Dims count{static_cast<unsigned int>(Ny),
-                               static_cast<unsigned int>(Nx)};
+            adios2::Dims count{static_cast<unsigned int>(Ny), static_cast<unsigned int>(Nx)};
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
         }
 
@@ -810,8 +785,8 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead2D4x2)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_i8 = io.InquireVariable<int8_t>("i8");
@@ -827,11 +802,11 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead2D4x2)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            const adios2::Box<adios2::Dims> sel1(
-                {0, static_cast<size_t>(mpiRank * Nx)}, {Ny / 2, Nx});
+            const adios2::Box<adios2::Dims> sel1({0, static_cast<size_t>(mpiRank * Nx)},
+                                                 {Ny / 2, Nx});
 
-            const adios2::Box<adios2::Dims> sel2(
-                {Ny / 2, static_cast<size_t>(mpiRank * Nx)}, {Ny - Ny / 2, Nx});
+            const adios2::Box<adios2::Dims> sel2({Ny / 2, static_cast<size_t>(mpiRank * Nx)},
+                                                 {Ny - Ny / 2, Nx});
 
             bpWriter.BeginStep();
 
@@ -900,8 +875,7 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead2D4x2)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
@@ -1036,8 +1010,8 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteMultiblockRead2D4x2)
             bpReader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
@@ -1101,30 +1075,23 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteRead1D8ZeroBlock)
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
         }
 
@@ -1151,8 +1118,8 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteRead1D8ZeroBlock)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
@@ -1169,9 +1136,8 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteRead1D8ZeroBlock)
 
             // Make a 1D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            const adios2::Box<adios2::Dims> sel2(
-                {static_cast<std::size_t>(mpiRank * Nx + Nx / 2)},
-                {Nx - Nx / 2});
+            const adios2::Box<adios2::Dims> sel2({static_cast<std::size_t>(mpiRank * Nx + Nx / 2)},
+                                                 {Nx - Nx / 2});
 
             const adios2::Box<adios2::Dims> selNull({mpiRank * Nx}, {0});
 
@@ -1248,8 +1214,7 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteRead1D8ZeroBlock)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -1366,8 +1331,8 @@ TEST_F(BPWriteMultiblockReadTest, ADIOS2BPWriteRead1D8ZeroBlock)
             var_r64.SetStepSelection({t, 1});
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             bpReader.Get(var_iString, IString);
 

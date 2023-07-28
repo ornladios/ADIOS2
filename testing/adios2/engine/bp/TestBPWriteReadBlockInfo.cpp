@@ -31,8 +31,7 @@ namespace
 
 template <class T>
 void CheckAllStepsBlockInfo1D(
-    const std::vector<std::vector<typename adios2::Variable<T>::Info>>
-        &allStepsBlocksInfo,
+    const std::vector<std::vector<typename adios2::Variable<T>::Info>> &allStepsBlocksInfo,
     const size_t NSteps, const size_t Nx)
 {
     EXPECT_EQ(allStepsBlocksInfo.size(), NSteps);
@@ -51,9 +50,8 @@ void CheckAllStepsBlockInfo1D(
     }
 }
 
-void CheckStepsBlockInfo1D_C(adios2_variable *var, adios2_varinfo *vi,
-                             const size_t NSteps, const size_t nproc,
-                             const size_t Nx)
+void CheckStepsBlockInfo1D_C(adios2_variable *var, adios2_varinfo *vi, const size_t NSteps,
+                             const size_t nproc, const size_t Nx)
 {
     (void)NSteps;
     EXPECT_EQ(vi->nblocks, nproc);
@@ -79,9 +77,8 @@ void CheckStepsBlockInfo1D_C(adios2_variable *var, adios2_varinfo *vi,
     else
     {
         // std::cout << "Unexpected shape ID " << std::endl;
-        throw std::invalid_argument(
-            "Variable " + std::string(name) +
-            " is expected to be a global value or array ");
+        throw std::invalid_argument("Variable " + std::string(name) +
+                                    " is expected to be a global value or array ");
     }
 
     EXPECT_FALSE(vi->IsReverseDims);
@@ -107,8 +104,7 @@ void CheckStepsBlockInfo1D_C(adios2_variable *var, adios2_varinfo *vi,
 
 template <class T>
 void CheckAllStepsBlockInfo2D(
-    const std::vector<std::vector<typename adios2::Variable<T>::Info>>
-        &allStepsBlocksInfo,
+    const std::vector<std::vector<typename adios2::Variable<T>::Info>> &allStepsBlocksInfo,
     const size_t NSteps, const size_t Nx, const size_t Ny)
 {
     EXPECT_EQ(allStepsBlocksInfo.size(), NSteps);
@@ -165,10 +161,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_local =
-            io.DefineVariable<int32_t>("local", {adios2::LocalValueDim});
-        auto var_localStr =
-            io.DefineVariable<std::string>("localStr", {adios2::LocalValueDim});
+        auto var_local = io.DefineVariable<int32_t>("local", {adios2::LocalValueDim});
+        auto var_localStr = io.DefineVariable<std::string>("localStr", {adios2::LocalValueDim});
 
         auto var_iString = io.DefineVariable<std::string>("iString");
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
@@ -181,10 +175,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
-        auto var_cr32 =
-            io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
-                                                                start, count);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
 
         if (!engineName.empty())
         {
@@ -202,8 +194,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             bpWriter.BeginStep();
 
@@ -240,8 +232,7 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         {
             io.SetEngine("BPFile");
         }
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_local = io.InquireVariable<int32_t>("local");
         auto var_localStr = io.InquireVariable<std::string>("localStr");
@@ -260,33 +251,31 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
         auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
 
-        const std::vector<std::vector<adios2::Variable<int8_t>::Info>>
-            allStepsBlocksInfoI8 = var_i8.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<int16_t>::Info>>
-            allStepsBlocksInfoI16 = var_i16.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<int32_t>::Info>>
-            allStepsBlocksInfoI32 = var_i32.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<int64_t>::Info>>
-            allStepsBlocksInfoI64 = var_i64.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<uint8_t>::Info>>
-            allStepsBlocksInfoU8 = var_u8.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<uint16_t>::Info>>
-            allStepsBlocksInfoU16 = var_u16.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<uint32_t>::Info>>
-            allStepsBlocksInfoU32 = var_u32.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<uint64_t>::Info>>
-            allStepsBlocksInfoU64 = var_u64.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<int8_t>::Info>> allStepsBlocksInfoI8 =
+            var_i8.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<int16_t>::Info>> allStepsBlocksInfoI16 =
+            var_i16.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<int32_t>::Info>> allStepsBlocksInfoI32 =
+            var_i32.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<int64_t>::Info>> allStepsBlocksInfoI64 =
+            var_i64.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<uint8_t>::Info>> allStepsBlocksInfoU8 =
+            var_u8.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<uint16_t>::Info>> allStepsBlocksInfoU16 =
+            var_u16.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<uint32_t>::Info>> allStepsBlocksInfoU32 =
+            var_u32.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<uint64_t>::Info>> allStepsBlocksInfoU64 =
+            var_u64.AllStepsBlocksInfo();
 
-        const std::vector<std::vector<adios2::Variable<float>::Info>>
-            allStepsBlocksInfoR32 = var_r32.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<double>::Info>>
-            allStepsBlocksInfoR64 = var_r64.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<float>::Info>> allStepsBlocksInfoR32 =
+            var_r32.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<double>::Info>> allStepsBlocksInfoR64 =
+            var_r64.AllStepsBlocksInfo();
 
-        const std::vector<
-            std::vector<adios2::Variable<std::complex<float>>::Info>>
+        const std::vector<std::vector<adios2::Variable<std::complex<float>>::Info>>
             allStepsBlocksInfoCR32 = var_cr32.AllStepsBlocksInfo();
-        const std::vector<
-            std::vector<adios2::Variable<std::complex<double>>::Info>>
+        const std::vector<std::vector<adios2::Variable<std::complex<double>>::Info>>
             allStepsBlocksInfoCR64 = var_cr64.AllStepsBlocksInfo();
 
         EXPECT_EQ(allStepsBlocksInfoI8.size(), NSteps);
@@ -312,10 +301,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
         CheckAllStepsBlockInfo1D<uint64_t>(allStepsBlocksInfoU64, NSteps, Nx);
         CheckAllStepsBlockInfo1D<float>(allStepsBlocksInfoR32, NSteps, Nx);
         CheckAllStepsBlockInfo1D<double>(allStepsBlocksInfoR64, NSteps, Nx);
-        CheckAllStepsBlockInfo1D<std::complex<float>>(allStepsBlocksInfoCR32,
-                                                      NSteps, Nx);
-        CheckAllStepsBlockInfo1D<std::complex<double>>(allStepsBlocksInfoCR64,
-                                                       NSteps, Nx);
+        CheckAllStepsBlockInfo1D<std::complex<float>>(allStepsBlocksInfoCR32, NSteps, Nx);
+        CheckAllStepsBlockInfo1D<std::complex<double>>(allStepsBlocksInfoCR64, NSteps, Nx);
 
         // TODO: other types
 
@@ -373,8 +360,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8)
             var_cr64.SetStepSelection({t, 1});
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             bpReader.Get(var_iString, IString);
 
@@ -508,10 +495,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
         auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
-        auto var_cr32 =
-            io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
-                                                                start, count);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
 
         if (!engineName.empty())
         {
@@ -529,8 +514,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             bpWriter.BeginStep();
             bpWriter.Put(var_iString, currentTestData.S1);
@@ -564,8 +549,7 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
             // Create the BP Engine
             io.SetEngine("BPFile");
         }
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         auto var_i8 = io.InquireVariable<int8_t>("i8");
@@ -581,31 +565,29 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
         auto var_cr32 = io.InquireVariable<std::complex<float>>("cr32");
         auto var_cr64 = io.InquireVariable<std::complex<double>>("cr64");
 
-        const std::vector<std::vector<adios2::Variable<int8_t>::Info>>
-            allStepsBlocksInfoI8 = var_i8.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<int16_t>::Info>>
-            allStepsBlocksInfoI16 = var_i16.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<int32_t>::Info>>
-            allStepsBlocksInfoI32 = var_i32.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<int64_t>::Info>>
-            allStepsBlocksInfoI64 = var_i64.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<uint8_t>::Info>>
-            allStepsBlocksInfoU8 = var_u8.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<uint16_t>::Info>>
-            allStepsBlocksInfoU16 = var_u16.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<uint32_t>::Info>>
-            allStepsBlocksInfoU32 = var_u32.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<uint64_t>::Info>>
-            allStepsBlocksInfoU64 = var_u64.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<float>::Info>>
-            allStepsBlocksInfoR32 = var_r32.AllStepsBlocksInfo();
-        const std::vector<std::vector<adios2::Variable<double>::Info>>
-            allStepsBlocksInfoR64 = var_r64.AllStepsBlocksInfo();
-        const std::vector<
-            std::vector<adios2::Variable<std::complex<float>>::Info>>
+        const std::vector<std::vector<adios2::Variable<int8_t>::Info>> allStepsBlocksInfoI8 =
+            var_i8.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<int16_t>::Info>> allStepsBlocksInfoI16 =
+            var_i16.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<int32_t>::Info>> allStepsBlocksInfoI32 =
+            var_i32.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<int64_t>::Info>> allStepsBlocksInfoI64 =
+            var_i64.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<uint8_t>::Info>> allStepsBlocksInfoU8 =
+            var_u8.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<uint16_t>::Info>> allStepsBlocksInfoU16 =
+            var_u16.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<uint32_t>::Info>> allStepsBlocksInfoU32 =
+            var_u32.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<uint64_t>::Info>> allStepsBlocksInfoU64 =
+            var_u64.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<float>::Info>> allStepsBlocksInfoR32 =
+            var_r32.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<double>::Info>> allStepsBlocksInfoR64 =
+            var_r64.AllStepsBlocksInfo();
+        const std::vector<std::vector<adios2::Variable<std::complex<float>>::Info>>
             allStepsBlocksInfoCR32 = var_cr32.AllStepsBlocksInfo();
-        const std::vector<
-            std::vector<adios2::Variable<std::complex<double>>::Info>>
+        const std::vector<std::vector<adios2::Variable<std::complex<double>>::Info>>
             allStepsBlocksInfoCR64 = var_cr64.AllStepsBlocksInfo();
 
         EXPECT_EQ(allStepsBlocksInfoI8.size(), NSteps);
@@ -622,25 +604,17 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
         EXPECT_EQ(allStepsBlocksInfoCR64.size(), NSteps);
 
         CheckAllStepsBlockInfo2D<int8_t>(allStepsBlocksInfoI8, NSteps, Nx, Ny);
-        CheckAllStepsBlockInfo2D<int16_t>(allStepsBlocksInfoI16, NSteps, Nx,
-                                          Ny);
-        CheckAllStepsBlockInfo2D<int32_t>(allStepsBlocksInfoI32, NSteps, Nx,
-                                          Ny);
-        CheckAllStepsBlockInfo2D<int64_t>(allStepsBlocksInfoI64, NSteps, Nx,
-                                          Ny);
+        CheckAllStepsBlockInfo2D<int16_t>(allStepsBlocksInfoI16, NSteps, Nx, Ny);
+        CheckAllStepsBlockInfo2D<int32_t>(allStepsBlocksInfoI32, NSteps, Nx, Ny);
+        CheckAllStepsBlockInfo2D<int64_t>(allStepsBlocksInfoI64, NSteps, Nx, Ny);
         CheckAllStepsBlockInfo2D<uint8_t>(allStepsBlocksInfoU8, NSteps, Nx, Ny);
-        CheckAllStepsBlockInfo2D<uint16_t>(allStepsBlocksInfoU16, NSteps, Nx,
-                                           Ny);
-        CheckAllStepsBlockInfo2D<uint32_t>(allStepsBlocksInfoU32, NSteps, Nx,
-                                           Ny);
-        CheckAllStepsBlockInfo2D<uint64_t>(allStepsBlocksInfoU64, NSteps, Nx,
-                                           Ny);
+        CheckAllStepsBlockInfo2D<uint16_t>(allStepsBlocksInfoU16, NSteps, Nx, Ny);
+        CheckAllStepsBlockInfo2D<uint32_t>(allStepsBlocksInfoU32, NSteps, Nx, Ny);
+        CheckAllStepsBlockInfo2D<uint64_t>(allStepsBlocksInfoU64, NSteps, Nx, Ny);
         CheckAllStepsBlockInfo2D<float>(allStepsBlocksInfoR32, NSteps, Nx, Ny);
         CheckAllStepsBlockInfo2D<double>(allStepsBlocksInfoR64, NSteps, Nx, Ny);
-        CheckAllStepsBlockInfo2D<std::complex<float>>(allStepsBlocksInfoCR32,
-                                                      NSteps, Nx, Ny);
-        CheckAllStepsBlockInfo2D<std::complex<double>>(allStepsBlocksInfoCR64,
-                                                       NSteps, Nx, Ny);
+        CheckAllStepsBlockInfo2D<std::complex<float>>(allStepsBlocksInfoCR32, NSteps, Nx, Ny);
+        CheckAllStepsBlockInfo2D<std::complex<double>>(allStepsBlocksInfoCR64, NSteps, Nx, Ny);
 
         std::string IString;
         std::array<int8_t, Nx * Ny> I8;
@@ -709,8 +683,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo2D2x4)
             bpReader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString, currentTestData.S1);
 
@@ -772,10 +746,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_local =
-            io.DefineVariable<int32_t>("local", {adios2::LocalValueDim});
-        auto var_localStr =
-            io.DefineVariable<std::string>("localStr", {adios2::LocalValueDim});
+        auto var_local = io.DefineVariable<int32_t>("local", {adios2::LocalValueDim});
+        auto var_localStr = io.DefineVariable<std::string>("localStr", {adios2::LocalValueDim});
 
         auto var_iString = io.DefineVariable<std::string>("iString");
         auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
@@ -788,10 +760,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
         auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
-        auto var_cr32 =
-            io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
-                                                                start, count);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
 
         if (!engineName.empty())
         {
@@ -809,8 +779,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             bpWriter.BeginStep();
 
@@ -853,8 +823,7 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
             adios2_set_engine(ioR, "BPFile");
         }
 
-        adios2_engine *engineR =
-            adios2_open(ioR, fname.data(), adios2_mode_read);
+        adios2_engine *engineR = adios2_open(ioR, fname.data(), adios2_mode_read);
 
         for (size_t t = 0; t < NSteps; ++t)
         {
@@ -866,38 +835,32 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
             {
                 auto *var_local = adios2_inquire_variable(ioR, "local");
                 EXPECT_NE(var_local, nullptr);
-                adios2_varinfo *vi_local =
-                    adios2_inquire_blockinfo(engineR, var_local, 0);
+                adios2_varinfo *vi_local = adios2_inquire_blockinfo(engineR, var_local, 0);
                 CheckStepsBlockInfo1D_C(var_local, vi_local, t, mpiSize, 1);
             }
             {
                 auto *var_localStr = adios2_inquire_variable(ioR, "localStr");
 
                 EXPECT_NE(var_localStr, nullptr);
-                adios2_varinfo *vi_localStr =
-                    adios2_inquire_blockinfo(engineR, var_localStr, 0);
-                CheckStepsBlockInfo1D_C(var_localStr, vi_localStr, t, mpiSize,
-                                        1);
+                adios2_varinfo *vi_localStr = adios2_inquire_blockinfo(engineR, var_localStr, 0);
+                CheckStepsBlockInfo1D_C(var_localStr, vi_localStr, t, mpiSize, 1);
             }
             {
                 auto *var_iString = adios2_inquire_variable(ioR, "iString");
                 EXPECT_NE(var_iString, nullptr);
-                adios2_varinfo *vi_iString =
-                    adios2_inquire_blockinfo(engineR, var_iString, 0);
+                adios2_varinfo *vi_iString = adios2_inquire_blockinfo(engineR, var_iString, 0);
                 CheckStepsBlockInfo1D_C(var_iString, vi_iString, t, mpiSize, 1);
             }
             {
                 auto *var_i8 = adios2_inquire_variable(ioR, "i8");
                 EXPECT_NE(var_i8, nullptr);
-                adios2_varinfo *vi_i8 =
-                    adios2_inquire_blockinfo(engineR, var_i8, 0);
+                adios2_varinfo *vi_i8 = adios2_inquire_blockinfo(engineR, var_i8, 0);
                 CheckStepsBlockInfo1D_C(var_i8, vi_i8, t, mpiSize, Nx);
             }
             {
                 auto *var_r64 = adios2_inquire_variable(ioR, "r64");
                 EXPECT_NE(var_r64, nullptr);
-                adios2_varinfo *vi_r64 =
-                    adios2_inquire_blockinfo(engineR, var_r64, 0);
+                adios2_varinfo *vi_r64 = adios2_inquire_blockinfo(engineR, var_r64, 0);
                 CheckStepsBlockInfo1D_C(var_r64, vi_r64, t, mpiSize, Nx);
             }
             /*

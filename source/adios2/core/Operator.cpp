@@ -23,29 +23,26 @@ Operator::Operator(const std::string &typeString, const OperatorType typeEnum,
 {
 }
 
-void Operator::SetParameter(const std::string key,
-                            const std::string value) noexcept
+void Operator::SetParameter(const std::string key, const std::string value) noexcept
 {
     m_Parameters[helper::LowerCase(key)] = value;
 }
 
 Params &Operator::GetParameters() noexcept { return m_Parameters; }
 
-#define declare_type(T)                                                        \
-                                                                               \
-    void Operator::RunCallback1(                                               \
-        const T *arg0, const std::string &arg1, const std::string &arg2,       \
-        const std::string &arg3, const size_t arg4, const Dims &arg5,          \
-        const Dims &arg6, const Dims &arg7) const                              \
-    {                                                                          \
-        CheckCallbackType("Callback1");                                        \
+#define declare_type(T)                                                                            \
+                                                                                                   \
+    void Operator::RunCallback1(const T *arg0, const std::string &arg1, const std::string &arg2,   \
+                                const std::string &arg3, const size_t arg4, const Dims &arg5,      \
+                                const Dims &arg6, const Dims &arg7) const                          \
+    {                                                                                              \
+        CheckCallbackType("Callback1");                                                            \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void Operator::RunCallback2(void *arg0, const std::string &arg1,
-                            const std::string &arg2, const std::string &arg3,
-                            const size_t arg4, const Dims &arg5,
+void Operator::RunCallback2(void *arg0, const std::string &arg1, const std::string &arg2,
+                            const std::string &arg3, const size_t arg4, const Dims &arg5,
                             const Dims &arg6, const Dims &arg7) const
 {
     CheckCallbackType("Callback2");
@@ -53,9 +50,8 @@ void Operator::RunCallback2(void *arg0, const std::string &arg1,
 
 // PROTECTED
 
-Dims Operator::ConvertDims(const Dims &dimensions, const DataType type,
-                           const size_t targetDims, const bool enforceDims,
-                           const size_t defaultDimSize) const
+Dims Operator::ConvertDims(const Dims &dimensions, const DataType type, const size_t targetDims,
+                           const bool enforceDims, const size_t defaultDimSize) const
 {
 
     if (targetDims < 1)
@@ -105,10 +101,10 @@ void Operator::CheckCallbackType(const std::string type) const
 {
     if (m_TypeString != type)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "Operator", "CheckCallbackType",
-            "operator of type " + m_TypeString +
-                " doesn't match expected callback type " + type + " arguments");
+        helper::Throw<std::invalid_argument>("Core", "Operator", "CheckCallbackType",
+                                             "operator of type " + m_TypeString +
+                                                 " doesn't match expected callback type " + type +
+                                                 " arguments");
     }
 }
 

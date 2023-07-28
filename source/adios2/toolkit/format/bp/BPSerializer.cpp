@@ -45,8 +45,7 @@ std::string BPSerializer::GetRankProfilingJSON(
     const std::vector<std::string> &transportsTypes,
     const std::vector<profiling::IOChrono *> &transportsProfilers) noexcept
 {
-    auto lf_WriterTimer = [](std::string &rankLog,
-                             const profiling::Timer &timer) {
+    auto lf_WriterTimer = [](std::string &rankLog, const profiling::Timer &timer) {
         rankLog += ", \"" + timer.m_Process + "_" + timer.GetShortUnits() +
                    "\": " + std::to_string(timer.m_ProcessTime);
     };
@@ -63,8 +62,7 @@ std::string BPSerializer::GetRankProfilingJSON(
 
     rankLog += ", \"start\": \"" + timeDate + "\"";
     rankLog += ", \"threads\": " + std::to_string(m_Parameters.Threads);
-    rankLog +=
-        ", \"bytes\": " + std::to_string(profiler.m_Bytes.at("buffering"));
+    rankLog += ", \"bytes\": " + std::to_string(profiler.m_Bytes.at("buffering"));
 
     for (const auto &timerPair : profiler.m_Timers)
     {
@@ -91,8 +89,7 @@ std::string BPSerializer::GetRankProfilingJSON(
     return rankLog;
 }
 
-std::vector<char>
-BPSerializer::AggregateProfilingJSON(const std::string &rankLog) const
+std::vector<char> BPSerializer::AggregateProfilingJSON(const std::string &rankLog) const
 {
     // Gather sizes
     const size_t rankLogSize = rankLog.size();
@@ -107,12 +104,10 @@ BPSerializer::AggregateProfilingJSON(const std::string &rankLog) const
 
     if (m_RankMPI == 0) // pre-allocate in destination
     {
-        gatheredSize = std::accumulate(rankLogsSizes.begin(),
-                                       rankLogsSizes.end(), size_t(0));
+        gatheredSize = std::accumulate(rankLogsSizes.begin(), rankLogsSizes.end(), size_t(0));
 
         profilingJSON.resize(gatheredSize + header.size() + footer.size() - 2);
-        helper::CopyToBuffer(profilingJSON, position, header.c_str(),
-                             header.size());
+        helper::CopyToBuffer(profilingJSON, position, header.c_str(), header.size());
     }
 
     m_Comm.GathervArrays(rankLog.c_str(), rankLog.size(), rankLogsSizes.data(),
@@ -121,23 +116,20 @@ BPSerializer::AggregateProfilingJSON(const std::string &rankLog) const
     if (m_RankMPI == 0) // add footer to close JSON
     {
         position += gatheredSize - 2;
-        helper::CopyToBuffer(profilingJSON, position, footer.c_str(),
-                             footer.size());
+        helper::CopyToBuffer(profilingJSON, position, footer.c_str(), footer.size());
     }
 
     return profilingJSON;
 }
 
-void BPSerializer::PutNameRecord(const std::string name,
-                                 std::vector<char> &buffer) noexcept
+void BPSerializer::PutNameRecord(const std::string name, std::vector<char> &buffer) noexcept
 {
     const uint16_t length = static_cast<uint16_t>(name.size());
     helper::InsertToBuffer(buffer, &length);
     helper::InsertToBuffer(buffer, name.c_str(), name.size());
 }
 
-void BPSerializer::PutNameRecord(const std::string name,
-                                 std::vector<char> &buffer,
+void BPSerializer::PutNameRecord(const std::string name, std::vector<char> &buffer,
                                  size_t &position) noexcept
 {
     const uint16_t length = static_cast<uint16_t>(name.length());
@@ -145,10 +137,8 @@ void BPSerializer::PutNameRecord(const std::string name,
     helper::CopyToBuffer(buffer, position, name.c_str(), length);
 }
 
-void BPSerializer::PutDimensionsRecord(const Dims &localDimensions,
-                                       const Dims &globalDimensions,
-                                       const Dims &offsets,
-                                       std::vector<char> &buffer) noexcept
+void BPSerializer::PutDimensionsRecord(const Dims &localDimensions, const Dims &globalDimensions,
+                                       const Dims &offsets, std::vector<char> &buffer) noexcept
 {
     if (offsets.empty() && globalDimensions.empty())
     { // local array
@@ -178,15 +168,11 @@ void BPSerializer::PutDimensionsRecord(const Dims &localDimensions,
     }
 }
 
-void BPSerializer::PutDimensionsRecord(const Dims &localDimensions,
-                                       const Dims &globalDimensions,
-                                       const Dims &offsets,
-                                       std::vector<char> &buffer,
-                                       size_t &position,
-                                       const bool isCharacteristic) noexcept
+void BPSerializer::PutDimensionsRecord(const Dims &localDimensions, const Dims &globalDimensions,
+                                       const Dims &offsets, std::vector<char> &buffer,
+                                       size_t &position, const bool isCharacteristic) noexcept
 {
-    auto lf_CopyDimension = [](std::vector<char> &buffer, size_t &position,
-                               const size_t dimension,
+    auto lf_CopyDimension = [](std::vector<char> &buffer, size_t &position, const size_t dimension,
                                const bool isCharacteristic) {
         if (!isCharacteristic)
         {
@@ -210,8 +196,7 @@ void BPSerializer::PutDimensionsRecord(const Dims &localDimensions,
 
         for (const auto &localDimension : localDimensions)
         {
-            lf_CopyDimension(buffer, position, localDimension,
-                             isCharacteristic);
+            lf_CopyDimension(buffer, position, localDimension, isCharacteristic);
             position += globalBoundsSkip;
         }
     }
@@ -221,10 +206,8 @@ void BPSerializer::PutDimensionsRecord(const Dims &localDimensions,
         size_t zeroOffset = 0;
         for (unsigned int d = 0; d < localDimensions.size(); ++d)
         {
-            lf_CopyDimension(buffer, position, localDimensions[d],
-                             isCharacteristic);
-            lf_CopyDimension(buffer, position, globalDimensions[d],
-                             isCharacteristic);
+            lf_CopyDimension(buffer, position, localDimensions[d], isCharacteristic);
+            lf_CopyDimension(buffer, position, globalDimensions[d], isCharacteristic);
             lf_CopyDimension(buffer, position, zeroOffset, isCharacteristic);
         }
     }
@@ -232,23 +215,19 @@ void BPSerializer::PutDimensionsRecord(const Dims &localDimensions,
     {
         for (unsigned int d = 0; d < localDimensions.size(); ++d)
         {
-            lf_CopyDimension(buffer, position, localDimensions[d],
-                             isCharacteristic);
-            lf_CopyDimension(buffer, position, globalDimensions[d],
-                             isCharacteristic);
+            lf_CopyDimension(buffer, position, localDimensions[d], isCharacteristic);
+            lf_CopyDimension(buffer, position, globalDimensions[d], isCharacteristic);
             lf_CopyDimension(buffer, position, offsets[d], isCharacteristic);
         }
     }
 }
 
-void BPSerializer::PutMinifooter(const uint64_t pgIndexStart,
-                                 const uint64_t variablesIndexStart,
-                                 const uint64_t attributesIndexStart,
-                                 std::vector<char> &buffer, size_t &position,
-                                 const bool addSubfiles)
+void BPSerializer::PutMinifooter(const uint64_t pgIndexStart, const uint64_t variablesIndexStart,
+                                 const uint64_t attributesIndexStart, std::vector<char> &buffer,
+                                 size_t &position, const bool addSubfiles)
 {
-    auto lf_CopyVersionChar = [](const std::string version,
-                                 std::vector<char> &buffer, size_t &position) {
+    auto lf_CopyVersionChar = [](const std::string version, std::vector<char> &buffer,
+                                 size_t &position) {
         helper::CopyToBuffer(buffer, position, version.c_str());
     };
 
@@ -256,13 +235,12 @@ void BPSerializer::PutMinifooter(const uint64_t pgIndexStart,
     const std::string minorVersion(std::to_string(ADIOS2_VERSION_MINOR));
     const std::string patchVersion(std::to_string(ADIOS2_VERSION_PATCH));
 
-    const std::string versionLongTag("ADIOS-BP v" + majorVersion + "." +
-                                     minorVersion + "." + patchVersion);
+    const std::string versionLongTag("ADIOS-BP v" + majorVersion + "." + minorVersion + "." +
+                                     patchVersion);
     const size_t versionLongTagSize = versionLongTag.size();
     if (versionLongTagSize < 24)
     {
-        helper::CopyToBuffer(buffer, position, versionLongTag.c_str(),
-                             versionLongTagSize);
+        helper::CopyToBuffer(buffer, position, versionLongTag.c_str(), versionLongTagSize);
         position += 24 - versionLongTagSize;
     }
     else
@@ -305,12 +283,11 @@ void BPSerializer::UpdateOffsetsInMetadata()
 
         while (currentPosition < buffer.size())
         {
-            ProcessGroupIndex pgIndex = ReadProcessGroupIndexHeader(
-                buffer, currentPosition, isLittleEndian);
+            ProcessGroupIndex pgIndex =
+                ReadProcessGroupIndexHeader(buffer, currentPosition, isLittleEndian);
 
             const uint64_t updatedOffset =
-                pgIndex.Offset +
-                static_cast<uint64_t>(m_Data.m_AbsolutePosition);
+                pgIndex.Offset + static_cast<uint64_t>(m_Data.m_AbsolutePosition);
             currentPosition -= sizeof(uint64_t);
             helper::CopyToBuffer(buffer, currentPosition, &updatedOffset);
         }
@@ -321,8 +298,8 @@ void BPSerializer::UpdateOffsetsInMetadata()
 
         // First get the type:
         size_t headerPosition = 0;
-        ElementIndexHeader header = ReadElementIndexHeader(
-            buffer, headerPosition, helper::IsLittleEndian());
+        ElementIndexHeader header =
+            ReadElementIndexHeader(buffer, headerPosition, helper::IsLittleEndian());
         const DataTypes dataTypeEnum = static_cast<DataTypes>(header.DataType);
 
         size_t &currentPosition = index.LastUpdatedPosition;
@@ -338,11 +315,10 @@ void BPSerializer::UpdateOffsetsInMetadata()
                 break;
             }
 
-#define make_case(T)                                                           \
-    case (TypeTraits<T>::type_enum): {                                         \
-        UpdateIndexOffsetsCharacteristics<T>(                                  \
-            currentPosition, TypeTraits<T>::type_enum, buffer);                \
-        break;                                                                 \
+#define make_case(T)                                                                               \
+    case (TypeTraits<T>::type_enum): {                                                             \
+        UpdateIndexOffsetsCharacteristics<T>(currentPosition, TypeTraits<T>::type_enum, buffer);   \
+        break;                                                                                     \
     }
                 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(make_case)
 #undef make_case
@@ -350,8 +326,7 @@ void BPSerializer::UpdateOffsetsInMetadata()
             default:
                 // TODO: complex, long double
                 helper::Throw<std::invalid_argument>(
-                    "Toolkit", "format::bp::BPSerializer",
-                    "UpdateOffsetsInMetadata",
+                    "Toolkit", "format::bp::BPSerializer", "UpdateOffsetsInMetadata",
                     "type " + std::to_string(header.DataType) +
                         " not supported in updating aggregated offsets");
 
@@ -377,13 +352,11 @@ void BPSerializer::UpdateOffsetsInMetadata()
 }
 
 void BPSerializer::MergeSerializeIndices(
-    const std::unordered_map<std::string, std::vector<SerialElementIndex>>
-        &nameRankIndices,
+    const std::unordered_map<std::string, std::vector<SerialElementIndex>> &nameRankIndices,
     helper::Comm const &comm, BufferSTL &bufferSTL)
 {
-    auto lf_GetCharacteristics = [&](const std::vector<char> &buffer,
-                                     size_t &position, const uint8_t dataType,
-                                     uint8_t &count, uint32_t &length,
+    auto lf_GetCharacteristics = [&](const std::vector<char> &buffer, size_t &position,
+                                     const uint8_t dataType, uint8_t &count, uint32_t &length,
                                      uint32_t &timeStep)
 
     {
@@ -393,26 +366,23 @@ void BPSerializer::MergeSerializeIndices(
         switch (dataTypeEnum)
         {
 
-#define make_case(T)                                                           \
-    case (TypeTraits<T>::type_enum): {                                         \
-        size_t irrelevant;                                                     \
-        const auto characteristics = ReadElementIndexCharacteristics<T>(       \
-            buffer, position, TypeTraits<T>::type_enum, irrelevant, true,      \
-            isLittleEndian);                                                   \
-        count = characteristics.EntryCount;                                    \
-        length = characteristics.EntryLength;                                  \
-        timeStep = characteristics.Statistics.Step;                            \
-        break;                                                                 \
+#define make_case(T)                                                                               \
+    case (TypeTraits<T>::type_enum): {                                                             \
+        size_t irrelevant;                                                                         \
+        const auto characteristics = ReadElementIndexCharacteristics<T>(                           \
+            buffer, position, TypeTraits<T>::type_enum, irrelevant, true, isLittleEndian);         \
+        count = characteristics.EntryCount;                                                        \
+        length = characteristics.EntryLength;                                                      \
+        timeStep = characteristics.Statistics.Step;                                                \
+        break;                                                                                     \
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(make_case)
 #undef make_case
 
         case (type_string_array): {
             size_t irrelevant;
-            const auto characteristics =
-                ReadElementIndexCharacteristics<std::string>(
-                    buffer, position, type_string_array, irrelevant, true,
-                    isLittleEndian);
+            const auto characteristics = ReadElementIndexCharacteristics<std::string>(
+                buffer, position, type_string_array, irrelevant, true, isLittleEndian);
             count = characteristics.EntryCount;
             length = characteristics.EntryLength;
             timeStep = characteristics.Statistics.Step;
@@ -422,141 +392,19 @@ void BPSerializer::MergeSerializeIndices(
         default:
             helper::Throw<std::invalid_argument>(
                 "Toolkit", "format::bp::BPSerializer", "MergeSerializeIndices",
-                "type " + std::to_string(dataType) +
-                    " not supported in BP3 Metadata Merge");
+                "type " + std::to_string(dataType) + " not supported in BP3 Metadata Merge");
 
         } // end switch
     };
 
-    auto lf_MergeRankSerial =
-        [&](const std::vector<SerialElementIndex> &indices,
-            BufferSTL &bufferSTL) {
-            auto &bufferOut = bufferSTL.m_Buffer;
-            auto &positionOut = bufferSTL.m_Position;
+    auto lf_MergeRankSerial = [&](const std::vector<SerialElementIndex> &indices,
+                                  BufferSTL &bufferSTL) {
+        auto &bufferOut = bufferSTL.m_Buffer;
+        auto &positionOut = bufferSTL.m_Position;
 
-            // extract header
-            ElementIndexHeader header;
-            // index non-empty buffer
-            size_t firstRank = 0;
-            // index positions per rank
-            std::vector<size_t> positions(indices.size(), 0);
-            // merge index length
-            size_t headerSize = 0;
-
-            const bool isLittleEndian = helper::IsLittleEndian();
-
-            for (size_t r = 0; r < indices.size(); ++r)
-            {
-                const auto &buffer = indices[r].Buffer;
-                if (buffer.empty())
-                {
-                    continue;
-                }
-                size_t &position = positions[r];
-
-                header =
-                    ReadElementIndexHeader(buffer, position, isLittleEndian);
-                firstRank = r;
-
-                headerSize = position;
-                break;
-            }
-
-            if (header.DataType == std::numeric_limits<uint8_t>::max() - 1)
-            {
-                helper::Throw<std::runtime_error>(
-                    "Toolkit", "format::bp::BPSerializer",
-                    "MergeSerializeIndices",
-                    "invalid data type for variable " + header.Name +
-                        "when writing metadata index");
-            }
-
-            // move all positions to headerSize
-            for (size_t r = 0; r < indices.size(); ++r)
-            {
-                const auto &buffer = indices[r].Buffer;
-                if (buffer.empty())
-                {
-                    continue;
-                }
-                positions[r] = headerSize;
-            }
-
-            uint64_t setsCount = 0;
-            unsigned int currentTimeStep = 1;
-            bool marching = true;
-
-            const size_t entryLengthPosition = positionOut;
-            positionOut += headerSize;
-
-            while (marching)
-            {
-                marching = false;
-
-                for (size_t r = firstRank; r < indices.size(); ++r)
-                {
-                    const auto &buffer = indices[r].Buffer;
-                    if (buffer.empty())
-                    {
-                        continue;
-                    }
-
-                    auto &position = positions[r];
-                    if (position < buffer.size())
-                    {
-                        marching = true;
-                    }
-                    else
-                    {
-                        continue;
-                    }
-
-                    uint8_t count = 0;
-                    uint32_t length = 0;
-                    uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
-
-                    while (timeStep == currentTimeStep)
-                    {
-                        size_t localPosition = position;
-                        lf_GetCharacteristics(buffer, localPosition,
-                                              header.DataType, count, length,
-                                              timeStep);
-
-                        if (timeStep != currentTimeStep)
-                        {
-                            break;
-                        }
-
-                        ++setsCount;
-
-                        helper::CopyToBuffer(bufferOut, positionOut,
-                                             &buffer[position], length + 5);
-
-                        position += length + 5;
-
-                        if (position >= buffer.size())
-                        {
-                            break;
-                        }
-                    }
-                }
-                ++currentTimeStep;
-            }
-
-            const uint32_t entryLength =
-                static_cast<uint32_t>(positionOut - entryLengthPosition - 4);
-
-            size_t backPosition = entryLengthPosition;
-            helper::CopyToBuffer(bufferOut, backPosition, &entryLength);
-            helper::CopyToBuffer(bufferOut, backPosition,
-                                 &indices[firstRank].Buffer[4],
-                                 headerSize - 8 - 4);
-            helper::CopyToBuffer(bufferOut, backPosition, &setsCount);
-        };
-
-    auto lf_MergeRank = [&](const std::vector<SerialElementIndex> &indices,
-                            BufferSTL &bufferSTL) {
+        // extract header
         ElementIndexHeader header;
+        // index non-empty buffer
         size_t firstRank = 0;
         // index positions per rank
         std::vector<size_t> positions(indices.size(), 0);
@@ -585,8 +433,120 @@ void BPSerializer::MergeSerializeIndices(
         {
             helper::Throw<std::runtime_error>(
                 "Toolkit", "format::bp::BPSerializer", "MergeSerializeIndices",
-                "invalid data type for variable " + header.Name +
-                    "when writing collective metadata");
+                "invalid data type for variable " + header.Name + "when writing metadata index");
+        }
+
+        // move all positions to headerSize
+        for (size_t r = 0; r < indices.size(); ++r)
+        {
+            const auto &buffer = indices[r].Buffer;
+            if (buffer.empty())
+            {
+                continue;
+            }
+            positions[r] = headerSize;
+        }
+
+        uint64_t setsCount = 0;
+        unsigned int currentTimeStep = 1;
+        bool marching = true;
+
+        const size_t entryLengthPosition = positionOut;
+        positionOut += headerSize;
+
+        while (marching)
+        {
+            marching = false;
+
+            for (size_t r = firstRank; r < indices.size(); ++r)
+            {
+                const auto &buffer = indices[r].Buffer;
+                if (buffer.empty())
+                {
+                    continue;
+                }
+
+                auto &position = positions[r];
+                if (position < buffer.size())
+                {
+                    marching = true;
+                }
+                else
+                {
+                    continue;
+                }
+
+                uint8_t count = 0;
+                uint32_t length = 0;
+                uint32_t timeStep = static_cast<uint32_t>(currentTimeStep);
+
+                while (timeStep == currentTimeStep)
+                {
+                    size_t localPosition = position;
+                    lf_GetCharacteristics(buffer, localPosition, header.DataType, count, length,
+                                          timeStep);
+
+                    if (timeStep != currentTimeStep)
+                    {
+                        break;
+                    }
+
+                    ++setsCount;
+
+                    helper::CopyToBuffer(bufferOut, positionOut, &buffer[position], length + 5);
+
+                    position += length + 5;
+
+                    if (position >= buffer.size())
+                    {
+                        break;
+                    }
+                }
+            }
+            ++currentTimeStep;
+        }
+
+        const uint32_t entryLength = static_cast<uint32_t>(positionOut - entryLengthPosition - 4);
+
+        size_t backPosition = entryLengthPosition;
+        helper::CopyToBuffer(bufferOut, backPosition, &entryLength);
+        helper::CopyToBuffer(bufferOut, backPosition, &indices[firstRank].Buffer[4],
+                             headerSize - 8 - 4);
+        helper::CopyToBuffer(bufferOut, backPosition, &setsCount);
+    };
+
+    auto lf_MergeRank = [&](const std::vector<SerialElementIndex> &indices, BufferSTL &bufferSTL) {
+        ElementIndexHeader header;
+        size_t firstRank = 0;
+        // index positions per rank
+        std::vector<size_t> positions(indices.size(), 0);
+        // merge index length
+        size_t headerSize = 0;
+
+        const bool isLittleEndian = helper::IsLittleEndian();
+
+        for (size_t r = 0; r < indices.size(); ++r)
+        {
+            const auto &buffer = indices[r].Buffer;
+            if (buffer.empty())
+            {
+                continue;
+            }
+            size_t &position = positions[r];
+
+            header = ReadElementIndexHeader(buffer, position, isLittleEndian);
+            firstRank = r;
+
+            headerSize = position;
+            break;
+        }
+
+        if (header.DataType == std::numeric_limits<uint8_t>::max() - 1)
+        {
+            helper::Throw<std::runtime_error>("Toolkit", "format::bp::BPSerializer",
+                                              "MergeSerializeIndices",
+                                              "invalid data type for variable " + header.Name +
+                                                  "when writing collective metadata");
         }
 
         // move all positions to headerSize
@@ -634,8 +594,7 @@ void BPSerializer::MergeSerializeIndices(
                 while (timeStep == currentTimeStep)
                 {
                     size_t localPosition = position;
-                    lf_GetCharacteristics(buffer, localPosition,
-                                          header.DataType, count, length,
+                    lf_GetCharacteristics(buffer, localPosition, header.DataType, count, length,
                                           timeStep);
 
                     if (timeStep != currentTimeStep)
@@ -646,8 +605,7 @@ void BPSerializer::MergeSerializeIndices(
                     ++setsCount;
 
                     // here copy to sorted buffer
-                    helper::InsertToBuffer(sorted, &buffer[position],
-                                           length + 5);
+                    helper::InsertToBuffer(sorted, &buffer[position], length + 5);
 
                     position += length + 5;
 
@@ -660,8 +618,7 @@ void BPSerializer::MergeSerializeIndices(
             ++currentTimeStep;
         }
 
-        const uint32_t entryLength =
-            static_cast<uint32_t>(headerSize + sorted.size() - 4);
+        const uint32_t entryLength = static_cast<uint32_t>(headerSize + sorted.size() - 4);
         // Copy header to metadata buffer, need mutex here
         {
             std::lock_guard<std::mutex> lock(m_Mutex);
@@ -669,20 +626,17 @@ void BPSerializer::MergeSerializeIndices(
             auto &position = bufferSTL.m_Position;
 
             helper::CopyToBuffer(buffer, position, &entryLength);
-            helper::CopyToBuffer(buffer, position,
-                                 &indices[firstRank].Buffer[4],
+            helper::CopyToBuffer(buffer, position, &indices[firstRank].Buffer[4],
                                  headerSize - 8 - 4);
             helper::CopyToBuffer(buffer, position, &setsCount);
-            helper::CopyToBuffer(buffer, position, sorted.data(),
-                                 sorted.size());
+            helper::CopyToBuffer(buffer, position, sorted.data(), sorted.size());
         }
     };
 
     auto lf_MergeRankRange =
-        [&](const std::unordered_map<
-                std::string, std::vector<SerialElementIndex>> &nameRankIndices,
-            const std::vector<std::string> &names, const size_t start,
-            const size_t end, BufferSTL &bufferSTL)
+        [&](const std::unordered_map<std::string, std::vector<SerialElementIndex>> &nameRankIndices,
+            const std::vector<std::string> &names, const size_t start, const size_t end,
+            BufferSTL &bufferSTL)
 
     {
         for (auto i = start; i < end; ++i)
@@ -703,10 +657,8 @@ void BPSerializer::MergeSerializeIndices(
     }
 
     const size_t elements = nameRankIndices.size();
-    const size_t stride =
-        elements / m_Parameters.Threads; // elements per thread
-    const size_t last =
-        stride + elements % m_Parameters.Threads; // remainder to last
+    const size_t stride = elements / m_Parameters.Threads;        // elements per thread
+    const size_t last = stride + elements % m_Parameters.Threads; // remainder to last
 
     std::vector<std::thread> threads;
     threads.reserve(m_Parameters.Threads);
@@ -730,9 +682,8 @@ void BPSerializer::MergeSerializeIndices(
             end = start + last;
         }
 
-        threads.push_back(
-            std::thread(lf_MergeRankRange, std::ref(nameRankIndices),
-                        std::ref(names), start, end, std::ref(bufferSTL)));
+        threads.push_back(std::thread(lf_MergeRankRange, std::ref(nameRankIndices), std::ref(names),
+                                      start, end, std::ref(bufferSTL)));
     }
 
     for (auto &thread : threads)
@@ -772,12 +723,12 @@ size_t BPSerializer::GetAttributesSizeInData(core::IO &io) const noexcept
         if (type == DataType::Struct)
         {
         }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        const std::string name = attribute.first;                              \
-        const core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);   \
-        attributesSizeInData += GetAttributeSizeInData<T>(attribute);          \
+#define declare_type(T)                                                                            \
+    else if (type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        const std::string name = attribute.first;                                                  \
+        const core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);                       \
+        attributesSizeInData += GetAttributeSizeInData<T>(attribute);                              \
     }
         ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -824,17 +775,17 @@ void BPSerializer::PutAttributes(core::IO &io)
         if (type == DataType::None)
         {
         }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Stats<T> stats;                                                        \
-        stats.Offset = absolutePosition + m_PreDataFileLength;                 \
-        stats.MemberID = memberID;                                             \
-        stats.Step = m_MetadataSet.TimeStep;                                   \
-        stats.FileIndex = GetFileIndex();                                      \
-        core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);         \
-        PutAttributeInData(attribute, stats);                                  \
-        PutAttributeInIndex(attribute, stats);                                 \
+#define declare_type(T)                                                                            \
+    else if (type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        Stats<T> stats;                                                                            \
+        stats.Offset = absolutePosition + m_PreDataFileLength;                                     \
+        stats.MemberID = memberID;                                                                 \
+        stats.Step = m_MetadataSet.TimeStep;                                                       \
+        stats.FileIndex = GetFileIndex();                                                          \
+        core::Attribute<T> &attribute = *io.InquireAttribute<T>(name);                             \
+        PutAttributeInData(attribute, stats);                                                      \
+        PutAttributeInIndex(attribute, stats);                                                     \
     }
         ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -843,23 +794,21 @@ void BPSerializer::PutAttributes(core::IO &io)
     }
 
     // complete attributes length
-    const uint64_t attributesLength =
-        static_cast<uint64_t>(position - attributesLengthPosition);
+    const uint64_t attributesLength = static_cast<uint64_t>(position - attributesLengthPosition);
 
     size_t backPosition = attributesLengthPosition;
     helper::CopyToBuffer(buffer, backPosition, &attributesLength);
 }
 
-BPSerializer::SerialElementIndex &BPSerializer::GetSerialElementIndex(
-    const std::string &name,
-    std::unordered_map<std::string, SerialElementIndex> &indices,
-    bool &isNew) const noexcept
+BPSerializer::SerialElementIndex &
+BPSerializer::GetSerialElementIndex(const std::string &name,
+                                    std::unordered_map<std::string, SerialElementIndex> &indices,
+                                    bool &isNew) const noexcept
 {
     auto itName = indices.find(name);
     if (itName == indices.end())
     {
-        indices.emplace(
-            name, SerialElementIndex(static_cast<uint32_t>(indices.size())));
+        indices.emplace(name, SerialElementIndex(static_cast<uint32_t>(indices.size())));
         isNew = true;
         return indices.at(name);
     }
@@ -868,45 +817,43 @@ BPSerializer::SerialElementIndex &BPSerializer::GetSerialElementIndex(
     return itName->second;
 }
 
-#define declare_template_instantiation(T)                                      \
-    template void BPSerializer::PutAttributeCharacteristicValueInIndex(        \
-        uint8_t &, const core::Attribute<T> &, std::vector<char> &) noexcept;  \
-                                                                               \
-    template size_t BPSerializer::GetAttributeSizeInData(                      \
-        const core::Attribute<T> &) const noexcept;                            \
-                                                                               \
-    template void BPSerializer::PutAttributeInData(const core::Attribute<T> &, \
-                                                   Stats<T> &) noexcept;       \
-    template void BPSerializer::PutAttributeInIndex(                           \
-        const core::Attribute<T> &attribute, const Stats<T> &stats) noexcept;
+#define declare_template_instantiation(T)                                                          \
+    template void BPSerializer::PutAttributeCharacteristicValueInIndex(                            \
+        uint8_t &, const core::Attribute<T> &, std::vector<char> &) noexcept;                      \
+                                                                                                   \
+    template size_t BPSerializer::GetAttributeSizeInData(const core::Attribute<T> &)               \
+        const noexcept;                                                                            \
+                                                                                                   \
+    template void BPSerializer::PutAttributeInData(const core::Attribute<T> &,                     \
+                                                   Stats<T> &) noexcept;                           \
+    template void BPSerializer::PutAttributeInIndex(const core::Attribute<T> &attribute,           \
+                                                    const Stats<T> &stats) noexcept;
 
 ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-#define declare_template_instantiation(T)                                      \
-                                                                               \
-    template void BPSerializer::PutCharacteristicRecord(                       \
-        const uint8_t, uint8_t &, const T &, std::vector<char> &) noexcept;    \
-                                                                               \
-    template void BPSerializer::PutCharacteristicRecord(                       \
-        const uint8_t, uint8_t &, const T &, std::vector<char> &,              \
-        size_t &) noexcept;                                                    \
-                                                                               \
-    template void BPSerializer::PutCharacteristicOperation(                    \
-        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
-        std::vector<char> &) noexcept;                                         \
-                                                                               \
-    template void BPSerializer::PutOperationPayloadInBuffer(                   \
-        const core::Variable<T> &,                                             \
-        const typename core::Variable<T>::BPInfo &);
+#define declare_template_instantiation(T)                                                          \
+                                                                                                   \
+    template void BPSerializer::PutCharacteristicRecord(const uint8_t, uint8_t &, const T &,       \
+                                                        std::vector<char> &) noexcept;             \
+                                                                                                   \
+    template void BPSerializer::PutCharacteristicRecord(const uint8_t, uint8_t &, const T &,       \
+                                                        std::vector<char> &, size_t &) noexcept;   \
+                                                                                                   \
+    template void BPSerializer::PutCharacteristicOperation(                                        \
+        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &,                     \
+        std::vector<char> &) noexcept;                                                             \
+                                                                                                   \
+    template void BPSerializer::PutOperationPayloadInBuffer(                                       \
+        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &);
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-#define declare_template_instantiation(T)                                      \
-    template void BPSerializer::PutPayloadInBuffer(                            \
-        const core::Variable<T> &, const typename core::Variable<T>::BPInfo &, \
-        const bool) noexcept;
+#define declare_template_instantiation(T)                                                          \
+    template void BPSerializer::PutPayloadInBuffer(const core::Variable<T> &,                      \
+                                                   const typename core::Variable<T>::BPInfo &,     \
+                                                   const bool) noexcept;
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

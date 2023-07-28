@@ -57,16 +57,13 @@ static DPlist AddDPPossibility(CP_Services Svcs, void *CP_Stream, DPlist List,
     return List;
 }
 
-CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
-                         struct _SstParams *Params, int Rank)
+CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params, int Rank)
 {
     CP_DP_Interface Ret;
     DPlist List = NULL;
-    List = AddDPPossibility(Svcs, CP_Stream, List, LoadEVpathDP(), "evpath",
-                            Params);
+    List = AddDPPossibility(Svcs, CP_Stream, List, LoadEVpathDP(), "evpath", Params);
 #ifdef SST_HAVE_LIBFABRIC
-    List =
-        AddDPPossibility(Svcs, CP_Stream, List, LoadRdmaDP(), "rdma", Params);
+    List = AddDPPossibility(Svcs, CP_Stream, List, LoadRdmaDP(), "rdma", Params);
 #endif /* SST_HAVE_LIBFABRIC */
 
 #ifdef SST_HAVE_UCX
@@ -74,8 +71,7 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
 #endif /* SST_HAVE_UCX */
 
 #ifdef SST_HAVE_DAOS
-    List =
-        AddDPPossibility(Svcs, CP_Stream, List, LoadDaosDP(), "daos", Params);
+    List = AddDPPossibility(Svcs, CP_Stream, List, LoadDaosDP(), "daos", Params);
 #endif /* SST_HAVE_DAOS */
 
 #ifdef SST_HAVE_MPI
@@ -90,8 +86,7 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream,
     if (Params->DataTransport)
     {
         if (Rank == 0)
-            Svcs->verbose(CP_Stream, DPPerStepVerbose,
-                          "Prefered dataplane name is \"%s\"\n",
+            Svcs->verbose(CP_Stream, DPPerStepVerbose, "Prefered dataplane name is \"%s\"\n",
                           Params->DataTransport);
     }
     while (List[i].Interface)

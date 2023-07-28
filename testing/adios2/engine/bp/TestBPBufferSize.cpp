@@ -137,17 +137,13 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
             for (size_t step = 0; step < NSteps; ++step)
             {
                 engine.BeginStep();
-                bufsize_sync_beginstep[step] =
-                    GetAndPrintBufferSize(engine, "After BeginStep():");
+                bufsize_sync_beginstep[step] = GetAndPrintBufferSize(engine, "After BeginStep():");
                 engine.Put(var1, data.data(), adios2::Mode::Sync);
-                bufsize_sync_v1[step] =
-                    GetAndPrintBufferSize(engine, "After Put(v1, Sync):", step);
+                bufsize_sync_v1[step] = GetAndPrintBufferSize(engine, "After Put(v1, Sync):", step);
                 engine.Put(var2, data.data(), adios2::Mode::Sync);
-                bufsize_sync_v2[step] =
-                    GetAndPrintBufferSize(engine, "After Put(v2, Sync):", step);
+                bufsize_sync_v2[step] = GetAndPrintBufferSize(engine, "After Put(v2, Sync):", step);
                 engine.Put(var3, data.data(), adios2::Mode::Sync);
-                bufsize_sync_v3[step] =
-                    GetAndPrintBufferSize(engine, "After Put(v3, Sync):", step);
+                bufsize_sync_v3[step] = GetAndPrintBufferSize(engine, "After Put(v3, Sync):", step);
                 engine.EndStep();
                 bufsize_sync_endstep[step] =
                     GetAndPrintBufferSize(engine, "After EndStep():", step);
@@ -172,14 +168,14 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
                 bufsize_deferred_beginstep[step] =
                     GetAndPrintBufferSize(engine, "After BeginStep():");
                 engine.Put(var1, data.data(), adios2::Mode::Deferred);
-                bufsize_deferred_v1[step] = GetAndPrintBufferSize(
-                    engine, "After Put(v1, Deferred):", step);
+                bufsize_deferred_v1[step] =
+                    GetAndPrintBufferSize(engine, "After Put(v1, Deferred):", step);
                 engine.Put(var2, data.data(), adios2::Mode::Deferred);
-                bufsize_deferred_v2[step] = GetAndPrintBufferSize(
-                    engine, "After Put(v2, Deferred):", step);
+                bufsize_deferred_v2[step] =
+                    GetAndPrintBufferSize(engine, "After Put(v2, Deferred):", step);
                 engine.Put(var3, data.data(), adios2::Mode::Deferred);
-                bufsize_deferred_v3[step] = GetAndPrintBufferSize(
-                    engine, "After Put(v3, Deferred):", step);
+                bufsize_deferred_v3[step] =
+                    GetAndPrintBufferSize(engine, "After Put(v3, Deferred):", step);
                 engine.EndStep();
                 bufsize_deferred_endstep[step] =
                     GetAndPrintBufferSize(engine, "After EndStep():", step);
@@ -195,8 +191,7 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
         size_t bufsize_deferred_pp_v3[NSteps];
         size_t bufsize_deferred_pp_endstep[NSteps];
         {
-            adios2::Engine engine =
-                io.Open(fnameDeferredPP, adios2::Mode::Write);
+            adios2::Engine engine = io.Open(fnameDeferredPP, adios2::Mode::Write);
 
             GetAndPrintBufferSize(engine, "After Open():");
             for (size_t step = 0; step < NSteps; ++step)
@@ -206,16 +201,16 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
                     GetAndPrintBufferSize(engine, "After BeginStep():");
                 engine.Put(var1, data.data(), adios2::Mode::Deferred);
                 engine.PerformPuts();
-                bufsize_deferred_pp_v1[step] = GetAndPrintBufferSize(
-                    engine, "After Put(v1, Def)+PerformPuts():", step);
+                bufsize_deferred_pp_v1[step] =
+                    GetAndPrintBufferSize(engine, "After Put(v1, Def)+PerformPuts():", step);
                 engine.Put(var2, data.data(), adios2::Mode::Deferred);
                 engine.PerformPuts();
-                bufsize_deferred_pp_v2[step] = GetAndPrintBufferSize(
-                    engine, "After Put(v2, Def)+PerformPuts():", step);
+                bufsize_deferred_pp_v2[step] =
+                    GetAndPrintBufferSize(engine, "After Put(v2, Def)+PerformPuts():", step);
                 engine.Put(var3, data.data(), adios2::Mode::Deferred);
                 engine.PerformPuts();
-                bufsize_deferred_pp_v3[step] = GetAndPrintBufferSize(
-                    engine, "After Put(v3, Def)+PerformPuts():", step);
+                bufsize_deferred_pp_v3[step] =
+                    GetAndPrintBufferSize(engine, "After Put(v3, Def)+PerformPuts():", step);
                 engine.EndStep();
                 bufsize_deferred_pp_endstep[step] =
                     GetAndPrintBufferSize(engine, "After EndStep():", step);
@@ -231,8 +226,7 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
          * size
          * */
         const size_t TotalDataSize = Nx * sizeof(double) * 3;
-        const size_t MaxExtra =
-            18 * 1024 * 1024; /* 18MB extra allowed in buffer */
+        const size_t MaxExtra = 18 * 1024 * 1024; /* 18MB extra allowed in buffer */
         for (size_t step = 0; step < NSteps; ++step)
         {
             EXPECT_LT(bufsize_sync_beginstep[step], TotalDataSize + MaxExtra);
@@ -241,20 +235,17 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
             EXPECT_LT(bufsize_sync_v3[step], TotalDataSize + MaxExtra);
             EXPECT_LT(bufsize_sync_endstep[step], TotalDataSize + MaxExtra);
 
-            EXPECT_LT(bufsize_deferred_beginstep[step],
-                      TotalDataSize + MaxExtra);
+            EXPECT_LT(bufsize_deferred_beginstep[step], TotalDataSize + MaxExtra);
             EXPECT_LT(bufsize_deferred_v1[step], TotalDataSize + MaxExtra);
             EXPECT_LT(bufsize_deferred_v2[step], TotalDataSize + MaxExtra);
             EXPECT_LT(bufsize_deferred_v3[step], TotalDataSize + MaxExtra);
             EXPECT_LT(bufsize_deferred_endstep[step], TotalDataSize + MaxExtra);
 
-            EXPECT_LT(bufsize_deferred_pp_beginstep[step],
-                      TotalDataSize + MaxExtra);
+            EXPECT_LT(bufsize_deferred_pp_beginstep[step], TotalDataSize + MaxExtra);
             EXPECT_LT(bufsize_deferred_pp_v1[step], TotalDataSize + MaxExtra);
             EXPECT_LT(bufsize_deferred_pp_v2[step], TotalDataSize + MaxExtra);
             EXPECT_LT(bufsize_deferred_pp_v3[step], TotalDataSize + MaxExtra);
-            EXPECT_LT(bufsize_deferred_pp_endstep[step],
-                      TotalDataSize + MaxExtra);
+            EXPECT_LT(bufsize_deferred_pp_endstep[step], TotalDataSize + MaxExtra);
         }
     }
 }

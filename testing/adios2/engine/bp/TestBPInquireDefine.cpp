@@ -57,21 +57,19 @@ TEST_F(ADIOSInquireDefineTest, Read)
             adios2::Dims start{static_cast<unsigned int>(mpiRank * Nx)};
             adios2::Dims count{static_cast<unsigned int>(Nx)};
 
-            auto var_g = ioWrite.DefineVariable<int32_t>("global_variable",
-                                                         shape, start, count);
+            auto var_g = ioWrite.DefineVariable<int32_t>("global_variable", shape, start, count);
             for (auto step = 0; step < NSteps; ++step)
             {
                 engine.BeginStep();
                 if (step == 0)
                 {
                     engine.Put(var_g, Ints0.data());
-                    auto var0 = ioWrite.DefineVariable<int32_t>(
-                        "variable0", shape, start, count);
+                    auto var0 = ioWrite.DefineVariable<int32_t>("variable0", shape, start, count);
                     engine.Put(var0, Ints0.data(), adios2::Mode::Deferred);
                     if (!ioWrite.InquireVariable<int>("variable0"))
                     {
-                        auto var0 = ioWrite.DefineVariable<int32_t>(
-                            "variable0", shape, start, count);
+                        auto var0 =
+                            ioWrite.DefineVariable<int32_t>("variable0", shape, start, count);
                         engine.Put(var0, Ints1.data(), adios2::Mode::Deferred);
                     }
                 }
@@ -80,8 +78,8 @@ TEST_F(ADIOSInquireDefineTest, Read)
                     engine.Put(var_g, Ints1.data());
                     if (!ioWrite.InquireVariable<int>("variable1"))
                     {
-                        auto var1 = ioWrite.DefineVariable<int32_t>(
-                            "variable1", shape, start, count);
+                        auto var1 =
+                            ioWrite.DefineVariable<int32_t>("variable1", shape, start, count);
                         engine.Put(var1, Ints1.data(), adios2::Mode::Deferred);
                     }
                 }
@@ -90,8 +88,8 @@ TEST_F(ADIOSInquireDefineTest, Read)
                     engine.Put(var_g, Ints2.data());
                     if (!ioWrite.InquireVariable<int>("variable2"))
                     {
-                        auto var2 = ioWrite.DefineVariable<int32_t>(
-                            "variable2", shape, start, count);
+                        auto var2 =
+                            ioWrite.DefineVariable<int32_t>("variable2", shape, start, count);
                         engine.Put(var2, Ints2.data(), adios2::Mode::Deferred);
                     }
                 }
@@ -100,8 +98,8 @@ TEST_F(ADIOSInquireDefineTest, Read)
                     engine.Put(var_g, Ints3.data());
                     if (!ioWrite.InquireVariable<int>("variable3"))
                     {
-                        auto var3 = ioWrite.DefineVariable<int32_t>(
-                            "variable3", shape, start, count);
+                        auto var3 =
+                            ioWrite.DefineVariable<int32_t>("variable3", shape, start, count);
                         engine.Put(var3, Ints3.data(), adios2::Mode::Deferred);
                     }
                 }

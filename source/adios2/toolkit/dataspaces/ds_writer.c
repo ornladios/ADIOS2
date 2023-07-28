@@ -59,22 +59,18 @@ enum DATASPACES_CONNECTION
     dataspaces_connected_from_writer = 2,
     dataspaces_connected_from_both = 3
 };
-static enum DATASPACES_CONNECTION globals_adios_connected_to_dataspaces =
-    dataspaces_disconnected;
+static enum DATASPACES_CONNECTION globals_adios_connected_to_dataspaces = dataspaces_disconnected;
 
 void globals_adios_set_dataspaces_connected_from_reader()
 {
     if (globals_adios_connected_to_dataspaces == dataspaces_disconnected)
-        globals_adios_connected_to_dataspaces =
-            dataspaces_connected_from_reader;
-    else if (globals_adios_connected_to_dataspaces ==
-             dataspaces_connected_from_writer)
+        globals_adios_connected_to_dataspaces = dataspaces_connected_from_reader;
+    else if (globals_adios_connected_to_dataspaces == dataspaces_connected_from_writer)
         globals_adios_connected_to_dataspaces = dataspaces_connected_from_both;
 }
 void globals_adios_set_dataspaces_disconnected_from_reader()
 {
-    if (globals_adios_connected_to_dataspaces ==
-        dataspaces_connected_from_reader)
+    if (globals_adios_connected_to_dataspaces == dataspaces_connected_from_reader)
     {
         globals_adios_connected_to_dataspaces = dataspaces_disconnected;
 #ifdef HAVE_DSPACES2
@@ -84,24 +80,19 @@ void globals_adios_set_dataspaces_disconnected_from_reader()
         }
 #endif
     }
-    else if (globals_adios_connected_to_dataspaces ==
-             dataspaces_connected_from_both)
-        globals_adios_connected_to_dataspaces =
-            dataspaces_connected_from_writer;
+    else if (globals_adios_connected_to_dataspaces == dataspaces_connected_from_both)
+        globals_adios_connected_to_dataspaces = dataspaces_connected_from_writer;
 }
 void globals_adios_set_dataspaces_connected_from_writer()
 {
     if (globals_adios_connected_to_dataspaces == dataspaces_disconnected)
-        globals_adios_connected_to_dataspaces =
-            dataspaces_connected_from_writer;
-    else if (globals_adios_connected_to_dataspaces ==
-             dataspaces_connected_from_reader)
+        globals_adios_connected_to_dataspaces = dataspaces_connected_from_writer;
+    else if (globals_adios_connected_to_dataspaces == dataspaces_connected_from_reader)
         globals_adios_connected_to_dataspaces = dataspaces_connected_from_both;
 }
 void globals_adios_set_dataspaces_disconnected_from_writer()
 {
-    if (globals_adios_connected_to_dataspaces ==
-        dataspaces_connected_from_writer)
+    if (globals_adios_connected_to_dataspaces == dataspaces_connected_from_writer)
     {
         globals_adios_connected_to_dataspaces = dataspaces_disconnected;
 #ifdef HAVE_DSPACES2
@@ -111,10 +102,8 @@ void globals_adios_set_dataspaces_disconnected_from_writer()
         }
 #endif
     }
-    else if (globals_adios_connected_to_dataspaces ==
-             dataspaces_connected_from_both)
-        globals_adios_connected_to_dataspaces =
-            dataspaces_connected_from_reader;
+    else if (globals_adios_connected_to_dataspaces == dataspaces_connected_from_both)
+        globals_adios_connected_to_dataspaces = dataspaces_connected_from_reader;
 }
 int globals_adios_is_dataspaces_connected()
 {
@@ -122,22 +111,17 @@ int globals_adios_is_dataspaces_connected()
 }
 int globals_adios_is_dataspaces_connected_from_reader()
 {
-    return (globals_adios_connected_to_dataspaces ==
-                dataspaces_connected_from_reader ||
-            globals_adios_connected_to_dataspaces ==
-                dataspaces_connected_from_both);
+    return (globals_adios_connected_to_dataspaces == dataspaces_connected_from_reader ||
+            globals_adios_connected_to_dataspaces == dataspaces_connected_from_both);
 }
 int globals_adios_is_dataspaces_connected_from_writer()
 {
-    return (globals_adios_connected_to_dataspaces ==
-                dataspaces_connected_from_writer ||
-            globals_adios_connected_to_dataspaces ==
-                dataspaces_connected_from_both);
+    return (globals_adios_connected_to_dataspaces == dataspaces_connected_from_writer ||
+            globals_adios_connected_to_dataspaces == dataspaces_connected_from_both);
 }
 int globals_adios_is_dataspaces_connected_from_both()
 {
-    return (globals_adios_connected_to_dataspaces ==
-            dataspaces_connected_from_both);
+    return (globals_adios_connected_to_dataspaces == dataspaces_connected_from_both);
 }
 
 int adios_dataspaces_init(void *comm, DsData *md)

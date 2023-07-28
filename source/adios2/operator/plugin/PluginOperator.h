@@ -37,18 +37,15 @@ public:
     PluginOperator(const Params &parameters);
     virtual ~PluginOperator();
 
-    size_t Operate(const char *dataIn, const Dims &blockStart,
-                   const Dims &blockCount, const DataType type,
-                   char *bufferOut) override;
+    size_t Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                   const DataType type, char *bufferOut) override;
 
-    size_t InverseOperate(const char *bufferIn, const size_t sizeIn,
-                          char *dataOut) override;
+    size_t InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut) override;
 
     bool IsDataTypeValid(const DataType type) const override;
 
 protected:
-    void PluginInit(const std::string &pluginName,
-                    const std::string &pluginLibrary);
+    void PluginInit(const std::string &pluginName, const std::string &pluginLibrary);
 
 private:
     struct Impl;

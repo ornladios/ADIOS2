@@ -77,8 +77,7 @@ public:
 #else
         adios2::ADIOS adios;
 #endif
-        std::string filename =
-            "ParameterSelectSteps" + std::to_string(mpiSize) + ".bp";
+        std::string filename = "ParameterSelectSteps" + std::to_string(mpiSize) + ".bp";
         adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
         ioWrite.SetEngine(engineName);
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
@@ -108,8 +107,7 @@ public:
 
 class BPParameterSelectStepsP
 : public BPParameterSelectSteps,
-  public ::testing::WithParamInterface<
-      std::tuple<std::string, std::vector<size_t>>>
+  public ::testing::WithParamInterface<std::tuple<std::string, std::vector<size_t>>>
 {
 protected:
     std::string GetSelectionString() { return std::get<0>(GetParam()); };
@@ -135,13 +133,11 @@ TEST_P(BPParameterSelectStepsP, Read)
     adios2::ADIOS adios;
 #endif
     CreateOutput();
-    std::string filename =
-        "ParameterSelectSteps" + std::to_string(mpiSize) + ".bp";
+    std::string filename = "ParameterSelectSteps" + std::to_string(mpiSize) + ".bp";
     adios2::IO ioRead = adios.DeclareIO("TestIORead");
     ioRead.SetEngine(engineName);
     ioRead.SetParameter("SelectSteps", selection);
-    adios2::Engine engine_s =
-        ioRead.Open(filename, adios2::Mode::ReadRandomAccess);
+    adios2::Engine engine_s = ioRead.Open(filename, adios2::Mode::ReadRandomAccess);
     EXPECT_TRUE(engine_s);
 
     const size_t nsteps = engine_s.Steps();
@@ -196,8 +192,7 @@ TEST_P(BPParameterSelectStepsP, Stream)
     adios2::ADIOS adios;
 #endif
 
-    std::string filename =
-        "ParameterSelectStepsStream" + std::to_string(mpiSize) + ".bp";
+    std::string filename = "ParameterSelectStepsStream" + std::to_string(mpiSize) + ".bp";
     adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
     ioWrite.SetEngine(engineName);
     adios2::Engine writer = ioWrite.Open(filename, adios2::Mode::Write);
@@ -236,8 +231,7 @@ TEST_P(BPParameterSelectStepsP, Stream)
         auto status = reader.BeginStep(adios2::StepMode::Read, 0.0f);
         if (!mpiRank)
         {
-            std::cout << "Reader BeginStep() step " << step << " status "
-                      << status << std::endl;
+            std::cout << "Reader BeginStep() step " << step << " status " << status << std::endl;
         }
         if (status == adios2::StepStatus::OK)
         {
@@ -245,27 +239,24 @@ TEST_P(BPParameterSelectStepsP, Stream)
             if (!mpiRank)
             {
                 std::cout << "Reader got read step " << readStep
-                          << ". Check if it equals to writer step "
-                          << absoluteSteps[readStep] << std::endl;
+                          << ". Check if it equals to writer step " << absoluteSteps[readStep]
+                          << std::endl;
             }
             std::vector<int32_t> res;
-            adios2::Variable<int32_t> var =
-                ioRead.InquireVariable<int32_t>("var");
+            adios2::Variable<int32_t> var = ioRead.InquireVariable<int32_t>("var");
             var.SetSelection({{Nx * mpiRank}, {Nx}});
             reader.Get<int32_t>(var, res, adios2::Mode::Sync);
             int s = static_cast<int>(absoluteSteps[readStep]);
             auto d = GenerateData(s, mpiRank, mpiSize);
             EXPECT_EQ(res[0], d[0]);
 
-            adios2::Variable<size_t> varStep =
-                ioRead.InquireVariable<size_t>("step");
+            adios2::Variable<size_t> varStep = ioRead.InquireVariable<size_t>("step");
             size_t stepInFile;
             reader.Get<size_t>(varStep, stepInFile);
             EXPECT_EQ(stepInFile, absoluteSteps[readStep]);
 
             std::string aname = "a" + std::to_string(absoluteSteps[readStep]);
-            adios2::Attribute<size_t> a =
-                ioRead.InquireAttribute<size_t>(aname);
+            adios2::Attribute<size_t> a = ioRead.InquireAttribute<size_t>(aname);
             size_t stepInAttribute = a.Data()[0];
             EXPECT_EQ(stepInAttribute, absoluteSteps[readStep]);
 
@@ -294,8 +285,7 @@ INSTANTIATE_TEST_SUITE_P(BPParameterSelectSteps, BPParameterSelectStepsP,
                          ::testing::Values(std::make_tuple("0:n:1", s_0n1),
                                            std::make_tuple("1:5:2", s_152),
                                            std::make_tuple("3:n:3", s_3n3),
-                                           std::make_tuple("1:n:2 0:n:2",
-                                                           s_1n2_0n2)));
+                                           std::make_tuple("1:n:2 0:n:2", s_1n2_0n2)));
 
 int main(int argc, char **argv)
 {

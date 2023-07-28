@@ -22,9 +22,8 @@ public:
     BP4ReadOldCompressed() = default;
 };
 
-class BP4ReadOldCompressedP
-: public BP4ReadOldCompressed,
-  public ::testing::WithParamInterface<std::tuple<std::string, bool>>
+class BP4ReadOldCompressedP : public BP4ReadOldCompressed,
+                              public ::testing::WithParamInterface<std::tuple<std::string, bool>>
 {
 protected:
     std::string GetFileName() { return std::get<0>(GetParam()); };
@@ -84,8 +83,7 @@ TEST_P(BP4ReadOldCompressedP, Read)
     }
     else
     {
-        ASSERT_THROW(bpReader.Get(var_a, R64, adios2::Mode::Sync),
-                     std::runtime_error);
+        ASSERT_THROW(bpReader.Get(var_a, R64, adios2::Mode::Sync), std::runtime_error);
     }
     bpReader.Close();
 }

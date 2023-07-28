@@ -26,8 +26,7 @@ void GenData(std::vector<std::complex<T>> &data, const size_t step)
 {
     for (size_t i = 0; i < data.size(); ++i)
     {
-        data[i] = {static_cast<T>(i + 10000 + step * 100),
-                   static_cast<T>(i + 10000)};
+        data[i] = {static_cast<T>(i + 10000 + step * 100), static_cast<T>(i + 10000)};
     }
 }
 
@@ -84,11 +83,10 @@ void VerifyData(const std::vector<T> &data, const size_t step)
     VerifyData(data.data(), data.size(), step);
 }
 
-void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
-                   const size_t steps, const adios2::Params &engineParams)
+void DataManWriter(const Dims &shape, const Dims &start, const Dims &count, const size_t steps,
+                   const adios2::Params &engineParams)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("WAN");
     io.SetEngine("DataMan");
@@ -104,21 +102,16 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
     auto varChars = io.DefineVariable<char>("varChars", shape, start, count);
-    auto varUChars =
-        io.DefineVariable<unsigned char>("varUChars", shape, start, count);
+    auto varUChars = io.DefineVariable<unsigned char>("varUChars", shape, start, count);
     auto varShorts = io.DefineVariable<short>("varShorts", shape, start, count);
-    auto varUShorts =
-        io.DefineVariable<unsigned short>("varUShorts", shape, start, count);
+    auto varUShorts = io.DefineVariable<unsigned short>("varUShorts", shape, start, count);
     auto varInts = io.DefineVariable<int>("varInts", shape, start, count);
-    auto varUInts =
-        io.DefineVariable<unsigned int>("varUInts", shape, start, count);
+    auto varUInts = io.DefineVariable<unsigned int>("varUInts", shape, start, count);
     auto varFloats = io.DefineVariable<float>("varFloats", shape, start, count);
-    auto varDoubles =
-        io.DefineVariable<double>("varDoubles", shape, start, count);
-    auto varComplexes = io.DefineVariable<std::complex<float>>(
-        "varComplexes", shape, start, count);
-    auto varDComplexes = io.DefineVariable<std::complex<double>>(
-        "varDComplexes", shape, start, count);
+    auto varDoubles = io.DefineVariable<double>("varDoubles", shape, start, count);
+    auto varComplexes = io.DefineVariable<std::complex<float>>("varComplexes", shape, start, count);
+    auto varDComplexes =
+        io.DefineVariable<std::complex<double>>("varDComplexes", shape, start, count);
     auto varUInt64s = io.DefineVariable<uint64_t>("varUInt64s");
     auto varString = io.DefineVariable<std::string>("varString");
     io.DefineAttribute<int>("AttInt", 110);
@@ -153,11 +146,10 @@ void DataManWriter(const Dims &shape, const Dims &start, const Dims &count,
     engine.Close();
 }
 
-void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
-                   const size_t steps, const adios2::Params &engineParams)
+void DataManReader(const Dims &shape, const Dims &start, const Dims &count, const size_t steps,
+                   const adios2::Params &engineParams)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("WAN");
     io.SetEngine("DataMan");
@@ -185,29 +177,22 @@ void DataManReader(const Dims &shape, const Dims &start, const Dims &count,
             const auto &vars = io.AvailableVariables();
             ASSERT_EQ(vars.size(), 12);
             currentStep = engine.CurrentStep();
-            adios2::Variable<char> varChars =
-                io.InquireVariable<char>("varChars");
+            adios2::Variable<char> varChars = io.InquireVariable<char>("varChars");
             adios2::Variable<unsigned char> varUChars =
                 io.InquireVariable<unsigned char>("varUChars");
-            adios2::Variable<short> varShorts =
-                io.InquireVariable<short>("varShorts");
+            adios2::Variable<short> varShorts = io.InquireVariable<short>("varShorts");
             adios2::Variable<unsigned short> varUShorts =
                 io.InquireVariable<unsigned short>("varUShorts");
             adios2::Variable<int> varInts = io.InquireVariable<int>("varInts");
-            adios2::Variable<unsigned int> varUInts =
-                io.InquireVariable<unsigned int>("varUInts");
-            adios2::Variable<float> varFloats =
-                io.InquireVariable<float>("varFloats");
-            adios2::Variable<double> varDoubles =
-                io.InquireVariable<double>("varDoubles");
+            adios2::Variable<unsigned int> varUInts = io.InquireVariable<unsigned int>("varUInts");
+            adios2::Variable<float> varFloats = io.InquireVariable<float>("varFloats");
+            adios2::Variable<double> varDoubles = io.InquireVariable<double>("varDoubles");
             adios2::Variable<std::complex<float>> varComplexes =
                 io.InquireVariable<std::complex<float>>("varComplexes");
             adios2::Variable<std::complex<double>> varDComplexes =
                 io.InquireVariable<std::complex<double>>("varDComplexes");
-            adios2::Variable<uint64_t> varUInt64s =
-                io.InquireVariable<uint64_t>("varUInt64s");
-            adios2::Variable<std::string> varString =
-                io.InquireVariable<std::string>("varString");
+            adios2::Variable<uint64_t> varUInt64s = io.InquireVariable<uint64_t>("varUInt64s");
+            adios2::Variable<std::string> varString = io.InquireVariable<std::string>("varString");
             auto charsBlocksInfo = engine.AllStepsBlocksInfo(varChars);
             varChars.SetSelection({start, count});
             varUChars.SetSelection({start, count});
@@ -280,14 +265,11 @@ TEST_F(DataManEngineTest, 1D)
     Dims start = {0};
     Dims count = {10};
     size_t steps = 5000;
-    adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
-                                   {"Port", "12300"}};
+    adios2::Params engineParams = {{"IPAddress", "127.0.0.1"}, {"Port", "12300"}};
 
     // run workflow
-    auto r =
-        std::thread(DataManReader, shape, start, count, steps, engineParams);
-    auto w =
-        std::thread(DataManWriter, shape, start, count, steps, engineParams);
+    auto r = std::thread(DataManReader, shape, start, count, steps, engineParams);
+    auto w = std::thread(DataManWriter, shape, start, count, steps, engineParams);
     w.join();
     r.join();
 }

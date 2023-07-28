@@ -32,16 +32,14 @@ using namespace adios2::format;
 
 void DaosWriter::WriteData_TwoLevelShm(format::BufferV *Data)
 {
-    aggregator::MPIShmChain *a =
-        dynamic_cast<aggregator::MPIShmChain *>(m_Aggregator);
+    aggregator::MPIShmChain *a = dynamic_cast<aggregator::MPIShmChain *>(m_Aggregator);
 
     // new step writing starts at offset m_DataPos on master aggregator
     // other aggregators to the same file will need to wait for the position
     // to arrive from the rank below
 
     // align to PAGE_SIZE (only valid on master aggregator at this point)
-    m_DataPos +=
-        helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
+    m_DataPos += helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
 
     // Each aggregator needs to know the total size they write
     // This calculation is valid on aggregators only
@@ -64,8 +62,7 @@ void DaosWriter::WriteData_TwoLevelShm(format::BufferV *Data)
         {
             alignment_size = m_Parameters.DirectIOAlignOffset;
         }
-        a->CreateShm(static_cast<size_t>(maxSize), m_Parameters.MaxShmSize,
-                     alignment_size);
+        a->CreateShm(static_cast<size_t>(maxSize), m_Parameters.MaxShmSize, alignment_size);
     }
 
     shm::TokenChain<uint64_t> tokenChain(&a->m_Comm);
@@ -80,26 +77,22 @@ void DaosWriter::WriteData_TwoLevelShm(format::BufferV *Data)
                 &m_DataPos, 1, a->m_AggregatorChainComm.Rank() - 1, 0,
                 "AggregatorChain token in DaosWriter::WriteData_TwoLevelShm");
             // align to PAGE_SIZE
-            m_DataPos += helper::PaddingToAlignOffset(m_DataPos,
-                                                      m_Parameters.StripeSize);
+            m_DataPos += helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
         }
         m_StartDataPos = m_DataPos; // metadata needs this info
-        if (a->m_AggregatorChainComm.Rank() <
-            a->m_AggregatorChainComm.Size() - 1)
+        if (a->m_AggregatorChainComm.Rank() < a->m_AggregatorChainComm.Size() - 1)
         {
             uint64_t nextWriterPos = m_DataPos + myTotalSize;
-            a->m_AggregatorChainComm.Isend(
-                &nextWriterPos, 1, a->m_AggregatorChainComm.Rank() + 1, 0,
-                "Chain token in DaosWriter::WriteData");
+            a->m_AggregatorChainComm.Isend(&nextWriterPos, 1, a->m_AggregatorChainComm.Rank() + 1,
+                                           0, "Chain token in DaosWriter::WriteData");
         }
         else if (a->m_AggregatorChainComm.Size() > 1)
         {
             // send back final position from last aggregator in file to master
             // aggregator
             uint64_t nextWriterPos = m_DataPos + myTotalSize;
-            a->m_AggregatorChainComm.Isend(
-                &nextWriterPos, 1, 0, 0,
-                "Chain token in DaosWriter::WriteData");
+            a->m_AggregatorChainComm.Isend(&nextWriterPos, 1, 0, 0,
+                                           "Chain token in DaosWriter::WriteData");
         }
 
         /*std::cout << "Rank " << m_Comm.Rank()
@@ -123,12 +116,10 @@ void DaosWriter::WriteData_TwoLevelShm(format::BufferV *Data)
         // Master aggregator needs to know where the last writing ended by the
         // last aggregator in the chain, so that it can start from the correct
         // position at the next output step
-        if (a->m_AggregatorChainComm.Size() > 1 &&
-            !a->m_AggregatorChainComm.Rank())
+        if (a->m_AggregatorChainComm.Size() > 1 && !a->m_AggregatorChainComm.Rank())
         {
-            a->m_AggregatorChainComm.Recv(
-                &m_DataPos, 1, a->m_AggregatorChainComm.Size() - 1, 0,
-                "Chain token in DaosWriter::WriteData");
+            a->m_AggregatorChainComm.Recv(&m_DataPos, 1, a->m_AggregatorChainComm.Size() - 1, 0,
+                                          "Chain token in DaosWriter::WriteData");
         }
     }
     else
@@ -157,8 +148,7 @@ void DaosWriter::WriteMyOwnData(format::BufferV *Data)
 {
     std::vector<core::iovec> DataVec = Data->DataVec();
     m_StartDataPos = m_DataPos;
-    m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(),
-                                  m_StartDataPos);
+    m_FileDataManager.WriteFileAt(DataVec.data(), DataVec.size(), m_StartDataPos);
     m_DataPos += Data->Size();
 }
 
@@ -191,8 +181,7 @@ void DaosWriter::SendDataToAggregator(format::BufferV *Data)
        between the two segments.
     */
 
-    aggregator::MPIShmChain *a =
-        dynamic_cast<aggregator::MPIShmChain *>(m_Aggregator);
+    aggregator::MPIShmChain *a = dynamic_cast<aggregator::MPIShmChain *>(m_Aggregator);
 
     std::vector<core::iovec> DataVec = Data->DataVec();
     size_t nBlocks = DataVec.size();
@@ -262,8 +251,7 @@ void DaosWriter::SendDataToAggregator(format::BufferV *Data)
 void DaosWriter::WriteOthersData(size_t TotalSize)
 {
     /* Only an Aggregator calls this function */
-    aggregator::MPIShmChain *a =
-        dynamic_cast<aggregator::MPIShmChain *>(m_Aggregator);
+    aggregator::MPIShmChain *a = dynamic_cast<aggregator::MPIShmChain *>(m_Aggregator);
 
     size_t wrote = 0;
     while (wrote < TotalSize)

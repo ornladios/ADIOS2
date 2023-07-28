@@ -31,20 +31,16 @@ namespace adios2
 namespace core
 {
 
-VariableBase::VariableBase(const std::string &name, const DataType type,
-                           const size_t elementSize, const Dims &shape,
-                           const Dims &start, const Dims &count,
+VariableBase::VariableBase(const std::string &name, const DataType type, const size_t elementSize,
+                           const Dims &shape, const Dims &start, const Dims &count,
                            const bool constantDims)
-: m_Name(name), m_Type(type), m_ElementSize(elementSize), m_Shape(shape),
-  m_Start(start), m_Count(count), m_ConstantDims(constantDims)
+: m_Name(name), m_Type(type), m_ElementSize(elementSize), m_Shape(shape), m_Start(start),
+  m_Count(count), m_ConstantDims(constantDims)
 {
     InitShapeType();
 }
 
-size_t VariableBase::TotalSize() const noexcept
-{
-    return helper::GetTotalSize(m_Count);
-}
+size_t VariableBase::TotalSize() const noexcept { return helper::GetTotalSize(m_Count); }
 
 MemorySpace VariableBase::GetMemorySpace(const void *ptr)
 {
@@ -68,27 +64,24 @@ void VariableBase::SetShape(const adios2::Dims &shape)
 {
     if (m_Type == helper::GetDataType<std::string>())
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "SetShape",
-            "string variable " + m_Name +
-                " is always LocalValue, can't change "
-                "shape, in call to SetShape");
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetShape",
+                                             "string variable " + m_Name +
+                                                 " is always LocalValue, can't change "
+                                                 "shape, in call to SetShape");
     }
 
     if (m_SingleValue)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "SetShape",
-            "selection is not valid for single value variable " + m_Name +
-                ", in call to SetShape");
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetShape",
+                                             "selection is not valid for single value variable " +
+                                                 m_Name + ", in call to SetShape");
     }
 
     if (m_ConstantDims)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "SetShape",
-            "selection is not valid for constant shape variable " + m_Name +
-                ", in call to SetShape");
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetShape",
+                                             "selection is not valid for constant shape variable " +
+                                                 m_Name + ", in call to SetShape");
     }
 
     if (m_ShapeID == ShapeID::LocalArray)
@@ -96,8 +89,7 @@ void VariableBase::SetShape(const adios2::Dims &shape)
         helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetShape",
                                              "can't assign shape dimensions "
                                              "to local array variable " +
-                                                 m_Name +
-                                                 ", in call to SetShape");
+                                                 m_Name + ", in call to SetShape");
     }
 
     m_Shape = shape;
@@ -114,49 +106,43 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
     const Dims &start = boxDims.first;
     const Dims &count = boxDims.second;
 
-    if (m_Type == helper::GetDataType<std::string>() &&
-        m_ShapeID != ShapeID::GlobalArray)
+    if (m_Type == helper::GetDataType<std::string>() && m_ShapeID != ShapeID::GlobalArray)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "SetSelection",
-            "string variable " + m_Name +
-                " not a GlobalArray, it can't have a "
-                "selection, in call to SetSelection");
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetSelection",
+                                             "string variable " + m_Name +
+                                                 " not a GlobalArray, it can't have a "
+                                                 "selection, in call to SetSelection");
     }
 
     if (m_SingleValue && m_ShapeID != ShapeID::GlobalArray)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "SetSelection",
-            "selection is not valid for single value variable " + m_Name +
-                ", in call to SetSelection");
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetSelection",
+                                             "selection is not valid for single value variable " +
+                                                 m_Name + ", in call to SetSelection");
     }
 
     if (m_ConstantDims)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "SetSelection",
-            "selection is not valid for constant shape variable " + m_Name +
-                ", in call to SetSelection");
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetSelection",
+                                             "selection is not valid for constant shape variable " +
+                                                 m_Name + ", in call to SetSelection");
     }
 
     if (m_ShapeID == ShapeID::GlobalArray &&
         (m_Shape.size() != count.size() || m_Shape.size() != start.size()))
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "SetSelection",
-            "count and start must be the "
-            "same size as shape for variable " +
-                m_Name + ", in call to SetSelection");
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetSelection",
+                                             "count and start must be the "
+                                             "same size as shape for variable " +
+                                                 m_Name + ", in call to SetSelection");
     }
 
     if (m_ShapeID == ShapeID::JoinedArray && !start.empty())
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "SetSelection",
-            "start argument must be empty "
-            "for joined array variable " +
-                m_Name + ", in call to SetSelection");
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetSelection",
+                                             "start argument must be empty "
+                                             "for joined array variable " +
+                                                 m_Name + ", in call to SetSelection");
     }
 
     m_Start = start;
@@ -171,31 +157,30 @@ void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
 
     if (m_SingleValue)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "SetMemorySelection",
-            "memory start is not valid "
-            "for single value variable " +
-                m_Name + ", in call to SetMemorySelection");
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetMemorySelection",
+                                             "memory start is not valid "
+                                             "for single value variable " +
+                                                 m_Name + ", in call to SetMemorySelection");
     }
 
     if (m_Start.size() != memoryStart.size())
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "SetMemorySelection",
-            "memoryStart size must be "
-            "the same as variable " +
-                m_Name + " start size " + std::to_string(m_Start.size()) +
-                ", in call to SetMemorySelection");
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetMemorySelection",
+                                             "memoryStart size must be "
+                                             "the same as variable " +
+                                                 m_Name + " start size " +
+                                                 std::to_string(m_Start.size()) +
+                                                 ", in call to SetMemorySelection");
     }
 
     if (m_Count.size() != memoryCount.size())
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "SetMemorySelection",
-            "memoryCount size must be "
-            "the same as variable " +
-                m_Name + " count size " + std::to_string(m_Count.size()) +
-                ", in call to SetMemorySelection");
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetMemorySelection",
+                                             "memoryCount size must be "
+                                             "the same as variable " +
+                                                 m_Name + " count size " +
+                                                 std::to_string(m_Count.size()) +
+                                                 ", in call to SetMemorySelection");
     }
 
     // TODO might have to remove for reading
@@ -210,9 +195,8 @@ void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
             helper::Throw<std::invalid_argument>(
                 "Core", "VariableBase", "SetMemorySelection",
                 "memoyCount[" + indexStr + "]= " + memoryCountStr +
-                    " can not be smaller than variable count[" + indexStr +
-                    "]= " + countStr + " for variable " + m_Name +
-                    ", in call to SetMemorySelection");
+                    " can not be smaller than variable count[" + indexStr + "]= " + countStr +
+                    " for variable " + m_Name + ", in call to SetMemorySelection");
         }
     }
 
@@ -220,25 +204,18 @@ void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
     m_MemoryCount = memorySelection.second;
 }
 
-size_t VariableBase::GetAvailableStepsStart() const
-{
-    return m_AvailableStepsStart;
-}
+size_t VariableBase::GetAvailableStepsStart() const { return m_AvailableStepsStart; }
 
-size_t VariableBase::GetAvailableStepsCount() const
-{
-    return m_AvailableStepsCount;
-}
+size_t VariableBase::GetAvailableStepsCount() const { return m_AvailableStepsCount; }
 
 void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
 {
     if (boxSteps.second == 0)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "SetStepSelection",
-            "boxSteps.second count argument "
-            " can't be zero, from variable " +
-                m_Name + ", in call to SetStepSelection");
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetStepSelection",
+                                             "boxSteps.second count argument "
+                                             " can't be zero, from variable " +
+                                                 m_Name + ", in call to SetStepSelection");
     }
 
     m_StepsStart = boxSteps.first;
@@ -255,8 +232,7 @@ void VariableBase::SetStepSelection(const Box<size_t> &boxSteps)
     }
 }
 
-size_t VariableBase::AddOperation(const std::string &type,
-                                  const Params &parameters) noexcept
+size_t VariableBase::AddOperation(const std::string &type, const Params &parameters) noexcept
 {
     auto op = MakeOperator(type, parameters);
     if (op->IsDataTypeValid(m_Type))
@@ -266,9 +242,8 @@ size_t VariableBase::AddOperation(const std::string &type,
     else
     {
         helper::Log("Variable", "VariableBase", "AddOperation",
-                    "Operator " + op->m_TypeString +
-                        " does not support data type " + ToString(m_Type) +
-                        ", operator not added",
+                    "Operator " + op->m_TypeString + " does not support data type " +
+                        ToString(m_Type) + ", operator not added",
                     helper::LogMode::WARNING);
     }
     return m_Operations.size() - 1;
@@ -282,8 +257,7 @@ size_t VariableBase::AddOperation(std::shared_ptr<core::Operator> op) noexcept
 
 void VariableBase::RemoveOperations() noexcept { m_Operations.clear(); }
 
-void VariableBase::SetOperationParameter(const size_t operationID,
-                                         const std::string key,
+void VariableBase::SetOperationParameter(const size_t operationID, const std::string key,
                                          const std::string value)
 {
     if (operationID >= m_Operations.size())
@@ -333,12 +307,11 @@ void VariableBase::CheckRandomAccessConflict(const std::string hint) const
 {
     if (m_RandomAccess && !m_FirstStreamingStep)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "CheckRandomAccessConflict",
-            "can't mix streaming and "
-            "random-access (call to SetStepSelection)"
-            "for variable " +
-                m_Name + ", " + hint);
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "CheckRandomAccessConflict",
+                                             "can't mix streaming and "
+                                             "random-access (call to SetStepSelection)"
+                                             "for variable " +
+                                                 m_Name + ", " + hint);
     }
 }
 
@@ -367,10 +340,8 @@ std::map<std::string, Params>
 VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
                                 const bool fullNameKeys) const noexcept
 {
-    auto lf_GetAttributeInfo = [](const std::string &prefix,
-                                  const std::string &attributeName,
-                                  core::IO &io,
-                                  std::map<std::string, Params> &attributesInfo,
+    auto lf_GetAttributeInfo = [](const std::string &prefix, const std::string &attributeName,
+                                  core::IO &io, std::map<std::string, Params> &attributesInfo,
                                   const bool fullNameKeys) {
         if (attributeName.compare(0, prefix.size(), prefix) != 0)
         {
@@ -379,8 +350,7 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
 
         auto itAttribute = io.GetAttributes().find(attributeName);
 
-        const std::string key =
-            fullNameKeys ? attributeName : attributeName.substr(prefix.size());
+        const std::string key = fullNameKeys ? attributeName : attributeName.substr(prefix.size());
 
         if (itAttribute->second->m_Type == DataType::Struct)
         {
@@ -400,8 +370,7 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
         // get prefixed attributes from stored attributes
         for (const std::string &attributeName : m_PrefixedAttributes)
         {
-            lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo,
-                                fullNameKeys);
+            lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo, fullNameKeys);
         }
     }
     else
@@ -409,8 +378,7 @@ VariableBase::GetAttributesInfo(core::IO &io, const std::string separator,
         for (const auto &attributePair : io.GetAttributes())
         {
             const std::string &attributeName = attributePair.first;
-            lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo,
-                                fullNameKeys);
+            lf_GetAttributeInfo(prefix, attributeName, io, attributesInfo, fullNameKeys);
         }
     }
 
@@ -454,17 +422,15 @@ void VariableBase::InitShapeType()
     {
         if (std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) == 1)
         {
-            if (!m_Start.empty() &&
-                static_cast<size_t>(std::count(m_Start.begin(), m_Start.end(),
-                                               0)) != m_Start.size())
+            if (!m_Start.empty() && static_cast<size_t>(std::count(m_Start.begin(), m_Start.end(),
+                                                                   0)) != m_Start.size())
             {
-                helper::Throw<std::invalid_argument>(
-                    "Core", "VariableBase", "InitShapeType",
-                    "The Start array must be "
-                    "empty or full-zero when defining "
-                    "a Joined Array in call to "
-                    "DefineVariable " +
-                        m_Name);
+                helper::Throw<std::invalid_argument>("Core", "VariableBase", "InitShapeType",
+                                                     "The Start array must be "
+                                                     "empty or full-zero when defining "
+                                                     "a Joined Array in call to "
+                                                     "DefineVariable " +
+                                                         m_Name);
             }
             m_ShapeID = ShapeID::JoinedArray;
         }
@@ -496,19 +462,15 @@ void VariableBase::InitShapeType()
                 m_ShapeID = ShapeID::GlobalArray;
             }
         }
-        else if (m_Shape.size() == m_Start.size() &&
-                 m_Shape.size() == m_Count.size())
+        else if (m_Shape.size() == m_Start.size() && m_Shape.size() == m_Count.size())
         {
-            auto lf_LargerThanError = [&](const unsigned int i,
-                                          const std::string dims1,
-                                          const size_t dims1Value,
-                                          const std::string dims2,
+            auto lf_LargerThanError = [&](const unsigned int i, const std::string dims1,
+                                          const size_t dims1Value, const std::string dims2,
                                           const size_t dims2Value) {
                 const std::string iString(std::to_string(i));
                 helper::Throw<std::invalid_argument>(
                     "Core", "VariableBase", "InitShapeType",
-                    dims1 + "[" + iString +
-                        "] = " + std::to_string(dims1Value) + " > " + dims2 +
+                    dims1 + "[" + iString + "] = " + std::to_string(dims1Value) + " > " + dims2 +
                         "[" + iString + "], = " + std::to_string(dims2Value) +
                         " in DefineVariable " + m_Name);
             };
@@ -517,26 +479,23 @@ void VariableBase::InitShapeType()
             {
                 if (m_Count[i] > m_Shape[i])
                 {
-                    lf_LargerThanError(i, "count", m_Count[i], "shape",
-                                       m_Shape[i]);
+                    lf_LargerThanError(i, "count", m_Count[i], "shape", m_Shape[i]);
                 }
                 if (m_Start[i] > m_Shape[i])
                 {
-                    lf_LargerThanError(i, "start", m_Start[i], "shape",
-                                       m_Shape[i]);
+                    lf_LargerThanError(i, "start", m_Start[i], "shape", m_Shape[i]);
                 }
             }
             m_ShapeID = ShapeID::GlobalArray;
         }
         else
         {
-            helper::Throw<std::invalid_argument>(
-                "Core", "VariableBase", "InitShapeType",
-                "the "
-                "combination of shape, start and count "
-                "arguments is inconsistent, in call to "
-                "DefineVariable " +
-                    m_Name);
+            helper::Throw<std::invalid_argument>("Core", "VariableBase", "InitShapeType",
+                                                 "the "
+                                                 "combination of shape, start and count "
+                                                 "arguments is inconsistent, in call to "
+                                                 "DefineVariable " +
+                                                     m_Name);
         }
     }
     else
@@ -572,47 +531,37 @@ void VariableBase::CheckDimensionsCommon(const std::string hint) const
 {
     if (m_ShapeID != ShapeID::LocalValue)
     {
-        if ((!m_Shape.empty() &&
-             std::count(m_Shape.begin(), m_Shape.end(), LocalValueDim) > 0) ||
-            (!m_Start.empty() &&
-             std::count(m_Start.begin(), m_Start.end(), LocalValueDim) > 0) ||
-            (!m_Count.empty() &&
-             std::count(m_Count.begin(), m_Count.end(), LocalValueDim) > 0))
+        if ((!m_Shape.empty() && std::count(m_Shape.begin(), m_Shape.end(), LocalValueDim) > 0) ||
+            (!m_Start.empty() && std::count(m_Start.begin(), m_Start.end(), LocalValueDim) > 0) ||
+            (!m_Count.empty() && std::count(m_Count.begin(), m_Count.end(), LocalValueDim) > 0))
         {
-            helper::Throw<std::invalid_argument>(
-                "Core", "VariableBase", "CheckDimensionsCommon",
-                "LocalValueDim parameter is only "
-                "allowed as {LocalValueDim} in Shape dimensions " +
-                    hint);
+            helper::Throw<std::invalid_argument>("Core", "VariableBase", "CheckDimensionsCommon",
+                                                 "LocalValueDim parameter is only "
+                                                 "allowed as {LocalValueDim} in Shape dimensions " +
+                                                     hint);
         }
     }
 
-    if ((!m_Shape.empty() &&
-         std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) > 1) ||
-        (!m_Start.empty() &&
-         std::count(m_Start.begin(), m_Start.end(), JoinedDim) > 0) ||
-        (!m_Count.empty() &&
-         std::count(m_Count.begin(), m_Count.end(), JoinedDim) > 0))
+    if ((!m_Shape.empty() && std::count(m_Shape.begin(), m_Shape.end(), JoinedDim) > 1) ||
+        (!m_Start.empty() && std::count(m_Start.begin(), m_Start.end(), JoinedDim) > 0) ||
+        (!m_Count.empty() && std::count(m_Count.begin(), m_Count.end(), JoinedDim) > 0))
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "VariableBase", "CheckDimensionsCommon",
-            "JoinedDim is only allowed once in "
-            "Shape and cannot appear in start/count, " +
-                hint);
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "CheckDimensionsCommon",
+                                             "JoinedDim is only allowed once in "
+                                             "Shape and cannot appear in start/count, " +
+                                                 hint);
     }
 }
 
-void VariableBase::CheckRandomAccess(const size_t step,
-                                     const std::string hint) const
+void VariableBase::CheckRandomAccess(const size_t step, const std::string hint) const
 {
     if (!m_FirstStreamingStep && step != DefaultSizeT)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "Variable", "CheckRandomAccess",
-            "can't pass a step input in "
-            "streaming (BeginStep/EndStep)"
-            "mode for variable " +
-                m_Name + ", in call to Variable<T>::" + hint);
+        helper::Throw<std::invalid_argument>("Core", "Variable", "CheckRandomAccess",
+                                             "can't pass a step input in "
+                                             "streaming (BeginStep/EndStep)"
+                                             "mode for variable " +
+                                                 m_Name + ", in call to Variable<T>::" + hint);
     }
 }
 
@@ -634,8 +583,7 @@ Dims VariableBase::Shape(const size_t step) const
 
     if (m_Engine != nullptr && m_ShapeID == ShapeID::GlobalArray)
     {
-        const size_t stepInput =
-            !m_FirstStreamingStep ? m_Engine->CurrentStep() : step;
+        const size_t stepInput = !m_FirstStreamingStep ? m_Engine->CurrentStep() : step;
 
         const auto it = m_AvailableShapes.find(stepInput + 1);
         if (it != m_AvailableShapes.end())

@@ -29,8 +29,8 @@ namespace core
 namespace engine
 {
 
-DataSpacesReader::DataSpacesReader(IO &io, const std::string &name,
-                                   const Mode mode, helper::Comm comm)
+DataSpacesReader::DataSpacesReader(IO &io, const std::string &name, const Mode mode,
+                                   helper::Comm comm)
 : Engine("DataSpacesReader", io, name, mode, std::move(comm))
 {
 
@@ -49,8 +49,7 @@ DataSpacesReader::DataSpacesReader(IO &io, const std::string &name,
         m_data.appid = 0;
     }
     auto latest = m_IO.m_Parameters.find("AlwaysProvideLatestTimestep");
-    if (latest != m_IO.m_Parameters.end() &&
-        (latest->second == "yes" || latest->second == "true"))
+    if (latest != m_IO.m_Parameters.end() && (latest->second == "yes" || latest->second == "true"))
     {
         m_ProvideLatest = true;
     }
@@ -113,13 +112,11 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
             char meta_str[256];
             unsigned int metalen;
             snprintf(meta_str, sizeof(meta_str), "VARMETA@%s", fstr);
-            int err = dspaces_get_meta(*client, meta_str, META_MODE_NEXT,
-                                       m_CurrentStep, &bcast_array[1],
-                                       (void **)&buffer, &metalen);
+            int err = dspaces_get_meta(*client, meta_str, META_MODE_NEXT, m_CurrentStep,
+                                       &bcast_array[1], (void **)&buffer, &metalen);
             bcast_array[0] = metalen;
 #else
-            buffer = dspaces_get_next_meta(m_CurrentStep, fstr, &bcast_array[0],
-                                           &bcast_array[1]);
+            buffer = dspaces_get_next_meta(m_CurrentStep, fstr, &bcast_array[0], &bcast_array[1]);
 #endif /* HAVE_DSPACES2 */
         }
     }
@@ -132,21 +129,19 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
             char meta_str[256];
             unsigned int metalen;
             snprintf(meta_str, sizeof(meta_str), "VARMETA@%s", fstr);
-            int err = dspaces_get_meta(*client, meta_str, META_MODE_LAST,
-                                       m_CurrentStep, &bcast_array[1],
-                                       (void **)&buffer, &metalen);
+            int err = dspaces_get_meta(*client, meta_str, META_MODE_LAST, m_CurrentStep,
+                                       &bcast_array[1], (void **)&buffer, &metalen);
             bcast_array[0] = metalen;
 #else
-            buffer = dspaces_get_latest_meta(m_CurrentStep, fstr,
-                                             &bcast_array[0], &bcast_array[1]);
+            buffer = dspaces_get_latest_meta(m_CurrentStep, fstr, &bcast_array[0], &bcast_array[1]);
 #endif /* HAVE_DSPACES2 */
         }
     }
     MPI_Bcast(bcast_array, 2, MPI_INT, 0, m_data.mpi_comm);
     int buf_len = bcast_array[0];
     int var_name_max_length = 128;
-    nVars = (buf_len) / (2 * sizeof(int) + MAX_DS_NDIM * sizeof(uint64_t) +
-                         var_name_max_length * sizeof(char));
+    nVars = (buf_len) /
+            (2 * sizeof(int) + MAX_DS_NDIM * sizeof(uint64_t) + var_name_max_length * sizeof(char));
     m_CurrentStep = bcast_array[1];
     if (nVars == 0)
         return StepStatus::EndOfStream;
@@ -167,8 +162,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
 
     memcpy(dim_meta, buffer, nVars * sizeof(int));
     memcpy(elemSize_meta, &buffer[nVars * sizeof(int)], nVars * sizeof(int));
-    memcpy(gdim_meta, &buffer[2 * nVars * sizeof(int)],
-           MAX_DS_NDIM * nVars * sizeof(uint64_t));
+    memcpy(gdim_meta, &buffer[2 * nVars * sizeof(int)], MAX_DS_NDIM * nVars * sizeof(uint64_t));
 
     for (int var = 0; var < nVars; ++var)
     {
@@ -180,8 +174,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
         char *val = (char *)(calloc(var_name_max_length, sizeof(char)));
         memcpy(val,
                &buffer[nVars * sizeof(int) + nVars * sizeof(int) +
-                       nVars * MAX_DS_NDIM * sizeof(uint64_t) +
-                       var * var_name_max_length],
+                       nVars * MAX_DS_NDIM * sizeof(uint64_t) + var * var_name_max_length],
                var_name_max_length * sizeof(char));
         adiosName.assign(val);
         free(val);
@@ -190,8 +183,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
         shape.resize(var_dim_size);
         if (var_dim_size > 0)
         {
-            bool isOrderC =
-                m_IO.m_ArrayOrder == adios2::ArrayOrdering::RowMajor;
+            bool isOrderC = m_IO.m_ArrayOrder == adios2::ArrayOrdering::RowMajor;
             for (int i = 0; i < var_dim_size; i++)
             {
                 if (isOrderC)
@@ -201,8 +193,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
                 }
                 else
                 {
-                    shape[i] =
-                        static_cast<int>(gdim_meta[var * MAX_DS_NDIM + i]);
+                    shape[i] = static_cast<int>(gdim_meta[var * MAX_DS_NDIM + i]);
                     ;
                 }
             }
@@ -211,8 +202,7 @@ StepStatus DataSpacesReader::BeginStep(StepMode mode, const float timeout_sec)
         auto itType = ds_to_varType.find(varType);
         if (itType == ds_to_varType.end())
         {
-            fprintf(stderr,
-                    "Wrong value in the serialized meta buffer for varType\n");
+            fprintf(stderr, "Wrong value in the serialized meta buffer for varType\n");
         }
         else
         {
@@ -285,14 +275,14 @@ void DataSpacesReader::PerformGets()
 {
     if (m_DeferredStack.size() > 0)
     {
-#define declare_type(T)                                                        \
-    for (std::string variableName : m_DeferredStack)                           \
-    {                                                                          \
-        Variable<T> *var = m_IO.InquireVariable<T>(variableName);              \
-        if (var != nullptr)                                                    \
-        {                                                                      \
-            ReadDsData(*var, var->GetData(), m_CurrentStep);                   \
-        }                                                                      \
+#define declare_type(T)                                                                            \
+    for (std::string variableName : m_DeferredStack)                                               \
+    {                                                                                              \
+        Variable<T> *var = m_IO.InquireVariable<T>(variableName);                                  \
+        if (var != nullptr)                                                                        \
+        {                                                                                          \
+            ReadDsData(*var, var->GetData(), m_CurrentStep);                                       \
+        }                                                                                          \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -300,14 +290,14 @@ void DataSpacesReader::PerformGets()
     }
 }
 
-#define declare_type(T)                                                        \
-    void DataSpacesReader::DoGetSync(Variable<T> &variable, T *data)           \
-    {                                                                          \
-        GetSyncCommon(variable, data);                                         \
-    }                                                                          \
-    void DataSpacesReader::DoGetDeferred(Variable<T> &variable, T *data)       \
-    {                                                                          \
-        GetDeferredCommon(variable, data);                                     \
+#define declare_type(T)                                                                            \
+    void DataSpacesReader::DoGetSync(Variable<T> &variable, T *data)                               \
+    {                                                                                              \
+        GetSyncCommon(variable, data);                                                             \
+    }                                                                                              \
+    void DataSpacesReader::DoGetDeferred(Variable<T> &variable, T *data)                           \
+    {                                                                                              \
+        GetDeferredCommon(variable, data);                                                         \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)

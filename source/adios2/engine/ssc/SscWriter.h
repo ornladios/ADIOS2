@@ -25,21 +25,19 @@ class SscWriter : public Engine
 {
 
 public:
-    SscWriter(IO &io, const std::string &name, const Mode mode,
-              helper::Comm comm);
+    SscWriter(IO &io, const std::string &name, const Mode mode, helper::Comm comm);
     ~SscWriter();
 
-    StepStatus BeginStep(
-        StepMode mode,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode mode,
+                         const float timeoutSeconds = std::numeric_limits<float>::max()) final;
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
 
 private:
-#define declare_type(T)                                                        \
-    void DoPutSync(Variable<T> &, const T *) final;                            \
+#define declare_type(T)                                                                            \
+    void DoPutSync(Variable<T> &, const T *) final;                                                \
     void DoPutDeferred(Variable<T> &, const T *) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

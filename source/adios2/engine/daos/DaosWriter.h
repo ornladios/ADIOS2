@@ -28,18 +28,17 @@
 #include <daos_obj.h>
 #include <mpi.h>
 
-#define FAIL(fmt, ...)                                                         \
-    do                                                                         \
-    {                                                                          \
-        fprintf(stderr, "Process %d(%s): " fmt " aborting\n", m_Comm.Rank(),   \
-                node, ##__VA_ARGS__);                                          \
-        MPI_Abort(MPI_COMM_WORLD, 1);                                          \
+#define FAIL(fmt, ...)                                                                             \
+    do                                                                                             \
+    {                                                                                              \
+        fprintf(stderr, "Process %d(%s): " fmt " aborting\n", m_Comm.Rank(), node, ##__VA_ARGS__); \
+        MPI_Abort(MPI_COMM_WORLD, 1);                                                              \
     } while (0)
-#define ASSERT(cond, ...)                                                      \
-    do                                                                         \
-    {                                                                          \
-        if (!(cond))                                                           \
-            FAIL(__VA_ARGS__);                                                 \
+#define ASSERT(cond, ...)                                                                          \
+    do                                                                                             \
+    {                                                                                              \
+        if (!(cond))                                                                               \
+            FAIL(__VA_ARGS__);                                                                     \
     } while (0)
 
 namespace adios2
@@ -59,13 +58,11 @@ public:
      * @param openMode w (supported), r, a from OpenMode in ADIOSTypes.h
      * @param comm multi-process communicator
      */
-    DaosWriter(IO &io, const std::string &name, const Mode mode,
-               helper::Comm comm);
+    DaosWriter(IO &io, const std::string &name, const Mode mode, helper::Comm comm);
 
     ~DaosWriter();
 
-    StepStatus BeginStep(StepMode mode,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void PerformDataWrite() final;
@@ -156,16 +153,15 @@ private:
     /** Notify the engine when a new attribute is defined or modified. Called
      * from IO.tcc
      */
-    void NotifyEngineAttribute(std::string name, AttributeBase *Attr,
-                               void *data) noexcept;
+    void NotifyEngineAttribute(std::string name, AttributeBase *Attr, void *data) noexcept;
 
     void EnterComputationBlock() noexcept;
     /** Inform about computation block through User->ADIOS->IO */
     void ExitComputationBlock() noexcept;
 
-#define declare_type(T)                                                        \
-    void DoPut(Variable<T> &variable, typename Variable<T>::Span &span,        \
-               const bool initialize, const T &value) final;
+#define declare_type(T)                                                                            \
+    void DoPut(Variable<T> &variable, typename Variable<T>::Span &span, const bool initialize,     \
+               const T &value) final;
 
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -174,8 +170,8 @@ private:
     void PutCommonSpan(Variable<T> &variable, typename Variable<T>::Span &span,
                        const bool initialize, const T &value);
 
-#define declare_type(T)                                                        \
-    void DoPutSync(Variable<T> &, const T *) final;                            \
+#define declare_type(T)                                                                            \
+    void DoPutSync(Variable<T> &, const T *) final;                                                \
     void DoPutDeferred(Variable<T> &, const T *) final;
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -183,8 +179,8 @@ private:
 
     void PutCommon(VariableBase &variable, const void *data, bool sync);
 
-#define declare_type(T, L)                                                     \
-    T *DoBufferData_##L(const int bufferIdx, const size_t payloadPosition,     \
+#define declare_type(T, L)                                                                         \
+    T *DoBufferData_##L(const int bufferIdx, const size_t payloadPosition,                         \
                         const size_t bufferID = 0) noexcept final;
 
     ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
@@ -203,8 +199,7 @@ private:
      * profilers*/
     void WriteProfilingJSONFile();
 
-    void WriteMetaMetadata(
-        const std::vector<format::BP5Base::MetaMetaInfoBlock> MetaMetaBlocks);
+    void WriteMetaMetadata(const std::vector<format::BP5Base::MetaMetaInfoBlock> MetaMetaBlocks);
 
     void WriteMetadataFileIndex(uint64_t MetaDataPos, uint64_t MetaDataSize);
 
@@ -213,10 +208,8 @@ private:
 
     /** Write Data to disk, in an aggregator chain */
     void WriteData(format::BufferV *Data);
-    void WriteData_EveryoneWrites(format::BufferV *Data,
-                                  bool SerializedWriters);
-    void WriteData_EveryoneWrites_Async(format::BufferV *Data,
-                                        bool SerializedWriters);
+    void WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedWriters);
+    void WriteData_EveryoneWrites_Async(format::BufferV *Data, bool SerializedWriters);
     void WriteData_TwoLevelShm(format::BufferV *Data);
     void WriteData_TwoLevelShm_Async(format::BufferV *Data);
 
@@ -279,8 +272,8 @@ private:
 
     std::vector<std::vector<size_t>> FlushPosSizeInfo;
 
-    void MakeHeader(std::vector<char> &buffer, size_t &position,
-                    const std::string fileType, const bool isActive);
+    void MakeHeader(std::vector<char> &buffer, size_t &position, const std::string fileType,
+                    const bool isActive);
 
     std::vector<uint64_t> m_WriterSubfileMap; // rank => subfile index
 
@@ -311,7 +304,7 @@ private:
     TimePoint m_EndStepEnd;
     TimePoint m_EngineStart;
     TimePoint m_BeginStepStart;
-    bool m_flagRush; // main thread flips this in Close, async thread watches it
+    bool m_flagRush;                   // main thread flips this in Close, async thread watches it
     bool m_InComputationBlock = false; // main thread flips this in Clos
     TimePoint m_ComputationBlockStart;
     /* block counter and length in seconds */
@@ -321,8 +314,7 @@ private:
     {
         size_t blockID;
         double length; // seconds
-        ComputationBlockInfo(const size_t id, const double len)
-        : blockID(id), length(len){};
+        ComputationBlockInfo(const size_t id, const double len) : blockID(id), length(len){};
     };
 
     std::vector<ComputationBlockInfo> m_ComputationBlockTimes;
@@ -349,9 +341,8 @@ private:
         // comm-free time within deadline in seconds
         double computationBlocksLength;
         std::vector<ComputationBlockInfo> expectedComputationBlocks; // a copy
-        std::vector<ComputationBlockInfo>
-            *currentComputationBlocks;     // extended by main thread
-        size_t *currentComputationBlockID; // increased by main thread
+        std::vector<ComputationBlockInfo> *currentComputationBlocks; // extended by main thread
+        size_t *currentComputationBlockID;                           // increased by main thread
         shm::Spinlock *lock; // race condition over currentComp* variables
     };
 
@@ -371,23 +362,20 @@ private:
     static int AsyncWriteThread_EveryoneWrites(AsyncWriteInfo *info);
     static int AsyncWriteThread_TwoLevelShm(AsyncWriteInfo *info);
     static void AsyncWriteThread_TwoLevelShm_Aggregator(AsyncWriteInfo *info);
-    static void AsyncWriteThread_TwoLevelShm_SendDataToAggregator(
-        aggregator::MPIShmChain *a, format::BufferV *Data);
+    static void AsyncWriteThread_TwoLevelShm_SendDataToAggregator(aggregator::MPIShmChain *a,
+                                                                  format::BufferV *Data);
 
     /* write own data used by both
        EveryoneWrites and TwoLevelShm  async threads  */
-    static void AsyncWriteOwnData(AsyncWriteInfo *info,
-                                  std::vector<core::iovec> &DataVec,
-                                  const size_t totalsize,
-                                  const bool seekOnFirstWrite);
+    static void AsyncWriteOwnData(AsyncWriteInfo *info, std::vector<core::iovec> &DataVec,
+                                  const size_t totalsize, const bool seekOnFirstWrite);
     enum class ComputationStatus
     {
         InComp,
         NotInComp_ExpectMore,
         NoMoreComp
     };
-    static ComputationStatus IsInComputationBlock(AsyncWriteInfo *info,
-                                                  size_t &compBlockIdx);
+    static ComputationStatus IsInComputationBlock(AsyncWriteInfo *info, size_t &compBlockIdx);
 
     void AsyncWriteDataCleanup();
     void AsyncWriteDataCleanup_EveryoneWrites();

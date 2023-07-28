@@ -4,8 +4,7 @@
 #include "H5Vol_def.h"
 
 herr_t H5VL_adios2_link_specific(void *obj, const H5VL_loc_params_t *loc_params,
-                                 H5VL_link_specific_args_t *args,
-                                 hid_t H5_ATTR_UNUSED dxpl_id,
+                                 H5VL_link_specific_args_t *args, hid_t H5_ATTR_UNUSED dxpl_id,
                                  void H5_ATTR_UNUSED **req)
 
 {
@@ -28,8 +27,7 @@ herr_t H5VL_adios2_link_specific(void *obj, const H5VL_loc_params_t *loc_params,
     }
 
     case H5VL_LINK_DELETE: {
-        ADIOS_VOL_WARN(
-            "link does not have effect if already written in file ..\n");
+        ADIOS_VOL_WARN("link does not have effect if already written in file ..\n");
 
         if ((GROUP == vol->m_ObjType) || (ROOT == vol->m_ObjType))
         {
@@ -50,8 +48,7 @@ herr_t H5VL_adios2_link_specific(void *obj, const H5VL_loc_params_t *loc_params,
 }
 
 herr_t H5VL_adios2_link_get(void *obj, const H5VL_loc_params_t *loc_params,
-                            H5VL_link_get_args_t *args,
-                            hid_t H5_ATTR_UNUSED dxpl_id,
+                            H5VL_link_get_args_t *args, hid_t H5_ATTR_UNUSED dxpl_id,
                             void H5_ATTR_UNUSED **req)
 {
 
@@ -68,8 +65,7 @@ herr_t H5VL_adios2_link_get(void *obj, const H5VL_loc_params_t *loc_params,
         if ((GROUP == vol->m_ObjType) || (ROOT == vol->m_ObjType))
         {
             // so idx makes sense
-            *ret =
-                gGetNameOfNthItem(vol, loc_params->loc_data.loc_by_idx.n, name);
+            *ret = gGetNameOfNthItem(vol, loc_params->loc_data.loc_by_idx.n, name);
             return 0;
         }
         break;

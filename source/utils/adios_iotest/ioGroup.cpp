@@ -11,8 +11,7 @@
 #include "hdf5.h"
 #endif
 
-std::shared_ptr<ioGroup> createGroup(const std::string &name, IOLib iolib,
-                                     adios2::ADIOS &adiosobj)
+std::shared_ptr<ioGroup> createGroup(const std::string &name, IOLib iolib, adios2::ADIOS &adiosobj)
 {
     std::shared_ptr<ioGroup> gp;
     switch (iolib)

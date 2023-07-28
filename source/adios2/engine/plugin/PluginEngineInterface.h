@@ -34,8 +34,8 @@ class PluginEngineInterface : public core::Engine
     friend class PluginEngine;
 
 public:
-    PluginEngineInterface(core::IO &io, const std::string &name,
-                          const Mode mode, helper::Comm comm);
+    PluginEngineInterface(core::IO &io, const std::string &name, const Mode mode,
+                          helper::Comm comm);
     virtual ~PluginEngineInterface() = default;
 };
 

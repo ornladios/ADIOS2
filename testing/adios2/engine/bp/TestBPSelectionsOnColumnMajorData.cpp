@@ -23,13 +23,12 @@ public:
     ADIOSSelectionColumnMajorTest() = default;
 };
 
-void copySelection2D_CM(const double *a, const adios2::Dims &shape,
-                        const adios2::Dims &start, const adios2::Dims &count,
-                        double *b)
+void copySelection2D_CM(const double *a, const adios2::Dims &shape, const adios2::Dims &start,
+                        const adios2::Dims &count, double *b)
 {
     std::cout << " copy Block: shape = " << adios2::ToString(shape)
-              << " start = " << adios2::ToString(start)
-              << " count = " << adios2::ToString(count) << std::endl;
+              << " start = " << adios2::ToString(start) << " count = " << adios2::ToString(count)
+              << std::endl;
     double *bp = b;
     for (size_t y = 0; y < count[1]; ++y)
     {
@@ -78,13 +77,12 @@ void copySelection2D_CM(const double *a, const adios2::Dims &shape,
     return true;
 }*/
 
-bool compareSelection2D_RM(const double *a, const adios2::Dims &shape,
-                           const adios2::Dims &start, const adios2::Dims &count,
-                           double *b, adios2::Dims &firstNonEqPoint)
+bool compareSelection2D_RM(const double *a, const adios2::Dims &shape, const adios2::Dims &start,
+                           const adios2::Dims &count, double *b, adios2::Dims &firstNonEqPoint)
 {
     std::cout << " compare Block: shape = " << adios2::ToString(shape)
-              << " start = " << adios2::ToString(start)
-              << " count = " << adios2::ToString(count) << std::endl;
+              << " start = " << adios2::ToString(start) << " count = " << adios2::ToString(count)
+              << std::endl;
     bool match = true;
     double *bp = b;
     for (size_t x = 0; x < count[0]; ++x)
@@ -95,10 +93,8 @@ bool compareSelection2D_RM(const double *a, const adios2::Dims &shape,
             if (*bp != a[aidx])
             {
                 firstNonEqPoint = {x, y};
-                std::cout << "   Non-match at pos = "
-                          << adios2::ToString(firstNonEqPoint)
-                          << " : a = " << a[aidx] << ", b = " << *bp
-                          << std::endl;
+                std::cout << "   Non-match at pos = " << adios2::ToString(firstNonEqPoint)
+                          << " : a = " << a[aidx] << ", b = " << *bp << std::endl;
                 match = false;
             }
             ++bp;
@@ -108,13 +104,12 @@ bool compareSelection2D_RM(const double *a, const adios2::Dims &shape,
     return match;
 }
 
-bool compareSelection2D_CM(const double *a, const adios2::Dims &shape,
-                           const adios2::Dims &start, const adios2::Dims &count,
-                           double *b, adios2::Dims &firstNonEqPoint)
+bool compareSelection2D_CM(const double *a, const adios2::Dims &shape, const adios2::Dims &start,
+                           const adios2::Dims &count, double *b, adios2::Dims &firstNonEqPoint)
 {
     std::cout << " compare Block: shape = " << adios2::ToString(shape)
-              << " start = " << adios2::ToString(start)
-              << " count = " << adios2::ToString(count) << std::endl;
+              << " start = " << adios2::ToString(start) << " count = " << adios2::ToString(count)
+              << std::endl;
     bool match = true;
     double *bp = b;
     for (size_t y = 0; y < count[1]; ++y)
@@ -125,10 +120,8 @@ bool compareSelection2D_CM(const double *a, const adios2::Dims &shape,
             if (*bp != a[aidx])
             {
                 firstNonEqPoint = {y, x};
-                std::cout << "   Non-match at pos = "
-                          << adios2::ToString(firstNonEqPoint)
-                          << " : a = " << a[aidx] << ", b = " << *bp
-                          << std::endl;
+                std::cout << "   Non-match at pos = " << adios2::ToString(firstNonEqPoint)
+                          << " : a = " << a[aidx] << ", b = " << *bp << std::endl;
                 match = false;
             }
             ++bp;
@@ -186,8 +179,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
 
         double b[C1 * C2];
 
-        adios2::Variable<double> var =
-            ioWrite.DefineVariable<double>("a", shape, start, count);
+        adios2::Variable<double> var = ioWrite.DefineVariable<double>("a", shape, start, count);
 
         // adios2::Variable<double> vara1 =
         //    ioWrite.DefineVariable<double>("a1", shape, start, shape);
@@ -227,8 +219,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         adios2::Dims firstNonMatch{0, 0, 0};
         std::vector<double> res;
 
-        std::cout << "Column-major read selections with entire blocks..."
-                  << std::endl;
+        std::cout << "Column-major read selections with entire blocks..." << std::endl;
 
         /* Entire array */
         s = {0, 0};
@@ -236,8 +227,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), DIM1 * DIM2);
-        EXPECT_TRUE(
-            compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* First block */
         s = {0, 0};
@@ -245,8 +235,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* Single block in the center */
         s = {5, 4};
@@ -254,8 +243,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* Two blocks in X (fast) direction */
         s = {5, 4};
@@ -263,8 +251,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* Three blocks in Y (slow) direction */
         s = {5, 0};
@@ -272,8 +259,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* Four blocks in X-Y direction */
         s = {5, 4};
@@ -281,11 +267,9 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
-        std::cout << "Column-major read selections with partial blocks..."
-                  << std::endl;
+        std::cout << "Column-major read selections with partial blocks..." << std::endl;
 
         /* center part of single block in center */
         s = {6, 5};
@@ -293,8 +277,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into two blocks in X direction */
         s = {6, 5};
@@ -302,8 +285,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into two blocks in Y direction */
         s = {6, 5};
@@ -311,8 +293,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into three blocks in Y direction */
         s = {6, 1};
@@ -320,8 +301,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into four blocks in X-Y direction */
         s = {6, 1};
@@ -329,8 +309,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* Center block plus 1 in each direction, cutting into all blocks */
         /* ./bin/bpls -la testing/adios2/engine/bp/bp4/ADIOSSelection2D.bp
@@ -341,8 +320,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         engine.EndStep();
         engine.Close();
@@ -365,15 +343,13 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         adios2::Dims firstNonMatch{0, 0};
         std::vector<double> res;
 
-        std::cout << "Row-major read selections with entire blocks..."
-                  << std::endl;
+        std::cout << "Row-major read selections with entire blocks..." << std::endl;
 
         /* Entire array */
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), DIM1 * DIM2);
-        EXPECT_TRUE(
-            compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* Single block in the center */
         s = {4, 5};
@@ -381,8 +357,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* Two blocks in X direction */
         s = {4, 5};
@@ -390,8 +365,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* Three blocks in Y direction */
         s = {4, 0};
@@ -399,8 +373,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* Four blocks in X-Y direction */
         s = {4, 5};
@@ -408,15 +381,13 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /*
          *   Partial blocks
          */
 
-        std::cout << "Row-major read selections with partial blocks..."
-                  << std::endl;
+        std::cout << "Row-major read selections with partial blocks..." << std::endl;
 
         /* center part of single block in center */
         s = {5, 6};
@@ -424,8 +395,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into two blocks in X direction */
         s = {5, 6};
@@ -433,8 +403,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into two blocks in Y direction */
         s = {5, 6};
@@ -442,8 +411,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into three blocks in Y direction */
         s = {5, 1};
@@ -451,8 +419,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into four blocks in X-Y direction */
         s = {1, 6};
@@ -460,8 +427,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* Center block plus 1 in each direction, cutting into all blocks */
         /* ./bin/bpls -la testing/adios2/engine/bp/bp4/ADIOSSelection2D.bp
@@ -472,17 +438,15 @@ TEST_F(ADIOSSelectionColumnMajorTest, 2D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1]);
-        EXPECT_TRUE(
-            compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection2D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         engine.EndStep();
         engine.Close();
     }
 }
 
-void copySelection3D_CM(const double *a, const adios2::Dims &shape,
-                        const adios2::Dims &start, const adios2::Dims &count,
-                        double *b)
+void copySelection3D_CM(const double *a, const adios2::Dims &shape, const adios2::Dims &start,
+                        const adios2::Dims &count, double *b)
 {
     /*std::cout << " copy Block: shape = " << adios2::ToString(shape)
               << " start = " << adios2::ToString(start)
@@ -492,8 +456,8 @@ void copySelection3D_CM(const double *a, const adios2::Dims &shape,
     {
         for (size_t y = 0; y < count[1]; ++y)
         {
-            size_t aidx = (start[2] + z) * shape[0] * shape[1] +
-                          (start[1] + y) * shape[0] + start[0];
+            size_t aidx =
+                (start[2] + z) * shape[0] * shape[1] + (start[1] + y) * shape[0] + start[0];
             for (size_t x = 0; x < count[0]; ++x)
             {
                 *bp = a[aidx];
@@ -504,29 +468,26 @@ void copySelection3D_CM(const double *a, const adios2::Dims &shape,
     }
 }
 
-bool compareSelection3D_RM(const double *a, const adios2::Dims &shape,
-                           const adios2::Dims &start, const adios2::Dims &count,
-                           double *b, adios2::Dims &firstNonEqPoint)
+bool compareSelection3D_RM(const double *a, const adios2::Dims &shape, const adios2::Dims &start,
+                           const adios2::Dims &count, double *b, adios2::Dims &firstNonEqPoint)
 {
     std::cout << " compare Block: shape = " << adios2::ToString(shape)
-              << " start = " << adios2::ToString(start)
-              << " count = " << adios2::ToString(count) << std::endl;
+              << " start = " << adios2::ToString(start) << " count = " << adios2::ToString(count)
+              << std::endl;
     double *bp = b;
     for (size_t x = 0; x < count[0]; ++x)
     {
         for (size_t y = 0; y < count[1]; ++y)
         {
-            size_t aidx = (start[0] + x) * shape[1] * shape[2] +
-                          (start[1] + y) * shape[2] + start[2];
+            size_t aidx =
+                (start[0] + x) * shape[1] * shape[2] + (start[1] + y) * shape[2] + start[2];
             for (size_t z = 0; z < count[2]; ++z)
             {
                 if (*bp != a[aidx])
                 {
                     firstNonEqPoint = {x, y, z};
-                    std::cout << "   Non-match at pos = "
-                              << adios2::ToString(firstNonEqPoint)
-                              << " : a = " << a[aidx] << ", b = " << *bp
-                              << std::endl;
+                    std::cout << "   Non-match at pos = " << adios2::ToString(firstNonEqPoint)
+                              << " : a = " << a[aidx] << ", b = " << *bp << std::endl;
                     return false;
                 }
                 ++bp;
@@ -537,29 +498,26 @@ bool compareSelection3D_RM(const double *a, const adios2::Dims &shape,
     return true;
 }
 
-bool compareSelection3D_CM(const double *a, const adios2::Dims &shape,
-                           const adios2::Dims &start, const adios2::Dims &count,
-                           double *b, adios2::Dims &firstNonEqPoint)
+bool compareSelection3D_CM(const double *a, const adios2::Dims &shape, const adios2::Dims &start,
+                           const adios2::Dims &count, double *b, adios2::Dims &firstNonEqPoint)
 {
     std::cout << " compare Block: shape = " << adios2::ToString(shape)
-              << " start = " << adios2::ToString(start)
-              << " count = " << adios2::ToString(count) << std::endl;
+              << " start = " << adios2::ToString(start) << " count = " << adios2::ToString(count)
+              << std::endl;
     double *bp = b;
     for (size_t z = 0; z < count[2]; ++z)
     {
         for (size_t y = 0; y < count[1]; ++y)
         {
-            size_t aidx = (start[2] + z) * shape[0] * shape[1] +
-                          (start[1] + y) * shape[0] + start[0];
+            size_t aidx =
+                (start[2] + z) * shape[0] * shape[1] + (start[1] + y) * shape[0] + start[0];
             for (size_t x = 0; x < count[0]; ++x)
             {
                 if (*bp != a[aidx])
                 {
                     firstNonEqPoint = {x, y, z};
-                    std::cout << "   Non-match at pos = "
-                              << adios2::ToString(firstNonEqPoint)
-                              << " : a = " << a[aidx] << ", b = " << *bp
-                              << std::endl;
+                    std::cout << "   Non-match at pos = " << adios2::ToString(firstNonEqPoint)
+                              << " : a = " << a[aidx] << ", b = " << *bp << std::endl;
                     return false;
                 }
                 ++bp;
@@ -622,8 +580,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         adios2::Dims start{0, 0, 0};
         double b[C1 * C2 * C3];
 
-        adios2::Variable<double> var =
-            ioWrite.DefineVariable<double>("a", shape, start, count);
+        adios2::Variable<double> var = ioWrite.DefineVariable<double>("a", shape, start, count);
 
         /*adios2::Variable<double> vara1 =
             ioWrite.DefineVariable<double>("a1", shape, start, shape);*/
@@ -666,8 +623,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         adios2::Dims firstNonMatch{0, 0, 0};
         std::vector<double> res;
 
-        std::cout << "Row-major read selections with entire blocks..."
-                  << std::endl;
+        std::cout << "Row-major read selections with entire blocks..." << std::endl;
 
         /* Entire array */
         s = {0, 0, 0};
@@ -675,8 +631,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), DIM1 * DIM2 * DIM3);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* Single block in the center */
         s = {5, 4, 3};
@@ -684,8 +639,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* Two blocks in X direction */
         s = {5, 4, 3};
@@ -693,8 +647,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* Three blocks in Y direction */
         s = {5, 0, 3};
@@ -702,8 +655,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* Two blocks in Z direction */
         s = {5, 4, 0};
@@ -711,8 +663,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* Four blocks in X-Z direction */
         s = {5, 4, 3};
@@ -720,8 +671,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* 8 blocks in X-Y-Z direction */
         s = {5, 4, 3};
@@ -729,15 +679,13 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /*
          *   Partial blocks
          */
 
-        std::cout << "Row-major read selections with partial blocks..."
-                  << std::endl;
+        std::cout << "Row-major read selections with partial blocks..." << std::endl;
 
         /* center part of single block in center */
         s = {6, 5, 4};
@@ -745,8 +693,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into two blocks in X direction */
         s = {6, 5, 4};
@@ -754,8 +701,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into two blocks in Y direction */
         s = {6, 5, 4};
@@ -763,8 +709,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into three blocks in Y direction
            while contiguous in Z direction, making the read of the
@@ -774,8 +719,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into two blocks in Z direction */
         s = {6, 5, 4};
@@ -783,8 +727,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into four blocks in X-Y direction */
         s = {1, 5, 4};
@@ -792,8 +735,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into four blocks in X-Z direction */
         s = {1, 5, 4};
@@ -801,8 +743,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into four blocks in Y-Z direction */
         s = {6, 5, 4};
@@ -810,8 +751,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into six blocks in X-Z direction */
         s = {1, 5, 4};
@@ -819,8 +759,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         /* Center block plus 1 in each direction, cutting into all blocks */
         /* ./bin/bpls -la testing/adios2/engine/bp/bp4/ADIOSSelection3D.bp
@@ -831,8 +770,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_CM(a, shapeF, s, c, res.data(), firstNonMatch));
 
         engine.EndStep();
         engine.Close();
@@ -855,8 +793,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         adios2::Dims firstNonMatch{0, 0, 0};
         std::vector<double> res;
 
-        std::cout << "Column-major read selections with entire blocks..."
-                  << std::endl;
+        std::cout << "Column-major read selections with entire blocks..." << std::endl;
 
         /* Entire array */
         s = {0, 0, 0};
@@ -864,8 +801,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), DIM1 * DIM2 * DIM3);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* Single block in the center */
         s = {3, 4, 5};
@@ -873,8 +809,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* Two blocks in X direction */
         s = {3, 4, 5};
@@ -882,8 +817,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* Three blocks in Y direction */
         s = {3, 0, 5};
@@ -891,8 +825,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* Two blocks in Z direction */
         s = {0, 4, 5};
@@ -900,8 +833,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* Four blocks in X-Z direction */
         s = {3, 4, 5};
@@ -909,8 +841,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* 8 blocks in X-Y-Z direction */
         s = {3, 4, 5};
@@ -918,11 +849,9 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
-        std::cout << "Column-major read selections with partial blocks..."
-                  << std::endl;
+        std::cout << "Column-major read selections with partial blocks..." << std::endl;
 
         /* center part of single block in center */
         s = {4, 5, 6};
@@ -930,8 +859,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into two blocks in X direction */
         s = {4, 5, 6};
@@ -939,8 +867,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into two blocks in Y direction */
         s = {4, 5, 6};
@@ -948,8 +875,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into three blocks in Y direction
            while contiguous in Z direction, making the read of the
@@ -959,8 +885,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into two blocks in Z direction */
         s = {4, 5, 6};
@@ -968,8 +893,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into four blocks in X-Y direction */
         s = {1, 5, 6};
@@ -977,8 +901,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into four blocks in X-Z direction */
         s = {1, 5, 6};
@@ -986,8 +909,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into four blocks in Y-Z direction */
         s = {4, 5, 6};
@@ -995,8 +917,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* partial selection cutting into six blocks in X-Z direction */
         s = {1, 5, 6};
@@ -1004,8 +925,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         /* Center block plus 1 in each direction, cutting into all blocks */
         /* ./bin/bpls -la testing/adios2/engine/bp/bp4/ADIOSSelection3D.bp
@@ -1016,8 +936,7 @@ TEST_F(ADIOSSelectionColumnMajorTest, 3D)
         var.SetSelection({s, c});
         engine.Get<double>(var, res, adios2::Mode::Sync);
         EXPECT_EQ(res.size(), c[0] * c[1] * c[2]);
-        EXPECT_TRUE(
-            compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
+        EXPECT_TRUE(compareSelection3D_RM(a, shape, s, c, res.data(), firstNonMatch));
 
         engine.EndStep();
         engine.Close();

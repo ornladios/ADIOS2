@@ -28,8 +28,7 @@ class SscWriterGeneric : public SscWriterBase
 {
 
 public:
-    SscWriterGeneric(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm comm);
+    SscWriterGeneric(IO &io, const std::string &name, const Mode mode, MPI_Comm comm);
     ~SscWriterGeneric() = default;
 
     StepStatus BeginStep(const StepMode mode, const float timeoutSeconds,
@@ -61,9 +60,8 @@ private:
     void EndStepFirst();
     void EndStepConsequentFixed();
     void EndStepConsequentFlexible();
-    void CalculatePosition(ssc::BlockVecVec &writerMapVec,
-                           ssc::BlockVecVec &readerMapVec, const int writerRank,
-                           ssc::RankPosMap &allOverlapRanks);
+    void CalculatePosition(ssc::BlockVecVec &writerMapVec, ssc::BlockVecVec &readerMapVec,
+                           const int writerRank, ssc::RankPosMap &allOverlapRanks);
 };
 
 }

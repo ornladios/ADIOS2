@@ -59,7 +59,7 @@ public:
 #endif
 
     ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
-    size_t m_BlockID = 0; ///< current block ID for local variables, global = 0
+    size_t m_BlockID = 0;                 ///< current block ID for local variables, global = 0
     SelectionType m_SelectionType = SelectionType::BoundingBox;
 
     bool m_SingleValue = false; ///< true: single value, false: array
@@ -112,9 +112,8 @@ public:
     std::set<std::string> m_PrefixedVariables;
     std::set<std::string> m_PrefixedAttributes;
 
-    VariableBase(const std::string &name, const DataType type,
-                 const size_t elementSize, const Dims &shape, const Dims &start,
-                 const Dims &count, const bool constantShape);
+    VariableBase(const std::string &name, const DataType type, const size_t elementSize,
+                 const Dims &shape, const Dims &start, const Dims &count, const bool constantShape);
 
     virtual ~VariableBase() = default;
 
@@ -179,8 +178,7 @@ public:
      */
     size_t AddOperation(std::shared_ptr<core::Operator> op) noexcept;
 
-    size_t AddOperation(const std::string &op,
-                        const Params &parameters = Params()) noexcept;
+    size_t AddOperation(const std::string &op, const Params &parameters = Params()) noexcept;
 
     /**
      * Removes all current Operations associated with AddOperation.
@@ -228,9 +226,8 @@ public:
      * @param separator
      * @return attributes info
      */
-    std::map<std::string, Params>
-    GetAttributesInfo(core::IO &io, const std::string separator,
-                      const bool fullNameKeys) const noexcept;
+    std::map<std::string, Params> GetAttributesInfo(core::IO &io, const std::string separator,
+                                                    const bool fullNameKeys) const noexcept;
 
 protected:
     bool m_ConstantDims = false; ///< true: fix m_Shape, m_Start, m_Count

@@ -72,8 +72,8 @@ size_t IO::AddTransport(const std::string type, const Params &parameters)
     return m_IO->AddTransport(type, parameters);
 }
 
-void IO::SetTransportParameter(const size_t transportIndex,
-                               const std::string key, const std::string value)
+void IO::SetTransportParameter(const size_t transportIndex, const std::string key,
+                               const std::string value)
 {
     helper::CheckForNullptr(m_IO, "in call to IO::SetTransportParameter");
     m_IO->SetTransportParameter(transportIndex, key, value);
@@ -105,14 +105,10 @@ void IO::RemoveAllAttributes()
 
 Engine IO::Open(const std::string &name, const Mode mode)
 {
-    helper::CheckForNullptr(m_IO,
-                            "for engine " + name + ", in call to IO::Open");
+    helper::CheckForNullptr(m_IO, "for engine " + name + ", in call to IO::Open");
     return Engine(&m_IO->Open(name, mode));
 }
-Group IO::InquireGroup(char delimiter)
-{
-    return Group(&m_IO->CreateGroup(delimiter));
-};
+Group IO::InquireGroup(char delimiter) { return Group(&m_IO->CreateGroup(delimiter)); };
 void IO::FlushAll()
 {
     helper::CheckForNullptr(m_IO, "in call to IO::FlushAll");
@@ -132,9 +128,9 @@ std::map<std::string, Params> IO::AvailableVariables(bool namesOnly)
     }
 }
 
-std::map<std::string, Params>
-IO::AvailableAttributes(const std::string &variableName,
-                        const std::string separator, const bool fullNameKeys)
+std::map<std::string, Params> IO::AvailableAttributes(const std::string &variableName,
+                                                      const std::string separator,
+                                                      const bool fullNameKeys)
 {
     helper::CheckForNullptr(m_IO, "in call to IO::AvailableAttributes");
     return m_IO->GetAvailableAttributes(variableName, separator, fullNameKeys);
@@ -152,8 +148,8 @@ std::string IO::AttributeType(const std::string &name) const
     return ToString(m_IO->InquireAttributeType(name));
 }
 
-void IO::AddOperation(const std::string &variable,
-                      const std::string &operatorType, const Params &parameters)
+void IO::AddOperation(const std::string &variable, const std::string &operatorType,
+                      const Params &parameters)
 {
     helper::CheckForNullptr(m_IO, "in call to IO::AddOperation");
     return m_IO->AddOperation(variable, operatorType, parameters);
@@ -165,17 +161,15 @@ std::string IO::EngineType() const
     return m_IO->m_EngineType;
 }
 
-VariableNT IO::DefineVariable(const DataType type, const std::string &name,
-                              const Dims &shape, const Dims &start,
-                              const Dims &count, const bool constantDims)
+VariableNT IO::DefineVariable(const DataType type, const std::string &name, const Dims &shape,
+                              const Dims &start, const Dims &count, const bool constantDims)
 {
-    helper::CheckForNullptr(m_IO, "for variable name " + name +
-                                      ", in call to IO::DefineVariable");
-#define declare_type(T)                                                        \
-    if (ToString(type) == GetType<T>())                                        \
-    {                                                                          \
-        return VariableNT(&m_IO->DefineVariable<typename TypeInfo<T>::IOType>( \
-            name, shape, start, count, constantDims));                         \
+    helper::CheckForNullptr(m_IO, "for variable name " + name + ", in call to IO::DefineVariable");
+#define declare_type(T)                                                                            \
+    if (ToString(type) == GetType<T>())                                                            \
+    {                                                                                              \
+        return VariableNT(&m_IO->DefineVariable<typename TypeInfo<T>::IOType>(                     \
+            name, shape, start, count, constantDims));                                             \
     }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -187,32 +181,28 @@ VariableNT IO::DefineVariable(const DataType type, const std::string &name,
 
 StructDefinition IO::DefineStruct(const std::string &name, const size_t size)
 {
-    helper::CheckForNullptr(m_IO, "for struct name " + name +
-                                      ", in call to IO::DefineStruct");
+    helper::CheckForNullptr(m_IO, "for struct name " + name + ", in call to IO::DefineStruct");
     return StructDefinition(&m_IO->DefineStruct(name, size));
 }
 
-VariableNT IO::DefineStructVariable(const std::string &name,
-                                    const StructDefinition &def,
-                                    const Dims &shape, const Dims &start,
-                                    const Dims &count, const bool constantDims)
+VariableNT IO::DefineStructVariable(const std::string &name, const StructDefinition &def,
+                                    const Dims &shape, const Dims &start, const Dims &count,
+                                    const bool constantDims)
 {
-    helper::CheckForNullptr(m_IO, "for variable name " + name +
-                                      ", in call to IO::DefineStructVariable");
-    return VariableNT(&m_IO->DefineStructVariable(
-        name, *def.m_StructDefinition, shape, start, count, constantDims));
+    helper::CheckForNullptr(m_IO,
+                            "for variable name " + name + ", in call to IO::DefineStructVariable");
+    return VariableNT(&m_IO->DefineStructVariable(name, *def.m_StructDefinition, shape, start,
+                                                  count, constantDims));
 }
 
 VariableNT IO::InquireVariable(const std::string &name)
 {
-    helper::CheckForNullptr(m_IO, "for variable name " + name +
-                                      ", in call to IO::InquireVariable");
+    helper::CheckForNullptr(m_IO, "for variable name " + name + ", in call to IO::InquireVariable");
     auto type = m_IO->InquireVariableType(name);
-#define declare_type(T)                                                        \
-    if (type == helper::GetDataType<T>())                                      \
-    {                                                                          \
-        return VariableNT(                                                     \
-            m_IO->InquireVariable<typename TypeInfo<T>::IOType>(name));        \
+#define declare_type(T)                                                                            \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        return VariableNT(m_IO->InquireVariable<typename TypeInfo<T>::IOType>(name));              \
     }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -228,20 +218,18 @@ VariableNT IO::InquireVariable(const std::string &name)
 
 VariableNT IO::InquireStructVariable(const std::string &name)
 {
-    helper::CheckForNullptr(m_IO, "for variable name " + name +
-                                      ", in call to IO::InquireStructVariable");
+    helper::CheckForNullptr(m_IO,
+                            "for variable name " + name + ", in call to IO::InquireStructVariable");
 
     return VariableNT(m_IO->InquireStructVariable(name));
 }
 
-VariableNT IO::InquireStructVariable(const std::string &name,
-                                     const StructDefinition def)
+VariableNT IO::InquireStructVariable(const std::string &name, const StructDefinition def)
 {
-    helper::CheckForNullptr(m_IO, "for variable name " + name +
-                                      ", in call to IO::InquireStructVariable");
+    helper::CheckForNullptr(m_IO,
+                            "for variable name " + name + ", in call to IO::InquireStructVariable");
 
-    return VariableNT(
-        m_IO->InquireStructVariable(name, *def.m_StructDefinition));
+    return VariableNT(m_IO->InquireStructVariable(name, *def.m_StructDefinition));
 }
 
 // PRIVATE
@@ -249,34 +237,28 @@ IO::IO(core::IO *io) : m_IO(io) {}
 
 // Explicit declaration of the public template methods
 // Limits the types
-#define declare_template_instantiation(T)                                      \
-    template Variable<T> IO::DefineVariable(const std::string &, const Dims &, \
-                                            const Dims &, const Dims &,        \
-                                            const bool);                       \
-                                                                               \
+#define declare_template_instantiation(T)                                                          \
+    template Variable<T> IO::DefineVariable(const std::string &, const Dims &, const Dims &,       \
+                                            const Dims &, const bool);                             \
+                                                                                                   \
     template Variable<T> IO::InquireVariable<T>(const std::string &);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-#define declare_template_instantiation(T)                                      \
-    template Attribute<T> IO::DefineAttribute(                                 \
-        const std::string &, const T *, const size_t, const std::string &,     \
-        const std::string, const bool);                                        \
-                                                                               \
-    template Attribute<T> IO::DefineAttribute(const std::string &, const T &,  \
-                                              const std::string &,             \
-                                              const std::string, const bool);  \
-                                                                               \
-    template Attribute<T> IO::InquireAttribute<T>(                             \
-        const std::string &, const std::string &, const std::string);
+#define declare_template_instantiation(T)                                                          \
+    template Attribute<T> IO::DefineAttribute(const std::string &, const T *, const size_t,        \
+                                              const std::string &, const std::string, const bool); \
+                                                                                                   \
+    template Attribute<T> IO::DefineAttribute(const std::string &, const T &, const std::string &, \
+                                              const std::string, const bool);                      \
+                                                                                                   \
+    template Attribute<T> IO::InquireAttribute<T>(const std::string &, const std::string &,        \
+                                                  const std::string);
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-std::string ToString(const IO &io)
-{
-    return std::string("IO(Name: \"" + io.Name() + "\")");
-}
+std::string ToString(const IO &io) { return std::string("IO(Name: \"" + io.Name() + "\")"); }
 
 } // end namespace adios2

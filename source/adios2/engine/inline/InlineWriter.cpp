@@ -24,8 +24,7 @@ namespace core
 namespace engine
 {
 
-InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
-                           helper::Comm comm)
+InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("InlineWriter", io, name, mode, std::move(comm))
 {
     PERFSTUBS_SCOPED_TIMER("InlineWriter::Open");
@@ -33,8 +32,7 @@ InlineWriter::InlineWriter(IO &io, const std::string &name, const Mode mode,
     Init();
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Writer " << m_WriterRank << " Open(" << m_Name
-                  << ")." << std::endl;
+        std::cout << "Inline Writer " << m_WriterRank << " Open(" << m_Name << ")." << std::endl;
     }
     m_IsOpen = true;
 }
@@ -60,10 +58,9 @@ const InlineReader *InlineWriter::GetReader() const
     }
     else if (engine_map.size() > 2)
     {
-        helper::Throw<std::runtime_error>(
-            "Engine", "InlineWriter", "GetReader",
-            "There must be only one inline writer and at most "
-            "one inline reader.");
+        helper::Throw<std::runtime_error>("Engine", "InlineWriter", "GetReader",
+                                          "There must be only one inline writer and at most "
+                                          "one inline reader.");
     }
 
     std::shared_ptr<Engine> e = engine_map.begin()->second;
@@ -87,10 +84,9 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     PERFSTUBS_SCOPED_TIMER("InlineWriter::BeginStep");
     if (m_InsideStep)
     {
-        helper::Throw<std::runtime_error>(
-            "Engine", "InlineWriter", "BeginStep",
-            "InlineWriter::BeginStep was called but the "
-            "writer is already inside a step");
+        helper::Throw<std::runtime_error>("Engine", "InlineWriter", "BeginStep",
+                                          "InlineWriter::BeginStep was called but the "
+                                          "writer is already inside a step");
     }
 
     auto reader = GetReader();
@@ -110,8 +106,8 @@ StepStatus InlineWriter::BeginStep(StepMode mode, const float timeoutSeconds)
     }
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Writer " << m_WriterRank
-                  << "   BeginStep() new step " << m_CurrentStep << "\n";
+        std::cout << "Inline Writer " << m_WriterRank << "   BeginStep() new step " << m_CurrentStep
+                  << "\n";
     }
 
     // m_BlocksInfo for all variables should be cleared at this point,
@@ -132,11 +128,11 @@ void InlineWriter::ResetVariables()
         if (type == DataType::Struct)
         {
         }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Variable<T> &variable = FindVariable<T>(name, "in call to BeginStep"); \
-        variable.m_BlocksInfo.clear();                                         \
+#define declare_type(T)                                                                            \
+    else if (type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        Variable<T> &variable = FindVariable<T>(name, "in call to BeginStep");                     \
+        variable.m_BlocksInfo.clear();                                                             \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -161,15 +157,14 @@ void InlineWriter::EndStep()
     PERFSTUBS_SCOPED_TIMER("InlineWriter::EndStep");
     if (!m_InsideStep)
     {
-        helper::Throw<std::runtime_error>(
-            "Engine", "InlineWriter", "EndStep",
-            "InlineWriter::EndStep() cannot be called "
-            "without a call to BeginStep() first");
+        helper::Throw<std::runtime_error>("Engine", "InlineWriter", "EndStep",
+                                          "InlineWriter::EndStep() cannot be called "
+                                          "without a call to BeginStep() first");
     }
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Writer " << m_WriterRank << " EndStep() Step "
-                  << m_CurrentStep << std::endl;
+        std::cout << "Inline Writer " << m_WriterRank << " EndStep() Step " << m_CurrentStep
+                  << std::endl;
     }
     m_InsideStep = false;
 }
@@ -187,16 +182,16 @@ bool InlineWriter::IsInsideStep() const { return m_InsideStep; }
 
 // PRIVATE
 
-#define declare_type(T)                                                        \
-    void InlineWriter::DoPutSync(Variable<T> &variable, const T *data)         \
-    {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("InlineWriter::DoPutSync");                     \
-        PutSyncCommon(variable, data);                                         \
-    }                                                                          \
-    void InlineWriter::DoPutDeferred(Variable<T> &variable, const T *data)     \
-    {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("InlineWriter::DoPutDeferred");                 \
-        PutDeferredCommon(variable, data);                                     \
+#define declare_type(T)                                                                            \
+    void InlineWriter::DoPutSync(Variable<T> &variable, const T *data)                             \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("InlineWriter::DoPutSync");                                         \
+        PutSyncCommon(variable, data);                                                             \
+    }                                                                                              \
+    void InlineWriter::DoPutDeferred(Variable<T> &variable, const T *data)                         \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("InlineWriter::DoPutDeferred");                                     \
+        PutDeferredCommon(variable, data);                                                         \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -220,11 +215,10 @@ void InlineWriter::InitParameters()
         {
             m_Verbosity = std::stoi(value);
             if (m_Verbosity < 0 || m_Verbosity > 5)
-                helper::Throw<std::invalid_argument>(
-                    "Engine", "InlineWriter", "InitParameters",
-                    "Method verbose argument must be an "
-                    "integer in the range [0,5], in call to "
-                    "Open or Engine constructor");
+                helper::Throw<std::invalid_argument>("Engine", "InlineWriter", "InitParameters",
+                                                     "Method verbose argument must be an "
+                                                     "integer in the range [0,5], in call to "
+                                                     "Open or Engine constructor");
         }
     }
 }
@@ -239,8 +233,7 @@ void InlineWriter::DoClose(const int transportIndex)
     PERFSTUBS_SCOPED_TIMER("InlineWriter::DoClose");
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Writer " << m_WriterRank << " Close(" << m_Name
-                  << ")\n";
+        std::cout << "Inline Writer " << m_WriterRank << " Close(" << m_Name << ")\n";
     }
     // end of stream
     m_CurrentStep = static_cast<size_t>(-1);

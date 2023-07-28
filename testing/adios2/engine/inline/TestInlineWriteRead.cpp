@@ -28,8 +28,7 @@ public:
 
 // helper
 template <class T>
-typename adios2::Variable<T>::Info setSelection(adios2::Variable<T> &var_i8,
-                                                size_t step,
+typename adios2::Variable<T>::Info setSelection(adios2::Variable<T> &var_i8, size_t step,
                                                 adios2::Engine &inlineReader)
 {
     var_i8.SetStepSelection({step, 1});
@@ -43,8 +42,7 @@ typename adios2::Variable<T>::Info setSelection(adios2::Variable<T> &var_i8,
 }
 
 template <class T>
-void testBlocksInfo(adios2::Variable<T> &var, size_t step,
-                    adios2::Engine &inlineReader)
+void testBlocksInfo(adios2::Variable<T> &var, size_t step, adios2::Engine &inlineReader)
 {
     var.SetStepSelection({step, 1});
     auto blocksInfo = inlineReader.BlocksInfo(var, step);
@@ -86,36 +84,27 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
-            auto var_cr32 = io.DefineVariable<std::complex<float>>(
-                "cr32", shape, start, count);
+            auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
             EXPECT_TRUE(var_cr32);
-            auto var_cr64 = io.DefineVariable<std::complex<double>>(
-                "cr64", shape, start, count);
+            auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
             EXPECT_TRUE(var_cr64);
         }
 
@@ -125,17 +114,15 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
         // writerID parameter makes sure the reader can find the writer.
         io.SetParameter("verbose", "4");
 
-        adios2::Engine inlineWriter =
-            io.Open(fname + "_write", adios2::Mode::Write);
+        adios2::Engine inlineWriter = io.Open(fname + "_write", adios2::Mode::Write);
 
-        adios2::Engine inlineReader =
-            io.Open(fname + "_read", adios2::Mode::Read);
+        adios2::Engine inlineReader = io.Open(fname + "_read", adios2::Mode::Read);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData testData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData testData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto wvar_iString = io.InquireVariable<std::string>("iString");
@@ -280,10 +267,8 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
             auto info_u64 = setSelection<uint64_t>(var_u64, step, inlineReader);
             auto info_r32 = setSelection<float>(var_r32, step, inlineReader);
             auto info_r64 = setSelection<double>(var_r64, step, inlineReader);
-            auto info_cr32 =
-                setSelection<std::complex<float>>(var_cr32, step, inlineReader);
-            auto info_cr64 = setSelection<std::complex<double>>(var_cr64, step,
-                                                                inlineReader);
+            auto info_cr32 = setSelection<std::complex<float>>(var_cr32, step, inlineReader);
+            auto info_cr64 = setSelection<std::complex<double>>(var_cr64, step, inlineReader);
 
             testBlocksInfo<int8_t>(var_i8, step, inlineReader);
             testBlocksInfo<int16_t>(var_i16, step, inlineReader);
@@ -299,8 +284,8 @@ TEST_F(InlineWriteRead, InlineWriteRead1D8)
             testBlocksInfo<std::complex<double>>(var_cr64, step, inlineReader);
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             inlineReader.EndStep();
             const int8_t *I8 = info_i8.Data();
@@ -384,36 +369,27 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
-            auto var_cr32 = io.DefineVariable<std::complex<float>>(
-                "cr32", shape, start, count);
+            auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
             EXPECT_TRUE(var_cr32);
-            auto var_cr64 = io.DefineVariable<std::complex<double>>(
-                "cr64", shape, start, count);
+            auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
             EXPECT_TRUE(var_cr64);
         }
 
@@ -423,17 +399,15 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
         // writerID parameter makes sure the reader can find the writer.
         io.SetParameter("verbose", "4");
 
-        adios2::Engine inlineWriter =
-            io.Open(fname + "_write", adios2::Mode::Write);
+        adios2::Engine inlineWriter = io.Open(fname + "_write", adios2::Mode::Write);
 
-        adios2::Engine inlineReader =
-            io.Open(fname + "_read", adios2::Mode::Read);
+        adios2::Engine inlineReader = io.Open(fname + "_read", adios2::Mode::Read);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData testData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData testData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto wvar_iString = io.InquireVariable<std::string>("iString");
@@ -452,8 +426,7 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::Box<adios2::Dims> sel(
-                {0, static_cast<size_t>(mpiRank * Nx)}, {Ny, Nx});
+            adios2::Box<adios2::Dims> sel({0, static_cast<size_t>(mpiRank * Nx)}, {Ny, Nx});
 
             EXPECT_THROW(wvar_iString.SetSelection(sel), std::invalid_argument);
             wvar_i8.SetSelection(sel);
@@ -581,14 +554,12 @@ TEST_F(InlineWriteRead, InlineWriteRead2D2x4)
             auto info_u64 = setSelection<uint64_t>(var_u64, step, inlineReader);
             auto info_r32 = setSelection<float>(var_r32, step, inlineReader);
             auto info_r64 = setSelection<double>(var_r64, step, inlineReader);
-            auto info_cr32 =
-                setSelection<std::complex<float>>(var_cr32, step, inlineReader);
-            auto info_cr64 = setSelection<std::complex<double>>(var_cr64, step,
-                                                                inlineReader);
+            auto info_cr32 = setSelection<std::complex<float>>(var_cr32, step, inlineReader);
+            auto info_cr64 = setSelection<std::complex<double>>(var_cr64, step, inlineReader);
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             inlineReader.EndStep();
             const int8_t *I8 = info_i8.Data();
@@ -663,8 +634,7 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts)
 
             auto var_iString = io.DefineVariable<std::string>("iString");
             EXPECT_TRUE(var_iString);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
         }
 
@@ -674,19 +644,17 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts)
         // writerID parameter makes sure the reader can find the writer.
         io.SetParameter("verbose", "4");
 
-        adios2::Engine inlineWriter =
-            io.Open(fname + "_write", adios2::Mode::Write);
+        adios2::Engine inlineWriter = io.Open(fname + "_write", adios2::Mode::Write);
 
-        adios2::Engine inlineReader =
-            io.Open(fname + "_read", adios2::Mode::Read);
+        adios2::Engine inlineReader = io.Open(fname + "_read", adios2::Mode::Read);
 
         // Want to test that the engine correctly fails when using the engine
         // incorrectly
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData testData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData testData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto wvar_iString = io.InquireVariable<std::string>("iString");
@@ -706,8 +674,7 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts)
             EXPECT_THROW(inlineReader.EndStep(), std::runtime_error);
 
             inlineWriter.Put(wvar_iString, testData.S1, adios2::Mode::Sync);
-            EXPECT_THROW(inlineWriter.Put(wvar_i32, testData.I32.data(),
-                                          adios2::Mode::Sync),
+            EXPECT_THROW(inlineWriter.Put(wvar_i32, testData.I32.data(), adios2::Mode::Sync),
                          std::invalid_argument);
             inlineWriter.Put(wvar_i32, testData.I32.data());
             inlineWriter.EndStep();
@@ -733,8 +700,8 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts)
             testBlocksInfo<int32_t>(var_i32, step, inlineReader);
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             const int32_t *testI32 = info_i32.Data();
             EXPECT_EQ(testI32, nullptr);
@@ -787,8 +754,7 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts2)
 
             auto var_iString = io.DefineVariable<std::string>("iString");
             EXPECT_TRUE(var_iString);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
         }
 
@@ -798,19 +764,17 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts2)
         // writerID parameter makes sure the reader can find the writer.
         io.SetParameter("verbose", "4");
 
-        adios2::Engine inlineWriter =
-            io.Open(fname + "_write", adios2::Mode::Write);
+        adios2::Engine inlineWriter = io.Open(fname + "_write", adios2::Mode::Write);
 
-        adios2::Engine inlineReader =
-            io.Open(fname + "_read", adios2::Mode::Read);
+        adios2::Engine inlineReader = io.Open(fname + "_read", adios2::Mode::Read);
 
         // Want to test that the engine correctly fails when using the engine
         // incorrectly
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData testData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData testData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto wvar_iString = io.InquireVariable<std::string>("iString");
@@ -824,8 +788,7 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts2)
             wvar_i32.SetSelection(sel);
 
             inlineWriter.Put(wvar_iString, testData.S1);
-            EXPECT_THROW(inlineWriter.Put(wvar_i32, testData.I32.data(),
-                                          adios2::Mode::Sync),
+            EXPECT_THROW(inlineWriter.Put(wvar_i32, testData.I32.data(), adios2::Mode::Sync),
                          std::invalid_argument);
             inlineWriter.Put(wvar_i32, testData.I32.data());
             inlineWriter.PerformPuts();
@@ -845,8 +808,8 @@ TEST_F(InlineWriteRead, InlineWriteReadContracts2)
             testBlocksInfo<int32_t>(var_i32, step, inlineReader);
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             const int32_t *testI32 = info_i32.Data();
             EXPECT_EQ(testI32, nullptr);
@@ -884,8 +847,7 @@ TEST_F(InlineWriteRead, IOInvariants)
     adios2::Engine inlineWriter = io.Open("writer", adios2::Mode::Write);
     EXPECT_TRUE(inlineWriter);
     // The inline engine does not support multiple writers:
-    EXPECT_THROW(io.Open("another_writer", adios2::Mode::Write),
-                 std::exception);
+    EXPECT_THROW(io.Open("another_writer", adios2::Mode::Write), std::exception);
     // The inline engine does not support append mode:
     EXPECT_THROW(io.Open("append_mode", adios2::Mode::Append), std::exception);
     adios2::Engine inlineReader = io.Open("reader", adios2::Mode::Read);
@@ -914,11 +876,10 @@ TEST_F(InlineWriteRead, PointerArithmetic)
 
     size_t N = 256;
     // Test local array:
-    auto local_array =
-        io.DefineVariable<double>("u", {}, {}, {N}, adios2::ConstantDims);
+    auto local_array = io.DefineVariable<double>("u", {}, {}, {N}, adios2::ConstantDims);
     // Test global array:
-    auto global_array = io.DefineVariable<double>(
-        "v", {mpiSize * N}, {mpiRank * N}, {N}, adios2::ConstantDims);
+    auto global_array =
+        io.DefineVariable<double>("v", {mpiSize * N}, {mpiRank * N}, {N}, adios2::ConstantDims);
     for (int64_t timeStep = 0; timeStep < 2; ++timeStep)
     {
         writer.BeginStep();

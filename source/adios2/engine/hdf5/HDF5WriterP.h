@@ -37,13 +37,11 @@ public:
      * @param comm
      * @param method
      */
-    HDF5WriterP(IO &io, const std::string &name, const Mode mode,
-                helper::Comm comm);
+    HDF5WriterP(IO &io, const std::string &name, const Mode mode, helper::Comm comm);
 
     ~HDF5WriterP();
 
-    StepStatus BeginStep(StepMode mode,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0) final;
     void EndStep() final;
 
     void PerformPuts() final;
@@ -54,8 +52,8 @@ private:
 
     void Init();
 
-#define declare_type(T)                                                        \
-    void DoPutSync(Variable<T> &variable, const T *values) final;              \
+#define declare_type(T)                                                                            \
+    void DoPutSync(Variable<T> &variable, const T *values) final;                                  \
     void DoPutDeferred(Variable<T> &variable, const T *values) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

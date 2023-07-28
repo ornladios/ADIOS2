@@ -41,17 +41,14 @@ IO::~IO()
     }
 }
 
-void IO::write(int step, const HeatTransfer &ht, const Settings &s,
-               MPI_Comm comm)
+void IO::write(int step, const HeatTransfer &ht, const Settings &s, MPI_Comm comm)
 {
     std::ostream out(buf);
     if (step == 0)
     {
-        out << "rank=" << s.rank << " size=" << s.ndx << "x" << s.ndy
-            << " offsets=" << s.offsx << ":" << s.offsy << " step=" << step
-            << std::endl;
-        out << " time   row   columns " << s.offsy << "..."
-            << s.offsy + s.ndy - 1 << std::endl;
+        out << "rank=" << s.rank << " size=" << s.ndx << "x" << s.ndy << " offsets=" << s.offsx
+            << ":" << s.offsy << " step=" << step << std::endl;
+        out << " time   row   columns " << s.offsy << "..." << s.offsy + s.ndy - 1 << std::endl;
         out << "        ";
         for (unsigned int j = 1; j <= s.ndy; ++j)
         {

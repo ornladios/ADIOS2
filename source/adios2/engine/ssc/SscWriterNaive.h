@@ -28,8 +28,7 @@ class SscWriterNaive : public SscWriterBase
 {
 
 public:
-    SscWriterNaive(IO &io, const std::string &name, const Mode mode,
-                   MPI_Comm comm);
+    SscWriterNaive(IO &io, const std::string &name, const Mode mode, MPI_Comm comm);
     ~SscWriterNaive() = default;
 
     StepStatus BeginStep(const StepMode mode, const float timeoutSeconds,

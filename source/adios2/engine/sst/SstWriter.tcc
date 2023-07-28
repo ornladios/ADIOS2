@@ -37,8 +37,7 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                                         "BeginStep/EndStep pairs");
     }
 
-    if ((Params.MarshalMethod == SstMarshalFFS) ||
-        (Params.MarshalMethod == SstMarshalBP5))
+    if ((Params.MarshalMethod == SstMarshalFFS) || (Params.MarshalMethod == SstMarshalBP5))
     {
         size_t *Shape = NULL;
         size_t *Start = NULL;
@@ -66,8 +65,8 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         if (Params.MarshalMethod == SstMarshalFFS)
         {
             SstFFSMarshal(m_Output, (void *)&variable, variable.m_Name.c_str(),
-                          (int)variable.m_Type, variable.m_ElementSize,
-                          DimCount, Shape, Count, Start, values);
+                          (int)variable.m_Type, variable.m_ElementSize, DimCount, Shape, Count,
+                          Start, values);
         }
         else
         {
@@ -75,60 +74,47 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
             {
                 std::string &source = *(std::string *)values;
                 void *p = &(source[0]);
-                m_BP5Serializer->Marshal(
-                    (void *)&variable, variable.m_Name.c_str(), variable.m_Type,
-                    variable.m_ElementSize, DimCount, Shape, Count, Start, &p,
-                    true, nullptr);
+                m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(),
+                                         variable.m_Type, variable.m_ElementSize, DimCount, Shape,
+                                         Count, Start, &p, true, nullptr);
             }
             else
             {
-                m_BP5Serializer->Marshal(
-                    (void *)&variable, variable.m_Name.c_str(), variable.m_Type,
-                    variable.m_ElementSize, DimCount, Shape, Count, Start,
-                    values, true, nullptr);
+                m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(),
+                                         variable.m_Type, variable.m_ElementSize, DimCount, Shape,
+                                         Count, Start, values, true, nullptr);
             }
         }
     }
     else if (Params.MarshalMethod == SstMarshalBP)
     {
-        auto &blockInfo = variable.SetBlockInfo(
-            values, m_BP3Serializer->m_MetadataSet.CurrentStep);
+        auto &blockInfo = variable.SetBlockInfo(values, m_BP3Serializer->m_MetadataSet.CurrentStep);
 
         if (!m_BP3Serializer->m_MetadataSet.DataPGIsOpen)
         {
             m_BP3Serializer->PutProcessGroupIndex(
-                m_IO.m_Name,
-                (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++"
-                                                               : "Fortran",
+                m_IO.m_Name, (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
                 {"SST"});
         }
         const size_t dataSize =
             helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
-            m_BP3Serializer->GetBPIndexSizeInData(variable.m_Name,
-                                                  blockInfo.Count);
-        format::BP3Base::ResizeResult resizeResult =
-            m_BP3Serializer->ResizeBuffer(
-                dataSize, "in call to variable " + variable.m_Name +
-                              " Put adios2::Mode::Sync");
+            m_BP3Serializer->GetBPIndexSizeInData(variable.m_Name, blockInfo.Count);
+        format::BP3Base::ResizeResult resizeResult = m_BP3Serializer->ResizeBuffer(
+            dataSize, "in call to variable " + variable.m_Name + " Put adios2::Mode::Sync");
         if (resizeResult == format::BP3Base::ResizeResult::Failure)
         {
-            helper::Throw<std::runtime_error>(
-                "Engine", "SstWriter", "PutSyncCommon",
-                "Failed to resize BP3 serializer buffer");
+            helper::Throw<std::runtime_error>("Engine", "SstWriter", "PutSyncCommon",
+                                              "Failed to resize BP3 serializer buffer");
         }
 
-        const bool sourceRowMajor =
-            (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
-        m_BP3Serializer->PutVariableMetadata(variable, blockInfo,
-                                             sourceRowMajor);
-        m_BP3Serializer->PutVariablePayload(variable, blockInfo,
-                                            sourceRowMajor);
+        const bool sourceRowMajor = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
+        m_BP3Serializer->PutVariableMetadata(variable, blockInfo, sourceRowMajor);
+        m_BP3Serializer->PutVariablePayload(variable, blockInfo, sourceRowMajor);
         variable.m_BlocksInfo.clear();
     }
     else
     {
-        helper::Throw<std::invalid_argument>("Engine", "SstWriter",
-                                             "PutSyncCommon",
+        helper::Throw<std::invalid_argument>("Engine", "SstWriter", "PutSyncCommon",
                                              "unknown marshaling method");
     }
 }

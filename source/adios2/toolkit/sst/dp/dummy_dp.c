@@ -114,25 +114,17 @@ typedef struct _DummyReadRequestMsg
 } *DummyReadRequestMsg;
 
 static FMField DummyReadRequestList[] = {
-    {"Timestep", "integer", sizeof(long),
-     FMOffset(DummyReadRequestMsg, Timestep)},
-    {"Offset", "integer", sizeof(size_t),
-     FMOffset(DummyReadRequestMsg, Offset)},
-    {"Length", "integer", sizeof(size_t),
-     FMOffset(DummyReadRequestMsg, Length)},
-    {"WS_Stream", "integer", sizeof(void *),
-     FMOffset(DummyReadRequestMsg, WS_Stream)},
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(DummyReadRequestMsg, RS_Stream)},
-    {"RequestingRank", "integer", sizeof(int),
-     FMOffset(DummyReadRequestMsg, RequestingRank)},
-    {"NotifyCondition", "integer", sizeof(int),
-     FMOffset(DummyReadRequestMsg, NotifyCondition)},
+    {"Timestep", "integer", sizeof(long), FMOffset(DummyReadRequestMsg, Timestep)},
+    {"Offset", "integer", sizeof(size_t), FMOffset(DummyReadRequestMsg, Offset)},
+    {"Length", "integer", sizeof(size_t), FMOffset(DummyReadRequestMsg, Length)},
+    {"WS_Stream", "integer", sizeof(void *), FMOffset(DummyReadRequestMsg, WS_Stream)},
+    {"RS_Stream", "integer", sizeof(void *), FMOffset(DummyReadRequestMsg, RS_Stream)},
+    {"RequestingRank", "integer", sizeof(int), FMOffset(DummyReadRequestMsg, RequestingRank)},
+    {"NotifyCondition", "integer", sizeof(int), FMOffset(DummyReadRequestMsg, NotifyCondition)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec DummyReadRequestStructs[] = {
-    {"DummyReadRequest", DummyReadRequestList,
-     sizeof(struct _DummyReadRequestMsg), NULL},
+    {"DummyReadRequest", DummyReadRequestList, sizeof(struct _DummyReadRequestMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
 typedef struct _DummyReadReplyMsg
@@ -145,25 +137,19 @@ typedef struct _DummyReadReplyMsg
 } *DummyReadReplyMsg;
 
 static FMField DummyReadReplyList[] = {
-    {"Timestep", "integer", sizeof(long),
-     FMOffset(DummyReadReplyMsg, Timestep)},
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(DummyReadReplyMsg, RS_Stream)},
-    {"DataLength", "integer", sizeof(size_t),
-     FMOffset(DummyReadReplyMsg, DataLength)},
-    {"Data", "char[DataLength]", sizeof(char),
-     FMOffset(DummyReadReplyMsg, Data)},
-    {"NotifyCondition", "integer", sizeof(int),
-     FMOffset(DummyReadReplyMsg, NotifyCondition)},
+    {"Timestep", "integer", sizeof(long), FMOffset(DummyReadReplyMsg, Timestep)},
+    {"RS_Stream", "integer", sizeof(void *), FMOffset(DummyReadReplyMsg, RS_Stream)},
+    {"DataLength", "integer", sizeof(size_t), FMOffset(DummyReadReplyMsg, DataLength)},
+    {"Data", "char[DataLength]", sizeof(char), FMOffset(DummyReadReplyMsg, Data)},
+    {"NotifyCondition", "integer", sizeof(int), FMOffset(DummyReadReplyMsg, NotifyCondition)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec DummyReadReplyStructs[] = {
-    {"DummyReadReply", DummyReadReplyList, sizeof(struct _DummyReadReplyMsg),
-     NULL},
+    {"DummyReadReply", DummyReadReplyList, sizeof(struct _DummyReadReplyMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
-static void DummyReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                  void *client_Data, attr_list attrs);
+static void DummyReadReplyHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                  attr_list attrs);
 
 /*
  *
@@ -176,14 +162,12 @@ static void DummyReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
  * https://www.cc.gatech.edu/systems/projects/FFS/.)
  *
  */
-static DP_RS_Stream DummyInitReader(CP_Services Svcs, void *CP_Stream,
-                                    void **ReaderContactInfoPtr,
-                                    struct _SstParams *Params,
-                                    attr_list WriterContact, SstStats Stats)
+static DP_RS_Stream DummyInitReader(CP_Services Svcs, void *CP_Stream, void **ReaderContactInfoPtr,
+                                    struct _SstParams *Params, attr_list WriterContact,
+                                    SstStats Stats)
 {
     Dummy_RS_Stream Stream = malloc(sizeof(struct _Dummy_RS_Stream));
-    DummyReaderContactInfo Contact =
-        malloc(sizeof(struct _DummyReaderContactInfo));
+    DummyReaderContactInfo Contact = malloc(sizeof(struct _DummyReaderContactInfo));
     CManager cm = Svcs->getCManager(CP_Stream);
     char *DummyContactString = malloc(64);
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
@@ -199,8 +183,7 @@ static DP_RS_Stream DummyInitReader(CP_Services Svcs, void *CP_Stream,
 
     SMPI_Comm_rank(comm, &Stream->Rank);
 
-    snprintf(DummyContactString, 64, "Reader Rank %d, test contact",
-             Stream->Rank);
+    snprintf(DummyContactString, 64, "Reader Rank %d, test contact", Stream->Rank);
 
     /*
      * add a handler for read reply messages
@@ -217,8 +200,8 @@ static DP_RS_Stream DummyInitReader(CP_Services Svcs, void *CP_Stream,
     return Stream;
 }
 
-static void DummyReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
-                                    void *client_Data, attr_list attrs)
+static void DummyReadRequestHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                    attr_list attrs)
 {
     PERFSTUBS_TIMER_START_FUNC(timer);
     DummyReadRequestMsg ReadRequestMsg = (DummyReadRequestMsg)msg_v;
@@ -232,8 +215,8 @@ static void DummyReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
                   "Got a request to read remote memory "
                   "from reader rank %d: timestep %d, "
                   "offset %d, length %d\n",
-                  ReadRequestMsg->RequestingRank, ReadRequestMsg->Timestep,
-                  ReadRequestMsg->Offset, ReadRequestMsg->Length);
+                  ReadRequestMsg->RequestingRank, ReadRequestMsg->Timestep, ReadRequestMsg->Offset,
+                  ReadRequestMsg->Length);
     while (tmp != NULL)
     {
         if (tmp->Timestep == ReadRequestMsg->Timestep)
@@ -246,13 +229,12 @@ static void DummyReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
             ReadReplyMsg.Data = tmp->Data->block + ReadRequestMsg->Offset;
             ReadReplyMsg.RS_Stream = ReadRequestMsg->RS_Stream;
             ReadReplyMsg.NotifyCondition = ReadRequestMsg->NotifyCondition;
-            Svcs->verbose(
-                WS_Stream->CP_Stream, DPTraceVerbose,
-                "Sending a reply to reader rank %d for remote memory read\n",
-                ReadRequestMsg->RequestingRank);
+            Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+                          "Sending a reply to reader rank %d for remote memory read\n",
+                          ReadRequestMsg->RequestingRank);
             Svcs->sendToPeer(WS_Stream->CP_Stream, WSR_Stream->PeerCohort,
-                             ReadRequestMsg->RequestingRank,
-                             WS_Stream->ReadReplyFormat, &ReadReplyMsg);
+                             ReadRequestMsg->RequestingRank, WS_Stream->ReadReplyFormat,
+                             &ReadReplyMsg);
             PERFSTUBS_TIMER_STOP_FUNC(timer);
             return;
         }
@@ -262,8 +244,7 @@ static void DummyReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
      * Shouldn't ever get here because we should never get a request for a
      * timestep that we don't have.
      */
-    fprintf(stderr, "Failed to read Timestep %ld, not found\n",
-            ReadRequestMsg->Timestep);
+    fprintf(stderr, "Failed to read Timestep %ld, not found\n", ReadRequestMsg->Timestep);
     /*
      * in the interest of not failing a writer on a reader failure, don't
      * assert(0) here.  Probably this sort of error should close the link to
@@ -281,20 +262,18 @@ typedef struct _DummyCompletionHandle
     int Rank;
 } *DummyCompletionHandle;
 
-static void DummyReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                  void *client_Data, attr_list attrs)
+static void DummyReadReplyHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                  attr_list attrs)
 {
     PERFSTUBS_TIMER_START_FUNC(timer);
     DummyReadReplyMsg ReadReplyMsg = (DummyReadReplyMsg)msg_v;
     Dummy_RS_Stream RS_Stream = ReadReplyMsg->RS_Stream;
     CP_Services Svcs = (CP_Services)client_Data;
-    DummyCompletionHandle Handle =
-        CMCondition_get_client_data(cm, ReadReplyMsg->NotifyCondition);
+    DummyCompletionHandle Handle = CMCondition_get_client_data(cm, ReadReplyMsg->NotifyCondition);
 
-    Svcs->verbose(
-        RS_Stream->CP_Stream, DPTraceVerbose,
-        "Got a reply to remote memory read from rank %d, condition is %d\n",
-        Handle->Rank, ReadReplyMsg->NotifyCondition);
+    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
+                  "Got a reply to remote memory read from rank %d, condition is %d\n", Handle->Rank,
+                  ReadReplyMsg->NotifyCondition);
 
     /*
      * `Handle` contains the full request info and is `client_data`
@@ -318,8 +297,7 @@ static void DummyReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
  * contact information per se.  That can be put off until InitWriterPerReader().
  *
  */
-static DP_WS_Stream DummyInitWriter(CP_Services Svcs, void *CP_Stream,
-                                    struct _SstParams *Params,
+static DP_WS_Stream DummyInitWriter(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params,
                                     attr_list DPAttrs, SstStats Stats)
 {
     Dummy_WS_Stream Stream = malloc(sizeof(struct _Dummy_WS_Stream));
@@ -361,10 +339,8 @@ static DP_WS_Stream DummyInitWriter(CP_Services Svcs, void *CP_Stream,
  * See https://www.cc.gatech.edu/systems/projects/FFS/.)
  *
  */
-static DP_WSR_Stream DummyInitWriterPerReader(CP_Services Svcs,
-                                              DP_WS_Stream WS_Stream_v,
-                                              int readerCohortSize,
-                                              CP_PeerCohort PeerCohort,
+static DP_WSR_Stream DummyInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_Stream_v,
+                                              int readerCohortSize, CP_PeerCohort PeerCohort,
                                               void **providedReaderInfo_v,
                                               void **WriterContactInfoPtr)
 {
@@ -374,8 +350,7 @@ static DP_WSR_Stream DummyInitWriterPerReader(CP_Services Svcs,
     SMPI_Comm comm = Svcs->getMPIComm(WS_Stream->CP_Stream);
     int Rank;
     char *DummyContactString = malloc(64);
-    DummyReaderContactInfo *providedReaderInfo =
-        (DummyReaderContactInfo *)providedReaderInfo_v;
+    DummyReaderContactInfo *providedReaderInfo = (DummyReaderContactInfo *)providedReaderInfo_v;
 
     SMPI_Comm_rank(comm, &Rank);
     snprintf(DummyContactString, 64, "Writer Rank %d, test contact", Rank);
@@ -393,21 +368,19 @@ static DP_WSR_Stream DummyInitWriterPerReader(CP_Services Svcs,
     {
         WSR_Stream->ReaderContactInfo[i].ContactString =
             strdup(providedReaderInfo[i]->ContactString);
-        WSR_Stream->ReaderContactInfo[i].RS_Stream =
-            providedReaderInfo[i]->RS_Stream;
-        Svcs->verbose(
-            WS_Stream->CP_Stream, DPTraceVerbose,
-            "Received contact info \"%s\", RD_Stream %p for Reader Rank %d\n",
-            WSR_Stream->ReaderContactInfo[i].ContactString,
-            WSR_Stream->ReaderContactInfo[i].RS_Stream, i);
+        WSR_Stream->ReaderContactInfo[i].RS_Stream = providedReaderInfo[i]->RS_Stream;
+        Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+                      "Received contact info \"%s\", RD_Stream %p for Reader Rank %d\n",
+                      WSR_Stream->ReaderContactInfo[i].ContactString,
+                      WSR_Stream->ReaderContactInfo[i].RS_Stream, i);
     }
 
     /*
      * add this writer-side reader-specific stream to the parent writer stream
      * structure
      */
-    WS_Stream->Readers = realloc(
-        WS_Stream->Readers, sizeof(*WSR_Stream) * (WS_Stream->ReaderCount + 1));
+    WS_Stream->Readers =
+        realloc(WS_Stream->Readers, sizeof(*WSR_Stream) * (WS_Stream->ReaderCount + 1));
     WS_Stream->Readers[WS_Stream->ReaderCount] = WSR_Stream;
     WS_Stream->ReaderCount++;
 
@@ -420,15 +393,12 @@ static DP_WSR_Stream DummyInitWriterPerReader(CP_Services Svcs,
     return WSR_Stream;
 }
 
-static void DummyProvideWriterDataToReader(CP_Services Svcs,
-                                           DP_RS_Stream RS_Stream_v,
-                                           int writerCohortSize,
-                                           CP_PeerCohort PeerCohort,
+static void DummyProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v,
+                                           int writerCohortSize, CP_PeerCohort PeerCohort,
                                            void **providedWriterInfo_v)
 {
     Dummy_RS_Stream RS_Stream = (Dummy_RS_Stream)RS_Stream_v;
-    DummyWriterContactInfo *providedWriterInfo =
-        (DummyWriterContactInfo *)providedWriterInfo_v;
+    DummyWriterContactInfo *providedWriterInfo = (DummyWriterContactInfo *)providedWriterInfo_v;
 
     RS_Stream->PeerCohort = PeerCohort;
     RS_Stream->WriterCohortSize = writerCohortSize;
@@ -443,13 +413,11 @@ static void DummyProvideWriterDataToReader(CP_Services Svcs,
     {
         RS_Stream->WriterContactInfo[i].ContactString =
             strdup(providedWriterInfo[i]->ContactString);
-        RS_Stream->WriterContactInfo[i].WS_Stream =
-            providedWriterInfo[i]->WS_Stream;
-        Svcs->verbose(
-            RS_Stream->CP_Stream, DPTraceVerbose,
-            "Received contact info \"%s\", WS_stream %p for WSR Rank %d\n",
-            RS_Stream->WriterContactInfo[i].ContactString,
-            RS_Stream->WriterContactInfo[i].WS_Stream, i);
+        RS_Stream->WriterContactInfo[i].WS_Stream = providedWriterInfo[i]->WS_Stream;
+        Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
+                      "Received contact info \"%s\", WS_stream %p for WSR Rank %d\n",
+                      RS_Stream->WriterContactInfo[i].ContactString,
+                      RS_Stream->WriterContactInfo[i].WS_Stream, i);
     }
 }
 
@@ -472,13 +440,12 @@ typedef struct _DummyPerTimestepInfo
  * handle.
  *
  */
-static void *DummyReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
-                                   int Rank, long Timestep, size_t Offset,
-                                   size_t Length, void *Buffer,
+static void *DummyReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Rank, long Timestep,
+                                   size_t Offset, size_t Length, void *Buffer,
                                    void *DP_TimestepInfo)
 {
-    Dummy_RS_Stream Stream = (Dummy_RS_Stream)
-        Stream_v; /* DP_RS_Stream is the return from InitReader */
+    Dummy_RS_Stream Stream =
+        (Dummy_RS_Stream)Stream_v; /* DP_RS_Stream is the return from InitReader */
     CManager cm = Svcs->getCManager(Stream->CP_Stream);
     DummyCompletionHandle ret = malloc(sizeof(struct _DummyCompletionHandle));
     struct _DummyReadRequestMsg ReadRequestMsg;
@@ -509,8 +476,8 @@ static void *DummyReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     ReadRequestMsg.RS_Stream = Stream;
     ReadRequestMsg.RequestingRank = Stream->Rank;
     ReadRequestMsg.NotifyCondition = ret->CMcondition;
-    Svcs->sendToPeer(Stream->CP_Stream, Stream->PeerCohort, Rank,
-                     Stream->ReadRequestFormat, &ReadRequestMsg);
+    Svcs->sendToPeer(Stream->CP_Stream, Stream->PeerCohort, Rank, Stream->ReadRequestFormat,
+                     &ReadRequestMsg);
 
     return ret;
 }
@@ -528,10 +495,9 @@ static int DummyWaitForCompletion(CP_Services Svcs, void *Handle_v)
 {
     DummyCompletionHandle Handle = (DummyCompletionHandle)Handle_v;
     int Ret;
-    Svcs->verbose(
-        Handle->CPStream, DPTraceVerbose,
-        "Waiting for completion of memory read to rank %d, condition %d\n",
-        Handle->Rank, Handle->CMcondition);
+    Svcs->verbose(Handle->CPStream, DPTraceVerbose,
+                  "Waiting for completion of memory read to rank %d, condition %d\n", Handle->Rank,
+                  Handle->CMcondition);
     /*
      * Wait for the CM condition to be signalled.  If it has been already,
      * this returns immediately.  Copying the incoming data to the waiting
@@ -570,19 +536,17 @@ static int DummyWaitForCompletion(CP_Services Svcs, void *Handle_v)
  * should be described by DPInterface.TimestepInfoFormats.
  *
  */
-static void DummyProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
-                                 struct _SstData *Data,
+static void DummyProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct _SstData *Data,
                                  struct _SstData *LocalMetadata, long Timestep,
                                  void **TimestepInfoPtr)
 {
     Dummy_WS_Stream Stream = (Dummy_WS_Stream)Stream_v;
     TimestepList Entry = malloc(sizeof(struct _TimestepEntry));
-    struct _DummyPerTimestepInfo *Info =
-        malloc(sizeof(struct _DummyPerTimestepInfo));
+    struct _DummyPerTimestepInfo *Info = malloc(sizeof(struct _DummyPerTimestepInfo));
 
     Info->CheckString = malloc(64);
-    snprintf(Info->CheckString, 64, "Dummy info for timestep %ld from rank %d",
-             Timestep, Stream->Rank);
+    snprintf(Info->CheckString, 64, "Dummy info for timestep %ld from rank %d", Timestep,
+             Stream->Rank);
     Info->CheckInt = Stream->Rank * 1000 + Timestep;
     Entry->Data = Data;
     Entry->Timestep = Timestep;
@@ -601,14 +565,12 @@ static void DummyProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
  *
  */
 
-static void DummyReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
-                                 long Timestep)
+static void DummyReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, long Timestep)
 {
     Dummy_WS_Stream Stream = (Dummy_WS_Stream)Stream_v;
     TimestepList List = Stream->Timesteps;
 
-    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "Releasing timestep %ld\n",
-                  Timestep);
+    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "Releasing timestep %ld\n", Timestep);
     if (Stream->Timesteps->Timestep == Timestep)
     {
         Stream->Timesteps = List->Next;
@@ -633,47 +595,39 @@ static void DummyReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
          * Shouldn't ever get here because we should never release a
          * timestep that we don't have.
          */
-        fprintf(stderr, "Failed to release Timestep %ld, not found\n",
-                Timestep);
+        fprintf(stderr, "Failed to release Timestep %ld, not found\n", Timestep);
         assert(0);
     }
 }
 
 static FMField DummyReaderContactList[] = {
-    {"ContactString", "string", sizeof(char *),
-     FMOffset(DummyReaderContactInfo, ContactString)},
-    {"reader_ID", "integer", sizeof(void *),
-     FMOffset(DummyReaderContactInfo, RS_Stream)},
+    {"ContactString", "string", sizeof(char *), FMOffset(DummyReaderContactInfo, ContactString)},
+    {"reader_ID", "integer", sizeof(void *), FMOffset(DummyReaderContactInfo, RS_Stream)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec DummyReaderContactStructs[] = {
-    {"DummyReaderContactInfo", DummyReaderContactList,
-     sizeof(struct _DummyReaderContactInfo), NULL},
+    {"DummyReaderContactInfo", DummyReaderContactList, sizeof(struct _DummyReaderContactInfo),
+     NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField DummyWriterContactList[] = {
-    {"ContactString", "string", sizeof(char *),
-     FMOffset(DummyWriterContactInfo, ContactString)},
-    {"writer_ID", "integer", sizeof(void *),
-     FMOffset(DummyWriterContactInfo, WS_Stream)},
+    {"ContactString", "string", sizeof(char *), FMOffset(DummyWriterContactInfo, ContactString)},
+    {"writer_ID", "integer", sizeof(void *), FMOffset(DummyWriterContactInfo, WS_Stream)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec DummyWriterContactStructs[] = {
-    {"DummyWriterContactInfo", DummyWriterContactList,
-     sizeof(struct _DummyWriterContactInfo), NULL},
+    {"DummyWriterContactInfo", DummyWriterContactList, sizeof(struct _DummyWriterContactInfo),
+     NULL},
     {NULL, NULL, 0, NULL}};
 
 #ifdef NOTDEF
 static FMField DummyTimestepInfoList[] = {
-    {"CheckString", "string", sizeof(char *),
-     FMOffset(DummyPerTimestepInfo, CheckString)},
-    {"CheckInt", "integer", sizeof(void *),
-     FMOffset(DummyPerTimestepInfo, CheckInt)},
+    {"CheckString", "string", sizeof(char *), FMOffset(DummyPerTimestepInfo, CheckString)},
+    {"CheckInt", "integer", sizeof(void *), FMOffset(DummyPerTimestepInfo, CheckInt)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec DummyTimestepInfoStructs[] = {
-    {"DummyTimestepInfo", DummyTimestepInfoList,
-     sizeof(struct _DummyPerTimestepInfo), NULL},
+    {"DummyTimestepInfo", DummyTimestepInfoList, sizeof(struct _DummyPerTimestepInfo), NULL},
     {NULL, NULL, 0, NULL}};
 #endif
 

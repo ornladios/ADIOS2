@@ -50,32 +50,29 @@ public:
     Stream(const std::string &name, const Mode mode, helper::Comm comm,
            const std::string engineType, const std::string hostLanguage);
 
-    Stream(const std::string &name, const Mode mode,
-           const std::string engineType, const std::string hostLanguage);
+    Stream(const std::string &name, const Mode mode, const std::string engineType,
+           const std::string hostLanguage);
 
     Stream(const std::string &name, const Mode mode, helper::Comm comm,
            const std::string configFile, const std::string ioInConfigFile,
            const std::string hostLanguage);
 
-    Stream(const std::string &name, const Mode mode,
-           const std::string configFile, const std::string ioInConfigFile,
-           const std::string hostLanguage);
+    Stream(const std::string &name, const Mode mode, const std::string configFile,
+           const std::string ioInConfigFile, const std::string hostLanguage);
 
     ~Stream() = default;
 
     template <class T>
-    void WriteAttribute(const std::string &name, const T &value,
-                        const std::string &variableName,
+    void WriteAttribute(const std::string &name, const T &value, const std::string &variableName,
                         const std::string separator, const bool nextStep);
     template <class T>
-    void WriteAttribute(const std::string &name, const T *array,
-                        const size_t elements, const std::string &variableName,
-                        const std::string separator, const bool nextStep);
+    void WriteAttribute(const std::string &name, const T *array, const size_t elements,
+                        const std::string &variableName, const std::string separator,
+                        const bool nextStep);
 
     template <class T>
-    void Write(const std::string &name, const T *values, const Dims &shape,
-               const Dims &start, const Dims &count,
-               const vParams &operations = vParams(),
+    void Write(const std::string &name, const T *values, const Dims &shape, const Dims &start,
+               const Dims &count, const vParams &operations = vParams(),
                const bool endStep = false);
 
     template <class T>
@@ -88,12 +85,10 @@ public:
     void Read(const std::string &name, T *values, const size_t blockID);
 
     template <class T>
-    void Read(const std::string &name, T *values, const Box<size_t> &step,
-              const size_t blockID);
+    void Read(const std::string &name, T *values, const Box<size_t> &step, const size_t blockID);
 
     template <class T>
-    void Read(const std::string &name, T *values, const Box<Dims> &selection,
-              const size_t blockID);
+    void Read(const std::string &name, T *values, const Box<Dims> &selection, const size_t blockID);
 
     template <class T>
     void Read(const std::string &name, T *values, const Box<Dims> &selection,
@@ -103,22 +98,18 @@ public:
     std::vector<T> Read(const std::string &name, const size_t blockID);
 
     template <class T>
-    std::vector<T> Read(const std::string &name,
-                        const Box<size_t> &stepsSelection,
+    std::vector<T> Read(const std::string &name, const Box<size_t> &stepsSelection,
                         const size_t blockID);
+
+    template <class T>
+    std::vector<T> Read(const std::string &name, const Box<Dims> &selection, const size_t blockID);
 
     template <class T>
     std::vector<T> Read(const std::string &name, const Box<Dims> &selection,
-                        const size_t blockID);
+                        const Box<size_t> &stepsSelection, const size_t blockID);
 
     template <class T>
-    std::vector<T> Read(const std::string &name, const Box<Dims> &selection,
-                        const Box<size_t> &stepsSelection,
-                        const size_t blockID);
-
-    template <class T>
-    void ReadAttribute(const std::string &name, T *data,
-                       const std::string &variableName,
+    void ReadAttribute(const std::string &name, T *data, const std::string &variableName,
                        const std::string separator);
 
     void EndStep();

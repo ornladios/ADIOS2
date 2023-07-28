@@ -30,15 +30,14 @@ BP3Base::GetBPBaseNames(const std::vector<std::string> &names) const noexcept
 
     for (const std::string &name : names)
     {
-        const std::string bpBaseName =
-            helper::AddExtension(name, ".bp") + ".dir";
+        const std::string bpBaseName = helper::AddExtension(name, ".bp") + ".dir";
         bpBaseNames.push_back(bpBaseName);
     }
     return bpBaseNames;
 }
 
-std::vector<std::string> BP3Base::GetBPMetadataFileNames(
-    const std::vector<std::string> &names) const noexcept
+std::vector<std::string>
+BP3Base::GetBPMetadataFileNames(const std::vector<std::string> &names) const noexcept
 {
     std::vector<std::string> metadataFileNames;
     metadataFileNames.reserve(names.size());
@@ -49,30 +48,26 @@ std::vector<std::string> BP3Base::GetBPMetadataFileNames(
     return metadataFileNames;
 }
 
-std::string
-BP3Base::GetBPMetadataFileName(const std::string &name) const noexcept
+std::string BP3Base::GetBPMetadataFileName(const std::string &name) const noexcept
 {
     return helper::AddExtension(name, ".bp");
 }
 
-std::vector<std::string> BP3Base::GetBPSubStreamNames(
-    const std::vector<std::string> &names) const noexcept
+std::vector<std::string>
+BP3Base::GetBPSubStreamNames(const std::vector<std::string> &names) const noexcept
 {
     std::vector<std::string> bpNames;
     bpNames.reserve(names.size());
 
     for (const auto &name : names)
     {
-        bpNames.push_back(
-            GetBPSubStreamName(name, static_cast<unsigned int>(m_RankMPI)));
+        bpNames.push_back(GetBPSubStreamName(name, static_cast<unsigned int>(m_RankMPI)));
     }
     return bpNames;
 }
 
-std::string BP3Base::GetBPSubFileName(const std::string &name,
-                                      const size_t subFileIndex,
-                                      const bool hasSubFiles,
-                                      const bool isReader) const noexcept
+std::string BP3Base::GetBPSubFileName(const std::string &name, const size_t subFileIndex,
+                                      const bool hasSubFiles, const bool isReader) const noexcept
 {
     return GetBPSubStreamName(name, subFileIndex, hasSubFiles, isReader);
 }
@@ -116,30 +111,24 @@ size_t BP3Base::GetBPIndexSizeInData(const std::string &variableName,
 
 // PROTECTED
 BP3Base::ElementIndexHeader
-BP3Base::ReadElementIndexHeader(const std::vector<char> &buffer,
-                                size_t &position,
+BP3Base::ReadElementIndexHeader(const std::vector<char> &buffer, size_t &position,
                                 const bool isLittleEndian) const noexcept
 {
     ElementIndexHeader header;
-    header.Length =
-        helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
-    header.MemberID =
-        helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
+    header.Length = helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
+    header.MemberID = helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
     header.GroupName = ReadBPString(buffer, position, isLittleEndian);
     header.Name = ReadBPString(buffer, position, isLittleEndian);
     header.Path = ReadBPString(buffer, position, isLittleEndian);
-    header.DataType =
-        helper::ReadValue<int8_t>(buffer, position, isLittleEndian);
-    header.CharacteristicsSetsCount =
-        helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
+    header.DataType = helper::ReadValue<int8_t>(buffer, position, isLittleEndian);
+    header.CharacteristicsSetsCount = helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
 
     return header;
 }
 
 // PRIVATE
-std::string BP3Base::GetBPSubStreamName(const std::string &name,
-                                        const size_t id, const bool hasSubFiles,
-                                        const bool isReader) const noexcept
+std::string BP3Base::GetBPSubStreamName(const std::string &name, const size_t id,
+                                        const bool hasSubFiles, const bool isReader) const noexcept
 {
     if (!hasSubFiles)
     {
@@ -157,13 +146,12 @@ std::string BP3Base::GetBPSubStreamName(const std::string &name,
         bpRoot = bpName.substr(lastPathSeparator);
     }
 
-    const size_t index = isReader ? id
-                         : m_Aggregator.m_IsActive
-                             ? m_Aggregator.m_SubStreamIndex
-                             : id;
+    const size_t index = isReader                  ? id
+                         : m_Aggregator.m_IsActive ? m_Aggregator.m_SubStreamIndex
+                                                   : id;
 
-    const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot +
-                                 "." + std::to_string(index));
+    const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot + "." +
+                                 std::to_string(index));
     return bpRankName;
 }
 

@@ -23,14 +23,13 @@ namespace engine
 {
 
 template <>
-inline void SkeletonReader::GetSyncCommon(Variable<std::string> &variable,
-                                          std::string *data)
+inline void SkeletonReader::GetSyncCommon(Variable<std::string> &variable, std::string *data)
 {
     variable.m_Data = data;
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Reader " << m_ReaderRank << "     GetSync("
-                  << variable.m_Name << ")\n";
+        std::cout << "Skeleton Reader " << m_ReaderRank << "     GetSync(" << variable.m_Name
+                  << ")\n";
     }
 }
 
@@ -40,8 +39,8 @@ inline void SkeletonReader::GetSyncCommon(Variable<T> &variable, T *data)
     variable.m_Data = data;
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Reader " << m_ReaderRank << "     GetSync("
-                  << variable.m_Name << ")\n";
+        std::cout << "Skeleton Reader " << m_ReaderRank << "     GetSync(" << variable.m_Name
+                  << ")\n";
     }
 }
 
@@ -51,8 +50,8 @@ void SkeletonReader::GetDeferredCommon(Variable<T> &variable, T *data)
     // returns immediately
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Reader " << m_ReaderRank << "     GetDeferred("
-                  << variable.m_Name << ")\n";
+        std::cout << "Skeleton Reader " << m_ReaderRank << "     GetDeferred(" << variable.m_Name
+                  << ")\n";
     }
     m_NeedPerformGets = true;
 }

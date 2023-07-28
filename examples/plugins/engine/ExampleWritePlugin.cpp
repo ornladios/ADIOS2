@@ -19,8 +19,8 @@ namespace adios2
 namespace plugin
 {
 
-ExampleWritePlugin::ExampleWritePlugin(core::IO &io, const std::string &name,
-                                       const Mode mode, helper::Comm comm)
+ExampleWritePlugin::ExampleWritePlugin(core::IO &io, const std::string &name, const Mode mode,
+                                       helper::Comm comm)
 : PluginEngineInterface(io, name, mode, comm.Duplicate())
 {
     Init();
@@ -46,21 +46,18 @@ void ExampleWritePlugin::Init()
     m_DataFile.open(fileName);
     if (!m_DataFile)
     {
-        throw std::ios_base::failure(
-            "ExampleWritePlugin: Failed to open file " + fileName);
+        throw std::ios_base::failure("ExampleWritePlugin: Failed to open file " + fileName);
     }
 
     std::string varfName = dir + "/vars.txt";
     m_VarFile.open(varfName);
     if (!m_VarFile)
     {
-        throw std::ios_base::failure(
-            "ExampleWritePlugin: Failed to open file " + varfName);
+        throw std::ios_base::failure("ExampleWritePlugin: Failed to open file " + varfName);
     }
 }
 
-StepStatus ExampleWritePlugin::BeginStep(StepMode mode,
-                                         const float timeoutSeconds)
+StepStatus ExampleWritePlugin::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     WriteVarsFromIO();
     return StepStatus::OK;
@@ -70,16 +67,14 @@ size_t ExampleWritePlugin::CurrentStep() const { return m_CurrentStep; }
 
 void ExampleWritePlugin::EndStep() { m_CurrentStep++; }
 
-#define declare(T)                                                             \
-    void ExampleWritePlugin::DoPutSync(core::Variable<T> &variable,            \
-                                       const T *values)                        \
-    {                                                                          \
-        WriteArray(variable, values);                                          \
-    }                                                                          \
-    void ExampleWritePlugin::DoPutDeferred(core::Variable<T> &variable,        \
-                                           const T *values)                    \
-    {                                                                          \
-        WriteArray(variable, values);                                          \
+#define declare(T)                                                                                 \
+    void ExampleWritePlugin::DoPutSync(core::Variable<T> &variable, const T *values)               \
+    {                                                                                              \
+        WriteArray(variable, values);                                                              \
+    }                                                                                              \
+    void ExampleWritePlugin::DoPutDeferred(core::Variable<T> &variable, const T *values)           \
+    {                                                                                              \
+        WriteArray(variable, values);                                                              \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
@@ -95,13 +90,13 @@ void ExampleWritePlugin::WriteVarsFromIO()
     {
         const std::string &varName = vpair.first;
         const DataType varType = vpair.second->m_Type;
-#define declare_template_instantiation(T)                                      \
-    if (varType == helper::GetDataType<T>())                                   \
-    {                                                                          \
-        core::Variable<T> *v = m_IO.InquireVariable<T>(varName);               \
-        if (!v)                                                                \
-            return;                                                            \
-        WriteVariableInfo(*v);                                                 \
+#define declare_template_instantiation(T)                                                          \
+    if (varType == helper::GetDataType<T>())                                                       \
+    {                                                                                              \
+        core::Variable<T> *v = m_IO.InquireVariable<T>(varName);                                   \
+        if (!v)                                                                                    \
+            return;                                                                                \
+        WriteVariableInfo(*v);                                                                     \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -113,13 +108,10 @@ void ExampleWritePlugin::WriteVarsFromIO()
 
 extern "C" {
 
-adios2::plugin::ExampleWritePlugin *EngineCreate(adios2::core::IO &io,
-                                                 const std::string &name,
-                                                 const adios2::Mode mode,
-                                                 adios2::helper::Comm comm)
+adios2::plugin::ExampleWritePlugin *EngineCreate(adios2::core::IO &io, const std::string &name,
+                                                 const adios2::Mode mode, adios2::helper::Comm comm)
 {
-    return new adios2::plugin::ExampleWritePlugin(io, name, mode,
-                                                  comm.Duplicate());
+    return new adios2::plugin::ExampleWritePlugin(io, name, mode, comm.Duplicate());
 }
 
 void EngineDestroy(adios2::plugin::ExampleWritePlugin *obj) { delete obj; }

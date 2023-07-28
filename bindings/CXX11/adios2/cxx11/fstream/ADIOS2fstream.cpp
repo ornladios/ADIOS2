@@ -14,36 +14,29 @@
 namespace adios2
 {
 
-fstream::fstream(const std::string &name, const openmode mode,
-                 const std::string engineType)
-: m_Stream(
-      std::make_shared<core::Stream>(name, ToMode(mode), engineType, "C++"))
+fstream::fstream(const std::string &name, const openmode mode, const std::string engineType)
+: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), engineType, "C++"))
 {
 }
 
-fstream::fstream(const std::string &name, const openmode mode,
-                 const std::string &configFile,
+fstream::fstream(const std::string &name, const openmode mode, const std::string &configFile,
                  const std::string ioInConfigFile)
-: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), configFile,
-                                          ioInConfigFile, "C++"))
+: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), configFile, ioInConfigFile, "C++"))
 {
 }
 
-void fstream::open(const std::string &name, const openmode mode,
-                   const std::string engineType)
+void fstream::open(const std::string &name, const openmode mode, const std::string engineType)
 {
     CheckOpen(name);
-    m_Stream =
-        std::make_shared<core::Stream>(name, ToMode(mode), engineType, "C++");
+    m_Stream = std::make_shared<core::Stream>(name, ToMode(mode), engineType, "C++");
 }
 
-void fstream::open(const std::string &name, const openmode mode,
-                   const std::string configFile,
+void fstream::open(const std::string &name, const openmode mode, const std::string configFile,
                    const std::string ioInConfigFile)
 {
     CheckOpen(name);
-    m_Stream = std::make_shared<core::Stream>(name, ToMode(mode), configFile,
-                                              ioInConfigFile, "C++");
+    m_Stream =
+        std::make_shared<core::Stream>(name, ToMode(mode), configFile, ioInConfigFile, "C++");
 }
 
 fstream::operator bool() const noexcept
@@ -64,8 +57,7 @@ void fstream::close()
     m_Stream.reset();
 }
 
-void fstream::set_parameter(const std::string key,
-                            const std::string value) noexcept
+void fstream::set_parameter(const std::string key, const std::string value) noexcept
 {
     m_Stream->m_IO->SetParameter(key, value);
 }
@@ -81,10 +73,7 @@ bool getstep(adios2::fstream &stream, adios2::fstep &step)
     return step.m_Stream->GetStep();
 }
 
-size_t fstream::current_step() const noexcept
-{
-    return m_Stream->CurrentStep();
-}
+size_t fstream::current_step() const noexcept { return m_Stream->CurrentStep(); }
 
 adios2::Mode fstream::ToMode(const openmode mode) const noexcept
 {
@@ -119,63 +108,53 @@ void fstream::CheckOpen(const std::string &name) const
     }
 }
 
-#define declare_template_instantiation(T)                                      \
-    template void fstream::write_attribute<T>(const std::string &, const T &,  \
-                                              const std::string &,             \
-                                              const std::string, const bool);  \
-                                                                               \
-    template void fstream::write_attribute<T>(                                 \
-        const std::string &, const T *, const size_t, const std::string &,     \
-        const std::string, const bool);                                        \
-                                                                               \
-    template std::vector<T> fstream::read_attribute<T>(                        \
-        const std::string &, const std::string &, const std::string);
+#define declare_template_instantiation(T)                                                          \
+    template void fstream::write_attribute<T>(const std::string &, const T &, const std::string &, \
+                                              const std::string, const bool);                      \
+                                                                                                   \
+    template void fstream::write_attribute<T>(const std::string &, const T *, const size_t,        \
+                                              const std::string &, const std::string, const bool); \
+                                                                                                   \
+    template std::vector<T> fstream::read_attribute<T>(const std::string &, const std::string &,   \
+                                                       const std::string);
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-#define declare_template_instantiation(T)                                      \
-    template void fstream::write<T>(const std::string &, const T *,            \
-                                    const Dims &, const Dims &, const Dims &,  \
-                                    const bool);                               \
-                                                                               \
-    template void fstream::write<T>(const std::string &, const T *,            \
-                                    const Dims &, const Dims &, const Dims &,  \
-                                    const vParams &, const bool);              \
-                                                                               \
-    template void fstream::write<T>(const std::string &, const T &,            \
-                                    const bool, const bool);                   \
-                                                                               \
-    template std::vector<T> fstream::read<T>(const std::string &,              \
-                                             const size_t);                    \
-                                                                               \
-    template std::vector<T> fstream::read<T>(                                  \
-        const std::string &, const size_t, const size_t, const size_t);        \
-                                                                               \
-    template std::vector<T> fstream::read<T>(                                  \
-        const std::string &, const Dims &, const Dims &, const size_t);        \
-                                                                               \
-    template std::vector<T> fstream::read<T>(                                  \
-        const std::string &, const Dims &, const Dims &, const size_t,         \
-        const size_t, const size_t);                                           \
-                                                                               \
-    template void fstream::read<T>(const std::string &, T *, const size_t);    \
-                                                                               \
-    template void fstream::read(const std::string &, T *, const size_t,        \
-                                const size_t, const size_t);                   \
-                                                                               \
-    template void fstream::read<T>(const std::string &name, T &,               \
-                                   const size_t);                              \
-                                                                               \
-    template void fstream::read<T>(const std::string &name, T &, const size_t, \
-                                   const size_t);                              \
-                                                                               \
-    template void fstream::read<T>(const std::string &, T *, const Dims &,     \
-                                   const Dims &, const size_t);                \
-                                                                               \
-    template void fstream::read<T>(const std::string &, T *, const Dims &,     \
-                                   const Dims &, const size_t, const size_t,   \
-                                   const size_t);
+#define declare_template_instantiation(T)                                                          \
+    template void fstream::write<T>(const std::string &, const T *, const Dims &, const Dims &,    \
+                                    const Dims &, const bool);                                     \
+                                                                                                   \
+    template void fstream::write<T>(const std::string &, const T *, const Dims &, const Dims &,    \
+                                    const Dims &, const vParams &, const bool);                    \
+                                                                                                   \
+    template void fstream::write<T>(const std::string &, const T &, const bool, const bool);       \
+                                                                                                   \
+    template std::vector<T> fstream::read<T>(const std::string &, const size_t);                   \
+                                                                                                   \
+    template std::vector<T> fstream::read<T>(const std::string &, const size_t, const size_t,      \
+                                             const size_t);                                        \
+                                                                                                   \
+    template std::vector<T> fstream::read<T>(const std::string &, const Dims &, const Dims &,      \
+                                             const size_t);                                        \
+                                                                                                   \
+    template std::vector<T> fstream::read<T>(const std::string &, const Dims &, const Dims &,      \
+                                             const size_t, const size_t, const size_t);            \
+                                                                                                   \
+    template void fstream::read<T>(const std::string &, T *, const size_t);                        \
+                                                                                                   \
+    template void fstream::read(const std::string &, T *, const size_t, const size_t,              \
+                                const size_t);                                                     \
+                                                                                                   \
+    template void fstream::read<T>(const std::string &name, T &, const size_t);                    \
+                                                                                                   \
+    template void fstream::read<T>(const std::string &name, T &, const size_t, const size_t);      \
+                                                                                                   \
+    template void fstream::read<T>(const std::string &, T *, const Dims &, const Dims &,           \
+                                   const size_t);                                                  \
+                                                                                                   \
+    template void fstream::read<T>(const std::string &, T *, const Dims &, const Dims &,           \
+                                   const size_t, const size_t, const size_t);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

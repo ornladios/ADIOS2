@@ -100,8 +100,8 @@ int main(int argc, char *argv[])
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
             // adios2::SelectionBoundingBox sel();
-            varGlobalArray.SetSelection(adios2::Box<adios2::Dims>(
-                {static_cast<size_t>(rank), 0}, {1, static_cast<size_t>(Nx)}));
+            varGlobalArray.SetSelection(adios2::Box<adios2::Dims>({static_cast<size_t>(rank), 0},
+                                                                  {1, static_cast<size_t>(Nx)}));
             writer.Put<double>(varGlobalArray, row.data());
             writer.Put<size_t>(varStep, step);
 

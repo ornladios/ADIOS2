@@ -21,9 +21,8 @@ namespace adios2
 namespace format
 {
 
-ChunkV::ChunkV(const std::string type, const bool AlwaysCopy,
-               const size_t MemAlign, const size_t MemBlockSize,
-               const size_t ChunkSize)
+ChunkV::ChunkV(const std::string type, const bool AlwaysCopy, const size_t MemAlign,
+               const size_t MemBlockSize, const size_t ChunkSize)
 : BufferV(type, AlwaysCopy, MemAlign, MemBlockSize), m_ChunkSize(ChunkSize)
 {
 }
@@ -72,8 +71,8 @@ size_t ChunkV::ChunkAlloc(Chunk &v, const size_t size)
     }
 }
 
-size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
-                        bool CopyReqd, MemorySpace MemSpace)
+size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align, bool CopyReqd,
+                        MemorySpace MemSpace)
 {
     AlignBuffer(align); // may call back AddToVec recursively
     size_t retOffset = CurOffset;
@@ -98,8 +97,7 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
         // internal
         bool AppendPossible =
             DataV.size() && !DataV.back().External &&
-            (m_TailChunk->Ptr + m_TailChunkPos - DataV.back().Size ==
-             DataV.back().Base);
+            (m_TailChunk->Ptr + m_TailChunkPos - DataV.back().Size == DataV.back().Base);
 
         if (AppendPossible && (m_TailChunkPos + size > m_ChunkSize))
         {
@@ -152,8 +150,7 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align,
     return retOffset;
 }
 
-void ChunkV::CopyDataToBuffer(const size_t size, const void *buf, size_t pos,
-                              MemorySpace MemSpace)
+void ChunkV::CopyDataToBuffer(const size_t size, const void *buf, size_t pos, MemorySpace MemSpace)
 {
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
     if (MemSpace == MemorySpace::GPU)
@@ -180,8 +177,7 @@ BufferV::BufferPos ChunkV::Allocate(const size_t size, size_t align)
     // internal
     bool AppendPossible =
         DataV.size() && !DataV.back().External &&
-        (m_TailChunk->Ptr + m_TailChunkPos - DataV.back().Size ==
-         DataV.back().Base);
+        (m_TailChunk->Ptr + m_TailChunkPos - DataV.back().Size == DataV.back().Base);
 
     if (AppendPossible && (m_TailChunkPos + size > m_ChunkSize))
     {
@@ -245,13 +241,11 @@ void *ChunkV::GetPtr(int bufferIdx, size_t posInBuffer)
     {
         return nullptr;
     }
-    else if (static_cast<size_t>(bufferIdx) > DataV.size() ||
-             DataV[bufferIdx].External)
+    else if (static_cast<size_t>(bufferIdx) > DataV.size() || DataV[bufferIdx].External)
     {
         helper::Throw<std::invalid_argument>(
             "Toolkit", "format::ChunkV", "GetPtr",
-            "ChunkV::GetPtr(" + std::to_string(bufferIdx) + ", " +
-                std::to_string(posInBuffer) +
+            "ChunkV::GetPtr(" + std::to_string(bufferIdx) + ", " + std::to_string(posInBuffer) +
                 ") refers to a non-existing or deferred memory chunk.");
         return nullptr;
     }

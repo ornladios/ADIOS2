@@ -25,8 +25,8 @@
 
 HeatTransfer::HeatTransfer(const Settings &settings)
 : m_s(settings), m_T1Buf(new double[(m_s.ndx + 2) * (m_s.ndy + 2)]),
-  m_T2Buf(new double[(m_s.ndx + 2) * (m_s.ndy + 2)]),
-  m_T1(new double *[m_s.ndx + 2]), m_T2(new double *[m_s.ndx + 2])
+  m_T2Buf(new double[(m_s.ndx + 2) * (m_s.ndy + 2)]), m_T1(new double *[m_s.ndx + 2]),
+  m_T2(new double *[m_s.ndx + 2])
 {
     m_T1[0] = m_T1Buf.get();
     m_T2[0] = m_T2Buf.get();
@@ -43,8 +43,7 @@ void HeatTransfer::init(bool init_with_rank)
 {
     if (init_with_rank)
     {
-        std::fill_n(m_T1Buf.get(), (m_s.ndx + 2) * (m_s.ndy + 2),
-                    static_cast<double>(m_s.rank));
+        std::fill_n(m_T1Buf.get(), (m_s.ndx + 2) * (m_s.ndy + 2), static_cast<double>(m_s.rank));
     }
     else
     {
@@ -58,9 +57,8 @@ void HeatTransfer::init(bool init_with_rank)
             for (unsigned int j = 0; j < m_s.ndy + 2; j++)
             {
                 y = 0.0 + hy * (j - 1);
-                m_T1[i][j] = cos(8 * x) + cos(6 * x) - cos(4 * x) + cos(2 * x) -
-                             cos(x) + sin(8 * y) - sin(6 * y) + sin(4 * y) -
-                             sin(2 * y) + sin(y);
+                m_T1[i][j] = cos(8 * x) + cos(6 * x) - cos(4 * x) + cos(2 * x) - cos(x) +
+                             sin(8 * y) - sin(6 * y) + sin(4 * y) - sin(2 * y) + sin(y);
             }
         }
     }
@@ -154,8 +152,8 @@ void HeatTransfer::exchange(MPI_Comm comm)
     {
         // std::cout << "Rank " << m_s.rank << " receive from right from rank "
         //          << m_s.rank_right << std::endl;
-        MPI_Recv(m_TCurrent[0] + (m_s.ndy + 1), 1, tColumnVector,
-                 m_s.rank_right, tag, comm, &status);
+        MPI_Recv(m_TCurrent[0] + (m_s.ndy + 1), 1, tColumnVector, m_s.rank_right, tag, comm,
+                 &status);
     }
 
     // send to right + receive from left
@@ -164,15 +162,13 @@ void HeatTransfer::exchange(MPI_Comm comm)
     {
         // std::cout << "Rank " << m_s.rank << " send right to rank "
         //          << m_s.rank_right << std::endl;
-        MPI_Send(m_TCurrent[0] + m_s.ndy, 1, tColumnVector, m_s.rank_right, tag,
-                 comm);
+        MPI_Send(m_TCurrent[0] + m_s.ndy, 1, tColumnVector, m_s.rank_right, tag, comm);
     }
     if (m_s.rank_left >= 0)
     {
         // std::cout << "Rank " << m_s.rank << " receive from left from rank "
         //          << m_s.rank_left << std::endl;
-        MPI_Recv(m_TCurrent[0], 1, tColumnVector, m_s.rank_left, tag, comm,
-                 &status);
+        MPI_Recv(m_TCurrent[0], 1, tColumnVector, m_s.rank_left, tag, comm, &status);
     }
 
     // Cleanup the custom column vector type
@@ -184,15 +180,13 @@ void HeatTransfer::exchange(MPI_Comm comm)
     {
         // std::cout << "Rank " << m_s.rank << " send down to rank "
         //          << m_s.rank_down << std::endl;
-        MPI_Send(m_TCurrent[m_s.ndx], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_down,
-                 tag, comm);
+        MPI_Send(m_TCurrent[m_s.ndx], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_down, tag, comm);
     }
     if (m_s.rank_up >= 0)
     {
         // std::cout << "Rank " << m_s.rank << " receive from above from rank "
         //          << m_s.rank_up << std::endl;
-        MPI_Recv(m_TCurrent[0], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_up, tag, comm,
-                 &status);
+        MPI_Recv(m_TCurrent[0], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_up, tag, comm, &status);
     }
 
     // send up + receive from below
@@ -202,15 +196,14 @@ void HeatTransfer::exchange(MPI_Comm comm)
         // std::cout << "Rank " << m_s.rank << " send up to rank " <<
         // m_s.rank_up
         //          << std::endl;
-        MPI_Send(m_TCurrent[1], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_up, tag,
-                 comm);
+        MPI_Send(m_TCurrent[1], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_up, tag, comm);
     }
     if (m_s.rank_down >= 0)
     {
         // std::cout << "Rank " << m_s.rank << " receive from below from rank "
         //          << m_s.rank_down << std::endl;
-        MPI_Recv(m_TCurrent[m_s.ndx + 1], m_s.ndy + 2, MPI_DOUBLE,
-                 m_s.rank_down, tag, comm, &status);
+        MPI_Recv(m_TCurrent[m_s.ndx + 1], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_down, tag, comm,
+                 &status);
     }
 }
 
@@ -223,8 +216,7 @@ std::vector<double> HeatTransfer::data_noghost() const
     std::vector<double> d(m_s.ndx * m_s.ndy);
     for (unsigned int i = 1; i <= m_s.ndx; ++i)
     {
-        std::memcpy(&d[(i - 1) * m_s.ndy], m_TCurrent[i] + 1,
-                    m_s.ndy * sizeof(double));
+        std::memcpy(&d[(i - 1) * m_s.ndy], m_TCurrent[i] + 1, m_s.ndy * sizeof(double));
     }
     return d;
 }

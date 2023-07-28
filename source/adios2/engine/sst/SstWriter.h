@@ -31,20 +31,17 @@ class SstWriter : public Engine
 {
 
 public:
-    SstWriter(IO &io, const std::string &name, const Mode mode,
-              helper::Comm comm);
+    SstWriter(IO &io, const std::string &name, const Mode mode, helper::Comm comm);
 
     virtual ~SstWriter();
 
-    StepStatus BeginStep(StepMode mode,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;
     void Flush(const int transportIndex = -1) final;
     void NotifyEngineAttribute(std::string name, DataType type) noexcept;
-    void NotifyEngineAttribute(std::string name, AttributeBase *Attr,
-                               void *data) noexcept;
+    void NotifyEngineAttribute(std::string name, AttributeBase *Attr, void *data) noexcept;
 
     /**
      * Called if destructor is called on an open engine.  Should warn or take
@@ -56,8 +53,8 @@ private:
     void Init(); ///< calls InitCapsules and InitTransports based on Method,
                  /// called from constructor
 
-#define declare_type(T)                                                        \
-    void DoPutSync(Variable<T> &variable, const T *values) final;              \
+#define declare_type(T)                                                                            \
+    void DoPutSync(Variable<T> &variable, const T *values) final;                                  \
     void DoPutDeferred(Variable<T> &, const T *) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

@@ -41,17 +41,15 @@ adios2::ArrayOrdering adios2_ToArrayOrdering(const adios2_arrayordering Corder)
     return order;
 }
 
-adios2_adios *adios2_init_config_glue_serial(const char *config_file,
-                                             const char *host_language)
+adios2_adios *adios2_init_config_glue_serial(const char *config_file, const char *host_language)
 {
     adios2_adios *adios = nullptr;
     try
     {
         adios2::helper::CheckForNullptr(
-            config_file,
-            "for config_file, in call to adios2_init or adios2_init_config");
-        adios = reinterpret_cast<adios2_adios *>(
-            new adios2::core::ADIOS(config_file, host_language));
+            config_file, "for config_file, in call to adios2_init or adios2_init_config");
+        adios =
+            reinterpret_cast<adios2_adios *>(new adios2::core::ADIOS(config_file, host_language));
     }
     catch (...)
     {
@@ -60,10 +58,7 @@ adios2_adios *adios2_init_config_glue_serial(const char *config_file,
     return adios;
 }
 
-adios2_adios *adios2_init_serial()
-{
-    return adios2_init_config_glue_serial("", "C");
-}
+adios2_adios *adios2_init_serial() { return adios2_init_config_glue_serial("", "C"); }
 
 adios2_adios *adios2_init_config_serial(const char *config_file)
 {
@@ -75,8 +70,7 @@ adios2_io *adios2_declare_io(adios2_adios *adios, const char *name)
     adios2_io *io = nullptr;
     try
     {
-        adios2::helper::CheckForNullptr(
-            adios, "for adios2_adios, in call to adios2_declare_io");
+        adios2::helper::CheckForNullptr(adios, "for adios2_adios, in call to adios2_declare_io");
         io = reinterpret_cast<adios2_io *>(
             &reinterpret_cast<adios2::core::ADIOS *>(adios)->DeclareIO(name));
     }
@@ -93,8 +87,7 @@ adios2_io *adios2_declare_io_order(adios2_adios *adios, const char *name,
     adios2_io *io = nullptr;
     try
     {
-        adios2::helper::CheckForNullptr(
-            adios, "for adios2_adios, in call to adios2_declare_io");
+        adios2::helper::CheckForNullptr(adios, "for adios2_adios, in call to adios2_declare_io");
         io = reinterpret_cast<adios2_io *>(
             &reinterpret_cast<adios2::core::ADIOS *>(adios)->DeclareIO(
                 name, adios2_ToArrayOrdering(order)));
@@ -111,8 +104,7 @@ adios2_io *adios2_at_io(adios2_adios *adios, const char *name)
     adios2_io *io = nullptr;
     try
     {
-        adios2::helper::CheckForNullptr(
-            adios, "for adios2_adios, in call to adios2_at_io");
+        adios2::helper::CheckForNullptr(adios, "for adios2_adios, in call to adios2_at_io");
         io = reinterpret_cast<adios2_io *>(
             &reinterpret_cast<adios2::core::ADIOS *>(adios)->AtIO(name));
     }
@@ -123,17 +115,15 @@ adios2_io *adios2_at_io(adios2_adios *adios, const char *name)
     return io;
 }
 
-adios2_operator *adios2_define_operator(adios2_adios *adios, const char *name,
-                                        const char *type)
+adios2_operator *adios2_define_operator(adios2_adios *adios, const char *name, const char *type)
 {
     adios2_operator *op = nullptr;
     try
     {
-        adios2::helper::CheckForNullptr(
-            adios, "for adios2_adios, in call to adios2_define_operator");
+        adios2::helper::CheckForNullptr(adios,
+                                        "for adios2_adios, in call to adios2_define_operator");
         op = reinterpret_cast<adios2_operator *>(
-            &reinterpret_cast<adios2::core::ADIOS *>(adios)->DefineOperator(
-                name, type));
+            &reinterpret_cast<adios2::core::ADIOS *>(adios)->DefineOperator(name, type));
     }
     catch (...)
     {
@@ -147,11 +137,10 @@ adios2_operator *adios2_inquire_operator(adios2_adios *adios, const char *name)
     adios2_operator *op = nullptr;
     try
     {
-        adios2::helper::CheckForNullptr(
-            adios, "for adios2_adios, in call to adios2_inquire_operator");
+        adios2::helper::CheckForNullptr(adios,
+                                        "for adios2_adios, in call to adios2_inquire_operator");
         op = reinterpret_cast<adios2_operator *>(
-            reinterpret_cast<adios2::core::ADIOS *>(adios)->InquireOperator(
-                name));
+            reinterpret_cast<adios2::core::ADIOS *>(adios)->InquireOperator(name));
     }
     catch (...)
     {
@@ -164,34 +153,28 @@ adios2_error adios2_flush_all(adios2_adios *adios)
 {
     try
     {
-        adios2::helper::CheckForNullptr(
-            adios, "for adios2_adios, in call to adios2_flush_all");
+        adios2::helper::CheckForNullptr(adios, "for adios2_adios, in call to adios2_flush_all");
         reinterpret_cast<adios2::core::ADIOS *>(adios)->FlushAll();
         return adios2_error_none;
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_flush_all"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_flush_all"));
     }
 }
 
-adios2_error adios2_remove_io(adios2_bool *result, adios2_adios *adios,
-                              const char *name)
+adios2_error adios2_remove_io(adios2_bool *result, adios2_adios *adios, const char *name)
 {
     try
     {
-        adios2::helper::CheckForNullptr(
-            adios, "for adios2_adios, in call to adios2_remove_io");
-        const bool resultCpp =
-            reinterpret_cast<adios2::core::ADIOS *>(adios)->RemoveIO(name);
+        adios2::helper::CheckForNullptr(adios, "for adios2_adios, in call to adios2_remove_io");
+        const bool resultCpp = reinterpret_cast<adios2::core::ADIOS *>(adios)->RemoveIO(name);
         *result = resultCpp ? adios2_true : adios2_false;
         return adios2_error_none;
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_remove_io"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_remove_io"));
     }
 }
 
@@ -199,15 +182,14 @@ adios2_error adios2_remove_all_ios(adios2_adios *adios)
 {
     try
     {
-        adios2::helper::CheckForNullptr(
-            adios, "for adios2_adios, in call to adios2_remove_all_ios");
+        adios2::helper::CheckForNullptr(adios,
+                                        "for adios2_adios, in call to adios2_remove_all_ios");
         reinterpret_cast<adios2::core::ADIOS *>(adios)->RemoveAllIOs();
         return adios2_error_none;
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_remove_all_ios"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_remove_all_ios"));
     }
 }
 
@@ -215,15 +197,13 @@ adios2_error adios2_finalize(adios2_adios *adios)
 {
     try
     {
-        adios2::helper::CheckForNullptr(
-            adios, "for adios2_adios, in call to adios2_finalize");
+        adios2::helper::CheckForNullptr(adios, "for adios2_adios, in call to adios2_finalize");
         delete reinterpret_cast<adios2::core::ADIOS *>(adios);
         return adios2_error_none;
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_finalize"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_finalize"));
     }
 }
 
@@ -234,8 +214,7 @@ adios2_error adios2_enter_computation_block(adios2_adios *adios)
     try
     {
         adios2::helper::CheckForNullptr(
-            adios,
-            "for adios2_adios, in call to adios2_enter_computation_block");
+            adios, "for adios2_adios, in call to adios2_enter_computation_block");
         reinterpret_cast<adios2::core::ADIOS *>(adios)->EnterComputationBlock();
         return adios2_error_none;
     }
@@ -253,8 +232,7 @@ adios2_error adios2_exit_computation_block(adios2_adios *adios)
     try
     {
         adios2::helper::CheckForNullptr(
-            adios,
-            "for adios2_adios, in call to adios2_exit_computation_block");
+            adios, "for adios2_adios, in call to adios2_exit_computation_block");
         reinterpret_cast<adios2::core::ADIOS *>(adios)->ExitComputationBlock();
         return adios2_error_none;
     }

@@ -21,8 +21,7 @@ namespace format
 {
 
 // PUBLIC
-BPBase::SerialElementIndex::SerialElementIndex(const uint32_t memberID,
-                                               const size_t bufferSize)
+BPBase::SerialElementIndex::SerialElementIndex(const uint32_t memberID, const size_t bufferSize)
 : MemberID(memberID)
 {
     Buffer.reserve(bufferSize);
@@ -37,8 +36,7 @@ BPBase::BPBase(helper::Comm const &comm) : m_Comm(comm)
     m_Profiler.m_IsActive = true; // default
 }
 
-void BPBase::Init(const Params &parameters, const std::string hint,
-                  const std::string engineType)
+void BPBase::Init(const Params &parameters, const std::string hint, const std::string engineType)
 {
     // Parse Parameters
     struct Parameters parsedParameters;
@@ -52,42 +50,37 @@ void BPBase::Init(const Params &parameters, const std::string hint,
         if (key == "profile")
         {
             profilePresent = true;
-            profileValue = helper::StringTo<bool>(
-                value, " in Parameter key=Profile " + hint);
+            profileValue = helper::StringTo<bool>(value, " in Parameter key=Profile " + hint);
         }
         else if (key == "profileunits")
         {
-            parsedParameters.ProfileUnit =
-                helper::StringToTimeUnit(value, hint);
+            parsedParameters.ProfileUnit = helper::StringToTimeUnit(value, hint);
         }
         else if (key == "opentimeoutsecs")
         {
-            parsedParameters.OpenTimeoutSecs = helper::StringTo<float>(
-                value, " in Parameter key=OpenTimeOutSecs " + hint);
+            parsedParameters.OpenTimeoutSecs =
+                helper::StringTo<float>(value, " in Parameter key=OpenTimeOutSecs " + hint);
 
             if (parsedParameters.OpenTimeoutSecs < 0.0)
             {
-                parsedParameters.OpenTimeoutSecs =
-                    std::numeric_limits<float>::max() / 10000;
+                parsedParameters.OpenTimeoutSecs = std::numeric_limits<float>::max() / 10000;
             }
         }
         else if (key == "beginsteppollingfrequencysecs")
         {
             parsedParameters.BeginStepPollingFrequencySecs =
-                helper::StringTo<float>(
-                    value, " in Parameter key=OpenTimeOutSecs " + hint);
+                helper::StringTo<float>(value, " in Parameter key=OpenTimeOutSecs " + hint);
 
             if (parsedParameters.BeginStepPollingFrequencySecs < 0.0)
             {
-                parsedParameters.BeginStepPollingFrequencySecs =
-                    1.0; // a second
+                parsedParameters.BeginStepPollingFrequencySecs = 1.0; // a second
             }
             parsedParameters.BeginStepPollingFrequencyIsSet = true;
         }
         else if (key == "buffergrowthfactor")
         {
-            parsedParameters.GrowthFactor = helper::StringTo<float>(
-                value, " in Parameter key=BufferGrowthFactor " + hint);
+            parsedParameters.GrowthFactor =
+                helper::StringTo<float>(value, " in Parameter key=BufferGrowthFactor " + hint);
         }
         else if (key == "initialbuffersize")
         {
@@ -95,8 +88,7 @@ void BPBase::Init(const Params &parameters, const std::string hint,
             parsedParameters.InitialBufferSize = helper::StringToByteUnits(
                 value, "for Parameter key=InitialBufferSize, in call to Open");
 
-            if (parsedParameters.InitialBufferSize <
-                DefaultInitialBufferSize) // 16384b
+            if (parsedParameters.InitialBufferSize < DefaultInitialBufferSize) // 16384b
             {
                 helper::Throw<std::invalid_argument>(
                     "Toolkit", "format::bp::BPBase", "Init",
@@ -112,48 +104,45 @@ void BPBase::Init(const Params &parameters, const std::string hint,
         }
         else if (key == "threads")
         {
-            parsedParameters.Threads =
-                static_cast<unsigned int>(helper::StringTo<uint32_t>(
-                    value, " in Parameter key=Threads " + hint));
+            parsedParameters.Threads = static_cast<unsigned int>(
+                helper::StringTo<uint32_t>(value, " in Parameter key=Threads " + hint));
         }
         else if (key == "asyncopen")
         {
-            parsedParameters.AsyncOpen = helper::StringTo<bool>(
-                value, " in Parameter key=AsyncOpen " + hint);
+            parsedParameters.AsyncOpen =
+                helper::StringTo<bool>(value, " in Parameter key=AsyncOpen " + hint);
         }
         else if (key == "statslevel")
         {
-            parsedParameters.StatsLevel =
-                static_cast<unsigned int>(helper::StringTo<uint32_t>(
-                    value, " in Parameter key=StatsLevel " + hint));
+            parsedParameters.StatsLevel = static_cast<unsigned int>(
+                helper::StringTo<uint32_t>(value, " in Parameter key=StatsLevel " + hint));
             if (parsedParameters.StatsLevel > 5)
             {
-                helper::Throw<std::invalid_argument>(
-                    "Toolkit", "format::bp::BPBase", "Init",
-                    "value for Parameter key=StatsLevel must be "
-                    "an integer in the range [0,5], " +
-                        hint);
+                helper::Throw<std::invalid_argument>("Toolkit", "format::bp::BPBase", "Init",
+                                                     "value for Parameter key=StatsLevel must be "
+                                                     "an integer in the range [0,5], " +
+                                                         hint);
             }
         }
         else if (key == "statsblocksize")
         {
-            parsedParameters.StatsBlockSize = helper::StringToSizeT(
-                value, " in Parameter key=StatsBlockSize " + hint);
+            parsedParameters.StatsBlockSize =
+                helper::StringToSizeT(value, " in Parameter key=StatsBlockSize " + hint);
         }
         else if (key == "collectivemetadata")
         {
-            parsedParameters.CollectiveMetadata = helper::StringTo<bool>(
-                value, " in Parameter key=CollectiveMetadata " + hint);
+            parsedParameters.CollectiveMetadata =
+                helper::StringTo<bool>(value, " in Parameter key=CollectiveMetadata " + hint);
         }
         else if (key == "flushstepscount")
         {
-            parsedParameters.FlushStepsCount = helper::StringToSizeT(
-                value, " in Parameter key=FlushStepsCount " + hint);
+            parsedParameters.FlushStepsCount =
+                helper::StringToSizeT(value, " in Parameter key=FlushStepsCount " + hint);
         }
         else if (key == "substreams" || key == "numaggregators")
         {
-            int n = static_cast<int>(helper::StringTo<int32_t>(
-                value, " in Parameter key=" + key + " " + hint));
+            int n = static_cast<int>(
+                helper::StringTo<int32_t>(value, " in Parameter key=" + key + " " + hint));
 
             if (n < 0)
             {
@@ -167,8 +156,8 @@ void BPBase::Init(const Params &parameters, const std::string hint,
         }
         else if (key == "aggregatorratio")
         {
-            int ratio = static_cast<int>(helper::StringTo<int32_t>(
-                value, " in Parameter key=AggregatorRatio " + hint));
+            int ratio = static_cast<int>(
+                helper::StringTo<int32_t>(value, " in Parameter key=AggregatorRatio " + hint));
             if (ratio > 0)
             {
                 int n = m_SizeMPI / ratio;
@@ -176,9 +165,8 @@ void BPBase::Init(const Params &parameters, const std::string hint,
                 {
                     helper::Throw<std::invalid_argument>(
                         "Toolkit", "format::bp::BPBase", "Init",
-                        "value for Parameter key=AggregatorRatio=" +
-                            std::to_string(ratio) + " must be " +
-                            "an integer divisor of the number of processes=" +
+                        "value for Parameter key=AggregatorRatio=" + std::to_string(ratio) +
+                            " must be " + "an integer divisor of the number of processes=" +
                             std::to_string(m_SizeMPI) + " " + hint);
                 }
 
@@ -195,29 +183,27 @@ void BPBase::Init(const Params &parameters, const std::string hint,
         }
         else if (key == "node-local" || key == "nodelocal")
         {
-            parsedParameters.NodeLocal = helper::StringTo<bool>(
-                value, " in Parameter key=NodeLocal " + hint);
+            parsedParameters.NodeLocal =
+                helper::StringTo<bool>(value, " in Parameter key=NodeLocal " + hint);
         }
         else if (key == "burstbufferpath")
         {
-            parsedParameters.BurstBufferPath =
-                helper::RemoveTrailingSlash(value);
+            parsedParameters.BurstBufferPath = helper::RemoveTrailingSlash(value);
         }
         else if (key == "burstbufferdrain")
         {
-            parsedParameters.BurstBufferDrain = helper::StringTo<bool>(
-                value, " in Parameter key=BurstBufferDrain " + hint);
+            parsedParameters.BurstBufferDrain =
+                helper::StringTo<bool>(value, " in Parameter key=BurstBufferDrain " + hint);
         }
         else if (key == "burstbufferverbose")
         {
-            parsedParameters.BurstBufferVerbose =
-                static_cast<int>(helper::StringTo<int32_t>(
-                    value, " in Parameter key=BurstBufferVerbose " + hint));
+            parsedParameters.BurstBufferVerbose = static_cast<int>(
+                helper::StringTo<int32_t>(value, " in Parameter key=BurstBufferVerbose " + hint));
         }
         else if (key == "streamreader")
         {
-            parsedParameters.StreamReader = helper::StringTo<bool>(
-                value, " in Parameter key=StreamReader " + hint);
+            parsedParameters.StreamReader =
+                helper::StringTo<bool>(value, " in Parameter key=StreamReader " + hint);
         }
     }
     if (!engineType.empty())
@@ -232,8 +218,7 @@ void BPBase::Init(const Params &parameters, const std::string hint,
             m_Parameters.GrowthFactor = parsedParameters.GrowthFactor;
             // OpenTimeoutSecs is ignored for SST
             // BeginStepPollingFrequencySecs is inoperative for SST
-            m_Parameters.StatsLevel =
-                parsedParameters.StatsLevel; // shouldn't hurt
+            m_Parameters.StatsLevel = parsedParameters.StatsLevel; // shouldn't hurt
             m_Parameters.Threads = parsedParameters.Threads;
             m_Parameters.ProfileUnit = parsedParameters.ProfileUnit;
             // AsyncOpen has no impact on SST
@@ -264,24 +249,18 @@ void BPBase::Init(const Params &parameters, const std::string hint,
     if (m_Profiler.m_IsActive)
     {
         const TimeUnit timeUnit = m_Parameters.ProfileUnit;
-        m_Profiler.m_Timers.emplace("buffering",
-                                    profiling::Timer("buffering", timeUnit));
-        m_Profiler.m_Timers.emplace("memcpy",
-                                    profiling::Timer("memcpy", timeUnit));
-        m_Profiler.m_Timers.emplace("minmax",
-                                    profiling::Timer("minmax", timeUnit));
-        m_Profiler.m_Timers.emplace(
-            "meta_sort_merge", profiling::Timer("meta_sort_merge", timeUnit));
-        m_Profiler.m_Timers.emplace("aggregation",
-                                    profiling::Timer("aggregation", timeUnit));
-        m_Profiler.m_Timers.emplace("mkdir",
-                                    profiling::Timer("mkdir", timeUnit));
+        m_Profiler.m_Timers.emplace("buffering", profiling::Timer("buffering", timeUnit));
+        m_Profiler.m_Timers.emplace("memcpy", profiling::Timer("memcpy", timeUnit));
+        m_Profiler.m_Timers.emplace("minmax", profiling::Timer("minmax", timeUnit));
+        m_Profiler.m_Timers.emplace("meta_sort_merge",
+                                    profiling::Timer("meta_sort_merge", timeUnit));
+        m_Profiler.m_Timers.emplace("aggregation", profiling::Timer("aggregation", timeUnit));
+        m_Profiler.m_Timers.emplace("mkdir", profiling::Timer("mkdir", timeUnit));
         m_Profiler.m_Bytes.emplace("buffering", 0);
     }
 }
 
-BPBase::ResizeResult BPBase::ResizeBuffer(const size_t dataIn,
-                                          const std::string hint)
+BPBase::ResizeResult BPBase::ResizeBuffer(const size_t dataIn, const std::string hint)
 {
     m_Profiler.Start("buffering");
     const size_t currentSize = m_Data.m_Buffer.size();
@@ -294,11 +273,9 @@ BPBase::ResizeResult BPBase::ResizeBuffer(const size_t dataIn,
     {
         helper::Throw<std::runtime_error>(
             "Toolkit", "format::bp::BPBase", "ResizeBuffer",
-            "data size: " +
-                std::to_string(static_cast<float>(dataIn) / (1024. * 1024.)) +
+            "data size: " + std::to_string(static_cast<float>(dataIn) / (1024. * 1024.)) +
                 " Mb is too large for adios2 bp MaxBufferSize=" +
-                std::to_string(static_cast<float>(maxBufferSize) /
-                               (1024. * 1024.)) +
+                std::to_string(static_cast<float>(maxBufferSize) / (1024. * 1024.)) +
                 "Mb, try increasing MaxBufferSize in call to IO "
                 "SetParameters " +
                 hint);
@@ -313,8 +290,8 @@ BPBase::ResizeResult BPBase::ResizeBuffer(const size_t dataIn,
         if (currentSize < maxBufferSize)
         {
             m_Data.Resize(maxBufferSize, " when resizing buffer to " +
-                                             std::to_string(maxBufferSize) +
-                                             "bytes, " + hint + "\n");
+                                             std::to_string(maxBufferSize) + "bytes, " + hint +
+                                             "\n");
         }
         result = ResizeResult::Flush;
     }
@@ -323,12 +300,11 @@ BPBase::ResizeResult BPBase::ResizeBuffer(const size_t dataIn,
         if (currentSize < maxBufferSize)
         {
             const float growthFactor = m_Parameters.GrowthFactor;
-            const size_t nextSize = std::min(
-                maxBufferSize, helper::NextExponentialSize(
-                                   requiredSize, currentSize, growthFactor));
-            m_Data.Resize(nextSize, " when resizing buffer to " +
-                                        std::to_string(nextSize) + "bytes, " +
-                                        hint);
+            const size_t nextSize =
+                std::min(maxBufferSize,
+                         helper::NextExponentialSize(requiredSize, currentSize, growthFactor));
+            m_Data.Resize(nextSize, " when resizing buffer to " + std::to_string(nextSize) +
+                                        "bytes, " + hint);
             result = ResizeResult::Success;
         }
     }
@@ -354,8 +330,8 @@ void BPBase::DeleteBuffers()
 }
 
 // PROTECTED
-std::vector<uint8_t> BPBase::GetTransportIDs(
-    const std::vector<std::string> &transportsTypes) const noexcept
+std::vector<uint8_t>
+BPBase::GetTransportIDs(const std::vector<std::string> &transportsTypes) const noexcept
 {
     auto lf_GetTransportID = [](const std::string method) -> uint8_t {
         int id = METHOD_UNKNOWN;
@@ -394,43 +370,34 @@ std::vector<uint8_t> BPBase::GetTransportIDs(
     return transportsIDs;
 }
 
-size_t
-BPBase::GetProcessGroupIndexSize(const std::string name,
-                                 const std::string timeStepName,
-                                 const size_t transportsSize) const noexcept
+size_t BPBase::GetProcessGroupIndexSize(const std::string name, const std::string timeStepName,
+                                        const size_t transportsSize) const noexcept
 {
     // pgIndex + list of methods (transports)
-    const size_t pgSize =
-        (name.length() + timeStepName.length() + 23) + (3 + transportsSize);
+    const size_t pgSize = (name.length() + timeStepName.length() + 23) + (3 + transportsSize);
     return pgSize;
 }
 
 BPBase::ProcessGroupIndex
-BPBase::ReadProcessGroupIndexHeader(const std::vector<char> &buffer,
-                                    size_t &position,
+BPBase::ReadProcessGroupIndexHeader(const std::vector<char> &buffer, size_t &position,
                                     const bool isLittleEndian) const noexcept
 {
     ProcessGroupIndex index;
-    index.Length =
-        helper::ReadValue<uint16_t>(buffer, position, isLittleEndian);
+    index.Length = helper::ReadValue<uint16_t>(buffer, position, isLittleEndian);
     index.Name = ReadBPString(buffer, position, isLittleEndian);
-    index.IsColumnMajor =
-        helper::ReadValue<char>(buffer, position, isLittleEndian);
-    index.ProcessID =
-        helper::ReadValue<int32_t>(buffer, position, isLittleEndian);
+    index.IsColumnMajor = helper::ReadValue<char>(buffer, position, isLittleEndian);
+    index.ProcessID = helper::ReadValue<int32_t>(buffer, position, isLittleEndian);
     index.StepName = ReadBPString(buffer, position, isLittleEndian);
     index.Step = helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
-    index.Offset =
-        helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
+    index.Offset = helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
     return index;
 }
 
-std::string BPBase::ReadBPString(const std::vector<char> &buffer,
-                                 size_t &position,
+std::string BPBase::ReadBPString(const std::vector<char> &buffer, size_t &position,
                                  const bool isLittleEndian) const noexcept
 {
-    const size_t size = static_cast<size_t>(
-        helper::ReadValue<uint16_t>(buffer, position, isLittleEndian));
+    const size_t size =
+        static_cast<size_t>(helper::ReadValue<uint16_t>(buffer, position, isLittleEndian));
 
     if (size == 0)
     {
@@ -443,9 +410,9 @@ std::string BPBase::ReadBPString(const std::vector<char> &buffer,
 }
 
 // static members
-const std::set<std::string> BPBase::m_TransformTypes = {
-    {"unknown", "none", "identity", "bzip2", "sz", "zfp", "mgard", "png",
-     "blosc", "sirius", "mgardplus", "plugin"}};
+const std::set<std::string> BPBase::m_TransformTypes = {{"unknown", "none", "identity", "bzip2",
+                                                         "sz", "zfp", "mgard", "png", "blosc",
+                                                         "sirius", "mgardplus", "plugin"}};
 
 const std::map<int, std::string> BPBase::m_TransformTypesToNames = {
     {transform_unknown, "unknown"},
@@ -461,8 +428,7 @@ const std::map<int, std::string> BPBase::m_TransformTypesToNames = {
     {transform_mgardplus, "mgardplus"},
     {transform_plugin, "plugin"}};
 
-BPBase::TransformTypes
-BPBase::TransformTypeEnum(const std::string transformType) const noexcept
+BPBase::TransformTypes BPBase::TransformTypeEnum(const std::string transformType) const noexcept
 {
     TransformTypes transformEnum = transform_unknown;
 
@@ -477,12 +443,10 @@ BPBase::TransformTypeEnum(const std::string transformType) const noexcept
     return transformEnum;
 }
 
-#define declare_template_instantiation(T)                                      \
-    template BPBase::Characteristics<T>                                        \
-    BPBase::ReadElementIndexCharacteristics(const std::vector<char> &,         \
-                                            size_t &, const BPBase::DataTypes, \
-                                            size_t &, const bool, const bool)  \
-        const;
+#define declare_template_instantiation(T)                                                          \
+    template BPBase::Characteristics<T> BPBase::ReadElementIndexCharacteristics(                   \
+        const std::vector<char> &, size_t &, const BPBase::DataTypes, size_t &, const bool,        \
+        const bool) const;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

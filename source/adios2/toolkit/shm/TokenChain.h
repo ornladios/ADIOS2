@@ -78,16 +78,14 @@ public:
             char *ptr;
             if (!m_Rank)
             {
-                m_Win =
-                    m_NodeComm->Win_allocate_shared(sizeof(segment_), 1, &ptr);
+                m_Win = m_NodeComm->Win_allocate_shared(sizeof(segment_), 1, &ptr);
             }
             else
             {
                 m_Win = m_NodeComm->Win_allocate_shared(0, 1, &ptr);
                 size_t shmsize;
                 int disp_unit;
-                m_NodeComm->Win_shared_query(m_Win, 0, &shmsize, &disp_unit,
-                                             &ptr);
+                m_NodeComm->Win_shared_query(m_Win, 0, &shmsize, &disp_unit, &ptr);
             }
             m_Shm = reinterpret_cast<segment_ *>(ptr);
 
@@ -140,12 +138,11 @@ public:
     {
         if (m_Rank != m_Shm->currentRank)
         {
-            helper::Throw<std::runtime_error>(
-                "Toolkit", "shm::TokenChain", "SendToken",
-                "function can only be "
-                "called by the Rank who last called "
-                "RecvToken, rank = " +
-                    std::to_string(m_Rank));
+            helper::Throw<std::runtime_error>("Toolkit", "shm::TokenChain", "SendToken",
+                                              "function can only be "
+                                              "called by the Rank who last called "
+                                              "RecvToken, rank = " +
+                                                  std::to_string(m_Rank));
         }
         assert(0 <= m_Shm->currentRank && m_Shm->currentRank < m_nProc);
         m_Shm->token = token;

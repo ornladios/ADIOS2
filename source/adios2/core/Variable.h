@@ -56,8 +56,7 @@ public:
          *  value: blockID is the vector (map value) index
          *  </pre>
          */
-        std::map<size_t, std::vector<helper::SubStreamBoxInfo>>
-            StepBlockSubStreamsInfo;
+        std::map<size_t, std::vector<helper::SubStreamBoxInfo>> StepBlockSubStreamsInfo;
 
         Dims Shape;
         Dims Start;
@@ -93,8 +92,8 @@ public:
      * m_BlocksInfo index (BP4 ONLY) */
     std::map<size_t, Span> m_BlocksSpan;
 
-    Variable<T>(const std::string &name, const Dims &shape, const Dims &start,
-                const Dims &count, const bool constantShape);
+    Variable<T>(const std::string &name, const Dims &shape, const Dims &start, const Dims &count,
+                const bool constantShape);
 
     ~Variable<T>() = default;
 
@@ -115,8 +114,7 @@ public:
 
     T Max(const size_t step = adios2::DefaultSizeT) const;
 
-    std::vector<std::vector<typename Variable<T>::BPInfo>>
-    AllStepsBlocksInfo() const;
+    std::vector<std::vector<typename Variable<T>::BPInfo>> AllStepsBlocksInfo() const;
 
 private:
     Dims DoCount() const;
@@ -125,8 +123,7 @@ private:
 
     std::pair<T, T> DoMinMax(const size_t step) const;
 
-    std::vector<std::vector<typename Variable<T>::BPInfo>>
-    DoAllStepsBlocksInfo() const;
+    std::vector<std::vector<typename Variable<T>::BPInfo>> DoAllStepsBlocksInfo() const;
 
     size_t WriterIndex;
 };

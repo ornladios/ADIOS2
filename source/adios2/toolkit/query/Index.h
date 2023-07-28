@@ -18,8 +18,7 @@ class AbstractQueryIndex
 {
 public:
     void Generate(std::string &fromBPFile, const adios2::Params &inputs) = 0;
-    void Evaluate(const QueryVar &query,
-                  std::vector<Box<Dims>> &touchedBlocks) = 0;
+    void Evaluate(const QueryVar &query, std::vector<Box<Dims>> &touchedBlocks) = 0;
 };
 
 /*

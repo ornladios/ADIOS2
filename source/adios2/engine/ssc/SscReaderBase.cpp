@@ -21,8 +21,7 @@ namespace engine
 namespace ssc
 {
 
-SscReaderBase::SscReaderBase(IO &io, const std::string &name, const Mode mode,
-                             MPI_Comm comm)
+SscReaderBase::SscReaderBase(IO &io, const std::string &name, const Mode mode, MPI_Comm comm)
 : m_Name(name), m_IO(io)
 {
     helper::GetParameter(io.m_Parameters, "Verbose", m_Verbosity);
@@ -41,9 +40,8 @@ void SscReaderBase::SyncMpiPattern(MPI_Comm comm)
     MPI_Group readerGroup;
     MPI_Comm writerComm;
 
-    helper::HandshakeComm(m_Name, 'r', m_OpenTimeoutSecs, comm, streamGroup,
-                          m_WriterGroup, readerGroup, m_StreamComm, writerComm,
-                          m_ReaderComm);
+    helper::HandshakeComm(m_Name, 'r', m_OpenTimeoutSecs, comm, streamGroup, m_WriterGroup,
+                          readerGroup, m_StreamComm, writerComm, m_ReaderComm);
 
     MPI_Comm_rank(comm, &m_ReaderRank);
     MPI_Comm_size(comm, &m_ReaderSize);
@@ -51,16 +49,16 @@ void SscReaderBase::SyncMpiPattern(MPI_Comm comm)
     MPI_Comm_size(m_StreamComm, &m_StreamSize);
 
     int writerMasterStreamRank = -1;
-    MPI_Allreduce(&writerMasterStreamRank, &m_WriterMasterStreamRank, 1,
-                  MPI_INT, MPI_MAX, m_StreamComm);
+    MPI_Allreduce(&writerMasterStreamRank, &m_WriterMasterStreamRank, 1, MPI_INT, MPI_MAX,
+                  m_StreamComm);
 
     int readerMasterStreamRank = -1;
     if (m_ReaderRank == 0)
     {
         readerMasterStreamRank = m_StreamRank;
     }
-    MPI_Allreduce(&readerMasterStreamRank, &m_ReaderMasterStreamRank, 1,
-                  MPI_INT, MPI_MAX, m_StreamComm);
+    MPI_Allreduce(&readerMasterStreamRank, &m_ReaderMasterStreamRank, 1, MPI_INT, MPI_MAX,
+                  m_StreamComm);
 }
 
 }

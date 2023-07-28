@@ -62,19 +62,17 @@ void BZIP2Accuracy1D(const std::string accuracy)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        adios2::Variable<float> var_r32 = io.DefineVariable<float>(
-            "r32", shape, start, count, adios2::ConstantDims);
-        adios2::Variable<double> var_r64 = io.DefineVariable<double>(
-            "r64", shape, start, count, adios2::ConstantDims);
+        adios2::Variable<float> var_r32 =
+            io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        adios2::Variable<double> var_r64 =
+            io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
         adios2::Operator BZIP2Op =
             adios.DefineOperator("BZIP2Compressor", adios2::ops::LosslessBZIP2);
 
-        var_r32.AddOperation(
-            BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
-        var_r64.AddOperation(
-            BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
+        var_r32.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
+        var_r64.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -198,19 +196,15 @@ void BZIP2Accuracy2D(const std::string accuracy)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
         adios2::Operator BZIP2Op =
             adios.DefineOperator("BZIP2Compressor", adios2::ops::LosslessBZIP2);
 
-        var_r32.AddOperation(
-            BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
-        var_r64.AddOperation(
-            BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
+        var_r32.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
+        var_r64.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -337,19 +331,15 @@ void BZIP2Accuracy3D(const std::string accuracy)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
         adios2::Operator BZIP2Op =
             adios.DefineOperator("BZIP2Compressor", adios2::ops::LosslessBZIP2);
 
-        var_r32.AddOperation(
-            BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
-        var_r64.AddOperation(
-            BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
+        var_r32.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
+        var_r64.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -476,19 +466,15 @@ void BZIP2Accuracy1DSel(const std::string accuracy)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
         adios2::Operator BZIP2Op =
             adios.DefineOperator("BZIP2Compressor", adios2::ops::LosslessBZIP2);
 
-        var_r32.AddOperation(
-            BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
-        var_r64.AddOperation(
-            BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
+        var_r32.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
+        var_r64.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -612,19 +598,15 @@ void BZIP2Accuracy2DSel(const std::string accuracy)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
         adios2::Operator BZIP2Op =
             adios.DefineOperator("BZIP2Compressor", adios2::ops::LosslessBZIP2);
 
-        var_r32.AddOperation(
-            BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
-        var_r64.AddOperation(
-            BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
+        var_r32.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
+        var_r64.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -751,19 +733,15 @@ void BZIP2Accuracy3DSel(const std::string accuracy)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
         adios2::Operator BZIP2Op =
             adios.DefineOperator("BZIP2Compressor", adios2::ops::LosslessBZIP2);
 
-        var_r32.AddOperation(
-            BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
-        var_r64.AddOperation(
-            BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
+        var_r32.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
+        var_r64.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -831,10 +809,8 @@ void BZIP2Accuracy3DSel(const std::string accuracy)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_EQ(decompressedR32s[i], r32s[Nx / 2 * Ny * Nz + i])
-                    << msg;
-                ASSERT_EQ(decompressedR64s[i], r64s[Nx / 2 * Ny * Nz + i])
-                    << msg;
+                ASSERT_EQ(decompressedR32s[i], r32s[Nx / 2 * Ny * Nz + i]) << msg;
+                ASSERT_EQ(decompressedR64s[i], r64s[Nx / 2 * Ny * Nz + i]) << msg;
             }
             ++t;
         }
@@ -853,42 +829,23 @@ public:
     virtual void TearDown(){};
 };
 
-TEST_P(BPWriteReadBZIP2, ADIOS2BPWriteReadBZIP21D)
-{
-    BZIP2Accuracy1D(GetParam());
-}
-TEST_P(BPWriteReadBZIP2, ADIOS2BPWriteReadBZIP22D)
-{
-    BZIP2Accuracy2D(GetParam());
-}
-TEST_P(BPWriteReadBZIP2, ADIOS2BPWriteReadBZIP23D)
-{
-    BZIP2Accuracy3D(GetParam());
-}
-TEST_P(BPWriteReadBZIP2, ADIOS2BPWriteReadBZIP21DSel)
-{
-    BZIP2Accuracy1DSel(GetParam());
-}
-TEST_P(BPWriteReadBZIP2, ADIOS2BPWriteReadBZIP22DSel)
-{
-    BZIP2Accuracy2DSel(GetParam());
-}
-TEST_P(BPWriteReadBZIP2, ADIOS2BPWriteReadBZIP23DSel)
-{
-    BZIP2Accuracy3DSel(GetParam());
-}
+TEST_P(BPWriteReadBZIP2, ADIOS2BPWriteReadBZIP21D) { BZIP2Accuracy1D(GetParam()); }
+TEST_P(BPWriteReadBZIP2, ADIOS2BPWriteReadBZIP22D) { BZIP2Accuracy2D(GetParam()); }
+TEST_P(BPWriteReadBZIP2, ADIOS2BPWriteReadBZIP23D) { BZIP2Accuracy3D(GetParam()); }
+TEST_P(BPWriteReadBZIP2, ADIOS2BPWriteReadBZIP21DSel) { BZIP2Accuracy1DSel(GetParam()); }
+TEST_P(BPWriteReadBZIP2, ADIOS2BPWriteReadBZIP22DSel) { BZIP2Accuracy2DSel(GetParam()); }
+TEST_P(BPWriteReadBZIP2, ADIOS2BPWriteReadBZIP23DSel) { BZIP2Accuracy3DSel(GetParam()); }
 
-INSTANTIATE_TEST_SUITE_P(
-    BZIP2Accuracy, BPWriteReadBZIP2,
-    ::testing::Values(adios2::ops::bzip2::value::blockSize100k_1,
-                      adios2::ops::bzip2::value::blockSize100k_2,
-                      adios2::ops::bzip2::value::blockSize100k_3,
-                      adios2::ops::bzip2::value::blockSize100k_4,
-                      adios2::ops::bzip2::value::blockSize100k_5,
-                      adios2::ops::bzip2::value::blockSize100k_6,
-                      adios2::ops::bzip2::value::blockSize100k_7,
-                      adios2::ops::bzip2::value::blockSize100k_8,
-                      adios2::ops::bzip2::value::blockSize100k_9));
+INSTANTIATE_TEST_SUITE_P(BZIP2Accuracy, BPWriteReadBZIP2,
+                         ::testing::Values(adios2::ops::bzip2::value::blockSize100k_1,
+                                           adios2::ops::bzip2::value::blockSize100k_2,
+                                           adios2::ops::bzip2::value::blockSize100k_3,
+                                           adios2::ops::bzip2::value::blockSize100k_4,
+                                           adios2::ops::bzip2::value::blockSize100k_5,
+                                           adios2::ops::bzip2::value::blockSize100k_6,
+                                           adios2::ops::bzip2::value::blockSize100k_7,
+                                           adios2::ops::bzip2::value::blockSize100k_8,
+                                           adios2::ops::bzip2::value::blockSize100k_9));
 
 int main(int argc, char **argv)
 {

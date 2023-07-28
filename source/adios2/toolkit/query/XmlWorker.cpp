@@ -15,9 +15,8 @@ void XmlWorker::ParseMe()
         std::ifstream fileStream(configXML);
         if (!fileStream)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "query::XmlWorker", "ParseMe",
-                "file " + configXML + " not found");
+            helper::Throw<std::ios_base::failure>("Toolkit", "query::XmlWorker", "ParseMe",
+                                                  "file " + configXML + " not found");
         }
         std::ostringstream fileSS;
         fileSS << fileStream.rdbuf();
@@ -25,8 +24,7 @@ void XmlWorker::ParseMe()
 
         if (fileSS.str().empty())
         {
-            helper::Throw<std::invalid_argument>("Toolkit", "query::XmlWorker",
-                                                 "ParseMe",
+            helper::Throw<std::invalid_argument>("Toolkit", "query::XmlWorker", "ParseMe",
                                                  "config xml file is empty");
         }
 
@@ -37,8 +35,8 @@ void XmlWorker::ParseMe()
     const std::unique_ptr<pugi::xml_document> document =
         adios2::helper::XMLDocument(fileContents, "in Query XMLWorker");
 
-    const std::unique_ptr<pugi::xml_node> config = adios2::helper::XMLNode(
-        "adios-query", *document, "in adios-query", true);
+    const std::unique_ptr<pugi::xml_node> config =
+        adios2::helper::XMLNode("adios-query", *document, "in adios-query", true);
 
     const pugi::xml_node ioNode = config->child("io");
     ParseIONode(ioNode);
@@ -61,12 +59,10 @@ void XmlWorker::ParseIONode(const pugi::xml_node &ioNode)
     if (engineNode)
     {
         const std::unique_ptr<pugi::xml_attribute> type =
-            adios2::query::XmlUtil::XMLAttribute("type", engineNode,
-                                                 "in query");
+            adios2::query::XmlUtil::XMLAttribute("type", engineNode, "in query");
         m_IO->SetEngine(type->value());
 
-        const adios2::Params parameters =
-            helper::GetParameters(engineNode, "in query");
+        const adios2::Params parameters = helper::GetParameters(engineNode, "in query");
         m_IO->SetParameters(parameters);
     }
     else
@@ -75,8 +71,7 @@ void XmlWorker::ParseIONode(const pugi::xml_node &ioNode)
     }
     // adios2::Engine reader =  currIO.Open(fileName.value(),
     // adios2::Mode::Read, m_Comm);
-    m_SourceReader =
-        &(m_IO->Open(fileName.value(), adios2::Mode::Read, m_Comm));
+    m_SourceReader = &(m_IO->Open(fileName.value(), adios2::Mode::Read, m_Comm));
 #else
     const std::unique_ptr<pugi::xml_attribute> ioName =
         adios2::helper::XMLAttribute("name", ioNode, "in query");
@@ -84,8 +79,8 @@ void XmlWorker::ParseIONode(const pugi::xml_node &ioNode)
     {
         helper::Throw<std::ios_base::failure>(
             "Toolkit", "query::XmlWorker", "ParseIONode",
-            "invalid query io. Expecting io name = " +
-                m_SourceReader->m_IO.m_Name + " found:" + ioName->value());
+            "invalid query io. Expecting io name = " + m_SourceReader->m_IO.m_Name +
+                " found:" + ioName->value());
     }
 #endif
 
@@ -97,8 +92,7 @@ void XmlWorker::ParseIONode(const pugi::xml_node &ioNode)
         const std::unique_ptr<pugi::xml_attribute> name =
             adios2::helper::XMLAttribute("name", qTagNode, "in query");
         const pugi::xml_node &variable = qTagNode.child("var");
-        QueryVar *q =
-            ParseVarNode(variable, m_SourceReader->m_IO, *m_SourceReader);
+        QueryVar *q = ParseVarNode(variable, m_SourceReader->m_IO, *m_SourceReader);
         if (!q)
             continue;
 
@@ -108,9 +102,9 @@ void XmlWorker::ParseIONode(const pugi::xml_node &ioNode)
         }
         else if (!q->IsCompatible(ref))
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "query::XmlWorker", "ParseIONode",
-                "impactible query found on var:" + q->GetVarName());
+            helper::Throw<std::ios_base::failure>("Toolkit", "query::XmlWorker", "ParseIONode",
+                                                  "impactible query found on var:" +
+                                                      q->GetVarName());
         }
         subqueries[name->value()] = q;
     }
@@ -125,8 +119,7 @@ void XmlWorker::ParseIONode(const pugi::xml_node &ioNode)
     {
         const std::unique_ptr<pugi::xml_attribute> op =
             adios2::helper::XMLAttribute("op", qNode, "in query");
-        QueryComposite *q =
-            new QueryComposite(adios2::query::strToRelation(op->value()));
+        QueryComposite *q = new QueryComposite(adios2::query::strToRelation(op->value()));
         for (const pugi::xml_node &sub : qNode.children())
         {
             q->AddNode(subqueries[sub.name()]);
@@ -136,37 +129,35 @@ void XmlWorker::ParseIONode(const pugi::xml_node &ioNode)
 } // parse_io_node
 
 // node is the variable node
-QueryVar *XmlWorker::ParseVarNode(const pugi::xml_node &node,
-                                  adios2::core::IO &currentIO,
+QueryVar *XmlWorker::ParseVarNode(const pugi::xml_node &node, adios2::core::IO &currentIO,
                                   adios2::core::Engine &reader)
 
 {
-    const std::string variableName = std::string(
-        adios2::helper::XMLAttribute("name", node, "in query")->value());
+    const std::string variableName =
+        std::string(adios2::helper::XMLAttribute("name", node, "in query")->value());
 
     // const std::string varType = currentIO.VariableType(variableName);
     const DataType varType = currentIO.InquireVariableType(variableName);
     if (varType == DataType::None)
     {
-        helper::Log("Query", "XmlWorker", "ParseVarNode",
-                    "No such variable: " + variableName, helper::FATALERROR);
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "query::XmlWorker", "ParseVarNode",
-            "variable: " + variableName + " not found");
+        helper::Log("Query", "XmlWorker", "ParseVarNode", "No such variable: " + variableName,
+                    helper::FATALERROR);
+        helper::Throw<std::ios_base::failure>("Toolkit", "query::XmlWorker", "ParseVarNode",
+                                              "variable: " + variableName + " not found");
     }
-#define declare_type(T)                                                        \
-    if (varType == helper::GetDataType<T>())                                   \
-    {                                                                          \
-        core::Variable<T> *var = currentIO.InquireVariable<T>(variableName);   \
-        if (var)                                                               \
-        {                                                                      \
-            QueryVar *q = new QueryVar(variableName);                          \
-            adios2::Dims zero(var->Shape().size(), 0);                         \
-            adios2::Dims shape = var->Shape();                                 \
-            q->SetSelection(zero, shape);                                      \
-            ConstructQuery(*q, node);                                          \
-            return q;                                                          \
-        }                                                                      \
+#define declare_type(T)                                                                            \
+    if (varType == helper::GetDataType<T>())                                                       \
+    {                                                                                              \
+        core::Variable<T> *var = currentIO.InquireVariable<T>(variableName);                       \
+        if (var)                                                                                   \
+        {                                                                                          \
+            QueryVar *q = new QueryVar(variableName);                                              \
+            adios2::Dims zero(var->Shape().size(), 0);                                             \
+            adios2::Dims shape = var->Shape();                                                     \
+            q->SetSelection(zero, shape);                                                          \
+            ConstructQuery(*q, node);                                                              \
+            return q;                                                                              \
+        }                                                                                          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -175,17 +166,12 @@ QueryVar *XmlWorker::ParseVarNode(const pugi::xml_node &node,
 
 void XmlWorker::ConstructTree(RangeTree &host, const pugi::xml_node &node)
 {
-    std::string relationStr =
-        adios2::helper::XMLAttribute("value", node, "in query")->value();
+    std::string relationStr = adios2::helper::XMLAttribute("value", node, "in query")->value();
     host.SetRelation(adios2::query::strToRelation(relationStr));
     for (const pugi::xml_node &rangeNode : node.children("range"))
     {
-        std::string valStr =
-            adios2::helper::XMLAttribute("value", rangeNode, "in query")
-                ->value();
-        std::string opStr =
-            adios2::helper::XMLAttribute("compare", rangeNode, "in query")
-                ->value();
+        std::string valStr = adios2::helper::XMLAttribute("value", rangeNode, "in query")->value();
+        std::string opStr = adios2::helper::XMLAttribute("compare", rangeNode, "in query")->value();
 
         host.AddLeaf(adios2::query::strToQueryOp(opStr), valStr);
     }
@@ -205,10 +191,8 @@ void XmlWorker::ConstructQuery(QueryVar &simpleQ, const pugi::xml_node &node)
 
     if (bbNode)
     {
-        std::string startStr =
-            adios2::helper::XMLAttribute("start", bbNode, "in query")->value();
-        std::string countStr =
-            adios2::helper::XMLAttribute("count", bbNode, "in query")->value();
+        std::string startStr = adios2::helper::XMLAttribute("start", bbNode, "in query")->value();
+        std::string countStr = adios2::helper::XMLAttribute("count", bbNode, "in query")->value();
 
         adios2::Dims start = split(startStr, ',');
         adios2::Dims count = split(countStr, ',');
@@ -221,15 +205,13 @@ void XmlWorker::ConstructQuery(QueryVar &simpleQ, const pugi::xml_node &node)
         }
 
         // simpleQ.setSelection(box.first, box.second);
-        adios2::Dims shape =
-            simpleQ.m_Selection.second; // set at the creation for default
+        adios2::Dims shape = simpleQ.m_Selection.second; // set at the creation for default
         simpleQ.SetSelection(start, count);
         if (!simpleQ.IsSelectionValid(shape))
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "query::XmlWorker", "ConstructQuery",
-                "invalid selections for selection of var: " +
-                    simpleQ.GetVarName());
+            helper::Throw<std::ios_base::failure>("Toolkit", "query::XmlWorker", "ConstructQuery",
+                                                  "invalid selections for selection of var: " +
+                                                      simpleQ.GetVarName());
         }
     }
 
@@ -237,10 +219,8 @@ void XmlWorker::ConstructQuery(QueryVar &simpleQ, const pugi::xml_node &node)
     pugi::xml_node tsNode = node.child("tstep");
     if (tsNode)
     {
-        std::string startStr =
-            adios2::helper::XMLAttribute("start", tsNode, "in query").value();
-        std::string countStr =
-            adios2::helper::XMLAttribute("count", tsNode, "in query").value();
+        std::string startStr = adios2::helper::XMLAttribute("start", tsNode, "in query").value();
+        std::string countStr = adios2::helper::XMLAttribute("count", tsNode, "in query").value();
 
         if ((startStr.size() > 0) && (countStr.size() > 0))
         {

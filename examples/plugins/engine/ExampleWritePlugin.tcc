@@ -23,14 +23,12 @@ template <typename T>
 void ExampleWritePlugin::WriteVariableInfo(core::Variable<T> &variable)
 {
     /** write basic variable info to file **/
-    m_VarFile << variable.m_Name << ";" << variable.m_Type << ";"
-              << variable.m_Shape << ";" << variable.m_Start << ";"
-              << variable.m_Count << std::endl;
+    m_VarFile << variable.m_Name << ";" << variable.m_Type << ";" << variable.m_Shape << ";"
+              << variable.m_Start << ";" << variable.m_Count << std::endl;
 }
 
 template <typename T>
-void ExampleWritePlugin::WriteArray(core::Variable<T> &variable,
-                                    const T *values)
+void ExampleWritePlugin::WriteArray(core::Variable<T> &variable, const T *values)
 {
     /** Write variable name and step to file, followed by the actual data on the
      * next line **/

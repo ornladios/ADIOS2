@@ -95,8 +95,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         // Generate test data for each process uniquely
         std::vector<double> data_forward;
 
-        generateSimpleForwardData(data_forward, (int)step, myStart1, myCount1,
-                                  (int)Nx * mpiSize);
+        generateSimpleForwardData(data_forward, (int)step, myStart1, myCount1, (int)Nx * mpiSize);
 
         engine1.BeginStep();
         auto var1 = io1.InquireVariable<double>(varname1);

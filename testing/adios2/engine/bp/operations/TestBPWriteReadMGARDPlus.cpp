@@ -58,15 +58,11 @@ void MGARDAccuracy1D(const std::string tolerance)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
-        var_r32.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
-        var_r64.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r32.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r64.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -141,8 +137,8 @@ void MGARDAccuracy1D(const std::string tolerance)
 
             const double relativeMaxDiff = maxDiff / *itMax;
             ASSERT_LT(relativeMaxDiff, std::stod(tolerance));
-            std::cout << "Relative Max Diff " << relativeMaxDiff
-                      << " tolerance " << tolerance << "\n";
+            std::cout << "Relative Max Diff " << relativeMaxDiff << " tolerance " << tolerance
+                      << "\n";
         }
 
         EXPECT_EQ(t, NSteps);
@@ -194,15 +190,11 @@ void MGARDAccuracy2D(const std::string tolerance)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
-        var_r32.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
-        var_r64.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r32.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r64.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -278,8 +270,8 @@ void MGARDAccuracy2D(const std::string tolerance)
 
             const double relativeMaxDiff = maxDiff / *itMax;
             ASSERT_LT(relativeMaxDiff, std::stod(tolerance));
-            std::cout << "Relative Max Diff " << relativeMaxDiff
-                      << " tolerance " << tolerance << "\n";
+            std::cout << "Relative Max Diff " << relativeMaxDiff << " tolerance " << tolerance
+                      << "\n";
         }
 
         EXPECT_EQ(t, NSteps);
@@ -332,15 +324,11 @@ void MGARDAccuracy3D(const std::string tolerance)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
-        var_r32.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
-        var_r64.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r32.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r64.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -418,8 +406,8 @@ void MGARDAccuracy3D(const std::string tolerance)
 
             const double relativeMaxDiff = maxDiff / *itMax;
             ASSERT_LT(relativeMaxDiff, std::stod(tolerance));
-            std::cout << "Relative Max Diff " << relativeMaxDiff
-                      << " tolerance " << tolerance << "\n";
+            std::cout << "Relative Max Diff " << relativeMaxDiff << " tolerance " << tolerance
+                      << "\n";
         }
 
         EXPECT_EQ(t, NSteps);
@@ -470,15 +458,11 @@ void MGARDAccuracy1DSel(const std::string tolerance)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
-        var_r32.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
-        var_r64.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r32.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r64.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -541,8 +525,7 @@ void MGARDAccuracy1DSel(const std::string tolerance)
                 //                r32s[Nx / 2 + i]),
                 //                          tolerance)
                 //                    << msg;
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 + i]),
-                          std::stod(tolerance))
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 + i]), std::stod(tolerance))
                     << msg;
             }
             ++t;
@@ -597,15 +580,11 @@ void MGARDAccuracy2DSel(const std::string tolerance)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
-        var_r32.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
-        var_r64.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r32.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r64.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -727,15 +706,11 @@ void MGARDAccuracy3DSel(const std::string tolerance)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
-        var_r32.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
-        var_r64.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r32.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r64.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -805,8 +780,7 @@ void MGARDAccuracy3DSel(const std::string tolerance)
                 //                    * Ny * Nz + i]),
                 //                    tolerance)
                 //                    << msg;
-                double diff =
-                    std::abs(r64s[Nx / 2 * Ny * Nz + i] - decompressedR64s[i]);
+                double diff = std::abs(r64s[Nx / 2 * Ny * Nz + i] - decompressedR64s[i]);
 
                 if (diff > maxDiff)
                 {
@@ -840,14 +814,12 @@ void MGARDAccuracy2DSmallSel(const std::string tolerance)
     // Number of steps
     const size_t NSteps = 1;
 
-    std::vector<float> r32s = {0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06,
-                               0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.13,
-                               0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20,
-                               0.21, 0.22, 0.23, 0.24};
-    std::vector<double> r64s = {0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06,
-                                0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.13,
-                                0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20,
-                                0.21, 0.22, 0.23, 0.24};
+    std::vector<float> r32s = {0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08,
+                               0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17,
+                               0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24};
+    std::vector<double> r64s = {0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08,
+                                0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17,
+                                0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24};
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -870,15 +842,11 @@ void MGARDAccuracy2DSmallSel(const std::string tolerance)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
-        var_r32.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
-        var_r64.AddOperation("MGARDPlus",
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r32.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
+        var_r64.AddOperation("MGARDPlus", {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -923,8 +891,7 @@ void MGARDAccuracy2DSmallSel(const std::string tolerance)
             ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
             ASSERT_EQ(var_r64.Shape()[1], Ny);
 
-            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx + 1,
-                                     1};
+            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx + 1, 1};
             const adios2::Dims count{2, 2};
             const adios2::Box<adios2::Dims> sel(start, count);
             // var_r32.SetSelection(sel);
@@ -935,20 +902,16 @@ void MGARDAccuracy2DSmallSel(const std::string tolerance)
             bpReader.EndStep();
 
             // ASSERT_LT(std::abs(decompressedR32s[0] - 0.06), tolerance);
-            ASSERT_LT(std::abs(decompressedR64s[0] - 0.06),
-                      std::stod(tolerance));
+            ASSERT_LT(std::abs(decompressedR64s[0] - 0.06), std::stod(tolerance));
 
             // ASSERT_LT(std::abs(decompressedR32s[1] - 0.07), tolerance);
-            ASSERT_LT(std::abs(decompressedR64s[1] - 0.07),
-                      std::stod(tolerance));
+            ASSERT_LT(std::abs(decompressedR64s[1] - 0.07), std::stod(tolerance));
 
             // ASSERT_LT(std::abs(decompressedR32s[2] - 0.11), tolerance);
-            ASSERT_LT(std::abs(decompressedR64s[2] - 0.11),
-                      std::stod(tolerance));
+            ASSERT_LT(std::abs(decompressedR64s[2] - 0.11), std::stod(tolerance));
 
             // ASSERT_LT(std::abs(decompressedR32s[3] - 0.12), tolerance);
-            ASSERT_LT(std::abs(decompressedR64s[3] - 0.12),
-                      std::stod(tolerance));
+            ASSERT_LT(std::abs(decompressedR64s[3] - 0.12), std::stod(tolerance));
 
             ++t;
         }
@@ -972,8 +935,7 @@ TEST_P(BPWriteReadMGARDPlus, BPWRMGARD2D) { MGARDAccuracy2D(GetParam()); }
 TEST_P(BPWriteReadMGARDPlus, BPWRMGARD3D) { MGARDAccuracy3D(GetParam()); }
 
 INSTANTIATE_TEST_SUITE_P(MGARDAccuracy, BPWriteReadMGARDPlus,
-                         ::testing::Values("0.01", "0.001", "0.0001",
-                                           "0.00001"));
+                         ::testing::Values("0.01", "0.001", "0.0001", "0.00001"));
 
 int main(int argc, char **argv)
 {

@@ -20,9 +20,8 @@ namespace adios2
 namespace helper
 {
 
-size_t CopyMemoryWithOpHeader(const char *src, const Dims &blockCount,
-                              const DataType type, char *dest,
-                              size_t destOffset, const MemorySpace memSpace)
+size_t CopyMemoryWithOpHeader(const char *src, const Dims &blockCount, const DataType type,
+                              char *dest, size_t destOffset, const MemorySpace memSpace)
 {
     const size_t sizeIn = GetTotalSize(blockCount, GetDataTypeSize(type));
     CopyContiguousMemory(src, sizeIn, dest + destOffset,
@@ -42,10 +41,10 @@ void CopyPayloadStride(const char *src, const size_t payloadStride, char *dest,
         if (destType == DataType::None)
         {
         }
-#define declare_type(T)                                                        \
-    else if (destType == GetDataType<T>())                                     \
-    {                                                                          \
-        CopyEndianReverse<T>(src, payloadStride, reinterpret_cast<T *>(dest)); \
+#define declare_type(T)                                                                            \
+    else if (destType == GetDataType<T>())                                                         \
+    {                                                                                              \
+        CopyEndianReverse<T>(src, payloadStride, reinterpret_cast<T *>(dest));                     \
     }
 
         ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
@@ -62,8 +61,7 @@ void CopyPayloadStride(const char *src, const size_t payloadStride, char *dest,
 #endif
 }
 
-Dims DestDimsFinal(const Dims &destDims, const bool destRowMajor,
-                   const bool srcRowMajor)
+Dims DestDimsFinal(const Dims &destDims, const bool destRowMajor, const bool srcRowMajor)
 {
     Dims destDimsFinal = destDims;
     if (srcRowMajor != destRowMajor)
@@ -73,17 +71,16 @@ Dims DestDimsFinal(const Dims &destDims, const bool destRowMajor,
     return destDimsFinal;
 }
 
-void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
-                  const bool destRowMajor, const char *src,
-                  const Dims &srcStart, const Dims &srcCount,
+void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount, const bool destRowMajor,
+                  const char *src, const Dims &srcStart, const Dims &srcCount,
                   const Dims & /*destMemStart*/, const Dims & /*destMemCount*/,
-                  const Dims &srcMemStart, const Dims &srcMemCount,
-                  const bool endianReverse, const DataType destType)
+                  const Dims &srcMemStart, const Dims &srcMemCount, const bool endianReverse,
+                  const DataType destType)
 {
     const Dims destStartFinal = DestDimsFinal(destStart, destRowMajor, true);
     const Dims destCountFinal = DestDimsFinal(destCount, destRowMajor, true);
-    const Box<Dims> intersectionBox = IntersectionStartCount(
-        destStartFinal, destCountFinal, srcStart, srcCount);
+    const Box<Dims> intersectionBox =
+        IntersectionStartCount(destStartFinal, destCountFinal, srcStart, srcCount);
 
     const Dims &interStart = intersectionBox.first;
     const Dims &interCount = intersectionBox.second;
@@ -118,8 +115,7 @@ void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
 
     /// start iteration
     Dims currentPoint(interStart); // current point for memory copy
-    const size_t interOffset =
-        LinearIndex(srcStart, srcCount, interStart, true);
+    const size_t interOffset = LinearIndex(srcStart, srcCount, interStart, true);
 
     bool run = true;
 
@@ -129,20 +125,18 @@ void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
         // here copy current linear memory between currentPoint and end
         const size_t srcBeginOffset =
             srcMemStart.empty()
-                ? LinearIndex(srcStart, srcCount, currentPoint, true) -
-                      interOffset
+                ? LinearIndex(srcStart, srcCount, currentPoint, true) - interOffset
                 : LinearIndex(Dims(srcMemCount.size(), 0), srcMemCount,
                               VectorsOp(std::plus<size_t>(),
-                                        VectorsOp(std::minus<size_t>(),
-                                                  currentPoint, interStart),
+                                        VectorsOp(std::minus<size_t>(), currentPoint, interStart),
                                         srcMemStart),
                               true);
 
-        const size_t destBeginOffset = helper::LinearIndex(
-            destStartFinal, destCountFinal, currentPoint, true);
+        const size_t destBeginOffset =
+            helper::LinearIndex(destStartFinal, destCountFinal, currentPoint, true);
 
-        CopyPayloadStride(src + srcBeginOffset, stride, dest + destBeginOffset,
-                          endianReverse, destType);
+        CopyPayloadStride(src + srcBeginOffset, stride, dest + destBeginOffset, endianReverse,
+                          destType);
 
         size_t p = startCoord;
         while (true)
@@ -170,17 +164,15 @@ void ClipRowMajor(char *dest, const Dims &destStart, const Dims &destCount,
 }
 
 void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
-                     const bool destRowMajor, const char *src,
-                     const Dims &srcStart, const Dims &srcCount,
-                     const Dims & /*destMemStart*/,
+                     const bool destRowMajor, const char *src, const Dims &srcStart,
+                     const Dims &srcCount, const Dims & /*destMemStart*/,
                      const Dims & /*destMemCount*/, const Dims &srcMemStart,
-                     const Dims &srcMemCount, const bool endianReverse,
-                     const DataType destType)
+                     const Dims &srcMemCount, const bool endianReverse, const DataType destType)
 {
     const Dims destStartFinal = DestDimsFinal(destStart, destRowMajor, false);
     const Dims destCountFinal = DestDimsFinal(destCount, destRowMajor, false);
-    const Box<Dims> intersectionBox = IntersectionStartCount(
-        destStartFinal, destCountFinal, srcStart, srcCount);
+    const Box<Dims> intersectionBox =
+        IntersectionStartCount(destStartFinal, destCountFinal, srcStart, srcCount);
 
     const Dims &interStart = intersectionBox.first;
     const Dims &interCount = intersectionBox.second;
@@ -205,8 +197,7 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
 
     /// start iteration
     Dims currentPoint(interStart); // current point for memory copy
-    const size_t interOffset =
-        LinearIndex(srcStart, srcCount, interStart, false);
+    const size_t interOffset = LinearIndex(srcStart, srcCount, interStart, false);
 
     bool run = true;
 
@@ -215,20 +206,18 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
         // here copy current linear memory between currentPoint and end
         const size_t srcBeginOffset =
             srcMemStart.empty()
-                ? LinearIndex(srcStart, srcCount, currentPoint, false) -
-                      interOffset
+                ? LinearIndex(srcStart, srcCount, currentPoint, false) - interOffset
                 : LinearIndex(Dims(srcMemCount.size(), 0), srcMemCount,
                               VectorsOp(std::plus<size_t>(),
-                                        VectorsOp(std::minus<size_t>(),
-                                                  currentPoint, interStart),
+                                        VectorsOp(std::minus<size_t>(), currentPoint, interStart),
                                         srcMemStart),
                               false);
 
-        const size_t destBeginOffset = helper::LinearIndex(
-            destStartFinal, destCountFinal, currentPoint, false);
+        const size_t destBeginOffset =
+            helper::LinearIndex(destStartFinal, destCountFinal, currentPoint, false);
 
-        CopyPayloadStride(src + srcBeginOffset, stride, dest + destBeginOffset,
-                          endianReverse, destType);
+        CopyPayloadStride(src + srcBeginOffset, stride, dest + destBeginOffset, endianReverse,
+                          destType);
         size_t p = startCoord;
 
         while (true)
@@ -259,12 +248,10 @@ void ClipColumnMajor(char *dest, const Dims &destStart, const Dims &destCount,
 
 int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
            const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
-           const CoreDims &outStart, const CoreDims &outCount,
-           const bool outIsRowMajor, const bool outIsLittleEndian,
-           const int typeSize, const CoreDims &inMemStart,
-           const CoreDims &inMemCount, const CoreDims &outMemStart,
-           const CoreDims &outMemCount, const bool safeMode,
-           MemorySpace MemSpace)
+           const CoreDims &outStart, const CoreDims &outCount, const bool outIsRowMajor,
+           const bool outIsLittleEndian, const int typeSize, const CoreDims &inMemStart,
+           const CoreDims &inMemCount, const CoreDims &outMemStart, const CoreDims &outMemCount,
+           const bool safeMode, MemorySpace MemSpace)
 
 {
 
@@ -289,22 +276,19 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
     size_t minContDim, blockSize;
     const char *inOvlpBase = nullptr;
     char *outOvlpBase = nullptr;
-    auto GetInEnd = [](CoreDims &inEnd, const CoreDims &inStart,
-                       const CoreDims &inCount) {
+    auto GetInEnd = [](CoreDims &inEnd, const CoreDims &inStart, const CoreDims &inCount) {
         for (size_t i = 0; i < inStart.size(); i++)
         {
             inEnd[i] = inStart[i] + inCount[i] - 1;
         }
     };
-    auto GetOutEnd = [](CoreDims &outEnd, const CoreDims &outStart,
-                        const CoreDims &output_count) {
+    auto GetOutEnd = [](CoreDims &outEnd, const CoreDims &outStart, const CoreDims &output_count) {
         for (size_t i = 0; i < outStart.size(); i++)
         {
             outEnd[i] = outStart[i] + output_count[i] - 1;
         }
     };
-    auto GetOvlpStart = [](CoreDims &ovlpStart, const CoreDims &inStart,
-                           const CoreDims &outStart) {
+    auto GetOvlpStart = [](CoreDims &ovlpStart, const CoreDims &inStart, const CoreDims &outStart) {
         for (size_t i = 0; i < ovlpStart.size(); i++)
         {
             ovlpStart[i] = inStart[i] > outStart[i] ? inStart[i] : outStart[i];
@@ -316,8 +300,7 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
             ovlpEnd[i] = inEnd[i] < outEnd[i] ? inEnd[i] : outEnd[i];
         }
     };
-    auto GetOvlpCount = [](CoreDims &ovlpCount, CoreDims &ovlpStart,
-                           CoreDims &ovlpEnd) {
+    auto GetOvlpCount = [](CoreDims &ovlpCount, CoreDims &ovlpStart, CoreDims &ovlpEnd) {
         for (size_t i = 0; i < ovlpCount.size(); i++)
         {
             ovlpCount[i] = ovlpEnd[i] - ovlpStart[i] + 1;
@@ -334,15 +317,13 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
         return true;
     };
 
-    auto GetIoStrides = [](CoreDims &ioStride, const CoreDims &ioCount,
-                           size_t elmSize) {
+    auto GetIoStrides = [](CoreDims &ioStride, const CoreDims &ioCount, size_t elmSize) {
         // ioStride[i] holds the total number of elements under each element
         // of the i'th dimension
         ioStride[ioStride.size() - 1] = elmSize;
         if (ioStride.size() > 1)
         {
-            ioStride[ioStride.size() - 2] =
-                ioCount[ioStride.size() - 1] * elmSize;
+            ioStride[ioStride.size() - 2] = ioCount[ioStride.size() - 1] * elmSize;
         }
         if (ioStride.size() > 2)
         {
@@ -362,27 +343,24 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
         }
     };
 
-    auto GetInOvlpBase = [](const char *&inOvlpBase, const char *in,
-                            const CoreDims &inStart, CoreDims &inStride,
-                            CoreDims &ovlpStart) {
+    auto GetInOvlpBase = [](const char *&inOvlpBase, const char *in, const CoreDims &inStart,
+                            CoreDims &inStride, CoreDims &ovlpStart) {
         inOvlpBase = in;
         for (size_t i = 0; i < inStart.size(); i++)
         {
             inOvlpBase = inOvlpBase + (ovlpStart[i] - inStart[i]) * inStride[i];
         }
     };
-    auto GetOutOvlpBase = [](char *&outOvlpBase, char *out,
-                             const CoreDims &outStart, CoreDims &outStride,
-                             CoreDims &ovlpStart) {
+    auto GetOutOvlpBase = [](char *&outOvlpBase, char *out, const CoreDims &outStart,
+                             CoreDims &outStride, CoreDims &ovlpStart) {
         outOvlpBase = out;
         for (size_t i = 0; i < outStart.size(); i++)
         {
-            outOvlpBase =
-                outOvlpBase + (ovlpStart[i] - outStart[i]) * outStride[i];
+            outOvlpBase = outOvlpBase + (ovlpStart[i] - outStart[i]) * outStride[i];
         }
     };
-    auto GetIoOvlpGapSize = [](CoreDims &ioOvlpGapSize, CoreDims &ioStride,
-                               const CoreDims &ioCount, CoreDims &ovlpCount) {
+    auto GetIoOvlpGapSize = [](CoreDims &ioOvlpGapSize, CoreDims &ioStride, const CoreDims &ioCount,
+                               CoreDims &ovlpCount) {
         for (size_t i = 0; i < ioOvlpGapSize.size(); i++)
         {
             ioOvlpGapSize[i] = (ioCount[i] - ovlpCount[i]) * ioStride[i];
@@ -412,8 +390,7 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
         }
         return i;
     };
-    auto GetBlockSize = [](CoreDims &ovlpCount, size_t minContDim,
-                           size_t elmSize) {
+    auto GetBlockSize = [](CoreDims &ovlpCount, size_t minContDim, size_t elmSize) {
         size_t res = elmSize;
         for (size_t i = minContDim; i < ovlpCount.size(); i++)
         {
@@ -422,8 +399,7 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
         return res;
     };
 
-    auto GetRltvOvlpStartPos = [](CoreDims &ioRltvOvlpStart,
-                                  const CoreDims &ioStart,
+    auto GetRltvOvlpStartPos = [](CoreDims &ioRltvOvlpStart, const CoreDims &ioStart,
                                   CoreDims &ovlpStart) {
         for (size_t i = 0; i < ioStart.size(); i++)
         {
@@ -462,9 +438,8 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
             if (MemSpace == MemorySpace::GPU)
             {
-                helper::NdCopyGPU(inOvlpBase, outOvlpBase, inOvlpGapSize,
-                                  outOvlpGapSize, ovlpCount, minContDim,
-                                  blockSize, MemSpace);
+                helper::NdCopyGPU(inOvlpBase, outOvlpBase, inOvlpGapSize, outOvlpGapSize, ovlpCount,
+                                  minContDim, blockSize, MemSpace);
                 return 0;
             }
 #endif
@@ -473,8 +448,7 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
             // of data.
             if (!safeMode)
             {
-                NdCopyRecurDFSeqPadding(0, inOvlpBase, outOvlpBase,
-                                        inOvlpGapSize, outOvlpGapSize,
+                NdCopyRecurDFSeqPadding(0, inOvlpBase, outOvlpBase, inOvlpGapSize, outOvlpGapSize,
                                         ovlpCount, minContDim, blockSize);
             }
             else // safeMode
@@ -482,9 +456,8 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
                 //      //alternative iterative version, 10% slower then
                 //      recursive
                 //      //use it when very high demension is used.
-                NdCopyIterDFSeqPadding(inOvlpBase, outOvlpBase, inOvlpGapSize,
-                                       outOvlpGapSize, ovlpCount, minContDim,
-                                       blockSize);
+                NdCopyIterDFSeqPadding(inOvlpBase, outOvlpBase, inOvlpGapSize, outOvlpGapSize,
+                                       ovlpCount, minContDim, blockSize);
             }
         }
         // different endianess mode
@@ -500,17 +473,15 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
 #endif
             if (!safeMode)
             {
-                NdCopyRecurDFSeqPaddingRevEndian(
-                    0, inOvlpBase, outOvlpBase, inOvlpGapSize, outOvlpGapSize,
-                    ovlpCount, minContDim, blockSize, typeSize,
-                    blockSize / typeSize);
+                NdCopyRecurDFSeqPaddingRevEndian(0, inOvlpBase, outOvlpBase, inOvlpGapSize,
+                                                 outOvlpGapSize, ovlpCount, minContDim, blockSize,
+                                                 typeSize, blockSize / typeSize);
             }
             else
             {
-                NdCopyIterDFSeqPaddingRevEndian(
-                    inOvlpBase, outOvlpBase, inOvlpGapSize, outOvlpGapSize,
-                    ovlpCount, minContDim, blockSize, typeSize,
-                    blockSize / typeSize);
+                NdCopyIterDFSeqPaddingRevEndian(inOvlpBase, outOvlpBase, inOvlpGapSize,
+                                                outOvlpGapSize, ovlpCount, minContDim, blockSize,
+                                                typeSize, blockSize / typeSize);
             }
         }
     }
@@ -585,8 +556,7 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
             // get reversed order outOvlpStart
             DimsArray revOvlpStart(ovlpStart);
             std::reverse(revOvlpStart.begin(), revOvlpStart.end());
-            GetRltvOvlpStartPos(outRltvOvlpStartPos, outMemStartNC,
-                                revOvlpStart);
+            GetRltvOvlpStartPos(outRltvOvlpStartPos, outMemStartNC, revOvlpStart);
         }
         // col-major ==> row-major mode
         else if (!inIsRowMajor && outIsRowMajor)
@@ -629,16 +599,14 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
         {
             if (!safeMode)
             {
-                NdCopyRecurDFNonSeqDynamic(0, inOvlpBase, outOvlpBase,
-                                           inRltvOvlpStartPos,
-                                           outRltvOvlpStartPos, inStride,
-                                           outStride, ovlpCount, typeSize);
+                NdCopyRecurDFNonSeqDynamic(0, inOvlpBase, outOvlpBase, inRltvOvlpStartPos,
+                                           outRltvOvlpStartPos, inStride, outStride, ovlpCount,
+                                           typeSize);
             }
             else
             {
                 NdCopyIterDFDynamic(inOvlpBase, outOvlpBase, inRltvOvlpStartPos,
-                                    outRltvOvlpStartPos, inStride, outStride,
-                                    ovlpCount, typeSize);
+                                    outRltvOvlpStartPos, inStride, outStride, ovlpCount, typeSize);
             }
         }
         // different Endian"
@@ -646,17 +614,15 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
         {
             if (!safeMode)
             {
-                NdCopyRecurDFNonSeqDynamicRevEndian(
-                    0, inOvlpBase, outOvlpBase, inRltvOvlpStartPos,
-                    outRltvOvlpStartPos, inStride, outStride, ovlpCount,
-                    typeSize);
+                NdCopyRecurDFNonSeqDynamicRevEndian(0, inOvlpBase, outOvlpBase, inRltvOvlpStartPos,
+                                                    outRltvOvlpStartPos, inStride, outStride,
+                                                    ovlpCount, typeSize);
             }
             else
             {
-                NdCopyIterDFDynamicRevEndian(inOvlpBase, outOvlpBase,
-                                             inRltvOvlpStartPos,
-                                             outRltvOvlpStartPos, inStride,
-                                             outStride, ovlpCount, typeSize);
+                NdCopyIterDFDynamicRevEndian(inOvlpBase, outOvlpBase, inRltvOvlpStartPos,
+                                             outRltvOvlpStartPos, inStride, outStride, ovlpCount,
+                                             typeSize);
             }
         }
     }
@@ -664,12 +630,11 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
 }
 //*************** End of NdCopy() and its 8 helpers ***************
 
-void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
-                 const bool destRowMajor, const char *src, const Dims &srcStart,
-                 const Dims &srcCount, const bool srcRowMajor,
-                 const Dims &destMemStart, const Dims &destMemCount,
-                 const Dims &srcMemStart, const Dims &srcMemCount,
-                 const bool endianReverse, const DataType destType) noexcept
+void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount, const bool destRowMajor,
+                 const char *src, const Dims &srcStart, const Dims &srcCount,
+                 const bool srcRowMajor, const Dims &destMemStart, const Dims &destMemCount,
+                 const Dims &srcMemStart, const Dims &srcMemCount, const bool endianReverse,
+                 const DataType destType) noexcept
 {
     if (srcStart.size() == 1) // 1D copy memory
     {
@@ -679,29 +644,27 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
         const Dims &interCount = intersectionBox.second;
 
         const size_t srcBeginOffset =
-            srcMemStart.empty()
-                ? interStart.front() - srcStart.front()
-                : interStart.front() - srcStart.front() + srcMemStart.front();
+            srcMemStart.empty() ? interStart.front() - srcStart.front()
+                                : interStart.front() - srcStart.front() + srcMemStart.front();
 
         const size_t stride = interCount.front();
         const size_t destBeginOffset = interStart.front() - destStart.front();
 
-        CopyPayloadStride(src + srcBeginOffset, stride, dest + destBeginOffset,
-                          endianReverse, destType);
+        CopyPayloadStride(src + srcBeginOffset, stride, dest + destBeginOffset, endianReverse,
+                          destType);
         return;
     }
 
     if (srcRowMajor) // stored with C, C++, Python
     {
-        ClipRowMajor(dest, destStart, destCount, destRowMajor, src, srcStart,
-                     srcCount, destMemStart, destMemCount, srcMemStart,
-                     srcMemCount, endianReverse, destType);
+        ClipRowMajor(dest, destStart, destCount, destRowMajor, src, srcStart, srcCount,
+                     destMemStart, destMemCount, srcMemStart, srcMemCount, endianReverse, destType);
     }
     else // stored with Fortran, R
     {
-        ClipColumnMajor(dest, destStart, destCount, destRowMajor, src, srcStart,
-                        srcCount, destMemStart, destMemCount, srcMemStart,
-                        srcMemCount, endianReverse, destType);
+        ClipColumnMajor(dest, destStart, destCount, destRowMajor, src, srcStart, srcCount,
+                        destMemStart, destMemCount, srcMemStart, srcMemCount, endianReverse,
+                        destType);
     }
 }
 

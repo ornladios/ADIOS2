@@ -99,15 +99,13 @@ int main(int argc, char *argv[])
          * Global dimension and starting offset must be an empty vector
          * Here the size of the local array is the same on every process
          */
-        adios2::Variable<double> varV0 =
-            io.DefineVariable<double>("v0", {}, {}, {Nglobal});
+        adios2::Variable<double> varV0 = io.DefineVariable<double>("v0", {}, {}, {Nglobal});
 
         /*
          * v1 is similar to v0 but on every process the local size
          * is a different value
          */
-        adios2::Variable<double> varV1 =
-            io.DefineVariable<double>("v1", {}, {}, {Nx});
+        adios2::Variable<double> varV1 = io.DefineVariable<double>("v1", {}, {}, {Nx});
 
         /*
          * Define local array: type, name

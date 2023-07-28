@@ -22,8 +22,7 @@ AttributeBase::AttributeBase(const std::string &name, const DataType type,
 {
 }
 
-AttributeBase::AttributeBase(const std::string &name, const DataType type,
-                             const size_t elements,
+AttributeBase::AttributeBase(const std::string &name, const DataType type, const size_t elements,
                              const bool allowModification)
 : m_Name(name), m_Type(type), m_Elements(elements), m_IsSingleValue(false),
   m_AllowModification(allowModification)
@@ -40,8 +39,7 @@ Params AttributeBase::GetInfo() const noexcept
     return info;
 }
 
-bool AttributeBase::Equals(const void *values,
-                           const size_t elements) const noexcept
+bool AttributeBase::Equals(const void *values, const size_t elements) const noexcept
 {
     return this->DoEqual(values, elements);
 }

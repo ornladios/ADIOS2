@@ -24,17 +24,15 @@ class Signature2 : public Operator
 {
 
 public:
-    Signature2(const std::function<
-                   void(void *, const std::string &, const std::string &,
-                        const std::string &, const size_t, const Dims &,
-                        const Dims &, const Dims &)> &function,
+    Signature2(const std::function<void(void *, const std::string &, const std::string &,
+                                        const std::string &, const size_t, const Dims &,
+                                        const Dims &, const Dims &)> &function,
                const Params &parameters);
 
     ~Signature2() = default;
 
-    void RunCallback2(void *, const std::string &, const std::string &,
-                      const std::string &, const size_t, const Dims &,
-                      const Dims &, const Dims &) const final;
+    void RunCallback2(void *, const std::string &, const std::string &, const std::string &,
+                      const size_t, const Dims &, const Dims &, const Dims &) const final;
 
     /**
      * @param dataIn
@@ -45,9 +43,8 @@ public:
      * UncompressedData), [ BloscCompressedChunk, ...]'
      * @return size of compressed buffer in bytes
      */
-    size_t Operate(const char *dataIn, const Dims &blockStart,
-                   const Dims &blockCount, const DataType type,
-                   char *bufferOut) final;
+    size_t Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                   const DataType type, char *bufferOut) final;
 
     /**
      * @param bufferIn
@@ -55,15 +52,13 @@ public:
      * @param dataOut
      * @return size of decompressed buffer
      */
-    size_t InverseOperate(const char *bufferIn, const size_t sizeIn,
-                          char *dataOut) final;
+    size_t InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 
 private:
-    std::function<void(void *, const std::string &, const std::string &,
-                       const std::string &, const size_t, const Dims &,
-                       const Dims &, const Dims &)>
+    std::function<void(void *, const std::string &, const std::string &, const std::string &,
+                       const size_t, const Dims &, const Dims &, const Dims &)>
         m_Function;
 };
 

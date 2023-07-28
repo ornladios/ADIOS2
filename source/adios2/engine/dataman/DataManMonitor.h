@@ -34,10 +34,8 @@ public:
     void SetCombiningSteps(const size_t steps);
     void SetWriterThreading();
     void SetReaderThreading();
-    void SetClockError(const uint64_t roundLatency,
-                       const uint64_t remoteTimeBase);
-    void AddCompression(const std::string &method,
-                        const std::string &accuracyUsed);
+    void SetClockError(const uint64_t roundLatency, const uint64_t remoteTimeBase);
+    void AddCompression(const std::string &method, const std::string &accuracyUsed);
     void SetRequiredAccuracy(const std::string &accuracyRequired);
     void AddTransport(const std::string &method);
     void OutputJson(const std::string &filename);

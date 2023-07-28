@@ -55,8 +55,7 @@ TEST_F(BPChangingShape, BPWriteReadShape2D)
 
         const size_t dim0 = static_cast<size_t>(nproc);
         const size_t off0 = static_cast<size_t>(rank);
-        auto var =
-            outIO.DefineVariable<double>("v", {dim0, 1}, {off0, 0}, {1, 1});
+        auto var = outIO.DefineVariable<double>("v", {dim0, 1}, {off0, 0}, {1, 1});
 
         std::vector<double> buf(nsteps, 0.0);
         for (size_t i = 0; i < buf.size(); i++)
@@ -77,8 +76,8 @@ TEST_F(BPChangingShape, BPWriteReadShape2D)
 
             if (!rank)
             {
-                std::cout << "Step " << i << " shape (" << var.Shape()[0]
-                          << ", " << var.Shape()[1] << ")" << std::endl;
+                std::cout << "Step " << i << " shape (" << var.Shape()[0] << ", " << var.Shape()[1]
+                          << ")" << std::endl;
             }
 
             writer.Put(var, buf.data());
@@ -101,15 +100,13 @@ TEST_F(BPChangingShape, BPWriteReadShape2D)
 
         if (!rank)
         {
-            std::cout << "Reading as stream with BeginStep/EndStep:"
-                      << std::endl;
+            std::cout << "Reading as stream with BeginStep/EndStep:" << std::endl;
         }
 
         int i = 0;
         while (true)
         {
-            adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::Read);
+            adios2::StepStatus status = reader.BeginStep(adios2::StepMode::Read);
 
             if (status != adios2::StepStatus::OK)
             {
@@ -125,8 +122,8 @@ TEST_F(BPChangingShape, BPWriteReadShape2D)
             if (!rank)
             {
 
-                std::cout << "Step " << i << " shape (" << var.Shape()[0]
-                          << ", " << var.Shape()[1] << ")" << std::endl;
+                std::cout << "Step " << i << " shape (" << var.Shape()[0] << ", " << var.Shape()[1]
+                          << ")" << std::endl;
             }
 
             EXPECT_EQ(var.Shape()[0], nproc);
@@ -147,8 +144,7 @@ TEST_F(BPChangingShape, BPWriteReadShape2D)
         {
             inIO.SetEngine(engineName);
         }
-        adios2::Engine reader =
-            inIO.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine reader = inIO.Open(fname, adios2::Mode::ReadRandomAccess);
 
         if (!rank)
         {
@@ -164,8 +160,8 @@ TEST_F(BPChangingShape, BPWriteReadShape2D)
             if (!rank)
             {
 
-                std::cout << "Step " << i << " shape (" << var.Shape()[0]
-                          << ", " << var.Shape()[1] << ")" << std::endl;
+                std::cout << "Step " << i << " shape (" << var.Shape()[0] << ", " << var.Shape()[1]
+                          << ")" << std::endl;
             }
             size_t expected_shape = i + 1;
             EXPECT_EQ(var.Shape()[0], nproc);

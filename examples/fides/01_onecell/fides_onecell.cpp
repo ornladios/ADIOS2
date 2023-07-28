@@ -42,8 +42,8 @@ int main(int argc, char *argv[])
         io.DefineVariable<double>("Mesh/Coords/Y", {NPOINTS}, {0}, {NPOINTS});
     adios2::Variable<double> varZ =
         io.DefineVariable<double>("Mesh/Coords/Z", {NPOINTS}, {0}, {NPOINTS});
-    adios2::Variable<int64_t> varCells = io.DefineVariable<int64_t>(
-        "Mesh/Cells", {NCELLS * NPOINTS}, {0}, {NCELLS * NPOINTS});
+    adios2::Variable<int64_t> varCells =
+        io.DefineVariable<int64_t>("Mesh/Cells", {NCELLS * NPOINTS}, {0}, {NCELLS * NPOINTS});
 
     adios2::Variable<size_t> varStep = io.DefineVariable<size_t>("step");
     adios2::Variable<double> varTime = io.DefineVariable<double>("time");

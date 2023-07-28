@@ -11,10 +11,7 @@ class ADIOSInterfaceWriteTest : public ::testing::Test
 {
 public:
 #if ADIOS2_USE_MPI
-    ADIOSInterfaceWriteTest()
-    : adios(MPI_COMM_SELF), io(adios.DeclareIO("TestIO"))
-    {
-    }
+    ADIOSInterfaceWriteTest() : adios(MPI_COMM_SELF), io(adios.DeclareIO("TestIO")) {}
 #else
     ADIOSInterfaceWriteTest() : adios(), io(adios.DeclareIO("TestIO")) {}
 #endif
@@ -44,12 +41,10 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int8_t_1x10)
     auto var_int8_t = io.DefineVariable<int8_t>(name, {}, {}, adios2::Dims{10});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_int8_t),
-                                  adios2::Variable<int8_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_int8_t), adios2::Variable<int8_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(auto foo =
-                     io.DefineVariable<int8_t>(name, {}, {}, adios2::Dims{10});
+    EXPECT_THROW(auto foo = io.DefineVariable<int8_t>(name, {}, {}, adios2::Dims{10});
                  (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
@@ -73,16 +68,13 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_1x10)
 
     // Define ADIOS variables for each type
 
-    auto var_int16_t =
-        io.DefineVariable<int16_t>(name, {}, {}, adios2::Dims{10});
+    auto var_int16_t = io.DefineVariable<int16_t>(name, {}, {}, adios2::Dims{10});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_int16_t),
-                                  adios2::Variable<int16_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_int16_t), adios2::Variable<int16_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(auto foo =
-                     io.DefineVariable<int16_t>(name, {}, {}, adios2::Dims{10});
+    EXPECT_THROW(auto foo = io.DefineVariable<int16_t>(name, {}, {}, adios2::Dims{10});
                  (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
@@ -106,16 +98,13 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_1x10)
 
     // Define ADIOS variables for each type
 
-    auto var_int32_t =
-        io.DefineVariable<int32_t>(name, {}, {}, adios2::Dims{10});
+    auto var_int32_t = io.DefineVariable<int32_t>(name, {}, {}, adios2::Dims{10});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_int32_t),
-                                  adios2::Variable<int32_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_int32_t), adios2::Variable<int32_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(auto foo =
-                     io.DefineVariable<int32_t>(name, {}, {}, adios2::Dims{10});
+    EXPECT_THROW(auto foo = io.DefineVariable<int32_t>(name, {}, {}, adios2::Dims{10});
                  (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
@@ -140,16 +129,13 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_1x10)
 
     // Define ADIOS variables for each type
 
-    auto var_int64_t =
-        io.DefineVariable<int64_t>(name, {}, {}, adios2::Dims{10});
+    auto var_int64_t = io.DefineVariable<int64_t>(name, {}, {}, adios2::Dims{10});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_int64_t),
-                                  adios2::Variable<int64_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_int64_t), adios2::Variable<int64_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(auto foo =
-                     io.DefineVariable<int64_t>(name, {}, {}, adios2::Dims{10});
+    EXPECT_THROW(auto foo = io.DefineVariable<int64_t>(name, {}, {}, adios2::Dims{10});
                  (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
@@ -175,16 +161,13 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_1x10)
 
     // Define ADIOS variables for each type
 
-    auto var_uint8_t =
-        io.DefineVariable<uint8_t>(name, {}, {}, adios2::Dims{10});
+    auto var_uint8_t = io.DefineVariable<uint8_t>(name, {}, {}, adios2::Dims{10});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_uint8_t),
-                                  adios2::Variable<uint8_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_uint8_t), adios2::Variable<uint8_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(auto foo =
-                     io.DefineVariable<uint8_t>(name, {}, {}, adios2::Dims{10});
+    EXPECT_THROW(auto foo = io.DefineVariable<uint8_t>(name, {}, {}, adios2::Dims{10});
                  (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
@@ -209,17 +192,14 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_1x10)
 
     // Define ADIOS variables for each type
 
-    auto var_uint16_t =
-        io.DefineVariable<uint16_t>(name, {}, {}, adios2::Dims{10});
+    auto var_uint16_t = io.DefineVariable<uint16_t>(name, {}, {}, adios2::Dims{10});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_uint16_t),
-                                  adios2::Variable<uint16_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_uint16_t), adios2::Variable<uint16_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(
-        auto foo = io.DefineVariable<uint16_t>(name, {}, {}, adios2::Dims{10});
-        (void)foo, std::invalid_argument);
+    EXPECT_THROW(auto foo = io.DefineVariable<uint16_t>(name, {}, {}, adios2::Dims{10});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_uint16_t.Shape().size(), 0);
@@ -243,17 +223,14 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_1x10)
 
     // Define ADIOS variables for each type
 
-    auto var_uint32_t =
-        io.DefineVariable<uint32_t>(name, {}, {}, adios2::Dims{10});
+    auto var_uint32_t = io.DefineVariable<uint32_t>(name, {}, {}, adios2::Dims{10});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_uint32_t),
-                                  adios2::Variable<uint32_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_uint32_t), adios2::Variable<uint32_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(
-        auto foo = io.DefineVariable<uint32_t>(name, {}, {}, adios2::Dims{10});
-        (void)foo, std::invalid_argument);
+    EXPECT_THROW(auto foo = io.DefineVariable<uint32_t>(name, {}, {}, adios2::Dims{10});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_uint32_t.Shape().size(), 0);
@@ -277,17 +254,14 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_1x10)
 
     // Define ADIOS variables for each type
 
-    auto var_uint64_t =
-        io.DefineVariable<uint64_t>(name, {}, {}, adios2::Dims{10});
+    auto var_uint64_t = io.DefineVariable<uint64_t>(name, {}, {}, adios2::Dims{10});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_uint64_t),
-                                  adios2::Variable<uint64_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_uint64_t), adios2::Variable<uint64_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(
-        auto foo = io.DefineVariable<uint64_t>(name, {}, {}, adios2::Dims{10});
-        (void)foo, std::invalid_argument);
+    EXPECT_THROW(auto foo = io.DefineVariable<uint64_t>(name, {}, {}, adios2::Dims{10});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_uint64_t.Shape().size(), 0);
@@ -315,17 +289,14 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int8_t_2x5)
 
     // Define ADIOS variables for each type
 
-    auto var_int8_t =
-        io.DefineVariable<int8_t>(name, {}, {}, adios2::Dims{2, 5});
+    auto var_int8_t = io.DefineVariable<int8_t>(name, {}, {}, adios2::Dims{2, 5});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_int8_t),
-                                  adios2::Variable<int8_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_int8_t), adios2::Variable<int8_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(
-        auto foo = io.DefineVariable<int8_t>(name, {}, {}, adios2::Dims{2, 5});
-        (void)foo, std::invalid_argument);
+    EXPECT_THROW(auto foo = io.DefineVariable<int8_t>(name, {}, {}, adios2::Dims{2, 5});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_int8_t.Shape().size(), 0);
@@ -350,17 +321,14 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int16_t_2x5)
 
     // Define ADIOS variables for each type
 
-    auto var_int16_t =
-        io.DefineVariable<int16_t>(name, {}, {}, adios2::Dims{2, 5});
+    auto var_int16_t = io.DefineVariable<int16_t>(name, {}, {}, adios2::Dims{2, 5});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_int16_t),
-                                  adios2::Variable<int16_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_int16_t), adios2::Variable<int16_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(
-        auto foo = io.DefineVariable<int16_t>(name, {}, {}, adios2::Dims{2, 5});
-        (void)foo, std::invalid_argument);
+    EXPECT_THROW(auto foo = io.DefineVariable<int16_t>(name, {}, {}, adios2::Dims{2, 5});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_int16_t.Shape().size(), 0);
@@ -385,17 +353,14 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int32_t_2x5)
 
     // Define ADIOS variables for each type
 
-    auto var_int32_t =
-        io.DefineVariable<int32_t>(name, {}, {}, adios2::Dims{2, 5});
+    auto var_int32_t = io.DefineVariable<int32_t>(name, {}, {}, adios2::Dims{2, 5});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_int32_t),
-                                  adios2::Variable<int32_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_int32_t), adios2::Variable<int32_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(
-        auto foo = io.DefineVariable<int32_t>(name, {}, {}, adios2::Dims{2, 5});
-        (void)foo, std::invalid_argument);
+    EXPECT_THROW(auto foo = io.DefineVariable<int32_t>(name, {}, {}, adios2::Dims{2, 5});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_int32_t.Shape().size(), 0);
@@ -420,17 +385,14 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_int64_t_2x5)
 
     // Define ADIOS variables for each type
 
-    auto var_int64_t =
-        io.DefineVariable<int64_t>(name, {}, {}, adios2::Dims{2, 5});
+    auto var_int64_t = io.DefineVariable<int64_t>(name, {}, {}, adios2::Dims{2, 5});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_int64_t),
-                                  adios2::Variable<int64_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_int64_t), adios2::Variable<int64_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(
-        auto foo = io.DefineVariable<int64_t>(name, {}, {}, adios2::Dims{2, 5});
-        (void)foo, std::invalid_argument);
+    EXPECT_THROW(auto foo = io.DefineVariable<int64_t>(name, {}, {}, adios2::Dims{2, 5});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_int64_t.Shape().size(), 0);
@@ -456,17 +418,14 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint8_t_2x5)
 
     // Define ADIOS variables for each type
 
-    auto var_uint8_t =
-        io.DefineVariable<uint8_t>(name, {}, {}, adios2::Dims{2, 5});
+    auto var_uint8_t = io.DefineVariable<uint8_t>(name, {}, {}, adios2::Dims{2, 5});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_uint8_t),
-                                  adios2::Variable<uint8_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_uint8_t), adios2::Variable<uint8_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(
-        auto foo = io.DefineVariable<uint8_t>(name, {}, {}, adios2::Dims{2, 5});
-        (void)foo, std::invalid_argument);
+    EXPECT_THROW(auto foo = io.DefineVariable<uint8_t>(name, {}, {}, adios2::Dims{2, 5});
+                 (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(var_uint8_t.Shape().size(), 0);
@@ -491,16 +450,13 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint16_t_2x5)
 
     // Define ADIOS variables for each type
 
-    auto var_uint16_t =
-        io.DefineVariable<uint16_t>(name, {}, {}, adios2::Dims{2, 5});
+    auto var_uint16_t = io.DefineVariable<uint16_t>(name, {}, {}, adios2::Dims{2, 5});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_uint16_t),
-                                  adios2::Variable<uint16_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_uint16_t), adios2::Variable<uint16_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(auto foo = io.DefineVariable<uint16_t>(name, {}, {},
-                                                        adios2::Dims{2, 5});
+    EXPECT_THROW(auto foo = io.DefineVariable<uint16_t>(name, {}, {}, adios2::Dims{2, 5});
                  (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
@@ -526,16 +482,13 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint32_t_2x5)
 
     // Define ADIOS variables for each type
 
-    auto var_uint32_t =
-        io.DefineVariable<uint32_t>(name, {}, {}, adios2::Dims{2, 5});
+    auto var_uint32_t = io.DefineVariable<uint32_t>(name, {}, {}, adios2::Dims{2, 5});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_uint32_t),
-                                  adios2::Variable<uint32_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_uint32_t), adios2::Variable<uint32_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(auto foo = io.DefineVariable<uint32_t>(name, {}, {},
-                                                        adios2::Dims{2, 5});
+    EXPECT_THROW(auto foo = io.DefineVariable<uint32_t>(name, {}, {}, adios2::Dims{2, 5});
                  (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
@@ -561,16 +514,13 @@ TEST_F(ADIOSInterfaceWriteTest, DefineVar_uint64_t_2x5)
 
     // Define ADIOS variables for each type
 
-    auto var_uint64_t =
-        io.DefineVariable<uint64_t>(name, {}, {}, adios2::Dims{2, 5});
+    auto var_uint64_t = io.DefineVariable<uint64_t>(name, {}, {}, adios2::Dims{2, 5});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(var_uint64_t),
-                                  adios2::Variable<uint64_t>>();
+    ::testing::StaticAssertTypeEq<decltype(var_uint64_t), adios2::Variable<uint64_t>>();
 
     // Verify exceptions are thrown upon duplicate variable names
-    EXPECT_THROW(auto foo = io.DefineVariable<uint64_t>(name, {}, {},
-                                                        adios2::Dims{2, 5});
+    EXPECT_THROW(auto foo = io.DefineVariable<uint64_t>(name, {}, {}, adios2::Dims{2, 5});
                  (void)foo, std::invalid_argument);
 
     // Verify the dimensions, name, and type are correct
@@ -591,16 +541,13 @@ TEST_F(ADIOSInterfaceWriteTest, Exceptions)
     adios2::Operator invalidOp = adios.InquireOperator("InvalidOp");
     EXPECT_FALSE(invalidOp);
     EXPECT_THROW(adios.AtIO("IOnull"), std::invalid_argument);
-    EXPECT_THROW(adios.DefineOperator("WrongOp", "UnsupportedType"),
-                 std::invalid_argument);
+    EXPECT_THROW(adios.DefineOperator("WrongOp", "UnsupportedType"), std::invalid_argument);
 
 #ifdef ADIOS2_HAVE_BZIP2
     EXPECT_NO_THROW(adios.DefineOperator("bzip2Op", "bzip2"));
-    EXPECT_THROW(adios.DefineOperator("bzip2Op", "bzip2"),
-                 std::invalid_argument);
+    EXPECT_THROW(adios.DefineOperator("bzip2Op", "bzip2"), std::invalid_argument);
 #else
-    EXPECT_THROW(adios.DefineOperator("bzip2Op", "bzip2"),
-                 std::invalid_argument);
+    EXPECT_THROW(adios.DefineOperator("bzip2Op", "bzip2"), std::invalid_argument);
 #endif
 
 #ifdef ADIOS2_HAVE_ZFP

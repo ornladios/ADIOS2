@@ -43,14 +43,13 @@ IO::IO(const Settings &s, MPI_Comm comm)
     }
 
     // define T as 2D global array
-    varT = bpio.DefineVariable<double>(
-        "T",
-        // Global dimensions
-        {s.gndx, s.gndy},
-        // starting offset of the local array in the global space
-        {s.offsx, s.offsy},
-        // local size, could be defined later using SetSelection()
-        {s.ndx, s.ndy});
+    varT = bpio.DefineVariable<double>("T",
+                                       // Global dimensions
+                                       {s.gndx, s.gndy},
+                                       // starting offset of the local array in the global space
+                                       {s.offsx, s.offsy},
+                                       // local size, could be defined later using SetSelection()
+                                       {s.ndx, s.ndy});
 
     if (bpio.EngineType() == "BP3")
     {
@@ -66,8 +65,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
 IO::~IO() { bpWriter.Close(); }
 
-void IO::write(int step, const HeatTransfer &ht, const Settings &s,
-               MPI_Comm comm)
+void IO::write(int step, const HeatTransfer &ht, const Settings &s, MPI_Comm comm)
 {
     // using PutDeferred() you promise the pointer to the data will be intact
     // until the end of the output step.

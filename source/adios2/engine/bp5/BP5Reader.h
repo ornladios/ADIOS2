@@ -42,13 +42,11 @@ public:
      * @param openMode only read
      * @param comm
      */
-    BP5Reader(IO &io, const std::string &name, const Mode mode,
-              helper::Comm comm);
+    BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm);
 
     ~BP5Reader();
 
-    StepStatus BeginStep(StepMode mode = StepMode::Read,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode = StepMode::Read, const float timeoutSeconds = -1.0) final;
 
     size_t CurrentStep() const final;
 
@@ -57,10 +55,8 @@ public:
     void PerformGets() final;
 
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
-    bool VarShape(const VariableBase &Var, const size_t Step,
-                  Dims &Shape) const;
-    bool VariableMinMax(const VariableBase &, const size_t Step,
-                        MinMaxStruct &MinMax);
+    bool VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const;
+    bool VariableMinMax(const VariableBase &, const size_t Step, MinMaxStruct &MinMax);
 
 private:
     format::BP5Deserializer *m_BP5Deserializer = nullptr;
@@ -122,16 +118,14 @@ private:
      * Return true if slept
      * return false if sleep was not needed because it was overtime
      */
-    bool SleepOrQuit(const TimePoint &timeoutInstant,
-                     const Seconds &pollSeconds);
+    bool SleepOrQuit(const TimePoint &timeoutInstant, const Seconds &pollSeconds);
     /** Open one category of files within timeout.
      * @return: 0 = OK, 1 = timeout, 2 = error
      * lasterrmsg contains the error message in case of error
      */
     size_t OpenWithTimeout(transportman::TransportMan &tm,
                            const std::vector<std::string> &fileNames,
-                           const TimePoint &timeoutInstant,
-                           const Seconds &pollSeconds,
+                           const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                            std::string &lasterrmsg /*INOUT*/);
 
     /** Open files within timeout.
@@ -147,8 +141,7 @@ private:
      *  track if new steps (after filtering with SelectSteps) are read in
      *  and are ready to be processed.
      */
-    void UpdateBuffer(const TimePoint &timeoutInstant,
-                      const Seconds &pollSeconds,
+    void UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                       const Seconds &timeoutSeconds);
 
     bool ReadActiveFlag(std::vector<char> &buffer);
@@ -163,8 +156,7 @@ private:
      *   m_WriterMapIndex
      *   m_FilteredMetadataInfo
      */
-    size_t ParseMetadataIndex(format::BufferSTL &bufferSTL,
-                              const size_t absoluteStartPos,
+    size_t ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t absoluteStartPos,
                               const bool hasHeader);
 
     /** Process the new metadata coming in (in UpdateBuffer)
@@ -198,8 +190,8 @@ private:
      */
     void NotifyEngineNoVarsQuery();
 
-#define declare_type(T)                                                        \
-    void DoGetSync(Variable<T> &, T *) final;                                  \
+#define declare_type(T)                                                                            \
+    void DoGetSync(Variable<T> &, T *) final;                                                      \
     void DoGetDeferred(Variable<T> &, T *) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -218,8 +210,7 @@ private:
 
     size_t DoSteps() const final;
 
-    void DoGetAbsoluteSteps(const VariableBase &variable,
-                            std::vector<size_t> &keys) const final;
+    void DoGetAbsoluteSteps(const VariableBase &variable, std::vector<size_t> &keys) const final;
 
     uint32_t m_WriterColumnMajor = 0;
     bool m_ReaderIsRowMajor = true;
@@ -231,11 +222,10 @@ private:
 
     void InstallMetaMetaData(format::BufferSTL MetaMetadata);
     void InstallMetadataForTimestep(size_t Step);
-    std::pair<double, double>
-    ReadData(adios2::transportman::TransportMan &FileManager,
-             const size_t maxOpenFiles, const size_t WriterRank,
-             const size_t Timestep, const size_t StartOffset,
-             const size_t Length, char *Destination);
+    std::pair<double, double> ReadData(adios2::transportman::TransportMan &FileManager,
+                                       const size_t maxOpenFiles, const size_t WriterRank,
+                                       const size_t Timestep, const size_t StartOffset,
+                                       const size_t Length, char *Destination);
 
     struct WriterMapStruct
     {

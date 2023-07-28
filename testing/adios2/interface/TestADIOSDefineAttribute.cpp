@@ -14,8 +14,7 @@ class ADIOSDefineAttributeTest : public ::testing::Test
 {
 public:
 #if ADIOS2_USE_MPI
-    ADIOSDefineAttributeTest()
-    : adios(MPI_COMM_WORLD), io(adios.DeclareIO("TestIO"))
+    ADIOSDefineAttributeTest() : adios(MPI_COMM_WORLD), io(adios.DeclareIO("TestIO"))
 #else
     ADIOSDefineAttributeTest() : adios(), io(adios.DeclareIO("TestIO"))
 #endif
@@ -46,11 +45,9 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeNameException)
     EXPECT_EQ(availableAttributes.size(), 1);
 
     // Redefinition is not allowed (non-modifiable attribute)
-    EXPECT_THROW(io.DefineAttribute<std::string>(name, "0"),
-                 std::invalid_argument);
+    EXPECT_THROW(io.DefineAttribute<std::string>(name, "0"), std::invalid_argument);
 
-    auto attributeString1 =
-        io.InquireAttribute<std::string>("NonExistingAttribute");
+    auto attributeString1 = io.InquireAttribute<std::string>("NonExistingAttribute");
     EXPECT_FALSE(attributeString1);
 
     auto attributeString2 = io.InquireAttribute<std::string>(name);
@@ -81,8 +78,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
 #endif
 
     // Define unique data for each process
-    SmallTestData currentTestData =
-        generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
+    SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
 
     const std::string mpiRankString(std::to_string(mpiRank));
     const std::string s1_Single("s1_Single_" + mpiRankString);
@@ -98,54 +94,32 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByValue)
     const std::string double_Single("double_Single_" + mpiRankString);
 
     // Define ADIOS global value
-    auto attributeS1 =
-        io.DefineAttribute<std::string>(s1_Single, currentTestData.S1);
-    auto attributeI8 =
-        io.DefineAttribute<int8_t>(i8_Single, currentTestData.I8.front());
-    auto attributeI16 =
-        io.DefineAttribute<int16_t>(i16_Single, currentTestData.I16.front());
-    auto attributeI32 =
-        io.DefineAttribute<int32_t>(i32_Single, currentTestData.I32.front());
-    auto attributeI64 =
-        io.DefineAttribute<int64_t>(i64_Single, currentTestData.I64.front());
+    auto attributeS1 = io.DefineAttribute<std::string>(s1_Single, currentTestData.S1);
+    auto attributeI8 = io.DefineAttribute<int8_t>(i8_Single, currentTestData.I8.front());
+    auto attributeI16 = io.DefineAttribute<int16_t>(i16_Single, currentTestData.I16.front());
+    auto attributeI32 = io.DefineAttribute<int32_t>(i32_Single, currentTestData.I32.front());
+    auto attributeI64 = io.DefineAttribute<int64_t>(i64_Single, currentTestData.I64.front());
 
-    auto attributeU8 =
-        io.DefineAttribute<uint8_t>(u8_Single, currentTestData.U8.front());
-    auto attributeU16 =
-        io.DefineAttribute<uint16_t>(u16_Single, currentTestData.U16.front());
-    auto attributeU32 =
-        io.DefineAttribute<uint32_t>(u32_Single, currentTestData.U32.front());
-    auto attributeU64 =
-        io.DefineAttribute<uint64_t>(u64_Single, currentTestData.U64.front());
+    auto attributeU8 = io.DefineAttribute<uint8_t>(u8_Single, currentTestData.U8.front());
+    auto attributeU16 = io.DefineAttribute<uint16_t>(u16_Single, currentTestData.U16.front());
+    auto attributeU32 = io.DefineAttribute<uint32_t>(u32_Single, currentTestData.U32.front());
+    auto attributeU64 = io.DefineAttribute<uint64_t>(u64_Single, currentTestData.U64.front());
 
-    auto attributeFloat =
-        io.DefineAttribute<float>(float_Single, currentTestData.R32.front());
-    auto attributeDouble =
-        io.DefineAttribute<double>(double_Single, currentTestData.R64.front());
+    auto attributeFloat = io.DefineAttribute<float>(float_Single, currentTestData.R32.front());
+    auto attributeDouble = io.DefineAttribute<double>(double_Single, currentTestData.R64.front());
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(attributeS1),
-                                  adios2::Attribute<std::string>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeI8),
-                                  adios2::Attribute<int8_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeI16),
-                                  adios2::Attribute<int16_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeI32),
-                                  adios2::Attribute<int32_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeI64),
-                                  adios2::Attribute<int64_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeU8),
-                                  adios2::Attribute<uint8_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeU16),
-                                  adios2::Attribute<uint16_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeU32),
-                                  adios2::Attribute<uint32_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeU64),
-                                  adios2::Attribute<uint64_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeFloat),
-                                  adios2::Attribute<float>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeDouble),
-                                  adios2::Attribute<double>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeS1), adios2::Attribute<std::string>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeI8), adios2::Attribute<int8_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeI16), adios2::Attribute<int16_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeI32), adios2::Attribute<int32_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeI64), adios2::Attribute<int64_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeU8), adios2::Attribute<uint8_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeU16), adios2::Attribute<uint16_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeU32), adios2::Attribute<uint32_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeU64), adios2::Attribute<uint64_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeFloat), adios2::Attribute<float>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeDouble), adios2::Attribute<double>>();
 
     // Verify the members are correct
     std::cout << "STRING name: " << attributeS1.Name() << "\n";
@@ -251,8 +225,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
 #endif
 
     // Define unique data for each process
-    SmallTestData currentTestData =
-        generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
+    SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
 
     std::string mpiRankString = std::to_string(mpiRank);
     std::string s3_Single = std::string("s3_Single_") + mpiRankString;
@@ -268,54 +241,42 @@ TEST_F(ADIOSDefineAttributeTest, DefineAttributeTypeByReference)
     std::string double_Single = std::string("double_Single_") + mpiRankString;
 
     // Define ADIOS global value
-    auto attributeS3 = io.DefineAttribute<std::string>(
-        s3_Single, currentTestData.S3.data(), 3);
-    auto attributeI8 = io.DefineAttribute<int8_t>(
-        i8_Single, currentTestData.I8.data(), numberOfElements);
-    auto attributeI16 = io.DefineAttribute<int16_t>(
-        i16_Single, currentTestData.I16.data(), numberOfElements);
-    auto attributeI32 = io.DefineAttribute<int32_t>(
-        i32_Single, currentTestData.I32.data(), numberOfElements);
-    auto attributeI64 = io.DefineAttribute<int64_t>(
-        i64_Single, currentTestData.I64.data(), numberOfElements);
+    auto attributeS3 = io.DefineAttribute<std::string>(s3_Single, currentTestData.S3.data(), 3);
+    auto attributeI8 =
+        io.DefineAttribute<int8_t>(i8_Single, currentTestData.I8.data(), numberOfElements);
+    auto attributeI16 =
+        io.DefineAttribute<int16_t>(i16_Single, currentTestData.I16.data(), numberOfElements);
+    auto attributeI32 =
+        io.DefineAttribute<int32_t>(i32_Single, currentTestData.I32.data(), numberOfElements);
+    auto attributeI64 =
+        io.DefineAttribute<int64_t>(i64_Single, currentTestData.I64.data(), numberOfElements);
 
-    auto attributeU8 = io.DefineAttribute<uint8_t>(
-        u8_Single, currentTestData.U8.data(), numberOfElements);
-    auto attributeU16 = io.DefineAttribute<uint16_t>(
-        u16_Single, currentTestData.U16.data(), numberOfElements);
-    auto attributeU32 = io.DefineAttribute<uint32_t>(
-        u32_Single, currentTestData.U32.data(), numberOfElements);
-    auto attributeU64 = io.DefineAttribute<uint64_t>(
-        u64_Single, currentTestData.U64.data(), numberOfElements);
+    auto attributeU8 =
+        io.DefineAttribute<uint8_t>(u8_Single, currentTestData.U8.data(), numberOfElements);
+    auto attributeU16 =
+        io.DefineAttribute<uint16_t>(u16_Single, currentTestData.U16.data(), numberOfElements);
+    auto attributeU32 =
+        io.DefineAttribute<uint32_t>(u32_Single, currentTestData.U32.data(), numberOfElements);
+    auto attributeU64 =
+        io.DefineAttribute<uint64_t>(u64_Single, currentTestData.U64.data(), numberOfElements);
 
-    auto attributeFloat = io.DefineAttribute<float>(
-        float_Single, currentTestData.R32.data(), numberOfElements);
-    auto attributeDouble = io.DefineAttribute<double>(
-        double_Single, currentTestData.R64.data(), numberOfElements);
+    auto attributeFloat =
+        io.DefineAttribute<float>(float_Single, currentTestData.R32.data(), numberOfElements);
+    auto attributeDouble =
+        io.DefineAttribute<double>(double_Single, currentTestData.R64.data(), numberOfElements);
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(attributeS3),
-                                  adios2::Attribute<std::string>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeI8),
-                                  adios2::Attribute<int8_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeI16),
-                                  adios2::Attribute<int16_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeI32),
-                                  adios2::Attribute<int32_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeI64),
-                                  adios2::Attribute<int64_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeU8),
-                                  adios2::Attribute<uint8_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeU16),
-                                  adios2::Attribute<uint16_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeU32),
-                                  adios2::Attribute<uint32_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeU64),
-                                  adios2::Attribute<uint64_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeFloat),
-                                  adios2::Attribute<float>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeDouble),
-                                  adios2::Attribute<double>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeS3), adios2::Attribute<std::string>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeI8), adios2::Attribute<int8_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeI16), adios2::Attribute<int16_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeI32), adios2::Attribute<int32_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeI64), adios2::Attribute<int64_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeU8), adios2::Attribute<uint8_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeU16), adios2::Attribute<uint16_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeU32), adios2::Attribute<uint32_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeU64), adios2::Attribute<uint64_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeFloat), adios2::Attribute<float>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeDouble), adios2::Attribute<double>>();
 
     // Verify the members are correct
     ASSERT_EQ(attributeS3.Data().size() == 1, false);
@@ -410,8 +371,7 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
 #endif
 
     // Define unique data for each process
-    SmallTestData currentTestData =
-        generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
+    SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
 
     std::string mpiRankString = std::to_string(mpiRank);
     std::string s3_Single = std::string("s3_Array_") + mpiRankString;
@@ -428,28 +388,17 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
 
     // Define ADIOS global value
     {
-        io.DefineAttribute<std::string>(s3_Single, currentTestData.S3.data(),
-                                        3);
-        io.DefineAttribute<int8_t>(i8_Single, currentTestData.I8.data(),
-                                   numberOfElements);
-        io.DefineAttribute<int16_t>(i16_Single, currentTestData.I16.data(),
-                                    numberOfElements);
-        io.DefineAttribute<int32_t>(i32_Single, currentTestData.I32.data(),
-                                    numberOfElements);
-        io.DefineAttribute<int64_t>(i64_Single, currentTestData.I64.data(),
-                                    numberOfElements);
-        io.DefineAttribute<uint8_t>(u8_Single, currentTestData.U8.data(),
-                                    numberOfElements);
-        io.DefineAttribute<uint16_t>(u16_Single, currentTestData.U16.data(),
-                                     numberOfElements);
-        io.DefineAttribute<uint32_t>(u32_Single, currentTestData.U32.data(),
-                                     numberOfElements);
-        io.DefineAttribute<uint64_t>(u64_Single, currentTestData.U64.data(),
-                                     numberOfElements);
-        io.DefineAttribute<float>(float_Single, currentTestData.R32.data(),
-                                  numberOfElements);
-        io.DefineAttribute<double>(double_Single, currentTestData.R64.data(),
-                                   numberOfElements);
+        io.DefineAttribute<std::string>(s3_Single, currentTestData.S3.data(), 3);
+        io.DefineAttribute<int8_t>(i8_Single, currentTestData.I8.data(), numberOfElements);
+        io.DefineAttribute<int16_t>(i16_Single, currentTestData.I16.data(), numberOfElements);
+        io.DefineAttribute<int32_t>(i32_Single, currentTestData.I32.data(), numberOfElements);
+        io.DefineAttribute<int64_t>(i64_Single, currentTestData.I64.data(), numberOfElements);
+        io.DefineAttribute<uint8_t>(u8_Single, currentTestData.U8.data(), numberOfElements);
+        io.DefineAttribute<uint16_t>(u16_Single, currentTestData.U16.data(), numberOfElements);
+        io.DefineAttribute<uint32_t>(u32_Single, currentTestData.U32.data(), numberOfElements);
+        io.DefineAttribute<uint64_t>(u64_Single, currentTestData.U64.data(), numberOfElements);
+        io.DefineAttribute<float>(float_Single, currentTestData.R32.data(), numberOfElements);
+        io.DefineAttribute<double>(double_Single, currentTestData.R64.data(), numberOfElements);
     }
 
     auto attributeS3 = io.InquireAttribute<std::string>(s3_Single);
@@ -465,28 +414,17 @@ TEST_F(ADIOSDefineAttributeTest, GetAttribute)
     auto attributeDouble = io.InquireAttribute<double>(double_Single);
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(attributeS3),
-                                  adios2::Attribute<std::string>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeI8),
-                                  adios2::Attribute<int8_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeI16),
-                                  adios2::Attribute<int16_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeI32),
-                                  adios2::Attribute<int32_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeI64),
-                                  adios2::Attribute<int64_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeU8),
-                                  adios2::Attribute<uint8_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeU16),
-                                  adios2::Attribute<uint16_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeU32),
-                                  adios2::Attribute<uint32_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeU64),
-                                  adios2::Attribute<uint64_t>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeFloat),
-                                  adios2::Attribute<float>>();
-    ::testing::StaticAssertTypeEq<decltype(attributeDouble),
-                                  adios2::Attribute<double>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeS3), adios2::Attribute<std::string>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeI8), adios2::Attribute<int8_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeI16), adios2::Attribute<int16_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeI32), adios2::Attribute<int32_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeI64), adios2::Attribute<int64_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeU8), adios2::Attribute<uint8_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeU16), adios2::Attribute<uint16_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeU32), adios2::Attribute<uint32_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeU64), adios2::Attribute<uint64_t>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeFloat), adios2::Attribute<float>>();
+    ::testing::StaticAssertTypeEq<decltype(attributeDouble), adios2::Attribute<double>>();
 
     // Verify the members are correct
     ASSERT_EQ(attributeS3.Data().size() == 1, false);
@@ -679,8 +617,7 @@ TEST_F(ADIOSDefineAttributeTest, DefineRemoveDefine)
     EXPECT_EQ(attributes[0].Name(), "string_0");
     EXPECT_EQ(attributes[0].Data().front(), "attribute_0_new");
 
-    auto attribute2 =
-        io.DefineAttribute<std::string>("string_2", "attribute_2");
+    auto attribute2 = io.DefineAttribute<std::string>("string_2", "attribute_2");
     EXPECT_TRUE(attribute2);
     EXPECT_EQ(attribute2.Name(), "string_2");
     EXPECT_EQ(attribute2.Data().front(), "attribute_2");
@@ -777,23 +714,19 @@ TEST_F(ADIOSDefineAttributeTest, VariableException)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
-        EXPECT_THROW(
-            io.DefineAttribute<std::string>("Hello Value", "Value", "myVar1"),
-            std::invalid_argument);
+        EXPECT_THROW(io.DefineAttribute<std::string>("Hello Value", "Value", "myVar1"),
+                     std::invalid_argument);
 
-        EXPECT_THROW(io.DefineAttribute<std::string>(
-                         "Hello Array", numbers.data(), numbers.size(),
-                         "myVar1", separator),
+        EXPECT_THROW(io.DefineAttribute<std::string>("Hello Array", numbers.data(), numbers.size(),
+                                                     "myVar1", separator),
                      std::invalid_argument);
 
         io.DefineVariable<int>("myVar1");
 
-        EXPECT_NO_THROW(
-            io.DefineAttribute<std::string>("Hello Value", "Value", "myVar1"));
+        EXPECT_NO_THROW(io.DefineAttribute<std::string>("Hello Value", "Value", "myVar1"));
 
-        EXPECT_NO_THROW(io.DefineAttribute<std::string>(
-            "Hello Array", numbers.data(), numbers.size(), "myVar1",
-            separator));
+        EXPECT_NO_THROW(io.DefineAttribute<std::string>("Hello Array", numbers.data(),
+                                                        numbers.size(), "myVar1", separator));
     }
 }
 

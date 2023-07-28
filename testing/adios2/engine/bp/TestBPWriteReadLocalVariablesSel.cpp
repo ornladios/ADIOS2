@@ -67,33 +67,21 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
             io.DefineVariable<int32_t>("stepsGlobalValue");
             io.DefineVariable<std::string>("stepsGlobalValueString");
 
-            io.DefineVariable<int32_t>("ranksLocalValue",
-                                       {adios2::LocalValueDim});
-            io.DefineVariable<std::string>("ranksLocalValueString",
-                                           {adios2::LocalValueDim});
+            io.DefineVariable<int32_t>("ranksLocalValue", {adios2::LocalValueDim});
+            io.DefineVariable<std::string>("ranksLocalValueString", {adios2::LocalValueDim});
 
-            io.DefineVariable<int8_t>("i8", shape, start, count,
-                                      adios2::ConstantDims);
-            io.DefineVariable<int16_t>("i16", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<int32_t>("i32", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<int64_t>("i64", shape, start, count,
-                                       adios2::ConstantDims);
+            io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int32_t>("i32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int64_t>("i64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                        adios2::ConstantDims);
+            io.DefineVariable<uint8_t>("u8", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint16_t>("u16", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint32_t>("u32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint64_t>("u64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<float>("r32", shape, start, count,
-                                     adios2::ConstantDims);
-            io.DefineVariable<double>("r64", shape, start, count,
-                                      adios2::ConstantDims);
+            io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
             io.DefineVariable<std::complex<float>>("cr32", shape, start, count,
                                                    adios2::ConstantDims);
@@ -105,8 +93,8 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             EXPECT_EQ(bpWriter.CurrentStep(), step);
 
@@ -114,12 +102,10 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
 
             const int32_t step32 = static_cast<int32_t>(step);
             bpWriter.Put<int32_t>("stepsGlobalValue", step32);
-            bpWriter.Put<std::string>("stepsGlobalValueString",
-                                      std::to_string(step));
+            bpWriter.Put<std::string>("stepsGlobalValueString", std::to_string(step));
 
             bpWriter.Put<int32_t>("ranksLocalValue", mpiRank);
-            bpWriter.Put<std::string>("ranksLocalValueString",
-                                      std::to_string(mpiRank));
+            bpWriter.Put<std::string>("ranksLocalValueString", std::to_string(mpiRank));
 
             bpWriter.Put<int8_t>("i8", currentTestData.I8.data());
             bpWriter.Put<int16_t>("i16", currentTestData.I16.data());
@@ -131,10 +117,8 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
             bpWriter.Put<uint64_t>("u64", currentTestData.U64.data());
             bpWriter.Put<float>("r32", currentTestData.R32.data());
             bpWriter.Put<double>("r64", currentTestData.R64.data());
-            bpWriter.Put<std::complex<float>>("cr32",
-                                              currentTestData.CR32.data());
-            bpWriter.Put<std::complex<double>>("cr64",
-                                               currentTestData.CR64.data());
+            bpWriter.Put<std::complex<float>>("cr32", currentTestData.CR32.data());
+            bpWriter.Put<std::complex<double>>("cr64", currentTestData.CR64.data());
             bpWriter.EndStep();
         }
 
@@ -172,12 +156,10 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
             const size_t currentStep = bpReader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-            auto var_StepsGlobalValue =
-                io.InquireVariable<int32_t>("stepsGlobalValue");
+            auto var_StepsGlobalValue = io.InquireVariable<int32_t>("stepsGlobalValue");
             auto var_StepsGlobalValueString =
                 io.InquireVariable<std::string>("stepsGlobalValueString");
-            auto var_RanksLocalValue =
-                io.InquireVariable<int32_t>("ranksLocalValue");
+            auto var_RanksLocalValue = io.InquireVariable<int32_t>("ranksLocalValue");
             auto var_RanksLocalValueString =
                 io.InquireVariable<std::string>("ranksLocalValueString");
 
@@ -196,35 +178,27 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
 
             // Global value
             EXPECT_TRUE(var_StepsGlobalValue);
-            EXPECT_EQ(var_StepsGlobalValue.ShapeID(),
-                      adios2::ShapeID::GlobalValue);
+            EXPECT_EQ(var_StepsGlobalValue.ShapeID(), adios2::ShapeID::GlobalValue);
             EXPECT_EQ(var_StepsGlobalValue.Shape().size(), 0);
-            EXPECT_EQ(var_StepsGlobalValue.Min(),
-                      static_cast<int32_t>(currentStep));
-            EXPECT_EQ(var_StepsGlobalValue.Max(),
-                      static_cast<int32_t>(currentStep));
+            EXPECT_EQ(var_StepsGlobalValue.Min(), static_cast<int32_t>(currentStep));
+            EXPECT_EQ(var_StepsGlobalValue.Max(), static_cast<int32_t>(currentStep));
             int32_t stepsGlobalValueData;
-            bpReader.Get(var_StepsGlobalValue, stepsGlobalValueData,
-                         adios2::Mode::Sync);
+            bpReader.Get(var_StepsGlobalValue, stepsGlobalValueData, adios2::Mode::Sync);
             EXPECT_EQ(stepsGlobalValueData, currentStep);
 
             EXPECT_TRUE(var_StepsGlobalValueString);
-            EXPECT_EQ(var_StepsGlobalValueString.ShapeID(),
-                      adios2::ShapeID::GlobalValue);
+            EXPECT_EQ(var_StepsGlobalValueString.ShapeID(), adios2::ShapeID::GlobalValue);
             EXPECT_EQ(var_StepsGlobalValueString.Shape().size(), 0);
             std::string stepsGlobalValueStringDataString;
-            bpReader.Get(var_StepsGlobalValueString,
-                         stepsGlobalValueStringDataString, adios2::Mode::Sync);
-            EXPECT_EQ(stepsGlobalValueStringDataString,
-                      std::to_string(currentStep));
+            bpReader.Get(var_StepsGlobalValueString, stepsGlobalValueStringDataString,
+                         adios2::Mode::Sync);
+            EXPECT_EQ(stepsGlobalValueStringDataString, std::to_string(currentStep));
 
             // Local values will be read as 1D GlobalArrays
             EXPECT_TRUE(var_RanksLocalValue);
-            EXPECT_EQ(var_RanksLocalValue.ShapeID(),
-                      adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_RanksLocalValue.ShapeID(), adios2::ShapeID::GlobalArray);
             EXPECT_EQ(var_RanksLocalValue.Shape().size(), 1);
-            EXPECT_EQ(var_RanksLocalValue.Shape()[0],
-                      static_cast<size_t>(mpiSize));
+            EXPECT_EQ(var_RanksLocalValue.Shape()[0], static_cast<size_t>(mpiSize));
             EXPECT_EQ(var_RanksLocalValue.Min(), 0);
             EXPECT_EQ(var_RanksLocalValue.Max(), mpiSize - 1);
             std::vector<int32_t> rankLocalValueData;
@@ -236,13 +210,11 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
             }
 
             EXPECT_TRUE(var_RanksLocalValueString);
-            EXPECT_EQ(var_RanksLocalValueString.ShapeID(),
-                      adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_RanksLocalValueString.ShapeID(), adios2::ShapeID::GlobalArray);
             EXPECT_EQ(var_RanksLocalValue.Shape().size(), 1);
             EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
             std::vector<std::string> rankLocalValueDataString;
-            bpReader.Get(var_RanksLocalValueString, rankLocalValueDataString,
-                         adios2::Mode::Sync);
+            bpReader.Get(var_RanksLocalValueString, rankLocalValueDataString, adios2::Mode::Sync);
             EXPECT_EQ(rankLocalValueData.size(), mpiSize);
             for (size_t r = 0; r < rankLocalValueData.size(); ++r)
             {
@@ -317,8 +289,7 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
                 EXPECT_EQ(var_cr64.BlockID(), b);
 
                 SmallTestData currentTestData = generateNewSmallTestData(
-                    m_TestData, static_cast<int>(currentStep),
-                    static_cast<int>(b), mpiSize);
+                    m_TestData, static_cast<int>(currentStep), static_cast<int>(b), mpiSize);
 
                 // loop selections
                 for (size_t s = 0; s < Nx; ++s)
@@ -406,18 +377,15 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
 
                         if (var_i16)
                         {
-                            EXPECT_EQ(I16[i - s], currentTestData.I16[i])
-                                << msg;
+                            EXPECT_EQ(I16[i - s], currentTestData.I16[i]) << msg;
                         }
                         if (var_i32)
                         {
-                            EXPECT_EQ(I32[i - s], currentTestData.I32[i])
-                                << msg;
+                            EXPECT_EQ(I32[i - s], currentTestData.I32[i]) << msg;
                         }
                         if (var_i64)
                         {
-                            EXPECT_EQ(I64[i - s], currentTestData.I64[i])
-                                << msg;
+                            EXPECT_EQ(I64[i - s], currentTestData.I64[i]) << msg;
                         }
 
                         if (var_u8)
@@ -426,39 +394,32 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
                         }
                         if (var_u16)
                         {
-                            EXPECT_EQ(U16[i - s], currentTestData.U16[i])
-                                << msg;
+                            EXPECT_EQ(U16[i - s], currentTestData.U16[i]) << msg;
                         }
                         if (var_u32)
                         {
-                            EXPECT_EQ(U32[i - s], currentTestData.U32[i])
-                                << msg;
+                            EXPECT_EQ(U32[i - s], currentTestData.U32[i]) << msg;
                         }
                         if (var_u64)
                         {
-                            EXPECT_EQ(U64[i - s], currentTestData.U64[i])
-                                << msg;
+                            EXPECT_EQ(U64[i - s], currentTestData.U64[i]) << msg;
                         }
                         if (var_r32)
                         {
-                            EXPECT_EQ(R32[i - s], currentTestData.R32[i])
-                                << msg;
+                            EXPECT_EQ(R32[i - s], currentTestData.R32[i]) << msg;
                         }
                         if (var_r64)
                         {
-                            EXPECT_EQ(R64[i - s], currentTestData.R64[i])
-                                << msg;
+                            EXPECT_EQ(R64[i - s], currentTestData.R64[i]) << msg;
                         }
 
                         if (var_cr32)
                         {
-                            EXPECT_EQ(CR32[i - s], currentTestData.CR32[i])
-                                << msg;
+                            EXPECT_EQ(CR32[i - s], currentTestData.CR32[i]) << msg;
                         }
                         if (var_cr64)
                         {
-                            EXPECT_EQ(CR64[i - s], currentTestData.CR64[i])
-                                << msg;
+                            EXPECT_EQ(CR64[i - s], currentTestData.CR64[i]) << msg;
                         }
                     }
 
@@ -518,33 +479,21 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
             io.DefineVariable<int32_t>("stepsGlobalValue");
             io.DefineVariable<std::string>("stepsGlobalValueString");
 
-            io.DefineVariable<int32_t>("ranksLocalValue",
-                                       {adios2::LocalValueDim});
-            io.DefineVariable<std::string>("ranksLocalValueString",
-                                           {adios2::LocalValueDim});
+            io.DefineVariable<int32_t>("ranksLocalValue", {adios2::LocalValueDim});
+            io.DefineVariable<std::string>("ranksLocalValueString", {adios2::LocalValueDim});
 
-            io.DefineVariable<int8_t>("i8", shape, start, count,
-                                      adios2::ConstantDims);
-            io.DefineVariable<int16_t>("i16", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<int32_t>("i32", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<int64_t>("i64", shape, start, count,
-                                       adios2::ConstantDims);
+            io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int32_t>("i32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int64_t>("i64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                        adios2::ConstantDims);
+            io.DefineVariable<uint8_t>("u8", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint16_t>("u16", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint32_t>("u32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint64_t>("u64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<float>("r32", shape, start, count,
-                                     adios2::ConstantDims);
-            io.DefineVariable<double>("r64", shape, start, count,
-                                      adios2::ConstantDims);
+            io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
             io.DefineVariable<std::complex<float>>("cr32", shape, start, count,
                                                    adios2::ConstantDims);
@@ -556,8 +505,8 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             EXPECT_EQ(bpWriter.CurrentStep(), step);
 
@@ -565,12 +514,10 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
 
             const int32_t step32 = static_cast<int32_t>(step);
             bpWriter.Put<int32_t>("stepsGlobalValue", step32);
-            bpWriter.Put<std::string>("stepsGlobalValueString",
-                                      std::to_string(step));
+            bpWriter.Put<std::string>("stepsGlobalValueString", std::to_string(step));
 
             bpWriter.Put<int32_t>("ranksLocalValue", mpiRank);
-            bpWriter.Put<std::string>("ranksLocalValueString",
-                                      std::to_string(mpiRank));
+            bpWriter.Put<std::string>("ranksLocalValueString", std::to_string(mpiRank));
 
             bpWriter.Put<int8_t>("i8", currentTestData.I8.data());
             bpWriter.Put<int16_t>("i16", currentTestData.I16.data());
@@ -582,10 +529,8 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
             bpWriter.Put<uint64_t>("u64", currentTestData.U64.data());
             bpWriter.Put<float>("r32", currentTestData.R32.data());
             bpWriter.Put<double>("r64", currentTestData.R64.data());
-            bpWriter.Put<std::complex<float>>("cr32",
-                                              currentTestData.CR32.data());
-            bpWriter.Put<std::complex<double>>("cr64",
-                                               currentTestData.CR64.data());
+            bpWriter.Put<std::complex<float>>("cr32", currentTestData.CR32.data());
+            bpWriter.Put<std::complex<double>>("cr64", currentTestData.CR64.data());
             bpWriter.EndStep();
         }
 
@@ -623,12 +568,10 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
             const size_t currentStep = bpReader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-            auto var_StepsGlobalValue =
-                io.InquireVariable<int32_t>("stepsGlobalValue");
+            auto var_StepsGlobalValue = io.InquireVariable<int32_t>("stepsGlobalValue");
             auto var_StepsGlobalValueString =
                 io.InquireVariable<std::string>("stepsGlobalValueString");
-            auto var_RanksLocalValue =
-                io.InquireVariable<int32_t>("ranksLocalValue");
+            auto var_RanksLocalValue = io.InquireVariable<int32_t>("ranksLocalValue");
             auto var_RanksLocalValueString =
                 io.InquireVariable<std::string>("ranksLocalValueString");
 
@@ -647,32 +590,25 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
 
             // Global value
             EXPECT_TRUE(var_StepsGlobalValue);
-            EXPECT_EQ(var_StepsGlobalValue.ShapeID(),
-                      adios2::ShapeID::GlobalValue);
+            EXPECT_EQ(var_StepsGlobalValue.ShapeID(), adios2::ShapeID::GlobalValue);
             EXPECT_EQ(var_StepsGlobalValue.Shape().size(), 0);
-            EXPECT_EQ(var_StepsGlobalValue.Min(),
-                      static_cast<int32_t>(currentStep));
-            EXPECT_EQ(var_StepsGlobalValue.Max(),
-                      static_cast<int32_t>(currentStep));
+            EXPECT_EQ(var_StepsGlobalValue.Min(), static_cast<int32_t>(currentStep));
+            EXPECT_EQ(var_StepsGlobalValue.Max(), static_cast<int32_t>(currentStep));
             int32_t stepsGlobalValueData;
-            bpReader.Get(var_StepsGlobalValue, stepsGlobalValueData,
-                         adios2::Mode::Sync);
+            bpReader.Get(var_StepsGlobalValue, stepsGlobalValueData, adios2::Mode::Sync);
             EXPECT_EQ(stepsGlobalValueData, currentStep);
 
             EXPECT_TRUE(var_StepsGlobalValueString);
-            EXPECT_EQ(var_StepsGlobalValueString.ShapeID(),
-                      adios2::ShapeID::GlobalValue);
+            EXPECT_EQ(var_StepsGlobalValueString.ShapeID(), adios2::ShapeID::GlobalValue);
             EXPECT_EQ(var_StepsGlobalValueString.Shape().size(), 0);
             std::string stepsGlobalValueStringDataString;
-            bpReader.Get(var_StepsGlobalValueString,
-                         stepsGlobalValueStringDataString, adios2::Mode::Sync);
-            EXPECT_EQ(stepsGlobalValueStringDataString,
-                      std::to_string(currentStep));
+            bpReader.Get(var_StepsGlobalValueString, stepsGlobalValueStringDataString,
+                         adios2::Mode::Sync);
+            EXPECT_EQ(stepsGlobalValueStringDataString, std::to_string(currentStep));
 
             // Local values are read as 1D Global Arrays
             EXPECT_TRUE(var_RanksLocalValue);
-            EXPECT_EQ(var_RanksLocalValue.ShapeID(),
-                      adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_RanksLocalValue.ShapeID(), adios2::ShapeID::GlobalArray);
             EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
             EXPECT_EQ(var_RanksLocalValue.Min(), 0);
             EXPECT_EQ(var_RanksLocalValue.Max(), mpiSize - 1);
@@ -685,12 +621,10 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
             }
 
             EXPECT_TRUE(var_RanksLocalValueString);
-            EXPECT_EQ(var_RanksLocalValueString.ShapeID(),
-                      adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_RanksLocalValueString.ShapeID(), adios2::ShapeID::GlobalArray);
             EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
             std::vector<std::string> rankLocalValueDataString;
-            bpReader.Get(var_RanksLocalValueString, rankLocalValueDataString,
-                         adios2::Mode::Sync);
+            bpReader.Get(var_RanksLocalValueString, rankLocalValueDataString, adios2::Mode::Sync);
             EXPECT_EQ(rankLocalValueData.size(), mpiSize);
             for (size_t r = 0; r < rankLocalValueData.size(); ++r)
             {
@@ -764,8 +698,7 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
                 EXPECT_EQ(var_cr64.BlockID(), b);
 
                 SmallTestData currentTestData = generateNewSmallTestData(
-                    m_TestData, static_cast<int>(currentStep),
-                    static_cast<int>(b), mpiSize);
+                    m_TestData, static_cast<int>(currentStep), static_cast<int>(b), mpiSize);
 
                 // selection loop
                 for (size_t j = 0; j < Ny; ++j)
@@ -871,95 +804,79 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
                             for (size_t p = i; p < Nx; ++p)
                             {
                                 std::stringstream ss;
-                                ss << "t=" << t << " q=" << q << " p=" << p
-                                   << " rank=" << mpiRank;
+                                ss << "t=" << t << " q=" << q << " p=" << p << " rank=" << mpiRank;
                                 std::string msg = ss.str();
 
-                                const size_t indexSel =
-                                    (q - j) * (Nx - i) + (p - i);
+                                const size_t indexSel = (q - j) * (Nx - i) + (p - i);
                                 const size_t indexBlock = q * Nx + p;
 
                                 if (var_i8)
                                 {
-                                    EXPECT_EQ(I8[indexSel],
-                                              currentTestData.I8[indexBlock])
-                                        << msg;
+                                    EXPECT_EQ(I8[indexSel], currentTestData.I8[indexBlock]) << msg;
                                 }
 
                                 if (var_i16)
                                 {
-                                    EXPECT_EQ(I16[indexSel],
-                                              currentTestData.I16[indexBlock])
+                                    EXPECT_EQ(I16[indexSel], currentTestData.I16[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_i32)
                                 {
-                                    EXPECT_EQ(I32[indexSel],
-                                              currentTestData.I32[indexBlock])
+                                    EXPECT_EQ(I32[indexSel], currentTestData.I32[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_i64)
                                 {
-                                    EXPECT_EQ(I64[indexSel],
-                                              currentTestData.I64[indexBlock])
+                                    EXPECT_EQ(I64[indexSel], currentTestData.I64[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_u8)
                                 {
-                                    EXPECT_EQ(U8[indexSel],
-                                              currentTestData.U8[indexBlock])
-                                        << msg;
+                                    EXPECT_EQ(U8[indexSel], currentTestData.U8[indexBlock]) << msg;
                                 }
 
                                 if (var_u16)
                                 {
-                                    EXPECT_EQ(U16[indexSel],
-                                              currentTestData.U16[indexBlock])
+                                    EXPECT_EQ(U16[indexSel], currentTestData.U16[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_u32)
                                 {
-                                    EXPECT_EQ(U32[indexSel],
-                                              currentTestData.U32[indexBlock])
+                                    EXPECT_EQ(U32[indexSel], currentTestData.U32[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_u64)
                                 {
-                                    EXPECT_EQ(U64[indexSel],
-                                              currentTestData.U64[indexBlock])
+                                    EXPECT_EQ(U64[indexSel], currentTestData.U64[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_r32)
                                 {
-                                    EXPECT_EQ(R32[indexSel],
-                                              currentTestData.R32[indexBlock])
+                                    EXPECT_EQ(R32[indexSel], currentTestData.R32[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_r64)
                                 {
-                                    EXPECT_EQ(R64[indexSel],
-                                              currentTestData.R64[indexBlock])
+                                    EXPECT_EQ(R64[indexSel], currentTestData.R64[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_cr32)
                                 {
-                                    EXPECT_EQ(CR32[indexSel],
-                                              currentTestData.CR32[indexBlock])
+                                    EXPECT_EQ(CR32[indexSel], currentTestData.CR32[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_cr64)
                                 {
-                                    EXPECT_EQ(CR64[indexSel],
-                                              currentTestData.CR64[indexBlock])
+                                    EXPECT_EQ(CR64[indexSel], currentTestData.CR64[indexBlock])
                                         << msg;
                                 }
                             }
@@ -1021,33 +938,21 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
             io.DefineVariable<int32_t>("stepsGlobalValue");
             io.DefineVariable<std::string>("stepsGlobalValueString");
 
-            io.DefineVariable<int32_t>("ranksLocalValue",
-                                       {adios2::LocalValueDim});
-            io.DefineVariable<std::string>("ranksLocalValueString",
-                                           {adios2::LocalValueDim});
+            io.DefineVariable<int32_t>("ranksLocalValue", {adios2::LocalValueDim});
+            io.DefineVariable<std::string>("ranksLocalValueString", {adios2::LocalValueDim});
 
-            io.DefineVariable<int8_t>("i8", shape, start, count,
-                                      adios2::ConstantDims);
-            io.DefineVariable<int16_t>("i16", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<int32_t>("i32", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<int64_t>("i64", shape, start, count,
-                                       adios2::ConstantDims);
+            io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int32_t>("i32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int64_t>("i64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                        adios2::ConstantDims);
+            io.DefineVariable<uint8_t>("u8", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint16_t>("u16", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint32_t>("u32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint64_t>("u64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<float>("r32", shape, start, count,
-                                     adios2::ConstantDims);
-            io.DefineVariable<double>("r64", shape, start, count,
-                                      adios2::ConstantDims);
+            io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
             io.DefineVariable<std::complex<float>>("cr32", shape, start, count,
                                                    adios2::ConstantDims);
@@ -1059,20 +964,18 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             EXPECT_EQ(bpWriter.CurrentStep(), step);
 
             bpWriter.BeginStep();
             const int32_t step32 = static_cast<int32_t>(step);
             bpWriter.Put<int32_t>("stepsGlobalValue", step32);
-            bpWriter.Put<std::string>("stepsGlobalValueString",
-                                      std::to_string(step));
+            bpWriter.Put<std::string>("stepsGlobalValueString", std::to_string(step));
 
             bpWriter.Put<int32_t>("ranksLocalValue", mpiRank);
-            bpWriter.Put<std::string>("ranksLocalValueString",
-                                      std::to_string(mpiRank));
+            bpWriter.Put<std::string>("ranksLocalValueString", std::to_string(mpiRank));
 
             bpWriter.Put<int8_t>("i8", currentTestData.I8.data());
             bpWriter.Put<int16_t>("i16", currentTestData.I16.data());
@@ -1084,10 +987,8 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
             bpWriter.Put<uint64_t>("u64", currentTestData.U64.data());
             bpWriter.Put<float>("r32", currentTestData.R32.data());
             bpWriter.Put<double>("r64", currentTestData.R64.data());
-            bpWriter.Put<std::complex<float>>("cr32",
-                                              currentTestData.CR32.data());
-            bpWriter.Put<std::complex<double>>("cr64",
-                                               currentTestData.CR64.data());
+            bpWriter.Put<std::complex<float>>("cr32", currentTestData.CR32.data());
+            bpWriter.Put<std::complex<double>>("cr64", currentTestData.CR64.data());
             bpWriter.EndStep();
         }
 
@@ -1125,12 +1026,10 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
             const size_t currentStep = bpReader.CurrentStep();
             EXPECT_EQ(currentStep, static_cast<size_t>(t));
 
-            auto var_StepsGlobalValue =
-                io.InquireVariable<int32_t>("stepsGlobalValue");
+            auto var_StepsGlobalValue = io.InquireVariable<int32_t>("stepsGlobalValue");
             auto var_StepsGlobalValueString =
                 io.InquireVariable<std::string>("stepsGlobalValueString");
-            auto var_RanksLocalValue =
-                io.InquireVariable<int32_t>("ranksLocalValue");
+            auto var_RanksLocalValue = io.InquireVariable<int32_t>("ranksLocalValue");
             auto var_RanksLocalValueString =
                 io.InquireVariable<std::string>("ranksLocalValueString");
 
@@ -1149,32 +1048,25 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
 
             // Global value
             EXPECT_TRUE(var_StepsGlobalValue);
-            EXPECT_EQ(var_StepsGlobalValue.ShapeID(),
-                      adios2::ShapeID::GlobalValue);
+            EXPECT_EQ(var_StepsGlobalValue.ShapeID(), adios2::ShapeID::GlobalValue);
             EXPECT_EQ(var_StepsGlobalValue.Shape().size(), 0);
-            EXPECT_EQ(var_StepsGlobalValue.Min(),
-                      static_cast<int32_t>(currentStep));
-            EXPECT_EQ(var_StepsGlobalValue.Max(),
-                      static_cast<int32_t>(currentStep));
+            EXPECT_EQ(var_StepsGlobalValue.Min(), static_cast<int32_t>(currentStep));
+            EXPECT_EQ(var_StepsGlobalValue.Max(), static_cast<int32_t>(currentStep));
             int32_t stepsGlobalValueData;
-            bpReader.Get(var_StepsGlobalValue, stepsGlobalValueData,
-                         adios2::Mode::Sync);
+            bpReader.Get(var_StepsGlobalValue, stepsGlobalValueData, adios2::Mode::Sync);
             EXPECT_EQ(stepsGlobalValueData, currentStep);
 
             EXPECT_TRUE(var_StepsGlobalValueString);
-            EXPECT_EQ(var_StepsGlobalValueString.ShapeID(),
-                      adios2::ShapeID::GlobalValue);
+            EXPECT_EQ(var_StepsGlobalValueString.ShapeID(), adios2::ShapeID::GlobalValue);
             EXPECT_EQ(var_StepsGlobalValueString.Shape().size(), 0);
             std::string stepsGlobalValueStringDataString;
-            bpReader.Get(var_StepsGlobalValueString,
-                         stepsGlobalValueStringDataString, adios2::Mode::Sync);
-            EXPECT_EQ(stepsGlobalValueStringDataString,
-                      std::to_string(currentStep));
+            bpReader.Get(var_StepsGlobalValueString, stepsGlobalValueStringDataString,
+                         adios2::Mode::Sync);
+            EXPECT_EQ(stepsGlobalValueStringDataString, std::to_string(currentStep));
 
             // Local values are read as 1D Global Arrays
             EXPECT_TRUE(var_RanksLocalValue);
-            EXPECT_EQ(var_RanksLocalValue.ShapeID(),
-                      adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_RanksLocalValue.ShapeID(), adios2::ShapeID::GlobalArray);
             EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
             EXPECT_EQ(var_RanksLocalValue.Min(), 0);
             EXPECT_EQ(var_RanksLocalValue.Max(), mpiSize - 1);
@@ -1187,12 +1079,10 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
             }
 
             EXPECT_TRUE(var_RanksLocalValueString);
-            EXPECT_EQ(var_RanksLocalValueString.ShapeID(),
-                      adios2::ShapeID::GlobalArray);
+            EXPECT_EQ(var_RanksLocalValueString.ShapeID(), adios2::ShapeID::GlobalArray);
             EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
             std::vector<std::string> rankLocalValueDataString;
-            bpReader.Get(var_RanksLocalValueString, rankLocalValueDataString,
-                         adios2::Mode::Sync);
+            bpReader.Get(var_RanksLocalValueString, rankLocalValueDataString, adios2::Mode::Sync);
             EXPECT_EQ(rankLocalValueData.size(), mpiSize);
             for (size_t r = 0; r < rankLocalValueData.size(); ++r)
             {
@@ -1266,8 +1156,7 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
                 EXPECT_EQ(var_cr64.BlockID(), b);
 
                 SmallTestData currentTestData = generateNewSmallTestData(
-                    m_TestData, static_cast<int>(currentStep),
-                    static_cast<int>(b), mpiSize);
+                    m_TestData, static_cast<int>(currentStep), static_cast<int>(b), mpiSize);
 
                 // selection loop
                 for (size_t j = 0; j < Ny; ++j)
@@ -1373,95 +1262,79 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
                             for (size_t p = i; p < Nx; ++p)
                             {
                                 std::stringstream ss;
-                                ss << "t=" << t << " q=" << q << " p=" << p
-                                   << " rank=" << mpiRank;
+                                ss << "t=" << t << " q=" << q << " p=" << p << " rank=" << mpiRank;
                                 std::string msg = ss.str();
 
-                                const size_t indexSel =
-                                    (q - j) * (Nx - i) + (p - i);
+                                const size_t indexSel = (q - j) * (Nx - i) + (p - i);
                                 const size_t indexBlock = q * Nx + p;
 
                                 if (var_i8)
                                 {
-                                    EXPECT_EQ(I8[indexSel],
-                                              currentTestData.I8[indexBlock])
-                                        << msg;
+                                    EXPECT_EQ(I8[indexSel], currentTestData.I8[indexBlock]) << msg;
                                 }
 
                                 if (var_i16)
                                 {
-                                    EXPECT_EQ(I16[indexSel],
-                                              currentTestData.I16[indexBlock])
+                                    EXPECT_EQ(I16[indexSel], currentTestData.I16[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_i32)
                                 {
-                                    EXPECT_EQ(I32[indexSel],
-                                              currentTestData.I32[indexBlock])
+                                    EXPECT_EQ(I32[indexSel], currentTestData.I32[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_i64)
                                 {
-                                    EXPECT_EQ(I64[indexSel],
-                                              currentTestData.I64[indexBlock])
+                                    EXPECT_EQ(I64[indexSel], currentTestData.I64[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_u8)
                                 {
-                                    EXPECT_EQ(U8[indexSel],
-                                              currentTestData.U8[indexBlock])
-                                        << msg;
+                                    EXPECT_EQ(U8[indexSel], currentTestData.U8[indexBlock]) << msg;
                                 }
 
                                 if (var_u16)
                                 {
-                                    EXPECT_EQ(U16[indexSel],
-                                              currentTestData.U16[indexBlock])
+                                    EXPECT_EQ(U16[indexSel], currentTestData.U16[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_u32)
                                 {
-                                    EXPECT_EQ(U32[indexSel],
-                                              currentTestData.U32[indexBlock])
+                                    EXPECT_EQ(U32[indexSel], currentTestData.U32[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_u64)
                                 {
-                                    EXPECT_EQ(U64[indexSel],
-                                              currentTestData.U64[indexBlock])
+                                    EXPECT_EQ(U64[indexSel], currentTestData.U64[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_r32)
                                 {
-                                    EXPECT_EQ(R32[indexSel],
-                                              currentTestData.R32[indexBlock])
+                                    EXPECT_EQ(R32[indexSel], currentTestData.R32[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_r64)
                                 {
-                                    EXPECT_EQ(R64[indexSel],
-                                              currentTestData.R64[indexBlock])
+                                    EXPECT_EQ(R64[indexSel], currentTestData.R64[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_cr32)
                                 {
-                                    EXPECT_EQ(CR32[indexSel],
-                                              currentTestData.CR32[indexBlock])
+                                    EXPECT_EQ(CR32[indexSel], currentTestData.CR32[indexBlock])
                                         << msg;
                                 }
 
                                 if (var_cr64)
                                 {
-                                    EXPECT_EQ(CR64[indexSel],
-                                              currentTestData.CR64[indexBlock])
+                                    EXPECT_EQ(CR64[indexSel], currentTestData.CR64[indexBlock])
                                         << msg;
                                 }
                             }
@@ -1523,33 +1396,21 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
             io.DefineVariable<int32_t>("stepsGlobalValue");
             io.DefineVariable<std::string>("stepsGlobalValueString");
 
-            io.DefineVariable<int32_t>("ranksLocalValue",
-                                       {adios2::LocalValueDim});
-            io.DefineVariable<std::string>("ranksLocalValueString",
-                                           {adios2::LocalValueDim});
+            io.DefineVariable<int32_t>("ranksLocalValue", {adios2::LocalValueDim});
+            io.DefineVariable<std::string>("ranksLocalValueString", {adios2::LocalValueDim});
 
-            io.DefineVariable<int8_t>("i8", shape, start, count,
-                                      adios2::ConstantDims);
-            io.DefineVariable<int16_t>("i16", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<int32_t>("i32", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<int64_t>("i64", shape, start, count,
-                                       adios2::ConstantDims);
+            io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int32_t>("i32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int64_t>("i64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                        adios2::ConstantDims);
+            io.DefineVariable<uint8_t>("u8", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint16_t>("u16", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint32_t>("u32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint64_t>("u64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<float>("r32", shape, start, count,
-                                     adios2::ConstantDims);
-            io.DefineVariable<double>("r64", shape, start, count,
-                                      adios2::ConstantDims);
+            io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
             io.DefineVariable<std::complex<float>>("cr32", shape, start, count,
                                                    adios2::ConstantDims);
@@ -1561,8 +1422,8 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             EXPECT_EQ(bpWriter.CurrentStep(), step);
 
@@ -1570,12 +1431,10 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
 
             const int32_t step32 = static_cast<int32_t>(step);
             bpWriter.Put<int32_t>("stepsGlobalValue", step32);
-            bpWriter.Put<std::string>("stepsGlobalValueString",
-                                      std::to_string(step));
+            bpWriter.Put<std::string>("stepsGlobalValueString", std::to_string(step));
 
             bpWriter.Put<int32_t>("ranksLocalValue", mpiRank);
-            bpWriter.Put<std::string>("ranksLocalValueString",
-                                      std::to_string(mpiRank));
+            bpWriter.Put<std::string>("ranksLocalValueString", std::to_string(mpiRank));
 
             bpWriter.Put<int8_t>("i8", currentTestData.I8.data());
             bpWriter.Put<int16_t>("i16", currentTestData.I16.data());
@@ -1587,10 +1446,8 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
             bpWriter.Put<uint64_t>("u64", currentTestData.U64.data());
             bpWriter.Put<float>("r32", currentTestData.R32.data());
             bpWriter.Put<double>("r64", currentTestData.R64.data());
-            bpWriter.Put<std::complex<float>>("cr32",
-                                              currentTestData.CR32.data());
-            bpWriter.Put<std::complex<double>>("cr64",
-                                               currentTestData.CR64.data());
+            bpWriter.Put<std::complex<float>>("cr32", currentTestData.CR32.data());
+            bpWriter.Put<std::complex<double>>("cr64", currentTestData.CR64.data());
             bpWriter.EndStep();
         }
 
@@ -1605,8 +1462,7 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         std::vector<int8_t> I8;
         std::vector<int16_t> I16;
@@ -1623,14 +1479,10 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
 
         size_t t = 0;
 
-        auto var_StepsGlobalValue =
-            io.InquireVariable<int32_t>("stepsGlobalValue");
-        auto var_StepsGlobalValueString =
-            io.InquireVariable<std::string>("stepsGlobalValueString");
-        auto var_RanksLocalValue =
-            io.InquireVariable<int32_t>("ranksLocalValue");
-        auto var_RanksLocalValueString =
-            io.InquireVariable<std::string>("ranksLocalValueString");
+        auto var_StepsGlobalValue = io.InquireVariable<int32_t>("stepsGlobalValue");
+        auto var_StepsGlobalValueString = io.InquireVariable<std::string>("stepsGlobalValueString");
+        auto var_RanksLocalValue = io.InquireVariable<int32_t>("ranksLocalValue");
+        auto var_RanksLocalValueString = io.InquireVariable<std::string>("ranksLocalValueString");
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         auto var_i16 = io.InquireVariable<int16_t>("i16");
@@ -1649,14 +1501,11 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
         EXPECT_EQ(var_StepsGlobalValue.Max(), static_cast<int32_t>(NSteps - 1));
 
         // Read all steps at once
-        var_StepsGlobalValue.SetStepSelection(
-            {0, var_StepsGlobalValue.Steps()});
-        var_StepsGlobalValueString.SetStepSelection(
-            {0, var_StepsGlobalValueString.Steps()});
+        var_StepsGlobalValue.SetStepSelection({0, var_StepsGlobalValue.Steps()});
+        var_StepsGlobalValueString.SetStepSelection({0, var_StepsGlobalValueString.Steps()});
 
         var_RanksLocalValue.SetStepSelection({0, var_RanksLocalValue.Steps()});
-        var_RanksLocalValueString.SetStepSelection(
-            {0, var_RanksLocalValueString.Steps()});
+        var_RanksLocalValueString.SetStepSelection({0, var_RanksLocalValueString.Steps()});
 
         var_i8.SetStepSelection({0, var_i8.Steps()});
         var_i16.SetStepSelection({0, var_i16.Steps()});
@@ -1729,8 +1578,7 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
                 for (size_t s = 0; s < NSteps; ++s)
                 {
                     SmallTestData currentTestData = generateNewSmallTestData(
-                        m_TestData, static_cast<int>(s), static_cast<int>(b),
-                        mpiSize);
+                        m_TestData, static_cast<int>(s), static_cast<int>(b), mpiSize);
 
                     for (size_t j = i; j < Nx; ++j)
                     {
@@ -1740,86 +1588,62 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
 
                         if (var_i8)
                         {
-                            EXPECT_EQ(I8[s * (Nx - i) + j - i],
-                                      currentTestData.I8[j])
-                                << msg;
+                            EXPECT_EQ(I8[s * (Nx - i) + j - i], currentTestData.I8[j]) << msg;
                         }
 
                         if (var_i16)
                         {
-                            EXPECT_EQ(I16[s * (Nx - i) + j - i],
-                                      currentTestData.I16[j])
-                                << msg;
+                            EXPECT_EQ(I16[s * (Nx - i) + j - i], currentTestData.I16[j]) << msg;
                         }
 
                         if (var_i32)
                         {
-                            EXPECT_EQ(I32[s * (Nx - i) + j - i],
-                                      currentTestData.I32[j])
-                                << msg;
+                            EXPECT_EQ(I32[s * (Nx - i) + j - i], currentTestData.I32[j]) << msg;
                         }
 
                         if (var_i64)
                         {
-                            EXPECT_EQ(I64[s * (Nx - i) + j - i],
-                                      currentTestData.I64[j])
-                                << msg;
+                            EXPECT_EQ(I64[s * (Nx - i) + j - i], currentTestData.I64[j]) << msg;
                         }
 
                         if (var_u8)
                         {
-                            EXPECT_EQ(U8[s * (Nx - i) + j - i],
-                                      currentTestData.U8[j])
-                                << msg;
+                            EXPECT_EQ(U8[s * (Nx - i) + j - i], currentTestData.U8[j]) << msg;
                         }
 
                         if (var_u16)
                         {
-                            EXPECT_EQ(U16[s * (Nx - i) + j - i],
-                                      currentTestData.U16[j])
-                                << msg;
+                            EXPECT_EQ(U16[s * (Nx - i) + j - i], currentTestData.U16[j]) << msg;
                         }
 
                         if (var_u32)
                         {
-                            EXPECT_EQ(U32[s * (Nx - i) + j - i],
-                                      currentTestData.U32[j])
-                                << msg;
+                            EXPECT_EQ(U32[s * (Nx - i) + j - i], currentTestData.U32[j]) << msg;
                         }
 
                         if (var_u64)
                         {
-                            EXPECT_EQ(U64[s * (Nx - i) + j - i],
-                                      currentTestData.U64[j])
-                                << msg;
+                            EXPECT_EQ(U64[s * (Nx - i) + j - i], currentTestData.U64[j]) << msg;
                         }
 
                         if (var_r32)
                         {
-                            EXPECT_EQ(R32[s * (Nx - i) + j - i],
-                                      currentTestData.R32[j])
-                                << msg;
+                            EXPECT_EQ(R32[s * (Nx - i) + j - i], currentTestData.R32[j]) << msg;
                         }
 
                         if (var_r64)
                         {
-                            EXPECT_EQ(R64[s * (Nx - i) + j - i],
-                                      currentTestData.R64[j])
-                                << msg;
+                            EXPECT_EQ(R64[s * (Nx - i) + j - i], currentTestData.R64[j]) << msg;
                         }
 
                         if (var_cr32)
                         {
-                            EXPECT_EQ(CR32[s * (Nx - i) + j - i],
-                                      currentTestData.CR32[j])
-                                << msg;
+                            EXPECT_EQ(CR32[s * (Nx - i) + j - i], currentTestData.CR32[j]) << msg;
                         }
 
                         if (var_cr64)
                         {
-                            EXPECT_EQ(CR64[s * (Nx - i) + j - i],
-                                      currentTestData.CR64[j])
-                                << msg;
+                            EXPECT_EQ(CR64[s * (Nx - i) + j - i], currentTestData.CR64[j]) << msg;
                         }
                     }
                 } // steps loop

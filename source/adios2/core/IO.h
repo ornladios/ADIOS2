@@ -148,8 +148,7 @@ public:
      * @param params acceptable parameters for a particular transport
      * @return transportIndex handler
      */
-    size_t AddTransport(const std::string type,
-                        const Params &parameters = Params());
+    size_t AddTransport(const std::string type, const Params &parameters = Params());
 
     /**
      * @brief Sets a single parameter to an existing transport identified with a
@@ -159,8 +158,8 @@ public:
      * @param key parameter key
      * @param value parameter value
      */
-    void SetTransportParameter(const size_t transportIndex,
-                               const std::string key, const std::string value);
+    void SetTransportParameter(const size_t transportIndex, const std::string key,
+                               const std::string value);
 
     /**
      * @brief Define a Variable of primitive data type for current IO.
@@ -177,15 +176,12 @@ public:
      * defined
      */
     template <class T>
-    Variable<T> &
-    DefineVariable(const std::string &name, const Dims &shape = Dims(),
-                   const Dims &start = Dims(), const Dims &count = Dims(),
-                   const bool constantDims = false);
+    Variable<T> &DefineVariable(const std::string &name, const Dims &shape = Dims(),
+                                const Dims &start = Dims(), const Dims &count = Dims(),
+                                const bool constantDims = false);
 
-    VariableStruct &DefineStructVariable(const std::string &name,
-                                         StructDefinition &def,
-                                         const Dims &shape = Dims(),
-                                         const Dims &start = Dims(),
+    VariableStruct &DefineStructVariable(const std::string &name, StructDefinition &def,
+                                         const Dims &shape = Dims(), const Dims &start = Dims(),
                                          const Dims &count = Dims(),
                                          const bool constantDims = false);
 
@@ -202,8 +198,7 @@ public:
      * defined
      */
     template <class T>
-    Attribute<T> &DefineAttribute(const std::string &name, const T *array,
-                                  const size_t elements,
+    Attribute<T> &DefineAttribute(const std::string &name, const T *array, const size_t elements,
                                   const std::string &variableName = "",
                                   const std::string separator = "/",
                                   const bool allowModification = false);
@@ -219,10 +214,9 @@ public:
      * defined
      */
     template <class T>
-    Attribute<T> &DefineAttribute(const std::string &name, const T &value,
-                                  const std::string &variableName = "",
-                                  const std::string separator = "/",
-                                  const bool allowModification = false);
+    Attribute<T> &
+    DefineAttribute(const std::string &name, const T &value, const std::string &variableName = "",
+                    const std::string separator = "/", const bool allowModification = false);
 
     /**
      * @brief Removes an existing Variable in current IO object.
@@ -268,8 +262,8 @@ public:
      * keys: Type, Min, Max, Value, AvailableStepsStart,
      * AvailableStepsCount, Shape, Start, Count, SingleValue
      */
-    std::map<std::string, Params> GetAvailableVariables(
-        const std::set<std::string> &keys = std::set<std::string>()) noexcept;
+    std::map<std::string, Params>
+    GetAvailableVariables(const std::set<std::string> &keys = std::set<std::string>()) noexcept;
 
     /**
      * @brief Gets an existing variable of primitive type by name
@@ -282,9 +276,8 @@ public:
 
     VariableStruct *InquireStructVariable(const std::string &name) noexcept;
 
-    VariableStruct *
-    InquireStructVariable(const std::string &name, const StructDefinition &def,
-                          const bool allowReorganize = false) noexcept;
+    VariableStruct *InquireStructVariable(const std::string &name, const StructDefinition &def,
+                                          const bool allowReorganize = false) noexcept;
 
     StructDefinition &DefineStruct(const std::string &name, const size_t size);
 
@@ -300,8 +293,7 @@ public:
      * @param itVariable
      * @return type primitive type
      */
-    DataType
-    InquireVariableType(const VarMap::const_iterator itVariable) const noexcept;
+    DataType InquireVariableType(const VarMap::const_iterator itVariable) const noexcept;
 
     /**
      * Retrieves hash holding internal variable identifiers
@@ -330,8 +322,7 @@ public:
      * found
      */
     template <class T>
-    Attribute<T> *InquireAttribute(const std::string &name,
-                                   const std::string &variableName = "",
+    Attribute<T> *InquireAttribute(const std::string &name, const std::string &variableName = "",
                                    const std::string separator = "/") noexcept;
 
     /**
@@ -339,10 +330,8 @@ public:
      * @param name input attribute name
      * @return type if found returns type as string, otherwise an empty string
      */
-    DataType
-    InquireAttributeType(const std::string &name,
-                         const std::string &variableName = "",
-                         const std::string separator = "/") const noexcept;
+    DataType InquireAttributeType(const std::string &name, const std::string &variableName = "",
+                                  const std::string separator = "/") const noexcept;
 
     /**
      * @brief Retrieve map with attributes info. Use when reading.
@@ -380,8 +369,7 @@ public:
      * @param operatorType
      * @param parameters
      */
-    void AddOperation(const std::string &variable,
-                      const std::string &operatorType,
+    void AddOperation(const std::string &variable, const std::string &operatorType,
                       const Params &parameters = Params()) noexcept;
 
     /**
@@ -448,13 +436,12 @@ public:
      * Resets all variables m_StepsStart and m_StepsCount
      * @param alwaysZero true: always m_StepsStart = 0, false: capture
      */
-    void ResetVariablesStepSelection(const bool zeroStart = false,
-                                     const std::string hint = "");
+    void ResetVariablesStepSelection(const bool zeroStart = false, const std::string hint = "");
 
     void SetPrefixedNames(const bool isStep) noexcept;
 
-    using MakeEngineFunc = std::function<std::shared_ptr<Engine>(
-        IO &, const std::string &, const Mode, helper::Comm)>;
+    using MakeEngineFunc =
+        std::function<std::shared_ptr<Engine>(IO &, const std::string &, const Mode, helper::Comm)>;
     struct EngineFactoryEntry
     {
         MakeEngineFunc MakeReader;
@@ -480,8 +467,7 @@ public:
      * creating instances of EngineFactoryEntry for RegisterEngine.
      */
     template <typename T>
-    static std::shared_ptr<Engine> MakeEngine(IO &io, const std::string &name,
-                                              const Mode mode,
+    static std::shared_ptr<Engine> MakeEngine(IO &io, const std::string &name, const Mode mode,
                                               helper::Comm comm)
     {
         return std::make_shared<T>(io, name, mode, std::move(comm));
@@ -491,17 +477,13 @@ public:
      * Register an engine factory entry to create a reader or writer
      * for an engine of the given engine type (named in lower case).
      */
-    static void RegisterEngine(const std::string &engineType,
-                               EngineFactoryEntry entry);
+    static void RegisterEngine(const std::string &engineType, EngineFactoryEntry entry);
 
     /*
      * Return list of all engines associated with this IO.
      */
 
-    const std::map<std::string, std::shared_ptr<Engine>> &GetEngines() const
-    {
-        return m_Engines;
-    }
+    const std::map<std::string, std::shared_ptr<Engine>> &GetEngines() const { return m_Engines; }
 
     /** Inform about computation block through User->ADIOS */
     void EnterComputationBlock() noexcept;
@@ -530,12 +512,10 @@ private:
     void CheckTransportType(const std::string type) const;
 
     template <class T>
-    bool IsAvailableStep(const size_t step,
-                         const unsigned int variableIndex) noexcept;
+    bool IsAvailableStep(const size_t step, const unsigned int variableIndex) noexcept;
 
     template <class T>
-    Params GetVariableInfo(const std::string &variableName,
-                           const std::set<std::string> &keys);
+    Params GetVariableInfo(const std::string &variableName, const std::set<std::string> &keys);
 };
 
 } // end namespace core

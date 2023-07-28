@@ -21,13 +21,11 @@ public:
     SscEngineTest() = default;
 };
 
-void Writer(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t steps, const adios2::Params &engineParams,
-            const std::string &name)
+void Writer(const Dims &shape, const Dims &start, const Dims &count, const size_t steps,
+            const adios2::Params &engineParams, const std::string &name)
 {
-    size_t datasize =
-        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
-                        std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                                      std::multiplies<size_t>());
     adios2::ADIOS adios(mpiComm);
     adios2::IO io = adios.DeclareIO("WAN");
     io.SetEngine("ssc");
@@ -43,21 +41,16 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
     auto varChars = io.DefineVariable<char>("varChars", shape, start, count);
-    auto varUChars =
-        io.DefineVariable<unsigned char>("varUChars", shape, start, count);
+    auto varUChars = io.DefineVariable<unsigned char>("varUChars", shape, start, count);
     auto varShorts = io.DefineVariable<short>("varShorts", shape, start, count);
-    auto varUShorts =
-        io.DefineVariable<unsigned short>("varUShorts", shape, start, count);
+    auto varUShorts = io.DefineVariable<unsigned short>("varUShorts", shape, start, count);
     auto varInts = io.DefineVariable<int>("varInts", shape, start, count);
-    auto varUInts =
-        io.DefineVariable<unsigned int>("varUInts", shape, start, count);
+    auto varUInts = io.DefineVariable<unsigned int>("varUInts", shape, start, count);
     auto varFloats = io.DefineVariable<float>("varFloats", shape, start, count);
-    auto varDoubles =
-        io.DefineVariable<double>("varDoubles", shape, start, count);
-    auto varComplexes = io.DefineVariable<std::complex<float>>(
-        "varComplexes", shape, start, count);
-    auto varDComplexes = io.DefineVariable<std::complex<double>>(
-        "varDComplexes", shape, start, count);
+    auto varDoubles = io.DefineVariable<double>("varDoubles", shape, start, count);
+    auto varComplexes = io.DefineVariable<std::complex<float>>("varComplexes", shape, start, count);
+    auto varDComplexes =
+        io.DefineVariable<std::complex<double>>("varDComplexes", shape, start, count);
     auto varIntScalar = io.DefineVariable<int>("varIntScalar");
     io.DefineAttribute<int>("AttInt", 110);
     adios2::Engine engine = io.Open(name, adios2::Mode::Write);
@@ -143,9 +136,8 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     engine.Close();
 }
 
-void Reader(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t steps, const adios2::Params &engineParams,
-            const std::string &name)
+void Reader(const Dims &shape, const Dims &start, const Dims &count, const size_t steps,
+            const adios2::Params &engineParams, const std::string &name)
 {
     adios2::ADIOS adios(mpiComm);
     adios2::IO io = adios.DeclareIO("Test");
@@ -154,9 +146,8 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     adios2::Engine engine = io.Open(name, adios2::Mode::Read);
     engine.LockReaderSelections();
 
-    size_t datasize =
-        std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1),
-                        std::multiplies<size_t>());
+    size_t datasize = std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1),
+                                      std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -176,21 +167,16 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             const auto &vars = io.AvailableVariables();
             ASSERT_EQ(vars.size(), 11);
             size_t currentStep = engine.CurrentStep();
-            adios2::Variable<char> varChars =
-                io.InquireVariable<char>("varChars");
+            adios2::Variable<char> varChars = io.InquireVariable<char>("varChars");
             adios2::Variable<unsigned char> varUChars =
                 io.InquireVariable<unsigned char>("varUChars");
-            adios2::Variable<short> varShorts =
-                io.InquireVariable<short>("varShorts");
+            adios2::Variable<short> varShorts = io.InquireVariable<short>("varShorts");
             adios2::Variable<unsigned short> varUShorts =
                 io.InquireVariable<unsigned short>("varUShorts");
             adios2::Variable<int> varInts = io.InquireVariable<int>("varInts");
-            adios2::Variable<unsigned int> varUInts =
-                io.InquireVariable<unsigned int>("varUInts");
-            adios2::Variable<float> varFloats =
-                io.InquireVariable<float>("varFloats");
-            adios2::Variable<double> varDoubles =
-                io.InquireVariable<double>("varDoubles");
+            adios2::Variable<unsigned int> varUInts = io.InquireVariable<unsigned int>("varUInts");
+            adios2::Variable<float> varFloats = io.InquireVariable<float>("varFloats");
+            adios2::Variable<double> varDoubles = io.InquireVariable<double>("varDoubles");
             adios2::Variable<std::complex<float>> varComplexes =
                 io.InquireVariable<std::complex<float>>("varComplexes");
             adios2::Variable<std::complex<double>> varDComplexes =
@@ -211,32 +197,21 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             engine.Get(varIntScalar, &i, adios2::Mode::Sync);
             ASSERT_EQ(i, currentStep);
 
-            VerifyData(myChars.data(), currentStep, start, shape, shape,
-                       mpiRank);
-            VerifyData(myUChars.data(), currentStep, start, shape, shape,
-                       mpiRank);
-            VerifyData(myShorts.data(), currentStep, start, shape, shape,
-                       mpiRank);
-            VerifyData(myUShorts.data(), currentStep, start, shape, shape,
-                       mpiRank);
-            VerifyData(myInts.data(), currentStep, start, shape, shape,
-                       mpiRank);
-            VerifyData(myUInts.data(), currentStep, start, shape, shape,
-                       mpiRank);
-            VerifyData(myFloats.data(), currentStep, start, shape, shape,
-                       mpiRank);
-            VerifyData(myDoubles.data(), currentStep, start, shape, shape,
-                       mpiRank);
-            VerifyData(myComplexes.data(), currentStep, start, shape, shape,
-                       mpiRank);
-            VerifyData(myDComplexes.data(), currentStep, start, shape, shape,
-                       mpiRank);
+            VerifyData(myChars.data(), currentStep, start, shape, shape, mpiRank);
+            VerifyData(myUChars.data(), currentStep, start, shape, shape, mpiRank);
+            VerifyData(myShorts.data(), currentStep, start, shape, shape, mpiRank);
+            VerifyData(myUShorts.data(), currentStep, start, shape, shape, mpiRank);
+            VerifyData(myInts.data(), currentStep, start, shape, shape, mpiRank);
+            VerifyData(myUInts.data(), currentStep, start, shape, shape, mpiRank);
+            VerifyData(myFloats.data(), currentStep, start, shape, shape, mpiRank);
+            VerifyData(myDoubles.data(), currentStep, start, shape, shape, mpiRank);
+            VerifyData(myComplexes.data(), currentStep, start, shape, shape, mpiRank);
+            VerifyData(myDComplexes.data(), currentStep, start, shape, shape, mpiRank);
             engine.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
-            std::cout << "[Rank " + std::to_string(mpiRank) +
-                             "] SscTest reader end of stream!"
+            std::cout << "[Rank " + std::to_string(mpiRank) + "] SscTest reader end of stream!"
                       << std::endl;
             break;
         }
@@ -286,8 +261,7 @@ TEST_F(SscEngineTest, TestSscWriterMultiblock)
 
     {
         std::string filename = "TestSscWriterMultiblockNaive";
-        adios2::Params engineParams = {{"Verbose", "0"},
-                                       {"EngineMode", "naive"}};
+        adios2::Params engineParams = {{"Verbose", "0"}, {"EngineMode", "naive"}};
 
         int worldRank, worldSize;
         MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);

@@ -33,11 +33,9 @@ public:
 
     ~BPBackCompatBlosc() = default;
 
-    void GetMetadata(const std::vector<char> &buffer,
-                     Params &info) const noexcept final;
+    void GetMetadata(const std::vector<char> &buffer, Params &info) const noexcept final;
 
-    void GetData(const char *input,
-                 const helper::BlockOperationInfo &blockOperationInfo,
+    void GetData(const char *input, const helper::BlockOperationInfo &blockOperationInfo,
                  char *dataOutput) const final;
 
 private:
@@ -58,15 +56,13 @@ private:
     using bloscSize_t = int32_t;
 
     /** Decompress chunked data */
-    size_t DecompressChunkedFormat(const void *bufferIn, const size_t sizeIn,
-                                   void *dataOut, const size_t sizeOut,
-                                   Params &info) const;
+    size_t DecompressChunkedFormat(const void *bufferIn, const size_t sizeIn, void *dataOut,
+                                   const size_t sizeOut, Params &info) const;
 
     /** Decompress data written before ADIOS2 supported large variables larger
      * 2GiB. */
-    size_t DecompressOldFormat(const void *bufferIn, const size_t sizeIn,
-                               void *dataOut, const size_t sizeOut,
-                               Params &info) const;
+    size_t DecompressOldFormat(const void *bufferIn, const size_t sizeIn, void *dataOut,
+                               const size_t sizeOut, Params &info) const;
 
     ADIOS2_CLASS_PACKED(DataHeader)
     {
@@ -90,10 +86,7 @@ private:
         uint32_t numberOfChunks = 0u;
 
     public:
-        void SetNumChunks(const uint32_t numChunks)
-        {
-            numberOfChunks = numChunks;
-        }
+        void SetNumChunks(const uint32_t numChunks) { numberOfChunks = numChunks; }
         uint32_t GetNumChunks() const { return numberOfChunks; }
 
         bool IsChunked() const { return format == 0; }

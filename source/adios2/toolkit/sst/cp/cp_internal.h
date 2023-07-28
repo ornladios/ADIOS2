@@ -529,86 +529,72 @@ extern void FinalizeCPInfo(CP_Info Info, CP_DP_Interface DPInfo);
 extern CP_Info CP_getCPInfo(char *ControlModule);
 extern char *CP_GetContactString(SstStream s, attr_list DPAttrs);
 extern SstStream CP_newStream();
-extern void SstInternalProvideTimestep(
-    SstStream s, SstData LocalMetadata, SstData Data, long Timestep,
-    FFSFormatList Formats, DataFreeFunc FreeTimestep, void *FreeClientData,
-    SstData AttributeData, DataFreeFunc FreeAttributeData,
-    void *FreeAttributeClientData);
+extern void SstInternalProvideTimestep(SstStream s, SstData LocalMetadata, SstData Data,
+                                       long Timestep, FFSFormatList Formats,
+                                       DataFreeFunc FreeTimestep, void *FreeClientData,
+                                       SstData AttributeData, DataFreeFunc FreeAttributeData,
+                                       void *FreeAttributeClientData);
 
-void **CP_consolidateDataToRankZero(SstStream stream, void *local_info,
-                                    FFSTypeHandle type, void **ret_data_block);
-void **CP_consolidateDataToAll(SstStream stream, void *local_info,
-                               FFSTypeHandle type, void **ret_data_block);
-void *CP_distributeDataFromRankZero(SstStream stream, void *root_info,
-                                    FFSTypeHandle type, void **ret_data_block);
-extern void CP_DPQueryHandler(CManager cm, CMConnection conn, void *msg_v,
-                              void *client_data, attr_list attrs);
-extern void CP_DPQueryResponseHandler(CManager cm, CMConnection conn,
-                                      void *msg_v, void *client_data,
-                                      attr_list attrs);
-extern void CP_ReaderRegisterHandler(CManager cm, CMConnection conn,
-                                     void *msg_v, void *client_data,
+void **CP_consolidateDataToRankZero(SstStream stream, void *local_info, FFSTypeHandle type,
+                                    void **ret_data_block);
+void **CP_consolidateDataToAll(SstStream stream, void *local_info, FFSTypeHandle type,
+                               void **ret_data_block);
+void *CP_distributeDataFromRankZero(SstStream stream, void *root_info, FFSTypeHandle type,
+                                    void **ret_data_block);
+extern void CP_DPQueryHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
+                              attr_list attrs);
+extern void CP_DPQueryResponseHandler(CManager cm, CMConnection conn, void *msg_v,
+                                      void *client_data, attr_list attrs);
+extern void CP_ReaderRegisterHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
                                      attr_list attrs);
-extern void CP_WriterResponseHandler(CManager cm, CMConnection conn,
-                                     void *msg_v, void *client_data,
+extern void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
                                      attr_list attrs);
-extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *msg_v,
-                                void *client_data, attr_list attrs);
-extern void CP_ReaderActivateHandler(CManager cm, CMConnection conn,
-                                     void *msg_v, void *client_data,
+extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
+                                attr_list attrs);
+extern void CP_ReaderActivateHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
                                      attr_list attrs);
-extern void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn,
-                                        void *msg_v, void *client_data,
-                                        attr_list attrs);
-extern void CP_TimestepMetadataHandler(CManager cm, CMConnection conn,
-                                       void *msg_v, void *client_data,
-                                       attr_list attrs);
-extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
-                                      void *msg_v, void *client_data,
-                                      attr_list attrs);
-extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn,
-                                            void *Msg_v, void *client_data,
-                                            attr_list attrs);
-extern void CP_CommPatternLockedHandler(CManager cm, CMConnection conn,
-                                        void *Msg_v, void *client_data,
-                                        attr_list attrs);
-extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *msg_v,
-                                  void *client_data, attr_list attrs);
-extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v,
-                                  void *client_data, attr_list attrs);
+extern void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn, void *msg_v,
+                                        void *client_data, attr_list attrs);
+extern void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *msg_v,
+                                       void *client_data, attr_list attrs);
+extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn, void *msg_v,
+                                      void *client_data, attr_list attrs);
+extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn, void *Msg_v,
+                                            void *client_data, attr_list attrs);
+extern void CP_CommPatternLockedHandler(CManager cm, CMConnection conn, void *Msg_v,
+                                        void *client_data, attr_list attrs);
+extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
+                                  attr_list attrs);
+extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
+                                  attr_list attrs);
 
 extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData);
-extern void FFSMarshalInstallPreciousMetadata(SstStream Stream,
-                                              TSMetadataMsg MetaData);
+extern void FFSMarshalInstallPreciousMetadata(SstStream Stream, TSMetadataMsg MetaData);
 extern void FFSClearTimestepData(SstStream Stream);
 extern void FFSFreeMarshalData(SstStream Stream);
-extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
-                          int **forwardArray, int **reverseArray);
+extern void getPeerArrays(int MySize, int MyRank, int PeerSize, int **forwardArray,
+                          int **reverseArray);
 extern void AddToLastCallFreeList(void *Block);
 
 enum VerbosityLevel
 {
     NoVerbose = 0,       // Generally no output (but not absolutely quiet?)
     CriticalVerbose = 1, // Informational output for failures only
-    SummaryVerbose =
-        2, // One-time summary output containing general info (transports used,
-           // timestep count, stream duration, etc.)
-    PerStepVerbose = 3, // One-per-step info, generally from rank 0 (metadata
-                        // read, Begin/EndStep verbosity, etc.)
-    PerRankVerbose = 4, // Per-step info from each rank (for those things that
-                        // might be different per rank).
-    TraceVerbose = 5,   // All debugging available
+    SummaryVerbose = 2,  // One-time summary output containing general info (transports used,
+                         // timestep count, stream duration, etc.)
+    PerStepVerbose = 3,  // One-per-step info, generally from rank 0 (metadata
+                         // read, Begin/EndStep verbosity, etc.)
+    PerRankVerbose = 4,  // Per-step info from each rank (for those things that
+                         // might be different per rank).
+    TraceVerbose = 5,    // All debugging available
 };
 
-extern void CP_verbose(SstStream Stream, enum VerbosityLevel Level,
-                       char *Format, ...);
+extern void CP_verbose(SstStream Stream, enum VerbosityLevel Level, char *Format, ...);
 extern void CP_error(SstStream Stream, char *Format, ...);
 extern struct _CP_Services Svcs;
-extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,
-                          int ReaderSide);
+extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params, int ReaderSide);
 
-typedef void (*CPNetworkInfoFunc)(int dataID, const char *net_string,
-                                  const char *data_string);
+typedef void (*CPNetworkInfoFunc)(int dataID, const char *net_string, const char *data_string);
 extern char *IPDiagString;
 extern CPNetworkInfoFunc globalNetinfoCallback;
 extern void SSTSetNetworkCallback(CPNetworkInfoFunc callback);

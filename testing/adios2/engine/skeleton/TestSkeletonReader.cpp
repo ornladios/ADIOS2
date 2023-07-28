@@ -11,8 +11,8 @@
 
 const std::string streamname = "skeleton_stream";
 
-static void printDataStep(const float *data, const size_t start,
-                          const size_t count, const int rank, const size_t step)
+static void printDataStep(const float *data, const size_t start, const size_t count, const int rank,
+                          const size_t step)
 {
     std::ofstream myfile;
     std::string filename = "data." + std::to_string(rank);
@@ -25,11 +25,10 @@ static void printDataStep(const float *data, const size_t start,
         myfile.open(filename, std::ios::app);
     }
 
-    myfile << "rank=" << rank << " size=" << count << " offsets=" << start
-           << " step=" << step << std::endl;
-
-    myfile << " step   row   columns " << start << "..." << start + count - 1
+    myfile << "rank=" << rank << " size=" << count << " offsets=" << start << " step=" << step
            << std::endl;
+
+    myfile << " step   row   columns " << start << "..." << start + count - 1 << std::endl;
     myfile << "        ";
     for (size_t j = 0; j < count; j++)
     {
@@ -43,8 +42,7 @@ static void printDataStep(const float *data, const size_t start,
         myfile << std::setw(5) << step << std::setw(5) << start + i;
         for (size_t j = 0; j < count; j++)
         {
-            myfile << std::setw(9) << std::setprecision(4)
-                   << data[i * count + j];
+            myfile << std::setw(9) << std::setprecision(4) << data[i * count + j];
         }
         myfile << std::endl;
     }
@@ -92,8 +90,7 @@ int main(int argc, char *argv[])
 
         while (true)
         {
-            adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::Read, 60.0f);
+            adios2::StepStatus status = reader.BeginStep(adios2::StepMode::Read, 60.0f);
             if (status != adios2::StepStatus::OK)
             {
                 break;
@@ -105,17 +102,15 @@ int main(int argc, char *argv[])
             vMyArray = io.InquireVariable<float>("myArray");
             if (!vMyArray)
             {
-                std::cout
-                    << "Missing 'myArray' variable. The Skeleton reader "
-                       "engine must retrieve variables from the writer and "
-                       "create Variable objects before they can be "
-                       "inquired\n";
+                std::cout << "Missing 'myArray' variable. The Skeleton reader "
+                             "engine must retrieve variables from the writer and "
+                             "create Variable objects before they can be "
+                             "inquired\n";
                 // Let's fake the read from now on
                 // so that we can test the rest of the read API
                 gndx = (size_t)nproc;
                 adios2::Variable<float> varArray = io.DefineVariable<float>(
-                    "myArray", {gndx}, {gndx / (size_t)nproc},
-                    {gndx / (size_t)nproc});
+                    "myArray", {gndx}, {gndx / (size_t)nproc}, {gndx / (size_t)nproc});
                 (void)varArray;
 
                 adios2::Variable<std::string> varSyncString =
@@ -157,8 +152,7 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
         retval = 1;
     }

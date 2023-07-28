@@ -15,8 +15,7 @@ namespace py11
 {
 
 ADIOS::ADIOS(const std::string &configFile, MPI4PY_Comm mpiComm)
-: m_ADIOS(std::make_shared<adios2::core::ADIOS>(
-      configFile, helper::CommDupMPI(mpiComm), "Python"))
+: m_ADIOS(std::make_shared<adios2::core::ADIOS>(configFile, helper::CommDupMPI(mpiComm), "Python"))
 {
 }
 

@@ -34,8 +34,8 @@ void printUsage()
               << "  M:       number of processes in Y dimension\n\n";
 }
 
-void Compute(const std::vector<double> &Tin, std::vector<double> &Tout,
-             std::vector<double> &dT, bool firstStep)
+void Compute(const std::vector<double> &Tin, std::vector<double> &Tout, std::vector<double> &dT,
+             bool firstStep)
 {
     /* Compute dT and
      * copy Tin into Tout as it will be used for calculating dT in the
@@ -115,8 +115,7 @@ int main(int argc, char *argv[])
 
         adios2::IO outIO = ad.DeclareIO("readerOutput");
 
-        adios2::Engine reader =
-            inIO.Open(settings.inputfile, adios2::Mode::Read, mpiReaderComm);
+        adios2::Engine reader = inIO.Open(settings.inputfile, adios2::Mode::Read, mpiReaderComm);
 
         std::vector<double> Tin;
         std::vector<double> Tout;
@@ -130,8 +129,7 @@ int main(int argc, char *argv[])
 
         while (true)
         {
-            adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::Read);
+            adios2::StepStatus status = reader.BeginStep(adios2::StepMode::Read);
             if (status != adios2::StepStatus::OK)
             {
                 break;
@@ -170,12 +168,11 @@ int main(int argc, char *argv[])
                 dT.resize(settings.readsize[0] * settings.readsize[1]);
 
                 /* Create output variables and open output stream */
-                vTout = outIO.DefineVariable<double>(
-                    "T", {gndx, gndy}, settings.offset, settings.readsize);
-                vdT = outIO.DefineVariable<double>(
-                    "dT", {gndx, gndy}, settings.offset, settings.readsize);
-                writer = outIO.Open(settings.outputfile, adios2::Mode::Write,
-                                    mpiReaderComm);
+                vTout = outIO.DefineVariable<double>("T", {gndx, gndy}, settings.offset,
+                                                     settings.readsize);
+                vdT = outIO.DefineVariable<double>("dT", {gndx, gndy}, settings.offset,
+                                                   settings.readsize);
+                writer = outIO.Open(settings.outputfile, adios2::Mode::Write, mpiReaderComm);
 
                 MPI_Barrier(mpiReaderComm); // sync processes just for stdout
             }
@@ -186,8 +183,7 @@ int main(int argc, char *argv[])
             }
 
             // Create a 2D selection for the subset
-            vTin.SetSelection(
-                adios2::Box<adios2::Dims>(settings.offset, settings.readsize));
+            vTin.SetSelection(adios2::Box<adios2::Dims>(settings.offset, settings.readsize));
 
             // Arrays are read by scheduling one or more of them
             // and performing the reads at once

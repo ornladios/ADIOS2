@@ -28,13 +28,10 @@ int main(int argc, char *argv[])
         std::string dataFileName = "/tmp/heatbp4.bp";
         if (argc <= 2)
         {
-            std::cout << "Usage: " << argv[0]
-                      << " configFileName  dataFilePath (queryFile)"
+            std::cout << "Usage: " << argv[0] << " configFileName  dataFilePath (queryFile)"
                       << std::endl;
-            std::cout << "    e.g.  " << argv[0] << " bp4io.xml heat_bp4.bp/ "
-                      << std::endl;
-            std::cout << "    or    " << argv[0]
-                      << " bp4io.xml heat_bp4.bp/ q1.json" << std::endl;
+            std::cout << "    e.g.  " << argv[0] << " bp4io.xml heat_bp4.bp/ " << std::endl;
+            std::cout << "    or    " << argv[0] << " bp4io.xml heat_bp4.bp/ q1.json" << std::endl;
             return 0;
         }
 
@@ -50,8 +47,7 @@ int main(int argc, char *argv[])
         adios2::ADIOS ad = adios2::ADIOS(configFileName, MPI_COMM_WORLD);
 
         adios2::IO queryIO = ad.DeclareIO("query");
-        adios2::Engine reader =
-            queryIO.Open(dataFileName, adios2::Mode::Read, MPI_COMM_WORLD);
+        adios2::Engine reader = queryIO.Open(dataFileName, adios2::Mode::Read, MPI_COMM_WORLD);
 #ifdef NEVER
         adios2::QueryWorker w = adios2::QueryWorker(configFileName, reader);
 #else
@@ -71,8 +67,8 @@ int main(int argc, char *argv[])
             w.GetResultCoverage(empty, touched_blocks);
             // adios2::Box<adios2::Dims> tt({10,10}, {12,12});
             // w.GetResultCoverage(tt, touched_blocks);
-            std::cout << " ... now can read out touched blocks ... size="
-                      << touched_blocks.size() << std::endl;
+            std::cout << " ... now can read out touched blocks ... size=" << touched_blocks.size()
+                      << std::endl;
             for (auto n : touched_blocks)
             {
                 std::ostringstream startStr;
@@ -82,8 +78,8 @@ int main(int argc, char *argv[])
                     startStr << n.first[k] << " ";
                     countStr << n.second[k] << " ";
                 }
-                std::cout << "\t[" << startStr.str() << "]  [" << countStr.str()
-                          << "]" << std::endl;
+                std::cout << "\t[" << startStr.str() << "]  [" << countStr.str() << "]"
+                          << std::endl;
             }
             reader.EndStep();
         }
@@ -101,8 +97,7 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-bool testMe(std::string &queryConfigFile, std::string const &doubleVarName,
-            MPI_Comm comm)
+bool testMe(std::string &queryConfigFile, std::string const &doubleVarName, MPI_Comm comm)
 {
     adios2::ADIOS ad(queryConfigFile, comm);
     std::string dataFileName = "test.file";

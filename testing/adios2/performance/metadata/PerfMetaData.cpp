@@ -78,8 +78,7 @@ static adios2::Params ParseEngineParams(std::string Input)
         std::getline(ss2, ParamName, '=');
         if (!std::getline(ss2, ParamValue, '='))
         {
-            throw std::invalid_argument("Engine parameter \"" + Param +
-                                        "\" missing value");
+            throw std::invalid_argument("Engine parameter \"" + Param + "\" missing value");
         }
         Ret[Trim(ParamName)] = Trim(ParamValue);
     }
@@ -131,8 +130,7 @@ static void ParseArgs(int argc, char **argv)
         {
             std::istringstream ss(argv[2]);
             if (!(ss >> NumVars))
-                std::cerr << "Invalid number for number of variables "
-                          << argv[1] << '\n';
+                std::cerr << "Invalid number for number of variables " << argv[1] << '\n';
             argv++;
             argc--;
         }
@@ -140,8 +138,7 @@ static void ParseArgs(int argc, char **argv)
         {
             std::istringstream ss(argv[2]);
             if (!(ss >> NumArrays))
-                std::cerr << "Invalid number for number of arrays" << argv[1]
-                          << '\n';
+                std::cerr << "Invalid number for number of arrays" << argv[1] << '\n';
             argv++;
             argc--;
         }
@@ -149,8 +146,7 @@ static void ParseArgs(int argc, char **argv)
         {
             std::istringstream ss(argv[2]);
             if (!(ss >> NumAttrs))
-                std::cerr << "Invalid number for number of attrs" << argv[1]
-                          << '\n';
+                std::cerr << "Invalid number for number of attrs" << argv[1] << '\n';
             argv++;
             argc--;
         }
@@ -158,8 +154,7 @@ static void ParseArgs(int argc, char **argv)
         {
             std::istringstream ss(argv[2]);
             if (!(ss >> NumBlocks))
-                std::cerr << "Invalid number for number of blocks" << argv[1]
-                          << '\n';
+                std::cerr << "Invalid number for number of blocks" << argv[1] << '\n';
             argv++;
             argc--;
         }
@@ -246,8 +241,7 @@ static void ParseArgs(int argc, char **argv)
             else
             {
 
-                throw std::invalid_argument("Unknown argument \"" +
-                                            std::string(argv[1]) + "\"");
+                throw std::invalid_argument("Unknown argument \"" + std::string(argv[1]) + "\"");
             }
         }
         argv++;
@@ -272,11 +266,9 @@ void DoWriter(adios2::Params writerParams)
     }
 #endif
     if ((mpiRank == 0) && E3sm)
-        std::cout << "E3SM mode.  Full run: 960 Timesteps, at 1344 ranks"
-                  << std::endl;
+        std::cout << "E3SM mode.  Full run: 960 Timesteps, at 1344 ranks" << std::endl;
     if ((mpiRank == 0) && Warpx)
-        std::cout << "Warpx mode.  Full run: 50 Timesteps, at 3000 ranks"
-                  << std::endl;
+        std::cout << "Warpx mode.  Full run: 50 Timesteps, at 3000 ranks" << std::endl;
     if ((mpiRank == 0) && ErrorStr)
     {
         std::cout << "Unknown arg " << ErrorStr << std::endl;
@@ -300,8 +292,7 @@ void DoWriter(adios2::Params writerParams)
     std::chrono::time_point<std::chrono::high_resolution_clock> start, finish;
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     adios2::Variable<float> *Floats = new adios2::Variable<float>[NumVars];
-    adios2::Variable<float> *FloatArrays =
-        new adios2::Variable<float>[NumArrays];
+    adios2::Variable<float> *FloatArrays = new adios2::Variable<float>[NumArrays];
     if (mpiRank == 0)
     {
         // attributes and globals on rank 0
@@ -321,14 +312,13 @@ void DoWriter(adios2::Params writerParams)
         std::string varname = "Array" + std::to_string(i);
         if (NumBlocks == 1)
         {
-            FloatArrays[i] = io.DefineVariable<float>(
-                varname, {(unsigned long)mpiSize}, {(unsigned long)mpiRank},
-                {1}, adios2::ConstantDims);
+            FloatArrays[i] =
+                io.DefineVariable<float>(varname, {(unsigned long)mpiSize},
+                                         {(unsigned long)mpiRank}, {1}, adios2::ConstantDims);
         }
         else
         {
-            FloatArrays[i] = io.DefineVariable<float>(varname, {}, {}, {1},
-                                                      adios2::ConstantDims);
+            FloatArrays[i] = io.DefineVariable<float>(varname, {}, {}, {1}, adios2::ConstantDims);
         }
     }
     start = std::chrono::high_resolution_clock::now();
@@ -383,8 +373,7 @@ void DoReader()
     engineParams["ReaderShortCircuitReads"] = "On";
     io.SetParameters(engineParams);
     adios2::Engine reader = io.Open("MetaDataTest", adios2::Mode::Read);
-    std::chrono::time_point<std::chrono::high_resolution_clock> startTS,
-        endBeginStep, finishTS;
+    std::chrono::time_point<std::chrono::high_resolution_clock> startTS, endBeginStep, finishTS;
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
     std::this_thread::sleep_for(std::chrono::seconds(ReaderDelay));
     std::vector<float> in(1);
@@ -465,8 +454,7 @@ void DoReader()
                 // local, go through blocks
                 for (int rank = 0; rank < WriterSize; rank++)
                 {
-                    for (auto blk :
-                         reader.BlocksInfo(Var, reader.CurrentStep()))
+                    for (auto blk : reader.BlocksInfo(Var, reader.CurrentStep()))
                     {
                         Var.SetBlockSelection(blk.BlockID);
                         reader.Get(Var, in.data());
@@ -493,21 +481,17 @@ void DoReader()
 
 void DoReaderOutput()
 {
-    std::cout << "Metadata Installation Time " << InstallTime.count()
-              << " seconds." << std::endl;
+    std::cout << "Metadata Installation Time " << InstallTime.count() << " seconds." << std::endl;
 
-    std::cout << "Metadata Traversal Time " << TraversalTime.count()
-              << " seconds." << std::endl;
+    std::cout << "Metadata Traversal Time " << TraversalTime.count() << " seconds." << std::endl;
 
     std::cout << "Parameters Nsteps=" << NSteps << ", NumArrays=" << NumArrays
-              << ", NumVArs=" << NumVars << ", NumAttrs=" << NumAttrs
-              << ", NumBlocks=" << NumBlocks << std::endl;
-    if ((NumArrays != LastArraySize) || (NumVars != LastVarSize) ||
-        (NumAttrs != LastAttrsSize))
+              << ", NumVArs=" << NumVars << ", NumAttrs=" << NumAttrs << ", NumBlocks=" << NumBlocks
+              << std::endl;
+    if ((NumArrays != LastArraySize) || (NumVars != LastVarSize) || (NumAttrs != LastAttrsSize))
     {
         std::cout << "Arrays=" << LastArraySize << ", Vars=" << LastVarSize
-                  << ", Attrs=" << LastAttrsSize << ", NumBlocks=" << NumBlocks
-                  << std::endl;
+                  << ", Attrs=" << LastAttrsSize << ", NumBlocks=" << NumBlocks << std::endl;
         std::cout << "Inconsistency" << std::endl;
     }
 }
@@ -546,8 +530,7 @@ int main(int argc, char **argv)
         {
             DoWriter(engineParams);
             if (key == 0)
-                std::cout << "File Writer Time " << elapsed.count()
-                          << " seconds." << std::endl;
+                std::cout << "File Writer Time " << elapsed.count() << " seconds." << std::endl;
         }
         else
         {
@@ -572,21 +555,18 @@ int main(int argc, char **argv)
     }
     if ((NumBlocks > 1) && (key == 0))
     {
-        std::cerr
-            << "Warning, metadata info for FFS not valid for num_blocks > 1"
-            << std::endl;
+        std::cerr << "Warning, metadata info for FFS not valid for num_blocks > 1" << std::endl;
     }
     // first all writer ranks do Writer calcs with no reader
     if (key > 0)
     {
-        adios2::Params ConsolidationParams =
-            engineParams; // parsed from command line
+        adios2::Params ConsolidationParams = engineParams; // parsed from command line
         ConsolidationParams["RendezvousReaderCount"] = "0";
         DoWriter(ConsolidationParams);
         if (key == 1)
         {
-            std::cout << "Metadata Consolidation Time " << elapsed.count()
-                      << " seconds." << std::endl;
+            std::cout << "Metadata Consolidation Time " << elapsed.count() << " seconds."
+                      << std::endl;
         }
         ReaderDelay = (int)elapsed.count() + 5;
     }

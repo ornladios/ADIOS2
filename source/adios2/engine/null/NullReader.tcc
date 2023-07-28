@@ -18,8 +18,7 @@ namespace engine
 {
 
 template <>
-inline void NullReader::GetSyncCommon(Variable<std::string> &variable,
-                                      std::string *data)
+inline void NullReader::GetSyncCommon(Variable<std::string> &variable, std::string *data)
 {
     variable.m_Data = data;
 }

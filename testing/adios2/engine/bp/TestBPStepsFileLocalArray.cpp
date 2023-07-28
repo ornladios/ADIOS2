@@ -28,8 +28,7 @@ class BPStepsFileLocalArray : public ::testing::Test
 protected:
     BPStepsFileLocalArray() = default;
 
-    const DataArray I32 = {
-        {512, 513, -510, 515, -508, 517, -506, 519, -504, 521}};
+    const DataArray I32 = {{512, 513, -510, 515, -508, 517, -506, 519, -504, 521}};
 
     DataArray GenerateData(int step, int rank, int size)
     {
@@ -77,9 +76,8 @@ std::string ReadModeToString(const ReadMode r)
     return "unknown";
 }
 
-class BPStepsFileLocalArrayReaders
-: public BPStepsFileLocalArray,
-  public ::testing::WithParamInterface<ReadMode>
+class BPStepsFileLocalArrayReaders : public BPStepsFileLocalArray,
+                                     public ::testing::WithParamInterface<ReadMode>
 {
 protected:
     ReadMode GetReadMode() { return GetParam(); };
@@ -89,8 +87,7 @@ protected:
 TEST_P(BPStepsFileLocalArrayReaders, EveryStep)
 {
     const ReadMode readMode = GetReadMode();
-    std::string fname_prefix =
-        "BPStepsFileLocalArray.EveryStep." + ReadModeToString(readMode);
+    std::string fname_prefix = "BPStepsFileLocalArray.EveryStep." + ReadModeToString(readMode);
     int mpiRank = 0, mpiSize = 1;
     const std::size_t NSteps = 4;
 
@@ -134,8 +131,7 @@ TEST_P(BPStepsFileLocalArrayReaders, EveryStep)
             // Generate test data for each process uniquely
             m_TestData[step] = GenerateData(step, mpiRank, mpiSize);
             std::cout << "Rank " << mpiRank << " write step " << step << ": "
-                      << ArrayToString(m_TestData[step].data(), Nx)
-                      << std::endl;
+                      << ArrayToString(m_TestData[step].data(), Nx) << std::endl;
             engine.BeginStep();
             engine.Put(var_i32, m_TestData[step].data());
             engine.EndStep();
@@ -175,8 +171,7 @@ TEST_P(BPStepsFileLocalArrayReaders, EveryStep)
             var_i32.SetBlockSelection(blockID);
             DataArray d;
             engine.Get(var_i32, d.data(), adios2::Mode::Sync);
-            std::cout << "Rank " << mpiRank << " read step " << step
-                      << " block " << blockID << ": "
+            std::cout << "Rank " << mpiRank << " read step " << step << " block " << blockID << ": "
                       << ArrayToString(d.data(), Nx) << std::endl;
             auto start = var_i32.Start();
             auto count = var_i32.Count();
@@ -214,8 +209,7 @@ TEST_P(BPStepsFileLocalArrayReaders, EveryStep)
             var_i32.SetBlockSelection(blockID);
             DataArray d;
             engine.Get(var_i32, d.data(), adios2::Mode::Sync);
-            std::cout << "Rank " << mpiRank << " read step " << step
-                      << " block " << blockID << ": "
+            std::cout << "Rank " << mpiRank << " read step " << step << " block " << blockID << ": "
                       << ArrayToString(d.data(), Nx) << std::endl;
             auto start = var_i32.Start();
             auto count = var_i32.Count();
@@ -239,8 +233,7 @@ TEST_P(BPStepsFileLocalArrayReaders, EveryStep)
 TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
 {
     const ReadMode readMode = GetReadMode();
-    std::string fname_prefix =
-        "BPStepsFileLocalArray.NewVarPerStep." + ReadModeToString(readMode);
+    std::string fname_prefix = "BPStepsFileLocalArray.NewVarPerStep." + ReadModeToString(readMode);
     int mpiRank = 0, mpiSize = 1;
     const std::size_t NSteps = 4;
 
@@ -263,9 +256,7 @@ TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
     fname = fname_prefix + ".Serial.bp";
 #endif
 
-    auto lf_VarName = [](int step) -> std::string {
-        return "i32_" + std::to_string(step);
-    };
+    auto lf_VarName = [](int step) -> std::string { return "i32_" + std::to_string(step); };
 
     // Write test data using ADIOS2
     {
@@ -287,10 +278,8 @@ TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
             auto var = io.DefineVariable<int32_t>(varName, shape, start, count);
             // Generate test data for each process uniquely
             m_TestData[step] = GenerateData(step, mpiRank, mpiSize);
-            std::cout << "Rank " << mpiRank << " write step " << step << " var "
-                      << varName << ": "
-                      << ArrayToString(m_TestData[step].data(), Nx)
-                      << std::endl;
+            std::cout << "Rank " << mpiRank << " write step " << step << " var " << varName << ": "
+                      << ArrayToString(m_TestData[step].data(), Nx) << std::endl;
             engine.BeginStep();
             engine.Put(var, m_TestData[step].data());
             engine.EndStep();
@@ -315,10 +304,9 @@ TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
 
         if (!mpiRank)
         {
-            std::cout
-                << "Read with File reading mode using explicit SetStepSelection"
-                   ", block by block"
-                << std::endl;
+            std::cout << "Read with File reading mode using explicit SetStepSelection"
+                         ", block by block"
+                      << std::endl;
         }
         for (int step = 0; step < static_cast<int>(NSteps); ++step)
         {
@@ -332,8 +320,7 @@ TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
             var.SetBlockSelection(blockID);
             DataArray d;
             engine.Get(var, d.data(), adios2::Mode::Sync);
-            std::cout << "Rank " << mpiRank << " read step " << step
-                      << " block " << blockID << ": "
+            std::cout << "Rank " << mpiRank << " read step " << step << " block " << blockID << ": "
                       << ArrayToString(d.data(), Nx) << std::endl;
             //  not ok on all engines
             //            auto start = var.Start();
@@ -356,9 +343,7 @@ TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
 
         if (!mpiRank)
         {
-            std::cout
-                << "Read with Stream reading mode step by step, block by block"
-                << std::endl;
+            std::cout << "Read with Stream reading mode step by step, block by block" << std::endl;
         }
         for (int step = 0; step < static_cast<int>(NSteps); ++step)
         {
@@ -372,8 +357,7 @@ TEST_P(BPStepsFileLocalArrayReaders, NewVarPerStep)
             var.SetBlockSelection(blockID);
             DataArray d;
             engine.Get(var, d.data(), adios2::Mode::Sync);
-            std::cout << "Rank " << mpiRank << " read step " << step
-                      << " block " << blockID << ": "
+            std::cout << "Rank " << mpiRank << " read step " << step << " block " << blockID << ": "
                       << ArrayToString(d.data(), Nx) << std::endl;
             //  not ok on all engines
             //            auto start = var.Start();
@@ -417,9 +401,9 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
     const std::size_t NSteps = GetNsteps();
     const std::size_t Oddity = GetOddity();
     const ReadMode readMode = GetReadMode();
-    std::string fname_prefix =
-        "BPStepsFileLocalArray.EveryOtherStep.Steps" + std::to_string(NSteps) +
-        ".Oddity" + std::to_string(Oddity) + "." + ReadModeToString(readMode);
+    std::string fname_prefix = "BPStepsFileLocalArray.EveryOtherStep.Steps" +
+                               std::to_string(NSteps) + ".Oddity" + std::to_string(Oddity) + "." +
+                               ReadModeToString(readMode);
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
@@ -448,9 +432,8 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
     {
         if (!mpiRank)
         {
-            std::cout << "Write one variable in every "
-                      << (Oddity ? "ODD" : "EVEN") << " steps, within "
-                      << std::to_string(NSteps) << " steps" << std::endl;
+            std::cout << "Write one variable in every " << (Oddity ? "ODD" : "EVEN")
+                      << " steps, within " << std::to_string(NSteps) << " steps" << std::endl;
         }
         adios2::IO io = adios.DeclareIO("Write");
         if (!engineName.empty())
@@ -470,10 +453,8 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
             if (step % 2 == static_cast<int>(Oddity))
             {
                 m_TestData.push_back(GenerateData(step, mpiRank, mpiSize));
-                std::cout << "Rank " << mpiRank << " write step " << step
-                          << ": "
-                          << ArrayToString(m_TestData[stepsWritten].data(), Nx)
-                          << std::endl;
+                std::cout << "Rank " << mpiRank << " write step " << step << ": "
+                          << ArrayToString(m_TestData[stepsWritten].data(), Nx) << std::endl;
                 engine.Put(var_i32, m_TestData[stepsWritten].data());
                 ++stepsWritten;
             }
@@ -516,9 +497,8 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
             var_i32.SetBlockSelection(blockID);
             DataArray d;
             engine.Get(var_i32, d.data(), adios2::Mode::Sync);
-            std::cout << "Rank " << mpiRank << " read step " << s << " block "
-                      << blockID << ": " << ArrayToString(d.data(), Nx)
-                      << std::endl;
+            std::cout << "Rank " << mpiRank << " read step " << s << " block " << blockID << ": "
+                      << ArrayToString(d.data(), Nx) << std::endl;
             //  not ok on all engines
             //            auto start = var_i32.Start();
             //            auto count = var_i32.Count();
@@ -541,9 +521,7 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
 
         if (!mpiRank)
         {
-            std::cout
-                << "Read with Stream reading mode step by step, block by block"
-                << std::endl;
+            std::cout << "Read with Stream reading mode step by step, block by block" << std::endl;
         }
 
         size_t writtenStep = 0;
@@ -560,9 +538,8 @@ TEST_P(BPStepsFileLocalArrayParameters, EveryOtherStep)
                 var_i32.SetBlockSelection(blockID);
                 DataArray d;
                 engine.Get(var_i32, d.data(), adios2::Mode::Sync);
-                std::cout << "Rank " << mpiRank << " read step " << step
-                          << " block " << blockID << ": "
-                          << ArrayToString(d.data(), Nx) << std::endl;
+                std::cout << "Rank " << mpiRank << " read step " << step << " block " << blockID
+                          << ": " << ArrayToString(d.data(), Nx) << std::endl;
                 //  not ok on all engines
                 //                auto start = var_i32.Start();
                 //                auto count = var_i32.Count();

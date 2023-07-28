@@ -18,12 +18,12 @@ namespace core
 namespace engine
 {
 
-DataManReader::DataManReader(IO &io, const std::string &name,
-                             const Mode openMode, helper::Comm comm)
+DataManReader::DataManReader(IO &io, const std::string &name, const Mode openMode,
+                             helper::Comm comm)
 : Engine("DataManReader", io, name, openMode, std::move(comm)),
   m_FinalStep(std::numeric_limits<signed long int>::max()),
-  m_Serializer(m_Comm, (io.m_ArrayOrder == ArrayOrdering::RowMajor)),
-  m_RequesterThreadActive(true), m_SubscriberThreadActive(true)
+  m_Serializer(m_Comm, (io.m_ArrayOrder == ArrayOrdering::RowMajor)), m_RequesterThreadActive(true),
+  m_SubscriberThreadActive(true)
 {
     m_MpiRank = m_Comm.Rank();
     m_MpiSize = m_Comm.Size();
@@ -33,11 +33,10 @@ DataManReader::DataManReader(IO &io, const std::string &name,
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
     helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
     helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
-    helper::GetParameter(m_IO.m_Parameters, "MaxStepBufferSize",
-                         m_ReceiverBufferSize);
+    helper::GetParameter(m_IO.m_Parameters, "MaxStepBufferSize", m_ReceiverBufferSize);
 
-    helper::Log("Engine", "DataManReader", "Open", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::INFO);
+    helper::Log("Engine", "DataManReader", "Open", m_Name, 0, m_Comm.Rank(), 5, m_Verbosity,
+                helper::LogMode::INFO);
 
     if (m_IPAddress.empty())
     {
@@ -45,27 +44,24 @@ DataManReader::DataManReader(IO &io, const std::string &name,
                                              "IP address not specified");
     }
 
-    std::string requesterAddress =
-        "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
-    std::string subscriberAddress =
-        "tcp://" + m_IPAddress + ":" + std::to_string(m_Port + 1);
-    m_Requester.OpenRequester(requesterAddress, m_Timeout,
-                              m_ReceiverBufferSize);
+    std::string requesterAddress = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
+    std::string subscriberAddress = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port + 1);
+    m_Requester.OpenRequester(requesterAddress, m_Timeout, m_ReceiverBufferSize);
 
     auto timeBeforeRequest = std::chrono::system_clock::now();
     auto reply = m_Requester.Request("Handshake", 9);
     auto timeAfterRequest = std::chrono::system_clock::now();
-    auto roundLatency = std::chrono::duration_cast<std::chrono::milliseconds>(
-                            timeAfterRequest - timeBeforeRequest)
-                            .count();
+    auto roundLatency =
+        std::chrono::duration_cast<std::chrono::milliseconds>(timeAfterRequest - timeBeforeRequest)
+            .count();
 
     while (reply == nullptr or reply->empty())
     {
         timeBeforeRequest = std::chrono::system_clock::now();
         reply = m_Requester.Request("Handshake", 9);
         timeAfterRequest = std::chrono::system_clock::now();
-        roundLatency = std::chrono::duration_cast<std::chrono::milliseconds>(
-                           timeAfterRequest - timeBeforeRequest)
+        roundLatency = std::chrono::duration_cast<std::chrono::milliseconds>(timeAfterRequest -
+                                                                             timeBeforeRequest)
                            .count();
     }
 
@@ -123,12 +119,10 @@ DataManReader::~DataManReader()
     }
 }
 
-StepStatus DataManReader::BeginStep(StepMode stepMode,
-                                    const float timeoutSeconds)
+StepStatus DataManReader::BeginStep(StepMode stepMode, const float timeoutSeconds)
 {
-    helper::Log("Engine", "DataManReader", "BeginStep",
-                std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
-                helper::LogMode::INFO);
+    helper::Log("Engine", "DataManReader", "BeginStep", std::to_string(CurrentStep()), 0,
+                m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
 
     float timeout = timeoutSeconds;
 
@@ -140,20 +134,18 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
     if (m_CurrentStep >= m_FinalStep and m_CurrentStep >= 0)
     {
         helper::Log("Engine", "DataManReader", "BeginStep",
-                    "EndOfStream, final step is " + std::to_string(m_FinalStep),
-                    0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
+                    "EndOfStream, final step is " + std::to_string(m_FinalStep), 0, m_Comm.Rank(),
+                    5, m_Verbosity, helper::LogMode::INFO);
 
         return StepStatus::EndOfStream;
     }
 
-    m_CurrentStepMetadata =
-        m_Serializer.GetEarliestLatestStep(m_CurrentStep, 1, timeout, false);
+    m_CurrentStepMetadata = m_Serializer.GetEarliestLatestStep(m_CurrentStep, 1, timeout, false);
 
     if (m_CurrentStepMetadata == nullptr)
     {
-        helper::Log("Engine", "DataManReader", "BeginStep",
-                    "EndOfStream due to timeout", 0, m_Comm.Rank(), 5,
-                    m_Verbosity, helper::LogMode::INFO);
+        helper::Log("Engine", "DataManReader", "BeginStep", "EndOfStream due to timeout", 0,
+                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
         return StepStatus::EndOfStream;
     }
 
@@ -167,21 +159,19 @@ StepStatus DataManReader::BeginStep(StepMode stepMode,
         {
             if (i.type == DataType::None)
             {
-                helper::Throw<std::invalid_argument>("Engine", "DataManReader",
-                                                     "BeginStep",
+                helper::Throw<std::invalid_argument>("Engine", "DataManReader", "BeginStep",
                                                      "invalid data type");
             }
-#define declare_type(T)                                                        \
-    else if (i.type == helper::GetDataType<T>())                               \
-    {                                                                          \
-        CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                 \
+#define declare_type(T)                                                                            \
+    else if (i.type == helper::GetDataType<T>())                                                   \
+    {                                                                                              \
+        CheckIOVariable<T>(i.name, i.shape, i.start, i.count);                                     \
     }
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
             else
             {
-                helper::Throw<std::invalid_argument>("Engine", "DataManReader",
-                                                     "BeginStep",
+                helper::Throw<std::invalid_argument>("Engine", "DataManReader", "BeginStep",
                                                      "invalid data type");
             }
         }
@@ -315,28 +305,28 @@ void DataManReader::SubscribeThread()
     }
 }
 
-#define declare_type(T)                                                        \
-    void DataManReader::DoGetSync(Variable<T> &variable, T *data)              \
-    {                                                                          \
-        helper::Log("Engine", "DataManReader", "GetSync", variable.m_Name, 0,  \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
-        GetSyncCommon(variable, data);                                         \
-    }                                                                          \
-    void DataManReader::DoGetDeferred(Variable<T> &variable, T *data)          \
-    {                                                                          \
-        helper::Log("Engine", "DataManReader", "GetDeferred", variable.m_Name, \
-                    0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);  \
-        GetDeferredCommon(variable, data);                                     \
-    }                                                                          \
-    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
-    DataManReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const     \
-    {                                                                          \
-        return AllStepsBlocksInfoCommon(variable);                             \
-    }                                                                          \
-    std::vector<typename Variable<T>::BPInfo> DataManReader::DoBlocksInfo(     \
-        const Variable<T> &variable, const size_t step) const                  \
-    {                                                                          \
-        return BlocksInfoCommon(variable, step);                               \
+#define declare_type(T)                                                                            \
+    void DataManReader::DoGetSync(Variable<T> &variable, T *data)                                  \
+    {                                                                                              \
+        helper::Log("Engine", "DataManReader", "GetSync", variable.m_Name, 0, m_Comm.Rank(), 5,    \
+                    m_Verbosity, helper::LogMode::INFO);                                           \
+        GetSyncCommon(variable, data);                                                             \
+    }                                                                                              \
+    void DataManReader::DoGetDeferred(Variable<T> &variable, T *data)                              \
+    {                                                                                              \
+        helper::Log("Engine", "DataManReader", "GetDeferred", variable.m_Name, 0, m_Comm.Rank(),   \
+                    5, m_Verbosity, helper::LogMode::INFO);                                        \
+        GetDeferredCommon(variable, data);                                                         \
+    }                                                                                              \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                                    \
+    DataManReader::DoAllStepsBlocksInfo(const Variable<T> &variable) const                         \
+    {                                                                                              \
+        return AllStepsBlocksInfoCommon(variable);                                                 \
+    }                                                                                              \
+    std::vector<typename Variable<T>::BPInfo> DataManReader::DoBlocksInfo(                         \
+        const Variable<T> &variable, const size_t step) const                                      \
+    {                                                                                              \
+        return BlocksInfoCommon(variable, step);                                                   \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

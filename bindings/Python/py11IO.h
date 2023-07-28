@@ -48,30 +48,26 @@ public:
 
     size_t AddTransport(const std::string type, const Params &parameters);
 
-    void SetTransportParameter(const size_t transportIndex,
-                               const std::string key, const std::string value);
+    void SetTransportParameter(const size_t transportIndex, const std::string key,
+                               const std::string value);
 
     Variable DefineVariable(const std::string &name);
 
-    Variable DefineVariable(const std::string &name,
-                            const pybind11::array &array, const Dims &shape,
-                            const Dims &start, const Dims &count,
+    Variable DefineVariable(const std::string &name, const pybind11::array &array,
+                            const Dims &shape, const Dims &start, const Dims &count,
                             const bool isConstantDims);
 
     Variable InquireVariable(const std::string &name);
 
-    Attribute DefineAttribute(const std::string &name,
-                              const pybind11::array &array,
+    Attribute DefineAttribute(const std::string &name, const pybind11::array &array,
                               const std::string &variableName = "",
                               const std::string separator = "/");
 
-    Attribute DefineAttribute(const std::string &name,
-                              const std::string &stringValue,
+    Attribute DefineAttribute(const std::string &name, const std::string &stringValue,
                               const std::string &variableName = "",
                               const std::string separator = "/");
 
-    Attribute DefineAttribute(const std::string &name,
-                              const std::vector<std::string> &strings,
+    Attribute DefineAttribute(const std::string &name, const std::vector<std::string> &strings,
                               const std::string &variableName = "",
                               const std::string separator = "/");
 

@@ -30,8 +30,7 @@ class DataManReader : public Engine
 {
 
 public:
-    DataManReader(IO &io, const std::string &name, const Mode mode,
-                  helper::Comm comm);
+    DataManReader(IO &io, const std::string &name, const Mode mode, helper::Comm comm);
     virtual ~DataManReader();
     StepStatus BeginStep(StepMode stepMode, const float timeoutSeconds) final;
     size_t CurrentStep() const final;
@@ -79,13 +78,13 @@ private:
      */
     void DestructorClose(bool Verbose) noexcept final{};
 
-#define declare_type(T)                                                        \
-    void DoGetSync(Variable<T> &, T *) final;                                  \
-    void DoGetDeferred(Variable<T> &, T *) final;                              \
-    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
-    DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
-    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(                    \
-        const Variable<T> &variable, const size_t step) const final;
+#define declare_type(T)                                                                            \
+    void DoGetSync(Variable<T> &, T *) final;                                                      \
+    void DoGetDeferred(Variable<T> &, T *) final;                                                  \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>> DoAllStepsBlocksInfo(              \
+        const Variable<T> &variable) const final;                                                  \
+    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(const Variable<T> &variable,            \
+                                                           const size_t step) const final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -104,12 +103,12 @@ private:
     AllStepsBlocksInfoCommon(const Variable<T> &variable) const;
 
     template <typename T>
-    std::vector<typename Variable<T>::BPInfo>
-    BlocksInfoCommon(const Variable<T> &variable, const size_t step) const;
+    std::vector<typename Variable<T>::BPInfo> BlocksInfoCommon(const Variable<T> &variable,
+                                                               const size_t step) const;
 
     template <typename T>
-    void CheckIOVariable(const std::string &name, const Dims &shape,
-                         const Dims &start, const Dims &count);
+    void CheckIOVariable(const std::string &name, const Dims &shape, const Dims &start,
+                         const Dims &count);
 };
 
 } // end namespace engine

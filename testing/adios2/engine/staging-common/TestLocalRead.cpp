@@ -23,8 +23,8 @@
 
 #include "ParseArgs.h"
 
-static void ReadVariable(const std::string &name, adios2::IO &io,
-                         adios2::Engine &reader, size_t step)
+static void ReadVariable(const std::string &name, adios2::IO &io, adios2::Engine &reader,
+                         size_t step)
 {
     adios2::Variable<double> variable = io.InquireVariable<double>(name);
 
@@ -32,8 +32,8 @@ static void ReadVariable(const std::string &name, adios2::IO &io,
     {
         auto blocksInfo = reader.BlocksInfo(variable, step);
 
-        std::cout << "    " << name << " has " << blocksInfo.size()
-                  << " blocks in step " << step << std::endl;
+        std::cout << "    " << name << " has " << blocksInfo.size() << " blocks in step " << step
+                  << std::endl;
 
         // create a data vector for each block
         std::vector<double> dataSet;
@@ -50,8 +50,7 @@ static void ReadVariable(const std::string &name, adios2::IO &io,
     }
     else
     {
-        std::cout << "    Variable " << name << " not found in step " << step
-                  << std::endl;
+        std::cout << "    Variable " << name << " not found in step " << step << std::endl;
     }
 }
 
@@ -87,8 +86,7 @@ TEST_F(LocalReadTest, ADIOS2LocalRead)
     {
 
         // Begin step
-        adios2::StepStatus read_status =
-            reader.BeginStep(adios2::StepMode::Read, 10.0f);
+        adios2::StepStatus read_status = reader.BeginStep(adios2::StepMode::Read, 10.0f);
         if (read_status == adios2::StepStatus::NotReady)
         {
             // std::cout << "Stream not ready yet. Waiting...\n";
@@ -123,9 +121,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);
 
     int key;

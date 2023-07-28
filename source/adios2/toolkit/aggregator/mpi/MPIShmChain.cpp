@@ -28,10 +28,8 @@ void MPIShmChain::Close()
     {
         m_NodeComm.Free("free per-node comm in ~MPIShmChain()");
         m_OnePerNodeComm.Free("free chain of nodes in ~MPIShmChain()");
-        m_AllAggregatorsComm.Free(
-            "free comm of all aggregators in ~MPIShmChain()");
-        m_AggregatorChainComm.Free(
-            "free chains of aggregators in ~MPIShmChain()");
+        m_AllAggregatorsComm.Free("free comm of all aggregators in ~MPIShmChain()");
+        m_AggregatorChainComm.Free("free chains of aggregators in ~MPIShmChain()");
     }
     MPIAggregator::Close();
 }
@@ -47,8 +45,7 @@ size_t MPIShmChain::PreInit(helper::Comm const &parentComm)
      *  We are only interested in the chain of rank 0s
      */
     int color = (NodeRank ? 1 : 0);
-    m_OnePerNodeComm =
-        parentComm.Split(color, 0, "creating chain of nodes at Open");
+    m_OnePerNodeComm = parentComm.Split(color, 0, "creating chain of nodes at Open");
 
     /* Number of nodes */
     if (!NodeRank)
@@ -86,8 +83,7 @@ void MPIShmChain::Init(const size_t numAggregators, const size_t subStreams,
 
     /* Create main communicator that splits the node comm into one or more
      * aggregator chains */
-    float k =
-        static_cast<float>(NodeSize) / static_cast<float>(aggregatorPerNode);
+    float k = static_cast<float>(NodeSize) / static_cast<float>(aggregatorPerNode);
     float c = static_cast<float>(NodeRank) / k;
     int color = static_cast<int>(c);
     m_Comm = m_NodeComm.Split(color, 0, "creating aggregator groups at Open");
@@ -108,8 +104,7 @@ void MPIShmChain::Init(const size_t numAggregators, const size_t subStreams,
 
     /* Communicator for all Aggregators */
     color = (m_Rank ? 1 : 0);
-    m_AllAggregatorsComm =
-        parentComm.Split(color, 0, "creating comm of all aggregators at Open");
+    m_AllAggregatorsComm = parentComm.Split(color, 0, "creating comm of all aggregators at Open");
 
     /* Total number of aggregators */
     if (!NodeRank)
@@ -131,8 +126,7 @@ void MPIShmChain::Init(const size_t numAggregators, const size_t subStreams,
 
     if (!m_Rank)
     {
-        k = static_cast<float>(m_NumAggregators) /
-            static_cast<float>(m_SubStreams);
+        k = static_cast<float>(m_NumAggregators) / static_cast<float>(m_SubStreams);
         /* 1.0 <= k <= m_NumAggregators */
         c = static_cast<float>(m_AllAggregatorsComm.Rank()) / k;
         m_SubStreamIndex = static_cast<int>(c);
@@ -142,8 +136,8 @@ void MPIShmChain::Init(const size_t numAggregators, const size_t subStreams,
     /* Create the communicator to connect aggregators writing to the same
      * substream */
     color = static_cast<int>(m_SubStreamIndex);
-    m_AggregatorChainComm = m_AllAggregatorsComm.Split(
-        color, 0, "creating chains of aggregators at Open");
+    m_AggregatorChainComm =
+        m_AllAggregatorsComm.Split(color, 0, "creating chains of aggregators at Open");
 
     if (m_AggregatorChainComm.Rank() != 0)
     {
@@ -181,28 +175,24 @@ void MPIShmChain::HandshakeLinks_Start(helper::Comm &comm, HandshakeStruct &hs)
     hs.sendToken = rank;
     if (rank < comm.Size() - 1) // send to next
     {
-        hs.sendRequest = comm.Isend(
-            &hs.sendToken, 1, rank + 1, 0,
-            "Isend handshake with neighbor, MPIChain aggregator, at Open");
+        hs.sendRequest = comm.Isend(&hs.sendToken, 1, rank + 1, 0,
+                                    "Isend handshake with neighbor, MPIChain aggregator, at Open");
     }
     else // send to 0 to close the loop
     {
-        hs.sendRequest = comm.Isend(
-            &hs.sendToken, 1, 0, 0,
-            "Isend handshake with rank 0, MPIChain aggregator, at Open");
+        hs.sendRequest = comm.Isend(&hs.sendToken, 1, 0, 0,
+                                    "Isend handshake with rank 0, MPIChain aggregator, at Open");
     }
 
     if (comm.Rank() > 0) // receive from previous
     {
-        hs.recvRequest = comm.Irecv(
-            &hs.recvToken, 1, rank - 1, 0,
-            "Irecv handshake with neighbor, MPIChain aggregator, at Open");
+        hs.recvRequest = comm.Irecv(&hs.recvToken, 1, rank - 1, 0,
+                                    "Irecv handshake with neighbor, MPIChain aggregator, at Open");
     }
     else // rank 0 receives from last
     {
-        hs.recvRequest = comm.Irecv(
-            &hs.recvToken, 1, comm.Size() - 1, 0,
-            "Irecv handshake with neighbor, MPIChain aggregator, at Open");
+        hs.recvRequest = comm.Irecv(&hs.recvToken, 1, comm.Size() - 1, 0,
+                                    "Irecv handshake with neighbor, MPIChain aggregator, at Open");
     }
 }
 
@@ -219,9 +209,8 @@ void MPIShmChain::CreateShm(size_t blocksize, const size_t maxsegmentsize,
 {
     if (!m_Comm.IsMPI())
     {
-        helper::Throw<std::runtime_error>(
-            "Toolkit", "aggregator::mpi::MPIShmChain", "CreateShm",
-            "called with a non-MPI communicator");
+        helper::Throw<std::runtime_error>("Toolkit", "aggregator::mpi::MPIShmChain", "CreateShm",
+                                          "called with a non-MPI communicator");
     }
     char *ptr;
     size_t structsize = sizeof(ShmSegment);
@@ -234,11 +223,9 @@ void MPIShmChain::CreateShm(size_t blocksize, const size_t maxsegmentsize,
         {
             // roll back and calculate sizes from maxsegmentsize
             totalsize = maxsegmentsize - alignment_size + 1;
-            totalsize +=
-                helper::PaddingToAlignOffset(totalsize, alignment_size);
+            totalsize += helper::PaddingToAlignOffset(totalsize, alignment_size);
             blocksize = (totalsize - structsize) / 2 - alignment_size + 1;
-            blocksize +=
-                helper::PaddingToAlignOffset(blocksize, alignment_size);
+            blocksize += helper::PaddingToAlignOffset(blocksize, alignment_size);
             totalsize = structsize + 2 * blocksize;
         }
         m_Win = m_Comm.Win_allocate_shared(totalsize, 1, &ptr);

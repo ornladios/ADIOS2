@@ -30,24 +30,23 @@ BufferSystemV::BufferSystemV(const size_t fixedSize, const std::string &name,
 {
     assert(projectID > 0); // for the developer
     key_t key = ftok(name.c_str(), static_cast<int>(projectID));
-    m_ShmID = shmget(key, static_cast<unsigned long int>(fixedSize),
-                     IPC_CREAT | 0666);
+    m_ShmID = shmget(key, static_cast<unsigned long int>(fixedSize), IPC_CREAT | 0666);
     if (m_ShmID == -1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "format::buffer::ipc::BufferSystemV", "BufferSystemV",
-            "could not create shared memory buffer of size " +
-                std::to_string(fixedSize) + " with shmget");
+        helper::Throw<std::ios_base::failure>("Toolkit", "format::buffer::ipc::BufferSystemV",
+                                              "BufferSystemV",
+                                              "could not create shared memory buffer of size " +
+                                                  std::to_string(fixedSize) + " with shmget");
     }
 
     void *data = shmat(m_ShmID, nullptr, 0);
     int *status = reinterpret_cast<int *>(data);
     if (*status == -1)
     {
-        helper::Throw<std::runtime_error>(
-            "Toolkit", "format::buffer::ipc::BufferSystemV", "BufferSystemV",
-            "could not attach shared memory buffer "
-            "to address with shmat");
+        helper::Throw<std::runtime_error>("Toolkit", "format::buffer::ipc::BufferSystemV",
+                                          "BufferSystemV",
+                                          "could not attach shared memory buffer "
+                                          "to address with shmat");
     }
     m_Data = static_cast<char *>(data);
 }
@@ -66,8 +65,7 @@ char *BufferSystemV::Data() noexcept { return m_Data; }
 
 const char *BufferSystemV::Data() const noexcept { return m_Data; }
 
-void BufferSystemV::Reset(const bool resetAbsolutePosition,
-                          const bool zeroInitialize)
+void BufferSystemV::Reset(const bool resetAbsolutePosition, const bool zeroInitialize)
 {
     m_Position = 0;
     if (resetAbsolutePosition)

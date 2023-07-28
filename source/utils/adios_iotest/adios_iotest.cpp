@@ -55,8 +55,7 @@ int main(int argc, char *argv[])
     {
         if (!settings.myRank && settings.verbose)
         {
-            std::cout << "Use ADIOS xml file " << settings.adiosConfigFileName
-                      << std::endl;
+            std::cout << "Use ADIOS xml file " << settings.adiosConfigFileName << std::endl;
         }
         adios = adios2::ADIOS(settings.adiosConfigFileName, settings.appComm);
     }
@@ -77,9 +76,8 @@ int main(int argc, char *argv[])
             }
             else
             {
-                std::cout << "Config file error in line "
-                          << currentConfigLineNumber << ": " << e.what()
-                          << std::endl;
+                std::cout << "Config file error in line " << currentConfigLineNumber << ": "
+                          << e.what() << std::endl;
             }
         }
 
@@ -101,8 +99,7 @@ int main(int argc, char *argv[])
          */
         if (!settings.myRank && settings.verbose)
         {
-            std::cout << "Start App " + std::to_string(settings.appId) + ": "
-                      << std::endl;
+            std::cout << "Start App " + std::to_string(settings.appId) + ": " << std::endl;
         }
         /* 1. Assign stream names with group names that appear in
            commands */
@@ -116,15 +113,13 @@ int main(int argc, char *argv[])
             {
                 auto cmdW = dynamic_cast<CommandWrite *>(cmd.get());
                 groupMap[cmdW->streamName] = cmdW->groupName;
-                streamsInOrder.push_back(
-                    std::make_pair(cmdW->streamName, Operation::Write));
+                streamsInOrder.push_back(std::make_pair(cmdW->streamName, Operation::Write));
             }
             else if (cmd->op == Operation::Read)
             {
                 auto cmdR = dynamic_cast<CommandRead *>(cmd.get());
                 groupMap[cmdR->streamName] = cmdR->groupName;
-                streamsInOrder.push_back(
-                    std::make_pair(cmdR->streamName, Operation::Read));
+                streamsInOrder.push_back(std::make_pair(cmdR->streamName, Operation::Read));
             }
         }
 
@@ -158,8 +153,8 @@ int main(int argc, char *argv[])
                 {
                     if (!settings.myRank && settings.verbose)
                     {
-                        std::cout << "    Create Output Stream " << streamName
-                                  << "... " << std::endl;
+                        std::cout << "    Create Output Stream " << streamName << "... "
+                                  << std::endl;
                     }
                     if (!settings.outputPath.empty())
                     {
@@ -171,9 +166,9 @@ int main(int argc, char *argv[])
 
                         streamName = outputPath + streamName;
                     }
-                    std::shared_ptr<Stream> writer = openStream(
-                        streamName, io, adios2::Mode::Write, settings.iolib,
-                        settings.appComm, settings.ioTimer, settings.appId);
+                    std::shared_ptr<Stream> writer =
+                        openStream(streamName, io, adios2::Mode::Write, settings.iolib,
+                                   settings.appComm, settings.ioTimer, settings.appId);
                     writeStreamMap[st.first] = writer;
                 }
             }
@@ -182,8 +177,7 @@ int main(int argc, char *argv[])
                 auto it = readStreamMap.find(streamName);
                 if (it == readStreamMap.end())
                 {
-                    std::cout << "    Open Input Stream " << streamName
-                              << "... " << std::endl;
+                    std::cout << "    Open Input Stream " << streamName << "... " << std::endl;
                     if (!settings.outputPath.empty())
                     {
                         std::string outputPath = settings.outputPath;
@@ -194,9 +188,9 @@ int main(int argc, char *argv[])
 
                         streamName = outputPath + streamName;
                     }
-                    std::shared_ptr<Stream> reader = openStream(
-                        streamName, io, adios2::Mode::Read, settings.iolib,
-                        settings.appComm, settings.ioTimer, settings.appId);
+                    std::shared_ptr<Stream> reader =
+                        openStream(streamName, io, adios2::Mode::Read, settings.iolib,
+                                   settings.appComm, settings.ioTimer, settings.appId);
                     readStreamMap[st.first] = reader;
                 }
             }
@@ -209,14 +203,13 @@ int main(int argc, char *argv[])
         {
             if (!settings.myRank)
             {
-                std::cout << "App " + std::to_string(settings.appId) + " Step "
-                          << step << ": " << std::endl;
+                std::cout << "App " + std::to_string(settings.appId) + " Step " << step << ": "
+                          << std::endl;
             }
             for (const auto &cmd : cfg.commands)
             {
                 if (!cmd->conditionalStream.empty() &&
-                    cfg.condMap.at(cmd->conditionalStream) !=
-                        adios2::StepStatus::OK)
+                    cfg.condMap.at(cmd->conditionalStream) != adios2::StepStatus::OK)
                 {
                     if (!settings.myRank && settings.verbose)
                     {
@@ -236,21 +229,17 @@ int main(int argc, char *argv[])
                     auto cmdS = dynamic_cast<const CommandSleep *>(cmd.get());
                     if (!settings.myRank && settings.verbose)
                     {
-                        double t =
-                            static_cast<double>(cmdS->sleepTime_us) / 1000000.0;
+                        double t = static_cast<double>(cmdS->sleepTime_us) / 1000000.0;
                         std::cout << "    Sleep for " << t << "  seconds ";
                     }
-                    std::this_thread::sleep_for(
-                        std::chrono::microseconds(cmdS->sleepTime_us));
+                    std::this_thread::sleep_for(std::chrono::microseconds(cmdS->sleepTime_us));
                     adios.ExitComputationBlock();
                     if (!settings.myRank && settings.verbose)
                     {
                         std::chrono::high_resolution_clock::time_point end =
                             std::chrono::high_resolution_clock::now();
-                        double t = static_cast<double>((end - start).count()) /
-                                   1000000000.0;
-                        std::cout << " -> Slept for " << t << "  seconds "
-                                  << std::endl;
+                        double t = static_cast<double>((end - start).count()) / 1000000000.0;
+                        std::cout << " -> Slept for " << t << "  seconds " << std::endl;
                     }
                     break;
                 }
@@ -262,10 +251,8 @@ int main(int argc, char *argv[])
                     //     std::chrono::microseconds(cmdS->busyTime_us);
                     if (!settings.myRank && settings.verbose)
                     {
-                        double t =
-                            static_cast<double>(cmdS->busyTime_us) / 1000000.0;
-                        std::cout << "    Busy for " << cmdS->cycles
-                                  << " cycles with " << t
+                        double t = static_cast<double>(cmdS->busyTime_us) / 1000000.0;
+                        std::cout << "    Busy for " << cmdS->cycles << " cycles with " << t
                                   << " seconds work in each cycle";
                     }
                     const size_t N = 1048576;
@@ -290,18 +277,15 @@ int main(int argc, char *argv[])
                         {
                             adios.ExitComputationBlock();
                         }
-                        MPI_Allreduce(f, g, N, MPI_DOUBLE, MPI_SUM,
-                                      settings.appComm);
+                        MPI_Allreduce(f, g, N, MPI_DOUBLE, MPI_SUM, settings.appComm);
                     }
                     std::chrono::high_resolution_clock::time_point end =
                         std::chrono::high_resolution_clock::now();
                     actualBusyTime_usec += (end - start).count() / 1000;
                     if (!settings.myRank && settings.verbose)
                     {
-                        double t = static_cast<double>((end - start).count()) /
-                                   1000000000.0;
-                        std::cout << " -> Was busy for " << t << "  seconds "
-                                  << std::endl;
+                        double t = static_cast<double>((end - start).count()) / 1000000000.0;
+                        std::cout << " -> Was busy for " << t << "  seconds " << std::endl;
                     }
                     break;
                 }
@@ -320,8 +304,7 @@ int main(int argc, char *argv[])
                     {
                         auto stream = readStreamMap[cmdR->streamName];
                         // auto io = ioMap[cmdR->groupName];
-                        adios2::StepStatus status =
-                            stream->Read(cmdR, cfg, settings, step);
+                        adios2::StepStatus status = stream->Read(cmdR, cfg, settings, step);
                         statusIt->second = status;
                         switch (status)
                         {
@@ -407,11 +390,10 @@ int main(int argc, char *argv[])
         if (actualBusyTime_usec > 0)
         {
             std::cout << "  Total Busy time on Rank 0 was "
-                      << (double)actualBusyTime_usec / 1000000.0 << " seconds "
-                      << std::endl;
+                      << (double)actualBusyTime_usec / 1000000.0 << " seconds " << std::endl;
         }
-        std::cout << "ADIOS IOTEST App " << settings.appId << " total time "
-                  << timeEnd - timeStart << " seconds " << std::endl;
+        std::cout << "ADIOS IOTEST App " << settings.appId << " total time " << timeEnd - timeStart
+                  << " seconds " << std::endl;
     }
 
     MPI_Finalize();

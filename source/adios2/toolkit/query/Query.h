@@ -102,8 +102,7 @@ public:
     virtual void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
                                     std::vector<Box<Dims>> &touchedBlocks) = 0;
 
-    Box<Dims> GetIntersection(const Box<Dims> &box1,
-                              const Box<Dims> &box2) noexcept
+    Box<Dims> GetIntersection(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
     {
         Box<Dims> b1 = adios2::helper::StartEndBox(box1.first, box1.second);
         Box<Dims> b2 = adios2::helper::StartEndBox(box2.first, box2.second);
@@ -122,8 +121,7 @@ public:
         return true;
     }
 
-    virtual void
-    BroadcastOutputRegion(const adios2::Box<adios2::Dims> &region) = 0;
+    virtual void BroadcastOutputRegion(const adios2::Box<adios2::Dims> &region) = 0;
 
     void ApplyOutputRegion(std::vector<Box<Dims>> &touchedBlocks,
                            const adios2::Box<Dims> &referenceRegion);
@@ -143,10 +141,7 @@ public:
     std::string &GetVarName() { return m_VarName; }
     void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
                             std::vector<Box<Dims>> &touchedBlocks);
-    void BroadcastOutputRegion(const adios2::Box<adios2::Dims> &region)
-    {
-        m_OutputRegion = region;
-    }
+    void BroadcastOutputRegion(const adios2::Box<adios2::Dims> &region) { m_OutputRegion = region; }
 
     void Print() { m_RangeTree.Print(); }
 
@@ -175,8 +170,7 @@ public:
 
     bool TouchSelection(adios2::Dims &start, adios2::Dims &count) const;
 
-    void LoadSelection(const std::string &startStr,
-                       const std::string &countStr);
+    void LoadSelection(const std::string &startStr, const std::string &countStr);
 
     void LimitToSelection(std::vector<Box<Dims>> &touchedBlocks)
     {

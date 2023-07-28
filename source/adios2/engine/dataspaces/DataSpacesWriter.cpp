@@ -30,8 +30,8 @@ namespace core
 namespace engine
 {
 
-DataSpacesWriter::DataSpacesWriter(IO &io, const std::string &name,
-                                   const Mode mode, helper::Comm comm)
+DataSpacesWriter::DataSpacesWriter(IO &io, const std::string &name, const Mode mode,
+                                   helper::Comm comm)
 : Engine("DataSpacesWriter", io, name, mode, std::move(comm))
 {
 
@@ -128,15 +128,14 @@ void DataSpacesWriter::DoClose(const int transportIndex)
 
 void DataSpacesWriter::PerformPuts() {}
 
-#define declare_type(T)                                                        \
-    void DataSpacesWriter::DoPutSync(Variable<T> &variable, const T *values)   \
-    {                                                                          \
-        DoPutSyncCommon(variable, values);                                     \
-    }                                                                          \
-    void DataSpacesWriter::DoPutDeferred(Variable<T> &variable,                \
-                                         const T *values)                      \
-    {                                                                          \
-        DoPutSyncCommon(variable, values);                                     \
+#define declare_type(T)                                                                            \
+    void DataSpacesWriter::DoPutSync(Variable<T> &variable, const T *values)                       \
+    {                                                                                              \
+        DoPutSyncCommon(variable, values);                                                         \
+    }                                                                                              \
+    void DataSpacesWriter::DoPutDeferred(Variable<T> &variable, const T *values)                   \
+    {                                                                                              \
+        DoPutSyncCommon(variable, values);                                                         \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -157,19 +156,16 @@ void DataSpacesWriter::WriteVarInfo()
         std::string ds_file_var;
         int var_num = ndim_vector.size();
         int var_name_max_length = 128;
-        int buf_len =
-            var_num * (2 * sizeof(int) + MAX_DS_NDIM * sizeof(uint64_t) +
-                       var_name_max_length * sizeof(char));
+        int buf_len = var_num * (2 * sizeof(int) + MAX_DS_NDIM * sizeof(uint64_t) +
+                                 var_name_max_length * sizeof(char));
         int *dim_meta, *elemSize_meta;
         uint64_t *gdim_meta;
         dim_meta = (int *)malloc(var_num * sizeof(int));
         elemSize_meta = (int *)malloc(var_num * sizeof(int));
-        gdim_meta =
-            (uint64_t *)malloc(MAX_DS_NDIM * var_num * sizeof(uint64_t));
+        gdim_meta = (uint64_t *)malloc(MAX_DS_NDIM * var_num * sizeof(uint64_t));
         memset(gdim_meta, 0, MAX_DS_NDIM * var_num * sizeof(uint64_t));
         buffer = (char *)malloc(buf_len);
-        name_string =
-            (char *)malloc(var_num * var_name_max_length * sizeof(char));
+        name_string = (char *)malloc(var_num * var_name_max_length * sizeof(char));
         for (nvars = 0; nvars < var_num; ++nvars)
         {
             char *cstr = new char[v_name_vector.at(nvars).length() + 1];
@@ -188,12 +184,10 @@ void DataSpacesWriter::WriteVarInfo()
         }
         // copy all the data into payload buffer
         memcpy(buffer, dim_meta, var_num * sizeof(int));
-        memcpy(&buffer[var_num * sizeof(int)], elemSize_meta,
-               var_num * sizeof(int));
+        memcpy(&buffer[var_num * sizeof(int)], elemSize_meta, var_num * sizeof(int));
         memcpy(&buffer[2 * var_num * sizeof(int)], gdim_meta,
                MAX_DS_NDIM * var_num * sizeof(uint64_t));
-        memcpy(&buffer[2 * var_num * sizeof(int) +
-                       MAX_DS_NDIM * var_num * sizeof(uint64_t)],
+        memcpy(&buffer[2 * var_num * sizeof(int) + MAX_DS_NDIM * var_num * sizeof(uint64_t)],
                name_string, var_num * var_name_max_length * sizeof(char));
 
         // store metadata in DataSoaces

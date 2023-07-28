@@ -41,8 +41,7 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpReader = bpIO.Open(filename, adios2::Mode::Read);
 
-        const std::map<std::string, adios2::Params> variables =
-            bpIO.AvailableVariables();
+        const std::map<std::string, adios2::Params> variables = bpIO.AvailableVariables();
 
         for (const auto &variablePair : variables)
         {
@@ -50,14 +49,12 @@ int main(int argc, char *argv[])
 
             for (const auto &parameter : variablePair.second)
             {
-                std::cout << "\t" << parameter.first << ": " << parameter.second
-                          << "\n";
+                std::cout << "\t" << parameter.first << ": " << parameter.second << "\n";
             }
         }
 
         /** Write variable for buffering */
-        adios2::Variable<float> bpFloats =
-            bpIO.InquireVariable<float>("bpFloats");
+        adios2::Variable<float> bpFloats = bpIO.InquireVariable<float>("bpFloats");
         adios2::Variable<int> bpInts = bpIO.InquireVariable<int>("bpInts");
 
         const std::size_t Nx = 10;
@@ -107,9 +104,7 @@ int main(int argc, char *argv[])
     {
         if (rank == 0)
         {
-            std::cerr
-                << "Invalid argument exception, STOPPING PROGRAM from rank "
-                << rank << "\n";
+            std::cerr << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
             std::cerr << e.what() << "\n";
         }
         MPI_Abort(MPI_COMM_WORLD, 1);
@@ -133,8 +128,7 @@ int main(int argc, char *argv[])
     {
         if (rank == 0)
         {
-            std::cerr << "Exception, STOPPING PROGRAM from rank " << rank
-                      << "\n";
+            std::cerr << "Exception, STOPPING PROGRAM from rank " << rank << "\n";
             std::cerr << e.what() << "\n";
         }
         MPI_Abort(MPI_COMM_WORLD, 1);

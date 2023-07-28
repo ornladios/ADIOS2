@@ -48,16 +48,14 @@ TEST_F(BPJoinedArray, MultiBlock)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     adios2::ADIOS adios(MPI_COMM_WORLD);
-    const int nblocks = (rank < static_cast<int>(nblocksPerProcess.size())
-                             ? nblocksPerProcess[rank]
-                             : 1);
+    const int nblocks =
+        (rank < static_cast<int>(nblocksPerProcess.size()) ? nblocksPerProcess[rank] : 1);
 #else
     adios2::ADIOS adios;
     const int nblocks = nblocksPerProcess[0];
 #endif
 
-    const std::string fname =
-        "BPJoinedArrayMultiblock_nproc_" + std::to_string(nproc) + ".bp";
+    const std::string fname = "BPJoinedArrayMultiblock_nproc_" + std::to_string(nproc) + ".bp";
     int nMyTotalRows[nsteps];
     int nTotalRows[nsteps];
 
@@ -71,8 +69,8 @@ TEST_F(BPJoinedArray, MultiBlock)
         }
 
         adios2::Engine writer = outIO.Open(fname, adios2::Mode::Write);
-        auto var = outIO.DefineVariable<double>(
-            "table", {adios2::JoinedDim, Ncols}, {}, {1, Ncols});
+        auto var =
+            outIO.DefineVariable<double>("table", {adios2::JoinedDim, Ncols}, {}, {1, Ncols});
 
         if (!rank)
         {
@@ -94,14 +92,14 @@ TEST_F(BPJoinedArray, MultiBlock)
 
             nTotalRows[step] = nMyTotalRows[step];
 #if ADIOS2_USE_MPI
-            MPI_Allreduce(&(nMyTotalRows[step]), &(nTotalRows[step]), 1,
-                          MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allreduce(&(nMyTotalRows[step]), &(nTotalRows[step]), 1, MPI_INT, MPI_SUM,
+                          MPI_COMM_WORLD);
 #endif
 
             if (!rank)
             {
-                std::cout << "Writing " << nTotalRows[step] << " rows in step "
-                          << step << std::endl;
+                std::cout << "Writing " << nTotalRows[step] << " rows in step " << step
+                          << std::endl;
             }
 
             writer.BeginStep();
@@ -112,17 +110,16 @@ TEST_F(BPJoinedArray, MultiBlock)
                 {
                     for (size_t col = 0; col < Ncols; col++)
                     {
-                        mytable[row * Ncols + col] = static_cast<double>(
-                            (step + 1) * 1.0 + rank * 0.1 + block * 0.01 +
-                            row * 0.001 + col * 0.0001);
+                        mytable[row * Ncols + col] =
+                            static_cast<double>((step + 1) * 1.0 + rank * 0.1 + block * 0.01 +
+                                                row * 0.001 + col * 0.0001);
                     }
                 }
 
                 var.SetSelection({{}, {Nrows[block], Ncols}});
 
-                std::cout << "Step " << step << " rank " << rank << " block "
-                          << block << " count (" << var.Count()[0] << ", "
-                          << var.Count()[1] << ")" << std::endl;
+                std::cout << "Step " << step << " rank " << rank << " block " << block << " count ("
+                          << var.Count()[0] << ", " << var.Count()[1] << ")" << std::endl;
 
                 writer.Put(var, mytable.data(), adios2::Mode::Sync);
             }
@@ -143,15 +140,13 @@ TEST_F(BPJoinedArray, MultiBlock)
 
         if (!rank)
         {
-            std::cout << "Reading as stream with BeginStep/EndStep:"
-                      << std::endl;
+            std::cout << "Reading as stream with BeginStep/EndStep:" << std::endl;
         }
 
         int step = 0;
         while (true)
         {
-            adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::Read);
+            adios2::StepStatus status = reader.BeginStep(adios2::StepMode::Read);
 
             if (status != adios2::StepStatus::OK)
             {
@@ -163,9 +158,8 @@ TEST_F(BPJoinedArray, MultiBlock)
 
             if (!rank)
             {
-                std::cout << "Step " << step << " table shape ("
-                          << var.Shape()[0] << ", " << var.Shape()[1] << ")"
-                          << std::endl;
+                std::cout << "Step " << step << " table shape (" << var.Shape()[0] << ", "
+                          << var.Shape()[1] << ")" << std::endl;
             }
 
             size_t Nrows = static_cast<size_t>(nTotalRows[step]);
@@ -185,8 +179,7 @@ TEST_F(BPJoinedArray, MultiBlock)
                     for (size_t j = 0; j < Ncols; ++j)
                     {
                         EXPECT_GE(data[i * Ncols + j], (step + 1) * 1.0);
-                        EXPECT_LT(data[i * Ncols + j],
-                                  (nsteps + 1) * 1.0 + 0.9999);
+                        EXPECT_LT(data[i * Ncols + j], (nsteps + 1) * 1.0 + 0.9999);
                     }
                 }
             }

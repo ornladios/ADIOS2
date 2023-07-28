@@ -19,9 +19,8 @@ static void printUsage(bool isWriter)
 {
     if (isWriter)
     {
-        std::cout
-            << "Usage: Usage: helloSkeletonWriter  config  N  M   nx  ny   "
-               "steps  sleeptime\n";
+        std::cout << "Usage: Usage: helloSkeletonWriter  config  N  M   nx  ny   "
+                     "steps  sleeptime\n";
     }
     else
     {
@@ -32,12 +31,11 @@ static void printUsage(bool isWriter)
               << "  M:         number of processes in Y dimension\n";
     if (isWriter)
     {
-        std::cout
-            << "  nx:        local array size in X dimension per processor\n"
-            << "  ny:        local array size in Y dimension per processor\n"
-            << "  steps:     the total number of steps to output\n"
-            << "  sleeptime: wait this many milliseconds between output "
-               "steps\n\n";
+        std::cout << "  nx:        local array size in X dimension per processor\n"
+                  << "  ny:        local array size in Y dimension per processor\n"
+                  << "  steps:     the total number of steps to output\n"
+                  << "  sleeptime: wait this many milliseconds between output "
+                     "steps\n\n";
     }
 }
 
@@ -47,14 +45,12 @@ static unsigned int convertToUint(std::string varName, char *arg)
     unsigned int retval = std::strtoul(arg, &end, 10);
     if (end[0] || errno == ERANGE)
     {
-        throw std::invalid_argument("Invalid value given for " + varName +
-                                    ": " + std::string(arg));
+        throw std::invalid_argument("Invalid value given for " + varName + ": " + std::string(arg));
     }
     return retval;
 }
 
-HelloSkeletonArgs::HelloSkeletonArgs(bool isWriter, int argc, char *argv[],
-                                     int rank, int nproc)
+HelloSkeletonArgs::HelloSkeletonArgs(bool isWriter, int argc, char *argv[], int rank, int nproc)
 : rank{rank}
 {
     npx = npy = ndx = ndy = steps = sleeptime = 0;
@@ -92,8 +88,7 @@ HelloSkeletonArgs::HelloSkeletonArgs(bool isWriter, int argc, char *argv[],
 
         if (npx * npy != static_cast<size_t>(nproc))
         {
-            throw std::invalid_argument(
-                "N*M must equal the number of processes");
+            throw std::invalid_argument("N*M must equal the number of processes");
         }
     }
     catch (std::invalid_argument &e)
@@ -127,6 +122,6 @@ void HelloSkeletonArgs::DecomposeArray(size_t NX, size_t NY)
         ndy = gndy - ndy * (npy - 1);
     }
 
-    std::cout << "rank " << rank << " reads 2D slice " << ndx << " x " << ndy
-              << " from offset (" << offsx << "," << offsy << ")" << std::endl;
+    std::cout << "rank " << rank << " reads 2D slice " << ndx << " x " << ndy << " from offset ("
+              << offsx << "," << offsy << ")" << std::endl;
 }

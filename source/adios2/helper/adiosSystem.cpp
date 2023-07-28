@@ -57,8 +57,7 @@ std::string LocalTimeDate() noexcept
     struct tm now_tm;
     char buf[30];
 
-    std::time_t now =
-        std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::time_t now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
 #ifdef _WIN32
     localtime_s(&now_tm, &now);
@@ -74,8 +73,7 @@ bool IsRowMajor(const std::string hostLanguage) noexcept
 {
     bool isRowMajor = true;
 
-    if (hostLanguage == "Fortran" || hostLanguage == "R" ||
-        hostLanguage == "Matlab")
+    if (hostLanguage == "Fortran" || hostLanguage == "R" || hostLanguage == "Matlab")
     {
         isRowMajor = false;
     }
@@ -102,26 +100,26 @@ int ExceptionToError(const std::string &function)
     }
     catch (std::invalid_argument &e)
     {
-        helper::Log("Helper", "adiosSystem", "ExceptionToError",
-                    function + ": " + e.what(), helper::FATALERROR);
+        helper::Log("Helper", "adiosSystem", "ExceptionToError", function + ": " + e.what(),
+                    helper::FATALERROR);
         return 1;
     }
     catch (std::system_error &e)
     {
-        helper::Log("Helper", "adiosSystem", "ExceptionToError",
-                    function + ": " + e.what(), helper::FATALERROR);
+        helper::Log("Helper", "adiosSystem", "ExceptionToError", function + ": " + e.what(),
+                    helper::FATALERROR);
         return 2;
     }
     catch (std::runtime_error &e)
     {
-        helper::Log("Helper", "adiosSystem", "ExceptionToError",
-                    function + ": " + e.what(), helper::FATALERROR);
+        helper::Log("Helper", "adiosSystem", "ExceptionToError", function + ": " + e.what(),
+                    helper::FATALERROR);
         return 3;
     }
     catch (std::exception &e)
     {
-        helper::Log("Helper", "adiosSystem", "ExceptionToError",
-                    function + ": " + e.what(), helper::FATALERROR);
+        helper::Log("Helper", "adiosSystem", "ExceptionToError", function + ": " + e.what(),
+                    helper::FATALERROR);
         return 4;
     }
 }
@@ -139,16 +137,13 @@ bool IsHDF5File(const std::string &name, core::IO &io, helper::Comm &comm,
             {
                 std::vector<Params> defaultTransportParameters(1);
                 defaultTransportParameters[0]["transport"] = "File";
-                tm.OpenFiles({name}, adios2::Mode::Read,
-                             defaultTransportParameters, false);
+                tm.OpenFiles({name}, adios2::Mode::Read, defaultTransportParameters, false);
             }
             else
             {
-                tm.OpenFiles({name}, adios2::Mode::Read, transportsParameters,
-                             false);
+                tm.OpenFiles({name}, adios2::Mode::Read, transportsParameters, false);
             }
-            const unsigned char HDF5Header[8] = {137, 72, 68, 70,
-                                                 13,  10, 26, 10};
+            const unsigned char HDF5Header[8] = {137, 72, 68, 70, 13, 10, 26, 10};
             if (tm.GetFileSize(0) >= 8)
             {
                 char header[8];
@@ -187,10 +182,7 @@ char BPVersion(const std::string &name, helper::Comm &comm,
     return version;
 }
 
-unsigned int NumHardwareThreadsPerNode()
-{
-    return std::thread::hardware_concurrency();
-}
+unsigned int NumHardwareThreadsPerNode() { return std::thread::hardware_concurrency(); }
 
 size_t RaiseLimitNoFile()
 {
@@ -230,9 +222,8 @@ size_t RaiseLimitNoFile()
 
         if (err)
         {
-            std::cerr << "adios2::helper::RaiseLimitNoFile(soft="
-                      << limit.rlim_cur << ", hard=" << limit.rlim_max
-                      << ") failed with error code " << errno << ": "
+            std::cerr << "adios2::helper::RaiseLimitNoFile(soft=" << limit.rlim_cur
+                      << ", hard=" << limit.rlim_max << ") failed with error code " << errno << ": "
                       << strerror(errno) << std::endl;
         }
         firstCallRaiseLimit = false;

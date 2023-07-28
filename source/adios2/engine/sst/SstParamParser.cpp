@@ -18,8 +18,7 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
         if (itKey != io.m_Parameters.end())
         {
             std::string value = itKey->second;
-            std::transform(value.begin(), value.end(), value.begin(),
-                           ::tolower);
+            std::transform(value.begin(), value.end(), value.begin(), ::tolower);
             if (value == "yes" || value == "true" || value == "on")
             {
                 parameter = 1;
@@ -30,9 +29,9 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             }
             else
             {
-                helper::Throw<std::invalid_argument>(
-                    "Engine", "SstParamParser", "ParseParams",
-                    "Unknown Sst Boolean parameter \"" + value + "\"");
+                helper::Throw<std::invalid_argument>("Engine", "SstParamParser", "ParseParams",
+                                                     "Unknown Sst Boolean parameter \"" + value +
+                                                         "\"");
             }
         }
     };
@@ -56,14 +55,12 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
         return false;
     };
 
-    auto lf_SetRegMethodParameter = [&](const std::string key,
-                                        size_t &parameter) {
+    auto lf_SetRegMethodParameter = [&](const std::string key, size_t &parameter) {
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())
         {
             std::string method = itKey->second;
-            std::transform(method.begin(), method.end(), method.begin(),
-                           ::tolower);
+            std::transform(method.begin(), method.end(), method.begin(), ::tolower);
             if (method == "file")
             {
                 parameter = SstRegisterFile;
@@ -75,31 +72,27 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             else if (method == "cloud")
             {
                 parameter = SstRegisterCloud;
-                helper::Throw<std::invalid_argument>(
-                    "Engine", "SstParamParser", "ParseParams",
-                    "Sst RegistrationMethod "
-                    "\"cloud\" not yet implemented");
+                helper::Throw<std::invalid_argument>("Engine", "SstParamParser", "ParseParams",
+                                                     "Sst RegistrationMethod "
+                                                     "\"cloud\" not yet implemented");
             }
             else
             {
-                helper::Throw<std::invalid_argument>(
-                    "Engine", "SstParamParser", "ParseParams",
-                    "Unknown Sst RegistrationMethod parameter \"" + method +
-                        "\"");
+                helper::Throw<std::invalid_argument>("Engine", "SstParamParser", "ParseParams",
+                                                     "Unknown Sst RegistrationMethod parameter \"" +
+                                                         method + "\"");
             }
             return true;
         }
         return false;
     };
 
-    auto lf_SetCompressionMethodParameter = [&](const std::string key,
-                                                size_t &parameter) {
+    auto lf_SetCompressionMethodParameter = [&](const std::string key, size_t &parameter) {
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())
         {
             std::string method = itKey->second;
-            std::transform(method.begin(), method.end(), method.begin(),
-                           ::tolower);
+            std::transform(method.begin(), method.end(), method.begin(), ::tolower);
             if (method == "zfp")
             {
                 parameter = SstCompressZFP;
@@ -110,10 +103,9 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             }
             else
             {
-                helper::Throw<std::invalid_argument>(
-                    "Engine", "SstParamParser", "ParseParams",
-                    "Unknown Sst CompressionMethod parameter \"" + method +
-                        "\"");
+                helper::Throw<std::invalid_argument>("Engine", "SstParamParser", "ParseParams",
+                                                     "Unknown Sst CompressionMethod parameter \"" +
+                                                         method + "\"");
             }
             return true;
         }
@@ -121,20 +113,17 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
     };
 
     // not really a parameter, but a convenient way to pass this around
-    auto lf_SetIsRowMajorParameter = [&](const std::string key,
-                                         int &parameter) {
+    auto lf_SetIsRowMajorParameter = [&](const std::string key, int &parameter) {
         parameter = (io.m_ArrayOrder == adios2::ArrayOrdering::RowMajor);
         return true;
     };
 
-    auto lf_SetMarshalMethodParameter = [&](const std::string key,
-                                            size_t &parameter) {
+    auto lf_SetMarshalMethodParameter = [&](const std::string key, size_t &parameter) {
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())
         {
             std::string method = itKey->second;
-            std::transform(method.begin(), method.end(), method.begin(),
-                           ::tolower);
+            std::transform(method.begin(), method.end(), method.begin(), ::tolower);
             if (method == "ffs")
             {
                 parameter = SstMarshalFFS;
@@ -149,23 +138,21 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             }
             else
             {
-                helper::Throw<std::invalid_argument>(
-                    "Engine", "SstParamParser", "ParseParams",
-                    "Unknown Sst MarshalMethod parameter \"" + method + "\"");
+                helper::Throw<std::invalid_argument>("Engine", "SstParamParser", "ParseParams",
+                                                     "Unknown Sst MarshalMethod parameter \"" +
+                                                         method + "\"");
             }
             return true;
         }
         return false;
     };
 
-    auto lf_SetCPCommPatternParameter = [&](const std::string key,
-                                            size_t &parameter) {
+    auto lf_SetCPCommPatternParameter = [&](const std::string key, size_t &parameter) {
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())
         {
             std::string method = itKey->second;
-            std::transform(method.begin(), method.end(), method.begin(),
-                           ::tolower);
+            std::transform(method.begin(), method.end(), method.begin(), ::tolower);
             if (method == "min")
             {
                 parameter = SstCPCommMin;
@@ -176,23 +163,21 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             }
             else
             {
-                helper::Throw<std::invalid_argument>(
-                    "Engine", "SstParamParser", "ParseParams",
-                    "Unknown Sst CPCommPattern parameter \"" + method + "\"");
+                helper::Throw<std::invalid_argument>("Engine", "SstParamParser", "ParseParams",
+                                                     "Unknown Sst CPCommPattern parameter \"" +
+                                                         method + "\"");
             }
             return true;
         }
         return false;
     };
 
-    auto lf_SetQueueFullPolicyParameter = [&](const std::string key,
-                                              size_t &parameter) {
+    auto lf_SetQueueFullPolicyParameter = [&](const std::string key, size_t &parameter) {
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())
         {
             std::string method = itKey->second;
-            std::transform(method.begin(), method.end(), method.begin(),
-                           ::tolower);
+            std::transform(method.begin(), method.end(), method.begin(), ::tolower);
             if (method == "block")
             {
                 parameter = SstQueueFullBlock;
@@ -203,23 +188,21 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             }
             else
             {
-                helper::Throw<std::invalid_argument>(
-                    "Engine", "SstParamParser", "ParseParams",
-                    "Unknown Sst QueueFullPolicy parameter \"" + method + "\"");
+                helper::Throw<std::invalid_argument>("Engine", "SstParamParser", "ParseParams",
+                                                     "Unknown Sst QueueFullPolicy parameter \"" +
+                                                         method + "\"");
             }
             return true;
         }
         return false;
     };
 
-    auto lf_SetStepDistributionModeParameter = [&](const std::string key,
-                                                   size_t &parameter) {
+    auto lf_SetStepDistributionModeParameter = [&](const std::string key, size_t &parameter) {
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())
         {
             std::string method = itKey->second;
-            std::transform(method.begin(), method.end(), method.begin(),
-                           ::tolower);
+            std::transform(method.begin(), method.end(), method.begin(), ::tolower);
             if (method == "alltoall")
             {
                 parameter = StepsAllToAll;
@@ -236,21 +219,18 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             {
                 helper::Throw<std::invalid_argument>(
                     "Engine", "SstParamParser", "ParseParams",
-                    "Unknown Sst StepDistributionMode parameter \"" + method +
-                        "\"");
+                    "Unknown Sst StepDistributionMode parameter \"" + method + "\"");
             }
             return true;
         }
         return false;
     };
-    auto lf_SetSpecPreloadModeParameter = [&](const std::string key,
-                                              int &parameter) {
+    auto lf_SetSpecPreloadModeParameter = [&](const std::string key, int &parameter) {
         auto itKey = io.m_Parameters.find(key);
         if (itKey != io.m_Parameters.end())
         {
             std::string method = itKey->second;
-            std::transform(method.begin(), method.end(), method.begin(),
-                           ::tolower);
+            std::transform(method.begin(), method.end(), method.begin(), ::tolower);
             if (method == "off")
             {
                 parameter = SpecPreloadOff;
@@ -267,16 +247,15 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
             {
                 helper::Throw<std::invalid_argument>(
                     "Engine", "SstParamParser", "ParseParams",
-                    "Unknown Sst SpeculativePreloadMode parameter \"" + method +
-                        "\"");
+                    "Unknown Sst SpeculativePreloadMode parameter \"" + method + "\"");
             }
             return true;
         }
         return false;
     };
 
-#define get_params(Param, Type, Typedecl, Default)                             \
-    Params.Param = Default;                                                    \
+#define get_params(Param, Type, Typedecl, Default)                                                 \
+    Params.Param = Default;                                                                        \
     lf_Set##Type##Parameter(#Param, Params.Param);
     SST_FOREACH_PARAMETER_TYPE_4ARGS(get_params);
 #undef get_params

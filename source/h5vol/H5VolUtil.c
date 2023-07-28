@@ -11,8 +11,8 @@ void *safe_calloc(size_t n, size_t s, unsigned long line)
     void *p = calloc(n, s);
     if (!p)
     {
-        fprintf(stderr, "[%s:%ld]Out of memory at calloc (%ld, %ld)\n",
-                __FILE__, line, (unsigned long)n, (unsigned long)s);
+        fprintf(stderr, "[%s:%ld]Out of memory at calloc (%ld, %ld)\n", __FILE__, line,
+                (unsigned long)n, (unsigned long)s);
         exit(EXIT_FAILURE);
     }
     return p;
@@ -28,8 +28,7 @@ void *safe_malloc(size_t n, unsigned long line)
     void *p = malloc(n);
     if (!p)
     {
-        fprintf(stderr, "[%s:%ld]Out of memory at malloc (%zu bytes)\n",
-                __FILE__, line, n);
+        fprintf(stderr, "[%s:%ld]Out of memory at malloc (%zu bytes)\n", __FILE__, line, n);
         exit(EXIT_FAILURE);
     }
     return p;
@@ -49,8 +48,8 @@ void *safe_ralloc(void *ptr, size_t newsize, unsigned long line)
     void *p = realloc(ptr, newsize);
     if (!p)
     {
-        fprintf(stderr, "[%s:%ld]Out of memory at ralloc to (%ld bytes)\n",
-                __FILE__, line, (unsigned long)newsize);
+        fprintf(stderr, "[%s:%ld]Out of memory at ralloc to (%ld bytes)\n", __FILE__, line,
+                (unsigned long)newsize);
         exit(EXIT_FAILURE);
     }
     return p;
@@ -81,8 +80,7 @@ int gUtilADIOS2GetShape(hid_t space_id, size_t *shape, size_t ndims)
     return H5VL_CODE_SUCC;
 }
 
-int gUtilADIOS2GetBlockInfo(hid_t hyperSlab_id, size_t *start, size_t *count,
-                            hsize_t ndims)
+int gUtilADIOS2GetBlockInfo(hid_t hyperSlab_id, size_t *start, size_t *count, hsize_t ndims)
 {
     hsize_t npts = H5Sget_select_npoints(hyperSlab_id);
 
@@ -137,10 +135,7 @@ int gUtilADIOS2IsScalar(hid_t space_id)
     return H5VL_CODE_FAIL;
 }
 
-int gUtilADIOS2GetDim(hid_t space_id)
-{
-    return H5Sget_simple_extent_ndims(space_id);
-}
+int gUtilADIOS2GetDim(hid_t space_id) { return H5Sget_simple_extent_ndims(space_id); }
 
 hid_t gUtilHDF5Type(adios2_type adios2Type)
 {

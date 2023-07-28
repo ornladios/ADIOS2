@@ -62,22 +62,19 @@ int main(int argc, char *argv[])
         bpReaderIO.AddTransport("File", {{"verbose", "4"}});
     }
 
-    adios2::Engine bpReader =
-        bpReaderIO.Open(inputfile, adios2::Mode::Read, mpiReaderComm);
+    adios2::Engine bpReader = bpReaderIO.Open(inputfile, adios2::Mode::Read, mpiReaderComm);
 
     unsigned int gndx = 0;
     unsigned int gndy = 0;
     // bpReader->Read<unsigned int>("gndx", &gndx);
     // bpReader->Read<unsigned int>("gndy", &gndy);
 
-    adios2::Variable<unsigned int> vgndx =
-        bpReaderIO.InquireVariable<unsigned int>("gndx");
+    adios2::Variable<unsigned int> vgndx = bpReaderIO.InquireVariable<unsigned int>("gndx");
     (void)vgndx;
 
     // gndx = vgndx.GetData()[0];
 
-    adios2::Variable<unsigned int> vgndy =
-        bpReaderIO.InquireVariable<unsigned int>("gndy");
+    adios2::Variable<unsigned int> vgndy = bpReaderIO.InquireVariable<unsigned int>("gndy");
     // gndy = vgndy.GetData()[0];
 
     if (rank == 0)
@@ -96,8 +93,8 @@ int main(int argc, char *argv[])
         readsize[1] = gndy - readsize[1] * (nproc - 1);
     }
 
-    std::cout << "rank " << rank << " reads " << readsize[1]
-              << " columns from offset " << offset[1] << std::endl;
+    std::cout << "rank " << rank << " reads " << readsize[1] << " columns from offset " << offset[1]
+              << std::endl;
 
     adios2::Variable<double> vT = bpReaderIO.InquireVariable<double>("T");
 

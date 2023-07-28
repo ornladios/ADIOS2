@@ -57,8 +57,7 @@ std::string DimsToString(const adios2::Dims &dims)
     return s;
 }
 
-void ReadVariable(const std::string &name, adios2::IO &io,
-                  adios2::Engine &reader, size_t step)
+void ReadVariable(const std::string &name, adios2::IO &io, adios2::Engine &reader, size_t step)
 {
     adios2::Variable<double> variable = io.InquireVariable<double>(name);
 
@@ -66,8 +65,8 @@ void ReadVariable(const std::string &name, adios2::IO &io,
     {
         auto blocksInfo = reader.BlocksInfo(variable, step);
 
-        std::cout << "    " << name << " has " << blocksInfo.size()
-                  << " blocks in step " << step << std::endl;
+        std::cout << "    " << name << " has " << blocksInfo.size() << " blocks in step " << step
+                  << std::endl;
 
         // create a data vector for each block
         std::vector<std::vector<double>> dataSet;
@@ -89,8 +88,7 @@ void ReadVariable(const std::string &name, adios2::IO &io,
         i = 0;
         for (const auto &info : blocksInfo)
         {
-            std::cout << "        block " << info.BlockID
-                      << " size = " << DimsToString(info.Count)
+            std::cout << "        block " << info.BlockID << " size = " << DimsToString(info.Count)
                       << " offset = " << DimsToString(info.Start) << " : ";
 
             for (const auto datum : dataSet[i])
@@ -103,8 +101,7 @@ void ReadVariable(const std::string &name, adios2::IO &io,
     }
     else
     {
-        std::cout << "    Variable " << name << " not found in step " << step
-                  << std::endl;
+        std::cout << "    Variable " << name << " not found in step " << step << std::endl;
     }
 }
 
@@ -127,8 +124,7 @@ int main(int argc, char *argv[])
         {
 
             // Begin step
-            adios2::StepStatus read_status =
-                reader.BeginStep(adios2::StepMode::Read, 10.0f);
+            adios2::StepStatus read_status = reader.BeginStep(adios2::StepMode::Read, 10.0f);
             if (read_status == adios2::StepStatus::NotReady)
             {
                 // std::cout << "Stream not ready yet. Waiting...\n";

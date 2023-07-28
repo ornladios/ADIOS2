@@ -239,8 +239,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
                 engine.BlocksInfo(var_r64, engine.CurrentStep());
             EXPECT_EQ(i8Info.size(), writerSize);
             EXPECT_EQ(i16Info.size(), writerSize);
-            EXPECT_TRUE((i32Info.size() == writerSize) ||
-                        (i32Info.size() == writerSize * 3));
+            EXPECT_TRUE((i32Info.size() == writerSize) || (i32Info.size() == writerSize * 3));
             EXPECT_EQ(i64Info.size(), writerSize);
             EXPECT_EQ(r32Info.size(), writerSize);
             EXPECT_EQ(r64Info.size(), writerSize);
@@ -257,10 +256,10 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         if (var_c32)
         {
-            const std::vector<adios2::Variable<std::complex<float>>::Info>
-                c32Info = engine.BlocksInfo(var_c32, engine.CurrentStep());
-            const std::vector<adios2::Variable<std::complex<double>>::Info>
-                c64Info = engine.BlocksInfo(var_c64, engine.CurrentStep());
+            const std::vector<adios2::Variable<std::complex<float>>::Info> c32Info =
+                engine.BlocksInfo(var_c32, engine.CurrentStep());
+            const std::vector<adios2::Variable<std::complex<double>>::Info> c64Info =
+                engine.BlocksInfo(var_c64, engine.CurrentStep());
             EXPECT_EQ(c32Info.size(), writerSize);
             EXPECT_EQ(c64Info.size(), writerSize);
             for (size_t i = 0; i < writerSize; ++i)
@@ -270,10 +269,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             }
         }
 
-        long unsigned int myStart =
-            (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
-        long unsigned int myLength =
-            (long unsigned int)((writerSize * Nx + mpiSize - 1) / mpiSize);
+        long unsigned int myStart = (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
+        long unsigned int myLength = (long unsigned int)((writerSize * Nx + mpiSize - 1) / mpiSize);
 
         if (myStart + myLength > writerSize * Nx)
         {
@@ -336,8 +333,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
                 engine.Get(var_r32, in_R32.data(), GlobalReadMode);
                 engine.Get(var_r64, in_R64.data(), GlobalReadMode);
                 if (!mpiRank)
-                    engine.Get(var_time, (int64_t *)&write_time,
-                               GlobalReadMode);
+                    engine.Get(var_time, (int64_t *)&write_time, GlobalReadMode);
             }
             else
             {
@@ -354,8 +350,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             if (var_r64_2d)
                 engine.Get(var_r64_2d, in_R64_2d.data(), GlobalReadMode);
             if (var_r64_2d_rev)
-                engine.Get(var_r64_2d_rev, in_R64_2d_rev.data(),
-                           GlobalReadMode);
+                engine.Get(var_r64_2d_rev, in_R64_2d_rev.data(), GlobalReadMode);
             if (LockGeometry)
             {
                 // we'll never change our data decomposition
@@ -368,8 +363,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             int result = validateCommonTestData(myStart, myLength, t, !var_c32);
             if (result != 0)
             {
-                std::cout << "Read Data Validation failed on node " << mpiRank
-                          << " timestep " << t << std::endl;
+                std::cout << "Read Data Validation failed on node " << mpiRank << " timestep " << t
+                          << std::endl;
             }
             EXPECT_EQ(result, 0);
         }
@@ -380,8 +375,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
             int result = validateCommonTestData(myStart, myLength, t, !var_c32);
             if (result != 0)
             {
-                std::cout << "Read Data Validation failed on node " << mpiRank
-                          << " timestep " << t << std::endl;
+                std::cout << "Read Data Validation failed on node " << mpiRank << " timestep " << t
+                          << std::endl;
             }
             EXPECT_EQ(result, 0);
             if (AdvancingAttrs)
@@ -393,15 +388,13 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
                     const std::string r64_Single =
                         std::string("r64_PerStep_") + std::to_string(step);
                     auto attr_r64 = io.InquireAttribute<double>(r64_Single);
-                    std::cout << "Testing for attribute " << r64_Single
-                              << std::endl;
+                    std::cout << "Testing for attribute " << r64_Single << std::endl;
                     if (step <= currentStep)
                     {
                         EXPECT_TRUE(attr_r64);
                         ASSERT_EQ(attr_r64.Data().size() == 1, true);
                         ASSERT_EQ(attr_r64.Type(), adios2::GetType<double>());
-                        ASSERT_EQ(attr_r64.Data().front(),
-                                  (double)(step * 10.0));
+                        ASSERT_EQ(attr_r64.Data().front(), (double)(step * 10.0));
                     }
                     else
                     {
@@ -418,9 +411,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         {
             if (NoDataNode != -1)
             {
-                EXPECT_EQ(
-                    validateCommonTestDataR64(myStart, myLength, t, !var_c32),
-                    0);
+                EXPECT_EQ(validateCommonTestDataR64(myStart, myLength, t, !var_c32), 0);
             }
         }
         ++t;
@@ -428,14 +419,13 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
     if (!mpiRank)
     {
-        std::cout << "Reader Open took " << std::fixed << std::setprecision(9)
-                  << timeOpen.count() << " seconds" << std::endl;
+        std::cout << "Reader Open took " << std::fixed << std::setprecision(9) << timeOpen.count()
+                  << " seconds" << std::endl;
         for (size_t i = 0; i < begin_times.size(); ++i)
         {
-            std::cout << "Reader BeginStep t = " << i
-                      << " had status = " << begin_statuses[i] << " after "
-                      << std::fixed << std::setprecision(9)
-                      << begin_times[i].count() << " seconds" << std::endl;
+            std::cout << "Reader BeginStep t = " << i << " had status = " << begin_statuses[i]
+                      << " after " << std::fixed << std::setprecision(9) << begin_times[i].count()
+                      << " seconds" << std::endl;
         }
     }
 
@@ -485,9 +475,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

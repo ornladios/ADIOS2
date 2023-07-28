@@ -33,21 +33,19 @@ namespace plugin
 class PluginEngine : public core::Engine
 {
 public:
-    PluginEngine(core::IO &io, const std::string &name, const Mode mode,
-                 helper::Comm comm);
+    PluginEngine(core::IO &io, const std::string &name, const Mode mode, helper::Comm comm);
     virtual ~PluginEngine();
 
-    StepStatus BeginStep(StepMode mode,
-                         const float timeoutSeconds = 0.f) override;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = 0.f) override;
     void PerformPuts() override;
     void PerformGets() override;
     void EndStep() override;
 
 protected:
-#define declare(T)                                                             \
-    void DoPutSync(core::Variable<T> &, const T *) override;                   \
-    void DoPutDeferred(core::Variable<T> &, const T *) override;               \
-    void DoGetSync(core::Variable<T> &, T *) override;                         \
+#define declare(T)                                                                                 \
+    void DoPutSync(core::Variable<T> &, const T *) override;                                       \
+    void DoPutDeferred(core::Variable<T> &, const T *) override;                                   \
+    void DoGetSync(core::Variable<T> &, T *) override;                                             \
     void DoGetDeferred(core::Variable<T> &, T *) override;
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare)

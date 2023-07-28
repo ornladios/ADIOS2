@@ -31,19 +31,18 @@ InlineIO::InlineIO(const Settings &s, MPI_Comm comm)
     if (!inlineIO.InConfigFile())
     {
         inlineIO.SetEngine("Inline");
-        inlineIO.SetParameters(
-            {{"writerID", writerName}, {"readerID", readerName}});
+        inlineIO.SetParameters({{"writerID", writerName}, {"readerID", readerName}});
     }
 
     // define T as 2D global array
-    varT = inlineIO.DefineVariable<double>(
-        "T",
-        // Global dimensions
-        {s.gndx, s.gndy},
-        // starting offset of the local array in the global space
-        {s.offsx, s.offsy},
-        // local size, could be defined later using SetSelection()
-        {s.ndx, s.ndy});
+    varT =
+        inlineIO.DefineVariable<double>("T",
+                                        // Global dimensions
+                                        {s.gndx, s.gndy},
+                                        // starting offset of the local array in the global space
+                                        {s.offsx, s.offsy},
+                                        // local size, could be defined later using SetSelection()
+                                        {s.ndx, s.ndy});
 
     inlineWriter = inlineIO.Open(writerName, adios2::Mode::Write, comm);
     inlineReader = inlineIO.Open(readerName, adios2::Mode::Read, comm);
@@ -80,8 +79,7 @@ const double *InlineIO::read(bool firstStep)
     // in this example we're only expecting one block
     if (blocksInfo.size() != 1)
     {
-        throw std::runtime_error(
-            "InlineIO::read found incorrect number of blocks");
+        throw std::runtime_error("InlineIO::read found incorrect number of blocks");
     }
 
     auto &info = blocksInfo[0];

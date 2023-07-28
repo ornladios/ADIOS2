@@ -22,13 +22,13 @@ namespace engine
 {
 
 template <class T>
-void SkeletonWriter::PutSyncCommon(
-    Variable<T> &variable, const typename Variable<T>::BPInfo &blockInfo)
+void SkeletonWriter::PutSyncCommon(Variable<T> &variable,
+                                   const typename Variable<T>::BPInfo &blockInfo)
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Writer " << m_WriterRank << "     PutSync("
-                  << variable.m_Name << ")\n";
+        std::cout << "Skeleton Writer " << m_WriterRank << "     PutSync(" << variable.m_Name
+                  << ")\n";
     }
 }
 
@@ -39,8 +39,8 @@ void SkeletonWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Writer " << m_WriterRank << "     PutDeferred("
-                  << variable.m_Name << ")\n";
+        std::cout << "Skeleton Writer " << m_WriterRank << "     PutDeferred(" << variable.m_Name
+                  << ")\n";
     }
     m_NeedPerformPuts = true;
 }

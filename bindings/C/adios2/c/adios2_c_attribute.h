@@ -28,8 +28,7 @@ extern "C" {
  * @param attribute handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_attribute_name(char *name, size_t *size,
-                                   const adios2_attribute *attribute);
+adios2_error adios2_attribute_name(char *name, size_t *size, const adios2_attribute *attribute);
 
 /**
  * Retrieve attribute type
@@ -37,8 +36,7 @@ adios2_error adios2_attribute_name(char *name, size_t *size,
  * @param attribute handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_attribute_type(adios2_type *type,
-                                   const adios2_attribute *attribute);
+adios2_error adios2_attribute_type(adios2_type *type, const adios2_attribute *attribute);
 
 /**
  * Retrieve attribute type in string form "char", "unsigned long", etc.
@@ -60,8 +58,7 @@ adios2_error adios2_attribute_type_string(char *type, size_t *size,
  * @param attribute handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_attribute_is_value(adios2_bool *result,
-                                       const adios2_attribute *attribute);
+adios2_error adios2_attribute_is_value(adios2_bool *result, const adios2_attribute *attribute);
 
 /**
  * Returns the number of elements (as in C++ STL size() function) if attribute
@@ -70,8 +67,7 @@ adios2_error adios2_attribute_is_value(adios2_bool *result,
  * @param attribute handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_attribute_size(size_t *size,
-                                   const adios2_attribute *attribute);
+adios2_error adios2_attribute_size(size_t *size, const adios2_attribute *attribute);
 
 /**
  * Retrieve attribute data pointer (read-only)
@@ -80,8 +76,7 @@ adios2_error adios2_attribute_size(size_t *size,
  * @param attribute handler
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_attribute_data(void *data, size_t *size,
-                                   const adios2_attribute *attribute);
+adios2_error adios2_attribute_data(void *data, size_t *size, const adios2_attribute *attribute);
 
 #ifdef __cplusplus
 } // end extern C

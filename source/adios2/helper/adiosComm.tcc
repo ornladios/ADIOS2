@@ -18,8 +18,7 @@ namespace helper
 
 // BroadcastValue full specializations forward-declared in 'adiosComm.inl'.
 template <>
-std::string Comm::BroadcastValue(const std::string &input,
-                                 const int rankSource) const
+std::string Comm::BroadcastValue(const std::string &input, const int rankSource) const
 {
     const size_t inputSize = input.size();
     const size_t length = this->BroadcastValue(inputSize, rankSource);

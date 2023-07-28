@@ -19,18 +19,17 @@ namespace core
 namespace engine
 {
 
-#define instantiate_type(T)                                                    \
-    void NullWriter::DoPut(Variable<T> &variable,                              \
-                           typename Variable<T>::Span &span,                   \
-                           const bool initialize, const T &value)              \
-    {                                                                          \
+#define instantiate_type(T)                                                                        \
+    void NullWriter::DoPut(Variable<T> &variable, typename Variable<T>::Span &span,                \
+                           const bool initialize, const T &value)                                  \
+    {                                                                                              \
     }
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(instantiate_type)
 #undef instantiate_type
 
-#define instantiate_type(T)                                                    \
-    void NullWriter::DoPutSync(Variable<T> &, const T *) {}                    \
+#define instantiate_type(T)                                                                        \
+    void NullWriter::DoPutSync(Variable<T> &, const T *) {}                                        \
     void NullWriter::DoPutDeferred(Variable<T> &, const T *) {}
 
 ADIOS2_FOREACH_STDTYPE_1ARG(instantiate_type)

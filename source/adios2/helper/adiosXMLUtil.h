@@ -53,8 +53,7 @@ std::unique_ptr<pugi::xml_document> XMLDocument(const std::string &xmlContents,
  */
 std::unique_ptr<pugi::xml_node> XMLNode(const std::string nodeName,
                                         const pugi::xml_document &xmlDocument,
-                                        const std::string hint,
-                                        const bool isMandatory = true,
+                                        const std::string hint, const bool isMandatory = true,
                                         const bool isUnique = false);
 
 /**
@@ -68,10 +67,8 @@ std::unique_ptr<pugi::xml_node> XMLNode(const std::string nodeName,
  * unique (many nodes)
  * @return pugi::xml_node must be unique_ptr to keep pugixml linked privately
  */
-std::unique_ptr<pugi::xml_node> XMLNode(const std::string nodeName,
-                                        const pugi::xml_node &upperNode,
-                                        const std::string hint,
-                                        const bool isMandatory = true,
+std::unique_ptr<pugi::xml_node> XMLNode(const std::string nodeName, const pugi::xml_node &upperNode,
+                                        const std::string hint, const bool isMandatory = true,
                                         const bool isUnique = false);
 
 /**
@@ -84,9 +81,10 @@ std::unique_ptr<pugi::xml_node> XMLNode(const std::string nodeName,
  * @return pugi::xml_attribute must be unique_ptr to keep pugixml linked
  * privately
  */
-std::unique_ptr<pugi::xml_attribute>
-XMLAttribute(const std::string attributeName, const pugi::xml_node &node,
-             const std::string hint, const bool isMandatory = true);
+std::unique_ptr<pugi::xml_attribute> XMLAttribute(const std::string attributeName,
+                                                  const pugi::xml_node &node,
+                                                  const std::string hint,
+                                                  const bool isMandatory = true);
 
 /**
  * Get Parameters map of key/value strings from a XML node
@@ -96,8 +94,7 @@ XMLAttribute(const std::string attributeName, const pugi::xml_node &node,
  * @param value identifier in the XML schema for parameter value
  * @return parameters map
  */
-adios2::Params XMLGetParameters(const pugi::xml_node &node,
-                                const std::string hint,
+adios2::Params XMLGetParameters(const pugi::xml_node &node, const std::string hint,
                                 const std::string xmlKey = "key",
                                 const std::string xmlValue = "value");
 

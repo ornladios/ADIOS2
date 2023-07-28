@@ -79,8 +79,7 @@ public:
          * @param memberID id input from bp format
          * @param bufferSize initial buffer size
          */
-        SerialElementIndex(const uint32_t memberID,
-                           const size_t bufferSize = 200);
+        SerialElementIndex(const uint32_t memberID, const size_t bufferSize = 200);
     };
 
     struct MetadataSet
@@ -309,8 +308,7 @@ public:
      * Init base don parameters passed from the user to IO
      * @param parameters input parameters
      */
-    void Init(const Params &parameters, const std::string hint,
-              const std::string engineType = "");
+    void Init(const Params &parameters, const std::string hint, const std::string engineType = "");
 
     /****************** NEED to check if some are virtual */
 
@@ -412,12 +410,12 @@ protected:
     /** Characteristic ID in variable metadata, legacy adios1 */
     enum CharacteristicID
     {
-        characteristic_value = 0,      //!< characteristic_value
-        characteristic_min = 1,        //!< Used to read in older bp file format
-        characteristic_max = 2,        //!< Used to read in older bp file format
-        characteristic_offset = 3,     //!< characteristic_offset
-        characteristic_dimensions = 4, //!< characteristic_dimensions
-        characteristic_var_id = 5,     //!< characteristic_var_id
+        characteristic_value = 0,           //!< characteristic_value
+        characteristic_min = 1,             //!< Used to read in older bp file format
+        characteristic_max = 2,             //!< Used to read in older bp file format
+        characteristic_offset = 3,          //!< characteristic_offset
+        characteristic_dimensions = 4,      //!< characteristic_dimensions
+        characteristic_var_id = 5,          //!< characteristic_var_id
         characteristic_payload_offset = 6,  //!< characteristic_payload_offset
         characteristic_file_index = 7,      //!< characteristic_file_index
         characteristic_time_index = 8,      //!< characteristic_time_index
@@ -474,8 +472,7 @@ protected:
      * @param transformType input
      * @return corresponding enum TransformTypes
      */
-    TransformTypes
-    TransformTypeEnum(const std::string transformType) const noexcept;
+    TransformTypes TransformTypeEnum(const std::string transformType) const noexcept;
 
     /**
      * Returns the proper derived class for BPOperation based on type
@@ -567,8 +564,8 @@ protected:
      * @param transportsTypes input user transports
      * @return vector with enum IO_METHOD
      */
-    std::vector<uint8_t> GetTransportIDs(
-        const std::vector<std::string> &transportsTypes) const noexcept;
+    std::vector<uint8_t>
+    GetTransportIDs(const std::vector<std::string> &transportsTypes) const noexcept;
 
     /**
      * Calculates the Process Index size in bytes according to the BP
@@ -579,8 +576,7 @@ protected:
      * @param transportsSize
      * @return size of pg index
      */
-    size_t GetProcessGroupIndexSize(const std::string name,
-                                    const std::string timeStepName,
+    size_t GetProcessGroupIndexSize(const std::string name, const std::string timeStepName,
                                     const size_t transportsSize) const noexcept;
 
     /**
@@ -591,9 +587,8 @@ protected:
      * @param isLittleEndian true: buffer is little endian, false: big endian
      * @return populated PGIndex struct
      */
-    ProcessGroupIndex ReadProcessGroupIndexHeader(
-        const std::vector<char> &buffer, size_t &position,
-        const bool isLittleEndian = true) const noexcept;
+    ProcessGroupIndex ReadProcessGroupIndexHeader(const std::vector<char> &buffer, size_t &position,
+                                                  const bool isLittleEndian = true) const noexcept;
 
     /**
      * Reads a PG index from a buffer position and advances the position until
@@ -617,12 +612,11 @@ protected:
      * @return populated Characteristics<T> struct
      */
     template <class T>
-    Characteristics<T>
-    ReadElementIndexCharacteristics(const std::vector<char> &buffer,
-                                    size_t &position, const DataTypes dataType,
-                                    size_t &joinedArrayShapePos,
-                                    const bool untilTimeStep = false,
-                                    const bool isLittleEndian = true) const;
+    Characteristics<T> ReadElementIndexCharacteristics(const std::vector<char> &buffer,
+                                                       size_t &position, const DataTypes dataType,
+                                                       size_t &joinedArrayShapePos,
+                                                       const bool untilTimeStep = false,
+                                                       const bool isLittleEndian = true) const;
 
     /**
      * Common function to extract a BP standard string, 2 bytes for length +
@@ -641,10 +635,8 @@ private:
      */
     template <class T>
     void ParseCharacteristics(const std::vector<char> &buffer, size_t &position,
-                              const DataTypes dataType,
-                              const bool untilTimeStep,
-                              Characteristics<T> &characteristics,
-                              size_t &joinedArrayShapePos,
+                              const DataTypes dataType, const bool untilTimeStep,
+                              Characteristics<T> &characteristics, size_t &joinedArrayShapePos,
                               const bool isLittleEndian = true) const;
 };
 

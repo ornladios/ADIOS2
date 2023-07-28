@@ -55,9 +55,8 @@ TEST_F(StructReadTest, ADIOS2StructRead)
     adios2::Dims start = {2, (size_t)mpiRank * 2};
     adios2::Dims count = {5, 2};
 
-    size_t datasize =
-        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
-                        std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                                      std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -83,8 +82,7 @@ TEST_F(StructReadTest, ADIOS2StructRead)
         if (status == adios2::StepStatus::OK)
         {
             auto varIntScalar = io.InquireVariable<int>("varIntScalar");
-            auto blocksInfo =
-                engine.BlocksInfo(varIntScalar, engine.CurrentStep());
+            auto blocksInfo = engine.BlocksInfo(varIntScalar, engine.CurrentStep());
 
             for (const auto &bi : blocksInfo)
             {
@@ -97,27 +95,21 @@ TEST_F(StructReadTest, ADIOS2StructRead)
             const auto &vars = io.AvailableVariables();
             ASSERT_EQ(vars.size(), 12);
             size_t currentStep = engine.CurrentStep();
-            adios2::Variable<char> varChars =
-                io.InquireVariable<char>("varChars");
+            adios2::Variable<char> varChars = io.InquireVariable<char>("varChars");
             adios2::Variable<unsigned char> varUChars =
                 io.InquireVariable<unsigned char>("varUChars");
-            adios2::Variable<short> varShorts =
-                io.InquireVariable<short>("varShorts");
+            adios2::Variable<short> varShorts = io.InquireVariable<short>("varShorts");
             adios2::Variable<unsigned short> varUShorts =
                 io.InquireVariable<unsigned short>("varUShorts");
             adios2::Variable<int> varInts = io.InquireVariable<int>("varInts");
-            adios2::Variable<unsigned int> varUInts =
-                io.InquireVariable<unsigned int>("varUInts");
-            adios2::Variable<float> varFloats =
-                io.InquireVariable<float>("varFloats");
-            adios2::Variable<double> varDoubles =
-                io.InquireVariable<double>("varDoubles");
+            adios2::Variable<unsigned int> varUInts = io.InquireVariable<unsigned int>("varUInts");
+            adios2::Variable<float> varFloats = io.InquireVariable<float>("varFloats");
+            adios2::Variable<double> varDoubles = io.InquireVariable<double>("varDoubles");
             adios2::Variable<std::complex<float>> varComplexes =
                 io.InquireVariable<std::complex<float>>("varComplexes");
             adios2::Variable<std::complex<double>> varDComplexes =
                 io.InquireVariable<std::complex<double>>("varDComplexes");
-            adios2::Variable<std::string> varString =
-                io.InquireVariable<std::string>("varString");
+            adios2::Variable<std::string> varString = io.InquireVariable<std::string>("varString");
 
             varChars.SetSelection({start, count});
             varUChars.SetSelection({start, count});
@@ -137,35 +129,23 @@ TEST_F(StructReadTest, ADIOS2StructRead)
             engine.Get(varInts, myInts.data(), adios2::Mode::Sync);
             engine.Get(varUInts, myUInts.data(), adios2::Mode::Sync);
 
-            VerifyData(myChars.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myUChars.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myShorts.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myUShorts.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myInts.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myUInts.data(), currentStep, start, count, shape,
-                       mpiRank);
+            VerifyData(myChars.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myUChars.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myShorts.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myUShorts.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myInts.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myUInts.data(), currentStep, start, count, shape, mpiRank);
 
             engine.Get(varFloats, myFloats.data(), adios2::Mode::Deferred);
             engine.Get(varDoubles, myDoubles.data(), adios2::Mode::Deferred);
-            engine.Get(varComplexes, myComplexes.data(),
-                       adios2::Mode::Deferred);
-            engine.Get(varDComplexes, myDComplexes.data(),
-                       adios2::Mode::Deferred);
+            engine.Get(varComplexes, myComplexes.data(), adios2::Mode::Deferred);
+            engine.Get(varDComplexes, myDComplexes.data(), adios2::Mode::Deferred);
             engine.PerformGets();
 
-            VerifyData(myFloats.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myDoubles.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myComplexes.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myDComplexes.data(), currentStep, start, count, shape,
-                       mpiRank);
+            VerifyData(myFloats.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myDoubles.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myComplexes.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myDComplexes.data(), currentStep, start, count, shape, mpiRank);
             std::string s;
             engine.Get(varString, s);
             engine.PerformGets();
@@ -181,33 +161,26 @@ TEST_F(StructReadTest, ADIOS2StructRead)
                 if (varStruct && !ReadStruct)
                 {
                     // can't do a Get without setting the read structure
-                    EXPECT_THROW(engine.Get(varStruct, myParticles.data(),
-                                            adios2::Mode::Sync),
+                    EXPECT_THROW(engine.Get(varStruct, myParticles.data(), adios2::Mode::Sync),
                                  std::logic_error);
 
-                    StructDefinition WriteStruct =
-                        varStruct.GetWriteStructDef();
+                    StructDefinition WriteStruct = varStruct.GetWriteStructDef();
                     ASSERT_TRUE(WriteStruct);
                     std::cout << std::endl
-                              << "Writer side structure was named \""
-                              << WriteStruct.StructName() << "\" and has size "
-                              << WriteStruct.StructSize() << std::endl;
+                              << "Writer side structure was named \"" << WriteStruct.StructName()
+                              << "\" and has size " << WriteStruct.StructSize() << std::endl;
                     for (size_t i = 0; i < WriteStruct.Fields(); i++)
                     {
-                        std::cout << "\tField " << i << " - Name: \""
-                                  << WriteStruct.Name(i)
+                        std::cout << "\tField " << i << " - Name: \"" << WriteStruct.Name(i)
                                   << "\", Offset: " << WriteStruct.Offset(i)
                                   << ", Type: " << WriteStruct.Type(i)
-                                  << ", ElementCount : "
-                                  << WriteStruct.ElementCount(i) << std::endl;
+                                  << ", ElementCount : " << WriteStruct.ElementCount(i)
+                                  << std::endl;
                     }
                     std::cout << std::endl;
-                    auto particleDef1 =
-                        io.DefineStruct("particle", sizeof(particle));
-                    particleDef1.AddField("a", offsetof(particle, a),
-                                          adios2::DataType::Int8);
-                    particleDef1.AddField("b", offsetof(particle, b),
-                                          adios2::DataType::Int32, 4);
+                    auto particleDef1 = io.DefineStruct("particle", sizeof(particle));
+                    particleDef1.AddField("a", offsetof(particle, a), adios2::DataType::Int8);
+                    particleDef1.AddField("b", offsetof(particle, b), adios2::DataType::Int32, 4);
                     varStruct.SetReadStructDef(particleDef1);
                 }
                 else if (varStruct)
@@ -219,17 +192,14 @@ TEST_F(StructReadTest, ADIOS2StructRead)
                         first = false;
                         StructDefinition SaveDef = varStruct.GetReadStructDef();
                         ASSERT_TRUE(SaveDef);
-                        auto particleDef2 =
-                            io.DefineStruct("particle", sizeof(particle));
-                        particleDef2.AddField("a", offsetof(particle, a),
-                                              adios2::DataType::Int8);
-                        particleDef2.AddField("c", offsetof(particle, b),
-                                              adios2::DataType::Int32, 4);
+                        auto particleDef2 = io.DefineStruct("particle", sizeof(particle));
+                        particleDef2.AddField("a", offsetof(particle, a), adios2::DataType::Int8);
+                        particleDef2.AddField("c", offsetof(particle, b), adios2::DataType::Int32,
+                                              4);
                         varStruct.SetReadStructDef(particleDef2);
 
                         // can't change the read structure
-                        EXPECT_THROW(engine.Get(varStruct, myParticles.data(),
-                                                adios2::Mode::Sync),
+                        EXPECT_THROW(engine.Get(varStruct, myParticles.data(), adios2::Mode::Sync),
                                      std::logic_error);
                         // restore the old one so we can succeed below
                         varStruct.SetReadStructDef(SaveDef);
@@ -252,8 +222,7 @@ TEST_F(StructReadTest, ADIOS2StructRead)
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
-            std::cout << "[Rank " + std::to_string(mpiRank) +
-                             "] SscTest reader end of stream!"
+            std::cout << "[Rank " + std::to_string(mpiRank) + "] SscTest reader end of stream!"
                       << std::endl;
             break;
         }
@@ -275,9 +244,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

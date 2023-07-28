@@ -28,11 +28,10 @@ void printData(double *xy, T *size, T *offset, int rank, size_t steps)
     for (size_t step = 0; step < steps; step++)
     {
         myfile << "rank=" << rank << " size=" << size[0] << "x" << size[1]
-               << " offsets=" << offset[0] << ":" << offset[1]
-               << " step=" << step << std::endl;
+               << " offsets=" << offset[0] << ":" << offset[1] << " step=" << step << std::endl;
 
-        myfile << " time   row   columns " << offset[1] << "..."
-               << offset[1] + size[1] - 1 << std::endl;
+        myfile << " time   row   columns " << offset[1] << "..." << offset[1] + size[1] - 1
+               << std::endl;
         myfile << "        ";
         for (int j = 0; j < static_cast<int>(size[1]); j++)
         {
@@ -46,8 +45,7 @@ void printData(double *xy, T *size, T *offset, int rank, size_t steps)
             myfile << std::setw(5) << step << std::setw(5) << offset[0] + i;
             for (int j = 0; j < static_cast<int>(size[1]); j++)
             {
-                myfile << std::setw(9) << std::setprecision(2)
-                       << data[i * size[1] + j];
+                myfile << std::setw(9) << std::setprecision(2) << data[i * size[1] + j];
             }
             myfile << std::endl;
         }

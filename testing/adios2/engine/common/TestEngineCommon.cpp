@@ -54,8 +54,7 @@ adios2::Params ParseEngineParams(std::string Input)
         std::getline(ss2, ParamName, ':');
         if (!std::getline(ss2, ParamValue, ':'))
         {
-            throw std::invalid_argument("Engine parameter \"" + Param +
-                                        "\" missing value");
+            throw std::invalid_argument("Engine parameter \"" + Param + "\" missing value");
         }
         Ret[Trim(ParamName)] = Trim(ParamValue);
     }
@@ -68,13 +67,13 @@ static unsigned int ParseUintParam(const std::string &optionName, char *arg)
     long retval = std::strtol(arg, &end, 10);
     if (end[0] || errno == ERANGE)
     {
-        throw std::invalid_argument("Invalid value given for " + optionName +
-                                    ": " + std::string(arg));
+        throw std::invalid_argument("Invalid value given for " + optionName + ": " +
+                                    std::string(arg));
     }
     if (retval < 0)
     {
-        throw std::invalid_argument("Negative value given for " + optionName +
-                                    ": " + std::string(arg));
+        throw std::invalid_argument("Negative value given for " + optionName + ": " +
+                                    std::string(arg));
     }
     return static_cast<unsigned int>(retval);
 }
@@ -103,18 +102,15 @@ TEST_F(Common, NewAttributeEveryStep)
     const int nreaders = 1;
     if (!wrank)
     {
-        std::cout << "test " << nwriters << " writers  with " << nreaders
-                  << " readers "
-                  << (serializeWriterReader ? "sequentially" : "concurrently")
-                  << std::endl;
+        std::cout << "test " << nwriters << " writers  with " << nreaders << " readers "
+                  << (serializeWriterReader ? "sequentially" : "concurrently") << std::endl;
     }
 
     if (nwriters + nreaders > numprocs)
     {
         if (!wrank)
         {
-            std::cout << "skip test: writers+readers > available processors "
-                      << std::endl;
+            std::cout << "skip test: writers+readers > available processors " << std::endl;
         }
         return;
     }
@@ -140,8 +136,7 @@ TEST_F(Common, NewAttributeEveryStep)
 
     if (color == 0)
     {
-        std::cout << "Process wrank " << wrank << " plays Writer rank " << rank
-                  << std::endl;
+        std::cout << "Process wrank " << wrank << " plays Writer rank " << rank << std::endl;
         if (!rank)
         {
             std::cout << "There are " << nproc << " Writers" << std::endl;
@@ -154,8 +149,8 @@ TEST_F(Common, NewAttributeEveryStep)
 
         const size_t shape = static_cast<size_t>(nproc);
         const size_t start = static_cast<size_t>(rank);
-        adios2::Variable<double> var = io.DefineVariable<double>(
-            "v", {shape}, {start}, {1}, adios2::ConstantDims);
+        adios2::Variable<double> var =
+            io.DefineVariable<double>("v", {shape}, {start}, {1}, adios2::ConstantDims);
         io.DefineAttribute<std::string>("v/unit", "km/s");
 
         adios2::Engine writer = io.Open(streamName, adios2::Mode::Write, comm);
@@ -182,8 +177,7 @@ TEST_F(Common, NewAttributeEveryStep)
         {
             MPI_Barrier(MPI_COMM_WORLD);
         }
-        std::cout << "Process wrank " << wrank << " plays Reader rank " << rank
-                  << std::endl;
+        std::cout << "Process wrank " << wrank << " plays Reader rank " << rank << std::endl;
         int rank, nproc;
         MPI_Comm_rank(comm, &rank);
         MPI_Comm_size(comm, &nproc);
@@ -200,12 +194,10 @@ TEST_F(Common, NewAttributeEveryStep)
 
         for (size_t step = 0; step < steps; ++step)
         {
-            adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::Read);
+            adios2::StepStatus status = reader.BeginStep(adios2::StepMode::Read);
             if (status != adios2::StepStatus::OK)
             {
-                throw std::runtime_error("Expected step " +
-                                         std::to_string(step) +
+                throw std::runtime_error("Expected step " + std::to_string(step) +
                                          " to be available in Reader but "
                                          "BeginStep() returned not-OK");
             }
@@ -220,17 +212,15 @@ TEST_F(Common, NewAttributeEveryStep)
             auto aUnit = io.InquireAttribute<std::string>("v/unit");
             if (!aUnit)
             {
-                throw std::ios_base::failure(
-                    "Missing 'v/unit' attribute in step " +
-                    std::to_string(step));
+                throw std::ios_base::failure("Missing 'v/unit' attribute in step " +
+                                             std::to_string(step));
             }
 
             const std::string aname = "a" + std::to_string(step);
             auto aStep = io.InquireAttribute<uint64_t>(aname);
             if (!aStep)
             {
-                throw std::ios_base::failure("Missing '" + aname +
-                                             "' attribute in step " +
+                throw std::ios_base::failure("Missing '" + aname + "' attribute in step " +
                                              std::to_string(step));
             }
             uint64_t expectedAttributeValue = step + 1;
@@ -241,12 +231,10 @@ TEST_F(Common, NewAttributeEveryStep)
 
             if (!rank)
             {
-                std::cout << "In step " << step
-                          << " Readers got attribute 'v/unit' with value "
+                std::cout << "In step " << step << " Readers got attribute 'v/unit' with value "
                           << aUnit.Data().front() << std::endl;
-                std::cout << "In step " << step << " Readers got attribute '"
-                          << aname << "' with value " << aStep.Data().front()
-                          << std::endl;
+                std::cout << "In step " << step << " Readers got attribute '" << aname
+                          << "' with value " << aStep.Data().front() << std::endl;
             }
 
             double d[nwriters];
@@ -258,8 +246,8 @@ TEST_F(Common, NewAttributeEveryStep)
             EXPECT_EQ(d[0], expectedScalarValue)
                 << "Error in read, did not receive the expected values for "
                    "'v':"
-                << " rank " << rank << ", step " << step << ", expected "
-                << expectedScalarValue << ", received " << d[0];
+                << " rank " << rank << ", step " << step << ", expected " << expectedScalarValue
+                << ", received " << d[0];
         }
         reader.Close();
     }
@@ -316,8 +304,8 @@ int main(int argc, char **argv)
 
     if (!wrank)
     {
-        std::cout << "Test " << engineName << " engine with " << numprocs
-                  << " processes " << std::endl;
+        std::cout << "Test " << engineName << " engine with " << numprocs << " processes "
+                  << std::endl;
     }
 
     int result;

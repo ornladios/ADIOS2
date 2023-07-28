@@ -70,8 +70,8 @@ FileIME::~FileIME()
 }
 
 /** Note that async mode is unsupported in FileIME. */
-void FileIME::Open(const std::string &name, const Mode openMode,
-                   const bool async, const bool directio)
+void FileIME::Open(const std::string &name, const Mode openMode, const bool async,
+                   const bool directio)
 {
     /** DEFAULT_IME_FILE_PREFIX is "ime://" */
     m_Name = DEFAULT_IME_FILE_PREFIX;
@@ -91,29 +91,26 @@ void FileIME::Open(const std::string &name, const Mode openMode,
     {
     case Mode::Write:
         ProfilerStart("open");
-        m_FileDescriptor = ime_client_native2_open(
-            m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
+        m_FileDescriptor =
+            ime_client_native2_open(m_Name.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666);
         ProfilerStop("open");
         break;
 
     case Mode::Append:
         ProfilerStart("open");
-        m_FileDescriptor =
-            ime_client_native2_open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
+        m_FileDescriptor = ime_client_native2_open(m_Name.c_str(), O_RDWR | O_CREAT, 0777);
         lseek(m_FileDescriptor, 0, SEEK_END);
         ProfilerStop("open");
         break;
 
     case Mode::Read:
         ProfilerStart("open");
-        m_FileDescriptor =
-            ime_client_native2_open(m_Name.c_str(), O_RDONLY, 0000);
+        m_FileDescriptor = ime_client_native2_open(m_Name.c_str(), O_RDONLY, 0000);
         ProfilerStop("open");
         break;
 
     default:
-        CheckFile("unknown open mode for file " + m_Name +
-                  ", in call to IME open");
+        CheckFile("unknown open mode for file " + m_Name + ", in call to IME open");
     }
 
     CheckFile("couldn't open file " + m_Name +
@@ -127,8 +124,7 @@ void FileIME::SetParameters(const Params &params)
     auto param = params.find("synctopfs");
     if (param != params.end())
     {
-        m_SyncToPFS = helper::StringTo<bool>(param->second,
-                                             " in Parameter key=SyncToPFS");
+        m_SyncToPFS = helper::StringTo<bool>(param->second, " in Parameter key=SyncToPFS");
     }
 }
 
@@ -138,8 +134,7 @@ void FileIME::Write(const char *buffer, size_t size, size_t start)
         while (size > 0)
         {
             ProfilerStart("write");
-            const auto writtenSize =
-                ime_client_native2_write(m_FileDescriptor, buffer, size);
+            const auto writtenSize = ime_client_native2_write(m_FileDescriptor, buffer, size);
             ProfilerStop("write");
 
             if (writtenSize == -1)
@@ -149,9 +144,8 @@ void FileIME::Write(const char *buffer, size_t size, size_t start)
                     continue;
                 }
 
-                helper::Throw<std::ios_base::failure>(
-                    "Toolkit", "transport::file::FileIME", "Write",
-                    "couldn't write to file " + m_Name);
+                helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileIME",
+                                                      "Write", "couldn't write to file " + m_Name);
             }
 
             buffer += writtenSize;
@@ -161,15 +155,13 @@ void FileIME::Write(const char *buffer, size_t size, size_t start)
 
     if (start != MaxSizeT)
     {
-        const auto newPosition =
-            ime_client_native2_lseek(m_FileDescriptor, start, SEEK_SET);
+        const auto newPosition = ime_client_native2_lseek(m_FileDescriptor, start, SEEK_SET);
 
         if (static_cast<size_t>(newPosition) != start)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileIME", "Write",
-                "couldn't move to start position " + std::to_string(start) +
-                    " in file " + m_Name);
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileIME", "Write",
+                                                  "couldn't move to start position " +
+                                                      std::to_string(start) + " in file " + m_Name);
         }
     }
 
@@ -198,8 +190,7 @@ void FileIME::Read(char *buffer, size_t size, size_t start)
         while (size > 0)
         {
             ProfilerStart("read");
-            const auto readSize =
-                ime_client_native2_read(m_FileDescriptor, buffer, size);
+            const auto readSize = ime_client_native2_read(m_FileDescriptor, buffer, size);
             ProfilerStop("read");
 
             if (readSize == -1)
@@ -209,9 +200,8 @@ void FileIME::Read(char *buffer, size_t size, size_t start)
                     continue;
                 }
 
-                helper::Throw<std::ios_base::failure>(
-                    "Toolkit", "transport::file::FileIME", "Read",
-                    "ERROR: couldn't read from file " + m_Name);
+                helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileIME", "Read",
+                                                      "ERROR: couldn't read from file " + m_Name);
             }
 
             buffer += readSize;
@@ -221,15 +211,14 @@ void FileIME::Read(char *buffer, size_t size, size_t start)
 
     if (start != MaxSizeT)
     {
-        const auto newPosition =
-            ime_client_native2_lseek(m_FileDescriptor, start, SEEK_SET);
+        const auto newPosition = ime_client_native2_lseek(m_FileDescriptor, start, SEEK_SET);
 
         if (static_cast<size_t>(newPosition) != start)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileIME", "Read",
-                "couldn't move to start position " + std::to_string(start) +
-                    " in file " + m_Name + ", errno " + std::to_string(errno));
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileIME", "Read",
+                                                  "couldn't move to start position " +
+                                                      std::to_string(start) + " in file " + m_Name +
+                                                      ", errno " + std::to_string(errno));
         }
     }
 
@@ -257,9 +246,8 @@ size_t FileIME::GetSize()
     struct stat fileStat;
     if (fstat(m_FileDescriptor, &fileStat) == -1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileIME", "GetSize",
-            "couldn't get size of file " + m_Name);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileIME", "GetSize",
+                                              "couldn't get size of file " + m_Name);
     }
     return static_cast<size_t>(fileStat.st_size);
 }
@@ -286,9 +274,8 @@ void FileIME::Close()
 
     if (status == -1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileIME", "Close",
-            "ERROR: couldn't close file " + m_Name);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileIME", "Close",
+                                              "ERROR: couldn't close file " + m_Name);
     }
 
     m_IsOpen = false;
@@ -307,8 +294,8 @@ void FileIME::CheckFile(const std::string hint) const
 {
     if (m_FileDescriptor == -1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileIME", "CheckFile", hint);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileIME", "CheckFile",
+                                              hint);
     }
 }
 
@@ -317,9 +304,8 @@ void FileIME::SeekToEnd()
     const int status = ime_client_native2_lseek(m_FileDescriptor, 0, SEEK_END);
     if (status == -1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileIME", "SeekToEnd",
-            "couldn't seek to the end of file " + m_Name);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileIME", "SeekToEnd",
+                                              "couldn't seek to the end of file " + m_Name);
     }
 }
 
@@ -328,9 +314,8 @@ void FileIME::SeekToBegin()
     const int status = ime_client_native2_lseek(m_FileDescriptor, 0, SEEK_SET);
     if (status == -1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileIME", "SeekToBegin",
-            "couldn't seek to the begin of file " + m_Name);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileIME", "SeekToBegin",
+                                              "couldn't seek to the begin of file " + m_Name);
     }
 }
 
@@ -338,14 +323,12 @@ void FileIME::Seek(const size_t start)
 {
     if (start != MaxSizeT)
     {
-        const int status =
-            ime_client_native2_lseek(m_FileDescriptor, start, SEEK_SET);
+        const int status = ime_client_native2_lseek(m_FileDescriptor, start, SEEK_SET);
         if (status == -1)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileIME", "Seek",
-                "couldn't seek to offset " + std::to_string(start) +
-                    " of file " + m_Name);
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileIME", "Seek",
+                                                  "couldn't seek to offset " +
+                                                      std::to_string(start) + " of file " + m_Name);
         }
     }
     else
@@ -356,9 +339,8 @@ void FileIME::Seek(const size_t start)
 
 void FileIME::Truncate(const size_t length)
 {
-    helper::Throw<std::ios_base::failure>(
-        "Toolkit", "transport::file::FileIME", "Truncate",
-        "IME Truncate is not implemented yet");
+    helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileIME", "Truncate",
+                                          "IME Truncate is not implemented yet");
 }
 
 void FileIME::MkDir(const std::string &fileName) {}

@@ -28,20 +28,18 @@ class NullReader : public core::Engine
 {
 
 public:
-    NullReader(IO &io, const std::string &name, const Mode mode,
-               helper::Comm comm);
+    NullReader(IO &io, const std::string &name, const Mode mode, helper::Comm comm);
 
     virtual ~NullReader();
 
-    StepStatus BeginStep(StepMode mode,
-                         const float timeoutSeconds = -1.0) override;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0) override;
     size_t CurrentStep() const override;
     void EndStep() override;
     void PerformGets() override;
 
 protected:
-#define declare_type(T)                                                        \
-    void DoGetSync(Variable<T> &, T *) override;                               \
+#define declare_type(T)                                                                            \
+    void DoGetSync(Variable<T> &, T *) override;                                                   \
     void DoGetDeferred(Variable<T> &, T *) override;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

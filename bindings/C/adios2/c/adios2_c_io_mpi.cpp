@@ -18,18 +18,15 @@
 
 extern "C" {
 
-adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name,
-                                    const adios2_mode mode, MPI_Comm comm)
+adios2_engine *adios2_open_new_comm(adios2_io *io, const char *name, const adios2_mode mode,
+                                    MPI_Comm comm)
 {
     adios2_engine *engine = nullptr;
     try
     {
-        adios2::helper::CheckForNullptr(
-            io, "for adios2_io, in call to adios2_open");
-        engine = reinterpret_cast<adios2_engine *>(
-            &reinterpret_cast<adios2::core::IO *>(io)->Open(
-                name, adios2_ToOpenMode(mode),
-                adios2::helper::CommDupMPI(comm)));
+        adios2::helper::CheckForNullptr(io, "for adios2_io, in call to adios2_open");
+        engine = reinterpret_cast<adios2_engine *>(&reinterpret_cast<adios2::core::IO *>(io)->Open(
+            name, adios2_ToOpenMode(mode), adios2::helper::CommDupMPI(comm)));
     }
     catch (...)
     {

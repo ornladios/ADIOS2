@@ -28,8 +28,8 @@ inline void InlineReader::GetSyncCommon(Variable<T> &variable, T *data)
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Reader " << m_ReaderRank << "     GetSync("
-                  << variable.m_Name << ")\n";
+        std::cout << "Inline Reader " << m_ReaderRank << "     GetSync(" << variable.m_Name
+                  << ")\n";
     }
     variable.m_Data = data;
     auto blockInfo = variable.m_BlocksInfo.back();
@@ -48,8 +48,7 @@ void InlineReader::Get(core::Variable<T> &variable, T **data) const
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Reader " << m_ReaderRank << "     Get("
-                  << variable.m_Name << ")\n";
+        std::cout << "Inline Reader " << m_ReaderRank << "     Get(" << variable.m_Name << ")\n";
     }
     auto blockInfo = variable.m_BlocksInfo.back();
     *data = blockInfo.Data;
@@ -64,8 +63,7 @@ void InlineReader::GetDeferredCommon(Variable<T> &variable, T *data)
 }
 
 template <class T>
-inline typename Variable<T>::BPInfo *
-InlineReader::GetBlockSyncCommon(Variable<T> &variable)
+inline typename Variable<T>::BPInfo *InlineReader::GetBlockSyncCommon(Variable<T> &variable)
 {
     if (variable.m_BlockID >= variable.m_BlocksInfo.size())
     {
@@ -76,8 +74,8 @@ InlineReader::GetBlockSyncCommon(Variable<T> &variable)
     }
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Reader " << m_ReaderRank << "     GetBlockSync("
-                  << variable.m_Name << ")\n";
+        std::cout << "Inline Reader " << m_ReaderRank << "     GetBlockSync(" << variable.m_Name
+                  << ")\n";
     }
     // Sync is okay when reading. Just need to make sure the pointer is
     // available now.
@@ -87,8 +85,7 @@ InlineReader::GetBlockSyncCommon(Variable<T> &variable)
 }
 
 template <class T>
-inline typename Variable<T>::BPInfo *
-InlineReader::GetBlockDeferredCommon(Variable<T> &variable)
+inline typename Variable<T>::BPInfo *InlineReader::GetBlockDeferredCommon(Variable<T> &variable)
 {
     if (variable.m_BlockID >= variable.m_BlocksInfo.size())
     {
@@ -99,8 +96,8 @@ InlineReader::GetBlockDeferredCommon(Variable<T> &variable)
     }
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Reader " << m_ReaderRank
-                  << "     GetBlockDeferred(" << variable.m_Name << ")\n";
+        std::cout << "Inline Reader " << m_ReaderRank << "     GetBlockDeferred(" << variable.m_Name
+                  << ")\n";
     }
     m_DeferredVariables.push_back(variable.m_Name);
     return &variable.m_BlocksInfo[variable.m_BlockID];

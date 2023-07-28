@@ -87,10 +87,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         /* take the first size as something that gives us writer size */
         writerSize = var1.Shape()[0] / 10;
 
-        long unsigned int myStart =
-            (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
-        long unsigned int myLength =
-            (long unsigned int)((writerSize * Nx + mpiSize - 1) / mpiSize);
+        long unsigned int myStart = (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
+        long unsigned int myLength = (long unsigned int)((writerSize * Nx + mpiSize - 1) / mpiSize);
 
         if (myStart + myLength > writerSize * Nx)
         {
@@ -109,16 +107,16 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         engine1.Get(step_var, &step);
         engine1.EndStep();
 
-        int result = validateSimpleForwardData(in_R64_1, (int)step, myStart,
-                                               myLength, writerSize * Nx);
+        int result =
+            validateSimpleForwardData(in_R64_1, (int)step, myStart, myLength, writerSize * Nx);
         if (first_step == SIZE_MAX)
         {
             first_step = step;
         }
         if (result != 0)
         {
-            std::cout << "Read Data Validation failed on node " << mpiRank
-                      << " timestep " << step << std::endl;
+            std::cout << "Read Data Validation failed on node " << mpiRank << " timestep " << step
+                      << std::endl;
         }
         EXPECT_EQ(result, 0);
         total_steps++;

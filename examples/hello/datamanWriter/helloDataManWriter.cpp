@@ -38,8 +38,7 @@ void PrintData(std::vector<T> &data, const size_t step)
 template <class T>
 std::vector<T> GenerateData(const size_t step)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     std::vector<T> myVec(datasize);
     for (size_t i = 0; i < datasize; ++i)
     {
@@ -76,8 +75,7 @@ int main(int argc, char *argv[])
     adios2::Engine engine = io.Open("HelloDataMan", adios2::Mode::Write);
 
     // define variable
-    auto floatArrayVar =
-        io.DefineVariable<float>("FloatArray", shape, start, count);
+    auto floatArrayVar = io.DefineVariable<float>("FloatArray", shape, start, count);
 
     // write data
     for (size_t i = 0; i < steps; ++i)

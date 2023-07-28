@@ -29,72 +29,57 @@ namespace adios2
 namespace format
 {
 
-void BPBackCompatBlosc::GetMetadata(const std::vector<char> &buffer,
-                                    Params &info) const noexcept
+void BPBackCompatBlosc::GetMetadata(const std::vector<char> &buffer, Params &info) const noexcept
 {
     size_t position = 0;
-    info["InputSize"] =
-        std::to_string(helper::ReadValue<uint64_t>(buffer, position));
-    info["OutputSize"] =
-        std::to_string(helper::ReadValue<uint64_t>(buffer, position));
+    info["InputSize"] = std::to_string(helper::ReadValue<uint64_t>(buffer, position));
+    info["OutputSize"] = std::to_string(helper::ReadValue<uint64_t>(buffer, position));
 }
 
-void BPBackCompatBlosc::GetData(
-    const char *input, const helper::BlockOperationInfo &blockOperationInfo,
-    char *dataOutput) const
+void BPBackCompatBlosc::GetData(const char *input,
+                                const helper::BlockOperationInfo &blockOperationInfo,
+                                char *dataOutput) const
 {
 #ifdef ADIOS2_HAVE_BLOSC2
     core::compress::CompressBlosc op((Params()));
-    const size_t sizeOut = (sizeof(size_t) == 8)
-                               ? static_cast<size_t>(helper::StringTo<uint64_t>(
-                                     blockOperationInfo.Info.at("InputSize"),
-                                     "when reading Blosc input size"))
-                               : static_cast<size_t>(helper::StringTo<uint32_t>(
-                                     blockOperationInfo.Info.at("InputSize"),
-                                     "when reading Blosc input size"));
+    const size_t sizeOut =
+        (sizeof(size_t) == 8)
+            ? static_cast<size_t>(helper::StringTo<uint64_t>(
+                  blockOperationInfo.Info.at("InputSize"), "when reading Blosc input size"))
+            : static_cast<size_t>(helper::StringTo<uint32_t>(
+                  blockOperationInfo.Info.at("InputSize"), "when reading Blosc input size"));
 
     Params &info = const_cast<Params &>(blockOperationInfo.Info);
-    Decompress(input, blockOperationInfo.PayloadSize, dataOutput, sizeOut,
-               info);
+    Decompress(input, blockOperationInfo.PayloadSize, dataOutput, sizeOut, info);
 
 #else
-    throw std::runtime_error(
-        "ERROR: current ADIOS2 library didn't compile "
-        "with Blosc, can't read Blosc compressed data, in call "
-        "to Get\n");
+    throw std::runtime_error("ERROR: current ADIOS2 library didn't compile "
+                             "with Blosc, can't read Blosc compressed data, in call "
+                             "to Get\n");
 #endif
 }
 
 #ifdef ADIOS2_HAVE_BLOSC2
 
-size_t BPBackCompatBlosc::Decompress(const void *bufferIn, const size_t sizeIn,
-                                     void *dataOut, const size_t sizeOut,
-                                     Params &info) const
+size_t BPBackCompatBlosc::Decompress(const void *bufferIn, const size_t sizeIn, void *dataOut,
+                                     const size_t sizeOut, Params &info) const
 {
     assert(sizeIn >= sizeof(DataHeader));
-    const bool isChunked =
-        reinterpret_cast<const DataHeader *>(bufferIn)->IsChunked();
+    const bool isChunked = reinterpret_cast<const DataHeader *>(bufferIn)->IsChunked();
 
     size_t decompressedSize = 0u;
     if (isChunked)
-        decompressedSize =
-            DecompressChunkedFormat(bufferIn, sizeIn, dataOut, sizeOut, info);
+        decompressedSize = DecompressChunkedFormat(bufferIn, sizeIn, dataOut, sizeOut, info);
     else
-        decompressedSize =
-            DecompressOldFormat(bufferIn, sizeIn, dataOut, sizeOut, info);
+        decompressedSize = DecompressOldFormat(bufferIn, sizeIn, dataOut, sizeOut, info);
 
     return decompressedSize;
 }
 
-bool BPBackCompatBlosc::IsDataTypeValid(const DataType type) const
-{
-    return true;
-}
+bool BPBackCompatBlosc::IsDataTypeValid(const DataType type) const { return true; }
 
-size_t BPBackCompatBlosc::DecompressChunkedFormat(const void *bufferIn,
-                                                  const size_t sizeIn,
-                                                  void *dataOut,
-                                                  const size_t sizeOut,
+size_t BPBackCompatBlosc::DecompressChunkedFormat(const void *bufferIn, const size_t sizeIn,
+                                                  void *dataOut, const size_t sizeOut,
                                                   Params &info) const
 {
     const DataHeader *dataPtr = reinterpret_cast<const DataHeader *>(bufferIn);
@@ -108,8 +93,7 @@ size_t BPBackCompatBlosc::DecompressChunkedFormat(const void *bufferIn,
     size_t inputOffset = 0u;
     size_t currentOutputSize = 0u;
 
-    const uint8_t *inputDataBuff =
-        reinterpret_cast<const uint8_t *>(bufferIn) + sizeof(DataHeader);
+    const uint8_t *inputDataBuff = reinterpret_cast<const uint8_t *>(bufferIn) + sizeof(DataHeader);
 
     size_t uncompressedSize = sizeOut;
 
@@ -136,19 +120,15 @@ size_t BPBackCompatBlosc::DecompressChunkedFormat(const void *bufferIn,
              *
              * we need only the compressed size ( source address + 12 byte)
              */
-            bloscSize_t max_inputDataSize =
-                *reinterpret_cast<const bloscSize_t *>(in_ptr + 12u);
+            bloscSize_t max_inputDataSize = *reinterpret_cast<const bloscSize_t *>(in_ptr + 12u);
 
             uint8_t *out_ptr = outputBuff + currentOutputSize;
 
-            size_t outputChunkSize =
-                std::min<size_t>(uncompressedSize - currentOutputSize,
-                                 static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
-            bloscSize_t max_output_size =
-                static_cast<bloscSize_t>(outputChunkSize);
+            size_t outputChunkSize = std::min<size_t>(uncompressedSize - currentOutputSize,
+                                                      static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
+            bloscSize_t max_output_size = static_cast<bloscSize_t>(outputChunkSize);
 
-            bloscSize_t decompressdSize =
-                blosc1_decompress(in_ptr, out_ptr, max_output_size);
+            bloscSize_t decompressdSize = blosc1_decompress(in_ptr, out_ptr, max_output_size);
 
             if (decompressdSize > 0)
                 currentOutputSize += static_cast<size_t>(decompressdSize);
@@ -175,10 +155,8 @@ size_t BPBackCompatBlosc::DecompressChunkedFormat(const void *bufferIn,
     return currentOutputSize;
 }
 
-size_t BPBackCompatBlosc::DecompressOldFormat(const void *bufferIn,
-                                              const size_t sizeIn,
-                                              void *dataOut,
-                                              const size_t sizeOut,
+size_t BPBackCompatBlosc::DecompressOldFormat(const void *bufferIn, const size_t sizeIn,
+                                              void *dataOut, const size_t sizeOut,
                                               Params &info) const
 {
     blosc2_init();

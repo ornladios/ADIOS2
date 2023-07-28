@@ -94,8 +94,7 @@ typedef struct _Evpath_WSR_Stream
     char *ReaderRequestArray;
     SstPreloadModeType CurPreloadMode;
     struct _EvpathReaderContactInfo *ReaderContactInfo;
-    struct _EvpathWriterContactInfo
-        *WriterContactInfo; /* included so we can free on destroy */
+    struct _EvpathWriterContactInfo *WriterContactInfo; /* included so we can free on destroy */
 } *Evpath_WSR_Stream;
 
 typedef struct _TimestepEntry
@@ -165,25 +164,17 @@ typedef struct _EvpathReadRequestMsg
 } *EvpathReadRequestMsg;
 
 static FMField EvpathReadRequestList[] = {
-    {"Timestep", "integer", sizeof(long),
-     FMOffset(EvpathReadRequestMsg, Timestep)},
-    {"Offset", "integer", sizeof(size_t),
-     FMOffset(EvpathReadRequestMsg, Offset)},
-    {"Length", "integer", sizeof(size_t),
-     FMOffset(EvpathReadRequestMsg, Length)},
-    {"WS_Stream", "integer", sizeof(void *),
-     FMOffset(EvpathReadRequestMsg, WS_Stream)},
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(EvpathReadRequestMsg, RS_Stream)},
-    {"RequestingRank", "integer", sizeof(int),
-     FMOffset(EvpathReadRequestMsg, RequestingRank)},
-    {"NotifyCondition", "integer", sizeof(int),
-     FMOffset(EvpathReadRequestMsg, NotifyCondition)},
+    {"Timestep", "integer", sizeof(long), FMOffset(EvpathReadRequestMsg, Timestep)},
+    {"Offset", "integer", sizeof(size_t), FMOffset(EvpathReadRequestMsg, Offset)},
+    {"Length", "integer", sizeof(size_t), FMOffset(EvpathReadRequestMsg, Length)},
+    {"WS_Stream", "integer", sizeof(void *), FMOffset(EvpathReadRequestMsg, WS_Stream)},
+    {"RS_Stream", "integer", sizeof(void *), FMOffset(EvpathReadRequestMsg, RS_Stream)},
+    {"RequestingRank", "integer", sizeof(int), FMOffset(EvpathReadRequestMsg, RequestingRank)},
+    {"NotifyCondition", "integer", sizeof(int), FMOffset(EvpathReadRequestMsg, NotifyCondition)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec EvpathReadRequestStructs[] = {
-    {"EvpathReadRequest", EvpathReadRequestList,
-     sizeof(struct _EvpathReadRequestMsg), NULL},
+    {"EvpathReadRequest", EvpathReadRequestList, sizeof(struct _EvpathReadRequestMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
 typedef struct _EvpathReadReplyMsg
@@ -196,25 +187,19 @@ typedef struct _EvpathReadReplyMsg
 } *EvpathReadReplyMsg;
 
 static FMField EvpathReadReplyList[] = {
-    {"Timestep", "integer", sizeof(long),
-     FMOffset(EvpathReadReplyMsg, Timestep)},
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(EvpathReadReplyMsg, RS_Stream)},
-    {"DataLength", "integer", sizeof(size_t),
-     FMOffset(EvpathReadReplyMsg, DataLength)},
-    {"Data", "char[DataLength]", sizeof(char),
-     FMOffset(EvpathReadReplyMsg, Data)},
-    {"NotifyCondition", "integer", sizeof(int),
-     FMOffset(EvpathReadReplyMsg, NotifyCondition)},
+    {"Timestep", "integer", sizeof(long), FMOffset(EvpathReadReplyMsg, Timestep)},
+    {"RS_Stream", "integer", sizeof(void *), FMOffset(EvpathReadReplyMsg, RS_Stream)},
+    {"DataLength", "integer", sizeof(size_t), FMOffset(EvpathReadReplyMsg, DataLength)},
+    {"Data", "char[DataLength]", sizeof(char), FMOffset(EvpathReadReplyMsg, Data)},
+    {"NotifyCondition", "integer", sizeof(int), FMOffset(EvpathReadReplyMsg, NotifyCondition)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec EvpathReadReplyStructs[] = {
-    {"EvpathReadReply", EvpathReadReplyList, sizeof(struct _EvpathReadReplyMsg),
-     NULL},
+    {"EvpathReadReply", EvpathReadReplyList, sizeof(struct _EvpathReadReplyMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
-static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                   void *client_Data, attr_list attrs);
+static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                   attr_list attrs);
 
 typedef struct _EvpathPreloadMsg
 {
@@ -227,40 +212,30 @@ typedef struct _EvpathPreloadMsg
 
 static FMField EvpathPreloadList[] = {
     {"Timestep", "integer", sizeof(long), FMOffset(EvpathPreloadMsg, Timestep)},
-    {"DataLength", "integer", sizeof(size_t),
-     FMOffset(EvpathPreloadMsg, DataLength)},
-    {"WriterRank", "integer", sizeof(size_t),
-     FMOffset(EvpathPreloadMsg, WriterRank)},
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(EvpathPreloadMsg, RS_Stream)},
-    {"Data", "char[DataLength]", sizeof(char),
-     FMOffset(EvpathPreloadMsg, Data)},
+    {"DataLength", "integer", sizeof(size_t), FMOffset(EvpathPreloadMsg, DataLength)},
+    {"WriterRank", "integer", sizeof(size_t), FMOffset(EvpathPreloadMsg, WriterRank)},
+    {"RS_Stream", "integer", sizeof(void *), FMOffset(EvpathPreloadMsg, RS_Stream)},
+    {"Data", "char[DataLength]", sizeof(char), FMOffset(EvpathPreloadMsg, Data)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec EvpathPreloadStructs[] = {
-    {"EvpathPreload", EvpathPreloadList, sizeof(struct _EvpathPreloadMsg),
-     NULL},
+    {"EvpathPreload", EvpathPreloadList, sizeof(struct _EvpathPreloadMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
-static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
-                                 void *client_Data, attr_list attrs);
-static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream,
-                                  long Timestep);
-static void SendPreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream,
-                            TimestepList TS);
-static void SendSpeculativePreloadMsgs(CP_Services Svcs,
-                                       Evpath_WSR_Stream WSR_Stream,
+static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                 attr_list attrs);
+static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream, long Timestep);
+static void SendPreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream, TimestepList TS);
+static void SendSpeculativePreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream,
                                        TimestepList TS);
 
 // reader-side routine, called by the main thread
-static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
-                                     void **ReaderContactInfoPtr,
-                                     struct _SstParams *Params,
-                                     attr_list WriterContact, SstStats Stats)
+static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream, void **ReaderContactInfoPtr,
+                                     struct _SstParams *Params, attr_list WriterContact,
+                                     SstStats Stats)
 {
     Evpath_RS_Stream Stream = malloc(sizeof(struct _Evpath_RS_Stream));
-    EvpathReaderContactInfo Contact =
-        malloc(sizeof(struct _EvpathReaderContactInfo));
+    EvpathReaderContactInfo Contact = malloc(sizeof(struct _EvpathReaderContactInfo));
     CManager cm = Svcs->getCManager(CP_Stream);
     char *EvpathContactString;
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
@@ -289,8 +264,7 @@ static DP_RS_Stream EvpathInitReader(CP_Services Svcs, void *CP_Stream,
     }
     else
     {
-        set_string_attr(ListenAttrs, attr_atom_from_string("CM_TRANSPORT"),
-                        strdup("sockets"));
+        set_string_attr(ListenAttrs, attr_atom_from_string("CM_TRANSPORT"), strdup("sockets"));
     }
 
     if (Params->DataInterface)
@@ -354,8 +328,7 @@ static void EvpathDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 }
 
 // writer side routine, called by the
-static void MarkReadRequest(TimestepList TS, DP_WSR_Stream WSR_Stream_v,
-                            int RequestingRank)
+static void MarkReadRequest(TimestepList TS, DP_WSR_Stream WSR_Stream_v, int RequestingRank)
 {
     Evpath_WSR_Stream Reader = (Evpath_WSR_Stream)WSR_Stream_v;
     ReaderRequestTrackPtr ReqList = TS->ReaderRequests;
@@ -379,9 +352,8 @@ static void MarkReadRequest(TimestepList TS, DP_WSR_Stream WSR_Stream_v,
 }
 
 // writer side routine, called by the network handler thread
-static void EvpathReadRequestHandler(CManager cm, CMConnection incoming_conn,
-                                     void *msg_v, void *client_Data,
-                                     attr_list attrs)
+static void EvpathReadRequestHandler(CManager cm, CMConnection incoming_conn, void *msg_v,
+                                     void *client_Data, attr_list attrs)
 {
     PERFSTUBS_TIMER_START_FUNC(timer);
     EvpathReadRequestMsg ReadRequestMsg = (EvpathReadRequestMsg)msg_v;
@@ -396,8 +368,8 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection incoming_conn,
                   "Got a request to read remote memory "
                   "from reader rank %d: timestep %d, "
                   "offset %d, length %d\n",
-                  RequestingRank, ReadRequestMsg->Timestep,
-                  ReadRequestMsg->Offset, ReadRequestMsg->Length);
+                  RequestingRank, ReadRequestMsg->Timestep, ReadRequestMsg->Offset,
+                  ReadRequestMsg->Length);
     pthread_mutex_lock(&WS_Stream->DataLock);
     tmp = WS_Stream->Timesteps;
     while (tmp != NULL)
@@ -414,16 +386,14 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection incoming_conn,
             ReadReplyMsg.Data = tmp->Data.block + ReadRequestMsg->Offset;
             ReadReplyMsg.RS_Stream = ReadRequestMsg->RS_Stream;
             ReadReplyMsg.NotifyCondition = ReadRequestMsg->NotifyCondition;
-            Svcs->verbose(
-                WS_Stream->CP_Stream, DPTraceVerbose,
-                "Sending a reply to reader rank %d for remote memory read\n",
-                RequestingRank);
+            Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+                          "Sending a reply to reader rank %d for remote memory read\n",
+                          RequestingRank);
             ReplyConn = WSR_Stream->ReaderContactInfo[RequestingRank].Conn;
             if (!ReplyConn)
             {
                 attr_list List = attr_list_from_string(
-                    WSR_Stream->ReaderContactInfo[RequestingRank]
-                        .ContactString);
+                    WSR_Stream->ReaderContactInfo[RequestingRank].ContactString);
                 pthread_mutex_unlock(&WS_Stream->DataLock);
                 ReplyConn = CMget_conn(cm, List);
                 free_attr_list(List);
@@ -485,8 +455,8 @@ typedef struct _EvpathCompletionHandle
 } *EvpathCompletionHandle;
 
 // reader-side routine called by the network handler thread
-static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                   void *client_Data, attr_list attrs)
+static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                   attr_list attrs)
 {
     PERFSTUBS_TIMER_START_FUNC(timer);
     EvpathReadReplyMsg ReadReplyMsg = (EvpathReadReplyMsg)msg_v;
@@ -507,16 +477,14 @@ static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
 
     if (!Handle)
     {
-        Svcs->verbose(
-            RS_Stream->CP_Stream, DPCriticalVerbose,
-            "Got a reply to remote memory read, but condition not found\n");
+        Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
+                      "Got a reply to remote memory read, but condition not found\n");
         PERFSTUBS_TIMER_STOP_FUNC(timer);
         return;
     }
-    Svcs->verbose(
-        RS_Stream->CP_Stream, DPTraceVerbose,
-        "Got a reply to remote memory read from rank %d, condition is %d\n",
-        Handle->Rank, ReadReplyMsg->NotifyCondition);
+    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
+                  "Got a reply to remote memory read from rank %d, condition is %d\n", Handle->Rank,
+                  ReadReplyMsg->NotifyCondition);
 
     /*
      * `Handle` contains the full request info and is `client_data`
@@ -564,15 +532,12 @@ static unsigned long writeBlockFingerprint(char *Page, size_t Size)
 }
 
 // reader-side routine, called from the main program
-static int HandleRequestWithPreloaded(CP_Services Svcs,
-                                      Evpath_RS_Stream RS_Stream, int Rank,
-                                      long Timestep, size_t Offset,
-                                      size_t Length, void *Buffer)
+static int HandleRequestWithPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream, int Rank,
+                                      long Timestep, size_t Offset, size_t Length, void *Buffer)
 {
     RSTimestepList Entry = NULL;
     Entry = RS_Stream->QueuedTimesteps;
-    while (Entry &&
-           ((Entry->WriterRank != Rank) || (Entry->Timestep != Timestep)))
+    while (Entry && ((Entry->WriterRank != Rank) || (Entry->Timestep != Timestep)))
     {
         Entry = Entry->Next;
     }
@@ -583,15 +548,13 @@ static int HandleRequestWithPreloaded(CP_Services Svcs,
     Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                   "Satisfying remote memory read with preload from writer rank "
                   "%d for timestep %ld, fprint %lx\n",
-                  Rank, Timestep,
-                  writeBlockFingerprint(Entry->Data, Entry->DataSize));
+                  Rank, Timestep, writeBlockFingerprint(Entry->Data, Entry->DataSize));
     memcpy(Buffer, Entry->Data + Offset, Length);
     return 1;
 }
 
 // reader-side routine, called from the main program
-static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream,
-                                  long Timestep)
+static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream, long Timestep)
 {
     RSTimestepList Entry, Last = NULL;
     Entry = RS_Stream->QueuedTimesteps;
@@ -617,8 +580,7 @@ static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream,
                 Svcs->verbose(RS_Stream->CP_Stream, DPPerRankVerbose,
                               "Discarding prior, TS %ld, data %p, fprint %lx\n",
                               ItemToFree->Timestep, ItemToFree->Data,
-                              writeBlockFingerprint(ItemToFree->Data,
-                                                    ItemToFree->DataSize));
+                              writeBlockFingerprint(ItemToFree->Data, ItemToFree->DataSize));
                 CMreturn_buffer(cm, ItemToFree->Data);
             }
 
@@ -636,20 +598,19 @@ static void RemoveRequestFromList(CP_Services Svcs, Evpath_RS_Stream Stream,
                                   EvpathCompletionHandle Handle);
 
 // reader-side routine, called from the network handler thread
-static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
-                                 void *client_Data, attr_list attrs)
+static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                 attr_list attrs)
 {
     EvpathPreloadMsg PreloadMsg = (EvpathPreloadMsg)msg_v;
     Evpath_RS_Stream RS_Stream = PreloadMsg->RS_Stream;
     CP_Services Svcs = (CP_Services)client_Data;
     RSTimestepList Entry = calloc(1, sizeof(*Entry));
 
-    Svcs->verbose(
-        RS_Stream->CP_Stream, DPPerStepVerbose,
-        "Got a preload message from writer rank %d for timestep %ld, fprint "
-        "%lx\n",
-        PreloadMsg->WriterRank, PreloadMsg->Timestep,
-        writeBlockFingerprint(PreloadMsg->Data, PreloadMsg->DataLength));
+    Svcs->verbose(RS_Stream->CP_Stream, DPPerStepVerbose,
+                  "Got a preload message from writer rank %d for timestep %ld, fprint "
+                  "%lx\n",
+                  PreloadMsg->WriterRank, PreloadMsg->Timestep,
+                  writeBlockFingerprint(PreloadMsg->Data, PreloadMsg->DataLength));
     /* arrange for this message data to stay around */
     CMtake_buffer(cm, msg_v);
 
@@ -675,9 +636,9 @@ static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
     {
         int HadPreload;
         EvpathCompletionHandle Next = Requests->Next;
-        HadPreload = HandleRequestWithPreloaded(
-            Svcs, RS_Stream, Requests->Rank, PreloadMsg->Timestep,
-            Requests->Offset, Requests->Length, Requests->Buffer);
+        HadPreload =
+            HandleRequestWithPreloaded(Svcs, RS_Stream, Requests->Rank, PreloadMsg->Timestep,
+                                       Requests->Offset, Requests->Length, Requests->Buffer);
         if (HadPreload)
         {
             CMCondition_signal(cm, Requests->CMcondition);
@@ -690,8 +651,7 @@ static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v,
 }
 
 // writer-side routine, called from the main program
-static DP_WS_Stream EvpathInitWriter(CP_Services Svcs, void *CP_Stream,
-                                     struct _SstParams *Params,
+static DP_WS_Stream EvpathInitWriter(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params,
                                      attr_list DPAttrs, SstStats Stats)
 {
     Evpath_WS_Stream Stream = malloc(sizeof(struct _Evpath_WS_Stream));
@@ -747,8 +707,7 @@ static void EvpathDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
             free(WS_Stream->Readers[i]->ReaderContactInfo->ContactString);
             if (WS_Stream->Readers[i]->ReaderContactInfo->Conn)
             {
-                CMConnection_dereference(
-                    WS_Stream->Readers[i]->ReaderContactInfo->Conn);
+                CMConnection_dereference(WS_Stream->Readers[i]->ReaderContactInfo->Conn);
                 WS_Stream->Readers[i]->ReaderContactInfo->Conn = NULL;
             }
             if (WS_Stream->Readers[i]->ReaderRequestArray)
@@ -764,10 +723,8 @@ static void EvpathDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
 }
 
 // writer-side routine, called from the main program
-static DP_WSR_Stream EvpathInitWriterPerReader(CP_Services Svcs,
-                                               DP_WS_Stream WS_Stream_v,
-                                               int readerCohortSize,
-                                               CP_PeerCohort PeerCohort,
+static DP_WSR_Stream EvpathInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_Stream_v,
+                                               int readerCohortSize, CP_PeerCohort PeerCohort,
                                                void **providedReaderInfo_v,
                                                void **WriterContactInfoPtr)
 {
@@ -777,8 +734,7 @@ static DP_WSR_Stream EvpathInitWriterPerReader(CP_Services Svcs,
     SMPI_Comm comm = Svcs->getMPIComm(WS_Stream->CP_Stream);
     int Rank;
     char *EvpathContactString = malloc(64);
-    EvpathReaderContactInfo *providedReaderInfo =
-        (EvpathReaderContactInfo *)providedReaderInfo_v;
+    EvpathReaderContactInfo *providedReaderInfo = (EvpathReaderContactInfo *)providedReaderInfo_v;
 
     SMPI_Comm_rank(comm, &Rank);
     snprintf(EvpathContactString, 64, "Writer Rank %d, test contact", Rank);
@@ -801,21 +757,19 @@ static DP_WSR_Stream EvpathInitWriterPerReader(CP_Services Svcs,
         WSR_Stream->ReaderContactInfo[i].ContactString =
             strdup(providedReaderInfo[i]->ContactString);
         WSR_Stream->ReaderContactInfo[i].Conn = NULL;
-        WSR_Stream->ReaderContactInfo[i].RS_Stream =
-            providedReaderInfo[i]->RS_Stream;
-        Svcs->verbose(
-            WS_Stream->CP_Stream, DPTraceVerbose,
-            "Received contact info \"%s\", RD_Stream %p for Reader Rank %d\n",
-            WSR_Stream->ReaderContactInfo[i].ContactString,
-            WSR_Stream->ReaderContactInfo[i].RS_Stream, i);
+        WSR_Stream->ReaderContactInfo[i].RS_Stream = providedReaderInfo[i]->RS_Stream;
+        Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+                      "Received contact info \"%s\", RD_Stream %p for Reader Rank %d\n",
+                      WSR_Stream->ReaderContactInfo[i].ContactString,
+                      WSR_Stream->ReaderContactInfo[i].RS_Stream, i);
     }
 
     /*
      * add this writer-side reader-specific stream to the parent writer stream
      * structure
      */
-    WS_Stream->Readers = realloc(
-        WS_Stream->Readers, sizeof(*WSR_Stream) * (WS_Stream->ReaderCount + 1));
+    WS_Stream->Readers =
+        realloc(WS_Stream->Readers, sizeof(*WSR_Stream) * (WS_Stream->ReaderCount + 1));
     WS_Stream->Readers[WS_Stream->ReaderCount] = WSR_Stream;
     WS_Stream->ReaderCount++;
 
@@ -830,8 +784,7 @@ static DP_WSR_Stream EvpathInitWriterPerReader(CP_Services Svcs,
 }
 
 // writer-side routine, called from the main program
-static void EvpathDestroyWriterPerReader(CP_Services Svcs,
-                                         DP_WSR_Stream WSR_Stream_v)
+static void EvpathDestroyWriterPerReader(CP_Services Svcs, DP_WSR_Stream WSR_Stream_v)
 {
     Evpath_WSR_Stream WSR_Stream = (Evpath_WSR_Stream)WSR_Stream_v;
     if (WSR_Stream->ReaderRequestArray)
@@ -843,15 +796,12 @@ static void EvpathDestroyWriterPerReader(CP_Services Svcs,
 }
 
 // reader-side routine, called from the main program
-static void EvpathProvideWriterDataToReader(CP_Services Svcs,
-                                            DP_RS_Stream RS_Stream_v,
-                                            int writerCohortSize,
-                                            CP_PeerCohort PeerCohort,
+static void EvpathProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v,
+                                            int writerCohortSize, CP_PeerCohort PeerCohort,
                                             void **providedWriterInfo_v)
 {
     Evpath_RS_Stream RS_Stream = (Evpath_RS_Stream)RS_Stream_v;
-    EvpathWriterContactInfo *providedWriterInfo =
-        (EvpathWriterContactInfo *)providedWriterInfo_v;
+    EvpathWriterContactInfo *providedWriterInfo = (EvpathWriterContactInfo *)providedWriterInfo_v;
 
     RS_Stream->PeerCohort = PeerCohort;
     RS_Stream->WriterCohortSize = writerCohortSize;
@@ -866,13 +816,11 @@ static void EvpathProvideWriterDataToReader(CP_Services Svcs,
     {
         RS_Stream->WriterContactInfo[i].ContactString =
             strdup(providedWriterInfo[i]->ContactString);
-        RS_Stream->WriterContactInfo[i].WS_Stream =
-            providedWriterInfo[i]->WS_Stream;
-        Svcs->verbose(
-            RS_Stream->CP_Stream, DPTraceVerbose,
-            "Received contact info \"%s\", WS_stream %p for WSR Rank %d\n",
-            RS_Stream->WriterContactInfo[i].ContactString,
-            RS_Stream->WriterContactInfo[i].WS_Stream, i);
+        RS_Stream->WriterContactInfo[i].WS_Stream = providedWriterInfo[i]->WS_Stream;
+        Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
+                      "Received contact info \"%s\", WS_stream %p for WSR Rank %d\n",
+                      RS_Stream->WriterContactInfo[i].ContactString,
+                      RS_Stream->WriterContactInfo[i].WS_Stream, i);
     }
 }
 
@@ -911,14 +859,13 @@ static void RemoveRequestFromList(CP_Services Svcs, Evpath_RS_Stream Stream,
 }
 
 // reader-side routine, called from the network handler (close handler)
-static void FailRequestsToRank(CP_Services Svcs, CManager cm,
-                               Evpath_RS_Stream Stream, int FailedRank)
+static void FailRequestsToRank(CP_Services Svcs, CManager cm, Evpath_RS_Stream Stream,
+                               int FailedRank)
 {
     EvpathCompletionHandle Tmp;
     int FailedSomethingToRank = 0;
     Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
-                  "Fail pending requests to rank %d on stream %p\n", FailedRank,
-                  Stream);
+                  "Fail pending requests to rank %d on stream %p\n", FailedRank, Stream);
     pthread_mutex_lock(&Stream->DataLock);
     Tmp = Stream->PendingReadRequests;
     while (Tmp != NULL)
@@ -933,9 +880,8 @@ static void FailRequestsToRank(CP_Services Svcs, CManager cm,
                           "failed and signalling condition %d\n",
                           Tmp->Rank, Tmp->CMcondition);
             CMCondition_signal(cm, Tmp->CMcondition);
-            Svcs->verbose(Tmp->CPStream, DPTraceVerbose,
-                          "Did the signal of condition %d\n", Tmp->Rank,
-                          Tmp->CMcondition);
+            Svcs->verbose(Tmp->CPStream, DPTraceVerbose, "Did the signal of condition %d\n",
+                          Tmp->Rank, Tmp->CMcondition);
         }
         Tmp = Tmp->Next;
     }
@@ -959,17 +905,15 @@ static void FailRequestsToRank(CP_Services Svcs, CManager cm,
                               "failed and signalling condition %d\n",
                               Tmp->Rank, Tmp->CMcondition);
                 CMCondition_signal(cm, Tmp->CMcondition);
-                Svcs->verbose(Tmp->CPStream, DPTraceVerbose,
-                              "Did the signal of condition %d\n", Tmp->Rank,
-                              Tmp->CMcondition);
+                Svcs->verbose(Tmp->CPStream, DPTraceVerbose, "Did the signal of condition %d\n",
+                              Tmp->Rank, Tmp->CMcondition);
             }
             Tmp = Tmp->Next;
         }
     }
     pthread_mutex_unlock(&Stream->DataLock);
     Svcs->verbose(Stream->CP_Stream, DPPerRankVerbose,
-                  "Done Failing requests to writer %d from stream %p\n",
-                  FailedRank, Stream);
+                  "Done Failing requests to writer %d from stream %p\n", FailedRank, Stream);
 }
 
 typedef struct _EvpathPerTimestepInfo
@@ -979,13 +923,12 @@ typedef struct _EvpathPerTimestepInfo
 } *EvpathPerTimestepInfo;
 
 // reader-side routine, called from the main program
-static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
-                                    int Rank, long Timestep, size_t Offset,
-                                    size_t Length, void *Buffer,
+static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Rank,
+                                    long Timestep, size_t Offset, size_t Length, void *Buffer,
                                     void *DP_TimestepInfo)
 {
-    Evpath_RS_Stream Stream = (Evpath_RS_Stream)
-        Stream_v; /* DP_RS_Stream is the return from InitReader */
+    Evpath_RS_Stream Stream =
+        (Evpath_RS_Stream)Stream_v; /* DP_RS_Stream is the return from InitReader */
     CManager cm = Svcs->getCManager(Stream->CP_Stream);
     EvpathCompletionHandle ret = malloc(sizeof(struct _EvpathCompletionHandle));
     // EvpathPerTimestepInfo TimestepInfo =
@@ -1001,8 +944,7 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
         DiscardPriorPreloaded(Svcs, Stream, Timestep);
     }
     LastRequestedTimestep = Timestep;
-    HadPreload = HandleRequestWithPreloaded(Svcs, Stream, Rank, Timestep,
-                                            Offset, Length, Buffer);
+    HadPreload = HandleRequestWithPreloaded(Svcs, Stream, Rank, Timestep, Offset, Length, Buffer);
     ret->CPStream = Stream->CP_Stream;
     ret->DPStream = Stream;
     ret->Failed = 0;
@@ -1056,15 +998,13 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
         Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
                       "Adios waiting for preload data for Timestep %d "
                       "from Rank %d, WSR_Stream = %p, DP_TimestepInfo %p\n",
-                      Timestep, Rank, Stream->WriterContactInfo[Rank].WS_Stream,
-                      DP_TimestepInfo);
+                      Timestep, Rank, Stream->WriterContactInfo[Rank].WS_Stream, DP_TimestepInfo);
         return ret;
     }
     Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
                   "Adios requesting to read remote memory for Timestep %d "
                   "from Rank %d, WSR_Stream = %p, DP_TimestepInfo %p\n",
-                  Timestep, Rank, Stream->WriterContactInfo[Rank].WS_Stream,
-                  DP_TimestepInfo);
+                  Timestep, Rank, Stream->WriterContactInfo[Rank].WS_Stream, DP_TimestepInfo);
 
     /* send request to appropriate writer */
     /* memset avoids uninit byte warnings from valgrind */
@@ -1076,8 +1016,8 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     ReadRequestMsg.RS_Stream = Stream;
     ReadRequestMsg.RequestingRank = Stream->Rank;
     ReadRequestMsg.NotifyCondition = ret->CMcondition;
-    if (!Svcs->sendToPeer(Stream->CP_Stream, Stream->PeerCohort, Rank,
-                          Stream->ReadRequestFormat, &ReadRequestMsg))
+    if (!Svcs->sendToPeer(Stream->CP_Stream, Stream->PeerCohort, Rank, Stream->ReadRequestFormat,
+                          &ReadRequestMsg))
     {
         ret->Failed = 1;
         CMCondition_signal(cm, ret->CMcondition);
@@ -1092,10 +1032,9 @@ static int EvpathWaitForCompletion(CP_Services Svcs, void *Handle_v)
     EvpathCompletionHandle Handle = (EvpathCompletionHandle)Handle_v;
     int Ret = 1;
     if (Handle->CMcondition != -1)
-        Svcs->verbose(
-            Handle->CPStream, DPTraceVerbose,
-            "Waiting for completion of memory read to rank %d, condition %d\n",
-            Handle->Rank, Handle->CMcondition);
+        Svcs->verbose(Handle->CPStream, DPTraceVerbose,
+                      "Waiting for completion of memory read to rank %d, condition %d\n",
+                      Handle->Rank, Handle->CMcondition);
     /*
      * Wait for the CM condition to be signalled.  If it has been already,
      * this returns immediately.  Copying the incoming data to the waiting
@@ -1128,11 +1067,10 @@ static int EvpathWaitForCompletion(CP_Services Svcs, void *Handle_v)
 }
 
 // reader-side routine, called from the network handler thread
-static void EvpathNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
-                                    int FailedPeerRank)
+static void EvpathNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v, int FailedPeerRank)
 {
-    Evpath_RS_Stream Stream = (Evpath_RS_Stream)
-        Stream_v; /* DP_RS_Stream is the return from InitReader */
+    Evpath_RS_Stream Stream =
+        (Evpath_RS_Stream)Stream_v; /* DP_RS_Stream is the return from InitReader */
     CManager cm = Svcs->getCManager(Stream->CP_Stream);
     Svcs->verbose(Stream->CP_Stream, DPPerRankVerbose,
                   "received notification that writer peer "
@@ -1143,19 +1081,15 @@ static void EvpathNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
 }
 
 // writer-side routine, called from the main program
-static void EvpathWSReaderRegisterTimestep(CP_Services Svcs,
-                                           DP_WSR_Stream WSRStream_v,
-                                           long Timestep,
-                                           SstPreloadModeType PreloadMode)
+static void EvpathWSReaderRegisterTimestep(CP_Services Svcs, DP_WSR_Stream WSRStream_v,
+                                           long Timestep, SstPreloadModeType PreloadMode)
 {
     Evpath_WSR_Stream WSR_Stream = (Evpath_WSR_Stream)WSRStream_v;
-    Evpath_WS_Stream WS_Stream =
-        WSR_Stream->WS_Stream; /* pointer to writer struct */
+    Evpath_WS_Stream WS_Stream = WSR_Stream->WS_Stream; /* pointer to writer struct */
     TimestepList Entry;
 
     pthread_mutex_lock(&WS_Stream->DataLock);
-    if ((WSR_Stream->CurPreloadMode == SstPreloadSpeculative) &&
-        (PreloadMode == SstPreloadLearned))
+    if ((WSR_Stream->CurPreloadMode == SstPreloadSpeculative) && (PreloadMode == SstPreloadLearned))
     {
         // Never transition from Speculative to Learned, because the writer
         // doesn't have the read knowledge
@@ -1175,16 +1109,14 @@ static void EvpathWSReaderRegisterTimestep(CP_Services Svcs,
     }
     if (!Entry)
     {
-        fprintf(
-            stderr,
-            "Didn't find timestep in per reader register, shouldn't happen\n");
+        fprintf(stderr, "Didn't find timestep in per reader register, shouldn't happen\n");
         pthread_mutex_unlock(&WS_Stream->DataLock);
         return;
     }
 
     Svcs->verbose(WS_Stream->CP_Stream, DPPerRankVerbose,
-                  "Per reader registration for timestep %ld, preload mode %d\n",
-                  Timestep, PreloadMode);
+                  "Per reader registration for timestep %ld, preload mode %d\n", Timestep,
+                  PreloadMode);
     if (PreloadMode == SstPreloadLearned)
     {
         if (WSR_Stream->ReadPatternLockTimestep == -1)
@@ -1193,37 +1125,33 @@ static void EvpathWSReaderRegisterTimestep(CP_Services Svcs,
         }
         if (WSR_Stream->ReaderRequestArray)
         {
-            Svcs->verbose(
-                WS_Stream->CP_Stream, DPPerRankVerbose,
-                "Sending Learned Preload messages, reader %p, timestep %ld, "
-                "fprint %lx\n",
-                WSR_Stream, Timestep,
-                writeBlockFingerprint(Entry->Data.block, Entry->Data.DataSize));
+            Svcs->verbose(WS_Stream->CP_Stream, DPPerRankVerbose,
+                          "Sending Learned Preload messages, reader %p, timestep %ld, "
+                          "fprint %lx\n",
+                          WSR_Stream, Timestep,
+                          writeBlockFingerprint(Entry->Data.block, Entry->Data.DataSize));
             SendPreloadMsgs(Svcs, WSR_Stream, Entry);
         }
     }
     else if (PreloadMode == SstPreloadSpeculative)
     {
-        Svcs->verbose(
-            WS_Stream->CP_Stream, DPPerRankVerbose,
-            "Sending Speculative Preload messages, reader %p, timestep %ld\n",
-            WSR_Stream, Timestep);
+        Svcs->verbose(WS_Stream->CP_Stream, DPPerRankVerbose,
+                      "Sending Speculative Preload messages, reader %p, timestep %ld\n", WSR_Stream,
+                      Timestep);
         SendSpeculativePreloadMsgs(Svcs, WSR_Stream, Entry);
     }
     pthread_mutex_unlock(&WS_Stream->DataLock);
 }
 
 // reader-side routine, called from the network handler thread
-static void EvpathRSTimestepArrived(CP_Services Svcs, DP_RS_Stream RS_Stream_v,
-                                    long Timestep,
+static void EvpathRSTimestepArrived(CP_Services Svcs, DP_RS_Stream RS_Stream_v, long Timestep,
                                     SstPreloadModeType PreloadMode)
 {
     Evpath_RS_Stream RS_Stream = (Evpath_RS_Stream)RS_Stream_v;
-    Svcs->verbose(
-        RS_Stream->CP_Stream, DPPerRankVerbose,
-        "EVPATH registering reader arrival of TS %ld metadata, preload mode "
-        "%d\n",
-        Timestep, PreloadMode);
+    Svcs->verbose(RS_Stream->CP_Stream, DPPerRankVerbose,
+                  "EVPATH registering reader arrival of TS %ld metadata, preload mode "
+                  "%d\n",
+                  Timestep, PreloadMode);
     if (PreloadMode != RS_Stream->CurPreloadMode)
     {
         RS_Stream->PreloadActiveTimestep = Timestep;
@@ -1232,15 +1160,12 @@ static void EvpathRSTimestepArrived(CP_Services Svcs, DP_RS_Stream RS_Stream_v,
 }
 
 // reader-side routine, called from either thread
-static void SendPreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream,
-                            TimestepList TS)
+static void SendPreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream, TimestepList TS)
 {
-    Evpath_WS_Stream WS_Stream =
-        WSR_Stream->WS_Stream; /* pointer to writer struct */
+    Evpath_WS_Stream WS_Stream = WSR_Stream->WS_Stream; /* pointer to writer struct */
     struct _EvpathPreloadMsg PreloadMsg;
     Svcs->verbose(WS_Stream->CP_Stream, DPPerRankVerbose,
-                  "EVPATH Sending preload messages for timestep %ld\n",
-                  TS->Timestep);
+                  "EVPATH Sending preload messages for timestep %ld\n", TS->Timestep);
     memset(&PreloadMsg, 0, sizeof(PreloadMsg));
     PreloadMsg.Timestep = TS->Timestep;
     PreloadMsg.DataLength = TS->Data.DataSize;
@@ -1252,22 +1177,18 @@ static void SendPreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream,
         if (WSR_Stream->ReaderRequestArray[i])
         {
             PreloadMsg.RS_Stream = WSR_Stream->ReaderContactInfo[i].RS_Stream;
-            Svcs->verbose(
-                WS_Stream->CP_Stream, DPTraceVerbose,
-                "EVPATH Preload message for timestep %ld, going to rank %d\n",
-                TS->Timestep, i);
-            CMwrite(WSR_Stream->ReaderContactInfo[i].Conn,
-                    WS_Stream->PreloadFormat, &PreloadMsg);
+            Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+                          "EVPATH Preload message for timestep %ld, going to rank %d\n",
+                          TS->Timestep, i);
+            CMwrite(WSR_Stream->ReaderContactInfo[i].Conn, WS_Stream->PreloadFormat, &PreloadMsg);
         }
     }
 }
 
-static void SendSpeculativePreloadMsgs(CP_Services Svcs,
-                                       Evpath_WSR_Stream WSR_Stream,
+static void SendSpeculativePreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream,
                                        TimestepList TS)
 {
-    Evpath_WS_Stream WS_Stream =
-        WSR_Stream->WS_Stream; /* pointer to writer struct */
+    Evpath_WS_Stream WS_Stream = WSR_Stream->WS_Stream; /* pointer to writer struct */
     CManager cm = Svcs->getCManager(WS_Stream->CP_Stream);
     struct _EvpathPreloadMsg PreloadMsg;
     memset(&PreloadMsg, 0, sizeof(PreloadMsg));
@@ -1280,43 +1201,36 @@ static void SendSpeculativePreloadMsgs(CP_Services Svcs,
     {
         if (!WSR_Stream->ReaderContactInfo[i].Conn)
         {
-            attr_list List = attr_list_from_string(
-                WSR_Stream->ReaderContactInfo[i].ContactString);
+            attr_list List = attr_list_from_string(WSR_Stream->ReaderContactInfo[i].ContactString);
             CMConnection Conn = CMget_conn(cm, List);
             free_attr_list(List);
             if (!Conn)
             {
-                Svcs->verbose(
-                    WS_Stream->CP_Stream, DPCriticalVerbose,
-                    "Failed to connect to reader rank %d for response to "
-                    "remote read, assume failure, no response sent\n",
-                    i);
+                Svcs->verbose(WS_Stream->CP_Stream, DPCriticalVerbose,
+                              "Failed to connect to reader rank %d for response to "
+                              "remote read, assume failure, no response sent\n",
+                              i);
                 return;
             }
             WSR_Stream->ReaderContactInfo[i].Conn = Conn;
         }
         PreloadMsg.RS_Stream = WSR_Stream->ReaderContactInfo[i].RS_Stream;
-        CMwrite(WSR_Stream->ReaderContactInfo[i].Conn, WS_Stream->PreloadFormat,
-                &PreloadMsg);
+        CMwrite(WSR_Stream->ReaderContactInfo[i].Conn, WS_Stream->PreloadFormat, &PreloadMsg);
     }
 }
 
-static void EvpathReaderReleaseTimestep(CP_Services Svcs,
-                                        DP_WSR_Stream Stream_v, long Timestep)
+static void EvpathReaderReleaseTimestep(CP_Services Svcs, DP_WSR_Stream Stream_v, long Timestep)
 {
     Evpath_WSR_Stream WSR_Stream = (Evpath_WSR_Stream)Stream_v;
-    Evpath_WS_Stream WS_Stream =
-        WSR_Stream->WS_Stream; /* pointer to writer struct */
+    Evpath_WS_Stream WS_Stream = WSR_Stream->WS_Stream; /* pointer to writer struct */
     TimestepList tmp;
 
     pthread_mutex_lock(&WS_Stream->DataLock);
     tmp = WS_Stream->Timesteps;
-    if ((!WSR_Stream->ReaderRequestArray) &&
-        (Timestep == WSR_Stream->ReadPatternLockTimestep))
+    if ((!WSR_Stream->ReaderRequestArray) && (Timestep == WSR_Stream->ReadPatternLockTimestep))
     {
         Svcs->verbose(WS_Stream->CP_Stream, DPPerRankVerbose,
-                      "EVPATH Saving the read pattern for timestep %ld\n",
-                      Timestep);
+                      "EVPATH Saving the read pattern for timestep %ld\n", Timestep);
         /* save the pattern */
         while (tmp != NULL)
         {
@@ -1354,8 +1268,7 @@ static void EvpathReaderReleaseTimestep(CP_Services Svcs,
     pthread_mutex_unlock(&WS_Stream->DataLock);
 }
 
-static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
-                                  struct _SstData *Data,
+static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct _SstData *Data,
                                   struct _SstData *LocalMetadata, long Timestep,
                                   void **TimestepInfoPtr)
 {
@@ -1378,11 +1291,9 @@ static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     Entry->Timestep = Timestep;
     Entry->Next = NULL;
 
-    Svcs->verbose(
-        WS_Stream->CP_Stream, DPPerRankVerbose,
-        "ProvideTimestep, registering timestep %ld, data %p, fprint %lx\n",
-        Timestep, Data->block,
-        writeBlockFingerprint(Data->block, Data->DataSize));
+    Svcs->verbose(WS_Stream->CP_Stream, DPPerRankVerbose,
+                  "ProvideTimestep, registering timestep %ld, data %p, fprint %lx\n", Timestep,
+                  Data->block, writeBlockFingerprint(Data->block, Data->DataSize));
     pthread_mutex_lock(&WS_Stream->DataLock);
     if (WS_Stream->Timesteps)
     {
@@ -1401,14 +1312,12 @@ static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     *TimestepInfoPtr = NULL;
 }
 
-static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
-                                  long Timestep)
+static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, long Timestep)
 {
     Evpath_WS_Stream WS_Stream = (Evpath_WS_Stream)Stream_v;
     TimestepList List;
 
-    Svcs->verbose(WS_Stream->CP_Stream, DPPerRankVerbose,
-                  "Releasing timestep %ld\n", Timestep);
+    Svcs->verbose(WS_Stream->CP_Stream, DPPerRankVerbose, "Releasing timestep %ld\n", Timestep);
     pthread_mutex_lock(&WS_Stream->DataLock);
     List = WS_Stream->Timesteps;
     if (WS_Stream->Timesteps && (WS_Stream->Timesteps->Timestep == Timestep))
@@ -1470,35 +1379,30 @@ static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
          * Shouldn't ever get here because we should never release a
          * timestep that we don't have.
          */
-        fprintf(stderr, "Failed to release Timestep %ld, not found\n",
-                Timestep);
+        fprintf(stderr, "Failed to release Timestep %ld, not found\n", Timestep);
         assert(0);
     }
     pthread_mutex_unlock(&WS_Stream->DataLock);
 }
 
 static FMField EvpathReaderContactList[] = {
-    {"ContactString", "string", sizeof(char *),
-     FMOffset(EvpathReaderContactInfo, ContactString)},
-    {"reader_ID", "integer", sizeof(void *),
-     FMOffset(EvpathReaderContactInfo, RS_Stream)},
+    {"ContactString", "string", sizeof(char *), FMOffset(EvpathReaderContactInfo, ContactString)},
+    {"reader_ID", "integer", sizeof(void *), FMOffset(EvpathReaderContactInfo, RS_Stream)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec EvpathReaderContactStructs[] = {
-    {"EvpathReaderContactInfo", EvpathReaderContactList,
-     sizeof(struct _EvpathReaderContactInfo), NULL},
+    {"EvpathReaderContactInfo", EvpathReaderContactList, sizeof(struct _EvpathReaderContactInfo),
+     NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField EvpathWriterContactList[] = {
-    {"ContactString", "string", sizeof(char *),
-     FMOffset(EvpathWriterContactInfo, ContactString)},
-    {"writer_ID", "integer", sizeof(void *),
-     FMOffset(EvpathWriterContactInfo, WS_Stream)},
+    {"ContactString", "string", sizeof(char *), FMOffset(EvpathWriterContactInfo, ContactString)},
+    {"writer_ID", "integer", sizeof(void *), FMOffset(EvpathWriterContactInfo, WS_Stream)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec EvpathWriterContactStructs[] = {
-    {"EvpathWriterContactInfo", EvpathWriterContactList,
-     sizeof(struct _EvpathWriterContactInfo), NULL},
+    {"EvpathWriterContactInfo", EvpathWriterContactList, sizeof(struct _EvpathWriterContactInfo),
+     NULL},
     {NULL, NULL, 0, NULL}};
 
 // static FMField EvpathTimestepInfoList[] = {
@@ -1513,12 +1417,11 @@ static FMStructDescRec EvpathWriterContactStructs[] = {
 //     sizeof(struct _EvpathPerTimestepInfo), NULL},
 //    {NULL, NULL, 0, NULL}};
 
-static struct _CP_DP_Interface evpathDPInterface = {
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+static struct _CP_DP_Interface evpathDPInterface = {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                                                    NULL, NULL, NULL, NULL, NULL, NULL, NULL};
 
-static int EvpathGetPriority(CP_Services Svcs, void *CP_Stream,
-                             struct _SstParams *Params)
+static int EvpathGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params)
 {
     // Define any unique attributes here
     //    (void)attr_atom_from_string("EVPATH_DP_Attr");
@@ -1536,8 +1439,7 @@ extern NO_SANITIZE_THREAD CP_DP_Interface LoadEVpathDP()
     evpathDPInterface.initReader = EvpathInitReader;
     evpathDPInterface.initWriter = EvpathInitWriter;
     evpathDPInterface.initWriterPerReader = EvpathInitWriterPerReader;
-    evpathDPInterface.provideWriterDataToReader =
-        EvpathProvideWriterDataToReader;
+    evpathDPInterface.provideWriterDataToReader = EvpathProvideWriterDataToReader;
     evpathDPInterface.readRemoteMemory = EvpathReadRemoteMemory;
     evpathDPInterface.waitForCompletion = EvpathWaitForCompletion;
     evpathDPInterface.notifyConnFailure = EvpathNotifyConnFailure;

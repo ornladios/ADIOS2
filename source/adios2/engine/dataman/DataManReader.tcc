@@ -35,9 +35,9 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
     {
         while (true)
         {
-            int ret = m_Serializer.GetData(
-                data, variable.m_Name, variable.m_Start, variable.m_Count,
-                m_CurrentStep, variable.m_MemoryStart, variable.m_MemoryCount);
+            int ret =
+                m_Serializer.GetData(data, variable.m_Name, variable.m_Start, variable.m_Count,
+                                     m_CurrentStep, variable.m_MemoryStart, variable.m_MemoryCount);
             if (ret == 0)
             {
                 break;
@@ -56,8 +56,8 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
         std::reverse(memcount.begin(), memcount.end());
         while (true)
         {
-            int ret = m_Serializer.GetData(data, variable.m_Name, start, count,
-                                           m_CurrentStep, memstart, memcount);
+            int ret = m_Serializer.GetData(data, variable.m_Name, start, count, m_CurrentStep,
+                                           memstart, memcount);
             if (ret == 0)
             {
                 break;
@@ -67,9 +67,8 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 
     if (m_MonitorActive)
     {
-        m_Monitor.AddBytes(std::accumulate(variable.m_Count.begin(),
-                                           variable.m_Count.end(), sizeof(T),
-                                           std::multiplies<size_t>()));
+        m_Monitor.AddBytes(std::accumulate(variable.m_Count.begin(), variable.m_Count.end(),
+                                           sizeof(T), std::multiplies<size_t>()));
     }
 }
 
@@ -82,8 +81,7 @@ DataManReader::AllStepsBlocksInfoCommon(const Variable<T> &variable) const
 
 template <typename T>
 std::vector<typename Variable<T>::BPInfo>
-DataManReader::BlocksInfoCommon(const Variable<T> &variable,
-                                const size_t step) const
+DataManReader::BlocksInfoCommon(const Variable<T> &variable, const size_t step) const
 {
     std::vector<typename Variable<T>::BPInfo> v;
     T max = std::numeric_limits<T>::min();
@@ -120,8 +118,8 @@ DataManReader::BlocksInfoCommon(const Variable<T> &variable,
 }
 
 template <typename T>
-void DataManReader::CheckIOVariable(const std::string &name, const Dims &shape,
-                                    const Dims &start, const Dims &count)
+void DataManReader::CheckIOVariable(const std::string &name, const Dims &shape, const Dims &start,
+                                    const Dims &count)
 {
     bool singleValue = false;
     if (shape.size() == 1 and start.size() == 1 and count.size() == 1)
@@ -164,21 +162,20 @@ void DataManReader::CheckIOVariable(const std::string &name, const Dims &shape,
 
 template <>
 inline void DataManReader::AccumulateMinMax<std::complex<float>>(
-    std::complex<float> &min, std::complex<float> &max,
-    const std::vector<char> &minVec, const std::vector<char> &maxVec) const
+    std::complex<float> &min, std::complex<float> &max, const std::vector<char> &minVec,
+    const std::vector<char> &maxVec) const
 {
 }
 
 template <>
 inline void DataManReader::AccumulateMinMax<std::complex<double>>(
-    std::complex<double> &min, std::complex<double> &max,
-    const std::vector<char> &minVec, const std::vector<char> &maxVec) const
+    std::complex<double> &min, std::complex<double> &max, const std::vector<char> &minVec,
+    const std::vector<char> &maxVec) const
 {
 }
 
 template <typename T>
-void DataManReader::AccumulateMinMax(T &min, T &max,
-                                     const std::vector<char> &minVec,
+void DataManReader::AccumulateMinMax(T &min, T &max, const std::vector<char> &minVec,
                                      const std::vector<char> &maxVec) const
 {
     T maxInMetadata = reinterpret_cast<const T *>(maxVec.data())[0];

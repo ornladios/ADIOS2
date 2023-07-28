@@ -121,8 +121,7 @@ bool RangeFilter::IsSelected(size_t n)
     {
         for (auto u : m_UnlimitedRules)
         {
-            size_t k =
-                n - u.first; // > 0 beacuse u.first was placed in m_Selection
+            size_t k = n - u.first; // > 0 beacuse u.first was placed in m_Selection
             if (k % u.second == 0)
             {
                 return true;
@@ -142,16 +141,15 @@ size_t RangeFilter::ToSizeT(const std::string &input)
     }
     catch (...)
     {
-        helper::ThrowNested<std::invalid_argument>(
-            "Helper", "adiosRangeFilter", "ToSizeT",
-            "could not cast string '" + input + "' to number ");
+        helper::ThrowNested<std::invalid_argument>("Helper", "adiosRangeFilter", "ToSizeT",
+                                                   "could not cast string '" + input +
+                                                       "' to number ");
     }
     if (value < 0L)
     {
-        helper::ThrowNested<std::invalid_argument>(
-            "Helper", "adiosRangeFilter", "ToSizeT",
-            "Negative number '" + input +
-                "' not supported in range selections!");
+        helper::ThrowNested<std::invalid_argument>("Helper", "adiosRangeFilter", "ToSizeT",
+                                                   "Negative number '" + input +
+                                                       "' not supported in range selections!");
     }
     if (pos < input.size())
     {
