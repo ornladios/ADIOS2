@@ -119,20 +119,17 @@ herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_args_t *args,
 
     switch (args->op_type)
     {
-    case H5VL_DATASET_GET_SPACE:
-    {
+    case H5VL_DATASET_GET_SPACE: {
         REQUIRE_SUCC_MSG((varDef->m_ShapeID >= 0), -1,
                          "H5VOL-ADIOS2: Unable to get space id.");
         args->args.get_space.space_id = H5Scopy(varDef->m_ShapeID);
         break;
     }
-    case H5VL_DATASET_GET_TYPE:
-    {
+    case H5VL_DATASET_GET_TYPE: {
         args->args.get_type.type_id = H5Tcopy(varDef->m_TypeID);
         break;
     }
-    default:
-    {
+    default: {
         return -1;
     }
     }

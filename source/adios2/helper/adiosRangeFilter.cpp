@@ -12,7 +12,7 @@
 #include "adiosLog.h"
 
 /// \cond EXCLUDE_FROM_DOXYGEN
-//#include <iostream>
+// #include <iostream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept> // std::invalid_argument

@@ -38,7 +38,7 @@ public:
         std::vector<MetaMetaInfoBlock> NewMetaMetaBlocks;
         std::shared_ptr<Buffer> MetaEncodeBuffer;
         std::shared_ptr<Buffer> AttributeEncodeBuffer;
-        BufferV* DataBuffer;
+        BufferV *DataBuffer;
     };
 
     typedef struct _MetadataInfo
@@ -151,7 +151,7 @@ private:
         int DimCount;
         int Type;
         size_t MinMaxOffset;
-    } * BP5WriterRec;
+    } *BP5WriterRec;
 
     struct FFSWriterMarshalBase
     {

@@ -202,14 +202,15 @@ void HeatTransfer::exchange(MPI_Comm comm)
         // std::cout << "Rank " << m_s.rank << " send up to rank " <<
         // m_s.rank_up
         //          << std::endl;
-        MPI_Send(m_TCurrent[1], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_up, tag, comm);
+        MPI_Send(m_TCurrent[1], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_up, tag,
+                 comm);
     }
     if (m_s.rank_down >= 0)
     {
         // std::cout << "Rank " << m_s.rank << " receive from below from rank "
         //          << m_s.rank_down << std::endl;
-        MPI_Recv(m_TCurrent[m_s.ndx + 1], m_s.ndy + 2, MPI_DOUBLE, m_s.rank_down,
-                 tag, comm, &status);
+        MPI_Recv(m_TCurrent[m_s.ndx + 1], m_s.ndy + 2, MPI_DOUBLE,
+                 m_s.rank_down, tag, comm, &status);
     }
 }
 

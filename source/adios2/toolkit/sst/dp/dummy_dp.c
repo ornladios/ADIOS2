@@ -58,7 +58,7 @@ typedef struct _Dummy_RS_Stream
     int WriterCohortSize;
     CP_PeerCohort PeerCohort;
     struct _DummyWriterContactInfo *WriterContactInfo;
-} * Dummy_RS_Stream;
+} *Dummy_RS_Stream;
 
 typedef struct _Dummy_WSR_Stream
 {
@@ -66,7 +66,7 @@ typedef struct _Dummy_WSR_Stream
     CP_PeerCohort PeerCohort;
     int ReaderCohortSize;
     struct _DummyReaderContactInfo *ReaderContactInfo;
-} * Dummy_WSR_Stream;
+} *Dummy_WSR_Stream;
 
 typedef struct _TimestepEntry
 {
@@ -75,7 +75,7 @@ typedef struct _TimestepEntry
     struct _DummyPerTimestepInfo *DP_TimestepInfo;
     struct _TimestepEntry *Next;
 
-} * TimestepList;
+} *TimestepList;
 
 typedef struct _Dummy_WS_Stream
 {
@@ -88,19 +88,19 @@ typedef struct _Dummy_WS_Stream
 
     int ReaderCount;
     Dummy_WSR_Stream *Readers;
-} * Dummy_WS_Stream;
+} *Dummy_WS_Stream;
 
 typedef struct _DummyReaderContactInfo
 {
     char *ContactString;
     void *RS_Stream;
-} * DummyReaderContactInfo;
+} *DummyReaderContactInfo;
 
 typedef struct _DummyWriterContactInfo
 {
     char *ContactString;
     void *WS_Stream;
-} * DummyWriterContactInfo;
+} *DummyWriterContactInfo;
 
 typedef struct _DummyReadRequestMsg
 {
@@ -111,7 +111,7 @@ typedef struct _DummyReadRequestMsg
     void *RS_Stream;
     int RequestingRank;
     int NotifyCondition;
-} * DummyReadRequestMsg;
+} *DummyReadRequestMsg;
 
 static FMField DummyReadRequestList[] = {
     {"Timestep", "integer", sizeof(long),
@@ -142,7 +142,7 @@ typedef struct _DummyReadReplyMsg
     void *RS_Stream;
     char *Data;
     int NotifyCondition;
-} * DummyReadReplyMsg;
+} *DummyReadReplyMsg;
 
 static FMField DummyReadReplyList[] = {
     {"Timestep", "integer", sizeof(long),
@@ -279,7 +279,7 @@ typedef struct _DummyCompletionHandle
     void *CPStream;
     void *Buffer;
     int Rank;
-} * DummyCompletionHandle;
+} *DummyCompletionHandle;
 
 static void DummyReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
                                   void *client_Data, attr_list attrs)
@@ -457,7 +457,7 @@ typedef struct _DummyPerTimestepInfo
 {
     char *CheckString;
     int CheckInt;
-} * DummyPerTimestepInfo;
+} *DummyPerTimestepInfo;
 
 /*
  *

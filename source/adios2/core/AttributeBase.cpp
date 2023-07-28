@@ -40,8 +40,8 @@ Params AttributeBase::GetInfo() const noexcept
     return info;
 }
 
-bool AttributeBase::Equals(const void *values, const size_t elements) const
-    noexcept
+bool AttributeBase::Equals(const void *values,
+                           const size_t elements) const noexcept
 {
     return this->DoEqual(values, elements);
 }

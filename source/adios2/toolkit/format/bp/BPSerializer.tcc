@@ -129,20 +129,17 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
 
         switch (id)
         {
-        case (characteristic_time_index):
-        {
+        case (characteristic_time_index): {
             currentPosition += sizeof(uint32_t);
             break;
         }
 
-        case (characteristic_file_index):
-        {
+        case (characteristic_file_index): {
             currentPosition += sizeof(uint32_t);
             break;
         }
 
-        case (characteristic_value):
-        {
+        case (characteristic_value): {
             if (dataType == type_string)
             {
                 // first get the length of the string
@@ -162,18 +159,15 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
 
             break;
         }
-        case (characteristic_min):
-        {
+        case (characteristic_min): {
             currentPosition += sizeof(T);
             break;
         }
-        case (characteristic_max):
-        {
+        case (characteristic_max): {
             currentPosition += sizeof(T);
             break;
         }
-        case (characteristic_minmax):
-        {
+        case (characteristic_minmax): {
             // first get the number of subblocks
             const uint16_t M =
                 helper::ReadValue<uint16_t>(buffer, currentPosition);
@@ -187,8 +181,7 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
             }
             break;
         }
-        case (characteristic_offset):
-        {
+        case (characteristic_offset): {
             const uint64_t currentOffset = helper::ReadValue<uint64_t>(
                 buffer, currentPosition, isLittleEndian);
 
@@ -200,8 +193,7 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
             helper::CopyToBuffer(buffer, currentPosition, &updatedOffset);
             break;
         }
-        case (characteristic_payload_offset):
-        {
+        case (characteristic_payload_offset): {
             const uint64_t currentPayloadOffset = helper::ReadValue<uint64_t>(
                 buffer, currentPosition, isLittleEndian);
 
@@ -214,8 +206,7 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
                                  &updatedPayloadOffset);
             break;
         }
-        case (characteristic_dimensions):
-        {
+        case (characteristic_dimensions): {
             dimensionsSize = static_cast<size_t>(helper::ReadValue<uint8_t>(
                 buffer, currentPosition, isLittleEndian));
 
@@ -223,8 +214,7 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
                 3 * sizeof(uint64_t) * dimensionsSize + 2; // 2 is for length
             break;
         }
-        case (characteristic_transform_type):
-        {
+        case (characteristic_transform_type): {
             const size_t typeLength =
                 static_cast<size_t>(helper::ReadValue<uint8_t>(
                     buffer, currentPosition, isLittleEndian));
@@ -247,8 +237,7 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
 
             break;
         }
-        default:
-        {
+        default: {
             helper::Throw<std::invalid_argument>(
                 "Toolkit", "format::bp::BPSerializer",
                 "UpdateIndexOffsetsCharacteristics",
@@ -261,9 +250,8 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
 }
 
 template <class T>
-inline size_t
-BPSerializer::GetAttributeSizeInData(const core::Attribute<T> &attribute) const
-    noexcept
+inline size_t BPSerializer::GetAttributeSizeInData(
+    const core::Attribute<T> &attribute) const noexcept
 {
     size_t size = 14 + attribute.m_Name.size() + 10;
     size += 4 + sizeof(T) * attribute.m_Elements;

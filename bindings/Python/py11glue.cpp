@@ -456,15 +456,15 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              pybind11::return_value_policy::move)
 
         .def("Put",
-             (void (adios2::py11::Engine::*)(adios2::py11::Variable,
-                                             const pybind11::array &,
-                                             const adios2::Mode launch)) &
+             (void(adios2::py11::Engine::*)(adios2::py11::Variable,
+                                            const pybind11::array &,
+                                            const adios2::Mode launch)) &
                  adios2::py11::Engine::Put,
              pybind11::arg("variable"), pybind11::arg("array"),
              pybind11::arg("launch") = adios2::Mode::Deferred)
 
-        .def("Put", (void (adios2::py11::Engine::*)(adios2::py11::Variable,
-                                                    const std::string &)) &
+        .def("Put", (void(adios2::py11::Engine::*)(adios2::py11::Variable,
+                                                   const std::string &)) &
                         adios2::py11::Engine::Put)
 
         .def("PerformPuts", &adios2::py11::Engine::PerformPuts)
@@ -472,9 +472,9 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         .def("PerformDataWrite", &adios2::py11::Engine::PerformDataWrite)
 
         .def("Get",
-             (void (adios2::py11::Engine::*)(adios2::py11::Variable,
-                                             pybind11::array &,
-                                             const adios2::Mode launch)) &
+             (void(adios2::py11::Engine::*)(adios2::py11::Variable,
+                                            pybind11::array &,
+                                            const adios2::Mode launch)) &
                  adios2::py11::Engine::Get,
              pybind11::arg("variable"), pybind11::arg("array"),
              pybind11::arg("launch") = adios2::Mode::Deferred)
@@ -540,8 +540,9 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              [](const adios2::py11::File &stream) { return stream; })
         .def("__exit__",
              [](adios2::py11::File &stream, pybind11::args) { stream.Close(); })
-        .def("__iter__", [](adios2::py11::File &stream) { return stream; },
-             pybind11::keep_alive<0, 1>())
+        .def(
+            "__iter__", [](adios2::py11::File &stream) { return stream; },
+            pybind11::keep_alive<0, 1>())
         .def("__next__",
              [](adios2::py11::File &stream) {
                  if (!stream.GetStep())
@@ -630,7 +631,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         )md")
 
         .def("write",
-             (void (adios2::py11::File::*)(
+             (void(adios2::py11::File::*)(
                  const std::string &, const pybind11::array &,
                  const adios2::Dims &, const adios2::Dims &,
                  const adios2::Dims &, const bool)) &
@@ -667,7 +668,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         )md")
 
         .def("write",
-             (void (adios2::py11::File::*)(
+             (void(adios2::py11::File::*)(
                  const std::string &, const pybind11::array &,
                  const adios2::Dims &, const adios2::Dims &,
                  const adios2::Dims &, const adios2::vParams &, const bool)) &
@@ -704,9 +705,9 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         )md")
 
         .def("write",
-             (void (adios2::py11::File::*)(const std::string &,
-                                           const pybind11::array &, const bool,
-                                           const bool)) &
+             (void(adios2::py11::File::*)(const std::string &,
+                                          const pybind11::array &, const bool,
+                                          const bool)) &
                  adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("array"),
              pybind11::arg("local_value") = false,
@@ -729,9 +730,9 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         )md")
 
         .def("write",
-             (void (adios2::py11::File::*)(const std::string &,
-                                           const std::string &, const bool,
-                                           const bool)) &
+             (void(adios2::py11::File::*)(const std::string &,
+                                          const std::string &, const bool,
+                                          const bool)) &
                  adios2::py11::File::Write,
              pybind11::arg("name"), pybind11::arg("string"),
              pybind11::arg("local_value") = false,
@@ -754,7 +755,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         )md")
 
         .def("write_attribute",
-             (void (adios2::py11::File::*)(
+             (void(adios2::py11::File::*)(
                  const std::string &, const pybind11::array &,
                  const std::string &, const std::string, const bool)) &
                  adios2::py11::File::WriteAttribute,
@@ -785,7 +786,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         )md")
 
         .def("write_attribute",
-             (void (adios2::py11::File::*)(
+             (void(adios2::py11::File::*)(
                  const std::string &, const std::string &, const std::string &,
                  const std::string, const bool)) &
                  adios2::py11::File::WriteAttribute,
@@ -816,7 +817,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         )md")
 
         .def("write_attribute",
-             (void (adios2::py11::File::*)(
+             (void(adios2::py11::File::*)(
                  const std::string &, const std::vector<std::string> &,
                  const std::string &, const std::string, const bool)) &
                  adios2::py11::File::WriteAttribute,

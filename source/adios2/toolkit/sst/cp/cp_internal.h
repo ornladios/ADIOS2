@@ -29,7 +29,7 @@ typedef struct _CP_GlobalCMInfo
     int LastCallFreeCount;
     void **LastCallFreeList;
     struct StructList CustomStructs;
-} * CP_GlobalCMInfo;
+} *CP_GlobalCMInfo;
 
 typedef struct _CP_Info
 {
@@ -44,7 +44,7 @@ typedef struct _CP_Info
     FFSTypeHandle TimestepDistributionFormat;
     FFSTypeHandle ReturnMetadataInfoFormat;
     struct StructList CustomStructs;
-} * CP_Info;
+} *CP_Info;
 
 struct _ReaderRegisterMsg;
 
@@ -53,13 +53,13 @@ typedef struct _RegisterQueue
     struct _ReaderRegisterMsg *Msg;
     CMConnection Conn;
     struct _RegisterQueue *Next;
-} * RegisterQueue;
+} *RegisterQueue;
 
 typedef struct _StepRequest
 {
     int RequestingReader;
     struct _StepRequest *Next;
-} * StepRequest;
+} *StepRequest;
 
 typedef struct _CP_PeerConnection
 {
@@ -107,13 +107,13 @@ typedef struct _WS_ReaderInfo
     int ReaderCohortSize;
     int *Peers;
     CP_PeerConnection *Connections;
-} * WS_ReaderInfo;
+} *WS_ReaderInfo;
 
 typedef struct _TimestepMetadataList
 {
     struct _TimestepMetadataMsg *MetadataMsg;
     struct _TimestepMetadataList *Next;
-} * TSMetadataList;
+} *TSMetadataList;
 
 enum StreamRole
 {
@@ -138,7 +138,7 @@ typedef struct _CPTimestepEntry
     void *FreeClientData;
     void *DataBlockToFree;
     struct _CPTimestepEntry *Next;
-} * CPTimestepList;
+} *CPTimestepList;
 
 typedef struct FFSFormatBlock *FFSFormatList;
 
@@ -258,7 +258,7 @@ typedef struct _CP_ReaderInitInfo
 {
     char *ContactInfo;
     void *ReaderID;
-} * CP_ReaderInitInfo;
+} *CP_ReaderInitInfo;
 
 /*
  * This is the structure that holds reader_side CP and DP contact info for a
@@ -345,7 +345,7 @@ typedef struct _CombinedReaderInfo
     void **DP_ReaderInfo;
     void *RankZeroID;
     SpeculativePreloadMode SpecPreload; // should be On or Off, not Auto
-} * reader_data_t;
+} *reader_data_t;
 
 /*
  * This is the baseline contact information for each writer-side rank.
@@ -355,7 +355,7 @@ typedef struct _CP_WriterInitInfo
 {
     char *ContactInfo;
     void *WriterID;
-} * CP_WriterInitInfo;
+} *CP_WriterInitInfo;
 
 /*
  * Writer response messages from writer rank 0 to reader rank 0 after the
@@ -381,7 +381,7 @@ typedef struct _PeerSetupMsg
     void *RS_Stream;
     int WriterRank;
     int WriterCohortSize;
-} * PeerSetupMsg;
+} *PeerSetupMsg;
 
 /*
  * The ReaderActivate message informs the writer that this reader is now ready
@@ -416,7 +416,7 @@ typedef struct _TimestepMetadataMsg
     SstData Metadata;
     SstData AttributeData;
     void **DP_TimestepInfo;
-} * TSMetadataMsg;
+} *TSMetadataMsg;
 
 /*
  * The timestepMetadataDistribution message carries the metadata from rank 0 to
@@ -427,7 +427,7 @@ typedef struct _TimestepMetadataDistributionMsg
     int ReturnValue;
     TSMetadataMsg TSmsg;
     int CommPatternLockedTimestep;
-} * TSMetadataDistributionMsg;
+} *TSMetadataDistributionMsg;
 
 /*
  * This is the structure that holds local metadata and the DP info related to
@@ -439,7 +439,7 @@ typedef struct _ReleaseRec
 {
     long Timestep;
     void *Reader;
-} * ReleaseRecPtr;
+} *ReleaseRecPtr;
 
 typedef struct _ReturnMetadataInfo
 {
@@ -452,7 +452,7 @@ typedef struct _ReturnMetadataInfo
     ReleaseRecPtr LockDefnsList;
     int LockDefnsCount;
     enum StreamStatus *ReaderStatus;
-} * ReturnMetadataInfo;
+} *ReturnMetadataInfo;
 
 /*
  * The ReleaseTimestep message informs the writers that this reader is done with
@@ -483,7 +483,7 @@ typedef struct _CommPatternLockedMsg
 {
     void *RS_Stream;
     int Timestep;
-} * CommPatternLockedMsg;
+} *CommPatternLockedMsg;
 
 /*
  * The WriterClose message informs the readers that the writer is beginning an
@@ -496,7 +496,7 @@ typedef struct _WriterCloseMsg
 {
     void *RS_Stream;
     int FinalTimestep;
-} * WriterCloseMsg;
+} *WriterCloseMsg;
 
 /*
  * The ReaderClose message informs the readers that the reader is beginning an
@@ -505,7 +505,7 @@ typedef struct _WriterCloseMsg
 typedef struct _ReaderCloseMsg
 {
     void *WSR_Stream;
-} * ReaderCloseMsg;
+} *ReaderCloseMsg;
 
 /*
  * This is the consolidated writer contact info structure that is used to
@@ -518,7 +518,7 @@ typedef struct _CombinedWriterInfo
     size_t StartingStepNumber;
     CP_WriterInitInfo *CP_WriterInfo;
     void **DP_WriterInfo;
-} * writer_data_t;
+} *writer_data_t;
 
 typedef struct _MetadataPlusDPInfo *MetadataPlusDPInfo;
 

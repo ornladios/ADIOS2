@@ -79,21 +79,18 @@ public:
     GetBPSubStreamNames(const std::vector<std::string> &names,
                         size_t subFileIndex) const noexcept;
 
-    std::vector<std::string>
-    GetBPMetadataFileNames(const std::vector<std::string> &names) const
-        noexcept;
-    std::vector<std::string>
-    GetBPMetaMetadataFileNames(const std::vector<std::string> &names) const
-        noexcept;
+    std::vector<std::string> GetBPMetadataFileNames(
+        const std::vector<std::string> &names) const noexcept;
+    std::vector<std::string> GetBPMetaMetadataFileNames(
+        const std::vector<std::string> &names) const noexcept;
     std::string GetBPMetadataFileName(const std::string &name) const noexcept;
-    std::string GetBPMetaMetadataFileName(const std::string &name) const
-        noexcept;
-    std::vector<std::string>
-    GetBPMetadataIndexFileNames(const std::vector<std::string> &names) const
-        noexcept;
+    std::string
+    GetBPMetaMetadataFileName(const std::string &name) const noexcept;
+    std::vector<std::string> GetBPMetadataIndexFileNames(
+        const std::vector<std::string> &names) const noexcept;
 
-    std::string GetBPMetadataIndexFileName(const std::string &name) const
-        noexcept;
+    std::string
+    GetBPMetadataIndexFileName(const std::string &name) const noexcept;
 
     std::string GetBPSubStreamName(const std::string &name, const size_t id,
                                    const bool hasSubFiles = true,

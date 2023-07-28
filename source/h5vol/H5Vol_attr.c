@@ -139,13 +139,11 @@ void GetFromAttribute(void *attrObj, hid_t *ret_id, H5VL_attr_get_t get_type)
 
     switch (get_type)
     {
-    case H5VL_ATTR_GET_SPACE:
-    {
+    case H5VL_ATTR_GET_SPACE: {
         *ret_id = H5Scopy(attrDef->m_SpaceID);
         break;
     }
-    case H5VL_ATTR_GET_TYPE:
-    {
+    case H5VL_ATTR_GET_TYPE: {
         *ret_id = H5Tcopy(attrDef->m_TypeID);
         break;
     }
@@ -162,14 +160,12 @@ herr_t H5VL_adios2_attr_get(void *obj, H5VL_attr_get_args_t *args,
 
     switch (args->op_type)
     {
-    case H5VL_ATTR_GET_SPACE:
-    {
+    case H5VL_ATTR_GET_SPACE: {
         hid_t *ret_id = (hid_t *)args->args.get_space.space_id;
         GetFromAttribute((vol->m_ObjPtr), ret_id, args->op_type);
         return 0;
     }
-    case H5VL_ATTR_GET_TYPE:
-    {
+    case H5VL_ATTR_GET_TYPE: {
         hid_t *ret_id = (hid_t *)args->args.get_type.type_id;
         GetFromAttribute((vol->m_ObjPtr), ret_id, args->op_type);
         return 0;
@@ -180,8 +176,7 @@ herr_t H5VL_adios2_attr_get(void *obj, H5VL_attr_get_args_t *args,
 
     switch (args->op_type)
     {
-    case H5VL_ATTR_GET_NAME:
-    {
+    case H5VL_ATTR_GET_NAME: {
         char *buf = args->args.get_name.buf;
         size_t *ret_val = (size_t *)args->args.get_name.attr_name_len;
 
@@ -243,8 +238,7 @@ herr_t H5VL_adios2_attr_specific(void *obj, const H5VL_loc_params_t *loc_params,
 
     switch (args->op_type)
     {
-    case H5VL_ATTR_DELETE:
-    {
+    case H5VL_ATTR_DELETE: {
         attr_name = (const char *)args->args.del.name;
         attr = gLocateAttrFrom(vol, attr_name);
 
@@ -261,8 +255,7 @@ herr_t H5VL_adios2_attr_specific(void *obj, const H5VL_loc_params_t *loc_params,
             return 0;
         }
     }
-    case H5VL_ATTR_EXISTS:
-    {
+    case H5VL_ATTR_EXISTS: {
         hbool_t *ret = args->args.exists.exists;
 
         attr_name = (const char *)args->args.exists.name;

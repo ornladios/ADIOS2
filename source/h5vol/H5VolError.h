@@ -68,7 +68,7 @@ void *safe_ralloc(void *ptr, size_t newsize, unsigned long line);
         return errReturn;                                                      \
     };
 
-//#define REQUIRE_MPI_SUCC(err) if (err != MPI_SUCCESS)
+// #define REQUIRE_MPI_SUCC(err) if (err != MPI_SUCCESS)
 //{ADIOS_VOL_MPI_ERR(err);}
 #define REQUIRE_MPI_SUCC(err)                                                  \
     if (err != MPI_SUCCESS)                                                    \

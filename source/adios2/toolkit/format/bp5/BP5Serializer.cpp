@@ -124,7 +124,7 @@ void BP5Serializer::RecalcAttributeStorageSize()
         Info.AttributeData = realloc(Info.AttributeData, NewAttributeSize + 8);
         memset((char *)(Info.AttributeData) + Info.AttributeSize, 0,
                NewAttributeSize - Info.AttributeSize);
-        Info.AttributeSize = (int) NewAttributeSize;
+        Info.AttributeSize = (int)NewAttributeSize;
     }
 }
 
@@ -259,7 +259,8 @@ static char *BuildLongName(const char *base_name, const ShapeID Shape,
     char *Ret = (char *)malloc(Len);
     if (StructID)
     {
-        snprintf(Ret, Len, "%s_%zd_%d_%s", Prefix, element_size, type, StructID);
+        snprintf(Ret, Len, "%s_%zd_%d_%s", Prefix, element_size, type,
+                 StructID);
     }
     else
     {

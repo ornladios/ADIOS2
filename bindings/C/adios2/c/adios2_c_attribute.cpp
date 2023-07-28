@@ -60,7 +60,10 @@ adios2_error adios2_attribute_type(adios2_type *type,
     }
         ADIOS2_FOREACH_C_ATTRIBUTE_TYPE_1ARG(make_case)
 #undef make_case
-        else { *type = adios2_type_unknown; }
+        else
+        {
+            *type = adios2_type_unknown;
+        }
         return adios2_error_none;
     }
     catch (...)

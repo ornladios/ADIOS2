@@ -179,7 +179,10 @@ VariableNT IO::DefineVariable(const DataType type, const std::string &name,
     }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
-    else { return nullptr; }
+    else
+    {
+        return nullptr;
+    }
 }
 
 StructDefinition IO::DefineStruct(const std::string &name, const size_t size)
@@ -217,7 +220,10 @@ VariableNT IO::InquireVariable(const std::string &name)
     {
         return VariableNT(m_IO->InquireStructVariable(name));
     }
-    else { return nullptr; }
+    else
+    {
+        return nullptr;
+    }
 }
 
 VariableNT IO::InquireStructVariable(const std::string &name)

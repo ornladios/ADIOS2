@@ -354,9 +354,8 @@ void BPBase::DeleteBuffers()
 }
 
 // PROTECTED
-std::vector<uint8_t>
-BPBase::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
-    noexcept
+std::vector<uint8_t> BPBase::GetTransportIDs(
+    const std::vector<std::string> &transportsTypes) const noexcept
 {
     auto lf_GetTransportID = [](const std::string method) -> uint8_t {
         int id = METHOD_UNKNOWN;
@@ -395,10 +394,10 @@ BPBase::GetTransportIDs(const std::vector<std::string> &transportsTypes) const
     return transportsIDs;
 }
 
-size_t BPBase::GetProcessGroupIndexSize(const std::string name,
-                                        const std::string timeStepName,
-                                        const size_t transportsSize) const
-    noexcept
+size_t
+BPBase::GetProcessGroupIndexSize(const std::string name,
+                                 const std::string timeStepName,
+                                 const size_t transportsSize) const noexcept
 {
     // pgIndex + list of methods (transports)
     const size_t pgSize =

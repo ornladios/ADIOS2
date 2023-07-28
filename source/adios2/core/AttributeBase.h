@@ -62,8 +62,8 @@ public:
 
 private:
     virtual std::string DoGetInfoValue() const noexcept = 0;
-    virtual bool DoEqual(const void *values, const size_t elements) const
-        noexcept = 0;
+    virtual bool DoEqual(const void *values,
+                         const size_t elements) const noexcept = 0;
 };
 
 } // end namespace core

@@ -229,8 +229,7 @@ int main(int argc, char *argv[])
 
                 switch (cmd->op)
                 {
-                case Operation::Sleep:
-                {
+                case Operation::Sleep: {
                     std::chrono::high_resolution_clock::time_point start =
                         std::chrono::high_resolution_clock::now();
                     adios.EnterComputationBlock();
@@ -255,8 +254,7 @@ int main(int argc, char *argv[])
                     }
                     break;
                 }
-                case Operation::Busy:
-                {
+                case Operation::Busy: {
                     auto cmdS = dynamic_cast<const CommandBusy *>(cmd.get());
                     std::chrono::high_resolution_clock::time_point start =
                         std::chrono::high_resolution_clock::now();
@@ -307,16 +305,14 @@ int main(int argc, char *argv[])
                     }
                     break;
                 }
-                case Operation::Write:
-                {
+                case Operation::Write: {
                     auto cmdW = dynamic_cast<CommandWrite *>(cmd.get());
                     auto stream = writeStreamMap[cmdW->streamName];
                     // auto io = ioMap[cmdW->groupName];
                     stream->Write(cmdW, cfg, settings, step);
                     break;
                 }
-                case Operation::Read:
-                {
+                case Operation::Read: {
                     auto cmdR = dynamic_cast<CommandRead *>(cmd.get());
                     auto statusIt = cfg.condMap.find(cmdR->streamName);
                     if (statusIt->second == adios2::StepStatus::OK ||

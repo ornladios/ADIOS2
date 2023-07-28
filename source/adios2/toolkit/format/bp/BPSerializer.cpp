@@ -12,8 +12,8 @@
 #include "BPSerializer.tcc"
 
 #ifdef _WIN32
-#pragma warning(                                                               \
-    disable : 4503) // Windows complains about MergeSerializeIndex long types
+#pragma warning(disable : 4503) // Windows complains about MergeSerializeIndex
+                                // long types
 #endif
 
 namespace adios2
@@ -332,16 +332,14 @@ void BPSerializer::UpdateOffsetsInMetadata()
             switch (dataTypeEnum)
             {
 
-            case (type_string):
-            {
+            case (type_string): {
                 // do nothing, strings are obtained from metadata
                 currentPosition = buffer.size();
                 break;
             }
 
 #define make_case(T)                                                           \
-    case (TypeTraits<T>::type_enum):                                           \
-    {                                                                          \
+    case (TypeTraits<T>::type_enum): {                                         \
         UpdateIndexOffsetsCharacteristics<T>(                                  \
             currentPosition, TypeTraits<T>::type_enum, buffer);                \
         break;                                                                 \
@@ -396,8 +394,7 @@ void BPSerializer::MergeSerializeIndices(
         {
 
 #define make_case(T)                                                           \
-    case (TypeTraits<T>::type_enum):                                           \
-    {                                                                          \
+    case (TypeTraits<T>::type_enum): {                                         \
         size_t irrelevant;                                                     \
         const auto characteristics = ReadElementIndexCharacteristics<T>(       \
             buffer, position, TypeTraits<T>::type_enum, irrelevant, true,      \
@@ -410,8 +407,7 @@ void BPSerializer::MergeSerializeIndices(
             ADIOS2_FOREACH_STDTYPE_1ARG(make_case)
 #undef make_case
 
-        case (type_string_array):
-        {
+        case (type_string_array): {
             size_t irrelevant;
             const auto characteristics =
                 ReadElementIndexCharacteristics<std::string>(

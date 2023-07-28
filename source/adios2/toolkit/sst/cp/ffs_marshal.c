@@ -546,7 +546,7 @@ typedef struct _FFSTimestepInfo
 {
     FFSBuffer MetaEncodeBuffer;
     FFSBuffer DataEncodeBuffer;
-} * FFSTimestepInfo;
+} *FFSTimestepInfo;
 
 #if defined(__has_feature)
 #if __has_feature(thread_sanitizer)
@@ -1271,7 +1271,7 @@ typedef struct _range_list
     size_t start;
     size_t end;
     struct _range_list *next;
-} * range_list;
+} *range_list;
 
 range_list static OneDCoverage(size_t start, size_t end,
                                range_list uncovered_list)

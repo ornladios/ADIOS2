@@ -343,8 +343,7 @@ void BP4Deserializer::ParseVariablesIndexPerStep(const BufferSTL &bufferSTL,
         {
 
 #define make_case(T)                                                           \
-    case (TypeTraits<T>::type_enum):                                           \
-    {                                                                          \
+    case (TypeTraits<T>::type_enum): {                                         \
         DefineVariableInEngineIOPerStep<T>(header, engine, buffer, position,   \
                                            step);                              \
         break;                                                                 \
@@ -530,15 +529,13 @@ void BP4Deserializer::ParseAttributesIndexPerStep(const BufferSTL &bufferSTL,
         {
 
 #define make_case(T)                                                           \
-    case (TypeTraits<T>::type_enum):                                           \
-    {                                                                          \
+    case (TypeTraits<T>::type_enum): {                                         \
         DefineAttributeInEngineIO<T>(header, engine, buffer, position);        \
         break;                                                                 \
     }
             ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(make_case)
 #undef make_case
-        case (type_string_array):
-        {
+        case (type_string_array): {
             DefineAttributeInEngineIO<std::string>(header, engine, buffer,
                                                    position);
             break;

@@ -655,7 +655,7 @@ TEST_F(H5VolWriteReadTest, H5VolWriteHDF5Read1D8)
             ASSERT_EQ(gDims[0], globalArraySize);
             hdf5Reader.ReadVar("r64", R64.data(), offset, count, arraySize);
 
-            //#EXPECT_EQ(IString, currentTestData.S1);
+            // #EXPECT_EQ(IString, currentTestData.S1);
 
             // Check if it's correct
             for (size_t i = 0; i < Nx; ++i)

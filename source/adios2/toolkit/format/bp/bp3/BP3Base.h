@@ -69,13 +69,11 @@ public:
      * @param baseNames inputs
      * @return vector of BP substream names for transports
      */
-    std::vector<std::string>
-    GetBPSubStreamNames(const std::vector<std::string> &baseNames) const
-        noexcept;
+    std::vector<std::string> GetBPSubStreamNames(
+        const std::vector<std::string> &baseNames) const noexcept;
 
-    std::vector<std::string>
-    GetBPMetadataFileNames(const std::vector<std::string> &names) const
-        noexcept;
+    std::vector<std::string> GetBPMetadataFileNames(
+        const std::vector<std::string> &names) const noexcept;
 
     std::string GetBPMetadataFileName(const std::string &name) const noexcept;
 
@@ -94,10 +92,9 @@ public:
                                 const Dims &count) const noexcept;
 
 protected:
-    ElementIndexHeader
-    ReadElementIndexHeader(const std::vector<char> &buffer, size_t &position,
-                           const bool isLittleEndian = true) const
-        noexcept final;
+    ElementIndexHeader ReadElementIndexHeader(
+        const std::vector<char> &buffer, size_t &position,
+        const bool isLittleEndian = true) const noexcept final;
 
 private:
     std::string GetBPSubStreamName(const std::string &name, const size_t id,

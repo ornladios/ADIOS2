@@ -171,21 +171,21 @@ typedef struct _UcxCompletionHandle
     size_t Length;
     int Rank;
     int Pending;
-} * UcxCompletionHandle;
+} *UcxCompletionHandle;
 
 typedef struct _UcxBufferHandle
 {
     void *Block;
     size_t rkey_size;
     char *rkey;
-} * UcxBufferHandle;
+} *UcxBufferHandle;
 
 typedef struct _UcxBuffer
 {
     struct _UcxBufferHandle Handle;
     uint64_t BufferLen;
     uint64_t Offset;
-} * UcxBuffer;
+} *UcxBuffer;
 
 typedef struct _Ucx_RS_Stream
 {
@@ -200,7 +200,7 @@ typedef struct _Ucx_RS_Stream
     CP_PeerCohort PeerCohort;
     struct _UcxWriterContactInfo *WriterContactInfo;
     ucp_ep_h *WriterEP;
-} * Ucx_RS_Stream;
+} *Ucx_RS_Stream;
 
 typedef struct _TimestepEntry
 {
@@ -211,7 +211,7 @@ typedef struct _TimestepEntry
     ucp_mem_h memh;
     void *rkey;
     size_t rkey_size;
-} * TimestepList;
+} *TimestepList;
 
 typedef struct _Ucx_WSR_Stream
 {
@@ -219,7 +219,7 @@ typedef struct _Ucx_WSR_Stream
     CP_PeerCohort PeerCohort;
     int ReaderCohortSize;
     struct _UcxWriterContactInfo *WriterContactInfo;
-} * Ucx_WSR_Stream;
+} *Ucx_WSR_Stream;
 
 typedef struct _Ucx_WS_Stream
 {
@@ -232,19 +232,19 @@ typedef struct _Ucx_WS_Stream
 
     int ReaderCount;
     Ucx_WSR_Stream *Readers;
-} * Ucx_WS_Stream;
+} *Ucx_WS_Stream;
 
 typedef struct _UcxReaderContactInfo
 {
     void *RS_Stream;
-} * UcxReaderContactInfo;
+} *UcxReaderContactInfo;
 
 typedef struct _UcxWriterContactInfo
 {
     void *WS_Stream;
     size_t Length;
     void *Address;
-} * UcxWriterContactInfo;
+} *UcxWriterContactInfo;
 
 static DP_RS_Stream UcxInitReader(CP_Services Svcs, void *CP_Stream,
                                   void **ReaderContactInfoPtr,

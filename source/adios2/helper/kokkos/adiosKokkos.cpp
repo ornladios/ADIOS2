@@ -28,14 +28,15 @@ void KokkosDeepCopy(const char *src, char *dst, size_t byteCount)
 template <class T>
 void KokkosMinMaxImpl(const T *data, const size_t size, T &min, T &max)
 {
-    Kokkos::parallel_reduce(size,
-                            KOKKOS_LAMBDA(int i, T &lmax, T &lmin) {
-                                if (lmax < data[i])
-                                    lmax = data[i];
-                                if (lmin > data[i])
-                                    lmin = data[i];
-                            },
-                            Kokkos::Max<T>(max), Kokkos::Min<T>(min));
+    Kokkos::parallel_reduce(
+        size,
+        KOKKOS_LAMBDA(int i, T &lmax, T &lmin) {
+            if (lmax < data[i])
+                lmax = data[i];
+            if (lmin > data[i])
+                lmin = data[i];
+        },
+        Kokkos::Max<T>(max), Kokkos::Min<T>(min));
 }
 
 // types non supported on the device

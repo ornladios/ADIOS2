@@ -37,9 +37,8 @@ BP3Base::GetBPBaseNames(const std::vector<std::string> &names) const noexcept
     return bpBaseNames;
 }
 
-std::vector<std::string>
-BP3Base::GetBPMetadataFileNames(const std::vector<std::string> &names) const
-    noexcept
+std::vector<std::string> BP3Base::GetBPMetadataFileNames(
+    const std::vector<std::string> &names) const noexcept
 {
     std::vector<std::string> metadataFileNames;
     metadataFileNames.reserve(names.size());
@@ -50,15 +49,14 @@ BP3Base::GetBPMetadataFileNames(const std::vector<std::string> &names) const
     return metadataFileNames;
 }
 
-std::string BP3Base::GetBPMetadataFileName(const std::string &name) const
-    noexcept
+std::string
+BP3Base::GetBPMetadataFileName(const std::string &name) const noexcept
 {
     return helper::AddExtension(name, ".bp");
 }
 
-std::vector<std::string>
-BP3Base::GetBPSubStreamNames(const std::vector<std::string> &names) const
-    noexcept
+std::vector<std::string> BP3Base::GetBPSubStreamNames(
+    const std::vector<std::string> &names) const noexcept
 {
     std::vector<std::string> bpNames;
     bpNames.reserve(names.size());
@@ -159,9 +157,10 @@ std::string BP3Base::GetBPSubStreamName(const std::string &name,
         bpRoot = bpName.substr(lastPathSeparator);
     }
 
-    const size_t index =
-        isReader ? id
-                 : m_Aggregator.m_IsActive ? m_Aggregator.m_SubStreamIndex : id;
+    const size_t index = isReader ? id
+                         : m_Aggregator.m_IsActive
+                             ? m_Aggregator.m_SubStreamIndex
+                             : id;
 
     const std::string bpRankName(bpName + ".dir" + PathSeparator + bpRoot +
                                  "." + std::to_string(index));

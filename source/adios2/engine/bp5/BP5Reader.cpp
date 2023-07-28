@@ -368,8 +368,8 @@ void BP5Reader::PerformGets()
         // then main thread process the last subset
         for (size_t tid = 0; tid < nThreads - 1; ++tid)
         {
-            futures[tid] = std::async(std::launch::async, lf_Reader, (int)(tid + 1),
-                                      maxOpenFiles);
+            futures[tid] = std::async(std::launch::async, lf_Reader,
+                                      (int)(tid + 1), maxOpenFiles);
         }
         // main thread runs last subset of reads
         /*auto tMain = */ lf_Reader(0, maxOpenFiles);
@@ -502,9 +502,9 @@ void BP5Reader::InitParameters()
     }
 
     size_t limit = helper::RaiseLimitNoFile();
-    if (m_Parameters.MaxOpenFilesAtOnce > (unsigned int) limit - 8)
+    if (m_Parameters.MaxOpenFilesAtOnce > (unsigned int)limit - 8)
     {
-        m_Parameters.MaxOpenFilesAtOnce = (unsigned int) limit - 8;
+        m_Parameters.MaxOpenFilesAtOnce = (unsigned int)limit - 8;
     }
 }
 
@@ -971,8 +971,7 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
 
         switch (recordID)
         {
-        case IndexRecord::WriterMapRecord:
-        {
+        case IndexRecord::WriterMapRecord: {
             auto p = m_WriterMap.emplace(m_StepsCount, WriterMapStruct());
             auto &s = p.first->second;
             s.WriterCount = (uint32_t)helper::ReadValue<uint64_t>(
@@ -993,8 +992,7 @@ size_t BP5Reader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
             m_LastWriterCount = s.WriterCount;
             break;
         }
-        case IndexRecord::StepRecord:
-        {
+        case IndexRecord::StepRecord: {
             std::vector<uint64_t> ptrs;
             const uint64_t MetadataPos = helper::ReadValue<uint64_t>(
                 buffer, position, m_Minifooter.IsLittleEndian);

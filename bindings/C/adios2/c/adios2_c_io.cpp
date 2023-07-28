@@ -205,23 +205,20 @@ adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
         switch (type)
         {
 
-        case (adios2_type_string):
-        {
+        case (adios2_type_string): {
             variableCpp = &ioCpp.DefineVariable<std::string>(
                 name, shapeV, startV, countV, constantSizeBool);
             break;
         }
 #define make_case(adios2_type)                                                 \
-    case (adios2_type):                                                        \
-    {                                                                          \
+    case (adios2_type): {                                                      \
         variableCpp = &ioCpp.DefineVariable<MapAdios2Type<adios2_type>::Type>( \
             name, shapeV, startV, countV, constantSizeBool);                   \
         break;                                                                 \
     }
             ADIOS2_FOREACH_C_TYPE_1ARG(make_case)
 #undef make_case
-        default:
-        {
+        default: {
             throw std::invalid_argument("ERROR: unsupported type " +
                                         std::to_string(static_cast<int>(type)) +
                                         ", see enum adios2_type for acceptable "
@@ -507,8 +504,7 @@ adios2_attribute *adios2_define_variable_attribute(
 
         switch (type)
         {
-        case (adios2_type_string):
-        {
+        case (adios2_type_string): {
             // relying on null terminated character for the size
             const std::string singleString(
                 reinterpret_cast<const char *>(value));
@@ -517,8 +513,7 @@ adios2_attribute *adios2_define_variable_attribute(
             break;
         }
 #define make_case(adios2_type)                                                 \
-    case (adios2_type):                                                        \
-    {                                                                          \
+    case (adios2_type): {                                                      \
         attributeCpp = &ioCpp.DefineAttribute(                                 \
             name,                                                              \
             *reinterpret_cast<const MapAdios2Type<adios2_type>::Type *>(       \
@@ -528,8 +523,7 @@ adios2_attribute *adios2_define_variable_attribute(
     }
             ADIOS2_FOREACH_C_ATTRIBUTE_TYPE_1ARG(make_case)
 #undef make_case
-        default:
-        {
+        default: {
             throw std::invalid_argument("ERROR: unsupported type " +
                                         std::to_string(static_cast<int>(type)) +
                                         ", see enum adios2_type for acceptable "
@@ -576,8 +570,7 @@ adios2_attribute *adios2_define_variable_attribute_array(
 
         switch (type)
         {
-        case (adios2_type_string):
-        {
+        case (adios2_type_string): {
             const char **char2D =
                 reinterpret_cast<const char **>(const_cast<void *>(data));
 
@@ -589,8 +582,7 @@ adios2_attribute *adios2_define_variable_attribute_array(
             break;
         }
 #define make_case(adios2_type)                                                 \
-    case (adios2_type):                                                        \
-    {                                                                          \
+    case (adios2_type): {                                                      \
         attributeCpp = &ioCpp.DefineAttribute(                                 \
             name,                                                              \
             reinterpret_cast<const MapAdios2Type<adios2_type>::Type *>(data),  \
@@ -599,8 +591,7 @@ adios2_attribute *adios2_define_variable_attribute_array(
     }
             ADIOS2_FOREACH_C_ATTRIBUTE_TYPE_1ARG(make_case)
 #undef make_case
-        default:
-        {
+        default: {
             throw std::invalid_argument(
                 "ERROR: unsupported type " +
                 std::to_string(static_cast<int>(type)) +

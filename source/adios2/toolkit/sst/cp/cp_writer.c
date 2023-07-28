@@ -1197,8 +1197,7 @@ static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
     STREAM_ASSERT_LOCKED(Stream);
     switch (Stream->ConfigParams->StepDistributionMode)
     {
-    case StepsAllToAll:
-    {
+    case StepsAllToAll: {
         for (int i = 0; i < Stream->ReaderCount; i++)
         {
             WS_ReaderInfo CP_WSR_Stream = Stream->Readers[i];
@@ -1206,8 +1205,7 @@ static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
         }
         break;
     }
-    case StepsRoundRobin:
-    {
+    case StepsRoundRobin: {
         if (Stream->ReaderCount == 0)
             return;
         if (Stream->NextRRDistribution >= Stream->ReaderCount)
@@ -1221,8 +1219,7 @@ static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
                                         Stream->NextRRDistribution);
         Stream->NextRRDistribution++;
     }
-    case StepsOnDemand:
-    {
+    case StepsOnDemand: {
         if (Stream->ReaderCount == 0)
             return;
     retry:

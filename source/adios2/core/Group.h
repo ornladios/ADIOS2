@@ -141,10 +141,10 @@ public:
      * @param name input attribute name
      * @return type if found returns type as string, otherwise an empty string
      */
-    DataType InquireAttributeType(const std::string &name,
-                                  const std::string &variableName = "",
-                                  const std::string separator = "/") const
-        noexcept;
+    DataType
+    InquireAttributeType(const std::string &name,
+                         const std::string &variableName = "",
+                         const std::string separator = "/") const noexcept;
 };
 
 } // end namespace core

@@ -66,7 +66,7 @@ typedef struct _Daos_RS_Stream
 
     /* queued timestep info */
     struct _RSTimestepEntry *QueuedTimesteps;
-} * Daos_RS_Stream;
+} *Daos_RS_Stream;
 
 typedef struct _Daos_WSR_Stream
 {
@@ -77,7 +77,7 @@ typedef struct _Daos_WSR_Stream
     struct _DaosReaderContactInfo *ReaderContactInfo;
     struct _DaosWriterContactInfo
         *WriterContactInfo; /* included so we can free on destroy */
-} * Daos_WSR_Stream;
+} *Daos_WSR_Stream;
 
 typedef struct _TimestepEntry
 {
@@ -85,7 +85,7 @@ typedef struct _TimestepEntry
     struct _SstData Data;
     struct _DaosPerTimestepInfo *DP_TimestepInfo;
     struct _TimestepEntry *Next;
-} * TimestepList;
+} *TimestepList;
 
 typedef struct _RSTimestepEntry
 {
@@ -95,7 +95,7 @@ typedef struct _RSTimestepEntry
     long DataSize;
     long DataStart;
     struct _RSTimestepEntry *Next;
-} * RSTimestepList;
+} *RSTimestepList;
 
 typedef struct _Daos_WS_Stream
 {
@@ -109,20 +109,20 @@ typedef struct _Daos_WS_Stream
 
     int ReaderCount;
     Daos_WSR_Stream *Readers;
-} * Daos_WS_Stream;
+} *Daos_WS_Stream;
 
 typedef struct _DaosReaderContactInfo
 {
     char *ContactString;
     CMConnection Conn;
     void *RS_Stream;
-} * DaosReaderContactInfo;
+} *DaosReaderContactInfo;
 
 typedef struct _DaosWriterContactInfo
 {
     char *ContactString;
     void *WS_Stream;
-} * DaosWriterContactInfo;
+} *DaosWriterContactInfo;
 
 typedef struct _DaosReadRequestMsg
 {
@@ -133,7 +133,7 @@ typedef struct _DaosReadRequestMsg
     void *RS_Stream;
     int RequestingRank;
     int NotifyCondition;
-} * DaosReadRequestMsg;
+} *DaosReadRequestMsg;
 
 static FMField DaosReadRequestList[] = {
     {"Timestep", "integer", sizeof(long),
@@ -162,7 +162,7 @@ typedef struct _DaosReadReplyMsg
     void *RS_Stream;
     char *Data;
     int NotifyCondition;
-} * DaosReadReplyMsg;
+} *DaosReadReplyMsg;
 
 static FMField DaosReadReplyList[] = {
     {"Timestep", "integer", sizeof(long), FMOffset(DaosReadReplyMsg, Timestep)},
@@ -320,7 +320,7 @@ typedef struct _DaosCompletionHandle
     int Failed;
     int Rank;
     struct _DaosCompletionHandle *Next;
-} * DaosCompletionHandle;
+} *DaosCompletionHandle;
 
 static void DaosReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
                                  void *client_Data, attr_list attrs)
@@ -585,7 +585,7 @@ typedef struct _DaosPerTimestepInfo
 {
     char *CheckString;
     int CheckInt;
-} * DaosPerTimestepInfo;
+} *DaosPerTimestepInfo;
 
 static void *DaosReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
                                   int Rank, long Timestep, size_t Offset,

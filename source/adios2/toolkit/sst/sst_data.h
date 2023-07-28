@@ -51,7 +51,7 @@ typedef struct _SstStats
     size_t PreloadTimestepsReceived;
     size_t BytesRead;
     double RunningFanIn;
-} * SstStats;
+} *SstStats;
 
 #define SST_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
     MACRO(MarshalMethod, MarshalMethod, size_t, SstMarshalBP5)                 \

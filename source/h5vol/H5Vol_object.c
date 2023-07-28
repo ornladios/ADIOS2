@@ -19,8 +19,7 @@ void *H5VL_adios2_object_open(void *obj, const H5VL_loc_params_t *loc_params,
 
     switch (loc_params->type)
     {
-    case H5VL_OBJECT_BY_NAME:
-    {
+    case H5VL_OBJECT_BY_NAME: {
         const char *obj_name = loc_params->loc_data.loc_by_name.name;
         adios2_attribute *attr = gLocateAttrFrom(vol, obj_name);
 
@@ -68,8 +67,7 @@ herr_t H5VL_adios2_object_get(void *obj, const H5VL_loc_params_t *loc_params,
 
     switch (args->op_type)
     {
-    case H5VL_OBJECT_GET_INFO:
-    {
+    case H5VL_OBJECT_GET_INFO: {
         H5O_info2_t *oinfo = args->args.get_info.oinfo;
         if (loc_params->type == H5VL_OBJECT_BY_SELF)
         {

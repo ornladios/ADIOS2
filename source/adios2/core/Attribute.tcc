@@ -146,8 +146,8 @@ std::string Attribute<T>::DoGetInfoValue() const noexcept
 }
 
 template <typename T>
-bool Attribute<T>::DoEqual(const void *values, const size_t elements) const
-    noexcept
+bool Attribute<T>::DoEqual(const void *values,
+                           const size_t elements) const noexcept
 {
     if (m_Elements != elements)
     {

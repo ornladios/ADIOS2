@@ -102,10 +102,10 @@ private:
     int decomp_values[10] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
     template <typename Arg, typename... Args>
-    void print0(Arg &&arg, Args &&... args);
+    void print0(Arg &&arg, Args &&...args);
 
     template <typename Arg, typename... Args>
-    void osprint0(std::ostream &out, Arg &&arg, Args &&... args);
+    void osprint0(std::ostream &out, Arg &&arg, Args &&...args);
 };
 
 } // end namespace utils

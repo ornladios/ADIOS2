@@ -175,8 +175,7 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode,
             "does not support writing yet " + m_Name);
         break;
 
-    case Mode::Read:
-    {
+    case Mode::Read: {
         ProfilerStart("open");
         errno = 0;
         Aws::S3::Model::HeadObjectRequest head_object_request;

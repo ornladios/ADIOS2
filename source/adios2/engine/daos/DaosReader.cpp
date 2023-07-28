@@ -1083,8 +1083,7 @@ size_t DaosReader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
 
         switch (recordID)
         {
-        case IndexRecord::WriterMapRecord:
-        {
+        case IndexRecord::WriterMapRecord: {
             auto p = m_WriterMap.emplace(m_StepsCount, WriterMapStruct());
             auto &s = p.first->second;
             s.WriterCount = helper::ReadValue<uint64_t>(
@@ -1105,8 +1104,7 @@ size_t DaosReader::ParseMetadataIndex(format::BufferSTL &bufferSTL,
             m_LastWriterCount = s.WriterCount;
             break;
         }
-        case IndexRecord::StepRecord:
-        {
+        case IndexRecord::StepRecord: {
             std::vector<uint64_t> ptrs;
             const uint64_t MetadataPos = helper::ReadValue<uint64_t>(
                 buffer, position, m_Minifooter.IsLittleEndian);

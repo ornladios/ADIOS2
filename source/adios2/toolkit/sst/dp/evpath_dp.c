@@ -83,7 +83,7 @@ typedef struct _Evpath_RS_Stream
     long ReadRequestsFromPreload;
     SstStats Stats;
     long LastPreloadTimestep;
-} * Evpath_RS_Stream;
+} *Evpath_RS_Stream;
 
 typedef struct _Evpath_WSR_Stream
 {
@@ -96,7 +96,7 @@ typedef struct _Evpath_WSR_Stream
     struct _EvpathReaderContactInfo *ReaderContactInfo;
     struct _EvpathWriterContactInfo
         *WriterContactInfo; /* included so we can free on destroy */
-} * Evpath_WSR_Stream;
+} *Evpath_WSR_Stream;
 
 typedef struct _TimestepEntry
 {
@@ -105,7 +105,7 @@ typedef struct _TimestepEntry
     struct _EvpathPerTimestepInfo *DP_TimestepInfo;
     struct _ReaderRequestTrackRec *ReaderRequests;
     struct _TimestepEntry *Next;
-} * TimestepList;
+} *TimestepList;
 
 typedef struct _RSTimestepEntry
 {
@@ -115,14 +115,14 @@ typedef struct _RSTimestepEntry
     long DataSize;
     long DataStart;
     struct _RSTimestepEntry *Next;
-} * RSTimestepList;
+} *RSTimestepList;
 
 typedef struct _ReaderRequestTrackRec
 {
     Evpath_WSR_Stream Reader;
     char *RequestList;
     struct _ReaderRequestTrackRec *Next;
-} * ReaderRequestTrackPtr;
+} *ReaderRequestTrackPtr;
 
 typedef struct _Evpath_WS_Stream
 {
@@ -138,20 +138,20 @@ typedef struct _Evpath_WS_Stream
     int ReaderCount;
     Evpath_WSR_Stream *Readers;
     SstStats Stats;
-} * Evpath_WS_Stream;
+} *Evpath_WS_Stream;
 
 typedef struct _EvpathReaderContactInfo
 {
     char *ContactString;
     CMConnection Conn;
     void *RS_Stream;
-} * EvpathReaderContactInfo;
+} *EvpathReaderContactInfo;
 
 typedef struct _EvpathWriterContactInfo
 {
     char *ContactString;
     void *WS_Stream;
-} * EvpathWriterContactInfo;
+} *EvpathWriterContactInfo;
 
 typedef struct _EvpathReadRequestMsg
 {
@@ -162,7 +162,7 @@ typedef struct _EvpathReadRequestMsg
     void *RS_Stream;
     int RequestingRank;
     int NotifyCondition;
-} * EvpathReadRequestMsg;
+} *EvpathReadRequestMsg;
 
 static FMField EvpathReadRequestList[] = {
     {"Timestep", "integer", sizeof(long),
@@ -193,7 +193,7 @@ typedef struct _EvpathReadReplyMsg
     void *RS_Stream;
     char *Data;
     int NotifyCondition;
-} * EvpathReadReplyMsg;
+} *EvpathReadReplyMsg;
 
 static FMField EvpathReadReplyList[] = {
     {"Timestep", "integer", sizeof(long),
@@ -223,7 +223,7 @@ typedef struct _EvpathPreloadMsg
     int WriterRank;
     void *RS_Stream;
     char *Data;
-} * EvpathPreloadMsg;
+} *EvpathPreloadMsg;
 
 static FMField EvpathPreloadList[] = {
     {"Timestep", "integer", sizeof(long), FMOffset(EvpathPreloadMsg, Timestep)},
@@ -482,7 +482,7 @@ typedef struct _EvpathCompletionHandle
     long Offset;
     long Length;
     struct _EvpathCompletionHandle *Next;
-} * EvpathCompletionHandle;
+} *EvpathCompletionHandle;
 
 // reader-side routine called by the network handler thread
 static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
@@ -976,7 +976,7 @@ typedef struct _EvpathPerTimestepInfo
 {
     char *CheckString;
     int CheckInt;
-} * EvpathPerTimestepInfo;
+} *EvpathPerTimestepInfo;
 
 // reader-side routine, called from the main program
 static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,

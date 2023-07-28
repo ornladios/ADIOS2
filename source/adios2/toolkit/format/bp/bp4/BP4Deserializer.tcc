@@ -1053,13 +1053,11 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
         std::lock_guard<std::mutex> lock(m_Mutex);
         switch (characteristics.EntryShapeID)
         {
-        case (ShapeID::GlobalValue):
-        {
+        case (ShapeID::GlobalValue): {
             variable = &engine.m_IO.DefineVariable<T>(variableName);
             break;
         }
-        case (ShapeID::GlobalArray):
-        {
+        case (ShapeID::GlobalArray): {
             const Dims shape = m_ReverseDimensions
                                    ? Dims(characteristics.Shape.rbegin(),
                                           characteristics.Shape.rend())
@@ -1071,8 +1069,7 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
                 variable->m_Shape;
             break;
         }
-        case (ShapeID::JoinedArray):
-        {
+        case (ShapeID::JoinedArray): {
             Dims shape = m_ReverseDimensions
                              ? Dims(characteristics.Shape.rbegin(),
                                     characteristics.Shape.rend())
@@ -1098,15 +1095,13 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
             variable->m_JoinedDimPos = joinedDimPos;
             break;
         }
-        case (ShapeID::LocalValue):
-        {
+        case (ShapeID::LocalValue): {
             variable =
                 &engine.m_IO.DefineVariable<T>(variableName, {1}, {0}, {1});
             variable->m_ShapeID = ShapeID::LocalValue;
             break;
         }
-        case (ShapeID::LocalArray):
-        {
+        case (ShapeID::LocalArray): {
             const Dims count = m_ReverseDimensions
                                    ? Dims(characteristics.Count.rbegin(),
                                           characteristics.Count.rend())

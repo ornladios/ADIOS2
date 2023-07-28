@@ -858,8 +858,7 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
 
         switch (recordID)
         {
-        case IndexRecord::WriterMapRecord:
-        {
+        case IndexRecord::WriterMapRecord: {
             m_AppendWriterCount = (uint32_t)helper::ReadValue<uint64_t>(
                 buffer, position, IsLittleEndian);
             m_AppendAggregatorCount = (uint32_t)helper::ReadValue<uint64_t>(
@@ -874,8 +873,7 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
             position += m_AppendWriterCount * sizeof(uint64_t);
             break;
         }
-        case IndexRecord::StepRecord:
-        {
+        case IndexRecord::StepRecord: {
             position += 2 * sizeof(uint64_t); // MetadataPos, MetadataSize
             const uint64_t FlushCount =
                 helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
@@ -945,8 +943,7 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
 
         switch (recordID)
         {
-        case IndexRecord::WriterMapRecord:
-        {
+        case IndexRecord::WriterMapRecord: {
             m_AppendWriterCount = (uint32_t)helper::ReadValue<uint64_t>(
                 buffer, position, IsLittleEndian);
             m_AppendAggregatorCount = (uint32_t)helper::ReadValue<uint64_t>(
@@ -964,8 +961,7 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
             }
             break;
         }
-        case IndexRecord::StepRecord:
-        {
+        case IndexRecord::StepRecord: {
             m_AppendMetadataIndexPos = position - sizeof(unsigned char) -
                                        sizeof(uint64_t); // pos of RecordID
             const uint64_t MetadataPos =
@@ -1563,10 +1559,11 @@ void BP5Writer::FlushData(const bool isFinal)
 
 void BP5Writer::Flush(const int transportIndex) {}
 
-void BP5Writer::PerformDataWrite() {
-  m_Profiler.Start("PDW");
-  FlushData(false);
-  m_Profiler.Stop("PDW");
+void BP5Writer::PerformDataWrite()
+{
+    m_Profiler.Start("PDW");
+    FlushData(false);
+    m_Profiler.Stop("PDW");
 }
 
 void BP5Writer::DestructorClose(bool Verbose) noexcept

@@ -120,8 +120,8 @@ protected:
     size_t GetAttributesSizeInData(core::IO &io) const noexcept;
 
     template <class T>
-    size_t GetAttributeSizeInData(const core::Attribute<T> &attribute) const
-        noexcept;
+    size_t
+    GetAttributeSizeInData(const core::Attribute<T> &attribute) const noexcept;
 
     void PutAttributes(core::IO &io);
 

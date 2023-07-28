@@ -60,23 +60,20 @@ inline void BPBase::ParseCharacteristics(
 
         switch (id)
         {
-        case (characteristic_time_index):
-        {
+        case (characteristic_time_index): {
             characteristics.Statistics.Step =
                 helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
             foundTimeStep = true;
             break;
         }
 
-        case (characteristic_file_index):
-        {
+        case (characteristic_file_index): {
             characteristics.Statistics.FileIndex =
                 helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
             break;
         }
 
-        case (characteristic_value):
-        {
+        case (characteristic_value): {
             if (dataType == type_string)
             {
                 // first get the length of the string
@@ -111,22 +108,19 @@ inline void BPBase::ParseCharacteristics(
             break;
         }
 
-        case (characteristic_offset):
-        {
+        case (characteristic_offset): {
             characteristics.Statistics.Offset =
                 helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
             break;
         }
 
-        case (characteristic_payload_offset):
-        {
+        case (characteristic_payload_offset): {
             characteristics.Statistics.PayloadOffset =
                 helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
             break;
         }
 
-        case (characteristic_dimensions):
-        {
+        case (characteristic_dimensions): {
             auto lf_CheckEmpty = [](const Dims &dimensions) -> bool {
                 return std::all_of(
                     dimensions.begin(), dimensions.end(),
@@ -172,8 +166,7 @@ inline void BPBase::ParseCharacteristics(
 
             break;
         }
-        default:
-        {
+        default: {
             helper::Throw<std::invalid_argument>(
                 "Toolkit", "format::bp::BPBase", "ParseCharacteristics",
                 "characteristic ID " + std::to_string(id) + " not supported");
@@ -213,23 +206,20 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
 
         switch (id)
         {
-        case (characteristic_time_index):
-        {
+        case (characteristic_time_index): {
             characteristics.Statistics.Step =
                 helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
             foundTimeStep = true;
             break;
         }
 
-        case (characteristic_file_index):
-        {
+        case (characteristic_file_index): {
             characteristics.Statistics.FileIndex =
                 helper::ReadValue<uint32_t>(buffer, position, isLittleEndian);
             break;
         }
 
-        case (characteristic_value):
-        {
+        case (characteristic_value): {
             // we are relying that count contains the dimensions
             if (characteristics.Count.empty() || characteristics.Count[0] == 1)
             {
@@ -273,22 +263,19 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
             break;
         }
 
-        case (characteristic_min):
-        {
+        case (characteristic_min): {
             characteristics.Statistics.Min =
                 helper::ReadValue<T>(buffer, position, isLittleEndian);
             break;
         }
 
-        case (characteristic_max):
-        {
+        case (characteristic_max): {
             characteristics.Statistics.Max =
                 helper::ReadValue<T>(buffer, position, isLittleEndian);
             break;
         }
 
-        case (characteristic_minmax):
-        {
+        case (characteristic_minmax): {
             // first get the number of subblocks
             const uint16_t subBlocks =
                 helper::ReadValue<uint16_t>(buffer, position);
@@ -323,22 +310,19 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
             break;
         }
 
-        case (characteristic_offset):
-        {
+        case (characteristic_offset): {
             characteristics.Statistics.Offset =
                 helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
             break;
         }
 
-        case (characteristic_payload_offset):
-        {
+        case (characteristic_payload_offset): {
             characteristics.Statistics.PayloadOffset =
                 helper::ReadValue<uint64_t>(buffer, position, isLittleEndian);
             break;
         }
 
-        case (characteristic_dimensions):
-        {
+        case (characteristic_dimensions): {
             auto lf_CheckEmpty = [](const Dims &dimensions) -> bool {
                 return std::all_of(
                     dimensions.begin(), dimensions.end(),
@@ -426,15 +410,13 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
             break;
         }
 
-        case (characteristic_bitmap):
-        {
+        case (characteristic_bitmap): {
             characteristics.Statistics.Bitmap = std::bitset<32>(
                 helper::ReadValue<uint32_t>(buffer, position, isLittleEndian));
             break;
         }
 
-        case (characteristic_stat):
-        {
+        case (characteristic_stat): {
             if (characteristics.Statistics.Bitmap.none())
             {
                 break;
@@ -452,48 +434,41 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
 
                 switch (bitStat)
                 {
-                case (statistic_min):
-                {
+                case (statistic_min): {
                     characteristics.Statistics.Min =
                         helper::ReadValue<T>(buffer, position, isLittleEndian);
                     break;
                 }
-                case (statistic_max):
-                {
+                case (statistic_max): {
                     characteristics.Statistics.Max =
                         helper::ReadValue<T>(buffer, position, isLittleEndian);
                     break;
                 }
-                case (statistic_sum):
-                {
+                case (statistic_sum): {
                     characteristics.Statistics.BitSum =
                         helper::ReadValue<double>(buffer, position,
                                                   isLittleEndian);
                     break;
                 }
-                case (statistic_sum_square):
-                {
+                case (statistic_sum_square): {
                     characteristics.Statistics.BitSumSquare =
                         helper::ReadValue<double>(buffer, position,
                                                   isLittleEndian);
                     break;
                 }
-                case (statistic_finite):
-                {
+                case (statistic_finite): {
                     characteristics.Statistics.BitFinite =
                         helper::ReadValue<uint8_t>(buffer, position,
                                                    isLittleEndian);
                     break;
                 }
-                case (statistic_hist):
-                {
+                case (statistic_hist): {
                     helper::Throw<std::invalid_argument>(
                         "Toolkit", "format::bp::BPBase", "ParseCharacteristics",
                         "ADIOS2 default engine doesn't support "
                         "histogram statistics");
                 }
-                case (statistic_cnt):
-                {
+                case (statistic_cnt): {
                     characteristics.Statistics.BitCount =
                         helper::ReadValue<uint32_t>(buffer, position,
                                                     isLittleEndian);
@@ -504,8 +479,7 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
             break;
         }
 
-        case (characteristic_transform_type):
-        {
+        case (characteristic_transform_type): {
             const size_t typeLength = static_cast<size_t>(
                 helper::ReadValue<uint8_t>(buffer, position, isLittleEndian));
             characteristics.Statistics.Op.Type =
@@ -550,8 +524,7 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer,
             break;
         }
 
-        default:
-        {
+        default: {
             helper::Throw<std::invalid_argument>(
                 "Toolkit", "format::bp::BPBase", "ParseCharacteristics",
                 "characteristic ID " + std::to_string(id) + " not supported");

@@ -29,7 +29,7 @@ typedef struct _DPElement
     const char *Name;
     CP_DP_Interface Interface;
     long Priority;
-} * DPlist;
+} *DPlist;
 
 static DPlist AddDPPossibility(CP_Services Svcs, void *CP_Stream, DPlist List,
                                CP_DP_Interface Interface, const char *Name,

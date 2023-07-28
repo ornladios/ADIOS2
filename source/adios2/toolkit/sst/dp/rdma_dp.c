@@ -448,26 +448,26 @@ typedef struct _RdmaCompletionHandle
     int Rank;
     int Pending;
     void *PreloadBuffer;
-} * RdmaCompletionHandle;
+} *RdmaCompletionHandle;
 
 typedef struct _RdmaBufferHandle
 {
     uint8_t *Block;
     uint64_t Key;
-} * RdmaBufferHandle;
+} *RdmaBufferHandle;
 
 typedef struct _RdmaBuffer
 {
     struct _RdmaBufferHandle Handle;
     uint64_t BufferLen;
     uint64_t Offset;
-} * RdmaBuffer;
+} *RdmaBuffer;
 
 typedef struct _RdmaReqLogEntry
 {
     size_t Offset;
     size_t Length;
-} * RdmaReqLogEntry;
+} *RdmaReqLogEntry;
 
 typedef struct _RdmaRankReqLog
 {
@@ -490,7 +490,7 @@ typedef struct _RdmaRankReqLog
         struct _RdmaRankReqLog *next; // Writer side
     };
     RdmaCompletionHandle *PreloadHandles;
-} * RdmaRankReqLog;
+} *RdmaRankReqLog;
 
 typedef struct _RdmaStepLogEntry
 {
@@ -500,7 +500,7 @@ typedef struct _RdmaStepLogEntry
     int Entries;
     long BufferSize;
     int WRanks;
-} * RdmaStepLogEntry;
+} *RdmaStepLogEntry;
 
 typedef struct _Rdma_RS_Stream
 {
@@ -536,13 +536,13 @@ typedef struct _Rdma_RS_Stream
     void *RecvDataBuffer;
     struct fid_mr *rbmr;
     void *rbdesc;
-} * Rdma_RS_Stream;
+} *Rdma_RS_Stream;
 
 typedef struct _RdmaPerTimestepInfo
 {
     uint8_t *Block;
     uint64_t Key;
-} * RdmaPerTimestepInfo;
+} *RdmaPerTimestepInfo;
 
 typedef struct _TimestepEntry
 {
@@ -555,7 +555,7 @@ typedef struct _TimestepEntry
     uint64_t Key;
     uint64_t OutstandingWrites;
     int BufferSlot;
-} * TimestepList;
+} *TimestepList;
 
 typedef struct _Rdma_WSR_Stream
 {
@@ -572,7 +572,7 @@ typedef struct _Rdma_WSR_Stream
     RdmaRankReqLog PreloadReq;
     TimestepList LastReleased;
     int PreloadUsed[2];
-} * Rdma_WSR_Stream;
+} *Rdma_WSR_Stream;
 
 typedef struct _Rdma_WS_Stream
 {
@@ -585,14 +585,14 @@ typedef struct _Rdma_WS_Stream
     TimestepList Timesteps;
     int ReaderCount;
     Rdma_WSR_Stream *Readers;
-} * Rdma_WS_Stream;
+} *Rdma_WS_Stream;
 
 typedef struct _RdmaReaderContactInfo
 {
     void *RS_Stream;
     size_t Length;
     void *Address;
-} * RdmaReaderContactInfo;
+} *RdmaReaderContactInfo;
 
 typedef struct _RdmaWriterContactInfo
 {
@@ -600,7 +600,7 @@ typedef struct _RdmaWriterContactInfo
     size_t Length;
     void *Address;
     struct _RdmaBufferHandle ReaderRollHandle;
-} * RdmaWriterContactInfo;
+} *RdmaWriterContactInfo;
 
 static TimestepList GetStep(Rdma_WS_Stream Stream, long Timestep)
 {

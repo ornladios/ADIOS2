@@ -27,7 +27,7 @@
 #include <daos.h>
 #include <daos_fs.h>
 
-//#include "adios2/helper/adiosFunctions.h"
+// #include "adios2/helper/adiosFunctions.h"
 
 #define CheckDAOSReturnCode(r) CheckDAOSReturnCodeF((r), __FILE__, __LINE__)
 #define DefaultMaxDFSBatchSize 8589934592

@@ -67,8 +67,8 @@ public:
 
 private:
     std::string DoGetInfoValue() const noexcept override;
-    bool DoEqual(const void *values, const size_t elements) const
-        noexcept override;
+    bool DoEqual(const void *values,
+                 const size_t elements) const noexcept override;
 };
 
 } // end namespace core

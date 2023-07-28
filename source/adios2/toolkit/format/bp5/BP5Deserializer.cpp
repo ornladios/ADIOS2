@@ -58,7 +58,8 @@ void BP5Deserializer::InstallMetaMetaData(MetaMetaInfoBlock &MM)
     memcpy(FormatID, MM.MetaMetaID, MM.MetaMetaIDLen);
     memcpy(MetaMetaInfo, MM.MetaMetaInfo, MM.MetaMetaInfoLen);
     load_external_format_FMcontext(FMContext_from_FFS(ReaderFFSContext),
-                                   FormatID, (int) MM.MetaMetaIDLen, MetaMetaInfo);
+                                   FormatID, (int)MM.MetaMetaIDLen,
+                                   MetaMetaInfo);
     free(FormatID);
 }
 
@@ -881,10 +882,11 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
 
                 if (!VarRec->Variable)
                 {
-                    VarRec->Variable = ArrayVarSetup(
-                        m_Engine, VarRec->VarName, VarRec->Type,
-                        (int)meta_base->Dims, meta_base->Shape, meta_base->Offsets,
-                        meta_base->Count, VarRec->Def, VarRec->ReaderDef);
+                    VarRec->Variable =
+                        ArrayVarSetup(m_Engine, VarRec->VarName, VarRec->Type,
+                                      (int)meta_base->Dims, meta_base->Shape,
+                                      meta_base->Offsets, meta_base->Count,
+                                      VarRec->Def, VarRec->ReaderDef);
                     static_cast<VariableBase *>(VarRec->Variable)->m_Engine =
                         m_Engine;
                     VarByKey[VarRec->Variable] = VarRec;
@@ -1820,7 +1822,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         {
             SelOffset = ZeroSel.data();
         }
-        for (int i = 0; i < (int) DimCount; i++)
+        for (int i = 0; i < (int)DimCount; i++)
         {
             GlobalDimensions[i] = RankSize[i];
         }

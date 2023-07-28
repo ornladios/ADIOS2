@@ -50,14 +50,14 @@ typedef struct _MpiReaderContactInfo
 {
     char ContactString[MPI_DP_CONTACT_STRING_LEN];
     void *StreamRS;
-} * MpiReaderContactInfo;
+} *MpiReaderContactInfo;
 
 typedef struct _MpiWriterContactInfo
 {
     char ContactString[MPI_DP_CONTACT_STRING_LEN];
     void *StreamWPR;
     int PID;
-} * MpiWriterContactInfo;
+} *MpiWriterContactInfo;
 
 /* Base Stream class, used implicitly */
 typedef struct _MpiStream
@@ -89,7 +89,7 @@ typedef struct _MpiStreamRD
     struct _MpiReaderContactInfo MyContactInfo;
     struct _MpiWriterContactInfo *CohortWriterInfo;
     MPI_Comm *CohortMpiComms;
-} * MpiStreamRD;
+} *MpiStreamRD;
 
 /**
  * Writers Stream.
@@ -107,7 +107,7 @@ typedef struct _MpiStreamWR
     TAILQ_HEAD(ReadersListHead, _MpiStreamWPR) Readers;
     pthread_rwlock_t LockTS;
     pthread_mutex_t MutexReaders;
-} * MpiStreamWR;
+} *MpiStreamWR;
 
 /**
  * WritersPerReader streams.
@@ -126,14 +126,14 @@ typedef struct _MpiStreamWPR
     char MpiPortName[MPI_MAX_PORT_NAME];
 
     TAILQ_ENTRY(_MpiStreamWPR) entries;
-} * MpiStreamWPR;
+} *MpiStreamWPR;
 
 typedef struct _TimeStepsEntry
 {
     long TimeStep;
     struct _SstData *Data;
     STAILQ_ENTRY(_TimeStepsEntry) entries;
-} * TimeStepsEntry;
+} *TimeStepsEntry;
 
 /*****Message Data Structures ***********************************************/
 
@@ -156,7 +156,7 @@ typedef struct _MpiReadRequestMsg
     size_t Offset;
     void *StreamRS;
     void *StreamWPR;
-} * MpiReadRequestMsg;
+} *MpiReadRequestMsg;
 
 typedef struct _MpiReadReplyMsg
 {
@@ -166,7 +166,7 @@ typedef struct _MpiReadReplyMsg
     long TimeStep;
     size_t DataLength;
     void *StreamRS;
-} * MpiReadReplyMsg;
+} *MpiReadReplyMsg;
 
 typedef struct _MpiCompletionHandle
 {
@@ -177,7 +177,7 @@ typedef struct _MpiCompletionHandle
     void *Buffer;
     int DestinationRank;
     enum MPI_DP_COMM_TYPE CommType;
-} * MpiCompletionHandle;
+} *MpiCompletionHandle;
 
 static FMField MpiReadRequestList[] = {
     {"TimeStep", "integer", sizeof(long),

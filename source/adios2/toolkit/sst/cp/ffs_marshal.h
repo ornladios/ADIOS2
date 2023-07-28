@@ -26,7 +26,7 @@ typedef struct _FFSWriterRec
     size_t MetaOffset;
     int DimCount;
     int Type;
-} * FFSWriterRec;
+} *FFSWriterRec;
 
 struct FFSWriterMarshalBase
 {
@@ -63,7 +63,7 @@ typedef struct FFSVarRec
     size_t **PerWriterCounts;
     void **PerWriterIncomingData;
     size_t *PerWriterIncomingSize; // important for compression
-} * FFSVarRec;
+} *FFSVarRec;
 
 enum FFSRequestTypeEnum
 {
@@ -80,7 +80,7 @@ typedef struct FFSArrayRequest
     size_t *Count;
     void *Data;
     struct FFSArrayRequest *Next;
-} * FFSArrayRequest;
+} *FFSArrayRequest;
 
 enum WriterDataStatusEnum
 {

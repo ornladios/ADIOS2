@@ -224,7 +224,7 @@ void Reorganize::Run()
 
 // PRIVATE
 template <typename Arg, typename... Args>
-void Reorganize::osprint0(std::ostream &out, Arg &&arg, Args &&... args)
+void Reorganize::osprint0(std::ostream &out, Arg &&arg, Args &&...args)
 {
     if (!m_Rank)
     {
@@ -236,7 +236,7 @@ void Reorganize::osprint0(std::ostream &out, Arg &&arg, Args &&... args)
 }
 
 template <typename Arg, typename... Args>
-void Reorganize::print0(Arg &&arg, Args &&... args)
+void Reorganize::print0(Arg &&arg, Args &&...args)
 {
     if (!m_Rank)
     {

@@ -16,9 +16,9 @@
 
 #define str_helper(X) #X
 #define str(X) str_helper(X)
-//#ifndef DEFAULT_CONFIG
-//#define DEFAULT_CONFIG config.xml
-//#endif
+// #ifndef DEFAULT_CONFIG
+// #define DEFAULT_CONFIG config.xml
+// #endif
 #define DEFAULT_CONFIG mix.xml
 #define DEFAULT_CONFIG_STR str(DEFAULT_CONFIG)
 

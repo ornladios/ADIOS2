@@ -2899,8 +2899,7 @@ int print_data(const void *data, int item, DataType adiosvartype,
         fprintf(outf, (f ? fmt : "%hhd"), ((signed char *)data)[item]);
         break;
 
-    case DataType::String:
-    {
+    case DataType::String: {
         // fprintf(outf, (f ? fmt : "\"%s\""), ((char *)data) + item);
         const std::string *dataStr =
             reinterpret_cast<const std::string *>(data);

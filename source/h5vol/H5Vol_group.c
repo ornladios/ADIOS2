@@ -64,8 +64,7 @@ herr_t H5VL_adios2_group_get(void *obj, H5VL_group_get_args_t *args,
 
     switch (args->op_type)
     {
-    case H5VL_GROUP_GET_INFO:
-    {
+    case H5VL_GROUP_GET_INFO: {
         const H5VL_loc_params_t *loc_params = &args->args.get_info.loc_params;
         H5G_info_t *group_info = args->args.get_info.ginfo;
 

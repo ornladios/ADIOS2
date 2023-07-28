@@ -156,8 +156,7 @@ void FileDrainerSingleThread::DrainThread()
         {
 
         case DrainOperation::CopyAt:
-        case DrainOperation::Copy:
-        {
+        case DrainOperation::Copy: {
             ts = core::Now();
             auto fdr = GetFileForRead(fdo.fromFileName);
             te = core::Now();
@@ -224,8 +223,7 @@ void FileDrainerSingleThread::DrainThread()
             }
             break;
         }
-        case DrainOperation::SeekEnd:
-        {
+        case DrainOperation::SeekEnd: {
             if (m_Verbose >= 2)
             {
 #ifndef NO_SANITIZE_THREAD
@@ -240,8 +238,7 @@ void FileDrainerSingleThread::DrainThread()
             timeWrite += te - ts;
             break;
         }
-        case DrainOperation::WriteAt:
-        {
+        case DrainOperation::WriteAt: {
             if (m_Verbose >= 2)
             {
 #ifndef NO_SANITIZE_THREAD
@@ -262,8 +259,7 @@ void FileDrainerSingleThread::DrainThread()
             nWriteBytesSucc += n;
             break;
         }
-        case DrainOperation::Write:
-        {
+        case DrainOperation::Write: {
             if (m_Verbose >= 2)
             {
 #ifndef NO_SANITIZE_THREAD
@@ -283,8 +279,7 @@ void FileDrainerSingleThread::DrainThread()
             nWriteBytesSucc += n;
             break;
         }
-        case DrainOperation::Create:
-        {
+        case DrainOperation::Create: {
             if (m_Verbose >= 2)
             {
 #ifndef NO_SANITIZE_THREAD
@@ -298,8 +293,7 @@ void FileDrainerSingleThread::DrainThread()
             timeWrite += te - ts;
             break;
         }
-        case DrainOperation::Open:
-        {
+        case DrainOperation::Open: {
             if (m_Verbose >= 2)
             {
 #ifndef NO_SANITIZE_THREAD
@@ -313,8 +307,7 @@ void FileDrainerSingleThread::DrainThread()
             timeWrite += te - ts;
             break;
         }
-        case DrainOperation::Delete:
-        {
+        case DrainOperation::Delete: {
             if (m_Verbose >= 2)
             {
 #ifndef NO_SANITIZE_THREAD

@@ -113,12 +113,15 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
         MinMaxStruct MM;
         if (m_Engine->VariableMinMax(*this, step, MM))
         {
-        if (std::is_same<T, std::string>::value) {
-            return minMax;
-        } else {
-            minMax.first = *(T *)&MM.MinUnion;
-            minMax.second = *(T *)&MM.MaxUnion;
-            return minMax;
+            if (std::is_same<T, std::string>::value)
+            {
+                return minMax;
+            }
+            else
+            {
+                minMax.first = *(T *)&MM.MinUnion;
+                minMax.second = *(T *)&MM.MaxUnion;
+                return minMax;
             }
         }
     }
