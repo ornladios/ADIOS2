@@ -376,3 +376,9 @@ if(NOT MSVC AND ADIOS2_HAVE_HDF5 AND (NOT ADIOS2_HAVE_MPI OR HDF5_IS_PARALLEL)) 
         add_common_test(${test} HDF5)
     endforeach()
 endif()
+
+# Tests particularities
+if (WIN32)
+    set_property(TEST Staging.1x1DefSync.BP5 PROPERTY TIMEOUT 500)
+    set_property(TEST Staging.1x1DataWrite.BP5 PROPERTY TIMEOUT 500)
+endif()
