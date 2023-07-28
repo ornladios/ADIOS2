@@ -18,10 +18,13 @@ if [ -n "${DIFF}" ]
 then
   echo "clang-format:"
   echo "  Code format checks failed."
-  echo "  Please run clang-format v7.1.0 on your changes before committing."
+  echo "  Please run clang-format v16 your changes before committing:"
+  echo "  You can use our CI image for this with: scripts/developer/run-clang-format.sh"
   echo "  The following changes are suggested:"
   echo "${DIFF}"
+  echo "$(git diff --stat)"
   exit 1
 fi
+
 
 exit 0
