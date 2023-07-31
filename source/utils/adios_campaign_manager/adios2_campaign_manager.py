@@ -49,16 +49,8 @@ def SetupArgs():
 
     # default values
     args.update = False
-    args.CampaignFileName = (
-        args.campaign_store
-        + "/"
-        + args.project
-        + "_"
-        + args.app
-        + "_"
-        + args.shot
-        + ".acm"
-    )
+    args.CampaignFileName = (args.campaign_store + "/" + args.project + "_" +
+                             args.app + "_" + args.shot + ".acm")
     args.LocalCampaignDir = "adios-campaign/"
 
     # print("Verbosity = {0}".format(args.verbose))
