@@ -55,25 +55,16 @@ Comm &Comm::operator=(Comm &&comm) = default;
 
 void Comm::Free(const std::string &hint) { m_Impl->Free(hint); }
 
-Comm Comm::Duplicate(const std::string &hint) const
-{
-    return Comm(m_Impl->Duplicate(hint));
-}
+Comm Comm::Duplicate(const std::string &hint) const { return Comm(m_Impl->Duplicate(hint)); }
 
 Comm Comm::Split(int color, int key, const std::string &hint) const
 {
     return Comm(m_Impl->Split(color, key, hint));
 }
 
-Comm Comm::World(const std::string &hint) const
-{
-    return Comm(m_Impl->World(hint));
-}
+Comm Comm::World(const std::string &hint) const { return Comm(m_Impl->World(hint)); }
 
-Comm Comm::GroupByShm(const std::string &hint) const
-{
-    return Comm(m_Impl->GroupByShm(hint));
-}
+Comm Comm::GroupByShm(const std::string &hint) const { return Comm(m_Impl->GroupByShm(hint)); }
 
 int Comm::Rank() const { return m_Impl->Rank(); }
 
@@ -83,8 +74,7 @@ bool Comm::IsMPI() const { return m_Impl->IsMPI(); }
 
 void Comm::Barrier(const std::string &hint) const { m_Impl->Barrier(hint); }
 
-std::string Comm::BroadcastFile(const std::string &fileName,
-                                const std::string hint,
+std::string Comm::BroadcastFile(const std::string &fileName, const std::string hint,
                                 const int rankSource) const
 {
     int rank = this->Rank();
@@ -101,8 +91,7 @@ std::string Comm::BroadcastFile(const std::string &fileName,
     return fileContents;
 }
 
-std::vector<size_t> Comm::GetGathervDisplacements(const size_t *counts,
-                                                  const size_t countsSize)
+std::vector<size_t> Comm::GetGathervDisplacements(const size_t *counts, const size_t countsSize)
 {
     std::vector<size_t> displacements(countsSize);
     displacements[0] = 0;
@@ -119,18 +108,13 @@ Comm::Win Comm::Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
 {
     return m_Impl->Win_allocate_shared(size, disp_unit, baseptr, hint);
 }
-int Comm::Win_shared_query(Comm::Win &win, int rank, size_t *size,
-                           int *disp_unit, void *baseptr,
+int Comm::Win_shared_query(Comm::Win &win, int rank, size_t *size, int *disp_unit, void *baseptr,
                            const std::string &hint)
 {
     return m_Impl->Win_shared_query(win, rank, size, disp_unit, baseptr, hint);
 }
-int Comm::Win_free(Win &win, const std::string &hint)
-{
-    return m_Impl->Win_free(win, hint);
-}
-int Comm::Win_lock(LockType lock_type, int rank, int assert, Win &win,
-                   const std::string &hint)
+int Comm::Win_free(Win &win, const std::string &hint) { return m_Impl->Win_free(win, hint); }
+int Comm::Win_lock(LockType lock_type, int rank, int assert, Win &win, const std::string &hint)
 {
     return m_Impl->Win_lock(lock_type, rank, assert, win, hint);
 }
@@ -194,10 +178,7 @@ CommImpl::~CommImpl() = default;
 
 size_t CommImpl::SizeOf(Datatype datatype) { return ToSize(datatype); }
 
-Comm CommImpl::MakeComm(std::unique_ptr<CommImpl> impl)
-{
-    return Comm(std::move(impl));
-}
+Comm CommImpl::MakeComm(std::unique_ptr<CommImpl> impl) { return Comm(std::move(impl)); }
 
 Comm::Req CommImpl::MakeReq(std::unique_ptr<CommReqImpl> impl)
 {

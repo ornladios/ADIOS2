@@ -23,17 +23,15 @@ namespace core
 namespace engine
 {
 
-BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode,
-                     helper::Comm comm)
-: Engine("BP4Reader", io, name, mode, std::move(comm)),
-  m_BP4Deserializer(m_Comm), m_MDFileManager(io, m_Comm),
-  m_DataFileManager(io, m_Comm), m_MDIndexFileManager(io, m_Comm),
+BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
+: Engine("BP4Reader", io, name, mode, std::move(comm)), m_BP4Deserializer(m_Comm),
+  m_MDFileManager(io, m_Comm), m_DataFileManager(io, m_Comm), m_MDIndexFileManager(io, m_Comm),
   m_ActiveFlagFileManager(io, m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP4Reader::Open");
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
-    helper::Log("Engine", "BP4Reader", "Open", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::INFO);
+    helper::Log("Engine", "BP4Reader", "Open", m_Name, 0, m_Comm.Rank(), 5, m_Verbosity,
+                helper::LogMode::INFO);
     Init();
     m_IsOpen = true;
 }
@@ -50,9 +48,8 @@ BP4Reader::~BP4Reader()
 StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     PERFSTUBS_SCOPED_TIMER("BP4Reader::BeginStep");
-    helper::Log("Engine", "BP4Reader", "BeginStep",
-                std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
-                helper::LogMode::INFO);
+    helper::Log("Engine", "BP4Reader", "BeginStep", std::to_string(CurrentStep()), 0, m_Comm.Rank(),
+                5, m_Verbosity, helper::LogMode::INFO);
 
     if (mode != StepMode::Read)
     {
@@ -72,11 +69,10 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 
     if (!m_BP4Deserializer.m_DeferredVariables.empty())
     {
-        helper::Throw<std::invalid_argument>(
-            "Engine", "BP4Reader", "BeginStep",
-            "existing variables subscribed with "
-            "GetDeferred, did you forget to call "
-            "PerformGets() or EndStep()?, in call to BeginStep");
+        helper::Throw<std::invalid_argument>("Engine", "BP4Reader", "BeginStep",
+                                             "existing variables subscribed with "
+                                             "GetDeferred, did you forget to call "
+                                             "PerformGets() or EndStep()?, in call to BeginStep");
     }
 
     // used to inquire for variables in streaming mode
@@ -113,8 +109,7 @@ StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
         }
 
         m_IO.m_EngineStep = m_CurrentStep;
-        m_IO.ResetVariablesStepSelection(false,
-                                         "in call to BP4 Reader BeginStep");
+        m_IO.ResetVariablesStepSelection(false, "in call to BP4 Reader BeginStep");
 
         // caches attributes for each step
         // if a variable name is a prefix
@@ -129,13 +124,12 @@ size_t BP4Reader::CurrentStep() const { return m_CurrentStep; }
 
 void BP4Reader::EndStep()
 {
-    helper::Log("Engine", "BP4Reader", "EndStep", std::to_string(CurrentStep()),
-                0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
+    helper::Log("Engine", "BP4Reader", "EndStep", std::to_string(CurrentStep()), 0, m_Comm.Rank(),
+                5, m_Verbosity, helper::LogMode::INFO);
     if (!m_BetweenStepPairs)
     {
-        helper::Throw<std::logic_error>(
-            "Engine", "BP4Reader", "EndStep",
-            "EndStep() is called without a successful BeginStep()");
+        helper::Throw<std::logic_error>("Engine", "BP4Reader", "EndStep",
+                                        "EndStep() is called without a successful BeginStep()");
     }
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP4Reader::EndStep");
@@ -145,8 +139,8 @@ void BP4Reader::EndStep()
 void BP4Reader::PerformGets()
 {
     PERFSTUBS_SCOPED_TIMER("BP4Reader::PerformGets");
-    helper::Log("Engine", "BP4Reader", "PerformGets", "", 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::INFO);
+    helper::Log("Engine", "BP4Reader", "PerformGets", "", 0, m_Comm.Rank(), 5, m_Verbosity,
+                helper::LogMode::INFO);
     if (m_BP4Deserializer.m_DeferredVariables.empty())
     {
         return;
@@ -159,17 +153,16 @@ void BP4Reader::PerformGets()
         if (type == DataType::Struct)
         {
         }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Variable<T> &variable =                                                \
-            FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \
-        for (auto &blockInfo : variable.m_BlocksInfo)                          \
-        {                                                                      \
-            m_BP4Deserializer.SetVariableBlockInfo(variable, blockInfo);       \
-        }                                                                      \
-        ReadVariableBlocks(variable);                                          \
-        variable.m_BlocksInfo.clear();                                         \
+#define declare_type(T)                                                                            \
+    else if (type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        Variable<T> &variable = FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \
+        for (auto &blockInfo : variable.m_BlocksInfo)                                              \
+        {                                                                                          \
+            m_BP4Deserializer.SetVariableBlockInfo(variable, blockInfo);                           \
+        }                                                                                          \
+        ReadVariableBlocks(variable);                                                              \
+        variable.m_BlocksInfo.clear();                                                             \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -198,11 +191,9 @@ void BP4Reader::Init()
 
     /* Do a collective wait for the file(s) to appear within timeout.
        Make sure every process comes to the same conclusion */
-    const Seconds timeoutSeconds(
-        m_BP4Deserializer.m_Parameters.OpenTimeoutSecs);
+    const Seconds timeoutSeconds(m_BP4Deserializer.m_Parameters.OpenTimeoutSecs);
 
-    Seconds pollSeconds(
-        m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs);
+    Seconds pollSeconds(m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs);
     if (pollSeconds > timeoutSeconds)
     {
         pollSeconds = timeoutSeconds;
@@ -218,8 +209,7 @@ void BP4Reader::Init()
     }
 }
 
-bool BP4Reader::SleepOrQuit(const TimePoint &timeoutInstant,
-                            const Seconds &pollSeconds)
+bool BP4Reader::SleepOrQuit(const TimePoint &timeoutInstant, const Seconds &pollSeconds)
 {
     auto now = Now();
     if (now + pollSeconds >= timeoutInstant)
@@ -238,8 +228,7 @@ bool BP4Reader::SleepOrQuit(const TimePoint &timeoutInstant,
 
 size_t BP4Reader::OpenWithTimeout(transportman::TransportMan &tm,
                                   const std::vector<std::string> &fileNames,
-                                  const TimePoint &timeoutInstant,
-                                  const Seconds &pollSeconds,
+                                  const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                                   std::string &lasterrmsg /*INOUT*/)
 {
     size_t flag = 1; // 0 = OK, opened file, 1 = timeout, 2 = error
@@ -252,18 +241,15 @@ size_t BP4Reader::OpenWithTimeout(transportman::TransportMan &tm,
 
             for (size_t i = 0; i < m_IO.m_TransportsParameters.size(); ++i)
             {
-                m_IO.m_TransportsParameters[i].insert(
-                    {"SingleProcess", "true"});
+                m_IO.m_TransportsParameters[i].insert({"SingleProcess", "true"});
             }
-            tm.OpenFiles(fileNames, adios2::Mode::Read,
-                         m_IO.m_TransportsParameters, profile);
+            tm.OpenFiles(fileNames, adios2::Mode::Read, m_IO.m_TransportsParameters, profile);
             flag = 0; // found file
             break;
         }
         catch (std::ios_base::failure &e)
         {
-            lasterrmsg =
-                std::string("errno=" + std::to_string(errno) + ": " + e.what());
+            lasterrmsg = std::string("errno=" + std::to_string(errno) + ": " + e.what());
             if (errno == ENOENT)
             {
                 flag = 1; // timeout
@@ -287,15 +273,13 @@ void BP4Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
         /* Open the metadata index table */
-        const std::string metadataIndexFile(
-            m_BP4Deserializer.GetBPMetadataIndexFileName(m_Name));
-        flag = OpenWithTimeout(m_MDIndexFileManager, {metadataIndexFile},
-                               timeoutInstant, pollSeconds, lasterrmsg);
+        const std::string metadataIndexFile(m_BP4Deserializer.GetBPMetadataIndexFileName(m_Name));
+        flag = OpenWithTimeout(m_MDIndexFileManager, {metadataIndexFile}, timeoutInstant,
+                               pollSeconds, lasterrmsg);
         if (flag == 0)
         {
             /* Open the metadata file */
-            const std::string metadataFile(
-                m_BP4Deserializer.GetBPMetadataFileName(m_Name));
+            const std::string metadataFile(m_BP4Deserializer.GetBPMetadataFileName(m_Name));
 
             /* We found md.idx. If we don't find md.0 immediately  we should
              * wait a little bit hoping for the file system to catch up.
@@ -307,8 +291,8 @@ void BP4Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
                 timeoutInstant += Seconds(5.0);
             }
 
-            flag = OpenWithTimeout(m_MDFileManager, {metadataFile},
-                                   timeoutInstant, pollSeconds, lasterrmsg);
+            flag = OpenWithTimeout(m_MDFileManager, {metadataFile}, timeoutInstant, pollSeconds,
+                                   lasterrmsg);
             if (flag != 0)
             {
                 /* Close the metadata index table */
@@ -322,15 +306,14 @@ void BP4Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
     {
         if (m_BP4Deserializer.m_RankMPI == 0 && !lasterrmsg.empty())
         {
-            helper::Throw<std::ios_base::failure>(
-                "Engine", "BP4Reader", "OpenFiles",
-                "File " + m_Name + " cannot be opened: " + lasterrmsg);
+            helper::Throw<std::ios_base::failure>("Engine", "BP4Reader", "OpenFiles",
+                                                  "File " + m_Name +
+                                                      " cannot be opened: " + lasterrmsg);
         }
         else
         {
-            helper::Throw<std::ios_base::failure>(
-                "Engine", "BP4Reader", "OpenFiles",
-                "File " + m_Name + " cannot be opened");
+            helper::Throw<std::ios_base::failure>("Engine", "BP4Reader", "OpenFiles",
+                                                  "File " + m_Name + " cannot be opened");
         }
     }
     else if (flag == 1)
@@ -340,8 +323,7 @@ void BP4Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
             helper::Throw<std::ios_base::failure>(
                 "Engine", "BP4Reader", "OpenFiles",
                 "File " + m_Name + " could not be found within the " +
-                    std::to_string(timeoutSeconds.count()) +
-                    "s timeout: " + lasterrmsg);
+                    std::to_string(timeoutSeconds.count()) + "s timeout: " + lasterrmsg);
         }
         else
         {
@@ -370,10 +352,10 @@ void BP4Reader::InitTransports()
 /* Count index records to minimum 1 and maximum of N records so that
  * expected metadata size is less then a predetermined constant
  */
-void MetadataCalculateMinFileSize(
-    const format::BP4Deserializer &m_BP4Deserializer,
-    const std::string &IdxFileName, char *buf, size_t idxsize, bool hasHeader,
-    const size_t mdStartPos, size_t &newIdxSize, size_t &expectedMinFileSize)
+void MetadataCalculateMinFileSize(const format::BP4Deserializer &m_BP4Deserializer,
+                                  const std::string &IdxFileName, char *buf, size_t idxsize,
+                                  bool hasHeader, const size_t mdStartPos, size_t &newIdxSize,
+                                  size_t &expectedMinFileSize)
 {
     newIdxSize = 0;
     expectedMinFileSize = 0;
@@ -392,14 +374,13 @@ void MetadataCalculateMinFileSize(
 
     if (idxsize % m_BP4Deserializer.m_IndexRecordSize != 0)
     {
-        helper::Throw<std::runtime_error>(
-            "Engine", "BP4Reader", "MetadataCalculateMinFileSize",
-            "ADIOS Index file " + IdxFileName +
-                " is assumed to always contain n*" +
-                std::to_string(m_BP4Deserializer.m_IndexRecordSize) +
-                " byte-length records. "
-                "Right now the length of index buffer is " +
-                std::to_string(idxsize) + " bytes.");
+        helper::Throw<std::runtime_error>("Engine", "BP4Reader", "MetadataCalculateMinFileSize",
+                                          "ADIOS Index file " + IdxFileName +
+                                              " is assumed to always contain n*" +
+                                              std::to_string(m_BP4Deserializer.m_IndexRecordSize) +
+                                              " byte-length records. "
+                                              "Right now the length of index buffer is " +
+                                              std::to_string(idxsize) + " bytes.");
     }
 
     const size_t nTotalRecords = idxsize / m_BP4Deserializer.m_IndexRecordSize;
@@ -412,13 +393,11 @@ void MetadataCalculateMinFileSize(
     }
 
     size_t nRecords = 1;
-    expectedMinFileSize = *(uint64_t *)&(
-        buf[nRecords * m_BP4Deserializer.m_IndexRecordSize - 24]);
+    expectedMinFileSize = *(uint64_t *)&(buf[nRecords * m_BP4Deserializer.m_IndexRecordSize - 24]);
     while (nRecords < nTotalRecords)
     {
         const size_t n = nRecords + 1;
-        const uint64_t mdEndPos =
-            *(uint64_t *)&(buf[n * m_BP4Deserializer.m_IndexRecordSize - 24]);
+        const uint64_t mdEndPos = *(uint64_t *)&(buf[n * m_BP4Deserializer.m_IndexRecordSize - 24]);
         if (mdEndPos - mdStartPos > 16777216)
         {
             break;
@@ -433,9 +412,8 @@ void MetadataCalculateMinFileSize(
     }
 }
 
-uint64_t
-MetadataExpectedMinFileSize(const format::BP4Deserializer &m_BP4Deserializer,
-                            const std::string &IdxFileName, bool hasHeader)
+uint64_t MetadataExpectedMinFileSize(const format::BP4Deserializer &m_BP4Deserializer,
+                                     const std::string &IdxFileName, bool hasHeader)
 {
     size_t idxsize = m_BP4Deserializer.m_MetadataIndex.m_Buffer.size();
     if (idxsize % 64 != 0)
@@ -447,20 +425,18 @@ MetadataExpectedMinFileSize(const format::BP4Deserializer &m_BP4Deserializer,
                 "The file size now is " +
                 std::to_string(idxsize) + " bytes.");
     }
-    if ((hasHeader && idxsize < m_BP4Deserializer.m_IndexHeaderSize +
-                                    m_BP4Deserializer.m_IndexRecordSize) ||
+    if ((hasHeader &&
+         idxsize < m_BP4Deserializer.m_IndexHeaderSize + m_BP4Deserializer.m_IndexRecordSize) ||
         idxsize < m_BP4Deserializer.m_IndexRecordSize)
     {
         // no (new) step entry in the index, so no metadata is expected
         return 0;
     }
-    uint64_t lastpos = *(uint64_t *)&(
-        m_BP4Deserializer.m_MetadataIndex.m_Buffer[idxsize - 24]);
+    uint64_t lastpos = *(uint64_t *)&(m_BP4Deserializer.m_MetadataIndex.m_Buffer[idxsize - 24]);
     return lastpos;
 }
 
-void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
-                           const Seconds &pollSeconds,
+void BP4Reader::InitBuffer(const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                            const Seconds &timeoutSeconds)
 {
     size_t newIdxSize = 0;
@@ -468,16 +444,14 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
         /* Read metadata index table into memory */
-        const size_t metadataIndexFileSize =
-            m_MDIndexFileManager.GetFileSize(0);
+        const size_t metadataIndexFileSize = m_MDIndexFileManager.GetFileSize(0);
         if (metadataIndexFileSize > 0)
         {
-            m_BP4Deserializer.m_MetadataIndex.Resize(
-                metadataIndexFileSize, "allocating metadata index buffer, "
-                                       "in call to BPFileReader Open");
-            m_MDIndexFileManager.ReadFile(
-                m_BP4Deserializer.m_MetadataIndex.m_Buffer.data(),
-                metadataIndexFileSize);
+            m_BP4Deserializer.m_MetadataIndex.Resize(metadataIndexFileSize,
+                                                     "allocating metadata index buffer, "
+                                                     "in call to BPFileReader Open");
+            m_MDIndexFileManager.ReadFile(m_BP4Deserializer.m_MetadataIndex.m_Buffer.data(),
+                                          metadataIndexFileSize);
 
             /* Read metadata file into memory but first make sure
              * it has the content that the index table refers to */
@@ -496,12 +470,10 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
             if (fileSize >= expectedMinFileSize)
             {
                 m_BP4Deserializer.m_Metadata.Resize(
-                    expectedMinFileSize,
-                    "allocating metadata buffer, in call to BP4Reader Open");
+                    expectedMinFileSize, "allocating metadata buffer, in call to BP4Reader Open");
 
-                m_MDFileManager.ReadFile(
-                    m_BP4Deserializer.m_Metadata.m_Buffer.data(),
-                    expectedMinFileSize);
+                m_MDFileManager.ReadFile(m_BP4Deserializer.m_Metadata.m_Buffer.data(),
+                                         expectedMinFileSize);
                 m_MDFileAlreadyReadSize = expectedMinFileSize;
                 m_MDIndexFileAlreadyReadSize = metadataIndexFileSize;
                 newIdxSize = metadataIndexFileSize;
@@ -515,11 +487,9 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
                         "has not contained enough data within "
                         "the specified timeout of " +
                         std::to_string(timeoutSeconds.count()) +
-                        " seconds. index size = " +
-                        std::to_string(metadataIndexFileSize) +
+                        " seconds. index size = " + std::to_string(metadataIndexFileSize) +
                         " metadata size = " + std::to_string(fileSize) +
-                        " expected size = " +
-                        std::to_string(expectedMinFileSize) +
+                        " expected size = " + std::to_string(expectedMinFileSize) +
                         ". One reason could be if the reader finds old data "
                         "while "
                         "the writer is creating the new files.");
@@ -538,15 +508,14 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
         m_Comm.BroadcastVector(m_BP4Deserializer.m_MetadataIndex.m_Buffer);
 
         /* Parse metadata index table */
-        m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex,
-                                             0, true, false);
+        m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex, 0, true, false);
         // now we are sure the index header has been parsed, first step parsing
         // done
         m_IdxHeaderParsed = true;
 
         // fills IO with Variables and Attributes
-        m_MDFileProcessedSize = m_BP4Deserializer.ParseMetadata(
-            m_BP4Deserializer.m_Metadata, *this, true);
+        m_MDFileProcessedSize =
+            m_BP4Deserializer.ParseMetadata(m_BP4Deserializer.m_Metadata, *this, true);
 
         /* m_MDFileProcessedSize is the position in the buffer where processing
          * ends. The processing is controlled by the number of records in the
@@ -561,8 +530,7 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant,
     }
 }
 
-size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
-                               const Seconds &pollSeconds)
+size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pollSeconds)
 {
     std::vector<size_t> sizes(3, 0);
     if (m_BP4Deserializer.m_RankMPI == 0)
@@ -570,18 +538,16 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
         const size_t idxFileSize = m_MDIndexFileManager.GetFileSize(0);
         if (idxFileSize > m_MDIndexFileAlreadyReadSize)
         {
-            const size_t maxIdxSize =
-                idxFileSize - m_MDIndexFileAlreadyReadSize;
+            const size_t maxIdxSize = idxFileSize - m_MDIndexFileAlreadyReadSize;
             std::vector<char> idxbuf(maxIdxSize);
-            m_MDIndexFileManager.ReadFile(idxbuf.data(), maxIdxSize,
-                                          m_MDIndexFileAlreadyReadSize);
+            m_MDIndexFileManager.ReadFile(idxbuf.data(), maxIdxSize, m_MDIndexFileAlreadyReadSize);
             size_t newIdxSize;
             size_t expectedMinFileSize;
             char *buf = idxbuf.data();
 
-            MetadataCalculateMinFileSize(
-                m_BP4Deserializer, m_Name, buf, maxIdxSize, !m_IdxHeaderParsed,
-                m_MDFileAlreadyReadSize, newIdxSize, expectedMinFileSize);
+            MetadataCalculateMinFileSize(m_BP4Deserializer, m_Name, buf, maxIdxSize,
+                                         !m_IdxHeaderParsed, m_MDFileAlreadyReadSize, newIdxSize,
+                                         expectedMinFileSize);
 
             // const uint64_t expectedMinFileSize = MetadataExpectedMinFileSize(
             //    m_BP4Deserializer, m_Name, !m_IdxHeaderParsed);
@@ -618,18 +584,16 @@ size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant,
                  * Those steps are read again here, starting in the beginning of
                  * the buffer now.
                  */
-                const size_t newMDSize =
-                    expectedMinFileSize - m_MDFileAlreadyReadSize;
+                const size_t newMDSize = expectedMinFileSize - m_MDFileAlreadyReadSize;
                 if (m_BP4Deserializer.m_Metadata.m_Buffer.size() < newMDSize)
                 {
-                    m_BP4Deserializer.m_Metadata.Resize(
-                        newMDSize, "allocating metadata buffer, in call to "
-                                   "BP4Reader Open");
+                    m_BP4Deserializer.m_Metadata.Resize(newMDSize,
+                                                        "allocating metadata buffer, in call to "
+                                                        "BP4Reader Open");
                 }
                 m_BP4Deserializer.m_Metadata.Reset(true, false);
-                m_MDFileManager.ReadFile(
-                    m_BP4Deserializer.m_Metadata.m_Buffer.data(), newMDSize,
-                    m_MDFileAlreadyReadSize);
+                m_MDFileManager.ReadFile(m_BP4Deserializer.m_Metadata.m_Buffer.data(), newMDSize,
+                                         m_MDFileAlreadyReadSize);
 
                 m_MDFileAbsolutePos = m_MDFileAlreadyReadSize;
                 m_MDFileAlreadyReadSize = expectedMinFileSize;
@@ -675,14 +639,13 @@ void BP4Reader::ProcessMetadataForNewSteps(const size_t newIdxSize)
     /* We need to skew the index table pointers with the
        size of the already-processed metadata because the memory buffer of
        new metadata starts from 0 */
-    m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex,
-                                         m_MDFileAbsolutePos,
+    m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex, m_MDFileAbsolutePos,
                                          !m_IdxHeaderParsed, true);
     m_IdxHeaderParsed = true;
 
     // fills IO with Variables and Attributes
-    const size_t newProcessedMDSize = m_BP4Deserializer.ParseMetadata(
-        m_BP4Deserializer.m_Metadata, *this, false);
+    const size_t newProcessedMDSize =
+        m_BP4Deserializer.ParseMetadata(m_BP4Deserializer.m_Metadata, *this, false);
 
     // remember current end position in metadata and index table for next round
     m_MDFileProcessedSize = m_MDFileAbsolutePos + newProcessedMDSize;
@@ -698,8 +661,7 @@ bool BP4Reader::CheckWriterActive()
     if (m_BP4Deserializer.m_RankMPI == 0)
     {
         std::vector<char> header(m_BP4Deserializer.m_IndexHeaderSize, '\0');
-        m_MDIndexFileManager.ReadFile(
-            header.data(), m_BP4Deserializer.m_IndexHeaderSize, 0, 0);
+        m_MDIndexFileManager.ReadFile(header.data(), m_BP4Deserializer.m_IndexHeaderSize, 0, 0);
         bool active = m_BP4Deserializer.ReadActiveFlag(header);
         flag = (active ? 1 : 0);
     }
@@ -740,8 +702,7 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
     }
     const TimePoint timeoutInstant = Now() + timeoutSeconds;
 
-    auto pollSeconds =
-        Seconds(m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs);
+    auto pollSeconds = Seconds(m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs);
     if (pollSeconds > timeoutSeconds)
     {
         pollSeconds = timeoutSeconds;
@@ -797,20 +758,20 @@ StepStatus BP4Reader::CheckForNewSteps(Seconds timeoutSeconds)
     return retval;
 }
 
-#define declare_type(T)                                                        \
-    void BP4Reader::DoGetSync(Variable<T> &variable, T *data)                  \
-    {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("BP4Reader::Get");                              \
-        helper::Log("Engine", "BP4Reader", "GetSync", variable.m_Name, 0,      \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
-        GetSyncCommon(variable, data);                                         \
-    }                                                                          \
-    void BP4Reader::DoGetDeferred(Variable<T> &variable, T *data)              \
-    {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("BP4Reader::Get");                              \
-        helper::Log("Engine", "BP4Reader", "GetDeferred", variable.m_Name, 0,  \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
-        GetDeferredCommon(variable, data);                                     \
+#define declare_type(T)                                                                            \
+    void BP4Reader::DoGetSync(Variable<T> &variable, T *data)                                      \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP4Reader::Get");                                                  \
+        helper::Log("Engine", "BP4Reader", "GetSync", variable.m_Name, 0, m_Comm.Rank(), 5,        \
+                    m_Verbosity, helper::LogMode::INFO);                                           \
+        GetSyncCommon(variable, data);                                                             \
+    }                                                                                              \
+    void BP4Reader::DoGetDeferred(Variable<T> &variable, T *data)                                  \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP4Reader::Get");                                                  \
+        helper::Log("Engine", "BP4Reader", "GetDeferred", variable.m_Name, 0, m_Comm.Rank(), 5,    \
+                    m_Verbosity, helper::LogMode::INFO);                                           \
+        GetDeferredCommon(variable, data);                                                         \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -818,8 +779,8 @@ ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 void BP4Reader::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP4Reader::Close");
-    helper::Log("Engine", "BP4Reader", "Close", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::INFO);
+    helper::Log("Engine", "BP4Reader", "Close", m_Name, 0, m_Comm.Rank(), 5, m_Verbosity,
+                helper::LogMode::INFO);
     PerformGets();
     /* Remove all variables we created in the last step */
     RemoveCreatedVars();
@@ -829,35 +790,32 @@ void BP4Reader::DoClose(const int transportIndex)
     m_MDIndexFileManager.CloseFiles();
 }
 
-#define declare_type(T)                                                        \
-    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
-    BP4Reader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
-    {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("BP4Reader::AllStepsBlocksInfo");               \
-        return m_BP4Deserializer.AllStepsBlocksInfo(variable);                 \
-    }                                                                          \
-                                                                               \
-    std::vector<std::vector<typename Variable<T>::BPInfo>>                     \
-    BP4Reader::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const \
-    {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("BP3Reader::AllRelativeStepsBlocksInfo");       \
-        return m_BP4Deserializer.AllRelativeStepsBlocksInfo(variable);         \
-    }                                                                          \
-                                                                               \
-    std::vector<typename Variable<T>::BPInfo> BP4Reader::DoBlocksInfo(         \
-        const Variable<T> &variable, const size_t step) const                  \
-    {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("BP4Reader::BlocksInfo");                       \
-        return m_BP4Deserializer.BlocksInfo(variable, step);                   \
+#define declare_type(T)                                                                            \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>> BP4Reader::DoAllStepsBlocksInfo(   \
+        const Variable<T> &variable) const                                                         \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP4Reader::AllStepsBlocksInfo");                                   \
+        return m_BP4Deserializer.AllStepsBlocksInfo(variable);                                     \
+    }                                                                                              \
+                                                                                                   \
+    std::vector<std::vector<typename Variable<T>::BPInfo>>                                         \
+    BP4Reader::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const                     \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP3Reader::AllRelativeStepsBlocksInfo");                           \
+        return m_BP4Deserializer.AllRelativeStepsBlocksInfo(variable);                             \
+    }                                                                                              \
+                                                                                                   \
+    std::vector<typename Variable<T>::BPInfo> BP4Reader::DoBlocksInfo(const Variable<T> &variable, \
+                                                                      const size_t step) const     \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP4Reader::BlocksInfo");                                           \
+        return m_BP4Deserializer.BlocksInfo(variable, step);                                       \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-size_t BP4Reader::DoSteps() const
-{
-    return m_BP4Deserializer.m_MetadataSet.StepsCount;
-}
+size_t BP4Reader::DoSteps() const { return m_BP4Deserializer.m_MetadataSet.StepsCount; }
 
 } // end namespace engine
 } // end namespace core

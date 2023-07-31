@@ -38,8 +38,7 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
     auto params = std::get<1>(GetParam());
     double epsilon = std::get<2>(GetParam());
 
-    const std::string fname("BPChangingShapeMultiblock_" + operatorName +
-                            ".bp");
+    const std::string fname("BPChangingShapeMultiblock_" + operatorName + ".bp");
     const int nsteps = 2;
     const std::vector<int> nblocks = {2, 3};
     const int N = 16384; // size of one block (should be big enough to compress)
@@ -67,8 +66,7 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
 
         const size_t dim0 = static_cast<size_t>(nproc);
         const size_t off0 = static_cast<size_t>(rank);
-        auto var =
-            outIO.DefineVariable<double>("v", {dim0, 1}, {off0, 0}, {1, 1});
+        auto var = outIO.DefineVariable<double>("v", {dim0, 1}, {off0, 0}, {1, 1});
 
         if (operatorName != "none")
         {
@@ -89,8 +87,7 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
         {
             writer.BeginStep();
 
-            double value =
-                static_cast<double>(rank) + static_cast<double>(i + 1) / 10.0;
+            double value = static_cast<double>(rank) + static_cast<double>(i + 1) / 10.0;
 
             for (size_t j = 0; j < static_cast<size_t>(nblocks[i]); j++)
             {
@@ -100,10 +97,10 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
 
                 if (!rank)
                 {
-                    std::cout << "Step " << i << " block " << j << " shape ("
-                              << var.Shape()[0] << ", " << var.Shape()[1] << ")"
-                              << " value = " << value << " data[] = " << data[0]
-                              << " .. " << data[N - 1] << std::endl;
+                    std::cout << "Step " << i << " block " << j << " shape (" << var.Shape()[0]
+                              << ", " << var.Shape()[1] << ")"
+                              << " value = " << value << " data[] = " << data[0] << " .. "
+                              << data[N - 1] << std::endl;
                 }
 
                 writer.Put(var, data.data(), adios2::Mode::Sync);
@@ -126,15 +123,13 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
 
         if (!rank)
         {
-            std::cout << "Reading as stream with BeginStep/EndStep:"
-                      << std::endl;
+            std::cout << "Reading as stream with BeginStep/EndStep:" << std::endl;
         }
 
         int step = 0;
         while (true)
         {
-            adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::Read);
+            adios2::StepStatus status = reader.BeginStep(adios2::StepMode::Read);
 
             if (status != adios2::StepStatus::OK)
             {
@@ -149,15 +144,14 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
             if (!rank)
             {
 
-                std::cout << "Step " << step << " shape (" << var.Shape()[0]
-                          << ", " << var.Shape()[1] << ")" << std::endl;
+                std::cout << "Step " << step << " shape (" << var.Shape()[0] << ", "
+                          << var.Shape()[1] << ")" << std::endl;
             }
 
             EXPECT_EQ(var.Shape()[0], nproc);
             EXPECT_EQ(var.Shape()[1], expected_shape);
 
-            var.SetSelection(
-                {{0, 0}, {static_cast<size_t>(nproc), expected_shape}});
+            var.SetSelection({{0, 0}, {static_cast<size_t>(nproc), expected_shape}});
 
             // Check data on rank 0
             if (!rank)
@@ -169,14 +163,11 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
 
                 for (int i = 0; i < nproc; i++)
                 {
-                    double value = static_cast<double>(i) +
-                                   static_cast<double>(step + 1) / 10.0;
+                    double value = static_cast<double>(i) + static_cast<double>(step + 1) / 10.0;
 
                     for (int j = 0; j < nblocks[step]; j++)
                     {
-                        EXPECT_LE(
-                            fabs(data[(i * nblocks[step] + j) * N] - value),
-                            epsilon);
+                        EXPECT_LE(fabs(data[(i * nblocks[step] + j) * N] - value), epsilon);
                         value += 0.01;
                     }
                 }
@@ -196,8 +187,7 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
         {
             inIO.SetEngine(engineName);
         }
-        adios2::Engine reader =
-            inIO.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine reader = inIO.Open(fname, adios2::Mode::ReadRandomAccess);
 
         if (!rank)
         {
@@ -211,15 +201,14 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
             var.SetStepSelection({step, 1});
             if (!rank)
             {
-                std::cout << "Step " << step << " shape (" << var.Shape()[0]
-                          << ", " << var.Shape()[1] << ")" << std::endl;
+                std::cout << "Step " << step << " shape (" << var.Shape()[0] << ", "
+                          << var.Shape()[1] << ")" << std::endl;
             }
             size_t expected_shape = N * nblocks[step];
             EXPECT_EQ(var.Shape()[0], nproc);
             EXPECT_EQ(var.Shape()[1], expected_shape);
 
-            var.SetSelection(
-                {{0, 0}, {static_cast<size_t>(nproc), expected_shape}});
+            var.SetSelection({{0, 0}, {static_cast<size_t>(nproc), expected_shape}});
 
             std::vector<double> data(nproc * expected_shape);
             reader.Get(var, data.data());
@@ -227,13 +216,11 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
 
             for (int i = 0; i < nproc; i++)
             {
-                double value = static_cast<double>(i) +
-                               static_cast<double>(step + 1) / 10.0;
+                double value = static_cast<double>(i) + static_cast<double>(step + 1) / 10.0;
 
                 for (int j = 0; j < nblocks[step]; j++)
                 {
-                    EXPECT_LE(fabs(data[(i * nblocks[step] + j) * N] - value),
-                              epsilon);
+                    EXPECT_LE(fabs(data[(i * nblocks[step] + j) * N] - value), epsilon);
                     value += 0.01;
                 }
             }
@@ -264,8 +251,7 @@ std::vector<ParamType> p = {{"none", paccuracy, 0.0}
 
 };
 
-INSTANTIATE_TEST_SUITE_P(Multiblock, BPChangingShapeWithinStep,
-                         ::testing::ValuesIn(p));
+INSTANTIATE_TEST_SUITE_P(Multiblock, BPChangingShapeWithinStep, ::testing::ValuesIn(p));
 
 int main(int argc, char **argv)
 {

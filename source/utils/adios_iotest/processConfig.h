@@ -84,8 +84,7 @@ public:
     const std::string groupName;
     const float timeout_sec;
     std::vector<std::shared_ptr<VariableInfo>> variables;
-    CommandRead(std::string stream, std::string group,
-                const float timeoutSec = -1.0);
+    CommandRead(std::string stream, std::string group, const float timeoutSec = -1.0);
     ~CommandRead();
 };
 
@@ -95,12 +94,10 @@ struct Config
     // list of input streams that we loop over instead of nSteps
     std::map<std::string, bool> stepOverStreams;
     // groupName, list of variables to preserve user defined order
-    std::map<std::string, std::vector<std::shared_ptr<VariableInfo>>>
-        groupVariableListMap;
+    std::map<std::string, std::vector<std::shared_ptr<VariableInfo>>> groupVariableListMap;
     // same group/variables but in an ordered map for finding
     // a particular variable
-    std::map<std::string, std::map<std::string, std::shared_ptr<VariableInfo>>>
-        groupVariablesMap;
+    std::map<std::string, std::map<std::string, std::shared_ptr<VariableInfo>>> groupVariablesMap;
     // appID, list of commands
     std::vector<std::shared_ptr<Command>> commands;
     // Read streams status flag for supporting conditionals

@@ -55,20 +55,18 @@ TEST_F(NullWriteReadTests_C_API, NullWriteRead1D8)
         const std::vector<std::size_t> count{Nx};
         std::vector<double> data(Nx, 1.0);
 
-        adios2_variable *var = adios2_define_variable(
-            io, "r64", adios2_type_double, 1, shape.data(), start.data(),
-            count.data(), adios2_constant_dims_true);
+        adios2_variable *var =
+            adios2_define_variable(io, "r64", adios2_type_double, 1, shape.data(), start.data(),
+                                   count.data(), adios2_constant_dims_true);
         adios2_set_engine(io, "NULL");
 
-        adios2_engine *nullWriter =
-            adios2_open(io, fname.data(), adios2_mode_write);
+        adios2_engine *nullWriter = adios2_open(io, fname.data(), adios2_mode_write);
 
         adios2_step_status status;
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            adios2_begin_step(nullWriter, adios2_step_mode_append, -1.,
-                              &status);
+            adios2_begin_step(nullWriter, adios2_step_mode_append, -1., &status);
             adios2_put(nullWriter, var, data.data(), adios2_mode_deferred);
             adios2_perform_puts(nullWriter);
             adios2_end_step(nullWriter);
@@ -82,8 +80,7 @@ TEST_F(NullWriteReadTests_C_API, NullWriteRead1D8)
         adios2_io *io = adios2_declare_io(adios, "ReadNull");
         adios2_set_engine(io, "null");
 
-        adios2_engine *nullReader =
-            adios2_open(io, fname.data(), adios2_mode_read);
+        adios2_engine *nullReader = adios2_open(io, fname.data(), adios2_mode_read);
 
         std::vector<double> R64;
 
@@ -101,8 +98,7 @@ TEST_F(NullWriteReadTests_C_API, NullWriteRead1D8)
             adios2_current_step(&currentStep, nullReader);
             EXPECT_EQ(currentStep, t);
 
-            auto ret =
-                adios2_get(nullReader, var, nullptr, adios2_mode_deferred);
+            auto ret = adios2_get(nullReader, var, nullptr, adios2_mode_deferred);
             EXPECT_EQ(ret, 1);
             adios2_perform_gets(nullReader);
             adios2_end_step(nullReader);

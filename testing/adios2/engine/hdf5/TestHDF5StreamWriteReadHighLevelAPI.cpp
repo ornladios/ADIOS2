@@ -47,8 +47,7 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead1D8)
     // write test data using H5
     {
 #ifdef TEST_HDF5_MPI
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
-                                "HDF5");
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, "HDF5");
 #else
         adios2::fstream oStream(fname, adios2::fstream::out, "HDF5");
 #endif
@@ -74,12 +73,11 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead1D8)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData stepData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData stepData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             oStream.write("iString", stepData.S1);
-            oStream.write("i8", stepData.I8.data(), shape, start, count,
-                          adios2::end_step);
+            oStream.write("i8", stepData.I8.data(), shape, start, count, adios2::end_step);
             /*
             oStream.write("i16", stepData.I16.data(), shape, start, count);
             oStream.write("i32", stepData.I32.data(), shape, start, count);
@@ -128,9 +126,7 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead1D8)
         for (adios2::fstep iStep; adios2::getstep(iStream, iStep);)
         {
 
-            std::cout << "Step " << t
-                      << ": currentstep() = " << iStep.current_step()
-                      << std::endl;
+            std::cout << "Step " << t << ": currentstep() = " << iStep.current_step() << std::endl;
             if (iStep.current_step() == 0)
             {
                 iStep.read("gi8", gi8);
@@ -208,8 +204,8 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead1D8)
             auto R64 = iStep.read<double>("r64", start, count);
             */
 
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString.front(), currentTestData.S1);
 
@@ -280,8 +276,7 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead2D2x4)
     // write test data using ADIOS2
     {
 #ifdef TEST_HDF5_MPI
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
-                                "HDF5");
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, "HDF5");
 #else
         adios2::fstream oStream(fname, adios2::fstream::out, "HDF5");
 #endif
@@ -293,8 +288,8 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead2D2x4)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData stepData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData stepData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             oStream.write("iString", stepData.S1);
             oStream.write("i8", stepData.I8.data(), shape, start, count);
@@ -306,8 +301,7 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead2D2x4)
             oStream.write("u32", stepData.U32.data(), shape, start, count);
             oStream.write("u64", stepData.U64.data(), shape, start, count);
             oStream.write("r32", stepData.R32.data(), shape, start, count);
-            oStream.write("r64", stepData.R64.data(), shape, start, count,
-                          adios2::endl);
+            oStream.write("r64", stepData.R64.data(), shape, start, count, adios2::endl);
         }
 
         // Close the file
@@ -317,8 +311,7 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead2D2x4)
     // READ
     {
 #ifdef TEST_HDF5_MPI
-        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD,
-                                "HDF5");
+        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD, "HDF5");
 #else
         adios2::fstream iStream(fname, adios2::fstream::in, "HDF5");
 #endif
@@ -344,8 +337,8 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead2D2x4)
             auto R64 = iStep.read<double>("r64", start, count);
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString.front(), currentTestData.S1);
 
@@ -399,8 +392,7 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead2D4x2)
     // write test data using ADIOS2
     {
 #ifdef TEST_HDF5_MPI
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
-                                "HDF5");
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, "HDF5");
 #else
         adios2::fstream oStream(fname, adios2::fstream::out, "HDF5");
 #endif
@@ -415,8 +407,8 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead2D4x2)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData stepData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData stepData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             oStream.write("iString", stepData.S1);
             oStream.write("i8", stepData.I8.data(), shape, start, count);
@@ -428,8 +420,7 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead2D4x2)
             oStream.write("u32", stepData.U32.data(), shape, start, count);
             oStream.write("u64", stepData.U64.data(), shape, start, count);
             oStream.write("r32", stepData.R32.data(), shape, start, count);
-            oStream.write("r64", stepData.R64.data(), shape, start, count,
-                          adios2::endl);
+            oStream.write("r64", stepData.R64.data(), shape, start, count, adios2::endl);
         }
 
         EXPECT_THROW(oStream.write<int16_t>("i8", 1), std::invalid_argument);
@@ -438,8 +429,7 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead2D4x2)
 
     {
 #ifdef TEST_HDF5_MPI
-        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD,
-                                "HDF5");
+        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD, "HDF5");
 #else
         adios2::fstream iStream(fname, adios2::fstream::in, "HDF5");
 #endif
@@ -466,8 +456,8 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, ADIOS2H5writeRead2D4x2)
             auto R64 = iStep.read<double>("r64", start, count);
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString.front(), currentTestData.S1);
 
@@ -502,15 +492,12 @@ TEST_F(StreamWriteReadHighLevelAPI_HDF5, DoubleOpenException)
 
     {
 #ifdef TEST_HDF5_MPI
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
-                                "HDF5");
-        EXPECT_THROW(oStream.open("second", adios2::fstream::out,
-                                  MPI_COMM_WORLD, "HDF5"),
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, "HDF5");
+        EXPECT_THROW(oStream.open("second", adios2::fstream::out, MPI_COMM_WORLD, "HDF5"),
                      std::invalid_argument);
 #else
         adios2::fstream oStream(fname, adios2::fstream::out, "HDF5");
-        EXPECT_THROW(oStream.open("second", adios2::fstream::out, "HDF5"),
-                     std::invalid_argument);
+        EXPECT_THROW(oStream.open("second", adios2::fstream::out, "HDF5"), std::invalid_argument);
 #endif
     }
 }

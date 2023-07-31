@@ -22,16 +22,15 @@ namespace adios2
 namespace transport
 {
 
-ShmSystemV::ShmSystemV(const unsigned int projectID, const size_t size,
-                       helper::Comm const &comm, const bool removeAtClose)
+ShmSystemV::ShmSystemV(const unsigned int projectID, const size_t size, helper::Comm const &comm,
+                       const bool removeAtClose)
 : Transport("Shm", "SystemV", comm), m_ProjectID(projectID), m_Size(size),
   m_RemoveAtClose(removeAtClose)
 {
     if (projectID == 0)
     {
-        helper::Throw<std::invalid_argument>(
-            "Toolkit", "transport::shm::ShmSystemV", "ShmSystemV",
-            "projectID can't be zero, in shared memory segment");
+        helper::Throw<std::invalid_argument>("Toolkit", "transport::shm::ShmSystemV", "ShmSystemV",
+                                             "projectID can't be zero, in shared memory segment");
     }
 }
 
@@ -48,8 +47,8 @@ ShmSystemV::~ShmSystemV() // this might not be correct
     }
 }
 
-void ShmSystemV::Open(const std::string &name, const Mode openMode,
-                      const bool async, const bool directio)
+void ShmSystemV::Open(const std::string &name, const Mode openMode, const bool async,
+                      const bool directio)
 {
     m_Name = name;
     CheckName();
@@ -79,9 +78,9 @@ void ShmSystemV::Open(const std::string &name, const Mode openMode,
         break;
 
     default:
-        helper::Throw<std::invalid_argument>(
-            "Toolkit", "transport::shm::ShmSystemV", "Open",
-            "unknown open mode for shared memory segment " + m_Name);
+        helper::Throw<std::invalid_argument>("Toolkit", "transport::shm::ShmSystemV", "Open",
+                                             "unknown open mode for shared memory segment " +
+                                                 m_Name);
     }
 
     CheckShmID("in call to ShmSystemV shmget at Open");
@@ -114,10 +113,9 @@ void ShmSystemV::Close()
     ProfilerStop("close");
     if (result < 1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::shm::ShmSystemV", "Close",
-            "failed to detach shared memory segment of size " +
-                std::to_string(m_Size) + " and name " + m_Name);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::shm::ShmSystemV", "Close",
+                                              "failed to detach shared memory segment of size " +
+                                                  std::to_string(m_Size) + " and name " + m_Name);
     }
 
     if (m_RemoveAtClose)
@@ -129,8 +127,8 @@ void ShmSystemV::Close()
         {
             helper::Throw<std::ios_base::failure>(
                 "Toolkit", "transport::shm::ShmSystemV", "Close",
-                "failed to remove shared memory segment of size " +
-                    std::to_string(m_Size) + " and name " + m_Name);
+                "failed to remove shared memory segment of size " + std::to_string(m_Size) +
+                    " and name " + m_Name);
         }
     }
 
@@ -157,10 +155,10 @@ void ShmSystemV::CheckShmID(const std::string hint) const
 {
     if (m_ShmID < 0)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::shm::ShmSystemV", "CheckShmID",
-            "Failed shared memory segment of size " + std::to_string(m_Size) +
-                " and name " + m_Name + ", " + hint);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::shm::ShmSystemV", "CheckShmID",
+                                              "Failed shared memory segment of size " +
+                                                  std::to_string(m_Size) + " and name " + m_Name +
+                                                  ", " + hint);
     }
 }
 
@@ -170,21 +168,19 @@ void ShmSystemV::CheckBuffer(const std::string hint) const
     {
         helper::Throw<std::ios_base::failure>(
             "Toolkit", "transport::shm::ShmSystemV", "CheckBuffer",
-            "nullptr shared memory segment of size " + std::to_string(m_Size) +
-                " and name " + m_Name + " " + hint);
+            "nullptr shared memory segment of size " + std::to_string(m_Size) + " and name " +
+                m_Name + " " + hint);
     }
 }
 
-void ShmSystemV::CheckSizes(const size_t start, const size_t size,
-                            const std::string hint) const
+void ShmSystemV::CheckSizes(const size_t start, const size_t size, const std::string hint) const
 {
     if (start + size > m_Size)
     {
         helper::Throw<std::invalid_argument>(
             "Toolkit", "transport::shm::ShmSystemV", "CheckSizes",
-            "final position (start + size) = (" + std::to_string(start) +
-                " + " + std::to_string(size) +
-                " ) exceeding shared memory pre-allocated size:" +
+            "final position (start + size) = (" + std::to_string(start) + " + " +
+                std::to_string(size) + " ) exceeding shared memory pre-allocated size:" +
                 std::to_string(m_Size) + "," + hint);
     }
 }

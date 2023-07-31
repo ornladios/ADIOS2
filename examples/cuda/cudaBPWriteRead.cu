@@ -17,8 +17,7 @@ __global__ void update_array(float *vect, int val) { vect[blockIdx.x] += val; }
 
 std::string engine("BP5");
 
-int BPWrite(const std::string fname, const size_t N, int nSteps,
-            const std::string engine)
+int BPWrite(const std::string fname, const size_t N, int nSteps, const std::string engine)
 {
     // Initialize the simulation data
     float *gpuSimData;
@@ -60,8 +59,7 @@ int BPWrite(const std::string fname, const size_t N, int nSteps,
     return 0;
 }
 
-int BPRead(const std::string fname, const size_t N, int nSteps,
-           const std::string engine)
+int BPRead(const std::string fname, const size_t N, int nSteps, const std::string engine)
 {
     // Create ADIOS structures
     adios2::ADIOS adios;
@@ -86,8 +84,7 @@ int BPRead(const std::string fname, const size_t N, int nSteps,
         data.SetMemorySpace(adios2::MemorySpace::GPU);
         bpReader.Get(data, gpuSimData); //, adios2::Mode::Deferred);
         bpReader.EndStep();
-        cudaMemcpy(simData.data(), gpuSimData, N * sizeof(float),
-                   cudaMemcpyDeviceToHost);
+        cudaMemcpy(simData.data(), gpuSimData, N * sizeof(float), cudaMemcpyDeviceToHost);
         std::cout << "Simualation step " << step << " : ";
         std::cout << simData.size() << " elements: " << simData[1] << std::endl;
     }

@@ -38,13 +38,11 @@ public:
      * @param comm
      * @param method
      */
-    InlineWriter(IO &adios, const std::string &name, const Mode mode,
-                 helper::Comm comm);
+    InlineWriter(IO &adios, const std::string &name, const Mode mode, helper::Comm comm);
 
     ~InlineWriter();
 
-    StepStatus BeginStep(StepMode mode,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;
@@ -56,7 +54,7 @@ public:
 
 private:
     int m_Verbosity = 0;
-    int m_WriterRank; // my rank in the writers' comm
+    int m_WriterRank;                               // my rank in the writers' comm
     size_t m_CurrentStep = static_cast<size_t>(-1); // steps start from 0
     bool m_InsideStep = false;
     bool m_ResetVariables = false; // used when PerformPuts is being used
@@ -66,8 +64,8 @@ private:
     void InitTransports() final;
     const InlineReader *GetReader() const;
 
-#define declare_type(T)                                                        \
-    void DoPutSync(Variable<T> &, const T *) final;                            \
+#define declare_type(T)                                                                            \
+    void DoPutSync(Variable<T> &, const T *) final;                                                \
     void DoPutDeferred(Variable<T> &, const T *) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

@@ -93,10 +93,10 @@ DataType GetDataTypeFromString(std::string const &type) noexcept
 
 size_t GetDataTypeSize(DataType type)
 {
-#define declare_type(T)                                                        \
-    if (type == helper::GetDataType<T>())                                      \
-    {                                                                          \
-        return sizeof(T);                                                      \
+#define declare_type(T)                                                                            \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        return sizeof(T);                                                                          \
     }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -178,8 +178,7 @@ std::vector<std::size_t> Uint64ArrayToSizetVector(const size_t nElements,
     return out;
 }
 
-std::vector<size_t>
-Uint64VectorToSizetVector(const std::vector<uint64_t> &in) noexcept
+std::vector<size_t> Uint64VectorToSizetVector(const std::vector<uint64_t> &in) noexcept
 {
     std::vector<size_t> out(in.size());
     std::transform(in.begin(), in.end(), out.begin(),
@@ -187,8 +186,7 @@ Uint64VectorToSizetVector(const std::vector<uint64_t> &in) noexcept
     return out;
 }
 
-TimeUnit StringToTimeUnit(const std::string timeUnitString,
-                          const std::string hint)
+TimeUnit StringToTimeUnit(const std::string timeUnitString, const std::string hint)
 {
     TimeUnit timeUnit = TimeUnit::Microseconds; // default
 
@@ -196,8 +194,7 @@ TimeUnit StringToTimeUnit(const std::string timeUnitString,
     {
         timeUnit = TimeUnit::Microseconds;
     }
-    else if (timeUnitString == "Milliseconds" ||
-             timeUnitString == "milliseconds")
+    else if (timeUnitString == "Milliseconds" || timeUnitString == "milliseconds")
     {
         timeUnit = TimeUnit::Milliseconds;
     }
@@ -215,13 +212,12 @@ TimeUnit StringToTimeUnit(const std::string timeUnitString,
     }
     else
     {
-        helper::Throw<std::invalid_argument>(
-            "Helper", "adiosType", "StringToTimeUnit",
-            "invalid value " + timeUnitString +
-                " in Parameter key=ProfileUnits, "
-                " must be Microseconds, Milliseconds, "
-                "Seconds, Minutes or Hours " +
-                hint);
+        helper::Throw<std::invalid_argument>("Helper", "adiosType", "StringToTimeUnit",
+                                             "invalid value " + timeUnitString +
+                                                 " in Parameter key=ProfileUnits, "
+                                                 " must be Microseconds, Milliseconds, "
+                                                 "Seconds, Minutes or Hours " +
+                                                 hint);
     }
     return timeUnit;
 }
@@ -247,9 +243,9 @@ size_t BytesFactor(const std::string units)
     }
     else
     {
-        helper::Throw<std::invalid_argument>(
-            "Helper", "adiosType", "BytesFactor",
-            "units " + units + " not supported in call to BytesFactor");
+        helper::Throw<std::invalid_argument>("Helper", "adiosType", "BytesFactor",
+                                             "units " + units +
+                                                 " not supported in call to BytesFactor");
     }
     return factor;
 }

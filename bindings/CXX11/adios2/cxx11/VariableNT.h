@@ -28,8 +28,8 @@ class StructDefinition
 {
 
 public:
-    void AddField(const std::string &name, const size_t offset,
-                  const DataType type, const size_t size = 1);
+    void AddField(const std::string &name, const size_t offset, const DataType type,
+                  const size_t size = 1);
     void Freeze() noexcept;
     size_t StructSize() const noexcept;
     std::string StructName() const noexcept;
@@ -194,8 +194,7 @@ public:
      * be confused by op own parameters
      * @return operation index handler in Operations()
      */
-    size_t AddOperation(const Operator op,
-                        const adios2::Params &parameters = adios2::Params());
+    size_t AddOperation(const Operator op, const adios2::Params &parameters = adios2::Params());
 
     size_t AddOperation(const std::string &type,
                         const adios2::Params &parameters = adios2::Params());
@@ -251,8 +250,7 @@ public:
 
     double MinDouble(const size_t step = adios2::DefaultSizeT) const;
     double MaxDouble(const size_t step = adios2::DefaultSizeT) const;
-    std::pair<double, double>
-    MinMaxDouble(const size_t step = adios2::DefaultSizeT) const;
+    std::pair<double, double> MinMaxDouble(const size_t step = adios2::DefaultSizeT) const;
 
     StructDefinition GetWriteStructDef() noexcept;
     StructDefinition GetReadStructDef() noexcept;

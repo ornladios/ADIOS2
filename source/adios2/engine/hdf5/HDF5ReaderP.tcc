@@ -68,8 +68,7 @@ HDF5ReaderP::BlocksInfoCommon(const core::Variable<T> &variable) const
     typename core::Variable<T>::BPInfo blockInfo;
     blockInfo.Start = variable.m_Start;
     blockInfo.Count = variable.m_Shape;
-    if (variable.m_ShapeID == ShapeID::GlobalValue ||
-        variable.m_ShapeID == ShapeID::LocalValue)
+    if (variable.m_ShapeID == ShapeID::GlobalValue || variable.m_ShapeID == ShapeID::LocalValue)
     {
         blockInfo.IsValue = true;
     }
@@ -86,21 +85,19 @@ template <class T>
 std::map<size_t, std::vector<typename Variable<T>::BPInfo>>
 HDF5ReaderP::GetAllStepsBlocksInfo(const Variable<T> &variable) const
 {
-    std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
-        allStepsBlocksInfo;
+    std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>> allStepsBlocksInfo;
 
-    for (size_t step = variable.m_AvailableStepsStart;
-         step < variable.m_AvailableStepsCount; ++step)
+    for (size_t step = variable.m_AvailableStepsStart; step < variable.m_AvailableStepsCount;
+         ++step)
     {
-        allStepsBlocksInfo[step - variable.m_AvailableStepsStart] =
-            BlocksInfoCommon(variable);
+        allStepsBlocksInfo[step - variable.m_AvailableStepsStart] = BlocksInfoCommon(variable);
     }
     return allStepsBlocksInfo;
 }
 
 template <class T>
-std::vector<typename Variable<T>::BPInfo>
-HDF5ReaderP::GetBlocksInfo(const Variable<T> &variable, const size_t step) const
+std::vector<typename Variable<T>::BPInfo> HDF5ReaderP::GetBlocksInfo(const Variable<T> &variable,
+                                                                     const size_t step) const
 {
     return BlocksInfoCommon(variable);
 }

@@ -61,9 +61,9 @@ int main(int argc, char *argv[])
         io.SetEngine("Skeleton");
         io.SetParameter("VerBose", "5");
 
-        adios2::Variable<float> varArray = io.DefineVariable<float>(
-            "myArray", {(unsigned int)nproc * ndx}, {(unsigned int)rank * ndx},
-            {ndx}, adios2::ConstantDims);
+        adios2::Variable<float> varArray =
+            io.DefineVariable<float>("myArray", {(unsigned int)nproc * ndx},
+                                     {(unsigned int)rank * ndx}, {ndx}, adios2::ConstantDims);
 
         adios2::Variable<std::string> varSyncString =
             io.DefineVariable<std::string>("mySyncString");
@@ -87,8 +87,7 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
         retval = 1;
     }

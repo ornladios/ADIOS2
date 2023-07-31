@@ -24,11 +24,9 @@ public:
 };
 
 template <class T>
-void PrintData(const T *data, const size_t step, const Dims &start,
-               const Dims &count)
+void PrintData(const T *data, const size_t step, const Dims &start, const Dims &count)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    size_t size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     std::cout << "Step: " << step << " Size:" << size << "\n";
     size_t printsize = 128;
 
@@ -52,8 +50,8 @@ void PrintData(const T *data, const size_t step, const Dims &start,
 }
 
 template <class T>
-void GenData(std::vector<T> &data, const size_t step, const Dims &start,
-             const Dims &count, const Dims &shape)
+void GenData(std::vector<T> &data, const size_t step, const Dims &start, const Dims &count,
+             const Dims &shape)
 {
     if (start.size() == 2)
     {
@@ -61,19 +59,17 @@ void GenData(std::vector<T> &data, const size_t step, const Dims &start,
         {
             for (size_t j = 0; j < count[1]; ++j)
             {
-                data[i * count[1] + j] =
-                    (i + start[1]) * shape[1] + j + start[0] + 0.01;
+                data[i * count[1] + j] = (i + start[1]) * shape[1] + j + start[0] + 0.01;
             }
         }
     }
 }
 
 template <class T>
-void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape)
+void VerifyData(const std::complex<T> *data, size_t step, const Dims &start, const Dims &count,
+                const Dims &shape)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    size_t size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     std::vector<std::complex<T>> tmpdata(size);
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
@@ -84,11 +80,9 @@ void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
 }
 
 template <class T>
-void VerifyData(const T *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape)
+void VerifyData(const T *data, size_t step, const Dims &start, const Dims &count, const Dims &shape)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    size_t size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     std::vector<T> tmpdata(size);
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
@@ -97,12 +91,10 @@ void VerifyData(const T *data, size_t step, const Dims &start,
     }
 }
 
-void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
-                               const Dims &count, const size_t steps,
-                               const adios2::Params &engineParams)
+void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start, const Dims &count,
+                               const size_t steps, const adios2::Params &engineParams)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("WAN");
     io.SetEngine("DataMan");
@@ -119,21 +111,16 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
     auto varChars = io.DefineVariable<char>("varChars", shape, start, count);
-    auto varUChars =
-        io.DefineVariable<unsigned char>("varUChars", shape, start, count);
+    auto varUChars = io.DefineVariable<unsigned char>("varUChars", shape, start, count);
     auto varShorts = io.DefineVariable<short>("varShorts", shape, start, count);
-    auto varUShorts =
-        io.DefineVariable<unsigned short>("varUShorts", shape, start, count);
+    auto varUShorts = io.DefineVariable<unsigned short>("varUShorts", shape, start, count);
     auto varInts = io.DefineVariable<int>("varInts", shape, start, count);
-    auto varUInts =
-        io.DefineVariable<unsigned int>("varUInts", shape, start, count);
+    auto varUInts = io.DefineVariable<unsigned int>("varUInts", shape, start, count);
     auto varFloats = io.DefineVariable<float>("varFloats", shape, start, count);
-    auto varDoubles =
-        io.DefineVariable<double>("varDoubles", shape, start, count);
-    auto varComplexes = io.DefineVariable<std::complex<float>>(
-        "varComplexes", shape, start, count);
-    auto varDComplexes = io.DefineVariable<std::complex<double>>(
-        "varDComplexes", shape, start, count);
+    auto varDoubles = io.DefineVariable<double>("varDoubles", shape, start, count);
+    auto varComplexes = io.DefineVariable<std::complex<float>>("varComplexes", shape, start, count);
+    auto varDComplexes =
+        io.DefineVariable<std::complex<double>>("varDComplexes", shape, start, count);
     io.DefineAttribute<int>("AttInt", 110);
     adios2::Engine engine = io.Open("stream", adios2::Mode::Write);
     for (size_t i = 0; i < steps; ++i)
@@ -164,9 +151,8 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     engine.Close();
 }
 
-void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
-                               const Dims &count, const Dims &memStart,
-                               const Dims &memCount, const size_t steps,
+void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start, const Dims &count,
+                               const Dims &memStart, const Dims &memCount, const size_t steps,
                                const adios2::Params &engineParams)
 {
     adios2::ADIOS adios;
@@ -175,8 +161,8 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
     io.SetParameters(engineParams);
     adios2::Engine engine = io.Open("stream", adios2::Mode::Read);
 
-    size_t datasize = std::accumulate(memCount.begin(), memCount.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize =
+        std::accumulate(memCount.begin(), memCount.end(), 1, std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -208,21 +194,16 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
             GenData(myDoubles, currentStep, memStart, memCount, shape);
             GenData(myComplexes, currentStep, memStart, memCount, shape);
             GenData(myDComplexes, currentStep, memStart, memCount, shape);
-            adios2::Variable<char> varChars =
-                io.InquireVariable<char>("varChars");
+            adios2::Variable<char> varChars = io.InquireVariable<char>("varChars");
             adios2::Variable<unsigned char> varUChars =
                 io.InquireVariable<unsigned char>("varUChars");
-            adios2::Variable<short> varShorts =
-                io.InquireVariable<short>("varShorts");
+            adios2::Variable<short> varShorts = io.InquireVariable<short>("varShorts");
             adios2::Variable<unsigned short> varUShorts =
                 io.InquireVariable<unsigned short>("varUShorts");
             adios2::Variable<int> varInts = io.InquireVariable<int>("varInts");
-            adios2::Variable<unsigned int> varUInts =
-                io.InquireVariable<unsigned int>("varUInts");
-            adios2::Variable<float> varFloats =
-                io.InquireVariable<float>("varFloats");
-            adios2::Variable<double> varDoubles =
-                io.InquireVariable<double>("varDoubles");
+            adios2::Variable<unsigned int> varUInts = io.InquireVariable<unsigned int>("varUInts");
+            adios2::Variable<float> varFloats = io.InquireVariable<float>("varFloats");
+            adios2::Variable<double> varDoubles = io.InquireVariable<double>("varDoubles");
             adios2::Variable<std::complex<float>> varComplexes =
                 io.InquireVariable<std::complex<float>>("varComplexes");
             adios2::Variable<std::complex<double>> varDComplexes =
@@ -264,17 +245,13 @@ void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
             VerifyData(myChars.data(), currentStep, memStart, memCount, shape);
             VerifyData(myUChars.data(), currentStep, memStart, memCount, shape);
             VerifyData(myShorts.data(), currentStep, memStart, memCount, shape);
-            VerifyData(myUShorts.data(), currentStep, memStart, memCount,
-                       shape);
+            VerifyData(myUShorts.data(), currentStep, memStart, memCount, shape);
             VerifyData(myInts.data(), currentStep, memStart, memCount, shape);
             VerifyData(myUInts.data(), currentStep, memStart, memCount, shape);
             VerifyData(myFloats.data(), currentStep, memStart, memCount, shape);
-            VerifyData(myDoubles.data(), currentStep, memStart, memCount,
-                       shape);
-            VerifyData(myComplexes.data(), currentStep, memStart, memCount,
-                       shape);
-            VerifyData(myDComplexes.data(), currentStep, memStart, memCount,
-                       shape);
+            VerifyData(myDoubles.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myComplexes.data(), currentStep, memStart, memCount, shape);
+            VerifyData(myDComplexes.data(), currentStep, memStart, memCount, shape);
             engine.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)
@@ -304,14 +281,12 @@ TEST_F(DataManEngineTest, 2D_Sz)
     Dims count = {10, 10};
 
     size_t steps = 5000;
-    adios2::Params engineParams = {
-        {"IPAddress", "127.0.0.1"}, {"Port", "12330"}, {"Verbose", "0"}};
+    adios2::Params engineParams = {{"IPAddress", "127.0.0.1"}, {"Port", "12330"}, {"Verbose", "0"}};
 
-    auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count, start,
-                         count, steps, engineParams);
-
-    auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps,
+    auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count, start, count, steps,
                          engineParams);
+
+    auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps, engineParams);
 
     w.join();
     r.join();

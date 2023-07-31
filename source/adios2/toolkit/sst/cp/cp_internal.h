@@ -29,7 +29,7 @@ typedef struct _CP_GlobalCMInfo
     int LastCallFreeCount;
     void **LastCallFreeList;
     struct StructList CustomStructs;
-} * CP_GlobalCMInfo;
+} *CP_GlobalCMInfo;
 
 typedef struct _CP_Info
 {
@@ -44,7 +44,7 @@ typedef struct _CP_Info
     FFSTypeHandle TimestepDistributionFormat;
     FFSTypeHandle ReturnMetadataInfoFormat;
     struct StructList CustomStructs;
-} * CP_Info;
+} *CP_Info;
 
 struct _ReaderRegisterMsg;
 
@@ -53,13 +53,13 @@ typedef struct _RegisterQueue
     struct _ReaderRegisterMsg *Msg;
     CMConnection Conn;
     struct _RegisterQueue *Next;
-} * RegisterQueue;
+} *RegisterQueue;
 
 typedef struct _StepRequest
 {
     int RequestingReader;
     struct _StepRequest *Next;
-} * StepRequest;
+} *StepRequest;
 
 typedef struct _CP_PeerConnection
 {
@@ -107,13 +107,13 @@ typedef struct _WS_ReaderInfo
     int ReaderCohortSize;
     int *Peers;
     CP_PeerConnection *Connections;
-} * WS_ReaderInfo;
+} *WS_ReaderInfo;
 
 typedef struct _TimestepMetadataList
 {
     struct _TimestepMetadataMsg *MetadataMsg;
     struct _TimestepMetadataList *Next;
-} * TSMetadataList;
+} *TSMetadataList;
 
 enum StreamRole
 {
@@ -138,7 +138,7 @@ typedef struct _CPTimestepEntry
     void *FreeClientData;
     void *DataBlockToFree;
     struct _CPTimestepEntry *Next;
-} * CPTimestepList;
+} *CPTimestepList;
 
 typedef struct FFSFormatBlock *FFSFormatList;
 
@@ -258,7 +258,7 @@ typedef struct _CP_ReaderInitInfo
 {
     char *ContactInfo;
     void *ReaderID;
-} * CP_ReaderInitInfo;
+} *CP_ReaderInitInfo;
 
 /*
  * This is the structure that holds reader_side CP and DP contact info for a
@@ -345,7 +345,7 @@ typedef struct _CombinedReaderInfo
     void **DP_ReaderInfo;
     void *RankZeroID;
     SpeculativePreloadMode SpecPreload; // should be On or Off, not Auto
-} * reader_data_t;
+} *reader_data_t;
 
 /*
  * This is the baseline contact information for each writer-side rank.
@@ -355,7 +355,7 @@ typedef struct _CP_WriterInitInfo
 {
     char *ContactInfo;
     void *WriterID;
-} * CP_WriterInitInfo;
+} *CP_WriterInitInfo;
 
 /*
  * Writer response messages from writer rank 0 to reader rank 0 after the
@@ -381,7 +381,7 @@ typedef struct _PeerSetupMsg
     void *RS_Stream;
     int WriterRank;
     int WriterCohortSize;
-} * PeerSetupMsg;
+} *PeerSetupMsg;
 
 /*
  * The ReaderActivate message informs the writer that this reader is now ready
@@ -416,7 +416,7 @@ typedef struct _TimestepMetadataMsg
     SstData Metadata;
     SstData AttributeData;
     void **DP_TimestepInfo;
-} * TSMetadataMsg;
+} *TSMetadataMsg;
 
 /*
  * The timestepMetadataDistribution message carries the metadata from rank 0 to
@@ -427,7 +427,7 @@ typedef struct _TimestepMetadataDistributionMsg
     int ReturnValue;
     TSMetadataMsg TSmsg;
     int CommPatternLockedTimestep;
-} * TSMetadataDistributionMsg;
+} *TSMetadataDistributionMsg;
 
 /*
  * This is the structure that holds local metadata and the DP info related to
@@ -439,7 +439,7 @@ typedef struct _ReleaseRec
 {
     long Timestep;
     void *Reader;
-} * ReleaseRecPtr;
+} *ReleaseRecPtr;
 
 typedef struct _ReturnMetadataInfo
 {
@@ -452,7 +452,7 @@ typedef struct _ReturnMetadataInfo
     ReleaseRecPtr LockDefnsList;
     int LockDefnsCount;
     enum StreamStatus *ReaderStatus;
-} * ReturnMetadataInfo;
+} *ReturnMetadataInfo;
 
 /*
  * The ReleaseTimestep message informs the writers that this reader is done with
@@ -483,7 +483,7 @@ typedef struct _CommPatternLockedMsg
 {
     void *RS_Stream;
     int Timestep;
-} * CommPatternLockedMsg;
+} *CommPatternLockedMsg;
 
 /*
  * The WriterClose message informs the readers that the writer is beginning an
@@ -496,7 +496,7 @@ typedef struct _WriterCloseMsg
 {
     void *RS_Stream;
     int FinalTimestep;
-} * WriterCloseMsg;
+} *WriterCloseMsg;
 
 /*
  * The ReaderClose message informs the readers that the reader is beginning an
@@ -505,7 +505,7 @@ typedef struct _WriterCloseMsg
 typedef struct _ReaderCloseMsg
 {
     void *WSR_Stream;
-} * ReaderCloseMsg;
+} *ReaderCloseMsg;
 
 /*
  * This is the consolidated writer contact info structure that is used to
@@ -518,7 +518,7 @@ typedef struct _CombinedWriterInfo
     size_t StartingStepNumber;
     CP_WriterInitInfo *CP_WriterInfo;
     void **DP_WriterInfo;
-} * writer_data_t;
+} *writer_data_t;
 
 typedef struct _MetadataPlusDPInfo *MetadataPlusDPInfo;
 
@@ -529,86 +529,72 @@ extern void FinalizeCPInfo(CP_Info Info, CP_DP_Interface DPInfo);
 extern CP_Info CP_getCPInfo(char *ControlModule);
 extern char *CP_GetContactString(SstStream s, attr_list DPAttrs);
 extern SstStream CP_newStream();
-extern void SstInternalProvideTimestep(
-    SstStream s, SstData LocalMetadata, SstData Data, long Timestep,
-    FFSFormatList Formats, DataFreeFunc FreeTimestep, void *FreeClientData,
-    SstData AttributeData, DataFreeFunc FreeAttributeData,
-    void *FreeAttributeClientData);
+extern void SstInternalProvideTimestep(SstStream s, SstData LocalMetadata, SstData Data,
+                                       long Timestep, FFSFormatList Formats,
+                                       DataFreeFunc FreeTimestep, void *FreeClientData,
+                                       SstData AttributeData, DataFreeFunc FreeAttributeData,
+                                       void *FreeAttributeClientData);
 
-void **CP_consolidateDataToRankZero(SstStream stream, void *local_info,
-                                    FFSTypeHandle type, void **ret_data_block);
-void **CP_consolidateDataToAll(SstStream stream, void *local_info,
-                               FFSTypeHandle type, void **ret_data_block);
-void *CP_distributeDataFromRankZero(SstStream stream, void *root_info,
-                                    FFSTypeHandle type, void **ret_data_block);
-extern void CP_DPQueryHandler(CManager cm, CMConnection conn, void *msg_v,
-                              void *client_data, attr_list attrs);
-extern void CP_DPQueryResponseHandler(CManager cm, CMConnection conn,
-                                      void *msg_v, void *client_data,
-                                      attr_list attrs);
-extern void CP_ReaderRegisterHandler(CManager cm, CMConnection conn,
-                                     void *msg_v, void *client_data,
+void **CP_consolidateDataToRankZero(SstStream stream, void *local_info, FFSTypeHandle type,
+                                    void **ret_data_block);
+void **CP_consolidateDataToAll(SstStream stream, void *local_info, FFSTypeHandle type,
+                               void **ret_data_block);
+void *CP_distributeDataFromRankZero(SstStream stream, void *root_info, FFSTypeHandle type,
+                                    void **ret_data_block);
+extern void CP_DPQueryHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
+                              attr_list attrs);
+extern void CP_DPQueryResponseHandler(CManager cm, CMConnection conn, void *msg_v,
+                                      void *client_data, attr_list attrs);
+extern void CP_ReaderRegisterHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
                                      attr_list attrs);
-extern void CP_WriterResponseHandler(CManager cm, CMConnection conn,
-                                     void *msg_v, void *client_data,
+extern void CP_WriterResponseHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
                                      attr_list attrs);
-extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *msg_v,
-                                void *client_data, attr_list attrs);
-extern void CP_ReaderActivateHandler(CManager cm, CMConnection conn,
-                                     void *msg_v, void *client_data,
+extern void CP_PeerSetupHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
+                                attr_list attrs);
+extern void CP_ReaderActivateHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
                                      attr_list attrs);
-extern void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn,
-                                        void *msg_v, void *client_data,
-                                        attr_list attrs);
-extern void CP_TimestepMetadataHandler(CManager cm, CMConnection conn,
-                                       void *msg_v, void *client_data,
-                                       attr_list attrs);
-extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn,
-                                      void *msg_v, void *client_data,
-                                      attr_list attrs);
-extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn,
-                                            void *Msg_v, void *client_data,
-                                            attr_list attrs);
-extern void CP_CommPatternLockedHandler(CManager cm, CMConnection conn,
-                                        void *Msg_v, void *client_data,
-                                        attr_list attrs);
-extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *msg_v,
-                                  void *client_data, attr_list attrs);
-extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v,
-                                  void *client_data, attr_list attrs);
+extern void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn, void *msg_v,
+                                        void *client_data, attr_list attrs);
+extern void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *msg_v,
+                                       void *client_data, attr_list attrs);
+extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn, void *msg_v,
+                                      void *client_data, attr_list attrs);
+extern void CP_LockReaderDefinitionsHandler(CManager cm, CMConnection conn, void *Msg_v,
+                                            void *client_data, attr_list attrs);
+extern void CP_CommPatternLockedHandler(CManager cm, CMConnection conn, void *Msg_v,
+                                        void *client_data, attr_list attrs);
+extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
+                                  attr_list attrs);
+extern void CP_ReaderCloseHandler(CManager cm, CMConnection conn, void *msg_v, void *client_data,
+                                  attr_list attrs);
 
 extern void FFSMarshalInstallMetadata(SstStream Stream, TSMetadataMsg MetaData);
-extern void FFSMarshalInstallPreciousMetadata(SstStream Stream,
-                                              TSMetadataMsg MetaData);
+extern void FFSMarshalInstallPreciousMetadata(SstStream Stream, TSMetadataMsg MetaData);
 extern void FFSClearTimestepData(SstStream Stream);
 extern void FFSFreeMarshalData(SstStream Stream);
-extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
-                          int **forwardArray, int **reverseArray);
+extern void getPeerArrays(int MySize, int MyRank, int PeerSize, int **forwardArray,
+                          int **reverseArray);
 extern void AddToLastCallFreeList(void *Block);
 
 enum VerbosityLevel
 {
     NoVerbose = 0,       // Generally no output (but not absolutely quiet?)
     CriticalVerbose = 1, // Informational output for failures only
-    SummaryVerbose =
-        2, // One-time summary output containing general info (transports used,
-           // timestep count, stream duration, etc.)
-    PerStepVerbose = 3, // One-per-step info, generally from rank 0 (metadata
-                        // read, Begin/EndStep verbosity, etc.)
-    PerRankVerbose = 4, // Per-step info from each rank (for those things that
-                        // might be different per rank).
-    TraceVerbose = 5,   // All debugging available
+    SummaryVerbose = 2,  // One-time summary output containing general info (transports used,
+                         // timestep count, stream duration, etc.)
+    PerStepVerbose = 3,  // One-per-step info, generally from rank 0 (metadata
+                         // read, Begin/EndStep verbosity, etc.)
+    PerRankVerbose = 4,  // Per-step info from each rank (for those things that
+                         // might be different per rank).
+    TraceVerbose = 5,    // All debugging available
 };
 
-extern void CP_verbose(SstStream Stream, enum VerbosityLevel Level,
-                       char *Format, ...);
+extern void CP_verbose(SstStream Stream, enum VerbosityLevel Level, char *Format, ...);
 extern void CP_error(SstStream Stream, char *Format, ...);
 extern struct _CP_Services Svcs;
-extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,
-                          int ReaderSide);
+extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params, int ReaderSide);
 
-typedef void (*CPNetworkInfoFunc)(int dataID, const char *net_string,
-                                  const char *data_string);
+typedef void (*CPNetworkInfoFunc)(int dataID, const char *net_string, const char *data_string);
 extern char *IPDiagString;
 extern CPNetworkInfoFunc globalNetinfoCallback;
 extern void SSTSetNetworkCallback(CPNetworkInfoFunc callback);

@@ -25,8 +25,7 @@ namespace ssc
 
 template <typename T>
 std::vector<typename Variable<T>::BPInfo>
-SscReaderNaive::BlocksInfoCommon(const Variable<T> &variable,
-                                 const size_t step) const
+SscReaderNaive::BlocksInfoCommon(const Variable<T> &variable, const size_t step) const
 {
     std::vector<typename Variable<T>::BPInfo> ret;
     size_t blockID = 0;
@@ -48,12 +47,10 @@ SscReaderNaive::BlocksInfoCommon(const Variable<T> &variable,
             {
                 b.IsReverseDims = true;
             }
-            if (v.shapeId == ShapeID::GlobalValue ||
-                v.shapeId == ShapeID::LocalValue)
+            if (v.shapeId == ShapeID::GlobalValue || v.shapeId == ShapeID::LocalValue)
             {
                 b.IsValue = true;
-                std::memcpy(reinterpret_cast<char *>(&b.Value), v.value.data(),
-                            v.value.size());
+                std::memcpy(reinterpret_cast<char *>(&b.Value), v.value.data(), v.value.size());
             }
             ++blockID;
         }

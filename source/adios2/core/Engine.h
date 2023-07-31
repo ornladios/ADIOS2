@@ -44,8 +44,7 @@ namespace core
 class Engine
 {
 public:
-    using AdvanceAsyncCallback =
-        std::function<void(std::shared_ptr<core::Engine>)>;
+    using AdvanceAsyncCallback = std::function<void(std::shared_ptr<core::Engine>)>;
 
 public:
     /** from derived class */
@@ -68,8 +67,8 @@ public:
      * @param mode  open mode from ADIOSTypes.h Mode
      * @param comm  communicator passed at Open or from ADIOS class
      */
-    Engine(const std::string engineType, IO &io, const std::string &name,
-           const Mode mode, helper::Comm comm);
+    Engine(const std::string engineType, IO &io, const std::string &name, const Mode mode,
+           helper::Comm comm);
 
     virtual ~Engine();
 
@@ -96,8 +95,7 @@ public:
      * @param timeoutSeconds (not yet implemented)
      * @return current step status
      */
-    virtual StepStatus BeginStep(StepMode mode,
-                                 const float timeoutSeconds = -1.0);
+    virtual StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0);
 
     /**
      * Returns current step information for each engine.
@@ -121,8 +119,8 @@ public:
      * application
      */
     template <class T>
-    typename Variable<T>::Span &
-    Put(Variable<T> &variable, const bool initialize, const T &value = T{});
+    typename Variable<T>::Span &Put(Variable<T> &variable, const bool initialize,
+                                    const T &value = T{});
 
     /**
      * @brief Put associates variable and data into adios2 in Engine Write mode.
@@ -143,11 +141,9 @@ public:
      * </pre>
      */
     template <class T>
-    void Put(Variable<T> &variable, const T *data,
-             const Mode launch = Mode::Deferred);
+    void Put(Variable<T> &variable, const T *data, const Mode launch = Mode::Deferred);
 
-    void Put(VariableStruct &variable, const void *data,
-             const Mode launch = Mode::Deferred);
+    void Put(VariableStruct &variable, const void *data, const Mode launch = Mode::Deferred);
 
     /**
      * @brief Put version that accepts a variable name as input parameter.
@@ -169,8 +165,7 @@ public:
      * </pre>
      */
     template <class T>
-    void Put(const std::string &variableName, const T *data,
-             const Mode launch = Mode::Deferred);
+    void Put(const std::string &variableName, const T *data, const Mode launch = Mode::Deferred);
 
     /**
      * Put version for single value datum, can accept on-the-fly values
@@ -202,8 +197,7 @@ public:
      * </pre>
      */
     template <class T>
-    void Put(const std::string &variableName, const T &datum,
-             const Mode launch);
+    void Put(const std::string &variableName, const T &datum, const Mode launch);
 
     /**
      * @brief Get associates an existing variable selections and populates data
@@ -228,11 +222,9 @@ public:
      * </pre>
      */
     template <class T>
-    void Get(Variable<T> &variable, T *data,
-             const Mode launch = Mode::Deferred);
+    void Get(Variable<T> &variable, T *data, const Mode launch = Mode::Deferred);
 
-    void Get(VariableStruct &variable, void *data,
-             const Mode launch = Mode::Deferred);
+    void Get(VariableStruct &variable, void *data, const Mode launch = Mode::Deferred);
 
     /**
      * @brief Get version that accepts a variableName as input.
@@ -256,8 +248,7 @@ public:
      * </pre>
      */
     template <class T>
-    void Get(const std::string &variableName, T *data,
-             const Mode launch = Mode::Deferred);
+    void Get(const std::string &variableName, T *data, const Mode launch = Mode::Deferred);
 
     /**
      * @brief Get version for single value datum
@@ -268,8 +259,7 @@ public:
      * @param datum to be populated with corresponding value
      */
     template <class T>
-    void Get(Variable<T> &variable, T &datum,
-             const Mode launch = Mode::Deferred);
+    void Get(Variable<T> &variable, T &datum, const Mode launch = Mode::Deferred);
 
     /**
      * @brief Get version for single value datum using variable name
@@ -278,8 +268,7 @@ public:
      * @param datum to be populated with corresponding value
      */
     template <class T>
-    void Get(const std::string &variableName, T &datum,
-             const Mode launch = Mode::Deferred);
+    void Get(const std::string &variableName, T &datum, const Mode launch = Mode::Deferred);
 
     /**
      * Convenience function, C++ only that allocates and populates a vector with
@@ -289,8 +278,7 @@ public:
      * @param launch
      */
     template <class T>
-    void Get(Variable<T> &variable, std::vector<T> &dataV,
-             const Mode launch = Mode::Deferred);
+    void Get(Variable<T> &variable, std::vector<T> &dataV, const Mode launch = Mode::Deferred);
 
     /**
      * Convenience function, C++ only that allocates and populates a vector with
@@ -329,8 +317,7 @@ public:
      * </pre>
      */
     template <class T>
-    typename Variable<T>::BPInfo *Get(Variable<T> &variable,
-                                      const Mode launch = Mode::Deferred);
+    typename Variable<T>::BPInfo *Get(Variable<T> &variable, const Mode launch = Mode::Deferred);
 
     /**
      * @brief Get version for block selection that accepts a variableName as
@@ -438,11 +425,11 @@ public:
      * found it returns an empty vector
      */
     template <class T>
-    std::vector<typename Variable<T>::BPInfo>
-    BlocksInfo(const Variable<T> &variable, const size_t step) const;
+    std::vector<typename Variable<T>::BPInfo> BlocksInfo(const Variable<T> &variable,
+                                                         const size_t step) const;
 
-    std::vector<VariableStruct::BPInfo>
-    BlocksInfoStruct(const VariableStruct &variable, const size_t step) const;
+    std::vector<VariableStruct::BPInfo> BlocksInfoStruct(const VariableStruct &variable,
+                                                         const size_t step) const;
 
     /**
      * Get the absolute steps of a variable in a file. This is for
@@ -479,31 +466,26 @@ public:
     virtual size_t DebugGetDataBufferSize() const;
 
     //  in this call, Step is RELATIVE, not absolute
-    virtual MinVarInfo *MinBlocksInfo(const VariableBase &,
-                                      const size_t Step) const
+    virtual MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const
     {
         return nullptr;
     }
 
     //  in this call, Step is RELATIVE, not absolute
-    virtual bool VarShape(const VariableBase &, const size_t Step,
-                          Dims &Shape) const
+    virtual bool VarShape(const VariableBase &, const size_t Step, Dims &Shape) const
     {
         return false;
     }
 
-    virtual bool VariableMinMax(const VariableBase &, const size_t Step,
-                                MinMaxStruct &MinMax)
+    virtual bool VariableMinMax(const VariableBase &, const size_t Step, MinMaxStruct &MinMax)
     {
         return false;
     }
 
     /** Notify the engine when a new attribute is defined. Called from IO.tcc
      */
-    virtual void NotifyEngineAttribute(std::string name,
-                                       DataType type) noexcept;
-    virtual void NotifyEngineAttribute(std::string name, AttributeBase *attr,
-                                       void *Data) noexcept;
+    virtual void NotifyEngineAttribute(std::string name, DataType type) noexcept;
+    virtual void NotifyEngineAttribute(std::string name, AttributeBase *attr, void *Data) noexcept;
 
     /** Notify the engine when InquireVariable is called when the IO is empty.
      * Called from IO.tcc
@@ -542,15 +524,14 @@ protected:
     virtual void InitTransports();
 
 // Put
-#define declare_type(T)                                                        \
-    virtual void DoPut(Variable<T> &variable,                                  \
-                       typename Variable<T>::Span &span,                       \
+#define declare_type(T)                                                                            \
+    virtual void DoPut(Variable<T> &variable, typename Variable<T>::Span &span,                    \
                        const bool initialize, const T &value);
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-#define declare_type(T)                                                        \
-    virtual void DoPutSync(Variable<T> &, const T *);                          \
+#define declare_type(T)                                                                            \
+    virtual void DoPutSync(Variable<T> &, const T *);                                              \
     virtual void DoPutDeferred(Variable<T> &, const T *);
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -559,10 +540,10 @@ protected:
     virtual void DoPutStructDeferred(VariableStruct &, const void *);
 
 // Get
-#define declare_type(T)                                                        \
-    virtual void DoGetSync(Variable<T> &, T *);                                \
-    virtual void DoGetDeferred(Variable<T> &, T *);                            \
-    virtual typename Variable<T>::BPInfo *DoGetBlockSync(Variable<T> &);       \
+#define declare_type(T)                                                                            \
+    virtual void DoGetSync(Variable<T> &, T *);                                                    \
+    virtual void DoGetDeferred(Variable<T> &, T *);                                                \
+    virtual typename Variable<T>::BPInfo *DoGetBlockSync(Variable<T> &);                           \
     virtual typename Variable<T>::BPInfo *DoGetBlockDeferred(Variable<T> &);
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -593,18 +574,17 @@ protected:
      * @return Variable<T>& reference if found, else throws an exception
      */
     template <class T>
-    Variable<T> &FindVariable(const std::string &variableName,
-                              const std::string hint);
+    Variable<T> &FindVariable(const std::string &variableName, const std::string hint);
 
-#define declare_type(T)                                                        \
-    virtual std::map<size_t, std::vector<typename Variable<T>::BPInfo>>        \
-    DoAllStepsBlocksInfo(const Variable<T> &variable) const;                   \
-                                                                               \
-    virtual std::vector<std::vector<typename Variable<T>::BPInfo>>             \
-    DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const;           \
-                                                                               \
-    virtual std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(            \
-        const Variable<T> &variable, const size_t step) const;
+#define declare_type(T)                                                                            \
+    virtual std::map<size_t, std::vector<typename Variable<T>::BPInfo>> DoAllStepsBlocksInfo(      \
+        const Variable<T> &variable) const;                                                        \
+                                                                                                   \
+    virtual std::vector<std::vector<typename Variable<T>::BPInfo>> DoAllRelativeStepsBlocksInfo(   \
+        const Variable<T> &variable) const;                                                        \
+                                                                                                   \
+    virtual std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(const Variable<T> &variable,    \
+                                                                   const size_t step) const;
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -615,12 +595,11 @@ protected:
     virtual std::vector<std::vector<VariableStruct::BPInfo>>
     DoAllRelativeStepsBlocksInfoStruct(const VariableStruct &variable) const;
 
-    virtual std::vector<VariableStruct::BPInfo>
-    DoBlocksInfoStruct(const VariableStruct &variable, const size_t step) const;
+    virtual std::vector<VariableStruct::BPInfo> DoBlocksInfoStruct(const VariableStruct &variable,
+                                                                   const size_t step) const;
 
-#define declare_type(T, L)                                                     \
-    virtual T *DoBufferData_##L(const int bufferIdx,                           \
-                                const size_t payloadPosition,                  \
+#define declare_type(T, L)                                                                         \
+    virtual T *DoBufferData_##L(const int bufferIdx, const size_t payloadPosition,                 \
                                 const size_t bufferID) noexcept;
 
     ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
@@ -628,8 +607,7 @@ protected:
 
     virtual size_t DoSteps() const;
 
-    virtual void DoGetAbsoluteSteps(const VariableBase &variable,
-                                    std::vector<size_t> &keys) const;
+    virtual void DoGetAbsoluteSteps(const VariableBase &variable, std::vector<size_t> &keys) const;
 
     /** true: No more definitions or changes to existing variables are allowed
      */
@@ -657,8 +635,7 @@ private:
      * @param modes acceptable modes
      * @param hint extra exception info
      */
-    void CommonChecks(VariableBase &variable, const void *data,
-                      const std::set<Mode> &modes,
+    void CommonChecks(VariableBase &variable, const void *data, const std::set<Mode> &modes,
                       const std::string hint) const;
 
     /**
@@ -667,8 +644,7 @@ private:
      * @param modes acceptable modes
      * @param hint extra exception info
      */
-    void CheckOpenModes(const std::set<Mode> &modes,
-                        const std::string hint) const;
+    void CheckOpenModes(const std::set<Mode> &modes, const std::string hint) const;
 };
 
 } // end namespace core

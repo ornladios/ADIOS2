@@ -71,20 +71,14 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         (void)io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
-        (void)io.DefineVariable<std::complex<float>>("c32", shape, start,
-                                                     count);
-        (void)io.DefineVariable<std::complex<double>>("c64", shape, start,
-                                                      count);
-        auto var_r64_2d =
-            io.DefineVariable<double>("r64_2d", shape2, start2, count2);
-        auto var_r64_2d_rev =
-            io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
-        (void)io.DefineVariable<int64_t>("time", time_shape, time_start,
-                                         time_count);
+        (void)io.DefineVariable<std::complex<float>>("c32", shape, start, count);
+        (void)io.DefineVariable<std::complex<double>>("c64", shape, start, count);
+        auto var_r64_2d = io.DefineVariable<double>("r64_2d", shape2, start2, count2);
+        auto var_r64_2d_rev = io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
+        (void)io.DefineVariable<int64_t>("time", time_shape, time_start, time_count);
         if (CompressZfp)
         {
-            adios2::Operator ZfpOp =
-                adios.DefineOperator("zfpCompressor", "zfp");
+            adios2::Operator ZfpOp = adios.DefineOperator("zfpCompressor", "zfp");
             var_r32.AddOperation(ZfpOp, {{"rate", "20"}});
             var_r64.AddOperation(ZfpOp, {{"rate", "20"}});
             var_r64_2d.AddOperation(ZfpOp, {{"rate", "20"}});
@@ -151,8 +145,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
         adios2::Box<adios2::Dims> sel2({mpiRank * Nx, 0}, {Nx, 2});
         adios2::Box<adios2::Dims> sel3({0, mpiRank * Nx}, {2, Nx});
-        adios2::Box<adios2::Dims> sel_time(
-            {static_cast<unsigned long>(mpiRank)}, {1});
+        adios2::Box<adios2::Dims> sel_time({static_cast<unsigned long>(mpiRank)}, {1});
         var_i8.SetSelection(sel);
         var_i16.SetSelection(sel);
         var_i32.SetSelection(sel);
@@ -186,8 +179,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
         if (ModifiableAttributes)
-            io.DefineAttribute<double>(
-                r64_Single, (double)3.14159 + (double)step, "", "/", true);
+            io.DefineAttribute<double>(r64_Single, (double)3.14159 + (double)step, "", "/", true);
         engine.EndStep();
     }
 
@@ -204,9 +196,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

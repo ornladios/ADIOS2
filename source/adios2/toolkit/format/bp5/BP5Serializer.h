@@ -38,7 +38,7 @@ public:
         std::vector<MetaMetaInfoBlock> NewMetaMetaBlocks;
         std::shared_ptr<Buffer> MetaEncodeBuffer;
         std::shared_ptr<Buffer> AttributeEncodeBuffer;
-        BufferV* DataBuffer;
+        BufferV *DataBuffer;
     };
 
     typedef struct _MetadataInfo
@@ -52,10 +52,9 @@ public:
         Buffer BackingBuffer;
     } AggregatedMetadataInfo;
 
-    void Marshal(void *Variable, const char *Name, const DataType Type,
-                 size_t ElemSize, size_t DimCount, const size_t *Shape,
-                 const size_t *Count, const size_t *Offsets, const void *Data,
-                 bool Sync, BufferV::BufferPos *span);
+    void Marshal(void *Variable, const char *Name, const DataType Type, size_t ElemSize,
+                 size_t DimCount, const size_t *Shape, const size_t *Count, const size_t *Offsets,
+                 const void *Data, bool Sync, BufferV::BufferPos *span);
     /*
      * BP5 has two attribute marshalling methods.  The first,
      * MarshallAttribute(), creates new MetaMetadata whenever a new
@@ -76,11 +75,11 @@ public:
      * attributes are produced on every timestep.  In the latter case,
      * OnetimeMarshalAttribute() is by far better.
      */
-    void MarshalAttribute(const char *Name, const DataType Type,
-                          size_t ElemSize, size_t ElemCount, const void *Data);
+    void MarshalAttribute(const char *Name, const DataType Type, size_t ElemSize, size_t ElemCount,
+                          const void *Data);
     void OnetimeMarshalAttribute(const core::AttributeBase &baseAttr);
-    void OnetimeMarshalAttribute(const char *Name, const DataType Type,
-                                 size_t ElemCount, const void *Data);
+    void OnetimeMarshalAttribute(const char *Name, const DataType Type, size_t ElemCount,
+                                 const void *Data);
 
     /*
      *  InitStep must be called with an appropriate BufferV subtype before a
@@ -96,8 +95,7 @@ public:
      * those offsets are relative to the entire sequence of data
      * produced by a writer rank.
      */
-    BufferV *ReinitStepData(BufferV *DataBuffer,
-                            bool forceCopyDeferred = false);
+    BufferV *ReinitStepData(BufferV *DataBuffer, bool forceCopyDeferred = false);
 
     TimestepInfo CloseTimestep(int timestep, bool forceCopyDeferred = false);
     void PerformPuts(bool forceCopyDeferred = false);
@@ -110,19 +108,19 @@ public:
 
     core::Engine *m_Engine = NULL;
 
-    std::vector<char> CopyMetadataToContiguous(
-        const std::vector<BP5Base::MetaMetaInfoBlock> NewMetaMetaBlocks,
-        const std::vector<core::iovec> &MetaEncodeBuffers,
-        const std::vector<core::iovec> &AttributeEncodeBuffers,
-        const std::vector<uint64_t> &DataSizes,
-        const std::vector<uint64_t> &WriterDataPositions) const;
+    std::vector<char>
+    CopyMetadataToContiguous(const std::vector<BP5Base::MetaMetaInfoBlock> NewMetaMetaBlocks,
+                             const std::vector<core::iovec> &MetaEncodeBuffers,
+                             const std::vector<core::iovec> &AttributeEncodeBuffers,
+                             const std::vector<uint64_t> &DataSizes,
+                             const std::vector<uint64_t> &WriterDataPositions) const;
 
-    std::vector<core::iovec> BreakoutContiguousMetadata(
-        std::vector<char> &Aggregate, const std::vector<size_t> Counts,
-        std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks,
-        std::vector<core::iovec> &AttributeBlocks,
-        std::vector<uint64_t> &DataSizes,
-        std::vector<uint64_t> &WriterDataPositions) const;
+    std::vector<core::iovec>
+    BreakoutContiguousMetadata(std::vector<char> &Aggregate, const std::vector<size_t> Counts,
+                               std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks,
+                               std::vector<core::iovec> &AttributeBlocks,
+                               std::vector<uint64_t> &DataSizes,
+                               std::vector<uint64_t> &WriterDataPositions) const;
 
     void *GetPtr(int bufferIdx, size_t posInBuffer);
     size_t CalcSize(const size_t Count, const size_t *Vals);
@@ -151,7 +149,7 @@ private:
         int DimCount;
         int Type;
         size_t MinMaxOffset;
-    } * BP5WriterRec;
+    } *BP5WriterRec;
 
     struct FFSWriterMarshalBase
     {
@@ -207,39 +205,32 @@ private:
     size_t m_PriorDataBufferSizeTotal = 0;
 
     BP5WriterRec LookupWriterRec(void *Key);
-    BP5WriterRec CreateWriterRec(void *Variable, const char *Name,
-                                 DataType Type, size_t ElemSize,
+    BP5WriterRec CreateWriterRec(void *Variable, const char *Name, DataType Type, size_t ElemSize,
                                  size_t DimCount);
     void ValidateWriterRec(BP5WriterRec Rec, void *Variable);
     void CollectFinalShapeValues();
     void RecalcMarshalStorageSize();
     void RecalcAttributeStorageSize();
-    void AddSimpleField(FMFieldList *FieldP, int *CountP, const char *Name,
-                        const char *Type, int ElementSize);
-    void AddField(FMFieldList *FieldP, int *CountP, const char *Name,
-                  const DataType Type, int ElementSize);
-    void AddFixedArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
-                            const DataType Type, int ElementSize, int DimCount);
-    void AddVarArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
-                          const DataType Type, int ElementSize,
-                          char *SizeField);
+    void AddSimpleField(FMFieldList *FieldP, int *CountP, const char *Name, const char *Type,
+                        int ElementSize);
+    void AddField(FMFieldList *FieldP, int *CountP, const char *Name, const DataType Type,
+                  int ElementSize);
+    void AddFixedArrayField(FMFieldList *FieldP, int *CountP, const char *Name, const DataType Type,
+                            int ElementSize, int DimCount);
+    void AddVarArrayField(FMFieldList *FieldP, int *CountP, const char *Name, const DataType Type,
+                          int ElementSize, char *SizeField);
     void AddDoubleArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
-                             const DataType Type, int ElementSize,
-                             char *SizeField);
-    char *BuildVarName(const char *base_name, const ShapeID Shape,
-                       const int type, const int element_size);
-    void BreakdownVarName(const char *Name, char **base_name_p, int *type_p,
-                          int *element_size_p);
-    char *BuildArrayDimsName(const char *base_name, const int type,
-                             const int element_size);
-    char *BuildArrayDBCountName(const char *base_name, const int type,
-                                const int element_size);
-    char *BuildArrayBlockCountName(const char *base_name, const int type,
-                                   const int element_size);
+                             const DataType Type, int ElementSize, char *SizeField);
+    char *BuildVarName(const char *base_name, const ShapeID Shape, const int type,
+                       const int element_size);
+    void BreakdownVarName(const char *Name, char **base_name_p, int *type_p, int *element_size_p);
+    char *BuildArrayDimsName(const char *base_name, const int type, const int element_size);
+    char *BuildArrayDBCountName(const char *base_name, const int type, const int element_size);
+    char *BuildArrayBlockCountName(const char *base_name, const int type, const int element_size);
     char *TranslateADIOS2Type2FFS(const DataType Type);
     size_t *CopyDims(const size_t Count, const size_t *Vals);
-    size_t *AppendDims(size_t *OldDims, const size_t OldCount,
-                       const size_t Count, const size_t *Vals);
+    size_t *AppendDims(size_t *OldDims, const size_t OldCount, const size_t Count,
+                       const size_t *Vals);
 
     void DumpDeferredBlocks(bool forceCopyDeferred = false);
     void VariableStatsEnabled(void *Variable);

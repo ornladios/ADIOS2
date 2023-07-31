@@ -29,12 +29,10 @@ public:
 
     ~CompressSirius() = default;
 
-    size_t Operate(const char *dataIn, const Dims &blockStart,
-                   const Dims &blockCount, const DataType type,
-                   char *bufferOut) final;
+    size_t Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                   const DataType type, char *bufferOut) final;
 
-    size_t InverseOperate(const char *bufferIn, const size_t sizeIn,
-                          char *dataOut) final;
+    size_t InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 
@@ -48,8 +46,7 @@ private:
     static int m_CurrentTier;
 
     // for decompress
-    static std::vector<std::unordered_map<std::string, std::vector<char>>>
-        m_TierBuffersMap;
+    static std::vector<std::unordered_map<std::string, std::vector<char>>> m_TierBuffersMap;
     static std::unordered_map<std::string, int> m_CurrentTierMap;
 
     /**
@@ -61,8 +58,7 @@ private:
      * @param dataOut : decompressed data buffer
      * @return : number of bytes in dataOut
      */
-    size_t DecompressV1(const char *bufferIn, const size_t sizeIn,
-                        char *dataOut);
+    size_t DecompressV1(const char *bufferIn, const size_t sizeIn, char *dataOut);
 };
 
 } // end namespace compress

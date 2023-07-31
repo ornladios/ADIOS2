@@ -25,16 +25,15 @@ template <class T>
 Dims Variable<T>::DoCount() const
 {
     auto lf_Step = [&]() -> size_t {
-        auto itStep =
-            std::next(m_AvailableStepBlockIndexOffsets.begin(), m_StepsStart);
+        auto itStep = std::next(m_AvailableStepBlockIndexOffsets.begin(), m_StepsStart);
         if (itStep == m_AvailableStepBlockIndexOffsets.end())
         {
             auto it = m_AvailableStepBlockIndexOffsets.rbegin();
             helper::Throw<std::invalid_argument>(
                 "Core", "Variable", "DoCount",
                 "current relative step start for variable " + m_Name +
-                    " is outside the scope of available steps " +
-                    std::to_string(it->first - 1) + " in call to Count");
+                    " is outside the scope of available steps " + std::to_string(it->first - 1) +
+                    " in call to Count");
         }
         return itStep->first - 1;
     };
@@ -52,9 +51,8 @@ Dims Variable<T>::DoCount() const
                         " from SetBlockSelection is out of bounds for "
                         "available "
                         "blocks size " +
-                        std::to_string(MVI->BlocksInfo.size()) +
-                        " for variable " + m_Name + " for step " +
-                        std::to_string(m_StepsStart) +
+                        std::to_string(MVI->BlocksInfo.size()) + " for variable " + m_Name +
+                        " for step " + std::to_string(m_StepsStart) +
                         ", in call to Variable<T>::Count()");
             }
 
@@ -69,8 +67,7 @@ Dims Variable<T>::DoCount() const
             return D;
         }
 
-        const size_t step =
-            !m_FirstStreamingStep ? m_Engine->CurrentStep() : lf_Step();
+        const size_t step = !m_FirstStreamingStep ? m_Engine->CurrentStep() : lf_Step();
 
         const std::vector<typename Variable<T>::BPInfo> blocksInfo =
             m_Engine->BlocksInfo<T>(*this, step);
@@ -82,9 +79,8 @@ Dims Variable<T>::DoCount() const
                 "blockID " + std::to_string(m_BlockID) +
                     " from SetBlockSelection is out of bounds for available "
                     "blocks size " +
-                    std::to_string(blocksInfo.size()) + " for variable " +
-                    m_Name + " for step " + std::to_string(step) +
-                    ", in call to Variable<T>::Count()");
+                    std::to_string(blocksInfo.size()) + " for variable " + m_Name + " for step " +
+                    std::to_string(step) + ", in call to Variable<T>::Count()");
         }
 
         return blocksInfo[m_BlockID].Count;
@@ -113,19 +109,21 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
         MinMaxStruct MM;
         if (m_Engine->VariableMinMax(*this, step, MM))
         {
-        if (std::is_same<T, std::string>::value) {
-            return minMax;
-        } else {
-            minMax.first = *(T *)&MM.MinUnion;
-            minMax.second = *(T *)&MM.MaxUnion;
-            return minMax;
+            if (std::is_same<T, std::string>::value)
+            {
+                return minMax;
+            }
+            else
+            {
+                minMax.first = *(T *)&MM.MinUnion;
+                minMax.second = *(T *)&MM.MaxUnion;
+                return minMax;
             }
         }
     }
     if (m_Engine != nullptr && !m_FirstStreamingStep)
     {
-        const size_t stepInput =
-            (step == DefaultSizeT) ? m_Engine->CurrentStep() : step;
+        const size_t stepInput = (step == DefaultSizeT) ? m_Engine->CurrentStep() : step;
 
         const std::vector<typename Variable<T>::BPInfo> blocksInfo =
             m_Engine->BlocksInfo<T>(*this, stepInput);
@@ -150,17 +148,14 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
             return minMax;
         }
 
-        const bool isValue =
-            ((blocksInfo.front().Shape.size() == 1 &&
-              blocksInfo.front().Shape.front() == LocalValueDim) ||
-             m_ShapeID == ShapeID::GlobalValue)
-                ? true
-                : false;
+        const bool isValue = ((blocksInfo.front().Shape.size() == 1 &&
+                               blocksInfo.front().Shape.front() == LocalValueDim) ||
+                              m_ShapeID == ShapeID::GlobalValue)
+                                 ? true
+                                 : false;
 
-        minMax.first =
-            isValue ? blocksInfo.front().Value : blocksInfo.front().Min;
-        minMax.second =
-            isValue ? blocksInfo.front().Value : blocksInfo.front().Max;
+        minMax.first = isValue ? blocksInfo.front().Value : blocksInfo.front().Min;
+        minMax.second = isValue ? blocksInfo.front().Value : blocksInfo.front().Max;
 
         for (const typename Variable<T>::BPInfo &blockInfo : blocksInfo)
         {
@@ -188,27 +183,24 @@ std::pair<T, T> Variable<T>::DoMinMax(const size_t step) const
 }
 
 template <class T>
-std::vector<std::vector<typename Variable<T>::BPInfo>>
-Variable<T>::DoAllStepsBlocksInfo() const
+std::vector<std::vector<typename Variable<T>::BPInfo>> Variable<T>::DoAllStepsBlocksInfo() const
 {
     if (m_Engine == nullptr)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "Variable", "DoAllStepsBlocksInfo",
-            "from variable " + m_Name +
-                " function is only valid in read mode, in "
-                "call to Variable<T>::AllBlocksInfo");
+        helper::Throw<std::invalid_argument>("Core", "Variable", "DoAllStepsBlocksInfo",
+                                             "from variable " + m_Name +
+                                                 " function is only valid in read mode, in "
+                                                 "call to Variable<T>::AllBlocksInfo");
     }
 
     if (!m_FirstStreamingStep)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "Variable", "DoAllStepsBlocksInfo",
-            "from variable " + m_Name +
-                " function is not valid in "
-                "random-access read mode "
-                "(BeginStep/EndStep), in "
-                "call to Variable<T>::AllBlocksInfo");
+        helper::Throw<std::invalid_argument>("Core", "Variable", "DoAllStepsBlocksInfo",
+                                             "from variable " + m_Name +
+                                                 " function is not valid in "
+                                                 "random-access read mode "
+                                                 "(BeginStep/EndStep), in "
+                                                 "call to Variable<T>::AllBlocksInfo");
     }
 
     return m_Engine->AllRelativeStepsBlocksInfo(*this);

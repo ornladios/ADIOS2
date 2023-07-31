@@ -53,12 +53,10 @@ int main(int argc, char *argv[])
         adios2::IO io = adios.DeclareIO("writer");
 
         adios2::Variable<float> varArray = io.DefineVariable<float>(
-            "myArray", {settings.gndx, settings.gndy},
-            {settings.offsx, settings.offsy}, {settings.ndx, settings.ndy},
-            adios2::ConstantDims);
+            "myArray", {settings.gndx, settings.gndy}, {settings.offsx, settings.offsy},
+            {settings.ndx, settings.ndy}, adios2::ConstantDims);
 
-        adios2::Engine writer =
-            io.Open(settings.streamname, adios2::Mode::Write);
+        adios2::Engine writer = io.Open(settings.streamname, adios2::Mode::Write);
 
         for (size_t step = 0; step < settings.steps; ++step)
         {
@@ -74,16 +72,14 @@ int main(int argc, char *argv[])
             writer.BeginStep(adios2::StepMode::Append);
             writer.Put<float>(varArray, myArray.data());
             writer.EndStep();
-            std::this_thread::sleep_for(
-                std::chrono::milliseconds(settings.sleeptime));
+            std::this_thread::sleep_for(std::chrono::milliseconds(settings.sleeptime));
         }
 
         writer.Close();
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)

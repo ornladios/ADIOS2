@@ -41,8 +41,7 @@ public:
     int rank;           // MPI rank
     unsigned int nproc; // number of processors
 
-    HelloSkeletonArgs(bool isWriter, int argc, char *argv[], int rank,
-                      int nproc);
+    HelloSkeletonArgs(bool isWriter, int argc, char *argv[], int rank, int nproc);
 
     void DecomposeArray(size_t NX, size_t NY);
 };

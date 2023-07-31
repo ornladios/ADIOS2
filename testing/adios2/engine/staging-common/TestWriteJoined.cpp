@@ -44,9 +44,8 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
     MPI_Comm_size(testComm, &mpiSize);
-    const int nblocks = (mpiRank < static_cast<int>(nblocksPerProcess.size())
-                             ? nblocksPerProcess[mpiRank]
-                             : 1);
+    const int nblocks =
+        (mpiRank < static_cast<int>(nblocksPerProcess.size()) ? nblocksPerProcess[mpiRank] : 1);
 #else
     const int nblocks = nblocksPerProcess[0];
 #endif
@@ -65,14 +64,12 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     outIO.SetParameters(engineParams);
 
     adios2::Engine writer = outIO.Open(fname, adios2::Mode::Write);
-    auto bpp_var = outIO.DefineVariable<int>("blocksperprocess",
-                                             {nblocksPerProcess.size()}, {0},
+    auto bpp_var = outIO.DefineVariable<int>("blocksperprocess", {nblocksPerProcess.size()}, {0},
                                              {nblocksPerProcess.size()});
 
     auto rows_var = outIO.DefineVariable<int>("totalrows");
 
-    auto var = outIO.DefineVariable<double>("table", {adios2::JoinedDim, Ncols},
-                                            {}, {1, Ncols});
+    auto var = outIO.DefineVariable<double>("table", {adios2::JoinedDim, Ncols}, {}, {1, Ncols});
 
     if (!mpiRank)
     {
@@ -94,14 +91,12 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
 
         nTotalRows[step] = nMyTotalRows[step];
 #if ADIOS2_USE_MPI
-        MPI_Allreduce(&(nMyTotalRows[step]), &(nTotalRows[step]), 1, MPI_INT,
-                      MPI_SUM, testComm);
+        MPI_Allreduce(&(nMyTotalRows[step]), &(nTotalRows[step]), 1, MPI_INT, MPI_SUM, testComm);
 #endif
 
         if (!mpiRank)
         {
-            std::cout << "Writing " << nTotalRows[step] << " rows in step "
-                      << step << std::endl;
+            std::cout << "Writing " << nTotalRows[step] << " rows in step " << step << std::endl;
         }
 
         writer.BeginStep();
@@ -111,8 +106,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         }
         if (mpiRank == 0)
         {
-            std::cout << "Writer Generating " << nTotalRows[step] << " in total"
-                      << std::endl;
+            std::cout << "Writer Generating " << nTotalRows[step] << " in total" << std::endl;
             writer.Put(rows_var, nTotalRows[step]);
         }
         for (int block = 0; block < nblocks; ++block)
@@ -122,17 +116,16 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
             {
                 for (size_t col = 0; col < Ncols; col++)
                 {
-                    mytable[row * Ncols + col] = static_cast<double>(
-                        (step + 1) * 1.0 + mpiRank * 0.1 + block * 0.01 +
-                        row * 0.001 + col * 0.0001);
+                    mytable[row * Ncols + col] =
+                        static_cast<double>((step + 1) * 1.0 + mpiRank * 0.1 + block * 0.01 +
+                                            row * 0.001 + col * 0.0001);
                 }
             }
 
             var.SetSelection({{}, {Nrows[block], Ncols}});
 
-            std::cout << "Step " << step << " rank " << mpiRank << " block "
-                      << block << " count (" << var.Count()[0] << ", "
-                      << var.Count()[1] << ")" << std::endl;
+            std::cout << "Step " << step << " rank " << mpiRank << " block " << block << " count ("
+                      << var.Count()[0] << ", " << var.Count()[1] << ")" << std::endl;
 
             writer.Put(var, mytable.data(), adios2::Mode::Sync);
         }
@@ -152,9 +145,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

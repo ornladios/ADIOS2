@@ -120,8 +120,7 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
         adios2::Box<adios2::Dims> sel({mpiRank * Nx}, {Nx});
         adios2::Box<adios2::Dims> sel2({mpiRank * Nx, 0}, {Nx, 2});
         adios2::Box<adios2::Dims> sel3({0, mpiRank * Nx}, {2, Nx});
-        adios2::Box<adios2::Dims> sel_time(
-            {static_cast<unsigned long>(mpiRank)}, {1});
+        adios2::Box<adios2::Dims> sel_time({static_cast<unsigned long>(mpiRank)}, {1});
         var_i8.SetSelection(sel);
         var_i16.SetSelection(sel);
         var_i32.SetSelection(sel);
@@ -160,14 +159,13 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
         }
         if (AdvancingAttrs)
         {
-            const std::string r64_Single =
-                std::string("r64_PerStep_") + std::to_string(step);
+            const std::string r64_Single = std::string("r64_PerStep_") + std::to_string(step);
             io.DefineAttribute<double>(r64_Single, (double)(step * 10.0));
         }
         engine.EndStep();
         std::cout << "Writer finished step " << step << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(
-            DelayMS)); /* sleep for DelayMS milliseconds */
+        std::this_thread::sleep_for(
+            std::chrono::milliseconds(DelayMS)); /* sleep for DelayMS milliseconds */
         step++;
         {
             int MyCloseNow = 0;
@@ -176,16 +174,15 @@ TEST_F(CommonServerTest, ADIOS2CommonServer)
                 MyCloseNow = 1;
             }
 #if ADIOS2_USE_MPI
-            MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR,
-                          MPI_COMM_WORLD);
+            MPI_Allreduce(&MyCloseNow, &GlobalCloseNow, 1, MPI_INT, MPI_LOR, MPI_COMM_WORLD);
 #else
             GlobalCloseNow = MyCloseNow;
 #endif
         }
         if (GlobalCloseNow)
         {
-            std::cout << "Writer closing stream because file \""
-                      << shutdown_name << "\" was noticed" << std::endl;
+            std::cout << "Writer closing stream because file \"" << shutdown_name
+                      << "\" was noticed" << std::endl;
         }
     }
     std::cout << "Writer closing stream normally" << std::endl;
@@ -202,9 +199,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

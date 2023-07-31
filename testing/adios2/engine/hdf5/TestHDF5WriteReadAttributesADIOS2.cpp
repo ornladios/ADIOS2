@@ -25,8 +25,8 @@ public:
 // ADIOS2 write, read for single value attributes
 TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
 {
-    const std::string fName = "." + std::string(&adios2::PathSeparator, 1) +
-                              "ADIOS2BPWriteAttributeReadSingleTypes.h5";
+    const std::string fName =
+        "." + std::string(&adios2::PathSeparator, 1) + "ADIOS2BPWriteAttributeReadSingleTypes.h5";
 
     const std::string zero = std::to_string(0);
     const std::string s1_Single = std::string("s1_Single_") + zero;
@@ -45,8 +45,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
     // When collective meta generation has landed, use
     // generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
     // Generate current testing data
-    SmallTestData currentTestData =
-        generateNewSmallTestData(m_TestData, 0, 0, 0);
+    SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, 0, 0);
 
 // Write test data using BP
 #ifdef TEST_HDF5_MPI
@@ -60,8 +59,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
 
         // Declare Single Value Attributes
         io.DefineAttribute<std::string>(s1_Single, currentTestData.S1);
-        io.DefineAttribute<std::string>(s1_Array,
-                                        currentTestData.S1array.data(),
+        io.DefineAttribute<std::string>(s1_Array, currentTestData.S1array.data(),
                                         currentTestData.S1array.size());
 
         io.DefineAttribute<int8_t>(i8_Single, currentTestData.I8.front());
@@ -187,8 +185,8 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
 // ADIOS2 write read for array attributes
 TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
 {
-    const std::string fName = "." + std::string(&adios2::PathSeparator, 1) +
-                              "ADIOS2BPWriteAttributeReadArrayTypes.h5";
+    const std::string fName =
+        "." + std::string(&adios2::PathSeparator, 1) + "ADIOS2BPWriteAttributeReadArrayTypes.h5";
 
 #ifdef TEST_HDF5_MPI
     int mpiRank = 0, mpiSize = 1;
@@ -212,8 +210,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
     // When collective meta generation has landed, use
     // generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
     // Generate current testing data
-    SmallTestData currentTestData =
-        generateNewSmallTestData(m_TestData, 0, 0, 0);
+    SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, 0, 0);
 
 // Write test data using BP
 #ifdef TEST_HDF5_MPI
@@ -229,8 +226,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
         io.DefineAttribute<std::string>(s1_Array, currentTestData.S3.data(),
                                         currentTestData.S3.size());
 
-        io.DefineAttribute<int8_t>(i8_Array, currentTestData.I8.data(),
-                                   currentTestData.I8.size());
+        io.DefineAttribute<int8_t>(i8_Array, currentTestData.I8.data(), currentTestData.I8.size());
         io.DefineAttribute<int16_t>(i16_Array, currentTestData.I16.data(),
                                     currentTestData.I16.size());
         io.DefineAttribute<int32_t>(i32_Array, currentTestData.I32.data(),
@@ -238,8 +234,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
         io.DefineAttribute<int64_t>(i64_Array, currentTestData.I64.data(),
                                     currentTestData.I64.size());
 
-        io.DefineAttribute<uint8_t>(u8_Array, currentTestData.U8.data(),
-                                    currentTestData.U8.size());
+        io.DefineAttribute<uint8_t>(u8_Array, currentTestData.U8.data(), currentTestData.U8.size());
         io.DefineAttribute<uint16_t>(u16_Array, currentTestData.U16.data(),
                                      currentTestData.U16.size());
         io.DefineAttribute<uint32_t>(u32_Array, currentTestData.U32.data(),
@@ -366,8 +361,8 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
 
 TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
 {
-    const std::string fName = "." + std::string(&adios2::PathSeparator, 1) +
-                              "BPWriteAttributeReadSingleTypesVar.h5";
+    const std::string fName =
+        "." + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadSingleTypesVar.h5";
 
     const std::string zero = std::to_string(0);
     const std::string s1_Single = std::string("s1_Single_") + zero;
@@ -385,8 +380,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
     // When collective meta generation has landed, use
     // generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
     // Generate current testing data
-    SmallTestData currentTestData =
-        generateNewSmallTestData(m_TestData, 0, 0, 0);
+    SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, 0, 0);
 
     const std::string separator = "/";
 
@@ -403,30 +397,19 @@ TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
         // Declare Single Value Attributes
         auto var = io.DefineVariable<int>("myVar");
 
-        io.DefineAttribute<std::string>(s1_Single, currentTestData.S1,
-                                        var.Name());
-        io.DefineAttribute<int8_t>(i8_Single, currentTestData.I8.front(),
-                                   var.Name());
-        io.DefineAttribute<int16_t>(i16_Single, currentTestData.I16.front(),
-                                    var.Name());
-        io.DefineAttribute<int32_t>(i32_Single, currentTestData.I32.front(),
-                                    var.Name());
-        io.DefineAttribute<int64_t>(i64_Single, currentTestData.I64.front(),
-                                    var.Name());
+        io.DefineAttribute<std::string>(s1_Single, currentTestData.S1, var.Name());
+        io.DefineAttribute<int8_t>(i8_Single, currentTestData.I8.front(), var.Name());
+        io.DefineAttribute<int16_t>(i16_Single, currentTestData.I16.front(), var.Name());
+        io.DefineAttribute<int32_t>(i32_Single, currentTestData.I32.front(), var.Name());
+        io.DefineAttribute<int64_t>(i64_Single, currentTestData.I64.front(), var.Name());
 
-        io.DefineAttribute<uint8_t>(u8_Single, currentTestData.U8.front(),
-                                    var.Name());
-        io.DefineAttribute<uint16_t>(u16_Single, currentTestData.U16.front(),
-                                     var.Name());
-        io.DefineAttribute<uint32_t>(u32_Single, currentTestData.U32.front(),
-                                     var.Name());
-        io.DefineAttribute<uint64_t>(u64_Single, currentTestData.U64.front(),
-                                     var.Name());
+        io.DefineAttribute<uint8_t>(u8_Single, currentTestData.U8.front(), var.Name());
+        io.DefineAttribute<uint16_t>(u16_Single, currentTestData.U16.front(), var.Name());
+        io.DefineAttribute<uint32_t>(u32_Single, currentTestData.U32.front(), var.Name());
+        io.DefineAttribute<uint64_t>(u64_Single, currentTestData.U64.front(), var.Name());
 
-        io.DefineAttribute<float>(r32_Single, currentTestData.R32.front(),
-                                  var.Name());
-        io.DefineAttribute<double>(r64_Single, currentTestData.R64.front(),
-                                   var.Name());
+        io.DefineAttribute<float>(r32_Single, currentTestData.R32.front(), var.Name());
+        io.DefineAttribute<double>(r64_Single, currentTestData.R64.front(), var.Name());
 
         adios2::Engine engine = io.Open(fName, adios2::Mode::Write);
         engine.Put(var, 10);
@@ -441,23 +424,16 @@ TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
 
         auto var = ioRead.InquireVariable<int>("myVar");
 
-        auto attr_s1 =
-            ioRead.InquireAttribute<std::string>(s1_Single, var.Name());
+        auto attr_s1 = ioRead.InquireAttribute<std::string>(s1_Single, var.Name());
         auto attr_i8 = ioRead.InquireAttribute<int8_t>(i8_Single, var.Name());
-        auto attr_i16 =
-            ioRead.InquireAttribute<int16_t>(i16_Single, var.Name());
-        auto attr_i32 =
-            ioRead.InquireAttribute<int32_t>(i32_Single, var.Name());
-        auto attr_i64 =
-            ioRead.InquireAttribute<int64_t>(i64_Single, var.Name());
+        auto attr_i16 = ioRead.InquireAttribute<int16_t>(i16_Single, var.Name());
+        auto attr_i32 = ioRead.InquireAttribute<int32_t>(i32_Single, var.Name());
+        auto attr_i64 = ioRead.InquireAttribute<int64_t>(i64_Single, var.Name());
 
         auto attr_u8 = ioRead.InquireAttribute<uint8_t>(u8_Single, var.Name());
-        auto attr_u16 =
-            ioRead.InquireAttribute<uint16_t>(u16_Single, var.Name());
-        auto attr_u32 =
-            ioRead.InquireAttribute<uint32_t>(u32_Single, var.Name());
-        auto attr_u64 =
-            ioRead.InquireAttribute<uint64_t>(u64_Single, var.Name());
+        auto attr_u16 = ioRead.InquireAttribute<uint16_t>(u16_Single, var.Name());
+        auto attr_u32 = ioRead.InquireAttribute<uint32_t>(u32_Single, var.Name());
+        auto attr_u64 = ioRead.InquireAttribute<uint64_t>(u64_Single, var.Name());
 
         auto attr_r32 = ioRead.InquireAttribute<float>(r32_Single, var.Name());
         auto attr_r64 = ioRead.InquireAttribute<double>(r64_Single, var.Name());
@@ -535,8 +511,8 @@ TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
 // ADIOS2 write read for array attributes
 TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
 {
-    const std::string fName = "." + std::string(&adios2::PathSeparator, 1) +
-                              "BPWriteAttributeReadArrayTypesVar.h5";
+    const std::string fName =
+        "." + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadArrayTypesVar.h5";
 
 #ifdef TEST_HDF5_MPI
     int mpiRank = 0, mpiSize = 1;
@@ -559,8 +535,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
 
     const std::string separator = "/";
 
-    SmallTestData currentTestData =
-        generateNewSmallTestData(m_TestData, 0, 0, 0);
+    SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, 0, 0);
 
 // Write test data using BP
 #ifdef TEST_HDF5_MPI
@@ -577,8 +552,8 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
         io.DefineAttribute<std::string>(s1_Array, currentTestData.S3.data(),
                                         currentTestData.S3.size(), var.Name());
 
-        io.DefineAttribute<int8_t>(i8_Array, currentTestData.I8.data(),
-                                   currentTestData.I8.size(), var.Name());
+        io.DefineAttribute<int8_t>(i8_Array, currentTestData.I8.data(), currentTestData.I8.size(),
+                                   var.Name());
         io.DefineAttribute<int16_t>(i16_Array, currentTestData.I16.data(),
                                     currentTestData.I16.size(), var.Name());
         io.DefineAttribute<int32_t>(i32_Array, currentTestData.I32.data(),
@@ -586,8 +561,8 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
         io.DefineAttribute<int64_t>(i64_Array, currentTestData.I64.data(),
                                     currentTestData.I64.size(), var.Name());
 
-        io.DefineAttribute<uint8_t>(u8_Array, currentTestData.U8.data(),
-                                    currentTestData.U8.size(), var.Name());
+        io.DefineAttribute<uint8_t>(u8_Array, currentTestData.U8.data(), currentTestData.U8.size(),
+                                    var.Name());
         io.DefineAttribute<uint16_t>(u16_Array, currentTestData.U16.data(),
                                      currentTestData.U16.size(), var.Name());
         io.DefineAttribute<uint32_t>(u32_Array, currentTestData.U32.data(),
@@ -595,8 +570,8 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
         io.DefineAttribute<uint64_t>(u64_Array, currentTestData.U64.data(),
                                      currentTestData.U64.size(), var.Name());
 
-        io.DefineAttribute<float>(r32_Array, currentTestData.R32.data(),
-                                  currentTestData.R32.size(), var.Name());
+        io.DefineAttribute<float>(r32_Array, currentTestData.R32.data(), currentTestData.R32.size(),
+                                  var.Name());
         io.DefineAttribute<double>(r64_Array, currentTestData.R64.data(),
                                    currentTestData.R64.size(), var.Name());
 
@@ -616,8 +591,7 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
 
         auto var = ioRead.InquireVariable<int>("myVar");
 
-        auto attr_s1 =
-            ioRead.InquireAttribute<std::string>(s1_Array, var.Name());
+        auto attr_s1 = ioRead.InquireAttribute<std::string>(s1_Array, var.Name());
 
         auto attr_i8 = ioRead.InquireAttribute<int8_t>(i8_Array, var.Name());
         auto attr_i16 = ioRead.InquireAttribute<int16_t>(i16_Array, var.Name());
@@ -625,12 +599,9 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
         auto attr_i64 = ioRead.InquireAttribute<int64_t>(i64_Array, var.Name());
 
         auto attr_u8 = ioRead.InquireAttribute<uint8_t>(u8_Array, var.Name());
-        auto attr_u16 =
-            ioRead.InquireAttribute<uint16_t>(u16_Array, var.Name());
-        auto attr_u32 =
-            ioRead.InquireAttribute<uint32_t>(u32_Array, var.Name());
-        auto attr_u64 =
-            ioRead.InquireAttribute<uint64_t>(u64_Array, var.Name());
+        auto attr_u16 = ioRead.InquireAttribute<uint16_t>(u16_Array, var.Name());
+        auto attr_u32 = ioRead.InquireAttribute<uint32_t>(u32_Array, var.Name());
+        auto attr_u64 = ioRead.InquireAttribute<uint64_t>(u64_Array, var.Name());
 
         auto attr_r32 = ioRead.InquireAttribute<float>(r32_Array, var.Name());
         auto attr_r64 = ioRead.InquireAttribute<double>(r64_Array, var.Name());

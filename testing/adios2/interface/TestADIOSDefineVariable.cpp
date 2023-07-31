@@ -12,8 +12,7 @@ class ADIOSDefineVariableTest : public ::testing::Test
 {
 public:
 #if ADIOS2_USE_MPI
-    ADIOSDefineVariableTest()
-    : adios(MPI_COMM_WORLD), io(adios.DeclareIO("TestIO"))
+    ADIOSDefineVariableTest() : adios(MPI_COMM_WORLD), io(adios.DeclareIO("TestIO"))
 #else
     ADIOSDefineVariableTest() : adios(), io(adios.DeclareIO("TestIO"))
 #endif
@@ -33,8 +32,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalValue)
     auto globalvalue = io.DefineVariable<int>(name);
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(globalvalue),
-                                  adios2::Variable<int>>();
+    ::testing::StaticAssertTypeEq<decltype(globalvalue), adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(globalvalue.Shape().size(), 0);
@@ -47,12 +45,10 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalValue)
 TEST_F(ADIOSDefineVariableTest, DefineLocalValue)
 {
     // Define ADIOS local value (a value changing across processes)
-    auto localvalue =
-        io.DefineVariable<int>("localvalue", {adios2::LocalValueDim});
+    auto localvalue = io.DefineVariable<int>("localvalue", {adios2::LocalValueDim});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(localvalue),
-                                  adios2::Variable<int>>();
+    ::testing::StaticAssertTypeEq<decltype(localvalue), adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(localvalue.Shape().size(), 1);
@@ -72,21 +68,16 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArray)
 #endif
     const std::size_t Nx(10), Ny(20), Nz(30);
 
-    adios2::Dims shape{static_cast<size_t>(Nx * mpiSize),
-                       static_cast<size_t>(Ny * mpiSize),
+    adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), static_cast<size_t>(Ny * mpiSize),
                        static_cast<size_t>(Nz * mpiSize)};
-    adios2::Dims start{static_cast<size_t>(Nx * mpiRank),
-                       static_cast<size_t>(Ny * mpiRank),
+    adios2::Dims start{static_cast<size_t>(Nx * mpiRank), static_cast<size_t>(Ny * mpiRank),
                        static_cast<size_t>(Nz * mpiRank)};
-    adios2::Dims count{static_cast<size_t>(Nx), static_cast<size_t>(Ny),
-                       static_cast<size_t>(Nz)};
+    adios2::Dims count{static_cast<size_t>(Nx), static_cast<size_t>(Ny), static_cast<size_t>(Nz)};
     // Define ADIOS global array
-    auto globalarray =
-        io.DefineVariable<int>("globalarray", shape, start, count);
+    auto globalarray = io.DefineVariable<int>("globalarray", shape, start, count);
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(globalarray),
-                                  adios2::Variable<int>>();
+    ::testing::StaticAssertTypeEq<decltype(globalarray), adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(globalarray.Shape().size(), 3);
@@ -116,20 +107,16 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayWithSelections)
 #endif
     const std::size_t Nx(10), Ny(20), Nz(30);
 
-    adios2::Dims shape{static_cast<size_t>(Nx * mpiSize),
-                       static_cast<size_t>(Ny * mpiSize),
+    adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), static_cast<size_t>(Ny * mpiSize),
                        static_cast<size_t>(Nz * mpiSize)};
-    adios2::Dims start{static_cast<size_t>(Nx * mpiRank),
-                       static_cast<size_t>(Ny * mpiRank),
+    adios2::Dims start{static_cast<size_t>(Nx * mpiRank), static_cast<size_t>(Ny * mpiRank),
                        static_cast<size_t>(Nz * mpiRank)};
-    adios2::Dims count{static_cast<size_t>(Nx), static_cast<size_t>(Ny),
-                       static_cast<size_t>(Nz)};
+    adios2::Dims count{static_cast<size_t>(Nx), static_cast<size_t>(Ny), static_cast<size_t>(Nz)};
     // Define ADIOS global array
     auto globalarray = io.DefineVariable<int>("globalarray", shape);
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(globalarray),
-                                  adios2::Variable<int>>();
+    ::testing::StaticAssertTypeEq<decltype(globalarray), adios2::Variable<int>>();
 
     // Make a 3D selection to describe the local dimensions of the
     // variable we write and its offsets in the global spaces
@@ -163,21 +150,16 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayConstantDims)
 #endif
     const std::size_t Nx(10), Ny(20), Nz(30);
 
-    adios2::Dims shape{static_cast<size_t>(Nx * mpiSize),
-                       static_cast<size_t>(Ny * mpiSize),
+    adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), static_cast<size_t>(Ny * mpiSize),
                        static_cast<size_t>(Nz * mpiSize)};
-    adios2::Dims start{static_cast<size_t>(Nx * mpiRank),
-                       static_cast<size_t>(Ny * mpiRank),
+    adios2::Dims start{static_cast<size_t>(Nx * mpiRank), static_cast<size_t>(Ny * mpiRank),
                        static_cast<size_t>(Nz * mpiRank)};
-    adios2::Dims count{static_cast<size_t>(Nx), static_cast<size_t>(Ny),
-                       static_cast<size_t>(Nz)};
+    adios2::Dims count{static_cast<size_t>(Nx), static_cast<size_t>(Ny), static_cast<size_t>(Nz)};
     // Define ADIOS global array
-    auto globalarray =
-        io.DefineVariable<int>("globalarray", shape, start, count, true);
+    auto globalarray = io.DefineVariable<int>("globalarray", shape, start, count, true);
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(globalarray),
-                                  adios2::Variable<int>>();
+    ::testing::StaticAssertTypeEq<decltype(globalarray), adios2::Variable<int>>();
 
     // Make a 3D selection to describe the local dimensions of the
     // variable we write and its offsets in the global spaces
@@ -205,8 +187,7 @@ TEST_F(ADIOSDefineVariableTest, DefineGlobalArrayInvalidLocalValueDim)
 {
     // Define ADIOS global array
     std::size_t n = 50;
-    EXPECT_THROW(io.DefineVariable<int>("globalarray",
-                                        {100, adios2::LocalValueDim, 30},
+    EXPECT_THROW(io.DefineVariable<int>("globalarray", {100, adios2::LocalValueDim, 30},
                                         {50, n / 2, 0}, {10, n / 2, 30}),
                  std::invalid_argument);
 }
@@ -215,12 +196,10 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArray)
 {
     // Define ADIOS local array (no global dimensions, no offsets)
     std::size_t n = 50;
-    auto localarray =
-        io.DefineVariable<int>("localarray", {}, {}, {10, n / 2, 30});
+    auto localarray = io.DefineVariable<int>("localarray", {}, {}, {10, n / 2, 30});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(localarray),
-                                  adios2::Variable<int>>();
+    ::testing::StaticAssertTypeEq<decltype(localarray), adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(localarray.Shape().size(), 0);
@@ -243,22 +222,17 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayWithSelection)
 #endif
     const std::size_t Nx(10), Ny(20), Nz(30);
 
-    adios2::Dims shape{static_cast<size_t>(Nx * mpiSize),
-                       static_cast<size_t>(Ny * mpiSize),
+    adios2::Dims shape{static_cast<size_t>(Nx * mpiSize), static_cast<size_t>(Ny * mpiSize),
                        static_cast<size_t>(Nz * mpiSize)};
-    adios2::Dims start{static_cast<size_t>(Nx * mpiRank),
-                       static_cast<size_t>(Ny * mpiRank),
+    adios2::Dims start{static_cast<size_t>(Nx * mpiRank), static_cast<size_t>(Ny * mpiRank),
                        static_cast<size_t>(Nz * mpiRank)};
-    adios2::Dims count{static_cast<size_t>(Nx), static_cast<size_t>(Ny),
-                       static_cast<size_t>(Nz)};
+    adios2::Dims count{static_cast<size_t>(Nx), static_cast<size_t>(Ny), static_cast<size_t>(Nz)};
     // Define ADIOS global array
     auto localArray = io.DefineVariable<int>(
-        "localArray", {}, {},
-        {adios2::UnknownDim, adios2::UnknownDim, adios2::UnknownDim});
+        "localArray", {}, {}, {adios2::UnknownDim, adios2::UnknownDim, adios2::UnknownDim});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(localArray),
-                                  adios2::Variable<int>>();
+    ::testing::StaticAssertTypeEq<decltype(localArray), adios2::Variable<int>>();
     ASSERT_EQ(localArray.Shape().size(), 0);
     EXPECT_EQ(localArray.Start().size(), 0);
     EXPECT_EQ(localArray.Count().size(), 3);
@@ -305,8 +279,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayConstantDims)
     auto localArray = io.DefineVariable<int>("localArray", {}, {}, count, true);
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(localArray),
-                                  adios2::Variable<int>>();
+    ::testing::StaticAssertTypeEq<decltype(localArray), adios2::Variable<int>>();
 
     adios2::Box<adios2::Dims> sel({}, count);
     EXPECT_THROW(localArray.SetSelection(sel), std::invalid_argument);
@@ -327,8 +300,7 @@ TEST_F(ADIOSDefineVariableTest, DefineLocalArrayInvalidOffsets)
     // Define ADIOS local array but try to add offsets
     std::size_t n = 50;
 
-    EXPECT_THROW(io.DefineVariable<int>("localarray", {}, {50, n / 2, 0},
-                                        {10, n / 2, 30}),
+    EXPECT_THROW(io.DefineVariable<int>("localarray", {}, {50, n / 2, 0}, {10, n / 2, 30}),
                  std::invalid_argument);
 }
 
@@ -336,12 +308,11 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayFirstDim)
 {
     // Define ADIOS joined array
     std::size_t n = 50;
-    auto joinedarray = io.DefineVariable<int>(
-        "joinedarray", {adios2::JoinedDim, n, 30}, {}, {10, n, 30});
+    auto joinedarray =
+        io.DefineVariable<int>("joinedarray", {adios2::JoinedDim, n, 30}, {}, {10, n, 30});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(joinedarray),
-                                  adios2::Variable<int>>();
+    ::testing::StaticAssertTypeEq<decltype(joinedarray), adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(joinedarray.Shape().size(), 3);
@@ -361,12 +332,11 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArraySecondDim)
 {
     // Define ADIOS joined array
     std::size_t n = 50;
-    auto joinedarray = io.DefineVariable<int>(
-        "joinedarray", {n, adios2::JoinedDim, 30}, {0, 0, 0}, {n, 10, 30});
+    auto joinedarray =
+        io.DefineVariable<int>("joinedarray", {n, adios2::JoinedDim, 30}, {0, 0, 0}, {n, 10, 30});
 
     // Verify the return type is as expected
-    ::testing::StaticAssertTypeEq<decltype(joinedarray),
-                                  adios2::Variable<int>>();
+    ::testing::StaticAssertTypeEq<decltype(joinedarray), adios2::Variable<int>>();
 
     // Verify the dimensions, name, and type are correct
     ASSERT_EQ(joinedarray.Shape().size(), 3);
@@ -390,9 +360,8 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayTooManyJoinedDims)
     // Define ADIOS joined array
     std::size_t n = 50;
 
-    EXPECT_THROW(io.DefineVariable<int>(
-                     "joinedarray", {n, adios2::JoinedDim, adios2::JoinedDim},
-                     {}, {n, 50, 30}),
+    EXPECT_THROW(io.DefineVariable<int>("joinedarray", {n, adios2::JoinedDim, adios2::JoinedDim},
+                                        {}, {n, 50, 30}),
                  std::invalid_argument);
 }
 
@@ -402,18 +371,18 @@ TEST_F(ADIOSDefineVariableTest, DefineJoinedArrayInvalidStart)
     std::size_t n = 10;
     std::size_t WrongValue = 1;
     // Start must be empty or full zero array
-    EXPECT_THROW(io.DefineVariable<int>("joinedarray", {adios2::JoinedDim, 50},
-                                        {0, WrongValue}, {n, 50}),
-                 std::invalid_argument);
+    EXPECT_THROW(
+        io.DefineVariable<int>("joinedarray", {adios2::JoinedDim, 50}, {0, WrongValue}, {n, 50}),
+        std::invalid_argument);
 }
 
 TEST_F(ADIOSDefineVariableTest, DefineString)
 {
     // Define ADIOS local array but try to add offsets
     const std::size_t n = 50;
-    EXPECT_THROW(io.DefineVariable<std::string>(
-                     "invalidString1", {}, {50, n / 2, 0}, {10, n / 2, 30}),
-                 std::invalid_argument);
+    EXPECT_THROW(
+        io.DefineVariable<std::string>("invalidString1", {}, {50, n / 2, 0}, {10, n / 2, 30}),
+        std::invalid_argument);
     EXPECT_THROW(io.DefineVariable<std::string>("invalidString2", {}, {}, {1}),
                  std::invalid_argument);
 
@@ -670,8 +639,7 @@ TEST_F(ADIOSDefineVariableTest, DefineStructVariable)
     struct1.AddField("a", offsetof(def1, a), adios2::DataType::Int8);
     struct1.AddField("b", offsetof(def1, b), adios2::DataType::Int32, 5);
     struct1.Freeze();
-    EXPECT_THROW(struct1.AddField("c", 0, adios2::DataType::Int32),
-                 std::runtime_error);
+    EXPECT_THROW(struct1.AddField("c", 0, adios2::DataType::Int32), std::runtime_error);
 
     typedef struct def2
     {
@@ -683,11 +651,9 @@ TEST_F(ADIOSDefineVariableTest, DefineStructVariable)
     struct2.AddField("a", offsetof(def2, a), adios2::DataType::Int8);
     struct2.AddField("b", offsetof(def2, b), adios2::DataType::Int32, 5);
     struct2.AddField("c", 24, adios2::DataType::Int32);
-    EXPECT_THROW(struct2.AddField("c", 27, adios2::DataType::Int32),
-                 std::runtime_error);
+    EXPECT_THROW(struct2.AddField("c", 27, adios2::DataType::Int32), std::runtime_error);
 
-    auto structVar =
-        io.DefineStructVariable("particle", struct1, shape, start, count);
+    auto structVar = io.DefineStructVariable("particle", struct1, shape, start, count);
 
     EXPECT_EQ(structVar.Shape().size(), 1);
     EXPECT_EQ(structVar.Start().size(), 1);

@@ -40,13 +40,11 @@ void BufferSTL::Resize(const size_t size, const std::string hint)
         // catch a bad_alloc
         helper::ThrowNested<std::runtime_error>(
             "Toolkit::Format", "buffer::heap::BufferSTL", "BufferSystemV",
-            "buffer overflow when resizing to " + std::to_string(size) +
-                " bytes, " + hint);
+            "buffer overflow when resizing to " + std::to_string(size) + " bytes, " + hint);
     }
 }
 
-void BufferSTL::Reset(const bool resetAbsolutePosition,
-                      const bool zeroInitialize)
+void BufferSTL::Reset(const bool resetAbsolutePosition, const bool zeroInitialize)
 {
     m_Position = 0;
     if (resetAbsolutePosition)
@@ -76,13 +74,9 @@ void BufferSTL::Reset(const bool resetAbsolutePosition,
     }
 }
 
-size_t BufferSTL::GetAvailableSize() const
-{
-    return m_Buffer.size() - m_Position;
-}
+size_t BufferSTL::GetAvailableSize() const { return m_Buffer.size() - m_Position; }
 
-#define declare_template_instantiation(T)                                      \
-    template size_t BufferSTL::Align<T>() const noexcept;
+#define declare_template_instantiation(T) template size_t BufferSTL::Align<T>() const noexcept;
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

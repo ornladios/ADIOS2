@@ -64,34 +64,34 @@ int main(int argc, char *argv[])
     count2[1] = d2_Ny;
 
     // Define variables in ioH
-    adios2_define_variable(ioH, "nproc", adios2_type_int32_t, 0, NULL, NULL,
-                           NULL, adios2_constant_dims_true);
+    adios2_define_variable(ioH, "nproc", adios2_type_int32_t, 0, NULL, NULL, NULL,
+                           adios2_constant_dims_true);
 
-    adios2_define_variable(ioH, "varI8", adios2_type_int8_t, 1, shape, start,
-                           count, adios2_constant_dims_true);
-    adios2_define_variable(ioH, "varI16", adios2_type_int16_t, 1, shape, start,
-                           count, adios2_constant_dims_true);
-    adios2_define_variable(ioH, "varI32", adios2_type_int32_t, 1, shape, start,
-                           count, adios2_constant_dims_true);
-    adios2_define_variable(ioH, "varI64", adios2_type_int64_t, 1, shape, start,
-                           count, adios2_constant_dims_true);
+    adios2_define_variable(ioH, "varI8", adios2_type_int8_t, 1, shape, start, count,
+                           adios2_constant_dims_true);
+    adios2_define_variable(ioH, "varI16", adios2_type_int16_t, 1, shape, start, count,
+                           adios2_constant_dims_true);
+    adios2_define_variable(ioH, "varI32", adios2_type_int32_t, 1, shape, start, count,
+                           adios2_constant_dims_true);
+    adios2_define_variable(ioH, "varI64", adios2_type_int64_t, 1, shape, start, count,
+                           adios2_constant_dims_true);
 
-    adios2_define_variable(ioH, "varU8", adios2_type_uint8_t, 1, shape, start,
-                           count, adios2_constant_dims_true);
-    adios2_define_variable(ioH, "varU16", adios2_type_uint16_t, 1, shape, start,
-                           count, adios2_constant_dims_true);
-    adios2_define_variable(ioH, "varU32", adios2_type_uint32_t, 1, shape, start,
-                           count, adios2_constant_dims_true);
-    adios2_define_variable(ioH, "varU64", adios2_type_uint64_t, 1, shape, start,
-                           count, adios2_constant_dims_true);
+    adios2_define_variable(ioH, "varU8", adios2_type_uint8_t, 1, shape, start, count,
+                           adios2_constant_dims_true);
+    adios2_define_variable(ioH, "varU16", adios2_type_uint16_t, 1, shape, start, count,
+                           adios2_constant_dims_true);
+    adios2_define_variable(ioH, "varU32", adios2_type_uint32_t, 1, shape, start, count,
+                           adios2_constant_dims_true);
+    adios2_define_variable(ioH, "varU64", adios2_type_uint64_t, 1, shape, start, count,
+                           adios2_constant_dims_true);
 
-    adios2_define_variable(ioH, "varR32", adios2_type_float, 1, shape, start,
-                           count, adios2_constant_dims_true);
-    adios2_define_variable(ioH, "varR64", adios2_type_double, 1, shape, start,
-                           count, adios2_constant_dims_true);
+    adios2_define_variable(ioH, "varR32", adios2_type_float, 1, shape, start, count,
+                           adios2_constant_dims_true);
+    adios2_define_variable(ioH, "varR64", adios2_type_double, 1, shape, start, count,
+                           adios2_constant_dims_true);
 
-    adios2_define_variable(ioH, "R64_2d", adios2_type_double, 2, shape2, start2,
-                           count2, adios2_constant_dims_true);
+    adios2_define_variable(ioH, "R64_2d", adios2_type_double, 2, shape2, start2, count2,
+                           adios2_constant_dims_true);
 
     // Define attributes in ioH
     adios2_define_attribute(ioH, "name", adios2_type_string, "TestUtilsCWrite");
@@ -99,8 +99,7 @@ int main(int argc, char *argv[])
                                   sizeof(strarray) / sizeof(char *));
     adios2_define_attribute(ioH, "nwriters", adios2_type_int32_t, &nproc);
     unsigned short shape2D[2] = {(unsigned short)d2_Nx, (unsigned short)d2_Ny};
-    adios2_define_attribute_array(ioH, "shape2D", adios2_type_uint16_t, shape2D,
-                                  2);
+    adios2_define_attribute_array(ioH, "shape2D", adios2_type_uint16_t, shape2D, 2);
     adios2_define_attribute(ioH, "aI8", adios2_type_int8_t, data_I8);
     adios2_define_attribute(ioH, "aI16", adios2_type_int16_t, data_I16);
     adios2_define_attribute(ioH, "aI32", adios2_type_int32_t, data_I32);
@@ -124,8 +123,7 @@ int main(int argc, char *argv[])
     adios2_variable *varR64 = adios2_inquire_variable(ioH, "varR64");
     adios2_variable *R64_2d = adios2_inquire_variable(ioH, "R64_2d");
 
-    adios2_engine *engineH =
-        adios2_open(ioH, "TestUtilsCWriter.bp", adios2_mode_write);
+    adios2_engine *engineH = adios2_open(ioH, "TestUtilsCWriter.bp", adios2_mode_write);
 
     adios2_put(engineH, varNproc, &nproc, adios2_mode_deferred);
     adios2_put(engineH, varI8, data_I8, adios2_mode_deferred);

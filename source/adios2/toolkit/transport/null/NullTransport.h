@@ -34,13 +34,12 @@ public:
 
     virtual ~NullTransport();
 
-    void Open(const std::string &name, const Mode openMode,
-              const bool async = false, const bool directio = false) override;
+    void Open(const std::string &name, const Mode openMode, const bool async = false,
+              const bool directio = false) override;
 
     void SetBuffer(char *buffer, size_t size) override;
 
-    void Write(const char *buffer, size_t size,
-               size_t start = MaxSizeT) override;
+    void Write(const char *buffer, size_t size, size_t start = MaxSizeT) override;
 
     void Read(char *buffer, size_t size, size_t start = MaxSizeT) override;
 

@@ -21,17 +21,14 @@ MPI_Comm mpiComm;
 size_t steps = 100;
 
 Dims shape = {4, 4, 4};
-std::vector<int> global_data = {0,   1,   2,   3,   10,  11,  12,  13,
-                                20,  21,  22,  23,  30,  31,  32,  33,
+std::vector<int> global_data = {
+    0,   1,   2,   3,   10,  11,  12,  13,  20,  21,  22,  23,  30,  31,  32,  33,
 
-                                100, 101, 102, 103, 110, 111, 112, 113,
-                                120, 121, 122, 123, 130, 131, 132, 133,
+    100, 101, 102, 103, 110, 111, 112, 113, 120, 121, 122, 123, 130, 131, 132, 133,
 
-                                200, 201, 202, 203, 210, 211, 212, 213,
-                                220, 221, 222, 223, 230, 231, 232, 233,
+    200, 201, 202, 203, 210, 211, 212, 213, 220, 221, 222, 223, 230, 231, 232, 233,
 
-                                300, 301, 302, 303, 310, 311, 312, 313,
-                                320, 321, 322, 323, 330, 331, 332, 333};
+    300, 301, 302, 303, 310, 311, 312, 313, 320, 321, 322, 323, 330, 331, 332, 333};
 
 Dims start = {1, 2, 1};
 Dims count = {2, 1, 2};
@@ -52,11 +49,9 @@ public:
 };
 
 template <class T>
-void PrintData(const T *data, const size_t step, const Dims &start,
-               const Dims &count)
+void PrintData(const T *data, const size_t step, const Dims &start, const Dims &count)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    size_t size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     std::cout << "Step: " << step << " Size:" << size << "\n";
     size_t printsize = 128;
 
@@ -79,11 +74,10 @@ void PrintData(const T *data, const size_t step, const Dims &start,
     std::cout << "]" << std::endl;
 }
 
-void VerifyData(const int *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape)
+void VerifyData(const int *data, size_t step, const Dims &start, const Dims &count,
+                const Dims &shape)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    size_t size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     bool compressed = false;
     for (size_t i = 0; i < size; ++i)
     {
@@ -169,8 +163,7 @@ TEST_F(SscEngineTest, TestSsc3DMemSelect)
         MPI_Barrier(MPI_COMM_WORLD);
     }
     {
-        adios2::Params engineParams = {{"Verbose", "0"},
-                                       {"EngineMode", "naive"}};
+        adios2::Params engineParams = {{"Verbose", "0"}, {"EngineMode", "naive"}};
         int worldRank, worldSize;
         MPI_Comm_rank(MPI_COMM_WORLD, &worldRank);
         MPI_Comm_size(MPI_COMM_WORLD, &worldSize);

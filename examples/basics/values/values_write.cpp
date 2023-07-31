@@ -106,8 +106,7 @@ int main(int argc, char *argv[])
                 // 1. Writing a global constant value only once
                 if (step == 0)
                 {
-                    adios2::Variable<int> varNproc =
-                        io.InquireVariable<int>("Nproc");
+                    adios2::Variable<int> varNproc = io.InquireVariable<int>("Nproc");
                     writer.Put<int>(varNproc, nproc);
                 }
                 writer.Put<int>(varStep, step);

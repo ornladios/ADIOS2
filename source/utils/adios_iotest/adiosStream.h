@@ -21,14 +21,11 @@ public:
     bool hasIOTimer;
     size_t appID;
 
-    adiosStream(const std::string &streamName, adios2::IO &io,
-                const adios2::Mode mode, MPI_Comm comm, bool iotimer,
-                size_t appid);
+    adiosStream(const std::string &streamName, adios2::IO &io, const adios2::Mode mode,
+                MPI_Comm comm, bool iotimer, size_t appid);
     ~adiosStream();
-    void Write(CommandWrite *cmdW, Config &cfg, const Settings &settings,
-               size_t step);
-    adios2::StepStatus Read(CommandRead *cmdR, Config &cfg,
-                            const Settings &settings, size_t step);
+    void Write(CommandWrite *cmdW, Config &cfg, const Settings &settings, size_t step);
+    adios2::StepStatus Read(CommandRead *cmdR, Config &cfg, const Settings &settings, size_t step);
     void Close();
 
 private:
@@ -38,10 +35,9 @@ private:
     void defineADIOSArray(const std::shared_ptr<VariableInfo> ov);
     void putADIOSArray(const std::shared_ptr<VariableInfo> ov);
     void getADIOSArray(std::shared_ptr<VariableInfo> ov);
-    adios2::StepStatus readADIOS(CommandRead *cmdR, Config &cfg,
-                                 const Settings &settings, size_t step);
-    void writeADIOS(CommandWrite *cmdW, Config &cfg, const Settings &settings,
-                    size_t step);
+    adios2::StepStatus readADIOS(CommandRead *cmdR, Config &cfg, const Settings &settings,
+                                 size_t step);
+    void writeADIOS(CommandWrite *cmdW, Config &cfg, const Settings &settings, size_t step);
 };
 
 #endif /* ADIOSSTREAM_H */

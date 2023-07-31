@@ -66,8 +66,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         adios2::Dims time_count{1};
 
         (void)io.DefineVariable<float>("r32", {}, {}, count);
-        (void)io.DefineVariable<int64_t>("time", time_shape, time_start,
-                                         time_count);
+        (void)io.DefineVariable<int64_t>("time", time_shape, time_start, time_count);
     }
 
     // Create the Engine
@@ -99,8 +98,8 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         std::time_t localtime = std::time(NULL);
         engine.Put(var_time, (int64_t *)&localtime);
         engine.EndStep();
-        std::this_thread::sleep_for(std::chrono::milliseconds(
-            DelayMS)); /* sleep for DelayMS milliseconds */
+        std::this_thread::sleep_for(
+            std::chrono::milliseconds(DelayMS)); /* sleep for DelayMS milliseconds */
     }
 
     // Close the file
@@ -118,9 +117,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

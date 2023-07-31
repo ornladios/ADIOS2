@@ -50,8 +50,7 @@ public:
      * @param elements
      * @param allowModifications
      */
-    Attribute(const std::string &name, const T &data,
-              const bool allowModification);
+    Attribute(const std::string &name, const T &data, const bool allowModification);
 
     ~Attribute() = default;
 
@@ -67,8 +66,7 @@ public:
 
 private:
     std::string DoGetInfoValue() const noexcept override;
-    bool DoEqual(const void *values, const size_t elements) const
-        noexcept override;
+    bool DoEqual(const void *values, const size_t elements) const noexcept override;
 };
 
 } // end namespace core

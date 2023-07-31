@@ -101,41 +101,36 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         // define attribute
         const char *strarray[] = {"first", "second", "third", "fourth"};
 
-        adios2_define_attribute_array(ioH, "strarray", adios2_type_string,
-                                      strarray, 4);
+        adios2_define_attribute_array(ioH, "strarray", adios2_type_string, strarray, 4);
 
-        adios2_define_attribute(ioH, "strvalue", adios2_type_string,
-                                "Hello Attribute");
+        adios2_define_attribute(ioH, "strvalue", adios2_type_string, "Hello Attribute");
 
         // Define variables in ioH
         {
-            adios2_define_variable(ioH, "varStr", adios2_type_string, 0, NULL,
-                                   NULL, NULL, adios2_constant_dims_true);
-            adios2_define_variable(ioH, "varI8", adios2_type_int8_t, 1, shape,
-                                   start, count, adios2_constant_dims_true);
-            adios2_define_variable(ioH, "varI16", adios2_type_int16_t, 1, shape,
-                                   start, count, adios2_constant_dims_true);
-            adios2_define_variable(ioH, "varI32", adios2_type_int32_t, 1, shape,
-                                   start, count, adios2_constant_dims_true);
-            adios2_define_variable(ioH, "varI64", adios2_type_int64_t, 1, shape,
-                                   start, count, adios2_constant_dims_true);
-
-            adios2_define_variable(ioH, "varU8", adios2_type_uint8_t, 1, shape,
-                                   start, count, adios2_constant_dims_true);
-            adios2_define_variable(ioH, "varU16", adios2_type_uint16_t, 1,
-                                   shape, start, count,
+            adios2_define_variable(ioH, "varStr", adios2_type_string, 0, NULL, NULL, NULL,
                                    adios2_constant_dims_true);
-            adios2_define_variable(ioH, "varU32", adios2_type_uint32_t, 1,
-                                   shape, start, count,
+            adios2_define_variable(ioH, "varI8", adios2_type_int8_t, 1, shape, start, count,
                                    adios2_constant_dims_true);
-            adios2_define_variable(ioH, "varU64", adios2_type_uint64_t, 1,
-                                   shape, start, count,
+            adios2_define_variable(ioH, "varI16", adios2_type_int16_t, 1, shape, start, count,
+                                   adios2_constant_dims_true);
+            adios2_define_variable(ioH, "varI32", adios2_type_int32_t, 1, shape, start, count,
+                                   adios2_constant_dims_true);
+            adios2_define_variable(ioH, "varI64", adios2_type_int64_t, 1, shape, start, count,
                                    adios2_constant_dims_true);
 
-            adios2_define_variable(ioH, "varR32", adios2_type_float, 1, shape,
-                                   start, count, adios2_constant_dims_true);
-            adios2_define_variable(ioH, "varR64", adios2_type_double, 1, shape,
-                                   start, count, adios2_constant_dims_true);
+            adios2_define_variable(ioH, "varU8", adios2_type_uint8_t, 1, shape, start, count,
+                                   adios2_constant_dims_true);
+            adios2_define_variable(ioH, "varU16", adios2_type_uint16_t, 1, shape, start, count,
+                                   adios2_constant_dims_true);
+            adios2_define_variable(ioH, "varU32", adios2_type_uint32_t, 1, shape, start, count,
+                                   adios2_constant_dims_true);
+            adios2_define_variable(ioH, "varU64", adios2_type_uint64_t, 1, shape, start, count,
+                                   adios2_constant_dims_true);
+
+            adios2_define_variable(ioH, "varR32", adios2_type_float, 1, shape, start, count,
+                                   adios2_constant_dims_true);
+            adios2_define_variable(ioH, "varR64", adios2_type_double, 1, shape, start, count,
+                                   adios2_constant_dims_true);
         }
         // inquire variables
         adios2_variable *varStr = adios2_inquire_variable(ioH, "varStr");
@@ -192,8 +187,7 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
 #endif
     {
         adios2_io *ioH = adios2_declare_io(adiosH, "Reader");
-        adios2_engine *engineH =
-            adios2_open(ioH, fname, adios2_mode_readRandomAccess);
+        adios2_engine *engineH = adios2_open(ioH, fname, adios2_mode_readRandomAccess);
 
         size_t steps;
         adios2_steps(&steps, engineH);
@@ -212,8 +206,7 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         size_t type_str_size;
 
         // single
-        adios2_attribute *attrSingle =
-            adios2_inquire_attribute(ioH, "strvalue");
+        adios2_attribute *attrSingle = adios2_inquire_attribute(ioH, "strvalue");
         adios2_attribute_is_value(&result, attrSingle);
         EXPECT_EQ(result, adios2_true);
 
@@ -259,8 +252,7 @@ TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
         }
 
         adios2_attribute_data(dataArray, &elements, attrArray);
-        const std::vector<std::string> dataVector(dataArray,
-                                                  dataArray + elements);
+        const std::vector<std::string> dataVector(dataArray, dataArray + elements);
         EXPECT_EQ(dataVector[0], "first");
         EXPECT_EQ(dataVector[1], "second");
         EXPECT_EQ(dataVector[2], "third");
@@ -460,13 +452,11 @@ TEST_F(ADIOS2_C_API_IO, ReturnedStrings)
     size_t shape[1] = {2};
     size_t start[1] = {0};
     size_t count[1] = {2};
-    adios2_variable *var =
-        adios2_define_variable(ioH, "varI8", adios2_type_int8_t, 1, shape,
-                               start, count, adios2_constant_dims_true);
+    adios2_variable *var = adios2_define_variable(ioH, "varI8", adios2_type_int8_t, 1, shape, start,
+                                                  count, adios2_constant_dims_true);
 
     int32_t value = 99;
-    adios2_attribute *attr =
-        adios2_define_attribute(ioH, "intAttr", adios2_type_int32_t, &value);
+    adios2_attribute *attr = adios2_define_attribute(ioH, "intAttr", adios2_type_int32_t, &value);
 
 #ifdef ADIOS2_HAVE_BZIP2
     adios2_operator *op = adios2_define_operator(adiosH, "testOp", "bzip2");

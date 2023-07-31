@@ -4,8 +4,8 @@
 // NOTE: this is called from H5F.c when a new file or  trunc file is asked
 //       so no need to check flags here. if do need to, use & not ==
 //
-void *H5VL_adios2_file_create(const char *name, unsigned flags, hid_t fcpl_id,
-                              hid_t fapl_id, hid_t dxpl_id, void **req)
+void *H5VL_adios2_file_create(const char *name, unsigned flags, hid_t fcpl_id, hid_t fapl_id,
+                              hid_t dxpl_id, void **req)
 {
     gInitADIOS2(fapl_id);
     if (flags & H5F_ACC_TRUNC)
@@ -31,16 +31,16 @@ void *H5VL_adios2_file_create(const char *name, unsigned flags, hid_t fcpl_id,
     return NULL;
 }
 
-void *H5VL_adios2_file_open(const char *name, unsigned flags, hid_t fapl_id,
-                            hid_t dxpl_id, void **req)
+void *H5VL_adios2_file_open(const char *name, unsigned flags, hid_t fapl_id, hid_t dxpl_id,
+                            void **req)
 {
     gInitADIOS2(fapl_id);
     H5VL_FileDef_t *handle = gADIOS2OpenFile(name);
     return gFileToVolObj(handle);
 }
 
-herr_t H5VL_adios2_file_specific(void *file, H5VL_file_specific_args_t *args,
-                                 hid_t dxpl_id, void **req)
+herr_t H5VL_adios2_file_specific(void *file, H5VL_file_specific_args_t *args, hid_t dxpl_id,
+                                 void **req)
 {
     //
     // This function is called after H5Fopen/create. Do not remove

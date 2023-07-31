@@ -78,9 +78,8 @@ void VerifyData(const T *data, const size_t rows, const Dims &shape)
     }
 }
 
-void Reader(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t rows, const adios2::Params &engineParams,
-            const std::string &name)
+void Reader(const Dims &shape, const Dims &start, const Dims &count, const size_t rows,
+            const adios2::Params &engineParams, const std::string &name)
 {
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
@@ -118,17 +117,13 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     ASSERT_EQ(vars.size(), 10);
 
     adios2::Variable<char> bpChars = io.InquireVariable<char>("bpChars");
-    adios2::Variable<unsigned char> bpUChars =
-        io.InquireVariable<unsigned char>("bpUChars");
+    adios2::Variable<unsigned char> bpUChars = io.InquireVariable<unsigned char>("bpUChars");
     adios2::Variable<short> bpShorts = io.InquireVariable<short>("bpShorts");
-    adios2::Variable<unsigned short> bpUShorts =
-        io.InquireVariable<unsigned short>("bpUShorts");
+    adios2::Variable<unsigned short> bpUShorts = io.InquireVariable<unsigned short>("bpUShorts");
     adios2::Variable<int> bpInts = io.InquireVariable<int>("bpInts");
-    adios2::Variable<unsigned int> bpUInts =
-        io.InquireVariable<unsigned int>("bpUInts");
+    adios2::Variable<unsigned int> bpUInts = io.InquireVariable<unsigned int>("bpUInts");
     adios2::Variable<float> bpFloats = io.InquireVariable<float>("bpFloats");
-    adios2::Variable<double> bpDoubles =
-        io.InquireVariable<double>("bpDoubles");
+    adios2::Variable<double> bpDoubles = io.InquireVariable<double>("bpDoubles");
     adios2::Variable<std::complex<float>> bpComplexes =
         io.InquireVariable<std::complex<float>>("bpComplexes");
     adios2::Variable<std::complex<double>> bpDComplexes =
@@ -170,9 +165,8 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     readerEngine.Close();
 }
 
-void Writer(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t rows, const adios2::Params &engineParams,
-            const std::string &name)
+void Writer(const Dims &shape, const Dims &start, const Dims &count, const size_t rows,
+            const adios2::Params &engineParams, const std::string &name)
 {
     size_t datasize = 1;
     for (const auto &i : count)
@@ -199,21 +193,16 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
     auto bpChars = io.DefineVariable<char>("bpChars", shape, start, count);
-    auto bpUChars =
-        io.DefineVariable<unsigned char>("bpUChars", shape, start, count);
+    auto bpUChars = io.DefineVariable<unsigned char>("bpUChars", shape, start, count);
     auto bpShorts = io.DefineVariable<short>("bpShorts", shape, start, count);
-    auto bpUShorts =
-        io.DefineVariable<unsigned short>("bpUShorts", shape, start, count);
+    auto bpUShorts = io.DefineVariable<unsigned short>("bpUShorts", shape, start, count);
     auto bpInts = io.DefineVariable<int>("bpInts", shape, start, count);
-    auto bpUInts =
-        io.DefineVariable<unsigned int>("bpUInts", shape, start, count);
+    auto bpUInts = io.DefineVariable<unsigned int>("bpUInts", shape, start, count);
     auto bpFloats = io.DefineVariable<float>("bpFloats", shape, start, count);
-    auto bpDoubles =
-        io.DefineVariable<double>("bpDoubles", shape, start, count);
-    auto bpComplexes = io.DefineVariable<std::complex<float>>(
-        "bpComplexes", shape, start, count);
-    auto bpDComplexes = io.DefineVariable<std::complex<double>>(
-        "bpDComplexes", shape, start, count);
+    auto bpDoubles = io.DefineVariable<double>("bpDoubles", shape, start, count);
+    auto bpComplexes = io.DefineVariable<std::complex<float>>("bpComplexes", shape, start, count);
+    auto bpDComplexes =
+        io.DefineVariable<std::complex<double>>("bpDComplexes", shape, start, count);
     adios2::Engine writerEngine = io.Open(name, adios2::Mode::Write);
     writerEngine.BeginStep();
     for (size_t i = 0; i < rows; ++i)

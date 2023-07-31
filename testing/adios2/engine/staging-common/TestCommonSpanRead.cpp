@@ -72,10 +72,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         /* take the first size as something that gives us writer size */
         writerSize = var.Shape()[0] / 10;
 
-        long unsigned int myStart =
-            (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
-        long unsigned int myLength =
-            (long unsigned int)(((writerSize)*Nx + mpiSize) / mpiSize);
+        long unsigned int myStart = (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
+        long unsigned int myLength = (long unsigned int)(((writerSize)*Nx + mpiSize) / mpiSize);
 
         if (myStart + myLength > writerSize * Nx)
         {
@@ -95,16 +93,15 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         engine.Get(var, in_R64.data());
         engine.EndStep();
 
-        int result = validateSimpleForwardData(in_R64, t, myStart, myLength,
-                                               writerSize * Nx);
+        int result = validateSimpleForwardData(in_R64, t, myStart, myLength, writerSize * Nx);
 
         EXPECT_EQ(VarMin, t * 100);
         EXPECT_EQ(VarMax, t * 100 + writerSize * 10 - 1);
 
         if (result != 0)
         {
-            std::cout << "Read Data Validation failed on node " << mpiRank
-                      << " timestep " << t << std::endl;
+            std::cout << "Read Data Validation failed on node " << mpiRank << " timestep " << t
+                      << std::endl;
         }
         EXPECT_EQ(result, 0);
 
@@ -128,9 +125,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);
 
     int key;

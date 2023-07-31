@@ -17,10 +17,8 @@ namespace adios2
 namespace profiling
 {
 
-Timer::Timer(const std::string process, const TimeUnit timeUnit,
-             const bool trace)
-: m_Process(process), m_TimeUnit(timeUnit),
-  m_LocalTimeDate(helper::LocalTimeDate())
+Timer::Timer(const std::string process, const TimeUnit timeUnit, const bool trace)
+: m_Process(process), m_TimeUnit(timeUnit), m_LocalTimeDate(helper::LocalTimeDate())
 {
     if (trace)
         m_Trace = true;
@@ -69,9 +67,9 @@ int64_t Timer::GetElapsedTime()
 {
     if (!m_InitialTimeSet)
     {
-        helper::Throw<std::invalid_argument>(
-            "Toolkit", "profiling::iochrono::Timer", "GetElapsedTime",
-            "Resume() in process " + m_Process + " not called");
+        helper::Throw<std::invalid_argument>("Toolkit", "profiling::iochrono::Timer",
+                                             "GetElapsedTime",
+                                             "Resume() in process " + m_Process + " not called");
     }
 
     int64_t time = -1;
@@ -80,33 +78,28 @@ int64_t Timer::GetElapsedTime()
     {
 
     case TimeUnit::Microseconds:
-        time = std::chrono::duration_cast<std::chrono::microseconds>(
-                   m_ElapsedTime - m_InitialTime)
+        time = std::chrono::duration_cast<std::chrono::microseconds>(m_ElapsedTime - m_InitialTime)
                    .count();
         break;
 
     case TimeUnit::Milliseconds:
-        time = std::chrono::duration_cast<std::chrono::milliseconds>(
-                   m_ElapsedTime - m_InitialTime)
+        time = std::chrono::duration_cast<std::chrono::milliseconds>(m_ElapsedTime - m_InitialTime)
                    .count();
         break;
 
     case TimeUnit::Seconds:
-        time = std::chrono::duration_cast<std::chrono::seconds>(m_ElapsedTime -
-                                                                m_InitialTime)
-                   .count();
+        time =
+            std::chrono::duration_cast<std::chrono::seconds>(m_ElapsedTime - m_InitialTime).count();
         break;
 
     case TimeUnit::Minutes:
-        time = std::chrono::duration_cast<std::chrono::minutes>(m_ElapsedTime -
-                                                                m_InitialTime)
-                   .count();
+        time =
+            std::chrono::duration_cast<std::chrono::minutes>(m_ElapsedTime - m_InitialTime).count();
         break;
 
     case TimeUnit::Hours:
-        time = std::chrono::duration_cast<std::chrono::hours>(m_ElapsedTime -
-                                                              m_InitialTime)
-                   .count();
+        time =
+            std::chrono::duration_cast<std::chrono::hours>(m_ElapsedTime - m_InitialTime).count();
         break;
     }
 

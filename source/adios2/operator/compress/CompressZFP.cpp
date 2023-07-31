@@ -45,17 +45,15 @@ zfp_field *GetZFPField(const char *data, const Dims &shape, DataType type);
  */
 zfp_type GetZfpType(DataType type);
 
-zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
-                         const Params &parameters);
+zfp_stream *GetZFPStream(const Dims &dimensions, DataType type, const Params &parameters);
 
 CompressZFP::CompressZFP(const Params &parameters)
 : Operator("zfp", COMPRESS_ZFP, "compress", parameters)
 {
 }
 
-size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart,
-                            const Dims &blockCount, const DataType type,
-                            char *bufferOut)
+size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                            const DataType type, char *bufferOut)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
@@ -71,12 +69,9 @@ size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart,
         PutParameter(bufferOut, bufferOutOffset, d);
     }
     PutParameter(bufferOut, bufferOutOffset, type);
-    PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(ZFP_VERSION_MAJOR));
-    PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(ZFP_VERSION_MINOR));
-    PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(ZFP_VERSION_PATCH));
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(ZFP_VERSION_MAJOR));
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(ZFP_VERSION_MINOR));
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(ZFP_VERSION_PATCH));
     PutParameters(bufferOut, bufferOutOffset, m_Parameters);
     // zfp V1 metadata end
 
@@ -95,9 +90,8 @@ size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart,
 
     if (sizeOut == 0)
     {
-        helper::Throw<std::runtime_error>(
-            "Operator", "CompressZFP", "Operate(Compress)",
-            "zfp failed, compressed buffer size is 0");
+        helper::Throw<std::runtime_error>("Operator", "CompressZFP", "Operate(Compress)",
+                                          "zfp failed, compressed buffer size is 0");
     }
 
     bufferOutOffset += sizeOut;
@@ -109,18 +103,15 @@ size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart,
     return bufferOutOffset;
 }
 
-size_t CompressZFP::InverseOperate(const char *bufferIn, const size_t sizeIn,
-                                   char *dataOut)
+size_t CompressZFP::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     size_t bufferInOffset = 1; // skip operator type
-    const uint8_t bufferVersion =
-        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    const uint8_t bufferVersion = GetParameter<uint8_t>(bufferIn, bufferInOffset);
     bufferInOffset += 2; // skip two reserved bytes
 
     if (bufferVersion == 1)
     {
-        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
-                            dataOut);
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset, dataOut);
     }
     else if (bufferVersion == 2)
     {
@@ -129,9 +120,9 @@ size_t CompressZFP::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        helper::Throw<std::runtime_error>(
-            "Operator", "CompressZFP", "InverseOperate",
-            "invalid zfp buffer version" + std::to_string(bufferVersion));
+        helper::Throw<std::runtime_error>("Operator", "CompressZFP", "InverseOperate",
+                                          "invalid zfp buffer version" +
+                                              std::to_string(bufferVersion));
     }
 
     return 0;
@@ -139,9 +130,8 @@ size_t CompressZFP::InverseOperate(const char *bufferIn, const size_t sizeIn,
 
 bool CompressZFP::IsDataTypeValid(const DataType type) const
 {
-    if (type == DataType::Float || type == DataType::Double ||
-        type == DataType::FloatComplex || type == DataType::DoubleComplex ||
-        type == DataType::Int32 || type == DataType::Int64)
+    if (type == DataType::Float || type == DataType::Double || type == DataType::FloatComplex ||
+        type == DataType::DoubleComplex || type == DataType::Int32 || type == DataType::Int64)
     {
         return true;
     }
@@ -150,8 +140,7 @@ bool CompressZFP::IsDataTypeValid(const DataType type) const
 
 // PRIVATE
 
-size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn,
-                                 char *dataOut)
+size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     // Do NOT remove even if the buffer version is updated. Data might be still
     // in lagacy formats. This function must be kept for backward compatibility.
@@ -167,12 +156,11 @@ size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn,
         blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     }
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
-    this->m_VersionInfo =
-        " Data is compressed using ZFP Version " +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
-        ". Please make sure a compatible version is used for decompression.";
+    this->m_VersionInfo = " Data is compressed using ZFP Version " +
+                          std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                          std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                          std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+                          ". Please make sure a compatible version is used for decompression.";
     const Params parameters = GetParameters(bufferIn, bufferInOffset);
 
     Dims convertedDims = ConvertDims(blockCount, type, 3);
@@ -184,8 +172,8 @@ size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn,
     stream = GetZFPStream(convertedDims, type, parameters);
 
     // associate bitstream
-    bitstream *bitstream = stream_open(
-        const_cast<char *>(bufferIn + bufferInOffset), sizeIn - bufferInOffset);
+    bitstream *bitstream =
+        stream_open(const_cast<char *>(bufferIn + bufferInOffset), sizeIn - bufferInOffset);
     zfp_stream_set_bit_stream(stream, bitstream);
     zfp_stream_rewind(stream);
 
@@ -193,9 +181,8 @@ size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn,
 
     if (!status)
     {
-        helper::Throw<std::runtime_error>(
-            "Operator", "CompressZFP", "DecompressV1",
-            "zfp failed with status " + std::to_string(status));
+        helper::Throw<std::runtime_error>("Operator", "CompressZFP", "DecompressV1",
+                                          "zfp failed with status " + std::to_string(status));
     }
 
     zfp_field_free(field);
@@ -235,9 +222,8 @@ zfp_type GetZfpType(DataType type)
     }
     else
     {
-        helper::Throw<std::invalid_argument>(
-            "Operator", "CompressZFP", "GetZfpType",
-            "invalid data type " + ToString(type));
+        helper::Throw<std::invalid_argument>("Operator", "CompressZFP", "GetZfpType",
+                                             "invalid data type " + ToString(type));
     }
 
     return zfpType;
@@ -256,35 +242,32 @@ zfp_field *GetZFPField(const char *data, const Dims &dimensions, DataType type)
     }
     else if (dimensions.size() == 2)
     {
-        field = zfp_field_2d(const_cast<char *>(data), zfpType, dimensions[0],
-                             dimensions[1]);
+        field = zfp_field_2d(const_cast<char *>(data), zfpType, dimensions[0], dimensions[1]);
     }
     else if (dimensions.size() == 3)
     {
-        field = zfp_field_3d(const_cast<char *>(data), zfpType, dimensions[0],
-                             dimensions[1], dimensions[2]);
+        field = zfp_field_3d(const_cast<char *>(data), zfpType, dimensions[0], dimensions[1],
+                             dimensions[2]);
     }
     else
     {
-        helper::Throw<std::invalid_argument>(
-            "Operator", "CompressZFP", "GetZfpField",
-            "zfp does not support " + std::to_string(dimensions.size()) +
-                "D data");
+        helper::Throw<std::invalid_argument>("Operator", "CompressZFP", "GetZfpField",
+                                             "zfp does not support " +
+                                                 std::to_string(dimensions.size()) + "D data");
     }
 
     if (field == nullptr)
     {
-        helper::Throw<std::runtime_error>(
-            "Operator", "CompressZFP", "GetZfpField",
-            "zfp failed to make field for" + std::to_string(dimensions.size()) +
-                "D data in " + ToString(type));
+        helper::Throw<std::runtime_error>("Operator", "CompressZFP", "GetZfpField",
+                                          "zfp failed to make field for" +
+                                              std::to_string(dimensions.size()) + "D data in " +
+                                              ToString(type));
     }
 
     return field;
 }
 
-zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
-                         const Params &parameters)
+zfp_stream *GetZFPStream(const Dims &dimensions, DataType type, const Params &parameters)
 {
     zfp_stream *stream = zfp_stream_open(NULL);
     bool isSerial = true;
@@ -343,8 +326,7 @@ zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
         zfp_stream_set_execution(stream, policy);
     }
 
-    if ((hasAccuracy && hasPrecision) || (hasAccuracy && hasRate) ||
-        (hasPrecision && hasRate) ||
+    if ((hasAccuracy && hasPrecision) || (hasAccuracy && hasRate) || (hasPrecision && hasRate) ||
         (!hasAccuracy && !hasRate && !hasPrecision && !isSerial))
     {
         std::ostringstream oss;
@@ -356,8 +338,7 @@ zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
         {
             oss << "(" << p.first << ", " << p.second << ").";
         }
-        helper::Throw<std::runtime_error>("Operator", "CompressZFP",
-                                          "GetZfpField", oss.str());
+        helper::Throw<std::runtime_error>("Operator", "CompressZFP", "GetZfpField", oss.str());
     }
 
     if (hasAccuracy)
@@ -369,18 +350,16 @@ zfp_stream *GetZFPStream(const Dims &dimensions, DataType type,
     }
     else if (hasRate)
     {
-        const double rate = helper::StringTo<double>(
-            itRate->second, "setting 'rate' in call to CompressZfp\n");
+        const double rate =
+            helper::StringTo<double>(itRate->second, "setting 'rate' in call to CompressZfp\n");
         // TODO support last argument write random access?
         zfp_stream_set_rate(stream, rate, GetZfpType(type),
                             static_cast<unsigned int>(dimensions.size()), 0);
     }
     else if (hasPrecision)
     {
-        const unsigned int precision =
-            static_cast<unsigned int>(helper::StringTo<uint32_t>(
-                itPrecision->second,
-                "setting 'precision' in call to CompressZfp\n"));
+        const unsigned int precision = static_cast<unsigned int>(helper::StringTo<uint32_t>(
+            itPrecision->second, "setting 'precision' in call to CompressZfp\n"));
         zfp_stream_set_precision(stream, precision);
     }
 

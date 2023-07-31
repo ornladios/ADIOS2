@@ -316,49 +316,38 @@ void MinMaxStruct::Dump(DataType Type)
     case DataType::None:
         break;
     case DataType::Int8:
-        std::cout << "Min : " << MinUnion.field_int8
-                  << ", Max : " << MaxUnion.field_int8;
+        std::cout << "Min : " << MinUnion.field_int8 << ", Max : " << MaxUnion.field_int8;
         break;
     case DataType::Int16:
-        std::cout << "Min : " << MinUnion.field_int16
-                  << ", Max : " << MaxUnion.field_int16;
+        std::cout << "Min : " << MinUnion.field_int16 << ", Max : " << MaxUnion.field_int16;
         break;
     case DataType::Int32:
-        std::cout << "Min : " << MinUnion.field_int32
-                  << ", Max : " << MaxUnion.field_int32;
+        std::cout << "Min : " << MinUnion.field_int32 << ", Max : " << MaxUnion.field_int32;
         break;
     case DataType::Int64:
-        std::cout << "Min : " << MinUnion.field_int64
-                  << ", Max : " << MaxUnion.field_int64;
+        std::cout << "Min : " << MinUnion.field_int64 << ", Max : " << MaxUnion.field_int64;
         break;
     case DataType::Char:
     case DataType::UInt8:
-        std::cout << "Min : " << MinUnion.field_uint8
-                  << ", Max : " << MaxUnion.field_uint8;
+        std::cout << "Min : " << MinUnion.field_uint8 << ", Max : " << MaxUnion.field_uint8;
         break;
     case DataType::UInt16:
-        std::cout << "Min : " << MinUnion.field_uint16
-                  << ", Max : " << MaxUnion.field_uint16;
+        std::cout << "Min : " << MinUnion.field_uint16 << ", Max : " << MaxUnion.field_uint16;
         break;
     case DataType::UInt32:
-        std::cout << "Min : " << MinUnion.field_uint32
-                  << ", Max : " << MaxUnion.field_uint32;
+        std::cout << "Min : " << MinUnion.field_uint32 << ", Max : " << MaxUnion.field_uint32;
         break;
     case DataType::UInt64:
-        std::cout << "Min : " << MinUnion.field_uint64
-                  << ", Max : " << MaxUnion.field_uint64;
+        std::cout << "Min : " << MinUnion.field_uint64 << ", Max : " << MaxUnion.field_uint64;
         break;
     case DataType::Float:
-        std::cout << "Min : " << MinUnion.field_float
-                  << ", Max : " << MaxUnion.field_float;
+        std::cout << "Min : " << MinUnion.field_float << ", Max : " << MaxUnion.field_float;
         break;
     case DataType::Double:
-        std::cout << "Min : " << MinUnion.field_double
-                  << ", Max : " << MaxUnion.field_double;
+        std::cout << "Min : " << MinUnion.field_double << ", Max : " << MaxUnion.field_double;
         break;
     case DataType::LongDouble:
-        std::cout << "Min : " << MinUnion.field_ldouble
-                  << ", Max : " << MaxUnion.field_ldouble;
+        std::cout << "Min : " << MinUnion.field_ldouble << ", Max : " << MaxUnion.field_ldouble;
         break;
     case DataType::FloatComplex:
     case DataType::DoubleComplex:

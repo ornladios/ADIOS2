@@ -13,17 +13,14 @@
 namespace adios2
 {
 ADIOS::ADIOS(const std::string &configFile, MPI_Comm comm)
-: m_ADIOS(std::make_shared<core::ADIOS>(configFile, helper::CommDupMPI(comm),
-                                        "C++"))
+: m_ADIOS(std::make_shared<core::ADIOS>(configFile, helper::CommDupMPI(comm), "C++"))
 {
 }
 
 ADIOS::ADIOS(MPI_Comm comm) : ADIOS("", comm) {}
 
-ADIOS::ADIOS(const std::string &configFile, MPI_Comm comm,
-             const std::string &hostLanguage)
-: m_ADIOS(std::make_shared<core::ADIOS>(configFile, helper::CommDupMPI(comm),
-                                        hostLanguage))
+ADIOS::ADIOS(const std::string &configFile, MPI_Comm comm, const std::string &hostLanguage)
+: m_ADIOS(std::make_shared<core::ADIOS>(configFile, helper::CommDupMPI(comm), hostLanguage))
 {
 }
 

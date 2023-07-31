@@ -31,8 +31,7 @@ template <class T>
 void BP4Deserializer::GetSyncVariableDataFromStream(core::Variable<T> &variable,
                                                     BufferSTL &bufferSTL) const
 {
-    auto itStep = variable.m_AvailableStepBlockIndexOffsets.find(
-        variable.m_StepsStart + 1);
+    auto itStep = variable.m_AvailableStepBlockIndexOffsets.find(variable.m_StepsStart + 1);
 
     if (itStep == variable.m_AvailableStepBlockIndexOffsets.end())
     {
@@ -44,10 +43,8 @@ void BP4Deserializer::GetSyncVariableDataFromStream(core::Variable<T> &variable,
     size_t position = itStep->second.front();
 
     size_t irrelevant;
-    const Characteristics<T> characteristics =
-        ReadElementIndexCharacteristics<T>(buffer, position,
-                                           TypeTraits<T>::type_enum, irrelevant,
-                                           false, m_Minifooter.IsLittleEndian);
+    const Characteristics<T> characteristics = ReadElementIndexCharacteristics<T>(
+        buffer, position, TypeTraits<T>::type_enum, irrelevant, false, m_Minifooter.IsLittleEndian);
 
     const size_t payloadOffset = characteristics.Statistics.PayloadOffset;
     variable.m_Data = reinterpret_cast<T *>(&buffer[payloadOffset]);
@@ -55,8 +52,7 @@ void BP4Deserializer::GetSyncVariableDataFromStream(core::Variable<T> &variable,
 
 template <class T>
 typename core::Variable<T>::BPInfo &
-BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
-                                       T *data) const
+BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable, T *data) const
 {
     const size_t stepsStart = variable.m_StepsStart;
     const size_t stepsCount = variable.m_StepsCount;
@@ -70,8 +66,8 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
             "steps start " + std::to_string(stepsStart) +
                 " from SetStepsSelection or BeginStep is larger than "
                 "the maximum available step " +
-                std::to_string(maxStep - 1) + " for variable " +
-                variable.m_Name + ", in call to Get");
+                std::to_string(maxStep - 1) + " for variable " + variable.m_Name +
+                ", in call to Get");
     }
 
     auto itStep = std::next(indices.begin(), stepsStart);
@@ -84,13 +80,10 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
         if (itStep == indices.end())
         {
             helper::Throw<std::invalid_argument>(
-                "Toolkit", "format::bp::BP4Deserializer",
-                "InitVariableBlockInfo",
-                "offset " + std::to_string(i) + " from steps start " +
-                    std::to_string(stepsStart) + " in variable " +
-                    variable.m_Name +
-                    " is beyond the largest available step = " +
-                    std::to_string(maxStep - 1) +
+                "Toolkit", "format::bp::BP4Deserializer", "InitVariableBlockInfo",
+                "offset " + std::to_string(i) + " from steps start " + std::to_string(stepsStart) +
+                    " in variable " + variable.m_Name +
+                    " is beyond the largest available step = " + std::to_string(maxStep - 1) +
                     ", check Variable SetStepSelection argument stepsCount "
                     "(random access), or "
                     "number of BeginStep calls (streaming), in call to Get");
@@ -109,11 +102,9 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
         if (variable.m_BlockID >= blocksInfo.size())
         {
             helper::Throw<std::invalid_argument>(
-                "Toolkit", "format::bp::BP4Deserializer",
-                "InitVariableBlockInfo",
-                "invalid blockID " + std::to_string(variable.m_BlockID) +
-                    " from steps start " + std::to_string(stepsStart) +
-                    " in variable " + variable.m_Name +
+                "Toolkit", "format::bp::BP4Deserializer", "InitVariableBlockInfo",
+                "invalid blockID " + std::to_string(variable.m_BlockID) + " from steps start " +
+                    std::to_string(stepsStart) + " in variable " + variable.m_Name +
                     ", check argument to Variable<T>::SetBlockID, in call "
                     "to Get");
         }
@@ -138,13 +129,12 @@ BP4Deserializer::InitVariableBlockInfo(core::Variable<T> &variable,
 }
 
 template <class T>
-void BP4Deserializer::SetVariableBlockInfo(
-    core::Variable<T> &variable,
-    typename core::Variable<T>::BPInfo &blockInfo) const
+void BP4Deserializer::SetVariableBlockInfo(core::Variable<T> &variable,
+                                           typename core::Variable<T>::BPInfo &blockInfo) const
 {
-    auto lf_SetSubStreamInfoOperations =
-        [&](const BPOpInfo &bpOpInfo, const size_t payloadOffset,
-            helper::SubStreamBoxInfo &subStreamInfo, const bool isRowMajor)
+    auto lf_SetSubStreamInfoOperations = [&](const BPOpInfo &bpOpInfo, const size_t payloadOffset,
+                                             helper::SubStreamBoxInfo &subStreamInfo,
+                                             const bool isRowMajor)
 
     {
         helper::BlockOperationInfo blockOperation;
@@ -161,26 +151,23 @@ void BP4Deserializer::SetVariableBlockInfo(
         // read metadata from supported type and populate Info
         if (m_Minifooter.ADIOSVersion >= 2008000)
         {
-            std::memcpy(&blockOperation.PayloadSize,
-                        bpOpInfo.Metadata.data() + 8, 8);
+            std::memcpy(&blockOperation.PayloadSize, bpOpInfo.Metadata.data() + 8, 8);
         }
         else
         {
             // Files made before 2.8 have incompatible compression operators
             // Add backward compatible fixes here to parse compression metadata
             // directly from the BP4 metadata format
-            std::shared_ptr<BPBackCompatOperation> bpOp =
-                SetBPBackCompatOperation(bpOpInfo.Type);
+            std::shared_ptr<BPBackCompatOperation> bpOp = SetBPBackCompatOperation(bpOpInfo.Type);
             if (bpOp)
             {
                 bpOp->GetMetadata(bpOpInfo.Metadata, blockOperation.Info);
-                blockOperation.PayloadSize = static_cast<size_t>(
-                    std::stoull(blockOperation.Info.at("OutputSize")));
+                blockOperation.PayloadSize =
+                    static_cast<size_t>(std::stoull(blockOperation.Info.at("OutputSize")));
             }
             else
             {
-                std::memcpy(&blockOperation.PayloadSize,
-                            bpOpInfo.Metadata.data() + 8, 8);
+                std::memcpy(&blockOperation.PayloadSize, bpOpInfo.Metadata.data() + 8, 8);
             }
         }
 
@@ -190,8 +177,7 @@ void BP4Deserializer::SetVariableBlockInfo(
     auto lf_SetSubStreamInfoLocalArray =
         [&](const std::string &variableName, const Box<Dims> &selectionBox,
             typename core::Variable<T>::BPInfo &blockInfo, const size_t step,
-            const size_t blockIndexOffset, const BufferSTL &bufferSTL,
-            const bool isRowMajor)
+            const size_t blockIndexOffset, const BufferSTL &bufferSTL, const bool isRowMajor)
 
     {
         const std::vector<char> &buffer = bufferSTL.m_Buffer;
@@ -200,9 +186,8 @@ void BP4Deserializer::SetVariableBlockInfo(
         size_t irrelevant;
 
         const Characteristics<T> blockCharacteristics =
-            ReadElementIndexCharacteristics<T>(
-                buffer, position, TypeTraits<T>::type_enum, irrelevant, false,
-                m_Minifooter.IsLittleEndian);
+            ReadElementIndexCharacteristics<T>(buffer, position, TypeTraits<T>::type_enum,
+                                               irrelevant, false, m_Minifooter.IsLittleEndian);
         // check if they intersect
         helper::SubStreamBoxInfo subStreamInfo;
 
@@ -212,9 +197,8 @@ void BP4Deserializer::SetVariableBlockInfo(
         }
 
         // if selection box start is not empty = local selection
-        subStreamInfo.BlockBox =
-            helper::StartEndBox(Dims(blockCharacteristics.Count.size(), 0),
-                                blockCharacteristics.Count);
+        subStreamInfo.BlockBox = helper::StartEndBox(Dims(blockCharacteristics.Count.size(), 0),
+                                                     blockCharacteristics.Count);
 
         if (!selectionBox.first.empty()) // selection start count was defined
         {
@@ -236,8 +220,7 @@ void BP4Deserializer::SetVariableBlockInfo(
         if (dimensions != blockInfo.Count.size())
         {
             helper::Throw<std::invalid_argument>(
-                "Toolkit", "format::bp::BP4Deserializer",
-                "SetVariableBlockInfo",
+                "Toolkit", "format::bp::BP4Deserializer", "SetVariableBlockInfo",
                 "block Count (available) and "
                 "selection Count (requested) number of dimensions, do not "
                 "match "
@@ -245,24 +228,21 @@ void BP4Deserializer::SetVariableBlockInfo(
                     variableName + ", in call to Get");
         }
 
-        const Dims readInCount = m_ReverseDimensions
-                                     ? Dims(blockCharacteristics.Count.rbegin(),
-                                            blockCharacteristics.Count.rend())
-                                     : blockCharacteristics.Count;
+        const Dims readInCount = m_ReverseDimensions ? Dims(blockCharacteristics.Count.rbegin(),
+                                                            blockCharacteristics.Count.rend())
+                                                     : blockCharacteristics.Count;
 
-        const Dims blockInfoStart = blockInfo.Start.empty()
-                                        ? Dims(blockInfo.Count.size(), 0)
-                                        : blockInfo.Start;
+        const Dims blockInfoStart =
+            blockInfo.Start.empty() ? Dims(blockInfo.Count.size(), 0) : blockInfo.Start;
 
         for (size_t i = 0; i < dimensions; ++i)
         {
             if (blockInfoStart[i] + blockInfo.Count[i] > readInCount[i])
             {
                 helper::Throw<std::invalid_argument>(
-                    "Toolkit", "format::bp::BP4Deserializer",
-                    "SetVariableBlockInfo",
-                    "selection Start " + helper::DimsToString(blockInfoStart) +
-                        " and Count " + helper::DimsToString(blockInfo.Count) +
+                    "Toolkit", "format::bp::BP4Deserializer", "SetVariableBlockInfo",
+                    "selection Start " + helper::DimsToString(blockInfoStart) + " and Count " +
+                        helper::DimsToString(blockInfo.Count) +
                         " (requested) is out of bounds of (available) local"
                         " Count " +
                         helper::DimsToString(readInCount) +
@@ -273,25 +253,21 @@ void BP4Deserializer::SetVariableBlockInfo(
 
         subStreamInfo.Seeks.first =
             sizeof(T) * helper::LinearIndex(subStreamInfo.BlockBox,
-                                            subStreamInfo.IntersectionBox.first,
-                                            isRowMajor);
+                                            subStreamInfo.IntersectionBox.first, isRowMajor);
 
         subStreamInfo.Seeks.second =
-            sizeof(T) * (helper::LinearIndex(
-                             subStreamInfo.BlockBox,
-                             subStreamInfo.IntersectionBox.second, isRowMajor) +
+            sizeof(T) * (helper::LinearIndex(subStreamInfo.BlockBox,
+                                             subStreamInfo.IntersectionBox.second, isRowMajor) +
                          1);
 
-        const size_t payloadOffset =
-            blockCharacteristics.Statistics.PayloadOffset;
+        const size_t payloadOffset = blockCharacteristics.Statistics.PayloadOffset;
 
         const BPOpInfo &bpOp = blockCharacteristics.Statistics.Op;
         // if they intersect get info Seeks (first: start, second:
         // count) depending on operation info
         if (bpOp.IsActive)
         {
-            lf_SetSubStreamInfoOperations(bpOp, payloadOffset, subStreamInfo,
-                                          m_IsRowMajor);
+            lf_SetSubStreamInfoOperations(bpOp, payloadOffset, subStreamInfo, m_IsRowMajor);
         }
         else
         {
@@ -299,18 +275,15 @@ void BP4Deserializer::SetVariableBlockInfo(
             subStreamInfo.Seeks.first += payloadOffset;
             subStreamInfo.Seeks.second += payloadOffset;
         }
-        subStreamInfo.SubStreamID =
-            static_cast<size_t>(blockCharacteristics.Statistics.FileIndex);
+        subStreamInfo.SubStreamID = static_cast<size_t>(blockCharacteristics.Statistics.FileIndex);
 
-        blockInfo.StepBlockSubStreamsInfo[step].push_back(
-            std::move(subStreamInfo));
+        blockInfo.StepBlockSubStreamsInfo[step].push_back(std::move(subStreamInfo));
     };
 
     auto lf_SetSubStreamInfoGlobalArray =
         [&](const std::string &variableName, const Box<Dims> &selectionBox,
             typename core::Variable<T>::BPInfo &blockInfo, const size_t step,
-            const size_t blockIndexOffset, const BufferSTL &bufferSTL,
-            const bool isRowMajor)
+            const size_t blockIndexOffset, const BufferSTL &bufferSTL, const bool isRowMajor)
 
     {
         const std::vector<char> &buffer = bufferSTL.m_Buffer;
@@ -319,9 +292,8 @@ void BP4Deserializer::SetVariableBlockInfo(
         size_t irrelevant;
 
         const Characteristics<T> blockCharacteristics =
-            ReadElementIndexCharacteristics<T>(
-                buffer, position, TypeTraits<T>::type_enum, irrelevant, false,
-                m_Minifooter.IsLittleEndian);
+            ReadElementIndexCharacteristics<T>(buffer, position, TypeTraits<T>::type_enum,
+                                               irrelevant, false, m_Minifooter.IsLittleEndian);
 
         // check if they intersect
         helper::SubStreamBoxInfo subStreamInfo;
@@ -331,8 +303,8 @@ void BP4Deserializer::SetVariableBlockInfo(
             subStreamInfo.ZeroBlock = true;
         }
 
-        subStreamInfo.BlockBox = helper::StartEndBox(
-            blockCharacteristics.Start, blockCharacteristics.Count);
+        subStreamInfo.BlockBox =
+            helper::StartEndBox(blockCharacteristics.Start, blockCharacteristics.Count);
         subStreamInfo.IntersectionBox =
             helper::IntersectionBox(selectionBox, subStreamInfo.BlockBox);
 
@@ -345,24 +317,20 @@ void BP4Deserializer::SetVariableBlockInfo(
         // relative position
         subStreamInfo.Seeks.first =
             sizeof(T) * helper::LinearIndex(subStreamInfo.BlockBox,
-                                            subStreamInfo.IntersectionBox.first,
-                                            isRowMajor);
+                                            subStreamInfo.IntersectionBox.first, isRowMajor);
 
         subStreamInfo.Seeks.second =
-            sizeof(T) * (helper::LinearIndex(
-                             subStreamInfo.BlockBox,
-                             subStreamInfo.IntersectionBox.second, isRowMajor) +
+            sizeof(T) * (helper::LinearIndex(subStreamInfo.BlockBox,
+                                             subStreamInfo.IntersectionBox.second, isRowMajor) +
                          1);
 
-        const size_t payloadOffset =
-            blockCharacteristics.Statistics.PayloadOffset;
+        const size_t payloadOffset = blockCharacteristics.Statistics.PayloadOffset;
         const auto &bp4Op = blockCharacteristics.Statistics.Op;
         // if they intersect get info Seeks (first: start, second:
         // count) depending on operation info
         if (bp4Op.IsActive)
         {
-            lf_SetSubStreamInfoOperations(bp4Op, payloadOffset, subStreamInfo,
-                                          m_IsRowMajor);
+            lf_SetSubStreamInfoOperations(bp4Op, payloadOffset, subStreamInfo, m_IsRowMajor);
         }
         else
         {
@@ -370,19 +338,17 @@ void BP4Deserializer::SetVariableBlockInfo(
             subStreamInfo.Seeks.first += payloadOffset;
             subStreamInfo.Seeks.second += payloadOffset;
         }
-        subStreamInfo.SubStreamID =
-            static_cast<size_t>(blockCharacteristics.Statistics.FileIndex);
+        subStreamInfo.SubStreamID = static_cast<size_t>(blockCharacteristics.Statistics.FileIndex);
 
-        blockInfo.StepBlockSubStreamsInfo[step].push_back(
-            std::move(subStreamInfo));
+        blockInfo.StepBlockSubStreamsInfo[step].push_back(std::move(subStreamInfo));
     };
 
     // BODY OF FUNCTIONS STARTS HERE
     const std::map<size_t, std::vector<size_t>> &indices =
         variable.m_AvailableStepBlockIndexOffsets;
 
-    const Box<Dims> selectionBox = helper::StartEndBox(
-        blockInfo.Start, blockInfo.Count, m_ReverseDimensions);
+    const Box<Dims> selectionBox =
+        helper::StartEndBox(blockInfo.Start, blockInfo.Count, m_ReverseDimensions);
 
     auto itStep = std::next(indices.begin(), blockInfo.StepsStart);
 
@@ -399,13 +365,11 @@ void BP4Deserializer::SetVariableBlockInfo(
             if (dimensions != blockInfo.Shape.size())
             {
                 helper::Throw<std::invalid_argument>(
-                    "Toolkit", "format::bp::BP4Deserializer",
-                    "SetVariableBlockInfo",
+                    "Toolkit", "format::bp::BP4Deserializer", "SetVariableBlockInfo",
                     "variable Shape (available) and "
                     "selection Shape (requested) number of dimensions, do not "
                     "match in step " +
-                        std::to_string(step) +
-                        " when reading global array variable " +
+                        std::to_string(step) + " when reading global array variable " +
                         variable.m_Name + ", in call to Get");
             }
 
@@ -414,33 +378,28 @@ void BP4Deserializer::SetVariableBlockInfo(
                 if (blockInfo.Start[i] + blockInfo.Count[i] > readInShape[i])
                 {
                     helper::Throw<std::invalid_argument>(
-                        "Toolkit", "format::bp::BP4Deserializer",
-                        "SetVariableBlockInfo",
-                        "selection Start " +
-                            helper::DimsToString(blockInfo.Start) +
-                            " and Count " +
+                        "Toolkit", "format::bp::BP4Deserializer", "SetVariableBlockInfo",
+                        "selection Start " + helper::DimsToString(blockInfo.Start) + " and Count " +
                             helper::DimsToString(blockInfo.Count) +
                             " (requested) is out of bounds of (available) "
                             "Shape " +
                             helper::DimsToString(readInShape) +
-                            " , when reading global array variable " +
-                            variable.m_Name + " in step " +
-                            std::to_string(step) + ", in call to Get");
+                            " , when reading global array variable " + variable.m_Name +
+                            " in step " + std::to_string(step) + ", in call to Get");
                 }
             }
             // Get intersections with each block
             for (const size_t blockOffset : blockOffsets)
             {
-                lf_SetSubStreamInfoGlobalArray(variable.m_Name, selectionBox,
-                                               blockInfo, step, blockOffset,
-                                               m_Metadata, m_IsRowMajor);
+                lf_SetSubStreamInfoGlobalArray(variable.m_Name, selectionBox, blockInfo, step,
+                                               blockOffset, m_Metadata, m_IsRowMajor);
             }
         }
         else if (variable.m_ShapeID == ShapeID::LocalArray)
         {
-            lf_SetSubStreamInfoLocalArray(
-                variable.m_Name, selectionBox, blockInfo, step,
-                blockOffsets[blockInfo.BlockID], m_Metadata, m_IsRowMajor);
+            lf_SetSubStreamInfoLocalArray(variable.m_Name, selectionBox, blockInfo, step,
+                                          blockOffsets[blockInfo.BlockID], m_Metadata,
+                                          m_IsRowMajor);
         }
 
         ++itStep;
@@ -448,13 +407,11 @@ void BP4Deserializer::SetVariableBlockInfo(
 }
 
 template <class T>
-void BP4Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
-                                           T *data) const
+void BP4Deserializer::GetValueFromMetadata(core::Variable<T> &variable, T *data) const
 {
     const auto &buffer = m_Metadata.m_Buffer;
 
-    const typename core::Variable<T>::BPInfo &blockInfo =
-        InitVariableBlockInfo(variable, data);
+    const typename core::Variable<T>::BPInfo &blockInfo = InitVariableBlockInfo(variable, data);
 
     const size_t stepsStart = blockInfo.StepsStart;
     const size_t stepsCount = blockInfo.StepsCount;
@@ -468,36 +425,30 @@ void BP4Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
         const std::vector<size_t> &positions = itStep->second;
 
         // global values only read one block per step
-        const size_t blocksStart = (variable.m_ShapeID == ShapeID::GlobalArray)
-                                       ? blockInfo.Start.front()
-                                       : 0;
+        const size_t blocksStart =
+            (variable.m_ShapeID == ShapeID::GlobalArray) ? blockInfo.Start.front() : 0;
 
-        const size_t blocksCount = (variable.m_ShapeID == ShapeID::GlobalArray)
-                                       ? variable.m_Count.front()
-                                       : 1;
+        const size_t blocksCount =
+            (variable.m_ShapeID == ShapeID::GlobalArray) ? variable.m_Count.front() : 1;
 
         if (blocksStart + blocksCount > positions.size())
         {
             helper::Throw<std::invalid_argument>(
-                "Toolkit", "format::bp::BP4Deserializer",
-                "GetValueFromMetadata",
-                "selection Start {" + std::to_string(blocksStart) +
-                    "} and Count {" + std::to_string(blocksCount) +
+                "Toolkit", "format::bp::BP4Deserializer", "GetValueFromMetadata",
+                "selection Start {" + std::to_string(blocksStart) + "} and Count {" +
+                    std::to_string(blocksCount) +
                     "} (requested) is out of bounds of (available) Shape {" +
-                    std::to_string(positions.size()) + "} for relative step " +
-                    std::to_string(s) +
-                    " , when reading 1D global array variable " +
-                    variable.m_Name + ", in call to Get");
+                    std::to_string(positions.size()) + "} for relative step " + std::to_string(s) +
+                    " , when reading 1D global array variable " + variable.m_Name +
+                    ", in call to Get");
         }
 
         size_t irrelevant;
         for (size_t b = blocksStart; b < blocksStart + blocksCount; ++b)
         {
             size_t localPosition = positions[b];
-            const Characteristics<T> characteristics =
-                ReadElementIndexCharacteristics<T>(
-                    buffer, localPosition, type_string, irrelevant, false,
-                    m_Minifooter.IsLittleEndian);
+            const Characteristics<T> characteristics = ReadElementIndexCharacteristics<T>(
+                buffer, localPosition, type_string, irrelevant, false, m_Minifooter.IsLittleEndian);
 
             data[dataCounter] = characteristics.Statistics.Value;
             ++dataCounter;
@@ -510,18 +461,17 @@ void BP4Deserializer::GetValueFromMetadata(core::Variable<T> &variable,
 }
 
 template <class T>
-void BP4Deserializer::PreDataRead(
-    core::Variable<T> &variable, typename core::Variable<T>::BPInfo &blockInfo,
-    const helper::SubStreamBoxInfo &subStreamBoxInfo, char *&buffer,
-    size_t &payloadSize, size_t &payloadOffset, const size_t threadID)
+void BP4Deserializer::PreDataRead(core::Variable<T> &variable,
+                                  typename core::Variable<T>::BPInfo &blockInfo,
+                                  const helper::SubStreamBoxInfo &subStreamBoxInfo, char *&buffer,
+                                  size_t &payloadSize, size_t &payloadOffset, const size_t threadID)
 {
     if (subStreamBoxInfo.OperationsInfo.size() > 0)
     {
         const helper::BlockOperationInfo &blockOperationInfo =
             InitPostOperatorBlockData(subStreamBoxInfo.OperationsInfo);
 
-        m_ThreadBuffers[threadID][1].resize(blockOperationInfo.PayloadSize,
-                                            '\0');
+        m_ThreadBuffers[threadID][1].resize(blockOperationInfo.PayloadSize, '\0');
 
         buffer = m_ThreadBuffers[threadID][1].data();
 
@@ -539,10 +489,10 @@ void BP4Deserializer::PreDataRead(
 }
 
 template <class T>
-void BP4Deserializer::PostDataRead(
-    core::Variable<T> &variable, typename core::Variable<T>::BPInfo &blockInfo,
-    const helper::SubStreamBoxInfo &subStreamBoxInfo,
-    const bool isRowMajorDestination, const size_t threadID)
+void BP4Deserializer::PostDataRead(core::Variable<T> &variable,
+                                   typename core::Variable<T>::BPInfo &blockInfo,
+                                   const helper::SubStreamBoxInfo &subStreamBoxInfo,
+                                   const bool isRowMajorDestination, const size_t threadID)
 {
     if (subStreamBoxInfo.OperationsInfo.size() > 0)
     {
@@ -552,8 +502,7 @@ void BP4Deserializer::PostDataRead(
                 InitPostOperatorBlockData(subStreamBoxInfo.OperationsInfo);
 
             const size_t preOpPayloadSize =
-                helper::GetTotalSize(blockOperationInfo.PreCount) *
-                blockOperationInfo.PreSizeOf;
+                helper::GetTotalSize(blockOperationInfo.PreCount) * blockOperationInfo.PreSizeOf;
             m_ThreadBuffers[threadID][0].resize(preOpPayloadSize);
 
             // get original block back
@@ -569,12 +518,11 @@ void BP4Deserializer::PostDataRead(
                     break;
                 }
             }
-            core::Decompress(postOpData, blockOperationInfo.PayloadSize,
-                             preOpData, blockInfo.MemSpace, op);
+            core::Decompress(postOpData, blockOperationInfo.PayloadSize, preOpData,
+                             blockInfo.MemSpace, op);
 
             // clip block to match selection
-            helper::ClipVector(m_ThreadBuffers[threadID][0],
-                               subStreamBoxInfo.Seeks.first,
+            helper::ClipVector(m_ThreadBuffers[threadID][0], subStreamBoxInfo.Seeks.first,
                                subStreamBoxInfo.Seeks.second);
         }
         else
@@ -587,8 +535,7 @@ void BP4Deserializer::PostDataRead(
 
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
     const bool endianReverse =
-        (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian) ? true
-                                                                  : false;
+        (helper::IsLittleEndian() != m_Minifooter.IsLittleEndian) ? true : false;
 #else
     constexpr bool endianReverse = false;
 #endif
@@ -602,24 +549,22 @@ void BP4Deserializer::PostDataRead(
     {
         if (endianReverse)
         {
-            helper::Throw<std::invalid_argument>(
-                "Toolkit", "format::bp::BP4Deserializer", "PostDataRead",
-                "endianReverse "
-                "not supported with MemorySelection");
+            helper::Throw<std::invalid_argument>("Toolkit", "format::bp::BP4Deserializer",
+                                                 "PostDataRead",
+                                                 "endianReverse "
+                                                 "not supported with MemorySelection");
         }
 
         if (m_ReverseDimensions)
         {
-            helper::Throw<std::invalid_argument>(
-                "Toolkit", "format::bp::BP4Deserializer", "PostDataRead",
-                "ReverseDimensions not supported with "
-                "MemorySelection");
+            helper::Throw<std::invalid_argument>("Toolkit", "format::bp::BP4Deserializer",
+                                                 "PostDataRead",
+                                                 "ReverseDimensions not supported with "
+                                                 "MemorySelection");
         }
 
-        helper::DimsArray intersectStart(
-            subStreamBoxInfo.IntersectionBox.first);
-        helper::DimsArray intersectCount(
-            subStreamBoxInfo.IntersectionBox.second);
+        helper::DimsArray intersectStart(subStreamBoxInfo.IntersectionBox.first);
+        helper::DimsArray intersectCount(subStreamBoxInfo.IntersectionBox.second);
         helper::DimsArray blockStart(subStreamBoxInfo.BlockBox.first);
         helper::DimsArray blockCount(subStreamBoxInfo.BlockBox.second);
         helper::DimsArray memoryStart(blockInfoStart);
@@ -632,25 +577,22 @@ void BP4Deserializer::PostDataRead(
             intersectStart[d] += blockInfo.MemoryStart[d];
             blockStart[d] += blockInfo.MemoryStart[d];
         }
-        helper::NdCopy(m_ThreadBuffers[threadID][0].data(), intersectStart,
-                       intersectCount, true, true,
-                       reinterpret_cast<char *>(blockInfo.Data), intersectStart,
-                       intersectCount, true, true, sizeof(T), intersectStart,
-                       blockCount, memoryStart,
-                       helper::DimsArray(blockInfo.MemoryCount), false);
+        helper::NdCopy(m_ThreadBuffers[threadID][0].data(), intersectStart, intersectCount, true,
+                       true, reinterpret_cast<char *>(blockInfo.Data), intersectStart,
+                       intersectCount, true, true, sizeof(T), intersectStart, blockCount,
+                       memoryStart, helper::DimsArray(blockInfo.MemoryCount), false);
     }
     else
     {
-        helper::ClipContiguousMemory(
-            blockInfo.Data, blockInfoStart, blockInfo.Count,
-            m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
-            subStreamBoxInfo.IntersectionBox, m_IsRowMajor, m_ReverseDimensions,
-            endianReverse, blockInfo.MemSpace);
+        helper::ClipContiguousMemory(blockInfo.Data, blockInfoStart, blockInfo.Count,
+                                     m_ThreadBuffers[threadID][0].data(), subStreamBoxInfo.BlockBox,
+                                     subStreamBoxInfo.IntersectionBox, m_IsRowMajor,
+                                     m_ReverseDimensions, endianReverse, blockInfo.MemSpace);
     }
 }
 
-void BP4Deserializer::BackCompatDecompress(
-    const helper::SubStreamBoxInfo &subStreamBoxInfo, const size_t threadID)
+void BP4Deserializer::BackCompatDecompress(const helper::SubStreamBoxInfo &subStreamBoxInfo,
+                                           const size_t threadID)
 {
     // Files made before 2.8 have incompatible compression operators
     // Add backward compatible fixes here
@@ -658,8 +600,7 @@ void BP4Deserializer::BackCompatDecompress(
         InitPostOperatorBlockData(subStreamBoxInfo.OperationsInfo);
 
     const size_t preOpPayloadSize =
-        helper::GetTotalSize(blockOperationInfo.PreCount) *
-        blockOperationInfo.PreSizeOf;
+        helper::GetTotalSize(blockOperationInfo.PreCount) * blockOperationInfo.PreSizeOf;
     m_ThreadBuffers[threadID][0].resize(preOpPayloadSize);
 
     std::string opType = blockOperationInfo.Info.at("Type");
@@ -668,15 +609,13 @@ void BP4Deserializer::BackCompatDecompress(
     char *preOpData = m_ThreadBuffers[threadID][0].data();
     const char *postOpData = m_ThreadBuffers[threadID][1].data();
     // get the right bp4Op
-    std::shared_ptr<BPBackCompatOperation> bp4Op =
-        SetBPBackCompatOperation(opType);
+    std::shared_ptr<BPBackCompatOperation> bp4Op = SetBPBackCompatOperation(opType);
 
     if (bp4Op)
     {
         bp4Op->GetData(postOpData, blockOperationInfo, preOpData);
         // clip block to match selection
-        helper::ClipVector(m_ThreadBuffers[threadID][0],
-                           subStreamBoxInfo.Seeks.first,
+        helper::ClipVector(m_ThreadBuffers[threadID][0], subStreamBoxInfo.Seeks.first,
                            subStreamBoxInfo.Seeks.second);
     }
     else
@@ -695,35 +634,30 @@ template <class T>
 std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
 BP4Deserializer::AllStepsBlocksInfo(const core::Variable<T> &variable) const
 {
-    std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
-        allStepsBlocksInfo;
+    std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>> allStepsBlocksInfo;
 
     for (const auto &pair : variable.m_AvailableStepBlockIndexOffsets)
     {
         const size_t step = pair.first;
         const std::vector<size_t> &blockPositions = pair.second;
         // bp4 index starts at 1
-        allStepsBlocksInfo[step - 1] =
-            BlocksInfoCommon(variable, blockPositions);
+        allStepsBlocksInfo[step - 1] = BlocksInfoCommon(variable, blockPositions);
     }
     return allStepsBlocksInfo;
 }
 
 template <class T>
 std::vector<std::vector<typename core::Variable<T>::BPInfo>>
-BP4Deserializer::AllRelativeStepsBlocksInfo(
-    const core::Variable<T> &variable) const
+BP4Deserializer::AllRelativeStepsBlocksInfo(const core::Variable<T> &variable) const
 {
-    std::vector<std::vector<typename core::Variable<T>::BPInfo>>
-        allRelativeStepsBlocksInfo(
-            variable.m_AvailableStepBlockIndexOffsets.size());
+    std::vector<std::vector<typename core::Variable<T>::BPInfo>> allRelativeStepsBlocksInfo(
+        variable.m_AvailableStepBlockIndexOffsets.size());
 
     size_t relativeStep = 0;
     for (const auto &pair : variable.m_AvailableStepBlockIndexOffsets)
     {
         const std::vector<size_t> &blockPositions = pair.second;
-        allRelativeStepsBlocksInfo[relativeStep] =
-            BlocksInfoCommon(variable, blockPositions);
+        allRelativeStepsBlocksInfo[relativeStep] = BlocksInfoCommon(variable, blockPositions);
         ++relativeStep;
     }
     return allRelativeStepsBlocksInfo;
@@ -731,8 +665,7 @@ BP4Deserializer::AllRelativeStepsBlocksInfo(
 
 template <class T>
 std::vector<typename core::Variable<T>::BPInfo>
-BP4Deserializer::BlocksInfo(const core::Variable<T> &variable,
-                            const size_t step) const
+BP4Deserializer::BlocksInfo(const core::Variable<T> &variable, const size_t step) const
 {
     // bp4 format starts at 1
     auto itStep = variable.m_AvailableStepBlockIndexOffsets.find(step + 1);
@@ -744,34 +677,32 @@ BP4Deserializer::BlocksInfo(const core::Variable<T> &variable,
 }
 
 template <class T>
-void BP4Deserializer::ClipContiguousMemory(
-    typename core::Variable<T>::BPInfo &blockInfo,
-    const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
-    const Box<Dims> &intersectionBox) const
+void BP4Deserializer::ClipContiguousMemory(typename core::Variable<T>::BPInfo &blockInfo,
+                                           const std::vector<char> &contiguousMemory,
+                                           const Box<Dims> &blockBox,
+                                           const Box<Dims> &intersectionBox) const
 {
-    helper::ClipContiguousMemory(
-        blockInfo.Data, blockInfo.Start, blockInfo.Count, contiguousMemory,
-        blockBox, intersectionBox, m_IsRowMajor, m_ReverseDimensions);
+    helper::ClipContiguousMemory(blockInfo.Data, blockInfo.Start, blockInfo.Count, contiguousMemory,
+                                 blockBox, intersectionBox, m_IsRowMajor, m_ReverseDimensions);
 }
 
 // PRIVATE
 
 template <>
 inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
-    const ElementIndexHeader &header, core::Engine &engine,
-    const std::vector<char> &buffer, size_t position, size_t step) const
+    const ElementIndexHeader &header, core::Engine &engine, const std::vector<char> &buffer,
+    size_t position, size_t step) const
 {
     const size_t initialPosition = position;
     size_t irrelevant;
 
     const Characteristics<std::string> characteristics =
         ReadElementIndexCharacteristics<std::string>(
-            buffer, position, static_cast<DataTypes>(header.DataType),
-            irrelevant, false, m_Minifooter.IsLittleEndian);
+            buffer, position, static_cast<DataTypes>(header.DataType), irrelevant, false,
+            m_Minifooter.IsLittleEndian);
 
     const std::string variableName =
-        header.Path.empty() ? header.Name
-                            : header.Path + PathSeparator + header.Name;
+        header.Path.empty() ? header.Name : header.Path + PathSeparator + header.Name;
 
     core::Variable<std::string> *variable = nullptr;
     variable = engine.m_IO.InquireVariable<std::string>(variableName);
@@ -779,8 +710,7 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
     {
         size_t endPositionCurrentStep =
             initialPosition -
-            (header.Name.size() + header.GroupName.size() + header.Path.size() +
-             23) +
+            (header.Name.size() + header.GroupName.size() + header.Path.size() + 23) +
             static_cast<size_t>(header.Length) + 4;
         position = initialPosition;
         // variable->m_AvailableStepsCount = step;
@@ -795,8 +725,8 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
             // read until step is found
             const Characteristics<std::string> subsetCharacteristics =
                 ReadElementIndexCharacteristics<std::string>(
-                    buffer, position, static_cast<DataTypes>(header.DataType),
-                    irrelevant, false, m_Minifooter.IsLittleEndian);
+                    buffer, position, static_cast<DataTypes>(header.DataType), irrelevant, false,
+                    m_Minifooter.IsLittleEndian);
 
             if (subsetCharacteristics.EntryShapeID == ShapeID::LocalValue)
             {
@@ -813,8 +743,7 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
                 }
             }
 
-            variable->m_AvailableStepBlockIndexOffsets[step].push_back(
-                subsetPosition);
+            variable->m_AvailableStepBlockIndexOffsets[step].push_back(subsetPosition);
             position = subsetPosition + subsetCharacteristics.EntryLength + 5;
         }
         return;
@@ -825,8 +754,7 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
         std::lock_guard<std::mutex> lock(m_Mutex);
         variable = &engine.m_IO.DefineVariable<std::string>(variableName);
         engine.RegisterCreatedVariable(variable);
-        variable->m_Value =
-            characteristics.Statistics.Value; // assigning first step
+        variable->m_Value = characteristics.Statistics.Value; // assigning first step
 
         if (characteristics.EntryShapeID == ShapeID::LocalValue)
         {
@@ -838,21 +766,18 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
     }
     else
     {
-        helper::Throw<std::runtime_error>(
-            "Toolkit", "format::bp::BP4Deserializer",
-            "DefineVariableInEngineIOPerStep",
-            "variable " + variableName +
-                " of type string can't be an array, when "
-                "parsing metadata in call to Open");
+        helper::Throw<std::runtime_error>("Toolkit", "format::bp::BP4Deserializer",
+                                          "DefineVariableInEngineIOPerStep",
+                                          "variable " + variableName +
+                                              " of type string can't be an array, when "
+                                              "parsing metadata in call to Open");
     }
 
     // going back to get variable index position
     variable->m_IndexStart =
-        initialPosition - (header.Name.size() + header.GroupName.size() +
-                           header.Path.size() + 23);
+        initialPosition - (header.Name.size() + header.GroupName.size() + header.Path.size() + 23);
 
-    const size_t endPosition =
-        variable->m_IndexStart + static_cast<size_t>(header.Length) + 4;
+    const size_t endPosition = variable->m_IndexStart + static_cast<size_t>(header.Length) + 4;
 
     position = initialPosition;
 
@@ -867,11 +792,10 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
         // read until step is found
         const Characteristics<std::string> subsetCharacteristics =
             ReadElementIndexCharacteristics<std::string>(
-                buffer, position, static_cast<DataTypes>(header.DataType),
-                irrelevant, false, m_Minifooter.IsLittleEndian);
+                buffer, position, static_cast<DataTypes>(header.DataType), irrelevant, false,
+                m_Minifooter.IsLittleEndian);
 
-        const bool isNextStep =
-            stepsFound.insert(subsetCharacteristics.Statistics.Step).second;
+        const bool isNextStep = stepsFound.insert(subsetCharacteristics.Statistics.Step).second;
 
         // if new step is inserted
         if (isNextStep)
@@ -894,8 +818,7 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
             }
         }
 
-        variable->m_AvailableStepBlockIndexOffsets[currentStep].push_back(
-            subsetPosition);
+        variable->m_AvailableStepBlockIndexOffsets[currentStep].push_back(subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
     }
 
@@ -913,21 +836,20 @@ inline void BP4Deserializer::DefineVariableInEngineIOPerStep<std::string>(
 
 /* Define the variable of each step when parsing the metadata */
 template <class T>
-void BP4Deserializer::DefineVariableInEngineIOPerStep(
-    const ElementIndexHeader &header, core::Engine &engine,
-    const std::vector<char> &buffer, size_t position, size_t step) const
+void BP4Deserializer::DefineVariableInEngineIOPerStep(const ElementIndexHeader &header,
+                                                      core::Engine &engine,
+                                                      const std::vector<char> &buffer,
+                                                      size_t position, size_t step) const
 {
     const size_t initialPosition = position;
     size_t irrelevant;
 
-    const Characteristics<T> characteristics =
-        ReadElementIndexCharacteristics<T>(
-            buffer, position, static_cast<DataTypes>(header.DataType),
-            irrelevant, false, m_Minifooter.IsLittleEndian);
+    const Characteristics<T> characteristics = ReadElementIndexCharacteristics<T>(
+        buffer, position, static_cast<DataTypes>(header.DataType), irrelevant, false,
+        m_Minifooter.IsLittleEndian);
 
     const std::string variableName =
-        header.Path.empty() ? header.Name
-                            : header.Path + PathSeparator + header.Name;
+        header.Path.empty() ? header.Name : header.Path + PathSeparator + header.Name;
 
     core::Variable<T> *variable = nullptr;
     {
@@ -940,8 +862,7 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
     {
         size_t endPositionCurrentStep =
             initialPosition -
-            (header.Name.size() + header.GroupName.size() + header.Path.size() +
-             23) +
+            (header.Name.size() + header.GroupName.size() + header.Path.size() + 23) +
             static_cast<size_t>(header.Length) + 4;
         position = initialPosition;
         // variable->m_AvailableStepsCount = step;
@@ -952,11 +873,9 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
             size_t joinedArrayStartValuePos;
 
             // read until step is found
-            const Characteristics<T> subsetCharacteristics =
-                ReadElementIndexCharacteristics<T>(
-                    buffer, position, static_cast<DataTypes>(header.DataType),
-                    joinedArrayStartValuePos, false,
-                    m_Minifooter.IsLittleEndian);
+            const Characteristics<T> subsetCharacteristics = ReadElementIndexCharacteristics<T>(
+                buffer, position, static_cast<DataTypes>(header.DataType), joinedArrayStartValuePos,
+                false, m_Minifooter.IsLittleEndian);
 
             const T blockMin = characteristics.Statistics.IsValue
                                    ? subsetCharacteristics.Statistics.Value
@@ -991,39 +910,32 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
             }
             else if (subsetCharacteristics.EntryShapeID == ShapeID::JoinedArray)
             {
-                Dims shape = m_ReverseDimensions
-                                 ? Dims(subsetCharacteristics.Shape.rbegin(),
-                                        subsetCharacteristics.Shape.rend())
-                                 : subsetCharacteristics.Shape;
-                const Dims count =
-                    m_ReverseDimensions
-                        ? Dims(subsetCharacteristics.Count.rbegin(),
-                               subsetCharacteristics.Count.rend())
-                        : subsetCharacteristics.Count;
+                Dims shape = m_ReverseDimensions ? Dims(subsetCharacteristics.Shape.rbegin(),
+                                                        subsetCharacteristics.Shape.rend())
+                                                 : subsetCharacteristics.Shape;
+                const Dims count = m_ReverseDimensions ? Dims(subsetCharacteristics.Count.rbegin(),
+                                                              subsetCharacteristics.Count.rend())
+                                                       : subsetCharacteristics.Count;
                 uint64_t newStart;
                 if (variable->m_AvailableShapes[step].empty())
                 {
-                    shape[variable->m_JoinedDimPos] =
-                        count[variable->m_JoinedDimPos];
+                    shape[variable->m_JoinedDimPos] = count[variable->m_JoinedDimPos];
                     newStart = 0;
                 }
                 else
                 {
                     newStart = static_cast<uint64_t>(
-                        variable->m_AvailableShapes[step]
-                                                   [variable->m_JoinedDimPos]);
+                        variable->m_AvailableShapes[step][variable->m_JoinedDimPos]);
 
                     // shape increases with each block
                     shape[variable->m_JoinedDimPos] =
-                        variable->m_AvailableShapes[step]
-                                                   [variable->m_JoinedDimPos] +
+                        variable->m_AvailableShapes[step][variable->m_JoinedDimPos] +
                         count[variable->m_JoinedDimPos];
                 }
                 // big hack: modify the metada in place, update the Start[i]
                 // of the block
                 char *src = reinterpret_cast<char *>(&newStart);
-                char *dst =
-                    const_cast<char *>(&buffer[joinedArrayStartValuePos]);
+                char *dst = const_cast<char *>(&buffer[joinedArrayStartValuePos]);
                 memcpy(dst, src, sizeof(uint64_t));
 
                 variable->m_Shape = shape;
@@ -1033,17 +945,14 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
             {
                 // Shape definition is by the last block now, not the first
                 // block
-                const Dims shape =
-                    m_ReverseDimensions
-                        ? Dims(subsetCharacteristics.Shape.rbegin(),
-                               subsetCharacteristics.Shape.rend())
-                        : subsetCharacteristics.Shape;
+                const Dims shape = m_ReverseDimensions ? Dims(subsetCharacteristics.Shape.rbegin(),
+                                                              subsetCharacteristics.Shape.rend())
+                                                       : subsetCharacteristics.Shape;
                 variable->m_Shape = shape;
                 variable->m_AvailableShapes[step] = shape;
             }
 
-            variable->m_AvailableStepBlockIndexOffsets[step].push_back(
-                subsetPosition);
+            variable->m_AvailableStepBlockIndexOffsets[step].push_back(subsetPosition);
             position = subsetPosition + subsetCharacteristics.EntryLength + 5;
         }
         return;
@@ -1053,34 +962,27 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
         std::lock_guard<std::mutex> lock(m_Mutex);
         switch (characteristics.EntryShapeID)
         {
-        case (ShapeID::GlobalValue):
-        {
+        case (ShapeID::GlobalValue): {
             variable = &engine.m_IO.DefineVariable<T>(variableName);
             break;
         }
-        case (ShapeID::GlobalArray):
-        {
-            const Dims shape = m_ReverseDimensions
-                                   ? Dims(characteristics.Shape.rbegin(),
-                                          characteristics.Shape.rend())
-                                   : characteristics.Shape;
+        case (ShapeID::GlobalArray): {
+            const Dims shape = m_ReverseDimensions ? Dims(characteristics.Shape.rbegin(),
+                                                          characteristics.Shape.rend())
+                                                   : characteristics.Shape;
 
-            variable = &engine.m_IO.DefineVariable<T>(
-                variableName, shape, Dims(shape.size(), 0), shape);
-            variable->m_AvailableShapes[characteristics.Statistics.Step] =
-                variable->m_Shape;
+            variable =
+                &engine.m_IO.DefineVariable<T>(variableName, shape, Dims(shape.size(), 0), shape);
+            variable->m_AvailableShapes[characteristics.Statistics.Step] = variable->m_Shape;
             break;
         }
-        case (ShapeID::JoinedArray):
-        {
+        case (ShapeID::JoinedArray): {
             Dims shape = m_ReverseDimensions
-                             ? Dims(characteristics.Shape.rbegin(),
-                                    characteristics.Shape.rend())
+                             ? Dims(characteristics.Shape.rbegin(), characteristics.Shape.rend())
                              : characteristics.Shape;
-            const Dims count = m_ReverseDimensions
-                                   ? Dims(characteristics.Count.rbegin(),
-                                          characteristics.Count.rend())
-                                   : characteristics.Count;
+            const Dims count = m_ReverseDimensions ? Dims(characteristics.Count.rbegin(),
+                                                          characteristics.Count.rend())
+                                                   : characteristics.Count;
             size_t joinedDimPos = 0;
             for (size_t i = 0; i < shape.size(); ++i)
             {
@@ -1091,36 +993,29 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
                 }
             }
 
-            variable = &engine.m_IO.DefineVariable<T>(
-                variableName, shape, Dims(shape.size(), 0), shape);
-            variable->m_AvailableShapes[characteristics.Statistics.Step] =
-                variable->m_Shape;
+            variable =
+                &engine.m_IO.DefineVariable<T>(variableName, shape, Dims(shape.size(), 0), shape);
+            variable->m_AvailableShapes[characteristics.Statistics.Step] = variable->m_Shape;
             variable->m_JoinedDimPos = joinedDimPos;
             break;
         }
-        case (ShapeID::LocalValue):
-        {
-            variable =
-                &engine.m_IO.DefineVariable<T>(variableName, {1}, {0}, {1});
+        case (ShapeID::LocalValue): {
+            variable = &engine.m_IO.DefineVariable<T>(variableName, {1}, {0}, {1});
             variable->m_ShapeID = ShapeID::LocalValue;
             break;
         }
-        case (ShapeID::LocalArray):
-        {
-            const Dims count = m_ReverseDimensions
-                                   ? Dims(characteristics.Count.rbegin(),
-                                          characteristics.Count.rend())
-                                   : characteristics.Count;
-            variable =
-                &engine.m_IO.DefineVariable<T>(variableName, {}, {}, count);
+        case (ShapeID::LocalArray): {
+            const Dims count = m_ReverseDimensions ? Dims(characteristics.Count.rbegin(),
+                                                          characteristics.Count.rend())
+                                                   : characteristics.Count;
+            variable = &engine.m_IO.DefineVariable<T>(variableName, {}, {}, count);
             break;
         }
         default:
-            helper::Throw<std::runtime_error>(
-                "Toolkit", "format::bp::BP4Deserializer",
-                "DefineVariableInEngineIOPerStep",
-                "invalid ShapeID or not yet supported for variable " +
-                    variableName + ", in call to Open");
+            helper::Throw<std::runtime_error>("Toolkit", "format::bp::BP4Deserializer",
+                                              "DefineVariableInEngineIOPerStep",
+                                              "invalid ShapeID or not yet supported for variable " +
+                                                  variableName + ", in call to Open");
         } // end switch
 
         engine.RegisterCreatedVariable(variable);
@@ -1139,11 +1034,9 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
 
     // going back to get variable index position
     variable->m_IndexStart =
-        initialPosition - (header.Name.size() + header.GroupName.size() +
-                           header.Path.size() + 23);
+        initialPosition - (header.Name.size() + header.GroupName.size() + header.Path.size() + 23);
 
-    const size_t endPosition =
-        variable->m_IndexStart + static_cast<size_t>(header.Length) + 4;
+    const size_t endPosition = variable->m_IndexStart + static_cast<size_t>(header.Length) + 4;
 
     position = initialPosition;
 
@@ -1156,10 +1049,9 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
         size_t joinedArrayStartValuePos;
 
         // read until step is found
-        const Characteristics<T> subsetCharacteristics =
-            ReadElementIndexCharacteristics<T>(
-                buffer, position, static_cast<DataTypes>(header.DataType),
-                joinedArrayStartValuePos, false, m_Minifooter.IsLittleEndian);
+        const Characteristics<T> subsetCharacteristics = ReadElementIndexCharacteristics<T>(
+            buffer, position, static_cast<DataTypes>(header.DataType), joinedArrayStartValuePos,
+            false, m_Minifooter.IsLittleEndian);
 
         const T blockMin = characteristics.Statistics.IsValue
                                ? subsetCharacteristics.Statistics.Value
@@ -1168,8 +1060,7 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
                                ? subsetCharacteristics.Statistics.Value
                                : subsetCharacteristics.Statistics.Max;
 
-        const bool isNextStep =
-            stepsFound.insert(subsetCharacteristics.Statistics.Step).second;
+        const bool isNextStep = stepsFound.insert(subsetCharacteristics.Statistics.Step).second;
 
         if (isNextStep)
         {
@@ -1193,31 +1084,26 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
 
         if (subsetCharacteristics.EntryShapeID == ShapeID::JoinedArray)
         {
-            Dims shape = m_ReverseDimensions
-                             ? Dims(subsetCharacteristics.Shape.rbegin(),
-                                    subsetCharacteristics.Shape.rend())
-                             : subsetCharacteristics.Shape;
-            const Dims count = m_ReverseDimensions
-                                   ? Dims(subsetCharacteristics.Count.rbegin(),
-                                          subsetCharacteristics.Count.rend())
-                                   : subsetCharacteristics.Count;
+            Dims shape = m_ReverseDimensions ? Dims(subsetCharacteristics.Shape.rbegin(),
+                                                    subsetCharacteristics.Shape.rend())
+                                             : subsetCharacteristics.Shape;
+            const Dims count = m_ReverseDimensions ? Dims(subsetCharacteristics.Count.rbegin(),
+                                                          subsetCharacteristics.Count.rend())
+                                                   : subsetCharacteristics.Count;
 
             uint64_t newStart;
             if (isNextStep)
             {
-                shape[variable->m_JoinedDimPos] =
-                    count[variable->m_JoinedDimPos];
+                shape[variable->m_JoinedDimPos] = count[variable->m_JoinedDimPos];
                 newStart = 0;
             }
             else
             {
                 newStart = static_cast<uint64_t>(
-                    variable->m_AvailableShapes[currentStep]
-                                               [variable->m_JoinedDimPos]);
+                    variable->m_AvailableShapes[currentStep][variable->m_JoinedDimPos]);
                 // shape increase with each block
                 shape[variable->m_JoinedDimPos] =
-                    variable->m_AvailableShapes[currentStep]
-                                               [variable->m_JoinedDimPos] +
+                    variable->m_AvailableShapes[currentStep][variable->m_JoinedDimPos] +
                     count[variable->m_JoinedDimPos];
             }
             // big hack: modify the metada in place, update the Start[i]
@@ -1233,17 +1119,15 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
         // Shape definition is by the last block now, not the first block
         if (subsetCharacteristics.EntryShapeID == ShapeID::GlobalArray)
         {
-            const Dims shape = m_ReverseDimensions
-                                   ? Dims(subsetCharacteristics.Shape.rbegin(),
-                                          subsetCharacteristics.Shape.rend())
-                                   : subsetCharacteristics.Shape;
+            const Dims shape = m_ReverseDimensions ? Dims(subsetCharacteristics.Shape.rbegin(),
+                                                          subsetCharacteristics.Shape.rend())
+                                                   : subsetCharacteristics.Shape;
             variable->m_Shape = shape;
             variable->m_AvailableShapes[currentStep] = shape;
         }
 
         // update min max for global values only if new step is found
-        if ((isNextStep &&
-             subsetCharacteristics.EntryShapeID == ShapeID::GlobalValue) ||
+        if ((isNextStep && subsetCharacteristics.EntryShapeID == ShapeID::GlobalValue) ||
             (subsetCharacteristics.EntryShapeID != ShapeID::GlobalValue))
         {
             if (helper::LessThan(blockMin, variable->m_Min))
@@ -1257,8 +1141,7 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
             }
         }
 
-        variable->m_AvailableStepBlockIndexOffsets[currentStep].push_back(
-            subsetPosition);
+        variable->m_AvailableStepBlockIndexOffsets[currentStep].push_back(subsetPosition);
         position = subsetPosition + subsetCharacteristics.EntryLength + 5;
     }
 
@@ -1277,15 +1160,15 @@ void BP4Deserializer::DefineVariableInEngineIOPerStep(
 }
 
 template <class T>
-void BP4Deserializer::DefineAttributeInEngineIO(
-    const ElementIndexHeader &header, core::Engine &engine,
-    const std::vector<char> &buffer, size_t position) const
+void BP4Deserializer::DefineAttributeInEngineIO(const ElementIndexHeader &header,
+                                                core::Engine &engine,
+                                                const std::vector<char> &buffer,
+                                                size_t position) const
 {
     size_t irrelevant;
-    const Characteristics<T> characteristics =
-        ReadElementIndexCharacteristics<T>(
-            buffer, position, static_cast<DataTypes>(header.DataType),
-            irrelevant, false, m_Minifooter.IsLittleEndian);
+    const Characteristics<T> characteristics = ReadElementIndexCharacteristics<T>(
+        buffer, position, static_cast<DataTypes>(header.DataType), irrelevant, false,
+        m_Minifooter.IsLittleEndian);
 
     std::string attributeName(header.Name);
     if (!header.Path.empty())
@@ -1295,21 +1178,19 @@ void BP4Deserializer::DefineAttributeInEngineIO(
 
     if (characteristics.Statistics.IsValue)
     {
-        engine.m_IO.DefineAttribute<T>(
-            attributeName, characteristics.Statistics.Value, "", "", true);
+        engine.m_IO.DefineAttribute<T>(attributeName, characteristics.Statistics.Value, "", "",
+                                       true);
     }
     else
     {
-        engine.m_IO.DefineAttribute<T>(
-            attributeName, characteristics.Statistics.Values.data(),
-            characteristics.Statistics.Values.size(), "", "", true);
+        engine.m_IO.DefineAttribute<T>(attributeName, characteristics.Statistics.Values.data(),
+                                       characteristics.Statistics.Values.size(), "", "", true);
     }
 }
 
 template <class T>
 std::map<std::string, helper::SubFileInfoMap>
-BP4Deserializer::GetSyncVariableSubFileInfo(
-    const core::Variable<T> &variable) const
+BP4Deserializer::GetSyncVariableSubFileInfo(const core::Variable<T> &variable) const
 {
     std::map<std::string, helper::SubFileInfoMap> variableSubFileInfo;
     variableSubFileInfo[variable.m_Name] = GetSubFileInfo(variable);
@@ -1324,8 +1205,7 @@ void BP4Deserializer::GetDeferredVariable(core::Variable<T> &variable, T *data)
 }
 
 template <class T>
-helper::SubFileInfoMap
-BP4Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
+helper::SubFileInfoMap BP4Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
 {
     helper::SubFileInfoMap infoMap;
 
@@ -1334,13 +1214,12 @@ BP4Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
     const size_t stepStart = variable.m_StepsStart + 1;
     const size_t stepEnd = stepStart + variable.m_StepsCount; // exclusive
 
-    const Box<Dims> selectionBox = helper::StartEndBox(
-        variable.m_Start, variable.m_Count, m_ReverseDimensions);
+    const Box<Dims> selectionBox =
+        helper::StartEndBox(variable.m_Start, variable.m_Count, m_ReverseDimensions);
 
     for (size_t step = stepStart; step < stepEnd; ++step)
     {
-        auto itBlockStarts =
-            variable.m_AvailableStepBlockIndexOffsets.find(step);
+        auto itBlockStarts = variable.m_AvailableStepBlockIndexOffsets.find(step);
         if (itBlockStarts == variable.m_AvailableStepBlockIndexOffsets.end())
         {
             continue;
@@ -1353,19 +1232,16 @@ BP4Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
         {
             size_t irrelevant;
             const Characteristics<T> blockCharacteristics =
-                ReadElementIndexCharacteristics<T>(
-                    buffer, blockPosition, TypeTraits<T>::type_enum, irrelevant,
-                    false, m_Minifooter.IsLittleEndian);
+                ReadElementIndexCharacteristics<T>(buffer, blockPosition, TypeTraits<T>::type_enum,
+                                                   irrelevant, false, m_Minifooter.IsLittleEndian);
 
             // check if they intersect
             helper::SubFileInfo info;
-            info.BlockBox = helper::StartEndBox(blockCharacteristics.Start,
-                                                blockCharacteristics.Count);
-            info.IntersectionBox =
-                helper::IntersectionBox(selectionBox, info.BlockBox);
+            info.BlockBox =
+                helper::StartEndBox(blockCharacteristics.Start, blockCharacteristics.Count);
+            info.IntersectionBox = helper::IntersectionBox(selectionBox, info.BlockBox);
 
-            if (info.IntersectionBox.first.empty() ||
-                info.IntersectionBox.second.empty())
+            if (info.IntersectionBox.first.empty() || info.IntersectionBox.second.empty())
             {
                 continue;
             }
@@ -1373,19 +1249,16 @@ BP4Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
             // count)
             info.Seeks.first =
                 blockCharacteristics.Statistics.PayloadOffset +
-                helper::LinearIndex(info.BlockBox, info.IntersectionBox.first,
-                                    m_IsRowMajor) *
+                helper::LinearIndex(info.BlockBox, info.IntersectionBox.first, m_IsRowMajor) *
                     sizeof(T);
 
             info.Seeks.second =
                 blockCharacteristics.Statistics.PayloadOffset +
-                (helper::LinearIndex(info.BlockBox, info.IntersectionBox.second,
-                                     m_IsRowMajor) +
+                (helper::LinearIndex(info.BlockBox, info.IntersectionBox.second, m_IsRowMajor) +
                  1) *
                     sizeof(T);
 
-            const size_t fileIndex =
-                static_cast<size_t>(blockCharacteristics.Statistics.FileIndex);
+            const size_t fileIndex = static_cast<size_t>(blockCharacteristics.Statistics.FileIndex);
 
             infoMap[fileIndex][step].push_back(std::move(info));
         }
@@ -1397,9 +1270,8 @@ BP4Deserializer::GetSubFileInfo(const core::Variable<T> &variable) const
 // PRIVATE
 template <class T>
 std::vector<typename core::Variable<T>::BPInfo>
-BP4Deserializer::BlocksInfoCommon(
-    const core::Variable<T> &variable,
-    const std::vector<size_t> &blocksIndexOffsets) const
+BP4Deserializer::BlocksInfoCommon(const core::Variable<T> &variable,
+                                  const std::vector<size_t> &blocksIndexOffsets) const
 {
     std::vector<typename core::Variable<T>::BPInfo> blocksInfo;
     blocksInfo.reserve(blocksIndexOffsets.size());
@@ -1410,10 +1282,9 @@ BP4Deserializer::BlocksInfoCommon(
         size_t position = blockIndexOffset;
         size_t irrelevant;
 
-        const Characteristics<T> blockCharacteristics =
-            ReadElementIndexCharacteristics<T>(
-                m_Metadata.m_Buffer, position, TypeTraits<T>::type_enum,
-                irrelevant, false, m_Minifooter.IsLittleEndian);
+        const Characteristics<T> blockCharacteristics = ReadElementIndexCharacteristics<T>(
+            m_Metadata.m_Buffer, position, TypeTraits<T>::type_enum, irrelevant, false,
+            m_Minifooter.IsLittleEndian);
 
         typename core::Variable<T>::BPInfo blockInfo;
         blockInfo.Shape = blockCharacteristics.Shape;
@@ -1440,11 +1311,9 @@ BP4Deserializer::BlocksInfoCommon(
             blockInfo.Min = blockCharacteristics.Statistics.Min;
             blockInfo.Max = blockCharacteristics.Statistics.Max;
             blockInfo.MinMaxs = blockCharacteristics.Statistics.MinMaxs;
-            blockInfo.SubBlockInfo =
-                blockCharacteristics.Statistics.SubBlockInfo;
+            blockInfo.SubBlockInfo = blockCharacteristics.Statistics.SubBlockInfo;
         }
-        if (blockInfo.Shape.size() == 1 &&
-            blockInfo.Shape.front() == LocalValueDim)
+        if (blockInfo.Shape.size() == 1 && blockInfo.Shape.front() == LocalValueDim)
         {
             blockInfo.Shape = Dims{blocksIndexOffsets.size()};
             blockInfo.Count = Dims{1};
@@ -1453,8 +1322,7 @@ BP4Deserializer::BlocksInfoCommon(
             blockInfo.Max = blockCharacteristics.Statistics.Value;
         }
         // bp index starts at 1
-        blockInfo.Step =
-            static_cast<size_t>(blockCharacteristics.Statistics.Step - 1);
+        blockInfo.Step = static_cast<size_t>(blockCharacteristics.Statistics.Step - 1);
         blockInfo.BlockID = n;
         blocksInfo.push_back(blockInfo);
         ++n;

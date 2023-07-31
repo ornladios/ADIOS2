@@ -52,9 +52,8 @@ public:
      * UncompressedData), [ BloscCompressedChunk, ...]'
      * @return size of compressed buffer in bytes
      */
-    size_t Operate(const char *dataIn, const Dims &blockStart,
-                   const Dims &blockCount, const DataType type,
-                   char *bufferOut) final;
+    size_t Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                   const DataType type, char *bufferOut) final;
 
     /**
      * @param bufferIn
@@ -62,8 +61,7 @@ public:
      * @param dataOut
      * @return size of decompressed buffer
      */
-    size_t InverseOperate(const char *bufferIn, const size_t sizeIn,
-                          char *dataOut) final;
+    size_t InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 
@@ -75,13 +73,13 @@ private:
     size_t bufferDecompressedSize = 0;
 
     /** Decompress chunked data */
-    size_t DecompressChunkedFormat(const char *bufferIn, const size_t sizeIn,
-                                   char *dataOut, const size_t sizeOut);
+    size_t DecompressChunkedFormat(const char *bufferIn, const size_t sizeIn, char *dataOut,
+                                   const size_t sizeOut);
 
     /** Decompress data written before ADIOS2 supported large variables larger
      * 2GiB. */
-    size_t DecompressOldFormat(const char *bufferIn, const size_t sizeIn,
-                               char *dataOut, const size_t sizeOut) const;
+    size_t DecompressOldFormat(const char *bufferIn, const size_t sizeIn, char *dataOut,
+                               const size_t sizeOut) const;
 
     /**
      * Decompress function for V1 buffer. Do NOT remove even if the buffer
@@ -92,8 +90,7 @@ private:
      * @param dataOut : decompressed data buffer
      * @return : number of bytes in dataOut
      */
-    size_t DecompressV1(const char *bufferIn, const size_t sizeIn,
-                        char *dataOut);
+    size_t DecompressV1(const char *bufferIn, const size_t sizeIn, char *dataOut);
 
     ADIOS2_CLASS_PACKED(DataHeader)
     {
@@ -117,10 +114,7 @@ private:
         uint32_t numberOfChunks = 0u;
 
     public:
-        void SetNumChunks(const uint32_t numChunks)
-        {
-            numberOfChunks = numChunks;
-        }
+        void SetNumChunks(const uint32_t numChunks) { numberOfChunks = numChunks; }
         uint32_t GetNumChunks() const { return numberOfChunks; }
 
         bool IsChunked() const { return format == 0; }

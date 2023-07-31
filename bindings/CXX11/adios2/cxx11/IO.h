@@ -134,8 +134,8 @@ public:
      * @exception std::invalid_argument if transportIndex not valid, e.g. not a
      * handler from AddTransport.
      */
-    void SetTransportParameter(const size_t transportIndex,
-                               const std::string key, const std::string value);
+    void SetTransportParameter(const size_t transportIndex, const std::string key,
+                               const std::string value);
 
     /**
      * Define a Variable<T> object within IO
@@ -148,25 +148,19 @@ public:
      * @return Variable<T> object
      */
     template <class T>
-    Variable<T>
-    DefineVariable(const std::string &name, const Dims &shape = Dims(),
-                   const Dims &start = Dims(), const Dims &count = Dims(),
-                   const bool constantDims = false);
+    Variable<T> DefineVariable(const std::string &name, const Dims &shape = Dims(),
+                               const Dims &start = Dims(), const Dims &count = Dims(),
+                               const bool constantDims = false);
 
     VariableNT DefineVariable(const DataType type, const std::string &name,
-                              const Dims &shape = Dims(),
-                              const Dims &start = Dims(),
-                              const Dims &count = Dims(),
-                              const bool constantDims = false);
+                              const Dims &shape = Dims(), const Dims &start = Dims(),
+                              const Dims &count = Dims(), const bool constantDims = false);
 
     StructDefinition DefineStruct(const std::string &name, const size_t size);
 
-    VariableNT DefineStructVariable(const std::string &name,
-                                    const StructDefinition &def,
-                                    const Dims &shape = Dims(),
-                                    const Dims &start = Dims(),
-                                    const Dims &count = Dims(),
-                                    const bool constantDims = false);
+    VariableNT DefineStructVariable(const std::string &name, const StructDefinition &def,
+                                    const Dims &shape = Dims(), const Dims &start = Dims(),
+                                    const Dims &count = Dims(), const bool constantDims = false);
 
     /**
      * Retrieve a Variable object within current IO object
@@ -181,8 +175,7 @@ public:
 
     VariableNT InquireStructVariable(const std::string &name);
 
-    VariableNT InquireStructVariable(const std::string &name,
-                                     const StructDefinition def);
+    VariableNT InquireStructVariable(const std::string &name, const StructDefinition def);
 
     /**
      * @brief Define attribute inside io. Array input version
@@ -201,8 +194,7 @@ public:
      * Variable) is already defined
      */
     template <class T>
-    Attribute<T> DefineAttribute(const std::string &name, const T *data,
-                                 const size_t size,
+    Attribute<T> DefineAttribute(const std::string &name, const T *data, const size_t size,
                                  const std::string &variableName = "",
                                  const std::string separator = "/",
                                  const bool allowModification = false);
@@ -223,10 +215,9 @@ public:
      * Variable) is already defined
      */
     template <class T>
-    Attribute<T> DefineAttribute(const std::string &name, const T &value,
-                                 const std::string &variableName = "",
-                                 const std::string separator = "/",
-                                 const bool allowModification = false);
+    Attribute<T>
+    DefineAttribute(const std::string &name, const T &value, const std::string &variableName = "",
+                    const std::string separator = "/", const bool allowModification = false);
 
     /**
      * @brief Retrieve an existing attribute
@@ -241,8 +232,7 @@ public:
      * Attribute is not found
      */
     template <class T>
-    Attribute<T> InquireAttribute(const std::string &name,
-                                  const std::string &variableName = "",
+    Attribute<T> InquireAttribute(const std::string &name, const std::string &variableName = "",
                                   const std::string separator = "/");
 
     /**
@@ -342,10 +332,9 @@ public:
      *      string value: attribute info value
      * </pre>
      */
-    std::map<std::string, Params>
-    AvailableAttributes(const std::string &variableName = "",
-                        const std::string separator = "/",
-                        const bool fullNameKeys = false);
+    std::map<std::string, Params> AvailableAttributes(const std::string &variableName = "",
+                                                      const std::string separator = "/",
+                                                      const bool fullNameKeys = false);
 
     /**
      * Inspects variable type. This function can be used in conjunction with
@@ -372,8 +361,7 @@ public:
      * @param parameters key/value settings particular to the IO, not to
      * be confused by op own parameters
      */
-    void AddOperation(const std::string &variable,
-                      const std::string &operatorType,
+    void AddOperation(const std::string &variable, const std::string &operatorType,
                       const Params &parameters = Params());
 
     /**

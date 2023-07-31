@@ -46,21 +46,17 @@ int main(int argc, char *argv[])
         adios2::Variable<float> bpFloats = bpIO.DefineVariable<float>(
             "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
-        bpIO.DefineAttribute<std::string>("Single_String",
-                                          "File generated with ADIOS2");
+        bpIO.DefineAttribute<std::string>("Single_String", "File generated with ADIOS2");
 
         std::vector<std::string> myStrings = {"one", "two", "three"};
-        bpIO.DefineAttribute<std::string>("Array_of_Strings", myStrings.data(),
-                                          myStrings.size());
+        bpIO.DefineAttribute<std::string>("Array_of_Strings", myStrings.data(), myStrings.size());
 
         bpIO.DefineAttribute<double>("Attr_Double", 0.f);
         std::vector<double> myDoubles = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-        bpIO.DefineAttribute<double>("Array_of_Doubles", myDoubles.data(),
-                                     myDoubles.size());
+        bpIO.DefineAttribute<double>("Array_of_Doubles", myDoubles.data(), myDoubles.size());
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine bpWriter =
-            bpIO.Open("fileAttributes.bp", adios2::Mode::Write);
+        adios2::Engine bpWriter = bpIO.Open("fileAttributes.bp", adios2::Mode::Write);
 
         /** Write variable for buffering */
         bpWriter.Put<float>(bpFloats, myFloats.data());
@@ -70,8 +66,7 @@ int main(int argc, char *argv[])
 
         adios2::IO bpReader = adios.DeclareIO("BPReader");
 
-        adios2::Engine bpReaderEngine =
-            bpReader.Open("fileAttributes.bp", adios2::Mode::Read);
+        adios2::Engine bpReaderEngine = bpReader.Open("fileAttributes.bp", adios2::Mode::Read);
 
         const auto attributesInfo = bpReader.AvailableAttributes();
 
@@ -80,8 +75,8 @@ int main(int argc, char *argv[])
             std::cout << "Attribute: " << attributeInfoPair.first;
             for (const auto &attributePair : attributeInfoPair.second)
             {
-                std::cout << "\tKey: " << attributePair.first
-                          << "\tValue: " << attributePair.second << "\n";
+                std::cout << "\tKey: " << attributePair.first << "\tValue: " << attributePair.second
+                          << "\n";
             }
             std::cout << "\n";
         }
@@ -90,15 +85,13 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout
-            << "IO System base failure exception, STOPPING PROGRAM from rank "
-            << rank << "\n";
+        std::cout << "IO System base failure exception, STOPPING PROGRAM from rank " << rank
+                  << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)

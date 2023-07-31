@@ -32,14 +32,12 @@ void printVector(const std::vector<T> &v)
     std::cout << "}";
 }
 
-void printTestInfo(const adios2::Dims &count, const size_t blockSize,
-                   const size_t sourceLine)
+void printTestInfo(const adios2::Dims &count, const size_t blockSize, const size_t sourceLine)
 {
     const size_t ndim = count.size();
     std::cout << "\nTest " << ndim << "-D array ";
     printVector(count);
-    std::cout << " divide by blockSize " << blockSize << " at line "
-              << sourceLine << std::endl;
+    std::cout << " divide by blockSize " << blockSize << " at line " << sourceLine << std::endl;
 }
 
 void printBlockDivisionInfo(const adios2::helper::BlockDivisionInfo &info)
@@ -57,8 +55,7 @@ void printBlockDivisionInfo(const adios2::helper::BlockDivisionInfo &info)
     std::cout << std::endl;
 }
 
-void printBlock(const adios2::Box<adios2::Dims> &block,
-                const unsigned int blockID)
+void printBlock(const adios2::Box<adios2::Dims> &block, const unsigned int blockID)
 {
     std::cout << "        block " << blockID << " start = ";
     printVector(block.first);
@@ -67,8 +64,7 @@ void printBlock(const adios2::Box<adios2::Dims> &block,
     std::cout << std::endl;
 }
 
-void printBlock(const adios2::Box<adios2::Dims> &block,
-                const unsigned int blockID,
+void printBlock(const adios2::Box<adios2::Dims> &block, const unsigned int blockID,
                 const std::vector<uint16_t> &expected_start,
                 const std::vector<uint16_t> &expected_count)
 {
@@ -83,8 +79,7 @@ void printBlock(const adios2::Box<adios2::Dims> &block,
     std::cout << std::endl;
 }
 
-void assert_block(const adios2::Box<adios2::Dims> &block,
-                  const unsigned int blockID,
+void assert_block(const adios2::Box<adios2::Dims> &block, const unsigned int blockID,
                   const std::vector<uint16_t> &expected_start,
                   const std::vector<uint16_t> &expected_count)
 {
@@ -116,10 +111,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_1D_100)
         blockSize = 100;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 1);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -139,10 +132,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_1D_100)
         blockSize = 50;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 2);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -166,10 +157,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_1D_100)
         blockSize = 17;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 6);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -209,10 +198,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_1D_100)
         blockSize = 170;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 1);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -232,10 +219,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_1D_100)
         blockSize = 1;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 100);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -276,10 +261,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_2D_10x10)
         blockSize = 100;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 1);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -302,10 +285,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_2D_10x10)
         blockSize = 50;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 2);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -332,10 +313,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_2D_10x10)
         blockSize = 5;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 20);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -378,10 +357,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_2D_10x10)
         blockSize = 17;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 6);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -424,10 +401,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_2D_10x10)
         blockSize = 170;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 1);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -450,10 +425,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_2D_10x10)
         blockSize = 1;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 100);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -496,10 +469,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_2D_10x10)
         blockSize = 3;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 30);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -562,10 +533,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_3D_10x10x10)
         blockSize = 100;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 10);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -599,10 +568,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_3D_10x10x10)
         blockSize = 500;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 2);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -632,10 +599,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_3D_10x10x10)
         blockSize = 50;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 20);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -681,10 +646,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_3D_10x10x10)
         blockSize = 17;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 50);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -734,10 +697,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_3D_10x10x10)
         blockSize = 170;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 6);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -783,10 +744,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_3D_10x10x10)
         blockSize = 1;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 1000);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -832,10 +791,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_3D_10x10x10)
         blockSize = 3;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 300);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -906,10 +863,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_3D_24x24x48)
         blockSize = 5000;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 6);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -952,10 +907,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_3D_3x2x5)
         blockSize = 2;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 12);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);
@@ -1010,10 +963,8 @@ TEST(ADIOS2DivideBlock, ADIOS2DivideBlock_4D_3x2x5x4)
         blockSize = 6;
         printTestInfo(count, blockSize, __LINE__);
 
-        struct adios2::helper::BlockDivisionInfo subBlockInfo =
-            adios2::helper::DivideBlock(
-                count, blockSize,
-                adios2::helper::BlockDivisionMethod::Contiguous);
+        struct adios2::helper::BlockDivisionInfo subBlockInfo = adios2::helper::DivideBlock(
+            count, blockSize, adios2::helper::BlockDivisionMethod::Contiguous);
         printBlockDivisionInfo(subBlockInfo);
         ASSERT_EQ(subBlockInfo.NBlocks, 18);
         ASSERT_EQ(subBlockInfo.SubBlockSize, blockSize);

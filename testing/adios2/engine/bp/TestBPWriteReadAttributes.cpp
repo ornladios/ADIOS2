@@ -28,8 +28,8 @@ public:
 // ADIOS2 write, read for single value attributes
 TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
 {
-    const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
-                              "WriteAttributeReadSingleTypes.bp";
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "WriteAttributeReadSingleTypes.bp";
 
     const std::string zero = std::to_string(0);
     const std::string s1_Single = std::string("s1_Single_") + zero;
@@ -51,8 +51,7 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
     // When collective meta generation has landed, use
     // generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
     // Generate current testing data
-    SmallTestData currentTestData =
-        generateNewSmallTestData(m_TestData, 0, 0, 0);
+    SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, 0, 0);
 
 // Write test data using BP
 #if ADIOS2_USE_MPI
@@ -65,8 +64,7 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
 
         // Declare Single Value Attributes
         io.DefineAttribute<std::string>(s1_Single, currentTestData.S1);
-        io.DefineAttribute<std::string>(s1_Array,
-                                        currentTestData.S1array.data(),
+        io.DefineAttribute<std::string>(s1_Array, currentTestData.S1array.data(),
                                         currentTestData.S1array.size());
 
         io.DefineAttribute<int8_t>(i8_Single, currentTestData.I8.front());
@@ -81,13 +79,10 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
 
         io.DefineAttribute<float>(r32_Single, currentTestData.R32.front());
         io.DefineAttribute<double>(r64_Single, currentTestData.R64.front());
-        io.DefineAttribute<long double>(r128_Single,
-                                        currentTestData.R128.front());
+        io.DefineAttribute<long double>(r128_Single, currentTestData.R128.front());
 
-        io.DefineAttribute<std::complex<float>>(cr32_Single,
-                                                currentTestData.CR32.front());
-        io.DefineAttribute<std::complex<double>>(cr64_Single,
-                                                 currentTestData.CR64.front());
+        io.DefineAttribute<std::complex<float>>(cr32_Single, currentTestData.CR32.front());
+        io.DefineAttribute<std::complex<double>>(cr64_Single, currentTestData.CR64.front());
 
         if (!engineName.empty())
         {
@@ -114,8 +109,7 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead =
-            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto attr_s1 = ioRead.InquireAttribute<std::string>(s1_Single);
         auto attr_s1a = ioRead.InquireAttribute<std::string>(s1_Array);
@@ -133,10 +127,8 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
         auto attr_r64 = ioRead.InquireAttribute<double>(r64_Single);
         auto attr_r128 = ioRead.InquireAttribute<long double>(r128_Single);
 
-        auto attr_cr32 =
-            ioRead.InquireAttribute<std::complex<float>>(cr32_Single);
-        auto attr_cr64 =
-            ioRead.InquireAttribute<std::complex<double>>(cr64_Single);
+        auto attr_cr32 = ioRead.InquireAttribute<std::complex<float>>(cr32_Single);
+        auto attr_cr64 = ioRead.InquireAttribute<std::complex<double>>(cr64_Single);
 
         EXPECT_TRUE(attr_s1);
         ASSERT_EQ(attr_s1.Name(), s1_Single);
@@ -235,8 +227,8 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
 // ADIOS2 write read for array attributes
 TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
 {
-    const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
-                              "WriteAttributeReadArrayTypes.bp";
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "WriteAttributeReadArrayTypes.bp";
 
 #if ADIOS2_USE_MPI
     int mpiRank = 0, mpiSize = 1;
@@ -263,8 +255,7 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
     // When collective meta generation has landed, use
     // generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
     // Generate current testing data
-    SmallTestData currentTestData =
-        generateNewSmallTestData(m_TestData, 0, 0, 0);
+    SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, 0, 0);
 
 // Write test data using BP
 #if ADIOS2_USE_MPI
@@ -279,8 +270,7 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
         io.DefineAttribute<std::string>(s1_Array, currentTestData.S3.data(),
                                         currentTestData.S3.size());
 
-        io.DefineAttribute<int8_t>(i8_Array, currentTestData.I8.data(),
-                                   currentTestData.I8.size());
+        io.DefineAttribute<int8_t>(i8_Array, currentTestData.I8.data(), currentTestData.I8.size());
         io.DefineAttribute<int16_t>(i16_Array, currentTestData.I16.data(),
                                     currentTestData.I16.size());
         io.DefineAttribute<int32_t>(i32_Array, currentTestData.I32.data(),
@@ -288,8 +278,7 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
         io.DefineAttribute<int64_t>(i64_Array, currentTestData.I64.data(),
                                     currentTestData.I64.size());
 
-        io.DefineAttribute<uint8_t>(u8_Array, currentTestData.U8.data(),
-                                    currentTestData.U8.size());
+        io.DefineAttribute<uint8_t>(u8_Array, currentTestData.U8.data(), currentTestData.U8.size());
         io.DefineAttribute<uint16_t>(u16_Array, currentTestData.U16.data(),
                                      currentTestData.U16.size());
         io.DefineAttribute<uint32_t>(u32_Array, currentTestData.U32.data(),
@@ -304,11 +293,9 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
         io.DefineAttribute<long double>(r128_Array, currentTestData.R128.data(),
                                         currentTestData.R128.size());
 
-        io.DefineAttribute<std::complex<float>>(cr32_Array,
-                                                currentTestData.CR32.data(),
+        io.DefineAttribute<std::complex<float>>(cr32_Array, currentTestData.CR32.data(),
                                                 currentTestData.CR32.size());
-        io.DefineAttribute<std::complex<double>>(cr64_Array,
-                                                 currentTestData.CR64.data(),
+        io.DefineAttribute<std::complex<double>>(cr64_Array, currentTestData.CR64.data(),
                                                  currentTestData.CR64.size());
 
         if (!engineName.empty())
@@ -335,8 +322,7 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead =
-            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto attr_s1 = ioRead.InquireAttribute<std::string>(s1_Array);
 
@@ -354,10 +340,8 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
         auto attr_r64 = ioRead.InquireAttribute<double>(r64_Array);
         auto attr_r128 = ioRead.InquireAttribute<long double>(r128_Array);
 
-        auto attr_cr32 =
-            ioRead.InquireAttribute<std::complex<float>>(cr32_Array);
-        auto attr_cr64 =
-            ioRead.InquireAttribute<std::complex<double>>(cr64_Array);
+        auto attr_cr32 = ioRead.InquireAttribute<std::complex<float>>(cr32_Array);
+        auto attr_cr64 = ioRead.InquireAttribute<std::complex<double>>(cr64_Array);
 
         EXPECT_TRUE(attr_s1);
         ASSERT_EQ(attr_s1.Name(), s1_Array);
@@ -459,8 +443,8 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
 
 TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
 {
-    const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
-                              "BPWriteAttributeReadSingleTypesVar.bp";
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadSingleTypesVar.bp";
 
     const std::string zero = std::to_string(0);
     const std::string s1_Single = std::string("s1_Single_") + zero;
@@ -481,8 +465,7 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
     // When collective meta generation has landed, use
     // generateNewSmallTestData(m_TestData, 0, mpiRank, mpiSize);
     // Generate current testing data
-    SmallTestData currentTestData =
-        generateNewSmallTestData(m_TestData, 0, 0, 0);
+    SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, 0, 0);
 
     const std::string separator = "/";
 
@@ -502,37 +485,25 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
         // Declare Single Value Attributes
         auto var = io.DefineVariable<int>("myVar");
 
-        io.DefineAttribute<std::string>(s1_Single, currentTestData.S1,
-                                        var.Name());
-        io.DefineAttribute<int8_t>(i8_Single, currentTestData.I8.front(),
-                                   var.Name());
-        io.DefineAttribute<int16_t>(i16_Single, currentTestData.I16.front(),
-                                    var.Name());
-        io.DefineAttribute<int32_t>(i32_Single, currentTestData.I32.front(),
-                                    var.Name());
-        io.DefineAttribute<int64_t>(i64_Single, currentTestData.I64.front(),
-                                    var.Name());
+        io.DefineAttribute<std::string>(s1_Single, currentTestData.S1, var.Name());
+        io.DefineAttribute<int8_t>(i8_Single, currentTestData.I8.front(), var.Name());
+        io.DefineAttribute<int16_t>(i16_Single, currentTestData.I16.front(), var.Name());
+        io.DefineAttribute<int32_t>(i32_Single, currentTestData.I32.front(), var.Name());
+        io.DefineAttribute<int64_t>(i64_Single, currentTestData.I64.front(), var.Name());
 
-        io.DefineAttribute<uint8_t>(u8_Single, currentTestData.U8.front(),
-                                    var.Name());
-        io.DefineAttribute<uint16_t>(u16_Single, currentTestData.U16.front(),
-                                     var.Name());
-        io.DefineAttribute<uint32_t>(u32_Single, currentTestData.U32.front(),
-                                     var.Name());
-        io.DefineAttribute<uint64_t>(u64_Single, currentTestData.U64.front(),
-                                     var.Name());
+        io.DefineAttribute<uint8_t>(u8_Single, currentTestData.U8.front(), var.Name());
+        io.DefineAttribute<uint16_t>(u16_Single, currentTestData.U16.front(), var.Name());
+        io.DefineAttribute<uint32_t>(u32_Single, currentTestData.U32.front(), var.Name());
+        io.DefineAttribute<uint64_t>(u64_Single, currentTestData.U64.front(), var.Name());
 
-        io.DefineAttribute<float>(r32_Single, currentTestData.R32.front(),
-                                  var.Name());
-        io.DefineAttribute<double>(r64_Single, currentTestData.R64.front(),
-                                   var.Name());
-        io.DefineAttribute<long double>(
-            r128_Single, currentTestData.R128.front(), var.Name());
+        io.DefineAttribute<float>(r32_Single, currentTestData.R32.front(), var.Name());
+        io.DefineAttribute<double>(r64_Single, currentTestData.R64.front(), var.Name());
+        io.DefineAttribute<long double>(r128_Single, currentTestData.R128.front(), var.Name());
 
-        io.DefineAttribute<std::complex<float>>(
-            cr32_Single, currentTestData.CR32.front(), var.Name());
-        io.DefineAttribute<std::complex<double>>(
-            cr64_Single, currentTestData.CR64.front(), var.Name());
+        io.DefineAttribute<std::complex<float>>(cr32_Single, currentTestData.CR32.front(),
+                                                var.Name());
+        io.DefineAttribute<std::complex<double>>(cr64_Single, currentTestData.CR64.front(),
+                                                 var.Name());
 
         adios2::Engine engine = io.Open(fName, adios2::Mode::Write);
         engine.Put(var, 10);
@@ -546,38 +517,27 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead =
-            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto var = ioRead.InquireVariable<int>("myVar");
 
-        auto attr_s1 =
-            ioRead.InquireAttribute<std::string>(s1_Single, var.Name());
+        auto attr_s1 = ioRead.InquireAttribute<std::string>(s1_Single, var.Name());
         auto attr_i8 = ioRead.InquireAttribute<int8_t>(i8_Single, var.Name());
-        auto attr_i16 =
-            ioRead.InquireAttribute<int16_t>(i16_Single, var.Name());
-        auto attr_i32 =
-            ioRead.InquireAttribute<int32_t>(i32_Single, var.Name());
-        auto attr_i64 =
-            ioRead.InquireAttribute<int64_t>(i64_Single, var.Name());
+        auto attr_i16 = ioRead.InquireAttribute<int16_t>(i16_Single, var.Name());
+        auto attr_i32 = ioRead.InquireAttribute<int32_t>(i32_Single, var.Name());
+        auto attr_i64 = ioRead.InquireAttribute<int64_t>(i64_Single, var.Name());
 
         auto attr_u8 = ioRead.InquireAttribute<uint8_t>(u8_Single, var.Name());
-        auto attr_u16 =
-            ioRead.InquireAttribute<uint16_t>(u16_Single, var.Name());
-        auto attr_u32 =
-            ioRead.InquireAttribute<uint32_t>(u32_Single, var.Name());
-        auto attr_u64 =
-            ioRead.InquireAttribute<uint64_t>(u64_Single, var.Name());
+        auto attr_u16 = ioRead.InquireAttribute<uint16_t>(u16_Single, var.Name());
+        auto attr_u32 = ioRead.InquireAttribute<uint32_t>(u32_Single, var.Name());
+        auto attr_u64 = ioRead.InquireAttribute<uint64_t>(u64_Single, var.Name());
 
         auto attr_r32 = ioRead.InquireAttribute<float>(r32_Single, var.Name());
         auto attr_r64 = ioRead.InquireAttribute<double>(r64_Single, var.Name());
-        auto attr_r128 =
-            ioRead.InquireAttribute<long double>(r128_Single, var.Name());
+        auto attr_r128 = ioRead.InquireAttribute<long double>(r128_Single, var.Name());
 
-        auto attr_cr32 = ioRead.InquireAttribute<std::complex<float>>(
-            cr32_Single, var.Name());
-        auto attr_cr64 = ioRead.InquireAttribute<std::complex<double>>(
-            cr64_Single, var.Name());
+        auto attr_cr32 = ioRead.InquireAttribute<std::complex<float>>(cr32_Single, var.Name());
+        auto attr_cr64 = ioRead.InquireAttribute<std::complex<double>>(cr64_Single, var.Name());
 
         EXPECT_TRUE(attr_s1);
         ASSERT_EQ(attr_s1.Name(), var.Name() + separator + s1_Single);
@@ -670,8 +630,8 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
 // ADIOS2 write read for array attributes
 TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
 {
-    const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
-                              "BPWriteAttributeReadArrayTypesVar.bp";
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadArrayTypesVar.bp";
 
 #if ADIOS2_USE_MPI
     int mpiRank = 0, mpiSize = 1;
@@ -697,8 +657,7 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
 
     const std::string separator = "/";
 
-    SmallTestData currentTestData =
-        generateNewSmallTestData(m_TestData, 0, 0, 0);
+    SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, 0, 0);
 
 // Write test data using BP
 #if ADIOS2_USE_MPI
@@ -714,8 +673,8 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
         io.DefineAttribute<std::string>(s1_Array, currentTestData.S3.data(),
                                         currentTestData.S3.size(), var.Name());
 
-        io.DefineAttribute<int8_t>(i8_Array, currentTestData.I8.data(),
-                                   currentTestData.I8.size(), var.Name());
+        io.DefineAttribute<int8_t>(i8_Array, currentTestData.I8.data(), currentTestData.I8.size(),
+                                   var.Name());
         io.DefineAttribute<int16_t>(i16_Array, currentTestData.I16.data(),
                                     currentTestData.I16.size(), var.Name());
         io.DefineAttribute<int32_t>(i32_Array, currentTestData.I32.data(),
@@ -723,8 +682,8 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
         io.DefineAttribute<int64_t>(i64_Array, currentTestData.I64.data(),
                                     currentTestData.I64.size(), var.Name());
 
-        io.DefineAttribute<uint8_t>(u8_Array, currentTestData.U8.data(),
-                                    currentTestData.U8.size(), var.Name());
+        io.DefineAttribute<uint8_t>(u8_Array, currentTestData.U8.data(), currentTestData.U8.size(),
+                                    var.Name());
         io.DefineAttribute<uint16_t>(u16_Array, currentTestData.U16.data(),
                                      currentTestData.U16.size(), var.Name());
         io.DefineAttribute<uint32_t>(u32_Array, currentTestData.U32.data(),
@@ -732,20 +691,17 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
         io.DefineAttribute<uint64_t>(u64_Array, currentTestData.U64.data(),
                                      currentTestData.U64.size(), var.Name());
 
-        io.DefineAttribute<float>(r32_Array, currentTestData.R32.data(),
-                                  currentTestData.R32.size(), var.Name());
+        io.DefineAttribute<float>(r32_Array, currentTestData.R32.data(), currentTestData.R32.size(),
+                                  var.Name());
         io.DefineAttribute<double>(r64_Array, currentTestData.R64.data(),
                                    currentTestData.R64.size(), var.Name());
         io.DefineAttribute<long double>(r128_Array, currentTestData.R128.data(),
-                                        currentTestData.R128.size(),
-                                        var.Name());
+                                        currentTestData.R128.size(), var.Name());
 
-        io.DefineAttribute<std::complex<float>>(
-            cr32_Array, currentTestData.CR32.data(),
-            currentTestData.CR32.size(), var.Name());
-        io.DefineAttribute<std::complex<double>>(
-            cr64_Array, currentTestData.CR64.data(),
-            currentTestData.CR64.size(), var.Name());
+        io.DefineAttribute<std::complex<float>>(cr32_Array, currentTestData.CR32.data(),
+                                                currentTestData.CR32.size(), var.Name());
+        io.DefineAttribute<std::complex<double>>(cr64_Array, currentTestData.CR64.data(),
+                                                 currentTestData.CR64.size(), var.Name());
 
         if (!engineName.empty())
         {
@@ -770,13 +726,11 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead =
-            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto var = ioRead.InquireVariable<int>("myVar");
 
-        auto attr_s1 =
-            ioRead.InquireAttribute<std::string>(s1_Array, var.Name());
+        auto attr_s1 = ioRead.InquireAttribute<std::string>(s1_Array, var.Name());
 
         auto attr_i8 = ioRead.InquireAttribute<int8_t>(i8_Array, var.Name());
         auto attr_i16 = ioRead.InquireAttribute<int16_t>(i16_Array, var.Name());
@@ -784,22 +738,16 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
         auto attr_i64 = ioRead.InquireAttribute<int64_t>(i64_Array, var.Name());
 
         auto attr_u8 = ioRead.InquireAttribute<uint8_t>(u8_Array, var.Name());
-        auto attr_u16 =
-            ioRead.InquireAttribute<uint16_t>(u16_Array, var.Name());
-        auto attr_u32 =
-            ioRead.InquireAttribute<uint32_t>(u32_Array, var.Name());
-        auto attr_u64 =
-            ioRead.InquireAttribute<uint64_t>(u64_Array, var.Name());
+        auto attr_u16 = ioRead.InquireAttribute<uint16_t>(u16_Array, var.Name());
+        auto attr_u32 = ioRead.InquireAttribute<uint32_t>(u32_Array, var.Name());
+        auto attr_u64 = ioRead.InquireAttribute<uint64_t>(u64_Array, var.Name());
 
         auto attr_r32 = ioRead.InquireAttribute<float>(r32_Array, var.Name());
         auto attr_r64 = ioRead.InquireAttribute<double>(r64_Array, var.Name());
-        auto attr_r128 =
-            ioRead.InquireAttribute<long double>(r128_Array, var.Name());
+        auto attr_r128 = ioRead.InquireAttribute<long double>(r128_Array, var.Name());
 
-        auto attr_cr32 = ioRead.InquireAttribute<std::complex<float>>(
-            cr32_Array, var.Name());
-        auto attr_cr64 = ioRead.InquireAttribute<std::complex<double>>(
-            cr64_Array, var.Name());
+        auto attr_cr32 = ioRead.InquireAttribute<std::complex<float>>(cr32_Array, var.Name());
+        auto attr_cr64 = ioRead.InquireAttribute<std::complex<double>>(cr64_Array, var.Name());
 
         EXPECT_TRUE(attr_s1);
         ASSERT_EQ(attr_s1.Name(), var.Name() + separator + s1_Array);
@@ -901,8 +849,8 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
 
 TEST_F(BPWriteReadAttributes, WriteReadStreamVarp)
 {
-    const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
-                              "AttributesWriteReadVar.bp";
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "AttributesWriteReadVar.bp";
 
     const std::string separator = "\\";
 
@@ -918,8 +866,7 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVarp)
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
-    SmallTestData currentTestData =
-        generateNewSmallTestData(m_TestData, 0, 0, 0);
+    SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, 0, 0);
 
 // Write test data using BP
 #if ADIOS2_USE_MPI
@@ -947,33 +894,27 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVarp)
         auto var2 = io.DefineVariable<int32_t>("var2", shape, start, count);
 
         io.DefineAttribute<std::string>("sArray", currentTestData.S3.data(),
-                                        currentTestData.S3.size(), var1.Name(),
-                                        separator);
+                                        currentTestData.S3.size(), var1.Name(), separator);
         io.DefineAttribute<std::string>("sArray", currentTestData.S3.data(),
-                                        currentTestData.S3.size(), var2.Name(),
-                                        separator);
+                                        currentTestData.S3.size(), var2.Name(), separator);
 
         io.DefineAttribute<uint32_t>("u32Value", 1, var1.Name(), separator);
         io.DefineAttribute<uint32_t>("u32Value", 1, var2.Name(), separator);
 
 #ifndef _WIN32
-        io.DefineAttribute<std::string>("smile", "\u263A", var1.Name(),
-                                        separator);
-        io.DefineAttribute<std::string>("smile", "\u263A", var2.Name(),
-                                        separator);
+        io.DefineAttribute<std::string>("smile", "\u263A", var1.Name(), separator);
+        io.DefineAttribute<std::string>("smile", "\u263A", var2.Name(), separator);
 
-        io.DefineAttribute<std::string>("utf8", std::string("महसुस"),
-                                        var1.Name(), separator);
-        io.DefineAttribute<std::string>("utf8", std::string("महसुस"),
-                                        var2.Name(), separator);
+        io.DefineAttribute<std::string>("utf8", std::string("महसुस"), var1.Name(), separator);
+        io.DefineAttribute<std::string>("utf8", std::string("महसुस"), var2.Name(), separator);
 #endif
         adios2::Engine bpWriter = io.Open(fName, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             const int32_t step32 = static_cast<int32_t>(step);
 
@@ -990,8 +931,7 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVarp)
 
     // reader
     {
-        auto lf_VerifyAttributes = [](const std::string &variableName,
-                                      const std::string separator,
+        auto lf_VerifyAttributes = [](const std::string &variableName, const std::string separator,
                                       adios2::IO &io, const bool fullNames) {
             const std::map<std::string, adios2::Params> attributesInfo =
                 io.AvailableAttributes(variableName, separator, fullNames);
@@ -1002,8 +942,7 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVarp)
             EXPECT_NE(itSArray, attributesInfo.end());
             EXPECT_EQ(itSArray->second.at("Type"), "string");
             EXPECT_EQ(itSArray->second.at("Elements"), "3");
-            EXPECT_EQ(itSArray->second.at("Value"),
-                      R"({ "one", "two", "three" })");
+            EXPECT_EQ(itSArray->second.at("Value"), R"({ "one", "two", "three" })");
 
             const std::string u32ValueName =
                 fullNames ? variableName + separator + "u32Value" : "u32Value";
@@ -1014,22 +953,19 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVarp)
             EXPECT_EQ(itU32Value->second.at("Value"), "1");
 
 #ifndef _WIN32
-            const std::string smileName =
-                fullNames ? variableName + separator + "smile" : "smile";
+            const std::string smileName = fullNames ? variableName + separator + "smile" : "smile";
             auto itSmile = attributesInfo.find(smileName);
             EXPECT_NE(itSmile, attributesInfo.end());
             EXPECT_EQ(itSmile->second.at("Type"), "string");
             EXPECT_EQ(itSmile->second.at("Elements"), "1");
             EXPECT_EQ(itSmile->second.at("Value"), std::string("\"\u263A\""));
 
-            const std::string utf8Name =
-                fullNames ? variableName + separator + "utf8" : "utf8";
+            const std::string utf8Name = fullNames ? variableName + separator + "utf8" : "utf8";
             auto itUTF8 = attributesInfo.find(utf8Name);
             EXPECT_NE(itUTF8, attributesInfo.end());
             EXPECT_EQ(itUTF8->second.at("Type"), "string");
             EXPECT_EQ(itUTF8->second.at("Elements"), "1");
-            EXPECT_EQ(itUTF8->second.at("Value"),
-                      "\"" + std::string("महसुस") + "\"");
+            EXPECT_EQ(itUTF8->second.at("Value"), "\"" + std::string("महसुस") + "\"");
 #endif
         };
 
@@ -1067,8 +1003,8 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVarp)
 
 TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
 {
-    const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
-                              "AttributesWriteReadModifiable.bp";
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "AttributesWriteReadModifiable.bp";
 
     const std::string separator = "\\";
 
@@ -1085,8 +1021,7 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
 #endif
 
     const double d3[3] = {-1.1, -1.2, -1.3};
-    SmallTestData currentTestData =
-        generateNewSmallTestData(m_TestData, 0, 0, 0);
+    SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, 0, 0);
 
 // Write test data using BP
 #if ADIOS2_USE_MPI
@@ -1112,23 +1047,19 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
         auto var1 = io.DefineVariable<int32_t>("var1");
         auto var2 = io.DefineVariable<int32_t>("var2", shape, start, count);
 
-        io.DefineAttribute<double>("dArray", d3, 3, var1.Name(), separator,
-                                   true);
-        io.DefineAttribute<double>("dArray", d3, 3, var2.Name(), separator,
-                                   true);
+        io.DefineAttribute<double>("dArray", d3, 3, var1.Name(), separator, true);
+        io.DefineAttribute<double>("dArray", d3, 3, var2.Name(), separator, true);
 
-        io.DefineAttribute<int32_t>("i32Value", -1, var1.Name(), separator,
-                                    true);
-        io.DefineAttribute<int32_t>("i32Value", -1, var2.Name(), separator,
-                                    true);
+        io.DefineAttribute<int32_t>("i32Value", -1, var1.Name(), separator, true);
+        io.DefineAttribute<int32_t>("i32Value", -1, var2.Name(), separator, true);
 
         adios2::Engine bpWriter = io.Open(fName, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             const int32_t step32 = static_cast<int32_t>(step);
             const double stepD = static_cast<double>(step);
@@ -1136,19 +1067,15 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
 
             bpWriter.BeginStep();
 
-            io.DefineAttribute<double>("dArray", d, 3, var1.Name(), separator,
-                                       true);
-            io.DefineAttribute<int32_t>("i32Value", step32, var1.Name(),
-                                        separator, true);
+            io.DefineAttribute<double>("dArray", d, 3, var1.Name(), separator, true);
+            io.DefineAttribute<int32_t>("i32Value", step32, var1.Name(), separator, true);
             bpWriter.Put(var1, step32);
 
             if (step % 2 == 0)
             {
                 bpWriter.Put(var2, currentTestData.I32.data());
-                io.DefineAttribute<double>("dArray", d, 3, var2.Name(),
-                                           separator, true);
-                io.DefineAttribute<int32_t>("i32Value", step32, var2.Name(),
-                                            separator, true);
+                io.DefineAttribute<double>("dArray", d, 3, var2.Name(), separator, true);
+                io.DefineAttribute<int32_t>("i32Value", step32, var2.Name(), separator, true);
             }
 
             bpWriter.EndStep();
@@ -1158,10 +1085,8 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
 
     // reader
     {
-        auto lf_VerifyAttributes = [](const int32_t step,
-                                      const std::string &variableName,
-                                      const std::string separator,
-                                      adios2::IO &io) {
+        auto lf_VerifyAttributes = [](const int32_t step, const std::string &variableName,
+                                      const std::string separator, adios2::IO &io) {
             const std::map<std::string, adios2::Params> attributesInfo =
                 io.AvailableAttributes(variableName, separator, false);
 
@@ -1173,8 +1098,7 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
             EXPECT_EQ(itDArray->second.at("Type"), "double");
             EXPECT_EQ(itDArray->second.at("Elements"), "3");
 
-            auto a =
-                io.InquireAttribute<double>("dArray", variableName, separator);
+            auto a = io.InquireAttribute<double>("dArray", variableName, separator);
             auto adata = a.Data();
             for (int i = 0; i < 3; ++i)
             {

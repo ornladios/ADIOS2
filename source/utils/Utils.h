@@ -38,8 +38,7 @@ protected:
     virtual void ProcessParameters() = 0;
     virtual void PrintUsage() const noexcept = 0;
     virtual void PrintExamples() const noexcept = 0;
-    virtual void SetParameters(const std::string argument,
-                               const bool isLong) = 0;
+    virtual void SetParameters(const std::string argument, const bool isLong) = 0;
 };
 
 } /// end namespace adios2

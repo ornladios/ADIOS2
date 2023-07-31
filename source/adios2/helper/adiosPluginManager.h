@@ -29,21 +29,14 @@ class PluginManager
 public:
     using EngineCreatePtr = std::add_pointer<PluginEngineInterface *(
         core::IO &, const std::string &, const Mode, helper::Comm)>::type;
-    using EngineDestroyPtr =
-        std::add_pointer<void(PluginEngineInterface *)>::type;
-    using EngineCreateFun =
-        std::function<typename std::remove_pointer<EngineCreatePtr>::type>;
-    using EngineDestroyFun =
-        std::function<typename std::remove_pointer<EngineDestroyPtr>::type>;
+    using EngineDestroyPtr = std::add_pointer<void(PluginEngineInterface *)>::type;
+    using EngineCreateFun = std::function<typename std::remove_pointer<EngineCreatePtr>::type>;
+    using EngineDestroyFun = std::function<typename std::remove_pointer<EngineDestroyPtr>::type>;
 
-    using OperatorCreatePtr =
-        std::add_pointer<PluginOperatorInterface *(const Params &)>::type;
-    using OperatorDestroyPtr =
-        std::add_pointer<void(PluginOperatorInterface *)>::type;
-    using OperatorCreateFun =
-        std::function<std::remove_pointer<OperatorCreatePtr>::type>;
-    using OperatorDestroyFun =
-        std::function<std::remove_pointer<OperatorDestroyPtr>::type>;
+    using OperatorCreatePtr = std::add_pointer<PluginOperatorInterface *(const Params &)>::type;
+    using OperatorDestroyPtr = std::add_pointer<void(PluginOperatorInterface *)>::type;
+    using OperatorCreateFun = std::function<std::remove_pointer<OperatorCreatePtr>::type>;
+    using OperatorDestroyFun = std::function<std::remove_pointer<OperatorDestroyPtr>::type>;
 
     static PluginManager &GetInstance();
 
@@ -53,8 +46,7 @@ public:
      * Attempts to load a single plugin specified by pluginName and
      * pluginLibrary.
      */
-    bool LoadPlugin(const std::string &pluginName,
-                    const std::string &pluginLibrary);
+    bool LoadPlugin(const std::string &pluginName, const std::string &pluginLibrary);
 
     EngineCreateFun GetEngineCreateFun(const std::string &name);
     EngineDestroyFun GetEngineDestroyFun(const std::string &name);
@@ -70,8 +62,7 @@ private:
 
     static void CreateInstance();
 
-    bool OpenPlugin(const std::string &pluginName,
-                    const std::string &pluginLibrary,
+    bool OpenPlugin(const std::string &pluginName, const std::string &pluginLibrary,
                     const std::string &pluginPath);
 
     static PluginManager *m_Instance;

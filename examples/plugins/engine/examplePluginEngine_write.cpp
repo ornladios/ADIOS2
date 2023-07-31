@@ -64,8 +64,8 @@ int main(int argc, char *argv[])
 
         /** global array: name, { shape (total dimensions) }, { start (local) },
          * { count (local) }, all are constant dimensions */
-        adios2::Variable<float> var = io.DefineVariable<float>(
-            "data", {}, {}, {Nx}, adios2::ConstantDims);
+        adios2::Variable<float> var =
+            io.DefineVariable<float>("data", {}, {}, {Nx}, adios2::ConstantDims);
 
         if (config.empty())
         {

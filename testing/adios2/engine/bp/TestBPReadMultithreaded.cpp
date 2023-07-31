@@ -77,8 +77,7 @@ public:
 #else
         adios2::ADIOS adios;
 #endif
-        std::string filename =
-            "BPReadMultithreaded" + std::to_string(mpiSize) + ".bp";
+        std::string filename = "BPReadMultithreaded" + std::to_string(mpiSize) + ".bp";
         adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
         ioWrite.SetEngine(engineName);
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
@@ -119,8 +118,8 @@ TEST_P(BPReadMultithreadedTestP, ReadFile)
 {
     int mpiRank = 0, mpiSize = 1;
     int nThreads = GetThreads();
-    std::cout << "---- Test Multithreaded ReadRandomAccess with " << nThreads
-              << " threads ----" << std::endl;
+    std::cout << "---- Test Multithreaded ReadRandomAccess with " << nThreads << " threads ----"
+              << std::endl;
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -133,13 +132,11 @@ TEST_P(BPReadMultithreadedTestP, ReadFile)
     adios2::ADIOS adios;
 #endif
     CreateOutput();
-    std::string filename =
-        "BPReadMultithreaded" + std::to_string(mpiSize) + ".bp";
+    std::string filename = "BPReadMultithreaded" + std::to_string(mpiSize) + ".bp";
     adios2::IO ioRead = adios.DeclareIO("TestIORead");
     ioRead.SetEngine(engineName);
     ioRead.SetParameter("Threads", std::to_string(nThreads));
-    adios2::Engine reader =
-        ioRead.Open(filename, adios2::Mode::ReadRandomAccess);
+    adios2::Engine reader = ioRead.Open(filename, adios2::Mode::ReadRandomAccess);
     EXPECT_TRUE(reader);
 
     const size_t nsteps = reader.Steps();
@@ -189,8 +186,8 @@ TEST_P(BPReadMultithreadedTestP, ReadStream)
 {
     int mpiRank = 0, mpiSize = 1;
     int nThreads = GetThreads();
-    std::cout << "---- Test Multithreaded stream Read with " << nThreads
-              << " threads ----" << std::endl;
+    std::cout << "---- Test Multithreaded stream Read with " << nThreads << " threads ----"
+              << std::endl;
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
@@ -203,8 +200,7 @@ TEST_P(BPReadMultithreadedTestP, ReadStream)
     adios2::ADIOS adios;
 #endif
     CreateOutput();
-    std::string filename =
-        "BPReadMultithreaded" + std::to_string(mpiSize) + ".bp";
+    std::string filename = "BPReadMultithreaded" + std::to_string(mpiSize) + ".bp";
     adios2::IO ioRead = adios.DeclareIO("TestIORead");
     ioRead.SetEngine(engineName);
     ioRead.SetParameter("Threads", std::to_string(nThreads));

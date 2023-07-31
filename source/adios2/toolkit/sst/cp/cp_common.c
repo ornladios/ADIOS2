@@ -17,66 +17,61 @@ char *SSTStreamStatusStr[] = {"NotOpen",    "Opening",    "Established",
                               "PeerClosed", "PeerFailed", "Closed"};
 
 #ifdef MUTEX_DEBUG
-#define STREAM_MUTEX_LOCK(Stream)                                              \
-    {                                                                          \
-        fprintf(stderr, "(PID %lx, TID %lx) CP_COMMON Trying lock line %d\n",  \
-                (long)getpid(), (long)gettid(), __LINE__);                     \
-        pthread_mutex_lock(&Stream->DataLock);                                 \
-        Stream->Locked++;                                                      \
-        fprintf(stderr, "(PID %lx, TID %lx) CP_COMMON Got lock\n",             \
-                (long)getpid(), (long)gettid());                               \
+#define STREAM_MUTEX_LOCK(Stream)                                                                  \
+    {                                                                                              \
+        fprintf(stderr, "(PID %lx, TID %lx) CP_COMMON Trying lock line %d\n", (long)getpid(),      \
+                (long)gettid(), __LINE__);                                                         \
+        pthread_mutex_lock(&Stream->DataLock);                                                     \
+        Stream->Locked++;                                                                          \
+        fprintf(stderr, "(PID %lx, TID %lx) CP_COMMON Got lock\n", (long)getpid(),                 \
+                (long)gettid());                                                                   \
     }
 
-#define STREAM_MUTEX_UNLOCK(Stream)                                            \
-    {                                                                          \
-        fprintf(stderr, "(PID %lx, TID %lx) CP_COMMON UNlocking line %d\n",    \
-                (long)getpid(), (long)gettid(), __LINE__);                     \
-        Stream->Locked--;                                                      \
-        pthread_mutex_unlock(&Stream->DataLock);                               \
+#define STREAM_MUTEX_UNLOCK(Stream)                                                                \
+    {                                                                                              \
+        fprintf(stderr, "(PID %lx, TID %lx) CP_COMMON UNlocking line %d\n", (long)getpid(),        \
+                (long)gettid(), __LINE__);                                                         \
+        Stream->Locked--;                                                                          \
+        pthread_mutex_unlock(&Stream->DataLock);                                                   \
     }
-#define STREAM_CONDITION_WAIT(Stream)                                          \
-    {                                                                          \
-        fprintf(                                                               \
-            stderr,                                                            \
-            "(PID %lx, TID %lx) CP_COMMON Dropping Condition Lock line %d\n",  \
-            (long)getpid(), (long)gettid(), __LINE__);                         \
-        Stream->Locked = 0;                                                    \
-        pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);          \
-        fprintf(                                                               \
-            stderr,                                                            \
-            "(PID %lx, TID %lx) CP_COMMON Acquired Condition Lock line %d\n",  \
-            (long)getpid(), (long)gettid(), __LINE__);                         \
-        Stream->Locked = 1;                                                    \
+#define STREAM_CONDITION_WAIT(Stream)                                                              \
+    {                                                                                              \
+        fprintf(stderr, "(PID %lx, TID %lx) CP_COMMON Dropping Condition Lock line %d\n",          \
+                (long)getpid(), (long)gettid(), __LINE__);                                         \
+        Stream->Locked = 0;                                                                        \
+        pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);                              \
+        fprintf(stderr, "(PID %lx, TID %lx) CP_COMMON Acquired Condition Lock line %d\n",          \
+                (long)getpid(), (long)gettid(), __LINE__);                                         \
+        Stream->Locked = 1;                                                                        \
     }
-#define STREAM_CONDITION_SIGNAL(Stream)                                        \
-    {                                                                          \
-        assert(Stream->Locked == 1);                                           \
-        fprintf(stderr,                                                        \
-                "(PID %lx, TID %lx) CP_COMMON Signalling Condition line %d\n", \
-                (long)getpid(), (long)gettid(), __LINE__);                     \
-        pthread_cond_signal(&Stream->DataCondition);                           \
+#define STREAM_CONDITION_SIGNAL(Stream)                                                            \
+    {                                                                                              \
+        assert(Stream->Locked == 1);                                                               \
+        fprintf(stderr, "(PID %lx, TID %lx) CP_COMMON Signalling Condition line %d\n",             \
+                (long)getpid(), (long)gettid(), __LINE__);                                         \
+        pthread_cond_signal(&Stream->DataCondition);                                               \
     }
 
-#define STREAM_ASSERT_LOCKED(Stream)                                           \
-    {                                                                          \
-        assert(Stream->Locked == 1);                                           \
+#define STREAM_ASSERT_LOCKED(Stream)                                                               \
+    {                                                                                              \
+        assert(Stream->Locked == 1);                                                               \
     }
 #else
-#define STREAM_MUTEX_LOCK(Stream)                                              \
-    {                                                                          \
-        pthread_mutex_lock(&Stream->DataLock);                                 \
+#define STREAM_MUTEX_LOCK(Stream)                                                                  \
+    {                                                                                              \
+        pthread_mutex_lock(&Stream->DataLock);                                                     \
     }
-#define STREAM_MUTEX_UNLOCK(Stream)                                            \
-    {                                                                          \
-        pthread_mutex_unlock(&Stream->DataLock);                               \
+#define STREAM_MUTEX_UNLOCK(Stream)                                                                \
+    {                                                                                              \
+        pthread_mutex_unlock(&Stream->DataLock);                                                   \
     }
-#define STREAM_CONDITION_WAIT(Stream)                                          \
-    {                                                                          \
-        pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);          \
+#define STREAM_CONDITION_WAIT(Stream)                                                              \
+    {                                                                                              \
+        pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);                              \
     }
-#define STREAM_CONDITION_SIGNAL(Stream)                                        \
-    {                                                                          \
-        pthread_cond_signal(&Stream->DataCondition);                           \
+#define STREAM_CONDITION_SIGNAL(Stream)                                                            \
+    {                                                                                              \
+        pthread_cond_signal(&Stream->DataCondition);                                               \
     }
 #define STREAM_ASSERT_LOCKED(Stream)
 #endif
@@ -100,13 +95,11 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
     }
     else
     {
-        fprintf(stderr,
-                "Invalid QueueLimit parameter value (%d) for SST Stream %s\n",
+        fprintf(stderr, "Invalid QueueLimit parameter value (%d) for SST Stream %s\n",
                 Params->QueueLimit, Stream->Filename);
     }
     Stream->QueueFullPolicy = (SstQueueFullPolicy)Params->QueueFullPolicy;
-    Stream->RegistrationMethod =
-        (SstRegistrationMethod)Params->RegistrationMethod;
+    Stream->RegistrationMethod = (SstRegistrationMethod)Params->RegistrationMethod;
     if (Params->DataTransport != NULL)
     {
         int i;
@@ -120,8 +113,7 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         free(Params->DataTransport);
 
         /* canonicalize SelectedTransport */
-        if ((strcmp(SelectedTransport, "wan") == 0) ||
-            (strcmp(SelectedTransport, "evpath") == 0))
+        if ((strcmp(SelectedTransport, "wan") == 0) || (strcmp(SelectedTransport, "evpath") == 0))
         {
             Params->DataTransport = strdup("evpath");
         }
@@ -157,8 +149,7 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         SelectedTransport[i] = 0;
 
         /* canonicalize SelectedTransport */
-        if ((strcmp(SelectedTransport, "sockets") == 0) ||
-            (strcmp(SelectedTransport, "tcp") == 0))
+        if ((strcmp(SelectedTransport, "sockets") == 0) || (strcmp(SelectedTransport, "tcp") == 0))
         {
             Params->ControlTransport = strdup("sockets");
         }
@@ -172,30 +163,25 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         free(SelectedTransport);
     }
     Stream->ConnectionUsleepMultiplier = 50;
-    if ((strcmp(Params->ControlTransport, "enet") == 0) &&
-        getenv("USLEEP_MULTIPLIER"))
+    if ((strcmp(Params->ControlTransport, "enet") == 0) && getenv("USLEEP_MULTIPLIER"))
     {
-        sscanf("%d", getenv("USLEEP_MULTIPLIER"),
-               &Stream->ConnectionUsleepMultiplier);
+        sscanf("%d", getenv("USLEEP_MULTIPLIER"), &Stream->ConnectionUsleepMultiplier);
     }
     for (int i = 0; Params->ControlTransport[i] != 0; i++)
     {
         Params->ControlTransport[i] = tolower(Params->ControlTransport[i]);
     }
-    if ((strcmp(Params->ControlTransport, "enet") == 0) &&
-        getenv("USLEEP_MULTIPLIER"))
+    if ((strcmp(Params->ControlTransport, "enet") == 0) && getenv("USLEEP_MULTIPLIER"))
     {
         int tmp;
         if (sscanf(getenv("USLEEP_MULTIPLIER"), "%d", &tmp) == 1)
         {
             Stream->ConnectionUsleepMultiplier = tmp;
         }
-        CP_verbose(Stream, PerStepVerbose,
-                   "USING %d as usleep multiplier before connections\n",
+        CP_verbose(Stream, PerStepVerbose, "USING %d as usleep multiplier before connections\n",
                    Stream->ConnectionUsleepMultiplier);
     }
-    CP_verbose(Stream, PerStepVerbose,
-               "Sst set to use %s as a Control Transport\n",
+    CP_verbose(Stream, PerStepVerbose, "Sst set to use %s as a Control Transport\n",
                Params->ControlTransport);
     if (Params->ControlModule != NULL)
     {
@@ -218,8 +204,7 @@ void CP_validateParams(SstStream Stream, SstParams Params, int Writer)
         }
         else
         {
-            fprintf(stderr,
-                    "Invalid ControlModule parameter (%s) for SST Stream %s\n",
+            fprintf(stderr, "Invalid ControlModule parameter (%s) for SST Stream %s\n",
                     Params->ControlModule, Stream->Filename);
         }
         free(SelectedModule);
@@ -244,73 +229,59 @@ static char *SstQueueFullStr[] = {"Block", "Discard"};
 static char *SstCompressStr[] = {"None", "ZFP"};
 static char *SstCommPatternStr[] = {"Min", "Peer"};
 static char *SstPreloadModeStr[] = {"Off", "On", "Auto"};
-static char *SstStepDistributionModeStr[] = {"StepsAllToAll", "StepsRoundRobin",
-                                             "StepsOnDemand"};
+static char *SstStepDistributionModeStr[] = {"StepsAllToAll", "StepsRoundRobin", "StepsOnDemand"};
 
-extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params,
-                          int ReaderSide)
+extern void CP_dumpParams(SstStream Stream, struct _SstParams *Params, int ReaderSide)
 {
     if (Stream->CPVerbosityLevel < SummaryVerbose)
         return;
 
-    fprintf(stderr, "Param -   RegistrationMethod=%s\n",
-            SstRegStr[Params->RegistrationMethod]);
+    fprintf(stderr, "Param -   RegistrationMethod=%s\n", SstRegStr[Params->RegistrationMethod]);
     if (!ReaderSide)
     {
-        fprintf(stderr, "Param -   RendezvousReaderCount=%d\n",
-                Params->RendezvousReaderCount);
+        fprintf(stderr, "Param -   RendezvousReaderCount=%d\n", Params->RendezvousReaderCount);
         fprintf(stderr, "Param -   QueueLimit=%d %s\n", Params->QueueLimit,
                 (Params->QueueLimit == 0) ? "(unlimited)" : "");
-        fprintf(stderr, "Param -   QueueFullPolicy=%s\n",
-                SstQueueFullStr[Params->QueueFullPolicy]);
+        fprintf(stderr, "Param -   QueueFullPolicy=%s\n", SstQueueFullStr[Params->QueueFullPolicy]);
         fprintf(stderr, "Param -   StepDistributionMode=%s\n",
                 SstStepDistributionModeStr[Params->StepDistributionMode]);
     }
     fprintf(stderr, "Param -   DataTransport=%s\n",
             Params->DataTransport ? Params->DataTransport : "");
-    fprintf(stderr, "Param -   ControlTransport=%s\n",
-            Params->ControlTransport);
+    fprintf(stderr, "Param -   ControlTransport=%s\n", Params->ControlTransport);
     fprintf(stderr, "Param -   NetworkInterface=%s\n",
             Params->NetworkInterface ? Params->NetworkInterface : "(default)");
     fprintf(stderr, "Param -   ControlInterface=%s\n",
-            Params->ControlInterface
-                ? Params->ControlInterface
-                : "(default to NetworkInterface if applicable)");
+            Params->ControlInterface ? Params->ControlInterface
+                                     : "(default to NetworkInterface if applicable)");
     fprintf(stderr, "Param -   DataInterface=%s\n",
-            Params->DataInterface
-                ? Params->DataInterface
-                : "(default to NetworkInterface if applicable)");
+            Params->DataInterface ? Params->DataInterface
+                                  : "(default to NetworkInterface if applicable)");
     if (!ReaderSide)
     {
         fprintf(stderr, "Param -   CompressionMethod=%s\n",
                 SstCompressStr[Params->CompressionMethod]);
-        fprintf(stderr, "Param -   CPCommPattern=%s\n",
-                SstCommPatternStr[Params->CPCommPattern]);
-        fprintf(stderr, "Param -   MarshalMethod=%s\n",
-                SstMarshalStr[Params->MarshalMethod]);
+        fprintf(stderr, "Param -   CPCommPattern=%s\n", SstCommPatternStr[Params->CPCommPattern]);
+        fprintf(stderr, "Param -   MarshalMethod=%s\n", SstMarshalStr[Params->MarshalMethod]);
         fprintf(stderr, "Param -   FirstTimestepPrecious=%s\n",
                 Params->FirstTimestepPrecious ? "True" : "False");
-        fprintf(stderr, "Param -   IsRowMajor=%d  (not user settable) \n",
-                Params->IsRowMajor);
+        fprintf(stderr, "Param -   IsRowMajor=%d  (not user settable) \n", Params->IsRowMajor);
     }
     if (ReaderSide)
     {
         fprintf(stderr, "Param -   AlwaysProvideLatestTimestep=%s\n",
                 Params->AlwaysProvideLatestTimestep ? "True" : "False");
     }
-    fprintf(stderr, "Param -   OpenTimeoutSecs=%d (seconds)\n",
-            Params->OpenTimeoutSecs);
+    fprintf(stderr, "Param -   OpenTimeoutSecs=%d (seconds)\n", Params->OpenTimeoutSecs);
     fprintf(stderr, "Param -   SpeculativePreloadMode=%s\n",
             SstPreloadModeStr[Params->SpeculativePreloadMode]);
-    fprintf(stderr, "Param -   SpecAutoNodeThreshold=%d\n",
-            Params->SpecAutoNodeThreshold);
+    fprintf(stderr, "Param -   SpecAutoNodeThreshold=%d\n", Params->SpecAutoNodeThreshold);
     fprintf(stderr, "Param -   ControlModule=%s\n",
-            Params->ControlModule ? Params->ControlModule
-                                  : " (default - Advanced param)");
+            Params->ControlModule ? Params->ControlModule : " (default - Advanced param)");
 }
 
 static FMField CP_SstParamsList_RAW[] = {
-#define declare_field(Param, Type, Typedecl, Default)                          \
+#define declare_field(Param, Type, Typedecl, Default)                                              \
     {#Param, #Typedecl, sizeof(Typedecl), FMOffset(struct _SstParams *, Param)},
     SST_FOREACH_PARAMETER_TYPE_4ARGS(declare_field)
 #undef declare_field
@@ -318,10 +289,8 @@ static FMField CP_SstParamsList_RAW[] = {
 static FMField *CP_SstParamsList = NULL;
 
 static FMField CP_ReaderInitList[] = {
-    {"ContactInfo", "string", sizeof(char *),
-     FMOffset(CP_ReaderInitInfo, ContactInfo)},
-    {"reader_ID", "integer", sizeof(void *),
-     FMOffset(CP_ReaderInitInfo, ReaderID)},
+    {"ContactInfo", "string", sizeof(char *), FMOffset(CP_ReaderInitInfo, ContactInfo)},
+    {"reader_ID", "integer", sizeof(void *), FMOffset(CP_ReaderInitInfo, ReaderID)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CP_ReaderInitStructs[] = {
@@ -329,10 +298,8 @@ static FMStructDescRec CP_ReaderInitStructs[] = {
     {NULL, NULL, 0, NULL}};
 
 static FMField CP_WriterInitList[] = {
-    {"ContactInfo", "string", sizeof(char *),
-     FMOffset(CP_WriterInitInfo, ContactInfo)},
-    {"WriterID", "integer", sizeof(void *),
-     FMOffset(CP_WriterInitInfo, WriterID)},
+    {"ContactInfo", "string", sizeof(char *), FMOffset(CP_WriterInitInfo, ContactInfo)},
+    {"WriterID", "integer", sizeof(void *), FMOffset(CP_WriterInitInfo, WriterID)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CP_WriterInitStructs[] = {
@@ -345,8 +312,7 @@ static FMField CP_DP_PairList[] = {
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CP_DP_PairStructs[] = {
-    {"CP_DP_pair", CP_DP_PairList, sizeof(struct _CP_DP_PairInfo), NULL},
-    {NULL, NULL, 0, NULL}};
+    {"CP_DP_pair", CP_DP_PairList, sizeof(struct _CP_DP_PairInfo), NULL}, {NULL, NULL, 0, NULL}};
 
 static FMStructDescRec CP_DP_WriterPairStructs[] = {
     {"CP_DP_WriterPair", CP_DP_PairList, sizeof(struct _CP_DP_PairInfo), NULL},
@@ -355,20 +321,16 @@ static FMStructDescRec CP_DP_WriterPairStructs[] = {
 static FMField CP_DP_ArrayReaderList[] = {
     {"ReaderCohortSize", "integer", sizeof(int),
      FMOffset(struct _CombinedReaderInfo *, ReaderCohortSize)},
-    {"CP_ReaderInfo", "(*CP_STRUCT)[ReaderCohortSize]",
-     sizeof(struct _CP_ReaderInitInfo),
+    {"CP_ReaderInfo", "(*CP_STRUCT)[ReaderCohortSize]", sizeof(struct _CP_ReaderInitInfo),
      FMOffset(struct _CombinedReaderInfo *, CP_ReaderInfo)},
     {"DP_ReaderInfo", "(*DP_STRUCT)[ReaderCohortSize]", 0,
      FMOffset(struct _CombinedReaderInfo *, DP_ReaderInfo)},
-    {"RankZeroID", "integer", sizeof(void *),
-     FMOffset(struct _CombinedReaderInfo *, RankZeroID)},
-    {"SpecPreload", "integer", sizeof(int),
-     FMOffset(struct _CombinedReaderInfo *, SpecPreload)},
+    {"RankZeroID", "integer", sizeof(void *), FMOffset(struct _CombinedReaderInfo *, RankZeroID)},
+    {"SpecPreload", "integer", sizeof(int), FMOffset(struct _CombinedReaderInfo *, SpecPreload)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CP_DP_ReaderArrayStructs[] = {
-    {"CombinedReaderInfo", CP_DP_ArrayReaderList,
-     sizeof(struct _CombinedReaderInfo), NULL},
+    {"CombinedReaderInfo", CP_DP_ArrayReaderList, sizeof(struct _CombinedReaderInfo), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField CP_DP_ArrayWriterList[] = {
@@ -378,29 +340,25 @@ static FMField CP_DP_ArrayWriterList[] = {
      FMOffset(struct _CombinedWriterInfo *, WriterConfigParams)},
     {"StartingStepNumber", "integer", sizeof(size_t),
      FMOffset(struct _CombinedWriterInfo *, StartingStepNumber)},
-    {"CP_WriterInfo", "(*CP_STRUCT)[WriterCohortSize]",
-     sizeof(struct _CP_WriterInitInfo),
+    {"CP_WriterInfo", "(*CP_STRUCT)[WriterCohortSize]", sizeof(struct _CP_WriterInitInfo),
      FMOffset(struct _CombinedWriterInfo *, CP_WriterInfo)},
     {"DP_WriterInfo", "(*DP_STRUCT)[WriterCohortSize]", 0,
      FMOffset(struct _CombinedWriterInfo *, DP_WriterInfo)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CP_DP_WriterArrayStructs[] = {
-    {"CombinedWriterInfo", CP_DP_ArrayWriterList,
-     sizeof(struct _CombinedWriterInfo), NULL},
+    {"CombinedWriterInfo", CP_DP_ArrayWriterList, sizeof(struct _CombinedWriterInfo), NULL},
     {"SstParams", NULL, sizeof(struct _SstParams), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField CP_DPQueryList[] = {
-    {"writer_ID", "integer", sizeof(void *),
-     FMOffset(struct _DPQueryMsg *, WriterFile)},
+    {"writer_ID", "integer", sizeof(void *), FMOffset(struct _DPQueryMsg *, WriterFile)},
     {"writer_response_condition", "integer", sizeof(int),
      FMOffset(struct _DPQueryMsg *, WriterResponseCondition)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CP_DPQueryStructs[] = {
-    {"DPQuery", CP_DPQueryList, sizeof(struct _DPQueryMsg), NULL},
-    {NULL, NULL, 0, NULL}};
+    {"DPQuery", CP_DPQueryList, sizeof(struct _DPQueryMsg), NULL}, {NULL, NULL, 0, NULL}};
 
 static FMField CP_DPQueryResponseList[] = {
     {"writer_response_condition", "integer", sizeof(int),
@@ -410,29 +368,24 @@ static FMField CP_DPQueryResponseList[] = {
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CP_DPQueryResponseStructs[] = {
-    {"DPQueryResponse", CP_DPQueryResponseList,
-     sizeof(struct _DPQueryResponseMsg), NULL},
+    {"DPQueryResponse", CP_DPQueryResponseList, sizeof(struct _DPQueryResponseMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField CP_ReaderRegisterList[] = {
-    {"writer_ID", "integer", sizeof(void *),
-     FMOffset(struct _ReaderRegisterMsg *, WriterFile)},
+    {"writer_ID", "integer", sizeof(void *), FMOffset(struct _ReaderRegisterMsg *, WriterFile)},
     {"writer_response_condition", "integer", sizeof(int),
      FMOffset(struct _ReaderRegisterMsg *, WriterResponseCondition)},
     {"ReaderCohortSize", "integer", sizeof(int),
      FMOffset(struct _ReaderRegisterMsg *, ReaderCohortSize)},
-    {"SpecPreload", "integer", sizeof(int),
-     FMOffset(struct _ReaderRegisterMsg *, SpecPreload)},
-    {"CP_ReaderInfo", "(*CP_STRUCT)[ReaderCohortSize]",
-     sizeof(struct _CP_ReaderInitInfo),
+    {"SpecPreload", "integer", sizeof(int), FMOffset(struct _ReaderRegisterMsg *, SpecPreload)},
+    {"CP_ReaderInfo", "(*CP_STRUCT)[ReaderCohortSize]", sizeof(struct _CP_ReaderInitInfo),
      FMOffset(struct _ReaderRegisterMsg *, CP_ReaderInfo)},
     {"DP_ReaderInfo", "(*DP_STRUCT)[ReaderCohortSize]", 0,
      FMOffset(struct _ReaderRegisterMsg *, DP_ReaderInfo)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CP_ReaderRegisterStructs[] = {
-    {"ReaderRegister", CP_ReaderRegisterList, sizeof(struct _ReaderRegisterMsg),
-     NULL},
+    {"ReaderRegister", CP_ReaderRegisterList, sizeof(struct _ReaderRegisterMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField CP_WriterResponseList[] = {
@@ -444,16 +397,14 @@ static FMField CP_WriterResponseList[] = {
      FMOffset(struct _WriterResponseMsg *, WriterConfigParams)},
     {"NextStepNumber", "integer", sizeof(size_t),
      FMOffset(struct _WriterResponseMsg *, NextStepNumber)},
-    {"cp_WriterInfo", "(*CP_STRUCT)[WriterCohortSize]",
-     sizeof(struct _CP_WriterInitInfo),
+    {"cp_WriterInfo", "(*CP_STRUCT)[WriterCohortSize]", sizeof(struct _CP_WriterInitInfo),
      FMOffset(struct _WriterResponseMsg *, CP_WriterInfo)},
     {"dp_WriterInfo", "(*DP_STRUCT)[WriterCohortSize]", 0,
      FMOffset(struct _WriterResponseMsg *, DP_WriterInfo)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CP_WriterResponseStructs[] = {
-    {"WriterResponse", CP_WriterResponseList, sizeof(struct _WriterResponseMsg),
-     NULL},
+    {"WriterResponse", CP_WriterResponseList, sizeof(struct _WriterResponseMsg), NULL},
     {"SstParams", NULL, sizeof(struct _SstParams), NULL},
     {NULL, NULL, 0, NULL}};
 
@@ -464,8 +415,7 @@ static FMField MetaDataPlusDPInfoList[] = {
      FMOffset(struct _MetadataPlusDPInfo *, AttributeData)},
     {"Formats", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
      FMOffset(struct _MetadataPlusDPInfo *, Formats)},
-    {"DP_TimestepInfo", "*DP_STRUCT", 0,
-     FMOffset(struct _MetadataPlusDPInfo *, DP_TimestepInfo)},
+    {"DP_TimestepInfo", "*DP_STRUCT", 0, FMOffset(struct _MetadataPlusDPInfo *, DP_TimestepInfo)},
     {NULL, NULL, 0, 0}};
 
 static FMField FFSFormatBlockList[] = {
@@ -473,36 +423,29 @@ static FMField FFSFormatBlockList[] = {
      FMOffset(struct FFSFormatBlock *, FormatServerRep)},
     {"FormatServerRepLen", "integer", sizeof(size_t),
      FMOffset(struct FFSFormatBlock *, FormatServerRepLen)},
-    {"FormatIDRep", "char[FormatIDRepLen]", 1,
-     FMOffset(struct FFSFormatBlock *, FormatIDRep)},
+    {"FormatIDRep", "char[FormatIDRepLen]", 1, FMOffset(struct FFSFormatBlock *, FormatIDRep)},
     {"FormatIDRepLen", "integer", sizeof(size_t),
      FMOffset(struct FFSFormatBlock *, FormatIDRepLen)},
     {"Next", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
      FMOffset(struct FFSFormatBlock *, Next)},
     {NULL, NULL, 0, 0}};
 
-static FMField SstBlockList[] = {{"BlockSize", "integer", sizeof(size_t),
-                                  FMOffset(struct _SstBlock *, BlockSize)},
-                                 {"BlockData", "char[BlockSize]", 1,
-                                  FMOffset(struct _SstBlock *, BlockData)},
-                                 {NULL, NULL, 0, 0}};
+static FMField SstBlockList[] = {
+    {"BlockSize", "integer", sizeof(size_t), FMOffset(struct _SstBlock *, BlockSize)},
+    {"BlockData", "char[BlockSize]", 1, FMOffset(struct _SstBlock *, BlockData)},
+    {NULL, NULL, 0, 0}};
 
 static FMStructDescRec MetaDataPlusDPInfoStructs[] = {
-    {"MetaDataPlusDPInfo", MetaDataPlusDPInfoList,
-     sizeof(struct _MetadataPlusDPInfo), NULL},
+    {"MetaDataPlusDPInfo", MetaDataPlusDPInfoList, sizeof(struct _MetadataPlusDPInfo), NULL},
     {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
     {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField TimestepMetadataList[] = {
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(struct _TimestepMetadataMsg *, RS_Stream)},
-    {"timestep", "integer", sizeof(int),
-     FMOffset(struct _TimestepMetadataMsg *, Timestep)},
-    {"cohort_size", "integer", sizeof(int),
-     FMOffset(struct _TimestepMetadataMsg *, CohortSize)},
-    {"preload_mode", "integer", sizeof(int),
-     FMOffset(struct _TimestepMetadataMsg *, PreloadMode)},
+    {"RS_Stream", "integer", sizeof(void *), FMOffset(struct _TimestepMetadataMsg *, RS_Stream)},
+    {"timestep", "integer", sizeof(int), FMOffset(struct _TimestepMetadataMsg *, Timestep)},
+    {"cohort_size", "integer", sizeof(int), FMOffset(struct _TimestepMetadataMsg *, CohortSize)},
+    {"preload_mode", "integer", sizeof(int), FMOffset(struct _TimestepMetadataMsg *, PreloadMode)},
     {"formats", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
      FMOffset(struct _TimestepMetadataMsg *, Formats)},
     {"metadata", "SstBlock[cohort_size]", sizeof(struct _SstBlock),
@@ -514,8 +457,7 @@ static FMField TimestepMetadataList[] = {
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec TimestepMetadataStructs[] = {
-    {"timestepMetadata", TimestepMetadataList,
-     sizeof(struct _TimestepMetadataMsg), NULL},
+    {"timestepMetadata", TimestepMetadataList, sizeof(struct _TimestepMetadataMsg), NULL},
     {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
     {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
     {NULL, NULL, 0, NULL}};
@@ -527,27 +469,24 @@ static FMField TimestepMetadataDistributionList[] = {
      FMOffset(struct _TimestepMetadataDistributionMsg *, TSmsg)},
     {NULL, NULL, 0, 0}};
 
-static FMField ReleaseRecList[] = {{"Timestep", "integer", sizeof(long),
-                                    FMOffset(struct _ReleaseRec *, Timestep)},
-                                   {"Reader", "integer", sizeof(void *),
-                                    FMOffset(struct _ReleaseRec *, Reader)},
-                                   {NULL, NULL, 0, 0}};
+static FMField ReleaseRecList[] = {
+    {"Timestep", "integer", sizeof(long), FMOffset(struct _ReleaseRec *, Timestep)},
+    {"Reader", "integer", sizeof(void *), FMOffset(struct _ReleaseRec *, Reader)},
+    {NULL, NULL, 0, 0}};
 
 static FMField ReturnMetadataInfoList[] = {
     {"DiscardThisTimestep", "integer", sizeof(int),
      FMOffset(struct _ReturnMetadataInfo *, DiscardThisTimestep)},
     {"PendingReaderCount", "integer", sizeof(int),
      FMOffset(struct _ReturnMetadataInfo *, PendingReaderCount)},
-    {"ReleaseCount", "integer", sizeof(int),
-     FMOffset(struct _ReturnMetadataInfo *, ReleaseCount)},
+    {"ReleaseCount", "integer", sizeof(int), FMOffset(struct _ReturnMetadataInfo *, ReleaseCount)},
     {"ReleaseList", "ReleaseRec[ReleaseCount]", sizeof(struct _ReleaseRec),
      FMOffset(struct _ReturnMetadataInfo *, ReleaseList)},
     {"LockDefnsCount", "integer", sizeof(int),
      FMOffset(struct _ReturnMetadataInfo *, LockDefnsCount)},
     {"LockDefnsList", "ReleaseRec[LockDefnsCount]", sizeof(struct _ReleaseRec),
      FMOffset(struct _ReturnMetadataInfo *, LockDefnsList)},
-    {"ReaderCount", "integer", sizeof(int),
-     FMOffset(struct _ReturnMetadataInfo *, ReaderCount)},
+    {"ReaderCount", "integer", sizeof(int), FMOffset(struct _ReturnMetadataInfo *, ReaderCount)},
     {"ReaderStatus", "integer[ReaderCount]", sizeof(enum StreamStatus),
      FMOffset(struct _ReturnMetadataInfo *, ReaderStatus)},
     {"Msg", "timestepMetadata", sizeof(struct _TimestepMetadataMsg),
@@ -557,113 +496,92 @@ static FMField ReturnMetadataInfoList[] = {
 static FMStructDescRec TimestepMetadataDistributionStructs[] = {
     {"TimestepDistribution", TimestepMetadataDistributionList,
      sizeof(struct _TimestepMetadataDistributionMsg), NULL},
-    {"timestepMetadata", TimestepMetadataList,
-     sizeof(struct _TimestepMetadataMsg), NULL},
+    {"timestepMetadata", TimestepMetadataList, sizeof(struct _TimestepMetadataMsg), NULL},
     {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
     {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMStructDescRec ReturnMetadataInfoStructs[] = {
-    {"ReturnMetadataInfo", ReturnMetadataInfoList,
-     sizeof(struct _TimestepMetadataDistributionMsg), NULL},
+    {"ReturnMetadataInfo", ReturnMetadataInfoList, sizeof(struct _TimestepMetadataDistributionMsg),
+     NULL},
     {"ReleaseRec", ReleaseRecList, sizeof(struct _ReleaseRec), NULL},
-    {"timestepMetadata", TimestepMetadataList,
-     sizeof(struct _TimestepMetadataMsg), NULL},
+    {"timestepMetadata", TimestepMetadataList, sizeof(struct _TimestepMetadataMsg), NULL},
     {"FFSFormatBlock", FFSFormatBlockList, sizeof(struct FFSFormatBlock), NULL},
     {"SstBlock", SstBlockList, sizeof(struct _SstBlock), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField ReleaseTimestepList[] = {
-    {"WSR_Stream", "integer", sizeof(void *),
-     FMOffset(struct _ReleaseTimestepMsg *, WSR_Stream)},
-    {"Timestep", "integer", sizeof(int),
-     FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
+    {"WSR_Stream", "integer", sizeof(void *), FMOffset(struct _ReleaseTimestepMsg *, WSR_Stream)},
+    {"Timestep", "integer", sizeof(int), FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec ReleaseTimestepStructs[] = {
-    {"ReleaseTimestep", ReleaseTimestepList, sizeof(struct _ReleaseTimestepMsg),
-     NULL},
+    {"ReleaseTimestep", ReleaseTimestepList, sizeof(struct _ReleaseTimestepMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField LockReaderDefinitionsList[] = {
     {"WSR_Stream", "integer", sizeof(void *),
      FMOffset(struct _LockReaderDefinitionsMsg *, WSR_Stream)},
-    {"Timestep", "integer", sizeof(int),
-     FMOffset(struct _LockReaderDefinitionsMsg *, Timestep)},
+    {"Timestep", "integer", sizeof(int), FMOffset(struct _LockReaderDefinitionsMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec LockReaderDefinitionsStructs[] = {
-    {"LockReaderDefinitions", LockReaderDefinitionsList,
-     sizeof(struct _LockReaderDefinitionsMsg), NULL},
+    {"LockReaderDefinitions", LockReaderDefinitionsList, sizeof(struct _LockReaderDefinitionsMsg),
+     NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField CommPatternLockedList[] = {
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(struct _CommPatternLockedMsg *, RS_Stream)},
-    {"Timestep", "integer", sizeof(int),
-     FMOffset(struct _CommPatternLockedMsg *, Timestep)},
+    {"RS_Stream", "integer", sizeof(void *), FMOffset(struct _CommPatternLockedMsg *, RS_Stream)},
+    {"Timestep", "integer", sizeof(int), FMOffset(struct _CommPatternLockedMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CommPatternLockedStructs[] = {
-    {"CommPatternLocked", CommPatternLockedList,
-     sizeof(struct _CommPatternLockedMsg), NULL},
+    {"CommPatternLocked", CommPatternLockedList, sizeof(struct _CommPatternLockedMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField PeerSetupList[] = {
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(struct _PeerSetupMsg *, RS_Stream)},
-    {"WriterRank", "integer", sizeof(int),
-     FMOffset(struct _PeerSetupMsg *, WriterRank)},
+    {"RS_Stream", "integer", sizeof(void *), FMOffset(struct _PeerSetupMsg *, RS_Stream)},
+    {"WriterRank", "integer", sizeof(int), FMOffset(struct _PeerSetupMsg *, WriterRank)},
     {"WriterCohortSize", "integer", sizeof(int),
      FMOffset(struct _PeerSetupMsg *, WriterCohortSize)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec PeerSetupStructs[] = {
-    {"PeerSetup", PeerSetupList, sizeof(struct _PeerSetupMsg), NULL},
-    {NULL, NULL, 0, NULL}};
+    {"PeerSetup", PeerSetupList, sizeof(struct _PeerSetupMsg), NULL}, {NULL, NULL, 0, NULL}};
 
 static FMField ReaderActivateList[] = {
-    {"WSR_Stream", "integer", sizeof(void *),
-     FMOffset(struct _ReaderActivateMsg *, WSR_Stream)},
+    {"WSR_Stream", "integer", sizeof(void *), FMOffset(struct _ReaderActivateMsg *, WSR_Stream)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec ReaderActivateStructs[] = {
-    {"ReaderActivate", ReaderActivateList, sizeof(struct _ReaderActivateMsg),
-     NULL},
+    {"ReaderActivate", ReaderActivateList, sizeof(struct _ReaderActivateMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField ReaderRequestStepList[] = {
-    {"WSR_Stream", "integer", sizeof(void *),
-     FMOffset(struct _ReaderRequestStepMsg *, WSR_Stream)},
+    {"WSR_Stream", "integer", sizeof(void *), FMOffset(struct _ReaderRequestStepMsg *, WSR_Stream)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec ReaderRequestStepStructs[] = {
-    {"ReaderRequestStep", ReaderRequestStepList,
-     sizeof(struct _ReaderRequestStepMsg), NULL},
+    {"ReaderRequestStep", ReaderRequestStepList, sizeof(struct _ReaderRequestStepMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField WriterCloseList[] = {
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(struct _WriterCloseMsg *, RS_Stream)},
-    {"FinalTimestep", "integer", sizeof(int),
-     FMOffset(struct _WriterCloseMsg *, FinalTimestep)},
+    {"RS_Stream", "integer", sizeof(void *), FMOffset(struct _WriterCloseMsg *, RS_Stream)},
+    {"FinalTimestep", "integer", sizeof(int), FMOffset(struct _WriterCloseMsg *, FinalTimestep)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec WriterCloseStructs[] = {
-    {"WriterClose", WriterCloseList, sizeof(struct _WriterCloseMsg), NULL},
-    {NULL, NULL, 0, NULL}};
+    {"WriterClose", WriterCloseList, sizeof(struct _WriterCloseMsg), NULL}, {NULL, NULL, 0, NULL}};
 
 static FMField ReaderCloseList[] = {
-    {"WSR_Stream", "integer", sizeof(void *),
-     FMOffset(struct _ReaderCloseMsg *, WSR_Stream)},
+    {"WSR_Stream", "integer", sizeof(void *), FMOffset(struct _ReaderCloseMsg *, WSR_Stream)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec ReaderCloseStructs[] = {
-    {"ReaderClose", ReaderCloseList, sizeof(struct _ReaderCloseMsg), NULL},
-    {NULL, NULL, 0, NULL}};
+    {"ReaderClose", ReaderCloseList, sizeof(struct _ReaderCloseMsg), NULL}, {NULL, NULL, 0, NULL}};
 
-static void replaceFormatNameInFieldList(FMStructDescList l, const char *orig,
-                                         const char *repl, int repl_size)
+static void replaceFormatNameInFieldList(FMStructDescList l, const char *orig, const char *repl,
+                                         int repl_size)
 {
     int i = 0;
     while (l[i].format_name)
@@ -678,8 +596,7 @@ static void replaceFormatNameInFieldList(FMStructDescList l, const char *orig,
                 {
                     /* replace 'orig' with 'repl' */
                     char *old = (char *)l[i].field_list[j].field_type;
-                    char *new =
-                        malloc(strlen(old) - strlen(orig) + strlen(repl) + 1);
+                    char *new = malloc(strlen(old) - strlen(orig) + strlen(repl) + 1);
                     strncpy(new, old, loc - old);
                     new[loc - old] = 0;
                     strcat(new, repl);
@@ -716,8 +633,7 @@ static void replaceFormatNameInFieldList(FMStructDescList l, const char *orig,
  * lists are replaced by
  * the actual names/sizes provided.
  */
-static FMStructDescList combineCpDpFormats(FMStructDescList top,
-                                           FMStructDescList cp,
+static FMStructDescList combineCpDpFormats(FMStructDescList top, FMStructDescList cp,
                                            FMStructDescList dp)
 {
     int i = 0, topCount = 0, cpCount = 0, dpCount = 0;
@@ -736,23 +652,19 @@ static FMStructDescList combineCpDpFormats(FMStructDescList top,
         dpCount++;
 
     CombinedFormats =
-        realloc(CombinedFormats, sizeof(CombinedFormats[0]) *
-                                     (topCount + cpCount + dpCount + 1));
+        realloc(CombinedFormats, sizeof(CombinedFormats[0]) * (topCount + cpCount + dpCount + 1));
     for (i = 0; i < cpCount; i++)
     {
         CombinedFormats[topCount + i].format_name = strdup(cp[i].format_name);
-        CombinedFormats[topCount + i].field_list =
-            copy_field_list(cp[i].field_list);
+        CombinedFormats[topCount + i].field_list = copy_field_list(cp[i].field_list);
         CombinedFormats[topCount + i].struct_size = cp[i].struct_size;
         CombinedFormats[topCount + i].opt_info = NULL;
     }
 
     for (i = 0; i < dpCount; i++)
     {
-        CombinedFormats[topCount + cpCount + i].format_name =
-            strdup(dp[i].format_name);
-        CombinedFormats[topCount + cpCount + i].field_list =
-            copy_field_list(dp[i].field_list);
+        CombinedFormats[topCount + cpCount + i].format_name = strdup(dp[i].format_name);
+        CombinedFormats[topCount + cpCount + i].field_list = copy_field_list(dp[i].field_list);
         CombinedFormats[topCount + cpCount + i].struct_size = dp[i].struct_size;
         CombinedFormats[topCount + cpCount + i].opt_info = NULL;
     }
@@ -761,17 +673,15 @@ static FMStructDescList combineCpDpFormats(FMStructDescList top,
     CombinedFormats[topCount + cpCount + dpCount].struct_size = 0;
     CombinedFormats[topCount + cpCount + dpCount].opt_info = NULL;
 
-    replaceFormatNameInFieldList(CombinedFormats, "CP_STRUCT",
-                                 cp ? cp[0].format_name : NULL,
+    replaceFormatNameInFieldList(CombinedFormats, "CP_STRUCT", cp ? cp[0].format_name : NULL,
                                  cp ? cp[0].struct_size : 0);
-    replaceFormatNameInFieldList(CombinedFormats, "DP_STRUCT",
-                                 dp ? dp[0].format_name : NULL,
+    replaceFormatNameInFieldList(CombinedFormats, "DP_STRUCT", dp ? dp[0].format_name : NULL,
                                  dp ? dp[0].struct_size : 0);
     return CombinedFormats;
 }
 
-void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
-                                    FFSTypeHandle Type, void **RetDataBlock)
+void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo, FFSTypeHandle Type,
+                                    void **RetDataBlock)
 {
     FFSBuffer Buf = create_FFSBuffer();
     size_t DataSize;
@@ -786,8 +696,7 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
     {
         RecvCounts = malloc(Stream->CohortSize * sizeof(*RecvCounts));
     }
-    SMPI_Gather(&DataSize, 1, SMPI_SIZE_T, RecvCounts, 1, SMPI_SIZE_T, 0,
-                Stream->mpiComm);
+    SMPI_Gather(&DataSize, 1, SMPI_SIZE_T, RecvCounts, 1, SMPI_SIZE_T, 0, Stream->mpiComm);
 
     /*
      * Figure out the total length of block
@@ -820,8 +729,8 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
      * can gather the data
      */
 
-    SMPI_Gatherv(Buffer, DataSize, SMPI_CHAR, RecvBuffer, RecvCounts, Displs,
-                 SMPI_CHAR, 0, Stream->mpiComm);
+    SMPI_Gatherv(Buffer, DataSize, SMPI_CHAR, RecvBuffer, RecvCounts, Displs, SMPI_CHAR, 0,
+                 Stream->mpiComm);
     free_FFSBuffer(Buf);
 
     if (Stream->Rank == 0)
@@ -834,8 +743,7 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
         Pointers = malloc(Stream->CohortSize * sizeof(Pointers[0]));
         for (i = 0; i < Stream->CohortSize; i++)
         {
-            FFSdecode_in_place(context, RecvBuffer + Displs[i],
-                               (void **)&Pointers[i]);
+            FFSdecode_in_place(context, RecvBuffer + Displs[i], (void **)&Pointers[i]);
             // printf("Decode for rank %d :\n", i);
             // FMdump_data(FMFormat_of_original(ffs_type), Pointers[i],
             // 1024000);
@@ -847,8 +755,8 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo,
     return (void **)Pointers;
 }
 
-void *CP_distributeDataFromRankZero(SstStream Stream, void *root_info,
-                                    FFSTypeHandle Type, void **RetDataBlock)
+void *CP_distributeDataFromRankZero(SstStream Stream, void *root_info, FFSTypeHandle Type,
+                                    void **RetDataBlock)
 {
     int DataSize;
     char *Buffer;
@@ -858,8 +766,7 @@ void *CP_distributeDataFromRankZero(SstStream Stream, void *root_info,
     {
         FFSBuffer Buf = create_FFSBuffer();
         size_t encodeSize;
-        char *tmp =
-            FFSencode(Buf, FMFormat_of_original(Type), root_info, &encodeSize);
+        char *tmp = FFSencode(Buf, FMFormat_of_original(Type), root_info, &encodeSize);
         DataSize = (int)encodeSize;
         SMPI_Bcast(&DataSize, 1, SMPI_INT, 0, Stream->mpiComm);
         SMPI_Bcast(tmp, DataSize, SMPI_CHAR, 0, Stream->mpiComm);
@@ -884,8 +791,8 @@ void *CP_distributeDataFromRankZero(SstStream Stream, void *root_info,
     return RetVal;
 }
 
-void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
-                               FFSTypeHandle Type, void **RetDataBlock)
+void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo, FFSTypeHandle Type,
+                               void **RetDataBlock)
 {
     FFSBuffer Buf = create_FFSBuffer();
     size_t DataSize;
@@ -898,8 +805,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
 
     RecvCounts = malloc(Stream->CohortSize * sizeof(*RecvCounts));
 
-    SMPI_Allgather(&DataSize, 1, SMPI_SIZE_T, RecvCounts, 1, SMPI_SIZE_T,
-                   Stream->mpiComm);
+    SMPI_Allgather(&DataSize, 1, SMPI_SIZE_T, RecvCounts, 1, SMPI_SIZE_T, Stream->mpiComm);
 
     /*
      * Figure out the total length of block
@@ -930,8 +836,8 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
      * can gather the data
      */
 
-    SMPI_Allgatherv(Buffer, DataSize, SMPI_CHAR, RecvBuffer, RecvCounts, Displs,
-                    SMPI_CHAR, Stream->mpiComm);
+    SMPI_Allgatherv(Buffer, DataSize, SMPI_CHAR, RecvBuffer, RecvCounts, Displs, SMPI_CHAR,
+                    Stream->mpiComm);
     free_FFSBuffer(Buf);
 
     FFSContext context = Stream->CPInfo->ffs_c;
@@ -939,8 +845,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo,
     Pointers = malloc(Stream->CohortSize * sizeof(Pointers[0]));
     for (i = 0; i < Stream->CohortSize; i++)
     {
-        FFSdecode_in_place(context, RecvBuffer + Displs[i],
-                           (void **)&Pointers[i]);
+        FFSdecode_in_place(context, RecvBuffer + Displs[i], (void **)&Pointers[i]);
     }
     free(Displs);
     free(RecvCounts);
@@ -967,8 +872,7 @@ static void AddCustomStruct(CP_StructList *List, FMStructDescList Struct)
 {
     List->CustomStructCount++;
     List->CustomStructList =
-        realloc(List->CustomStructList,
-                sizeof(FMStructDescList) * List->CustomStructCount);
+        realloc(List->CustomStructList, sizeof(FMStructDescList) * List->CustomStructCount);
     List->CustomStructList[List->CustomStructCount - 1] = Struct;
 }
 
@@ -988,69 +892,48 @@ static void doPrelimCMFormatRegistration(CP_GlobalCMInfo CPInfo)
 
     CPInfo->DPQueryFormat = CMregister_format(CPInfo->cm, CP_DPQueryStructs);
     CMregister_handler(CPInfo->DPQueryFormat, CP_DPQueryHandler, NULL);
-    CPInfo->DPQueryResponseFormat =
-        CMregister_format(CPInfo->cm, CP_DPQueryResponseStructs);
-    CMregister_handler(CPInfo->DPQueryResponseFormat, CP_DPQueryResponseHandler,
-                       NULL);
-    CPInfo->ReaderActivateFormat =
-        CMregister_format(CPInfo->cm, ReaderActivateStructs);
-    CMregister_handler(CPInfo->ReaderActivateFormat, CP_ReaderActivateHandler,
-                       NULL);
-    CPInfo->ReaderRequestStepFormat =
-        CMregister_format(CPInfo->cm, ReaderRequestStepStructs);
-    CMregister_handler(CPInfo->ReaderRequestStepFormat,
-                       CP_ReaderRequestStepHandler, NULL);
+    CPInfo->DPQueryResponseFormat = CMregister_format(CPInfo->cm, CP_DPQueryResponseStructs);
+    CMregister_handler(CPInfo->DPQueryResponseFormat, CP_DPQueryResponseHandler, NULL);
+    CPInfo->ReaderActivateFormat = CMregister_format(CPInfo->cm, ReaderActivateStructs);
+    CMregister_handler(CPInfo->ReaderActivateFormat, CP_ReaderActivateHandler, NULL);
+    CPInfo->ReaderRequestStepFormat = CMregister_format(CPInfo->cm, ReaderRequestStepStructs);
+    CMregister_handler(CPInfo->ReaderRequestStepFormat, CP_ReaderRequestStepHandler, NULL);
 
-    CPInfo->ReleaseTimestepFormat =
-        CMregister_format(CPInfo->cm, ReleaseTimestepStructs);
-    CMregister_handler(CPInfo->ReleaseTimestepFormat, CP_ReleaseTimestepHandler,
-                       NULL);
+    CPInfo->ReleaseTimestepFormat = CMregister_format(CPInfo->cm, ReleaseTimestepStructs);
+    CMregister_handler(CPInfo->ReleaseTimestepFormat, CP_ReleaseTimestepHandler, NULL);
     CPInfo->LockReaderDefinitionsFormat =
         CMregister_format(CPInfo->cm, LockReaderDefinitionsStructs);
-    CMregister_handler(CPInfo->LockReaderDefinitionsFormat,
-                       CP_LockReaderDefinitionsHandler, NULL);
-    CPInfo->CommPatternLockedFormat =
-        CMregister_format(CPInfo->cm, CommPatternLockedStructs);
-    CMregister_handler(CPInfo->CommPatternLockedFormat,
-                       CP_CommPatternLockedHandler, NULL);
-    CPInfo->WriterCloseFormat =
-        CMregister_format(CPInfo->cm, WriterCloseStructs);
+    CMregister_handler(CPInfo->LockReaderDefinitionsFormat, CP_LockReaderDefinitionsHandler, NULL);
+    CPInfo->CommPatternLockedFormat = CMregister_format(CPInfo->cm, CommPatternLockedStructs);
+    CMregister_handler(CPInfo->CommPatternLockedFormat, CP_CommPatternLockedHandler, NULL);
+    CPInfo->WriterCloseFormat = CMregister_format(CPInfo->cm, WriterCloseStructs);
     CMregister_handler(CPInfo->WriterCloseFormat, CP_WriterCloseHandler, NULL);
-    CPInfo->ReaderCloseFormat =
-        CMregister_format(CPInfo->cm, ReaderCloseStructs);
+    CPInfo->ReaderCloseFormat = CMregister_format(CPInfo->cm, ReaderCloseStructs);
     CMregister_handler(CPInfo->ReaderCloseFormat, CP_ReaderCloseHandler, NULL);
 }
 
-static void doFinalCMFormatRegistration(CP_GlobalCMInfo CPInfo,
-                                        CP_DP_Interface DPInfo)
+static void doFinalCMFormatRegistration(CP_GlobalCMInfo CPInfo, CP_DP_Interface DPInfo)
 {
     FMStructDescList FullReaderRegisterStructs, FullWriterResponseStructs,
         CombinedTimestepMetadataStructs;
 
-    FullReaderRegisterStructs =
-        combineCpDpFormats(CP_ReaderRegisterStructs, CP_ReaderInitStructs,
-                           DPInfo->ReaderContactFormats);
-    CPInfo->ReaderRegisterFormat =
-        CMregister_format(CPInfo->cm, FullReaderRegisterStructs);
-    CMregister_handler(CPInfo->ReaderRegisterFormat, CP_ReaderRegisterHandler,
-                       NULL);
+    FullReaderRegisterStructs = combineCpDpFormats(CP_ReaderRegisterStructs, CP_ReaderInitStructs,
+                                                   DPInfo->ReaderContactFormats);
+    CPInfo->ReaderRegisterFormat = CMregister_format(CPInfo->cm, FullReaderRegisterStructs);
+    CMregister_handler(CPInfo->ReaderRegisterFormat, CP_ReaderRegisterHandler, NULL);
     AddCustomStruct(&CPInfo->CustomStructs, FullReaderRegisterStructs);
 
-    FullWriterResponseStructs =
-        combineCpDpFormats(CP_WriterResponseStructs, CP_WriterInitStructs,
-                           DPInfo->WriterContactFormats);
-    CPInfo->WriterResponseFormat =
-        CMregister_format(CPInfo->cm, FullWriterResponseStructs);
-    CMregister_handler(CPInfo->WriterResponseFormat, CP_WriterResponseHandler,
-                       NULL);
+    FullWriterResponseStructs = combineCpDpFormats(CP_WriterResponseStructs, CP_WriterInitStructs,
+                                                   DPInfo->WriterContactFormats);
+    CPInfo->WriterResponseFormat = CMregister_format(CPInfo->cm, FullWriterResponseStructs);
+    CMregister_handler(CPInfo->WriterResponseFormat, CP_WriterResponseHandler, NULL);
     AddCustomStruct(&CPInfo->CustomStructs, FullWriterResponseStructs);
 
-    CombinedTimestepMetadataStructs = combineCpDpFormats(
-        TimestepMetadataStructs, NULL, DPInfo->TimestepInfoFormats);
+    CombinedTimestepMetadataStructs =
+        combineCpDpFormats(TimestepMetadataStructs, NULL, DPInfo->TimestepInfoFormats);
     CPInfo->DeliverTimestepMetadataFormat =
         CMregister_format(CPInfo->cm, CombinedTimestepMetadataStructs);
-    CMregister_handler(CPInfo->DeliverTimestepMetadataFormat,
-                       CP_TimestepMetadataHandler, NULL);
+    CMregister_handler(CPInfo->DeliverTimestepMetadataFormat, CP_TimestepMetadataHandler, NULL);
     AddCustomStruct(&CPInfo->CustomStructs, CombinedTimestepMetadataStructs);
 }
 
@@ -1061,62 +944,52 @@ static void doFFSFormatRegistration(CP_Info CPInfo, CP_DP_Interface DPInfo)
     FMStructDescList CombinedMetadataStructs;
     FMFormat f;
 
-    PerRankReaderStructs = combineCpDpFormats(
-        CP_DP_PairStructs, CP_ReaderInitStructs, DPInfo->ReaderContactFormats);
+    PerRankReaderStructs =
+        combineCpDpFormats(CP_DP_PairStructs, CP_ReaderInitStructs, DPInfo->ReaderContactFormats);
     f = FMregister_data_format(CPInfo->fm_c, PerRankReaderStructs);
-    CPInfo->PerRankReaderInfoFormat =
-        FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
+    CPInfo->PerRankReaderInfoFormat = FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
     FFSset_fixed_target(CPInfo->ffs_c, PerRankReaderStructs);
     AddCustomStruct(&CPInfo->CustomStructs, PerRankReaderStructs);
 
-    CombinedReaderStructs =
-        combineCpDpFormats(CP_DP_ReaderArrayStructs, CP_ReaderInitStructs,
-                           DPInfo->ReaderContactFormats);
+    CombinedReaderStructs = combineCpDpFormats(CP_DP_ReaderArrayStructs, CP_ReaderInitStructs,
+                                               DPInfo->ReaderContactFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedReaderStructs);
-    CPInfo->CombinedReaderInfoFormat =
-        FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
+    CPInfo->CombinedReaderInfoFormat = FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
     FFSset_fixed_target(CPInfo->ffs_c, CombinedReaderStructs);
     AddCustomStruct(&CPInfo->CustomStructs, CombinedReaderStructs);
 
-    PerRankWriterStructs =
-        combineCpDpFormats(CP_DP_WriterPairStructs, CP_WriterInitStructs,
-                           DPInfo->WriterContactFormats);
+    PerRankWriterStructs = combineCpDpFormats(CP_DP_WriterPairStructs, CP_WriterInitStructs,
+                                              DPInfo->WriterContactFormats);
     f = FMregister_data_format(CPInfo->fm_c, PerRankWriterStructs);
-    CPInfo->PerRankWriterInfoFormat =
-        FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
+    CPInfo->PerRankWriterInfoFormat = FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
     FFSset_fixed_target(CPInfo->ffs_c, PerRankWriterStructs);
     AddCustomStruct(&CPInfo->CustomStructs, PerRankWriterStructs);
 
-    CombinedWriterStructs =
-        combineCpDpFormats(CP_DP_WriterArrayStructs, CP_WriterInitStructs,
-                           DPInfo->WriterContactFormats);
+    CombinedWriterStructs = combineCpDpFormats(CP_DP_WriterArrayStructs, CP_WriterInitStructs,
+                                               DPInfo->WriterContactFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedWriterStructs);
-    CPInfo->CombinedWriterInfoFormat =
-        FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
+    CPInfo->CombinedWriterInfoFormat = FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
     FFSset_fixed_target(CPInfo->ffs_c, CombinedWriterStructs);
     AddCustomStruct(&CPInfo->CustomStructs, CombinedWriterStructs);
 
-    CombinedMetadataStructs = combineCpDpFormats(
-        MetaDataPlusDPInfoStructs, NULL, DPInfo->TimestepInfoFormats);
+    CombinedMetadataStructs =
+        combineCpDpFormats(MetaDataPlusDPInfoStructs, NULL, DPInfo->TimestepInfoFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedMetadataStructs);
-    CPInfo->PerRankMetadataFormat =
-        FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
+    CPInfo->PerRankMetadataFormat = FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
     FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
     AddCustomStruct(&CPInfo->CustomStructs, CombinedMetadataStructs);
 
-    CombinedMetadataStructs = combineCpDpFormats(
-        TimestepMetadataDistributionStructs, NULL, DPInfo->TimestepInfoFormats);
+    CombinedMetadataStructs =
+        combineCpDpFormats(TimestepMetadataDistributionStructs, NULL, DPInfo->TimestepInfoFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedMetadataStructs);
-    CPInfo->TimestepDistributionFormat =
-        FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
+    CPInfo->TimestepDistributionFormat = FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
     FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
     AddCustomStruct(&CPInfo->CustomStructs, CombinedMetadataStructs);
 
-    CombinedMetadataStructs = combineCpDpFormats(
-        ReturnMetadataInfoStructs, NULL, DPInfo->TimestepInfoFormats);
+    CombinedMetadataStructs =
+        combineCpDpFormats(ReturnMetadataInfoStructs, NULL, DPInfo->TimestepInfoFormats);
     f = FMregister_data_format(CPInfo->fm_c, CombinedMetadataStructs);
-    CPInfo->ReturnMetadataInfoFormat =
-        FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
+    CPInfo->ReturnMetadataInfoFormat = FFSTypeHandle_by_index(CPInfo->ffs_c, FMformat_index(f));
     FFSset_fixed_target(CPInfo->ffs_c, CombinedMetadataStructs);
     AddCustomStruct(&CPInfo->CustomStructs, CombinedMetadataStructs);
 }
@@ -1127,9 +1000,8 @@ static int SharedCMInfoRefCount = 0;
 
 extern void AddToLastCallFreeList(void *Block)
 {
-    SharedCMInfo->LastCallFreeList =
-        realloc(SharedCMInfo->LastCallFreeList,
-                sizeof(void *) * (SharedCMInfo->LastCallFreeCount + 1));
+    SharedCMInfo->LastCallFreeList = realloc(
+        SharedCMInfo->LastCallFreeList, sizeof(void *) * (SharedCMInfo->LastCallFreeCount + 1));
     SharedCMInfo->LastCallFreeList[SharedCMInfo->LastCallFreeCount] = Block;
     SharedCMInfo->LastCallFreeCount++;
 }
@@ -1138,8 +1010,7 @@ static void ReadableSizeString(size_t SizeInBytes, char *Output, size_t size)
 {
     int i = 0;
     size_t LastSizeInBytes = SizeInBytes;
-    char *byteUnits[] = {"bytes", "kB", "MB", "GB", "TB",
-                         "PB",    "EB", "ZB", "YB"};
+    char *byteUnits[] = {"bytes", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"};
 
     while (SizeInBytes > 1024)
     {
@@ -1150,8 +1021,7 @@ static void ReadableSizeString(size_t SizeInBytes, char *Output, size_t size)
 
     if ((SizeInBytes < 100) && (i != 0))
     {
-        snprintf(Output, size, "%.1f %s", ((double)LastSizeInBytes) / 1024,
-                 byteUnits[i]);
+        snprintf(Output, size, "%.1f %s", ((double)LastSizeInBytes) / 1024, byteUnits[i]);
     }
     else
     {
@@ -1183,8 +1053,8 @@ extern void DoStreamSummary(SstStream Stream)
     }
     AllStats[0].RunningFanIn /= Stream->CohortSize;
 
-    CP_verbose(Stream, SummaryVerbose, "\nStream \"%s\" (%p) summary info:\n",
-               Stream->Filename, (void *)Stream);
+    CP_verbose(Stream, SummaryVerbose, "\nStream \"%s\" (%p) summary info:\n", Stream->Filename,
+               (void *)Stream);
     CP_verbose(Stream, SummaryVerbose, "\tDuration (secs) = %g\n",
                Stream->Stats.StreamValidTimeSecs);
     if (Stream->Role == WriterRole)
@@ -1197,24 +1067,18 @@ extern void DoStreamSummary(SstStream Stream)
     else if (Stream->Role == ReaderRole)
     {
         char OutputString[256];
-        CP_verbose(Stream, SummaryVerbose,
-                   "\tTimestep Metadata Received = %zu\n",
+        CP_verbose(Stream, SummaryVerbose, "\tTimestep Metadata Received = %zu\n",
                    Stream->Stats.TimestepMetadataReceived);
         CP_verbose(Stream, SummaryVerbose, "\tTimesteps Consumed = %zu\n",
                    Stream->Stats.TimestepsConsumed);
-        ReadableSizeString(AllStats[0].MetadataBytesReceived, OutputString,
-                           sizeof(OutputString));
-        CP_verbose(Stream, SummaryVerbose,
-                   "\tMetadataBytesReceived = %zu (%s)\n",
+        ReadableSizeString(AllStats[0].MetadataBytesReceived, OutputString, sizeof(OutputString));
+        CP_verbose(Stream, SummaryVerbose, "\tMetadataBytesReceived = %zu (%s)\n",
                    AllStats[0].MetadataBytesReceived, OutputString);
-        ReadableSizeString(AllStats[0].DataBytesReceived, OutputString,
-                           sizeof(OutputString));
+        ReadableSizeString(AllStats[0].DataBytesReceived, OutputString, sizeof(OutputString));
         CP_verbose(Stream, SummaryVerbose, "\tDataBytesReceived = %zu (%s)\n",
                    AllStats[0].DataBytesReceived, OutputString);
-        ReadableSizeString(AllStats[0].PreloadBytesReceived, OutputString,
-                           sizeof(OutputString));
-        CP_verbose(Stream, SummaryVerbose,
-                   "\tPreloadBytesReceived = %zu (%s)\n",
+        ReadableSizeString(AllStats[0].PreloadBytesReceived, OutputString, sizeof(OutputString));
+        CP_verbose(Stream, SummaryVerbose, "\tPreloadBytesReceived = %zu (%s)\n",
                    AllStats[0].PreloadBytesReceived, OutputString);
         CP_verbose(Stream, SummaryVerbose, "\tPreloadTimestepsReceived = %zu\n",
                    Stream->Stats.PreloadTimestepsReceived);
@@ -1232,8 +1096,7 @@ extern void SstStreamDestroy(SstStream Stream)
      * in a safe way after all streams have been destroyed
      */
     struct _SstStream StackStream;
-    CP_verbose(Stream, PerStepVerbose, "Destroying stream %p, name %s\n",
-               Stream, Stream->Filename);
+    CP_verbose(Stream, PerStepVerbose, "Destroying stream %p, name %s\n", Stream, Stream->Filename);
     STREAM_MUTEX_LOCK(Stream);
     StackStream = *Stream;
     Stream->Status = Destroyed;
@@ -1264,8 +1127,7 @@ extern void SstStreamDestroy(SstStream Stream)
     {
         for (int i = 0; i < Stream->ReaderCount; i++)
         {
-            CP_PeerConnection *connections_to_reader =
-                Stream->Readers[i]->Connections;
+            CP_PeerConnection *connections_to_reader = Stream->Readers[i]->Connections;
 
             if (connections_to_reader)
             {
@@ -1273,8 +1135,7 @@ extern void SstStreamDestroy(SstStream Stream)
                 {
                     if (connections_to_reader[j].CMconn)
                     {
-                        CMConnection_dereference(
-                            connections_to_reader[j].CMconn);
+                        CMConnection_dereference(connections_to_reader[j].CMconn);
                         connections_to_reader[j].CMconn = NULL;
                     }
                     free_attr_list(connections_to_reader[j].ContactList);
@@ -1306,8 +1167,7 @@ extern void SstStreamDestroy(SstStream Stream)
         free(FFSList);
         FFSList = Tmp;
     }
-    if (Stream->WriterConfigParams &&
-        (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS))
+    if (Stream->WriterConfigParams && (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS))
     {
         FFSFreeMarshalData(Stream);
         if (Stream->M)
@@ -1391,9 +1251,8 @@ extern void SstStreamDestroy(SstStream Stream)
     SharedCMInfoRefCount--;
     if (SharedCMInfoRefCount == 0)
     {
-        CP_verbose(
-            Stream, PerStepVerbose,
-            "Reference count now zero, Destroying process SST info cache\n");
+        CP_verbose(Stream, PerStepVerbose,
+                   "Reference count now zero, Destroying process SST info cache\n");
         CManager_close(SharedCMInfo->cm);
         FreeCustomStructs(&SharedCMInfo->CustomStructs);
         CP_verbose(Stream, PerStepVerbose, "Freeing LastCallList\n");
@@ -1409,15 +1268,13 @@ extern void SstStreamDestroy(SstStream Stream)
         CP_SstParamsList = NULL;
     }
     pthread_mutex_unlock(&StateMutex);
-    CP_verbose(&StackStream, PerStepVerbose,
-               "SstStreamDestroy successful, returning\n");
+    CP_verbose(&StackStream, PerStepVerbose, "SstStreamDestroy successful, returning\n");
 }
 
 extern char *CP_GetContactString(SstStream Stream, attr_list DPAttrs)
 {
     attr_list ListenList = create_attr_list(), ContactList;
-    set_string_attr(ListenList, CM_TRANSPORT_ATOM,
-                    strdup(Stream->ConfigParams->ControlTransport));
+    set_string_attr(ListenList, CM_TRANSPORT_ATOM, strdup(Stream->ConfigParams->ControlTransport));
     if (Stream->ConfigParams->ControlInterface)
     {
         set_string_attr(ListenList, attr_atom_from_string("IP_INTERFACE"),
@@ -1428,10 +1285,8 @@ extern char *CP_GetContactString(SstStream Stream, attr_list DPAttrs)
         set_string_attr(ListenList, IP_INTERFACE_ATOM,
                         strdup(Stream->ConfigParams->NetworkInterface));
     }
-    ContactList =
-        CMget_specific_contact_list(Stream->CPInfo->SharedCM->cm, ListenList);
-    ContactList =
-        CMderef_and_copy_list(Stream->CPInfo->SharedCM->cm, ContactList);
+    ContactList = CMget_specific_contact_list(Stream->CPInfo->SharedCM->cm, ListenList);
+    ContactList = CMderef_and_copy_list(Stream->CPInfo->SharedCM->cm, ContactList);
     if (strcmp(Stream->ConfigParams->ControlTransport, "enet") == 0)
     {
         set_int_attr(ContactList, CM_ENET_CONN_TIMEOUT, 60000); /* 60 seconds */
@@ -1510,10 +1365,8 @@ extern CP_Info CP_getCPInfo(char *ControlModule)
                     free((void *)CP_SstParamsList[i].field_type);
                     CP_SstParamsList[i].field_type = strdup("integer");
                 }
-                else if ((strcmp(CP_SstParamsList[i].field_type, "char*") ==
-                          0) ||
-                         (strcmp(CP_SstParamsList[i].field_type, "char *") ==
-                          0))
+                else if ((strcmp(CP_SstParamsList[i].field_type, "char*") == 0) ||
+                         (strcmp(CP_SstParamsList[i].field_type, "char *") == 0))
                 {
                     free((void *)CP_SstParamsList[i].field_type);
                     CP_SstParamsList[i].field_type = strdup("string");
@@ -1522,25 +1375,19 @@ extern CP_Info CP_getCPInfo(char *ControlModule)
             }
         }
         int i;
-        for (i = 0; i < sizeof(CP_DP_WriterArrayStructs) /
-                            sizeof(CP_DP_WriterArrayStructs[0]);
-             i++)
+        for (i = 0; i < sizeof(CP_DP_WriterArrayStructs) / sizeof(CP_DP_WriterArrayStructs[0]); i++)
         {
             if (CP_DP_WriterArrayStructs[i].format_name &&
-                (strcmp(CP_DP_WriterArrayStructs[i].format_name, "SstParams") ==
-                 0))
+                (strcmp(CP_DP_WriterArrayStructs[i].format_name, "SstParams") == 0))
             {
                 CP_DP_WriterArrayStructs[i].field_list = CP_SstParamsList;
             }
         }
 
-        for (i = 0; i < sizeof(CP_WriterResponseStructs) /
-                            sizeof(CP_WriterResponseStructs[0]);
-             i++)
+        for (i = 0; i < sizeof(CP_WriterResponseStructs) / sizeof(CP_WriterResponseStructs[0]); i++)
         {
             if (CP_WriterResponseStructs[i].format_name &&
-                (strcmp(CP_WriterResponseStructs[i].format_name, "SstParams") ==
-                 0))
+                (strcmp(CP_WriterResponseStructs[i].format_name, "SstParams") == 0))
             {
                 CP_WriterResponseStructs[i].field_list = CP_SstParamsList;
             }
@@ -1571,8 +1418,7 @@ SstStream CP_newStream()
     Stream->CloseTimestepCount = (size_t)-1;
     Stream->LastDemandTimestep = (size_t)-1;
     Stream->LastReleasedTimestep = -1;
-    Stream->DiscardPriorTimestep =
-        -1; // Timesteps prior to this discarded/released upon arrival
+    Stream->DiscardPriorTimestep = -1; // Timesteps prior to this discarded/released upon arrival
     Stream->CPVerbosityLevel = CriticalVerbose;
     Stream->DPVerbosityLevel = CriticalVerbose;
     if ((CPEnvValue = getenv("SstVerbose")))
@@ -1596,13 +1442,12 @@ SstStream CP_newStream()
 
 static void DP_verbose(SstStream Stream, int Level, char *Format, ...);
 static CManager CP_getCManager(SstStream Stream);
-static int CP_sendToPeer(SstStream Stream, CP_PeerCohort cohort, int rank,
-                         CMFormat Format, void *data);
+static int CP_sendToPeer(SstStream Stream, CP_PeerCohort cohort, int rank, CMFormat Format,
+                         void *data);
 static SMPI_Comm CP_getMPIComm(SstStream Stream);
 
-struct _CP_Services Svcs = {
-    (CP_VerboseFunc)DP_verbose, (CP_GetCManagerFunc)CP_getCManager,
-    (CP_SendToPeerFunc)CP_sendToPeer, (CP_GetMPICommFunc)CP_getMPIComm};
+struct _CP_Services Svcs = {(CP_VerboseFunc)DP_verbose, (CP_GetCManagerFunc)CP_getCManager,
+                            (CP_SendToPeerFunc)CP_sendToPeer, (CP_GetMPICommFunc)CP_getMPIComm};
 
 static int *PeerArray(int MySize, int MyRank, int PeerSize)
 {
@@ -1626,8 +1471,7 @@ static int *PeerArray(int MySize, int MyRank, int PeerSize)
     return MyPeers;
 }
 
-static int *reversePeerArray(int MySize, int MyRank, int PeerSize,
-                             int *forward_entry)
+static int *reversePeerArray(int MySize, int MyRank, int PeerSize, int *forward_entry)
 {
     int PeerCount = 0;
     int *ReversePeers = malloc(sizeof(int));
@@ -1642,8 +1486,7 @@ static int *reversePeerArray(int MySize, int MyRank, int PeerSize,
         {
             if (their_peers[j] == MyRank)
             {
-                ReversePeers =
-                    realloc(ReversePeers, (PeerCount + 2) * sizeof(int));
+                ReversePeers = realloc(ReversePeers, (PeerCount + 2) * sizeof(int));
                 ReversePeers[PeerCount] = i;
                 PeerCount++;
                 if (j == 0)
@@ -1657,8 +1500,8 @@ static int *reversePeerArray(int MySize, int MyRank, int PeerSize,
     return ReversePeers;
 }
 
-extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
-                          int **forwardArray, int **reverseArray)
+extern void getPeerArrays(int MySize, int MyRank, int PeerSize, int **forwardArray,
+                          int **reverseArray)
 {
     if (MySize < PeerSize)
     {
@@ -1682,8 +1525,7 @@ extern void getPeerArrays(int MySize, int MyRank, int PeerSize,
         int *reverse;
         *forwardArray = malloc(sizeof(int) * 2);
         (*forwardArray)[1] = -1;
-        reverse =
-            reversePeerArray(MySize, MyRank, PeerSize, &((*forwardArray)[0]));
+        reverse = reversePeerArray(MySize, MyRank, PeerSize, &((*forwardArray)[0]));
         if (reverseArray)
         {
             *reverseArray = reverse;
@@ -1725,8 +1567,7 @@ static void DP_verbose(SstStream s, int Level, char *Format, ...)
     }
 }
 
-extern void CP_verbose(SstStream s, enum VerbosityLevel Level, char *Format,
-                       ...)
+extern void CP_verbose(SstStream s, enum VerbosityLevel Level, char *Format, ...)
 {
     if (s->CPVerbosityLevel >= (int)Level)
     {
@@ -1772,40 +1613,30 @@ extern void CP_error(SstStream s, char *Format, ...)
     va_end(Args);
 }
 
-static CManager CP_getCManager(SstStream Stream)
-{
-    return Stream->CPInfo->SharedCM->cm;
-}
+static CManager CP_getCManager(SstStream Stream) { return Stream->CPInfo->SharedCM->cm; }
 
 static SMPI_Comm CP_getMPIComm(SstStream Stream) { return Stream->mpiComm; }
 
-extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn,
-                                   void *client_data);
-extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn,
-                                   void *client_data);
-static int CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
-                         CMFormat Format, void *Data)
+extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn, void *client_data);
+extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn, void *client_data);
+static int CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank, CMFormat Format, void *Data)
 {
     CP_PeerConnection *Peers = (CP_PeerConnection *)Cohort;
     if (Peers[Rank].CMconn == NULL)
     {
-        Peers[Rank].CMconn =
-            CMget_conn(s->CPInfo->SharedCM->cm, Peers[Rank].ContactList);
+        Peers[Rank].CMconn = CMget_conn(s->CPInfo->SharedCM->cm, Peers[Rank].ContactList);
         if (!Peers[Rank].CMconn)
         {
-            CP_error(s,
-                     "Connection failed in CP_sendToPeer! Contact list was:\n");
+            CP_error(s, "Connection failed in CP_sendToPeer! Contact list was:\n");
             CP_error(s, attr_list_to_string(Peers[Rank].ContactList));
             return 0;
         }
         if (s->Role == ReaderRole)
         {
-            CP_verbose(
-                s, TraceVerbose,
-                "Registering reader close handler for peer %d CONNECTION %p\n",
-                Rank, Peers[Rank].CMconn);
-            CMconn_register_close_handler(Peers[Rank].CMconn,
-                                          ReaderConnCloseHandler, (void *)s);
+            CP_verbose(s, TraceVerbose,
+                       "Registering reader close handler for peer %d CONNECTION %p\n", Rank,
+                       Peers[Rank].CMconn);
+            CMconn_register_close_handler(Peers[Rank].CMconn, ReaderConnCloseHandler, (void *)s);
         }
         else
         {
@@ -1817,8 +1648,7 @@ static int CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
                                "Registering writer close handler for peer %d, "
                                "CONNECTION %p\n",
                                Rank, Peers[Rank].CMconn);
-                    CMconn_register_close_handler(Peers[Rank].CMconn,
-                                                  WriterConnCloseHandler,
+                    CMconn_register_close_handler(Peers[Rank].CMconn, WriterConnCloseHandler,
                                                   (void *)s->Readers[i]);
                     break;
                 }
@@ -1839,7 +1669,4 @@ static int CP_sendToPeer(SstStream s, CP_PeerCohort Cohort, int Rank,
 CPNetworkInfoFunc globalNetinfoCallback = NULL;
 char *IPDiagString = NULL;
 
-extern void SSTSetNetworkCallback(CPNetworkInfoFunc callback)
-{
-    globalNetinfoCallback = callback;
-}
+extern void SSTSetNetworkCallback(CPNetworkInfoFunc callback) { globalNetinfoCallback = callback; }

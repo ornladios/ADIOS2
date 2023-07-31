@@ -41,7 +41,6 @@ void gUtilConvert(hsize_t *fromH5, size_t *to, size_t ndims);
 
 int gUtilADIOS2GetShape(hid_t space_id, size_t *shape, size_t ndims);
 
-int gUtilADIOS2GetBlockInfo(hid_t hyperSlab_id, size_t *start, size_t *count,
-                            hsize_t ndims);
+int gUtilADIOS2GetBlockInfo(hid_t hyperSlab_id, size_t *start, size_t *count, hsize_t ndims);
 
 #endif

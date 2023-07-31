@@ -36,8 +36,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        std::cerr << "Usage: " << argv[0] << " [/path/to/config.xml]"
-                  << std::endl;
+        std::cerr << "Usage: " << argv[0] << " [/path/to/config.xml]" << std::endl;
         return 1;
     }
     std::cout << "Using config file: " << configFile << std::endl;
@@ -57,16 +56,15 @@ int main(int argc, char *argv[])
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
-        adios2::Variable<float> &bpFloats = bpIO.DefineVariable<float>(
-            "bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
+        adios2::Variable<float> &bpFloats =
+            bpIO.DefineVariable<float>("bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
         auto bpWriter = bpIO.Open("myVector.bp", adios2::Mode::Write);
 
         if (!bpWriter)
         {
-            throw std::ios_base::failure(
-                "ERROR: bpWriter not created at Open\n");
+            throw std::ios_base::failure("ERROR: bpWriter not created at Open\n");
         }
 
         /** Write variable for buffering */

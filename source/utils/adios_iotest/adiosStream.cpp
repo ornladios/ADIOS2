@@ -16,9 +16,8 @@
 #include <string>
 #include <vector>
 
-adiosStream::adiosStream(const std::string &streamName, adios2::IO &io,
-                         const adios2::Mode mode, MPI_Comm comm, bool iotimer,
-                         size_t appid)
+adiosStream::adiosStream(const std::string &streamName, adios2::IO &io, const adios2::Mode mode,
+                         MPI_Comm comm, bool iotimer, size_t appid)
 : Stream(streamName, mode), io(io), comm(comm)
 {
     int myRank, totalRanks;
@@ -48,23 +47,20 @@ adiosStream::adiosStream(const std::string &streamName, adios2::IO &io,
         std::vector<double> opentime_all_ranks;
         if (myRank == 0)
         {
-            std::string logfilename =
-                "app" + std::to_string(appID) + "_perf.csv";
+            std::string logfilename = "app" + std::to_string(appID) + "_perf.csv";
             perfLogFP = fopen(logfilename.c_str(), "w");
             fputs("step,rank,operation,time\n", perfLogFP);
             std::cout << "performance log file open succeeded!" << std::endl;
             opentime_all_ranks.reserve(totalRanks);
         }
-        MPI_Gather(&openTime, 1, MPI_DOUBLE, opentime_all_ranks.data(), 1,
-                   MPI_DOUBLE, 0, comm);
+        MPI_Gather(&openTime, 1, MPI_DOUBLE, opentime_all_ranks.data(), 1, MPI_DOUBLE, 0, comm);
         if (myRank == 0)
         {
             for (int i = 0; i < totalRanks; i++)
             {
-                std::string content = std::to_string(engine.CurrentStep()) +
-                                      "," + std::to_string(i) + ",open," +
-                                      std::to_string(opentime_all_ranks[i]) +
-                                      "\n";
+                std::string content = std::to_string(engine.CurrentStep()) + "," +
+                                      std::to_string(i) + ",open," +
+                                      std::to_string(opentime_all_ranks[i]) + "\n";
                 // std::cout << content;
                 fputs(content.c_str(), perfLogFP);
             }
@@ -91,21 +87,21 @@ void adiosStream::defineADIOSArray(const std::shared_ptr<VariableInfo> ov)
 {
     if (ov->type == "double")
     {
-        adios2::Variable<double> v = io.DefineVariable<double>(
-            ov->name, ov->shape, ov->start, ov->count, true);
+        adios2::Variable<double> v =
+            io.DefineVariable<double>(ov->name, ov->shape, ov->start, ov->count, true);
         (void)v;
         // v = io->InquireVariable<double>(ov->name);
     }
     else if (ov->type == "float")
     {
-        adios2::Variable<float> v = io.DefineVariable<float>(
-            ov->name, ov->shape, ov->start, ov->count, true);
+        adios2::Variable<float> v =
+            io.DefineVariable<float>(ov->name, ov->shape, ov->start, ov->count, true);
         (void)v;
     }
     else if (ov->type == "int")
     {
-        adios2::Variable<int> v = io.DefineVariable<int>(
-            ov->name, ov->shape, ov->start, ov->count, true);
+        adios2::Variable<int> v =
+            io.DefineVariable<int>(ov->name, ov->shape, ov->start, ov->count, true);
         (void)v;
     }
 }
@@ -178,14 +174,13 @@ void adiosStream::getADIOSArray(std::shared_ptr<VariableInfo> ov)
 }
 
 /* return true if read-in completed */
-adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
-                                          const Settings &settings, size_t step)
+adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg, const Settings &settings,
+                                          size_t step)
 {
     if (!settings.myRank && settings.verbose)
     {
-        std::cout << "    Read " << cmdR->streamName << " with timeout value "
-                  << cmdR->timeout_sec << " using the group "
-                  << cmdR->groupName;
+        std::cout << "    Read " << cmdR->streamName << " with timeout value " << cmdR->timeout_sec
+                  << " using the group " << cmdR->groupName;
         if (!cmdR->variables.empty())
         {
             std::cout << " with selected variables:  ";
@@ -201,8 +196,7 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
     // double maxReadTime, minReadTime;
     MPI_Barrier(comm);
     timeStart = MPI_Wtime();
-    adios2::StepStatus status =
-        engine.BeginStep(cmdR->stepMode, cmdR->timeout_sec);
+    adios2::StepStatus status = engine.BeginStep(cmdR->stepMode, cmdR->timeout_sec);
     if (status != adios2::StepStatus::OK)
     {
         return status;
@@ -232,10 +226,9 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
     {
         if (!settings.myRank && settings.verbose)
         {
-            std::cout
-                << "        Lock Reader Selections for Fixed Pattern before "
-                   "first EndStep"
-                << std::endl;
+            std::cout << "        Lock Reader Selections for Fixed Pattern before "
+                         "first EndStep"
+                      << std::endl;
         }
         engine.LockWriterDefinitions();
     }
@@ -266,16 +259,14 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
             readtime_all_ranks.reserve(totalRanks);
         }
 
-        MPI_Gather(&readTime, 1, MPI_DOUBLE, readtime_all_ranks.data(), 1,
-                   MPI_DOUBLE, 0, comm);
+        MPI_Gather(&readTime, 1, MPI_DOUBLE, readtime_all_ranks.data(), 1, MPI_DOUBLE, 0, comm);
         if (myRank == 0)
         {
             for (int i = 0; i < totalRanks; i++)
             {
-                std::string content = std::to_string(engine.CurrentStep()) +
-                                      "," + std::to_string(i) + ",read," +
-                                      std::to_string(readtime_all_ranks[i]) +
-                                      "\n";
+                std::string content = std::to_string(engine.CurrentStep()) + "," +
+                                      std::to_string(i) + ",read," +
+                                      std::to_string(readtime_all_ranks[i]) + "\n";
                 // std::cout << content;
                 fputs(content.c_str(), perfLogFP);
             }
@@ -299,13 +290,11 @@ adios2::StepStatus adiosStream::readADIOS(CommandRead *cmdR, Config &cfg,
     return status;
 }
 
-void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
-                             const Settings &settings, size_t step)
+void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg, const Settings &settings, size_t step)
 {
     if (!settings.myRank && settings.verbose)
     {
-        std::cout << "    Write to output " << cmdW->streamName << " the group "
-                  << cmdW->groupName;
+        std::cout << "    Write to output " << cmdW->streamName << " the group " << cmdW->groupName;
         if (!cmdW->variables.empty())
         {
             std::cout << " with selected variables:  ";
@@ -319,8 +308,7 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
 
     size_t s = (cfg.nSteps > 0 ? cfg.nSteps : 1000);
     const double div = pow(10.0, static_cast<double>(settings.ndigits(s - 1)));
-    double myValue = static_cast<double>(settings.myRank) +
-                     static_cast<double>(step - 1) / div;
+    double myValue = static_cast<double>(settings.myRank) + static_cast<double>(step - 1) / div;
 
     std::map<std::string, adios2::Params> definedVars = io.AvailableVariables();
     for (auto ov : cmdW->variables)
@@ -338,8 +326,7 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
         {
             if (!settings.myRank && settings.verbose)
             {
-                std::cout << "        Define array  " << ov->name
-                          << "  for output" << std::endl;
+                std::cout << "        Define array  " << ov->name << "  for output" << std::endl;
             }
             defineADIOSArray(ov);
         }
@@ -350,8 +337,7 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
         {
             if (!settings.myRank && settings.verbose)
             {
-                std::cout << "        Fill array  " << ov->name
-                          << "  for output" << std::endl;
+                std::cout << "        Fill array  " << ov->name << "  for output" << std::endl;
             }
             fillArray(ov, myValue);
         }
@@ -376,10 +362,9 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
     {
         if (!settings.myRank && settings.verbose)
         {
-            std::cout
-                << "        Lock Writer Definitions for Fixed Pattern before "
-                   "first EndStep"
-                << std::endl;
+            std::cout << "        Lock Writer Definitions for Fixed Pattern before "
+                         "first EndStep"
+                      << std::endl;
         }
         engine.LockWriterDefinitions();
     }
@@ -410,16 +395,14 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
             writetime_all_ranks.reserve(totalRanks);
         }
 
-        MPI_Gather(&writeTime, 1, MPI_DOUBLE, writetime_all_ranks.data(), 1,
-                   MPI_DOUBLE, 0, comm);
+        MPI_Gather(&writeTime, 1, MPI_DOUBLE, writetime_all_ranks.data(), 1, MPI_DOUBLE, 0, comm);
         if (myRank == 0)
         {
             for (int i = 0; i < totalRanks; i++)
             {
-                std::string content = std::to_string(engine.CurrentStep()) +
-                                      "," + std::to_string(i) + ",write," +
-                                      std::to_string(writetime_all_ranks[i]) +
-                                      "\n";
+                std::string content = std::to_string(engine.CurrentStep()) + "," +
+                                      std::to_string(i) + ",write," +
+                                      std::to_string(writetime_all_ranks[i]) + "\n";
                 // std::cout << content;
                 fputs(content.c_str(), perfLogFP);
             }
@@ -456,15 +439,14 @@ void adiosStream::writeADIOS(CommandWrite *cmdW, Config &cfg,
     //    }
 }
 
-void adiosStream::Write(CommandWrite *cmdW, Config &cfg,
-                        const Settings &settings, size_t step)
+void adiosStream::Write(CommandWrite *cmdW, Config &cfg, const Settings &settings, size_t step)
 {
 
     writeADIOS(cmdW, cfg, settings, step);
 }
 
-adios2::StepStatus adiosStream::Read(CommandRead *cmdR, Config &cfg,
-                                     const Settings &settings, size_t step)
+adios2::StepStatus adiosStream::Read(CommandRead *cmdR, Config &cfg, const Settings &settings,
+                                     size_t step)
 {
     return readADIOS(cmdR, cfg, settings, step);
 }

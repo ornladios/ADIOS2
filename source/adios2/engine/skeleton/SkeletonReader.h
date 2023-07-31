@@ -38,12 +38,10 @@ public:
      * @param method
      * @param hostLanguage
      */
-    SkeletonReader(IO &adios, const std::string &name, const Mode mode,
-                   helper::Comm comm);
+    SkeletonReader(IO &adios, const std::string &name, const Mode mode, helper::Comm comm);
 
     ~SkeletonReader();
-    StepStatus BeginStep(StepMode mode = StepMode::Read,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode = StepMode::Read, const float timeoutSeconds = -1.0) final;
     void PerformGets() final;
     size_t CurrentStep() const final;
     void EndStep() final;
@@ -63,8 +61,8 @@ private:
     void InitParameters() final;
     void InitTransports() final;
 
-#define declare_type(T)                                                        \
-    void DoGetSync(Variable<T> &, T *) final;                                  \
+#define declare_type(T)                                                                            \
+    void DoGetSync(Variable<T> &, T *) final;                                                      \
     void DoGetDeferred(Variable<T> &, T *) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

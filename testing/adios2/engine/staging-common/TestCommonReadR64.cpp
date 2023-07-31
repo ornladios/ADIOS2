@@ -33,9 +33,8 @@ int validateCommonTestR64(int start, int length, size_t step)
     {
         if (in_R64[i] != (double)((i + start) * 10 + step))
         {
-            std::cout << "Expected " << (double)((i + start) * 10 + step)
-                      << ", got " << in_R64[i] << " for in_R64[" << i
-                      << "](global[" << i + start << "])" << std::endl;
+            std::cout << "Expected " << (double)((i + start) * 10 + step) << ", got " << in_R64[i]
+                      << " for in_R64[" << i << "](global[" << i + start << "])" << std::endl;
             failures++;
         }
     }
@@ -101,10 +100,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead)
         ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_r64.Shape()[0], writerSize * Nx);
 
-        long unsigned int myStart =
-            (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
-        long unsigned int myLength =
-            (long unsigned int)((writerSize * Nx + mpiSize - 1) / mpiSize);
+        long unsigned int myStart = (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
+        long unsigned int myLength = (long unsigned int)((writerSize * Nx + mpiSize - 1) / mpiSize);
 
         if (myStart + myLength > writerSize * Nx)
         {
@@ -122,8 +119,8 @@ TEST_F(CommonReadTest, ADIOS2CommonRead)
         int result = validateCommonTestR64(myStart, myLength, t);
         if (result != 0)
         {
-            std::cout << "Read Data Validation failed on node " << mpiRank
-                      << " timestep " << t << std::endl;
+            std::cout << "Read Data Validation failed on node " << mpiRank << " timestep " << t
+                      << std::endl;
         }
         EXPECT_EQ(result, 0);
 
@@ -148,9 +145,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

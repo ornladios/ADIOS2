@@ -94,8 +94,7 @@ public:
      * @param timeoutSeconds
      * @return current step status
      */
-    StepStatus BeginStep(const StepMode mode,
-                         const float timeoutSeconds = -1.f);
+    StepStatus BeginStep(const StepMode mode, const float timeoutSeconds = -1.f);
 
     /**
      * Inspect current logical step
@@ -117,8 +116,7 @@ public:
      * @return span to variable data in engine internal buffer
      */
     template <class T>
-    typename Variable<T>::Span Put(Variable<T> variable, const bool initialize,
-                                   const T &value);
+    typename Variable<T>::Span Put(Variable<T> variable, const bool initialize, const T &value);
 
     /**
      * Put signature that provides access to an internal engine buffer (decided
@@ -145,11 +143,9 @@ public:
      * @exception std::invalid_argument for invalid variable or nullptr data
      */
     template <class T>
-    void Put(Variable<T> variable, const T *data,
-             const Mode launch = Mode::Deferred);
+    void Put(Variable<T> variable, const T *data, const Mode launch = Mode::Deferred);
 
-    void Put(VariableNT &variable, const void *data,
-             const Mode launch = Mode::Deferred);
+    void Put(VariableNT &variable, const void *data, const Mode launch = Mode::Deferred);
 
     /**
      * Put data associated with a Variable in the Engine
@@ -167,8 +163,7 @@ public:
      * @exception std::invalid_argument if variable not found or nullptr data
      */
     template <class T>
-    void Put(const std::string &variableName, const T *data,
-             const Mode launch = Mode::Deferred);
+    void Put(const std::string &variableName, const T *data, const Mode launch = Mode::Deferred);
 
     /**
      * Put data associated with a Variable in the Engine
@@ -181,12 +176,10 @@ public:
      * @exception std::invalid_argument if variable is invalid or nullptr &datum
      */
     template <class T>
-    void Put(Variable<T> variable, const T &datum,
-             const Mode launch = Mode::Deferred);
+    void Put(Variable<T> variable, const T &datum, const Mode launch = Mode::Deferred);
 
-#define declare_type(T)                                                        \
-    void Put(VariableNT &variable, const T &datum,                             \
-             const Mode launch = Mode::Deferred);
+#define declare_type(T)                                                                            \
+    void Put(VariableNT &variable, const T &datum, const Mode launch = Mode::Deferred);
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -203,8 +196,7 @@ public:
      * @exception std::invalid_argument if variable is invalid or nullptr &datum
      */
     template <class T>
-    void Put(const std::string &variableName, const T &datum,
-             const Mode launch = Mode::Deferred);
+    void Put(const std::string &variableName, const T &datum, const Mode launch = Mode::Deferred);
 
     /**
      * The next two Put functions are used to accept a variable, and an
@@ -216,10 +208,8 @@ public:
      * always sync
      */
     template <class T, typename U,
-              class = typename std::enable_if<
-                  std::is_convertible<U, AdiosView<U>>::value>::type>
-    void Put(Variable<T> variable, U const &data,
-             const Mode launch = Mode::Deferred)
+              class = typename std::enable_if<std::is_convertible<U, AdiosView<U>>::value>::type>
+    void Put(Variable<T> variable, U const &data, const Mode launch = Mode::Deferred)
     {
         auto bufferView = static_cast<AdiosView<U>>(data);
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
@@ -258,8 +248,7 @@ public:
     template <class T>
     void Get(Variable<T> variable, T *data, const Mode launch = Mode::Deferred);
 
-    void Get(VariableNT &variable, void *data,
-             const Mode launch = Mode::Deferred);
+    void Get(VariableNT &variable, void *data, const Mode launch = Mode::Deferred);
 
     /**
      * Get data associated with a Variable from the Engine. Overloaded version
@@ -281,8 +270,7 @@ public:
      * doesn't exist in IO) or nullptr data
      */
     template <class T>
-    void Get(const std::string &variableName, T *data,
-             const Mode launch = Mode::Deferred);
+    void Get(const std::string &variableName, T *data, const Mode launch = Mode::Deferred);
 
     /**
      * Get single value data associated with a Variable from the Engine
@@ -294,18 +282,15 @@ public:
      * @exception std::invalid_argument if variable is invalid or nullptr &datum
      */
     template <class T>
-    void Get(Variable<T> variable, T &datum,
-             const Mode launch = Mode::Deferred);
+    void Get(Variable<T> variable, T &datum, const Mode launch = Mode::Deferred);
 
-#define declare_type(T)                                                        \
-    void Get(VariableNT &variable, T &datum,                                   \
-             const Mode launch = Mode::Deferred);
+#define declare_type(T)                                                                            \
+    void Get(VariableNT &variable, T &datum, const Mode launch = Mode::Deferred);
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-#define declare_type(T)                                                        \
-    void Get(VariableNT &variable, std::vector<T> &datum,                      \
-             const Mode launch = Mode::Deferred);
+#define declare_type(T)                                                                            \
+    void Get(VariableNT &variable, std::vector<T> &datum, const Mode launch = Mode::Deferred);
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
@@ -321,8 +306,7 @@ public:
      * doesn't exist in IO) or nullptr data
      */
     template <class T>
-    void Get(const std::string &variableName, T &datum,
-             const Mode launch = Mode::Deferred);
+    void Get(const std::string &variableName, T &datum, const Mode launch = Mode::Deferred);
 
     /**
      * Get data associated with a Variable from the Engine.
@@ -341,8 +325,7 @@ public:
      * @exception std::invalid_argument for invalid variable
      */
     template <class T>
-    void Get(Variable<T> variable, std::vector<T> &dataV,
-             const Mode launch = Mode::Deferred);
+    void Get(Variable<T> variable, std::vector<T> &dataV, const Mode launch = Mode::Deferred);
 
     /**
      * Get data associated with a Variable from the Engine.
@@ -430,10 +413,8 @@ public:
      * always sync
      */
     template <class T, typename U,
-              class = typename std::enable_if<
-                  std::is_convertible<U, AdiosView<U>>::value>::type>
-    void Get(Variable<T> variable, U const &data,
-             const Mode launch = Mode::Deferred)
+              class = typename std::enable_if<std::is_convertible<U, AdiosView<U>>::value>::type>
+    void Get(Variable<T> variable, U const &data, const Mode launch = Mode::Deferred)
     {
         auto adios_data = static_cast<AdiosView<U>>(data);
         auto mem_space = adios_data.memory_space();
@@ -499,11 +480,10 @@ public:
      * found it returns an empty vector
      */
     template <class T>
-    std::vector<typename Variable<T>::Info>
-    BlocksInfo(const Variable<T> variable, const size_t step) const;
+    std::vector<typename Variable<T>::Info> BlocksInfo(const Variable<T> variable,
+                                                       const size_t step) const;
 
-    std::vector<VariableNT::Info> BlocksInfo(const VariableNT &variable,
-                                             const size_t step) const;
+    std::vector<VariableNT::Info> BlocksInfo(const VariableNT &variable, const size_t step) const;
 
     /**
      * Get the absolute steps of a variable in a file. This is for

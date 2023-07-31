@@ -49,9 +49,8 @@ int main(int argc, char *argv[])
     {
         if (argc != 3)
         {
-            throw std::invalid_argument(
-                "ERROR: need sz accuracy e.g. 0.01, 0.1 as "
-                "2nd parameter in argv\n");
+            throw std::invalid_argument("ERROR: need sz accuracy e.g. 0.01, 0.1 as "
+                                        "2nd parameter in argv\n");
         }
 
         const std::size_t Nx = static_cast<std::size_t>(std::stoull(argv[1]));
@@ -83,21 +82,17 @@ int main(int argc, char *argv[])
         if (accuracy > 1E-16)
         {
             adios2::Operator op = adios.DefineOperator("SZCompressor", "sz");
-            varFloats.AddOperation(op,
-                                   {{"accuracy", std::to_string(accuracy)}});
-            varDoubles.AddOperation(op,
-                                    {{"accuracy", std::to_string(accuracy)}});
+            varFloats.AddOperation(op, {{"accuracy", std::to_string(accuracy)}});
+            varDoubles.AddOperation(op, {{"accuracy", std::to_string(accuracy)}});
         }
 
-        adios2::Attribute<double> attribute =
-            bpIO.DefineAttribute<double>("SZ_accuracy", accuracy);
+        adios2::Attribute<double> attribute = bpIO.DefineAttribute<double>("SZ_accuracy", accuracy);
 
         // To avoid compiling warnings
         (void)attribute;
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine bpFileWriter =
-            bpIO.Open("SZexample.bp", adios2::Mode::Write);
+        adios2::Engine bpFileWriter = bpIO.Open("SZexample.bp", adios2::Mode::Write);
 
         for (unsigned int t = 0; t < 3; ++t)
         {

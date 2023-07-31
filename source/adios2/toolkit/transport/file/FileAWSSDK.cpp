@@ -77,8 +77,7 @@ void FileAWSSDK::SetParameters(const Params &params)
     s3ClientConfig->enableEndpointDiscovery = false;
 
     s3Client = new Aws::S3::S3Client(*s3ClientConfig);
-    std::cout << "AWS Transport created with endpoint = '" << m_Endpoint << "'"
-              << std::endl;
+    std::cout << "AWS Transport created with endpoint = '" << m_Endpoint << "'" << std::endl;
 }
 
 void FileAWSSDK::WaitForOpen()
@@ -99,8 +98,7 @@ void FileAWSSDK::SetUpCache()
 {
     if (!m_CachePath.empty())
     {
-        if (helper::EndsWith(m_ObjectName, "md.idx") ||
-            helper::EndsWith(m_ObjectName, "md.0") ||
+        if (helper::EndsWith(m_ObjectName, "md.idx") || helper::EndsWith(m_ObjectName, "md.0") ||
             helper::EndsWith(m_ObjectName, "mmd.0"))
         {
             m_CachingThisFile = true;
@@ -109,13 +107,11 @@ void FileAWSSDK::SetUpCache()
 
     if (m_CachingThisFile)
     {
-        std::string const ep =
-            std::regex_replace(m_Endpoint, std::regex("/|:"), "_");
+        std::string const ep = std::regex_replace(m_Endpoint, std::regex("/|:"), "_");
 
         m_CacheFileWrite = new FileFStream(m_Comm);
-        const std::string path(m_CachePath + PathSeparator + ep +
-                               PathSeparator + m_BucketName + PathSeparator +
-                               m_ObjectName);
+        const std::string path(m_CachePath + PathSeparator + ep + PathSeparator + m_BucketName +
+                               PathSeparator + m_ObjectName);
         m_CacheFilePath = path;
         const auto lastPathSeparator(path.find_last_of(PathSeparator));
         if (lastPathSeparator != std::string::npos)
@@ -149,17 +145,16 @@ void FileAWSSDK::SetUpCache()
     }
 }
 
-void FileAWSSDK::Open(const std::string &name, const Mode openMode,
-                      const bool async, const bool directio)
+void FileAWSSDK::Open(const std::string &name, const Mode openMode, const bool async,
+                      const bool directio)
 {
     m_Name = name;
 
     size_t pos = name.find(PathSeparator);
     if (pos == std::string::npos)
     {
-        helper::Throw<std::invalid_argument>(
-            "Toolkit", "transport::file::FileAWSSDK", "Open",
-            "invalid 'bucket/object' name " + name);
+        helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileAWSSDK", "Open",
+                                             "invalid 'bucket/object' name " + name);
     }
     m_BucketName = name.substr(0, pos);
     m_ObjectName = name.substr(pos + 1);
@@ -170,29 +165,25 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode,
 
     case Mode::Write:
     case Mode::Append:
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileAWSSDK", "Open",
-            "does not support writing yet " + m_Name);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "Open",
+                                              "does not support writing yet " + m_Name);
         break;
 
-    case Mode::Read:
-    {
+    case Mode::Read: {
         ProfilerStart("open");
         errno = 0;
         Aws::S3::Model::HeadObjectRequest head_object_request;
         head_object_request.SetBucket(m_BucketName);
         head_object_request.SetKey(m_ObjectName);
 
-        std::cout << "S3 HeadObjectRequests bucket='"
-                  << head_object_request.GetBucket() << "'  object = '"
-                  << head_object_request.GetKey() << "'" << std::endl;
+        std::cout << "S3 HeadObjectRequests bucket='" << head_object_request.GetBucket()
+                  << "'  object = '" << head_object_request.GetKey() << "'" << std::endl;
 
         head_object = s3Client->HeadObject(head_object_request);
         if (!head_object.IsSuccess())
         {
-            helper::Throw<std::invalid_argument>(
-                "Toolkit", "transport::file::FileAWSSDK", "Open",
-                "'bucket/object'  " + m_Name + " does not exist ");
+            helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileAWSSDK", "Open",
+                                                 "'bucket/object'  " + m_Name + " does not exist ");
         }
         else
         {
@@ -207,8 +198,7 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode,
         break;
     }
     default:
-        CheckFile("unknown open mode for file " + m_Name +
-                  ", in call to AWSSDK open");
+        CheckFile("unknown open mode for file " + m_Name + ", in call to AWSSDK open");
     }
 
     if (!m_IsOpening)
@@ -218,15 +208,13 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode,
     }
 }
 
-void FileAWSSDK::OpenChain(const std::string &name, Mode openMode,
-                           const helper::Comm &chainComm, const bool async,
-                           const bool directio)
+void FileAWSSDK::OpenChain(const std::string &name, Mode openMode, const helper::Comm &chainComm,
+                           const bool async, const bool directio)
 {
     int token = 1;
     if (chainComm.Rank() > 0)
     {
-        chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0,
-                       "Chain token in FileAWSSDK::OpenChain");
+        chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0, "Chain token in FileAWSSDK::OpenChain");
     }
 
     Open(name, openMode, async, directio);
@@ -240,9 +228,8 @@ void FileAWSSDK::OpenChain(const std::string &name, Mode openMode,
 
 void FileAWSSDK::Write(const char *buffer, size_t size, size_t start)
 {
-    helper::Throw<std::ios_base::failure>(
-        "Toolkit", "transport::file::FileAWSSDK", "Write",
-        "does not support writing yet " + m_Name);
+    helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "Write",
+                                          "does not support writing yet " + m_Name);
 }
 
 void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
@@ -256,8 +243,7 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
             helper::Throw<std::ios_base::failure>(
                 "Toolkit", "transport::file::FileAWSSDK", "Read",
                 "couldn't move to start position " + std::to_string(start) +
-                    " beyond the size of " + m_Name + " which is " +
-                    std::to_string(m_Size));
+                    " beyond the size of " + m_Name + " which is " + std::to_string(m_Size));
         }
         m_SeekPos = start;
         errno = 0;
@@ -266,19 +252,18 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
 
     if (m_SeekPos + size > m_Size)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileAWSSDK", "Read",
-            "can't read " + std::to_string(size) + " bytes from position " +
-                std::to_string(m_SeekPos) + " from " + m_Name +
-                " whose size is " + std::to_string(m_Size));
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "Read",
+                                              "can't read " + std::to_string(size) +
+                                                  " bytes from position " +
+                                                  std::to_string(m_SeekPos) + " from " + m_Name +
+                                                  " whose size is " + std::to_string(m_Size));
     }
 
     if (m_IsCached)
     {
         m_CacheFileRead->Read(buffer, size, m_SeekPos);
-        std::cout << "Read from cache " << m_CacheFileRead->m_Name
-                  << " start = " << m_SeekPos << " size = " << size
-                  << std::endl;
+        std::cout << "Read from cache " << m_CacheFileRead->m_Name << " start = " << m_SeekPos
+                  << " size = " << size << std::endl;
         return;
     }
 
@@ -297,15 +282,13 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
         helper::Throw<std::invalid_argument>(
             "Toolkit", "transport::file::FileAWSSDK", "Read",
             "'bucket/object'  " + m_Name + ", range " + range.str() +
-                "GetObject: " + err.GetExceptionName() + ": " +
-                err.GetMessage());
+                "GetObject: " + err.GetExceptionName() + ": " + err.GetMessage());
     }
     else
     {
-        std::cout << "Successfully retrieved '" << m_ObjectName << "' from '"
-                  << m_BucketName << "'."
-                  << "\nObject length = "
-                  << outcome.GetResult().GetContentLength()
+        std::cout << "Successfully retrieved '" << m_ObjectName << "' from '" << m_BucketName
+                  << "'."
+                  << "\nObject length = " << outcome.GetResult().GetContentLength()
                   << "\nRange requested = " << range.str() << std::endl;
         auto body = outcome.GetResult().GetBody().rdbuf();
         body->sgetn(buffer, size);
@@ -314,9 +297,8 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
         if (m_CachingThisFile)
         {
             m_CacheFileWrite->Write(buffer, size, m_SeekPos);
-            std::cout << "Written to cache " << m_CacheFileWrite->m_Name
-                      << " start = " << m_SeekPos << " size = " << size
-                      << std::endl;
+            std::cout << "Written to cache " << m_CacheFileWrite->m_Name << " start = " << m_SeekPos
+                      << " size = " << size << std::endl;
         }
     }
 }
@@ -384,8 +366,8 @@ void FileAWSSDK::CheckFile(const std::string hint) const
 {
     if (!head_object.IsSuccess())
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileAWSSDK", "CheckFile", hint);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "CheckFile",
+                                              hint);
     }
 }
 
@@ -407,9 +389,8 @@ void FileAWSSDK::Seek(const size_t start)
 
 void FileAWSSDK::Truncate(const size_t length)
 {
-    helper::Throw<std::ios_base::failure>(
-        "Toolkit", "transport::file::FileAWSSDK", "Truncate",
-        "does not support truncating " + m_Name);
+    helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "Truncate",
+                                          "does not support truncating " + m_Name);
 }
 
 void FileAWSSDK::MkDir(const std::string &fileName) {}

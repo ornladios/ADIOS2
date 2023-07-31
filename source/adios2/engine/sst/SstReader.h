@@ -39,8 +39,7 @@ public:
      * @param method
      * @param nthreads
      */
-    SstReader(IO &io, const std::string &name, const Mode mode,
-              helper::Comm comm);
+    SstReader(IO &io, const std::string &name, const Mode mode, helper::Comm comm);
 
     virtual ~SstReader();
 
@@ -51,20 +50,16 @@ public:
     void PerformGets();
     void Flush(const int transportIndex = -1) final;
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
-    bool VarShape(const VariableBase &Var, const size_t Step,
-                  Dims &Shape) const;
-    bool VariableMinMax(const VariableBase &, const size_t Step,
-                        MinMaxStruct &MinMax);
+    bool VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const;
+    bool VariableMinMax(const VariableBase &, const size_t Step, MinMaxStruct &MinMax);
 
 private:
     template <class T>
-    void ReadVariableBlocksRequests(Variable<T> &variable,
-                                    std::vector<void *> &sstReadHandlers,
+    void ReadVariableBlocksRequests(Variable<T> &variable, std::vector<void *> &sstReadHandlers,
                                     std::vector<std::vector<char>> &buffers);
 
     template <class T>
-    void ReadVariableBlocksFill(Variable<T> &variable,
-                                std::vector<std::vector<char>> &buffers,
+    void ReadVariableBlocksFill(Variable<T> &variable, std::vector<std::vector<char>> &buffers,
                                 size_t &iter);
 
     template <class T>
@@ -84,17 +79,16 @@ private:
 
     struct _SstParams Params;
 
-    std::unordered_map<const VariableBase *, std::unique_ptr<MinVarInfo>>
-        m_InfoMap;
-#define declare_type(T)                                                        \
-    void DoGetSync(Variable<T> &, T *) final;                                  \
-    void DoGetDeferred(Variable<T> &, T *) final;                              \
-                                                                               \
-    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
-    DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
-                                                                               \
-    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(                    \
-        const Variable<T> &variable, const size_t step) const final;
+    std::unordered_map<const VariableBase *, std::unique_ptr<MinVarInfo>> m_InfoMap;
+#define declare_type(T)                                                                            \
+    void DoGetSync(Variable<T> &, T *) final;                                                      \
+    void DoGetDeferred(Variable<T> &, T *) final;                                                  \
+                                                                                                   \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>> DoAllStepsBlocksInfo(              \
+        const Variable<T> &variable) const final;                                                  \
+                                                                                                   \
+    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(const Variable<T> &variable,            \
+                                                           const size_t step) const final;
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

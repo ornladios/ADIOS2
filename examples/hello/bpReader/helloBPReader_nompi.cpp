@@ -32,8 +32,7 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpReader = bpIO.Open(filename, adios2::Mode::Read);
 
-        const std::map<std::string, adios2::Params> variables =
-            bpIO.AvailableVariables(true);
+        const std::map<std::string, adios2::Params> variables = bpIO.AvailableVariables(true);
 
         std::cout << "List of variables:";
         for (const auto &variablePair : variables)
@@ -43,8 +42,7 @@ int main(int argc, char *argv[])
         std::cout << std::endl;
 
         /** Write variable for buffering */
-        adios2::Variable<float> bpFloats =
-            bpIO.InquireVariable<float>("bpFloats");
+        adios2::Variable<float> bpFloats = bpIO.InquireVariable<float>("bpFloats");
 
         adios2::Variable<int> bpInts = bpIO.InquireVariable<int>("bpInts");
 
@@ -67,8 +65,7 @@ int main(int argc, char *argv[])
         }
         else
         {
-            std::cout << "There are no integer datasets in " << filename
-                      << ".\n";
+            std::cout << "There are no integer datasets in " << filename << ".\n";
         }
 
         /** Close bp file, engine becomes unreachable after this*/

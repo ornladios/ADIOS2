@@ -53,11 +53,9 @@ int main(int argc, char *argv[])
         adios2::Variable<int> h5Ints = hdf5IO.DefineVariable<int>(
             "h5Ints", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
-        adios2::Variable<double> h5ScalarDouble =
-            hdf5IO.DefineVariable<double>("h5ScalarDouble");
+        adios2::Variable<double> h5ScalarDouble = hdf5IO.DefineVariable<double>("h5ScalarDouble");
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine hdf5Writer =
-            hdf5IO.Open("myVector.h5", adios2::Mode::Write);
+        adios2::Engine hdf5Writer = hdf5IO.Open("myVector.h5", adios2::Mode::Write);
 #ifdef ALL_RANKS_WRITE
         // all Ranks must call Put
         /** Write variable for buffering */
@@ -78,22 +76,15 @@ int main(int argc, char *argv[])
         hdf5Writer.EndStep();
 #endif
         std::vector<int64_t> m_globalDims = {10, 20, 30, 40};
-        hdf5IO.DefineAttribute<std::string>(
-            "adios2_schema/version_major",
-            std::to_string(ADIOS2_VERSION_MAJOR));
-        hdf5IO.DefineAttribute<std::string>(
-            "adios2_schema/version_minor",
-            std::to_string(ADIOS2_VERSION_MINOR));
-        hdf5IO.DefineAttribute<std::string>("/adios2_schema/mesh/type",
-                                            "explicit");
-        hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension0",
-                                             m_globalDims[0]);
-        hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension1",
-                                             m_globalDims[1]);
-        hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension2",
-                                             m_globalDims[2]);
-        hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension3",
-                                             m_globalDims[3]);
+        hdf5IO.DefineAttribute<std::string>("adios2_schema/version_major",
+                                            std::to_string(ADIOS2_VERSION_MAJOR));
+        hdf5IO.DefineAttribute<std::string>("adios2_schema/version_minor",
+                                            std::to_string(ADIOS2_VERSION_MINOR));
+        hdf5IO.DefineAttribute<std::string>("/adios2_schema/mesh/type", "explicit");
+        hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension0", m_globalDims[0]);
+        hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension1", m_globalDims[1]);
+        hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension2", m_globalDims[2]);
+        hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension3", m_globalDims[3]);
         hdf5IO.DefineAttribute<std::int64_t>("adios2_schema/mesh/dimension-num",
                                              m_globalDims.size());
 
@@ -101,15 +92,13 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout
-            << "IO System base failure exception, STOPPING PROGRAM from rank "
-            << rank << "\n";
+        std::cout << "IO System base failure exception, STOPPING PROGRAM from rank " << rank
+                  << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)

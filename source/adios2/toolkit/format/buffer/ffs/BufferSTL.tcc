@@ -29,8 +29,7 @@ size_t BufferSTL::Align() const noexcept
 {
     // std::align implementation from llvm libc++
     // needed due to bug in gcc 4.8
-    auto lf_align = [](const size_t alignment, const size_t size, void *&ptr,
-                       size_t &space) {
+    auto lf_align = [](const size_t alignment, const size_t size, void *&ptr, size_t &space) {
         if (size <= space)
         {
             const char *p1 = static_cast<char *>(ptr);
@@ -44,8 +43,8 @@ size_t BufferSTL::Align() const noexcept
         }
     };
 
-    void *currentAddress = reinterpret_cast<void *>(
-        const_cast<char *>(m_Buffer.data() + m_Position));
+    void *currentAddress =
+        reinterpret_cast<void *>(const_cast<char *>(m_Buffer.data() + m_Position));
     size_t size = GetAvailableSize();
     lf_align(alignof(T), sizeof(T), currentAddress, size);
     return GetAvailableSize() - size;

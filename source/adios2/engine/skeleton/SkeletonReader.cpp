@@ -22,16 +22,15 @@ namespace core
 namespace engine
 {
 
-SkeletonReader::SkeletonReader(IO &io, const std::string &name, const Mode mode,
-                               helper::Comm comm)
+SkeletonReader::SkeletonReader(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("SkeletonReader", io, name, mode, std::move(comm))
 {
     m_ReaderRank = m_Comm.Rank();
     Init();
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Reader " << m_ReaderRank << " Open(" << m_Name
-                  << ") in constructor." << std::endl;
+        std::cout << "Skeleton Reader " << m_ReaderRank << " Open(" << m_Name << ") in constructor."
+                  << std::endl;
     }
     m_IsOpen = true;
 }
@@ -41,8 +40,7 @@ SkeletonReader::~SkeletonReader()
     /* m_Skeleton deconstructor does close and finalize */
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Reader " << m_ReaderRank << " deconstructor on "
-                  << m_Name << "\n";
+        std::cout << "Skeleton Reader " << m_ReaderRank << " deconstructor on " << m_Name << "\n";
     }
     if (m_IsOpen)
     {
@@ -51,8 +49,7 @@ SkeletonReader::~SkeletonReader()
     m_IsOpen = false;
 }
 
-StepStatus SkeletonReader::BeginStep(const StepMode mode,
-                                     const float timeoutSeconds)
+StepStatus SkeletonReader::BeginStep(const StepMode mode, const float timeoutSeconds)
 {
     // step info should be received from the writer side in BeginStep()
     // so this forced increase should not be here
@@ -60,8 +57,8 @@ StepStatus SkeletonReader::BeginStep(const StepMode mode,
 
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Reader " << m_ReaderRank
-                  << "   BeginStep() new step " << m_CurrentStep << "\n";
+        std::cout << "Skeleton Reader " << m_ReaderRank << "   BeginStep() new step "
+                  << m_CurrentStep << "\n";
     }
 
     // If we reach the end of stream (writer is gone or explicitly tells the
@@ -87,8 +84,7 @@ void SkeletonReader::PerformGets()
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Reader " << m_ReaderRank
-                  << "     PerformGets()\n";
+        std::cout << "Skeleton Reader " << m_ReaderRank << "     PerformGets()\n";
     }
     m_NeedPerformGets = false;
 }
@@ -112,14 +108,14 @@ void SkeletonReader::EndStep()
 
 // PRIVATE
 
-#define declare_type(T)                                                        \
-    void SkeletonReader::DoGetSync(Variable<T> &variable, T *data)             \
-    {                                                                          \
-        GetSyncCommon(variable, data);                                         \
-    }                                                                          \
-    void SkeletonReader::DoGetDeferred(Variable<T> &variable, T *data)         \
-    {                                                                          \
-        GetDeferredCommon(variable, data);                                     \
+#define declare_type(T)                                                                            \
+    void SkeletonReader::DoGetSync(Variable<T> &variable, T *data)                                 \
+    {                                                                                              \
+        GetSyncCommon(variable, data);                                                             \
+    }                                                                                              \
+    void SkeletonReader::DoGetDeferred(Variable<T> &variable, T *data)                             \
+    {                                                                                              \
+        GetDeferredCommon(variable, data);                                                         \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -145,11 +141,10 @@ void SkeletonReader::InitParameters()
         {
             m_Verbosity = std::stoi(value);
             if (m_Verbosity < 0 || m_Verbosity > 5)
-                helper::Throw<std::invalid_argument>(
-                    "Engine", "SkeletonReader", "InitParameters",
-                    "Method verbose argument must be an "
-                    "integer in the range [0,5], in call to "
-                    "Open or Engine constructor");
+                helper::Throw<std::invalid_argument>("Engine", "SkeletonReader", "InitParameters",
+                                                     "Method verbose argument must be an "
+                                                     "integer in the range [0,5], in call to "
+                                                     "Open or Engine constructor");
         }
     }
 }
@@ -163,8 +158,7 @@ void SkeletonReader::DoClose(const int transportIndex)
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Skeleton Reader " << m_ReaderRank << " Close(" << m_Name
-                  << ")\n";
+        std::cout << "Skeleton Reader " << m_ReaderRank << " Close(" << m_Name << ")\n";
     }
 }
 

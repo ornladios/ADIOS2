@@ -53,8 +53,7 @@ int main(int argc, char *argv[])
             "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine bpWriter =
-            bpIO.Open("myVectorFlush.bp", adios2::Mode::Write);
+        adios2::Engine bpWriter = bpIO.Open("myVectorFlush.bp", adios2::Mode::Write);
 
         for (unsigned int t = 0; t < 100; ++t)
         {
@@ -69,15 +68,13 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout
-            << "IO System base failure exception, STOPPING PROGRAM from rank "
-            << rank << "\n";
+        std::cout << "IO System base failure exception, STOPPING PROGRAM from rank " << rank
+                  << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)

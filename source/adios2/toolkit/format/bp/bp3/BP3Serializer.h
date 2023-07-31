@@ -46,30 +46,27 @@ public:
      * @param hostLanguage from ADIOS class passed to IO
      * @param transportsTypes passed to get list of transport "bp methods"
      */
-    void PutProcessGroupIndex(
-        const std::string &ioName, const std::string hostLanguage,
-        const std::vector<std::string> &transportsTypes) noexcept;
+    void PutProcessGroupIndex(const std::string &ioName, const std::string hostLanguage,
+                              const std::vector<std::string> &transportsTypes) noexcept;
 
     /**
      * Put in buffer metadata for a given variable
      */
     template <class T>
-    void PutVariableMetadata(
-        const core::Variable<T> &variable,
-        const typename core::Variable<T>::BPInfo &blockInfo,
-        const bool sourceRowMajor = true,
-        typename core::Variable<T>::Span *span = nullptr) noexcept;
+    void PutVariableMetadata(const core::Variable<T> &variable,
+                             const typename core::Variable<T>::BPInfo &blockInfo,
+                             const bool sourceRowMajor = true,
+                             typename core::Variable<T>::Span *span = nullptr) noexcept;
 
     /**
      * Put in buffer variable payload. Expensive part.
      * @param variable payload input from m_PutValues
      */
     template <class T>
-    void PutVariablePayload(
-        const core::Variable<T> &variable,
-        const typename core::Variable<T>::BPInfo &blockInfo,
-        const bool sourceRowMajor = true,
-        typename core::Variable<T>::Span *span = nullptr) noexcept;
+    void PutVariablePayload(const core::Variable<T> &variable,
+                            const typename core::Variable<T>::BPInfo &blockInfo,
+                            const bool sourceRowMajor = true,
+                            typename core::Variable<T>::Span *span = nullptr) noexcept;
 
     template <class T>
     void PutSpanMetadata(const core::Variable<T> &variable,
@@ -113,8 +110,7 @@ public:
      * @param inMetadataBuffer collective metadata from absolute rank = 0, else
      *                         from aggregators
      */
-    void AggregateCollectiveMetadata(helper::Comm const &comm,
-                                     BufferSTL &bufferSTL,
+    void AggregateCollectiveMetadata(helper::Comm const &comm, BufferSTL &bufferSTL,
                                      const bool inMetadataBuffer);
 
 private:
@@ -124,8 +120,7 @@ private:
     /** aggregate pg rank indices */
     std::vector<char> m_PGRankIndices;
     /** deserialized variable indices per rank (vector index) */
-    std::unordered_map<std::string, std::vector<BPBase::SerialElementIndex>>
-        m_VariableRankIndices;
+    std::unordered_map<std::string, std::vector<BPBase::SerialElementIndex>> m_VariableRankIndices;
     /** deserialized attribute indices per rank (vector index) */
     std::unordered_map<std::string, std::vector<BPBase::SerialElementIndex>>
         m_AttributesRankIndices;
@@ -138,8 +133,7 @@ private:
      * @return attribute length position
      */
     template <class T>
-    size_t PutAttributeHeaderInData(const core::Attribute<T> &attribute,
-                                    Stats<T> &stats) noexcept;
+    size_t PutAttributeHeaderInData(const core::Attribute<T> &attribute, Stats<T> &stats) noexcept;
 
     /**
      * Called from WriteAttributeInData specialized functions
@@ -148,20 +142,16 @@ private:
      * @param attributeLengthPosition
      */
     template <class T>
-    void
-    PutAttributeLengthInData(const core::Attribute<T> &attribute,
-                             Stats<T> &stats,
-                             const size_t attributeLengthPosition) noexcept;
+    void PutAttributeLengthInData(const core::Attribute<T> &attribute, Stats<T> &stats,
+                                  const size_t attributeLengthPosition) noexcept;
 
-#define declare_template_instantiation(T)                                      \
-    void DoPutAttributeInData(const core::Attribute<T> &attribute,             \
-                              Stats<T> &stats) noexcept final;
+#define declare_template_instantiation(T)                                                          \
+    void DoPutAttributeInData(const core::Attribute<T> &attribute, Stats<T> &stats) noexcept final;
     ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
     template <class T>
-    void PutAttributeInDataCommon(const core::Attribute<T> &attribute,
-                                  Stats<T> &stats) noexcept;
+    void PutAttributeInDataCommon(const core::Attribute<T> &attribute, Stats<T> &stats) noexcept;
 
     /**
      * Get variable statistics
@@ -170,50 +160,44 @@ private:
      * @return stats BP3 Stats
      */
     template <class T>
-    Stats<T> GetBPStats(const bool singleValue,
-                        const typename core::Variable<T>::BPInfo &blockInfo,
+    Stats<T> GetBPStats(const bool singleValue, const typename core::Variable<T>::BPInfo &blockInfo,
                         const bool isRowMajor) noexcept;
 
     template <class T>
-    void PutVariableMetadataInData(
-        const core::Variable<T> &variable,
-        const typename core::Variable<T>::BPInfo &blockInfo,
-        const Stats<T> &stats,
-        const typename core::Variable<T>::Span *span = nullptr) noexcept;
+    void PutVariableMetadataInData(const core::Variable<T> &variable,
+                                   const typename core::Variable<T>::BPInfo &blockInfo,
+                                   const Stats<T> &stats,
+                                   const typename core::Variable<T>::Span *span = nullptr) noexcept;
 
     template <class T>
-    void PutVariableMetadataInIndex(
-        const core::Variable<T> &variable,
-        const typename core::Variable<T>::BPInfo &blockInfo,
-        const Stats<T> &stats, const bool isNew,
-        BPBase::SerialElementIndex &index,
-        typename core::Variable<T>::Span *span) noexcept;
+    void PutVariableMetadataInIndex(const core::Variable<T> &variable,
+                                    const typename core::Variable<T>::BPInfo &blockInfo,
+                                    const Stats<T> &stats, const bool isNew,
+                                    BPBase::SerialElementIndex &index,
+                                    typename core::Variable<T>::Span *span) noexcept;
 
     template <class T>
-    void PutVariableCharacteristics(
-        const core::Variable<T> &variable,
-        const typename core::Variable<T>::BPInfo &blockInfo,
-        const Stats<T> &stats, std::vector<char> &buffer,
-        typename core::Variable<T>::Span *span) noexcept;
+    void PutVariableCharacteristics(const core::Variable<T> &variable,
+                                    const typename core::Variable<T>::BPInfo &blockInfo,
+                                    const Stats<T> &stats, std::vector<char> &buffer,
+                                    typename core::Variable<T>::Span *span) noexcept;
 
     template <class T>
-    void PutVariableCharacteristics(
-        const core::Variable<T> &variable,
-        const typename core::Variable<T>::BPInfo &blockInfo,
-        const Stats<T> &stats, std::vector<char> &buffer,
-        size_t &position) noexcept;
+    void PutVariableCharacteristics(const core::Variable<T> &variable,
+                                    const typename core::Variable<T>::BPInfo &blockInfo,
+                                    const Stats<T> &stats, std::vector<char> &buffer,
+                                    size_t &position) noexcept;
 
     /** Writes min max */
     template <class T>
     void PutBoundsRecord(const bool singleValue, const Stats<T> &stats,
-                         uint8_t &characteristicsCounter,
-                         std::vector<char> &buffer) noexcept;
+                         uint8_t &characteristicsCounter, std::vector<char> &buffer) noexcept;
 
     /** Overloaded version for data buffer */
     template <class T>
     void PutBoundsRecord(const bool singleValue, const Stats<T> &stats,
-                         uint8_t &characteristicsCounter,
-                         std::vector<char> &buffer, size_t &position) noexcept;
+                         uint8_t &characteristicsCounter, std::vector<char> &buffer,
+                         size_t &position) noexcept;
 
     /**
      * Wraps up the data buffer serialization in m_HeapBuffer and fills the pg
@@ -231,9 +215,8 @@ private:
      * @param inMetadataBuffer
      * @return contains indices positions in buffer
      */
-    std::vector<size_t>
-    AggregateCollectiveMetadataIndices(helper::Comm const &comm,
-                                       BufferSTL &bufferSTL);
+    std::vector<size_t> AggregateCollectiveMetadataIndices(helper::Comm const &comm,
+                                                           BufferSTL &bufferSTL);
 };
 
 } // end namespace format

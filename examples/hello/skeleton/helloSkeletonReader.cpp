@@ -41,8 +41,7 @@ int main(int argc, char *argv[])
         adios2::ADIOS adios(settings.configfile);
 #endif
         adios2::IO io = adios.DeclareIO("reader");
-        adios2::Engine reader =
-            io.Open(settings.streamname, adios2::Mode::Read);
+        adios2::Engine reader = io.Open(settings.streamname, adios2::Mode::Read);
 
         int step = 0;
         adios2::Variable<float> vMyArray;
@@ -51,8 +50,7 @@ int main(int argc, char *argv[])
 
         while (true)
         {
-            adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::Read, 60.0f);
+            adios2::StepStatus status = reader.BeginStep(adios2::StepMode::Read, 60.0f);
             if (status != adios2::StepStatus::OK)
             {
                 break;
@@ -65,11 +63,10 @@ int main(int argc, char *argv[])
                 vMyArray = io.InquireVariable<float>("myArray");
                 if (!vMyArray)
                 {
-                    std::cout
-                        << "Missing 'myArray' variable. The Skeleton reader "
-                           "engine must retrieve variables from the writer and "
-                           "create Variable objects before they can be "
-                           "inquired\n";
+                    std::cout << "Missing 'myArray' variable. The Skeleton reader "
+                                 "engine must retrieve variables from the writer and "
+                                 "create Variable objects before they can be "
+                                 "inquired\n";
                     count.push_back(0);
                     count.push_back(0);
                     start.push_back(0);
@@ -79,8 +76,7 @@ int main(int argc, char *argv[])
                 {
                     // now read the variable
                     // Get the read decomposition
-                    settings.DecomposeArray(vMyArray.Shape()[0],
-                                            vMyArray.Shape()[1]);
+                    settings.DecomposeArray(vMyArray.Shape()[0], vMyArray.Shape()[1]);
                     count.push_back(settings.ndx);
                     count.push_back(settings.ndy);
                     start.push_back(settings.offsx);
@@ -106,8 +102,7 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)

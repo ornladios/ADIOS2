@@ -25,13 +25,11 @@ namespace adios2
 namespace burstbuffer
 {
 
-FileDrainOperation::FileDrainOperation(DrainOperation op,
-                                       const std::string &fromFileName,
-                                       const std::string &toFileName,
-                                       size_t countBytes, size_t fromOffset,
-                                       size_t toOffset, const void *data)
-: op(op), fromFileName(fromFileName), toFileName(toFileName),
-  countBytes(countBytes), fromOffset(fromOffset), toOffset(toOffset)
+FileDrainOperation::FileDrainOperation(DrainOperation op, const std::string &fromFileName,
+                                       const std::string &toFileName, size_t countBytes,
+                                       size_t fromOffset, size_t toOffset, const void *data)
+: op(op), fromFileName(fromFileName), toFileName(toFileName), countBytes(countBytes),
+  fromOffset(fromOffset), toOffset(toOffset)
 {
     if (data)
     {
@@ -46,14 +44,12 @@ void FileDrainer::AddOperation(FileDrainOperation &operation)
     operations.push(operation);
 }
 
-void FileDrainer::AddOperation(DrainOperation op,
-                               const std::string &fromFileName,
-                               const std::string &toFileName, size_t fromOffset,
-                               size_t toOffset, size_t countBytes,
-                               const void *data)
+void FileDrainer::AddOperation(DrainOperation op, const std::string &fromFileName,
+                               const std::string &toFileName, size_t fromOffset, size_t toOffset,
+                               size_t countBytes, const void *data)
 {
-    FileDrainOperation operation(op, fromFileName, toFileName, countBytes,
-                                 fromOffset, toOffset, data);
+    FileDrainOperation operation(op, fromFileName, toFileName, countBytes, fromOffset, toOffset,
+                                 data);
     std::lock_guard<std::mutex> lockGuard(operationsMutex);
     operations.push(operation);
 }
@@ -63,37 +59,30 @@ void FileDrainer::AddOperationSeekEnd(const std::string &toFileName)
     std::string emptyStr;
     AddOperation(DrainOperation::SeekEnd, emptyStr, toFileName, 0, 0, 0);
 }
-void FileDrainer::AddOperationCopyAt(const std::string &fromFileName,
-                                     const std::string &toFileName,
-                                     size_t fromOffset, size_t toOffset,
-                                     size_t countBytes)
+void FileDrainer::AddOperationCopyAt(const std::string &fromFileName, const std::string &toFileName,
+                                     size_t fromOffset, size_t toOffset, size_t countBytes)
 {
-    AddOperation(DrainOperation::CopyAt, fromFileName, toFileName, fromOffset,
-                 toOffset, countBytes);
-}
-void FileDrainer::AddOperationCopy(const std::string &fromFileName,
-                                   const std::string &toFileName,
-                                   size_t countBytes)
-{
-    AddOperation(DrainOperation::Copy, fromFileName, toFileName, 0, 0,
+    AddOperation(DrainOperation::CopyAt, fromFileName, toFileName, fromOffset, toOffset,
                  countBytes);
 }
-
-void FileDrainer::AddOperationWriteAt(const std::string &toFileName,
-                                      size_t toOffset, size_t countBytes,
-                                      const void *data)
+void FileDrainer::AddOperationCopy(const std::string &fromFileName, const std::string &toFileName,
+                                   size_t countBytes)
 {
-    std::string emptyStr;
-    AddOperation(DrainOperation::WriteAt, emptyStr, toFileName, 0, toOffset,
-                 countBytes, data);
+    AddOperation(DrainOperation::Copy, fromFileName, toFileName, 0, 0, countBytes);
 }
 
-void FileDrainer::AddOperationWrite(const std::string &toFileName,
-                                    size_t countBytes, const void *data)
+void FileDrainer::AddOperationWriteAt(const std::string &toFileName, size_t toOffset,
+                                      size_t countBytes, const void *data)
 {
     std::string emptyStr;
-    AddOperation(DrainOperation::Write, emptyStr, toFileName, 0, 0, countBytes,
-                 data);
+    AddOperation(DrainOperation::WriteAt, emptyStr, toFileName, 0, toOffset, countBytes, data);
+}
+
+void FileDrainer::AddOperationWrite(const std::string &toFileName, size_t countBytes,
+                                    const void *data)
+{
+    std::string emptyStr;
+    AddOperation(DrainOperation::Write, emptyStr, toFileName, 0, 0, countBytes, data);
 }
 
 void FileDrainer::AddOperationOpen(const std::string &toFileName, Mode mode)
@@ -109,9 +98,8 @@ void FileDrainer::AddOperationOpen(const std::string &toFileName, Mode mode)
     }
     else
     {
-        helper::Throw<std::runtime_error>(
-            "Toolkit", "BurstBuffer::FileDrainer", "AddOperationOpen",
-            "only supports Write and Append modes");
+        helper::Throw<std::runtime_error>("Toolkit", "BurstBuffer::FileDrainer", "AddOperationOpen",
+                                          "only supports Write and Append modes");
     }
 }
 
@@ -222,8 +210,7 @@ size_t FileDrainer::GetFileSize(InputFile &f)
     return static_cast<size_t>(fileSize);
 }
 
-std::pair<size_t, double> FileDrainer::Read(InputFile &f, size_t count,
-                                            char *buffer,
+std::pair<size_t, double> FileDrainer::Read(InputFile &f, size_t count, char *buffer,
                                             const std::string &path)
 {
     size_t totalRead = 0;
@@ -248,11 +235,9 @@ std::pair<size_t, double> FileDrainer::Read(InputFile &f, size_t count,
             {
                 helper::Throw<std::ios_base::failure>(
                     "Toolkit", "BurstBuffer::FileDrainer", "Read",
-                    "FileDrainer couldn't read from file " + path +
-                        " offset = " + std::to_string(currentOffset) +
-                        " count = " + std::to_string(count) +
-                        " bytes but only " +
-                        std::to_string(totalRead + readSize));
+                    "FileDrainer couldn't read from file " + path + " offset = " +
+                        std::to_string(currentOffset) + " count = " + std::to_string(count) +
+                        " bytes but only " + std::to_string(totalRead + readSize));
             }
         }
         buffer += readSize;
@@ -262,17 +247,15 @@ std::pair<size_t, double> FileDrainer::Read(InputFile &f, size_t count,
     return std::pair<size_t, double>(totalRead, totalSlept);
 }
 
-size_t FileDrainer::Write(OutputFile &f, size_t count, const char *buffer,
-                          const std::string &path)
+size_t FileDrainer::Write(OutputFile &f, size_t count, const char *buffer, const std::string &path)
 {
     f->write(buffer, static_cast<std::streamsize>(count));
 
     if (f->bad())
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "BurstBuffer::FileDrainer", "Write",
-            "FileDrainer couldn't write to file " + path +
-                " count = " + std::to_string(count) + " bytes");
+        helper::Throw<std::ios_base::failure>("Toolkit", "BurstBuffer::FileDrainer", "Write",
+                                              "FileDrainer couldn't write to file " + path +
+                                                  " count = " + std::to_string(count) + " bytes");
     }
 
     return count;

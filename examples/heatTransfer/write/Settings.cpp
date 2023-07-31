@@ -22,13 +22,12 @@ static unsigned int convertToUint(std::string varName, char *arg)
     long retval = std::strtol(arg, &end, 10);
     if (end[0] || errno == ERANGE)
     {
-        throw std::invalid_argument("Invalid value given for " + varName +
-                                    ": " + std::string(arg));
+        throw std::invalid_argument("Invalid value given for " + varName + ": " + std::string(arg));
     }
     if (retval < 0)
     {
-        throw std::invalid_argument("Negative value given for " + varName +
-                                    ": " + std::string(arg));
+        throw std::invalid_argument("Negative value given for " + varName + ": " +
+                                    std::string(arg));
     }
     return static_cast<unsigned int>(retval);
 }

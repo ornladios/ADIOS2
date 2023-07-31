@@ -55,8 +55,7 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
  * key2=value2, ..."
  * @return a map with unique key/value pairs
  */
-Params BuildParametersMap(const std::string &input,
-                          const char delimKeyValue = '=',
+Params BuildParametersMap(const std::string &input, const char delimKeyValue = '=',
                           const char delimItem = ',');
 
 /**
@@ -66,8 +65,7 @@ Params BuildParametersMap(const std::string &input,
  * @return if name already has extension returns name (name.bp), otherwise
  * returns name.extension (name.bp)
  */
-std::string AddExtension(const std::string &name,
-                         const std::string extension) noexcept;
+std::string AddExtension(const std::string &name, const std::string extension) noexcept;
 
 /**
  * Check if a string ends with another substring
@@ -76,8 +74,7 @@ std::string AddExtension(const std::string &name,
  * @param caseSensitive input flag
  * @return true if the 'str' string ends with the string 'ending'
  */
-bool EndsWith(const std::string &str, const std::string &ending,
-              const bool caseSensitive = true);
+bool EndsWith(const std::string &str, const std::string &ending, const bool caseSensitive = true);
 
 /**
  * Get values for each param entry of a certain key in a vector.
@@ -86,9 +83,8 @@ bool EndsWith(const std::string &str, const std::string &ending,
  * @param parametersVector
  * @return vector of values, from key,value in parametersVector
  */
-std::vector<std::string>
-GetParametersValues(const std::string &key,
-                    const std::vector<Params> &parametersVector) noexcept;
+std::vector<std::string> GetParametersValues(const std::string &key,
+                                             const std::vector<Params> &parametersVector) noexcept;
 
 /**
  * Searches key and assign value from parameters map
@@ -119,12 +115,12 @@ bool GetParameter(const Params &params, const std::string &key, T &value);
  * @param value to be modified if key is found in parameters
  * @param hint passed for extra debugging info if exception is thrown
  */
-void SetParameterValueInt(const std::string key, const Params &parameters,
-                          int &value, const std::string &hint);
+void SetParameterValueInt(const std::string key, const Params &parameters, int &value,
+                          const std::string &hint);
 
 template <class T>
-void SetParameterValue(const std::string key, const Params &parameters,
-                       T &value, const std::string &hint);
+void SetParameterValue(const std::string key, const Params &parameters, T &value,
+                       const std::string &hint);
 
 /**
  * Returns a single string with dimension values
@@ -188,9 +184,8 @@ Params LowerCaseParams(const Params &params);
  * @param inputs input names
  * @return  all names with prefix "pre": pre1, pre2, ..., preXYZ,
  */
-std::set<std::string>
-PrefixMatches(const std::string &prefix,
-              const std::set<std::string> &inputs) noexcept;
+std::set<std::string> PrefixMatches(const std::string &prefix,
+                                    const std::set<std::string> &inputs) noexcept;
 
 /**
  * Remove a trailing path separator character at the end of the string.

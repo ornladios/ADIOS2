@@ -13,23 +13,18 @@
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2_c_internal.h"
 
-adios2_error adios2_operator_type(char *type, size_t *size,
-                                  const adios2_operator *op)
+adios2_error adios2_operator_type(char *type, size_t *size, const adios2_operator *op)
 {
     try
     {
-        adios2::helper::CheckForNullptr(
-            op, "for adios2_operator, in call to adios2_operator_type");
+        adios2::helper::CheckForNullptr(op, "for adios2_operator, in call to adios2_operator_type");
 
-        auto *opCpp =
-            reinterpret_cast<const std::pair<std::string, adios2::Params> *>(
-                op);
+        auto *opCpp = reinterpret_cast<const std::pair<std::string, adios2::Params> *>(op);
 
         return String2CAPI(opCpp->first, type, size);
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_operator_type"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_operator_type"));
     }
 }

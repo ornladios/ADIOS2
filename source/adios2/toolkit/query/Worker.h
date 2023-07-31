@@ -42,14 +42,12 @@ public:
 
     adios2::core::Engine *GetSourceReader() { return m_SourceReader; }
 
-    void GetResultCoverage(const adios2::Box<adios2::Dims> &,
-                           std::vector<Box<adios2::Dims>> &);
+    void GetResultCoverage(const adios2::Box<adios2::Dims> &, std::vector<Box<adios2::Dims>> &);
 
 protected:
     Worker(const std::string &configFile, adios2::core::Engine *adiosEngine);
 
-    QueryVar *GetBasicVarQuery(adios2::core::IO &currentIO,
-                               const std::string &variableName);
+    QueryVar *GetBasicVarQuery(adios2::core::IO &currentIO, const std::string &variableName);
 
     std::string m_QueryFile; // e.g. xml file
 
@@ -91,14 +89,12 @@ private:
     void ConstructQuery(QueryVar &q, const pugi::xml_node &node);
 
     void ParseIONode(const pugi::xml_node &ioNode);
-    adios2::query::QueryVar *ParseVarNode(const pugi::xml_node &node,
-                                          adios2::core::IO &currentIO,
+    adios2::query::QueryVar *ParseVarNode(const pugi::xml_node &node, adios2::core::IO &currentIO,
                                           adios2::core::Engine &reader);
 
 }; // XmlWorker
 
-Worker *GetWorker(const std::string &configFile,
-                  adios2::core::Engine *adiosEngine);
+Worker *GetWorker(const std::string &configFile, adios2::core::Engine *adiosEngine);
 
 } // namespace query
 } // name space adios2

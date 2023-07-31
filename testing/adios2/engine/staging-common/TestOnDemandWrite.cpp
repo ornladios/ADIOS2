@@ -65,8 +65,7 @@ TEST_F(SstOnDemandWriteTest, ADIOS2SstOnDemandWrite)
         {
             std::string namev("sstFloats");
             namev += std::to_string(v);
-            sstFloats[v] = sstIO.DefineVariable<float>(namev, {size * Nx},
-                                                       {rank * Nx}, {Nx});
+            sstFloats[v] = sstIO.DefineVariable<float>(namev, {size * Nx}, {rank * Nx}, {Nx});
         }
         auto stepVar = sstIO.DefineVariable<int>("Step");
 
@@ -85,47 +84,40 @@ TEST_F(SstOnDemandWriteTest, ADIOS2SstOnDemandWrite)
                 put_time += (end_put - start_put).count() / 1000;
                 // std::this_thread::sleep_for (std::chrono::seconds(10));
 #ifdef DEBUG
-                std::cout << fname << ": Put step " << timeStep << " variable"
-                          << v << " " << myFloats[v * Nx] << std::endl;
+                std::cout << fname << ": Put step " << timeStep << " variable" << v << " "
+                          << myFloats[v * Nx] << std::endl;
 #endif
             }
             sstWriter.Put<int>(stepVar, timeStep);
             sstWriter.EndStep();
         }
         auto end_step = std::chrono::steady_clock::now();
-        double total_time =
-            ((double)(end_step - start_step).count()) / (size * 1000.0);
+        double total_time = ((double)(end_step - start_step).count()) / (size * 1000.0);
 
         double global_put_sum;
         double global_sum;
 #if ADIOS2_USE_MPI
-        MPI_Reduce(&put_time, &global_put_sum, 1, MPI_DOUBLE, MPI_SUM, 0,
-                   testComm);
-        MPI_Reduce(&total_time, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0,
-                   testComm);
+        MPI_Reduce(&put_time, &global_put_sum, 1, MPI_DOUBLE, MPI_SUM, 0, testComm);
+        MPI_Reduce(&total_time, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, testComm);
 #else
         global_sum = total_time;
         global_put_sum = put_time;
 #endif
         // Time in microseconds
         if (rank == 0)
-            std::cout << "SST,Write," << size << "," << Nx << ","
-                      << variablesSize << "," << NSteps << ","
-                      << global_put_sum / size << "," << global_sum / size
-                      << std::endl;
+            std::cout << "SST,Write," << size << "," << Nx << "," << variablesSize << "," << NSteps
+                      << "," << global_put_sum / size << "," << global_sum / size << std::endl;
         sstWriter.Close();
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout
-            << "IO System base failure exception, STOPPING PROGRAM from rank "
-            << rank << "\n";
+        std::cout << "IO System base failure exception, STOPPING PROGRAM from rank " << rank
+                  << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)
@@ -146,9 +138,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

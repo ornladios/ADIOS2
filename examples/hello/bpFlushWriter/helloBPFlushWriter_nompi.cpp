@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
 
         /** global array: name, { shape (total dimensions) }, { start (local) },
          * { count (local) }, all are constant dimensions */
-        adios2::Variable<float> bpFloats = bpIO.DefineVariable<float>(
-            "bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
+        adios2::Variable<float> bpFloats =
+            bpIO.DefineVariable<float>("bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpWriter = bpIO.Open("myVector.bp", adios2::Mode::Write);

@@ -43,20 +43,15 @@ namespace adios2
 namespace transportman
 {
 
-TransportMan::TransportMan(core::IO &io, helper::Comm &comm)
-: m_IO(io), m_Comm(comm)
-{
-}
+TransportMan::TransportMan(core::IO &io, helper::Comm &comm) : m_IO(io), m_Comm(comm) {}
 
 void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
-                                 const std::vector<Params> &parametersVector,
-                                 const bool nodeLocal)
+                                 const std::vector<Params> &parametersVector, const bool nodeLocal)
 {
     auto lf_CreateDirectories = [&](const std::vector<std::string> &fileNames) {
         for (size_t i = 0; i < fileNames.size(); ++i)
         {
-            const auto lastPathSeparator(
-                fileNames[i].find_last_of(PathSeparator));
+            const auto lastPathSeparator(fileNames[i].find_last_of(PathSeparator));
             if (lastPathSeparator == std::string::npos)
             {
                 continue;
@@ -65,8 +60,7 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
             const std::string type = parameters.at("transport");
             if (type == "File" || type == "file")
             {
-                const std::string path(
-                    fileNames[i].substr(0, lastPathSeparator));
+                const std::string path(fileNames[i].substr(0, lastPathSeparator));
 
                 std::string library;
                 helper::SetParameterValue("Library", parameters, library);
@@ -74,8 +68,7 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
                 if (library == "Daos" || library == "daos")
                 {
 #ifdef ADIOS2_HAVE_DAOS
-                    auto transport =
-                        std::make_shared<transport::FileDaos>(m_Comm);
+                    auto transport = std::make_shared<transport::FileDaos>(m_Comm);
                     transport->SetParameters({{"SingleProcess", "true"}});
                     // int rank = m_Comm.Rank();
                     // std::cout << "rank " << rank << ": start
@@ -109,10 +102,8 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
     }
 }
 
-void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
-                             const Mode openMode,
-                             const std::vector<Params> &parametersVector,
-                             const bool profile)
+void TransportMan::OpenFiles(const std::vector<std::string> &fileNames, const Mode openMode,
+                             const std::vector<Params> &parametersVector, const bool profile)
 {
     for (size_t i = 0; i < fileNames.size(); ++i)
     {
@@ -121,17 +112,16 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
 
         if (type == "file")
         {
-            std::shared_ptr<Transport> file = OpenFileTransport(
-                fileNames[i], openMode, parameters, profile, false, m_Comm);
+            std::shared_ptr<Transport> file =
+                OpenFileTransport(fileNames[i], openMode, parameters, profile, false, m_Comm);
             m_Transports.insert({i, file});
         }
     }
 }
 
-void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
-                             const Mode openMode,
-                             const std::vector<Params> &parametersVector,
-                             const bool profile, const helper::Comm &chainComm)
+void TransportMan::OpenFiles(const std::vector<std::string> &fileNames, const Mode openMode,
+                             const std::vector<Params> &parametersVector, const bool profile,
+                             const helper::Comm &chainComm)
 {
     for (size_t i = 0; i < fileNames.size(); ++i)
     {
@@ -140,26 +130,24 @@ void TransportMan::OpenFiles(const std::vector<std::string> &fileNames,
 
         if (type == "file")
         {
-            std::shared_ptr<Transport> file = OpenFileTransport(
-                fileNames[i], openMode, parameters, profile, true, chainComm);
+            std::shared_ptr<Transport> file =
+                OpenFileTransport(fileNames[i], openMode, parameters, profile, true, chainComm);
             m_Transports.insert({i, file});
         }
     }
 }
 
-void TransportMan::OpenFileID(const std::string &name, const size_t id,
-                              const Mode mode, const Params &parameters,
-                              const bool profile)
+void TransportMan::OpenFileID(const std::string &name, const size_t id, const Mode mode,
+                              const Params &parameters, const bool profile)
 {
     std::shared_ptr<Transport> file =
-        OpenFileTransport(name, mode, helper::LowerCaseParams(parameters),
-                          profile, false, m_Comm);
+        OpenFileTransport(name, mode, helper::LowerCaseParams(parameters), profile, false, m_Comm);
     m_Transports.insert({id, file});
 }
 
-std::vector<std::string> TransportMan::GetFilesBaseNames(
-    const std::string &baseName,
-    const std::vector<Params> &parametersVector) const
+std::vector<std::string>
+TransportMan::GetFilesBaseNames(const std::string &baseName,
+                                const std::vector<Params> &parametersVector) const
 {
     if (parametersVector.size() <= 1)
     {
@@ -184,13 +172,12 @@ std::vector<std::string> TransportMan::GetFilesBaseNames(
         {
             if (itType->second.count(name) == 1)
             {
-                helper::Throw<std::invalid_argument>(
-                    "Toolkit", "TransportMan", "OpenFileID",
-                    "two IO AddTransport of the same type can't "
-                    "have the same name : " +
-                        name +
-                        ", use Name=value parameter, in "
-                        "call to Open");
+                helper::Throw<std::invalid_argument>("Toolkit", "TransportMan", "OpenFileID",
+                                                     "two IO AddTransport of the same type can't "
+                                                     "have the same name : " +
+                                                         name +
+                                                         ", use Name=value parameter, in "
+                                                         "call to Open");
             }
         }
         typeTransportNames[type].insert(name);
@@ -212,8 +199,7 @@ std::vector<std::string> TransportMan::GetTransportsTypes() noexcept
     return types;
 }
 
-std::vector<profiling::IOChrono *>
-TransportMan::GetTransportsProfilers() noexcept
+std::vector<profiling::IOChrono *> TransportMan::GetTransportsProfilers() noexcept
 {
     std::vector<profiling::IOChrono *> profilers;
     profilers.reserve(m_Transports.size());
@@ -226,8 +212,7 @@ TransportMan::GetTransportsProfilers() noexcept
     return profilers;
 }
 
-void TransportMan::WriteFiles(const char *buffer, const size_t size,
-                              const int transportIndex)
+void TransportMan::WriteFiles(const char *buffer, const size_t size, const int transportIndex)
 {
     if (transportIndex == -1)
     {
@@ -243,14 +228,14 @@ void TransportMan::WriteFiles(const char *buffer, const size_t size,
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to WriteFiles with index " +
-                                   std::to_string(transportIndex));
+        CheckFile(itTransport,
+                  ", in call to WriteFiles with index " + std::to_string(transportIndex));
         itTransport->second->Write(buffer, size);
     }
 }
 
-void TransportMan::WriteFileAt(const char *buffer, const size_t size,
-                               const size_t start, const int transportIndex)
+void TransportMan::WriteFileAt(const char *buffer, const size_t size, const size_t start,
+                               const int transportIndex)
 {
     if (transportIndex == -1)
     {
@@ -266,14 +251,13 @@ void TransportMan::WriteFileAt(const char *buffer, const size_t size,
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to WriteFileAt with index " +
-                                   std::to_string(transportIndex));
+        CheckFile(itTransport,
+                  ", in call to WriteFileAt with index " + std::to_string(transportIndex));
         itTransport->second->Write(buffer, size, start);
     }
 }
 
-void TransportMan::WriteFiles(const core::iovec *iov, const size_t iovcnt,
-                              const int transportIndex)
+void TransportMan::WriteFiles(const core::iovec *iov, const size_t iovcnt, const int transportIndex)
 {
     if (transportIndex == -1)
     {
@@ -289,14 +273,14 @@ void TransportMan::WriteFiles(const core::iovec *iov, const size_t iovcnt,
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to WriteFiles with index " +
-                                   std::to_string(transportIndex));
+        CheckFile(itTransport,
+                  ", in call to WriteFiles with index " + std::to_string(transportIndex));
         itTransport->second->WriteV(iov, static_cast<int>(iovcnt));
     }
 }
 
-void TransportMan::WriteFileAt(const core::iovec *iov, const size_t iovcnt,
-                               const size_t start, const int transportIndex)
+void TransportMan::WriteFileAt(const core::iovec *iov, const size_t iovcnt, const size_t start,
+                               const int transportIndex)
 {
     if (transportIndex == -1)
     {
@@ -312,8 +296,8 @@ void TransportMan::WriteFileAt(const core::iovec *iov, const size_t iovcnt,
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to WriteFileAt with index " +
-                                   std::to_string(transportIndex));
+        CheckFile(itTransport,
+                  ", in call to WriteFileAt with index " + std::to_string(transportIndex));
         itTransport->second->WriteV(iov, static_cast<int>(iovcnt), start);
     }
 }
@@ -334,8 +318,8 @@ void TransportMan::SeekToFileEnd(const int transportIndex)
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to SeekToFileEnd with index " +
-                                   std::to_string(transportIndex));
+        CheckFile(itTransport,
+                  ", in call to SeekToFileEnd with index " + std::to_string(transportIndex));
         itTransport->second->SeekToEnd();
     }
 }
@@ -356,8 +340,8 @@ void TransportMan::SeekToFileBegin(const int transportIndex)
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to SeekToFileBegin with index " +
-                                   std::to_string(transportIndex));
+        CheckFile(itTransport,
+                  ", in call to SeekToFileBegin with index " + std::to_string(transportIndex));
         itTransport->second->SeekToBegin();
     }
 }
@@ -378,8 +362,7 @@ void TransportMan::SeekTo(const size_t start, const int transportIndex)
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to SeekTo with index " +
-                                   std::to_string(transportIndex));
+        CheckFile(itTransport, ", in call to SeekTo with index " + std::to_string(transportIndex));
         itTransport->second->Seek(start);
     }
 }
@@ -400,8 +383,8 @@ void TransportMan::Truncate(const size_t length, const int transportIndex)
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to Truncate with index " +
-                                   std::to_string(transportIndex));
+        CheckFile(itTransport,
+                  ", in call to Truncate with index " + std::to_string(transportIndex));
         itTransport->second->Truncate(length);
     }
 }
@@ -409,8 +392,7 @@ void TransportMan::Truncate(const size_t length, const int transportIndex)
 size_t TransportMan::GetFileSize(const size_t transportIndex) const
 {
     auto itTransport = m_Transports.find(transportIndex);
-    CheckFile(itTransport, ", in call to GetFileSize with index " +
-                               std::to_string(transportIndex));
+    CheckFile(itTransport, ", in call to GetFileSize with index " + std::to_string(transportIndex));
     return itTransport->second->GetSize();
 }
 
@@ -418,8 +400,7 @@ void TransportMan::ReadFile(char *buffer, const size_t size, const size_t start,
                             const size_t transportIndex)
 {
     auto itTransport = m_Transports.find(transportIndex);
-    CheckFile(itTransport, ", in call to ReadFile with index " +
-                               std::to_string(transportIndex));
+    CheckFile(itTransport, ", in call to ReadFile with index " + std::to_string(transportIndex));
     itTransport->second->Read(buffer, size, start);
 }
 
@@ -440,8 +421,8 @@ void TransportMan::FlushFiles(const int transportIndex)
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to FlushFiles with index " +
-                                   std::to_string(transportIndex));
+        CheckFile(itTransport,
+                  ", in call to FlushFiles with index " + std::to_string(transportIndex));
         itTransport->second->Flush();
     }
 }
@@ -463,8 +444,8 @@ void TransportMan::CloseFiles(const int transportIndex)
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to CloseFiles with index " +
-                                   std::to_string(transportIndex));
+        CheckFile(itTransport,
+                  ", in call to CloseFiles with index " + std::to_string(transportIndex));
         itTransport->second->Close();
         m_Transports.erase(itTransport);
     }
@@ -487,8 +468,8 @@ void TransportMan::DeleteFiles(const int transportIndex)
     else
     {
         auto itTransport = m_Transports.find(transportIndex);
-        CheckFile(itTransport, ", in call to CloseFiles with index " +
-                                   std::to_string(transportIndex));
+        CheckFile(itTransport,
+                  ", in call to CloseFiles with index " + std::to_string(transportIndex));
         itTransport->second->Delete();
     }
 }
@@ -509,15 +490,13 @@ bool TransportMan::AllTransportsClosed() const noexcept
     return allClose;
 }
 
-bool TransportMan::FileExists(const std::string &name, const Params &parameters,
-                              const bool profile)
+bool TransportMan::FileExists(const std::string &name, const Params &parameters, const bool profile)
 {
     bool exists = false;
     try
     {
         std::shared_ptr<Transport> file = OpenFileTransport(
-            name, Mode::Read, helper::LowerCaseParams(parameters), profile,
-            false, m_Comm);
+            name, Mode::Read, helper::LowerCaseParams(parameters), profile, false, m_Comm);
         exists = true;
         file->Close();
     }
@@ -528,9 +507,11 @@ bool TransportMan::FileExists(const std::string &name, const Params &parameters,
 }
 
 // PRIVATE
-std::shared_ptr<Transport> TransportMan::OpenFileTransport(
-    const std::string &fileName, const Mode openMode, const Params &parameters,
-    const bool profile, const bool useComm, const helper::Comm &chainComm)
+std::shared_ptr<Transport> TransportMan::OpenFileTransport(const std::string &fileName,
+                                                           const Mode openMode,
+                                                           const Params &parameters,
+                                                           const bool profile, const bool useComm,
+                                                           const helper::Comm &chainComm)
 {
     // This function expects Params with lower case keys!!!
 
@@ -542,11 +523,10 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
             std::stringstream ss(bufferedValueStr);
             if (!(ss >> std::boolalpha >> bufferedValue))
             {
-                helper::Throw<std::invalid_argument>(
-                    "Toolkit", "TransportMan", "OpenFileTransport",
-                    "invalid value for \"buffered\" transport "
-                    "parameter: " +
-                        bufferedValueStr);
+                helper::Throw<std::invalid_argument>("Toolkit", "TransportMan", "OpenFileTransport",
+                                                     "invalid value for \"buffered\" transport "
+                                                     "parameter: " +
+                                                         bufferedValueStr);
             }
         }
         return bufferedValue;
@@ -618,9 +598,8 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
         }
         else
         {
-            helper::Throw<std::invalid_argument>(
-                "Toolkit", "TransportMan", "OpenFileTransport",
-                "invalid IO AddTransport library " + library);
+            helper::Throw<std::invalid_argument>("Toolkit", "TransportMan", "OpenFileTransport",
+                                                 "invalid IO AddTransport library " + library);
         }
     };
 
@@ -638,15 +617,13 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
         return helper::StringToTimeUnit(profileUnits);
     };
 
-    auto lf_GetAsyncOpen = [&](const std::string defaultAsync,
-                               const Params &parameters) -> bool {
+    auto lf_GetAsyncOpen = [&](const std::string defaultAsync, const Params &parameters) -> bool {
         std::string AsyncOpen = defaultAsync;
         helper::SetParameterValue("asyncopen", parameters, AsyncOpen);
         return helper::StringTo<bool>(AsyncOpen, "");
     };
 
-    auto lf_GetDirectIO = [&](const std::string defaultValue,
-                              const Params &parameters) -> bool {
+    auto lf_GetDirectIO = [&](const std::string defaultValue, const Params &parameters) -> bool {
         std::string directio = defaultValue;
         helper::SetParameterValue("directio", parameters, directio);
         return helper::StringTo<bool>(directio, "");
@@ -654,15 +631,13 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
 
     // BODY OF FUNCTION starts here
     std::shared_ptr<Transport> transport;
-    const std::string library =
-        helper::LowerCase(lf_GetLibrary(DefaultFileLibrary, parameters));
+    const std::string library = helper::LowerCase(lf_GetLibrary(DefaultFileLibrary, parameters));
     lf_SetFileTransport(library, transport);
 
     // Default or user ProfileUnits in parameters
     if (profile)
     {
-        transport->InitProfiler(openMode,
-                                lf_GetTimeUnits(DefaultTimeUnit, parameters));
+        transport->InitProfiler(openMode, lf_GetTimeUnits(DefaultTimeUnit, parameters));
     }
 
     transport->SetParameters(parameters);
@@ -670,37 +645,32 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(
     // open
     if (useComm)
     {
-        transport->OpenChain(fileName, openMode, chainComm,
-                             lf_GetAsyncOpen("false", parameters),
+        transport->OpenChain(fileName, openMode, chainComm, lf_GetAsyncOpen("false", parameters),
                              lf_GetDirectIO("false", parameters));
     }
     else
     {
-        transport->Open(fileName, openMode,
-                        lf_GetAsyncOpen("false", parameters),
+        transport->Open(fileName, openMode, lf_GetAsyncOpen("false", parameters),
                         lf_GetDirectIO("false", parameters));
     }
     return transport;
 }
 
 void TransportMan::CheckFile(
-    std::unordered_map<size_t, std::shared_ptr<Transport>>::const_iterator
-        itTransport,
+    std::unordered_map<size_t, std::shared_ptr<Transport>>::const_iterator itTransport,
     const std::string hint) const
 {
     if (itTransport == m_Transports.end())
     {
-        helper::Throw<std::invalid_argument>("Toolkit", "TransportMan",
-                                             "CheckFile",
+        helper::Throw<std::invalid_argument>("Toolkit", "TransportMan", "CheckFile",
                                              "invalid transport " + hint);
     }
 
     if (itTransport->second->m_Type != "File")
     {
-        helper::Throw<std::invalid_argument>(
-            "Toolkit", "TransportMan", "CheckFile",
-            "invalid type " + itTransport->second->m_Library +
-                ", must be file " + hint);
+        helper::Throw<std::invalid_argument>("Toolkit", "TransportMan", "CheckFile",
+                                             "invalid type " + itTransport->second->m_Library +
+                                                 ", must be file " + hint);
     }
 }
 

@@ -16,9 +16,9 @@
 
 #define str_helper(X) #X
 #define str(X) str_helper(X)
-//#ifndef DEFAULT_CONFIG
-//#define DEFAULT_CONFIG config.xml
-//#endif
+// #ifndef DEFAULT_CONFIG
+// #define DEFAULT_CONFIG config.xml
+// #endif
 #define DEFAULT_CONFIG mix.xml
 #define DEFAULT_CONFIG_STR str(DEFAULT_CONFIG)
 
@@ -54,14 +54,13 @@ IO::IO(const Settings &s, MPI_Comm comm)
     h5io.DefineVariable<unsigned int>("gndy");
 
     // define T as 2D global array
-    varT = h5io.DefineVariable<double>(
-        "T",
-        // Global dimensions
-        {s.gndx, s.gndy},
-        // starting offset of the local array in the global space
-        {s.offsx, s.offsy},
-        // local size, could be defined later using SetSelection()
-        {s.ndx, s.ndy});
+    varT = h5io.DefineVariable<double>("T",
+                                       // Global dimensions
+                                       {s.gndx, s.gndy},
+                                       // starting offset of the local array in the global space
+                                       {s.offsx, s.offsy},
+                                       // local size, could be defined later using SetSelection()
+                                       {s.ndx, s.ndy});
 
     // add transform to variable
     // adios2::Transform tr = adios2::transform::BZIP2( );
@@ -72,8 +71,7 @@ IO::IO(const Settings &s, MPI_Comm comm)
 
     if (!h5mixerWriter)
     {
-        throw std::ios_base::failure(
-            "ERROR: failed to open ADIOS h5mixerWriter\n");
+        throw std::ios_base::failure("ERROR: failed to open ADIOS h5mixerWriter\n");
     }
 }
 
@@ -83,8 +81,7 @@ IO::~IO()
     delete ad;
 }
 
-void IO::write(int step, const HeatTransfer &ht, const Settings &s,
-               MPI_Comm comm)
+void IO::write(int step, const HeatTransfer &ht, const Settings &s, MPI_Comm comm)
 {
 
     h5mixerWriter.BeginStep();
@@ -94,8 +91,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
     // Make a selection to describe the local dimensions of the variable we
     // write and its offsets in the global spaces. This could have been done in
     // adios.DefineVariable()
-    varT.SetSelection(
-        adios2::Box<adios2::Dims>({s.offsx, s.offsy}, {s.ndx, s.ndy}));
+    varT.SetSelection(adios2::Box<adios2::Dims>({s.offsx, s.offsy}, {s.ndx, s.ndy}));
 
     /* Select the area that we want to write from the data pointer we pass to
          the
@@ -138,8 +134,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
        above.
        Default memspace is always the full selection.
     */
-    adios2::SelectionBoundingBox memspace =
-        adios2::SelectionBoundingBox({1, 1}, {s.ndx, s.ndy});
+    adios2::SelectionBoundingBox memspace = adios2::SelectionBoundingBox({1, 1}, {s.ndx, s.ndy});
     varT->SetMemorySelection(memspace);
 
     h5mixerWriter->Write<unsigned int>(*varGndx, s.gndx);

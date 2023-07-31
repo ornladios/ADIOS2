@@ -26,8 +26,8 @@ void InlineWriter::PutSyncCommon(Variable<T> &variable, const T *data)
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Writer " << m_WriterRank << "     PutSync("
-                  << variable.m_Name << ")\n";
+        std::cout << "Inline Writer " << m_WriterRank << "     PutSync(" << variable.m_Name
+                  << ")\n";
     }
 
     // PutSync really shouldn't be supported for any variable, but single value
@@ -38,8 +38,7 @@ void InlineWriter::PutSyncCommon(Variable<T> &variable, const T *data)
     }
     else
     {
-        helper::Throw<std::invalid_argument>("Engine", "InlineWriter",
-                                             "PutSyncCommon",
+        helper::Throw<std::invalid_argument>("Engine", "InlineWriter", "PutSyncCommon",
                                              "Put Sync is not supported.");
     }
 }
@@ -49,8 +48,8 @@ void InlineWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Inline Writer " << m_WriterRank << "     PutDeferred("
-                  << variable.m_Name << ")\n";
+        std::cout << "Inline Writer " << m_WriterRank << "     PutDeferred(" << variable.m_Name
+                  << ")\n";
     }
 
     if (m_ResetVariables)
@@ -58,8 +57,7 @@ void InlineWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
         ResetVariables();
     }
     auto &blockInfo = variable.SetBlockInfo(data, CurrentStep());
-    if (variable.m_ShapeID == ShapeID::GlobalValue ||
-        variable.m_ShapeID == ShapeID::LocalValue)
+    if (variable.m_ShapeID == ShapeID::GlobalValue || variable.m_ShapeID == ShapeID::LocalValue)
     {
         blockInfo.IsValue = true;
         blockInfo.Value = blockInfo.Data[0];

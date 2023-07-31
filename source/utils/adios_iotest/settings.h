@@ -45,8 +45,7 @@ public:
     bool multithreadedMPI = false; // turn on MT-enabled MPI
     IOLib iolib = IOLib::ADIOS;
     //   process decomposition
-    std::vector<size_t> processDecomp = {1, 1, 1, 1, 1, 1, 1, 1,
-                                         1, 1, 1, 1, 1, 1, 1, 1};
+    std::vector<size_t> processDecomp = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
     /* public variables */
     MPI_Comm appComm = MPI_COMM_WORLD; // will change to split communicator

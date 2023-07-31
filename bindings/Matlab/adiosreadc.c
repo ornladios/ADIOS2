@@ -32,9 +32,8 @@
 
 static int verbose = 0;
 
-mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path,
-                  mwSize in_noffsets, const int64_t *in_offsets,
-                  const int64_t *in_counts, const int64_t in_stepstart,
+mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path, mwSize in_noffsets,
+                  const int64_t *in_offsets, const int64_t *in_counts, const int64_t in_stepstart,
                   const int64_t in_stepcount);
 void errorCheck(int nlhs, int nrhs, const mxArray *prhs[]);
 void checkDimSize(const int ndims, const size_t *dims);
@@ -42,11 +41,10 @@ char *getString(const mxArray *mxstr);
 mxClassID adiostypeToMatlabClass(int adiostype, mxComplexity *complexity);
 mxArray *createMatlabArray(int adiostype, size_t ndim, size_t *dims);
 void recalc_offsets(const size_t ndim, const size_t *dims, mwSize in_noffsets,
-                    const int64_t *in_offsets, const int64_t *in_counts,
-                    size_t *offsets, size_t *counts);
-void recalc_steps(const size_t varStepStart, const size_t varStepCount,
-                  const int64_t in_stepstart, const int64_t in_stepcount,
-                  size_t *start, size_t *count);
+                    const int64_t *in_offsets, const int64_t *in_counts, size_t *offsets,
+                    size_t *counts);
+void recalc_steps(const size_t varStepStart, const size_t varStepCount, const int64_t in_stepstart,
+                  const int64_t in_stepcount, size_t *start, size_t *count);
 static void swap_order(size_t n, size_t *array);
 void printArrayInt64(size_t nelems, void *array);
 
@@ -108,8 +106,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     /*********************************************************************/
     /* 5. read in variable */
-    out = readdata(fp, group, path, in_noffsets, in_offsets, in_counts,
-                   in_stepstart, in_stepcount);
+    out = readdata(fp, group, path, in_noffsets, in_offsets, in_counts, in_stepstart, in_stepcount);
     if (nlhs >= 1)
     {
         plhs[0] = out;
@@ -118,9 +115,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mxFree(path);
 }
 
-mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path,
-                  mwSize in_noffsets, const int64_t *in_offsets,
-                  const int64_t *in_counts, const int64_t in_stepstart,
+mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path, mwSize in_noffsets,
+                  const int64_t *in_offsets, const int64_t *in_counts, const int64_t in_stepstart,
                   const int64_t in_stepcount)
 {
     /* FIXME: does not work for COMPLEX data because
@@ -186,16 +182,14 @@ mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path,
     size_t qstepstart = varStepStart; // default value in case there are no
                                       // steps for the variable
     size_t qstepcount = varStepCount;
-    recalc_offsets(varNdim, mxdims, in_noffsets, in_offsets, in_counts,
-                   qoffsets, qcounts);
-    recalc_steps(varStepStart, varStepCount, in_stepstart, in_stepcount,
-                 &qstepstart, &qstepcount);
+    recalc_offsets(varNdim, mxdims, in_noffsets, in_offsets, in_counts, qoffsets, qcounts);
+    recalc_steps(varStepStart, varStepCount, in_stepstart, in_stepcount, &qstepstart, &qstepcount);
 
     if (mxndim > varNdim)
     {
         if (verbose)
-            mexPrintf("Add steps as extra dimension, start=%zu  count=%zu ",
-                      qstepstart, qstepcount);
+            mexPrintf("Add steps as extra dimension, start=%zu  count=%zu ", qstepstart,
+                      qstepcount);
         qoffsets[varNdim] = qstepstart;
         qcounts[varNdim] = qstepcount; // steps become slowest dimension
     }
@@ -235,8 +229,8 @@ mxArray *readdata(adios2_engine *fp, adios2_io *group, const char *path,
         mexPrintf("  count = ");
         printArrayInt64(varNdim, qcounts);
         mexPrintf("\n");
-        mexPrintf("Set step-selection for variable: start = %zu  count = %zu\n",
-                  qstepstart, qstepcount);
+        mexPrintf("Set step-selection for variable: start = %zu  count = %zu\n", qstepstart,
+                  qstepcount);
     }
 
     if (varNdim > 0)
@@ -271,34 +265,29 @@ void errorCheck(int nlhs, int nrhs, const mxArray *prhs[])
 
     if (nrhs != 8)
     {
-        mexErrMsgIdAndTxt("MATLAB:adiosreadc:rhs",
-                          "This function needs exactly 6 arguments: File, "
-                          "Group, Varpath, Offsets, Counts, StepStart, "
-                          "StepCount, Verbose");
+        mexErrMsgIdAndTxt("MATLAB:adiosreadc:rhs", "This function needs exactly 6 arguments: File, "
+                                                   "Group, Varpath, Offsets, Counts, StepStart, "
+                                                   "StepCount, Verbose");
     }
 
     if (!mxIsUint64(prhs[0]))
     {
-        mexErrMsgIdAndTxt("MATLAB:adiosreadc:rhs",
-                          "First arg must be an uint64 handler.");
+        mexErrMsgIdAndTxt("MATLAB:adiosreadc:rhs", "First arg must be an uint64 handler.");
     }
 
     if (!mxIsUint64(prhs[1]))
     {
-        mexErrMsgIdAndTxt("MATLAB:adiosreadc:rhs",
-                          "Second arg must be an uint64 handler.");
+        mexErrMsgIdAndTxt("MATLAB:adiosreadc:rhs", "Second arg must be an uint64 handler.");
     }
 
     if (!mxIsChar(prhs[2]))
     {
-        mexErrMsgIdAndTxt("MATLAB:adiosreadc:rhs",
-                          "Third arg must be a string.");
+        mexErrMsgIdAndTxt("MATLAB:adiosreadc:rhs", "Third arg must be a string.");
     }
 
     if (nlhs > 1)
     {
-        mexErrMsgIdAndTxt("MATLAB:adiosreadc:lhs",
-                          "Too many output arguments.");
+        mexErrMsgIdAndTxt("MATLAB:adiosreadc:lhs", "Too many output arguments.");
     }
 }
 
@@ -309,12 +298,11 @@ void checkDimSize(const int ndims, const size_t *dims)
     {
         if (dims[i] > MWSIZE_MAX)
         {
-            mexErrMsgIdAndTxt(
-                "MATLAB:adiosreadc:dimensionTooLarge",
-                "The selected dimension size, %zu, is larger than the "
-                "maximum supported value of mwSize, %u, so we cannot create "
-                "the result array\n",
-                dims[i], MWSIZE_MAX);
+            mexErrMsgIdAndTxt("MATLAB:adiosreadc:dimensionTooLarge",
+                              "The selected dimension size, %zu, is larger than the "
+                              "maximum supported value of mwSize, %u, so we cannot create "
+                              "the result array\n",
+                              dims[i], MWSIZE_MAX);
         }
     }
 }
@@ -334,8 +322,7 @@ char *getString(const mxArray *mxstr)
 }
 
 /** return the appropriate class for an adios type (and complexity too) */
-mxClassID adiostypeToMatlabClass(adios2_type adiostype,
-                                 mxComplexity *complexity)
+mxClassID adiostypeToMatlabClass(adios2_type adiostype, mxComplexity *complexity)
 {
     *complexity = mxREAL;
     switch (adiostype)
@@ -378,8 +365,7 @@ mxClassID adiostypeToMatlabClass(adios2_type adiostype,
 
     default:
         mexErrMsgIdAndTxt("MATLAB:adiosopenc.c:dimensionTooLarge",
-                          "Adios type id=%d not supported in matlab.\n",
-                          adiostype);
+                          "Adios type id=%d not supported in matlab.\n", adiostype);
         break;
     }
     return 0; /* just to avoid warnings. never executed */
@@ -429,8 +415,8 @@ mxArray *createMatlabArray(int adiostype, size_t ndim, size_t *dims)
     !!! Provide the output arrays in the caller !!!
 */
 void recalc_offsets(const size_t ndim, const size_t *dims, mwSize in_noffsets,
-                    const int64_t *in_offsets, const int64_t *in_counts,
-                    size_t *offsets, size_t *counts)
+                    const int64_t *in_offsets, const int64_t *in_counts, size_t *offsets,
+                    size_t *counts)
 {
     int i;
     for (i = 0; i < ndim; i++)
@@ -442,8 +428,7 @@ void recalc_offsets(const size_t ndim, const size_t *dims, mwSize in_noffsets,
             else
                 offsets[i] = in_offsets[i] - 1; /* C index start from 0 */
 
-            if (in_counts[i] <
-                0) /* negative count means last-|count|+1-start */
+            if (in_counts[i] < 0) /* negative count means last-|count|+1-start */
                 counts[i] = dims[i] + in_counts[i] - offsets[i] + 1;
             else
                 counts[i] = in_counts[i];
@@ -452,18 +437,15 @@ void recalc_offsets(const size_t ndim, const size_t *dims, mwSize in_noffsets,
         {
             /* extend offset/count array to match variable's dimensions */
             if (verbose)
-                mexPrintf(
-                    "Extend offset/counts for dim %d: offset=%d count=%d\n", i,
-                    0, dims[i]);
+                mexPrintf("Extend offset/counts for dim %d: offset=%d count=%d\n", i, 0, dims[i]);
             offsets[i] = 0;
             counts[i] = dims[i];
         }
     }
 }
 
-void recalc_steps(const size_t varStepStart, const size_t varStepCount,
-                  const int64_t in_stepstart, const int64_t in_stepcount,
-                  size_t *start, size_t *count)
+void recalc_steps(const size_t varStepStart, const size_t varStepCount, const int64_t in_stepstart,
+                  const int64_t in_stepcount, size_t *start, size_t *count)
 {
     /* handle steps for variables with multiple steps */
     if (in_stepstart < 0) /* negative offset means last step -|start| */

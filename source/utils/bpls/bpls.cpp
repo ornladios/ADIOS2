@@ -73,17 +73,16 @@ using EntryMap = std::map<std::string, Entry>;
 // output files' starting path (can be extended with subdirs,
 // names, indexes)
 std::string outpath;
-char *varmask[MAX_MASKS]; // can have many -var masks (either shell patterns or
-                          // extended regular expressions)
-int nmasks;               // number of masks specified
-char *vfile;              // file name to bpls
-std::string start;        // dimension spec starting points
-std::string count;        // dimension spec counts
-std::string format;       // format string for one data element (e.g. %6.2f)
-std::string
-    transport_params; // Transport parameters (e.g. "Library=stdio,verbose=3")
-std::string engine_name;   // Engine name (e.g. "BP5")
-std::string engine_params; // Engine parameters (e.g. "SelectSteps=0:5:2")
+char *varmask[MAX_MASKS];     // can have many -var masks (either shell patterns or
+                              // extended regular expressions)
+int nmasks;                   // number of masks specified
+char *vfile;                  // file name to bpls
+std::string start;            // dimension spec starting points
+std::string count;            // dimension spec counts
+std::string format;           // format string for one data element (e.g. %6.2f)
+std::string transport_params; // Transport parameters (e.g. "Library=stdio,verbose=3")
+std::string engine_name;      // Engine name (e.g. "BP5")
+std::string engine_params;    // Engine parameters (e.g. "SelectSteps=0:5:2")
 
 // Flags from arguments or defaults
 bool dump; // dump data not just list info(flag == 1)
@@ -123,82 +122,81 @@ char commentchar;
 void display_help()
 {
     // printf( "Usage: %s  \n", prgname);
-    printf(
-        "usage: bpls [OPTIONS] file [mask1 mask2 ...]\n"
-        "\nList/dump content of a BP/HDF5 file. \n"
-        "A mask can be a shell pattern like with 'ls' e.g. \"*/x?\".\n"
-        "Variables with multiple timesteps are reported with an extra "
-        "dimensions.\n"
-        "The time dimension is the first dimension then.\n"
-        "\n"
-        "  --long      | -l           Print values of all scalars and "
-        "attributes and\n"
-        "                               min/max values of arrays (no overhead "
-        "to get them!)\n"
-        "  --attrs     | -a           List/match attributes too\n"
-        "  --attrsonly | -A           List attributes only\n"
-        "  --meshes    | -m           List meshes\n"
-        /*
-        "  --sort      | -r           Sort names before listing\n"
-        */
-        "  --timestep  | -t           Read content step by step (stream "
-        "reading)\n"
-        "  --dump      | -d           Dump matched variables/attributes\n"
-        "                               To match attributes too, add option "
-        "-a\n"
-        "  --regexp    | -e           Treat masks as extended regular "
-        "expressions\n"
-        "  --output    | -o <path>    Print to a file instead of stdout\n"
-        /*
-           "  --xml    | -x            # print as xml instead of ascii text\n"
-         */
-        "  --start     | -s \"spec\"    Offset indices in each dimension \n"
-        "                               (default is 0 for all dimensions) \n"
-        "                               <0 is handled as in python (-1 is "
-        "last)\n"
-        "  --count     | -c \"spec\"    Number of elements in each dimension\n"
-        "                               -1 denotes 'until end' of dimension\n"
-        "                               (default is -1 for all dimensions)\n"
-        "  --noindex   | -y           Print data without array indices\n"
-        "  --string    | -S           Print 8bit integer arrays as strings\n"
-        "  --columns   | -n \"cols\"    Number of data elements per row to "
-        "print\n"
-        "  --format    | -f \"str\"     Format string to use for one data item "
-        "in print\n"
-        "                               instead of the default. E.g. "
-        "\"%%6.3f\"\n"
-        "  --hidden_attrs             Show hidden ADIOS attributes in the "
-        "file\n"
-        "  --decomp    | -D           Show decomposition of variables as layed "
-        "out in file\n"
-        "  --transport-parameters | -T         Specify File transport "
-        "parameters\n"
-        "                                      e.g. \"Library=stdio\"\n"
-        "  --engine               | -E <name>  Specify ADIOS Engine\n"
-        "  --engine-params        | -P string  Specify ADIOS Engine "
-        "Parameters\n"
-        "                                      e.g. \"SelectSteps=0:n:2\""
-        "\n"
-        "  Examples for slicing:\n"
-        "  -s \"0,0,0\"   -c \"1,99,1\":  Print 100 elements (of the 2nd "
-        "dimension).\n"
-        "  -s \"0,0\"     -c \"1,-1\":    Print the whole 2nd dimension "
-        "however large it is.\n"
-        "  -s \"-1,-1\"   -c \"1,1\":     Print the very last element (of a 2D "
-        "array)\n"
-        "\n"
-        "Help options\n"
-        "  --help      | -h           Print this help.\n"
-        "  --verbose   | -v           Print log about what this program is "
-        "doing.\n"
-        "                               Use multiple -v to increase logging "
-        "level.\n"
-        "  --version   | -V           Print version information; compatible "
-        " with\n"
-        "                               --verbose for additional information, "
-        "i.e.\n"
-        "                               -v --version.\n"
-        "\nTypical use: bpls -lav <file>\n");
+    printf("usage: bpls [OPTIONS] file [mask1 mask2 ...]\n"
+           "\nList/dump content of a BP/HDF5 file. \n"
+           "A mask can be a shell pattern like with 'ls' e.g. \"*/x?\".\n"
+           "Variables with multiple timesteps are reported with an extra "
+           "dimensions.\n"
+           "The time dimension is the first dimension then.\n"
+           "\n"
+           "  --long      | -l           Print values of all scalars and "
+           "attributes and\n"
+           "                               min/max values of arrays (no overhead "
+           "to get them!)\n"
+           "  --attrs     | -a           List/match attributes too\n"
+           "  --attrsonly | -A           List attributes only\n"
+           "  --meshes    | -m           List meshes\n"
+           /*
+           "  --sort      | -r           Sort names before listing\n"
+           */
+           "  --timestep  | -t           Read content step by step (stream "
+           "reading)\n"
+           "  --dump      | -d           Dump matched variables/attributes\n"
+           "                               To match attributes too, add option "
+           "-a\n"
+           "  --regexp    | -e           Treat masks as extended regular "
+           "expressions\n"
+           "  --output    | -o <path>    Print to a file instead of stdout\n"
+           /*
+              "  --xml    | -x            # print as xml instead of ascii text\n"
+            */
+           "  --start     | -s \"spec\"    Offset indices in each dimension \n"
+           "                               (default is 0 for all dimensions) \n"
+           "                               <0 is handled as in python (-1 is "
+           "last)\n"
+           "  --count     | -c \"spec\"    Number of elements in each dimension\n"
+           "                               -1 denotes 'until end' of dimension\n"
+           "                               (default is -1 for all dimensions)\n"
+           "  --noindex   | -y           Print data without array indices\n"
+           "  --string    | -S           Print 8bit integer arrays as strings\n"
+           "  --columns   | -n \"cols\"    Number of data elements per row to "
+           "print\n"
+           "  --format    | -f \"str\"     Format string to use for one data item "
+           "in print\n"
+           "                               instead of the default. E.g. "
+           "\"%%6.3f\"\n"
+           "  --hidden_attrs             Show hidden ADIOS attributes in the "
+           "file\n"
+           "  --decomp    | -D           Show decomposition of variables as layed "
+           "out in file\n"
+           "  --transport-parameters | -T         Specify File transport "
+           "parameters\n"
+           "                                      e.g. \"Library=stdio\"\n"
+           "  --engine               | -E <name>  Specify ADIOS Engine\n"
+           "  --engine-params        | -P string  Specify ADIOS Engine "
+           "Parameters\n"
+           "                                      e.g. \"SelectSteps=0:n:2\""
+           "\n"
+           "  Examples for slicing:\n"
+           "  -s \"0,0,0\"   -c \"1,99,1\":  Print 100 elements (of the 2nd "
+           "dimension).\n"
+           "  -s \"0,0\"     -c \"1,-1\":    Print the whole 2nd dimension "
+           "however large it is.\n"
+           "  -s \"-1,-1\"   -c \"1,1\":     Print the very last element (of a 2D "
+           "array)\n"
+           "\n"
+           "Help options\n"
+           "  --help      | -h           Print this help.\n"
+           "  --verbose   | -v           Print log about what this program is "
+           "doing.\n"
+           "                               Use multiple -v to increase logging "
+           "level.\n"
+           "  --version   | -V           Print version information; compatible "
+           " with\n"
+           "                               --verbose for additional information, "
+           "i.e.\n"
+           "                               -v --version.\n"
+           "\nTypical use: bpls -lav <file>\n");
 }
 
 bool option_help_was_called = false;
@@ -231,8 +229,7 @@ void print_bpls_version()
         printf("\nBuild configuration:\n");
         if (strlen(ADIOS_INFO_VER_GIT) > 0)
         {
-            printf("ADIOS version: %s (%s)\n", ADIOS2_VERSION_STR,
-                   ADIOS_INFO_VER_GIT);
+            printf("ADIOS version: %s (%s)\n", ADIOS2_VERSION_STR, ADIOS_INFO_VER_GIT);
         }
         else
         {
@@ -240,13 +237,12 @@ void print_bpls_version()
         }
         if (strlen(ADIOS_INFO_COMPILER_WRAP) > 0)
         {
-            printf("C++ Compiler:  %s %s (%s)\n", ADIOS_INFO_COMPILER_ID,
-                   ADIOS_INFO_COMPILER_VER, ADIOS_INFO_COMPILER_WRAP);
+            printf("C++ Compiler:  %s %s (%s)\n", ADIOS_INFO_COMPILER_ID, ADIOS_INFO_COMPILER_VER,
+                   ADIOS_INFO_COMPILER_WRAP);
         }
         else
         {
-            printf("C++ Compiler:  %s %s\n", ADIOS_INFO_COMPILER_ID,
-                   ADIOS_INFO_COMPILER_VER);
+            printf("C++ Compiler:  %s %s\n", ADIOS_INFO_COMPILER_ID, ADIOS_INFO_COMPILER_VER);
         }
         printf("Target OS:     %s\n", ADIOS_INFO_SYSTEM);
         printf("Target Arch:   %s\n", ADIOS_INFO_ARCH);
@@ -305,14 +301,11 @@ bool introspectAsBPFile(std::ifstream &f, const std::string &name) noexcept
 
         if (!IsBigEndian)
         {
-            uint64_t PGIndexStart =
-                helper::ReadValue<uint64_t>(buffer, position, !IsBigEndian);
-            uint64_t VarsIndexStart =
-                helper::ReadValue<uint64_t>(buffer, position, !IsBigEndian);
+            uint64_t PGIndexStart = helper::ReadValue<uint64_t>(buffer, position, !IsBigEndian);
+            uint64_t VarsIndexStart = helper::ReadValue<uint64_t>(buffer, position, !IsBigEndian);
             uint64_t AttributesIndexStart =
                 helper::ReadValue<uint64_t>(buffer, position, !IsBigEndian);
-            if (PGIndexStart >= VarsIndexStart ||
-                VarsIndexStart >= AttributesIndexStart ||
+            if (PGIndexStart >= VarsIndexStart || VarsIndexStart >= AttributesIndexStart ||
                 AttributesIndexStart >= static_cast<uint64_t>(flength))
             {
                 return false;
@@ -338,15 +331,13 @@ bool introspectAsBPFile(std::ifstream &f, const std::string &name) noexcept
 
             /* Cleanup ADIOS2 bug here: VersionTag is not filled with 0s */
             int pos = 10;
-            while (VersionTag[pos] == '.' ||
-                   (VersionTag[pos] >= '0' && VersionTag[pos] <= '9'))
+            while (VersionTag[pos] == '.' || (VersionTag[pos] >= '0' && VersionTag[pos] <= '9'))
             {
                 ++pos;
             }
             VersionTag[pos] = '\0';
             printf("ADIOS-BP Version %d %s - ADIOS v%d.%d.%d\n", BPVersion,
-                   (IsBigEndian ? "Big Endian" : "Little Endian"), major, minor,
-                   patch);
+                   (IsBigEndian ? "Big Endian" : "Little Endian"), major, minor, patch);
         }
     }
     return true;
@@ -410,22 +401,22 @@ bool introspectAsBPDir(const std::string &name) noexcept
     {
         isActive = static_cast<bool>(buffer[38]);
         printf("ADIOS-BP Version %d %s - ADIOS v%c.%c.%c %s\n", BPVersion,
-               (isBigEndian ? "Big Endian" : "Little Endian"), major, minor,
-               patch, (isActive ? "- active" : ""));
+               (isBigEndian ? "Big Endian" : "Little Endian"), major, minor, patch,
+               (isActive ? "- active" : ""));
     }
     else if (BPVersion == 5)
     {
         uint8_t minversion = static_cast<uint8_t>(buffer[38]);
         isActive = static_cast<bool>(buffer[39]);
-        printf("ADIOS-BP Version %d.%d %s - ADIOS v%c.%c.%c %s\n", BPVersion,
-               minversion, (isBigEndian ? "Big Endian" : "Little Endian"),
-               major, minor, patch, (isActive ? "- active" : ""));
+        printf("ADIOS-BP Version %d.%d %s - ADIOS v%c.%c.%c %s\n", BPVersion, minversion,
+               (isBigEndian ? "Big Endian" : "Little Endian"), major, minor, patch,
+               (isActive ? "- active" : ""));
     }
     else
     {
         printf("ADIOS-BP Version %d %s - ADIOS v%c.%c.%c %s\n", BPVersion,
-               (isBigEndian ? "Big Endian" : "Little Endian"), major, minor,
-               patch, (isActive ? "- active" : ""));
+               (isBigEndian ? "Big Endian" : "Little Endian"), major, minor, patch,
+               (isActive ? "- active" : ""));
     }
 
     return true;
@@ -552,13 +543,11 @@ int bplsMain(int argc, char *argv[])
                     "Print information about what bpls is doing");
     arg.AddCallback("--help", argT::NO_ARGUMENT, optioncb_help, &arg, "Help");
     arg.AddCallback("-h", argT::NO_ARGUMENT, optioncb_help, &arg, "");
-    arg.AddBooleanArgument("--dump", &dump,
-                           "Dump matched variables/attributes");
+    arg.AddBooleanArgument("--dump", &dump, "Dump matched variables/attributes");
     arg.AddBooleanArgument("-d", &dump, "");
-    arg.AddBooleanArgument(
-        "--long", &longopt,
-        "Print values of all scalars and attributes and min/max "
-        "values of arrays");
+    arg.AddBooleanArgument("--long", &longopt,
+                           "Print values of all scalars and attributes and min/max "
+                           "values of arrays");
     arg.AddBooleanArgument("-l", &longopt, "");
     arg.AddBooleanArgument("--regexp", &use_regexp,
                            "| -e Treat masks as extended regular expressions");
@@ -576,14 +565,11 @@ int bplsMain(int argc, char *argv[])
                     "denotes 'until end' of dimension. default is -1 for all "
                     "dimensions");
     arg.AddArgument("-c", argT::SPACE_ARGUMENT, &count, "");
-    arg.AddBooleanArgument("--noindex", &noindex,
-                           " | -y Print data without array indices");
+    arg.AddBooleanArgument("--noindex", &noindex, " | -y Print data without array indices");
     arg.AddBooleanArgument("-y", &noindex, "");
-    arg.AddBooleanArgument("--timestep", &timestep,
-                           " | -t Print values of timestep elements");
+    arg.AddBooleanArgument("--timestep", &timestep, " | -t Print values of timestep elements");
     arg.AddBooleanArgument("-t", &timestep, "");
-    arg.AddBooleanArgument("--attrs", &listattrs,
-                           " | -a List/match attributes too");
+    arg.AddBooleanArgument("--attrs", &listattrs, " | -a List/match attributes too");
     arg.AddBooleanArgument("-a", &listattrs, "");
     arg.AddBooleanArgument("--attrsonly", &attrsonly,
                            " | -A List/match attributes only (no variables)");
@@ -601,18 +587,15 @@ int bplsMain(int argc, char *argv[])
     arg.AddArgument("-f", argT::SPACE_ARGUMENT, &format, "");
     arg.AddBooleanArgument("--hidden_attrs", &hidden_attrs,
                            "  Show hidden ADIOS attributes in the file");
-    arg.AddBooleanArgument(
-        "--decompose", &show_decomp,
-        "| -D Show decomposition of variables as layed out in file");
+    arg.AddBooleanArgument("--decompose", &show_decomp,
+                           "| -D Show decomposition of variables as layed out in file");
     arg.AddBooleanArgument("-D", &show_decomp, "");
-    arg.AddBooleanArgument(
-        "--version", &show_version,
-        "Print version information (add -verbose for additional"
-        " information)");
+    arg.AddBooleanArgument("--version", &show_version,
+                           "Print version information (add -verbose for additional"
+                           " information)");
     arg.AddBooleanArgument("-V", &show_version, "");
-    arg.AddArgument(
-        "--transport-parameters", argT::SPACE_ARGUMENT, &transport_params,
-        "| -T string    Specify File transport parameters manually");
+    arg.AddArgument("--transport-parameters", argT::SPACE_ARGUMENT, &transport_params,
+                    "| -T string    Specify File transport parameters manually");
     arg.AddArgument("-T", argT::SPACE_ARGUMENT, &transport_params, "");
     arg.AddArgument("--engine", argT::SPACE_ARGUMENT, &engine_name,
                     "| -E string    Specify ADIOS Engine manually");
@@ -748,28 +731,28 @@ void init_globals()
     ndimsspecified = 0;
 }
 
-#define PRINT_DIMS_INT(str, v, n, loopvar)                                     \
-    printf("%s = { ", str);                                                    \
-    for (loopvar = 0; loopvar < n; loopvar++)                                  \
-        printf("%d ", v[loopvar]);                                             \
+#define PRINT_DIMS_INT(str, v, n, loopvar)                                                         \
+    printf("%s = { ", str);                                                                        \
+    for (loopvar = 0; loopvar < n; loopvar++)                                                      \
+        printf("%d ", v[loopvar]);                                                                 \
     printf("}")
 
-#define PRINT_DIMS_UINT64(str, v, n, loopvar)                                  \
-    printf("%s = { ", str);                                                    \
-    for (loopvar = 0; loopvar < n; loopvar++)                                  \
-        printf("%" PRIu64 " ", v[loopvar]);                                    \
+#define PRINT_DIMS_UINT64(str, v, n, loopvar)                                                      \
+    printf("%s = { ", str);                                                                        \
+    for (loopvar = 0; loopvar < n; loopvar++)                                                      \
+        printf("%" PRIu64 " ", v[loopvar]);                                                        \
     printf("}")
 
-#define PRINT_DIMS_INT64(str, v, n, loopvar)                                   \
-    printf("%s = { ", str);                                                    \
-    for (loopvar = 0; loopvar < n; loopvar++)                                  \
-        printf("%" PRId64 " ", v[loopvar]);                                    \
+#define PRINT_DIMS_INT64(str, v, n, loopvar)                                                       \
+    printf("%s = { ", str);                                                                        \
+    for (loopvar = 0; loopvar < n; loopvar++)                                                      \
+        printf("%" PRId64 " ", v[loopvar]);                                                        \
     printf("}")
 
-#define PRINT_DIMS_SIZET(str, v, n, loopvar)                                   \
-    printf("%s = { ", str);                                                    \
-    for (loopvar = 0; loopvar < n; loopvar++)                                  \
-        printf("%zu ", v[loopvar]);                                            \
+#define PRINT_DIMS_SIZET(str, v, n, loopvar)                                                       \
+    printf("%s = { ", str);                                                                        \
+    for (loopvar = 0; loopvar < n; loopvar++)                                                      \
+        printf("%zu ", v[loopvar]);                                                                \
     printf("}")
 
 void printSettings(void)
@@ -855,14 +838,12 @@ static inline int ndigits(size_t n)
 }
 
 template <class T>
-int printAttributeValue(core::Engine *fp, core::IO *io,
-                        core::Attribute<T> *attribute)
+int printAttributeValue(core::Engine *fp, core::IO *io, core::Attribute<T> *attribute)
 {
     DataType adiosvartype = attribute->m_Type;
     if (attribute->m_IsSingleValue)
     {
-        print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype,
-                   true);
+        print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype, true);
     }
     else
     {
@@ -870,8 +851,7 @@ int printAttributeValue(core::Engine *fp, core::IO *io,
         size_t nelems = attribute->m_DataArray.size();
         for (size_t j = 0; j < nelems; j++)
         {
-            print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype,
-                       true);
+            print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype, true);
             if (j < nelems - 1)
             {
                 fprintf(outf, ", ");
@@ -883,8 +863,7 @@ int printAttributeValue(core::Engine *fp, core::IO *io,
 }
 
 template <>
-int printAttributeValue(core::Engine *fp, core::IO *io,
-                        core::Attribute<std::string> *attribute)
+int printAttributeValue(core::Engine *fp, core::IO *io, core::Attribute<std::string> *attribute)
 {
     DataType adiosvartype = attribute->m_Type;
     bool xmlprint = helper::EndsWith(attribute->m_Name, "xml", false);
@@ -894,14 +873,12 @@ int printAttributeValue(core::Engine *fp, core::IO *io,
     {
         if (xmlprint)
         {
-            printDataAnyway =
-                print_data_xml(attribute->m_DataSingleValue.data(),
-                               attribute->m_DataSingleValue.length());
+            printDataAnyway = print_data_xml(attribute->m_DataSingleValue.data(),
+                                             attribute->m_DataSingleValue.length());
         }
         if (printDataAnyway)
         {
-            print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype,
-                       true);
+            print_data((void *)&attribute->m_DataSingleValue, 0, adiosvartype, true);
         }
     }
     else
@@ -912,14 +889,12 @@ int printAttributeValue(core::Engine *fp, core::IO *io,
         {
             if (xmlprint)
             {
-                printDataAnyway =
-                    print_data_xml(attribute->m_DataArray[j].data(),
-                                   attribute->m_DataArray[j].length());
+                printDataAnyway = print_data_xml(attribute->m_DataArray[j].data(),
+                                                 attribute->m_DataArray[j].length());
             }
             if (printDataAnyway)
             {
-                print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype,
-                           true);
+                print_data((void *)&attribute->m_DataArray[j], 0, adiosvartype, true);
             }
             if (j < nelems - 1)
             {
@@ -1008,14 +983,13 @@ int doList_vars(core::Engine *fp, core::IO *io)
                     {
                         // not supported
                     }
-#define declare_template_instantiation(T)                                      \
-    else if (entry.typeName == helper::GetDataType<T>())                       \
-    {                                                                          \
-        core::Attribute<T> *a = static_cast<core::Attribute<T> *>(entry.attr); \
-        retval = printAttributeValue(fp, io, a);                               \
+#define declare_template_instantiation(T)                                                          \
+    else if (entry.typeName == helper::GetDataType<T>())                                           \
+    {                                                                                              \
+        core::Attribute<T> *a = static_cast<core::Attribute<T> *>(entry.attr);                     \
+        retval = printAttributeValue(fp, io, a);                                                   \
     }
-                    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(
-                        declare_template_instantiation)
+                    ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
                     fprintf(outf, "\n");
                     matches = false; // already printed
@@ -1031,11 +1005,11 @@ int doList_vars(core::Engine *fp, core::IO *io)
                 {
                     // not supported
                 }
-#define declare_template_instantiation(T)                                      \
-    else if (entry.typeName == helper::GetDataType<T>())                       \
-    {                                                                          \
-        core::Variable<T> *v = static_cast<core::Variable<T> *>(entry.var);    \
-        retval = printVariableInfo(fp, io, v);                                 \
+#define declare_template_instantiation(T)                                                          \
+    else if (entry.typeName == helper::GetDataType<T>())                                           \
+    {                                                                                              \
+        core::Variable<T> *v = static_cast<core::Variable<T> *>(entry.var);                        \
+        retval = printVariableInfo(fp, io, v);                                                     \
     }
                 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -1051,8 +1025,7 @@ int doList_vars(core::Engine *fp, core::IO *io)
 }
 
 template <class T>
-int printVariableInfo(core::Engine *fp, core::IO *io,
-                      core::Variable<T> *variable)
+int printVariableInfo(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     size_t nsteps = variable->GetAvailableStepsCount();
     if (timestep)
@@ -1076,29 +1049,22 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
         if (variable->m_ShapeID == ShapeID::GlobalArray)
         {
             Dims d = get_global_array_signature(fp, io, variable);
-            fprintf(outf, "{%s",
-                    d[0] > 0 ? std::to_string(d[0]).c_str() : "__");
+            fprintf(outf, "{%s", d[0] > 0 ? std::to_string(d[0]).c_str() : "__");
             for (size_t j = 1; j < variable->m_Shape.size(); j++)
             {
-                fprintf(outf, ", %s",
-                        d[j] > 0 ? std::to_string(d[j]).c_str() : "__");
+                fprintf(outf, ", %s", d[j] > 0 ? std::to_string(d[j]).c_str() : "__");
             }
             fprintf(outf, "}");
         }
         else if (variable->m_ShapeID == ShapeID::LocalArray)
         {
-            std::pair<size_t, Dims> signo =
-                get_local_array_signature(fp, io, variable);
+            std::pair<size_t, Dims> signo = get_local_array_signature(fp, io, variable);
             Dims &d = signo.second;
-            fprintf(outf, "[%s]*",
-                    signo.first > 0 ? std::to_string(signo.first).c_str()
-                                    : "__");
-            fprintf(outf, "{%s",
-                    d[0] > 0 ? std::to_string(d[0]).c_str() : "__");
+            fprintf(outf, "[%s]*", signo.first > 0 ? std::to_string(signo.first).c_str() : "__");
+            fprintf(outf, "{%s", d[0] > 0 ? std::to_string(d[0]).c_str() : "__");
             for (size_t j = 1; j < variable->m_Count.size(); j++)
             {
-                fprintf(outf, ", %s",
-                        d[j] > 0 ? std::to_string(d[j]).c_str() : "__");
+                fprintf(outf, ", %s", d[j] > 0 ? std::to_string(d[j]).c_str() : "__");
             }
             fprintf(outf, "}");
         }
@@ -1285,36 +1251,36 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
     return retval;
 }
 
-#define PRINT_ARRAY(str, ndim, dims, loopvar, format)                          \
-    fprintf(outf, "%s", str);                                                  \
-    if (ndim > 0)                                                              \
-    {                                                                          \
-        fprintf(outf, "{%" #format, dims[0]);                                  \
-        for (loopvar = 1; loopvar < ndim; loopvar++)                           \
-        {                                                                      \
-            fprintf(outf, ", %" #format, dims[loopvar]);                       \
-        }                                                                      \
-        fprintf(outf, "}\n");                                                  \
-    }                                                                          \
-    else                                                                       \
-    {                                                                          \
-        fprintf(outf, "empty\n");                                              \
+#define PRINT_ARRAY(str, ndim, dims, loopvar, format)                                              \
+    fprintf(outf, "%s", str);                                                                      \
+    if (ndim > 0)                                                                                  \
+    {                                                                                              \
+        fprintf(outf, "{%" #format, dims[0]);                                                      \
+        for (loopvar = 1; loopvar < ndim; loopvar++)                                               \
+        {                                                                                          \
+            fprintf(outf, ", %" #format, dims[loopvar]);                                           \
+        }                                                                                          \
+        fprintf(outf, "}\n");                                                                      \
+    }                                                                                              \
+    else                                                                                           \
+    {                                                                                              \
+        fprintf(outf, "empty\n");                                                                  \
     }
 
-#define PRINT_ARRAY64(str, ndim, dims, loopvar)                                \
-    fprintf(outf, "%s", str);                                                  \
-    if (ndim > 0)                                                              \
-    {                                                                          \
-        fprintf(outf, "{%" PRIu64, dims[0]);                                   \
-        for (loopvar = 1; loopvar < ndim; loopvar++)                           \
-        {                                                                      \
-            fprintf(outf, ", %" PRIu64, dims[loopvar]);                        \
-        }                                                                      \
-        fprintf(outf, "}\n");                                                  \
-    }                                                                          \
-    else                                                                       \
-    {                                                                          \
-        fprintf(outf, "empty\n");                                              \
+#define PRINT_ARRAY64(str, ndim, dims, loopvar)                                                    \
+    fprintf(outf, "%s", str);                                                                      \
+    if (ndim > 0)                                                                                  \
+    {                                                                                              \
+        fprintf(outf, "{%" PRIu64, dims[0]);                                                       \
+        for (loopvar = 1; loopvar < ndim; loopvar++)                                               \
+        {                                                                                          \
+            fprintf(outf, ", %" PRIu64, dims[loopvar]);                                            \
+        }                                                                                          \
+        fprintf(outf, "}\n");                                                                      \
+    }                                                                                              \
+    else                                                                                           \
+    {                                                                                              \
+        fprintf(outf, "empty\n");                                                                  \
     }
 
 void printMeshes(core::Engine *fp)
@@ -1534,18 +1500,16 @@ int doList(const char *path)
         printf("\nADIOS Open: read header info from %s\n", path);
 
     std::string tpl = helper::LowerCase(transport_params);
-    bool remoteFile = (tpl.find("awssdk") != std::string::npos) ||
-                      (tpl.find("daos") != std::string::npos);
+    bool remoteFile =
+        (tpl.find("awssdk") != std::string::npos) || (tpl.find("daos") != std::string::npos);
     if (remoteFile)
     {
         if (engine_name.empty())
         {
-            fprintf(
-                stderr,
-                "\nError: For remote file access you must specify the engine "
-                "explicitly with -E parameter, e.g. -E bp5 or -E bp4 or -E "
-                "bp3.\nVirtual engines like BPFile or FileStream do not know "
-                "which engine to use.\n");
+            fprintf(stderr, "\nError: For remote file access you must specify the engine "
+                            "explicitly with -E parameter, e.g. -E bp5 or -E bp4 or -E "
+                            "bp3.\nVirtual engines like BPFile or FileStream do not know "
+                            "which engine to use.\n");
             return 8;
         }
     }
@@ -1620,8 +1584,7 @@ int doList(const char *path)
         }
         catch (std::exception &e)
         {
-            printf("Failed to open with %s engine: %s\n", engineName.c_str(),
-                   e.what());
+            printf("Failed to open with %s engine: %s\n", engineName.c_str(), e.what());
         }
         if (fp != nullptr)
             break;
@@ -1664,22 +1627,19 @@ int doList(const char *path)
         {
             while (true)
             {
-                adios2::StepStatus status =
-                    fp->BeginStep(adios2::StepMode::Read);
+                adios2::StepStatus status = fp->BeginStep(adios2::StepMode::Read);
                 if (status == adios2::StepStatus::EndOfStream)
                 {
                     break;
                 }
                 else if (status == adios2::StepStatus::NotReady)
                 {
-                    std::this_thread::sleep_for(
-                        std::chrono::milliseconds(1000));
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
                     continue;
                 }
                 else if (status == adios2::StepStatus::OtherError)
                 {
-                    fprintf(stderr,
-                            "\nError: Cannot read more steps due to errors\n");
+                    fprintf(stderr, "\nError: Cannot read more steps due to errors\n");
                     break;
                 }
                 fprintf(stdout, "Step %zu:\n", fp->CurrentStep());
@@ -1694,9 +1654,8 @@ int doList(const char *path)
 
         if (nmasks > 0 && nEntriesMatched == 0)
         {
-            fprintf(stderr,
-                    "\nError: None of the variables/attributes matched any "
-                    "name/regexp you provided\n");
+            fprintf(stderr, "\nError: None of the variables/attributes matched any "
+                            "name/regexp you provided\n");
             return 4;
         }
         fp->Close();
@@ -1788,8 +1747,7 @@ int cmpstringp(const void *p1, const void *p2)
   otherwise just return listV.
   If sortnames=true, quicksort the result list.
  */
-void mergeLists(int nV, char **listV, int nA, char **listA, char **mlist,
-                bool *isVar)
+void mergeLists(int nV, char **listV, int nA, char **listA, char **mlist, bool *isVar)
 {
     int v, a, idx;
     if (sortnames && listattrs && !attrsonly)
@@ -1916,16 +1874,15 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     // size_t elemsize;                   // size in bytes of one element
     uint64_t stepStart, stepCount;
     std::vector<T> dataV;
-    uint64_t sum;         // working var to sum up things
-    uint64_t maxreadn;    // max number of elements to read once up to a limit
-                          // (10MB of data)
-    uint64_t actualreadn; // our decision how much to read at once
+    uint64_t sum;             // working var to sum up things
+    uint64_t maxreadn;        // max number of elements to read once up to a limit
+                              // (10MB of data)
+    uint64_t actualreadn;     // our decision how much to read at once
     uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
     int ndigits_dims[32];     // # of digits (to print) of each dimension
 
     const size_t elemsize = variable->m_ElementSize;
-    const int nsteps =
-        (timestep ? 1 : static_cast<int>(variable->GetAvailableStepsCount()));
+    const int nsteps = (timestep ? 1 : static_cast<int>(variable->GetAvailableStepsCount()));
     const int ndim = static_cast<int>(variable->m_Shape.size());
     // create the counter arrays with the appropriate lengths
     // transfer start and count arrays to format dependent arrays
@@ -1949,13 +1906,12 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             stepCount = icount[0];
 
         if (verbose > 2)
-            printf("    j=0, stepStart=%" PRIu64 " stepCount=%" PRIu64 "\n",
-                   stepStart, stepCount);
+            printf("    j=0, stepStart=%" PRIu64 " stepCount=%" PRIu64 "\n", stepStart, stepCount);
 
         if (stepStart + stepCount > static_cast<uint64_t>(nsteps))
         {
-            printf("ERROR: The sum of start step (%" PRIu64
-                   ") and step count (%" PRIu64 ") is larger "
+            printf("ERROR: The sum of start step (%" PRIu64 ") and step count (%" PRIu64
+                   ") is larger "
                    "than the number of steps available (%d)\n",
                    stepStart, stepCount, nsteps);
             return -1;
@@ -1965,8 +1921,8 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         count_t[0] = stepCount;
         nelems *= stepCount;
         if (verbose > 1)
-            printf("    s[0]=%" PRIu64 ", c[0]=%" PRIu64 ", n=%" PRIu64 "\n",
-                   start_t[0], count_t[0], nelems);
+            printf("    s[0]=%" PRIu64 ", c[0]=%" PRIu64 ", n=%" PRIu64 "\n", start_t[0],
+                   count_t[0], nelems);
         tidx = 1;
     }
 
@@ -2048,22 +2004,19 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             ct = icount[j + tidx];
 
         if (verbose > 2)
-            printf("    j=%d, st=%" PRIu64 " ct=%" PRIu64 "\n", j + tidx, st,
-                   ct);
+            printf("    j=%d, st=%" PRIu64 " ct=%" PRIu64 "\n", j + tidx, st, ct);
 
         start_t[j + tidx] = st;
         count_t[j + tidx] = ct;
         nelems *= ct;
         if (verbose > 1)
-            printf("    s[%d]=%" PRIu64 ", c[%d]=%" PRIu64 ", n=%" PRIu64 "\n",
-                   j + tidx, start_t[j + tidx], j + tidx, count_t[j + tidx],
-                   nelems);
+            printf("    s[%d]=%" PRIu64 ", c[%d]=%" PRIu64 ", n=%" PRIu64 "\n", j + tidx,
+                   start_t[j + tidx], j + tidx, count_t[j + tidx], nelems);
     }
 
     if (verbose > 1)
     {
-        printf(" total size of data to read = %" PRIu64 "\n",
-               nelems * elemsize);
+        printf(" total size of data to read = %" PRIu64 "\n", nelems * elemsize);
     }
 
     print_slice_info(variable, (tidx == 1), start_t, count_t, shape);
@@ -2115,8 +2068,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         actualreadn = actualreadn * readn[i];
     }
     if (verbose > 1)
-        printf("    read %" PRIu64 " elements at once, %" PRIu64
-               " in total (nelems=%" PRIu64 ")\n",
+        printf("    read %" PRIu64 " elements at once, %" PRIu64 " in total (nelems=%" PRIu64 ")\n",
                actualreadn, sum, nelems);
 
     // init s and c
@@ -2126,8 +2078,8 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         s[j] = start_t[j];
         c[j] = readn[j];
 
-        ndigits_dims[j] = ndigits(start_t[j] + count_t[j] -
-                                  1); // -1: dim=100 results in 2 digits (0..99)
+        ndigits_dims[j] =
+            ndigits(start_t[j] + count_t[j] - 1); // -1: dim=100 results in 2 digits (0..99)
     }
 
     // read until read all 'nelems' elements
@@ -2149,14 +2101,12 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         }
 
         // read a slice finally
-        const Dims startv =
-            variable->m_ShapeID == ShapeID::GlobalArray
-                ? helper::Uint64ArrayToSizetVector(tdims - tidx, s + tidx)
-                : Dims();
-        const Dims countv =
-            variable->m_ShapeID == ShapeID::GlobalArray
-                ? helper::Uint64ArrayToSizetVector(tdims - tidx, c + tidx)
-                : Dims();
+        const Dims startv = variable->m_ShapeID == ShapeID::GlobalArray
+                                ? helper::Uint64ArrayToSizetVector(tdims - tidx, s + tidx)
+                                : Dims();
+        const Dims countv = variable->m_ShapeID == ShapeID::GlobalArray
+                                ? helper::Uint64ArrayToSizetVector(tdims - tidx, c + tidx)
+                                : Dims();
 
         if (verbose > 2)
         {
@@ -2175,8 +2125,8 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         {
             if (verbose > 2)
             {
-                printf("set Step selection: from relative step %" PRIu64
-                       " read %" PRIu64 " steps\n",
+                printf("set Step selection: from relative step %" PRIu64 " read %" PRIu64
+                       " steps\n",
                        s[0], c[0]);
             }
             variable->SetStepSelection({s[0], c[0]});
@@ -2186,8 +2136,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         fp->Get(*variable, dataV, adios2::Mode::Sync);
 
         // print slice
-        print_dataset(dataV.data(), variable->m_Type, s, c, tdims,
-                      ndigits_dims);
+        print_dataset(dataV.data(), variable->m_Type, s, c, tdims, ndigits_dims);
 
         // prepare for next read
         sum += actualreadn;
@@ -2225,8 +2174,8 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
  * Return: 0: ok, != 0 on error
  */
 template <class T>
-int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
-                 size_t step, size_t blockid, Dims Count, Dims Start)
+int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable, size_t step,
+                 size_t blockid, Dims Count, Dims Start)
 {
     int i, j;
     uint64_t start_t[MAX_DIMS],
@@ -2237,17 +2186,16 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
     int tidx;
     uint64_t st, ct;
     std::vector<T> dataV;
-    uint64_t sum;         // working var to sum up things
-    uint64_t maxreadn;    // max number of elements to read once up to a limit
-                          // (10MB of data)
-    uint64_t actualreadn; // our decision how much to read at once
+    uint64_t sum;             // working var to sum up things
+    uint64_t maxreadn;        // max number of elements to read once up to a limit
+                              // (10MB of data)
+    uint64_t actualreadn;     // our decision how much to read at once
     uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
     bool incdim;              // used in incremental reading in
     int ndigits_dims[32];     // # of digits (to print) of each dimension
 
     const size_t elemsize = variable->m_ElementSize;
-    const int nsteps =
-        (timestep ? 1 : static_cast<int>(variable->GetAvailableStepsCount()));
+    const int nsteps = (timestep ? 1 : static_cast<int>(variable->GetAvailableStepsCount()));
     const int ndim = static_cast<int>(variable->m_Count.size());
     // create the counter arrays with the appropriate lengths
     // transfer start and count arrays to format dependent arrays
@@ -2302,14 +2250,13 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
         count_t[j] = ct;
         nelems *= ct;
         if (verbose > 1)
-            printf("    s[%d]=%" PRIu64 ", c[%d]=%" PRIu64 ", n=%" PRIu64 "\n",
-                   j, start_t[j], j, count_t[j], nelems);
+            printf("    s[%d]=%" PRIu64 ", c[%d]=%" PRIu64 ", n=%" PRIu64 "\n", j, start_t[j], j,
+                   count_t[j], nelems);
     }
 
     if (verbose > 1)
     {
-        printf(" total size of data to read = %" PRIu64 "\n",
-               nelems * elemsize);
+        printf(" total size of data to read = %" PRIu64 "\n", nelems * elemsize);
     }
 
     print_slice_info(variable, false, start_t, count_t, Count);
@@ -2353,8 +2300,7 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
         actualreadn = actualreadn * readn[i];
     }
     if (verbose > 1)
-        printf("    read %" PRIu64 " elements at once, %" PRIu64
-               " in total (nelems=%" PRIu64 ")\n",
+        printf("    read %" PRIu64 " elements at once, %" PRIu64 " in total (nelems=%" PRIu64 ")\n",
                actualreadn, sum, nelems);
 
     // init s and c
@@ -2364,8 +2310,8 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
         s[j] = start_t[j];
         c[j] = readn[j];
 
-        ndigits_dims[j] = ndigits(start_t[j] + count_t[j] -
-                                  1); // -1: dim=100 results in 2 digits (0..99)
+        ndigits_dims[j] =
+            ndigits(start_t[j] + count_t[j] - 1); // -1: dim=100 results in 2 digits (0..99)
     }
 
     // read until read all 'nelems' elements
@@ -2394,9 +2340,8 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
             printf("  read %" PRIu64 " elems\n", actualreadn);
         }
         if (verbose > 1)
-            printf("    read block %zu from offset %" PRIu64 " nelems %" PRIu64
-                   ")\n",
-                   blockid, startoffset, actualreadn);
+            printf("    read block %zu from offset %" PRIu64 " nelems %" PRIu64 ")\n", blockid,
+                   startoffset, actualreadn);
 
         // read a slice finally
         Dims startv = helper::Uint64ArrayToSizetVector(ndim, s);
@@ -2437,9 +2382,7 @@ int readVarBlock(core::Engine *fp, core::IO *io, core::Variable<T> *variable,
         {
             if (verbose > 2)
             {
-                printf("set Step selection: from %" PRIu64 " read %" PRIu64
-                       " steps\n",
-                       s[0], c[0]);
+                printf("set Step selection: from %" PRIu64 " read %" PRIu64 " steps\n", s[0], c[0]);
             }
             variable->SetStepSelection({step, 1});
         }
@@ -2501,11 +2444,9 @@ bool matchesAMask(const char *name)
             if (name[0] == '/') // have to check if it matches from the
                                 // second character too
                 startpos = 1;
-            if (excode == 0 && // matches
-                (pmatch[0].rm_so == 0 ||
-                 pmatch[0].rm_so == startpos) && // from the beginning
-                static_cast<size_t>(pmatch[0].rm_eo) ==
-                    strlen(name) // to the very end of the name
+            if (excode == 0 &&                                           // matches
+                (pmatch[0].rm_so == 0 || pmatch[0].rm_so == startpos) && // from the beginning
+                static_cast<size_t>(pmatch[0].rm_eo) == strlen(name) // to the very end of the name
             )
 #else
             bool matches = std::regex_match(name, varregex[i]);
@@ -2515,8 +2456,7 @@ bool matchesAMask(const char *name)
 #endif
             {
                 if (verbose > 1)
-                    printf("Name %s matches regexp %i %s\n", name, i,
-                           varmask[i]);
+                    printf("Name %s matches regexp %i %s\n", name, i, varmask[i]);
                 return true;
             }
         }
@@ -2532,8 +2472,7 @@ bool matchesAMask(const char *name)
 #endif
             {
                 if (verbose > 1)
-                    printf("Name %s matches varmask %i %s\n", name, i,
-                           varmask[i]);
+                    printf("Name %s matches varmask %i %s\n", name, i, varmask[i]);
                 return true;
             }
         }
@@ -2551,8 +2490,8 @@ int print_start(const std::string &fname)
     {
         if ((outf = fopen(fname.c_str(), "w")) == NULL)
         {
-            fprintf(stderr, "Error at opening for writing file %s: %s\n",
-                    fname.c_str(), strerror(errno));
+            fprintf(stderr, "Error at opening for writing file %s: %s\n", fname.c_str(),
+                    strerror(errno));
             return 30;
         }
     }
@@ -2561,11 +2500,10 @@ int print_start(const std::string &fname)
 
 void print_stop() { fclose(outf); }
 
-static int nextcol =
-    0; // column index to start with (can have lines split in two calls)
+static int nextcol = 0; // column index to start with (can have lines split in two calls)
 
-void print_slice_info(core::VariableBase *variable, bool timed, uint64_t *s,
-                      uint64_t *c, Dims count)
+void print_slice_info(core::VariableBase *variable, bool timed, uint64_t *s, uint64_t *c,
+                      Dims count)
 {
     // print the slice info in indexing is on and
     // not the complete variable is read
@@ -2586,8 +2524,7 @@ void print_slice_info(core::VariableBase *variable, bool timed, uint64_t *s,
     }
     if (isaslice)
     {
-        fprintf(outf, "%c   slice (%" PRIu64 ":%" PRIu64, commentchar, s[0],
-                s[0] + c[0] - 1);
+        fprintf(outf, "%c   slice (%" PRIu64 ":%" PRIu64, commentchar, s[0], s[0] + c[0] - 1);
         for (size_t i = 1; i < tdim; i++)
         {
             fprintf(outf, ", %" PRIu64 ":%" PRIu64, s[i], s[i] + c[i] - 1);
@@ -2630,16 +2567,14 @@ int print_data_as_string(const void *data, int maxlen, DataType adiosvartype)
         fprintf(stderr,
                 "Error in bpls code: cannot use print_data_as_string() "
                 "for type \"%d\"\n",
-                static_cast<typename std::underlying_type<DataType>::type>(
-                    adiosvartype));
+                static_cast<typename std::underlying_type<DataType>::type>(adiosvartype));
         return -1;
     }
     return 0;
 }
 
-int print_data_characteristics(void *min, void *max, double *avg,
-                               double *std_dev, DataType adiosvartype,
-                               bool allowformat)
+int print_data_characteristics(void *min, void *max, double *avg, double *std_dev,
+                               DataType adiosvartype, bool allowformat)
 {
     bool f = format.size() && allowformat;
     const char *fmt = format.c_str();
@@ -2876,8 +2811,7 @@ bool print_data_xml(const char *s, const size_t length)
     return false;
 }
 
-int print_data(const void *data, int item, DataType adiosvartype,
-               bool allowformat)
+int print_data(const void *data, int item, DataType adiosvartype, bool allowformat)
 {
     bool f = format.size() && allowformat;
     const char *fmt = format.c_str();
@@ -2899,11 +2833,9 @@ int print_data(const void *data, int item, DataType adiosvartype,
         fprintf(outf, (f ? fmt : "%hhd"), ((signed char *)data)[item]);
         break;
 
-    case DataType::String:
-    {
+    case DataType::String: {
         // fprintf(outf, (f ? fmt : "\"%s\""), ((char *)data) + item);
-        const std::string *dataStr =
-            reinterpret_cast<const std::string *>(data);
+        const std::string *dataStr = reinterpret_cast<const std::string *>(data);
         fprintf(outf, (f ? fmt : "\"%s\""), dataStr[item].c_str());
         break;
     }
@@ -2958,8 +2890,8 @@ int print_data(const void *data, int item, DataType adiosvartype,
     return 0;
 }
 
-int print_dataset(const void *data, const DataType vartype, uint64_t *s,
-                  uint64_t *c, int tdims, int *ndigits)
+int print_dataset(const void *data, const DataType vartype, uint64_t *s, uint64_t *c, int tdims,
+                  int *ndigits)
 {
     int i, item, steps;
     char idxstr[128], buf[16];
@@ -2986,12 +2918,10 @@ int print_dataset(const void *data, const DataType vartype, uint64_t *s,
         {
             if (!noindex && tdims > 0)
             {
-                snprintf(idxstr, sizeof(idxstr), "    (%*" PRIu64, ndigits[0],
-                         ids[0]);
+                snprintf(idxstr, sizeof(idxstr), "    (%*" PRIu64, ndigits[0], ids[0]);
                 for (i = 1; i < tdims; i++)
                 {
-                    snprintf(buf, sizeof(buf), ",%*" PRIu64, ndigits[i],
-                             ids[i]);
+                    snprintf(buf, sizeof(buf), ",%*" PRIu64, ndigits[i], ids[i]);
                     strcat(idxstr, buf);
                 }
                 strcat(idxstr, ")    ");
@@ -3000,8 +2930,7 @@ int print_dataset(const void *data, const DataType vartype, uint64_t *s,
 
         // print item
         fprintf(outf, "%s", idxstr);
-        if (printByteAsChar &&
-            (adiosvartype == DataType::Int8 || adiosvartype == DataType::UInt8))
+        if (printByteAsChar && (adiosvartype == DataType::Int8 || adiosvartype == DataType::UInt8))
         {
             /* special case: k-D byte array printed as (k-1)D array of
              * strings
@@ -3012,12 +2941,10 @@ int print_dataset(const void *data, const DataType vartype, uint64_t *s,
             }
             else
             {
-                print_data_as_string(
-                    (char *)data + item, c[tdims - 1],
-                    adiosvartype);        // print data of last dim as string
-                item += c[tdims - 1] - 1; // will be ++-ed once below
-                ids[tdims - 1] =
-                    s[tdims - 1] + c[tdims - 1] - 1; // will be rolled below
+                print_data_as_string((char *)data + item, c[tdims - 1],
+                                     adiosvartype); // print data of last dim as string
+                item += c[tdims - 1] - 1;           // will be ++-ed once below
+                ids[tdims - 1] = s[tdims - 1] + c[tdims - 1] - 1; // will be rolled below
             }
             nextcol = ncols - 1; // force new line, will be ++-ed once below
         }
@@ -3093,8 +3020,7 @@ size_t relative_to_absolute_step(core::Engine *fp, core::Variable<T> *variable,
 }
 
 template <class T>
-Dims get_global_array_signature(core::Engine *fp, core::IO *io,
-                                core::Variable<T> *variable)
+Dims get_global_array_signature(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     const size_t ndim = variable->m_Shape.size();
     Dims dims(ndim, 0);
@@ -3124,9 +3050,8 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
                     for (size_t k = 0; k < ndim; k++)
                     {
                         size_t n =
-                            (minBlocks->WasLocalValue
-                                 ? reinterpret_cast<size_t>(minBlocks->Shape)
-                                 : minBlocks->Shape[k]);
+                            (minBlocks->WasLocalValue ? reinterpret_cast<size_t>(minBlocks->Shape)
+                                                      : minBlocks->Shape[k]);
                         if (firstStep)
                         {
                             dims[k] = n;
@@ -3176,8 +3101,7 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io,
 }
 
 template <class T>
-std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
-                                                  core::IO *io,
+std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp, core::IO *io,
                                                   core::Variable<T> *variable)
 {
     const size_t ndim = variable->m_Count.size();
@@ -3247,8 +3171,7 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
         {
             dims.resize(minBlocksInfo->Dims);
             size_t RelStep = 0;
-            for (RelStep = 0; RelStep < variable->m_AvailableStepsCount;
-                 RelStep++)
+            for (RelStep = 0; RelStep < variable->m_AvailableStepsCount; RelStep++)
             {
                 if (RelStep > 0)
                 {
@@ -3290,13 +3213,12 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
         }
         else
         {
-            std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
-                allblocks = fp->AllStepsBlocksInfo(*variable);
+            std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>> allblocks =
+                fp->AllStepsBlocksInfo(*variable);
 
             for (auto &blockpair : allblocks)
             {
-                std::vector<typename adios2::core::Variable<T>::BPInfo>
-                    &blocks = blockpair.second;
+                std::vector<typename adios2::core::Variable<T>::BPInfo> &blocks = blockpair.second;
                 const size_t blocksSize = blocks.size();
                 if (firstStep)
                 {
@@ -3330,8 +3252,7 @@ std::pair<size_t, Dims> get_local_array_signature(core::Engine *fp,
 }
 
 static int ndigits_dims[32] = {
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
-    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
+    8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8, 8,
 };
 template <class T>
 void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
@@ -3340,8 +3261,8 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     DataType adiosvartype = variable->m_Type;
 
     MinVarInfo *minBlocksInfo = nullptr;
-    minBlocksInfo = fp->MinBlocksInfo(
-        *variable, variable->m_AvailableStepsCount - 1 /* relative step 0 */);
+    minBlocksInfo =
+        fp->MinBlocksInfo(*variable, variable->m_AvailableStepsCount - 1 /* relative step 0 */);
 
     // first step
     if (minBlocksInfo)
@@ -3352,13 +3273,12 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         if (variable->m_ShapeID == ShapeID::GlobalValue ||
             variable->m_ShapeID == ShapeID::LocalValue)
         {
-            for (size_t RelStep = 0; RelStep < variable->m_AvailableStepsCount;
-                 RelStep++)
+            for (size_t RelStep = 0; RelStep < variable->m_AvailableStepsCount; RelStep++)
             {
                 minBlocksInfo = fp->MinBlocksInfo(*variable, RelStep);
                 auto blocks = minBlocksInfo->BlocksInfo;
-                fprintf(outf, "%c       step %*zu: ", commentchar,
-                        ndigits_nsteps, minBlocksInfo->Step);
+                fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
+                        minBlocksInfo->Step);
                 if (blocks.size() == 1)
                 {
                     fprintf(outf, " = ");
@@ -3397,8 +3317,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         else
         {
             // arrays
-            for (size_t RelStep = 0; RelStep < variable->m_AvailableStepsCount;
-                 RelStep++)
+            for (size_t RelStep = 0; RelStep < variable->m_AvailableStepsCount; RelStep++)
             {
                 minBlocksInfo = fp->MinBlocksInfo(*variable, RelStep);
                 auto blocks = minBlocksInfo->BlocksInfo;
@@ -3419,37 +3338,33 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 
                 size_t stepAbsolute = minBlocksInfo->Step;
 
-                fprintf(outf, "%c       step %*zu: ", commentchar,
-                        ndigits_nsteps, stepAbsolute);
+                fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps, stepAbsolute);
                 fprintf(outf, "\n");
                 const size_t blocksSize = blocks.size();
                 ndigits_nblocks = ndigits(blocksSize - 1);
 
                 for (size_t j = 0; j < blocksSize; j++)
                 {
-                    fprintf(outf, "%c         block %*zu: [", commentchar,
-                            ndigits_nblocks, j);
+                    fprintf(outf, "%c         block %*zu: [", commentchar, ndigits_nblocks, j);
 
                     // just in case ndim for a block changes in LocalArrays:
                     ndim = variable->m_Count.size();
 
                     for (size_t k = 0; k < ndim; k++)
                     {
-                        size_t c =
-                            (minBlocksInfo->WasLocalValue
-                                 ? reinterpret_cast<size_t>(blocks[j].Count)
-                                 : blocks[j].Count[k]);
+                        size_t c = (minBlocksInfo->WasLocalValue
+                                        ? reinterpret_cast<size_t>(blocks[j].Count)
+                                        : blocks[j].Count[k]);
 
                         if (c)
                         {
                             if (variable->m_ShapeID == ShapeID::GlobalArray)
                             {
                                 size_t s = (minBlocksInfo->WasLocalValue
-                                                ? reinterpret_cast<size_t>(
-                                                      blocks[j].Start)
+                                                ? reinterpret_cast<size_t>(blocks[j].Start)
                                                 : blocks[j].Start[k]);
-                                fprintf(outf, "%*zu:%*zu", ndigits_dims[k], s,
-                                        ndigits_dims[k], s + c - 1);
+                                fprintf(outf, "%*zu:%*zu", ndigits_dims[k], s, ndigits_dims[k],
+                                        s + c - 1);
                             }
                             else
                             {
@@ -3459,8 +3374,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                         }
                         else
                         {
-                            fprintf(outf, "%-*s", 2 * ndigits_dims[k] + 1,
-                                    "null");
+                            fprintf(outf, "%-*s", 2 * ndigits_dims[k] + 1, "null");
                         }
                         if (k < ndim - 1)
                             fprintf(outf, ", ");
@@ -3473,12 +3387,10 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                         if (true /* TODO: variable->has_minmax */)
                         {
                             fprintf(outf, " = ");
-                            print_data(&blocks[j].MinMax.MinUnion, 0,
-                                       adiosvartype, false);
+                            print_data(&blocks[j].MinMax.MinUnion, 0, adiosvartype, false);
 
                             fprintf(outf, " / ");
-                            print_data(&blocks[j].MinMax.MaxUnion, 0,
-                                       adiosvartype, false);
+                            print_data(&blocks[j].MinMax.MaxUnion, 0, adiosvartype, false);
                         }
                         else
                         {
@@ -3498,10 +3410,8 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                             }
                             else
                             {
-                                c = Dims(blocks[j].Count,
-                                         blocks[j].Count + ndim);
-                                s = Dims(blocks[j].Start,
-                                         blocks[j].Start + ndim);
+                                c = Dims(blocks[j].Count, blocks[j].Count + ndim);
+                                s = Dims(blocks[j].Start, blocks[j].Start + ndim);
                             }
                         }
                         else
@@ -3517,25 +3427,22 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         return;
     }
 
-    std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>>
-        allblocks = fp->AllStepsBlocksInfo(*variable);
+    std::map<size_t, std::vector<typename core::Variable<T>::BPInfo>> allblocks =
+        fp->AllStepsBlocksInfo(*variable);
     if (allblocks.empty())
     {
         return;
     }
     size_t laststep = allblocks.rbegin()->first;
     int ndigits_nsteps = ndigits(laststep);
-    if (variable->m_ShapeID == ShapeID::GlobalValue ||
-        variable->m_ShapeID == ShapeID::LocalValue)
+    if (variable->m_ShapeID == ShapeID::GlobalValue || variable->m_ShapeID == ShapeID::LocalValue)
     {
         // scalars
         for (auto &blockpair : allblocks)
         {
             size_t step = blockpair.first;
-            std::vector<typename adios2::core::Variable<T>::BPInfo> &blocks =
-                blockpair.second;
-            fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
-                    step);
+            std::vector<typename adios2::core::Variable<T>::BPInfo> &blocks = blockpair.second;
+            fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps, step);
             if (blocks.size() == 1)
             {
                 fprintf(outf, " = ");
@@ -3594,18 +3501,15 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         for (auto &blockpair : allblocks)
         {
             size_t stepAbsolute = blockpair.first;
-            std::vector<typename adios2::core::Variable<T>::BPInfo> &blocks =
-                blockpair.second;
+            std::vector<typename adios2::core::Variable<T>::BPInfo> &blocks = blockpair.second;
             const size_t blocksSize = blocks.size();
-            fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
-                    stepAbsolute);
+            fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps, stepAbsolute);
             fprintf(outf, "\n");
             ndigits_nblocks = ndigits(blocksSize - 1);
 
             for (size_t j = 0; j < blocksSize; j++)
             {
-                fprintf(outf, "%c         block %*zu: [", commentchar,
-                        ndigits_nblocks, j);
+                fprintf(outf, "%c         block %*zu: [", commentchar, ndigits_nblocks, j);
 
                 // just in case ndim for a block changes in LocalArrays:
                 ndim = variable->m_Count.size();
@@ -3616,16 +3520,13 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     {
                         if (variable->m_ShapeID == ShapeID::GlobalArray)
                         {
-                            fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
-                                    blocks[j].Start[k], ndigits_dims[k],
-                                    blocks[j].Start[k] + blocks[j].Count[k] -
-                                        1);
+                            fprintf(outf, "%*zu:%*zu", ndigits_dims[k], blocks[j].Start[k],
+                                    ndigits_dims[k], blocks[j].Start[k] + blocks[j].Count[k] - 1);
                         }
                         else
                         {
                             // blockStart is empty vector for LocalArrays
-                            fprintf(outf, "0:%*zu", ndigits_dims[k],
-                                    blocks[j].Count[k] - 1);
+                            fprintf(outf, "0:%*zu", ndigits_dims[k], blocks[j].Count[k] - 1);
                         }
                     }
                     else
@@ -3656,8 +3557,8 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                 fprintf(outf, "\n");
                 if (dump)
                 {
-                    readVarBlock(fp, io, variable, stepRelative, j,
-                                 blocks[j].Count, blocks[j].Start);
+                    readVarBlock(fp, io, variable, stepRelative, j, blocks[j].Count,
+                                 blocks[j].Start);
                 }
             }
             ++stepRelative;
@@ -3666,8 +3567,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 }
 
 template <class T>
-void print_decomp_singlestep(core::Engine *fp, core::IO *io,
-                             core::Variable<T> *variable)
+void print_decomp_singlestep(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 {
     /* Print block info */
     DataType adiosvartype = variable->m_Type;
@@ -3692,8 +3592,7 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
     }
     const int ndigits_nblocks = ndigits(blocksSize - 1);
 
-    if (variable->m_ShapeID == ShapeID::GlobalValue ||
-        variable->m_ShapeID == ShapeID::LocalValue)
+    if (variable->m_ShapeID == ShapeID::GlobalValue || variable->m_ShapeID == ShapeID::LocalValue)
     {
         // scalars
         if (dump)
@@ -3713,8 +3612,7 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
                 if (!minBlocks)
                     print_data(&coreBlocks[j].Value, 0, adiosvartype, true);
                 else
-                    print_data(&minBlocks->BlocksInfo[j].BufferP, 0,
-                               adiosvartype, true);
+                    print_data(&minBlocks->BlocksInfo[j].BufferP, 0, adiosvartype, true);
                 ++col;
                 if (j < blocksSize - 1)
                 {
@@ -3758,8 +3656,7 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
 
         for (size_t j = 0; j < blocksSize; j++)
         {
-            fprintf(outf, "%c         block %*zu: [", commentchar,
-                    ndigits_nblocks, j);
+            fprintf(outf, "%c         block %*zu: [", commentchar, ndigits_nblocks, j);
 
             // just in case ndim for a block changes in LocalArrays:
             ndim = variable->m_Count.size();
@@ -3772,16 +3669,14 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
                     {
                         if (variable->m_ShapeID == ShapeID::GlobalArray)
                         {
-                            fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
-                                    coreBlocks[j].Start[k], ndigits_dims[k],
-                                    coreBlocks[j].Start[k] +
-                                        coreBlocks[j].Count[k] - 1);
+                            fprintf(outf, "%*zu:%*zu", ndigits_dims[k], coreBlocks[j].Start[k],
+                                    ndigits_dims[k],
+                                    coreBlocks[j].Start[k] + coreBlocks[j].Count[k] - 1);
                         }
                         else
                         {
                             // blockStart is empty vector for LocalArrays
-                            fprintf(outf, "0:%*zu", ndigits_dims[k],
-                                    coreBlocks[j].Count[k] - 1);
+                            fprintf(outf, "0:%*zu", ndigits_dims[k], coreBlocks[j].Count[k] - 1);
                         }
                     }
                     else
@@ -3796,8 +3691,7 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
                         if (variable->m_ShapeID == ShapeID::GlobalArray)
                         {
                             fprintf(outf, "%*zu:%*zu", ndigits_dims[k],
-                                    minBlocks->BlocksInfo[j].Start[k],
-                                    ndigits_dims[k],
+                                    minBlocks->BlocksInfo[j].Start[k], ndigits_dims[k],
                                     minBlocks->BlocksInfo[j].Start[k] +
                                         minBlocks->BlocksInfo[j].Count[k] - 1);
                         }
@@ -3834,12 +3728,12 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
                     else
                     {
                         fprintf(outf, " = ");
-                        print_data(&minBlocks->BlocksInfo[j].MinMax.MinUnion, 0,
-                                   adiosvartype, false);
+                        print_data(&minBlocks->BlocksInfo[j].MinMax.MinUnion, 0, adiosvartype,
+                                   false);
 
                         fprintf(outf, " / ");
-                        print_data(&minBlocks->BlocksInfo[j].MinMax.MaxUnion, 0,
-                                   adiosvartype, false);
+                        print_data(&minBlocks->BlocksInfo[j].MinMax.MaxUnion, 0, adiosvartype,
+                                   false);
                     }
                 }
                 else
@@ -3852,8 +3746,8 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io,
             {
                 if (!minBlocks)
                 {
-                    readVarBlock(fp, io, variable, stepRelative, j,
-                                 coreBlocks[j].Count, coreBlocks[j].Start);
+                    readVarBlock(fp, io, variable, stepRelative, j, coreBlocks[j].Count,
+                                 coreBlocks[j].Start);
                 }
                 else
                 {
@@ -3947,8 +3841,7 @@ int compile_regexp_masks(void)
             fprintf(stderr,
                     "Error: \"%s\" is an invalid extended regular "
                     "expression. C++ regex error code: %d\n",
-                    varmask[i],
-                    e.code() == std::regex_constants::error_badrepeat);
+                    varmask[i], e.code() == std::regex_constants::error_badrepeat);
             return 2;
         }
     }

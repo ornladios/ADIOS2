@@ -31,9 +31,8 @@ std::string FileToString(const std::string &fileName, const std::string hint)
 
     if (!fileStream)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Helper", "adiosString", "FileToString",
-            "file " + fileName + " not found, " + hint);
+        helper::Throw<std::ios_base::failure>("Helper", "adiosString", "FileToString",
+                                              "file " + fileName + " not found, " + hint);
     }
 
     std::ostringstream fileSS;
@@ -42,25 +41,23 @@ std::string FileToString(const std::string &fileName, const std::string hint)
     return fileSS.str();
 }
 
-Params BuildParametersMap(const std::vector<std::string> &parameters,
-                          const char delimKeyValue)
+Params BuildParametersMap(const std::vector<std::string> &parameters, const char delimKeyValue)
 {
     auto lf_Trim = [](std::string &input) {
         input.erase(0, input.find_first_not_of(" \n\r\t")); // prefixing spaces
         input.erase(input.find_last_not_of(" \n\r\t") + 1); // suffixing spaces
     };
 
-    auto lf_GetFieldValue = [](const std::string parameter, std::string &field,
-                               std::string &value, const char delimKeyValue) {
+    auto lf_GetFieldValue = [](const std::string parameter, std::string &field, std::string &value,
+                               const char delimKeyValue) {
         auto equalPosition = parameter.find(delimKeyValue);
 
         if (equalPosition == parameter.npos)
         {
-            helper::Throw<std::invalid_argument>(
-                "Helper", "adiosString", "BuildParametersMap",
-                "wrong format for IO parameter " + parameter +
-                    ", format must be key" + delimKeyValue +
-                    "value for each entry");
+            helper::Throw<std::invalid_argument>("Helper", "adiosString", "BuildParametersMap",
+                                                 "wrong format for IO parameter " + parameter +
+                                                     ", format must be key" + delimKeyValue +
+                                                     "value for each entry");
         }
 
         field = parameter.substr(0, equalPosition);
@@ -79,16 +76,16 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
 
         if (value.length() == 0)
         {
-            helper::Throw<std::invalid_argument>(
-                "Helper", "adiosString", "BuildParametersMap",
-                "empty value in IO parameter " + parameter +
-                    ", format must be key" + delimKeyValue + "value");
+            helper::Throw<std::invalid_argument>("Helper", "adiosString", "BuildParametersMap",
+                                                 "empty value in IO parameter " + parameter +
+                                                     ", format must be key" + delimKeyValue +
+                                                     "value");
         }
         if (parametersOutput.count(field) == 1)
         {
-            helper::Throw<std::invalid_argument>(
-                "Helper", "adiosString", "BuildParametersMap",
-                "parameter " + field + " already exists, must be unique");
+            helper::Throw<std::invalid_argument>("Helper", "adiosString", "BuildParametersMap",
+                                                 "parameter " + field +
+                                                     " already exists, must be unique");
         }
 
         parametersOutput[field] = value;
@@ -97,8 +94,7 @@ Params BuildParametersMap(const std::vector<std::string> &parameters,
     return parametersOutput;
 }
 
-Params BuildParametersMap(const std::string &input, const char delimKeyValue,
-                          const char delimItem)
+Params BuildParametersMap(const std::string &input, const char delimKeyValue, const char delimItem)
 {
     auto lf_Trim = [](std::string &input) {
         input.erase(0, input.find_first_not_of(" \n\r\t")); // prefixing spaces
@@ -114,11 +110,10 @@ Params BuildParametersMap(const std::string &input, const char delimKeyValue,
         const size_t position = parameter.find(delimKeyValue);
         if (position == parameter.npos)
         {
-            helper::Throw<std::invalid_argument>(
-                "Helper", "adiosString", "BuildParametersMap",
-                "wrong format for IO parameter " + parameter +
-                    ", format must be key" + delimKeyValue +
-                    "value for each entry");
+            helper::Throw<std::invalid_argument>("Helper", "adiosString", "BuildParametersMap",
+                                                 "wrong format for IO parameter " + parameter +
+                                                     ", format must be key" + delimKeyValue +
+                                                     "value for each entry");
         }
 
         std::string key = parameter.substr(0, position);
@@ -127,17 +122,16 @@ Params BuildParametersMap(const std::string &input, const char delimKeyValue,
         lf_Trim(value);
         if (value.length() == 0)
         {
-            helper::Throw<std::invalid_argument>(
-                "Helper", "adiosString", "BuildParametersMap",
-                "empty value in IO parameter " + parameter +
-                    ", format must be key" + delimKeyValue + "value");
+            helper::Throw<std::invalid_argument>("Helper", "adiosString", "BuildParametersMap",
+                                                 "empty value in IO parameter " + parameter +
+                                                     ", format must be key" + delimKeyValue +
+                                                     "value");
         }
         if (parametersOutput.count(key) == 1)
         {
             helper::Throw<std::invalid_argument>(
                 "Helper", "adiosString", "BuildParametersMap",
-                "key " + key +
-                    " appears multiple times in the parameters string");
+                "key " + key + " appears multiple times in the parameters string");
         }
 
         parametersOutput[key] = value;
@@ -146,8 +140,7 @@ Params BuildParametersMap(const std::string &input, const char delimKeyValue,
     return parametersOutput;
 }
 
-std::string AddExtension(const std::string &name,
-                         const std::string extension) noexcept
+std::string AddExtension(const std::string &name, const std::string extension) noexcept
 {
     std::string result(name);
     if (name.find(extension) != name.size() - 3)
@@ -157,23 +150,20 @@ std::string AddExtension(const std::string &name,
     return result;
 }
 
-bool EndsWith(const std::string &str, const std::string &ending,
-              const bool caseSensitive)
+bool EndsWith(const std::string &str, const std::string &ending, const bool caseSensitive)
 {
     if (str.length() >= ending.length())
     {
         if (caseSensitive)
         {
-            return (!str.compare(str.length() - ending.length(),
-                                 ending.length(), ending));
+            return (!str.compare(str.length() - ending.length(), ending.length(), ending));
         }
         else
         {
             const std::string strLC = LowerCase(str);
             const std::string endLC = LowerCase(ending);
 
-            return (!strLC.compare(strLC.length() - endLC.length(),
-                                   endLC.length(), endLC));
+            return (!strLC.compare(strLC.length() - endLC.length(), endLC.length(), endLC));
         }
     }
     else
@@ -182,9 +172,8 @@ bool EndsWith(const std::string &str, const std::string &ending,
     }
 }
 
-std::vector<std::string>
-GetParametersValues(const std::string &key,
-                    const std::vector<Params> &parametersVector) noexcept
+std::vector<std::string> GetParametersValues(const std::string &key,
+                                             const std::vector<Params> &parametersVector) noexcept
 {
     std::vector<std::string> values;
     values.reserve(parametersVector.size());
@@ -203,8 +192,7 @@ GetParametersValues(const std::string &key,
     return values;
 }
 
-void SetParameterValue(const std::string key, const Params &parameters,
-                       std::string &value) noexcept
+void SetParameterValue(const std::string key, const Params &parameters, std::string &value) noexcept
 {
     auto itKey = parameters.find(key);
     if (itKey != parameters.end())
@@ -213,8 +201,8 @@ void SetParameterValue(const std::string key, const Params &parameters,
     }
 }
 
-std::string GetParameter(const std::string key, const Params &params,
-                         const bool isMandatory, const std::string hint)
+std::string GetParameter(const std::string key, const Params &params, const bool isMandatory,
+                         const std::string hint)
 {
     std::string value;
     auto itParameter = params.find(key);
@@ -222,9 +210,9 @@ std::string GetParameter(const std::string key, const Params &params,
     {
         if (isMandatory)
         {
-            helper::Throw<std::invalid_argument>(
-                "Helper", "adiosString", "GetParameter",
-                "mandatory parameter " + key + " not found, " + hint);
+            helper::Throw<std::invalid_argument>("Helper", "adiosString", "GetParameter",
+                                                 "mandatory parameter " + key + " not found, " +
+                                                     hint);
         }
     }
     else
@@ -235,8 +223,7 @@ std::string GetParameter(const std::string key, const Params &params,
 }
 
 template <>
-bool GetParameter(const Params &params, const std::string &key,
-                  std::string &value)
+bool GetParameter(const Params &params, const std::string &key, std::string &value)
 {
     auto it = params.find(key);
     if (it != params.end())
@@ -264,9 +251,9 @@ bool GetParameter(const Params &params, const std::string &key, int &value)
         }
         catch (...)
         {
-            helper::Throw<std::invalid_argument>(
-                "Helper", "adiosString", "GetParameter",
-                "Engine parameter " + key + " can only be integer numbers");
+            helper::Throw<std::invalid_argument>("Helper", "adiosString", "GetParameter",
+                                                 "Engine parameter " + key +
+                                                     " can only be integer numbers");
         }
     }
     return true;
@@ -288,9 +275,9 @@ bool GetParameter(const Params &params, const std::string &key, uint64_t &value)
         }
         catch (...)
         {
-            helper::Throw<std::invalid_argument>(
-                "Helper", "adiosString", "GetParameter",
-                "Engine parameter " + key + " can only be integer numbers");
+            helper::Throw<std::invalid_argument>("Helper", "adiosString", "GetParameter",
+                                                 "Engine parameter " + key +
+                                                     " can only be integer numbers");
         }
     }
     return true;
@@ -312,9 +299,9 @@ bool GetParameter(const Params &params, const std::string &key, float &value)
         }
         catch (...)
         {
-            helper::Throw<std::invalid_argument>(
-                "Helper", "adiosString", "GetParameter",
-                "Engine parameter " + key + " can only be float numbers");
+            helper::Throw<std::invalid_argument>("Helper", "adiosString", "GetParameter",
+                                                 "Engine parameter " + key +
+                                                     " can only be float numbers");
         }
     }
     return true;
@@ -327,8 +314,7 @@ bool GetParameter(const Params &params, const std::string &key, bool &value)
     if (it != params.end())
     {
         std::string valueStr = it->second;
-        std::transform(valueStr.begin(), valueStr.end(), valueStr.begin(),
-                       ::tolower);
+        std::transform(valueStr.begin(), valueStr.end(), valueStr.begin(), ::tolower);
         if (valueStr == "yes" || valueStr == "true")
         {
             value = true;
@@ -342,8 +328,8 @@ bool GetParameter(const Params &params, const std::string &key, bool &value)
     return false;
 }
 
-void SetParameterValueInt(const std::string key, const Params &parameters,
-                          int &value, const std::string &hint)
+void SetParameterValueInt(const std::string key, const Params &parameters, int &value,
+                          const std::string &hint)
 {
     auto itKey = parameters.find(key);
     if (itKey == parameters.end())
@@ -363,8 +349,7 @@ void SetParameterValueInt(const std::string key, const Params &parameters,
 
 std::string DimsToString(const Dims &dimensions)
 {
-    std::string dimensionsString("Dims(" + std::to_string(dimensions.size()) +
-                                 "):[");
+    std::string dimensionsString("Dims(" + std::to_string(dimensions.size()) + "):[");
 
     for (const auto dimension : dimensions)
     {
@@ -466,9 +451,8 @@ Params LowerCaseParams(const Params &params)
     return lower_case_params;
 }
 
-std::set<std::string>
-PrefixMatches(const std::string &prefix,
-              const std::set<std::string> &inputs) noexcept
+std::set<std::string> PrefixMatches(const std::string &prefix,
+                                    const std::set<std::string> &inputs) noexcept
 {
     std::set<std::string> outputs;
     auto itPrefix = inputs.lower_bound(prefix);

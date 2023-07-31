@@ -32,10 +32,9 @@ public:
     void OpenRequester(const int timeout, const size_t receiverBufferSize);
     void OpenRequester(const std::string &address, const int timeout,
                        const size_t receiverBufferSize);
-    std::shared_ptr<std::vector<char>>
-    Request(const char *request, const size_t size, const std::string &address);
-    std::shared_ptr<std::vector<char>> Request(const char *request,
-                                               const size_t size);
+    std::shared_ptr<std::vector<char>> Request(const char *request, const size_t size,
+                                               const std::string &address);
+    std::shared_ptr<std::vector<char>> Request(const char *request, const size_t size);
 
     // replier
     void OpenReplier(const std::string &address, const int timeout,

@@ -53,8 +53,7 @@ void DoWriter(adios2::IO io)
         // Generate test data for each process uniquely
         std::vector<double> data_forward;
 
-        generateSimpleForwardData(data_forward, (int)step, myStart, myCount,
-                                  (int)Nx);
+        generateSimpleForwardData(data_forward, (int)step, myStart, myCount, (int)Nx);
 
         engine.BeginStep();
 
@@ -107,8 +106,7 @@ void DoReader(adios2::IO io, int Rank)
         steps += 1;
     }
     sstReader.Close();
-    std::cout << "Reader " << Rank << " got " << steps << " steps "
-              << std::endl;
+    std::cout << "Reader " << Rank << " got " << steps << " steps " << std::endl;
     MPI_Reduce(&steps, &get_count, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
 }
 

@@ -16,45 +16,42 @@ namespace
 void KokkosDeepCopy(const char *src, char *dst, size_t byteCount)
 {
     using mem_space = Kokkos::DefaultExecutionSpace::memory_space;
-    Kokkos::View<const char *, mem_space,
-                 Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-        srcView(src, byteCount);
-    Kokkos::View<char *, Kokkos::HostSpace,
-                 Kokkos::MemoryTraits<Kokkos::Unmanaged>>
-        dstView(dst, byteCount);
+    Kokkos::View<const char *, mem_space, Kokkos::MemoryTraits<Kokkos::Unmanaged>> srcView(
+        src, byteCount);
+    Kokkos::View<char *, Kokkos::HostSpace, Kokkos::MemoryTraits<Kokkos::Unmanaged>> dstView(
+        dst, byteCount);
     Kokkos::deep_copy(dstView, srcView);
 }
 
 template <class T>
 void KokkosMinMaxImpl(const T *data, const size_t size, T &min, T &max)
 {
-    Kokkos::parallel_reduce(size,
-                            KOKKOS_LAMBDA(int i, T &lmax, T &lmin) {
-                                if (lmax < data[i])
-                                    lmax = data[i];
-                                if (lmin > data[i])
-                                    lmin = data[i];
-                            },
-                            Kokkos::Max<T>(max), Kokkos::Min<T>(min));
+    Kokkos::parallel_reduce(
+        size,
+        KOKKOS_LAMBDA(int i, T &lmax, T &lmin) {
+            if (lmax < data[i])
+                lmax = data[i];
+            if (lmin > data[i])
+                lmin = data[i];
+        },
+        Kokkos::Max<T>(max), Kokkos::Min<T>(min));
 }
 
 // types non supported on the device
-void KokkosMinMaxImpl(const char * /*values*/, const size_t /*size*/,
-                      char & /*min*/, char & /*max*/)
+void KokkosMinMaxImpl(const char * /*values*/, const size_t /*size*/, char & /*min*/,
+                      char & /*max*/)
 {
 }
-void KokkosMinMaxImpl(const long double * /*values*/, const size_t /*size*/,
-                      long double & /*min*/, long double & /*max*/)
+void KokkosMinMaxImpl(const long double * /*values*/, const size_t /*size*/, long double & /*min*/,
+                      long double & /*max*/)
 {
 }
-void KokkosMinMaxImpl(const std::complex<float> * /*values*/,
-                      const size_t /*size*/, std::complex<float> & /*min*/,
-                      std::complex<float> & /*max*/)
+void KokkosMinMaxImpl(const std::complex<float> * /*values*/, const size_t /*size*/,
+                      std::complex<float> & /*min*/, std::complex<float> & /*max*/)
 {
 }
-void KokkosMinMaxImpl(const std::complex<double> * /*values*/,
-                      const size_t /*size*/, std::complex<double> & /*min*/,
-                      std::complex<double> & /*max*/)
+void KokkosMinMaxImpl(const std::complex<double> * /*values*/, const size_t /*size*/,
+                      std::complex<double> & /*min*/, std::complex<double> & /*max*/)
 {
 }
 
@@ -94,9 +91,8 @@ bool IsGPUbuffer(const void *ptr)
     }
 #endif
 #ifdef ADIOS2_HAVE_KOKKOS_SYCL
-    auto ret =
-        sycl::address_space_cast<sycl::access::address_space::global_space,
-                                 sycl::access::decorated::no>(ptr);
+    auto ret = sycl::address_space_cast<sycl::access::address_space::global_space,
+                                        sycl::access::decorated::no>(ptr);
     if (ret != nullptr)
     {
         return true;
@@ -139,9 +135,8 @@ void GPUMinMax(const T *values, const size_t size, T &min, T &max)
 }
 }
 
-#define declare_type(T)                                                        \
-    template void adios2::helper::GPUMinMax(                                   \
-        const T *values, const size_t size, T &min, T &max);
+#define declare_type(T)                                                                            \
+    template void adios2::helper::GPUMinMax(const T *values, const size_t size, T &min, T &max);
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
 

@@ -39,8 +39,7 @@ struct EncryptionOperator::EncryptImpl
         std::fstream keyFile(KeyFilename.c_str());
         if (keyFile)
         {
-            keyFile.read(reinterpret_cast<char *>(&Key),
-                         crypto_secretbox_KEYBYTES);
+            keyFile.read(reinterpret_cast<char *>(&Key), crypto_secretbox_KEYBYTES);
             keyFile.close();
         }
         else
@@ -51,18 +50,16 @@ struct EncryptionOperator::EncryptImpl
                 throw std::runtime_error("couldn't open file to write key");
             }
             crypto_secretbox_keygen(Key);
-            keyFile.write(reinterpret_cast<char *>(&Key),
-                          crypto_secretbox_KEYBYTES);
+            keyFile.write(reinterpret_cast<char *>(&Key), crypto_secretbox_KEYBYTES);
             keyFile.close();
         }
 
         // lock the key to avoid swapping to disk
         if (sodium_mlock(Key, crypto_secretbox_KEYBYTES) == -1)
         {
-            throw std::runtime_error(
-                "Unable to lock memory location of secret key,"
-                " due to system limit on amount of memory that can be locked "
-                "by a process.");
+            throw std::runtime_error("Unable to lock memory location of secret key,"
+                                     " due to system limit on amount of memory that can be locked "
+                                     "by a process.");
         }
         KeyValid = true;
     }
@@ -97,9 +94,8 @@ __attribute__((no_sanitize("memory")))
 #endif
 #endif
 size_t
-EncryptionOperator::Operate(const char *dataIn, const Dims &blockStart,
-                            const Dims &blockCount, const DataType type,
-                            char *bufferOut)
+EncryptionOperator::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                            const DataType type, char *bufferOut)
 {
     if (!Impl->KeyValid)
     {
@@ -114,24 +110,20 @@ EncryptionOperator::Operate(const char *dataIn, const Dims &blockStart,
 
     // write any parameters we need to save for the InverseOperate() call
     // In this case, we just write out the size of the data
-    size_t sizeIn =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+    size_t sizeIn = helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
     PutParameter(bufferOut, offset, sizeIn);
 
     // create the nonce directly in the output buffer, since we'll need it for
     // decryption
-    unsigned char *nonce =
-        reinterpret_cast<unsigned char *>(bufferOut + offset);
+    unsigned char *nonce = reinterpret_cast<unsigned char *>(bufferOut + offset);
     randombytes_buf(nonce, crypto_secretbox_NONCEBYTES);
     offset += crypto_secretbox_NONCEBYTES;
 
     // encrypt data directly into the output buffer
     size_t cipherTextSize = sizeIn + crypto_secretbox_MACBYTES;
-    unsigned char *cipherText =
-        reinterpret_cast<unsigned char *>(bufferOut + offset);
-    crypto_secretbox_easy(cipherText,
-                          reinterpret_cast<const unsigned char *>(dataIn),
-                          sizeIn, nonce, Impl->Key);
+    unsigned char *cipherText = reinterpret_cast<unsigned char *>(bufferOut + offset);
+    crypto_secretbox_easy(cipherText, reinterpret_cast<const unsigned char *>(dataIn), sizeIn,
+                          nonce, Impl->Key);
     offset += cipherTextSize;
 
     // need to return the size of data in the buffer
@@ -145,8 +137,7 @@ __attribute__((no_sanitize("memory")))
 #endif
 #endif
 size_t
-EncryptionOperator::InverseOperate(const char *bufferIn, const size_t sizeIn,
-                                   char *dataOut)
+EncryptionOperator::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     size_t offset = 0;
 
@@ -154,20 +145,17 @@ EncryptionOperator::InverseOperate(const char *bufferIn, const size_t sizeIn,
     const size_t dataBytes = GetParameter<size_t>(bufferIn, offset);
 
     // grab the nonce ptr
-    const unsigned char *nonce =
-        reinterpret_cast<const unsigned char *>(bufferIn + offset);
+    const unsigned char *nonce = reinterpret_cast<const unsigned char *>(bufferIn + offset);
     offset += crypto_secretbox_NONCEBYTES;
 
     // grab the cipher text ptr
     size_t cipherTextSize = dataBytes + crypto_secretbox_MACBYTES;
-    const unsigned char *cipherText =
-        reinterpret_cast<const unsigned char *>(bufferIn + offset);
+    const unsigned char *cipherText = reinterpret_cast<const unsigned char *>(bufferIn + offset);
     offset += cipherTextSize;
 
     // decrypt directly into dataOut buffer
-    if (crypto_secretbox_open_easy(reinterpret_cast<unsigned char *>(dataOut),
-                                   cipherText, cipherTextSize, nonce,
-                                   Impl->Key) != 0)
+    if (crypto_secretbox_open_easy(reinterpret_cast<unsigned char *>(dataOut), cipherText,
+                                   cipherTextSize, nonce, Impl->Key) != 0)
     {
         throw std::runtime_error("message forged!");
     }
@@ -176,18 +164,14 @@ EncryptionOperator::InverseOperate(const char *bufferIn, const size_t sizeIn,
     return dataBytes;
 }
 
-bool EncryptionOperator::IsDataTypeValid(const DataType type) const
-{
-    return true;
-}
+bool EncryptionOperator::IsDataTypeValid(const DataType type) const { return true; }
 
 } // end namespace plugin
 } // end namespace adios2
 
 extern "C" {
 
-adios2::plugin::EncryptionOperator *
-OperatorCreate(const adios2::Params &parameters)
+adios2::plugin::EncryptionOperator *OperatorCreate(const adios2::Params &parameters)
 {
     return new adios2::plugin::EncryptionOperator(parameters);
 }

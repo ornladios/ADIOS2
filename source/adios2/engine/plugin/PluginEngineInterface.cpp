@@ -16,9 +16,8 @@ namespace adios2
 namespace plugin
 {
 
-PluginEngineInterface::PluginEngineInterface(core::IO &io,
-                                             const std::string &name,
-                                             const Mode mode, helper::Comm comm)
+PluginEngineInterface::PluginEngineInterface(core::IO &io, const std::string &name, const Mode mode,
+                                             helper::Comm comm)
 : Engine("PluginInterface", io, name, mode, std::move(comm))
 {
 }

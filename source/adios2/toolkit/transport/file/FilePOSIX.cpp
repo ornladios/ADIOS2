@@ -33,10 +33,7 @@ namespace adios2
 namespace transport
 {
 
-FilePOSIX::FilePOSIX(helper::Comm const &comm)
-: Transport("File", "POSIX", comm)
-{
-}
+FilePOSIX::FilePOSIX(helper::Comm const &comm) : Transport("File", "POSIX", comm) {}
 
 FilePOSIX::~FilePOSIX()
 {
@@ -74,11 +71,10 @@ static int __GetOpenFlag(const int flag, const bool directio)
     }
 }
 
-void FilePOSIX::Open(const std::string &name, const Mode openMode,
-                     const bool async, const bool directio)
+void FilePOSIX::Open(const std::string &name, const Mode openMode, const bool async,
+                     const bool directio)
 {
-    auto lf_AsyncOpenWrite = [&](const std::string &name,
-                                 const bool directio) -> int {
+    auto lf_AsyncOpenWrite = [&](const std::string &name, const bool directio) -> int {
         ProfilerStart("open");
         errno = 0;
         int flag = __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio);
@@ -99,16 +95,14 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
         if (async)
         {
             m_IsOpening = true;
-            m_OpenFuture = std::async(std::launch::async, lf_AsyncOpenWrite,
-                                      name, directio);
+            m_OpenFuture = std::async(std::launch::async, lf_AsyncOpenWrite, name, directio);
         }
         else
         {
             ProfilerStart("open");
             errno = 0;
-            m_FileDescriptor = open(
-                m_Name.c_str(),
-                __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio), 0666);
+            m_FileDescriptor =
+                open(m_Name.c_str(), __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio), 0666);
             m_Errno = errno;
             ProfilerStop("open");
         }
@@ -117,8 +111,7 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
     case Mode::Append:
         ProfilerStart("open");
         errno = 0;
-        m_FileDescriptor = open(
-            m_Name.c_str(), __GetOpenFlag(O_RDWR | O_CREAT, directio), 0777);
+        m_FileDescriptor = open(m_Name.c_str(), __GetOpenFlag(O_RDWR | O_CREAT, directio), 0777);
         lseek(m_FileDescriptor, 0, SEEK_END);
         m_Errno = errno;
         ProfilerStop("open");
@@ -133,8 +126,7 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
         break;
 
     default:
-        CheckFile("unknown open mode for file " + m_Name +
-                  ", in call to POSIX open");
+        CheckFile("unknown open mode for file " + m_Name + ", in call to POSIX open");
     }
 
     if (!m_IsOpening)
@@ -144,12 +136,10 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode,
     }
 }
 
-void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
-                          const helper::Comm &chainComm, const bool async,
-                          const bool directio)
+void FilePOSIX::OpenChain(const std::string &name, Mode openMode, const helper::Comm &chainComm,
+                          const bool async, const bool directio)
 {
-    auto lf_AsyncOpenWrite = [&](const std::string &name,
-                                 const bool directio) -> int {
+    auto lf_AsyncOpenWrite = [&](const std::string &name, const bool directio) -> int {
         ProfilerStart("open");
         errno = 0;
         int flag = __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio);
@@ -165,8 +155,7 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
 
     if (chainComm.Rank() > 0)
     {
-        chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0,
-                       "Chain token in FilePOSIX::OpenChain");
+        chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0, "Chain token in FilePOSIX::OpenChain");
     }
 
     m_DirectIO = directio;
@@ -180,8 +169,7 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
             // only when process is a single writer, can create the file
             // asynchronously, otherwise other processes are waiting on it
             m_IsOpening = true;
-            m_OpenFuture = std::async(std::launch::async, lf_AsyncOpenWrite,
-                                      name, directio);
+            m_OpenFuture = std::async(std::launch::async, lf_AsyncOpenWrite, name, directio);
         }
         else
         {
@@ -189,15 +177,12 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
             errno = 0;
             if (chainComm.Rank() == 0)
             {
-                m_FileDescriptor =
-                    open(m_Name.c_str(),
-                         __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio),
-                         0666);
+                m_FileDescriptor = open(
+                    m_Name.c_str(), __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio), 0666);
             }
             else
             {
-                m_FileDescriptor = open(
-                    m_Name.c_str(), __GetOpenFlag(O_WRONLY, directio), 0666);
+                m_FileDescriptor = open(m_Name.c_str(), __GetOpenFlag(O_WRONLY, directio), 0666);
                 lseek(m_FileDescriptor, 0, SEEK_SET);
             }
             m_Errno = errno;
@@ -211,13 +196,11 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
         if (chainComm.Rank() == 0)
         {
             m_FileDescriptor =
-                open(m_Name.c_str(), __GetOpenFlag(O_RDWR | O_CREAT, directio),
-                     0666);
+                open(m_Name.c_str(), __GetOpenFlag(O_RDWR | O_CREAT, directio), 0666);
         }
         else
         {
-            m_FileDescriptor =
-                open(m_Name.c_str(), __GetOpenFlag(O_RDWR, directio));
+            m_FileDescriptor = open(m_Name.c_str(), __GetOpenFlag(O_RDWR, directio));
         }
         lseek(m_FileDescriptor, 0, SEEK_END);
         m_Errno = errno;
@@ -233,8 +216,7 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode,
         break;
 
     default:
-        CheckFile("unknown open mode for file " + m_Name +
-                  ", in call to POSIX open");
+        CheckFile("unknown open mode for file " + m_Name + ", in call to POSIX open");
     }
 
     if (!m_IsOpening)
@@ -288,10 +270,10 @@ void FilePOSIX::Write(const char *buffer, size_t size, size_t start)
 
         if (static_cast<size_t>(newPosition) != start)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FilePOSIX", "Write",
-                "couldn't move to start position " + std::to_string(start) +
-                    " in file " + m_Name + " " + SysErrMsg());
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FilePOSIX", "Write",
+                                                  "couldn't move to start position " +
+                                                      std::to_string(start) + " in file " + m_Name +
+                                                      " " + SysErrMsg());
         }
     }
     else
@@ -375,12 +357,10 @@ void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
             }
 
             // write the rest one by one
-            Write(static_cast<const char *>(iov[c].iov_base) + pos,
-                  iov[c].iov_len - pos);
+            Write(static_cast<const char *>(iov[c].iov_base) + pos, iov[c].iov_len - pos);
             for (; c < iovcnt; ++c)
             {
-                Write(static_cast<const char *>(iov[c].iov_base),
-                      iov[c].iov_len);
+                Write(static_cast<const char *>(iov[c].iov_base), iov[c].iov_len);
             }
         }
     };
@@ -394,10 +374,10 @@ void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
 
         if (static_cast<size_t>(newPosition) != start)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FilePOSIX", "WriteV",
-                "couldn't move to start position " + std::to_string(start) +
-                    " in file " + m_Name + " " + SysErrMsg());
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FilePOSIX", "WriteV",
+                                                  "couldn't move to start position " +
+                                                      std::to_string(start) + " in file " + m_Name +
+                                                      " " + SysErrMsg());
         }
     }
 
@@ -453,10 +433,10 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
 
         if (static_cast<size_t>(newPosition) != start)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FilePOSIX", "Read",
-                "couldn't move to start position " + std::to_string(start) +
-                    " in file " + m_Name + " " + SysErrMsg());
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FilePOSIX", "Read",
+                                                  "couldn't move to start position " +
+                                                      std::to_string(start) + " in file " + m_Name +
+                                                      " " + SysErrMsg());
         }
     }
 
@@ -487,9 +467,8 @@ size_t FilePOSIX::GetSize()
     if (fstat(m_FileDescriptor, &fileStat) == -1)
     {
         m_Errno = errno;
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FilePOSIX", "GetSize",
-            "couldn't get size of file " + m_Name + SysErrMsg());
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FilePOSIX", "GetSize",
+                                              "couldn't get size of file " + m_Name + SysErrMsg());
     }
     m_Errno = errno;
     return static_cast<size_t>(fileStat.st_size);
@@ -519,9 +498,8 @@ void FilePOSIX::Close()
 
     if (status == -1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FilePOSIX", "Close",
-            "couldn't close file " + m_Name + " " + SysErrMsg());
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FilePOSIX", "Close",
+                                              "couldn't close file " + m_Name + " " + SysErrMsg());
     }
 
     m_IsOpen = false;
@@ -541,16 +519,14 @@ void FilePOSIX::CheckFile(const std::string hint) const
 {
     if (m_FileDescriptor == -1)
     {
-        helper::Throw<std::ios_base::failure>("Toolkit",
-                                              "transport::file::FilePOSIX",
-                                              "CheckFile", hint + SysErrMsg());
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FilePOSIX", "CheckFile",
+                                              hint + SysErrMsg());
     }
 }
 
 std::string FilePOSIX::SysErrMsg() const
 {
-    return std::string(": errno = " + std::to_string(m_Errno) + ": " +
-                       strerror(m_Errno));
+    return std::string(": errno = " + std::to_string(m_Errno) + ": " + strerror(m_Errno));
 }
 
 void FilePOSIX::SeekToEnd()
@@ -561,9 +537,9 @@ void FilePOSIX::SeekToEnd()
     m_Errno = 0;
     if (status == -1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FilePOSIX", "SeekToEnd",
-            "couldn't seek to the end of file " + m_Name + " " + SysErrMsg());
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FilePOSIX", "SeekToEnd",
+                                              "couldn't seek to the end of file " + m_Name + " " +
+                                                  SysErrMsg());
     }
 }
 
@@ -591,10 +567,10 @@ void FilePOSIX::Seek(const size_t start)
         m_Errno = errno;
         if (status == -1)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FilePOSIX", "Seek",
-                "couldn't seek to offset " + std::to_string(start) +
-                    " of file " + m_Name + " " + SysErrMsg());
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FilePOSIX", "Seek",
+                                                  "couldn't seek to offset " +
+                                                      std::to_string(start) + " of file " + m_Name +
+                                                      " " + SysErrMsg());
         }
     }
     else
@@ -611,10 +587,9 @@ void FilePOSIX::Truncate(const size_t length)
     m_Errno = errno;
     if (status == -1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FilePOSIX", "Truncate",
-            "couldn't truncate to " + std::to_string(length) +
-                " bytes of file " + m_Name + " " + SysErrMsg());
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FilePOSIX", "Truncate",
+                                              "couldn't truncate to " + std::to_string(length) +
+                                                  " bytes of file " + m_Name + " " + SysErrMsg());
     }
 }
 

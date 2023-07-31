@@ -40,9 +40,8 @@ public:
      * @param bufferOut
      * @return size of compressed buffer
      */
-    size_t Operate(const char *dataIn, const Dims &blockStart,
-                   const Dims &blockCount, const DataType type,
-                   char *bufferOut) final;
+    size_t Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                   const DataType type, char *bufferOut) final;
 
     /**
      * @param bufferIn
@@ -50,8 +49,7 @@ public:
      * @param dataOut
      * @return size of decompressed buffer
      */
-    size_t InverseOperate(const char *bufferIn, const size_t sizeIn,
-                          char *dataOut) final;
+    size_t InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut) final;
 
     bool IsDataTypeValid(const DataType type) const final;
 
@@ -65,8 +63,7 @@ private:
      * @param dataOut : decompressed data buffer
      * @return : number of bytes in dataOut
      */
-    size_t DecompressV1(const char *bufferIn, const size_t sizeIn,
-                        char *dataOut);
+    size_t DecompressV1(const char *bufferIn, const size_t sizeIn, char *dataOut);
 
     std::string m_VersionInfo;
 };

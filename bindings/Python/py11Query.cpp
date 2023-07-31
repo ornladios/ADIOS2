@@ -19,18 +19,14 @@ Query::Query(adios2::query::Worker *qw) : m_QueryWorker(qw) {}
 
 Query::Query(std::string queryFile, Engine reader)
 {
-    adios2::query::Worker *m =
-        adios2::query::GetWorker(queryFile, reader.m_Engine);
+    adios2::query::Worker *m = adios2::query::GetWorker(queryFile, reader.m_Engine);
     if (m == nullptr)
         throw std::invalid_argument("ERROR: unable to construct query. ");
     m_QueryWorker = std::make_shared<adios2::query::Worker>(std::move(*m));
     delete m;
 }
 
-Query::operator bool() const noexcept
-{
-    return (m_QueryWorker == nullptr) ? false : true;
-}
+Query::operator bool() const noexcept { return (m_QueryWorker == nullptr) ? false : true; }
 
 std::vector<Box<Dims>> Query::GetResult()
 {

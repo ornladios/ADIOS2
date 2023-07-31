@@ -22,19 +22,17 @@ static unsigned int convertToUint(std::string varName, char *arg)
     long retval = std::strtol(arg, &end, 10);
     if (end[0] || errno == ERANGE)
     {
-        throw std::invalid_argument("Invalid value given for " + varName +
-                                    ": " + std::string(arg));
+        throw std::invalid_argument("Invalid value given for " + varName + ": " + std::string(arg));
     }
     if (retval < 0)
     {
-        throw std::invalid_argument("Negative value given for " + varName +
-                                    ": " + std::string(arg));
+        throw std::invalid_argument("Negative value given for " + varName + ": " +
+                                    std::string(arg));
     }
     return static_cast<unsigned int>(retval);
 }
 
-ReadSettings::ReadSettings(int argc, char *argv[], int rank, int nproc)
-: rank{rank}
+ReadSettings::ReadSettings(int argc, char *argv[], int rank, int nproc) : rank{rank}
 {
     if (argc < 6)
     {
@@ -79,6 +77,6 @@ void ReadSettings::DecomposeArray(int gndx, int gndy)
     offset.push_back(offsx);
     offset.push_back(offsy);
 
-    std::cout << "rank " << rank << " reads 2D slice " << ndx << " x " << ndy
-              << " from offset (" << offsx << "," << offsy << ")" << std::endl;
+    std::cout << "rank " << rank << " reads 2D slice " << ndx << " x " << ndy << " from offset ("
+              << offsx << "," << offsy << ")" << std::endl;
 }

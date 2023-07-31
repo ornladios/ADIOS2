@@ -36,8 +36,8 @@ namespace plugin
 class ExampleReadPlugin : public PluginEngineInterface
 {
 public:
-    ExampleReadPlugin(core::IO &io, const std::string &name,
-                      const Mode openMode, helper::Comm comm);
+    ExampleReadPlugin(core::IO &io, const std::string &name, const Mode openMode,
+                      helper::Comm comm);
     virtual ~ExampleReadPlugin();
 
     /** Indicates beginning of a step **/
@@ -56,8 +56,8 @@ public:
 protected:
     void Init() override;
 
-#define declare(T)                                                             \
-    void DoGetSync(core::Variable<T> &variable, T *values) override;           \
+#define declare(T)                                                                                 \
+    void DoGetSync(core::Variable<T> &variable, T *values) override;                               \
     void DoGetDeferred(core::Variable<T> &variable, T *values) override;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
@@ -70,8 +70,7 @@ private:
     size_t m_CurrentStep = 0;
 
     template <typename T>
-    void AddVariable(const std::string &name, Dims shape, Dims start,
-                     Dims count);
+    void AddVariable(const std::string &name, Dims shape, Dims start, Dims count);
 
     template <class T>
     void ReadVariable(core::Variable<T> &variable, T *values);
@@ -83,10 +82,9 @@ private:
 extern "C" {
 
 PLUGIN_ENGINE_READ_EXPORT adios2::plugin::ExampleReadPlugin *
-EngineCreate(adios2::core::IO &io, const std::string &name,
-             const adios2::Mode mode, adios2::helper::Comm comm);
-PLUGIN_ENGINE_READ_EXPORT void
-EngineDestroy(adios2::plugin::ExampleReadPlugin *obj);
+EngineCreate(adios2::core::IO &io, const std::string &name, const adios2::Mode mode,
+             adios2::helper::Comm comm);
+PLUGIN_ENGINE_READ_EXPORT void EngineDestroy(adios2::plugin::ExampleReadPlugin *obj);
 }
 
 #endif /* EXAMPLEREADPLUGIN_H_ */

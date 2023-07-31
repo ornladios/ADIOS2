@@ -23,8 +23,7 @@ namespace engine
 {
 
 template <>
-inline void BP3Reader::GetSyncCommon(Variable<std::string> &variable,
-                                     std::string *data)
+inline void BP3Reader::GetSyncCommon(Variable<std::string> &variable, std::string *data)
 {
     m_BP3Deserializer.GetValueFromMetadata(variable, data);
 }
@@ -71,8 +70,7 @@ void BP3Reader::ReadVariableBlocks(Variable<T> &variable)
 
         for (const auto &stepPair : blockInfo.StepBlockSubStreamsInfo)
         {
-            for (const helper::SubStreamBoxInfo &subStreamBoxInfo :
-                 stepPair.second)
+            for (const helper::SubStreamBoxInfo &subStreamBoxInfo : stepPair.second)
             {
                 if (subStreamBoxInfo.ZeroBlock)
                 {
@@ -80,32 +78,27 @@ void BP3Reader::ReadVariableBlocks(Variable<T> &variable)
                 }
 
                 // check if subfile is already opened
-                if (m_SubFileManager.m_Transports.count(
-                        subStreamBoxInfo.SubStreamID) == 0)
+                if (m_SubFileManager.m_Transports.count(subStreamBoxInfo.SubStreamID) == 0)
                 {
-                    const std::string subFileName =
-                        m_BP3Deserializer.GetBPSubFileName(
-                            m_Name, subStreamBoxInfo.SubStreamID,
-                            m_BP3Deserializer.m_Minifooter.HasSubFiles, true);
+                    const std::string subFileName = m_BP3Deserializer.GetBPSubFileName(
+                        m_Name, subStreamBoxInfo.SubStreamID,
+                        m_BP3Deserializer.m_Minifooter.HasSubFiles, true);
 
-                    m_SubFileManager.OpenFileID(
-                        subFileName, subStreamBoxInfo.SubStreamID, Mode::Read,
-                        {{"transport", "File"}}, profile);
+                    m_SubFileManager.OpenFileID(subFileName, subStreamBoxInfo.SubStreamID,
+                                                Mode::Read, {{"transport", "File"}}, profile);
                 }
 
                 char *buffer = nullptr;
                 size_t payloadSize = 0, payloadStart = 0;
 
-                m_BP3Deserializer.PreDataRead(variable, blockInfo,
-                                              subStreamBoxInfo, buffer,
+                m_BP3Deserializer.PreDataRead(variable, blockInfo, subStreamBoxInfo, buffer,
                                               payloadSize, payloadStart, 0);
 
                 m_SubFileManager.ReadFile(buffer, payloadSize, payloadStart,
                                           subStreamBoxInfo.SubStreamID);
 
-                m_BP3Deserializer.PostDataRead(
-                    variable, blockInfo, subStreamBoxInfo,
-                    m_IO.m_ArrayOrder == ArrayOrdering::RowMajor, 0);
+                m_BP3Deserializer.PostDataRead(variable, blockInfo, subStreamBoxInfo,
+                                               m_IO.m_ArrayOrder == ArrayOrdering::RowMajor, 0);
             } // substreams loop
             // advance pointer to next step
             blockInfo.Data += helper::GetTotalSize(blockInfo.Count);

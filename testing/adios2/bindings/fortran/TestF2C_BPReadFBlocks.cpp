@@ -41,8 +41,7 @@ TEST_F(BPReadFBlocks, FHeatMap2D)
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
-            adios2::Variable<float> var_r32 =
-                io.InquireVariable<float>("temperatures_r4");
+            adios2::Variable<float> var_r32 = io.InquireVariable<float>("temperatures_r4");
 
             EXPECT_TRUE(var_r32);
             EXPECT_EQ(var_r32.Shape().size(), 2);
@@ -57,8 +56,7 @@ TEST_F(BPReadFBlocks, FHeatMap2D)
                 if (i == static_cast<size_t>(mpiRank))
                 {
                     EXPECT_EQ(r32Blocks[i].Start[0],
-                              r32Blocks[i].Count[0] *
-                                  static_cast<size_t>(mpiRank));
+                              r32Blocks[i].Count[0] * static_cast<size_t>(mpiRank));
 
                     EXPECT_EQ(r32Blocks[i].Start[1], 0);
                     EXPECT_EQ(r32Blocks[i].Count[1], var_r32.Shape()[1]);
@@ -91,8 +89,7 @@ TEST_F(BPReadFBlocks, FHeatMap3D)
 
         while (bpReader.BeginStep() == adios2::StepStatus::OK)
         {
-            adios2::Variable<float> var_r32 =
-                io.InquireVariable<float>("temperatures_r4");
+            adios2::Variable<float> var_r32 = io.InquireVariable<float>("temperatures_r4");
 
             EXPECT_TRUE(var_r32);
             EXPECT_EQ(var_r32.Shape().size(), 3);
@@ -107,8 +104,7 @@ TEST_F(BPReadFBlocks, FHeatMap3D)
                 if (i == static_cast<size_t>(mpiRank))
                 {
                     EXPECT_EQ(r32Blocks[i].Start[0],
-                              r32Blocks[i].Count[0] *
-                                  static_cast<size_t>(mpiRank));
+                              r32Blocks[i].Count[0] * static_cast<size_t>(mpiRank));
 
                     EXPECT_EQ(r32Blocks[i].Start[1], 0);
                     EXPECT_EQ(r32Blocks[i].Count[1], var_r32.Shape()[1]);

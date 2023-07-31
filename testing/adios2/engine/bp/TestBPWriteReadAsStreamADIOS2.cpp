@@ -62,31 +62,21 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
 
             io.DefineVariable<std::string>("iString");
 
-            io.DefineVariable<int8_t>("i8", shape, start, count,
-                                      adios2::ConstantDims);
-            io.DefineVariable<int16_t>("i16", shape, start, count,
-                                       adios2::ConstantDims);
+            io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<int32_t>("i32", shape, start, count,
-                                       adios2::ConstantDims);
+            io.DefineVariable<int32_t>("i32", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<int64_t>("i64", shape, start, count,
-                                       adios2::ConstantDims);
+            io.DefineVariable<int64_t>("i64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                       adios2::ConstantDims);
+            io.DefineVariable<uint8_t>("u8", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                        adios2::ConstantDims);
+            io.DefineVariable<uint16_t>("u16", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint32_t>("u32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint64_t>("u64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<float>("r32", shape, start, count,
-                                     adios2::ConstantDims);
-            io.DefineVariable<double>("r64", shape, start, count,
-                                      adios2::ConstantDims);
+            io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
             io.DefineVariable<std::complex<float>>("cr32", shape, start, count,
                                                    adios2::ConstantDims);
@@ -108,8 +98,8 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             EXPECT_EQ(bpWriter.CurrentStep(), step);
 
@@ -141,10 +131,8 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
                 bpWriter.Put<double>("r64", currentTestData.R64.data());
             }
 
-            bpWriter.Put<std::complex<float>>("cr32",
-                                              currentTestData.CR32.data());
-            bpWriter.Put<std::complex<double>>("cr64",
-                                               currentTestData.CR64.data());
+            bpWriter.Put<std::complex<float>>("cr32", currentTestData.CR32.data());
+            bpWriter.Put<std::complex<double>>("cr64", currentTestData.CR64.data());
 
             bpWriter.EndStep();
         }
@@ -232,16 +220,13 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead1D8)
                 ASSERT_EQ(var_i8.Shape()[0], static_cast<size_t>(mpiSize * Nx));
 
                 ASSERT_EQ(var_i16.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_i16.Shape()[0],
-                          static_cast<size_t>(mpiSize * Nx));
+                ASSERT_EQ(var_i16.Shape()[0], static_cast<size_t>(mpiSize * Nx));
 
                 ASSERT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_i32.Shape()[0],
-                          static_cast<size_t>(mpiSize * Nx));
+                ASSERT_EQ(var_i32.Shape()[0], static_cast<size_t>(mpiSize * Nx));
 
                 ASSERT_EQ(var_i64.ShapeID(), adios2::ShapeID::GlobalArray);
-                ASSERT_EQ(var_i64.Shape()[0],
-                          static_cast<size_t>(mpiSize * Nx));
+                ASSERT_EQ(var_i64.Shape()[0], static_cast<size_t>(mpiSize * Nx));
 
                 var_i8.SetSelection(sel);
                 var_i16.SetSelection(sel);
@@ -433,29 +418,19 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
             const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
             const adios2::Dims count{Ny, Nx};
 
-            io.DefineVariable<int8_t>("i8", shape, start, count,
-                                      adios2::ConstantDims);
-            io.DefineVariable<int16_t>("i16", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<int32_t>("i32", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<int64_t>("i64", shape, start, count,
-                                       adios2::ConstantDims);
+            io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int32_t>("i32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int64_t>("i64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                       adios2::ConstantDims);
+            io.DefineVariable<uint8_t>("u8", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                        adios2::ConstantDims);
+            io.DefineVariable<uint16_t>("u16", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint32_t>("u32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint64_t>("u64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<float>("r32", shape, start, count,
-                                     adios2::ConstantDims);
-            io.DefineVariable<double>("r64", shape, start, count,
-                                      adios2::ConstantDims);
+            io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
         }
 
         if (!engineName.empty())
@@ -473,8 +448,8 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D2x4)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             EXPECT_EQ(bpWriter.CurrentStep(), step);
 
@@ -683,32 +658,21 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
                                static_cast<unsigned int>(mpiSize * Nx)};
             adios2::Dims start{static_cast<unsigned int>(0),
                                static_cast<unsigned int>(mpiRank * Nx)};
-            adios2::Dims count{static_cast<unsigned int>(Ny),
-                               static_cast<unsigned int>(Nx)};
+            adios2::Dims count{static_cast<unsigned int>(Ny), static_cast<unsigned int>(Nx)};
 
-            io.DefineVariable<int8_t>("i8", shape, start, count,
-                                      adios2::ConstantDims);
-            io.DefineVariable<int16_t>("i16", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<int32_t>("i32", shape, start, count,
-                                       adios2::ConstantDims);
-            io.DefineVariable<int64_t>("i64", shape, start, count,
-                                       adios2::ConstantDims);
+            io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int32_t>("i32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<int64_t>("i64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                       adios2::ConstantDims);
+            io.DefineVariable<uint8_t>("u8", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                        adios2::ConstantDims);
-            io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                        adios2::ConstantDims);
+            io.DefineVariable<uint16_t>("u16", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint32_t>("u32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<uint64_t>("u64", shape, start, count, adios2::ConstantDims);
 
-            io.DefineVariable<float>("r32", shape, start, count,
-                                     adios2::ConstantDims);
-            io.DefineVariable<double>("r64", shape, start, count,
-                                      adios2::ConstantDims);
+            io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+            io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
         }
 
         if (!engineName.empty())
@@ -727,8 +691,8 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ADIOS2BPWriteRead2D4x2)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             EXPECT_EQ(bpWriter.CurrentStep(), step);
 
@@ -941,15 +905,14 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
             io.SetEngine(engineName);
         }
 
-        io.DefineVariable<float>("r32", shape, start, count,
-                                 adios2::ConstantDims);
+        io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
 
         adios2::Engine bpWriter = io.Open(fnameFloat, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
             bpWriter.BeginStep();
             bpWriter.Put<float>("r32", currentTestData.R32.data());
             bpWriter.EndStep();
@@ -978,13 +941,13 @@ TEST_F(BPWriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
 
             if (step == 0)
             {
-                adios2::Variable<double> varR64 = io.DefineVariable<double>(
-                    "r64", shape, start, count, adios2::ConstantDims);
+                adios2::Variable<double> varR64 =
+                    io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
                 EXPECT_TRUE(varR64);
             }
 
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
             writer.BeginStep();
             writer.Put<float>("r32", currentTestData.R32.data());
             writer.Put<double>("r64", currentTestData.R64.data());

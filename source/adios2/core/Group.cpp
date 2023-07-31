@@ -64,8 +64,7 @@ void Group::BuildTree()
     const core::VarMap &variables = m_IO.GetVariables();
     for (const auto &variablePair : variables)
     {
-        std::vector<std::string> tokens =
-            split(variablePair.first, groupDelimiter);
+        std::vector<std::string> tokens = split(variablePair.first, groupDelimiter);
         // Adding artificial root element
         if (tokens[0] == "")
             tokens[0] = ADIOS_root;
@@ -90,8 +89,7 @@ void Group::BuildTree()
     const core::AttrMap &attributes = m_IO.GetAttributes();
     for (const auto &attributePair : attributes)
     {
-        std::vector<std::string> tokens =
-            split(attributePair.first, groupDelimiter);
+        std::vector<std::string> tokens = split(attributePair.first, groupDelimiter);
         if (tokens.size() > 1)
         {
             std::string key = tokens[0];
@@ -115,13 +113,12 @@ std::vector<std::string> Group::AvailableVariables()
     std::vector<std::string> available_variables;
     for (auto const &v : val)
     {
-        if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) ==
-            mapPtr->treeMap.end())
+        if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) == mapPtr->treeMap.end())
         {
             const core::VarMap &variables = m_IO.GetVariables();
             std::string variablePath = currentPath + groupDelimiter + v;
-            variablePath = variablePath.substr(
-                ADIOS_root.size() + 1, variablePath.size() - ADIOS_root.size());
+            variablePath =
+                variablePath.substr(ADIOS_root.size() + 1, variablePath.size() - ADIOS_root.size());
             if (variables.find(variablePath) != variables.end())
             {
                 available_variables.push_back(v);
@@ -140,13 +137,12 @@ std::vector<std::string> Group::AvailableAttributes()
     std::vector<std::string> available_attributes;
     for (auto const &v : val)
     {
-        if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) ==
-            mapPtr->treeMap.end())
+        if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) == mapPtr->treeMap.end())
         {
             const core::AttrMap &attributes = m_IO.GetAttributes();
             std::string variablePath = currentPath + groupDelimiter + v;
-            variablePath = variablePath.substr(
-                ADIOS_root.size() + 1, variablePath.size() - ADIOS_root.size());
+            variablePath =
+                variablePath.substr(ADIOS_root.size() + 1, variablePath.size() - ADIOS_root.size());
             if (attributes.find(variablePath) != attributes.end())
             {
                 available_attributes.push_back(v);
@@ -164,8 +160,7 @@ std::vector<std::string> Group::AvailableGroups()
     std::set<std::string> val = mapPtr->treeMap[currentPath];
     for (auto const &v : val)
     {
-        if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) !=
-            mapPtr->treeMap.end())
+        if (mapPtr->treeMap.find(currentPath + groupDelimiter + v) != mapPtr->treeMap.end())
             available_groups.push_back(v);
     }
     return available_groups;
@@ -185,16 +180,14 @@ DataType Group::InquireVariableType(const std::string &name) const noexcept
     return m_IO.InquireVariableType(currentPath + groupDelimiter + name);
 }
 
-DataType Group::InquireAttributeType(const std::string &name,
-                                     const std::string &variableName,
+DataType Group::InquireAttributeType(const std::string &name, const std::string &variableName,
                                      const std::string separator) const noexcept
 {
     return m_IO.InquireAttributeType(name, variableName, separator);
 }
 // Explicitly instantiate the necessary public template implementations
-#define define_template_instantiation(T)                                       \
-    template Variable<T> *Group::InquireVariable<T>(                           \
-        const std::string &) noexcept;
+#define define_template_instantiation(T)                                                           \
+    template Variable<T> *Group::InquireVariable<T>(const std::string &) noexcept;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(define_template_instantiation)
 #undef define_template_instatiation

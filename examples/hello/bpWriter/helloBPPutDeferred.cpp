@@ -71,12 +71,11 @@ int main(int argc, char *argv[])
         adios2::Variable<float> bpFloats = bpIO.DefineVariable<float>(
             "bpFloats", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
 
-        adios2::Variable<int> bpInts = bpIO.DefineVariable<int>(
-            "bpInts", {size * Nx}, {rank * Nx}, {Nx}, adios2::ConstantDims);
+        adios2::Variable<int> bpInts = bpIO.DefineVariable<int>("bpInts", {size * Nx}, {rank * Nx},
+                                                                {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine bpFileWriter =
-            bpIO.Open("myVectorDeferred.bp", adios2::Mode::Write);
+        adios2::Engine bpFileWriter = bpIO.Open("myVectorDeferred.bp", adios2::Mode::Write);
 
         /** Put variables for buffering, template type is optional */
         bpFileWriter.Put<float>(bpFloats, myFloats.data());

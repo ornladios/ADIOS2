@@ -75,8 +75,7 @@ struct DataManVar
 
 using DmvVecPtr = std::shared_ptr<std::vector<DataManVar>>;
 using DmvVecPtrMap = std::unordered_map<size_t, DmvVecPtr>;
-using OperatorMap =
-    std::unordered_map<std::string, std::map<std::string, std::string>>;
+using OperatorMap = std::unordered_map<std::string, std::map<std::string, std::string>>;
 
 class DataManSerializer
 {
@@ -93,28 +92,26 @@ public:
     void PutAttributes(core::IO &io);
 
     // put a variable for writer
-    void PutData(const std::string *inputData, const std::string &varName,
-                 const Dims &varShape, const Dims &varStart,
-                 const Dims &varCount, const Dims &varMemStart,
-                 const Dims &varMemCount, const std::string &doid,
-                 const size_t step, const int rank, const std::string &address,
+    void PutData(const std::string *inputData, const std::string &varName, const Dims &varShape,
+                 const Dims &varStart, const Dims &varCount, const Dims &varMemStart,
+                 const Dims &varMemCount, const std::string &doid, const size_t step,
+                 const int rank, const std::string &address,
                  const std::vector<std::shared_ptr<core::Operator>> &ops,
                  VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
 
     template <class T>
-    void PutData(const T *inputData, const std::string &varName,
-                 const Dims &varShape, const Dims &varStart,
-                 const Dims &varCount, const Dims &varMemStart,
-                 const Dims &varMemCount, const std::string &doid,
-                 const size_t step, const int rank, const std::string &address,
+    void PutData(const T *inputData, const std::string &varName, const Dims &varShape,
+                 const Dims &varStart, const Dims &varCount, const Dims &varMemStart,
+                 const Dims &varMemCount, const std::string &doid, const size_t step,
+                 const int rank, const std::string &address,
                  const std::vector<std::shared_ptr<core::Operator>> &ops,
                  VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
 
     // another wrapper for PutData which accepts adios2::core::Variable
     template <class T>
-    void PutData(const core::Variable<T> &variable, const std::string &doid,
-                 const size_t step, const int rank, const std::string &address,
-                 VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
+    void PutData(const core::Variable<T> &variable, const std::string &doid, const size_t step,
+                 const int rank, const std::string &address, VecPtr localBuffer = nullptr,
+                 JsonPtr metadataJson = nullptr);
 
     // attach attributes to local pack
     void AttachAttributesToLocalPack();
@@ -136,9 +133,8 @@ public:
     void GetAttributes(core::IO &io);
 
     template <class T>
-    int GetData(T *output_data, const std::string &varName,
-                const Dims &varStart, const Dims &varCount, const size_t step,
-                const Dims &varMemStart = Dims(),
+    int GetData(T *output_data, const std::string &varName, const Dims &varStart,
+                const Dims &varCount, const size_t step, const Dims &varMemStart = Dims(),
                 const Dims &varMemCount = Dims());
 
     void Erase(const size_t step, const bool allPreviousSteps = false);
@@ -155,10 +151,8 @@ public:
 
     size_t LocalBufferSize();
 
-    DmvVecPtr GetEarliestLatestStep(int64_t &currentStep,
-                                    const int requireMinimumBlocks,
-                                    const float timeoutSeconds,
-                                    const bool latest);
+    DmvVecPtr GetEarliestLatestStep(int64_t &currentStep, const int requireMinimumBlocks,
+                                    const float timeoutSeconds, const bool latest);
 
     OperatorMap GetOperatorMap();
 
@@ -172,14 +166,11 @@ private:
     nlohmann::json DeserializeJson(const char *start, size_t size);
 
     template <typename T>
-    void CalculateMinMax(const T *data, const Dims &count,
-                         nlohmann::json &metaj);
+    void CalculateMinMax(const T *data, const Dims &count, nlohmann::json &metaj);
 
-    bool StepHasMinimumBlocks(const size_t step,
-                              const int requireMinimumBlocks);
+    bool StepHasMinimumBlocks(const size_t step, const int requireMinimumBlocks);
 
-    void Log(const int level, const std::string &message, const bool mpi,
-             const bool endline);
+    void Log(const int level, const std::string &message, const bool mpi, const bool endline);
 
     // local rank single step data and metadata pack buffer, used in writer,
     // only accessed from writer app API thread, does not need mutex

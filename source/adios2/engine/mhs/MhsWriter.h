@@ -24,12 +24,10 @@ class MhsWriter : public Engine
 {
 
 public:
-    MhsWriter(IO &adios, const std::string &name, const Mode mode,
-              helper::Comm comm);
+    MhsWriter(IO &adios, const std::string &name, const Mode mode, helper::Comm comm);
     virtual ~MhsWriter();
 
-    StepStatus BeginStep(StepMode mode,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;
@@ -43,8 +41,8 @@ private:
 
     void PutSubEngine(bool finalPut = false);
 
-#define declare_type(T)                                                        \
-    void DoPutSync(Variable<T> &, const T *) final;                            \
+#define declare_type(T)                                                                            \
+    void DoPutSync(Variable<T> &, const T *) final;                                                \
     void DoPutDeferred(Variable<T> &, const T *) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

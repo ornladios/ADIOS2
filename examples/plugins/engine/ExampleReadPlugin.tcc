@@ -19,8 +19,7 @@ namespace plugin
 {
 
 template <typename T>
-void ExampleReadPlugin::AddVariable(const std::string &name, Dims shape,
-                                    Dims start, Dims count)
+void ExampleReadPlugin::AddVariable(const std::string &name, Dims shape, Dims start, Dims count)
 {
     core::Variable<T> *v = m_IO.InquireVariable<T>(name);
     if (!v)
@@ -30,8 +29,7 @@ void ExampleReadPlugin::AddVariable(const std::string &name, Dims shape,
 }
 
 template <class T>
-inline void ExampleReadPlugin::ReadVariable(core::Variable<T> &variable,
-                                            T *values)
+inline void ExampleReadPlugin::ReadVariable(core::Variable<T> &variable, T *values)
 {
     while (m_DataFile.good())
     {
@@ -65,9 +63,8 @@ inline void ExampleReadPlugin::ReadVariable(core::Variable<T> &variable,
 }
 
 template <>
-inline void
-ExampleReadPlugin::ReadVariable(core::Variable<std::string> &variable,
-                                std::string *values)
+inline void ExampleReadPlugin::ReadVariable(core::Variable<std::string> &variable,
+                                            std::string *values)
 {
     while (m_DataFile.good())
     {
@@ -82,8 +79,7 @@ ExampleReadPlugin::ReadVariable(core::Variable<std::string> &variable,
 }
 
 template <>
-inline void ExampleReadPlugin::ReadVariable(core::Variable<char> &variable,
-                                            char *values)
+inline void ExampleReadPlugin::ReadVariable(core::Variable<char> &variable, char *values)
 {
     while (m_DataFile.good())
     {
@@ -101,9 +97,8 @@ inline void ExampleReadPlugin::ReadVariable(core::Variable<char> &variable,
 }
 
 template <>
-inline void
-ExampleReadPlugin::ReadVariable(core::Variable<unsigned char> &variable,
-                                unsigned char *values)
+inline void ExampleReadPlugin::ReadVariable(core::Variable<unsigned char> &variable,
+                                            unsigned char *values)
 {
     while (m_DataFile.good())
     {
@@ -123,9 +118,8 @@ ExampleReadPlugin::ReadVariable(core::Variable<unsigned char> &variable,
 }
 
 template <>
-inline void
-ExampleReadPlugin::ReadVariable(core::Variable<signed char> &variable,
-                                signed char *values)
+inline void ExampleReadPlugin::ReadVariable(core::Variable<signed char> &variable,
+                                            signed char *values)
 {
     while (m_DataFile.good())
     {
@@ -145,8 +139,7 @@ ExampleReadPlugin::ReadVariable(core::Variable<signed char> &variable,
 }
 
 template <>
-inline void ExampleReadPlugin::ReadVariable(core::Variable<short> &variable,
-                                            short *values)
+inline void ExampleReadPlugin::ReadVariable(core::Variable<short> &variable, short *values)
 {
     while (m_DataFile.good())
     {
@@ -166,9 +159,8 @@ inline void ExampleReadPlugin::ReadVariable(core::Variable<short> &variable,
 }
 
 template <>
-inline void
-ExampleReadPlugin::ReadVariable(core::Variable<unsigned short> &variable,
-                                unsigned short *values)
+inline void ExampleReadPlugin::ReadVariable(core::Variable<unsigned short> &variable,
+                                            unsigned short *values)
 {
     while (m_DataFile.good())
     {
@@ -188,9 +180,8 @@ ExampleReadPlugin::ReadVariable(core::Variable<unsigned short> &variable,
 }
 
 template <>
-inline void
-ExampleReadPlugin::ReadVariable(core::Variable<long double> &variable,
-                                long double *values)
+inline void ExampleReadPlugin::ReadVariable(core::Variable<long double> &variable,
+                                            long double *values)
 {
     while (m_DataFile.good())
     {
@@ -208,8 +199,8 @@ ExampleReadPlugin::ReadVariable(core::Variable<long double> &variable,
                 }
                 catch (...)
                 {
-                    std::throw_with_nested(std::invalid_argument(
-                        "ERROR: could not cast " + val + " to long double "));
+                    std::throw_with_nested(
+                        std::invalid_argument("ERROR: could not cast " + val + " to long double "));
                 }
             }
             break;
@@ -218,21 +209,17 @@ ExampleReadPlugin::ReadVariable(core::Variable<long double> &variable,
 }
 
 template <>
-inline void
-ExampleReadPlugin::ReadVariable(core::Variable<std::complex<float>> &variable,
-                                std::complex<float> *values)
+inline void ExampleReadPlugin::ReadVariable(core::Variable<std::complex<float>> &variable,
+                                            std::complex<float> *values)
 {
-    throw std::invalid_argument(
-        "ERROR: std::complex<float> not supported in this engine");
+    throw std::invalid_argument("ERROR: std::complex<float> not supported in this engine");
 }
 
 template <>
-inline void
-ExampleReadPlugin::ReadVariable(core::Variable<std::complex<double>> &variable,
-                                std::complex<double> *values)
+inline void ExampleReadPlugin::ReadVariable(core::Variable<std::complex<double>> &variable,
+                                            std::complex<double> *values)
 {
-    throw std::invalid_argument(
-        "ERROR: std::complex<double> not supported in this engine");
+    throw std::invalid_argument("ERROR: std::complex<double> not supported in this engine");
 }
 } // end namespace plugin
 } // end namespace adios2

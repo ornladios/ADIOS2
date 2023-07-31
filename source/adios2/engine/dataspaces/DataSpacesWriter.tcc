@@ -72,14 +72,11 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
         {
             for (int i = 0; i < ndims; i++)
             {
-                gdims_in[i] =
-                    static_cast<uint64_t>(variable.m_Shape[ndims - i - 1]);
+                gdims_in[i] = static_cast<uint64_t>(variable.m_Shape[ndims - i - 1]);
                 dims_vec.push_back(gdims_in[i]);
-                lb_in[i] =
-                    static_cast<uint64_t>(variable.m_Start[ndims - i - 1]);
-                ub_in[i] =
-                    static_cast<uint64_t>(variable.m_Start[ndims - i - 1] +
-                                          variable.m_Count[ndims - i - 1] - 1);
+                lb_in[i] = static_cast<uint64_t>(variable.m_Start[ndims - i - 1]);
+                ub_in[i] = static_cast<uint64_t>(variable.m_Start[ndims - i - 1] +
+                                                 variable.m_Count[ndims - i - 1] - 1);
             }
         }
         else
@@ -90,8 +87,7 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
                 gdims_in[i] = static_cast<uint64_t>(variable.m_Shape[i]);
                 dims_vec.push_back(gdims_in[i]);
                 lb_in[i] = static_cast<uint64_t>(variable.m_Start[i]);
-                ub_in[i] = static_cast<uint64_t>(variable.m_Start[i] +
-                                                 variable.m_Count[i] - 1);
+                ub_in[i] = static_cast<uint64_t>(variable.m_Start[i] + variable.m_Count[i] - 1);
             }
         }
     }
@@ -123,12 +119,10 @@ void DataSpacesWriter::DoPutSyncCommon(Variable<T> &variable, const T *values)
 #ifdef HAVE_DSPACES2
     dspaces_client_t *client = get_client_handle();
     dspaces_define_gdim(*client, var_str, ndims, gdims_in);
-    dspaces_put(*client, var_str, version, variable.m_ElementSize, ndims, lb_in,
-                ub_in, values);
+    dspaces_put(*client, var_str, version, variable.m_ElementSize, ndims, lb_in, ub_in, values);
 #else
     dspaces_define_gdim(var_str, ndims, gdims_in);
-    dspaces_put(var_str, version, variable.m_ElementSize, ndims, lb_in, ub_in,
-                values);
+    dspaces_put(var_str, version, variable.m_ElementSize, ndims, lb_in, ub_in, values);
     dspaces_put_sync();
     dspaces_put_sync();
 #endif /* HAVE_DSPACES2 */

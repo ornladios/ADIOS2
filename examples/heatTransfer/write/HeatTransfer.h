@@ -45,8 +45,7 @@ private:
     const Settings &m_s;
 
     const double edgetemp = 3.0; // temperature at the edges of the global plate
-    const double omega =
-        0.8; // weight for current temp is (1-omega) in iteration
+    const double omega = 0.8;    // weight for current temp is (1-omega) in iteration
 
     // 2D data arrays (ndx+2) * (ndy+2) size, including ghost cells
     std::unique_ptr<double[]> m_T1Buf;

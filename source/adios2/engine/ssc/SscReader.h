@@ -24,30 +24,27 @@ namespace engine
 class SscReader : public Engine
 {
 public:
-    SscReader(IO &adios, const std::string &name, const Mode mode,
-              helper::Comm comm);
+    SscReader(IO &adios, const std::string &name, const Mode mode, helper::Comm comm);
     ~SscReader();
-    StepStatus BeginStep(
-        StepMode stepMode = StepMode::Read,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode stepMode = StepMode::Read,
+                         const float timeoutSeconds = std::numeric_limits<float>::max()) final;
     void PerformGets() final;
     size_t CurrentStep() const final;
     void EndStep() final;
 
 private:
-#define declare_type(T)                                                        \
-    void DoGetSync(Variable<T> &, T *) final;                                  \
-    void DoGetDeferred(Variable<T> &, T *) final;                              \
-    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(                    \
-        const Variable<T> &variable, const size_t step) const final;
+#define declare_type(T)                                                                            \
+    void DoGetSync(Variable<T> &, T *) final;                                                      \
+    void DoGetDeferred(Variable<T> &, T *) final;                                                  \
+    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(const Variable<T> &variable,            \
+                                                           const size_t step) const final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     void DoGetStructSync(VariableStruct &, void *) final;
     void DoGetStructDeferred(VariableStruct &, void *) final;
-    std::vector<VariableStruct::BPInfo>
-    DoBlocksInfoStruct(const VariableStruct &variable,
-                       const size_t step) const final;
+    std::vector<VariableStruct::BPInfo> DoBlocksInfoStruct(const VariableStruct &variable,
+                                                           const size_t step) const final;
 
     void DoClose(const int transportIndex = -1) final;
 

@@ -42,8 +42,7 @@ void printUsage()
               << "  iterations: one step consist of this many iterations\n\n";
 }
 
-void Compute(const double *Tin, std::vector<double> &Tout,
-             std::vector<double> &dT, bool firstStep)
+void Compute(const double *Tin, std::vector<double> &Tout, std::vector<double> &dT, bool firstStep)
 {
     /* Compute dT and
      * copy Tin into Tout as it will be used for calculating dT in the
@@ -96,10 +95,8 @@ void setupOutputIO(const Settings &s, MPI_Comm comm)
     // For inline engine, there's no exchange of data between processes,
     // so the shape of variables to be written out for validation
     // is the same as the writer
-    vTout = outIO.DefineVariable<double>("T", {s.gndx, s.gndy},
-                                         {s.offsx, s.offsy}, {s.ndx, s.ndy});
-    vdT = outIO.DefineVariable<double>("dT", {s.gndx, s.gndy},
-                                       {s.offsx, s.offsy}, {s.ndx, s.ndy});
+    vTout = outIO.DefineVariable<double>("T", {s.gndx, s.gndy}, {s.offsx, s.offsy}, {s.ndx, s.ndy});
+    vdT = outIO.DefineVariable<double>("dT", {s.gndx, s.gndy}, {s.offsx, s.offsy}, {s.ndx, s.ndy});
     writer = outIO.Open(s.outputfile, adios2::Mode::Write, comm);
 }
 

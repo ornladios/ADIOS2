@@ -48,8 +48,7 @@ int main(int argc, char *argv[])
     {
         if (rank == 0)
         {
-            std::cerr << "Usage: " << argv[0] << " [/path/to/config.xml]"
-                      << std::endl;
+            std::cerr << "Usage: " << argv[0] << " [/path/to/config.xml]" << std::endl;
         }
         return 1;
     }
@@ -81,8 +80,7 @@ int main(int argc, char *argv[])
 
         if (!bpWriter)
         {
-            throw std::ios_base::failure(
-                "ERROR: bpWriter not created at Open\n");
+            throw std::ios_base::failure("ERROR: bpWriter not created at Open\n");
         }
 
         /** Write variable for buffering */
@@ -93,15 +91,13 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)
     {
-        std::cout
-            << "IO System base failure exception, STOPPING PROGRAM from rank "
-            << rank << "\n";
+        std::cout << "IO System base failure exception, STOPPING PROGRAM from rank " << rank
+                  << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::exception &e)

@@ -23,8 +23,7 @@ extern "C" {
 
 #if ADIOS2_USE_MPI
 #define adios2_init(comm) adios2_init_mpi(comm)
-#define adios2_init_config(config_file, comm)                                  \
-    adios2_init_config_mpi(config_file, comm)
+#define adios2_init_config(config_file, comm) adios2_init_config_mpi(config_file, comm)
 
 /**
  * Starting point for MPI apps. Creates an ADIOS handler.
@@ -97,8 +96,7 @@ adios2_io *adios2_at_io(adios2_adios *adios, const char *name);
  * @param type supported ADIOS2 operator type: zfp, sz
  * @return success: handler, failure: NULL
  */
-adios2_operator *adios2_define_operator(adios2_adios *adios, const char *name,
-                                        const char *type);
+adios2_operator *adios2_define_operator(adios2_adios *adios, const char *name, const char *type);
 
 /**
  * Retrieves a previously defined operator handler
@@ -136,8 +134,7 @@ adios2_error adios2_finalize(adios2_adios *adios);
  * @param name input unique identifier for io to be removed
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_remove_io(adios2_bool *result, adios2_adios *adios,
-                              const char *name);
+adios2_error adios2_remove_io(adios2_bool *result, adios2_adios *adios, const char *name);
 
 /**
  * DANGER ZONE: removes all ios created with adios2_declare_io.

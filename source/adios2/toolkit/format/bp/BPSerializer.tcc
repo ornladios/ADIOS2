@@ -19,9 +19,10 @@ namespace format
 {
 
 template <class T>
-inline void BPSerializer::PutAttributeCharacteristicValueInIndex(
-    uint8_t &characteristicsCounter, const core::Attribute<T> &attribute,
-    std::vector<char> &buffer) noexcept
+inline void
+BPSerializer::PutAttributeCharacteristicValueInIndex(uint8_t &characteristicsCounter,
+                                                     const core::Attribute<T> &attribute,
+                                                     std::vector<char> &buffer) noexcept
 {
     const uint8_t characteristicID = CharacteristicID::characteristic_value;
 
@@ -33,16 +34,14 @@ inline void BPSerializer::PutAttributeCharacteristicValueInIndex(
     }
     else // array
     {
-        helper::InsertToBuffer(buffer, attribute.m_DataArray.data(),
-                               attribute.m_Elements);
+        helper::InsertToBuffer(buffer, attribute.m_DataArray.data(), attribute.m_Elements);
     }
     ++characteristicsCounter;
 }
 
 template <class T>
 void BPSerializer::PutCharacteristicRecord(const uint8_t characteristicID,
-                                           uint8_t &characteristicsCounter,
-                                           const T &value,
+                                           uint8_t &characteristicsCounter, const T &value,
                                            std::vector<char> &buffer) noexcept
 {
     const uint8_t id = characteristicID;
@@ -53,10 +52,8 @@ void BPSerializer::PutCharacteristicRecord(const uint8_t characteristicID,
 
 template <class T>
 void BPSerializer::PutCharacteristicRecord(const uint8_t characteristicID,
-                                           uint8_t &characteristicsCounter,
-                                           const T &value,
-                                           std::vector<char> &buffer,
-                                           size_t &position) noexcept
+                                           uint8_t &characteristicsCounter, const T &value,
+                                           std::vector<char> &buffer, size_t &position) noexcept
 {
     const uint8_t id = characteristicID;
     helper::CopyToBuffer(buffer, position, &id);
@@ -65,10 +62,9 @@ void BPSerializer::PutCharacteristicRecord(const uint8_t characteristicID,
 }
 
 template <class T>
-inline void BPSerializer::PutPayloadInBuffer(
-    const core::Variable<T> &variable,
-    const typename core::Variable<T>::BPInfo &blockInfo,
-    const bool sourceRowMajor) noexcept
+inline void BPSerializer::PutPayloadInBuffer(const core::Variable<T> &variable,
+                                             const typename core::Variable<T>::BPInfo &blockInfo,
+                                             const bool sourceRowMajor) noexcept
 {
     const size_t blockSize = helper::GetTotalSize(blockInfo.Count);
     m_Profiler.Start("memcpy");
@@ -76,9 +72,8 @@ inline void BPSerializer::PutPayloadInBuffer(
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
     if (blockInfo.MemSpace == MemorySpace::GPU)
     {
-        helper::CopyFromGPUToBuffer(m_Data.m_Buffer, m_Data.m_Position,
-                                    blockInfo.Data, blockInfo.MemSpace,
-                                    blockSize);
+        helper::CopyFromGPUToBuffer(m_Data.m_Buffer, m_Data.m_Position, blockInfo.Data,
+                                    blockInfo.MemSpace, blockSize);
         m_Profiler.Stop("memcpy");
         m_Data.m_AbsolutePosition += blockSize * sizeof(T);
         return;
@@ -87,17 +82,15 @@ inline void BPSerializer::PutPayloadInBuffer(
 
     if (!blockInfo.MemoryStart.empty())
     {
-        helper::CopyMemoryBlock(
-            reinterpret_cast<T *>(m_Data.m_Buffer.data() + m_Data.m_Position),
-            blockInfo.Start, blockInfo.Count, sourceRowMajor, blockInfo.Data,
-            blockInfo.Start, blockInfo.Count, sourceRowMajor, false, Dims(),
-            Dims(), blockInfo.MemoryStart, blockInfo.MemoryCount);
+        helper::CopyMemoryBlock(reinterpret_cast<T *>(m_Data.m_Buffer.data() + m_Data.m_Position),
+                                blockInfo.Start, blockInfo.Count, sourceRowMajor, blockInfo.Data,
+                                blockInfo.Start, blockInfo.Count, sourceRowMajor, false, Dims(),
+                                Dims(), blockInfo.MemoryStart, blockInfo.MemoryCount);
         m_Data.m_Position += blockSize * sizeof(T);
     }
     else
     {
-        helper::CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position,
-                                    blockInfo.Data, blockSize,
+        helper::CopyToBufferThreads(m_Data.m_Buffer, m_Data.m_Position, blockInfo.Data, blockSize,
                                     m_Parameters.Threads);
     }
     m_Profiler.Stop("memcpy");
@@ -117,39 +110,33 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
     const uint32_t characteristicsLength =
         helper::ReadValue<uint32_t>(buffer, currentPosition, isLittleEndian);
 
-    const size_t endPosition =
-        currentPosition + static_cast<size_t>(characteristicsLength);
+    const size_t endPosition = currentPosition + static_cast<size_t>(characteristicsLength);
 
     size_t dimensionsSize = 0; // get it from dimensions characteristics
 
     while (currentPosition < endPosition)
     {
-        const uint8_t id =
-            helper::ReadValue<uint8_t>(buffer, currentPosition, isLittleEndian);
+        const uint8_t id = helper::ReadValue<uint8_t>(buffer, currentPosition, isLittleEndian);
 
         switch (id)
         {
-        case (characteristic_time_index):
-        {
+        case (characteristic_time_index): {
             currentPosition += sizeof(uint32_t);
             break;
         }
 
-        case (characteristic_file_index):
-        {
+        case (characteristic_file_index): {
             currentPosition += sizeof(uint32_t);
             break;
         }
 
-        case (characteristic_value):
-        {
+        case (characteristic_value): {
             if (dataType == type_string)
             {
                 // first get the length of the string
                 const size_t length = static_cast<size_t>(
 
-                    helper::ReadValue<uint16_t>(buffer, currentPosition,
-                                                isLittleEndian));
+                    helper::ReadValue<uint16_t>(buffer, currentPosition, isLittleEndian));
 
                 currentPosition += length;
             }
@@ -162,98 +149,80 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
 
             break;
         }
-        case (characteristic_min):
-        {
+        case (characteristic_min): {
             currentPosition += sizeof(T);
             break;
         }
-        case (characteristic_max):
-        {
+        case (characteristic_max): {
             currentPosition += sizeof(T);
             break;
         }
-        case (characteristic_minmax):
-        {
+        case (characteristic_minmax): {
             // first get the number of subblocks
-            const uint16_t M =
-                helper::ReadValue<uint16_t>(buffer, currentPosition);
+            const uint16_t M = helper::ReadValue<uint16_t>(buffer, currentPosition);
             currentPosition += 2 * sizeof(T); // block min/max
             if (M > 1)
             {
                 currentPosition += 1 + 8; // method (byte), blockSize (uint64_t)
-                currentPosition +=
-                    dimensionsSize * sizeof(uint16_t); // N-dim division
-                currentPosition += 2 * M * sizeof(T);  // M * min/max
+                currentPosition += dimensionsSize * sizeof(uint16_t); // N-dim division
+                currentPosition += 2 * M * sizeof(T);                 // M * min/max
             }
             break;
         }
-        case (characteristic_offset):
-        {
-            const uint64_t currentOffset = helper::ReadValue<uint64_t>(
-                buffer, currentPosition, isLittleEndian);
+        case (characteristic_offset): {
+            const uint64_t currentOffset =
+                helper::ReadValue<uint64_t>(buffer, currentPosition, isLittleEndian);
 
             const uint64_t updatedOffset =
-                currentOffset +
-                static_cast<uint64_t>(m_Data.m_AbsolutePosition);
+                currentOffset + static_cast<uint64_t>(m_Data.m_AbsolutePosition);
 
             currentPosition -= sizeof(uint64_t);
             helper::CopyToBuffer(buffer, currentPosition, &updatedOffset);
             break;
         }
-        case (characteristic_payload_offset):
-        {
-            const uint64_t currentPayloadOffset = helper::ReadValue<uint64_t>(
-                buffer, currentPosition, isLittleEndian);
+        case (characteristic_payload_offset): {
+            const uint64_t currentPayloadOffset =
+                helper::ReadValue<uint64_t>(buffer, currentPosition, isLittleEndian);
 
             const uint64_t updatedPayloadOffset =
-                currentPayloadOffset +
-                static_cast<uint64_t>(m_Data.m_AbsolutePosition);
+                currentPayloadOffset + static_cast<uint64_t>(m_Data.m_AbsolutePosition);
 
             currentPosition -= sizeof(uint64_t);
-            helper::CopyToBuffer(buffer, currentPosition,
-                                 &updatedPayloadOffset);
+            helper::CopyToBuffer(buffer, currentPosition, &updatedPayloadOffset);
             break;
         }
-        case (characteristic_dimensions):
-        {
-            dimensionsSize = static_cast<size_t>(helper::ReadValue<uint8_t>(
-                buffer, currentPosition, isLittleEndian));
+        case (characteristic_dimensions): {
+            dimensionsSize = static_cast<size_t>(
+                helper::ReadValue<uint8_t>(buffer, currentPosition, isLittleEndian));
 
-            currentPosition +=
-                3 * sizeof(uint64_t) * dimensionsSize + 2; // 2 is for length
+            currentPosition += 3 * sizeof(uint64_t) * dimensionsSize + 2; // 2 is for length
             break;
         }
-        case (characteristic_transform_type):
-        {
-            const size_t typeLength =
-                static_cast<size_t>(helper::ReadValue<uint8_t>(
-                    buffer, currentPosition, isLittleEndian));
+        case (characteristic_transform_type): {
+            const size_t typeLength = static_cast<size_t>(
+                helper::ReadValue<uint8_t>(buffer, currentPosition, isLittleEndian));
             // skip over operator name (transform type) string
             currentPosition += typeLength;
 
             // skip over pre-data type (1) and dimensionsSize (1)
             currentPosition += 2;
 
-            const uint16_t dimensionsLength = helper::ReadValue<uint16_t>(
-                buffer, currentPosition, isLittleEndian);
+            const uint16_t dimensionsLength =
+                helper::ReadValue<uint16_t>(buffer, currentPosition, isLittleEndian);
             // skip over dimensions
             currentPosition += dimensionsLength;
 
-            const size_t metadataLength =
-                static_cast<size_t>(helper::ReadValue<uint16_t>(
-                    buffer, currentPosition, isLittleEndian));
+            const size_t metadataLength = static_cast<size_t>(
+                helper::ReadValue<uint16_t>(buffer, currentPosition, isLittleEndian));
             // skip over operator metadata
             currentPosition += metadataLength;
 
             break;
         }
-        default:
-        {
+        default: {
             helper::Throw<std::invalid_argument>(
-                "Toolkit", "format::bp::BPSerializer",
-                "UpdateIndexOffsetsCharacteristics",
-                "characteristic ID " + std::to_string(id) +
-                    " not supported when updating offsets");
+                "Toolkit", "format::bp::BPSerializer", "UpdateIndexOffsetsCharacteristics",
+                "characteristic ID " + std::to_string(id) + " not supported when updating offsets");
         }
 
         } // end id switch
@@ -262,8 +231,7 @@ void BPSerializer::UpdateIndexOffsetsCharacteristics(size_t &currentPosition,
 
 template <class T>
 inline size_t
-BPSerializer::GetAttributeSizeInData(const core::Attribute<T> &attribute) const
-    noexcept
+BPSerializer::GetAttributeSizeInData(const core::Attribute<T> &attribute) const noexcept
 {
     size_t size = 14 + attribute.m_Name.size() + 10;
     size += 4 + sizeof(T) * attribute.m_Elements;
@@ -271,8 +239,7 @@ BPSerializer::GetAttributeSizeInData(const core::Attribute<T> &attribute) const
 }
 
 template <class T>
-void BPSerializer::PutAttributeInData(const core::Attribute<T> &attribute,
-                                      Stats<T> &stats) noexcept
+void BPSerializer::PutAttributeInData(const core::Attribute<T> &attribute, Stats<T> &stats) noexcept
 {
     DoPutAttributeInData(attribute, stats);
 }
@@ -313,11 +280,10 @@ void BPSerializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
     uint8_t characteristicsCounter = 0;
 
     // DIMENSIONS
-    PutCharacteristicRecord(characteristic_time_index, characteristicsCounter,
-                            stats.Step, buffer);
+    PutCharacteristicRecord(characteristic_time_index, characteristicsCounter, stats.Step, buffer);
 
-    PutCharacteristicRecord(characteristic_file_index, characteristicsCounter,
-                            stats.FileIndex, buffer);
+    PutCharacteristicRecord(characteristic_file_index, characteristicsCounter, stats.FileIndex,
+                            buffer);
 
     uint8_t characteristicID = characteristic_dimensions;
     helper::InsertToBuffer(buffer, &characteristicID);
@@ -329,15 +295,12 @@ void BPSerializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
     ++characteristicsCounter;
 
     // VALUE
-    PutAttributeCharacteristicValueInIndex(characteristicsCounter, attribute,
-                                           buffer);
+    PutAttributeCharacteristicValueInIndex(characteristicsCounter, attribute, buffer);
 
-    PutCharacteristicRecord(characteristic_offset, characteristicsCounter,
-                            stats.Offset, buffer);
+    PutCharacteristicRecord(characteristic_offset, characteristicsCounter, stats.Offset, buffer);
 
-    PutCharacteristicRecord(characteristic_payload_offset,
-                            characteristicsCounter, stats.PayloadOffset,
-                            buffer);
+    PutCharacteristicRecord(characteristic_payload_offset, characteristicsCounter,
+                            stats.PayloadOffset, buffer);
     // END OF CHARACTERISTICS
 
     // Back to characteristics count and length
@@ -346,16 +309,15 @@ void BPSerializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
                          &characteristicsCounter); // count (1)
 
     // remove its own length (4) + characteristic counter (1)
-    const uint32_t characteristicsLength = static_cast<uint32_t>(
-        buffer.size() - characteristicsCountPosition - 4 - 1);
+    const uint32_t characteristicsLength =
+        static_cast<uint32_t>(buffer.size() - characteristicsCountPosition - 4 - 1);
 
     helper::CopyToBuffer(buffer, backPosition,
                          &characteristicsLength); // length
 
     // Remember this attribute and its serialized piece
     // should not affect BP3 as it's recalculated
-    const uint32_t indexLength =
-        static_cast<uint32_t>(buffer.size() - indexLengthPosition - 4);
+    const uint32_t indexLength = static_cast<uint32_t>(buffer.size() - indexLengthPosition - 4);
 
     helper::CopyToBuffer(buffer, indexLengthPosition, &indexLength);
     m_MetadataSet.AttributesIndices.emplace(attribute.m_Name, index);
@@ -364,10 +326,9 @@ void BPSerializer::PutAttributeInIndex(const core::Attribute<T> &attribute,
 
 // operations related functions
 template <class T>
-void BPSerializer::PutCharacteristicOperation(
-    const core::Variable<T> &variable,
-    const typename core::Variable<T>::BPInfo &blockInfo,
-    std::vector<char> &buffer) noexcept
+void BPSerializer::PutCharacteristicOperation(const core::Variable<T> &variable,
+                                              const typename core::Variable<T>::BPInfo &blockInfo,
+                                              std::vector<char> &buffer) noexcept
 {
     const std::string type = blockInfo.Operations[0]->m_TypeString;
     const uint8_t typeLength = static_cast<uint8_t>(type.size());
@@ -382,12 +343,11 @@ void BPSerializer::PutCharacteristicOperation(
     helper::InsertToBuffer(buffer, &dimensions); // count
     const uint16_t dimensionsLength = static_cast<uint16_t>(24 * dimensions);
     helper::InsertToBuffer(buffer, &dimensionsLength); // length
-    PutDimensionsRecord(blockInfo.Count, blockInfo.Shape, blockInfo.Start,
-                        buffer);
+    PutDimensionsRecord(blockInfo.Count, blockInfo.Shape, blockInfo.Start, buffer);
 
     // here put the metadata info depending on operation
-    const uint64_t inputSize = static_cast<uint64_t>(
-        helper::GetTotalSize(blockInfo.Count) * sizeof(T));
+    const uint64_t inputSize =
+        static_cast<uint64_t>(helper::GetTotalSize(blockInfo.Count) * sizeof(T));
 
     // fixed size only stores inputSize 8-bytes and outputSize 8-bytes
     constexpr uint16_t metadataSize = 16;
@@ -401,28 +361,26 @@ void BPSerializer::PutCharacteristicOperation(
 }
 
 template <class T>
-void BPSerializer::PutOperationPayloadInBuffer(
-    const core::Variable<T> &variable,
-    const typename core::Variable<T>::BPInfo &blockInfo)
+void BPSerializer::PutOperationPayloadInBuffer(const core::Variable<T> &variable,
+                                               const typename core::Variable<T>::BPInfo &blockInfo)
 {
     size_t outputSize = blockInfo.Operations[0]->Operate(
-        reinterpret_cast<char *>(blockInfo.Data), blockInfo.Start,
-        blockInfo.Count, variable.m_Type,
+        reinterpret_cast<char *>(blockInfo.Data), blockInfo.Start, blockInfo.Count, variable.m_Type,
         m_Data.m_Buffer.data() + m_Data.m_Position);
 
     if (outputSize == 0) // the operator was not applied
         outputSize = helper::CopyMemoryWithOpHeader(
-            reinterpret_cast<char *>(blockInfo.Data), blockInfo.Count,
-            variable.m_Type, m_Data.m_Buffer.data() + m_Data.m_Position,
-            blockInfo.Operations[0]->GetHeaderSize(), blockInfo.MemSpace);
+            reinterpret_cast<char *>(blockInfo.Data), blockInfo.Count, variable.m_Type,
+            m_Data.m_Buffer.data() + m_Data.m_Position, blockInfo.Operations[0]->GetHeaderSize(),
+            blockInfo.MemSpace);
 
     m_Data.m_Position += outputSize;
     m_Data.m_AbsolutePosition += outputSize;
 
     // update metadata
     bool isFound = false;
-    SerialElementIndex &variableIndex = GetSerialElementIndex(
-        variable.m_Name, m_MetadataSet.VarsIndices, isFound);
+    SerialElementIndex &variableIndex =
+        GetSerialElementIndex(variable.m_Name, m_MetadataSet.VarsIndices, isFound);
 
     size_t backPosition = m_OutputSizeMetadataPosition;
 

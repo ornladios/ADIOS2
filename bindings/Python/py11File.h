@@ -39,11 +39,10 @@ public:
          const std::string &configFile, const std::string ioInConfigFile);
 #endif
 
-    File(const std::string &name, const std::string mode,
-         const std::string engineType = "BPFile");
+    File(const std::string &name, const std::string mode, const std::string engineType = "BPFile");
 
-    File(const std::string &name, const std::string mode,
-         const std::string &configFile, const std::string ioInConfigFile);
+    File(const std::string &name, const std::string mode, const std::string &configFile,
+         const std::string ioInConfigFile);
 
     ~File() = default;
 
@@ -51,38 +50,31 @@ public:
 
     void SetParameters(const Params &parameters) noexcept;
 
-    size_t AddTransport(const std::string type,
-                        const Params &parameters = Params());
+    size_t AddTransport(const std::string type, const Params &parameters = Params());
 
     std::map<std::string, adios2::Params>
-    AvailableVariables(const std::vector<std::string> &keys =
-                           std::vector<std::string>()) noexcept;
+    AvailableVariables(const std::vector<std::string> &keys = std::vector<std::string>()) noexcept;
 
     std::map<std::string, adios2::Params> AvailableAttributes() noexcept;
 
     void WriteAttribute(const std::string &name, const pybind11::array &array,
-                        const std::string &variableName = "",
-                        const std::string separator = "/",
+                        const std::string &variableName = "", const std::string separator = "/",
                         const bool endStep = false);
 
     void WriteAttribute(const std::string &name, const std::string &stringValue,
-                        const std::string &variableName = "",
-                        const std::string separator = "/",
+                        const std::string &variableName = "", const std::string separator = "/",
                         const bool endStep = false);
 
-    void WriteAttribute(const std::string &name,
-                        const std::vector<std::string> &stringArray,
-                        const std::string &variableName = "",
-                        const std::string separator = "/",
+    void WriteAttribute(const std::string &name, const std::vector<std::string> &stringArray,
+                        const std::string &variableName = "", const std::string separator = "/",
                         const bool endStep = false);
 
-    void Write(const std::string &name, const pybind11::array &array,
-               const Dims &shape, const Dims &start, const Dims &count,
+    void Write(const std::string &name, const pybind11::array &array, const Dims &shape,
+               const Dims &start, const Dims &count, const bool endStep = false);
+
+    void Write(const std::string &name, const pybind11::array &array, const Dims &shape,
+               const Dims &start, const Dims &count, const adios2::vParams &operations,
                const bool endStep = false);
-
-    void Write(const std::string &name, const pybind11::array &array,
-               const Dims &shape, const Dims &start, const Dims &count,
-               const adios2::vParams &operations, const bool endStep = false);
 
     void Write(const std::string &name, const pybind11::array &array,
                const bool isLocalValue = false, const bool endStep = false);
@@ -92,31 +84,25 @@ public:
 
     bool GetStep() const;
 
-    std::vector<std::string> ReadString(const std::string &name,
-                                        const size_t blockID = 0);
+    std::vector<std::string> ReadString(const std::string &name, const size_t blockID = 0);
 
-    std::vector<std::string> ReadString(const std::string &name,
-                                        const size_t stepStart,
-                                        const size_t stepCount,
-                                        const size_t blockID = 0);
+    std::vector<std::string> ReadString(const std::string &name, const size_t stepStart,
+                                        const size_t stepCount, const size_t blockID = 0);
 
     pybind11::array Read(const std::string &name, const size_t blockID = 0);
 
-    pybind11::array Read(const std::string &name, const Dims &start,
-                         const Dims &count, const size_t blockID = 0);
+    pybind11::array Read(const std::string &name, const Dims &start, const Dims &count,
+                         const size_t blockID = 0);
 
-    pybind11::array Read(const std::string &name, const Dims &start,
-                         const Dims &count, const size_t stepStart,
-                         const size_t stepCount, const size_t blockID = 0);
+    pybind11::array Read(const std::string &name, const Dims &start, const Dims &count,
+                         const size_t stepStart, const size_t stepCount, const size_t blockID = 0);
 
-    pybind11::array ReadAttribute(const std::string &name,
-                                  const std::string &variableName = "",
+    pybind11::array ReadAttribute(const std::string &name, const std::string &variableName = "",
                                   const std::string separator = "/");
 
-    std::vector<std::string>
-    ReadAttributeString(const std::string &name,
-                        const std::string &variableName = "",
-                        const std::string separator = "/");
+    std::vector<std::string> ReadAttributeString(const std::string &name,
+                                                 const std::string &variableName = "",
+                                                 const std::string separator = "/");
 
     void EndStep();
 
@@ -131,9 +117,8 @@ private:
     adios2::Mode ToMode(const std::string mode) const;
 
     template <class T>
-    pybind11::array DoRead(const std::string &name, const Dims &start,
-                           const Dims &count, const size_t stepStart,
-                           const size_t stepCount, const size_t blockID);
+    pybind11::array DoRead(const std::string &name, const Dims &start, const Dims &count,
+                           const size_t stepStart, const size_t stepCount, const size_t blockID);
 };
 
 } // end namespace py11

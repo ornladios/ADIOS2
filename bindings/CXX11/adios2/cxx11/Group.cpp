@@ -21,18 +21,9 @@ Group Group::InquireGroup(std::string group_name)
     auto m = m_Group->InquireGroup(group_name);
     return Group(m);
 }
-std::vector<std::string> Group::AvailableVariables()
-{
-    return m_Group->AvailableVariables();
-}
-std::vector<std::string> Group::AvailableAttributes()
-{
-    return m_Group->AvailableAttributes();
-}
-std::vector<std::string> Group::AvailableGroups()
-{
-    return m_Group->AvailableGroups();
-}
+std::vector<std::string> Group::AvailableVariables() { return m_Group->AvailableVariables(); }
+std::vector<std::string> Group::AvailableAttributes() { return m_Group->AvailableAttributes(); }
+std::vector<std::string> Group::AvailableGroups() { return m_Group->AvailableGroups(); }
 
 std::string Group::InquirePath() { return m_Group->InquirePath(); }
 
@@ -52,7 +43,7 @@ Group::~Group() = default;
 ;
 // Explicit declaration of the public template methods
 // Limits the types
-#define declare_template_instantiation(T)                                      \
+#define declare_template_instantiation(T)                                                          \
     template Variable<T> Group::InquireVariable<T>(const std::string &);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)

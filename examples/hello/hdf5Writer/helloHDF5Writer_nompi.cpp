@@ -33,12 +33,11 @@ int main(int argc, char *argv[])
 
         /** global array : name, { shape (total) }, { start (local) }, { count
          * (local) }, all are constant dimensions */
-        adios2::Variable<float> bpFloats = hdf5IO.DefineVariable<float>(
-            "bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
+        adios2::Variable<float> bpFloats =
+            hdf5IO.DefineVariable<float>("bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine hdf5Writer =
-            hdf5IO.Open("myVector.h5", adios2::Mode::Write);
+        adios2::Engine hdf5Writer = hdf5IO.Open("myVector.h5", adios2::Mode::Write);
 
         /** Write variable for buffering */
         hdf5Writer.Put<float>(bpFloats, myFloats.data());

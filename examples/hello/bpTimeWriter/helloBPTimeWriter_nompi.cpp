@@ -32,11 +32,10 @@ int main(int argc, char *argv[])
 
         /** name, { shape (total dimensions) }, { start (local) }, { count
          * {local} } */
-        adios2::Variable<float> bpFloats = bpIO.DefineVariable<float>(
-            "bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
+        adios2::Variable<float> bpFloats =
+            bpIO.DefineVariable<float>("bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
 
-        adios2::Variable<unsigned int> bpTimeStep =
-            bpIO.DefineVariable<unsigned int>("timeStep");
+        adios2::Variable<unsigned int> bpTimeStep = bpIO.DefineVariable<unsigned int>("timeStep");
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpWriter = bpIO.Open("myVector.bp", adios2::Mode::Write);

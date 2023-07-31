@@ -55,19 +55,15 @@ int main(int argc, char **argv)
     adios2::Dims start{static_cast<size_t>(rank * Nx), 0};
     adios2::Dims count{1, Nx};
     // variable that changes shape every step
-    auto var_ch =
-        outIO.DefineVariable<double>("ChangingShapeVar", shape, start, count);
+    auto var_ch = outIO.DefineVariable<double>("ChangingShapeVar", shape, start, count);
     // variable that is written every other steps but not changing shape
-    auto var_alt = outIO.DefineVariable<double>("AlternatingStepsVar", shape,
-                                                start, count);
+    auto var_alt = outIO.DefineVariable<double>("AlternatingStepsVar", shape, start, count);
     // variable that is written every other steps AND is changing shape
-    auto var_altch = outIO.DefineVariable<double>(
-        "AlternatingStepsAndChangingShapeVar", shape, start, count);
+    auto var_altch =
+        outIO.DefineVariable<double>("AlternatingStepsAndChangingShapeVar", shape, start, count);
     // Other ("normal") variables
-    auto var_fixed =
-        outIO.DefineVariable<double>("FixedShapeVar", shape, start, count);
-    auto var_single =
-        outIO.DefineVariable<double>("SingleStepVar", shape, start, count);
+    auto var_fixed = outIO.DefineVariable<double>("FixedShapeVar", shape, start, count);
+    auto var_single = outIO.DefineVariable<double>("SingleStepVar", shape, start, count);
 
     std::vector<double> buf(Nx + nsteps / 2 + 1, 0.0);
 

@@ -63,8 +63,8 @@ public:
      * @throws std::invalid_argument (user input error) or std::runtime_error
      * (system error)
      */
-    fstream(const std::string &name, adios2::fstream::openmode mode,
-            MPI_Comm comm, const std::string engineType = "BPFile");
+    fstream(const std::string &name, adios2::fstream::openmode mode, MPI_Comm comm,
+            const std::string engineType = "BPFile");
 
     /**
      * High-level API MPI constructor, based on C++11 fstream. Allows for
@@ -79,9 +79,8 @@ public:
      * std::runtime_error
      * (system error)
      */
-    fstream(const std::string &name, const adios2::fstream::openmode mode,
-            MPI_Comm comm, const std::string &configFile,
-            const std::string ioInConfigFile);
+    fstream(const std::string &name, const adios2::fstream::openmode mode, MPI_Comm comm,
+            const std::string &configFile, const std::string ioInConfigFile);
 #endif
 
     /**
@@ -177,8 +176,8 @@ public:
      * @exception std::invalid_argument (user input error) or
      * std::runtime_error (system error)
      */
-    void open(const std::string &name, const openmode mode,
-              const std::string configFile, const std::string ioInConfigFile);
+    void open(const std::string &name, const openmode mode, const std::string configFile,
+              const std::string ioInConfigFile);
 
     /**
      * Set a single stream parameter based on Engine supported parameters.
@@ -214,8 +213,7 @@ public:
      */
     template <class T>
     void write_attribute(const std::string &name, const T &value,
-                         const std::string &variableName = "",
-                         const std::string separator = "/",
+                         const std::string &variableName = "", const std::string separator = "/",
                          const bool endStep = false);
 
     /**
@@ -235,10 +233,8 @@ public:
      * Use adios2::endStep for true.
      */
     template <class T>
-    void write_attribute(const std::string &name, const T *data,
-                         const size_t size,
-                         const std::string &variableName = "",
-                         const std::string separator = "/",
+    void write_attribute(const std::string &name, const T *data, const size_t size,
+                         const std::string &variableName = "", const std::string separator = "/",
                          const bool endStep = false);
 
     /**
@@ -257,11 +253,9 @@ public:
      * std::runtime_error (system error)
      */
     template <class T>
-    void write(const std::string &name, const T *data,
-               const adios2::Dims &shape = adios2::Dims(),
+    void write(const std::string &name, const T *data, const adios2::Dims &shape = adios2::Dims(),
                const adios2::Dims &start = adios2::Dims(),
-               const adios2::Dims &count = adios2::Dims(),
-               const bool endStep = false);
+               const adios2::Dims &count = adios2::Dims(), const bool endStep = false);
 
     /**
      * write overload that allows passing supported operations
@@ -286,10 +280,9 @@ public:
      * std::runtime_error (system error)
      */
     template <class T>
-    void write(const std::string &name, const T *data,
-               const adios2::Dims &shape, const adios2::Dims &start,
-               const adios2::Dims &count, const adios2::vParams &operations,
-               const bool endStep = false);
+    void write(const std::string &name, const T *data, const adios2::Dims &shape,
+               const adios2::Dims &start, const adios2::Dims &count,
+               const adios2::vParams &operations, const bool endStep = false);
 
     /**
      * Write a self-describing single-value variable
@@ -303,8 +296,8 @@ public:
      * std::runtime_error (system error)
      */
     template <class T>
-    void write(const std::string &name, const T &value,
-               const bool isLocalValue = false, const bool endStep = false);
+    void write(const std::string &name, const T &value, const bool isLocalValue = false,
+               const bool endStep = false);
 
     /**
      * Reads into a pre-allocated pointer. When
@@ -365,8 +358,7 @@ public:
      * found
      */
     template <class T>
-    void read(const std::string &name, T &value, const size_t step,
-              const size_t blockID = 0);
+    void read(const std::string &name, T &value, const size_t step, const size_t blockID = 0);
 
     /**
      * Reads into a pre-allocated pointer a selection piece in dimension. When
@@ -405,8 +397,8 @@ public:
      */
     template <class T>
     void read(const std::string &name, T *data, const adios2::Dims &start,
-              const adios2::Dims &count, const size_t stepsStart,
-              const size_t stepsCount, const size_t blockID = 0);
+              const adios2::Dims &count, const size_t stepsStart, const size_t stepsCount,
+              const size_t blockID = 0);
 
     /**
      * Reads entire variable for current step (streaming mode: step by step)
@@ -455,8 +447,8 @@ public:
      * found
      */
     template <class T>
-    std::vector<T> read(const std::string &name, const Dims &start,
-                        const Dims &count, const size_t blockID = 0);
+    std::vector<T> read(const std::string &name, const Dims &start, const Dims &count,
+                        const size_t blockID = 0);
 
     /**
      * Reads a selection piece in dimension and a selection piece in steps
@@ -476,9 +468,8 @@ public:
      * found
      */
     template <class T>
-    std::vector<T> read(const std::string &name, const Dims &start,
-                        const Dims &count, const size_t stepsStart,
-                        const size_t stepsCount, const size_t blockID = 0);
+    std::vector<T> read(const std::string &name, const Dims &start, const Dims &count,
+                        const size_t stepsStart, const size_t stepsCount, const size_t blockID = 0);
 
     /**
      * Reads an attribute returning a vector
@@ -492,8 +483,7 @@ public:
      * @return vector containing attribute data
      */
     template <class T>
-    std::vector<T> read_attribute(const std::string &name,
-                                  const std::string &variableName = "",
+    std::vector<T> read_attribute(const std::string &name, const std::string &variableName = "",
                                   const std::string separator = "/");
 
     /**
@@ -536,67 +526,60 @@ private:
     void CheckOpen(const std::string &name) const;
 };
 
-#define declare_template_instantiation(T)                                      \
-    extern template void fstream::write_attribute<T>(                          \
-        const std::string &, const T &, const std::string &,                   \
-        const std::string, const bool);                                        \
-                                                                               \
-    extern template void fstream::write_attribute<T>(                          \
-        const std::string &, const T *, const size_t, const std::string &,     \
-        const std::string, const bool);                                        \
-                                                                               \
-    extern template std::vector<T> fstream::read_attribute<T>(                 \
+#define declare_template_instantiation(T)                                                          \
+    extern template void fstream::write_attribute<T>(                                              \
+        const std::string &, const T &, const std::string &, const std::string, const bool);       \
+                                                                                                   \
+    extern template void fstream::write_attribute<T>(const std::string &, const T *, const size_t, \
+                                                     const std::string &, const std::string,       \
+                                                     const bool);                                  \
+                                                                                                   \
+    extern template std::vector<T> fstream::read_attribute<T>(                                     \
         const std::string &, const std::string &, const std::string);
 
 ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-#define declare_template_instantiation(T)                                      \
-    extern template void fstream::write<T>(const std::string &, const T *,     \
-                                           const Dims &, const Dims &,         \
-                                           const Dims &, const bool);          \
-                                                                               \
-    extern template void fstream::write<T>(                                    \
-        const std::string &, const T *, const Dims &, const Dims &,            \
-        const Dims &, const vParams &, const bool);                            \
-                                                                               \
-    extern template void fstream::write<T>(const std::string &, const T &,     \
-                                           const bool, const bool);            \
-                                                                               \
-    extern template std::vector<T> fstream::read<T>(const std::string &,       \
-                                                    const size_t);             \
-                                                                               \
-    extern template std::vector<T> fstream::read<T>(                           \
-        const std::string &, const size_t, const size_t, const size_t);        \
-                                                                               \
-    extern template std::vector<T> fstream::read<T>(                           \
-        const std::string &, const Dims &, const Dims &, const size_t);        \
-                                                                               \
-    extern template std::vector<T> fstream::read<T>(                           \
-        const std::string &, const Dims &, const Dims &, const size_t,         \
-        const size_t, const size_t);                                           \
-                                                                               \
-    extern template void fstream::read<T>(const std::string &, T *,            \
-                                          const size_t);                       \
-                                                                               \
-    extern template void fstream::read(const std::string &, T *, const size_t, \
-                                       const size_t, const size_t);            \
-                                                                               \
-    extern template void fstream::read<T>(const std::string &name, T &,        \
-                                          const size_t);                       \
-                                                                               \
-    extern template void fstream::read<T>(const std::string &name, T &,        \
-                                          const size_t);                       \
-                                                                               \
-    extern template void fstream::read<T>(                                     \
-        const std::string &, T *, const Dims &, const Dims &, const size_t);   \
-                                                                               \
-    extern template void fstream::read<T>(                                     \
-        const std::string &, T *, const size_t, const size_t, const size_t);   \
-                                                                               \
-    extern template void fstream::read<T>(                                     \
-        const std::string &, T *, const Dims &, const Dims &, const size_t,    \
-        const size_t, const size_t);
+#define declare_template_instantiation(T)                                                          \
+    extern template void fstream::write<T>(const std::string &, const T *, const Dims &,           \
+                                           const Dims &, const Dims &, const bool);                \
+                                                                                                   \
+    extern template void fstream::write<T>(const std::string &, const T *, const Dims &,           \
+                                           const Dims &, const Dims &, const vParams &,            \
+                                           const bool);                                            \
+                                                                                                   \
+    extern template void fstream::write<T>(const std::string &, const T &, const bool,             \
+                                           const bool);                                            \
+                                                                                                   \
+    extern template std::vector<T> fstream::read<T>(const std::string &, const size_t);            \
+                                                                                                   \
+    extern template std::vector<T> fstream::read<T>(const std::string &, const size_t,             \
+                                                    const size_t, const size_t);                   \
+                                                                                                   \
+    extern template std::vector<T> fstream::read<T>(const std::string &, const Dims &,             \
+                                                    const Dims &, const size_t);                   \
+                                                                                                   \
+    extern template std::vector<T> fstream::read<T>(const std::string &, const Dims &,             \
+                                                    const Dims &, const size_t, const size_t,      \
+                                                    const size_t);                                 \
+                                                                                                   \
+    extern template void fstream::read<T>(const std::string &, T *, const size_t);                 \
+                                                                                                   \
+    extern template void fstream::read(const std::string &, T *, const size_t, const size_t,       \
+                                       const size_t);                                              \
+                                                                                                   \
+    extern template void fstream::read<T>(const std::string &name, T &, const size_t);             \
+                                                                                                   \
+    extern template void fstream::read<T>(const std::string &name, T &, const size_t);             \
+                                                                                                   \
+    extern template void fstream::read<T>(const std::string &, T *, const Dims &, const Dims &,    \
+                                          const size_t);                                           \
+                                                                                                   \
+    extern template void fstream::read<T>(const std::string &, T *, const size_t, const size_t,    \
+                                          const size_t);                                           \
+                                                                                                   \
+    extern template void fstream::read<T>(const std::string &, T *, const Dims &, const Dims &,    \
+                                          const size_t, const size_t, const size_t);
 
 ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

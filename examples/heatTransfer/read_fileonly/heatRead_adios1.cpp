@@ -74,8 +74,8 @@ int main(int argc, char *argv[])
         readsize[1] = gndy - readsize[1] * (nproc - 1);
     }
 
-    std::cout << "rank " << rank << " reads " << readsize[1]
-              << " columns from offset " << offset[1] << std::endl;
+    std::cout << "rank " << rank << " reads " << readsize[1] << " columns from offset " << offset[1]
+              << std::endl;
 
     ADIOS_VARINFO *vT = adios_inq_var(f, "T");
 

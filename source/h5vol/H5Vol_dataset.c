@@ -3,10 +3,9 @@
 
 #include "H5Vol_def.h"
 
-void *H5VL_adios2_dataset_create(void *obj, const H5VL_loc_params_t *loc_params,
-                                 const char *name, hid_t lcpl_id, hid_t type_id,
-                                 hid_t space_id, hid_t dcpl_id, hid_t dapl_id,
-                                 hid_t dxpl_id, void **req)
+void *H5VL_adios2_dataset_create(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
+                                 hid_t lcpl_id, hid_t type_id, hid_t space_id, hid_t dcpl_id,
+                                 hid_t dapl_id, hid_t dxpl_id, void **req)
 {
     REQUIRE_NOT_NULL_ERR(loc_params, NULL);
     REQUIRE_NOT_NULL_ERR(obj, NULL);
@@ -17,8 +16,7 @@ void *H5VL_adios2_dataset_create(void *obj, const H5VL_loc_params_t *loc_params,
     {
         REQUIRE_SUCC((ROOT == vol->m_ObjType), NULL);
         H5VL_FileDef_t *handle = (H5VL_FileDef_t *)(vol->m_ObjPtr);
-        H5VL_VarDef_t *varDef =
-            gCreateVarDef(name, handle->m_Engine, NULL, space_id, type_id);
+        H5VL_VarDef_t *varDef = gCreateVarDef(name, handle->m_Engine, NULL, space_id, type_id);
         gADIOS2DefineVar(vol->m_FileIO, varDef);
         return gVarToVolObj(varDef, vol);
     }
@@ -42,9 +40,9 @@ void *H5VL_adios2_dataset_create(void *obj, const H5VL_loc_params_t *loc_params,
         {
             if (curr->m_Parent == NULL)
             {
-                H5VL_VarDef_t *varDef = gCreateVarDef(
-                    fullPath, ((H5VL_FileDef_t *)(curr->m_ObjPtr))->m_Engine,
-                    NULL, space_id, type_id);
+                H5VL_VarDef_t *varDef =
+                    gCreateVarDef(fullPath, ((H5VL_FileDef_t *)(curr->m_ObjPtr))->m_Engine, NULL,
+                                  space_id, type_id);
                 gADIOS2DefineVar(vol->m_FileIO, varDef);
                 return gVarToVolObj(varDef, vol);
             }
@@ -57,9 +55,8 @@ void *H5VL_adios2_dataset_create(void *obj, const H5VL_loc_params_t *loc_params,
     return NULL;
 }
 
-void *H5VL_adios2_dataset_open(void *obj, const H5VL_loc_params_t *loc_params,
-                               const char *name, hid_t dapl_id, hid_t dxpl_id,
-                               void **req)
+void *H5VL_adios2_dataset_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
+                               hid_t dapl_id, hid_t dxpl_id, void **req)
 {
     REQUIRE_NOT_NULL_ERR(loc_params, NULL);
     REQUIRE_NOT_NULL_ERR(obj, NULL);
@@ -80,16 +77,13 @@ void *H5VL_adios2_dataset_open(void *obj, const H5VL_loc_params_t *loc_params,
 
     H5VL_ObjDef_t *result = gGetVarObjDef(name, vol);
     if (NULL == result)
-        SHOW_ERROR_MSG("H5VL_ADIOS2: Error: No such variable: %s in file.\n ",
-                       name);
+        SHOW_ERROR_MSG("H5VL_ADIOS2: Error: No such variable: %s in file.\n ", name);
     return result;
 }
 
-herr_t H5VL_adios2_dataset_read(size_t count, void *dset_array[],
-                                hid_t mem_type_id_array[],
-                                hid_t mem_space_id_array[],
-                                hid_t file_space_id_array[], hid_t dxpl_id,
-                                void *buf_array[],
+herr_t H5VL_adios2_dataset_read(size_t count, void *dset_array[], hid_t mem_type_id_array[],
+                                hid_t mem_space_id_array[], hid_t file_space_id_array[],
+                                hid_t dxpl_id, void *buf_array[],
                                 void **req) // last parameter is unused as in h5
 {
     herr_t returnValue = 0;
@@ -110,8 +104,7 @@ herr_t H5VL_adios2_dataset_read(size_t count, void *dset_array[],
     return returnValue;
 }
 
-herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_args_t *args,
-                               hid_t dxpl_id, void **req)
+herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_args_t *args, hid_t dxpl_id, void **req)
 {
     REQUIRE_NOT_NULL_ERR(dset, -1);
     H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)dset;
@@ -119,31 +112,25 @@ herr_t H5VL_adios2_dataset_get(void *dset, H5VL_dataset_get_args_t *args,
 
     switch (args->op_type)
     {
-    case H5VL_DATASET_GET_SPACE:
-    {
-        REQUIRE_SUCC_MSG((varDef->m_ShapeID >= 0), -1,
-                         "H5VOL-ADIOS2: Unable to get space id.");
+    case H5VL_DATASET_GET_SPACE: {
+        REQUIRE_SUCC_MSG((varDef->m_ShapeID >= 0), -1, "H5VOL-ADIOS2: Unable to get space id.");
         args->args.get_space.space_id = H5Scopy(varDef->m_ShapeID);
         break;
     }
-    case H5VL_DATASET_GET_TYPE:
-    {
+    case H5VL_DATASET_GET_TYPE: {
         args->args.get_type.type_id = H5Tcopy(varDef->m_TypeID);
         break;
     }
-    default:
-    {
+    default: {
         return -1;
     }
     }
     return 0;
 }
 
-herr_t H5VL_adios2_dataset_write(size_t count, void *dset_array[],
-                                 hid_t mem_type_id_array[],
-                                 hid_t mem_space_id_array[],
-                                 hid_t file_space_id_array[], hid_t dxpl_id,
-                                 const void *buf_array[], void **req)
+herr_t H5VL_adios2_dataset_write(size_t count, void *dset_array[], hid_t mem_type_id_array[],
+                                 hid_t mem_space_id_array[], hid_t file_space_id_array[],
+                                 hid_t dxpl_id, const void *buf_array[], void **req)
 {
     for (size_t i = 0; i < count; i++)
     {

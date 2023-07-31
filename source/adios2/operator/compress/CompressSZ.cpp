@@ -32,9 +32,8 @@ CompressSZ::CompressSZ(const Params &parameters)
 {
 }
 
-size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
-                           const Dims &blockCount, const DataType varType,
-                           char *bufferOut)
+size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                           const DataType varType, char *bufferOut)
 {
     const uint8_t bufferVersion = 2;
     size_t bufferOutOffset = 0;
@@ -53,8 +52,7 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
     PutParameter(bufferOut, bufferOutOffset, varType);
     for (uint8_t i = 0; i < 4; ++i)
     {
-        PutParameter(bufferOut, bufferOutOffset,
-                     static_cast<uint8_t>(versionNumber[i]));
+        PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(versionNumber[i]));
     }
     // sz V2 metadata end
 
@@ -76,8 +74,7 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
     sz.relBoundRatio = 1E-3;
     sz.psnr = 80.0;
     sz.pw_relBoundRatio = 1E-5;
-    sz.segment_size =
-        static_cast<int>(std::pow(5., static_cast<double>(ndims)));
+    sz.segment_size = static_cast<int>(std::pow(5., static_cast<double>(ndims)));
     sz.pwr_type = SZ_PWR_MIN_TYPE;
 
     /* SZ parameters */
@@ -212,8 +209,7 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
             }
             sz.pwr_type = pwr_type;
         }
-        else if ((it->first == "abs") || (it->first == "absolute") ||
-                 (it->first == "accuracy"))
+        else if ((it->first == "abs") || (it->first == "absolute") || (it->first == "accuracy"))
         {
             sz.errorBoundMode = ABS;
             sz.absErrBound = std::stod(it->second);
@@ -223,8 +219,8 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
             sz.errorBoundMode = REL;
             sz.relBoundRatio = std::stof(it->second);
         }
-        else if ((it->first == "pw") || (it->first == "pwr") ||
-                 (it->first == "pwrel") || (it->first == "pwrelative"))
+        else if ((it->first == "pw") || (it->first == "pwr") || (it->first == "pwrel") ||
+                 (it->first == "pwrelative"))
         {
             sz.errorBoundMode = PW_REL;
             sz.pw_relBoundRatio = std::stof(it->second);
@@ -257,9 +253,8 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
     }
     else
     {
-        helper::Throw<std::invalid_argument>(
-            "Operator", "CompressSZ", "Operate",
-            "SZ compressor only support float or double types");
+        helper::Throw<std::invalid_argument>("Operator", "CompressSZ", "Operate",
+                                             "SZ compressor only support float or double types");
     }
 
     convertedDims = ConvertDims(blockCount, varType, 5, true, 0);
@@ -275,9 +270,9 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
     {
         SZ_Init_Params(&sz);
     }
-    auto *szBuffer = SZ_compress(
-        dtype, const_cast<char *>(dataIn), &szBufferSize, convertedDims[0],
-        convertedDims[1], convertedDims[2], convertedDims[3], convertedDims[4]);
+    auto *szBuffer =
+        SZ_compress(dtype, const_cast<char *>(dataIn), &szBufferSize, convertedDims[0],
+                    convertedDims[1], convertedDims[2], convertedDims[3], convertedDims[4]);
     SZ_Finalize();
     m_Mutex.unlock();
 
@@ -285,8 +280,7 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
         helper::GetTotalSize(blockCount, helper::GetDataTypeSize(varType)))
     {
         CompressNull c({});
-        bufferOutOffset =
-            c.Operate(dataIn, blockStart, blockCount, varType, bufferOut);
+        bufferOutOffset = c.Operate(dataIn, blockStart, blockCount, varType, bufferOut);
     }
     else
     {
@@ -300,23 +294,19 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart,
     return bufferOutOffset;
 }
 
-size_t CompressSZ::InverseOperate(const char *bufferIn, const size_t sizeIn,
-                                  char *dataOut)
+size_t CompressSZ::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     size_t bufferInOffset = 1; // skip operator type
-    const uint8_t bufferVersion =
-        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    const uint8_t bufferVersion = GetParameter<uint8_t>(bufferIn, bufferInOffset);
     bufferInOffset += 2; // skip two reserved bytes
 
     if (bufferVersion == 2)
     {
-        return DecompressV2(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
-                            dataOut);
+        return DecompressV2(bufferIn + bufferInOffset, sizeIn - bufferInOffset, dataOut);
     }
     else if (bufferVersion == 1)
     {
-        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
-                            dataOut);
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset, dataOut);
     }
     else if (bufferVersion == 3)
     {
@@ -325,8 +315,7 @@ size_t CompressSZ::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        helper::Throw<std::runtime_error>("Operator", "CompressSZ",
-                                          "InverseOperate",
+        helper::Throw<std::runtime_error>("Operator", "CompressSZ", "InverseOperate",
                                           "invalid sz buffer version");
     }
 
@@ -335,16 +324,15 @@ size_t CompressSZ::InverseOperate(const char *bufferIn, const size_t sizeIn,
 
 bool CompressSZ::IsDataTypeValid(const DataType type) const
 {
-    if (type == DataType::Float || type == DataType::Double ||
-        type == DataType::FloatComplex || type == DataType::DoubleComplex)
+    if (type == DataType::Float || type == DataType::Double || type == DataType::FloatComplex ||
+        type == DataType::DoubleComplex)
     {
         return true;
     }
     return false;
 }
 
-size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
-                                char *dataOut)
+size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     // Do NOT remove even if the buffer version is updated. Data might be still
     // in lagacy formats. This function must be kept for backward compatibility.
@@ -361,13 +349,12 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
     }
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
 
-    m_VersionInfo =
-        " Data is compressed using SZ Version " +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
-        ". Please make sure a compatible version is used for decompression.";
+    m_VersionInfo = " Data is compressed using SZ Version " +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+                    ". Please make sure a compatible version is used for decompression.";
 
     Dims convertedDims = ConvertDims(blockCount, type, 4, true, 1);
 
@@ -388,28 +375,23 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        helper::Throw<std::invalid_argument>(
-            "Operator", "CompressSZ", "DecompressV1",
-            "SZ compressor only support float or double types");
+        helper::Throw<std::invalid_argument>("Operator", "CompressSZ", "DecompressV1",
+                                             "SZ compressor only support float or double types");
     }
 
-    const size_t dataSizeBytes =
-        helper::GetTotalSize(convertedDims, dataTypeSize);
+    const size_t dataSizeBytes = helper::GetTotalSize(convertedDims, dataTypeSize);
 
     m_Mutex.lock();
-    void *result =
-        SZ_decompress(dtype,
-                      reinterpret_cast<unsigned char *>(
-                          const_cast<char *>(bufferIn + bufferInOffset)),
-                      sizeIn - bufferInOffset, 0, convertedDims[0],
-                      convertedDims[1], convertedDims[2], convertedDims[3]);
+    void *result = SZ_decompress(
+        dtype, reinterpret_cast<unsigned char *>(const_cast<char *>(bufferIn + bufferInOffset)),
+        sizeIn - bufferInOffset, 0, convertedDims[0], convertedDims[1], convertedDims[2],
+        convertedDims[3]);
     SZ_Finalize();
     m_Mutex.unlock();
 
     if (result == nullptr)
     {
-        helper::Throw<std::runtime_error>("Operator", "CompressSZ",
-                                          "DecompressV1", m_VersionInfo);
+        helper::Throw<std::runtime_error>("Operator", "CompressSZ", "DecompressV1", m_VersionInfo);
     }
     std::memcpy(dataOut, result, dataSizeBytes);
     free(result);
@@ -417,8 +399,7 @@ size_t CompressSZ::DecompressV1(const char *bufferIn, const size_t sizeIn,
     return dataSizeBytes;
 }
 
-size_t CompressSZ::DecompressV2(const char *bufferIn, const size_t sizeIn,
-                                char *dataOut)
+size_t CompressSZ::DecompressV2(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     // Do NOT remove even if the buffer version is updated. Data might be still
     // in lagacy formats. This function must be kept for backward compatibility.
@@ -435,13 +416,12 @@ size_t CompressSZ::DecompressV2(const char *bufferIn, const size_t sizeIn,
     }
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
 
-    m_VersionInfo =
-        " Data is compressed using SZ Version " +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
-        ". Please make sure a compatible version is used for decompression.";
+    m_VersionInfo = " Data is compressed using SZ Version " +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+                    ". Please make sure a compatible version is used for decompression.";
 
     // Get type info
     int dtype = 0;
@@ -460,30 +440,25 @@ size_t CompressSZ::DecompressV2(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        helper::Throw<std::invalid_argument>(
-            "Operator", "CompressSZ", "DecompressV2",
-            "SZ compressor only supports float or double types");
+        helper::Throw<std::invalid_argument>("Operator", "CompressSZ", "DecompressV2",
+                                             "SZ compressor only supports float or double types");
     }
 
     const size_t dataSizeBytes = helper::GetTotalSize(blockCount, dataTypeSize);
 
-    Dims convertedDims =
-        ConvertDims(blockCount, helper::GetDataType<float>(), 5, true, 0);
+    Dims convertedDims = ConvertDims(blockCount, helper::GetDataType<float>(), 5, true, 0);
 
     m_Mutex.lock();
     void *result = SZ_decompress(
-        dtype,
-        reinterpret_cast<unsigned char *>(
-            const_cast<char *>(bufferIn + bufferInOffset)),
-        sizeIn - bufferInOffset, convertedDims[0], convertedDims[1],
-        convertedDims[2], convertedDims[3], convertedDims[4]);
+        dtype, reinterpret_cast<unsigned char *>(const_cast<char *>(bufferIn + bufferInOffset)),
+        sizeIn - bufferInOffset, convertedDims[0], convertedDims[1], convertedDims[2],
+        convertedDims[3], convertedDims[4]);
     SZ_Finalize();
     m_Mutex.unlock();
 
     if (result == nullptr)
     {
-        helper::Throw<std::runtime_error>("Operator", "CompressSZ",
-                                          "DecompressV2", m_VersionInfo);
+        helper::Throw<std::runtime_error>("Operator", "CompressSZ", "DecompressV2", m_VersionInfo);
     }
     std::memcpy(dataOut, result, dataSizeBytes);
     free(result);

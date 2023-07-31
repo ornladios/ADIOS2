@@ -29,8 +29,7 @@ public:
     ~ZmqPubSub();
 
     void OpenPublisher(const std::string &address);
-    void OpenSubscriber(const std::string &address,
-                        const size_t receiveBufferSize);
+    void OpenSubscriber(const std::string &address, const size_t receiveBufferSize);
 
     void Send(std::shared_ptr<std::vector<char>> buffer);
     std::shared_ptr<std::vector<char>> Receive();

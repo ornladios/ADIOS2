@@ -28,26 +28,24 @@ class SscReaderBase
 {
 
 public:
-    SscReaderBase(IO &io, const std::string &name, const Mode mode,
-                  MPI_Comm comm);
+    SscReaderBase(IO &io, const std::string &name, const Mode mode, MPI_Comm comm);
     virtual ~SscReaderBase();
 
-    virtual StepStatus BeginStep(const StepMode mode,
-                                 const float timeoutSeconds,
+    virtual StepStatus BeginStep(const StepMode mode, const float timeoutSeconds,
                                  const bool readerLocked) = 0;
     virtual size_t CurrentStep() = 0;
     virtual void PerformGets() = 0;
     virtual void EndStep(const bool readerLocked) = 0;
     virtual void Close(const int transportIndex) = 0;
 
-#define declare_type(T)                                                        \
-    virtual std::vector<typename Variable<T>::BPInfo> BlocksInfo(              \
-        const Variable<T> &variable, const size_t step) const = 0;
+#define declare_type(T)                                                                            \
+    virtual std::vector<typename Variable<T>::BPInfo> BlocksInfo(const Variable<T> &variable,      \
+                                                                 const size_t step) const = 0;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-    virtual std::vector<VariableStruct::BPInfo>
-    BlocksInfo(const VariableStruct &variable, const size_t step) const = 0;
+    virtual std::vector<VariableStruct::BPInfo> BlocksInfo(const VariableStruct &variable,
+                                                           const size_t step) const = 0;
 
     virtual void GetDeferred(VariableBase &, void *) = 0;
 

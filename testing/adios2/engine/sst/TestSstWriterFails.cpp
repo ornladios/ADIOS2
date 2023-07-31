@@ -51,8 +51,7 @@ static adios2::Params ParseEngineParams(std::string Input)
         std::getline(ss2, ParamName, ':');
         if (!std::getline(ss2, ParamValue, ':'))
         {
-            throw std::invalid_argument("Engine parameter \"" + Param +
-                                        "\" missing value");
+            throw std::invalid_argument("Engine parameter \"" + Param + "\" missing value");
         }
         Ret[Trim(ParamName)] = Trim(ParamValue);
     }
@@ -157,8 +156,7 @@ int main(int argc, char **argv)
         }
         else
         {
-            throw std::invalid_argument("Unknown argument \"" +
-                                        std::string(argv[1]) + "\"");
+            throw std::invalid_argument("Unknown argument \"" + std::string(argv[1]) + "\"");
         }
         argv++;
         argc--;

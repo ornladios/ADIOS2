@@ -83,64 +83,47 @@ void PNGAccuracy2D(const std::string compressionLevel)
         const adios2::Dims start{static_cast<size_t>(height * mpiRank), 0};
         const adios2::Dims count{height, width};
 
-        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count,
-                                                  adios2::ConstantDims);
+        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
+        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
+        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count, adios2::ConstantDims);
 
-        auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                                 adios2::ConstantDims);
-        auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                                   adios2::ConstantDims);
+        auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count, adios2::ConstantDims);
+        auto var_u16 =
+            io.DefineVariable<uint16_t>("u16", shape, start, count, adios2::ConstantDims);
+        auto var_u32 =
+            io.DefineVariable<uint32_t>("u32", shape, start, count, adios2::ConstantDims);
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
 
         // add operations
 
-        var_i8.AddOperation("png", {{adios2::ops::png::key::color_type,
-                                     adios2::ops::png::value::color_type_GRAY},
-                                    {adios2::ops::png::key::compression_level,
-                                     compressionLevel}});
+        var_i8.AddOperation(
+            "png", {{adios2::ops::png::key::color_type, adios2::ops::png::value::color_type_GRAY},
+                    {adios2::ops::png::key::compression_level, compressionLevel}});
 
-        var_i16.AddOperation(
-            "png",
-            {{adios2::ops::png::key::color_type,
-              adios2::ops::png::value::color_type_GRAY_ALPHA},
-             {adios2::ops::png::key::compression_level, compressionLevel}});
+        var_i16.AddOperation("png", {{adios2::ops::png::key::color_type,
+                                      adios2::ops::png::value::color_type_GRAY_ALPHA},
+                                     {adios2::ops::png::key::compression_level, compressionLevel}});
 
-        var_i32.AddOperation(
-            "png",
-            {{adios2::ops::png::key::color_type,
-              adios2::ops::png::value::color_type_RGB_ALPHA},
-             {adios2::ops::png::key::compression_level, compressionLevel}});
+        var_i32.AddOperation("png", {{adios2::ops::png::key::color_type,
+                                      adios2::ops::png::value::color_type_RGB_ALPHA},
+                                     {adios2::ops::png::key::compression_level, compressionLevel}});
 
-        var_u8.AddOperation("png", {{adios2::ops::png::key::color_type,
-                                     adios2::ops::png::value::color_type_GRAY},
-                                    {adios2::ops::png::key::compression_level,
-                                     compressionLevel}});
+        var_u8.AddOperation(
+            "png", {{adios2::ops::png::key::color_type, adios2::ops::png::value::color_type_GRAY},
+                    {adios2::ops::png::key::compression_level, compressionLevel}});
 
-        var_u16.AddOperation(
-            "png",
-            {{adios2::ops::png::key::color_type,
-              adios2::ops::png::value::color_type_GRAY_ALPHA},
-             {adios2::ops::png::key::compression_level, compressionLevel}});
+        var_u16.AddOperation("png", {{adios2::ops::png::key::color_type,
+                                      adios2::ops::png::value::color_type_GRAY_ALPHA},
+                                     {adios2::ops::png::key::compression_level, compressionLevel}});
 
-        var_u32.AddOperation(
-            "png",
-            {{adios2::ops::png::key::color_type,
-              adios2::ops::png::value::color_type_RGB_ALPHA},
-             {adios2::ops::png::key::compression_level, compressionLevel}});
+        var_u32.AddOperation("png", {{adios2::ops::png::key::color_type,
+                                      adios2::ops::png::value::color_type_RGB_ALPHA},
+                                     {adios2::ops::png::key::compression_level, compressionLevel}});
 
-        var_u32.AddOperation("png", {{adios2::ops::png::key::compression_level,
-                                      compressionLevel}});
+        var_u32.AddOperation("png", {{adios2::ops::png::key::compression_level, compressionLevel}});
 
-        var_r32.AddOperation("png", {{adios2::ops::png::key::compression_level,
-                                      compressionLevel}});
+        var_r32.AddOperation("png", {{adios2::ops::png::key::compression_level, compressionLevel}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -336,17 +319,13 @@ void PNGAccuracy2DSel(const std::string accuracy)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
 
-        var_r32.AddOperation(
-            "png", {{adios2::ops::png::key::compression_level, accuracy}});
-        var_r64.AddOperation(
-            "png", {{adios2::ops::png::key::compression_level, accuracy}});
+        var_r32.AddOperation("png", {{adios2::ops::png::key::compression_level, accuracy}});
+        var_r64.AddOperation("png", {{adios2::ops::png::key::compression_level, accuracy}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -434,17 +413,16 @@ public:
 
 TEST_P(BPWRPNG, BPWRPNG2D) { PNGAccuracy2D(GetParam()); }
 
-INSTANTIATE_TEST_SUITE_P(
-    PNGAccuracy, BPWRPNG,
-    ::testing::Values(adios2::ops::png::value::compression_level_1,
-                      adios2::ops::png::value::compression_level_2,
-                      adios2::ops::png::value::compression_level_3,
-                      adios2::ops::png::value::compression_level_4,
-                      adios2::ops::png::value::compression_level_5,
-                      adios2::ops::png::value::compression_level_6,
-                      adios2::ops::png::value::compression_level_7,
-                      adios2::ops::png::value::compression_level_8,
-                      adios2::ops::png::value::compression_level_9));
+INSTANTIATE_TEST_SUITE_P(PNGAccuracy, BPWRPNG,
+                         ::testing::Values(adios2::ops::png::value::compression_level_1,
+                                           adios2::ops::png::value::compression_level_2,
+                                           adios2::ops::png::value::compression_level_3,
+                                           adios2::ops::png::value::compression_level_4,
+                                           adios2::ops::png::value::compression_level_5,
+                                           adios2::ops::png::value::compression_level_6,
+                                           adios2::ops::png::value::compression_level_7,
+                                           adios2::ops::png::value::compression_level_8,
+                                           adios2::ops::png::value::compression_level_9));
 
 int main(int argc, char **argv)
 {

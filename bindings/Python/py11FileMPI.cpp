@@ -17,16 +17,15 @@ namespace py11
 File::File(const std::string &name, const std::string mode, MPI_Comm comm,
            const std::string engineType)
 : m_Name(name), m_Mode(mode),
-  m_Stream(std::make_shared<core::Stream>(
-      name, ToMode(mode), helper::CommDupMPI(comm), engineType, "Python"))
+  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), helper::CommDupMPI(comm), engineType,
+                                          "Python"))
 {
 }
 
 File::File(const std::string &name, const std::string mode, MPI_Comm comm,
            const std::string &configFile, const std::string ioInConfigFile)
 : m_Name(name), m_Mode(mode),
-  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode),
-                                          helper::CommDupMPI(comm), configFile,
+  m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), helper::CommDupMPI(comm), configFile,
                                           ioInConfigFile, "Python"))
 {
 }

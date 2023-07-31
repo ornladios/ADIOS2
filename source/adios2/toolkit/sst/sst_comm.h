@@ -37,23 +37,19 @@ typedef enum
 int SMPI_Comm_rank(SMPI_Comm comm, int *rank);
 int SMPI_Comm_size(SMPI_Comm comm, int *size);
 int SMPI_Barrier(SMPI_Comm comm);
-int SMPI_Bcast(void *buffer, int count, SMPI_Datatype datatype, int root,
-               SMPI_Comm comm);
-int SMPI_Gather(const void *sendbuf, int sendcount, SMPI_Datatype sendtype,
-                void *recvbuf, int recvcount, SMPI_Datatype recvtype, int root,
-                SMPI_Comm comm);
-int SMPI_Gatherv(const void *sendbuf, int sendcount, SMPI_Datatype sendtype,
-                 void *recvbuf, const size_t *recvcounts, const size_t *displs,
-                 SMPI_Datatype recvtype, int root, SMPI_Comm comm);
-int SMPI_Allgather(const void *sendbuf, int sendcount, SMPI_Datatype sendtype,
-                   void *recvbuf, int recvcount, SMPI_Datatype recvtype,
-                   SMPI_Comm comm);
-int SMPI_Allgatherv(const void *sendbuf, int sendcount, SMPI_Datatype sendtype,
-                    void *recvbuf, const size_t *recvcounts,
-                    const size_t *displs, SMPI_Datatype recvtype,
+int SMPI_Bcast(void *buffer, int count, SMPI_Datatype datatype, int root, SMPI_Comm comm);
+int SMPI_Gather(const void *sendbuf, int sendcount, SMPI_Datatype sendtype, void *recvbuf,
+                int recvcount, SMPI_Datatype recvtype, int root, SMPI_Comm comm);
+int SMPI_Gatherv(const void *sendbuf, int sendcount, SMPI_Datatype sendtype, void *recvbuf,
+                 const size_t *recvcounts, const size_t *displs, SMPI_Datatype recvtype, int root,
+                 SMPI_Comm comm);
+int SMPI_Allgather(const void *sendbuf, int sendcount, SMPI_Datatype sendtype, void *recvbuf,
+                   int recvcount, SMPI_Datatype recvtype, SMPI_Comm comm);
+int SMPI_Allgatherv(const void *sendbuf, int sendcount, SMPI_Datatype sendtype, void *recvbuf,
+                    const size_t *recvcounts, const size_t *displs, SMPI_Datatype recvtype,
                     SMPI_Comm comm);
-int SMPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
-                   SMPI_Datatype datatype, SMPI_Op op, SMPI_Comm comm);
+int SMPI_Allreduce(const void *sendbuf, void *recvbuf, int count, SMPI_Datatype datatype,
+                   SMPI_Op op, SMPI_Comm comm);
 
 #ifdef __cplusplus
 }

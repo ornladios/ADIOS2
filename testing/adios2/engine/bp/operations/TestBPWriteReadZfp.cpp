@@ -58,18 +58,15 @@ void ZFPRate1D(const std::string rate)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
-        adios2::Operator ZFPOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+        adios2::Operator ZFPOp = adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
         var_r32.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate, rate}});
-        var_r64.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate,
-                                      std::to_string(2 * std::stod(rate))}});
+        var_r64.AddOperation(ZFPOp,
+                             {{adios2::ops::zfp::key::rate, std::to_string(2 * std::stod(rate))}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -193,14 +190,11 @@ void ZFPRate2D(const std::string rate)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+        adios2::Operator szOp = adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
         var_r32.AddOperation(szOp, {{"rate", rate}});
         var_r64.AddOperation(szOp, {{"rate", rate}});
@@ -327,14 +321,11 @@ void ZFPRate3D(const std::string rate)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+        adios2::Operator szOp = adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
         var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
         var_r64.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
@@ -461,18 +452,15 @@ void ZFPRate1DSel(const std::string rate)
         const adios2::Dims start{static_cast<std::size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
-        adios2::Operator ZFPOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+        adios2::Operator ZFPOp = adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
         var_r32.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate, rate}});
-        var_r64.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate,
-                                      std::to_string(2 * std::stod(rate))}});
+        var_r64.AddOperation(ZFPOp,
+                             {{adios2::ops::zfp::key::rate, std::to_string(2 * std::stod(rate))}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -515,11 +503,9 @@ void ZFPRate1DSel(const std::string rate)
             EXPECT_TRUE(var_r64);
             ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
             ASSERT_EQ(var_r64.Steps(), NSteps);
-            ASSERT_EQ(var_r64.Shape()[0],
-                      static_cast<std::size_t>(mpiSize) * Nx);
+            ASSERT_EQ(var_r64.Shape()[0], static_cast<std::size_t>(mpiSize) * Nx);
 
-            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx +
-                                     Nx / 2};
+            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx + Nx / 2};
             const adios2::Dims count{Nx / 2};
             const adios2::Box<adios2::Dims> sel(start, count);
             var_r32.SetSelection(sel);
@@ -538,12 +524,8 @@ void ZFPRate1DSel(const std::string rate)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 + i]),
-                          1E-4)
-                    << msg;
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 + i]),
-                          1E-4)
-                    << msg;
+                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 + i]), 1E-4) << msg;
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 + i]), 1E-4) << msg;
             }
             ++t;
         }
@@ -597,14 +579,11 @@ void ZFPRate2DSel(const std::string rate)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+        adios2::Operator szOp = adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
         var_r32.AddOperation(szOp, {{"rate", rate}});
         var_r64.AddOperation(szOp, {{"rate", rate}});
@@ -669,12 +648,8 @@ void ZFPRate2DSel(const std::string rate)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny + i]),
-                          1E-4)
-                    << msg;
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 * Ny + i]),
-                          1E-4)
-                    << msg;
+                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny + i]), 1E-4) << msg;
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 * Ny + i]), 1E-4) << msg;
             }
             ++t;
         }
@@ -729,14 +704,11 @@ void ZFPRate3DSel(const std::string rate)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+        adios2::Operator szOp = adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
         var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
         var_r64.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
@@ -786,8 +758,7 @@ void ZFPRate3DSel(const std::string rate)
             ASSERT_EQ(var_r64.Shape()[1], Ny);
             ASSERT_EQ(var_r64.Shape()[2], Nz);
 
-            const adios2::Dims start{
-                static_cast<std::size_t>(mpiRank) * Nx + Nx / 2, 0, 0};
+            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx + Nx / 2, 0, 0};
             const adios2::Dims count{Nx / 2, Ny, Nz};
             const adios2::Box<adios2::Dims> sel(start, count);
             var_r32.SetSelection(sel);
@@ -803,14 +774,8 @@ void ZFPRate3DSel(const std::string rate)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(
-                    std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny * Nz + i]),
-                    1E-4)
-                    << msg;
-                ASSERT_LT(
-                    std::abs(decompressedR64s[i] - r64s[Nx / 2 * Ny * Nz + i]),
-                    1E-4)
-                    << msg;
+                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny * Nz + i]), 1E-4) << msg;
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 * Ny * Nz + i]), 1E-4) << msg;
             }
             ++t;
         }
@@ -835,14 +800,12 @@ void ZFPRate2DSmallSel(const std::string rate)
     // Number of steps
     const size_t NSteps = 1;
 
-    std::vector<float> r32s = {0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06,
-                               0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.13,
-                               0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20,
-                               0.21, 0.22, 0.23, 0.24};
-    std::vector<double> r64s = {0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06,
-                                0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.13,
-                                0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20,
-                                0.21, 0.22, 0.23, 0.24};
+    std::vector<float> r32s = {0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08,
+                               0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17,
+                               0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24};
+    std::vector<double> r64s = {0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08,
+                                0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17,
+                                0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24};
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -865,14 +828,11 @@ void ZFPRate2DSmallSel(const std::string rate)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
-        adios2::Operator szOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+        adios2::Operator szOp = adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
         szOp.SetParameter("backend", "serial");
 
         var_r32.AddOperation(szOp, {{adios2::ops::zfp::key::rate, rate}});
@@ -921,8 +881,7 @@ void ZFPRate2DSmallSel(const std::string rate)
             ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
             ASSERT_EQ(var_r64.Shape()[1], Ny);
 
-            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx + 1,
-                                     1};
+            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx + 1, 1};
             const adios2::Dims count{2, 2};
             const adios2::Box<adios2::Dims> sel(start, count);
             var_r32.SetSelection(sel);

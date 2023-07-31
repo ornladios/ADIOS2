@@ -17,17 +17,14 @@ using namespace adios2;
 size_t print_lines = 0;
 
 Dims shape = {4, 4, 4};
-std::vector<int> global_data = {0,   1,   2,   3,   10,  11,  12,  13,
-                                20,  21,  22,  23,  30,  31,  32,  33,
+std::vector<int> global_data = {
+    0,   1,   2,   3,   10,  11,  12,  13,  20,  21,  22,  23,  30,  31,  32,  33,
 
-                                100, 101, 102, 103, 110, 111, 112, 113,
-                                120, 121, 122, 123, 130, 131, 132, 133,
+    100, 101, 102, 103, 110, 111, 112, 113, 120, 121, 122, 123, 130, 131, 132, 133,
 
-                                200, 201, 202, 203, 210, 211, 212, 213,
-                                220, 221, 222, 223, 230, 231, 232, 233,
+    200, 201, 202, 203, 210, 211, 212, 213, 220, 221, 222, 223, 230, 231, 232, 233,
 
-                                300, 301, 302, 303, 310, 311, 312, 313,
-                                320, 321, 322, 323, 330, 331, 332, 333};
+    300, 301, 302, 303, 310, 311, 312, 313, 320, 321, 322, 323, 330, 331, 332, 333};
 
 Dims start = {1, 2, 1};
 Dims count = {2, 1, 2};
@@ -48,11 +45,9 @@ public:
 };
 
 template <class T>
-void PrintData(const T *data, const size_t step, const Dims &start,
-               const Dims &count)
+void PrintData(const T *data, const size_t step, const Dims &start, const Dims &count)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    size_t size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     std::cout << "Step: " << step << " Size:" << size << "\n";
     size_t printsize = 128;
 
@@ -75,11 +70,10 @@ void PrintData(const T *data, const size_t step, const Dims &start,
     std::cout << "]" << std::endl;
 }
 
-void VerifyData(const int *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape)
+void VerifyData(const int *data, size_t step, const Dims &start, const Dims &count,
+                const Dims &shape)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    size_t size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     bool compressed = false;
     for (size_t i = 0; i < size; ++i)
     {
@@ -90,9 +84,8 @@ void VerifyData(const int *data, size_t step, const Dims &start,
     }
 }
 
-void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
-                               const Dims &count, const size_t steps,
-                               const adios2::Params &engineParams)
+void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start, const Dims &count,
+                               const size_t steps, const adios2::Params &engineParams)
 {
     adios2::ADIOS adios;
     adios2::IO io = adios.DeclareIO("WAN");
@@ -109,9 +102,8 @@ void DataManWriterP2PMemSelect(const Dims &shape, const Dims &start,
     engine.Close();
 }
 
-void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start,
-                               const Dims &count, const Dims &memStart,
-                               const Dims &memCount, const size_t steps,
+void DataManReaderP2PMemSelect(const Dims &shape, const Dims &start, const Dims &count,
+                               const Dims &memStart, const Dims &memCount, const size_t steps,
                                const adios2::Params &engineParams)
 {
     adios2::ADIOS adios;
@@ -153,15 +145,13 @@ TEST_F(DataManEngineTest, 3D_MemSelect)
 {
 
     size_t steps = 3500;
-    adios2::Params engineParams = {{"IPAddress", "127.0.0.1"},
-                                   {"Port", "12350"}};
+    adios2::Params engineParams = {{"IPAddress", "127.0.0.1"}, {"Port", "12350"}};
     // run workflow
 
-    auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count,
-                         memstart, memcount, steps, engineParams);
-
-    auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps,
+    auto r = std::thread(DataManReaderP2PMemSelect, shape, start, count, memstart, memcount, steps,
                          engineParams);
+
+    auto w = std::thread(DataManWriterP2PMemSelect, shape, start, count, steps, engineParams);
 
     w.join();
 

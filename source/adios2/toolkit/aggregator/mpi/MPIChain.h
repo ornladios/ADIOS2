@@ -47,11 +47,10 @@ public:
         helper::Comm::Req m_Recv;
     };
 
-    ExchangeAbsolutePositionRequests
-    IExchangeAbsolutePosition(format::Buffer &buffer, const int step);
+    ExchangeAbsolutePositionRequests IExchangeAbsolutePosition(format::Buffer &buffer,
+                                                               const int step);
 
-    void WaitAbsolutePosition(ExchangeAbsolutePositionRequests &requests,
-                              const int step);
+    void WaitAbsolutePosition(ExchangeAbsolutePositionRequests &requests, const int step);
 
     void Wait(ExchangeRequests &requests, const int step);
 
@@ -97,8 +96,7 @@ private:
      * @param buffer to be resized
      * @param hint used in exception error message
      */
-    void ResizeUpdateBuffer(const size_t newSize, format::Buffer &buffer,
-                            const std::string hint);
+    void ResizeUpdateBuffer(const size_t newSize, format::Buffer &buffer, const std::string hint);
 };
 
 } // end namespace aggregator

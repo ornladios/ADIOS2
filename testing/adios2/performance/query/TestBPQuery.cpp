@@ -14,7 +14,7 @@
 
 #include <gtest/gtest.h>
 
-//#include "../engine/SmallTestData.h"
+// #include "../engine/SmallTestData.h"
 
 // std::string engineName; // comes from command line
 
@@ -65,12 +65,10 @@ class BPQueryTest : public ::testing::Test
 public:
     BPQueryTest() = default;
 
-    void WriteFile(const std::string &fname, adios2::ADIOS &adios,
-                   const std::string &engineName);
+    void WriteFile(const std::string &fname, adios2::ADIOS &adios, const std::string &engineName);
     void QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios,
                         const std::string &engineName);
-    void QueryIntVar(const std::string &fname, adios2::ADIOS &adios,
-                     const std::string &engineName);
+    void QueryIntVar(const std::string &fname, adios2::ADIOS &adios, const std::string &engineName);
 
     QueryTestData m_TestData;
 
@@ -177,10 +175,8 @@ void BPQueryTest::WriteFile(const std::string &fname, adios2::ADIOS &adios,
             const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
             const adios2::Dims count{Nx};
 
-            auto var_i32 =
-                io.DefineVariable<int32_t>("intV", shape, start, count);
-            auto var_r64 =
-                io.DefineVariable<double>("doubleV", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("intV", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("doubleV", shape, start, count);
             EXPECT_TRUE(var_i32);
             EXPECT_TRUE(var_r64);
         }
@@ -213,8 +209,7 @@ void BPQueryTest::WriteFile(const std::string &fname, adios2::ADIOS &adios,
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            LoadTestData(m_TestData, static_cast<int>(step), mpiRank,
-                         static_cast<int>(Nx));
+            LoadTestData(m_TestData, static_cast<int>(step), mpiRank, static_cast<int>(Nx));
 
             auto var_i32 = io.InquireVariable<int32_t>("intV");
             auto var_r64 = io.InquireVariable<double>("doubleV");

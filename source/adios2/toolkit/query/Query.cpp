@@ -89,16 +89,14 @@ bool QueryComposite::AddNode(QueryBase *var)
         // if (m_Nodes.size() > 0) return false;
         // don't want to support NOT for composite queries
         // return false;
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "query::QueryComposite", "AddNode",
-            "Currently NOT is not suppprted for composite query");
+        helper::Throw<std::ios_base::failure>("Toolkit", "query::QueryComposite", "AddNode",
+                                              "Currently NOT is not suppprted for composite query");
     }
     m_Nodes.push_back(var);
     return true;
 }
 
-void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io,
-                                        adios2::core::Engine &reader,
+void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io, adios2::core::Engine &reader,
                                         std::vector<Box<Dims>> &touchedBlocks)
 {
     auto lf_ApplyAND = [&](std::vector<Box<Dims>> &touched,
@@ -241,10 +239,9 @@ bool QueryVar::IsSelectionValid(adios2::Dims &shape) const
 
     if (m_Selection.first.size() != shape.size())
     {
-        helper::Log(
-            "Query", "QueryVar", "IsSelectionValid",
-            "Query selection dimension is different from shape dimension",
-            helper::FATALERROR);
+        helper::Log("Query", "QueryVar", "IsSelectionValid",
+                    "Query selection dimension is different from shape dimension",
+                    helper::FATALERROR);
         return false; // different dimension
     }
 
@@ -259,8 +256,7 @@ bool QueryVar::IsSelectionValid(adios2::Dims &shape) const
     return true;
 }
 
-void QueryVar::LoadSelection(const std::string &startStr,
-                             const std::string &countStr)
+void QueryVar::LoadSelection(const std::string &startStr, const std::string &countStr)
 {
     adios2::Dims start = split(startStr, ',');
     adios2::Dims count = split(countStr, ',');
@@ -273,13 +269,12 @@ void QueryVar::LoadSelection(const std::string &startStr,
     }
 
     // simpleQ.setSelection(box.first, box.second);
-    adios2::Dims shape =
-        this->m_Selection.second; // set at the creation for default
+    adios2::Dims shape = this->m_Selection.second; // set at the creation for default
     this->SetSelection(start, count);
     if (!this->IsSelectionValid(shape))
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "query::QueryVar", "LoadSelection",
-            "invalid selections for selection of var: " + this->GetVarName());
+        helper::Throw<std::ios_base::failure>("Toolkit", "query::QueryVar", "LoadSelection",
+                                              "invalid selections for selection of var: " +
+                                                  this->GetVarName());
 }
 
 bool QueryVar::TouchSelection(adios2::Dims &start, adios2::Dims &count) const
@@ -302,8 +297,7 @@ bool QueryVar::TouchSelection(adios2::Dims &start, adios2::Dims &count) const
     return true;
 }
 
-void QueryVar::BlockIndexEvaluate(adios2::core::IO &io,
-                                  adios2::core::Engine &reader,
+void QueryVar::BlockIndexEvaluate(adios2::core::IO &io, adios2::core::Engine &reader,
                                   std::vector<Box<Dims>> &touchedBlocks)
 {
     const DataType varType = io.InquireVariableType(m_VarName);
@@ -312,12 +306,12 @@ void QueryVar::BlockIndexEvaluate(adios2::core::IO &io,
     // BlockIndex<int> idx(io, reader);
 
     // var already exists when loading query. skipping validity checking
-#define declare_type(T)                                                        \
-    if (varType == adios2::helper::GetDataType<T>())                           \
-    {                                                                          \
-        core::Variable<T> *var = io.InquireVariable<T>(m_VarName);             \
-        BlockIndex<T> idx(*var, io, reader);                                   \
-        idx.Evaluate(*this, touchedBlocks);                                    \
+#define declare_type(T)                                                                            \
+    if (varType == adios2::helper::GetDataType<T>())                                               \
+    {                                                                                              \
+        core::Variable<T> *var = io.InquireVariable<T>(m_VarName);                                 \
+        BlockIndex<T> idx(*var, io, reader);                                                       \
+        idx.Evaluate(*this, touchedBlocks);                                                        \
     }
     // ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type) //skip complex types
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)

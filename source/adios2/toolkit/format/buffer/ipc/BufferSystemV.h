@@ -21,8 +21,8 @@ namespace format
 class BufferSystemV : public Buffer
 {
 public:
-    BufferSystemV(const size_t fixedSize, const std::string &name,
-                  const unsigned int projectID, const bool remove);
+    BufferSystemV(const size_t fixedSize, const std::string &name, const unsigned int projectID,
+                  const bool remove);
 
     ~BufferSystemV();
 
@@ -30,8 +30,7 @@ public:
 
     const char *Data() const noexcept final;
 
-    void Reset(const bool resetAbsolutePosition,
-               const bool zeroInitialize) final;
+    void Reset(const bool resetAbsolutePosition, const bool zeroInitialize) final;
 
 private:
     /** shared memory segment ID from shmget */

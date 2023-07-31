@@ -42,8 +42,8 @@ public:
     AdiosView(Kokkos::View<T, P...> v)
     {
         pointer = v.data();
-        mem_space = detail::memspace_kokkos_to_adios2<
-            typename Kokkos::View<T, P...>::memory_space>::value;
+        mem_space =
+            detail::memspace_kokkos_to_adios2<typename Kokkos::View<T, P...>::memory_space>::value;
     }
 
     data_type const *data() const { return pointer; }

@@ -50,14 +50,14 @@ typedef struct _MpiReaderContactInfo
 {
     char ContactString[MPI_DP_CONTACT_STRING_LEN];
     void *StreamRS;
-} * MpiReaderContactInfo;
+} *MpiReaderContactInfo;
 
 typedef struct _MpiWriterContactInfo
 {
     char ContactString[MPI_DP_CONTACT_STRING_LEN];
     void *StreamWPR;
     int PID;
-} * MpiWriterContactInfo;
+} *MpiWriterContactInfo;
 
 /* Base Stream class, used implicitly */
 typedef struct _MpiStream
@@ -89,7 +89,7 @@ typedef struct _MpiStreamRD
     struct _MpiReaderContactInfo MyContactInfo;
     struct _MpiWriterContactInfo *CohortWriterInfo;
     MPI_Comm *CohortMpiComms;
-} * MpiStreamRD;
+} *MpiStreamRD;
 
 /**
  * Writers Stream.
@@ -107,7 +107,7 @@ typedef struct _MpiStreamWR
     TAILQ_HEAD(ReadersListHead, _MpiStreamWPR) Readers;
     pthread_rwlock_t LockTS;
     pthread_mutex_t MutexReaders;
-} * MpiStreamWR;
+} *MpiStreamWR;
 
 /**
  * WritersPerReader streams.
@@ -126,14 +126,14 @@ typedef struct _MpiStreamWPR
     char MpiPortName[MPI_MAX_PORT_NAME];
 
     TAILQ_ENTRY(_MpiStreamWPR) entries;
-} * MpiStreamWPR;
+} *MpiStreamWPR;
 
 typedef struct _TimeStepsEntry
 {
     long TimeStep;
     struct _SstData *Data;
     STAILQ_ENTRY(_TimeStepsEntry) entries;
-} * TimeStepsEntry;
+} *TimeStepsEntry;
 
 /*****Message Data Structures ***********************************************/
 
@@ -156,7 +156,7 @@ typedef struct _MpiReadRequestMsg
     size_t Offset;
     void *StreamRS;
     void *StreamWPR;
-} * MpiReadRequestMsg;
+} *MpiReadRequestMsg;
 
 typedef struct _MpiReadReplyMsg
 {
@@ -166,7 +166,7 @@ typedef struct _MpiReadReplyMsg
     long TimeStep;
     size_t DataLength;
     void *StreamRS;
-} * MpiReadReplyMsg;
+} *MpiReadReplyMsg;
 
 typedef struct _MpiCompletionHandle
 {
@@ -177,38 +177,28 @@ typedef struct _MpiCompletionHandle
     void *Buffer;
     int DestinationRank;
     enum MPI_DP_COMM_TYPE CommType;
-} * MpiCompletionHandle;
+} *MpiCompletionHandle;
 
 static FMField MpiReadRequestList[] = {
-    {"TimeStep", "integer", sizeof(long),
-     FMOffset(MpiReadRequestMsg, TimeStep)},
+    {"TimeStep", "integer", sizeof(long), FMOffset(MpiReadRequestMsg, TimeStep)},
     {"Offset", "integer", sizeof(size_t), FMOffset(MpiReadRequestMsg, Offset)},
     {"Length", "integer", sizeof(size_t), FMOffset(MpiReadRequestMsg, Length)},
-    {"StreamWPR", "integer", sizeof(void *),
-     FMOffset(MpiReadRequestMsg, StreamWPR)},
-    {"StreamRS", "integer", sizeof(void *),
-     FMOffset(MpiReadRequestMsg, StreamRS)},
-    {"RequestingRank", "integer", sizeof(int),
-     FMOffset(MpiReadRequestMsg, RequestingRank)},
-    {"NotifyCondition", "integer", sizeof(int),
-     FMOffset(MpiReadRequestMsg, NotifyCondition)},
+    {"StreamWPR", "integer", sizeof(void *), FMOffset(MpiReadRequestMsg, StreamWPR)},
+    {"StreamRS", "integer", sizeof(void *), FMOffset(MpiReadRequestMsg, StreamRS)},
+    {"RequestingRank", "integer", sizeof(int), FMOffset(MpiReadRequestMsg, RequestingRank)},
+    {"NotifyCondition", "integer", sizeof(int), FMOffset(MpiReadRequestMsg, NotifyCondition)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec MpiReadRequestStructs[] = {
-    {"MpiReadRequest", MpiReadRequestList, sizeof(struct _MpiReadRequestMsg),
-     NULL},
+    {"MpiReadRequest", MpiReadRequestList, sizeof(struct _MpiReadRequestMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField MpiReadReplyList[] = {
     {"TimeStep", "integer", sizeof(long), FMOffset(MpiReadReplyMsg, TimeStep)},
-    {"StreamRS", "integer", sizeof(void *),
-     FMOffset(MpiReadReplyMsg, StreamRS)},
-    {"DataLength", "integer", sizeof(size_t),
-     FMOffset(MpiReadReplyMsg, DataLength)},
-    {"NotifyCondition", "integer", sizeof(int),
-     FMOffset(MpiReadReplyMsg, NotifyCondition)},
-    {"MpiPortName", "string", sizeof(char *),
-     FMOffset(MpiReadReplyMsg, MpiPortName)},
+    {"StreamRS", "integer", sizeof(void *), FMOffset(MpiReadReplyMsg, StreamRS)},
+    {"DataLength", "integer", sizeof(size_t), FMOffset(MpiReadReplyMsg, DataLength)},
+    {"NotifyCondition", "integer", sizeof(int), FMOffset(MpiReadReplyMsg, NotifyCondition)},
+    {"MpiPortName", "string", sizeof(char *), FMOffset(MpiReadReplyMsg, MpiPortName)},
     {"Data", "char[DataLength]", sizeof(char), FMOffset(MpiReadReplyMsg, Data)},
     {NULL, NULL, 0, 0}};
 
@@ -217,37 +207,33 @@ static FMStructDescRec MpiReadReplyStructs[] = {
     {NULL, NULL, 0, NULL}};
 
 static FMField MpiReaderContactList[] = {
-    {"ContactString", "char[" MACRO_TO_STR(MPI_DP_CONTACT_STRING_LEN) "]",
-     sizeof(char), FMOffset(MpiReaderContactInfo, ContactString)},
-    {"reader_ID", "integer", sizeof(void *),
-     FMOffset(MpiReaderContactInfo, StreamRS)},
+    {"ContactString", "char[" MACRO_TO_STR(MPI_DP_CONTACT_STRING_LEN) "]", sizeof(char),
+     FMOffset(MpiReaderContactInfo, ContactString)},
+    {"reader_ID", "integer", sizeof(void *), FMOffset(MpiReaderContactInfo, StreamRS)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec MpiReaderContactStructs[] = {
-    {"MpiReaderContactInfo", MpiReaderContactList,
-     sizeof(struct _MpiReaderContactInfo), NULL},
+    {"MpiReaderContactInfo", MpiReaderContactList, sizeof(struct _MpiReaderContactInfo), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField MpiWriterContactList[] = {
-    {"ContactString", "char[" MACRO_TO_STR(MPI_DP_CONTACT_STRING_LEN) "]",
-     sizeof(char), FMOffset(MpiWriterContactInfo, ContactString)},
-    {"writer_ID", "integer", sizeof(void *),
-     FMOffset(MpiWriterContactInfo, StreamWPR)},
+    {"ContactString", "char[" MACRO_TO_STR(MPI_DP_CONTACT_STRING_LEN) "]", sizeof(char),
+     FMOffset(MpiWriterContactInfo, ContactString)},
+    {"writer_ID", "integer", sizeof(void *), FMOffset(MpiWriterContactInfo, StreamWPR)},
     {"PID", "integer", sizeof(int), FMOffset(MpiWriterContactInfo, PID)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec MpiWriterContactStructs[] = {
-    {"MpiWriterContactInfo", MpiWriterContactList,
-     sizeof(struct _MpiWriterContactInfo), NULL},
+    {"MpiWriterContactInfo", MpiWriterContactList, sizeof(struct _MpiWriterContactInfo), NULL},
     {NULL, NULL, 0, NULL}};
 
 /*****Internal functions*****************************************************/
 
-static void MpiReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                void *client_Data, attr_list attrs);
+static void MpiReadReplyHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                attr_list attrs);
 
-static void MpiReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
-                                  void *client_Data, attr_list attrs);
+static void MpiReadRequestHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                  attr_list attrs);
 
 /**
  * Initialize MPI in the mode that it is required for MPI_DP to work.
@@ -296,10 +282,9 @@ static void MpiInitialize()
  * is an FFS format description.  See
  * https://www.cc.gatech.edu/systems/projects/FFS/.)
  */
-static DP_RS_Stream MpiInitReader(CP_Services Svcs, void *CP_Stream,
-                                  void **ReaderContactInfoPtr,
-                                  struct _SstParams *Params,
-                                  attr_list WriterContact, SstStats Stats)
+static DP_RS_Stream MpiInitReader(CP_Services Svcs, void *CP_Stream, void **ReaderContactInfoPtr,
+                                  struct _SstParams *Params, attr_list WriterContact,
+                                  SstStats Stats)
 {
     pthread_once(&OnceMpiInitializer, MpiInitialize);
 
@@ -320,14 +305,13 @@ static DP_RS_Stream MpiInitReader(CP_Services Svcs, void *CP_Stream,
     CMregister_handler(F, MpiReadReplyHandler, Svcs);
 
     /* Generate Contact info */
-    snprintf(Stream->MyContactInfo.ContactString, MPI_DP_CONTACT_STRING_LEN,
-             "Reader Rank %d", Stream->Stream.Rank);
+    snprintf(Stream->MyContactInfo.ContactString, MPI_DP_CONTACT_STRING_LEN, "Reader Rank %d",
+             Stream->Stream.Rank);
     Stream->MyContactInfo.StreamRS = Stream;
     *ReaderContactInfoPtr = &Stream->MyContactInfo;
 
     Svcs->verbose(Stream->Stream.CP_Stream, DPTraceVerbose,
-                  "MPI dataplane reader initialized, reader rank %d\n",
-                  Stream->Stream.Rank);
+                  "MPI dataplane reader initialized, reader rank %d\n", Stream->Stream.Rank);
 
     return Stream;
 }
@@ -340,9 +324,8 @@ static DP_RS_Stream MpiInitReader(CP_Services Svcs, void *CP_Stream,
  * initialize a new writer-side data plane.  This does *not* include creating
  * contact information per se.  That can be put off until InitWriterPerReader().
  */
-static DP_WS_Stream MpiInitWriter(CP_Services Svcs, void *CP_Stream,
-                                  struct _SstParams *Params, attr_list DPAttrs,
-                                  SstStats Stats)
+static DP_WS_Stream MpiInitWriter(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params,
+                                  attr_list DPAttrs, SstStats Stats)
 {
     pthread_once(&OnceMpiInitializer, MpiInitialize);
 
@@ -373,8 +356,7 @@ static DP_WS_Stream MpiInitWriter(CP_Services Svcs, void *CP_Stream,
     /* * register read reply message structure so we can send later */
     Stream->ReadReplyFormat = CMregister_format(cm, MpiReadReplyStructs);
 
-    Svcs->verbose(CP_Stream, DPTraceVerbose,
-                  "MpiInitWriter initialized addr=%p\n", Stream);
+    Svcs->verbose(CP_Stream, DPTraceVerbose, "MpiInitWriter initialized addr=%p\n", Stream);
 
     return (void *)Stream;
 }
@@ -390,15 +372,14 @@ static DP_WS_Stream MpiInitWriter(CP_Services Svcs, void *CP_Stream,
  * DPInterface.WriterContactFormats.   (This is an FFS format description.  See
  * https://www.cc.gatech.edu/systems/projects/FFS/.)
  */
-static DP_WSR_Stream
-MpiInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_Stream_v,
-                       int readerCohortSize, CP_PeerCohort PeerCohort,
-                       void **providedReaderInfo_v, void **WriterContactInfoPtr)
+static DP_WSR_Stream MpiInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_Stream_v,
+                                            int readerCohortSize, CP_PeerCohort PeerCohort,
+                                            void **providedReaderInfo_v,
+                                            void **WriterContactInfoPtr)
 {
     MpiStreamWR StreamWR = (MpiStreamWR)WS_Stream_v;
     MpiStreamWPR StreamWPR = calloc(sizeof(struct _MpiStreamWPR), 1);
-    MpiReaderContactInfo *providedReaderInfo =
-        (MpiReaderContactInfo *)providedReaderInfo_v;
+    MpiReaderContactInfo *providedReaderInfo = (MpiReaderContactInfo *)providedReaderInfo_v;
 
     MPI_Open_port(MPI_INFO_NULL, StreamWPR->MpiPortName);
 
@@ -410,8 +391,7 @@ MpiInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_Stream_v,
                   "MPI dataplane WriterPerReader to be initialized\n");
 
     /* * Copy of writer contact information (original will not be preserved) */
-    StreamWPR->CohortReaderInfo =
-        malloc(sizeof(struct _MpiReaderContactInfo) * readerCohortSize);
+    StreamWPR->CohortReaderInfo = malloc(sizeof(struct _MpiReaderContactInfo) * readerCohortSize);
     StreamWPR->CohortMpiComms = malloc(sizeof(MPI_Comm) * readerCohortSize);
     for (int i = 0; i < readerCohortSize; i++)
     {
@@ -446,22 +426,18 @@ MpiInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_Stream_v,
  * function recieves the WriterContactInfo created at MpiInitWriterPerReader in
  * providedWriterInfo_v argument.
  */
-static void MpiProvideWriterDataToReader(CP_Services Svcs,
-                                         DP_RS_Stream RS_Stream_v,
-                                         int writerCohortSize,
-                                         CP_PeerCohort PeerCohort,
+static void MpiProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v,
+                                         int writerCohortSize, CP_PeerCohort PeerCohort,
                                          void **providedWriterInfo_v)
 {
     MpiStreamRD StreamRS = (MpiStreamRD)RS_Stream_v;
-    MpiWriterContactInfo *providedWriterInfo =
-        (MpiWriterContactInfo *)providedWriterInfo_v;
+    MpiWriterContactInfo *providedWriterInfo = (MpiWriterContactInfo *)providedWriterInfo_v;
 
     StreamRS->Link.PeerCohort = PeerCohort;
     StreamRS->Link.CohortSize = writerCohortSize;
 
     /* * Copy of writer contact information (original will not be preserved) */
-    StreamRS->CohortWriterInfo =
-        malloc(sizeof(struct _MpiWriterContactInfo) * writerCohortSize);
+    StreamRS->CohortWriterInfo = malloc(sizeof(struct _MpiWriterContactInfo) * writerCohortSize);
     StreamRS->CohortMpiComms = malloc(sizeof(MPI_Comm) * writerCohortSize);
     for (int i = 0; i < writerCohortSize; i++)
     {
@@ -509,10 +485,8 @@ static char *LoadTimeStep(MpiStreamWR Stream, long TimeStep)
  * call returns.  The void* return value will later be passed to a
  * WaitForCompletion call and should represent a completion handle.
  */
-static void *MpiReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
-                                 int Rank, long TimeStep, size_t Offset,
-                                 size_t Length, void *Buffer,
-                                 void *DP_TimeStepInfo)
+static void *MpiReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Rank, long TimeStep,
+                                 size_t Offset, size_t Length, void *Buffer, void *DP_TimeStepInfo)
 {
     /* DP_RS_Stream is the return from InitReader */
     MpiStreamRD Stream = (MpiStreamRD)Stream_v;
@@ -521,36 +495,32 @@ static void *MpiReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
 
     MpiWriterContactInfo TargetContact = &Stream->CohortWriterInfo[Rank];
 
-    Svcs->verbose(
-        Stream->Stream.CP_Stream, DPTraceVerbose,
-        "Reader (rank %d) requesting to read remote memory for TimeStep %d "
-        "from Rank %d, StreamWPR =%p, Offset=%d, Length=%d\n",
-        Stream->Stream.Rank, TimeStep, Rank, TargetContact->StreamWPR, Offset,
-        Length);
+    Svcs->verbose(Stream->Stream.CP_Stream, DPTraceVerbose,
+                  "Reader (rank %d) requesting to read remote memory for TimeStep %d "
+                  "from Rank %d, StreamWPR =%p, Offset=%d, Length=%d\n",
+                  Stream->Stream.Rank, TimeStep, Rank, TargetContact->StreamWPR, Offset, Length);
 
     /* send request to appropriate writer */
-    struct _MpiReadRequestMsg ReadRequestMsg = {
-        .Length = Length,
-        .NotifyCondition = CMCondition_get(cm, NULL),
-        .Offset = Offset,
-        .RequestingRank = Stream->Stream.Rank,
-        .StreamRS = Stream,
-        .StreamWPR = TargetContact->StreamWPR,
-        .TimeStep = TimeStep};
+    struct _MpiReadRequestMsg ReadRequestMsg = {.Length = Length,
+                                                .NotifyCondition = CMCondition_get(cm, NULL),
+                                                .Offset = Offset,
+                                                .RequestingRank = Stream->Stream.Rank,
+                                                .StreamRS = Stream,
+                                                .StreamWPR = TargetContact->StreamWPR,
+                                                .TimeStep = TimeStep};
 
     ret->ReadRequest = ReadRequestMsg;
     ret->Buffer = Buffer;
     ret->cm = cm;
     ret->CPStream = Stream->Stream.CP_Stream;
     ret->DestinationRank = Rank;
-    ret->CommType = (TargetContact->PID == Stream->Stream.PID) ? MPI_DP_LOCAL
-                                                               : MPI_DP_REMOTE;
+    ret->CommType = (TargetContact->PID == Stream->Stream.PID) ? MPI_DP_LOCAL : MPI_DP_REMOTE;
 
     if (ret->CommType == MPI_DP_REMOTE)
     {
         CMCondition_set_client_data(cm, ReadRequestMsg.NotifyCondition, ret);
-        Svcs->sendToPeer(Stream->Stream.CP_Stream, Stream->Link.PeerCohort,
-                         Rank, Stream->ReadRequestFormat, &ReadRequestMsg);
+        Svcs->sendToPeer(Stream->Stream.CP_Stream, Stream->Link.PeerCohort, Rank,
+                         Stream->ReadRequestFormat, &ReadRequestMsg);
 
         Svcs->verbose(Stream->Stream.CP_Stream, DPTraceVerbose,
                       "ReadRemoteMemory: Send to server, Link.CohortSize=%d\n",
@@ -578,23 +548,20 @@ static int MpiWaitForCompletion(CP_Services Svcs, void *Handle_v)
     const struct _MpiReadRequestMsg Request = Handle->ReadRequest;
     int Ret = 0;
 
-    Svcs->verbose(
-        Handle->CPStream, DPTraceVerbose,
-        "Waiting for completion of memory read to rank %d, condition %d,"
-        "timestep=%d, is_local=%d\n",
-        Handle->DestinationRank, Request.NotifyCondition, Request.TimeStep,
-        Handle->CommType);
+    Svcs->verbose(Handle->CPStream, DPTraceVerbose,
+                  "Waiting for completion of memory read to rank %d, condition %d,"
+                  "timestep=%d, is_local=%d\n",
+                  Handle->DestinationRank, Request.NotifyCondition, Request.TimeStep,
+                  Handle->CommType);
 
     // If possible, read locally
     if (Handle->CommType == MPI_DP_LOCAL)
     {
-        const MpiStreamWR StreamWR =
-            ((MpiStreamWPR)Request.StreamWPR)->StreamWR;
+        const MpiStreamWR StreamWR = ((MpiStreamWPR)Request.StreamWPR)->StreamWR;
         char *LoadedBuffer = LoadTimeStep(StreamWR, Request.TimeStep);
         if (LoadedBuffer)
         {
-            memcpy(Handle->Buffer, LoadedBuffer + Request.Offset,
-                   Request.Length);
+            memcpy(Handle->Buffer, LoadedBuffer + Request.Offset, Request.Length);
         }
         Ret = (LoadedBuffer != NULL);
     }
@@ -610,17 +577,15 @@ static int MpiWaitForCompletion(CP_Services Svcs, void *Handle_v)
         Svcs->verbose(Handle->CPStream, DPTraceVerbose,
                       "Memory read to rank %d with condition %d and"
                       "length %zu has completed\n",
-                      Handle->DestinationRank, Request.NotifyCondition,
-                      Request.Length);
+                      Handle->DestinationRank, Request.NotifyCondition, Request.Length);
     }
     else
     {
-        Svcs->verbose(
-            Handle->CPStream, DPTraceVerbose,
-            "Remote memory read to rank %d with condition %d has FAILED"
-            "because of "
-            "writer failure\n",
-            Handle->DestinationRank, Request.NotifyCondition);
+        Svcs->verbose(Handle->CPStream, DPTraceVerbose,
+                      "Remote memory read to rank %d with condition %d has FAILED"
+                      "because of "
+                      "writer failure\n",
+                      Handle->DestinationRank, Request.NotifyCondition);
     }
 
     free(Handle);
@@ -634,8 +599,8 @@ static int MpiWaitForCompletion(CP_Services Svcs, void *Handle_v)
  * is message is sent from MpiReadRemoteMemory. This function should noisily
  * fail if the requested timestep is not found.
  */
-static void MpiReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
-                                  void *client_Data, attr_list attrs)
+static void MpiReadRequestHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                  attr_list attrs)
 {
     MpiReadRequestMsg ReadRequestMsg = (MpiReadRequestMsg)msg_v;
     MpiStreamWPR StreamWPR = ReadRequestMsg->StreamWPR;
@@ -645,8 +610,8 @@ static void MpiReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
     Svcs->verbose(StreamWR->Stream.CP_Stream, DPTraceVerbose,
                   "MpiReadRequestHandler:"
                   "read request from reader=%d,ts=%d,off=%d,len=%d\n",
-                  ReadRequestMsg->RequestingRank, ReadRequestMsg->TimeStep,
-                  ReadRequestMsg->Offset, ReadRequestMsg->Length);
+                  ReadRequestMsg->RequestingRank, ReadRequestMsg->TimeStep, ReadRequestMsg->Offset,
+                  ReadRequestMsg->Length);
 
     PERFSTUBS_TIMER_START_FUNC(timer);
 
@@ -656,8 +621,7 @@ static void MpiReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
     {
         PERFSTUBS_TIMER_STOP_FUNC(timer);
         Svcs->verbose(StreamWR->Stream.CP_Stream, DPPerStepVerbose,
-                      "Failed to read TimeStep %ld, not found\n",
-                      ReadRequestMsg->TimeStep);
+                      "Failed to read TimeStep %ld, not found\n", ReadRequestMsg->TimeStep);
         return;
     }
 
@@ -669,35 +633,30 @@ static void MpiReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
         .MpiPortName = StreamWPR->MpiPortName,
     };
 
-    Svcs->verbose(
-        StreamWR->Stream.CP_Stream, DPTraceVerbose,
-        "MpiReadRequestHandler: Replying reader=%d with MPI port name=%s\n",
-        ReadRequestMsg->RequestingRank, StreamWPR->MpiPortName);
+    Svcs->verbose(StreamWR->Stream.CP_Stream, DPTraceVerbose,
+                  "MpiReadRequestHandler: Replying reader=%d with MPI port name=%s\n",
+                  ReadRequestMsg->RequestingRank, StreamWPR->MpiPortName);
 
     Svcs->sendToPeer(StreamWR->Stream.CP_Stream, StreamWPR->Link.PeerCohort,
-                     ReadRequestMsg->RequestingRank, StreamWR->ReadReplyFormat,
-                     &ReadReplyMsg);
+                     ReadRequestMsg->RequestingRank, StreamWR->ReadReplyFormat, &ReadReplyMsg);
 
     // Send the actual Data using MPI
     MPI_Comm *comm = &StreamWPR->CohortMpiComms[ReadRequestMsg->RequestingRank];
     MPI_Errhandler worldErrHandler;
     MPI_Comm_get_errhandler(MPI_COMM_WORLD, &worldErrHandler);
     MPI_Comm_set_errhandler(MPI_COMM_WORLD, MPI_ERRORS_RETURN);
-    int ret =
-        MPI_Send(RequestedData + ReadRequestMsg->Offset, ReadRequestMsg->Length,
-                 MPI_CHAR, 0, ReadRequestMsg->NotifyCondition, *comm);
+    int ret = MPI_Send(RequestedData + ReadRequestMsg->Offset, ReadRequestMsg->Length, MPI_CHAR, 0,
+                       ReadRequestMsg->NotifyCondition, *comm);
     MPI_Comm_set_errhandler(MPI_COMM_WORLD, worldErrHandler);
 
     if (ret != MPI_SUCCESS)
     {
-        MPI_Comm_accept(StreamWPR->MpiPortName, MPI_INFO_NULL, 0, MPI_COMM_SELF,
-                        comm);
-        Svcs->verbose(
-            StreamWR->Stream.CP_Stream, DPTraceVerbose,
-            "MpiReadRequestHandler: Accepted client, Link.CohortSize=%d\n",
-            StreamWPR->Link.CohortSize);
-        MPI_Send(RequestedData + ReadRequestMsg->Offset, ReadRequestMsg->Length,
-                 MPI_CHAR, 0, ReadRequestMsg->NotifyCondition, *comm);
+        MPI_Comm_accept(StreamWPR->MpiPortName, MPI_INFO_NULL, 0, MPI_COMM_SELF, comm);
+        Svcs->verbose(StreamWR->Stream.CP_Stream, DPTraceVerbose,
+                      "MpiReadRequestHandler: Accepted client, Link.CohortSize=%d\n",
+                      StreamWPR->Link.CohortSize);
+        MPI_Send(RequestedData + ReadRequestMsg->Offset, ReadRequestMsg->Length, MPI_CHAR, 0,
+                 ReadRequestMsg->NotifyCondition, *comm);
     }
 
     PERFSTUBS_TIMER_STOP_FUNC(timer);
@@ -708,21 +667,18 @@ static void MpiReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
  *
  * This is invoked at the Reader side when a reply is ready to be read.
  */
-static void MpiReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                void *client_Data, attr_list attrs)
+static void MpiReadReplyHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                attr_list attrs)
 {
     PERFSTUBS_TIMER_START_FUNC(timer);
     MpiReadReplyMsg ReadReplyMsg = (MpiReadReplyMsg)msg_v;
     MpiStreamRD StreamRS = ReadReplyMsg->StreamRS;
     CP_Services Svcs = (CP_Services)client_Data;
-    MpiCompletionHandle Handle =
-        CMCondition_get_client_data(cm, ReadReplyMsg->NotifyCondition);
+    MpiCompletionHandle Handle = CMCondition_get_client_data(cm, ReadReplyMsg->NotifyCondition);
 
-    Svcs->verbose(
-        StreamRS->Stream.CP_Stream, DPTraceVerbose,
-        "MpiReadReplyHandler: Read recv from rank=%d,condition=%d,size=%d\n",
-        Handle->DestinationRank, ReadReplyMsg->NotifyCondition,
-        ReadReplyMsg->DataLength);
+    Svcs->verbose(StreamRS->Stream.CP_Stream, DPTraceVerbose,
+                  "MpiReadReplyHandler: Read recv from rank=%d,condition=%d,size=%d\n",
+                  Handle->DestinationRank, ReadReplyMsg->NotifyCondition, ReadReplyMsg->DataLength);
 
     MPI_Comm comm = StreamRS->CohortMpiComms[Handle->DestinationRank];
 
@@ -735,8 +691,7 @@ static void MpiReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
 
     if (ret != MPI_SUCCESS)
     {
-        MPI_Comm_connect(ReadReplyMsg->MpiPortName, MPI_INFO_NULL, 0,
-                         MPI_COMM_SELF, &comm);
+        MPI_Comm_connect(ReadReplyMsg->MpiPortName, MPI_INFO_NULL, 0, MPI_COMM_SELF, &comm);
 
         Svcs->verbose(StreamRS->Stream.CP_Stream, DPTraceVerbose,
                       "MpiReadReplyHandler: Connecting to MPI Server\n");
@@ -767,8 +722,7 @@ static void MpiReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
  * DPInterface.TimeStepInfoFormats.
  *
  */
-static void MpiProvideTimeStep(CP_Services Svcs, DP_WS_Stream Stream_v,
-                               struct _SstData *Data,
+static void MpiProvideTimeStep(CP_Services Svcs, DP_WS_Stream Stream_v, struct _SstData *Data,
                                struct _SstData *LocalMetadata, long TimeStep,
                                void **TimeStepInfoPtr)
 {
@@ -791,13 +745,11 @@ static void MpiProvideTimeStep(CP_Services Svcs, DP_WS_Stream Stream_v,
  * plane that a particular timestep is no longer required and any resources
  * devoted to serving it can be released.
  */
-static void MpiReleaseTimeStep(CP_Services Svcs, DP_WS_Stream Stream_v,
-                               long TimeStep)
+static void MpiReleaseTimeStep(CP_Services Svcs, DP_WS_Stream Stream_v, long TimeStep)
 {
     MpiStreamWR Stream = (MpiStreamWR)Stream_v;
 
-    Svcs->verbose(Stream->Stream.CP_Stream, DPTraceVerbose,
-                  "Releasing timestep %ld\n", TimeStep);
+    Svcs->verbose(Stream->Stream.CP_Stream, DPTraceVerbose, "Releasing timestep %ld\n", TimeStep);
 
     pthread_rwlock_rdlock(&Stream->LockTS);
     TimeStepsEntry EntryToDelete = STAILQ_FIRST(&Stream->TimeSteps);
@@ -826,8 +778,7 @@ static void MpiReleaseTimeStep(CP_Services Svcs, DP_WS_Stream Stream_v,
         if (EntryToDelete)
         {
             pthread_rwlock_wrlock(&Stream->LockTS);
-            STAILQ_REMOVE(&Stream->TimeSteps, EntryToDelete, _TimeStepsEntry,
-                          entries);
+            STAILQ_REMOVE(&Stream->TimeSteps, EntryToDelete, _TimeStepsEntry, entries);
             pthread_rwlock_unlock(&Stream->LockTS);
         }
     }
@@ -845,8 +796,7 @@ static void MpiReleaseTimeStep(CP_Services Svcs, DP_WS_Stream Stream_v,
  * When MPI is initialized with MPI_THREAD_MULTIPLE this data-plane should have
  * highest priority
  */
-static int MpiGetPriority(CP_Services Svcs, void *CP_Stream,
-                          struct _SstParams *Params)
+static int MpiGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params)
 {
 #if defined(MPICH)
     // Only enabled when MPI_THREAD_MULTIPLE and using MPICH
@@ -864,8 +814,7 @@ static int MpiGetPriority(CP_Services Svcs, void *CP_Stream,
 /**
  * MpiNotifyConnFailure
  */
-static void MpiNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
-                                 int FailedPeerRank)
+static void MpiNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v, int FailedPeerRank)
 {
     /* DP_RS_Stream is the return from InitReader */
     MpiStreamRD Stream = (MpiStreamRD)Stream_v;
@@ -882,8 +831,7 @@ static void MpiNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
  * This is called whenever a reader disconnect from a writer. This function
  * also removes the StreamWPR from its own StreamWR.
  */
-static void MpiDestroyWriterPerReader(CP_Services Svcs,
-                                      DP_WSR_Stream WSR_Stream_v)
+static void MpiDestroyWriterPerReader(CP_Services Svcs, DP_WSR_Stream WSR_Stream_v)
 {
     MpiStreamWPR StreamWPR = (MpiStreamWPR)WSR_Stream_v;
     MpiStreamWR StreamWR = StreamWPR->StreamWR;

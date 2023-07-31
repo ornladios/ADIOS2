@@ -28,9 +28,8 @@ public:
 // ADIOS2  declare attributes on multiple ranks
 TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
 {
-    const std::string fName =
-        "foo" + std::string(&adios2::PathSeparator, 1) +
-        "ADIOS2BPWriteAttributeMultirankReadArrayTypes.bp";
+    const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
+                              "ADIOS2BPWriteAttributeMultirankReadArrayTypes.bp";
 
     int mpiRank = 0;
 #if ADIOS2_USE_MPI
@@ -38,13 +37,11 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
 #endif
 
     // a different variable and associated attribute on each rank
-    std::string varpath = "rank" + std::to_string(mpiRank) +
-                          std::string(&adios2::PathSeparator, 1) + "value";
-    std::string attrpath =
-        varpath + std::string(&adios2::PathSeparator, 1) + "description";
+    std::string varpath =
+        "rank" + std::to_string(mpiRank) + std::string(&adios2::PathSeparator, 1) + "value";
+    std::string attrpath = varpath + std::string(&adios2::PathSeparator, 1) + "description";
     std::string desc =
-        "This variable and associated attribute was created on rank " +
-        std::to_string(mpiRank);
+        "This variable and associated attribute was created on rank " + std::to_string(mpiRank);
 
 // Write test data using BP
 #if ADIOS2_USE_MPI
@@ -55,17 +52,15 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
-        io.DefineAttribute<std::string>("GlobalAttribute",
-                                        "Defined on all ranks");
+        io.DefineAttribute<std::string>("GlobalAttribute", "Defined on all ranks");
 
         auto var = io.DefineVariable<int>(varpath);
         auto attr = io.DefineAttribute<std::string>(attrpath, desc);
         (void)var;
         (void)attr;
 
-        std::cout << "Rank " << mpiRank << " create variable " << varpath
-                  << " = " << mpiRank << " and attribute " << attrpath
-                  << " = \"" << desc << "\"" << std::endl;
+        std::cout << "Rank " << mpiRank << " create variable " << varpath << " = " << mpiRank
+                  << " and attribute " << attrpath << " = \"" << desc << "\"" << std::endl;
 
         if (!engineName.empty())
         {
@@ -93,8 +88,7 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
             ioRead.SetEngine(engineName);
         }
 
-        adios2::Engine bpRead =
-            ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpRead = ioRead.Open(fName, adios2::Mode::ReadRandomAccess);
 
         auto var = ioRead.InquireVariable<int>(varpath);
         EXPECT_TRUE(var);
@@ -110,8 +104,8 @@ TEST_F(BPWriteReadAttributeTestMultirank, ADIOS2BPWriteReadArrayTypes)
         EXPECT_TRUE(attr);
         ASSERT_EQ(attr.Name(), attrpath);
         ASSERT_EQ(attr.Data().size() == 1, true);
-        std::cout << "Rank " << mpiRank << " attribute is " << attrpath
-                  << " = \"" << attr.Data()[0] << "\"" << std::endl;
+        std::cout << "Rank " << mpiRank << " attribute is " << attrpath << " = \"" << attr.Data()[0]
+                  << "\"" << std::endl;
         ASSERT_EQ(attr.Type(), "string");
 
         bpRead.Close();

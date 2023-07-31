@@ -26,7 +26,7 @@ typedef struct _FFSWriterRec
     size_t MetaOffset;
     int DimCount;
     int Type;
-} * FFSWriterRec;
+} *FFSWriterRec;
 
 struct FFSWriterMarshalBase
 {
@@ -63,7 +63,7 @@ typedef struct FFSVarRec
     size_t **PerWriterCounts;
     void **PerWriterIncomingData;
     size_t *PerWriterIncomingSize; // important for compression
-} * FFSVarRec;
+} *FFSVarRec;
 
 enum FFSRequestTypeEnum
 {
@@ -80,7 +80,7 @@ typedef struct FFSArrayRequest
     size_t *Count;
     void *Data;
     struct FFSArrayRequest *Next;
-} * FFSArrayRequest;
+} *FFSArrayRequest;
 
 enum WriterDataStatusEnum
 {
@@ -132,10 +132,8 @@ struct FFSReaderMarshalBase
     struct ControlInfo *ControlBlocks;
 };
 
-extern char *FFS_ZFPCompress(SstStream Stream, const size_t DimCount, int Type,
-                             void *Data, const size_t *Count,
-                             size_t *ByteCountP);
-extern void *FFS_ZFPDecompress(SstStream Stream, const size_t DimCount,
-                               int Type, void *bufferIn, const size_t sizeIn,
-                               const size_t *Dimensions, attr_list Parameters);
+extern char *FFS_ZFPCompress(SstStream Stream, const size_t DimCount, int Type, void *Data,
+                             const size_t *Count, size_t *ByteCountP);
+extern void *FFS_ZFPDecompress(SstStream Stream, const size_t DimCount, int Type, void *bufferIn,
+                               const size_t sizeIn, const size_t *Dimensions, attr_list Parameters);
 extern int ZFPcompressionPossible(const int Type, const int DimCount);

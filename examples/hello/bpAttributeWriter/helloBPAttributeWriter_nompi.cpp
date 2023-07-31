@@ -33,20 +33,17 @@ int main(int argc, char *argv[])
 
         /** global array: name, { shape (total dimensions) }, { start (local) },
          * { count (local) }, all are constant dimensions */
-        adios2::Variable<float> bpFloats = bpIO.DefineVariable<float>(
-            "bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
+        adios2::Variable<float> bpFloats =
+            bpIO.DefineVariable<float>("bpFloats", {}, {}, {Nx}, adios2::ConstantDims);
 
-        bpIO.DefineAttribute<std::string>("Single_String",
-                                          "File generated with ADIOS2");
+        bpIO.DefineAttribute<std::string>("Single_String", "File generated with ADIOS2");
 
         std::vector<std::string> myStrings = {"one", "two", "three"};
-        bpIO.DefineAttribute<std::string>("Array_of_Strings", myStrings.data(),
-                                          myStrings.size());
+        bpIO.DefineAttribute<std::string>("Array_of_Strings", myStrings.data(), myStrings.size());
 
         bpIO.DefineAttribute<double>("Attr_Double", 0.f);
         std::vector<double> myDoubles = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-        bpIO.DefineAttribute<double>("Array_of_Doubles", myDoubles.data(),
-                                     myDoubles.size());
+        bpIO.DefineAttribute<double>("Array_of_Doubles", myDoubles.data(), myDoubles.size());
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpWriter = bpIO.Open("myVector.bp", adios2::Mode::Write);

@@ -85,8 +85,7 @@ TEST_F(BPFortranToCppRead, ADIOS2BPFortranToCppRead)
         EXPECT_EQ(a.size(), static_cast<size_t>(inx));
         for (int i = 0; i < inx; ++i)
         {
-            EXPECT_DOUBLE_EQ(a[i],
-                             (mpiRank + 1) * 1000 + (step + 1) * 100 + (i + 1));
+            EXPECT_DOUBLE_EQ(a[i], (mpiRank + 1) * 1000 + (step + 1) * 100 + (i + 1));
         }
 
         // 2D local array
@@ -100,18 +99,14 @@ TEST_F(BPFortranToCppRead, ADIOS2BPFortranToCppRead)
         EXPECT_EQ(a.size(), static_cast<size_t>(inx * 2));
         for (int i = 0; i < inx; ++i)
         {
-            EXPECT_DOUBLE_EQ(a[i],
-                             (mpiRank + 1) * 1000 + (step + 1) * 100 + (i + 1));
-            EXPECT_DOUBLE_EQ(a[i + inx], (mpiRank + 1) * 1000 +
-                                             (step + 1) * 100 + (inx + i + 1));
+            EXPECT_DOUBLE_EQ(a[i], (mpiRank + 1) * 1000 + (step + 1) * 100 + (i + 1));
+            EXPECT_DOUBLE_EQ(a[i + inx], (mpiRank + 1) * 1000 + (step + 1) * 100 + (inx + i + 1));
         }
 
         // 1D changing local array
-        auto var_localarray_1D_changing =
-            io.InquireVariable<int64_t>("localarray_1D_changing");
+        auto var_localarray_1D_changing = io.InquireVariable<int64_t>("localarray_1D_changing");
         EXPECT_TRUE(var_localarray_1D_changing);
-        EXPECT_EQ(var_localarray_1D_changing.ShapeID(),
-                  adios2::ShapeID::LocalArray);
+        EXPECT_EQ(var_localarray_1D_changing.ShapeID(), adios2::ShapeID::LocalArray);
         EXPECT_EQ(var_localarray_1D_changing.Shape().size(), 0);
         var_localarray_1D_changing.SetBlockSelection(mpiRank);
         a.clear();
@@ -119,8 +114,7 @@ TEST_F(BPFortranToCppRead, ADIOS2BPFortranToCppRead)
         EXPECT_EQ(a.size(), static_cast<size_t>(step + 1));
         for (int i = 0; i < step + 1; ++i)
         {
-            EXPECT_DOUBLE_EQ(a[i], (mpiRank + 1) * 1000 + (step + 1) * 100 +
-                                       (i + 1) + (step + 1));
+            EXPECT_DOUBLE_EQ(a[i], (mpiRank + 1) * 1000 + (step + 1) * 100 + (i + 1) + (step + 1));
         }
 
         bpReader.EndStep();

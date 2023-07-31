@@ -28,8 +28,7 @@ class SscReaderGeneric : public SscReaderBase
 {
 
 public:
-    SscReaderGeneric(IO &io, const std::string &name, const Mode mode,
-                     MPI_Comm comm);
+    SscReaderGeneric(IO &io, const std::string &name, const Mode mode, MPI_Comm comm);
     ~SscReaderGeneric() = default;
 
     StepStatus BeginStep(const StepMode mode, const float timeoutSeconds,
@@ -39,14 +38,14 @@ public:
     void EndStep(const bool readerLocked) final;
     void Close(const int transportIndex) final;
 
-#define declare_type(T)                                                        \
-    std::vector<typename Variable<T>::BPInfo> BlocksInfo(                      \
-        const Variable<T> &variable, const size_t step) const final;
+#define declare_type(T)                                                                            \
+    std::vector<typename Variable<T>::BPInfo> BlocksInfo(const Variable<T> &variable,              \
+                                                         const size_t step) const final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-    std::vector<VariableStruct::BPInfo>
-    BlocksInfo(const VariableStruct &variable, const size_t step) const final;
+    std::vector<VariableStruct::BPInfo> BlocksInfo(const VariableStruct &variable,
+                                                   const size_t step) const final;
 
     void GetDeferred(VariableBase &, void *) final;
 
@@ -70,12 +69,11 @@ private:
     void EndStepFixed();
     void EndStepFirstFlexible();
     void EndStepConsequentFlexible();
-    void CalculatePosition(ssc::BlockVecVec &mapVec,
-                           ssc::RankPosMap &allOverlapRanks);
+    void CalculatePosition(ssc::BlockVecVec &mapVec, ssc::RankPosMap &allOverlapRanks);
 
     template <typename T>
-    std::vector<typename Variable<T>::BPInfo>
-    BlocksInfoCommon(const Variable<T> &variable, const size_t step) const;
+    std::vector<typename Variable<T>::BPInfo> BlocksInfoCommon(const Variable<T> &variable,
+                                                               const size_t step) const;
 
     template <class T>
     void GetDeferredCommon(Variable<T> &variable, T *data);

@@ -90,11 +90,9 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 
         ASSERT_EQ(var2.Shape()[0], (writerSize + 1) * Nx);
 
-        long unsigned int myStart =
-            (long unsigned int)((writerSize + 1) * Nx / mpiSize) * mpiRank;
+        long unsigned int myStart = (long unsigned int)((writerSize + 1) * Nx / mpiSize) * mpiRank;
         long unsigned int myLength =
-            (long unsigned int)(((writerSize + 1) * Nx + mpiSize - 1) /
-                                mpiSize);
+            (long unsigned int)(((writerSize + 1) * Nx + mpiSize - 1) / mpiSize);
 
         if (myStart + myLength > writerSize * Nx)
         {
@@ -117,14 +115,13 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
         engine1.EndStep();
         engine2.EndStep();
 
-        int result = validateSimpleForwardData(in_R64_1, 0, myStart, myLength,
-                                               (writerSize + 1) * Nx);
-        result |= validateSimpleReverseData(in_R64_2, 0, myStart, myLength,
-                                            (writerSize + 1) * Nx);
+        int result =
+            validateSimpleForwardData(in_R64_1, 0, myStart, myLength, (writerSize + 1) * Nx);
+        result |= validateSimpleReverseData(in_R64_2, 0, myStart, myLength, (writerSize + 1) * Nx);
         if (result != 0)
         {
-            std::cout << "Read Data Validation failed on node " << mpiRank
-                      << " timestep " << t << std::endl;
+            std::cout << "Read Data Validation failed on node " << mpiRank << " timestep " << t
+                      << std::endl;
         }
         EXPECT_EQ(result, 0);
 
@@ -149,9 +146,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

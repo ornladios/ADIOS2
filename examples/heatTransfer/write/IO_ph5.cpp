@@ -28,16 +28,13 @@ public:
     void Close();
     void CheckWriteGroup();
 
-    void WriteScalar(const std::string &varName, const void *data,
-                     hid_t h5Type);
-    void WriteSimple(const std::string &varName, int dimSize, const void *data,
-                     hid_t h5Type, const hsize_t *shape, const hsize_t *offset,
-                     const hsize_t *count);
+    void WriteScalar(const std::string &varName, const void *data, hid_t h5Type);
+    void WriteSimple(const std::string &varName, int dimSize, const void *data, hid_t h5Type,
+                     const hsize_t *shape, const hsize_t *offset, const hsize_t *count);
 
     void applyMetadataCacheEviction();
-    void WriteSimpleWithChunking(const std::string &varName, int dimSize,
-                                 const void *data, hid_t h5Type,
-                                 const hsize_t *shape, const hsize_t *offset,
+    void WriteSimpleWithChunking(const std::string &varName, int dimSize, const void *data,
+                                 hid_t h5Type, const hsize_t *shape, const hsize_t *offset,
                                  const hsize_t *count);
     int m_CurrentTimeStep;
     unsigned int m_TotalTimeSteps;
@@ -57,8 +54,7 @@ HDF5NativeWriter::HDF5NativeWriter(const std::string &fileName)
     // read a file collectively
     H5Pset_fapl_mpio(m_FilePropertyListId, MPI_COMM_WORLD, MPI_INFO_NULL);
 
-    m_FileId = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
-                         m_FilePropertyListId);
+    m_FileId = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, m_FilePropertyListId);
 
     if (m_FileId < 0)
     {
@@ -69,8 +65,7 @@ HDF5NativeWriter::HDF5NativeWriter(const std::string &fileName)
 
     std::string ts0 = "/Step0";
 
-    m_GroupId = H5Gcreate2(m_FileId, ts0.c_str(), H5P_DEFAULT, H5P_DEFAULT,
-                           H5P_DEFAULT);
+    m_GroupId = H5Gcreate2(m_FileId, ts0.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if (m_GroupId < 0)
     {
         throw std::runtime_error("HDF5: Unable to create group " + ts0);
@@ -110,8 +105,7 @@ void HDF5NativeWriter::Close()
         return;
 
     hid_t s = H5Screate(H5S_SCALAR);
-    hid_t attr = H5Acreate(m_FileId, "NumSteps", H5T_NATIVE_UINT, s,
-                           H5P_DEFAULT, H5P_DEFAULT);
+    hid_t attr = H5Acreate(m_FileId, "NumSteps", H5T_NATIVE_UINT, s, H5P_DEFAULT, H5P_DEFAULT);
     unsigned int totalTimeSteps = m_CurrentTimeStep + 1;
 
     if (m_GroupId < 0)
@@ -154,23 +148,20 @@ void HDF5NativeWriter::CheckWriteGroup()
     }
 
     std::string timeStepName = "/Step" + std::to_string(m_CurrentTimeStep);
-    m_GroupId = H5Gcreate2(m_FileId, timeStepName.c_str(), H5P_DEFAULT,
-                           H5P_DEFAULT, H5P_DEFAULT);
+    m_GroupId = H5Gcreate2(m_FileId, timeStepName.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
     if (m_GroupId < 0)
     {
-        throw std::runtime_error("HDF5: Unable to create group " +
-                                 timeStepName);
+        throw std::runtime_error("HDF5: Unable to create group " + timeStepName);
     }
 }
 
-void HDF5NativeWriter::WriteScalar(const std::string &varName, const void *data,
-                                   hid_t h5Type)
+void HDF5NativeWriter::WriteScalar(const std::string &varName, const void *data, hid_t h5Type)
 {
     CheckWriteGroup();
     // scalar
     hid_t filespaceID = H5Screate(H5S_SCALAR);
-    hid_t dsetID = H5Dcreate(m_GroupId, varName.c_str(), h5Type, filespaceID,
-                             H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t dsetID = H5Dcreate(m_GroupId, varName.c_str(), h5Type, filespaceID, H5P_DEFAULT,
+                             H5P_DEFAULT, H5P_DEFAULT);
     hid_t plistID = H5Pcreate(H5P_DATASET_XFER);
     H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
 
@@ -184,16 +175,15 @@ void HDF5NativeWriter::WriteScalar(const std::string &varName, const void *data,
     H5Dclose(dsetID);
 }
 
-void HDF5NativeWriter::WriteSimple(const std::string &varName, int dimSize,
-                                   const void *data, hid_t h5Type,
-                                   const hsize_t *shape, const hsize_t *offset,
+void HDF5NativeWriter::WriteSimple(const std::string &varName, int dimSize, const void *data,
+                                   hid_t h5Type, const hsize_t *shape, const hsize_t *offset,
                                    const hsize_t *count)
 {
     CheckWriteGroup();
     hid_t fileSpace = H5Screate_simple(dimSize, shape, NULL);
 
-    hid_t dsetID = H5Dcreate(m_GroupId, varName.c_str(), h5Type, fileSpace,
-                             H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t dsetID = H5Dcreate(m_GroupId, varName.c_str(), h5Type, fileSpace, H5P_DEFAULT,
+                             H5P_DEFAULT, H5P_DEFAULT);
 
     hid_t memSpace = H5Screate_simple(dimSize, count, NULL);
 
@@ -222,9 +212,9 @@ void HDF5NativeWriter::WriteSimple(const std::string &varName, int dimSize,
     H5Pclose(plistID);
 }
 
-void HDF5NativeWriter::WriteSimpleWithChunking(
-    const std::string &varName, int dimSize, const void *data, hid_t h5Type,
-    const hsize_t *shape, const hsize_t *offset, const hsize_t *count)
+void HDF5NativeWriter::WriteSimpleWithChunking(const std::string &varName, int dimSize,
+                                               const void *data, hid_t h5Type, const hsize_t *shape,
+                                               const hsize_t *offset, const hsize_t *count)
 {
     CheckWriteGroup();
     hid_t fileSpace = H5Screate_simple(dimSize, shape, NULL);
@@ -240,8 +230,8 @@ void HDF5NativeWriter::WriteSimpleWithChunking(
     hid_t access_plistid = H5Pcreate(H5P_DATASET_ACCESS);
     H5Pset_chunk_cache(access_plistid, 101, bytes, 1);
 
-    hid_t dsetID = H5Dcreate(m_GroupId, varName.c_str(), h5Type, fileSpace,
-                             H5P_DEFAULT, dsetPid, access_plistid);
+    hid_t dsetID = H5Dcreate(m_GroupId, varName.c_str(), h5Type, fileSpace, H5P_DEFAULT, dsetPid,
+                             access_plistid);
 
     hid_t memSpace = H5Screate_simple(dimSize, count, NULL);
 
@@ -303,8 +293,7 @@ IO::~IO()
     // delete h5writer;
 }
 
-void IO::write(int step, const HeatTransfer &ht, const Settings &s,
-               MPI_Comm comm)
+void IO::write(int step, const HeatTransfer &ht, const Settings &s, MPI_Comm comm)
 {
     if (h5writer == nullptr)
     {
@@ -316,15 +305,13 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s,
 
     if (h5writer->m_Chunking)
     {
-        h5writer->WriteSimpleWithChunking("T", 2, ht.data_noghost().data(),
-                                          H5T_NATIVE_DOUBLE, dims.data(),
-                                          offset.data(), count.data());
+        h5writer->WriteSimpleWithChunking("T", 2, ht.data_noghost().data(), H5T_NATIVE_DOUBLE,
+                                          dims.data(), offset.data(), count.data());
     }
     else
     {
-        h5writer->WriteSimple("T", 2, ht.data_noghost().data(),
-                              H5T_NATIVE_DOUBLE, dims.data(), offset.data(),
-                              count.data());
+        h5writer->WriteSimple("T", 2, ht.data_noghost().data(), H5T_NATIVE_DOUBLE, dims.data(),
+                              offset.data(), count.data());
     }
 
     h5writer->WriteScalar("gndy", &(s.gndy), H5T_NATIVE_UINT);

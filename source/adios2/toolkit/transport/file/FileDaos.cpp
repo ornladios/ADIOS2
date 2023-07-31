@@ -27,7 +27,7 @@
 #include <daos.h>
 #include <daos_fs.h>
 
-//#include "adios2/helper/adiosFunctions.h"
+// #include "adios2/helper/adiosFunctions.h"
 
 #define CheckDAOSReturnCode(r) CheckDAOSReturnCodeF((r), __FILE__, __LINE__)
 #define DefaultMaxDFSBatchSize 8589934592
@@ -53,9 +53,9 @@ void GetUUIDFromEnv(const std::string &env, uuid_t &uuidValue)
     }
     else
     {
-        helper::Throw<std::invalid_argument>(
-            "Toolkit", "transport::file::FileDaos", "GetUUIDFromEnv",
-            "Error: " + env + " environment variable not found");
+        helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileDaos",
+                                             "GetUUIDFromEnv",
+                                             "Error: " + env + " environment variable not found");
     }
 }
 
@@ -67,8 +67,7 @@ void CheckDAOSReturnCodeF(int rc, const char *file, int line)
         std::string theFile(file);
         helper::Throw<std::ios_base::failure>(
             "Toolkit", "transport::file::FileDaos", "CheckDAOSReturnCodeF",
-            "ERROR: DAOS: " + daosErr + " " + theFile + " " +
-                std::to_string(line));
+            "ERROR: DAOS: " + daosErr + " " + theFile + " " + std::to_string(line));
     }
 }
 }
@@ -156,9 +155,8 @@ public:
 
         if (Mount)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileDaos", "InitMount",
-                "Mount handle already exists");
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileDaos",
+                                                  "InitMount", "Mount handle already exists");
         }
 
         rc = daos_init();
@@ -185,11 +183,9 @@ public:
         {
 
 #if DAOS_API_VERSION_MAJOR == 2
-            rc = daos_pool_connect(uuid_c, Group.c_str(), poolFlags, &poh, NULL,
-                                   NULL);
+            rc = daos_pool_connect(uuid_c, Group.c_str(), poolFlags, &poh, NULL, NULL);
 #else
-            rc = daos_pool_connect(UUID, Group.c_str(), poolFlags, &poh, NULL,
-                                   NULL);
+            rc = daos_pool_connect(UUID, Group.c_str(), poolFlags, &poh, NULL, NULL);
 #endif
             CheckDAOSReturnCode(rc);
 #if DAOS_API_VERSION_MAJOR == 2
@@ -212,11 +208,9 @@ public:
             if (comm.Rank() == 0)
             {
 #if DAOS_API_VERSION_MAJOR == 2
-                rc = daos_pool_connect(uuid_c, Group.c_str(), poolFlags, &poh,
-                                       NULL, NULL);
+                rc = daos_pool_connect(uuid_c, Group.c_str(), poolFlags, &poh, NULL, NULL);
 #else
-                rc = daos_pool_connect(UUID, Group.c_str(), poolFlags, &poh,
-                                       NULL, NULL);
+                rc = daos_pool_connect(UUID, Group.c_str(), poolFlags, &poh, NULL, NULL);
 #endif
                 CheckDAOSReturnCode(rc);
 #if DAOS_API_VERSION_MAJOR == 2
@@ -286,8 +280,7 @@ public:
                     {
                         std::cout << "problem!" << std::endl;
                     }
-                    std::memcpy(bufPtr, gHandles[i].iov_buf,
-                                gHandles[i].iov_buf_len);
+                    std::memcpy(bufPtr, gHandles[i].iov_buf, gHandles[i].iov_buf_len);
                     bufPtr += gHandles[i].iov_buf_len;
                 }
             }
@@ -308,8 +301,7 @@ public:
                 rc = daos_cont_global2local(poh, gHandles[1], &coh);
                 CheckDAOSReturnCode(rc);
 
-                rc =
-                    dfs_global2local(poh, coh, mountFlags, gHandles[2], &Mount);
+                rc = dfs_global2local(poh, coh, mountFlags, gHandles[2], &Mount);
                 CheckDAOSReturnCode(rc);
             }
 
@@ -333,10 +325,7 @@ public:
     dfs_obj_t *Obj = nullptr;
 };
 
-FileDaos::FileDaos(helper::Comm const &comm)
-: Transport("File", "Daos", comm), m_Impl(new Impl)
-{
-}
+FileDaos::FileDaos(helper::Comm const &comm) : Transport("File", "Daos", comm), m_Impl(new Impl) {}
 
 FileDaos::~FileDaos()
 {
@@ -367,16 +356,15 @@ void FileDaos::SetParameters(const Params &params)
         {
             if (!uuid_parse(param->second.c_str(), m_Impl->UUID))
             {
-                helper::Throw<std::invalid_argument>(
-                    "Toolkit", "transport::file::FileDaos", "SetParameters",
-                    "Unable to parse daos_pool_uuid parameter");
+                helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileDaos",
+                                                     "SetParameters",
+                                                     "Unable to parse daos_pool_uuid parameter");
             }
         }
         if (uuid_is_null(m_Impl->UUID))
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileDaos", "SetParameters",
-                "DAOS UUID is empty or not set");
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileDaos",
+                                                  "SetParameters", "DAOS UUID is empty or not set");
         }
     }
 
@@ -389,9 +377,9 @@ void FileDaos::SetParameters(const Params &params)
         }
         if (m_Impl->Group.empty())
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileDaos", "SetParameters",
-                "DAOS Group is empty or not set");
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileDaos",
+                                                  "SetParameters",
+                                                  "DAOS Group is empty or not set");
         }
     }
 
@@ -402,16 +390,16 @@ void FileDaos::SetParameters(const Params &params)
         {
             if (!uuid_parse(param->second.c_str(), m_Impl->CUUID))
             {
-                helper::Throw<std::invalid_argument>(
-                    "Toolkit", "transport::file::FileDaos", "SetParameters",
-                    "Unable to parse daos_cont_uuid parameter");
+                helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileDaos",
+                                                     "SetParameters",
+                                                     "Unable to parse daos_cont_uuid parameter");
             }
         }
         if (uuid_is_null(m_Impl->CUUID))
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileDaos", "SetParameters",
-                "DAOS CUUID is empty or not set");
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileDaos",
+                                                  "SetParameters",
+                                                  "DAOS CUUID is empty or not set");
         }
     }
 }
@@ -432,8 +420,7 @@ void FileDaos::MkDir(const std::string &path)
         {
             std::cout << "m_Impl->Mount is NULL, problem!" << std::endl;
         }
-        int rc =
-            dfs_mkdir(m_Impl->Mount, NULL, path.c_str(), S_IWUSR | S_IRUSR, 0);
+        int rc = dfs_mkdir(m_Impl->Mount, NULL, path.c_str(), S_IWUSR | S_IRUSR, 0);
         CheckDAOSReturnCode(rc);
     }
     m_Impl->Release();
@@ -453,8 +440,8 @@ void FileDaos::WaitForOpen()
     }
 }
 
-void FileDaos::Open(const std::string &name, const Mode openMode,
-                    const bool async, const bool directio)
+void FileDaos::Open(const std::string &name, const Mode openMode, const bool async,
+                    const bool directio)
 {
 
     int rc;
@@ -474,8 +461,7 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
     {
         const std::string dirName(m_Name.substr(0, lastPathSeparator));
         fileName = m_Name.substr(lastPathSeparator + 1, m_Name.length() - 1);
-        rc = dfs_lookup_rel(m_Impl->Mount, NULL, dirName.c_str(), O_RDWR,
-                            &parent, NULL, NULL);
+        rc = dfs_lookup_rel(m_Impl->Mount, NULL, dirName.c_str(), O_RDWR, &parent, NULL, NULL);
         CheckDAOSReturnCode(rc);
     }
     else
@@ -488,10 +474,9 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
 
     case Mode::Write:
         ProfilerStart("open");
-        rc =
-            dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ parent, fileName.c_str(),
-                     S_IFREG | S_IWUSR, O_RDWR | O_CREAT, /*CID*/ 0,
-                     /*chunksize*/ 0, NULL, &m_Impl->Obj);
+        rc = dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ parent, fileName.c_str(), S_IFREG | S_IWUSR,
+                      O_RDWR | O_CREAT, /*CID*/ 0,
+                      /*chunksize*/ 0, NULL, &m_Impl->Obj);
         CheckDAOSReturnCode(rc);
         m_Errno = rc;
         ProfilerStop("open");
@@ -499,10 +484,9 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
 
     case Mode::Append:
         ProfilerStart("open");
-        rc =
-            dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ parent, fileName.c_str(),
-                     S_IFREG | S_IWUSR | S_IRUSR, O_RDWR | O_CREAT, /*CID*/ 0,
-                     /*chunksize*/ 0, NULL, &m_Impl->Obj);
+        rc = dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ parent, fileName.c_str(),
+                      S_IFREG | S_IWUSR | S_IRUSR, O_RDWR | O_CREAT, /*CID*/ 0,
+                      /*chunksize*/ 0, NULL, &m_Impl->Obj);
         CheckDAOSReturnCode(rc);
         m_Errno = rc;
         ProfilerStop("open");
@@ -510,8 +494,8 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
 
     case Mode::Read:
         ProfilerStart("open");
-        rc = dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ parent,
-                      fileName.c_str(), S_IFREG | S_IRUSR, O_RDONLY, /*CID*/ 0,
+        rc = dfs_open(/*DFS*/ m_Impl->Mount, /*PARENT*/ parent, fileName.c_str(), S_IFREG | S_IRUSR,
+                      O_RDONLY, /*CID*/ 0,
                       /*chunksize*/ 0, NULL, &m_Impl->Obj);
         CheckDAOSReturnCode(rc);
         m_Errno = rc;
@@ -519,8 +503,7 @@ void FileDaos::Open(const std::string &name, const Mode openMode,
         break;
 
     default:
-        CheckFile("unknown open mode for file " + m_Name +
-                  ", in call to Daos open");
+        CheckFile("unknown open mode for file " + m_Name + ", in call to Daos open");
     }
     rc = dfs_release(parent);
     CheckDAOSReturnCode(rc);
@@ -563,18 +546,16 @@ void FileDaos::Write(const char *buffer, size_t size, size_t start)
         auto start = std::chrono::high_resolution_clock::now();
         rc = dfs_write(m_Impl->Mount, m_Impl->Obj, &wsgl, m_GlobalOffset, NULL);
         auto end = std::chrono::high_resolution_clock::now();
-        auto duration =
-            std::chrono::duration_cast<std::chrono::seconds>(end - start);
-        std::cout << "rank " << m_Comm.Rank() << ": dfs_write took "
-                  << duration.count() << "s" << std::endl;
+        auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - start);
+        std::cout << "rank " << m_Comm.Rank() << ": dfs_write took " << duration.count() << "s"
+                  << std::endl;
 
         CheckDAOSReturnCode(rc);
         if (rc)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileDaos", "Write",
-                "couldn't write to file " + m_Name + ", in call to Daos Write" +
-                    SysErrMsg());
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileDaos", "Write",
+                                                  "couldn't write to file " + m_Name +
+                                                      ", in call to Daos Write" + SysErrMsg());
         }
         // std::cout << "rank " << m_Comm.Rank() << ": dfs_write succeeded!" <<
         // std::endl;
@@ -674,17 +655,15 @@ void FileDaos::Read(char *buffer, size_t size, size_t start)
 
         // std::cout << "rank " << m_Comm.Rank() << ": start dfs_read..." <<
         // std::endl;
-        rc = dfs_read(m_Impl->Mount, m_Impl->Obj, &rsgl, m_GlobalOffset,
-                      &got_size, NULL);
+        rc = dfs_read(m_Impl->Mount, m_Impl->Obj, &rsgl, m_GlobalOffset, &got_size, NULL);
 
         CheckDAOSReturnCode(rc);
 
         if (rc)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileDaos", "Read",
-                "couldn't read from file " + m_Name + ", in call to Daos Read" +
-                    SysErrMsg());
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileDaos", "Read",
+                                                  "couldn't read from file " + m_Name +
+                                                      ", in call to Daos Read" + SysErrMsg());
         }
         // std::cout << "rank " << m_Comm.Rank() << ": dfs_read succeeded!" <<
         // std::endl;
@@ -777,10 +756,9 @@ void FileDaos::Close()
 
     if (rc)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileDaos", "Close",
-            "couldn't close file " + m_Name + ", in call to Daos IO close" +
-                SysErrMsg());
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileDaos", "Close",
+                                              "couldn't close file " + m_Name +
+                                                  ", in call to Daos IO close" + SysErrMsg());
     }
 
     m_IsOpen = false;
@@ -801,9 +779,8 @@ void FileDaos::CheckFile(const std::string hint) const
 {
     if (!m_DAOSOpenSucceed)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileDaos", "CheckFile",
-            "ERROR: " + hint + SysErrMsg());
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileDaos", "CheckFile",
+                                              "ERROR: " + hint + SysErrMsg());
     }
 }
 
@@ -831,9 +808,8 @@ void FileDaos::Seek(const size_t start)
 
 void FileDaos::Truncate(const size_t length)
 {
-    helper::Throw<std::ios_base::failure>(
-        "Toolkit", "transport::file::FileDaos", "Truncate",
-        "Daos Truncate is not implemented yet");
+    helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileDaos", "Truncate",
+                                          "Daos Truncate is not implemented yet");
 }
 
 } // end namespace transport

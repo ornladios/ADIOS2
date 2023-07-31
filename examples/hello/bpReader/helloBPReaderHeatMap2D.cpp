@@ -54,8 +54,7 @@ int main(int argc, char *argv[])
 
         for (unsigned int j = 0; j < Ny; ++j)
         {
-            const unsigned int value =
-                static_cast<unsigned int>(iGlobal * shape[1] + j);
+            const unsigned int value = static_cast<unsigned int>(iGlobal * shape[1] + j);
             temperatures[i * Ny + j] = value;
         }
     }
@@ -70,13 +69,11 @@ int main(int argc, char *argv[])
          * Parameters, Transports, and Execution: Engines */
         adios2::IO putHeatMap = adios.DeclareIO("HeatMapWriter");
 
-        adios2::Variable<unsigned int> outTemperature =
-            putHeatMap.DefineVariable<unsigned int>(
-                "temperature", shape, start, count, adios2::ConstantDims);
+        adios2::Variable<unsigned int> outTemperature = putHeatMap.DefineVariable<unsigned int>(
+            "temperature", shape, start, count, adios2::ConstantDims);
 
         /** Will create HeatMap.bp */
-        adios2::Engine bpWriter =
-            putHeatMap.Open("HeatMap2D.bp", adios2::Mode::Write);
+        adios2::Engine bpWriter = putHeatMap.Open("HeatMap2D.bp", adios2::Mode::Write);
 
         bpWriter.Put(outTemperature, temperatures.data());
         bpWriter.Close();
@@ -85,8 +82,8 @@ int main(int argc, char *argv[])
         if (rank == 0)
         {
             adios2::IO getHeatMap = adios.DeclareIO("HeatMapReader");
-            adios2::Engine bpReader = getHeatMap.Open(
-                "HeatMap2D.bp", adios2::Mode::Read, MPI_COMM_SELF);
+            adios2::Engine bpReader =
+                getHeatMap.Open("HeatMap2D.bp", adios2::Mode::Read, MPI_COMM_SELF);
 
             // this just discovers in the metadata file that the variable exists
             adios2::Variable<unsigned int> inTemperature =
@@ -100,8 +97,7 @@ int main(int argc, char *argv[])
                 std::cout << "Pre-allocated " << elementsSize << " elements, "
                           << elementsSize * sizeof(unsigned int) << " bytes\n";
 
-                bpReader.Get(inTemperature, inTemperatures.data(),
-                             adios2::Mode::Sync);
+                bpReader.Get(inTemperature, inTemperatures.data(), adios2::Mode::Sync);
 
                 std::cout << "Incoming temperature map:\n";
 
@@ -121,8 +117,7 @@ int main(int argc, char *argv[])
     }
     catch (std::invalid_argument &e)
     {
-        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank "
-                  << rank << "\n";
+        std::cout << "Invalid argument exception, STOPPING PROGRAM from rank " << rank << "\n";
         std::cout << e.what() << "\n";
     }
     catch (std::ios_base::failure &e)

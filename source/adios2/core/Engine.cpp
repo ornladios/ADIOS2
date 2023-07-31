@@ -21,10 +21,9 @@ namespace adios2
 namespace core
 {
 
-Engine::Engine(const std::string engineType, IO &io, const std::string &name,
-               const Mode openMode, helper::Comm comm)
-: m_EngineType(engineType), m_IO(io), m_Name(name), m_OpenMode(openMode),
-  m_Comm(std::move(comm))
+Engine::Engine(const std::string engineType, IO &io, const std::string &name, const Mode openMode,
+               helper::Comm comm)
+: m_EngineType(engineType), m_IO(io), m_Name(name), m_OpenMode(openMode), m_Comm(std::move(comm))
 {
     m_FailVerbose = (m_Comm.Rank() == 0);
 }
@@ -93,8 +92,7 @@ void Engine::DestructorClose(bool Verbose) noexcept
 {
     if (Verbose)
     {
-        std::cerr << "Engine \"" << m_Name
-                  << "\" destroyed without a prior Close()." << std::endl;
+        std::cerr << "Engine \"" << m_Name << "\" destroyed without a prior Close()." << std::endl;
         std::cerr << "This may have negative consequences." << std::endl;
     }
 };
@@ -103,17 +101,11 @@ void Engine::Flush(const int /*transportIndex*/) { ThrowUp("Flush"); }
 
 size_t Engine::Steps() const { return DoSteps(); }
 
-void Engine::LockWriterDefinitions() noexcept
-{
-    m_WriterDefinitionsLocked = true;
-}
+void Engine::LockWriterDefinitions() noexcept { m_WriterDefinitionsLocked = true; }
 
 bool Engine::BetweenStepPairs() const { return m_BetweenStepPairs; }
 
-void Engine::LockReaderSelections() noexcept
-{
-    m_ReaderSelectionsLocked = true;
-}
+void Engine::LockReaderSelections() noexcept { m_ReaderSelectionsLocked = true; }
 
 size_t Engine::DebugGetDataBufferSize() const
 {
@@ -134,17 +126,15 @@ void Engine::Put(VariableStruct &variable, const void *data, const Mode launch)
         DoPutStructSync(variable, data);
         break;
     default:
-        helper::Throw<std::invalid_argument>(
-            "Core", "Engine", "Put",
-            "invalid launch Mode for variable " + variable.m_Name +
-                ", only Mode::Deferred and Mode::Sync are valid");
+        helper::Throw<std::invalid_argument>("Core", "Engine", "Put",
+                                             "invalid launch Mode for variable " + variable.m_Name +
+                                                 ", only Mode::Deferred and Mode::Sync are valid");
     }
 }
 
 void Engine::Get(VariableStruct &variable, void *data, const Mode launch)
 {
-    CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess},
-                 "in call to Get");
+    CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess}, "in call to Get");
 
     switch (launch)
     {
@@ -155,10 +145,9 @@ void Engine::Get(VariableStruct &variable, void *data, const Mode launch)
         DoGetStructSync(variable, data);
         break;
     default:
-        helper::Throw<std::invalid_argument>(
-            "Core", "Engine", "Get",
-            "invalid launch Mode for variable " + variable.m_Name +
-                ", only Mode::Deferred and Mode::Sync are valid");
+        helper::Throw<std::invalid_argument>("Core", "Engine", "Get",
+                                             "invalid launch Mode for variable " + variable.m_Name +
+                                                 ", only Mode::Deferred and Mode::Sync are valid");
     }
 }
 
@@ -173,8 +162,7 @@ void Engine::InitTransports() {}
 void Engine::NotifyEngineAttribute(std::string name, DataType type) noexcept {}
 
 // if not overriden, default to name/type version
-void Engine::NotifyEngineAttribute(std::string name, AttributeBase *attr,
-                                   void *Data) noexcept
+void Engine::NotifyEngineAttribute(std::string name, AttributeBase *attr, void *Data) noexcept
 {
     NotifyEngineAttribute(name, attr->m_Type);
 }
@@ -182,53 +170,31 @@ void Engine::NotifyEngineAttribute(std::string name, AttributeBase *attr,
 void Engine::NotifyEngineNoVarsQuery() {}
 
 // DoPut*
-#define declare_type(T)                                                        \
-    void Engine::DoPut(Variable<T> &, typename Variable<T>::Span &,            \
-                       const bool, const T &)                                  \
-    {                                                                          \
-        ThrowUp("DoPut");                                                      \
+#define declare_type(T)                                                                            \
+    void Engine::DoPut(Variable<T> &, typename Variable<T>::Span &, const bool, const T &)         \
+    {                                                                                              \
+        ThrowUp("DoPut");                                                                          \
     }
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-#define declare_type(T)                                                        \
-    void Engine::DoPutSync(Variable<T> &, const T *) { ThrowUp("DoPutSync"); } \
-    void Engine::DoPutDeferred(Variable<T> &, const T *)                       \
-    {                                                                          \
-        ThrowUp("DoPutDeferred");                                              \
-    }
+#define declare_type(T)                                                                            \
+    void Engine::DoPutSync(Variable<T> &, const T *) { ThrowUp("DoPutSync"); }                     \
+    void Engine::DoPutDeferred(Variable<T> &, const T *) { ThrowUp("DoPutDeferred"); }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void Engine::DoPutStructSync(VariableStruct &, const void *)
-{
-    ThrowUp("DoPutStructSync");
-}
-void Engine::DoPutStructDeferred(VariableStruct &, const void *)
-{
-    ThrowUp("DoPutStructDeferred");
-}
+void Engine::DoPutStructSync(VariableStruct &, const void *) { ThrowUp("DoPutStructSync"); }
+void Engine::DoPutStructDeferred(VariableStruct &, const void *) { ThrowUp("DoPutStructDeferred"); }
 
 // DoGet*
-#define declare_type(T)                                                        \
-    void Engine::DoGetSync(Variable<T> &, T *) { ThrowUp("DoGetSync"); }       \
-    void Engine::DoGetDeferred(Variable<T> &, T *)                             \
-    {                                                                          \
-        ThrowUp("DoGetDeferred");                                              \
-    }                                                                          \
-    typename Variable<T>::BPInfo *Engine::DoGetBlockSync(Variable<T> &v)       \
-    {                                                                          \
-        return nullptr;                                                        \
-    }                                                                          \
-    typename Variable<T>::BPInfo *Engine::DoGetBlockDeferred(Variable<T> &v)   \
-    {                                                                          \
-        return nullptr;                                                        \
-    }
+#define declare_type(T)                                                                            \
+    void Engine::DoGetSync(Variable<T> &, T *) { ThrowUp("DoGetSync"); }                           \
+    void Engine::DoGetDeferred(Variable<T> &, T *) { ThrowUp("DoGetDeferred"); }                   \
+    typename Variable<T>::BPInfo *Engine::DoGetBlockSync(Variable<T> &v) { return nullptr; }       \
+    typename Variable<T>::BPInfo *Engine::DoGetBlockDeferred(Variable<T> &v) { return nullptr; }
 
-void Engine::RegisterCreatedVariable(const VariableBase *var)
-{
-    m_CreatedVars.insert(var);
-}
+void Engine::RegisterCreatedVariable(const VariableBase *var) { m_CreatedVars.insert(var); }
 
 void Engine::RemoveCreatedVars()
 {
@@ -239,8 +205,7 @@ void Engine::RemoveCreatedVars()
     m_CreatedVars.clear();
 }
 
-void Engine::DoGetAbsoluteSteps(const VariableBase &variable,
-                                std::vector<size_t> &keys) const
+void Engine::DoGetAbsoluteSteps(const VariableBase &variable, std::vector<size_t> &keys) const
 {
     ThrowUp("DoGetAbsoluteSteps");
     return;
@@ -249,35 +214,32 @@ void Engine::DoGetAbsoluteSteps(const VariableBase &variable,
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-void Engine::DoGetStructSync(VariableStruct &, void *)
-{
-    ThrowUp("DoGetSync for Struct Variable");
-}
+void Engine::DoGetStructSync(VariableStruct &, void *) { ThrowUp("DoGetSync for Struct Variable"); }
 void Engine::DoGetStructDeferred(VariableStruct &, void *)
 {
     ThrowUp("DoGetDeferred for Struct Variable");
 }
 
-#define declare_type(T)                                                        \
-    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
-    Engine::DoAllStepsBlocksInfo(const Variable<T> &variable) const            \
-    {                                                                          \
-        ThrowUp("DoAllStepsBlocksInfo");                                       \
-        return std::map<size_t, std::vector<typename Variable<T>::BPInfo>>();  \
-    }                                                                          \
-                                                                               \
-    std::vector<std::vector<typename Variable<T>::BPInfo>>                     \
-    Engine::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const    \
-    {                                                                          \
-        ThrowUp("DoAllRelativeStepsBlocksInfo");                               \
-        return std::vector<std::vector<typename Variable<T>::BPInfo>>();       \
-    }                                                                          \
-                                                                               \
-    std::vector<typename Variable<T>::BPInfo> Engine::DoBlocksInfo(            \
-        const Variable<T> &variable, const size_t step) const                  \
-    {                                                                          \
-        ThrowUp("DoBlocksInfo");                                               \
-        return std::vector<typename Variable<T>::BPInfo>();                    \
+#define declare_type(T)                                                                            \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>> Engine::DoAllStepsBlocksInfo(      \
+        const Variable<T> &variable) const                                                         \
+    {                                                                                              \
+        ThrowUp("DoAllStepsBlocksInfo");                                                           \
+        return std::map<size_t, std::vector<typename Variable<T>::BPInfo>>();                      \
+    }                                                                                              \
+                                                                                                   \
+    std::vector<std::vector<typename Variable<T>::BPInfo>> Engine::DoAllRelativeStepsBlocksInfo(   \
+        const Variable<T> &variable) const                                                         \
+    {                                                                                              \
+        ThrowUp("DoAllRelativeStepsBlocksInfo");                                                   \
+        return std::vector<std::vector<typename Variable<T>::BPInfo>>();                           \
+    }                                                                                              \
+                                                                                                   \
+    std::vector<typename Variable<T>::BPInfo> Engine::DoBlocksInfo(const Variable<T> &variable,    \
+                                                                   const size_t step) const        \
+    {                                                                                              \
+        ThrowUp("DoBlocksInfo");                                                                   \
+        return std::vector<typename Variable<T>::BPInfo>();                                        \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -297,21 +259,19 @@ Engine::DoAllRelativeStepsBlocksInfoStruct(const VariableStruct &variable) const
     return std::vector<std::vector<VariableStruct::BPInfo>>();
 }
 
-std::vector<VariableStruct::BPInfo>
-Engine::DoBlocksInfoStruct(const VariableStruct &variable,
-                           const size_t step) const
+std::vector<VariableStruct::BPInfo> Engine::DoBlocksInfoStruct(const VariableStruct &variable,
+                                                               const size_t step) const
 {
     ThrowUp("DoBlocksInfo");
     return std::vector<VariableStruct::BPInfo>();
 }
 
-#define declare_type(T, L)                                                     \
-    T *Engine::DoBufferData_##L(const int bufferIdx,                           \
-                                const size_t payloadPosition,                  \
-                                const size_t bufferID) noexcept                \
-    {                                                                          \
-        T *data = nullptr;                                                     \
-        return data;                                                           \
+#define declare_type(T, L)                                                                         \
+    T *Engine::DoBufferData_##L(const int bufferIdx, const size_t payloadPosition,                 \
+                                const size_t bufferID) noexcept                                    \
+    {                                                                                              \
+        T *data = nullptr;                                                                         \
+        return data;                                                                               \
     }
 
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
@@ -326,35 +286,29 @@ size_t Engine::DoSteps() const
 // PRIVATE
 void Engine::ThrowUp(const std::string function) const
 {
-    helper::Throw<std::invalid_argument>("Core", "Engine", "ThrowUp",
-                                         "Engine " + m_EngineType +
-                                             " does not support " + function);
+    helper::Throw<std::invalid_argument>(
+        "Core", "Engine", "ThrowUp", "Engine " + m_EngineType + " does not support " + function);
 }
 
-void Engine::CheckOpenModes(const std::set<Mode> &modes,
-                            const std::string hint) const
+void Engine::CheckOpenModes(const std::set<Mode> &modes, const std::string hint) const
 {
     if (modes.count(m_OpenMode) == 0)
     {
         helper::Throw<std::invalid_argument>("Core", "Engine", "CheckOpenModes",
-                                             "Engine open mode not valid for " +
-                                                 hint);
+                                             "Engine open mode not valid for " + hint);
     }
 }
 
-void Engine::CommonChecks(VariableBase &variable, const void *data,
-                          const std::set<Mode> &modes,
+void Engine::CommonChecks(VariableBase &variable, const void *data, const std::set<Mode> &modes,
                           const std::string hint) const
 {
     variable.CheckDimensions(hint);
     CheckOpenModes(modes, " for variable " + variable.m_Name + ", " + hint);
 
     // If no dimension has a zero count then there must be data to write.
-    if (std::find(variable.m_Count.begin(), variable.m_Count.end(), 0) ==
-        variable.m_Count.end())
+    if (std::find(variable.m_Count.begin(), variable.m_Count.end(), 0) == variable.m_Count.end())
     {
-        helper::CheckForNullptr(
-            data, "for data argument in non-zero count block, " + hint);
+        helper::CheckForNullptr(data, "for data argument in non-zero count block, " + hint);
     }
 }
 
@@ -370,57 +324,51 @@ Engine::AllRelativeStepsBlocksInfoStruct(const VariableStruct &variable) const
     return DoAllRelativeStepsBlocksInfoStruct(variable);
 }
 
-std::vector<VariableStruct::BPInfo>
-Engine::BlocksInfoStruct(const VariableStruct &variable,
-                         const size_t step) const
+std::vector<VariableStruct::BPInfo> Engine::BlocksInfoStruct(const VariableStruct &variable,
+                                                             const size_t step) const
 {
     return DoBlocksInfoStruct(variable, step);
 }
 
 // PUBLIC TEMPLATE FUNCTIONS EXPANSION WITH SCOPED TYPES
-#define declare_template_instantiation(T)                                      \
-                                                                               \
-    template void Engine::Put<T>(Variable<T> &, const T *, const Mode);        \
-    template void Engine::Put<T>(const std::string &, const T *, const Mode);  \
-                                                                               \
-    template void Engine::Put<T>(Variable<T> &, const T &, const Mode);        \
-    template void Engine::Put<T>(const std::string &, const T &, const Mode);  \
-                                                                               \
-    template void Engine::Get<T>(Variable<T> &, T *, const Mode);              \
-    template void Engine::Get<T>(const std::string &, T *, const Mode);        \
-                                                                               \
-    template void Engine::Get<T>(Variable<T> &, T &, const Mode);              \
-    template void Engine::Get<T>(const std::string &, T &, const Mode);        \
-                                                                               \
-    template void Engine::Get<T>(Variable<T> &, std::vector<T> &, const Mode); \
-    template void Engine::Get<T>(const std::string &, std::vector<T> &,        \
-                                 const Mode);                                  \
-                                                                               \
-    template typename Variable<T>::BPInfo *Engine::Get<T>(Variable<T> &,       \
-                                                          const Mode);         \
-    template typename Variable<T>::BPInfo *Engine::Get<T>(const std::string &, \
-                                                          const Mode);         \
-                                                                               \
-    template Variable<T> &Engine::FindVariable(                                \
-        const std::string &variableName, const std::string hint);              \
-                                                                               \
-    template std::map<size_t, std::vector<typename Variable<T>::BPInfo>>       \
-    Engine::AllStepsBlocksInfo(const Variable<T> &) const;                     \
-                                                                               \
-    template std::vector<std::vector<typename Variable<T>::BPInfo>>            \
-    Engine::AllRelativeStepsBlocksInfo(const Variable<T> &) const;             \
-                                                                               \
-    template std::vector<typename Variable<T>::BPInfo> Engine::BlocksInfo(     \
-        const Variable<T> &, const size_t) const;                              \
-    template std::vector<size_t> Engine::GetAbsoluteSteps(const Variable<T> &) \
-        const;
+#define declare_template_instantiation(T)                                                          \
+                                                                                                   \
+    template void Engine::Put<T>(Variable<T> &, const T *, const Mode);                            \
+    template void Engine::Put<T>(const std::string &, const T *, const Mode);                      \
+                                                                                                   \
+    template void Engine::Put<T>(Variable<T> &, const T &, const Mode);                            \
+    template void Engine::Put<T>(const std::string &, const T &, const Mode);                      \
+                                                                                                   \
+    template void Engine::Get<T>(Variable<T> &, T *, const Mode);                                  \
+    template void Engine::Get<T>(const std::string &, T *, const Mode);                            \
+                                                                                                   \
+    template void Engine::Get<T>(Variable<T> &, T &, const Mode);                                  \
+    template void Engine::Get<T>(const std::string &, T &, const Mode);                            \
+                                                                                                   \
+    template void Engine::Get<T>(Variable<T> &, std::vector<T> &, const Mode);                     \
+    template void Engine::Get<T>(const std::string &, std::vector<T> &, const Mode);               \
+                                                                                                   \
+    template typename Variable<T>::BPInfo *Engine::Get<T>(Variable<T> &, const Mode);              \
+    template typename Variable<T>::BPInfo *Engine::Get<T>(const std::string &, const Mode);        \
+                                                                                                   \
+    template Variable<T> &Engine::FindVariable(const std::string &variableName,                    \
+                                               const std::string hint);                            \
+                                                                                                   \
+    template std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                           \
+    Engine::AllStepsBlocksInfo(const Variable<T> &) const;                                         \
+                                                                                                   \
+    template std::vector<std::vector<typename Variable<T>::BPInfo>>                                \
+    Engine::AllRelativeStepsBlocksInfo(const Variable<T> &) const;                                 \
+                                                                                                   \
+    template std::vector<typename Variable<T>::BPInfo> Engine::BlocksInfo(const Variable<T> &,     \
+                                                                          const size_t) const;     \
+    template std::vector<size_t> Engine::GetAbsoluteSteps(const Variable<T> &) const;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
 
-#define declare_template_instantiation(T)                                      \
-    template typename Variable<T>::Span &Engine::Put(Variable<T> &,            \
-                                                     const bool, const T &);   \
+#define declare_template_instantiation(T)                                                          \
+    template typename Variable<T>::Span &Engine::Put(Variable<T> &, const bool, const T &);        \
     template void Engine::Get<T>(core::Variable<T> &, T **) const;
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)

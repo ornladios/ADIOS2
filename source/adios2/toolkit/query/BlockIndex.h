@@ -30,14 +30,12 @@ public:
 
     void Generate(std::string &fromBPFile, const adios2::Params &inputs) {}
 
-    void Evaluate(const QueryVar &query,
-                  std::vector<adios2::Box<adios2::Dims>> &resultSubBlocks)
+    void Evaluate(const QueryVar &query, std::vector<adios2::Box<adios2::Dims>> &resultSubBlocks)
     {
         RunBP4Stat(query, resultSubBlocks);
     }
 
-    void RunBP4Stat(const QueryVar &query,
-                    std::vector<adios2::Box<adios2::Dims>> &hitBlocks)
+    void RunBP4Stat(const QueryVar &query, std::vector<adios2::Box<adios2::Dims>> &hitBlocks)
     {
         size_t currStep = m_IdxReader.CurrentStep();
         adios2::Dims currShape = m_Var.Shape();
@@ -54,21 +52,17 @@ public:
 
             if (blockInfo.MinMaxs.size() > 0)
             {
-                adios2::helper::CalculateSubblockInfo(blockInfo.Count,
-                                                      blockInfo.SubBlockInfo);
-                unsigned int numSubBlocks =
-                    static_cast<unsigned int>(blockInfo.MinMaxs.size() / 2);
+                adios2::helper::CalculateSubblockInfo(blockInfo.Count, blockInfo.SubBlockInfo);
+                unsigned int numSubBlocks = static_cast<unsigned int>(blockInfo.MinMaxs.size() / 2);
                 for (unsigned int i = 0; i < numSubBlocks; i++)
                 {
-                    bool isHit = query.m_RangeTree.CheckInterval(
-                        blockInfo.MinMaxs[2 * i], blockInfo.MinMaxs[2 * i + 1]);
+                    bool isHit = query.m_RangeTree.CheckInterval(blockInfo.MinMaxs[2 * i],
+                                                                 blockInfo.MinMaxs[2 * i + 1]);
                     if (isHit)
                     {
                         adios2::Box<adios2::Dims> currSubBlock =
-                            adios2::helper::GetSubBlock(
-                                blockInfo.Count, blockInfo.SubBlockInfo, i);
-                        if (!query.TouchSelection(currSubBlock.first,
-                                                  currSubBlock.second))
+                            adios2::helper::GetSubBlock(blockInfo.Count, blockInfo.SubBlockInfo, i);
+                        if (!query.TouchSelection(currSubBlock.first, currSubBlock.second))
                             continue;
                         hitBlocks.push_back(currSubBlock);
                     }
@@ -76,12 +70,10 @@ public:
             }
             else
             { // default
-                bool isHit = query.m_RangeTree.CheckInterval(blockInfo.Min,
-                                                             blockInfo.Max);
+                bool isHit = query.m_RangeTree.CheckInterval(blockInfo.Min, blockInfo.Max);
                 if (isHit)
                 {
-                    adios2::Box<adios2::Dims> box = {blockInfo.Start,
-                                                     blockInfo.Count};
+                    adios2::Box<adios2::Dims> box = {blockInfo.Start, blockInfo.Count};
                     hitBlocks.push_back(box);
                 }
             }

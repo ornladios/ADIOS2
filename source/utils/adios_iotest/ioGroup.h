@@ -26,8 +26,7 @@ public:
 class adiosIOGroup : public ioGroup
 {
 public:
-    adiosIOGroup(const std::string &name, adios2::ADIOS &adiosobj)
-    : ioGroup(name)
+    adiosIOGroup(const std::string &name, adios2::ADIOS &adiosobj) : ioGroup(name)
     {
         adiosio = adiosobj.DeclareIO(name);
     };
@@ -41,7 +40,6 @@ public:
     ~hdf5IOGroup(){};
 };
 
-std::shared_ptr<ioGroup> createGroup(const std::string &name, IOLib iolib,
-                                     adios2::ADIOS &adiosobj);
+std::shared_ptr<ioGroup> createGroup(const std::string &name, IOLib iolib, adios2::ADIOS &adiosobj);
 
 #endif /* IOGROUP_H */

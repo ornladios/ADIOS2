@@ -24,12 +24,10 @@ namespace engine
 class MhsReader : public Engine
 {
 public:
-    MhsReader(IO &adios, const std::string &name, const Mode mode,
-              helper::Comm comm);
+    MhsReader(IO &adios, const std::string &name, const Mode mode, helper::Comm comm);
     virtual ~MhsReader();
 
-    StepStatus BeginStep(StepMode mode = StepMode::Read,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode = StepMode::Read, const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void PerformGets() final;
     void EndStep() final;
@@ -40,8 +38,8 @@ private:
     std::shared_ptr<compress::CompressSirius> m_SiriusCompressor;
     int m_Tiers;
 
-#define declare_type(T)                                                        \
-    void DoGetSync(Variable<T> &, T *) final;                                  \
+#define declare_type(T)                                                                            \
+    void DoGetSync(Variable<T> &, T *) final;                                                      \
     void DoGetDeferred(Variable<T> &, T *) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

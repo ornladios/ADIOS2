@@ -23,23 +23,20 @@ CompressNull::CompressNull(const Params &parameters)
 {
 }
 
-size_t CompressNull::Operate(const char *dataIn, const Dims &blockStart,
-                             const Dims &blockCount, const DataType varType,
-                             char *bufferOut)
+size_t CompressNull::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                             const DataType varType, char *bufferOut)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
     MakeCommonHeader(bufferOut, bufferOutOffset, bufferVersion);
-    size_t totalInputBytes =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(varType));
+    size_t totalInputBytes = helper::GetTotalSize(blockCount, helper::GetDataTypeSize(varType));
     PutParameter(bufferOut, bufferOutOffset, totalInputBytes);
     std::memcpy(bufferOut + bufferOutOffset, dataIn, totalInputBytes);
     bufferOutOffset += totalInputBytes;
     return bufferOutOffset;
 }
 
-size_t CompressNull::InverseOperate(const char *bufferIn, const size_t sizeIn,
-                                    char *dataOut)
+size_t CompressNull::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     size_t bufferInOffset = 4; // skip common header
 

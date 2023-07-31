@@ -47,8 +47,7 @@ TEST_F(ADIOSInquireVariableException, Read)
         const adios2::Dims start = {rank * Nx};
         const adios2::Dims count = {Nx};
 
-        auto var1 =
-            io_w.DefineVariable<int32_t>("variable1", shape, start, count);
+        auto var1 = io_w.DefineVariable<int32_t>("variable1", shape, start, count);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
