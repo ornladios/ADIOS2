@@ -222,10 +222,8 @@ def Info(args: dict, cur: sqlite3.Cursor):
     for host in hosts:
         print(f"hostname = {host[1]}   longhostname = {host[2]}")
         res2 = cur.execute(
-            'select rowid, name from directory where hostid = "'
-            + str(host[0])
-            + '"'
-        )
+            'select rowid, name from directory where hostid = "' +
+            str(host[0]) + '"')
         dirs = res2.fetchall()
         for dir in dirs:
             print(f"    dir = {dir[1]}")
