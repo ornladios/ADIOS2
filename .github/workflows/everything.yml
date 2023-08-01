@@ -168,7 +168,7 @@ jobs:
         run: ccache -s
       - name: Save cache
         uses: actions/cache/save@v3
-        if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit == 'false' }}
+        if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
         id: save-cache
         with:
           path: .ccache
@@ -232,7 +232,7 @@ jobs:
         run: ccache -s
       - name: Save cache
         uses: actions/cache/save@v3
-        if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit == 'false' }}
+        if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
         id: save-cache
         with:
           path: .ccache
@@ -299,7 +299,7 @@ jobs:
         run: ccache -s
       - name: Save cache
         uses: actions/cache/save@v3
-        if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit == 'false' }}
+        if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
         id: save-cache
         with:
           path: .ccache
