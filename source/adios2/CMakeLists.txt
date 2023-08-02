@@ -18,7 +18,7 @@ add_library(adios2_core
   core/VariableBase.cpp
   core/Span.cpp core/Span.tcc
   core/Group.cpp core/Group.tcc
-  core/adios2_libinfo.cpp
+  core/Info.cpp
 
 #operator
   operator/callback/Signature1.cpp
@@ -405,10 +405,10 @@ install(FILES common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
 install(DIRECTORY core/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/core COMPONENT adios2_core-development
   FILES_MATCHING PATTERN "*.h"
-  PATTERN "adios2_libinfo.h" EXCLUDE
+  PATTERN "Info.h" EXCLUDE
 )
 
-install(FILES core/adios2_libinfo.h
+install(FILES core/Info.h
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT adios2_core-development
 )
 

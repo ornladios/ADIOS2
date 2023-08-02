@@ -29,3 +29,4 @@ gtest_add_tests_helper(Selection MPI_NONE ADIOS Interface.  .BP3
 gtest_add_tests_helper(Selection MPI_NONE ADIOS Interface.  .BPfile
     WORKING_DIRECTORY ${BPfile_DIR} EXTRA_ARGS "BPfile")
 gtest_add_tests_helper(NoMpi MPI_NONE ADIOS Interface. "")
+gtest_add_tests_helper(Info MPI_NONE ADIOS Interface. "")

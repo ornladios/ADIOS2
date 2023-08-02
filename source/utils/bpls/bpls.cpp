@@ -247,11 +247,11 @@ void print_bpls_version()
         printf("Target OS:     %s\n", ADIOS_INFO_SYSTEM);
         printf("Target Arch:   %s\n", ADIOS_INFO_ARCH);
 
-        int nengines;
-        char const *const *list_engines;
+        size_t nengines;
+        const char *const *list_engines;
         adios2_available_engines(&nengines, &list_engines);
-        printf("Available engines = %d:", nengines);
-        for (int i = 0; i < nengines; ++i)
+        printf("Available engines = %zu:", nengines);
+        for (size_t i = 0; i < nengines; ++i)
         {
             printf(" %s", list_engines[i]);
             if (i < nengines - 1)
@@ -261,11 +261,11 @@ void print_bpls_version()
         }
         printf("\n");
 
-        int noperators;
-        char const *const *list_operators;
+        size_t noperators;
+        const char *const *list_operators;
         adios2_available_operators(&noperators, &list_operators);
-        printf("Available operators = %d:", noperators);
-        for (int i = 0; i < noperators; ++i)
+        printf("Available operators = %zu:", noperators);
+        for (size_t i = 0; i < noperators; ++i)
         {
             printf(" %s", list_operators[i]);
             if (i < noperators - 1)
@@ -275,11 +275,11 @@ void print_bpls_version()
         }
         printf("\n");
 
-        int nfeatures;
-        char const *const *list_features;
+        size_t nfeatures;
+        const char *const *list_features;
         adios2_available_features(&nfeatures, &list_features);
-        printf("Available features = %d:", nfeatures);
-        for (int i = 0; i < nfeatures; ++i)
+        printf("Available features = %zu:", nfeatures);
+        for (size_t i = 0; i < nfeatures; ++i)
         {
             printf(" %s", list_features[i]);
             if (i < nfeatures - 1)
