@@ -14,7 +14,7 @@ add_executable(bpls ./bpls/bpls.cpp)
 target_link_libraries(bpls
                       PUBLIC adios2_core adios2sys
                       PRIVATE adios2::thirdparty::pugixml $<$<PLATFORM_ID:Windows>:shlwapi>)
-target_include_directories(bpls PRIVATE ${PROJECT_BINARY_DIR})
+target_include_directories(bpls PRIVATE ${PROJECT_BINARY_DIR} ${PROJECT_SOURCE_DIR}/bindings/C)
 set_property(TARGET bpls PROPERTY OUTPUT_NAME bpls${ADIOS2_EXECUTABLE_SUFFIX})
 install(TARGETS bpls EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_tools-runtime
