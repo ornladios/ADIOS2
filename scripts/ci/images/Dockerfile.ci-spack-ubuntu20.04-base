@@ -40,7 +40,8 @@ RUN . /spack/share/spack/setup-env.sh && \
 
 ### Other missing packages (compared to el8 base):
 RUN apt-get update && apt-get install -y \
-    ccache && \
+    ccache \
+    libcurl4-gnutls-dev && \
     apt-get remove -y \
     gcc-9 \
     g++-9 \
