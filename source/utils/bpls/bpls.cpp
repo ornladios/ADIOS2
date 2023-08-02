@@ -250,6 +250,48 @@ void print_bpls_version()
         }
         printf("Target OS:     %s\n", ADIOS_INFO_SYSTEM);
         printf("Target Arch:   %s\n", ADIOS_INFO_ARCH);
+
+        size_t nengines;
+        const char *const *list_engines;
+        adios2_available_engines(&nengines, &list_engines);
+        printf("Available engines = %zu:", nengines);
+        for (size_t i = 0; i < nengines; ++i)
+        {
+            printf(" %s", list_engines[i]);
+            if (i < nengines - 1)
+            {
+                printf(",");
+            }
+        }
+        printf("\n");
+
+        size_t noperators;
+        const char *const *list_operators;
+        adios2_available_operators(&noperators, &list_operators);
+        printf("Available operators = %zu:", noperators);
+        for (size_t i = 0; i < noperators; ++i)
+        {
+            printf(" %s", list_operators[i]);
+            if (i < noperators - 1)
+            {
+                printf(",");
+            }
+        }
+        printf("\n");
+
+        size_t nfeatures;
+        const char *const *list_features;
+        adios2_available_features(&nfeatures, &list_features);
+        printf("Available features = %zu:", nfeatures);
+        for (size_t i = 0; i < nfeatures; ++i)
+        {
+            printf(" %s", list_features[i]);
+            if (i < nfeatures - 1)
+            {
+                printf(",");
+            }
+        }
+        printf("\n");
     }
 }
 
