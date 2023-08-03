@@ -1,9 +1,13 @@
 # .readthedocs.yml
 version: 2
 
-conda: 
+conda:
   environment: docs/environment.yml
-    
+
 python:
    version: 3.7
    system_packages: true
+
+formats:
+  - pdf
+  - epub
