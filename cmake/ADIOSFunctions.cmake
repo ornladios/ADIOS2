@@ -99,10 +99,12 @@ function(GenerateADIOSHeaderConfig)
 ")
     if(ADIOS2_HAVE_${OPT})
       set(ADIOS2_HAVE_${OPT_UPPER} 1)
+      string(APPEND ADIOS2_CONFIG_FEATURE_LIST "\"${OPT_UPPER}\",")
     else()
       set(ADIOS2_HAVE_${OPT_UPPER})
     endif()
   endforeach()
+  string(APPEND ADIOS2_CONFIG_FEATURE_LIST "nullptr")
 
   configure_file(
     ${ADIOS2_SOURCE_DIR}/source/adios2/common/ADIOSConfig.h.in
