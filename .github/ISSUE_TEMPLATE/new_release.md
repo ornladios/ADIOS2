@@ -44,10 +44,27 @@ git push
 git fetch origin
 git checkout -b release_@MAJOR@@MINOR@ origin/master
 # Use the following command with care
-git push origin
+git push origin release_@MAJOR@@MINOR@:release_@MAJOR@@MINOR@
 ```
 <!-- else -->
-- [ ] Create PR that merges release_@MAJOR@@MINOR@ into master
+- [ ] Remove older patch releases for @MAJOR@.@MINOR@.X in ReadTheDocs.
+- [ ] Create merge -sours commit in master:
+```
+git fetch origin
+git checkout master
+git reset --hard origin/master
+# We do not want the changes master from the release branch
+git -s ours release_@MAJOR@@MINOR@
+# Be very careful here
+git push origin master
+```
+<!-- endif -->
 - [ ] Submit a PR in Spack that adds this new version of ADIOS (if not RC mark this new version as preferred)
+  - Run `spack checksum -a adios2` to add it, create commit; push it; Create
+    PR in Spack repo.
+- [ ] Submit a PR in Conda that adds this new version of ADIOS (if not RC mark this new version as preferred)
+  - CondaForge robot should do this for you automatically, expect a new PR at
+    https://github.com/conda-forge/adios2-feedstock a couple of hours after the
+    release.
 - [ ] Write an announcement in the ADIOS-ECP mail-list
   (https://groups.google.com/a/kitware.com/g/adios-ecp)
