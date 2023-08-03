@@ -1433,7 +1433,6 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
         Req.BlockID = variable.m_BlockID;
         if (variable.m_SelectionType == adios2::SelectionType::BoundingBox)
         {
-            Req.BlockID = (size_t)-1;
             Req.Start = variable.m_Start;
             Req.Count = variable.m_Count;
         }

@@ -249,10 +249,10 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent,
         auto var = f->m_io->InquireVariable<T>(VarName);                       \
         if (f->m_mode == RemoteOpenRandomAccess)                               \
             var->SetStepSelection({GetMsg->Step, 1});                          \
-        if (GetMsg->BlockID == -1)                                             \
-            var->SetSelection(b);                                              \
-        else                                                                   \
+        if (GetMsg->BlockID != -1)                                             \
             var->SetBlockSelection(GetMsg->BlockID);                           \
+	if (GetMsg->Start) 						       \
+            var->SetSelection(b);                                              \
         f->m_engine->Get(*var, RetData, Mode::Sync);                           \
         Response.Size = RetData.size() * sizeof(T);                            \
         Response.ReadData = (char *)RetData.data();                            \
