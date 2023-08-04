@@ -99,7 +99,7 @@ public:
     int64_t m_ID;
     int m_FileDescriptor;
     int m_Errno = 0;
-    size_t m_Size = -1;
+    size_t m_Size = (size_t)-1;
     size_t m_CurrentOffset = 0;
     std::string m_FileName;
     size_t m_BytesSent = 0;
