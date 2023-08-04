@@ -1849,8 +1849,8 @@ int BP5Deserializer::FindOffset(size_t Dims, const size_t *Size, const size_t *I
 
 BP5Deserializer::BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor,
                                  bool RandomAccessMode)
-: m_WriterIsRowMajor{WriterIsRowMajor}, m_ReaderIsRowMajor{ReaderIsRowMajor}, m_RandomAccessMode{
-                                                                                  RandomAccessMode}
+: m_WriterIsRowMajor{WriterIsRowMajor}, m_ReaderIsRowMajor{ReaderIsRowMajor},
+  m_RandomAccessMode{RandomAccessMode}
 {
     FMContext Tmp = create_local_FMcontext();
     ReaderFFSContext = create_FFSContext_FM(Tmp);
