@@ -54,7 +54,6 @@ void Remote::InitCMData()
 {
     std::lock_guard<std::mutex> lockGuard(m_CMInitMutex);
     bool first = true;
-    ;
     auto &CM = CManagerSingleton::Instance(first);
     ev_state.cm = CM.m_cm;
     RegisterFormats(ev_state);
@@ -77,7 +76,6 @@ void Remote::Open(const std::string hostname, const int32_t port, const std::str
 {
 
     RemoteCommon::_OpenFileMsg open_msg;
-    bool first;
     InitCMData();
     attr_list contact_list = create_attr_list();
     atom_t CM_IP_PORT = -1;
