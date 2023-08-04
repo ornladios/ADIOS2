@@ -31,7 +31,7 @@ namespace engine
 BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("BP5Reader", io, name, mode, std::move(comm)), m_MDFileManager(io, m_Comm),
   m_DataFileManager(io, m_Comm), m_MDIndexFileManager(io, m_Comm),
-  m_FileMetaMetadataManager(io, m_Comm), m_ActiveFlagFileManager(io, m_Comm)
+  m_FileMetaMetadataManager(io, m_Comm), m_ActiveFlagFileManager(io, m_Comm), m_Remote()
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     Init();
@@ -262,6 +262,34 @@ std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan
 
 void BP5Reader::PerformGets()
 {
+    if (m_Remote)
+    {
+        PerformRemoteGets();
+    }
+    else
+    {
+        PerformLocalGets();
+    }
+
+    // clear pending requests inside deserializer
+    {
+        std::vector<adios2::format::BP5Deserializer::ReadRequest> empty;
+        m_BP5Deserializer->FinalizeGets(empty);
+    }
+}
+
+void BP5Reader::PerformRemoteGets()
+{
+    // TP startGenerate = NOW();
+    auto GetRequests = m_BP5Deserializer->PendingGetRequests;
+    for (auto &Req : GetRequests)
+    {
+        m_Remote.Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count, Req.Start, Req.Data);
+    }
+}
+
+void BP5Reader::PerformLocalGets()
+{
     auto lf_CompareReqSubfile = [&](adios2::format::BP5Deserializer::ReadRequest &r1,
                                     adios2::format::BP5Deserializer::ReadRequest &r2) -> bool {
         return (m_WriterMap[m_WriterMapIndex[r1.Timestep]].RankToSubfile[r1.WriterRank] <
@@ -383,13 +411,6 @@ void BP5Reader::PerformGets()
             m_BP5Deserializer->FinalizeGet(Req, false);
         }
     }
-
-    // clear pending requests inside deserializer
-    {
-        std::vector<adios2::format::BP5Deserializer::ReadRequest> empty;
-        m_BP5Deserializer->FinalizeGets(empty);
-    }
-
     /*TP end = NOW();
     double t1 = DURATION(start, end);
     double t2 = DURATION(startRead, end);
@@ -432,6 +453,17 @@ void BP5Reader::Init()
     TimePoint timeoutInstant = Now() + timeoutSeconds;
     OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
     UpdateBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
+
+    //  This isn't how we'll trigger remote ops in the end, but a temporary
+    //  solution
+    if (!m_Parameters.RemoteDataPath.empty())
+    {
+        m_Remote.Open("localhost", 26200, m_Parameters.RemoteDataPath, m_OpenMode);
+    }
+    else if (getenv("DoRemote"))
+    {
+        m_Remote.Open("localhost", 26200, m_Name, m_OpenMode);
+    }
 }
 
 void BP5Reader::InitParameters()
