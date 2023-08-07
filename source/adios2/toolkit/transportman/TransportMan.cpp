@@ -23,6 +23,9 @@
 #ifdef ADIOS2_HAVE_DAOS
 #include "adios2/toolkit/transport/file/FileDaos.h"
 #endif
+#ifdef ADIOS2_HAVE_SST
+#include "adios2/toolkit/transport/file/FileRemote.h"
+#endif
 #ifdef ADIOS2_HAVE_IME
 #include "adios2/toolkit/transport/file/FileIME.h"
 #endif
@@ -574,6 +577,18 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(const std::string &fi
             }
         }
 #endif
+#ifdef ADIOS2_HAVE_SST
+        else if (library == "remote")
+        {
+            transport = std::make_shared<transport::FileRemote>(m_Comm);
+            if (lf_GetBuffered("false"))
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "TransportMan", "OpenFileTransport",
+                    library + " transport does not support buffered I/O.");
+            }
+        }
+#endif
 #ifdef ADIOS2_HAVE_IME
         else if (library == "ime")
         {
@@ -632,7 +647,10 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(const std::string &fi
     // BODY OF FUNCTION starts here
     std::shared_ptr<Transport> transport;
     const std::string library = helper::LowerCase(lf_GetLibrary(DefaultFileLibrary, parameters));
-    lf_SetFileTransport(library, transport);
+    if (getenv("DoFileRemote") && (openMode == Mode::Read))
+        lf_SetFileTransport("remote", transport);
+    else
+        lf_SetFileTransport(library, transport);
 
     // Default or user ProfileUnits in parameters
     if (profile)

@@ -568,7 +568,7 @@ void BP5Deserializer::SetupForStep(size_t Step, size_t WriterCount)
     }
     else
     {
-        PendingRequests.clear();
+        PendingGetRequests.clear();
 
         for (auto RecPair : VarByKey)
         {
@@ -1196,7 +1196,7 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
 {
     if (!m_RandomAccessMode)
     {
-        return QueueGetSingle(variable, DestData, CurTimestep);
+        return QueueGetSingle(variable, DestData, CurTimestep, CurTimestep);
     }
     else
     {
@@ -1229,7 +1229,7 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
                 if (GetMetadataBase(VarRec, AbsStep, WriterRank))
                 {
                     // This writer wrote on this timestep
-                    ret = QueueGetSingle(variable, DestData, AbsStep);
+                    ret = QueueGetSingle(variable, DestData, AbsStep, RelStep);
                     size_t increment = variable.TotalSize() * variable.m_ElementSize;
                     DestData = (void *)((char *)DestData + increment);
                     break;
@@ -1290,7 +1290,8 @@ void BP5Deserializer::StructQueueReadChecks(core::VariableStruct *variable, BP5V
     VarRec->ReaderDef = variable->m_ReadStructDefinition;
 }
 
-bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestData, size_t Step)
+bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestData, size_t AbsStep,
+                                     size_t RelStep)
 {
     BP5VarRec *VarRec = VarByKey[&variable];
     if (variable.m_Type == adios2::DataType::Struct)
@@ -1300,10 +1301,10 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
 
     if (VarRec->OrigShapeID == ShapeID::GlobalValue)
     {
-        const size_t writerCohortSize = WriterCohortSize(Step);
+        const size_t writerCohortSize = WriterCohortSize(AbsStep);
         for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
         {
-            if (GetSingleValueFromMetadata(variable, VarRec, DestData, Step, WriterRank))
+            if (GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank))
                 return false;
         }
         return false;
@@ -1314,7 +1315,7 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
         for (size_t WriterRank = variable.m_Start[0];
              WriterRank < variable.m_Count[0] + variable.m_Start[0]; WriterRank++)
         {
-            (void)GetSingleValueFromMetadata(variable, VarRec, DestData, Step, WriterRank);
+            (void)GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank);
             DestData = (char *)DestData + variable.m_ElementSize; // use variable.m_ElementSize
                                                                   // because it's the size in local
                                                                   // memory, VarRec->ElementSize is
@@ -1329,20 +1330,23 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
     {
         BP5ArrayRequest Req;
         Req.VarRec = VarRec;
+        Req.VarName = (char *)variable.m_Name.c_str();
         Req.RequestType = Global;
-        Req.BlockID = variable.m_BlockID;
+        Req.BlockID = (size_t)-1;
         Req.Count = variable.m_Count;
         Req.Start = variable.m_Start;
-        Req.Step = Step;
+        Req.Step = AbsStep;
+        Req.RelStep = RelStep;
         Req.MemSpace = MemSpace;
         Req.Data = DestData;
-        PendingRequests.push_back(Req);
+        PendingGetRequests.push_back(Req);
     }
     else if ((variable.m_SelectionType == adios2::SelectionType::WriteBlock) ||
              (variable.m_ShapeID == ShapeID::LocalArray))
     {
         BP5ArrayRequest Req;
         Req.VarRec = VarByKey[&variable];
+        Req.VarName = (char *)variable.m_Name.c_str();
         Req.RequestType = Local;
         Req.BlockID = variable.m_BlockID;
         if (variable.m_SelectionType == adios2::SelectionType::BoundingBox)
@@ -1352,8 +1356,9 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
         }
         Req.Data = DestData;
         Req.MemSpace = MemSpace;
-        Req.Step = Step;
-        PendingRequests.push_back(Req);
+        Req.Step = AbsStep;
+        Req.RelStep = RelStep;
+        PendingGetRequests.push_back(Req);
     }
     else
     {
@@ -1447,7 +1452,7 @@ bool BP5Deserializer::IsContiguousTransfer(BP5ArrayRequest *Req, size_t *offsets
      * involve contiguous blocks, but for now all multimensional
      * requests are assumed to be non-contiguous.
      */
-    return (Req->VarRec->DimCount == 1);
+    return (((struct BP5VarRec *)Req->VarRec)->DimCount == 1);
 }
 
 std::vector<BP5Deserializer::ReadRequest>
@@ -1456,18 +1461,19 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
     std::vector<BP5Deserializer::ReadRequest> Ret;
     *maxReadSize = 0;
 
-    for (size_t ReqIndex = 0; ReqIndex < PendingRequests.size(); ReqIndex++)
+    for (size_t ReqIndex = 0; ReqIndex < PendingGetRequests.size(); ReqIndex++)
     {
-        auto Req = &PendingRequests[ReqIndex];
-        VariableBase *VB = static_cast<VariableBase *>(Req->VarRec->Variable);
+        auto Req = &PendingGetRequests[ReqIndex];
+        auto VarRec = (struct BP5VarRec *)Req->VarRec;
+        VariableBase *VB = static_cast<VariableBase *>(VarRec->Variable);
         if (Req->RequestType == Local)
         {
             const size_t writerCohortSize = WriterCohortSize(Req->Step);
             size_t NodeFirstBlock = 0;
             for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
             {
-                MetaArrayRecOperator *writer_meta_base =
-                    (MetaArrayRecOperator *)GetMetadataBase(Req->VarRec, Req->Step, WriterRank);
+                MetaArrayRecOperator *writer_meta_base = (MetaArrayRecOperator *)GetMetadataBase(
+                    (struct BP5VarRec *)Req->VarRec, Req->Step, WriterRank);
                 if (!writer_meta_base)
                 {
                     continue; // Not writen on this step
@@ -1477,7 +1483,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                 {
                     // block is here
                     size_t NeededBlock = Req->BlockID - NodeFirstBlock;
-                    size_t StartDim = NeededBlock * Req->VarRec->DimCount;
+                    size_t StartDim = NeededBlock * VarRec->DimCount;
                     ReadRequest RR;
                     RR.Timestep = Req->Step;
                     RR.WriterRank = WriterRank;
@@ -1489,21 +1495,19 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                             IsContiguousTransfer(Req, &writer_meta_base->Offsets[StartDim],
                                                  &writer_meta_base->Count[StartDim]);
                     RR.ReadLength =
-                        helper::GetDataTypeSize(Req->VarRec->Type) *
-                        CalcBlockLength(Req->VarRec->DimCount, &writer_meta_base->Count[StartDim]);
+                        helper::GetDataTypeSize(VarRec->Type) *
+                        CalcBlockLength(VarRec->DimCount, &writer_meta_base->Count[StartDim]);
                     RR.OffsetInBlock = 0;
                     if (RR.DirectToAppMemory)
                     {
                         RR.DestinationAddr = (char *)Req->Data;
                         if (Req->Start.size() != 0)
                         {
-                            RR.ReadLength =
-                                helper::GetDataTypeSize(Req->VarRec->Type) *
-                                CalcBlockLength(Req->VarRec->DimCount, Req->Count.data());
+                            RR.ReadLength = helper::GetDataTypeSize(VarRec->Type) *
+                                            CalcBlockLength(VarRec->DimCount, Req->Count.data());
                             /* DirectToAppMemory handles only 1D, so offset calc
                              * is 1D only for the moment */
-                            RR.StartOffset +=
-                                helper::GetDataTypeSize(Req->VarRec->Type) * Req->Start[0];
+                            RR.StartOffset += helper::GetDataTypeSize(VarRec->Type) * Req->Start[0];
                         }
                     }
                     else
@@ -1530,8 +1534,8 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
             const size_t writerCohortSize = WriterCohortSize(Req->Step);
             for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
             {
-                MetaArrayRecOperator *writer_meta_base =
-                    (MetaArrayRecOperator *)GetMetadataBase(Req->VarRec, Req->Step, WriterRank);
+                MetaArrayRecOperator *writer_meta_base = (MetaArrayRecOperator *)GetMetadataBase(
+                    (struct BP5VarRec *)Req->VarRec, Req->Step, WriterRank);
                 if (!writer_meta_base)
                     continue; // Not writen on this step
 
@@ -1541,14 +1545,14 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                     std::array<size_t, helper::MAX_DIMS> intersectionend;
                     std::array<size_t, helper::MAX_DIMS> intersectioncount;
 
-                    size_t StartDim = Block * Req->VarRec->DimCount;
-                    if (IntersectionStartCount(Req->VarRec->DimCount, Req->Start.data(),
+                    size_t StartDim = Block * VarRec->DimCount;
+                    if (IntersectionStartCount(VarRec->DimCount, Req->Start.data(),
                                                Req->Count.data(),
                                                &writer_meta_base->Offsets[StartDim],
                                                &writer_meta_base->Count[StartDim],
                                                &intersectionstart[0], &intersectioncount[0]))
                     {
-                        if (Req->VarRec->Operator != NULL)
+                        if (VarRec->Operator != NULL)
                         {
                             // need the whole thing for decompression anyway
                             ReadRequest RR;
@@ -1571,24 +1575,22 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                         }
                         else
                         {
-                            for (size_t Dim = 0; Dim < Req->VarRec->DimCount; Dim++)
+                            for (size_t Dim = 0; Dim < VarRec->DimCount; Dim++)
                             {
                                 intersectionstart[Dim] -= writer_meta_base->Offsets[StartDim + Dim];
                             }
                             size_t StartOffsetInBlock =
-                                VB->m_ElementSize * LinearIndex(Req->VarRec->DimCount,
-                                                                &writer_meta_base->Count[StartDim],
-                                                                &intersectionstart[0],
-                                                                m_ReaderIsRowMajor);
-                            for (size_t Dim = 0; Dim < Req->VarRec->DimCount; Dim++)
+                                VB->m_ElementSize *
+                                LinearIndex(VarRec->DimCount, &writer_meta_base->Count[StartDim],
+                                            &intersectionstart[0], m_ReaderIsRowMajor);
+                            for (size_t Dim = 0; Dim < VarRec->DimCount; Dim++)
                             {
                                 intersectionend[Dim] =
                                     intersectionstart[Dim] + intersectioncount[Dim] - 1;
                             }
                             size_t EndOffsetInBlock =
                                 VB->m_ElementSize *
-                                (LinearIndex(Req->VarRec->DimCount,
-                                             &writer_meta_base->Count[StartDim],
+                                (LinearIndex(VarRec->DimCount, &writer_meta_base->Count[StartDim],
                                              &intersectionend[0], m_ReaderIsRowMajor) +
                                  1);
                             ReadRequest RR;
@@ -1645,15 +1647,15 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
 
 void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
 {
-    auto Req = PendingRequests[Read.ReqIndex];
+    auto Req = PendingGetRequests[Read.ReqIndex];
 
     // if we could do this, nothing else to do
     if (Read.DirectToAppMemory)
         return;
 
-    int ElementSize = Req.VarRec->ElementSize;
-    MetaArrayRec *writer_meta_base =
-        (MetaArrayRec *)GetMetadataBase(Req.VarRec, Req.Step, Read.WriterRank);
+    int ElementSize = ((struct BP5VarRec *)Req.VarRec)->ElementSize;
+    MetaArrayRec *writer_meta_base = (MetaArrayRec *)GetMetadataBase(
+        ((struct BP5VarRec *)Req.VarRec), Req.Step, Read.WriterRank);
 
     size_t *GlobalDimensions = writer_meta_base->Shape;
     auto DimCount = writer_meta_base->Dims;
@@ -1667,10 +1669,10 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
     char *IncomingData = Read.DestinationAddr;
     char *VirtualIncomingData = Read.DestinationAddr - Read.OffsetInBlock;
     std::vector<char> decompressBuffer;
-    if (Req.VarRec->Operator != NULL)
+    if (((struct BP5VarRec *)Req.VarRec)->Operator != NULL)
     {
-        size_t DestSize = Req.VarRec->ElementSize;
-        for (size_t dim = 0; dim < Req.VarRec->DimCount; dim++)
+        size_t DestSize = ((struct BP5VarRec *)Req.VarRec)->ElementSize;
+        for (size_t dim = 0; dim < ((struct BP5VarRec *)Req.VarRec)->DimCount; dim++)
         {
             DestSize *= writer_meta_base->Count[dim + Read.BlockID * writer_meta_base->Dims];
         }
@@ -1711,7 +1713,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         }
     }
 
-    VariableBase *VB = static_cast<VariableBase *>(Req.VarRec->Variable);
+    VariableBase *VB = static_cast<VariableBase *>(((struct BP5VarRec *)Req.VarRec)->Variable);
     DimsArray inStart(DimCount, RankOffset);
     DimsArray inCount(DimCount, RankSize);
     DimsArray outStart(DimCount, SelOffset);
@@ -1790,7 +1792,7 @@ void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> &Reads)
     {
         FinalizeGet(Read, true);
     }
-    PendingRequests.clear();
+    PendingGetRequests.clear();
 }
 
 void BP5Deserializer::MapGlobalToLocalIndex(size_t Dims, const size_t *GlobalIndex,

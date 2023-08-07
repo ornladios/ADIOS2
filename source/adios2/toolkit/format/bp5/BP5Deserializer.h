@@ -61,7 +61,8 @@ public:
     void SetupForStep(size_t Step, size_t WriterCount);
     // return from QueueGet is true if a sync is needed to fill the data
     bool QueueGet(core::VariableBase &variable, void *DestData);
-    bool QueueGetSingle(core::VariableBase &variable, void *DestData, size_t Step);
+    bool QueueGetSingle(core::VariableBase &variable, void *DestData, size_t AbsStep,
+                        size_t RelStep);
 
     /* generate read requests. return vector of requests AND the size of
      * the largest allocation block necessary for reading.
@@ -86,6 +87,27 @@ public:
     const bool m_WriterIsRowMajor;
     const bool m_ReaderIsRowMajor;
     core::Engine *m_Engine = NULL;
+
+    enum RequestTypeEnum
+    {
+        Global = 0,
+        Local = 1
+    };
+
+    struct BP5ArrayRequest
+    {
+        void *VarRec = NULL;
+        char *VarName;
+        enum RequestTypeEnum RequestType;
+        size_t Step;    // local operations use absolute steps
+        size_t RelStep; // preserve Relative Step for remote
+        size_t BlockID;
+        Dims Start;
+        Dims Count;
+        MemorySpace MemSpace;
+        void *Data;
+    };
+    std::vector<BP5ArrayRequest> PendingGetRequests;
 
 private:
     size_t m_VarCount = 0;
@@ -207,24 +229,6 @@ private:
                                     size_t Step, size_t WriterRank);
     void StructQueueReadChecks(core::VariableStruct *variable, BP5VarRec *VarRec);
 
-    enum RequestTypeEnum
-    {
-        Global = 0,
-        Local = 1
-    };
-
-    struct BP5ArrayRequest
-    {
-        BP5VarRec *VarRec = NULL;
-        enum RequestTypeEnum RequestType;
-        size_t Step;
-        size_t BlockID;
-        Dims Start;
-        Dims Count;
-        MemorySpace MemSpace;
-        void *Data;
-    };
-    std::vector<BP5ArrayRequest> PendingRequests;
     void *GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t WriterRank) const;
     bool IsContiguousTransfer(BP5ArrayRequest *Req, size_t *offsets, size_t *count);
 
