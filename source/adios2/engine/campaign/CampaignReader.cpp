@@ -159,8 +159,6 @@ void CampaignReader::InitParameters()
 void CampaignReader::InitTransports()
 {
     int rc;
-    char *zErrMsg = 0;
-
     rc = sqlite3_open(m_Name.c_str(), &m_DB);
     if (rc)
     {

@@ -162,25 +162,6 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
     }
 }
 
-static int sqlcb_bpfile_data(void *p, int argc, char **argv, char **azColName)
-{
-    CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
-    CampaignBPFile cf;
-    size_t dsid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
-    cf.bpDatasetIdx = dsid - 1;
-    cf.name = std::string(argv[1]);
-    int comp = helper::StringTo<int>(std::string(argv[2]), "SQL callback convert text to int");
-    cf.compressed = (bool)comp;
-    cf.lengthOriginal =
-        helper::StringToSizeT(std::string(argv[3]), "SQL callback convert text to int");
-    cf.lengthCompressed =
-        helper::StringToSizeT(std::string(argv[4]), "SQL callback convert text to int");
-
-    CampaignBPDataset &cds = cdp->bpdatasets[cf.bpDatasetIdx];
-    cds.files.push_back(cf);
-    return 0;
-};
-
 /* Decompress from in-memory source to file dest until stream ends or EOF.
    inf() returns Z_OK on success, Z_MEM_ERROR if memory could not be
    allocated for processing, Z_DATA_ERROR if the deflate data is

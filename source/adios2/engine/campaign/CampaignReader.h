@@ -58,7 +58,6 @@ private:
     int m_ReaderRank;                 // my rank in the readers' comm
 
     int m_CurrentStep = 0;
-    bool m_FirstStep = true;
 
     // EndStep must call PerformGets if necessary
     bool m_NeedPerformGets = false;
