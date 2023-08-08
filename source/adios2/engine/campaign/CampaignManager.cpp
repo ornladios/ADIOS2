@@ -25,37 +25,17 @@ namespace core
 namespace engine
 {
 
-static std::string CMapToJson(const CampaignRecordMap &cmap, const int rank,
-                              const std::string name)
+static std::string CMapToJson(const CampaignRecordMap &cmap, const int rank, const std::string name)
 {
     nlohmann::json j = nlohmann::json::array();
-    std::cout << "Campaign Manager " << rank << " Close(" << name
-              << ")\nCampaign";
     for (auto &r : cmap)
     {
-        nlohmann::json c =
-            nlohmann::json{{"name", r.first},
-                           {"varying_deltas", r.second.varying_deltas},
-                           {"delta_step", r.second.delta_step},
-                           {"delta_time", r.second.delta_time},
-                           {"steps", r.second.steps},
-                           {"times", r.second.times}};
-        std::cout << "name = " << r.first << "\n";
-        std::cout << "   varying_deltas = " << r.second.varying_deltas << "\n";
-        std::cout << "   delta_step     = " << r.second.delta_step << "\n";
-        std::cout << "   delta_time     = " << r.second.delta_time << "\n";
-        std::cout << "   steps          = {";
-        for (const auto s : r.second.steps)
-        {
-            std::cout << s << " ";
-        }
-        std::cout << "}\n";
-        std::cout << "   times          = {";
-        for (const auto t : r.second.times)
-        {
-            std::cout << t << " ";
-        }
-        std::cout << "}\n";
+        nlohmann::json c = nlohmann::json{{"name", r.first},
+                                          {"varying_deltas", r.second.varying_deltas},
+                                          {"delta_step", r.second.delta_step},
+                                          {"delta_time", r.second.delta_time},
+                                          {"steps", r.second.steps},
+                                          {"times", r.second.times}};
         j.push_back(c);
     }
     return nlohmann::to_string(j);
@@ -66,8 +46,7 @@ CampaignManager::CampaignManager(adios2::helper::Comm &comm)
     m_WriterRank = comm.Rank();
     if (m_Verbosity == 5)
     {
-        std::cout << "Campaign Manager " << m_WriterRank
-                  << " constructor called" << std::endl;
+        std::cout << "Campaign Manager " << m_WriterRank << " constructor called" << std::endl;
     }
     helper::CreateDirectory(m_CampaignDir);
 }
@@ -76,8 +55,7 @@ CampaignManager::~CampaignManager()
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Campaign Manager " << m_WriterRank
-                  << " desctructor called\n";
+        std::cout << "Campaign Manager " << m_WriterRank << " desctructor called\n";
     }
     if (m_Opened)
     {
@@ -87,23 +65,19 @@ CampaignManager::~CampaignManager()
 
 void CampaignManager::Open(const std::string &name)
 {
-    m_Name = m_CampaignDir + "/" + name + "_" + std::to_string(m_WriterRank) +
-             ".json";
+    m_Name = m_CampaignDir + "/" + name + "_" + std::to_string(m_WriterRank) + ".json";
     if (m_Verbosity == 5)
     {
-        std::cout << "Campaign Manager " << m_WriterRank << " Open(" << m_Name
-                  << ")\n";
+        std::cout << "Campaign Manager " << m_WriterRank << " Open(" << m_Name << ")\n";
     }
 }
 
-void CampaignManager::Record(const std::string &name, const size_t step,
-                             const double time)
+void CampaignManager::Record(const std::string &name, const size_t step, const double time)
 {
     if (m_Verbosity == 5)
     {
-        std::cout << "Campaign Manager " << m_WriterRank
-                  << "   Record name = " << name << " step = " << step
-                  << " time = " << time << "\n";
+        std::cout << "Campaign Manager " << m_WriterRank << "   Record name = " << name
+                  << " step = " << step << " time = " << time << "\n";
     }
     auto r = cmap.find(name);
     if (r != cmap.end())
@@ -121,8 +95,7 @@ void CampaignManager::Record(const std::string &name, const size_t step,
         }
         else
         {
-            size_t old_delta_step =
-                r->second.steps.back() - r->second.steps.rbegin()[1];
+            size_t old_delta_step = r->second.steps.back() - r->second.steps.rbegin()[1];
             if (old_delta_step != delta_step)
             {
                 r->second.delta_step = 0;
@@ -143,37 +116,11 @@ void CampaignManager::Record(const std::string &name, const size_t step,
 
 void CampaignManager::Close()
 {
-    /*if (m_Verbosity == 5)
-    {
-        std::cout << "Campaign Manager " << m_WriterRank
-                  << " Close()\nCampaign";
-        for (const auto &r : cmap)
-        {
-            std::cout << "name = " << r.first << "\n";
-            std::cout << "   varying_deltas = " << r.second.varying_deltas
-                      << "\n";
-            std::cout << "   delta_step     = " << r.second.delta_step << "\n";
-            std::cout << "   delta_time     = " << r.second.delta_time << "\n";
-            std::cout << "   steps          = {";
-            for (const auto s : r.second.steps)
-            {
-                std::cout << s << " ";
-            }
-            std::cout << "}\n";
-            std::cout << "   times          = {";
-            for (const auto t : r.second.times)
-            {
-                std::cout << t << " ";
-            }
-            std::cout << "}\n";
-        }
-    }*/
     if (!cmap.empty())
     {
         m_Output.open(m_Name, std::ofstream::out);
         m_Opened = true;
-        m_Output << std::setw(4) << CMapToJson(cmap, m_WriterRank, m_Name)
-                 << std::endl;
+        m_Output << std::setw(4) << CMapToJson(cmap, m_WriterRank, m_Name) << std::endl;
         m_Output.close();
         m_Opened = false;
     }

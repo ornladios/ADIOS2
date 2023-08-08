@@ -150,7 +150,7 @@ def AddDatasetToArchive(args: dict, dataset: str, cur: sqlite3.Cursor, hostID: i
 
 def ProcessJsonFile(args: dict, jsonlist: list, cur: sqlite3.Cursor, hostID: int, dirID: int):
     for entry in jsonlist:
-        print(f"Process entry {entry}:")
+        # print(f"Process entry {entry}:")
         if isinstance(entry, dict):
             if "name" in entry:
                 AddDatasetToArchive(
@@ -228,7 +228,7 @@ def Update(args: dict, cur: sqlite3.Cursor):
 
     jsonlist = MergeJsonFiles(jsonFileList)
 
-    print(f"Merged json = {jsonlist}")
+    # print(f"Merged json = {jsonlist}")
     ProcessJsonFile(args, jsonlist, cur, hostID, dirID)
 
     con.commit()
