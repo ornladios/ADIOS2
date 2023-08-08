@@ -16,8 +16,6 @@
 #include <unordered_map>
 #include <vector>
 
-#include <sqlite3.h>
-
 namespace adios2
 {
 namespace core
