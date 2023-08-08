@@ -5,13 +5,11 @@ import glob
 import json
 import sqlite3
 import zlib
-from datetime import datetime, timezone
-from io import StringIO
+from datetime import datetime
 from os import chdir, getcwd, remove, stat
-from os.path import basename, exists, isdir
+from os.path import exists, isdir
 from re import sub
 from socket import getfqdn
-from subprocess import check_call
 from time import time
 
 # from adios2.adios2_campaign_manager import *
@@ -22,7 +20,8 @@ ADIOS_ACM_VERSION = "1.0"
 def SetupArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "command", help="Command: create/update/delete", choices=['create', 'update', 'delete', 'info'])
+        "command", help="Command: create/update/delete",
+        choices=['create', 'update', 'delete', 'info'])
     parser.add_argument("--verbose", "-v",
                         help="More verbosity", action="count")
     parser.add_argument("--project", "-p",
@@ -45,8 +44,8 @@ def SetupArgs():
 
     # default values
     args.update = False
-    args.CampaignFileName = args.campaign_store+"/" + \
-        args.project+"_"+args.app+"_"+args.shot+".acm"
+    args.CampaignFileName = args.campaign_store + "/" + \
+        args.project + "_" + args.app + "_" + args.shot + ".acm"
     args.LocalCampaignDir = "adios-campaign/"
 
     # print("Verbosity = {0}".format(args.verbose))
@@ -71,9 +70,9 @@ def CheckLocalCampaignDir(args):
 def IsADIOSDataset(dataset):
     if not isdir(dataset):
         return False
-    if not exists(dataset+"/"+"md.idx"):
+    if not exists(dataset + "/" + "md.idx"):
         return False
-    if not exists(dataset+"/"+"data.0"):
+    if not exists(dataset + "/" + "data.0"):
         return False
     return True
 
@@ -141,7 +140,7 @@ def AddDatasetToArchive(args: dict, dataset: str, cur: sqlite3.Cursor, hostID: i
         chdir(dataset)
         mdFileList = glob.glob('*md.*')
         profileList = glob.glob('profiling.json')
-        files = mdFileList+profileList
+        files = mdFileList + profileList
         for f in files:
             AddFileToArchive(args, f, cur, dsID)
         chdir(cwd)
@@ -175,7 +174,7 @@ def AddHostName(longHostName, shortHostName):
     res = cur.execute(
         'select rowid from host where hostname = "' + shortHostName + '"')
     row = res.fetchone()
-    if row != None:
+    if row is not None:
         hostID = row[0]
         print(f"Found host {shortHostName} in database, rowid = {hostID}")
     else:
@@ -197,14 +196,14 @@ def Info(args: dict, cur: sqlite3.Cursor):
     for host in hosts:
         print(f"hostname = {host[1]}   longhostname = {host[2]}")
         res2 = cur.execute(
-            'select rowid, name from directory where hostid = "'+str(host[0])+'"')
+            'select rowid, name from directory where hostid = "' + str(host[0]) + '"')
         dirs = res2.fetchall()
         for dir in dirs:
             print(f"    dir = {dir[1]}")
             res3 = cur.execute(
-                'select rowid, name, ctime from bpdataset where hostid = "'+str(host[0]) +
-                '" and dirid = "'+str(dir[0])+'"')
-            bpdatasets = res2.fetchall()
+                'select rowid, name, ctime from bpdataset where hostid = "' + str(host[0]) +
+                '" and dirid = "' + str(dir[0]) + '"')
+            bpdatasets = res3.fetchall()
             for bpdataset in bpdatasets:
                 t = datetime.fromtimestamp(float(bpdataset[2]))
                 print(f"        dataset = {bpdataset[1]}     created on {t}")
@@ -212,7 +211,7 @@ def Info(args: dict, cur: sqlite3.Cursor):
 
 def Update(args: dict, cur: sqlite3.Cursor):
     longHostName, shortHostName = GetHostName()
-    if args.hostname != None:
+    if args.hostname is not None:
         shortHostName = args.hostname
 
     hostID = AddHostName(longHostName, shortHostName)
