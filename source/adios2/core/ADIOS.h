@@ -161,8 +161,7 @@ public:
      * in main thread. Useful when using Async IO */
     void ExitComputationBlock() noexcept;
 
-    void RecordOutputStep(const std::string &name,
-                          const size_t step = UnknownStep,
+    void RecordOutputStep(const std::string &name, const size_t step = UnknownStep,
                           const double time = UnknownTime);
 
 private:

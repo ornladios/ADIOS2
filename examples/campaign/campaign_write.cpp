@@ -71,8 +71,7 @@ unsigned int convertToUint(std::string varName, char *arg)
     unsigned int retval = std::strtoul(arg, &end, 10);
     if (end[0] || errno == ERANGE)
     {
-        throw std::invalid_argument("Invalid value given for " + varName +
-                                    ": " + std::string(arg));
+        throw std::invalid_argument("Invalid value given for " + varName + ": " + std::string(arg));
     }
     return retval;
 }
@@ -84,12 +83,10 @@ int main(int argc, char *argv[])
         printUsage();
         return -1;
     }
-    nSteps =
-        adios2::helper::StringToSizeT(argv[1], "when parsing argument steps");
+    nSteps = adios2::helper::StringToSizeT(argv[1], "when parsing argument steps");
     if (argc > 2)
     {
-        startStep = adios2::helper::StringToSizeT(
-            argv[2], "when parsing argument start_step");
+        startStep = adios2::helper::StringToSizeT(argv[2], "when parsing argument start_step");
     }
     /*nSteps = convertToUint("steps", argv[1]);
     if (argc > 2)
@@ -206,75 +203,55 @@ int main(int argc, char *argv[])
         }
 
         adios2::Variable<double> varXAll = ioAll.DefineVariable<double>(
-            "x", {static_cast<size_t>(nproc), Nx},
-            {static_cast<size_t>(rank), 0}, {1, Nx});
+            "x", {static_cast<size_t>(nproc), Nx}, {static_cast<size_t>(rank), 0}, {1, Nx});
         adios2::Variable<double> varYAll = ioAll.DefineVariable<double>(
-            "y", {static_cast<size_t>(nproc), Ny},
-            {static_cast<size_t>(rank), 0}, {1, Ny});
+            "y", {static_cast<size_t>(nproc), Ny}, {static_cast<size_t>(rank), 0}, {1, Ny});
         adios2::Variable<double> varZAll = ioAll.DefineVariable<double>(
-            "z", {static_cast<size_t>(nproc), Nz},
-            {static_cast<size_t>(rank), 0}, {1, Nz});
-        adios2::Variable<size_t> varStepAll =
-            ioAll.DefineVariable<size_t>("AdiosStep");
-        adios2::Variable<size_t> varPhysStepAll =
-            ioAll.DefineVariable<size_t>("iteration");
-        adios2::Variable<double> varPhysTimeAll =
-            ioAll.DefineVariable<double>("time");
-        ioAll.DefineAttribute<std::string>("comment",
-                                           "Written by all processes");
+            "z", {static_cast<size_t>(nproc), Nz}, {static_cast<size_t>(rank), 0}, {1, Nz});
+        adios2::Variable<size_t> varStepAll = ioAll.DefineVariable<size_t>("AdiosStep");
+        adios2::Variable<size_t> varPhysStepAll = ioAll.DefineVariable<size_t>("iteration");
+        adios2::Variable<double> varPhysTimeAll = ioAll.DefineVariable<double>("time");
+        ioAll.DefineAttribute<std::string>("comment", "Written by all processes");
 
         adios2::Variable<double> varZStep = ioStep.DefineVariable<double>(
-            "z", {(unsigned int)nproc, Nz}, {static_cast<size_t>(rank), 0},
-            {1, Nz});
-        adios2::Variable<size_t> varStepStep =
-            ioStep.DefineVariable<size_t>("AdiosStep");
-        adios2::Variable<size_t> varPhysStepStep =
-            ioStep.DefineVariable<size_t>("iteration");
-        adios2::Variable<double> varPhysTimeStep =
-            ioStep.DefineVariable<double>("time");
+            "z", {(unsigned int)nproc, Nz}, {static_cast<size_t>(rank), 0}, {1, Nz});
+        adios2::Variable<size_t> varStepStep = ioStep.DefineVariable<size_t>("AdiosStep");
+        adios2::Variable<size_t> varPhysStepStep = ioStep.DefineVariable<size_t>("iteration");
+        adios2::Variable<double> varPhysTimeStep = ioStep.DefineVariable<double>("time");
 
         adios2::Variable<double> varYNew = ioStep.DefineVariable<double>(
-            "y", {(unsigned int)nproc, Ny}, {static_cast<size_t>(rank), 0},
-            {1, Ny});
-        adios2::Variable<size_t> varStepNew =
-            ioNew.DefineVariable<size_t>("AdiosStep");
-        adios2::Variable<size_t> varPhysStepNew =
-            ioNew.DefineVariable<size_t>("iteration");
-        adios2::Variable<double> varPhysTimeNew =
-            ioNew.DefineVariable<double>("time");
+            "y", {(unsigned int)nproc, Ny}, {static_cast<size_t>(rank), 0}, {1, Ny});
+        adios2::Variable<size_t> varStepNew = ioNew.DefineVariable<size_t>("AdiosStep");
+        adios2::Variable<size_t> varPhysStepNew = ioNew.DefineVariable<size_t>("iteration");
+        adios2::Variable<double> varPhysTimeNew = ioNew.DefineVariable<double>("time");
 
         writerAll = ioAll.Open("dataAll.bp", mode);
 
         adios2::Variable<double> varXFirstRank;
         if (rank == 0)
         {
-            varXFirstRank =
-                ioFirstRank.DefineVariable<double>("x", {Nx}, {0}, {Nx});
-            ioFirstRank.DefineAttribute<std::string>("comment",
-                                                     "Written by rank 0");
-            writerFirstRank =
-                ioFirstRank.Open("dataFirstRank.bp", mode, commFirstRank);
+            varXFirstRank = ioFirstRank.DefineVariable<double>("x", {Nx}, {0}, {Nx});
+            ioFirstRank.DefineAttribute<std::string>("comment", "Written by rank 0");
+            writerFirstRank = ioFirstRank.Open("dataFirstRank.bp", mode, commFirstRank);
         }
 
         adios2::Variable<double> varXLastRank;
         if (rank == nproc - 1)
         {
-            varXLastRank =
-                ioLastRank.DefineVariable<double>("x", {Nx}, {0}, {Nx});
-            ioLastRank.DefineAttribute<std::string>(
-                "comment", "Written by rank " + std::to_string(nproc - 1));
-            writerLastRank =
-                ioLastRank.Open("dataLastRank.bp", mode, commLastRank);
+            varXLastRank = ioLastRank.DefineVariable<double>("x", {Nx}, {0}, {Nx});
+            ioLastRank.DefineAttribute<std::string>("comment",
+                                                    "Written by rank " + std::to_string(nproc - 1));
+            writerLastRank = ioLastRank.Open("dataLastRank.bp", mode, commLastRank);
         }
 
         // the other ADIOS object (valid on rank 1..N, not on rank 0)
         adios2::Variable<double> varXAnother;
         if (rank > 0)
         {
-            varXAnother = ioAnother.DefineVariable<double>(
-                "x", {static_cast<size_t>(nproc - 1), Nx});
-            ioAnother.DefineAttribute<std::string>(
-                "comment", "Written by ranks 1.." + std::to_string(nproc - 1));
+            varXAnother =
+                ioAnother.DefineVariable<double>("x", {static_cast<size_t>(nproc - 1), Nx});
+            ioAnother.DefineAttribute<std::string>("comment", "Written by ranks 1.." +
+                                                                  std::to_string(nproc - 1));
             writerAnother = ioAnother.Open("dataAnother.bp", mode);
         }
 
@@ -306,8 +283,8 @@ int main(int argc, char *argv[])
 
             writerAll.EndStep();
 
-            adios2::Engine writerStep = ioStep.Open(
-                "dataStep" + std::to_string(step) + ".bp", adios2::Mode::Write);
+            adios2::Engine writerStep =
+                ioStep.Open("dataStep" + std::to_string(step) + ".bp", adios2::Mode::Write);
             writerStep.Put(varZStep, z.data());
             writerStep.Put(varStepStep, step);
             writerStep.Put(varPhysStepStep, physicalStep);
@@ -318,8 +295,7 @@ int main(int argc, char *argv[])
             {
                 writerAnother.BeginStep();
                 varXAnother.SetSelection(adios2::Box<adios2::Dims>(
-                    {static_cast<size_t>(rank - 1), 0},
-                    {1, static_cast<size_t>(Nx)}));
+                    {static_cast<size_t>(rank - 1), 0}, {1, static_cast<size_t>(Nx)}));
                 writerAnother.Put(varXAnother, x.data());
                 writerAnother.EndStep();
             }
@@ -341,8 +317,7 @@ int main(int argc, char *argv[])
             if (startStep > 0 && step == startStep)
             {
                 adios2::Engine writerNew =
-                    ioNew.Open("dataNew" + std::to_string(step) + ".bp",
-                               adios2::Mode::Write);
+                    ioNew.Open("dataNew" + std::to_string(step) + ".bp", adios2::Mode::Write);
                 writerNew.Put(varYNew, y.data());
                 writerNew.Put(varStepNew, step);
                 writerNew.Put(varPhysStepNew, physicalStep);
@@ -382,14 +357,10 @@ int main(int argc, char *argv[])
 
             adios2::Variable<double> varXFinal =
                 ioFinal.DefineVariable<double>("x_on_rank_1", {Nx}, {0}, {Nx});
-            adios2::Variable<size_t> varStepFinal =
-                ioFinal.DefineVariable<size_t>("AdiosStep");
-            adios2::Variable<size_t> varPhysStepFinal =
-                ioFinal.DefineVariable<size_t>("iteration");
-            adios2::Variable<double> varPhysTimeFinal =
-                ioFinal.DefineVariable<double>("time");
-            ioFinal.DefineAttribute<std::string>(
-                "comment", "Written by rank 1 at end of run");
+            adios2::Variable<size_t> varStepFinal = ioFinal.DefineVariable<size_t>("AdiosStep");
+            adios2::Variable<size_t> varPhysStepFinal = ioFinal.DefineVariable<size_t>("iteration");
+            adios2::Variable<double> varPhysTimeFinal = ioFinal.DefineVariable<double>("time");
+            ioFinal.DefineAttribute<std::string>("comment", "Written by rank 1 at end of run");
 
             adios2::Engine writerFinal = ioFinal.Open("dataFinal.bp", mode);
             writerFinal.Put(varXFinal, x.data());
