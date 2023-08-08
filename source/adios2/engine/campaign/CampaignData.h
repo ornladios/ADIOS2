@@ -61,8 +61,7 @@ struct CampaignData
 
 void ReadCampaignData(sqlite3 *db, CampaignData &cd);
 
-void SaveToFile(sqlite3 *db, const std::string &path,
-                const CampaignBPFile &bpfile);
+void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfile);
 
 } // end namespace engine
 } // end namespace core

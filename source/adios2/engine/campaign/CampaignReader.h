@@ -41,12 +41,10 @@ public:
      * @param method
      * @param hostLanguage
      */
-    CampaignReader(IO &adios, const std::string &name, const Mode mode,
-                   helper::Comm comm);
+    CampaignReader(IO &adios, const std::string &name, const Mode mode, helper::Comm comm);
 
     ~CampaignReader();
-    StepStatus BeginStep(StepMode mode = StepMode::Read,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode = StepMode::Read, const float timeoutSeconds = -1.0) final;
     void PerformGets() final;
     size_t CurrentStep() const final;
     void EndStep() final;
@@ -73,10 +71,7 @@ private:
         void *originalVar; // Variable<T> in the actual IO
         size_t ioIdx;      // actual IO in m_IOs
         size_t engineIdx;  // actual engine in m_Engines
-        VarInternalInfo(void *p, size_t i, size_t e)
-        : originalVar(p), ioIdx(i), engineIdx(e)
-        {
-        }
+        VarInternalInfo(void *p, size_t i, size_t e) : originalVar(p), ioIdx(i), engineIdx(e) {}
     };
     std::unordered_map<std::string, VarInternalInfo> m_VarInternalInfo;
 
@@ -85,23 +80,23 @@ private:
     void InitParameters() final;
     void InitTransports() final;
 
-#define declare_type(T)                                                        \
-    void DoGetSync(Variable<T> &, T *) final;                                  \
+#define declare_type(T)                                                                            \
+    void DoGetSync(Variable<T> &, T *) final;                                                      \
     void DoGetDeferred(Variable<T> &, T *) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     void DoClose(const int transportIndex = -1);
 
-#define declare_type(T)                                                        \
-    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
-    DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
-                                                                               \
-    std::vector<std::vector<typename Variable<T>::BPInfo>>                     \
-    DoAllRelativeStepsBlocksInfo(const Variable<T> &) const final;             \
-                                                                               \
-    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(                    \
-        const Variable<T> &variable, const size_t step) const final;
+#define declare_type(T)                                                                            \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>> DoAllStepsBlocksInfo(              \
+        const Variable<T> &variable) const final;                                                  \
+                                                                                                   \
+    std::vector<std::vector<typename Variable<T>::BPInfo>> DoAllRelativeStepsBlocksInfo(           \
+        const Variable<T> &) const final;                                                          \
+                                                                                                   \
+    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(const Variable<T> &variable,            \
+                                                           const size_t step) const final;
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -117,16 +112,15 @@ private:
      * based on an existing variable.
      */
     template <class T>
-    Variable<T> DuplicateVariable(Variable<T> *variable, IO &io,
-                                  std::string &name, VarInternalInfo &vii);
+    Variable<T> DuplicateVariable(Variable<T> *variable, IO &io, std::string &name,
+                                  VarInternalInfo &vii);
 
     /**
      * Create a new variable with name `name` in `io`
      * based on an existing variable.
      */
     template <class T>
-    std::pair<Variable<T> *, Engine *>
-    TranslateToActualVariable(Variable<T> &variable);
+    std::pair<Variable<T> *, Engine *> TranslateToActualVariable(Variable<T> &variable);
 
     sqlite3 *m_DB;
     CampaignData m_CampaignData;

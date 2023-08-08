@@ -60,10 +60,8 @@ static int sqlcb_host(void *p, int argc, char **argv, char **azColName)
 static int sqlcb_directory(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
-    size_t hostid = helper::StringToSizeT(std::string(argv[0]),
-                                          "SQL callback convert text to int");
-    size_t hostidx =
-        hostid - 1; // SQL rows start from 1, vector idx start from 0
+    size_t hostid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
+    size_t hostidx = hostid - 1; // SQL rows start from 1, vector idx start from 0
     cdp->hosts[hostidx].directory.push_back(argv[1]);
     return 0;
 };
@@ -72,10 +70,8 @@ static int sqlcb_bpdataset(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     CampaignBPDataset cds;
-    size_t hostid = helper::StringToSizeT(std::string(argv[0]),
-                                          "SQL callback convert text to int");
-    size_t dirid = helper::StringToSizeT(std::string(argv[1]),
-                                         "SQL callback convert text to int");
+    size_t hostid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
+    size_t dirid = helper::StringToSizeT(std::string(argv[1]), "SQL callback convert text to int");
     cds.hostIdx = hostid - 1; // SQL rows start from 1, vector idx start from 0
     cds.dirIdx = dirid - 1;
     cds.name = argv[2];
@@ -87,19 +83,16 @@ static int sqlcb_bpfile(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     CampaignBPFile cf;
-    size_t dsid = helper::StringToSizeT(std::string(argv[0]),
-                                        "SQL callback convert text to int");
+    size_t dsid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
     cf.bpDatasetIdx = dsid - 1;
     cf.name = std::string(argv[1]);
-    int comp = helper::StringTo<int>(std::string(argv[2]),
-                                     "SQL callback convert text to int");
+    int comp = helper::StringTo<int>(std::string(argv[2]), "SQL callback convert text to int");
     cf.compressed = (bool)comp;
-    cf.lengthOriginal = helper::StringToSizeT(
-        std::string(argv[3]), "SQL callback convert text to int");
-    cf.lengthCompressed = helper::StringToSizeT(
-        std::string(argv[4]), "SQL callback convert text to int");
-    cf.ctime = helper::StringTo<long>(std::string(argv[5]),
-                                      "SQL callback convert ctime to int");
+    cf.lengthOriginal =
+        helper::StringToSizeT(std::string(argv[3]), "SQL callback convert text to int");
+    cf.lengthCompressed =
+        helper::StringToSizeT(std::string(argv[4]), "SQL callback convert text to int");
+    cf.ctime = helper::StringTo<long>(std::string(argv[5]), "SQL callback convert ctime to int");
 
     CampaignBPDataset &cds = cdp->bpdatasets[cf.bpDatasetIdx];
     cds.files.push_back(cf);
@@ -118,9 +111,8 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
     {
         std::cout << "SQL error: " << zErrMsg << std::endl;
         std::string m(zErrMsg);
-        helper::Throw<std::invalid_argument>(
-            "Engine", "CampaignReader", "ReadCampaignData",
-            "SQL error on reading info records:" + m);
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
+                                             "SQL error on reading info records:" + m);
         sqlite3_free(zErrMsg);
     }
 
@@ -130,9 +122,8 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
     {
         std::cout << "SQL error: " << zErrMsg << std::endl;
         std::string m(zErrMsg);
-        helper::Throw<std::invalid_argument>(
-            "Engine", "CampaignReader", "ReadCampaignData",
-            "SQL error on reading host records:" + m);
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
+                                             "SQL error on reading host records:" + m);
         sqlite3_free(zErrMsg);
     }
 
@@ -142,9 +133,8 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
     {
         std::cout << "SQL error: " << zErrMsg << std::endl;
         std::string m(zErrMsg);
-        helper::Throw<std::invalid_argument>(
-            "Engine", "CampaignReader", "ReadCampaignData",
-            "SQL error on reading directory records:" + m);
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
+                                             "SQL error on reading directory records:" + m);
         sqlite3_free(zErrMsg);
     }
 
@@ -154,23 +144,20 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
     {
         std::cout << "SQL error: " << zErrMsg << std::endl;
         std::string m(zErrMsg);
-        helper::Throw<std::invalid_argument>(
-            "Engine", "CampaignReader", "ReadCampaignData",
-            "SQL error on reading bpdataset records:" + m);
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
+                                             "SQL error on reading bpdataset records:" + m);
         sqlite3_free(zErrMsg);
     }
 
-    sqlcmd =
-        "SELECT bpdatasetid, name, compression, lenorig, lencompressed, ctime "
-        "FROM bpfile";
+    sqlcmd = "SELECT bpdatasetid, name, compression, lenorig, lencompressed, ctime "
+             "FROM bpfile";
     rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_bpfile, &cd, &zErrMsg);
     if (rc != SQLITE_OK)
     {
         std::cout << "SQL error: " << zErrMsg << std::endl;
         std::string m(zErrMsg);
-        helper::Throw<std::invalid_argument>(
-            "Engine", "CampaignReader", "ReadCampaignData",
-            "SQL error on reading bpfile records:" + m);
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
+                                             "SQL error on reading bpfile records:" + m);
         sqlite3_free(zErrMsg);
     }
 }
@@ -179,17 +166,15 @@ static int sqlcb_bpfile_data(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     CampaignBPFile cf;
-    size_t dsid = helper::StringToSizeT(std::string(argv[0]),
-                                        "SQL callback convert text to int");
+    size_t dsid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
     cf.bpDatasetIdx = dsid - 1;
     cf.name = std::string(argv[1]);
-    int comp = helper::StringTo<int>(std::string(argv[2]),
-                                     "SQL callback convert text to int");
+    int comp = helper::StringTo<int>(std::string(argv[2]), "SQL callback convert text to int");
     cf.compressed = (bool)comp;
-    cf.lengthOriginal = helper::StringToSizeT(
-        std::string(argv[3]), "SQL callback convert text to int");
-    cf.lengthCompressed = helper::StringToSizeT(
-        std::string(argv[4]), "SQL callback convert text to int");
+    cf.lengthOriginal =
+        helper::StringToSizeT(std::string(argv[3]), "SQL callback convert text to int");
+    cf.lengthCompressed =
+        helper::StringToSizeT(std::string(argv[4]), "SQL callback convert text to int");
 
     CampaignBPDataset &cds = cdp->bpdatasets[cf.bpDatasetIdx];
     cds.files.push_back(cf);
@@ -202,8 +187,7 @@ static int sqlcb_bpfile_data(void *p, int argc, char **argv, char **azColName)
    invalid or incomplete, Z_VERSION_ERROR if the version of zlib.h and
    the version of the library linked do not match, or Z_ERRNO if there
    is an error reading or writing the files. */
-int inflateToFile(const unsigned char *source, const size_t blobsize,
-                  std::ofstream *dest)
+int inflateToFile(const unsigned char *source, const size_t blobsize, std::ofstream *dest)
 {
     constexpr size_t CHUNK = 16777216;
     int ret;
@@ -230,8 +214,8 @@ int inflateToFile(const unsigned char *source, const size_t blobsize,
         strm.avail_in = (uInt)(blobsize > CHUNK ? CHUNK : blobsize);
         strm.next_in = p;
 
-        std::cout << "     next_in = " << (void *)strm.next_in
-                  << " avail_in = " << strm.avail_in << "\n";
+        std::cout << "     next_in = " << (void *)strm.next_in << " avail_in = " << strm.avail_in
+                  << "\n";
         /* run inflate() on input until output buffer not full */
         do
         {
@@ -313,8 +297,7 @@ static bool isFileNewer(const std::string path, long ctime)
     return (ctSec > ctimeSec);
 }
 
-void SaveToFile(sqlite3 *db, const std::string &path,
-                const CampaignBPFile &bpfile)
+void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfile)
 {
     if (isFileNewer(path, bpfile.ctime))
     {
@@ -327,18 +310,16 @@ void SaveToFile(sqlite3 *db, const std::string &path,
     std::string id = std::to_string(bpfile.bpDatasetIdx + 1);
 
     sqlite3_stmt *statement;
-    sqlcmd = "SELECT data FROM bpfile WHERE bpdatasetid = " + id +
-             " AND name = '" + bpfile.name + "'";
+    sqlcmd =
+        "SELECT data FROM bpfile WHERE bpdatasetid = " + id + " AND name = '" + bpfile.name + "'";
     // std::cout << "SQL statement: " << sqlcmd << "\n";
-    rc =
-        sqlite3_prepare_v2(db, sqlcmd.c_str(), sqlcmd.size(), &statement, NULL);
+    rc = sqlite3_prepare_v2(db, sqlcmd.c_str(), sqlcmd.size(), &statement, NULL);
     if (rc != SQLITE_OK)
     {
         std::cout << "SQL error: " << zErrMsg << std::endl;
         std::string m(zErrMsg);
-        helper::Throw<std::invalid_argument>(
-            "Engine", "CampaignReader", "SaveToFIle",
-            "SQL error on reading info records:" + m);
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "SaveToFIle",
+                                             "SQL error on reading info records:" + m);
         sqlite3_free(zErrMsg);
     }
 
@@ -346,9 +327,8 @@ void SaveToFile(sqlite3 *db, const std::string &path,
     result = sqlite3_step(statement);
     if (result != SQLITE_ROW)
     {
-        helper::Throw<std::invalid_argument>(
-            "Engine", "CampaignReader", "SaveToFIle",
-            "Did not find record for :" + bpfile.name);
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "SaveToFIle",
+                                             "Did not find record for :" + bpfile.name);
     }
 
     int iBlobsize = sqlite3_column_bytes(statement, 0);

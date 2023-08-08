@@ -23,9 +23,8 @@ namespace engine
 {
 
 template <class T>
-inline Variable<T> CampaignReader::DuplicateVariable(Variable<T> *variable,
-                                                     IO &io, std::string &name,
-                                                     VarInternalInfo &vii)
+inline Variable<T> CampaignReader::DuplicateVariable(Variable<T> *variable, IO &io,
+                                                     std::string &name, VarInternalInfo &vii)
 {
     auto &v = io.DefineVariable<T>(name, variable->Shape());
     v.m_AvailableStepsCount = variable->GetAvailableStepsCount();
@@ -37,8 +36,7 @@ inline Variable<T> CampaignReader::DuplicateVariable(Variable<T> *variable,
     v.m_RandomAccess = variable->m_RandomAccess;
     v.m_MemSpace = variable->m_MemSpace;
     v.m_JoinedDimPos = variable->m_JoinedDimPos;
-    v.m_AvailableStepBlockIndexOffsets =
-        variable->m_AvailableStepBlockIndexOffsets;
+    v.m_AvailableStepBlockIndexOffsets = variable->m_AvailableStepBlockIndexOffsets;
     v.m_AvailableShapes = variable->m_AvailableShapes;
     v.m_Min = variable->m_Min;
     v.m_Max = variable->m_Max;

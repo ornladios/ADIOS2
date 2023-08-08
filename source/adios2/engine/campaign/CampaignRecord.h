@@ -39,8 +39,7 @@ struct CampaignRecord
 
     CampaignRecord() : delta_step(0), delta_time(0.0), varying_deltas(false){};
 
-    CampaignRecord(size_t step, double time)
-    : delta_step(0), delta_time(0.0), varying_deltas(false)
+    CampaignRecord(size_t step, double time) : delta_step(0), delta_time(0.0), varying_deltas(false)
     {
         steps.push_back(step);
         times.push_back(time);
