@@ -163,9 +163,9 @@ def ProcessJsonFile(args: dict, jsonlist: list, cur: sqlite3.Cursor, hostID: int
 def GetHostName():
     host = getfqdn()
     if host.startswith("login"):
-        host = sub('^login[0-9]*\.', '', host)
+        host = sub('^login[0-9]*\\.', '', host)
     if host.startswith("batch"):
-        host = sub('^batch[0-9]*\.', '', host)
+        host = sub('^batch[0-9]*\\.', '', host)
     shorthost = host.split('.')[0]
     return host, shorthost
 
