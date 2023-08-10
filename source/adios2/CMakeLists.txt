@@ -258,9 +258,11 @@ if(ADIOS2_HAVE_DataSpaces)
   target_link_libraries(adios2_core_mpi PRIVATE DataSpaces::DataSpaces)
 endif()
 
+set(maybe_adios2_blosc2)
 if(ADIOS2_HAVE_Blosc2)
   target_sources(adios2_core PRIVATE operator/compress/CompressBlosc.cpp)
-  target_link_libraries(adios2_core PRIVATE Blosc2::Blosc2)
+  target_link_libraries(adios2_core PRIVATE adios2_blosc2)
+  set(maybe_adios2_blosc2 adios2_blosc2)
 endif()
 
 if(ADIOS2_HAVE_BZip2)
@@ -433,7 +435,7 @@ install(DIRECTORY toolkit/
 )
 
 # Library installation
-install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_cuda} ${maybe_adios2_core_kokkos} EXPORT adios2Exports
+install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_cuda} ${maybe_adios2_core_kokkos} ${maybe_adios2_blosc2} EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-development

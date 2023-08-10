@@ -196,6 +196,8 @@ if(ADIOS2_HAVE_MPI)
   add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
 endif()
 
+cmake_dependent_option(ADIOS2_Blosc2_PREFER_SHARED "Prefer shared Blosc2 libraries"
+  ON "Blosc2_shlib_available" OFF)
 
 #------------------------------------------------------------------------------#
 # POSIX O_DIRECT is only working for Unix in adios for now
