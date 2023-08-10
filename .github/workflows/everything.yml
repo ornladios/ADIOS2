@@ -111,7 +111,7 @@ jobs:
       image: ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-${{ matrix.compiler }}
       options: --shm-size=1g
       env:
-        GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.gpu_backend }}${{ matrix.compiler }}-${{ matrix.parallel }}
+        GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ matrix.parallel }}
         GH_YML_BASE_OS: Linux
         GH_YML_MATRIX_OS: ${{ matrix.os }}
         GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
@@ -126,6 +126,7 @@ jobs:
       matrix:
         os: [ubuntu20.04]
         compiler: [gcc8, gcc9, gcc10, gcc11, clang6, clang10]
+        shared: [shared]
         parallel: [ompi]
         include:
           - os: ubuntu20.04
@@ -137,7 +138,16 @@ jobs:
           - os: ubuntu20.04
             compiler: clang6
             parallel: serial
-
+          - os: ubuntu20.04
+            compiler: gcc8
+            shared: static
+            parallel: ompi
+            constrains: build_only
+          - os: ubuntu20.04
+            compiler: clang6
+            shared: static
+            parallel: ompi
+            constrains: build_only
     steps:
       - uses: actions/checkout@v3
         with:
@@ -174,6 +184,7 @@ jobs:
           path: .ccache
           key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
       - name: Test
+        if: ${{ matrix.constrains != 'build_only' }}
         run: gha/scripts/ci/gh-actions/run.sh test
 
   linux_el8:
@@ -185,7 +196,7 @@ jobs:
       image: ghcr.io/ornladios/adios2:ci-el8-${{ matrix.compiler }}
       options: --shm-size=1g
       env:
-        GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.gpu_backend }}${{ matrix.compiler }}-${{ matrix.parallel }}
+        GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
         GH_YML_BASE_OS: Linux
         GH_YML_MATRIX_OS: ${{ matrix.os }}
         GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
