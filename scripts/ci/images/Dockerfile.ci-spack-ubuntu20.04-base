@@ -1,42 +1,59 @@
 # vim: ft=dockerfile
-FROM ecpe4s/ubuntu20.04:23.02
+FROM ecpe4s/ubuntu20.04:23.05
 
 COPY packages.yaml /etc/spack/packages.yaml
-COPY specs.yaml /tmp/specs.yaml
 
+# Install Base specs
 RUN . /spack/share/spack/setup-env.sh && \
     export ADIOS_SPEC_NO_MPI="adios2~mpi" && \
-    export ADIOS_SPEC_OPENMPI="adios2+mpi^openmpi@4.1.4" && \
-    export ADIOS_SPEC_MPICH="adios2+mpi^mpich device=ch3 netmod=tcp" && \
-    spack env create adios2-ci-serial /tmp/specs.yaml && \
+    export ADIOS_SPEC_OPENMPI="adios2+mpi^openmpi" && \
+    export ADIOS_SPEC_MPICH="adios2+mpi^mpich" && \
+    spack config add "config:checksum:false" && \
+    spack config add "config:build_jobs:$(nproc)" && \
+    spack config add "concretizer:unify:false" && \
+    spack env create adios2-ci-serial && \
     spack -e adios2-ci-serial add ${ADIOS_SPEC_NO_MPI} && \
     spack -e adios2-ci-serial concretize && \
     spack -e adios2-ci-serial install \
       --include-build-deps \
       --no-check-signature \
       --fail-fast \
-      --only dependencies \
-      -j$(grep -c '^processor' /proc/cpuinfo) && \
-    spack env create adios2-ci-ompi /tmp/specs.yaml && \
+      --only dependencies && \
+    spack env create adios2-ci-ompi && \
     spack -e adios2-ci-ompi add ${ADIOS_SPEC_OPENMPI} && \
     spack -e adios2-ci-ompi concretize && \
     spack -e adios2-ci-ompi install \
       --include-build-deps \
       --no-check-signature \
       --fail-fast \
-      --only dependencies \
-      -j$(grep -c '^processor' /proc/cpuinfo) && \
-    spack env create adios2-ci-mpich /tmp/specs.yaml && \
+      --only dependencies && \
+    spack env create adios2-ci-mpich && \
     spack -e adios2-ci-mpich add ${ADIOS_SPEC_MPICH} && \
     spack -e adios2-ci-mpich concretize && \
     spack -e adios2-ci-mpich install \
       --include-build-deps \
       --no-check-signature \
       --fail-fast \
-      --only dependencies \
-      -j$(grep -c '^processor' /proc/cpuinfo) && \
+      --only dependencies && \
     spack clean -a && \
     echo "source /spack/share/spack/setup-env.sh" >> /etc/profile.d/zz-spack.sh
+
+# Install deps
+RUN pip install shyaml
+COPY specs.yaml /tmp/specs.yaml
+RUN . /spack/share/spack/setup-env.sh && \
+    spack env create adios2-ci-deps /tmp/specs.yaml && \
+    spack -e adios2-ci-deps install \
+      --no-check-signature \
+      --include-build-deps \
+      --fail-fast && \
+    spack -e adios2-ci-serial add $(shyaml get-values spack.specs < /tmp/specs.yaml) && \
+    spack -e adios2-ci-serial concretize && \
+    spack -e adios2-ci-ompi add $(shyaml get-values spack.specs < /tmp/specs.yaml) && \
+    spack -e adios2-ci-ompi concretize && \
+    spack -e adios2-ci-mpich add $(shyaml get-values spack.specs < /tmp/specs.yaml) && \
+    spack -e adios2-ci-mpich concretize && \
+    spack clean -a
 
 ### Other missing packages (compared to el8 base):
 RUN apt-get update && apt-get install -y \
