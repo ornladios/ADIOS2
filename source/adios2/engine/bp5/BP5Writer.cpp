@@ -574,14 +574,14 @@ void BP5Writer::EndStep()
         TSInfo.NewMetaMetaBlocks, {m}, {a}, {m_ThisTimestepDataSize},
         {m_StartDataPos});
 
-    if (m_Aggregator->m_Comm.Size() > 1)
+    if (m_AggregatorMetadata.m_Comm.Size() > 1)
     { // level 1
         m_Profiler.Start("meta_gather1");
         size_t LocalSize = MetaBuffer.size();
         std::vector<size_t> RecvCounts =
-            m_Aggregator->m_Comm.GatherValues(LocalSize, 0);
+            m_AggregatorMetadata.m_Comm.GatherValues(LocalSize, 0);
         std::vector<char> RecvBuffer;
-        if (m_Aggregator->m_Comm.Rank() == 0)
+        if (m_AggregatorMetadata.m_Comm.Rank() == 0)
         {
             uint64_t TotalSize = 0;
             for (auto &n : RecvCounts)
@@ -591,11 +591,11 @@ void BP5Writer::EndStep()
                       << TotalSize << " bytes from aggregator group"
                       << std::endl;*/
         }
-        m_Aggregator->m_Comm.GathervArrays(MetaBuffer.data(), LocalSize,
-                                           RecvCounts.data(), RecvCounts.size(),
-                                           RecvBuffer.data(), 0);
+        m_AggregatorMetadata.m_Comm.GathervArrays(
+            MetaBuffer.data(), LocalSize, RecvCounts.data(), RecvCounts.size(),
+            RecvBuffer.data(), 0);
         m_Profiler.Stop("meta_gather1");
-        if (m_Aggregator->m_Comm.Rank() == 0)
+        if (m_AggregatorMetadata.m_Comm.Rank() == 0)
         {
             std::vector<format::BP5Base::MetaMetaInfoBlock>
                 UniqueMetaMetaBlocks;
@@ -615,17 +615,17 @@ void BP5Writer::EndStep()
     m_Profiler.Stop("meta_lvl1");
     m_Profiler.Start("meta_lvl2");
     // level 2
-    if (m_Aggregator->m_Comm.Rank() == 0)
+    if (m_AggregatorMetadata.m_Comm.Rank() == 0)
     {
         std::vector<char> RecvBuffer;
         std::vector<char> *buf;
         std::vector<size_t> RecvCounts;
         size_t LocalSize = MetaBuffer.size();
-        if (m_CommAggregators.Size() > 1)
+        if (m_CommMetadataAggregators.Size() > 1)
         {
             m_Profiler.Start("meta_gather2");
-            RecvCounts = m_CommAggregators.GatherValues(LocalSize, 0);
-            if (m_CommAggregators.Rank() == 0)
+            RecvCounts = m_CommMetadataAggregators.GatherValues(LocalSize, 0);
+            if (m_CommMetadataAggregators.Rank() == 0)
             {
                 uint64_t TotalSize = 0;
                 for (auto &n : RecvCounts)
@@ -636,7 +636,7 @@ void BP5Writer::EndStep()
                           << std::endl;*/
             }
 
-            m_CommAggregators.GathervArrays(
+            m_CommMetadataAggregators.GathervArrays(
                 MetaBuffer.data(), LocalSize, RecvCounts.data(),
                 RecvCounts.size(), RecvBuffer.data(), 0);
             buf = &RecvBuffer;
@@ -648,7 +648,7 @@ void BP5Writer::EndStep()
             RecvCounts.push_back(LocalSize);
         }
 
-        if (m_CommAggregators.Rank() == 0)
+        if (m_CommMetadataAggregators.Rank() == 0)
         {
             std::vector<format::BP5Base::MetaMetaInfoBlock>
                 UniqueMetaMetaBlocks;
@@ -693,12 +693,12 @@ void BP5Writer::EndStep()
 
     if (TSInfo.AttributeEncodeBuffer)
     {
-      delete TSInfo.AttributeEncodeBuffer;
+        delete TSInfo.AttributeEncodeBuffer;
     }
 
     if (TSInfo.MetaEncodeBuffer)
     {
-      delete TSInfo.MetaEncodeBuffer;
+        delete TSInfo.MetaEncodeBuffer;
     }
 }
 
@@ -860,8 +860,7 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
 
         switch (recordID)
         {
-        case IndexRecord::WriterMapRecord:
-        {
+        case IndexRecord::WriterMapRecord: {
             m_AppendWriterCount =
                 helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
             m_AppendAggregatorCount =
@@ -876,8 +875,7 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
             position += m_AppendWriterCount * sizeof(uint64_t);
             break;
         }
-        case IndexRecord::StepRecord:
-        {
+        case IndexRecord::StepRecord: {
             position += 2 * sizeof(uint64_t); // MetadataPos, MetadataSize
             const uint64_t FlushCount =
                 helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
@@ -947,8 +945,7 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
 
         switch (recordID)
         {
-        case IndexRecord::WriterMapRecord:
-        {
+        case IndexRecord::WriterMapRecord: {
             m_AppendWriterCount =
                 helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
             m_AppendAggregatorCount =
@@ -966,8 +963,7 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
             }
             break;
         }
-        case IndexRecord::StepRecord:
-        {
+        case IndexRecord::StepRecord: {
             m_AppendMetadataIndexPos = position - sizeof(unsigned char) -
                                        sizeof(uint64_t); // pos of RecordID
             const uint64_t MetadataPos =
@@ -1061,6 +1057,17 @@ void BP5Writer::InitAggregator()
     int color = m_Aggregator->m_Comm.Rank();
     m_CommAggregators =
         m_Comm.Split(color, 0, "creating level 2 chain of aggregators at Open");
+
+    /* Metadata aggregator for two-level metadata aggregation */
+    {
+        size_t n = static_cast<size_t>(m_Comm.Size());
+        size_t a = (int)floor(sqrt((double)n));
+        m_AggregatorMetadata.Init(a, a, m_Comm);
+        /* chain of rank 0s form the second level of aggregation */
+        int color = m_AggregatorMetadata.m_Comm.Rank();
+        m_CommMetadataAggregators = m_Comm.Split(
+            color, 0, "creating level 2 chain of aggregators at Open");
+    }
 }
 
 void BP5Writer::InitTransports()

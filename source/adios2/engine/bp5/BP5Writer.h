@@ -204,6 +204,11 @@ private:
     helper::Comm *DataWritingComm; // processes that write the same data file
     // aggregators only (valid if m_Aggregator->m_Comm.Rank() == 0)
     helper::Comm m_CommAggregators;
+
+    /* two-level metadata aggregation */
+    aggregator::MPIChain m_AggregatorMetadata; // first level
+    helper::Comm m_CommMetadataAggregators;    // second level
+
     adios2::profiling::JSONProfiler m_Profiler;
 
 protected:
