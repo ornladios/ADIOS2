@@ -2,8 +2,6 @@ from os import fstat
 
 import numpy as np
 
-from .utils import *
-
 
 def ReadMetaMetadataRecord(buf, rec, pos, fileSize):
     # Read one metametadata record
@@ -15,7 +13,8 @@ def ReadMetaMetadataRecord(buf, rec, pos, fileSize):
     pos = pos + 8
     # mmid = np.frombuffer(buf, dtype=np.uint8, count=mmIDlen[0], offset=pos)
     pos = pos + int(mmIDlen[0])
-    # mminfo = np.frombuffer(buf, dtype=np.uint8, count=mmInfolen[0], offset=pos)
+    # mminfo = np.frombuffer(buf, dtype=np.uint8,
+    #                        count=mmInfolen[0], offset=pos)
     pos = pos + int(mmInfolen[0])
 
     recs = str(rec).rjust(7)

@@ -2,15 +2,13 @@ from os import fstat
 
 import numpy as np
 
-from .utils import *
-
 
 def ReadMetadataStep(f, fileSize, MetadataEntry, WriterMapEntry):
     # Read metadata of one step
     step = MetadataEntry['step']
     mdpos = MetadataEntry['mdpos']
     mdsize = MetadataEntry['mdsize']
-    flushcount = MetadataEntry['flushcount']
+    # flushcount = MetadataEntry['flushcount']
     WriterCount = WriterMapEntry['WriterCount']
 
     if mdpos + mdsize > fileSize:

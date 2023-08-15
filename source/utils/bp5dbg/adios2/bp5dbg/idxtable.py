@@ -1,9 +1,8 @@
-from ast import Sub
 from os import fstat
 
 import numpy as np
 
-from .utils import *
+from .utils import ReadHeader
 
 # metadata index table (list of dictionary)
 #   step:           step (superfluous, since list idx = step)
@@ -85,9 +84,9 @@ def ReadIndex(f, fileSize, verbose):
             MetadataIndexTable.append(md)
 
             if verbose:
-                print("|   Step = " + stepstr + "| MetadataPos = " + mdatapos +
-                      " |  MetadataSize = " + mdatasize + "   | FlushCount = " +
-                      flushcount + "|")
+                print("|   Step = " + stepstr + "| MetadataPos = " +
+                      mdatapos + " |  MetadataSize = " + mdatasize +
+                      "   | FlushCount = " + flushcount + "|")
 
             pos = pos + 3 * 8
 
