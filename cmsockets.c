@@ -3,6 +3,7 @@
 #include <sys/types.h>
 
 #ifdef HAVE_WINDOWS_H
+#define FD_SETSIZE 1024
 #include <winsock2.h>
 #include <windows.h>
 #include <process.h>
@@ -782,7 +783,7 @@ libcmsockets_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transpor
 	    return NULL;
 	}
 	sd->listen_fds = realloc(sd->listen_fds,
-				 sizeof(int)*(sd->listen_count+1));
+				 sizeof(SOCKET)*(sd->listen_count+1));
 	sd->listen_ports = realloc(sd->listen_ports,
 				 sizeof(int)*(sd->listen_count+1));
 	sd->listen_fds[sd->listen_count] = conn_sock;
@@ -973,12 +974,10 @@ int iovcnt;
 {
     ssize_t wrote = 0;
     int i;
-    printf("tmp Writev iovcnt %d\n", iovcnt);
     for (i = 0; i < iovcnt; i++) {
 	size_t left = iov[i].iov_len;
 	ssize_t iget = 0;
 
-	printf("Writing block[%d] of len %zu, startig at %p\n", i, left, iov[i].iov_base);
 	while (left > 0) {
 	    errno = 0;
 	    size_t this_write = left;
@@ -1208,7 +1207,7 @@ libcmsockets_LTX_initialize(CManager cm, CMtrans_services svc, transport_entry t
     socket_data->svc = svc;
     socket_data->characteristics = create_attr_list();
     socket_data->listen_count = 0;
-    socket_data->listen_fds = malloc(sizeof(int));
+    socket_data->listen_fds = malloc(sizeof(SOCKET));
     socket_data->listen_ports = malloc(sizeof(int));
     add_int_attr(socket_data->characteristics, CM_TRANSPORT_RELIABLE, 1);
     svc->add_shutdown_task(cm, free_socket_data, (void *) socket_data, FREE_TASK);

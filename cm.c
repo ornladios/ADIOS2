@@ -17,6 +17,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #ifdef HAVE_WINDOWS_H
+#define FD_SETSIZE 1024
 #include <winsock2.h>
 #define __ANSI_CPP__
 #else
@@ -3773,7 +3774,11 @@ CM_init_select(CMControlList cl, CManager cm)
     lt_dladdsearchdir(EVPATH_MODULE_BUILD_DIR);
     lt_dladdsearchdir(EVPATH_MODULE_INSTALL_DIR);
     libname = malloc(strlen("lib" CM_LIBRARY_PREFIX "cm") + strlen(select_module) + strlen(MODULE_EXT) + 1);
+#ifndef HAVE_WINDOWS_H
     strcpy(libname, "lib" CM_LIBRARY_PREFIX "cm");
+#else
+    strcpy(libname, CM_LIBRARY_PREFIX "cm");
+#endif
     strcat(libname, select_module);
     strcat(libname, MODULE_EXT);
     handle = CMdlopen(cm->CMTrace_file, libname, 0);
