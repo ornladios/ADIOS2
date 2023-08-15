@@ -401,11 +401,6 @@ install(FILES common/ADIOSMacros.h common/ADIOSTypes.h common/ADIOSTypes.inl
 install(DIRECTORY core/
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/core COMPONENT adios2_core-development
   FILES_MATCHING PATTERN "*.h"
-  PATTERN "Info.h" EXCLUDE
-)
-
-install(FILES core/Info.h
-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT adios2_core-development
 )
 
 install(DIRECTORY engine/
