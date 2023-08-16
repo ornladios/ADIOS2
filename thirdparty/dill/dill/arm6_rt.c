@@ -62,7 +62,7 @@ arm6_rt_set_PLT_locs(call_t* t, dill_pkg pkg)
     int i;
     int PLT_offset = pkg->code_size - 3 * 4;  /* 3 insn per PLT entry */
     for (i=t->call_count-1; i>=0; i--) {
-	t->call_locs[i].mach_info = (void*)PLT_offset;
+        t->call_locs[i].mach_info = (void*) (intptr_t)PLT_offset;
 	PLT_offset -= 3 * 4;
     }
 }

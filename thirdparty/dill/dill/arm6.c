@@ -171,13 +171,7 @@ int arm6_type_size[] = {
         sizeof(char*), /* EC */
 };
 
-extern void arm6_dproc(s, op, shift_code, dest, src1, src2)
-dill_stream s;
-int op;
-int shift_code;
-int dest;
-int src1;
-int src2;
+extern void arm6_dproc(dill_stream s, int op, int shift_code, int dest, int src1, int src2)
 {
     int shift = 0;
     if (shift_code != 0) {
@@ -190,12 +184,7 @@ int src2;
     INSN_OUT(s, COND(AL)|CLASS(0x0)|OPCODE(op)|S(0)|RN(src1)|RD(dest)|RM(src2)|shift);
 }
 
-extern void arm6_dproc2(s, op, fop, dest, src)
-dill_stream s;
-int op;
-int fop;
-int dest;
-int src;
+extern void arm6_dproc2(dill_stream s, int op, int fop, int dest, int src)
 {
     if (op == RSB) {
 	arm6_dproci(s, RSB, 0, dest, src, 0);
@@ -208,23 +197,12 @@ int src;
     }
 }
 
-extern void arm6_negf(s, op,fd, dest, src)
-dill_stream s;
-int op;
-int fd;
-int dest;
-int src;
+extern void arm6_negf(dill_stream s, int op, int fd, int dest, int src)
 {
     arm6_fproc2(s, op, fd, 0, dest, src);
 }
 
-extern void arm6_fproc2(s, op,fd, n, dest, src)
-dill_stream s;
-int op;
-int fd;
-int n;
-int dest;
-int src;
+extern void arm6_fproc2(dill_stream s, int op, int fd, int n, int dest, int src)
 {
   INSN_OUT(s, COND(AL)|CLASS(0x7)|p(1)|D(dest&1)|q(1)|r(1)|FN(op)|N(n)|FD(dest>>1)|(0xa+fd)<<8|s(1)|M(src&1)|((src>>1)&0xf));
 }
@@ -348,24 +326,12 @@ arm6_movi2d(dill_stream s, int dest, int src)
     arm6_ploadi(s, DILL_D, 0, dest, _fp, ami->conversion_word);
 }
     
-extern void arm6_fproc(s, arm6_op, fd, dest, src1, src2)
-dill_stream s;
-int arm6_op;
-int fd;
-int dest;
-int src1;
-int src2;
+extern void arm6_fproc(dill_stream s, int arm6_op, int fd, int dest, int src1, int src2)
 {
   INSN_OUT(s, COND(AL)|CLASS(0x7)|D(dest&0x1)|p(arm6_op>>3)|q(arm6_op>>2)|r(arm6_op>>1)|s(arm6_op)|(arm6_op&0x1)<<15|((src1>>1)&0xf)<<16|((dest>>1)&0xf)<<12|(0xa+(fd))<<8|(src1&1)<<7|(src2>>1)&0xf|(src2&0x1)<<5);
 }
 
-extern void arm6_dproci(s, op, shift_code, dest, src1, imm)
-dill_stream s;
-int op;
-int shift_code;
-int dest;
-int src1;
-long imm;
+extern void arm6_dproci(dill_stream s, int op, int shift_code, int dest, int src1, long imm)
 {
     int shift = 0;
     int setcc = 0;
@@ -1608,8 +1574,7 @@ arm6_emit_save(dill_stream s)
 }
     
 extern void
-arm6_end(s)
-dill_stream s;
+arm6_end(dill_stream s)
 {
     arm6_nop(s);
     arm6_simple_ret(s);
@@ -1622,8 +1587,7 @@ dill_stream s;
 }
 
 extern void
-arm6_package_end(s)
-dill_stream s;
+arm6_package_end(dill_stream s)
 {
     arm6_nop(s);
     arm6_simple_ret(s);
@@ -1633,10 +1597,7 @@ dill_stream s;
 }
 
 extern void *
-arm6_clone_code(s, new_base, available_size)
-dill_stream s;
-void *new_base;
-int available_size;
+arm6_clone_code(dill_stream s, void *new_base, int available_size)
 {
     int size = dill_code_size(s);
     if (available_size < size) {
@@ -1704,10 +1665,7 @@ arm6_setf(dill_stream s, int type, int junk, int dest, double imm)
 
 
 extern void
-arm6_set(s, r, val)
-dill_stream s;
-int r;
-long val;
+arm6_set(dill_stream s, int r, long val)
 {
 #if defined(HOST_ARM7)
     /* movw */
@@ -1761,9 +1719,7 @@ arm6_reg_init(dill_stream s)
 }
 
 extern void*
-gen_arm6_mach_info(s, v9)
-dill_stream s;
-int v9;
+gen_arm6_mach_info(dill_stream s, int v9)
 {
     arm6_mach_info ami = malloc(sizeof(*ami));
     if (s->p->mach_info != NULL) {

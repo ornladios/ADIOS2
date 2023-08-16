@@ -12,6 +12,7 @@
 #endif
 #include <stdlib.h>
 #ifdef HAVE_WINDOWS_H
+#define FD_SETSIZE 1024
 #include <winsock2.h>
 #define __ANSI_CPP__
 #else

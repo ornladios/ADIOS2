@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.5)
 
 # The directory label is used for CDash to treat EVPath as a subproject of
 # GTKorvo
@@ -303,7 +303,8 @@ if(EVPATH_TRANSPORT_MODULES)
   foreach(M cmselect cmsockets cmudp cmmulticast)
     set_target_properties(${M} PROPERTIES
       OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}${M}
-      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR})
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR}
+      WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
     install(TARGETS ${M} DESTINATION ${EVPATH_INSTALL_MODULE_DIR} COMPONENT ${EVPATH_MODULE_COMPONENT_PREFIX}${M})
   endforeach()
 
