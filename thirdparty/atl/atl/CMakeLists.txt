@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 # The directory label is used for CDash to treat ATL as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS ATL)
