@@ -24,6 +24,7 @@ list(APPEND CTEST_CUSTOM_WARNING_EXCEPTION
   "Warning #20208-D: '.*' is treated as '.*' in device code"
   "Warning: '.*' is treated as '.*' in device code"
   ".*was specified as both a system and non-system include directory.*"
+  "Wunused-command-line-argument"
 )
 list(APPEND CTEST_CUSTOM_COVERAGE_EXCLUDE
   ".*/thirdparty/.*"

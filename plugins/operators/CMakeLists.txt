@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_Sodium)
-  add_library(EncryptionOperator
+  add_library(EncryptionOperator MODULE
     EncryptionOperator.cpp
   )
   target_link_libraries(EncryptionOperator adios2_core sodium)
