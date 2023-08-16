@@ -103,7 +103,7 @@ def GetCharacteristicDataLength(cID, typeID):
 
 # Read Header info 64 bytes
 # fileType: Data, Metadata, Index Table
-def ReadHeader(f, fileSize, fileType):
+def ReadHeader(f, fileSize, fileType, verbose):
     status = True
     if fileSize < 64:
         print("ERROR: Invalid " + fileType + ". File is smaller "
@@ -142,6 +142,9 @@ def ReadHeader(f, fileSize, fileType):
     else:
         clmnStr = '  yes'
     # 45..63 unused
+
+    if not verbose:
+        return status
 
     print("---------------------------------------------------------"
           "---------------------------------------------------------")
