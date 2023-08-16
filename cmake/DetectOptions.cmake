@@ -430,7 +430,7 @@ if(Python_Interpreter_FOUND)
 endif()
 
 # Sst
-if(ADIOS2_USE_SST AND NOT WIN32)
+if(ADIOS2_USE_SST)
   set(ADIOS2_HAVE_SST TRUE)
   find_package(LIBFABRIC 1.6)
   if(LIBFABRIC_FOUND)
