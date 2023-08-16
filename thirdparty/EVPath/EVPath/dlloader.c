@@ -184,11 +184,19 @@ CMdlsym(void *vdlh, char *sym)
     return NULL;
 #else
     dlhandle dlh = (dlhandle)vdlh;
-    char *tmp = malloc(strlen(sym) + strlen(dlh->lib_prefix) + 1);
+    char *tmp = malloc(strlen(sym) + strlen(dlh->lib_prefix) + 3);
     void *sym_val;
     strcpy(tmp, dlh->lib_prefix);
     strcat(tmp, sym);
     sym_val = dlsym(dlh->dlopen_handle, tmp);
+    if (!sym_val) {
+      // try with lib prefix
+      char *tmp2 = malloc(strlen(tmp) + 4);
+      strcpy(tmp2, "lib");
+      strcat(tmp2, tmp);
+      sym_val = dlsym(dlh->dlopen_handle, tmp2);
+      free(tmp2);
+    }
     free(tmp);
     if (!sym_val) 
 	sym_val = dlsym(dlh->dlopen_handle, sym);

@@ -6,6 +6,7 @@
 
 #undef NDEBUG
 #ifdef HAVE_WINDOWS_H
+#define FD_SETSIZE 1024
 #include <winsock2.h>
 #include <windows.h>
 #include <process.h>

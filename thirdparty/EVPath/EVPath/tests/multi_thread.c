@@ -173,7 +173,7 @@ main(int argc, char **argv)
     srand48(getpid());
 
 #ifdef HAVE_WINDOWS_H
-    SetTimer(NULL, 5, 1000, (TIMERPROC) fail_and_die);
+    SetTimer(NULL, 5, 300*1000, (TIMERPROC) fail_and_die);
 #else
     struct sigaction sigact;
     sigact.sa_flags = 0;
