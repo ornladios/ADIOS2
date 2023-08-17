@@ -108,7 +108,7 @@ jobs:
 
     runs-on: ubuntu-20.04
     container:
-      image: ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-tmp-${{ matrix.compiler }}
+      image: ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-${{ matrix.compiler }}
       options: --shm-size=1g
       env:
         GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ matrix.parallel }}
