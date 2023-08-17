@@ -4,6 +4,7 @@
 #------------------------------------------------------------------------------#
 
 add_subdirectory(interface)
+add_subdirectory(unit)
 add_subdirectory(engine)
 add_subdirectory(transports)
 add_subdirectory(bindings)
