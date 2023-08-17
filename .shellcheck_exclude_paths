@@ -2,7 +2,6 @@ scripts/ci/circle/postCDashStatus.sh
 scripts/ci/circle/run.sh
 scripts/ci/gh-actions/check-branch-name.sh
 scripts/ci/gh-actions/get-changed-files.sh
-scripts/ci/gh-actions/linux-setup.sh
 scripts/ci/gh-actions/macos-setup.sh
 scripts/ci/gh-actions/run.sh
 scripts/ci/scripts/github-prs-to-gitlab.sh
