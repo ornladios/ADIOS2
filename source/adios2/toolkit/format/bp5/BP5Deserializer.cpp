@@ -47,6 +47,13 @@ namespace adios2
 {
 namespace format
 {
+
+namespace
+{
+// To keep ABI compatibility with ADIOS 2.9.0
+static std::map<BP5Deserializer *, std::vector<void *> *> m_FreeableJDOA;
+}
+
 static void ApplyElementMinMax(MinMaxStruct &MinMax, DataType Type,
                                void *Element);
 
@@ -707,7 +714,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
             m_JoinedDimenOffsetArrays = new std::vector<void *>();
             m_JoinedDimenOffsetArrays->resize(writerCohortSize);
             JoinedDimArray[Step] = m_JoinedDimenOffsetArrays;
-            m_FreeableJDOA = nullptr;
+            m_FreeableJDOA[this] = nullptr;
         }
     }
     else
@@ -725,7 +732,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen,
         if (!m_JoinedDimenOffsetArrays)
         {
             m_JoinedDimenOffsetArrays = new std::vector<void *>();
-            m_FreeableJDOA = m_JoinedDimenOffsetArrays;
+            m_FreeableJDOA[this] = m_JoinedDimenOffsetArrays;
         }
         if (writerCohortSize > m_JoinedDimenOffsetArrays->size())
         {
@@ -1974,6 +1981,7 @@ BP5Deserializer::BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor,
 {
     FMContext Tmp = create_local_FMcontext();
     ReaderFFSContext = create_FFSContext_FM(Tmp);
+    m_FreeableJDOA[this] = nullptr;
     free_FMcontext(Tmp);
 }
 
@@ -2004,14 +2012,16 @@ BP5Deserializer::~BP5Deserializer()
     {
         delete m_FreeableMBA;
     }
-    if (m_FreeableJDOA)
+    if (m_FreeableJDOA[this])
     {
-        delete m_FreeableJDOA;
+        delete m_FreeableJDOA[this];
     }
     for (auto &step : MetadataBaseArray)
     {
         delete step;
     }
+
+    m_FreeableJDOA.erase(this);
 }
 
 void *BP5Deserializer::GetMetadataBase(BP5VarRec *VarRec, size_t Step,
