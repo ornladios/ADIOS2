@@ -3,5 +3,5 @@
 #accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-gtest_add_tests_helper(ChunkV MPI_NONE "" Toolkit.Format.Buffer. "")
+gtest_add_tests_helper(ChunkV MPI_NONE "" Unit. "")
 
