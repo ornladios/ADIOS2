@@ -193,6 +193,7 @@ BufferV::BufferPos ChunkV::Allocate(const size_t size, size_t align)
         {
             auto p = m_Chunks.back().Ptr + m_TailChunkPos;
             std::fill(p, p + alignment, 0);
+            CurOffset += alignment;
         }
         DataV.back().Size = actualsize;
         m_TailChunkPos = 0;
