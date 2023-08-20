@@ -76,7 +76,7 @@ if(ADIOS2_USE_Blosc2 STREQUAL AUTO)
   endif()
 elseif(ADIOS2_USE_Blosc2)
   # Prefect CONFIG mode
-  find_package(Blosc2 2.4 CONFIG REQUIRED)
+  find_package(Blosc2 2.4 CONFIG)
   if(NOT Blosc2_FOUND)
     find_package(Blosc2 2.4 MODULE REQUIRED)
   endif()
