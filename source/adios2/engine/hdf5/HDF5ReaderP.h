@@ -54,7 +54,8 @@ private:
     void Init() final;
 
     bool m_InStreamMode = false; // default is not streaming, i.e. set var timestep range
-    unsigned int m_StreamAt = 0; // stream step counter
+  //unsigned int m_StreamAt = 0; // stream step counter
+    size_t m_StreamAt = 0 ;
 #define declare_type(T)                                                                            \
     void DoGetSync(Variable<T> &, T *) final;                                                      \
     void DoGetDeferred(Variable<T> &, T *) final;                                                  \

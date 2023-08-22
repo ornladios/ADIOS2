@@ -17,6 +17,7 @@
 #include <mutex>
 #include <stdexcept>
 #include <vector>
+#include <limits>
 
 #include "adios2/helper/adiosFunctions.h" // IsRowMajor
 #include <cstring>                        // strlen
@@ -85,6 +86,14 @@ HDF5Common::HDF5Common()
               H5T_NATIVE_LDOUBLE);
 
     m_PropertyTxfID = H5Pcreate(H5P_DATASET_XFER);
+
+    size_t size_t_max = (size_t)-1;
+    if (size_t_max  <=  std::numeric_limits<unsigned int>::max())
+      m_TimeStepH5T =  H5T_NATIVE_UINT;
+    else if (size_t_max  <= std::numeric_limits<unsigned long>::max()) 
+      m_TimeStepH5T =  H5T_NATIVE_ULONG;
+      
+    // default is m_TimeStepH5T =  H5T_NATIVE_ULLONG;        
 }
 
 HDF5Common::~HDF5Common() { Close(); }
@@ -279,32 +288,36 @@ void HDF5Common::WriteAdiosSteps()
 
     hid_t s = H5Screate(H5S_SCALAR);
     hid_t attr = H5Aexists(m_FileId, ATTRNAME_NUM_STEPS.c_str());
+
     if (0 == attr)
-        attr = H5Acreate(m_FileId, ATTRNAME_NUM_STEPS.c_str(), H5T_NATIVE_UINT, s, H5P_DEFAULT,
+        attr = H5Acreate(m_FileId, ATTRNAME_NUM_STEPS.c_str(), m_TimeStepH5T, s, H5P_DEFAULT,
                          H5P_DEFAULT);
     else
         attr = H5Aopen(m_FileId, ATTRNAME_NUM_STEPS.c_str(), H5P_DEFAULT);
 
-    unsigned int totalAdiosSteps = m_CurrentAdiosStep + 1;
+    //unsigned int totalAdiosSteps = m_CurrentAdiosStep + 1;
+    size_t totalAdiosSteps = m_CurrentAdiosStep + 1;
 
     if (m_GroupId < 0)
     {
         totalAdiosSteps = m_CurrentAdiosStep;
     }
 
-    H5Awrite(attr, H5T_NATIVE_UINT, &totalAdiosSteps);
+    H5Awrite(attr, m_TimeStepH5T, &totalAdiosSteps);
 
     H5Sclose(s);
     H5Aclose(attr);
 }
 
-unsigned int HDF5Common::GetAdiosStep() const { return m_NumAdiosSteps; }
+size_t HDF5Common::GetAdiosStep() const { return m_NumAdiosSteps; }
 
-unsigned int HDF5Common::GetNumAdiosSteps()
+// A valid file should have at least 1 step.
+size_t HDF5Common::GetNumAdiosSteps()
 {
     if (m_WriteMode)
     {
-        return static_cast<unsigned int>(-1);
+      //return static_cast<unsigned int>(-1);
+      return 0; 
     }
 
     if (m_FileId < 0)
@@ -329,7 +342,7 @@ unsigned int HDF5Common::GetNumAdiosSteps()
         {
             hid_t attr = H5Aopen(m_FileId, ATTRNAME_NUM_STEPS.c_str(), H5P_DEFAULT);
 
-            H5Aread(attr, H5T_NATIVE_UINT, &m_NumAdiosSteps);
+            H5Aread(attr, m_TimeStepH5T, &m_NumAdiosSteps);
             H5Aclose(attr);
         }
     }
@@ -347,9 +360,9 @@ void HDF5Common::ReadAllVariables(core::IO &io)
     }
 
     GetNumAdiosSteps();
-    unsigned int i = 0;
+    //unsigned int i = 0;
 
-    for (i = 0; i < m_NumAdiosSteps; i++)
+    for (auto i = 0; i < m_NumAdiosSteps; i++)
     {
         ReadVariables(i, io);
     }
@@ -362,7 +375,6 @@ void HDF5Common::FindVarsFromH5(core::IO &io, hid_t top_id, const char *gname, c
     // std::string stepStr;
     hsize_t numObj;
 
-    // StaticGetAdiosStepString(stepStr, ts);
     hid_t gid = H5Gopen2(top_id, gname, H5P_DEFAULT);
     HDF5TypeGuard g(gid, E_H5_GROUP);
     ///    if (gid > 0) {
@@ -798,7 +810,7 @@ void HDF5Common::Close()
     m_GroupId = -1;
 }
 
-void HDF5Common::SetAdiosStep(int step)
+void HDF5Common::SetAdiosStep(size_t step)
 {
     if (m_WriteMode)
         helper::Throw<std::ios_base::failure>("Toolkit", "interop::hdf5::HDF5Common",
@@ -811,13 +823,13 @@ void HDF5Common::SetAdiosStep(int step)
 
     GetNumAdiosSteps();
 
-    unsigned int ustep = static_cast<unsigned int>(step);
-    if (ustep >= m_NumAdiosSteps)
+    //unsigned int ustep = static_cast<unsigned int>(step);
+    if (step >= m_NumAdiosSteps)
         helper::Throw<std::ios_base::failure>("Toolkit", "interop::hdf5::HDF5Common",
                                               "SetAdiosStep",
                                               "given time step is more than actual known steps");
 
-    if (m_CurrentAdiosStep == ustep)
+    if (m_CurrentAdiosStep == step)
     {
         return;
     }
@@ -835,7 +847,7 @@ void HDF5Common::SetAdiosStep(int step)
             "ERROR: unable to open HDF5 group " + stepName + ", in call to Open");
     }
 
-    m_CurrentAdiosStep = ustep;
+    m_CurrentAdiosStep = step;
 }
 
 //
@@ -896,11 +908,11 @@ void HDF5Common::Advance()
     }
     else
     {
-        if (m_NumAdiosSteps == 0)
+        if (0 == m_NumAdiosSteps)
         {
             GetNumAdiosSteps();
         }
-        if (m_CurrentAdiosStep + 1 >= m_NumAdiosSteps)
+        if ((m_CurrentAdiosStep + 1) >= m_NumAdiosSteps)
         {
             return;
         }
@@ -1467,7 +1479,7 @@ void HDF5Common::LocateAttrParent(const std::string &attrName, std::vector<std::
     if (list.size() >= 1)
     {
         std::string ts;
-        for (unsigned int i = 0; i < m_CurrentAdiosStep; i++)
+        for (auto i = 0; i < m_CurrentAdiosStep; i++)
         {
             StaticGetAdiosStepString(ts, i);
             for (size_t j = 0; j < list.size() - 1; j++)
@@ -1725,7 +1737,7 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId, std::string c
     }
 }
 
-void HDF5Common::StaticGetAdiosStepString(std::string &stepName, int ts)
+void HDF5Common::StaticGetAdiosStepString(std::string &stepName, size_t ts)
 {
     stepName = "/Step" + std::to_string(ts);
 }
