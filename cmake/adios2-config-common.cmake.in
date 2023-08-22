@@ -162,6 +162,12 @@ if(NOT @BUILD_SHARED_LIBS@)
 
   adios2_add_thirdparty_target(perfstubs-interface)
 
+  find_dependency(ffs)
+  adios2_add_thirdparty_target(ffs)
+  set_target_properties(adios2::thirdparty::ffs PROPERTIES
+    INTERFACE_LINK_LIBRARIES ffs::ffs
+  )
+
   set(ADIOS2_HAVE_SST @ADIOS2_HAVE_SST@)
   if(ADIOS2_HAVE_SST)
     set(ADIOS2_SST_HAVE_LIBFABRIC @ADIOS2_SST_HAVE_LIBFABRIC@)

@@ -167,7 +167,7 @@ target_link_libraries(adios2_core PRIVATE
   adios2::thirdparty::yaml-cpp
   adios2::thirdparty::nlohmann_json
   adios2::thirdparty::perfstubs-interface
-  ffs::ffs
+  adios2::thirdparty::ffs
 )
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEATURES}>")
@@ -184,7 +184,7 @@ endif()
 if (ADIOS2_HAVE_SST)
   # EVPath-enabled remote file transport
   target_sources(adios2_core PRIVATE toolkit/remote/remote_common.cpp toolkit/transport/file/FileRemote.cpp)
-  target_link_libraries(adios2_core PRIVATE EVPath::EVPath)
+  target_link_libraries(adios2_core PRIVATE adios2::thirdparty::EVPath)
   add_subdirectory(toolkit/remote)
 endif()
 

@@ -105,22 +105,23 @@ cmake_dependent_option(ADIOS2_USE_EXTERNAL_ENET
   "NOT ADIOS2_USE_EXTERNAL_EVPATH" OFF
 )
 
-if(NOT ADIOS2_USE_EXTERNAL_EVPATH)
+if(NOT ADIOS2_USE_EXTERNAL_FFS)
   if(NOT ADIOS2_USE_EXTERNAL_ATL)
     add_subdirectory(atl)
   endif()
   find_package(atl REQUIRED)
 
-  if(NOT ADIOS2_USE_EXTERNAL_FFS)
-    if(NOT ADIOS2_USE_EXTERNAL_DILL)
-      add_subdirectory(dill)
-    endif()
-    find_package(dill REQUIRED)
-
-    add_subdirectory(ffs)
+  if(NOT ADIOS2_USE_EXTERNAL_DILL)
+    add_subdirectory(dill)
   endif()
-  find_package(ffs REQUIRED)
+  find_package(dill REQUIRED)
 
+  add_subdirectory(ffs)
+endif()
+find_package(ffs REQUIRED)
+adios2_add_thirdparty_target(ffs ffs::ffs)
+
+if(NOT ADIOS2_USE_EXTERNAL_EVPATH)
   if(NOT ADIOS2_USE_EXTERNAL_ENET)
     add_subdirectory(enet)
   endif()
