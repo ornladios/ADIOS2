@@ -362,7 +362,7 @@ void HDF5Common::ReadAllVariables(core::IO &io)
     GetNumAdiosSteps();
     // unsigned int i = 0;
 
-    for (auto i = 0; i < m_NumAdiosSteps; i++)
+    for (size_t i = 0; i < m_NumAdiosSteps; i++)
     {
         ReadVariables(i, io);
     }
@@ -1479,7 +1479,7 @@ void HDF5Common::LocateAttrParent(const std::string &attrName, std::vector<std::
     if (list.size() >= 1)
     {
         std::string ts;
-        for (auto i = 0; i < m_CurrentAdiosStep; i++)
+        for (size_t i = 0; i < m_CurrentAdiosStep; i++)
         {
             StaticGetAdiosStepString(ts, i);
             for (size_t j = 0; j < list.size() - 1; j++)
