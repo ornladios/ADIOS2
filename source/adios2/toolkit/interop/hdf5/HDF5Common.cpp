@@ -14,10 +14,10 @@
 #include <complex>
 #include <ios>
 #include <iostream>
+#include <limits>
 #include <mutex>
 #include <stdexcept>
 #include <vector>
-#include <limits>
 
 #include "adios2/helper/adiosFunctions.h" // IsRowMajor
 #include <cstring>                        // strlen
@@ -88,12 +88,12 @@ HDF5Common::HDF5Common()
     m_PropertyTxfID = H5Pcreate(H5P_DATASET_XFER);
 
     size_t size_t_max = (size_t)-1;
-    if (size_t_max  <=  std::numeric_limits<unsigned int>::max())
-      m_TimeStepH5T =  H5T_NATIVE_UINT;
-    else if (size_t_max  <= std::numeric_limits<unsigned long>::max()) 
-      m_TimeStepH5T =  H5T_NATIVE_ULONG;
-      
-    // default is m_TimeStepH5T =  H5T_NATIVE_ULLONG;        
+    if (size_t_max <= std::numeric_limits<unsigned int>::max())
+        m_TimeStepH5T = H5T_NATIVE_UINT;
+    else if (size_t_max <= std::numeric_limits<unsigned long>::max())
+        m_TimeStepH5T = H5T_NATIVE_ULONG;
+
+    // default is m_TimeStepH5T =  H5T_NATIVE_ULLONG;
 }
 
 HDF5Common::~HDF5Common() { Close(); }
@@ -295,7 +295,7 @@ void HDF5Common::WriteAdiosSteps()
     else
         attr = H5Aopen(m_FileId, ATTRNAME_NUM_STEPS.c_str(), H5P_DEFAULT);
 
-    //unsigned int totalAdiosSteps = m_CurrentAdiosStep + 1;
+    // unsigned int totalAdiosSteps = m_CurrentAdiosStep + 1;
     size_t totalAdiosSteps = m_CurrentAdiosStep + 1;
 
     if (m_GroupId < 0)
@@ -316,8 +316,8 @@ size_t HDF5Common::GetNumAdiosSteps()
 {
     if (m_WriteMode)
     {
-      //return static_cast<unsigned int>(-1);
-      return 0; 
+        // return static_cast<unsigned int>(-1);
+        return 0;
     }
 
     if (m_FileId < 0)
@@ -360,7 +360,7 @@ void HDF5Common::ReadAllVariables(core::IO &io)
     }
 
     GetNumAdiosSteps();
-    //unsigned int i = 0;
+    // unsigned int i = 0;
 
     for (auto i = 0; i < m_NumAdiosSteps; i++)
     {
@@ -823,7 +823,7 @@ void HDF5Common::SetAdiosStep(size_t step)
 
     GetNumAdiosSteps();
 
-    //unsigned int ustep = static_cast<unsigned int>(step);
+    // unsigned int ustep = static_cast<unsigned int>(step);
     if (step >= m_NumAdiosSteps)
         helper::Throw<std::ios_base::failure>("Toolkit", "interop::hdf5::HDF5Common",
                                               "SetAdiosStep",

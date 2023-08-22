@@ -77,7 +77,7 @@ void HDF5ReaderP::Init()
     m_H5File.ParseParameters(m_IO);
 
     /*
-    */
+     */
     m_H5File.ReadAttrToIO(m_IO);
     if (!m_InStreamMode)
     {
@@ -210,7 +210,7 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
     }
 
     T *values = data;
-    //unsigned int ts = 0;
+    // unsigned int ts = 0;
     size_t ts = 0;
     size_t variableStart = variable.m_StepsStart;
     /*

@@ -172,7 +172,7 @@ public:
 
     void ReadNativeAttrToIO(core::IO &io, hid_t datasetId, std::string const &pathFromRoot);
 
-    //void SetAdiosStep(int ts);
+    // void SetAdiosStep(int ts);
     void SetAdiosStep(size_t ts);
 
     size_t GetNumAdiosSteps();
@@ -213,7 +213,7 @@ public:
     hid_t m_DefH5TypeComplexFloat;
     hid_t m_DefH5TypeBlockStat;
 
-    //unsigned int m_CurrentAdiosStep = 0;
+    // unsigned int m_CurrentAdiosStep = 0;
     size_t m_CurrentAdiosStep = 0;
 
     void CheckWriteGroup();
@@ -249,7 +249,7 @@ private:
                           std::vector<hsize_t> &, std::vector<hsize_t> &);
 
     bool m_WriteMode = false;
-    //unsigned int m_NumAdiosSteps = 0;
+    // unsigned int m_NumAdiosSteps = 0;
     size_t m_NumAdiosSteps = 0;
 
     MPI_API const *m_MPI = nullptr;
@@ -261,7 +261,8 @@ private:
     template <class T>
     void AddStats(const core::Variable<T> &variable, hid_t parentId, std::vector<T> &stats);
 
-    hid_t m_TimeStepH5T = H5T_NATIVE_ULLONG;;
+    hid_t m_TimeStepH5T = H5T_NATIVE_ULLONG;
+    ;
     hid_t m_ChunkPID;
     int m_ChunkDim;
     std::set<std::string> m_ChunkVarNames;
