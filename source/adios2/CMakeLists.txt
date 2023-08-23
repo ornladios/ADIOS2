@@ -50,6 +50,15 @@ add_library(adios2_core
   engine/bp4/BP4Reader.cpp engine/bp4/BP4Reader.tcc
   engine/bp4/BP4Writer.cpp engine/bp4/BP4Writer.tcc
 
+  engine/bp5/BP5Engine.cpp
+  engine/bp5/BP5Reader.cpp
+  engine/bp5/BP5Reader.tcc
+  engine/bp5/BP5Writer.cpp
+  engine/bp5/BP5Writer_EveryoneWrites_Async.cpp
+  engine/bp5/BP5Writer.tcc
+  engine/bp5/BP5Writer_TwoLevelShm_Async.cpp
+  engine/bp5/BP5Writer_TwoLevelShm.cpp
+
   engine/skeleton/SkeletonReader.cpp engine/skeleton/SkeletonReader.tcc
   engine/skeleton/SkeletonWriter.cpp engine/skeleton/SkeletonWriter.tcc
 
@@ -61,12 +70,17 @@ add_library(adios2_core
 
   engine/plugin/PluginEngine.cpp engine/plugin/PluginEngineInterface.cpp
   operator/plugin/PluginOperator.cpp operator/plugin/PluginOperatorInterface.cpp
+
 #toolkit
+  toolkit/burstbuffer/FileDrainer.cpp
+  toolkit/burstbuffer/FileDrainerSingleThread.cpp
+
   toolkit/format/buffer/Buffer.cpp
   toolkit/format/buffer/BufferV.cpp
-  toolkit/format/buffer/malloc/MallocV.cpp
   toolkit/format/buffer/chunk/ChunkV.cpp
+  toolkit/format/buffer/ffs/BufferFFS.cpp
   toolkit/format/buffer/heap/BufferSTL.cpp
+  toolkit/format/buffer/malloc/MallocV.cpp
 
   toolkit/format/bp/BPBase.cpp toolkit/format/bp/BPBase.tcc
   toolkit/format/bp/BPSerializer.cpp toolkit/format/bp/BPSerializer.tcc
@@ -79,6 +93,11 @@ add_library(adios2_core
   toolkit/format/bp/bp4/BP4Serializer.cpp toolkit/format/bp/bp4/BP4Serializer.tcc
   toolkit/format/bp/bp4/BP4Deserializer.cpp toolkit/format/bp/bp4/BP4Deserializer.tcc
   toolkit/format/bp/bpBackCompatOperation/compress/BPBackCompatBlosc.cpp
+
+  toolkit/format/bp5/BP5Base.cpp
+  toolkit/format/bp5/BP5Deserializer.cpp
+  toolkit/format/bp5/BP5Deserializer.tcc
+  toolkit/format/bp5/BP5Serializer.cpp
 
   toolkit/profiling/iochrono/Timer.cpp
   toolkit/profiling/iochrono/IOChrono.cpp
@@ -104,9 +123,6 @@ add_library(adios2_core
   toolkit/aggregator/mpi/MPIAggregator.cpp
   toolkit/aggregator/mpi/MPIChain.cpp
   toolkit/aggregator/mpi/MPIShmChain.cpp
-
-  toolkit/burstbuffer/FileDrainer.cpp
-  toolkit/burstbuffer/FileDrainerSingleThread.cpp
 )
 set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
 set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core)
@@ -145,8 +161,14 @@ target_include_directories(adios2_core
     $<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source>
     $<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source>
 )
-target_link_libraries(adios2_core PRIVATE adios2sys_interface adios2::thirdparty::pugixml
-  adios2::thirdparty::yaml-cpp adios2::thirdparty::nlohmann_json adios2::thirdparty::perfstubs-interface)
+target_link_libraries(adios2_core PRIVATE
+  adios2sys_interface
+  adios2::thirdparty::pugixml
+  adios2::thirdparty::yaml-cpp
+  adios2::thirdparty::nlohmann_json
+  adios2::thirdparty::perfstubs-interface
+  adios2::thirdparty::ffs
+)
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEATURES}>")
 
@@ -162,27 +184,10 @@ endif()
 if (ADIOS2_HAVE_SST)
   # EVPath-enabled remote file transport
   target_sources(adios2_core PRIVATE toolkit/remote/remote_common.cpp toolkit/transport/file/FileRemote.cpp)
-  target_link_libraries(adios2_core PRIVATE EVPath::EVPath)
+  target_link_libraries(adios2_core PRIVATE adios2::thirdparty::EVPath)
   add_subdirectory(toolkit/remote)
 endif()
-   
-if (ADIOS2_HAVE_BP5)
-  target_sources(adios2_core PRIVATE
-    engine/bp5/BP5Engine.cpp
-    engine/bp5/BP5Reader.cpp engine/bp5/BP5Reader.tcc
-    engine/bp5/BP5Writer.cpp engine/bp5/BP5Writer.tcc engine/bp5/BP5Writer_TwoLevelShm.cpp engine/bp5/BP5Writer_TwoLevelShm_Async.cpp engine/bp5/BP5Writer_EveryoneWrites_Async.cpp
-  )
-endif()
 
-if (ADIOS2_HAVE_BP5 OR ADIOS2_HAVE_SST)
-  target_sources(adios2_core PRIVATE
-    toolkit/format/buffer/ffs/BufferFFS.cpp
-    toolkit/format/bp5/BP5Base.cpp
-    toolkit/format/bp5/BP5Serializer.cpp
-    toolkit/format/bp5/BP5Deserializer.cpp  toolkit/format/bp5/BP5Deserializer.tcc
-  )
-  target_link_libraries(adios2_core PRIVATE ffs::ffs)
-endif()
 
 if(ADIOS2_HAVE_DAOS)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FileDaos.cpp

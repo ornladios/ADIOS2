@@ -485,11 +485,6 @@ if(DAOS_FOUND)
   set(ADIOS2_HAVE_DAOS TRUE)
 endif()
 
-# BP5
-if(ADIOS2_USE_BP5)
-  set(ADIOS2_HAVE_BP5 TRUE)
-endif()
-
 #SysV IPC
 if(UNIX)
   include(CheckSymbolExists)

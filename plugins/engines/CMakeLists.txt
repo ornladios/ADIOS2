@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 if(ADIOS2_HAVE_Catalyst)
-  add_library(ParaViewADIOSInSituEngine
+  add_library(ParaViewADIOSInSituEngine MODULE
     ParaViewFidesEngine.cpp)
   target_link_libraries(ParaViewADIOSInSituEngine
     PUBLIC

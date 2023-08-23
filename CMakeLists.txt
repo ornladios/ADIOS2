@@ -154,7 +154,6 @@ adios_option(DataMan    "Enable support for DataMan" AUTO)
 adios_option(DataSpaces "Enable support for DATASPACES" AUTO)
 adios_option(MHS        "Enable support for MHS" AUTO)
 adios_option(SST        "Enable support for SST" AUTO)
-adios_option(BP5        "Enable support for BP5" AUTO)
 adios_option(ZeroMQ     "Enable support for ZeroMQ" AUTO)
 adios_option(HDF5       "Enable support for the HDF5 engine" AUTO)
 adios_option(HDF5_VOL   "Enable support for HDF5 ADIOS2 VOL" AUTO)
@@ -238,9 +237,10 @@ endif()
 
 
 set(ADIOS2_CONFIG_OPTS
-    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python Blosc2
-    BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX ZeroMQ 
-    Profiling Endian_Reverse AWSSDK GPU_Support CUDA Kokkos Kokkos_CUDA Kokkos_HIP Kokkos_SYCL
+    DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python Blosc2 BZip2
+    LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX
+    ZeroMQ Profiling Endian_Reverse AWSSDK GPU_Support CUDA Kokkos Kokkos_CUDA
+    Kokkos_HIP Kokkos_SYCL
 )
 
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})

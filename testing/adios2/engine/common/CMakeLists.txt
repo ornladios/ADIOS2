@@ -43,13 +43,11 @@ if(NOT MSVC)
     )
 endif()
 
-if (ADIOS2_HAVE_BP5)
-  gtest_add_tests_helper(Common MPI_ONLY "" Engine. .BP5
-    EXTRA_ARGS "BP5" "1")
-endif()
+gtest_add_tests_helper(Common MPI_ONLY "" Engine. .BP5
+  EXTRA_ARGS "BP5" "1")
 
-  gtest_add_tests_helper(Common MPI_ONLY "" Engine. .BP3
-    EXTRA_ARGS "BP3" "1")
+gtest_add_tests_helper(Common MPI_ONLY "" Engine. .BP3
+  EXTRA_ARGS "BP3" "1")
 
 #if(ADIOS2_HAVE_DataMan)
 #  gtest_add_tests_helper(Common MPI_ONLY "" Engine. .DataMan
