@@ -14,7 +14,9 @@
 #include <adios2-perfstubs-interface.h>
 
 #include <chrono>
+#include <cstdio>
 #include <errno.h>
+#include <iostream>
 #include <mutex>
 #include <thread>
 
@@ -1247,9 +1249,16 @@ void BP5Reader::FlushProfiler()
         // write profile json in /tmp
         profileFileName = "/tmp/" + bpBaseName + "_" + PIDstr.str() + "_profiling.json";
 
-        profilingJSONStream.Open(profileFileName, Mode::Write);
-        profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());
-        profilingJSONStream.Close();
+        try
+        {
+            (void)remove(profileFileName.c_str());
+            profilingJSONStream.Open(profileFileName, Mode::Write);
+            profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());
+            profilingJSONStream.Close();
+        }
+        catch (...)
+        { // do nothing
+        }
     }
 }
 
