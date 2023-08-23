@@ -77,14 +77,7 @@ void HDF5ReaderP::Init()
     m_H5File.ParseParameters(m_IO);
 
     /*
-    int ts = m_H5File.GetNumAdiosSteps();
-
-    if (ts == 0)
-    {
-        helper::Throw<std::runtime_error>( "Engine", "HDF5ReaderP", "Init",
-    "This h5 file is NOT written by ADIOS2");
-    }
-    */
+     */
     m_H5File.ReadAttrToIO(m_IO);
     if (!m_InStreamMode)
     {
@@ -103,37 +96,6 @@ void HDF5ReaderP::Init()
 template <class T>
 size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &variable, T *values)
 {
-    /*
-    size_t variableStart = variable.m_StepsStart;
-
-    if ((m_H5File.m_IsGeneratedByAdios) && (ts >= 0))
-      {
-              try
-              {
-                  m_H5File.SetAdiosStep(variableStart + ts);
-              }
-              catch (std::exception &e)
-              {
-                  printf("[Not fatal] %s\n", e.what());
-                  return 0;
-                  //break;
-              }
-          }
-
-          std::vector<hid_t> chain;
-          if (!m_H5File.OpenDataset(variable.m_Name, chain)) {
-            return -1;
-          }
-
-          hid_t dataSetId = chain.back();
-          interop::HDF5DatasetGuard g(chain);
-          //hid_t dataSetId =
-          //  H5Dopen(m_H5File.m_GroupId, variable.m_Name.c_str(), H5P_DEFAULT);
-          if (dataSetId < 0)
-          {
-              return 0;
-          }
-    */
     hid_t fileSpace = H5Dget_space(dataSetId);
     interop::HDF5TypeGuard g_fs(fileSpace, interop::E_H5_SPACE);
 
@@ -248,8 +210,8 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
     }
 
     T *values = data;
-    unsigned int ts = 0;
-    // T *values = data;
+
+    size_t ts = 0;
     size_t variableStart = variable.m_StepsStart;
     /*
       // looks like m_StepsStart is defaulted to be 0 now.
@@ -278,8 +240,7 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
         }
         hid_t dataSetId = chain.back();
         interop::HDF5DatasetGuard g(chain);
-        // hid_t dataSetId =
-        //  H5Dopen(m_H5File.m_GroupId, variable.m_Name.c_str(), H5P_DEFAULT);
+
         if (dataSetId < 0)
         {
             return;
@@ -291,8 +252,6 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
         {
             break;
         }
-        // H5Sclose(fileSpace);
-        // H5Dclose(dataSetId);
 
         ts++;
         values += slabsize;
@@ -304,7 +263,7 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
 
 StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    const unsigned int ts = m_H5File.GetNumAdiosSteps();
+    const size_t ts = m_H5File.GetNumAdiosSteps();
 
     if (m_StreamAt >= ts)
     {
