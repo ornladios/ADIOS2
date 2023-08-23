@@ -295,7 +295,6 @@ void HDF5Common::WriteAdiosSteps()
     else
         attr = H5Aopen(m_FileId, ATTRNAME_NUM_STEPS.c_str(), H5P_DEFAULT);
 
-    // unsigned int totalAdiosSteps = m_CurrentAdiosStep + 1;
     size_t totalAdiosSteps = m_CurrentAdiosStep + 1;
 
     if (m_GroupId < 0)
@@ -360,7 +359,6 @@ void HDF5Common::ReadAllVariables(core::IO &io)
     }
 
     GetNumAdiosSteps();
-    // unsigned int i = 0;
 
     for (size_t i = 0; i < m_NumAdiosSteps; i++)
     {
@@ -369,7 +367,7 @@ void HDF5Common::ReadAllVariables(core::IO &io)
 }
 
 void HDF5Common::FindVarsFromH5(core::IO &io, hid_t top_id, const char *gname, const char *heritage,
-                                unsigned int ts)
+                                size_t ts)
 {
     // int i = 0;
     // std::string stepStr;
@@ -431,44 +429,9 @@ void HDF5Common::FindVarsFromH5(core::IO &io, hid_t top_id, const char *gname, c
         }
     }
 }
-/*
-void HDF5Common::ReadNativeGroup(hid_t hid, IO& io)
-{
-H5G_info_t group_info;
-herr_t result = H5Gget_info(hid, &group_info);
-
-if (result < 0) {
-  // error
-  helper::Throw<std::ios_base::failure>( "Toolkit", "interop::hdf5::HDF5Common",
-"ReadNativeGroup", "Unable to get group info");
-}
-
-if (group_info.nlinks == 0) {
-  return;
-}
-
-char tmpstr[1024];
-
-hsize_t idx;
-for (idx=0; idx<group_info.nlinks; idx++) {
-  int currType = H5Gget_objtype_by_idx(hid, idx);
-  if (currType < 0) {
-  helper::Throw<std::ios_base::failure>( "Toolkit", "interop::hdf5::HDF5Common",
-"ReadNativeGroup", "unable to get type info of idx"+idx);
-  }
-
-
-  ssize_t curr= H5Gget_objname_by_idx(hid, idx, tmpstr, sizeof(tmpstr));
-  if (curr > 0) { // got a name
-    std::cout<<" ... printing a name: "<<tmpstr<<",
-type:[0=G/1=D/2=T/3=L/4=UDL]"<<currType<<std::endl;
-  }
-}
-}
-*/
 
 // read variables from the input timestep
-void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
+void HDF5Common::ReadVariables(size_t ts, core::IO &io)
 {
     std::string stepStr;
     hsize_t numObj;
@@ -476,7 +439,7 @@ void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
     StaticGetAdiosStepString(stepStr, ts);
     hid_t gid = H5Gopen2(m_FileId, stepStr.c_str(), H5P_DEFAULT);
     HDF5TypeGuard g(gid, E_H5_GROUP);
-    ///    if (gid > 0) {
+
     herr_t ret = H5Gget_num_objs(gid, &numObj);
     if (ret >= 0)
     {
@@ -512,12 +475,9 @@ void HDF5Common::ReadVariables(unsigned int ts, core::IO &io)
             }
         }
     }
-    /// H5Gclose(gid);
-    ///}
 }
 
-void HDF5Common::AddSingleString(core::IO &io, std::string const &name, hid_t datasetId,
-                                 unsigned int ts)
+void HDF5Common::AddSingleString(core::IO &io, std::string const &name, hid_t datasetId, size_t ts)
 {
     try
     {
@@ -542,8 +502,7 @@ void HDF5Common::AddSingleString(core::IO &io, std::string const &name, hid_t da
     }
 }
 
-void HDF5Common::AddVarString(core::IO &io, std::string const &name, hid_t datasetId,
-                              unsigned int ts)
+void HDF5Common::AddVarString(core::IO &io, std::string const &name, hid_t datasetId, size_t ts)
 {
     core::Variable<std::string> *v = io.InquireVariable<std::string>(name);
     if (v != NULL)
@@ -560,7 +519,6 @@ void HDF5Common::AddVarString(core::IO &io, std::string const &name, hid_t datas
     H5Sget_simple_extent_dims(dspace, dims.data(), NULL);
     H5Sclose(dspace);
 
-    // if ( (ndims > 1) || ( (ndims == 1) && (dims[0] > 1) ) ) {
     if ((ndims > 0))
     {
         bool isSingleElement = true;
@@ -625,7 +583,7 @@ void HDF5Common::AddVarString(core::IO &io, std::string const &name, hid_t datas
 }
 
 template <class T>
-void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId, unsigned int ts)
+void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId, size_t ts)
 {
     core::Variable<T> *v = io.InquireVariable<T>(name);
     if (NULL == v)
@@ -690,7 +648,7 @@ void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId, 
 }
 
 void HDF5Common::CreateVar(core::IO &io, hid_t datasetId, std::string const &nameSuggested,
-                           unsigned int ts)
+                           size_t ts)
 {
     std::string name;
     ReadADIOSName(datasetId, name);
@@ -823,7 +781,6 @@ void HDF5Common::SetAdiosStep(size_t step)
 
     GetNumAdiosSteps();
 
-    // unsigned int ustep = static_cast<unsigned int>(step);
     if (step >= m_NumAdiosSteps)
         helper::Throw<std::ios_base::failure>("Toolkit", "interop::hdf5::HDF5Common",
                                               "SetAdiosStep",
