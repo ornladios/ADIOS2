@@ -210,7 +210,7 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
     }
 
     T *values = data;
-    // unsigned int ts = 0;
+
     size_t ts = 0;
     size_t variableStart = variable.m_StepsStart;
     /*
