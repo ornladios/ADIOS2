@@ -58,7 +58,6 @@ public:
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
     bool VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const;
     bool VariableMinMax(const VariableBase &, const size_t Step, MinMaxStruct &MinMax);
-    adios2::profiling::JSONProfiler m_JSONProfiler;
 
 private:
     format::BP5Deserializer *m_BP5Deserializer = nullptr;
@@ -96,6 +95,7 @@ private:
     transportman::TransportMan m_ActiveFlagFileManager;
     Remote m_Remote;
     bool m_WriterIsActive = true;
+    adios2::profiling::JSONProfiler m_JSONProfiler;
 
     /** used for per-step reads, TODO: to be moved to BP5Deserializer */
     size_t m_CurrentStep = 0;
