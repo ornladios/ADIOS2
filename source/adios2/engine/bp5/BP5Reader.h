@@ -58,6 +58,7 @@ public:
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
     bool VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const;
     bool VariableMinMax(const VariableBase &, const size_t Step, MinMaxStruct &MinMax);
+    adios2::profiling::JSONProfiler m_JSONProfiler;
 
 private:
     format::BP5Deserializer *m_BP5Deserializer = nullptr;
@@ -199,6 +200,8 @@ private:
 #undef declare_type
 
     void DoClose(const int transportIndex = -1) final;
+
+    void FlushProfiler();
 
     void GetSyncCommon(VariableBase &variable, void *data);
 
