@@ -98,11 +98,12 @@ std::string JSONProfiler::GetRankProfilingJSON(
     for (const auto &timerPair : profiler.m_Timers)
     {
         const profiling::Timer &timer = timerPair.second;
-	if (timer.m_nCalls > 0) {
-	  rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
-	    "\": " + std::to_string(timer.m_ProcessTime) + ", ";
-	  timer.AddToJsonStr(rankLog);
-	}
+        if (timer.m_nCalls > 0)
+        {
+            rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
+                       "\": " + std::to_string(timer.m_ProcessTime) + ", ";
+            timer.AddToJsonStr(rankLog);
+        }
     }
 
     size_t DataBytes = m_Profiler.m_Bytes["dataread"];

@@ -32,7 +32,8 @@ namespace engine
 BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("BP5Reader", io, name, mode, std::move(comm)), m_MDFileManager(io, m_Comm),
   m_DataFileManager(io, m_Comm), m_MDIndexFileManager(io, m_Comm),
-  m_FileMetaMetadataManager(io, m_Comm), m_ActiveFlagFileManager(io, m_Comm), m_Remote(), m_JSONProfiler(m_Comm)
+  m_FileMetaMetadataManager(io, m_Comm), m_ActiveFlagFileManager(io, m_Comm), m_Remote(),
+  m_JSONProfiler(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     Init();
@@ -319,9 +320,10 @@ void BP5Reader::PerformLocalGets()
             reqidx = nextRequest;
             ++nextRequest;
         }
-	if (reqidx <= nRequest) {
-	  m_JSONProfiler.AddBytes("dataread", ReadRequests[reqidx].ReadLength);
-	}
+        if (reqidx <= nRequest)
+        {
+            m_JSONProfiler.AddBytes("dataread", ReadRequests[reqidx].ReadLength);
+        }
         return reqidx;
     };
 
@@ -411,7 +413,7 @@ void BP5Reader::PerformLocalGets()
             {
                 Req.DestinationAddr = buf.data();
             }
-	    m_JSONProfiler.AddBytes("dataread", Req.ReadLength);
+            m_JSONProfiler.AddBytes("dataread", Req.ReadLength);
             ReadData(m_DataFileManager, maxOpenFiles, Req.WriterRank, Req.Timestep, Req.StartOffset,
                      Req.ReadLength, Req.DestinationAddr);
             m_BP5Deserializer->FinalizeGet(Req, false);
@@ -796,19 +798,19 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
 
             if (actualFileSize >= expectedMinFileSize)
             {
-	       m_JSONProfiler.Start("MetaDataRead");
+                m_JSONProfiler.Start("MetaDataRead");
                 m_Metadata.Resize(fileFilteredSize, "allocating metadata buffer, "
                                                     "in call to BP5Reader Open");
                 size_t mempos = 0;
                 for (auto p : m_FilteredMetadataInfo)
                 {
-		  m_JSONProfiler.AddBytes("metadataread", p.second);
+                    m_JSONProfiler.AddBytes("metadataread", p.second);
                     m_MDFileManager.ReadFile(m_Metadata.m_Buffer.data() + mempos, p.second,
                                              p.first);
                     mempos += p.second;
                 }
                 m_MDFileAlreadyReadSize = expectedMinFileSize;
-	       m_JSONProfiler.Stop("MetaDataRead");
+                m_JSONProfiler.Stop("MetaDataRead");
             }
             else
             {
@@ -834,15 +836,15 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
             if (metametadataFileSize > m_MetaMetaDataFileAlreadyReadSize)
             {
                 const size_t newMMDSize = metametadataFileSize - m_MetaMetaDataFileAlreadyReadSize;
-	        m_JSONProfiler.Start("MetaMetaDataRead");
-		m_JSONProfiler.AddBytes("metametadataread", newMMDSize);
+                m_JSONProfiler.Start("MetaMetaDataRead");
+                m_JSONProfiler.AddBytes("metametadataread", newMMDSize);
                 m_MetaMetadata.Resize(metametadataFileSize, "(re)allocating meta-meta-data buffer, "
                                                             "in call to BP5Reader Open");
                 m_FileMetaMetadataManager.ReadFile(m_MetaMetadata.m_Buffer.data() +
                                                        m_MetaMetaDataFileAlreadyReadSize,
                                                    newMMDSize, m_MetaMetaDataFileAlreadyReadSize);
                 m_MetaMetaDataFileAlreadyReadSize += newMMDSize;
-	        m_JSONProfiler.Stop("MetaMetaDataRead");
+                m_JSONProfiler.Stop("MetaMetaDataRead");
             }
         }
 
@@ -1219,36 +1221,35 @@ void BP5Reader::DoClose(const int transportIndex)
 }
 
 #if defined(_WIN32)
-#  include <windows.h>
-#  define getpid() GetCurrentProcessId();
-#elif defined(__linux) || defined(__APPLE__) || defined(__OpenBSD__) ||       \
-  defined(__FreeBSD__) || defined(__NetBSD__) || defined(__DragonFly__) ||    \
-  defined(__CYGWIN__)
+#include <windows.h>
+#define getpid() GetCurrentProcessId();
+#elif defined(__linux) || defined(__APPLE__) || defined(__OpenBSD__) || defined(__FreeBSD__) ||    \
+    defined(__NetBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
 #else
-#  define getpid() (long long) -1;
+#define getpid() (long long)-1;
 #endif
 
 void BP5Reader::FlushProfiler()
 {
 
-  auto LineJSON = m_JSONProfiler.GetRankProfilingJSON({}, {});
+    auto LineJSON = m_JSONProfiler.GetRankProfilingJSON({}, {});
     const std::vector<char> profilingJSON(m_JSONProfiler.AggregateProfilingJSON(LineJSON));
 
     if (m_RankMPI == 0)
     {
         std::string profileFileName;
-	transport::FileFStream profilingJSONStream(m_Comm);
-	std::string bpBaseName = m_Name;
+        transport::FileFStream profilingJSONStream(m_Comm);
+        std::string bpBaseName = m_Name;
 
-	auto PID = getpid();
-	std::stringstream PIDstr;
-	PIDstr << std::hex << PID;
-	// write profile json in /tmp
-	profileFileName = "/tmp/" + bpBaseName + "_" + PIDstr.str() + "_profiling.json";
+        auto PID = getpid();
+        std::stringstream PIDstr;
+        PIDstr << std::hex << PID;
+        // write profile json in /tmp
+        profileFileName = "/tmp/" + bpBaseName + "_" + PIDstr.str() + "_profiling.json";
 
-	profilingJSONStream.Open(profileFileName, Mode::Write);
-	profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());
-	profilingJSONStream.Close();
+        profilingJSONStream.Open(profileFileName, Mode::Write);
+        profilingJSONStream.Write(profilingJSON.data(), profilingJSON.size());
+        profilingJSONStream.Close();
     }
 }
 

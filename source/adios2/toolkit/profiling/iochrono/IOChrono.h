@@ -68,7 +68,10 @@ public:
 
     void Start(const std::string process) { m_Profiler.Start(process); };
     void Stop(const std::string process) { m_Profiler.Stop(process); };
-    void AddBytes(const std::string process, size_t bytes) { m_Profiler.m_Bytes[process] += bytes ;};
+    void AddBytes(const std::string process, size_t bytes)
+    {
+        m_Profiler.m_Bytes[process] += bytes;
+    };
 
     std::string GetRankProfilingJSON(
         const std::vector<std::string> &transportsTypes,
