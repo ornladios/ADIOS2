@@ -1227,6 +1227,8 @@ void BP5Reader::DoClose(const int transportIndex)
 #define getpid() GetCurrentProcessId();
 #elif defined(__linux) || defined(__APPLE__) || defined(__OpenBSD__) || defined(__FreeBSD__) ||    \
     defined(__NetBSD__) || defined(__DragonFly__) || defined(__CYGWIN__)
+#include <sys/types.h>
+#include <unistd.h>
 #else
 #define getpid() (long long)-1;
 #endif
