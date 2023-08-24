@@ -30,6 +30,7 @@
 
 #include <mpi.h>
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,7 +55,7 @@ typedef struct _MpiWriterContactInfo
 {
     char ContactString[MPI_DP_CONTACT_STRING_LEN];
     void *StreamWPR;
-    int PID;
+    long taskID;
 } *MpiWriterContactInfo;
 
 /* Base Stream class, used implicitly */
@@ -62,7 +63,7 @@ typedef struct _MpiStream
 {
     void *CP_Stream;
     int Rank;
-    int PID;
+    long taskID;
 } MpiStream;
 
 /* Link Stream class, used implicitly */
@@ -218,7 +219,7 @@ static FMField MpiWriterContactList[] = {
     {"ContactString", "char[" MACRO_TO_STR(MPI_DP_CONTACT_STRING_LEN) "]", sizeof(char),
      FMOffset(MpiWriterContactInfo, ContactString)},
     {"writer_ID", "integer", sizeof(void *), FMOffset(MpiWriterContactInfo, StreamWPR)},
-    {"PID", "integer", sizeof(int), FMOffset(MpiWriterContactInfo, PID)},
+    {"taskID", "integer", sizeof(long), FMOffset(MpiWriterContactInfo, taskID)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec MpiWriterContactStructs[] = {
@@ -226,6 +227,16 @@ static FMStructDescRec MpiWriterContactStructs[] = {
     {NULL, NULL, 0, NULL}};
 
 /*****Internal functions*****************************************************/
+
+/**
+ * Return an unique process ID (Task ID) for the current process. We do this by
+ * combining the PID of the process and the hostid (as return the same output
+ * as `hostid` or the content of /etc/machine-id in modern UNIX-like systems).
+ */
+static uint64_t GetUniqueTaskId()
+{
+    return ((uint32_t)getpid() * (1ll << 32ll)) | (uint32_t)gethostid();
+}
 
 static void MpiReadReplyHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
                                 attr_list attrs);
@@ -242,9 +253,7 @@ static void MpiReadRequestHandler(CManager cm, CMConnection conn, void *msg_v, v
  * the reader side.  It should do whatever is necessary to initialize a new
  * reader-side data plane.  A pointer to per-reader-rank contact information
  * should be placed in *ReaderContactInfoPtr.  The structure of that
- * information should be described by DPInterface.ReaderContactFormats.  (This
- * is an FFS format description.  See
- * https://www.cc.gatech.edu/systems/projects/FFS/.)
+ * information should be described by DPInterface.ReaderContactFormats.
  */
 static DP_RS_Stream MpiInitReader(CP_Services Svcs, void *CP_Stream, void **ReaderContactInfoPtr,
                                   struct _SstParams *Params, attr_list WriterContact,
@@ -256,7 +265,7 @@ static DP_RS_Stream MpiInitReader(CP_Services Svcs, void *CP_Stream, void **Read
     CMFormat F;
 
     Stream->Stream.CP_Stream = CP_Stream;
-    Stream->Stream.PID = getpid();
+    Stream->Stream.taskID = GetUniqueTaskId();
     Stream->Link.Stats = Stats;
 
     SMPI_Comm_rank(comm, &Stream->Stream.Rank);
@@ -305,7 +314,7 @@ static DP_WS_Stream MpiInitWriter(CP_Services Svcs, void *CP_Stream, struct _Sst
     SMPI_Comm_rank(comm, &Stream->Stream.Rank);
 
     Stream->Stream.CP_Stream = CP_Stream;
-    Stream->Stream.PID = getpid();
+    Stream->Stream.taskID = GetUniqueTaskId();
     STAILQ_INIT(&Stream->TimeSteps);
     TAILQ_INIT(&Stream->Readers);
 
@@ -329,8 +338,7 @@ static DP_WS_Stream MpiInitWriter(CP_Services Svcs, void *CP_Stream, struct _Sst
  * on the connecting peer in InitReader) and should create its own
  * per-writer-rank contact information and place it in *writerContactInfoPtr.
  * The structure of that information should be described by
- * DPInterface.WriterContactFormats.   (This is an FFS format description.  See
- * https://www.cc.gatech.edu/systems/projects/FFS/.)
+ * DPInterface.WriterContactFormats.
  */
 static DP_WSR_Stream MpiInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_Stream_v,
                                             int readerCohortSize, CP_PeerCohort PeerCohort,
@@ -372,7 +380,7 @@ static DP_WSR_Stream MpiInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_St
              "Writer Rank %d, test contact", Rank);
 
     StreamWPR->MyContactInfo.StreamWPR = StreamWPR;
-    StreamWPR->MyContactInfo.PID = StreamWR->Stream.PID;
+    StreamWPR->MyContactInfo.taskID = StreamWR->Stream.taskID;
     *WriterContactInfoPtr = &StreamWPR->MyContactInfo;
 
     return StreamWPR;
@@ -474,7 +482,7 @@ static void *MpiReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Ra
     ret->cm = cm;
     ret->CPStream = Stream->Stream.CP_Stream;
     ret->DestinationRank = Rank;
-    ret->CommType = (TargetContact->PID == Stream->Stream.PID) ? MPI_DP_LOCAL : MPI_DP_REMOTE;
+    ret->CommType = (TargetContact->taskID == Stream->Stream.taskID) ? MPI_DP_LOCAL : MPI_DP_REMOTE;
 
     if (ret->CommType == MPI_DP_REMOTE)
     {
