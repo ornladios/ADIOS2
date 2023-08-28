@@ -1393,18 +1393,33 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable,
     if (VarRec->OrigShapeID == ShapeID::LocalValue)
     {
         // Shows up as global array with one element per writer rank
-        for (size_t WriterRank = variable.m_Start[0];
-             WriterRank < variable.m_Count[0] + variable.m_Start[0];
-             WriterRank++)
-        {
-            (void)GetSingleValueFromMetadata(variable, VarRec, DestData, Step,
-                                             WriterRank);
-            DestData = (char *)DestData +
-                       variable.m_ElementSize; // use variable.m_ElementSize
-                                               // because it's the size in local
-                                               // memory, VarRec->ElementSize is
-                                               // the size in metadata
+        if (variable.m_SelectionType == adios2::SelectionType::BoundingBox) {
+	    for (size_t WriterRank = variable.m_Start[0];
+		 WriterRank < variable.m_Count[0] + variable.m_Start[0];
+		 WriterRank++)
+	    {
+	      (void)GetSingleValueFromMetadata(variable, VarRec, DestData, Step,
+					       WriterRank);
+	      DestData = (char *)DestData +
+		variable.m_ElementSize; // use variable.m_ElementSize
+	      // because it's the size in local
+	      // memory, VarRec->ElementSize is
+	      // the size in metadata
+	    }
+	      
         }
+	else if (variable.m_SelectionType == adios2::SelectionType::WriteBlock)
+	{
+	    size_t WriterRank = variable.m_BlockID;
+	    (void)GetSingleValueFromMetadata(variable, VarRec, DestData, Step,
+					     WriterRank);
+	}
+	else
+	{
+	    helper::Throw<std::invalid_argument>(
+						 "Toolkit", "format::bp::BP5Deserializer", "QueueGetSingle",
+						 "Unexpected selection type");
+	}
         return false;
     }
     MemorySpace MemSpace = variable.GetMemorySpace(DestData);
