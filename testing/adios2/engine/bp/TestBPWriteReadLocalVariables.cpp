@@ -210,14 +210,27 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
                 EXPECT_EQ(rankLocalValueData[r], static_cast<int32_t>(r));
             }
 
+            if (mpiSize > 1)
+            {
+                for (size_t r = 0; r < rankLocalValueData.size(); ++r)
+                {
+                    int32_t val;
+                    var_RanksLocalValue.SetBlockSelection(r);
+                    bpReader.Get(var_RanksLocalValue, &val);
+                    EXPECT_EQ(val, static_cast<int32_t>(r));
+                }
+            }
+
+            bpReader.Get(var_RanksLocalValue, rankLocalValueData);
+
             EXPECT_TRUE(var_RanksLocalValueString);
             EXPECT_EQ(var_RanksLocalValueString.ShapeID(), adios2::ShapeID::GlobalArray);
-            EXPECT_EQ(var_RanksLocalValue.Shape().size(), 1);
-            EXPECT_EQ(var_RanksLocalValue.Shape()[0], mpiSize);
+            EXPECT_EQ(var_RanksLocalValueString.Shape().size(), 1);
+            EXPECT_EQ(var_RanksLocalValueString.Shape()[0], mpiSize);
             std::vector<std::string> rankLocalValueDataString;
             bpReader.Get(var_RanksLocalValueString, rankLocalValueDataString, adios2::Mode::Sync);
-            EXPECT_EQ(rankLocalValueData.size(), mpiSize);
-            for (size_t r = 0; r < rankLocalValueData.size(); ++r)
+            EXPECT_EQ(rankLocalValueDataString.size(), mpiSize);
+            for (size_t r = 0; r < rankLocalValueDataString.size(); ++r)
             {
                 EXPECT_EQ(rankLocalValueDataString[r], std::to_string(r));
             }
