@@ -173,12 +173,8 @@ std::string ToString(SelectionType value)
     {
     case SelectionType::BoundingBox:
         return "SelectionType::BoundingBox";
-    case SelectionType::Points:
-        return "SelectionType::Points";
     case SelectionType::WriteBlock:
         return "SelectionType::WriteBlock";
-    case SelectionType::Auto:
-        return "SelectionType::Auto";
     default:
         return "ToString: Unknown SelectionType";
     }
