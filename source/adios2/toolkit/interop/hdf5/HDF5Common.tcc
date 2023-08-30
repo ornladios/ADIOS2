@@ -46,8 +46,8 @@ void HDF5Common::DefineDataset(core::Variable<T> &variable)
     size_t max_int = static_cast<size_t>(std::numeric_limits<int>::max());
     if (dimSize > max_int)
     {
-        helper::Throw<std::overflow_error>("Toolkit", "interop::hdf5::HDF5Common", 
-                                           "DefineDataset", "dimSize is too large "
+        helper::Throw<std::overflow_error>("Toolkit", "interop::hdf5::HDF5Common", "DefineDataset",
+                                           "dimSize is too large "
                                            "to be represented by an int");
     }
 
@@ -184,8 +184,8 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
     size_t max_int = static_cast<size_t>(std::numeric_limits<int>::max());
     if (dimSize > max_int)
     {
-        helper::Throw<std::overflow_error>("Toolkit", "interop::hdf5::HDF5Common", 
-                                           "Write", "dimSize is too large "
+        helper::Throw<std::overflow_error>("Toolkit", "interop::hdf5::HDF5Common", "Write",
+                                           "dimSize is too large "
                                            "to be represented by an int");
     }
 

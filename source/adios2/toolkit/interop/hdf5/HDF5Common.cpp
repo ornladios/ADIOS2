@@ -139,8 +139,9 @@ void HDF5Common::ParseParameters(core::IO &io)
             size_t max_int = static_cast<size_t>(std::numeric_limits<int>::max());
             if (m_ChunkDim > max_int)
             {
-                helper::Throw<std::overflow_error>("Toolkit", "interop::hdf5::HDF5Common", 
-                                                   "ParseParameters", "chunkDim.size() is "
+                helper::Throw<std::overflow_error>("Toolkit", "interop::hdf5::HDF5Common",
+                                                   "ParseParameters",
+                                                   "chunkDim.size() is "
                                                    "too large to be represented by an int");
             }
 

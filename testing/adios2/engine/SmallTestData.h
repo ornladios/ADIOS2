@@ -76,9 +76,12 @@ SmallTestData generateNewSmallTestData(SmallTestData in, size_t step, size_t ran
     std::for_each(in.I32.begin(), in.I32.end(), [&](int32_t &v) { v += static_cast<int32_t>(j); });
     std::for_each(in.I64.begin(), in.I64.end(), [&](int64_t &v) { v += static_cast<int64_t>(j); });
     std::for_each(in.U8.begin(), in.U8.end(), [&](uint8_t &v) { v += static_cast<uint8_t>(j); });
-    std::for_each(in.U16.begin(), in.U16.end(), [&](uint16_t &v) { v += static_cast<uint16_t>(j); });
-    std::for_each(in.U32.begin(), in.U32.end(), [&](uint32_t &v) { v += static_cast<uint32_t>(j); });
-    std::for_each(in.U64.begin(), in.U64.end(), [&](uint64_t &v) { v += static_cast<uint64_t>(j); });
+    std::for_each(in.U16.begin(), in.U16.end(),
+                  [&](uint16_t &v) { v += static_cast<uint16_t>(j); });
+    std::for_each(in.U32.begin(), in.U32.end(),
+                  [&](uint32_t &v) { v += static_cast<uint32_t>(j); });
+    std::for_each(in.U64.begin(), in.U64.end(),
+                  [&](uint64_t &v) { v += static_cast<uint64_t>(j); });
     std::for_each(in.R32.begin(), in.R32.end(), [&](float &v) { v += static_cast<float>(j); });
     std::for_each(in.R64.begin(), in.R64.end(), [&](double &v) { v += static_cast<double>(j); });
     std::for_each(in.R128.begin(), in.R128.end(), [&](long double &v) { v += j; });
