@@ -135,8 +135,17 @@ void HDF5Common::ParseParameters(core::IO &io)
 
             m_ChunkPID = H5Pcreate(H5P_DATASET_CREATE);
             m_ChunkDim = chunkDim.size();
+
+            size_t max_int = static_cast<size_t>(std::numeric_limits<int>::max());
+            if (m_ChunkDim > max_int)
+            {
+                helper::Throw<std::overflow_error>("Toolkit", "interop::hdf5::HDF5Common", 
+                                                   "ParseParameters", "chunkDim.size() is "
+                                                   "too large to be represented by an int");
+            }
+
             if (m_ChunkDim > 0)
-                H5Pset_chunk(m_ChunkPID, chunkDim.size(), chunkDim.data());
+                H5Pset_chunk(m_ChunkPID, static_cast<int>(m_ChunkDim), chunkDim.data());
         }
     }
 
@@ -383,8 +392,8 @@ void HDF5Common::FindVarsFromH5(core::IO &io, hid_t top_id, const char *gname, c
         char name[100];
         for (k = 0; k < numObj; k++)
         {
-            ret = H5Gget_objname_by_idx(gid, (hsize_t)k, name, sizeof(name));
-            if (ret >= 0)
+            ssize_t result = H5Gget_objname_by_idx(gid, (hsize_t)k, name, sizeof(name));
+            if (result >= 0)
             {
                 int currType = H5Gget_objtype_by_idx(gid, k);
                 if ((currType == H5G_DATASET) || (currType == H5G_TYPE))
@@ -447,8 +456,8 @@ void HDF5Common::ReadVariables(size_t ts, core::IO &io)
         char name[50];
         for (k = 0; k < numObj; k++)
         {
-            ret = H5Gget_objname_by_idx(gid, (hsize_t)k, name, sizeof(name));
-            if (ret >= 0)
+            ssize_t result = H5Gget_objname_by_idx(gid, (hsize_t)k, name, sizeof(name));
+            if (result >= 0)
             {
                 int currType = H5Gget_objtype_by_idx(gid, k);
                 if (currType == H5G_GROUP)
@@ -497,8 +506,8 @@ void HDF5Common::AddSingleString(core::IO &io, std::string const &name, hid_t da
     {
         // invalid variable, do not define
         printf("WARNING: IO is not accepting definition of variable: %s. "
-               "Skipping. \n",
-               name.c_str());
+               "\nException: %s. \nSkipping. \n",
+               name.c_str(), e.what());
     }
 }
 
@@ -568,9 +577,9 @@ void HDF5Common::AddVarString(core::IO &io, std::string const &name, hid_t datas
                     {
                         // invalid variable, do not define
                         printf("WARNING: IO is not accepting definition of "
-                               "variable: %s. "
+                               "variable: %s. \nException: %s. \n"
                                "Skipping. \n",
-                               name.c_str());
+                               name.c_str(), e.what());
                     }
                 }
             return;
@@ -632,8 +641,8 @@ void HDF5Common::AddVar(core::IO &io, std::string const &name, hid_t datasetId, 
         {
             // invalid variable, do not define
             printf("WARNING: IO is not accepting definition of variable: %s. "
-                   "Skipping. \n",
-                   name.c_str());
+                   "\nException: %s. \nSkipping. \n",
+                   name.c_str(), e.what());
         }
     }
     else

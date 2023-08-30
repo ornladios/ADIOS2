@@ -261,7 +261,7 @@ private:
     hid_t m_TimeStepH5T = H5T_NATIVE_ULLONG;
     ;
     hid_t m_ChunkPID;
-    int m_ChunkDim;
+    size_t m_ChunkDim;
     std::set<std::string> m_ChunkVarNames;
     bool m_OrderByC = true; // C or fortran
 

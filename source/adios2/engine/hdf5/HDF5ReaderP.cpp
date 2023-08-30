@@ -13,6 +13,8 @@
 
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 #include "adios2/helper/adiosFunctions.h" //IsHDF5
+#include <limits>
+#include <stdexcept>
 #include <vector>
 
 namespace adios2
@@ -145,10 +147,18 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &vari
         if (ret < 0)
             return 0;
 
-        hid_t memDataSpace = H5Screate_simple(ndims, count.data(), NULL);
+        size_t max_int = static_cast<size_t>(std::numeric_limits<int>::max());
+        if (ndims > max_int)
+        {
+            helper::Throw<std::overflow_error>("Engine", "HDF5ReaderP", "ReadDataset",
+                                               "Number of dimensions is too large to be "
+                                               "represented by an int");
+        }
+
+        hid_t memDataSpace = H5Screate_simple(static_cast<int>(ndims), count.data(), NULL);
         interop::HDF5TypeGuard g_mds(memDataSpace, interop::E_H5_SPACE);
 
-        int elementsRead = 1;
+        size_t elementsRead = 1;
         for (size_t i = 0u; i < ndims; i++)
         {
             elementsRead *= count[i];
