@@ -49,7 +49,7 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s, MPI_Comm com
     double total_time = MPI_Wtime() - time_start;
     uint64_t adios_totalsize = 2 * sizeof(int) + 2 * s.ndx * s.ndy * sizeof(double);
     uint64_t sizeMB = adios_totalsize * s.nproc / 1024 / 1024 / 1024; // size in MB
-    uint64_t mbs = sizeMB / total_time;
+    double mbs = sizeMB / total_time;
     if (s.rank == 0)
         std::cout << "Step " << step << ": " << m_outputfilename << " " << sizeMB << " "
                   << total_time << "" << mbs << std::endl;

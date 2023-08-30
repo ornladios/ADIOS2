@@ -24,7 +24,7 @@ void ReadData(adios2::IO h5IO, adios2::Engine h5Reader, const std::string &name)
     {
         size_t nDims = var.Shape().size();
         size_t totalSize = 1;
-        for (int i = 0; i < nDims; i++)
+        for (size_t i = 0; i < nDims; i++)
         {
             totalSize *= var.Shape()[i];
         }
