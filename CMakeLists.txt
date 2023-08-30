@@ -287,6 +287,11 @@ if(BUILD_SHARED_LIBS AND ADIOS2_RUN_INSTALL_TEST)
   endif()
 endif()
 
+if(MSVC AND BUILD_SHARED_LIBS AND ADIOS2_HAVE_HDF5)
+  # See note about building with visual studio and shared libs, here:
+  #     https://github.com/HDFGroup/hdf5/blob/develop/release_docs/USING_HDF5_VS.txt
+  add_definitions(-DH5_BUILT_AS_DYNAMIC_LIB=1)
+endif()
 
 #------------------------------------------------------------------------------#
 # Third party libraries
