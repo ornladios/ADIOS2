@@ -3,6 +3,9 @@ set(ENV{CXX} cl)
 set(ENV{CFLAGS} /WX)
 set(ENV{CXXFLAGS} /WX)
 
+# Tests need to find hdf5.dll
+set(ENV{PATH} "$ENV{PATH};C:/hdf5/HDF5-1.14.2.1-win64/bin")
+
 set(dashboard_cache "
 ADIOS2_USE_Fortran:BOOL=OFF
 ADIOS2_USE_MPI:BOOL=ON
