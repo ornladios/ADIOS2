@@ -87,7 +87,7 @@ void CampaignManager::Record(const std::string &name, const size_t step, const d
         size_t delta_step = step - last_step;
         double last_time = r->second.times.back();
         double delta_time = time - last_time;
-        int nsteps = r->second.steps.size();
+        auto nsteps = r->second.steps.size();
         if (nsteps == 1)
         {
             r->second.delta_step = delta_step;

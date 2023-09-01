@@ -13,13 +13,15 @@
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
 #include <string.h> // memcpy
-#include <unistd.h> // gethostname
 
 #include <netdb.h>      //getFQDN
 #include <sys/socket.h> //getFQDN
 #include <sys/types.h>  //getFQDN
 
 #ifndef _WIN32
+
+#include <unistd.h> // gethostname
+
 #if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_TABLE)
 
 #include <iostream>
