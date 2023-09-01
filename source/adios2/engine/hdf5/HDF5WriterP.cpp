@@ -46,7 +46,7 @@ void HDF5WriterP::EndStep()
     m_H5File.CleanUpNullVars(m_IO);
     m_H5File.Advance();
     m_H5File.WriteAttrFromIO(m_IO);
-    if (!comm.Rank())
+    if (!m_Comm.Rank())
     {
         m_IO.m_ADIOS.RecordOutputStep(m_Name, UnknownStep, UnknownTime);
     }
