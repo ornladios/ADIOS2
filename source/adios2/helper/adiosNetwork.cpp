@@ -14,13 +14,12 @@
 
 #include <string.h> // memcpy
 
+#ifndef _WIN32
+
 #include <netdb.h>      //getFQDN
 #include <sys/socket.h> //getFQDN
 #include <sys/types.h>  //getFQDN
-
-#ifndef _WIN32
-
-#include <unistd.h> // gethostname
+#include <unistd.h>     // gethostname
 
 #if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_TABLE)
 
