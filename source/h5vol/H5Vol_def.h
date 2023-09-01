@@ -19,6 +19,9 @@
 #define H5VL_ADIOS2_NAME "ADIOS2_VOL"
 #define H5VL_ADIOS2_VALUE 511 /* VOL connector ID */
 #define H5VL_ADIOS2_VERSION 0
+#define H5VL_ADIOS2_CAP_FLAGS                                                                      \
+    (H5VL_CAP_FLAG_FILE_BASIC | H5VL_CAP_FLAG_GROUP_BASIC | H5VL_CAP_FLAG_DATASET_BASIC |          \
+     H5VL_CAP_FLAG_ATTR_BASIC | H5VL_CAP_FLAG_OBJECT_BASIC)
 
 typedef struct H5VL_ADIOS2_t
 {

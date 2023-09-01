@@ -104,9 +104,7 @@ TEST_F(ADIOS2_CXX11_API, ToString)
     EXPECT_EQ(ToString(adios2::TimeUnit::Hours), "TimeUnit::Hours");
 
     EXPECT_EQ(ToString(adios2::SelectionType::BoundingBox), "SelectionType::BoundingBox");
-    EXPECT_EQ(ToString(adios2::SelectionType::Points), "SelectionType::Points");
     EXPECT_EQ(ToString(adios2::SelectionType::WriteBlock), "SelectionType::WriteBlock");
-    EXPECT_EQ(ToString(adios2::SelectionType::Auto), "SelectionType::Auto");
 }
 
 TEST_F(ADIOS2_CXX11_API, APIToString)
