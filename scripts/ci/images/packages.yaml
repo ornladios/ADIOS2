@@ -2,6 +2,8 @@ packages:
   all:
     target: [haswell]
   adios2:
-    require: +blosc+bzip2+zfp+sz+png+sst+dataman+ssc+hdf5+python+fortran
-  cmake:
-    version: [3.24]
+    require: '+blosc+bzip2+zfp+sz+png+sst+dataman+ssc+hdf5+python+fortran'
+  mpich:
+    require: 'device=ch3 netmod=tcp'
+  openmpi:
+    require: '@4.1'

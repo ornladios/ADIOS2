@@ -105,33 +105,32 @@ cmake_dependent_option(ADIOS2_USE_EXTERNAL_ENET
   "NOT ADIOS2_USE_EXTERNAL_EVPATH" OFF
 )
 
-if(ADIOS2_HAVE_SST OR ADIOS2_HAVE_BP5)
-  if(NOT ADIOS2_USE_EXTERNAL_EVPATH)
-    if(NOT ADIOS2_USE_EXTERNAL_ATL)
-      add_subdirectory(atl)
-    endif()
-    find_package(atl REQUIRED)
-
-    if(NOT ADIOS2_USE_EXTERNAL_FFS)
-      if(NOT ADIOS2_USE_EXTERNAL_DILL)
-        add_subdirectory(dill)
-      endif()
-      find_package(dill REQUIRED)
-
-      add_subdirectory(ffs)
-    endif()
-    find_package(ffs REQUIRED)
-
-    if(NOT ADIOS2_USE_EXTERNAL_ENET)
-      add_subdirectory(enet)
-    endif()
-    find_package(enet REQUIRED)
-
-    add_subdirectory(EVPath)
+if(NOT ADIOS2_USE_EXTERNAL_FFS)
+  if(NOT ADIOS2_USE_EXTERNAL_ATL)
+    add_subdirectory(atl)
   endif()
-  find_package(EVPath REQUIRED)
-  adios2_add_thirdparty_target(EVPath EVPath::EVPath)
+  find_package(atl REQUIRED)
+
+  if(NOT ADIOS2_USE_EXTERNAL_DILL)
+    add_subdirectory(dill)
+  endif()
+  find_package(dill REQUIRED)
+
+  add_subdirectory(ffs)
 endif()
+find_package(ffs REQUIRED)
+adios2_add_thirdparty_target(ffs ffs::ffs)
+
+if(NOT ADIOS2_USE_EXTERNAL_EVPATH)
+  if(NOT ADIOS2_USE_EXTERNAL_ENET)
+    add_subdirectory(enet)
+  endif()
+  find_package(enet REQUIRED)
+
+  add_subdirectory(EVPath)
+endif()
+find_package(EVPath REQUIRED)
+adios2_add_thirdparty_target(EVPath EVPath::EVPath)
 
 # Keep this at the end so we see the verbose messages at least once
 set(ADIOS2_THIRDPARTY_VERBOSE_DISABLE TRUE CACHE INTERNAL "" FORCE)

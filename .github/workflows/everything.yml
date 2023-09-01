@@ -111,7 +111,7 @@ jobs:
       image: ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-${{ matrix.compiler }}
       options: --shm-size=1g
       env:
-        GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.gpu_backend }}${{ matrix.compiler }}-${{ matrix.parallel }}
+        GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ matrix.parallel }}
         GH_YML_BASE_OS: Linux
         GH_YML_MATRIX_OS: ${{ matrix.os }}
         GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
@@ -126,6 +126,7 @@ jobs:
       matrix:
         os: [ubuntu20.04]
         compiler: [gcc8, gcc9, gcc10, gcc11, clang6, clang10]
+        shared: [shared]
         parallel: [ompi]
         include:
           - os: ubuntu20.04
@@ -137,7 +138,20 @@ jobs:
           - os: ubuntu20.04
             compiler: clang6
             parallel: serial
-
+          - os: ubuntu20.04
+            compiler: gcc8
+            shared: static
+            parallel: ompi
+            constrains: build_only
+          - os: ubuntu20.04
+            compiler: clang6
+            shared: static
+            parallel: ompi
+            constrains: build_only
+          - os: ubuntu20.04
+            compiler: gcc8
+            shared: static
+            parallel: serial
     steps:
       - uses: actions/checkout@v3
         with:
@@ -174,6 +188,7 @@ jobs:
           path: .ccache
           key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
       - name: Test
+        if: ${{ matrix.constrains != 'build_only' }}
         run: gha/scripts/ci/gh-actions/run.sh test
 
   linux_el8:
@@ -185,7 +200,7 @@ jobs:
       image: ghcr.io/ornladios/adios2:ci-el8-${{ matrix.compiler }}
       options: --shm-size=1g
       env:
-        GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.gpu_backend }}${{ matrix.compiler }}-${{ matrix.parallel }}
+        GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
         GH_YML_BASE_OS: Linux
         GH_YML_MATRIX_OS: ${{ matrix.os }}
         GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
@@ -480,6 +495,60 @@ jobs:
         run: /opt/adios2/source/testing/contract/${{ matrix.code }}/install.sh
       - name: Test
         run: /opt/adios2/source/testing/contract/${{ matrix.code }}/test.sh
+
+#######################################
+# Code analysis builds
+#######################################
+
+  analyze:
+    needs: [format, git_checks]
+    name: CodeQL
+    runs-on: ubuntu-latest
+    container:
+      image: 'ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-gcc8'
+      env:
+        GH_YML_JOBNAME: ubuntu20.04-gcc8-serial-codeql
+        GH_YML_BASE_OS: Linux
+        GH_YML_MATRIX_OS: ubuntu20.04
+        GH_YML_MATRIX_COMPILER: gcc8
+        GH_YML_MATRIX_PARALLEL: serial
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'cpp' ]
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        path: gha
+    - uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
+        path: source
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v2
+      with:
+        languages: ${{ matrix.language }}
+        config: |
+          paths-ignore:
+            - source/thirdparty/
+    - name: Setup
+      run: gha/scripts/ci/gh-actions/linux-setup.sh
+    - name: Update
+      run: gha/scripts/ci/gh-actions/run.sh update
+    - name: Configure
+      run: gha/scripts/ci/gh-actions/run.sh configure
+    - name: Build
+      run: gha/scripts/ci/gh-actions/run.sh build
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v2
+      with:
+        category: "/language:${{matrix.language}}"
 
 #######################################
 # Workaround for skipping matrix jobs

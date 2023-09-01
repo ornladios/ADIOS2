@@ -37,7 +37,7 @@ MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 ")
 
 set(CTEST_TEST_ARGS
-  EXCLUDE "Engine.BPEngineTest.SzComplex.MPI|Engine.BPEngineTest.ZfpComplex.MPI")
+  EXCLUDE "Engine.BPEngineTest.SzComplex.MPI|Engine.BPEngineTest.ZfpComplex.MPI|.Serial$")
 
 set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")

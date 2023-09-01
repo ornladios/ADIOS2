@@ -69,12 +69,35 @@ endfunction()
 
 # Blosc2
 if(ADIOS2_USE_Blosc2 STREQUAL AUTO)
-  find_package(Blosc2 2.4)
+  # Prefect CONFIG mode
+  find_package(Blosc2 2.4 CONFIG QUIET)
+  if(NOT Blosc2_FOUND)
+    find_package(Blosc2 2.4 MODULE QUIET)
+  endif()
 elseif(ADIOS2_USE_Blosc2)
-  find_package(Blosc2 2.4 REQUIRED)
+  # Prefect CONFIG mode
+  find_package(Blosc2 2.4 CONFIG REQUIRED)
+  if(NOT Blosc2_FOUND)
+    find_package(Blosc2 2.4 MODULE REQUIRED)
+  endif()
 endif()
-if(BLOSC2_FOUND)
+if(Blosc2_FOUND)
   set(ADIOS2_HAVE_Blosc2 TRUE)
+  if(TARGET Blosc2::blosc2_shared)
+    set(Blosc2_shlib_available ON)
+  endif()
+
+  set(adios2_blosc2_tgt Blosc2::Blosc2)
+  if (Blosc2_VERSION VERSION_GREATER_EQUAL 2.10.1)
+    if (Blosc2_shlib_available)
+      set(adios2_blosc2_tgt Blosc2::blosc2_$<IF:$<BOOL:${ADIOS2_Blosc2_PREFER_SHARED}>,shared,static>)
+    else()
+      set(adios2_blosc2_tgt Blosc2::blosc2_static)
+    endif()
+  endif()
+
+  add_library(adios2_blosc2 INTERFACE)
+  target_link_libraries(adios2_blosc2 INTERFACE ${adios2_blosc2_tgt})
 endif()
 
 # BZip2
@@ -460,11 +483,6 @@ endif()
 find_package(DAOS)
 if(DAOS_FOUND)
   set(ADIOS2_HAVE_DAOS TRUE)
-endif()
-
-# BP5
-if(ADIOS2_USE_BP5)
-  set(ADIOS2_HAVE_BP5 TRUE)
 endif()
 
 #SysV IPC

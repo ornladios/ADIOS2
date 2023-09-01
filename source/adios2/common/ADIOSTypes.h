@@ -126,10 +126,8 @@ enum class SelectionType
 {
     BoundingBox, ///< Contiguous block of data defined by offsets and counts
                  /// per dimension
-    Points,      ///< List of individual points
     WriteBlock,  ///< Selection of an individual block written by a writer
                  /// process
-    Auto         ///< Let the engine decide what to return
 };
 
 // Data types.

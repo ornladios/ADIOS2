@@ -22,10 +22,8 @@
 #include "adios2/engine/bp3/BP3Writer.h"
 #include "adios2/engine/bp4/BP4Reader.h"
 #include "adios2/engine/bp4/BP4Writer.h"
-#ifdef ADIOS2_HAVE_BP5
 #include "adios2/engine/bp5/BP5Reader.h"
 #include "adios2/engine/bp5/BP5Writer.h"
-#endif
 #include "adios2/engine/campaign/CampaignReader.h"
 #include "adios2/engine/inline/InlineReader.h"
 #include "adios2/engine/inline/InlineWriter.h"
@@ -69,14 +67,7 @@ namespace
 std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
     {"bp3", {IO::MakeEngine<engine::BP3Reader>, IO::MakeEngine<engine::BP3Writer>}},
     {"bp4", {IO::MakeEngine<engine::BP4Reader>, IO::MakeEngine<engine::BP4Writer>}},
-    {"bp5",
-#ifdef ADIOS2_HAVE_BP5
-     {IO::MakeEngine<engine::BP5Reader>, IO::MakeEngine<engine::BP5Writer>}
-#else
-     IO::NoEngineEntry("ERROR: this version didn't compile with "
-                       "BP5 library, can't use BP5 engine\n")
-#endif
-    },
+    {"bp5", {IO::MakeEngine<engine::BP5Reader>, IO::MakeEngine<engine::BP5Writer>}},
     {"dataman",
 #ifdef ADIOS2_HAVE_DATAMAN
      {IO::MakeEngine<engine::DataManReader>, IO::MakeEngine<engine::DataManWriter>}
@@ -588,13 +579,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         }
         else
         {
-#ifdef ADIOS2_HAVE_BP5
             // File default for writing: BP5
             engineTypeLC = "bp5";
-#else
-            // File default for writing: BP4
-            engineTypeLC = "bp4";
-#endif
         }
     }
 

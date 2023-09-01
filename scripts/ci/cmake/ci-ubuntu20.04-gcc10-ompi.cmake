@@ -37,6 +37,9 @@ MPIEXEC_EXTRA_FLAGS:STRING=--allow-run-as-root --oversubscribe
 MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 ")
 
+# We have a dedicated build for this setup without MPI
+set(CTEST_TEST_ARGS EXCLUDE ".Serial$")
+
 set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
 include(${CMAKE_CURRENT_LIST_DIR}/ci-common.cmake)

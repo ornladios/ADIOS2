@@ -154,7 +154,6 @@ adios_option(DataMan    "Enable support for DataMan" AUTO)
 adios_option(DataSpaces "Enable support for DATASPACES" AUTO)
 adios_option(MHS        "Enable support for MHS" AUTO)
 adios_option(SST        "Enable support for SST" AUTO)
-adios_option(BP5        "Enable support for BP5" AUTO)
 adios_option(ZeroMQ     "Enable support for ZeroMQ" AUTO)
 adios_option(HDF5       "Enable support for the HDF5 engine" AUTO)
 adios_option(HDF5_VOL   "Enable support for HDF5 ADIOS2 VOL" AUTO)
@@ -198,6 +197,8 @@ if(ADIOS2_HAVE_MPI)
   add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
 endif()
 
+cmake_dependent_option(ADIOS2_Blosc2_PREFER_SHARED "Prefer shared Blosc2 libraries"
+  ON "Blosc2_shlib_available" OFF)
 
 #------------------------------------------------------------------------------#
 # POSIX O_DIRECT is only working for Unix in adios for now
@@ -237,10 +238,10 @@ endif()
 
 
 set(ADIOS2_CONFIG_OPTS
-    BP5 DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python Blosc2
-    BZip2 LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX ZeroMQ 
-    Profiling Endian_Reverse AWSSDK GPU_Support CUDA Kokkos Kokkos_CUDA Kokkos_HIP Kokkos_SYCL
-    SQLite3
+    DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python Blosc2 BZip2
+    LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX
+    ZeroMQ Profiling Endian_Reverse AWSSDK GPU_Support CUDA Kokkos Kokkos_CUDA
+    Kokkos_HIP Kokkos_SYCL SQLite3
 )
 
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})

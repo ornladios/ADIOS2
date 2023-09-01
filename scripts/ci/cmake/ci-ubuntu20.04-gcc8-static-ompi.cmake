@@ -2,9 +2,9 @@ include(ProcessorCount)
 ProcessorCount(NCPUS)
 math(EXPR N2CPUS "${NCPUS}*2")
 
-set(ENV{CC}  clang-10)
-set(ENV{CXX} clang++-10)
-set(ENV{FC}  gfortran-11)
+set(ENV{CC}  gcc)
+set(ENV{CXX} g++)
+set(ENV{FC}  gfortran)
 
 execute_process(
   COMMAND "python3-config" "--prefix"
@@ -12,11 +12,14 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 set(dashboard_cache "
-ADIOS2_USE_Blosc:BOOL=ON
+BUILD_SHARED_LIBS=OFF
+BUILD_TESTING=OFF
 ADIOS2_USE_BZip2:BOOL=ON
+ADIOS2_USE_Blosc:BOOL=ON
 ADIOS2_USE_DataMan:BOOL=ON
 ADIOS2_USE_Fortran:BOOL=ON
 ADIOS2_USE_HDF5:BOOL=ON
+ADIOS2_USE_MGARD:BOOL=OFF
 ADIOS2_USE_MPI:BOOL=ON
 ADIOS2_USE_Python:BOOL=ON
 ADIOS2_USE_SZ:BOOL=ON

@@ -25,9 +25,7 @@ const char adios2_version_str[] = ADIOS2_VERSION_STR;
 
 static const char *const engines[] = {"BP3",
                                       "BP4",
-#ifdef ADIOS2_HAVE_BP5
                                       "BP5",
-#endif
 #ifdef ADIOS2_HAVE_HDF5
                                       "HDF5",
 #endif

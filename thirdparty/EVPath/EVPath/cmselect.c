@@ -3,6 +3,7 @@
 #include <sys/types.h>
 
 #ifdef HAVE_WINDOWS_H
+#define FD_SETSIZE 1024
 #include <winsock2.h>
 #include <windows.h>
 #include <sys/timeb.h>
@@ -121,8 +122,8 @@ typedef struct select_data {
     int		closed;
     CManager	cm;
     int 	select_consistency_number;
-    int 	wake_read_fd;
-    int 	wake_write_fd;
+    SOCKET 	wake_read_fd;
+    SOCKET	wake_write_fd;
 } *select_data_ptr;
 
 static void wake_server_thread(select_data_ptr socket_data);
@@ -879,8 +880,7 @@ int err;
  */
 
 int
-pipe(filedes)
-SOCKET filedes[2];
+pipe(SOCKET *filedes)
 {
     
     int length;
@@ -970,7 +970,7 @@ SOCKET filedes[2];
 static void
 setup_wake_mechanism(CMtrans_services svc, select_data_ptr *sdp)
 {
-    int filedes[2];
+    SOCKET filedes[2];
 
     select_data_ptr sd = *((select_data_ptr *)sdp);
     if (sd->cm) {
@@ -978,7 +978,7 @@ setup_wake_mechanism(CMtrans_services svc, select_data_ptr *sdp)
 	assert(CM_LOCKED(svc, sd->cm));
     }
     if (sd->wake_read_fd != -1) return;
-    if (pipe(filedes) != 0) {
+    if (pipe(&filedes[0]) != 0) {
 	perror("Pipe for wake not created.  Wake mechanism inoperative.");
 	return;
     }
@@ -986,7 +986,7 @@ setup_wake_mechanism(CMtrans_services svc, select_data_ptr *sdp)
     sd->wake_write_fd = filedes[1];
     svc->verbose(sd->cm, CMSelectVerbose, "CMSelect Adding read_wake_fd as action on fd %d",
 		   sd->wake_read_fd);
-    libcmselect_LTX_add_select(svc, sdp, sd->wake_read_fd, read_wake_fd, 
+    libcmselect_LTX_add_select(svc, sdp, (int)sd->wake_read_fd, read_wake_fd, 
 			       (void*)(intptr_t)sd->wake_read_fd, NULL);
 }
 

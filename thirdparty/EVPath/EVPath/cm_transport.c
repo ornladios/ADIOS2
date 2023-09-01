@@ -121,7 +121,11 @@ load_transport(CManager cm, const char *trans_name, int quiet)
 		     strlen(MODULE_EXT)
 		     + 1);
 
+#ifndef HAVE_WINDOWS_H
     strcpy(libname, "lib" CM_LIBRARY_PREFIX "cm");
+#else
+    strcpy(libname, CM_LIBRARY_PREFIX "cm");
+#endif
     strcat(libname, trans_name);
     strcat(libname, MODULE_EXT);
 
