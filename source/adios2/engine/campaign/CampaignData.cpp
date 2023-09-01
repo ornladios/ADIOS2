@@ -92,7 +92,8 @@ static int sqlcb_bpfile(void *p, int argc, char **argv, char **azColName)
         helper::StringToSizeT(std::string(argv[3]), "SQL callback convert text to int");
     cf.lengthCompressed =
         helper::StringToSizeT(std::string(argv[4]), "SQL callback convert text to int");
-    cf.ctime = helper::StringTo<long>(std::string(argv[5]), "SQL callback convert ctime to int");
+    cf.ctime = static_cast<long>(
+        helper::StringTo<int64_t>(std::string(argv[5]), "SQL callback convert ctime to int"));
 
     CampaignBPDataset &cds = cdp->bpdatasets[cf.bpDatasetIdx];
     cds.files.push_back(cf);
