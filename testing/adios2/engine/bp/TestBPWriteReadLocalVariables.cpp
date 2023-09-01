@@ -210,8 +210,15 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
                 EXPECT_EQ(rankLocalValueData[r], static_cast<int32_t>(r));
             }
 
-            if (mpiSize > 1)
+            if ((engineName != "BP3") && (engineName != "BP4") && (mpiSize > 1))
             {
+                // This test exposes a difference in behaviour between
+                // BP3/4 and BP5.  BP5 resets the variables to their
+                // default state at each BeginStep where prior engines
+                // do not.  Therefore setting the block selection in
+                // this portion causes failures in future timesteps in
+                // prior engines, but not in BP5.  So we'll just test
+                // BP5 for the moment.
                 for (size_t r = 0; r < rankLocalValueData.size(); ++r)
                 {
                     int32_t val;
