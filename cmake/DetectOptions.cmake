@@ -550,7 +550,9 @@ elseif(ADIOS2_USE_SQLite3)
     find_package(SQLite3 REQUIRED)
 endif()
 if(SQLite3_FOUND)
+    message(STATUS "Sqlite3 found. Requires ZLIB")
     set(ADIOS2_HAVE_SQLite3 TRUE)
+    find_package(ZLIB REQUIRED)
 endif()
 
 # Multithreading
