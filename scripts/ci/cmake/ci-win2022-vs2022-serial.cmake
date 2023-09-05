@@ -3,9 +3,15 @@ set(ENV{CXX} cl)
 set(ENV{CFLAGS} /WX)
 set(ENV{CXXFLAGS} /WX)
 
+# Tests need to find hdf5.dll
+set(ENV{PATH} "$ENV{PATH};C:/hdf5/HDF5-1.14.2.1-win64/bin")
+
 set(dashboard_cache "
 ADIOS2_USE_Fortran:BOOL=OFF
 ADIOS2_USE_MPI:BOOL=OFF
+ADIOS2_USE_HDF5:STRING=ON
+ADIOS2_USE_HDF5_VOL:STRING=OFF
+HDF5_ROOT:PATH=C:/hdf5/HDF5-1.14.2.1-win64
 ")
 
 set(CTEST_CMAKE_GENERATOR "Visual Studio 17 2022")
