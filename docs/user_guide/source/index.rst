@@ -24,6 +24,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
 .. toctree::
    :caption: Basics
 
+   tutorial/tutorial
    components/components
    engines/virtual_engines
    engines/engines
