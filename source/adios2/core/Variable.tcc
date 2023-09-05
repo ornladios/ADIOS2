@@ -56,15 +56,23 @@ Dims Variable<T>::DoCount() const
                         ", in call to Variable<T>::Count()");
             }
 
-            size_t *DimsPtr = (MVI->BlocksInfo)[m_BlockID].Count;
-            Dims D;
-            D.resize(MVI->Dims);
-            for (int i = 0; i < MVI->Dims; i++)
+            if (!MVI->WasLocalValue)
             {
-                D[i] = DimsPtr[i];
+                size_t *DimsPtr = (MVI->BlocksInfo)[m_BlockID].Count;
+                Dims D;
+                D.resize(MVI->Dims);
+                for (int i = 0; i < MVI->Dims; i++)
+                {
+                    D[i] = DimsPtr[i];
+                }
+                delete MVI;
+                return D;
             }
-            delete MVI;
-            return D;
+            else
+            {
+                delete MVI;
+                return {1};
+            }
         }
 
         const size_t step = !m_FirstStreamingStep ? m_Engine->CurrentStep() : lf_Step();
