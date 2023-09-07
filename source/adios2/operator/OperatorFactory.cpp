@@ -31,6 +31,10 @@
 #include "adios2/operator/compress/CompressMGARDPlus.h"
 #endif
 
+#ifdef ADIOS2_HAVE_MGARD_MDR
+#include "adios2/operator/refactor/RefactorMDR.h"
+#endif
+
 #ifdef ADIOS2_HAVE_PNG
 #include "adios2/operator/compress/CompressPNG.h"
 #endif
@@ -74,6 +78,8 @@ std::string OperatorTypeToString(const Operator::OperatorType type)
         return "sz";
     case Operator::COMPRESS_ZFP:
         return "zfp";
+    case Operator::REFACTOR_MDR:
+        return "mdr";
     case Operator::PLUGIN_INTERFACE:
         return "plugin";
     default:
@@ -139,6 +145,12 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &pa
     {
 #ifdef ADIOS2_HAVE_ZFP
         ret = std::make_shared<compress::CompressZFP>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "mdr")
+    {
+#ifdef ADIOS2_HAVE_MGARD_MDR
+        ret = std::make_shared<refactor::RefactorMDR>(parameters);
 #endif
     }
     else if (typeLowerCase == "plugin")

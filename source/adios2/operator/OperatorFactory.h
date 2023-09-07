@@ -17,6 +17,8 @@ namespace adios2
 namespace core
 {
 
+std::string OperatorTypeToString(const Operator::OperatorType type);
+
 std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &parameters);
 
 size_t Decompress(const char *bufferIn, const size_t sizeIn, char *dataOut, MemorySpace memSpace,

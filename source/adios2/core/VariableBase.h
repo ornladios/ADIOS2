@@ -98,6 +98,11 @@ public:
 
     Engine *m_Engine = nullptr;
 
+    /** user requested accuracy */
+    Accuracy m_AccuracyRequested = {0.0, 0.0, false};
+    /** provided accuracy */
+    Accuracy m_AccuracyProvided = {0.0, 0.0, false};
+
     /** Index to Step and blocks' (inside a step) characteristics position in a
      * serial metadata buffer
      * <pre>
@@ -165,6 +170,22 @@ public:
      * Set local offset and dimensions to memory passed at Put
      */
     void SetMemorySelection(const Box<Dims> &memorySelection);
+
+    /**
+     * Sets the requested accuracy for the next read operation.
+     * The actual accuracy after the read is provided in GetAccuracy()
+     */
+    void SetAccuracy(const adios2::Accuracy &a) noexcept;
+
+    /**
+     * Get the provided accuracy for the last read operation.
+     * Most operations provide data as it was written, meaning that
+     * error is reported as 0.0
+     */
+    adios2::Accuracy GetAccuracy() const noexcept;
+
+    /** Return the requested accuracy set by user with SetAccuracy */
+    adios2::Accuracy GetAccuracyRequested() const noexcept;
 
     size_t GetAvailableStepsStart() const;
 

@@ -78,6 +78,13 @@ namespace adios2
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
+    void Variable<T>::SetAccuracy(const adios2::Accuracy &a)                                       \
+    {                                                                                              \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::SetAccuracy");                \
+        m_Variable->SetAccuracy(a);                                                                \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
     size_t Variable<T>::SelectionSize() const                                                      \
     {                                                                                              \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::SelectionSize");              \
@@ -216,6 +223,13 @@ namespace adios2
     {                                                                                              \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Max");                        \
         return m_Variable->Max(step);                                                              \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
+    adios2::Accuracy Variable<T>::GetAccuracy()                                                    \
+    {                                                                                              \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::GetAccuracy");                \
+        return m_Variable->GetAccuracy();                                                          \
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \

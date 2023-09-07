@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 #endif
-    const int NSTEPS = 5;
+    const int NSTEPS = 1;
 
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
 #endif
 
     // Application variables for output
-    const unsigned int Nx = 10;
+    const unsigned int Nx = 100000;
     // Global 2D array, size of nproc x Nx, with 1D decomposition
     // Each process writes one "row" of the 2D matrix.
     std::vector<double> row(Nx);
@@ -83,6 +83,9 @@ int main(int argc, char *argv[])
         adios2::Variable<size_t> varStep = io.DefineVariable<size_t>("step");
 
         io.DefineAttribute<int>("nsteps", NSTEPS);
+
+        adios2::Operator op = adios.DefineOperator("mdr", "mdr");
+        varGlobalArray.AddOperation(op, {{"accuracy", std::to_string(0.1)}});
 
         // Open file. "w" means we overwrite any existing file on disk,
         // but Advance() will append steps to the same file.

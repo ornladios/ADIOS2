@@ -184,6 +184,11 @@ gtest_add_tests_helper(ReadMultithreaded MPI_NONE BP Engine.BP. .BP5
   WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
 )
 
+# Only a single test is enough, pick the latest engine
+gtest_add_tests_helper(AccuracyDefaults MPI_NONE BP Engine.BP. .BP5
+  WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+)
+
 # BP3 only for now
 gtest_add_tests_helper(WriteNull MPI_ALLOW BP Engine.BP. .BP3
   WORKING_DIRECTORY ${BP3_DIR} EXTRA_ARGS "BP3"
@@ -191,6 +196,7 @@ gtest_add_tests_helper(WriteNull MPI_ALLOW BP Engine.BP. .BP3
 
 # BP4 and BP5 but NOT BP3
 bp4_bp5_gtest_add_tests_helper(WriteAppendReadADIOS2 MPI_ALLOW)
+bp4_bp5_gtest_add_tests_helper(JoinedArray MPI_ALLOW)
 
 # BP4 only for now
 # gtest_add_tests_helper(WriteAppendReadADIOS2 MPI_ALLOW BP Engine.BP. .BP4
@@ -202,9 +208,9 @@ gtest_add_tests_helper(StepsInSituGlobalArray MPI_ALLOW BP Engine.BP. .BP4
 gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .BP4
   WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
 )
-gtest_add_tests_helper(JoinedArray MPI_ALLOW BP Engine.BP. .BP4
-  WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
-)
+#gtest_add_tests_helper(JoinedArray MPI_ALLOW BP Engine.BP. .BP4
+#  WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
+#)
 
 # InquireVaribleException only for BP4 because BP5 works differently
 gtest_add_tests_helper(InquireVariableException MPI_ALLOW BP Engine.BP. .BP4

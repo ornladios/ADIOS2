@@ -210,6 +210,12 @@ public:
     void SetStepSelection(const adios2::Box<size_t> &stepSelection);
 
     /**
+     * Sets the requested accuracy for the next read operation.
+     * The actual accuracy after the read is provided in GetAccuracy()
+     */
+    void SetAccuracy(const adios2::Accuracy &a);
+
+    /**
      * Returns the number of elements required for pre-allocation based on
      * current count and stepsCount
      * @return elements of type T required for pre-allocation
@@ -334,6 +340,13 @@ public:
      * @return variable minimum
      */
     T Max(const size_t step = adios2::DefaultSizeT) const;
+
+    /**
+     * Get the provided accuracy for the last read operation.
+     * Most operations provide data as it was written, meaning that
+     * error is reported as 0.0
+     */
+    adios2::Accuracy GetAccuracy();
 
     /** Contains block information for a particular Variable<T> */
     struct Info

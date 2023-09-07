@@ -72,6 +72,9 @@ static const char *const operators[] = {
     "MGARD",
     "MGARDPlus",
 #endif
+#ifdef ADIOS2_HAVE_MGARD_MDR
+    "MDR",
+#endif
 #ifdef ADIOS2_HAVE_SZ
     "SZ",
 #endif
