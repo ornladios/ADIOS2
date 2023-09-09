@@ -390,4 +390,54 @@ int TypeElementSize(DataType adiosvartype)
     }
 }
 
+static void PrintMBI(std::ostream &os, const MinBlockInfo &blk, int Dims)
+{
+    os << "Writer: " << blk.WriterID << ", Blk: " << blk.BlockID << ", Start: {";
+    if ((Dims == 0) || (blk.Start == NULL))
+        os << "NULL";
+    else
+    {
+        for (int i = 0; i < Dims; i++)
+        {
+            os << blk.Start[i];
+            if (i < Dims - 1)
+                os << ", ";
+        }
+    }
+    os << "}, Count: {";
+
+    if ((Dims == 0) || (blk.Count == NULL))
+        os << "NULL";
+    else
+    {
+        for (int i = 0; i < Dims; i++)
+        {
+            os << blk.Count[i];
+            if (i < Dims - 1)
+                os << ", ";
+        }
+    }
+    os << "}, Data: " << (void *)blk.BufferP << std::endl;
+}
+
+void PrintMVI(std::ostream &os, const MinVarInfo &mvi)
+{
+    os << "Step: " << mvi.Step << "  Dims: " << mvi.Dims << " Shape: {";
+    if ((mvi.Dims == 0) || (mvi.Shape == NULL))
+        os << "NULL";
+    else
+    {
+        for (int i = 0; i < mvi.Dims; i++)
+        {
+            os << mvi.Shape[i];
+            if (i < mvi.Dims - 1)
+                os << ", ";
+        }
+    }
+    os << "}, BlockCount: " << mvi.BlocksInfo.size() << " ";
+    for (const auto &blk : mvi.BlocksInfo)
+        PrintMBI(os, blk, mvi.Dims);
+    os << std::endl;
+}
+
 } // end namespace adios2
