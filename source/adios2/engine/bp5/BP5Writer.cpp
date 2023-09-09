@@ -509,7 +509,7 @@ void BP5Writer::EndStep()
     for (const auto &varPair : vars)
     {
         auto baseVar = varPair.second.get();
-        auto mvi = MinBlocksInfo(*baseVar);
+        auto mvi = WriterMinBlocksInfo(*baseVar);
         if (mvi)
         {
             std::cout << "Info for Variable " << varPair.first << std::endl;
@@ -686,7 +686,7 @@ void BP5Writer::Init()
     InitBPBuffer();
 }
 
-MinVarInfo *BP5Writer::MinBlocksInfo(const core::VariableBase &Var)
+MinVarInfo *BP5Writer::WriterMinBlocksInfo(const core::VariableBase &Var)
 {
     return m_BP5Serializer.MinBlocksInfo(Var);
 }

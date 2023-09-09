@@ -115,7 +115,7 @@ private:
      */
     void NotifyEngineAttribute(std::string name, AttributeBase *Attr, void *data) noexcept;
 
-    MinVarInfo *MinBlocksInfo(const VariableBase &);
+    MinVarInfo *WriterMinBlocksInfo(const VariableBase &);
 
     void EnterComputationBlock() noexcept;
     /** Inform about computation block through User->ADIOS->IO */
