@@ -80,7 +80,7 @@ void BP5Serializer::Init()
     ((BP5MetadataInfoStruct *)MetadataBuf)->BitField = (std::size_t *)malloc(sizeof(size_t));
     ((BP5MetadataInfoStruct *)MetadataBuf)->DataBlockSize = 0;
 }
-BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Key)
+BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Key) const
 {
     for (int i = 0; i < Info.RecCount; i++)
     {
@@ -856,6 +856,73 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
                     AppendDims(MetaEntry->Offsets, PreviousDBCount, DimCount, Offsets);
         }
     }
+}
+
+MinVarInfo *BP5Serializer::MinBlocksInfo(const core::VariableBase &Var)
+{
+    BP5WriterRec VarRec = LookupWriterRec((void *)&Var);
+
+    if (!VarRec)
+        return NULL;
+
+    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, (size_t *)Var.m_Shape.data());
+
+    BP5MetadataInfoStruct *MBase = (struct BP5MetadataInfoStruct *)MetadataBuf;
+
+    int AlreadyWritten = BP5BitfieldTest(MBase, VarRec->FieldID);
+
+    if (!AlreadyWritten)
+        return MV;
+
+    if (Var.m_SingleValue)
+    {
+        // single value case
+        MinBlockInfo Blk;
+        Blk.MinMax.Init(Var.m_Type);
+        Blk.WriterID = (int)-1;
+        Blk.BlockID = 0;
+        Blk.Start = NULL;
+        Blk.Count = NULL;
+        if (Var.m_Type != DataType::String)
+        {
+            Blk.BufferP = (char *)(MetadataBuf) + VarRec->MetaOffset;
+        }
+        else
+        {
+            char **StrPtr = (char **)((char *)(MetadataBuf) + VarRec->MetaOffset);
+            Blk.BufferP = *StrPtr;
+        }
+        MV->BlocksInfo.push_back(Blk);
+    }
+    else
+    {
+        // everything else
+        MetaArrayRec *MetaEntry = (MetaArrayRec *)((char *)(MetadataBuf) + VarRec->MetaOffset);
+        for (size_t b = 0; b < MetaEntry->BlockCount; b++)
+        {
+            MinBlockInfo Blk;
+            Blk.MinMax.Init(Var.m_Type);
+            Blk.WriterID = (int)-1;
+            Blk.BlockID = 0;
+            Blk.Start = NULL;
+            if (MetaEntry->Offsets)
+            {
+                Blk.Start = &(MetaEntry->Offsets[b * MetaEntry->Dims]);
+            }
+            Blk.Count = &(MetaEntry->Count[b * MetaEntry->Dims]);
+            if (MetaEntry->DataBlockLocation[b] < m_PriorDataBufferSizeTotal)
+            {
+                Blk.BufferP = (void *)(intptr_t)(-1); // data is out of memory
+            }
+            else
+            {
+                Blk.BufferP = CurDataBuffer->GetPtr(MetaEntry->DataBlockLocation[b] -
+                                                    m_PriorDataBufferSizeTotal);
+            }
+            MV->BlocksInfo.push_back(Blk);
+        }
+    }
+    return MV;
 }
 
 void BP5Serializer::MarshalAttribute(const char *Name, const DataType Type, size_t ElemSize,

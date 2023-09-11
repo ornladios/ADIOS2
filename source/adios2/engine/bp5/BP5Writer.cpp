@@ -497,14 +497,32 @@ void BP5Writer::MarshalAttributes()
 
 void BP5Writer::EndStep()
 {
-    /* Seconds ts = Now() - m_EngineStart;
-      std::cout << "END STEP starts at: " << ts.count() << std::endl; */
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP5Writer::EndStep");
     m_Profiler.Start("ES");
 
     m_Profiler.Start("ES_close");
     MarshalAttributes();
+
+#ifdef NOT_DEF
+    const auto &vars = m_IO.GetVariables();
+    for (const auto &varPair : vars)
+    {
+        auto baseVar = varPair.second.get();
+        auto mvi = WriterMinBlocksInfo(*baseVar);
+        if (mvi)
+        {
+            std::cout << "Info for Variable " << varPair.first << std::endl;
+            PrintMVI(std::cout, *mvi);
+            if (baseVar->m_Type == DataType::Double)
+                std::cout << "Double value is " << *((double *)mvi->BlocksInfo[0].BufferP)
+                          << std::endl;
+            delete mvi;
+        }
+        else
+            std::cout << "Variable " << varPair.first << " not written on this step" << std::endl;
+    }
+#endif
 
     // true: advances step
     auto TSInfo = m_BP5Serializer.CloseTimestep((int)m_WriterStep,
@@ -666,6 +684,11 @@ void BP5Writer::Init()
     InitAggregator();
     InitTransports();
     InitBPBuffer();
+}
+
+MinVarInfo *BP5Writer::WriterMinBlocksInfo(const core::VariableBase &Var)
+{
+    return m_BP5Serializer.MinBlocksInfo(Var);
 }
 
 void BP5Writer::InitParameters()

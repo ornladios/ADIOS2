@@ -42,6 +42,7 @@ public:
     void DownsizeLastAlloc(const size_t oldSize, const size_t newSize);
 
     virtual void *GetPtr(int bufferIdx, size_t posInBuffer);
+    virtual void *GetPtr(size_t posInBuffer);
 
 private:
     char *m_InternalBlock = NULL;

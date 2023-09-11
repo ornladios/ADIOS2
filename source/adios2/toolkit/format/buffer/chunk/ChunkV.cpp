@@ -255,6 +255,30 @@ void *ChunkV::GetPtr(int bufferIdx, size_t posInBuffer)
     }
 }
 
+void *ChunkV::GetPtr(size_t OverallPosInBuffer)
+{
+    int bufferIdx = 0;
+    if (DataV.size() == 0)
+        return nullptr;
+    while (DataV[bufferIdx].Size <= OverallPosInBuffer)
+    {
+        OverallPosInBuffer -= DataV[bufferIdx].Size;
+        bufferIdx++;
+        if (static_cast<size_t>(bufferIdx) > DataV.size())
+        {
+            helper::Throw<std::invalid_argument>(
+                "Toolkit", "format::ChunkV", "GetPtr",
+                "ChunkV::GetPtr(" + std::to_string(OverallPosInBuffer) +
+                    ") refers to a non-existing or deferred memory chunk.");
+            return nullptr;
+        }
+    }
+    if (DataV[bufferIdx].External)
+        return ((char *)DataV[bufferIdx].External) + OverallPosInBuffer;
+
+    return (void *)((char *)DataV[bufferIdx].Base + OverallPosInBuffer);
+}
+
 std::vector<core::iovec> ChunkV::DataVec() noexcept
 {
     std::vector<core::iovec> iov(DataV.size());

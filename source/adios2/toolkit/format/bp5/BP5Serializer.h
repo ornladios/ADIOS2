@@ -127,6 +127,8 @@ public:
 
     size_t DebugGetDataBufferSize() const;
 
+    MinVarInfo *MinBlocksInfo(const core::VariableBase &Var);
+
     int m_StatsLevel = 1;
 
     /* Variables to help appending to existing file */
@@ -204,7 +206,7 @@ private:
 
     size_t m_PriorDataBufferSizeTotal = 0;
 
-    BP5WriterRec LookupWriterRec(void *Key);
+    BP5WriterRec LookupWriterRec(void *Key) const;
     BP5WriterRec CreateWriterRec(void *Variable, const char *Name, DataType Type, size_t ElemSize,
                                  size_t DimCount);
     void ValidateWriterRec(BP5WriterRec Rec, void *Variable);

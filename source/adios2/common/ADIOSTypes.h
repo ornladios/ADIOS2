@@ -214,6 +214,7 @@ struct MinBlockInfo
     MinMaxStruct MinMax;
     void *BufferP = NULL;
 };
+
 struct MinVarInfo
 {
     size_t Step;
@@ -228,6 +229,8 @@ struct MinVarInfo
     {
     }
 };
+
+void PrintMVI(std::ostream &os, const MinVarInfo &mvi);
 
 // adios defaults
 #ifdef _WIN32

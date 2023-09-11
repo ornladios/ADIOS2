@@ -38,6 +38,7 @@ public:
     virtual void DownsizeLastAlloc(const size_t oldSize, const size_t newSize);
 
     virtual void *GetPtr(int bufferIdx, size_t posInBuffer);
+    virtual void *GetPtr(size_t OverallPosInBuffer);
 
     void CopyDataToBuffer(const size_t size, const void *buf, size_t pos, MemorySpace MemSpace);
 

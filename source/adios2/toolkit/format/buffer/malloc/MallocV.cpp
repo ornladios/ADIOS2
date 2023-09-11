@@ -157,6 +157,8 @@ void *MallocV::GetPtr(int bufferIdx, size_t posInBuffer)
     }
 }
 
+void *MallocV::GetPtr(size_t posInBuffer) { return m_InternalBlock + posInBuffer; }
+
 std::vector<core::iovec> MallocV::DataVec() noexcept
 {
     std::vector<core::iovec> iov(DataV.size());
