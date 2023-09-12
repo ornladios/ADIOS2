@@ -71,11 +71,19 @@ add_subdirectory(nlohmann_json)
 adios2_add_thirdparty_target(nlohmann_json nlohmann_json_wrapper)
 
 if(ADIOS2_USE_EXTERNAL_YAMLCPP)
-  find_package(yaml-cpp REQUIRED)
+  find_package(yaml-cpp 0.7.0 REQUIRED)
 else()
   add_subdirectory(yaml-cpp)
 endif()
+
 adios2_add_thirdparty_target(yaml-cpp yaml-cpp)
+
+# YAML-cpp does not add the incdir/libdir to its target rather it exposes it
+# through the cmake variables YAML_CPP_INCLUDE_DIR and YAML_CPP_LIBRARY_DIR
+if(yaml-cpp_VERSION VERSION_GREATER_EQUAL 0.8)
+  target_include_directories(adios2::thirdparty::yaml-cpp INTERFACE ${YAML_CPP_INCLUDE_DIR})
+  target_link_directories(adios2::thirdparty::yaml-cpp INTERFACE ${YAML_CPP_LIBRARY_DIR})
+endif()
 
 if(WIN32)
   add_subdirectory(mingw-w64)
