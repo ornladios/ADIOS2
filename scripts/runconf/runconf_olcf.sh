@@ -66,7 +66,6 @@ if [ `hostname | cut -c 1-5` == "titan" ]; then
           -DADIOS2_USE_MPI=${USE_MPI} \
           -DADIOS2_USE_Fortran=ON \
           -DADIOS2_USE_Python=OFF \
-          -DADIOS2_BUILD_EXAMPLES_EXPERIMENTAL=OFF \
           -DCMAKE_BUILD_TYPE=RelWithDebInfo \
           -DBUILD_TESTING=OFF \
           ${EXTERNAL_OPTS} \
@@ -116,7 +115,6 @@ elif [ `hostname -f | cut -c 1-9` == "summitdev" ]; then
           -DADIOS2_USE_MPI=${USE_MPI} \
           -DADIOS2_USE_Fortran=ON \
           -DADIOS2_USE_Python=OFF \
-          -DADIOS2_BUILD_EXAMPLES_EXPERIMENTAL=OFF \
           -DCMAKE_BUILD_TYPE=Debug \
           -DBUILD_TESTING=ON \
           -DADIOS2_USE_DataMan=OFF \
@@ -154,7 +152,6 @@ elif [ `hostname -f | cut -c 1-4` == "rhea" ]; then
           -DADIOS2_USE_Fortran=ON \
           -DADIOS2_USE_Python=OFF \
           -DADIOS2_USE_SST=OFF \
-          -DADIOS2_BUILD_EXAMPLES_EXPERIMENTAL=OFF \
           -DCMAKE_BUILD_TYPE=Debug \
           -DBUILD_TESTING=ON \
           -DADIOS2_USE_DataMan=OFF \
