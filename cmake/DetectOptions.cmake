@@ -193,8 +193,8 @@ endif()
 
 set(mpi_find_components C)
 
-if(ADIOS_USE_Kokkos AND ADIOS_USE_CUDA)
-  message(FATAL_ERROR "ADIOS2_USE_Kokkos is incompatible with ADIOS_USE_CUDA")
+if(ADIOS2_USE_Kokkos AND ADIOS2_USE_CUDA)
+  message(FATAL_ERROR "ADIOS2_USE_Kokkos is incompatible with ADIOS2_USE_CUDA")
 endif()
 
 # Kokkos
@@ -239,7 +239,7 @@ if(ADIOS2_USE_CUDA)
   endif()
 endif()
 
-if(ADIOS_HAVE_Kokkos AND ADIOS_HAVE_CUDA)
+if(ADIOS2_HAVE_Kokkos AND ADIOS2_HAVE_CUDA)
     message(FATAL_ERROR "The Kokkos and CUDA backends cannot be active concurrently")
 endif()
 
