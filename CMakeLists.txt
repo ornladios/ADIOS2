@@ -319,7 +319,6 @@ add_subdirectory(plugins)
 # Examples
 #------------------------------------------------------------------------------#
 option(ADIOS2_BUILD_EXAMPLES "Build examples" ON)
-option(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL "Build experimental examples" OFF)
 if(ADIOS2_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
