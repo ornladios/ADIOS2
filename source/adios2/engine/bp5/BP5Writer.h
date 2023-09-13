@@ -97,8 +97,6 @@ private:
     std::vector<std::string> m_DrainMetadataIndexFileNames;
     std::vector<std::string> m_ActiveFlagFileNames;
 
-    bool m_BetweenStepPairs = false;
-
     void Init() final;
 
     /** Parses parameters from IO SetParameters */
