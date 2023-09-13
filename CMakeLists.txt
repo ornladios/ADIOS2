@@ -170,7 +170,7 @@ adios_option(Profiling  "Enable support for profiling" AUTO)
 adios_option(Endian_Reverse "Enable support for Little/Big Endian Interoperability" AUTO)
 adios_option(Sodium     "Enable support for Sodium for encryption" AUTO)
 adios_option(Catalyst   "Enable support for in situ visualization plugin using ParaView Catalyst" AUTO)
-adios_option(AWSSDK     "Enable support for S3 compatible storage using AWS SDK's S3 module" AUTO)
+adios_option(AWSSDK     "Enable support for S3 compatible storage using AWS SDK's S3 module" OFF)
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
