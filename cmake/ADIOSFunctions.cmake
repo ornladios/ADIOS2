@@ -97,7 +97,7 @@ function(GenerateADIOSHeaderConfig)
   foreach(OPT IN LISTS ARGN)
     string(TOUPPER ${OPT} OPT_UPPER)
     string(APPEND ADIOS2_CONFIG_DEFINES "
-/* CMake Option: ADIOS_USE_${OPT}=OFF */
+/* CMake Option: ADIOS2_USE_${OPT}=OFF */
 #cmakedefine ADIOS2_HAVE_${OPT_UPPER}
 ")
     if(ADIOS2_HAVE_${OPT})
