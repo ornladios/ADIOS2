@@ -95,6 +95,7 @@ private:
     transportman::TransportMan m_ActiveFlagFileManager;
     Remote m_Remote;
     bool m_WriterIsActive = true;
+    adios2::profiling::JSONProfiler m_JSONProfiler;
 
     /** used for per-step reads, TODO: to be moved to BP5Deserializer */
     size_t m_CurrentStep = 0;
@@ -199,6 +200,8 @@ private:
 #undef declare_type
 
     void DoClose(const int transportIndex = -1) final;
+
+    void FlushProfiler();
 
     void GetSyncCommon(VariableBase &variable, void *data);
 

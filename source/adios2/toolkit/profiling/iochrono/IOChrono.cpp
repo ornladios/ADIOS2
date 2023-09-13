@@ -57,6 +57,12 @@ JSONProfiler::JSONProfiler(helper::Comm const &comm) : m_Comm(comm)
     AddTimerWatch("PDW");
 
     m_Profiler.m_Bytes.emplace("buffering", 0);
+    AddTimerWatch("DataRead");
+    m_Profiler.m_Bytes.emplace("dataread", 0);
+    AddTimerWatch("MetaDataRead");
+    m_Profiler.m_Bytes.emplace("metadataread", 0);
+    AddTimerWatch("MetaMetaDataRead");
+    m_Profiler.m_Bytes.emplace("metadmetaataread", 0);
 
     m_RankMPI = m_Comm.Rank();
 }
@@ -92,10 +98,20 @@ std::string JSONProfiler::GetRankProfilingJSON(
     for (const auto &timerPair : profiler.m_Timers)
     {
         const profiling::Timer &timer = timerPair.second;
-        // rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
-        //          "\": " + std::to_string(timer.m_ProcessTime) + ", ";
-        timer.AddToJsonStr(rankLog);
+        if (timer.m_nCalls > 0)
+        {
+            rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
+                       "\": " + std::to_string(timer.m_ProcessTime) + ", ";
+            timer.AddToJsonStr(rankLog);
+        }
     }
+
+    size_t DataBytes = m_Profiler.m_Bytes["dataread"];
+    size_t MetaDataBytes = m_Profiler.m_Bytes["metadataread"];
+    size_t MetaMetaDataBytes = m_Profiler.m_Bytes["metametadataread"];
+    rankLog += ", \"databytes\":" + std::to_string(DataBytes);
+    rankLog += ", \"metadatabytes\":" + std::to_string(MetaDataBytes);
+    rankLog += ", \"metametadatabytes\":" + std::to_string(MetaMetaDataBytes);
 
     const size_t transportsSize = transportsTypes.size();
 
