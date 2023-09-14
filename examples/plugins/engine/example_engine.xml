@@ -10,7 +10,7 @@
     <io name="writer">
         <engine type="Plugin">
             <parameter key="PluginName" value="WritePlugin" />
-            <parameter key="PluginLibrary" value="PluginEngineWrite" />
+            <parameter key="PluginLibrary" value="adios2_plugins_exampleWritePlugin" />
         </engine>
     </io>
 
@@ -22,7 +22,7 @@
     <io name="reader">
         <engine type="Plugin">
             <parameter key="PluginName" value="ReadPlugin" />
-            <parameter key="PluginLibrary" value="PluginEngineRead" />
+            <parameter key="PluginLibrary" value="adios2_plugins_exampleReadPlugin" />
         </engine>
     </io>
 </adios-config>

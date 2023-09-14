@@ -17,14 +17,14 @@ set(ENV{ADIOS2_PLUGIN_PATH} "${adios2_DIR}/../../")
 
 # add write test
 add_executable(adios_plugin_operator_write_test
-  ../../../examples/plugins/operator/examplePluginOperator_write.cpp
+  ../../../examples/plugins/operator/examplePluginOperatorWrite.cpp
 )
 target_link_libraries(adios_plugin_operator_write_test adios2::cxx11)
 add_test(NAME adios_plugin_operator_write_test COMMAND adios_plugin_operator_write_test)
 
 # add read test
 add_executable(adios_plugin_operator_read_test
-  ../../../examples/plugins/operator/examplePluginOperator_read.cpp
+  ../../../examples/plugins/operator/examplePluginOperatorRead.cpp
 )
 target_link_libraries(adios_plugin_operator_read_test adios2::cxx11)
 add_test(NAME adios_plugin_operator_read_test COMMAND adios_plugin_operator_read_test)

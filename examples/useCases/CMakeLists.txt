@@ -3,5 +3,5 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+add_subdirectory(fidesOneCell)
 add_subdirectory(insituGlobalArrays)
-

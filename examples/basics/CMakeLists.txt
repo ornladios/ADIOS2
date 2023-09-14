@@ -3,7 +3,10 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(globalArray)
+add_subdirectory(globalArrayND)
 add_subdirectory(joinedArray)
 add_subdirectory(localArray)
+if(ADIOS2_HAVE_DATAMAN)
+  add_subdirectory(queryWorker)
+endif()
 add_subdirectory(values)

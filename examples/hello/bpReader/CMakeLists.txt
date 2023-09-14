@@ -3,28 +3,59 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_executable(hello_bpReader helloBPReader_nompi.cpp)
-target_link_libraries(hello_bpReader adios2::cxx11)
+cmake_minimum_required(VERSION 3.12)
+project(ADIOS2HelloBPReaderExample)
 
-if(ADIOS2_HAVE_Fortran)
-  add_executable(hello_bpReaderHeatMap3D_f helloBPReaderHeatMap3D.F90)
-  set_property(TARGET hello_bpReaderHeatMap3D_f PROPERTY LINKER_LANGUAGE Fortran)
-  target_link_libraries(hello_bpReaderHeatMap3D_f adios2::fortran)
+if(NOT TARGET adios2::cxx11)
+  set(_components C)
+
+  include(CheckLanguage)
+  check_language(Fortran)
+  if(CMAKE_Fortran_COMPILER)
+    enable_language(Fortran)
+  endif()
+  if(CMAKE_Fortran_COMPILER_LOADED)
+    list(APPEND _components Fortran)
+  endif()
+
+  find_package(MPI COMPONENTS ${_components})
+  if(MPI_FOUND)
+    # Workaround for various MPI implementations forcing the link of C++ bindings
+    add_definitions(-DOMPI_SKIP_MPICXX -DMPICH_SKIP_MPICXX)
+
+    list(APPEND _components MPI)
+  endif()
+  list(APPEND _components CXX)
+
+  find_package(ADIOS2 REQUIRED COMPONENTS ${_components})
 endif()
 
-if(ADIOS2_HAVE_MPI)
-  add_executable(hello_bpReader_mpi helloBPReader.cpp)
-  target_link_libraries(hello_bpReader_mpi adios2::cxx11_mpi MPI::MPI_C)
-  
-  add_executable(hello_bpReaderHeatMap2D helloBPReaderHeatMap2D.cpp)
-  target_link_libraries(hello_bpReaderHeatMap2D adios2::cxx11_mpi MPI::MPI_C)
-  
-  add_executable(hello_bpReaderHeatMap3D helloBPReaderHeatMap3D.cpp)
-  target_link_libraries(hello_bpReaderHeatMap3D adios2::cxx11_mpi MPI::MPI_C)
+add_executable(adios2_hello_bpReader bpReader_nompi.cpp)
+target_link_libraries(adios2_hello_bpReader adios2::cxx11)
+install(TARGETS adios2_hello_bpReader RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
-  if(ADIOS2_HAVE_Fortran)
-    add_executable(hello_bpReaderHeatMap3D_f_mpi helloBPReaderHeatMap3D.F90)
-    target_link_libraries(hello_bpReaderHeatMap3D_f_mpi adios2::fortran_mpi MPI::MPI_Fortran)
-    set_property(TARGET hello_bpReaderHeatMap3D_f_mpi PROPERTY LINKER_LANGUAGE Fortran)
+if(ADIOS2_HAVE_MPI)
+  add_executable(adios2_hello_bpReader_mpi bpReader.cpp)
+  target_link_libraries(adios2_hello_bpReader_mpi adios2::cxx11_mpi MPI::MPI_C)
+  install(TARGETS adios2_hello_bpReader_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+  add_executable(adios2_hello_bpReaderHeatMap2D bpReaderHeatMap2D.cpp)
+  target_link_libraries(adios2_hello_bpReaderHeatMap2D adios2::cxx11_mpi MPI::MPI_C)
+  install(TARGETS adios2_hello_bpReaderHeatMap2D RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+  add_executable(adios2_hello_bpReaderHeatMap3D bpReaderHeatMap3D.cpp)
+  target_link_libraries(adios2_hello_bpReaderHeatMap3D adios2::cxx11_mpi MPI::MPI_C)
+  install(TARGETS adios2_hello_bpReaderHeatMap3D RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+endif()
+
+if(ADIOS2_HAVE_Fortran)
+  add_executable(adios2_hello_bpReaderHeatMap3D_f bpReaderHeatMap3D.F90)
+  target_link_libraries(adios2_hello_bpReaderHeatMap3D_f adios2::fortran)
+  install(TARGETS adios2_hello_bpReaderHeatMap3D_f RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+  if(ADIOS2_HAVE_MPI)
+    add_executable(adios2_hello_bpReaderHeatMap3D_f_mpi bpReaderHeatMap3D.F90)
+    target_link_libraries(adios2_hello_bpReaderHeatMap3D_f_mpi adios2::fortran_mpi MPI::MPI_Fortran)
+    install(TARGETS adios2_hello_bpReaderHeatMap3D_f_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
   endif()
 endif()
