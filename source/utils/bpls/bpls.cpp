@@ -1286,8 +1286,9 @@ int printVariableInfo(core::Engine *fp, core::IO *io,
         if (longopt && !timestep)
         {
             fprintf(outf, " = ");
-            auto mm = variable->MinMax();
-            print_data(&mm.second, 0, adiosvartype, false);
+            T value;
+            fp->Get(*variable, value, adios2::Mode::Sync);
+            print_data(&value, 0, adiosvartype, false);
         }
         fprintf(outf, "\n");
 
@@ -2941,8 +2942,7 @@ int print_data(const void *data, int item, DataType adiosvartype,
         fprintf(outf, (f ? fmt : "%hhd"), ((signed char *)data)[item]);
         break;
 
-    case DataType::String:
-    {
+    case DataType::String: {
         // fprintf(outf, (f ? fmt : "\"%s\""), ((char *)data) + item);
         const std::string *dataStr =
             reinterpret_cast<const std::string *>(data);
