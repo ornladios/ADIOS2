@@ -1,21 +1,86 @@
+#
 from mpi4py import MPI
 import numpy as np
 import adios2
-import os
+import sys
 
 # MPI
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
-configFile = './defaultConfig.xml'
-queryFile = './sampleQuery.xml'
-dataPath = './heat.bp'
+########################################
+##  usage: <exe> [bp4 | bp5=default]  ##
+########################################
+numSteps = 5
+queryFile='query.xml'
+targetVarName='var0'
+
+# User data
+myArray = np.array([0, 1., 2., 3., 4., 5., 6., 7., 8., 9.])
+Nx = myArray.size
+
+# ADIOS MPI Communicator
+adios = adios2.ADIOS(comm)
+
+supportedEngines=['bp5', 'bp4']                
+engineType='bp5'
+if (len(sys.argv) > 1):
+    engineType = sys.argv[1].lower()
+
+if (engineType in supportedEngines):
+    if (rank == 0):    
+        print ('Using engine type:', engineType)
+else:
+    sys.exit('specified engine does not exist')
 
 
-def doAnalysis(reader, touched_blocks, varList):
+dataFileName= 'test_'+engineType+'.bp'
+def writeDataFile():
+    # ADIOS IO
+    bpIO = adios.DeclareIO("Writer")
+    bpIO.SetEngine(engineType)
+
+    ioArray = bpIO.DefineVariable(
+        targetVarName, myArray, [size * Nx], [rank * Nx], [Nx], adios2.ConstantDims)
+
+    # ADIOS Engine
+    bpFileWriter = bpIO.Open(dataFileName, adios2.Mode.Write)
+
+    for i in range(numSteps):
+        bpFileWriter.BeginStep()
+        bpFileWriter.Put(ioArray, i*10.0 + myArray/(rank+1), adios2.Mode.Sync)
+        bpFileWriter.EndStep()
+    
+    bpFileWriter.Close()
+
+
+def createQueryFile():
+    print(".. Writing query file to: ", queryFile)
+    
+    file1 = open(queryFile, 'w')
+    queryContent = [
+        "<?xml version=\"1.0\"?>\n", "<adios-query>\n",
+        "  <io name=\"query\">\n"
+        "  <var name=\""+targetVarName+"\">\n",
+        "    <op value=\"AND\">\n",
+        "      <range  compare=\"LT\" value=\"15.0\"/>\n",
+        "      <range  compare=\"GT\" value=\"4.0\"/>\n", "    </op>\n",
+        "  </var>\n", "  </io>\n", "</adios-query>\n"
+    ]
+    file1.writelines(queryContent)
+    file1.close()
+
+def doAnalysis(reader, touched_blocks, varList):    
     print(" Step: ", reader.CurrentStep(),
           "  num touched blocks: ", len(touched_blocks))
+    if ( 0 == reader.CurrentStep() ):
+        assert(len(touched_blocks) ==  min(size, 2))
+    if ( 1 == reader.CurrentStep() ):
+        assert(len(touched_blocks) == size)
+    if ( 1 <  reader.CurrentStep() ):        
+        assert(len(touched_blocks) == 0)
+        
     values = []
     data = {}
 
@@ -32,76 +97,45 @@ def doAnalysis(reader, touched_blocks, varList):
                 # do analysis with data here
 
 
-def runQuery():
-    adios = adios2.ADIOS(configFile, comm, True)
-    queryIO = adios.DeclareIO("query")
-    reader = queryIO.Open(dataPath, adios2.Mode.Read, comm)
-    w = adios2.Query(queryFile, reader)
-
+def queryDataFile():
+    adios_nompi = adios2.ADIOS()
+    queryIO = adios_nompi.DeclareIO("query")
+    reader = queryIO.Open(dataFileName, adios2.Mode.Read)
+    print("dataFile=", dataFileName, "queryFile=", queryFile)    
+    
     touched_blocks = []
 
     print("Num steps: ", reader.Steps())
 
     while (reader.BeginStep() == adios2.StepStatus.OK):
+        #  bp5  loads metadata after beginstep(). so query has to be called per step
+        w = adios2.Query(queryFile, reader)
         # say only rank 0 wants to process result
-        var = [queryIO.InquireVariable("T")]
+        var = [queryIO.InquireVariable(targetVarName)]
 
         if (rank == 0):
             touched_blocks = w.GetResult()
             doAnalysis(reader, touched_blocks, var)
 
-    reader.EndStep()
+        reader.EndStep()
     reader.Close()
 
 
-def createConfigFile():
-    print(".. Writing config file to: ", configFile)
-    file1 = open(configFile, 'w')
-
-    xmlContent = ["<?xml version=\"1.0\"?>\n",
-                  "<adios-config>\n",
-                  "<io name=\"query\">\n",
-                  "  <engine type=\"BPFile\">\n",
-                  "  </engine>\n",
-                  "  <transport type=\"File\">\n",
-                  "    <parameter key=\"Library\" value=\"POSIX\"/>\n",
-                  "  </transport>\n",
-                  "</io>\n", "</adios-config>\n"]
-
-    file1.writelines(xmlContent)
-    file1.close()
-
-
-def createQueryFile():
-    print(".. Writing query file to: ", queryFile)
-
-    file1 = open(queryFile, 'w')
-    queryContent = [
-        "<?xml version=\"1.0\"?>\n", "<adios-query>\n",
-        "  <io name=\"query\">\n"
-        "  <var name=\"T\">\n",
-        "    <op value=\"AND\">\n",
-        "      <range  compare=\"LT\" value=\"2.7\"/>\n",
-        "      <range  compare=\"GT\" value=\"2.66\"/>\n", "    </op>\n",
-        "  </var>\n", "  </io>\n", "</adios-query>\n"
-    ]
-    file1.writelines(queryContent)
-    file1.close()
-
-
-if (os.path.exists(dataPath) is False):
-    print("Please generate data file:", dataPath,
-          " from heat transfer example first.")
-else:
-    # configFile created
-    createConfigFile()
-
-    # queryFile Generated
-    createQueryFile()
-
-    print(".. Running query against: ", dataPath)
-    runQuery()
-
-    print("Now clean up.")
+def cleanUp():
+    import os
+    import shutil
     os.remove(queryFile)
-    os.remove(configFile)
+    shutil.rmtree(dataFileName)
+    print ("  Cleanup generated files: ", queryFile, dataFileName)
+
+
+    
+#
+# actual setup:
+#
+writeDataFile()
+
+if ( 0 == rank):
+    createQueryFile();    
+    queryDataFile()
+    cleanUp()
