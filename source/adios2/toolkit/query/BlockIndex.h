@@ -54,7 +54,7 @@ public:
         {
             Dims ss(MinBlocksInfo->Dims);
             Dims cc(MinBlocksInfo->Dims);
-            for (auto i = 0; i < ss.size(); i++)
+            for (std::vector<int>::size_type i = 0; i < ss.size(); i++)
             {
                 ss[i] = blockInfo.Start[i];
                 cc[i] = blockInfo.Count[i];
