@@ -37,14 +37,12 @@ else:
 
 dataFileName= 'test_'+engineType+'.bp'
 def writeDataFile():
-#ADIOS IO
     bpIO = adios.DeclareIO("Writer")
     bpIO.SetEngine(engineType)
 
     ioArray = bpIO.DefineVariable(
         targetVarName, myArray, [size * Nx], [rank * Nx], [Nx], adios2.ConstantDims)
 
-#ADIOS Engine
     bpFileWriter = bpIO.Open(dataFileName, adios2.Mode.Write)
 
     for i in range(numSteps):
@@ -98,8 +96,10 @@ def doAnalysis(reader, touched_blocks, varList):
 
 
 def queryDataFile():
-    adios_nompi = adios2.ADIOS()
+    ## use no mpi
+    adios_nompi = adios2.ADIOS()    
     queryIO = adios_nompi.DeclareIO("query")
+    
     reader = queryIO.Open(dataFileName, adios2.Mode.Read)
     print("dataFile=", dataFileName, "queryFile=", queryFile)    
     
@@ -108,9 +108,9 @@ def queryDataFile():
     print("Num steps: ", reader.Steps())
 
     while (reader.BeginStep() == adios2.StepStatus.OK):
-#bp5 loads metadata after beginstep().so query has to be called per step
+        # bp5 loads metadata after beginstep().so query has to be called per step
         w = adios2.Query(queryFile, reader)
-#say only rank 0 wants to process result
+        # assume only rank 0 wants to process result
         var = [queryIO.InquireVariable(targetVarName)]
 
         if (rank == 0):
@@ -135,4 +135,6 @@ writeDataFile()
 
 if ( 0 == rank):
     createQueryFile();
-queryDataFile() cleanUp()
+    
+    queryDataFile()
+    cleanUp()
