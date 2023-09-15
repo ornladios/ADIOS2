@@ -4,7 +4,7 @@ import numpy as np
 import adios2
 import sys
 
-# MPI
+#MPI
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
@@ -16,11 +16,11 @@ numSteps = 5
 queryFile='query.xml'
 targetVarName='var0'
 
-# User data
+#User data
 myArray = np.array([0, 1., 2., 3., 4., 5., 6., 7., 8., 9.])
 Nx = myArray.size
 
-# ADIOS MPI Communicator
+#ADIOS MPI Communicator
 adios = adios2.ADIOS(comm)
 
 supportedEngines=['bp5', 'bp4']                
@@ -37,14 +37,14 @@ else:
 
 dataFileName= 'test_'+engineType+'.bp'
 def writeDataFile():
-    # ADIOS IO
+#ADIOS IO
     bpIO = adios.DeclareIO("Writer")
     bpIO.SetEngine(engineType)
 
     ioArray = bpIO.DefineVariable(
         targetVarName, myArray, [size * Nx], [rank * Nx], [Nx], adios2.ConstantDims)
 
-    # ADIOS Engine
+#ADIOS Engine
     bpFileWriter = bpIO.Open(dataFileName, adios2.Mode.Write)
 
     for i in range(numSteps):
@@ -94,7 +94,7 @@ def doAnalysis(reader, touched_blocks, varList):
                 var.SetSelection(n)
                 reader.Get(var, values, adios2.Mode.Sync)
                 data[var].extend(values)
-                # do analysis with data here
+#do analysis with data here
 
 
 def queryDataFile():
@@ -108,9 +108,9 @@ def queryDataFile():
     print("Num steps: ", reader.Steps())
 
     while (reader.BeginStep() == adios2.StepStatus.OK):
-        #  bp5  loads metadata after beginstep(). so query has to be called per step
+#bp5 loads metadata after beginstep().so query has to be called per step
         w = adios2.Query(queryFile, reader)
-        # say only rank 0 wants to process result
+#say only rank 0 wants to process result
         var = [queryIO.InquireVariable(targetVarName)]
 
         if (rank == 0):
@@ -128,14 +128,11 @@ def cleanUp():
     shutil.rmtree(dataFileName)
     print ("  Cleanup generated files: ", queryFile, dataFileName)
 
-
-    
 #
-# actual setup:
+#actual setup:
 #
 writeDataFile()
 
 if ( 0 == rank):
-    createQueryFile();    
-    queryDataFile()
-    cleanUp()
+    createQueryFile();
+queryDataFile() cleanUp()
