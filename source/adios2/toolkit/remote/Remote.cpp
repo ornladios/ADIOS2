@@ -172,7 +172,7 @@ bool Remote::WaitForGet(GetHandle handle) { return CMCondition_wait(ev_state.cm,
 #else
 
 void Remote::Open(const std::string hostname, const int32_t port, const std::string filename,
-                  const Mode mode){};
+                  const Mode mode, bool RowMajorOrdering){};
 
 void Remote::OpenSimpleFile(const std::string hostname, const int32_t port,
                             const std::string filename){};
