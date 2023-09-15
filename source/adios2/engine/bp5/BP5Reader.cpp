@@ -467,13 +467,15 @@ void BP5Reader::Init()
 
     //  This isn't how we'll trigger remote ops in the end, but a temporary
     //  solution
+    bool RowMajorOrdering = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
     if (!m_Parameters.RemoteDataPath.empty())
     {
-        m_Remote.Open("localhost", 26200, m_Parameters.RemoteDataPath, m_OpenMode);
+        m_Remote.Open("localhost", 26200, m_Parameters.RemoteDataPath, m_OpenMode,
+                      RowMajorOrdering);
     }
     else if (getenv("DoRemote"))
     {
-        m_Remote.Open("localhost", 26200, m_Name, m_OpenMode);
+        m_Remote.Open("localhost", 26200, m_Name, m_OpenMode, RowMajorOrdering);
     }
 }
 

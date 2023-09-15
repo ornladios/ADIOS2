@@ -18,6 +18,7 @@ typedef struct _OpenFileMsg
     int OpenResponseCondition;
     char *FileName;
     RemoteFileMode Mode;
+    int RowMajorOrder;
 } *OpenFileMsg;
 
 typedef struct _OpenResponseMsg

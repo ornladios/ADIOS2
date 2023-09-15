@@ -6,11 +6,13 @@ namespace adios2
 namespace RemoteCommon
 {
 
-FMField OpenFileList[] = {{"OpenResponseCondition", "integer", sizeof(long),
-                           FMOffset(OpenFileMsg, OpenResponseCondition)},
-                          {"FileName", "string", sizeof(char *), FMOffset(OpenFileMsg, FileName)},
-                          {"Mode", "integer", sizeof(RemoteFileMode), FMOffset(OpenFileMsg, Mode)},
-                          {NULL, NULL, 0, 0}};
+FMField OpenFileList[] = {
+    {"OpenResponseCondition", "integer", sizeof(long),
+     FMOffset(OpenFileMsg, OpenResponseCondition)},
+    {"FileName", "string", sizeof(char *), FMOffset(OpenFileMsg, FileName)},
+    {"Mode", "integer", sizeof(RemoteFileMode), FMOffset(OpenFileMsg, Mode)},
+    {"RowMajorOrder", "integer", sizeof(RemoteFileMode), FMOffset(OpenFileMsg, RowMajorOrder)},
+    {NULL, NULL, 0, 0}};
 
 FMStructDescRec OpenFileStructs[] = {{"OpenFile", OpenFileList, sizeof(struct _OpenFileMsg), NULL},
                                      {NULL, NULL, 0, NULL}};
