@@ -1,144 +1,75 @@
 #
+# Distributed under the OSI-approved Apache License, Version 2.0.  See
+# accompanying file Copyright.txt for details.
+#
+# TestNullEngine.py
+#
+#
+# Created on : Apr 11th, 2019
+# Author : William F Godoy godoywf @ornl.gov
+#
+
 from mpi4py import MPI
 import numpy as np
 import adios2
-import sys
 
 # MPI
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
 size = comm.Get_size()
 
-# #######################################
-# #  usage: <exe> [bp4 | bp5=default]  ##
-# #######################################
-numSteps = 5
-queryFile = 'query.xml'
-targetVarName = 'var0'
-
 # User data
-myArray = np.array([0, 1., 2., 3., 4., 5., 6., 7., 8., 9.])
-Nx = myArray.size
+Nx = 10
+Ny = 10
 
-# ADIOS MPI Communicator
+count = [Nx, Ny]
+start = [rank * Nx, 0]
+shape = [size * Nx, Ny]
+
+temperatures = np.zeros(count, dtype=np.int32)
+
+for i in range(0, Nx):
+    for j in range(0, Ny):
+        temperatures[i, j] = (start[0] + i) * shape[1] + (j + start[1])
+
+# ADIOS write
 adios = adios2.ADIOS(comm)
+ioWrite = adios.DeclareIO("ioWriter")
 
-supportedEngines = ['bp5', 'bp4']
-engineType = 'bp5'
-if (len(sys.argv) > 1):
-    engineType = sys.argv[1].lower()
+varTemperature = ioWrite.DefineVariable("temperature2D", temperatures, shape,
+                                        start, count, adios2.ConstantDims)
+ioWrite.SetEngine("NULL")
 
-if (engineType in supportedEngines):
-    if (rank == 0):
-        print('Using engine type:', engineType)
-else:
-    sys.exit('specified engine does not exist')
+nullWriter = ioWrite.Open('NULL_py.bp', adios2.Mode.Write)
 
+assert (nullWriter.Type() == "NullWriter")
 
-dataFileName = 'test_'+engineType+'.bp'
+status = nullWriter.BeginStep()
+assert (status == adios2.StepStatus.OK)
 
+nullWriter.Put(varTemperature, temperatures)
+nullWriter.EndStep()
+nullWriter.Close()
 
-def writeDataFile():
-    bpIO = adios.DeclareIO("Writer")
-    bpIO.SetEngine(engineType)
+# ADIOS2 read
+ioRead = adios.DeclareIO("ioReader")
+ioRead.SetEngine("null")
+nullReader = ioRead.Open('NULL_py.bp', adios2.Mode.Read, MPI.COMM_SELF)
 
-    ioArray = bpIO.DefineVariable(
-        targetVarName, myArray, [size * Nx], [rank * Nx],
-        [Nx], adios2.ConstantDims)
+assert (nullReader.Type() == "NullReader")
 
-    bpFileWriter = bpIO.Open(dataFileName, adios2.Mode.Write)
+inTemperatures = np.zeros(1, dtype=np.int32)
 
-    for i in range(numSteps):
-        bpFileWriter.BeginStep()
-        bpFileWriter.Put(ioArray, i*10.0 + myArray/(rank+1), adios2.Mode.Sync)
-        bpFileWriter.EndStep()
+status = nullReader.BeginStep()
+assert (status == adios2.StepStatus.EndOfStream)
 
-    bpFileWriter.Close()
+var_inTemperature = ioRead.InquireVariable("temperature2D")
 
+if (var_inTemperature is True):
+    raise ValueError('var_inTemperature is not False')
 
-def createQueryFile():
-    print(".. Writing query file to: ", queryFile)
+# nullReader.Get(var_inTemperature, inTemperatures)
 
-    file1 = open(queryFile, 'w')
-    queryContent = [
-        "<?xml version=\"1.0\"?>\n", "<adios-query>\n",
-        "  <io name=\"query\">\n"
-        "  <var name=\""+targetVarName+"\">\n",
-        "    <op value=\"AND\">\n",
-        "      <range  compare=\"LT\" value=\"15.0\"/>\n",
-        "      <range  compare=\"GT\" value=\"4.0\"/>\n", "    </op>\n",
-        "  </var>\n", "  </io>\n", "</adios-query>\n"
-    ]
-    file1.writelines(queryContent)
-    file1.close()
-
-
-def doAnalysis(reader, touched_blocks, varList):
-    print(" Step: ", reader.CurrentStep(),
-          "  num touched blocks: ", len(touched_blocks))
-    if (0 == reader.CurrentStep()):
-        assert (len(touched_blocks) == min(size, 2))
-    if (1 == reader.CurrentStep()):
-        assert (len(touched_blocks) == size)
-    if (1 < reader.CurrentStep()):
-        assert (len(touched_blocks) == 0)
-
-    values = []
-    data = {}
-
-    for var in varList:
-        data[var] = []
-
-    if (len(touched_blocks) > 0):
-        for n in touched_blocks:
-            for var in varList:
-                values = np.zeros(n[1], dtype=np.double)
-                var.SetSelection(n)
-                reader.Get(var, values, adios2.Mode.Sync)
-                data[var].extend(values)
-
-
-def queryDataFile():
-    # # use no mpi
-    adios_nompi = adios2.ADIOS()
-    queryIO = adios_nompi.DeclareIO("query")
-
-    reader = queryIO.Open(dataFileName, adios2.Mode.Read)
-    print("dataFile=", dataFileName, "queryFile=", queryFile)
-    touched_blocks = []
-
-    print("Num steps: ", reader.Steps())
-
-    while (reader.BeginStep() == adios2.StepStatus.OK):
-        # bp5 loads metadata after beginstep(),
-        # therefore query has to be called per step
-        w = adios2.Query(queryFile, reader)
-        # assume only rank 0 wants to process result
-        var = [queryIO.InquireVariable(targetVarName)]
-
-        if (rank == 0):
-            touched_blocks = w.GetResult()
-            doAnalysis(reader, touched_blocks, var)
-
-        reader.EndStep()
-    reader.Close()
-
-
-def cleanUp():
-    import os
-    import shutil
-    os.remove(queryFile)
-    shutil.rmtree(dataFileName)
-    print("  Cleanup generated files: ", queryFile, dataFileName)
-
-#
-# actual setup:
-#
-
-
-writeDataFile()
-
-if (0 == rank):
-    createQueryFile()
-    queryDataFile()
-    cleanUp()
+nullReader.PerformGets()
+nullReader.EndStep()
+nullReader.Close()
