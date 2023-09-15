@@ -35,7 +35,7 @@ else:
     sys.exit('specified engine does not exist')
 
 
-dataFileName = 'test_'+engineType+'.bp'
+dataFileName = 'test_' + engineType + '.bp'
 
 
 def writeDataFile():
@@ -50,7 +50,7 @@ def writeDataFile():
 
     for i in range(numSteps):
         bpFileWriter.BeginStep()
-        bpFileWriter.Put(ioArray, i*10.0 + myArray/(rank+1), adios2.Mode.Sync)
+        bpFileWriter.Put(ioArray, i * 10.0 + myArray / (rank + 1), adios2.Mode.Sync)
         bpFileWriter.EndStep()
 
     bpFileWriter.Close()
@@ -63,7 +63,7 @@ def createQueryFile():
     queryContent = [
         "<?xml version=\"1.0\"?>\n", "<adios-query>\n",
         "  <io name=\"query\">\n"
-        "  <var name=\""+targetVarName+"\">\n",
+        "  <var name=\"" + targetVarName + "\">\n",
         "    <op value=\"AND\">\n",
         "      <range  compare=\"LT\" value=\"15.0\"/>\n",
         "      <range  compare=\"GT\" value=\"4.0\"/>\n", "    </op>\n",
