@@ -72,7 +72,7 @@ void Remote::InitCMData()
 }
 
 void Remote::Open(const std::string hostname, const int32_t port, const std::string filename,
-                  const Mode mode)
+                  const Mode mode, bool RowMajorOrdering)
 {
 
     RemoteCommon::_OpenFileMsg open_msg;
@@ -102,6 +102,7 @@ void Remote::Open(const std::string hostname, const int32_t port, const std::str
         break;
     }
     open_msg.OpenResponseCondition = CMCondition_get(ev_state.cm, m_conn);
+    open_msg.RowMajorOrder = RowMajorOrdering;
     CMCondition_set_client_data(ev_state.cm, open_msg.OpenResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.OpenFileFormat, &open_msg);
     CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition);
@@ -171,7 +172,7 @@ bool Remote::WaitForGet(GetHandle handle) { return CMCondition_wait(ev_state.cm,
 #else
 
 void Remote::Open(const std::string hostname, const int32_t port, const std::string filename,
-                  const Mode mode){};
+                  const Mode mode, bool RowMajorOrdering){};
 
 void Remote::OpenSimpleFile(const std::string hostname, const int32_t port,
                             const std::string filename){};

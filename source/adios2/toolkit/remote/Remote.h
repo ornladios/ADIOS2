@@ -38,7 +38,7 @@ public:
     explicit operator bool() const { return m_Active; }
 
     void Open(const std::string hostname, const int32_t port, const std::string filename,
-              const Mode mode);
+              const Mode mode, bool RowMajorOrdering);
 
     void OpenSimpleFile(const std::string hostname, const int32_t port, const std::string filename);
 

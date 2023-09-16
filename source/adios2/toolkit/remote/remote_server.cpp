@@ -74,12 +74,14 @@ public:
     size_t m_BytesSent = 0;
     size_t m_OperationCount = 0;
     RemoteFileMode m_mode = RemoteCommon::RemoteFileMode::RemoteOpen;
-    AnonADIOSFile(std::string FileName, RemoteCommon::RemoteFileMode mode)
+    AnonADIOSFile(std::string FileName, RemoteCommon::RemoteFileMode mode, bool RowMajorArrays)
     {
         Mode adios_read_mode = adios2::Mode::Read;
         m_FileName = FileName;
         m_IOname = lf_random_string();
-        m_io = &adios.DeclareIO(m_IOname);
+        ArrayOrdering ArrayOrder =
+            RowMajorArrays ? ArrayOrdering::RowMajor : ArrayOrdering::ColumnMajor;
+        m_io = &adios.DeclareIO(m_IOname, ArrayOrder);
         m_mode = mode;
         if (m_mode == RemoteOpenRandomAccess)
             adios_read_mode = adios2::Mode::ReadRandomAccess;
@@ -163,7 +165,8 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
     struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
     _OpenResponseMsg open_response_msg;
     std::cout << "Got an open request for file " << open_msg->FileName << std::endl;
-    AnonADIOSFile *f = new AnonADIOSFile(open_msg->FileName, open_msg->Mode);
+    AnonADIOSFile *f =
+        new AnonADIOSFile(open_msg->FileName, open_msg->Mode, open_msg->RowMajorOrder);
     memset(&open_response_msg, 0, sizeof(open_response_msg));
     open_response_msg.FileHandle = f->m_ID;
     open_response_msg.OpenResponseCondition = open_msg->OpenResponseCondition;
