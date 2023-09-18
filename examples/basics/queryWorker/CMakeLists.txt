@@ -17,12 +17,10 @@ if(NOT TARGET adios2_core)
     list(APPEND _components MPI)
   endif()
 
-  find_package(ZeroMQ 4.1 QUIET)
-
   find_package(ADIOS2 REQUIRED COMPONENTS ${_components})
 endif()
 
-if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_DataMan)
+if(ADIOS2_HAVE_MPI)
   add_executable(adios2_basics_queryWorker queryWorker.cpp)
   target_link_libraries(adios2_basics_queryWorker adios2::cxx11_mpi MPI::MPI_C)
   install(TARGETS adios2_basics_queryWorker RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

@@ -1,16 +1,15 @@
+/*
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ */
+
 #include "adios2.h"
 #include <mpi.h>
 
 #include <cstdint>
-#include <iomanip>
 #include <iostream>
-#include <math.h>
-#include <memory>
-#include <stdexcept>
 #include <string>
 #include <vector>
-
-// #include "adios2/toolkit/query/Worker.h"
 
 void queryWithStreaming(adios2::IO &queryIO, std::string &dataFileName, std::string &queryFile)
 {

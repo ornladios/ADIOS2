@@ -11,8 +11,22 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 add_subdirectory(bpReader)
+add_subdirectory(bpThreadWrite)
 add_subdirectory(bpTimeWriter)
 add_subdirectory(bpWriter)
+
+if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
+  add_subdirectory(bpWriteReadCuda)
+endif()
+
+find_package(hip QUIET)
+if(ADIOS2_HAVE_Kokkos_HIP OR hip_FOUND)
+  add_subdirectory(bpWriteReadHip)
+endif()
+
+if(ADIOS2_HAVE_Kokkos)
+  add_subdirectory(bpWriteReadKokkos)
+endif()
 
 if(ADIOS2_HAVE_DataMan)
   add_subdirectory(datamanReader)
@@ -31,6 +45,8 @@ if(ADIOS2_HAVE_HDF5)
     add_subdirectory(hdf5SubFile)
   endif()
 endif()
+
+add_subdirectory(helloWorld)
 
 if(ADIOS2_HAVE_Fortran)
   add_subdirectory(inlineFWriteCppRead)

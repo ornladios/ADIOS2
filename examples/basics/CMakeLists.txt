@@ -3,10 +3,12 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
+if(ADIOS2_HAVE_MPI)
+  add_subdirectory(globalArray1D)
+endif()
 add_subdirectory(globalArrayND)
 add_subdirectory(joinedArray)
 add_subdirectory(localArray)
-if(ADIOS2_HAVE_DATAMAN)
-  add_subdirectory(queryWorker)
-endif()
+add_subdirectory(queryWorker)
 add_subdirectory(values)
+add_subdirectory(variablesShapes)

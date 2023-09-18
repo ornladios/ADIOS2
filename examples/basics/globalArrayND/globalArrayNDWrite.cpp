@@ -94,7 +94,8 @@ int main(int argc, char *argv[])
 
             for (size_t i = 0; i < Nx; i++)
             {
-                row[i] = step * Nx * nproc * 1.0 + rank * Nx * 1.0 + (double)i;
+                row[i] = static_cast<double>(step) * Nx * nproc * 1.0 + rank * Nx * 1.0 +
+                         static_cast<double>(i);
             }
 
             // Make a 2D selection to describe the local dimensions of the
