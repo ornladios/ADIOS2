@@ -164,7 +164,11 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
     OpenFileMsg open_msg = static_cast<OpenFileMsg>(vevent);
     struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
     _OpenResponseMsg open_response_msg;
-    std::cout << "Got an open request for file " << open_msg->FileName << std::endl;
+    std::string strMode = "Streaming";
+    if (open_msg->Mode == RemoteOpenRandomAccess)
+        strMode = "RandomAccess";
+    std::cout << "Got an open request (mode " << strMode << ") for file " << open_msg->FileName
+              << std::endl;
     AnonADIOSFile *f =
         new AnonADIOSFile(open_msg->FileName, open_msg->Mode, open_msg->RowMajorOrder);
     memset(&open_response_msg, 0, sizeof(open_response_msg));
@@ -231,9 +235,11 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
         }
     }
 
-    if (TypeOfVar == adios2::DataType::None)
+    try
     {
-    }
+        if (TypeOfVar == adios2::DataType::None)
+        {
+        }
 #define GET(T)                                                                                     \
     else if (TypeOfVar == helper::GetDataType<T>())                                                \
     {                                                                                              \
@@ -259,8 +265,15 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
         f->m_OperationCount++;                                                                     \
         CMwrite(conn, ev_state->ReadResponseFormat, &Response);                                    \
     }
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
+        ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
 #undef GET
+    }
+    catch (const std::exception &exc)
+    {
+        if (verbose)
+            std::cout << "Returning exception " << exc.what() << " for Get<" << TypeOfVar << ">("
+                      << VarName << ")" << std::endl;
+    }
 }
 
 static void ReadRequestHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
