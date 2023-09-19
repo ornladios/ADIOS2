@@ -24,30 +24,31 @@ to construct a query and evaluate using the engine.
         void GetResultCoverage(adios2::Box<adios2::Dims> &,
                               std::vector<adios2::Box<adios2::Dims>> &touched_blocks);
     }
-			     
 
-Sample Query:
--------------
+A Sample Compound Query:
+----------------------
+
 .. code-block:: xml
-<adios-query>
-  <io name="query">
-   <var name="intV">
-      <boundingbox  start="5" count="80"/>
-       <op value="OR">
-         <range  compare="GT" value="6.6"/>
-         <range  compare="LT" value="-0.17"/>
-         <op value="AND">
-            <range  compare="LT" value="2.9"/>
-            <range  compare="GT" value="2.8"/>
-         </op>
-       </op>
-   </var>
- </io>
-</adios-query>
+
+	<adios-query>
+  	  <io name="query">
+   	  <var name="intV">
+      	    <boundingbox  start="5" count="80"/>
+            <op value="OR">
+              <range  compare="GT" value="6.6"/>
+              <range  compare="LT" value="-0.17"/>
+              <op value="AND">
+                 <range  compare="LT" value="2.9"/>
+                 <range  compare="GT" value="2.8"/>
+              </op>
+            </op>
+          </var>
+          </io>
+        </adios-query>
 		
 
-EXAMPLES:
-=========
+Code EXAMPLES:
+==============
 C++:
 ----
 .. code-block:: c++
@@ -62,7 +63,7 @@ C++:
                   << std::endl;
     }
 
-Full C++ example is here:
+The Full C++ example is here:
     https://github.com/ornladios/ADIOS2/blob/master/examples/query/test.cpp
     
 
