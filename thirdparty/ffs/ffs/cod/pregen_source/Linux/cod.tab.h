@@ -119,7 +119,7 @@
      string_constant = 335,
      floating_constant = 336,
      identifier_ref = 337,
-     type_id = 338,
+     type_identifier = 338,
      enumeration_constant = 339
    };
 #endif
@@ -204,7 +204,7 @@
 #define string_constant 335
 #define floating_constant 336
 #define identifier_ref 337
-#define type_id 338
+#define type_identifier 338
 #define enumeration_constant 339
 
 
@@ -212,7 +212,7 @@
 
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 typedef union YYSTYPE
-#line 187 "cod/cod.y"
+#line 201 "cod/cod.y"
 {
     lx_info info;
     sm_ref reference;

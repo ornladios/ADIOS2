@@ -71,8 +71,7 @@ extern int my_yy_input();
 #endif
 static
 int
-is_defined_type(id)
-char *id;
+is_defined_type(char *id)
 {
     int i = 0;
     while(types && types[i]) {
@@ -83,8 +82,7 @@ char *id;
 }
 static
 int
-is_enumeration_constant(id)
-char *id;
+is_enumeration_constant(char *id)
 {
     int i = 0;
     while(enums && enums[i]) {
@@ -185,7 +183,7 @@ return			{RETURN(RETURN_TOKEN);}
 [A-Za-z_][A-Za-z0-9_]*	{
 				yylval.info.string = create_string_from_yytext();
 				if (is_defined_type(yylval.info.string)) {
-				    RETURN(type_id);
+				    RETURN(type_identifier);
 				} else if (is_enumeration_constant(yylval.info.string)) {
 				    RETURN(enumeration_constant);
 				} else {
@@ -329,7 +327,7 @@ static char *create_string_from_yytext()
 
 static void check_strbuf()
 {
-    int cur_len = string_buf_ptr - string_buffer;
+    intptr_t cur_len = string_buf_ptr - string_buffer;
     if ((cur_len + 1) == buffer_len) {
 	buffer_len += 20;
 	string_buffer = realloc(string_buffer, buffer_len + 1);
@@ -361,87 +359,21 @@ yywrap YY_PROTO(( void ))
 }
 
 
-#ifndef input
 /* flex, not lex */
 void yy_delete_buffer YY_PROTO((YY_BUFFER_STATE b));
 
-#ifdef WINNT
-/* old Windows code for MKS Toolkit version of flex */
-
-static void 
-terminate_string_parse()
-{
-    yyrestart(NULL);
-}
-
-#ifdef YY_USE_PROTOS
-static void *yy_flex_alloc( yy_size_t size )
-#else
-static void *yy_flex_alloc( size )
-yy_size_t size;
-#endif
-	{
-	return (void *) malloc( size );
-	}
-
-static char* current_input_string;
-
-int my_yy_input(buf,result,max_size) {
-
-      if (current_input_string == NULL) 
-      {
-           
-           result = 0;
-      }
-      else
-           if (max_size < strlen(current_input_string)) 
-	   {
-	        memcpy((void*)buf, current_input_string, max_size);
-		current_input_string += max_size;
-		result = max_size;
-	   } else {
-	        int n = strlen(current_input_string);
-		memcpy((void*)buf, current_input_string, n+1);
-		current_input_string = NULL;
-		result = n;
-	   }
-      	  
-/*      printf("my_yy_input buf[%s],result[%d]\n",buf,result);*/
-      return result;
-}
-
-static void
-setup_for_string_parse(string, defined_types, enum_constants)
-const char *string;
-char **defined_types;
-char **enum_constants;
-{
-    type_count = defined_type_count;
-    types = defined_types;
-    enums = enum_constants;
-
-    current_input_string = string;
-    lex_offset = 1;
-    line_count = 1;
-}
-#else
 
 static YY_BUFFER_STATE bb = NULL;
 
 static void
-reset_types_table(defined_types, enumerated_constants)
-char **defined_types;
-char **enumerated_constants;
+reset_types_table(char **defined_types, char **enumerated_constants)
 {
     types = defined_types;
     enums = enumerated_constants;
 }
 
 static void
-setup_for_string_parse(string, defined_types, enum_constants)
-const char *string;
-char **defined_types;
-char **enum_constants;
+setup_for_string_parse(const char *string, char **defined_types, char **enum_constants)
 {
     types = defined_types;
     enums = enum_constants;
@@ -462,5 +394,3 @@ terminate_string_parse()
 	}
 }
 
-#endif
-#endif
