@@ -2,8 +2,9 @@
 ADIOS2 query API
 #################
 
-The query API in ADIOS2 allows a client to pass query in XML or json format,
+The query API in ADIOS2 allows a client to pass a query in XML or json format,
 and get back a list of blocks or subblocks that contains hits. 
+Both BP4 and BP5 engines are supported.  
 
 
 The interface
@@ -19,20 +20,25 @@ to construct a query and evaluate using the engine.
     public:
         // configFile has query, can be either xml or json
         QueryWorker(const std::string &configFile, adios2::Engine &engine);
+
 	// touched_blocks is a list of regions specified by (start, count),
 	// that contains data that satisfies the query file
-        void GetResultCoverage(adios2::Box<adios2::Dims> &,
-                              std::vector<adios2::Box<adios2::Dims>> &touched_blocks);
+        void GetResultCoverage(std::vector<adios2::Box<adios2::Dims>> &touched_blocks);
+    ... 
     }
 
-A Sample Compound Query:
+A Sample Compound Query  
 ----------------------
+
+This query targets a 1D variable "doubleV", data of interest is (x  > 6.6) or (x < -0.17) or (2.8 < x < 2.9) 
+In addition, this query also specied an output region [start=5,count=80]. 
+
 
 .. code-block:: xml
 
 	<adios-query>
   	  <io name="query">
-   	  <var name="intV">
+   	  <var name="doubleV">
       	    <boundingbox  start="5" count="80"/>
             <op value="OR">
               <range  compare="GT" value="6.6"/>
@@ -56,12 +62,12 @@ C++:
     while (reader.BeginStep() == adios2::StepStatus::OK)
     {
         adios2::QueryWorker w = adios2::QueryWorker(queryFile, reader);
-        adios2::Box<adios2::Dims> empty; // no output restriction
-        w.GetResultCoverage(empty, touched_blocks);
+        w.GetResultCoverage(touched_blocks);
 	
         std::cout << " ... now can read out touched blocks ... size=" << touched_blocks.size()
                   << std::endl;
     }
+
 
 The Full C++ example is here:
     https://github.com/ornladios/ADIOS2/blob/master/examples/query/test.cpp
