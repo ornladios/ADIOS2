@@ -101,6 +101,10 @@ public:
                     {
                         adios2::Box<adios2::Dims> currSubBlock =
                             adios2::helper::GetSubBlock(blockInfo.Count, blockInfo.SubBlockInfo, i);
+                        for (size_t d = 0; d < blockInfo.Count.size(); ++d)
+                        {
+                            currSubBlock.first[d] += blockInfo.Start[d];
+                        }
                         if (!query.TouchSelection(currSubBlock.first, currSubBlock.second))
                             continue;
                         hitBlocks.push_back(currSubBlock);
