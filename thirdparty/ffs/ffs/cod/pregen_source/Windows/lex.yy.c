@@ -1431,7 +1431,7 @@ YY_RULE_SETUP
 {
 				yylval.info.string = create_string_from_yytext();
 				if (is_defined_type(yylval.info.string)) {
-				    RETURN(type_id);
+				    RETURN(type_identifier);
 				} else if (is_enumeration_constant(yylval.info.string)) {
 				    RETURN(enumeration_constant);
 				} else {

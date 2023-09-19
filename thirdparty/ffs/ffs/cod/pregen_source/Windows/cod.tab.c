@@ -146,7 +146,7 @@
      string_constant = 335,
      floating_constant = 336,
      identifier_ref = 337,
-     type_id = 338,
+     type_identifier = 338,
      enumeration_constant = 339
    };
 #endif
@@ -231,7 +231,7 @@
 #define string_constant 335
 #define floating_constant 336
 #define identifier_ref 337
-#define type_id 338
+#define type_identifier 338
 #define enumeration_constant 339
 
 
@@ -877,7 +877,7 @@ static const char *const yytname[] =
   "STATIC", "EXTERN_TOKEN", "STRUCT", "ENUM", "UNION", "CONST", "SIZEOF",
   "TYPEDEF", "RETURN_TOKEN", "CONTINUE", "BREAK", "GOTO", "PRINT", "COMMA",
   "DOTDOTDOT", "integer_constant", "character_constant", "string_constant",
-  "floating_constant", "identifier_ref", "type_id", "enumeration_constant",
+  "floating_constant", "identifier_ref", "type_identifier", "enumeration_constant",
   "$accept", "start", "primary_expression", "postfix_expression",
   "argument_expression_list", "unary_expression", "unary_operator",
   "cast_expression", "multiplicative_expression", "additive_expression",

@@ -278,7 +278,7 @@ cod_dup_list(sm_list list)
 %token <info> string_constant
 %token <info> floating_constant
 %token <info> identifier_ref
-%token <info> type_id
+%token <info> type_identifier
 %token <info> enumeration_constant
 
 %type <info> struct_or_union;
@@ -1031,7 +1031,7 @@ type_specifier:
 	    $$->node.type_specifier.lx_srcpos = $1.lx_srcpos;
 	    $$->node.type_specifier.token = STRING;
 	}
-	| type_id {
+	| type_identifier {
 	    $$ = cod_new_identifier();
 	    $$->node.identifier.lx_srcpos = $1.lx_srcpos;
 	    $$->node.identifier.id = $1.string;
