@@ -119,38 +119,6 @@ public:
         }
     }
 
-    /*
-    void RunDefaultBPStat(const QueryVar &query,
-                          std::vector<adios2::Box<adios2::Dims>> &hitBlocks)
-    {
-        size_t currStep = m_IdxReader.CurrentStep();
-        adios2::Dims currShape = m_Var.Shape();
-        if (!query.IsSelectionValid(currShape))
-            return;
-
-        std::vector<typename adios2::core::Variable<T>::BPInfo> varBlocksInfo =
-            m_IdxReader.BlocksInfo(m_Var, currStep);
-
-        for (auto &blockInfo : varBlocksInfo)
-        {
-            if (!query.TouchSelection(blockInfo.Start, blockInfo.Count))
-                continue;
-
-            T min = blockInfo.Min;
-            T max = blockInfo.Max;
-
-            // std::cout<<" min: "<<min<<"  max: "<<max<<std::endl;
-            bool isHit = query.m_RangeTree.CheckInterval(min, max);
-            if (isHit)
-            {
-                adios2::Box<adios2::Dims> box = {blockInfo.Start,
-                                                 blockInfo.Count};
-                hitBlocks.push_back(box);
-            }
-        }
-    }
-    */
-
     Tree m_Content;
 
     // can not be unique_ptr as it changes with bp5 through steps

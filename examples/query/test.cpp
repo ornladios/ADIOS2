@@ -24,8 +24,7 @@ void queryWithStreaming(adios2::IO &queryIO, std::string &dataFileName, std::str
         adios2::QueryWorker w = adios2::QueryWorker(queryFile, reader);
         adios2::Box<adios2::Dims> empty;
         w.GetResultCoverage(empty, touched_blocks);
-        // adios2::Box<adios2::Dims> tt({10,10}, {12,12});
-        // w.GetResultCoverage(tt, touched_blocks);
+
         std::cout << " ... now can read out touched blocks ... size=" << touched_blocks.size()
                   << std::endl;
         for (auto n : touched_blocks)
