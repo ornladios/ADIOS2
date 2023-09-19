@@ -183,7 +183,7 @@ return			{RETURN(RETURN_TOKEN);}
 [A-Za-z_][A-Za-z0-9_]*	{
 				yylval.info.string = create_string_from_yytext();
 				if (is_defined_type(yylval.info.string)) {
-				    RETURN(type_id);
+				    RETURN(type_identifier);
 				} else if (is_enumeration_constant(yylval.info.string)) {
 				    RETURN(enumeration_constant);
 				} else {
