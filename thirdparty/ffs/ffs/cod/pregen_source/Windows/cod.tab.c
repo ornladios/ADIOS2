@@ -387,7 +387,7 @@ extern int yydebug;
     string_constant = 335,         /* string_constant  */
     floating_constant = 336,       /* floating_constant  */
     identifier_ref = 337,          /* identifier_ref  */
-    type_id = 338,                 /* type_id  */
+    type_identifier = 338,                 /* type_id  */
     enumeration_constant = 339     /* enumeration_constant  */
   };
   typedef enum yytokentype yytoken_kind_t;
@@ -508,7 +508,7 @@ enum yysymbol_kind_t
   YYSYMBOL_string_constant = 80,           /* string_constant  */
   YYSYMBOL_floating_constant = 81,         /* floating_constant  */
   YYSYMBOL_identifier_ref = 82,            /* identifier_ref  */
-  YYSYMBOL_type_id = 83,                   /* type_id  */
+  YYSYMBOL_type_identifier = 83,                   /* type_id  */
   YYSYMBOL_enumeration_constant = 84,      /* enumeration_constant  */
   YYSYMBOL_YYACCEPT = 85,                  /* $accept  */
   YYSYMBOL_start = 86,                     /* start  */
@@ -1019,7 +1019,7 @@ static const char *const yytname[] =
   "ENUM", "UNION", "CONST", "SIZEOF", "TYPEDEF", "RETURN_TOKEN",
   "CONTINUE", "BREAK", "GOTO", "PRINT", "COMMA", "DOTDOTDOT",
   "integer_constant", "character_constant", "string_constant",
-  "floating_constant", "identifier_ref", "type_id", "enumeration_constant",
+  "floating_constant", "identifier_ref", "type_identifier", "enumeration_constant",
   "$accept", "start", "primary_expression", "postfix_expression",
   "argument_expression_list", "unary_expression", "unary_operator",
   "cast_expression", "multiplicative_expression", "additive_expression",
@@ -2860,7 +2860,7 @@ yyreduce:
 #line 2861 "cod.tab.c"
     break;
 
-  case 104: /* type_specifier: type_id  */
+  case 104: /* type_specifier: type_identifier  */
 #line 1042 "cod.y"
                   {
 	    (yyval.reference) = cod_new_identifier();
