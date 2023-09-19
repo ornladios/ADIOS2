@@ -14,7 +14,13 @@ QueryWorker::QueryWorker(const std::string &configFile, adios2::Engine &reader)
     delete m;
 }
 
-void QueryWorker::GetResultCoverage(adios2::Box<adios2::Dims> &outputSelection,
+void QueryWorker::GetResultCoverage(std::vector<adios2::Box<adios2::Dims>> &touched_blocks)
+{
+  adios2::Box<adios2::Dims> empty;
+  GetResultCoverage(empty, touched_blocks);
+}
+
+void QueryWorker::GetResultCoverage(const adios2::Box<adios2::Dims> &outputSelection,
                                     std::vector<adios2::Box<adios2::Dims>> &touched_blocks)
 {
     if (m_Worker)

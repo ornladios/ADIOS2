@@ -107,8 +107,7 @@ void BPQueryTest::QueryIntVar(const std::string &fname, adios2::ADIOS &adios,
     {
         adios2::QueryWorker w = adios2::QueryWorker(queryFile, bpReader);
         std::vector<adios2::Box<adios2::Dims>> touched_blocks;
-        adios2::Box<adios2::Dims> empty;
-        w.GetResultCoverage(empty, touched_blocks);
+        w.GetResultCoverage(touched_blocks);
         ASSERT_EQ(touched_blocks.size(), rr[bpReader.CurrentStep()]);
         bpReader.EndStep();
     }
@@ -143,8 +142,7 @@ void BPQueryTest::QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios,
     {
         adios2::QueryWorker w = adios2::QueryWorker(queryFile, bpReader);
         std::vector<adios2::Box<adios2::Dims>> touched_blocks;
-        adios2::Box<adios2::Dims> empty;
-        w.GetResultCoverage(empty, touched_blocks);
+        w.GetResultCoverage(touched_blocks);
         ASSERT_EQ(touched_blocks.size(), rr[bpReader.CurrentStep()]);
         bpReader.EndStep();
     }
@@ -263,7 +261,7 @@ TEST_F(BPQueryTest, BP4)
     std::string engineName = "BP4";
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname(engineName + "4Query1D.bp");
+    const std::string fname(engineName + "Query1D.bp");
 
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);

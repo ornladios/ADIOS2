@@ -22,8 +22,7 @@ void queryWithStreaming(adios2::IO &queryIO, std::string &dataFileName, std::str
     while (reader.BeginStep() == adios2::StepStatus::OK)
     {
         adios2::QueryWorker w = adios2::QueryWorker(queryFile, reader);
-        adios2::Box<adios2::Dims> empty;
-        w.GetResultCoverage(empty, touched_blocks);
+	w.GetResultCoverage(touched_blocks);
 
         std::cout << " ... now can read out touched blocks ... size=" << touched_blocks.size()
                   << std::endl;
