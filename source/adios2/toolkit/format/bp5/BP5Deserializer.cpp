@@ -1948,15 +1948,21 @@ void *BP5Deserializer::GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t Wr
     return writer_meta_base;
 }
 
-MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
+MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelStep)
 {
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
 
     MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, VarRec->GlobalDims);
 
-    const size_t writerCohortSize = WriterCohortSize(Step);
+    size_t AbsStep = RelStep;
+
+    if (m_RandomAccessMode)
+    {
+        AbsStep = VarRec->AbsStepFromRel[RelStep];
+    }
+    const size_t writerCohortSize = WriterCohortSize(AbsStep);
     size_t Id = 0;
-    MV->Step = Step;
+    MV->Step = RelStep;
     MV->Dims = (int)VarRec->DimCount;
     MV->Shape = NULL;
     MV->IsReverseDims = ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
@@ -1981,7 +1987,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
         for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
         {
             MetaArrayRec *writer_meta_base =
-                (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
+                (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
             if (writer_meta_base)
             {
                 MinBlockInfo Blk;
@@ -2007,7 +2013,8 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
     }
     for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
     {
-        MetaArrayRec *writer_meta_base = (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
+        MetaArrayRec *writer_meta_base =
+            (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
         if (writer_meta_base)
         {
             if (MV->Shape == NULL)
@@ -2024,7 +2031,8 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
     Id = 0;
     for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
     {
-        MetaArrayRec *writer_meta_base = (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
+        MetaArrayRec *writer_meta_base =
+            (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
 
         if (!writer_meta_base)
             continue;
