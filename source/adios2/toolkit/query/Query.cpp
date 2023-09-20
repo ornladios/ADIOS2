@@ -310,7 +310,7 @@ void QueryVar::BlockIndexEvaluate(adios2::core::IO &io, adios2::core::Engine &re
     if (varType == adios2::helper::GetDataType<T>())                                               \
     {                                                                                              \
         core::Variable<T> *var = io.InquireVariable<T>(m_VarName);                                 \
-        BlockIndex<T> idx(*var, io, reader);                                                       \
+        BlockIndex<T> idx(var, io, reader);                                                        \
         idx.Evaluate(*this, touchedBlocks);                                                        \
     }
     // ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(declare_type) //skip complex types

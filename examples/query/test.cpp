@@ -12,6 +12,36 @@
 
 // #include "adios2/toolkit/query/Worker.h"
 
+void queryWithStreaming(adios2::IO &queryIO, std::string &dataFileName, std::string &queryFile)
+{
+    adios2::Engine reader = queryIO.Open(dataFileName, adios2::Mode::Read, MPI_COMM_WORLD);
+    // adios2::QueryWorker* worker = NULL;
+    queryIO.SetParameter("StreamReader", "true");
+    std::vector<adios2::Box<adios2::Dims>> touched_blocks;
+
+    while (reader.BeginStep() == adios2::StepStatus::OK)
+    {
+        adios2::QueryWorker w = adios2::QueryWorker(queryFile, reader);
+        w.GetResultCoverage(touched_blocks);
+
+        std::cout << " ... now can read out touched blocks ... size=" << touched_blocks.size()
+                  << std::endl;
+        for (auto n : touched_blocks)
+        {
+            std::ostringstream startStr;
+            std::ostringstream countStr;
+            for (size_t k = 0; k < n.first.size(); k++)
+            {
+                startStr << n.first[k] << " ";
+                countStr << n.second[k] << " ";
+            }
+            std::cout << "\t[" << startStr.str() << "]  [" << countStr.str() << "]" << std::endl;
+        }
+        reader.EndStep();
+    }
+    reader.Close();
+}
+
 int main(int argc, char *argv[])
 {
     int provided;
@@ -47,43 +77,16 @@ int main(int argc, char *argv[])
         adios2::ADIOS ad = adios2::ADIOS(configFileName, MPI_COMM_WORLD);
 
         adios2::IO queryIO = ad.DeclareIO("query");
-        adios2::Engine reader = queryIO.Open(dataFileName, adios2::Mode::Read, MPI_COMM_WORLD);
-#ifdef NEVER
-        adios2::QueryWorker w = adios2::QueryWorker(configFileName, reader);
-#else
+
         std::string queryFile = configFileName;
         if (argc > 3)
         {
             queryFile = argv[3];
         }
         std::cout << "Testing query file  ..." << queryFile << std::endl;
-        adios2::QueryWorker w = adios2::QueryWorker(queryFile, reader);
-#endif
-        std::vector<adios2::Box<adios2::Dims>> touched_blocks;
 
-        while (reader.BeginStep() == adios2::StepStatus::OK)
-        {
-            adios2::Box<adios2::Dims> empty;
-            w.GetResultCoverage(empty, touched_blocks);
-            // adios2::Box<adios2::Dims> tt({10,10}, {12,12});
-            // w.GetResultCoverage(tt, touched_blocks);
-            std::cout << " ... now can read out touched blocks ... size=" << touched_blocks.size()
-                      << std::endl;
-            for (auto n : touched_blocks)
-            {
-                std::ostringstream startStr;
-                std::ostringstream countStr;
-                for (size_t k = 0; k < n.first.size(); k++)
-                {
-                    startStr << n.first[k] << " ";
-                    countStr << n.second[k] << " ";
-                }
-                std::cout << "\t[" << startStr.str() << "]  [" << countStr.str() << "]"
-                          << std::endl;
-            }
-            reader.EndStep();
-        }
-        reader.Close();
+        queryWithStreaming(queryIO, dataFileName, queryFile);
+
         return 0;
     }
     catch (std::exception &e)

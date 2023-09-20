@@ -34,8 +34,6 @@ public:
     explicit operator bool() const noexcept;
 
     std::vector<Box<Dims>> GetResult();
-    // const Box< Dims > & refinedSelectionIfAny,
-    // std::vector< Box< Dims > > &touched_blocks
 
 private:
     Query(adios2::query::Worker *qw);

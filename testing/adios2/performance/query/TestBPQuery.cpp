@@ -14,8 +14,6 @@
 
 #include <gtest/gtest.h>
 
-// #include "../engine/SmallTestData.h"
-
 // std::string engineName; // comes from command line
 
 struct QueryTestData
@@ -98,7 +96,6 @@ void BPQueryTest::QueryIntVar(const std::string &fname, adios2::ADIOS &adios,
     std::string queryFile = "./" + ioName + "test.xml"; //"./test.xml";
     std::cout << ioName << std::endl;
     WriteXmlQuery1D(queryFile, ioName, "intV");
-    adios2::QueryWorker w = adios2::QueryWorker(queryFile, bpReader);
 
     std::vector<size_t> rr;
     if (engineName.compare("BP4") == 0)
@@ -108,9 +105,9 @@ void BPQueryTest::QueryIntVar(const std::string &fname, adios2::ADIOS &adios,
 
     while (bpReader.BeginStep() == adios2::StepStatus::OK)
     {
+        adios2::QueryWorker w = adios2::QueryWorker(queryFile, bpReader);
         std::vector<adios2::Box<adios2::Dims>> touched_blocks;
-        adios2::Box<adios2::Dims> empty;
-        w.GetResultCoverage(empty, touched_blocks);
+        w.GetResultCoverage(touched_blocks);
         ASSERT_EQ(touched_blocks.size(), rr[bpReader.CurrentStep()]);
         bpReader.EndStep();
     }
@@ -135,7 +132,6 @@ void BPQueryTest::QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios,
     // std::string queryFile = "./.test.xml";
     std::string queryFile = "./" + ioName + "test.xml";
     WriteXmlQuery1D(queryFile, ioName, "doubleV");
-    adios2::QueryWorker w = adios2::QueryWorker(queryFile, bpReader);
 
     std::vector<size_t> rr; //= {0,9,9};
     if (engineName.compare("BP4") == 0)
@@ -144,9 +140,9 @@ void BPQueryTest::QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios,
         rr = {0, 1, 1};
     while (bpReader.BeginStep() == adios2::StepStatus::OK)
     {
+        adios2::QueryWorker w = adios2::QueryWorker(queryFile, bpReader);
         std::vector<adios2::Box<adios2::Dims>> touched_blocks;
-        adios2::Box<adios2::Dims> empty;
-        w.GetResultCoverage(empty, touched_blocks);
+        w.GetResultCoverage(touched_blocks);
         ASSERT_EQ(touched_blocks.size(), rr[bpReader.CurrentStep()]);
         bpReader.EndStep();
     }
@@ -234,9 +230,9 @@ void BPQueryTest::WriteFile(const std::string &fname, adios2::ADIOS &adios,
 // 1D  test data
 //******************************************************************************
 
-TEST_F(BPQueryTest, BP3)
+TEST_F(BPQueryTest, BP5)
 {
-    std::string engineName = "BP3";
+    std::string engineName = "BP5";
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
     const std::string fname(engineName + "Query1D.bp");
@@ -265,7 +261,7 @@ TEST_F(BPQueryTest, BP4)
     std::string engineName = "BP4";
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname(engineName + "4Query1D.bp");
+    const std::string fname(engineName + "Query1D.bp");
 
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
