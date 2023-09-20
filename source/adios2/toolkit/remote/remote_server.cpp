@@ -358,7 +358,6 @@ const char *hostname = "localhost";
 
 void connect_and_kill(int ServerPort)
 {
-    RemoteCommon::_OpenSimpleFileMsg open_msg;
     CManager cm = CManager_create();
     _KillServerMsg kill_msg;
     struct Remote_evpath_state ev_state;
