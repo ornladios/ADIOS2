@@ -106,16 +106,17 @@ bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
 
 set(BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.Serial")
  
-add_test(NAME serverSetup   COMMAND remote_server -background)
-set_tests_properties(serverSetup         PROPERTIES FIXTURES_SETUP    Server)
+if (NOT WIN32)
+# prototype for remote server testing
+   add_test(NAME serverSetup   COMMAND $<TARGET_FILE:remote_server> -background)
+   set_tests_properties(serverSetup         PROPERTIES FIXTURES_SETUP    Server)
 
-add_test(NAME serverCleanup COMMAND remote_server -kill_server)
-set_tests_properties(serverCleanup         PROPERTIES FIXTURES_CLEANUP    Server)
+   add_test(NAME serverCleanup COMMAND $<TARGET_FILE:remote_server> -kill_server)
+   set_tests_properties(serverCleanup         PROPERTIES FIXTURES_CLEANUP    Server)
 
-add_test(NAME "REMOTEWriteReadADIOS2stdio"
-          COMMAND Test.Engine.BP.WriteReadADIOS2.Serial bp5)
-set_tests_properties(REMOTEWriteReadADIOS2stdio PROPERTIES FIXTURES_REQUIRED Server ENVIRONMENT "DoRemote=1")
-
+   add_test(NAME "REMOTEWriteReadADIOS2stdio" COMMAND Test.Engine.BP.WriteReadADIOS2.Serial bp5)
+   set_tests_properties(REMOTEWriteReadADIOS2stdio PROPERTIES FIXTURES_REQUIRED Server ENVIRONMENT "DoRemote=1")
+endif()
 
 if(ADIOS2_HAVE_MPI)
   list(APPEND BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.MPI" "Engine.BP.BPLargeMetadata.ManyLongStrings.BP5.MPI")
