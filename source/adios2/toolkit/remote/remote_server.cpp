@@ -354,7 +354,7 @@ void ServerRegisterHandlers(struct Remote_evpath_state &ev_state)
     CMregister_handler(ev_state.KillResponseFormat, KillResponseHandler, &ev_state);
 }
 
-const char *hostname = "localhost";
+static const char *hostname = "localhost";
 
 void connect_and_kill(int ServerPort)
 {
