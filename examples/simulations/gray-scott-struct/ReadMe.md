@@ -1,19 +1,20 @@
-# ADIOS2 gray-scott-struct example
-#
-# This is a version where the computation is on a struct memory type holding U and V
-# instead of having two separate arrays for U and V. It was created for the purpose of
-# testing user defined data types in ADIOS2
-#
+### ADIOS2 gray-scott-struct example
 
 This is a 3D 7-point stencil code to simulate the following [Gray-Scott
 reaction diffusion model](https://doi.org/10.1126/science.261.5118.189):
+
+#### Differences from the gray-scott example
+
+This is a version where the computation is on a struct memory type holding U and V
+instead of having two separate arrays for U and V. It was created for the purpose of
+testing user defined data types in ADIOS2
 
 ```
 u_t = Du * (u_xx + u_yy + u_zz) - u * v^2 + F * (1 - u)
 v_t = Dv * (v_xx + v_yy + v_zz) + u * v^2 - (F + k) * v
 ```
 
-## How to run
+#### How to run
 
 Make sure MPI and ADIOS2 are installed and that the `PYTHONPATH` includes the ADIOS2 package.
 Make sure the adios2/bin installation directory is in the `PATH` (conda and spack installations should take care of this
@@ -57,7 +58,7 @@ $ python3 gsplot.py -i gs.bp
 
 ```
 
-## Analysis example how to run
+#### Analysis example how to run
 
 ```
 $ mpirun -n 4 adios2_simulations_gray-scott-struct settings-files.json
@@ -77,7 +78,7 @@ Each process plots the middle slice of their subarray U/pdf[x:y,:]
 
 ```
 
-## How to change the parameters
+#### How to change the parameters
 
 Edit settings.json to change the parameters for the simulation.
 
@@ -97,7 +98,7 @@ Edit settings.json to change the parameters for the simulation.
 
 Decomposition is automatically determined by MPI_Dims_create.
 
-## Examples
+#### Examples
 
 | D_u | D_v | F    | k      | Output                         |
 |-----|-----|------|--------|--------------------------------|
@@ -107,7 +108,7 @@ Decomposition is automatically determined by MPI_Dims_create.
 | 0.2 | 0.1 | 0.01 | 0.05   | ![](img/example4.jpg?raw=true) |
 | 0.2 | 0.1 | 0.02 | 0.06   | ![](img/example5.jpg?raw=true) |
 
-## In situ pipeline example
+#### In situ pipeline example
 
 In adios2.xml, change all IO groups' engine to SST.
 
@@ -131,7 +132,7 @@ $ mpirun -n 4 adios2_simulations_gray-scott-struct settings-staging.json : \
          -n 1 python3 gsplot.py -i gs.bp
 ```
 
-## In situ batch visualization with ParaView Catalyst
+#### In situ batch visualization with ParaView Catalyst
 
 This requires ADIOS 2.8.0 or later, due to the use of `ParaViewFidesEngine` plugin for ADIOS.
 Internally, this plugin uses the ADIOS inline engine to pass data pointers to ParaView's
@@ -154,7 +155,7 @@ The `gs-pipeline.py` contains the pipeline Catalyst will execute on each step.
 These files are passed as parameters to the engine plugin (see parameters `DataModel` and `Script` in
 the `adios2-inline-plugin.xml` file).
 
-### Build and Run
+##### Build and Run
 
 This example is built as normal (making sure you are using ADIOS v2.8.0 or later)
 and does not have build dependencies on ParaView.

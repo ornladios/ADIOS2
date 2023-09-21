@@ -42,7 +42,7 @@ if(ADIOS2_HAVE_MPI)
     "simulation/settings-staging.json"
     "simulation/settings-inline.json"
     "plot/decomp.py" "plot/gsplot.py" "plot/pdfplot.py"
-    "README.md"
+    "ReadMe.md"
     DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/examples/simulations/gray-scott)
 
   install(DIRECTORY "catalyst" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/examples/simulations/gray-scott)
