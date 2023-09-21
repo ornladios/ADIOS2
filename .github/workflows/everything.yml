@@ -535,8 +535,10 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         config: |
+          paths:
+            - source
           paths-ignore:
-            - source/thirdparty/
+            - source/thirdparty
     - name: Setup
       run: gha/scripts/ci/gh-actions/linux-setup.sh
     - name: Update
