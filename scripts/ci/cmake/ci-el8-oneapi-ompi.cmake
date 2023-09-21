@@ -7,6 +7,9 @@ set(ENV{CXX} icpx)
 set(ENV{FC}  ifort) # oneapi fortran compiler currently has issues
 
 set(dashboard_cache "
+BUILD_TESTING:BOOL=ON
+ADIOS2_BUILD_EXAMPLES:BOOL=ON
+
 ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_Blosc:BOOL=OFF
 ADIOS2_USE_DataMan:BOOL=ON

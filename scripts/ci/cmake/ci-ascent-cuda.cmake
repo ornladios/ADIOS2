@@ -1,6 +1,9 @@
 # Client maintainer: vicente.bolea@kitware.com
 
 set(dashboard_cache "
+BUILD_TESTING:BOOL=ON
+ADIOS2_BUILD_EXAMPLES:BOOL=ON
+
 ADIOS2_USE_BZip2:BOOL=OFF
 ADIOS2_USE_CUDA:BOOL=ON
 ADIOS2_USE_DataMan:BOOL=ON

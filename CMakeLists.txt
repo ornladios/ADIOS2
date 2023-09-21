@@ -137,7 +137,6 @@ if((NOT BUILD_SHARED_LIBS) AND (NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE))
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
-include(CTest)
 
 adios_option(Blosc2     "Enable support for c-blosc-2 transforms" AUTO)
 adios_option(BZip2      "Enable support for BZip2 transforms" AUTO)
@@ -293,11 +292,15 @@ if(MSVC AND BUILD_SHARED_LIBS AND ADIOS2_HAVE_HDF5)
   add_definitions(-DH5_BUILT_AS_DYNAMIC_LIB=1)
 endif()
 
+# Ctest creates BUILD_TESTING option and sets it to true by default
+# Here we disable BUILD_TESTING option by default
+set(BUILD_TESTING OFF CACHE BOOL "Build testing")
+include(CTest)
+mark_as_advanced(BUILD_TESTING)
+
 #------------------------------------------------------------------------------#
 # Third party libraries
 #------------------------------------------------------------------------------#
-include(CTest)
-mark_as_advanced(BUILD_TESTING)
 add_subdirectory(thirdparty)
 
 #------------------------------------------------------------------------------#
@@ -318,7 +321,7 @@ add_subdirectory(plugins)
 #------------------------------------------------------------------------------#
 # Examples
 #------------------------------------------------------------------------------#
-option(ADIOS2_BUILD_EXAMPLES "Build examples" ON)
+option(ADIOS2_BUILD_EXAMPLES "Build examples" OFF)
 if(ADIOS2_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
