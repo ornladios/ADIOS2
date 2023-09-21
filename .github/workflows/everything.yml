@@ -539,14 +539,6 @@ jobs:
             - source
           paths-ignore:
             - source/thirdparty
-
-paths:
-  - sources
-paths-ignore:
-  - sources/deprecated
-  - '**/types'
-  - '**/.budfiles'
-  - '**/lib'
     - name: Setup
       run: gha/scripts/ci/gh-actions/linux-setup.sh
     - name: Update
