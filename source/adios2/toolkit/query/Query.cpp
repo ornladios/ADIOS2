@@ -53,6 +53,77 @@ adios2::Dims split(const std::string &s, char delim)
     return dim;
 }
 
+BlockHit::BlockHit(size_t id) : m_ID(id) {}
+
+BlockHit::BlockHit(size_t id, Box<Dims> &box) : m_ID(id) { m_Regions.push_back(box); }
+
+BlockHit::BlockHit(const BlockHit &cpy)
+{
+    m_ID = cpy.m_ID;
+    m_Regions = cpy.m_Regions;
+}
+
+//
+// return false if no intersection to apply
+//  e.g. different blockID, no overlapped subblocks
+// return true  if has intersection
+//
+// note that BlockHit comparison should match
+// e.g. both are local/global arrays blocks
+//
+bool BlockHit::applyIntersection(const BlockHit &tmp)
+{
+    if (m_ID != tmp.m_ID)
+        return false;
+
+    // local array, no subblock info
+    if (isLocalArrayBlock() || tmp.isLocalArrayBlock())
+        return true;
+
+    // check subblocks:
+    bool overlapped = false;
+    for (auto b : tmp.m_Regions)
+    {
+        for (auto it = m_Regions.begin(); it != m_Regions.end(); it++)
+        {
+            adios2::Box<Dims> curr = QueryBase::GetIntersection(*it, b);
+            if (curr.first.size() != 0) // has intersection
+            {
+                overlapped = true;
+                *it = curr;
+            }
+        }
+    }
+
+    return overlapped;
+}
+
+// return true  if can extended with tmp
+//   e.g. at least same blockID with tmp
+bool BlockHit::applyExtension(const BlockHit &tmp)
+{
+    if (m_ID != tmp.m_ID)
+        return false;
+
+    // check subblocks:
+    for (auto b : tmp.m_Regions)
+    {
+        bool duplicated = false;
+        for (auto box : m_Regions)
+        {
+            if (adios2::helper::IdenticalBoxes(box, b))
+            {
+                duplicated = true;
+                continue;
+            }
+        }
+        if (!duplicated)
+            m_Regions.push_back(b);
+    }
+
+    return true;
+}
+
 void QueryBase::ApplyOutputRegion(std::vector<Box<Dims>> &touchedBlocks,
                                   const adios2::Box<Dims> &referenceRegion)
 {
@@ -97,10 +168,11 @@ bool QueryComposite::AddNode(QueryBase *var)
 }
 
 void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io, adios2::core::Engine &reader,
-                                        std::vector<Box<Dims>> &touchedBlocks)
+                                        // std::vector<Box<Dims>> &touchedBlocks)
+                                        std::vector<BlockHit> &touchedBlocks)
 {
-    auto lf_ApplyAND = [&](std::vector<Box<Dims>> &touched,
-                           const std::vector<Box<Dims>> &curr) -> void {
+    auto lf_ApplyAND = [&](std::vector<BlockHit> &touched,
+                           const std::vector<BlockHit> &curr) -> void {
         if (curr.size() == 0)
         {
             touched.clear();
@@ -112,35 +184,19 @@ void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io, adios2::core::Engi
             bool intersects = false;
             for (auto b : curr)
             {
-                adios2::Box<Dims> curr = GetIntersection(touched[i - 1], b);
-                if (curr.first.size() != 0) // has intersection
+                if (touched[i].applyIntersection(b))
                 {
                     intersects = true;
                     break;
                 }
             }
             if (!intersects)
-                // it = touched.erase(it);
                 touched.erase(touched.begin() + i - 1);
-            // if (touched.end() == it)
-            // break;
-        }
-
-        for (auto b : curr)
-        {
-            for (auto it = touched.begin(); it != touched.end(); it++)
-            {
-                adios2::Box<Dims> curr = GetIntersection(*it, b);
-                if (curr.first.size() != 0) // has intersection
-                {
-                    *it = curr;
-                }
-            }
         }
     }; // lf_ApplyAND
 
-    auto lf_ApplyOR = [&](std::vector<Box<Dims>> &touched,
-                          const std::vector<Box<Dims>> &curr) -> void {
+    auto lf_ApplyOR = [&](std::vector<BlockHit> &touched,
+                          const std::vector<BlockHit> &curr) -> void {
         if (curr.size() == 0)
             return;
 
@@ -149,7 +205,7 @@ void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io, adios2::core::Engi
             bool duplicated = false;
             for (auto box : touched)
             {
-                if (adios2::helper::IdenticalBoxes(box, b))
+                if (box.applyExtension(b))
                 {
                     duplicated = true;
                     continue;
@@ -160,42 +216,6 @@ void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io, adios2::core::Engi
         }
     }; // lf_ApplyOR
 
-    /*
-    auto lf_ApplyRelation = [&](std::vector<Box<Dims>> &collection,
-                                const Box<Dims> &block) -> void {
-        if (adios2::query::Relation::AND == m_Relation)
-        {
-            for (auto it = touchedBlocks.begin(); it != touchedBlocks.end();
-                 it++)
-            {
-                adios2::Box<Dims> curr = GetIntersection(*it, block);
-                // adios2::helper::IntersectionBox(*it, block);
-                if (curr.first.size() == 0) // no intersection
-                  {
-                    it = touchedBlocks.erase(it);
-                    if (touchedBlocks.end() == it)
-                      return;
-                  }
-                else
-                  *it = curr;
-            }
-
-            return;
-        }
-
-        if (adios2::query::Relation::OR == m_Relation)
-        {
-            for (auto box : touchedBlocks)
-            {
-                if (adios2::helper::IdenticalBoxes(box, block))
-                    return;
-            }
-            touchedBlocks.push_back(block);
-            return;
-        }
-    }; // local
-    */
-
     if (m_Nodes.size() == 0)
         return;
 
@@ -203,7 +223,7 @@ void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io, adios2::core::Engi
     for (auto node : m_Nodes)
     {
         counter++;
-        std::vector<Box<Dims>> currBlocks;
+        std::vector<BlockHit> currBlocks;
         node->BlockIndexEvaluate(io, reader, currBlocks);
         if (counter == 1)
         {
@@ -227,9 +247,6 @@ void QueryComposite::BlockIndexEvaluate(adios2::core::IO &io, adios2::core::Engi
         else if (adios2::query::Relation::OR == m_Relation)
             lf_ApplyOR(touchedBlocks, currBlocks);
     }
-    // plan to shift all var results to regions start at 0, and find out the
-    // overlapped regions boxes can be different size especially if they are
-    // from BP3
 }
 
 bool QueryVar::IsSelectionValid(adios2::Dims &shape) const
@@ -245,14 +262,6 @@ bool QueryVar::IsSelectionValid(adios2::Dims &shape) const
         return false; // different dimension
     }
 
-    /*
-    for (size_t i = 0; i < shape.size(); i++)
-    {
-        if ((m_Selection.first[i] > shape[i]) ||
-            (m_Selection.second[i] > shape[i]))
-            return false;
-    }
-    */
     return true;
 }
 
@@ -298,12 +307,9 @@ bool QueryVar::TouchSelection(adios2::Dims &start, adios2::Dims &count) const
 }
 
 void QueryVar::BlockIndexEvaluate(adios2::core::IO &io, adios2::core::Engine &reader,
-                                  std::vector<Box<Dims>> &touchedBlocks)
+                                  std::vector<BlockHit> &touchedBlocks)
 {
     const DataType varType = io.InquireVariableType(m_VarName);
-
-    // Variable<int> var = io.InquireVariable<int>(m_VarName);
-    // BlockIndex<int> idx(io, reader);
 
     // var already exists when loading query. skipping validity checking
 #define declare_type(T)                                                                            \
@@ -320,7 +326,14 @@ void QueryVar::BlockIndexEvaluate(adios2::core::IO &io, adios2::core::Engine &re
     if (touchedBlocks.size() > 0)
     {
         LimitToSelection(touchedBlocks);
-        ApplyOutputRegion(touchedBlocks, m_Selection);
+
+        for (auto blk : touchedBlocks)
+        {
+            if (!blk.isLocalArrayBlock())
+            {
+                ApplyOutputRegion(blk.m_Regions, m_Selection);
+            }
+        }
     }
 }
 } // namespace query
