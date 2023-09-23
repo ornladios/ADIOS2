@@ -82,6 +82,20 @@ QueryVar *Worker::GetBasicVarQuery(adios2::core::IO &currentIO, const std::strin
     return nullptr;
 }
 
+void Worker::GetResultCoverage(std::vector<size_t> &touchedBlockIDs)
+{
+    touchedBlockIDs.clear();
+
+    std::vector<BlockHit> blockHits;
+    if (m_Query && m_SourceReader)
+    {
+        m_Query->BlockIndexEvaluate(m_SourceReader->m_IO, *m_SourceReader, blockHits);
+    }
+
+    for (auto blk : blockHits)
+        touchedBlockIDs.push_back(blk.m_ID);
+}
+
 void Worker::GetResultCoverage(const adios2::Box<adios2::Dims> &outputRegion,
                                std::vector<Box<Dims>> &touchedBlocks)
 {
@@ -95,7 +109,11 @@ void Worker::GetResultCoverage(const adios2::Box<adios2::Dims> &outputRegion,
 
     if (m_Query && m_SourceReader)
     {
-        m_Query->BlockIndexEvaluate(m_SourceReader->m_IO, *m_SourceReader, touchedBlocks);
+        std::vector<BlockHit> blockHits;
+        m_Query->BlockIndexEvaluate(m_SourceReader->m_IO, *m_SourceReader, blockHits);
+
+        for (auto blk : blockHits)
+            touchedBlocks.insert(touchedBlocks.end(), blk.m_Regions.begin(), blk.m_Regions.end());
     }
 }
 } // namespace query

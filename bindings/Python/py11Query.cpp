@@ -36,5 +36,12 @@ std::vector<Box<Dims>> Query::GetResult()
     return touched_blocks;
 }
 
+std::vector<size_t> Query::GetBlockIDs()
+{
+    std::vector<size_t> touched_block_ids;
+    m_QueryWorker->GetResultCoverage(touched_block_ids);
+    return touched_block_ids;
+}
+
 } // py11
 } // adios2

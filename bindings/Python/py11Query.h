@@ -34,6 +34,7 @@ public:
     explicit operator bool() const noexcept;
 
     std::vector<Box<Dims>> GetResult();
+    std::vector<size_t> GetBlockIDs();
 
 private:
     Query(adios2::query::Worker *qw);
