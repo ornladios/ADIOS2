@@ -31,10 +31,10 @@ void WriteXmlQuery1D(const std::string &queryFile, const std::string &ioName,
     file << "   <var name=\"" << varName << "\">" << std::endl;
     file << "      <boundingbox  start=\"5\" count=\"80\"/>" << std::endl;
     file << "       <op value=\"OR\">" << std::endl;
-    file << "         <range  compare=\"GT\" value=\"6.6\"/>" << std::endl;
+    file << "         <range  compare=\"GT\" value=\"100.6\"/>" << std::endl;
     file << "         <range  compare=\"LT\" value=\"-0.17\"/>" << std::endl;
     file << "         <op value=\"AND\">" << std::endl;
-    file << "            <range  compare=\"LT\" value=\"2.9\"/>" << std::endl;
+    file << "            <range  compare=\"LT\" value=\"11.9\"/>" << std::endl;
     file << "            <range  compare=\"GT\" value=\"2.8\"/>" << std::endl;
     file << "         </op>" << std::endl;
     file << "       </op>" << std::endl;
@@ -99,7 +99,7 @@ void BPQueryTest::QueryIntVar(const std::string &fname, adios2::ADIOS &adios,
 
     std::vector<size_t> rr;
     if (engineName.compare("BP4") == 0)
-        rr = {9, 9, 9};
+        rr = {2, 1, 1};
     else
         rr = {1, 1, 1};
 
@@ -135,7 +135,7 @@ void BPQueryTest::QueryDoubleVar(const std::string &fname, adios2::ADIOS &adios,
 
     std::vector<size_t> rr; //= {0,9,9};
     if (engineName.compare("BP4") == 0)
-        rr = {0, 9, 9};
+        rr = {0, 3, 1};
     else
         rr = {0, 1, 1};
     while (bpReader.BeginStep() == adios2::StepStatus::OK)
