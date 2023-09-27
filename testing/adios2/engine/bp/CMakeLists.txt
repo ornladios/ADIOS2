@@ -105,17 +105,25 @@ bp_gtest_add_tests_helper(WriteReadAttributesMultirank MPI_ALLOW)
 bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
 
 set(BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.Serial")
- 
-if (NOT WIN32)
+
+if ((NOT WIN32) AND ADIOS2_HAVE_SST)
 # prototype for remote server testing
-   add_test(NAME serverSetup   COMMAND $<TARGET_FILE:remote_server> -background)
-   set_tests_properties(serverSetup         PROPERTIES FIXTURES_SETUP    Server)
+# (we don't really use SST here, just EVPath, but ADIOS2_HAVE_SST is the most relevant conditional)
+   macro(add_remote_tests_helper testname)
+      add_test(NAME "Remote.BP${testname}.GetRemote" COMMAND Test.Engine.BP.${testname}.Serial bp5)
+      set_tests_properties(Remote.BP${testname}.GetRemote PROPERTIES FIXTURES_REQUIRED Server ENVIRONMENT "DoRemote=1")
 
-   add_test(NAME serverCleanup COMMAND $<TARGET_FILE:remote_server> -kill_server)
-   set_tests_properties(serverCleanup         PROPERTIES FIXTURES_CLEANUP    Server)
+      add_test(NAME "Remote.BP${testname}.FileRemote" COMMAND Test.Engine.BP.${testname}.Serial bp5)
+      set_tests_properties(Remote.BP${testname}.FileRemote PROPERTIES FIXTURES_REQUIRED Server ENVIRONMENT "DoFileRemote=1")
+   endmacro()
 
-   add_test(NAME "REMOTEWriteReadADIOS2stdio" COMMAND Test.Engine.BP.WriteReadADIOS2.Serial bp5)
-   set_tests_properties(REMOTEWriteReadADIOS2stdio PROPERTIES FIXTURES_REQUIRED Server ENVIRONMENT "DoRemote=1")
+   add_test(NAME remoteServerSetup   COMMAND remote_server -background)
+   set_tests_properties(remoteServerSetup         PROPERTIES FIXTURES_SETUP    Server)
+
+   add_test(NAME remoteServerCleanup COMMAND remote_server -kill_server)
+   set_tests_properties(remoteServerCleanup         PROPERTIES FIXTURES_CLEANUP    Server)
+
+   add_remote_tests_helper(WriteReadADIOS2stdio)
 endif()
 
 if(ADIOS2_HAVE_MPI)
