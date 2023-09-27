@@ -71,21 +71,61 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
         }
         else
         {
-            if (variable.m_Type == DataType::String)
+            if (!variable.m_MemoryCount.empty())
             {
-                std::string &source = *(std::string *)values;
-                void *p = &(source[0]);
-                m_BP5Serializer->Marshal(
-                    (void *)&variable, variable.m_Name.c_str(), variable.m_Type,
-                    variable.m_ElementSize, DimCount, Shape, Count, Start, &p,
-                    true, nullptr);
+                size_t ObjSize;
+                if (variable.m_Type == DataType::Struct)
+                {
+                    ObjSize = variable.m_ElementSize;
+                }
+                else
+                {
+                    ObjSize = helper::GetDataTypeSize(variable.m_Type);
+                }
+
+                const bool sourceRowMajor = helper::IsRowMajor(m_IO.m_HostLanguage);
+                helper::DimsArray MemoryStart(variable.m_MemoryStart);
+                helper::DimsArray MemoryCount(variable.m_MemoryCount);
+                helper::DimsArray varCount(variable.m_Count);
+
+                int DimCount = (int)variable.m_Count.size();
+                helper::DimsArray ZeroDims(DimCount, (size_t)0);
+                // get a temporary span then fill with memselection now
+                format::BufferV::BufferPos bp5span(0, 0, 0);
+
+                m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(),
+                                         variable.m_Type, variable.m_ElementSize, DimCount, Shape,
+                                         Count, Start, nullptr, false, &bp5span);
+                void *ptr = m_BP5Serializer->GetPtr(bp5span.bufferIdx, bp5span.posInBuffer);
+
+                if (!sourceRowMajor)
+                {
+                    std::reverse(MemoryStart.begin(), MemoryStart.end());
+                    std::reverse(MemoryCount.begin(), MemoryCount.end());
+                    std::reverse(varCount.begin(), varCount.end());
+                }
+                helper::NdCopy((const char *)values, helper::CoreDims(ZeroDims), MemoryCount,
+                               sourceRowMajor, false, (char *)ptr, MemoryStart, varCount,
+                               sourceRowMajor, false, (int)ObjSize, helper::CoreDims(),
+                               helper::CoreDims(), helper::CoreDims(), helper::CoreDims(),
+                               false /* safemode */, variable.m_MemSpace);
             }
             else
             {
-                m_BP5Serializer->Marshal(
-                    (void *)&variable, variable.m_Name.c_str(), variable.m_Type,
-                    variable.m_ElementSize, DimCount, Shape, Count, Start,
-                    values, true, nullptr);
+                if (variable.m_Type == DataType::String)
+                {
+                    std::string &source = *(std::string *)values;
+                    void *p = &(source[0]);
+                    m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(),
+                                             variable.m_Type, variable.m_ElementSize, DimCount,
+                                             Shape, Count, Start, &p, true, nullptr);
+                }
+                else
+                {
+                    m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(),
+                                             variable.m_Type, variable.m_ElementSize, DimCount,
+                                             Shape, Count, Start, values, true, nullptr);
+                }
             }
         }
     }
