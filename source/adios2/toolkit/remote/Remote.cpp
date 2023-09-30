@@ -54,8 +54,8 @@ void Remote::InitCMData()
 {
     std::lock_guard<std::mutex> lockGuard(m_CMInitMutex);
     bool first = true;
-    auto &CM = CManagerSingleton::Instance(first);
-    ev_state.cm = CM.m_cm;
+    auto CM = CManagerSingleton::Instance(first);
+    ev_state.cm = CM->m_cm;
     RegisterFormats(ev_state);
     if (first)
     {

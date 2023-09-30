@@ -106,6 +106,25 @@ bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
 
 set(BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.Serial")
 
+if ((NOT WIN32) AND ADIOS2_HAVE_SST)
+# prototype for remote server testing
+# (we don't really use SST here, just EVPath, but ADIOS2_HAVE_SST is the most relevant conditional)
+   macro(add_remote_tests_helper testname)
+      add_test(NAME "Remote.BP${testname}.GetRemote" COMMAND Test.Engine.BP.${testname}.Serial bp5)
+      set_tests_properties(Remote.BP${testname}.GetRemote PROPERTIES FIXTURES_REQUIRED Server ENVIRONMENT "DoRemote=1")
+   endmacro()
+
+   add_test(NAME remoteServerSetup   COMMAND remote_server -background)
+   set_tests_properties(remoteServerSetup         PROPERTIES FIXTURES_SETUP    Server)
+
+   add_test(NAME remoteServerCleanup COMMAND remote_server -kill_server)
+   set_tests_properties(remoteServerCleanup         PROPERTIES FIXTURES_CLEANUP    Server)
+
+ #add remote tests below this line
+   add_remote_tests_helper(WriteReadADIOS2stdio)
+   add_remote_tests_helper(WriteMemorySelectionRead)
+endif()
+
 if(ADIOS2_HAVE_MPI)
   list(APPEND BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.MPI" "Engine.BP.BPLargeMetadata.ManyLongStrings.BP5.MPI")
 endif()

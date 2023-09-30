@@ -30,6 +30,13 @@ using namespace adios2;
 int verbose = 1;
 ADIOS adios("C++");
 
+size_t TotalSimpleBytesSent = 0;
+size_t TotalGetBytesSent = 0;
+size_t TotalSimpleReads = 0;
+size_t TotalGets = 0;
+size_t SimpleFilesOpened = 0;
+size_t ADIOSFilesOpened = 0;
+
 std::string readable_size(uint64_t size)
 {
     constexpr const char FILE_SIZE_UNITS[8][3]{"B ", "KB", "MB", "GB", "TB", "PB", "EB", "ZB"};
@@ -178,6 +185,7 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
     CMconn_register_close_handler(conn, ConnCloseHandler, NULL);
     ADIOSFileMap[f->m_ID] = f;
     ConnToFileMap.emplace(conn, f->m_ID);
+    ADIOSFilesOpened++;
 }
 
 static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
@@ -198,6 +206,7 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
     CMconn_register_close_handler(conn, ConnCloseHandler, NULL);
     SimpleFileMap[f->m_ID] = f;
     ConnToFileMap.emplace(conn, f->m_ID);
+    SimpleFilesOpened++;
 }
 
 static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
@@ -263,6 +272,8 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
                       << " for Get<" << TypeOfVar << ">(" << VarName << ")" << b << std::endl;     \
         f->m_BytesSent += Response.Size;                                                           \
         f->m_OperationCount++;                                                                     \
+        TotalGetBytesSent += Response.Size;                                                        \
+        TotalGets++;                                                                               \
         CMwrite(conn, ev_state->ReadResponseFormat, &Response);                                    \
     }
         ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
@@ -300,16 +311,78 @@ static void ReadRequestHandler(CManager cm, CMConnection conn, void *vevent, voi
         std::cout << "Returning " << readable_size(Response.Size) << " for Read " << std::endl;
     f->m_BytesSent += Response.Size;
     f->m_OperationCount++;
+    TotalSimpleBytesSent += Response.Size;
+    TotalSimpleReads++;
     CMwrite(conn, ev_state->ReadResponseFormat, &Response);
     free(tmp);
 }
 
-void REVPServerRegisterHandlers(struct Remote_evpath_state &ev_state)
+static void KillServerHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
+                              attr_list attrs)
+{
+    KillServerMsg kill_msg = static_cast<KillServerMsg>(vevent);
+    struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
+    _KillResponseMsg kill_response_msg;
+    memset(&kill_response_msg, 0, sizeof(kill_response_msg));
+    kill_response_msg.KillResponseCondition = kill_msg->KillResponseCondition;
+    std::stringstream Status;
+    Status << "ADIOS files Opened: " << ADIOSFilesOpened << " (" << TotalGets << " gets for "
+           << readable_size(TotalGetBytesSent) << ")  Simple files opened: " << SimpleFilesOpened
+           << " (" << TotalSimpleReads << " reads for " << readable_size(TotalSimpleBytesSent)
+           << ")";
+    kill_response_msg.Status = strdup(Status.str().c_str());
+    CMwrite(conn, ev_state->KillResponseFormat, &kill_response_msg);
+    free(kill_response_msg.Status);
+    exit(0);
+}
+
+static void KillResponseHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
+                                attr_list attrs)
+{
+    KillResponseMsg kill_response_msg = static_cast<KillResponseMsg>(vevent);
+    std::cout << "Server final status: " << kill_response_msg->Status << std::endl;
+    exit(0);
+}
+
+void ServerRegisterHandlers(struct Remote_evpath_state &ev_state)
 {
     CMregister_handler(ev_state.OpenFileFormat, OpenHandler, &ev_state);
     CMregister_handler(ev_state.OpenSimpleFileFormat, OpenSimpleHandler, &ev_state);
     CMregister_handler(ev_state.GetRequestFormat, GetRequestHandler, &ev_state);
     CMregister_handler(ev_state.ReadRequestFormat, ReadRequestHandler, &ev_state);
+    CMregister_handler(ev_state.KillServerFormat, KillServerHandler, &ev_state);
+    CMregister_handler(ev_state.KillResponseFormat, KillResponseHandler, &ev_state);
+}
+
+static const char *hostname = "localhost";
+
+void connect_and_kill(int ServerPort)
+{
+    CManager cm = CManager_create();
+    _KillServerMsg kill_msg;
+    struct Remote_evpath_state ev_state;
+    attr_list contact_list = create_attr_list();
+    atom_t CM_IP_PORT = -1;
+    atom_t CM_IP_HOSTNAME = -1;
+    CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
+    CM_IP_PORT = attr_atom_from_string("IP_PORT");
+    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)hostname);
+    add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)ServerPort);
+    CMConnection conn = CMinitiate_conn(cm, contact_list);
+    if (!conn)
+        return;
+
+    ev_state.cm = cm;
+
+    RegisterFormats(ev_state);
+
+    ServerRegisterHandlers(ev_state);
+
+    memset(&kill_msg, 0, sizeof(kill_msg));
+    kill_msg.KillResponseCondition = CMCondition_get(ev_state.cm, conn);
+    CMwrite(conn, ev_state.KillServerFormat, &kill_msg);
+    CMCondition_wait(ev_state.cm, kill_msg.KillResponseCondition);
+    exit(0);
 }
 
 static atom_t CM_IP_PORT = -1;
@@ -318,9 +391,67 @@ int main(int argc, char **argv)
 {
     CManager cm;
     struct Remote_evpath_state ev_state;
+    int background = 0;
+    int kill_server = 0;
 
-    (void)argc;
-    (void)argv;
+    for (int i = 1; i < argc; i++)
+    {
+        if (strcmp(argv[i], "-background") == 0)
+        {
+            background++;
+        }
+        else if (strcmp(argv[i], "-kill_server") == 0)
+        {
+            kill_server++;
+        }
+        if (argv[i][0] == '-')
+        {
+            size_t j = 1;
+            while (argv[i][j] != 0)
+            {
+                if (argv[i][j] == 'v')
+                {
+                    verbose++;
+                }
+                else if (argv[i][j] == 'q')
+                {
+                    verbose--;
+                }
+                j++;
+            }
+        }
+        else
+        {
+            fprintf(stderr, "Unknown argument \"%s\"\n", argv[i]);
+            fprintf(stderr, "Usage:  remote_server [-background] [-kill_server] [-v] [-q]\n");
+            exit(1);
+        }
+    }
+
+    if (kill_server)
+    {
+        connect_and_kill(ServerPort);
+        exit(0);
+    }
+    if (background)
+    {
+        if (verbose)
+        {
+            printf("Forking server to background\n");
+        }
+        if (fork() != 0)
+        {
+            /* I'm the parent, wait a sec to let the child start, then exit */
+            sleep(1);
+            exit(0);
+        }
+        /* I'm the child, close IO FDs so that ctest continues.  No verbosity here */
+        verbose = 0;
+        close(0);
+        close(1);
+        close(2);
+    }
+
     cm = CManager_create();
     CM_IP_PORT = attr_atom_from_string("IP_PORT");
     attr_list listen_list = NULL;
@@ -339,28 +470,9 @@ int main(int argc, char **argv)
     }
     ev_state.cm = cm;
 
-    while (argv[1] && (argv[1][0] == '-'))
-    {
-        size_t i = 1;
-        while (argv[1][i] != 0)
-        {
-            if (argv[1][i] == 'v')
-            {
-                verbose++;
-            }
-            else if (argv[1][i] == 'q')
-            {
-                verbose--;
-            }
-            i++;
-        }
-        argv++;
-        argc--;
-    }
-
     RegisterFormats(ev_state);
 
-    REVPServerRegisterHandlers(ev_state);
+    ServerRegisterHandlers(ev_state);
 
     std::cout << "doing Run Network" << std::endl;
     CMrun_network(cm);

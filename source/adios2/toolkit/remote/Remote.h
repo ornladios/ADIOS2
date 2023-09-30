@@ -69,27 +69,14 @@ public:
 #ifdef ADIOS2_HAVE_SST
     CManager m_cm = NULL;
 #endif
-    static CManagerSingleton &Instance(bool &first)
+    static CManagerSingleton *Instance(bool &first)
     {
-        // Since it's a static variable, if the class has already been created,
-        // it won't be created again.
-        // And it **is** thread-safe in C++11.
-        static CManagerSingleton myInstance;
+        static CManagerSingleton *ptr = new CManagerSingleton();
         static bool internal_first = true;
-        // Return a reference to our instance.
-
         first = internal_first;
         internal_first = false;
-        return myInstance;
+        return ptr;
     }
-
-    // delete copy and move constructors and assign operators
-    CManagerSingleton(CManagerSingleton const &) = delete;            // Copy construct
-    CManagerSingleton(CManagerSingleton &&) = delete;                 // Move construct
-    CManagerSingleton &operator=(CManagerSingleton const &) = delete; // Copy assign
-    CManagerSingleton &operator=(CManagerSingleton &&) = delete;      // Move assign
-
-    // Any other public methods.
 
 protected:
 #ifdef ADIOS2_HAVE_SST
@@ -101,7 +88,6 @@ protected:
 
     ~CManagerSingleton() {}
 #endif
-    // And any other protected methods.
 };
 
 } // end namespace adios2
