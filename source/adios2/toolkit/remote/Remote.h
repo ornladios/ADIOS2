@@ -71,6 +71,8 @@ public:
 #endif
     static CManagerSingleton *Instance(bool &first)
     {
+        static std::mutex init_mutex;
+        const std::lock_guard<std::mutex> lock(init_mutex);
         static CManagerSingleton *ptr = new CManagerSingleton();
         static bool internal_first = true;
         first = internal_first;
