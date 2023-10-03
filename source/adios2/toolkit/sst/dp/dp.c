@@ -74,9 +74,9 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream, struct _SstParams *P
     List = AddDPPossibility(Svcs, CP_Stream, List, LoadDaosDP(), "daos", Params);
 #endif /* SST_HAVE_DAOS */
 
-#ifdef SST_HAVE_MPI
-    List = AddDPPossibility(Svcs, CP_Stream, List, LoadMpiDP(), "mpi", Params);
-#endif /* SST_HAVE_MPI */
+    // #ifdef SST_HAVE_MPI
+    //     List = AddDPPossibility(Svcs, CP_Stream, List, LoadMpiDP(), "mpi", Params);
+    // #endif /* SST_HAVE_MPI */
 
     int SelectedDP = -1;
     int BestPriority = -1;
