@@ -98,6 +98,9 @@ TEST_F(BPExtremeVars, WriteRead)
         {
             EXPECT_EQ(vars.size(), numWrittenVariables);
         }
+        else
+            (void)vars.size(); // kill unused var warning
+
         bpReader.Close();
     }
 }
