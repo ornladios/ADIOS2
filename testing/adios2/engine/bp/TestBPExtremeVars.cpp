@@ -28,6 +28,7 @@ std::string createVariable(adios2::IO &io, int counter, int rank, long unsigned 
     sStream << "Var-" << std::setfill('0') << std::setw(3) << counter << std::setw(3) << "_Rank-"
             << rank;
     adios2::Variable<double> var = io.DefineVariable<double>(sStream.str(), {}, {}, {bufferSize});
+    (void)var; // kill warning
     return sStream.str();
 }
 
