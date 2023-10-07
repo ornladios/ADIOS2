@@ -18,6 +18,28 @@ public:
     BPExtremeVars() = default;
 };
 
+class BPExtremeVars20k : public BPExtremeVars
+{
+};
+class BPExtremeVars10k : public BPExtremeVars
+{
+};
+class BPExtremeVars5k : public BPExtremeVars
+{
+};
+class BPExtremeVars2k : public BPExtremeVars
+{
+};
+class BPExtremeVars1k : public BPExtremeVars
+{
+};
+class BPExtremeVars512 : public BPExtremeVars
+{
+};
+class BPExtremeVars256 : public BPExtremeVars
+{
+};
+
 #include <adios2.h>
 #include <iomanip>
 #include <iostream>
@@ -32,11 +54,10 @@ std::string createVariable(adios2::IO &io, int counter, int rank, long unsigned 
     return sStream.str();
 }
 
-int numVarTotal = -1;
-int numWrittenVariables = 0;
-TEST_F(BPExtremeVars, WriteRead)
+void do_test(size_t numVarTotal)
 {
-    const std::string fname("ExtremeVars");
+    const std::string fname("ExtremeVars" + std::to_string(numVarTotal));
+    int numWrittenVariables = 0;
     int commSize = 1;
     int commRank = 0;
 #if ADIOS2_USE_MPI
@@ -105,6 +126,15 @@ TEST_F(BPExtremeVars, WriteRead)
         bpReader.Close();
     }
 }
+
+TEST_F(BPExtremeVars20k, WriteRead) { do_test(20000); }
+TEST_F(BPExtremeVars10k, WriteRead) { do_test(10000); }
+TEST_F(BPExtremeVars5k, WriteRead) { do_test(5000); }
+TEST_F(BPExtremeVars2k, WriteRead) { do_test(2000); }
+TEST_F(BPExtremeVars1k, WriteRead) { do_test(1000); }
+TEST_F(BPExtremeVars512, WriteRead) { do_test(512); }
+TEST_F(BPExtremeVars256, WriteRead) { do_test(256); }
+
 //******************************************************************************
 // main
 //******************************************************************************
@@ -120,8 +150,6 @@ int main(int argc, char **argv)
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
-
-    numVarTotal = 20000;
 
     if (argc > 1)
     {
