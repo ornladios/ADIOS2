@@ -77,7 +77,7 @@ void do_test(size_t numVarTotal)
         adios2::IO output = adios.DeclareIO("Writer");
         output.SetEngine(engineName);
         adios2::Engine writer = output.Open(fname, adios2::Mode::Write);
-        int numVarLocal = numVarTotal / commSize;
+        int numVarLocal = (int)numVarTotal / commSize;
 
         int counter = 0;
 
