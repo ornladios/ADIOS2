@@ -127,13 +127,13 @@ void do_test(size_t numVarTotal)
     }
 }
 
-TEST_F(BPExtremeVars20k, WriteRead) { do_test(20000); }
-TEST_F(BPExtremeVars10k, WriteRead) { do_test(10000); }
-TEST_F(BPExtremeVars5k, WriteRead) { do_test(5000); }
-TEST_F(BPExtremeVars2k, WriteRead) { do_test(2000); }
-TEST_F(BPExtremeVars1k, WriteRead) { do_test(1000); }
-TEST_F(BPExtremeVars512, WriteRead) { do_test(512); }
-TEST_F(BPExtremeVars256, WriteRead) { do_test(256); }
+TEST_F(BPExtremeVars20k, WriteRead) { do_test(25000); }
+TEST_F(BPExtremeVars10k, WriteRead) { do_test(15000); }
+TEST_F(BPExtremeVars5k, WriteRead) { do_test(5500); }
+TEST_F(BPExtremeVars2k, WriteRead) { do_test(2500); }
+TEST_F(BPExtremeVars1k, WriteRead) { do_test(1500); }
+TEST_F(BPExtremeVars512, WriteRead) { do_test(570); }
+TEST_F(BPExtremeVars256, WriteRead) { do_test(400); }
 
 //******************************************************************************
 // main
