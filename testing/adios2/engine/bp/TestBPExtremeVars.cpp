@@ -63,6 +63,10 @@ void do_test(size_t numVarTotal)
 #if ADIOS2_USE_MPI
     MPI_Comm_size(MPI_COMM_WORLD, &commSize);
     MPI_Comm_rank(MPI_COMM_WORLD, &commRank);
+    if (commRank == 0)
+    {
+        std::cout << "MPI comm size is " << commSize << std::endl;
+    }
 #endif
 
     // -------------
@@ -127,13 +131,13 @@ void do_test(size_t numVarTotal)
     }
 }
 
-TEST_F(BPExtremeVars20k, WriteRead) { do_test(23000); }
-TEST_F(BPExtremeVars10k, WriteRead) { do_test(13000); }
-TEST_F(BPExtremeVars5k, WriteRead) { do_test(5300); }
-TEST_F(BPExtremeVars2k, WriteRead) { do_test(2300); }
-TEST_F(BPExtremeVars1k, WriteRead) { do_test(1300); }
-TEST_F(BPExtremeVars512, WriteRead) { do_test(870); }
-TEST_F(BPExtremeVars256, WriteRead) { do_test(350); }
+TEST_F(BPExtremeVars20k, WriteRead) { do_test(24000); }
+TEST_F(BPExtremeVars10k, WriteRead) { do_test(14000); }
+TEST_F(BPExtremeVars5k, WriteRead) { do_test(5400); }
+TEST_F(BPExtremeVars2k, WriteRead) { do_test(2400); }
+TEST_F(BPExtremeVars1k, WriteRead) { do_test(1400); }
+TEST_F(BPExtremeVars512, WriteRead) { do_test(840); }
+TEST_F(BPExtremeVars256, WriteRead) { do_test(370); }
 
 //******************************************************************************
 // main
