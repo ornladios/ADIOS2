@@ -1,6 +1,6 @@
-*********************************
+**********
 DataSpaces
-*********************************
+**********
 
 The DataSpaces engine for ADIOS2 is experimental. DataSpaces is an asynchronous I/O transfer method within ADIOS that enables 
 low-overhead, high-throughput data extraction from a running simulation. 

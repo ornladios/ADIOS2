@@ -9,9 +9,9 @@ or, set it in client code. For example, here is how to create a hdf5 reader:
 
 .. code-block:: c++
 
- adios2::IO h5IO = adios.DeclareIO("SomeName");
- h5IO.SetEngine("HDF5");
- adios2::Engine h5Reader = h5IO.Open(filename, adios2::Mode::Read);
+  adios2::IO h5IO = adios.DeclareIO("SomeName");
+  h5IO.SetEngine("HDF5");
+  adios2::Engine h5Reader = h5IO.Open(filename, adios2::Mode::Read);
 
 To read back the h5 files generated with VDS to ADIOS2, one can use the HDF5 engine. Please make sure you are using the HDF5 library that has version greater than or equal to 1.11 in ADIOS2.
 
@@ -33,10 +33,11 @@ After the subfile feature is introduced  in HDF5 version 1.14, the ADIOS2 HDF5 e
 
 To use the subfile feature, client needs to support MPI_Init_thread with MPI_THREAD_MULTIPLE. 
 
-Useful parameters from the  HDF lirbary to tune subfiles are:
+Useful parameters from the HDF library to tune subfiles are:
+
 .. code-block:: xml
 		
-H5FD_SUBFILING_IOC_PER_NODE (num of subfiles per node)
-    set H5FD_SUBFILING_IOC_PER_NODE to 0 if the regular h5 file is prefered, before using ADIOS2 HDF5 engine. 
-H5FD_SUBFILING_STRIPE_SIZE
-H5FD_IOC_THREAD_POOL_SIZE
+  H5FD_SUBFILING_IOC_PER_NODE (num of subfiles per node)
+    set H5FD_SUBFILING_IOC_PER_NODE to 0 if the regular h5 file is preferred, before using ADIOS2 HDF5 engine.
+  H5FD_SUBFILING_STRIPE_SIZE
+  H5FD_IOC_THREAD_POOL_SIZE

@@ -323,7 +323,7 @@ PerformsPuts
 
 
 PerformsDataWrite
-------------
+-----------------
 
    If supported by the engine, moves data from prior ``Put`` calls to disk
 
