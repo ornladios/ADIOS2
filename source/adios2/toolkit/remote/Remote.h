@@ -80,10 +80,7 @@ private:
         CMfork_comm_thread(internalEvState.cm);
     }
 
-    ~CManagerSingleton()
-    {
-        CManager_close(m_cm);
-    }
+    ~CManagerSingleton() { CManager_close(m_cm); }
 };
 #endif
 
