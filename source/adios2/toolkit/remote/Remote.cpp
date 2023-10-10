@@ -50,16 +50,22 @@ void ReadResponseHandler(CManager cm, CMConnection conn, void *vevent, void *cli
     return;
 };
 
+CManagerSingleton &CManagerSingleton::Instance(RemoteCommon::Remote_evpath_state &ev_state)
+{
+    static CManagerSingleton self = [&ev_state] {
+        CManagerSingleton instance;
+        ev_state = instance.internalEvState;
+        return instance;
+    }();
+    ev_state = self.internalEvState;
+    return self;
+}
+
 void Remote::InitCMData()
 {
-    std::lock_guard<std::mutex> lockGuard(m_CMInitMutex);
-    bool first = true;
-    auto CM = CManagerSingleton::Instance(first);
-    ev_state.cm = CM->m_cm;
-    RegisterFormats(ev_state);
-    if (first)
-    {
-        CMfork_comm_thread(ev_state.cm);
+    (void)CManagerSingleton::Instance(ev_state);
+    static std::once_flag flag;
+    std::call_once(flag, [&]() {
         CMregister_handler(ev_state.OpenResponseFormat, (CMHandlerFunc)OpenResponseHandler,
                            &ev_state);
         CMregister_handler(ev_state.ReadResponseFormat, (CMHandlerFunc)ReadResponseHandler,
@@ -68,7 +74,7 @@ void Remote::InitCMData()
                            (CMHandlerFunc)OpenSimpleResponseHandler, &ev_state);
         CMregister_handler(ev_state.ReadResponseFormat, (CMHandlerFunc)ReadResponseHandler,
                            &ev_state);
-    }
+    });
 }
 
 void Remote::Open(const std::string hostname, const int32_t port, const std::string filename,
