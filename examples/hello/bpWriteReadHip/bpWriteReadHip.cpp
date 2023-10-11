@@ -120,7 +120,7 @@ int main(int argc, char **argv)
         std::cout << "[BPWrite] error: " << hipGetErrorString(hipExit) << std::endl;
         return 1;
     }
-    const std::vector<std::string> list_of_engines = {"BP4", "BP5"};
+    const std::vector<std::string> list_of_engines = {"BPFile"};
     const size_t N = 6000;
     int nSteps = 2, ret = 0;
 

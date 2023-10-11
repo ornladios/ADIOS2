@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 
         if (config.empty())
         {
-            io.SetEngine("BP4");
+            io.SetEngine("BPFile");
             /* PluginName -> <operator name> is required. If your operator needs
              * other parameters, they can be passed in here as well. */
             adios2::Params params;

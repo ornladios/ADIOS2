@@ -23,7 +23,7 @@ adios = adios2.ADIOS(comm)
 
 # ADIOS IO
 bpIO = adios.DeclareIO("BPFile_N2N")
-bpIO.SetEngine("bp3")
+bpIO.SetEngine("BPFile")
 # bpIO.SetParameters( {"Threads" : "2", "ProfileUnits" : "Microseconds",
 # "InitialBufferSize" : "17Kb"} )
 bpIOParams = {}

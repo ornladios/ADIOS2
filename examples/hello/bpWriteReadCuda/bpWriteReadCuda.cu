@@ -18,7 +18,7 @@
 
 __global__ void update_array(float *vect, int val) { vect[blockIdx.x] += val; }
 
-std::string engine("BP5");
+std::string engine("BPFile");
 
 int BPWrite(const std::string fname, const size_t N, int nSteps, const std::string engine)
 {

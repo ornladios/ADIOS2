@@ -51,11 +51,6 @@ IO::IO(const Settings &s, MPI_Comm comm)
                                        // local size, could be defined later using SetSelection()
                                        {s.ndx, s.ndy});
 
-    if (bpio.EngineType() == "BP3")
-    {
-        varT.SetMemorySelection({{1, 1}, {s.ndx + 2, s.ndy + 2}});
-    }
-
     bpWriter = bpio.Open(m_outputfilename, adios2::Mode::Write, comm);
 
     // Promise that we are not going to change the variable sizes nor add new
@@ -72,17 +67,8 @@ void IO::write(int step, const HeatTransfer &ht, const Settings &s, MPI_Comm com
     // We need to have the vector object here not to destruct here until the end
     // of function.
     // added support for MemorySelection
-    if (bpWriter.Type() == "BP3")
-    {
-        bpWriter.BeginStep();
-        bpWriter.Put<double>(varT, ht.data());
-        bpWriter.EndStep();
-    }
-    else
-    {
-        bpWriter.BeginStep();
-        std::vector<double> v = ht.data_noghost();
-        bpWriter.Put<double>(varT, v.data());
-        bpWriter.EndStep();
-    }
+    bpWriter.BeginStep();
+    std::vector<double> v = ht.data_noghost();
+    bpWriter.Put<double>(varT, v.data());
+    bpWriter.EndStep();
 }
