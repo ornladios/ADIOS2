@@ -46,7 +46,9 @@ varTemperature = ioWrite.DefineVariable(
 )
 
 obpStream = ioWrite.Open("HeatMap2D_py.bp", adios2.Mode.Write)
+obpStream.BeginStep()
 obpStream.Put(varTemperature, temperatures)
+obpStream.EndStep()
 obpStream.Close()
 
 
@@ -54,6 +56,8 @@ if rank == 0:
     ioRead = adios.DeclareIO("ioReader")
 
     ibpStream = ioRead.Open("HeatMap2D_py.bp", adios2.Mode.Read, MPI.COMM_SELF)
+
+    ibpStream.BeginStep()
 
     var_inTemperature = ioRead.InquireVariable("temperature2D")
 
@@ -74,4 +78,5 @@ if rank == 0:
             if (i + 1) % 4 == 0:
                 print()
 
+    ibpStream.EndStep()
     ibpStream.Close()

@@ -48,8 +48,12 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpWriter = bpIO.Open("myVector.bp", adios2::Mode::Write);
 
+        bpWriter.BeginStep();
+
         /** Write variable for buffering */
         bpWriter.Put<float>(bpFloats, myFloats.data());
+
+        bpWriter.EndStep();
 
         /** Create bp file, engine becomes unreachable after this*/
         bpWriter.Close();

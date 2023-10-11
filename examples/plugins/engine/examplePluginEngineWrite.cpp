@@ -16,36 +16,12 @@
 
 #include "adios2.h"
 
-void testStreaming(adios2::Engine &writer, std::vector<float> &myFloats,
-                   adios2::Variable<float> &var)
-{
-    for (int i = 0; i < 2; i++)
-    {
-        if (i == 1)
-        {
-            for (auto &num : myFloats)
-            {
-                num *= 2;
-            }
-        }
-        writer.BeginStep();
-        writer.Put<float>(var, myFloats.data());
-        writer.EndStep();
-    }
-}
-
 int main(int argc, char *argv[])
 {
     std::string config;
     if (argc > 1)
     {
         config = std::string(argv[1]);
-    }
-
-    bool streaming = false;
-    if (argc > 2)
-    {
-        streaming = std::atoi(argv[2]) == 1;
     }
 
     /** Application variable */
@@ -78,14 +54,19 @@ int main(int argc, char *argv[])
         }
         adios2::Engine writer = io.Open("TestPlugin", adios2::Mode::Write);
 
-        if (streaming)
+        // test streaming
+        for (int i = 0; i < 2; i++)
         {
-            testStreaming(writer, myFloats, var);
-        }
-        else
-        {
+            if (i == 1)
+            {
+                for (auto &num : myFloats)
+                {
+                    num *= 2;
+                }
+            }
+            writer.BeginStep();
             writer.Put<float>(var, myFloats.data());
-            writer.PerformPuts();
+            writer.EndStep();
         }
 
         /** Engine becomes unreachable after this*/

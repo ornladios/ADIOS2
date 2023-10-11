@@ -41,5 +41,7 @@ ioArray = bpIO.DefineVariable(
 
 # ADIOS Engine
 bpFileWriter = bpIO.Open("npArray.bp", adios2.Mode.Write)
+bpFileWriter.BeginStep()
 bpFileWriter.Put(ioArray, myArray, adios2.Mode.Sync)
+bpFileWriter.EndStep()
 bpFileWriter.Close()

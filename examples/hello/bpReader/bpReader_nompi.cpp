@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
 
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpReader = bpIO.Open(filename, adios2::Mode::Read);
+        bpReader.BeginStep();
 
         const std::map<std::string, adios2::Params> variables = bpIO.AvailableVariables(true);
 
@@ -67,6 +68,7 @@ int main(int argc, char *argv[])
         {
             std::cout << "There are no integer datasets in " << filename << ".\n";
         }
+        bpReader.EndStep();
 
         /** Close bp file, engine becomes unreachable after this*/
         bpReader.Close();

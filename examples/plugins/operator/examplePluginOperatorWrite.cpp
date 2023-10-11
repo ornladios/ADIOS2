@@ -68,7 +68,9 @@ int main(int argc, char *argv[])
 
         adios2::Engine writer = io.Open("testOperator.bp", adios2::Mode::Write);
 
+        writer.BeginStep();
         writer.Put<double>(var, myDoubles.data());
+        writer.EndStep();
 
         /** Engine becomes unreachable after this*/
         writer.Close();

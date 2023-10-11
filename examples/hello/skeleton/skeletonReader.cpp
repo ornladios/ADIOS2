@@ -53,14 +53,8 @@ int main(int argc, char *argv[])
         adios2::Dims count, start;
         std::vector<float> myArray;
 
-        while (true)
+        while (reader.BeginStep(adios2::StepMode::Read, 60.0f) == adios2::StepStatus::OK)
         {
-            adios2::StepStatus status = reader.BeginStep(adios2::StepMode::Read, 60.0f);
-            if (status != adios2::StepStatus::OK)
-            {
-                break;
-            }
-
             if (step == 0)
             {
                 // this just discovers in the metadata file that the variable
@@ -88,7 +82,7 @@ int main(int argc, char *argv[])
                     start.push_back(settings.offsy);
 
                     vMyArray.SetSelection({start, count});
-                    size_t elementsSize = count[0] * count[1];
+                    const size_t elementsSize = count[0] * count[1];
                     myArray.resize(elementsSize);
                 }
             }

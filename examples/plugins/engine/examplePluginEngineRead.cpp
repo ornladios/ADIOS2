@@ -16,47 +16,12 @@
 
 #include "adios2.h"
 
-void testStreaming(adios2::Engine &reader, std::vector<float> &myFloats,
-                   adios2::Variable<float> &var)
-{
-    for (int i = 0; i < 2; i++)
-    {
-        if (i == 1)
-        {
-            for (auto &num : myFloats)
-            {
-                num *= 2;
-            }
-        }
-
-        reader.BeginStep();
-        std::vector<float> readFloats;
-        reader.Get(var, readFloats);
-        reader.EndStep();
-
-        if (readFloats == myFloats)
-        {
-            std::cout << "data was read correctly!" << std::endl;
-        }
-        else
-        {
-            std::cout << "data was not read correctly!" << std::endl;
-        }
-    }
-}
-
 int main(int argc, char *argv[])
 {
     std::string config;
     if (argc > 1)
     {
         config = std::string(argv[1]);
-    }
-
-    bool streaming = false;
-    if (argc > 2)
-    {
-        streaming = std::atoi(argv[2]) == 1;
     }
 
     std::vector<float> myFloats = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
@@ -82,30 +47,38 @@ int main(int argc, char *argv[])
         }
         adios2::Engine reader = io.Open("TestPlugin", adios2::Mode::Read);
 
-        auto var = io.InquireVariable<float>("data");
-        if (!var)
+        // test streaming
+        for (int i = 0; i < 2; i++)
         {
-            std::cout << "variable does not exist" << std::endl;
-        }
-
-        if (streaming)
-        {
-            testStreaming(reader, myFloats, var);
-        }
-        else
-        {
-            std::vector<float> readFloats;
-            reader.Get<float>(var, readFloats);
-            reader.PerformGets();
-
-            if (readFloats == myFloats)
+            if (i == 1)
             {
-                std::cout << "data was read correctly!" << std::endl;
+                for (auto &num : myFloats)
+                {
+                    num *= 2;
+                }
+            }
+
+            reader.BeginStep();
+            auto var = io.InquireVariable<float>("data");
+            if (!var)
+            {
+                std::cout << "variable does not exist" << std::endl;
             }
             else
             {
-                std::cout << "data was not read correctly!" << std::endl;
+                std::vector<float> readFloats;
+                reader.Get(var, readFloats);
+
+                if (readFloats == myFloats)
+                {
+                    std::cout << "data was read correctly!" << std::endl;
+                }
+                else
+                {
+                    std::cout << "data was not read correctly!" << std::endl;
+                }
             }
+            reader.EndStep();
         }
 
         /** Engine becomes unreachable after this*/

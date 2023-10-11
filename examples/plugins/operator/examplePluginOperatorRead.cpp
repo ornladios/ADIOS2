@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
         /** global array: name, { shape (total dimensions) }, { start (local) },
          * { count (local) }, all are constant dimensions */
         adios2::Engine reader = io.Open("testOperator.bp", adios2::Mode::Read);
+        reader.BeginStep();
         auto var = io.InquireVariable<double>("data");
         if (!var)
         {
@@ -81,6 +82,7 @@ int main(int argc, char *argv[])
         {
             std::cout << "data was not read correctly!" << std::endl;
         }
+        reader.EndStep();
 
         /** Engine becomes unreachable after this*/
         reader.Close();

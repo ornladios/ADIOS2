@@ -90,6 +90,8 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine h5Reader = h5IO.Open(filename, adios2::Mode::Read);
 
+        h5Reader.BeginStep();
+
         const std::map<std::string, adios2::Params> variables = h5IO.AvailableVariables();
 
         for (const auto &variablePair : variables)
@@ -122,6 +124,8 @@ int main(int argc, char *argv[])
 
         // ReadData<float>(h5IO, h5Reader, "h5Floats");
         // ReadData<int>(h5IO, h5Reader, "h5Ints");
+
+        h5Reader.EndStep();
 
         /** Close h5 file, engine becomes unreachable after this*/
         h5Reader.Close();

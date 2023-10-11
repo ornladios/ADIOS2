@@ -68,6 +68,7 @@ int main(int argc, char *argv[])
     adios2_adios *adios = adios2_init_serial();
 #endif
 
+    adios2_step_status err;
     check_handler(adios, "adios");
 
     adios2_io *io = adios2_declare_io(adios, "BPFile_Write");
@@ -90,8 +91,12 @@ int main(int argc, char *argv[])
     adios2_engine *engine = adios2_open(io, "myVector_c.bp", adios2_mode_write);
     check_handler(engine, "engine");
 
+    adios2_begin_step(engine, adios2_step_mode_append, 0.0f, &err);
+
     errio = adios2_put(engine, variable, myFloats, adios2_mode_deferred);
     check_error(errio);
+
+    adios2_end_step(engine);
 
     errio = adios2_close(engine);
     check_error(errio);
