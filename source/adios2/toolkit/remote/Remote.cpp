@@ -52,13 +52,11 @@ void ReadResponseHandler(CManager cm, CMConnection conn, void *vevent, void *cli
 
 CManagerSingleton &CManagerSingleton::Instance(RemoteCommon::Remote_evpath_state &ev_state)
 {
-    static CManagerSingleton self = [&ev_state] {
-        CManagerSingleton instance;
-        ev_state = instance.internalEvState;
-        return instance;
-    }();
-    ev_state = self.internalEvState;
-    return self;
+    std::mutex mtx;
+    const std::lock_guard<std::mutex> lock(mtx);
+    static CManagerSingleton instance;
+    ev_state = instance.internalEvState;
+    return instance;
 }
 
 void Remote::InitCMData()
