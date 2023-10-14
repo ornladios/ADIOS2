@@ -63,32 +63,26 @@ private:
     bool m_Active = false;
 };
 
+#ifdef ADIOS2_HAVE_SST
 class CManagerSingleton
 {
 public:
-#ifdef ADIOS2_HAVE_SST
+    static CManagerSingleton &Instance(RemoteCommon::Remote_evpath_state &ev_state);
+
+private:
     CManager m_cm = NULL;
-#endif
-    static CManagerSingleton *Instance(bool &first)
+    RemoteCommon::Remote_evpath_state internalEvState;
+    CManagerSingleton()
     {
-        static CManagerSingleton *ptr = new CManagerSingleton();
-        static bool internal_first = true;
-        first = internal_first;
-        internal_first = false;
-        return ptr;
+        m_cm = CManager_create();
+        internalEvState.cm = m_cm;
+        RegisterFormats(internalEvState);
+        CMfork_comm_thread(internalEvState.cm);
     }
 
-protected:
-#ifdef ADIOS2_HAVE_SST
-    CManagerSingleton() { m_cm = CManager_create(); }
-
     ~CManagerSingleton() { CManager_close(m_cm); }
-#else
-    CManagerSingleton() {}
-
-    ~CManagerSingleton() {}
-#endif
 };
+#endif
 
 } // end namespace adios2
 
