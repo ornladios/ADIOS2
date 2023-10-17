@@ -407,9 +407,11 @@ if(ADIOS2_USE_SST AND NOT WIN32)
     endif()
   endif()
   if(ADIOS2_HAVE_MPI)
-    set(CMAKE_REQUIRED_LIBRARIES MPI::MPI_C)
-    include(CheckCSourceRuns)
-    check_c_source_runs([=[
+    set(CMAKE_REQUIRED_LIBRARIES "MPI::MPI_C;Threads::Threads")
+    include(CheckCXXSourceRuns)
+    check_cxx_source_runs([=[
+        #include <chrono>
+        #include <future>
         #include <mpi.h>
         #include <stdlib.h>
 
@@ -419,9 +421,18 @@ if(ADIOS2_USE_SST AND NOT WIN32)
 
         int main()
         {
+          // Timeout after 5 second
+          auto task = std::async(std::launch::async, []() {
+                                 std::this_thread::sleep_for(std::chrono::seconds(5));
+                                 exit(EXIT_FAILURE);
+          });
+
+          char* port_name = new char[MPI_MAX_PORT_NAME];
           MPI_Init_thread(NULL, NULL, MPI_THREAD_MULTIPLE, NULL);
-          MPI_Open_port(MPI_INFO_NULL, malloc(sizeof(char) * MPI_MAX_PORT_NAME));
+          MPI_Open_port(MPI_INFO_NULL, port_name);
+          MPI_Close_port(port_name);
           MPI_Finalize();
+          exit(EXIT_SUCCESS);
         }]=]
     ADIOS2_HAVE_MPI_CLIENT_SERVER)
     unset(CMAKE_REQUIRED_LIBRARIES)
