@@ -10,7 +10,7 @@
 #include <string>
 #include <vector>
 
-// returns block ids
+// touched block ids are printed.
 void queryIDs(adios2::IO &queryIO, std::string &dataFileName, std::string &queryFile)
 {
     adios2::Engine reader = queryIO.Open(dataFileName, adios2::Mode::Read, MPI_COMM_WORLD);
