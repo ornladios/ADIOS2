@@ -64,6 +64,12 @@ if [ "${1:0:1}" != "/" ]
 then
   # Convert relative paths to absolute based on DESTDIR
   PREFIX="${DESTDIR:-$(pwd)}/$1"
+else
+  # check if the PREFIX directory exists and prepend DESTDIR if not
+  if [ ! -d "${PREFIX}" ]
+  then
+    PREFIX="${DESTDIR}$1"
+  fi
 fi
 
 shift
