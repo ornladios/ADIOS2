@@ -448,24 +448,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        code: [examples, lammps, tau]
+        code: [lammps, tau]
         include:
-          - code: examples
-            repo: ornladios/ADIOS2-Examples
-            ref: master
           - code: lammps
             repo: pnorbert/lammps
             ref: fix-deprecated-adios-init
           - code: tau
-            repo: ornladios/ADIOS2-Examples
-            ref: master
-
     defaults:
       run:
         shell: bash -c "docker exec adios2-ci bash --login -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
 
     steps:
       - uses: actions/checkout@v4
+        if: ${{ matrix.repo != '' }}
         with:
           repository: ${{ matrix.repo }}
           ref: ${{ matrix.ref }}

@@ -4,4 +4,6 @@
 #------------------------------------------------------------------------------#
 
 add_subdirectory(engine)
-add_subdirectory(operator)
+if(ADIOS2_HAVE_Sodium)
+  add_subdirectory(operator)
+endif()

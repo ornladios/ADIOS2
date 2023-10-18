@@ -13,6 +13,9 @@ find_package(EnvModules REQUIRED)
 env_module(load mpi)
 
 set(dashboard_cache "
+BUILD_TESTING:BOOL=ON
+ADIOS2_BUILD_EXAMPLES:BOOL=ON
+
 ADIOS2_USE_HDF5:STRING=ON
 ADIOS2_USE_MPI:STRING=ON
 
