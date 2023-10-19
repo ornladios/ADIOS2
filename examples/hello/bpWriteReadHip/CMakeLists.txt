@@ -19,7 +19,7 @@ endif()
 
 if(ADIOS2_HAVE_Kokkos_HIP OR hip_FOUND)
   add_executable(adios2_hello_bpWriteReadHip bpWriteReadHip.cpp)
-  target_link_libraries(adios2_hello_bpWriteReadHip adios2::cxx11 hip::runtime)
+  target_link_libraries(adios2_hello_bpWriteReadHip adios2::cxx11 hip::device)
   set_target_properties(adios2_hello_bpWriteReadHip PROPERTIES LANGUAGE "HIP")
   install(TARGETS adios2_hello_bpWriteReadHip RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
