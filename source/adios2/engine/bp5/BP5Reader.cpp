@@ -470,12 +470,12 @@ void BP5Reader::Init()
     bool RowMajorOrdering = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
     if (!m_Parameters.RemoteDataPath.empty())
     {
-        m_Remote.Open("localhost", 26200, m_Parameters.RemoteDataPath, m_OpenMode,
-                      RowMajorOrdering);
+        m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Parameters.RemoteDataPath,
+                      m_OpenMode, RowMajorOrdering);
     }
     else if (getenv("DoRemote"))
     {
-        m_Remote.Open("localhost", 26200, m_Name, m_OpenMode, RowMajorOrdering);
+        m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Name, m_OpenMode, RowMajorOrdering);
     }
 }
 

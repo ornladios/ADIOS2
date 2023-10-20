@@ -1,4 +1,6 @@
+#ifdef ADIOS2_HAVE_SST
 #include "evpath.h"
+#endif
 #include <stddef.h>
 
 namespace adios2
@@ -6,6 +8,9 @@ namespace adios2
 namespace RemoteCommon
 {
 
+const int ServerPort = 26200;
+
+#ifdef ADIOS2_HAVE_SST
 enum RemoteFileMode
 {
     RemoteOpen,
@@ -127,6 +132,7 @@ struct Remote_evpath_state
 };
 
 void RegisterFormats(struct Remote_evpath_state &ev_state);
+#endif
 
 }; // end of namespace remote_common
 }; // end of namespace adios2
