@@ -58,8 +58,12 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpWriter = bpIO.Open("fileAttributes.bp", adios2::Mode::Write);
 
+        bpWriter.BeginStep();
+
         /** Write variable for buffering */
         bpWriter.Put<float>(bpFloats, myFloats.data());
+
+        bpWriter.EndStep();
 
         /** Create bp file, engine becomes unreachable after this*/
         bpWriter.Close();
@@ -68,6 +72,7 @@ int main(int argc, char *argv[])
 
         adios2::Engine bpReaderEngine = bpReader.Open("fileAttributes.bp", adios2::Mode::Read);
 
+        bpReaderEngine.BeginStep();
         const auto attributesInfo = bpReader.AvailableAttributes();
 
         for (const auto &attributeInfoPair : attributesInfo)
@@ -80,6 +85,7 @@ int main(int argc, char *argv[])
             }
             std::cout << "\n";
         }
+        bpReaderEngine.EndStep();
 
         bpReaderEngine.Close();
     }

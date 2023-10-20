@@ -99,6 +99,8 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine h5Reader = h5IO.Open(filename, adios2::Mode::Read);
 
+        h5Reader.BeginStep();
+
         const std::map<std::string, adios2::Params> variables = h5IO.AvailableVariables();
 
         for (const auto &variablePair : variables)
@@ -159,6 +161,7 @@ int main(int argc, char *argv[])
                 //... add more types if needed
             }
         }
+        h5Reader.EndStep();
 
         h5Reader.Close();
     }

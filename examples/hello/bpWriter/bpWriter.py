@@ -23,7 +23,7 @@ adios = adios2.ADIOS(comm)
 
 # ADIOS IO
 bpIO = adios.DeclareIO("BPFile_N2N")
-bpIO.SetEngine("bp3")
+bpIO.SetEngine("BPFile")
 # bpIO.SetParameters( {"Threads" : "2", "ProfileUnits" : "Microseconds",
 # "InitialBufferSize" : "17Kb"} )
 bpIOParams = {}
@@ -41,5 +41,7 @@ ioArray = bpIO.DefineVariable(
 
 # ADIOS Engine
 bpFileWriter = bpIO.Open("npArray.bp", adios2.Mode.Write)
+bpFileWriter.BeginStep()
 bpFileWriter.Put(ioArray, myArray, adios2.Mode.Sync)
+bpFileWriter.EndStep()
 bpFileWriter.Close()

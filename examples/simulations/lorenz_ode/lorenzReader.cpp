@@ -30,6 +30,7 @@ void read_solution()
         return;
     }
     adios2::Engine adios_engine = io.Open("lorenz.bp", adios2::Mode::Read);
+    adios_engine.BeginStep();
     auto sigma_att = io.InquireAttribute<Real>("σ");
     std::cout << "Lorenz system solved with ";
     if (sigma_att)
@@ -105,6 +106,7 @@ void read_solution()
         // For more information than we want:
         // std::cout << solution << "\n";
     }
+    adios_engine.EndStep();
     adios_engine.Close();
 }
 

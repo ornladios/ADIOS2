@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
         // Get io settings from the config file or
         // create one with default settings here
         adios2::IO io = adios.DeclareIO("Output");
-        io.SetEngine("BP5");
+        io.SetEngine("BPFile");
         io.SetParameter("AggregationType", "TwoLevelShm");
         io.SetParameter("AggregatorRatio", "4");
 

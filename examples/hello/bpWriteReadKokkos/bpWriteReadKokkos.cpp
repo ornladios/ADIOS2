@@ -98,7 +98,7 @@ int BPRead(const std::string fname, const size_t N, int nSteps, const std::strin
 
 int main(int argc, char **argv)
 {
-    const std::vector<std::string> list_of_engines = {"BP4", "BP5"};
+    const std::vector<std::string> list_of_engines = {"BPFile"};
     const size_t N = 6000;
     int nSteps = 2, ret = 0;
 

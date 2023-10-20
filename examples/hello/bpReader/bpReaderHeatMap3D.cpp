@@ -87,7 +87,9 @@ int main(int argc, char *argv[])
         /** Will create HeatMap3D.bp */
         adios2::Engine bpWriter = putHeatMap.Open("HeatMap3D.bp", adios2::Mode::Write);
 
+        bpWriter.BeginStep();
         bpWriter.Put(outTemperature, temperatures.data());
+        bpWriter.EndStep();
         bpWriter.Close();
 
         // ************************** READ
@@ -97,6 +99,7 @@ int main(int argc, char *argv[])
             adios2::Engine bpReader =
                 getHeatMap.Open("HeatMap3D.bp", adios2::Mode::Read, MPI_COMM_SELF);
 
+            bpReader.BeginStep();
             // this just discovers in the metadata file that the variable exists
             adios2::Variable<unsigned int> inTemperature =
                 getHeatMap.InquireVariable<unsigned int>("temperature");
@@ -124,6 +127,7 @@ int main(int argc, char *argv[])
                 }
                 std::cout << "\n";
             }
+            bpReader.EndStep();
 
             bpReader.Close();
         }

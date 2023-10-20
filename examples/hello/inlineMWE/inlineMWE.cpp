@@ -31,5 +31,7 @@ int main(int argc, char *argv[])
         std::cout << "Getting data from address " << data << " via inline reader\n";
         reader.EndStep();
     }
+    writer.Close();
+    reader.Close();
     return 0;
 }

@@ -19,12 +19,15 @@
 
 void writer(adios2_adios *adios, const char *greeting)
 {
+    adios2_step_status status;
     adios2_io *io = adios2_declare_io(adios, "hello-world-writer");
     adios2_variable *var_greeting = adios2_define_variable(
         io, "Greeting", adios2_type_string, 0, NULL, NULL, NULL, adios2_constant_dims_true);
 
     adios2_engine *engine = adios2_open(io, "hello-world-c.bp", adios2_mode_write);
+    adios2_begin_step(engine, adios2_step_mode_append, -1., &status);
     adios2_put(engine, var_greeting, greeting, adios2_mode_deferred);
+    adios2_end_step(engine);
     adios2_close(engine);
 }
 

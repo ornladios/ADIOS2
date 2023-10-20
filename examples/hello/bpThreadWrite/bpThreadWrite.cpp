@@ -92,6 +92,7 @@ int main(int argc, char *argv[])
         // elements for last thread, add remainder
         const std::size_t last = stride + nx % nthreads;
 
+        engine.BeginStep();
         // launch threads
         for (std::size_t t = 0; t < nthreads; ++t)
         {
@@ -110,6 +111,7 @@ int main(int argc, char *argv[])
         {
             threadTask.join();
         }
+        engine.EndStep();
 
         engine.Close();
     }

@@ -67,9 +67,11 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpFileWriter = bpIO.Open("myVectorDeferred.bp", adios2::Mode::Write);
 
+        bpFileWriter.BeginStep();
         /** Put variables for buffering, template type is optional */
         bpFileWriter.Put<float>(bpFloats, myFloats.data());
         bpFileWriter.Put(bpInts, myInts.data());
+        bpFileWriter.EndStep();
 
         /** Create bp file, engine becomes unreachable after this*/
         bpFileWriter.Close();

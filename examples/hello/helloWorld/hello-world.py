@@ -24,7 +24,9 @@ def writer(ad, greeting):
     io = ad.DeclareIO("hello-world-writer")
     var_greeting = io.DefineVariable("Greeting")
     w = io.Open(DATA_FILENAME, adios2.Mode.Write)
+    w.BeginStep()
     w.Put(var_greeting, greeting)
+    w.EndStep()
     w.Close()
     return 0
 

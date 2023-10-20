@@ -56,7 +56,7 @@ int main(int argc, char *argv[])
 
         if (config.empty())
         {
-            io.SetEngine("BP4");
+            io.SetEngine("BPFile");
             /* PluginName -> <operator name> is required. If your operator needs
              * other parameters, they can be passed in here as well. */
             adios2::Params params;
@@ -68,7 +68,9 @@ int main(int argc, char *argv[])
 
         adios2::Engine writer = io.Open("testOperator.bp", adios2::Mode::Write);
 
+        writer.BeginStep();
         writer.Put<double>(var, myDoubles.data());
+        writer.EndStep();
 
         /** Engine becomes unreachable after this*/
         writer.Close();

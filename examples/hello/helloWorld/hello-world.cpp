@@ -23,7 +23,9 @@ void writer(adios2::ADIOS &adios, const std::string &greeting)
     adios2::Variable<std::string> varGreeting = io.DefineVariable<std::string>("Greeting");
 
     adios2::Engine writer = io.Open("hello-world-cpp.bp", adios2::Mode::Write);
+    writer.BeginStep();
     writer.Put(varGreeting, greeting);
+    writer.EndStep();
     writer.Close();
 }
 

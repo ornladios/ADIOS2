@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
         {
             // if not defined by user, we can change the default settings
             // BPFile is the default engine
-            inIO.SetEngine("BP3");
+            inIO.SetEngine("BPFile");
             inIO.SetParameters({{"num_threads", "1"}});
 
             // ISO-POSIX file output is the default transport (called "File")

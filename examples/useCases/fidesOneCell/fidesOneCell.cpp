@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
     const int64_t cell[NCELLS * NPOINTS] = {0, 1, 2, 3, 4, 5, 6, 7};
 
     adios2::IO io = adios.DeclareIO("Output");
-    io.SetEngine("BP5");
+    io.SetEngine("BPFile");
 
     /*
      * Define global array: type, name, global dimensions
