@@ -733,7 +733,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
             for (size_t i = 0; i < DimCount; i++)
             {
                 tmpCount.push_back(Count[i]);
-                tmpOffsets.push_back(Offsets[i]);
+                if (Offsets)
+                    tmpOffsets.push_back(Offsets[i]);
             }
             size_t AllocSize = ElemCount * ElemSize + 100;
             BufferV::BufferPos pos = CurDataBuffer->Allocate(AllocSize, ElemSize);
