@@ -78,7 +78,6 @@ Once ADIOS2 is installed refer to:
 
 ADIOS2 is an open source project: Questions, discussion, and contributions are welcome. Join us at:
 
-- Slack workspace: [![Slack](https://img.shields.io/badge/slack-ADIOS2-pink.svg)](https://adios2.spack.io) 
 - Mailing list: adios-ecp@kitware.com 
 - Github Discussions: https://github.com/ornladios/ADIOS2/discussions
 
