@@ -100,8 +100,8 @@ std::string JSONProfiler::GetRankProfilingJSON(
         const profiling::Timer &timer = timerPair.second;
         if (timer.m_nCalls > 0)
         {
-            rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
-                       "\": " + std::to_string(timer.m_ProcessTime) + ", ";
+            rankLog += ",\"" + timer.m_Process + "_" + timer.GetShortUnits() +
+                       "\": " + std::to_string(timer.m_ProcessTime);
             timer.AddToJsonStr(rankLog);
         }
     }
