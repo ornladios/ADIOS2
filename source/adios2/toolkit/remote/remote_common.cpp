@@ -1,3 +1,5 @@
+#include "adios2/common/ADIOSConfig.h"
+
 #include "remote_common.h"
 #include <evpath.h>
 

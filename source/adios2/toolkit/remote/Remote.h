@@ -16,9 +16,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 
-#ifdef ADIOS2_HAVE_SST
 #include "remote_common.h"
-#endif
 
 namespace adios2
 {

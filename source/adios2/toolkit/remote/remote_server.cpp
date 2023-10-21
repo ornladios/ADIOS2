@@ -135,6 +135,7 @@ public:
 std::unordered_map<uint64_t, AnonADIOSFile *> ADIOSFileMap;
 std::unordered_map<uint64_t, AnonSimpleFile *> SimpleFileMap;
 std::unordered_multimap<void *, uint64_t> ConnToFileMap;
+static auto last_service_time = std::chrono::steady_clock::now();
 
 static void ConnCloseHandler(CManager cm, CMConnection conn, void *client_data)
 {
@@ -186,6 +187,7 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
     ADIOSFileMap[f->m_ID] = f;
     ConnToFileMap.emplace(conn, f->m_ID);
     ADIOSFilesOpened++;
+    last_service_time = std::chrono::steady_clock::now();
 }
 
 static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
@@ -207,6 +209,7 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
     SimpleFileMap[f->m_ID] = f;
     ConnToFileMap.emplace(conn, f->m_ID);
     SimpleFilesOpened++;
+    last_service_time = std::chrono::steady_clock::now();
 }
 
 static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
@@ -215,6 +218,7 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
     GetRequestMsg GetMsg = static_cast<GetRequestMsg>(vevent);
     AnonADIOSFile *f = ADIOSFileMap[GetMsg->FileHandle];
     struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
+    last_service_time = std::chrono::steady_clock::now();
     if (f->m_mode == RemoteOpen)
     {
         if (f->currentStep == -1)
@@ -293,6 +297,7 @@ static void ReadRequestHandler(CManager cm, CMConnection conn, void *vevent, voi
     ReadRequestMsg ReadMsg = static_cast<ReadRequestMsg>(vevent);
     AnonSimpleFile *f = SimpleFileMap[ReadMsg->FileHandle];
     struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
+    last_service_time = std::chrono::steady_clock::now();
     if (f->m_CurrentOffset != ReadMsg->Offset)
     {
         lseek(f->m_FileDescriptor, ReadMsg->Offset, SEEK_SET);
@@ -386,13 +391,46 @@ void connect_and_kill(int ServerPort)
 }
 
 static atom_t CM_IP_PORT = -1;
-const int ServerPort = 26200;
+
+static bool server_timeout(void *CMvoid, int time_since_service)
+{
+    CManager cm = (CManager)CMvoid;
+    if (verbose)
+        std::cout << time_since_service << " seconds since last service.\n";
+    if (time_since_service > 600)
+    {
+        if (verbose)
+            std::cout << "Timing out remote server" << std::endl;
+        CManager_close(cm);
+        return true;
+    }
+    return false;
+}
+
+static void timer_start(void *param, unsigned int interval)
+{
+
+    std::thread([param, interval]() {
+        while (true)
+        {
+            auto now = std::chrono::steady_clock::now();
+            auto secs =
+                std::chrono::duration_cast<std::chrono::seconds>(now - last_service_time).count();
+            auto x = now + std::chrono::milliseconds(interval);
+            if (server_timeout(param, secs))
+                return;
+            std::this_thread::sleep_until(x);
+        }
+    }).detach();
+}
+
 int main(int argc, char **argv)
 {
     CManager cm;
     struct Remote_evpath_state ev_state;
     int background = 0;
     int kill_server = 0;
+    int no_timeout = 0; // default to timeout
 
     for (int i = 1; i < argc; i++)
     {
@@ -403,6 +441,10 @@ int main(int argc, char **argv)
         else if (strcmp(argv[i], "-kill_server") == 0)
         {
             kill_server++;
+        }
+        else if (strcmp(argv[i], "-no_timeout") == 0)
+        {
+            no_timeout++;
         }
         if (argv[i][0] == '-')
         {
@@ -423,7 +465,8 @@ int main(int argc, char **argv)
         else
         {
             fprintf(stderr, "Unknown argument \"%s\"\n", argv[i]);
-            fprintf(stderr, "Usage:  remote_server [-background] [-kill_server] [-v] [-q]\n");
+            fprintf(stderr,
+                    "Usage:  remote_server [-background] [-kill_server] [-no_timeout] [-v] [-q]\n");
             exit(1);
         }
     }
@@ -453,6 +496,8 @@ int main(int argc, char **argv)
     }
 
     cm = CManager_create();
+    if (!no_timeout)
+        timer_start((void *)cm, 60 * 1000); // check timeout on 1 minute boundaries
     CM_IP_PORT = attr_atom_from_string("IP_PORT");
     attr_list listen_list = NULL;
 

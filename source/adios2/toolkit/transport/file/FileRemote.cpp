@@ -92,7 +92,7 @@ void FileRemote::Open(const std::string &name, const Mode openMode, const bool a
 
     case Mode::Read: {
         ProfilerStart("open");
-        m_Remote.OpenSimpleFile("localhost", 26200, m_Name);
+        m_Remote.OpenSimpleFile("localhost", RemoteCommon::ServerPort, m_Name);
         ProfilerStop("open");
         m_Size = m_Remote.m_Size;
         break;
