@@ -1974,7 +1974,7 @@ static void hashlittle2(
 {
     static const uint64_t skey[2] = {0xECB8FF2F434B2FBB, 0xB4E298A99A71F723 };
     INT4 output[2];
-    siphash(data, length, &ske4y, (uint8_t*) &output[0], sizeof(output));
+    siphash(data, length, &skey, (uint8_t*) &output[0], sizeof(output));
     *pc = output[0];
     *pb = output[1];
 }
