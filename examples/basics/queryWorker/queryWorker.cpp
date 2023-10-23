@@ -11,7 +11,6 @@
 #include <string>
 #include <vector>
 
-
 // touched block ids are printed.
 void queryIDs(adios2::IO &queryIO, std::string &dataFileName, std::string &queryFile)
 {
