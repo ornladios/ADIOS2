@@ -121,7 +121,6 @@ public:
     virtual bool IsCompatible(const adios2::Box<adios2::Dims> &box) = 0;
     virtual void Print() = 0;
     virtual void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
-                                    // std::vector<Box<Dims>> &touchedBlocks) = 0;
                                     std::vector<BlockHit> &touchedBlocks) = 0;
 
     static Box<Dims> GetIntersection(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
@@ -163,7 +162,6 @@ public:
     std::string &GetVarName() { return m_VarName; }
     void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
                             std::vector<BlockHit> &touchedBlocks);
-    // std::vector<Box<Dims>> &touchedBlocks);
 
     void BroadcastOutputRegion(const adios2::Box<adios2::Dims> &region) { m_OutputRegion = region; }
 
