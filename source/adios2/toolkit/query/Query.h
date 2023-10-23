@@ -93,6 +93,27 @@ public:
     std::vector<RangeTree> m_SubNodes;
 }; // class RangeTree
 
+struct BlockHit
+{
+    BlockHit(size_t id);
+    BlockHit(size_t id, Box<Dims> &box);
+    BlockHit(const BlockHit &cpy);
+
+    size_t m_ID;
+
+    // if no sublocks, m_Regions is start/count of block (if global array). size=1
+    // with subblocks,
+    //    if global array, m_Regions has all the touched sub blocks with (abs) start count
+    //    if local array, because client needs to read whole block, subblocks is ignored
+    //       size=0
+    // items in this vector are assumed to have no intersection.
+    std::vector<Box<Dims>> m_Regions;
+
+    bool isLocalArrayBlock() const { return (0 == m_Regions.size()); }
+    bool applyIntersection(const BlockHit &tmp);
+    bool applyExtension(const BlockHit &tmp);
+};
+
 class QueryBase
 {
 public:
@@ -100,9 +121,9 @@ public:
     virtual bool IsCompatible(const adios2::Box<adios2::Dims> &box) = 0;
     virtual void Print() = 0;
     virtual void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
-                                    std::vector<Box<Dims>> &touchedBlocks) = 0;
+                                    std::vector<BlockHit> &touchedBlocks) = 0;
 
-    Box<Dims> GetIntersection(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
+    static Box<Dims> GetIntersection(const Box<Dims> &box1, const Box<Dims> &box2) noexcept
     {
         Box<Dims> b1 = adios2::helper::StartEndBox(box1.first, box1.second);
         Box<Dims> b2 = adios2::helper::StartEndBox(box2.first, box2.second);
@@ -140,7 +161,8 @@ public:
 
     std::string &GetVarName() { return m_VarName; }
     void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
-                            std::vector<Box<Dims>> &touchedBlocks);
+                            std::vector<BlockHit> &touchedBlocks);
+
     void BroadcastOutputRegion(const adios2::Box<adios2::Dims> &region) { m_OutputRegion = region; }
 
     void Print() { m_RangeTree.Print(); }
@@ -183,6 +205,32 @@ public:
         }
     }
 
+    // only applies to global arrays
+    void LimitToSelection(std::vector<BlockHit> &blockHits)
+    {
+        for (auto i = blockHits.size(); i >= 1; i--)
+        {
+            if (blockHits[i - 1].isLocalArrayBlock())
+                return;
+
+            bool keepBlk = false;
+            for (auto it = blockHits[i - 1].m_Regions.begin();
+                 it != blockHits[i - 1].m_Regions.end(); it++)
+            {
+                Box<Dims> overlap = GetIntersection(m_Selection, *it);
+                if (overlap.first.size() != 0)
+                {
+                    keepBlk = true;
+                    it->first = overlap.first;
+                    it->second = overlap.second;
+                }
+            }
+
+            if (!keepBlk)
+                blockHits.erase(blockHits.begin() + i - 1);
+        }
+    }
+
     RangeTree m_RangeTree;
     adios2::Box<adios2::Dims> m_Selection;
 
@@ -212,7 +260,8 @@ public:
     }
 
     void BlockIndexEvaluate(adios2::core::IO &, adios2::core::Engine &,
-                            std::vector<Box<Dims>> &touchedBlocks);
+                            std::vector<BlockHit> &touchedBlocks);
+    // std::vector<Box<Dims>> &touchedBlocks);
 
     bool AddNode(QueryBase *v);
 

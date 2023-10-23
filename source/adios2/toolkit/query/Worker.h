@@ -42,6 +42,7 @@ public:
 
     adios2::core::Engine *GetSourceReader() { return m_SourceReader; }
 
+    void GetResultCoverage(std::vector<size_t> &);
     void GetResultCoverage(const adios2::Box<adios2::Dims> &, std::vector<Box<adios2::Dims>> &);
 
 protected:

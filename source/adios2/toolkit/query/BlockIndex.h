@@ -12,15 +12,6 @@ namespace query
 template <class T>
 class BlockIndex
 {
-    struct Tree
-    {
-        //
-        // ** no need to keep the original block. might be smaller than
-        // blockIndex typename Variable<T>::BPInfo& m_BlockInfo;
-        //
-        std::vector<typename adios2::core::Variable<T>::BPInfo> m_SubBlockInfo;
-    };
-
 public:
     BlockIndex<T>(adios2::core::Variable<T> *var, adios2::core::IO &io,
                   adios2::core::Engine &reader)
@@ -30,15 +21,20 @@ public:
 
     void Generate(std::string &fromBPFile, const adios2::Params &inputs) {}
 
-    void Evaluate(const QueryVar &query, std::vector<adios2::Box<adios2::Dims>> &resultSubBlocks)
+    void Evaluate(const QueryVar &query, std::vector<BlockHit> &resultBlockIDs)
     {
+        if (nullptr == m_VarPtr)
+        {
+            throw std::runtime_error("Unable to evaluate query! Invalid Variable detected");
+        }
+
         if (m_IdxReader.m_EngineType.find("5") != std::string::npos) // a bp5 reader
-            RunBP5Stat(query, resultSubBlocks);
+            RunBP5Stat(query, resultBlockIDs);
         else
-            RunBP4Stat(query, resultSubBlocks);
+            RunBP4Stat(query, resultBlockIDs);
     }
 
-    void RunBP5Stat(const QueryVar &query, std::vector<adios2::Box<adios2::Dims>> &hitBlocks)
+    void RunBP5Stat(const QueryVar &query, std::vector<BlockHit> &hitBlocks)
     {
         size_t currStep = m_IdxReader.CurrentStep();
         adios2::Dims currShape = m_VarPtr->Shape();
@@ -52,29 +48,40 @@ public:
         }
         for (auto &blockInfo : MinBlocksInfo->BlocksInfo)
         {
-            Dims ss(MinBlocksInfo->Dims);
-            Dims cc(MinBlocksInfo->Dims);
-            for (std::vector<int>::size_type i = 0; i < ss.size(); i++)
-            {
-                ss[i] = blockInfo.Start[i];
-                cc[i] = blockInfo.Count[i];
-            }
-            if (!query.TouchSelection(ss, cc))
-                continue;
-
             T bmin = *(T *)&blockInfo.MinMax.MinUnion;
             T bmax = *(T *)&blockInfo.MinMax.MaxUnion;
             bool isHit = query.m_RangeTree.CheckInterval(bmin, bmax);
-            if (isHit)
+
+            if (!isHit)
+                continue;
+
+            if (m_VarPtr->m_ShapeID != adios2::ShapeID::LocalArray)
             {
-                adios2::Box<adios2::Dims> box = {ss, cc};
-                hitBlocks.push_back(box);
+                Dims ss(MinBlocksInfo->Dims);
+                Dims cc(MinBlocksInfo->Dims);
+                for (std::vector<int>::size_type i = 0; i < ss.size(); i++)
+                {
+                    ss[i] = blockInfo.Start[i];
+                    cc[i] = blockInfo.Count[i];
+                }
+                if (!query.TouchSelection(ss, cc))
+                    continue;
+
+                if (isHit)
+                {
+                    adios2::Box<adios2::Dims> box = {ss, cc};
+                    hitBlocks.push_back(BlockHit(blockInfo.BlockID, box));
+                }
+            }
+            else
+            { // local array
+                hitBlocks.push_back(BlockHit(blockInfo.BlockID));
             }
         }
         delete MinBlocksInfo;
     }
 
-    void RunBP4Stat(const QueryVar &query, std::vector<adios2::Box<adios2::Dims>> &hitBlocks)
+    void RunBP4Stat(const QueryVar &query, std::vector<BlockHit> &hitBlocks)
     {
         size_t currStep = m_IdxReader.CurrentStep();
         adios2::Dims currShape = m_VarPtr->Shape();
@@ -86,44 +93,65 @@ public:
 
         for (auto &blockInfo : varBlocksInfo)
         {
-            if (!query.TouchSelection(blockInfo.Start, blockInfo.Count))
+            bool isHit = query.m_RangeTree.CheckInterval(blockInfo.Min, blockInfo.Max);
+            if (!isHit)
                 continue;
 
-            if (blockInfo.MinMaxs.size() > 0)
+            if (m_VarPtr->m_ShapeID == adios2::ShapeID::LocalArray)
             {
-                adios2::helper::CalculateSubblockInfo(blockInfo.Count, blockInfo.SubBlockInfo);
-                unsigned int numSubBlocks = static_cast<unsigned int>(blockInfo.MinMaxs.size() / 2);
-                for (unsigned int i = 0; i < numSubBlocks; i++)
-                {
-                    bool isHit = query.m_RangeTree.CheckInterval(blockInfo.MinMaxs[2 * i],
-                                                                 blockInfo.MinMaxs[2 * i + 1]);
-                    if (isHit)
-                    {
-                        adios2::Box<adios2::Dims> currSubBlock =
-                            adios2::helper::GetSubBlock(blockInfo.Count, blockInfo.SubBlockInfo, i);
-                        for (size_t d = 0; d < blockInfo.Count.size(); ++d)
-                        {
-                            currSubBlock.first[d] += blockInfo.Start[d];
-                        }
-                        if (!query.TouchSelection(currSubBlock.first, currSubBlock.second))
-                            continue;
-                        hitBlocks.push_back(currSubBlock);
-                    }
-                }
+                if (isHit)
+                    hitBlocks.push_back(BlockHit(blockInfo.BlockID));
             }
             else
-            { // default
-                bool isHit = query.m_RangeTree.CheckInterval(blockInfo.Min, blockInfo.Max);
-                if (isHit)
+            {
+                // global array
+                if (!query.TouchSelection(blockInfo.Start, blockInfo.Count))
+                    continue;
+
+                BlockHit tmp(blockInfo.BlockID);
+                if (blockInfo.MinMaxs.size() > 0)
                 {
-                    adios2::Box<adios2::Dims> box = {blockInfo.Start, blockInfo.Count};
-                    hitBlocks.push_back(box);
+                    // Consolidate to whole block If all subblocks are hits, then return the whole
+                    // block
+                    bool allCovered = true;
+
+                    adios2::helper::CalculateSubblockInfo(blockInfo.Count, blockInfo.SubBlockInfo);
+                    unsigned int numSubBlocks =
+                        static_cast<unsigned int>(blockInfo.MinMaxs.size() / 2);
+                    for (unsigned int i = 0; i < numSubBlocks; i++)
+                    {
+                        bool isSubblockHit = query.m_RangeTree.CheckInterval(
+                            blockInfo.MinMaxs[2 * i], blockInfo.MinMaxs[2 * i + 1]);
+                        if (isSubblockHit)
+                        {
+                            adios2::Box<adios2::Dims> currSubBlock = adios2::helper::GetSubBlock(
+                                blockInfo.Count, blockInfo.SubBlockInfo, i);
+                            for (size_t d = 0; d < blockInfo.Count.size(); ++d)
+                                currSubBlock.first[d] += blockInfo.Start[d];
+
+                            if (!query.TouchSelection(currSubBlock.first, currSubBlock.second))
+                                continue;
+                            tmp.m_Regions.push_back(currSubBlock);
+                        }
+                        else
+                        {
+                            allCovered = false;
+                        }
+                    } // for num subblocks
+
+                    if (!allCovered)
+                    {
+                        hitBlocks.push_back(tmp);
+                        continue;
+                    }
                 }
+
+                // no subblock info or (allCovered = true)
+                adios2::Box<adios2::Dims> box = {blockInfo.Start, blockInfo.Count};
+                hitBlocks.push_back(BlockHit(blockInfo.BlockID, box));
             }
         }
     }
-
-    Tree m_Content;
 
     // can not be unique_ptr as it changes with bp5 through steps
     // as BP5Deserializer::SetupForStep calls io.RemoveVariables()
