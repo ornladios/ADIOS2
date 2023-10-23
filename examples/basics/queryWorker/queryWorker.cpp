@@ -11,6 +11,30 @@
 #include <string>
 #include <vector>
 
+// touched block ids are returned
+void queryIDs(adios2::IO &queryIO, std::string &dataFileName, std::string &queryFile)
+{
+    adios2::Engine reader = queryIO.Open(dataFileName, adios2::Mode::Read, MPI_COMM_WORLD);
+    // adios2::QueryWorker* worker = NULL;
+    queryIO.SetParameter("StreamReader", "true");
+    std::vector<size_t> touched_blockIDs;
+
+    while (reader.BeginStep() == adios2::StepStatus::OK)
+    {
+        adios2::QueryWorker w = adios2::QueryWorker(queryFile, reader);
+        w.GetResultCoverage(touched_blockIDs);
+
+        std::cout << " Num touched blocks =" << touched_blockIDs.size() << std::endl;
+        for (auto n : touched_blockIDs)
+        {
+            std::cout << "\t[" << n << "] " << std::endl;
+        }
+
+        reader.EndStep();
+    }
+    reader.Close();
+}
+
 void queryWithStreaming(adios2::IO &queryIO, std::string &dataFileName, std::string &queryFile)
 {
     adios2::Engine reader = queryIO.Open(dataFileName, adios2::Mode::Read, MPI_COMM_WORLD);
@@ -23,7 +47,10 @@ void queryWithStreaming(adios2::IO &queryIO, std::string &dataFileName, std::str
         adios2::QueryWorker w = adios2::QueryWorker(queryFile, reader);
         w.GetResultCoverage(touched_blocks);
 
-        std::cout << " ... now can read out touched blocks ... size=" << touched_blocks.size()
+        std::cout << " Num touched regions ="
+                  << touched_blocks.size()
+                  // std::cout << " ... now can read out touched blocks ... size=" <<
+                  // touched_blocks.size()
                   << std::endl;
         for (auto n : touched_blocks)
         {
@@ -67,12 +94,6 @@ int main(int argc, char *argv[])
         configFileName = argv[1];
         dataFileName = argv[2];
 
-        if (rank == 0)
-        {
-            std::cout << " using config file = " << configFileName << std::endl;
-            std::cout << "        data file  = " << dataFileName << std::endl;
-        }
-
         adios2::ADIOS ad = adios2::ADIOS(configFileName, MPI_COMM_WORLD);
 
         adios2::IO queryIO = ad.DeclareIO("query");
@@ -82,8 +103,16 @@ int main(int argc, char *argv[])
         {
             queryFile = argv[3];
         }
-        std::cout << "Testing query file  ..." << queryFile << std::endl;
+        if (rank == 0)
+        {
+            std::cout << " using config file = " << configFileName << std::endl;
+            std::cout << "         data file = " << dataFileName << std::endl;
+            std::cout << "         queryfile = " << queryFile << std::endl;
+        }
 
+        queryIDs(queryIO, dataFileName, queryFile);
+
+        std::cout << "\n" << std::endl;
         queryWithStreaming(queryIO, dataFileName, queryFile);
 
         return 0;
