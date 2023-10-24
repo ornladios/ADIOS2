@@ -3,7 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(bpAttributeWriter)
+add_subdirectory(bpAttributeWriteRead)
 add_subdirectory(bpFlushWriter)
 
 if(ADIOS2_HAVE_MPI)

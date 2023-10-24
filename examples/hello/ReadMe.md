@@ -17,7 +17,7 @@ They can be found in the following subdirectories, and they should be explored i
 5. [bpTimeWriter](bpTimeWriter): The _bpTimeWriter_ example demonstrates how to write two Variables (one is timestep)
    using time aggregation using ADIOS2's BP engine.
    * Languages: C++, Python
-6. [bpAttributeWriter](bpAttributeWriter): The _bpAttributeWriter_ example demonstrates how to write attributes using
+6. [bpAttributeWriterReader](bpAttributeWriter): The _bpAttributeWriterReader_ example demonstrates how to write/read attributes using
    ADIOS2's BP engine.
    * Languages: C++
 7. [bpFlushWriter](bpFlushWriter): The _bpFlushWriter_ example demonstrates how to flush a variable using ADIOS2's BP

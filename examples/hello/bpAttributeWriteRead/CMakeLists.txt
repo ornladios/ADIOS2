@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 cmake_minimum_required(VERSION 3.12)
-project(ADIOS2HelloBPAttributeWriterExample)
+project(ADIOS2HelloBPAttributeWriteReadExample)
 
 if(NOT TARGET adios2_core)
   set(_components CXX)
@@ -20,13 +20,12 @@ if(NOT TARGET adios2_core)
   find_package(ADIOS2 REQUIRED COMPONENTS ${_components})
 endif()
 
-add_executable(adios2_hello_bpAttributeWriter bpAttributeWriter_nompi.cpp)
-target_link_libraries(adios2_hello_bpAttributeWriter adios2::cxx11)
-install(TARGETS adios2_hello_bpAttributeWriter RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+add_executable(adios2_hello_bpAttributeWriteRead bpAttributeWriteRead.cpp)
+target_link_libraries(adios2_hello_bpAttributeWriteRead adios2::cxx11)
+install(TARGETS adios2_hello_bpAttributeWriteRead RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if(ADIOS2_HAVE_MPI)
-  add_executable(adios2_hello_bpAttributeWriter_mpi bpAttributeWriter.cpp)
-  target_link_libraries(adios2_hello_bpAttributeWriter_mpi adios2::cxx11_mpi MPI::MPI_C)
-  install(TARGETS adios2_hello_bpAttributeWriter_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  add_executable(adios2_hello_bpAttributeWriteRead_mpi bpAttributeWriteRead.cpp)
+  target_link_libraries(adios2_hello_bpAttributeWriteRead_mpi adios2::cxx11_mpi MPI::MPI_C)
+  install(TARGETS adios2_hello_bpAttributeWriteRead_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
-
