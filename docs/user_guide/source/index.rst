@@ -45,6 +45,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    :caption: Tutorials
 
    tutorials/overview
+   tutorials/downloadAndBuild
 
 .. toctree::
    :caption: Ecosystem Tools
