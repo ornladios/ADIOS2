@@ -103,7 +103,7 @@ if(ADIOS2_HAVE_MPI)
       PRIVATE
         adios2_c_mpi
         adios2_core_mpi
-      PUBLIC
+      INTERFACE
         MPI::MPI_Fortran
     )
     target_compile_definitions(adios2_fortran_mpi PRIVATE "$<$<COMPILE_LANGUAGE:Fortran>:ADIOS2_HAVE_FORTRAN_SUBMODULES;ADIOS2_HAVE_MPI_F>")
