@@ -69,12 +69,35 @@ endfunction()
 
 # Blosc2
 if(ADIOS2_USE_Blosc2 STREQUAL AUTO)
-  find_package(Blosc2 2.4)
+  # Prefect CONFIG mode
+  find_package(Blosc2 2.4 CONFIG QUIET)
+  if(NOT Blosc2_FOUND)
+    find_package(Blosc2 2.4 MODULE QUIET)
+  endif()
 elseif(ADIOS2_USE_Blosc2)
-  find_package(Blosc2 2.4 REQUIRED)
+  # Prefect CONFIG mode
+  find_package(Blosc2 2.4 CONFIG)
+  if(NOT Blosc2_FOUND)
+    find_package(Blosc2 2.4 MODULE REQUIRED)
+  endif()
 endif()
-if(BLOSC2_FOUND)
+if(Blosc2_FOUND)
   set(ADIOS2_HAVE_Blosc2 TRUE)
+  if(TARGET Blosc2::blosc2_shared)
+    set(Blosc2_shlib_available ON)
+  endif()
+
+  set(adios2_blosc2_tgt Blosc2::Blosc2)
+  if (Blosc2_VERSION VERSION_GREATER_EQUAL 2.10.1)
+    if (Blosc2_shlib_available)
+      set(adios2_blosc2_tgt Blosc2::blosc2_$<IF:$<BOOL:${ADIOS2_Blosc2_PREFER_SHARED}>,shared,static>)
+    else()
+      set(adios2_blosc2_tgt Blosc2::blosc2_static)
+    endif()
+  endif()
+
+  add_library(adios2_blosc2 INTERFACE)
+  target_link_libraries(adios2_blosc2 INTERFACE ${adios2_blosc2_tgt})
 endif()
 
 # BZip2
@@ -407,9 +430,11 @@ if(ADIOS2_USE_SST AND NOT WIN32)
     endif()
   endif()
   if(ADIOS2_HAVE_MPI)
-    set(CMAKE_REQUIRED_LIBRARIES MPI::MPI_C)
-    include(CheckCSourceRuns)
-    check_c_source_runs([=[
+    set(CMAKE_REQUIRED_LIBRARIES "MPI::MPI_C;Threads::Threads")
+    include(CheckCXXSourceRuns)
+    check_cxx_source_runs([=[
+        #include <chrono>
+        #include <future>
         #include <mpi.h>
         #include <stdlib.h>
 
@@ -419,9 +444,18 @@ if(ADIOS2_USE_SST AND NOT WIN32)
 
         int main()
         {
+          // Timeout after 5 second
+          auto task = std::async(std::launch::async, []() {
+                                 std::this_thread::sleep_for(std::chrono::seconds(5));
+                                 exit(EXIT_FAILURE);
+          });
+
+          char* port_name = new char[MPI_MAX_PORT_NAME];
           MPI_Init_thread(NULL, NULL, MPI_THREAD_MULTIPLE, NULL);
-          MPI_Open_port(MPI_INFO_NULL, malloc(sizeof(char) * MPI_MAX_PORT_NAME));
+          MPI_Open_port(MPI_INFO_NULL, port_name);
+          MPI_Close_port(port_name);
           MPI_Finalize();
+          exit(EXIT_SUCCESS);
         }]=]
     ADIOS2_HAVE_MPI_CLIENT_SERVER)
     unset(CMAKE_REQUIRED_LIBRARIES)
