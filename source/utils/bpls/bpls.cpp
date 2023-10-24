@@ -1252,8 +1252,9 @@ int printVariableInfo(core::Engine *fp, core::IO *io, core::Variable<T> *variabl
         if (longopt && !timestep)
         {
             fprintf(outf, " = ");
-            auto mm = variable->MinMax();
-            print_data(&mm.second, 0, adiosvartype, false);
+            T value;
+            fp->Get(*variable, value, adios2::Mode::Sync);
+            print_data(&value, 0, adiosvartype, false);
         }
         fprintf(outf, "\n");
 
