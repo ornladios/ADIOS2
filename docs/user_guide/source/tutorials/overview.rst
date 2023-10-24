@@ -6,3 +6,6 @@ In this tutorial we will learn about how to build ADIOS2, and go through several
 More specifically, we will go through the following examples:
 
 1. :ref:`Download And Build <sec:tutorials_download_and_build>`
+2. Basic tutorials:
+
+   1. :ref:`Hello World <sec:tutorials_basics_hello_world>`
