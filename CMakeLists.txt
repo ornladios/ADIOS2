@@ -134,7 +134,7 @@ else()
 endif()
 
 set(FM_SRC_LIST
-   fm_formats.c fm_dump.c lookup3.c string_conversion.c fm_get.c xml.c
+   fm_formats.c fm_dump.c siphash.c string_conversion.c fm_get.c xml.c
    ${FM_SOCKET_IO} ${FFS_FILE_IO})
 foreach(FM_SRC ${FM_SRC_LIST})
   list(APPEND FM_MASTER_SRC_LIST fm/${FM_SRC} )

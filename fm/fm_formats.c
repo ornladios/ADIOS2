@@ -1946,12 +1946,20 @@ register_data_format(FMContext context, FMStructDescList struct_list)
 
 INT4 FFS_self_server_IP_addr = 0;
 
-extern void hashlittle2( 
-  const void *key,       /* the key to hash */
-  size_t      length,    /* length of the key */
-  INT4   *pc,        /* IN: primary initval, OUT: primary hash */
-  INT4   *pb)        /* IN: secondary initval, OUT: secondary hash */;
+#include "siphash.h"
 
+static void hashlittle2( 
+  const void *data,       /* the data to hash */
+  size_t      length,    /* length of the data */
+  INT4   *pc,        /* IN: primary initval, OUT: primary hash */
+  INT4   *pb)
+{
+    static const uint64_t skey[2] = {0xECB8FF2F434B2FBB, 0xB4E298A99A71F723 };
+    INT4 output[2];
+    siphash(data, length, &skey, (uint8_t*) &output[0], sizeof(output));
+    *pc = output[0];
+    *pb = output[1];
+}
 
 extern void
 generate_format3_server_ID(server_ID_type *server_ID,
