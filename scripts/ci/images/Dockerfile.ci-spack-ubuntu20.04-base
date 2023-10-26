@@ -7,7 +7,6 @@ COPY packages.yaml /etc/spack/packages.yaml
 RUN . /spack/share/spack/setup-env.sh && \
     export ADIOS_SPEC_NO_MPI="adios2~mpi" && \
     export ADIOS_SPEC_OPENMPI="adios2+mpi^openmpi" && \
-    export ADIOS_SPEC_MPICH="adios2+mpi^mpich" && \
     spack config add "config:checksum:false" && \
     spack config add "config:build_jobs:$(nproc)" && \
     spack config add "concretizer:unify:false" && \
@@ -26,7 +25,46 @@ RUN . /spack/share/spack/setup-env.sh && \
       --include-build-deps \
       --no-check-signature \
       --fail-fast \
-      --only dependencies && \
+      --only dependencies
+
+# Build external mpich (using ch3:sock:tcp is faster in CI and not supported
+# by spack), while trying to use any dependencies from the spack builds above.
+RUN . /spack/share/spack/setup-env.sh && \
+    export MPICH_VERSION=4.1.1 && \
+    export MPICH_INSTALL_DIR=/opt/mpich-${MPICH_VERSION} && \
+    mkdir -p ${MPICH_INSTALL_DIR} && \
+    cd /tmp && \
+    curl -OL https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz && \
+    gunzip mpich-${MPICH_VERSION}.tar.gz && \
+    tar -xf mpich-${MPICH_VERSION}.tar && \
+    cd mpich-${MPICH_VERSION} && \
+    ./configure \
+      --disable-option-checking \
+      --prefix="${MPICH_INSTALL_DIR}" \
+      --disable-silent-rules \
+      --enable-shared \
+      --with-pm=hydra \
+      --enable-romio \
+      --without-ibverbs \
+      --enable-wrapper-rpath=yes \
+      --with-yaksa="$(spack location --install /$(spack find --format {hash:7} yaksa))" \
+      --with-hwloc="$(spack location --install /$(spack find --format {hash:7} hwloc))" \
+      --with-slurm=no \
+      --with-pmi=simple \
+      --without-cuda \
+      --without-hip \
+      --with-device=ch3:sock:tcp \
+      --enable-libxml2 \
+      --with-datatype-engine=auto \
+      --enable-g=dbg,log \
+      --cache-file=/dev/null \
+      --srcdir=. \
+      'CFLAGS= -g -O2' && \
+    make -j $(nproc) && \
+    make install
+
+RUN . /spack/share/spack/setup-env.sh && \
+    export ADIOS_SPEC_MPICH="adios2+mpi^mpich" && \
     spack env create adios2-ci-mpich && \
     spack -e adios2-ci-mpich add ${ADIOS_SPEC_MPICH} && \
     spack -e adios2-ci-mpich concretize && \
