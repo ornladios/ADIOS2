@@ -1,6 +1,8 @@
 # vim: ft=dockerfile
 FROM ecpe4s/ubuntu20.04:23.05
 
+ARG MPICH_VERSION=4.1.1
+
 COPY packages.yaml /etc/spack/packages.yaml
 
 # Install Base specs
@@ -30,7 +32,6 @@ RUN . /spack/share/spack/setup-env.sh && \
 # Build external mpich (using ch3:sock:tcp is faster in CI and not supported
 # by spack), while trying to use any dependencies from the spack builds above.
 RUN . /spack/share/spack/setup-env.sh && \
-    export MPICH_VERSION=4.1.1 && \
     export MPICH_INSTALL_DIR=/opt/mpich-${MPICH_VERSION} && \
     mkdir -p ${MPICH_INSTALL_DIR} && \
     cd /tmp && \
@@ -64,7 +65,7 @@ RUN . /spack/share/spack/setup-env.sh && \
     make install
 
 RUN . /spack/share/spack/setup-env.sh && \
-    export ADIOS_SPEC_MPICH="adios2+mpi^mpich" && \
+    export ADIOS_SPEC_MPICH="adios2+mpi^mpich${MPICH_VERSION}" && \
     spack env create adios2-ci-mpich && \
     spack -e adios2-ci-mpich add ${ADIOS_SPEC_MPICH} && \
     spack -e adios2-ci-mpich concretize && \
