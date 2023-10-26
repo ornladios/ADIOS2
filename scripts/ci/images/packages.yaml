@@ -6,7 +6,7 @@ packages:
   mpich:
     require: 'device=ch3 netmod=tcp'
     externals:
-    - spec: "mpich@4.1.1%gcc@11.1.0~argobots~cuda+fortran+hwloc+hydra+libxml2+pci~rocm+romio~slurm~two_level_namespace~vci~verbs+wrapperrpath build_system=autotools datatype-engine=auto device=ch3 netmod=tcp pmi=pmi arch=linux-ubuntu20.04-x86_64"
+    - spec: "mpich@4.1.1%gcc@11.1.0 build_system=autotools datatype-engine=auto device=ch3 netmod=tcp pmi=pmi arch=linux-ubuntu20.04-x86_64"
       prefix: /opt/mpich-4.1.1
     buildable: False
   openmpi:
