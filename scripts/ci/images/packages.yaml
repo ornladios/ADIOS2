@@ -4,6 +4,8 @@ packages:
   adios2:
     require: '+blosc+bzip2+zfp+sz+png+sst+dataman+ssc+hdf5+python+fortran'
   mpich:
-    require: 'device=ch3 netmod=tcp'
+    externals:
+    - spec: "mpich@4.1.1%gcc@11.1.0 arch=linux-ubuntu20.04-x86_64"
+      prefix: /opt/mpich-4.1.1
   openmpi:
     require: '@4.1'
