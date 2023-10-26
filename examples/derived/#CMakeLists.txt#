@@ -1,0 +1,4 @@
+add_executable(derivedTestGrammar TestGrammar.)
+target_link_libraries(derivedTestGrammar adios2::cxx11)
+add_executable(derivedTestGrammar TestGrammar.cpp)
+target_link_libraries(derivedTestGrammar adios2::cxx11)

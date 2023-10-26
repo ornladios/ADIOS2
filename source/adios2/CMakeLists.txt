@@ -130,7 +130,7 @@ set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFF
 set(maybe_adios2_core_derived)
 
 if (ADIOS2_HAVE_Derived)
-  target_sources(adios2_core PRIVATE
+  target_sources(adios2_core PUBLIC
       core/VariableDerived.cpp
       toolkit/derived/Expression.cpp
       toolkit/derived/Function.cpp toolkit/derived/Function.tcc)
@@ -139,7 +139,7 @@ if (ADIOS2_HAVE_Derived)
       toolkit/derived/parser/parser.cpp
       toolkit/derived/parser/ExprHelper.h
       toolkit/derived/parser/ASTNode.cpp)
-  target_link_libraries(adios2_core PRIVATE adios2_core_derived)
+  target_link_libraries(adios2_core PUBLIC adios2_core_derived)
   set(maybe_adios2_core_derived adios2_core_derived)
 endif()
 
