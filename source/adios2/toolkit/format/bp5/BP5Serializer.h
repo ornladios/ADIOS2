@@ -21,6 +21,8 @@
 #pragma warning(disable : 4250)
 #endif
 
+#include <unordered_map>
+
 namespace adios2
 {
 namespace format
@@ -160,7 +162,6 @@ private:
     struct FFSWriterMarshalBase
     {
         int RecCount = 0;
-        BP5WriterRec RecList = NULL;
         FMContext LocalFMContext = {0};
         int MetaFieldCount = 0;
         FMFieldList MetaFields = NULL;
@@ -170,6 +171,7 @@ private:
         FMFormat AttributeFormat = NULL;
         void *AttributeData = NULL;
         int AttributeSize = 0;
+        std::unordered_map<void *, _BP5WriterRec> RecMap;
     };
 
     FMFormat GenericAttributeFormat = NULL;
