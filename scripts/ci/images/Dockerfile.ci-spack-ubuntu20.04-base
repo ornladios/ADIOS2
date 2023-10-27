@@ -1,12 +1,15 @@
 # vim: ft=dockerfile
-FROM ecpe4s/ubuntu20.04:23.05
+FROM ecpe4s/ubuntu20.04-runner-amd64-gcc-11.4:2023.08.01
 
 ARG MPICH_VERSION=4.1.1
+ARG E4S_VERSION=23.08
 
 COPY packages.yaml /etc/spack/packages.yaml
 
 # Install Base specs
-RUN . /spack/share/spack/setup-env.sh && \
+RUN git clone --depth 1 --single-branch --branch e4s-${E4S_VERSION} https://github.com/spack/spack && \
+    . /spack/share/spack/setup-env.sh && \
+    spack mirror add E4S "https://cache.e4s.io/${E4S_VERSION}" && \
     export ADIOS_SPEC_NO_MPI="adios2~mpi" && \
     export ADIOS_SPEC_OPENMPI="adios2+mpi^openmpi" && \
     spack config add "config:checksum:false" && \
@@ -29,10 +32,16 @@ RUN . /spack/share/spack/setup-env.sh && \
       --fail-fast \
       --only dependencies
 
-# Build external mpich (using ch3:sock:tcp is faster in CI and not supported
-# by spack), while trying to use any dependencies from the spack builds above.
+# # Build external mpich (using ch3:sock:tcp is faster in CI and not supported
+# # by spack), while trying to use any dependencies from the spack builds above.
+# #
+# #   configure with "--enable-g=dbg,log" for runtime debug output
+# #
 RUN . /spack/share/spack/setup-env.sh && \
+    export HWLOC_LOCATION="$(spack location --install /$(spack find --format {hash:7} hwloc))" && \
+    echo ${HWLOC_LOCATION} && \
     export MPICH_INSTALL_DIR=/opt/mpich-${MPICH_VERSION} && \
+    echo ${MPICH_INSTALL_DIR} && \
     mkdir -p ${MPICH_INSTALL_DIR} && \
     cd /tmp && \
     curl -OL https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz && \
@@ -41,15 +50,15 @@ RUN . /spack/share/spack/setup-env.sh && \
     cd mpich-${MPICH_VERSION} && \
     ./configure \
       --disable-option-checking \
-      --prefix="${MPICH_INSTALL_DIR}" \
+      --prefix=${MPICH_INSTALL_DIR} \
       --disable-silent-rules \
       --enable-shared \
       --with-pm=hydra \
       --enable-romio \
       --without-ibverbs \
       --enable-wrapper-rpath=yes \
-      --with-yaksa="$(spack location --install /$(spack find --format {hash:7} yaksa))" \
-      --with-hwloc="$(spack location --install /$(spack find --format {hash:7} hwloc))" \
+      --with-yaksa=embedded \
+      --with-hwloc=${HWLOC_LOCATION} \
       --with-slurm=no \
       --with-pmi=simple \
       --without-cuda \
@@ -60,12 +69,13 @@ RUN . /spack/share/spack/setup-env.sh && \
       --enable-g=dbg,log \
       --cache-file=/dev/null \
       --srcdir=. \
-      'CFLAGS= -g -O2' && \
+      'CFLAGS= -g -O2' \
+      'LDFLAGS= -Wl,-rpath,${HWLOC_LOCATION}/lib' && \
     make -j $(nproc) && \
     make install
 
 RUN . /spack/share/spack/setup-env.sh && \
-    export ADIOS_SPEC_MPICH="adios2+mpi^mpich${MPICH_VERSION}" && \
+    export ADIOS_SPEC_MPICH="adios2+mpi^mpich@${MPICH_VERSION}" && \
     spack env create adios2-ci-mpich && \
     spack -e adios2-ci-mpich add ${ADIOS_SPEC_MPICH} && \
     spack -e adios2-ci-mpich concretize && \
@@ -76,23 +86,6 @@ RUN . /spack/share/spack/setup-env.sh && \
       --only dependencies && \
     spack clean -a && \
     echo "source /spack/share/spack/setup-env.sh" >> /etc/profile.d/zz-spack.sh
-
-# Install deps
-RUN pip install shyaml
-COPY specs.yaml /tmp/specs.yaml
-RUN . /spack/share/spack/setup-env.sh && \
-    spack env create adios2-ci-deps /tmp/specs.yaml && \
-    spack -e adios2-ci-deps install \
-      --no-check-signature \
-      --include-build-deps \
-      --fail-fast && \
-    spack -e adios2-ci-serial add $(shyaml get-values spack.specs < /tmp/specs.yaml) && \
-    spack -e adios2-ci-serial concretize && \
-    spack -e adios2-ci-ompi add $(shyaml get-values spack.specs < /tmp/specs.yaml) && \
-    spack -e adios2-ci-ompi concretize && \
-    spack -e adios2-ci-mpich add $(shyaml get-values spack.specs < /tmp/specs.yaml) && \
-    spack -e adios2-ci-mpich concretize && \
-    spack clean -a
 
 ### Other missing packages (compared to el8 base):
 RUN apt-get update && apt-get install -y \
