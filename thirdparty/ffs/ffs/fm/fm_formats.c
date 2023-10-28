@@ -1987,7 +1987,7 @@ generate_format3_server_ID(server_ID_type *server_ID,
     INT4 hash1 = 0, hash2 = 0;
     UINT4 server_format_rep_length = ntohs(server_format_rep->format_rep_length);
     if (server_format_rep->server_rep_version > 0) {
-	server_format_rep_length += (ntohs(server_format_rep->top_bytes_format_rep_length) >> 16);
+	server_format_rep_length += (ntohs(server_format_rep->top_bytes_format_rep_length) << 16);
     }
     if (server_format_rep_length > (1 << 26)) fprintf(stderr, "Format rep too long in generate_format_server_ID\n");
     server_ID->length = 12;
