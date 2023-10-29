@@ -31,14 +31,14 @@ namespace format
 BP5Serializer::BP5Serializer() { Init(); }
 BP5Serializer::~BP5Serializer()
 {
-    if (Info.RecList)
+    if (!Info.RecMap.empty())
     {
-        for (int i = 0; i < Info.RecCount; i++)
+        for (auto &rec : Info.RecMap)
         {
-            if (Info.RecList[i].OperatorType)
-                free(Info.RecList[i].OperatorType);
+            if (rec.second.OperatorType)
+                free(rec.second.OperatorType);
         }
-        free(Info.RecList);
+        Info.RecMap.clear();
     }
     if (Info.MetaFieldCount)
         free_FMfield_list(Info.MetaFields);
@@ -61,7 +61,6 @@ void BP5Serializer::Init()
     // Re-init Info to zero
     Info = FFSWriterMarshalBase();
     Info.RecCount = 0;
-    Info.RecList = (BP5Serializer::BP5WriterRec)malloc(sizeof(Info.RecList[0]));
     Info.MetaFieldCount = 0;
     Info.MetaFields = NULL;
     Info.LocalFMContext = create_local_FMcontext();
@@ -80,14 +79,11 @@ void BP5Serializer::Init()
 }
 BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Key)
 {
-    for (int i = 0; i < Info.RecCount; i++)
+    auto it = Info.RecMap.find(Key);
+    if (it != Info.RecMap.end())
     {
-        if (Info.RecList[i].Key == Key)
-        {
-            return &Info.RecList[i];
-        }
+        return const_cast<BP5WriterRec>(&(it->second));
     }
-
     return NULL;
 }
 
@@ -442,9 +438,8 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
                                size_t ElemSize, size_t DimCount)
 {
     core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
-    Info.RecList = (BP5WriterRec)realloc(
-        Info.RecList, (Info.RecCount + 1) * sizeof(Info.RecList[0]));
-    BP5WriterRec Rec = &Info.RecList[Info.RecCount];
+    auto obj = Info.RecMap.insert(std::make_pair(Variable, _BP5WriterRec()));
+    BP5WriterRec Rec = &obj.first->second;
     if (Type == DataType::String)
         ElemSize = sizeof(char *);
     Rec->Key = Variable;
@@ -1134,9 +1129,9 @@ BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer,
 
 void BP5Serializer::CollectFinalShapeValues()
 {
-    for (int i = 0; i < Info.RecCount; i++)
+    for (auto it : Info.RecMap)
     {
-        BP5WriterRec Rec = &Info.RecList[i];
+        BP5WriterRec Rec = &it.second;
         if (Rec->Shape == ShapeID::GlobalArray)
         {
             core::VariableBase *VB =
