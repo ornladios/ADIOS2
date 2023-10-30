@@ -10,6 +10,10 @@ if(ADIOS2_HAVE_MPI)
   add_subdirectory(bpFWriteCRead)
 endif()
 
+if(ADIOS2_HAVE_SZ)
+  add_subdirectory(bpOperatorSZWriter)
+endif()
+
 add_subdirectory(bpReader)
 add_subdirectory(bpThreadWrite)
 add_subdirectory(bpTimeWriter)

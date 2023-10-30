@@ -2,19 +2,20 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * bpSZ.cpp : example passing runtime compression arguments
+ * bpOperatorSZWriter.cpp : example using operator by passing compression arguments
  *
  *  Created on: Aug 3, 2018
  *      Author: William F Godoy godoywf@ornl.gov
  */
 
+#include <algorithm> //std::transform
 #include <ios>       //std::ios_base::failure
 #include <iostream>  //std::cout
 #include <numeric>   //std::iota
 #include <stdexcept> //std::invalid_argument std::exception
 #include <vector>
 
-#include <adios2.h>
+#include "adios2.h"
 #if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
@@ -23,7 +24,7 @@ void Usage()
 {
     std::cout << "\n";
     std::cout << "USAGE:\n";
-    std::cout << "./helloBPSZ Nx sz_accuracy\n";
+    std::cout << "./adios2_hello_bpOperatorSZWriter Nx sz_accuracy\n";
     std::cout << "\t Nx: size of float and double arrays to be compressed\n";
     std::cout << "\t sz_accuracy: absolute accuracy e.g. 0.1, 0.001, to skip "
                  "compression: -1\n\n";
@@ -31,8 +32,13 @@ void Usage()
 
 int main(int argc, char *argv[])
 {
-    int rank, size;
+    if (argc != 3)
+    {
+        Usage();
+        return EXIT_SUCCESS;
+    }
 
+    int rank, size;
 #if ADIOS2_USE_MPI
     int provided;
 
@@ -47,12 +53,6 @@ int main(int argc, char *argv[])
 
     try
     {
-        if (argc != 3)
-        {
-            throw std::invalid_argument("ERROR: need sz accuracy e.g. 0.01, 0.1 as "
-                                        "2nd parameter in argv\n");
-        }
-
         const std::size_t Nx = static_cast<std::size_t>(std::stoull(argv[1]));
         const double accuracy = std::stod(argv[2]);
 
@@ -92,21 +92,26 @@ int main(int argc, char *argv[])
         (void)attribute;
 
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine bpFileWriter = bpIO.Open("SZexample.bp", adios2::Mode::Write);
+        adios2::Engine bpWriter = bpIO.Open("SZexample.bp", adios2::Mode::Write);
 
-        for (unsigned int t = 0; t < 3; ++t)
+        for (unsigned int step = 0; step < 3; ++step)
         {
-            bpFileWriter.BeginStep();
+            bpWriter.BeginStep();
+
+            bpWriter.Put(varFloats, myFloats.data());
+            bpWriter.Put(varDoubles, myDoubles.data());
+
+            bpWriter.EndStep();
 
             // here you can modify myFloats, myDoubles per step
-
-            bpFileWriter.Put(varFloats, myFloats.data());
-            bpFileWriter.Put(varDoubles, myDoubles.data());
-            bpFileWriter.EndStep();
+            std::transform(myFloats.begin(), myFloats.end(), myFloats.begin(),
+                           [&](float v) -> float { return 2 * v; });
+            std::transform(myDoubles.begin(), myDoubles.end(), myDoubles.begin(),
+                           [&](double v) -> double { return 3 * v; });
         }
 
         /** Create bp file, engine becomes unreachable after this*/
-        bpFileWriter.Close();
+        bpWriter.Close();
     }
     catch (std::invalid_argument &e)
     {
