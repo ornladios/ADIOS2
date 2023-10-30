@@ -23,11 +23,11 @@ RUN dnf install -y \
         libpng-devel \
         Lmod \
         make \
-        openmpi-devel \
+        mpich-devel \
         patch \
         patchelf \
         python3-devel \
-        python3-mpi4py-openmpi \
+        python3-mpi4py-mpich \
         python3-pip \
         tar \
         tcl \
@@ -42,9 +42,9 @@ RUN dnf install -y \
 COPY oneAPI.repo /etc/yum.repos.d/
 RUN pip3 install numpy && \
     dnf install -y \
-        intel-oneapi-compiler-dpcpp-cpp-2023.1.0 \
-        intel-oneapi-compiler-fortran-2023.1.0 \
-        intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-2023.1.0
+        intel-oneapi-compiler-dpcpp-cpp-2023.2.1 \
+        intel-oneapi-compiler-fortran-2023.2.1 \
+        intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic-2023.2.1
 RUN dnf clean all
 
 # Setup module files for the compilers
@@ -66,7 +66,7 @@ RUN curl -L https://github.com/szcompressor/SZ/releases/download/v2.1.12.5/SZ-2.
     cd .. && \
     rm -rf SZ-2.1.12.5 build
 
-ENV PATH /opt/cmake/bin:/opt/sz/2.1.12.5/bin:/usr/lib64/openmpi/bin:${PATH}
+ENV PATH /opt/cmake/bin:/opt/sz/2.1.12.5/bin:/usr/lib64/mpich/bin:${PATH}
 ENV LD_LIBRARY_PATH /opt/sz/2.1.12.5/lib64:${LD_LIBRARY_PATH}
 ENV CMAKE_PREFIX_PATH /opt/sz/2.1.12.5:${CMAKE_PREFIX_PATH}
 
