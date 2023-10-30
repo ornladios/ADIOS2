@@ -4,7 +4,9 @@
 #------------------------------------------------------------------------------#
 
 add_subdirectory(basics)
-add_subdirectory(derived)
+if (ADIOS2_HAVE_Derived)
+  add_subdirectory(derived)
+endif()
 add_subdirectory(hello)
 add_subdirectory(plugins)
 add_subdirectory(simulations)

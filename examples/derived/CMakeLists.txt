@@ -1,2 +1,6 @@
 add_executable(bpExpression_write BP5WriteRead.cpp)
+#add_executable(derivedGrammarTest TestGrammar.cpp)
+add_executable(derivedCorrectnessTest TestCorrectness.cpp)
 target_link_libraries(bpExpression_write adios2::cxx11)
+#target_link_libraries(derivedGrammarTest adios2::cxx11)
+target_link_libraries(derivedCorrectnessTest adios2::cxx11)

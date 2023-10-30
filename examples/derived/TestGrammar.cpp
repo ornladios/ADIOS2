@@ -165,7 +165,7 @@ void AddExpressionNonBinary()
         bpFileWriter.Put(Uy, simArray2.data());
         bpFileWriter.EndStep();
     }
-    adios2::Expression addexpr = addU.m_expr;
+    adios2::derived::Expression addexpr = addU.m_Expr;
     if (addexpr.operation != adios2::detail::ExpressionOperator::OP_ADD)
       {
 	std::cout << "TEST: ADD EXPRESSION OPERATION INCORRECT" << std::endl;
