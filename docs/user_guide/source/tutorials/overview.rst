@@ -11,3 +11,4 @@ More specifically, we will go through the following examples:
    1. :ref:`Hello World <sec:tutorials_basics_hello_world>`
    2. :ref:`Array Variables <sec:tutorials_basics_variables>`
    3. :ref:`Attributes <sec:tutorials_basics_attributes>`
+   4. :ref:`Operators <sec:tutorials_basics_operators>`

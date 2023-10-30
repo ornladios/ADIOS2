@@ -6,3 +6,4 @@ Basic Tutorials
    helloWorld
    variables
    attributes
+   operators
