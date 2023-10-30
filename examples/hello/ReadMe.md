@@ -17,18 +17,18 @@ They can be found in the following subdirectories, and they should be explored i
 5. [bpOperatorSZWriter](bpOperatorSZWriter): The _bpOperatorSZWriter_ example demonstrates how to write variables with
    the SZ operator using ADIOS2's BP engine.
    * Languages: C++
-6. [bpTimeWriter](bpTimeWriter): The _bpTimeWriter_ example demonstrates how to write two Variables (one is timestep)
-   using time aggregation using ADIOS2's BP engine.
-   * Languages: C++, Python
-7. [bpWriteReadCuda](bpWriteReadCuda): The _bpWriteReadCuda_ example demonstrates how to write and read a variable with
-   multiple time steps using ADIOS2's BP engine and leveraging CUDA.
+6. [bpStepsWriteRead](bpStepsWriteRead): The _bpStepsWriteRead_ example demonstrates how to write and read
+   multiple steps using ADIOS2's BP engine.
+      * Languages: C++
+7. [bpStepsWriteReadCuda](bpStepsWriteReadCuda): The _bpStepsWriteReadCuda_ example demonstrates how to write and read a
+   variable with multiple steps using ADIOS2's BP engine and leveraging CUDA.
    * Languages: C++
-8. [bpWriteReadHip](bpWriteReadHip): The _bpWriteReadHip_ example demonstrates how to write and read a variable with
-   multiple time steps using ADIOS2's BP engine and leveraging HIP.
+8. [bpStepsWriteReadHip](bpStepsWriteReadHip): The _bpStepsWriteReadHip_ example demonstrates how to write and read a
+   variable with multiple steps using ADIOS2's BP engine and leveraging HIP.
    * Languages: C++
-9. [bpWriteReadKokkos](bpWriteReadKokkos): The _bpWriteReadOmp_ example demonstrates how to write and read a variable
-    with multiple time steps using ADIOS2's BP engine and leveraging Kokkos.
-    * Languages: C++
+9. [bpStepsWriteReadKokkos](bpStepsWriteReadKokkos): The _bpStepsWriteReadKokkos_ example demonstrates how to write and
+   read a variable with multiple steps using ADIOS2's BP engine and leveraging Kokkos.
+   * Languages: C++
 10. [bpFlushWriter](bpFlushWriter): The _bpFlushWriter_ example demonstrates how to flush a variable using ADIOS2's BP
     engine.
     * Languages: C++

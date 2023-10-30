@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 cmake_minimum_required(VERSION 3.12)
-project(ADIOS2HelloBPTimeWriterExample)
+project(ADIOS2HelloBPStepsWriteReadExample)
 
 if(NOT TARGET adios2_core)
   set(_components CXX)
@@ -20,12 +20,12 @@ if(NOT TARGET adios2_core)
   find_package(ADIOS2 REQUIRED COMPONENTS ${_components})
 endif()
 
-add_executable(adios2_hello_bpTimeWriter bpTimeWriter_nompi.cpp)
-target_link_libraries(adios2_hello_bpTimeWriter adios2::cxx11)
-install(TARGETS adios2_hello_bpTimeWriter RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+add_executable(adios2_hello_bpStepsWriteRead bpStepsWriteRead.cpp)
+target_link_libraries(adios2_hello_bpStepsWriteRead adios2::cxx11)
+install(TARGETS adios2_hello_bpStepsWriteRead RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if(ADIOS2_HAVE_MPI)
-  add_executable(adios2_hello_bpTimeWriter_mpi bpTimeWriter.cpp)
-  target_link_libraries(adios2_hello_bpTimeWriter_mpi adios2::cxx11_mpi MPI::MPI_C)
-  install(TARGETS adios2_hello_bpTimeWriter_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  add_executable(adios2_hello_bpStepsWriteRead_mpi bpStepsWriteRead.cpp)
+  target_link_libraries(adios2_hello_bpStepsWriteRead_mpi adios2::cxx11_mpi MPI::MPI_C)
+  install(TARGETS adios2_hello_bpStepsWriteRead_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
