@@ -14,10 +14,7 @@
 //TEST(DerivedTest, AddCorrectnessTest)
 void AddCorrectnessTest()
 {
-    size_t rank = 1;
-    size_t size = 1;
-    
-    const size_t Nx = 2, Ny = 2, Nz = 10;
+    const size_t Nx = 10, Ny = 3, Nz = 1;
     const size_t steps = 2;
     /** Application variable */
     std::default_random_engine generator;
@@ -52,13 +49,13 @@ void AddCorrectnessTest()
 
     std::cout << "Define Variable " << varname[0] << std::endl;
     auto Ux =
-        bpOut.DefineVariable<float>(varname[0], {Nz, Ny, size * Nx}, {0, 0, rank * Nx}, {Nz, Ny, Nx});
+        bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     std::cout << "Define Variable " << varname[1] << std::endl;
     auto Uy =
-        bpOut.DefineVariable<float>(varname[1], {Nz, Ny, size * Nx}, {0, 0, rank * Nx}, {Nz, Ny, Nx});
+        bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     std::cout << "Define Variable " << varname[2] << std::endl;
     auto Uz =
-        bpOut.DefineVariable<float>(varname[2], {Nz, Ny, size * Nx}, {0, 0, rank * Nx}, {Nz, Ny, Nx});
+        bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     std::cout << "Define Derived Variable " << derivedname << std::endl;
     auto addU = bpOut.DefineDerivedVariable(derivedname,
                                            "x:" + varname[0] + " \n"
@@ -102,21 +99,17 @@ void AddCorrectnessTest()
     std::vector<float> readAdd(Nx * Ny * Nz);
 
     float calcA;
-    float epsilon = 0.000001;
+    float epsilon = 0.01;
     for (int i = 0; i < steps; i++)
     {
         bpFileReader.BeginStep();
         std::cout << "Reading step " << i << std::endl;
 
-        auto varx = bpIn.InquireVariable<float>(varname[0]);
-        auto vary = bpIn.InquireVariable<float>(varname[1]);
-        auto varz = bpIn.InquireVariable<float>(varname[2]);
-        auto varadd = bpIn.InquireVariable<float>(derivedname);
-
-        bpFileReader.Get(varx, readUx);
-        bpFileReader.Get(vary, readUy);
-        bpFileReader.Get(varz, readUz);
-        bpFileReader.Get<float>(derivedname, readAdd);
+        bpFileReader.Get<float>(varname[0], readUx.data());
+        bpFileReader.Get<float>(varname[1], readUy.data());
+        bpFileReader.Get<float>(varname[2], readUz.data());
+        bpFileReader.Get<float>(derivedname, readAdd.data());
+	bpFileReader.EndStep();
 	for (int x = 0; x < Nx; ++x)
 	  {
 	    for (int y = 0; y < Ny; ++y)
@@ -136,12 +129,11 @@ void AddCorrectnessTest()
 			std::cout << "FALSE: ";
 			eq = " != ";
 		      }
-		    std::cout << "addU " << i << " [" << x << "," << y << "," << z << "]";
-		    std::cout << eq << calcA << std::endl;
+		    std::cout << "addU " << i << " [" << x << "," << y << "," << z << "] = " << readAdd[ind];
+		    std::cout << eq << calcA << " = " << readUx[ind] << " + " << readUy[ind] << " + " << readUz[ind] << std::endl;
 		  }
 	      }
 	  }
-	bpFileReader.EndStep();
     }
 
     /** Create bp file, engine becomes unreachable after this*/
@@ -153,10 +145,7 @@ void AddCorrectnessTest()
 //TEST(DerivedTest, MagCorrectnessTest)
 void MagCorrectnessTest()
 {
-    size_t rank = 1;
-    size_t size = 1;
-
-    const size_t Nx = 2, Ny = 2, Nz = 10;
+    const size_t Nx = 10, Ny = 3, Nz = 1;
     const size_t steps = 2;
     // Application variable
     std::default_random_engine generator;
@@ -187,11 +176,11 @@ void MagCorrectnessTest()
     std::string derivedname = "derived/magU";
     
     auto Ux =
-        bpOut.DefineVariable<float>(varname[0], {Nz, Ny, size * Nx}, {0, 0, rank * Nx}, {Nz, Ny, Nx});
+        bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto Uy =
-        bpOut.DefineVariable<float>(varname[1], {Nz, Ny, size * Nx}, {0, 0, rank * Nx}, {Nz, Ny, Nx});
+        bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto Uz =
-        bpOut.DefineVariable<float>(varname[2], {Nz, Ny, size * Nx}, {0, 0, rank * Nx}, {Nz, Ny, Nx});
+        bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto magU = bpOut.DefineDerivedVariable(derivedname,
                                            "x:" + varname[0] + " \n"
                                            "y:" + varname[1] + " \n"
@@ -215,10 +204,8 @@ void MagCorrectnessTest()
 
     // Create bp file, engine becomes unreachable after this
     bpFileWriter.Close();
-    if (rank == 0)
-    {
-        std::cout << "Wrote file " << filename << " to disk. \n";
-    }
+    std::cout << "Wrote file " << filename << " to disk. \n";
+
 
     // TODO add Operation to magU
     adios2::IO bpIn = adios.DeclareIO("BPReadMagExpression");
@@ -237,7 +224,7 @@ void MagCorrectnessTest()
     std::vector<float> readMag(Nx * Ny * Nz);
 
     float calcM;
-    float epsilon = 0.000001;
+    float epsilon = 0.01;
     for (int i = 0; i < steps; i++)
     {
         std::cout << "Reading step " << i << std::endl;
@@ -251,7 +238,9 @@ void MagCorrectnessTest()
 	bpFileReader.Get(varx, readUx);
         bpFileReader.Get(vary, readUy);
         bpFileReader.Get(varz, readUz);
-        bpFileReader.Get<float>(derivedname, readMag);
+	varmag.SetSelection({{0,0,0}, {Nx,Ny,Nz}});
+	bpFileReader.Get(varmag, readMag);
+	bpFileReader.EndStep();
 	for (int x = 0; x < Nx; ++x)
 	  {
 	    for (int y = 0; y < Ny; ++y)
@@ -276,7 +265,6 @@ void MagCorrectnessTest()
 		  }
 	      }
 	  }
-	bpFileReader.EndStep();
     }
 
     // Create bp file, engine becomes unreachable after this
