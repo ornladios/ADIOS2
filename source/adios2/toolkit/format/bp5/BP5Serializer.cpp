@@ -28,18 +28,37 @@ namespace adios2
 namespace format
 {
 
+namespace
+{
+// To keep ABI compatibility with ADIOS 2.9.0
+static std::map<BP5Serializer *, BP5Serializer::RecMap> GlobalRecMap;
+}
+
+BP5Serializer::RecMap &BP5Serializer::GetRecMap(BP5Serializer *ptr)
+{
+    auto it = GlobalRecMap.find(ptr);
+    if (it == GlobalRecMap.end())
+    {
+        it = GlobalRecMap.insert({ptr, {}}).first;
+    }
+    return it->second;
+}
+
 BP5Serializer::BP5Serializer() { Init(); }
 BP5Serializer::~BP5Serializer()
 {
-    if (!Info.RecMap.empty())
+    auto &rec_map = BP5Serializer::GetRecMap(this);
+    if (!rec_map.empty())
     {
-        for (auto &rec : Info.RecMap)
+        for (auto &rec : rec_map)
         {
             if (rec.second.OperatorType)
                 free(rec.second.OperatorType);
         }
-        Info.RecMap.clear();
+        rec_map.clear();
     }
+    GlobalRecMap.erase(this);
+
     if (Info.MetaFieldCount)
         free_FMfield_list(Info.MetaFields);
     if (Info.LocalFMContext)
@@ -79,8 +98,9 @@ void BP5Serializer::Init()
 }
 BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Key)
 {
-    auto it = Info.RecMap.find(Key);
-    if (it != Info.RecMap.end())
+    auto &rec_map = BP5Serializer::GetRecMap(this);
+    auto it = rec_map.find(Key);
+    if (it != rec_map.end())
     {
         return const_cast<BP5WriterRec>(&(it->second));
     }
@@ -438,7 +458,8 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
                                size_t ElemSize, size_t DimCount)
 {
     core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
-    auto obj = Info.RecMap.insert(std::make_pair(Variable, _BP5WriterRec()));
+    auto obj = BP5Serializer::GetRecMap(this).insert(
+        std::make_pair(Variable, _BP5WriterRec()));
     BP5WriterRec Rec = &obj.first->second;
     if (Type == DataType::String)
         ElemSize = sizeof(char *);
@@ -1129,7 +1150,7 @@ BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer,
 
 void BP5Serializer::CollectFinalShapeValues()
 {
-    for (auto it : Info.RecMap)
+    for (auto it : BP5Serializer::GetRecMap(this))
     {
         BP5WriterRec Rec = &it.second;
         if (Rec->Shape == ShapeID::GlobalArray)
