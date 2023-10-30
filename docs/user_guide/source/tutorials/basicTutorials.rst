@@ -7,3 +7,4 @@ Basic Tutorials
    variables
    attributes
    operators
+   steps

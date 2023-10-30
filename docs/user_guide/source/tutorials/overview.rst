@@ -12,3 +12,4 @@ More specifically, we will go through the following examples:
    2. :ref:`Array Variables <sec:tutorials_basics_variables>`
    3. :ref:`Attributes <sec:tutorials_basics_attributes>`
    4. :ref:`Operators <sec:tutorials_basics_operators>`
+   5. :ref:`Steps <sec:tutorials_basics_steps>`
