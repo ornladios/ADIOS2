@@ -114,8 +114,8 @@ RUN curl -L https://github.com/Blosc/c-blosc2/archive/refs/tags/v2.10.1.tar.gz |
     cd .. && \
     rm -rf c-blosc2-2.10.1 build
 
-ENV PATH /opt/cmake/bin:/opt/blosc2/2.10.1/bin:${PATH}
-ENV LD_LIBRARY_PATH /opt/blosc2/2.10.1/lib64:${LD_LIBRARY_PATH}
+ENV PATH /opt/mpich-4.1.1/bin:/opt/cmake/bin:/opt/blosc2/2.10.1/bin:${PATH}
+ENV LD_LIBRARY_PATH /opt/mpich-4.1.1/lib:/opt/blosc2/2.10.1/lib64:${LD_LIBRARY_PATH}
 ENV CMAKE_PREFIX_PATH /opt/blosc2/2.10.1:${CMAKE_PREFIX_PATH}
 
 ENTRYPOINT ["/bin/bash", "--login"]
