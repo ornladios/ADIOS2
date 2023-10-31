@@ -9,3 +9,4 @@ More specifically, we will go through the following examples:
 2. Basic tutorials:
 
    1. :ref:`Hello World <sec:tutorials_basics_hello_world>`
+   2. :ref:`Variables <sec:tutorials_basics_variables>`

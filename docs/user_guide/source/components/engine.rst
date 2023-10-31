@@ -2,6 +2,8 @@
 Engine
 ******
 
+.. _sec:basics_interface_components_engine:
+
 The Engine abstraction component serves as the base interface to the actual IO systems executing the heavy-load tasks performed when producing and consuming data.
 
 Engine functionality works around two concepts:
@@ -361,13 +363,13 @@ The following table summarizes the memory contracts required by ADIOS2 engines b
 +----------+-------------+-----------------------------------------------+
 | Get      | Data Memory | Contract                                      |
 +----------+-------------+-----------------------------------------------+
-|          | Pointer     | do not modify until PerformPuts/EndStep/Close |
+|          | Pointer     | do not modify until PerformGets/EndStep/Close |
 | Deferred |             |                                               |
-|          | Contents    | populated at Put or PerformPuts/EndStep/Close |
+|          | Contents    | populated at Get or PerformGets/EndStep/Close |
 +----------+-------------+-----------------------------------------------+
-|          | Pointer     | modify after Put                              |
+|          | Pointer     | modify after Get                              |
 | Sync     |             |                                               |
-|          | Contents    | populated at Put                              |
+|          | Contents    | populated at Get                              |
 +----------+-------------+-----------------------------------------------+
 
 
