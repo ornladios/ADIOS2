@@ -5,6 +5,7 @@
 
 add_subdirectory(interface)
 add_subdirectory(engine)
+add_subdirectory(derived)
 add_subdirectory(transports)
 add_subdirectory(bindings)
 add_subdirectory(xml)
