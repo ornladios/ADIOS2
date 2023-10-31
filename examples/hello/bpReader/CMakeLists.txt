@@ -30,7 +30,7 @@ if(NOT TARGET adios2::cxx11)
   find_package(ADIOS2 REQUIRED COMPONENTS ${_components})
 endif()
 
-add_executable(adios2_hello_bpReader bpReader_nompi.cpp)
+add_executable(adios2_hello_bpReader bpReader.cpp)
 target_link_libraries(adios2_hello_bpReader adios2::cxx11)
 install(TARGETS adios2_hello_bpReader RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
