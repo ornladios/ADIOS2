@@ -21,8 +21,6 @@
 #pragma warning(disable : 4250)
 #endif
 
-#include <unordered_map>
-
 namespace adios2
 {
 namespace format
@@ -42,9 +40,7 @@ public:
         Buffer *AttributeEncodeBuffer;
         BufferV *DataBuffer;
 
-        ~TimestepInfo()
-        {
-        }
+        ~TimestepInfo() {}
     };
 
     typedef struct _MetadataInfo
@@ -162,6 +158,7 @@ private:
     struct FFSWriterMarshalBase
     {
         int RecCount = 0;
+        BP5WriterRec RecList = NULL;
         FMContext LocalFMContext = {0};
         int MetaFieldCount = 0;
         FMFieldList MetaFields = NULL;
@@ -171,7 +168,6 @@ private:
         FMFormat AttributeFormat = NULL;
         void *AttributeData = NULL;
         int AttributeSize = 0;
-        std::unordered_map<void *, _BP5WriterRec> RecMap;
     };
 
     FMFormat GenericAttributeFormat = NULL;
@@ -255,6 +251,10 @@ private:
         size_t ElemCount;
         void *Array;
     } ArrayRec;
+
+public:
+    using RecMap = std::unordered_map<void *, BP5Serializer::_BP5WriterRec>;
+    static RecMap &GetRecMap(BP5Serializer *ptr);
 };
 
 } // end namespace format
