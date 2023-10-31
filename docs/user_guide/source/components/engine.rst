@@ -309,8 +309,8 @@ The ``data`` fed to the ``Put`` function is assumed to be allocated on the Host 
    Only the BP4 and BP5 engines are capable of receiving device allocated buffers.
 
 
-PerformsPuts
-------------
+PerformPuts
+-----------
 
    Executes all pending ``Put`` calls in deferred mode and collects
    span data.  Specifically this call copies Put(Deferred) data into
@@ -322,8 +322,8 @@ PerformsPuts
    impact performance on some engines.
 
 
-PerformsDataWrite
------------------
+PerformDataWrite
+----------------
 
    If supported by the engine, moves data from prior ``Put`` calls to disk
 
@@ -452,8 +452,8 @@ Only use it if absolutely necessary (*e.g.* memory bound application or out of s
    ``Get`` doesn't support returning spans.
 
 
-PerformsGets
-------------
+PerformGets
+-----------
 
    Executes all pending ``Get`` calls in deferred mode.
 
