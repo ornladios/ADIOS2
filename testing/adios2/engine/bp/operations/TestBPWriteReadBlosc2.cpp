@@ -858,6 +858,119 @@ void Blosc2Accuracy3DSel(const std::string accuracy, const std::string threshold
     }
 }
 
+void Blosc2NullBlocks(const std::string accuracy, const std::string threshold,
+                      const std::string doshuffle)
+{
+    // Null blocks only work for BP4 and BP5
+    if (engineName == "BP3")
+        return;
+
+    // Each process would write a 1x8 array and all processes would
+    // form a mpiSize * Nx 1D array
+    const std::string fname("BPWRBlosc2NullBlock_" + accuracy + "_" + threshold + threshold + "_" +
+                            doshuffle + ".bp");
+
+    int mpiRank = 0, mpiSize = 1;
+    // Number of rows
+    const size_t Nx = 1000;
+    // Number of steps
+    const size_t NSteps = 1;
+
+    std::vector<float> r32s(Nx);
+    // range 0 to 999
+    std::iota(r32s.begin(), r32s.end(), 0.f);
+
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+    {
+        adios2::IO io = adios.DeclareIO("TestIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
+        const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
+        const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
+        const adios2::Dims count{Nx};
+
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
+
+        // add operations
+        adios2::Operator Blosc2Op =
+            adios.DefineOperator("Blosc2Compressor", adios2::ops::LosslessBlosc);
+
+        var_r32.AddOperation(Blosc2Op, {{adios2::ops::blosc::key::clevel, accuracy},
+                                        {adios2::ops::blosc::key::threshold, threshold},
+                                        {adios2::ops::blosc::key::doshuffle, doshuffle}});
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            bpWriter.BeginStep();
+            var_r32.SetSelection(adios2::Box<adios2::Dims>({mpiRank * Nx}, {Nx}));
+            bpWriter.Put<float>("r32", r32s.data());
+            var_r32.SetSelection(adios2::Box<adios2::Dims>({mpiRank * Nx}, {0}));
+            std::vector<float> r32_empty;
+            bpWriter.Put<float>("r32", r32_empty.data());
+            bpWriter.EndStep();
+        }
+
+        bpWriter.Close();
+    }
+
+    {
+        adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
+
+        unsigned int t = 0;
+        std::vector<float> decompressedR32s;
+
+        while (bpReader.BeginStep() == adios2::StepStatus::OK)
+        {
+            auto var_r32 = io.InquireVariable<float>("r32");
+            EXPECT_TRUE(var_r32);
+            ASSERT_EQ(var_r32.ShapeID(), adios2::ShapeID::GlobalArray);
+            ASSERT_EQ(var_r32.Steps(), NSteps);
+            ASSERT_EQ(var_r32.Shape()[0], mpiSize * Nx);
+
+            const adios2::Dims start{mpiRank * Nx + Nx / 2};
+            const adios2::Dims count{Nx / 2};
+            const adios2::Box<adios2::Dims> sel(start, count);
+            var_r32.SetSelection(sel);
+            bpReader.Get(var_r32, decompressedR32s);
+            bpReader.EndStep();
+
+            for (size_t i = 0; i < Nx / 2; ++i)
+            {
+                std::stringstream ss;
+                ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
+                std::string msg = ss.str();
+
+                ASSERT_EQ(decompressedR32s[i], r32s[Nx / 2 + i]) << msg;
+            }
+            ++t;
+        }
+
+        EXPECT_EQ(t, NSteps);
+
+        bpReader.Close();
+    }
+}
 class BPWriteReadBlosc2
 : public ::testing::TestWithParam<std::tuple<std::string, std::string, std::string>>
 {
@@ -890,6 +1003,10 @@ TEST_P(BPWriteReadBlosc2, ADIOS2BPWriteReadBlosc22DSel)
 TEST_P(BPWriteReadBlosc2, ADIOS2BPWriteReadBlosc23DSel)
 {
     Blosc2Accuracy3DSel(std::get<0>(GetParam()), std::get<1>(GetParam()), std::get<2>(GetParam()));
+}
+TEST_P(BPWriteReadBlosc2, ADIOS2BPWriteReadBlosc2Null)
+{
+    Blosc2NullBlocks(std::get<0>(GetParam()), std::get<1>(GetParam()), std::get<2>(GetParam()));
 }
 
 INSTANTIATE_TEST_SUITE_P(
