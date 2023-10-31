@@ -14,7 +14,7 @@
 //TEST(DerivedTest, AddCorrectnessTest)
 void AddCorrectnessTest()
 {
-    const size_t Nx = 10, Ny = 3, Nz = 1;
+    const size_t Nx = 10, Ny = 3, Nz = 6;
     const size_t steps = 2;
     /** Application variable */
     std::default_random_engine generator;
@@ -38,11 +38,6 @@ void AddCorrectnessTest()
     adios2::ADIOS adios;
 
     adios2::IO bpOut = adios.DeclareIO("BPWriteAddExpression");
-    bpOut.SetEngine("bp5");
-    bpOut.DefineAttribute<int>("nsteps", steps);
-    bpOut.DefineAttribute<int>("arraySize", Nx * Ny * Nz);
-    bpOut.SetParameters("statslevel=1");
-    bpOut.SetParameters("statsblocksize=5000");
 
     std::vector<std::string> varname = {"sim1/Ux", "sim1/Uy", "sim1/Uz"};
     std::string derivedname = "derived/addU";
@@ -81,22 +76,14 @@ void AddCorrectnessTest()
     bpFileWriter.Close();
     std::cout << "Wrote file " << filename << " to disk. \n";
 
-
     // TODO add Operation to magU
     adios2::IO bpIn = adios.DeclareIO("BPReadExpression");
-    
-    bpIn.SetEngine("bp5");
-    bpIn.DefineAttribute<int>("nsteps", steps);
-    bpIn.DefineAttribute<int>("arraySize", Nx * Ny * Nz);
-    bpIn.SetParameters("statslevel=1");
-    bpIn.SetParameters("statsblocksize=5000");
-
     adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
     
-    std::vector<float> readUx(Nx * Ny * Nz);
-    std::vector<float> readUy(Nx * Ny * Nz);
-    std::vector<float> readUz(Nx * Ny * Nz);
-    std::vector<float> readAdd(Nx * Ny * Nz);
+    std::vector<float> readUx;
+    std::vector<float> readUy;
+    std::vector<float> readUz;
+    std::vector<float> readAdd;
 
     float calcA;
     float epsilon = 0.01;
@@ -105,37 +92,29 @@ void AddCorrectnessTest()
         bpFileReader.BeginStep();
         std::cout << "Reading step " << i << std::endl;
 
-        bpFileReader.Get<float>(varname[0], readUx.data());
-        bpFileReader.Get<float>(varname[1], readUy.data());
-        bpFileReader.Get<float>(varname[2], readUz.data());
-        bpFileReader.Get<float>(derivedname, readAdd.data());
+        bpFileReader.Get(varname[0], readUx);
+        bpFileReader.Get(varname[1], readUy);
+        bpFileReader.Get(varname[2], readUz);
+        bpFileReader.Get(derivedname, readAdd);
 	bpFileReader.EndStep();
-	for (int x = 0; x < Nx; ++x)
+	for (size_t ind = 0; ind < Nx*Ny*Nz; ++ind)
 	  {
-	    for (int y = 0; y < Ny; ++y)
+	    calcA = readUx[ind] + readUy[ind] + readUz[ind];
+	    std::string eq;
+	    if (fabs(calcA - readAdd[ind]) < epsilon)
 	      {
-		for (int z = 0; z < Nz; ++z)
-		  {
-		    size_t ind = (x*Nx) + (y*Ny) + (z*Nz);
-		    calcA = readUx[ind] + readUy[ind] + readUz[ind];
-		    std::string eq;
-		    if (fabs(calcA - readAdd[ind]) < epsilon)
-		      {
-			std::cout << "TRUE: ";
-			eq = " = ";
-		      }
-		    else
-		      {
-			std::cout << "FALSE: ";
-			eq = " != ";
-		      }
-		    std::cout << "addU " << i << " [" << x << "," << y << "," << z << "] = " << readAdd[ind];
-		    std::cout << eq << calcA << " = " << readUx[ind] << " + " << readUy[ind] << " + " << readUz[ind] << std::endl;
-		  }
+		std::cout << "TRUE: ";
+		eq = " = ";
 	      }
+	    else
+	      {
+		std::cout << "FALSE: ";
+		eq = " != ";
+	      }
+	    std::cout << "addU " << i << " [" << ind << "] = " << readAdd[ind];
+	    std::cout << eq << calcA << " = " << readUx[ind] << " + " << readUy[ind] << " + " << readUz[ind] << std::endl;
 	  }
     }
-
     /** Create bp file, engine becomes unreachable after this*/
     bpFileReader.Close();
     std::cout << "Read file " << filename << " complete. \n";
@@ -145,7 +124,7 @@ void AddCorrectnessTest()
 //TEST(DerivedTest, MagCorrectnessTest)
 void MagCorrectnessTest()
 {
-    const size_t Nx = 10, Ny = 3, Nz = 1;
+    const size_t Nx = 2, Ny = 3, Nz = 10;
     const size_t steps = 2;
     // Application variable
     std::default_random_engine generator;
@@ -154,24 +133,15 @@ void MagCorrectnessTest()
     std::vector<float> simArray1(Nx * Ny * Nz);
     std::vector<float> simArray2(Nx * Ny * Nz);
     std::vector<float> simArray3(Nx * Ny * Nz);
-    std::vector<float> simArray4(Nx * Ny * Nz);
     for (size_t i = 0; i < Nx * Ny * Nz; ++i)
     {
         simArray1[i] = distribution(generator);
         simArray2[i] = distribution(generator);
         simArray3[i] = distribution(generator);
-        simArray4[i] = distribution(generator);
     }
 
     adios2::ADIOS adios;
-
     adios2::IO bpOut = adios.DeclareIO("BPWriteExpression");
-    bpOut.SetEngine("bp5");
-    bpOut.DefineAttribute<int>("nsteps", steps);
-    bpOut.DefineAttribute<int>("arraySize", Nx * Ny * Nz);
-    bpOut.SetParameters("statslevel=1");
-    bpOut.SetParameters("statsblocksize=5000");
-
     std::vector<std::string> varname = {"sim2/Ux", "sim2/Uy", "sim2/Uz"};
     std::string derivedname = "derived/magU";
     
@@ -199,29 +169,20 @@ void MagCorrectnessTest()
         bpFileWriter.Put(Uy, simArray2.data());
         bpFileWriter.Put(Uz, simArray3.data());
         bpFileWriter.EndStep();
-
     }
 
     // Create bp file, engine becomes unreachable after this
     bpFileWriter.Close();
     std::cout << "Wrote file " << filename << " to disk. \n";
 
-
     // TODO add Operation to magU
     adios2::IO bpIn = adios.DeclareIO("BPReadMagExpression");
-    
-    bpIn.SetEngine("bp5");
-    bpIn.DefineAttribute<int>("nsteps", steps);
-    bpIn.DefineAttribute<int>("arraySize", Nx * Ny * Nz);
-    bpIn.SetParameters("statslevel=1");
-    bpIn.SetParameters("statsblocksize=5000");
-
     adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
 
-    std::vector<float> readUx(Nx * Ny * Nz);
-    std::vector<float> readUy(Nx * Ny * Nz);
-    std::vector<float> readUz(Nx * Ny * Nz);
-    std::vector<float> readMag(Nx * Ny * Nz);
+    std::vector<float> readUx;
+    std::vector<float> readUy;
+    std::vector<float> readUz;
+    std::vector<float> readMag;
 
     float calcM;
     float epsilon = 0.01;
@@ -238,35 +199,26 @@ void MagCorrectnessTest()
 	bpFileReader.Get(varx, readUx);
         bpFileReader.Get(vary, readUy);
         bpFileReader.Get(varz, readUz);
-	varmag.SetSelection({{0,0,0}, {Nx,Ny,Nz}});
 	bpFileReader.Get(varmag, readMag);
 	bpFileReader.EndStep();
-	for (int x = 0; x < Nx; ++x)
+	for (size_t ind = 0; ind < Nx*Ny*Nz; ++ind)
 	  {
-	    for (int y = 0; y < Ny; ++y)
+	    calcM = sqrt(pow(readUx[ind],2)+pow(readUy[ind],2)+pow(readUz[ind],2));
+	    std::string eq;
+	    if (fabs(calcM - readMag[ind]) < epsilon)
 	      {
-		for (int z = 0; z < Nz; ++z)
-		  {
-		    size_t ind = (x*Nx) + (y*Ny) + (z*Nz);
-		    calcM = sqrt(pow(readUx[ind],2)+pow(readUy[ind],2)+pow(readUz[ind],2));
-		    std::string eq;
-		    if (fabs(calcM - readMag[ind]) < epsilon)
-		      {
-			std::cout << "TRUE: ";
-			eq = " = ";
-		      }
-		    else
-		      {
-			std::cout << "FALSE: ";
-			eq = " != ";
-		      }
-		    std::cout << "magU " << i << " [" << x << "," << y << "," << z << "]";
-		    std::cout << eq << calcM << " = mag(" << readUx[ind] << ", " << readUy[ind] << ", " << readUz[ind] << ")" << std::endl;
-		  }
+		std::cout << "TRUE: ";
+		eq = " = ";
 	      }
+	    else
+	      {
+		std::cout << "FALSE: ";
+		eq = " != ";
+	      }
+	    std::cout << "magU " << i << " [" << ind << "]";
+	    std::cout << eq << calcM << " = mag(" << readUx[ind] << ", " << readUy[ind] << ", " << readUz[ind] << ")" << std::endl;
 	  }
     }
-
     // Create bp file, engine becomes unreachable after this
     bpFileReader.Close();
     std::cout << "Read file " << filename << " complete. \n";
