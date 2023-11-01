@@ -75,10 +75,10 @@ def CompressPNG(compression_level):
 
             for i in range(0, Nx):
                 for j in range(0, Ny):
-                    assert(u32s[i][j] == in_u32s[i][j])
-                    assert(u8s[i][j][0] == in_u8s[i][j][0])
-                    assert(u8s[i][j][1] == in_u8s[i][j][1])
-                    assert(u8s[i][j][2] == in_u8s[i][j][2])
+                    assert (u32s[i][j] == in_u32s[i][j])
+                    assert (u8s[i][j][0] == in_u8s[i][j][0])
+                    assert (u8s[i][j][1] == in_u8s[i][j][1])
+                    assert (u8s[i][j][2] == in_u8s[i][j][2])
 
 
 def main():

@@ -24,11 +24,11 @@ namespace core
 {
 
 template <class T>
-typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
-                                        const bool initialize, const T &value)
+typename Variable<T>::Span &Engine::Put(Variable<T> &variable, const bool initialize,
+                                        const T &value)
 {
-    CheckOpenModes({{Mode::Write}}, " for variable " + variable.m_Name +
-                                        ", in call to Variable<T>::Span Put");
+    CheckOpenModes({{Mode::Write, Mode::Append}},
+                   " for variable " + variable.m_Name + ", in call to Variable<T>::Span Put");
     if (!variable.m_Operations.empty())
     {
         helper::Throw<std::invalid_argument>(
@@ -38,8 +38,7 @@ typename Variable<T>::Span &Engine::Put(Variable<T> &variable,
     }
 
     auto itSpan = variable.m_BlocksSpan.emplace(
-        variable.m_BlocksInfo.size(),
-        typename Variable<T>::Span(*this, variable.TotalSize()));
+        variable.m_BlocksInfo.size(), typename Variable<T>::Span(*this, variable.TotalSize()));
     DoPut(variable, itSpan.first->second, initialize, value);
     return itSpan.first->second;
 }
@@ -58,16 +57,14 @@ void Engine::Put(Variable<T> &variable, const T *data, const Mode launch)
         DoPutSync(variable, data);
         break;
     default:
-        helper::Throw<std::invalid_argument>(
-            "Core", "Engine", "Put",
-            "invalid launch Mode for variable " + variable.m_Name +
-                ", only Mode::Deferred and Mode::Sync are valid");
+        helper::Throw<std::invalid_argument>("Core", "Engine", "Put",
+                                             "invalid launch Mode for variable " + variable.m_Name +
+                                                 ", only Mode::Deferred and Mode::Sync are valid");
     }
 }
 
 template <class T>
-void Engine::Put(const std::string &variableName, const T *data,
-                 const Mode launch)
+void Engine::Put(const std::string &variableName, const T *data, const Mode launch)
 {
     Put(FindVariable<T>(variableName, "in call to Put"), data, launch);
 }
@@ -80,20 +77,17 @@ void Engine::Put(Variable<T> &variable, const T &datum, const Mode /*launch*/)
 }
 
 template <class T>
-void Engine::Put(const std::string &variableName, const T &datum,
-                 const Mode /*launch*/)
+void Engine::Put(const std::string &variableName, const T &datum, const Mode /*launch*/)
 {
     const T datumLocal = datum;
-    Put(FindVariable<T>(variableName, "in call to Put"), &datumLocal,
-        Mode::Sync);
+    Put(FindVariable<T>(variableName, "in call to Put"), &datumLocal, Mode::Sync);
 }
 
 // Get
 template <class T>
 void Engine::Get(Variable<T> &variable, T *data, const Mode launch)
 {
-    CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess},
-                 "in call to Get");
+    CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess}, "in call to Get");
 
     switch (launch)
     {
@@ -104,10 +98,9 @@ void Engine::Get(Variable<T> &variable, T *data, const Mode launch)
         DoGetSync(variable, data);
         break;
     default:
-        helper::Throw<std::invalid_argument>(
-            "Core", "Engine", "Get",
-            "invalid launch Mode for variable " + variable.m_Name +
-                ", only Mode::Deferred and Mode::Sync are valid");
+        helper::Throw<std::invalid_argument>("Core", "Engine", "Get",
+                                             "invalid launch Mode for variable " + variable.m_Name +
+                                                 ", only Mode::Deferred and Mode::Sync are valid");
     }
 }
 
@@ -130,8 +123,7 @@ void Engine::Get(const std::string &variableName, T &datum, const Mode launch)
 }
 
 template <class T>
-void Engine::Get(Variable<T> &variable, std::vector<T> &dataV,
-                 const Mode launch)
+void Engine::Get(Variable<T> &variable, std::vector<T> &dataV, const Mode launch)
 {
     const size_t dataSize = variable.SelectionSize();
     helper::Resize(dataV, dataSize, "in call to Get with std::vector argument");
@@ -141,33 +133,28 @@ void Engine::Get(Variable<T> &variable, std::vector<T> &dataV,
 template <class T>
 void Engine::Get(core::Variable<T> &variable, T **data) const
 {
-    const auto *eng =
-        dynamic_cast<const adios2::core::engine::InlineReader *>(this);
+    const auto *eng = dynamic_cast<const adios2::core::engine::InlineReader *>(this);
     if (eng)
     {
         eng->Get(variable, data);
     }
     else
     {
-        helper::Throw<std::runtime_error>(
-            "Core", "Engine", "Get",
-            "Engine " + m_EngineType +
-                " does not support Get(core::Variable<T>&, T**)");
+        helper::Throw<std::runtime_error>("Core", "Engine", "Get",
+                                          "Engine " + m_EngineType +
+                                              " does not support Get(core::Variable<T>&, T**)");
     }
 }
 
 template <class T>
-void Engine::Get(const std::string &variableName, std::vector<T> &dataV,
-                 const Mode launch)
+void Engine::Get(const std::string &variableName, std::vector<T> &dataV, const Mode launch)
 {
-    Get(FindVariable<T>(variableName, "in Get with std::vector argument"),
-        dataV, launch);
+    Get(FindVariable<T>(variableName, "in Get with std::vector argument"), dataV, launch);
 }
 
 // Get
 template <class T>
-typename Variable<T>::BPInfo *Engine::Get(Variable<T> &variable,
-                                          const Mode launch)
+typename Variable<T>::BPInfo *Engine::Get(Variable<T> &variable, const Mode launch)
 {
     typename Variable<T>::BPInfo *info = nullptr;
     switch (launch)
@@ -179,10 +166,9 @@ typename Variable<T>::BPInfo *Engine::Get(Variable<T> &variable,
         info = DoGetBlockSync(variable);
         break;
     default:
-        helper::Throw<std::invalid_argument>(
-            "Core", "Engine", "Get",
-            "invalid launch Mode for variable " + variable.m_Name +
-                ", only Mode::Deferred and Mode::Sync are valid");
+        helper::Throw<std::invalid_argument>("Core", "Engine", "Get",
+                                             "invalid launch Mode for variable " + variable.m_Name +
+                                                 ", only Mode::Deferred and Mode::Sync are valid");
     }
 
     CommonChecks(variable, info->Data, {Mode::Read}, "in call to Get");
@@ -191,8 +177,7 @@ typename Variable<T>::BPInfo *Engine::Get(Variable<T> &variable,
 }
 
 template <class T>
-typename Variable<T>::BPInfo *Engine::Get(const std::string &variableName,
-                                          const Mode launch)
+typename Variable<T>::BPInfo *Engine::Get(const std::string &variableName, const Mode launch)
 {
     return Get(FindVariable<T>(variableName, "in call to Get"), launch);
 }
@@ -212,8 +197,8 @@ Engine::AllRelativeStepsBlocksInfo(const Variable<T> &variable) const
 }
 
 template <class T>
-std::vector<typename Variable<T>::BPInfo>
-Engine::BlocksInfo(const Variable<T> &variable, const size_t step) const
+std::vector<typename Variable<T>::BPInfo> Engine::BlocksInfo(const Variable<T> &variable,
+                                                             const size_t step) const
 {
     return DoBlocksInfo(variable, step);
 }
@@ -236,27 +221,25 @@ std::vector<size_t> Engine::GetAbsoluteSteps(const Variable<T> &variable) const
     return keys;
 }
 
-#define declare_type(T, L)                                                     \
-    template <>                                                                \
-    T *Engine::BufferData(const int bufferIdx, const size_t payloadPosition,   \
-                          const size_t bufferID) noexcept                      \
-    {                                                                          \
-        return DoBufferData_##L(bufferIdx, payloadPosition, bufferID);         \
+#define declare_type(T, L)                                                                         \
+    template <>                                                                                    \
+    T *Engine::BufferData(const int bufferIdx, const size_t payloadPosition,                       \
+                          const size_t bufferID) noexcept                                          \
+    {                                                                                              \
+        return DoBufferData_##L(bufferIdx, payloadPosition, bufferID);                             \
     }
 ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(declare_type)
 #undef declare_type
 
 // PROTECTED
 template <class T>
-Variable<T> &Engine::FindVariable(const std::string &variableName,
-                                  const std::string hint)
+Variable<T> &Engine::FindVariable(const std::string &variableName, const std::string hint)
 {
     Variable<T> *variable = m_IO.InquireVariable<T>(variableName);
     if (variable == nullptr)
     {
         helper::Throw<std::invalid_argument>("Core", "Engine", "FindVariable",
-                                             "variable " + variableName +
-                                                 " not found in IO " +
+                                             "variable " + variableName + " not found in IO " +
                                                  m_IO.m_Name + ", " + hint);
     }
     return *variable;

@@ -73,8 +73,7 @@ public:
     TestStagingMPMD() = default;
     const std::string streamName = "TestStream";
 
-    void MainWriters(MPI_Comm comm, size_t npx, size_t npy, int steps,
-                     unsigned int sleeptime)
+    void MainWriters(MPI_Comm comm, size_t npx, size_t npy, int steps, unsigned int sleeptime)
     {
         int rank, nproc;
         MPI_Comm_rank(comm, &rank);
@@ -99,12 +98,10 @@ public:
         io.SetEngine(engineName);
         io.SetParameters(engineParams);
 
-        adios2::Variable<float> varArray =
-            io.DefineVariable<float>("myArray", {gndx, gndy}, {offsx, offsy},
-                                     {ndx, ndy}, adios2::ConstantDims);
+        adios2::Variable<float> varArray = io.DefineVariable<float>(
+            "myArray", {gndx, gndy}, {offsx, offsy}, {ndx, ndy}, adios2::ConstantDims);
 
-        adios2::Variable<double> varScalar =
-            io.DefineVariable<double>("myScalar");
+        adios2::Variable<double> varScalar = io.DefineVariable<double>("myScalar");
 
         adios2::Engine writer = io.Open(streamName, adios2::Mode::Write, comm);
 
@@ -148,9 +145,8 @@ public:
         return 1000.0f * step + offsy + offsx / 1000.0f;
     }
 
-    void CheckData(const std::vector<float> &array, size_t gndx, size_t gndy,
-                   size_t offsx, size_t offsy, size_t ndx, size_t ndy,
-                   size_t step, int rank)
+    void CheckData(const std::vector<float> &array, size_t gndx, size_t gndy, size_t offsx,
+                   size_t offsy, size_t ndx, size_t ndy, size_t step, int rank)
     {
         size_t idx = 0;
         for (size_t x = 0; x < ndx; ++x)
@@ -160,17 +156,16 @@ public:
                 float expectedValue = GetValue(offsx + x, offsy + y, step);
                 EXPECT_EQ(array[idx], expectedValue)
                     << "Error in read, did not receive the expected value:"
-                    << " rank " << rank << ", step " << step << ", gdim {"
-                    << gndx << ',' << gndy << '}' << ", offs {" << offsx << ','
-                    << offsy << '}' << ", ldim {" << ndx << ',' << ndy << '}'
-                    << ", lpos {" << x << ',' << y << '}';
+                    << " rank " << rank << ", step " << step << ", gdim {" << gndx << ',' << gndy
+                    << '}' << ", offs {" << offsx << ',' << offsy << '}' << ", ldim {" << ndx << ','
+                    << ndy << '}' << ", lpos {" << x << ',' << y << '}';
                 ++idx;
             }
         }
     }
 
-    void MainReaders(MPI_Comm comm, size_t npx, size_t npy,
-                     unsigned int sleeptime, float reader_timeout)
+    void MainReaders(MPI_Comm comm, size_t npx, size_t npy, unsigned int sleeptime,
+                     float reader_timeout)
     {
         int rank, nproc;
         MPI_Comm_rank(comm, &rank);
@@ -196,8 +191,7 @@ public:
 
         while (true)
         {
-            adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::Read, reader_timeout);
+            adios2::StepStatus status = reader.BeginStep(adios2::StepMode::Read, reader_timeout);
             if (status != adios2::StepStatus::OK)
             {
                 break;
@@ -258,8 +252,8 @@ public:
     void TestCommon(RunParams p, int steps, unsigned int writer_sleeptime,
                     unsigned int reader_sleeptime, float reader_timeout)
     {
-        std::cout << "test " << p.npx_w << "x" << p.npy_w << " writers "
-                  << p.npx_r << "x" << p.npy_r << " readers " << std::endl;
+        std::cout << "test " << p.npx_w << "x" << p.npy_w << " writers " << p.npx_r << "x"
+                  << p.npy_r << " readers " << std::endl;
 
         size_t nwriters = p.npx_w * p.npy_w;
         size_t nreaders = p.npx_r * p.npy_r;
@@ -267,9 +261,7 @@ public:
         {
             if (!wrank)
             {
-                std::cout
-                    << "skip test: writers+readers > available processors "
-                    << std::endl;
+                std::cout << "skip test: writers+readers > available processors " << std::endl;
             }
             return;
         }
@@ -295,19 +287,18 @@ public:
 
         if (color == 0)
         {
-            std::cout << "Process wrank " << wrank << " rank " << rank
-                      << " calls MainWriters " << std::endl;
+            std::cout << "Process wrank " << wrank << " rank " << rank << " calls MainWriters "
+                      << std::endl;
             MainWriters(comm, p.npx_w, p.npy_w, steps, writer_sleeptime);
         }
         else if (color == 1)
         {
-            std::cout << "Process wrank " << wrank << " rank " << rank
-                      << " calls MainReaders " << std::endl;
-            MainReaders(comm, p.npx_r, p.npy_r, reader_sleeptime,
-                        reader_timeout);
+            std::cout << "Process wrank " << wrank << " rank " << rank << " calls MainReaders "
+                      << std::endl;
+            MainReaders(comm, p.npx_r, p.npy_r, reader_sleeptime, reader_timeout);
         }
-        std::cout << "Process wrank " << wrank << " rank " << rank
-                  << " enters MPI barrier..." << std::endl;
+        std::cout << "Process wrank " << wrank << " rank " << rank << " enters MPI barrier..."
+                  << std::endl;
         MPI_Barrier(MPI_COMM_WORLD);
 
         // Separate each individual test with a big gap in time
@@ -346,8 +337,7 @@ TEST_P(TestStagingMPMD, SlowReader)
     TestCommon(p, 4, 0, 100, -1.0);
 }
 
-INSTANTIATE_TEST_SUITE_P(NxM, TestStagingMPMD,
-                         ::testing::ValuesIn(CreateRunParams()));
+INSTANTIATE_TEST_SUITE_P(NxM, TestStagingMPMD, ::testing::ValuesIn(CreateRunParams()));
 
 void threadTimeoutRun(size_t t)
 {
@@ -387,8 +377,8 @@ int main(int argc, char **argv)
 
     if (!wrank)
     {
-        std::cout << "Test " << engineName << " engine with " << numprocs
-                  << " processes " << std::endl;
+        std::cout << "Test " << engineName << " engine with " << numprocs << " processes "
+                  << std::endl;
     }
 
     int result;

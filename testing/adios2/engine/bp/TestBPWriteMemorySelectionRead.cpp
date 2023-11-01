@@ -15,13 +15,14 @@
 #include "../SmallTestData.h"
 
 std::string engineName; // comes from command line
+bool DoWrite = true;
+bool DoRead = true;
 
 namespace
 {
 
 template <class T>
-inline void AssignStep1D(const size_t step, std::vector<T> &vector,
-                         const size_t ghostCells = 0)
+inline void AssignStep1D(const size_t step, std::vector<T> &vector, const size_t ghostCells = 0)
 {
     std::for_each(vector.begin() + ghostCells, vector.end() - ghostCells,
                   [step](T &value) { value = static_cast<T>(step); });
@@ -31,11 +32,10 @@ template <>
 void AssignStep1D(const size_t step, std::vector<std::complex<float>> &vector,
                   const size_t ghostCells)
 {
-    std::for_each(vector.begin() + ghostCells, vector.end() - ghostCells,
-                  [step](std::complex<float> &value) {
-                      value = std::complex<float>(static_cast<float>(step),
-                                                  static_cast<float>(step));
-                  });
+    std::for_each(
+        vector.begin() + ghostCells, vector.end() - ghostCells, [step](std::complex<float> &value) {
+            value = std::complex<float>(static_cast<float>(step), static_cast<float>(step));
+        });
 }
 
 template <>
@@ -50,9 +50,8 @@ void AssignStep1D(const size_t step, std::vector<std::complex<double>> &vector,
 }
 
 template <class T>
-inline void AssignStep2D(const size_t step, std::vector<T> &vector,
-                         const size_t Nx, const size_t Ny,
-                         const size_t ghostCellsX, const size_t ghostCellsY)
+inline void AssignStep2D(const size_t step, std::vector<T> &vector, const size_t Nx,
+                         const size_t Ny, const size_t ghostCellsX, const size_t ghostCellsY)
 {
     for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
     {
@@ -67,9 +66,8 @@ inline void AssignStep2D(const size_t step, std::vector<T> &vector,
 }
 
 template <>
-void AssignStep2D(const size_t step, std::vector<std::complex<float>> &vector,
-                  const size_t Nx, const size_t Ny, const size_t ghostCellsX,
-                  const size_t ghostCellsY)
+void AssignStep2D(const size_t step, std::vector<std::complex<float>> &vector, const size_t Nx,
+                  const size_t Ny, const size_t ghostCellsX, const size_t ghostCellsY)
 {
     for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
     {
@@ -78,16 +76,14 @@ void AssignStep2D(const size_t step, std::vector<std::complex<float>> &vector,
         for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
         {
             const size_t index = indexJ + i;
-            vector[index] = std::complex<float>(static_cast<float>(step),
-                                                static_cast<float>(step));
+            vector[index] = std::complex<float>(static_cast<float>(step), static_cast<float>(step));
         }
     }
 }
 
 template <>
-void AssignStep2D(const size_t step, std::vector<std::complex<double>> &vector,
-                  const size_t Nx, const size_t Ny, const size_t ghostCellsX,
-                  const size_t ghostCellsY)
+void AssignStep2D(const size_t step, std::vector<std::complex<double>> &vector, const size_t Nx,
+                  const size_t Ny, const size_t ghostCellsX, const size_t ghostCellsY)
 {
     for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
     {
@@ -96,22 +92,20 @@ void AssignStep2D(const size_t step, std::vector<std::complex<double>> &vector,
         for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
         {
             const size_t index = indexJ + i;
-            vector[index] = std::complex<double>(static_cast<double>(step),
-                                                 static_cast<double>(step));
+            vector[index] =
+                std::complex<double>(static_cast<double>(step), static_cast<double>(step));
         }
     }
 }
 
 template <class T>
-inline void AssignStep3D(const size_t step, std::vector<T> &vector,
-                         const size_t Nx, const size_t Ny, const size_t Nz,
-                         const size_t ghostCellsX, const size_t ghostCellsY,
-                         const size_t ghostCellsZ)
+inline void AssignStep3D(const size_t step, std::vector<T> &vector, const size_t Nx,
+                         const size_t Ny, const size_t Nz, const size_t ghostCellsX,
+                         const size_t ghostCellsY, const size_t ghostCellsZ)
 {
     for (size_t k = ghostCellsZ; k < Nz + ghostCellsZ; ++k)
     {
-        const size_t indexK =
-            k * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
+        const size_t indexK = k * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
 
         for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
         {
@@ -127,15 +121,13 @@ inline void AssignStep3D(const size_t step, std::vector<T> &vector,
 }
 
 template <>
-void AssignStep3D(const size_t step, std::vector<std::complex<float>> &vector,
-                  const size_t Nx, const size_t Ny, const size_t Nz,
-                  const size_t ghostCellsX, const size_t ghostCellsY,
-                  const size_t ghostCellsZ)
+void AssignStep3D(const size_t step, std::vector<std::complex<float>> &vector, const size_t Nx,
+                  const size_t Ny, const size_t Nz, const size_t ghostCellsX,
+                  const size_t ghostCellsY, const size_t ghostCellsZ)
 {
     for (size_t k = ghostCellsZ; k < Nz + ghostCellsZ; ++k)
     {
-        const size_t indexK =
-            k * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
+        const size_t indexK = k * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
 
         for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
         {
@@ -144,23 +136,21 @@ void AssignStep3D(const size_t step, std::vector<std::complex<float>> &vector,
             for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
             {
                 const size_t index = indexK + indexJ + i;
-                vector[index] = std::complex<float>(static_cast<float>(step),
-                                                    static_cast<float>(step));
+                vector[index] =
+                    std::complex<float>(static_cast<float>(step), static_cast<float>(step));
             }
         }
     }
 }
 
 template <>
-void AssignStep3D(const size_t step, std::vector<std::complex<double>> &vector,
-                  const size_t Nx, const size_t Ny, const size_t Nz,
-                  const size_t ghostCellsX, const size_t ghostCellsY,
-                  const size_t ghostCellsZ)
+void AssignStep3D(const size_t step, std::vector<std::complex<double>> &vector, const size_t Nx,
+                  const size_t Ny, const size_t Nz, const size_t ghostCellsX,
+                  const size_t ghostCellsY, const size_t ghostCellsZ)
 {
     for (size_t k = ghostCellsZ; k < Nz + ghostCellsZ; ++k)
     {
-        const size_t indexK =
-            k * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
+        const size_t indexK = k * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
 
         for (size_t j = ghostCellsY; j < Ny + ghostCellsY; ++j)
         {
@@ -169,8 +159,8 @@ void AssignStep3D(const size_t step, std::vector<std::complex<double>> &vector,
             for (size_t i = ghostCellsX; i < Nx + ghostCellsX; ++i)
             {
                 const size_t index = indexK + indexJ + i;
-                vector[index] = std::complex<double>(static_cast<double>(step),
-                                                     static_cast<double>(step));
+                vector[index] =
+                    std::complex<double>(static_cast<double>(step), static_cast<double>(step));
             }
         }
     }
@@ -178,9 +168,13 @@ void AssignStep3D(const size_t step, std::vector<std::complex<double>> &vector,
 
 } // end anonymous namespace
 
+#if ADIOS2_USE_MPI
+MPI_Comm testComm;
+#endif
+
 void BPSteps1D(const size_t ghostCells)
 {
-    const std::string fname("BPSteps1D_" + std::to_string(ghostCells) + ".bp");
+    const std::string fname("BPSteps1D_" + std::to_string(ghostCells));
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -190,15 +184,16 @@ void BPSteps1D(const size_t ghostCells)
     const size_t NSteps = 3;
 
 #if ADIOS2_USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    MPI_Comm_rank(testComm, &mpiRank);
+    MPI_Comm_size(testComm, &mpiSize);
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD);
+    adios2::ADIOS adios(testComm);
 #else
     adios2::ADIOS adios;
 #endif
+    if (DoWrite)
     {
         adios2::IO io = adios.DeclareIO("WriteIO");
 
@@ -207,6 +202,7 @@ void BPSteps1D(const size_t ghostCells)
             io.SetEngine(engineName);
         }
 
+        io.SetParameters("StatsLevel=1");
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
@@ -217,10 +213,8 @@ void BPSteps1D(const size_t ghostCells)
         auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
-        auto var_cr32 =
-            io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
-                                                                start, count);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
 
         const adios2::Dims memoryStart = {ghostCells};
         const adios2::Dims memoryCount = {Nx + 2 * ghostCells};
@@ -240,10 +234,8 @@ void BPSteps1D(const size_t ghostCells)
         std::vector<int64_t> dataI64(Nx + 2 * ghostCells, -1);
         std::vector<float> dataR32(Nx + 2 * ghostCells, -1.f);
         std::vector<double> dataR64(Nx + 2 * ghostCells, -1.);
-        std::vector<std::complex<float>> dataCR32(Nx + 2 * ghostCells,
-                                                  {-1.f, -1.f});
-        std::vector<std::complex<double>> dataCR64(Nx + 2 * ghostCells,
-                                                   {-1., -1.});
+        std::vector<std::complex<float>> dataCR32(Nx + 2 * ghostCells, {-1.f, -1.f});
+        std::vector<std::complex<double>> dataCR64(Nx + 2 * ghostCells, {-1., -1.});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -272,9 +264,10 @@ void BPSteps1D(const size_t ghostCells)
         bpWriter.Close();
     }
 #if ADIOS2_USE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(testComm);
 #endif
     // Reader
+    if (DoRead)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
@@ -363,38 +356,28 @@ void BPSteps1D(const size_t ghostCells)
             EXPECT_EQ(R32.front(), static_cast<float>(step));
             EXPECT_EQ(R64.front(), static_cast<double>(step));
             EXPECT_EQ(CR32.front(),
-                      std::complex<float>(static_cast<float>(step),
-                                          static_cast<float>(step)));
+                      std::complex<float>(static_cast<float>(step), static_cast<float>(step)));
             EXPECT_EQ(CR64.front(),
-                      std::complex<double>(static_cast<double>(step),
-                                           static_cast<double>(step)));
+                      std::complex<double>(static_cast<double>(step), static_cast<double>(step)));
 
-            EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(),
-                                         std::not_equal_to<int8_t>()),
+            EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(), std::not_equal_to<int8_t>()),
                       I8.end());
-            EXPECT_EQ(std::adjacent_find(I16.begin(), I16.end(),
-                                         std::not_equal_to<int16_t>()),
+            EXPECT_EQ(std::adjacent_find(I16.begin(), I16.end(), std::not_equal_to<int16_t>()),
                       I16.end());
-            EXPECT_EQ(std::adjacent_find(I32.begin(), I32.end(),
-                                         std::not_equal_to<int32_t>()),
+            EXPECT_EQ(std::adjacent_find(I32.begin(), I32.end(), std::not_equal_to<int32_t>()),
                       I32.end());
-            EXPECT_EQ(std::adjacent_find(I64.begin(), I64.end(),
-                                         std::not_equal_to<int64_t>()),
+            EXPECT_EQ(std::adjacent_find(I64.begin(), I64.end(), std::not_equal_to<int64_t>()),
                       I64.end());
-            EXPECT_EQ(std::adjacent_find(R32.begin(), R32.end(),
-                                         std::not_equal_to<float>()),
+            EXPECT_EQ(std::adjacent_find(R32.begin(), R32.end(), std::not_equal_to<float>()),
                       R32.end());
-            EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(),
-                                         std::not_equal_to<double>()),
+            EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(), std::not_equal_to<double>()),
                       R64.end());
-            EXPECT_EQ(
-                std::adjacent_find(CR32.begin(), CR32.end(),
-                                   std::not_equal_to<std::complex<float>>()),
-                CR32.end());
-            EXPECT_EQ(
-                std::adjacent_find(CR64.begin(), CR64.end(),
-                                   std::not_equal_to<std::complex<double>>()),
-                CR64.end());
+            EXPECT_EQ(std::adjacent_find(CR32.begin(), CR32.end(),
+                                         std::not_equal_to<std::complex<float>>()),
+                      CR32.end());
+            EXPECT_EQ(std::adjacent_find(CR64.begin(), CR64.end(),
+                                         std::not_equal_to<std::complex<double>>()),
+                      CR64.end());
         }
 
         bpReader.Close();
@@ -403,8 +386,7 @@ void BPSteps1D(const size_t ghostCells)
 
 void BPSteps2D4x2(const size_t ghostCells)
 {
-    const std::string fname("BPSteps2D4x2_" + std::to_string(ghostCells) +
-                            ".bp");
+    const std::string fname("BPSteps2D4x2_" + std::to_string(ghostCells));
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -418,15 +400,16 @@ void BPSteps2D4x2(const size_t ghostCells)
     const size_t NSteps = 3;
 
 #if ADIOS2_USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    MPI_Comm_rank(testComm, &mpiRank);
+    MPI_Comm_size(testComm, &mpiSize);
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD);
+    adios2::ADIOS adios(testComm);
 #else
     adios2::ADIOS adios;
 #endif
+    if (DoWrite)
     {
         adios2::IO io = adios.DeclareIO("WriteIO");
 
@@ -445,14 +428,11 @@ void BPSteps2D4x2(const size_t ghostCells)
         auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
-        auto var_cr32 =
-            io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
-                                                                start, count);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
 
         const adios2::Dims memoryStart = {ghostCellsY, ghostCellsX};
-        const adios2::Dims memoryCount = {Ny + 2 * ghostCellsY,
-                                          Nx + 2 * ghostCellsX};
+        const adios2::Dims memoryCount = {Ny + 2 * ghostCellsY, Nx + 2 * ghostCellsX};
 
         var_i8.SetMemorySelection({memoryStart, memoryCount});
         var_i16.SetMemorySelection({memoryStart, memoryCount});
@@ -500,9 +480,10 @@ void BPSteps2D4x2(const size_t ghostCells)
         bpWriter.Close();
     }
 #if ADIOS2_USE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(testComm);
 #endif
     // Reader
+    if (DoRead)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
@@ -601,38 +582,28 @@ void BPSteps2D4x2(const size_t ghostCells)
             EXPECT_EQ(R32.front(), static_cast<float>(step));
             EXPECT_EQ(R64.front(), static_cast<double>(step));
             EXPECT_EQ(CR32.front(),
-                      std::complex<float>(static_cast<float>(step),
-                                          static_cast<float>(step)));
+                      std::complex<float>(static_cast<float>(step), static_cast<float>(step)));
             EXPECT_EQ(CR64.front(),
-                      std::complex<double>(static_cast<double>(step),
-                                           static_cast<double>(step)));
+                      std::complex<double>(static_cast<double>(step), static_cast<double>(step)));
 
-            EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(),
-                                         std::not_equal_to<int8_t>()),
+            EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(), std::not_equal_to<int8_t>()),
                       I8.end());
-            EXPECT_EQ(std::adjacent_find(I16.begin(), I16.end(),
-                                         std::not_equal_to<int16_t>()),
+            EXPECT_EQ(std::adjacent_find(I16.begin(), I16.end(), std::not_equal_to<int16_t>()),
                       I16.end());
-            EXPECT_EQ(std::adjacent_find(I32.begin(), I32.end(),
-                                         std::not_equal_to<int32_t>()),
+            EXPECT_EQ(std::adjacent_find(I32.begin(), I32.end(), std::not_equal_to<int32_t>()),
                       I32.end());
-            EXPECT_EQ(std::adjacent_find(I64.begin(), I64.end(),
-                                         std::not_equal_to<int64_t>()),
+            EXPECT_EQ(std::adjacent_find(I64.begin(), I64.end(), std::not_equal_to<int64_t>()),
                       I64.end());
-            EXPECT_EQ(std::adjacent_find(R32.begin(), R32.end(),
-                                         std::not_equal_to<float>()),
+            EXPECT_EQ(std::adjacent_find(R32.begin(), R32.end(), std::not_equal_to<float>()),
                       R32.end());
-            EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(),
-                                         std::not_equal_to<double>()),
+            EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(), std::not_equal_to<double>()),
                       R64.end());
-            EXPECT_EQ(
-                std::adjacent_find(CR32.begin(), CR32.end(),
-                                   std::not_equal_to<std::complex<float>>()),
-                CR32.end());
-            EXPECT_EQ(
-                std::adjacent_find(CR64.begin(), CR64.end(),
-                                   std::not_equal_to<std::complex<double>>()),
-                CR64.end());
+            EXPECT_EQ(std::adjacent_find(CR32.begin(), CR32.end(),
+                                         std::not_equal_to<std::complex<float>>()),
+                      CR32.end());
+            EXPECT_EQ(std::adjacent_find(CR64.begin(), CR64.end(),
+                                         std::not_equal_to<std::complex<double>>()),
+                      CR64.end());
         }
 
         bpReader.Close();
@@ -641,8 +612,7 @@ void BPSteps2D4x2(const size_t ghostCells)
 
 void BPSteps3D8x2x4(const size_t ghostCells)
 {
-    const std::string fname("BPSteps3D8x2x4_" + std::to_string(ghostCells) +
-                            ".bp");
+    const std::string fname("BPSteps3D8x2x4_" + std::to_string(ghostCells));
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -658,15 +628,16 @@ void BPSteps3D8x2x4(const size_t ghostCells)
     const size_t NSteps = 3;
 
 #if ADIOS2_USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    MPI_Comm_rank(testComm, &mpiRank);
+    MPI_Comm_size(testComm, &mpiSize);
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD);
+    adios2::ADIOS adios(testComm);
 #else
     adios2::ADIOS adios;
 #endif
+    if (DoWrite)
     {
         adios2::IO io = adios.DeclareIO("WriteIO");
 
@@ -685,15 +656,12 @@ void BPSteps3D8x2x4(const size_t ghostCells)
         auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
-        auto var_cr32 =
-            io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape,
-                                                                start, count);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
 
-        const adios2::Dims memoryStart = {ghostCellsZ, ghostCellsY,
-                                          ghostCellsX};
-        const adios2::Dims memoryCount = {
-            Nz + 2 * ghostCellsZ, Ny + 2 * ghostCellsY, Nx + 2 * ghostCellsX};
+        const adios2::Dims memoryStart = {ghostCellsZ, ghostCellsY, ghostCellsX};
+        const adios2::Dims memoryCount = {Nz + 2 * ghostCellsZ, Ny + 2 * ghostCellsY,
+                                          Nx + 2 * ghostCellsX};
 
         var_i8.SetMemorySelection({memoryStart, memoryCount});
         var_i16.SetMemorySelection({memoryStart, memoryCount});
@@ -704,8 +672,8 @@ void BPSteps3D8x2x4(const size_t ghostCells)
         var_cr32.SetMemorySelection({memoryStart, memoryCount});
         var_cr64.SetMemorySelection({memoryStart, memoryCount});
 
-        const size_t dataSize = (Nz + 2 * ghostCellsZ) *
-                                (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
+        const size_t dataSize =
+            (Nz + 2 * ghostCellsZ) * (Ny + 2 * ghostCellsY) * (Nx + 2 * ghostCellsX);
         std::vector<int8_t> dataI8(dataSize, -1);
         std::vector<int16_t> dataI16(dataSize, -1);
         std::vector<int32_t> dataI32(dataSize, -1);
@@ -719,22 +687,14 @@ void BPSteps3D8x2x4(const size_t ghostCells)
 
         for (size_t i = 0; i < NSteps; ++i)
         {
-            AssignStep3D(i, dataI8, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataI16, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataI32, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataI64, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataR32, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataR64, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataCR32, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
-            AssignStep3D(i, dataCR64, Nx, Ny, Nz, ghostCellsX, ghostCellsY,
-                         ghostCellsZ);
+            AssignStep3D(i, dataI8, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataI16, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataI32, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataI64, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataR32, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataR64, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataCR32, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
+            AssignStep3D(i, dataCR64, Nx, Ny, Nz, ghostCellsX, ghostCellsY, ghostCellsZ);
 
             bpWriter.BeginStep();
             bpWriter.Put(var_i8, dataI8.data());
@@ -750,9 +710,10 @@ void BPSteps3D8x2x4(const size_t ghostCells)
         bpWriter.Close();
     }
 #if ADIOS2_USE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(testComm);
 #endif
     // Reader
+    if (DoRead)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
@@ -884,38 +845,28 @@ void BPSteps3D8x2x4(const size_t ghostCells)
             EXPECT_EQ(R32.front(), static_cast<float>(step));
             EXPECT_EQ(R64.front(), static_cast<double>(step));
             EXPECT_EQ(CR32.front(),
-                      std::complex<float>(static_cast<float>(step),
-                                          static_cast<float>(step)));
+                      std::complex<float>(static_cast<float>(step), static_cast<float>(step)));
             EXPECT_EQ(CR64.front(),
-                      std::complex<double>(static_cast<double>(step),
-                                           static_cast<double>(step)));
+                      std::complex<double>(static_cast<double>(step), static_cast<double>(step)));
 
-            EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(),
-                                         std::not_equal_to<int8_t>()),
+            EXPECT_EQ(std::adjacent_find(I8.begin(), I8.end(), std::not_equal_to<int8_t>()),
                       I8.end());
-            EXPECT_EQ(std::adjacent_find(I16.begin(), I16.end(),
-                                         std::not_equal_to<int16_t>()),
+            EXPECT_EQ(std::adjacent_find(I16.begin(), I16.end(), std::not_equal_to<int16_t>()),
                       I16.end());
-            EXPECT_EQ(std::adjacent_find(I32.begin(), I32.end(),
-                                         std::not_equal_to<int32_t>()),
+            EXPECT_EQ(std::adjacent_find(I32.begin(), I32.end(), std::not_equal_to<int32_t>()),
                       I32.end());
-            EXPECT_EQ(std::adjacent_find(I64.begin(), I64.end(),
-                                         std::not_equal_to<int64_t>()),
+            EXPECT_EQ(std::adjacent_find(I64.begin(), I64.end(), std::not_equal_to<int64_t>()),
                       I64.end());
-            EXPECT_EQ(std::adjacent_find(R32.begin(), R32.end(),
-                                         std::not_equal_to<float>()),
+            EXPECT_EQ(std::adjacent_find(R32.begin(), R32.end(), std::not_equal_to<float>()),
                       R32.end());
-            EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(),
-                                         std::not_equal_to<double>()),
+            EXPECT_EQ(std::adjacent_find(R64.begin(), R64.end(), std::not_equal_to<double>()),
                       R64.end());
-            EXPECT_EQ(
-                std::adjacent_find(CR32.begin(), CR32.end(),
-                                   std::not_equal_to<std::complex<float>>()),
-                CR32.end());
-            EXPECT_EQ(
-                std::adjacent_find(CR64.begin(), CR64.end(),
-                                   std::not_equal_to<std::complex<double>>()),
-                CR64.end());
+            EXPECT_EQ(std::adjacent_find(CR32.begin(), CR32.end(),
+                                         std::not_equal_to<std::complex<float>>()),
+                      CR32.end());
+            EXPECT_EQ(std::adjacent_find(CR64.begin(), CR64.end(),
+                                         std::not_equal_to<std::complex<double>>()),
+                      CR64.end());
         }
 
         bpReader.Close();
@@ -930,45 +881,90 @@ public:
     virtual void TearDown() {}
 };
 
-TEST_P(BPWriteMemSelReadVector, BPMemorySelectionSteps1D)
-{
-    BPSteps1D(GetParam());
-}
+TEST_P(BPWriteMemSelReadVector, BPMemorySelectionSteps1D) { BPSteps1D(GetParam()); }
 
-TEST_P(BPWriteMemSelReadVector, BPMemorySelectionSteps2D4x2)
-{
-    BPSteps2D4x2(GetParam());
-}
+TEST_P(BPWriteMemSelReadVector, BPMemorySelectionSteps2D4x2) { BPSteps2D4x2(GetParam()); }
 
-TEST_P(BPWriteMemSelReadVector, BPMemorySelectionSteps3D4x2x8)
-{
-    BPSteps3D8x2x4(GetParam());
-}
+TEST_P(BPWriteMemSelReadVector, BPMemorySelectionSteps3D4x2x8) { BPSteps3D8x2x4(GetParam()); }
 
-INSTANTIATE_TEST_SUITE_P(ghostCells, BPWriteMemSelReadVector,
-                         ::testing::Values(1));
+INSTANTIATE_TEST_SUITE_P(ghostCells, BPWriteMemSelReadVector, ::testing::Values(1));
 
 int main(int argc, char **argv)
 {
-#if ADIOS2_USE_MPI
-    int provided;
-
-    // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
-    MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
-#endif
-
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+    int bare_arg = 0;
 
-    if (argc > 1)
+    for (int i = 1; i < argc; i++)
     {
-        engineName = std::string(argv[1]);
+        if (strcmp(argv[i], "-do_write") == 0)
+        {
+            DoWrite = true;
+            DoRead = false;
+        }
+        else if (strcmp(argv[i], "-do_read") == 0)
+        {
+            DoWrite = false;
+            DoRead = true;
+        }
+        else if (argv[i][0] == '-')
+        {
+            std::cerr << "Unknown argument: " << argv[i] << std::endl;
+            exit(1);
+        }
+        else
+        {
+            std::string fname;
+            std::string engineParams;
+            if (bare_arg == 0)
+            {
+                /* first arg without -- is engine */
+                engineName = std::string(argv[1]);
+                bare_arg++;
+            }
+            else if (bare_arg == 1)
+            {
+                /* second arg without -- is filename */
+                //                fname = std::string(argv[1]);
+                bare_arg++;
+            }
+            else if (bare_arg == 2)
+            {
+                //                engineParams = ParseEngineParams(argv[1]);
+                bare_arg++;
+            }
+            else
+            {
+
+                throw std::invalid_argument("Unknown argument \"" + std::string(argv[1]) + "\"");
+            }
+        }
     }
+
+#if ADIOS2_USE_MPI
+    int provided;
+    int thread_support_level =
+        (engineName == "SST" || engineName == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
+
+    // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
+    MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);
+
+    int key;
+    MPI_Comm_rank(MPI_COMM_WORLD, &key);
+
+    const unsigned int color = (DoRead & !DoWrite) ? 1 : 0;
+
+    MPI_Comm_split(MPI_COMM_WORLD, color, key, &testComm);
+#endif
 
     result = RUN_ALL_TESTS();
 
 #if ADIOS2_USE_MPI
+#ifdef CRAY_MPICH_VERSION
+    MPI_Barrier(MPI_COMM_WORLD);
+#else
     MPI_Finalize();
+#endif
 #endif
 
     return result;

@@ -31,8 +31,7 @@
  *
  */
 
-void decompColumnMajor(const size_t ndim, const size_t rank,
-                       const size_t *decomp, size_t *pos);
+void decompColumnMajor(const size_t ndim, const size_t rank, const size_t *decomp, size_t *pos);
 
 /** Decompose M processes with N-dimensional decomposition in a Row major
  * fashion.
@@ -55,7 +54,6 @@ void decompColumnMajor(const size_t ndim, const size_t rank,
  *
  */
 
-void decompRowMajor(const size_t ndim, const size_t rank, const size_t *decomp,
-                    size_t *pos);
+void decompRowMajor(const size_t ndim, const size_t rank, const size_t *decomp, size_t *pos);
 
 #endif /* DECOMP_H */

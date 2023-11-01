@@ -27,10 +27,7 @@ namespace adios2
 namespace transport
 {
 
-FileStdio::FileStdio(helper::Comm const &comm)
-: Transport("File", "stdio", comm)
-{
-}
+FileStdio::FileStdio(helper::Comm const &comm) : Transport("File", "stdio", comm) {}
 
 FileStdio::~FileStdio()
 {
@@ -49,9 +46,8 @@ void FileStdio::WaitForOpen()
             m_File = m_OpenFuture.get();
         }
         m_IsOpening = false;
-        CheckFile(
-            "couldn't open file " + m_Name +
-            ", check permissions or path existence, in call to POSIX open");
+        CheckFile("couldn't open file " + m_Name +
+                  ", check permissions or path existence, in call to POSIX open");
         m_IsOpen = true;
         if (m_DelayedBufferSet)
         {
@@ -60,8 +56,8 @@ void FileStdio::WaitForOpen()
     }
 }
 
-void FileStdio::Open(const std::string &name, const Mode openMode,
-                     const bool async, const bool directio)
+void FileStdio::Open(const std::string &name, const Mode openMode, const bool async,
+                     const bool directio)
 {
     auto lf_AsyncOpenWrite = [&](const std::string &name) -> FILE * {
         errno = 0;
@@ -77,8 +73,7 @@ void FileStdio::Open(const std::string &name, const Mode openMode,
         if (async)
         {
             m_IsOpening = true;
-            m_OpenFuture =
-                std::async(std::launch::async, lf_AsyncOpenWrite, name);
+            m_OpenFuture = std::async(std::launch::async, lf_AsyncOpenWrite, name);
         }
         else
         {
@@ -96,23 +91,20 @@ void FileStdio::Open(const std::string &name, const Mode openMode,
         m_File = std::fopen(name.c_str(), "rb");
         break;
     default:
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileStdio", "Open",
-            "unknown open mode for file " + m_Name);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "Open",
+                                              "unknown open mode for file " + m_Name);
     }
 
     if (!m_IsOpening)
     {
-        CheckFile(
-            "couldn't open file " + m_Name +
-            ", check permissions or path existence, in call to stdio open");
+        CheckFile("couldn't open file " + m_Name +
+                  ", check permissions or path existence, in call to stdio open");
         m_IsOpen = true;
     }
 }
 
-void FileStdio::OpenChain(const std::string &name, Mode openMode,
-                          const helper::Comm &chainComm, const bool async,
-                          const bool directio)
+void FileStdio::OpenChain(const std::string &name, Mode openMode, const helper::Comm &chainComm,
+                          const bool async, const bool directio)
 {
     auto lf_AsyncOpenWrite = [&](const std::string &name) -> FILE * {
         errno = 0;
@@ -125,8 +117,7 @@ void FileStdio::OpenChain(const std::string &name, Mode openMode,
 
     if (chainComm.Rank() > 0)
     {
-        chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0,
-                       "Chain token in FileStdio::OpenChain");
+        chainComm.Recv(&token, 1, chainComm.Rank() - 1, 0, "Chain token in FileStdio::OpenChain");
     }
 
     m_OpenMode = openMode;
@@ -136,8 +127,7 @@ void FileStdio::OpenChain(const std::string &name, Mode openMode,
         if (async)
         {
             m_IsOpening = true;
-            m_OpenFuture =
-                std::async(std::launch::async, lf_AsyncOpenWrite, name);
+            m_OpenFuture = std::async(std::launch::async, lf_AsyncOpenWrite, name);
         }
         else
         {
@@ -155,16 +145,14 @@ void FileStdio::OpenChain(const std::string &name, Mode openMode,
         m_File = std::fopen(name.c_str(), "rb");
         break;
     default:
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileStdio", "Open",
-            "unknown open mode for file " + m_Name);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "Open",
+                                              "unknown open mode for file " + m_Name);
     }
 
     if (!m_IsOpening)
     {
-        CheckFile(
-            "couldn't open file " + m_Name +
-            ", check permissions or path existence, in call to stdio open");
+        CheckFile("couldn't open file " + m_Name +
+                  ", check permissions or path existence, in call to stdio open");
         m_IsOpen = true;
     }
 
@@ -197,19 +185,18 @@ void FileStdio::SetBuffer(char *buffer, size_t size)
     {
         if (size != 0)
         {
-            helper::Throw<std::invalid_argument>(
-                "Toolkit", "transport::file::FileStdio", "SetBuffer",
-                "buffer size must be 0 when using a NULL buffer");
+            helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileStdio",
+                                                 "SetBuffer",
+                                                 "buffer size must be 0 when using a NULL buffer");
         }
         status = std::setvbuf(m_File, NULL, _IONBF, 0);
     }
 
     if (status)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileStdio", "SetBuffer",
-            "could not set FILE* buffer in file " + m_Name +
-                ", in call to stdio setvbuf");
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "SetBuffer",
+                                              "could not set FILE* buffer in file " + m_Name +
+                                                  ", in call to stdio setvbuf");
     }
 }
 
@@ -217,38 +204,34 @@ void FileStdio::Write(const char *buffer, size_t size, size_t start)
 {
     auto lf_Write = [&](const char *buffer, size_t size) {
         ProfilerStart("write");
-        const auto writtenSize =
-            std::fwrite(buffer, sizeof(char), size, m_File);
+        const auto writtenSize = std::fwrite(buffer, sizeof(char), size, m_File);
         ProfilerStop("write");
 
-        CheckFile("couldn't write to file " + m_Name +
-                  ", in call to stdio fwrite");
+        CheckFile("couldn't write to file " + m_Name + ", in call to stdio fwrite");
 
         if (writtenSize != size)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileStdio", "Write",
-                "written size + " + std::to_string(writtenSize) +
-                    " is not equal to intended size " + std::to_string(size) +
-                    " in file " + m_Name + ", in call to stdio fwrite");
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "Write",
+                                                  "written size + " + std::to_string(writtenSize) +
+                                                      " is not equal to intended size " +
+                                                      std::to_string(size) + " in file " + m_Name +
+                                                      ", in call to stdio fwrite");
         }
     };
 
     WaitForOpen();
     if (start != MaxSizeT)
     {
-        const auto status =
-            std::fseek(m_File, static_cast<long int>(start), SEEK_SET);
+        const auto status = std::fseek(m_File, static_cast<long int>(start), SEEK_SET);
         if (status != 0)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileStdio", "Write",
-                "couldn't move position of " + m_Name +
-                    " file, in call to FileStdio Write fseek");
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "Write",
+                                                  "couldn't move position of " + m_Name +
+                                                      " file, in call to FileStdio Write fseek");
         }
 
-        CheckFile("couldn't move to start position " + std::to_string(start) +
-                  " in file " + m_Name + ", in call to stdio fseek at write ");
+        CheckFile("couldn't move to start position " + std::to_string(start) + " in file " +
+                  m_Name + ", in call to stdio fseek at write ");
     }
 
     if (size > DefaultMaxFileBatchSize)
@@ -277,28 +260,23 @@ void FileStdio::Read(char *buffer, size_t size, size_t start)
         const auto readSize = std::fread(buffer, sizeof(char), size, m_File);
         ProfilerStop("read");
 
-        CheckFile("couldn't read to file " + m_Name +
-                  ", in call to stdio fread");
+        CheckFile("couldn't read to file " + m_Name + ", in call to stdio fread");
 
         if (readSize != size)
         {
             helper::Throw<std::ios_base::failure>(
                 "Toolkit", "transport::file::FileStdio", "Read",
-                "read size of " + std::to_string(readSize) +
-                    " is not equal to intended size " + std::to_string(size) +
-                    " in file " + m_Name + ", in call to stdio fread");
+                "read size of " + std::to_string(readSize) + " is not equal to intended size " +
+                    std::to_string(size) + " in file " + m_Name + ", in call to stdio fread");
         }
     };
 
     WaitForOpen();
     if (start != MaxSizeT)
     {
-        const auto status =
-            std::fseek(m_File, static_cast<long int>(start), SEEK_SET);
-        CheckFile("couldn't move to start position " + std::to_string(start) +
-                  " in file " + m_Name +
-                  ", in call to stdio fseek for read, result=" +
-                  std::to_string(status));
+        const auto status = std::fseek(m_File, static_cast<long int>(start), SEEK_SET);
+        CheckFile("couldn't move to start position " + std::to_string(start) + " in file " +
+                  m_Name + ", in call to stdio fseek for read, result=" + std::to_string(status));
     }
 
     if (size > DefaultMaxFileBatchSize)
@@ -326,20 +304,18 @@ size_t FileStdio::GetSize()
     const auto currentPosition = ftell(m_File);
     if (currentPosition == -1L)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileStdio", "GetSize",
-            "couldn't get current position of " + m_Name +
-                " file, in call to FileStdio GetSize ftell");
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "GetSize",
+                                              "couldn't get current position of " + m_Name +
+                                                  " file, in call to FileStdio GetSize ftell");
     }
 
     fseek(m_File, 0, SEEK_END);
     const auto size = ftell(m_File);
     if (size == -1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileStdio", "GetSize",
-            "couldn't get size of " + m_Name +
-                " file, in call to FileStdio GetSize ftell");
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "GetSize",
+                                              "couldn't get size of " + m_Name +
+                                                  " file, in call to FileStdio GetSize ftell");
     }
     fseek(m_File, currentPosition, SEEK_SET);
     return static_cast<size_t>(size);
@@ -354,9 +330,9 @@ void FileStdio::Flush()
 
     if (status == EOF)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileStdio", "Flush",
-            "couldn't flush file " + m_Name + ", in call to stdio fflush");
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "Flush",
+                                              "couldn't flush file " + m_Name +
+                                                  ", in call to stdio fflush");
     }
 }
 
@@ -369,9 +345,9 @@ void FileStdio::Close()
 
     if (status == EOF)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileStdio", "Close",
-            "couldn't close file " + m_Name + ", in call to stdio fclose");
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "Close",
+                                              "couldn't close file " + m_Name +
+                                                  ", in call to stdio fclose");
     }
 
     m_IsOpen = false;
@@ -396,15 +372,13 @@ void FileStdio::CheckFile(const std::string hint) const
         {
             errmsg = std::strerror(errno);
         }
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileStdio", "CheckFile",
-            "ERROR: " + hint + ":" + errmsg);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "CheckFile",
+                                              "ERROR: " + hint + ":" + errmsg);
     }
     else if (std::ferror(m_File))
     {
-        helper::Throw<std::ios_base::failure>("Toolkit",
-                                              "transport::file::FileStdio",
-                                              "CheckFile", "ERROR: " + hint);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "CheckFile",
+                                              "ERROR: " + hint);
     }
 }
 
@@ -414,9 +388,8 @@ void FileStdio::SeekToEnd()
     const auto status = std::fseek(m_File, 0, SEEK_END);
     if (status == -1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileStdio", "SeekToEnd",
-            "couldn't seek to the end of file " + m_Name);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "SeekToEnd",
+                                              "couldn't seek to the end of file " + m_Name);
     }
 }
 
@@ -426,9 +399,9 @@ void FileStdio::SeekToBegin()
     const auto status = std::fseek(m_File, 0, SEEK_SET);
     if (status == -1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileStdio", "SeekToBegin",
-            "couldn't seek to the begin of file " + m_Name);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio",
+                                              "SeekToBegin",
+                                              "couldn't seek to the begin of file " + m_Name);
     }
 }
 
@@ -440,10 +413,9 @@ void FileStdio::Seek(const size_t start)
         const auto status = std::fseek(m_File, 0, SEEK_SET);
         if (status == -1)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "transport::file::FileStdio", "Seek",
-                "couldn't seek to offset " + std::to_string(start) +
-                    " of file " + m_Name);
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "Seek",
+                                                  "couldn't seek to offset " +
+                                                      std::to_string(start) + " of file " + m_Name);
         }
     }
     else
@@ -455,9 +427,8 @@ void FileStdio::Seek(const size_t start)
 #ifdef _WIN32
 void FileStdio::Truncate(const size_t length)
 {
-    helper::Throw<std::ios_base::failure>(
-        "Toolkit", "transport::file::FileStdio", "Truncate",
-        "This is not supported on Windows");
+    helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "Truncate",
+                                          "This is not supported on Windows");
 }
 #else
 #include <unistd.h> // ftruncate
@@ -469,10 +440,9 @@ void FileStdio::Truncate(const size_t length)
     const auto status = ftruncate(fd, length);
     if (status == -1)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "transport::file::FileStdio", "Truncate",
-            "couldn't truncate to " + std::to_string(length) + " of file " +
-                m_Name);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileStdio", "Truncate",
+                                              "couldn't truncate to " + std::to_string(length) +
+                                                  " of file " + m_Name);
     }
 }
 #endif

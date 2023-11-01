@@ -13,6 +13,8 @@
 
 #include "adios2/helper/adiosFunctions.h" //CSVToVector
 #include "adios2/helper/adiosFunctions.h" //IsHDF5
+#include <limits>
+#include <stdexcept>
 #include <vector>
 
 namespace adios2
@@ -22,23 +24,21 @@ namespace core
 namespace engine
 {
 
-#define CHECK_H5_RETURN(returnCode, reason)                                    \
-    {                                                                          \
-        if (returnCode < 0)                                                    \
-        {                                                                      \
-            helper::Throw<std::runtime_error>("Engine", "HDF5ReaderP",         \
-                                              "CHECK_H5_RETURN", reason);      \
-        }                                                                      \
+#define CHECK_H5_RETURN(returnCode, reason)                                                        \
+    {                                                                                              \
+        if (returnCode < 0)                                                                        \
+        {                                                                                          \
+            helper::Throw<std::runtime_error>("Engine", "HDF5ReaderP", "CHECK_H5_RETURN", reason); \
+        }                                                                                          \
     }
 
-HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode,
-                         helper::Comm comm)
+HDF5ReaderP::HDF5ReaderP(IO &io, const std::string &name, const Mode openMode, helper::Comm comm)
 : Engine("HDF5Reader", io, name, openMode, std::move(comm))
 {
     if (!helper::IsHDF5File(name, io, m_Comm, {}))
     {
-        helper::Throw<std::invalid_argument>(
-            "Engine", "HDF5ReaderP", "HDF5ReaderP", "Invalid HDF5 file found");
+        helper::Throw<std::invalid_argument>("Engine", "HDF5ReaderP", "HDF5ReaderP",
+                                             "Invalid HDF5 file found");
     }
 
     Init();
@@ -70,24 +70,16 @@ void HDF5ReaderP::Init()
 {
     if (m_OpenMode != Mode::Read)
     {
-        helper::Throw<std::invalid_argument>(
-            "Engine", "HDF5ReaderP", "Init",
-            "HDF5Reader only supports OpenMode::Read "
-            ", in call to Open");
+        helper::Throw<std::invalid_argument>("Engine", "HDF5ReaderP", "Init",
+                                             "HDF5Reader only supports OpenMode::Read "
+                                             ", in call to Open");
     }
 
     m_H5File.Init(m_Name, m_Comm, false);
     m_H5File.ParseParameters(m_IO);
 
     /*
-    int ts = m_H5File.GetNumAdiosSteps();
-
-    if (ts == 0)
-    {
-        helper::Throw<std::runtime_error>( "Engine", "HDF5ReaderP", "Init",
-    "This h5 file is NOT written by ADIOS2");
-    }
-    */
+     */
     m_H5File.ReadAttrToIO(m_IO);
     if (!m_InStreamMode)
     {
@@ -104,40 +96,8 @@ void HDF5ReaderP::Init()
 // returns slab size (>0) (datasize read in)
 // returns -1 to advise do not continue
 template <class T>
-size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
-                                Variable<T> &variable, T *values)
+size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &variable, T *values)
 {
-    /*
-    size_t variableStart = variable.m_StepsStart;
-
-    if ((m_H5File.m_IsGeneratedByAdios) && (ts >= 0))
-      {
-              try
-              {
-                  m_H5File.SetAdiosStep(variableStart + ts);
-              }
-              catch (std::exception &e)
-              {
-                  printf("[Not fatal] %s\n", e.what());
-                  return 0;
-                  //break;
-              }
-          }
-
-          std::vector<hid_t> chain;
-          if (!m_H5File.OpenDataset(variable.m_Name, chain)) {
-            return -1;
-          }
-
-          hid_t dataSetId = chain.back();
-          interop::HDF5DatasetGuard g(chain);
-          //hid_t dataSetId =
-          //  H5Dopen(m_H5File.m_GroupId, variable.m_Name.c_str(), H5P_DEFAULT);
-          if (dataSetId < 0)
-          {
-              return 0;
-          }
-    */
     hid_t fileSpace = H5Dget_space(dataSetId);
     interop::HDF5TypeGuard g_fs(fileSpace, interop::E_H5_SPACE);
 
@@ -158,8 +118,7 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
         }
         else
         {
-            hid_t ret = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL,
-                                H5P_DEFAULT, values);
+            hid_t ret = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, values);
             CHECK_H5_RETURN(ret, "ReadDataset, H5Dread");
         }
     }
@@ -183,15 +142,23 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
             slabsize *= count[i];
             stride[i] = 1;
         }
-        hid_t ret = H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, start.data(),
-                                        stride.data(), count.data(), NULL);
+        hid_t ret = H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, start.data(), stride.data(),
+                                        count.data(), NULL);
         if (ret < 0)
             return 0;
 
-        hid_t memDataSpace = H5Screate_simple(ndims, count.data(), NULL);
+        size_t max_int = static_cast<size_t>(std::numeric_limits<int>::max());
+        if (ndims > max_int)
+        {
+            helper::Throw<std::overflow_error>("Engine", "HDF5ReaderP", "ReadDataset",
+                                               "Number of dimensions is too large to be "
+                                               "represented by an int");
+        }
+
+        hid_t memDataSpace = H5Screate_simple(static_cast<int>(ndims), count.data(), NULL);
         interop::HDF5TypeGuard g_mds(memDataSpace, interop::E_H5_SPACE);
 
-        int elementsRead = 1;
+        size_t elementsRead = 1;
         for (size_t i = 0u; i < ndims; i++)
         {
             elementsRead *= count[i];
@@ -199,8 +166,7 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
 
         if (H5Tget_class(h5Type) != H5T_STRING)
         {
-            ret = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace,
-                          H5P_DEFAULT, values);
+            ret = H5Dread(dataSetId, h5Type, memDataSpace, fileSpace, H5P_DEFAULT, values);
             // H5Sclose(memDataSpace);
         }
         else if (1 == elementsRead)
@@ -209,8 +175,7 @@ size_t HDF5ReaderP::ReadDataset(hid_t dataSetId, hid_t h5Type,
             size_t typesize = H5Tget_size(h5Type);
 
             char *val = (char *)(calloc(typesize, sizeof(char)));
-            H5Dread(dataSetId, h5Type, memDataSpace, fileSpace, H5P_DEFAULT,
-                    val);
+            H5Dread(dataSetId, h5Type, memDataSpace, fileSpace, H5P_DEFAULT, val);
 
             ((std::string *)values)->assign(val, typesize);
             free(val);
@@ -232,8 +197,7 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
         if (found != std::string::npos)
         {
             std::string h5name = variable.m_Name.substr(0, found);
-            hid_t dataSetId =
-                H5Dopen(m_H5File.m_FileId, h5name.c_str(), H5P_DEFAULT);
+            hid_t dataSetId = H5Dopen(m_H5File.m_FileId, h5name.c_str(), H5P_DEFAULT);
             if (dataSetId < 0)
                 return;
             interop::HDF5TypeGuard g_ds(dataSetId, interop::E_H5_DATASET);
@@ -243,8 +207,7 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
         else
         {
             // UseHDFReadNativeFile(variable, data, h5Type);
-            hid_t dataSetId = H5Dopen(m_H5File.m_FileId,
-                                      variable.m_Name.c_str(), H5P_DEFAULT);
+            hid_t dataSetId = H5Dopen(m_H5File.m_FileId, variable.m_Name.c_str(), H5P_DEFAULT);
             if (dataSetId < 0)
             {
                 return;
@@ -257,8 +220,8 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
     }
 
     T *values = data;
-    unsigned int ts = 0;
-    // T *values = data;
+
+    size_t ts = 0;
     size_t variableStart = variable.m_StepsStart;
     /*
       // looks like m_StepsStart is defaulted to be 0 now.
@@ -287,8 +250,7 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
         }
         hid_t dataSetId = chain.back();
         interop::HDF5DatasetGuard g(chain);
-        // hid_t dataSetId =
-        //  H5Dopen(m_H5File.m_GroupId, variable.m_Name.c_str(), H5P_DEFAULT);
+
         if (dataSetId < 0)
         {
             return;
@@ -300,8 +262,6 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
         {
             break;
         }
-        // H5Sclose(fileSpace);
-        // H5Dclose(dataSetId);
 
         ts++;
         values += slabsize;
@@ -313,7 +273,7 @@ void HDF5ReaderP::UseHDFRead(Variable<T> &variable, T *data, hid_t h5Type)
 
 StepStatus HDF5ReaderP::BeginStep(StepMode mode, const float timeoutSeconds)
 {
-    const unsigned int ts = m_H5File.GetNumAdiosSteps();
+    const size_t ts = m_H5File.GetNumAdiosSteps();
 
     if (m_StreamAt >= ts)
     {
@@ -357,24 +317,24 @@ void HDF5ReaderP::EndStep()
 void HDF5ReaderP::PerformGets()
 {
 
-#define declare_type(T)                                                        \
-    for (std::string variableName : m_DeferredStack)                           \
-    {                                                                          \
-        const DataType type = m_IO.InquireVariableType(variableName);          \
-        if (type == helper::GetDataType<T>())                                  \
-        {                                                                      \
-            Variable<T> *var = m_IO.InquireVariable<T>(variableName);          \
-            if (var != nullptr)                                                \
-            {                                                                  \
-                if (m_InStreamMode)                                            \
-                {                                                              \
-                    var->m_StepsStart = m_StreamAt;                            \
-                    var->m_StepsCount = 1;                                     \
-                }                                                              \
-                hid_t h5Type = m_H5File.GetHDF5Type<T>();                      \
-                UseHDFRead(*var, var->GetData(), h5Type);                      \
-            }                                                                  \
-        }                                                                      \
+#define declare_type(T)                                                                            \
+    for (std::string variableName : m_DeferredStack)                                               \
+    {                                                                                              \
+        const DataType type = m_IO.InquireVariableType(variableName);                              \
+        if (type == helper::GetDataType<T>())                                                      \
+        {                                                                                          \
+            Variable<T> *var = m_IO.InquireVariable<T>(variableName);                              \
+            if (var != nullptr)                                                                    \
+            {                                                                                      \
+                if (m_InStreamMode)                                                                \
+                {                                                                                  \
+                    var->m_StepsStart = m_StreamAt;                                                \
+                    var->m_StepsCount = 1;                                                         \
+                }                                                                                  \
+                hid_t h5Type = m_H5File.GetHDF5Type<T>();                                          \
+                UseHDFRead(*var, var->GetData(), h5Type);                                          \
+            }                                                                                      \
+        }                                                                                          \
     }
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -386,27 +346,24 @@ void HDF5ReaderP::PerformGets()
     m_DeferredStack.clear();
 }
 
-#define declare_type(T)                                                        \
-    void HDF5ReaderP::DoGetSync(Variable<T> &variable, T *data)                \
-    {                                                                          \
-        GetSyncCommon(variable, data);                                         \
-    }                                                                          \
-                                                                               \
-    void HDF5ReaderP::DoGetDeferred(Variable<T> &variable, T *data)            \
-    {                                                                          \
-        GetDeferredCommon(variable, data);                                     \
-    }                                                                          \
-                                                                               \
-    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
-    HDF5ReaderP::DoAllStepsBlocksInfo(const Variable<T> &variable) const       \
-    {                                                                          \
-        return GetAllStepsBlocksInfo(variable);                                \
-    }                                                                          \
-                                                                               \
-    std::vector<typename Variable<T>::BPInfo> HDF5ReaderP::DoBlocksInfo(       \
-        const Variable<T> &variable, const size_t step) const                  \
-    {                                                                          \
-        return GetBlocksInfo(variable, step);                                  \
+#define declare_type(T)                                                                            \
+    void HDF5ReaderP::DoGetSync(Variable<T> &variable, T *data) { GetSyncCommon(variable, data); } \
+                                                                                                   \
+    void HDF5ReaderP::DoGetDeferred(Variable<T> &variable, T *data)                                \
+    {                                                                                              \
+        GetDeferredCommon(variable, data);                                                         \
+    }                                                                                              \
+                                                                                                   \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>> HDF5ReaderP::DoAllStepsBlocksInfo( \
+        const Variable<T> &variable) const                                                         \
+    {                                                                                              \
+        return GetAllStepsBlocksInfo(variable);                                                    \
+    }                                                                                              \
+                                                                                                   \
+    std::vector<typename Variable<T>::BPInfo> HDF5ReaderP::DoBlocksInfo(                           \
+        const Variable<T> &variable, const size_t step) const                                      \
+    {                                                                                              \
+        return GetBlocksInfo(variable, step);                                                      \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)

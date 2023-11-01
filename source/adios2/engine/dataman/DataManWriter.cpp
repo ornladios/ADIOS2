@@ -17,11 +17,11 @@ namespace core
 namespace engine
 {
 
-DataManWriter::DataManWriter(IO &io, const std::string &name,
-                             const Mode openMode, helper::Comm comm)
+DataManWriter::DataManWriter(IO &io, const std::string &name, const Mode openMode,
+                             helper::Comm comm)
 : Engine("DataManWriter", io, name, openMode, std::move(comm)), m_SentSteps(0),
-  m_Serializer(m_Comm, (io.m_ArrayOrder == ArrayOrdering::RowMajor)),
-  m_ReplyThreadActive(true), m_PublishThreadActive(true)
+  m_Serializer(m_Comm, (io.m_ArrayOrder == ArrayOrdering::RowMajor)), m_ReplyThreadActive(true),
+  m_PublishThreadActive(true)
 {
 
     m_MpiRank = m_Comm.Rank();
@@ -29,24 +29,22 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
 
     if (m_MpiSize > 1)
     {
-        helper::Throw<std::logic_error>("Engine", "DataManWriter", "Open",
-                                        m_Name, m_Comm.Rank());
+        helper::Throw<std::logic_error>("Engine", "DataManWriter", "Open", m_Name, m_Comm.Rank());
     }
 
     helper::GetParameter(m_IO.m_Parameters, "IPAddress", m_IPAddress);
     helper::GetParameter(m_IO.m_Parameters, "Port", m_Port);
     helper::GetParameter(m_IO.m_Parameters, "Timeout", m_Timeout);
     helper::GetParameter(m_IO.m_Parameters, "Verbose", m_Verbosity);
-    helper::GetParameter(m_IO.m_Parameters, "RendezvousReaderCount",
-                         m_RendezvousReaderCount);
+    helper::GetParameter(m_IO.m_Parameters, "RendezvousReaderCount", m_RendezvousReaderCount);
     helper::GetParameter(m_IO.m_Parameters, "Threading", m_Threading);
     helper::GetParameter(m_IO.m_Parameters, "TransportMode", m_TransportMode);
     helper::GetParameter(m_IO.m_Parameters, "Monitor", m_MonitorActive);
     helper::GetParameter(m_IO.m_Parameters, "CombiningSteps", m_CombiningSteps);
     helper::GetParameter(m_IO.m_Parameters, "FloatAccuracy", m_FloatAccuracy);
 
-    helper::Log("Engine", "DataManWriter", "Open", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::INFO);
+    helper::Log("Engine", "DataManWriter", "Open", m_Name, 0, m_Comm.Rank(), 5, m_Verbosity,
+                helper::LogMode::INFO);
 
     m_HandshakeJson["Threading"] = m_Threading;
     m_HandshakeJson["Transport"] = m_TransportMode;
@@ -70,10 +68,8 @@ DataManWriter::DataManWriter(IO &io, const std::string &name,
         }
     }
 
-    std::string replierAddress =
-        "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
-    std::string publisherAddress =
-        "tcp://" + m_IPAddress + ":" + std::to_string(m_Port + 1);
+    std::string replierAddress = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port);
+    std::string publisherAddress = "tcp://" + m_IPAddress + ":" + std::to_string(m_Port + 1);
 
     if (m_TransportMode == "fast")
     {
@@ -132,14 +128,12 @@ StepStatus DataManWriter::BeginStep(StepMode mode, const float timeout_sec)
         m_Monitor.BeginStep(m_CurrentStep);
     }
 
-    helper::Log("Engine", "DataManWriter", "BeginStep",
-                std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
-                helper::LogMode::INFO);
+    helper::Log("Engine", "DataManWriter", "BeginStep", std::to_string(CurrentStep()), 0,
+                m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
 
-    m_Serializer.AttachTimeStamp(
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch())
-            .count());
+    m_Serializer.AttachTimeStamp(std::chrono::duration_cast<std::chrono::milliseconds>(
+                                     std::chrono::system_clock::now().time_since_epoch())
+                                     .count());
 
     return StepStatus::OK;
 }
@@ -150,9 +144,8 @@ void DataManWriter::PerformPuts() {}
 
 void DataManWriter::EndStep()
 {
-    helper::Log("Engine", "DataManWriter", "EndStep",
-                std::to_string(CurrentStep()), 0, m_Comm.Rank(), 5, m_Verbosity,
-                helper::LogMode::INFO);
+    helper::Log("Engine", "DataManWriter", "EndStep", std::to_string(CurrentStep()), 0,
+                m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);
 
     if (m_CurrentStep == 0)
     {
@@ -191,26 +184,26 @@ void DataManWriter::Flush(const int transportIndex) {}
 
 // PRIVATE functions below
 
-#define declare_type(T)                                                        \
-    void DataManWriter::DoPutSync(Variable<T> &variable, const T *values)      \
-    {                                                                          \
-        helper::Log("Engine", "DataManWriter", "PutSync", variable.m_Name, 0,  \
-                    m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);     \
-        PutSyncCommon(variable, values);                                       \
-    }                                                                          \
-    void DataManWriter::DoPutDeferred(Variable<T> &variable, const T *values)  \
-    {                                                                          \
-        helper::Log("Engine", "DataManWriter", "PutDeferred", variable.m_Name, \
-                    0, m_Comm.Rank(), 5, m_Verbosity, helper::LogMode::INFO);  \
-        PutDeferredCommon(variable, values);                                   \
+#define declare_type(T)                                                                            \
+    void DataManWriter::DoPutSync(Variable<T> &variable, const T *values)                          \
+    {                                                                                              \
+        helper::Log("Engine", "DataManWriter", "PutSync", variable.m_Name, 0, m_Comm.Rank(), 5,    \
+                    m_Verbosity, helper::LogMode::INFO);                                           \
+        PutSyncCommon(variable, values);                                                           \
+    }                                                                                              \
+    void DataManWriter::DoPutDeferred(Variable<T> &variable, const T *values)                      \
+    {                                                                                              \
+        helper::Log("Engine", "DataManWriter", "PutDeferred", variable.m_Name, 0, m_Comm.Rank(),   \
+                    5, m_Verbosity, helper::LogMode::INFO);                                        \
+        PutDeferredCommon(variable, values);                                                       \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
 void DataManWriter::DoClose(const int transportIndex)
 {
-    helper::Log("Engine", "DataManWriter", "Close", m_Name, 0, m_Comm.Rank(), 5,
-                m_Verbosity, helper::LogMode::INFO);
+    helper::Log("Engine", "DataManWriter", "Close", m_Name, 0, m_Comm.Rank(), 5, m_Verbosity,
+                helper::LogMode::INFO);
 
     if (m_CombinedSteps < m_CombiningSteps && m_CombinedSteps > 0)
     {
@@ -365,7 +358,6 @@ void DataManWriter::Handshake()
 
 void DataManWriter::ReplyThread()
 {
-    int readerCount = 0;
     while (m_ReplyThreadActive)
     {
         auto request = m_Replier.ReceiveRequest();
@@ -384,7 +376,6 @@ void DataManWriter::ReplyThread()
             else if (r == "Ready")
             {
                 m_Replier.SendReply("OK", 2);
-                ++readerCount;
             }
             else if (r == "Step")
             {

@@ -23,8 +23,7 @@ namespace engine
 {
 
 template <>
-inline void BP4Reader::GetSyncCommon(Variable<std::string> &variable,
-                                     std::string *data)
+inline void BP4Reader::GetSyncCommon(Variable<std::string> &variable, std::string *data)
 {
     m_BP4Deserializer.GetValueFromMetadata(variable, data);
 }
@@ -71,8 +70,7 @@ void BP4Reader::ReadVariableBlocks(Variable<T> &variable)
 
         for (const auto &stepPair : blockInfo.StepBlockSubStreamsInfo)
         {
-            for (const helper::SubStreamBoxInfo &subStreamBoxInfo :
-                 stepPair.second)
+            for (const helper::SubStreamBoxInfo &subStreamBoxInfo : stepPair.second)
             {
                 if (subStreamBoxInfo.ZeroBlock)
                 {
@@ -80,32 +78,28 @@ void BP4Reader::ReadVariableBlocks(Variable<T> &variable)
                 }
 
                 // check if subfile is already opened
-                if (m_DataFileManager.m_Transports.count(
-                        subStreamBoxInfo.SubStreamID) == 0)
+                if (m_DataFileManager.m_Transports.count(subStreamBoxInfo.SubStreamID) == 0)
                 {
-                    const std::string subFileName =
-                        m_BP4Deserializer.GetBPSubFileName(
-                            m_Name, subStreamBoxInfo.SubStreamID,
-                            m_BP4Deserializer.m_Minifooter.HasSubFiles, true);
+                    const std::string subFileName = m_BP4Deserializer.GetBPSubFileName(
+                        m_Name, subStreamBoxInfo.SubStreamID,
+                        m_BP4Deserializer.m_Minifooter.HasSubFiles, true);
 
-                    m_DataFileManager.OpenFileID(
-                        subFileName, subStreamBoxInfo.SubStreamID, Mode::Read,
-                        m_IO.m_TransportsParameters[0], profile);
+                    m_DataFileManager.OpenFileID(subFileName, subStreamBoxInfo.SubStreamID,
+                                                 Mode::Read, m_IO.m_TransportsParameters[0],
+                                                 profile);
                 }
 
                 char *buffer = nullptr;
                 size_t payloadSize = 0, payloadStart = 0;
 
-                m_BP4Deserializer.PreDataRead(variable, blockInfo,
-                                              subStreamBoxInfo, buffer,
+                m_BP4Deserializer.PreDataRead(variable, blockInfo, subStreamBoxInfo, buffer,
                                               payloadSize, payloadStart, 0);
 
                 m_DataFileManager.ReadFile(buffer, payloadSize, payloadStart,
                                            subStreamBoxInfo.SubStreamID);
 
-                m_BP4Deserializer.PostDataRead(
-                    variable, blockInfo, subStreamBoxInfo,
-                    m_IO.m_ArrayOrder == ArrayOrdering::RowMajor, 0);
+                m_BP4Deserializer.PostDataRead(variable, blockInfo, subStreamBoxInfo,
+                                               m_IO.m_ArrayOrder == ArrayOrdering::RowMajor, 0);
             } // substreams loop
             // advance pointer to next step
             blockInfo.Data += helper::GetTotalSize(blockInfo.Count);

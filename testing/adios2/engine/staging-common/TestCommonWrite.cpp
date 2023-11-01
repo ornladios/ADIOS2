@@ -62,8 +62,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
             r64_Nx = 2 * Nx;
         }
     }
-    std::cout << "Nx is set to " << r64_Nx << " on Rank " << mpiRank
-              << std::endl;
+    std::cout << "Nx is set to " << r64_Nx << " on Rank " << mpiRank << std::endl;
 
     // Declare 1D variables (NumOfProcesses * Nx)
     // The local process' part (start, count) can be defined now or later
@@ -97,22 +96,15 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         (void)io.DefineVariable<int32_t>("i32", shape, start, count);
         (void)io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
-        auto var_r64 =
-            io.DefineVariable<double>("r64", shape, start_r64, count_r64);
-        (void)io.DefineVariable<std::complex<float>>("c32", shape, start,
-                                                     count);
-        (void)io.DefineVariable<std::complex<double>>("c64", shape, start,
-                                                      count);
-        auto var_r64_2d =
-            io.DefineVariable<double>("r64_2d", shape2, start2, count2);
-        auto var_r64_2d_rev =
-            io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
-        (void)io.DefineVariable<int64_t>("time", time_shape, time_start,
-                                         time_count);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start_r64, count_r64);
+        (void)io.DefineVariable<std::complex<float>>("c32", shape, start, count);
+        (void)io.DefineVariable<std::complex<double>>("c64", shape, start, count);
+        auto var_r64_2d = io.DefineVariable<double>("r64_2d", shape2, start2, count2);
+        auto var_r64_2d_rev = io.DefineVariable<double>("r64_2d_rev", shape3, start3, count3);
+        (void)io.DefineVariable<int64_t>("time", time_shape, time_start, time_count);
         if (CompressZfp)
         {
-            adios2::Operator ZfpOp =
-                adios.DefineOperator("zfpCompressor", "zfp");
+            adios2::Operator ZfpOp = adios.DefineOperator("zfpCompressor", "zfp");
             var_r32.AddOperation(ZfpOp, {{"rate", "20"}});
             var_r64.AddOperation(ZfpOp, {{"rate", "20"}});
             var_r64_2d.AddOperation(ZfpOp, {{"rate", "20"}});
@@ -129,8 +121,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     for (int step = 0; step < NSteps; ++step)
     {
         // Generate test data for each process uniquely
-        generateCommonTestData((int)step, mpiRank, mpiSize, (int)Nx,
-                               (int)r64_Nx);
+        generateCommonTestData((int)step, mpiRank, mpiSize, (int)Nx, (int)r64_Nx);
 
         engine.BeginStep();
         // Retrieve the variables that previously went out of scope
@@ -153,8 +144,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         adios2::Box<adios2::Dims> sel_r64({mpiRank * Nx}, {r64_Nx});
         adios2::Box<adios2::Dims> sel2({mpiRank * Nx, 0}, {Nx, 2});
         adios2::Box<adios2::Dims> sel3({0, mpiRank * Nx}, {2, Nx});
-        adios2::Box<adios2::Dims> sel_time(
-            {static_cast<unsigned long>(mpiRank)}, {1});
+        adios2::Box<adios2::Dims> sel_time({static_cast<unsigned long>(mpiRank)}, {1});
         if (ZeroDataVar)
         {
             if (mpiRank == 1)
@@ -226,14 +216,13 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         }
         if (AdvancingAttrs)
         {
-            const std::string r64_Single =
-                std::string("r64_PerStep_") + std::to_string(step);
+            const std::string r64_Single = std::string("r64_PerStep_") + std::to_string(step);
             io.DefineAttribute<double>(r64_Single, (double)(step * 10.0));
             std::cout << "Defining attribute " << r64_Single << std::endl;
         }
         engine.EndStep();
-        std::this_thread::sleep_for(std::chrono::milliseconds(
-            DelayMS)); /* sleep for DelayMS milliseconds */
+        std::this_thread::sleep_for(
+            std::chrono::milliseconds(DelayMS)); /* sleep for DelayMS milliseconds */
     }
 
     // Close the file
@@ -254,9 +243,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

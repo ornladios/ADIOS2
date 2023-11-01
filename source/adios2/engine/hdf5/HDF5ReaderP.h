@@ -37,15 +37,13 @@ public:
      * @param comm
      * @param method
      */
-    HDF5ReaderP(IO &adios, const std::string &name, const Mode openMode,
-                helper::Comm comm);
+    HDF5ReaderP(IO &adios, const std::string &name, const Mode openMode, helper::Comm comm);
 
     ~HDF5ReaderP();
 
     bool IsValid();
 
-    StepStatus BeginStep(StepMode mode,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void EndStep() final;
 
@@ -55,25 +53,24 @@ private:
     interop::HDF5Common m_H5File;
     void Init() final;
 
-    bool m_InStreamMode =
-        false; // default is not streaming, i.e. set var timestep range
-    unsigned int m_StreamAt = 0; // stream step counter
-#define declare_type(T)                                                        \
-    void DoGetSync(Variable<T> &, T *) final;                                  \
-    void DoGetDeferred(Variable<T> &, T *) final;                              \
-    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
-    DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
-                                                                               \
-    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(                    \
-        const Variable<T> &variable, const size_t step) const final;
+    bool m_InStreamMode = false; // default is not streaming, i.e. set var timestep range
+                                 // unsigned int m_StreamAt = 0; // stream step counter
+    size_t m_StreamAt = 0;
+#define declare_type(T)                                                                            \
+    void DoGetSync(Variable<T> &, T *) final;                                                      \
+    void DoGetDeferred(Variable<T> &, T *) final;                                                  \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>> DoAllStepsBlocksInfo(              \
+        const Variable<T> &variable) const final;                                                  \
+                                                                                                   \
+    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(const Variable<T> &variable,            \
+                                                           const size_t step) const final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
     void DoClose(const int transportIndex = -1) final;
 
     template <class T>
-    size_t ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &variable,
-                       T *values);
+    size_t ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &variable, T *values);
 
     template <class T>
     void GetSyncCommon(Variable<T> &variable, T *data);
@@ -86,8 +83,8 @@ private:
     GetAllStepsBlocksInfo(const Variable<T> &variable) const;
 
     template <class T>
-    std::vector<typename Variable<T>::BPInfo>
-    GetBlocksInfo(const Variable<T> &variable, const size_t step) const;
+    std::vector<typename Variable<T>::BPInfo> GetBlocksInfo(const Variable<T> &variable,
+                                                            const size_t step) const;
 
     template <class T>
     std::vector<typename core::Variable<T>::BPInfo>

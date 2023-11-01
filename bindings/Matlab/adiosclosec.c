@@ -84,16 +84,14 @@ void errorCheck(int nlhs, int nrhs, const mxArray *prhs[])
 
     if (nrhs != 3)
     {
-        mexErrMsgIdAndTxt("MATLAB:adiosclosec:rhs",
-                          "This function needs exactly 3 arguments: "
-                          "FileHandler, ADIOSHandler, Verbose");
+        mexErrMsgIdAndTxt("MATLAB:adiosclosec:rhs", "This function needs exactly 3 arguments: "
+                                                    "FileHandler, ADIOSHandler, Verbose");
     }
 
     if (!mxIsUint64(prhs[0]))
     {
-        mexErrMsgIdAndTxt(
-            "MATLAB:adiosclosec:rhs",
-            "First arg must be an uint64 handler to an ADIOS file .");
+        mexErrMsgIdAndTxt("MATLAB:adiosclosec:rhs",
+                          "First arg must be an uint64 handler to an ADIOS file .");
     }
 
     if (!mxIsUint64(prhs[1]))
@@ -104,8 +102,7 @@ void errorCheck(int nlhs, int nrhs, const mxArray *prhs[])
 
     if (!mxIsNumeric(prhs[2]))
     {
-        mexErrMsgIdAndTxt("MATLAB:adiosclosec:rhs",
-                          "Third arg must be a number.");
+        mexErrMsgIdAndTxt("MATLAB:adiosclosec:rhs", "Third arg must be a number.");
     }
 
     if (nlhs > 0)

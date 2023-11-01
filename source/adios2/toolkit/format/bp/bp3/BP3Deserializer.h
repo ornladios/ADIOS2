@@ -50,8 +50,7 @@ public:
      * @param bufferSTL bp buffer input that contains metadata and data
      */
     template <class T>
-    void GetSyncVariableDataFromStream(core::Variable<T> &variable,
-                                       BufferSTL &bufferSTL) const;
+    void GetSyncVariableDataFromStream(core::Variable<T> &variable, BufferSTL &bufferSTL) const;
 
     /**
      * Initializes a block inside variable.m_BlocksInfo
@@ -61,8 +60,8 @@ public:
      * twice)
      */
     template <class T>
-    typename core::Variable<T>::BPInfo &
-    InitVariableBlockInfo(core::Variable<T> &variable, T *data) const;
+    typename core::Variable<T>::BPInfo &InitVariableBlockInfo(core::Variable<T> &variable,
+                                                              T *data) const;
 
     /**
      * Sets read block information from the available metadata information
@@ -70,9 +69,8 @@ public:
      * @param blockInfo
      */
     template <class T>
-    void
-    SetVariableBlockInfo(core::Variable<T> &variable,
-                         typename core::Variable<T>::BPInfo &blockInfo) const;
+    void SetVariableBlockInfo(core::Variable<T> &variable,
+                              typename core::Variable<T>::BPInfo &blockInfo) const;
 
     /**
      * Prepares the information to get raw data from the transport manager for a
@@ -91,18 +89,14 @@ public:
      * spaces per thread, default = 0
      */
     template <class T>
-    void PreDataRead(core::Variable<T> &variable,
-                     typename core::Variable<T>::BPInfo &blockInfo,
-                     const helper::SubStreamBoxInfo &subStreamBoxInfo,
-                     char *&buffer, size_t &payloadSize, size_t &payloadOffset,
-                     const size_t threadID = 0);
+    void PreDataRead(core::Variable<T> &variable, typename core::Variable<T>::BPInfo &blockInfo,
+                     const helper::SubStreamBoxInfo &subStreamBoxInfo, char *&buffer,
+                     size_t &payloadSize, size_t &payloadOffset, const size_t threadID = 0);
 
     template <class T>
-    void PostDataRead(core::Variable<T> &variable,
-                      typename core::Variable<T>::BPInfo &blockInfo,
+    void PostDataRead(core::Variable<T> &variable, typename core::Variable<T>::BPInfo &blockInfo,
                       const helper::SubStreamBoxInfo &subStreamBoxInfo,
-                      const bool isRowMajorDestination,
-                      const size_t threadID = 0);
+                      const bool isRowMajorDestination, const size_t threadID = 0);
 
     void BackCompatDecompress(const helper::SubStreamBoxInfo &subStreamBoxInfo,
                               const size_t threadID = 0);
@@ -117,8 +111,7 @@ public:
      */
     template <class T>
     void ClipContiguousMemory(typename core::Variable<T>::BPInfo &blockInfo,
-                              const std::vector<char> &contiguousMemory,
-                              const Box<Dims> &blockBox,
+                              const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
                               const Box<Dims> &intersectionBox) const;
 
     /**
@@ -138,12 +131,11 @@ public:
     AllRelativeStepsBlocksInfo(const core::Variable<T> &variable) const;
 
     template <class T>
-    std::vector<typename core::Variable<T>::BPInfo>
-    BlocksInfo(const core::Variable<T> &variable, const size_t step) const;
+    std::vector<typename core::Variable<T>::BPInfo> BlocksInfo(const core::Variable<T> &variable,
+                                                               const size_t step) const;
 
     // TODO : Will deprecate all function below
-    std::map<std::string, helper::SubFileInfoMap>
-    PerformGetsVariablesSubFileInfo(core::IO &io);
+    std::map<std::string, helper::SubFileInfoMap> PerformGetsVariablesSubFileInfo(core::IO &io);
 
     // TODO : will deprecate
     template <class T>
@@ -156,13 +148,11 @@ public:
 
     // TODO : will deprecate
     template <class T>
-    helper::SubFileInfoMap
-    GetSubFileInfo(const core::Variable<T> &variable) const;
+    helper::SubFileInfoMap GetSubFileInfo(const core::Variable<T> &variable) const;
 
     // TODO : will deprecate
     void ClipMemory(const std::string &variableName, core::IO &io,
-                    const std::vector<char> &contiguousMemory,
-                    const Box<Dims> &blockBox,
+                    const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
                     const Box<Dims> &intersectionBox) const;
 
     // TODO: will deprecate
@@ -182,8 +172,7 @@ private:
     static std::mutex m_Mutex;
 
     void ParseMinifooter(const BufferSTL &bufferSTL);
-    void ParsePGIndex(const BufferSTL &bufferSTL,
-                      const std::string hostLanguage);
+    void ParsePGIndex(const BufferSTL &bufferSTL, const std::string hostLanguage);
     void ParseVariablesIndex(const BufferSTL &bufferSTL, core::Engine &engine);
     void ParseAttributesIndex(const BufferSTL &bufferSTL, core::Engine &engine);
 
@@ -196,16 +185,12 @@ private:
      * @param position
      */
     template <class T>
-    void DefineVariableInEngineIO(const ElementIndexHeader &header,
-                                  core::Engine &engine,
-                                  const std::vector<char> &buffer,
-                                  size_t position) const;
+    void DefineVariableInEngineIO(const ElementIndexHeader &header, core::Engine &engine,
+                                  const std::vector<char> &buffer, size_t position) const;
 
     template <class T>
-    void DefineAttributeInEngineIO(const ElementIndexHeader &header,
-                                   core::Engine &engine,
-                                   const std::vector<char> &buffer,
-                                   size_t position) const;
+    void DefineAttributeInEngineIO(const ElementIndexHeader &header, core::Engine &engine,
+                                   const std::vector<char> &buffer, size_t position) const;
 
     template <class T>
     void GetValueFromMetadataCommon(core::Variable<T> &variable, T *data) const;
@@ -216,8 +201,7 @@ private:
                      const std::vector<size_t> &blocksIndexOffsets) const;
 
     const helper::BlockOperationInfo &InitPostOperatorBlockData(
-        const std::vector<helper::BlockOperationInfo> &blockOperationsInfo)
-        const;
+        const std::vector<helper::BlockOperationInfo> &blockOperationsInfo) const;
 };
 
 } // end namespace format

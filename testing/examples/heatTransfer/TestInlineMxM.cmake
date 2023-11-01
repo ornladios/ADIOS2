@@ -8,8 +8,8 @@ include(ADIOSFunctions)
 add_test(NAME HeatTransfer.Inline.MxM
   COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
     ${MPIEXEC_NUMPROC_FLAG} 4
-      $<TARGET_FILE:heatTransfer_inline_adios2>
-        ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_inline.xml
+      $<TARGET_FILE:adios2_simulations_heatTransferInline>
+        ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_inline.xml
         Read.bp 2 2 10 10 10 10
 )
 set_tests_properties(HeatTransfer.Inline.MxM PROPERTIES PROCESSORS 8)

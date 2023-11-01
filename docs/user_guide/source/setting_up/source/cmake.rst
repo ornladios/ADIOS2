@@ -84,7 +84,7 @@ VAR                            VALUE                     Description
 ``ADIOS2_USE_MPI``             **ON**/OFF      MPI or non-MPI (serial) build.
 ``ADIOS2_USE_ZeroMQ``          **ON**/OFF      `ZeroMQ <http://zeromq.org/>`_ for the DataMan engine.
 ``ADIOS2_USE_HDF5``            **ON**/OFF      `HDF5 <https://www.hdfgroup.org>`_ engine. If HDF5 is not on the syspath, it can be set using ``-DHDF5_ROOT=/path/to/hdf5``
-``ADIOS2_USE_Python``          **ON**/OFF      Python bindings. Python 3 will be used if found. If you want to specify a particular python version use  ``-DPYTHON_EXECUTABLE=/path/to/interpreter/python``
+``ADIOS2_USE_Python``          **ON**/OFF      Python bindings. Python 3 will be used if found. If you want to specify a particular python version use ``-DPYTHON_EXECUTABLE=/path/to/interpreter/python -DPython_FIND_STRATEGY=LOCATION``
 ``ADIOS2_USE_Fortran``         **ON**/OFF      Bindings for Fortran 90 or above.
 ``ADIOS2_USE_SST``             **ON**/OFF      Simplified Staging Engine (SST) and its dependencies, requires MPI. Can optionally use LibFabric/UCX for RDMA transport. You can specify the LibFabric/UCX path manually with the -DLIBFABRIC_ROOT=... or -DUCX_ROOT=... option.
 ``ADIOS2_USE_BZip2``           **ON**/OFF      `BZIP2 <http://www.bzip.org>`_ compression.
@@ -103,8 +103,8 @@ In addition to the ``ADIOS2_USE_Feature`` options, the following options are als
  CMake VAR Options                       Values                                       Description                                                                          |
 ==================================== =============================================== ===============================
 ``BUILD_SHARED_LIBS``                  **ON**/OFF                                     Build shared libraries.
-``ADIOS2_BUILD_EXAMPLES``              **ON**/OFF                                     Build examples.
-``BUILD_TESTING``                      **ON**/OFF                                     Build test code.
+``ADIOS2_BUILD_EXAMPLES``              ON/**OFF**                                     Build examples.
+``BUILD_TESTING``                      ON/**OFF**                                     Build test code.
 ``CMAKE_INSTALL_PREFIX``               /path/to/install (``/usr/local``)              Installation location.
 ``CMAKE_BUILD_TYPE``                   Debug/**Release**/RelWithDebInfo/MinSizeRel    Compiler optimization levels.
 ==================================== =============================================== ===============================

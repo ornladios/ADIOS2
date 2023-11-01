@@ -69,9 +69,9 @@ public:
         m_Type = type;
         if (key < 0)
         {
-            helper::Throw<std::ios_base::failure>(
-                "Toolkit", "interop::hdf5::HDF5Common::HDF5TypeGuard",
-                "HDF5TypeGuard", "HDF5 failure detected");
+            helper::Throw<std::ios_base::failure>("Toolkit",
+                                                  "interop::hdf5::HDF5Common::HDF5TypeGuard",
+                                                  "HDF5TypeGuard", "HDF5 failure detected");
         }
     }
 
@@ -144,15 +144,14 @@ public:
     template <class T>
     void DefineDataset(core::Variable<T> &variable);
 
-    void CreateDataset(const std::string &varName, hid_t h5Type,
-                       hid_t filespaceID, std::vector<hid_t> &chain);
+    void CreateDataset(const std::string &varName, hid_t h5Type, hid_t filespaceID,
+                       std::vector<hid_t> &chain);
     bool OpenDataset(const std::string &varName, std::vector<hid_t> &chain);
     void RemoveEmptyDataset(const std::string &varName);
     void StoreADIOSName(const std::string adiosName, hid_t dsetID);
     void ReadADIOSName(hid_t dsetID, std::string &adiosName);
 
-    void LocateAttrParent(const std::string &attrName,
-                          std::vector<std::string> &list,
+    void LocateAttrParent(const std::string &attrName, std::vector<std::string> &list,
                           std::vector<hid_t> &datasetChain);
 
     void Close();
@@ -171,42 +170,36 @@ public:
     void WriteAttrFromIO(core::IO &io);
     void ReadAttrToIO(core::IO &io);
 
-    void ReadNativeAttrToIO(core::IO &io, hid_t datasetId,
-                            std::string const &pathFromRoot);
+    void ReadNativeAttrToIO(core::IO &io, hid_t datasetId, std::string const &pathFromRoot);
 
-    void SetAdiosStep(int ts);
+    void SetAdiosStep(size_t ts);
 
-    unsigned int GetNumAdiosSteps();
-    unsigned int GetAdiosStep() const;
+    size_t GetNumAdiosSteps();
+    size_t GetAdiosStep() const;
     void WriteAdiosSteps();
 
-    void ReadVariables(unsigned int ts, core::IO &io);
-    void FindVarsFromH5(core::IO &io, hid_t gid, const char *name,
-                        const char *heritage, unsigned int ts);
+    void ReadVariables(size_t ts, core::IO &io);
+    void FindVarsFromH5(core::IO &io, hid_t gid, const char *name, const char *heritage, size_t ts);
     void ReadAllVariables(core::IO &io);
 
     void ReadStringScalarDataset(hid_t dataSetId, std::string &result);
     hid_t GetTypeStringScalar(const std::string &input);
-    void CreateVar(core::IO &io, hid_t h5Type, std::string const &name,
-                   unsigned int ts);
+    void CreateVar(core::IO &io, hid_t h5Type, std::string const &name, size_t ts);
 
     template <class T>
-    void AddVar(core::IO &io, std::string const &name, hid_t datasetId,
-                unsigned int ts);
+    void AddVar(core::IO &io, std::string const &name, hid_t datasetId, size_t ts);
 
     // adios only allows a scalar string var
-    void AddSingleString(core::IO &io, std::string const &name, hid_t datasetId,
-                         unsigned int ts);
+    void AddSingleString(core::IO &io, std::string const &name, hid_t datasetId, size_t ts);
 
     // decompose array string vars
-    void AddVarString(core::IO &io, std::string const &name, hid_t datasetId,
-                      unsigned int ts);
+    void AddVarString(core::IO &io, std::string const &name, hid_t datasetId, size_t ts);
 
     template <class T>
-    void AddNonStringAttribute(core::IO &io, std::string const &attrName,
-                               hid_t attrId, hid_t h5Type, hsize_t arraySize);
+    void AddNonStringAttribute(core::IO &io, std::string const &attrName, hid_t attrId,
+                               hid_t h5Type, hsize_t arraySize);
 
-    static void StaticGetAdiosStepString(std::string &adiosStepName, int ts);
+    static void StaticGetAdiosStepString(std::string &adiosStepName, size_t ts);
 
     hid_t m_PropertyListId = -1;
     hid_t m_PropertyTxfID = -1;
@@ -218,7 +211,7 @@ public:
     hid_t m_DefH5TypeComplexFloat;
     hid_t m_DefH5TypeBlockStat;
 
-    unsigned int m_CurrentAdiosStep = 0;
+    size_t m_CurrentAdiosStep = 0;
 
     void CheckWriteGroup();
 
@@ -237,24 +230,24 @@ public:
     };
 
 private:
-    void ReadInStringAttr(core::IO &io, const std::string &attrName,
-                          hid_t attrId, hid_t h5Type, hid_t sid);
-    void ReadInNonStringAttr(core::IO &io, const std::string &attrName,
-                             hid_t attrId, hid_t h5Type, hid_t sid);
+    void ReadInStringAttr(core::IO &io, const std::string &attrName, hid_t attrId, hid_t h5Type,
+                          hid_t sid);
+    void ReadInNonStringAttr(core::IO &io, const std::string &attrName, hid_t attrId, hid_t h5Type,
+                             hid_t sid);
     void WriteStringAttr(core::IO &io, core::Attribute<std::string> *adiosAttr,
                          const std::string &attrName, hid_t parentID);
 
     template <class T>
-    void WriteNonStringAttr(core::IO &io, core::Attribute<T> *adiosAttr,
-                            hid_t parentID, const char *h5Name);
+    void WriteNonStringAttr(core::IO &io, core::Attribute<T> *adiosAttr, hid_t parentID,
+                            const char *h5Name);
 
     template <class T>
-    void GetHDF5SpaceSpec(const core::Variable<T> &variable,
-                          std::vector<hsize_t> &, std::vector<hsize_t> &,
-                          std::vector<hsize_t> &);
+    void GetHDF5SpaceSpec(const core::Variable<T> &variable, std::vector<hsize_t> &,
+                          std::vector<hsize_t> &, std::vector<hsize_t> &);
 
     bool m_WriteMode = false;
-    unsigned int m_NumAdiosSteps = 0;
+
+    size_t m_NumAdiosSteps = 0;
 
     MPI_API const *m_MPI = nullptr;
     int m_CommRank = 0;
@@ -263,11 +256,12 @@ private:
     template <class T>
     void AddBlockInfo(const core::Variable<T> &varaible, hid_t parentId);
     template <class T>
-    void AddStats(const core::Variable<T> &variable, hid_t parentId,
-                  std::vector<T> &stats);
+    void AddStats(const core::Variable<T> &variable, hid_t parentId, std::vector<T> &stats);
 
+    hid_t m_TimeStepH5T = H5T_NATIVE_ULLONG;
+    ;
     hid_t m_ChunkPID;
-    int m_ChunkDim;
+    size_t m_ChunkDim;
     std::set<std::string> m_ChunkVarNames;
     bool m_OrderByC = true; // C or fortran
 

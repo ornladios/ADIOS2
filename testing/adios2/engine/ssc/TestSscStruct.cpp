@@ -23,13 +23,11 @@ public:
     SscEngineTest() = default;
 };
 
-void Writer(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t steps, const adios2::Params &engineParams,
-            const std::string &name)
+void Writer(const Dims &shape, const Dims &start, const Dims &count, const size_t steps,
+            const adios2::Params &engineParams, const std::string &name)
 {
-    size_t datasize =
-        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
-                        std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                                      std::multiplies<size_t>());
     adios2::ADIOS adios(mpiComm);
     adios2::IO io = adios.DeclareIO("Test");
     io.SetEngine("ssc");
@@ -45,21 +43,16 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
     auto varChars = io.DefineVariable<char>("varChars", shape, start, count);
-    auto varUChars =
-        io.DefineVariable<unsigned char>("varUChars", shape, start, count);
+    auto varUChars = io.DefineVariable<unsigned char>("varUChars", shape, start, count);
     auto varShorts = io.DefineVariable<short>("varShorts", shape, start, count);
-    auto varUShorts =
-        io.DefineVariable<unsigned short>("varUShorts", shape, start, count);
+    auto varUShorts = io.DefineVariable<unsigned short>("varUShorts", shape, start, count);
     auto varInts = io.DefineVariable<int>("varInts", shape, start, count);
-    auto varUInts =
-        io.DefineVariable<unsigned int>("varUInts", shape, start, count);
+    auto varUInts = io.DefineVariable<unsigned int>("varUInts", shape, start, count);
     auto varFloats = io.DefineVariable<float>("varFloats", shape, start, count);
-    auto varDoubles =
-        io.DefineVariable<double>("varDoubles", shape, start, count);
-    auto varComplexes = io.DefineVariable<std::complex<float>>(
-        "varComplexes", shape, start, count);
-    auto varDComplexes = io.DefineVariable<std::complex<double>>(
-        "varDComplexes", shape, start, count);
+    auto varDoubles = io.DefineVariable<double>("varDoubles", shape, start, count);
+    auto varComplexes = io.DefineVariable<std::complex<float>>("varComplexes", shape, start, count);
+    auto varDComplexes =
+        io.DefineVariable<std::complex<double>>("varDComplexes", shape, start, count);
     auto varIntScalar = io.DefineVariable<int>("varIntScalar");
     auto varString = io.DefineVariable<std::string>("varString");
 
@@ -71,12 +64,10 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     auto particleDef = io.DefineStruct("particle", sizeof(particle));
     particleDef.AddField("a", offsetof(struct particle, a),
                          adios2::DataType::Int8); // simple field
-    particleDef.AddField("b", offsetof(struct particle, b),
-                         adios2::DataType::Int32, sizeof(int)); // static array
-    auto varStruct =
-        io.DefineStructVariable("particles", particleDef, shape, start, count);
-    EXPECT_THROW(particleDef.AddField("c", 12, adios2::DataType::Int32),
-                 std::runtime_error);
+    particleDef.AddField("b", offsetof(struct particle, b), adios2::DataType::Int32,
+                         sizeof(int)); // static array
+    auto varStruct = io.DefineStructVariable("particles", particleDef, shape, start, count);
+    EXPECT_THROW(particleDef.AddField("c", 12, adios2::DataType::Int32), std::runtime_error);
     std::vector<particle> myParticles(datasize);
     for (size_t i = 0; i < datasize; ++i)
     {
@@ -122,9 +113,8 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     engine.Close();
 }
 
-void Reader(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t steps, const adios2::Params &engineParams,
-            const std::string &name)
+void Reader(const Dims &shape, const Dims &start, const Dims &count, const size_t steps,
+            const adios2::Params &engineParams, const std::string &name)
 {
     adios2::ADIOS adios(mpiComm);
     adios2::IO io = adios.DeclareIO("Test");
@@ -132,9 +122,8 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     io.SetParameters(engineParams);
     adios2::Engine engine = io.Open(name, adios2::Mode::Read);
 
-    size_t datasize =
-        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
-                        std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                                      std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -155,18 +144,13 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     engine.LockReaderSelections();
 
     auto particleDef1 = io.DefineStruct("particle1", sizeof(particle));
-    particleDef1.AddField("a", offsetof(struct particle, a),
-                          adios2::DataType::Int8);
-    particleDef1.AddField("b", offsetof(struct particle, b),
-                          adios2::DataType::Int32, 4);
+    particleDef1.AddField("a", offsetof(struct particle, a), adios2::DataType::Int8);
+    particleDef1.AddField("b", offsetof(struct particle, b), adios2::DataType::Int32, 4);
 
     auto particleDef2 = io.DefineStruct("particle2", sizeof(particle) + 4);
-    particleDef2.AddField("a", offsetof(struct particle, a),
-                          adios2::DataType::Int8, 1);
-    particleDef2.AddField("b", offsetof(struct particle, b),
-                          adios2::DataType::Int32, 4);
-    particleDef2.AddField("c", sizeof(particle) /* OK offset */,
-                          adios2::DataType::Int32);
+    particleDef2.AddField("a", offsetof(struct particle, a), adios2::DataType::Int8, 1);
+    particleDef2.AddField("b", offsetof(struct particle, b), adios2::DataType::Int32, 4);
+    particleDef2.AddField("c", sizeof(particle) /* OK offset */, adios2::DataType::Int32);
 
     while (true)
     {
@@ -174,8 +158,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         if (status == adios2::StepStatus::OK)
         {
             auto varIntScalar = io.InquireVariable<int>("varIntScalar");
-            auto blocksInfo =
-                engine.BlocksInfo(varIntScalar, engine.CurrentStep());
+            auto blocksInfo = engine.BlocksInfo(varIntScalar, engine.CurrentStep());
 
             for (const auto &bi : blocksInfo)
             {
@@ -188,27 +171,21 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             const auto &vars = io.AvailableVariables();
             ASSERT_EQ(vars.size(), 12);
             size_t currentStep = engine.CurrentStep();
-            adios2::Variable<char> varChars =
-                io.InquireVariable<char>("varChars");
+            adios2::Variable<char> varChars = io.InquireVariable<char>("varChars");
             adios2::Variable<unsigned char> varUChars =
                 io.InquireVariable<unsigned char>("varUChars");
-            adios2::Variable<short> varShorts =
-                io.InquireVariable<short>("varShorts");
+            adios2::Variable<short> varShorts = io.InquireVariable<short>("varShorts");
             adios2::Variable<unsigned short> varUShorts =
                 io.InquireVariable<unsigned short>("varUShorts");
             adios2::Variable<int> varInts = io.InquireVariable<int>("varInts");
-            adios2::Variable<unsigned int> varUInts =
-                io.InquireVariable<unsigned int>("varUInts");
-            adios2::Variable<float> varFloats =
-                io.InquireVariable<float>("varFloats");
-            adios2::Variable<double> varDoubles =
-                io.InquireVariable<double>("varDoubles");
+            adios2::Variable<unsigned int> varUInts = io.InquireVariable<unsigned int>("varUInts");
+            adios2::Variable<float> varFloats = io.InquireVariable<float>("varFloats");
+            adios2::Variable<double> varDoubles = io.InquireVariable<double>("varDoubles");
             adios2::Variable<std::complex<float>> varComplexes =
                 io.InquireVariable<std::complex<float>>("varComplexes");
             adios2::Variable<std::complex<double>> varDComplexes =
                 io.InquireVariable<std::complex<double>>("varDComplexes");
-            adios2::Variable<std::string> varString =
-                io.InquireVariable<std::string>("varString");
+            adios2::Variable<std::string> varString = io.InquireVariable<std::string>("varString");
 
             varChars.SetSelection({start, count});
             varUChars.SetSelection({start, count});
@@ -228,43 +205,29 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             engine.Get(varInts, myInts.data(), adios2::Mode::Sync);
             engine.Get(varUInts, myUInts.data(), adios2::Mode::Sync);
 
-            VerifyData(myChars.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myUChars.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myShorts.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myUShorts.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myInts.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myUInts.data(), currentStep, start, count, shape,
-                       mpiRank);
+            VerifyData(myChars.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myUChars.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myShorts.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myUShorts.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myInts.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myUInts.data(), currentStep, start, count, shape, mpiRank);
 
             engine.Get(varFloats, myFloats.data(), adios2::Mode::Deferred);
             engine.Get(varDoubles, myDoubles.data(), adios2::Mode::Deferred);
-            engine.Get(varComplexes, myComplexes.data(),
-                       adios2::Mode::Deferred);
-            engine.Get(varDComplexes, myDComplexes.data(),
-                       adios2::Mode::Deferred);
+            engine.Get(varComplexes, myComplexes.data(), adios2::Mode::Deferred);
+            engine.Get(varDComplexes, myDComplexes.data(), adios2::Mode::Deferred);
             engine.PerformGets();
 
-            VerifyData(myFloats.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myDoubles.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myComplexes.data(), currentStep, start, count, shape,
-                       mpiRank);
-            VerifyData(myDComplexes.data(), currentStep, start, count, shape,
-                       mpiRank);
+            VerifyData(myFloats.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myDoubles.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myComplexes.data(), currentStep, start, count, shape, mpiRank);
+            VerifyData(myDComplexes.data(), currentStep, start, count, shape, mpiRank);
             std::string s;
             engine.Get(varString, s);
             engine.PerformGets();
             ASSERT_EQ(s, "sample string sample string sample string");
-            ASSERT_EQ(varString.Min(),
-                      "sample string sample string sample string");
-            ASSERT_EQ(varString.Max(),
-                      "sample string sample string sample string");
+            ASSERT_EQ(varString.Min(), "sample string sample string sample string");
+            ASSERT_EQ(varString.Max(), "sample string sample string sample string");
 
             int i;
             engine.Get(varIntScalar, &i);
@@ -294,8 +257,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             }
 
             {
-                auto varStruct =
-                    io.InquireStructVariable("particles", particleDef1);
+                auto varStruct = io.InquireStructVariable("particles", particleDef1);
                 varStruct.SetSelection({start, count});
                 ASSERT_TRUE(varStruct);
                 engine.Get(varStruct, myParticles.data(), adios2::Mode::Sync);
@@ -317,8 +279,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
                 }
             }
             {
-                auto varStruct =
-                    io.InquireStructVariable("particles", particleDef2);
+                auto varStruct = io.InquireStructVariable("particles", particleDef2);
                 ASSERT_FALSE(varStruct);
             }
 
@@ -327,8 +288,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         }
         else if (status == adios2::StepStatus::EndOfStream)
         {
-            std::cout << "[Rank " + std::to_string(mpiRank) +
-                             "] SscTest reader end of stream!"
+            std::cout << "[Rank " + std::to_string(mpiRank) + "] SscTest reader end of stream!"
                       << std::endl;
             break;
         }
@@ -364,8 +324,7 @@ TEST_F(SscEngineTest, TestSscStruct)
     }
     {
         std::string filename = "TestSscStructNaive";
-        adios2::Params engineParams = {{"Verbose", "0"},
-                                       {"EngineMode", "naive"}};
+        adios2::Params engineParams = {{"Verbose", "0"}, {"EngineMode", "naive"}};
         int mpiGroup = worldRank / (worldSize / 2);
         MPI_Comm_split(MPI_COMM_WORLD, mpiGroup, worldRank, &mpiComm);
         MPI_Comm_rank(mpiComm, &mpiRank);

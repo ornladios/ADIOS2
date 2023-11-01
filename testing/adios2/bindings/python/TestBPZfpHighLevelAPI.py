@@ -61,8 +61,8 @@ def CompressZfp2D(rate):
 
             for j in range(0, Ny):
                 for i in range(0, Nx):
-                    assert(abs(r32s[j][i] - in_r32s[j][i]) < 1E-4)
-                    assert(abs(r64s[j][i] - in_r64s[j][i]) < 1E-4)
+                    assert (abs(r32s[j][i] - in_r32s[j][i]) < 1E-4)
+                    assert (abs(r64s[j][i] - in_r64s[j][i]) < 1E-4)
 
 
 def main():

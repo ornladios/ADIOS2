@@ -27,8 +27,8 @@ enum LogMode : char
 };
 
 std::string MakeMessage(const std::string &component, const std::string &source,
-                        const std::string &activity, const std::string &message,
-                        const int commRank, const LogMode mode);
+                        const std::string &activity, const std::string &message, const int commRank,
+                        const LogMode mode);
 
 /**
  * Print outputs, warnings, errors, and exceptions
@@ -38,9 +38,8 @@ std::string MakeMessage(const std::string &component, const std::string &source,
  * @param message: text message
  * @param mode: INFO, WARNING or ERROR
  */
-void Log(const std::string &component, const std::string &source,
-         const std::string &activity, const std::string &message,
-         const LogMode mode);
+void Log(const std::string &component, const std::string &source, const std::string &activity,
+         const std::string &message, const LogMode mode);
 
 /**
  * Print outputs, warnings, errors, and exceptions
@@ -52,9 +51,8 @@ void Log(const std::string &component, const std::string &source,
  * @param verbosity: engine parameter for engine wide verbosity level
  * @param mode: INFO, WARNING or ERROR
  */
-void Log(const std::string &component, const std::string &source,
-         const std::string &activity, const std::string &message,
-         const int priority, const int verbosity, const LogMode mode);
+void Log(const std::string &component, const std::string &source, const std::string &activity,
+         const std::string &message, const int priority, const int verbosity, const LogMode mode);
 
 /**
  * Print outputs, warnings, errors, and exceptions
@@ -68,28 +66,23 @@ void Log(const std::string &component, const std::string &source,
  * @param verbosity: engine parameter for engine wide verbosity level
  * @param mode: INFO, WARNING or ERROR
  */
-void Log(const std::string &component, const std::string &source,
-         const std::string &activity, const std::string &message,
-         const int logRank, const int commRank, const int priority,
+void Log(const std::string &component, const std::string &source, const std::string &activity,
+         const std::string &message, const int logRank, const int commRank, const int priority,
          const int verbosity, const LogMode mode);
 
 template <class T>
-void Throw(const std::string &component, const std::string &source,
-           const std::string &activity, const std::string &message,
-           const int commRank = -1)
+void Throw(const std::string &component, const std::string &source, const std::string &activity,
+           const std::string &message, const int commRank = -1)
 {
-    auto m = MakeMessage(component, source, activity, message, commRank,
-                         LogMode::EXCEPTION);
+    auto m = MakeMessage(component, source, activity, message, commRank, LogMode::EXCEPTION);
     throw(T(m));
 }
 
 template <class T>
 void ThrowNested(const std::string &component, const std::string &source,
-                 const std::string &activity, const std::string &message,
-                 const int commRank = -1)
+                 const std::string &activity, const std::string &message, const int commRank = -1)
 {
-    auto m = MakeMessage(component, source, activity, message, commRank,
-                         LogMode::EXCEPTION);
+    auto m = MakeMessage(component, source, activity, message, commRank, LogMode::EXCEPTION);
     throw_with_nested(T(m));
 }
 

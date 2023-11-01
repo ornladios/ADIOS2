@@ -15,8 +15,7 @@ namespace adios2
 namespace format
 {
 
-BufferFFS::BufferFFS(FFSBuffer Buf, void *data, size_t len)
-: Buffer("BufferFFS", len)
+BufferFFS::BufferFFS(FFSBuffer Buf, void *data, size_t len) : Buffer("BufferFFS", len)
 {
     m_buffer = Buf;
     m_data = data;

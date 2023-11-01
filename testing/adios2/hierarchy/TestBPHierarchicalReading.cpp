@@ -23,8 +23,7 @@ public:
 
 TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 {
-    std::string filename =
-        "ADIOSHierarchicalReadVariable." + engineName + ".bp";
+    std::string filename = "ADIOSHierarchicalReadVariable." + engineName + ".bp";
 
     // Number of steps
     const std::size_t NSteps = 2;
@@ -56,18 +55,17 @@ TEST_F(ADIOSHierarchicalReadVariableTest, Read)
         const adios2::Dims start = {rank * Nx};
         const adios2::Dims count = {Nx};
 
-        auto var1 = io.DefineVariable<int32_t>(
-            "group1/group2/group3/group4/variable1", shape, start, count);
-        auto var2 = io.DefineVariable<int32_t>(
-            "group1/group2/group3/group4/variable2", shape, start, count);
-        auto var3 = io.DefineVariable<int32_t>(
-            "group1/group2/group3/group4/variable3", shape, start, count);
-        auto var4 = io.DefineVariable<int32_t>(
-            "group1/group2/group3/group4/variable4", shape, start, count);
-        auto var5 = io.DefineVariable<int32_t>(
-            "group1/group2/group3/group4/variable5", shape, start, count);
-        auto var6 =
-            io.DefineVariable<int32_t>("variable6", shape, start, count);
+        auto var1 = io.DefineVariable<int32_t>("group1/group2/group3/group4/variable1", shape,
+                                               start, count);
+        auto var2 = io.DefineVariable<int32_t>("group1/group2/group3/group4/variable2", shape,
+                                               start, count);
+        auto var3 = io.DefineVariable<int32_t>("group1/group2/group3/group4/variable3", shape,
+                                               start, count);
+        auto var4 = io.DefineVariable<int32_t>("group1/group2/group3/group4/variable4", shape,
+                                               start, count);
+        auto var5 = io.DefineVariable<int32_t>("group1/group2/group3/group4/variable5", shape,
+                                               start, count);
+        auto var6 = io.DefineVariable<int32_t>("variable6", shape, start, count);
         std::vector<int32_t> Ints = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
         for (size_t step = 0; step < NSteps; ++step)

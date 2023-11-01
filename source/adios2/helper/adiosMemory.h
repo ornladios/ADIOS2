@@ -37,26 +37,24 @@ void CopyEndianReverse(const char *src, const size_t payloadStride, T *dest);
  * @param elements number of elements of source type
  */
 template <class T>
-void InsertToBuffer(std::vector<char> &buffer, const T *source,
-                    const size_t elements = 1) noexcept;
+void InsertToBuffer(std::vector<char> &buffer, const T *source, const size_t elements = 1) noexcept;
 
 /*
  * Copies data from a GPU buffer to a specific location in the adios buffer
  */
 template <class T>
-void CopyFromGPUToBuffer(std::vector<char> &dest, size_t &position,
-                         const T *source, MemorySpace memSpace,
-                         const size_t elements = 1) noexcept;
+void CopyFromGPUToBuffer(std::vector<char> &dest, size_t &position, const T *source,
+                         MemorySpace memSpace, const size_t elements = 1) noexcept;
 template <class T>
-void CopyFromGPUToBuffer(char *dest, size_t position, const T *GPUbuffer,
-                         MemorySpace memSpace, const size_t size) noexcept;
+void CopyFromGPUToBuffer(char *dest, size_t position, const T *GPUbuffer, MemorySpace memSpace,
+                         const size_t size) noexcept;
 
 /*
  * Copies data from a specific location in the adios buffer to a GPU buffer
  */
 template <class T>
-void CopyFromBufferToGPU(T *GPUbuffer, size_t position, const char *source,
-                         MemorySpace memSpace, const size_t size) noexcept;
+void CopyFromBufferToGPU(T *GPUbuffer, size_t position, const char *source, MemorySpace memSpace,
+                         const size_t size) noexcept;
 
 /**
  * Copies data to a specific location in the buffer updating position
@@ -81,13 +79,12 @@ void CopyToBuffer(std::vector<char> &buffer, size_t &position, const T *source,
  * @param threads number of threads sharing the copy load
  */
 template <class T>
-void CopyToBufferThreads(std::vector<char> &buffer, size_t &position,
-                         const T *source, const size_t elements = 1,
-                         const unsigned int threads = 1) noexcept;
+void CopyToBufferThreads(std::vector<char> &buffer, size_t &position, const T *source,
+                         const size_t elements = 1, const unsigned int threads = 1) noexcept;
 
 template <class T>
-void ReverseCopyFromBuffer(const std::vector<char> &buffer, size_t &position,
-                           T *destination, const size_t elements = 1) noexcept;
+void ReverseCopyFromBuffer(const std::vector<char> &buffer, size_t &position, T *destination,
+                           const size_t elements = 1) noexcept;
 
 /**
  * Copy memory from a buffer at a certain input position
@@ -98,8 +95,8 @@ void ReverseCopyFromBuffer(const std::vector<char> &buffer, size_t &position,
  * @param elements  number of elements of destination type
  */
 template <class T>
-void CopyFromBuffer(const std::vector<char> &buffer, size_t &position,
-                    T *destination, const size_t elements = 1) noexcept;
+void CopyFromBuffer(const std::vector<char> &buffer, size_t &position, T *destination,
+                    const size_t elements = 1) noexcept;
 
 /**
  * Cast an element to uint64 and insert to a buffer
@@ -117,8 +114,8 @@ T ReadValue(const std::vector<char> &buffer, size_t &position,
  * output must be pre-allocated.
  */
 template <class T>
-void ReadArray(const std::vector<char> &buffer, size_t &position, T *output,
-               const size_t nElems, const bool isLittleEndian = true) noexcept;
+void ReadArray(const std::vector<char> &buffer, size_t &position, T *output, const size_t nElems,
+               const bool isLittleEndian = true) noexcept;
 
 /**
  * General function to copy memory between blocks of different type and start
@@ -137,23 +134,17 @@ void ReadArray(const std::vector<char> &buffer, size_t &position, T *output,
  * @param srcMemCount
  */
 template <class T, class U>
-void CopyMemoryBlock(T *dest, const Dims &destStart, const Dims &destCount,
-                     const bool destRowMajor, const U *src,
-                     const Dims &srcStart, const Dims &srcCount,
+void CopyMemoryBlock(T *dest, const Dims &destStart, const Dims &destCount, const bool destRowMajor,
+                     const U *src, const Dims &srcStart, const Dims &srcCount,
                      const bool srcRowMajor, const bool endianReverse = false,
-                     const Dims &destMemStart = Dims(),
-                     const Dims &destMemCount = Dims(),
-                     const Dims &srcMemStart = Dims(),
-                     const Dims &srcMemCount = Dims()) noexcept;
+                     const Dims &destMemStart = Dims(), const Dims &destMemCount = Dims(),
+                     const Dims &srcMemStart = Dims(), const Dims &srcMemCount = Dims()) noexcept;
 
-void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
-                 const bool destRowMajor, const char *src, const Dims &srcStart,
-                 const Dims &srcCount, const bool srcRowMajor,
-                 const Dims &destMemStart = Dims(),
-                 const Dims &destMemCount = Dims(),
-                 const Dims &srcMemStart = Dims(),
-                 const Dims &srcMemCount = Dims(),
-                 const bool endianReverse = false,
+void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount, const bool destRowMajor,
+                 const char *src, const Dims &srcStart, const Dims &srcCount,
+                 const bool srcRowMajor, const Dims &destMemStart = Dims(),
+                 const Dims &destMemCount = Dims(), const Dims &srcMemStart = Dims(),
+                 const Dims &srcMemCount = Dims(), const bool endianReverse = false,
                  const DataType destType = DataType::None) noexcept;
 
 /**
@@ -173,27 +164,20 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount,
  */
 template <class T>
 void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
-                          const char *contiguousMemory,
-                          const Box<Dims> &blockBox,
-                          const Box<Dims> &intersectionBox,
-                          const bool isRowMajor = true,
-                          const bool reverseDimensions = false,
-                          const bool endianReverse = false,
+                          const char *contiguousMemory, const Box<Dims> &blockBox,
+                          const Box<Dims> &intersectionBox, const bool isRowMajor = true,
+                          const bool reverseDimensions = false, const bool endianReverse = false,
                           const MemorySpace memSpace = MemorySpace::Host);
 
 template <class T>
 void ClipContiguousMemory(T *dest, const Dims &destStart, const Dims &destCount,
-                          const std::vector<char> &contiguousMemory,
-                          const Box<Dims> &blockBox,
-                          const Box<Dims> &intersectionBox,
-                          const bool isRowMajor = true,
-                          const bool reverseDimensions = false,
-                          const bool endianReverse = false,
+                          const std::vector<char> &contiguousMemory, const Box<Dims> &blockBox,
+                          const Box<Dims> &intersectionBox, const bool isRowMajor = true,
+                          const bool reverseDimensions = false, const bool endianReverse = false,
                           const MemorySpace memSpace = MemorySpace::Host);
 
-size_t CopyMemoryWithOpHeader(const char *src, const Dims &blockCount,
-                              const DataType type, char *dest,
-                              size_t headerSize, const MemorySpace memSpace);
+size_t CopyMemoryWithOpHeader(const char *src, const Dims &blockCount, const DataType type,
+                              char *dest, size_t headerSize, const MemorySpace memSpace);
 
 template <class T>
 void CopyContiguousMemory(const char *src, const size_t stride, T *dest,
@@ -208,12 +192,10 @@ void CopyContiguousMemory(const char *src, const size_t stride, T *dest,
  * @param end
  */
 template <class T>
-void ClipVector(std::vector<T> &vec, const size_t start,
-                const size_t end) noexcept;
+void ClipVector(std::vector<T> &vec, const size_t start, const size_t end) noexcept;
 
 template <class T>
-void Resize(std::vector<T> &vec, const size_t dataSize, const std::string hint,
-            T value = T());
+void Resize(std::vector<T> &vec, const size_t dataSize, const std::string hint, T value = T());
 
 /**
  * Author:Shawn Yang, shawnyang610@gmail.com
@@ -253,14 +235,11 @@ void Resize(std::vector<T> &vec, const size_t dataSize, const std::string hint,
 
 int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
            const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
-           const CoreDims &outStart, const CoreDims &outCount,
-           const bool outIsRowMajor, const bool outIsLittleEndian,
-           const int typeSize, const CoreDims &inMemStart = CoreDims(),
-           const CoreDims &inMemCount = CoreDims(),
-           const CoreDims &outMemStart = CoreDims(),
-           const CoreDims &outMemCount = CoreDims(),
-           const bool safeMode = false,
-           MemorySpace MemSpace = MemorySpace::Host);
+           const CoreDims &outStart, const CoreDims &outCount, const bool outIsRowMajor,
+           const bool outIsLittleEndian, const int typeSize,
+           const CoreDims &inMemStart = CoreDims(), const CoreDims &inMemCount = CoreDims(),
+           const CoreDims &outMemStart = CoreDims(), const CoreDims &outMemCount = CoreDims(),
+           const bool safeMode = false, MemorySpace MemSpace = MemorySpace::Host);
 
 template <class T>
 size_t PayloadSize(const T *data, const Dims &count) noexcept;

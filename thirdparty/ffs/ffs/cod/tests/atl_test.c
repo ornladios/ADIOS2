@@ -7,6 +7,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 #ifndef HAVE_ATL_H
 int
 main()
@@ -37,7 +38,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 	/* test external call */
@@ -65,7 +66,7 @@ main(int argc, char **argv)
 
 	cod_subroutine_declaration("int proc(attr_list l)", context);
 	gen_code = cod_code_gen(code, context);
-	func = (int (*)(attr_list))(long)gen_code->func;
+	func = (int (*)(attr_list))(intptr_t)gen_code->func;
 
 	if ((func)(l) != 15) {
 	    printf("Function didn't return 15\n");
@@ -76,7 +77,7 @@ main(int argc, char **argv)
 
 	cod_subroutine_declaration("int proc(attr_list l)", context2);
 	gen_code = cod_code_gen(code, context2);
-	func = (int (*)(attr_list))(long)gen_code->func;
+	func = (int (*)(attr_list))(intptr_t)gen_code->func;
 
 	if ((func)(l) != 15) {
 	    printf("Function didn't return 15\n");
@@ -91,7 +92,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {"l", (void*) 0},
 	    {(void*)0, (void*)0}
 	};
@@ -121,7 +122,7 @@ main(int argc, char **argv)
 
 	cod_subroutine_declaration("int proc()", context);
 	gen_code = cod_code_gen(code, context);
-	func = (int (*)(attr_list))(long)gen_code->func;
+	func = (int (*)(attr_list))(intptr_t)gen_code->func;
 
 	if ((func)(l) != 15) {
 	    printf("Function didn't return 15\n");
@@ -138,7 +139,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 	/* test external call */
@@ -160,7 +161,7 @@ main(int argc, char **argv)
 
 	cod_subroutine_declaration("int proc(attr_list l[], int i)", context);
 	gen_code = cod_code_gen(code, context);
-	func = (int (*)(attr_list*, int))(long)gen_code->func;
+	func = (int (*)(attr_list*, int))(intptr_t)gen_code->func;
 
 	l[0] = create_attr_list();
 	set_attr(l[0], attr_atom_from_string("test_value"), Attr_Int4, (attr_value)15);
@@ -185,7 +186,7 @@ main(int argc, char **argv)
 
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
+	    {"printf", (void*)(intptr_t)printf},
 	    {(void*)0, (void*)0}
 	};
 	/* test external call */
@@ -212,7 +213,7 @@ main(int argc, char **argv)
 
 	cod_subroutine_declaration("double proc(int limit)", context);
 	gen_code = cod_code_gen(code, context);
-	func = (double (*)(int))(long)gen_code->func;
+	func = (double (*)(int))(intptr_t)gen_code->func;
 
 	big =  (func)(1000000);
 	little = (func)(10000);

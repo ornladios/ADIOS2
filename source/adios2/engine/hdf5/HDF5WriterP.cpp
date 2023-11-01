@@ -19,8 +19,7 @@ namespace core
 namespace engine
 {
 
-HDF5WriterP::HDF5WriterP(IO &io, const std::string &name, const Mode mode,
-                         helper::Comm comm)
+HDF5WriterP::HDF5WriterP(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("HDF5Writer", io, name, mode, std::move(comm))
 {
     m_IO.m_ReadStreaming = false;
@@ -56,11 +55,10 @@ void HDF5WriterP::Init()
 {
     if (m_OpenMode != Mode::Write && m_OpenMode != Mode::Append)
     {
-        helper::Throw<std::invalid_argument>(
-            "Engine", "HDF5WriterP", "Init",
-            "HDF5Writer only support OpenMode::Write or "
-            "OpenMode::Append "
-            ", in call to ADIOS Open or HDF5Writer constructor");
+        helper::Throw<std::invalid_argument>("Engine", "HDF5WriterP", "Init",
+                                             "HDF5Writer only support OpenMode::Write or "
+                                             "OpenMode::Append "
+                                             ", in call to ADIOS Open or HDF5Writer constructor");
     }
 
     if (m_OpenMode == Mode::Append)
@@ -107,14 +105,14 @@ void HDF5WriterP::Init()
     */
 }
 
-#define declare_type(T)                                                        \
-    void HDF5WriterP::DoPutSync(Variable<T> &variable, const T *values)        \
-    {                                                                          \
-        DoPutSyncCommon(variable, values);                                     \
-    }                                                                          \
-    void HDF5WriterP::DoPutDeferred(Variable<T> &variable, const T *values)    \
-    {                                                                          \
-        DoPutSyncCommon(variable, values);                                     \
+#define declare_type(T)                                                                            \
+    void HDF5WriterP::DoPutSync(Variable<T> &variable, const T *values)                            \
+    {                                                                                              \
+        DoPutSyncCommon(variable, values);                                                         \
+    }                                                                                              \
+    void HDF5WriterP::DoPutDeferred(Variable<T> &variable, const T *values)                        \
+    {                                                                                              \
+        DoPutSyncCommon(variable, values);                                                         \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

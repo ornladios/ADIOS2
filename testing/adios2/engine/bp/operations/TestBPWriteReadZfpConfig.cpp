@@ -45,12 +45,10 @@ void ZfpRate1D(const std::string configFile)
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                        adios2::PathSeparator + configFile);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -59,10 +57,8 @@ void ZfpRate1D(const std::string configFile)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         (void)var_r32;
         (void)var_r64;
@@ -164,12 +160,10 @@ void ZfpRate2D(const std::string configFile)
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                        adios2::PathSeparator + configFile);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -178,10 +172,8 @@ void ZfpRate2D(const std::string configFile)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         (void)var_r32;
         (void)var_r64;
@@ -283,12 +275,10 @@ void ZfpRate3D(const std::string configFile)
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                        adios2::PathSeparator + configFile);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -297,10 +287,8 @@ void ZfpRate3D(const std::string configFile)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         (void)var_r32;
         (void)var_r64;
@@ -402,12 +390,10 @@ void ZfpRate1DSel(const std::string configFile)
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                        adios2::PathSeparator + configFile);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -416,10 +402,8 @@ void ZfpRate1DSel(const std::string configFile)
         const adios2::Dims start{static_cast<std::size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         (void)var_r32;
         (void)var_r64;
@@ -461,11 +445,9 @@ void ZfpRate1DSel(const std::string configFile)
             EXPECT_TRUE(var_r64);
             ASSERT_EQ(var_r64.ShapeID(), adios2::ShapeID::GlobalArray);
             ASSERT_EQ(var_r64.Steps(), NSteps);
-            ASSERT_EQ(var_r64.Shape()[0],
-                      static_cast<std::size_t>(mpiSize) * Nx);
+            ASSERT_EQ(var_r64.Shape()[0], static_cast<std::size_t>(mpiSize) * Nx);
 
-            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx +
-                                     Nx / 2};
+            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx + Nx / 2};
             const adios2::Dims count{Nx / 2};
             const adios2::Box<adios2::Dims> sel(start, count);
             var_r32.SetSelection(sel);
@@ -481,12 +463,8 @@ void ZfpRate1DSel(const std::string configFile)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 + i]),
-                          1E-4)
-                    << msg;
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 + i]),
-                          1E-4)
-                    << msg;
+                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 + i]), 1E-4) << msg;
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 + i]), 1E-4) << msg;
             }
             ++t;
         }
@@ -527,12 +505,10 @@ void ZfpRate2DSel(const std::string configFile)
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                        adios2::PathSeparator + configFile);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -541,10 +517,8 @@ void ZfpRate2DSel(const std::string configFile)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         (void)var_r32;
         (void)var_r64;
@@ -603,12 +577,8 @@ void ZfpRate2DSel(const std::string configFile)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny + i]),
-                          1E-4)
-                    << msg;
-                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 * Ny + i]),
-                          1E-4)
-                    << msg;
+                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny + i]), 1E-4) << msg;
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 * Ny + i]), 1E-4) << msg;
             }
             ++t;
         }
@@ -650,12 +620,10 @@ void ZfpRate3DSel(const std::string configFile)
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                        adios2::PathSeparator + configFile);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -664,10 +632,8 @@ void ZfpRate3DSel(const std::string configFile)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         (void)var_r32;
         (void)var_r64;
@@ -712,8 +678,7 @@ void ZfpRate3DSel(const std::string configFile)
             ASSERT_EQ(var_r64.Shape()[1], Ny);
             ASSERT_EQ(var_r64.Shape()[2], Nz);
 
-            const adios2::Dims start{
-                static_cast<std::size_t>(mpiRank) * Nx + Nx / 2, 0, 0};
+            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx + Nx / 2, 0, 0};
             const adios2::Dims count{Nx / 2, Ny, Nz};
             const adios2::Box<adios2::Dims> sel(start, count);
             var_r32.SetSelection(sel);
@@ -729,14 +694,8 @@ void ZfpRate3DSel(const std::string configFile)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(
-                    std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny * Nz + i]),
-                    1E-4)
-                    << msg;
-                ASSERT_LT(
-                    std::abs(decompressedR64s[i] - r64s[Nx / 2 * Ny * Nz + i]),
-                    1E-4)
-                    << msg;
+                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny * Nz + i]), 1E-4) << msg;
+                ASSERT_LT(std::abs(decompressedR64s[i] - r64s[Nx / 2 * Ny * Nz + i]), 1E-4) << msg;
             }
             ++t;
         }
@@ -764,26 +723,22 @@ void ZfpRate2DSmallSel(const std::string configFile)
     // Number of steps
     const size_t NSteps = 1;
 
-    std::vector<float> r32s = {0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06,
-                               0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.13,
-                               0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20,
-                               0.21, 0.22, 0.23, 0.24};
-    std::vector<double> r64s = {0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06,
-                                0.07, 0.08, 0.09, 0.10, 0.11, 0.12, 0.13,
-                                0.14, 0.15, 0.16, 0.17, 0.18, 0.19, 0.20,
-                                0.21, 0.22, 0.23, 0.24};
+    std::vector<float> r32s = {0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08,
+                               0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17,
+                               0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24};
+    std::vector<double> r64s = {0.00, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08,
+                                0.09, 0.10, 0.11, 0.12, 0.13, 0.14, 0.15, 0.16, 0.17,
+                                0.18, 0.19, 0.20, 0.21, 0.22, 0.23, 0.24};
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                            adios2::PathSeparator + configFile,
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile,
                         MPI_COMM_WORLD);
 #else
-    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) +
-                        adios2::PathSeparator + configFile);
+    adios2::ADIOS adios(std::string(mystr(XML_CONFIG_DIR)) + adios2::PathSeparator + configFile);
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -792,10 +747,8 @@ void ZfpRate2DSmallSel(const std::string configFile)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         (void)var_r32;
         (void)var_r64;
@@ -838,8 +791,7 @@ void ZfpRate2DSmallSel(const std::string configFile)
             ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
             ASSERT_EQ(var_r64.Shape()[1], Ny);
 
-            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx + 1,
-                                     1};
+            const adios2::Dims start{static_cast<std::size_t>(mpiRank) * Nx + 1, 1};
             const adios2::Dims count{2, 2};
             const adios2::Box<adios2::Dims> sel(start, count);
             var_r32.SetSelection(sel);
@@ -882,30 +834,17 @@ public:
 TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp1D) { ZfpRate1D(GetParam()); }
 TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp2D) { ZfpRate2D(GetParam()); }
 TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp3D) { ZfpRate3D(GetParam()); }
-TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp1DSel)
-{
-    ZfpRate1DSel(GetParam());
-}
-TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp2DSel)
-{
-    ZfpRate2DSel(GetParam());
-}
-TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp3DSel)
-{
-    ZfpRate3DSel(GetParam());
-}
-TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp2DSmallSel)
-{
-    ZfpRate2DSmallSel(GetParam());
-}
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp1DSel) { ZfpRate1DSel(GetParam()); }
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp2DSel) { ZfpRate2DSel(GetParam()); }
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp3DSel) { ZfpRate3DSel(GetParam()); }
+TEST_P(BPWriteReadZfpConfig, ADIOS2BPWriteReadZfp2DSmallSel) { ZfpRate2DSmallSel(GetParam()); }
 
-INSTANTIATE_TEST_SUITE_P(
-    ZfpConfigFile, BPWriteReadZfpConfig,
-    ::testing::Values("configZfp_rate8.xml", "configZfp_rate8Simple.xml",
-                      "configZfp_rate9.xml", "configZfp_rate9Simple.xml",
-                      "configZfp_rate10.xml", "configZfp_rate10Simple.xml",
-                      "configZfp_rate8.yaml", "configZfp_rate9.yaml",
-                      "configZfp_rate10.yaml"));
+INSTANTIATE_TEST_SUITE_P(ZfpConfigFile, BPWriteReadZfpConfig,
+                         ::testing::Values("configZfp_rate8.xml", "configZfp_rate8Simple.xml",
+                                           "configZfp_rate9.xml", "configZfp_rate9Simple.xml",
+                                           "configZfp_rate10.xml", "configZfp_rate10Simple.xml",
+                                           "configZfp_rate8.yaml", "configZfp_rate9.yaml",
+                                           "configZfp_rate10.yaml"));
 
 int main(int argc, char **argv)
 {

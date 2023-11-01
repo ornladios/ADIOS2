@@ -27,8 +27,7 @@ void MhsWriter::PutDeferredCommon<std::string>(Variable<std::string> &variable,
     auto var = m_SubIOs[0]->InquireVariable<std::string>(variable.m_Name);
     if (!var)
     {
-        var = &m_SubIOs[0]->DefineVariable<std::string>(variable.m_Name,
-                                                        {LocalValueDim});
+        var = &m_SubIOs[0]->DefineVariable<std::string>(variable.m_Name, {LocalValueDim});
     }
     m_SubEngines[0]->Put(variable, data, Mode::Sync);
 }
@@ -56,8 +55,7 @@ void MhsWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
     auto var0 = m_SubIOs[0]->InquireVariable<T>(variable.m_Name);
     if (!var0)
     {
-        var0 =
-            &m_SubIOs[0]->DefineVariable<T>(variable.m_Name, variable.m_Shape);
+        var0 = &m_SubIOs[0]->DefineVariable<T>(variable.m_Name, variable.m_Shape);
         itVar = m_TransportMap.find(variable.m_Name);
         if (itVar != m_TransportMap.end())
         {
@@ -75,8 +73,7 @@ void MhsWriter::PutDeferredCommon(Variable<T> &variable, const T *data)
             auto var = m_SubIOs[i]->InquireVariable<T>(variable.m_Name);
             if (!var)
             {
-                var = &m_SubIOs[i]->DefineVariable<T>(variable.m_Name,
-                                                      variable.m_Shape);
+                var = &m_SubIOs[i]->DefineVariable<T>(variable.m_Name, variable.m_Shape);
                 var->AddOperation(itVar->second);
             }
             var->SetSelection({variable.m_Start, variable.m_Count});

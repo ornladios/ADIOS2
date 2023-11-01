@@ -34,4 +34,4 @@ with adios2.open('out.bp', 'r', comm) as f:
     for f_step in f:
         shape_z = int(f_step.available_variables()['z']['Shape'])
         print(shape_z)
-        assert(shape_z == int(shape[f_step.current_step()][0]))
+        assert (shape_z == int(shape[f_step.current_step()][0]))

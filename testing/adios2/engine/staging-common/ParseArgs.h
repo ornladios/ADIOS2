@@ -77,8 +77,7 @@ static adios2::Params ParseEngineParams(std::string Input)
         std::getline(ss2, ParamName, '=');
         if (!std::getline(ss2, ParamValue, '='))
         {
-            throw std::invalid_argument("Engine parameter \"" + Param +
-                                        "\" missing value");
+            throw std::invalid_argument("Engine parameter \"" + Param + "\" missing value");
         }
         Ret[Trim(ParamName)] = Trim(ParamValue);
     }
@@ -102,8 +101,7 @@ void ParseArgs(int argc, char **argv)
         {
             std::istringstream ss(argv[2]);
             if (!(ss >> Nx))
-                std::cerr << "Invalid number for nx (base element count) "
-                          << argv[1] << '\n';
+                std::cerr << "Invalid number for nx (base element count) " << argv[1] << '\n';
             argv++;
             argc--;
         }
@@ -192,8 +190,7 @@ void ParseArgs(int argc, char **argv)
             }
             else
             {
-                std::cerr << "Invalid mode for --write_mode " << argv[2]
-                          << std::endl;
+                std::cerr << "Invalid mode for --write_mode " << argv[2] << std::endl;
             }
             argv++;
             argc--;
@@ -210,8 +207,7 @@ void ParseArgs(int argc, char **argv)
             }
             else
             {
-                std::cerr << "Invalid mode for --write_mode " << argv[2]
-                          << std::endl;
+                std::cerr << "Invalid mode for --write_mode " << argv[2] << std::endl;
             }
             argv++;
             argc--;
@@ -278,15 +274,13 @@ void ParseArgs(int argc, char **argv)
         else if (std::string(argv[1]) == "--round_robin")
         {
             if (OnDemand)
-                std::cerr << "OnDemand already specified, round robin ignored"
-                          << std::endl;
+                std::cerr << "OnDemand already specified, round robin ignored" << std::endl;
             RoundRobin = true;
         }
         else if (std::string(argv[1]) == "--on_demand")
         {
             if (RoundRobin)
-                std::cerr << "RoundRobin already specified, on_demand ignored"
-                          << std::endl;
+                std::cerr << "RoundRobin already specified, on_demand ignored" << std::endl;
             OnDemand = true;
         }
         else if (std::string(argv[1]) == "--no_data")
@@ -297,8 +291,7 @@ void ParseArgs(int argc, char **argv)
         {
             std::istringstream ss(argv[2]);
             if (!(ss >> NoDataNode))
-                std::cerr << "Invalid number for --no_data_node argument"
-                          << argv[1] << '\n';
+                std::cerr << "Invalid number for --no_data_node argument" << argv[1] << '\n';
             argv++;
             argc--;
         }
@@ -306,8 +299,7 @@ void ParseArgs(int argc, char **argv)
         {
             std::istringstream ss(argv[2]);
             if (!(ss >> LocalCount))
-                std::cerr << "Invalid number for --local_count argument"
-                          << argv[1] << '\n';
+                std::cerr << "Invalid number for --local_count argument" << argv[1] << '\n';
             argv++;
             argc--;
         }
@@ -315,8 +307,7 @@ void ParseArgs(int argc, char **argv)
         {
             std::istringstream ss(argv[2]);
             if (!(ss >> DataSize))
-                std::cerr << "Invalid number for --data_size argument"
-                          << argv[1] << '\n';
+                std::cerr << "Invalid number for --data_size argument" << argv[1] << '\n';
             argv++;
             argc--;
         }
@@ -359,8 +350,7 @@ void ParseArgs(int argc, char **argv)
             else
             {
 
-                throw std::invalid_argument("Unknown argument \"" +
-                                            std::string(argv[1]) + "\"");
+                throw std::invalid_argument("Unknown argument \"" + std::string(argv[1]) + "\"");
             }
         }
         argv++;

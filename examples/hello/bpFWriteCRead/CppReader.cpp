@@ -35,8 +35,9 @@ int main(int argc, char *argv[])
         /** Engine derived class, spawned to start IO operations */
         adios2::Engine bpReader = bpIO.Open("FWriter.bp", adios2::Mode::Read);
 
-        const std::map<std::string, adios2::Params> variables =
-            bpIO.AvailableVariables();
+        bpReader.BeginStep();
+
+        const std::map<std::string, adios2::Params> variables = bpIO.AvailableVariables();
 
         for (const auto &variablePair : variables)
         {
@@ -44,8 +45,7 @@ int main(int argc, char *argv[])
 
             for (const auto &parameter : variablePair.second)
             {
-                std::cout << "\t" << parameter.first << ": " << parameter.second
-                          << "\n";
+                std::cout << "\t" << parameter.first << ": " << parameter.second << "\n";
             }
         }
 
@@ -54,6 +54,9 @@ int main(int argc, char *argv[])
         std::vector<float> data(bpData.SelectionSize());
 
         bpReader.Get(bpData, data.data());
+
+        bpReader.EndStep();
+
         bpReader.Close();
 
         std::cout << "Selection size: " << bpData.SelectionSize() << "\n";

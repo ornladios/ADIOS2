@@ -24,14 +24,13 @@ public:
 
 TEST_F(XMLConfigSerialTest, TwoIOs)
 {
-    const std::string configFile(
-        configDir + std::string(&adios2::PathSeparator, 1) + "config1.xml");
+    const std::string configFile(configDir + std::string(&adios2::PathSeparator, 1) +
+                                 "config1.xml");
 
     adios2::ADIOS adios(configFile);
 
     // must be declared at least once
-    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 1"),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 1"), std::invalid_argument);
 
     EXPECT_NO_THROW({
         adios2::IO io = adios.DeclareIO("Test IO 1");
@@ -43,14 +42,12 @@ TEST_F(XMLConfigSerialTest, TwoIOs)
         EXPECT_EQ(params.at("MaxBufferSize"), "20Mb");
         EXPECT_EQ(params.at("InitialBufferSize"), "1Mb");
         EXPECT_EQ(params.at("BufferGrowthFactor"), "2");
-        adios2::Engine engine =
-            io.Open("Test BP Writer 1", adios2::Mode::Write);
+        adios2::Engine engine = io.Open("Test BP Writer 1", adios2::Mode::Write);
         engine.Close();
     });
     EXPECT_NO_THROW(adios2::IO io = adios.AtIO("Test IO 1"));
 
-    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 2"),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 2"), std::invalid_argument);
     EXPECT_NO_THROW({
         adios2::IO io = adios.DeclareIO("Test IO 2");
         const adios2::Params params = io.Parameters();
@@ -65,16 +62,15 @@ TEST_F(XMLConfigSerialTest, TwoIOs)
 
 TEST_F(XMLConfigSerialTest, TwoEnginesException)
 {
-    const std::string configFile(
-        configDir + std::string(&adios2::PathSeparator, 1) + "config2.xml");
+    const std::string configFile(configDir + std::string(&adios2::PathSeparator, 1) +
+                                 "config2.xml");
 
     EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
 }
 
 TEST_F(XMLConfigSerialTest, OpTypeException)
 {
-    const std::string configFile(configDir +
-                                 std::string(&adios2::PathSeparator, 1) +
+    const std::string configFile(configDir + std::string(&adios2::PathSeparator, 1) +
                                  "configOpTypeException.xml");
 
     EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
@@ -82,8 +78,7 @@ TEST_F(XMLConfigSerialTest, OpTypeException)
 
 TEST_F(XMLConfigSerialTest, OpNullException)
 {
-    const std::string configFile(configDir +
-                                 std::string(&adios2::PathSeparator, 1) +
+    const std::string configFile(configDir + std::string(&adios2::PathSeparator, 1) +
                                  "configOpNullException.xml");
 
     EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
@@ -91,8 +86,7 @@ TEST_F(XMLConfigSerialTest, OpNullException)
 
 TEST_F(XMLConfigSerialTest, OpNoneException)
 {
-    const std::string configFile(configDir +
-                                 std::string(&adios2::PathSeparator, 1) +
+    const std::string configFile(configDir + std::string(&adios2::PathSeparator, 1) +
                                  "configOpNoneException.xml");
 
     EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);

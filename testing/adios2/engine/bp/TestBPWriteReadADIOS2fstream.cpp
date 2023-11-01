@@ -75,36 +75,27 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead1D8)
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
-            auto var_cr32 = io.DefineVariable<std::complex<float>>(
-                "cr32", shape, start, count);
+            auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
             EXPECT_TRUE(var_cr32);
-            auto var_cr64 = io.DefineVariable<std::complex<double>>(
-                "cr64", shape, start, count);
+            auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
             EXPECT_TRUE(var_cr64);
         }
 
@@ -113,8 +104,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead1D8)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
@@ -183,8 +174,7 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead1D8)
         }
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -321,8 +311,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead1D8)
             var_cr64.SetStepSelection({t, 1});
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             bpReader.Get("iString", IString);
 
@@ -424,36 +414,27 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D2x4)
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
-            auto var_cr32 = io.DefineVariable<std::complex<float>>(
-                "cr32", shape, start, count);
+            auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
             EXPECT_TRUE(var_cr32);
-            auto var_cr64 = io.DefineVariable<std::complex<double>>(
-                "cr64", shape, start, count);
+            auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
             EXPECT_TRUE(var_cr64);
         }
 
@@ -462,8 +443,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D2x4)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
@@ -482,8 +463,7 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D2x4)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::Box<adios2::Dims> sel(
-                {0, static_cast<size_t>(mpiRank * Nx)}, {Ny, Nx});
+            adios2::Box<adios2::Dims> sel({0, static_cast<size_t>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -530,8 +510,7 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D2x4)
         }
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -695,8 +674,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D2x4)
             bpReader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString, currentTestData.S1);
 
@@ -771,40 +750,30 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2)
                                static_cast<unsigned int>(mpiSize * Nx)};
             adios2::Dims start{static_cast<unsigned int>(0),
                                static_cast<unsigned int>(mpiRank * Nx)};
-            adios2::Dims count{static_cast<unsigned int>(Ny),
-                               static_cast<unsigned int>(Nx)};
+            adios2::Dims count{static_cast<unsigned int>(Ny), static_cast<unsigned int>(Nx)};
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
-            auto var_cr32 = io.DefineVariable<std::complex<float>>(
-                "cr32", shape, start, count);
+            auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
             EXPECT_TRUE(var_cr32);
-            auto var_cr64 = io.DefineVariable<std::complex<double>>(
-                "cr64", shape, start, count);
+            auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
             EXPECT_TRUE(var_cr64);
         }
 
@@ -813,8 +782,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_i8 = io.InquireVariable<int8_t>("i8");
@@ -832,8 +801,7 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::Box<adios2::Dims> sel(
-                {0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
+            adios2::Box<adios2::Dims> sel({0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -878,8 +846,7 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2)
         }
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
@@ -1039,8 +1006,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2)
             bpReader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
@@ -1070,8 +1037,7 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname(
-        "ADIOS2BPWriteRead2D4x2Test_ReadMultiStepsfstream.bp");
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_ReadMultiStepsfstream.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -1112,36 +1078,27 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
             adios2::Dims count{Ny, Nx};
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
-            auto var_cr32 = io.DefineVariable<std::complex<float>>(
-                "cr32", shape, start, count);
+            auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
             EXPECT_TRUE(var_cr32);
-            auto var_cr64 = io.DefineVariable<std::complex<double>>(
-                "cr64", shape, start, count);
+            auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
             EXPECT_TRUE(var_cr64);
         }
 
@@ -1150,8 +1107,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_i8 = io.InquireVariable<int8_t>("i8");
@@ -1169,8 +1126,7 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::Box<adios2::Dims> sel(
-                {0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
+            adios2::Box<adios2::Dims> sel({0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -1215,8 +1171,7 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         }
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
@@ -1376,8 +1331,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
         for (size_t t = tInitial; t < NSteps; ++t)
         {
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
@@ -1450,30 +1405,23 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
             adios2::Dims count{Ny, Nx};
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
         }
 
@@ -1482,8 +1430,8 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_i8 = io.InquireVariable<int8_t>("i8");
@@ -1499,8 +1447,7 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::Box<adios2::Dims> sel(
-                {0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
+            adios2::Box<adios2::Dims> sel({0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -1541,8 +1488,7 @@ TEST_F(BPWriteReadTestADIOS2fstream, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
         }
         io.AddTransport("file", {{"Library", "fstream"}});
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         auto var_i16 = io.InquireVariable<int16_t>("i16");
@@ -1637,14 +1583,12 @@ TEST_F(BPWriteReadTestADIOS2fstream, OpenEngineTwice)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        EXPECT_THROW(io.Open(fname, adios2::Mode::Write),
-                     std::invalid_argument);
+        EXPECT_THROW(io.Open(fname, adios2::Mode::Write), std::invalid_argument);
 
         bpWriter.Close();
 
         EXPECT_NO_THROW(io.Open(fname, adios2::Mode::Write));
-        EXPECT_THROW(io.Open(fname, adios2::Mode::ReadRandomAccess),
-                     std::invalid_argument);
+        EXPECT_THROW(io.Open(fname, adios2::Mode::ReadRandomAccess), std::invalid_argument);
     }
 }
 

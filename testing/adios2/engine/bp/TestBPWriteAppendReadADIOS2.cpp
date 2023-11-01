@@ -55,8 +55,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
     const std::string cr32_Single = std::string("cr32_Single_") + zero;
     const std::string cr32_Array = std::string("cr32_Array_") + zero;
     const std::string cr64_Single = std::string("cr64_Single_") + zero;
-    SmallTestData attributeTestData =
-        generateNewSmallTestData(m_TestData, 0, 0, 0);
+    SmallTestData attributeTestData = generateNewSmallTestData(m_TestData, 0, 0, 0);
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -93,22 +92,15 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 
             auto var_iString = io.DefineVariable<std::string>("iString");
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
 
             (void)var_iString;
             (void)var_i8;
@@ -127,46 +119,32 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 
             // Declare Single Value Attributes
             io.DefineAttribute<std::string>(s1_Single, attributeTestData.S1);
-            io.DefineAttribute<std::string>(s1_Array,
-                                            attributeTestData.S1array.data(),
+            io.DefineAttribute<std::string>(s1_Array, attributeTestData.S1array.data(),
                                             attributeTestData.S1array.size());
 
             io.DefineAttribute<int8_t>(i8_Single, attributeTestData.I8.front());
-            io.DefineAttribute<int16_t>(i16_Single,
-                                        attributeTestData.I16.front());
-            io.DefineAttribute<int32_t>(i32_Single,
-                                        attributeTestData.I32.front());
+            io.DefineAttribute<int16_t>(i16_Single, attributeTestData.I16.front());
+            io.DefineAttribute<int32_t>(i32_Single, attributeTestData.I32.front());
             io.DefineAttribute<int32_t>(i32_Array, attributeTestData.I32.data(),
                                         attributeTestData.I32.size());
-            io.DefineAttribute<int64_t>(i64_Single,
-                                        attributeTestData.I64.front());
+            io.DefineAttribute<int64_t>(i64_Single, attributeTestData.I64.front());
 
-            io.DefineAttribute<uint8_t>(u8_Single,
-                                        attributeTestData.U8.front());
-            io.DefineAttribute<uint16_t>(u16_Single,
-                                         attributeTestData.U16.front());
-            io.DefineAttribute<uint32_t>(u32_Single,
-                                         attributeTestData.U32.front());
-            io.DefineAttribute<uint32_t>(u32_Array,
-                                         attributeTestData.U32.data(),
+            io.DefineAttribute<uint8_t>(u8_Single, attributeTestData.U8.front());
+            io.DefineAttribute<uint16_t>(u16_Single, attributeTestData.U16.front());
+            io.DefineAttribute<uint32_t>(u32_Single, attributeTestData.U32.front());
+            io.DefineAttribute<uint32_t>(u32_Array, attributeTestData.U32.data(),
                                          attributeTestData.U32.size());
-            io.DefineAttribute<uint64_t>(u64_Single,
-                                         attributeTestData.U64.front());
+            io.DefineAttribute<uint64_t>(u64_Single, attributeTestData.U64.front());
 
-            io.DefineAttribute<float>(r32_Single,
-                                      attributeTestData.R32.front());
+            io.DefineAttribute<float>(r32_Single, attributeTestData.R32.front());
             io.DefineAttribute<float>(r32_Array, attributeTestData.R32.data(),
                                       attributeTestData.R32.size());
-            io.DefineAttribute<double>(r64_Single,
-                                       attributeTestData.R64.front());
+            io.DefineAttribute<double>(r64_Single, attributeTestData.R64.front());
 
-            io.DefineAttribute<std::complex<float>>(
-                cr32_Single, attributeTestData.CR32.front());
-            io.DefineAttribute<std::complex<float>>(
-                cr32_Array, attributeTestData.CR32.data(),
-                attributeTestData.CR32.size());
-            io.DefineAttribute<std::complex<double>>(
-                cr64_Single, attributeTestData.CR64.front());
+            io.DefineAttribute<std::complex<float>>(cr32_Single, attributeTestData.CR32.front());
+            io.DefineAttribute<std::complex<float>>(cr32_Array, attributeTestData.CR32.data(),
+                                                    attributeTestData.CR32.size());
+            io.DefineAttribute<std::complex<double>>(cr64_Single, attributeTestData.CR64.front());
         }
 
         io.SetEngine(engineName);
@@ -177,8 +155,8 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
@@ -195,8 +173,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::Box<adios2::Dims> sel(
-                {0, static_cast<size_t>(mpiRank * Nx)}, {Ny, Nx});
+            adios2::Box<adios2::Dims> sel({0, static_cast<size_t>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -244,22 +221,15 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 
             auto var_iString = io.DefineVariable<std::string>("iString");
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
 
             (void)var_iString;
             (void)var_i8;
@@ -278,46 +248,32 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 
             // Declare Single Value Attributes
             io.DefineAttribute<std::string>(s1_Single, attributeTestData.S1);
-            io.DefineAttribute<std::string>(s1_Array,
-                                            attributeTestData.S1array.data(),
+            io.DefineAttribute<std::string>(s1_Array, attributeTestData.S1array.data(),
                                             attributeTestData.S1array.size());
 
             io.DefineAttribute<int8_t>(i8_Single, attributeTestData.I8.front());
-            io.DefineAttribute<int16_t>(i16_Single,
-                                        attributeTestData.I16.front());
-            io.DefineAttribute<int32_t>(i32_Single,
-                                        attributeTestData.I32.front());
+            io.DefineAttribute<int16_t>(i16_Single, attributeTestData.I16.front());
+            io.DefineAttribute<int32_t>(i32_Single, attributeTestData.I32.front());
             io.DefineAttribute<int32_t>(i32_Array, attributeTestData.I32.data(),
                                         attributeTestData.I32.size());
-            io.DefineAttribute<int64_t>(i64_Single,
-                                        attributeTestData.I64.front());
+            io.DefineAttribute<int64_t>(i64_Single, attributeTestData.I64.front());
 
-            io.DefineAttribute<uint8_t>(u8_Single,
-                                        attributeTestData.U8.front());
-            io.DefineAttribute<uint16_t>(u16_Single,
-                                         attributeTestData.U16.front());
-            io.DefineAttribute<uint32_t>(u32_Single,
-                                         attributeTestData.U32.front());
-            io.DefineAttribute<uint32_t>(u32_Array,
-                                         attributeTestData.U32.data(),
+            io.DefineAttribute<uint8_t>(u8_Single, attributeTestData.U8.front());
+            io.DefineAttribute<uint16_t>(u16_Single, attributeTestData.U16.front());
+            io.DefineAttribute<uint32_t>(u32_Single, attributeTestData.U32.front());
+            io.DefineAttribute<uint32_t>(u32_Array, attributeTestData.U32.data(),
                                          attributeTestData.U32.size());
-            io.DefineAttribute<uint64_t>(u64_Single,
-                                         attributeTestData.U64.front());
+            io.DefineAttribute<uint64_t>(u64_Single, attributeTestData.U64.front());
 
-            io.DefineAttribute<float>(r32_Single,
-                                      attributeTestData.R32.front());
+            io.DefineAttribute<float>(r32_Single, attributeTestData.R32.front());
             io.DefineAttribute<float>(r32_Array, attributeTestData.R32.data(),
                                       attributeTestData.R32.size());
-            io.DefineAttribute<double>(r64_Single,
-                                       attributeTestData.R64.front());
+            io.DefineAttribute<double>(r64_Single, attributeTestData.R64.front());
 
-            io.DefineAttribute<std::complex<float>>(
-                cr32_Single, attributeTestData.CR32.front());
-            io.DefineAttribute<std::complex<float>>(
-                cr32_Array, attributeTestData.CR32.data(),
-                attributeTestData.CR32.size());
-            io.DefineAttribute<std::complex<double>>(
-                cr64_Single, attributeTestData.CR64.front());
+            io.DefineAttribute<std::complex<float>>(cr32_Single, attributeTestData.CR32.front());
+            io.DefineAttribute<std::complex<float>>(cr32_Array, attributeTestData.CR32.data(),
+                                                    attributeTestData.CR32.size());
+            io.DefineAttribute<std::complex<double>>(cr64_Single, attributeTestData.CR64.front());
         }
 
         io.SetEngine(engineName);
@@ -329,8 +285,8 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
         for (size_t step = NSteps; step < 2 * NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
@@ -347,8 +303,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::Box<adios2::Dims> sel(
-                {0, static_cast<size_t>(mpiRank * Nx)}, {Ny, Nx});
+            adios2::Box<adios2::Dims> sel({0, static_cast<size_t>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -387,8 +342,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
         adios2::IO io = adios.DeclareIO("ReadIO");
         io.SetEngine(engineName);
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto attr_s1 = io.InquireAttribute<std::string>(s1_Single);
         auto attr_s1a = io.InquireAttribute<std::string>(s1_Array);
@@ -444,8 +398,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 
         EXPECT_TRUE(attr_i32a);
         ASSERT_EQ(attr_i32a.Name(), i32_Array);
-        ASSERT_EQ(attr_i32a.Data().size() == attributeTestData.I32.size(),
-                  true);
+        ASSERT_EQ(attr_i32a.Data().size() == attributeTestData.I32.size(), true);
         ASSERT_EQ(attr_i32a.Type(), adios2::GetType<int32_t>());
         ASSERT_EQ(attr_i32a.Data()[0], attributeTestData.I32[0]);
 
@@ -475,8 +428,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 
         EXPECT_TRUE(attr_u32a);
         ASSERT_EQ(attr_u32a.Name(), u32_Array);
-        ASSERT_EQ(attr_u32a.Data().size() == attributeTestData.U32.size(),
-                  true);
+        ASSERT_EQ(attr_u32a.Data().size() == attributeTestData.U32.size(), true);
         ASSERT_EQ(attr_u32a.Type(), adios2::GetType<uint32_t>());
         ASSERT_EQ(attr_u32a.Data()[0], attributeTestData.U32[0]);
 
@@ -494,8 +446,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 
         EXPECT_TRUE(attr_r32a);
         ASSERT_EQ(attr_r32a.Name(), r32_Array);
-        ASSERT_EQ(attr_r32a.Data().size() == attributeTestData.R32.size(),
-                  true);
+        ASSERT_EQ(attr_r32a.Data().size() == attributeTestData.R32.size(), true);
         ASSERT_EQ(attr_r32a.Type(), adios2::GetType<float>());
         ASSERT_EQ(attr_r32a.Data()[0], attributeTestData.R32[0]);
 
@@ -513,8 +464,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 
         EXPECT_TRUE(attr_cr32a);
         ASSERT_EQ(attr_cr32a.Name(), cr32_Array);
-        ASSERT_EQ(attr_cr32a.Data().size() == attributeTestData.CR32.size(),
-                  true);
+        ASSERT_EQ(attr_cr32a.Data().size() == attributeTestData.CR32.size(), true);
         ASSERT_EQ(attr_cr32a.Type(), adios2::GetType<std::complex<float>>());
         ASSERT_EQ(attr_cr32a.Data()[0], attributeTestData.CR32[0]);
 
@@ -663,8 +613,8 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
             bpReader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString, currentTestData.S1);
 
@@ -723,8 +673,8 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadAggregate)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
             bpWriter.BeginStep();
             bpWriter.Put(var_i32, currentTestData.I32.data());
             bpWriter.EndStep();
@@ -736,8 +686,8 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadAggregate)
         for (size_t step = NSteps; step < 2 * NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
             bpWriter.BeginStep();
             bpWriter.Put(var_i32, currentTestData.I32.data());
             bpWriter.EndStep();
@@ -749,8 +699,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadAggregate)
         adios2::IO io = adios.DeclareIO("ReadIO");
         io.SetEngine(engineName);
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
         EXPECT_TRUE(var_i32);
@@ -774,8 +723,8 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadAggregate)
             bpReader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
@@ -822,8 +771,8 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingAggregation)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
             bpWriter.BeginStep();
             bpWriter.Put(var_i32, currentTestData.I32.data());
             bpWriter.EndStep();
@@ -836,8 +785,8 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingAggregation)
         for (size_t step = NSteps; step < 2 * NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
             bpWriter.BeginStep();
             bpWriter.Put(var_i32, currentTestData.I32.data());
             bpWriter.EndStep();
@@ -850,8 +799,8 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingAggregation)
         for (size_t step = 2 * NSteps; step < 3 * NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
             bpWriter.BeginStep();
             bpWriter.Put(var_i32, currentTestData.I32.data());
             bpWriter.EndStep();
@@ -864,8 +813,7 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingAggregation)
         adios2::IO io = adios.DeclareIO("ReadIO");
         io.SetEngine(engineName);
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
         EXPECT_TRUE(var_i32);
@@ -890,8 +838,8 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingAggregation)
             bpReader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {

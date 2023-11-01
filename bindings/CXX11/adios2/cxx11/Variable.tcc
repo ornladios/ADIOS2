@@ -24,16 +24,15 @@ namespace
 
 template <class T>
 std::vector<typename Variable<T>::Info>
-ToBlocksInfo(const std::vector<typename core::Variable<
-                 typename TypeInfo<T>::IOType>::BPInfo> &coreBlocksInfo)
+ToBlocksInfo(const std::vector<typename core::Variable<typename TypeInfo<T>::IOType>::BPInfo>
+                 &coreBlocksInfo)
 {
     using IOType = typename TypeInfo<T>::IOType;
 
     std::vector<typename Variable<T>::Info> blocksInfo;
     blocksInfo.reserve(coreBlocksInfo.size());
 
-    for (const typename core::Variable<IOType>::BPInfo &coreBlockInfo :
-         coreBlocksInfo)
+    for (const typename core::Variable<IOType>::BPInfo &coreBlockInfo : coreBlocksInfo)
     {
         typename Variable<T>::Info blockInfo;
         blockInfo.Start = coreBlockInfo.Start;
@@ -70,8 +69,7 @@ Variable<T>::DoAllStepsBlocksInfoMap() const
     minBlocksInfo = m_Variable->m_Engine->MinBlocksInfo(*m_Variable, 0);
     if (!minBlocksInfo)
         throw std::logic_error("not implemented");
-    std::map<size_t, std::vector<typename Variable<T>::Info>>
-        allStepsBlocksInfo;
+    std::map<size_t, std::vector<typename Variable<T>::Info>> allStepsBlocksInfo;
 
     size_t gotCount = 1;
     size_t curStep = 1;
@@ -79,12 +77,10 @@ Variable<T>::DoAllStepsBlocksInfoMap() const
     delete (minBlocksInfo);
     while (gotCount < m_Variable->m_AvailableStepsCount)
     {
-        minBlocksInfo =
-            m_Variable->m_Engine->MinBlocksInfo(*m_Variable, curStep);
+        minBlocksInfo = m_Variable->m_Engine->MinBlocksInfo(*m_Variable, curStep);
         if (minBlocksInfo)
         {
-            allStepsBlocksInfo.insert(
-                {curStep, ToBlocksInfoMin(minBlocksInfo)});
+            allStepsBlocksInfo.insert({curStep, ToBlocksInfoMin(minBlocksInfo)});
             delete (minBlocksInfo);
             gotCount++;
         }
@@ -94,21 +90,18 @@ Variable<T>::DoAllStepsBlocksInfoMap() const
 }
 
 template <class T>
-std::vector<std::vector<typename Variable<T>::Info>>
-Variable<T>::DoAllStepsBlocksInfo()
+std::vector<std::vector<typename Variable<T>::Info>> Variable<T>::DoAllStepsBlocksInfo()
 {
-    helper::CheckForNullptr(m_Variable,
-                            "in call to Variable<T>::AllStepsBlocksInfo");
+    helper::CheckForNullptr(m_Variable, "in call to Variable<T>::AllStepsBlocksInfo");
 
     MinVarInfo *minBlocksInfo = nullptr;
     if (m_Variable->m_Engine)
     {
-        minBlocksInfo = m_Variable->m_Engine->MinBlocksInfo(
-            *m_Variable, m_Variable->m_AvailableStepsStart);
+        minBlocksInfo =
+            m_Variable->m_Engine->MinBlocksInfo(*m_Variable, m_Variable->m_AvailableStepsStart);
         if (minBlocksInfo)
         {
-            std::vector<std::vector<typename Variable<T>::Info>>
-                allStepsBlocksInfo;
+            std::vector<std::vector<typename Variable<T>::Info>> allStepsBlocksInfo;
             // PUBLIC OUTPUT
             size_t gotCount = 1;
             size_t curStep = m_Variable->m_AvailableStepsStart + 1;
@@ -116,12 +109,10 @@ Variable<T>::DoAllStepsBlocksInfo()
             delete (minBlocksInfo);
             while (gotCount < m_Variable->m_AvailableStepsCount)
             {
-                minBlocksInfo =
-                    m_Variable->m_Engine->MinBlocksInfo(*m_Variable, curStep);
+                minBlocksInfo = m_Variable->m_Engine->MinBlocksInfo(*m_Variable, curStep);
                 if (minBlocksInfo)
                 {
-                    allStepsBlocksInfo.push_back(
-                        ToBlocksInfoMin(minBlocksInfo));
+                    allStepsBlocksInfo.push_back(ToBlocksInfoMin(minBlocksInfo));
                     delete (minBlocksInfo);
                     gotCount++;
                 }
@@ -132,8 +123,8 @@ Variable<T>::DoAllStepsBlocksInfo()
     }
 
     // PRIVATE INPUT
-    const std::vector<std::vector<typename core::Variable<IOType>::BPInfo>>
-        coreAllStepsBlocksInfo = m_Variable->AllStepsBlocksInfo();
+    const std::vector<std::vector<typename core::Variable<IOType>::BPInfo>> coreAllStepsBlocksInfo =
+        m_Variable->AllStepsBlocksInfo();
 
     // PUBLIC OUTPUT
     std::vector<std::vector<typename Variable<T>::Info>> allStepsBlocksInfo(
@@ -221,8 +212,7 @@ Variable<T>::ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const
 template <typename T>
 std::string ToString(const Variable<T> &variable)
 {
-    return std::string("Variable<") + variable.Type() + ">(Name: \"" +
-           variable.Name() + "\")";
+    return std::string("Variable<") + variable.Type() + ">(Name: \"" + variable.Name() + "\")";
 }
 
 namespace detail

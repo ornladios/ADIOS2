@@ -28,6 +28,9 @@ void FC_GLOBAL(open_reader, OPEN_READER)(adios2::IO *io)
 
 void FC_GLOBAL(analyze_data, ANALYZE_DATA)()
 {
+    // begin step on the reader
+    reader.BeginStep();
+
     // grab the desired variable
     auto u = adiosIO->InquireVariable<float>("data2D");
     if (!u)
@@ -36,9 +39,6 @@ void FC_GLOBAL(analyze_data, ANALYZE_DATA)()
         return;
     }
     auto shape = u.Shape();
-
-    // begin step on the reader
-    reader.BeginStep();
 
     // get the data pointer and do some stuff with it
     float *data = nullptr;

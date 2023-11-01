@@ -32,13 +32,13 @@ NullTransport::NullTransport(helper::Comm const &comm)
 
 NullTransport::~NullTransport() = default;
 
-void NullTransport::Open(const std::string &name, const Mode openMode,
-                         const bool async, const bool directio)
+void NullTransport::Open(const std::string &name, const Mode openMode, const bool async,
+                         const bool directio)
 {
     if (Impl->IsOpen)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport",
-                                          "Open", "transport is already open");
+        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport", "Open",
+                                          "transport is already open");
     }
 
     ProfilerStart("open");
@@ -54,8 +54,8 @@ void NullTransport::Write(const char *buffer, size_t size, size_t start)
 {
     if (!Impl->IsOpen)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport",
-                                          "Write", "transport is not open yet");
+        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport", "Write",
+                                          "transport is not open yet");
     }
 
     ProfilerStart("write");
@@ -71,15 +71,15 @@ void NullTransport::Read(char *buffer, size_t size, size_t start)
 {
     if (!Impl->IsOpen)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport",
-                                          "Read", "transport is not open yet");
+        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport", "Read",
+                                          "transport is not open yet");
     }
 
     ProfilerStart("read");
     if (start + size > Impl->Capacity)
     {
-        helper::Throw<std::out_of_range>("Toolkit", "transport::NullTransport",
-                                         "Read", "size+start exceeds capacity");
+        helper::Throw<std::out_of_range>("Toolkit", "transport::NullTransport", "Read",
+                                         "size+start exceeds capacity");
     }
     std::memset(buffer, 0, size);
     Impl->CurPos = start + size;
@@ -92,8 +92,8 @@ void NullTransport::Flush()
 {
     if (!Impl->IsOpen)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport",
-                                          "Flush", "transport is not open yet");
+        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport", "Flush",
+                                          "transport is not open yet");
     }
 }
 
@@ -101,8 +101,8 @@ void NullTransport::Close()
 {
     if (!Impl->IsOpen)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport",
-                                          "Close", "transport is not open yet");
+        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport", "Close",
+                                          "transport is not open yet");
     }
 
     Impl->CurPos = 0;
@@ -116,8 +116,7 @@ void NullTransport::SeekToEnd()
 {
     if (!Impl->IsOpen)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport",
-                                          "SeekToEnd",
+        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport", "SeekToEnd",
                                           "transport is not open yet");
     }
     Impl->CurPos = Impl->Capacity - 1;
@@ -127,8 +126,7 @@ void NullTransport::SeekToBegin()
 {
     if (!Impl->IsOpen)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport",
-                                          "SeekToBegin",
+        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport", "SeekToBegin",
                                           "transport is not open yet");
     }
     Impl->CurPos = 0;
@@ -138,8 +136,8 @@ void NullTransport::Seek(const size_t start)
 {
     if (!Impl->IsOpen)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport",
-                                          "Seek", "transport is not open yet");
+        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport", "Seek",
+                                          "transport is not open yet");
     }
     Impl->CurPos = start;
 }
@@ -148,8 +146,7 @@ void NullTransport::Truncate(const size_t length)
 {
     if (!Impl->IsOpen)
     {
-        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport",
-                                          "Truncate",
+        helper::Throw<std::runtime_error>("Toolkit", "transport::NullTransport", "Truncate",
                                           "transport is not open yet");
     }
     Impl->Capacity = length;

@@ -20,8 +20,7 @@ namespace adios2
 namespace core
 {
 /** used for Variables and Attributes, name, type, type-index */
-using DataMap =
-    std::unordered_map<std::string, std::pair<std::string, unsigned int>>;
+using DataMap = std::unordered_map<std::string, std::pair<std::string, unsigned int>>;
 class Group
 {
 private:
@@ -124,8 +123,7 @@ public:
      * found
      */
     template <class T>
-    Attribute<T> *InquireAttribute(const std::string &name,
-                                   const std::string &variableName = "",
+    Attribute<T> *InquireAttribute(const std::string &name, const std::string &variableName = "",
                                    const std::string separator = "/") noexcept;
     /**
      * @brief Returns the type of an existing variable as an string. A wrapper
@@ -141,10 +139,8 @@ public:
      * @param name input attribute name
      * @return type if found returns type as string, otherwise an empty string
      */
-    DataType InquireAttributeType(const std::string &name,
-                                  const std::string &variableName = "",
-                                  const std::string separator = "/") const
-        noexcept;
+    DataType InquireAttributeType(const std::string &name, const std::string &variableName = "",
+                                  const std::string separator = "/") const noexcept;
 };
 
 } // end namespace core

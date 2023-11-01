@@ -69,12 +69,35 @@ endfunction()
 
 # Blosc2
 if(ADIOS2_USE_Blosc2 STREQUAL AUTO)
-  find_package(Blosc2 2.4)
+  # Prefect CONFIG mode
+  find_package(Blosc2 2.4 CONFIG QUIET)
+  if(NOT Blosc2_FOUND)
+    find_package(Blosc2 2.4 MODULE QUIET)
+  endif()
 elseif(ADIOS2_USE_Blosc2)
-  find_package(Blosc2 2.4 REQUIRED)
+  # Prefect CONFIG mode
+  find_package(Blosc2 2.4 CONFIG)
+  if(NOT Blosc2_FOUND)
+    find_package(Blosc2 2.4 MODULE REQUIRED)
+  endif()
 endif()
-if(BLOSC2_FOUND)
+if(Blosc2_FOUND)
   set(ADIOS2_HAVE_Blosc2 TRUE)
+  if(TARGET Blosc2::blosc2_shared)
+    set(Blosc2_shlib_available ON)
+  endif()
+
+  set(adios2_blosc2_tgt Blosc2::Blosc2)
+  if (Blosc2_VERSION VERSION_GREATER_EQUAL 2.10.1)
+    if (Blosc2_shlib_available)
+      set(adios2_blosc2_tgt Blosc2::blosc2_$<IF:$<BOOL:${ADIOS2_Blosc2_PREFER_SHARED}>,shared,static>)
+    else()
+      set(adios2_blosc2_tgt Blosc2::blosc2_static)
+    endif()
+  endif()
+
+  add_library(adios2_blosc2 INTERFACE)
+  target_link_libraries(adios2_blosc2 INTERFACE ${adios2_blosc2_tgt})
 endif()
 
 # BZip2
@@ -170,8 +193,8 @@ endif()
 
 set(mpi_find_components C)
 
-if(ADIOS_USE_Kokkos AND ADIOS_USE_CUDA)
-  message(FATAL_ERROR "ADIOS2_USE_Kokkos is incompatible with ADIOS_USE_CUDA")
+if(ADIOS2_USE_Kokkos AND ADIOS2_USE_CUDA)
+  message(FATAL_ERROR "ADIOS2_USE_Kokkos is incompatible with ADIOS2_USE_CUDA")
 endif()
 
 # Kokkos
@@ -193,7 +216,7 @@ if(ADIOS2_USE_Kokkos)
         enable_language(HIP)
       endif()
       if(Kokkos_ENABLE_SYCL)
-	    set(ADIOS2_HAVE_Kokkos_SYCL TRUE)
+        set(ADIOS2_HAVE_Kokkos_SYCL TRUE)
       endif()
       set(ADIOS2_HAVE_GPU_Support TRUE)
     endif()
@@ -216,7 +239,7 @@ if(ADIOS2_USE_CUDA)
   endif()
 endif()
 
-if(ADIOS_HAVE_Kokkos AND ADIOS_HAVE_CUDA)
+if(ADIOS2_HAVE_Kokkos AND ADIOS2_HAVE_CUDA)
     message(FATAL_ERROR "The Kokkos and CUDA backends cannot be active concurrently")
 endif()
 
@@ -318,6 +341,18 @@ elseif(ADIOS2_USE_HDF5)
     message(FATAL_ERROR "MPI is disabled but parallel HDF5 is detected.")
   endif()
   set(ADIOS2_HAVE_HDF5 TRUE)
+
+  # HDF5 VOL requires 1.13+
+  if(ADIOS2_USE_HDF5_VOL AND ADIOS2_HAVE_HDF5)
+    if(HDF5_VERSION GREATER_EQUAL 1.14)
+      set(ADIOS2_HAVE_HDF5_VOL TRUE)
+    else()
+      set(ADIOS2_HAVE_HDF5_VOL FALSE)
+      if(ADIOS2_USE_HDF5_VOL STREQUAL ON)
+        message(FATAL_ERROR "ADIOS HDF5_VOL requires HDF5>=1.14+")
+      endif()
+    endif()
+  endif()
 endif()
 
 # IME
@@ -410,9 +445,11 @@ if(ADIOS2_USE_SST AND NOT WIN32)
     endif()
   endif()
   if(ADIOS2_HAVE_MPI)
-    set(CMAKE_REQUIRED_LIBRARIES MPI::MPI_C)
-    include(CheckCSourceRuns)
-    check_c_source_runs([=[
+    set(CMAKE_REQUIRED_LIBRARIES "MPI::MPI_C;Threads::Threads")
+    include(CheckCXXSourceRuns)
+    check_cxx_source_runs([=[
+        #include <chrono>
+        #include <future>
         #include <mpi.h>
         #include <stdlib.h>
 
@@ -422,9 +459,18 @@ if(ADIOS2_USE_SST AND NOT WIN32)
 
         int main()
         {
+          // Timeout after 5 second
+          auto task = std::async(std::launch::async, []() {
+                                 std::this_thread::sleep_for(std::chrono::seconds(5));
+                                 exit(EXIT_FAILURE);
+          });
+
+          char* port_name = new char[MPI_MAX_PORT_NAME];
           MPI_Init_thread(NULL, NULL, MPI_THREAD_MULTIPLE, NULL);
-          MPI_Open_port(MPI_INFO_NULL, malloc(sizeof(char) * MPI_MAX_PORT_NAME));
+          MPI_Open_port(MPI_INFO_NULL, port_name);
+          MPI_Close_port(port_name);
           MPI_Finalize();
+          exit(EXIT_SUCCESS);
         }]=]
     ADIOS2_HAVE_MPI_CLIENT_SERVER)
     unset(CMAKE_REQUIRED_LIBRARIES)
@@ -448,11 +494,6 @@ endif()
 find_package(DAOS)
 if(DAOS_FOUND)
   set(ADIOS2_HAVE_DAOS TRUE)
-endif()
-
-# BP5
-if(ADIOS2_USE_BP5 AND NOT WIN32)
-  set(ADIOS2_HAVE_BP5 TRUE)
 endif()
 
 #SysV IPC
@@ -505,9 +546,9 @@ endif()
 
 # AWS S3
 if(ADIOS2_USE_AWSSDK STREQUAL AUTO)
-    find_package(AWSSDK QUIET COMPONENTS s3)
+    find_package(AWSSDK 1.10.15 COMPONENTS s3)
 elseif(ADIOS2_USE_AWSSDK)
-    find_package(AWSSDK REQUIRED COMPONENTS s3)
+    find_package(AWSSDK 1.10.15 REQUIRED COMPONENTS s3)
 endif()
 if(AWSSDK_FOUND)
     set(ADIOS2_HAVE_AWSSDK TRUE)

@@ -61,14 +61,11 @@ void ZFPRate1D(const std::string rate)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
-        adios2::Operator ZFPOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+        adios2::Operator ZFPOp = adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -87,11 +84,9 @@ void ZFPRate1D(const std::string rate)
             }
             else
             {
-                var_r32.AddOperation(ZFPOp,
-                                     {{adios2::ops::zfp::key::rate, rate}});
-                var_r64.AddOperation(ZFPOp,
-                                     {{adios2::ops::zfp::key::rate,
-                                       std::to_string(2 * std::stod(rate))}});
+                var_r32.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate, rate}});
+                var_r64.AddOperation(
+                    ZFPOp, {{adios2::ops::zfp::key::rate, std::to_string(2 * std::stod(rate))}});
 
                 EXPECT_FALSE(var_r32.Operations().empty());
                 EXPECT_FALSE(var_r64.Operations().empty());
@@ -213,14 +208,11 @@ void ZFPRate2D(const std::string rate)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
-        adios2::Operator zfpOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+        adios2::Operator zfpOp = adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
         var_r32.AddOperation(zfpOp, {{"Accuracy", rate}});
         var_r64.AddOperation(zfpOp, {{"accuracy", rate}});
@@ -242,11 +234,9 @@ void ZFPRate2D(const std::string rate)
             }
             else
             {
-                var_r32.AddOperation(zfpOp,
-                                     {{adios2::ops::zfp::key::rate, rate}});
-                var_r64.AddOperation(zfpOp,
-                                     {{adios2::ops::zfp::key::rate,
-                                       std::to_string(2 * std::stod(rate))}});
+                var_r32.AddOperation(zfpOp, {{adios2::ops::zfp::key::rate, rate}});
+                var_r64.AddOperation(
+                    zfpOp, {{adios2::ops::zfp::key::rate, std::to_string(2 * std::stod(rate))}});
 
                 EXPECT_FALSE(var_r32.Operations().empty());
                 EXPECT_FALSE(var_r64.Operations().empty());
@@ -368,14 +358,11 @@ void ZFPRate3D(const std::string rate)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0, 0};
         const adios2::Dims count{Nx, Ny, Nz};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add operations
-        adios2::Operator zfpOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+        adios2::Operator zfpOp = adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -394,11 +381,9 @@ void ZFPRate3D(const std::string rate)
             }
             else
             {
-                var_r32.AddOperation(zfpOp,
-                                     {{adios2::ops::zfp::key::rate, rate}});
-                var_r64.AddOperation(zfpOp,
-                                     {{adios2::ops::zfp::key::rate,
-                                       std::to_string(2 * std::stod(rate))}});
+                var_r32.AddOperation(zfpOp, {{adios2::ops::zfp::key::rate, rate}});
+                var_r64.AddOperation(
+                    zfpOp, {{adios2::ops::zfp::key::rate, std::to_string(2 * std::stod(rate))}});
 
                 EXPECT_FALSE(var_r32.Operations().empty());
                 EXPECT_FALSE(var_r64.Operations().empty());
@@ -491,8 +476,7 @@ TEST_P(BPWRZFPODD, ADIOS2BPWRZFPODD1D) { ZFPRate1D(GetParam()); }
 TEST_P(BPWRZFPODD, ADIOS2BPWRZFPODD2D) { ZFPRate2D(GetParam()); }
 TEST_P(BPWRZFPODD, ADIOS2BPWRZFPODD3D) { ZFPRate3D(GetParam()); }
 
-INSTANTIATE_TEST_SUITE_P(ZFPRate, BPWRZFPODD,
-                         ::testing::Values("8", "9", "10"));
+INSTANTIATE_TEST_SUITE_P(ZFPRate, BPWRZFPODD, ::testing::Values("8", "9", "10"));
 
 int main(int argc, char **argv)
 {

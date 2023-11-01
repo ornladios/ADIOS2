@@ -42,8 +42,7 @@ void TimeAggregation1D8(const std::string flushstepscount)
 #else
     adios2::ADIOS adios;
 #endif
-    const std::string TestName =
-        "TimeAggregation1D8 flush every " + flushstepscount + " steps";
+    const std::string TestName = "TimeAggregation1D8 flush every " + flushstepscount + " steps";
     {
         adios2::IO io = adios.DeclareIO("TestIO");
 
@@ -61,30 +60,23 @@ void TimeAggregation1D8(const std::string flushstepscount)
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
 
             io.DefineAttribute<std::string>("TestName", TestName);
@@ -110,8 +102,8 @@ void TimeAggregation1D8(const std::string flushstepscount)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
@@ -303,8 +295,8 @@ void TimeAggregation1D8(const std::string flushstepscount)
             var_r64.SetStepSelection({t, 1});
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             bpReader.Get(var_iString, IString, adios2::Mode::Sync);
 
@@ -351,8 +343,7 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
-    const std::string fname =
-        "BPTimeAggregation2D2x4_" + flushstepscount + ".bp";
+    const std::string fname = "BPTimeAggregation2D2x4_" + flushstepscount + ".bp";
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -376,8 +367,7 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
 #else
     adios2::ADIOS adios;
 #endif
-    const std::string TestName =
-        "TimeAggregation2D4x2 flush every " + flushstepscount + " steps";
+    const std::string TestName = "TimeAggregation2D4x2 flush every " + flushstepscount + " steps";
 
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -397,30 +387,23 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
 
             io.DefineAttribute<std::string>("TestName", TestName);
@@ -446,8 +429,8 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
@@ -464,8 +447,7 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::Box<adios2::Dims> sel(
-                {0, static_cast<size_t>(mpiRank * Nx)}, {Ny, Nx});
+            adios2::Box<adios2::Dims> sel({0, static_cast<size_t>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -660,8 +642,8 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
             bpReader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString, currentTestData.S1);
 
@@ -698,15 +680,9 @@ public:
     virtual void TearDown() {}
 };
 
-TEST_P(BPTestTimeAggregation, BPTimeAggregation1D8)
-{
-    TimeAggregation1D8(GetParam());
-}
+TEST_P(BPTestTimeAggregation, BPTimeAggregation1D8) { TimeAggregation1D8(GetParam()); }
 
-TEST_P(BPTestTimeAggregation, BPTimeAggregation2D4x2)
-{
-    TimeAggregation2D4x2(GetParam());
-}
+TEST_P(BPTestTimeAggregation, BPTimeAggregation2D4x2) { TimeAggregation2D4x2(GetParam()); }
 
 INSTANTIATE_TEST_SUITE_P(FlushStepsCount, BPTestTimeAggregation,
                          ::testing::Values("1", "2", "3", "6", "8", "10"));

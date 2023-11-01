@@ -76,8 +76,7 @@ PluginManager &PluginManager::GetInstance()
     {
         if (m_Destroyed)
         {
-            throw std::runtime_error(
-                "Dead reference to PluginManager singleton");
+            throw std::runtime_error("Dead reference to PluginManager singleton");
         }
         else
         {
@@ -98,13 +97,10 @@ void PluginManager::SetParameters(const Params &params)
     helper::GetParameter(params, "verbose", m_Impl->m_Verbosity);
 }
 
-bool PluginManager::LoadPlugin(const std::string &pluginName,
-                               const std::string &pluginLibrary)
+bool PluginManager::LoadPlugin(const std::string &pluginName, const std::string &pluginLibrary)
 {
-    if (m_Impl->m_EngineRegistry.find(pluginName) !=
-            m_Impl->m_EngineRegistry.end() ||
-        m_Impl->m_OperatorRegistry.find(pluginName) !=
-            m_Impl->m_OperatorRegistry.end())
+    if (m_Impl->m_EngineRegistry.find(pluginName) != m_Impl->m_EngineRegistry.end() ||
+        m_Impl->m_OperatorRegistry.find(pluginName) != m_Impl->m_OperatorRegistry.end())
     {
         return true;
     }
@@ -122,8 +118,8 @@ bool PluginManager::LoadPlugin(const std::string &pluginName,
     char platform_separator = ':';
 #endif
 
-    auto pathsSplit = adios2sys::SystemTools::SplitString(
-        allPluginPaths, platform_separator, false);
+    auto pathsSplit =
+        adios2sys::SystemTools::SplitString(allPluginPaths, platform_separator, false);
 
     bool loaded = false;
     auto pathIt = pathsSplit.begin();
@@ -138,8 +134,8 @@ bool PluginManager::LoadPlugin(const std::string &pluginName,
             // this is not necessarily an error, because you could have
             // multiple paths in ADIOS2_PLUGIN_PATH variable
             helper::Log("Plugins", "PluginManager", "LoadPlugin",
-                        std::string("OpenPlugin failed: ") + e.what(), 5,
-                        m_Impl->m_Verbosity, helper::LogMode::INFO);
+                        std::string("OpenPlugin failed: ") + e.what(), 5, m_Impl->m_Verbosity,
+                        helper::LogMode::INFO);
             loaded = false;
         }
         ++pathIt;
@@ -160,14 +156,12 @@ bool PluginManager::LoadPlugin(const std::string &pluginName,
     return loaded;
 }
 
-bool PluginManager::OpenPlugin(const std::string &pluginName,
-                               const std::string &pluginLibrary,
+bool PluginManager::OpenPlugin(const std::string &pluginName, const std::string &pluginLibrary,
                                const std::string &pluginPath)
 {
     helper::Log("Plugins", "PluginManager", "OpenPlugin",
-                "Attempting to open plugin " + pluginLibrary + " at path " +
-                    pluginPath,
-                5, m_Impl->m_Verbosity, helper::LogMode::INFO);
+                "Attempting to open plugin " + pluginLibrary + " at path " + pluginPath, 5,
+                m_Impl->m_Verbosity, helper::LogMode::INFO);
     std::unique_ptr<helper::DynamicBinder> binder(
         new helper::DynamicBinder(pluginLibrary, pluginPath));
     if (auto createHandle = binder->GetSymbol("EngineCreate"))
@@ -178,19 +172,17 @@ bool PluginManager::OpenPlugin(const std::string &pluginName,
         plugin.m_HandleCreate = reinterpret_cast<EngineCreatePtr>(createHandle);
         if (!plugin.m_HandleCreate)
         {
-            helper::Throw<std::runtime_error>("Plugins", "PluginManager",
-                                              "OpenPlugin",
+            helper::Throw<std::runtime_error>("Plugins", "PluginManager", "OpenPlugin",
                                               "Unable to locate EngineCreate"
                                               " symbol in library " +
                                                   pluginLibrary);
         }
 
-        plugin.m_HandleDestroy = reinterpret_cast<EngineDestroyPtr>(
-            binder->GetSymbol("EngineDestroy"));
+        plugin.m_HandleDestroy =
+            reinterpret_cast<EngineDestroyPtr>(binder->GetSymbol("EngineDestroy"));
         if (!plugin.m_HandleDestroy)
         {
-            helper::Throw<std::runtime_error>("Plugins", "PluginManager",
-                                              "OpenPlugin",
+            helper::Throw<std::runtime_error>("Plugins", "PluginManager", "OpenPlugin",
                                               "Unable to locate EngineDestroy"
                                               " symbol in library " +
                                                   pluginLibrary);
@@ -198,8 +190,8 @@ bool PluginManager::OpenPlugin(const std::string &pluginName,
         plugin.m_Binder = std::move(binder);
         m_Impl->m_EngineRegistry[pluginName] = std::move(plugin);
         helper::Log("Plugins", "PluginManager", "OpenPlugin",
-                    "Engine Plugin " + pluginName + " successfully opened", 5,
-                    m_Impl->m_Verbosity, helper::LogMode::INFO);
+                    "Engine Plugin " + pluginName + " successfully opened", 5, m_Impl->m_Verbosity,
+                    helper::LogMode::INFO);
         return true;
     }
     else if (auto createHandle = binder->GetSymbol("OperatorCreate"))
@@ -207,23 +199,20 @@ bool PluginManager::OpenPlugin(const std::string &pluginName,
         // should be an operator plugin
         OperatorPluginInfo plugin;
         plugin.m_LibraryName = pluginLibrary;
-        plugin.m_HandleCreate =
-            reinterpret_cast<OperatorCreatePtr>(createHandle);
+        plugin.m_HandleCreate = reinterpret_cast<OperatorCreatePtr>(createHandle);
         if (!plugin.m_HandleCreate)
         {
-            helper::Throw<std::runtime_error>("Plugins", "PluginManager",
-                                              "OpenPlugin",
+            helper::Throw<std::runtime_error>("Plugins", "PluginManager", "OpenPlugin",
                                               "Unable to locate OperatorCreate"
                                               " symbol in library " +
                                                   pluginLibrary);
         }
 
-        plugin.m_HandleDestroy = reinterpret_cast<OperatorDestroyPtr>(
-            binder->GetSymbol("OperatorDestroy"));
+        plugin.m_HandleDestroy =
+            reinterpret_cast<OperatorDestroyPtr>(binder->GetSymbol("OperatorDestroy"));
         if (!plugin.m_HandleDestroy)
         {
-            helper::Throw<std::runtime_error>("Plugins", "PluginManager",
-                                              "OpenPlugin",
+            helper::Throw<std::runtime_error>("Plugins", "PluginManager", "OpenPlugin",
                                               "Unable to locate OperatorDestroy"
                                               " symbol in library " +
                                                   pluginLibrary);
@@ -235,63 +224,55 @@ bool PluginManager::OpenPlugin(const std::string &pluginName,
                     m_Impl->m_Verbosity, helper::LogMode::INFO);
         return true;
     }
-    helper::Throw<std::runtime_error>(
-        "Plugins", "PluginManager", "OpenPlugin",
-        "Unable to locate Create/Destroy symbols in library " + pluginLibrary);
+    helper::Throw<std::runtime_error>("Plugins", "PluginManager", "OpenPlugin",
+                                      "Unable to locate Create/Destroy symbols in library " +
+                                          pluginLibrary);
     return false;
 }
 
-PluginManager::EngineCreateFun
-PluginManager::GetEngineCreateFun(const std::string &name)
+PluginManager::EngineCreateFun PluginManager::GetEngineCreateFun(const std::string &name)
 {
     auto pluginIt = m_Impl->m_EngineRegistry.find(name);
     if (pluginIt == m_Impl->m_EngineRegistry.end())
     {
-        helper::Throw<std::runtime_error>(
-            "Plugins", "PluginManager", "GetEngineCreateFun",
-            "Couldn't find engine plugin named " + name);
+        helper::Throw<std::runtime_error>("Plugins", "PluginManager", "GetEngineCreateFun",
+                                          "Couldn't find engine plugin named " + name);
     }
 
     return pluginIt->second.m_HandleCreate;
 }
 
-PluginManager::EngineDestroyFun
-PluginManager::GetEngineDestroyFun(const std::string &name)
+PluginManager::EngineDestroyFun PluginManager::GetEngineDestroyFun(const std::string &name)
 {
     auto pluginIt = m_Impl->m_EngineRegistry.find(name);
     if (pluginIt == m_Impl->m_EngineRegistry.end())
     {
-        helper::Throw<std::runtime_error>(
-            "Plugins", "PluginManager", "GetEngineDestroyFun",
-            "Couldn't find engine plugin named " + name);
+        helper::Throw<std::runtime_error>("Plugins", "PluginManager", "GetEngineDestroyFun",
+                                          "Couldn't find engine plugin named " + name);
     }
 
     return pluginIt->second.m_HandleDestroy;
 }
 
-PluginManager::OperatorCreateFun
-PluginManager::GetOperatorCreateFun(const std::string &name)
+PluginManager::OperatorCreateFun PluginManager::GetOperatorCreateFun(const std::string &name)
 {
     auto pluginIt = m_Impl->m_OperatorRegistry.find(name);
     if (pluginIt == m_Impl->m_OperatorRegistry.end())
     {
-        helper::Throw<std::runtime_error>(
-            "Plugins", "PluginManager", "GetOperatorCreateFun",
-            "Couldn't find operator plugin named " + name);
+        helper::Throw<std::runtime_error>("Plugins", "PluginManager", "GetOperatorCreateFun",
+                                          "Couldn't find operator plugin named " + name);
     }
 
     return pluginIt->second.m_HandleCreate;
 }
 
-PluginManager::OperatorDestroyFun
-PluginManager::GetOperatorDestroyFun(const std::string &name)
+PluginManager::OperatorDestroyFun PluginManager::GetOperatorDestroyFun(const std::string &name)
 {
     auto pluginIt = m_Impl->m_OperatorRegistry.find(name);
     if (pluginIt == m_Impl->m_OperatorRegistry.end())
     {
-        helper::Throw<std::runtime_error>(
-            "Plugins", "PluginManager", "GetOperatorDestroyFun",
-            "Couldn't find operator plugin named " + name);
+        helper::Throw<std::runtime_error>("Plugins", "PluginManager", "GetOperatorDestroyFun",
+                                          "Couldn't find operator plugin named " + name);
     }
 
     return pluginIt->second.m_HandleDestroy;

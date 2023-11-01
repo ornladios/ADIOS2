@@ -19,8 +19,7 @@ namespace core
 namespace engine
 {
 
-MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
-                     helper::Comm comm)
+MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("MhsWriter", io, name, mode, std::move(comm))
 {
     helper::GetParameter(io.m_Parameters, "Tiers", m_Tiers);
@@ -39,22 +38,20 @@ MhsWriter::MhsWriter(IO &io, const std::string &name, const Mode mode,
 
         if (itTransport->second == "sirius")
         {
-            m_TransportMap.emplace(
-                itVar->second,
-                std::make_shared<compress::CompressSirius>(io.m_Parameters));
+            m_TransportMap.emplace(itVar->second,
+                                   std::make_shared<compress::CompressSirius>(io.m_Parameters));
         }
         else
         {
-            helper::Throw<std::invalid_argument>(
-                "Engine", "MhsWriter", "MhsWriter", "invalid operator");
+            helper::Throw<std::invalid_argument>("Engine", "MhsWriter", "MhsWriter",
+                                                 "invalid operator");
         }
     }
     for (int i = 0; i < m_Tiers; ++i)
     {
-        m_SubIOs.emplace_back(
-            &io.m_ADIOS.DeclareIO("SubIO" + std::to_string(i)));
-        m_SubEngines.emplace_back(&m_SubIOs.back()->Open(
-            m_Name + ".tier" + std::to_string(i), adios2::Mode::Write));
+        m_SubIOs.emplace_back(&io.m_ADIOS.DeclareIO("SubIO" + std::to_string(i)));
+        m_SubEngines.emplace_back(
+            &m_SubIOs.back()->Open(m_Name + ".tier" + std::to_string(i), adios2::Mode::Write));
     }
     m_IsOpen = true;
 }
@@ -109,14 +106,14 @@ void MhsWriter::Flush(const int transportIndex)
 
 // PRIVATE
 
-#define declare_type(T)                                                        \
-    void MhsWriter::DoPutSync(Variable<T> &variable, const T *data)            \
-    {                                                                          \
-        PutSyncCommon(variable, data);                                         \
-    }                                                                          \
-    void MhsWriter::DoPutDeferred(Variable<T> &variable, const T *data)        \
-    {                                                                          \
-        PutDeferredCommon(variable, data);                                     \
+#define declare_type(T)                                                                            \
+    void MhsWriter::DoPutSync(Variable<T> &variable, const T *data)                                \
+    {                                                                                              \
+        PutSyncCommon(variable, data);                                                             \
+    }                                                                                              \
+    void MhsWriter::DoPutDeferred(Variable<T> &variable, const T *data)                            \
+    {                                                                                              \
+        PutDeferredCommon(variable, data);                                                         \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

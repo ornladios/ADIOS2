@@ -28,13 +28,13 @@ static herr_t H5VL_adios2_term(void)
 extern herr_t H5VL_adios2_begin_read_step(const char *);
 extern herr_t H5VL_adios2_begin_write_step(const char *);
 
-extern herr_t H5VL_adios2_beginstep(const char *engine_name,
-                                    adios2_step_mode m);
+extern herr_t H5VL_adios2_beginstep(const char *engine_name, adios2_step_mode m);
 
 extern herr_t H5VL_adios2_endstep(const char *engine_nane);
 
-static herr_t H5VL_adios2_introspect_opt_query(void *obj, H5VL_subclass_t cls,
-                                               int opt_type,
+static herr_t H5VL_adios2_introspect_get_cap_flags(const void *info, uint64_t *cap_flags);
+
+static herr_t H5VL_adios2_introspect_opt_query(void *obj, H5VL_subclass_t cls, int opt_type,
                                                uint64_t *supported)
 {
     *supported = 0;
@@ -53,11 +53,11 @@ static herr_t H5VL_adios2_datatype_close(void *dt, hid_t H5_ATTR_UNUSED dxpl_id,
 static const H5VL_class_t H5VL_adios2_def = {
     H5VL_VERSION, /* Version # of connector, needed for v1.13 */
     (H5VL_class_value_t)H5VL_ADIOS2_VALUE,
-    H5VL_ADIOS2_NAME,    /* name */
-    H5VL_ADIOS2_VERSION, /* version of this vol, not as important  */
-    H5VL_CAP_FLAG_NONE,  /* Capability flags for connector */
-    H5VL_adios2_init,    /* initialize */
-    H5VL_adios2_term,    /* terminate */
+    H5VL_ADIOS2_NAME,      /* name */
+    H5VL_ADIOS2_VERSION,   /* version of this vol, not as important  */
+    H5VL_ADIOS2_CAP_FLAGS, /* Capability flags for connector */
+    H5VL_adios2_init,      /* initialize */
+    H5VL_adios2_term,      /* terminate */
     {
         /* info_cls */
         (size_t)0, /* info size    */
@@ -74,26 +74,25 @@ static const H5VL_class_t H5VL_adios2_def = {
         NULL, /* unwrap_object */
         NULL  /* free_wrap_ctx */
     },
-    {H5VL_adios2_attr_create, H5VL_adios2_attr_open, H5VL_adios2_attr_read,
-     H5VL_adios2_attr_write, H5VL_adios2_attr_get, H5VL_adios2_attr_specific,
+    {H5VL_adios2_attr_create, H5VL_adios2_attr_open, H5VL_adios2_attr_read, H5VL_adios2_attr_write,
+     H5VL_adios2_attr_get, H5VL_adios2_attr_specific,
      NULL, // H5VL_adios2_attr_optional,
      H5VL_adios2_attr_close},
     {
         /* dataset_cls */
-        H5VL_adios2_dataset_create, H5VL_adios2_dataset_open,
-        H5VL_adios2_dataset_read, H5VL_adios2_dataset_write,
-        H5VL_adios2_dataset_get,  /* get properties*/
-        NULL,                     // H5VL_adios2_dataset_specific
-        NULL,                     // optional
-        H5VL_adios2_dataset_close /* close */
+        H5VL_adios2_dataset_create, H5VL_adios2_dataset_open, H5VL_adios2_dataset_read,
+        H5VL_adios2_dataset_write, H5VL_adios2_dataset_get, /* get properties*/
+        NULL,                                               // H5VL_adios2_dataset_specific
+        NULL,                                               // optional
+        H5VL_adios2_dataset_close                           /* close */
     },
     {
         /* datatype_cls */
-        NULL, // H5VL_adios2_datatype_commit,           /* commit */
-        NULL, // H5VL_adios2_datatype_open,             /* open */
-        NULL, // H5VL_adios2_datatype_get, /* get_size */
-        NULL, // H5VL_adios2_datatype_specific,
-        NULL, // H5VL_adios2_datatype_optional,
+        NULL,                      // H5VL_adios2_datatype_commit,           /* commit */
+        NULL,                      // H5VL_adios2_datatype_open,             /* open */
+        NULL,                      // H5VL_adios2_datatype_get, /* get_size */
+        NULL,                      // H5VL_adios2_datatype_specific,
+        NULL,                      // H5VL_adios2_datatype_optional,
         H5VL_adios2_datatype_close /* close */
     },
     {H5VL_adios2_file_create, H5VL_adios2_file_open,
@@ -101,8 +100,8 @@ static const H5VL_class_t H5VL_adios2_def = {
      H5VL_adios2_file_specific,
      NULL, // H5VL_adios2_file_optional,
      H5VL_adios2_file_close},
-    {H5VL_adios2_group_create, H5VL_adios2_group_open, H5VL_adios2_group_get,
-     NULL, NULL, H5VL_adios2_group_close},
+    {H5VL_adios2_group_create, H5VL_adios2_group_open, H5VL_adios2_group_get, NULL, NULL,
+     H5VL_adios2_group_close},
     {
         NULL, // H5VL_adios2_link_create,
         NULL, // H5VL_adios2_link_copy,
@@ -120,8 +119,8 @@ static const H5VL_class_t H5VL_adios2_def = {
     {
         /* introspect_cls */
         NULL, // H5VL_pass_through_introspect_get_conn_cls,  /* get_conn_cls */
-        NULL, /* get_cap_flags */
-        H5VL_adios2_introspect_opt_query, /* opt_query */
+        H5VL_adios2_introspect_get_cap_flags, /* get_cap_flags */
+        H5VL_adios2_introspect_opt_query,     /* opt_query */
     },
     {
         /* request_cls */
@@ -147,5 +146,11 @@ static const H5VL_class_t H5VL_adios2_def = {
     },
     NULL /*/optional*/
 };
+
+static herr_t H5VL_adios2_introspect_get_cap_flags(const void *info, uint64_t *cap_flags)
+{
+    *cap_flags = H5VL_adios2_def.cap_flags;
+    return 0;
+}
 
 #endif // ADIOS_VOL_WRITER_H

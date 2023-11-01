@@ -56,7 +56,7 @@
 # resulting _CMD strings until add_common_test() which removes it.
 #
 
-find_package(PythonInterp REQUIRED)
+find_package(Python3 REQUIRED)
 
 # Change the STAGING_COMMON_TEST_SUPP_VERBOSE value to ON for debugging output
 #
@@ -70,8 +70,10 @@ set (1x1GetSync_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=--read_mode --rarg
 set (1x1DontCloseWriter_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=--dont_close")
 set (1x1DontCloseReader_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=--dont_close")
 set (1x1DefSync_CMD "TestDefSyncWrite --data_size 200 --engine_params ChunkSize=500,MinDeferredSize=150")
+set (1x1DefSync_TIMEOUT 180)
 set (1x1VarDestruction_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=--var_destruction")
 set (1x1DataWrite_CMD "TestDefSyncWrite --flush --data_size 200 --engine_params ChunkSize=500,MinDeferredSize=150")
+set (1x1DataWrite_TIMEOUT 180)
 set (1x1.NoPreload_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=PreloadMode=SstPreloadNone,RENGINE_PARAMS")
 set (1x1.SstRUDP_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --rarg=DataTransport=WAN,WANDataTransport=enet,RENGINE_PARAMS --warg=DataTransport=WAN,WANDataTransport=enet,WENGINE_PARAMS")
 set (1x1.NoData_CMD "run_test.py.$<CONFIG> -nw 1 -nr 1 --warg=--no_data --rarg=--no_data")
@@ -321,3 +323,15 @@ function(from_hex HEX DEC)
     set(${DEC} ${_res} PARENT_SCOPE)
 endfunction()
 
+function(import_bp_test BASENAME WRITE_SCALE READ_SCALE)
+    set (WRITER_POSTFIX "Serial")
+    set (READER_POSTFIX "Serial")
+    if(ADIOS2_HAVE_MPI)
+        set (WRITER_POSTFIX "MPI")
+    endif()
+    if(ADIOS2_HAVE_MPI)
+        set (READER_POSTFIX "MPI")
+    endif()
+  set (${BASENAME}.${WRITE_SCALE}x${READ_SCALE}_CMD "run_test.py.$<CONFIG> -nw ${WRITE_SCALE} -nr ${READ_SCALE} --warg=-do_write --rarg=-do_read -w $<TARGET_FILE:Test.Engine.BP.${BASENAME}.${WRITER_POSTFIX}> -r $<TARGET_FILE:Test.Engine.BP.${BASENAME}.${READER_POSTFIX}>" PARENT_SCOPE)
+
+endfunction()

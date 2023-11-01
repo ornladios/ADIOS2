@@ -24,12 +24,10 @@ namespace core
 namespace engine
 {
 
-SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
-                     helper::Comm comm)
+SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("SstWriter", io, name, mode, std::move(comm))
 {
-    auto AssembleMetadata = [](void *writer, int CohortSize,
-                               struct _SstData * /*PerRankMetadata*/,
+    auto AssembleMetadata = [](void *writer, int CohortSize, struct _SstData * /*PerRankMetadata*/,
                                struct _SstData * /*PerRankAttributeData*/) {
         for (int i = 0; i < CohortSize; i++)
         {
@@ -99,14 +97,13 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
                                      to registered Free routine */
     };
 
-    auto FreeAssembledMetadata =
-        [](void * /*writer*/, struct _SstData * /*PerRankMetadata*/,
-           struct _SstData * /*PerRankAttributeData*/, void *ClientData) {
-            //        std::cout << "Free called with client data " << ClientData
-            //        << std::endl;
-            free(ClientData);
-            return;
-        };
+    auto FreeAssembledMetadata = [](void * /*writer*/, struct _SstData * /*PerRankMetadata*/,
+                                    struct _SstData * /*PerRankAttributeData*/, void *ClientData) {
+        //        std::cout << "Free called with client data " << ClientData
+        //        << std::endl;
+        free(ClientData);
+        return;
+    };
 
     Init();
 
@@ -114,8 +111,7 @@ SstWriter::SstWriter(IO &io, const std::string &name, const Mode mode,
 
     if (Params.MarshalMethod == SstMarshalBP)
     {
-        SstWriterInitMetadataCallback(m_Output, this, AssembleMetadata,
-                                      FreeAssembledMetadata);
+        SstWriterInitMetadataCallback(m_Output, this, AssembleMetadata, FreeAssembledMetadata);
     }
     m_IsOpen = true;
 }
@@ -143,20 +139,16 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     m_BetweenStepPairs = true;
     if (Params.MarshalMethod == SstMarshalFFS)
     {
-        return (StepStatus)SstFFSWriterBeginStep(m_Output, (int)mode,
-                                                 timeout_sec);
+        return (StepStatus)SstFFSWriterBeginStep(m_Output, (int)mode, timeout_sec);
     }
     else if (Params.MarshalMethod == SstMarshalBP)
     {
         // initialize BP serializer, deleted in
         // SstWriter::EndStep()::lf_FreeBlocks()
-        m_BP3Serializer = std::unique_ptr<format::BP3Serializer>(
-            new format::BP3Serializer(m_Comm));
-        m_BP3Serializer->Init(m_IO.m_Parameters,
-                              "in call to BP3::Open for writing", "sst");
-        m_BP3Serializer->ResizeBuffer(
-            m_BP3Serializer->m_Parameters.InitialBufferSize,
-            "in call to BP3::Open for writing by SST engine");
+        m_BP3Serializer = std::unique_ptr<format::BP3Serializer>(new format::BP3Serializer(m_Comm));
+        m_BP3Serializer->Init(m_IO.m_Parameters, "in call to BP3::Open for writing", "sst");
+        m_BP3Serializer->ResizeBuffer(m_BP3Serializer->m_Parameters.InitialBufferSize,
+                                      "in call to BP3::Open for writing by SST engine");
         m_BP3Serializer->m_MetadataSet.TimeStep = 1;
         m_BP3Serializer->m_MetadataSet.CurrentStep = m_WriterStep;
     }
@@ -164,8 +156,7 @@ StepStatus SstWriter::BeginStep(StepMode mode, const float timeout_sec)
     {
         if (!m_BP5Serializer)
         {
-            m_BP5Serializer = std::unique_ptr<format::BP5Serializer>(
-                new format::BP5Serializer());
+            m_BP5Serializer = std::unique_ptr<format::BP5Serializer>(new format::BP5Serializer());
             m_BP5Serializer->m_StatsLevel = Params.StatsLevel;
         }
         m_BP5Serializer->InitStep(new format::MallocV("SstWriter", true));
@@ -212,8 +203,7 @@ void SstWriter::MarshalAttributes()
         }
         else if (type == helper::GetDataType<std::string>())
         {
-            core::Attribute<std::string> &attribute =
-                *m_IO.InquireAttribute<std::string>(name);
+            core::Attribute<std::string> &attribute = *m_IO.InquireAttribute<std::string>(name);
             int element_count = -1;
             const char *data_addr = attribute.m_DataSingleValue.c_str();
             if (!attribute.m_IsSingleValue)
@@ -222,33 +212,29 @@ void SstWriter::MarshalAttributes()
             }
 
             if (Params.MarshalMethod == SstMarshalFFS)
-                SstFFSMarshalAttribute(m_Output, name.c_str(), (int)type,
-                                       sizeof(char *), element_count,
-                                       data_addr);
+                SstFFSMarshalAttribute(m_Output, name.c_str(), (int)type, sizeof(char *),
+                                       element_count, data_addr);
             else if (Params.MarshalMethod == SstMarshalBP5)
-                m_BP5Serializer->MarshalAttribute(name.c_str(), type,
-                                                  sizeof(char *), element_count,
+                m_BP5Serializer->MarshalAttribute(name.c_str(), type, sizeof(char *), element_count,
                                                   data_addr);
         }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        core::Attribute<T> &attribute = *m_IO.InquireAttribute<T>(name);       \
-        int element_count = -1;                                                \
-        void *data_addr = &attribute.m_DataSingleValue;                        \
-        if (!attribute.m_IsSingleValue)                                        \
-        {                                                                      \
-            element_count = attribute.m_Elements;                              \
-            data_addr = attribute.m_DataArray.data();                          \
-        }                                                                      \
-        if (Params.MarshalMethod == SstMarshalFFS)                             \
-            SstFFSMarshalAttribute(m_Output, attribute.m_Name.c_str(),         \
-                                   (int)type, sizeof(T), element_count,        \
-                                   data_addr);                                 \
-        else if (Params.MarshalMethod == SstMarshalBP5)                        \
-            m_BP5Serializer->MarshalAttribute(attribute.m_Name.c_str(), type,  \
-                                              sizeof(T), element_count,        \
-                                              data_addr);                      \
+#define declare_type(T)                                                                            \
+    else if (type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        core::Attribute<T> &attribute = *m_IO.InquireAttribute<T>(name);                           \
+        int element_count = -1;                                                                    \
+        void *data_addr = &attribute.m_DataSingleValue;                                            \
+        if (!attribute.m_IsSingleValue)                                                            \
+        {                                                                                          \
+            element_count = attribute.m_Elements;                                                  \
+            data_addr = attribute.m_DataArray.data();                                              \
+        }                                                                                          \
+        if (Params.MarshalMethod == SstMarshalFFS)                                                 \
+            SstFFSMarshalAttribute(m_Output, attribute.m_Name.c_str(), (int)type, sizeof(T),       \
+                                   element_count, data_addr);                                      \
+        else if (Params.MarshalMethod == SstMarshalBP5)                                            \
+            m_BP5Serializer->MarshalAttribute(attribute.m_Name.c_str(), type, sizeof(T),           \
+                                              element_count, data_addr);                           \
     }
 
         ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type)
@@ -259,13 +245,11 @@ void SstWriter::MarshalAttributes()
 
 void SstWriter::NotifyEngineAttribute(std::string name, DataType type) noexcept
 {
-    helper::Throw<std::invalid_argument>(
-        "SstWriter", "Engine", "ThrowUp",
-        "Engine does not support NotifyEngineAttribute");
+    helper::Throw<std::invalid_argument>("SstWriter", "Engine", "ThrowUp",
+                                         "Engine does not support NotifyEngineAttribute");
 }
 
-void SstWriter::NotifyEngineAttribute(std::string name, AttributeBase *Attr,
-                                      void *data) noexcept
+void SstWriter::NotifyEngineAttribute(std::string name, AttributeBase *Attr, void *data) noexcept
 {
     if (!Params.UseOneTimeAttributes)
     {
@@ -282,9 +266,8 @@ void SstWriter::EndStep()
     PERFSTUBS_SCOPED_TIMER_FUNC();
     if (!m_BetweenStepPairs)
     {
-        helper::Throw<std::logic_error>(
-            "Engine", "SstWriter", "EndStep",
-            "EndStep() is called without a successful BeginStep()");
+        helper::Throw<std::logic_error>("Engine", "SstWriter", "EndStep",
+                                        "EndStep() is called without a successful BeginStep()");
     }
     m_BetweenStepPairs = false;
     if (m_WriterDefinitionsLocked && !m_DefinitionsNotified)
@@ -304,11 +287,9 @@ void SstWriter::EndStep()
     {
         MarshalAttributes();
         format::BP5Serializer::TimestepInfo *TSInfo =
-            new format::BP5Serializer::TimestepInfo(
-                m_BP5Serializer->CloseTimestep(m_WriterStep));
+            new format::BP5Serializer::TimestepInfo(m_BP5Serializer->CloseTimestep(m_WriterStep));
         auto lf_FreeBlocks = [](void *vBlock) {
-            BP5DataBlock *BlockToFree =
-                reinterpret_cast<BP5DataBlock *>(vBlock);
+            BP5DataBlock *BlockToFree = reinterpret_cast<BP5DataBlock *>(vBlock);
             //  Free data and metadata blocks here.  BlockToFree is the newblock
             //  value in the enclosing function.
             free(BlockToFree->MetaMetaBlocks);
@@ -346,19 +327,16 @@ void SstWriter::EndStep()
         newblock->TSInfo = TSInfo;
         if (TSInfo->AttributeEncodeBuffer)
         {
-            newblock->attribute_data.DataSize =
-                TSInfo->AttributeEncodeBuffer->m_FixedSize;
-            newblock->attribute_data.block =
-                TSInfo->AttributeEncodeBuffer->Data();
+            newblock->attribute_data.DataSize = TSInfo->AttributeEncodeBuffer->m_FixedSize;
+            newblock->attribute_data.block = TSInfo->AttributeEncodeBuffer->Data();
         }
         else
         {
             newblock->attribute_data.DataSize = 0;
             newblock->attribute_data.block = NULL;
         }
-        SstProvideTimestepMM(m_Output, &newblock->metadata, &newblock->data,
-                             m_WriterStep, lf_FreeBlocks, newblock,
-                             &newblock->attribute_data, NULL, newblock,
+        SstProvideTimestepMM(m_Output, &newblock->metadata, &newblock->data, m_WriterStep,
+                             lf_FreeBlocks, newblock, &newblock->attribute_data, NULL, newblock,
                              MetaMetaBlocks);
     }
     else if (Params.MarshalMethod == SstMarshalBP)
@@ -376,8 +354,7 @@ void SstWriter::EndStep()
         // (explicit deallocation callback).
         PERFSTUBS_TIMER_START(timer, "Marshaling overhead");
         auto lf_FreeBlocks = [](void *vBlock) {
-            BP3DataBlock *BlockToFree =
-                reinterpret_cast<BP3DataBlock *>(vBlock);
+            BP3DataBlock *BlockToFree = reinterpret_cast<BP3DataBlock *>(vBlock);
             //  Free data and metadata blocks here.  BlockToFree is the newblock
             //  value in the enclosing function.
             delete BlockToFree->serializer;
@@ -385,8 +362,7 @@ void SstWriter::EndStep()
         };
 
         m_BP3Serializer->CloseStream(m_IO, true);
-        m_BP3Serializer->AggregateCollectiveMetadata(
-            m_Comm, m_BP3Serializer->m_Metadata, true);
+        m_BP3Serializer->AggregateCollectiveMetadata(m_Comm, m_BP3Serializer->m_Metadata, true);
         BP3DataBlock *newblock = new BP3DataBlock;
         newblock->metadata.DataSize = m_BP3Serializer->m_Metadata.m_Position;
         newblock->metadata.block = m_BP3Serializer->m_Metadata.m_Buffer.data();
@@ -394,9 +370,8 @@ void SstWriter::EndStep()
         newblock->data.block = m_BP3Serializer->m_Data.m_Buffer.data();
         newblock->serializer = m_BP3Serializer.release();
         PERFSTUBS_TIMER_STOP(timer);
-        SstProvideTimestep(m_Output, &newblock->metadata, &newblock->data,
-                           m_WriterStep, lf_FreeBlocks, newblock, NULL, NULL,
-                           NULL);
+        SstProvideTimestep(m_Output, &newblock->metadata, &newblock->data, m_WriterStep,
+                           lf_FreeBlocks, newblock, NULL, NULL, NULL);
     }
     else
     {
@@ -417,22 +392,21 @@ void SstWriter::Init()
 
     if (Params.verbose < 0 || Params.verbose > 5)
     {
-        helper::Throw<std::invalid_argument>(
-            "Engine", "SstWriter", "Init",
-            "ERROR: Method verbose argument must be an "
-            "integer in the range [0,5], in call to "
-            "Open or Engine constructor\n");
+        helper::Throw<std::invalid_argument>("Engine", "SstWriter", "Init",
+                                             "ERROR: Method verbose argument must be an "
+                                             "integer in the range [0,5], in call to "
+                                             "Open or Engine constructor\n");
     }
 }
 
-#define declare_type(T)                                                        \
-    void SstWriter::DoPutSync(Variable<T> &variable, const T *values)          \
-    {                                                                          \
-        PutSyncCommon(variable, values);                                       \
-    }                                                                          \
-    void SstWriter::DoPutDeferred(Variable<T> &variable, const T *values)      \
-    {                                                                          \
-        PutSyncCommon(variable, values);                                       \
+#define declare_type(T)                                                                            \
+    void SstWriter::DoPutSync(Variable<T> &variable, const T *values)                              \
+    {                                                                                              \
+        PutSyncCommon(variable, values);                                                           \
+    }                                                                                              \
+    void SstWriter::DoPutDeferred(Variable<T> &variable, const T *values)                          \
+    {                                                                                              \
+        PutSyncCommon(variable, values);                                                           \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
@@ -472,9 +446,9 @@ void SstWriter::PutStructCommon(VariableBase &variable, const void *data)
         DimCount = variable.m_Count.size();
         Count = variable.m_Count.data();
     }
-    m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(),
-                             variable.m_Type, variable.m_ElementSize, DimCount,
-                             Shape, Count, Start, data, true, nullptr);
+    m_BP5Serializer->Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                             variable.m_ElementSize, DimCount, Shape, Count, Start, data, true,
+                             nullptr);
 }
 
 void SstWriter::DoPutStructSync(VariableStruct &variable, const void *data)
@@ -499,8 +473,8 @@ void SstWriter::DestructorClose(bool Verbose) noexcept
 {
     if (Verbose)
     {
-        std::cerr << "SST Writer \"" << m_Name
-                  << "\" Destroyed without a prior Close()." << std::endl;
+        std::cerr << "SST Writer \"" << m_Name << "\" Destroyed without a prior Close()."
+                  << std::endl;
         std::cerr << "This may result in loss of data and/or disconnect "
                      "warnings for a connected SST Reader."
                   << std::endl;

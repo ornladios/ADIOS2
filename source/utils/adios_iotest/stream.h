@@ -22,19 +22,17 @@ public:
     adios2::Mode mode;
     Stream(const std::string &streamName, const adios2::Mode mode);
     virtual ~Stream() = 0;
-    virtual void Write(CommandWrite *cmdW, Config &cfg,
-                       const Settings &settings, size_t step) = 0;
-    virtual adios2::StepStatus Read(CommandRead *cmdR, Config &cfg,
-                                    const Settings &settings, size_t step) = 0;
+    virtual void Write(CommandWrite *cmdW, Config &cfg, const Settings &settings, size_t step) = 0;
+    virtual adios2::StepStatus Read(CommandRead *cmdR, Config &cfg, const Settings &settings,
+                                    size_t step) = 0;
     virtual void Close() = 0;
 
 protected:
     void fillArray(std::shared_ptr<VariableInfo> ov, double value);
 };
 
-std::shared_ptr<Stream> openStream(const std::string &streamName,
-                                   std::shared_ptr<ioGroup> iogroup,
-                                   const adios2::Mode mode, IOLib iolib,
-                                   MPI_Comm comm, bool iotimer, size_t appid);
+std::shared_ptr<Stream> openStream(const std::string &streamName, std::shared_ptr<ioGroup> iogroup,
+                                   const adios2::Mode mode, IOLib iolib, MPI_Comm comm,
+                                   bool iotimer, size_t appid);
 
 #endif /* STREAM_H */

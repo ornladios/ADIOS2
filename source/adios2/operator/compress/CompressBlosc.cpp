@@ -34,34 +34,29 @@ const std::map<std::string, uint32_t> CompressBlosc::m_Shuffles = {
     {"BLOSC_SHUFFLE", BLOSC_SHUFFLE},
     {"BLOSC_BITSHUFFLE", BLOSC_BITSHUFFLE}};
 
-const std::set<std::string> CompressBlosc::m_Compressors = {
-    "blosclz", "lz4", "lz4hc", "snappy", "zlib", "zstd"};
+const std::set<std::string> CompressBlosc::m_Compressors = {"blosclz", "lz4",  "lz4hc",
+                                                            "snappy",  "zlib", "zstd"};
 
 CompressBlosc::CompressBlosc(const Params &parameters)
 : Operator("blosc", COMPRESS_BLOSC, "compress", parameters)
 {
 }
 
-size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
-                              const Dims &blockCount, const DataType type,
-                              char *bufferOut)
+size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                              const DataType type, char *bufferOut)
 {
     size_t bufferOutOffset = 0;
     const uint8_t bufferVersion = 1;
 
     MakeCommonHeader(bufferOut, bufferOutOffset, bufferVersion);
 
-    const size_t sizeIn =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+    const size_t sizeIn = helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
 
     // blosc2 V1 metadata
     PutParameter(bufferOut, bufferOutOffset, sizeIn);
-    PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(BLOSC2_VERSION_MAJOR));
-    PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(BLOSC2_VERSION_MINOR));
-    PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(BLOSC2_VERSION_RELEASE));
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(BLOSC2_VERSION_MAJOR));
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(BLOSC2_VERSION_MINOR));
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(BLOSC2_VERSION_RELEASE));
     // blosc2 V1 metadata end
 
     bool useMemcpy = false;
@@ -84,8 +79,8 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
 
         if (key == "compression_level" || key == "clevel")
         {
-            compressionLevel = static_cast<int>(helper::StringTo<int32_t>(
-                value, "when setting Blosc clevel parameter\n"));
+            compressionLevel = static_cast<int>(
+                helper::StringTo<int32_t>(value, "when setting Blosc clevel parameter\n"));
             if (compressionLevel < 0 || compressionLevel > 9)
             {
                 helper::Throw<std::invalid_argument>(
@@ -100,17 +95,16 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
             auto itShuffle = m_Shuffles.find(value);
             if (itShuffle == m_Shuffles.end())
             {
-                helper::Throw<std::invalid_argument>(
-                    "Operator", "CompressBlosc", "Operate",
-                    "Parameter doshuffle must be BLOSC_SHUFFLE, "
-                    "BLOSC_NOSHUFFLE or BLOSC_BITSHUFFLE");
+                helper::Throw<std::invalid_argument>("Operator", "CompressBlosc", "Operate",
+                                                     "Parameter doshuffle must be BLOSC_SHUFFLE, "
+                                                     "BLOSC_NOSHUFFLE or BLOSC_BITSHUFFLE");
             }
             doShuffle = itShuffle->second;
         }
         else if (key == "nthreads")
         {
-            threads = static_cast<int>(helper::StringTo<int32_t>(
-                value, "when setting Blosc nthreads parameter\n"));
+            threads = static_cast<int>(
+                helper::StringTo<int32_t>(value, "when setting Blosc nthreads parameter\n"));
         }
         else if (key == "compressor")
         {
@@ -125,28 +119,27 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
         }
         else if (key == "blocksize")
         {
-            blockSize = static_cast<size_t>(helper::StringTo<uint64_t>(
-                value, "when setting Blosc blocksize parameter\n"));
+            blockSize = static_cast<size_t>(
+                helper::StringTo<uint64_t>(value, "when setting Blosc blocksize parameter\n"));
         }
         else if (key == "threshold")
         {
-            thresholdSize = static_cast<size_t>(helper::StringTo<uint64_t>(
-                value, "when setting Blosc threshold parameter\n"));
+            thresholdSize = static_cast<size_t>(
+                helper::StringTo<uint64_t>(value, "when setting Blosc threshold parameter\n"));
             if (thresholdSize < 128u)
                 thresholdSize = 128u;
         }
         else
         {
             helper::Log("Operator", "CompressBlosc", "Operate",
-                        "Unknown parameter keyword '" + key + "' with value '" +
-                            value + "' passed to Blosc compression operator.",
+                        "Unknown parameter keyword '" + key + "' with value '" + value +
+                            "' passed to Blosc compression operator.",
                         helper::WARNING);
         }
     }
 
     // write header to detect new compression format (set first 8 byte to zero)
-    DataHeader *headerPtr =
-        reinterpret_cast<DataHeader *>(bufferOut + bufferOutOffset);
+    DataHeader *headerPtr = reinterpret_cast<DataHeader *>(bufferOut + bufferOutOffset);
 
     // set default header
     *headerPtr = DataHeader{};
@@ -171,8 +164,7 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
         {
             helper::Throw<std::invalid_argument>(
                 "Operator", "CompressBlosc", "Operate",
-                "blosc library linked does not support compressor " +
-                    compressor);
+                "blosc library linked does not support compressor " + compressor);
         }
         blosc2_set_nthreads(threads);
         blosc1_set_blocksize(blockSize);
@@ -181,16 +173,14 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
         for (; inputOffset < sizeIn; ++chunk)
         {
             size_t inputChunkSize =
-                std::min(sizeIn - inputOffset,
-                         static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
-            bloscSize_t maxIntputSize =
-                static_cast<bloscSize_t>(inputChunkSize);
+                std::min<size_t>(sizeIn - inputOffset, static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
+            bloscSize_t maxIntputSize = static_cast<bloscSize_t>(inputChunkSize);
 
             bloscSize_t maxChunkSize = maxIntputSize + BLOSC2_MAX_OVERHEAD;
 
-            bloscSize_t compressedChunkSize = blosc2_compress(
-                compressionLevel, doShuffle, typesize, dataIn + inputOffset,
-                maxIntputSize, bufferOut + bufferOutOffset, maxChunkSize);
+            bloscSize_t compressedChunkSize =
+                blosc2_compress(compressionLevel, doShuffle, typesize, dataIn + inputOffset,
+                                maxIntputSize, bufferOut + bufferOutOffset, maxChunkSize);
 
             if (compressedChunkSize > 0)
                 bufferOutOffset += static_cast<size_t>(compressedChunkSize);
@@ -225,19 +215,16 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart,
 
 size_t CompressBlosc::GetHeaderSize() const { return headerSize; }
 
-size_t CompressBlosc::InverseOperate(const char *bufferIn, const size_t sizeIn,
-                                     char *dataOut)
+size_t CompressBlosc::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     size_t bufferInOffset = 1; // skip operator type
-    const uint8_t bufferVersion =
-        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    const uint8_t bufferVersion = GetParameter<uint8_t>(bufferIn, bufferInOffset);
     bufferInOffset += 2; // skip two reserved bytes
     headerSize = bufferInOffset;
 
     if (bufferVersion == 1)
     {
-        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
-                            dataOut);
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset, dataOut);
     }
     else if (bufferVersion == 2)
     {
@@ -246,8 +233,7 @@ size_t CompressBlosc::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        helper::Throw<std::runtime_error>("Operator", "CompressBlosc",
-                                          "InverseOperate",
+        helper::Throw<std::runtime_error>("Operator", "CompressBlosc", "InverseOperate",
                                           "invalid blosc buffer version");
     }
 
@@ -256,8 +242,7 @@ size_t CompressBlosc::InverseOperate(const char *bufferIn, const size_t sizeIn,
 
 bool CompressBlosc::IsDataTypeValid(const DataType type) const { return true; }
 
-size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
-                                   char *dataOut)
+size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     // Do NOT remove even if the buffer version is updated. Data might be still
     // in lagacy formats. This function must be kept for backward compatibility.
@@ -268,35 +253,30 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
     size_t sizeOut = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     bool isCompressed = true;
 
-    m_VersionInfo =
-        " Data is compressed using BLOSC Version " +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
-        ". Please make sure a compatible version is used for decompression.";
+    m_VersionInfo = " Data is compressed using BLOSC Version " +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+                    ". Please make sure a compatible version is used for decompression.";
 
     if (sizeIn - bufferInOffset < sizeof(DataHeader))
     {
-        helper::Throw<std::invalid_argument>(
-            "Operator", "CompressBlosc", "InverseOperate",
-            "corrupted compressed buffer." + m_VersionInfo);
+        helper::Throw<std::invalid_argument>("Operator", "CompressBlosc", "InverseOperate",
+                                             "corrupted compressed buffer." + m_VersionInfo);
     }
     const bool isChunked =
-        reinterpret_cast<const DataHeader *>(bufferIn + bufferInOffset)
-            ->IsChunked();
+        reinterpret_cast<const DataHeader *>(bufferIn + bufferInOffset)->IsChunked();
 
     size_t decompressedSize = 0;
     if (isChunked)
     {
-        decompressedSize =
-            DecompressChunkedFormat(bufferIn + bufferInOffset,
-                                    sizeIn - bufferInOffset, dataOut, sizeOut);
+        decompressedSize = DecompressChunkedFormat(bufferIn + bufferInOffset,
+                                                   sizeIn - bufferInOffset, dataOut, sizeOut);
     }
     else
     {
-        decompressedSize =
-            DecompressOldFormat(bufferIn + bufferInOffset,
-                                sizeIn - bufferInOffset, dataOut, sizeOut);
+        decompressedSize = DecompressOldFormat(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
+                                               dataOut, sizeOut);
     }
     if (decompressedSize == 0) // the decompression was not applied
     {
@@ -305,8 +285,8 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
     }
     if (decompressedSize != sizeOut)
     {
-        helper::Throw<std::runtime_error>("Operator", "CompressBlosc",
-                                          "DecompressV1", m_VersionInfo);
+        helper::Throw<std::runtime_error>("Operator", "CompressBlosc", "DecompressV1",
+                                          m_VersionInfo);
     }
     headerSize += sizeIn - sizeOut;
     if (!isCompressed)
@@ -314,10 +294,8 @@ size_t CompressBlosc::DecompressV1(const char *bufferIn, const size_t sizeIn,
     return sizeOut;
 }
 
-size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
-                                              const size_t sizeIn,
-                                              char *dataOut,
-                                              const size_t sizeOut)
+size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn, const size_t sizeIn,
+                                              char *dataOut, const size_t sizeOut)
 {
     const DataHeader *dataPtr = reinterpret_cast<const DataHeader *>(bufferIn);
     uint32_t num_chunks = dataPtr->GetNumChunks();
@@ -345,8 +323,8 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
             const std::string value = itParameter.second;
             if (key == "nthreads")
             {
-                threads = static_cast<int>(helper::StringTo<int32_t>(
-                    value, "when setting Blosc nthreads parameter\n"));
+                threads = static_cast<int>(
+                    helper::StringTo<int32_t>(value, "when setting Blosc nthreads parameter\n"));
             }
         }
         blosc2_set_nthreads(threads);
@@ -374,14 +352,12 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
 
             char *out_ptr = dataOut + currentOutputSize;
 
-            size_t outputChunkSize =
-                std::min(uncompressedSize - currentOutputSize,
-                         static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
-            bloscSize_t max_output_size =
-                static_cast<bloscSize_t>(outputChunkSize);
+            size_t outputChunkSize = std::min<size_t>(uncompressedSize - currentOutputSize,
+                                                      static_cast<size_t>(BLOSC2_MAX_BUFFERSIZE));
+            bloscSize_t max_output_size = static_cast<bloscSize_t>(outputChunkSize);
 
-            bloscSize_t decompressdSize = blosc2_decompress(
-                in_ptr, max_inputDataSize, out_ptr, max_output_size);
+            bloscSize_t decompressdSize =
+                blosc2_decompress(in_ptr, max_inputDataSize, out_ptr, max_output_size);
 
             if (decompressdSize > 0)
                 currentOutputSize += static_cast<size_t>(decompressdSize);
@@ -389,8 +365,7 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
             {
                 helper::Throw<std::runtime_error>(
                     "Operator", "CompressBlosc", "DecompressChunkedFormat",
-                    "blosc decompress failed with zero buffer size. " +
-                        m_VersionInfo);
+                    "blosc decompress failed with zero buffer size. " + m_VersionInfo);
             }
             inputOffset += static_cast<size_t>(max_inputDataSize);
         }
@@ -408,8 +383,7 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn,
     return currentOutputSize;
 }
 
-size_t CompressBlosc::DecompressOldFormat(const char *bufferIn,
-                                          const size_t sizeIn, char *dataOut,
+size_t CompressBlosc::DecompressOldFormat(const char *bufferIn, const size_t sizeIn, char *dataOut,
                                           const size_t sizeOut) const
 {
     blosc2_init();
@@ -420,13 +394,12 @@ size_t CompressBlosc::DecompressOldFormat(const char *bufferIn,
         const std::string value = itParameter.second;
         if (key == "nthreads")
         {
-            threads = static_cast<int>(helper::StringTo<int32_t>(
-                value, "when setting Blosc nthreads parameter\n"));
+            threads = static_cast<int>(
+                helper::StringTo<int32_t>(value, "when setting Blosc nthreads parameter\n"));
         }
     }
     blosc2_set_nthreads(threads);
-    const int decompressedSize =
-        blosc2_decompress(bufferIn, sizeIn, dataOut, sizeOut);
+    const int decompressedSize = blosc2_decompress(bufferIn, sizeIn, dataOut, sizeOut);
     blosc2_destroy();
     return static_cast<size_t>(decompressedSize);
 }

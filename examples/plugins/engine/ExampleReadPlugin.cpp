@@ -18,8 +18,8 @@ namespace adios2
 namespace plugin
 {
 
-ExampleReadPlugin::ExampleReadPlugin(core::IO &io, const std::string &name,
-                                     const Mode mode, helper::Comm comm)
+ExampleReadPlugin::ExampleReadPlugin(core::IO &io, const std::string &name, const Mode mode,
+                                     helper::Comm comm)
 : PluginEngineInterface(io, name, mode, comm.Duplicate())
 {
     Init();
@@ -61,16 +61,15 @@ void ExampleReadPlugin::Init()
     m_DataFile.open(fileName, std::ofstream::in);
     if (!m_DataFile)
     {
-        throw std::ios_base::failure("ExampleReadPlugin: Failed to open file " +
-                                     fileName);
+        throw std::ios_base::failure("ExampleReadPlugin: Failed to open file " + fileName);
     }
 
     std::string varfName = dir + "/vars.txt";
     m_VarFile.open(varfName, std::ofstream::in);
     if (!m_VarFile)
     {
-        throw std::ios_base::failure("ExampleReadPlugin: Failed to open file " +
-                                     varfName + ".vars");
+        throw std::ios_base::failure("ExampleReadPlugin: Failed to open file " + varfName +
+                                     ".vars");
     }
 
     // get var info
@@ -92,31 +91,29 @@ void ExampleReadPlugin::Init()
         {
             // not supported
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        AddVariable<T>(name, shape, start, count);                             \
+#define declare_template_instantiation(T)                                                          \
+    else if (type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        AddVariable<T>(name, shape, start, count);                                                 \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
     }
 }
 
-#define declare(T)                                                             \
-    void ExampleReadPlugin::DoGetSync(core::Variable<T> &variable, T *values)  \
-    {                                                                          \
-        ReadVariable(variable, values);                                        \
-    }                                                                          \
-    void ExampleReadPlugin::DoGetDeferred(core::Variable<T> &variable,         \
-                                          T *values)                           \
-    {                                                                          \
-        ReadVariable(variable, values);                                        \
+#define declare(T)                                                                                 \
+    void ExampleReadPlugin::DoGetSync(core::Variable<T> &variable, T *values)                      \
+    {                                                                                              \
+        ReadVariable(variable, values);                                                            \
+    }                                                                                              \
+    void ExampleReadPlugin::DoGetDeferred(core::Variable<T> &variable, T *values)                  \
+    {                                                                                              \
+        ReadVariable(variable, values);                                                            \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
 
-StepStatus ExampleReadPlugin::BeginStep(StepMode mode,
-                                        const float timeoutSeconds)
+StepStatus ExampleReadPlugin::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     return StepStatus::OK;
 }
@@ -134,13 +131,10 @@ void ExampleReadPlugin::DoClose(const int transportIndex) {}
 
 extern "C" {
 
-adios2::plugin::ExampleReadPlugin *EngineCreate(adios2::core::IO &io,
-                                                const std::string &name,
-                                                const adios2::Mode mode,
-                                                adios2::helper::Comm comm)
+adios2::plugin::ExampleReadPlugin *EngineCreate(adios2::core::IO &io, const std::string &name,
+                                                const adios2::Mode mode, adios2::helper::Comm comm)
 {
-    return new adios2::plugin::ExampleReadPlugin(io, name, mode,
-                                                 comm.Duplicate());
+    return new adios2::plugin::ExampleReadPlugin(io, name, mode, comm.Duplicate());
 }
 
 void EngineDestroy(adios2::plugin::ExampleReadPlugin *obj) { delete obj; }

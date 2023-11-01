@@ -50,8 +50,8 @@ void ZFPRateCUDA(const std::string rate)
 
     float *gpuSimData = nullptr;
     cudaMalloc(&gpuSimData, Nx * sizeof(float));
-    cudaMemcpy(gpuSimData, ((float *)&r32s[0] + (Nx * mpiRank)),
-               Nx * sizeof(float), cudaMemcpyHostToDevice);
+    cudaMemcpy(gpuSimData, ((float *)&r32s[0] + (Nx * mpiRank)), Nx * sizeof(float),
+               cudaMemcpyHostToDevice);
 
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -68,8 +68,7 @@ void ZFPRateCUDA(const std::string rate)
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
 
         // add operations
-        adios2::Operator ZFPOp =
-            adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
+        adios2::Operator ZFPOp = adios.DefineOperator("ZFPCompressor", adios2::ops::LossyZFP);
 
         var_r32.AddOperation(ZFPOp, {{adios2::ops::zfp::key::rate, rate}});
 
@@ -122,14 +121,13 @@ void ZFPRateCUDA(const std::string rate)
 
             // Remove INCREMENT from each element
             std::transform(r32o.begin(), r32o.end(), r32o.begin(),
-                           std::bind(std::minus<float>(), std::placeholders::_1,
-                                     INCREMENT));
+                           std::bind(std::minus<float>(), std::placeholders::_1, INCREMENT));
 
             for (size_t i = 0; i < NxTotal; i++)
             {
                 char msg[1 << 8] = {0};
-                snprintf(msg, sizeof(msg), "t=%d i=%zu rank=%d r32o=%f r32s=%f",
-                         t, i, mpiRank, r32o[i], r32s[i]);
+                snprintf(msg, sizeof(msg), "t=%d i=%zu rank=%d r32o=%f r32s=%f", t, i, mpiRank,
+                         r32o[i], r32s[i]);
                 ASSERT_LT(std::abs(r32o[i] - r32s[i]), EPSILON) << msg;
             }
         }
@@ -150,8 +148,7 @@ public:
 
 TEST_P(BPWRZFPCUDA, ADIOS2BPWRZFPCUDA) { ZFPRateCUDA(GetParam()); }
 
-INSTANTIATE_TEST_SUITE_P(ZFPRate, BPWRZFPCUDA,
-                         ::testing::Values("16", "32", "64"));
+INSTANTIATE_TEST_SUITE_P(ZFPRate, BPWRZFPCUDA, ::testing::Values("16", "32", "64"));
 
 int main(int argc, char **argv)
 {

@@ -57,6 +57,12 @@ JSONProfiler::JSONProfiler(helper::Comm const &comm) : m_Comm(comm)
     AddTimerWatch("PDW");
 
     m_Profiler.m_Bytes.emplace("buffering", 0);
+    AddTimerWatch("DataRead");
+    m_Profiler.m_Bytes.emplace("dataread", 0);
+    AddTimerWatch("MetaDataRead");
+    m_Profiler.m_Bytes.emplace("metadataread", 0);
+    AddTimerWatch("MetaMetaDataRead");
+    m_Profiler.m_Bytes.emplace("metadmetaataread", 0);
 
     m_RankMPI = m_Comm.Rank();
 }
@@ -71,8 +77,7 @@ std::string JSONProfiler::GetRankProfilingJSON(
     const std::vector<std::string> &transportsTypes,
     const std::vector<profiling::IOChrono *> &transportsProfilers) noexcept
 {
-    auto lf_WriterTimer = [](std::string &rankLog,
-                             const profiling::Timer &timer) {
+    auto lf_WriterTimer = [](std::string &rankLog, const profiling::Timer &timer) {
         // rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
         //           "\": " + std::to_string(timer.m_ProcessTime) + ", ";
         timer.AddToJsonStr(rankLog);
@@ -93,10 +98,20 @@ std::string JSONProfiler::GetRankProfilingJSON(
     for (const auto &timerPair : profiler.m_Timers)
     {
         const profiling::Timer &timer = timerPair.second;
-        // rankLog += "\"" + timer.m_Process + "_" + timer.GetShortUnits() +
-        //          "\": " + std::to_string(timer.m_ProcessTime) + ", ";
-        timer.AddToJsonStr(rankLog);
+        if (timer.m_nCalls > 0)
+        {
+            rankLog += ",\"" + timer.m_Process + "_" + timer.GetShortUnits() +
+                       "\": " + std::to_string(timer.m_ProcessTime);
+            timer.AddToJsonStr(rankLog);
+        }
     }
+
+    size_t DataBytes = m_Profiler.m_Bytes["dataread"];
+    size_t MetaDataBytes = m_Profiler.m_Bytes["metadataread"];
+    size_t MetaMetaDataBytes = m_Profiler.m_Bytes["metametadataread"];
+    rankLog += ", \"databytes\":" + std::to_string(DataBytes);
+    rankLog += ", \"metadatabytes\":" + std::to_string(MetaDataBytes);
+    rankLog += ", \"metametadatabytes\":" + std::to_string(MetaMetaDataBytes);
 
     const size_t transportsSize = transportsTypes.size();
 
@@ -119,8 +134,7 @@ std::string JSONProfiler::GetRankProfilingJSON(
     return rankLog;
 }
 
-std::vector<char>
-JSONProfiler::AggregateProfilingJSON(const std::string &rankLog) const
+std::vector<char> JSONProfiler::AggregateProfilingJSON(const std::string &rankLog) const
 {
     // Gather sizes
     const size_t rankLogSize = rankLog.size();
@@ -135,12 +149,10 @@ JSONProfiler::AggregateProfilingJSON(const std::string &rankLog) const
 
     if (m_RankMPI == 0) // pre-allocate in destination
     {
-        gatheredSize = std::accumulate(rankLogsSizes.begin(),
-                                       rankLogsSizes.end(), size_t(0));
+        gatheredSize = std::accumulate(rankLogsSizes.begin(), rankLogsSizes.end(), size_t(0));
 
         profilingJSON.resize(gatheredSize + header.size() + footer.size() - 2);
-        adios2::helper::CopyToBuffer(profilingJSON, position, header.c_str(),
-                                     header.size());
+        adios2::helper::CopyToBuffer(profilingJSON, position, header.c_str(), header.size());
     }
 
     m_Comm.GathervArrays(rankLog.c_str(), rankLog.size(), rankLogsSizes.data(),
@@ -149,8 +161,7 @@ JSONProfiler::AggregateProfilingJSON(const std::string &rankLog) const
     if (m_RankMPI == 0) // add footer to close JSON
     {
         position += gatheredSize - 2;
-        helper::CopyToBuffer(profilingJSON, position, footer.c_str(),
-                             footer.size());
+        helper::CopyToBuffer(profilingJSON, position, footer.c_str(), footer.size());
     }
 
     return profilingJSON;

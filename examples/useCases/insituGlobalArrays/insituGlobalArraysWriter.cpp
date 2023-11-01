@@ -50,12 +50,10 @@ const size_t BIGDIM = 1000;
 */
 
 // Which process writes which variables
-std::vector<std::vector<std::string>> VarTree = {
-    {"a", "b", "c"}, {"a", "d"}, {"b", "d"}, {"c"}};
+std::vector<std::vector<std::string>> VarTree = {{"a", "b", "c"}, {"a", "d"}, {"b", "d"}, {"c"}};
 
 // What size of data do they write
-std::vector<std::vector<size_t>> SizesTree = {
-    {5, 5, 5}, {3, 3}, {4, 4}, {5, 5}};
+std::vector<std::vector<size_t>> SizesTree = {{5, 5, 5}, {3, 3}, {4, 4}, {5, 5}};
 
 std::string argEngine = "BPFile";
 adios2::Params engineParams;
@@ -107,9 +105,8 @@ int main(int argc, char *argv[])
     {
         if (!rank)
         {
-            std::cout
-                << "ERROR: Maximum number of processors for this example is "
-                << maxProc << std::endl;
+            std::cout << "ERROR: Maximum number of processors for this example is " << maxProc
+                      << std::endl;
         }
         exit(1);
     }
@@ -117,8 +114,7 @@ int main(int argc, char *argv[])
     ProcessArgs(rank, argc, argv);
     if (!rank)
     {
-        std::cout << "Writer: ADIOS2 Engine set to: " << argEngine
-                  << "   Parameters:";
+        std::cout << "Writer: ADIOS2 Engine set to: " << argEngine << "   Parameters:";
         for (auto &p : engineParams)
         {
             std::cout << "    " << p.first << " = " << p.second;
@@ -167,8 +163,8 @@ int main(int argc, char *argv[])
         {
             size_t nelems = SizesTree[rank][i];
             Vars[i].resize(nelems);
-            ADIOSVars[i] = io.DefineVariable<double>(
-                VarTree[rank][i], {(unsigned int)nproc, BIGDIM});
+            ADIOSVars[i] =
+                io.DefineVariable<double>(VarTree[rank][i], {(unsigned int)nproc, BIGDIM});
         }
 
         adios2::Engine writer = io.Open("output.bp", adios2::Mode::Write);
@@ -189,8 +185,7 @@ int main(int argc, char *argv[])
                 // variable we write and its offsets in the global spaces
                 // adios2::SelectionBoundingBox sel();
                 ADIOSVars[i].SetSelection(adios2::Box<adios2::Dims>(
-                    {static_cast<size_t>(rank), 0},
-                    {1, static_cast<size_t>(nelems)}));
+                    {static_cast<size_t>(rank), 0}, {1, static_cast<size_t>(nelems)}));
                 writer.Put<double>(ADIOSVars[i], Vars[i].data());
             }
 

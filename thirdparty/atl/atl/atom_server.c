@@ -149,9 +149,7 @@ establish_server_connection()
 }
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
     int sockfd, tcpfd;
     int quiet = 0;
@@ -344,8 +342,7 @@ process_data(char* buf, char *response)
 }
 
 static void
-handle_udp_data(sockfd)
-int sockfd;
+handle_udp_data(int sockfd)
 {
     int numbytes;
     socklen_t addr_len = sizeof(struct sockaddr);
@@ -377,8 +374,7 @@ int sockfd;
 }
 
 static void
-handle_tcp_data(sockfd)
-int sockfd;
+handle_tcp_data(int sockfd)
 {
     int numbytes;
     unsigned char len;

@@ -23,24 +23,24 @@ namespace format
 {
 
 template <>
-inline void DataManSerializer::CalculateMinMax<std::complex<float>>(
-    const std::complex<float> *data, const Dims &count, nlohmann::json &metaj)
+inline void DataManSerializer::CalculateMinMax<std::complex<float>>(const std::complex<float> *data,
+                                                                    const Dims &count,
+                                                                    nlohmann::json &metaj)
 {
 }
 
 template <>
-inline void DataManSerializer::CalculateMinMax<std::complex<double>>(
-    const std::complex<double> *data, const Dims &count, nlohmann::json &metaj)
+inline void
+DataManSerializer::CalculateMinMax<std::complex<double>>(const std::complex<double> *data,
+                                                         const Dims &count, nlohmann::json &metaj)
 {
 }
 
 template <typename T>
-void DataManSerializer::CalculateMinMax(const T *data, const Dims &count,
-                                        nlohmann::json &metaj)
+void DataManSerializer::CalculateMinMax(const T *data, const Dims &count, nlohmann::json &metaj)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    size_t size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     T max = std::numeric_limits<T>::min();
     T min = std::numeric_limits<T>::max();
 
@@ -67,31 +67,27 @@ void DataManSerializer::CalculateMinMax(const T *data, const Dims &count,
 }
 
 template <class T>
-void DataManSerializer::PutData(const core::Variable<T> &variable,
-                                const std::string &doid, const size_t step,
-                                const int rank, const std::string &address,
+void DataManSerializer::PutData(const core::Variable<T> &variable, const std::string &doid,
+                                const size_t step, const int rank, const std::string &address,
                                 VecPtr localBuffer, JsonPtr metadataJson)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
-    PutData(variable.GetData(), variable.m_Name, variable.m_Shape,
-            variable.m_Start, variable.m_Count, variable.m_MemoryStart,
-            variable.m_MemoryCount, doid, step, rank, address,
-            variable.m_Operations, localBuffer, metadataJson);
+    PutData(variable.GetData(), variable.m_Name, variable.m_Shape, variable.m_Start,
+            variable.m_Count, variable.m_MemoryStart, variable.m_MemoryCount, doid, step, rank,
+            address, variable.m_Operations, localBuffer, metadataJson);
 }
 
 template <class T>
-void DataManSerializer::PutData(
-    const T *inputData, const std::string &varName, const Dims &varShape,
-    const Dims &varStart, const Dims &varCount, const Dims &varMemStart,
-    const Dims &varMemCount, const std::string &doid, const size_t step,
-    const int rank, const std::string &address,
-    const std::vector<std::shared_ptr<core::Operator>> &ops, VecPtr localBuffer,
-    JsonPtr metadataJson)
+void DataManSerializer::PutData(const T *inputData, const std::string &varName,
+                                const Dims &varShape, const Dims &varStart, const Dims &varCount,
+                                const Dims &varMemStart, const Dims &varMemCount,
+                                const std::string &doid, const size_t step, const int rank,
+                                const std::string &address,
+                                const std::vector<std::shared_ptr<core::Operator>> &ops,
+                                VecPtr localBuffer, JsonPtr metadataJson)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
-    Log(1,
-        "DataManSerializer::PutData begin with Step " + std::to_string(step) +
-            " Var " + varName,
+    Log(1, "DataManSerializer::PutData begin with Step " + std::to_string(step) + " Var " + varName,
         true, true);
 
     if (localBuffer == nullptr)
@@ -136,18 +132,15 @@ void DataManSerializer::PutData(
         std::transform(compressionMethod.begin(), compressionMethod.end(),
                        compressionMethod.begin(), ::tolower);
 
-        m_CompressBuffer.reserve(std::accumulate(varCount.begin(),
-                                                 varCount.end(), sizeof(T),
+        m_CompressBuffer.reserve(std::accumulate(varCount.begin(), varCount.end(), sizeof(T),
                                                  std::multiplies<size_t>()));
 
-        datasize = ops[0]->Operate(reinterpret_cast<const char *>(inputData),
-                                   varStart, varCount, helper::GetDataType<T>(),
-                                   m_CompressBuffer.data());
+        datasize = ops[0]->Operate(reinterpret_cast<const char *>(inputData), varStart, varCount,
+                                   helper::GetDataType<T>(), m_CompressBuffer.data());
         if (datasize == 0) // operator was not applied
             datasize = helper::CopyMemoryWithOpHeader(
-                reinterpret_cast<const char *>(inputData), varCount,
-                helper::GetDataType<T>(), m_CompressBuffer.data(),
-                ops[0]->GetHeaderSize(), MemorySpace::Host);
+                reinterpret_cast<const char *>(inputData), varCount, helper::GetDataType<T>(),
+                m_CompressBuffer.data(), ops[0]->GetHeaderSize(), MemorySpace::Host);
         compressed = true;
     }
 
@@ -158,8 +151,8 @@ void DataManSerializer::PutData(
     }
     else
     {
-        datasize = std::accumulate(varCount.begin(), varCount.end(), sizeof(T),
-                                   std::multiplies<size_t>());
+        datasize =
+            std::accumulate(varCount.begin(), varCount.end(), sizeof(T), std::multiplies<size_t>());
     }
 
     metaj["I"] = datasize;
@@ -173,36 +166,30 @@ void DataManSerializer::PutData(
 
     if (compressed)
     {
-        std::memcpy(localBuffer->data() + localBuffer->size() - datasize,
-                    m_CompressBuffer.data(), datasize);
+        std::memcpy(localBuffer->data() + localBuffer->size() - datasize, m_CompressBuffer.data(),
+                    datasize);
     }
     else
     {
-        std::memcpy(localBuffer->data() + localBuffer->size() - datasize,
-                    inputData, datasize);
+        std::memcpy(localBuffer->data() + localBuffer->size() - datasize, inputData, datasize);
     }
 
     if (metadataJson == nullptr)
     {
-        m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(
-            std::move(metaj));
+        m_MetadataJson[std::to_string(step)][std::to_string(rank)].emplace_back(std::move(metaj));
     }
     else
     {
-        (*metadataJson)[std::to_string(step)][std::to_string(rank)]
-            .emplace_back(std::move(metaj));
+        (*metadataJson)[std::to_string(step)][std::to_string(rank)].emplace_back(std::move(metaj));
     }
 
-    Log(1,
-        "DataManSerializer::PutData end with Step " + std::to_string(step) +
-            " Var " + varName,
+    Log(1, "DataManSerializer::PutData end with Step " + std::to_string(step) + " Var " + varName,
         true, true);
 }
 
 template <class T>
-int DataManSerializer::GetData(T *outputData, const std::string &varName,
-                               const Dims &varStart, const Dims &varCount,
-                               const size_t step, const Dims &varMemStart,
+int DataManSerializer::GetData(T *outputData, const std::string &varName, const Dims &varStart,
+                               const Dims &varCount, const size_t step, const Dims &varMemStart,
                                const Dims &varMemCount)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
@@ -249,10 +236,9 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
                 m_OperatorMap[varName] = j.params;
                 m_OperatorMap[varName]["method"] = j.compression;
                 m_OperatorMapMutex.unlock();
-                decompressBuffer.reserve(
-                    helper::GetTotalSize(j.count, sizeof(T)));
-                core::Decompress(j.buffer->data() + j.position, j.size,
-                                 decompressBuffer.data(), MemorySpace::Host);
+                decompressBuffer.reserve(helper::GetTotalSize(j.count, sizeof(T)));
+                core::Decompress(j.buffer->data() + j.position, j.size, decompressBuffer.data(),
+                                 MemorySpace::Host);
                 decompressed = true;
                 input_data = decompressBuffer.data();
             }
@@ -263,39 +249,33 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName,
             }
             /* single values */
             if (j.shape.empty() or
-                std::all_of(j.shape.begin(), j.shape.end(),
-                            [&](size_t i) { return i == 1; }))
+                std::all_of(j.shape.begin(), j.shape.end(), [&](size_t i) { return i == 1; }))
             {
-                std::memcpy(reinterpret_cast<char *>(outputData), input_data,
-                            sizeof(T));
+                std::memcpy(reinterpret_cast<char *>(outputData), input_data, sizeof(T));
             }
             else if (j.start.size() > 0 and j.start.size() == j.count.size() and
-                     j.start.size() == varStart.size() and
-                     j.start.size() == varCount.size())
+                     j.start.size() == varStart.size() and j.start.size() == varCount.size())
             {
                 if (m_ContiguousMajor)
                 {
-                    helper::NdCopy(
-                        input_data, j.start, j.count, true, j.isLittleEndian,
-                        reinterpret_cast<char *>(outputData), varStart,
-                        varCount, true, m_IsLittleEndian, sizeof(T), j.start,
-                        j.count, varMemStart, varMemCount);
+                    helper::NdCopy(input_data, j.start, j.count, true, j.isLittleEndian,
+                                   reinterpret_cast<char *>(outputData), varStart, varCount, true,
+                                   m_IsLittleEndian, sizeof(T), j.start, j.count, varMemStart,
+                                   varMemCount);
                 }
                 else
                 {
-                    helper::NdCopy(
-                        input_data, j.start, j.count, j.isRowMajor,
-                        j.isLittleEndian, reinterpret_cast<char *>(outputData),
-                        varStart, varCount, m_IsRowMajor, m_IsLittleEndian,
-                        sizeof(T), j.start, j.count, varMemStart, varMemCount);
+                    helper::NdCopy(input_data, j.start, j.count, j.isRowMajor, j.isLittleEndian,
+                                   reinterpret_cast<char *>(outputData), varStart, varCount,
+                                   m_IsRowMajor, m_IsLittleEndian, sizeof(T), j.start, j.count,
+                                   varMemStart, varMemCount);
                 }
             }
             else
             {
-                throw std::runtime_error(
-                    "DataManSerializer::GeData end with Step \" + "
-                    "std::to_string(step) +\n"
-                    "                        \" Var \" + varName failed");
+                throw std::runtime_error("DataManSerializer::GeData end with Step \" + "
+                                         "std::to_string(step) +\n"
+                                         "                        \" Var \" + varName failed");
             }
         }
     }

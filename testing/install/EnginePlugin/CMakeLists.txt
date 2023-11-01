@@ -43,7 +43,7 @@ endif()
 
 # add write test
 add_executable(adios_plugin_engine_write_test
-  ../../../examples/plugins/engine/examplePluginEngine_write.cpp
+  ../../../examples/plugins/engine/examplePluginEngineWrite.cpp
 )
 target_link_libraries(adios_plugin_engine_write_test adios2::cxx11)
 add_test(NAME adios_plugin_engine_write_test COMMAND adios_plugin_engine_write_test)
@@ -53,7 +53,7 @@ set_tests_properties(adios_plugin_engine_write_test PROPERTIES
 
 # add read test
 add_executable(adios_plugin_engine_read_test
-  ../../../examples/plugins/engine/examplePluginEngine_read.cpp
+  ../../../examples/plugins/engine/examplePluginEngineRead.cpp
 )
 target_link_libraries(adios_plugin_engine_read_test adios2::cxx11)
 add_test(NAME adios_plugin_engine_read_test COMMAND adios_plugin_engine_read_test)

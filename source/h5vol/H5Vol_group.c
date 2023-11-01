@@ -3,17 +3,16 @@
 
 #include "H5Vol_def.h"
 
-void *H5VL_adios2_group_create(void *obj, const H5VL_loc_params_t *loc_params,
-                               const char *name, hid_t lcpl_id, hid_t gcpl_id,
-                               hid_t gapl_id, hid_t dxpl_id, void **req)
+void *H5VL_adios2_group_create(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
+                               hid_t lcpl_id, hid_t gcpl_id, hid_t gapl_id, hid_t dxpl_id,
+                               void **req)
 {
     REQUIRE_NOT_NULL_ERR(obj, NULL);
     H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)obj;
 
     // NOTE: flaky here as I do not check whether this group was create before.
     //       good faith on users
-    if ((H5I_GROUP == loc_params->obj_type) ||
-        (H5I_FILE == loc_params->obj_type))
+    if ((H5I_GROUP == loc_params->obj_type) || (H5I_FILE == loc_params->obj_type))
     {
         H5VL_GroupDef_t *grp = gCreateGroupDef(name);
         return gGroupToVolObj(grp, vol);
@@ -36,17 +35,15 @@ herr_t H5VL_adios2_group_close(void *obj, hid_t dxpl_id, void **req)
     return 0;
 }
 
-void *H5VL_adios2_group_open(void *obj, const H5VL_loc_params_t *loc_params,
-                             const char *name, hid_t gapl_id, hid_t dxpl_id,
-                             void **req)
+void *H5VL_adios2_group_open(void *obj, const H5VL_loc_params_t *loc_params, const char *name,
+                             hid_t gapl_id, hid_t dxpl_id, void **req)
 {
     REQUIRE_NOT_NULL_ERR(obj, NULL);
     REQUIRE_NOT_NULL_ERR(loc_params, NULL);
 
     H5VL_ObjDef_t *vol = (H5VL_ObjDef_t *)obj;
 
-    if ((H5I_GROUP == loc_params->obj_type) |
-        (H5I_FILE == loc_params->obj_type))
+    if ((H5I_GROUP == loc_params->obj_type) | (H5I_FILE == loc_params->obj_type))
     {
         H5VL_GroupDef_t *grp = gCreateGroupDef(name);
         return gGroupToVolObj(grp, vol);
@@ -55,8 +52,7 @@ void *H5VL_adios2_group_open(void *obj, const H5VL_loc_params_t *loc_params,
     return NULL;
 }
 
-herr_t H5VL_adios2_group_get(void *obj, H5VL_group_get_args_t *args,
-                             hid_t H5_ATTR_UNUSED dxpl_id,
+herr_t H5VL_adios2_group_get(void *obj, H5VL_group_get_args_t *args, hid_t H5_ATTR_UNUSED dxpl_id,
                              void H5_ATTR_UNUSED **req)
 {
     REQUIRE_NOT_NULL_ERR(obj, -1);
@@ -64,8 +60,7 @@ herr_t H5VL_adios2_group_get(void *obj, H5VL_group_get_args_t *args,
 
     switch (args->op_type)
     {
-    case H5VL_GROUP_GET_INFO:
-    {
+    case H5VL_GROUP_GET_INFO: {
         const H5VL_loc_params_t *loc_params = &args->args.get_info.loc_params;
         H5G_info_t *group_info = args->args.get_info.ginfo;
 

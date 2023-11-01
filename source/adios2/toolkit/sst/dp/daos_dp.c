@@ -66,7 +66,7 @@ typedef struct _Daos_RS_Stream
 
     /* queued timestep info */
     struct _RSTimestepEntry *QueuedTimesteps;
-} * Daos_RS_Stream;
+} *Daos_RS_Stream;
 
 typedef struct _Daos_WSR_Stream
 {
@@ -75,9 +75,8 @@ typedef struct _Daos_WSR_Stream
     int ReaderCohortSize;
     char *ReaderRequests;
     struct _DaosReaderContactInfo *ReaderContactInfo;
-    struct _DaosWriterContactInfo
-        *WriterContactInfo; /* included so we can free on destroy */
-} * Daos_WSR_Stream;
+    struct _DaosWriterContactInfo *WriterContactInfo; /* included so we can free on destroy */
+} *Daos_WSR_Stream;
 
 typedef struct _TimestepEntry
 {
@@ -85,7 +84,7 @@ typedef struct _TimestepEntry
     struct _SstData Data;
     struct _DaosPerTimestepInfo *DP_TimestepInfo;
     struct _TimestepEntry *Next;
-} * TimestepList;
+} *TimestepList;
 
 typedef struct _RSTimestepEntry
 {
@@ -95,7 +94,7 @@ typedef struct _RSTimestepEntry
     long DataSize;
     long DataStart;
     struct _RSTimestepEntry *Next;
-} * RSTimestepList;
+} *RSTimestepList;
 
 typedef struct _Daos_WS_Stream
 {
@@ -109,20 +108,20 @@ typedef struct _Daos_WS_Stream
 
     int ReaderCount;
     Daos_WSR_Stream *Readers;
-} * Daos_WS_Stream;
+} *Daos_WS_Stream;
 
 typedef struct _DaosReaderContactInfo
 {
     char *ContactString;
     CMConnection Conn;
     void *RS_Stream;
-} * DaosReaderContactInfo;
+} *DaosReaderContactInfo;
 
 typedef struct _DaosWriterContactInfo
 {
     char *ContactString;
     void *WS_Stream;
-} * DaosWriterContactInfo;
+} *DaosWriterContactInfo;
 
 typedef struct _DaosReadRequestMsg
 {
@@ -133,26 +132,20 @@ typedef struct _DaosReadRequestMsg
     void *RS_Stream;
     int RequestingRank;
     int NotifyCondition;
-} * DaosReadRequestMsg;
+} *DaosReadRequestMsg;
 
 static FMField DaosReadRequestList[] = {
-    {"Timestep", "integer", sizeof(long),
-     FMOffset(DaosReadRequestMsg, Timestep)},
+    {"Timestep", "integer", sizeof(long), FMOffset(DaosReadRequestMsg, Timestep)},
     {"Offset", "integer", sizeof(size_t), FMOffset(DaosReadRequestMsg, Offset)},
     {"Length", "integer", sizeof(size_t), FMOffset(DaosReadRequestMsg, Length)},
-    {"WS_Stream", "integer", sizeof(void *),
-     FMOffset(DaosReadRequestMsg, WS_Stream)},
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(DaosReadRequestMsg, RS_Stream)},
-    {"RequestingRank", "integer", sizeof(int),
-     FMOffset(DaosReadRequestMsg, RequestingRank)},
-    {"NotifyCondition", "integer", sizeof(int),
-     FMOffset(DaosReadRequestMsg, NotifyCondition)},
+    {"WS_Stream", "integer", sizeof(void *), FMOffset(DaosReadRequestMsg, WS_Stream)},
+    {"RS_Stream", "integer", sizeof(void *), FMOffset(DaosReadRequestMsg, RS_Stream)},
+    {"RequestingRank", "integer", sizeof(int), FMOffset(DaosReadRequestMsg, RequestingRank)},
+    {"NotifyCondition", "integer", sizeof(int), FMOffset(DaosReadRequestMsg, NotifyCondition)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec DaosReadRequestStructs[] = {
-    {"DaosReadRequest", DaosReadRequestList, sizeof(struct _DaosReadRequestMsg),
-     NULL},
+    {"DaosReadRequest", DaosReadRequestList, sizeof(struct _DaosReadRequestMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
 typedef struct _DaosReadReplyMsg
@@ -162,37 +155,29 @@ typedef struct _DaosReadReplyMsg
     void *RS_Stream;
     char *Data;
     int NotifyCondition;
-} * DaosReadReplyMsg;
+} *DaosReadReplyMsg;
 
 static FMField DaosReadReplyList[] = {
     {"Timestep", "integer", sizeof(long), FMOffset(DaosReadReplyMsg, Timestep)},
-    {"RS_Stream", "integer", sizeof(void *),
-     FMOffset(DaosReadReplyMsg, RS_Stream)},
-    {"DataLength", "integer", sizeof(size_t),
-     FMOffset(DaosReadReplyMsg, DataLength)},
-    {"Data", "char[DataLength]", sizeof(char),
-     FMOffset(DaosReadReplyMsg, Data)},
-    {"NotifyCondition", "integer", sizeof(int),
-     FMOffset(DaosReadReplyMsg, NotifyCondition)},
+    {"RS_Stream", "integer", sizeof(void *), FMOffset(DaosReadReplyMsg, RS_Stream)},
+    {"DataLength", "integer", sizeof(size_t), FMOffset(DaosReadReplyMsg, DataLength)},
+    {"Data", "char[DataLength]", sizeof(char), FMOffset(DaosReadReplyMsg, Data)},
+    {"NotifyCondition", "integer", sizeof(int), FMOffset(DaosReadReplyMsg, NotifyCondition)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec DaosReadReplyStructs[] = {
-    {"DaosReadReply", DaosReadReplyList, sizeof(struct _DaosReadReplyMsg),
-     NULL},
+    {"DaosReadReply", DaosReadReplyList, sizeof(struct _DaosReadReplyMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
-static void DaosReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                 void *client_Data, attr_list attrs);
+static void DaosReadReplyHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                 attr_list attrs);
 
-static DP_RS_Stream DaosInitReader(CP_Services Svcs, void *CP_Stream,
-                                   void **ReaderContactInfoPtr,
-                                   struct _SstParams *Params,
-                                   attr_list WriterContactAttributes,
+static DP_RS_Stream DaosInitReader(CP_Services Svcs, void *CP_Stream, void **ReaderContactInfoPtr,
+                                   struct _SstParams *Params, attr_list WriterContactAttributes,
                                    SstStats Stats)
 {
     Daos_RS_Stream Stream = malloc(sizeof(struct _Daos_RS_Stream));
-    DaosReaderContactInfo Contact =
-        malloc(sizeof(struct _DaosReaderContactInfo));
+    DaosReaderContactInfo Contact = malloc(sizeof(struct _DaosReaderContactInfo));
     CManager cm = Svcs->getCManager(CP_Stream);
     char *DaosContactString;
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
@@ -212,8 +197,7 @@ static DP_RS_Stream DaosInitReader(CP_Services Svcs, void *CP_Stream,
 
     SMPI_Comm_rank(comm, &Stream->Rank);
 
-    set_string_attr(ListenAttrs, attr_atom_from_string("CM_TRANSPORT"),
-                    "sockets");
+    set_string_attr(ListenAttrs, attr_atom_from_string("CM_TRANSPORT"), "sockets");
 
     if (Params->DataInterface)
     {
@@ -245,8 +229,8 @@ static void DaosDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
     free(RS_Stream);
 }
 
-static void DaosReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
-                                   void *client_Data, attr_list attrs)
+static void DaosReadRequestHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                   attr_list attrs)
 {
     PERFSTUBS_TIMER_START_FUNC(timer);
     DaosReadRequestMsg ReadRequestMsg = (DaosReadRequestMsg)msg_v;
@@ -261,8 +245,8 @@ static void DaosReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
                   "Got a request to read remote memory "
                   "from reader rank %d: timestep %d, "
                   "offset %d, length %d\n",
-                  RequestingRank, ReadRequestMsg->Timestep,
-                  ReadRequestMsg->Offset, ReadRequestMsg->Length);
+                  RequestingRank, ReadRequestMsg->Timestep, ReadRequestMsg->Offset,
+                  ReadRequestMsg->Length);
     while (tmp != NULL)
     {
         if (tmp->Timestep == ReadRequestMsg->Timestep)
@@ -275,21 +259,19 @@ static void DaosReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
             ReadReplyMsg.Data = tmp->Data.block + ReadRequestMsg->Offset;
             ReadReplyMsg.RS_Stream = ReadRequestMsg->RS_Stream;
             ReadReplyMsg.NotifyCondition = ReadRequestMsg->NotifyCondition;
-            Svcs->verbose(
-                WS_Stream->CP_Stream, DPTraceVerbose,
-                "Sending a reply to reader rank %d for remote memory read\n",
-                RequestingRank);
+            Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose,
+                          "Sending a reply to reader rank %d for remote memory read\n",
+                          RequestingRank);
             if (!WSR_Stream->ReaderContactInfo[RequestingRank].Conn)
             {
                 attr_list List = attr_list_from_string(
-                    WSR_Stream->ReaderContactInfo[RequestingRank]
-                        .ContactString);
+                    WSR_Stream->ReaderContactInfo[RequestingRank].ContactString);
                 CMConnection Conn = CMget_conn(cm, List);
                 free_attr_list(List);
                 WSR_Stream->ReaderContactInfo[RequestingRank].Conn = Conn;
             }
-            CMwrite(WSR_Stream->ReaderContactInfo[RequestingRank].Conn,
-                    WS_Stream->ReadReplyFormat, &ReadReplyMsg);
+            CMwrite(WSR_Stream->ReaderContactInfo[RequestingRank].Conn, WS_Stream->ReadReplyFormat,
+                    &ReadReplyMsg);
 
             PERFSTUBS_TIMER_STOP_FUNC(timer);
             return;
@@ -320,10 +302,10 @@ typedef struct _DaosCompletionHandle
     int Failed;
     int Rank;
     struct _DaosCompletionHandle *Next;
-} * DaosCompletionHandle;
+} *DaosCompletionHandle;
 
-static void DaosReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
-                                 void *client_Data, attr_list attrs)
+static void DaosReadReplyHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
+                                 attr_list attrs)
 {
     PERFSTUBS_TIMER_START_FUNC(timer);
     DaosReadReplyMsg ReadReplyMsg = (DaosReadReplyMsg)msg_v;
@@ -344,16 +326,14 @@ static void DaosReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
 
     if (!Handle)
     {
-        Svcs->verbose(
-            RS_Stream->CP_Stream, DPTraceVerbose,
-            "Got a reply to remote memory read, but condition not found\n");
+        Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
+                      "Got a reply to remote memory read, but condition not found\n");
         PERFSTUBS_TIMER_STOP_FUNC(timer);
         return;
     }
-    Svcs->verbose(
-        RS_Stream->CP_Stream, DPTraceVerbose,
-        "Got a reply to remote memory read from rank %d, condition is %d\n",
-        Handle->Rank, ReadReplyMsg->NotifyCondition);
+    Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
+                  "Got a reply to remote memory read from rank %d, condition is %d\n", Handle->Rank,
+                  ReadReplyMsg->NotifyCondition);
 
     /*
      * `Handle` contains the full request info and is `client_data`
@@ -369,9 +349,8 @@ static void DaosReadReplyHandler(CManager cm, CMConnection conn, void *msg_v,
     PERFSTUBS_TIMER_STOP_FUNC(timer);
 }
 
-static DP_WS_Stream DaosInitWriter(CP_Services Svcs, void *CP_Stream,
-                                   struct _SstParams *Params, attr_list DPAttrs,
-                                   SstStats Stats)
+static DP_WS_Stream DaosInitWriter(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params,
+                                   attr_list DPAttrs, SstStats Stats)
 {
     Daos_WS_Stream Stream = malloc(sizeof(struct _Daos_WS_Stream));
     CManager cm = Svcs->getCManager(CP_Stream);
@@ -390,8 +369,7 @@ static DP_WS_Stream DaosInitWriter(CP_Services Svcs, void *CP_Stream,
     Stream->nvs = NULL; // DAOS_INIT()?
 
     Svcs->verbose(Stream->CP_Stream, DPSummaryVerbose,
-                  "Initializing DAOS writer, create store returned %p\n",
-                  Stream->nvs);
+                  "Initializing DAOS writer, create store returned %p\n", Stream->nvs);
 
     return (void *)Stream;
 }
@@ -408,8 +386,7 @@ static void DaosDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
             free(WS_Stream->Readers[i]->WriterContactInfo);
             free(WS_Stream->Readers[i]->ReaderContactInfo->ContactString);
             if (WS_Stream->Readers[i]->ReaderContactInfo->Conn)
-                CMConnection_close(
-                    WS_Stream->Readers[i]->ReaderContactInfo->Conn);
+                CMConnection_close(WS_Stream->Readers[i]->ReaderContactInfo->Conn);
             free(WS_Stream->Readers[i]->ReaderContactInfo);
             free(WS_Stream->Readers[i]);
         }
@@ -418,10 +395,8 @@ static void DaosDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
     free(WS_Stream);
 }
 
-static DP_WSR_Stream DaosInitWriterPerReader(CP_Services Svcs,
-                                             DP_WS_Stream WS_Stream_v,
-                                             int readerCohortSize,
-                                             CP_PeerCohort PeerCohort,
+static DP_WSR_Stream DaosInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_Stream_v,
+                                             int readerCohortSize, CP_PeerCohort PeerCohort,
                                              void **providedReaderInfo_v,
                                              void **WriterContactInfoPtr)
 {
@@ -430,8 +405,7 @@ static DP_WSR_Stream DaosInitWriterPerReader(CP_Services Svcs,
     DaosWriterContactInfo ContactInfo;
     SMPI_Comm comm = Svcs->getMPIComm(WS_Stream->CP_Stream);
     int Rank;
-    DaosReaderContactInfo *providedReaderInfo =
-        (DaosReaderContactInfo *)providedReaderInfo_v;
+    DaosReaderContactInfo *providedReaderInfo = (DaosReaderContactInfo *)providedReaderInfo_v;
 
     SMPI_Comm_rank(comm, &Rank);
 
@@ -449,28 +423,25 @@ static DP_WSR_Stream DaosInitWriterPerReader(CP_Services Svcs,
     {
         WSR_Stream->ReaderContactInfo[i].ContactString = NULL;
         WSR_Stream->ReaderContactInfo[i].Conn = NULL;
-        WSR_Stream->ReaderContactInfo[i].RS_Stream =
-            providedReaderInfo[i]->RS_Stream;
-        Svcs->verbose(
-            WS_Stream->CP_Stream, DPPerRankVerbose,
-            "Received contact info \"%s\", RD_Stream %p for Reader Rank %d\n",
-            WSR_Stream->ReaderContactInfo[i].ContactString,
-            WSR_Stream->ReaderContactInfo[i].RS_Stream, i);
+        WSR_Stream->ReaderContactInfo[i].RS_Stream = providedReaderInfo[i]->RS_Stream;
+        Svcs->verbose(WS_Stream->CP_Stream, DPPerRankVerbose,
+                      "Received contact info \"%s\", RD_Stream %p for Reader Rank %d\n",
+                      WSR_Stream->ReaderContactInfo[i].ContactString,
+                      WSR_Stream->ReaderContactInfo[i].RS_Stream, i);
     }
 
     /*
      * add this writer-side reader-specific stream to the parent writer stream
      * structure
      */
-    WS_Stream->Readers = realloc(
-        WS_Stream->Readers, sizeof(*WSR_Stream) * (WS_Stream->ReaderCount + 1));
+    WS_Stream->Readers =
+        realloc(WS_Stream->Readers, sizeof(*WSR_Stream) * (WS_Stream->ReaderCount + 1));
     WS_Stream->Readers[WS_Stream->ReaderCount] = WSR_Stream;
     WS_Stream->ReaderCount++;
 
     ContactInfo = malloc(sizeof(struct _DaosWriterContactInfo));
     memset(ContactInfo, 0, sizeof(struct _DaosWriterContactInfo));
-    ContactInfo->ContactString =
-        NULL; // strdup(nvs_get_store_name(WS_Stream->nvs));
+    ContactInfo->ContactString = NULL; // strdup(nvs_get_store_name(WS_Stream->nvs));
     ContactInfo->WS_Stream = WSR_Stream;
     *WriterContactInfoPtr = ContactInfo;
     WSR_Stream->WriterContactInfo = ContactInfo;
@@ -478,22 +449,18 @@ static DP_WSR_Stream DaosInitWriterPerReader(CP_Services Svcs,
     return WSR_Stream;
 }
 
-static void DaosDestroyWriterPerReader(CP_Services Svcs,
-                                       DP_WSR_Stream WSR_Stream_v)
+static void DaosDestroyWriterPerReader(CP_Services Svcs, DP_WSR_Stream WSR_Stream_v)
 {
     Daos_WSR_Stream WSR_Stream = (Daos_WSR_Stream)WSR_Stream_v;
     free(WSR_Stream);
 }
 
-static void DaosProvideWriterDataToReader(CP_Services Svcs,
-                                          DP_RS_Stream RS_Stream_v,
-                                          int writerCohortSize,
-                                          CP_PeerCohort PeerCohort,
+static void DaosProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v,
+                                          int writerCohortSize, CP_PeerCohort PeerCohort,
                                           void **providedWriterInfo_v)
 {
     Daos_RS_Stream RS_Stream = (Daos_RS_Stream)RS_Stream_v;
-    DaosWriterContactInfo *providedWriterInfo =
-        (DaosWriterContactInfo *)providedWriterInfo_v;
+    DaosWriterContactInfo *providedWriterInfo = (DaosWriterContactInfo *)providedWriterInfo_v;
 
     RS_Stream->PeerCohort = PeerCohort;
     RS_Stream->WriterCohortSize = writerCohortSize;
@@ -502,19 +469,16 @@ static void DaosProvideWriterDataToReader(CP_Services Svcs,
      * make a copy of writer contact information (original will not be
      * preserved)
      */
-    RS_Stream->WriterContactInfo =
-        malloc(sizeof(struct _DaosWriterContactInfo) * writerCohortSize);
+    RS_Stream->WriterContactInfo = malloc(sizeof(struct _DaosWriterContactInfo) * writerCohortSize);
     for (int i = 0; i < writerCohortSize; i++)
     {
         RS_Stream->WriterContactInfo[i].ContactString =
             strdup(providedWriterInfo[i]->ContactString);
-        RS_Stream->WriterContactInfo[i].WS_Stream =
-            providedWriterInfo[i]->WS_Stream;
-        Svcs->verbose(
-            RS_Stream->CP_Stream, DPPerRankVerbose,
-            "Received contact info \"%s\", WS_stream %p for WSR Rank %d\n",
-            RS_Stream->WriterContactInfo[i].ContactString,
-            RS_Stream->WriterContactInfo[i].WS_Stream, i);
+        RS_Stream->WriterContactInfo[i].WS_Stream = providedWriterInfo[i]->WS_Stream;
+        Svcs->verbose(RS_Stream->CP_Stream, DPPerRankVerbose,
+                      "Received contact info \"%s\", WS_stream %p for WSR Rank %d\n",
+                      RS_Stream->WriterContactInfo[i].ContactString,
+                      RS_Stream->WriterContactInfo[i].WS_Stream, i);
     }
     RS_Stream->writer_nvs = malloc(sizeof(void *) * writerCohortSize);
     for (int i = 0; i < writerCohortSize; i++)
@@ -524,8 +488,7 @@ static void DaosProvideWriterDataToReader(CP_Services Svcs,
     }
 }
 
-static void AddRequestToList(CP_Services Svcs, Daos_RS_Stream Stream,
-                             DaosCompletionHandle Handle)
+static void AddRequestToList(CP_Services Svcs, Daos_RS_Stream Stream, DaosCompletionHandle Handle)
 {
     Handle->Next = Stream->PendingReadRequests;
     Stream->PendingReadRequests = Handle;
@@ -554,12 +517,11 @@ static void RemoveRequestFromList(CP_Services Svcs, Daos_RS_Stream Stream,
     Tmp->Next = Tmp->Next->Next;
 }
 
-static void FailRequestsToRank(CP_Services Svcs, CManager cm,
-                               Daos_RS_Stream Stream, int FailedRank)
+static void FailRequestsToRank(CP_Services Svcs, CManager cm, Daos_RS_Stream Stream, int FailedRank)
 {
     DaosCompletionHandle Tmp = Stream->PendingReadRequests;
-    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
-                  "Fail pending requests to writer rank %d\n", FailedRank);
+    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "Fail pending requests to writer rank %d\n",
+                  FailedRank);
     while (Tmp != NULL)
     {
         if (Tmp->Rank == FailedRank)
@@ -571,29 +533,26 @@ static void FailRequestsToRank(CP_Services Svcs, CManager cm,
                           "failed and signalling condition %d\n",
                           Tmp->Rank, Tmp->CMcondition);
             CMCondition_signal(cm, Tmp->CMcondition);
-            Svcs->verbose(Tmp->CPStream, DPTraceVerbose,
-                          "Did the signal of condition %d\n", Tmp->Rank,
-                          Tmp->CMcondition);
+            Svcs->verbose(Tmp->CPStream, DPTraceVerbose, "Did the signal of condition %d\n",
+                          Tmp->Rank, Tmp->CMcondition);
         }
         Tmp = Tmp->Next;
     }
-    Svcs->verbose(Stream->CP_Stream, DPPerRankVerbose,
-                  "Done Failing requests to writer rank %d\n", FailedRank);
+    Svcs->verbose(Stream->CP_Stream, DPPerRankVerbose, "Done Failing requests to writer rank %d\n",
+                  FailedRank);
 }
 
 typedef struct _DaosPerTimestepInfo
 {
     char *CheckString;
     int CheckInt;
-} * DaosPerTimestepInfo;
+} *DaosPerTimestepInfo;
 
-static void *DaosReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
-                                  int Rank, long Timestep, size_t Offset,
-                                  size_t Length, void *Buffer,
-                                  void *DP_TimestepInfo)
+static void *DaosReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Rank, long Timestep,
+                                  size_t Offset, size_t Length, void *Buffer, void *DP_TimestepInfo)
 {
-    Daos_RS_Stream Stream = (Daos_RS_Stream)
-        Stream_v; /* DP_RS_Stream is the return from InitReader */
+    Daos_RS_Stream Stream =
+        (Daos_RS_Stream)Stream_v; /* DP_RS_Stream is the return from InitReader */
     CManager cm = Svcs->getCManager(Stream->CP_Stream);
     DaosCompletionHandle ret = malloc(sizeof(struct _DaosCompletionHandle));
     DaosPerTimestepInfo TimestepInfo = (DaosPerTimestepInfo)DP_TimestepInfo;
@@ -621,8 +580,7 @@ static void *DaosReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v,
     void *NVBlock;
     char *BaseAddr;
     snprintf(StringName, 20, "Timestep_%ld", Timestep);
-    BaseAddr =
-        NULL; // nvs_get_with_malloc(Stream->writer_nvs[Rank], StringName, 1);
+    BaseAddr = NULL; // nvs_get_with_malloc(Stream->writer_nvs[Rank], StringName, 1);
 
     if (BaseAddr)
     {
@@ -639,10 +597,9 @@ static int DaosWaitForCompletion(CP_Services Svcs, void *Handle_v)
 {
     DaosCompletionHandle Handle = (DaosCompletionHandle)Handle_v;
     int Ret = 1;
-    Svcs->verbose(
-        Handle->CPStream, DPTraceVerbose,
-        "Waiting for completion of memory read to rank %d, condition %d\n",
-        Handle->Rank, Handle->CMcondition);
+    Svcs->verbose(Handle->CPStream, DPTraceVerbose,
+                  "Waiting for completion of memory read to rank %d, condition %d\n", Handle->Rank,
+                  Handle->CMcondition);
     /*
      * Wait for the CM condition to be signalled.  If it has been already,
      * this returns immediately.  Copying the incoming data to the waiting
@@ -661,21 +618,19 @@ static int DaosWaitForCompletion(CP_Services Svcs, void *Handle_v)
     }
     else
     {
-        Svcs->verbose(
-            Handle->CPStream, DPTraceVerbose,
-            "Remote memory read to rank %d with condition %d has completed\n",
-            Handle->Rank, Handle->CMcondition);
+        Svcs->verbose(Handle->CPStream, DPTraceVerbose,
+                      "Remote memory read to rank %d with condition %d has completed\n",
+                      Handle->Rank, Handle->CMcondition);
     }
     RemoveRequestFromList(Svcs, Handle->DPStream, Handle);
     free(Handle);
     return Ret;
 }
 
-static void DaosNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
-                                  int FailedPeerRank)
+static void DaosNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v, int FailedPeerRank)
 {
-    Daos_RS_Stream Stream = (Daos_RS_Stream)
-        Stream_v; /* DP_RS_Stream is the return from InitReader */
+    Daos_RS_Stream Stream =
+        (Daos_RS_Stream)Stream_v; /* DP_RS_Stream is the return from InitReader */
     CManager cm = Svcs->getCManager(Stream->CP_Stream);
     Svcs->verbose(Stream->CP_Stream, DPPerRankVerbose,
                   "received notification that writer peer "
@@ -685,8 +640,7 @@ static void DaosNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v,
     FailRequestsToRank(Svcs, cm, Stream, FailedPeerRank);
 }
 
-static void DaosProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
-                                struct _SstData *Data,
+static void DaosProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct _SstData *Data,
                                 struct _SstData *LocalMetadata, long Timestep,
                                 void **TimestepInfoPtr)
 {
@@ -718,18 +672,15 @@ static void DaosProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
     NVBlock = NULL; // nvs_alloc(Stream->nvs, &Data->DataSize, StringName);
     memcpy(NVBlock, Data->block, Data->DataSize);
     // nvs_snapshot_(Stream->nvs, &Stream->Rank);
-    fprintf(stderr, "Did alloc, memcpy and snapshot with name %s\n",
-            StringName);
+    fprintf(stderr, "Did alloc, memcpy and snapshot with name %s\n", StringName);
 }
 
-static void DaosReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
-                                long Timestep)
+static void DaosReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, long Timestep)
 {
     Daos_WS_Stream Stream = (Daos_WS_Stream)Stream_v;
     TimestepList List = Stream->Timesteps;
 
-    Svcs->verbose(Stream->CP_Stream, DPPerRankVerbose,
-                  "Releasing timestep %ld\n", Timestep);
+    Svcs->verbose(Stream->CP_Stream, DPPerRankVerbose, "Releasing timestep %ld\n", Timestep);
     if (Stream->Timesteps->Timestep == Timestep)
     {
         Stream->Timesteps = List->Next;
@@ -762,52 +713,41 @@ static void DaosReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v,
          * Shouldn't ever get here because we should never release a
          * timestep that we don't have.
          */
-        fprintf(stderr, "Failed to release Timestep %ld, not found\n",
-                Timestep);
+        fprintf(stderr, "Failed to release Timestep %ld, not found\n", Timestep);
         assert(0);
     }
 }
 
 static FMField DaosReaderContactList[] = {
-    {"ContactString", "string", sizeof(char *),
-     FMOffset(DaosReaderContactInfo, ContactString)},
-    {"reader_ID", "integer", sizeof(void *),
-     FMOffset(DaosReaderContactInfo, RS_Stream)},
+    {"ContactString", "string", sizeof(char *), FMOffset(DaosReaderContactInfo, ContactString)},
+    {"reader_ID", "integer", sizeof(void *), FMOffset(DaosReaderContactInfo, RS_Stream)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec DaosReaderContactStructs[] = {
-    {"DaosReaderContactInfo", DaosReaderContactList,
-     sizeof(struct _DaosReaderContactInfo), NULL},
+    {"DaosReaderContactInfo", DaosReaderContactList, sizeof(struct _DaosReaderContactInfo), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField DaosWriterContactList[] = {
-    {"ContactString", "string", sizeof(char *),
-     FMOffset(DaosWriterContactInfo, ContactString)},
-    {"writer_ID", "integer", sizeof(void *),
-     FMOffset(DaosWriterContactInfo, WS_Stream)},
+    {"ContactString", "string", sizeof(char *), FMOffset(DaosWriterContactInfo, ContactString)},
+    {"writer_ID", "integer", sizeof(void *), FMOffset(DaosWriterContactInfo, WS_Stream)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec DaosWriterContactStructs[] = {
-    {"DaosWriterContactInfo", DaosWriterContactList,
-     sizeof(struct _DaosWriterContactInfo), NULL},
+    {"DaosWriterContactInfo", DaosWriterContactList, sizeof(struct _DaosWriterContactInfo), NULL},
     {NULL, NULL, 0, NULL}};
 
 static FMField DaosTimestepInfoList[] = {
-    {"CheckString", "string", sizeof(char *),
-     FMOffset(DaosPerTimestepInfo, CheckString)},
-    {"CheckInt", "integer", sizeof(void *),
-     FMOffset(DaosPerTimestepInfo, CheckInt)},
+    {"CheckString", "string", sizeof(char *), FMOffset(DaosPerTimestepInfo, CheckString)},
+    {"CheckInt", "integer", sizeof(void *), FMOffset(DaosPerTimestepInfo, CheckInt)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec DaosTimestepInfoStructs[] = {
-    {"DaosTimestepInfo", DaosTimestepInfoList,
-     sizeof(struct _DaosPerTimestepInfo), NULL},
+    {"DaosTimestepInfo", DaosTimestepInfoList, sizeof(struct _DaosPerTimestepInfo), NULL},
     {NULL, NULL, 0, NULL}};
 
 static struct _CP_DP_Interface daosDPInterface;
 
-static int DaosGetPriority(CP_Services Svcs, void *CP_Stream,
-                           struct _SstParams *Params)
+static int DaosGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params)
 {
     /* The daos DP priority 10 */
     return 10;

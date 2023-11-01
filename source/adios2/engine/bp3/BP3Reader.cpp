@@ -21,8 +21,7 @@ namespace core
 namespace engine
 {
 
-BP3Reader::BP3Reader(IO &io, const std::string &name, const Mode mode,
-                     helper::Comm comm)
+BP3Reader::BP3Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("BP3", io, name, mode, std::move(comm)), m_BP3Deserializer(m_Comm),
   m_FileManager(io, m_Comm), m_SubFileManager(io, m_Comm)
 {
@@ -45,21 +44,19 @@ StepStatus BP3Reader::BeginStep(StepMode mode, const float timeoutSeconds)
     PERFSTUBS_SCOPED_TIMER("BP3Reader::BeginStep");
     if (mode != StepMode::Read)
     {
-        helper::Throw<std::invalid_argument>(
-            "Engine", "BP3Reader", "BeginStep",
-            "mode is not supported yet, "
-            "only Read is valid for "
-            "engine BP3 with adios2::Mode::Read, in call to "
-            "BeginStep");
+        helper::Throw<std::invalid_argument>("Engine", "BP3Reader", "BeginStep",
+                                             "mode is not supported yet, "
+                                             "only Read is valid for "
+                                             "engine BP3 with adios2::Mode::Read, in call to "
+                                             "BeginStep");
     }
 
     if (!m_BP3Deserializer.m_DeferredVariables.empty())
     {
-        helper::Throw<std::invalid_argument>(
-            "Engine", "BP3Reader", "BeginStep",
-            "existing variables subscribed with "
-            "GetDeferred, did you forget to call "
-            "PerformGets() or EndStep()?, in call to BeginStep");
+        helper::Throw<std::invalid_argument>("Engine", "BP3Reader", "BeginStep",
+                                             "existing variables subscribed with "
+                                             "GetDeferred, did you forget to call "
+                                             "PerformGets() or EndStep()?, in call to BeginStep");
     }
 
     if (m_BetweenStepPairs)
@@ -100,9 +97,8 @@ void BP3Reader::EndStep()
 {
     if (!m_BetweenStepPairs)
     {
-        helper::Throw<std::logic_error>(
-            "Engine", "BP3Reader", "EndStep",
-            "EndStep() is called without a successful BeginStep()");
+        helper::Throw<std::logic_error>("Engine", "BP3Reader", "EndStep",
+                                        "EndStep() is called without a successful BeginStep()");
     }
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP3Reader::EndStep");
@@ -124,17 +120,16 @@ void BP3Reader::PerformGets()
         if (type == DataType::Struct)
         {
         }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        Variable<T> &variable =                                                \
-            FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \
-        for (auto &blockInfo : variable.m_BlocksInfo)                          \
-        {                                                                      \
-            m_BP3Deserializer.SetVariableBlockInfo(variable, blockInfo);       \
-        }                                                                      \
-        ReadVariableBlocks(variable);                                          \
-        variable.m_BlocksInfo.clear();                                         \
+#define declare_type(T)                                                                            \
+    else if (type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        Variable<T> &variable = FindVariable<T>(name, "in call to PerformGets, EndStep or Close"); \
+        for (auto &blockInfo : variable.m_BlocksInfo)                                              \
+        {                                                                                          \
+            m_BP3Deserializer.SetVariableBlockInfo(variable, blockInfo);                           \
+        }                                                                                          \
+        ReadVariableBlocks(variable);                                                              \
+        variable.m_BlocksInfo.clear();                                                             \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -148,9 +143,9 @@ void BP3Reader::Init()
 {
     if (m_OpenMode != Mode::Read)
     {
-        helper::Throw<std::invalid_argument>(
-            "Engine", "BP3Reader", "Init",
-            "BPFileReader only supports OpenMode::Read from" + m_Name);
+        helper::Throw<std::invalid_argument>("Engine", "BP3Reader", "Init",
+                                             "BPFileReader only supports OpenMode::Read from" +
+                                                 m_Name);
     }
 
     // if IO was involved in reading before this flag may be true now
@@ -176,14 +171,14 @@ void BP3Reader::InitTransports()
         const bool profile = m_BP3Deserializer.m_Profiler.m_IsActive;
         try
         {
-            m_FileManager.OpenFiles({m_Name}, adios2::Mode::Read,
-                                    m_IO.m_TransportsParameters, profile);
+            m_FileManager.OpenFiles({m_Name}, adios2::Mode::Read, m_IO.m_TransportsParameters,
+                                    profile);
         }
         catch (...)
         {
             const std::string bpName = helper::AddExtension(m_Name, ".bp");
-            m_FileManager.OpenFiles({bpName}, adios2::Mode::Read,
-                                    m_IO.m_TransportsParameters, profile);
+            m_FileManager.OpenFiles({bpName}, adios2::Mode::Read, m_IO.m_TransportsParameters,
+                                    profile);
         }
     }
 }
@@ -197,8 +192,7 @@ void BP3Reader::InitBuffer()
         // buffer
 
         // Load/Read Minifooter
-        const size_t miniFooterSize =
-            m_BP3Deserializer.m_MetadataSet.MiniFooterSize;
+        const size_t miniFooterSize = m_BP3Deserializer.m_MetadataSet.MiniFooterSize;
         if (fileSize < miniFooterSize)
         {
             std::string err = "The size of the input file " + m_Name + "(" +
@@ -209,30 +203,26 @@ void BP3Reader::InitBuffer()
                               " It is unlikely that this is a .bp file.";
             helper::Throw<std::logic_error>("Engine", "BP3Reader", "Init", err);
         }
-        const size_t miniFooterStart =
-            helper::GetDistance(fileSize, miniFooterSize,
-                                " fileSize < miniFooterSize, in call to Open");
+        const size_t miniFooterStart = helper::GetDistance(
+            fileSize, miniFooterSize, " fileSize < miniFooterSize, in call to Open");
 
         m_BP3Deserializer.m_Metadata.Resize(
-            miniFooterSize,
-            "allocating metadata buffer to inspect bp minifooter, in call to "
-            "Open");
+            miniFooterSize, "allocating metadata buffer to inspect bp minifooter, in call to "
+                            "Open");
 
-        m_FileManager.ReadFile(m_BP3Deserializer.m_Metadata.m_Buffer.data(),
-                               miniFooterSize, miniFooterStart);
+        m_FileManager.ReadFile(m_BP3Deserializer.m_Metadata.m_Buffer.data(), miniFooterSize,
+                               miniFooterStart);
 
         // Load/Read Metadata
-        const size_t metadataStart =
-            m_BP3Deserializer.MetadataStart(m_BP3Deserializer.m_Metadata);
-        const size_t metadataSize =
-            helper::GetDistance(fileSize, metadataStart,
-                                " fileSize < miniFooterSize, in call to Open");
+        const size_t metadataStart = m_BP3Deserializer.MetadataStart(m_BP3Deserializer.m_Metadata);
+        const size_t metadataSize = helper::GetDistance(
+            fileSize, metadataStart, " fileSize < miniFooterSize, in call to Open");
 
-        m_BP3Deserializer.m_Metadata.Resize(
-            metadataSize, "allocating metadata buffer, in call to Open");
+        m_BP3Deserializer.m_Metadata.Resize(metadataSize,
+                                            "allocating metadata buffer, in call to Open");
 
-        m_FileManager.ReadFile(m_BP3Deserializer.m_Metadata.m_Buffer.data(),
-                               metadataSize, metadataStart);
+        m_FileManager.ReadFile(m_BP3Deserializer.m_Metadata.m_Buffer.data(), metadataSize,
+                               metadataStart);
     }
 
     // broadcast metadata buffer to all ranks from zero
@@ -244,16 +234,16 @@ void BP3Reader::InitBuffer()
     m_IO.SetPrefixedNames(false);
 }
 
-#define declare_type(T)                                                        \
-    void BP3Reader::DoGetSync(Variable<T> &variable, T *data)                  \
-    {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("BP3Reader::Get");                              \
-        GetSyncCommon(variable, data);                                         \
-    }                                                                          \
-    void BP3Reader::DoGetDeferred(Variable<T> &variable, T *data)              \
-    {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("BP3Reader::Get");                              \
-        GetDeferredCommon(variable, data);                                     \
+#define declare_type(T)                                                                            \
+    void BP3Reader::DoGetSync(Variable<T> &variable, T *data)                                      \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP3Reader::Get");                                                  \
+        GetSyncCommon(variable, data);                                                             \
+    }                                                                                              \
+    void BP3Reader::DoGetDeferred(Variable<T> &variable, T *data)                                  \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP3Reader::Get");                                                  \
+        GetDeferredCommon(variable, data);                                                         \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -267,35 +257,32 @@ void BP3Reader::DoClose(const int transportIndex)
     m_FileManager.CloseFiles();
 }
 
-#define declare_type(T)                                                        \
-    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
-    BP3Reader::DoAllStepsBlocksInfo(const Variable<T> &variable) const         \
-    {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("BP3Reader::AllStepsBlocksInfo");               \
-        return m_BP3Deserializer.AllStepsBlocksInfo(variable);                 \
-    }                                                                          \
-                                                                               \
-    std::vector<std::vector<typename Variable<T>::BPInfo>>                     \
-    BP3Reader::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const \
-    {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("BP3Reader::AllRelativeStepsBlocksInfo");       \
-        return m_BP3Deserializer.AllRelativeStepsBlocksInfo(variable);         \
-    }                                                                          \
-                                                                               \
-    std::vector<typename Variable<T>::BPInfo> BP3Reader::DoBlocksInfo(         \
-        const Variable<T> &variable, const size_t step) const                  \
-    {                                                                          \
-        PERFSTUBS_SCOPED_TIMER("BP3Reader::BlocksInfo");                       \
-        return m_BP3Deserializer.BlocksInfo(variable, step);                   \
+#define declare_type(T)                                                                            \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>> BP3Reader::DoAllStepsBlocksInfo(   \
+        const Variable<T> &variable) const                                                         \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP3Reader::AllStepsBlocksInfo");                                   \
+        return m_BP3Deserializer.AllStepsBlocksInfo(variable);                                     \
+    }                                                                                              \
+                                                                                                   \
+    std::vector<std::vector<typename Variable<T>::BPInfo>>                                         \
+    BP3Reader::DoAllRelativeStepsBlocksInfo(const Variable<T> &variable) const                     \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP3Reader::AllRelativeStepsBlocksInfo");                           \
+        return m_BP3Deserializer.AllRelativeStepsBlocksInfo(variable);                             \
+    }                                                                                              \
+                                                                                                   \
+    std::vector<typename Variable<T>::BPInfo> BP3Reader::DoBlocksInfo(const Variable<T> &variable, \
+                                                                      const size_t step) const     \
+    {                                                                                              \
+        PERFSTUBS_SCOPED_TIMER("BP3Reader::BlocksInfo");                                           \
+        return m_BP3Deserializer.BlocksInfo(variable, step);                                       \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-size_t BP3Reader::DoSteps() const
-{
-    return m_BP3Deserializer.m_MetadataSet.StepsCount;
-}
+size_t BP3Reader::DoSteps() const { return m_BP3Deserializer.m_MetadataSet.StepsCount; }
 
 } // end namespace engine
 } // end namespace core

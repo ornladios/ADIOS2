@@ -73,41 +73,33 @@ TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
 
         // Define variables in ioH
 
-        adios2_variable *varI8 =
-            adios2_define_variable(ioH, "varI8", adios2_type_int8_t, 1, shape,
-                                   start, count, adios2_constant_dims_false);
-        adios2_variable *varI16 =
-            adios2_define_variable(ioH, "varI16", adios2_type_int16_t, 1, shape,
-                                   start, count, adios2_constant_dims_false);
-        adios2_variable *varI32 =
-            adios2_define_variable(ioH, "varI32", adios2_type_int32_t, 1, shape,
-                                   start, count, adios2_constant_dims_false);
-        adios2_variable *varI64 =
-            adios2_define_variable(ioH, "varI64", adios2_type_int64_t, 1, shape,
-                                   start, count, adios2_constant_dims_false);
+        adios2_variable *varI8 = adios2_define_variable(ioH, "varI8", adios2_type_int8_t, 1, shape,
+                                                        start, count, adios2_constant_dims_false);
+        adios2_variable *varI16 = adios2_define_variable(
+            ioH, "varI16", adios2_type_int16_t, 1, shape, start, count, adios2_constant_dims_false);
+        adios2_variable *varI32 = adios2_define_variable(
+            ioH, "varI32", adios2_type_int32_t, 1, shape, start, count, adios2_constant_dims_false);
+        adios2_variable *varI64 = adios2_define_variable(
+            ioH, "varI64", adios2_type_int64_t, 1, shape, start, count, adios2_constant_dims_false);
 
-        adios2_variable *varU8 =
-            adios2_define_variable(ioH, "varU8", adios2_type_uint8_t, 1, shape,
-                                   start, count, adios2_constant_dims_false);
-        adios2_variable *varU16 = adios2_define_variable(
-            ioH, "varU16", adios2_type_uint16_t, 1, shape, start, count,
-            adios2_constant_dims_false);
-        adios2_variable *varU32 = adios2_define_variable(
-            ioH, "varU32", adios2_type_uint32_t, 1, shape, start, count,
-            adios2_constant_dims_false);
-        adios2_variable *varU64 = adios2_define_variable(
-            ioH, "varU64", adios2_type_uint64_t, 1, shape, start, count,
-            adios2_constant_dims_false);
+        adios2_variable *varU8 = adios2_define_variable(ioH, "varU8", adios2_type_uint8_t, 1, shape,
+                                                        start, count, adios2_constant_dims_false);
+        adios2_variable *varU16 =
+            adios2_define_variable(ioH, "varU16", adios2_type_uint16_t, 1, shape, start, count,
+                                   adios2_constant_dims_false);
+        adios2_variable *varU32 =
+            adios2_define_variable(ioH, "varU32", adios2_type_uint32_t, 1, shape, start, count,
+                                   adios2_constant_dims_false);
+        adios2_variable *varU64 =
+            adios2_define_variable(ioH, "varU64", adios2_type_uint64_t, 1, shape, start, count,
+                                   adios2_constant_dims_false);
 
-        adios2_variable *varR32 =
-            adios2_define_variable(ioH, "varR32", adios2_type_float, 1, shape,
-                                   start, count, adios2_constant_dims_false);
-        adios2_variable *varR64 =
-            adios2_define_variable(ioH, "varR64", adios2_type_double, 1, shape,
-                                   start, count, adios2_constant_dims_false);
+        adios2_variable *varR32 = adios2_define_variable(ioH, "varR32", adios2_type_float, 1, shape,
+                                                         start, count, adios2_constant_dims_false);
+        adios2_variable *varR64 = adios2_define_variable(
+            ioH, "varR64", adios2_type_double, 1, shape, start, count, adios2_constant_dims_false);
 
-        adios2_engine *engineH =
-            adios2_open(ioH, "available.bp", adios2_mode_write);
+        adios2_engine *engineH = adios2_open(ioH, "available.bp", adios2_mode_write);
 
         for (size_t i = 0; i < steps; ++i)
         {
@@ -115,73 +107,53 @@ TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
 
             adios2_set_selection(varI8, 1, startNull.data(), countNull.data());
             adios2_put(engineH, varI8, nullptr, adios2_mode_sync);
-            adios2_set_selection(varI8, 1, startValid.data(),
-                                 countValid.data());
-            adios2_put(engineH, varI8, &data_I8[data_Nx / 2],
-                       adios2_mode_deferred);
+            adios2_set_selection(varI8, 1, startValid.data(), countValid.data());
+            adios2_put(engineH, varI8, &data_I8[data_Nx / 2], adios2_mode_deferred);
 
             adios2_set_selection(varI16, 1, startNull.data(), countNull.data());
             adios2_put(engineH, varI16, nullptr, adios2_mode_sync);
-            adios2_set_selection(varI16, 1, startValid.data(),
-                                 countValid.data());
-            adios2_put(engineH, varI16, &data_I16[data_Nx / 2],
-                       adios2_mode_deferred);
+            adios2_set_selection(varI16, 1, startValid.data(), countValid.data());
+            adios2_put(engineH, varI16, &data_I16[data_Nx / 2], adios2_mode_deferred);
 
             adios2_set_selection(varI32, 1, startNull.data(), countNull.data());
             adios2_put(engineH, varI32, nullptr, adios2_mode_sync);
-            adios2_set_selection(varI32, 1, startValid.data(),
-                                 countValid.data());
-            adios2_put(engineH, varI32, &data_I32[data_Nx / 2],
-                       adios2_mode_deferred);
+            adios2_set_selection(varI32, 1, startValid.data(), countValid.data());
+            adios2_put(engineH, varI32, &data_I32[data_Nx / 2], adios2_mode_deferred);
 
             adios2_set_selection(varI64, 1, startNull.data(), countNull.data());
             adios2_put(engineH, varI64, nullptr, adios2_mode_sync);
-            adios2_set_selection(varI64, 1, startValid.data(),
-                                 countValid.data());
-            adios2_put(engineH, varI64, &data_I64[data_Nx / 2],
-                       adios2_mode_deferred);
+            adios2_set_selection(varI64, 1, startValid.data(), countValid.data());
+            adios2_put(engineH, varI64, &data_I64[data_Nx / 2], adios2_mode_deferred);
 
             adios2_set_selection(varU8, 1, startNull.data(), countNull.data());
             adios2_put(engineH, varU8, nullPointer, adios2_mode_deferred);
-            adios2_set_selection(varU8, 1, startValid.data(),
-                                 countValid.data());
-            adios2_put(engineH, varU8, &data_U8[data_Nx / 2],
-                       adios2_mode_deferred);
+            adios2_set_selection(varU8, 1, startValid.data(), countValid.data());
+            adios2_put(engineH, varU8, &data_U8[data_Nx / 2], adios2_mode_deferred);
 
             adios2_set_selection(varU16, 1, startNull.data(), countNull.data());
             adios2_put(engineH, varU16, nullPointer, adios2_mode_deferred);
-            adios2_set_selection(varU16, 1, startValid.data(),
-                                 countValid.data());
-            adios2_put(engineH, varU16, &data_U16[data_Nx / 2],
-                       adios2_mode_deferred);
+            adios2_set_selection(varU16, 1, startValid.data(), countValid.data());
+            adios2_put(engineH, varU16, &data_U16[data_Nx / 2], adios2_mode_deferred);
 
             adios2_set_selection(varU32, 1, startNull.data(), countNull.data());
             adios2_put(engineH, varU32, nullPointer, adios2_mode_deferred);
-            adios2_set_selection(varU32, 1, startValid.data(),
-                                 countValid.data());
-            adios2_put(engineH, varU32, &data_U32[data_Nx / 2],
-                       adios2_mode_deferred);
+            adios2_set_selection(varU32, 1, startValid.data(), countValid.data());
+            adios2_put(engineH, varU32, &data_U32[data_Nx / 2], adios2_mode_deferred);
 
             adios2_set_selection(varU64, 1, startNull.data(), countNull.data());
             adios2_put(engineH, varU64, nullPointer, adios2_mode_deferred);
-            adios2_set_selection(varU64, 1, startValid.data(),
-                                 countValid.data());
-            adios2_put(engineH, varU64, &data_U64[data_Nx / 2],
-                       adios2_mode_deferred);
+            adios2_set_selection(varU64, 1, startValid.data(), countValid.data());
+            adios2_put(engineH, varU64, &data_U64[data_Nx / 2], adios2_mode_deferred);
 
             adios2_set_selection(varR32, 1, startNull.data(), countNull.data());
             adios2_put(engineH, varR32, nullPointer, adios2_mode_deferred);
-            adios2_set_selection(varR32, 1, startValid.data(),
-                                 countValid.data());
-            adios2_put(engineH, varR32, &data_R32[data_Nx / 2],
-                       adios2_mode_deferred);
+            adios2_set_selection(varR32, 1, startValid.data(), countValid.data());
+            adios2_put(engineH, varR32, &data_R32[data_Nx / 2], adios2_mode_deferred);
 
             adios2_set_selection(varR64, 1, startNull.data(), countNull.data());
             adios2_put(engineH, varR64, nullPointer, adios2_mode_deferred);
-            adios2_set_selection(varR64, 1, startValid.data(),
-                                 countValid.data());
-            adios2_put(engineH, varR64, &data_R64[data_Nx / 2],
-                       adios2_mode_deferred);
+            adios2_set_selection(varR64, 1, startValid.data(), countValid.data());
+            adios2_put(engineH, varR64, &data_R64[data_Nx / 2], adios2_mode_deferred);
 
             adios2_end_step(engineH);
         }
@@ -205,24 +177,22 @@ TEST_F(BPAvailableVariablesAttributes, AvailableVariablesAttributes)
         std::vector<double> inR64(data_Nx / 2);
 
         adios2_io *ioH = adios2_declare_io(adiosH, "Reader");
-        adios2_engine *engineH =
-            adios2_open(ioH, "available.bp", adios2_mode_read);
+        adios2_engine *engineH = adios2_open(ioH, "available.bp", adios2_mode_read);
 
         size_t nsteps;
         adios2_steps(&nsteps, engineH);
         EXPECT_EQ(nsteps, steps);
 
-        while (adios2_begin_step(engineH, adios2_step_mode_read, -1.,
-                                 &status) == adios2_error_none)
+        while (adios2_begin_step(engineH, adios2_step_mode_read, -1., &status) == adios2_error_none)
         {
             if (status == adios2_step_status_end_of_stream)
             {
                 break;
             }
 
-            std::vector<std::string> correct_vars = {
-                "varI16", "varI32", "varI64", "varI8",  "varR32",
-                "varR64", "varU16", "varU32", "varU64", "varU8"};
+            std::vector<std::string> correct_vars = {"varI16", "varI32", "varI64", "varI8",
+                                                     "varR32", "varR64", "varU16", "varU32",
+                                                     "varU64", "varU8"};
             std::vector<std::string> correct_attrs = {"strvalue", "intvalue"};
 
             std::vector<std::string> vars;

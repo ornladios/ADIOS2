@@ -47,8 +47,7 @@ class BP4Base : virtual public BPBase
 
 public:
     /* metadata index table*/
-    std::unordered_map<uint64_t,
-                       std::unordered_map<uint64_t, std::vector<uint64_t>>>
+    std::unordered_map<uint64_t, std::unordered_map<uint64_t, std::vector<uint64_t>>>
         m_MetadataIndexTable;
 
     BufferSTL m_MetadataIndex;
@@ -78,8 +77,7 @@ public:
      * @param names
      * @return vector of base (name.bp) names
      */
-    std::vector<std::string>
-    GetBPBaseNames(const std::vector<std::string> &names) const noexcept;
+    std::vector<std::string> GetBPBaseNames(const std::vector<std::string> &names) const noexcept;
 
     /**
      * Get BP substream names from base names:
@@ -89,21 +87,17 @@ public:
      * @return vector of BP substream names for transports
      */
     std::vector<std::string>
-    GetBPSubStreamNames(const std::vector<std::string> &baseNames) const
-        noexcept;
+    GetBPSubStreamNames(const std::vector<std::string> &baseNames) const noexcept;
 
     std::vector<std::string>
-    GetBPMetadataFileNames(const std::vector<std::string> &names) const
-        noexcept;
+    GetBPMetadataFileNames(const std::vector<std::string> &names) const noexcept;
 
     std::string GetBPMetadataFileName(const std::string &name) const noexcept;
 
     std::vector<std::string>
-    GetBPMetadataIndexFileNames(const std::vector<std::string> &names) const
-        noexcept;
+    GetBPMetadataIndexFileNames(const std::vector<std::string> &names) const noexcept;
 
-    std::string GetBPMetadataIndexFileName(const std::string &name) const
-        noexcept;
+    std::string GetBPMetadataIndexFileName(const std::string &name) const noexcept;
 
     std::vector<std::string>
     GetBPVersionFileNames(const std::vector<std::string> &names) const noexcept;
@@ -111,13 +105,11 @@ public:
     std::string GetBPVersionFileName(const std::string &name) const noexcept;
 
     std::vector<std::string>
-    GetBPActiveFlagFileNames(const std::vector<std::string> &names) const
-        noexcept;
+    GetBPActiveFlagFileNames(const std::vector<std::string> &names) const noexcept;
 
     std::string GetBPActiveFlagFileName(const std::string &name) const noexcept;
 
-    std::string GetBPSubFileName(const std::string &name,
-                                 const size_t subFileIndex,
+    std::string GetBPSubFileName(const std::string &name, const size_t subFileIndex,
                                  const bool hasSubFiles = true,
                                  const bool isReader = false) const noexcept;
 
@@ -127,8 +119,7 @@ public:
      * @param variableName input
      * @param count input variable local dimensions
      */
-    size_t GetBPIndexSizeInData(const std::string &variableName,
-                                const Dims &count) const noexcept;
+    size_t GetBPIndexSizeInData(const std::string &variableName, const Dims &count) const noexcept;
 
 protected:
     /* The position of the length of the serialized variable (metadata + data
@@ -143,8 +134,7 @@ protected:
 
     ElementIndexHeader
     ReadElementIndexHeader(const std::vector<char> &buffer, size_t &position,
-                           const bool isLittleEndian = true) const
-        noexcept final;
+                           const bool isLittleEndian = true) const noexcept final;
 
 private:
     std::string GetBPSubStreamName(const std::string &name, const size_t id,

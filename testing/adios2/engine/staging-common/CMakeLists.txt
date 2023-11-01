@@ -149,8 +149,13 @@ set (ALL_SIMPLE_TESTS "")
 list (APPEND ALL_SIMPLE_TESTS ${SIMPLE_TESTS} ${SIMPLE_FORTRAN_TESTS} ${SIMPLE_MPI_TESTS} ${SIMPLE_ZFP_TESTS})
 
 set (SST_SPECIFIC_TESTS  "")
+import_bp_test(WriteMemorySelectionRead 1 1)
+list (APPEND SST_SPECIFIC_TESTS  "WriteMemorySelectionRead.1x1")
 list (APPEND SST_SPECIFIC_TESTS  "1x1.SstRUDP;1x1.LocalMultiblock;RoundRobinDistribution.1x1x3;AllToAllDistribution.1x1x3;OnDemandSingle.1x1")
+
 if (ADIOS2_HAVE_MPI)
+  import_bp_test(WriteMemorySelectionRead 3 3)
+  list (APPEND SST_SPECIFIC_TESTS  "WriteMemorySelectionRead.3x3")
   list (APPEND SST_SPECIFIC_TESTS  "2x3.SstRUDP;2x1.LocalMultiblock;5x3.LocalMultiblock;")
 endif()
 
@@ -233,24 +238,22 @@ if(NOT WIN32)    # not on windows
 endif()
 
 #  BP5 tests
-if(ADIOS2_HAVE_BP5)
-    set (BP5_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS} ${BP5File_ONLY_TESTS})
-    # Delayed reader not worth testing on file engines
-    list (FILTER BP5_TESTS EXCLUDE REGEX "DelayedReader")
-    # Discard not a feature of BP5
-    list (FILTER BP5_TESTS EXCLUDE REGEX ".*DiscardWriter.1x1")
-    # PreciousTimestep not a feature of BP5
-    list (FILTER BP5_TESTS EXCLUDE REGEX ".*PreciousTimestep")
-    # LatestTimestep not a feature of BP5
-    list (FILTER BP5_TESTS EXCLUDE REGEX ".*LatestReader")
-    # KillWriter fails with BP5
-    list (FILTER BP5_TESTS EXCLUDE REGEX ".*KillWriter")
-    # KillReaders  We swear this isn't necessary for BP5 streaming
-    list (FILTER BP5_TESTS EXCLUDE REGEX ".*KillReaders")
-    foreach(test ${BP5_TESTS})
-        add_common_test(${test} BP5)
-    endforeach()
-endif()
+set (BP5_TESTS ${ALL_SIMPLE_TESTS} ${SPECIAL_TESTS} ${BP5File_ONLY_TESTS})
+# Delayed reader not worth testing on file engines
+list (FILTER BP5_TESTS EXCLUDE REGEX "DelayedReader")
+# Discard not a feature of BP5
+list (FILTER BP5_TESTS EXCLUDE REGEX ".*DiscardWriter.1x1")
+# PreciousTimestep not a feature of BP5
+list (FILTER BP5_TESTS EXCLUDE REGEX ".*PreciousTimestep")
+# LatestTimestep not a feature of BP5
+list (FILTER BP5_TESTS EXCLUDE REGEX ".*LatestReader")
+# KillWriter fails with BP5
+list (FILTER BP5_TESTS EXCLUDE REGEX ".*KillWriter")
+# KillReaders  We swear this isn't necessary for BP5 streaming
+list (FILTER BP5_TESTS EXCLUDE REGEX ".*KillReaders")
+foreach(test ${BP5_TESTS})
+    add_common_test(${test} BP5)
+endforeach()
 
 
 #
@@ -375,4 +378,10 @@ if(NOT MSVC AND ADIOS2_HAVE_HDF5 AND (NOT ADIOS2_HAVE_MPI OR HDF5_IS_PARALLEL)) 
     foreach(test ${HDF5_TESTS})
         add_common_test(${test} HDF5)
     endforeach()
+endif()
+
+# Tests particularities
+if (WIN32)
+    set_property(TEST Staging.1x1DefSync.BP5 PROPERTY TIMEOUT 500)
+    set_property(TEST Staging.1x1DataWrite.BP5 PROPERTY TIMEOUT 500)
 endif()

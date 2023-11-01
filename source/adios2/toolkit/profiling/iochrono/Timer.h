@@ -26,8 +26,8 @@ namespace adios2
 namespace profiling
 {
 
-static std::chrono::time_point<std::chrono::high_resolution_clock>
-    m_ADIOS2ProgStart = std::chrono::high_resolution_clock::now();
+static std::chrono::time_point<std::chrono::high_resolution_clock> m_ADIOS2ProgStart =
+    std::chrono::high_resolution_clock::now();
 
 class Timer
 {
@@ -51,8 +51,7 @@ public:
      * @param process name of process to be measured
      * @param timeUnit (mus, ms, s, etc.) from ADIOSTypes.h TimeUnit
      */
-    Timer(const std::string process, const TimeUnit timeUnit,
-          const bool trace = false);
+    Timer(const std::string process, const TimeUnit timeUnit, const bool trace = false);
 
     ~Timer() = default;
 
@@ -73,13 +72,12 @@ public:
         m_nCalls++;
         if (m_Trace)
         {
-            auto relative =
-                std::chrono::duration_cast<std::chrono::microseconds>(
-                    m_InitialTime - m_ADIOS2ProgStart)
+            auto relative = std::chrono::duration_cast<std::chrono::microseconds>(m_InitialTime -
+                                                                                  m_ADIOS2ProgStart)
+                                .count();
+            auto micros =
+                std::chrono::duration_cast<std::chrono::microseconds>(m_ElapsedTime - m_InitialTime)
                     .count();
-            auto micros = std::chrono::duration_cast<std::chrono::microseconds>(
-                              m_ElapsedTime - m_InitialTime)
-                              .count();
 
             if ((micros > 10000))
             {
@@ -88,8 +86,7 @@ public:
 
                 std::ostringstream ss;
 
-                ss << "\"" << relative / 1000.0 << "+" << micros / 1000.0
-                   << "\"";
+                ss << "\"" << relative / 1000.0 << "+" << micros / 1000.0 << "\"";
 
                 m_Details += ss.str();
             }
@@ -105,8 +102,7 @@ public:
         {
             rankLog += ", ";
         }
-        rankLog +=
-            "\"" + m_Process + "\":{\"mus\":" + std::to_string(m_ProcessTime);
+        rankLog += "\"" + m_Process + "\":{\"mus\":" + std::to_string(m_ProcessTime);
         rankLog += ", \"nCalls\":" + std::to_string(m_nCalls);
 
         if (500 > m_nCalls)

@@ -117,8 +117,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
             if (ExpectedStep == adios2::MaxSizeT)
             {
                 EXPECT_EQ(currentStep, 0);
-                std::cout << "Got my expected first timestep Zero!"
-                          << std::endl;
+                std::cout << "Got my expected first timestep Zero!" << std::endl;
                 ExpectedStep = 0;
             }
             else if (ExpectedStep == 1)
@@ -130,8 +129,7 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         }
         if ((ExpectedStep == adios2::MaxSizeT) || Latest || Discard)
         {
-            if ((ExpectedStep != adios2::MaxSizeT) &&
-                (ExpectedStep != currentStep))
+            if ((ExpectedStep != adios2::MaxSizeT) && (ExpectedStep != currentStep))
             {
                 SkippedSteps++;
             }
@@ -206,10 +204,8 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         ASSERT_EQ(var_time.ShapeID(), adios2::ShapeID::GlobalArray);
         ASSERT_EQ(var_time.Shape()[0], writerSize);
 
-        long unsigned int myStart =
-            (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
-        long unsigned int myLength =
-            (long unsigned int)((writerSize * Nx + mpiSize - 1) / mpiSize);
+        long unsigned int myStart = (long unsigned int)(writerSize * Nx / mpiSize) * mpiRank;
+        long unsigned int myLength = (long unsigned int)((writerSize * Nx + mpiSize - 1) / mpiSize);
 
         if (myStart + myLength > writerSize * Nx)
         {
@@ -276,16 +272,15 @@ TEST_F(SstReadTest, ADIOS2SstRead)
         }
         if (IncreasingDelay && DelayWhileHoldingStep)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(
-                DelayMS)); /* sleep for DelayMS milliseconds */
+            std::this_thread::sleep_for(
+                std::chrono::milliseconds(DelayMS)); /* sleep for DelayMS milliseconds */
             DelayMS += 200;
         }
         try
         {
             engine.EndStep();
 
-            EXPECT_EQ(validateCommonTestData(myStart, myLength, currentStep, 0),
-                      0);
+            EXPECT_EQ(validateCommonTestData(myStart, myLength, currentStep, 0), 0);
             write_times.push_back(write_time);
             if (AdvancingAttrs)
             {
@@ -296,15 +291,13 @@ TEST_F(SstReadTest, ADIOS2SstRead)
                     const std::string r64_Single =
                         std::string("r64_PerStep_") + std::to_string(step);
                     auto attr_r64 = io.InquireAttribute<double>(r64_Single);
-                    std::cout << "Testing for attribute " << r64_Single
-                              << std::endl;
+                    std::cout << "Testing for attribute " << r64_Single << std::endl;
                     if (step <= currentStep)
                     {
                         EXPECT_TRUE(attr_r64);
                         ASSERT_EQ(attr_r64.Data().size() == 1, true);
                         ASSERT_EQ(attr_r64.Type(), adios2::GetType<double>());
-                        ASSERT_EQ(attr_r64.Data().front(),
-                                  (double)(step * 10.0));
+                        ASSERT_EQ(attr_r64.Data().front(), (double)(step * 10.0));
                     }
                     else
                     {
@@ -330,18 +323,16 @@ TEST_F(SstReadTest, ADIOS2SstRead)
                 break;
             }
         }
-        std::cout << "Reader finished with step " << ExpectedStep - 1
-                  << std::endl;
+        std::cout << "Reader finished with step " << ExpectedStep - 1 << std::endl;
         if (IncreasingDelay && !DelayWhileHoldingStep)
         {
-            std::this_thread::sleep_for(std::chrono::milliseconds(
-                DelayMS)); /* sleep for DelayMS milliseconds */
+            std::this_thread::sleep_for(
+                std::chrono::milliseconds(DelayMS)); /* sleep for DelayMS milliseconds */
             DelayMS += 200;
         }
     }
 
-    if ((write_times.size() > 1) &&
-        ((write_times.back() - write_times.front()) > 1))
+    if ((write_times.size() > 1) && ((write_times.back() - write_times.front()) > 1))
     {
         TimeGapDetected++;
     }
@@ -373,8 +364,8 @@ TEST_F(SstReadTest, ADIOS2SstRead)
     }
     if (NonBlockingBeginStep)
     {
-        std::cout << "Number of BeginSteps where we failed timeout is "
-                  << BeginStepFailedPolls << std::endl;
+        std::cout << "Number of BeginSteps where we failed timeout is " << BeginStepFailedPolls
+                  << std::endl;
         EXPECT_TRUE(BeginStepFailedPolls);
     }
 
@@ -395,8 +386,7 @@ int main(int argc, char **argv)
     ParseArgs(argc, argv);
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level =
-        (engine == "SST") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
+    int thread_support_level = (engine == "SST") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

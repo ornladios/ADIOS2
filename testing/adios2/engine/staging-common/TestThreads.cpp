@@ -77,8 +77,8 @@ int Read(std::string BaseName, int ID)
         Reader.Close();
         {
             std::lock_guard<std::mutex> guard(StdOutMtx);
-            std::cout << "Reader got " << expect << " values, " << value_errors
-                      << " were incorrect" << std::endl;
+            std::cout << "Reader got " << expect << " values, " << value_errors << " were incorrect"
+                      << std::endl;
         }
     }
     catch (std::exception &e)
@@ -102,8 +102,8 @@ bool Write(std::string BaseName, int ID)
         std::lock_guard<std::mutex> guard(StdOutMtx);
         std::cout << "Writer: engine = " << engine << std::endl;
     }
-    auto var = io.DefineVariable<dt>("data", adios2::Dims{100, 10},
-                                     adios2::Dims{0, 0}, adios2::Dims{100, 10});
+    auto var = io.DefineVariable<dt>("data", adios2::Dims{100, 10}, adios2::Dims{0, 0},
+                                     adios2::Dims{100, 10});
 
     std::array<dt, 1000> ar;
     std::iota(ar.begin(), ar.end(), 0);
@@ -153,8 +153,7 @@ TEST_F(TestThreads, Basic)
     bool writer_success = write_fut.get();
     EXPECT_TRUE(reader_success);
     EXPECT_TRUE(writer_success);
-    EXPECT_EQ(value_errors, 0)
-        << "We got " << value_errors << " erroneous values at the reader";
+    EXPECT_EQ(value_errors, 0) << "We got " << value_errors << " erroneous values at the reader";
 }
 
 //  This test tries to push up to the limits to see if we're leaking FDs, but it

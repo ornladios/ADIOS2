@@ -14,8 +14,7 @@
 
 #include "ParseArgs.h"
 
-void ReadVariable(const std::string &name, adios2::IO &io,
-                  adios2::Engine &reader, size_t step)
+void ReadVariable(const std::string &name, adios2::IO &io, adios2::Engine &reader, size_t step)
 {
     adios2::Variable<double> variable = io.InquireVariable<double>(name);
 
@@ -23,8 +22,8 @@ void ReadVariable(const std::string &name, adios2::IO &io,
     {
         auto blocksInfo = reader.BlocksInfo(variable, step);
 
-        std::cout << "    " << name << " has " << blocksInfo.size()
-                  << " blocks in step " << step << std::endl;
+        std::cout << "    " << name << " has " << blocksInfo.size() << " blocks in step " << step
+                  << std::endl;
 
         // create a data vector for each block
         std::vector<double> dataSet;
@@ -41,8 +40,7 @@ void ReadVariable(const std::string &name, adios2::IO &io,
     }
     else
     {
-        std::cout << "    Variable " << name << " not found in step " << step
-                  << std::endl;
+        std::cout << "    Variable " << name << " not found in step " << step << std::endl;
     }
 }
 
@@ -81,8 +79,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
     io.SetEngine(engine);
     io.SetParameters(engineParams);
 
-    adios2::Variable<double> varV0 =
-        io.DefineVariable<double>("v0", {}, {}, {Nglobal});
+    adios2::Variable<double> varV0 = io.DefineVariable<double>("v0", {}, {}, {Nglobal});
 
     adios2::Engine writer = io.Open(fname, adios2::Mode::Write);
 
@@ -118,9 +115,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);
 
     int key;

@@ -31,12 +31,9 @@ struct DynamicBinder::Impl
     adios2sys::DynamicLoader::LibraryHandle m_LibraryHandle;
 };
 
-DynamicBinder::DynamicBinder(std::string libName) : DynamicBinder(libName, "")
-{
-}
+DynamicBinder::DynamicBinder(std::string libName) : DynamicBinder(libName, "") {}
 
-DynamicBinder::DynamicBinder(std::string libName, std::string libPath)
-: m_Impl(new Impl)
+DynamicBinder::DynamicBinder(std::string libName, std::string libPath) : m_Impl(new Impl)
 {
     std::vector<std::string> libPrefixes;
     libPrefixes.emplace_back("");
@@ -75,15 +72,13 @@ DynamicBinder::DynamicBinder(std::string libName, std::string libPath)
                 // Slashes in fileName is correct for unix-like systems
                 // ConvertToOutputPath() will change slashes if we're running on
                 // a Windows system
-                fileName =
-                    adios2sys::SystemTools::ConvertToOutputPath(fileName);
+                fileName = adios2sys::SystemTools::ConvertToOutputPath(fileName);
             }
             else
             {
                 fileName = prefix + libName + suffix;
             }
-            m_Impl->m_LibraryHandle =
-                adios2sys::DynamicLoader::OpenLibrary(fileName);
+            m_Impl->m_LibraryHandle = adios2sys::DynamicLoader::OpenLibrary(fileName);
             searchedLibs.push_back(fileName);
             if (m_Impl->m_LibraryHandle)
             {
@@ -98,26 +93,20 @@ DynamicBinder::DynamicBinder(std::string libName, std::string libPath)
     if (!m_Impl->m_LibraryHandle)
     {
         std::stringstream errString;
-        errString << "Unable to locate the " << libName
-                  << " library; searched for ";
+        errString << "Unable to locate the " << libName << " library; searched for ";
         std::copy(searchedLibs.begin(), searchedLibs.end(),
                   std::ostream_iterator<std::string>(errString, " "));
 
-        helper::Throw<std::runtime_error>("Helper", "adiosDynamicBinder",
-                                          "DynamicBinder", errString.str());
+        helper::Throw<std::runtime_error>("Helper", "adiosDynamicBinder", "DynamicBinder",
+                                          errString.str());
     }
 }
 
-DynamicBinder::~DynamicBinder()
-{
-    adios2sys::DynamicLoader::CloseLibrary(m_Impl->m_LibraryHandle);
-}
+DynamicBinder::~DynamicBinder() { adios2sys::DynamicLoader::CloseLibrary(m_Impl->m_LibraryHandle); }
 
-DynamicBinder::VoidSymbolPointer
-DynamicBinder::GetSymbol(std::string symbolName)
+DynamicBinder::VoidSymbolPointer DynamicBinder::GetSymbol(std::string symbolName)
 {
-    return adios2sys::DynamicLoader::GetSymbolAddress(m_Impl->m_LibraryHandle,
-                                                      symbolName);
+    return adios2sys::DynamicLoader::GetSymbolAddress(m_Impl->m_LibraryHandle, symbolName);
 }
 
 } // end namespace helper

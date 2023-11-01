@@ -34,13 +34,11 @@ public:
      * @param comm
      * @param method
      */
-    SkeletonWriter(IO &adios, const std::string &name, const Mode mode,
-                   helper::Comm comm);
+    SkeletonWriter(IO &adios, const std::string &name, const Mode mode, helper::Comm comm);
 
     ~SkeletonWriter();
 
-    StepStatus BeginStep(StepMode mode,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0) final;
     size_t CurrentStep() const final;
     void PerformPuts() final;
     void EndStep() final;
@@ -58,8 +56,8 @@ private:
     void InitParameters() final;
     void InitTransports() final;
 
-#define declare_type(T)                                                        \
-    void DoPutSync(Variable<T> &, const T *) final;                            \
+#define declare_type(T)                                                                            \
+    void DoPutSync(Variable<T> &, const T *) final;                                                \
     void DoPutDeferred(Variable<T> &, const T *) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -84,8 +82,7 @@ private:
      * @param values
      */
     template <class T>
-    void PutSyncCommon(Variable<T> &variable,
-                       const typename Variable<T>::BPInfo &blockInfo);
+    void PutSyncCommon(Variable<T> &variable, const typename Variable<T>::BPInfo &blockInfo);
 
     template <class T>
     void PutDeferredCommon(Variable<T> &variable, const T *values);

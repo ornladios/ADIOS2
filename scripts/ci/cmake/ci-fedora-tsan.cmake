@@ -1,6 +1,9 @@
 # Client maintainer: chuck.atkins@kitware.com
 
 set(dashboard_cache "
+BUILD_TESTING:BOOL=ON
+ADIOS2_BUILD_EXAMPLES:BOOL=ON
+
 CMAKE_TOOLCHAIN_FILE:FILEPATH=/opt/tsan/toolchain.cmake
 ADIOS2_USE_Fortran:STRING=OFF
 ADIOS2_USE_HDF5:STRING=ON

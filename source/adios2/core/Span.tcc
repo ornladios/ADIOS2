@@ -21,8 +21,7 @@ namespace core
 {
 
 template <class T>
-Span<T>::Span(Engine &engine, const size_t size)
-: m_Engine(engine), m_Size(size)
+Span<T>::Span(Engine &engine, const size_t size) : m_Engine(engine), m_Size(size)
 {
 }
 
@@ -43,10 +42,10 @@ T &Span<T>::At(const size_t position)
 {
     if (position > m_Size)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "Span", "At",
-            "position " + std::to_string(position) +
-                " is out of bounds for span of size " + std::to_string(m_Size));
+        helper::Throw<std::invalid_argument>("Core", "Span", "At",
+                                             "position " + std::to_string(position) +
+                                                 " is out of bounds for span of size " +
+                                                 std::to_string(m_Size));
     }
 
     return (*this)[position];
@@ -55,8 +54,7 @@ T &Span<T>::At(const size_t position)
 template <class T>
 T &Span<T>::operator[](const size_t position)
 {
-    T &data = *m_Engine.BufferData<T>(m_BufferIdx,
-                                      m_PayloadPosition + position * sizeof(T));
+    T &data = *m_Engine.BufferData<T>(m_BufferIdx, m_PayloadPosition + position * sizeof(T));
     return data;
 }
 

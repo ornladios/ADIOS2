@@ -27,8 +27,7 @@ class BPStepsInSituGlobalArray : public ::testing::Test
 protected:
     BPStepsInSituGlobalArray() = default;
 
-    const DataArray I32 = {
-        {512, 513, -510, 515, -508, 517, -506, 519, -504, 521}};
+    const DataArray I32 = {{512, 513, -510, 515, -508, 517, -506, 519, -504, 521}};
 
     DataArray GenerateData(const int step, const int rank, const int size)
     {
@@ -117,10 +116,7 @@ class BPStepsInSituGlobalArrayReaders
   public ::testing::WithParamInterface<std::tuple<size_t, ReadMode>>
 {
 protected:
-    const std::vector<Act> &GetSchedule()
-    {
-        return Schedules[std::get<0>(GetParam())];
-    };
+    const std::vector<Act> &GetSchedule() { return Schedules[std::get<0>(GetParam())]; };
     ReadMode GetReadMode() { return std::get<1>(GetParam()); };
     size_t GetScheduleID() { return std::get<0>(GetParam()); };
 };
@@ -134,8 +130,7 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
     std::string BaseName = engineName;
     const std::string fname_prefix = "BPStepsInSituGlobalArray.EveryStep." +
                                      std::to_string(GetScheduleID()) + "." +
-                                     ReadModeToString(readMode) + "." +
-                                     engineName;
+                                     ReadModeToString(readMode) + "." + engineName;
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
@@ -159,9 +154,8 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
 
     if (!mpiRank)
     {
-        std::cout << "Test with Schedule " << GetScheduleID() << " "
-                  << ScheduleToString(schedule) << " Read Mode "
-                  << ReadModeToString(readMode) << std::endl;
+        std::cout << "Test with Schedule " << GetScheduleID() << " " << ScheduleToString(schedule)
+                  << " Read Mode " << ReadModeToString(readMode) << std::endl;
     }
 
     // Start writer
@@ -204,10 +198,8 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
 
             // Generate test data for each process uniquely
             m_TestData.push_back(GenerateData(stepsWritten, mpiRank, mpiSize));
-            std::cout << "Rank " << mpiRank << " write step " << stepsWritten
-                      << ": "
-                      << ArrayToString(m_TestData[stepsWritten].data(), Nx)
-                      << std::endl;
+            std::cout << "Rank " << mpiRank << " write step " << stepsWritten << ": "
+                      << ArrayToString(m_TestData[stepsWritten].data(), Nx) << std::endl;
             writer.BeginStep();
             writer.Put(var_i32, m_TestData[stepsWritten].data());
             writer.EndStep();
@@ -220,8 +212,7 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
                 /// Read back data with global selection
                 if (!mpiRank)
                 {
-                    std::cout << "Read step " << stepsRead
-                              << " with Global selection" << std::endl;
+                    std::cout << "Read step " << stepsRead << " with Global selection" << std::endl;
                 }
 
                 reader.BeginStep();
@@ -233,8 +224,8 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
                 var_i32.SetSelection({{start}, {Nx}});
                 DataArray d;
                 reader.Get(var_i32, d.data(), adios2::Mode::Sync);
-                std::cout << "Rank " << mpiRank << " read step " << stepsRead
-                          << ": " << ArrayToString(d.data(), Nx) << std::endl;
+                std::cout << "Rank " << mpiRank << " read step " << stepsRead << ": "
+                          << ArrayToString(d.data(), Nx) << std::endl;
                 for (size_t i = 0; i < Nx; ++i)
                 {
                     EXPECT_EQ(d[i], m_TestData[stepsRead][i]);
@@ -246,8 +237,7 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
                 /// Read back data with block selection
                 if (!mpiRank)
                 {
-                    std::cout << "Read step " << stepsRead
-                              << " with Block selection" << std::endl;
+                    std::cout << "Read step " << stepsRead << " with Block selection" << std::endl;
                 }
 
                 reader.BeginStep();
@@ -259,9 +249,8 @@ TEST_P(BPStepsInSituGlobalArrayReaders, EveryStep)
                 var_i32.SetBlockSelection(blockID);
                 DataArray d;
                 reader.Get(var_i32, d.data(), adios2::Mode::Sync);
-                std::cout << "Rank " << mpiRank << " read step " << stepsRead
-                          << " block " << blockID << ": "
-                          << ArrayToString(d.data(), Nx) << std::endl;
+                std::cout << "Rank " << mpiRank << " read step " << stepsRead << " block "
+                          << blockID << ": " << ArrayToString(d.data(), Nx) << std::endl;
                 auto start = var_i32.Start();
                 auto count = var_i32.Count();
                 EXPECT_EQ(start[0], mpiRank * Nx);
@@ -292,8 +281,7 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
     std::string BaseName = engineName;
     const std::string fname_prefix = "BPStepsInSituGlobalArray.NewVarPerStep." +
                                      std::to_string(GetScheduleID()) + "." +
-                                     ReadModeToString(readMode) + "." +
-                                     engineName;
+                                     ReadModeToString(readMode) + "." + engineName;
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
@@ -315,13 +303,10 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
     fname = fname_prefix + BaseName + ".Serial.bp";
 #endif
 
-    auto lf_VarName = [](int step) -> std::string {
-        return "i32_" + std::to_string(step);
-    };
+    auto lf_VarName = [](int step) -> std::string { return "i32_" + std::to_string(step); };
 
-    std::cout << "Test with Schedule " << GetScheduleID() << " "
-              << ScheduleToString(schedule) << " Read Mode "
-              << ReadModeToString(readMode) << std::endl;
+    std::cout << "Test with Schedule " << GetScheduleID() << " " << ScheduleToString(schedule)
+              << " Read Mode " << ReadModeToString(readMode) << std::endl;
 
     // Start writer
     adios2::IO iow = adios.DeclareIO("Write");
@@ -361,14 +346,11 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
             }
 
             const std::string varName = lf_VarName(stepsWritten);
-            auto var =
-                iow.DefineVariable<int32_t>(varName, shape, start, count);
+            auto var = iow.DefineVariable<int32_t>(varName, shape, start, count);
             // Generate test data for each process uniquely
             m_TestData.push_back(GenerateData(stepsWritten, mpiRank, mpiSize));
-            std::cout << "Rank " << mpiRank << " write step " << stepsWritten
-                      << " var " << varName << ": "
-                      << ArrayToString(m_TestData[stepsWritten].data(), Nx)
-                      << std::endl;
+            std::cout << "Rank " << mpiRank << " write step " << stepsWritten << " var " << varName
+                      << ": " << ArrayToString(m_TestData[stepsWritten].data(), Nx) << std::endl;
             writer.BeginStep();
             writer.Put(var, m_TestData[stepsWritten].data());
             writer.EndStep();
@@ -381,8 +363,7 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
                 /// Read back data with global selection
                 if (!mpiRank)
                 {
-                    std::cout << "Read step " << stepsRead
-                              << " with Global selection" << std::endl;
+                    std::cout << "Read step " << stepsRead << " with Global selection" << std::endl;
                 }
 
                 reader.BeginStep();
@@ -395,8 +376,8 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
                 var.SetSelection({{start}, {Nx}});
                 DataArray d;
                 reader.Get(var, d.data(), adios2::Mode::Sync);
-                std::cout << "Rank " << mpiRank << " read var " << varName
-                          << ": " << ArrayToString(d.data(), Nx) << std::endl;
+                std::cout << "Rank " << mpiRank << " read var " << varName << ": "
+                          << ArrayToString(d.data(), Nx) << std::endl;
 
                 for (size_t i = 0; i < Nx; ++i)
                 {
@@ -409,8 +390,7 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
                 /// Read back data with block selection
                 if (!mpiRank)
                 {
-                    std::cout << "Read step " << stepsRead
-                              << " with Block selection" << std::endl;
+                    std::cout << "Read step " << stepsRead << " with Block selection" << std::endl;
                 }
 
                 reader.BeginStep();
@@ -423,9 +403,8 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
                 var.SetBlockSelection(blockID);
                 DataArray d;
                 reader.Get(var, d.data(), adios2::Mode::Sync);
-                std::cout << "Rank " << mpiRank << " read step " << stepsRead
-                          << " block " << blockID << ": "
-                          << ArrayToString(d.data(), Nx) << std::endl;
+                std::cout << "Rank " << mpiRank << " read step " << stepsRead << " block "
+                          << blockID << ": " << ArrayToString(d.data(), Nx) << std::endl;
                 auto start = var.Start();
                 auto count = var.Count();
                 EXPECT_EQ(start[0], mpiRank * Nx);
@@ -447,28 +426,24 @@ TEST_P(BPStepsInSituGlobalArrayReaders, NewVarPerStep)
     reader.Close();
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    BPStepsInSituGlobalArray, BPStepsInSituGlobalArrayReaders,
-    ::testing::Values(std::make_tuple(0, ReadMode::ReadGlobal),
-                      std::make_tuple(1, ReadMode::ReadGlobal),
-                      std::make_tuple(2, ReadMode::ReadGlobal),
-                      std::make_tuple(3, ReadMode::ReadGlobal),
-                      std::make_tuple(4, ReadMode::ReadGlobal),
-                      std::make_tuple(0, ReadMode::ReadBlocks),
-                      std::make_tuple(1, ReadMode::ReadBlocks),
-                      std::make_tuple(2, ReadMode::ReadBlocks),
-                      std::make_tuple(3, ReadMode::ReadBlocks),
-                      std::make_tuple(4, ReadMode::ReadBlocks)));
+INSTANTIATE_TEST_SUITE_P(BPStepsInSituGlobalArray, BPStepsInSituGlobalArrayReaders,
+                         ::testing::Values(std::make_tuple(0, ReadMode::ReadGlobal),
+                                           std::make_tuple(1, ReadMode::ReadGlobal),
+                                           std::make_tuple(2, ReadMode::ReadGlobal),
+                                           std::make_tuple(3, ReadMode::ReadGlobal),
+                                           std::make_tuple(4, ReadMode::ReadGlobal),
+                                           std::make_tuple(0, ReadMode::ReadBlocks),
+                                           std::make_tuple(1, ReadMode::ReadBlocks),
+                                           std::make_tuple(2, ReadMode::ReadBlocks),
+                                           std::make_tuple(3, ReadMode::ReadBlocks),
+                                           std::make_tuple(4, ReadMode::ReadBlocks)));
 
 class BPStepsInSituGlobalArrayParameters
 : public BPStepsInSituGlobalArray,
   public ::testing::WithParamInterface<std::tuple<size_t, size_t, ReadMode>>
 {
 protected:
-    const std::vector<Act> &GetSchedule()
-    {
-        return Schedules[std::get<0>(GetParam())];
-    };
+    const std::vector<Act> &GetSchedule() { return Schedules[std::get<0>(GetParam())]; };
     size_t GetOddity() { return std::get<1>(GetParam()); };
     ReadMode GetReadMode() { return std::get<2>(GetParam()); };
     size_t GetScheduleID() { return std::get<0>(GetParam()); };
@@ -484,9 +459,8 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
     using namespace std;
     std::string BaseName = engineName;
     const std::string fname_prefix =
-        "BPStepsInSituGlobalArray.EveryOtherStep.Schedule" +
-        std::to_string(GetScheduleID()) + ".Oddity" + std::to_string(Oddity) +
-        "." + ReadModeToString(readMode) + "." + engineName;
+        "BPStepsInSituGlobalArray.EveryOtherStep.Schedule" + std::to_string(GetScheduleID()) +
+        ".Oddity" + std::to_string(Oddity) + "." + ReadModeToString(readMode) + "." + engineName;
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
@@ -511,9 +485,9 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
 
     if (!mpiRank)
     {
-        std::cout << "Test with Schedule " << GetScheduleID() << " "
-                  << ScheduleToString(schedule) << " Oddity " << Oddity
-                  << " Read Mode " << ReadModeToString(readMode) << std::endl;
+        std::cout << "Test with Schedule " << GetScheduleID() << " " << ScheduleToString(schedule)
+                  << " Oddity " << Oddity << " Read Mode " << ReadModeToString(readMode)
+                  << std::endl;
     }
 
     // Start writer
@@ -561,13 +535,10 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
             writer.Put(var_step, stepsWritten);
             if (stepsWritten % 2 == static_cast<int>(Oddity))
             {
-                m_TestData.push_back(
-                    GenerateData(stepsWritten, mpiRank, mpiSize));
-                std::cout << "Rank " << mpiRank << " at step " << stepsWritten
-                          << " write var-step " << varStepsWritten << ": "
-                          << ArrayToString(m_TestData[varStepsWritten].data(),
-                                           Nx)
-                          << std::endl;
+                m_TestData.push_back(GenerateData(stepsWritten, mpiRank, mpiSize));
+                std::cout << "Rank " << mpiRank << " at step " << stepsWritten << " write var-step "
+                          << varStepsWritten << ": "
+                          << ArrayToString(m_TestData[varStepsWritten].data(), Nx) << std::endl;
                 writer.Put(var_i32, m_TestData[varStepsWritten].data());
                 ++varStepsWritten;
             }
@@ -582,8 +553,7 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
                 /// Read back data with global selection
                 if (!mpiRank)
                 {
-                    std::cout << "Read step " << stepsRead
-                              << " with Global selection" << std::endl;
+                    std::cout << "Read step " << stepsRead << " with Global selection" << std::endl;
                 }
 
                 reader.BeginStep();
@@ -597,10 +567,8 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
                     var_i32.SetSelection({{start}, {Nx}});
                     DataArray d;
                     reader.Get(var_i32, d.data(), adios2::Mode::Sync);
-                    std::cout << "Rank " << mpiRank << " read at step "
-                              << stepsRead << " var-step " << varStepsRead
-                              << ": " << ArrayToString(d.data(), Nx)
-                              << std::endl;
+                    std::cout << "Rank " << mpiRank << " read at step " << stepsRead << " var-step "
+                              << varStepsRead << ": " << ArrayToString(d.data(), Nx) << std::endl;
 
                     for (size_t i = 0; i < Nx; ++i)
                     {
@@ -615,8 +583,7 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
                 /// Read back data with block selection
                 if (!mpiRank)
                 {
-                    std::cout << "Read step " << stepsRead
-                              << " with Block selection" << std::endl;
+                    std::cout << "Read step " << stepsRead << " with Block selection" << std::endl;
                 }
                 reader.BeginStep();
                 if (stepsRead % 2 == static_cast<int>(Oddity))
@@ -629,9 +596,8 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
                     var_i32.SetBlockSelection(blockID);
                     DataArray d;
                     reader.Get(var_i32, d.data(), adios2::Mode::Sync);
-                    std::cout << "Rank " << mpiRank << " read at step "
-                              << stepsRead << " var-step " << varStepsRead
-                              << " block " << blockID << ": "
+                    std::cout << "Rank " << mpiRank << " read at step " << stepsRead << " var-step "
+                              << varStepsRead << " block " << blockID << ": "
                               << ArrayToString(d.data(), Nx) << std::endl;
                     auto start = var_i32.Start();
                     auto count = var_i32.Count();
@@ -659,26 +625,17 @@ TEST_P(BPStepsInSituGlobalArrayParameters, EveryOtherStep)
 
 INSTANTIATE_TEST_SUITE_P(
     BPStepsInSituGlobalArray, BPStepsInSituGlobalArrayParameters,
-    ::testing::Values(std::make_tuple(0, 0, ReadMode::ReadGlobal),
-                      std::make_tuple(0, 0, ReadMode::ReadBlocks),
-                      std::make_tuple(0, 1, ReadMode::ReadGlobal),
-                      std::make_tuple(0, 1, ReadMode::ReadBlocks),
-                      std::make_tuple(1, 0, ReadMode::ReadGlobal),
-                      std::make_tuple(1, 0, ReadMode::ReadBlocks),
-                      std::make_tuple(1, 1, ReadMode::ReadGlobal),
-                      std::make_tuple(1, 1, ReadMode::ReadBlocks),
-                      std::make_tuple(2, 0, ReadMode::ReadGlobal),
-                      std::make_tuple(2, 0, ReadMode::ReadBlocks),
-                      std::make_tuple(2, 1, ReadMode::ReadGlobal),
-                      std::make_tuple(2, 1, ReadMode::ReadBlocks),
-                      std::make_tuple(3, 0, ReadMode::ReadGlobal),
-                      std::make_tuple(3, 0, ReadMode::ReadBlocks),
-                      std::make_tuple(3, 1, ReadMode::ReadGlobal),
-                      std::make_tuple(3, 1, ReadMode::ReadBlocks),
-                      std::make_tuple(4, 0, ReadMode::ReadGlobal),
-                      std::make_tuple(4, 0, ReadMode::ReadBlocks),
-                      std::make_tuple(4, 1, ReadMode::ReadGlobal),
-                      std::make_tuple(4, 1, ReadMode::ReadBlocks)));
+    ::testing::Values(
+        std::make_tuple(0, 0, ReadMode::ReadGlobal), std::make_tuple(0, 0, ReadMode::ReadBlocks),
+        std::make_tuple(0, 1, ReadMode::ReadGlobal), std::make_tuple(0, 1, ReadMode::ReadBlocks),
+        std::make_tuple(1, 0, ReadMode::ReadGlobal), std::make_tuple(1, 0, ReadMode::ReadBlocks),
+        std::make_tuple(1, 1, ReadMode::ReadGlobal), std::make_tuple(1, 1, ReadMode::ReadBlocks),
+        std::make_tuple(2, 0, ReadMode::ReadGlobal), std::make_tuple(2, 0, ReadMode::ReadBlocks),
+        std::make_tuple(2, 1, ReadMode::ReadGlobal), std::make_tuple(2, 1, ReadMode::ReadBlocks),
+        std::make_tuple(3, 0, ReadMode::ReadGlobal), std::make_tuple(3, 0, ReadMode::ReadBlocks),
+        std::make_tuple(3, 1, ReadMode::ReadGlobal), std::make_tuple(3, 1, ReadMode::ReadBlocks),
+        std::make_tuple(4, 0, ReadMode::ReadGlobal), std::make_tuple(4, 0, ReadMode::ReadBlocks),
+        std::make_tuple(4, 1, ReadMode::ReadGlobal), std::make_tuple(4, 1, ReadMode::ReadBlocks)));
 //******************************************************************************
 // main
 //******************************************************************************

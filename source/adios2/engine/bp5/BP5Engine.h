@@ -75,25 +75,19 @@ public:
         WriterMapRecord = 'w',
     };
 
-    std::vector<std::string>
-    GetBPSubStreamNames(const std::vector<std::string> &names,
-                        size_t subFileIndex) const noexcept;
+    std::vector<std::string> GetBPSubStreamNames(const std::vector<std::string> &names,
+                                                 size_t subFileIndex) const noexcept;
 
     std::vector<std::string>
-    GetBPMetadataFileNames(const std::vector<std::string> &names) const
-        noexcept;
+    GetBPMetadataFileNames(const std::vector<std::string> &names) const noexcept;
     std::vector<std::string>
-    GetBPMetaMetadataFileNames(const std::vector<std::string> &names) const
-        noexcept;
+    GetBPMetaMetadataFileNames(const std::vector<std::string> &names) const noexcept;
     std::string GetBPMetadataFileName(const std::string &name) const noexcept;
-    std::string GetBPMetaMetadataFileName(const std::string &name) const
-        noexcept;
+    std::string GetBPMetaMetadataFileName(const std::string &name) const noexcept;
     std::vector<std::string>
-    GetBPMetadataIndexFileNames(const std::vector<std::string> &names) const
-        noexcept;
+    GetBPMetadataIndexFileNames(const std::vector<std::string> &names) const noexcept;
 
-    std::string GetBPMetadataIndexFileName(const std::string &name) const
-        noexcept;
+    std::string GetBPMetadataIndexFileName(const std::string &name) const noexcept;
 
     std::string GetBPSubStreamName(const std::string &name, const size_t id,
                                    const bool hasSubFiles = true,
@@ -128,39 +122,39 @@ public:
         Guided
     };
 
-#define BP5_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                \
-    MACRO(OpenTimeoutSecs, Float, float, -1.0f)                                \
-    MACRO(BeginStepPollingFrequencySecs, Float, float, 1.0f)                   \
-    MACRO(StreamReader, Bool, bool, false)                                     \
-    MACRO(BurstBufferDrain, Bool, bool, true)                                  \
-    MACRO(BurstBufferPath, String, std::string, "")                            \
-    MACRO(NodeLocal, Bool, bool, false)                                        \
-    MACRO(verbose, Int, int, 0)                                                \
-    MACRO(CollectiveMetadata, Bool, bool, true)                                \
-    MACRO(NumAggregators, UInt, unsigned int, 0)                               \
-    MACRO(AggregatorRatio, UInt, unsigned int, 0)                              \
-    MACRO(NumSubFiles, UInt, unsigned int, 0)                                  \
-    MACRO(StripeSize, UInt, unsigned int, 4096)                                \
-    MACRO(DirectIO, Bool, bool, false)                                         \
-    MACRO(DirectIOAlignOffset, UInt, unsigned int, 512)                        \
-    MACRO(DirectIOAlignBuffer, UInt, unsigned int, 0)                          \
-    MACRO(AggregationType, AggregationType, int,                               \
-          (int)AggregationType::TwoLevelShm)                                   \
-    MACRO(AsyncOpen, Bool, bool, true)                                         \
-    MACRO(AsyncWrite, AsyncWrite, int, (int)AsyncWrite::Sync)                  \
-    MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)               \
-    MACRO(InitialBufferSize, SizeBytes, size_t, DefaultInitialBufferSize)      \
-    MACRO(MinDeferredSize, SizeBytes, size_t, DefaultMinDeferredSize)          \
-    MACRO(BufferChunkSize, SizeBytes, size_t, DefaultBufferChunkSize)          \
-    MACRO(MaxShmSize, SizeBytes, size_t, DefaultMaxShmSize)                    \
-    MACRO(BufferVType, BufferVType, int, (int)BufferVType::ChunkVType)         \
-    MACRO(AppendAfterSteps, Int, int, INT_MAX)                                 \
-    MACRO(SelectSteps, String, std::string, "")                                \
-    MACRO(ReaderShortCircuitReads, Bool, bool, false)                          \
-    MACRO(StatsLevel, UInt, unsigned int, 1)                                   \
-    MACRO(StatsBlockSize, SizeBytes, size_t, DefaultStatsBlockSize)            \
-    MACRO(Threads, UInt, unsigned int, 0)                                      \
-    MACRO(UseOneTimeAttributes, Bool, bool, true)                              \
+#define BP5_FOREACH_PARAMETER_TYPE_4ARGS(MACRO)                                                    \
+    MACRO(OpenTimeoutSecs, Float, float, -1.0f)                                                    \
+    MACRO(BeginStepPollingFrequencySecs, Float, float, 1.0f)                                       \
+    MACRO(StreamReader, Bool, bool, false)                                                         \
+    MACRO(BurstBufferDrain, Bool, bool, true)                                                      \
+    MACRO(BurstBufferPath, String, std::string, "")                                                \
+    MACRO(NodeLocal, Bool, bool, false)                                                            \
+    MACRO(verbose, Int, int, 0)                                                                    \
+    MACRO(CollectiveMetadata, Bool, bool, true)                                                    \
+    MACRO(NumAggregators, UInt, unsigned int, 0)                                                   \
+    MACRO(AggregatorRatio, UInt, unsigned int, 0)                                                  \
+    MACRO(NumSubFiles, UInt, unsigned int, 0)                                                      \
+    MACRO(StripeSize, UInt, unsigned int, 4096)                                                    \
+    MACRO(DirectIO, Bool, bool, false)                                                             \
+    MACRO(DirectIOAlignOffset, UInt, unsigned int, 512)                                            \
+    MACRO(DirectIOAlignBuffer, UInt, unsigned int, 0)                                              \
+    MACRO(AggregationType, AggregationType, int, (int)AggregationType::TwoLevelShm)                \
+    MACRO(AsyncOpen, Bool, bool, true)                                                             \
+    MACRO(AsyncWrite, AsyncWrite, int, (int)AsyncWrite::Sync)                                      \
+    MACRO(GrowthFactor, Float, float, DefaultBufferGrowthFactor)                                   \
+    MACRO(InitialBufferSize, SizeBytes, size_t, DefaultInitialBufferSize)                          \
+    MACRO(MinDeferredSize, SizeBytes, size_t, DefaultMinDeferredSize)                              \
+    MACRO(BufferChunkSize, SizeBytes, size_t, DefaultBufferChunkSize)                              \
+    MACRO(MaxShmSize, SizeBytes, size_t, DefaultMaxShmSize)                                        \
+    MACRO(BufferVType, BufferVType, int, (int)BufferVType::ChunkVType)                             \
+    MACRO(AppendAfterSteps, Int, int, INT_MAX)                                                     \
+    MACRO(SelectSteps, String, std::string, "")                                                    \
+    MACRO(ReaderShortCircuitReads, Bool, bool, false)                                              \
+    MACRO(StatsLevel, UInt, unsigned int, 1)                                                       \
+    MACRO(StatsBlockSize, SizeBytes, size_t, DefaultStatsBlockSize)                                \
+    MACRO(Threads, UInt, unsigned int, 0)                                                          \
+    MACRO(UseOneTimeAttributes, Bool, bool, true)                                                  \
+    MACRO(RemoteDataPath, String, std::string, "")                                                 \
     MACRO(MaxOpenFilesAtOnce, UInt, unsigned int, UINT_MAX)
 
     struct BP5Params

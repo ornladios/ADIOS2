@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.5)
 
 # The directory label is used for CDash to treat DILL as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS DILL)
 
-project(DILL VERSION 2.4.1 LANGUAGES C CXX)
+project(DILL VERSION 3.0.0 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -38,7 +38,7 @@ endif()
 if(NOT DEFINED DILL_HEADER_COMPONENT)
   set(DILL_HEADER_COMPONENT dev)
 endif()
-
+add_definitions(-DDILL_SRC)
 if(WIN32)
   # Automagic to do the DLL / LIB song and dance
   set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)

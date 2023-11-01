@@ -20,8 +20,8 @@ public:
 
 TEST_F(YAMLConfigTest, TwoIOs)
 {
-    const std::string configFile(
-        configDir + std::string(&adios2::PathSeparator, 1) + "config1.yaml");
+    const std::string configFile(configDir + std::string(&adios2::PathSeparator, 1) +
+                                 "config1.yaml");
 
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(configFile, MPI_COMM_WORLD);
@@ -30,8 +30,7 @@ TEST_F(YAMLConfigTest, TwoIOs)
 #endif
 
     // must be declared at least once
-    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 1");
-                 (void)io, std::invalid_argument);
+    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 1"); (void)io, std::invalid_argument);
 
     EXPECT_NO_THROW({
         adios2::IO io = adios.DeclareIO("Test IO 1");
@@ -43,14 +42,12 @@ TEST_F(YAMLConfigTest, TwoIOs)
         EXPECT_EQ(params.at("MaxBufferSize"), "20Mb");
         EXPECT_EQ(params.at("InitialBufferSize"), "1Mb");
         EXPECT_EQ(params.at("BufferGrowthFactor"), "2");
-        adios2::Engine engine =
-            io.Open("Test BP Writer 1", adios2::Mode::Write);
+        adios2::Engine engine = io.Open("Test BP Writer 1", adios2::Mode::Write);
         engine.Close();
     });
     EXPECT_NO_THROW(adios2::IO io = adios.AtIO("Test IO 1"); (void)io);
 
-    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 2");
-                 (void)io, std::invalid_argument);
+    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 2"); (void)io, std::invalid_argument);
     EXPECT_NO_THROW({
         adios2::IO io = adios.DeclareIO("Test IO 2");
         const adios2::Params params = io.Parameters();
@@ -65,8 +62,7 @@ TEST_F(YAMLConfigTest, TwoIOs)
 
 TEST_F(YAMLConfigTest, OpTypeException)
 {
-    const std::string configFile(configDir +
-                                 std::string(&adios2::PathSeparator, 1) +
+    const std::string configFile(configDir + std::string(&adios2::PathSeparator, 1) +
                                  "configOpTypeException.yaml");
 
 #if ADIOS2_USE_MPI
@@ -75,8 +71,7 @@ TEST_F(YAMLConfigTest, OpTypeException)
 
     if (rank == 0)
     {
-        EXPECT_THROW(adios2::ADIOS adios(configFile, MPI_COMM_SELF),
-                     std::invalid_argument);
+        EXPECT_THROW(adios2::ADIOS adios(configFile, MPI_COMM_SELF), std::invalid_argument);
     }
 #else
     EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
@@ -85,13 +80,11 @@ TEST_F(YAMLConfigTest, OpTypeException)
 
 TEST_F(YAMLConfigTest, OpNullException)
 {
-    const std::string configFile(configDir +
-                                 std::string(&adios2::PathSeparator, 1) +
+    const std::string configFile(configDir + std::string(&adios2::PathSeparator, 1) +
                                  "configOpNullException.yaml");
 
 #if ADIOS2_USE_MPI
-    EXPECT_THROW(adios2::ADIOS adios(configFile, MPI_COMM_WORLD),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::ADIOS adios(configFile, MPI_COMM_WORLD), std::invalid_argument);
 #else
     EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
 #endif

@@ -1,15 +1,16 @@
-FROM ubuntu:20.04
+FROM fedora:38
 
-RUN apt update && \
-    DEBIAN_FRONTEND="noninteractive" apt upgrade -y --no-install-recommends && \
-    DEBIAN_FRONTEND="noninteractive" apt install -y --no-install-recommends \
-    apt-utils \
-    ca-certificates \
-    clang-format-7 \
+RUN dnf update -y && \
+    dnf install -y \
+    clang-tools-extra \
     curl \
-    flake8 \
     git \
-    libtinfo5 \
-    shellcheck \
+    python3-flake8 \
+    ShellCheck \
     && \
-    apt-get clean
+    dnf clean all
+
+# Check that the target programs has been installed
+RUN command -v clang-format > /dev/null && \
+    command -v flake8 > /dev/null && \
+    command -v shellcheck > /dev/null

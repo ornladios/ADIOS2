@@ -36,16 +36,15 @@ struct PluginEngine::Impl
 
 /******************************************************************************/
 
-PluginEngine::PluginEngine(core::IO &io, const std::string &name,
-                           const Mode mode, helper::Comm comm)
+PluginEngine::PluginEngine(core::IO &io, const std::string &name, const Mode mode,
+                           helper::Comm comm)
 : Engine("Plugin", io, name, mode, comm.Duplicate()), m_Impl(new Impl)
 {
     auto pluginNameIt = m_IO.m_Parameters.find("PluginName");
     if (pluginNameIt == m_IO.m_Parameters.end())
     {
-        helper::Throw<std::runtime_error>(
-            "Plugins", "PluginEngine", "PluginEngine",
-            "PluginName must be specified in the engine parameters");
+        helper::Throw<std::runtime_error>("Plugins", "PluginEngine", "PluginEngine",
+                                          "PluginName must be specified in the engine parameters");
     }
 
     auto pluginLibIt = m_IO.m_Parameters.find("PluginLibrary");
@@ -59,12 +58,9 @@ PluginEngine::PluginEngine(core::IO &io, const std::string &name,
     auto &pluginManager = PluginManager::GetInstance();
     pluginManager.SetParameters(m_IO.m_Parameters);
     pluginManager.LoadPlugin(pluginNameIt->second, pluginLibIt->second);
-    m_Impl->m_HandleCreate =
-        pluginManager.GetEngineCreateFun(pluginNameIt->second);
-    m_Impl->m_HandleDestroy =
-        pluginManager.GetEngineDestroyFun(pluginNameIt->second);
-    m_Impl->m_Plugin = m_Impl->m_HandleCreate(io, pluginNameIt->second, mode,
-                                              comm.Duplicate());
+    m_Impl->m_HandleCreate = pluginManager.GetEngineCreateFun(pluginNameIt->second);
+    m_Impl->m_HandleDestroy = pluginManager.GetEngineDestroyFun(pluginNameIt->second);
+    m_Impl->m_Plugin = m_Impl->m_HandleCreate(io, pluginNameIt->second, mode, comm.Duplicate());
     m_IsOpen = true;
 }
 
@@ -81,32 +77,28 @@ void PluginEngine::PerformGets() { m_Impl->m_Plugin->PerformGets(); }
 
 void PluginEngine::EndStep() { m_Impl->m_Plugin->EndStep(); }
 
-#define declare(T)                                                             \
-    void PluginEngine::DoPutSync(core::Variable<T> &variable, const T *values) \
-    {                                                                          \
-        m_Impl->m_Plugin->DoPutSync(variable, values);                         \
-    }                                                                          \
-    void PluginEngine::DoPutDeferred(core::Variable<T> &variable,              \
-                                     const T *values)                          \
-    {                                                                          \
-        m_Impl->m_Plugin->DoPutDeferred(variable, values);                     \
-    }                                                                          \
-    void PluginEngine::DoGetSync(core::Variable<T> &variable, T *values)       \
-    {                                                                          \
-        m_Impl->m_Plugin->DoGetSync(variable, values);                         \
-    }                                                                          \
-    void PluginEngine::DoGetDeferred(core::Variable<T> &variable, T *values)   \
-    {                                                                          \
-        m_Impl->m_Plugin->DoGetDeferred(variable, values);                     \
+#define declare(T)                                                                                 \
+    void PluginEngine::DoPutSync(core::Variable<T> &variable, const T *values)                     \
+    {                                                                                              \
+        m_Impl->m_Plugin->DoPutSync(variable, values);                                             \
+    }                                                                                              \
+    void PluginEngine::DoPutDeferred(core::Variable<T> &variable, const T *values)                 \
+    {                                                                                              \
+        m_Impl->m_Plugin->DoPutDeferred(variable, values);                                         \
+    }                                                                                              \
+    void PluginEngine::DoGetSync(core::Variable<T> &variable, T *values)                           \
+    {                                                                                              \
+        m_Impl->m_Plugin->DoGetSync(variable, values);                                             \
+    }                                                                                              \
+    void PluginEngine::DoGetDeferred(core::Variable<T> &variable, T *values)                       \
+    {                                                                                              \
+        m_Impl->m_Plugin->DoGetDeferred(variable, values);                                         \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
 
-void PluginEngine::DoClose(const int transportIndex)
-{
-    m_Impl->m_Plugin->Close(transportIndex);
-}
+void PluginEngine::DoClose(const int transportIndex) { m_Impl->m_Plugin->Close(transportIndex); }
 
 } // end namespace plugin
 } // end namespace adios2

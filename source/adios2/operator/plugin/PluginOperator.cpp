@@ -63,8 +63,7 @@ PluginOperator::PluginOperator(const Params &parameters)
 
 PluginOperator::~PluginOperator() { m_Impl->m_HandleDestroy(m_Impl->m_Plugin); }
 
-void PluginOperator::PluginInit(const std::string &pluginName,
-                                const std::string &pluginLibrary)
+void PluginOperator::PluginInit(const std::string &pluginName, const std::string &pluginLibrary)
 {
     if (m_Impl->m_Plugin)
     {
@@ -80,9 +79,8 @@ void PluginOperator::PluginInit(const std::string &pluginName,
     m_Impl->m_Plugin = m_Impl->m_HandleCreate(m_Parameters);
 }
 
-size_t PluginOperator::Operate(const char *dataIn, const Dims &blockStart,
-                               const Dims &blockCount, const DataType type,
-                               char *bufferOut)
+size_t PluginOperator::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                               const DataType type, char *bufferOut)
 {
     // handle common header first
     size_t offset = 0;
@@ -95,13 +93,12 @@ size_t PluginOperator::Operate(const char *dataIn, const Dims &blockStart,
 
     // add offset to the bufferOut pointer, so that way the plugin doesn't
     // need to know anything about the plugin header.
-    size_t pluginSize = m_Impl->m_Plugin->Operate(
-        dataIn, blockStart, blockCount, type, bufferOut + offset);
+    size_t pluginSize =
+        m_Impl->m_Plugin->Operate(dataIn, blockStart, blockCount, type, bufferOut + offset);
     return offset + pluginSize;
 }
 
-size_t PluginOperator::InverseOperate(const char *bufferIn, const size_t sizeIn,
-                                      char *dataOut)
+size_t PluginOperator::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     size_t offset = 4; // skip 4 bytes for the common header
 
@@ -111,18 +108,16 @@ size_t PluginOperator::InverseOperate(const char *bufferIn, const size_t sizeIn,
     auto paramPluginNameIt = m_Impl->m_PluginParams.find("PluginName");
     if (paramPluginNameIt == m_Impl->m_PluginParams.end())
     {
-        helper::Throw<std::runtime_error>(
-            "Plugins", "PluginOperator", "InverseOperate",
-            "PluginName could not be found in the plugin header");
+        helper::Throw<std::runtime_error>("Plugins", "PluginOperator", "InverseOperate",
+                                          "PluginName could not be found in the plugin header");
     }
     std::string pluginName = paramPluginNameIt->second;
 
     auto paramPluginLibraryIt = m_Impl->m_PluginParams.find("PluginLibrary");
     if (paramPluginLibraryIt == m_Impl->m_PluginParams.end())
     {
-        helper::Throw<std::runtime_error>(
-            "Plugins", "PluginOperator", "InverseOperate",
-            "PluginLibrary could not be found in the plugin header");
+        helper::Throw<std::runtime_error>("Plugins", "PluginOperator", "InverseOperate",
+                                          "PluginLibrary could not be found in the plugin header");
     }
     const std::string &pluginLibrary = paramPluginLibraryIt->second;
 
@@ -131,8 +126,8 @@ size_t PluginOperator::InverseOperate(const char *bufferIn, const size_t sizeIn,
 
     // add offset to bufferIn, so plugin doesn't have to worry about plugin
     // header or common header
-    size_t pluginSize = m_Impl->m_Plugin->InverseOperate(
-        bufferIn + offset, sizeIn - offset, dataOut);
+    size_t pluginSize =
+        m_Impl->m_Plugin->InverseOperate(bufferIn + offset, sizeIn - offset, dataOut);
     return pluginSize;
 }
 

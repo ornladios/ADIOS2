@@ -32,13 +32,11 @@ void CUDAWrongMemSpace()
         const adios2::Dims start{0};
         const adios2::Dims count{Nx};
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
-        auto var_r32_cpu =
-            io.DefineVariable<float>("r32cpu", shape, start, count);
+        auto var_r32_cpu = io.DefineVariable<float>("r32cpu", shape, start, count);
 
         float *gpuSimData = nullptr;
         cudaMalloc(&gpuSimData, Nx * sizeof(float));
-        cudaMemcpy(gpuSimData, (float *)&r32s[0], Nx * sizeof(float),
-                   cudaMemcpyHostToDevice);
+        cudaMemcpy(gpuSimData, (float *)&r32s[0], Nx * sizeof(float), cudaMemcpyHostToDevice);
 
         io.SetEngine("BP5");
         if (!engineName.empty())
@@ -74,8 +72,7 @@ void CUDAWrongMemSpace()
         float *gpuSimData;
         cudaMalloc(&gpuSimData, Nx * sizeof(float));
         var_r32.SetMemorySpace(adios2::MemorySpace::Host);
-        EXPECT_THROW(bpReader.Get(var_r32, gpuSimData, adios2::Mode::Sync),
-                     std::ios_base::failure);
+        EXPECT_THROW(bpReader.Get(var_r32, gpuSimData, adios2::Mode::Sync), std::ios_base::failure);
         var_r32.SetMemorySpace(adios2::MemorySpace::GPU);
         EXPECT_THROW(bpReader.Get(var_r32, r32o.data(), adios2::Mode::Sync),
                      std::ios_base::failure);
@@ -114,8 +111,7 @@ void CUDADetectMemSpace(const std::string mode)
 
         float *gpuSimData = nullptr;
         cudaMalloc(&gpuSimData, NTotal * sizeof(float));
-        cudaMemcpy(gpuSimData, (float *)&r32s[0], NTotal * sizeof(float),
-                   cudaMemcpyHostToDevice);
+        cudaMemcpy(gpuSimData, (float *)&r32s[0], NTotal * sizeof(float), cudaMemcpyHostToDevice);
 
         io.SetEngine("BP5");
 
@@ -130,8 +126,7 @@ void CUDADetectMemSpace(const std::string mode)
             // Update values in the simulation data
             cuda_increment(NTotal, 1, 0, gpuSimData, INCREMENT);
             std::transform(r32s.begin(), r32s.end(), r32s.begin(),
-                           std::bind(std::plus<float>(), std::placeholders::_1,
-                                     INCREMENT));
+                           std::bind(std::plus<float>(), std::placeholders::_1, INCREMENT));
 
             bpWriter.BeginStep();
             if (step % 2 == 0)
@@ -177,19 +172,17 @@ void CUDADetectMemSpace(const std::string mode)
             {
                 bpReader.Get(var_r32, gpuSimData, ioMode);
                 bpReader.EndStep();
-                cudaMemcpy(r32o.data(), gpuSimData, NTotal * sizeof(float),
-                           cudaMemcpyDeviceToHost);
+                cudaMemcpy(r32o.data(), gpuSimData, NTotal * sizeof(float), cudaMemcpyDeviceToHost);
             }
             // Remove INCREMENT from each element
-            std::transform(r32o.begin(), r32o.end(), r32o.begin(),
-                           std::bind(std::minus<float>(), std::placeholders::_1,
-                                     (t + 1) * INCREMENT));
+            std::transform(
+                r32o.begin(), r32o.end(), r32o.begin(),
+                std::bind(std::minus<float>(), std::placeholders::_1, (t + 1) * INCREMENT));
 
             for (size_t i = 0; i < NTotal; i++)
             {
                 char msg[1 << 8] = {0};
-                snprintf(msg, sizeof(msg), "t=%d i=%zu r32o=%f r32s=%f", t, i,
-                         r32o[i], r32s[i]);
+                snprintf(msg, sizeof(msg), "t=%d i=%zu r32o=%f r32s=%f", t, i, r32o[i], r32s[i]);
                 ASSERT_LT(std::abs(r32o[i] - r32s[i]), EPSILON) << msg;
             }
         }
@@ -213,8 +206,7 @@ void CUDAWriteReadMemorySelection()
         // cuda simulation buffer
         float *gpuSimData = nullptr;
         cudaMalloc(&gpuSimData, (Nx + 2 * ghostCells) * sizeof(float));
-        cudaMemcpy(gpuSimData, r32s.data(),
-                   (Nx + 2 * ghostCells) * sizeof(float),
+        cudaMemcpy(gpuSimData, r32s.data(), (Nx + 2 * ghostCells) * sizeof(float),
                    cudaMemcpyHostToDevice);
 
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -279,18 +271,16 @@ void CUDAWriteReadMemorySelection()
             var_r32.SetMemorySpace(adios2::MemorySpace::GPU);
             bpReader.Get(var_r32, gpuSimData);
             bpReader.EndStep();
-            cudaMemcpy(r32o.data(), gpuSimData, Nx * sizeof(float),
-                       cudaMemcpyDeviceToHost);
+            cudaMemcpy(r32o.data(), gpuSimData, Nx * sizeof(float), cudaMemcpyDeviceToHost);
 
             // Remove INCREMENT from each element
-            std::transform(r32o.begin(), r32o.end(), r32o.begin(),
-                           std::bind(std::minus<float>(), std::placeholders::_1,
-                                     (t + 1) * INCREMENT));
+            std::transform(
+                r32o.begin(), r32o.end(), r32o.begin(),
+                std::bind(std::minus<float>(), std::placeholders::_1, (t + 1) * INCREMENT));
             for (size_t i = 0; i < Nx; i++)
             {
                 char msg[1 << 8] = {0};
-                snprintf(msg, sizeof(msg), "t=%d i=%zu r32o=%f r32s=%f", t, i,
-                         r32o[i], r32s[i]);
+                snprintf(msg, sizeof(msg), "t=%d i=%zu r32o=%f r32s=%f", t, i, r32o[i], r32s[i]);
                 ASSERT_LT(std::abs(r32o[i] - r32s[i]), EPSILON) << msg;
             }
         }
@@ -334,8 +324,8 @@ void CUDAWriteReadMPI1D(const std::string mode)
         // cuda simulation buffer
         float *gpuSimData = nullptr;
         cudaMalloc(&gpuSimData, Nx * sizeof(float));
-        cudaMemcpy(gpuSimData, ((float *)&r32s[0] + (Nx * mpiRank)),
-                   Nx * sizeof(float), cudaMemcpyHostToDevice);
+        cudaMemcpy(gpuSimData, ((float *)&r32s[0] + (Nx * mpiRank)), Nx * sizeof(float),
+                   cudaMemcpyHostToDevice);
         // host simulation buffer
         std::vector<float> simData(r32s.begin() + (Nx * mpiRank),
                                    r32s.begin() + (Nx * (mpiRank + 1)));
@@ -353,8 +343,7 @@ void CUDAWriteReadMPI1D(const std::string mode)
         const adios2::Dims count{Nx};
 
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
-        auto var_r32_host =
-            io.DefineVariable<float>("r32host", shape, start, count);
+        auto var_r32_host = io.DefineVariable<float>("r32host", shape, start, count);
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -363,8 +352,7 @@ void CUDAWriteReadMPI1D(const std::string mode)
             // Update values in the simulation data
             cuda_increment(Nx, 1, 0, gpuSimData, INCREMENT);
             std::transform(simData.begin(), simData.end(), simData.begin(),
-                           std::bind(std::plus<float>(), std::placeholders::_1,
-                                     INCREMENT));
+                           std::bind(std::plus<float>(), std::placeholders::_1, INCREMENT));
 
             bpWriter.BeginStep();
             var_r32.SetMemorySpace(adios2::MemorySpace::GPU);
@@ -410,19 +398,18 @@ void CUDAWriteReadMPI1D(const std::string mode)
             var_r32.SetMemorySpace(adios2::MemorySpace::GPU);
             bpReader.Get(var_r32, gpuSimData, ioMode);
             bpReader.EndStep();
-            cudaMemcpy(r32o.data(), gpuSimData, NxTotal * sizeof(float),
-                       cudaMemcpyDeviceToHost);
+            cudaMemcpy(r32o.data(), gpuSimData, NxTotal * sizeof(float), cudaMemcpyDeviceToHost);
 
             // Remove INCREMENT from each element
-            std::transform(r32o.begin(), r32o.end(), r32o.begin(),
-                           std::bind(std::minus<float>(), std::placeholders::_1,
-                                     (t + 1) * INCREMENT));
+            std::transform(
+                r32o.begin(), r32o.end(), r32o.begin(),
+                std::bind(std::minus<float>(), std::placeholders::_1, (t + 1) * INCREMENT));
 
             for (size_t i = 0; i < NxTotal; i++)
             {
                 char msg[1 << 8] = {0};
-                snprintf(msg, sizeof(msg), "t=%d i=%zu rank=%d r32o=%f r32s=%f",
-                         t, i, mpiRank, r32o[i], r32s[i]);
+                snprintf(msg, sizeof(msg), "t=%d i=%zu rank=%d r32o=%f r32s=%f", t, i, mpiRank,
+                         r32o[i], r32s[i]);
                 ASSERT_LT(std::abs(r32o[i] - r32s[i]), EPSILON) << msg;
             }
         }
@@ -446,8 +433,7 @@ TEST_P(BPWRCUDA, ADIOS2BPCUDADetect) { CUDADetectMemSpace(GetParam()); }
 TEST_P(BPWRCUDA, ADIOS2BPCUDAWrong) { CUDAWrongMemSpace(); }
 TEST_P(BPWRCUDA, ADIOS2BPCUDAMemSel) { CUDAWriteReadMemorySelection(); }
 
-INSTANTIATE_TEST_SUITE_P(CudaRW, BPWRCUDA,
-                         ::testing::Values("deferred", "sync"));
+INSTANTIATE_TEST_SUITE_P(CudaRW, BPWRCUDA, ::testing::Values("deferred", "sync"));
 
 int main(int argc, char **argv)
 {

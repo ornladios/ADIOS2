@@ -35,8 +35,7 @@ template <>
 std::set<std::string> LowerCase(const std::set<std::string> &input)
 {
     std::set<std::string> output;
-    std::transform(input.begin(), input.end(),
-                   std::inserter(output, output.begin()),
+    std::transform(input.begin(), input.end(), std::inserter(output, output.begin()),
                    [](const std::string &in) { return LowerCase(in); });
     return output;
 }
@@ -59,8 +58,7 @@ bool StringTo(const std::string &input, const std::string &hint)
     {
         helper::Throw<std::invalid_argument>(
             "Helper", "adiosString", "StringTo",
-            "invalid input value: " + input +
-                " for on/off or true/false bool conversion " + hint);
+            "invalid input value: " + input + " for on/off or true/false bool conversion " + hint);
     }
     return result;
 }
@@ -76,8 +74,7 @@ int32_t StringTo(const std::string &input, const std::string &hint)
     catch (...)
     {
         helper::ThrowNested<std::invalid_argument>(
-            "Helper", "adiosString", "StringTo",
-            "could not cast " + input + " to int32_t " + hint);
+            "Helper", "adiosString", "StringTo", "could not cast " + input + " to int32_t " + hint);
     }
     return 0;
 }
@@ -92,9 +89,9 @@ uint32_t StringTo(const std::string &input, const std::string &hint)
     }
     catch (...)
     {
-        helper::ThrowNested<std::invalid_argument>(
-            "Helper", "adiosString", "StringTo",
-            "could not cast " + input + " to uint32_t " + hint);
+        helper::ThrowNested<std::invalid_argument>("Helper", "adiosString", "StringTo",
+                                                   "could not cast " + input + " to uint32_t " +
+                                                       hint);
     }
     return 0;
 }
@@ -110,8 +107,7 @@ int64_t StringTo(const std::string &input, const std::string &hint)
     catch (...)
     {
         helper::ThrowNested<std::invalid_argument>(
-            "Helper", "adiosString", "StringTo",
-            "could not cast " + input + " to int64_t " + hint);
+            "Helper", "adiosString", "StringTo", "could not cast " + input + " to int64_t " + hint);
     }
     return 0;
 }
@@ -126,9 +122,9 @@ uint64_t StringTo(const std::string &input, const std::string &hint)
     }
     catch (...)
     {
-        helper::ThrowNested<std::invalid_argument>(
-            "Helper", "adiosString", "StringTo",
-            "could not cast " + input + " to uint64_t " + hint);
+        helper::ThrowNested<std::invalid_argument>("Helper", "adiosString", "StringTo",
+                                                   "could not cast " + input + " to uint64_t " +
+                                                       hint);
     }
     return 0;
 }
@@ -143,9 +139,8 @@ float StringTo(const std::string &input, const std::string &hint)
     }
     catch (...)
     {
-        helper::ThrowNested<std::invalid_argument>(
-            "Helper", "adiosString", "StringTo",
-            "could not cast " + input + " to float " + hint);
+        helper::ThrowNested<std::invalid_argument>("Helper", "adiosString", "StringTo",
+                                                   "could not cast " + input + " to float " + hint);
     }
     return 0;
 }
@@ -161,8 +156,7 @@ double StringTo(const std::string &input, const std::string &hint)
     catch (...)
     {
         helper::ThrowNested<std::invalid_argument>(
-            "Helper", "adiosString", "StringTo",
-            "could not cast " + input + " to double " + hint);
+            "Helper", "adiosString", "StringTo", "could not cast " + input + " to double " + hint);
     }
     return 0;
 }

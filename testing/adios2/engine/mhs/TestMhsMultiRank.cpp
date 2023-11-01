@@ -22,9 +22,8 @@ public:
     MhsEngineTest() = default;
 };
 
-void Reader(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t rows, const adios2::Params &engineParams,
-            const std::string &name)
+void Reader(const Dims &shape, const Dims &start, const Dims &count, const size_t rows,
+            const adios2::Params &engineParams, const std::string &name)
 {
 
     if (mpiRank != 0)
@@ -66,19 +65,14 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         std::cout << std::endl;
 
         adios2::Variable<char> bpChars = io.InquireVariable<char>("bpChars");
-        adios2::Variable<unsigned char> bpUChars =
-            io.InquireVariable<unsigned char>("bpUChars");
-        adios2::Variable<short> bpShorts =
-            io.InquireVariable<short>("bpShorts");
+        adios2::Variable<unsigned char> bpUChars = io.InquireVariable<unsigned char>("bpUChars");
+        adios2::Variable<short> bpShorts = io.InquireVariable<short>("bpShorts");
         adios2::Variable<unsigned short> bpUShorts =
             io.InquireVariable<unsigned short>("bpUShorts");
         adios2::Variable<int> bpInts = io.InquireVariable<int>("bpInts");
-        adios2::Variable<unsigned int> bpUInts =
-            io.InquireVariable<unsigned int>("bpUInts");
-        adios2::Variable<float> bpFloats =
-            io.InquireVariable<float>("bpFloats");
-        adios2::Variable<double> bpDoubles =
-            io.InquireVariable<double>("bpDoubles");
+        adios2::Variable<unsigned int> bpUInts = io.InquireVariable<unsigned int>("bpUInts");
+        adios2::Variable<float> bpFloats = io.InquireVariable<float>("bpFloats");
+        adios2::Variable<double> bpDoubles = io.InquireVariable<double>("bpDoubles");
         adios2::Variable<std::complex<float>> bpComplexes =
             io.InquireVariable<std::complex<float>>("bpComplexes");
         adios2::Variable<std::complex<double>> bpDComplexes =
@@ -105,8 +99,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         VerifyData(myShorts.data(), step, {0, 0, 0}, shape, shape, "bpShorts");
 
         readerEngine.Get(bpUShorts, myUShorts.data(), adios2::Mode::Sync);
-        VerifyData(myUShorts.data(), step, {0, 0, 0}, shape, shape,
-                   "bpUShorts");
+        VerifyData(myUShorts.data(), step, {0, 0, 0}, shape, shape, "bpUShorts");
 
         readerEngine.Get(bpInts, myInts.data(), adios2::Mode::Sync);
         VerifyData(myInts.data(), step, {0, 0, 0}, shape, shape, "bpInts");
@@ -118,25 +111,21 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
         VerifyData(myFloats.data(), step, {0, 0, 0}, shape, shape, "bpFloats");
 
         readerEngine.Get(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-        VerifyData(myDoubles.data(), step, {0, 0, 0}, shape, shape,
-                   "bpDoubles");
+        VerifyData(myDoubles.data(), step, {0, 0, 0}, shape, shape, "bpDoubles");
 
         readerEngine.Get(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
-        VerifyData(myComplexes.data(), step, {0, 0, 0}, shape, shape,
-                   "bpComplexes");
+        VerifyData(myComplexes.data(), step, {0, 0, 0}, shape, shape, "bpComplexes");
 
         readerEngine.Get(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
-        VerifyData(myDComplexes.data(), step, {0, 0, 0}, shape, shape,
-                   "bpDComplexes");
+        VerifyData(myDComplexes.data(), step, {0, 0, 0}, shape, shape, "bpDComplexes");
 
         readerEngine.EndStep();
     }
     readerEngine.Close();
 }
 
-void Writer(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t rows, const adios2::Params &engineParams,
-            const std::string &name)
+void Writer(const Dims &shape, const Dims &start, const Dims &count, const size_t rows,
+            const adios2::Params &engineParams, const std::string &name)
 {
     size_t datasize = 1;
     for (const auto &i : count)
@@ -159,21 +148,16 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
     auto bpChars = io.DefineVariable<char>("bpChars", shape, start, count);
-    auto bpUChars =
-        io.DefineVariable<unsigned char>("bpUChars", shape, start, count);
+    auto bpUChars = io.DefineVariable<unsigned char>("bpUChars", shape, start, count);
     auto bpShorts = io.DefineVariable<short>("bpShorts", shape, start, count);
-    auto bpUShorts =
-        io.DefineVariable<unsigned short>("bpUShorts", shape, start, count);
+    auto bpUShorts = io.DefineVariable<unsigned short>("bpUShorts", shape, start, count);
     auto bpInts = io.DefineVariable<int>("bpInts", shape, start, count);
-    auto bpUInts =
-        io.DefineVariable<unsigned int>("bpUInts", shape, start, count);
+    auto bpUInts = io.DefineVariable<unsigned int>("bpUInts", shape, start, count);
     auto bpFloats = io.DefineVariable<float>("bpFloats", shape, start, count);
-    auto bpDoubles =
-        io.DefineVariable<double>("bpDoubles", shape, start, count);
-    auto bpComplexes = io.DefineVariable<std::complex<float>>(
-        "bpComplexes", shape, start, count);
-    auto bpDComplexes = io.DefineVariable<std::complex<double>>(
-        "bpDComplexes", shape, start, count);
+    auto bpDoubles = io.DefineVariable<double>("bpDoubles", shape, start, count);
+    auto bpComplexes = io.DefineVariable<std::complex<float>>("bpComplexes", shape, start, count);
+    auto bpDComplexes =
+        io.DefineVariable<std::complex<double>>("bpDComplexes", shape, start, count);
     adios2::Engine writerEngine = io.Open(name, adios2::Mode::Write);
 
     for (size_t step = 0; step < 10; step++)
@@ -211,10 +195,8 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
             writerEngine.Put(bpUInts, myUInts.data(), adios2::Mode::Sync);
             writerEngine.Put(bpFloats, myFloats.data(), adios2::Mode::Sync);
             writerEngine.Put(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-            writerEngine.Put(bpComplexes, myComplexes.data(),
-                             adios2::Mode::Sync);
-            writerEngine.Put(bpDComplexes, myDComplexes.data(),
-                             adios2::Mode::Sync);
+            writerEngine.Put(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
+            writerEngine.Put(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
         }
         writerEngine.EndStep();
     }

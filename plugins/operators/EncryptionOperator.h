@@ -34,12 +34,10 @@ public:
     EncryptionOperator(const Params &parameters);
     virtual ~EncryptionOperator();
 
-    size_t Operate(const char *dataIn, const Dims &blockStart,
-                   const Dims &blockCount, const DataType type,
-                   char *bufferOut) override;
+    size_t Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                   const DataType type, char *bufferOut) override;
 
-    size_t InverseOperate(const char *bufferIn, const size_t sizeIn,
-                          char *dataOut) override;
+    size_t InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut) override;
 
     bool IsDataTypeValid(const DataType type) const override;
 
@@ -53,8 +51,7 @@ private:
 
 extern "C" {
 
-adios2::plugin::EncryptionOperator *
-OperatorCreate(const adios2::Params &parameters);
+adios2::plugin::EncryptionOperator *OperatorCreate(const adios2::Params &parameters);
 void OperatorDestroy(adios2::plugin::EncryptionOperator *obj);
 }
 

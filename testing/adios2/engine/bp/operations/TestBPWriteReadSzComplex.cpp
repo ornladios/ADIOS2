@@ -27,11 +27,9 @@ public:
 };
 
 template <class T>
-void PrintData(const T *data, const size_t step, const Dims &start,
-               const Dims &count)
+void PrintData(const T *data, const size_t step, const Dims &start, const Dims &count)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    size_t size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     std::cout << "Step: " << step << " Size:" << size << "\n";
     size_t printsize = 128;
 
@@ -55,28 +53,7 @@ void PrintData(const T *data, const size_t step, const Dims &start,
 }
 
 template <class T>
-void GenData(std::vector<std::complex<T>> &data, const size_t step,
-             const Dims &start, const Dims &count, const Dims &shape)
-{
-    if (start.size() == 2)
-    {
-        for (size_t i = 0; i < count[0]; ++i)
-        {
-            for (size_t j = 0; j < count[1]; ++j)
-            {
-                data[i * count[1] + j] = {
-                    static_cast<T>((i + start[1]) * shape[1] + j + start[0] +
-                                   std::stof(accuracy) * 0.01 * (T)step),
-                    static_cast<T>((i + start[1]) * shape[1] + j + start[0] +
-                                   std::stof(accuracy) * 0.01 * (T)step) +
-                        1};
-            }
-        }
-    }
-}
-
-template <class T>
-void GenData(std::vector<T> &data, const size_t step, const Dims &start,
+void GenData(std::vector<std::complex<T>> &data, const size_t step, const Dims &start,
              const Dims &count, const Dims &shape)
 {
     if (start.size() == 2)
@@ -85,20 +62,38 @@ void GenData(std::vector<T> &data, const size_t step, const Dims &start,
         {
             for (size_t j = 0; j < count[1]; ++j)
             {
-                data[i * count[1] + j] =
-                    (i + start[1]) * shape[1] + j + start[0] +
-                    std::stof(accuracy) * 0.00001 * (T)step;
+                data[i * count[1] + j] = {static_cast<T>((i + start[1]) * shape[1] + j + start[0] +
+                                                         std::stof(accuracy) * 0.01 * (T)step),
+                                          static_cast<T>((i + start[1]) * shape[1] + j + start[0] +
+                                                         std::stof(accuracy) * 0.01 * (T)step) +
+                                              1};
             }
         }
     }
 }
 
 template <class T>
-void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape, bool &compressed)
+void GenData(std::vector<T> &data, const size_t step, const Dims &start, const Dims &count,
+             const Dims &shape)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    if (start.size() == 2)
+    {
+        for (size_t i = 0; i < count[0]; ++i)
+        {
+            for (size_t j = 0; j < count[1]; ++j)
+            {
+                data[i * count[1] + j] = (i + start[1]) * shape[1] + j + start[0] +
+                                         std::stof(accuracy) * 0.00001 * (T)step;
+            }
+        }
+    }
+}
+
+template <class T>
+void VerifyData(const std::complex<T> *data, size_t step, const Dims &start, const Dims &count,
+                const Dims &shape, bool &compressed)
+{
+    size_t size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     std::vector<std::complex<T>> tmpdata(size);
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
@@ -107,8 +102,7 @@ void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
                   std::stof(accuracy));
         ASSERT_LT(std::abs((double)data[i].imag() - (double)tmpdata[i].imag()),
                   std::stof(accuracy));
-        if (data[i].real() != tmpdata[i].real() ||
-            data[i].imag() != tmpdata[i].imag())
+        if (data[i].real() != tmpdata[i].real() || data[i].imag() != tmpdata[i].imag())
         {
             compressed = true;
         }
@@ -116,17 +110,15 @@ void VerifyData(const std::complex<T> *data, size_t step, const Dims &start,
 }
 
 template <class T>
-void VerifyData(const T *data, size_t step, const Dims &start,
-                const Dims &count, const Dims &shape, bool &compressed)
+void VerifyData(const T *data, size_t step, const Dims &start, const Dims &count, const Dims &shape,
+                bool &compressed)
 {
-    size_t size = std::accumulate(count.begin(), count.end(), 1,
-                                  std::multiplies<size_t>());
+    size_t size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     std::vector<T> tmpdata(size);
     GenData(tmpdata, step, start, count, shape);
     for (size_t i = 0; i < size; ++i)
     {
-        ASSERT_LT(std::abs((double)(data[i] - tmpdata[i])),
-                  std::stof(accuracy));
+        ASSERT_LT(std::abs((double)(data[i] - tmpdata[i])), std::stof(accuracy));
         if (data[i] != tmpdata[i])
         {
             compressed = true;
@@ -134,11 +126,9 @@ void VerifyData(const T *data, size_t step, const Dims &start,
     }
 }
 
-void Writer(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t steps)
+void Writer(const Dims &shape, const Dims &start, const Dims &count, const size_t steps)
 {
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
@@ -156,26 +146,20 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
     auto bpChars = io.DefineVariable<char>("bpChars", shape, start, count);
-    auto bpUChars =
-        io.DefineVariable<unsigned char>("bpUChars", shape, start, count);
+    auto bpUChars = io.DefineVariable<unsigned char>("bpUChars", shape, start, count);
     auto bpShorts = io.DefineVariable<short>("bpShorts", shape, start, count);
-    auto bpUShorts =
-        io.DefineVariable<unsigned short>("bpUShorts", shape, start, count);
+    auto bpUShorts = io.DefineVariable<unsigned short>("bpUShorts", shape, start, count);
     auto bpInts = io.DefineVariable<int>("bpInts", shape, start, count);
-    auto bpUInts =
-        io.DefineVariable<unsigned int>("bpUInts", shape, start, count);
+    auto bpUInts = io.DefineVariable<unsigned int>("bpUInts", shape, start, count);
     auto bpFloats = io.DefineVariable<float>("bpFloats", shape, start, count);
-    adios2::Operator compressor =
-        adios.DefineOperator("szCompressor", adios2::ops::LossySZ);
+    adios2::Operator compressor = adios.DefineOperator("szCompressor", adios2::ops::LossySZ);
     bpFloats.AddOperation(compressor, {{"accuracy", accuracy}});
-    auto bpDoubles =
-        io.DefineVariable<double>("bpDoubles", shape, start, count);
+    auto bpDoubles = io.DefineVariable<double>("bpDoubles", shape, start, count);
     bpDoubles.AddOperation(compressor, {{"accuracy", accuracy}});
-    auto bpComplexes = io.DefineVariable<std::complex<float>>(
-        "bpComplexes", shape, start, count);
+    auto bpComplexes = io.DefineVariable<std::complex<float>>("bpComplexes", shape, start, count);
     bpComplexes.AddOperation(compressor, {{"accuracy", accuracy}});
-    auto bpDComplexes = io.DefineVariable<std::complex<double>>(
-        "bpDComplexes", shape, start, count);
+    auto bpDComplexes =
+        io.DefineVariable<std::complex<double>>("bpDComplexes", shape, start, count);
     bpDComplexes.AddOperation(compressor, {{"accuracy", accuracy}});
     io.DefineAttribute<int>("AttInt", 110);
     adios2::Engine writerEngine = io.Open(fileName, adios2::Mode::Write);
@@ -207,8 +191,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count,
     writerEngine.Close();
 }
 
-void Reader(const Dims &shape, const Dims &start, const Dims &count,
-            const size_t steps)
+void Reader(const Dims &shape, const Dims &start, const Dims &count, const size_t steps)
 {
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
@@ -218,8 +201,7 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
     adios2::IO io = adios.DeclareIO(ioName);
     adios2::Engine readerEngine = io.Open(fileName, adios2::Mode::Read);
 
-    size_t datasize = std::accumulate(count.begin(), count.end(), 1,
-                                      std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
     std::vector<short> myShorts(datasize);
@@ -254,21 +236,16 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             GenData(myDoubles, currentStep, start, count, shape);
             GenData(myComplexes, currentStep, start, count, shape);
             GenData(myDComplexes, currentStep, start, count, shape);
-            adios2::Variable<char> bpChars =
-                io.InquireVariable<char>("bpChars");
+            adios2::Variable<char> bpChars = io.InquireVariable<char>("bpChars");
             adios2::Variable<unsigned char> bpUChars =
                 io.InquireVariable<unsigned char>("bpUChars");
-            adios2::Variable<short> bpShorts =
-                io.InquireVariable<short>("bpShorts");
+            adios2::Variable<short> bpShorts = io.InquireVariable<short>("bpShorts");
             adios2::Variable<unsigned short> bpUShorts =
                 io.InquireVariable<unsigned short>("bpUShorts");
             adios2::Variable<int> bpInts = io.InquireVariable<int>("bpInts");
-            adios2::Variable<unsigned int> bpUInts =
-                io.InquireVariable<unsigned int>("bpUInts");
-            adios2::Variable<float> bpFloats =
-                io.InquireVariable<float>("bpFloats");
-            adios2::Variable<double> bpDoubles =
-                io.InquireVariable<double>("bpDoubles");
+            adios2::Variable<unsigned int> bpUInts = io.InquireVariable<unsigned int>("bpUInts");
+            adios2::Variable<float> bpFloats = io.InquireVariable<float>("bpFloats");
+            adios2::Variable<double> bpDoubles = io.InquireVariable<double>("bpDoubles");
             adios2::Variable<std::complex<float>> bpComplexes =
                 io.InquireVariable<std::complex<float>>("bpComplexes");
             adios2::Variable<std::complex<double>> bpDComplexes =
@@ -294,31 +271,19 @@ void Reader(const Dims &shape, const Dims &start, const Dims &count,
             readerEngine.Get(bpUInts, myUInts.data(), adios2::Mode::Sync);
             readerEngine.Get(bpFloats, myFloats.data(), adios2::Mode::Sync);
             readerEngine.Get(bpDoubles, myDoubles.data(), adios2::Mode::Sync);
-            readerEngine.Get(bpComplexes, myComplexes.data(),
-                             adios2::Mode::Sync);
-            readerEngine.Get(bpDComplexes, myDComplexes.data(),
-                             adios2::Mode::Sync);
+            readerEngine.Get(bpComplexes, myComplexes.data(), adios2::Mode::Sync);
+            readerEngine.Get(bpDComplexes, myDComplexes.data(), adios2::Mode::Sync);
 
-            VerifyData(myChars.data(), currentStep, start, count, shape,
-                       otherCompressed);
-            VerifyData(myUChars.data(), currentStep, start, count, shape,
-                       otherCompressed);
-            VerifyData(myShorts.data(), currentStep, start, count, shape,
-                       otherCompressed);
-            VerifyData(myUShorts.data(), currentStep, start, count, shape,
-                       otherCompressed);
-            VerifyData(myInts.data(), currentStep, start, count, shape,
-                       otherCompressed);
-            VerifyData(myUInts.data(), currentStep, start, count, shape,
-                       otherCompressed);
-            VerifyData(myFloats.data(), currentStep, start, count, shape,
-                       floatCompressed);
-            VerifyData(myDoubles.data(), currentStep, start, count, shape,
-                       doubleCompressed);
-            VerifyData(myComplexes.data(), currentStep, start, count, shape,
-                       complexCompressed);
-            VerifyData(myDComplexes.data(), currentStep, start, count, shape,
-                       dcomplexCompressed);
+            VerifyData(myChars.data(), currentStep, start, count, shape, otherCompressed);
+            VerifyData(myUChars.data(), currentStep, start, count, shape, otherCompressed);
+            VerifyData(myShorts.data(), currentStep, start, count, shape, otherCompressed);
+            VerifyData(myUShorts.data(), currentStep, start, count, shape, otherCompressed);
+            VerifyData(myInts.data(), currentStep, start, count, shape, otherCompressed);
+            VerifyData(myUInts.data(), currentStep, start, count, shape, otherCompressed);
+            VerifyData(myFloats.data(), currentStep, start, count, shape, floatCompressed);
+            VerifyData(myDoubles.data(), currentStep, start, count, shape, doubleCompressed);
+            VerifyData(myComplexes.data(), currentStep, start, count, shape, complexCompressed);
+            VerifyData(myDComplexes.data(), currentStep, start, count, shape, dcomplexCompressed);
             readerEngine.EndStep();
         }
         else if (status == adios2::StepStatus::EndOfStream)

@@ -19,9 +19,8 @@ namespace py11
 {
 
 template <class T>
-pybind11::array File::DoRead(const std::string &name, const Dims &_start,
-                             const Dims &_count, const size_t stepStart,
-                             const size_t stepCount, const size_t blockID)
+pybind11::array File::DoRead(const std::string &name, const Dims &_start, const Dims &_count,
+                             const size_t stepStart, const size_t stepCount, const size_t blockID)
 {
     core::Variable<T> &variable = *m_Stream->m_IO->InquireVariable<T>(name);
     Dims &shape = variable.m_Shape;
@@ -45,8 +44,7 @@ pybind11::array File::DoRead(const std::string &name, const Dims &_start,
     {
         if (blockID != 0)
         {
-            throw std::invalid_argument(
-                "blockId can only be specified when reading LocalArrays.");
+            throw std::invalid_argument("blockId can only be specified when reading LocalArrays.");
         }
     }
 

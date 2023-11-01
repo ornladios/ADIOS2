@@ -11,8 +11,7 @@
 #include <gtest/gtest.h>
 
 class BufferTest
-: public ::testing::TestWithParam<
-      std::tuple<std::string, std::string, std::string, std::string>>
+: public ::testing::TestWithParam<std::tuple<std::string, std::string, std::string, std::string>>
 {
 };
 
@@ -23,9 +22,8 @@ TEST_P(BufferTest, WriteRead)
     const std::string &transportReadLibrary = std::get<2>(GetParam());
     const std::string &transportReadBuffer = std::get<3>(GetParam());
 
-    const std::string fname("FileBufferTest_" + transportWriteLibrary + "_" +
-                            transportWriteBuffer + "_" + transportReadLibrary +
-                            "_" + transportReadBuffer + ".bp");
+    const std::string fname("FileBufferTest_" + transportWriteLibrary + "_" + transportWriteBuffer +
+                            "_" + transportReadLibrary + "_" + transportReadBuffer + ".bp");
 
     std::array<double, 100> dataOrig;
     for (size_t i = 0; i < 100; ++i)
@@ -76,55 +74,55 @@ TEST_P(BufferTest, WriteRead)
 }
 
 #ifdef __unix__
-INSTANTIATE_TEST_SUITE_P(
-    TransportTests, BufferTest,
-    ::testing::Values(std::make_tuple("fstream", "true", "posix", "false"),
-                      std::make_tuple("fstream", "false", "posix", "false"),
-                      std::make_tuple("posix", "false", "stdio", "true"),
-                      std::make_tuple("posix", "false", "stdio", "false"),
-                      std::make_tuple("posix", "false", "fstream", "true"),
-                      std::make_tuple("posix", "false", "fstream", "false"),
-                      std::make_tuple("posix", "false", "posix", "false"),
-                      std::make_tuple("stdio", "true", "posix", "false"),
-                      std::make_tuple("stdio", "false", "posix", "false"),
+INSTANTIATE_TEST_SUITE_P(TransportTests, BufferTest,
+                         ::testing::Values(std::make_tuple("fstream", "true", "posix", "false"),
+                                           std::make_tuple("fstream", "false", "posix", "false"),
+                                           std::make_tuple("posix", "false", "stdio", "true"),
+                                           std::make_tuple("posix", "false", "stdio", "false"),
+                                           std::make_tuple("posix", "false", "fstream", "true"),
+                                           std::make_tuple("posix", "false", "fstream", "false"),
+                                           std::make_tuple("posix", "false", "posix", "false"),
+                                           std::make_tuple("stdio", "true", "posix", "false"),
+                                           std::make_tuple("stdio", "false", "posix", "false"),
 
-                      std::make_tuple("stdio", "true", "stdio", "true"),
-                      std::make_tuple("stdio", "true", "stdio", "false"),
-                      std::make_tuple("stdio", "false", "stdio", "true"),
-                      std::make_tuple("stdio", "false", "stdio", "false"),
-                      std::make_tuple("stdio", "true", "fstream", "true"),
-                      std::make_tuple("stdio", "true", "fstream", "false"),
-                      std::make_tuple("stdio", "false", "fstream", "true"),
-                      std::make_tuple("stdio", "false", "fstream", "false"),
+                                           std::make_tuple("stdio", "true", "stdio", "true"),
+                                           std::make_tuple("stdio", "true", "stdio", "false"),
+                                           std::make_tuple("stdio", "false", "stdio", "true"),
+                                           std::make_tuple("stdio", "false", "stdio", "false"),
+                                           std::make_tuple("stdio", "true", "fstream", "true"),
+                                           std::make_tuple("stdio", "true", "fstream", "false"),
+                                           std::make_tuple("stdio", "false", "fstream", "true"),
+                                           std::make_tuple("stdio", "false", "fstream", "false"),
 
-                      std::make_tuple("fstream", "true", "stdio", "true"),
-                      std::make_tuple("fstream", "true", "stdio", "false"),
-                      std::make_tuple("fstream", "false", "stdio", "true"),
-                      std::make_tuple("fstream", "false", "stdio", "false"),
-                      std::make_tuple("fstream", "true", "fstream", "true"),
-                      std::make_tuple("fstream", "true", "fstream", "false"),
-                      std::make_tuple("fstream", "false", "fstream", "true"),
-                      std::make_tuple("fstream", "false", "fstream", "false")));
+                                           std::make_tuple("fstream", "true", "stdio", "true"),
+                                           std::make_tuple("fstream", "true", "stdio", "false"),
+                                           std::make_tuple("fstream", "false", "stdio", "true"),
+                                           std::make_tuple("fstream", "false", "stdio", "false"),
+                                           std::make_tuple("fstream", "true", "fstream", "true"),
+                                           std::make_tuple("fstream", "true", "fstream", "false"),
+                                           std::make_tuple("fstream", "false", "fstream", "true"),
+                                           std::make_tuple("fstream", "false", "fstream",
+                                                           "false")));
 #else
-INSTANTIATE_TEST_SUITE_P(
-    TransportTests, BufferTest,
-    ::testing::Values(std::make_tuple("stdio", "true", "stdio", "true"),
-                      std::make_tuple("stdio", "true", "stdio", "false"),
-                      std::make_tuple("stdio", "false", "stdio", "true"),
-                      std::make_tuple("stdio", "false", "stdio", "false"),
-                      std::make_tuple("stdio", "true", "fstream", "true"),
-                      std::make_tuple("stdio", "true", "fstream", "false"),
-                      std::make_tuple("stdio", "false", "fstream", "true"),
-                      std::make_tuple("stdio", "false", "fstream", "false"),
+INSTANTIATE_TEST_SUITE_P(TransportTests, BufferTest,
+                         ::testing::Values(std::make_tuple("stdio", "true", "stdio", "true"),
+                                           std::make_tuple("stdio", "true", "stdio", "false"),
+                                           std::make_tuple("stdio", "false", "stdio", "true"),
+                                           std::make_tuple("stdio", "false", "stdio", "false"),
+                                           std::make_tuple("stdio", "true", "fstream", "true"),
+                                           std::make_tuple("stdio", "true", "fstream", "false"),
+                                           std::make_tuple("stdio", "false", "fstream", "true"),
+                                           std::make_tuple("stdio", "false", "fstream", "false"),
 
-                      std::make_tuple("fstream", "true", "stdio", "true"),
-                      std::make_tuple("fstream", "true", "stdio", "false"),
-                      std::make_tuple("fstream", "false", "stdio", "true"),
-                      std::make_tuple("fstream", "false", "stdio", "false"),
-                      std::make_tuple("fstream", "true", "fstream", "true"),
-                      std::make_tuple("fstream", "true", "fstream", "false"),
-                      std::make_tuple("fstream", "false", "fstream", "true"),
-                      std::make_tuple("fstream", "false", "fstream", "false")));
+                                           std::make_tuple("fstream", "true", "stdio", "true"),
+                                           std::make_tuple("fstream", "true", "stdio", "false"),
+                                           std::make_tuple("fstream", "false", "stdio", "true"),
+                                           std::make_tuple("fstream", "false", "stdio", "false"),
+                                           std::make_tuple("fstream", "true", "fstream", "true"),
+                                           std::make_tuple("fstream", "true", "fstream", "false"),
+                                           std::make_tuple("fstream", "false", "fstream", "true"),
+                                           std::make_tuple("fstream", "false", "fstream",
+                                                           "false")));
 #endif
 
 int main(int argc, char **argv)

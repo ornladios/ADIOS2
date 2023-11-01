@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <stdio.h>
 #include <fcntl.h>
+#include <io.h>
 #include "ffs.h"
 #include "io_interface.h"
 #include "ffs_internal.h"
@@ -26,21 +27,14 @@ char **result_p;
     bResult = ReadFile(conn, (char *) buffer, length, &iget, NULL);
 
     if (iget == 0) {
-	*result_p = "End of file";
-	*errno_p = 0;
+	if (result_p) *result_p = "End of file";
+	if (errno_p) *errno_p = 0;
 	return 0;		/* end of file */
     } else {
 	if (!bResult) {
-	    *errno_p = GetLastError();
-	    if ((*errno_p != WSAEWOULDBLOCK) &&
-		(*errno_p != WSAEINPROGRESS) &&
-		(*errno_p != WSAEINTR)) {
-		/* serious error */
-		return -1;
-	    } else {
-		*errno_p = 0;
-		iget = 0;
-	    }
+	    return -1;
+	} else {
+		if(errno_p) *errno_p = 0;
 	}
     }
 
@@ -49,22 +43,15 @@ char **result_p;
 	bResult = ReadFile((HANDLE) conn, (char *) buffer + length - left,
 			   left, &iget, NULL);
 	if (iget == 0) {
-	    *result_p = "End of file";
-	    *errno_p = 0;
+	    if (result_p) *result_p = "End of file";
+	    if (errno_p) *errno_p = 0;
 	    return length - left;	/* end of file */
 	} else {
 	    if (!bResult) {
-		*errno_p = GetLastError();
-		if ((*errno_p != WSAEWOULDBLOCK) &&
-		    (*errno_p != WSAEINPROGRESS) &&
-		    (*errno_p != WSAEINTR)) {
-		    /* serious error */
 		    return (length - left);
 		} else {
-		    *errno_p = 0;
-		    iget = 0;
+		    if (errno_p) *errno_p = 0;
 		}
-	    }
 	}
 	left -= iget;
     }
@@ -81,52 +68,54 @@ char **result_p;
 {
     int left = length;
     int iget;
-    iget = recv((unsigned int) conn, (char *) buffer + length - left, left, 0);
+    iget = recv((unsigned int) (intptr_t)conn, (char *) buffer + length - left, left, 0);
     if (iget == 0) {
-	*result_p = NULL;
-	*errno_p = 0;
+	if (result_p) *result_p = NULL;
+	if (errno_p) *errno_p = 0;
 	return 0;		/* No more socket data */
     } else if (iget == SOCKET_ERROR) {
-	*errno_p = WSAGetLastError();
-	if ((*errno_p != WSAEWOULDBLOCK) &&
-	    (*errno_p != WSAEINPROGRESS) &&
-		(*errno_p != WSAECONNRESET)  &&
-	    (*errno_p != WSAEINTR)) {
+	DWORD tmp = WSAGetLastError();
+	if (errno_p) *errno_p = tmp;
+	if ((tmp != WSAEWOULDBLOCK) &&
+	    (tmp != WSAEINPROGRESS) &&
+		(tmp != WSAECONNRESET)  &&
+	    (tmp != WSAEINTR)) {
 	    /* serious error */
-	    fprintf(stderr, "WINSOCK ERROR during receive, %i on socket %i\n",
-		    *errno_p, conn);
+	    fprintf(stderr, "WINSOCK ERROR during receive, %i on socket %p\n",
+		    tmp, conn);
 	    return -1;
 	} else {
-		if (*errno_p == WSAECONNRESET)
+		if (tmp == WSAECONNRESET)
 			return -1;
-	    *errno_p = 0;
+	    if (errno_p) *errno_p = 0;
 	    iget = 0;
 	}
     }
     left = length - iget;
     while (left > 0) {
-	iget = recv((unsigned int) conn, (char *) buffer + length - left,
+	iget = recv((unsigned int)(intptr_t) conn, (char *) buffer + length - left,
 		    left, 0);
 	if (iget == 0) {
-	    *result_p = NULL;
-	    *errno_p = 0;
+	    if (result_p) *result_p = NULL;
+	    if (errno_p) *errno_p = 0;
 	    return length - left;	/* no more socket data */
 	} else {
 	    if (iget == SOCKET_ERROR) {
-		*errno_p = WSAGetLastError();
-		if ((*errno_p != WSAEWOULDBLOCK) &&
-		    (*errno_p != WSAEINPROGRESS) &&
-			(*errno_p != WSAECONNRESET)  &&
-		    (*errno_p != WSAEINTR)) {
+		DWORD tmp = WSAGetLastError();
+		if (errno_p) *errno_p = tmp;
+		if ((tmp != WSAEWOULDBLOCK) &&
+		    (tmp != WSAEINPROGRESS) &&
+			(tmp != WSAECONNRESET)  &&
+		    (tmp != WSAEINTR)) {
 
 		    /* serious error */
-		    fprintf(stderr, "WINSOCK ERROR during receive2, %i on socket %i\n",
-			    *errno_p, conn);
+		    fprintf(stderr, "WINSOCK ERROR during receive2, %i on socket %p\n",
+			    tmp, conn);
 		    return (length - left);
 		} else {
-			if (*errno_p == WSAECONNRESET)
+			if (tmp == WSAECONNRESET)
 				return -1;
-		    *errno_p = 0;
+		    if(errno_p) *errno_p = 0;
 		    iget = 0;
 		}
 	    }
@@ -154,14 +143,15 @@ char **result_p;
 	bResult = WriteFile((HANDLE) conn, (char *) buffer + length - left, 
 			    left, &iget, NULL);
 	if (!bResult) {
-	    *errno_p = GetLastError();
-	    if ((*errno_p != WSAEWOULDBLOCK) &&
-		(*errno_p != WSAEINPROGRESS) &&
-		(*errno_p != WSAEINTR)) {
+	    DWORD tmp = GetLastError();
+	    if (errno_p) tmp = tmp;
+	    if ((tmp != WSAEWOULDBLOCK) &&
+		(tmp != WSAEINPROGRESS) &&
+		(tmp != WSAEINTR)) {
 		/* serious error */
 		return (length - left);
 	    } else {
-		*errno_p = 0;
+		if(errno_p) *errno_p = 0;
 		iget = 0;
 	    }
 	}
@@ -183,17 +173,18 @@ char **result_p;
     int iget = 0;
 
     while (left > 0) {
-	iget = send((unsigned int) conn, (char *) buffer + length - left,
+	iget = send((unsigned int) (intptr_t)conn, (char *) buffer + length - left,
 		    left, 0);
 	if (iget == SOCKET_ERROR) {
-	    *errno_p = GetLastError();
-	    if ((*errno_p != WSAEWOULDBLOCK) &&
-		(*errno_p != WSAEINPROGRESS) &&
-		(*errno_p != WSAEINTR)) {
+	    DWORD tmp = GetLastError();
+	    if (errno_p) *errno_p = tmp;
+	    if ((tmp != WSAEWOULDBLOCK) &&
+		(tmp != WSAEINPROGRESS) &&
+		(tmp != WSAEINTR)) {
 		/* serious error */
 		return (length - left);
 	    } else {
-		*errno_p = 0;
+		if (errno_p) *errno_p = 0;
 		iget = 0;
 	    }
 	}
@@ -218,28 +209,34 @@ void *conn;
 }
 
 static void *
-nt_file_open_func(path, flag_str, input, output)
-const char *path;
-const char *flag_str;
-int *input;
-int *output;
+nt_file_open_func(const char *path, const char *flag_str, int *input, int *output)
 {
-
+    int readfile = 0;
+    int writefile = 0;
     void *file;
-    long tmp_flags = (long)flag_str;
+    long tmp_flags = (long)(intptr_t)flag_str;
+    if (input) *input = 0;
+    if (output) *output = 0;
+
     tmp_flags &= ~(O_TRUNC);
     tmp_flags &= ~(O_CREAT);
 
     if ((O_RDONLY == tmp_flags) ||
 	(O_WRONLY == tmp_flags)) {
 	 /* must be old style call */
-	*input = (O_RDONLY == (long) flag_str);
-	*output = (O_WRONLY & (long) flag_str);
+	if (input) *input = (O_RDONLY == (long) (intptr_t)flag_str);
+	if (output) *output = (O_WRONLY & (long) (intptr_t)flag_str);
     } else {
 	if (strcmp(flag_str, "r") == 0) {
-	    *input = TRUE;
+	    if (input) *input = TRUE;
+	    readfile = 1;
 	} else if (strcmp(flag_str, "w") == 0) {
-	    *output = TRUE;
+	    if (output) *output = TRUE;
+	    writefile = 1;
+	 } else if (strcmp(flag_str, "a") == 0) {
+	     if (output) *output = 1;
+	     if (input) *input = 1;
+	     readfile = writefile = 1;
 	} else {
 	    fprintf(stderr, "Open flags value not understood for file \"%s\"\n",
 		    path);
@@ -247,7 +244,7 @@ int *output;
 	}
     }
 
-    if (*input) {
+    if (readfile) {
 	file = CreateFile(path, GENERIC_READ, FILE_SHARE_READ,
 		      NULL, OPEN_EXISTING, FILE_ATTRIBUTE_ARCHIVE, NULL);
 
@@ -260,6 +257,12 @@ int *output;
     } else {
 	return file;
     }
+}
+
+static int
+nt_file_lseek_func (void *file, size_t pos, int origin)
+{
+    return SetFilePointer((HANDLE)file, (long)pos, 0, origin);
 }
 
 
@@ -302,14 +305,35 @@ char **result_p;
     return icount;
 }
 
+static int
+null_file_writev_func(conn, iov, icount, errno_p, result_p)
+void* conn;
+struct iovec* iov;
+int icount;
+int* errno_p;
+char** result_p;
+{
+
+    int i = 0;
+    for (; i < icount; i++) {
+	if (nt_file_write_func(conn, iov[i].iov_base, iov[i].iov_len, errno_p,
+	    result_p) != iov[i].iov_len) {
+	    return i;
+	}
+    }
+    return icount;
+}
 
 /* Winsock init stuff, ask for ver 1.1 */
-static WORD wVersionRequested = MAKEWORD(1, 1);
+static WORD wVersionRequested = MAKEWORD(2, 2);
 static WSADATA wsaData;
 
 static void
 nt_socket_init_func()
 {
+    static int once = 0;
+    if (once) return;
+    once = 1;
     int nErrorStatus;
     nErrorStatus = WSAStartup(wVersionRequested, &wsaData);
     if (nErrorStatus != 0) {
@@ -324,7 +348,7 @@ static int
 nt_poll_func(conn)
 void *conn;
 {
-    int fd = (int) (long) conn;
+    int fd = (int) (intptr_t) conn;
     struct timeval time;
     fd_set read_fds;
     int ret_val;
@@ -340,22 +364,23 @@ void *conn;
     return (ret_val > 0);
 }
 
-IOinterface_func os_file_read_func = (IOinterface_func)nt_file_read_func;
-IOinterface_func os_file_write_func = (IOinterface_func)nt_file_write_func;
-IOinterface_funcv os_file_readv_func = (IOinterface_funcv)null_file_readv_func;
-IOinterface_funcv os_file_writev_func = NULL;
+IOinterface_func ffs_file_read_func = (IOinterface_func)nt_file_read_func;
+IOinterface_func ffs_file_write_func = (IOinterface_func)nt_file_write_func;
+IOinterface_funcv ffs_file_readv_func = (IOinterface_funcv)null_file_readv_func;
+IOinterface_funcv ffs_file_writev_func = (IOinterface_funcv)null_file_writev_func;
+IOinterface_lseek ffs_file_lseek_func = (IOinterface_lseek)nt_file_lseek_func;
 
 
-IOinterface_func os_read_func = (IOinterface_func)nt_socket_read_func;
-IOinterface_func os_write_func = (IOinterface_func)nt_socket_write_func;
-IOinterface_funcv os_readv_func = (IOinterface_funcv)nt_socket_readv_func;
-IOinterface_funcv os_writev_func = NULL;
-int os_max_iov = 1;
+IOinterface_func ffs_read_func = (IOinterface_func)nt_socket_read_func;
+IOinterface_func ffs_write_func = (IOinterface_func)nt_socket_write_func;
+IOinterface_funcv ffs_readv_func = (IOinterface_funcv)nt_socket_readv_func;
+IOinterface_funcv ffs_writev_func = NULL;
+int ffs_max_iov = 1;
 
 
-IOinterface_open os_file_open_func = (IOinterface_open)nt_file_open_func;
-IOinterface_close os_close_func = (IOinterface_close) nt_close_func;
-IOinterface_poll  os_poll_func = (IOinterface_poll)nt_poll_func;
-IOinterface_func os_server_read_func = (IOinterface_func)nt_socket_read_func;
-IOinterface_func os_server_write_func = (IOinterface_func)nt_socket_write_func;
-IOinterface_init os_sockets_init_func = (IOinterface_init)nt_socket_init_func;
+IOinterface_open ffs_file_open_func = (IOinterface_open)nt_file_open_func;
+IOinterface_close ffs_close_func = (IOinterface_close) nt_close_func;
+IOinterface_poll  ffs_poll_func = (IOinterface_poll)nt_poll_func;
+IOinterface_func ffs_server_read_func = (IOinterface_func)nt_socket_read_func;
+IOinterface_func ffs_server_write_func = (IOinterface_func)nt_socket_write_func;
+IOinterface_init ffs_sockets_init_func = (IOinterface_init)nt_socket_init_func;

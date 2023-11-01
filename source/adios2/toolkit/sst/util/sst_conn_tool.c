@@ -76,8 +76,7 @@ static const char *optstring = "hlcifs";
 
 void displayHelp()
 {
-    fprintf(stderr,
-            "sst_conn_tool - Diagnostics for ADIOS2/SST connections\n\n");
+    fprintf(stderr, "sst_conn_tool - Diagnostics for ADIOS2/SST connections\n\n");
     fprintf(stderr, "Usage:  sst_conn_tool { -l | -c } [options]\n");
     fprintf(stderr, "  -l,--listen  Display connection parameters and wait for "
                     "an SST connection (default)\n");
@@ -94,22 +93,21 @@ void displayHelp()
     fprintf(stderr, "  -h,--help    Display this message\n\n");
 }
 
-static char *envHelp =
-    "\tThe following environment variables can impact ADIOS2_IP_CONFIG "
-    "operation:\n"
-    "\t\tADIOS2_IP  		-  Publish the specified IP address "
-    "for "
-    "contact\n"
-    "\t\tADIOS2_HOSTNAME  	-  Publish the specified hostname for contact\n"
-    "\t\tADIOS2_USE_HOSTNAME 	-  Publish a hostname preferentially "
-    "over IP "
-    "address\n"
-    "\t\tADIOS2_INTERFACE  	-  Use the IP address associated with the "
-    "specified network interface\n"
-    "\t\tADIOS2_PORT_RANGE  	-  Use a port within the specified "
-    "range \"low:high\",\n"
-    "\t\t                 	   or specify \"any\" to let the OS "
-    "choose\n";
+static char *envHelp = "\tThe following environment variables can impact ADIOS2_IP_CONFIG "
+                       "operation:\n"
+                       "\t\tADIOS2_IP  		-  Publish the specified IP address "
+                       "for "
+                       "contact\n"
+                       "\t\tADIOS2_HOSTNAME  	-  Publish the specified hostname for contact\n"
+                       "\t\tADIOS2_USE_HOSTNAME 	-  Publish a hostname preferentially "
+                       "over IP "
+                       "address\n"
+                       "\t\tADIOS2_INTERFACE  	-  Use the IP address associated with the "
+                       "specified network interface\n"
+                       "\t\tADIOS2_PORT_RANGE  	-  Use a port within the specified "
+                       "range \"low:high\",\n"
+                       "\t\t                 	   or specify \"any\" to let the OS "
+                       "choose\n";
 
 static void do_listen();
 static void do_connect();
@@ -162,8 +160,7 @@ int main(int argc, char **argv)
     }
     if (listen + connect > 1)
     {
-        fprintf(stderr,
-                "Only one of --listen or --connect can be specified\n\n");
+        fprintf(stderr, "Only one of --listen or --connect can be specified\n\n");
         displayHelp();
         return 1;
     }
@@ -185,8 +182,8 @@ int main(int argc, char **argv)
     }
 }
 
-static void DecodeAttrList(const char *attrs, char **in_transport, char **in_ip,
-                           char **in_hostname, int *in_port)
+static void DecodeAttrList(const char *attrs, char **in_transport, char **in_ip, char **in_hostname,
+                           int *in_port)
 {
     attr_list listen_info = attr_list_from_string(attrs);
     char *transport = NULL;
@@ -253,8 +250,7 @@ static void ConnToolCallback(int dataID, const char *attrs, const char *data)
         }
         else
         {
-            printf(
-                "\n\tWarning, unknown control network transport operating\n");
+            printf("\n\tWarning, unknown control network transport operating\n");
         }
         printf("\tSst connection tool waiting for connection...\n\n");
     }
@@ -264,18 +260,15 @@ static void ConnToolCallback(int dataID, const char *attrs, const char *data)
          * parameters */
         if (!transport)
         {
-            printf("\n\tSst reader at IP %s, listen TCP/IP port %d\n\n", IP,
-                   port);
+            printf("\n\tSst reader at IP %s, listen TCP/IP port %d\n\n", IP, port);
         }
         else if (strcmp(transport, "enet") == 0)
         {
-            printf("\n\tSst reader at IP %s, listening UDP port %d\n\n", IP,
-                   port);
+            printf("\n\tSst reader at IP %s, listening UDP port %d\n\n", IP, port);
         }
         else
         {
-            printf(
-                "\n\tWarning, unknown control network transport operating\n");
+            printf("\n\tWarning, unknown control network transport operating\n");
         }
     }
     else if (dataID == 2)
@@ -294,8 +287,7 @@ static void ConnToolCallback(int dataID, const char *attrs, const char *data)
         }
         else
         {
-            printf(
-                "\n\tWarning, unknown control network transport operating\n");
+            printf("\n\tWarning, unknown control network transport operating\n");
         }
     }
 }

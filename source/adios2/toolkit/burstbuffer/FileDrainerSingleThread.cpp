@@ -71,8 +71,7 @@ void FileDrainerSingleThread::Join()
         if (m_Verbose)
         {
 #ifndef NO_SANITIZE_THREAD
-            std::cout << "Drain " << m_Rank
-                      << ": Waited for thread to join = " << timeTotal.count()
+            std::cout << "Drain " << m_Rank << ": Waited for thread to join = " << timeTotal.count()
                       << " seconds" << std::endl;
 #endif
         }
@@ -103,12 +102,10 @@ void FileDrainerSingleThread::DrainThread()
     double sleptForWaitingOnRead = 0.0;
 
     /* Copy a block of data from one file to another at the same offset */
-    auto lf_Copy = [&](FileDrainOperation &fdo, InputFile fdr, OutputFile fdw,
-                       size_t count) {
+    auto lf_Copy = [&](FileDrainOperation &fdo, InputFile fdr, OutputFile fdw, size_t count) {
         nReadBytesTasked += count;
         ts = core::Now();
-        std::pair<size_t, double> ret =
-            Read(fdr, count, buffer.data(), fdo.fromFileName);
+        std::pair<size_t, double> ret = Read(fdr, count, buffer.data(), fdo.fromFileName);
         te = core::Now();
         timeRead += te - ts;
         nReadBytesSucc += ret.first;
@@ -156,8 +153,7 @@ void FileDrainerSingleThread::DrainThread()
         {
 
         case DrainOperation::CopyAt:
-        case DrainOperation::Copy:
-        {
+        case DrainOperation::Copy: {
             ts = core::Now();
             auto fdr = GetFileForRead(fdo.fromFileName);
             te = core::Now();
@@ -172,13 +168,11 @@ void FileDrainerSingleThread::DrainThread()
             if (m_Verbose >= 2)
             {
 #ifndef NO_SANITIZE_THREAD
-                std::cout << "Drain " << m_Rank << ": Copy from "
-                          << fdo.fromFileName << " -> " << fdo.toFileName << " "
-                          << fdo.countBytes << " bytes ";
+                std::cout << "Drain " << m_Rank << ": Copy from " << fdo.fromFileName << " -> "
+                          << fdo.toFileName << " " << fdo.countBytes << " bytes ";
                 if (fdo.op == DrainOperation::CopyAt)
                 {
-                    std::cout << ", offsets: from " << fdo.fromOffset << " to "
-                              << fdo.toOffset;
+                    std::cout << ", offsets: from " << fdo.fromOffset << " to " << fdo.toOffset;
                 }
                 if (!Good(fdr) || !Good(fdw))
                 {
@@ -217,20 +211,18 @@ void FileDrainerSingleThread::DrainThread()
                 }
                 catch (std::ios_base::failure &e)
                 {
-                    helper::Log("BurstBuffer", "FileDrainerSingleThread",
-                                "DrainThread", std::string(e.what()),
-                                helper::FATALERROR);
+                    helper::Log("BurstBuffer", "FileDrainerSingleThread", "DrainThread",
+                                std::string(e.what()), helper::FATALERROR);
                 }
             }
             break;
         }
-        case DrainOperation::SeekEnd:
-        {
+        case DrainOperation::SeekEnd: {
             if (m_Verbose >= 2)
             {
 #ifndef NO_SANITIZE_THREAD
-                std::cout << "Drain " << m_Rank << ": Seek to End of file "
-                          << fdo.toFileName << std::endl;
+                std::cout << "Drain " << m_Rank << ": Seek to End of file " << fdo.toFileName
+                          << std::endl;
 #endif
             }
             ts = core::Now();
@@ -240,14 +232,12 @@ void FileDrainerSingleThread::DrainThread()
             timeWrite += te - ts;
             break;
         }
-        case DrainOperation::WriteAt:
-        {
+        case DrainOperation::WriteAt: {
             if (m_Verbose >= 2)
             {
 #ifndef NO_SANITIZE_THREAD
-                std::cout << "Drain " << m_Rank << ": Write to file "
-                          << fdo.toFileName << " " << fdo.countBytes
-                          << " bytes of data from memory to offset "
+                std::cout << "Drain " << m_Rank << ": Write to file " << fdo.toFileName << " "
+                          << fdo.countBytes << " bytes of data from memory to offset "
                           << fdo.toOffset << std::endl;
 #endif
             }
@@ -255,41 +245,35 @@ void FileDrainerSingleThread::DrainThread()
             ts = core::Now();
             auto fdw = GetFileForWrite(fdo.toFileName);
             Seek(fdw, fdo.toOffset, fdo.toFileName);
-            size_t n = Write(fdw, fdo.countBytes, fdo.dataToWrite.data(),
-                             fdo.toFileName);
+            size_t n = Write(fdw, fdo.countBytes, fdo.dataToWrite.data(), fdo.toFileName);
             te = core::Now();
             timeWrite += te - ts;
             nWriteBytesSucc += n;
             break;
         }
-        case DrainOperation::Write:
-        {
+        case DrainOperation::Write: {
             if (m_Verbose >= 2)
             {
 #ifndef NO_SANITIZE_THREAD
-                std::cout << "Drain " << m_Rank << ": Write to file "
-                          << fdo.toFileName << " " << fdo.countBytes
-                          << " bytes of data from memory (no seek)"
-                          << std::endl;
+                std::cout << "Drain " << m_Rank << ": Write to file " << fdo.toFileName << " "
+                          << fdo.countBytes << " bytes of data from memory (no seek)" << std::endl;
 #endif
             }
             nWriteBytesTasked += fdo.countBytes;
             ts = core::Now();
             auto fdw = GetFileForWrite(fdo.toFileName);
-            size_t n = Write(fdw, fdo.countBytes, fdo.dataToWrite.data(),
-                             fdo.toFileName);
+            size_t n = Write(fdw, fdo.countBytes, fdo.dataToWrite.data(), fdo.toFileName);
             te = core::Now();
             timeWrite += te - ts;
             nWriteBytesSucc += n;
             break;
         }
-        case DrainOperation::Create:
-        {
+        case DrainOperation::Create: {
             if (m_Verbose >= 2)
             {
 #ifndef NO_SANITIZE_THREAD
-                std::cout << "Drain " << m_Rank << ": Create new file "
-                          << fdo.toFileName << std::endl;
+                std::cout << "Drain " << m_Rank << ": Create new file " << fdo.toFileName
+                          << std::endl;
 #endif
             }
             ts = core::Now();
@@ -298,13 +282,12 @@ void FileDrainerSingleThread::DrainThread()
             timeWrite += te - ts;
             break;
         }
-        case DrainOperation::Open:
-        {
+        case DrainOperation::Open: {
             if (m_Verbose >= 2)
             {
 #ifndef NO_SANITIZE_THREAD
-                std::cout << "Drain " << m_Rank << ": Open file "
-                          << fdo.toFileName << " for append " << std::endl;
+                std::cout << "Drain " << m_Rank << ": Open file " << fdo.toFileName
+                          << " for append " << std::endl;
 #endif
             }
             ts = core::Now();
@@ -313,13 +296,11 @@ void FileDrainerSingleThread::DrainThread()
             timeWrite += te - ts;
             break;
         }
-        case DrainOperation::Delete:
-        {
+        case DrainOperation::Delete: {
             if (m_Verbose >= 2)
             {
 #ifndef NO_SANITIZE_THREAD
-                std::cout << "Drain " << m_Rank << ": Delete file "
-                          << fdo.toFileName << std::endl;
+                std::cout << "Drain " << m_Rank << ": Delete file " << fdo.toFileName << std::endl;
 #endif
             }
             ts = core::Now();
@@ -341,8 +322,7 @@ void FileDrainerSingleThread::DrainThread()
     if (m_Verbose > 1)
     {
 #ifndef NO_SANITIZE_THREAD
-        std::cout << "Drain " << m_Rank
-                  << " finished operations. Closing all files" << std::endl;
+        std::cout << "Drain " << m_Rank << " finished operations. Closing all files" << std::endl;
 #endif
     }
 
@@ -355,17 +335,14 @@ void FileDrainerSingleThread::DrainThread()
     timeTotal = tTotalEnd - tTotalStart;
     const bool shouldReport =
         (m_Verbose || (nReadBytesTasked != nReadBytesSucc) ||
-         (nWriteBytesTasked != nWriteBytesSucc) ||
-         (sleptForWaitingOnRead > 0.0));
+         (nWriteBytesTasked != nWriteBytesSucc) || (sleptForWaitingOnRead > 0.0));
     if (shouldReport)
     {
 #ifndef NO_SANITIZE_THREAD
-        std::cout << "Drain " << m_Rank
-                  << ": Runtime  total = " << timeTotal.count()
-                  << " read = " << timeRead.count()
-                  << " write = " << timeWrite.count()
-                  << " close = " << timeClose.count()
-                  << " sleep = " << timeSleep.count() << " seconds"
+        std::cout << "Drain " << m_Rank << ": Runtime  total = " << timeTotal.count()
+                  << " read = " << timeRead.count() << " write = " << timeWrite.count()
+                  << " close = " << timeClose.count() << " sleep = " << timeSleep.count()
+                  << " seconds"
                   << ". Max queue size = " << maxQueueSize << ".";
         if (nReadBytesTasked == nReadBytesSucc)
         {
@@ -374,8 +351,7 @@ void FileDrainerSingleThread::DrainThread()
         else
         {
             std::cout << " WARNING Read wanted = " << nReadBytesTasked
-                      << " but successfully read = " << nReadBytesSucc
-                      << " bytes.";
+                      << " but successfully read = " << nReadBytesSucc << " bytes.";
         }
         if (nWriteBytesTasked == nWriteBytesSucc)
         {
@@ -384,8 +360,7 @@ void FileDrainerSingleThread::DrainThread()
         else
         {
             std::cout << " WARNING Write wanted = " << nWriteBytesTasked
-                      << " but successfully wrote = " << nWriteBytesSucc
-                      << " bytes.";
+                      << " but successfully wrote = " << nWriteBytesSucc << " bytes.";
         }
         if (sleptForWaitingOnRead > 0.0)
         {

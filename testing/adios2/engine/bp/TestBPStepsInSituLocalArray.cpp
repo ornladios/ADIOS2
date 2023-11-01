@@ -27,8 +27,7 @@ class BPStepsInSituLocalArray : public ::testing::Test
 protected:
     BPStepsInSituLocalArray() = default;
 
-    const DataArray I32 = {
-        {512, 513, -510, 515, -508, 517, -506, 519, -504, 521}};
+    const DataArray I32 = {{512, 513, -510, 515, -508, 517, -506, 519, -504, 521}};
 
     DataArray GenerateData(const int step, const int rank, const int size)
     {
@@ -94,9 +93,8 @@ std::string ScheduleToString(const std::vector<Act> &schedule)
     return ss.str();
 }
 
-class BPStepsInSituLocalArrayReaders
-: public BPStepsInSituLocalArray,
-  public ::testing::WithParamInterface<size_t>
+class BPStepsInSituLocalArrayReaders : public BPStepsInSituLocalArray,
+                                       public ::testing::WithParamInterface<size_t>
 {
 protected:
     const std::vector<Act> &GetSchedule() { return Schedules[GetParam()]; };
@@ -133,8 +131,8 @@ TEST_P(BPStepsInSituLocalArrayReaders, EveryStep)
 #endif
     if (!mpiRank)
     {
-        std::cout << "Test with Schedule " << GetScheduleID() << " "
-                  << ScheduleToString(schedule) << std::endl;
+        std::cout << "Test with Schedule " << GetScheduleID() << " " << ScheduleToString(schedule)
+                  << std::endl;
     }
 
     // Start writer
@@ -177,10 +175,8 @@ TEST_P(BPStepsInSituLocalArrayReaders, EveryStep)
 
             // Generate test data for each process uniquely
             m_TestData.push_back(GenerateData(stepsWritten, mpiRank, mpiSize));
-            std::cout << "Rank " << mpiRank << " write step " << stepsWritten
-                      << ": "
-                      << ArrayToString(m_TestData[stepsWritten].data(), Nx)
-                      << std::endl;
+            std::cout << "Rank " << mpiRank << " write step " << stepsWritten << ": "
+                      << ArrayToString(m_TestData[stepsWritten].data(), Nx) << std::endl;
             writer.BeginStep();
             writer.Put(var_i32, m_TestData[stepsWritten].data());
             writer.EndStep();
@@ -191,8 +187,7 @@ TEST_P(BPStepsInSituLocalArrayReaders, EveryStep)
             /// Read back data with block selection
             if (!mpiRank)
             {
-                std::cout << "Read step " << stepsRead
-                          << " with Block selection" << std::endl;
+                std::cout << "Read step " << stepsRead << " with Block selection" << std::endl;
             }
 
             reader.BeginStep();
@@ -204,9 +199,8 @@ TEST_P(BPStepsInSituLocalArrayReaders, EveryStep)
             var_i32.SetBlockSelection(blockID);
             DataArray d;
             reader.Get(var_i32, d.data(), adios2::Mode::Sync);
-            std::cout << "Rank " << mpiRank << " read step " << stepsRead
-                      << " block " << blockID << ": "
-                      << ArrayToString(d.data(), Nx) << std::endl;
+            std::cout << "Rank " << mpiRank << " read step " << stepsRead << " block " << blockID
+                      << ": " << ArrayToString(d.data(), Nx) << std::endl;
             auto start = var_i32.Start();
             auto count = var_i32.Count();
             EXPECT_EQ(start.size(), 0);
@@ -234,8 +228,8 @@ TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
     const std::vector<Act> &schedule = GetSchedule();
     using namespace std;
     std::string BaseName = engineName;
-    const std::string fname_prefix = "BPStepsInSituLocalArray.NewVarPerStep." +
-                                     std::to_string(GetScheduleID());
+    const std::string fname_prefix =
+        "BPStepsInSituLocalArray.NewVarPerStep." + std::to_string(GetScheduleID());
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
@@ -257,14 +251,12 @@ TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
     fname = fname_prefix + BaseName + ".Serial.bp";
 #endif
 
-    auto lf_VarName = [](int step) -> std::string {
-        return "i32_" + std::to_string(step);
-    };
+    auto lf_VarName = [](int step) -> std::string { return "i32_" + std::to_string(step); };
 
     if (!mpiRank)
     {
-        std::cout << "Test with Schedule " << GetScheduleID() << " "
-                  << ScheduleToString(schedule) << std::endl;
+        std::cout << "Test with Schedule " << GetScheduleID() << " " << ScheduleToString(schedule)
+                  << std::endl;
     }
 
     // Start writer
@@ -305,14 +297,11 @@ TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
             }
 
             const std::string varName = lf_VarName(stepsWritten);
-            auto var =
-                iow.DefineVariable<int32_t>(varName, shape, start, count);
+            auto var = iow.DefineVariable<int32_t>(varName, shape, start, count);
             // Generate test data for each process uniquely
             m_TestData.push_back(GenerateData(stepsWritten, mpiRank, mpiSize));
-            std::cout << "Rank " << mpiRank << " write step " << stepsWritten
-                      << " var " << varName << ": "
-                      << ArrayToString(m_TestData[stepsWritten].data(), Nx)
-                      << std::endl;
+            std::cout << "Rank " << mpiRank << " write step " << stepsWritten << " var " << varName
+                      << ": " << ArrayToString(m_TestData[stepsWritten].data(), Nx) << std::endl;
             writer.BeginStep();
             writer.Put(var, m_TestData[stepsWritten].data());
             writer.EndStep();
@@ -323,8 +312,7 @@ TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
             /// Read back data with block selection
             if (!mpiRank)
             {
-                std::cout << "Read step " << stepsRead
-                          << " with Block selection" << std::endl;
+                std::cout << "Read step " << stepsRead << " with Block selection" << std::endl;
             }
 
             reader.BeginStep();
@@ -337,9 +325,8 @@ TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
             var.SetBlockSelection(blockID);
             DataArray d;
             reader.Get(var, d.data(), adios2::Mode::Sync);
-            std::cout << "Rank " << mpiRank << " read step " << stepsRead
-                      << " block " << blockID << ": "
-                      << ArrayToString(d.data(), Nx) << std::endl;
+            std::cout << "Rank " << mpiRank << " read step " << stepsRead << " block " << blockID
+                      << ": " << ArrayToString(d.data(), Nx) << std::endl;
             auto start = var.Start();
             auto count = var.Count();
             EXPECT_EQ(start.size(), 0);
@@ -361,8 +348,7 @@ TEST_P(BPStepsInSituLocalArrayReaders, NewVarPerStep)
     reader.Close();
 }
 
-INSTANTIATE_TEST_SUITE_P(BPStepsInSituLocalArray,
-                         BPStepsInSituLocalArrayReaders,
+INSTANTIATE_TEST_SUITE_P(BPStepsInSituLocalArray, BPStepsInSituLocalArrayReaders,
                          ::testing::Values(0, 1, 2, 3, 4));
 
 class BPStepsInSituLocalArrayParameters
@@ -370,10 +356,7 @@ class BPStepsInSituLocalArrayParameters
   public ::testing::WithParamInterface<std::tuple<size_t, size_t>>
 {
 protected:
-    const std::vector<Act> &GetSchedule()
-    {
-        return Schedules[std::get<0>(GetParam())];
-    };
+    const std::vector<Act> &GetSchedule() { return Schedules[std::get<0>(GetParam())]; };
     size_t GetOddity() { return std::get<1>(GetParam()); };
     size_t GetScheduleID() { return std::get<0>(GetParam()); };
 };
@@ -386,9 +369,9 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
     const std::size_t Oddity = GetOddity();
     using namespace std;
     std::string BaseName = engineName;
-    const std::string fname_prefix =
-        "BPStepsInSituLocalArray.EveryOtherStep.Schedule" +
-        std::to_string(GetScheduleID()) + ".Oddity" + std::to_string(Oddity);
+    const std::string fname_prefix = "BPStepsInSituLocalArray.EveryOtherStep.Schedule" +
+                                     std::to_string(GetScheduleID()) + ".Oddity" +
+                                     std::to_string(Oddity);
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
@@ -413,9 +396,8 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
 
     if (!mpiRank)
     {
-        std::cout << "Test with Schedule " << GetScheduleID() << " "
-                  << ScheduleToString(schedule) << " Oddity " << Oddity
-                  << std::endl;
+        std::cout << "Test with Schedule " << GetScheduleID() << " " << ScheduleToString(schedule)
+                  << " Oddity " << Oddity << std::endl;
     }
 
     // Start writer
@@ -463,13 +445,10 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
             writer.Put(var_step, stepsWritten);
             if (stepsWritten % 2 == static_cast<int>(Oddity))
             {
-                m_TestData.push_back(
-                    GenerateData(stepsWritten, mpiRank, mpiSize));
-                std::cout << "Rank " << mpiRank << " at step " << stepsWritten
-                          << " write var-step " << varStepsWritten << ": "
-                          << ArrayToString(m_TestData[varStepsWritten].data(),
-                                           Nx)
-                          << std::endl;
+                m_TestData.push_back(GenerateData(stepsWritten, mpiRank, mpiSize));
+                std::cout << "Rank " << mpiRank << " at step " << stepsWritten << " write var-step "
+                          << varStepsWritten << ": "
+                          << ArrayToString(m_TestData[varStepsWritten].data(), Nx) << std::endl;
                 writer.Put(var_i32, m_TestData[varStepsWritten].data());
                 ++varStepsWritten;
             }
@@ -481,8 +460,7 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
             /// Read back data with block selection
             if (!mpiRank)
             {
-                std::cout << "Read step " << stepsRead
-                          << " with Block selection" << std::endl;
+                std::cout << "Read step " << stepsRead << " with Block selection" << std::endl;
             }
             reader.BeginStep();
             if (stepsRead % 2 == static_cast<int>(Oddity))
@@ -495,10 +473,9 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
                 var_i32.SetBlockSelection(blockID);
                 DataArray d;
                 reader.Get(var_i32, d.data(), adios2::Mode::Sync);
-                std::cout << "Rank " << mpiRank << " read at step " << stepsRead
-                          << " var-step " << varStepsRead << " block "
-                          << blockID << ": " << ArrayToString(d.data(), Nx)
-                          << std::endl;
+                std::cout << "Rank " << mpiRank << " read at step " << stepsRead << " var-step "
+                          << varStepsRead << " block " << blockID << ": "
+                          << ArrayToString(d.data(), Nx) << std::endl;
                 auto start = var_i32.Start();
                 auto count = var_i32.Count();
                 EXPECT_EQ(start.size(), 0);
@@ -523,13 +500,12 @@ TEST_P(BPStepsInSituLocalArrayParameters, EveryOtherStep)
     reader.Close();
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    BPStepsInSituLocalArray, BPStepsInSituLocalArrayParameters,
-    ::testing::Values(std::make_tuple(0, 0), std::make_tuple(0, 1),
-                      std::make_tuple(1, 0), std::make_tuple(1, 1),
-                      std::make_tuple(2, 0), std::make_tuple(2, 1),
-                      std::make_tuple(3, 0), std::make_tuple(3, 1),
-                      std::make_tuple(4, 0), std::make_tuple(4, 1)));
+INSTANTIATE_TEST_SUITE_P(BPStepsInSituLocalArray, BPStepsInSituLocalArrayParameters,
+                         ::testing::Values(std::make_tuple(0, 0), std::make_tuple(0, 1),
+                                           std::make_tuple(1, 0), std::make_tuple(1, 1),
+                                           std::make_tuple(2, 0), std::make_tuple(2, 1),
+                                           std::make_tuple(3, 0), std::make_tuple(3, 1),
+                                           std::make_tuple(4, 0), std::make_tuple(4, 1)));
 //******************************************************************************
 // main
 //******************************************************************************

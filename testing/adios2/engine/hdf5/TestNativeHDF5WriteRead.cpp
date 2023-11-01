@@ -33,14 +33,12 @@ public:
 
     bool Advance();
 
-    void GetVarInfo(const std::string varName, std::vector<hsize_t> &dims,
-                    hid_t &h5Type);
+    void GetVarInfo(const std::string varName, std::vector<hsize_t> &dims, hid_t &h5Type);
     // If offset, count and memspaceSize are provided, then variable would be
     // read by selection
     void ReadString(const std::string varName, std::string &result);
-    void ReadVar(const std::string varName, void *dataArray,
-                 hsize_t *offset = nullptr, hsize_t *count = nullptr,
-                 const size_t memsspaceSize = 0);
+    void ReadVar(const std::string varName, void *dataArray, hsize_t *offset = nullptr,
+                 hsize_t *count = nullptr, const size_t memsspaceSize = 0);
 
     int m_CurrentTimeStep;
     unsigned int m_TotalTimeSteps;
@@ -63,12 +61,10 @@ public:
 
     void Advance();
 
-    void CreateAndStoreScalar(std::string const &variableName, hid_t h5Type,
-                              const void *values);
-    void CreateAndStoreVar(std::string const &variableName, int dimSize,
-                           hid_t h5Type, const hsize_t *global_dims,
-                           const hsize_t *offsets, const hsize_t *counts,
-                           const void *values);
+    void CreateAndStoreScalar(std::string const &variableName, hid_t h5Type, const void *values);
+    void CreateAndStoreVar(std::string const &variableName, int dimSize, hid_t h5Type,
+                           const hsize_t *global_dims, const hsize_t *offsets,
+                           const hsize_t *counts, const void *values);
 
     /*
       void WriteVar(const std::string varName, void *dataArray,
@@ -105,15 +101,13 @@ HDF5NativeWriter::HDF5NativeWriter(const std::string &fileName)
     /*
      * Create a new file collectively and release property list identifier.
      */
-    m_FileId = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT,
-                         m_FilePropertyListId);
+    m_FileId = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, m_FilePropertyListId);
     if (m_FileId < 0)
     {
         throw std::runtime_error("Unable to create file: " + fileName);
     }
 
-    m_GroupId = H5Gcreate2(m_FileId, ts0.c_str(), H5P_DEFAULT, H5P_DEFAULT,
-                           H5P_DEFAULT);
+    m_GroupId = H5Gcreate2(m_FileId, ts0.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     if (m_GroupId < 0)
     {
@@ -131,8 +125,7 @@ HDF5NativeWriter::~HDF5NativeWriter()
     // write NumStep attr
     hid_t s = H5Screate(H5S_SCALAR);
 
-    hid_t attr = H5Acreate(m_FileId, "NumSteps", H5T_NATIVE_UINT, s,
-                           H5P_DEFAULT, H5P_DEFAULT);
+    hid_t attr = H5Acreate(m_FileId, "NumSteps", H5T_NATIVE_UINT, s, H5P_DEFAULT, H5P_DEFAULT);
     unsigned int totalAdiosSteps = m_CurrentTimeStep + 1;
 
     if (m_GroupId < 0)
@@ -164,18 +157,16 @@ void HDF5NativeWriter::CheckWriteGroup()
 
     std::string stepName = "/Step" + std::to_string(m_CurrentTimeStep);
 
-    m_GroupId = H5Gcreate2(m_FileId, stepName.c_str(), H5P_DEFAULT, H5P_DEFAULT,
-                           H5P_DEFAULT);
+    m_GroupId = H5Gcreate2(m_FileId, stepName.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     if (m_GroupId < 0)
     {
-        throw std::runtime_error("ERROR: Unable to create HDF5 group " +
-                                 stepName);
+        throw std::runtime_error("ERROR: Unable to create HDF5 group " + stepName);
     }
 }
 
-void HDF5NativeWriter::CreateAndStoreScalar(std::string const &variableName,
-                                            hid_t h5Type, const void *values)
+void HDF5NativeWriter::CreateAndStoreScalar(std::string const &variableName, hid_t h5Type,
+                                            const void *values)
 {
     CheckWriteGroup();
 
@@ -190,10 +181,9 @@ void HDF5NativeWriter::CreateAndStoreScalar(std::string const &variableName,
 
     if (h5Type != H5T_STRING)
     {
-        dsetID = H5Dcreate(m_GroupId, variableName.c_str(), h5Type, filespaceID,
-                           H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-        herr_t status =
-            H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, plistID, values);
+        dsetID = H5Dcreate(m_GroupId, variableName.c_str(), h5Type, filespaceID, H5P_DEFAULT,
+                           H5P_DEFAULT, H5P_DEFAULT);
+        herr_t status = H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, plistID, values);
         EXPECT_TRUE(status >= 0);
     }
     else
@@ -206,8 +196,8 @@ void HDF5NativeWriter::CreateAndStoreScalar(std::string const &variableName,
         ret = H5Tset_strpad(type, H5T_STR_NULLTERM);
         EXPECT_TRUE(ret >= 0);
         /* Test creating a "normal" sized string attribute */
-        dsetID = H5Dcreate(m_GroupId, variableName.c_str(), type, filespaceID,
-                           H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+        dsetID = H5Dcreate(m_GroupId, variableName.c_str(), type, filespaceID, H5P_DEFAULT,
+                           H5P_DEFAULT, H5P_DEFAULT);
 
         ret = H5Dwrite(dsetID, type, H5S_ALL, H5S_ALL, plistID, values);
         EXPECT_TRUE(ret >= 0);
@@ -216,8 +206,7 @@ void HDF5NativeWriter::CreateAndStoreScalar(std::string const &variableName,
         char *val = (char *)(calloc(typesize, sizeof(char)));
 
         hid_t ret2 = H5Dread(dsetID, type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
-        std::cerr << "        ....  typesize=" << typesize << "  val=" << val
-                  << std::endl;
+        std::cerr << "        ....  typesize=" << typesize << "  val=" << val << std::endl;
         free val;
 #endif
     }
@@ -226,12 +215,9 @@ void HDF5NativeWriter::CreateAndStoreScalar(std::string const &variableName,
     H5Dclose(dsetID);
 }
 
-void HDF5NativeWriter::CreateAndStoreVar(std::string const &variableName,
-                                         int dimSize, hid_t h5Type,
-                                         const hsize_t *global_dims,
-                                         const hsize_t *offsets,
-                                         const hsize_t *counts,
-                                         const void *values)
+void HDF5NativeWriter::CreateAndStoreVar(std::string const &variableName, int dimSize, hid_t h5Type,
+                                         const hsize_t *global_dims, const hsize_t *offsets,
+                                         const hsize_t *counts, const void *values)
 {
     if (h5Type == H5T_STRING)
     {
@@ -242,8 +228,8 @@ void HDF5NativeWriter::CreateAndStoreVar(std::string const &variableName,
     CheckWriteGroup();
     hid_t fileSpace = H5Screate_simple(dimSize, global_dims, NULL);
 
-    hid_t dsetID = H5Dcreate(m_GroupId, variableName.c_str(), h5Type, fileSpace,
-                             H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t dsetID = H5Dcreate(m_GroupId, variableName.c_str(), h5Type, fileSpace, H5P_DEFAULT,
+                             H5P_DEFAULT, H5P_DEFAULT);
     hid_t memSpace = H5Screate_simple(dimSize, counts, NULL);
 
     // Select hyperslab
@@ -256,13 +242,11 @@ void HDF5NativeWriter::CreateAndStoreVar(std::string const &variableName,
 #ifdef TEST_HDF5_MPI
     H5Pset_dxpl_mpio(plistID, H5FD_MPIO_COLLECTIVE);
 #endif
-    herr_t status =
-        H5Dwrite(dsetID, h5Type, memSpace, fileSpace, plistID, values);
+    herr_t status = H5Dwrite(dsetID, h5Type, memSpace, fileSpace, plistID, values);
 
     if (status < 0)
     {
-        throw std::runtime_error(
-            "ERROR: HDF5 file Write failed, in call to Write\n");
+        throw std::runtime_error("ERROR: HDF5 file Write failed, in call to Write\n");
     }
 
     H5Dclose(dsetID);
@@ -304,8 +288,7 @@ HDF5NativeReader::HDF5NativeReader(const std::string fileName)
     m_GroupId = H5Gopen(m_FileId, ts0.c_str(), H5P_DEFAULT);
     if (m_GroupId < 0)
     {
-        throw std::runtime_error("Unable to open group " + ts0 +
-                                 " for reading");
+        throw std::runtime_error("Unable to open group " + ts0 + " for reading");
     }
 
     hid_t attrId = H5Aopen(m_FileId, "NumSteps", H5P_DEFAULT);
@@ -328,35 +311,31 @@ HDF5NativeReader::~HDF5NativeReader()
     H5Pclose(m_FilePropertyListId);
 }
 
-void HDF5NativeReader::GetVarInfo(const std::string varName,
-                                  std::vector<hsize_t> &dims, hid_t &h5Type)
+void HDF5NativeReader::GetVarInfo(const std::string varName, std::vector<hsize_t> &dims,
+                                  hid_t &h5Type)
 {
     hid_t dataSetId = H5Dopen(m_GroupId, varName.c_str(), H5P_DEFAULT);
     if (dataSetId < 0)
     {
-        throw std::runtime_error("Unable to open dataset " + varName +
-                                 " when getVarInfo");
+        throw std::runtime_error("Unable to open dataset " + varName + " when getVarInfo");
     }
 
     hid_t fileSpaceId = H5Dget_space(dataSetId);
     if (fileSpaceId < 0)
     {
-        throw std::runtime_error("Unable to get filespace for dataset " +
-                                 varName);
+        throw std::runtime_error("Unable to get filespace for dataset " + varName);
     }
 
     const int ndims = H5Sget_simple_extent_ndims(fileSpaceId);
     if (ndims < 0)
     {
-        throw std::runtime_error(
-            "Unable to get number of dimensions for dataset " + varName);
+        throw std::runtime_error("Unable to get number of dimensions for dataset " + varName);
     }
 
     dims.resize(ndims);
     if (H5Sget_simple_extent_dims(fileSpaceId, dims.data(), NULL) != ndims)
     {
-        throw std::runtime_error("Unable to get dimensions for dataset " +
-                                 varName);
+        throw std::runtime_error("Unable to get dimensions for dataset " + varName);
     }
 
     h5Type = H5Dget_type(dataSetId);
@@ -382,16 +361,14 @@ bool HDF5NativeReader::Advance()
     m_GroupId = H5Gopen(m_FileId, tsName.c_str(), H5P_DEFAULT);
     if (m_GroupId < 0)
     {
-        throw std::runtime_error("Unable to open group " + tsName +
-                                 " for reading");
+        throw std::runtime_error("Unable to open group " + tsName + " for reading");
     }
     ++m_CurrentTimeStep;
 
     return true;
 }
 
-void HDF5NativeReader::ReadString(const std::string varName,
-                                  std::string &result)
+void HDF5NativeReader::ReadString(const std::string varName, std::string &result)
 {
     if (m_GroupId < 0)
     {
@@ -402,8 +379,7 @@ void HDF5NativeReader::ReadString(const std::string varName,
     hid_t dataSetId = H5Dopen(m_GroupId, varName.c_str(), H5P_DEFAULT);
     if (dataSetId < 0)
     {
-        throw std::runtime_error("Unable to open dataset " + varName +
-                                 "when ReadVar");
+        throw std::runtime_error("Unable to open dataset " + varName + "when ReadVar");
     }
 
     hid_t h5Type = H5Dget_type(dataSetId);
@@ -418,9 +394,8 @@ void HDF5NativeReader::ReadString(const std::string varName,
     H5Dclose(dataSetId);
 }
 
-void HDF5NativeReader::ReadVar(const std::string varName, void *dataArray,
-                               hsize_t *offset, hsize_t *count,
-                               const size_t memspaceSize)
+void HDF5NativeReader::ReadVar(const std::string varName, void *dataArray, hsize_t *offset,
+                               hsize_t *count, const size_t memspaceSize)
 {
     if (m_GroupId < 0)
     {
@@ -431,14 +406,12 @@ void HDF5NativeReader::ReadVar(const std::string varName, void *dataArray,
     hid_t dataSetId = H5Dopen(m_GroupId, varName.c_str(), H5P_DEFAULT);
     if (dataSetId < 0)
     {
-        throw std::runtime_error("Unable to open dataset " + varName +
-                                 "when ReadVar");
+        throw std::runtime_error("Unable to open dataset " + varName + "when ReadVar");
     }
     hid_t fileSpace = H5Dget_space(dataSetId);
     if (fileSpace < 0)
     {
-        throw std::runtime_error("Unable to get filespace for dataset " +
-                                 varName);
+        throw std::runtime_error("Unable to get filespace for dataset " + varName);
     }
 
     hid_t h5type = H5Dget_type(dataSetId);
@@ -451,26 +424,22 @@ void HDF5NativeReader::ReadVar(const std::string varName, void *dataArray,
         // Get the dataspace
         hid_t dataspace = H5Dget_space(dataSetId);
         // Define hyperslab in the dataset
-        hid_t status = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset,
-                                           NULL, count, NULL);
+        hid_t status = H5Sselect_hyperslab(dataspace, H5S_SELECT_SET, offset, NULL, count, NULL);
         if (status < 0)
         {
-            throw std::runtime_error(
-                "Unable to create a selection for dataset" + varName);
+            throw std::runtime_error("Unable to create a selection for dataset" + varName);
         }
 
         hsize_t dimsm[1];
         dimsm[0] = memspaceSize;
         hid_t memspace = H5Screate_simple(1, dimsm, NULL);
 
-        hid_t ret = H5Dread(dataSetId, h5type, memspace, dataspace, H5P_DEFAULT,
-                            dataArray);
+        hid_t ret = H5Dread(dataSetId, h5type, memspace, dataspace, H5P_DEFAULT, dataArray);
         EXPECT_TRUE(ret >= 0);
     }
     else
     {
-        hid_t ret = H5Dread(dataSetId, h5type, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                            dataArray);
+        hid_t ret = H5Dread(dataSetId, h5type, H5S_ALL, H5S_ALL, H5P_DEFAULT, dataArray);
         EXPECT_TRUE(ret >= 0);
     }
 
@@ -657,7 +626,11 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
             hdf5Reader.ReadVar("i32", I32.data(), offset, count, arraySize);
 
             hdf5Reader.GetVarInfo("i64", gDims, h5Type);
+#ifdef _WIN32
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LLONG), 1);
+#else
             ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LONG), 1);
+#endif
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], globalArraySize);
             hdf5Reader.ReadVar("i64", I64.data(), offset, count, arraySize);
@@ -681,7 +654,11 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
             hdf5Reader.ReadVar("u32", U32.data(), offset, count, arraySize);
 
             hdf5Reader.GetVarInfo("u64", gDims, h5Type);
+#ifdef _WIN32
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULLONG), 1);
+#else
             ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULONG), 1);
+#endif
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], globalArraySize);
             hdf5Reader.ReadVar("u64", U64.data(), offset, count, arraySize);
@@ -964,8 +941,8 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read1D8)
             var_r64.SetStepSelection({t, 1});
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             hdf5Reader.Get(var_iString, IString);
 
@@ -1040,41 +1017,39 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
             SmallTestData currentTestData =
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
-            h5writer.CreateAndStoreScalar("iString", H5T_STRING,
-                                          currentTestData.S1.data());
-            h5writer.CreateAndStoreVar("ch", dimSize, H5T_NATIVE_UCHAR,
-                                       global_dims, offset, count,
+            h5writer.CreateAndStoreScalar("iString", H5T_STRING, currentTestData.S1.data());
+            h5writer.CreateAndStoreVar("ch", dimSize, H5T_NATIVE_UCHAR, global_dims, offset, count,
                                        currentTestData.CHAR.data());
-            h5writer.CreateAndStoreVar("i8", dimSize, H5T_NATIVE_INT8,
-                                       global_dims, offset, count,
+            h5writer.CreateAndStoreVar("i8", dimSize, H5T_NATIVE_INT8, global_dims, offset, count,
                                        currentTestData.I8.data());
-            h5writer.CreateAndStoreVar("i16", dimSize, H5T_NATIVE_SHORT,
-                                       global_dims, offset, count,
+            h5writer.CreateAndStoreVar("i16", dimSize, H5T_NATIVE_SHORT, global_dims, offset, count,
                                        currentTestData.I16.data());
-            h5writer.CreateAndStoreVar("i32", dimSize, H5T_NATIVE_INT,
-                                       global_dims, offset, count,
+            h5writer.CreateAndStoreVar("i32", dimSize, H5T_NATIVE_INT, global_dims, offset, count,
                                        currentTestData.I32.data());
-            h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LONG,
-                                       global_dims, offset, count,
+#ifdef _WIN32
+            h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LLONG, global_dims, offset, count,
                                        currentTestData.I64.data());
-            h5writer.CreateAndStoreVar("u8", dimSize, H5T_NATIVE_UCHAR,
-                                       global_dims, offset, count,
+#else
+            h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LONG, global_dims, offset, count,
+                                       currentTestData.I64.data());
+#endif
+            h5writer.CreateAndStoreVar("u8", dimSize, H5T_NATIVE_UCHAR, global_dims, offset, count,
                                        currentTestData.U8.data());
-            h5writer.CreateAndStoreVar("u16", dimSize, H5T_NATIVE_USHORT,
-                                       global_dims, offset, count,
-                                       currentTestData.U16.data());
-            h5writer.CreateAndStoreVar("u32", dimSize, H5T_NATIVE_UINT,
-                                       global_dims, offset, count,
+            h5writer.CreateAndStoreVar("u16", dimSize, H5T_NATIVE_USHORT, global_dims, offset,
+                                       count, currentTestData.U16.data());
+            h5writer.CreateAndStoreVar("u32", dimSize, H5T_NATIVE_UINT, global_dims, offset, count,
                                        currentTestData.U32.data());
-            h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULONG,
-                                       global_dims, offset, count,
+#ifdef _WIN32
+            h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULLONG, global_dims, offset,
+                                       count, currentTestData.U64.data());
+#else
+            h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULONG, global_dims, offset, count,
                                        currentTestData.U64.data());
-            h5writer.CreateAndStoreVar("r32", dimSize, H5T_NATIVE_FLOAT,
-                                       global_dims, offset, count,
+#endif
+            h5writer.CreateAndStoreVar("r32", dimSize, H5T_NATIVE_FLOAT, global_dims, offset, count,
                                        currentTestData.R32.data());
-            h5writer.CreateAndStoreVar("r64", dimSize, H5T_NATIVE_DOUBLE,
-                                       global_dims, offset, count,
-                                       currentTestData.R64.data());
+            h5writer.CreateAndStoreVar("r64", dimSize, H5T_NATIVE_DOUBLE, global_dims, offset,
+                                       count, currentTestData.R64.data());
             h5writer.Advance();
         }
     }
@@ -1217,8 +1192,8 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
             var_r64.SetStepSelection({t, 1});
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             hdf5Reader.Get(var_iString, IString);
 
@@ -1246,8 +1221,7 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                EXPECT_EQ(static_cast<char>(CHAR[i]), currentTestData.CHAR[i])
-                    << msg;
+                EXPECT_EQ(static_cast<char>(CHAR[i]), currentTestData.CHAR[i]) << msg;
                 EXPECT_EQ(I8[i], currentTestData.I8[i]) << msg;
                 EXPECT_EQ(I16[i], currentTestData.I16[i]) << msg;
                 EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
@@ -1307,36 +1281,28 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
                                static_cast<unsigned int>(Nx * mpiSize)};
             adios2::Dims start{static_cast<unsigned int>(0),
                                static_cast<unsigned int>(mpiRank * Nx)};
-            adios2::Dims count{static_cast<unsigned int>(Ny),
-                               static_cast<unsigned int>(Nx)};
+            adios2::Dims count{static_cast<unsigned int>(Ny), static_cast<unsigned int>(Nx)};
             auto var_iString = io.DefineVariable<std::string>("iString");
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
         }
 
@@ -1373,8 +1339,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::Box<adios2::Dims> sel(
-                {0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
+            adios2::Box<adios2::Dims> sel({0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -1472,7 +1437,11 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
             hdf5Reader.ReadVar("i32", I32.data(), offset, count, arraySize);
 
             hdf5Reader.GetVarInfo("i64", gDims, h5Type);
+#ifdef _WIN32
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LLONG), 1);
+#else
             ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LONG), 1);
+#endif
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], globalArraySize);
@@ -1500,7 +1469,11 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
             hdf5Reader.ReadVar("u32", U32.data(), offset, count, arraySize);
 
             hdf5Reader.GetVarInfo("u64", gDims, h5Type);
+#ifdef _WIN32
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULLONG), 1);
+#else
             ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULONG), 1);
+#endif
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], globalArraySize);
@@ -1581,37 +1554,29 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D2x4)
                                static_cast<unsigned int>(Nx * mpiSize)};
             adios2::Dims start{static_cast<unsigned int>(0),
                                static_cast<unsigned int>(mpiRank * Nx)};
-            adios2::Dims count{static_cast<unsigned int>(Ny),
-                               static_cast<unsigned int>(Nx)};
+            adios2::Dims count{static_cast<unsigned int>(Ny), static_cast<unsigned int>(Nx)};
 
             auto var_iString = io.DefineVariable<std::string>("iString");
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
         }
 
@@ -1648,8 +1613,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D2x4)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::Box<adios2::Dims> sel(
-                {0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
+            adios2::Box<adios2::Dims> sel({0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -1828,8 +1792,8 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D2x4)
             hdf5Reader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString, currentTestData.S1);
 
@@ -1888,38 +1852,37 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D2x4)
             SmallTestData currentTestData =
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
-            h5writer.CreateAndStoreScalar("iString", H5T_STRING,
-                                          currentTestData.S1.data());
-            h5writer.CreateAndStoreVar("i8", dimSize, H5T_NATIVE_INT8,
-                                       global_dims, offset, count,
+            h5writer.CreateAndStoreScalar("iString", H5T_STRING, currentTestData.S1.data());
+            h5writer.CreateAndStoreVar("i8", dimSize, H5T_NATIVE_INT8, global_dims, offset, count,
                                        currentTestData.I8.data());
-            h5writer.CreateAndStoreVar("i16", dimSize, H5T_NATIVE_SHORT,
-                                       global_dims, offset, count,
+            h5writer.CreateAndStoreVar("i16", dimSize, H5T_NATIVE_SHORT, global_dims, offset, count,
                                        currentTestData.I16.data());
-            h5writer.CreateAndStoreVar("i32", dimSize, H5T_NATIVE_INT,
-                                       global_dims, offset, count,
+            h5writer.CreateAndStoreVar("i32", dimSize, H5T_NATIVE_INT, global_dims, offset, count,
                                        currentTestData.I32.data());
-            h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LONG,
-                                       global_dims, offset, count,
+#ifdef _WIN32
+            h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LLONG, global_dims, offset, count,
                                        currentTestData.I64.data());
-            h5writer.CreateAndStoreVar("u8", dimSize, H5T_NATIVE_UCHAR,
-                                       global_dims, offset, count,
+#else
+            h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LONG, global_dims, offset, count,
+                                       currentTestData.I64.data());
+#endif
+            h5writer.CreateAndStoreVar("u8", dimSize, H5T_NATIVE_UCHAR, global_dims, offset, count,
                                        currentTestData.U8.data());
-            h5writer.CreateAndStoreVar("u16", dimSize, H5T_NATIVE_USHORT,
-                                       global_dims, offset, count,
-                                       currentTestData.U16.data());
-            h5writer.CreateAndStoreVar("u32", dimSize, H5T_NATIVE_UINT,
-                                       global_dims, offset, count,
+            h5writer.CreateAndStoreVar("u16", dimSize, H5T_NATIVE_USHORT, global_dims, offset,
+                                       count, currentTestData.U16.data());
+            h5writer.CreateAndStoreVar("u32", dimSize, H5T_NATIVE_UINT, global_dims, offset, count,
                                        currentTestData.U32.data());
-            h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULONG,
-                                       global_dims, offset, count,
+#ifdef _WIN32
+            h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULLONG, global_dims, offset,
+                                       count, currentTestData.U64.data());
+#else
+            h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULONG, global_dims, offset, count,
                                        currentTestData.U64.data());
-            h5writer.CreateAndStoreVar("r32", dimSize, H5T_NATIVE_FLOAT,
-                                       global_dims, offset, count,
+#endif
+            h5writer.CreateAndStoreVar("r32", dimSize, H5T_NATIVE_FLOAT, global_dims, offset, count,
                                        currentTestData.R32.data());
-            h5writer.CreateAndStoreVar("r64", dimSize, H5T_NATIVE_DOUBLE,
-                                       global_dims, offset, count,
-                                       currentTestData.R64.data());
+            h5writer.CreateAndStoreVar("r64", dimSize, H5T_NATIVE_DOUBLE, global_dims, offset,
+                                       count, currentTestData.R64.data());
             h5writer.Advance();
         }
     }
@@ -2078,8 +2041,8 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D2x4)
             hdf5Reader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString, currentTestData.S1);
 
@@ -2148,37 +2111,29 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
                                static_cast<unsigned int>(mpiSize * Nx)};
             adios2::Dims start{static_cast<unsigned int>(0),
                                static_cast<unsigned int>(mpiRank * Nx)};
-            adios2::Dims count{static_cast<unsigned int>(Ny),
-                               static_cast<unsigned int>(Nx)};
+            adios2::Dims count{static_cast<unsigned int>(Ny), static_cast<unsigned int>(Nx)};
 
             auto var_iString = io.DefineVariable<std::string>("iString");
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
         }
 
@@ -2215,8 +2170,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::Box<adios2::Dims> sel(
-                {0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
+            adios2::Box<adios2::Dims> sel({0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -2311,7 +2265,11 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
             hdf5Reader.ReadVar("i32", I32.data(), offset, count, arraySize);
 
             hdf5Reader.GetVarInfo("i64", gDims, h5Type);
+#ifdef _WIN32
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LLONG), 1);
+#else
             ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LONG), 1);
+#endif
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], globalArraySize);
@@ -2339,7 +2297,11 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
             hdf5Reader.ReadVar("u32", U32.data(), offset, count, arraySize);
 
             hdf5Reader.GetVarInfo("u64", gDims, h5Type);
+#ifdef _WIN32
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULLONG), 1);
+#else
             ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULONG), 1);
+#endif
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], globalArraySize);
@@ -2420,36 +2382,28 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D4x2)
                                static_cast<unsigned int>(mpiSize * Nx)};
             adios2::Dims start{static_cast<unsigned int>(0),
                                static_cast<unsigned int>(mpiRank * Nx)};
-            adios2::Dims count{static_cast<unsigned int>(Ny),
-                               static_cast<unsigned int>(Nx)};
+            adios2::Dims count{static_cast<unsigned int>(Ny), static_cast<unsigned int>(Nx)};
             auto var_iString = io.DefineVariable<std::string>("iString");
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
         }
 
@@ -2486,8 +2440,7 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D4x2)
 
             // Make a 2D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
-            adios2::Box<adios2::Dims> sel(
-                {0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
+            adios2::Box<adios2::Dims> sel({0, static_cast<unsigned int>(mpiRank * Nx)}, {Ny, Nx});
             var_i8.SetSelection(sel);
             var_i16.SetSelection(sel);
             var_i32.SetSelection(sel);
@@ -2663,8 +2616,8 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteADIOS2HDF5Read2D4x2)
             hdf5Reader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString, currentTestData.S1);
 
@@ -2723,38 +2676,37 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D4x2)
             SmallTestData currentTestData =
                 generateNewSmallTestData(m_TestData, step, mpiRank, mpiSize);
 
-            h5writer.CreateAndStoreScalar("iString", H5T_STRING,
-                                          currentTestData.S1.data());
-            h5writer.CreateAndStoreVar("i8", dimSize, H5T_NATIVE_INT8,
-                                       global_dims, offset, count,
+            h5writer.CreateAndStoreScalar("iString", H5T_STRING, currentTestData.S1.data());
+            h5writer.CreateAndStoreVar("i8", dimSize, H5T_NATIVE_INT8, global_dims, offset, count,
                                        currentTestData.I8.data());
-            h5writer.CreateAndStoreVar("i16", dimSize, H5T_NATIVE_SHORT,
-                                       global_dims, offset, count,
+            h5writer.CreateAndStoreVar("i16", dimSize, H5T_NATIVE_SHORT, global_dims, offset, count,
                                        currentTestData.I16.data());
-            h5writer.CreateAndStoreVar("i32", dimSize, H5T_NATIVE_INT,
-                                       global_dims, offset, count,
+            h5writer.CreateAndStoreVar("i32", dimSize, H5T_NATIVE_INT, global_dims, offset, count,
                                        currentTestData.I32.data());
-            h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LONG,
-                                       global_dims, offset, count,
+#ifdef _WIN32
+            h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LLONG, global_dims, offset, count,
                                        currentTestData.I64.data());
-            h5writer.CreateAndStoreVar("u8", dimSize, H5T_NATIVE_UCHAR,
-                                       global_dims, offset, count,
+#else
+            h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LONG, global_dims, offset, count,
+                                       currentTestData.I64.data());
+#endif
+            h5writer.CreateAndStoreVar("u8", dimSize, H5T_NATIVE_UCHAR, global_dims, offset, count,
                                        currentTestData.U8.data());
-            h5writer.CreateAndStoreVar("u16", dimSize, H5T_NATIVE_USHORT,
-                                       global_dims, offset, count,
-                                       currentTestData.U16.data());
-            h5writer.CreateAndStoreVar("u32", dimSize, H5T_NATIVE_UINT,
-                                       global_dims, offset, count,
+            h5writer.CreateAndStoreVar("u16", dimSize, H5T_NATIVE_USHORT, global_dims, offset,
+                                       count, currentTestData.U16.data());
+            h5writer.CreateAndStoreVar("u32", dimSize, H5T_NATIVE_UINT, global_dims, offset, count,
                                        currentTestData.U32.data());
-            h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULONG,
-                                       global_dims, offset, count,
+#ifdef _WIN32
+            h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULLONG, global_dims, offset,
+                                       count, currentTestData.U64.data());
+#else
+            h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULONG, global_dims, offset, count,
                                        currentTestData.U64.data());
-            h5writer.CreateAndStoreVar("r32", dimSize, H5T_NATIVE_FLOAT,
-                                       global_dims, offset, count,
+#endif
+            h5writer.CreateAndStoreVar("r32", dimSize, H5T_NATIVE_FLOAT, global_dims, offset, count,
                                        currentTestData.R32.data());
-            h5writer.CreateAndStoreVar("r64", dimSize, H5T_NATIVE_DOUBLE,
-                                       global_dims, offset, count,
-                                       currentTestData.R64.data());
+            h5writer.CreateAndStoreVar("r64", dimSize, H5T_NATIVE_DOUBLE, global_dims, offset,
+                                       count, currentTestData.R64.data());
             h5writer.Advance();
         }
     }
@@ -2913,8 +2865,8 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D4x2)
             hdf5Reader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString, currentTestData.S1);
 
@@ -3148,8 +3100,8 @@ TEST_F(HDF5WriteReadTest, /*DISABLE_*/ ATTRTESTADIOS2vsHDF5)
             var3.SetStepSelection({t, 1});
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             hdf5Reader.BeginStep();
 
@@ -3173,8 +3125,7 @@ TEST_F(HDF5WriteReadTest, /*DISABLE_*/ ATTRTESTADIOS2vsHDF5)
             }
         }
 
-        const std::map<std::string, adios2::Params> &attributesInfo =
-            io.AvailableAttributes();
+        const std::map<std::string, adios2::Params> &attributesInfo = io.AvailableAttributes();
 
         EXPECT_EQ(numAttr, attributesInfo.size());
 
@@ -3186,8 +3137,7 @@ TEST_F(HDF5WriteReadTest, /*DISABLE_*/ ATTRTESTADIOS2vsHDF5)
                      "io.m_EngineStep=2 but var4 is only in step 1, this it "
                      "thinks so such var"
                   << std::endl;
-        std::cout << " need to fix semantics of io.AvailableAttributes()"
-                  << std::endl;
+        std::cout << " need to fix semantics of io.AvailableAttributes()" << std::endl;
         // EXPECT_EQ(1, io.AvailableAttributes(var4Name).size());
 
         std::cout << " other tests will follow after William make changes: "

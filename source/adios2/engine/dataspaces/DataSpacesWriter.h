@@ -37,14 +37,12 @@ public:
      * @param comm
      * @param method
      */
-    DataSpacesWriter(IO &io, const std::string &name, const Mode mode,
-                     helper::Comm comm);
+    DataSpacesWriter(IO &io, const std::string &name, const Mode mode, helper::Comm comm);
 
     ~DataSpacesWriter();
 
-    StepStatus BeginStep(
-        StepMode mode,
-        const float timeoutSeconds = std::numeric_limits<float>::max()) final;
+    StepStatus BeginStep(StepMode mode,
+                         const float timeoutSeconds = std::numeric_limits<float>::max()) final;
     size_t CurrentStep() const final;
     void EndStep() final;
 
@@ -60,10 +58,9 @@ private:
     std::vector<std::string> v_name_vector;
     std::vector<int> elemSize_vector;
     const std::map<std::string, int> varType_to_ds = {
-        {"int8_t", 1},          {"uint8_t", 2},      {"int16_t", 3},
-        {"uint16_t", 4},        {"int32_t", 5},      {"uint32_t", 6},
-        {"int64_t", 7},         {"uint64_t", 8},     {"float", 9},
-        {"double", 10},         {"long double", 11}, {"complex float", 12},
+        {"int8_t", 1},          {"uint8_t", 2},  {"int16_t", 3},      {"uint16_t", 4},
+        {"int32_t", 5},         {"uint32_t", 6}, {"int64_t", 7},      {"uint64_t", 8},
+        {"float", 9},           {"double", 10},  {"long double", 11}, {"complex float", 12},
         {"complex double", 13}, {"string", 14},
     };
     /*
@@ -88,8 +85,8 @@ private:
         };
         */
 
-#define declare_type(T)                                                        \
-    void DoPutSync(Variable<T> &variable, const T *values) final;              \
+#define declare_type(T)                                                                            \
+    void DoPutSync(Variable<T> &variable, const T *values) final;                                  \
     void DoPutDeferred(Variable<T> &variable, const T *values) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

@@ -8,7 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
 #include "evpath.h"
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
@@ -171,7 +173,7 @@ main(int argc, char **argv)
     srand48(getpid());
 
 #ifdef HAVE_WINDOWS_H
-    SetTimer(NULL, 5, 1000, (TIMERPROC) fail_and_die);
+    SetTimer(NULL, 5, 300*1000, (TIMERPROC) fail_and_die);
 #else
     struct sigaction sigact;
     sigact.sa_flags = 0;

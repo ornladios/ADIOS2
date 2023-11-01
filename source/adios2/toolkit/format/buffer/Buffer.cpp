@@ -24,15 +24,14 @@ Buffer::Buffer(const std::string type, const size_t fixedSize)
 void Buffer::Resize(const size_t size, const std::string hint)
 {
     helper::Throw<std::invalid_argument>("Toolkit", "format::Buffer", "Resize",
-                                         "buffer memory of type " + m_Type +
-                                             " can't call Resize " + hint);
+                                         "buffer memory of type " + m_Type + " can't call Resize " +
+                                             hint);
 }
 
 void Buffer::Reset(const bool resetAbsolutePosition, const bool zeroInitialize)
 {
     helper::Throw<std::invalid_argument>("Toolkit", "format::Buffer", "Reset",
-                                         "buffer memory of type " + m_Type +
-                                             " can't call Reset");
+                                         "buffer memory of type " + m_Type + " can't call Reset");
 }
 
 char *Buffer::Data() noexcept { return nullptr; }
@@ -51,8 +50,7 @@ size_t Buffer::GetAvailableSize() const
 void Buffer::Delete()
 {
     helper::Throw<std::invalid_argument>("Toolkit", "format::Buffer", "Delete",
-                                         "buffer memory of type " + m_Type +
-                                             " can't call Delete");
+                                         "buffer memory of type " + m_Type + " can't call Delete");
 }
 
 } // end namespace format

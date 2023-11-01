@@ -21,25 +21,16 @@ namespace core
 namespace engine
 {
 
-void DataManMonitor::SetAverageSteps(const size_t step)
-{
-    m_AverageSteps = step;
-}
+void DataManMonitor::SetAverageSteps(const size_t step) { m_AverageSteps = step; }
 
-void DataManMonitor::SetCombiningSteps(const size_t step)
-{
-    m_CombiningSteps = step;
-}
+void DataManMonitor::SetCombiningSteps(const size_t step) { m_CombiningSteps = step; }
 
-void DataManMonitor::SetClockError(const uint64_t roundLatency,
-                                   const uint64_t remoteTimeBase)
+void DataManMonitor::SetClockError(const uint64_t roundLatency, const uint64_t remoteTimeBase)
 {
-    uint64_t localTimeBase =
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch())
-            .count();
-    m_ClockError = localTimeBase - remoteTimeBase -
-                   static_cast<double>(roundLatency) / 2.0;
+    uint64_t localTimeBase = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                 std::chrono::system_clock::now().time_since_epoch())
+                                 .count();
+    m_ClockError = localTimeBase - remoteTimeBase - static_cast<double>(roundLatency) / 2.0;
     m_RoundLatency = roundLatency;
 }
 
@@ -70,10 +61,9 @@ void DataManMonitor::BeginStep(const size_t step)
 
 void DataManMonitor::AddLatencyMilliseconds(const uint64_t remoteStamp)
 {
-    uint64_t localStamp =
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch())
-            .count();
+    uint64_t localStamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              std::chrono::system_clock::now().time_since_epoch())
+                              .count();
     uint64_t latency = localStamp - remoteStamp - m_ClockError;
     m_LatencyMilliseconds.push_back(latency);
     m_AccumulatedLatency += latency;
@@ -102,11 +92,9 @@ void DataManMonitor::EndStep(const size_t step)
     m_AverageTime = std::chrono::duration_cast<std::chrono::microseconds>(
                         (m_StepTimers.back() - m_StepTimers.front()))
                         .count();
-    m_TotalRate = static_cast<double>(m_TotalBytes.back()) /
-                  static_cast<double>(m_TotalTime);
-    m_AverageRate =
-        static_cast<double>(m_TotalBytes.back() - m_TotalBytes.front()) /
-        static_cast<double>(m_AverageTime);
+    m_TotalRate = static_cast<double>(m_TotalBytes.back()) / static_cast<double>(m_TotalTime);
+    m_AverageRate = static_cast<double>(m_TotalBytes.back() - m_TotalBytes.front()) /
+                    static_cast<double>(m_AverageTime);
     if (step > 0)
     {
         m_DropRate = static_cast<double>((step - m_CurrentStep)) / step;
@@ -127,23 +115,17 @@ void DataManMonitor::EndStep(const size_t step)
     {
         std::lock_guard<std::mutex> l(m_PrintMutex);
         std::cout << "Step " << step << ", Total MBs "
-                  << static_cast<double>(m_TotalBytes.back()) / 1000000.0
-                  << ", Step MBs "
-                  << static_cast<double>(m_StepBytes) / 1000000.0
-                  << ", Total seconds "
-                  << static_cast<double>(m_TotalTime) / 1000000.0 << ", "
-                  << m_StepTimers.size() << " step seconds "
-                  << static_cast<double>(m_AverageTime) / 1000000.0
-                  << ", Total MB/s " << m_TotalRate << ", "
-                  << m_StepTimers.size() << " step average MB/s "
-                  << m_AverageRate << ", Drop rate " << m_DropRate * 100 << "%"
-                  << ", Steps per second " << m_StepsPerSecond << ", "
-                  << m_StepTimers.size()
+                  << static_cast<double>(m_TotalBytes.back()) / 1000000.0 << ", Step MBs "
+                  << static_cast<double>(m_StepBytes) / 1000000.0 << ", Total seconds "
+                  << static_cast<double>(m_TotalTime) / 1000000.0 << ", " << m_StepTimers.size()
+                  << " step seconds " << static_cast<double>(m_AverageTime) / 1000000.0
+                  << ", Total MB/s " << m_TotalRate << ", " << m_StepTimers.size()
+                  << " step average MB/s " << m_AverageRate << ", Drop rate " << m_DropRate * 100
+                  << "%"
+                  << ", Steps per second " << m_StepsPerSecond << ", " << m_StepTimers.size()
                   << " step average latency milliseconds " << averageLatency
                   << ", Average latency milliseconds "
-                  << m_AccumulatedLatency /
-                         static_cast<double>(m_CurrentStep + 1)
-                  << std::endl;
+                  << m_AccumulatedLatency / static_cast<double>(m_CurrentStep + 1) << std::endl;
     }
 }
 
@@ -161,8 +143,7 @@ void DataManMonitor::SetRequiredAccuracy(const std::string &accuracyRequired)
     }
 }
 
-void DataManMonitor::AddCompression(const std::string &method,
-                                    const std::string &accuracyUsed)
+void DataManMonitor::AddCompression(const std::string &method, const std::string &accuracyUsed)
 {
     m_CompressionMethod = method;
 
@@ -172,10 +153,7 @@ void DataManMonitor::AddCompression(const std::string &method,
     }
 }
 
-void DataManMonitor::AddTransport(const std::string &method)
-{
-    m_TransportMethod = method;
-}
+void DataManMonitor::AddTransport(const std::string &method) { m_TransportMethod = method; }
 
 void DataManMonitor::SetReaderThreading() { m_ReaderThreading = true; }
 
@@ -207,8 +185,7 @@ void DataManMonitor::OutputJson(const std::string &filename)
 
     bool fileExists = FileExisted(filename + ".json");
 
-    std::ofstream file((filename + ".json").c_str(),
-                       std::fstream::out | std::fstream::app);
+    std::ofstream file((filename + ".json").c_str(), std::fstream::out | std::fstream::app);
     if (!fileExists)
     {
         file << "ADOPS2 DataMan performance measurements" << std::endl;
@@ -220,8 +197,7 @@ void DataManMonitor::OutputJson(const std::string &filename)
 void DataManMonitor::OutputCsv(const std::string &filename)
 {
     bool fileExists = FileExisted(filename + ".csv");
-    std::ofstream file((filename + ".csv").c_str(),
-                       std::fstream::out | std::fstream::app);
+    std::ofstream file((filename + ".csv").c_str(), std::fstream::out | std::fstream::app);
     if (!fileExists)
     {
         file << "bandwidth, latency, precision, completeness, size, "
@@ -229,10 +205,7 @@ void DataManMonitor::OutputCsv(const std::string &filename)
              << std::endl;
     }
     file << floor(log2(m_TotalRate)) << ", ";
-    file << floor(log2(m_AccumulatedLatency /
-                       static_cast<double>(m_CurrentStep + 1))) -
-                8
-         << ", ";
+    file << floor(log2(m_AccumulatedLatency / static_cast<double>(m_CurrentStep + 1))) - 8 << ", ";
     if (m_RequiredAccuracy == 0)
     {
         file << 0 << ", ";
@@ -260,8 +233,7 @@ void DataManMonitor::OutputCsv(const std::string &filename)
     {
         file << round(log10(m_CompressionAccuracy)) + 6 << ", ";
     }
-    file << static_cast<int>(m_WriterThreading) * 2 +
-                static_cast<int>(m_ReaderThreading)
+    file << static_cast<int>(m_WriterThreading) * 2 + static_cast<int>(m_ReaderThreading)
          << std::endl;
     file.close();
 }

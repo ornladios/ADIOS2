@@ -110,8 +110,7 @@ public:
     void ResetBuffers() noexcept;
 
     // 2*blocksize+some is allocated but only up to maxsegmentsize
-    void CreateShm(size_t blocksize, const size_t maxsegmentsize,
-                   const size_t alignment_size);
+    void CreateShm(size_t blocksize, const size_t maxsegmentsize, const size_t alignment_size);
     void DestroyShm();
 
 private:

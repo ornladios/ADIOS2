@@ -62,10 +62,8 @@ struct ParaViewFidesEngine::EngineImpl
         node["catalyst/fides/json_file"].set(this->JSONFileName);
         node["catalyst/fides/data_source_io/source"].set(std::string("source"));
         node["catalyst/fides/data_source_io/address"].set(address.str());
-        node["catalyst/fides/data_source_path/source"].set(
-            std::string("source"));
-        node["catalyst/fides/data_source_path/path"].set(
-            std::string("DataReader"));
+        node["catalyst/fides/data_source_path/source"].set(std::string("source"));
+        node["catalyst/fides/data_source_path/path"].set(std::string("DataReader"));
         catalyst_initialize(conduit_cpp::c_node(&node));
 
         if (this->Rank == 0)
@@ -92,10 +90,8 @@ struct ParaViewFidesEngine::EngineImpl
         node["catalyst/fides/json_file"].set(this->JSONFileName);
         node["catalyst/fides/data_source_io/source"].set(std::string("source"));
         node["catalyst/fides/data_source_io/address"].set(address.str());
-        node["catalyst/fides/data_source_path/source"].set(
-            std::string("source"));
-        node["catalyst/fides/data_source_path/path"].set(
-            std::string("DataReader"));
+        node["catalyst/fides/data_source_path/source"].set(std::string("source"));
+        node["catalyst/fides/data_source_path/path"].set(std::string("DataReader"));
 
         // catalyst requires the data node on a channel, but we don't actually
         // need it when using fides, so just create a dummy object to pass
@@ -108,24 +104,21 @@ struct ParaViewFidesEngine::EngineImpl
     }
 };
 
-ParaViewFidesEngine::ParaViewFidesEngine(adios2::core::IO &io,
-                                         const std::string &name,
+ParaViewFidesEngine::ParaViewFidesEngine(adios2::core::IO &io, const std::string &name,
                                          adios2::helper::Comm comm)
-: adios2::plugin::PluginEngineInterface(io, name, adios2::Mode::Write,
-                                        comm.Duplicate()),
+: adios2::plugin::PluginEngineInterface(io, name, adios2::Mode::Write, comm.Duplicate()),
   Impl(new EngineImpl(io.m_ADIOS))
 {
     // Need to define the Variables in the IO object used for the inline engine
     const auto &varMap = io.GetVariables();
     for (const auto &it : varMap)
     {
-#define declare_type(T)                                                        \
-    if (it.second->m_Type == adios2::helper::GetDataType<T>())                 \
-    {                                                                          \
-        this->Impl->Io->DefineVariable<T>(                                     \
-            it.first, it.second->m_Shape, it.second->m_Start,                  \
-            it.second->m_Count, it.second->IsConstantDims());                  \
-        continue;                                                              \
+#define declare_type(T)                                                                            \
+    if (it.second->m_Type == adios2::helper::GetDataType<T>())                                     \
+    {                                                                                              \
+        this->Impl->Io->DefineVariable<T>(it.first, it.second->m_Shape, it.second->m_Start,        \
+                                          it.second->m_Count, it.second->IsConstantDims());        \
+        continue;                                                                                  \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -156,16 +149,12 @@ ParaViewFidesEngine::~ParaViewFidesEngine()
     catalyst_finalize(conduit_cpp::c_node(&node));
 }
 
-adios2::StepStatus ParaViewFidesEngine::BeginStep(adios2::StepMode mode,
-                                                  const float timeoutSeconds)
+adios2::StepStatus ParaViewFidesEngine::BeginStep(adios2::StepMode mode, const float timeoutSeconds)
 {
     return this->Impl->Writer->BeginStep(mode, timeoutSeconds);
 }
 
-size_t ParaViewFidesEngine::CurrentStep() const
-{
-    return this->Impl->Writer->CurrentStep();
-}
+size_t ParaViewFidesEngine::CurrentStep() const { return this->Impl->Writer->CurrentStep(); }
 
 void ParaViewFidesEngine::EndStep()
 {
@@ -176,20 +165,18 @@ void ParaViewFidesEngine::EndStep()
 
 void ParaViewFidesEngine::PerformPuts() { this->Impl->Writer->PerformPuts(); }
 
-#define declare(T)                                                             \
-    void ParaViewFidesEngine::DoPutSync(adios2::core::Variable<T> &variable,   \
-                                        const T *values)                       \
-    {                                                                          \
-        adios2::core::Variable<T> *inlineVar =                                 \
-            this->Impl->Io->InquireVariable<T>(variable.m_Name);               \
-        this->Impl->Writer->Put(*inlineVar, values, adios2::Mode::Sync);       \
-    }                                                                          \
-    void ParaViewFidesEngine::DoPutDeferred(                                   \
-        adios2::core::Variable<T> &variable, const T *values)                  \
-    {                                                                          \
-        adios2::core::Variable<T> *inlineVar =                                 \
-            this->Impl->Io->InquireVariable<T>(variable.m_Name);               \
-        this->Impl->Writer->Put(*inlineVar, values);                           \
+#define declare(T)                                                                                 \
+    void ParaViewFidesEngine::DoPutSync(adios2::core::Variable<T> &variable, const T *values)      \
+    {                                                                                              \
+        adios2::core::Variable<T> *inlineVar =                                                     \
+            this->Impl->Io->InquireVariable<T>(variable.m_Name);                                   \
+        this->Impl->Writer->Put(*inlineVar, values, adios2::Mode::Sync);                           \
+    }                                                                                              \
+    void ParaViewFidesEngine::DoPutDeferred(adios2::core::Variable<T> &variable, const T *values)  \
+    {                                                                                              \
+        adios2::core::Variable<T> *inlineVar =                                                     \
+            this->Impl->Io->InquireVariable<T>(variable.m_Name);                                   \
+        this->Impl->Writer->Put(*inlineVar, values);                                               \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
@@ -203,10 +190,8 @@ void ParaViewFidesEngine::DoClose(const int transportIndex)
 
 extern "C" {
 
-fides_plugin::ParaViewFidesEngine *EngineCreate(adios2::core::IO &io,
-                                                const std::string &name,
-                                                const adios2::Mode mode,
-                                                adios2::helper::Comm comm)
+fides_plugin::ParaViewFidesEngine *EngineCreate(adios2::core::IO &io, const std::string &name,
+                                                const adios2::Mode mode, adios2::helper::Comm comm)
 {
     (void)mode;
     return new fides_plugin::ParaViewFidesEngine(io, name, comm.Duplicate());

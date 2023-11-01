@@ -25,24 +25,22 @@ public:
 
     const size_t m_ChunkSize;
 
-    ChunkV(const std::string type, const bool AlwaysCopy = false,
-           const size_t MemAlign = 1, const size_t MemBlockSize = 1,
-           const size_t ChunkSize = DefaultBufferChunkSize);
+    ChunkV(const std::string type, const bool AlwaysCopy = false, const size_t MemAlign = 1,
+           const size_t MemBlockSize = 1, const size_t ChunkSize = DefaultBufferChunkSize);
     virtual ~ChunkV();
 
     virtual std::vector<core::iovec> DataVec() noexcept;
 
-    virtual size_t AddToVec(const size_t size, const void *buf, size_t align,
-                            bool CopyReqd,
+    virtual size_t AddToVec(const size_t size, const void *buf, size_t align, bool CopyReqd,
                             MemorySpace MemSpace = MemorySpace::Host);
 
     virtual BufferPos Allocate(const size_t size, size_t align);
     virtual void DownsizeLastAlloc(const size_t oldSize, const size_t newSize);
 
     virtual void *GetPtr(int bufferIdx, size_t posInBuffer);
+    virtual void *GetPtr(size_t OverallPosInBuffer);
 
-    void CopyDataToBuffer(const size_t size, const void *buf, size_t pos,
-                          MemorySpace MemSpace);
+    void CopyDataToBuffer(const size_t size, const void *buf, size_t pos, MemorySpace MemSpace);
 
 private:
     struct Chunk

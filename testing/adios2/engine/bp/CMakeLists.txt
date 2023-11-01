@@ -32,12 +32,9 @@ macro(bp4_bp5_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP4
     WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
   )
-
-  if(ADIOS2_HAVE_BP5)
-    gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
-      WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-    )
-  endif()
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+  )
 endmacro()
 
 macro(bp_gtest_add_tests_helper testname mpi)
@@ -47,29 +44,24 @@ macro(bp_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP4
     WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
   )
-
-  if(ADIOS2_HAVE_BP5)
-    gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
-      WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-    )
-  endif()
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+  )
 endmacro()
 
 macro(async_gtest_add_tests_helper testname mpi)
-  if(ADIOS2_HAVE_BP5)
-    gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.TLS.Guided
-      WORKING_DIRECTORY ${BP5_ASYNC_DIR}/tls-guided EXTRA_ARGS "BP5" "AggregationType=TwoLevelShm,AsyncWrite=Guided"
-    )
-    gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.TLS.Naive
-      WORKING_DIRECTORY ${BP5_ASYNC_DIR}/tls-naive EXTRA_ARGS "BP5" "AggregationType=TwoLevelShm,AsyncWrite=Naive"
-    )
-    gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.EWS.Guided
-      WORKING_DIRECTORY ${BP5_ASYNC_DIR}/ews-guided EXTRA_ARGS "BP5" "AggregationType=EveryoneWritesSerial,AsyncWrite=Guided"
-    )
-    gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.EWS.Naive
-      WORKING_DIRECTORY ${BP5_ASYNC_DIR}/ews-naive EXTRA_ARGS "BP5" "AggregationType=EveryoneWritesSerial,AsyncWrite=Naive"
-    )
-  endif()
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.TLS.Guided
+    WORKING_DIRECTORY ${BP5_ASYNC_DIR}/tls-guided EXTRA_ARGS "BP5" "AggregationType=TwoLevelShm,AsyncWrite=Guided"
+  )
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.TLS.Naive
+    WORKING_DIRECTORY ${BP5_ASYNC_DIR}/tls-naive EXTRA_ARGS "BP5" "AggregationType=TwoLevelShm,AsyncWrite=Naive"
+  )
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.EWS.Guided
+    WORKING_DIRECTORY ${BP5_ASYNC_DIR}/ews-guided EXTRA_ARGS "BP5" "AggregationType=EveryoneWritesSerial,AsyncWrite=Guided"
+  )
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .Async.BP5.EWS.Naive
+    WORKING_DIRECTORY ${BP5_ASYNC_DIR}/ews-naive EXTRA_ARGS "BP5" "AggregationType=EveryoneWritesSerial,AsyncWrite=Naive"
+  )
 endmacro()
 
 if(ADIOS2_HAVE_Fortran)
@@ -81,12 +73,9 @@ if(ADIOS2_HAVE_Fortran)
     gtest_add_tests_helper_Fortran(${testname} ${mpi} BP Engine.BP. .BP4
       ${BP4_DIR} "BP4"
     )
-
-    if(ADIOS2_HAVE_BP5)
-      gtest_add_tests_helper_Fortran(${testname} ${mpi} BP Engine.BP. .BP5
-        ${BP5_DIR} "BP5"
-      )
-    endif()
+    gtest_add_tests_helper_Fortran(${testname} ${mpi} BP Engine.BP. .BP5
+      ${BP5_DIR} "BP5"
+    )
   endmacro()
 else()
   macro(bp_gtest_add_tests_helper_Fortran testname mpi)
@@ -108,22 +97,46 @@ bp_gtest_add_tests_helper(WriteReadAsStreamADIOS2 MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAsStreamADIOS2_Threads MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAttributes MPI_ALLOW)
 bp_gtest_add_tests_helper(FStreamWriteReadHighLevelAPI MPI_ALLOW)
-bp3_bp4_gtest_add_tests_helper(WriteFlushRead MPI_ALLOW)
+bp_gtest_add_tests_helper(WriteFlushRead MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteMultiblockRead MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadMultiblock MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadVector MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAttributesMultirank MPI_ALLOW)
 bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
 
-if(ADIOS2_HAVE_BP5)
-  set(BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.Serial")
+set(BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.Serial")
 
-  if(ADIOS2_HAVE_MPI)
-    list(APPEND BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.MPI" "Engine.BP.BPLargeMetadata.ManyLongStrings.BP5.MPI")
-  endif()
+if ((NOT WIN32) AND ADIOS2_HAVE_SST)
+   # prototype for remote server testing
+   # (we don't really use SST here, just EVPath, but ADIOS2_HAVE_SST is the most relevant conditional)
 
-  set_tests_properties(${BP5LargeMeta} PROPERTIES RUN_SERIAL TRUE)
+   macro(add_get_remote_tests_helper testname)
+      add_test(NAME "Remote.BP${testname}.GetRemote" COMMAND Test.Engine.BP.${testname}.Serial bp5)
+      set_tests_properties(Remote.BP${testname}.GetRemote PROPERTIES FIXTURES_REQUIRED Server ENVIRONMENT "DoRemote=1")
+   endmacro()
+
+   macro(add_file_remote_tests_helper testname)
+      add_test(NAME "Remote.BP${testname}.FileRemote" COMMAND Test.Engine.BP.${testname}.Serial bp5)
+      set_tests_properties(Remote.BP${testname}.FileRemote PROPERTIES FIXTURES_REQUIRED Server ENVIRONMENT "DoFileRemote=1")
+   endmacro()
+
+   add_test(NAME remoteServerSetup   COMMAND remote_server -background)
+   set_tests_properties(remoteServerSetup         PROPERTIES FIXTURES_SETUP    Server)
+
+   add_test(NAME remoteServerCleanup COMMAND remote_server -kill_server)
+   set_tests_properties(remoteServerCleanup         PROPERTIES FIXTURES_CLEANUP    Server)
+
+   ##### add remote tests below this line
+   add_get_remote_tests_helper(WriteReadADIOS2stdio)
+   add_get_remote_tests_helper(WriteMemorySelectionRead)
+   add_file_remote_tests_helper(WriteMemorySelectionRead)
 endif()
+
+if(ADIOS2_HAVE_MPI)
+  list(APPEND BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.MPI" "Engine.BP.BPLargeMetadata.ManyLongStrings.BP5.MPI")
+endif()
+
+set_tests_properties(${BP5LargeMeta} PROPERTIES RUN_SERIAL TRUE)
 
 bp_gtest_add_tests_helper(WriteMemorySelectionRead MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadLocalVariables MPI_ALLOW)
@@ -158,20 +171,18 @@ if(ADIOS2_HAVE_MPI)
 endif()
 
 # BP5 only for now
-if(ADIOS2_HAVE_BP5)
-  gtest_add_tests_helper(ParameterSelectSteps MPI_ALLOW BP Engine.BP. .BP5
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-  )
-  gtest_add_tests_helper(AppendAfterSteps MPI_ALLOW BP Engine.BP. .BP5
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-  )
-  gtest_add_tests_helper(DirectIO MPI_NONE BP Engine.BP. .BP5
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-  )
-  gtest_add_tests_helper(ReadMultithreaded MPI_NONE BP Engine.BP. .BP5
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-  )
-endif(ADIOS2_HAVE_BP5)
+gtest_add_tests_helper(ParameterSelectSteps MPI_ALLOW BP Engine.BP. .BP5
+  WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+)
+gtest_add_tests_helper(AppendAfterSteps MPI_ALLOW BP Engine.BP. .BP5
+  WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+)
+gtest_add_tests_helper(DirectIO MPI_NONE BP Engine.BP. .BP5
+  WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+)
+gtest_add_tests_helper(ReadMultithreaded MPI_NONE BP Engine.BP. .BP5
+  WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+)
 
 # BP3 only for now
 gtest_add_tests_helper(WriteNull MPI_ALLOW BP Engine.BP. .BP3
@@ -223,15 +234,12 @@ if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
   gtest_add_tests_helper(SelectionsCuda MPI_ALLOW BP Engine.BP. .BP4
     WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
   )
-
-  if(ADIOS2_HAVE_BP5)
-    gtest_add_tests_helper(WriteReadCuda MPI_ALLOW BP Engine.BP. .BP5
-      WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-    )
-    gtest_add_tests_helper(SelectionsCuda MPI_ALLOW BP Engine.BP. .BP5
-      WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-    )
-  endif()
+  gtest_add_tests_helper(WriteReadCuda MPI_ALLOW BP Engine.BP. .BP5
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+  )
+  gtest_add_tests_helper(SelectionsCuda MPI_ALLOW BP Engine.BP. .BP5
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+  )
 
   foreach(tgt ${Test.Engine.BP.WriteReadCuda-TARGETS})
     target_sources(${tgt} PRIVATE operations/CudaRoutines.cu)

@@ -50,10 +50,9 @@ static int verbose = 0;
 
 mxClassID adiostypeToMatlabClass(int adiostype, mxComplexity *complexity);
 size_t adiostypeToMemSize(adios2_type adiostype);
-mxArray *valueToMatlabValue(const void *data, mxClassID mxtype,
+mxArray *valueToMatlabValue(const void *data, mxClassID mxtype, mxComplexity complexFlag);
+mxArray *arrayToMatlabArray(const void *data, const size_t nelems, mxClassID mxtype,
                             mxComplexity complexFlag);
-mxArray *arrayToMatlabArray(const void *data, const size_t nelems,
-                            mxClassID mxtype, mxComplexity complexFlag);
 void errorCheck(int nlhs, int nrhs, const mxArray *prhs[]);
 char *getString(const mxArray *mxstr);
 static size_t *swap_order(size_t n, const size_t *array);
@@ -71,8 +70,8 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     size_t nvars, nattrs;           /* Number of variables and attributes */
     adios2_variable **adios_vars;   /* List of variable objects */
     adios2_attribute **adios_attrs; /* List of attribute objects */
-    int mpi_comm_dummy; /* ADIOS read API needs an MPI communicator */
-    void *data;         /* Attributes return their values */
+    int mpi_comm_dummy;             /* ADIOS read API needs an MPI communicator */
+    void *data;                     /* Attributes return their values */
 
     size_t vi, ai, i;                 /* loop variables for vars and attrs */
     mxArray *arr;                     /* temp array for constructions */
@@ -81,32 +80,27 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     mxComplexity complexFlag;
 
     /* Output structure definition */
-    const char *top_field_names[] = {
-        "Name", "Handlers", "Variables",
-        "Attributes"}; /* top level struct fields */
+    const char *top_field_names[] = {"Name", "Handlers", "Variables",
+                                     "Attributes"}; /* top level struct fields */
     mwSize ntopfields = 4;
-    mwSize top_struct_dims[] = {
-        1, 1}; /* dimensions for top level struct array: 1-by-1 */
+    mwSize top_struct_dims[] = {1, 1}; /* dimensions for top level struct array: 1-by-1 */
     int top_field_Name;
     int top_field_Handlers;
     int top_field_Variables;
     int top_field_Attributes;
 
     /* Handlers structure definition */
-    const char *handler_field_names[] = {
-        "FileHandler", "GroupHandler",
-        "ADIOSHandler"}; /* handler level struct fields */
+    const char *handler_field_names[] = {"FileHandler", "GroupHandler",
+                                         "ADIOSHandler"}; /* handler level struct fields */
     mwSize nhandlerfields = 3;
-    mwSize handler_struct_dims[] = {
-        1, 1}; /* dimensions for handler level struct array: 1-by-1 */
+    mwSize handler_struct_dims[] = {1, 1}; /* dimensions for handler level struct array: 1-by-1 */
     int handler_field_FileHandler;
     int handler_field_GroupHandler;
     int handler_field_ADIOSHandler;
 
-    const char
-        *var_field_names[] = {"Name",       "Type",       "Dims",
-                              "StepsStart", "StepsCount", "GlobalMin",
-                              "GlobalMax"}; /* variable level struct fields */
+    const char *var_field_names[] = {
+        "Name",       "Type",      "Dims",     "StepsStart",
+        "StepsCount", "GlobalMin", "GlobalMax"}; /* variable level struct fields */
     mwSize nvarfields = 7;
     mwSize var_struct_dims[2]; /* dimensions for variable level struct array:
                                   1-by-sth */
@@ -118,8 +112,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     int var_field_GlobalMin;
     int var_field_GlobalMax;
 
-    const char *attr_field_names[] = {
-        "Name", "Type", "Value"}; /* attribute level struct fields */
+    const char *attr_field_names[] = {"Name", "Type", "Value"}; /* attribute level struct fields */
     mwSize nattrfields = 3;
     mwSize attr_struct_dims[2]; /* dimensions for attribute level struct array:
                                    1-by-sth */
@@ -152,22 +145,19 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     fp = adios2_open(group, fname, adios2_mode_read);
     if (fp == NULL)
     {
-        mexErrMsgIdAndTxt("MATLAB:adiosopenc:open",
-                          "Opening the file failed\n");
+        mexErrMsgIdAndTxt("MATLAB:adiosopenc:open", "Opening the file failed\n");
     }
 
     adios2_inquire_all_variables(&adios_vars, &nvars, group);
     adios2_inquire_all_attributes(&adios_attrs, &nattrs, group);
     if (verbose)
-        mexPrintf("Opened file fp=%lld nvars=%zu nattrs=%zu\n", (int64_t)fp,
-                  nvars, nattrs);
+        mexPrintf("Opened file fp=%lld nvars=%zu nattrs=%zu\n", (int64_t)fp, nvars, nattrs);
 
     /******************************/
     /* Create top level structure */
     if (verbose)
         mexPrintf("Create top struct array, 1-by-1\n");
-    plhs[0] =
-        mxCreateStructArray(2, top_struct_dims, ntopfields, top_field_names);
+    plhs[0] = mxCreateStructArray(2, top_struct_dims, ntopfields, top_field_names);
     top_field_Name = mxGetFieldNumber(plhs[0], "Name");
     top_field_Handlers = mxGetFieldNumber(plhs[0], "Handlers");
     top_field_Variables = mxGetFieldNumber(plhs[0], "Variables");
@@ -177,8 +167,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
     /* Create top.Handlers structure array */
     if (verbose)
         mexPrintf("Create top.Handlers struct array, 1-by-1\n");
-    handlers = mxCreateStructArray(2, handler_struct_dims, nhandlerfields,
-                                   handler_field_names);
+    handlers = mxCreateStructArray(2, handler_struct_dims, nhandlerfields, handler_field_names);
     mxSetFieldByNumber(plhs[0], 0, top_field_Handlers, handlers);
 
     /* Create top.Variables structure array */
@@ -194,8 +183,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mexPrintf("Create top.Attributes struct array, 1-by-%zu\n", nattrs);
     attr_struct_dims[0] = 1;
     attr_struct_dims[1] = nattrs;
-    attrs =
-        mxCreateStructArray(2, attr_struct_dims, nattrfields, attr_field_names);
+    attrs = mxCreateStructArray(2, attr_struct_dims, nattrfields, attr_field_names);
     mxSetFieldByNumber(plhs[0], 0, top_field_Attributes, attrs);
 
     /****************************/
@@ -246,8 +234,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         adios2_variable_type(&adiostype, avar);
         mxtype = adiostypeToMatlabClass(adiostype, &complexFlag);
         arr = mxCreateNumericMatrix(1, 1, mxtype, complexFlag);
-        mxSetFieldByNumber(vars, vi, var_field_Type,
-                           mxCreateString(mxGetClassName(arr)));
+        mxSetFieldByNumber(vars, vi, var_field_Type, mxCreateString(mxGetClassName(arr)));
         mxDestroyArray(arr);
         /* field DIMS */
         size_t ndim;
@@ -260,8 +247,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
         if (verbose > 1)
         {
-            mexPrintf("      %s: ndims=%d, adios type=%d, dimensions [",
-                      varname, ndim, adiostype);
+            mexPrintf("      %s: ndims=%d, adios type=%d, dimensions [", varname, ndim, adiostype);
             for (i = 0; i < ndim; i++)
                 mexPrintf("%lld ", mxdims[i]);
             mexPrintf("]\n");
@@ -338,8 +324,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         adios2_attribute_name(attrname, &namelen, aa);
         attrname[namelen] = '\0';
 
-        mxSetFieldByNumber(attrs, ai, attr_field_Name,
-                           mxCreateString(attrname));
+        mxSetFieldByNumber(attrs, ai, attr_field_Name, mxCreateString(attrname));
         /* field TYPE */
         size_t typelen;
         adios2_type adiostype;
@@ -351,8 +336,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
         mxtype = adiostypeToMatlabClass(adiostype, &complexFlag);
         arr = mxCreateNumericMatrix(1, 1, mxtype, complexFlag);
-        mxSetFieldByNumber(attrs, ai, attr_field_Type,
-                           mxCreateString(mxGetClassName(arr)));
+        mxSetFieldByNumber(attrs, ai, attr_field_Type, mxCreateString(mxGetClassName(arr)));
         mxDestroyArray(arr);
         /* field VALUE */
         size_t aelems;
@@ -404,8 +388,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
             mxSetFieldByNumber(attrs, ai, attr_field_Value, arr);
         }
         if (verbose > 1)
-            mexPrintf("      %s: adios type=%s size=%zu\n", attrname,
-                      mxGetClassName(arr), aelems);
+            mexPrintf("      %s: adios type=%s size=%zu\n", attrname, mxGetClassName(arr), aelems);
         mxFree(data);
     }
 
@@ -416,8 +399,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
         mexPrintf("return from adiosopenc\n");
 }
 
-mxArray *valueToMatlabValue(const void *data, mxClassID mxtype,
-                            mxComplexity complexFlag)
+mxArray *valueToMatlabValue(const void *data, mxClassID mxtype, mxComplexity complexFlag)
 {
     /* copies values in all cases, so one can free(data) later */
     mxArray *arr;
@@ -451,8 +433,8 @@ mxArray *valueToMatlabValue(const void *data, mxClassID mxtype,
     return arr;
 }
 
-mxArray *arrayToMatlabArray(const void *data, const size_t nelems,
-                            mxClassID mxtype, mxComplexity complexFlag)
+mxArray *arrayToMatlabArray(const void *data, const size_t nelems, mxClassID mxtype,
+                            mxComplexity complexFlag)
 {
     /* copies values in all cases, so one can free(data) later */
     mxArray *arr;
@@ -498,27 +480,23 @@ void errorCheck(int nlhs, int nrhs, const mxArray *prhs[])
 
     if (nrhs != 2)
     {
-        mexErrMsgIdAndTxt(
-            "MATLAB:adiosopenc:rhs",
-            "This function needs exactly 2 arguments: File, Verbose");
+        mexErrMsgIdAndTxt("MATLAB:adiosopenc:rhs",
+                          "This function needs exactly 2 arguments: File, Verbose");
     }
 
     if (!mxIsChar(prhs[0]))
     {
-        mexErrMsgIdAndTxt("MATLAB:adiosopenc:rhs",
-                          "First arg must be a string.");
+        mexErrMsgIdAndTxt("MATLAB:adiosopenc:rhs", "First arg must be a string.");
     }
 
     if (!mxIsNumeric(prhs[1]))
     {
-        mexErrMsgIdAndTxt("MATLAB:adiosopenc:rhs",
-                          "Second arg must be a number.");
+        mexErrMsgIdAndTxt("MATLAB:adiosopenc:rhs", "Second arg must be a number.");
     }
 
     if (nlhs > 1)
     {
-        mexErrMsgIdAndTxt("MATLAB:adiosopenc:lhs",
-                          "Too many output arguments.");
+        mexErrMsgIdAndTxt("MATLAB:adiosopenc:lhs", "Too many output arguments.");
     }
 }
 
@@ -537,8 +515,7 @@ char *getString(const mxArray *mxstr)
 }
 
 /** return the appropriate class for an adios type (and complexity too) */
-mxClassID adiostypeToMatlabClass(adios2_type adiostype,
-                                 mxComplexity *complexity)
+mxClassID adiostypeToMatlabClass(adios2_type adiostype, mxComplexity *complexity)
 {
     *complexity = mxREAL;
     switch (adiostype)
@@ -581,8 +558,7 @@ mxClassID adiostypeToMatlabClass(adios2_type adiostype,
 
     default:
         mexErrMsgIdAndTxt("MATLAB:adiosopenc.c:dimensionTooLarge",
-                          "Adios type id=%d not supported in matlab.\n",
-                          adiostype);
+                          "Adios type id=%d not supported in matlab.\n", adiostype);
         break;
     }
     return 0; /* just to avoid warnings. never executed */
@@ -625,8 +601,7 @@ size_t adiostypeToMemSize(adios2_type adiostype)
 
     default:
         mexErrMsgIdAndTxt("MATLAB:adiosopenc.c:dimensionTooLarge",
-                          "Adios type id=%d not supported in matlab.\n",
-                          adiostype);
+                          "Adios type id=%d not supported in matlab.\n", adiostype);
         break;
     }
     return 0; /* just to avoid warnings. never executed */

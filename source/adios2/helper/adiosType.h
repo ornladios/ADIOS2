@@ -49,8 +49,7 @@ struct SubFileInfo
  *       value : file seek box: first = seekStart, second = seekCount
  * </pre>
  */
-using SubFileInfoMap =
-    std::map<size_t, std::map<size_t, std::vector<SubFileInfo>>>;
+using SubFileInfoMap = std::map<size_t, std::map<size_t, std::vector<SubFileInfo>>>;
 
 struct BlockOperationInfo
 {
@@ -116,14 +115,8 @@ public:
     // memory remains valid as long as it is necessary.  If you don't
     // know the memory will be valid the entire time, use the
     // DimsArray class which copies the dimension data.
-    CoreDims(std::vector<size_t> vec)
-    : DimCount(vec.size()), DimensSpan(vec.data())
-    {
-    }
-    CoreDims(size_t count, size_t *span_val)
-    : DimCount(count), DimensSpan(span_val)
-    {
-    }
+    CoreDims(std::vector<size_t> vec) : DimCount(vec.size()), DimensSpan(vec.data()) {}
+    CoreDims(size_t count, size_t *span_val) : DimCount(count), DimensSpan(span_val) {}
 
     size_t size() const { return DimCount; }
     bool empty() const { return DimCount == 0; }
@@ -157,8 +150,7 @@ public:
     DimsArray(const size_t count) : CoreDims(count, &Dimensions[0]) {}
 
     //  constructor with single init value
-    DimsArray(const size_t count, const size_t init)
-    : CoreDims(count, &Dimensions[0])
+    DimsArray(const size_t count, const size_t init) : CoreDims(count, &Dimensions[0])
     {
         for (size_t i = 0; i < count; i++)
         {
@@ -166,8 +158,7 @@ public:
         }
     }
     //  constructor from vector
-    DimsArray(const std::vector<size_t> vec)
-    : CoreDims(vec.size(), &Dimensions[0])
+    DimsArray(const std::vector<size_t> vec) : CoreDims(vec.size(), &Dimensions[0])
     {
         for (size_t i = 0; i < vec.size(); i++)
         {
@@ -175,8 +166,7 @@ public:
         }
     }
     //  constructor from address
-    DimsArray(const size_t count, const size_t *arr)
-    : CoreDims(count, &Dimensions[0])
+    DimsArray(const size_t count, const size_t *arr) : CoreDims(count, &Dimensions[0])
     {
         for (size_t i = 0; i < count; i++)
         {
@@ -239,16 +229,14 @@ void Uint64ArrayToSizetVector(const size_t nElements, const uint64_t *in,
  *  @param input array of uint64_t elements
  *  @return vector of std::size_t elements
  */
-std::vector<size_t> Uint64ArrayToSizetVector(const size_t nElements,
-                                             const uint64_t *in) noexcept;
+std::vector<size_t> Uint64ArrayToSizetVector(const size_t nElements, const uint64_t *in) noexcept;
 
 /**
  * Converts a recognized time unit string to TimeUnit enum
  * @param timeUnit string with acceptable time unit
  * @return TimeUnit enum (int) TimeUnit::s, TimeUnit::ms, etc.
  */
-TimeUnit StringToTimeUnit(const std::string timeUnitString,
-                          const std::string hint = "");
+TimeUnit StringToTimeUnit(const std::string timeUnitString, const std::string hint = "");
 
 /**
  * Returns the conversion factor from input units Tb, Gb, Mb, Kb, to bytes as a
@@ -264,8 +252,7 @@ size_t BytesFactor(const std::string units);
  * @param oneLetter if true returns a one letter version ("w", "a" or "r")
  * @return string with open mode
  */
-std::string OpenModeToString(const Mode openMode,
-                             const bool oneLetter = false) noexcept;
+std::string OpenModeToString(const Mode openMode, const bool oneLetter = false) noexcept;
 
 template <class T, class U>
 std::vector<U> NewVectorType(const std::vector<T> &in);

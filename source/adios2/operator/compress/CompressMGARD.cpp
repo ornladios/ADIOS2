@@ -27,9 +27,8 @@ CompressMGARD::CompressMGARD(const Params &parameters)
 {
 }
 
-size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
-                              const Dims &blockCount, const DataType type,
-                              char *bufferOut)
+size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                              const DataType type, char *bufferOut)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
@@ -41,10 +40,9 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     const size_t ndims = convertedDims.size();
     if (ndims > 5)
     {
-        helper::Throw<std::invalid_argument>(
-            "Operator", "CompressMGARD", "Operate",
-            "MGARD does not support data in " + std::to_string(ndims) +
-                " dimensions");
+        helper::Throw<std::invalid_argument>("Operator", "CompressMGARD", "Operate",
+                                             "MGARD does not support data in " +
+                                                 std::to_string(ndims) + " dimensions");
     }
 
     // mgard V1 metadata
@@ -54,12 +52,9 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
         PutParameter(bufferOut, bufferOutOffset, d);
     }
     PutParameter(bufferOut, bufferOutOffset, type);
-    PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(MGARD_VERSION_MAJOR));
-    PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(MGARD_VERSION_MINOR));
-    PutParameter(bufferOut, bufferOutOffset,
-                 static_cast<uint8_t>(MGARD_VERSION_PATCH));
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(MGARD_VERSION_MAJOR));
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(MGARD_VERSION_MINOR));
+    PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(MGARD_VERSION_PATCH));
     // mgard V1 metadata end
 
     // set type
@@ -82,9 +77,8 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     }
     else
     {
-        helper::Throw<std::invalid_argument>(
-            "Operator", "CompressMGARD", "Operate",
-            "MGARD only supports float and double types");
+        helper::Throw<std::invalid_argument>("Operator", "CompressMGARD", "Operate",
+                                             "MGARD only supports float and double types");
     }
     // set type end
 
@@ -125,9 +119,8 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     }
     if (!hasTolerance)
     {
-        helper::Throw<std::invalid_argument>(
-            "Operator", "CompressMGARD", "Operate",
-            "missing mandatory parameter tolerance / accuracy");
+        helper::Throw<std::invalid_argument>("Operator", "CompressMGARD", "Operate",
+                                             "missing mandatory parameter tolerance / accuracy");
     }
     auto itSParameter = m_Parameters.find("s");
     if (itSParameter != m_Parameters.end())
@@ -148,8 +141,7 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
     }
 
     // let mgard know the output buffer size
-    size_t sizeOut =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+    size_t sizeOut = helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
 
     if (sizeOut < thresholdSize)
     {
@@ -161,8 +153,8 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
 
     PutParameter(bufferOut, bufferOutOffset, true);
     void *compressedData = bufferOut + bufferOutOffset;
-    mgard_x::compress(mgardDim, mgardType, mgardCount, tolerance, s,
-                      errorBoundType, dataIn, compressedData, sizeOut, true);
+    mgard_x::compress(mgardDim, mgardType, mgardCount, tolerance, s, errorBoundType, dataIn,
+                      compressedData, sizeOut, true);
     bufferOutOffset += sizeOut;
 
     return bufferOutOffset;
@@ -170,8 +162,7 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart,
 
 size_t CompressMGARD::GetHeaderSize() const { return headerSize; }
 
-size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
-                                   char *dataOut)
+size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     // Do NOT remove even if the buffer version is updated. Data might be still
     // in lagacy formats. This function must be kept for backward compatibility.
@@ -187,17 +178,15 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
         blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     }
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
-    m_VersionInfo =
-        " Data is compressed using MGARD Version " +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
-        std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
-        ". Please make sure a compatible version is used for decompression.";
+    m_VersionInfo = " Data is compressed using MGARD Version " +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) + "." +
+                    std::to_string(GetParameter<uint8_t>(bufferIn, bufferInOffset)) +
+                    ". Please make sure a compatible version is used for decompression.";
 
     const bool isCompressed = GetParameter<bool>(bufferIn, bufferInOffset);
 
-    size_t sizeOut =
-        helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
+    size_t sizeOut = helper::GetTotalSize(blockCount, helper::GetDataTypeSize(type));
 
     if (type == DataType::FloatComplex || type == DataType::DoubleComplex)
     {
@@ -209,13 +198,13 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
         try
         {
             void *dataOutVoid = dataOut;
-            mgard_x::decompress(bufferIn + bufferInOffset,
-                                sizeIn - bufferInOffset, dataOutVoid, true);
+            mgard_x::decompress(bufferIn + bufferInOffset, sizeIn - bufferInOffset, dataOutVoid,
+                                true);
         }
         catch (...)
         {
-            helper::Throw<std::runtime_error>("Operator", "CompressMGARD",
-                                              "DecompressV1", m_VersionInfo);
+            helper::Throw<std::runtime_error>("Operator", "CompressMGARD", "DecompressV1",
+                                              m_VersionInfo);
         }
         return sizeOut;
     }
@@ -224,19 +213,16 @@ size_t CompressMGARD::DecompressV1(const char *bufferIn, const size_t sizeIn,
     return 0;
 }
 
-size_t CompressMGARD::InverseOperate(const char *bufferIn, const size_t sizeIn,
-                                     char *dataOut)
+size_t CompressMGARD::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     size_t bufferInOffset = 1; // skip operator type
-    const uint8_t bufferVersion =
-        GetParameter<uint8_t>(bufferIn, bufferInOffset);
+    const uint8_t bufferVersion = GetParameter<uint8_t>(bufferIn, bufferInOffset);
     bufferInOffset += 2; // skip two reserved bytes
     headerSize = bufferInOffset;
 
     if (bufferVersion == 1)
     {
-        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset,
-                            dataOut);
+        return DecompressV1(bufferIn + bufferInOffset, sizeIn - bufferInOffset, dataOut);
     }
     else if (bufferVersion == 2)
     {
@@ -245,8 +231,7 @@ size_t CompressMGARD::InverseOperate(const char *bufferIn, const size_t sizeIn,
     }
     else
     {
-        helper::Throw<std::runtime_error>("Operator", "CompressMGARD",
-                                          "InverseOperate",
+        helper::Throw<std::runtime_error>("Operator", "CompressMGARD", "InverseOperate",
                                           "invalid mgard buffer version");
     }
 
@@ -255,8 +240,8 @@ size_t CompressMGARD::InverseOperate(const char *bufferIn, const size_t sizeIn,
 
 bool CompressMGARD::IsDataTypeValid(const DataType type) const
 {
-    if (type == DataType::Double || type == DataType::Float ||
-        type == DataType::DoubleComplex || type == DataType::FloatComplex)
+    if (type == DataType::Double || type == DataType::Float || type == DataType::DoubleComplex ||
+        type == DataType::FloatComplex)
     {
         return true;
     }

@@ -36,13 +36,11 @@ public:
      * @param openMode only read
      * @param comm
      */
-    BP4Reader(IO &io, const std::string &name, const Mode mode,
-              helper::Comm comm);
+    BP4Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm);
 
     virtual ~BP4Reader();
 
-    StepStatus BeginStep(StepMode mode = StepMode::Read,
-                         const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode = StepMode::Read, const float timeoutSeconds = -1.0) final;
 
     size_t CurrentStep() const final;
 
@@ -96,16 +94,14 @@ private:
      * Return true if slept
      * return false if sleep was not needed because it was overtime
      */
-    bool SleepOrQuit(const TimePoint &timeoutInstant,
-                     const Seconds &pollSeconds);
+    bool SleepOrQuit(const TimePoint &timeoutInstant, const Seconds &pollSeconds);
     /** Open one category of files within timeout.
      * @return: 0 = OK, 1 = timeout, 2 = error
      * lasterrmsg contains the error message in case of error
      */
     size_t OpenWithTimeout(transportman::TransportMan &tm,
                            const std::vector<std::string> &fileNames,
-                           const TimePoint &timeoutInstant,
-                           const Seconds &pollSeconds,
+                           const TimePoint &timeoutInstant, const Seconds &pollSeconds,
                            std::string &lasterrmsg /*INOUT*/);
 
     /** Open files within timeout.
@@ -120,8 +116,7 @@ private:
      *  For streaming only.
      *  @return size of new content from Index Table
      */
-    size_t UpdateBuffer(const TimePoint &timeoutInstant,
-                        const Seconds &pollSeconds);
+    size_t UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pollSeconds);
 
     /** Process the new metadata coming in (in UpdateBuffer)
      *  @param newIdxSize: the size of the new content from Index Table
@@ -149,8 +144,8 @@ private:
      */
     StepStatus CheckForNewSteps(Seconds timeoutSeconds);
 
-#define declare_type(T)                                                        \
-    void DoGetSync(Variable<T> &, T *) final;                                  \
+#define declare_type(T)                                                                            \
+    void DoGetSync(Variable<T> &, T *) final;                                                      \
     void DoGetDeferred(Variable<T> &, T *) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -166,15 +161,15 @@ private:
     template <class T>
     void ReadVariableBlocks(Variable<T> &variable);
 
-#define declare_type(T)                                                        \
-    std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                \
-    DoAllStepsBlocksInfo(const Variable<T> &variable) const final;             \
-                                                                               \
-    std::vector<std::vector<typename Variable<T>::BPInfo>>                     \
-    DoAllRelativeStepsBlocksInfo(const Variable<T> &) const final;             \
-                                                                               \
-    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(                    \
-        const Variable<T> &variable, const size_t step) const final;
+#define declare_type(T)                                                                            \
+    std::map<size_t, std::vector<typename Variable<T>::BPInfo>> DoAllStepsBlocksInfo(              \
+        const Variable<T> &variable) const final;                                                  \
+                                                                                                   \
+    std::vector<std::vector<typename Variable<T>::BPInfo>> DoAllRelativeStepsBlocksInfo(           \
+        const Variable<T> &) const final;                                                          \
+                                                                                                   \
+    std::vector<typename Variable<T>::BPInfo> DoBlocksInfo(const Variable<T> &variable,            \
+                                                           const size_t step) const final;
 
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type

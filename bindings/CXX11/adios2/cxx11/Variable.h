@@ -288,8 +288,7 @@ public:
      * be confused by op own parameters
      * @return operation index handler in Operations()
      */
-    size_t AddOperation(const Operator op,
-                        const adios2::Params &parameters = adios2::Params());
+    size_t AddOperation(const Operator op, const adios2::Params &parameters = adios2::Params());
 
     size_t AddOperation(const std::string &type,
                         const adios2::Params &parameters = adios2::Params());
@@ -384,22 +383,19 @@ public:
 
     /**
      */
-    std::map<size_t, std::vector<typename Variable<T>::Info>>
-    AllStepsBlocksInfoMap() const;
+    std::map<size_t, std::vector<typename Variable<T>::Info>> AllStepsBlocksInfoMap() const;
 
     using Span = adios2::detail::Span<T>;
 
 private:
     core::Variable<IOType> *m_Variable = nullptr;
 
-    std::vector<typename Variable<T>::Info>
-    ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const;
+    std::vector<typename Variable<T>::Info> ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const;
 
     Variable(core::Variable<IOType> *variable);
 
     std::vector<std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfo();
-    std::map<size_t, std::vector<typename Variable<T>::Info>>
-    DoAllStepsBlocksInfoMap() const;
+    std::map<size_t, std::vector<typename Variable<T>::Info>> DoAllStepsBlocksInfoMap() const;
 };
 
 template <typename T>

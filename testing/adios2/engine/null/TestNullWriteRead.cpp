@@ -55,30 +55,23 @@ TEST_F(NullWriteReadTests, NullWriteRead1D8)
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
         }
 
@@ -89,8 +82,8 @@ TEST_F(NullWriteReadTests, NullWriteRead1D8)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
@@ -165,11 +158,9 @@ TEST_F(NullWriteReadTests, NullWriteRead1D8)
             auto var_i8 = io.InquireVariable<int8_t>("i8");
             EXPECT_FALSE(var_i8);
 
-            EXPECT_THROW(nullReader.Get(var_iString, IString),
-                         std::invalid_argument);
+            EXPECT_THROW(nullReader.Get(var_iString, IString), std::invalid_argument);
 
-            EXPECT_THROW(nullReader.Get(var_i8, I8.data()),
-                         std::invalid_argument);
+            EXPECT_THROW(nullReader.Get(var_i8, I8.data()), std::invalid_argument);
 
             nullReader.PerformGets();
             nullReader.EndStep();

@@ -19,14 +19,12 @@ namespace engine
 namespace ssc
 {
 
-SscWriterNaive::SscWriterNaive(IO &io, const std::string &name, const Mode mode,
-                               MPI_Comm comm)
+SscWriterNaive::SscWriterNaive(IO &io, const std::string &name, const Mode mode, MPI_Comm comm)
 : SscWriterBase(io, name, mode, comm)
 {
 }
 
-StepStatus SscWriterNaive::BeginStep(const StepMode mode,
-                                     const float timeoutSeconds,
+StepStatus SscWriterNaive::BeginStep(const StepMode mode, const float timeoutSeconds,
                                      const bool writerLocked)
 {
     ++m_CurrentStep;
@@ -49,8 +47,7 @@ void SscWriterNaive::EndStep(const bool writerLocked)
 
     if (m_WriterRank == 0)
     {
-        ssc::SerializeStructDefinitions(m_IO.m_ADIOS.m_StructDefinitions,
-                                        m_Buffer);
+        ssc::SerializeStructDefinitions(m_IO.m_ADIOS.m_StructDefinitions, m_Buffer);
     }
 
     if (m_WriterRank == m_WriterSize - 1)
@@ -62,8 +59,7 @@ void SscWriterNaive::EndStep(const bool writerLocked)
 
     int localSize = static_cast<int>(m_Buffer.value<uint64_t>());
     std::vector<int> localSizes(m_WriterSize);
-    MPI_Gather(&localSize, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0,
-               m_WriterComm);
+    MPI_Gather(&localSize, 1, MPI_INT, localSizes.data(), 1, MPI_INT, 0, m_WriterComm);
     int globalSize = std::accumulate(localSizes.begin(), localSizes.end(), 0);
     ssc::Buffer globalBuffer(globalSize);
 
@@ -73,15 +69,14 @@ void SscWriterNaive::EndStep(const bool writerLocked)
         displs[i] = displs[i - 1] + localSizes[i - 1];
     }
 
-    MPI_Gatherv(m_Buffer.data(), localSize, MPI_CHAR, globalBuffer.data(),
-                localSizes.data(), displs.data(), MPI_CHAR, 0, m_WriterComm);
+    MPI_Gatherv(m_Buffer.data(), localSize, MPI_CHAR, globalBuffer.data(), localSizes.data(),
+                displs.data(), MPI_CHAR, 0, m_WriterComm);
 
     if (m_WriterRank == 0)
     {
-        MPI_Send(&globalSize, 1, MPI_INT, m_ReaderMasterStreamRank, 0,
+        MPI_Send(&globalSize, 1, MPI_INT, m_ReaderMasterStreamRank, 0, m_StreamComm);
+        MPI_Send(globalBuffer.data(), globalSize, MPI_CHAR, m_ReaderMasterStreamRank, 0,
                  m_StreamComm);
-        MPI_Send(globalBuffer.data(), globalSize, MPI_CHAR,
-                 m_ReaderMasterStreamRank, 0, m_StreamComm);
     }
 }
 
@@ -92,10 +87,9 @@ void SscWriterNaive::Close(const int transportIndex)
     ssc::Buffer globalBuffer(globalSize);
     if (m_WriterRank == 0)
     {
-        MPI_Send(&globalSize, 1, MPI_INT, m_ReaderMasterStreamRank, 0,
+        MPI_Send(&globalSize, 1, MPI_INT, m_ReaderMasterStreamRank, 0, m_StreamComm);
+        MPI_Send(globalBuffer.data(), globalSize, MPI_CHAR, m_ReaderMasterStreamRank, 0,
                  m_StreamComm);
-        MPI_Send(globalBuffer.data(), globalSize, MPI_CHAR,
-                 m_ReaderMasterStreamRank, 0, m_StreamComm);
     }
 }
 
@@ -116,15 +110,13 @@ void SscWriterNaive::PutDeferred(VariableBase &variable, const void *data)
         b.bufferStart = m_Buffer.size();
         b.bufferCount = dataString->size();
         m_Buffer.resize(b.bufferStart + b.bufferCount);
-        std::memcpy(m_Buffer.data() + b.bufferStart, dataString->data(),
-                    dataString->size());
+        std::memcpy(m_Buffer.data() + b.bufferStart, dataString->data(), dataString->size());
         b.value.resize(dataString->size());
         std::memcpy(b.value.data(), dataString->data(), dataString->size());
         return;
     }
 
-    if ((variable.m_ShapeID == ShapeID::GlobalValue ||
-         variable.m_ShapeID == ShapeID::LocalValue ||
+    if ((variable.m_ShapeID == ShapeID::GlobalValue || variable.m_ShapeID == ShapeID::LocalValue ||
          variable.m_Type == DataType::String) &&
         m_WriterRank != 0)
     {
@@ -146,8 +138,7 @@ void SscWriterNaive::PutDeferred(VariableBase &variable, const void *data)
     for (const auto &b : m_Metadata)
     {
         if (b.name == variable.m_Name && ssc::AreSameDims(vStart, b.start) &&
-            ssc::AreSameDims(vCount, b.count) &&
-            ssc::AreSameDims(vShape, b.shape))
+            ssc::AreSameDims(vCount, b.count) && ssc::AreSameDims(vShape, b.shape))
         {
             std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
             found = true;
@@ -169,8 +160,7 @@ void SscWriterNaive::PutDeferred(VariableBase &variable, const void *data)
         b.bufferCount = ssc::TotalDataSize(b.count, b.elementSize, b.shapeId);
         m_Buffer.resize(b.bufferStart + b.bufferCount);
         std::memcpy(m_Buffer.data() + b.bufferStart, data, b.bufferCount);
-        if (b.shapeId == ShapeID::GlobalValue ||
-            b.shapeId == ShapeID::LocalValue)
+        if (b.shapeId == ShapeID::GlobalValue || b.shapeId == ShapeID::LocalValue)
         {
             b.value.resize(variable.m_ElementSize);
             std::memcpy(b.value.data(), data, b.bufferCount);

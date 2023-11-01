@@ -20,14 +20,13 @@ public:
 
 TEST_F(YAMLConfigTestSerial, TwoIOs)
 {
-    const std::string configFile(
-        configDir + std::string(&adios2::PathSeparator, 1) + "config1.yaml");
+    const std::string configFile(configDir + std::string(&adios2::PathSeparator, 1) +
+                                 "config1.yaml");
 
     adios2::ADIOS adios(configFile);
 
     // must be declared at least once
-    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 1"),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 1"), std::invalid_argument);
 
     EXPECT_NO_THROW({
         adios2::IO io = adios.DeclareIO("Test IO 1");
@@ -39,14 +38,12 @@ TEST_F(YAMLConfigTestSerial, TwoIOs)
         EXPECT_EQ(params.at("MaxBufferSize"), "20Mb");
         EXPECT_EQ(params.at("InitialBufferSize"), "1Mb");
         EXPECT_EQ(params.at("BufferGrowthFactor"), "2");
-        adios2::Engine engine =
-            io.Open("Test BP Writer 1", adios2::Mode::Write);
+        adios2::Engine engine = io.Open("Test BP Writer 1", adios2::Mode::Write);
         engine.Close();
     });
     EXPECT_NO_THROW(adios2::IO io = adios.AtIO("Test IO 1"));
 
-    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 2"),
-                 std::invalid_argument);
+    EXPECT_THROW(adios2::IO io = adios.AtIO("Test IO 2"), std::invalid_argument);
     EXPECT_NO_THROW({
         adios2::IO io = adios.DeclareIO("Test IO 2");
         const adios2::Params params = io.Parameters();
@@ -61,8 +58,7 @@ TEST_F(YAMLConfigTestSerial, TwoIOs)
 
 TEST_F(YAMLConfigTestSerial, OpTypeException)
 {
-    const std::string configFile(configDir +
-                                 std::string(&adios2::PathSeparator, 1) +
+    const std::string configFile(configDir + std::string(&adios2::PathSeparator, 1) +
                                  "configOpTypeException.yaml");
 
     EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);
@@ -70,8 +66,7 @@ TEST_F(YAMLConfigTestSerial, OpTypeException)
 
 TEST_F(YAMLConfigTestSerial, OpNullException)
 {
-    const std::string configFile(configDir +
-                                 std::string(&adios2::PathSeparator, 1) +
+    const std::string configFile(configDir + std::string(&adios2::PathSeparator, 1) +
                                  "configOpNullException.yaml");
 
     EXPECT_THROW(adios2::ADIOS adios(configFile), std::invalid_argument);

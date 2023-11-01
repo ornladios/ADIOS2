@@ -29,13 +29,13 @@ class Transport
 {
 
 public:
-    const std::string m_Type;    ///< transport type from derived class
-    const std::string m_Library; ///< library implementation (POSIX, Mdtm, etc.)
-    std::string m_Name; ///< from Open, unique identifier (e.g. filename)
+    const std::string m_Type;          ///< transport type from derived class
+    const std::string m_Library;       ///< library implementation (POSIX, Mdtm, etc.)
+    std::string m_Name;                ///< from Open, unique identifier (e.g. filename)
     Mode m_OpenMode = Mode::Undefined; ///< at Open from ADIOSTypes.h
-    bool m_IsOpen = false; ///< true: open for communication, false: unreachable
-    helper::Comm const &m_Comm;     ///< current multi-process communicator
-    profiling::IOChrono m_Profiler; ///< profiles Open, Write/Read, Close
+    bool m_IsOpen = false;             ///< true: open for communication, false: unreachable
+    helper::Comm const &m_Comm;        ///< current multi-process communicator
+    profiling::IOChrono m_Profiler;    ///< profiles Open, Write/Read, Close
 
     struct Status
     {
@@ -50,8 +50,7 @@ public:
      * @param type from derived class
      * @param comm passed to m_Comm
      */
-    Transport(const std::string type, const std::string library,
-              helper::Comm const &comm);
+    Transport(const std::string type, const std::string library, helper::Comm const &comm);
 
     virtual ~Transport() = default;
 
@@ -64,8 +63,7 @@ public:
      * @param openMode
      * @param async
      */
-    virtual void Open(const std::string &name, const Mode openMode,
-                      const bool async = false,
+    virtual void Open(const std::string &name, const Mode openMode, const bool async = false,
                       const bool directio = false) = 0;
 
     /**
@@ -77,10 +75,8 @@ public:
      * @param chainComm
      * @param async
      */
-    virtual void OpenChain(const std::string &name, Mode openMode,
-                           const helper::Comm &chainComm,
-                           const bool async = false,
-                           const bool directio = false);
+    virtual void OpenChain(const std::string &name, Mode openMode, const helper::Comm &chainComm,
+                           const bool async = false, const bool directio = false);
 
     /**
      * If OS buffered (FILE* or fstream), sets the buffer size
@@ -103,8 +99,7 @@ public:
      * @param start starting position for writing (to allow rewind), if not
      * passed then start at current stream position
      */
-    virtual void Write(const char *buffer, size_t size,
-                       size_t start = MaxSizeT) = 0;
+    virtual void Write(const char *buffer, size_t size, size_t start = MaxSizeT) = 0;
 
     /**
      * Writes to transport, writev version. Note that size is non-const due to
@@ -114,8 +109,7 @@ public:
      * @param start starting position for writing (to allow rewind), if not
      * passed then start at current stream position
      */
-    virtual void WriteV(const core::iovec *iov, const int iovcnt,
-                        size_t start = MaxSizeT);
+    virtual void WriteV(const core::iovec *iov, const int iovcnt, size_t start = MaxSizeT);
 
     /**
      * Reads from transport "size" bytes from a certain position. Note that size

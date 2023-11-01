@@ -56,17 +56,15 @@ public:
 
     Params &GetParameters() noexcept;
 
-#define declare_type(T)                                                        \
-    virtual void RunCallback1(const T *, const std::string &,                  \
-                              const std::string &, const std::string &,        \
-                              const size_t, const Dims &, const Dims &,        \
+#define declare_type(T)                                                                            \
+    virtual void RunCallback1(const T *, const std::string &, const std::string &,                 \
+                              const std::string &, const size_t, const Dims &, const Dims &,       \
                               const Dims &) const;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
 
-    virtual void RunCallback2(void *, const std::string &, const std::string &,
-                              const std::string &, const size_t, const Dims &,
-                              const Dims &, const Dims &) const;
+    virtual void RunCallback2(void *, const std::string &, const std::string &, const std::string &,
+                              const size_t, const Dims &, const Dims &, const Dims &) const;
 
     virtual size_t GetHeaderSize() const;
 
@@ -79,9 +77,8 @@ public:
      * @param parameters
      * @return size of compressed buffer
      */
-    virtual size_t Operate(const char *dataIn, const Dims &blockStart,
-                           const Dims &blockCount, const DataType type,
-                           char *bufferOut) = 0;
+    virtual size_t Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                           const DataType type, char *bufferOut) = 0;
 
     /**
      * @param bufferIn
@@ -89,8 +86,7 @@ public:
      * @param dataOut
      * @return size of decompressed buffer
      */
-    virtual size_t InverseOperate(const char *bufferIn, const size_t sizeIn,
-                                  char *dataOut) = 0;
+    virtual size_t InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut) = 0;
 
     virtual bool IsDataTypeValid(const DataType type) const = 0;
 
@@ -107,14 +103,11 @@ protected:
      * @param targetDims
      * @return refined dimensions
      */
-    Dims ConvertDims(const Dims &dimensions, const DataType type,
-                     const size_t targetDims = 0,
-                     const bool enforceDims = false,
-                     const size_t defaultDimSize = 1) const;
+    Dims ConvertDims(const Dims &dimensions, const DataType type, const size_t targetDims = 0,
+                     const bool enforceDims = false, const size_t defaultDimSize = 1) const;
 
     template <typename T>
-    void MakeCommonHeader(char *bufferOut, T &bufferOutOffset,
-                          const uint8_t bufferVersion)
+    void MakeCommonHeader(char *bufferOut, T &bufferOutOffset, const uint8_t bufferVersion)
     {
         PutParameter(bufferOut, bufferOutOffset, m_TypeEnum);
         PutParameter(bufferOut, bufferOutOffset, bufferVersion);
@@ -166,12 +159,10 @@ protected:
         for (uint8_t i = 0; i < params; ++i)
         {
             uint8_t size = GetParameter<uint8_t>(buffer, pos);
-            std::string key =
-                std::string(reinterpret_cast<const char *>(buffer + pos), size);
+            std::string key = std::string(reinterpret_cast<const char *>(buffer + pos), size);
             pos += size;
             size = GetParameter<uint8_t>(buffer, pos);
-            std::string value =
-                std::string(reinterpret_cast<const char *>(buffer + pos), size);
+            std::string value = std::string(reinterpret_cast<const char *>(buffer + pos), size);
             pos += size;
             ret[key] = value;
         }

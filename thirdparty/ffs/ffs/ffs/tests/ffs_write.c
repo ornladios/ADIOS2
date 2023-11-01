@@ -102,7 +102,7 @@ main(int argc, char **argv)
     str_list[0].opt_info = &opt_info[0];
     str_list[1].format_name = NULL;
 
-    opt_info[0].info_len = strlen(first_xml) +1;
+    opt_info[0].info_len = (int)strlen(first_xml) +1;
     opt_info[0].info_block = first_xml;
     first_rec_ioformat = register_data_format(src_context, str_list);
     str_list[0].format_name = "string format";
@@ -110,7 +110,7 @@ main(int argc, char **argv)
     str_list[0].struct_size = sizeof(second_rec);
     str_list[0].opt_info = &opt_info[0];
     str_list[1].format_name = NULL;
-    opt_info[0].info_len = strlen(string_xml) +1;
+    opt_info[0].info_len = (int)strlen(string_xml) +1;
     opt_info[0].info_block = string_xml;
     second_rec_ioformat = register_data_format(src_context, str_list);
 
@@ -119,7 +119,7 @@ main(int argc, char **argv)
     str_list[0].struct_size = sizeof(third_rec);
     str_list[0].opt_info = &opt_info[0];
     str_list[1].format_name = NULL;
-    opt_info[0].info_len = strlen(third_xml) +1;
+    opt_info[0].info_len = (int)strlen(third_xml) +1;
     opt_info[0].info_block = third_xml;
     third_rec_ioformat = register_data_format(src_context, str_list);
 
@@ -128,7 +128,7 @@ main(int argc, char **argv)
     str_list[0].struct_size = sizeof(fourth_rec);
     str_list[0].opt_info = &opt_info[0];
     str_list[1].format_name = NULL;
-    opt_info[0].info_len = strlen(fourth_xml) +1;
+    opt_info[0].info_len = (int)strlen(fourth_xml) +1;
     opt_info[0].info_block = fourth_xml;
     fourth_rec_ioformat = register_data_format(src_context, str_list);
 
@@ -137,7 +137,7 @@ main(int argc, char **argv)
     str_list[0].struct_size = sizeof(embedded_rec);
     str_list[0].opt_info = &opt_info[0];
     str_list[1].format_name = NULL;
-    opt_info[0].info_len = strlen(embedded_xml) +1;
+    opt_info[0].info_len = (int)strlen(embedded_xml) +1;
     opt_info[0].info_block = embedded_xml;
     embedded_rec_ioformat = register_data_format(src_context, str_list);
 
@@ -153,10 +153,10 @@ main(int argc, char **argv)
     str_list[1].struct_size = sizeof(second_rec);
     str_list[1].opt_info = &opt_info2[0];
     str_list[2].format_name = NULL;
-    opt_info[0].info_len = strlen(var_array_xml) +1;
+    opt_info[0].info_len = (int)strlen(var_array_xml) +1;
     opt_info[0].info_block = var_array_xml;
     opt_info2[0].info_type = 0x584D4C20;   /* XML */
-    opt_info2[0].info_len = strlen(string_xml) +1;
+    opt_info2[0].info_len = (int)strlen(string_xml) +1;
     opt_info2[0].info_block = string_xml;
     opt_info2[1].info_type = 0;
     opt_info2[1].info_len = 0;
@@ -276,7 +276,7 @@ main(int argc, char **argv)
 	str_list[0].opt_info = &opt_info[0];
 	str_list[1].format_name = NULL;
 
-	opt_info[0].info_len = strlen(first_xml) +1;
+	opt_info[0].info_len = (int)strlen(first_xml) +1;
 	opt_info[0].info_block = first_xml;
 	first_rec_ioformat = register_data_format(src_context, str_list);
 
@@ -286,7 +286,7 @@ main(int argc, char **argv)
 	str_list[0].struct_size = sizeof(second_rec);
 	str_list[0].opt_info = &opt_info[0];
 	str_list[1].format_name = NULL;
-	opt_info[0].info_len = strlen(string_xml) +1;
+	opt_info[0].info_len = (int)strlen(string_xml) +1;
 	opt_info[0].info_block = string_xml;
 	second_rec_ioformat = register_data_format(src_context, str_list);
 	
@@ -295,7 +295,7 @@ main(int argc, char **argv)
 	str_list[0].struct_size = sizeof(third_rec);
 	str_list[0].opt_info = &opt_info[0];
 	str_list[1].format_name = NULL;
-	opt_info[0].info_len = strlen(third_xml) +1;
+	opt_info[0].info_len = (int)strlen(third_xml) +1;
 	opt_info[0].info_block = third_xml;
 	third_rec_ioformat = register_data_format(src_context, str_list);
 	
@@ -304,7 +304,7 @@ main(int argc, char **argv)
 	str_list[0].struct_size = sizeof(fourth_rec);
 	str_list[0].opt_info = &opt_info[0];
 	str_list[1].format_name = NULL;
-	opt_info[0].info_len = strlen(fourth_xml) +1;
+	opt_info[0].info_len = (int)strlen(fourth_xml) +1;
 	opt_info[0].info_block = fourth_xml;
 	fourth_rec_ioformat = register_data_format(src_context, str_list);
 
@@ -313,7 +313,7 @@ main(int argc, char **argv)
 	str_list[0].struct_size = sizeof(embedded_rec);
 	str_list[0].opt_info = &opt_info[0];
 	str_list[1].format_name = NULL;
-	opt_info[0].info_len = strlen(embedded_xml) +1;
+	opt_info[0].info_len = (int)strlen(embedded_xml) + 1;
 	opt_info[0].info_block = embedded_xml;
 	embedded_rec_ioformat = register_data_format(src_context, str_list);
         (void)embedded_rec_ioformat;
@@ -329,10 +329,10 @@ main(int argc, char **argv)
 	str_list[1].struct_size = sizeof(second_rec);
 	str_list[1].opt_info = &opt_info2[0];
 	str_list[2].format_name = NULL;
-	opt_info[0].info_len = strlen(var_array_xml) +1;
+	opt_info[0].info_len = (int)strlen(var_array_xml) +1;
 	opt_info[0].info_block = var_array_xml;
 	opt_info2[0].info_type = 0x584D4C20;   /* XML */
-	opt_info2[0].info_len = strlen(string_xml) +1;
+	opt_info2[0].info_len = (int)strlen(string_xml) +1;
 	opt_info2[0].info_block = string_xml;
 	opt_info2[1].info_type = 0;
 	opt_info2[1].info_len = 0;
@@ -346,7 +346,7 @@ main(int argc, char **argv)
     str_list[0].struct_size = sizeof(later_rec);
     str_list[0].opt_info = NULL;
     str_list[1].format_name = NULL;
-    opt_info[0].info_len = strlen(later_xml) +1;
+    opt_info[0].info_len = (int)strlen(later_xml) +1;
     opt_info[0].info_block = later_xml;
     later_ioformat = register_data_format(src_context, str_list);
 
@@ -359,7 +359,7 @@ main(int argc, char **argv)
     str_list[1].struct_size = sizeof(second_rec);
     str_list[1].opt_info = &opt_info2[0];
     str_list[2].format_name = NULL;
-    opt_info[0].info_len = strlen(nested_xml) +1;
+    opt_info[0].info_len = (int)strlen(nested_xml) +1;
     opt_info[0].info_block = nested_xml;
     nested_ioformat = register_data_format(src_context, str_list);
 
@@ -433,7 +433,7 @@ main(int argc, char **argv)
     str_list[0].struct_size = sizeof(later_rec);
     str_list[0].opt_info = &opt_info[0];
     str_list[1].format_name = NULL;
-    opt_info[0].info_len = strlen(later2_xml) +1;
+    opt_info[0].info_len = (int)strlen(later2_xml) +1;
     opt_info[0].info_block = later2_xml;
 
     later_ioformat = register_data_format(src_context, str_list);
@@ -506,10 +506,10 @@ main(int argc, char **argv)
     str_list[1].struct_size = sizeof(struct _io_encode_vec);
     str_list[1].opt_info = &opt_info2[0];
     str_list[2].format_name = NULL;
-    opt_info[0].info_len = strlen(event_xml) +1;
+    opt_info[0].info_len = (int)strlen(event_xml) +1;
     opt_info[0].info_block = event_xml;
 
-    opt_info2[0].info_len = strlen(event_vec_xml) +1;
+    opt_info2[0].info_len = (int)strlen(event_vec_xml) +1;
     opt_info2[0].info_block = event_vec_xml;
     ninth_rec_ioformat = register_data_format(src_context, str_list);
 

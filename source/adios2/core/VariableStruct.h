@@ -31,8 +31,8 @@ public:
     };
 
     StructDefinition(const std::string &name, const size_t size);
-    void AddField(const std::string &name, const size_t offset,
-                  const DataType type, const size_t size = 1);
+    void AddField(const std::string &name, const size_t offset, const DataType type,
+                  const size_t size = 1);
     void Freeze() noexcept;
     size_t StructSize() const noexcept;
     std::string StructName() const noexcept;
@@ -78,9 +78,8 @@ public:
 
     std::vector<BPInfo> m_BlocksInfo;
 
-    VariableStruct(const std::string &name, const StructDefinition &def,
-                   const Dims &shape, const Dims &start, const Dims &count,
-                   const bool constantDims);
+    VariableStruct(const std::string &name, const StructDefinition &def, const Dims &shape,
+                   const Dims &start, const Dims &count, const bool constantDims);
 
     ~VariableStruct() = default;
 

@@ -31,9 +31,8 @@ namespace core
 {
 
 template <class T>
-Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
-                                const Dims &start, const Dims &count,
-                                const bool constantDims)
+Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape, const Dims &start,
+                                const Dims &count, const bool constantDims)
 {
     PERFSTUBS_SCOPED_TIMER("IO::DefineVariable");
 
@@ -41,18 +40,16 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape,
         auto itVariable = m_Variables.find(name);
         if (itVariable != m_Variables.end())
         {
-            helper::Throw<std::invalid_argument>(
-                "Core", "IO", "DefineVariable",
-                "variable " + name + " already defined in IO " + m_Name);
+            helper::Throw<std::invalid_argument>("Core", "IO", "DefineVariable",
+                                                 "variable " + name + " already defined in IO " +
+                                                     m_Name);
         }
     }
 
-    auto itVariablePair = m_Variables.emplace(
-        name, std::unique_ptr<VariableBase>(
-                  new Variable<T>(name, shape, start, count, constantDims)));
+    auto itVariablePair = m_Variables.emplace(name, std::unique_ptr<VariableBase>(new Variable<T>(
+                                                        name, shape, start, count, constantDims)));
 
-    Variable<T> &variable =
-        static_cast<Variable<T> &>(*itVariablePair.first->second);
+    Variable<T> &variable = static_cast<Variable<T> &>(*itVariablePair.first->second);
 
     // check IO placeholder for variable operations
     auto itOperations = m_VarOpsPlaceholder.find(name);
@@ -91,8 +88,7 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
         return nullptr;
     }
 
-    Variable<T> *variable =
-        static_cast<Variable<T> *>(itVariable->second.get());
+    Variable<T> *variable = static_cast<Variable<T> *>(itVariable->second.get());
     if (m_ReadStreaming)
     {
         if (!variable->IsValidStep(m_EngineStep + 1))
@@ -105,34 +101,28 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
 
 template <class T>
 Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
-                                  const std::string &variableName,
-                                  const std::string separator,
+                                  const std::string &variableName, const std::string separator,
                                   const bool allowModification)
 {
     PERFSTUBS_SCOPED_TIMER("IO::DefineAttribute");
-    if (!variableName.empty() &&
-        InquireVariableType(variableName) == DataType::None)
+    if (!variableName.empty() && InquireVariableType(variableName) == DataType::None)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "IO", "DefineAttribute",
-            "variable " + variableName +
-                " doesn't exist, can't associate attribute " + name +
-                ", in call to DefineAttribute");
+        helper::Throw<std::invalid_argument>("Core", "IO", "DefineAttribute",
+                                             "variable " + variableName +
+                                                 " doesn't exist, can't associate attribute " +
+                                                 name + ", in call to DefineAttribute");
     }
 
-    const std::string globalName =
-        helper::GlobalName(name, variableName, separator);
+    const std::string globalName = helper::GlobalName(name, variableName, separator);
 
     auto itExistingAttribute = m_Attributes.find(globalName);
     if (itExistingAttribute != m_Attributes.end())
     {
         if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
         {
-            if (!itExistingAttribute->second->Equals(
-                    static_cast<const void *>(&value), 1))
+            if (!itExistingAttribute->second->Equals(static_cast<const void *>(&value), 1))
             {
-                Attribute<T> &a =
-                    static_cast<Attribute<T> &>(*itExistingAttribute->second);
+                Attribute<T> &a = static_cast<Attribute<T> &>(*itExistingAttribute->second);
 
                 a.Modify(value);
                 void *Data = &a.m_DataSingleValue;
@@ -140,8 +130,8 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
                     Data = a.m_DataArray.data();
                 for (auto &e : m_Engines)
                 {
-                    e.second->NotifyEngineAttribute(
-                        globalName, itExistingAttribute->second.get(), Data);
+                    e.second->NotifyEngineAttribute(globalName, itExistingAttribute->second.get(),
+                                                    Data);
                 }
             }
         }
@@ -149,10 +139,8 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
         {
             helper::Throw<std::invalid_argument>(
                 "Core", "IO", "DefineAttribute",
-                "modifiable attribute " + globalName +
-                    " has been defined with type " +
-                    ToString(itExistingAttribute->second->m_Type) +
-                    ". Type cannot be changed to " +
+                "modifiable attribute " + globalName + " has been defined with type " +
+                    ToString(itExistingAttribute->second->m_Type) + ". Type cannot be changed to " +
                     ToString(helper::GetDataType<T>()));
         }
         return static_cast<Attribute<T> &>(*itExistingAttribute->second);
@@ -160,53 +148,45 @@ Attribute<T> &IO::DefineAttribute(const std::string &name, const T &value,
     else
     {
         auto itAttributePair = m_Attributes.emplace(
-            globalName, std::unique_ptr<AttributeBase>(new Attribute<T>(
-                            globalName, value, allowModification)));
+            globalName,
+            std::unique_ptr<AttributeBase>(new Attribute<T>(globalName, value, allowModification)));
         for (auto &e : m_Engines)
         {
-            Attribute<T> &a =
-                static_cast<Attribute<T> &>(*itAttributePair.first->second);
+            Attribute<T> &a = static_cast<Attribute<T> &>(*itAttributePair.first->second);
             void *Data = &a.m_DataSingleValue;
             if (a.m_DataArray.size() != 0)
                 Data = a.m_DataArray.data();
 
-            e.second->NotifyEngineAttribute(
-                globalName, itAttributePair.first->second.get(), Data);
+            e.second->NotifyEngineAttribute(globalName, itAttributePair.first->second.get(), Data);
         }
         return static_cast<Attribute<T> &>(*itAttributePair.first->second);
     }
 }
 
 template <class T>
-Attribute<T> &
-IO::DefineAttribute(const std::string &name, const T *array,
-                    const size_t elements, const std::string &variableName,
-                    const std::string separator, const bool allowModification)
+Attribute<T> &IO::DefineAttribute(const std::string &name, const T *array, const size_t elements,
+                                  const std::string &variableName, const std::string separator,
+                                  const bool allowModification)
 {
     PERFSTUBS_SCOPED_TIMER("IO::DefineAttribute");
-    if (!variableName.empty() &&
-        InquireVariableType(variableName) == DataType::None)
+    if (!variableName.empty() && InquireVariableType(variableName) == DataType::None)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "IO", "DefineAttribute",
-            "variable " + variableName +
-                " doesn't exist, can't associate attribute " + name +
-                ", in call to DefineAttribute");
+        helper::Throw<std::invalid_argument>("Core", "IO", "DefineAttribute",
+                                             "variable " + variableName +
+                                                 " doesn't exist, can't associate attribute " +
+                                                 name + ", in call to DefineAttribute");
     }
 
-    const std::string globalName =
-        helper::GlobalName(name, variableName, separator);
+    const std::string globalName = helper::GlobalName(name, variableName, separator);
 
     auto itExistingAttribute = m_Attributes.find(globalName);
     if (itExistingAttribute != m_Attributes.end())
     {
         if (itExistingAttribute->second->m_Type == helper::GetDataType<T>())
         {
-            if (!itExistingAttribute->second->Equals(
-                    static_cast<const void *>(array), elements))
+            if (!itExistingAttribute->second->Equals(static_cast<const void *>(array), elements))
             {
-                Attribute<T> &a =
-                    static_cast<Attribute<T> &>(*itExistingAttribute->second);
+                Attribute<T> &a = static_cast<Attribute<T> &>(*itExistingAttribute->second);
                 a.Modify(array, elements);
                 void *Data = &a.m_DataSingleValue;
                 if (a.m_DataArray.size() != 0)
@@ -221,21 +201,18 @@ IO::DefineAttribute(const std::string &name, const T *array,
         {
             helper::Throw<std::invalid_argument>(
                 "Core", "IO", "DefineAttribute",
-                "modifiable attribute " + globalName +
-                    " has been defined with type " +
-                    ToString(itExistingAttribute->second->m_Type) +
-                    ". Type cannot be changed to " +
+                "modifiable attribute " + globalName + " has been defined with type " +
+                    ToString(itExistingAttribute->second->m_Type) + ". Type cannot be changed to " +
                     ToString(helper::GetDataType<T>()));
         }
         return static_cast<Attribute<T> &>(*itExistingAttribute->second);
     }
     else
     {
-        auto itAttributePair = m_Attributes.emplace(
-            globalName, std::unique_ptr<AttributeBase>(new Attribute<T>(
-                            globalName, array, elements, allowModification)));
-        Attribute<T> &a =
-            static_cast<Attribute<T> &>(*itAttributePair.first->second);
+        auto itAttributePair =
+            m_Attributes.emplace(globalName, std::unique_ptr<AttributeBase>(new Attribute<T>(
+                                                 globalName, array, elements, allowModification)));
+        Attribute<T> &a = static_cast<Attribute<T> &>(*itAttributePair.first->second);
         void *Data = (void *)array;
         for (auto &e : m_Engines)
         {
@@ -246,13 +223,11 @@ IO::DefineAttribute(const std::string &name, const T *array,
 }
 
 template <class T>
-Attribute<T> *IO::InquireAttribute(const std::string &name,
-                                   const std::string &variableName,
+Attribute<T> *IO::InquireAttribute(const std::string &name, const std::string &variableName,
                                    const std::string separator) noexcept
 {
     PERFSTUBS_SCOPED_TIMER("IO::InquireAttribute");
-    const std::string globalName =
-        helper::GlobalName(name, variableName, separator);
+    const std::string globalName = helper::GlobalName(name, variableName, separator);
     auto itAttribute = m_Attributes.find(globalName);
 
     if (itAttribute == m_Attributes.end())
@@ -271,8 +246,7 @@ Attribute<T> *IO::InquireAttribute(const std::string &name,
 // PRIVATE
 
 template <class T>
-Params IO::GetVariableInfo(const std::string &variableName,
-                           const std::set<std::string> &keys)
+Params IO::GetVariableInfo(const std::string &variableName, const std::set<std::string> &keys)
 {
     Params info;
     // keys input are case insensitive
@@ -293,8 +267,7 @@ Params IO::GetVariableInfo(const std::string &variableName,
 
     if (keys.empty() || keysLC.count("availablestepscount") == 1)
     {
-        info["AvailableStepsCount"] =
-            helper::ValueToString(variable.m_AvailableStepsCount);
+        info["AvailableStepsCount"] = helper::ValueToString(variable.m_AvailableStepsCount);
     }
 
     if (keys.empty() || keysLC.count("shape") == 1)
@@ -305,8 +278,7 @@ Params IO::GetVariableInfo(const std::string &variableName,
 
     if (keys.empty() || keysLC.count("singlevalue") == 1)
     {
-        const std::string isSingleValue =
-            variable.m_SingleValue ? "true" : "false";
+        const std::string isSingleValue = variable.m_SingleValue ? "true" : "false";
         info["SingleValue"] = isSingleValue;
     }
 

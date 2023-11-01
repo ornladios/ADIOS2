@@ -120,8 +120,7 @@ public:
      * Creates a new communicator covering the subset of the original
      * processes that pass the same 'color'.  Ranks assigned by 'key' order.
      */
-    Comm Split(int color, int key,
-               const std::string &hint = std::string()) const;
+    Comm Split(int color, int key, const std::string &hint = std::string()) const;
 
     /**
      * @brief Create a communicator covering all processes.
@@ -177,13 +176,12 @@ public:
      * @param rankDestination rank in which arrays are gathered (root)
      */
     template <class T>
-    void GathervArrays(const T *source, size_t sourceCount,
-                       const size_t *counts, size_t countsSize, T *destination,
-                       int rankDestination = 0) const;
+    void GathervArrays(const T *source, size_t sourceCount, const size_t *counts, size_t countsSize,
+                       T *destination, int rankDestination = 0) const;
 
     template <class T>
-    void GathervVectors(const std::vector<T> &in, std::vector<T> &out,
-                        size_t &position, int rankDestination = 0) const;
+    void GathervVectors(const std::vector<T> &in, std::vector<T> &out, size_t &position,
+                        int rankDestination = 0) const;
     /**
      * Perform AllGather for source value
      * @param source input
@@ -194,23 +192,19 @@ public:
     std::vector<T> AllGatherValues(const T source) const;
 
     template <class T>
-    T ReduceValues(const T source, Op op = Op::Sum,
-                   const int rankDestination = 0) const;
+    T ReduceValues(const T source, Op op = Op::Sum, const int rankDestination = 0) const;
 
     template <class T>
     T BroadcastValue(const T &input, const int rankSource = 0) const;
 
     template <class T>
-    void BroadcastVector(std::vector<T> &vector,
-                         const int rankSource = 0) const;
+    void BroadcastVector(std::vector<T> &vector, const int rankSource = 0) const;
 
-    std::string BroadcastFile(const std::string &fileName,
-                              const std::string hint = "",
+    std::string BroadcastFile(const std::string &fileName, const std::string hint = "",
                               const int rankSource = 0) const;
 
     template <typename TSend, typename TRecv>
-    void Allgather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
-                   size_t recvcount,
+    void Allgather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf, size_t recvcount,
                    const std::string &hint = std::string()) const;
 
     template <typename TSend, typename TRecv>
@@ -223,18 +217,15 @@ public:
                    const std::string &hint = std::string()) const;
 
     template <typename T>
-    void Bcast(T *buffer, size_t count, int root,
-               const std::string &hint = std::string()) const;
+    void Bcast(T *buffer, size_t count, int root, const std::string &hint = std::string()) const;
 
     template <typename TSend, typename TRecv>
-    void Gather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
-                size_t recvcount, int root,
+    void Gather(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf, size_t recvcount, int root,
                 const std::string &hint = std::string()) const;
 
     template <typename TSend, typename TRecv>
-    void Gatherv(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
-                 const size_t *recvcounts, const size_t *displs, int root,
-                 const std::string &hint = std::string()) const;
+    void Gatherv(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf, const size_t *recvcounts,
+                 const size_t *displs, int root, const std::string &hint = std::string()) const;
 
     template <typename T>
     void Reduce(const T *sendbuf, T *recvbuf, size_t count, Op op, int root,
@@ -253,8 +244,7 @@ public:
                 const std::string &hint = std::string()) const;
 
     template <typename TSend, typename TRecv>
-    void Scatter(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf,
-                 size_t recvcount, int root,
+    void Scatter(const TSend *sendbuf, size_t sendcount, TRecv *recvbuf, size_t recvcount, int root,
                  const std::string &hint = std::string()) const;
 
     template <typename T>
@@ -267,15 +257,13 @@ public:
 
     Win Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
                             const std::string &hint = std::string());
-    int Win_shared_query(Win &win, int rank, size_t *size, int *disp_unit,
-                         void *baseptr,
+    int Win_shared_query(Win &win, int rank, size_t *size, int *disp_unit, void *baseptr,
                          const std::string &hint = std::string());
     int Win_free(Win &win, const std::string &hint = std::string());
     int Win_lock(LockType lock_type, int rank, int assert, Win &win,
                  const std::string &hint = std::string());
     int Win_unlock(int rank, Win &win, const std::string &hint = std::string());
-    int Win_lock_all(int assert, Win &win,
-                     const std::string &hint = std::string());
+    int Win_lock_all(int assert, Win &win, const std::string &hint = std::string());
     int Win_unlock_all(Win &win, const std::string &hint = std::string());
 
 private:
@@ -447,88 +435,66 @@ public:
 
     virtual ~CommImpl() = 0;
     virtual void Free(const std::string &hint) = 0;
-    virtual std::unique_ptr<CommImpl>
-    Duplicate(const std::string &hint) const = 0;
-    virtual std::unique_ptr<CommImpl> Split(int color, int key,
-                                            const std::string &hint) const = 0;
+    virtual std::unique_ptr<CommImpl> Duplicate(const std::string &hint) const = 0;
+    virtual std::unique_ptr<CommImpl> Split(int color, int key, const std::string &hint) const = 0;
     virtual std::unique_ptr<CommImpl> World(const std::string &hint) const = 0;
-    virtual std::unique_ptr<CommImpl>
-    GroupByShm(const std::string &hint) const = 0;
+    virtual std::unique_ptr<CommImpl> GroupByShm(const std::string &hint) const = 0;
     virtual int Rank() const = 0;
     virtual int Size() const = 0;
     virtual bool IsMPI() const = 0;
     virtual void Barrier(const std::string &hint) const = 0;
-    virtual void Allgather(const void *sendbuf, size_t sendcount,
-                           Datatype sendtype, void *recvbuf, size_t recvcount,
-                           Datatype recvtype,
-                           const std::string &hint) const = 0;
-    virtual void Allgatherv(const void *sendbuf, size_t sendcount,
-                            Datatype sendtype, void *recvbuf,
-                            const size_t *recvcounts, const size_t *displs,
-                            Datatype recvtype,
+    virtual void Allgather(const void *sendbuf, size_t sendcount, Datatype sendtype, void *recvbuf,
+                           size_t recvcount, Datatype recvtype, const std::string &hint) const = 0;
+    virtual void Allgatherv(const void *sendbuf, size_t sendcount, Datatype sendtype, void *recvbuf,
+                            const size_t *recvcounts, const size_t *displs, Datatype recvtype,
                             const std::string &hint) const = 0;
 
-    virtual void Allreduce(const void *sendbuf, void *recvbuf, size_t count,
-                           Datatype datatype, Comm::Op op,
-                           const std::string &hint) const = 0;
+    virtual void Allreduce(const void *sendbuf, void *recvbuf, size_t count, Datatype datatype,
+                           Comm::Op op, const std::string &hint) const = 0;
 
     virtual void Bcast(void *buffer, size_t count, Datatype datatype, int root,
                        const std::string &hint) const = 0;
 
-    virtual void Gather(const void *sendbuf, size_t sendcount,
-                        Datatype sendtype, void *recvbuf, size_t recvcount,
-                        Datatype recvtype, int root,
+    virtual void Gather(const void *sendbuf, size_t sendcount, Datatype sendtype, void *recvbuf,
+                        size_t recvcount, Datatype recvtype, int root,
                         const std::string &hint) const = 0;
 
-    virtual void Gatherv(const void *sendbuf, size_t sendcount,
-                         Datatype sendtype, void *recvbuf,
-                         const size_t *recvcounts, const size_t *displs,
-                         Datatype recvtype, int root,
-                         const std::string &hint) const = 0;
+    virtual void Gatherv(const void *sendbuf, size_t sendcount, Datatype sendtype, void *recvbuf,
+                         const size_t *recvcounts, const size_t *displs, Datatype recvtype,
+                         int root, const std::string &hint) const = 0;
 
-    virtual void Reduce(const void *sendbuf, void *recvbuf, size_t count,
-                        Datatype datatype, Comm::Op op, int root,
-                        const std::string &hint) const = 0;
+    virtual void Reduce(const void *sendbuf, void *recvbuf, size_t count, Datatype datatype,
+                        Comm::Op op, int root, const std::string &hint) const = 0;
 
-    virtual void ReduceInPlace(void *buf, size_t count, Datatype datatype,
-                               Comm::Op op, int root,
+    virtual void ReduceInPlace(void *buf, size_t count, Datatype datatype, Comm::Op op, int root,
                                const std::string &hint) const = 0;
 
-    virtual void Send(const void *buf, size_t count, Datatype datatype,
-                      int dest, int tag, const std::string &hint) const = 0;
+    virtual void Send(const void *buf, size_t count, Datatype datatype, int dest, int tag,
+                      const std::string &hint) const = 0;
 
-    virtual Comm::Status Recv(void *buf, size_t count, Datatype datatype,
-                              int source, int tag,
+    virtual Comm::Status Recv(void *buf, size_t count, Datatype datatype, int source, int tag,
                               const std::string &hint) const = 0;
 
-    virtual void Scatter(const void *sendbuf, size_t sendcount,
-                         Datatype sendtype, void *recvbuf, size_t recvcount,
-                         Datatype recvtype, int root,
+    virtual void Scatter(const void *sendbuf, size_t sendcount, Datatype sendtype, void *recvbuf,
+                         size_t recvcount, Datatype recvtype, int root,
                          const std::string &hint) const = 0;
 
-    virtual Comm::Req Isend(const void *buffer, size_t count, Datatype datatype,
-                            int dest, int tag,
+    virtual Comm::Req Isend(const void *buffer, size_t count, Datatype datatype, int dest, int tag,
                             const std::string &hint) const = 0;
 
-    virtual Comm::Req Irecv(void *buffer, size_t count, Datatype datatype,
-                            int source, int tag,
+    virtual Comm::Req Irecv(void *buffer, size_t count, Datatype datatype, int source, int tag,
                             const std::string &hint) const = 0;
 
-    virtual Comm::Win Win_allocate_shared(size_t size, int disp_unit,
-                                          void *baseptr,
+    virtual Comm::Win Win_allocate_shared(size_t size, int disp_unit, void *baseptr,
                                           const std::string &hint) const = 0;
-    virtual int Win_shared_query(Comm::Win &win, int rank, size_t *size,
-                                 int *disp_unit, void *baseptr,
-                                 const std::string &hint) const = 0;
+    virtual int Win_shared_query(Comm::Win &win, int rank, size_t *size, int *disp_unit,
+                                 void *baseptr, const std::string &hint) const = 0;
     virtual int Win_free(Comm::Win &win, const std::string &hint) const = 0;
-    virtual int Win_lock(Comm::LockType lock_type, int rank, int assert,
-                         Comm::Win &win, const std::string &hint) const = 0;
-    virtual int Win_unlock(int rank, Comm::Win &win,
-                           const std::string &hint) const = 0;
-    virtual int Win_lock_all(int assert, Comm::Win &win,
-                             const std::string &hint) const = 0;
-    virtual int Win_unlock_all(Comm::Win &win,
-                               const std::string &hint) const = 0;
+    virtual int Win_lock(Comm::LockType lock_type, int rank, int assert, Comm::Win &win,
+                         const std::string &hint) const = 0;
+    virtual int Win_unlock(int rank, Comm::Win &win, const std::string &hint) const = 0;
+    virtual int Win_lock_all(int assert, Comm::Win &win, const std::string &hint) const = 0;
+    virtual int Win_unlock_all(Comm::Win &win, const std::string &hint) const = 0;
     static size_t SizeOf(Datatype datatype);
 
     static Comm MakeComm(std::unique_ptr<CommImpl> impl);

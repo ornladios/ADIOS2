@@ -1,6 +1,7 @@
 #include "config.h"
 #include "cod.h"
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
@@ -26,9 +27,9 @@ void *malloc(int size);\n\
 void free(void *pointer);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
-	    {"malloc", (void*)(long)malloc},
-	    {"free", (void*)(long)free},
+	    {"printf", (void*)(intptr_t)printf},
+	    {"malloc", (void*)(intptr_t)malloc},
+	    {"free", (void*)(intptr_t)free},
 	    {(void*)0, (void*)0}
 	};
 	char code_string[] = "\
@@ -60,7 +61,7 @@ void free(void *pointer);\n";
 	cod_assoc_externs(context, externs);
 	cod_parse_for_context(extern_string, context);
 	gen_code = cod_code_gen(code_string, context);
-	func = (long(*)()) (long) gen_code->func;
+	func = (long(*)()) (intptr_t) gen_code->func;
 	result = func();
 	assert(result == 42);
 	cod_code_free(gen_code);
@@ -110,9 +111,9 @@ void *malloc(int size);\n\
 void free(void *pointer);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
-	    {"malloc", (void*)(long)malloc},
-	    {"free", (void*)(long)free},
+	    {"printf", (void*)(intptr_t)printf},
+	    {"malloc", (void*)(intptr_t)malloc},
+	    {"free", (void*)(intptr_t)free},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
@@ -126,7 +127,7 @@ void free(void *pointer);\n";
 	if (gen_code == NULL) {
 	    printf("Code generation failed for test 2\n");
 	} else {
-	    func = (long(*)()) (long) gen_code->func;
+	    func = (long(*)()) (intptr_t) gen_code->func;
 	    result = func();
 	    assert(result == 21);
 	    cod_code_free(gen_code);
@@ -163,9 +164,9 @@ void *malloc(int size);\n\
 void free(void *pointer);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
-	    {"malloc", (void*)(long)malloc},
-	    {"free", (void*)(long)free},
+	    {"printf", (void*)(intptr_t)printf},
+	    {"malloc", (void*)(intptr_t)malloc},
+	    {"free", (void*)(intptr_t)free},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
@@ -179,7 +180,7 @@ void free(void *pointer);\n";
 	if (gen_code == NULL) {
 	    printf("Code generation failed for test 3\n");
 	} else {
-	    func = (long(*)()) (long) gen_code->func;
+	    func = (long(*)()) (intptr_t) gen_code->func;
 	    result = func();
 	    assert(result == 20);
 	    cod_code_free(gen_code);
@@ -215,9 +216,9 @@ void *malloc(int size);\n\
 void free(void *pointer);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
-	    {"malloc", (void*)(long)malloc},
-	    {"free", (void*)(long)free},
+	    {"printf", (void*)(intptr_t)printf},
+	    {"malloc", (void*)(intptr_t)malloc},
+	    {"free", (void*)(intptr_t)free},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
@@ -231,7 +232,7 @@ void free(void *pointer);\n";
 	if (gen_code == NULL) {
 	    printf("Code generation failed for test 3\n");
 	} else {
-	    func = (long(*)()) (long) gen_code->func;
+	    func = (long(*)()) (intptr_t) gen_code->func;
 	    result = func();
 	    assert(result == 20);
 	    cod_code_free(gen_code);
@@ -265,9 +266,9 @@ void free(void *pointer);\n";
 	static char extern_string[] = "int printf(string format, ...);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
-	    {"malloc", (void*)(long)malloc},
-	    {"free", (void*)(long)free},
+	    {"printf", (void*)(intptr_t)printf},
+	    {"malloc", (void*)(intptr_t)malloc},
+	    {"free", (void*)(intptr_t)free},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
@@ -281,7 +282,7 @@ void free(void *pointer);\n";
 	if (gen_code == NULL) {
 	    printf("Code generation failed for test 3\n");
 	} else {
-	    func = (long(*)()) (long) gen_code->func;
+	    func = (long(*)()) (intptr_t) gen_code->func;
 	    result = func();
 	    assert(result == 20);
 	    cod_code_free(gen_code);
@@ -337,14 +338,14 @@ static  FMField dyn_arrays_field_list[] =
 	static char extern_string[] = "int printf(string format, ...);\n";
 	static cod_extern_entry externs[] = 
 	{
-	    {"printf", (void*)(long)printf},
-	    {"malloc", (void*)(long)malloc},
-	    {"free", (void*)(long)free},
+	    {"printf", (void*)(intptr_t)printf},
+	    {"malloc", (void*)(intptr_t)malloc},
+	    {"free", (void*)(intptr_t)free},
 	    {(void*)0, (void*)0}
 	};
 	cod_parse_context context = new_cod_parse_context();
 	cod_code gen_code;
-	long (*func)();
+	long (*func)(dyn_arrays *);
 	long result;
 
 	cod_assoc_externs(context, externs);
@@ -356,7 +357,7 @@ static  FMField dyn_arrays_field_list[] =
 	    printf("Code generation failed for test 3\n");
 	} else {
 	    dyn_arrays  input;
-	    func = (long(*)()) (long) gen_code->func;
+	    func = (long(*)(dyn_arrays*)) (intptr_t) gen_code->func;
 	    input.dim1 = 7;
 	    input.dim2 = 5;
 	    input.dim3 = 3;

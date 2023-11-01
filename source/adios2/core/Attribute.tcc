@@ -44,15 +44,13 @@ struct Pad<T, typename std::enable_if<std::is_trivial<T>::value>::type>
 };
 
 template <typename T>
-struct Pad<T, typename std::enable_if<std::is_same<
-                  T, std::complex<typename T::value_type>>::value>::type>
+struct Pad<
+    T, typename std::enable_if<std::is_same<T, std::complex<typename T::value_type>>::value>::type>
 {
     static void Zero(T &arg)
     {
-        Pad<typename T::value_type>::Zero(
-            reinterpret_cast<typename T::value_type(&)[2]>(arg)[0]);
-        Pad<typename T::value_type>::Zero(
-            reinterpret_cast<typename T::value_type(&)[2]>(arg)[1]);
+        Pad<typename T::value_type>::Zero(reinterpret_cast<typename T::value_type(&)[2]>(arg)[0]);
+        Pad<typename T::value_type>::Zero(reinterpret_cast<typename T::value_type(&)[2]>(arg)[1]);
     }
 };
 }
@@ -75,8 +73,8 @@ Attribute<T>::Attribute(const Attribute<T> &other)
 }
 
 template <typename T>
-Attribute<T>::Attribute(const std::string &name, const T *array,
-                        const size_t elements, const bool allowModification)
+Attribute<T>::Attribute(const std::string &name, const T *array, const size_t elements,
+                        const bool allowModification)
 : AttributeBase(name, helper::GetDataType<T>(), elements, allowModification)
 {
     m_DataArray = std::vector<T>(array, array + elements);
@@ -84,8 +82,7 @@ Attribute<T>::Attribute(const std::string &name, const T *array,
 }
 
 template <typename T>
-Attribute<T>::Attribute(const std::string &name, const T &value,
-                        const bool allowModification)
+Attribute<T>::Attribute(const std::string &name, const T &value, const bool allowModification)
 : AttributeBase(name, helper::GetDataType<T>(), allowModification)
 {
     m_DataArray.clear();
@@ -105,9 +102,9 @@ void Attribute<T>::Modify(const T *data, const size_t elements)
     }
     else
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "Attribute", "Modify",
-            "Attribute " + this->m_Name + " being modified is not modifiable");
+        helper::Throw<std::invalid_argument>("Core", "Attribute", "Modify",
+                                             "Attribute " + this->m_Name +
+                                                 " being modified is not modifiable");
     }
 }
 
@@ -124,9 +121,9 @@ void Attribute<T>::Modify(const T &data)
     }
     else
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "Attribute", "Modify",
-            "Attribute " + this->m_Name + " being modified is not modifiable");
+        helper::Throw<std::invalid_argument>("Core", "Attribute", "Modify",
+                                             "Attribute " + this->m_Name +
+                                                 " being modified is not modifiable");
     }
 }
 
@@ -146,8 +143,7 @@ std::string Attribute<T>::DoGetInfoValue() const noexcept
 }
 
 template <typename T>
-bool Attribute<T>::DoEqual(const void *values, const size_t elements) const
-    noexcept
+bool Attribute<T>::DoEqual(const void *values, const size_t elements) const noexcept
 {
     if (m_Elements != elements)
     {

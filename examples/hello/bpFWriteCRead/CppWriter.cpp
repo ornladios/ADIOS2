@@ -38,12 +38,13 @@ int main(int argc, char *argv[])
     adios2::ADIOS adios(MPI_COMM_WORLD);
     adios2::IO io = adios.DeclareIO("CppWriter");
 
-    adios2::Variable<float> bpFloats =
-        io.DefineVariable<float>("data2D", {size * nx, ny}, {rank * nx, 0},
-                                 {nx, ny}, adios2::ConstantDims);
+    adios2::Variable<float> bpFloats = io.DefineVariable<float>(
+        "data2D", {size * nx, ny}, {rank * nx, 0}, {nx, ny}, adios2::ConstantDims);
 
     adios2::Engine engine = io.Open("CppWriter.bp", adios2::Mode::Write);
+    engine.BeginStep();
     engine.Put(bpFloats, data.data());
+    engine.EndStep();
     engine.Close();
 
     MPI_Finalize();

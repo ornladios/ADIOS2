@@ -38,16 +38,11 @@ TEST(CommonWriteTest, ADIOS2CommonWrite)
     adios2::Dims small_count{static_cast<unsigned int>(SmallSize)};
 
     std::vector<adios2::Variable<double>> vars(5);
-    vars[0] =
-        io.DefineVariable<double>("big1", big_shape, big_start, big_count);
-    vars[1] = io.DefineVariable<double>("small1", small_shape, small_start,
-                                        small_count);
-    vars[2] =
-        io.DefineVariable<double>("big2", big_shape, big_start, big_count);
-    vars[3] = io.DefineVariable<double>("small2", small_shape, small_start,
-                                        small_count);
-    vars[4] =
-        io.DefineVariable<double>("big3", big_shape, big_start, big_count);
+    vars[0] = io.DefineVariable<double>("big1", big_shape, big_start, big_count);
+    vars[1] = io.DefineVariable<double>("small1", small_shape, small_start, small_count);
+    vars[2] = io.DefineVariable<double>("big2", big_shape, big_start, big_count);
+    vars[3] = io.DefineVariable<double>("small2", small_shape, small_start, small_count);
+    vars[4] = io.DefineVariable<double>("big3", big_shape, big_start, big_count);
 
     std::vector<std::vector<double>> data(5);
     for (int i = 0; i < 5; i++)
@@ -201,8 +196,7 @@ TEST(CommonWriteTest, ADIOS2CommonRead)
                 for (std::size_t index = 0; index < data[j].size(); ++index)
                 {
                     EXPECT_EQ(data[j][index], j + 1.0)
-                        << "Data isn't correct, for " << vars[j].Name() << "["
-                        << index << "]";
+                        << "Data isn't correct, for " << vars[j].Name() << "[" << index << "]";
                 }
             }
         }

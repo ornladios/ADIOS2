@@ -43,8 +43,7 @@ class ADIOS
 
 public:
     template <class T>
-    using enable_if_bool =
-        typename std::enable_if<std::is_same<T, bool>::value, bool>::type;
+    using enable_if_bool = typename std::enable_if<std::is_same<T, bool>::value, bool>::type;
 
 #if ADIOS2_USE_MPI
     /**
@@ -75,8 +74,7 @@ public:
      * treat all arrays column-major
      *     e.g. adios2::ADIOS("", comm, "Fortran", false);
      */
-    ADIOS(const std::string &configFile, MPI_Comm comm,
-          const std::string &hostLanguage);
+    ADIOS(const std::string &configFile, MPI_Comm comm, const std::string &hostLanguage);
 
 #endif
 
@@ -143,8 +141,7 @@ public:
      * @exception std::invalid_argument if IO with unique name is already
      * declared
      */
-    IO DeclareIO(const std::string name,
-                 const ArrayOrdering ArrayOrder = ArrayOrdering::Auto);
+    IO DeclareIO(const std::string name, const ArrayOrdering ArrayOrder = ArrayOrdering::Auto);
 
     /**
      * Retrieve an existing IO object previously created with DeclareIO.
@@ -180,8 +177,7 @@ public:
      * operator due to missing dependency or unsupported type
      */
     template <class R, class... Args>
-    Operator DefineOperator(const std::string name,
-                            const std::function<R(Args...)> &function,
+    Operator DefineOperator(const std::string name, const std::function<R(Args...)> &function,
                             const Params &parameters = Params());
 
     /**
@@ -228,25 +224,23 @@ protected:
     void CheckPointer(const std::string hint);
 
 /* CallBack1 signature */
-#define declare_type(T)                                                        \
-    Operator DefineCallBack(                                                   \
-        const std::string name,                                                \
-        const std::function<void(const T *, const std::string &,               \
-                                 const std::string &, const std::string &,     \
-                                 const size_t, const Dims &, const Dims &,     \
-                                 const Dims &)> &function,                     \
+#define declare_type(T)                                                                            \
+    Operator DefineCallBack(                                                                       \
+        const std::string name,                                                                    \
+        const std::function<void(const T *, const std::string &, const std::string &,              \
+                                 const std::string &, const size_t, const Dims &, const Dims &,    \
+                                 const Dims &)> &function,                                         \
         const Params &parameters);
     ADIOS2_FOREACH_TYPE_1ARG(declare_type)
 #undef declare_type
 
     /* CallBack2 signature */
-    Operator DefineCallBack(
-        const std::string name,
-        const std::function<void(void *, const std::string &,
-                                 const std::string &, const std::string &,
-                                 const size_t, const Dims &, const Dims &,
-                                 const Dims &)> &function,
-        const Params &parameters);
+    Operator
+    DefineCallBack(const std::string name,
+                   const std::function<void(void *, const std::string &, const std::string &,
+                                            const std::string &, const size_t, const Dims &,
+                                            const Dims &, const Dims &)> &function,
+                   const Params &parameters);
 };
 
 } // end namespace adios2

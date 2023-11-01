@@ -8,15 +8,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
-#include <arpa/inet.h>
 #include "evpath.h"
 #ifdef HAVE_WINDOWS_H
 #include <windows.h>
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
+#define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
 #else
 #include <sys/wait.h>
+#include <arpa/inet.h>
 #endif
 
 typedef struct _complex_rec {
@@ -272,7 +273,7 @@ do_regression_master_test()
     int message_count = 0, i;
     EVstone handle;
 #ifdef HAVE_WINDOWS_H
-    SetTimer(NULL, 5, 1000, (TIMERPROC) fail_and_die);
+    SetTimer(NULL, 5, 300*1000, (TIMERPROC) fail_and_die);
 #else
     struct sigaction sigact;
     sigact.sa_flags = 0;

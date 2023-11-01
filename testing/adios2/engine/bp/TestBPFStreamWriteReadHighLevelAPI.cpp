@@ -50,8 +50,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
     {
 #if ADIOS2_USE_MPI
 
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
-                                engineName);
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
 
 #else
         adios2::fstream oStream(fname, adios2::fstream::out, engineName);
@@ -64,8 +63,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData stepData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData stepData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             if (step == 0)
             {
@@ -93,18 +92,15 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
                 oStream.write_attribute("attrr32", m_TestData.R32.front());
                 oStream.write_attribute("attrr64", m_TestData.R64.front());
 
-                oStream.write_attribute("attrStrarray", m_TestData.S3.data(),
-                                        m_TestData.S3.size());
-                oStream.write_attribute("attri8array", m_TestData.I8.data(),
-                                        m_TestData.I8.size());
+                oStream.write_attribute("attrStrarray", m_TestData.S3.data(), m_TestData.S3.size());
+                oStream.write_attribute("attri8array", m_TestData.I8.data(), m_TestData.I8.size());
                 oStream.write_attribute("attri16array", m_TestData.I16.data(),
                                         m_TestData.I16.size());
                 oStream.write_attribute("attri32array", m_TestData.I32.data(),
                                         m_TestData.I32.size());
                 oStream.write_attribute("attri64array", m_TestData.I64.data(),
                                         m_TestData.I64.size());
-                oStream.write_attribute("attru8array", m_TestData.U8.data(),
-                                        m_TestData.U8.size());
+                oStream.write_attribute("attru8array", m_TestData.U8.data(), m_TestData.U8.size());
                 oStream.write_attribute("attru16array", m_TestData.U16.data(),
                                         m_TestData.U16.size());
                 oStream.write_attribute("attru32array", m_TestData.U32.data(),
@@ -131,39 +127,30 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
 
             if (step == 0)
             {
-                oStream.write_attribute<std::string>("attrStr", m_TestData.S1,
-                                                     "iString");
+                oStream.write_attribute<std::string>("attrStr", m_TestData.S1, "iString");
                 oStream.write_attribute("attri8", m_TestData.I8.front(), "i8");
-                oStream.write_attribute("attri16", m_TestData.I16.front(),
-                                        "i16");
-                oStream.write_attribute("attri32", m_TestData.I32.front(),
-                                        "i32");
-                oStream.write_attribute("attri64", m_TestData.I64.front(),
-                                        "i64");
+                oStream.write_attribute("attri16", m_TestData.I16.front(), "i16");
+                oStream.write_attribute("attri32", m_TestData.I32.front(), "i32");
+                oStream.write_attribute("attri64", m_TestData.I64.front(), "i64");
                 oStream.write_attribute("attru8", m_TestData.U8.front(), "u8");
-                oStream.write_attribute("attru16", m_TestData.U16.front(),
-                                        "u16");
-                oStream.write_attribute("attru32", m_TestData.U32.front(),
-                                        "u32");
-                oStream.write_attribute("attru64", m_TestData.U64.front(),
-                                        "u64");
-                oStream.write_attribute("attrr32", m_TestData.R32.front(),
-                                        "r32");
-                oStream.write_attribute("attrr64", m_TestData.R64.front(),
-                                        "r64");
+                oStream.write_attribute("attru16", m_TestData.U16.front(), "u16");
+                oStream.write_attribute("attru32", m_TestData.U32.front(), "u32");
+                oStream.write_attribute("attru64", m_TestData.U64.front(), "u64");
+                oStream.write_attribute("attrr32", m_TestData.R32.front(), "r32");
+                oStream.write_attribute("attrr64", m_TestData.R64.front(), "r64");
 
-                oStream.write_attribute("attrStrarray", m_TestData.S3.data(),
-                                        m_TestData.S3.size(), "iString", "::");
-                oStream.write_attribute("attri8array", m_TestData.I8.data(),
-                                        m_TestData.I8.size(), "i8", "::");
+                oStream.write_attribute("attrStrarray", m_TestData.S3.data(), m_TestData.S3.size(),
+                                        "iString", "::");
+                oStream.write_attribute("attri8array", m_TestData.I8.data(), m_TestData.I8.size(),
+                                        "i8", "::");
                 oStream.write_attribute("attri16array", m_TestData.I16.data(),
                                         m_TestData.I16.size(), "i16", "::");
                 oStream.write_attribute("attri32array", m_TestData.I32.data(),
                                         m_TestData.I32.size(), "i32", "::");
                 oStream.write_attribute("attri64array", m_TestData.I64.data(),
                                         m_TestData.I64.size(), "i64", "::");
-                oStream.write_attribute("attru8array", m_TestData.U8.data(),
-                                        m_TestData.U8.size(), "u8", "::");
+                oStream.write_attribute("attru8array", m_TestData.U8.data(), m_TestData.U8.size(),
+                                        "u8", "::");
                 oStream.write_attribute("attru16array", m_TestData.U16.data(),
                                         m_TestData.U16.size(), "u16", "::");
                 oStream.write_attribute("attru32array", m_TestData.U32.data(),
@@ -282,27 +269,17 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
                 EXPECT_EQ(vattrr32.front(), m_TestData.R32.front());
                 EXPECT_EQ(vattrr64.front(), m_TestData.R64.front());
 
-                auto vattrStrarray =
-                    iStep.read_attribute<std::string>("attrStrarray");
+                auto vattrStrarray = iStep.read_attribute<std::string>("attrStrarray");
                 auto vattri8array = iStep.read_attribute<int8_t>("attri8array");
-                auto vattri16array =
-                    iStep.read_attribute<int16_t>("attri16array");
-                auto vattri32array =
-                    iStep.read_attribute<int32_t>("attri32array");
-                auto vattri64array =
-                    iStep.read_attribute<int64_t>("attri64array");
-                auto vattru8array =
-                    iStep.read_attribute<uint8_t>("attru8array");
-                auto vattru16array =
-                    iStep.read_attribute<uint16_t>("attru16array");
-                auto vattru32array =
-                    iStep.read_attribute<uint32_t>("attru32array");
-                auto vattru64array =
-                    iStep.read_attribute<uint64_t>("attru64array");
-                auto vattrr32array =
-                    iStep.read_attribute<float>("attrr32array");
-                auto vattrr64array =
-                    iStep.read_attribute<double>("attrr64array");
+                auto vattri16array = iStep.read_attribute<int16_t>("attri16array");
+                auto vattri32array = iStep.read_attribute<int32_t>("attri32array");
+                auto vattri64array = iStep.read_attribute<int64_t>("attri64array");
+                auto vattru8array = iStep.read_attribute<uint8_t>("attru8array");
+                auto vattru16array = iStep.read_attribute<uint16_t>("attru16array");
+                auto vattru32array = iStep.read_attribute<uint32_t>("attru32array");
+                auto vattru64array = iStep.read_attribute<uint64_t>("attru64array");
+                auto vattrr32array = iStep.read_attribute<float>("attrr32array");
+                auto vattrr64array = iStep.read_attribute<double>("attrr64array");
 
                 for (size_t i = 0; i < vattrStrarray.size(); ++i)
                 {
@@ -324,26 +301,17 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
                 }
 
                 // var attributes
-                auto vvarattrStr =
-                    iStep.read_attribute<std::string>("attrStr", "iString");
+                auto vvarattrStr = iStep.read_attribute<std::string>("attrStr", "iString");
                 auto vvarattri8 = iStep.read_attribute<int8_t>("attri8", "i8");
-                auto vvarattri16 =
-                    iStep.read_attribute<int16_t>("attri16", "i16");
-                auto vvarattri32 =
-                    iStep.read_attribute<int32_t>("attri32", "i32");
-                auto vvarattri64 =
-                    iStep.read_attribute<int64_t>("attri64", "i64");
+                auto vvarattri16 = iStep.read_attribute<int16_t>("attri16", "i16");
+                auto vvarattri32 = iStep.read_attribute<int32_t>("attri32", "i32");
+                auto vvarattri64 = iStep.read_attribute<int64_t>("attri64", "i64");
                 auto vvarattru8 = iStep.read_attribute<uint8_t>("attru8", "u8");
-                auto vvarattru16 =
-                    iStep.read_attribute<uint16_t>("attru16", "u16");
-                auto vvarattru32 =
-                    iStep.read_attribute<uint32_t>("attru32", "u32");
-                auto vvarattru64 =
-                    iStep.read_attribute<uint64_t>("attru64", "u64");
-                auto vvarattrr32 =
-                    iStep.read_attribute<float>("attrr32", "r32");
-                auto vvarattrr64 =
-                    iStep.read_attribute<double>("attrr64", "r64");
+                auto vvarattru16 = iStep.read_attribute<uint16_t>("attru16", "u16");
+                auto vvarattru32 = iStep.read_attribute<uint32_t>("attru32", "u32");
+                auto vvarattru64 = iStep.read_attribute<uint64_t>("attru64", "u64");
+                auto vvarattrr32 = iStep.read_attribute<float>("attrr32", "r32");
+                auto vvarattrr64 = iStep.read_attribute<double>("attrr64", "r64");
 
                 EXPECT_EQ(vvarattrStr.front(), m_TestData.S1);
                 EXPECT_EQ(vvarattri8.front(), m_TestData.I8.front());
@@ -357,28 +325,18 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
                 EXPECT_EQ(vvarattrr32.front(), m_TestData.R32.front());
                 EXPECT_EQ(vvarattrr64.front(), m_TestData.R64.front());
 
-                auto vvarattrStrarray = iStep.read_attribute<std::string>(
-                    "attrStrarray", "iString", "::");
-                auto vvarattri8array =
-                    iStep.read_attribute<int8_t>("attri8array", "i8", "::");
-                auto vvarattri16array =
-                    iStep.read_attribute<int16_t>("attri16array", "i16", "::");
-                auto vvarattri32array =
-                    iStep.read_attribute<int32_t>("attri32array", "i32", "::");
-                auto vvarattri64array =
-                    iStep.read_attribute<int64_t>("attri64array", "i64", "::");
-                auto vvarattru8array =
-                    iStep.read_attribute<uint8_t>("attru8array", "u8", "::");
-                auto vvarattru16array =
-                    iStep.read_attribute<uint16_t>("attru16array", "u16", "::");
-                auto vvarattru32array =
-                    iStep.read_attribute<uint32_t>("attru32array", "u32", "::");
-                auto vvarattru64array =
-                    iStep.read_attribute<uint64_t>("attru64array", "u64", "::");
-                auto vvarattrr32array =
-                    iStep.read_attribute<float>("attrr32array", "r32", "::");
-                auto vvarattrr64array =
-                    iStep.read_attribute<double>("attrr64array", "r64", "::");
+                auto vvarattrStrarray =
+                    iStep.read_attribute<std::string>("attrStrarray", "iString", "::");
+                auto vvarattri8array = iStep.read_attribute<int8_t>("attri8array", "i8", "::");
+                auto vvarattri16array = iStep.read_attribute<int16_t>("attri16array", "i16", "::");
+                auto vvarattri32array = iStep.read_attribute<int32_t>("attri32array", "i32", "::");
+                auto vvarattri64array = iStep.read_attribute<int64_t>("attri64array", "i64", "::");
+                auto vvarattru8array = iStep.read_attribute<uint8_t>("attru8array", "u8", "::");
+                auto vvarattru16array = iStep.read_attribute<uint16_t>("attru16array", "u16", "::");
+                auto vvarattru32array = iStep.read_attribute<uint32_t>("attru32array", "u32", "::");
+                auto vvarattru64array = iStep.read_attribute<uint64_t>("attru64array", "u64", "::");
+                auto vvarattrr32array = iStep.read_attribute<float>("attrr32array", "r32", "::");
+                auto vvarattrr64array = iStep.read_attribute<double>("attrr64array", "r64", "::");
 
                 for (size_t i = 0; i < vvarattrStrarray.size(); ++i)
                 {
@@ -418,8 +376,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
             auto R32 = iStep.read<float>("r32", start, count);
             auto R64 = iStep.read<double>("r64", start, count);
 
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString.front(), currentTestData.S1);
 
@@ -477,8 +435,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
     {
 #if ADIOS2_USE_MPI
 
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
-                                engineName);
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
 
 #else
         adios2::fstream oStream(fname, adios2::fstream::out, engineName);
@@ -491,8 +448,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData stepData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData stepData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             oStream.write("iString", stepData.S1);
             oStream.write("i8", stepData.I8.data(), shape, start, count);
@@ -504,8 +461,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
             oStream.write("u32", stepData.U32.data(), shape, start, count);
             oStream.write("u64", stepData.U64.data(), shape, start, count);
             oStream.write("r32", stepData.R32.data(), shape, start, count);
-            oStream.write("r64", stepData.R64.data(), shape, start, count,
-                          adios2::end_step);
+            oStream.write("r64", stepData.R64.data(), shape, start, count, adios2::end_step);
         }
 
         // Close the file
@@ -515,8 +471,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
     // READ
     {
 #if ADIOS2_USE_MPI
-        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD,
-                                engineName);
+        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD, engineName);
 #else
         adios2::fstream iStream(fname, adios2::fstream::in, engineName);
 #endif
@@ -543,8 +498,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
             auto R64 = iStep.read<double>("r64", start, count);
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString.front(), currentTestData.S1);
 
@@ -599,8 +554,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
     {
 #if ADIOS2_USE_MPI
 
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
-                                engineName);
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
 
 #else
         adios2::fstream oStream(fname, adios2::fstream::out, engineName);
@@ -617,8 +571,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData stepData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData stepData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             oStream.write("iString", stepData.S1);
             oStream.write("i8", stepData.I8.data(), shape, start, count);
@@ -630,8 +584,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
             oStream.write("u32", stepData.U32.data(), shape, start, count);
             oStream.write("u64", stepData.U64.data(), shape, start, count);
             oStream.write("r32", stepData.R32.data(), shape, start, count);
-            oStream.write("r64", stepData.R64.data(), shape, start, count,
-                          adios2::end_step);
+            oStream.write("r64", stepData.R64.data(), shape, start, count, adios2::end_step);
         }
 
         EXPECT_THROW(oStream.write<int16_t>("i8", 1), std::invalid_argument);
@@ -640,8 +593,7 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
 
     {
 #if ADIOS2_USE_MPI
-        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD,
-                                engineName);
+        adios2::fstream iStream(fname, adios2::fstream::in, MPI_COMM_WORLD, engineName);
 #else
         adios2::fstream iStream(fname, adios2::fstream::in, engineName);
 #endif
@@ -668,8 +620,8 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
             auto R64 = iStep.read<double>("r64", start, count);
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString.front(), currentTestData.S1);
 
@@ -705,10 +657,8 @@ TEST_F(StreamWriteReadHighLevelAPI, DoubleOpenException)
     {
 #if ADIOS2_USE_MPI
 
-        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD,
-                                engineName);
-        EXPECT_THROW(oStream.open("second", adios2::fstream::out,
-                                  MPI_COMM_WORLD, engineName),
+        adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
+        EXPECT_THROW(oStream.open("second", adios2::fstream::out, MPI_COMM_WORLD, engineName),
                      std::invalid_argument);
 
 #else

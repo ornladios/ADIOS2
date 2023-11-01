@@ -48,41 +48,39 @@ size_t Settings::ndigits(size_t n) const
 
 void Settings::displayHelp()
 {
-    std::cout
-        << "Usage: adios_iotest -a appid -c config {-s | -w} {-d d1[,d2,..,dN] "
-           "| -D r1[,r2,..,rN]}"
-           "[-x "
-           "file]\n"
-        << "  -a appID:  unique number for each application in the workflow\n"
-        << "  -c config: data specification config file\n"
-        << "  -d ...     define process decomposition:\n"
-        << "      d1:        number of processes in 1st (slowest) dimension\n"
-        << "      dN:        number of processes in Nth dimension\n"
-        << "                 d1*d2*..*dN must equal the number of processes\n"
-        << "   -D ...    define process decomposition ratio:\n"
-        << "      r1:        ratio of process decomposition in the 1st "
-           "(slowest) dimension\n"
-        << "      rN:        ratio of process decomposition in the Nth "
-           "dimension\n"
-        << "                 r1xr2x..xrN must scale up to process count"
-           "count without remainder\n"
-        << "  -s OR -w:  strong or weak scaling. \n"
-        << "             Dimensions in config are treated accordingly\n"
-        << "  -x file    ADIOS configuration XML file\n"
+    std::cout << "Usage: adios_iotest -a appid -c config {-s | -w} {-d d1[,d2,..,dN] "
+                 "| -D r1[,r2,..,rN]}"
+                 "[-x "
+                 "file]\n"
+              << "  -a appID:  unique number for each application in the workflow\n"
+              << "  -c config: data specification config file\n"
+              << "  -d ...     define process decomposition:\n"
+              << "      d1:        number of processes in 1st (slowest) dimension\n"
+              << "      dN:        number of processes in Nth dimension\n"
+              << "                 d1*d2*..*dN must equal the number of processes\n"
+              << "   -D ...    define process decomposition ratio:\n"
+              << "      r1:        ratio of process decomposition in the 1st "
+                 "(slowest) dimension\n"
+              << "      rN:        ratio of process decomposition in the Nth "
+                 "dimension\n"
+              << "                 r1xr2x..xrN must scale up to process count"
+                 "count without remainder\n"
+              << "  -s OR -w:  strong or weak scaling. \n"
+              << "             Dimensions in config are treated accordingly\n"
+              << "  -x file    ADIOS configuration XML file\n"
 #ifdef ADIOS2_HAVE_HDF5_PARALLEL
-        << "  --hdf5     Use native Parallel HDF5 instead of ADIOS for I/O\n"
+              << "  --hdf5     Use native Parallel HDF5 instead of ADIOS for I/O\n"
 #endif
-        << "  -v         increase verbosity\n"
-        << "  -h         display this help\n"
-        << "  -F         turn on fixed I/O pattern explicitly\n"
-        << "  -T         turn on multi-threaded MPI (needed by SST/MPI)\n"
-        << "  -p         specify the path of the output explicitly\n"
-        << "  -t         print and dump the timing measured by the I/O "
-           "timer\n\n";
+              << "  -v         increase verbosity\n"
+              << "  -h         display this help\n"
+              << "  -F         turn on fixed I/O pattern explicitly\n"
+              << "  -T         turn on multi-threaded MPI (needed by SST/MPI)\n"
+              << "  -p         specify the path of the output explicitly\n"
+              << "  -t         print and dump the timing measured by the I/O "
+                 "timer\n\n";
 }
 
-size_t Settings::stringToNumber(const std::string &varName,
-                                const char *arg) const
+size_t Settings::stringToNumber(const std::string &varName, const char *arg) const
 {
     char *end;
     size_t retval = static_cast<size_t>(std::strtoull(arg, &end, 10));
@@ -127,8 +125,7 @@ int Settings::rescaleDecomp()
         ratioProd *= processDecomp[i];
     }
 
-    for (scaleFactor = 1; ratioProd * pow(scaleFactor, nDecomp) <= nProc;
-         scaleFactor++)
+    for (scaleFactor = 1; ratioProd * pow(scaleFactor, nDecomp) <= nProc; scaleFactor++)
     {
         if (ratioProd * pow(scaleFactor, nDecomp) == nProc)
         {
@@ -179,8 +176,7 @@ int Settings::processArgs(int argc, char *argv[])
             }
             else
             {
-                processDecomp[nDecomp] =
-                    stringToNumber("decomposition in dimension 1", optarg);
+                processDecomp[nDecomp] = stringToNumber("decomposition in dimension 1", optarg);
                 ++nDecomp;
             }
             decompDefined = true;
@@ -198,8 +194,7 @@ int Settings::processArgs(int argc, char *argv[])
             }
             else
             {
-                processDecomp[nDecomp] =
-                    stringToNumber("decomposition in dimension 1", optarg);
+                processDecomp[nDecomp] = stringToNumber("decomposition in dimension 1", optarg);
                 ++nDecomp;
             }
             decompDefined = true;
@@ -261,8 +256,7 @@ int Settings::processArgs(int argc, char *argv[])
             if (last_c == 'd' || last_c == 'D')
             { // --decomp extra arg (or not if not a number)
                 processDecomp[nDecomp] = stringToNumber(
-                    "decomposition in dimension " + std::to_string(nDecomp + 1),
-                    optarg);
+                    "decomposition in dimension " + std::to_string(nDecomp + 1), optarg);
                 ++nDecomp;
             }
             else
@@ -294,8 +288,7 @@ int Settings::processArgs(int argc, char *argv[])
             ++optind;
         }
         adios2::helper::Throw<std::invalid_argument>(
-            "Utils::adios_iotest", "settings", "processArgs",
-            "There are unknown arguments: " + s);
+            "Utils::adios_iotest", "settings", "processArgs", "There are unknown arguments: " + s);
     }
 
     /* Check if we have a everything defined */
@@ -387,8 +380,7 @@ int Settings::extraArgumentChecks()
     if (N != nProc)
     {
         std::cout << "ERROR : Product of decomposition values = " << N
-                  << " must equal the number of processes = " << nProc
-                  << std::endl;
+                  << " must equal the number of processes = " << nProc << std::endl;
         return 1;
     }
     return 0;

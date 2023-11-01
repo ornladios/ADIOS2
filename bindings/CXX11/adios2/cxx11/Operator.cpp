@@ -33,9 +33,6 @@ Params &Operator::Parameters() const
 }
 
 // PRIVATE
-Operator::Operator(const std::string &type, Params *params)
-: m_Parameters(params), m_Type(type)
-{
-}
+Operator::Operator(const std::string &type, Params *params) : m_Parameters(params), m_Type(type) {}
 
 } // end namespace adios2

@@ -36,13 +36,12 @@ namespace plugin
 class ExampleWritePlugin : public PluginEngineInterface
 {
 public:
-    ExampleWritePlugin(core::IO &io, const std::string &name,
-                       const Mode openMode, helper::Comm comm);
+    ExampleWritePlugin(core::IO &io, const std::string &name, const Mode openMode,
+                       helper::Comm comm);
     virtual ~ExampleWritePlugin();
 
     /** Indicates beginning of a step **/
-    StepStatus BeginStep(StepMode mode,
-                         const float timeoutSeconds = -1.0) override;
+    StepStatus BeginStep(StepMode mode, const float timeoutSeconds = -1.0) override;
 
     /** Indicates end of a step **/
     void EndStep() override;
@@ -56,8 +55,8 @@ public:
 protected:
     void Init() override;
 
-#define declare(T)                                                             \
-    void DoPutSync(core::Variable<T> &variable, const T *values) override;     \
+#define declare(T)                                                                                 \
+    void DoPutSync(core::Variable<T> &variable, const T *values) override;                         \
     void DoPutDeferred(core::Variable<T> &variable, const T *values) override;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare)
 #undef declare
@@ -84,10 +83,9 @@ private:
 extern "C" {
 
 PLUGIN_ENGINE_WRITE_EXPORT adios2::plugin::ExampleWritePlugin *
-EngineCreate(adios2::core::IO &io, const std::string &name,
-             const adios2::Mode mode, adios2::helper::Comm comm);
-PLUGIN_ENGINE_WRITE_EXPORT void
-EngineDestroy(adios2::plugin::ExampleWritePlugin *obj);
+EngineCreate(adios2::core::IO &io, const std::string &name, const adios2::Mode mode,
+             adios2::helper::Comm comm);
+PLUGIN_ENGINE_WRITE_EXPORT void EngineDestroy(adios2::plugin::ExampleWritePlugin *obj);
 }
 
 #endif /* EXAMPLEWRITEPLUGIN_H_ */

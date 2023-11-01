@@ -65,30 +65,23 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
 
         auto var_Step = io.DefineVariable<size_t>("step");
         /* Why is there no Span for string variable? */
-        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                                 adios2::ConstantDims);
-        auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
-        auto var_cr32 = io.DefineVariable<std::complex<float>>(
-            "cr32", shape, start, count, adios2::ConstantDims);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>(
-            "cr64", shape, start, count, adios2::ConstantDims);
+        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
+        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
+        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count, adios2::ConstantDims);
+        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count, adios2::ConstantDims);
+        auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count, adios2::ConstantDims);
+        auto var_u16 =
+            io.DefineVariable<uint16_t>("u16", shape, start, count, adios2::ConstantDims);
+        auto var_u32 =
+            io.DefineVariable<uint32_t>("u32", shape, start, count, adios2::ConstantDims);
+        auto var_u64 =
+            io.DefineVariable<uint64_t>("u64", shape, start, count, adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count,
+                                                               adios2::ConstantDims);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count,
+                                                                adios2::ConstantDims);
 
         (void)var_i8;
         (void)var_i16;
@@ -107,8 +100,8 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             bpWriter.BeginStep();
 
@@ -127,23 +120,20 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
             adios2::Variable<uint64_t>::Span u64Span = bpWriter.Put(var_u64);
             adios2::Variable<float>::Span r32Span = bpWriter.Put(var_r32);
             adios2::Variable<double>::Span r64Span = bpWriter.Put(var_r64);
-            adios2::Variable<std::complex<float>>::Span cr32Span =
-                bpWriter.Put(var_cr32);
-            adios2::Variable<std::complex<double>>::Span cr64Span =
-                bpWriter.Put(var_cr64);
+            adios2::Variable<std::complex<float>>::Span cr32Span = bpWriter.Put(var_cr32);
+            adios2::Variable<std::complex<double>>::Span cr64Span = bpWriter.Put(var_cr64);
 
             auto ptr = i64Span.data();
             (void)ptr;
 
             // Testing Data()
-            std::copy(currentTestData.I8.begin(),
-                      currentTestData.I8.begin() + Nx, i8Span.begin());
-            std::copy(currentTestData.I16.begin(),
-                      currentTestData.I16.begin() + Nx, i16Span.begin());
-            std::copy(currentTestData.I32.begin(),
-                      currentTestData.I32.begin() + Nx, i32Span.data());
-            std::copy(currentTestData.I64.begin(),
-                      currentTestData.I64.begin() + Nx, i64Span.data());
+            std::copy(currentTestData.I8.begin(), currentTestData.I8.begin() + Nx, i8Span.begin());
+            std::copy(currentTestData.I16.begin(), currentTestData.I16.begin() + Nx,
+                      i16Span.begin());
+            std::copy(currentTestData.I32.begin(), currentTestData.I32.begin() + Nx,
+                      i32Span.data());
+            std::copy(currentTestData.I64.begin(), currentTestData.I64.begin() + Nx,
+                      i64Span.data());
             // Testing operator[] and At
             for (size_t i = 0; i < Nx; ++i)
             {
@@ -370,30 +360,23 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
         const adios2::Dims start{0, static_cast<size_t>(mpiRank * Nx)};
         const adios2::Dims count{Ny, Nx};
 
-        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                                 adios2::ConstantDims);
-        auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
-        auto var_cr32 = io.DefineVariable<std::complex<float>>(
-            "cr32", shape, start, count, adios2::ConstantDims);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>(
-            "cr64", shape, start, count, adios2::ConstantDims);
+        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
+        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
+        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count, adios2::ConstantDims);
+        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count, adios2::ConstantDims);
+        auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count, adios2::ConstantDims);
+        auto var_u16 =
+            io.DefineVariable<uint16_t>("u16", shape, start, count, adios2::ConstantDims);
+        auto var_u32 =
+            io.DefineVariable<uint32_t>("u32", shape, start, count, adios2::ConstantDims);
+        auto var_u64 =
+            io.DefineVariable<uint64_t>("u64", shape, start, count, adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count,
+                                                               adios2::ConstantDims);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count,
+                                                                adios2::ConstantDims);
 
         (void)var_i8;
         (void)var_i16;
@@ -412,8 +395,8 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             bpWriter.BeginStep();
             EXPECT_EQ(bpWriter.CurrentStep(), step);
@@ -427,16 +410,14 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
             adios2::Variable<uint64_t>::Span u64Span = bpWriter.Put(var_u64);
             adios2::Variable<float>::Span r32Span = bpWriter.Put(var_r32);
             adios2::Variable<double>::Span r64Span = bpWriter.Put(var_r64);
-            adios2::Variable<std::complex<float>>::Span cr32Span =
-                bpWriter.Put(var_cr32);
-            adios2::Variable<std::complex<double>>::Span cr64Span =
-                bpWriter.Put(var_cr64);
+            adios2::Variable<std::complex<float>>::Span cr32Span = bpWriter.Put(var_cr32);
+            adios2::Variable<std::complex<double>>::Span cr64Span = bpWriter.Put(var_cr64);
 
             // Testing Data()
-            std::copy(currentTestData.I8.begin(),
-                      currentTestData.I8.begin() + Nx * Ny, i8Span.data());
-            std::copy(currentTestData.I16.begin(),
-                      currentTestData.I16.begin() + Nx * Ny, i16Span.data());
+            std::copy(currentTestData.I8.begin(), currentTestData.I8.begin() + Nx * Ny,
+                      i8Span.data());
+            std::copy(currentTestData.I16.begin(), currentTestData.I16.begin() + Nx * Ny,
+                      i16Span.data());
 
             size_t i = 0;
             for (auto &i32 : i32Span)
@@ -683,30 +664,23 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
         const adios2::Dims start{};
         const adios2::Dims count{Nx};
 
-        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                                 adios2::ConstantDims);
-        auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
-        auto var_cr32 = io.DefineVariable<std::complex<float>>(
-            "cr32", shape, start, count, adios2::ConstantDims);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>(
-            "cr64", shape, start, count, adios2::ConstantDims);
+        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
+        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
+        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count, adios2::ConstantDims);
+        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count, adios2::ConstantDims);
+        auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count, adios2::ConstantDims);
+        auto var_u16 =
+            io.DefineVariable<uint16_t>("u16", shape, start, count, adios2::ConstantDims);
+        auto var_u32 =
+            io.DefineVariable<uint32_t>("u32", shape, start, count, adios2::ConstantDims);
+        auto var_u64 =
+            io.DefineVariable<uint64_t>("u64", shape, start, count, adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count,
+                                                               adios2::ConstantDims);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count,
+                                                                adios2::ConstantDims);
 
         (void)var_i8;
         (void)var_i16;
@@ -725,8 +699,8 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             bpWriter.BeginStep();
             EXPECT_EQ(bpWriter.CurrentStep(), step);
@@ -742,20 +716,17 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
             adios2::Variable<uint64_t>::Span u64Span = bpWriter.Put(var_u64);
             adios2::Variable<float>::Span r32Span = bpWriter.Put(var_r32);
             adios2::Variable<double>::Span r64Span = bpWriter.Put(var_r64);
-            adios2::Variable<std::complex<float>>::Span cr32Span =
-                bpWriter.Put(var_cr32);
-            adios2::Variable<std::complex<double>>::Span cr64Span =
-                bpWriter.Put(var_cr64);
+            adios2::Variable<std::complex<float>>::Span cr32Span = bpWriter.Put(var_cr32);
+            adios2::Variable<std::complex<double>>::Span cr64Span = bpWriter.Put(var_cr64);
 
             // Testing Data()
-            std::copy(currentTestData.I8.begin(),
-                      currentTestData.I8.begin() + Nx, i8Span.begin());
-            std::copy(currentTestData.I16.begin(),
-                      currentTestData.I16.begin() + Nx, i16Span.begin());
-            std::copy(currentTestData.I32.begin(),
-                      currentTestData.I32.begin() + Nx, i32Span.data());
-            std::copy(currentTestData.I64.begin(),
-                      currentTestData.I64.begin() + Nx, i64Span.data());
+            std::copy(currentTestData.I8.begin(), currentTestData.I8.begin() + Nx, i8Span.begin());
+            std::copy(currentTestData.I16.begin(), currentTestData.I16.begin() + Nx,
+                      i16Span.begin());
+            std::copy(currentTestData.I32.begin(), currentTestData.I32.begin() + Nx,
+                      i32Span.data());
+            std::copy(currentTestData.I64.begin(), currentTestData.I64.begin() + Nx,
+                      i64Span.data());
             // Testing operator[] and At
             for (size_t i = 0; i < Nx; ++i)
             {
@@ -946,30 +917,23 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
         const adios2::Dims start{};
         const adios2::Dims count{Ny, Nx};
 
-        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                                 adios2::ConstantDims);
-        auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
-        auto var_cr32 = io.DefineVariable<std::complex<float>>(
-            "cr32", shape, start, count, adios2::ConstantDims);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>(
-            "cr64", shape, start, count, adios2::ConstantDims);
+        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
+        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
+        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count, adios2::ConstantDims);
+        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count, adios2::ConstantDims);
+        auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count, adios2::ConstantDims);
+        auto var_u16 =
+            io.DefineVariable<uint16_t>("u16", shape, start, count, adios2::ConstantDims);
+        auto var_u32 =
+            io.DefineVariable<uint32_t>("u32", shape, start, count, adios2::ConstantDims);
+        auto var_u64 =
+            io.DefineVariable<uint64_t>("u64", shape, start, count, adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count,
+                                                               adios2::ConstantDims);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count,
+                                                                adios2::ConstantDims);
 
         (void)var_i8;
         (void)var_i16;
@@ -988,8 +952,8 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
 
         for (size_t step = 0; step < NSteps; ++step)
         {
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             bpWriter.BeginStep();
             EXPECT_EQ(bpWriter.CurrentStep(), step);
@@ -1003,16 +967,14 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
             adios2::Variable<uint64_t>::Span u64Span = bpWriter.Put(var_u64);
             adios2::Variable<float>::Span r32Span = bpWriter.Put(var_r32);
             adios2::Variable<double>::Span r64Span = bpWriter.Put(var_r64);
-            adios2::Variable<std::complex<float>>::Span cr32Span =
-                bpWriter.Put(var_cr32);
-            adios2::Variable<std::complex<double>>::Span cr64Span =
-                bpWriter.Put(var_cr64);
+            adios2::Variable<std::complex<float>>::Span cr32Span = bpWriter.Put(var_cr32);
+            adios2::Variable<std::complex<double>>::Span cr64Span = bpWriter.Put(var_cr64);
 
             // Testing Data()
-            std::copy(currentTestData.I8.begin(),
-                      currentTestData.I8.begin() + Nx * Ny, i8Span.data());
-            std::copy(currentTestData.I16.begin(),
-                      currentTestData.I16.begin() + Nx * Ny, i16Span.data());
+            std::copy(currentTestData.I8.begin(), currentTestData.I8.begin() + Nx * Ny,
+                      i8Span.data());
+            std::copy(currentTestData.I16.begin(), currentTestData.I16.begin() + Nx * Ny,
+                      i16Span.data());
 
             size_t i = 0;
             for (auto &i32 : i32Span)
@@ -1231,30 +1193,23 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count,
-                                                  adios2::ConstantDims);
-        auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count,
-                                                 adios2::ConstantDims);
-        auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count,
-                                                   adios2::ConstantDims);
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
-        auto var_cr32 = io.DefineVariable<std::complex<float>>(
-            "cr32", shape, start, count, adios2::ConstantDims);
-        auto var_cr64 = io.DefineVariable<std::complex<double>>(
-            "cr64", shape, start, count, adios2::ConstantDims);
+        auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count, adios2::ConstantDims);
+        auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count, adios2::ConstantDims);
+        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count, adios2::ConstantDims);
+        auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count, adios2::ConstantDims);
+        auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count, adios2::ConstantDims);
+        auto var_u16 =
+            io.DefineVariable<uint16_t>("u16", shape, start, count, adios2::ConstantDims);
+        auto var_u32 =
+            io.DefineVariable<uint32_t>("u32", shape, start, count, adios2::ConstantDims);
+        auto var_u64 =
+            io.DefineVariable<uint64_t>("u64", shape, start, count, adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
+        auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count,
+                                                               adios2::ConstantDims);
+        auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count,
+                                                                adios2::ConstantDims);
 
         (void)var_i8;
         (void)var_i16;
@@ -1301,13 +1256,10 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
             adios2::Variable<double>::Span r64Span =
                 bpWriter.Put(var_r64, true, static_cast<double>(step));
 
-            adios2::Variable<std::complex<float>>::Span cr32Span = bpWriter.Put(
-                var_cr32, true,
-                {static_cast<float>(step), static_cast<float>(step)});
-            adios2::Variable<std::complex<double>>::Span cr64Span =
-                bpWriter.Put(
-                    var_cr64, true,
-                    {static_cast<double>(step), static_cast<double>(step)});
+            adios2::Variable<std::complex<float>>::Span cr32Span =
+                bpWriter.Put(var_cr32, true, {static_cast<float>(step), static_cast<float>(step)});
+            adios2::Variable<std::complex<double>>::Span cr64Span = bpWriter.Put(
+                var_cr64, true, {static_cast<double>(step), static_cast<double>(step)});
 
             (void)i8Span;
             (void)i16Span;
@@ -1497,13 +1449,11 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
                 EXPECT_EQ(U64[i], static_cast<uint64_t>(currentStep)) << msg;
                 EXPECT_EQ(R32[i], static_cast<float>(currentStep)) << msg;
                 EXPECT_EQ(R64[i], static_cast<double>(currentStep)) << msg;
-                EXPECT_EQ(CR32[i],
-                          std::complex<float>(static_cast<float>(currentStep),
-                                              static_cast<float>(currentStep)))
+                EXPECT_EQ(CR32[i], std::complex<float>(static_cast<float>(currentStep),
+                                                       static_cast<float>(currentStep)))
                     << msg;
-                EXPECT_EQ(CR64[i], std::complex<double>(
-                                       static_cast<double>(currentStep),
-                                       static_cast<double>(currentStep)))
+                EXPECT_EQ(CR64[i], std::complex<double>(static_cast<double>(currentStep),
+                                                        static_cast<double>(currentStep)))
                     << msg;
             }
 
@@ -1556,10 +1506,8 @@ TEST_F(BPWriteReadSpan, BPWriteSpanOperatorException)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
         adios2::Operator BZIP2Op =
             adios.DefineOperator("BZIP2Compressor", adios2::ops::LosslessBZIP2);
 
@@ -1574,10 +1522,8 @@ TEST_F(BPWriteReadSpan, BPWriteSpanOperatorException)
 
             // using bzip2, it could have been any operator to generate an
             // exception
-            var_r32.AddOperation(
-                BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, "1e-4"}});
-            var_r64.AddOperation(
-                BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, "1e-4"}});
+            var_r32.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, "1e-4"}});
+            var_r64.AddOperation(BZIP2Op, {{adios2::ops::bzip2::key::blockSize100k, "1e-4"}});
 
             EXPECT_THROW(bpWriter.Put(var_r32, true, static_cast<float>(step)),
                          std::invalid_argument);

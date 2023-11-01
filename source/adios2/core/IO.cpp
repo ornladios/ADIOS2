@@ -22,10 +22,8 @@
 #include "adios2/engine/bp3/BP3Writer.h"
 #include "adios2/engine/bp4/BP4Reader.h"
 #include "adios2/engine/bp4/BP4Writer.h"
-#ifdef ADIOS2_HAVE_BP5
 #include "adios2/engine/bp5/BP5Reader.h"
 #include "adios2/engine/bp5/BP5Writer.h"
-#endif
 #include "adios2/engine/inline/InlineReader.h"
 #include "adios2/engine/inline/InlineWriter.h"
 #include "adios2/engine/mhs/MhsReader.h"
@@ -66,22 +64,12 @@ IO::EngineFactoryEntry IO_MakeEngine_HDF5();
 namespace
 {
 std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
-    {"bp3",
-     {IO::MakeEngine<engine::BP3Reader>, IO::MakeEngine<engine::BP3Writer>}},
-    {"bp4",
-     {IO::MakeEngine<engine::BP4Reader>, IO::MakeEngine<engine::BP4Writer>}},
-    {"bp5",
-#ifdef ADIOS2_HAVE_BP5
-     {IO::MakeEngine<engine::BP5Reader>, IO::MakeEngine<engine::BP5Writer>}
-#else
-     IO::NoEngineEntry("ERROR: this version didn't compile with "
-                       "BP5 library, can't use BP5 engine\n")
-#endif
-    },
+    {"bp3", {IO::MakeEngine<engine::BP3Reader>, IO::MakeEngine<engine::BP3Writer>}},
+    {"bp4", {IO::MakeEngine<engine::BP4Reader>, IO::MakeEngine<engine::BP4Writer>}},
+    {"bp5", {IO::MakeEngine<engine::BP5Reader>, IO::MakeEngine<engine::BP5Writer>}},
     {"dataman",
 #ifdef ADIOS2_HAVE_DATAMAN
-     {IO::MakeEngine<engine::DataManReader>,
-      IO::MakeEngine<engine::DataManWriter>}
+     {IO::MakeEngine<engine::DataManReader>, IO::MakeEngine<engine::DataManWriter>}
 #else
      IO::NoEngineEntry("ERROR: this version didn't compile with "
                        "DataMan library, can't use DataMan engine\n")
@@ -121,9 +109,8 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
                        "Sst library, can't use Sst engine\n")
 #endif
     },
-    {"dataspaces",
-     IO::NoEngineEntry("ERROR: this version didn't compile with "
-                       "DataSpaces library, can't use DataSpaces engine\n")},
+    {"dataspaces", IO::NoEngineEntry("ERROR: this version didn't compile with "
+                                     "DataSpaces library, can't use DataSpaces engine\n")},
     {"hdf5",
 #ifdef ADIOS2_HAVE_HDF5
      IO_MakeEngine_HDF5()
@@ -132,20 +119,13 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
                        "HDF5 library, can't use HDF5 engine\n")
 #endif
     },
-    {"skeleton",
-     {IO::MakeEngine<engine::SkeletonReader>,
-      IO::MakeEngine<engine::SkeletonWriter>}},
-    {"inline",
-     {IO::MakeEngine<engine::InlineReader>,
-      IO::MakeEngine<engine::InlineWriter>}},
-    {"null",
-     {IO::MakeEngine<engine::NullReader>, IO::MakeEngine<engine::NullWriter>}},
+    {"skeleton", {IO::MakeEngine<engine::SkeletonReader>, IO::MakeEngine<engine::SkeletonWriter>}},
+    {"inline", {IO::MakeEngine<engine::InlineReader>, IO::MakeEngine<engine::InlineWriter>}},
+    {"null", {IO::MakeEngine<engine::NullReader>, IO::MakeEngine<engine::NullWriter>}},
     {"nullcore",
      {IO::NoEngine("ERROR: nullcore engine does not support read mode"),
       IO::MakeEngine<engine::NullWriter>}},
-    {"plugin",
-     {IO::MakeEngine<plugin::PluginEngine>,
-      IO::MakeEngine<plugin::PluginEngine>}},
+    {"plugin", {IO::MakeEngine<plugin::PluginEngine>, IO::MakeEngine<plugin::PluginEngine>}},
 };
 
 // Synchronize access to the factory in case one thread is
@@ -162,8 +142,7 @@ FactoryLookup(std::string const &name)
 
 struct ThrowError
 {
-    std::shared_ptr<Engine> operator()(IO &, const std::string &, const Mode,
-                                       helper::Comm) const
+    std::shared_ptr<Engine> operator()(IO &, const std::string &, const Mode, helper::Comm) const
     {
         helper::Throw<std::invalid_argument>("Core", "IO", "Operator", Err);
         return nullptr;
@@ -175,10 +154,7 @@ struct ThrowError
 
 IO::MakeEngineFunc IO::NoEngine(std::string e) { return ThrowError{e}; }
 
-IO::EngineFactoryEntry IO::NoEngineEntry(std::string e)
-{
-    return {NoEngine(e), NoEngine(e)};
-}
+IO::EngineFactoryEntry IO::NoEngineEntry(std::string e) { return {NoEngine(e), NoEngine(e)}; }
 
 void IO::RegisterEngine(const std::string &engineType, EngineFactoryEntry entry)
 {
@@ -188,8 +164,7 @@ void IO::RegisterEngine(const std::string &engineType, EngineFactoryEntry entry)
 
 IO::IO(ADIOS &adios, const std::string name, const bool inConfigFile,
        const std::string hostLanguage)
-: m_ADIOS(adios), m_Name(name), m_HostLanguage(hostLanguage),
-  m_InConfigFile(inConfigFile)
+: m_ADIOS(adios), m_Name(name), m_HostLanguage(hostLanguage), m_InConfigFile(inConfigFile)
 {
 }
 
@@ -197,16 +172,14 @@ IO::~IO() = default;
 
 void IO::SetEngine(const std::string engineType) noexcept
 {
-    auto lf_InsertParam = [&](const std::string &key,
-                              const std::string &value) {
+    auto lf_InsertParam = [&](const std::string &key, const std::string &value) {
         m_Parameters.insert(std::pair<std::string, std::string>(key, value));
     };
 
     /* First step in handling virtual engine names */
     std::string finalEngineType;
     std::string engineTypeLC = engineType;
-    std::transform(engineTypeLC.begin(), engineTypeLC.end(),
-                   engineTypeLC.begin(), ::tolower);
+    std::transform(engineTypeLC.begin(), engineTypeLC.end(), engineTypeLC.begin(), ::tolower);
     if (engineTypeLC == "insituviz" || engineTypeLC == "insituvisualization")
     {
         finalEngineType = "SST";
@@ -262,8 +235,7 @@ void IO::SetParameters(const Params &parameters) noexcept
 void IO::SetParameters(const std::string &parameters)
 {
     PERFSTUBS_SCOPED_TIMER("IO::other");
-    adios2::Params parameterMap =
-        adios2::helper::BuildParametersMap(parameters, '=', ',');
+    adios2::Params parameterMap = adios2::helper::BuildParametersMap(parameters, '=', ',');
     SetParameters(parameterMap);
 }
 
@@ -286,8 +258,7 @@ size_t IO::AddTransport(const std::string type, const Params &parameters)
     PERFSTUBS_SCOPED_TIMER("IO::other");
     Params parametersMap(parameters);
 
-    if (parameters.count("transport") == 1 ||
-        parameters.count("Transport") == 1)
+    if (parameters.count("transport") == 1 || parameters.count("Transport") == 1)
     {
         helper::Throw<std::invalid_argument>(
             "Core", "IO", "AddTransport",
@@ -302,16 +273,15 @@ size_t IO::AddTransport(const std::string type, const Params &parameters)
     return m_TransportsParameters.size() - 1;
 }
 
-void IO::SetTransportParameter(const size_t transportIndex,
-                               const std::string key, const std::string value)
+void IO::SetTransportParameter(const size_t transportIndex, const std::string key,
+                               const std::string value)
 {
     PERFSTUBS_SCOPED_TIMER("IO::other");
     if (transportIndex >= m_TransportsParameters.size())
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "IO", "SetTransportParameter",
-            "transport Index " + std::to_string(transportIndex) +
-                " does not exist");
+        helper::Throw<std::invalid_argument>("Core", "IO", "SetTransportParameter",
+                                             "transport Index " + std::to_string(transportIndex) +
+                                                 " does not exist");
     }
 
     m_TransportsParameters[transportIndex][key] = value;
@@ -391,8 +361,7 @@ void IO::RemoveAllAttributes() noexcept
     m_Attributes.clear();
 }
 
-std::map<std::string, Params>
-IO::GetAvailableVariables(const std::set<std::string> &keys) noexcept
+std::map<std::string, Params> IO::GetAvailableVariables(const std::set<std::string> &keys) noexcept
 {
     PERFSTUBS_SCOPED_TIMER("IO::GetAvailableVariables");
 
@@ -405,10 +374,10 @@ IO::GetAvailableVariables(const std::set<std::string> &keys) noexcept
         if (type == DataType::Struct)
         {
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        variablesInfo[variableName] = GetVariableInfo<T>(variableName, keys);  \
+#define declare_template_instantiation(T)                                                          \
+    else if (type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        variablesInfo[variableName] = GetVariableInfo<T>(variableName, keys);                      \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -417,10 +386,9 @@ IO::GetAvailableVariables(const std::set<std::string> &keys) noexcept
     return variablesInfo;
 }
 
-std::map<std::string, Params>
-IO::GetAvailableAttributes(const std::string &variableName,
-                           const std::string separator,
-                           const bool fullNameKeys) noexcept
+std::map<std::string, Params> IO::GetAvailableAttributes(const std::string &variableName,
+                                                         const std::string separator,
+                                                         const bool fullNameKeys) noexcept
 {
     PERFSTUBS_SCOPED_TIMER("IO::GetAvailableAttributes");
     std::map<std::string, Params> attributesInfo;
@@ -435,8 +403,7 @@ IO::GetAvailableAttributes(const std::string &variableName,
         }
         else
         {
-            attributesInfo = itVariable->second->GetAttributesInfo(
-                *this, separator, fullNameKeys);
+            attributesInfo = itVariable->second->GetAttributesInfo(*this, separator, fullNameKeys);
         }
         return attributesInfo;
     }
@@ -464,8 +431,7 @@ DataType IO::InquireVariableType(const std::string &name) const noexcept
     return InquireVariableType(itVariable);
 }
 
-DataType IO::InquireVariableType(const VarMap::const_iterator itVariable) const
-    noexcept
+DataType IO::InquireVariableType(const VarMap::const_iterator itVariable) const noexcept
 {
     if (itVariable == m_Variables.end())
     {
@@ -491,13 +457,11 @@ DataType IO::InquireVariableType(const VarMap::const_iterator itVariable) const
     return type;
 }
 
-DataType IO::InquireAttributeType(const std::string &name,
-                                  const std::string &variableName,
+DataType IO::InquireAttributeType(const std::string &name, const std::string &variableName,
                                   const std::string separator) const noexcept
 {
     PERFSTUBS_SCOPED_TIMER("IO::other");
-    const std::string globalName =
-        helper::GlobalName(name, variableName, separator);
+    const std::string globalName = helper::GlobalName(name, variableName, separator);
 
     auto itAttribute = m_Attributes.find(globalName);
     if (itAttribute == m_Attributes.end())
@@ -508,8 +472,7 @@ DataType IO::InquireAttributeType(const std::string &name,
     return itAttribute->second->m_Type;
 }
 
-void IO::AddOperation(const std::string &variable,
-                      const std::string &operatorType,
+void IO::AddOperation(const std::string &variable, const std::string &operatorType,
                       const Params &parameters) noexcept
 {
     PERFSTUBS_SCOPED_TIMER("IO::other");
@@ -536,8 +499,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
     {
         if (isEngineActive) // check if active
         {
-            helper::Throw<std::invalid_argument>(
-                "Core", "IO", "Open", "Engine " + name + " is opened twice");
+            helper::Throw<std::invalid_argument>("Core", "IO", "Open",
+                                                 "Engine " + name + " is opened twice");
         }
     }
 
@@ -554,23 +517,21 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
     std::string engineTypeLC = m_EngineType;
     if (!isDefaultEngine)
     {
-        std::transform(engineTypeLC.begin(), engineTypeLC.end(),
-                       engineTypeLC.begin(), ::tolower);
+        std::transform(engineTypeLC.begin(), engineTypeLC.end(), engineTypeLC.begin(), ::tolower);
     }
 
     /* Second step in handling virtual engines */
     /* BPFile for read needs to use BP5, BP4, or BP3 depending on the file's
      * version
      */
-    if ((engineTypeLC == "file" || engineTypeLC == "bpfile" ||
-         engineTypeLC == "bp" || isDefaultEngine))
+    if ((engineTypeLC == "file" || engineTypeLC == "bpfile" || engineTypeLC == "bp" ||
+         isDefaultEngine))
     {
         if (helper::EndsWith(name, ".h5", false))
         {
             engineTypeLC = "hdf5";
         }
-        else if ((mode_to_use == Mode::Read) ||
-                 (mode_to_use == Mode::ReadRandomAccess))
+        else if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess))
         {
             if (adios2sys::SystemTools::FileIsDirectory(name))
             {
@@ -593,8 +554,7 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
                     /* We need to figure out the type of file
                      * from the file itself
                      */
-                    if (helper::IsHDF5File(name, *this, comm,
-                                           m_TransportsParameters))
+                    if (helper::IsHDF5File(name, *this, comm, m_TransportsParameters))
                     {
                         engineTypeLC = "hdf5";
                     }
@@ -607,13 +567,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         }
         else
         {
-#ifdef ADIOS2_HAVE_BP5
             // File default for writing: BP5
             engineTypeLC = "bp5";
-#else
-            // File default for writing: BP4
-            engineTypeLC = "bp4";
-#endif
         }
     }
 
@@ -640,23 +595,20 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
     {
         if (mode_to_use == Mode::Append)
         {
-            helper::Throw<std::runtime_error>(
-                "Core", "IO", "Open",
-                "Append mode is not supported in the inline engine.");
+            helper::Throw<std::runtime_error>("Core", "IO", "Open",
+                                              "Append mode is not supported in the inline engine.");
         }
 
         // See inline.rst:44
         if (mode_to_use == Mode::Sync)
         {
-            helper::Throw<std::runtime_error>(
-                "Core", "IO", "Open",
-                "Sync mode is not supported in the inline engine.");
+            helper::Throw<std::runtime_error>("Core", "IO", "Open",
+                                              "Sync mode is not supported in the inline engine.");
         }
 
         if (m_Engines.size() >= 2)
         {
-            std::string msg =
-                "Failed to add engine " + name + " to IO \'" + m_Name + "\'. ";
+            std::string msg = "Failed to add engine " + name + " to IO \'" + m_Name + "\'. ";
             msg += "An inline engine must have exactly one writer, and one "
                    "reader. ";
             msg += "There are already two engines declared, so no more can be "
@@ -670,10 +622,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
             auto engine_ptr = m_Engines.begin()->second;
             if (engine_ptr->OpenMode() == mode_to_use)
             {
-                std::string msg =
-                    "The previously added engine " + engine_ptr->m_Name +
-                    " is already opened in same mode requested for " + name +
-                    ". ";
+                std::string msg = "The previously added engine " + engine_ptr->m_Name +
+                                  " is already opened in same mode requested for " + name + ". ";
                 msg += "The inline engine requires exactly one writer and one "
                        "reader.";
                 helper::Throw<std::runtime_error>("Core", "IO", "Open", msg);
@@ -684,31 +634,27 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
     auto f = FactoryLookup(engineTypeLC);
     if (f != Factory.end())
     {
-        if ((mode_to_use == Mode::Read) ||
-            (mode_to_use == Mode::ReadRandomAccess))
+        if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess))
         {
-            engine =
-                f->second.MakeReader(*this, name, mode_to_use, std::move(comm));
+            engine = f->second.MakeReader(*this, name, mode_to_use, std::move(comm));
         }
         else
         {
-            engine =
-                f->second.MakeWriter(*this, name, mode_to_use, std::move(comm));
+            engine = f->second.MakeWriter(*this, name, mode_to_use, std::move(comm));
         }
     }
     else
     {
         helper::Throw<std::invalid_argument>("Core", "IO", "Open",
-                                             "Engine type " + m_EngineType +
-                                                 " is not valid");
+                                             "Engine type " + m_EngineType + " is not valid");
     }
 
     auto itEngine = m_Engines.emplace(name, std::move(engine));
 
     if (!itEngine.second)
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "IO", "Open", "failed to create Engine " + m_EngineType);
+        helper::Throw<std::invalid_argument>("Core", "IO", "Open",
+                                             "failed to create Engine " + m_EngineType);
     }
     // return a reference
     return *itEngine.first->second.get();
@@ -783,12 +729,10 @@ void IO::FlushAll()
     }
 }
 
-void IO::ResetVariablesStepSelection(const bool zeroStart,
-                                     const std::string hint)
+void IO::ResetVariablesStepSelection(const bool zeroStart, const std::string hint)
 {
     PERFSTUBS_SCOPED_TIMER("IO::other");
-    for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end();
-         ++itVariable)
+    for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end(); ++itVariable)
     {
         const DataType type = InquireVariableType(itVariable);
 
@@ -815,13 +759,11 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
     const std::set<std::string> attributes = helper::KeysToSet(m_Attributes);
     const std::set<std::string> variables = helper::KeysToSet(m_Variables);
 
-    for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end();
-         ++itVariable)
+    for (auto itVariable = m_Variables.begin(); itVariable != m_Variables.end(); ++itVariable)
     {
         // if for each step (BP4), check if variable type is not empty
         // (means variable exist in that step)
-        const DataType type = isStep ? InquireVariableType(itVariable)
-                                     : itVariable->second->m_Type;
+        const DataType type = isStep ? InquireVariableType(itVariable) : itVariable->second->m_Type;
 
         if (type == DataType::None)
         {
@@ -834,10 +776,8 @@ void IO::SetPrefixedNames(const bool isStep) noexcept
         else
         {
             VariableBase &variable = *itVariable->second;
-            variable.m_PrefixedVariables =
-                helper::PrefixMatches(variable.m_Name, variables);
-            variable.m_PrefixedAttributes =
-                helper::PrefixMatches(variable.m_Name, attributes);
+            variable.m_PrefixedVariables = helper::PrefixMatches(variable.m_Name, variables);
+            variable.m_PrefixedAttributes = helper::PrefixMatches(variable.m_Name, attributes);
         }
     }
 
@@ -850,10 +790,9 @@ void IO::CheckAttributeCommon(const std::string &name) const
     auto itAttribute = m_Attributes.find(name);
     if (itAttribute != m_Attributes.end())
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "IO", "CheckAttributeCommon",
-            "Attribute " + name + " exists in IO " + m_Name +
-                ", in call to DefineAttribute");
+        helper::Throw<std::invalid_argument>("Core", "IO", "CheckAttributeCommon",
+                                             "Attribute " + name + " exists in IO " + m_Name +
+                                                 ", in call to DefineAttribute");
     }
 }
 
@@ -871,15 +810,11 @@ void IO::CheckTransportType(const std::string type) const
 
 StructDefinition &IO::DefineStruct(const std::string &name, const size_t size)
 {
-    return m_ADIOS.m_StructDefinitions
-        .emplace(name, StructDefinition(name, size))
-        ->second;
+    return m_ADIOS.m_StructDefinitions.emplace(name, StructDefinition(name, size))->second;
 }
 
-VariableStruct &IO::DefineStructVariable(const std::string &name,
-                                         StructDefinition &def,
-                                         const Dims &shape, const Dims &start,
-                                         const Dims &count,
+VariableStruct &IO::DefineStructVariable(const std::string &name, StructDefinition &def,
+                                         const Dims &shape, const Dims &start, const Dims &count,
                                          const bool constantDims)
 {
 
@@ -889,18 +824,17 @@ VariableStruct &IO::DefineStructVariable(const std::string &name,
         auto itVariable = m_Variables.find(name);
         if (itVariable != m_Variables.end())
         {
-            helper::Throw<std::invalid_argument>(
-                "Core", "IO", "DefineStructVariable",
-                "variable " + name + " already defined in IO " + m_Name);
+            helper::Throw<std::invalid_argument>("Core", "IO", "DefineStructVariable",
+                                                 "variable " + name + " already defined in IO " +
+                                                     m_Name);
         }
     }
 
-    auto itVariablePair = m_Variables.emplace(
-        name, std::unique_ptr<VariableBase>(new VariableStruct(
-                  name, def, shape, start, count, constantDims)));
+    auto itVariablePair =
+        m_Variables.emplace(name, std::unique_ptr<VariableBase>(new VariableStruct(
+                                      name, def, shape, start, count, constantDims)));
 
-    VariableStruct &variable =
-        static_cast<VariableStruct &>(*itVariablePair.first->second);
+    VariableStruct &variable = static_cast<VariableStruct &>(*itVariablePair.first->second);
 
     // check IO placeholder for variable operations
     auto itOperations = m_VarOpsPlaceholder.find(name);
@@ -943,8 +877,7 @@ VariableStruct *IO::InquireStructVariable(const std::string &name) noexcept
         return nullptr;
     }
 
-    VariableStruct *variable =
-        static_cast<VariableStruct *>(itVariable->second.get());
+    VariableStruct *variable = static_cast<VariableStruct *>(itVariable->second.get());
     if (m_ReadStreaming)
     {
         if (!variable->IsValidStep(m_EngineStep + 1))
@@ -955,8 +888,7 @@ VariableStruct *IO::InquireStructVariable(const std::string &name) noexcept
     return variable;
 }
 
-VariableStruct *IO::InquireStructVariable(const std::string &name,
-                                          const StructDefinition &def,
+VariableStruct *IO::InquireStructVariable(const std::string &name, const StructDefinition &def,
                                           const bool allowReorganize) noexcept
 {
     auto ret = InquireStructVariable(name);
@@ -976,8 +908,7 @@ VariableStruct *IO::InquireStructVariable(const std::string &name,
         {
             return nullptr;
         }
-        if (ret->m_WriteStructDefinition->Offset(i) != def.Offset(i) &&
-            !allowReorganize)
+        if (ret->m_WriteStructDefinition->Offset(i) != def.Offset(i) && !allowReorganize)
         {
             return nullptr;
         }
@@ -985,8 +916,7 @@ VariableStruct *IO::InquireStructVariable(const std::string &name,
         {
             return nullptr;
         }
-        if (ret->m_WriteStructDefinition->ElementCount(i) !=
-            def.ElementCount(i))
+        if (ret->m_WriteStructDefinition->ElementCount(i) != def.ElementCount(i))
         {
             return nullptr;
         }
@@ -996,24 +926,22 @@ VariableStruct *IO::InquireStructVariable(const std::string &name,
 }
 
 // Explicitly instantiate the necessary public template implementations
-#define define_template_instantiation(T)                                       \
-    template Variable<T> &IO::DefineVariable<T>(const std::string &,           \
-                                                const Dims &, const Dims &,    \
-                                                const Dims &, const bool);     \
+#define define_template_instantiation(T)                                                           \
+    template Variable<T> &IO::DefineVariable<T>(const std::string &, const Dims &, const Dims &,   \
+                                                const Dims &, const bool);                         \
     template Variable<T> *IO::InquireVariable<T>(const std::string &) noexcept;
 
 ADIOS2_FOREACH_STDTYPE_1ARG(define_template_instantiation)
 #undef define_template_instatiation
 
-#define declare_template_instantiation(T)                                      \
-    template Attribute<T> &IO::DefineAttribute<T>(                             \
-        const std::string &, const T *, const size_t, const std::string &,     \
-        const std::string, const bool);                                        \
-    template Attribute<T> &IO::DefineAttribute<T>(                             \
-        const std::string &, const T &, const std::string &,                   \
-        const std::string, const bool);                                        \
-    template Attribute<T> *IO::InquireAttribute<T>(                            \
-        const std::string &, const std::string &, const std::string) noexcept;
+#define declare_template_instantiation(T)                                                          \
+    template Attribute<T> &IO::DefineAttribute<T>(const std::string &, const T *, const size_t,    \
+                                                  const std::string &, const std::string,          \
+                                                  const bool);                                     \
+    template Attribute<T> &IO::DefineAttribute<T>(                                                 \
+        const std::string &, const T &, const std::string &, const std::string, const bool);       \
+    template Attribute<T> *IO::InquireAttribute<T>(const std::string &, const std::string &,       \
+                                                   const std::string) noexcept;
 
 ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

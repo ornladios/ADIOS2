@@ -169,7 +169,7 @@ class SpackCIBridge(object):
                         # Check if we should defer pushing/testing this PR because it is based on "too new" of a commit
                         # of the main branch.
                         tmp_pr_branch = f"temporary_{pr_string}"
-                        subprocess.run(["git", "fetch", "--unshallow", "github",
+                        subprocess.run(["git", "fetch", "github",
                                        f"refs/pull/{pull.number}/head:{tmp_pr_branch}"], check=True)
                         # Get the merge base between this PR and the main branch.
                         try:
@@ -226,7 +226,7 @@ class SpackCIBridge(object):
                         # then we will push the merge commit that was automatically created by GitHub to GitLab
                         # where it will kick off a CI pipeline.
                         try:
-                            subprocess.run(["git", "fetch", "--unshallow", "github",
+                            subprocess.run(["git", "fetch", "github",
                                            f"{pull.merge_commit_sha}:{pr_string}"], check=True)
                         except subprocess.CalledProcessError:
                             print("Failed to locally checkout PR {0} ({1}). Skipping"
@@ -306,7 +306,7 @@ class SpackCIBridge(object):
         self.gitlab_shallow_fetch()
 
         if self.main_branch:
-            subprocess.run(["git", "fetch", "--unshallow", "github", self.main_branch], check=True)
+            subprocess.run(["git", "fetch", "github", self.main_branch], check=True)
 
     def get_gitlab_pr_branches(self):
         """Query GitLab for branches that have already been copied over from GitHub PRs.
@@ -350,7 +350,7 @@ class SpackCIBridge(object):
     def fetch_github_branches(self, fetch_refspecs):
         """Perform `git fetch` for a given list of refspecs."""
         print("Fetching GitHub refs for open PRs")
-        fetch_args = ["git", "fetch", "-q", "--unshallow", "github"] + fetch_refspecs
+        fetch_args = ["git", "fetch", "-q", "github"] + fetch_refspecs
         subprocess.run(fetch_args, check=True)
 
     def build_local_branches(self, protected_branches):

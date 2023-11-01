@@ -28,6 +28,7 @@ then
 else
   export CI_BUILD_NAME="${GITHUB_REF_NAME}_${GH_YML_JOBNAME}"
 fi
+
 if [[ "${GH_YML_BASE_OS}" =~ "Windows" ]]
 then
   export CI_ROOT_DIR="${GITHUB_WORKSPACE//\\//}"
@@ -39,7 +40,7 @@ fi
 export CI_BIN_DIR="${CI_ROOT_DIR}/${GH_YML_JOBNAME}"
 
 STEP=$1
-CTEST_SCRIPT=gha/scripts/ci/cmake-v2/ci-${GH_YML_JOBNAME}.cmake
+CTEST_SCRIPT=gha/scripts/ci/cmake/ci-${GH_YML_JOBNAME}.cmake
 
 # Update and Test steps enable an extra step
 CTEST_STEP_ARGS="-Ddashboard_do_${STEP}=ON"
@@ -69,30 +70,20 @@ export TMPDIR="${RUNNER_TEMP}/tmp"
 mkdir -p "${TMPDIR}"
 
 # OpenMPI specific setup and workarounds
-if [[ "${GH_YML_MATRIX_PARALLEL}" =~ mpi && "${GH_YML_BASE_OS}" != "Windows" ]]
+if [[ "${GH_YML_MATRIX_PARALLEL}" =~ ompi && "${GH_YML_BASE_OS}" != "Windows" ]]
 then
   # Quiet some warnings from OpenMPI
   export OMPI_MCA_btl_base_warn_component_unused=0
   export OMPI_MCA_btl_vader_single_copy_mechanism=none
 
-  # Force only shared mem backends
-  export OMPI_MCA_btl="self,vader"
-
-  # Workaround for open-mpi/ompi#7516
-  export OMPI_MCA_gds=hash
-
-  # Workaround for open-mpi/ompi#5798
-  export OMPI_MCA_btl_vader_backing_directory="/tmp"
-
   # Enable overscription in OpenMPI
   export OMPI_MCA_rmaps_base_oversubscribe=1
   export OMPI_MCA_hwloc_base_binding_policy=none
+fi
 
-  # Disable OpenMPI rsh launching
-  export OMPI_MCA_plm_rsh_agent=false
-
-  # Disable cuda warnings
-  export OMPI_MCA_opal_warn_on_missing_libcuda=0
+if [[ "${GH_YML_MATRIX_PARALLEL}" =~ ompi ]]
+then
+  export HYDRA_LAUNCHER=fork
 fi
 
 # Make sure staging tests use localhost

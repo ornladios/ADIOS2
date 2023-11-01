@@ -41,8 +41,7 @@ struct RunParams
     size_t nvars;
     size_t nblocks;
     size_t nsteps;
-    RunParams(size_t nv, size_t nb, size_t ns)
-    : nvars{nv}, nblocks{nb}, nsteps{ns} {};
+    RunParams(size_t nv, size_t nb, size_t ns) : nvars{nv}, nblocks{nb}, nsteps{ns} {};
 };
 
 /* This function is executed by INSTANTIATE_TEST_SUITE_P
@@ -72,53 +71,51 @@ std::vector<RunParams> CreateRunParams()
     return params;
 }
 
-#define log(...)                                                               \
-    fprintf(stderr, "[rank=%3.3d, line %d]: ", rank, __LINE__);                \
-    fprintf(stderr, __VA_ARGS__);                                              \
+#define log(...)                                                                                   \
+    fprintf(stderr, "[rank=%3.3d, line %d]: ", rank, __LINE__);                                    \
+    fprintf(stderr, __VA_ARGS__);                                                                  \
     fflush(stderr);
-#define printE(...)                                                            \
-    fprintf(stderr, "[rank=%3.3d, line %d]: ERROR: ", rank, __LINE__);         \
-    fprintf(stderr, __VA_ARGS__);                                              \
+#define printE(...)                                                                                \
+    fprintf(stderr, "[rank=%3.3d, line %d]: ERROR: ", rank, __LINE__);                             \
+    fprintf(stderr, __VA_ARGS__);                                                                  \
     fflush(stderr);
 
 #define VALUE(rank, step, block) (step * 10000 + 10 * rank + block)
 
-#define CHECK_VARINFO(VARNAME, NDIM, NSTEPS)                                   \
-    vi = adios2_inquire_variable(ioR, VARNAME);                                \
-    if (vi == NULL)                                                            \
-    {                                                                          \
-        printE("No such variable: %s\n", VARNAME);                             \
-        err = 101;                                                             \
-        goto endread;                                                          \
-    }                                                                          \
-    size_t ndims;                                                              \
-    adios2_variable_ndims(&ndims, vi);                                         \
-    if (ndims != NDIM)                                                         \
-    {                                                                          \
-        printE("Variable %s has %zu dimensions, but expected %u\n", VARNAME,   \
-               ndims, NDIM);                                                   \
-        err = 102;                                                             \
-        goto endread;                                                          \
+#define CHECK_VARINFO(VARNAME, NDIM, NSTEPS)                                                       \
+    vi = adios2_inquire_variable(ioR, VARNAME);                                                    \
+    if (vi == NULL)                                                                                \
+    {                                                                                              \
+        printE("No such variable: %s\n", VARNAME);                                                 \
+        err = 101;                                                                                 \
+        goto endread;                                                                              \
+    }                                                                                              \
+    size_t ndims;                                                                                  \
+    adios2_variable_ndims(&ndims, vi);                                                             \
+    if (ndims != NDIM)                                                                             \
+    {                                                                                              \
+        printE("Variable %s has %zu dimensions, but expected %u\n", VARNAME, ndims, NDIM);         \
+        err = 102;                                                                                 \
+        goto endread;                                                                              \
     }
 
-#define CHECK_SCALAR(VARNAME, VAR, VALUE, STEP)                                \
-    if (VAR != VALUE)                                                          \
-    {                                                                          \
-        printE(#VARNAME " step %zu: wrote %zu but read %zu\n", STEP, VALUE,    \
-               VAR);                                                           \
-        err = 104;                                                             \
-        /*goto endread;*/                                                      \
+#define CHECK_SCALAR(VARNAME, VAR, VALUE, STEP)                                                    \
+    if (VAR != VALUE)                                                                              \
+    {                                                                                              \
+        printE(#VARNAME " step %zu: wrote %zu but read %zu\n", STEP, VALUE, VAR);                  \
+        err = 104;                                                                                 \
+        /*goto endread;*/                                                                          \
     }
 
-#define CHECK_ARRAY(VARNAME, A, N, VALUE, STEP, BLOCK)                         \
-    for (int i = 0; i < static_cast<int>(N); i++)                              \
-        if (A[i] != VALUE)                                                     \
-        {                                                                      \
-            printE("%s[%d] step %d block %zu: wrote %d but read %d\n",         \
-                   VARNAME, i, STEP, BLOCK, VALUE, A[i]);                      \
-            err = 104;                                                         \
-            /*goto endread;*/                                                  \
-            break;                                                             \
+#define CHECK_ARRAY(VARNAME, A, N, VALUE, STEP, BLOCK)                                             \
+    for (int i = 0; i < static_cast<int>(N); i++)                                                  \
+        if (A[i] != VALUE)                                                                         \
+        {                                                                                          \
+            printE("%s[%d] step %d block %zu: wrote %d but read %d\n", VARNAME, i, STEP, BLOCK,    \
+                   VALUE, A[i]);                                                                   \
+            err = 104;                                                                             \
+            /*goto endread;*/                                                                      \
+            break;                                                                                 \
         }
 
 #if ADIOS2_USE_MPI
@@ -238,8 +235,8 @@ public:
         NBLOCKS = p.nblocks;
         NSTEPS = p.nsteps;
         REDEFINE = redefineVars;
-        snprintf(FILENAME, sizeof(FILENAME), "manyVars.%zu_%zu_%zu%s.bp", NVARS,
-                 NBLOCKS, NSTEPS, REDEFINE ? "_redefine" : "");
+        snprintf(FILENAME, sizeof(FILENAME), "manyVars.%zu_%zu_%zu%s.bp", NVARS, NBLOCKS, NSTEPS,
+                 REDEFINE ? "_redefine" : "");
 
         alloc_vars();
 #if ADIOS2_USE_MPI
@@ -254,8 +251,7 @@ public:
 
         if (rank == 0)
         {
-            log("Test %zu Variables, %zu Blocks, %zu Steps\n", NVARS, NBLOCKS,
-                NSTEPS);
+            log("Test %zu Variables, %zu Blocks, %zu Steps\n", NVARS, NBLOCKS, NSTEPS);
         }
 
         engineW = adios2_open(ioW, FILENAME, adios2_mode_write);
@@ -303,9 +299,8 @@ public:
          * Offsets will change at writing for each block. */
         for (size_t i = 0; i < NVARS; i++)
         {
-            varW[i] = adios2_define_variable(
-                ioW, varnames[i], adios2_type_int32_t, 2, shape, start, count,
-                adios2_constant_dims_false);
+            varW[i] = adios2_define_variable(ioW, varnames[i], adios2_type_int32_t, 2, shape, start,
+                                             count, adios2_constant_dims_false);
         }
     }
 
@@ -322,8 +317,7 @@ public:
         for (size_t block = 0; block < NBLOCKS; block++)
         {
             v = VALUE(rank, step, block);
-            log("  Write block %d, value %d to %s\n", static_cast<int>(block),
-                v, FILENAME);
+            log("  Write block %d, value %d to %s\n", static_cast<int>(block), v, FILENAME);
             set_vars(step, block);
             size_t start[2] = {offs1, offs2};
             for (size_t i = 0; i < NVARS; i++)
@@ -339,8 +333,7 @@ public:
         if (rank == 0)
         {
             log("  Write time for step %d was %6.3lf seconds\n", step,
-                double(std::chrono::duration_cast<std::chrono::seconds>(te - tb)
-                           .count()));
+                double(std::chrono::duration_cast<std::chrono::seconds>(te - tb).count()));
         }
 #if ADIOS2_USE_MPI
         MPI_Barrier(comm);
@@ -361,8 +354,7 @@ public:
         adios2_variable *vi;
         int err = 0;
         std::chrono::time_point<std::chrono::high_resolution_clock> tb, te;
-        std::chrono::duration<double>
-            ts; // time for just scheduling for one step/block
+        std::chrono::duration<double> ts; // time for just scheduling for one step/block
 
         size_t start[2] = {offs1, offs2};
         size_t count[2] = {ldim1, ldim2};
@@ -393,8 +385,7 @@ public:
         if (rank == 0)
         {
             log("  Time to check all vars' info: %6.3lf seconds\n",
-                double(std::chrono::duration_cast<std::chrono::seconds>(te - tb)
-                           .count()));
+                double(std::chrono::duration_cast<std::chrono::seconds>(te - tb).count()));
         }
 
         log("  Check variable content...\n");
@@ -420,20 +411,17 @@ public:
                     for (size_t i = 0; i < NVARS; i++)
                     {
                         auto tsb = std::chrono::high_resolution_clock::now();
-                        adios2_variable *varH =
-                            adios2_inquire_variable(ioR, varnames[i]);
+                        adios2_variable *varH = adios2_inquire_variable(ioR, varnames[i]);
                         adios2_set_selection(varH, 2, start, count);
                         adios2_get(engineR, varH, r2, adios2_mode_sync);
                         auto tse = std::chrono::high_resolution_clock::now();
                         ts += tse - tsb;
-                        CHECK_ARRAY(varnames[i], r2, ldim1 * ldim2, v, step,
-                                    block)
+                        CHECK_ARRAY(varnames[i], r2, ldim1 * ldim2, v, step, block)
                     }
                 }
                 else
                 {
-                    printf("-- ERROR: Could not get Step %d, status = %d\n",
-                           step, status);
+                    printf("-- ERROR: Could not get Step %d, status = %d\n", step, status);
                 }
             }
             adios2_end_step(engineR);
@@ -444,8 +432,7 @@ public:
             if (rank == 0)
             {
                 log("  Read time for step %d was %6.3lfs\n", step,
-                    double(std::chrono::duration_cast<std::chrono::seconds>(ts)
-                               .count()));
+                    double(std::chrono::duration_cast<std::chrono::seconds>(ts).count()));
             }
         }
 
@@ -466,8 +453,7 @@ TEST_P(TestManyVars, DontRedefineVars)
     ASSERT_EQ(err, 0);
 }
 
-INSTANTIATE_TEST_SUITE_P(NxM, TestManyVars,
-                         ::testing::ValuesIn(CreateRunParams()));
+INSTANTIATE_TEST_SUITE_P(NxM, TestManyVars, ::testing::ValuesIn(CreateRunParams()));
 
 //******************************************************************************
 // main

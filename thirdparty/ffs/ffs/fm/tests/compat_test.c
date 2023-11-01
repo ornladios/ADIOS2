@@ -135,11 +135,9 @@ do_test(FMStructDescList list)
 
 
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
-    FMContext context = create_local_FMcontext(NULL);
+    FMContext context = create_local_FMcontext();
     FMFormat ioformat1, ioformat2;
     FMStructDescRec str_list[5];
 

@@ -26,11 +26,17 @@ class Worker;
 class QueryWorker
 {
 public:
+    // configFile has query, can be either xml or json
     QueryWorker(const std::string &configFile, adios2::Engine &engine);
 
-    void
-    GetResultCoverage(adios2::Box<adios2::Dims> &,
-                      std::vector<adios2::Box<adios2::Dims>> &touched_blocks);
+    void GetResultCoverage(std::vector<size_t> &touched_block_ids);
+    // touched_blocks is a list of regions specified by (start, count),
+    // that contains data that satisfies the query file
+    void GetResultCoverage(std::vector<adios2::Box<adios2::Dims>> &touched_blocks);
+
+    // supply output bound for the results
+    void GetResultCoverage(const adios2::Box<adios2::Dims> &,
+                           std::vector<adios2::Box<adios2::Dims>> &touched_blocks);
 
 private:
     std::shared_ptr<adios2::query::Worker> m_Worker;

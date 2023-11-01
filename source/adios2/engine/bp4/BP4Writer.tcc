@@ -20,72 +20,60 @@ namespace engine
 {
 
 template <class T>
-void BP4Writer::PutCommon(Variable<T> &variable,
-                          typename Variable<T>::Span &span,
+void BP4Writer::PutCommon(Variable<T> &variable, typename Variable<T>::Span &span,
                           const size_t /*bufferID*/, const T &value)
 {
-    const typename Variable<T>::BPInfo &blockInfo =
-        variable.SetBlockInfo(nullptr, CurrentStep());
+    const typename Variable<T>::BPInfo &blockInfo = variable.SetBlockInfo(nullptr, CurrentStep());
     m_BP4Serializer.m_DeferredVariables.insert(variable.m_Name);
 
-    const size_t dataSize =
-        helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
-        m_BP4Serializer.GetBPIndexSizeInData(variable.m_Name, blockInfo.Count);
+    const size_t dataSize = helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
+                            m_BP4Serializer.GetBPIndexSizeInData(variable.m_Name, blockInfo.Count);
 
     const format::BP4Serializer::ResizeResult resizeResult =
-        m_BP4Serializer.ResizeBuffer(dataSize, "in call to variable " +
-                                                   variable.m_Name + " Put");
+        m_BP4Serializer.ResizeBuffer(dataSize, "in call to variable " + variable.m_Name + " Put");
 
     // if first timestep Write create a new pg index
     if (!m_BP4Serializer.m_MetadataSet.DataPGIsOpen)
     {
         m_BP4Serializer.PutProcessGroupIndex(
-            m_IO.m_Name,
-            (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
+            m_IO.m_Name, (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
             m_FileDataManager.GetTransportsTypes());
     }
 
     if (resizeResult == format::BP4Serializer::ResizeResult::Flush)
     {
-        helper::Throw<std::invalid_argument>(
-            "Engine", "BP4Writer", "PutCommon",
-            "returning a Span can't trigger "
-            "buffer reallocation in BP4 engine, remove "
-            "MaxBufferSize parameter, in call to Put");
+        helper::Throw<std::invalid_argument>("Engine", "BP4Writer", "PutCommon",
+                                             "returning a Span can't trigger "
+                                             "buffer reallocation in BP4 engine, remove "
+                                             "MaxBufferSize parameter, in call to Put");
     }
 
     // WRITE INDEX to data buffer and metadata structure (in memory)//
     const bool sourceRowMajor = m_IO.m_ArrayOrder == ArrayOrdering::RowMajor;
-    m_BP4Serializer.PutVariableMetadata(variable, blockInfo, sourceRowMajor,
-                                        &span);
+    m_BP4Serializer.PutVariableMetadata(variable, blockInfo, sourceRowMajor, &span);
     span.m_Value = value;
-    m_BP4Serializer.PutVariablePayload(variable, blockInfo, sourceRowMajor,
-                                       &span);
+    m_BP4Serializer.PutVariablePayload(variable, blockInfo, sourceRowMajor, &span);
 }
 
 template <class T>
-void BP4Writer::PutSyncCommon(Variable<T> &variable,
-                              const typename Variable<T>::BPInfo &blockInfo,
+void BP4Writer::PutSyncCommon(Variable<T> &variable, const typename Variable<T>::BPInfo &blockInfo,
                               const bool resize)
 {
-    format::BP4Base::ResizeResult resizeResult =
-        format::BP4Base::ResizeResult::Success;
+    format::BP4Base::ResizeResult resizeResult = format::BP4Base::ResizeResult::Success;
     if (resize)
     {
         const size_t dataSize =
             helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
-            m_BP4Serializer.GetBPIndexSizeInData(variable.m_Name,
-                                                 blockInfo.Count);
+            m_BP4Serializer.GetBPIndexSizeInData(variable.m_Name, blockInfo.Count);
 
-        resizeResult = m_BP4Serializer.ResizeBuffer(
-            dataSize, "in call to variable " + variable.m_Name + " Put");
+        resizeResult = m_BP4Serializer.ResizeBuffer(dataSize, "in call to variable " +
+                                                                  variable.m_Name + " Put");
     }
     // if first timestep Write create a new pg index
     if (!m_BP4Serializer.m_MetadataSet.DataPGIsOpen)
     {
         m_BP4Serializer.PutProcessGroupIndex(
-            m_IO.m_Name,
-            (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
+            m_IO.m_Name, (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
             m_FileDataManager.GetTransportsTypes());
     }
 
@@ -96,8 +84,7 @@ void BP4Writer::PutSyncCommon(Variable<T> &variable,
 
         // new group index for incoming variable
         m_BP4Serializer.PutProcessGroupIndex(
-            m_IO.m_Name,
-            (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
+            m_IO.m_Name, (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor) ? "C++" : "Fortran",
             m_FileDataManager.GetTransportsTypes());
     }
 
@@ -116,22 +103,18 @@ void BP4Writer::PutDeferredCommon(Variable<T> &variable, const T *data)
         return;
     }
 
-    const typename Variable<T>::BPInfo blockInfo =
-        variable.SetBlockInfo(data, CurrentStep());
+    const typename Variable<T>::BPInfo blockInfo = variable.SetBlockInfo(data, CurrentStep());
     m_BP4Serializer.m_DeferredVariables.insert(variable.m_Name);
     m_BP4Serializer.m_DeferredVariablesDataSize += static_cast<size_t>(
         1.05 * helper::PayloadSize(blockInfo.Data, blockInfo.Count) +
-        4 * m_BP4Serializer.GetBPIndexSizeInData(variable.m_Name,
-                                                 blockInfo.Count));
+        4 * m_BP4Serializer.GetBPIndexSizeInData(variable.m_Name, blockInfo.Count));
 }
 
 template <class T>
-T *BP4Writer::BufferDataCommon(const int /*bufferIdx*/,
-                               const size_t payloadPosition,
+T *BP4Writer::BufferDataCommon(const int /*bufferIdx*/, const size_t payloadPosition,
                                const size_t /*bufferID*/) noexcept
 {
-    T *data = reinterpret_cast<T *>(m_BP4Serializer.m_Data.m_Buffer.data() +
-                                    payloadPosition);
+    T *data = reinterpret_cast<T *>(m_BP4Serializer.m_Data.m_Buffer.data() + payloadPosition);
     return data;
 }
 

@@ -5,7 +5,6 @@
 #include "config.h"
 #include <string.h>
 #include <time.h>
-#include <stdio.h>
 #include "fm.h"
 #include "ffs.h"
 
@@ -21,7 +20,7 @@ extern int sleep();
 char *gen_name(int i)
 {
     char tmp_name[128];
-    sprintf(tmp_name, "SST_Variable_FieldName that's really really long because I can't imagine why %d", i);
+    snprintf(tmp_name, sizeof(tmp_name), "SST_Variable_FieldName that's really really long because I can't imagine why %d", i);
     return strdup(tmp_name);
 }
 
@@ -32,10 +31,13 @@ struct base_elem {
   int64_t *array2;
 };
 
+#ifdef _MSC_VER
+// this is not important on windows
+#define clock_gettime(x,y)
+#endif
+
 int
-main(argc, argv)
-int argc;
-char **argv;
+main(int argc, char **argv)
 {
 
     FMStructDescRec str_list[5];
@@ -62,12 +64,12 @@ char **argv;
         list[cur_count+1].field_size = 8;
         list[cur_count+1].field_offset = (cur_count+1) * 8;
         list[cur_count+2].field_name = n3;
-        sprintf(tmp, "integer[%s]", n1);
+        snprintf(tmp, sizeof(tmp), "integer[%s]", n1);
         list[cur_count+2].field_type = strdup(tmp);
         list[cur_count+2].field_size = 8;
         list[cur_count+2].field_offset = (cur_count+2) * 8;
         list[cur_count+3].field_name = n4;
-        sprintf(tmp, "integer[%s]", n2);
+        snprintf(tmp, sizeof(tmp), "integer[%s]", n2);
         list[cur_count+3].field_type = strdup(tmp);
         list[cur_count+3].field_size = 8;
         list[cur_count+3].field_offset = (cur_count+3) * 8;

@@ -31,15 +31,14 @@ namespace core
 namespace
 {
 template <typename T>
-std::shared_ptr<Engine> MakeEngineMPI(IO &io, const std::string &name,
-                                      const Mode mode, helper::Comm comm)
+std::shared_ptr<Engine> MakeEngineMPI(IO &io, const std::string &name, const Mode mode,
+                                      helper::Comm comm)
 {
     if (!comm.IsMPI())
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "IOMPI", "MakeEngineMPI",
-            "A MPI-only engine cannot be used with a "
-            "communicator that is not MPI-based.");
+        helper::Throw<std::invalid_argument>("Core", "IOMPI", "MakeEngineMPI",
+                                             "A MPI-only engine cannot be used with a "
+                                             "communicator that is not MPI-based.");
     }
     return IO::MakeEngine<T>(io, name, mode, std::move(comm));
 }
@@ -47,14 +46,12 @@ std::shared_ptr<Engine> MakeEngineMPI(IO &io, const std::string &name,
 
 void RegisterMPIEngines()
 {
-    IO::RegisterEngine(
-        "ssc", IO::EngineFactoryEntry{MakeEngineMPI<engine::SscReader>,
-                                      MakeEngineMPI<engine::SscWriter>});
+    IO::RegisterEngine("ssc", IO::EngineFactoryEntry{MakeEngineMPI<engine::SscReader>,
+                                                     MakeEngineMPI<engine::SscWriter>});
 #ifdef ADIOS2_HAVE_DATASPACES
-    IO::RegisterEngine(
-        "dataspaces",
-        IO::EngineFactoryEntry{MakeEngineMPI<engine::DataSpacesReader>,
-                               MakeEngineMPI<engine::DataSpacesWriter>});
+    IO::RegisterEngine("dataspaces",
+                       IO::EngineFactoryEntry{MakeEngineMPI<engine::DataSpacesReader>,
+                                              MakeEngineMPI<engine::DataSpacesWriter>});
 #endif
 #if defined(ADIOS2_HAVE_HDF5_PARALLEL)
     interop::RegisterHDF5Common_MPI_API();

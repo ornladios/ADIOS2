@@ -96,8 +96,7 @@ public:
      * found
      */
     template <class T>
-    Attribute<T> InquireAttribute(const std::string &name,
-                                  const std::string &variableName = "",
+    Attribute<T> InquireAttribute(const std::string &name, const std::string &variableName = "",
                                   const std::string separator = "/");
 
     /**

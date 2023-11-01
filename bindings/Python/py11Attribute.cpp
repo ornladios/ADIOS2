@@ -22,10 +22,7 @@ namespace py11
 
 Attribute::Attribute(core::AttributeBase *attribute) : m_Attribute(attribute) {}
 
-Attribute::operator bool() const noexcept
-{
-    return (m_Attribute == nullptr) ? false : true;
-}
+Attribute::operator bool() const noexcept { return (m_Attribute == nullptr) ? false : true; }
 
 std::string Attribute::Name() const
 {
@@ -63,9 +60,8 @@ std::vector<std::string> Attribute::DataString()
     }
     else
     {
-        throw std::invalid_argument(
-            "ERROR: data type for attribute " + m_Attribute->m_Name +
-            " is not string, in call to Attribute::DataStrings\n");
+        throw std::invalid_argument("ERROR: data type for attribute " + m_Attribute->m_Name +
+                                    " is not string, in call to Attribute::DataStrings\n");
     }
     return data;
 }
@@ -79,26 +75,23 @@ pybind11::array Attribute::Data()
     {
         // not supported
     }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        pybind11::array pyArray(pybind11::dtype::of<T>(),                      \
-                                m_Attribute->m_Elements);                      \
-        if (m_Attribute->m_IsSingleValue)                                      \
-        {                                                                      \
-            const T value = dynamic_cast<core::Attribute<T> *>(m_Attribute)    \
-                                ->m_DataSingleValue;                           \
-            std::memcpy(const_cast<void *>(pyArray.data()), &value,            \
-                        sizeof(T));                                            \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            const std::vector<T> &values =                                     \
-                dynamic_cast<core::Attribute<T> *>(m_Attribute)->m_DataArray;  \
-            std::memcpy(const_cast<void *>(pyArray.data()), values.data(),     \
-                        sizeof(T) * m_Attribute->m_Elements);                  \
-        }                                                                      \
-        return pyArray;                                                        \
+#define declare_type(T)                                                                            \
+    else if (type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        pybind11::array pyArray(pybind11::dtype::of<T>(), m_Attribute->m_Elements);                \
+        if (m_Attribute->m_IsSingleValue)                                                          \
+        {                                                                                          \
+            const T value = dynamic_cast<core::Attribute<T> *>(m_Attribute)->m_DataSingleValue;    \
+            std::memcpy(const_cast<void *>(pyArray.data()), &value, sizeof(T));                    \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            const std::vector<T> &values =                                                         \
+                dynamic_cast<core::Attribute<T> *>(m_Attribute)->m_DataArray;                      \
+            std::memcpy(const_cast<void *>(pyArray.data()), values.data(),                         \
+                        sizeof(T) * m_Attribute->m_Elements);                                      \
+        }                                                                                          \
+        return pyArray;                                                                            \
     }
     ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type

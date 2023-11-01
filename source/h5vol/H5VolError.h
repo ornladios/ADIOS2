@@ -21,78 +21,78 @@ void safe_free(void *p);
 void *safe_ralloc(void *ptr, size_t newsize, unsigned long line);
 #define SAFE_REALLOC(ptr, newsize) safe_ralloc(ptr, newsize, __LINE__)
 
-#define ADIOS_VOL_LOG_ERR(...)                                                 \
-    {                                                                          \
-        fprintf(stderr, "## ADIOS_VOL_ERROR:");                                \
-        fprintf(stderr, __VA_ARGS__);                                          \
-        fprintf(stderr, " In function:: %s\n", __FUNCTION__);                  \
-        fflush(stderr);                                                        \
+#define ADIOS_VOL_LOG_ERR(...)                                                                     \
+    {                                                                                              \
+        fprintf(stderr, "## ADIOS_VOL_ERROR:");                                                    \
+        fprintf(stderr, __VA_ARGS__);                                                              \
+        fprintf(stderr, " In function:: %s\n", __FUNCTION__);                                      \
+        fflush(stderr);                                                                            \
     }
 
-#define ADIOS_VOL_NOT_SUPPORTED_ERR(...)                                       \
-    {                                                                          \
-        fprintf(stderr, "## ADIOS_VOL_NOT_SUPPORTED:");                        \
-        fprintf(stderr, __VA_ARGS__);                                          \
-        fprintf(stderr, " In function:: %s\n", __FUNCTION__);                  \
-        fflush(stderr);                                                        \
+#define ADIOS_VOL_NOT_SUPPORTED_ERR(...)                                                           \
+    {                                                                                              \
+        fprintf(stderr, "## ADIOS_VOL_NOT_SUPPORTED:");                                            \
+        fprintf(stderr, __VA_ARGS__);                                                              \
+        fprintf(stderr, " In function:: %s\n", __FUNCTION__);                                      \
+        fflush(stderr);                                                                            \
     }
 
-#define ADIOS_VOL_NOT_SUPPORTED(...)                                           \
-    {                                                                          \
-        ADIOS_VOL_NOT_SUPPORTED_ERR(__VA_ARGS__);                              \
-        return -1; /* return err */                                            \
+#define ADIOS_VOL_NOT_SUPPORTED(...)                                                               \
+    {                                                                                              \
+        ADIOS_VOL_NOT_SUPPORTED_ERR(__VA_ARGS__);                                                  \
+        return -1; /* return err */                                                                \
     }
 
-#define ADIOS_VOL_WARN(...)                                                    \
-    {                                                                          \
-        fprintf(stderr, " ## ADIOS VOL WARNING :");                            \
-        fprintf(stderr, __VA_ARGS__);                                          \
-        fprintf(stderr, " In function:: %s\n", __FUNCTION__);                  \
-        fflush(stderr);                                                        \
+#define ADIOS_VOL_WARN(...)                                                                        \
+    {                                                                                              \
+        fprintf(stderr, " ## ADIOS VOL WARNING :");                                                \
+        fprintf(stderr, __VA_ARGS__);                                                              \
+        fprintf(stderr, " In function:: %s\n", __FUNCTION__);                                      \
+        fflush(stderr);                                                                            \
     }
-#define SHOW_ERROR_MSG(...)                                                    \
-    {                                                                          \
-        ADIOS_VOL_LOG_ERR(__VA_ARGS__);                                        \
+#define SHOW_ERROR_MSG(...)                                                                        \
+    {                                                                                              \
+        ADIOS_VOL_LOG_ERR(__VA_ARGS__);                                                            \
     }
 
-#define REQUIRE_NOT_NULL(x)                                                    \
-    if (NULL == x)                                                             \
-    {                                                                          \
-        ADIOS_VOL_LOG_ERR("");                                                 \
-        return;                                                                \
+#define REQUIRE_NOT_NULL(x)                                                                        \
+    if (NULL == x)                                                                                 \
+    {                                                                                              \
+        ADIOS_VOL_LOG_ERR("");                                                                     \
+        return;                                                                                    \
     }
-#define REQUIRE_NOT_NULL_ERR(x, errReturn)                                     \
-    if (NULL == x)                                                             \
-    {                                                                          \
-        ADIOS_VOL_LOG_ERR("");                                                 \
-        return errReturn;                                                      \
+#define REQUIRE_NOT_NULL_ERR(x, errReturn)                                                         \
+    if (NULL == x)                                                                                 \
+    {                                                                                              \
+        ADIOS_VOL_LOG_ERR("");                                                                     \
+        return errReturn;                                                                          \
     };
 
-//#define REQUIRE_MPI_SUCC(err) if (err != MPI_SUCCESS)
+// #define REQUIRE_MPI_SUCC(err) if (err != MPI_SUCCESS)
 //{ADIOS_VOL_MPI_ERR(err);}
-#define REQUIRE_MPI_SUCC(err)                                                  \
-    if (err != MPI_SUCCESS)                                                    \
-    {                                                                          \
-        ADIOS_VOL_MPI_ERR(err);                                                \
-        return -1;                                                             \
+#define REQUIRE_MPI_SUCC(err)                                                                      \
+    if (err != MPI_SUCCESS)                                                                        \
+    {                                                                                              \
+        ADIOS_VOL_MPI_ERR(err);                                                                    \
+        return -1;                                                                                 \
     }
 
-#define REQUIRE_SUCC(valid, errReturn)                                         \
-    if (!valid)                                                                \
-    {                                                                          \
-        return errReturn;                                                      \
+#define REQUIRE_SUCC(valid, errReturn)                                                             \
+    if (!valid)                                                                                    \
+    {                                                                                              \
+        return errReturn;                                                                          \
     }
-#define REQUIRE_SUCC_MSG(valid, errReturn, ...)                                \
-    if (!valid)                                                                \
-    {                                                                          \
-        SHOW_ERROR_MSG(__VA_ARGS__);                                           \
-        return errReturn;                                                      \
+#define REQUIRE_SUCC_MSG(valid, errReturn, ...)                                                    \
+    if (!valid)                                                                                    \
+    {                                                                                              \
+        SHOW_ERROR_MSG(__VA_ARGS__);                                                               \
+        return errReturn;                                                                          \
     }
-#define REQUIRE_SUCC_ACTION(valid, action, errReturn)                          \
-    if (!valid)                                                                \
-    {                                                                          \
-        action;                                                                \
-        return errReturn;                                                      \
+#define REQUIRE_SUCC_ACTION(valid, action, errReturn)                                              \
+    if (!valid)                                                                                    \
+    {                                                                                              \
+        action;                                                                                    \
+        return errReturn;                                                                          \
     }
 
 #endif

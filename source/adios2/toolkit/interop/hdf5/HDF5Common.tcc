@@ -25,7 +25,7 @@ namespace interop
 template <class T>
 void HDF5Common::DefineDataset(core::Variable<T> &variable)
 {
-    int dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
+    size_t dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
     hid_t h5Type = GetHDF5Type<T>();
 
     if (dimSize == 0)
@@ -43,7 +43,15 @@ void HDF5Common::DefineDataset(core::Variable<T> &variable)
     std::vector<hsize_t> dimsf, count, offset;
     GetHDF5SpaceSpec(variable, dimsf, count, offset);
 
-    hid_t fileSpace = H5Screate_simple(dimSize, dimsf.data(), NULL);
+    size_t max_int = static_cast<size_t>(std::numeric_limits<int>::max());
+    if (dimSize > max_int)
+    {
+        helper::Throw<std::overflow_error>("Toolkit", "interop::hdf5::HDF5Common", "DefineDataset",
+                                           "dimSize is too large "
+                                           "to be represented by an int");
+    }
+
+    hid_t fileSpace = H5Screate_simple(static_cast<int>(dimSize), dimsf.data(), NULL);
     HDF5TypeGuard fs(fileSpace, E_H5_SPACE);
 
     std::vector<hid_t> chain;
@@ -52,18 +60,15 @@ void HDF5Common::DefineDataset(core::Variable<T> &variable)
 }
 
 template <>
-void HDF5Common::DefineDataset<std::string>(
-    core::Variable<std::string> &variable)
+void HDF5Common::DefineDataset<std::string>(core::Variable<std::string> &variable)
 {
-    std::cout << "...Needs actual string size, so defer to later? var name="
-              << variable.m_Name << std::endl;
+    std::cout << "...Needs actual string size, so defer to later? var name=" << variable.m_Name
+              << std::endl;
 }
 
 template <class T>
-void HDF5Common::GetHDF5SpaceSpec(const core::Variable<T> &variable,
-                                  std::vector<hsize_t> &dimsf,
-                                  std::vector<hsize_t> &count,
-                                  std::vector<hsize_t> &offset)
+void HDF5Common::GetHDF5SpaceSpec(const core::Variable<T> &variable, std::vector<hsize_t> &dimsf,
+                                  std::vector<hsize_t> &count, std::vector<hsize_t> &offset)
 {
     size_t dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
     for (size_t i = 0; i < dimSize; ++i)
@@ -113,7 +118,7 @@ template <class T>
 void HDF5Common::Write(core::Variable<T> &variable, const T *values)
 {
     CheckWriteGroup();
-    int dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
+    size_t dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
     hid_t h5Type = GetHDF5Type<T>();
 
     if (std::is_same<T, std::string>::value)
@@ -165,8 +170,7 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
             }
             else
             {
-                H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, m_PropertyTxfID,
-                         values);
+                H5Dwrite(dsetID, h5Type, H5S_ALL, H5S_ALL, m_PropertyTxfID, values);
             }
         }
 #endif
@@ -177,7 +181,15 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
     std::vector<hsize_t> dimsf, count, offset;
     GetHDF5SpaceSpec(variable, dimsf, count, offset);
 
-    hid_t fileSpace = H5Screate_simple(dimSize, dimsf.data(), NULL);
+    size_t max_int = static_cast<size_t>(std::numeric_limits<int>::max());
+    if (dimSize > max_int)
+    {
+        helper::Throw<std::overflow_error>("Toolkit", "interop::hdf5::HDF5Common", "Write",
+                                           "dimSize is too large "
+                                           "to be represented by an int");
+    }
+
+    hid_t fileSpace = H5Screate_simple(static_cast<int>(dimSize), dimsf.data(), NULL);
 #ifndef RELAY_DEFINE_TO_HDF5 // RELAY_DEFINE_TO_HDF5 = variables in io are
                              // created at begin_step
     std::vector<hid_t> chain;
@@ -191,12 +203,11 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
     {
     }
 #endif
-    hid_t memSpace = H5Screate_simple(dimSize, count.data(), NULL);
+    hid_t memSpace = H5Screate_simple(static_cast<int>(dimSize), count.data(), NULL);
 
     // Select hyperslab
     fileSpace = H5Dget_space(dsetID);
-    H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, offset.data(), NULL,
-                        count.data(), NULL);
+    H5Sselect_hyperslab(fileSpace, H5S_SELECT_SET, offset.data(), NULL, count.data(), NULL);
 
     herr_t status;
 
@@ -211,28 +222,24 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
                                 variable.m_Count, true, false, Dims(), Dims(),
                                 variable.m_MemoryStart, variable.m_MemoryCount);
 
-        status =
-            H5Dwrite(dsetID, h5Type, memSpace, fileSpace, m_PropertyTxfID, k);
+        status = H5Dwrite(dsetID, h5Type, memSpace, fileSpace, m_PropertyTxfID, k);
         free(k);
     }
     else
     {
-        status = H5Dwrite(dsetID, h5Type, memSpace, fileSpace, m_PropertyTxfID,
-                          values);
+        status = H5Dwrite(dsetID, h5Type, memSpace, fileSpace, m_PropertyTxfID, values);
     }
 
     if (status < 0)
     {
-        helper::Throw<std::ios_base::failure>(
-            "Toolkit", "interop::hdf5::HDF5Common", "Write",
-            "HDF5 file Write failed");
+        helper::Throw<std::ios_base::failure>("Toolkit", "interop::hdf5::HDF5Common", "Write",
+                                              "HDF5 file Write failed");
     }
 
 #ifdef NO_STAT
     size_t valuesSize = adios2::helper::GetTotalSize(variable.m_Count);
     T min, max;
-    adios2::helper::GetMinMaxThreads(values, valuesSize, min, max, 1,
-                                     variable.m_MemSpace);
+    adios2::helper::GetMinMaxThreads(values, valuesSize, min, max, 1, variable.m_MemSpace);
 
     int chainSize = chain.size();
     hid_t parentId = m_GroupId;
@@ -250,8 +257,7 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
 }
 
 template <class T>
-void HDF5Common::AddStats(const core::Variable<T> &variable, hid_t parentId,
-                          std::vector<T> &stats)
+void HDF5Common::AddStats(const core::Variable<T> &variable, hid_t parentId, std::vector<T> &stats)
 {
 
     hid_t h5Type = GetHDF5Type<T>();
@@ -260,19 +266,16 @@ void HDF5Common::AddStats(const core::Variable<T> &variable, hid_t parentId,
     hsize_t numStat = stats.size(); // min, max etc
     hsize_t statDim[2] = {(hsize_t)m_CommSize, numStat};
     hid_t statSpace_id = H5Screate_simple(numStat, statDim, NULL);
-    hid_t statId =
-        H5Dcreate(parentId, statInfo_name.c_str(), h5Type, statSpace_id,
-                  H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t statId = H5Dcreate(parentId, statInfo_name.c_str(), h5Type, statSpace_id, H5P_DEFAULT,
+                             H5P_DEFAULT, H5P_DEFAULT);
     hsize_t statLocalDim[1] = {numStat};
     hid_t statLocal_id = H5Screate_simple(1, statLocalDim, NULL);
 
     hsize_t statOffset[2] = {(hsize_t)m_CommRank, 0};
     hsize_t statCount[2] = {1, numStat};
-    H5Sselect_hyperslab(statSpace_id, H5S_SELECT_SET, statOffset, NULL,
-                        statCount, NULL);
+    H5Sselect_hyperslab(statSpace_id, H5S_SELECT_SET, statOffset, NULL, statCount, NULL);
 
-    H5Dwrite(statId, h5Type, statLocal_id, statSpace_id, m_PropertyTxfID,
-             stats.data());
+    H5Dwrite(statId, h5Type, statLocal_id, statSpace_id, m_PropertyTxfID, stats.data());
 
     H5Sclose(statLocal_id);
     H5Sclose(statSpace_id);
@@ -289,9 +292,8 @@ void HDF5Common::AddBlockInfo(const core::Variable<T> &variable, hid_t parentId)
     metaDim[0] = m_CommSize;
     hid_t metaSpace_id = H5Screate_simple(2, metaDim, NULL);
     std::string blockInfo_name = PREFIX_BLOCKINFO + variable.m_Name;
-    hid_t metaId =
-        H5Dcreate(parentId, blockInfo_name.c_str(), H5T_NATIVE_HSIZE,
-                  metaSpace_id, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    hid_t metaId = H5Dcreate(parentId, blockInfo_name.c_str(), H5T_NATIVE_HSIZE, metaSpace_id,
+                             H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
     std::vector<size_t> blocks(dimSize * 2);
     for (int i = 0; i < dimSize; i++)
@@ -304,11 +306,9 @@ void HDF5Common::AddBlockInfo(const core::Variable<T> &variable, hid_t parentId)
 
     hsize_t metaOffset[2] = {(hsize_t)m_CommRank, 0};
     hsize_t metaCount[2] = {1, (hsize_t)(dimSize * 2)};
-    H5Sselect_hyperslab(metaSpace_id, H5S_SELECT_SET, metaOffset, NULL,
-                        metaCount, NULL);
+    H5Sselect_hyperslab(metaSpace_id, H5S_SELECT_SET, metaOffset, NULL, metaCount, NULL);
 
-    H5Dwrite(metaId, H5T_NATIVE_HSIZE, metaLocal_id, metaSpace_id,
-             m_PropertyTxfID, blocks.data());
+    H5Dwrite(metaId, H5T_NATIVE_HSIZE, metaLocal_id, metaSpace_id, m_PropertyTxfID, blocks.data());
 
     H5Sclose(metaLocal_id);
     H5Sclose(metaSpace_id);

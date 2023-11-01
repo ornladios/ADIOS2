@@ -13,7 +13,7 @@
 
 #include <pybind11/numpy.h>
 
-//#include "adios2/toolkit/query/Query.h"
+// #include "adios2/toolkit/query/Query.h"
 #include "adios2/toolkit/query/Worker.h"
 #include "py11Engine.h"
 
@@ -34,8 +34,7 @@ public:
     explicit operator bool() const noexcept;
 
     std::vector<Box<Dims>> GetResult();
-    // const Box< Dims > & refinedSelectionIfAny,
-    // std::vector< Box< Dims > > &touched_blocks
+    std::vector<size_t> GetBlockIDs();
 
 private:
     Query(adios2::query::Worker *qw);

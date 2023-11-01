@@ -18,8 +18,7 @@ namespace core
 namespace engine
 {
 
-MhsReader::MhsReader(IO &io, const std::string &name, const Mode mode,
-                     helper::Comm comm)
+MhsReader::MhsReader(IO &io, const std::string &name, const Mode mode, helper::Comm comm)
 : Engine("MhsReader", io, name, mode, std::move(comm))
 {
     helper::GetParameter(io.m_Parameters, "Tiers", m_Tiers);
@@ -31,10 +30,9 @@ MhsReader::MhsReader(IO &io, const std::string &name, const Mode mode,
 
     for (int i = 1; i < m_Tiers; ++i)
     {
-        m_SubIOs.emplace_back(
-            &io.m_ADIOS.DeclareIO("SubIO" + std::to_string(i)));
-        m_SubEngines.emplace_back(&m_SubIOs.back()->Open(
-            m_Name + ".tier" + std::to_string(i), adios2::Mode::Read));
+        m_SubIOs.emplace_back(&io.m_ADIOS.DeclareIO("SubIO" + std::to_string(i)));
+        m_SubEngines.emplace_back(
+            &m_SubIOs.back()->Open(m_Name + ".tier" + std::to_string(i), adios2::Mode::Read));
     }
     m_IsOpen = true;
 }
@@ -90,14 +88,11 @@ void MhsReader::EndStep()
 
 // PRIVATE
 
-#define declare_type(T)                                                        \
-    void MhsReader::DoGetSync(Variable<T> &variable, T *data)                  \
-    {                                                                          \
-        GetSyncCommon(variable, data);                                         \
-    }                                                                          \
-    void MhsReader::DoGetDeferred(Variable<T> &variable, T *data)              \
-    {                                                                          \
-        GetDeferredCommon(variable, data);                                     \
+#define declare_type(T)                                                                            \
+    void MhsReader::DoGetSync(Variable<T> &variable, T *data) { GetSyncCommon(variable, data); }   \
+    void MhsReader::DoGetDeferred(Variable<T> &variable, T *data)                                  \
+    {                                                                                              \
+        GetDeferredCommon(variable, data);                                                         \
     }
 
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)

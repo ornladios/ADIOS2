@@ -173,12 +173,8 @@ std::string ToString(SelectionType value)
     {
     case SelectionType::BoundingBox:
         return "SelectionType::BoundingBox";
-    case SelectionType::Points:
-        return "SelectionType::Points";
     case SelectionType::WriteBlock:
         return "SelectionType::WriteBlock";
-    case SelectionType::Auto:
-        return "SelectionType::Auto";
     default:
         return "ToString: Unknown SelectionType";
     }
@@ -316,49 +312,38 @@ void MinMaxStruct::Dump(DataType Type)
     case DataType::None:
         break;
     case DataType::Int8:
-        std::cout << "Min : " << MinUnion.field_int8
-                  << ", Max : " << MaxUnion.field_int8;
+        std::cout << "Min : " << MinUnion.field_int8 << ", Max : " << MaxUnion.field_int8;
         break;
     case DataType::Int16:
-        std::cout << "Min : " << MinUnion.field_int16
-                  << ", Max : " << MaxUnion.field_int16;
+        std::cout << "Min : " << MinUnion.field_int16 << ", Max : " << MaxUnion.field_int16;
         break;
     case DataType::Int32:
-        std::cout << "Min : " << MinUnion.field_int32
-                  << ", Max : " << MaxUnion.field_int32;
+        std::cout << "Min : " << MinUnion.field_int32 << ", Max : " << MaxUnion.field_int32;
         break;
     case DataType::Int64:
-        std::cout << "Min : " << MinUnion.field_int64
-                  << ", Max : " << MaxUnion.field_int64;
+        std::cout << "Min : " << MinUnion.field_int64 << ", Max : " << MaxUnion.field_int64;
         break;
     case DataType::Char:
     case DataType::UInt8:
-        std::cout << "Min : " << MinUnion.field_uint8
-                  << ", Max : " << MaxUnion.field_uint8;
+        std::cout << "Min : " << MinUnion.field_uint8 << ", Max : " << MaxUnion.field_uint8;
         break;
     case DataType::UInt16:
-        std::cout << "Min : " << MinUnion.field_uint16
-                  << ", Max : " << MaxUnion.field_uint16;
+        std::cout << "Min : " << MinUnion.field_uint16 << ", Max : " << MaxUnion.field_uint16;
         break;
     case DataType::UInt32:
-        std::cout << "Min : " << MinUnion.field_uint32
-                  << ", Max : " << MaxUnion.field_uint32;
+        std::cout << "Min : " << MinUnion.field_uint32 << ", Max : " << MaxUnion.field_uint32;
         break;
     case DataType::UInt64:
-        std::cout << "Min : " << MinUnion.field_uint64
-                  << ", Max : " << MaxUnion.field_uint64;
+        std::cout << "Min : " << MinUnion.field_uint64 << ", Max : " << MaxUnion.field_uint64;
         break;
     case DataType::Float:
-        std::cout << "Min : " << MinUnion.field_float
-                  << ", Max : " << MaxUnion.field_float;
+        std::cout << "Min : " << MinUnion.field_float << ", Max : " << MaxUnion.field_float;
         break;
     case DataType::Double:
-        std::cout << "Min : " << MinUnion.field_double
-                  << ", Max : " << MaxUnion.field_double;
+        std::cout << "Min : " << MinUnion.field_double << ", Max : " << MaxUnion.field_double;
         break;
     case DataType::LongDouble:
-        std::cout << "Min : " << MinUnion.field_ldouble
-                  << ", Max : " << MaxUnion.field_ldouble;
+        std::cout << "Min : " << MinUnion.field_ldouble << ", Max : " << MaxUnion.field_ldouble;
         break;
     case DataType::FloatComplex:
     case DataType::DoubleComplex:
@@ -403,6 +388,56 @@ int TypeElementSize(DataType adiosvartype)
     default:
         return -1;
     }
+}
+
+static void PrintMBI(std::ostream &os, const MinBlockInfo &blk, int Dims)
+{
+    os << "Writer: " << blk.WriterID << ", Blk: " << blk.BlockID << ", Start: {";
+    if ((Dims == 0) || (blk.Start == NULL))
+        os << "NULL";
+    else
+    {
+        for (int i = 0; i < Dims; i++)
+        {
+            os << blk.Start[i];
+            if (i < Dims - 1)
+                os << ", ";
+        }
+    }
+    os << "}, Count: {";
+
+    if ((Dims == 0) || (blk.Count == NULL))
+        os << "NULL";
+    else
+    {
+        for (int i = 0; i < Dims; i++)
+        {
+            os << blk.Count[i];
+            if (i < Dims - 1)
+                os << ", ";
+        }
+    }
+    os << "}, Data: " << (void *)blk.BufferP << std::endl;
+}
+
+void PrintMVI(std::ostream &os, const MinVarInfo &mvi)
+{
+    os << "Step: " << mvi.Step << "  Dims: " << mvi.Dims << " Shape: {";
+    if ((mvi.Dims == 0) || (mvi.Shape == NULL))
+        os << "NULL";
+    else
+    {
+        for (int i = 0; i < mvi.Dims; i++)
+        {
+            os << mvi.Shape[i];
+            if (i < mvi.Dims - 1)
+                os << ", ";
+        }
+    }
+    os << "}, BlockCount: " << mvi.BlocksInfo.size() << " ";
+    for (const auto &blk : mvi.BlocksInfo)
+        PrintMBI(os, blk, mvi.Dims);
+    os << std::endl;
 }
 
 } // end namespace adios2

@@ -29,8 +29,7 @@ namespace helper
  * @param dimensions input containing size on each dimension {Nx, Ny, Nz}
  * @return product of all dimensions Nx * Ny * Nz
  */
-size_t GetTotalSize(const Dims &dimensions,
-                    const size_t elementSize = 1) noexcept;
+size_t GetTotalSize(const Dims &dimensions, const size_t elementSize = 1) noexcept;
 
 /**
  * Populates min and max for a selection region inside
@@ -42,10 +41,9 @@ size_t GetTotalSize(const Dims &dimensions,
  * @param max
  */
 template <class T>
-void GetMinMaxSelection(
-    const T *values, const Dims &shape, const Dims &start, const Dims &count,
-    const bool isRowMajor, T &min, T &max,
-    const MemorySpace memSpace = MemorySpace::Host) noexcept;
+void GetMinMaxSelection(const T *values, const Dims &shape, const Dims &start, const Dims &count,
+                        const bool isRowMajor, T &min, T &max,
+                        const MemorySpace memSpace = MemorySpace::Host) noexcept;
 
 /**
  * Gets the min and max from a values array of primitive types (not including
@@ -74,8 +72,8 @@ void GetGPUMinMax(const T *values, const size_t size, T &min, T &max) noexcept;
  * @param max modulus from values
  */
 template <class T>
-void GetMinMaxComplex(const std::complex<T> *values, const size_t size,
-                      std::complex<T> &min, std::complex<T> &max) noexcept;
+void GetMinMaxComplex(const std::complex<T> *values, const size_t size, std::complex<T> &min,
+                      std::complex<T> &max) noexcept;
 
 /**
  * Threaded version of GetMinMax.
@@ -101,8 +99,8 @@ void GetMinMaxThreads(const T *values, const size_t size, T &min, T &max,
  * @param threads used for parallel computation
  */
 template <class T>
-void GetMinMaxThreads(const std::complex<T> *values, const size_t size, T &min,
-                      T &max, const unsigned int threads = 1) noexcept;
+void GetMinMaxThreads(const std::complex<T> *values, const size_t size, T &min, T &max,
+                      const unsigned int threads = 1) noexcept;
 
 /**
  * Check if index is within (inclusive) limits
@@ -112,8 +110,7 @@ void GetMinMaxThreads(const std::complex<T> *values, const size_t size, T &min,
  * @param lowerLimit
  * @return true index is within limits
  */
-bool CheckIndexRange(const int index, const int upperLimit,
-                     const int lowerLimit = 0) noexcept;
+bool CheckIndexRange(const int index, const int upperLimit, const int lowerLimit = 0) noexcept;
 
 /**
  * Returns the appropriate size larger than requiredSize
@@ -134,8 +131,7 @@ size_t NextExponentialSize(const size_t requiredSize, const size_t currentSize,
  * Row-Major interoperability
  * @return [start, end[ box
  */
-Box<Dims> StartEndBox(const Dims &start, const Dims &count,
-                      const bool reverse = false) noexcept;
+Box<Dims> StartEndBox(const Dims &start, const Dims &count, const bool reverse = false) noexcept;
 
 Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept;
 
@@ -146,11 +142,9 @@ Box<Dims> StartCountBox(const Dims &start, const Dims &end) noexcept;
  * @param box2 {start, end} input (end is exclusive)
  * @return empty if not interception, otherwise intersection box
  */
-Box<Dims> IntersectionBox(const Box<Dims> &box1,
-                          const Box<Dims> &box2) noexcept;
+Box<Dims> IntersectionBox(const Box<Dims> &box1, const Box<Dims> &box2) noexcept;
 
-Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1,
-                                 const Dims &start2,
+Box<Dims> IntersectionStartCount(const Dims &start1, const Dims &count1, const Dims &start2,
                                  const Dims &count2) noexcept;
 
 /**
@@ -173,10 +167,8 @@ bool IdenticalBoxes(const Box<Dims> &box1, const Box<Dims> &box2) noexcept;
  * @return true if intersection box is a contiguous subarray
  * of the block box, false otherwise
  */
-bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox,
-                                      const Box<Dims> &intersectionBox,
-                                      const bool isRowMajor,
-                                      size_t &startOffset) noexcept;
+bool IsIntersectionContiguousSubarray(const Box<Dims> &blockBox, const Box<Dims> &intersectionBox,
+                                      const bool isRowMajor, size_t &startOffset) noexcept;
 
 /**
  * Get a linear index for a point inside a localBox depending on data layout
@@ -198,8 +190,7 @@ size_t LinearIndex(const Dims &start, const Dims &count, const Dims &point,
  * @param isZeroIndex
  * @return linear index for contiguous memory
  */
-size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point,
-                   const bool isRowMajor) noexcept;
+size_t LinearIndex(const Box<Dims> &startEndBox, const Dims &point, const bool isRowMajor) noexcept;
 
 /**
  * Specialized for std::complex to do a comparison by std::norm.
@@ -252,8 +243,7 @@ std::vector<T> VectorsOp(BinaryOperation op, const std::vector<T> &vector1,
  * @param hint added debug information, can be larger than 15 characters
  * @return end - start
  */
-size_t GetDistance(const size_t end, const size_t start,
-                   const std::string &hint = "");
+size_t GetDistance(const size_t end, const size_t start, const std::string &hint = "");
 
 /** A flag to indicate how a block is divided up.
  * At this time, only the contiguous method is supported
@@ -318,10 +308,9 @@ Box<Dims> GetSubBlock(const Dims &count, const BlockDivisionInfo &info,
  * pairs)
  */
 template <class T>
-void GetMinMaxSubblocks(
-    const T *values, const Dims &count, const BlockDivisionInfo &info,
-    std::vector<T> &MinMaxs, T &bmin, T &bmax, const unsigned int threads,
-    const MemorySpace memSpace = MemorySpace::Host) noexcept;
+void GetMinMaxSubblocks(const T *values, const Dims &count, const BlockDivisionInfo &info,
+                        std::vector<T> &MinMaxs, T &bmin, T &bmax, const unsigned int threads,
+                        const MemorySpace memSpace = MemorySpace::Host) noexcept;
 
 /**
  * @brief Return a value within the min/max limits

@@ -35,8 +35,7 @@ class BP5Deserializer : virtual public BP5Base
 {
 
 public:
-    BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor,
-                    bool RandomAccessMode = false);
+    BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor, bool RandomAccessMode = false);
 
     ~BP5Deserializer();
 
@@ -53,20 +52,17 @@ public:
         size_t BlockID;
     };
     void InstallMetaMetaData(MetaMetaInfoBlock &MMList);
-    void InstallMetaData(void *MetadataBlock, size_t BlockLen,
-                         size_t WriterRank, size_t Step = SIZE_MAX);
-    void InstallAttributeData(void *AttributeBlock, size_t BlockLen,
-                              size_t Step = SIZE_MAX);
-    void InstallAttributesV1(FFSTypeHandle FFSformat, void *BaseData,
-                             size_t Step);
-    void InstallAttributesV2(FFSTypeHandle FFSformat, void *BaseData,
-                             size_t Step);
+    void InstallMetaData(void *MetadataBlock, size_t BlockLen, size_t WriterRank,
+                         size_t Step = SIZE_MAX);
+    void InstallAttributeData(void *AttributeBlock, size_t BlockLen, size_t Step = SIZE_MAX);
+    void InstallAttributesV1(FFSTypeHandle FFSformat, void *BaseData, size_t Step);
+    void InstallAttributesV2(FFSTypeHandle FFSformat, void *BaseData, size_t Step);
 
     void SetupForStep(size_t Step, size_t WriterCount);
     // return from QueueGet is true if a sync is needed to fill the data
     bool QueueGet(core::VariableBase &variable, void *DestData);
-    bool QueueGetSingle(core::VariableBase &variable, void *DestData,
-                        size_t Step);
+    bool QueueGetSingle(core::VariableBase &variable, void *DestData, size_t AbsStep,
+                        size_t RelStep);
 
     /* generate read requests. return vector of requests AND the size of
      * the largest allocation block necessary for reading.
@@ -85,14 +81,33 @@ public:
     MinVarInfo *AllStepsMinBlocksInfo(const VariableBase &var);
     MinVarInfo *MinBlocksInfo(const VariableBase &Var, const size_t Step);
     bool VarShape(const VariableBase &, const size_t Step, Dims &Shape) const;
-    bool VariableMinMax(const VariableBase &var, const size_t Step,
-                        MinMaxStruct &MinMax);
-    void GetAbsoluteSteps(const VariableBase &variable,
-                          std::vector<size_t> &keys) const;
+    bool VariableMinMax(const VariableBase &var, const size_t Step, MinMaxStruct &MinMax);
+    void GetAbsoluteSteps(const VariableBase &variable, std::vector<size_t> &keys) const;
 
     const bool m_WriterIsRowMajor;
     const bool m_ReaderIsRowMajor;
     core::Engine *m_Engine = NULL;
+
+    enum RequestTypeEnum
+    {
+        Global = 0,
+        Local = 1
+    };
+
+    struct BP5ArrayRequest
+    {
+        void *VarRec = NULL;
+        char *VarName;
+        enum RequestTypeEnum RequestType;
+        size_t Step;    // local operations use absolute steps
+        size_t RelStep; // preserve Relative Step for remote
+        size_t BlockID;
+        Dims Start;
+        Dims Count;
+        MemorySpace MemSpace;
+        void *Data;
+    };
+    std::vector<BP5ArrayRequest> PendingGetRequests;
 
 private:
     size_t m_VarCount = 0;
@@ -174,6 +189,7 @@ private:
     std::vector<void *> *m_FreeableMBA = nullptr;
 
     std::vector<void *> *m_JoinedDimenOffsetArrays = nullptr;
+    std::vector<void *> *m_FreeableJDOA = nullptr;
 
     // for random access mode, for each timestep, for each writerrank, what
     // metameta info applies to the metadata
@@ -195,55 +211,26 @@ private:
     BP5VarRec *LookupVarByName(const char *Name);
     BP5VarRec *CreateVarRec(const char *ArrayName);
     void ReverseDimensions(size_t *Dimensions, size_t count, size_t times);
-    const char *BreakdownVarName(const char *Name, DataType *type_p,
-                                 int *element_size_p);
-    void BreakdownFieldType(const char *FieldType, bool &Operator,
-                            bool &MinMax);
-    void BreakdownArrayName(const char *Name, char **base_name_p,
-                            DataType *type_p, int *element_size_p,
-                            FMFormat *Format);
-    void BreakdownV1ArrayName(const char *Name, char **base_name_p,
-                              DataType *type_p, int *element_size_p,
-                              bool &Operator, bool &MinMax);
-    void *VarSetup(core::Engine *engine, const char *variableName,
-                   const DataType type, void *data);
-    void *ArrayVarSetup(core::Engine *engine, const char *variableName,
-                        const DataType type, int DimCount, size_t *Shape,
-                        size_t *Start, size_t *Count,
-                        core::StructDefinition *Def,
-                        core::StructDefinition *ReaderDef);
-    void MapGlobalToLocalIndex(size_t Dims, const size_t *GlobalIndex,
-                               const size_t *LocalOffsets, size_t *LocalIndex);
+    const char *BreakdownVarName(const char *Name, DataType *type_p, int *element_size_p);
+    void BreakdownFieldType(const char *FieldType, bool &Operator, bool &MinMax);
+    void BreakdownArrayName(const char *Name, char **base_name_p, DataType *type_p,
+                            int *element_size_p, FMFormat *Format);
+    void BreakdownV1ArrayName(const char *Name, char **base_name_p, DataType *type_p,
+                              int *element_size_p, bool &Operator, bool &MinMax);
+    void *VarSetup(core::Engine *engine, const char *variableName, const DataType type, void *data);
+    void *ArrayVarSetup(core::Engine *engine, const char *variableName, const DataType type,
+                        int DimCount, size_t *Shape, size_t *Start, size_t *Count,
+                        core::StructDefinition *Def, core::StructDefinition *ReaderDef);
+    void MapGlobalToLocalIndex(size_t Dims, const size_t *GlobalIndex, const size_t *LocalOffsets,
+                               size_t *LocalIndex);
     size_t RelativeToAbsoluteStep(const BP5VarRec *VarRec, size_t RelStep);
     int FindOffset(size_t Dims, const size_t *Size, const size_t *Index);
-    bool GetSingleValueFromMetadata(core::VariableBase &variable,
-                                    BP5VarRec *VarRec, void *DestData,
+    bool GetSingleValueFromMetadata(core::VariableBase &variable, BP5VarRec *VarRec, void *DestData,
                                     size_t Step, size_t WriterRank);
-    void StructQueueReadChecks(core::VariableStruct *variable,
-                               BP5VarRec *VarRec);
+    void StructQueueReadChecks(core::VariableStruct *variable, BP5VarRec *VarRec);
 
-    enum RequestTypeEnum
-    {
-        Global = 0,
-        Local = 1
-    };
-
-    struct BP5ArrayRequest
-    {
-        BP5VarRec *VarRec = NULL;
-        enum RequestTypeEnum RequestType;
-        size_t Step;
-        size_t BlockID;
-        Dims Start;
-        Dims Count;
-        MemorySpace MemSpace;
-        void *Data;
-    };
-    std::vector<BP5ArrayRequest> PendingRequests;
-    void *GetMetadataBase(BP5VarRec *VarRec, size_t Step,
-                          size_t WriterRank) const;
-    bool IsContiguousTransfer(BP5ArrayRequest *Req, size_t *offsets,
-                              size_t *count);
+    void *GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t WriterRank) const;
+    bool IsContiguousTransfer(BP5ArrayRequest *Req, size_t *offsets, size_t *count);
 
     size_t CurTimestep = 0;
 

@@ -19,18 +19,16 @@ namespace callback
 {
 
 Signature2::Signature2(
-    const std::function<void(void *, const std::string &, const std::string &,
-                             const std::string &, const size_t, const Dims &,
-                             const Dims &, const Dims &)> &function,
+    const std::function<void(void *, const std::string &, const std::string &, const std::string &,
+                             const size_t, const Dims &, const Dims &, const Dims &)> &function,
     const Params &parameters)
 : Operator("Signature2", Operator::CALLBACK_SIGNATURE2, "callback", parameters),
   m_Function(function)
 {
 }
 
-void Signature2::RunCallback2(void *arg1, const std::string &arg2,
-                              const std::string &arg3, const std::string &arg4,
-                              const size_t arg5, const Dims &arg6,
+void Signature2::RunCallback2(void *arg1, const std::string &arg2, const std::string &arg3,
+                              const std::string &arg4, const size_t arg5, const Dims &arg6,
                               const Dims &arg7, const Dims &arg8) const
 {
     if (m_Function)
@@ -39,21 +37,18 @@ void Signature2::RunCallback2(void *arg1, const std::string &arg2,
     }
     else
     {
-        helper::Throw<std::runtime_error>(
-            "Operator", "Signature2", "RunCallback2",
-            "callback function of Signature2 type failed");
+        helper::Throw<std::runtime_error>("Operator", "Signature2", "RunCallback2",
+                                          "callback function of Signature2 type failed");
     }
 }
 
-size_t Signature2::Operate(const char *dataIn, const Dims &blockStart,
-                           const Dims &blockCount, const DataType type,
-                           char *bufferOut)
+size_t Signature2::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
+                           const DataType type, char *bufferOut)
 {
     return 0;
 }
 
-size_t Signature2::InverseOperate(const char *bufferIn, const size_t sizeIn,
-                                  char *dataOut)
+size_t Signature2::InverseOperate(const char *bufferIn, const size_t sizeIn, char *dataOut)
 {
     return 0;
 }

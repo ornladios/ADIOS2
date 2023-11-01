@@ -19,16 +19,15 @@ namespace
 {
 
 template <typename T>
-std::shared_ptr<Engine> MakeEngineHDF5(IO &io, const std::string &name,
-                                       const Mode mode, helper::Comm comm)
+std::shared_ptr<Engine> MakeEngineHDF5(IO &io, const std::string &name, const Mode mode,
+                                       helper::Comm comm)
 {
 #ifndef H5_HAVE_PARALLEL
     if (comm.IsMPI())
     {
-        helper::Throw<std::invalid_argument>(
-            "Core", "IOHDF5", "MakeEngineHDF5",
-            "A serial HDF5 engine cannot be used "
-            "with a communicator that is MPI-based.");
+        helper::Throw<std::invalid_argument>("Core", "IOHDF5", "MakeEngineHDF5",
+                                             "A serial HDF5 engine cannot be used "
+                                             "with a communicator that is MPI-based.");
     }
 #endif
     return IO::MakeEngine<T>(io, name, mode, std::move(comm));

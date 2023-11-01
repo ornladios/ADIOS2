@@ -15,16 +15,14 @@ namespace adios2
 
 fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
                  const std::string engineType)
-: m_Stream(std::make_shared<core::Stream>(
-      name, ToMode(mode), helper::CommDupMPI(comm), engineType, "C++"))
+: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), helper::CommDupMPI(comm), engineType,
+                                          "C++"))
 {
 }
 
 fstream::fstream(const std::string &name, const openmode mode, MPI_Comm comm,
-                 const std::string &configFile,
-                 const std::string ioInConfigFile)
-: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode),
-                                          helper::CommDupMPI(comm), configFile,
+                 const std::string &configFile, const std::string ioInConfigFile)
+: m_Stream(std::make_shared<core::Stream>(name, ToMode(mode), helper::CommDupMPI(comm), configFile,
                                           ioInConfigFile, "C++"))
 {
 }
@@ -33,18 +31,16 @@ void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
                    const std::string engineType)
 {
     CheckOpen(name);
-    m_Stream = std::make_shared<core::Stream>(
-        name, ToMode(mode), helper::CommDupMPI(comm), engineType, "C++");
+    m_Stream = std::make_shared<core::Stream>(name, ToMode(mode), helper::CommDupMPI(comm),
+                                              engineType, "C++");
 }
 
 void fstream::open(const std::string &name, const openmode mode, MPI_Comm comm,
-                   const std::string configFile,
-                   const std::string ioInConfigFile)
+                   const std::string configFile, const std::string ioInConfigFile)
 {
     CheckOpen(name);
-    m_Stream = std::make_shared<core::Stream>(
-        name, ToMode(mode), helper::CommDupMPI(comm), configFile,
-        ioInConfigFile, "C++");
+    m_Stream = std::make_shared<core::Stream>(name, ToMode(mode), helper::CommDupMPI(comm),
+                                              configFile, ioInConfigFile, "C++");
 }
 
 } // end namespace adios2

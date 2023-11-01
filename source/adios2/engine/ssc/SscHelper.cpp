@@ -19,13 +19,11 @@ namespace engine
 namespace ssc
 {
 
-size_t TotalDataSize(const Dims &dims, const size_t elementSize,
-                     const ShapeID &shapeId)
+size_t TotalDataSize(const Dims &dims, const size_t elementSize, const ShapeID &shapeId)
 {
     if (shapeId == ShapeID::GlobalArray || shapeId == ShapeID::LocalArray)
     {
-        return std::accumulate(dims.begin(), dims.end(), elementSize,
-                               std::multiplies<size_t>());
+        return std::accumulate(dims.begin(), dims.end(), elementSize, std::multiplies<size_t>());
     }
     else if (shapeId == ShapeID::GlobalValue || shapeId == ShapeID::LocalValue)
     {
@@ -74,10 +72,8 @@ RankPosMap CalculateOverlap(BlockVecVec &globalVecVec, const BlockVec &localVec)
                         bool hasOverlap = true;
                         for (size_t i = 0; i < gBlock.start.size(); ++i)
                         {
-                            if (gBlock.start[i] + gBlock.count[i] <=
-                                    lBlock.start[i] ||
-                                lBlock.start[i] + lBlock.count[i] <=
-                                    gBlock.start[i])
+                            if (gBlock.start[i] + gBlock.count[i] <= lBlock.start[i] ||
+                                lBlock.start[i] + lBlock.count[i] <= gBlock.start[i])
                             {
                                 hasOverlap = false;
                                 break;
@@ -128,8 +124,7 @@ void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
         {
             output.value(pos) = static_cast<uint8_t>(b.structDef.size());
             ++pos;
-            std::memcpy(output.data(pos), b.structDef.data(),
-                        b.structDef.size());
+            std::memcpy(output.data(pos), b.structDef.data(), b.structDef.size());
             pos += b.structDef.size();
         }
 
@@ -173,10 +168,9 @@ void SerializeVariables(const BlockVec &input, Buffer &output, const int rank)
     }
 }
 
-void DeserializeVariable(
-    const Buffer &input, const ShapeID shapeId, uint64_t &pos, BlockInfo &b,
-    IO &io, const bool regIO,
-    std::unordered_map<std::string, StructDefinition> &StructDefs)
+void DeserializeVariable(const Buffer &input, const ShapeID shapeId, uint64_t &pos, BlockInfo &b,
+                         IO &io, const bool regIO,
+                         std::unordered_map<std::string, StructDefinition> &StructDefs)
 {
     b.shapeId = static_cast<ShapeID>(shapeId);
 
@@ -264,49 +258,47 @@ void DeserializeVariable(
                     }
                     else
                     {
-                        io.DefineStructVariable(b.name, *def, vShape, vStart,
-                                                vShape);
+                        io.DefineStructVariable(b.name, *def, vShape, vStart, vShape);
                     }
                 }
             }
         }
-#define declare_type(T)                                                        \
-    else if (b.type == helper::GetDataType<T>())                               \
-    {                                                                          \
-        auto v = io.InquireVariable<T>(b.name);                                \
-        if (!v)                                                                \
-        {                                                                      \
-            Dims vStart = b.start;                                             \
-            Dims vShape = b.shape;                                             \
-            if (io.m_ArrayOrder != ArrayOrdering::RowMajor)                    \
-            {                                                                  \
-                std::reverse(vStart.begin(), vStart.end());                    \
-                std::reverse(vShape.begin(), vShape.end());                    \
-            }                                                                  \
-            if (b.shapeId == ShapeID::GlobalValue)                             \
-            {                                                                  \
-                io.DefineVariable<T>(b.name);                                  \
-            }                                                                  \
-            else if (b.shapeId == ShapeID::GlobalArray)                        \
-            {                                                                  \
-                io.DefineVariable<T>(b.name, vShape, vStart, vShape);          \
-            }                                                                  \
-            else if (b.shapeId == ShapeID::LocalValue)                         \
-            {                                                                  \
-                io.DefineVariable<T>(b.name, {adios2::LocalValueDim});         \
-            }                                                                  \
-            else if (b.shapeId == ShapeID::LocalArray)                         \
-            {                                                                  \
-                io.DefineVariable<T>(b.name, {}, {}, vShape);                  \
-            }                                                                  \
-        }                                                                      \
+#define declare_type(T)                                                                            \
+    else if (b.type == helper::GetDataType<T>())                                                   \
+    {                                                                                              \
+        auto v = io.InquireVariable<T>(b.name);                                                    \
+        if (!v)                                                                                    \
+        {                                                                                          \
+            Dims vStart = b.start;                                                                 \
+            Dims vShape = b.shape;                                                                 \
+            if (io.m_ArrayOrder != ArrayOrdering::RowMajor)                                        \
+            {                                                                                      \
+                std::reverse(vStart.begin(), vStart.end());                                        \
+                std::reverse(vShape.begin(), vShape.end());                                        \
+            }                                                                                      \
+            if (b.shapeId == ShapeID::GlobalValue)                                                 \
+            {                                                                                      \
+                io.DefineVariable<T>(b.name);                                                      \
+            }                                                                                      \
+            else if (b.shapeId == ShapeID::GlobalArray)                                            \
+            {                                                                                      \
+                io.DefineVariable<T>(b.name, vShape, vStart, vShape);                              \
+            }                                                                                      \
+            else if (b.shapeId == ShapeID::LocalValue)                                             \
+            {                                                                                      \
+                io.DefineVariable<T>(b.name, {adios2::LocalValueDim});                             \
+            }                                                                                      \
+            else if (b.shapeId == ShapeID::LocalArray)                                             \
+            {                                                                                      \
+                io.DefineVariable<T>(b.name, {}, {}, vShape);                                      \
+            }                                                                                      \
+        }                                                                                          \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         else
         {
-            helper::Throw<std::runtime_error>("Engine", "SscHelper",
-                                              "DeserializeVariable",
+            helper::Throw<std::runtime_error>("Engine", "SscHelper", "DeserializeVariable",
                                               "unknown variable data type");
         }
     }
@@ -322,16 +314,14 @@ void SerializeAttributes(IO &input, Buffer &output)
 
         if (attributePair.second->m_Type == DataType::String)
         {
-            const auto &attribute =
-                input.InquireAttribute<std::string>(attributePair.first);
+            const auto &attribute = input.InquireAttribute<std::string>(attributePair.first);
             output[pos] = 66;
             ++pos;
             output[pos] = static_cast<uint8_t>(attribute->m_Type);
             ++pos;
             output[pos] = static_cast<uint8_t>(attribute->m_Name.size());
             ++pos;
-            std::memcpy(output.data(pos), attribute->m_Name.data(),
-                        attribute->m_Name.size());
+            std::memcpy(output.data(pos), attribute->m_Name.data(), attribute->m_Name.size());
             pos += attribute->m_Name.size();
             output.value<uint64_t>(pos) = attribute->m_DataSingleValue.size();
             pos += 8;
@@ -339,36 +329,33 @@ void SerializeAttributes(IO &input, Buffer &output)
                         attribute->m_DataSingleValue.size());
             pos += attribute->m_DataSingleValue.size();
         }
-#define declare_type(T)                                                        \
-    else if (attributePair.second->m_Type == helper::GetDataType<T>())         \
-    {                                                                          \
-        const auto &attribute =                                                \
-            input.InquireAttribute<T>(attributePair.first);                    \
-        output[pos] = 66;                                                      \
-        ++pos;                                                                 \
-        output[pos] = static_cast<uint8_t>(attribute->m_Type);                 \
-        ++pos;                                                                 \
-        output[pos] = static_cast<uint8_t>(attribute->m_Name.size());          \
-        ++pos;                                                                 \
-        std::memcpy(output.data(pos), attribute->m_Name.data(),                \
-                    attribute->m_Name.size());                                 \
-        pos += attribute->m_Name.size();                                       \
-        if (attribute->m_IsSingleValue)                                        \
-        {                                                                      \
-            output.value<uint64_t>(pos) = sizeof(T);                           \
-            pos += 8;                                                          \
-            output.value<T>(pos) = attribute->m_DataSingleValue;               \
-            pos += sizeof(T);                                                  \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            uint64_t size = sizeof(T) * attribute->m_DataArray.size();         \
-            output.value<uint64_t>(pos) = size;                                \
-            pos += 8;                                                          \
-            std::memcpy(output.data(pos), attribute->m_DataArray.data(),       \
-                        size);                                                 \
-            pos += size;                                                       \
-        }                                                                      \
+#define declare_type(T)                                                                            \
+    else if (attributePair.second->m_Type == helper::GetDataType<T>())                             \
+    {                                                                                              \
+        const auto &attribute = input.InquireAttribute<T>(attributePair.first);                    \
+        output[pos] = 66;                                                                          \
+        ++pos;                                                                                     \
+        output[pos] = static_cast<uint8_t>(attribute->m_Type);                                     \
+        ++pos;                                                                                     \
+        output[pos] = static_cast<uint8_t>(attribute->m_Name.size());                              \
+        ++pos;                                                                                     \
+        std::memcpy(output.data(pos), attribute->m_Name.data(), attribute->m_Name.size());         \
+        pos += attribute->m_Name.size();                                                           \
+        if (attribute->m_IsSingleValue)                                                            \
+        {                                                                                          \
+            output.value<uint64_t>(pos) = sizeof(T);                                               \
+            pos += 8;                                                                              \
+            output.value<T>(pos) = attribute->m_DataSingleValue;                                   \
+            pos += sizeof(T);                                                                      \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            uint64_t size = sizeof(T) * attribute->m_DataArray.size();                             \
+            output.value<uint64_t>(pos) = size;                                                    \
+            pos += 8;                                                                              \
+            std::memcpy(output.data(pos), attribute->m_DataArray.data(), size);                    \
+            pos += size;                                                                           \
+        }                                                                                          \
     }
         ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -376,8 +363,7 @@ void SerializeAttributes(IO &input, Buffer &output)
     }
 }
 
-void DeserializeAttribute(const Buffer &input, uint64_t &pos, IO &io,
-                          const bool regIO)
+void DeserializeAttribute(const Buffer &input, uint64_t &pos, IO &io, const bool regIO)
 {
     const DataType type = static_cast<DataType>(input[pos]);
     ++pos;
@@ -403,28 +389,26 @@ void DeserializeAttribute(const Buffer &input, uint64_t &pos, IO &io,
             MPI_Comm_rank(MPI_COMM_WORLD, &rank);
             if (type == DataType::String)
             {
-                io.DefineAttribute<std::string>(
-                    name, std::string(input.data<char>(pos), size));
+                io.DefineAttribute<std::string>(name, std::string(input.data<char>(pos), size));
             }
-#define declare_type(T)                                                        \
-    else if (type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        if (size == sizeof(T))                                                 \
-        {                                                                      \
-            io.DefineAttribute<T>(name, input.value<T>(pos));                  \
-        }                                                                      \
-        else                                                                   \
-        {                                                                      \
-            io.DefineAttribute<T>(name, input.data<T>(pos), size / sizeof(T)); \
-        }                                                                      \
+#define declare_type(T)                                                                            \
+    else if (type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        if (size == sizeof(T))                                                                     \
+        {                                                                                          \
+            io.DefineAttribute<T>(name, input.value<T>(pos));                                      \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            io.DefineAttribute<T>(name, input.data<T>(pos), size / sizeof(T));                     \
+        }                                                                                          \
     }
             ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_type)
 #undef declare_type
             else
             {
-                helper::Throw<std::runtime_error>(
-                    "Engine", "SscHelper", "DeserializeAttribute",
-                    "unknown attribute data type");
+                helper::Throw<std::runtime_error>("Engine", "SscHelper", "DeserializeAttribute",
+                                                  "unknown attribute data type");
             }
         }
     }
@@ -432,8 +416,7 @@ void DeserializeAttribute(const Buffer &input, uint64_t &pos, IO &io,
 }
 
 void SerializeStructDefinitions(
-    const std::unordered_multimap<std::string, StructDefinition> &definitions,
-    Buffer &output)
+    const std::unordered_multimap<std::string, StructDefinition> &definitions, Buffer &output)
 {
     if (definitions.empty())
     {
@@ -459,8 +442,7 @@ void SerializeStructDefinitions(
         {
             output[pos] = static_cast<uint8_t>(p.second.Name(i).size());
             ++pos;
-            std::memcpy(output.data(pos), p.second.Name(i).data(),
-                        p.second.Name(i).size());
+            std::memcpy(output.data(pos), p.second.Name(i).data(), p.second.Name(i).size());
             pos += p.second.Name(i).size();
             output.value<uint64_t>(pos) = p.second.Offset(i);
             pos += 8;
@@ -473,9 +455,8 @@ void SerializeStructDefinitions(
     output.value<uint64_t>() = pos;
 }
 
-void DeserializeStructDefinitions(
-    const Buffer &input, uint64_t &pos, IO &io, const bool regIO,
-    std::unordered_map<std::string, StructDefinition> &StructDefs)
+void DeserializeStructDefinitions(const Buffer &input, uint64_t &pos, IO &io, const bool regIO,
+                                  std::unordered_map<std::string, StructDefinition> &StructDefs)
 {
     uint8_t defs = input.value<uint8_t>(pos);
     ++pos;
@@ -485,8 +466,7 @@ void DeserializeStructDefinitions(
         ++pos;
         std::vector<char> defNameChar(nameSize);
         std::memcpy(defNameChar.data(), input.data(pos), nameSize);
-        std::string defName =
-            std::string(defNameChar.begin(), defNameChar.end());
+        std::string defName = std::string(defNameChar.begin(), defNameChar.end());
         pos += nameSize;
         size_t structSize = input.value<uint64_t>(pos);
         pos += 8;
@@ -496,9 +476,7 @@ void DeserializeStructDefinitions(
         if (StructDefs.find(defName) == StructDefs.end())
         {
             structDefinition =
-                &StructDefs
-                     .emplace(defName, StructDefinition(defName, structSize))
-                     .first->second;
+                &StructDefs.emplace(defName, StructDefinition(defName, structSize)).first->second;
         }
         for (uint8_t j = 0; j < items; ++j)
         {
@@ -506,8 +484,7 @@ void DeserializeStructDefinitions(
             ++pos;
             defNameChar.resize(nameSize);
             std::memcpy(defNameChar.data(), input.data(pos), nameSize);
-            std::string itemName =
-                std::string(defNameChar.begin(), defNameChar.end());
+            std::string itemName = std::string(defNameChar.begin(), defNameChar.end());
             pos += nameSize;
             size_t itemOffset = input.value<uint64_t>(pos);
             pos += 8;
@@ -517,15 +494,14 @@ void DeserializeStructDefinitions(
             pos += 8;
             if (structDefinition != nullptr)
             {
-                structDefinition->AddField(itemName, itemOffset, itemType,
-                                           itemSize);
+                structDefinition->AddField(itemName, itemOffset, itemType, itemSize);
             }
         }
     }
 }
 
-void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
-                 const bool regVars, const bool regAttrs, const bool regDefs,
+void Deserialize(const Buffer &input, BlockVecVec &output, IO &io, const bool regVars,
+                 const bool regAttrs, const bool regDefs,
                  std::unordered_map<std::string, StructDefinition> &StructDefs)
 {
     for (auto &i : output)
@@ -560,14 +536,14 @@ void Deserialize(const Buffer &input, BlockVecVec &output, IO &io,
             output[rank].emplace_back();
             auto &b = output[rank].back();
 
-            DeserializeVariable(input, static_cast<ShapeID>(shapeId), pos, b,
-                                io, regVars, StructDefs);
+            DeserializeVariable(input, static_cast<ShapeID>(shapeId), pos, b, io, regVars,
+                                StructDefs);
         }
     }
 }
 
-void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
-                       MPI_Comm comm, const bool finalStep, const bool locked)
+void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer, MPI_Comm comm,
+                       const bool finalStep, const bool locked)
 {
     int mpiSize;
     MPI_Comm_size(comm, &mpiSize);
@@ -583,9 +559,8 @@ void AggregateMetadata(const Buffer &localBuffer, Buffer &globalBuffer,
         displs[i] = displs[i - 1] + localSizes[i - 1];
     }
 
-    MPI_Gatherv(localBuffer.data() + 8, localSize, MPI_CHAR,
-                globalBuffer.data() + 10, localSizes.data(), displs.data(),
-                MPI_CHAR, 0, comm);
+    MPI_Gatherv(localBuffer.data() + 8, localSize, MPI_CHAR, globalBuffer.data() + 10,
+                localSizes.data(), displs.data(), MPI_CHAR, 0, comm);
     globalBuffer[0] = finalStep;
     globalBuffer[1] = locked;
     globalBuffer.value<uint64_t>(2) = globalSize;
@@ -618,11 +593,9 @@ bool AreSameDims(const Dims &a, const Dims &b)
     return true;
 }
 
-void MPI_Gatherv64(const void *sendbuf, uint64_t sendcount,
-                   MPI_Datatype sendtype, void *recvbuf,
-                   const uint64_t *recvcounts, const uint64_t *displs,
-                   MPI_Datatype recvtype, int root, MPI_Comm comm,
-                   const int chunksize)
+void MPI_Gatherv64(const void *sendbuf, uint64_t sendcount, MPI_Datatype sendtype, void *recvbuf,
+                   const uint64_t *recvcounts, const uint64_t *displs, MPI_Datatype recvtype,
+                   int root, MPI_Comm comm, const int chunksize)
 {
 
     int mpiSize;
@@ -648,19 +621,15 @@ void MPI_Gatherv64(const void *sendbuf, uint64_t sendcount,
                 if (recvcount > static_cast<uint64_t>(chunksize))
                 {
                     MPI_Irecv(reinterpret_cast<char *>(recvbuf) +
-                                  (displs[i] + recvcounts[i] - recvcount) *
-                                      recvTypeSize,
-                              chunksize, recvtype, i, 0, comm,
-                              &requests.back());
+                                  (displs[i] + recvcounts[i] - recvcount) * recvTypeSize,
+                              chunksize, recvtype, i, 0, comm, &requests.back());
                     recvcount -= static_cast<uint64_t>(chunksize);
                 }
                 else
                 {
                     MPI_Irecv(reinterpret_cast<char *>(recvbuf) +
-                                  (displs[i] + recvcounts[i] - recvcount) *
-                                      recvTypeSize,
-                              static_cast<int>(recvcount), recvtype, i, 0, comm,
-                              &requests.back());
+                                  (displs[i] + recvcounts[i] - recvcount) * recvTypeSize,
+                              static_cast<int>(recvcount), recvtype, i, 0, comm, &requests.back());
                     recvcount = 0;
                 }
             }
@@ -683,21 +652,17 @@ void MPI_Gatherv64(const void *sendbuf, uint64_t sendcount,
         {
             MPI_Isend(reinterpret_cast<const char *>(sendbuf) +
                           (sendcount - sendcountvar) * sendTypeSize,
-                      static_cast<int>(sendcountvar), sendtype, root, 0, comm,
-                      &requests.back());
+                      static_cast<int>(sendcountvar), sendtype, root, 0, comm, &requests.back());
             sendcountvar = 0;
         }
     }
 
-    MPI_Waitall(static_cast<int>(requests.size()), requests.data(),
-                MPI_STATUSES_IGNORE);
+    MPI_Waitall(static_cast<int>(requests.size()), requests.data(), MPI_STATUSES_IGNORE);
 }
 
-void MPI_Gatherv64OneSidedPull(const void *sendbuf, uint64_t sendcount,
-                               MPI_Datatype sendtype, void *recvbuf,
-                               const uint64_t *recvcounts,
-                               const uint64_t *displs, MPI_Datatype recvtype,
-                               int root, MPI_Comm comm, const int chunksize)
+void MPI_Gatherv64OneSidedPull(const void *sendbuf, uint64_t sendcount, MPI_Datatype sendtype,
+                               void *recvbuf, const uint64_t *recvcounts, const uint64_t *displs,
+                               MPI_Datatype recvtype, int root, MPI_Comm comm, const int chunksize)
 {
 
     int mpiSize;
@@ -712,8 +677,8 @@ void MPI_Gatherv64OneSidedPull(const void *sendbuf, uint64_t sendcount,
     MPI_Type_size(sendtype, &sendTypeSize);
 
     MPI_Win win;
-    MPI_Win_create(const_cast<void *>(sendbuf), sendcount * sendTypeSize,
-                   sendTypeSize, MPI_INFO_NULL, comm, &win);
+    MPI_Win_create(const_cast<void *>(sendbuf), sendcount * sendTypeSize, sendTypeSize,
+                   MPI_INFO_NULL, comm, &win);
 
     if (mpiRank == root)
     {
@@ -725,19 +690,16 @@ void MPI_Gatherv64OneSidedPull(const void *sendbuf, uint64_t sendcount,
                 if (recvcount > static_cast<uint64_t>(chunksize))
                 {
                     MPI_Get(reinterpret_cast<char *>(recvbuf) +
-                                (displs[i] + recvcounts[i] - recvcount) *
-                                    recvTypeSize,
-                            chunksize, recvtype, i, recvcounts[i] - recvcount,
-                            chunksize, recvtype, win);
+                                (displs[i] + recvcounts[i] - recvcount) * recvTypeSize,
+                            chunksize, recvtype, i, recvcounts[i] - recvcount, chunksize, recvtype,
+                            win);
                     recvcount -= static_cast<uint64_t>(chunksize);
                 }
                 else
                 {
                     MPI_Get(reinterpret_cast<char *>(recvbuf) +
-                                (displs[i] + recvcounts[i] - recvcount) *
-                                    recvTypeSize,
-                            static_cast<int>(recvcount), recvtype, i,
-                            recvcounts[i] - recvcount,
+                                (displs[i] + recvcounts[i] - recvcount) * recvTypeSize,
+                            static_cast<int>(recvcount), recvtype, i, recvcounts[i] - recvcount,
                             static_cast<int>(recvcount), recvtype, win);
                     recvcount = 0;
                 }
@@ -748,11 +710,9 @@ void MPI_Gatherv64OneSidedPull(const void *sendbuf, uint64_t sendcount,
     MPI_Win_free(&win);
 }
 
-void MPI_Gatherv64OneSidedPush(const void *sendbuf, uint64_t sendcount,
-                               MPI_Datatype sendtype, void *recvbuf,
-                               const uint64_t *recvcounts,
-                               const uint64_t *displs, MPI_Datatype recvtype,
-                               int root, MPI_Comm comm, const int chunksize)
+void MPI_Gatherv64OneSidedPush(const void *sendbuf, uint64_t sendcount, MPI_Datatype sendtype,
+                               void *recvbuf, const uint64_t *recvcounts, const uint64_t *displs,
+                               MPI_Datatype recvtype, int root, MPI_Comm comm, const int chunksize)
 {
 
     int mpiSize;
@@ -769,8 +729,7 @@ void MPI_Gatherv64OneSidedPush(const void *sendbuf, uint64_t sendcount,
     uint64_t recvsize = displs[mpiSize - 1] + recvcounts[mpiSize - 1];
 
     MPI_Win win;
-    MPI_Win_create(recvbuf, recvsize * recvTypeSize, recvTypeSize,
-                   MPI_INFO_NULL, comm, &win);
+    MPI_Win_create(recvbuf, recvsize * recvTypeSize, recvTypeSize, MPI_INFO_NULL, comm, &win);
 
     uint64_t sendcountvar = sendcount;
 
@@ -780,9 +739,8 @@ void MPI_Gatherv64OneSidedPush(const void *sendbuf, uint64_t sendcount,
         {
             MPI_Put(reinterpret_cast<const char *>(sendbuf) +
                         (sendcount - sendcountvar) * sendTypeSize,
-                    chunksize, sendtype, root,
-                    displs[mpiRank] + sendcount - sendcountvar, chunksize,
-                    sendtype, win);
+                    chunksize, sendtype, root, displs[mpiRank] + sendcount - sendcountvar,
+                    chunksize, sendtype, win);
             sendcountvar -= static_cast<uint64_t>(chunksize);
         }
         else
@@ -790,8 +748,8 @@ void MPI_Gatherv64OneSidedPush(const void *sendbuf, uint64_t sendcount,
             MPI_Put(reinterpret_cast<const char *>(sendbuf) +
                         (sendcount - sendcountvar) * sendTypeSize,
                     static_cast<int>(sendcountvar), sendtype, root,
-                    displs[mpiRank] + sendcount - sendcountvar,
-                    static_cast<int>(sendcountvar), sendtype, win);
+                    displs[mpiRank] + sendcount - sendcountvar, static_cast<int>(sendcountvar),
+                    sendtype, win);
             sendcountvar = 0;
         }
     }
@@ -853,10 +811,8 @@ void PrintBlockVecVec(const BlockVecVec &bvv, const std::string &label)
             PrintDims(i.shape, "        Shape : ");
             PrintDims(i.start, "        Start : ");
             PrintDims(i.count, "        Count : ");
-            std::cout << "        Position Start : " << i.bufferStart
-                      << std::endl;
-            std::cout << "        Position Count : " << i.bufferCount
-                      << std::endl;
+            std::cout << "        Position Start : " << i.bufferStart << std::endl;
+            std::cout << "        Position Count : " << i.bufferCount << std::endl;
         }
         ++rank;
     }
@@ -867,8 +823,7 @@ void PrintRankPosMap(const RankPosMap &m, const std::string &label)
     std::cout << label << std::endl;
     for (const auto &rank : m)
     {
-        std::cout << "Rank = " << rank.first
-                  << ", bufferStart = " << rank.second.first
+        std::cout << "Rank = " << rank.first << ", bufferStart = " << rank.second.first
                   << ", bufferCount = " << rank.second.second << std::endl;
     }
 }

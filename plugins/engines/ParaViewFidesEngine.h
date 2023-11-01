@@ -49,8 +49,7 @@ public:
 
     ~ParaViewFidesEngine() override;
 
-    adios2::StepStatus BeginStep(adios2::StepMode mode,
-                                 const float timeoutSeconds = -1.0) override;
+    adios2::StepStatus BeginStep(adios2::StepMode mode, const float timeoutSeconds = -1.0) override;
 
     void EndStep() override;
 
@@ -59,8 +58,8 @@ public:
     void PerformPuts() override;
 
 protected:
-#define declare_type(T)                                                        \
-    void DoPutSync(adios2::core::Variable<T> &, const T *) override;           \
+#define declare_type(T)                                                                            \
+    void DoPutSync(adios2::core::Variable<T> &, const T *) override;                               \
     void DoPutDeferred(adios2::core::Variable<T> &, const T *) override;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -76,10 +75,8 @@ private:
 
 extern "C" {
 
-fides_plugin::ParaViewFidesEngine *EngineCreate(adios2::core::IO &io,
-                                                const std::string &name,
-                                                const adios2::Mode mode,
-                                                adios2::helper::Comm comm);
+fides_plugin::ParaViewFidesEngine *EngineCreate(adios2::core::IO &io, const std::string &name,
+                                                const adios2::Mode mode, adios2::helper::Comm comm);
 void EngineDestroy(fides_plugin::ParaViewFidesEngine *obj);
 }
 

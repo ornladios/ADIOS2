@@ -3,8 +3,9 @@
 #include <sys/types.h>
 
 #ifdef HAVE_WINDOWS_H
+#define FD_SETSIZE 1024
+#include <winsock2.h>
 #include <windows.h>
-#include <winsock.h>
 #define getpid()	_getpid()
 #else
 #ifdef HAVE_SYS_TIME_H
@@ -87,7 +88,7 @@ static atom_t CM_TRANSPORT_RELIABLE = -1;
 typedef struct udp_transport_data {
     CManager cm;
     CMtrans_services svc;
-    int socket_fd;
+    SOCKET socket_fd;
     int self_ip;
     int self_port;
     attr_list characteristics;
@@ -109,17 +110,12 @@ typedef struct udp_connection_data {
 } *udp_conn_data_ptr;
 
 #ifdef WSAEWOULDBLOCK
-#define EWOULDBLOCK WSAEWOULDBLOCK
-#define EAGAIN WSAEINPROGRESS
-#define EINTR WSAEINTR
-#define errno GetLastError()
 #define read(fd, buf, len) recv(fd, buf, len, 0)
 #define write(fd, buf, len) send(fd, buf, len, 0)
 #endif
 
 static udp_conn_data_ptr
-create_udp_conn_data(svc)
-CMtrans_services svc;
+create_udp_conn_data(CMtrans_services svc)
 {
     udp_conn_data_ptr udp_conn_data =
 	svc->malloc_func(sizeof(struct udp_connection_data));
@@ -197,9 +193,7 @@ int fd;
 #endif
 
 extern void
-libcmudp_LTX_shutdown_conn(svc, ucd)
-CMtrans_services svc;
-udp_conn_data_ptr ucd;
+libcmudp_LTX_shutdown_conn(CMtrans_services svc, udp_conn_data_ptr ucd)
 {
     unlink_connection(ucd->utd, ucd);
     svc->connection_deref(ucd->conn);
@@ -209,10 +203,16 @@ udp_conn_data_ptr ucd;
 
 #include "qual_hostname.c"
 
+#ifdef _MSC_VER
+static int inet_aton(const char* cp, struct in_addr* addr)
+{
+    addr->s_addr = inet_addr(cp);
+    return (addr->s_addr == INADDR_NONE) ? 0 : 1;
+}
+#endif
+
 static int
-check_host(hostname, sin_addr)
-char *hostname;
-void *sin_addr;
+check_host(char *hostname, void *sin_addr)
 {
     struct hostent *host_addr;
     host_addr = gethostbyname(hostname);
@@ -234,13 +234,7 @@ void *sin_addr;
 }
 
 static int
-initiate_udp_conn(cm, svc, trans, attrs, udp_conn_data, conn_attr_list)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
-udp_conn_data_ptr udp_conn_data;
-attr_list conn_attr_list;
+initiate_udp_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, udp_conn_data_ptr udp_conn_data, attr_list conn_attr_list)
 {
     int int_port_num;
     udp_transport_data_ptr utd = (udp_transport_data_ptr) trans->trans_data;
@@ -251,14 +245,14 @@ attr_list conn_attr_list;
 
     memset(&dest_addr, 0, sizeof(dest_addr));
     if (!query_attr(attrs, CM_IP_HOSTNAME, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_name)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_name)) {
 	svc->trace_out(cm, "UDP transport found no UDP_HOST attribute");
 	host_name = NULL;
     } else {
         svc->trace_out(cm, "UDP transport connect to host %s", host_name);
     }
     if (!query_attr(attrs, CM_UDP_ADDR, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *) (long) &udp_ip)) {
+    /* value pointer */ (attr_value *) (intptr_t) &udp_ip)) {
 	svc->trace_out(cm, "CMUDP transport found no UDP_ADDR attribute");
 	/* wasn't there */
 	udp_ip = 0;
@@ -269,7 +263,7 @@ attr_list conn_attr_list;
 	return -1;
 
     if (!query_attr(attrs, CM_UDP_PORT, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *) (long) &int_port_num)) {
+    /* value pointer */ (attr_value *) (intptr_t) &int_port_num)) {
 	svc->trace_out(cm, "CMUDP transport found no UDP_PORT attribute");
 	return -1;
     } else {
@@ -278,7 +272,7 @@ attr_list conn_attr_list;
 
     if (((network_string = getenv("CM_NETWORK")) != NULL) &&
 	(host_name != NULL)) {
-	int name_len = strlen(host_name) + 2 + strlen(network_string);
+	size_t name_len = strlen(host_name) + 2 + strlen(network_string);
 	char *new_host_name = svc->malloc_func(name_len);
 	char *first_dot = strchr(host_name, '.');
 	memset(new_host_name, 0, name_len);
@@ -334,7 +328,7 @@ static void
 libcmudp_data_available(void *vtrans, void *vinput)
 {
     transport_entry trans = vtrans;
-    int input_fd = (long)vinput;
+    SOCKET input_fd = (SOCKET) (intptr_t) vinput;
     ssize_t nbytes;
     udp_transport_data_ptr utd = (udp_transport_data_ptr) trans->trans_data;
     udp_conn_data_ptr ucd = utd->connections;
@@ -343,7 +337,7 @@ libcmudp_data_available(void *vtrans, void *vinput)
     char *msgbuf;
     int unused;
 
-    if (recvfrom(input_fd, &unused, 4, MSG_PEEK,
+    if (recvfrom(input_fd, (char*) & unused, 4, MSG_PEEK,
 		 (struct sockaddr *) &addr, &addrlen) != 4) {
         return;
     }
@@ -398,11 +392,7 @@ libcmudp_data_available(void *vtrans, void *vinput)
  * Initiate a connection to a udp group.
  */
 extern CMConnection
-libcmudp_LTX_initiate_conn(cm, svc, trans, attrs)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
+libcmudp_LTX_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs)
 {
     udp_conn_data_ptr udp_conn_data = create_udp_conn_data(svc);
     attr_list conn_attr_list = create_attr_list();
@@ -431,11 +421,7 @@ attr_list attrs;
  * indicated by the attribute list, would we be connecting to ourselves?
  */
 extern int
-libcmudp_LTX_self_check(cm, svc, trans, attrs)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
+libcmudp_LTX_self_check(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs)
 {
     udp_transport_data_ptr utd = trans->trans_data;
     int host_addr;
@@ -448,18 +434,18 @@ attr_list attrs;
 	IP = get_self_ip_addr(cm, svc);
     }
     if (!query_attr(attrs, CM_IP_HOSTNAME, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_name)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_name)) {
 	svc->trace_out(cm, "CMself check UDP transport found no IP_HOST attribute");
 	host_name = NULL;
     }
     if (!query_attr(attrs, CM_UDP_ADDR, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_addr)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_addr)) {
 	svc->trace_out(cm, "CMself check UDP transport found no UDP_ADDR attribute");
 	if (host_name == NULL) return 0;
 	host_addr = 0;
     }
     if (!query_attr(attrs, CM_UDP_PORT, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & int_port_num)) {
+    /* value pointer */ (attr_value *)(intptr_t) & int_port_num)) {
 	svc->trace_out(cm, "CMself check UDP transport found no UDP_PORT attribute");
 	return 0;
     }
@@ -482,12 +468,7 @@ attr_list attrs;
 }
 
 extern int
-libcmudp_LTX_connection_eq(cm, svc, trans, attrs, ucd)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
-udp_conn_data_ptr ucd;
+libcmudp_LTX_connection_eq(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, udp_conn_data_ptr ucd)
 {
 
     int int_port_num;
@@ -495,19 +476,19 @@ udp_conn_data_ptr ucd;
     char *host_name = NULL;
 
     if (!query_attr(attrs, CM_IP_HOSTNAME, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *)(long) & host_name)) {
+    /* value pointer */ (attr_value *)(intptr_t) & host_name)) {
 	svc->trace_out(cm, "UDP transport found no UDP_HOST attribute");
 	host_name = NULL;
     } else {
         svc->trace_out(cm, "UDP transport connect to host %s", host_name);
     }
     if (!query_attr(attrs, CM_UDP_PORT, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *) (long) &int_port_num)) {
+    /* value pointer */ (attr_value *) (intptr_t) &int_port_num)) {
 	svc->trace_out(cm, "Conn Eq CMUdp transport found no UDP_PORT attribute");
 	return 0;
     }
     if (!query_attr(attrs, CM_UDP_ADDR, /* type pointer */ NULL,
-    /* value pointer */ (attr_value *) (long) &requested_IP)) {
+    /* value pointer */ (attr_value *) (intptr_t) &requested_IP)) {
 	svc->trace_out(cm, "CMUdp transport found no UDP_ADDR attribute");
     }
     svc->trace_out(cm, "CMUdp Conn_eq comparing IP/ports %x/%d and %x/%d",
@@ -531,11 +512,7 @@ udp_conn_data_ptr ucd;
 
 
 extern attr_list
-libcmudp_LTX_non_blocking_listen(cm, svc, trans, listen_info)
-CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list listen_info;
+libcmudp_LTX_non_blocking_listen(CManager cm, CMtrans_services svc, transport_entry trans, attr_list listen_info)
 {
     udp_transport_data_ptr utd = trans->trans_data;
     int int_port_num = 0;
@@ -543,13 +520,13 @@ attr_list listen_info;
     attr_list listen_list;
     unsigned int nl;
     int one = 1;
-    int socket_fd;
+    SOCKET socket_fd;
     struct sockaddr_in addr;
     int IP = get_self_ip_addr(cm, svc);
 
     if (listen_info != NULL &&
 	(!query_attr(listen_info, CM_UDP_PORT, /* type pointer */ NULL,
-		     (attr_value *) (long) &int_port_num))) {
+		     (attr_value *) (intptr_t) &int_port_num))) {
 	svc->trace_out(cm, "CMUDP transport found no UDP_PORT attribute");
 	int_port_num = 0;
     } else {
@@ -599,7 +576,7 @@ attr_list listen_info;
 	     (attr_value) strdup("udp"));
     svc->trace_out(cm, "CMudp Adding libcmudp_data_available as action on fd %d", socket_fd);
     svc->fd_add_select(cm, socket_fd, libcmudp_data_available,
-		       (void *) trans, (void *) (long)socket_fd);
+		       (void *) trans, (void *) (intptr_t)socket_fd);
     utd->socket_fd = socket_fd;
     utd->self_ip = IP;
     utd->self_port = ntohs(addr.sin_port);
@@ -624,11 +601,7 @@ struct iovec {
  *  that are more efficient if they allocate their own buffer space.
  */
 extern void *
-libcmudp_LTX_read_block_func(svc, ucd, actual_len, offset_ptr)
-CMtrans_services svc;
-udp_conn_data_ptr ucd;
-size_t *actual_len;
-size_t *offset_ptr;
+libcmudp_LTX_read_block_func(CMtrans_services svc, udp_conn_data_ptr ucd, size_t *actual_len, size_t *offset_ptr)
 {
     *actual_len = ucd->read_buf_len;
     *offset_ptr = 0;
@@ -642,16 +615,9 @@ size_t *offset_ptr;
 #endif
 
 extern int
-libcmudp_LTX_writev_func(svc, ucd, iov, iovcnt, attrs)
-CMtrans_services svc;
-udp_conn_data_ptr ucd;
-struct iovec *iov;
-size_t iovcnt;
-attr_list attrs;
+libcmudp_LTX_writev_func(CMtrans_services svc, udp_conn_data_ptr ucd, struct iovec *iov, size_t iovcnt, attr_list attrs)
 {
-    int fd = ucd->utd->socket_fd;
-    struct sockaddr_in addr = ucd->dest_addr;
-    struct msghdr msg;
+    SOCKET fd = ucd->utd->socket_fd;
     if (ucd->utd->socket_fd == -1) {
 	if ((ucd->utd->socket_fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 	    perror("socket");
@@ -661,6 +627,9 @@ attr_list attrs;
     fd = ucd->utd->socket_fd;
     svc->trace_out(ucd->utd->cm, "CMUdp writev of %d vectors on fd %d",
 		   iovcnt, fd);
+#ifndef _MSC_VER
+    struct sockaddr_in addr = ucd->dest_addr;
+    struct msghdr msg;
     memset(&msg, 0, sizeof(msg));
     msg.msg_name = (void*)&addr;
     msg.msg_namelen = sizeof(addr);
@@ -670,7 +639,10 @@ attr_list attrs;
 	perror("write sendmsg");
 	exit(1);
     }
-    return iovcnt;
+#else
+    // no reimplementation for windows currently
+#endif
+    return (int)iovcnt;
 }
 
 #ifdef HAVE_WINDOWS_H
@@ -690,9 +662,7 @@ free_udp_data(CManager cm, void *utdv)
 }
 
 extern void *
-libcmudp_LTX_initialize(cm, svc)
-CManager cm;
-CMtrans_services svc;
+libcmudp_LTX_initialize(CManager cm, CMtrans_services svc)
 {
     static int atom_init = 0;
 
@@ -748,9 +718,9 @@ cmudp_add_static_transport(CManager cm, CMtrans_services svc)
     transport->cm = cm;
     transport->transport_init = (CMTransport_func)libcmudp_LTX_initialize;
     transport->listen = (CMTransport_listen_func)libcmudp_LTX_non_blocking_listen;
-    transport->initiate_conn = (CMConnection(*)())libcmudp_LTX_initiate_conn;
-    transport->self_check = (int(*)())libcmudp_LTX_self_check;
-    transport->connection_eq = (int(*)())libcmudp_LTX_connection_eq;
+    transport->initiate_conn = (CMTransport_conn_func)libcmudp_LTX_initiate_conn;
+    transport->self_check = (CMTransport_self_check_func)libcmudp_LTX_self_check;
+    transport->connection_eq = (CMTransport_connection_eq_func)libcmudp_LTX_connection_eq;
     transport->shutdown_conn = (CMTransport_shutdown_conn_func)libcmudp_LTX_shutdown_conn;
     transport->read_to_buffer_func = (CMTransport_read_to_buffer_func)NULL;
     transport->read_block_func = (CMTransport_read_block_func)libcmudp_LTX_read_block_func;;

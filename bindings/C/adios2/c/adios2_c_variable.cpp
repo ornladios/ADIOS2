@@ -16,8 +16,7 @@
 
 namespace
 {
-adios2_shapeid adios2_ToShapeID(const adios2::ShapeID shapeIDCpp,
-                                const std::string &hint)
+adios2_shapeid adios2_ToShapeID(const adios2::ShapeID shapeIDCpp, const std::string &hint)
 {
     adios2_shapeid shapeID = adios2_shapeid_unknown;
     switch (shapeIDCpp)
@@ -44,8 +43,7 @@ adios2_shapeid adios2_ToShapeID(const adios2::ShapeID shapeIDCpp,
         break;
 
     default:
-        throw std::invalid_argument("ERROR: invalid adios2_shapeid, " + hint +
-                                    "\n");
+        throw std::invalid_argument("ERROR: invalid adios2_shapeid, " + hint + "\n");
     }
 
     return shapeID;
@@ -57,14 +55,12 @@ adios2_shapeid adios2_ToShapeID(const adios2::ShapeID shapeIDCpp,
 extern "C" {
 #endif
 
-adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims,
-                              const size_t *shape)
+adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims, const size_t *shape)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for adios2_variable, in call to "
-                                        "adios2_set_shape");
+        adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                                  "adios2_set_shape");
         adios2::helper::CheckForNullptr(shape, "for start, in call to "
                                                "adios2_set_shape");
 
@@ -77,19 +73,16 @@ adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims,
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_set_shape"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_set_shape"));
     }
 }
 
-adios2_error adios2_set_block_selection(adios2_variable *variable,
-                                        const size_t block_id)
+adios2_error adios2_set_block_selection(adios2_variable *variable, const size_t block_id)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for adios2_variable, in call to "
-                                        "adios2_set_block_selection");
+        adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                                  "adios2_set_block_selection");
 
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
@@ -108,17 +101,15 @@ adios2_error adios2_set_selection(adios2_variable *variable, const size_t ndims,
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for adios2_variable, in call to "
-                                        "adios2_set_selection");
+        adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                                  "adios2_set_selection");
         adios2::helper::CheckForNullptr(count, "for count, in call to "
                                                "adios2_set_selection");
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
 
-        const adios2::Dims startV = (start == nullptr)
-                                        ? adios2::Dims()
-                                        : adios2::Dims(start, start + ndims);
+        const adios2::Dims startV =
+            (start == nullptr) ? adios2::Dims() : adios2::Dims(start, start + ndims);
         const adios2::Dims countV = adios2::Dims(count, count + ndims);
 
         variableBase->SetSelection({startV, countV});
@@ -127,27 +118,21 @@ adios2_error adios2_set_selection(adios2_variable *variable, const size_t ndims,
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_set_selection"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_set_selection"));
     }
 }
 
-adios2_error adios2_set_memory_selection(adios2_variable *variable,
-                                         const size_t ndims,
-                                         const size_t *memory_start,
-                                         const size_t *memory_count)
+adios2_error adios2_set_memory_selection(adios2_variable *variable, const size_t ndims,
+                                         const size_t *memory_start, const size_t *memory_count)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for adios2_variable, in call to "
-                                        "adios2_set_memory_selection");
-        adios2::helper::CheckForNullptr(memory_start,
-                                        "for start, in call to "
-                                        "adios2_set_memory_selection");
-        adios2::helper::CheckForNullptr(memory_count,
-                                        "for count, in call to "
-                                        "adios2_set_memory_selection");
+        adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                                  "adios2_set_memory_selection");
+        adios2::helper::CheckForNullptr(memory_start, "for start, in call to "
+                                                      "adios2_set_memory_selection");
+        adios2::helper::CheckForNullptr(memory_count, "for count, in call to "
+                                                      "adios2_set_memory_selection");
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
 
@@ -163,38 +148,31 @@ adios2_error adios2_set_memory_selection(adios2_variable *variable,
     }
 }
 
-adios2_error adios2_set_step_selection(adios2_variable *variable,
-                                       const size_t step_start,
+adios2_error adios2_set_step_selection(adios2_variable *variable, const size_t step_start,
                                        const size_t step_count)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for adios2_variable, in call to "
-                                        "adios2_set_step_selection");
+        adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                                  "adios2_set_step_selection");
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
-        variableBase->SetStepSelection(
-            adios2::Box<size_t>{step_start, step_count});
+        variableBase->SetStepSelection(adios2::Box<size_t>{step_start, step_count});
         return adios2_error_none;
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_set_selection"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_set_selection"));
     }
 }
 
-adios2_error adios2_variable_name(char *name, size_t *size,
-                                  const adios2_variable *variable)
+adios2_error adios2_variable_name(char *name, size_t *size, const adios2_variable *variable)
 {
     try
     {
         adios2::helper::CheckForNullptr(
-            variable,
-            "for const adios2_variable, in call to adios2_variable_name");
-        adios2::helper::CheckForNullptr(
-            size, "for size_t* size, in call to adios2_variable_name");
+            variable, "for const adios2_variable, in call to adios2_variable_name");
+        adios2::helper::CheckForNullptr(size, "for size_t* size, in call to adios2_variable_name");
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
@@ -202,19 +180,16 @@ adios2_error adios2_variable_name(char *name, size_t *size,
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_variable_name"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_variable_name"));
     }
 }
 
-adios2_error adios2_variable_type(adios2_type *type,
-                                  const adios2_variable *variable)
+adios2_error adios2_variable_type(adios2_type *type, const adios2_variable *variable)
 {
     try
     {
         adios2::helper::CheckForNullptr(
-            variable,
-            "for const adios2_variable, in call to adios2_variable_type");
+            variable, "for const adios2_variable, in call to adios2_variable_type");
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
@@ -224,31 +199,31 @@ adios2_error adios2_variable_type(adios2_type *type,
         {
             *type = adios2_type_string;
         }
-#define make_case(T)                                                           \
-    else if (typeCpp == adios2::helper::GetDataType<MapAdios2Type<T>::Type>()) \
-    {                                                                          \
-        *type = T;                                                             \
+#define make_case(T)                                                                               \
+    else if (typeCpp == adios2::helper::GetDataType<MapAdios2Type<T>::Type>())                     \
+    {                                                                                              \
+        *type = T;                                                                                 \
     }
         ADIOS2_FOREACH_C_TYPE_1ARG(make_case)
 #undef make_case
-        else { *type = adios2_type_unknown; }
+        else
+        {
+            *type = adios2_type_unknown;
+        }
         return adios2_error_none;
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_variable_type"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_variable_type"));
     }
 }
 
-adios2_error adios2_variable_type_string(char *type, size_t *size,
-                                         const adios2_variable *variable)
+adios2_error adios2_variable_type_string(char *type, size_t *size, const adios2_variable *variable)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for const adios2_variable, in call to "
-                                        "adios2_variable_type_string");
+        adios2::helper::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                                  "adios2_variable_type_string");
         adios2::helper::CheckForNullptr(
             size, "for size_t* length, in call to adios2_variable_type_string");
 
@@ -263,19 +238,16 @@ adios2_error adios2_variable_type_string(char *type, size_t *size,
     }
 }
 
-adios2_error adios2_variable_shapeid(adios2_shapeid *shapeid,
-                                     const adios2_variable *variable)
+adios2_error adios2_variable_shapeid(adios2_shapeid *shapeid, const adios2_variable *variable)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for const adios2_variable, in call to "
-                                        "adios2_variable_shapeid");
+        adios2::helper::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                                  "adios2_variable_shapeid");
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        *shapeid = adios2_ToShapeID(variableBase->m_ShapeID,
-                                    "in call to adios2_variable_shapeid");
+        *shapeid = adios2_ToShapeID(variableBase->m_ShapeID, "in call to adios2_variable_shapeid");
         return adios2_error_none;
     }
     catch (...)
@@ -285,14 +257,12 @@ adios2_error adios2_variable_shapeid(adios2_shapeid *shapeid,
     }
 }
 
-adios2_error adios2_variable_ndims(size_t *ndims,
-                                   const adios2_variable *variable)
+adios2_error adios2_variable_ndims(size_t *ndims, const adios2_variable *variable)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for const adios2_variable, in call to "
-                                        "adios2_variable_ndims");
+        adios2::helper::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                                  "adios2_variable_ndims");
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
         *ndims = variableBase->m_Count.size();
@@ -300,19 +270,16 @@ adios2_error adios2_variable_ndims(size_t *ndims,
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_variable_ndims"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_variable_ndims"));
     }
 }
 
-adios2_error adios2_variable_shape(size_t *shape,
-                                   const adios2_variable *variable)
+adios2_error adios2_variable_shape(size_t *shape, const adios2_variable *variable)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for const adios2_variable, in call to "
-                                        "adios2_variable_shape");
+        adios2::helper::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                                  "adios2_variable_shape");
         adios2::helper::CheckForNullptr(shape, "for size_t* shape, in call to "
                                                "adios2_variable_shape");
 
@@ -324,14 +291,13 @@ adios2_error adios2_variable_shape(size_t *shape,
         {
             // not supported
         }
-#define declare_template_instantiation(T)                                      \
-    else if (typeCpp == adios2::helper::GetDataType<T>())                      \
-    {                                                                          \
-        const adios2::core::Variable<T> *variable =                            \
-            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
-        const adios2::Dims shapeCpp =                                          \
-            variable->Shape(adios2::EngineCurrentStep);                        \
-        std::copy(shapeCpp.begin(), shapeCpp.end(), shape);                    \
+#define declare_template_instantiation(T)                                                          \
+    else if (typeCpp == adios2::helper::GetDataType<T>())                                          \
+    {                                                                                              \
+        const adios2::core::Variable<T> *variable =                                                \
+            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);                         \
+        const adios2::Dims shapeCpp = variable->Shape(adios2::EngineCurrentStep);                  \
+        std::copy(shapeCpp.begin(), shapeCpp.end(), shape);                                        \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -340,44 +306,36 @@ adios2_error adios2_variable_shape(size_t *shape,
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_variable_shape"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_variable_shape"));
     }
 }
 
-adios2_error adios2_variable_start(size_t *start,
-                                   const adios2_variable *variable)
+adios2_error adios2_variable_start(size_t *start, const adios2_variable *variable)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for const adios2_variable, in call to "
-                                        "adios2_variable_start");
+        adios2::helper::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                                  "adios2_variable_start");
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
-        std::copy(variableBase->m_Start.begin(), variableBase->m_Start.end(),
-                  start);
+        std::copy(variableBase->m_Start.begin(), variableBase->m_Start.end(), start);
         return adios2_error_none;
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_variable_shape"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_variable_shape"));
     }
 }
 
-adios2_error adios2_variable_count(size_t *count,
-                                   const adios2_variable *variable)
+adios2_error adios2_variable_count(size_t *count, const adios2_variable *variable)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for const adios2_variable, in call to "
-                                        "adios2_variable_count");
-        adios2::helper::CheckForNullptr(count,
-                                        "for const adios2_count, in call to "
-                                        "adios2_variable_count");
+        adios2::helper::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                                  "adios2_variable_count");
+        adios2::helper::CheckForNullptr(count, "for const adios2_count, in call to "
+                                               "adios2_variable_count");
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
@@ -387,13 +345,13 @@ adios2_error adios2_variable_count(size_t *count,
         {
             // not supported
         }
-#define declare_template_instantiation(T)                                      \
-    else if (typeCpp == adios2::helper::GetDataType<T>())                      \
-    {                                                                          \
-        const adios2::core::Variable<T> *variable =                            \
-            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
-        const adios2::Dims countCpp = variable->Count();                       \
-        std::copy(countCpp.begin(), countCpp.end(), count);                    \
+#define declare_template_instantiation(T)                                                          \
+    else if (typeCpp == adios2::helper::GetDataType<T>())                                          \
+    {                                                                                              \
+        const adios2::core::Variable<T> *variable =                                                \
+            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);                         \
+        const adios2::Dims countCpp = variable->Count();                                           \
+        std::copy(countCpp.begin(), countCpp.end(), count);                                        \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -402,19 +360,16 @@ adios2_error adios2_variable_count(size_t *count,
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_variable_count"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_variable_count"));
     }
 }
 
-adios2_error adios2_variable_steps_start(size_t *steps_start,
-                                         const adios2_variable *variable)
+adios2_error adios2_variable_steps_start(size_t *steps_start, const adios2_variable *variable)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for const adios2_variable, in call to "
-                                        "adios2_variable_steps_start");
+        adios2::helper::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                                  "adios2_variable_steps_start");
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
         *steps_start = variableBase->m_AvailableStepsStart;
@@ -427,14 +382,12 @@ adios2_error adios2_variable_steps_start(size_t *steps_start,
     }
 }
 
-adios2_error adios2_variable_steps(size_t *steps,
-                                   const adios2_variable *variable)
+adios2_error adios2_variable_steps(size_t *steps, const adios2_variable *variable)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for const adios2_variable, in call to "
-                                        "adios2_variable_steps");
+        adios2::helper::CheckForNullptr(variable, "for const adios2_variable, in call to "
+                                                  "adios2_variable_steps");
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
         *steps = variableBase->m_AvailableStepsCount;
@@ -442,19 +395,16 @@ adios2_error adios2_variable_steps(size_t *steps,
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_variable_steps"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_variable_steps"));
     }
 }
 
-adios2_error adios2_selection_size(size_t *size,
-                                   const adios2_variable *variable)
+adios2_error adios2_selection_size(size_t *size, const adios2_variable *variable)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for adios2_variable, in call to "
-                                        "adios2_selection_size");
+        adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                                  "adios2_selection_size");
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
 
@@ -464,12 +414,12 @@ adios2_error adios2_selection_size(size_t *size,
         {
             // not supported
         }
-#define declare_template_instantiation(T)                                      \
-    else if (typeCpp == adios2::helper::GetDataType<T>())                      \
-    {                                                                          \
-        const adios2::core::Variable<T> *variable =                            \
-            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
-        *size = variable->SelectionSize();                                     \
+#define declare_template_instantiation(T)                                                          \
+    else if (typeCpp == adios2::helper::GetDataType<T>())                                          \
+    {                                                                                              \
+        const adios2::core::Variable<T> *variable =                                                \
+            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);                         \
+        *size = variable->SelectionSize();                                                         \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -478,21 +428,17 @@ adios2_error adios2_selection_size(size_t *size,
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_selection_size"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_selection_size"));
     }
 }
 
-adios2_error adios2_add_operation(size_t *operation_index,
-                                  adios2_variable *variable,
-                                  adios2_operator *op, const char *key,
-                                  const char *value)
+adios2_error adios2_add_operation(size_t *operation_index, adios2_variable *variable,
+                                  adios2_operator *op, const char *key, const char *value)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for adios2_variable, in call to "
-                                        "adios2_add_operation");
+        adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                                  "adios2_add_operation");
         adios2::helper::CheckForNullptr(op, "for adios2_operator, in call to "
                                             "adios2_add_operation");
 
@@ -505,8 +451,7 @@ adios2_error adios2_add_operation(size_t *operation_index,
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
 
-        auto *opCpp =
-            reinterpret_cast<std::pair<std::string, adios2::Params> *>(op);
+        auto *opCpp = reinterpret_cast<std::pair<std::string, adios2::Params> *>(op);
 
         auto params = adios2::Params{{key, value}};
 
@@ -521,20 +466,17 @@ adios2_error adios2_add_operation(size_t *operation_index,
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_add_operation"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_add_operation"));
     }
 }
 
-adios2_error adios2_set_operation_parameter(adios2_variable *variable,
-                                            const size_t operation_id,
+adios2_error adios2_set_operation_parameter(adios2_variable *variable, const size_t operation_id,
                                             const char *key, const char *value)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for adios2_variable, in call to "
-                                        "adios2_set_operation_parameter");
+        adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                                  "adios2_set_operation_parameter");
 
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
@@ -552,9 +494,8 @@ adios2_error adios2_remove_operations(adios2_variable *variable)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for adios2_variable, in call to "
-                                        "adios2_remove_operations");
+        adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call to "
+                                                  "adios2_remove_operations");
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
         variableBase->RemoveOperations();
@@ -571,11 +512,9 @@ adios2_error adios2_variable_min(void *min, const adios2_variable *variable)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for adios2_variable, in call "
-                                        "to adios2_variable_min");
-        adios2::helper::CheckForNullptr(
-            min, "for void* min, in call to adios2_variable_min");
+        adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call "
+                                                  "to adios2_variable_min");
+        adios2::helper::CheckForNullptr(min, "for void* min, in call to adios2_variable_min");
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
@@ -585,13 +524,13 @@ adios2_error adios2_variable_min(void *min, const adios2_variable *variable)
         {
             // not supported
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetDataType<T>())                         \
-    {                                                                          \
-        T *minT = reinterpret_cast<T *>(min);                                  \
-        const adios2::core::Variable<T> *variableT =                           \
-            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
-        *minT = variableT->Min(adios2::EngineCurrentStep);                     \
+#define declare_template_instantiation(T)                                                          \
+    else if (type == adios2::helper::GetDataType<T>())                                             \
+    {                                                                                              \
+        T *minT = reinterpret_cast<T *>(min);                                                      \
+        const adios2::core::Variable<T> *variableT =                                               \
+            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);                         \
+        *minT = variableT->Min(adios2::EngineCurrentStep);                                         \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -599,8 +538,7 @@ adios2_error adios2_variable_min(void *min, const adios2_variable *variable)
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_variable_min"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_variable_min"));
     }
 }
 
@@ -608,11 +546,9 @@ adios2_error adios2_variable_max(void *max, const adios2_variable *variable)
 {
     try
     {
-        adios2::helper::CheckForNullptr(variable,
-                                        "for adios2_variable, in call "
-                                        "to adios2_variable_max");
-        adios2::helper::CheckForNullptr(
-            max, "for void* max, in call to adios2_variable_max");
+        adios2::helper::CheckForNullptr(variable, "for adios2_variable, in call "
+                                                  "to adios2_variable_max");
+        adios2::helper::CheckForNullptr(max, "for void* max, in call to adios2_variable_max");
 
         const adios2::core::VariableBase *variableBase =
             reinterpret_cast<const adios2::core::VariableBase *>(variable);
@@ -622,13 +558,13 @@ adios2_error adios2_variable_max(void *max, const adios2_variable *variable)
         {
             // not supported
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == adios2::helper::GetDataType<T>())                         \
-    {                                                                          \
-        T *maxT = reinterpret_cast<T *>(max);                                  \
-        const adios2::core::Variable<T> *variableT =                           \
-            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);     \
-        *maxT = variableT->Max(adios2::EngineCurrentStep);                     \
+#define declare_template_instantiation(T)                                                          \
+    else if (type == adios2::helper::GetDataType<T>())                                             \
+    {                                                                                              \
+        T *maxT = reinterpret_cast<T *>(max);                                                      \
+        const adios2::core::Variable<T> *variableT =                                               \
+            dynamic_cast<const adios2::core::Variable<T> *>(variableBase);                         \
+        *maxT = variableT->Max(adios2::EngineCurrentStep);                                         \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -636,8 +572,7 @@ adios2_error adios2_variable_max(void *max, const adios2_variable *variable)
     }
     catch (...)
     {
-        return static_cast<adios2_error>(
-            adios2::helper::ExceptionToError("adios2_variable_max"));
+        return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_variable_max"));
     }
 }
 

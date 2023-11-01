@@ -28,8 +28,7 @@ inline void MhsReader::GetSyncCommon(Variable<T> &variable, T *data)
 }
 
 template <>
-inline void MhsReader::GetDeferredCommon(Variable<std::string> &variable,
-                                         std::string *data)
+inline void MhsReader::GetDeferredCommon(Variable<std::string> &variable, std::string *data)
 {
     m_SubEngines[0]->Get(variable, data, Mode::Sync);
 }

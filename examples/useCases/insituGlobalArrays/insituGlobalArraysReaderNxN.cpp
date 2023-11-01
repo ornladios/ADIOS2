@@ -55,8 +55,7 @@ std::string DimsToString(adios2::Dims &dims)
  * Appends the block info to the passed Varinfo vector if found
  */
 template <class T>
-void ProcessVariableMetadata(int rank, const std::string &name,
-                             const std::string &type,
+void ProcessVariableMetadata(int rank, const std::string &name, const std::string &type,
                              const adios2::Engine &reader, adios2::IO &io,
                              std::vector<VarInfo> &varinfos)
 {
@@ -66,23 +65,20 @@ void ProcessVariableMetadata(int rank, const std::string &name,
     for (auto &block : blocks)
     {
         /* offset in first dimension is encoding writer's rank */
-        if (block.Start.size() > 0 &&
-            block.Start[0] == static_cast<size_t>(rank))
+        if (block.Start.size() > 0 && block.Start[0] == static_cast<size_t>(rank))
         {
             /*std::cout << "        Rank " << rank << "     Variable '" << name
                       << "' found a block dimensions = "
                       << DimsToString(block.Count)
                       << " offset = " << DimsToString(block.Start) <<
                std::endl;*/
-            varinfos.push_back(
-                {name, type, variable.Shape(), block.Start, block.Count});
+            varinfos.push_back({name, type, variable.Shape(), block.Start, block.Count});
         }
     }
 }
 
-std::vector<VarInfo>
-ProcessMetadata(int rank, const adios2::Engine &reader, adios2::IO &io,
-                const std::map<std::string, adios2::Params> &varNameList)
+std::vector<VarInfo> ProcessMetadata(int rank, const adios2::Engine &reader, adios2::IO &io,
+                                     const std::map<std::string, adios2::Params> &varNameList)
 {
     std::vector<VarInfo> varinfos;
     for (auto &var : varNameList)
@@ -94,17 +90,17 @@ ProcessMetadata(int rank, const adios2::Engine &reader, adios2::IO &io,
         const std::string &shape = it->second;
         if (!rank)
         {
-            std::cout << "    Variable '" << name << "' type " << type
-                      << " dimensions = " << shape << std::endl;
+            std::cout << "    Variable '" << name << "' type " << type << " dimensions = " << shape
+                      << std::endl;
         }
         if (type == "struct")
         {
             // not supported
         }
-#define declare_template_instantiation(T)                                      \
-    else if (type == adios2::GetType<T>())                                     \
-    {                                                                          \
-        ProcessVariableMetadata<T>(rank, name, type, reader, io, varinfos);    \
+#define declare_template_instantiation(T)                                                          \
+    else if (type == adios2::GetType<T>())                                                         \
+    {                                                                                              \
+        ProcessVariableMetadata<T>(rank, name, type, reader, io, varinfos);                        \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
@@ -116,8 +112,7 @@ ProcessMetadata(int rank, const adios2::Engine &reader, adios2::IO &io,
     return varinfos;
 }
 
-void ReadVariables(int rank, adios2::Engine &reader, adios2::IO &io,
-                   std::vector<VarInfo> &varinfos)
+void ReadVariables(int rank, adios2::Engine &reader, adios2::IO &io, std::vector<VarInfo> &varinfos)
 {
     for (auto &vi : varinfos)
     {
@@ -126,8 +121,7 @@ void ReadVariables(int rank, adios2::Engine &reader, adios2::IO &io,
                   << " offset = " << DimsToString(vi.start) << std::endl;*/
         if (vi.type == "double")
         {
-            adios2::Variable<double> variable =
-                io.InquireVariable<double>(vi.varName);
+            adios2::Variable<double> variable = io.InquireVariable<double>(vi.varName);
             variable.SetSelection({vi.start, vi.count});
             reader.Get(variable, vi.data);
         }
@@ -135,8 +129,7 @@ void ReadVariables(int rank, adios2::Engine &reader, adios2::IO &io,
         {
             std::cout << "ERROR: This example does not support reading "
                          "variables of type: "
-                      << vi.type << ". Skip reading variable " << vi.varName
-                      << std::endl;
+                      << vi.type << ". Skip reading variable " << vi.varName << std::endl;
         }
     }
     reader.PerformGets();
@@ -155,12 +148,10 @@ void SerialPrintout(std::vector<VarInfo> &varinfos, int rank, int nproc)
     }
 #endif
 
-    std::cout << "    Rank " << rank << " variables:" << varinfos.size()
-              << std::endl;
+    std::cout << "    Rank " << rank << " variables:" << varinfos.size() << std::endl;
     for (auto &vi : varinfos)
     {
-        std::cout << "       Name: " << vi.varName
-                  << " dimensions = " << DimsToString(vi.count)
+        std::cout << "       Name: " << vi.varName << " dimensions = " << DimsToString(vi.count)
                   << " offset = " << DimsToString(vi.start) << " = [";
         for (auto d : vi.data)
         {
@@ -203,10 +194,8 @@ void ProcessArgs(int rank, int argc, char *argv[])
     else if (elc == "dataman")
     {
         engineParams["WorkflowMode"] = "p2p";
-        engineTransports["WAN"] = {{"Library", "ZMQ"},
-                                   {"Timeout", "2000"},
-                                   {"IPAddress", "127.0.0.1"},
-                                   {"Port", "25600"}};
+        engineTransports["WAN"] = {
+            {"Library", "ZMQ"}, {"Timeout", "2000"}, {"IPAddress", "127.0.0.1"}, {"Port", "25600"}};
     }
 }
 
@@ -236,8 +225,7 @@ int main(int argc, char *argv[])
     ProcessArgs(rank, argc, argv);
     if (!rank)
     {
-        std::cout << "Reader: ADIOS2 Engine set to: " << argEngine
-                  << "   Parameters:";
+        std::cout << "Reader: ADIOS2 Engine set to: " << argEngine << "   Parameters:";
         for (auto &p : engineParams)
         {
             std::cout << "    " << p.first << " = " << p.second;
@@ -268,8 +256,7 @@ int main(int argc, char *argv[])
 
         while (true)
         {
-            adios2::StepStatus status =
-                reader.BeginStep(adios2::StepMode::Read, 60.0f);
+            adios2::StepStatus status = reader.BeginStep(adios2::StepMode::Read, 60.0f);
             if (status == adios2::StepStatus::NotReady)
             {
                 std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -280,20 +267,16 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            std::map<std::string, adios2::Params> varNameList =
-                io.AvailableVariables();
+            std::map<std::string, adios2::Params> varNameList = io.AvailableVariables();
             const size_t nTotalVars = varNameList.size();
             if (!rank)
             {
                 std::cout << "File info:" << std::endl;
-                std::cout << "  Current step:   " << reader.CurrentStep()
-                          << std::endl;
-                std::cout << "  Total number of variables = " << nTotalVars
-                          << std::endl;
+                std::cout << "  Current step:   " << reader.CurrentStep() << std::endl;
+                std::cout << "  Total number of variables = " << nTotalVars << std::endl;
             }
 
-            std::vector<VarInfo> varinfos =
-                ProcessMetadata(rank, reader, io, varNameList);
+            std::vector<VarInfo> varinfos = ProcessMetadata(rank, reader, io, varNameList);
             ReadVariables(rank, reader, io, varinfos);
             SerialPrintout(varinfos, rank, nproc);
 

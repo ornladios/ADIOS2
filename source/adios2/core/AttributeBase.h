@@ -38,8 +38,7 @@ public:
      * @param name
      * @param type
      */
-    AttributeBase(const std::string &name, const DataType type,
-                  const bool allowModification);
+    AttributeBase(const std::string &name, const DataType type, const bool allowModification);
 
     /**
      * Array constructor used by Attribute<T> derived class
@@ -47,8 +46,8 @@ public:
      * @param type
      * @param elements
      */
-    AttributeBase(const std::string &name, const DataType type,
-                  const size_t elements, const bool allowModification);
+    AttributeBase(const std::string &name, const DataType type, const size_t elements,
+                  const bool allowModification);
 
     virtual ~AttributeBase() = default;
 
@@ -62,8 +61,7 @@ public:
 
 private:
     virtual std::string DoGetInfoValue() const noexcept = 0;
-    virtual bool DoEqual(const void *values, const size_t elements) const
-        noexcept = 0;
+    virtual bool DoEqual(const void *values, const size_t elements) const noexcept = 0;
 };
 
 } // end namespace core

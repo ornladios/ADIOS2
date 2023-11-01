@@ -19,14 +19,12 @@ namespace engine
 namespace ssc
 {
 
-SscReaderNaive::SscReaderNaive(IO &io, const std::string &name, const Mode mode,
-                               MPI_Comm comm)
+SscReaderNaive::SscReaderNaive(IO &io, const std::string &name, const Mode mode, MPI_Comm comm)
 : SscReaderBase(io, name, mode, comm)
 {
 }
 
-StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
-                                     const float timeoutSeconds,
+StepStatus SscReaderNaive::BeginStep(const StepMode stepMode, const float timeoutSeconds,
                                      const bool readerLocked)
 {
 
@@ -39,15 +37,15 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
 
     if (m_ReaderRank == 0)
     {
-        MPI_Recv(&globalSize, 1, MPI_INT, m_WriterMasterStreamRank, 0,
-                 m_StreamComm, MPI_STATUS_IGNORE);
+        MPI_Recv(&globalSize, 1, MPI_INT, m_WriterMasterStreamRank, 0, m_StreamComm,
+                 MPI_STATUS_IGNORE);
         m_Buffer.resize(globalSize);
         //        MPI_Recv(m_Buffer.data(), globalSize, MPI_CHAR,
         //        m_WriterMasterStreamRank, 0, m_StreamComm, MPI_STATUS_IGNORE);
         // TODO: revert when the crusher MPI bug is fixed
         ssc::Buffer tmp(globalSize);
-        MPI_Recv(tmp.data(), globalSize, MPI_CHAR, m_WriterMasterStreamRank, 0,
-                 m_StreamComm, MPI_STATUS_IGNORE);
+        MPI_Recv(tmp.data(), globalSize, MPI_CHAR, m_WriterMasterStreamRank, 0, m_StreamComm,
+                 MPI_STATUS_IGNORE);
         std::memcpy(m_Buffer.data(), tmp.data(), globalSize);
     }
 
@@ -76,8 +74,7 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
 
             if (shapeId == 65)
             {
-                DeserializeStructDefinitions(m_Buffer, pos, m_IO, true,
-                                             m_StructDefinitions);
+                DeserializeStructDefinitions(m_Buffer, pos, m_IO, true, m_StructDefinitions);
             }
             else if (shapeId == 66)
             {
@@ -87,52 +84,42 @@ StepStatus SscReaderNaive::BeginStep(const StepMode stepMode,
             {
                 pos += 4;
                 ssc::BlockInfo b;
-                DeserializeVariable(m_Buffer, static_cast<ShapeID>(shapeId),
-                                    pos, b, m_IO, true, m_StructDefinitions);
+                DeserializeVariable(m_Buffer, static_cast<ShapeID>(shapeId), pos, b, m_IO, true,
+                                    m_StructDefinitions);
                 b.bufferStart += start;
                 m_BlockMap[b.name].push_back(b);
-                if (b.shapeId == ShapeID::GlobalValue ||
-                    b.shapeId == ShapeID::LocalValue)
+                if (b.shapeId == ShapeID::GlobalValue || b.shapeId == ShapeID::LocalValue)
                 {
                     std::vector<char> value(b.bufferCount);
                     std::memcpy(value.data(), b.value.data(), b.value.size());
 
                     if (b.type == DataType::String)
                     {
-                        auto variable =
-                            m_IO.InquireVariable<std::string>(b.name);
+                        auto variable = m_IO.InquireVariable<std::string>(b.name);
                         if (variable)
                         {
-                            variable->m_Value =
-                                std::string(value.begin(), value.end());
-                            variable->m_Min =
-                                std::string(value.begin(), value.end());
-                            variable->m_Max =
-                                std::string(value.begin(), value.end());
+                            variable->m_Value = std::string(value.begin(), value.end());
+                            variable->m_Min = std::string(value.begin(), value.end());
+                            variable->m_Max = std::string(value.begin(), value.end());
                         }
                     }
-#define declare_type(T)                                                        \
-    else if (b.type == helper::GetDataType<T>())                               \
-    {                                                                          \
-        auto variable = m_IO.InquireVariable<T>(b.name);                       \
-        if (variable)                                                          \
-        {                                                                      \
-            std::memcpy(reinterpret_cast<char *>(&variable->m_Min),            \
-                        value.data(), value.size());                           \
-            std::memcpy(reinterpret_cast<char *>(&variable->m_Max),            \
-                        value.data(), value.size());                           \
-            std::memcpy(reinterpret_cast<char *>(&variable->m_Value),          \
-                        value.data(), value.size());                           \
-        }                                                                      \
+#define declare_type(T)                                                                            \
+    else if (b.type == helper::GetDataType<T>())                                                   \
+    {                                                                                              \
+        auto variable = m_IO.InquireVariable<T>(b.name);                                           \
+        if (variable)                                                                              \
+        {                                                                                          \
+            std::memcpy(reinterpret_cast<char *>(&variable->m_Min), value.data(), value.size());   \
+            std::memcpy(reinterpret_cast<char *>(&variable->m_Max), value.data(), value.size());   \
+            std::memcpy(reinterpret_cast<char *>(&variable->m_Value), value.data(), value.size()); \
+        }                                                                                          \
     }
                     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
                     else
                     {
-                        helper::Log("Engine", "SscReaderNaive", "BeginStep",
-                                    "unknown data type", m_ReaderRank,
-                                    m_ReaderRank, 0, m_Verbosity,
-                                    helper::FATALERROR);
+                        helper::Log("Engine", "SscReaderNaive", "BeginStep", "unknown data type",
+                                    m_ReaderRank, m_ReaderRank, 0, m_Verbosity, helper::FATALERROR);
                     }
                 }
             }
@@ -150,11 +137,11 @@ void SscReaderNaive::PerformGets() {}
 
 void SscReaderNaive::Close(const int transportIndex) {}
 
-#define declare_type(T)                                                        \
-    std::vector<typename Variable<T>::BPInfo> SscReaderNaive::BlocksInfo(      \
-        const Variable<T> &variable, const size_t step) const                  \
-    {                                                                          \
-        return BlocksInfoCommon(variable, step);                               \
+#define declare_type(T)                                                                            \
+    std::vector<typename Variable<T>::BPInfo> SscReaderNaive::BlocksInfo(                          \
+        const Variable<T> &variable, const size_t step) const                                      \
+    {                                                                                              \
+        return BlocksInfoCommon(variable, step);                                                   \
     }
 ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -171,8 +158,7 @@ void SscReaderNaive::GetDeferred(VariableBase &variable, void *data)
             if (b.name == variable.m_Name)
             {
                 *dataString = std::string(m_Buffer.data() + b.bufferStart,
-                                          m_Buffer.data() + b.bufferStart +
-                                              b.bufferCount);
+                                          m_Buffer.data() + b.bufferStart + b.bufferCount);
                 variableString->m_Value = *dataString;
                 variableString->m_Min = *dataString;
                 variableString->m_Max = *dataString;
@@ -196,28 +182,23 @@ void SscReaderNaive::GetDeferred(VariableBase &variable, void *data)
 
     for (const auto &b : m_BlockMap[variable.m_Name])
     {
-        if (b.shapeId == ShapeID::GlobalArray ||
-            b.shapeId == ShapeID::LocalArray)
+        if (b.shapeId == ShapeID::GlobalArray || b.shapeId == ShapeID::LocalArray)
         {
-            helper::NdCopy(m_Buffer.data<char>() + b.bufferStart,
-                           helper::CoreDims(b.start), helper::CoreDims(b.count),
-                           true, true, reinterpret_cast<char *>(data), vStart,
-                           vCount, true, true,
-                           static_cast<int>(variable.m_ElementSize),
-                           helper::CoreDims(b.start), helper::CoreDims(b.count),
-                           vMemStart, vMemCount);
+            helper::NdCopy(m_Buffer.data<char>() + b.bufferStart, helper::CoreDims(b.start),
+                           helper::CoreDims(b.count), true, true, reinterpret_cast<char *>(data),
+                           vStart, vCount, true, true, static_cast<int>(variable.m_ElementSize),
+                           helper::CoreDims(b.start), helper::CoreDims(b.count), vMemStart,
+                           vMemCount);
         }
-        else if (b.shapeId == ShapeID::GlobalValue ||
-                 b.shapeId == ShapeID::LocalValue)
+        else if (b.shapeId == ShapeID::GlobalValue || b.shapeId == ShapeID::LocalValue)
         {
             std::memcpy(data, m_Buffer.data() + b.bufferStart, b.bufferCount);
         }
     }
 }
 
-std::vector<VariableStruct::BPInfo>
-SscReaderNaive::BlocksInfo(const VariableStruct &variable,
-                           const size_t step) const
+std::vector<VariableStruct::BPInfo> SscReaderNaive::BlocksInfo(const VariableStruct &variable,
+                                                               const size_t step) const
 {
     std::vector<VariableStruct::BPInfo> ret;
     size_t blockID = 0;

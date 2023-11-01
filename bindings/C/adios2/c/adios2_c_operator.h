@@ -28,8 +28,7 @@ extern "C" {
  * @param op operator handler to be inspected
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
-adios2_error adios2_operator_type(char *type, size_t *size,
-                                  const adios2_operator *op);
+adios2_error adios2_operator_type(char *type, size_t *size, const adios2_operator *op);
 
 #ifdef __cplusplus
 } // end extern C

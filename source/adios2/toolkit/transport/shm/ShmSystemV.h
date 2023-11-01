@@ -33,13 +33,13 @@ public:
      * greater than zero.
      * @param size shared-memory pre-allocated data size
      */
-    ShmSystemV(const unsigned int projectID, const size_t size,
-               helper::Comm const &comm, const bool removeAtClose = false);
+    ShmSystemV(const unsigned int projectID, const size_t size, helper::Comm const &comm,
+               const bool removeAtClose = false);
 
     ~ShmSystemV();
 
-    void Open(const std::string &name, const Mode openMode,
-              const bool async = false, const bool directio = false) final;
+    void Open(const std::string &name, const Mode openMode, const bool async = false,
+              const bool directio = false) final;
 
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
 
@@ -80,8 +80,7 @@ private:
 
     void CheckBuffer(const std::string hint) const;
 
-    void CheckSizes(const size_t start, const size_t size,
-                    const std::string hint) const;
+    void CheckSizes(const size_t start, const size_t size, const std::string hint) const;
 };
 
 } // end namespace transport

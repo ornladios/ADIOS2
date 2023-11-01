@@ -52,14 +52,11 @@ void MGARDAccuracy2D(const std::string tolerance)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank), 0};
         const adios2::Dims count{Nx, Ny};
 
-        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count,
-                                                 adios2::ConstantDims);
+        auto var_r64 = io.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
 
         // add MGARD operations
-        adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", adios2::ops::LossyMGARD);
-        var_r64.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::tolerance, tolerance}});
+        adios2::Operator mgardOp = adios.DefineOperator("mgardCompressor", adios2::ops::LossyMGARD);
+        var_r64.AddOperation(mgardOp, {{adios2::ops::mgard::key::tolerance, tolerance}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -68,8 +65,7 @@ void MGARDAccuracy2D(const std::string tolerance)
         for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
-            cudaMemcpy(gpu64s, r64s.data(), Nx * Ny * sizeof(double),
-                       cudaMemcpyHostToDevice);
+            cudaMemcpy(gpu64s, r64s.data(), Nx * Ny * sizeof(double), cudaMemcpyHostToDevice);
             var_r64.SetMemorySpace(adios2::MemorySpace::GPU);
             bpWriter.Put<double>("r64", gpu64s);
             bpWriter.EndStep();
@@ -109,8 +105,8 @@ void MGARDAccuracy2D(const std::string tolerance)
             cudaMalloc(&gpu64s, Nx * Ny * sizeof(double));
             bpReader.Get(var_r64, gpu64s);
             bpReader.EndStep();
-            cudaMemcpy(decompressedR64s.data(), gpu64s,
-                       Nx * Ny * sizeof(double), cudaMemcpyDeviceToHost);
+            cudaMemcpy(decompressedR64s.data(), gpu64s, Nx * Ny * sizeof(double),
+                       cudaMemcpyDeviceToHost);
 
             double maxDiff = 0;
             for (size_t i = 0; i < Nx * Ny; ++i)
@@ -130,8 +126,8 @@ void MGARDAccuracy2D(const std::string tolerance)
             auto itMax = std::max_element(r64s.begin(), r64s.end());
             const double relativeMaxDiff = maxDiff / *itMax;
             ASSERT_LT(relativeMaxDiff, std::stod(tolerance));
-            std::cout << "Relative Max Diff " << relativeMaxDiff
-                      << " tolerance " << tolerance << "\n";
+            std::cout << "Relative Max Diff " << relativeMaxDiff << " tolerance " << tolerance
+                      << "\n";
         }
 
         EXPECT_EQ(t, NSteps);
@@ -178,16 +174,13 @@ void MGARDAccuracySmall(const std::string tolerance)
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
 
-        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count,
-                                                adios2::ConstantDims);
+        auto var_r32 = io.DefineVariable<float>("r32", shape, start, count, adios2::ConstantDims);
 
         // add operations
-        adios2::Operator mgardOp =
-            adios.DefineOperator("mgardCompressor", adios2::ops::LossyMGARD);
+        adios2::Operator mgardOp = adios.DefineOperator("mgardCompressor", adios2::ops::LossyMGARD);
 
-        var_r32.AddOperation(mgardOp,
-                             {{adios2::ops::mgard::key::tolerance, tolerance},
-                              {adios2::ops::mgard::key::s, "inf"}});
+        var_r32.AddOperation(mgardOp, {{adios2::ops::mgard::key::tolerance, tolerance},
+                                       {adios2::ops::mgard::key::s, "inf"}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
@@ -196,8 +189,7 @@ void MGARDAccuracySmall(const std::string tolerance)
         for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
-            cudaMemcpy(gpu32s, r32s.data(), Nx * sizeof(float),
-                       cudaMemcpyHostToDevice);
+            cudaMemcpy(gpu32s, r32s.data(), Nx * sizeof(float), cudaMemcpyHostToDevice);
             bpWriter.Put<float>("r32", gpu32s);
             bpWriter.EndStep();
         }
@@ -235,8 +227,7 @@ void MGARDAccuracySmall(const std::string tolerance)
             cudaMalloc(&gpu32s, Nx * sizeof(float));
             bpReader.Get(var_r32, gpu32s);
             bpReader.EndStep();
-            cudaMemcpy(decompressedR32s.data(), gpu32s, Nx * sizeof(float),
-                       cudaMemcpyDeviceToHost);
+            cudaMemcpy(decompressedR32s.data(), gpu32s, Nx * sizeof(float), cudaMemcpyDeviceToHost);
 
             double maxDiff = 0, relativeMaxDiff = 0;
 
@@ -259,8 +250,8 @@ void MGARDAccuracySmall(const std::string tolerance)
             relativeMaxDiff = maxDiff / *r32s_Max;
 
             ASSERT_LT(relativeMaxDiff, std::stod(tolerance));
-            std::cout << "Relative Max Diff " << relativeMaxDiff
-                      << " tolerance " << tolerance << "\n";
+            std::cout << "Relative Max Diff " << relativeMaxDiff << " tolerance " << tolerance
+                      << "\n";
         }
 
         EXPECT_EQ(t, NSteps);
@@ -281,8 +272,7 @@ TEST_P(BPWriteReadMGARD, BPWRMGARDCU2D) { MGARDAccuracy2D(GetParam()); }
 TEST_P(BPWriteReadMGARD, BPWRMGARDCU1D) { MGARDAccuracySmall(GetParam()); }
 
 INSTANTIATE_TEST_SUITE_P(MGARDAccuracy, BPWriteReadMGARD,
-                         ::testing::Values("0.01", "0.001", "0.0001",
-                                           "0.00001"));
+                         ::testing::Values("0.01", "0.001", "0.0001", "0.00001"));
 
 int main(int argc, char **argv)
 {

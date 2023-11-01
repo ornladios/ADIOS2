@@ -71,12 +71,10 @@ TEST_F(BPLargeMetadata, BPWrite1D_LargeMetadata)
 
         for (size_t i = 0; i < NVars; ++i)
         {
-            varsR32[i] =
-                io.DefineVariable<float>("varR32_" + std::to_string(i), shape,
-                                         start, count, adios2::ConstantDims);
-            varsR64[i] =
-                io.DefineVariable<double>("varR64_" + std::to_string(i), shape,
-                                          start, count, adios2::ConstantDims);
+            varsR32[i] = io.DefineVariable<float>("varR32_" + std::to_string(i), shape, start,
+                                                  count, adios2::ConstantDims);
+            varsR64[i] = io.DefineVariable<double>("varR64_" + std::to_string(i), shape, start,
+                                                   count, adios2::ConstantDims);
         }
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -84,8 +82,8 @@ TEST_F(BPLargeMetadata, BPWrite1D_LargeMetadata)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             bpWriter.BeginStep();
             for (size_t i = 0; i < NVars; ++i)

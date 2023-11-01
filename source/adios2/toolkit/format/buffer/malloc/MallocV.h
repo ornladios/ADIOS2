@@ -23,9 +23,8 @@ class MallocV : public BufferV
 public:
     uint64_t Size() noexcept;
 
-    MallocV(const std::string type, const bool AlwaysCopy = false,
-            const size_t MemAlign = 1, const size_t MemBlockSize = 1,
-            size_t InitialBufferSize = DefaultInitialBufferSize,
+    MallocV(const std::string type, const bool AlwaysCopy = false, const size_t MemAlign = 1,
+            const size_t MemBlockSize = 1, size_t InitialBufferSize = DefaultInitialBufferSize,
             double GrowthFactor = DefaultBufferGrowthFactor);
     virtual ~MallocV();
 
@@ -36,14 +35,14 @@ public:
      */
     virtual void Reset();
 
-    virtual size_t AddToVec(const size_t size, const void *buf, size_t align,
-                            bool CopyReqd,
+    virtual size_t AddToVec(const size_t size, const void *buf, size_t align, bool CopyReqd,
                             MemorySpace MemSpace = MemorySpace::Host);
 
     virtual BufferPos Allocate(const size_t size, size_t align);
     void DownsizeLastAlloc(const size_t oldSize, const size_t newSize);
 
     virtual void *GetPtr(int bufferIdx, size_t posInBuffer);
+    virtual void *GetPtr(size_t posInBuffer);
 
 private:
     char *m_InternalBlock = NULL;

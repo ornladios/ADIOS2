@@ -33,8 +33,8 @@ void Operator::SetParameter(const std::string key, const std::string value)
 {
     if (m_Parameters == nullptr)
     {
-        helper::Log("PythonAPI", "Operator", "SetParameter()",
-                    "Operator is nullptr", helper::LogMode::EXCEPTION);
+        helper::Log("PythonAPI", "Operator", "SetParameter()", "Operator is nullptr",
+                    helper::LogMode::EXCEPTION);
     }
     (*m_Parameters)[key] = value;
 }
@@ -43,17 +43,14 @@ Params &Operator::Parameters() const
 {
     if (m_Parameters == nullptr)
     {
-        helper::Log("PythonAPI", "Operator", "Parameter()",
-                    "Operator is nullptr", helper::LogMode::EXCEPTION);
+        helper::Log("PythonAPI", "Operator", "Parameter()", "Operator is nullptr",
+                    helper::LogMode::EXCEPTION);
     }
     return *m_Parameters;
 }
 
 // PRIVATE
-Operator::Operator(const std::string &type, Params *params)
-: m_Parameters(params), m_Type(type)
-{
-}
+Operator::Operator(const std::string &type, Params *params) : m_Parameters(params), m_Type(type) {}
 
 } // end namespace py11
 } // end namespace adios2

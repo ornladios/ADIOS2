@@ -57,8 +57,7 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
     // Make a 1D selection to describe the local dimensions of the
     // variable we write and its offsets in the global spaces
     const adios2::Box<adios2::Dims> sel1({mpiRank * Nx}, {Nx / 2});
-    const adios2::Box<adios2::Dims> sel2({mpiRank * Nx + Nx / 2},
-                                         {Nx - Nx / 2});
+    const adios2::Box<adios2::Dims> sel2({mpiRank * Nx + Nx / 2}, {Nx - Nx / 2});
 
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -75,36 +74,27 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
-            auto var_cr32 = io.DefineVariable<std::complex<float>>(
-                "cr32", shape, start, count);
+            auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
             EXPECT_TRUE(var_cr32);
-            auto var_cr64 = io.DefineVariable<std::complex<double>>(
-                "cr64", shape, start, count);
+            auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
             EXPECT_TRUE(var_cr64);
         }
 
@@ -131,8 +121,8 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
@@ -227,8 +217,7 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -361,36 +350,26 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
 
         for (size_t CurrentStep = 0; CurrentStep < NSteps; CurrentStep++)
         {
-            const std::vector<adios2::Variable<std::string>::Info>
-                &iStringInfo = iStringAllInfo.at(t);
+            const std::vector<adios2::Variable<std::string>::Info> &iStringInfo =
+                iStringAllInfo.at(t);
 
-            const std::vector<adios2::Variable<int8_t>::Info> &i8Info =
-                i8AllInfo.at(t);
-            const std::vector<adios2::Variable<int16_t>::Info> &i16Info =
-                i16AllInfo.at(t);
-            const std::vector<adios2::Variable<int32_t>::Info> &i32Info =
-                i32AllInfo.at(t);
-            const std::vector<adios2::Variable<int64_t>::Info> &i64Info =
-                i64AllInfo.at(t);
+            const std::vector<adios2::Variable<int8_t>::Info> &i8Info = i8AllInfo.at(t);
+            const std::vector<adios2::Variable<int16_t>::Info> &i16Info = i16AllInfo.at(t);
+            const std::vector<adios2::Variable<int32_t>::Info> &i32Info = i32AllInfo.at(t);
+            const std::vector<adios2::Variable<int64_t>::Info> &i64Info = i64AllInfo.at(t);
 
-            const std::vector<adios2::Variable<uint8_t>::Info> &u8Info =
-                u8AllInfo.at(t);
-            const std::vector<adios2::Variable<uint16_t>::Info> &u16Info =
-                u16AllInfo.at(t);
-            const std::vector<adios2::Variable<uint32_t>::Info> &u32Info =
-                u32AllInfo.at(t);
-            const std::vector<adios2::Variable<uint64_t>::Info> &u64Info =
-                u64AllInfo.at(t);
+            const std::vector<adios2::Variable<uint8_t>::Info> &u8Info = u8AllInfo.at(t);
+            const std::vector<adios2::Variable<uint16_t>::Info> &u16Info = u16AllInfo.at(t);
+            const std::vector<adios2::Variable<uint32_t>::Info> &u32Info = u32AllInfo.at(t);
+            const std::vector<adios2::Variable<uint64_t>::Info> &u64Info = u64AllInfo.at(t);
 
-            const std::vector<adios2::Variable<float>::Info> &r32Info =
-                r32AllInfo.at(t);
-            const std::vector<adios2::Variable<double>::Info> &r64Info =
-                r64AllInfo.at(t);
+            const std::vector<adios2::Variable<float>::Info> &r32Info = r32AllInfo.at(t);
+            const std::vector<adios2::Variable<double>::Info> &r64Info = r64AllInfo.at(t);
 
-            const std::vector<adios2::Variable<std::complex<float>>::Info>
-                &cr32Info = cr32AllInfo.at(t);
-            const std::vector<adios2::Variable<std::complex<double>>::Info>
-                &cr64Info = cr64AllInfo.at(t);
+            const std::vector<adios2::Variable<std::complex<float>>::Info> &cr32Info =
+                cr32AllInfo.at(t);
+            const std::vector<adios2::Variable<std::complex<double>>::Info> &cr64Info =
+                cr64AllInfo.at(t);
 
             EXPECT_EQ(iStringInfo.size(), mpiSize);
             EXPECT_EQ(i8Info.size(), 2 * mpiSize);
@@ -465,9 +444,8 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                 std::complex<float> cr32Min, cr32Max;
                 std::complex<double> cr64Min, cr64Max;
 
-                SmallTestData currentTestData =
-                    generateNewSmallTestData(m_TestData, static_cast<int>(t),
-                                             static_cast<int>(inRank), mpiSize);
+                SmallTestData currentTestData = generateNewSmallTestData(
+                    m_TestData, static_cast<int>(t), static_cast<int>(inRank), mpiSize);
 
                 if (i % 2 == 0)
                 {
@@ -484,66 +462,46 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                     EXPECT_EQ(cr32Info[i].Start[0], inRank * Nx);
                     EXPECT_EQ(cr64Info[i].Start[0], inRank * Nx);
 
-                    i8Min =
-                        *std::min_element(currentTestData.I8.begin(),
-                                          currentTestData.I8.begin() + Nx / 2);
-                    i8Max =
-                        *std::max_element(currentTestData.I8.begin(),
-                                          currentTestData.I8.begin() + Nx / 2);
-                    i16Min =
-                        *std::min_element(currentTestData.I16.begin(),
-                                          currentTestData.I16.begin() + Nx / 2);
-                    i16Max =
-                        *std::max_element(currentTestData.I16.begin(),
-                                          currentTestData.I16.begin() + Nx / 2);
-                    i32Min =
-                        *std::min_element(currentTestData.I32.begin(),
-                                          currentTestData.I32.begin() + Nx / 2);
-                    i32Max =
-                        *std::max_element(currentTestData.I32.begin(),
-                                          currentTestData.I32.begin() + Nx / 2);
-                    i64Min =
-                        *std::min_element(currentTestData.I64.begin(),
-                                          currentTestData.I64.begin() + Nx / 2);
-                    i64Max =
-                        *std::max_element(currentTestData.I64.begin(),
-                                          currentTestData.I64.begin() + Nx / 2);
-                    u8Min =
-                        *std::min_element(currentTestData.U8.begin(),
-                                          currentTestData.U8.begin() + Nx / 2);
-                    u8Max =
-                        *std::max_element(currentTestData.U8.begin(),
-                                          currentTestData.U8.begin() + Nx / 2);
-                    u16Min =
-                        *std::min_element(currentTestData.U16.begin(),
-                                          currentTestData.U16.begin() + Nx / 2);
-                    u16Max =
-                        *std::max_element(currentTestData.U16.begin(),
-                                          currentTestData.U16.begin() + Nx / 2);
-                    u32Min =
-                        *std::min_element(currentTestData.U32.begin(),
-                                          currentTestData.U32.begin() + Nx / 2);
-                    u32Max =
-                        *std::max_element(currentTestData.U32.begin(),
-                                          currentTestData.U32.begin() + Nx / 2);
-                    u64Min =
-                        *std::min_element(currentTestData.U64.begin(),
-                                          currentTestData.U64.begin() + Nx / 2);
-                    u64Max =
-                        *std::max_element(currentTestData.U64.begin(),
-                                          currentTestData.U64.begin() + Nx / 2);
-                    r32Min =
-                        *std::min_element(currentTestData.R32.begin(),
-                                          currentTestData.R32.begin() + Nx / 2);
-                    r32Max =
-                        *std::max_element(currentTestData.R32.begin(),
-                                          currentTestData.R32.begin() + Nx / 2);
-                    r64Min =
-                        *std::min_element(currentTestData.R64.begin(),
-                                          currentTestData.R64.begin() + Nx / 2);
-                    r64Max =
-                        *std::max_element(currentTestData.R64.begin(),
-                                          currentTestData.R64.begin() + Nx / 2);
+                    i8Min = *std::min_element(currentTestData.I8.begin(),
+                                              currentTestData.I8.begin() + Nx / 2);
+                    i8Max = *std::max_element(currentTestData.I8.begin(),
+                                              currentTestData.I8.begin() + Nx / 2);
+                    i16Min = *std::min_element(currentTestData.I16.begin(),
+                                               currentTestData.I16.begin() + Nx / 2);
+                    i16Max = *std::max_element(currentTestData.I16.begin(),
+                                               currentTestData.I16.begin() + Nx / 2);
+                    i32Min = *std::min_element(currentTestData.I32.begin(),
+                                               currentTestData.I32.begin() + Nx / 2);
+                    i32Max = *std::max_element(currentTestData.I32.begin(),
+                                               currentTestData.I32.begin() + Nx / 2);
+                    i64Min = *std::min_element(currentTestData.I64.begin(),
+                                               currentTestData.I64.begin() + Nx / 2);
+                    i64Max = *std::max_element(currentTestData.I64.begin(),
+                                               currentTestData.I64.begin() + Nx / 2);
+                    u8Min = *std::min_element(currentTestData.U8.begin(),
+                                              currentTestData.U8.begin() + Nx / 2);
+                    u8Max = *std::max_element(currentTestData.U8.begin(),
+                                              currentTestData.U8.begin() + Nx / 2);
+                    u16Min = *std::min_element(currentTestData.U16.begin(),
+                                               currentTestData.U16.begin() + Nx / 2);
+                    u16Max = *std::max_element(currentTestData.U16.begin(),
+                                               currentTestData.U16.begin() + Nx / 2);
+                    u32Min = *std::min_element(currentTestData.U32.begin(),
+                                               currentTestData.U32.begin() + Nx / 2);
+                    u32Max = *std::max_element(currentTestData.U32.begin(),
+                                               currentTestData.U32.begin() + Nx / 2);
+                    u64Min = *std::min_element(currentTestData.U64.begin(),
+                                               currentTestData.U64.begin() + Nx / 2);
+                    u64Max = *std::max_element(currentTestData.U64.begin(),
+                                               currentTestData.U64.begin() + Nx / 2);
+                    r32Min = *std::min_element(currentTestData.R32.begin(),
+                                               currentTestData.R32.begin() + Nx / 2);
+                    r32Max = *std::max_element(currentTestData.R32.begin(),
+                                               currentTestData.R32.begin() + Nx / 2);
+                    r64Min = *std::min_element(currentTestData.R64.begin(),
+                                               currentTestData.R64.begin() + Nx / 2);
+                    r64Max = *std::max_element(currentTestData.R64.begin(),
+                                               currentTestData.R64.begin() + Nx / 2);
 
                     cr32Min = currentTestData.CR32.front();
                     cr32Max = currentTestData.CR32.front();
@@ -592,75 +550,55 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
                     EXPECT_EQ(cr32Info[i].Start[0], inRank * Nx + Nx / 2);
                     EXPECT_EQ(cr64Info[i].Start[0], inRank * Nx + Nx / 2);
 
-                    i8Min =
-                        *std::min_element(currentTestData.I8.begin() + Nx / 2,
-                                          currentTestData.I8.begin() + Nx);
-                    i8Max =
-                        *std::max_element(currentTestData.I8.begin() + Nx / 2,
-                                          currentTestData.I8.begin() + Nx);
+                    i8Min = *std::min_element(currentTestData.I8.begin() + Nx / 2,
+                                              currentTestData.I8.begin() + Nx);
+                    i8Max = *std::max_element(currentTestData.I8.begin() + Nx / 2,
+                                              currentTestData.I8.begin() + Nx);
 
-                    i16Min =
-                        *std::min_element(currentTestData.I16.begin() + Nx / 2,
-                                          currentTestData.I16.begin() + Nx);
-                    i16Max =
-                        *std::max_element(currentTestData.I16.begin() + Nx / 2,
-                                          currentTestData.I16.begin() + Nx);
+                    i16Min = *std::min_element(currentTestData.I16.begin() + Nx / 2,
+                                               currentTestData.I16.begin() + Nx);
+                    i16Max = *std::max_element(currentTestData.I16.begin() + Nx / 2,
+                                               currentTestData.I16.begin() + Nx);
 
-                    i32Min =
-                        *std::min_element(currentTestData.I32.begin() + Nx / 2,
-                                          currentTestData.I32.begin() + Nx);
-                    i32Max =
-                        *std::max_element(currentTestData.I32.begin() + Nx / 2,
-                                          currentTestData.I32.begin() + Nx);
+                    i32Min = *std::min_element(currentTestData.I32.begin() + Nx / 2,
+                                               currentTestData.I32.begin() + Nx);
+                    i32Max = *std::max_element(currentTestData.I32.begin() + Nx / 2,
+                                               currentTestData.I32.begin() + Nx);
 
-                    i64Min =
-                        *std::min_element(currentTestData.I64.begin() + Nx / 2,
-                                          currentTestData.I64.begin() + Nx);
-                    i64Max =
-                        *std::max_element(currentTestData.I64.begin() + Nx / 2,
-                                          currentTestData.I64.begin() + Nx);
+                    i64Min = *std::min_element(currentTestData.I64.begin() + Nx / 2,
+                                               currentTestData.I64.begin() + Nx);
+                    i64Max = *std::max_element(currentTestData.I64.begin() + Nx / 2,
+                                               currentTestData.I64.begin() + Nx);
 
-                    u8Min =
-                        *std::min_element(currentTestData.U8.begin() + Nx / 2,
-                                          currentTestData.U8.begin() + Nx);
-                    u8Max =
-                        *std::max_element(currentTestData.U8.begin() + Nx / 2,
-                                          currentTestData.U8.begin() + Nx);
+                    u8Min = *std::min_element(currentTestData.U8.begin() + Nx / 2,
+                                              currentTestData.U8.begin() + Nx);
+                    u8Max = *std::max_element(currentTestData.U8.begin() + Nx / 2,
+                                              currentTestData.U8.begin() + Nx);
 
-                    u16Min =
-                        *std::min_element(currentTestData.U16.begin() + Nx / 2,
-                                          currentTestData.U16.begin() + Nx);
-                    u16Max =
-                        *std::max_element(currentTestData.U16.begin() + Nx / 2,
-                                          currentTestData.U16.begin() + Nx);
+                    u16Min = *std::min_element(currentTestData.U16.begin() + Nx / 2,
+                                               currentTestData.U16.begin() + Nx);
+                    u16Max = *std::max_element(currentTestData.U16.begin() + Nx / 2,
+                                               currentTestData.U16.begin() + Nx);
 
-                    u32Min =
-                        *std::min_element(currentTestData.U32.begin() + Nx / 2,
-                                          currentTestData.U32.begin() + Nx);
-                    u32Max =
-                        *std::max_element(currentTestData.U32.begin() + Nx / 2,
-                                          currentTestData.U32.begin() + Nx);
+                    u32Min = *std::min_element(currentTestData.U32.begin() + Nx / 2,
+                                               currentTestData.U32.begin() + Nx);
+                    u32Max = *std::max_element(currentTestData.U32.begin() + Nx / 2,
+                                               currentTestData.U32.begin() + Nx);
 
-                    u64Min =
-                        *std::min_element(currentTestData.U64.begin() + Nx / 2,
-                                          currentTestData.U64.begin() + Nx);
-                    u64Max =
-                        *std::max_element(currentTestData.U64.begin() + Nx / 2,
-                                          currentTestData.U64.begin() + Nx);
+                    u64Min = *std::min_element(currentTestData.U64.begin() + Nx / 2,
+                                               currentTestData.U64.begin() + Nx);
+                    u64Max = *std::max_element(currentTestData.U64.begin() + Nx / 2,
+                                               currentTestData.U64.begin() + Nx);
 
-                    r32Min =
-                        *std::min_element(currentTestData.R32.begin() + Nx / 2,
-                                          currentTestData.R32.begin() + Nx);
-                    r32Max =
-                        *std::max_element(currentTestData.R32.begin() + Nx / 2,
-                                          currentTestData.R32.begin() + Nx);
+                    r32Min = *std::min_element(currentTestData.R32.begin() + Nx / 2,
+                                               currentTestData.R32.begin() + Nx);
+                    r32Max = *std::max_element(currentTestData.R32.begin() + Nx / 2,
+                                               currentTestData.R32.begin() + Nx);
 
-                    r64Min =
-                        *std::min_element(currentTestData.R64.begin() + Nx / 2,
-                                          currentTestData.R64.begin() + Nx);
-                    r64Max =
-                        *std::max_element(currentTestData.R64.begin() + Nx / 2,
-                                          currentTestData.R64.begin() + Nx);
+                    r64Min = *std::min_element(currentTestData.R64.begin() + Nx / 2,
+                                               currentTestData.R64.begin() + Nx);
+                    r64Max = *std::max_element(currentTestData.R64.begin() + Nx / 2,
+                                               currentTestData.R64.begin() + Nx);
 
                     cr32Min = currentTestData.CR32[Nx / 2];
                     cr32Max = currentTestData.CR32[Nx / 2];
@@ -720,8 +658,8 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
             }
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             var_iString.SetStepSelection({CurrentStep, 1});
             bpReader.Get(var_iString, IString);
@@ -862,11 +800,10 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
 
     // Make a 2D selection to describe the local dimensions of the
     // variable we write and its offsets in the global spaces
-    const adios2::Box<adios2::Dims> sel1({0, static_cast<size_t>(mpiRank * Nx)},
-                                         {Ny / 2, Nx});
+    const adios2::Box<adios2::Dims> sel1({0, static_cast<size_t>(mpiRank * Nx)}, {Ny / 2, Nx});
 
-    const adios2::Box<adios2::Dims> sel2(
-        {Ny / 2, static_cast<size_t>(mpiRank * Nx)}, {Ny - Ny / 2, Nx});
+    const adios2::Box<adios2::Dims> sel2({Ny / 2, static_cast<size_t>(mpiRank * Nx)},
+                                         {Ny - Ny / 2, Nx});
 
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -883,36 +820,27 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
             EXPECT_TRUE(var_iString);
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
-            auto var_cr32 = io.DefineVariable<std::complex<float>>(
-                "cr32", shape, start, count);
+            auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
             EXPECT_TRUE(var_cr32);
-            auto var_cr64 = io.DefineVariable<std::complex<double>>(
-                "cr64", shape, start, count);
+            auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
             EXPECT_TRUE(var_cr64);
         }
 
@@ -932,8 +860,8 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_iString = io.InquireVariable<std::string>("iString");
@@ -1028,8 +956,7 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_iString = io.InquireVariable<std::string>("iString");
         EXPECT_TRUE(var_iString);
@@ -1216,8 +1143,8 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
             bpReader.PerformGets();
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             EXPECT_EQ(IString, currentTestData.S1);
 
@@ -1281,11 +1208,10 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
 
     // Make a 2D selection to describe the local dimensions of the
     // variable we write and its offsets in the global spaces
-    const adios2::Box<adios2::Dims> sel1({0, static_cast<size_t>(mpiRank * Nx)},
-                                         {Ny / 2, Nx});
+    const adios2::Box<adios2::Dims> sel1({0, static_cast<size_t>(mpiRank * Nx)}, {Ny / 2, Nx});
 
-    const adios2::Box<adios2::Dims> sel2(
-        {Ny / 2, static_cast<size_t>(mpiRank * Nx)}, {Ny - Ny / 2, Nx});
+    const adios2::Box<adios2::Dims> sel2({Ny / 2, static_cast<size_t>(mpiRank * Nx)},
+                                         {Ny - Ny / 2, Nx});
 
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -1294,44 +1220,32 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
         // The local process' part (start, count) can be defined now or later
         // before Write().
         {
-            adios2::Dims shape{static_cast<size_t>(Ny),
-                               static_cast<size_t>(mpiSize * Nx)};
-            adios2::Dims start{static_cast<size_t>(0),
-                               static_cast<size_t>(mpiRank * Nx)};
-            adios2::Dims count{static_cast<size_t>(Ny),
-                               static_cast<size_t>(Nx)};
+            adios2::Dims shape{static_cast<size_t>(Ny), static_cast<size_t>(mpiSize * Nx)};
+            adios2::Dims start{static_cast<size_t>(0), static_cast<size_t>(mpiRank * Nx)};
+            adios2::Dims count{static_cast<size_t>(Ny), static_cast<size_t>(Nx)};
             auto var_i8 = io.DefineVariable<int8_t>("i8", shape, start, count);
             EXPECT_TRUE(var_i8);
-            auto var_i16 =
-                io.DefineVariable<int16_t>("i16", shape, start, count);
+            auto var_i16 = io.DefineVariable<int16_t>("i16", shape, start, count);
             EXPECT_TRUE(var_i16);
-            auto var_i32 =
-                io.DefineVariable<int32_t>("i32", shape, start, count);
+            auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
             EXPECT_TRUE(var_i32);
-            auto var_i64 =
-                io.DefineVariable<int64_t>("i64", shape, start, count);
+            auto var_i64 = io.DefineVariable<int64_t>("i64", shape, start, count);
             EXPECT_TRUE(var_i64);
             auto var_u8 = io.DefineVariable<uint8_t>("u8", shape, start, count);
             EXPECT_TRUE(var_u8);
-            auto var_u16 =
-                io.DefineVariable<uint16_t>("u16", shape, start, count);
+            auto var_u16 = io.DefineVariable<uint16_t>("u16", shape, start, count);
             EXPECT_TRUE(var_u16);
-            auto var_u32 =
-                io.DefineVariable<uint32_t>("u32", shape, start, count);
+            auto var_u32 = io.DefineVariable<uint32_t>("u32", shape, start, count);
             EXPECT_TRUE(var_u32);
-            auto var_u64 =
-                io.DefineVariable<uint64_t>("u64", shape, start, count);
+            auto var_u64 = io.DefineVariable<uint64_t>("u64", shape, start, count);
             EXPECT_TRUE(var_u64);
             auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
             EXPECT_TRUE(var_r32);
-            auto var_r64 =
-                io.DefineVariable<double>("r64", shape, start, count);
+            auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
-            auto var_cr32 = io.DefineVariable<std::complex<float>>(
-                "cr32", shape, start, count);
+            auto var_cr32 = io.DefineVariable<std::complex<float>>("cr32", shape, start, count);
             EXPECT_TRUE(var_cr32);
-            auto var_cr64 = io.DefineVariable<std::complex<double>>(
-                "cr64", shape, start, count);
+            auto var_cr64 = io.DefineVariable<std::complex<double>>("cr64", shape, start, count);
             EXPECT_TRUE(var_cr64);
         }
 
@@ -1353,8 +1267,8 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), mpiRank, mpiSize);
 
             // Retrieve the variables that previously went out of scope
             auto var_i8 = io.InquireVariable<int8_t>("i8");
@@ -1447,8 +1361,7 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         EXPECT_TRUE(var_i8);
@@ -1575,10 +1488,10 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
             const std::vector<adios2::Variable<double>::Info> r64Info =
                 bpReader.BlocksInfo(var_r64, CurrentStep);
 
-            const std::vector<adios2::Variable<std::complex<float>>::Info>
-                cr32Info = bpReader.BlocksInfo(var_cr32, CurrentStep);
-            const std::vector<adios2::Variable<std::complex<double>>::Info>
-                cr64Info = bpReader.BlocksInfo(var_cr64, CurrentStep);
+            const std::vector<adios2::Variable<std::complex<float>>::Info> cr32Info =
+                bpReader.BlocksInfo(var_cr32, CurrentStep);
+            const std::vector<adios2::Variable<std::complex<double>>::Info> cr64Info =
+                bpReader.BlocksInfo(var_cr64, CurrentStep);
 
             EXPECT_EQ(i8Info.size(), 2 * mpiSize);
             EXPECT_EQ(i16Info.size(), 2 * mpiSize);
@@ -1622,9 +1535,8 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                 std::complex<float> cr32Min, cr32Max;
                 std::complex<double> cr64Min, cr64Max;
 
-                SmallTestData currentTestData =
-                    generateNewSmallTestData(m_TestData, static_cast<int>(t),
-                                             static_cast<int>(inRank), mpiSize);
+                SmallTestData currentTestData = generateNewSmallTestData(
+                    m_TestData, static_cast<int>(t), static_cast<int>(inRank), mpiSize);
 
                 if (i % 2 == 0)
                 {
@@ -1701,65 +1613,45 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                     EXPECT_EQ(cr64Info[i].WriterID, inRank);
 
                     i8Min = *std::min_element(currentTestData.I8.begin(),
-                                              currentTestData.I8.begin() +
-                                                  Ny * Nx / 2);
+                                              currentTestData.I8.begin() + Ny * Nx / 2);
                     i8Max = *std::max_element(currentTestData.I8.begin(),
-                                              currentTestData.I8.begin() +
-                                                  Ny * Nx / 2);
+                                              currentTestData.I8.begin() + Ny * Nx / 2);
                     i16Min = *std::min_element(currentTestData.I16.begin(),
-                                               currentTestData.I16.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.I16.begin() + Ny * Nx / 2);
                     i16Max = *std::max_element(currentTestData.I16.begin(),
-                                               currentTestData.I16.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.I16.begin() + Ny * Nx / 2);
                     i32Min = *std::min_element(currentTestData.I32.begin(),
-                                               currentTestData.I32.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.I32.begin() + Ny * Nx / 2);
                     i32Max = *std::max_element(currentTestData.I32.begin(),
-                                               currentTestData.I32.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.I32.begin() + Ny * Nx / 2);
                     i64Min = *std::min_element(currentTestData.I64.begin(),
-                                               currentTestData.I64.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.I64.begin() + Ny * Nx / 2);
                     i64Max = *std::max_element(currentTestData.I64.begin(),
-                                               currentTestData.I64.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.I64.begin() + Ny * Nx / 2);
                     u8Min = *std::min_element(currentTestData.U8.begin(),
-                                              currentTestData.U8.begin() +
-                                                  Ny * Nx / 2);
+                                              currentTestData.U8.begin() + Ny * Nx / 2);
                     u8Max = *std::max_element(currentTestData.U8.begin(),
-                                              currentTestData.U8.begin() +
-                                                  Ny * Nx / 2);
+                                              currentTestData.U8.begin() + Ny * Nx / 2);
                     u16Min = *std::min_element(currentTestData.U16.begin(),
-                                               currentTestData.U16.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.U16.begin() + Ny * Nx / 2);
                     u16Max = *std::max_element(currentTestData.U16.begin(),
-                                               currentTestData.U16.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.U16.begin() + Ny * Nx / 2);
                     u32Min = *std::min_element(currentTestData.U32.begin(),
-                                               currentTestData.U32.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.U32.begin() + Ny * Nx / 2);
                     u32Max = *std::max_element(currentTestData.U32.begin(),
-                                               currentTestData.U32.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.U32.begin() + Ny * Nx / 2);
                     u64Min = *std::min_element(currentTestData.U64.begin(),
-                                               currentTestData.U64.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.U64.begin() + Ny * Nx / 2);
                     u64Max = *std::max_element(currentTestData.U64.begin(),
-                                               currentTestData.U64.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.U64.begin() + Ny * Nx / 2);
                     r32Min = *std::min_element(currentTestData.R32.begin(),
-                                               currentTestData.R32.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.R32.begin() + Ny * Nx / 2);
                     r32Max = *std::max_element(currentTestData.R32.begin(),
-                                               currentTestData.R32.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.R32.begin() + Ny * Nx / 2);
                     r64Min = *std::min_element(currentTestData.R64.begin(),
-                                               currentTestData.R64.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.R64.begin() + Ny * Nx / 2);
                     r64Max = *std::max_element(currentTestData.R64.begin(),
-                                               currentTestData.R64.begin() +
-                                                   Ny * Nx / 2);
+                                               currentTestData.R64.begin() + Ny * Nx / 2);
 
                     cr32Min = currentTestData.CR32.front();
                     cr32Max = currentTestData.CR32.front();
@@ -1855,75 +1747,55 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
                     EXPECT_EQ(cr64Info[i].Count[0], Ny - Ny / 2);
                     EXPECT_EQ(cr64Info[i].Count[1], Nx);
 
-                    i8Min = *std::min_element(
-                        currentTestData.I8.begin() + Ny * Nx / 2,
-                        currentTestData.I8.begin() + Ny * Nx);
-                    i8Max = *std::max_element(
-                        currentTestData.I8.begin() + Ny * Nx / 2,
-                        currentTestData.I8.begin() + Ny * Nx);
+                    i8Min = *std::min_element(currentTestData.I8.begin() + Ny * Nx / 2,
+                                              currentTestData.I8.begin() + Ny * Nx);
+                    i8Max = *std::max_element(currentTestData.I8.begin() + Ny * Nx / 2,
+                                              currentTestData.I8.begin() + Ny * Nx);
 
-                    i16Min = *std::min_element(
-                        currentTestData.I16.begin() + Ny * Nx / 2,
-                        currentTestData.I16.begin() + Ny * Nx);
-                    i16Max = *std::max_element(
-                        currentTestData.I16.begin() + Ny * Nx / 2,
-                        currentTestData.I16.begin() + Ny * Nx);
+                    i16Min = *std::min_element(currentTestData.I16.begin() + Ny * Nx / 2,
+                                               currentTestData.I16.begin() + Ny * Nx);
+                    i16Max = *std::max_element(currentTestData.I16.begin() + Ny * Nx / 2,
+                                               currentTestData.I16.begin() + Ny * Nx);
 
-                    i32Min = *std::min_element(
-                        currentTestData.I32.begin() + Ny * Nx / 2,
-                        currentTestData.I32.begin() + Ny * Nx);
-                    i32Max = *std::max_element(
-                        currentTestData.I32.begin() + Ny * Nx / 2,
-                        currentTestData.I32.begin() + Ny * Nx);
+                    i32Min = *std::min_element(currentTestData.I32.begin() + Ny * Nx / 2,
+                                               currentTestData.I32.begin() + Ny * Nx);
+                    i32Max = *std::max_element(currentTestData.I32.begin() + Ny * Nx / 2,
+                                               currentTestData.I32.begin() + Ny * Nx);
 
-                    i64Min = *std::min_element(
-                        currentTestData.I64.begin() + Ny * Nx / 2,
-                        currentTestData.I64.begin() + Ny * Nx);
-                    i64Max = *std::max_element(
-                        currentTestData.I64.begin() + Ny * Nx / 2,
-                        currentTestData.I64.begin() + Ny * Nx);
+                    i64Min = *std::min_element(currentTestData.I64.begin() + Ny * Nx / 2,
+                                               currentTestData.I64.begin() + Ny * Nx);
+                    i64Max = *std::max_element(currentTestData.I64.begin() + Ny * Nx / 2,
+                                               currentTestData.I64.begin() + Ny * Nx);
 
-                    u8Min = *std::min_element(
-                        currentTestData.U8.begin() + Ny * Nx / 2,
-                        currentTestData.U8.begin() + Ny * Nx);
-                    u8Max = *std::max_element(
-                        currentTestData.U8.begin() + Ny * Nx / 2,
-                        currentTestData.U8.begin() + Ny * Nx);
+                    u8Min = *std::min_element(currentTestData.U8.begin() + Ny * Nx / 2,
+                                              currentTestData.U8.begin() + Ny * Nx);
+                    u8Max = *std::max_element(currentTestData.U8.begin() + Ny * Nx / 2,
+                                              currentTestData.U8.begin() + Ny * Nx);
 
-                    u16Min = *std::min_element(
-                        currentTestData.U16.begin() + Ny * Nx / 2,
-                        currentTestData.U16.begin() + Ny * Nx);
-                    u16Max = *std::max_element(
-                        currentTestData.U16.begin() + Ny * Nx / 2,
-                        currentTestData.U16.begin() + Ny * Nx);
+                    u16Min = *std::min_element(currentTestData.U16.begin() + Ny * Nx / 2,
+                                               currentTestData.U16.begin() + Ny * Nx);
+                    u16Max = *std::max_element(currentTestData.U16.begin() + Ny * Nx / 2,
+                                               currentTestData.U16.begin() + Ny * Nx);
 
-                    u32Min = *std::min_element(
-                        currentTestData.U32.begin() + Ny * Nx / 2,
-                        currentTestData.U32.begin() + Ny * Nx);
-                    u32Max = *std::max_element(
-                        currentTestData.U32.begin() + Ny * Nx / 2,
-                        currentTestData.U32.begin() + Ny * Nx);
+                    u32Min = *std::min_element(currentTestData.U32.begin() + Ny * Nx / 2,
+                                               currentTestData.U32.begin() + Ny * Nx);
+                    u32Max = *std::max_element(currentTestData.U32.begin() + Ny * Nx / 2,
+                                               currentTestData.U32.begin() + Ny * Nx);
 
-                    u64Min = *std::min_element(
-                        currentTestData.U64.begin() + Ny * Nx / 2,
-                        currentTestData.U64.begin() + Ny * Nx);
-                    u64Max = *std::max_element(
-                        currentTestData.U64.begin() + Ny * Nx / 2,
-                        currentTestData.U64.begin() + Ny * Nx);
+                    u64Min = *std::min_element(currentTestData.U64.begin() + Ny * Nx / 2,
+                                               currentTestData.U64.begin() + Ny * Nx);
+                    u64Max = *std::max_element(currentTestData.U64.begin() + Ny * Nx / 2,
+                                               currentTestData.U64.begin() + Ny * Nx);
 
-                    r32Min = *std::min_element(
-                        currentTestData.R32.begin() + Ny * Nx / 2,
-                        currentTestData.R32.begin() + Ny * Nx);
-                    r32Max = *std::max_element(
-                        currentTestData.R32.begin() + Ny * Nx / 2,
-                        currentTestData.R32.begin() + Ny * Nx);
+                    r32Min = *std::min_element(currentTestData.R32.begin() + Ny * Nx / 2,
+                                               currentTestData.R32.begin() + Ny * Nx);
+                    r32Max = *std::max_element(currentTestData.R32.begin() + Ny * Nx / 2,
+                                               currentTestData.R32.begin() + Ny * Nx);
 
-                    r64Min = *std::min_element(
-                        currentTestData.R64.begin() + Ny * Nx / 2,
-                        currentTestData.R64.begin() + Ny * Nx);
-                    r64Max = *std::max_element(
-                        currentTestData.R64.begin() + Ny * Nx / 2,
-                        currentTestData.R64.begin() + Ny * Nx);
+                    r64Min = *std::min_element(currentTestData.R64.begin() + Ny * Nx / 2,
+                                               currentTestData.R64.begin() + Ny * Nx);
+                    r64Max = *std::max_element(currentTestData.R64.begin() + Ny * Nx / 2,
+                                               currentTestData.R64.begin() + Ny * Nx);
 
                     cr32Min = currentTestData.CR32[Ny * Nx / 2];
                     cr32Max = currentTestData.CR32[Ny * Nx / 2];
@@ -2054,8 +1926,8 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
             bpReader.Get(var_cr64, CR64.data() + Ny * Nx / 2);
 
             // Generate test data for each rank uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(t), mpiRank, mpiSize);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(t), mpiRank, mpiSize);
 
             bpReader.PerformGets();
 
@@ -2094,8 +1966,7 @@ TEST_F(BPWriteReadMultiblockTest, MultiblockPerformDataWrite)
 {
     if (engineName != "BP5")
     {
-        std::cout << "Engine " << engineName
-                  << " is not tested for this feature." << std::endl;
+        std::cout << "Engine " << engineName << " is not tested for this feature." << std::endl;
         return;
     }
     // Each process would write a 1x8 array and all processes would
@@ -2125,8 +1996,7 @@ TEST_F(BPWriteReadMultiblockTest, MultiblockPerformDataWrite)
     /* Write output */
     {
         adios2::IO io = adios.DeclareIO("TestIO");
-        const adios2::Dims shape{static_cast<size_t>(mpiSize),
-                                 static_cast<size_t>(Nx * Nblocks)};
+        const adios2::Dims shape{static_cast<size_t>(mpiSize), static_cast<size_t>(Nx * Nblocks)};
         const adios2::Dims start{static_cast<size_t>(mpiRank), 0};
         const adios2::Dims count{1, Nx};
 
@@ -2155,8 +2025,7 @@ TEST_F(BPWriteReadMultiblockTest, MultiblockPerformDataWrite)
                 SmallTestData currentTestData =
                     generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
 
-                const adios2::Box<adios2::Dims> sel({(size_t)mpiRank, b * Nx},
-                                                    {1, Nx});
+                const adios2::Box<adios2::Dims> sel({(size_t)mpiRank, b * Nx}, {1, Nx});
                 var_i32.SetSelection(sel);
                 bpWriter.Put(var_i32, currentTestData.I32.data());
 
@@ -2180,8 +2049,7 @@ TEST_F(BPWriteReadMultiblockTest, MultiblockPerformDataWrite)
             io.SetEngine(engineName);
         }
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         auto var_i32 = io.InquireVariable<int32_t>("i32");
         EXPECT_TRUE(var_i32);
@@ -2201,15 +2069,13 @@ TEST_F(BPWriteReadMultiblockTest, MultiblockPerformDataWrite)
             var_i32.SetStepSelection({step, 1});
             for (size_t b = 0; b < Nblocks; ++b)
             {
-                std::cout << "Read step " << step << " block=" << b
-                          << std::endl;
+                std::cout << "Read step " << step << " block=" << b << std::endl;
                 // Generate test data for each process / block uniquely
                 int t = static_cast<int>(step * Nblocks + b);
                 SmallTestData currentTestData =
                     generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
 
-                const adios2::Box<adios2::Dims> sel({(size_t)mpiRank, b * Nx},
-                                                    {1, Nx});
+                const adios2::Box<adios2::Dims> sel({(size_t)mpiRank, b * Nx}, {1, Nx});
                 var_i32.SetSelection(sel);
                 bpReader.Get(var_i32, I32.data(), adios2::Mode::Sync);
 
@@ -2217,8 +2083,140 @@ TEST_F(BPWriteReadMultiblockTest, MultiblockPerformDataWrite)
                 for (size_t i = 0; i < Nx; ++i)
                 {
                     std::stringstream ss;
-                    ss << "step=" << step << " block=" << b << " i=" << i
-                       << " rank=" << mpiRank;
+                    ss << "step=" << step << " block=" << b << " i=" << i << " rank=" << mpiRank;
+                    std::string msg = ss.str();
+                    EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+                }
+            }
+        }
+        bpReader.Close();
+    }
+}
+
+//******************************************************************************
+// Test reading data where some processes do not contribute to the data
+// and some blocks are null
+//******************************************************************************
+
+TEST_F(BPWriteReadMultiblockTest, MultiblockNullBlocks)
+{
+    // Each process would write a 2x8 array and all processes would
+    // form a mpiSize * Nx 1D array
+    const std::string fname("MultiblockNullBlocks.bp");
+
+    int mpiRank = 0, mpiSize = 1;
+    // Number of elements per blocks (blocksize)
+    const size_t Nx = 8;
+    // Number of blocks per process (= number of flushes)
+    const size_t Nblocks = 3;
+    // Number of steps
+    const size_t NSteps = 3;
+
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+    /* Write */
+    {
+        adios2::IO io = adios.DeclareIO("TestIO");
+        adios2::Dims shape{static_cast<size_t>(mpiSize), static_cast<size_t>(Nx * (Nblocks - 1))};
+        adios2::Dims start{static_cast<size_t>(mpiRank), 0};
+        adios2::Dims count{1, Nx};
+
+        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            bpWriter.BeginStep();
+
+            size_t nb = 0;
+            for (size_t b = 0; b < Nblocks; ++b)
+            {
+                // Generate test data for each process / block uniquely
+                int t = static_cast<int>(step * Nblocks + b);
+                SmallTestData currentTestData =
+                    generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
+
+                // the first block does not contribute to the variable's data
+                if (b == 0)
+                {
+                    std::array<int32_t, Nx> I32_empty;
+                    var_i32.SetSelection(
+                        adios2::Box<adios2::Dims>({(size_t)mpiRank, b * Nx}, {0, 0}));
+                    bpWriter.Put(var_i32, I32_empty.data());
+                }
+                else
+                {
+                    ++nb;
+                    start = {static_cast<size_t>(mpiRank), static_cast<size_t>(Nx * (nb - 1))};
+                    count = {1, Nx};
+                    var_i32.SetSelection({start, count});
+                    bpWriter.Put(var_i32, currentTestData.I32.data(), adios2::Mode::Sync);
+                }
+
+                bpWriter.PerformDataWrite();
+            }
+            bpWriter.EndStep();
+        }
+        bpWriter.Close();
+    }
+    // Read and check correctness
+    {
+        adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+
+        auto var_i32 = io.InquireVariable<int32_t>("i32");
+        EXPECT_TRUE(var_i32);
+        EXPECT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i32.Steps(), NSteps);
+        EXPECT_EQ(var_i32.Shape()[0], mpiSize);
+        EXPECT_EQ(var_i32.Shape()[1], Nx * (Nblocks - 1));
+
+        SmallTestData testData;
+        std::array<int32_t, Nx> I32;
+
+        const auto i32AllInfo = bpReader.AllStepsBlocksInfo(var_i32);
+        EXPECT_EQ(i32AllInfo.size(), NSteps);
+
+        for (size_t step = 0; step < NSteps; step++)
+        {
+            var_i32.SetStepSelection({step, 1});
+            for (size_t b = 1; b < Nblocks; ++b)
+            {
+                std::cout << "Read step " << step << " block=" << b << std::endl;
+                // Generate test data for each process / block uniquely
+                int t = static_cast<int>(step * Nblocks + b);
+                SmallTestData currentTestData =
+                    generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
+
+                // Block 0 was not written so all blocks are shifted back
+                const adios2::Box<adios2::Dims> sel({(size_t)mpiRank, (b - 1) * Nx}, {1, Nx});
+                var_i32.SetSelection(sel);
+                bpReader.Get(var_i32, I32.data(), adios2::Mode::Sync);
+
+                for (size_t i = 0; i < Nx; ++i)
+                {
+                    std::stringstream ss;
+                    ss << "step=" << step << " block=" << b << " i=" << i << " rank=" << mpiRank;
                     std::string msg = ss.str();
                     EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
                 }

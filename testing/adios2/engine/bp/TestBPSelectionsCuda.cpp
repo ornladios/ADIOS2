@@ -26,9 +26,8 @@ public:
     ADIOSSelectionCUDATest() = default;
 };
 
-void copySelection2D(const double *a, const adios2::Dims &shape,
-                     const adios2::Dims &start, const adios2::Dims &count,
-                     double *b)
+void copySelection2D(const double *a, const adios2::Dims &shape, const adios2::Dims &start,
+                     const adios2::Dims &count, double *b)
 {
     double *bp = b;
     for (size_t x = 0; x < count[0]; ++x)
@@ -42,13 +41,12 @@ void copySelection2D(const double *a, const adios2::Dims &shape,
     }
 }
 
-bool compareSelection2D(const double *a, const adios2::Dims &shape,
-                        const adios2::Dims &start, const adios2::Dims &count,
-                        double *b, adios2::Dims &firstNonEqPoint)
+bool compareSelection2D(const double *a, const adios2::Dims &shape, const adios2::Dims &start,
+                        const adios2::Dims &count, double *b, adios2::Dims &firstNonEqPoint)
 {
     std::cout << " compare Block: shape = " << adios2::ToString(shape)
-              << " start = " << adios2::ToString(start)
-              << " count = " << adios2::ToString(count) << std::endl;
+              << " start = " << adios2::ToString(start) << " count = " << adios2::ToString(count)
+              << std::endl;
     bool match = true;
     double *bp = b;
     for (size_t x = 0; x < count[0]; ++x)
@@ -59,10 +57,8 @@ bool compareSelection2D(const double *a, const adios2::Dims &shape,
             if (*bp != a[aidx])
             {
                 firstNonEqPoint = {x, y};
-                std::cout << "   Non-match at pos = "
-                          << adios2::ToString(firstNonEqPoint)
-                          << " : a = " << a[aidx] << ", b = " << *bp
-                          << std::endl;
+                std::cout << "   Non-match at pos = " << adios2::ToString(firstNonEqPoint)
+                          << " : a = " << a[aidx] << ", b = " << *bp << std::endl;
                 match = false;
             }
             ++bp;
@@ -72,13 +68,12 @@ bool compareSelection2D(const double *a, const adios2::Dims &shape,
     return match;
 }
 
-bool compareSelection2D_F(const double *a, const adios2::Dims &shape,
-                          const adios2::Dims &start, const adios2::Dims &count,
-                          double *b, adios2::Dims &firstNonEqPoint)
+bool compareSelection2D_F(const double *a, const adios2::Dims &shape, const adios2::Dims &start,
+                          const adios2::Dims &count, double *b, adios2::Dims &firstNonEqPoint)
 {
     std::cout << " compare Block: shape = " << adios2::ToString(shape)
-              << " start = " << adios2::ToString(start)
-              << " count = " << adios2::ToString(count) << std::endl;
+              << " start = " << adios2::ToString(start) << " count = " << adios2::ToString(count)
+              << std::endl;
     bool match = true;
     double *bp = b;
     for (size_t y = 0; y < count[1]; ++y)
@@ -89,10 +84,8 @@ bool compareSelection2D_F(const double *a, const adios2::Dims &shape,
             if (*bp != a[aidx])
             {
                 firstNonEqPoint = {y, x};
-                std::cout << "   Non-match at pos = "
-                          << adios2::ToString(firstNonEqPoint)
-                          << " : a = " << a[aidx] << ", b = " << *bp
-                          << std::endl;
+                std::cout << "   Non-match at pos = " << adios2::ToString(firstNonEqPoint)
+                          << " : a = " << a[aidx] << ", b = " << *bp << std::endl;
                 match = false;
             }
             ++bp;
@@ -147,8 +140,7 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
 
         double b[C1 * C2];
 
-        adios2::Variable<double> var =
-            ioWrite.DefineVariable<double>("a", shape, start, count);
+        adios2::Variable<double> var = ioWrite.DefineVariable<double>("a", shape, start, count);
 
         /*adios2::Variable<double> vara1 =
             ioWrite.DefineVariable<double>("a1", shape, start, shape);*/
@@ -164,8 +156,7 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
                 start = {x, y};
                 copySelection2D(a, shape, start, count, b);
                 var.SetSelection({start, count});
-                cudaMemcpy(gpuSimData, b, C1 * C2 * sizeof(double),
-                           cudaMemcpyHostToDevice);
+                cudaMemcpy(gpuSimData, b, C1 * C2 * sizeof(double), cudaMemcpyHostToDevice);
                 var.SetMemorySpace(adios2::MemorySpace::GPU);
                 engine.Put(var, gpuSimData, adios2::Mode::Sync);
             }
@@ -201,11 +192,9 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
             var.SetSelection({s, c});
             var.SetMemorySpace(adios2::MemorySpace::GPU);
             engine.Get<double>(var, gpuRet, adios2::Mode::Sync);
-            cudaMemcpy(res.data(), gpuRet, DIM1 * DIM2 * sizeof(double),
-                       cudaMemcpyDeviceToHost);
+            cudaMemcpy(res.data(), gpuRet, DIM1 * DIM2 * sizeof(double), cudaMemcpyDeviceToHost);
             EXPECT_EQ(res.size(), DIM1 * DIM2);
-            EXPECT_TRUE(
-                compareSelection2D(a, shape, s, c, res.data(), firstNonMatch));
+            EXPECT_TRUE(compareSelection2D(a, shape, s, c, res.data(), firstNonMatch));
         }
 
         /* Single block in the center */
@@ -218,11 +207,9 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
             var.SetSelection({s, c});
             var.SetMemorySpace(adios2::MemorySpace::GPU);
             engine.Get<double>(var, gpuRet, adios2::Mode::Sync);
-            cudaMemcpy(res.data(), gpuRet, c[0] * c[1] * sizeof(double),
-                       cudaMemcpyDeviceToHost);
+            cudaMemcpy(res.data(), gpuRet, c[0] * c[1] * sizeof(double), cudaMemcpyDeviceToHost);
             EXPECT_EQ(res.size(), c[0] * c[1]);
-            EXPECT_TRUE(
-                compareSelection2D(a, shape, s, c, res.data(), firstNonMatch));
+            EXPECT_TRUE(compareSelection2D(a, shape, s, c, res.data(), firstNonMatch));
         }
 
         /* Four blocks in X-Y direction */
@@ -235,11 +222,9 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
             var.SetSelection({s, c});
             var.SetMemorySpace(adios2::MemorySpace::GPU);
             engine.Get<double>(var, gpuRet, adios2::Mode::Sync);
-            cudaMemcpy(res.data(), gpuRet, c[0] * c[1] * sizeof(double),
-                       cudaMemcpyDeviceToHost);
+            cudaMemcpy(res.data(), gpuRet, c[0] * c[1] * sizeof(double), cudaMemcpyDeviceToHost);
             EXPECT_EQ(res.size(), c[0] * c[1]);
-            EXPECT_TRUE(
-                compareSelection2D(a, shape, s, c, res.data(), firstNonMatch));
+            EXPECT_TRUE(compareSelection2D(a, shape, s, c, res.data(), firstNonMatch));
         }
 
         /*
@@ -258,11 +243,9 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
             var.SetSelection({s, c});
             var.SetMemorySpace(adios2::MemorySpace::GPU);
             engine.Get<double>(var, gpuRet, adios2::Mode::Sync);
-            cudaMemcpy(res.data(), gpuRet, c[0] * c[1] * sizeof(double),
-                       cudaMemcpyDeviceToHost);
+            cudaMemcpy(res.data(), gpuRet, c[0] * c[1] * sizeof(double), cudaMemcpyDeviceToHost);
             EXPECT_EQ(res.size(), c[0] * c[1]);
-            EXPECT_TRUE(
-                compareSelection2D(a, shape, s, c, res.data(), firstNonMatch));
+            EXPECT_TRUE(compareSelection2D(a, shape, s, c, res.data(), firstNonMatch));
         }
 
         /* Center block plus 1 in each direction, cutting into all blocks */
@@ -278,11 +261,9 @@ TEST_F(ADIOSSelectionCUDATest, 2D)
             var.SetSelection({s, c});
             var.SetMemorySpace(adios2::MemorySpace::GPU);
             engine.Get<double>(var, gpuRet, adios2::Mode::Sync);
-            cudaMemcpy(res.data(), gpuRet, c[0] * c[1] * sizeof(double),
-                       cudaMemcpyDeviceToHost);
+            cudaMemcpy(res.data(), gpuRet, c[0] * c[1] * sizeof(double), cudaMemcpyDeviceToHost);
             EXPECT_EQ(res.size(), c[0] * c[1]);
-            EXPECT_TRUE(
-                compareSelection2D(a, shape, s, c, res.data(), firstNonMatch));
+            EXPECT_TRUE(compareSelection2D(a, shape, s, c, res.data(), firstNonMatch));
         }
 
         engine.EndStep();

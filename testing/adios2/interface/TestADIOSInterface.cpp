@@ -26,8 +26,7 @@ TEST(ADIOSInterface, MPICommRemoved)
 
 TEST(ADIOSInterface, BADConfigFile)
 {
-    EXPECT_THROW(adios2::ADIOS adios("notthere.xml");
-                 adios2::IO io = adios.DeclareIO("TestIO");
+    EXPECT_THROW(adios2::ADIOS adios("notthere.xml"); adios2::IO io = adios.DeclareIO("TestIO");
 
                  io.Open("test.bp", adios2::Mode::Write);, std::logic_error);
 }
@@ -84,8 +83,7 @@ TEST_F(ADIOS2_CXX11_API, ToString)
               "ReadMultiplexPattern::OpenAllSteps");
 
     EXPECT_EQ(ToString(adios2::StreamOpenMode::Wait), "StreamOpenMode::Wait");
-    EXPECT_EQ(ToString(adios2::StreamOpenMode::NoWait),
-              "StreamOpenMode::NoWait");
+    EXPECT_EQ(ToString(adios2::StreamOpenMode::NoWait), "StreamOpenMode::NoWait");
 
     EXPECT_EQ(ToString(adios2::ReadMode::NonBlocking), "ReadMode::NonBlocking");
     EXPECT_EQ(ToString(adios2::ReadMode::Blocking), "ReadMode::Blocking");
@@ -96,25 +94,17 @@ TEST_F(ADIOS2_CXX11_API, ToString)
 
     EXPECT_EQ(ToString(adios2::StepStatus::OK), "StepStatus::OK");
     EXPECT_EQ(ToString(adios2::StepStatus::NotReady), "StepStatus::NotReady");
-    EXPECT_EQ(ToString(adios2::StepStatus::EndOfStream),
-              "StepStatus::EndOfStream");
-    EXPECT_EQ(ToString(adios2::StepStatus::OtherError),
-              "StepStatus::OtherError");
+    EXPECT_EQ(ToString(adios2::StepStatus::EndOfStream), "StepStatus::EndOfStream");
+    EXPECT_EQ(ToString(adios2::StepStatus::OtherError), "StepStatus::OtherError");
 
-    EXPECT_EQ(ToString(adios2::TimeUnit::Microseconds),
-              "TimeUnit::Microseconds");
-    EXPECT_EQ(ToString(adios2::TimeUnit::Milliseconds),
-              "TimeUnit::Milliseconds");
+    EXPECT_EQ(ToString(adios2::TimeUnit::Microseconds), "TimeUnit::Microseconds");
+    EXPECT_EQ(ToString(adios2::TimeUnit::Milliseconds), "TimeUnit::Milliseconds");
     EXPECT_EQ(ToString(adios2::TimeUnit::Seconds), "TimeUnit::Seconds");
     EXPECT_EQ(ToString(adios2::TimeUnit::Minutes), "TimeUnit::Minutes");
     EXPECT_EQ(ToString(adios2::TimeUnit::Hours), "TimeUnit::Hours");
 
-    EXPECT_EQ(ToString(adios2::SelectionType::BoundingBox),
-              "SelectionType::BoundingBox");
-    EXPECT_EQ(ToString(adios2::SelectionType::Points), "SelectionType::Points");
-    EXPECT_EQ(ToString(adios2::SelectionType::WriteBlock),
-              "SelectionType::WriteBlock");
-    EXPECT_EQ(ToString(adios2::SelectionType::Auto), "SelectionType::Auto");
+    EXPECT_EQ(ToString(adios2::SelectionType::BoundingBox), "SelectionType::BoundingBox");
+    EXPECT_EQ(ToString(adios2::SelectionType::WriteBlock), "SelectionType::WriteBlock");
 }
 
 TEST_F(ADIOS2_CXX11_API, APIToString)
@@ -129,14 +119,8 @@ TEST_F(ADIOS2_CXX11_API, APIToString)
     EXPECT_EQ(ToString(attribute), "Attribute<float>(Name: \"attr_float\")");
 
     auto engine = io.Open("test.bp", adios2::Mode::Write);
-#if defined(_WIN64) || defined(_WIN32)
-    // default staying BP4 for now
-    EXPECT_EQ(ToString(engine),
-              "Engine(Name: \"test.bp\", Type: \"BP4Writer\")");
-#else
-    EXPECT_EQ(ToString(engine),
-              "Engine(Name: \"test.bp\", Type: \"BP5Writer\")");
-#endif
+
+    EXPECT_EQ(ToString(engine), "Engine(Name: \"test.bp\", Type: \"BP5Writer\")");
 }
 
 TEST_F(ADIOS2_CXX11_API, operatorLL)
@@ -163,12 +147,8 @@ TEST_F(ADIOS2_CXX11_API_IO, Engine)
 
     adios2::Engine engine = m_Io.Open("types.bp", adios2::Mode::Write);
     EXPECT_EQ(engine.Name(), "types.bp");
-#if defined(_WIN64) || defined(_WIN32)
-    // default staying BP4 for now
-    EXPECT_EQ(engine.Type(), "BP4Writer");
-#else
     EXPECT_EQ(engine.Type(), "BP5Writer");
-#endif
+
     engine.Close();
 }
 
@@ -179,12 +159,7 @@ TEST_F(ADIOS2_CXX11_API_IO, EngineDefault)
 
     adios2::Engine engine = m_Io.Open("types.bp", adios2::Mode::Write);
     EXPECT_EQ(engine.Name(), "types.bp");
-#if defined(_WIN64) || defined(_WIN32)
-    // default staying BP4 for now
-    EXPECT_EQ(engine.Type(), "BP4Writer");
-#else
     EXPECT_EQ(engine.Type(), "BP5Writer");
-#endif
     engine.Close();
 }
 
@@ -252,11 +227,10 @@ struct CaseMultiBlock
     static const adios2::Mode PutMode = _PutMode;
 };
 
-using MultiBlockTypes =
-    ::testing::Types<CaseMultiBlock<double, adios2::Mode::Sync>,
-                     CaseMultiBlock<int64_t, adios2::Mode::Sync>,
-                     CaseMultiBlock<double, adios2::Mode::Deferred>,
-                     CaseMultiBlock<int64_t, adios2::Mode::Deferred>>;
+using MultiBlockTypes = ::testing::Types<CaseMultiBlock<double, adios2::Mode::Sync>,
+                                         CaseMultiBlock<int64_t, adios2::Mode::Sync>,
+                                         CaseMultiBlock<double, adios2::Mode::Deferred>,
+                                         CaseMultiBlock<int64_t, adios2::Mode::Deferred>>;
 
 template <typename TypeParam>
 class ADIOS2_CXX11_API_MultiBlock : public ADIOS2_CXX11_API_IO

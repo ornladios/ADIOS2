@@ -18,8 +18,7 @@ struct hdf5VarInfo
 {
     hid_t dataspace;
     hid_t dataset;
-    hdf5VarInfo(hid_t dataset, hid_t dataspace)
-    : dataspace(dataspace), dataset(dataset){};
+    hdf5VarInfo(hid_t dataset, hid_t dataspace) : dataspace(dataspace), dataset(dataset){};
 };
 
 using H5VarMap = std::map<std::string, hdf5VarInfo>;
@@ -29,13 +28,10 @@ class hdf5Stream : public Stream
 public:
     hid_t h5file;
     H5VarMap varmap;
-    hdf5Stream(const std::string &streamName, const adios2::Mode mode,
-               MPI_Comm comm);
+    hdf5Stream(const std::string &streamName, const adios2::Mode mode, MPI_Comm comm);
     ~hdf5Stream();
-    void Write(CommandWrite *cmdW, Config &cfg, const Settings &settings,
-               size_t step);
-    adios2::StepStatus Read(CommandRead *cmdR, Config &cfg,
-                            const Settings &settings, size_t step);
+    void Write(CommandWrite *cmdW, Config &cfg, const Settings &settings, size_t step);
+    adios2::StepStatus Read(CommandRead *cmdR, Config &cfg, const Settings &settings, size_t step);
     void Close();
 
 private:

@@ -26,7 +26,7 @@ struct VarInfo
     std::string type;
     Dims start;
     Dims count;
-    size_t writesize = 0; // size of subset this process writes, 0: do not write
+    size_t writesize = 0;    // size of subset this process writes, 0: do not write
     void *readbuf = nullptr; // read in buffer
 };
 
@@ -60,8 +60,7 @@ private:
     size_t Decompose(int numproc, int rank, VarInfo &vi,
                      const int *np // number of processes in each dimension
     );
-    int ProcessMetadata(core::Engine &rStream, core::IO &io,
-                        const core::VarMap &variables,
+    int ProcessMetadata(core::Engine &rStream, core::IO &io, const core::VarMap &variables,
                         const core::AttrMap &attributes, int step);
     int ReadWrite(core::Engine &rStream, core::Engine &wStream, core::IO &io,
                   const core::VarMap &variables, int step);
@@ -102,10 +101,10 @@ private:
     int decomp_values[10] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
 
     template <typename Arg, typename... Args>
-    void print0(Arg &&arg, Args &&... args);
+    void print0(Arg &&arg, Args &&...args);
 
     template <typename Arg, typename... Args>
-    void osprint0(std::ostream &out, Arg &&arg, Args &&... args);
+    void osprint0(std::ostream &out, Arg &&arg, Args &&...args);
 };
 
 } // end namespace utils

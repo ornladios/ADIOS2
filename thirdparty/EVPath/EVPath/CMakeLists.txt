@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.5)
 
 # The directory label is used for CDash to treat EVPath as a subproject of
 # GTKorvo
@@ -72,6 +72,23 @@ endif()
 if(NOT MSVC)
   set(CMAKE_C_STANDARD 99)
   set(CMAKE_C_STANDARD_REQUIRED True)
+endif()
+
+if(WIN32)
+  # Automagic to do the DLL / LIB song and dance
+  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
+
+  # Silence MSVC warnings
+  if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
+     CMAKE_C_SIMULATE_ID MATCHES "MSVC")
+    add_definitions(
+      -D_CRT_SECURE_NO_DEPRECATE
+      -D_CRT_SECURE_NO_WARNINGS
+      -D_SCL_SECURE_NO_DEPRECATE
+      -D_WINSOCK_DEPRECATED_NO_WARNINGS
+      -D_CRT_NONSTDC_NO_DEPRECATE)
+    set (MSVC_PERL_FLAGS "-msvc-long")
+  endif()
 endif()
 
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "dill, atl, ffs")
@@ -201,7 +218,7 @@ cmake_dependent_option(EVPATH_TRANSPORT_MODULES
 
 list(INSERT CMAKE_PREFIX_PATH 0 ${CMAKE_INSTALL_PREFIX})
 find_package(atl 2.2.1 REQUIRED)
-find_package(ffs 2.0.0 REQUIRED)
+find_package(ffs 3.0.0 REQUIRED)
 _pkg_get_target_prefix(atl::atl atl_PREFIX)
 _pkg_get_target_prefix(ffs::ffs ffs_PREFIX)
 list(APPEND _pkg_config_pfxs "${atl_PREFIX}" "${ffs_PREFIX}")
@@ -214,7 +231,7 @@ else()
   unset(CMAKE_REQUIRED_LIBRARIES)
 endif()
 if (HAVE_COD_H)
-   find_package(dill 2.3.1 REQUIRED)
+   find_package(dill 3.0.0 REQUIRED)
    target_link_libraries(EVPath PUBLIC atl::atl ffs::ffs PRIVATE dill::dill)
    _pkg_get_target_prefix(dill::dill dill_PREFIX)
    list(APPEND _pkg_config_private_reqs "dill >= ${dill_VERSION}")
@@ -286,7 +303,8 @@ if(EVPATH_TRANSPORT_MODULES)
   foreach(M cmselect cmsockets cmudp cmmulticast)
     set_target_properties(${M} PROPERTIES
       OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}${M}
-      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR})
+      LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR}
+      WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
     install(TARGETS ${M} DESTINATION ${EVPATH_INSTALL_MODULE_DIR} COMPONENT ${EVPATH_MODULE_COMPONENT_PREFIX}${M})
   endforeach()
 
@@ -354,6 +372,9 @@ else()
   message(STATUS " - Enet library was not found.  This is not a fatal error, just that the Enet transport will not be built.")
 endif()
 
+if (MSVC)
+    set(EVPATH_USE_ZPL_ENET FALSE)
+endif()
 if(NOT (DEFINED EVPATH_USE_ZPL_ENET))
   option(EVPATH_USE_ZPL_ENET "Build the enet transport" "ON")
 endif()
@@ -486,6 +507,10 @@ if(IBVERBS_FOUND)
     endif()
   endif()
 
+  if(WIN32)
+  target_link_libraries(EVPath wsock32 ws2_32)
+  endif()
+
   if(EVPATH_TRANSPORT_MODULES)
     add_library(cmib MODULE cmib.c)
     set_target_properties(cmib PROPERTIES
@@ -593,7 +618,7 @@ CHECK_INCLUDE_FILE(sys/uio.h HAVE_SYS_UIO_H)
 CHECK_INCLUDE_FILE(sys/un.h HAVE_SYS_UN_H)
 CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 CHECK_INCLUDE_FILE(windows.h HAVE_WINDOWS_H)
-CHECK_INCLUDE_FILE(winsock.h HAVE_WINSOCK_H)
+CHECK_INCLUDE_FILE(winsock2.h HAVE_WINSOCK2_H)
 
 CHECK_STRUCT_HAS_MEMBER("struct fd_set" "fds_bits" "sys/select.h" HAVE_FDS_BITS)
 

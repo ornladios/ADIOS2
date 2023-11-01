@@ -61,8 +61,7 @@ public:
      * @param nodeLocal true: all ranks create a directory
      */
     void MkDirsBarrier(const std::vector<std::string> &fileNames,
-                       const std::vector<Params> &parametersVector,
-                       const bool nodeLocal);
+                       const std::vector<Params> &parametersVector, const bool nodeLocal);
 
     /**
      * OpenFiles passed from fileNames
@@ -71,10 +70,8 @@ public:
      * @param parametersVector from IO
      * @param profile
      */
-    void OpenFiles(const std::vector<std::string> &fileNames,
-                   const Mode openMode,
-                   const std::vector<Params> &parametersVector,
-                   const bool profile);
+    void OpenFiles(const std::vector<std::string> &fileNames, const Mode openMode,
+                   const std::vector<Params> &parametersVector, const bool profile);
 
     /**
      * OpenFiles passed from fileNames, in a chain to avoid DOS attacking of the
@@ -85,10 +82,9 @@ public:
      * @param profile
      * @oaram chainComm
      */
-    void OpenFiles(const std::vector<std::string> &fileNames,
-                   const Mode openMode,
-                   const std::vector<Params> &parametersVector,
-                   const bool profile, const helper::Comm &chainComm);
+    void OpenFiles(const std::vector<std::string> &fileNames, const Mode openMode,
+                   const std::vector<Params> &parametersVector, const bool profile,
+                   const helper::Comm &chainComm);
 
     /**
      * Used for sub-files defined by index
@@ -112,9 +108,8 @@ public:
      * function)
      * @return transport base names
      */
-    std::vector<std::string>
-    GetFilesBaseNames(const std::string &baseName,
-                      const std::vector<Params> &parametersVector) const;
+    std::vector<std::string> GetFilesBaseNames(const std::string &baseName,
+                                               const std::vector<Params> &parametersVector) const;
 
     /**
      * m_Type from m_Transports based on derived classes of Transport
@@ -134,8 +129,7 @@ public:
      * @param buffer
      * @param size
      */
-    void WriteFiles(const char *buffer, const size_t size,
-                    const int transportIndex = -1);
+    void WriteFiles(const char *buffer, const size_t size, const int transportIndex = -1);
 
     /**
      * Write data to a specific location in files
@@ -153,8 +147,7 @@ public:
      * @param iovec array pointer
      * @param iovcnt number of entries
      */
-    void WriteFiles(const core::iovec *iov, const size_t iovcnt,
-                    const int transportIndex = -1);
+    void WriteFiles(const core::iovec *iov, const size_t iovcnt, const int transportIndex = -1);
 
     /**
      * Write data to a specific location in files, writev version
@@ -163,8 +156,8 @@ public:
      * @param iovcnt number of entries
      * @param start offset in file
      */
-    void WriteFileAt(const core::iovec *iov, const size_t iovcnt,
-                     const size_t start, const int transportIndex = -1);
+    void WriteFileAt(const core::iovec *iov, const size_t iovcnt, const size_t start,
+                     const int transportIndex = -1);
 
     size_t GetFileSize(const size_t transportIndex = 0) const;
 
@@ -215,22 +208,19 @@ public:
      * @param parameters
      * @param profile
      */
-    bool FileExists(const std::string &name, const Params &parameters,
-                    const bool profile);
+    bool FileExists(const std::string &name, const Params &parameters, const bool profile);
 
 protected:
     core::IO &m_IO;
     helper::Comm const &m_Comm;
 
-    std::shared_ptr<Transport>
-    OpenFileTransport(const std::string &fileName, const Mode openMode,
-                      const Params &parameters, const bool profile,
-                      const bool useComm, const helper::Comm &chainComm);
+    std::shared_ptr<Transport> OpenFileTransport(const std::string &fileName, const Mode openMode,
+                                                 const Params &parameters, const bool profile,
+                                                 const bool useComm, const helper::Comm &chainComm);
 
-    void CheckFile(
-        std::unordered_map<size_t, std::shared_ptr<Transport>>::const_iterator
-            itTransport,
-        const std::string hint) const;
+    void
+    CheckFile(std::unordered_map<size_t, std::shared_ptr<Transport>>::const_iterator itTransport,
+              const std::string hint) const;
 
     void WaitForAsync() const;
 };

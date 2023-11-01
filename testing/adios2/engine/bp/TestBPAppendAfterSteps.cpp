@@ -57,9 +57,8 @@ public:
     }
 };
 
-class BPAppendAfterStepsP
-: public BPAppendAfterSteps,
-  public ::testing::WithParamInterface<std::tuple<size_t, int>>
+class BPAppendAfterStepsP : public BPAppendAfterSteps,
+                            public ::testing::WithParamInterface<std::tuple<size_t, int>>
 {
 protected:
     size_t GetSteps() { return std::get<0>(GetParam()); };
@@ -85,13 +84,12 @@ TEST_P(BPAppendAfterStepsP, Test)
 #endif
 
     std::cout << "Test AppendAfterSteps parameter with writing " << nSteps
-              << " steps, then appending " << nSteps
-              << " steps again with parameter " << nAppendAfterSteps
-              << std::endl;
+              << " steps, then appending " << nSteps << " steps again with parameter "
+              << nAppendAfterSteps << std::endl;
 
-    std::string filename = "AppendAfterSteps_N" + std::to_string(mpiSize) +
-                           "_Steps" + std::to_string(nSteps) + "_Append_" +
-                           std::to_string(nAppendAfterSteps) + ".bp";
+    std::string filename = "AppendAfterSteps_N" + std::to_string(mpiSize) + "_Steps" +
+                           std::to_string(nSteps) + "_Append_" + std::to_string(nAppendAfterSteps) +
+                           ".bp";
     size_t totalNSteps = 0;
 
     {
@@ -118,8 +116,7 @@ TEST_P(BPAppendAfterStepsP, Test)
         engine.Close();
 
         /* Write again nSteps steps but append to file at nAppendAfterSteps*/
-        ioWrite.SetParameter("AppendAfterSteps",
-                             std::to_string(nAppendAfterSteps));
+        ioWrite.SetParameter("AppendAfterSteps", std::to_string(nAppendAfterSteps));
         engine = ioWrite.Open(filename, adios2::Mode::Append);
 
         size_t beginStep = 0;
@@ -158,16 +155,14 @@ TEST_P(BPAppendAfterStepsP, Test)
     {
         adios2::IO ioRead = adios.DeclareIO("TestIORead");
         ioRead.SetEngine(engineName);
-        adios2::Engine engine_s =
-            ioRead.Open(filename, adios2::Mode::ReadRandomAccess);
+        adios2::Engine engine_s = ioRead.Open(filename, adios2::Mode::ReadRandomAccess);
         EXPECT_TRUE(engine_s);
 
         const size_t nsteps = engine_s.Steps();
         EXPECT_EQ(nsteps, totalNSteps);
 
         adios2::Variable<int> var = ioRead.InquireVariable<int32_t>("var");
-        adios2::Variable<size_t> varStep =
-            ioRead.InquireVariable<size_t>("step");
+        adios2::Variable<size_t> varStep = ioRead.InquireVariable<size_t>("step");
 
         for (size_t readStep = 0; readStep < totalNSteps; readStep++)
         {
@@ -184,8 +179,7 @@ TEST_P(BPAppendAfterStepsP, Test)
             EXPECT_EQ(stepInFile, readStep);
 
             std::string aname = "a" + std::to_string(readStep);
-            adios2::Attribute<size_t> a =
-                ioRead.InquireAttribute<size_t>(aname);
+            adios2::Attribute<size_t> a = ioRead.InquireAttribute<size_t>(aname);
             size_t stepInAttribute = a.Data()[0];
             EXPECT_EQ(stepInAttribute, readStep);
         }
@@ -197,13 +191,12 @@ TEST_P(BPAppendAfterStepsP, Test)
 #endif
 }
 
-INSTANTIATE_TEST_SUITE_P(
-    BPAppendAfterSteps, BPAppendAfterStepsP,
-    ::testing::Values(std::make_tuple(1, 0), std::make_tuple(1, 1),
-                      std::make_tuple(2, 0), std::make_tuple(2, 1),
-                      std::make_tuple(2, 2), std::make_tuple(2, 3),
-                      std::make_tuple(2, 1), std::make_tuple(2, -1),
-                      std::make_tuple(2, -2), std::make_tuple(2, -3)));
+INSTANTIATE_TEST_SUITE_P(BPAppendAfterSteps, BPAppendAfterStepsP,
+                         ::testing::Values(std::make_tuple(1, 0), std::make_tuple(1, 1),
+                                           std::make_tuple(2, 0), std::make_tuple(2, 1),
+                                           std::make_tuple(2, 2), std::make_tuple(2, 3),
+                                           std::make_tuple(2, 1), std::make_tuple(2, -1),
+                                           std::make_tuple(2, -2), std::make_tuple(2, -3)));
 
 int main(int argc, char **argv)
 {

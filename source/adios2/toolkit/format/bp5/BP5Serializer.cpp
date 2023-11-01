@@ -22,6 +22,9 @@
 #ifdef _WIN32
 #pragma warning(disable : 4250)
 #endif
+#ifdef _MSC_VER
+#define strdup(x) _strdup(x)
+#endif
 
 namespace adios2
 {
@@ -31,14 +34,14 @@ namespace format
 BP5Serializer::BP5Serializer() { Init(); }
 BP5Serializer::~BP5Serializer()
 {
-    if (Info.RecList)
+    if (!Info.RecMap.empty())
     {
-        for (int i = 0; i < Info.RecCount; i++)
+        for (auto &rec : Info.RecMap)
         {
-            if (Info.RecList[i].OperatorType)
-                free(Info.RecList[i].OperatorType);
+            if (rec.second.OperatorType)
+                free(rec.second.OperatorType);
         }
-        free(Info.RecList);
+        Info.RecMap.clear();
     }
     if (Info.MetaFieldCount)
         free_FMfield_list(Info.MetaFields);
@@ -61,33 +64,28 @@ void BP5Serializer::Init()
     // Re-init Info to zero
     Info = FFSWriterMarshalBase();
     Info.RecCount = 0;
-    Info.RecList = (BP5Serializer::BP5WriterRec)malloc(sizeof(Info.RecList[0]));
     Info.MetaFieldCount = 0;
     Info.MetaFields = NULL;
     Info.LocalFMContext = create_local_FMcontext();
-    AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, "BitFieldCount",
-                   "integer", sizeof(size_t));
-    AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, "BitField",
-                   "integer[BitFieldCount]", sizeof(size_t));
-    AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, "DataBlockSize",
-                   "integer", sizeof(size_t));
+    AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, "BitFieldCount", "integer",
+                   sizeof(size_t));
+    AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, "BitField", "integer[BitFieldCount]",
+                   sizeof(size_t));
+    AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, "DataBlockSize", "integer",
+                   sizeof(size_t));
     RecalcMarshalStorageSize();
 
     ((BP5MetadataInfoStruct *)MetadataBuf)->BitFieldCount = 0;
-    ((BP5MetadataInfoStruct *)MetadataBuf)->BitField =
-        (std::size_t *)malloc(sizeof(size_t));
+    ((BP5MetadataInfoStruct *)MetadataBuf)->BitField = (std::size_t *)malloc(sizeof(size_t));
     ((BP5MetadataInfoStruct *)MetadataBuf)->DataBlockSize = 0;
 }
-BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Key)
+BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Key) const
 {
-    for (int i = 0; i < Info.RecCount; i++)
+    auto it = Info.RecMap.find(Key);
+    if (it != Info.RecMap.end())
     {
-        if (Info.RecList[i].Key == Key)
-        {
-            return &Info.RecList[i];
-        }
+        return const_cast<BP5WriterRec>(&(it->second));
     }
-
     return NULL;
 }
 
@@ -98,11 +96,9 @@ void BP5Serializer::RecalcMarshalStorageSize()
         FMFieldList LastMetaField;
         size_t NewMetaSize;
         LastMetaField = &Info.MetaFields[Info.MetaFieldCount - 1];
-        NewMetaSize =
-            (LastMetaField->field_offset + LastMetaField->field_size + 7) & ~7;
+        NewMetaSize = (LastMetaField->field_offset + LastMetaField->field_size + 7) & ~7;
         MetadataBuf = realloc(MetadataBuf, NewMetaSize + 8);
-        memset((char *)(MetadataBuf) + MetadataSize, 0,
-               NewMetaSize - MetadataSize);
+        memset((char *)(MetadataBuf) + MetadataSize, 0, NewMetaSize - MetadataSize);
         MetadataSize = NewMetaSize;
     }
 }
@@ -113,21 +109,18 @@ void BP5Serializer::RecalcAttributeStorageSize()
     {
         FMFieldList LastAttributeField;
         size_t NewAttributeSize;
-        LastAttributeField =
-            &Info.AttributeFields[Info.AttributeFieldCount - 1];
-        NewAttributeSize = (LastAttributeField->field_offset +
-                            LastAttributeField->field_size + 7) &
-                           ~7;
+        LastAttributeField = &Info.AttributeFields[Info.AttributeFieldCount - 1];
+        NewAttributeSize =
+            (LastAttributeField->field_offset + LastAttributeField->field_size + 7) & ~7;
         Info.AttributeData = realloc(Info.AttributeData, NewAttributeSize + 8);
         memset((char *)(Info.AttributeData) + Info.AttributeSize, 0,
                NewAttributeSize - Info.AttributeSize);
-        Info.AttributeSize = NewAttributeSize;
+        Info.AttributeSize = (int)NewAttributeSize;
     }
 }
 
-void BP5Serializer::AddSimpleField(FMFieldList *FieldP, int *CountP,
-                                   const char *Name, const char *Type,
-                                   int ElementSize)
+void BP5Serializer::AddSimpleField(FMFieldList *FieldP, int *CountP, const char *Name,
+                                   const char *Type, int ElementSize)
 {
     int Offset = 0;
     FMFieldList Field;
@@ -141,14 +134,11 @@ void BP5Serializer::AddSimpleField(FMFieldList *FieldP, int *CountP,
             // really a pointer
             PriorFieldSize = sizeof(void *);
         }
-        Offset =
-            ((PriorField->field_offset + PriorFieldSize + ElementSize - 1) /
-             ElementSize) *
-            ElementSize;
+        Offset = ((PriorField->field_offset + PriorFieldSize + ElementSize - 1) / ElementSize) *
+                 ElementSize;
     }
     if (*FieldP)
-        *FieldP =
-            (FMFieldList)realloc(*FieldP, (*CountP + 2) * sizeof((*FieldP)[0]));
+        *FieldP = (FMFieldList)realloc(*FieldP, (*CountP + 2) * sizeof((*FieldP)[0]));
     else
         *FieldP = (FMFieldList)malloc((*CountP + 2) * sizeof((*FieldP)[0]));
 
@@ -223,12 +213,12 @@ static char *ConcatName(const char *base_name, const char *postfix)
     return Ret;
 }
 
-char *BP5Serializer::BuildVarName(const char *base_name, const ShapeID Shape,
-                                  const int type, const int element_size)
+char *BP5Serializer::BuildVarName(const char *base_name, const ShapeID Shape, const int type,
+                                  const int element_size)
 {
 
     const char *Prefix = NamePrefix(Shape);
-    int Len = strlen(base_name) + 2 + strlen(Prefix) + 16;
+    auto Len = strlen(base_name) + 2 + strlen(Prefix) + 16;
     char *Ret = (char *)malloc(Len);
     if (element_size == 0)
     {
@@ -244,31 +234,30 @@ char *BP5Serializer::BuildVarName(const char *base_name, const ShapeID Shape,
     return Ret;
 }
 
-static char *BuildLongName(const char *base_name, const ShapeID Shape,
-                           const int type, const int element_size,
-                           const char *StructID)
+static char *BuildLongName(const char *base_name, const ShapeID Shape, const int type,
+                           const size_t element_size, const char *StructID)
 {
     const char *Prefix = NamePrefix(Shape);
-    int StructIDLen = 0;
+    size_t StructIDLen = 0;
     if (StructID)
         StructIDLen = strlen(StructID);
-    int Len = strlen(base_name) + 3 + strlen(Prefix) + StructIDLen + 16;
+    size_t Len = strlen(base_name) + 3 + strlen(Prefix) + StructIDLen + 16;
     char *Ret = (char *)malloc(Len);
     if (StructID)
     {
-        snprintf(Ret, Len, "%s_%d_%d_%s", Prefix, element_size, type, StructID);
+        snprintf(Ret, Len, "%s_%zd_%d_%s", Prefix, element_size, type, StructID);
     }
     else
     {
-        snprintf(Ret, Len, "%s_%d_%d", Prefix, element_size, type);
+        snprintf(Ret, Len, "%s_%zd_%d", Prefix, element_size, type);
     }
     strcat(Ret, "_");
     strcat(Ret, base_name);
     return Ret;
 }
 
-void BP5Serializer::BreakdownVarName(const char *Name, char **base_name_p,
-                                     int *type_p, int *element_size_p)
+void BP5Serializer::BreakdownVarName(const char *Name, char **base_name_p, int *type_p,
+                                     int *element_size_p)
 {
     int Type;
     int ElementSize;
@@ -283,7 +272,7 @@ char *BP5Serializer::BuildArrayDimsName(const char *base_name, const int type,
                                         const int element_size)
 {
     const char *Prefix = NamePrefix(ShapeID::GlobalArray);
-    int Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
+    size_t Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
     char *Ret = (char *)malloc(Len);
     snprintf(Ret, Len, "%s%d_%d_", Prefix, element_size, type);
     strcat(Ret, base_name);
@@ -291,12 +280,11 @@ char *BP5Serializer::BuildArrayDimsName(const char *base_name, const int type,
     return Ret;
 }
 
-char *BP5Serializer::BuildArrayDBCountName(const char *base_name,
-                                           const int type,
+char *BP5Serializer::BuildArrayDBCountName(const char *base_name, const int type,
                                            const int element_size)
 {
     const char *Prefix = NamePrefix(ShapeID::GlobalArray);
-    int Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
+    size_t Len = strlen(base_name) + 3 + strlen(Prefix) + 16;
     char *Ret = (char *)malloc(Len);
     snprintf(Ret, Len, "%s%d_%d_", Prefix, element_size, type);
     strcat(Ret, base_name);
@@ -304,12 +292,11 @@ char *BP5Serializer::BuildArrayDBCountName(const char *base_name,
     return Ret;
 }
 
-char *BP5Serializer::BuildArrayBlockCountName(const char *base_name,
-                                              const int type,
+char *BP5Serializer::BuildArrayBlockCountName(const char *base_name, const int type,
                                               const int element_size)
 {
     const char *Prefix = NamePrefix(ShapeID::GlobalArray);
-    int Len = strlen(base_name) + 3 + strlen(Prefix) + 24;
+    size_t Len = strlen(base_name) + 3 + strlen(Prefix) + 24;
     char *Ret = (char *)malloc(Len);
     snprintf(Ret, Len, "%s%d_%d_", Prefix, element_size, type);
     strcat(Ret, base_name);
@@ -357,52 +344,45 @@ void BP5Serializer::AddField(FMFieldList *FieldP, int *CountP, const char *Name,
     free(TransType);
 }
 
-void BP5Serializer::AddFixedArrayField(FMFieldList *FieldP, int *CountP,
-                                       const char *Name, const DataType Type,
-                                       int ElementSize, int DimCount)
+void BP5Serializer::AddFixedArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
+                                       const DataType Type, int ElementSize, int DimCount)
 {
     const char *TransType = TranslateADIOS2Type2FFS(Type);
     char *TypeWithArray = (char *)malloc(strlen(TransType) + 16);
-    snprintf(TypeWithArray, strlen(TransType) + 16, "*(%s[%d])", TransType,
-             DimCount);
+    snprintf(TypeWithArray, strlen(TransType) + 16, "*(%s[%d])", TransType, DimCount);
     free((void *)TransType);
     AddSimpleField(FieldP, CountP, Name, TypeWithArray, sizeof(void *));
     free(TypeWithArray);
     (*FieldP)[*CountP - 1].field_size = ElementSize;
 }
 
-void BP5Serializer::AddVarArrayField(FMFieldList *FieldP, int *CountP,
-                                     const char *Name, const DataType Type,
-                                     int ElementSize, char *SizeField)
+void BP5Serializer::AddVarArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
+                                     const DataType Type, int ElementSize, char *SizeField)
 {
     char *TransType = TranslateADIOS2Type2FFS(Type);
-    char *TypeWithArray =
-        (char *)malloc(strlen(TransType) + strlen(SizeField) + 8);
-    snprintf(TypeWithArray, strlen(TransType) + strlen(SizeField) + 8, "%s[%s]",
-             TransType, SizeField);
+    char *TypeWithArray = (char *)malloc(strlen(TransType) + strlen(SizeField) + 8);
+    snprintf(TypeWithArray, strlen(TransType) + strlen(SizeField) + 8, "%s[%s]", TransType,
+             SizeField);
     free(TransType);
     AddSimpleField(FieldP, CountP, Name, TypeWithArray, sizeof(void *));
     free(TypeWithArray);
     (*FieldP)[*CountP - 1].field_size = ElementSize;
 }
 
-void BP5Serializer::AddDoubleArrayField(FMFieldList *FieldP, int *CountP,
-                                        const char *Name, const DataType Type,
-                                        int ElementSize, char *SizeField)
+void BP5Serializer::AddDoubleArrayField(FMFieldList *FieldP, int *CountP, const char *Name,
+                                        const DataType Type, int ElementSize, char *SizeField)
 {
     char *TransType = TranslateADIOS2Type2FFS(Type);
-    char *TypeWithArray =
-        (char *)malloc(strlen(TransType) + strlen(SizeField) + 8);
-    snprintf(TypeWithArray, strlen(TransType) + strlen(SizeField) + 8,
-             "%s[2][%s]", TransType, SizeField);
+    char *TypeWithArray = (char *)malloc(strlen(TransType) + strlen(SizeField) + 8);
+    snprintf(TypeWithArray, strlen(TransType) + strlen(SizeField) + 8, "%s[2][%s]", TransType,
+             SizeField);
     AddSimpleField(FieldP, CountP, Name, TypeWithArray, sizeof(void *));
     free(TransType);
     free(TypeWithArray);
     (*FieldP)[*CountP - 1].field_size = ElementSize;
 }
 
-void BP5Serializer::ValidateWriterRec(BP5Serializer::BP5WriterRec Rec,
-                                      void *Variable)
+void BP5Serializer::ValidateWriterRec(BP5Serializer::BP5WriterRec Rec, void *Variable)
 {
     core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
     if ((VB->m_Operations.size() == 0) && Rec->OperatorType)
@@ -422,13 +402,11 @@ void BP5Serializer::ValidateWriterRec(BP5Serializer::BP5WriterRec Rec,
     else if (VB->m_Operations.size() > 1)
     {
         // removed operator case
-        helper::Throw<std::logic_error>(
-            "Toolkit", "format::BP5Serializer", "Marshal",
-            "BP5 does not support multiple operators");
+        helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer", "Marshal",
+                                        "BP5 does not support multiple operators");
     }
     else if (Rec->OperatorType && VB->m_Operations.size() &&
-             (VB->m_Operations[0]->m_TypeString !=
-              std::string(Rec->OperatorType)))
+             (VB->m_Operations[0]->m_TypeString != std::string(Rec->OperatorType)))
     {
         // removed operator case
         helper::Throw<std::logic_error>(
@@ -437,27 +415,25 @@ void BP5Serializer::ValidateWriterRec(BP5Serializer::BP5WriterRec Rec,
     }
 }
 
-BP5Serializer::BP5WriterRec
-BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
-                               size_t ElemSize, size_t DimCount)
+BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const char *Name,
+                                                           DataType Type, size_t ElemSize,
+                                                           size_t DimCount)
 {
     core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
-    Info.RecList = (BP5WriterRec)realloc(
-        Info.RecList, (Info.RecCount + 1) * sizeof(Info.RecList[0]));
-    BP5WriterRec Rec = &Info.RecList[Info.RecCount];
+    auto obj = Info.RecMap.insert(std::make_pair(Variable, _BP5WriterRec()));
+    BP5WriterRec Rec = &obj.first->second;
     if (Type == DataType::String)
         ElemSize = sizeof(char *);
     Rec->Key = Variable;
     Rec->Shape = VB->m_ShapeID;
     Rec->FieldID = Info.RecCount;
-    Rec->DimCount = DimCount;
+    Rec->DimCount = (int)DimCount;
     Rec->Type = (int)Type;
     Rec->OperatorType = NULL;
     char *TextStructID = NULL;
     if (Type == DataType::Struct)
     {
-        core::VariableStruct *VS =
-            static_cast<core::VariableStruct *>(Variable);
+        core::VariableStruct *VS = static_cast<core::VariableStruct *>(Variable);
         core::StructDefinition *SD = VS->m_WriteStructDefinition;
         if (VS->m_ReadStructDefinition)
             SD = VS->m_ReadStructDefinition; // Data has been converted to this
@@ -467,13 +443,12 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
             List[i].field_name = strdup(SD->Name(i).c_str());
             List[i].field_type = TranslateADIOS2Type2FFS(SD->Type(i));
             List[i].field_size = TypeElementSize(SD->Type(i));
-            List[i].field_offset = SD->Offset(i);
+            List[i].field_offset = (int)SD->Offset(i);
             if (SD->ElementCount(i) != 1)
             {
                 size_t Len = strlen(List[i].field_type) + 10;
                 char *Tmp = (char *)malloc(Len);
-                snprintf(Tmp, Len, "%s[%d]", List[i].field_type,
-                         (int)SD->ElementCount(i));
+                snprintf(Tmp, Len, "%s[%d]", List[i].field_type, (int)SD->ElementCount(i));
                 free((void *)List[i].field_type);
                 List[i].field_type = Tmp;
             }
@@ -487,18 +462,16 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
             {NULL, NULL, 0, NULL}};
         struct_list[0].format_name = strdup(SD->StructName().c_str());
         struct_list[0].field_list = List;
-        struct_list[0].struct_size = SD->StructSize();
+        struct_list[0].struct_size = (int)SD->StructSize();
 
-        FMFormat Format =
-            register_data_format(Info.LocalFMContext, &struct_list[0]);
+        FMFormat Format = register_data_format(Info.LocalFMContext, &struct_list[0]);
 
         int IDLength;
         char *ServerID = get_server_ID_FMformat(Format, &IDLength);
         TextStructID = (char *)malloc(IDLength * 2 + 1);
         for (int i = 0; i < IDLength; i++)
         {
-            snprintf(&TextStructID[i * 2], 3, "%02x",
-                     ((unsigned char *)ServerID)[i]);
+            snprintf(&TextStructID[i * 2], 3, "%02x", ((unsigned char *)ServerID)[i]);
         }
         NewStructFormats.push_back(Format);
     }
@@ -507,8 +480,7 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         // simple field, only add base value FMField to metadata
         char *SstName = BuildVarName(Name, VB->m_ShapeID, 0,
                                      0); // size and type in full field spec
-        AddField(&Info.MetaFields, &Info.MetaFieldCount, SstName, Type,
-                 ElemSize);
+        AddField(&Info.MetaFields, &Info.MetaFieldCount, SstName, Type, (int)ElemSize);
         free(SstName);
         RecalcMarshalStorageSize();
         Rec->MetaOffset = Info.MetaFields[Info.MetaFieldCount - 1].field_offset;
@@ -525,8 +497,7 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
         }
         // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
         // and Offsets matching _MetaArrayRec
-        char *LongName = BuildLongName(Name, VB->m_ShapeID, (int)Type, ElemSize,
-                                       TextStructID);
+        char *LongName = BuildLongName(Name, VB->m_ShapeID, (int)Type, ElemSize, TextStructID);
 
         const char *ArrayTypeName = "MetaArray";
         int FieldSize = sizeof(MetaArrayRec);
@@ -559,13 +530,13 @@ BP5Serializer::CreateWriterRec(void *Variable, const char *Name, DataType Type,
             }
             Rec->MinMaxOffset = FieldSize;
             FieldSize += sizeof(char *);
-            AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, LongName,
-                           MMArrayName, FieldSize);
+            AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, LongName, MMArrayName,
+                           FieldSize);
         }
         else
         {
-            AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, LongName,
-                           ArrayTypeName, FieldSize);
+            AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, LongName, ArrayTypeName,
+                           FieldSize);
         }
         Rec->MetaOffset = Info.MetaFields[Info.MetaFieldCount - 1].field_offset;
         Rec->OperatorType = OperatorType;
@@ -586,11 +557,10 @@ size_t *BP5Serializer::CopyDims(const size_t Count, const size_t *Vals)
     return Ret;
 }
 
-size_t *BP5Serializer::AppendDims(size_t *OldDims, const size_t OldCount,
-                                  const size_t Count, const size_t *Vals)
+size_t *BP5Serializer::AppendDims(size_t *OldDims, const size_t OldCount, const size_t Count,
+                                  const size_t *Vals)
 {
-    size_t *Ret =
-        (size_t *)realloc(OldDims, (OldCount + Count) * sizeof(Ret[0]));
+    size_t *Ret = (size_t *)realloc(OldDims, (OldCount + Count) * sizeof(Ret[0]));
     memcpy(Ret + OldCount, Vals, Count * sizeof(Ret[0]));
     return Ret;
 }
@@ -616,19 +586,17 @@ void BP5Serializer::DumpDeferredBlocks(bool forceCopyDeferred)
 {
     for (auto &Def : DeferredExterns)
     {
-        MetaArrayRec *MetaEntry =
-            (MetaArrayRec *)((char *)(MetadataBuf) + Def.MetaOffset);
+        MetaArrayRec *MetaEntry = (MetaArrayRec *)((char *)(MetadataBuf) + Def.MetaOffset);
         size_t DataOffset =
             m_PriorDataBufferSizeTotal +
-            CurDataBuffer->AddToVec(Def.DataSize, Def.Data, Def.AlignReq,
-                                    forceCopyDeferred);
+            CurDataBuffer->AddToVec(Def.DataSize, Def.Data, Def.AlignReq, forceCopyDeferred);
         MetaEntry->DataBlockLocation[Def.BlockID] = DataOffset;
     }
     DeferredExterns.clear();
 }
 
-static void GetMinMax(const void *Data, size_t ElemCount, const DataType Type,
-                      MinMaxStruct &MinMax, MemorySpace MemSpace)
+static void GetMinMax(const void *Data, size_t ElemCount, const DataType Type, MinMaxStruct &MinMax,
+                      MemorySpace MemSpace)
 {
     MinMax.Init(Type);
     if (ElemCount == 0)
@@ -637,41 +605,37 @@ static void GetMinMax(const void *Data, size_t ElemCount, const DataType Type,
     {
     }
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
-#define pertype(T, N)                                                          \
-    else if (MemSpace == MemorySpace::GPU && Type == helper::GetDataType<T>()) \
-    {                                                                          \
-        const T *values = (const T *)Data;                                     \
-        if (!std::is_same<T, long double>::value)                              \
-            helper::GPUMinMax(values, ElemCount, MinMax.MinUnion.field_##N,    \
-                              MinMax.MaxUnion.field_##N);                      \
+#define pertype(T, N)                                                                              \
+    else if (MemSpace == MemorySpace::GPU && Type == helper::GetDataType<T>())                     \
+    {                                                                                              \
+        const T *values = (const T *)Data;                                                         \
+        if (!std::is_same<T, long double>::value)                                                  \
+            helper::GPUMinMax(values, ElemCount, MinMax.MinUnion.field_##N,                        \
+                              MinMax.MaxUnion.field_##N);                                          \
     }
     ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(pertype)
 #undef pertype
 #endif
-#define pertype(T, N)                                                          \
-    else if (Type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        const T *values = (const T *)Data;                                     \
-        auto res = std::minmax_element(values, values + ElemCount);            \
-        MinMax.MinUnion.field_##N = *res.first;                                \
-        MinMax.MaxUnion.field_##N = *res.second;                               \
+#define pertype(T, N)                                                                              \
+    else if (Type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        const T *values = (const T *)Data;                                                         \
+        auto res = std::minmax_element(values, values + ElemCount);                                \
+        MinMax.MinUnion.field_##N = *res.first;                                                    \
+        MinMax.MaxUnion.field_##N = *res.second;                                                   \
     }
     ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(pertype)
 }
 
-void BP5Serializer::Marshal(void *Variable, const char *Name,
-                            const DataType Type, size_t ElemSize,
-                            size_t DimCount, const size_t *Shape,
-                            const size_t *Count, const size_t *Offsets,
-                            const void *Data, bool Sync,
+void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Type, size_t ElemSize,
+                            size_t DimCount, const size_t *Shape, const size_t *Count,
+                            const size_t *Offsets, const void *Data, bool Sync,
                             BufferV::BufferPos *Span)
 {
 
-    auto lf_QueueSpanMinMax = [&](const format::BufferV::BufferPos Data,
-                                  const size_t ElemCount, const DataType Type,
-                                  const MemorySpace MemSpace,
-                                  const size_t MetaOffset,
-                                  const size_t MinMaxOffset,
+    auto lf_QueueSpanMinMax = [&](const format::BufferV::BufferPos Data, const size_t ElemCount,
+                                  const DataType Type, const MemorySpace MemSpace,
+                                  const size_t MetaOffset, const size_t MinMaxOffset,
                                   const size_t BlockNum) {
         DeferredSpanMinMax entry = {Data,       ElemCount,    Type,    MemSpace,
                                     MetaOffset, MinMaxOffset, BlockNum};
@@ -736,8 +700,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
     else
     {
         MemorySpace MemSpace = VB->GetMemorySpace(Data);
-        MetaArrayRec *MetaEntry =
-            (MetaArrayRec *)((char *)(MetadataBuf) + Rec->MetaOffset);
+        MetaArrayRec *MetaEntry = (MetaArrayRec *)((char *)(MetadataBuf) + Rec->MetaOffset);
         size_t ElemCount = CalcSize(DimCount, Count);
         size_t DataOffset = 0;
         size_t CompressedSize = 0;
@@ -745,8 +708,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
         MetaEntry->Dims = DimCount;
         if (CurDataBuffer == NULL)
         {
-            helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer",
-                                            "Marshal", "without prior Init");
+            helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer", "Marshal",
+                                            "without prior Init");
         }
 
         MinMaxStruct MinMax;
@@ -765,32 +728,29 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             for (size_t i = 0; i < DimCount; i++)
             {
                 tmpCount.push_back(Count[i]);
-                tmpOffsets.push_back(Offsets[i]);
+                if (Offsets)
+                    tmpOffsets.push_back(Offsets[i]);
             }
             size_t AllocSize = ElemCount * ElemSize + 100;
-            BufferV::BufferPos pos =
-                CurDataBuffer->Allocate(AllocSize, ElemSize);
-            char *CompressedData =
-                (char *)GetPtr(pos.bufferIdx, pos.posInBuffer);
+            BufferV::BufferPos pos = CurDataBuffer->Allocate(AllocSize, ElemSize);
+            char *CompressedData = (char *)GetPtr(pos.bufferIdx, pos.posInBuffer);
             DataOffset = m_PriorDataBufferSizeTotal + pos.globalPos;
-            CompressedSize = VB->m_Operations[0]->Operate(
-                (const char *)Data, tmpOffsets, tmpCount, (DataType)Rec->Type,
-                CompressedData);
+            CompressedSize = VB->m_Operations[0]->Operate((const char *)Data, tmpOffsets, tmpCount,
+                                                          (DataType)Rec->Type, CompressedData);
             // if the operator was not applied
             if (CompressedSize == 0)
                 CompressedSize = helper::CopyMemoryWithOpHeader(
-                    (const char *)Data, tmpCount, (DataType)Rec->Type,
-                    CompressedData, VB->m_Operations[0]->GetHeaderSize(),
-                    MemSpace);
+                    (const char *)Data, tmpCount, (DataType)Rec->Type, CompressedData,
+                    VB->m_Operations[0]->GetHeaderSize(), MemSpace);
             CurDataBuffer->DownsizeLastAlloc(AllocSize, CompressedSize);
         }
         else if (Span == nullptr)
         {
             if (!DeferAddToVec)
             {
-                DataOffset = m_PriorDataBufferSizeTotal +
-                             CurDataBuffer->AddToVec(ElemCount * ElemSize, Data,
-                                                     ElemSize, Sync, MemSpace);
+                DataOffset =
+                    m_PriorDataBufferSizeTotal +
+                    CurDataBuffer->AddToVec(ElemCount * ElemSize, Data, ElemSize, Sync, MemSpace);
             }
         }
         else
@@ -813,8 +773,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             MetaEntry->DataBlockLocation[0] = DataOffset;
             if (Rec->OperatorType)
             {
-                MetaArrayRecOperator *OpEntry =
-                    (MetaArrayRecOperator *)MetaEntry;
+                MetaArrayRecOperator *OpEntry = (MetaArrayRecOperator *)MetaEntry;
                 OpEntry->DataBlockSize = (size_t *)malloc(sizeof(size_t));
                 OpEntry->DataBlockSize[0] = CompressedSize;
             }
@@ -824,26 +783,22 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
                 MetaEntry->Offsets = NULL;
             if (m_StatsLevel > 0)
             {
-                void **MMPtrLoc =
-                    (void **)(((char *)MetaEntry) + Rec->MinMaxOffset);
+                void **MMPtrLoc = (void **)(((char *)MetaEntry) + Rec->MinMaxOffset);
                 *MMPtrLoc = (void *)malloc(ElemSize * 2);
                 if (!Span)
                 {
                     memcpy(*MMPtrLoc, &MinMax.MinUnion, ElemSize);
-                    memcpy(((char *)*MMPtrLoc) + ElemSize, &MinMax.MaxUnion,
-                           ElemSize);
+                    memcpy(((char *)*MMPtrLoc) + ElemSize, &MinMax.MaxUnion, ElemSize);
                 }
                 else
                 {
-                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type,
-                                       MemSpace, Rec->MetaOffset,
-                                       Rec->MinMaxOffset, 0 /*BlockNum*/);
+                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type, MemSpace,
+                                       Rec->MetaOffset, Rec->MinMaxOffset, 0 /*BlockNum*/);
                 }
             }
             if (DeferAddToVec)
             {
-                DeferredExtern rec = {Rec->MetaOffset, 0, Data,
-                                      ElemCount * ElemSize, ElemSize};
+                DeferredExtern rec = {Rec->MetaOffset, 0, Data, ElemCount * ElemSize, ElemSize};
                 DeferredExterns.push_back(rec);
             }
         }
@@ -857,63 +812,117 @@ void BP5Serializer::Marshal(void *Variable, const char *Name,
             //
             MetaEntry->DBCount += DimCount;
             MetaEntry->BlockCount++;
-            MetaEntry->Count =
-                AppendDims(MetaEntry->Count, PreviousDBCount, DimCount, Count);
-            MetaEntry->DataBlockLocation =
-                (size_t *)realloc(MetaEntry->DataBlockLocation,
-                                  MetaEntry->BlockCount * sizeof(size_t));
-            MetaEntry->DataBlockLocation[MetaEntry->BlockCount - 1] =
-                DataOffset;
+            MetaEntry->Count = AppendDims(MetaEntry->Count, PreviousDBCount, DimCount, Count);
+            MetaEntry->DataBlockLocation = (size_t *)realloc(
+                MetaEntry->DataBlockLocation, MetaEntry->BlockCount * sizeof(size_t));
+            MetaEntry->DataBlockLocation[MetaEntry->BlockCount - 1] = DataOffset;
             if (Rec->OperatorType)
             {
-                MetaArrayRecOperator *OpEntry =
-                    (MetaArrayRecOperator *)MetaEntry;
+                MetaArrayRecOperator *OpEntry = (MetaArrayRecOperator *)MetaEntry;
                 OpEntry->DataBlockSize =
-                    (size_t *)realloc(OpEntry->DataBlockSize,
-                                      OpEntry->BlockCount * sizeof(size_t));
-                OpEntry->DataBlockSize[OpEntry->BlockCount - 1] =
-                    CompressedSize;
+                    (size_t *)realloc(OpEntry->DataBlockSize, OpEntry->BlockCount * sizeof(size_t));
+                OpEntry->DataBlockSize[OpEntry->BlockCount - 1] = CompressedSize;
             }
             if (m_StatsLevel > 0)
             {
-                void **MMPtrLoc =
-                    (void **)(((char *)MetaEntry) + Rec->MinMaxOffset);
-                *MMPtrLoc = (void *)realloc(*MMPtrLoc, MetaEntry->BlockCount *
-                                                           ElemSize * 2);
+                void **MMPtrLoc = (void **)(((char *)MetaEntry) + Rec->MinMaxOffset);
+                *MMPtrLoc = (void *)realloc(*MMPtrLoc, MetaEntry->BlockCount * ElemSize * 2);
                 if (!Span)
                 {
-                    memcpy(((char *)*MMPtrLoc) +
-                               ElemSize * (2 * (MetaEntry->BlockCount - 1)),
+                    memcpy(((char *)*MMPtrLoc) + ElemSize * (2 * (MetaEntry->BlockCount - 1)),
                            &MinMax.MinUnion, ElemSize);
-                    memcpy(((char *)*MMPtrLoc) +
-                               ElemSize * (2 * (MetaEntry->BlockCount - 1) + 1),
+                    memcpy(((char *)*MMPtrLoc) + ElemSize * (2 * (MetaEntry->BlockCount - 1) + 1),
                            &MinMax.MaxUnion, ElemSize);
                 }
                 else
                 {
-                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type,
-                                       MemSpace, Rec->MetaOffset,
-                                       Rec->MinMaxOffset,
+                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type, MemSpace,
+                                       Rec->MetaOffset, Rec->MinMaxOffset,
                                        MetaEntry->BlockCount - 1 /*BlockNum*/);
                 }
             }
 
             if (DeferAddToVec)
             {
-                DeferredExterns.push_back({Rec->MetaOffset,
-                                           MetaEntry->BlockCount - 1, Data,
+                DeferredExterns.push_back({Rec->MetaOffset, MetaEntry->BlockCount - 1, Data,
                                            ElemCount * ElemSize, ElemSize});
             }
             if (Offsets)
-                MetaEntry->Offsets = AppendDims(
-                    MetaEntry->Offsets, PreviousDBCount, DimCount, Offsets);
+                MetaEntry->Offsets =
+                    AppendDims(MetaEntry->Offsets, PreviousDBCount, DimCount, Offsets);
         }
     }
 }
 
-void BP5Serializer::MarshalAttribute(const char *Name, const DataType Type,
-                                     size_t ElemSize, size_t ElemCount,
-                                     const void *Data)
+MinVarInfo *BP5Serializer::MinBlocksInfo(const core::VariableBase &Var)
+{
+    BP5WriterRec VarRec = LookupWriterRec((void *)&Var);
+
+    if (!VarRec)
+        return NULL;
+
+    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, (size_t *)Var.m_Shape.data());
+
+    BP5MetadataInfoStruct *MBase = (struct BP5MetadataInfoStruct *)MetadataBuf;
+
+    int AlreadyWritten = BP5BitfieldTest(MBase, VarRec->FieldID);
+
+    if (!AlreadyWritten)
+        return MV;
+
+    if (Var.m_SingleValue)
+    {
+        // single value case
+        MinBlockInfo Blk;
+        Blk.MinMax.Init(Var.m_Type);
+        Blk.WriterID = (int)-1;
+        Blk.BlockID = 0;
+        Blk.Start = NULL;
+        Blk.Count = NULL;
+        if (Var.m_Type != DataType::String)
+        {
+            Blk.BufferP = (char *)(MetadataBuf) + VarRec->MetaOffset;
+        }
+        else
+        {
+            char **StrPtr = (char **)((char *)(MetadataBuf) + VarRec->MetaOffset);
+            Blk.BufferP = *StrPtr;
+        }
+        MV->BlocksInfo.push_back(Blk);
+    }
+    else
+    {
+        // everything else
+        MetaArrayRec *MetaEntry = (MetaArrayRec *)((char *)(MetadataBuf) + VarRec->MetaOffset);
+        for (size_t b = 0; b < MetaEntry->BlockCount; b++)
+        {
+            MinBlockInfo Blk;
+            Blk.MinMax.Init(Var.m_Type);
+            Blk.WriterID = (int)-1;
+            Blk.BlockID = 0;
+            Blk.Start = NULL;
+            if (MetaEntry->Offsets)
+            {
+                Blk.Start = &(MetaEntry->Offsets[b * MetaEntry->Dims]);
+            }
+            Blk.Count = &(MetaEntry->Count[b * MetaEntry->Dims]);
+            if (MetaEntry->DataBlockLocation[b] < m_PriorDataBufferSizeTotal)
+            {
+                Blk.BufferP = (void *)(intptr_t)(-1); // data is out of memory
+            }
+            else
+            {
+                Blk.BufferP = CurDataBuffer->GetPtr(MetaEntry->DataBlockLocation[b] -
+                                                    m_PriorDataBufferSizeTotal);
+            }
+            MV->BlocksInfo.push_back(Blk);
+        }
+    }
+    return MV;
+}
+
+void BP5Serializer::MarshalAttribute(const char *Name, const DataType Type, size_t ElemSize,
+                                     size_t ElemCount, const void *Data)
 {
 
     const char *AttrString = NULL;
@@ -929,16 +938,12 @@ void BP5Serializer::MarshalAttribute(const char *Name, const DataType Type,
     if (ElemCount == (size_t)(-1))
     {
         // simple field, only simple attribute name and value
-        char *SstName =
-            BuildVarName(Name, ShapeID::GlobalValue, (int)Type, ElemSize);
-        AddField(&Info.AttributeFields, &Info.AttributeFieldCount, SstName,
-                 Type, ElemSize);
+        char *SstName = BuildVarName(Name, ShapeID::GlobalValue, (int)Type, (int)ElemSize);
+        AddField(&Info.AttributeFields, &Info.AttributeFieldCount, SstName, Type, (int)ElemSize);
         free(SstName);
         RecalcAttributeStorageSize();
-        int DataOffset =
-            Info.AttributeFields[Info.AttributeFieldCount - 1].field_offset;
-        memcpy((char *)(Info.AttributeData) + DataOffset, DataAddress,
-               ElemSize);
+        int DataOffset = Info.AttributeFields[Info.AttributeFieldCount - 1].field_offset;
+        memcpy((char *)(Info.AttributeData) + DataOffset, DataAddress, ElemSize);
     }
     else
     {
@@ -947,23 +952,19 @@ void BP5Serializer::MarshalAttribute(const char *Name, const DataType Type,
         char *ArrayName = BuildVarName(Name, ShapeID::GlobalArray, 0,
                                        0); // size and type in full field spec
         char *ElemCountName = ConcatName(ArrayName, "ElemCount");
-        AddField(&Info.AttributeFields, &Info.AttributeFieldCount,
-                 ElemCountName, DataType::Int64, sizeof(int64_t));
-        int CountOffset =
-            Info.AttributeFields[Info.AttributeFieldCount - 1].field_offset;
-        AddVarArrayField(&Info.AttributeFields, &Info.AttributeFieldCount,
-                         ArrayName, Type, ElemSize, ElemCountName);
-        int DataOffset =
-            Info.AttributeFields[Info.AttributeFieldCount - 1].field_offset;
+        AddField(&Info.AttributeFields, &Info.AttributeFieldCount, ElemCountName, DataType::Int64,
+                 sizeof(int64_t));
+        int CountOffset = Info.AttributeFields[Info.AttributeFieldCount - 1].field_offset;
+        AddVarArrayField(&Info.AttributeFields, &Info.AttributeFieldCount, ArrayName, Type,
+                         (int)ElemSize, ElemCountName);
+        int DataOffset = Info.AttributeFields[Info.AttributeFieldCount - 1].field_offset;
         free(ElemCountName);
         free(ArrayName);
 
         RecalcAttributeStorageSize();
 
-        memcpy((char *)(Info.AttributeData) + CountOffset, &ElemCount,
-               sizeof(size_t));
-        memcpy((char *)(Info.AttributeData) + DataOffset, &Data,
-               sizeof(void *));
+        memcpy((char *)(Info.AttributeData) + CountOffset, &ElemCount, sizeof(size_t));
+        memcpy((char *)(Info.AttributeData) + DataOffset, &Data, sizeof(void *));
     }
 }
 
@@ -992,16 +993,15 @@ void BP5Serializer::OnetimeMarshalAttribute(const core::AttributeBase &baseAttr)
             Data = &(attribute->m_DataArray[0]);
         }
     }
-#define per_type_code(T)                                                       \
-    else if (Type == helper::GetDataType<T>())                                 \
-    {                                                                          \
-        const core::Attribute<T> *attribute =                                  \
-            dynamic_cast<const core::Attribute<T> *>(&baseAttr);               \
-        Data = (void *)(&attribute->m_DataSingleValue);                        \
-        if (!attribute->m_IsSingleValue)                                       \
-        {                                                                      \
-            Data = (void *)attribute->m_DataArray.data();                      \
-        }                                                                      \
+#define per_type_code(T)                                                                           \
+    else if (Type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        const core::Attribute<T> *attribute = dynamic_cast<const core::Attribute<T> *>(&baseAttr); \
+        Data = (void *)(&attribute->m_DataSingleValue);                                            \
+        if (!attribute->m_IsSingleValue)                                                           \
+        {                                                                                          \
+            Data = (void *)attribute->m_DataArray.data();                                          \
+        }                                                                                          \
     }
 
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(per_type_code)
@@ -1010,9 +1010,8 @@ void BP5Serializer::OnetimeMarshalAttribute(const core::AttributeBase &baseAttr)
     OnetimeMarshalAttribute(Name, Type, ElemCount, Data);
 }
 
-void BP5Serializer::OnetimeMarshalAttribute(const char *Name,
-                                            const DataType Type,
-                                            size_t ElemCount, const void *Data)
+void BP5Serializer::OnetimeMarshalAttribute(const char *Name, const DataType Type, size_t ElemCount,
+                                            const void *Data)
 {
     if (!PendingAttrs)
         PendingAttrs = new (BP5AttrStruct);
@@ -1025,10 +1024,8 @@ void BP5Serializer::OnetimeMarshalAttribute(const char *Name,
     {
         PendingAttrs->StrAttrCount++;
         PendingAttrs->StrAttrs = (struct StringArrayAttr *)realloc(
-            PendingAttrs->StrAttrs,
-            sizeof(StringArrayAttr) * PendingAttrs->StrAttrCount);
-        StringArrayAttr *ThisAttr =
-            &PendingAttrs->StrAttrs[PendingAttrs->StrAttrCount - 1];
+            PendingAttrs->StrAttrs, sizeof(StringArrayAttr) * PendingAttrs->StrAttrCount);
+        StringArrayAttr *ThisAttr = &PendingAttrs->StrAttrs[PendingAttrs->StrAttrCount - 1];
         memset((void *)ThisAttr, 0, sizeof(*ThisAttr));
         ThisAttr->Name = TmpName;
         if (ElemCount == (size_t)-1)
@@ -1042,8 +1039,7 @@ void BP5Serializer::OnetimeMarshalAttribute(const char *Name,
         {
             std::string *StrArray = (std::string *)Data;
             ThisAttr->ElementCount = ElemCount;
-            ThisAttr->Values =
-                (const char **)malloc(sizeof(char *) * ElemCount);
+            ThisAttr->Values = (const char **)malloc(sizeof(char *) * ElemCount);
             for (size_t i = 0; i < ElemCount; i++)
             {
                 ThisAttr->Values[i] = strdup(StrArray[i].c_str());
@@ -1054,17 +1050,15 @@ void BP5Serializer::OnetimeMarshalAttribute(const char *Name,
     {
         if ((Type == DataType::None) || (Type == DataType::Struct))
         {
-            helper::Throw<std::logic_error>(
-                "Toolkit", "format::BP5Serializer",
-                "doesn't support this type of Attribute", ToString(Type));
+            helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer",
+                                            "doesn't support this type of Attribute",
+                                            ToString(Type));
         }
         char *Array = (char *)Data;
         PendingAttrs->PrimAttrCount++;
         PendingAttrs->PrimAttrs = (struct PrimitiveTypeAttr *)realloc(
-            PendingAttrs->PrimAttrs,
-            sizeof(PrimitiveTypeAttr) * PendingAttrs->PrimAttrCount);
-        PrimitiveTypeAttr *ThisAttr =
-            &PendingAttrs->PrimAttrs[PendingAttrs->PrimAttrCount - 1];
+            PendingAttrs->PrimAttrs, sizeof(PrimitiveTypeAttr) * PendingAttrs->PrimAttrCount);
+        PrimitiveTypeAttr *ThisAttr = &PendingAttrs->PrimAttrs[PendingAttrs->PrimAttrCount - 1];
         if (ElemCount == (size_t)-1)
         {
             ElemCount = 1;
@@ -1073,8 +1067,7 @@ void BP5Serializer::OnetimeMarshalAttribute(const char *Name,
         ThisAttr->Name = TmpName;
         ThisAttr->TotalElementSize = ElemCount * DataTypeSize[(int)Type];
         ThisAttr->Values = (char *)malloc(ThisAttr->TotalElementSize);
-        std::memcpy((void *)ThisAttr->Values, (void *)Array,
-                    ThisAttr->TotalElementSize);
+        std::memcpy((void *)ThisAttr->Values, (void *)Array, ThisAttr->TotalElementSize);
     }
 }
 
@@ -1082,8 +1075,8 @@ void BP5Serializer::InitStep(BufferV *DataBuffer)
 {
     if (CurDataBuffer != NULL)
     {
-        helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer",
-                                        "InitStep", "without prior Close");
+        helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer", "InitStep",
+                                        "without prior Close");
     }
     CurDataBuffer = DataBuffer;
     m_PriorDataBufferSizeTotal = 0;
@@ -1095,36 +1088,32 @@ void BP5Serializer::ProcessDeferredMinMax()
     {
         MinMaxStruct MinMax;
         MinMax.Init(Def.Type);
-        void *Ptr = reinterpret_cast<void *>(
-            GetPtr(Def.Data.bufferIdx, Def.Data.posInBuffer));
+        void *Ptr = reinterpret_cast<void *>(GetPtr(Def.Data.bufferIdx, Def.Data.posInBuffer));
         GetMinMax(Ptr, Def.ElemCount, Def.Type, MinMax, Def.MemSpace);
 
-        MetaArrayRecMM *MetaEntry =
-            (MetaArrayRecMM *)((char *)(MetadataBuf) + Def.MetaOffset);
+        MetaArrayRecMM *MetaEntry = (MetaArrayRecMM *)((char *)(MetadataBuf) + Def.MetaOffset);
         void **MMPtrLoc = (void **)(((char *)MetaEntry) + Def.MinMaxOffset);
-        int ElemSize = helper::GetDataTypeSize(Def.Type);
+        auto ElemSize = helper::GetDataTypeSize(Def.Type);
 
-        memcpy(((char *)*MMPtrLoc) + ElemSize * (2 * (Def.BlockNum)),
-               &MinMax.MinUnion, ElemSize);
-        memcpy(((char *)*MMPtrLoc) + ElemSize * (2 * (Def.BlockNum) + 1),
-               &MinMax.MaxUnion, ElemSize);
+        memcpy(((char *)*MMPtrLoc) + ElemSize * (2 * (Def.BlockNum)), &MinMax.MinUnion, ElemSize);
+        memcpy(((char *)*MMPtrLoc) + ElemSize * (2 * (Def.BlockNum) + 1), &MinMax.MaxUnion,
+               ElemSize);
     }
     DefSpanMinMax.clear();
 }
 
-BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer,
-                                       bool forceCopyDeferred)
+BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer, bool forceCopyDeferred)
 {
     if (CurDataBuffer == NULL)
     {
-        helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer",
-                                        "ReinitStepData", "without prior Init");
+        helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer", "ReinitStepData",
+                                        "without prior Init");
     }
     //  Dump data for externs into iovec
     DumpDeferredBlocks(forceCopyDeferred);
 
-    m_PriorDataBufferSizeTotal += CurDataBuffer->AddToVec(
-        0, NULL, m_BufferBlockSize, true); //  output block size aligned
+    m_PriorDataBufferSizeTotal +=
+        CurDataBuffer->AddToVec(0, NULL, m_BufferBlockSize, true); //  output block size aligned
 
     ProcessDeferredMinMax();
     BufferV *tmp = CurDataBuffer;
@@ -1134,30 +1123,25 @@ BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer,
 
 void BP5Serializer::CollectFinalShapeValues()
 {
-    for (int i = 0; i < Info.RecCount; i++)
+    for (auto it : Info.RecMap)
     {
-        BP5WriterRec Rec = &Info.RecList[i];
+        BP5WriterRec Rec = &it.second;
         if (Rec->Shape == ShapeID::GlobalArray)
         {
-            core::VariableBase *VB =
-                static_cast<core::VariableBase *>(Rec->Key);
-            struct BP5MetadataInfoStruct *MBase =
-                (struct BP5MetadataInfoStruct *)MetadataBuf;
+            core::VariableBase *VB = static_cast<core::VariableBase *>(Rec->Key);
+            struct BP5MetadataInfoStruct *MBase = (struct BP5MetadataInfoStruct *)MetadataBuf;
             int AlreadyWritten = BP5BitfieldTest(MBase, Rec->FieldID);
             if (!AlreadyWritten)
                 continue;
 
-            MetaArrayRec *MetaEntry =
-                (MetaArrayRec *)((char *)(MetadataBuf) + Rec->MetaOffset);
+            MetaArrayRec *MetaEntry = (MetaArrayRec *)((char *)(MetadataBuf) + Rec->MetaOffset);
 
-            memcpy(MetaEntry->Shape, VB->Shape().data(),
-                   Rec->DimCount * sizeof(size_t));
+            memcpy(MetaEntry->Shape, VB->Shape().data(), Rec->DimCount * sizeof(size_t));
         }
     }
 }
 
-BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
-                                                         bool forceCopyDeferred)
+BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep, bool forceCopyDeferred)
 {
     // EndStep()
     std::vector<MetaMetaInfoBlock> Formats;
@@ -1169,36 +1153,28 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
             {"complex4", fcomplex_field_list, sizeof(fcomplex_struct), NULL},
             {"complex8", dcomplex_field_list, sizeof(dcomplex_struct), NULL},
             {"MetaArray", MetaArrayRecListPtr, sizeof(MetaArrayRec), NULL},
-            {"MetaArrayOp", MetaArrayRecOperatorListPtr,
-             sizeof(MetaArrayRecOperator), NULL},
-            {"MetaArrayMM1", MetaArrayRecMM1ListPtr, sizeof(MetaArrayRecMM),
+            {"MetaArrayOp", MetaArrayRecOperatorListPtr, sizeof(MetaArrayRecOperator), NULL},
+            {"MetaArrayMM1", MetaArrayRecMM1ListPtr, sizeof(MetaArrayRecMM), NULL},
+            {"MetaArrayOpMM1", MetaArrayRecOperatorMM1ListPtr, sizeof(MetaArrayRecOperatorMM),
              NULL},
-            {"MetaArrayOpMM1", MetaArrayRecOperatorMM1ListPtr,
-             sizeof(MetaArrayRecOperatorMM), NULL},
-            {"MetaArrayMM2", MetaArrayRecMM2ListPtr, sizeof(MetaArrayRecMM),
+            {"MetaArrayMM2", MetaArrayRecMM2ListPtr, sizeof(MetaArrayRecMM), NULL},
+            {"MetaArrayOpMM2", MetaArrayRecOperatorMM2ListPtr, sizeof(MetaArrayRecOperatorMM),
              NULL},
-            {"MetaArrayOpMM2", MetaArrayRecOperatorMM2ListPtr,
-             sizeof(MetaArrayRecOperatorMM), NULL},
-            {"MetaArrayMM4", MetaArrayRecMM4ListPtr, sizeof(MetaArrayRecMM),
+            {"MetaArrayMM4", MetaArrayRecMM4ListPtr, sizeof(MetaArrayRecMM), NULL},
+            {"MetaArrayOpMM4", MetaArrayRecOperatorMM4ListPtr, sizeof(MetaArrayRecOperatorMM),
              NULL},
-            {"MetaArrayOpMM4", MetaArrayRecOperatorMM4ListPtr,
-             sizeof(MetaArrayRecOperatorMM), NULL},
-            {"MetaArrayMM8", MetaArrayRecMM8ListPtr, sizeof(MetaArrayRecMM),
+            {"MetaArrayMM8", MetaArrayRecMM8ListPtr, sizeof(MetaArrayRecMM), NULL},
+            {"MetaArrayOpMM8", MetaArrayRecOperatorMM8ListPtr, sizeof(MetaArrayRecOperatorMM),
              NULL},
-            {"MetaArrayOpMM8", MetaArrayRecOperatorMM8ListPtr,
-             sizeof(MetaArrayRecOperatorMM), NULL},
-            {"MetaArrayMM16", MetaArrayRecMM16ListPtr, sizeof(MetaArrayRecMM),
+            {"MetaArrayMM16", MetaArrayRecMM16ListPtr, sizeof(MetaArrayRecMM), NULL},
+            {"MetaArrayOpMM16", MetaArrayRecOperatorMM16ListPtr, sizeof(MetaArrayRecOperatorMM),
              NULL},
-            {"MetaArrayOpMM16", MetaArrayRecOperatorMM16ListPtr,
-             sizeof(MetaArrayRecOperatorMM), NULL},
             {NULL, NULL, 0, NULL}};
         struct_list[0].format_name = "MetaData";
         struct_list[0].field_list = Info.MetaFields;
-        struct_list[0].struct_size =
-            FMstruct_size_field_list(Info.MetaFields, sizeof(char *));
+        struct_list[0].struct_size = FMstruct_size_field_list(Info.MetaFields, sizeof(char *));
 
-        FMFormat Format =
-            register_data_format(Info.LocalFMContext, &struct_list[0]);
+        FMFormat Format = register_data_format(Info.LocalFMContext, &struct_list[0]);
 
         Info.MetaFormat = Format;
         int size;
@@ -1218,11 +1194,9 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
             {NULL, NULL, 0, NULL}};
         struct_list[0].format_name = "Attributes";
         struct_list[0].field_list = Info.AttributeFields;
-        struct_list[0].struct_size =
-            FMstruct_size_field_list(Info.AttributeFields, sizeof(char *));
+        struct_list[0].struct_size = FMstruct_size_field_list(Info.AttributeFields, sizeof(char *));
 
-        FMFormat Format =
-            register_data_format(Info.LocalFMContext, &struct_list[0]);
+        FMFormat Format = register_data_format(Info.LocalFMContext, &struct_list[0]);
         Info.AttributeFormat = Format;
         int size;
         Block.MetaMetaInfo = get_server_rep_FMformat(Format, &size);
@@ -1248,20 +1222,19 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
     FFSBuffer AttributeEncodeBuffer = NULL;
     size_t MetaDataSize = 0;
     size_t AttributeSize = 0;
-    struct BP5MetadataInfoStruct *MBase =
-        (struct BP5MetadataInfoStruct *)MetadataBuf;
+    struct BP5MetadataInfoStruct *MBase = (struct BP5MetadataInfoStruct *)MetadataBuf;
 
     if (CurDataBuffer == NULL)
     {
-        helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer",
-                                        "CloseTimestep", "without prior Init");
+        helper::Throw<std::logic_error>("Toolkit", "format::BP5Serializer", "CloseTimestep",
+                                        "without prior Init");
     }
 
     //  Dump data for externs into iovec
     DumpDeferredBlocks(forceCopyDeferred);
 
-    MBase->DataBlockSize = CurDataBuffer->AddToVec(
-        0, NULL, m_BufferBlockSize, true); //  output block size aligned
+    MBase->DataBlockSize =
+        CurDataBuffer->AddToVec(0, NULL, m_BufferBlockSize, true); //  output block size aligned
 
     MBase->DataBlockSize += m_PriorDataBufferSizeTotal;
 
@@ -1269,10 +1242,8 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
 
     CollectFinalShapeValues();
 
-    void *MetaDataBlock = FFSencode(MetaEncodeBuffer, Info.MetaFormat,
-                                    MetadataBuf, &MetaDataSize);
-    BufferFFS *Metadata =
-        new BufferFFS(MetaEncodeBuffer, MetaDataBlock, MetaDataSize);
+    void *MetaDataBlock = FFSencode(MetaEncodeBuffer, Info.MetaFormat, MetadataBuf, &MetaDataSize);
+    BufferFFS *Metadata = new BufferFFS(MetaEncodeBuffer, MetaDataBlock, MetaDataSize);
 
     BufferFFS *AttrData = NULL;
 
@@ -1280,11 +1251,9 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
     if (NewAttribute && Info.AttributeFields)
     {
         AttributeEncodeBuffer = create_FFSBuffer();
-        void *AttributeBlock =
-            FFSencode(AttributeEncodeBuffer, Info.AttributeFormat,
-                      Info.AttributeData, &AttributeSize);
-        AttrData =
-            new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
+        void *AttributeBlock = FFSencode(AttributeEncodeBuffer, Info.AttributeFormat,
+                                         Info.AttributeData, &AttributeSize);
+        AttrData = new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
     }
 
     if (PendingAttrs)
@@ -1296,20 +1265,16 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
                 register_data_format(Info.LocalFMContext, &attr_struct_list[0]);
             Info.AttributeFormat = GenericAttributeFormat;
             int size;
-            Block.MetaMetaInfo =
-                get_server_rep_FMformat(GenericAttributeFormat, &size);
+            Block.MetaMetaInfo = get_server_rep_FMformat(GenericAttributeFormat, &size);
             Block.MetaMetaInfoLen = size;
-            Block.MetaMetaID =
-                get_server_ID_FMformat(GenericAttributeFormat, &size);
+            Block.MetaMetaID = get_server_ID_FMformat(GenericAttributeFormat, &size);
             Block.MetaMetaIDLen = size;
             Formats.push_back(Block);
         }
         AttributeEncodeBuffer = create_FFSBuffer();
         void *AttributeBlock =
-            FFSencode(AttributeEncodeBuffer, GenericAttributeFormat,
-                      PendingAttrs, &AttributeSize);
-        AttrData =
-            new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
+            FFSencode(AttributeEncodeBuffer, GenericAttributeFormat, PendingAttrs, &AttributeSize);
+        AttrData = new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
         //	FMdump_encoded_data(GenericAttributeFormat, AttributeBlock,
         // 1024000);
         FMfree_var_rec_elements(GenericAttributeFormat, PendingAttrs);
@@ -1360,8 +1325,7 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep,
 std::vector<char> BP5Serializer::CopyMetadataToContiguous(
     const std::vector<BP5Base::MetaMetaInfoBlock> NewMetaMetaBlocks,
     const std::vector<core::iovec> &MetaEncodeBuffers,
-    const std::vector<core::iovec> &AttributeEncodeBuffers,
-    const std::vector<uint64_t> &DataSizes,
+    const std::vector<core::iovec> &AttributeEncodeBuffers, const std::vector<uint64_t> &DataSizes,
     const std::vector<uint64_t> &WriterDataPositions) const
 {
     std::vector<char> Ret;
@@ -1417,13 +1381,11 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
     {
         size_t AlignedSize = ((m.iov_len + 7) & ~0x7);
         helper::CopyToBuffer(Ret, Position, &AlignedSize);
-        helper::CopyToBuffer(Ret, Position, (const char *)m.iov_base,
-                             m.iov_len);
+        helper::CopyToBuffer(Ret, Position, (const char *)m.iov_base, m.iov_len);
         if (m.iov_len != AlignedSize)
         {
             uint64_t zero = 0;
-            helper::CopyToBuffer(Ret, Position, (char *)&zero,
-                                 AlignedSize - m.iov_len);
+            helper::CopyToBuffer(Ret, Position, (char *)&zero, AlignedSize - m.iov_len);
         }
     }
 
@@ -1434,13 +1396,11 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
         {
             size_t AlignedSize = ((a.iov_len + 7) & ~0x7);
             helper::CopyToBuffer(Ret, Position, &AlignedSize);
-            helper::CopyToBuffer(Ret, Position, (const char *)a.iov_base,
-                                 a.iov_len);
+            helper::CopyToBuffer(Ret, Position, (const char *)a.iov_base, a.iov_len);
             if (a.iov_len != AlignedSize)
             {
                 uint64_t zero = 0;
-                helper::CopyToBuffer(Ret, Position, (char *)&zero,
-                                     AlignedSize - a.iov_len);
+                helper::CopyToBuffer(Ret, Position, (char *)&zero, AlignedSize - a.iov_len);
             }
         }
         else
@@ -1459,9 +1419,8 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
 
 std::vector<core::iovec> BP5Serializer::BreakoutContiguousMetadata(
     std::vector<char> &Aggregate, const std::vector<size_t> Counts,
-    std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks,
-    std::vector<core::iovec> &AttributeBlocks, std::vector<uint64_t> &DataSizes,
-    std::vector<uint64_t> &WriterDataPositions) const
+    std::vector<MetaMetaInfoBlock> &UniqueMetaMetaBlocks, std::vector<core::iovec> &AttributeBlocks,
+    std::vector<uint64_t> &DataSizes, std::vector<uint64_t> &WriterDataPositions) const
 {
     size_t Position = 0;
     std::vector<core::iovec> MetadataBlocks;
@@ -1485,15 +1444,13 @@ std::vector<core::iovec> BP5Serializer::BreakoutContiguousMetadata(
             {
                 if (o.MetaMetaIDLen != IDLen)
                     continue;
-                if (std::memcmp(o.MetaMetaID, Aggregate.data() + IDPosition,
-                                IDLen) == 0)
+                if (std::memcmp(o.MetaMetaID, Aggregate.data() + IDPosition, IDLen) == 0)
                     Found = true;
             }
             if (!Found)
             {
-                MetaMetaInfoBlock New = {Aggregate.data() + InfoPosition,
-                                         InfoLen, Aggregate.data() + IDPosition,
-                                         IDLen};
+                MetaMetaInfoBlock New = {Aggregate.data() + InfoPosition, InfoLen,
+                                         Aggregate.data() + IDPosition, IDLen};
                 UniqueMetaMetaBlocks.push_back(New);
             }
         }

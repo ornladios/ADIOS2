@@ -6,8 +6,6 @@
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/adios2)](https://anaconda.org/conda-forge/adios2)
 
 [![Circle CI](https://circleci.com/gh/ornladios/ADIOS2.svg?style=shield)](https://circleci.com/gh/ornladios/ADIOS2)
-[![Travis CI](https://api.travis-ci.com/ornladios/ADIOS2.svg)](https://travis-ci.com/ornladios/ADIOS2)
-[![AppVeyor CI](https://ci.appveyor.com/api/projects/status/0s2a3qp57hgbvlhj?svg=true)](https://ci.appveyor.com/project/ornladios/adios2)
 
 [![Coverity Scan Build Status](https://scan.coverity.com/projects/11116/badge.svg)](https://scan.coverity.com/projects/ornladios-adios2)
 
@@ -76,6 +74,13 @@ Once ADIOS2 is installed refer to:
 
 * Previous releases: [https://github.com/ornladios/ADIOS2/releases](https://github.com/ornladios/ADIOS2/releases)
 
+## Community
+
+ADIOS2 is an open source project: Questions, discussion, and contributions are welcome. Join us at:
+
+- Mailing list: adios-ecp@kitware.com 
+- Github Discussions: https://github.com/ornladios/ADIOS2/discussions
+
 ## Reporting Bugs
 
 If you find a bug, please open an [issue on ADIOS2 github repository](https://github.com/ornladios/ADIOS2/issues)
@@ -88,8 +93,8 @@ See the [Contributor's Guide to ADIOS 2](Contributing.md) for instructions on ho
 ADIOS2 is licensed under the Apache License v2.0.
 See the accompanying [Copyright.txt](Copyright.txt) for more details.
 
-
 ## Directory layout
+
 * bindings - public application programming interface, API, language bindings (C++11, C, Fortran, Python and Matlab)
 
 * cmake - Project specific CMake modules

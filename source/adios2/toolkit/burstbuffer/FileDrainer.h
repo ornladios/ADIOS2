@@ -40,7 +40,7 @@ enum class DrainOperation
     Write,   // Write data from memory to toFileName directly (without seek)
     Create,  // Open file for writing (creat) - only toFile
     Open,    // Open file for append - only toFile
-    Delete // Remove a file on disk (file will be opened if not already opened)
+    Delete   // Remove a file on disk (file will be opened if not already opened)
 };
 
 struct FileDrainOperation
@@ -54,8 +54,8 @@ struct FileDrainOperation
     std::vector<char> dataToWrite; // memory to write with Write operation
 
     FileDrainOperation(DrainOperation op, const std::string &fromFileName,
-                       const std::string &toFileName, size_t countBytes,
-                       size_t fromOffset, size_t toOffset, const void *data);
+                       const std::string &toFileName, size_t countBytes, size_t fromOffset,
+                       size_t toOffset, const void *data);
 };
 
 typedef std::map<std::string, std::shared_ptr<std::ifstream>> InputFileMap;
@@ -72,20 +72,17 @@ public:
 
     void AddOperation(FileDrainOperation &operation);
     void AddOperation(DrainOperation op, const std::string &fromFileName,
-                      const std::string &toFileName, size_t fromOffset,
-                      size_t toOffset, size_t countBytes,
-                      const void *data = nullptr);
+                      const std::string &toFileName, size_t fromOffset, size_t toOffset,
+                      size_t countBytes, const void *data = nullptr);
 
     void AddOperationSeekEnd(const std::string &toFileName);
-    void AddOperationCopyAt(const std::string &fromFileName,
-                            const std::string &toFileName, size_t fromOffset,
-                            size_t toOffset, size_t countBytes);
-    void AddOperationCopy(const std::string &fromFileName,
-                          const std::string &toFileName, size_t countBytes);
-    void AddOperationWriteAt(const std::string &toFileName, size_t toOffset,
-                             size_t countBytes, const void *data);
-    void AddOperationWrite(const std::string &toFileName, size_t countBytes,
-                           const void *data);
+    void AddOperationCopyAt(const std::string &fromFileName, const std::string &toFileName,
+                            size_t fromOffset, size_t toOffset, size_t countBytes);
+    void AddOperationCopy(const std::string &fromFileName, const std::string &toFileName,
+                          size_t countBytes);
+    void AddOperationWriteAt(const std::string &toFileName, size_t toOffset, size_t countBytes,
+                             const void *data);
+    void AddOperationWrite(const std::string &toFileName, size_t countBytes, const void *data);
     void AddOperationOpen(const std::string &toFileName, Mode mode);
 
     void AddOperationDelete(const std::string &toFileName);
@@ -133,8 +130,7 @@ protected:
      */
     std::pair<size_t, double> Read(InputFile &f, size_t count, char *buffer,
                                    const std::string &path);
-    size_t Write(OutputFile &f, size_t count, const char *buffer,
-                 const std::string &path);
+    size_t Write(OutputFile &f, size_t count, const char *buffer, const std::string &path);
 
     void Delete(OutputFile &f, const std::string &path);
 

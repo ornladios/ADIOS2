@@ -54,9 +54,8 @@ TEST_F(StructWriteTest, ADIOS2CommonWrite)
     adios2::Dims shape = {10, (size_t)mpiSize * 2};
     adios2::Dims start = {2, (size_t)mpiRank * 2};
     adios2::Dims count = {5, 2};
-    size_t datasize =
-        std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
-                        std::multiplies<size_t>());
+    size_t datasize = std::accumulate(count.begin(), count.end(), static_cast<size_t>(1),
+                                      std::multiplies<size_t>());
 
     std::vector<char> myChars(datasize);
     std::vector<unsigned char> myUChars(datasize);
@@ -69,21 +68,16 @@ TEST_F(StructWriteTest, ADIOS2CommonWrite)
     std::vector<std::complex<float>> myComplexes(datasize);
     std::vector<std::complex<double>> myDComplexes(datasize);
     auto varChars = io.DefineVariable<char>("varChars", shape, start, count);
-    auto varUChars =
-        io.DefineVariable<unsigned char>("varUChars", shape, start, count);
+    auto varUChars = io.DefineVariable<unsigned char>("varUChars", shape, start, count);
     auto varShorts = io.DefineVariable<short>("varShorts", shape, start, count);
-    auto varUShorts =
-        io.DefineVariable<unsigned short>("varUShorts", shape, start, count);
+    auto varUShorts = io.DefineVariable<unsigned short>("varUShorts", shape, start, count);
     auto varInts = io.DefineVariable<int>("varInts", shape, start, count);
-    auto varUInts =
-        io.DefineVariable<unsigned int>("varUInts", shape, start, count);
+    auto varUInts = io.DefineVariable<unsigned int>("varUInts", shape, start, count);
     auto varFloats = io.DefineVariable<float>("varFloats", shape, start, count);
-    auto varDoubles =
-        io.DefineVariable<double>("varDoubles", shape, start, count);
-    auto varComplexes = io.DefineVariable<std::complex<float>>(
-        "varComplexes", shape, start, count);
-    auto varDComplexes = io.DefineVariable<std::complex<double>>(
-        "varDComplexes", shape, start, count);
+    auto varDoubles = io.DefineVariable<double>("varDoubles", shape, start, count);
+    auto varComplexes = io.DefineVariable<std::complex<float>>("varComplexes", shape, start, count);
+    auto varDComplexes =
+        io.DefineVariable<std::complex<double>>("varDComplexes", shape, start, count);
     auto varIntScalar = io.DefineVariable<int>("varIntScalar");
     auto varString = io.DefineVariable<std::string>("varString");
 
@@ -93,14 +87,10 @@ TEST_F(StructWriteTest, ADIOS2CommonWrite)
         int b[4];
     };
     auto particleDef = io.DefineStruct("particle", sizeof(particle));
-    particleDef.AddField("a", offsetof(struct particle, a),
-                         adios2::DataType::Int8);
-    particleDef.AddField("b", offsetof(struct particle, b),
-                         adios2::DataType::Int32, 4);
-    auto varStruct =
-        io.DefineStructVariable("particles", particleDef, shape, start, count);
-    EXPECT_THROW(particleDef.AddField("c", 4, adios2::DataType::Int32),
-                 std::runtime_error);
+    particleDef.AddField("a", offsetof(struct particle, a), adios2::DataType::Int8);
+    particleDef.AddField("b", offsetof(struct particle, b), adios2::DataType::Int32, 4);
+    auto varStruct = io.DefineStructVariable("particles", particleDef, shape, start, count);
+    EXPECT_THROW(particleDef.AddField("c", 4, adios2::DataType::Int32), std::runtime_error);
     std::vector<particle> myParticles(datasize);
     for (size_t i = 0; i < datasize; ++i)
     {
@@ -157,9 +147,8 @@ int main(int argc, char **argv)
 
 #if ADIOS2_USE_MPI
     int provided;
-    int thread_support_level = (engine == "SST" || engine == "sst")
-                                   ? MPI_THREAD_MULTIPLE
-                                   : MPI_THREAD_SINGLE;
+    int thread_support_level =
+        (engine == "SST" || engine == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
 
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);

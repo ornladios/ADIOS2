@@ -532,7 +532,7 @@ void *CP_distributeDataFromRankZero(FFSContext ffs_c, void *root_info,
 
     FFSContext context = ffs_c;
     // FFSTypeHandle ffs_type = FFSTypeHandle_from_encode(context, Buffer);
-    if (verbose) printf("BUFFER IS AT %p, DataSize is %ld (0x%lx), End is %p\n", Buffer, DataSize, DataSize, Buffer+DataSize);
+    if (verbose) printf("BUFFER IS AT %p, DataSize is %zu (0x%zx), End is %p\n", Buffer, DataSize, DataSize, Buffer+DataSize);
 
     FFSdecode_in_place(context, Buffer, &RetVal);
     if (verbose) {
