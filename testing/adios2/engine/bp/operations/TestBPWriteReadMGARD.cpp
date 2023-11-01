@@ -977,18 +977,22 @@ void MGARDNullBlocks(const std::string tolerance)
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
 
         // add operations
-        adios2::Operator mgardOp = adios.DefineOperator("mgardCompressor", adios2::ops::LossyMGARD);
-        var_r32.AddOperation(mgardOp, {{adios2::ops::mgard::key::tolerance, tolerance},
-                                       {adios2::ops::mgard::key::s, "inf"}});
+        adios2::Operator mgardOp =
+            adios.DefineOperator("mgardCompressor", adios2::ops::LossyMGARD);
+        var_r32.AddOperation(mgardOp,
+                             {{adios2::ops::mgard::key::tolerance, tolerance},
+                              {adios2::ops::mgard::key::s, "inf"}});
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
-            var_r32.SetSelection(adios2::Box<adios2::Dims>({Nx * mpiRank, 0}, {Nx, Ny}));
+            var_r32.SetSelection(
+                adios2::Box<adios2::Dims>({Nx * mpiRank, 0}, {Nx, Ny}));
             bpWriter.Put<float>("r32", r32s.data());
-            var_r32.SetSelection(adios2::Box<adios2::Dims>({Nx * mpiRank, 0}, {0, 0}));
+            var_r32.SetSelection(
+                adios2::Box<adios2::Dims>({Nx * mpiRank, 0}, {0, 0}));
             std::vector<float> r32_empty;
             bpWriter.Put<float>("r32", r32_empty.data());
             bpWriter.EndStep();
@@ -1032,8 +1036,10 @@ void MGARDNullBlocks(const std::string tolerance)
                 ss << "t=" << t << " i=" << i << " rank=" << mpiRank;
                 std::string msg = ss.str();
 
-                ASSERT_LT(std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny + i]) / *r32s_Max,
-                          std::stod(tolerance))
+                ASSERT_LT(
+                    std::abs(decompressedR32s[i] - r32s[Nx / 2 * Ny + i]) /
+                        *r32s_Max,
+                    std::stod(tolerance))
                     << msg;
             }
             ++t;

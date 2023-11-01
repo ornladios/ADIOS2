@@ -894,8 +894,8 @@ void Blosc2NullBlocks(const std::string accuracy, const std::string threshold,
 
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRBlosc2NullBlock_" + accuracy + "_" + threshold + threshold + "_" +
-                            doshuffle + ".bp");
+    const std::string fname("BPWRBlosc2NullBlock_" + accuracy + "_" +
+                            threshold + threshold + "_" + doshuffle + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -932,20 +932,23 @@ void Blosc2NullBlocks(const std::string accuracy, const std::string threshold,
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
 
         // add operations
-        adios2::Operator Blosc2Op =
-            adios.DefineOperator("Blosc2Compressor", adios2::ops::LosslessBlosc);
+        adios2::Operator Blosc2Op = adios.DefineOperator(
+            "Blosc2Compressor", adios2::ops::LosslessBlosc);
 
-        var_r32.AddOperation(Blosc2Op, {{adios2::ops::blosc::key::clevel, accuracy},
-                                        {adios2::ops::blosc::key::threshold, threshold},
-                                        {adios2::ops::blosc::key::doshuffle, doshuffle}});
+        var_r32.AddOperation(Blosc2Op,
+                             {{adios2::ops::blosc::key::clevel, accuracy},
+                              {adios2::ops::blosc::key::threshold, threshold},
+                              {adios2::ops::blosc::key::doshuffle, doshuffle}});
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
         {
             bpWriter.BeginStep();
-            var_r32.SetSelection(adios2::Box<adios2::Dims>({mpiRank * Nx}, {Nx}));
+            var_r32.SetSelection(
+                adios2::Box<adios2::Dims>({mpiRank * Nx}, {Nx}));
             bpWriter.Put<float>("r32", r32s.data());
-            var_r32.SetSelection(adios2::Box<adios2::Dims>({mpiRank * Nx}, {0}));
+            var_r32.SetSelection(
+                adios2::Box<adios2::Dims>({mpiRank * Nx}, {0}));
             std::vector<float> r32_empty;
             bpWriter.Put<float>("r32", r32_empty.data());
             bpWriter.EndStep();
@@ -1040,7 +1043,8 @@ TEST_P(BPWriteReadBlosc2, ADIOS2BPWriteReadBlosc23DSel)
 }
 TEST_P(BPWriteReadBlosc2, ADIOS2BPWriteReadBlosc2Null)
 {
-    Blosc2NullBlocks(std::get<0>(GetParam()), std::get<1>(GetParam()), std::get<2>(GetParam()));
+    Blosc2NullBlocks(std::get<0>(GetParam()), std::get<1>(GetParam()),
+                     std::get<2>(GetParam()));
 }
 
 INSTANTIATE_TEST_SUITE_P(
