@@ -2229,6 +2229,139 @@ TEST_F(BPWriteReadMultiblockTest, MultiblockPerformDataWrite)
 }
 
 //******************************************************************************
+// Test reading data where some processes do not contribute to the data
+// and some blocks are null
+//******************************************************************************
+
+TEST_F(BPWriteReadMultiblockTest, MultiblockNullBlocks)
+{
+    // Each process would write a 2x8 array and all processes would
+    // form a mpiSize * Nx 1D array
+    const std::string fname("MultiblockNullBlocks.bp");
+
+    int mpiRank = 0, mpiSize = 1;
+    // Number of elements per blocks (blocksize)
+    const size_t Nx = 8;
+    // Number of blocks per process (= number of flushes)
+    const size_t Nblocks = 3;
+    // Number of steps
+    const size_t NSteps = 3;
+
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+#endif
+
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios;
+#endif
+    /* Write */
+    {
+        adios2::IO io = adios.DeclareIO("TestIO");
+        adios2::Dims shape{static_cast<size_t>(mpiSize), static_cast<size_t>(Nx * (Nblocks - 1))};
+        adios2::Dims start{static_cast<size_t>(mpiRank), 0};
+        adios2::Dims count{1, Nx};
+
+        auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
+        adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
+
+        for (size_t step = 0; step < NSteps; ++step)
+        {
+            bpWriter.BeginStep();
+
+            size_t nb = 0;
+            for (size_t b = 0; b < Nblocks; ++b)
+            {
+                // Generate test data for each process / block uniquely
+                int t = static_cast<int>(step * Nblocks + b);
+                SmallTestData currentTestData =
+                    generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
+
+                // the first block does not contribute to the variable's data
+                if (b == 0)
+                {
+                    std::array<int32_t, Nx> I32_empty;
+                    var_i32.SetSelection(
+                        adios2::Box<adios2::Dims>({(size_t)mpiRank, b * Nx}, {0, 0}));
+                    bpWriter.Put(var_i32, I32_empty.data());
+                }
+                else
+                {
+                    ++nb;
+                    start = {static_cast<size_t>(mpiRank), static_cast<size_t>(Nx * (nb - 1))};
+                    count = {1, Nx};
+                    var_i32.SetSelection({start, count});
+                    bpWriter.Put(var_i32, currentTestData.I32.data(), adios2::Mode::Sync);
+                }
+
+                bpWriter.PerformDataWrite();
+            }
+            bpWriter.EndStep();
+        }
+        bpWriter.Close();
+    }
+    // Read and check correctness
+    {
+        adios2::IO io = adios.DeclareIO("ReadIO");
+
+        if (!engineName.empty())
+        {
+            io.SetEngine(engineName);
+        }
+
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
+
+        auto var_i32 = io.InquireVariable<int32_t>("i32");
+        EXPECT_TRUE(var_i32);
+        EXPECT_EQ(var_i32.ShapeID(), adios2::ShapeID::GlobalArray);
+        EXPECT_EQ(var_i32.Steps(), NSteps);
+        EXPECT_EQ(var_i32.Shape()[0], mpiSize);
+        EXPECT_EQ(var_i32.Shape()[1], Nx * (Nblocks - 1));
+
+        SmallTestData testData;
+        std::array<int32_t, Nx> I32;
+
+        const auto i32AllInfo = bpReader.AllStepsBlocksInfo(var_i32);
+        EXPECT_EQ(i32AllInfo.size(), NSteps);
+
+        for (size_t step = 0; step < NSteps; step++)
+        {
+            var_i32.SetStepSelection({step, 1});
+            for (size_t b = 1; b < Nblocks; ++b)
+            {
+                std::cout << "Read step " << step << " block=" << b << std::endl;
+                // Generate test data for each process / block uniquely
+                int t = static_cast<int>(step * Nblocks + b);
+                SmallTestData currentTestData =
+                    generateNewSmallTestData(m_TestData, t, mpiRank, mpiSize);
+
+                // Block 0 was not written so all blocks are shifted back
+                const adios2::Box<adios2::Dims> sel({(size_t)mpiRank, (b - 1) * Nx}, {1, Nx});
+                var_i32.SetSelection(sel);
+                bpReader.Get(var_i32, I32.data(), adios2::Mode::Sync);
+
+                for (size_t i = 0; i < Nx; ++i)
+                {
+                    std::stringstream ss;
+                    ss << "step=" << step << " block=" << b << " i=" << i << " rank=" << mpiRank;
+                    std::string msg = ss.str();
+                    EXPECT_EQ(I32[i], currentTestData.I32[i]) << msg;
+                }
+            }
+        }
+        bpReader.Close();
+    }
+}
+
+//******************************************************************************
 // main
 //******************************************************************************
 
