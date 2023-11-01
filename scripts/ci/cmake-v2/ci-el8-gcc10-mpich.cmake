@@ -2,7 +2,6 @@
 
 include(ProcessorCount)
 ProcessorCount(NCPUS)
-math(EXPR N2CPUS "${NCPUS}*2")
 
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
@@ -24,7 +23,7 @@ CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
 
-MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
+MPIEXEC_MAX_NUMPROCS:STRING=${NCPUS}
 ")
 
 set(CTEST_CMAKE_GENERATOR "Ninja")
