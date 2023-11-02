@@ -33,7 +33,7 @@ git push
 - [ ] Create PR (BASE to master if release_@MAJOR@@MINOR@ does not exists; otherwise release_@MAJOR@@MINOR@)
 - [ ] Ask for review
 - [ ] Merge PR
-- [ ] Create Tag commit `git tag -a v@VERSION@ the_merge_commit`
+- [ ] Create Tag commit `git tag -a -m 'v@VERSION' v@VERSION@ the_merge_commit`
 - [ ] Create Release in GitHub page
   - Use the following script for getting the PR of this release
     - `./scripts/developer/create-changelog.sh v@VERSION@ v@OLD_RELEASE@`
@@ -66,5 +66,8 @@ git push origin master
   - CondaForge robot should do this for you automatically, expect a new PR at
     https://github.com/conda-forge/adios2-feedstock a couple of hours after the
     release.
+- [ ] Submit a MR for ParaView Superbuild to use v@VERSION@ release.
+- [ ] Update the website to point to the v@VERSION@ release
 - [ ] Write an announcement in the ADIOS-ECP mail-list
   (https://groups.google.com/a/kitware.com/g/adios-ecp)
+
