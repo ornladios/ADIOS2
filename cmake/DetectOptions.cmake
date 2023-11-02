@@ -67,6 +67,9 @@ function(lists_get_prefix listVars outVar)
   set(${outVar} "${prefix}" PARENT_SCOPE)
 endfunction()
 
+# Multithreading
+find_package(Threads REQUIRED)
+
 # Blosc2
 if(ADIOS2_USE_Blosc2 STREQUAL AUTO)
   # Prefect CONFIG mode
@@ -553,9 +556,6 @@ endif()
 if(AWSSDK_FOUND)
     set(ADIOS2_HAVE_AWSSDK TRUE)
 endif()
-
-# Multithreading
-find_package(Threads REQUIRED)
 
 # Floating point detection
 include(CheckTypeRepresentation)
