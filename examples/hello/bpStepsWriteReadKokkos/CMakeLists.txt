@@ -4,7 +4,7 @@
 #------------------------------------------------------------------------------#
 
 cmake_minimum_required(VERSION 3.12)
-project(ADIOS2HelloBPWriteReadKokkosExample)
+project(ADIOS2HelloBPStepsWriteReadKokkosExample)
 
 # CXX Compiler settings only in for this example
 set(CMAKE_CXX_STANDARD 17)
@@ -26,8 +26,8 @@ else()
 endif()
 
 if(ADIOS2_HAVE_Kokkos)
-  add_executable(adios2_hello_bpWriteReadKokkos bpWriteReadKokkos.cpp)
-  kokkos_compilation(SOURCE bpWriteReadKokkos.cpp)
-  target_link_libraries(adios2_hello_bpWriteReadKokkos adios2::cxx11 Kokkos::kokkos)
-  install(TARGETS adios2_hello_bpWriteReadKokkos RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+  add_executable(adios2_hello_bpStepsWriteReadKokkos bpStepsWriteReadKokkos.cpp)
+  kokkos_compilation(SOURCE bpStepsWriteReadKokkos.cpp)
+  target_link_libraries(adios2_hello_bpStepsWriteReadKokkos adios2::cxx11 Kokkos::kokkos)
+  install(TARGETS adios2_hello_bpStepsWriteReadKokkos RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

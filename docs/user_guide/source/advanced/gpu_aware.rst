@@ -35,7 +35,7 @@ If there is no CUDA toolkit installed, cmake will turn CUDA off automatically. A
 When building ADIOS2 with CUDA enabled, the user is responsible with setting the correct ``CMAKE_CUDA_ARCHITECTURES`` (e.g. for Summit the ``CMAKE_CUDA_ARCHITECTURES`` needs to be set to 70 to match the NVIDIA Volta V100).
 
 Building with Kokkos enabled
---------------------------
+----------------------------
 
 The Kokkos library can be used to enable GPU within ADIOS2. Based on how Kokkos is build, either the CUDA, HIP or SYCL backend will be enabled. Building with Kokkos requires ``-DADIOS2_USE_Kokkos=ON``. The ``CMAKE_CUDA_ARCHITECTURES`` is set automanically to point to the same architecture used when configuring the Kokkos library.
 
@@ -43,9 +43,9 @@ The Kokkos library can be used to enable GPU within ADIOS2. Based on how Kokkos 
     Kokkos version >= 3.7 is required to enable the GPU backend in ADIOS2
 
 
-*************
+****************
 Writing GPU code
-*************
+****************
 
 The following is a simple example of writing data to storage directly from a GPU buffer allocated with CUDA relying on the automatic detection of device pointers in ADIOS2. The ADIOS2 API is identical to codes using Host buffers for both the read and write logic.
 

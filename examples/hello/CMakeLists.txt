@@ -3,30 +3,33 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(bpAttributeWriter)
+add_subdirectory(bpAttributeWriteRead)
 add_subdirectory(bpFlushWriter)
 
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(bpFWriteCRead)
 endif()
 
-add_subdirectory(bpReader)
-add_subdirectory(bpThreadWrite)
-add_subdirectory(bpTimeWriter)
-add_subdirectory(bpWriter)
-
-if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
-  add_subdirectory(bpWriteReadCuda)
+if(ADIOS2_HAVE_SZ)
+  add_subdirectory(bpOperatorSZWriter)
 endif()
 
+add_subdirectory(bpReader)
+
+add_subdirectory(bpStepsWriteRead)
+if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
+  add_subdirectory(bpStepsWriteReadCuda)
+endif()
 find_package(hip QUIET)
 if(ADIOS2_HAVE_Kokkos_HIP OR hip_FOUND)
-  add_subdirectory(bpWriteReadHip)
+  add_subdirectory(bpStepsWriteReadHip)
+endif()
+if(ADIOS2_HAVE_Kokkos)
+  add_subdirectory(bpStepsWriteReadKokkos)
 endif()
 
-if(ADIOS2_HAVE_Kokkos)
-  add_subdirectory(bpWriteReadKokkos)
-endif()
+add_subdirectory(bpThreadWrite)
+add_subdirectory(bpWriter)
 
 if(ADIOS2_HAVE_DataMan)
   add_subdirectory(datamanReader)

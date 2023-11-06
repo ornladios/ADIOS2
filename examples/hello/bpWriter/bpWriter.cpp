@@ -69,22 +69,22 @@ int main(int argc, char *argv[])
 
         std::string filename = "myVector_cpp.bp";
         /** Engine derived class, spawned to start IO operations */
-        adios2::Engine bpFileWriter = bpIO.Open(filename, adios2::Mode::Write);
+        adios2::Engine bpWriter = bpIO.Open(filename, adios2::Mode::Write);
 
-        bpFileWriter.BeginStep();
+        bpWriter.BeginStep();
         /** Put variables for buffering, template type is optional */
-        bpFileWriter.Put<float>(bpFloats, myFloats.data());
-        bpFileWriter.Put(bpInts, myInts.data());
-        // bpFileWriter.Put(bpString, myString);
-        bpFileWriter.EndStep();
+        bpWriter.Put(bpFloats, myFloats.data());
+        bpWriter.Put(bpInts, myInts.data());
+        // bpWriter.Put(bpString, myString);
+        bpWriter.EndStep();
 
         /** Create bp file, engine becomes unreachable after this*/
-        bpFileWriter.Close();
+        bpWriter.Close();
         if (rank == 0)
         {
             std::cout << "Wrote file " << filename
                       << " to disk. It can now be read by running "
-                         "./bin/hello_bpReader.\n";
+                         "./bin/adios2_hello_bpReader.\n";
         }
     }
     catch (std::invalid_argument &e)

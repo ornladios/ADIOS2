@@ -142,16 +142,15 @@ Dims value.
 For example, the definition below defines a 2-D Joined array where the
 first dimension is the one along which blocks will be joined and the
 2nd dimension is 5.  Here this rank is contributing two rows to this array.
-   .. code-block:: c++
-    auto var = outIO.DefineVariable<double>("table", {adios2::JoinedDim, 5},
-                                            {}, {2, 5});
+
+.. code-block:: c++
+
+  auto var = outIO.DefineVariable<double>("table", {adios2::JoinedDim, 5}, {}, {2, 5});
 
 If each of N writer ranks were to declare a variable like this and do
 a single Put() in a timestep, the reader-side GlobalArray would have
 shape {2*N, 5} and all normal reader-side GlobalArray operations would
 be applicable to it.  
-
-
 
 
 .. note::
