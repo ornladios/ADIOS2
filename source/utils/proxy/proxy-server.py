@@ -11,16 +11,33 @@ import getpass
 import pycurl
 from io import BytesIO
 import logging
+import argparse
 
 HOST = "127.0.0.1"
 PORT = 9999
-logging.basicConfig(level = logging.INFO)
+logging.basicConfig(level=logging.INFO)
 """
 Typical test command
 curl --http0.9 http://127.0.0.1:9999/path/test.bp/md.idx -i -H "Range: bytes=0-10"
 """
 buf = BytesIO()
 curl = pycurl.Curl()
+
+
+def SetupArgs():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--mode", "-m", help="Name of the mode", default="curl"
+    )
+    parser.add_argument(
+        "--port", "-p", help="port number", default=9999
+    )
+    parser.add_argument(
+        "--auth", "-a", help="authentication mode password or key", default=""
+    )
+    return parser.parse_args()
+
+
 class FastTransport(paramiko.Transport):
 
     def __init__(self, sock):
@@ -28,6 +45,7 @@ class FastTransport(paramiko.Transport):
         self.window_size = 2147483647
         self.packetizer.REKEY_BYTES = pow(2, 40)
         self.packetizer.REKEY_PACKETS = pow(2, 40)
+
 
 class ADIOS_HTTP_PARAMIKO_Request(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -61,6 +79,7 @@ class ADIOS_HTTP_PARAMIKO_Request(BaseHTTPRequestHandler):
             return
 
         self.wfile.write("Ok".encode("utf-8"))
+
 
 class ADIOS_HTTP_CURL_Request(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -101,12 +120,14 @@ class ADIOS_HTTP_CURL_Request(BaseHTTPRequestHandler):
         self.wfile.write("Ok".encode("utf-8"))
 
 
-def auth():
+def auth(args):
+    global PORT
+    PORT = int(args.port)
     REMOTE_HOST = input("hostname: ")
     pkey = None
     client = None
 
-    if len(sys.argv) > 2 and sys.argv[2] == "--auth=2":
+    if args.auth == "key":
         auth_key = input("Auth key:")
         key_password = ""
         try:
@@ -123,6 +144,7 @@ def auth():
     except Exception as error:
         logging.info('ERROR : %s', str(error))
     return (client, REMOTE_HOST, user, pkey, password)
+
 
 def main_paramiko(client, REMOTE_HOST, user, pkey, password):
     global sftp
@@ -146,6 +168,7 @@ def main_paramiko(client, REMOTE_HOST, user, pkey, password):
         server.server_close()
         logging.info("Server stopped")
 
+
 def main_curl(REMOTE_HOST, user, pkey, password):
     global curl
     server = HTTPServer((HOST, PORT), ADIOS_HTTP_CURL_Request)
@@ -159,11 +182,16 @@ def main_curl(REMOTE_HOST, user, pkey, password):
         server.server_close()
         logging.info("Server stopped")
 
-
-
+def showUsage():
+    print("Usage: proxy-server --port 9999 --mode curl")
 if __name__ == "__main__":
-    (client, REMOTE_HOST, user, pkey, password) = auth()
-    if len(sys.argv) > 1 and sys.argv[1] == "--mode=paramiko":
+    args = SetupArgs()
+    if args.help:
+        showUsage()
+    (client, REMOTE_HOST, user, pkey, password) = auth(args)
+    if args.mode == "paramiko":
         main_paramiko(client, REMOTE_HOST, user, pkey, password)
-    elif len(sys.argv) > 1 and sys.argv[1] == "--mode=curl":
+    elif args.mode == "curl":
         main_curl(REMOTE_HOST, user, pkey, password)
+    else:
+        logging.error("mode can be curl or paramiko")
