@@ -25,7 +25,7 @@ curl = pycurl.Curl()
 
 
 def setup_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser('A proxy server for remote reading. python proxy ')
     parser.add_argument(
         "--mode", "-m", help="Name of the mode", default="curl"
     )
@@ -183,14 +183,8 @@ def main_curl(REMOTE_HOST, user, pkey, password):
         logging.info("Server stopped")
 
 
-def show_usage():
-    print("Usage: proxy-server --port 9999 --mode curl")
-
-
 if __name__ == "__main__":
     args = setup_args()
-    if args.help:
-        show_usage()
     (client, REMOTE_HOST, user, pkey, password) = auth(args)
     if args.mode == "paramiko":
         main_paramiko(client, REMOTE_HOST, user, pkey, password)
