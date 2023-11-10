@@ -27,7 +27,7 @@ curl = pycurl.Curl()
 def setup_args():
     parser = argparse.ArgumentParser('A proxy server for remote reading. python proxy ')
     parser.add_argument(
-        "--mode", "-m", help="Name of the mode", default="curl"
+        "--mode", "-m", help="Connection method", default="curl"
     )
     parser.add_argument(
         "--port", "-p", help="port number", default=9999
@@ -148,7 +148,7 @@ def auth(args):
 
 def main_paramiko(client, REMOTE_HOST, user, pkey, password):
     global sftp
-    if len(sys.argv) > 2 and sys.argv[2] == "--auth=2":
+    if pkey is not None:
         logging.info("connecting ...")
         client.connect(hostname=REMOTE_HOST, username=user, pkey=pkey, password=password)
         logging.info("connected")
@@ -171,6 +171,20 @@ def main_paramiko(client, REMOTE_HOST, user, pkey, password):
 
 def main_curl(REMOTE_HOST, user, pkey, password):
     global curl
+    #trying to connect
+    curl.setopt(pycurl.URL, "sftp://" + REMOTE_HOST)
+    curl.setopt(pycurl.WRITEFUNCTION, buf.write)
+    curl.setopt(pycurl.NOPROGRESS, 1)
+    curl.setopt(pycurl.USERPWD, user + ":" + password)
+    curl.setopt(curl.NOBODY, 1)
+    try:
+        curl.perform()
+    except Exception:
+        logging.info("connection error")
+        exit(1)
+
+    curl.setopt(curl.NOBODY, 0)
+
     server = HTTPServer((HOST, PORT), ADIOS_HTTP_CURL_Request)
     try:
         # Listen for requests
