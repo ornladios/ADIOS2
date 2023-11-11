@@ -288,6 +288,9 @@ void IO::SetTransportParameter(const size_t transportIndex, const std::string ke
 }
 
 const VarMap &IO::GetVariables() const noexcept { return m_Variables; }
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+const VarMap &IO::GetDerivedVariables() const noexcept { return m_VariablesDerived; }
+#endif
 
 const AttrMap &IO::GetAttributes() const noexcept { return m_Attributes; }
 
@@ -807,6 +810,92 @@ void IO::CheckTransportType(const std::string type) const
                 "call to IO AddTransport");
     }
 }
+
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::string &exp_string,
+                                           const DerivedVarType varType)
+{
+    PERFSTUBS_SCOPED_TIMER("IO::DefineDerivedVariable");
+
+    {
+        auto itVariable = m_VariablesDerived.find(name);
+        if (itVariable != m_VariablesDerived.end())
+        {
+            helper::Throw<std::invalid_argument>("Core", "IO", "DefineDerivedVariable",
+                                                 "derived variable " + name +
+                                                     " already defined in IO " + m_Name);
+        }
+        else
+        {
+            auto itVariable = m_Variables.find(name);
+            if (itVariable != m_Variables.end())
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Core", "IO", "DefineDerivedVariable",
+                    "derived variable " + name +
+                        " trying to use an already defined variable name in IO " + m_Name);
+            }
+        }
+    }
+
+    derived::Expression derived_exp(exp_string);
+    std::vector<std::string> var_list = derived_exp.VariableNameList();
+    DataType expressionType = DataType::None;
+    bool isConstant = true;
+    std::map<std::string, std::tuple<Dims, Dims, Dims>> name_to_dims;
+    // check correctness for the variable names and types within the expression
+    for (auto var_name : var_list)
+    {
+        auto itVariable = m_Variables.find(var_name);
+        if (itVariable == m_Variables.end())
+            helper::Throw<std::invalid_argument>("Core", "IO", "DefineDerivedVariable",
+                                                 "using undefine variable " + var_name +
+                                                     " in defining the derived variable " + name);
+        DataType var_type = InquireVariableType(var_name);
+        if (expressionType == DataType::None)
+            expressionType = var_type;
+        if (expressionType != var_type)
+            helper::Throw<std::invalid_argument>("Core", "IO", "DefineDerivedVariable",
+                                                 "all variables within a derived variable "
+                                                 " must have the same type ");
+        if ((itVariable->second)->IsConstantDims() == false)
+            isConstant = false;
+        name_to_dims.insert({var_name,
+                             {(itVariable->second)->m_Start, (itVariable->second)->m_Count,
+                              (itVariable->second)->m_Shape}});
+    }
+    // std::cout << "Derived variable " << name << ": PASS : variables exist and have the same type"
+    //          << std::endl;
+    // set the initial shape of the expression and check correcness
+    derived_exp.SetDims(name_to_dims);
+    // std::cout << "Derived variable " << name << ": PASS : initial variable dimensions are valid"
+    //          << std::endl;
+
+    // create derived variable with the expression
+    auto itVariablePair = m_VariablesDerived.emplace(
+        name, std::unique_ptr<VariableBase>(
+                  new VariableDerived(name, derived_exp, expressionType, isConstant, varType)));
+    VariableDerived &variable = static_cast<VariableDerived &>(*itVariablePair.first->second);
+
+    // check IO placeholder for variable operations
+    auto itOperations = m_VarOpsPlaceholder.find(name);
+    if (itOperations != m_VarOpsPlaceholder.end())
+    {
+        // allow to apply an operation only for derived variables that save the data
+        if (varType != DerivedVarType::StoreData)
+            helper::Throw<std::invalid_argument>(
+                "Core", "IO", "DefineDerivedVariable",
+                "Operators for derived variables can only be applied "
+                " for DerivedVarType::StoreData types.");
+        variable.m_Operations.reserve(itOperations->second.size());
+        for (auto &operation : itOperations->second)
+        {
+            variable.AddOperation(operation.first, operation.second);
+        }
+    }
+    return variable;
+}
+#endif
 
 StructDefinition &IO::DefineStruct(const std::string &name, const size_t size)
 {
