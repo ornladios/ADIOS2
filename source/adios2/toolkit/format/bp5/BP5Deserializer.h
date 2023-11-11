@@ -120,6 +120,8 @@ private:
         size_t JoinedDimen = SIZE_MAX;
         size_t *LastJoinedOffset = NULL;
         size_t *LastJoinedShape = NULL;
+        bool Derived = false;
+        char *ExprStr = NULL;
         ShapeID OrigShapeID;
         core::StructDefinition *Def = nullptr;
         core::StructDefinition *ReaderDef = nullptr;
