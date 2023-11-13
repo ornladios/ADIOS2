@@ -272,7 +272,7 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
         Response.ReadResponseCondition = GetMsg->GetResponseCondition;                             \
         Response.Dest = GetMsg->Dest; /* final data destination in client memory space */          \
         if (verbose >= 2)                                                                          \
-            std::cout << "Returning " << Response.Size << " " << readable_size(Response.Size)      \
+            std::cout << "Returning " << readable_size(Response.Size)      \
                       << " for Get<" << TypeOfVar << ">(" << VarName << ")" << b << std::endl;     \
         f->m_BytesSent += Response.Size;                                                           \
         f->m_OperationCount++;                                                                     \
@@ -458,7 +458,7 @@ static atom_t CM_IP_PORT = -1;
 static bool server_timeout(void *CMvoid, int time_since_service)
 {
     CManager cm = (CManager)CMvoid;
-    if (verbose)
+    if (verbose && (time_since_service > 90))
         std::cout << time_since_service << " seconds since last service.\n";
     if (time_since_service > 600)
     {
@@ -584,7 +584,6 @@ int main(int argc, char **argv)
 
     ServerRegisterHandlers(ev_state);
 
-    std::cout << "doing Run Network" << std::endl;
     CMrun_network(cm);
     return 0;
 }
