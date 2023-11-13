@@ -97,7 +97,11 @@ class ADIOS_HTTP_CURL_Request(BaseHTTPRequestHandler):
             curl.setopt(pycurl.RANGE, ranges)
             buf.truncate(0)
             buf.seek(0)
-            curl.perform()
+            """if credentials are not correct 3 times, your access will be blocked"""
+            try:
+                curl.perform()
+            except Exception:
+                exit(1)
             """send data back"""
             val = buf.getvalue()
             logging.info("sending %s bytes", str(len(val)))
@@ -109,7 +113,11 @@ class ADIOS_HTTP_CURL_Request(BaseHTTPRequestHandler):
 
         if header:
             curl.setopt(curl.NOBODY, 1)
-            curl.perform()
+            try:
+                curl.perform()
+            except Exception:
+                exit(1)
+
             size = curl.getinfo(curl.CONTENT_LENGTH_DOWNLOAD)
             curl.setopt(curl.NOBODY, 0)
             """send data back"""
