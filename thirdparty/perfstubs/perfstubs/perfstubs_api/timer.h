@@ -49,7 +49,7 @@ extern int perfstubs_initialized;
 extern "C" {
 #endif
 
-void  ps_initialize_(void);
+void  ps_initialize_(const int rank);
 void  ps_finalize_(void);
 void  ps_pause_measurement_(void);
 void  ps_resume_measurement_(void);
@@ -93,7 +93,7 @@ char* ps_make_timer_name_(const char * file, const char * func, int line);
  * line or in a config.h file, however your project does it
  */
 
-#define PERFSTUBS_INITIALIZE() ps_initialize_();
+#define PERFSTUBS_INITIALIZE(rank) ps_initialize_(rank);
 
 #define PERFSTUBS_FINALIZE() ps_finalize_();
 
@@ -170,7 +170,7 @@ char* ps_make_timer_name_(const char * file, const char * func, int line);
 
 #else // defined(PERFSTUBS_USE_TIMERS)
 
-#define PERFSTUBS_INITIALIZE()
+#define PERFSTUBS_INITIALIZE(rank)
 #define PERFSTUBS_FINALIZE()
 #define PERFSTUBS_PAUSE_MEASUREMENT()
 #define PERFSTUBS_RESUME_MEASUREMENT()
