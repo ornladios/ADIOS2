@@ -15,7 +15,7 @@ fi
 
 # Give me a sorted list of the project scripts
 found_scripts="$({
-  find scripts -regextype posix-extended -iregex '.*\.(sh|bash)' -print;
+  find scripts source testing -regextype posix-extended -iregex '.*\.(sh|bash)' -print;
   grep -rnlE -e '#!/(/usr)?/bin/(bash|sh)' -e '#!(/usr)?/bin/env\s+(bash|sh)' scripts;
 } | sort -u)"
 
