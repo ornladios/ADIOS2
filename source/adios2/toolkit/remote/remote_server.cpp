@@ -272,8 +272,8 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
         Response.ReadResponseCondition = GetMsg->GetResponseCondition;                             \
         Response.Dest = GetMsg->Dest; /* final data destination in client memory space */          \
         if (verbose >= 2)                                                                          \
-            std::cout << "Returning " << readable_size(Response.Size)      \
-                      << " for Get<" << TypeOfVar << ">(" << VarName << ")" << b << std::endl;     \
+            std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << TypeOfVar  \
+                      << ">(" << VarName << ")" << b << std::endl;                                 \
         f->m_BytesSent += Response.Size;                                                           \
         f->m_OperationCount++;                                                                     \
         TotalGetBytesSent += Response.Size;                                                        \
