@@ -11,9 +11,10 @@
 #include <string.h>
 #include <vector>
 
-#include <adios2.h>
+#include "adios2.h"
 
 #if ADIOS2_USE_MPI
+#include <algorithm>
 #include <mpi.h>
 #endif
 bool DEBUG = false;
@@ -27,19 +28,19 @@ enum test_cases
     DIM3PLANEXY,
     DIM3PLANEXZ
 };
-void read1D(int nproc, int rank, const std::string &filename, const int NSTEPS, adios2::IO &io,
+void read1D(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
             std::vector<std::string> &variables, int output_length);
 /* test 2 and 3
  * read 1 or many 1D variables
  */
-void read3D(int nproc, int rank, const std::string &filename, const int NSTEPS, adios2::IO &io,
+void read3D(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
             std::vector<std::string> &variables, int direction, double ratio,
             int output_line_length);
 /* test 5
  * A 3D subset from 3D variable
  */
 
-void read3DPlane(int nproc, int rank, const std::string &filename, const int NSTEPS, adios2::IO &io,
+void read3DPlane(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
                  std::vector<std::string> &variables, int direction, double ratio,
                  int output_line_length);
 
@@ -50,8 +51,8 @@ std::string &getOutputString(int rank, int output_line_length, std::string &out,
  * A 3D subset from 3D variable
  */
 
-void read1D(int nproc, int rank, const std::string &filename, const int NSTEPS, adios2::IO &io,
-            std::vector<std::string> &variables_in, double ratio, int output_line_length)
+void read1D(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
+            std::vector<std::string> &required_variables, double ratio, int output_line_length)
 {
     unsigned int startX;
     unsigned int countX;
@@ -67,17 +68,32 @@ void read1D(int nproc, int rank, const std::string &filename, const int NSTEPS, 
         /* get variables with 1D shape */
 
         std::string out;
-        for (size_t step = 0; step < NSTEPS; step++)
+        for (size_t step = 0; step < nsteps; step++)
         {
             reader.BeginStep();
-            auto variables = io.AvailableVariables(true);
-
-            for (auto const &var_name : variables)
+            auto available_variables = io.AvailableVariables(true);
+            std::vector<std::string> available_variables_str;
+            for (const auto &v : available_variables)
+                available_variables_str.push_back(v.first);
+            std::vector<std::string> vars_intersection;
+            if (!required_variables.empty())
             {
-                if (!variables_in.empty() && var_name.first != variables_in[0])
-                    continue;
-                adios2::Variable<double> var = io.InquireVariable<double>(var_name.first);
-                if (var.Shape().size() == 1)
+                std::sort(available_variables_str.begin(), available_variables_str.end());
+
+                std::set_intersection(available_variables_str.begin(),
+                                      available_variables_str.end(), required_variables.begin(),
+                                      required_variables.end(),
+                                      std::back_inserter(vars_intersection));
+            }
+            else
+            {
+                vars_intersection = available_variables_str;
+            }
+
+            for (auto const &var_name : vars_intersection)
+            {
+                adios2::Variable<double> var = io.InquireVariable<double>(var_name);
+                if (var && var.Shape().size() == 1)
                 {
                     auto globalSize = var.Shape()[0];
                     auto localSize = globalSize / nproc;
@@ -156,8 +172,8 @@ std::string &getOutputString(int rank, int output_line_length, std::string &out,
     return out;
 }
 
-void read3D(int nproc, int rank, const std::string &filename, const int NSTEPS, adios2::IO &io,
-            std::vector<std::string> &variables_in, int direction, double ratio,
+void read3D(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
+            std::vector<std::string> &required_variables, int direction, double ratio,
             int output_line_length)
 {
     unsigned int startX;
@@ -172,28 +188,35 @@ void read3D(int nproc, int rank, const std::string &filename, const int NSTEPS, 
         std::chrono::time_point<std::chrono::system_clock> start_time;
         std::chrono::time_point<std::chrono::system_clock> end_time;
         start_time = std::chrono::system_clock::now();
-        // Get io settings from the config file or
-        // create one with default settings here
-
-        /*
-         * Define global array: type, name, global dimensions
-         * The local process' part (start, count) can be defined now or later
-         * before Write().
-         */
 
         adios2::Engine reader = io.Open(filename, adios2::Mode::Read);
 
         std::string out;
-        for (size_t step = 0; step < NSTEPS; step++)
+        for (size_t step = 0; step < nsteps; step++)
         {
             reader.BeginStep();
-            auto variables = io.AvailableVariables(true);
-            for (auto const &var_name : variables)
+            auto available_variables = io.AvailableVariables(true);
+            std::vector<std::string> available_variables_str;
+            for (const auto &v : available_variables)
+                available_variables_str.push_back(v.first);
+            std::vector<std::string> vars_intersection;
+            if (!required_variables.empty())
             {
-                if (!variables_in.empty() && var_name.first != variables_in[0])
-                    continue;
-                adios2::Variable<double> var = io.InquireVariable<double>(var_name.first);
-                if (var.Shape().size() == 3)
+                std::sort(available_variables_str.begin(), available_variables_str.end());
+
+                std::set_intersection(available_variables_str.begin(),
+                                      available_variables_str.end(), required_variables.begin(),
+                                      required_variables.end(),
+                                      std::back_inserter(vars_intersection));
+            }
+            else
+            {
+                vars_intersection = available_variables_str;
+            }
+            for (auto const &var_name : vars_intersection)
+            {
+                adios2::Variable<double> var = io.InquireVariable<double>(var_name);
+                if (var && var.Shape().size() == 3)
                 {
                     auto globalSizeX = var.Shape()[0];
                     auto globalSizeY = var.Shape()[1];
@@ -304,8 +327,8 @@ void read3D(int nproc, int rank, const std::string &filename, const int NSTEPS, 
     }
 }
 
-void read3DPlane(int nproc, int rank, const std::string &filename, const int NSTEPS, adios2::IO &io,
-                 std::vector<std::string> &variables_in, int direction, double ratio,
+void read3DPlane(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
+                 std::vector<std::string> &required_variables, int direction, double ratio,
                  int output_line_length)
 {
 
@@ -324,16 +347,32 @@ void read3DPlane(int nproc, int rank, const std::string &filename, const int NST
 
         adios2::Engine reader = io.Open(filename, adios2::Mode::Read);
         std::string out;
-        for (size_t step = 0; step < NSTEPS; step++)
+        for (size_t step = 0; step < nsteps; step++)
         {
             reader.BeginStep();
-            auto variables = io.AvailableVariables(true);
-            for (auto const &var_name : variables)
+
+            auto available_variables = io.AvailableVariables(true);
+            std::vector<std::string> available_variables_str;
+            for (const auto &v : available_variables)
+                available_variables_str.push_back(v.first);
+            std::vector<std::string> vars_intersection;
+            if (!required_variables.empty())
             {
-                if (!variables_in.empty() && var_name.first != variables_in[0])
-                    continue;
-                adios2::Variable<double> var = io.InquireVariable<double>(var_name.first);
-                if (var.Shape().size() == 3)
+                std::sort(available_variables_str.begin(), available_variables_str.end());
+
+                std::set_intersection(available_variables_str.begin(),
+                                      available_variables_str.end(), required_variables.begin(),
+                                      required_variables.end(),
+                                      std::back_inserter(vars_intersection));
+            }
+            else
+            {
+                vars_intersection = available_variables_str;
+            }
+            for (auto const &var_name : vars_intersection)
+            {
+                adios2::Variable<double> var = io.InquireVariable<double>(var_name);
+                if (var && var.Shape().size() == 3)
                 {
                     auto globalSizeX = var.Shape()[0];
                     auto globalSizeY = var.Shape()[1];
@@ -473,7 +512,7 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 #endif
-    int NSTEPS = 1;
+    int nsteps = 1;
 
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
@@ -528,7 +567,8 @@ int main(int argc, char *argv[])
             break;
         case 'h':
             std::cout << "Help: --case: 1D, 3DX, 3DY, 3DZ, 3DYZ, 3DXY, 3DXZ" << std::endl;
-            std::cout << "Usage: mpirun -n 8 ./test_vars  --case 3DX --variables var1 --filename "
+            std::cout << "Usage: mpirun -n 8 ./test_vars  --case 3DX --variables var1,var2,var3 "
+                         "--filename "
                          "/absolute/path/on/remote/machine/remote.bp"
                       << std::endl;
             break;
@@ -587,9 +627,18 @@ int main(int argc, char *argv[])
         case 'v':
             if (strlen(optarg) > 0)
             {
-                std::string variables_string = optarg;
-                // split and put into vector
-                variables.push_back(variables_string);
+                std::string delimiter = ",";
+                std::string variables_string = optarg + delimiter;
+                size_t pos = 0;
+                std::string token;
+
+                while ((pos = variables_string.find(delimiter)) != std::string::npos)
+                {
+                    token = variables_string.substr(0, pos);
+                    variables.push_back(token);
+                    variables_string.erase(0, pos + delimiter.length());
+                }
+                std::sort(variables.begin(), variables.end());
             }
             break;
         case 'r':
@@ -607,7 +656,7 @@ int main(int argc, char *argv[])
         case 'n':
             if (strlen(optarg) > 0)
             {
-                NSTEPS = std::stoi(optarg);
+                nsteps = std::stoi(optarg);
             }
             break;
         default:
@@ -636,27 +685,27 @@ int main(int argc, char *argv[])
     switch (mode)
     {
     case DIM1:
-        read1D(nproc, rank, filename, NSTEPS, io, variables, ratio, output_line_length);
+        read1D(nproc, rank, filename, nsteps, io, variables, ratio, output_line_length);
         break;
     case DIM3X:
-        read3D(nproc, rank, filename, NSTEPS, io, variables, DIM3X, ratio, output_line_length);
+        read3D(nproc, rank, filename, nsteps, io, variables, DIM3X, ratio, output_line_length);
         break;
     case DIM3Y:
-        read3D(nproc, rank, filename, NSTEPS, io, variables, DIM3Y, ratio, output_line_length);
+        read3D(nproc, rank, filename, nsteps, io, variables, DIM3Y, ratio, output_line_length);
         break;
     case DIM3Z:
-        read3D(nproc, rank, filename, NSTEPS, io, variables, DIM3Z, ratio, output_line_length);
+        read3D(nproc, rank, filename, nsteps, io, variables, DIM3Z, ratio, output_line_length);
         break;
     case DIM3PLANEYZ:
-        read3DPlane(nproc, rank, filename, NSTEPS, io, variables, DIM3PLANEYZ, ratio,
+        read3DPlane(nproc, rank, filename, nsteps, io, variables, DIM3PLANEYZ, ratio,
                     output_line_length);
         break;
     case DIM3PLANEXY:
-        read3DPlane(nproc, rank, filename, NSTEPS, io, variables, DIM3PLANEXY, ratio,
+        read3DPlane(nproc, rank, filename, nsteps, io, variables, DIM3PLANEXY, ratio,
                     output_line_length);
         break;
     case DIM3PLANEXZ:
-        read3DPlane(nproc, rank, filename, NSTEPS, io, variables, DIM3PLANEXZ, ratio,
+        read3DPlane(nproc, rank, filename, nsteps, io, variables, DIM3PLANEXZ, ratio,
                     output_line_length);
         break;
 
