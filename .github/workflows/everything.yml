@@ -66,7 +66,7 @@ jobs:
 
     runs-on: ubuntu-latest
     container:
-      image: ornladios/adios2:ci-formatting
+      image: docker.io/ornladios/adios2:ci-formatting
 
     steps:
       - uses: actions/checkout@v4
@@ -94,7 +94,7 @@ jobs:
 
     runs-on: ubuntu-latest
     container:
-      image: ornladios/adios2:ci-spack-el8-${{ matrix.compiler }}-${{ matrix.parallel }}
+      image: docker.io/ornladios/adios2:ci-spack-el8-${{ matrix.compiler }}-${{ matrix.parallel }}
       options: --shm-size=1g
       env:
         GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.gpu_backend }}${{ matrix.compiler }}-${{ matrix.parallel }}
