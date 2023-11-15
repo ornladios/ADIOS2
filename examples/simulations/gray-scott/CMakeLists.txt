@@ -43,11 +43,11 @@ if(ADIOS2_HAVE_MPI)
     "simulation/settings-inline.json"
     "plot/decomp.py" "plot/gsplot.py" "plot/pdfplot.py"
     "ReadMe.md"
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/examples/simulations/gray-scott)
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott)
 
-  install(DIRECTORY "catalyst" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/examples/simulations/gray-scott)
+  install(DIRECTORY "catalyst" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott)
 
-  install(PROGRAMS "cleanup.sh" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/examples/simulations/gray-scott)
+  install(PROGRAMS "cleanup.sh" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott)
 
   find_package(VTK QUIET)
   if(VTK_FOUND)
