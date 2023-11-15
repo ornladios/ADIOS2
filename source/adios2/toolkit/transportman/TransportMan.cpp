@@ -38,9 +38,9 @@
 #endif
 
 #include "adios2/toolkit/transport/file/FileFStream.h"
+#include "adios2/toolkit/transport/file/FileHTTP.h"
 #include "adios2/toolkit/transport/file/FileStdio.h"
 #include "adios2/toolkit/transport/null/NullTransport.h"
-#include "adios2/toolkit/transport/file/FileHTTP.h"
 
 namespace adios2
 {
