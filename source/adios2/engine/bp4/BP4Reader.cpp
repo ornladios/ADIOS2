@@ -495,13 +495,6 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant, const Seconds &pollS
                         "the writer is creating the new files.");
             }
         }
-        else
-        {
-            helper::Throw<std::ios_base::failure>(
-                "Engine", "BP4Reader", "InitBuffer",
-                "Metadata index file of " + m_Name +
-                    " has zero size");
-        }
     }
 
     newIdxSize = m_Comm.BroadcastValue(newIdxSize, 0);

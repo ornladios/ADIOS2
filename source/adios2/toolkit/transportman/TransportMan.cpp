@@ -40,7 +40,6 @@
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include "adios2/toolkit/transport/file/FileStdio.h"
 #include "adios2/toolkit/transport/null/NullTransport.h"
-//TODODG make if
 #include "adios2/toolkit/transport/file/FileHTTP.h"
 
 namespace adios2

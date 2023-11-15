@@ -52,8 +52,8 @@ void FileHTTP::Open(const std::string &name, const Mode openMode,
     /* Build the socket. */
     protoent = getprotobyname("tcp");
     if (protoent == NULL) {
-        perror("getprotobyname");
-        exit(EXIT_FAILURE);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "Open",
+                                              "cannot make getprotobyname");
     }
     m_p_proto = protoent->p_proto;
 
@@ -62,13 +62,13 @@ void FileHTTP::Open(const std::string &name, const Mode openMode,
     /* Build the address. */
     hostent = gethostbyname(m_hostname.c_str());
     if (hostent == NULL) {
-        fprintf(stderr, "error: gethostbyname(\"%s\")\n", m_hostname.c_str());
-        exit(EXIT_FAILURE);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "Open",
+                                              "error: gethostbyname " + m_hostname);
     }
     in_addr = inet_addr(inet_ntoa(*(struct in_addr*)*(hostent->h_addr_list)));
     if (in_addr == (in_addr_t)-1) {
-        fprintf(stderr, "error: inet_addr(\"%s\")\n", *(hostent->h_addr_list));
-        exit(EXIT_FAILURE);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "Open",
+                                              "error: inet_addr " + std::string(*(hostent->h_addr_list)));
     }
     sockaddr_in.sin_addr.s_addr = in_addr;
     sockaddr_in.sin_family = AF_INET;
@@ -195,26 +195,26 @@ void FileHTTP::Read(char *buffer, size_t size, size_t start)
         snprintf(request, MAX_REQUEST_LEN, request_template, m_Name.c_str(),
                  m_hostname.c_str(), start, start + size - 1);
     if (request_len >= MAX_REQUEST_LEN) {
-        fprintf(stderr, "request length large: %d\n", request_len);
-        exit(EXIT_FAILURE);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "Read",
+                                              "request length too long:  " + std::to_string(request_len));
     }
     m_socketFileDescriptor = socket(AF_INET, SOCK_STREAM, m_p_proto);
     if (m_socketFileDescriptor == -1) {
-        perror("socket");
-        exit(EXIT_FAILURE);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "Read",
+                                              "cannot open socket");
     }
     /* Actually connect. */
     if (connect(m_socketFileDescriptor, (struct sockaddr*)&sockaddr_in, sizeof(sockaddr_in)) == -1) {
-        perror("connect");
-        exit(EXIT_FAILURE);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "Read",
+                                              "cannot connect");
     }
     /* Send HTTP request. */
     int nbytes_total = 0;
     while (nbytes_total < request_len) {
         int nbytes_last = write(m_socketFileDescriptor, request + nbytes_total, request_len - nbytes_total);
         if (nbytes_last == -1) {
-            perror("write");
-            exit(EXIT_FAILURE);
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "Read",
+                                                  "cannot send request");
         }
         nbytes_total += nbytes_last;
     }
@@ -224,8 +224,8 @@ void FileHTTP::Read(char *buffer, size_t size, size_t start)
     while (bytes_recd < size){
         nbytes_total = read(m_socketFileDescriptor, buffer + bytes_recd, std::min(size - bytes_recd, BUF_SIZE));
         if (nbytes_total == -1) {
-            perror("read");
-            exit(EXIT_FAILURE);
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "Read",
+                                                  "cannot get response");
         }
         bytes_recd += nbytes_total;
     }
@@ -245,26 +245,26 @@ size_t FileHTTP::GetSize()
         snprintf(request, MAX_REQUEST_LEN, request_template, m_Name.c_str(),
                  m_hostname.c_str());
     if (request_len >= MAX_REQUEST_LEN) {
-        fprintf(stderr, "request length large: %d\n", request_len);
-        exit(EXIT_FAILURE);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "GetSize",
+                                              "request length too long:  " + std::to_string(request_len));
     }
     m_socketFileDescriptor = socket(AF_INET, SOCK_STREAM, m_p_proto);
     if (m_socketFileDescriptor == -1) {
-        perror("socket");
-        exit(EXIT_FAILURE);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "GetSize",
+                                              "cannot bind socket");
     }
     /* Actually connect. */
     if (connect(m_socketFileDescriptor, (struct sockaddr*)&sockaddr_in, sizeof(sockaddr_in)) == -1) {
-        perror("connect");
-        exit(EXIT_FAILURE);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "GetSize",
+                                              "cannot connect");
     }
     /* Send HTTP request. */
     int nbytes_total = 0;
     while (nbytes_total < request_len) {
         int nbytes_last = write(m_socketFileDescriptor, request + nbytes_total, request_len - nbytes_total);
         if (nbytes_last == -1) {
-            perror("write");
-            exit(EXIT_FAILURE);
+            helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "GetSize",
+                                                  "sending request failed");
         }
         nbytes_total += nbytes_last;
     }
@@ -272,8 +272,8 @@ size_t FileHTTP::GetSize()
     /* Read the response. */
     while ((nbytes_total = read(m_socketFileDescriptor, buffer, BUF_SIZE)) > 0);
     if (nbytes_total == -1) {
-        perror("read");
-        exit(EXIT_FAILURE);
+        helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "GetSize",
+                                              "receiving response failed");
     }
     close(m_socketFileDescriptor);
     size_t result = atoi(buffer);
