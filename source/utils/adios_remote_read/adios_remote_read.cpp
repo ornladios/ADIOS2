@@ -28,31 +28,53 @@ enum test_cases
     DIM3PLANEXY,
     DIM3PLANEXZ
 };
+/**
+ * @brief read one or multiple 1D variables. Measure and report into a log reading time
+ * @param nproc number of MPI ranks
+ * @param rank current rank
+ * @param nsteps number of steps to read
+ * @param io a handle for adios2 IO object
+ * @param variables list of variables to read
+ * @param output_length number of numbers to print in one line
+ */
 void read1D(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
             std::vector<std::string> &variables, int output_length);
-/* test 2 and 3
- * read 1 or many 1D variables
+/**
+ * @brief read one or multiple 3D variables. Measure and report into a log reading time
+ * @param nproc number of MPI ranks
+ * @param rank current rank
+ * @param nsteps number of steps to read
+ * @param io a handle for adios2 IO object
+ * @param variables list of variables to read
+ * @param ratio defines an amount of data to read. 1.0 corresponds to 100%
+ * @param output_length number of numbers to print in one line
  */
 void read3D(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
             std::vector<std::string> &variables, int direction, double ratio,
             int output_line_length);
-/* test 5
- * A 3D subset from 3D variable
+/**
+ * @brief read one or multiple 3D variables. Measure and report into a log reading time
+ * @param nproc number of MPI ranks
+ * @param rank current rank
+ * @param nsteps number of steps to read
+ * @param io a handle for adios2 IO object
+ * @param variables list of variables to read
+ * @param direction defines the data plane XY, XZ, YZ
+ * @param ratio defines an amount of data to read. 1.0 corresponds to 100%
+ * @param output_length number of numbers to print in one line
  */
-
 void read3DPlane(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
                  std::vector<std::string> &variables, int direction, double ratio,
                  int output_line_length);
 
-std::string &getOutputString(int rank, int output_line_length, std::string &out,
-                             std::vector<double> &data);
-
-/* test 5
- * A 3D subset from 3D variable
+/**
+ * @brief  internal function for printing the output
  */
+std::string &getOutputString(int rank, int output_line_length, std::string &out,
+                             const std::vector<double> &data);
 
 void read1D(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
-            std::vector<std::string> &required_variables, double ratio, int output_line_length)
+            std::vector<std::string> &required_variables, int output_line_length)
 {
     unsigned int startX;
     unsigned int countX;
@@ -68,9 +90,10 @@ void read1D(int nproc, int rank, const std::string &filename, const int nsteps, 
         /* get variables with 1D shape */
 
         std::string out;
-        for (size_t step = 0; step < nsteps; step++)
+        for (size_t step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
         {
-            reader.BeginStep();
+            if (nsteps != 0 && step == nsteps)
+                break;
             auto available_variables = io.AvailableVariables(true);
             std::vector<std::string> available_variables_str;
             for (const auto &v : available_variables)
@@ -152,23 +175,23 @@ void read1D(int nproc, int rank, const std::string &filename, const int nsteps, 
 }
 
 std::string &getOutputString(int rank, int output_line_length, std::string &out,
-                             std::vector<double> &data)
+                             const std::vector<double> &data)
 {
-    {
-        out += "rank " + std::to_string(rank) + ":" + "\n";
-        int counter = 0;
 
-        for (auto v : data)
+    out += "rank " + std::to_string(rank) + ":" + "\n";
+    int counter = 0;
+
+    for (auto v : data)
+    {
+        counter++;
+        out += std::to_string(v) + " ";
+        if (counter == output_line_length)
         {
-            counter++;
-            out += std::to_string(v) + " ";
-            if (counter == output_line_length)
-            {
-                out += "\n";
-                counter = 0;
-            }
+            out += "\n";
+            counter = 0;
         }
     }
+
     return out;
 }
 
@@ -192,9 +215,10 @@ void read3D(int nproc, int rank, const std::string &filename, const int nsteps, 
         adios2::Engine reader = io.Open(filename, adios2::Mode::Read);
 
         std::string out;
-        for (size_t step = 0; step < nsteps; step++)
+        for (size_t step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
         {
-            reader.BeginStep();
+            if (nsteps != 0 && step == nsteps)
+                break;
             auto available_variables = io.AvailableVariables(true);
             std::vector<std::string> available_variables_str;
             for (const auto &v : available_variables)
@@ -347,10 +371,10 @@ void read3DPlane(int nproc, int rank, const std::string &filename, const int nst
 
         adios2::Engine reader = io.Open(filename, adios2::Mode::Read);
         std::string out;
-        for (size_t step = 0; step < nsteps; step++)
+        for (size_t step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
         {
-            reader.BeginStep();
-
+            if (nsteps != 0 && step == nsteps)
+                break;
             auto available_variables = io.AvailableVariables(true);
             std::vector<std::string> available_variables_str;
             for (const auto &v : available_variables)
@@ -462,6 +486,8 @@ void read3DPlane(int nproc, int rank, const std::string &filename, const int nst
                     size_t elementsSize = var.SelectionSize();
                     std::vector<double> data2D(elementsSize);
                     reader.Get<double>(var, data2D.data(), adios2::Mode::Sync);
+                    if (DEBUG)
+                        out = getOutputString(rank, output_line_length, out, data2D);
                 }
             }
 
@@ -512,7 +538,7 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 #endif
-    int nsteps = 1;
+    int nsteps = 0;
 
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
@@ -566,11 +592,12 @@ int main(int argc, char *argv[])
             printf("\n");
             break;
         case 'h':
-            std::cout << "Help: --case: 1D, 3DX, 3DY, 3DZ, 3DYZ, 3DXY, 3DXZ" << std::endl;
-            std::cout << "Usage: mpirun -n 8 ./test_vars  --case 3DX --variables var1,var2,var3 "
-                         "--filename "
-                         "/absolute/path/on/remote/machine/remote.bp"
-                      << std::endl;
+            std::cout << "Usage: mpirun -n 8 adios2_remote_read  [OPTIONS]" << std::endl
+                      << "--case 1D, 3DX, 3DY, 3DZ, 3DYZ, 3DXY, 3DXZ" << std::endl
+                      << "--variables var1,var2,var3 " << std::endl
+                      << "--filename /absolute/path/on/remote/machine/remote.bp" << std::endl
+                      << "--debug debug output for small cases" << std::endl
+                      << "--ratio 0.5 amount of data to read" << std::endl;
             break;
         case 'd':
             DEBUG = true;
@@ -685,7 +712,7 @@ int main(int argc, char *argv[])
     switch (mode)
     {
     case DIM1:
-        read1D(nproc, rank, filename, nsteps, io, variables, ratio, output_line_length);
+        read1D(nproc, rank, filename, nsteps, io, variables, output_line_length);
         break;
     case DIM3X:
         read3D(nproc, rank, filename, nsteps, io, variables, DIM3X, ratio, output_line_length);
