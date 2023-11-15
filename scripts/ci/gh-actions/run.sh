@@ -72,13 +72,20 @@ mkdir -p "${TMPDIR}"
 # OpenMPI specific setup and workarounds
 if [[ "${GH_YML_MATRIX_PARALLEL}" =~ ompi && "${GH_YML_BASE_OS}" != "Windows" ]]
 then
+  # Enable run as root
+  export OMPI_ALLOW_RUN_AS_ROOT=1
+  export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+
+  # Enable overscription in OpenMPI
+  export OMPI_MCA_rmaps_base_oversubscribe=true
+  export OMPI_MCA_hwloc_base_binding_policy=none
+
+  # Only use loop interface
+  export OMPI_MCA_btl_tcp_if_include=lo
+
   # Quiet some warnings from OpenMPI
   export OMPI_MCA_btl_base_warn_component_unused=0
   export OMPI_MCA_btl_vader_single_copy_mechanism=none
-
-  # Enable overscription in OpenMPI
-  export OMPI_MCA_rmaps_base_oversubscribe=1
-  export OMPI_MCA_hwloc_base_binding_policy=none
 fi
 
 if [[ "${GH_YML_MATRIX_PARALLEL}" =~ ompi ]]
@@ -88,6 +95,9 @@ fi
 
 # Make sure staging tests use localhost
 export ADIOS2_IP=127.0.0.1
+
+# We already paralelize with mpi (MGARD uses OMP)
+export OMP_NUM_THREADS=1
 
 # Load any additional setup scripts
 if [ -f gha/scripts/ci/setup-run/ci-${GH_YML_JOBNAME}.sh ]
