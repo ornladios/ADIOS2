@@ -1,11 +1,11 @@
 /*
-* Distributed under the OSI-approved Apache License, Version 2.0.  See
-* accompanying file Copyright.txt for details.
-*
-* FileDescriptor.h wrapper of POSIX library functions for file I/O
-*
-*  Created on: Jul 7, 2023
-*      Author: Dmitry Ganyushin  ganyushin@gmail.com
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ *
+ * FileDescriptor.h wrapper of POSIX library functions for file I/O
+ *
+ *  Created on: Jul 7, 2023
+ *      Author: Dmitry Ganyushin  ganyushin@gmail.com
  */
 #ifndef ADIOS2_FILEHTTP_H
 #define ADIOS2_FILEHTTP_H
@@ -32,19 +32,17 @@ public:
 
     ~FileHTTP();
 
-    void Open(const std::string &name, const Mode openMode,
-              const bool async = false, const bool directio = false) final;
+    void Open(const std::string &name, const Mode openMode, const bool async = false,
+              const bool directio = false) final;
 
-    void OpenChain(const std::string &name, Mode openMode,
-                   const helper::Comm &chainComm, const bool async = false,
-                   const bool directio = false) final;
+    void OpenChain(const std::string &name, Mode openMode, const helper::Comm &chainComm,
+                   const bool async = false, const bool directio = false) final;
 
     void Write(const char *buffer, size_t size, size_t start = MaxSizeT) final;
 
 #ifdef REALLY_WANT_WRITEV
     /* Actual writev() function, inactive for now */
-    void WriteV(const core::iovec *iov, const int iovcnt,
-                size_t start = MaxSizeT) final;
+    void WriteV(const core::iovec *iov, const int iovcnt, size_t start = MaxSizeT) final;
 #endif
 
     void Read(char *buffer, size_t size, size_t start = MaxSizeT) final;
