@@ -1,4 +1,4 @@
-source_dir=$(readlink -f ${PWD})/source
+source_dir="/opt/adios2/source/examples/basics/variablesShapes"
 build_dir=$(readlink -f ${PWD})/build
 install_dir=$(readlink -f ${PWD})/install
 test_dir=$(readlink -f ${PWD})/test

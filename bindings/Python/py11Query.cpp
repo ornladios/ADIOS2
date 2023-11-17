@@ -30,11 +30,17 @@ Query::operator bool() const noexcept { return (m_QueryWorker == nullptr) ? fals
 
 std::vector<Box<Dims>> Query::GetResult()
 {
-    // std::cout<<"Do something"<<std::endl;
-    adios2::Box<adios2::Dims> empty; // look into all data
     std::vector<Box<Dims>> touched_blocks;
+    adios2::Box<adios2::Dims> empty;
     m_QueryWorker->GetResultCoverage(empty, touched_blocks);
     return touched_blocks;
+}
+
+std::vector<size_t> Query::GetBlockIDs()
+{
+    std::vector<size_t> touched_block_ids;
+    m_QueryWorker->GetResultCoverage(touched_block_ids);
+    return touched_block_ids;
 }
 
 } // py11

@@ -626,7 +626,11 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
             hdf5Reader.ReadVar("i32", I32.data(), offset, count, arraySize);
 
             hdf5Reader.GetVarInfo("i64", gDims, h5Type);
+#ifdef _WIN32
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LLONG), 1);
+#else
             ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LONG), 1);
+#endif
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], globalArraySize);
             hdf5Reader.ReadVar("i64", I64.data(), offset, count, arraySize);
@@ -650,7 +654,11 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read1D8)
             hdf5Reader.ReadVar("u32", U32.data(), offset, count, arraySize);
 
             hdf5Reader.GetVarInfo("u64", gDims, h5Type);
+#ifdef _WIN32
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULLONG), 1);
+#else
             ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULONG), 1);
+#endif
             ASSERT_EQ(gDims.size(), 1);
             ASSERT_EQ(gDims[0], globalArraySize);
             hdf5Reader.ReadVar("u64", U64.data(), offset, count, arraySize);
@@ -1018,16 +1026,26 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read1D8)
                                        currentTestData.I16.data());
             h5writer.CreateAndStoreVar("i32", dimSize, H5T_NATIVE_INT, global_dims, offset, count,
                                        currentTestData.I32.data());
+#ifdef _WIN32
+            h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LLONG, global_dims, offset, count,
+                                       currentTestData.I64.data());
+#else
             h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LONG, global_dims, offset, count,
                                        currentTestData.I64.data());
+#endif
             h5writer.CreateAndStoreVar("u8", dimSize, H5T_NATIVE_UCHAR, global_dims, offset, count,
                                        currentTestData.U8.data());
             h5writer.CreateAndStoreVar("u16", dimSize, H5T_NATIVE_USHORT, global_dims, offset,
                                        count, currentTestData.U16.data());
             h5writer.CreateAndStoreVar("u32", dimSize, H5T_NATIVE_UINT, global_dims, offset, count,
                                        currentTestData.U32.data());
+#ifdef _WIN32
+            h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULLONG, global_dims, offset,
+                                       count, currentTestData.U64.data());
+#else
             h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULONG, global_dims, offset, count,
                                        currentTestData.U64.data());
+#endif
             h5writer.CreateAndStoreVar("r32", dimSize, H5T_NATIVE_FLOAT, global_dims, offset, count,
                                        currentTestData.R32.data());
             h5writer.CreateAndStoreVar("r64", dimSize, H5T_NATIVE_DOUBLE, global_dims, offset,
@@ -1419,7 +1437,11 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
             hdf5Reader.ReadVar("i32", I32.data(), offset, count, arraySize);
 
             hdf5Reader.GetVarInfo("i64", gDims, h5Type);
+#ifdef _WIN32
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LLONG), 1);
+#else
             ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LONG), 1);
+#endif
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], globalArraySize);
@@ -1447,7 +1469,11 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D2x4)
             hdf5Reader.ReadVar("u32", U32.data(), offset, count, arraySize);
 
             hdf5Reader.GetVarInfo("u64", gDims, h5Type);
+#ifdef _WIN32
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULLONG), 1);
+#else
             ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULONG), 1);
+#endif
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 2);
             ASSERT_EQ(gDims[1], globalArraySize);
@@ -1833,16 +1859,26 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D2x4)
                                        currentTestData.I16.data());
             h5writer.CreateAndStoreVar("i32", dimSize, H5T_NATIVE_INT, global_dims, offset, count,
                                        currentTestData.I32.data());
+#ifdef _WIN32
+            h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LLONG, global_dims, offset, count,
+                                       currentTestData.I64.data());
+#else
             h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LONG, global_dims, offset, count,
                                        currentTestData.I64.data());
+#endif
             h5writer.CreateAndStoreVar("u8", dimSize, H5T_NATIVE_UCHAR, global_dims, offset, count,
                                        currentTestData.U8.data());
             h5writer.CreateAndStoreVar("u16", dimSize, H5T_NATIVE_USHORT, global_dims, offset,
                                        count, currentTestData.U16.data());
             h5writer.CreateAndStoreVar("u32", dimSize, H5T_NATIVE_UINT, global_dims, offset, count,
                                        currentTestData.U32.data());
+#ifdef _WIN32
+            h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULLONG, global_dims, offset,
+                                       count, currentTestData.U64.data());
+#else
             h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULONG, global_dims, offset, count,
                                        currentTestData.U64.data());
+#endif
             h5writer.CreateAndStoreVar("r32", dimSize, H5T_NATIVE_FLOAT, global_dims, offset, count,
                                        currentTestData.R32.data());
             h5writer.CreateAndStoreVar("r64", dimSize, H5T_NATIVE_DOUBLE, global_dims, offset,
@@ -2229,7 +2265,11 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
             hdf5Reader.ReadVar("i32", I32.data(), offset, count, arraySize);
 
             hdf5Reader.GetVarInfo("i64", gDims, h5Type);
+#ifdef _WIN32
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LLONG), 1);
+#else
             ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_LONG), 1);
+#endif
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], globalArraySize);
@@ -2257,7 +2297,11 @@ TEST_F(HDF5WriteReadTest, ADIOS2HDF5WriteHDF5Read2D4x2)
             hdf5Reader.ReadVar("u32", U32.data(), offset, count, arraySize);
 
             hdf5Reader.GetVarInfo("u64", gDims, h5Type);
+#ifdef _WIN32
+            ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULLONG), 1);
+#else
             ASSERT_EQ(H5Tequal(h5Type, H5T_NATIVE_ULONG), 1);
+#endif
             ASSERT_EQ(gDims.size(), 2);
             ASSERT_EQ(gDims[0], 4);
             ASSERT_EQ(gDims[1], globalArraySize);
@@ -2639,16 +2683,26 @@ TEST_F(HDF5WriteReadTest, HDF5WriteADIOS2HDF5Read2D4x2)
                                        currentTestData.I16.data());
             h5writer.CreateAndStoreVar("i32", dimSize, H5T_NATIVE_INT, global_dims, offset, count,
                                        currentTestData.I32.data());
+#ifdef _WIN32
+            h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LLONG, global_dims, offset, count,
+                                       currentTestData.I64.data());
+#else
             h5writer.CreateAndStoreVar("i64", dimSize, H5T_NATIVE_LONG, global_dims, offset, count,
                                        currentTestData.I64.data());
+#endif
             h5writer.CreateAndStoreVar("u8", dimSize, H5T_NATIVE_UCHAR, global_dims, offset, count,
                                        currentTestData.U8.data());
             h5writer.CreateAndStoreVar("u16", dimSize, H5T_NATIVE_USHORT, global_dims, offset,
                                        count, currentTestData.U16.data());
             h5writer.CreateAndStoreVar("u32", dimSize, H5T_NATIVE_UINT, global_dims, offset, count,
                                        currentTestData.U32.data());
+#ifdef _WIN32
+            h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULLONG, global_dims, offset,
+                                       count, currentTestData.U64.data());
+#else
             h5writer.CreateAndStoreVar("u64", dimSize, H5T_NATIVE_ULONG, global_dims, offset, count,
                                        currentTestData.U64.data());
+#endif
             h5writer.CreateAndStoreVar("r32", dimSize, H5T_NATIVE_FLOAT, global_dims, offset, count,
                                        currentTestData.R32.data());
             h5writer.CreateAndStoreVar("r64", dimSize, H5T_NATIVE_DOUBLE, global_dims, offset,

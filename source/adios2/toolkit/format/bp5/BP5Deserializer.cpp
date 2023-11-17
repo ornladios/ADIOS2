@@ -1,3 +1,4 @@
+
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
@@ -238,8 +239,8 @@ void BP5Deserializer::BreakdownArrayName(const char *Name, char **base_name_p, D
 {
     /* string formatted as bp5_%d_%d_actualname */
     char *p;
-    // + 3 to skip BP5_ or bp5_ prefix
-    long n = strtol(Name + 4, &p, 10);
+    // Prefix has already been skipped
+    long n = strtol(Name, &p, 10);
     *element_size_p = static_cast<int>(n);
     ++p; // skip '_'
     long Type = strtol(p, &p, 10);
@@ -295,6 +296,59 @@ BP5Deserializer::BP5VarRec *BP5Deserializer::CreateVarRec(const char *ArrayName)
     return Ret;
 }
 
+/*
+ * Decode base64 data to 'output'.  Decode in-place if 'output' is NULL.
+ * Return the length of the decoded data, or -1 if there was an error.
+ */
+static const char signed char_to_num[256] = {
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 62, -1, -1, -1, 63,
+    52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1, 0,  1,  2,  3,  4,  5,  6,
+    7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, -1, -1, -1, -1, -1,
+    -1, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
+    49, 50, 51, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+};
+static int base64_decode(unsigned char *input, unsigned char *output)
+{
+    int len = 0;
+    int c1, c2, c3, c4;
+
+    if (output == NULL)
+        output = input;
+    while (*input)
+    {
+        c1 = *input++;
+        if (char_to_num[c1] == -1)
+            return -1;
+        c2 = *input++;
+        if (char_to_num[c2] == -1)
+            return -1;
+        c3 = *input++;
+        if (c3 != '=' && char_to_num[c3] == -1)
+            return -1;
+        c4 = *input++;
+        if (c4 != '=' && char_to_num[c4] == -1)
+            return -1;
+        *output++ = (char_to_num[c1] << 2) | (char_to_num[c2] >> 4);
+        ++len;
+        if (c3 == '=')
+            break;
+        *output++ = ((char_to_num[c2] << 4) & 0xf0) | (char_to_num[c3] >> 2);
+        ++len;
+        if (c4 == '=')
+            break;
+        *output++ = ((char_to_num[c3] << 6) & 0xc0) | char_to_num[c4];
+        ++len;
+    }
+
+    return len;
+}
+
 BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
 {
     FMStructDescList FormatList = format_list_of_FMFormat(Format);
@@ -312,6 +366,9 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
     size_t VarIndex = 0;
     while (FieldList[i].field_name)
     {
+        size_t HeaderSkip;
+        char *ExprStr = NULL;
+        int Derived = 0;
         ret = (ControlInfo *)realloc(ret, sizeof(*ret) + ControlCount * sizeof(struct ControlInfo));
         struct ControlStruct *C = &(ret->Controls[ControlCount]);
         ControlCount++;
@@ -336,6 +393,29 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             C->OrigShapeID = ShapeID::LocalArray;
             break;
         }
+        if (FieldList[i].field_name[3] == '_')
+        {
+            HeaderSkip = 4;
+        }
+        else if (FieldList[i].field_name[3] == '-')
+        {
+            // Expression follows
+            Derived = 1;
+            int EncLen;
+            int NumberLen;
+            if (sscanf(&FieldList[i].field_name[4], "%d%n", &EncLen, &NumberLen) == 1)
+            { // Expression
+                ExprStr = (char *)malloc(EncLen + 1);
+                const char *Dash = strchr(&FieldList[i].field_name[4], '-');
+                base64_decode((unsigned char *)Dash + 1, (unsigned char *)ExprStr);
+                HeaderSkip = 6 + NumberLen + EncLen;
+            }
+            else
+            {
+                fprintf(stderr, "Bad Expression spec in field %s\n", FieldList[i].field_name);
+            }
+        }
+        //
         BP5VarRec *VarRec = nullptr;
         if (NameIndicatesArray(FieldList[i].field_name))
         {
@@ -356,8 +436,8 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
             else
             {
                 BreakdownFieldType(FieldList[i].field_type, Operator, MinMax);
-                BreakdownArrayName(FieldList[i].field_name, &ArrayName, &Type, &ElementSize,
-                                   &StructFormat);
+                BreakdownArrayName(FieldList[i].field_name + HeaderSkip, &ArrayName, &Type,
+                                   &ElementSize, &StructFormat);
             }
             VarRec = LookupVarByName(ArrayName);
             if (!VarRec)
@@ -366,6 +446,8 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
                 VarRec->Type = Type;
                 VarRec->ElementSize = ElementSize;
                 VarRec->OrigShapeID = C->OrigShapeID;
+                VarRec->Derived = Derived;
+                VarRec->ExprStr = ExprStr;
                 if (StructFormat)
                 {
                     core::StructDefinition *Def =
@@ -1312,14 +1394,27 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
     if (VarRec->OrigShapeID == ShapeID::LocalValue)
     {
         // Shows up as global array with one element per writer rank
-        for (size_t WriterRank = variable.m_Start[0];
-             WriterRank < variable.m_Count[0] + variable.m_Start[0]; WriterRank++)
+        if (variable.m_SelectionType == adios2::SelectionType::BoundingBox)
         {
+            for (size_t WriterRank = variable.m_Start[0];
+                 WriterRank < variable.m_Count[0] + variable.m_Start[0]; WriterRank++)
+            {
+                (void)GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank);
+                DestData = (char *)DestData + variable.m_ElementSize; // use variable.m_ElementSize
+                // because it's the size in local
+                // memory, VarRec->ElementSize is
+                // the size in metadata
+            }
+        }
+        else if (variable.m_SelectionType == adios2::SelectionType::WriteBlock)
+        {
+            size_t WriterRank = variable.m_BlockID;
             (void)GetSingleValueFromMetadata(variable, VarRec, DestData, AbsStep, WriterRank);
-            DestData = (char *)DestData + variable.m_ElementSize; // use variable.m_ElementSize
-                                                                  // because it's the size in local
-                                                                  // memory, VarRec->ElementSize is
-                                                                  // the size in metadata
+        }
+        else
+        {
+            helper::Throw<std::invalid_argument>("Toolkit", "format::bp::BP5Deserializer",
+                                                 "QueueGetSingle", "Unexpected selection type");
         }
         return false;
     }
@@ -1488,6 +1583,8 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                     RR.Timestep = Req->Step;
                     RR.WriterRank = WriterRank;
                     RR.StartOffset = writer_meta_base->DataBlockLocation[NeededBlock];
+                    if (RR.StartOffset == (size_t)-1)
+                        throw std::runtime_error("No data exists for this variable");
                     if (Req->MemSpace != MemorySpace::Host)
                         RR.DirectToAppMemory = false;
                     else
@@ -1561,6 +1658,8 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                             RR.StartOffset = writer_meta_base->DataBlockLocation[Block];
                             RR.ReadLength = writer_meta_base->DataBlockSize[Block];
                             RR.DestinationAddr = nullptr;
+                            if (RR.StartOffset == (size_t)-1)
+                                throw std::runtime_error("No data exists for this variable");
                             if (doAllocTempBuffers)
                             {
                                 RR.DestinationAddr = (char *)malloc(RR.ReadLength);
@@ -1598,6 +1697,8 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                             RR.WriterRank = WriterRank;
                             RR.StartOffset =
                                 writer_meta_base->DataBlockLocation[Block] + StartOffsetInBlock;
+                            if (writer_meta_base->DataBlockLocation[Block] == (size_t)-1)
+                                throw std::runtime_error("No data exists for this variable");
                             RR.ReadLength = EndOffsetInBlock - StartOffsetInBlock;
                             if (Req->MemSpace != MemorySpace::Host)
                                 RR.DirectToAppMemory = false;
@@ -1935,15 +2036,21 @@ void *BP5Deserializer::GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t Wr
     return writer_meta_base;
 }
 
-MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
+MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelStep)
 {
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
 
     MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, VarRec->GlobalDims);
 
-    const size_t writerCohortSize = WriterCohortSize(Step);
+    size_t AbsStep = RelStep;
+
+    if (m_RandomAccessMode)
+    {
+        AbsStep = VarRec->AbsStepFromRel[RelStep];
+    }
+    const size_t writerCohortSize = WriterCohortSize(AbsStep);
     size_t Id = 0;
-    MV->Step = Step;
+    MV->Step = RelStep;
     MV->Dims = (int)VarRec->DimCount;
     MV->Shape = NULL;
     MV->IsReverseDims = ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
@@ -1968,7 +2075,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
         for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
         {
             MetaArrayRec *writer_meta_base =
-                (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
+                (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
             if (writer_meta_base)
             {
                 MinBlockInfo Blk;
@@ -1994,7 +2101,8 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
     }
     for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
     {
-        MetaArrayRec *writer_meta_base = (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
+        MetaArrayRec *writer_meta_base =
+            (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
         if (writer_meta_base)
         {
             if (MV->Shape == NULL)
@@ -2011,7 +2119,8 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t Step)
     Id = 0;
     for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
     {
-        MetaArrayRec *writer_meta_base = (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
+        MetaArrayRec *writer_meta_base =
+            (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
 
         if (!writer_meta_base)
             continue;

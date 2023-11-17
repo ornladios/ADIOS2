@@ -63,6 +63,8 @@ public:
 
     virtual void *GetPtr(int bufferIdx, size_t posInBuffer) = 0;
 
+    virtual void *GetPtr(size_t overallPosInVector) = 0;
+
 protected:
     std::vector<char> zero;
     const bool m_AlwaysCopy = false;

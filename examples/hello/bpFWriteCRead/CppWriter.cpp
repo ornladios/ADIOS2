@@ -42,7 +42,9 @@ int main(int argc, char *argv[])
         "data2D", {size * nx, ny}, {rank * nx, 0}, {nx, ny}, adios2::ConstantDims);
 
     adios2::Engine engine = io.Open("CppWriter.bp", adios2::Mode::Write);
+    engine.BeginStep();
     engine.Put(bpFloats, data.data());
+    engine.EndStep();
     engine.Close();
 
     MPI_Finalize();

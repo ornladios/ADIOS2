@@ -18,9 +18,43 @@ import urllib3
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-def request_as_dict(url):
-    r = requests.get(url + '?per_page=100', verify=False)
-    return r.json()
+class skip_after_n_successes:
+    def __init__(self, default_value, n):
+        self.runs_max = n
+        self.runs_current = 0
+        self.default_value = default_value
+
+    def __call__(self, fn, *args, **kwargs):
+        if self.runs_current >= self.runs_max:
+            return self.default_value
+
+        ret = fn(*args, **kwargs)
+        if ret:
+            self.runs_current += 1
+        return ret
+
+
+def http_get_request(*args, **kwargs):
+    kwargs['verify'] = False
+    return requests.get(*args, **kwargs)
+
+
+def request_as_list(url, *args, **kwargs):
+    current_url = url
+    body_json = []
+    while current_url:
+        response = http_get_request(current_url, *args, **kwargs)
+        body_json += response.json()
+
+        header = response.headers
+        current_url = None
+        if 'link' in header:
+            links = re.search(
+                r'(?<=\<)([\S]*)(?=>; rel="next")', header['link'], flags=re.IGNORECASE)
+            if links is not None:
+                current_url = links.group(0)
+
+    return body_json
 
 
 def add_timestamp(branch):
@@ -44,7 +78,12 @@ def has_no_status(branch):
         gh_commit_sha = branch['commit']['parent_ids'][1]
 
     # Query GitHub for the status of this commit
-    commit = request_as_dict(gh_url + '/commits/' + gh_commit_sha + '/status')
+    response = http_get_request(
+        gh_url + '/commits/' + gh_commit_sha + '/status')
+    if int(response.headers['x-ratelimit-remaining']) <= 0:
+        raise ConnectionError(response.json())
+
+    commit = response.json()
     if commit is None or 'sha' not in commit:
         return False
 
@@ -88,14 +127,15 @@ gh_url = 'https://api.github.com/repos/' + args.gh_name
 with open(args.template_file, 'r') as fd:
     template_str = fd.read()
 
-    branches = request_as_dict(gl_url + '/repository/branches')
-    branches = map(add_timestamp, branches)
-    branches = filter(is_recent, branches)
-    branches = filter(has_no_status, branches)
-
-    # Select the arg.max most least recent branches
+    branches = request_as_list(gl_url + '/repository/branches')
+    branches = [add_timestamp(branch) for branch in branches]
+    branches = [b for b in branches if is_recent(b)]
     branches = sorted(branches, key=lambda x: x['dt'])
-    branches = itertools.islice(branches, args.max)
+
+    # Skip running (and return true) has_no_status after returning True args.max times.
+    # We need this not to hog the Github Rest API draconian ratelimit.
+    run_n_times = skip_after_n_successes(default_value=False, n=args.max)
+    branches = [b for b in branches if run_n_times(has_no_status, b)]
 
     for branch in branches:
         print(template_str.format(

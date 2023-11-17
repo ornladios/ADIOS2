@@ -129,6 +129,21 @@ add_library(adios2_core
 set_property(TARGET adios2_core PROPERTY EXPORT_NAME core)
 set_property(TARGET adios2_core PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core)
 
+set(maybe_adios2_core_derived)
+if (ADIOS2_HAVE_Derived_Variable)
+  target_sources(adios2_core PRIVATE
+      core/VariableDerived.cpp
+      toolkit/derived/Expression.cpp
+      toolkit/derived/Function.cpp toolkit/derived/Function.tcc
+      toolkit/derived/ExprHelper.h)
+  add_library(adios2_core_derived
+      toolkit/derived/parser/lexer.cpp
+      toolkit/derived/parser/parser.cpp
+      toolkit/derived/parser/ASTNode.cpp)
+  target_link_libraries(adios2_core PRIVATE adios2_core_derived)
+  set(maybe_adios2_core_derived adios2_core_derived)
+endif()
+
 set(maybe_adios2_core_cuda)
 if(ADIOS2_HAVE_CUDA)
   add_library(adios2_core_cuda helper/adiosCUDA.cu)
@@ -456,10 +471,11 @@ install(DIRECTORY toolkit/
   PATTERN "*/*.inl"
   REGEX "sst/util" EXCLUDE
   REGEX "sst/dp" EXCLUDE
+  REGEX "derived/parser" EXCLUDE
 )
 
 # Library installation
-install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_cuda} ${maybe_adios2_core_kokkos} ${maybe_adios2_blosc2} EXPORT adios2Exports
+install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_cuda} ${maybe_adios2_core_kokkos} ${maybe_adios2_blosc2} ${maybe_adios2_core_derived} EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-development

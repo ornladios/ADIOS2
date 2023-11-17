@@ -25,7 +25,7 @@ namespace interop
 template <class T>
 void HDF5Common::DefineDataset(core::Variable<T> &variable)
 {
-    int dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
+    size_t dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
     hid_t h5Type = GetHDF5Type<T>();
 
     if (dimSize == 0)
@@ -43,7 +43,15 @@ void HDF5Common::DefineDataset(core::Variable<T> &variable)
     std::vector<hsize_t> dimsf, count, offset;
     GetHDF5SpaceSpec(variable, dimsf, count, offset);
 
-    hid_t fileSpace = H5Screate_simple(dimSize, dimsf.data(), NULL);
+    size_t max_int = static_cast<size_t>(std::numeric_limits<int>::max());
+    if (dimSize > max_int)
+    {
+        helper::Throw<std::overflow_error>("Toolkit", "interop::hdf5::HDF5Common", "DefineDataset",
+                                           "dimSize is too large "
+                                           "to be represented by an int");
+    }
+
+    hid_t fileSpace = H5Screate_simple(static_cast<int>(dimSize), dimsf.data(), NULL);
     HDF5TypeGuard fs(fileSpace, E_H5_SPACE);
 
     std::vector<hid_t> chain;
@@ -110,7 +118,7 @@ template <class T>
 void HDF5Common::Write(core::Variable<T> &variable, const T *values)
 {
     CheckWriteGroup();
-    int dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
+    size_t dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
     hid_t h5Type = GetHDF5Type<T>();
 
     if (std::is_same<T, std::string>::value)
@@ -173,7 +181,15 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
     std::vector<hsize_t> dimsf, count, offset;
     GetHDF5SpaceSpec(variable, dimsf, count, offset);
 
-    hid_t fileSpace = H5Screate_simple(dimSize, dimsf.data(), NULL);
+    size_t max_int = static_cast<size_t>(std::numeric_limits<int>::max());
+    if (dimSize > max_int)
+    {
+        helper::Throw<std::overflow_error>("Toolkit", "interop::hdf5::HDF5Common", "Write",
+                                           "dimSize is too large "
+                                           "to be represented by an int");
+    }
+
+    hid_t fileSpace = H5Screate_simple(static_cast<int>(dimSize), dimsf.data(), NULL);
 #ifndef RELAY_DEFINE_TO_HDF5 // RELAY_DEFINE_TO_HDF5 = variables in io are
                              // created at begin_step
     std::vector<hid_t> chain;
@@ -187,7 +203,7 @@ void HDF5Common::Write(core::Variable<T> &variable, const T *values)
     {
     }
 #endif
-    hid_t memSpace = H5Screate_simple(dimSize, count.data(), NULL);
+    hid_t memSpace = H5Screate_simple(static_cast<int>(dimSize), count.data(), NULL);
 
     // Select hyperslab
     fileSpace = H5Dget_space(dsetID);

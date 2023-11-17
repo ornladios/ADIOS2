@@ -1,4 +1,6 @@
+#ifdef ADIOS2_HAVE_SST
 #include "evpath.h"
+#endif
 #include <stddef.h>
 
 namespace adios2
@@ -6,6 +8,9 @@ namespace adios2
 namespace RemoteCommon
 {
 
+const int ServerPort = 26200;
+
+#ifdef ADIOS2_HAVE_SST
 enum RemoteFileMode
 {
     RemoteOpen,
@@ -18,6 +23,7 @@ typedef struct _OpenFileMsg
     int OpenResponseCondition;
     char *FileName;
     RemoteFileMode Mode;
+    int RowMajorOrder;
 } *OpenFileMsg;
 
 typedef struct _OpenResponseMsg
@@ -86,6 +92,29 @@ typedef struct _CloseFileMsg
     void *FileHandle;
 } *CloseFileMsg;
 
+typedef struct _KillServerMsg
+{
+    int KillResponseCondition;
+} *KillServerMsg;
+
+typedef struct _KillResponseMsg
+{
+    int KillResponseCondition;
+    char *Status;
+} *KillResponseMsg;
+
+typedef struct _StatusServerMsg
+{
+    int StatusResponseCondition;
+} *StatusServerMsg;
+
+typedef struct _StatusResponseMsg
+{
+    int StatusResponseCondition;
+    char *Hostname;
+    char *Status;
+} *StatusResponseMsg;
+
 enum VerbosityLevel
 {
     NoVerbose = 0,       // Generally no output (but not absolutely quiet?)
@@ -110,9 +139,14 @@ struct Remote_evpath_state
     CMFormat ReadRequestFormat;
     CMFormat ReadResponseFormat;
     CMFormat CloseFileFormat;
+    CMFormat KillServerFormat;
+    CMFormat KillResponseFormat;
+    CMFormat StatusServerFormat;
+    CMFormat StatusResponseFormat;
 };
 
 void RegisterFormats(struct Remote_evpath_state &ev_state);
+#endif
 
 }; // end of namespace remote_common
 }; // end of namespace adios2

@@ -118,7 +118,7 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string 
         static bool perfstubsInit(false);
         if (!perfstubsInit)
         {
-            PERFSTUBS_INITIALIZE();
+            PERFSTUBS_INITIALIZE(m_Comm.Rank());
             perfstubsInit = true;
             atexit(ps_finalize_);
         }

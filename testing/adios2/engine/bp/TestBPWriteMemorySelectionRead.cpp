@@ -15,6 +15,8 @@
 #include "../SmallTestData.h"
 
 std::string engineName; // comes from command line
+bool DoWrite = true;
+bool DoRead = true;
 
 namespace
 {
@@ -166,9 +168,13 @@ void AssignStep3D(const size_t step, std::vector<std::complex<double>> &vector, 
 
 } // end anonymous namespace
 
+#if ADIOS2_USE_MPI
+MPI_Comm testComm;
+#endif
+
 void BPSteps1D(const size_t ghostCells)
 {
-    const std::string fname("BPSteps1D_" + std::to_string(ghostCells) + ".bp");
+    const std::string fname("BPSteps1D_" + std::to_string(ghostCells));
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -178,15 +184,16 @@ void BPSteps1D(const size_t ghostCells)
     const size_t NSteps = 3;
 
 #if ADIOS2_USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    MPI_Comm_rank(testComm, &mpiRank);
+    MPI_Comm_size(testComm, &mpiSize);
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD);
+    adios2::ADIOS adios(testComm);
 #else
     adios2::ADIOS adios;
 #endif
+    if (DoWrite)
     {
         adios2::IO io = adios.DeclareIO("WriteIO");
 
@@ -195,6 +202,7 @@ void BPSteps1D(const size_t ghostCells)
             io.SetEngine(engineName);
         }
 
+        io.SetParameters("StatsLevel=1");
         const adios2::Dims shape{static_cast<size_t>(Nx * mpiSize)};
         const adios2::Dims start{static_cast<size_t>(Nx * mpiRank)};
         const adios2::Dims count{Nx};
@@ -256,9 +264,10 @@ void BPSteps1D(const size_t ghostCells)
         bpWriter.Close();
     }
 #if ADIOS2_USE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(testComm);
 #endif
     // Reader
+    if (DoRead)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
@@ -377,7 +386,7 @@ void BPSteps1D(const size_t ghostCells)
 
 void BPSteps2D4x2(const size_t ghostCells)
 {
-    const std::string fname("BPSteps2D4x2_" + std::to_string(ghostCells) + ".bp");
+    const std::string fname("BPSteps2D4x2_" + std::to_string(ghostCells));
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -391,15 +400,16 @@ void BPSteps2D4x2(const size_t ghostCells)
     const size_t NSteps = 3;
 
 #if ADIOS2_USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    MPI_Comm_rank(testComm, &mpiRank);
+    MPI_Comm_size(testComm, &mpiSize);
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD);
+    adios2::ADIOS adios(testComm);
 #else
     adios2::ADIOS adios;
 #endif
+    if (DoWrite)
     {
         adios2::IO io = adios.DeclareIO("WriteIO");
 
@@ -470,9 +480,10 @@ void BPSteps2D4x2(const size_t ghostCells)
         bpWriter.Close();
     }
 #if ADIOS2_USE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(testComm);
 #endif
     // Reader
+    if (DoRead)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
@@ -601,7 +612,7 @@ void BPSteps2D4x2(const size_t ghostCells)
 
 void BPSteps3D8x2x4(const size_t ghostCells)
 {
-    const std::string fname("BPSteps3D8x2x4_" + std::to_string(ghostCells) + ".bp");
+    const std::string fname("BPSteps3D8x2x4_" + std::to_string(ghostCells));
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -617,15 +628,16 @@ void BPSteps3D8x2x4(const size_t ghostCells)
     const size_t NSteps = 3;
 
 #if ADIOS2_USE_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
-    MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    MPI_Comm_rank(testComm, &mpiRank);
+    MPI_Comm_size(testComm, &mpiSize);
 #endif
 
 #if ADIOS2_USE_MPI
-    adios2::ADIOS adios(MPI_COMM_WORLD);
+    adios2::ADIOS adios(testComm);
 #else
     adios2::ADIOS adios;
 #endif
+    if (DoWrite)
     {
         adios2::IO io = adios.DeclareIO("WriteIO");
 
@@ -698,9 +710,10 @@ void BPSteps3D8x2x4(const size_t ghostCells)
         bpWriter.Close();
     }
 #if ADIOS2_USE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(testComm);
 #endif
     // Reader
+    if (DoRead)
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
 
@@ -878,25 +891,80 @@ INSTANTIATE_TEST_SUITE_P(ghostCells, BPWriteMemSelReadVector, ::testing::Values(
 
 int main(int argc, char **argv)
 {
-#if ADIOS2_USE_MPI
-    int provided;
-
-    // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
-    MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
-#endif
-
     int result;
     ::testing::InitGoogleTest(&argc, argv);
+    int bare_arg = 0;
 
-    if (argc > 1)
+    for (int i = 1; i < argc; i++)
     {
-        engineName = std::string(argv[1]);
+        if (strcmp(argv[i], "-do_write") == 0)
+        {
+            DoWrite = true;
+            DoRead = false;
+        }
+        else if (strcmp(argv[i], "-do_read") == 0)
+        {
+            DoWrite = false;
+            DoRead = true;
+        }
+        else if (argv[i][0] == '-')
+        {
+            std::cerr << "Unknown argument: " << argv[i] << std::endl;
+            exit(1);
+        }
+        else
+        {
+            std::string fname;
+            std::string engineParams;
+            if (bare_arg == 0)
+            {
+                /* first arg without -- is engine */
+                engineName = std::string(argv[1]);
+                bare_arg++;
+            }
+            else if (bare_arg == 1)
+            {
+                /* second arg without -- is filename */
+                //                fname = std::string(argv[1]);
+                bare_arg++;
+            }
+            else if (bare_arg == 2)
+            {
+                //                engineParams = ParseEngineParams(argv[1]);
+                bare_arg++;
+            }
+            else
+            {
+
+                throw std::invalid_argument("Unknown argument \"" + std::string(argv[1]) + "\"");
+            }
+        }
     }
+
+#if ADIOS2_USE_MPI
+    int provided;
+    int thread_support_level =
+        (engineName == "SST" || engineName == "sst") ? MPI_THREAD_MULTIPLE : MPI_THREAD_SINGLE;
+
+    // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
+    MPI_Init_thread(nullptr, nullptr, thread_support_level, &provided);
+
+    int key;
+    MPI_Comm_rank(MPI_COMM_WORLD, &key);
+
+    const unsigned int color = (DoRead & !DoWrite) ? 1 : 0;
+
+    MPI_Comm_split(MPI_COMM_WORLD, color, key, &testComm);
+#endif
 
     result = RUN_ALL_TESTS();
 
 #if ADIOS2_USE_MPI
+#ifdef CRAY_MPICH_VERSION
+    MPI_Barrier(MPI_COMM_WORLD);
+#else
     MPI_Finalize();
+#endif
 #endif
 
     return result;

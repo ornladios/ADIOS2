@@ -21,6 +21,8 @@
 #pragma warning(disable : 4250)
 #endif
 
+#include <unordered_map>
+
 namespace adios2
 {
 namespace format
@@ -127,6 +129,8 @@ public:
 
     size_t DebugGetDataBufferSize() const;
 
+    MinVarInfo *MinBlocksInfo(const core::VariableBase &Var);
+
     int m_StatsLevel = 1;
 
     /* Variables to help appending to existing file */
@@ -154,7 +158,6 @@ private:
     struct FFSWriterMarshalBase
     {
         int RecCount = 0;
-        BP5WriterRec RecList = NULL;
         FMContext LocalFMContext = {0};
         int MetaFieldCount = 0;
         FMFieldList MetaFields = NULL;
@@ -164,6 +167,7 @@ private:
         FMFormat AttributeFormat = NULL;
         void *AttributeData = NULL;
         int AttributeSize = 0;
+        std::unordered_map<void *, _BP5WriterRec> RecMap;
     };
 
     FMFormat GenericAttributeFormat = NULL;
@@ -204,7 +208,7 @@ private:
 
     size_t m_PriorDataBufferSizeTotal = 0;
 
-    BP5WriterRec LookupWriterRec(void *Key);
+    BP5WriterRec LookupWriterRec(void *Key) const;
     BP5WriterRec CreateWriterRec(void *Variable, const char *Name, DataType Type, size_t ElemSize,
                                  size_t DimCount);
     void ValidateWriterRec(BP5WriterRec Rec, void *Variable);
@@ -240,6 +244,9 @@ private:
         size_t ElemCount;
         void *Array;
     } ArrayRec;
+
+private:
+    const void *SearchDeferredBlocks(size_t MetaOffset, size_t blocknum);
 };
 
 } // end namespace format

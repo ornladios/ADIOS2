@@ -1,7 +1,3 @@
-include(ProcessorCount)
-ProcessorCount(NCPUS)
-math(EXPR N2CPUS "${NCPUS}*2")
-
 set(ENV{CC}  clang-6.0)
 set(ENV{CXX} clang++-6.0)
 set(ENV{FC}  gfortran-11)
@@ -13,7 +9,9 @@ execute_process(
 
 set(dashboard_cache "
 BUILD_SHARED_LIBS=OFF
-BUILD_TESTING=OFF
+BUILD_TESTING:BOOL=OFF
+ADIOS2_BUILD_EXAMPLES:BOOL=ON
+
 ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_Blosc:BOOL=ON
 ADIOS2_USE_DataMan:BOOL=ON
@@ -35,9 +33,6 @@ CMAKE_CXX_COMPILER_LAUNCHER=ccache
 CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
-
-MPIEXEC_EXTRA_FLAGS:STRING=--allow-run-as-root --oversubscribe
-MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 ")
 
 set(CTEST_CMAKE_GENERATOR "Ninja")

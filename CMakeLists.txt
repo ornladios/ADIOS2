@@ -137,7 +137,11 @@ if((NOT BUILD_SHARED_LIBS) AND (NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE))
   set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 endif()
 
+# Ctest creates BUILD_TESTING option and sets it to true by default
+# Here we disable BUILD_TESTING option by default
+option(BUILD_TESTING "Build testing" OFF)
 include(CTest)
+mark_as_advanced(CLEAR BUILD_TESTING)
 
 adios_option(Blosc2     "Enable support for c-blosc-2 transforms" AUTO)
 adios_option(BZip2      "Enable support for BZip2 transforms" AUTO)
@@ -166,8 +170,10 @@ adios_option(Profiling  "Enable support for profiling" AUTO)
 adios_option(Endian_Reverse "Enable support for Little/Big Endian Interoperability" AUTO)
 adios_option(Sodium     "Enable support for Sodium for encryption" AUTO)
 adios_option(Catalyst   "Enable support for in situ visualization plugin using ParaView Catalyst" AUTO)
-adios_option(AWSSDK     "Enable support for S3 compatible storage using AWS SDK's S3 module" AUTO)
-adios_option(SQLite3    "Enable support for SQLite3 required by campaign manager" AUTO)
+adios_option(SQLite3    "Enable support for SQLite3 required by campaign manager" OFF)
+adios_option(AWSSDK     "Enable support for S3 compatible storage using AWS SDK's S3 module" OFF)
+adios_option(Derived_Variable    "Enable support for derived variables" OFF)
+>>>>>>> master
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
@@ -177,7 +183,7 @@ if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
         if(DEFINED Kokkos_CUDA_ARCHITECTURES)
             set(CMAKE_CUDA_ARCHITECTURES ${Kokkos_CUDA_ARCHITECTURES})
         else()
-            # Mininum common non-deprecated architecture
+            # Minimum common non-deprecated architecture
             set(CMAKE_CUDA_ARCHITECTURES 52)
         endif()
     endif()
@@ -240,8 +246,8 @@ endif()
 set(ADIOS2_CONFIG_OPTS
     DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python Blosc2 BZip2
     LIBPRESSIO MGARD PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX
-    ZeroMQ Profiling Endian_Reverse AWSSDK GPU_Support CUDA Kokkos Kokkos_CUDA
-    Kokkos_HIP Kokkos_SYCL SQLite3
+    ZeroMQ Profiling Endian_Reverse Derived_Variable AWSSDK GPU_Support CUDA Kokkos
+    Kokkos_CUDA Kokkos_HIP Kokkos_SYCL SQLite3
 )
 
 GenerateADIOSHeaderConfig(${ADIOS2_CONFIG_OPTS})
@@ -288,12 +294,15 @@ if(BUILD_SHARED_LIBS AND ADIOS2_RUN_INSTALL_TEST)
   endif()
 endif()
 
+if(MSVC AND BUILD_SHARED_LIBS AND ADIOS2_HAVE_HDF5)
+  # See note about building with visual studio and shared libs, here:
+  #     https://github.com/HDFGroup/hdf5/blob/develop/release_docs/USING_HDF5_VS.txt
+  add_definitions(-DH5_BUILT_AS_DYNAMIC_LIB=1)
+endif()
 
 #------------------------------------------------------------------------------#
 # Third party libraries
 #------------------------------------------------------------------------------#
-include(CTest)
-mark_as_advanced(BUILD_TESTING)
 add_subdirectory(thirdparty)
 
 #------------------------------------------------------------------------------#
@@ -314,8 +323,7 @@ add_subdirectory(plugins)
 #------------------------------------------------------------------------------#
 # Examples
 #------------------------------------------------------------------------------#
-option(ADIOS2_BUILD_EXAMPLES "Build examples" ON)
-option(ADIOS2_BUILD_EXAMPLES_EXPERIMENTAL "Build experimental examples" OFF)
+option(ADIOS2_BUILD_EXAMPLES "Build examples" OFF)
 if(ADIOS2_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()

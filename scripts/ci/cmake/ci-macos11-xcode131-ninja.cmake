@@ -4,6 +4,9 @@ set(ENV{CXX} clang++)
 set(ENV{FC}  gfortran)
 
 set(dashboard_cache "
+BUILD_TESTING:BOOL=ON
+ADIOS2_BUILD_EXAMPLES:BOOL=ON
+
 ADIOS2_USE_Fortran:BOOL=ON
 ADIOS2_USE_MPI:BOOL=OFF
 ADIOS2_USE_Python:BOOL=ON

@@ -179,6 +179,16 @@ VariableNT IO::DefineVariable(const DataType type, const std::string &name, cons
     }
 }
 
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+VariableDerived IO::DefineDerivedVariable(const std::string &name, const std::string &expression,
+                                          const DerivedVarType varType)
+{
+    helper::CheckForNullptr(m_IO,
+                            "for variable name " + name + ", in call to IO::DefineDerivedVariable");
+
+    return VariableDerived(&m_IO->DefineDerivedVariable(name, expression, varType));
+}
+#endif
 StructDefinition IO::DefineStruct(const std::string &name, const size_t size)
 {
     helper::CheckForNullptr(m_IO, "for struct name " + name + ", in call to IO::DefineStruct");

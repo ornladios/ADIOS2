@@ -8,13 +8,13 @@ include(ADIOSFunctions)
 add_test(NAME HeatTransfer.InsituMPI.Mx1
   COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
     ${MPIEXEC_NUMPROC_FLAG} 4
-      $<TARGET_FILE:heatTransfer_write_adios2>
-        ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_ssc.xml
+      $<TARGET_FILE:adios2_simulations_heatTransferWrite>
+        ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_ssc.xml
         Write.bp 2 2 10 10 10 10
     :
     ${MPIEXEC_NUMPROC_FLAG} 1
-      $<TARGET_FILE:heatTransfer_read>
-        ${PROJECT_SOURCE_DIR}/examples/heatTransfer/heat_ssc.xml
+      $<TARGET_FILE:adios2_simulations_heatTransferRead>
+        ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_ssc.xml
         Write.bp Read.bp 1 1
 )
 set_tests_properties(HeatTransfer.InsituMPI.Mx1 PROPERTIES PROCESSORS 5)

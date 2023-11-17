@@ -16,9 +16,7 @@
 
 #include "adios2/common/ADIOSConfig.h"
 
-#ifdef ADIOS2_HAVE_SST
 #include "remote_common.h"
-#endif
 
 namespace adios2
 {
@@ -38,7 +36,7 @@ public:
     explicit operator bool() const { return m_Active; }
 
     void Open(const std::string hostname, const int32_t port, const std::string filename,
-              const Mode mode);
+              const Mode mode, bool RowMajorOrdering);
 
     void OpenSimpleFile(const std::string hostname, const int32_t port, const std::string filename);
 
@@ -63,46 +61,26 @@ private:
     bool m_Active = false;
 };
 
+#ifdef ADIOS2_HAVE_SST
 class CManagerSingleton
 {
 public:
-#ifdef ADIOS2_HAVE_SST
-    CManager m_cm = NULL;
-#endif
-    static CManagerSingleton &Instance(bool &first)
-    {
-        // Since it's a static variable, if the class has already been created,
-        // it won't be created again.
-        // And it **is** thread-safe in C++11.
-        static CManagerSingleton myInstance;
-        static bool internal_first = true;
-        // Return a reference to our instance.
+    static CManagerSingleton &Instance(RemoteCommon::Remote_evpath_state &ev_state);
 
-        first = internal_first;
-        internal_first = false;
-        return myInstance;
+private:
+    CManager m_cm = NULL;
+    RemoteCommon::Remote_evpath_state internalEvState;
+    CManagerSingleton()
+    {
+        m_cm = CManager_create();
+        internalEvState.cm = m_cm;
+        RegisterFormats(internalEvState);
+        CMfork_comm_thread(internalEvState.cm);
     }
 
-    // delete copy and move constructors and assign operators
-    CManagerSingleton(CManagerSingleton const &) = delete;            // Copy construct
-    CManagerSingleton(CManagerSingleton &&) = delete;                 // Move construct
-    CManagerSingleton &operator=(CManagerSingleton const &) = delete; // Copy assign
-    CManagerSingleton &operator=(CManagerSingleton &&) = delete;      // Move assign
-
-    // Any other public methods.
-
-protected:
-#ifdef ADIOS2_HAVE_SST
-    CManagerSingleton() { m_cm = CManager_create(); }
-
     ~CManagerSingleton() { CManager_close(m_cm); }
-#else
-    CManagerSingleton() {}
-
-    ~CManagerSingleton() {}
-#endif
-    // And any other protected methods.
 };
+#endif
 
 } // end namespace adios2
 

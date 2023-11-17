@@ -1,3 +1,5 @@
+#include "adios2/common/ADIOSConfig.h"
+
 #include "remote_common.h"
 #include <evpath.h>
 
@@ -6,11 +8,13 @@ namespace adios2
 namespace RemoteCommon
 {
 
-FMField OpenFileList[] = {{"OpenResponseCondition", "integer", sizeof(long),
-                           FMOffset(OpenFileMsg, OpenResponseCondition)},
-                          {"FileName", "string", sizeof(char *), FMOffset(OpenFileMsg, FileName)},
-                          {"Mode", "integer", sizeof(RemoteFileMode), FMOffset(OpenFileMsg, Mode)},
-                          {NULL, NULL, 0, 0}};
+FMField OpenFileList[] = {
+    {"OpenResponseCondition", "integer", sizeof(long),
+     FMOffset(OpenFileMsg, OpenResponseCondition)},
+    {"FileName", "string", sizeof(char *), FMOffset(OpenFileMsg, FileName)},
+    {"Mode", "integer", sizeof(RemoteFileMode), FMOffset(OpenFileMsg, Mode)},
+    {"RowMajorOrder", "integer", sizeof(int), FMOffset(OpenFileMsg, RowMajorOrder)},
+    {NULL, NULL, 0, 0}};
 
 FMStructDescRec OpenFileStructs[] = {{"OpenFile", OpenFileList, sizeof(struct _OpenFileMsg), NULL},
                                      {NULL, NULL, 0, NULL}};
@@ -94,6 +98,42 @@ FMField CloseFileList[] = {
 FMStructDescRec CloseFileStructs[] = {{"Close", CloseFileList, sizeof(struct _CloseFileMsg), NULL},
                                       {NULL, NULL, 0, NULL}};
 
+FMField KillServerList[] = {{"KillResponseCondition", "integer", sizeof(long),
+                             FMOffset(KillServerMsg, KillResponseCondition)},
+                            {NULL, NULL, 0, 0}};
+
+FMStructDescRec KillServerStructs[] = {
+    {"KillServer", KillServerList, sizeof(struct _KillServerMsg), NULL}, {NULL, NULL, 0, NULL}};
+
+FMField KillResponseList[] = {
+    {"KillResponseCondition", "integer", sizeof(long),
+     FMOffset(KillResponseMsg, KillResponseCondition)},
+    {"Status", "string", sizeof(char *), FMOffset(KillResponseMsg, Status)},
+    {NULL, NULL, 0, 0}};
+
+FMStructDescRec KillResponseStructs[] = {
+    {"KillResponse", KillResponseList, sizeof(struct _KillResponseMsg), NULL},
+    {NULL, NULL, 0, NULL}};
+
+FMField StatusServerList[] = {{"StatusResponseCondition", "integer", sizeof(long),
+                               FMOffset(StatusServerMsg, StatusResponseCondition)},
+                              {NULL, NULL, 0, 0}};
+
+FMStructDescRec StatusServerStructs[] = {
+    {"StatusServer", StatusServerList, sizeof(struct _StatusServerMsg), NULL},
+    {NULL, NULL, 0, NULL}};
+
+FMField StatusResponseList[] = {
+    {"StatusResponseCondition", "integer", sizeof(long),
+     FMOffset(StatusResponseMsg, StatusResponseCondition)},
+    {"Hostname", "string", sizeof(char *), FMOffset(StatusResponseMsg, Hostname)},
+    {"Status", "string", sizeof(char *), FMOffset(StatusResponseMsg, Status)},
+    {NULL, NULL, 0, 0}};
+
+FMStructDescRec StatusResponseStructs[] = {
+    {"StatusResponse", StatusResponseList, sizeof(struct _StatusResponseMsg), NULL},
+    {NULL, NULL, 0, NULL}};
+
 void RegisterFormats(RemoteCommon::Remote_evpath_state &ev_state)
 {
     ev_state.OpenFileFormat = CMregister_format(ev_state.cm, RemoteCommon::OpenFileStructs);
@@ -106,6 +146,11 @@ void RegisterFormats(RemoteCommon::Remote_evpath_state &ev_state)
     ev_state.ReadRequestFormat = CMregister_format(ev_state.cm, RemoteCommon::ReadRequestStructs);
     ev_state.ReadResponseFormat = CMregister_format(ev_state.cm, RemoteCommon::ReadResponseStructs);
     ev_state.CloseFileFormat = CMregister_format(ev_state.cm, RemoteCommon::CloseFileStructs);
+    ev_state.KillServerFormat = CMregister_format(ev_state.cm, RemoteCommon::KillServerStructs);
+    ev_state.KillResponseFormat = CMregister_format(ev_state.cm, RemoteCommon::KillResponseStructs);
+    ev_state.StatusServerFormat = CMregister_format(ev_state.cm, RemoteCommon::StatusServerStructs);
+    ev_state.StatusResponseFormat =
+        CMregister_format(ev_state.cm, RemoteCommon::StatusResponseStructs);
 }
 }
 }

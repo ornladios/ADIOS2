@@ -76,6 +76,8 @@ And finally, use the standard invocation to install:
 CMake Options
 *************
 
+.. _sec:source_cmake_options:
+
 The following options can be specified with CMake's ``-DVAR=VALUE`` syntax. The default option is highlighted.
 
 ============================= ================ ==========================================================================================================================================================================================================================
@@ -103,8 +105,8 @@ In addition to the ``ADIOS2_USE_Feature`` options, the following options are als
  CMake VAR Options                       Values                                       Description                                                                          |
 ==================================== =============================================== ===============================
 ``BUILD_SHARED_LIBS``                  **ON**/OFF                                     Build shared libraries.
-``ADIOS2_BUILD_EXAMPLES``              **ON**/OFF                                     Build examples.
-``BUILD_TESTING``                      **ON**/OFF                                     Build test code.
+``ADIOS2_BUILD_EXAMPLES``              ON/**OFF**                                     Build examples.
+``BUILD_TESTING``                      ON/**OFF**                                     Build test code.
 ``CMAKE_INSTALL_PREFIX``               /path/to/install (``/usr/local``)              Installation location.
 ``CMAKE_BUILD_TYPE``                   Debug/**Release**/RelWithDebInfo/MinSizeRel    Compiler optimization levels.
 ==================================== =============================================== ===============================

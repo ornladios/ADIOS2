@@ -357,7 +357,8 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              "adios2 query construction, a xml query File and a read engine",
              pybind11::arg("queryFile"), pybind11::arg("reader") = true)
 
-        .def("GetResult", &adios2::py11::Query::GetResult);
+        .def("GetResult", &adios2::py11::Query::GetResult)
+        .def("GetBlockIDs", &adios2::py11::Query::GetBlockIDs);
 
     pybind11::class_<adios2::py11::Variable>(m, "Variable")
         // Python 2

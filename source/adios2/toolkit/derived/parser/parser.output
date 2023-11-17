@@ -1,0 +1,350 @@
+State 5 conflicts: 1 shift/reduce
+State 24 conflicts: 1 shift/reduce
+
+
+Grammar
+
+    0 $accept: input $end
+
+    1 input: /* empty */
+    2      | ENDL input
+    3      | decl input
+    4      | exp input
+
+    5 decl: ALIAS PATH
+    6     | ALIAS PATH INDICES
+
+    7 list: list COMMA exp
+    8     | exp
+
+    9 exp: ALIAS
+   10    | ALIAS INDICES
+   11    | PATH
+   12    | NUMBER
+   13    | L_PAREN exp R_PAREN
+   14    | exp OPERATOR exp
+   15    | FUNCTION L_PAREN list R_PAREN
+
+
+Terminals, with rules where they appear
+
+$end (0) 0
+error (256)
+COMMA (258) 7
+L_PAREN (259) 13 15
+R_PAREN (260) 13 15
+ENDL (261) 2
+FUNCTION (262) 15
+OPERATOR (263) 14
+INDICES (264) 6 10
+NUMBER (265) 12
+ALIAS (266) 5 6 9 10
+PATH (267) 5 6 11
+
+
+Nonterminals, with rules where they appear
+
+$accept (13)
+    on left: 0
+input (14)
+    on left: 1 2 3 4, on right: 0 2 3 4
+decl (15)
+    on left: 5 6, on right: 3
+list (16)
+    on left: 7 8, on right: 7 15
+exp (17)
+    on left: 9 10 11 12 13 14 15, on right: 4 7 8 13 14
+
+
+state 0
+
+    0 $accept: . input $end
+
+    L_PAREN   shift, and go to state 1
+    ENDL      shift, and go to state 2
+    FUNCTION  shift, and go to state 3
+    NUMBER    shift, and go to state 4
+    ALIAS     shift, and go to state 5
+    PATH      shift, and go to state 6
+
+    $default  reduce using rule 1 (input)
+
+    input  go to state 7
+    decl   go to state 8
+    exp    go to state 9
+
+
+state 1
+
+   13 exp: L_PAREN . exp R_PAREN
+
+    L_PAREN   shift, and go to state 1
+    FUNCTION  shift, and go to state 3
+    NUMBER    shift, and go to state 4
+    ALIAS     shift, and go to state 10
+    PATH      shift, and go to state 6
+
+    exp  go to state 11
+
+
+state 2
+
+    2 input: ENDL . input
+
+    L_PAREN   shift, and go to state 1
+    ENDL      shift, and go to state 2
+    FUNCTION  shift, and go to state 3
+    NUMBER    shift, and go to state 4
+    ALIAS     shift, and go to state 5
+    PATH      shift, and go to state 6
+
+    $default  reduce using rule 1 (input)
+
+    input  go to state 12
+    decl   go to state 8
+    exp    go to state 9
+
+
+state 3
+
+   15 exp: FUNCTION . L_PAREN list R_PAREN
+
+    L_PAREN  shift, and go to state 13
+
+
+state 4
+
+   12 exp: NUMBER .
+
+    $default  reduce using rule 12 (exp)
+
+
+state 5
+
+    5 decl: ALIAS . PATH
+    6     | ALIAS . PATH INDICES
+    9 exp: ALIAS .
+   10    | ALIAS . INDICES
+
+    INDICES  shift, and go to state 14
+    PATH     shift, and go to state 15
+
+    PATH      [reduce using rule 9 (exp)]
+    $default  reduce using rule 9 (exp)
+
+
+state 6
+
+   11 exp: PATH .
+
+    $default  reduce using rule 11 (exp)
+
+
+state 7
+
+    0 $accept: input . $end
+
+    $end  shift, and go to state 16
+
+
+state 8
+
+    3 input: decl . input
+
+    L_PAREN   shift, and go to state 1
+    ENDL      shift, and go to state 2
+    FUNCTION  shift, and go to state 3
+    NUMBER    shift, and go to state 4
+    ALIAS     shift, and go to state 5
+    PATH      shift, and go to state 6
+
+    $default  reduce using rule 1 (input)
+
+    input  go to state 17
+    decl   go to state 8
+    exp    go to state 9
+
+
+state 9
+
+    4 input: exp . input
+   14 exp: exp . OPERATOR exp
+
+    L_PAREN   shift, and go to state 1
+    ENDL      shift, and go to state 2
+    FUNCTION  shift, and go to state 3
+    OPERATOR  shift, and go to state 18
+    NUMBER    shift, and go to state 4
+    ALIAS     shift, and go to state 5
+    PATH      shift, and go to state 6
+
+    $default  reduce using rule 1 (input)
+
+    input  go to state 19
+    decl   go to state 8
+    exp    go to state 9
+
+
+state 10
+
+    9 exp: ALIAS .
+   10    | ALIAS . INDICES
+
+    INDICES  shift, and go to state 14
+
+    $default  reduce using rule 9 (exp)
+
+
+state 11
+
+   13 exp: L_PAREN exp . R_PAREN
+   14    | exp . OPERATOR exp
+
+    R_PAREN   shift, and go to state 20
+    OPERATOR  shift, and go to state 18
+
+
+state 12
+
+    2 input: ENDL input .
+
+    $default  reduce using rule 2 (input)
+
+
+state 13
+
+   15 exp: FUNCTION L_PAREN . list R_PAREN
+
+    L_PAREN   shift, and go to state 1
+    FUNCTION  shift, and go to state 3
+    NUMBER    shift, and go to state 4
+    ALIAS     shift, and go to state 10
+    PATH      shift, and go to state 6
+
+    list  go to state 21
+    exp   go to state 22
+
+
+state 14
+
+   10 exp: ALIAS INDICES .
+
+    $default  reduce using rule 10 (exp)
+
+
+state 15
+
+    5 decl: ALIAS PATH .
+    6     | ALIAS PATH . INDICES
+
+    INDICES  shift, and go to state 23
+
+    $default  reduce using rule 5 (decl)
+
+
+state 16
+
+    0 $accept: input $end .
+
+    $default  accept
+
+
+state 17
+
+    3 input: decl input .
+
+    $default  reduce using rule 3 (input)
+
+
+state 18
+
+   14 exp: exp OPERATOR . exp
+
+    L_PAREN   shift, and go to state 1
+    FUNCTION  shift, and go to state 3
+    NUMBER    shift, and go to state 4
+    ALIAS     shift, and go to state 10
+    PATH      shift, and go to state 6
+
+    exp  go to state 24
+
+
+state 19
+
+    4 input: exp input .
+
+    $default  reduce using rule 4 (input)
+
+
+state 20
+
+   13 exp: L_PAREN exp R_PAREN .
+
+    $default  reduce using rule 13 (exp)
+
+
+state 21
+
+    7 list: list . COMMA exp
+   15 exp: FUNCTION L_PAREN list . R_PAREN
+
+    COMMA    shift, and go to state 25
+    R_PAREN  shift, and go to state 26
+
+
+state 22
+
+    8 list: exp .
+   14 exp: exp . OPERATOR exp
+
+    OPERATOR  shift, and go to state 18
+
+    $default  reduce using rule 8 (list)
+
+
+state 23
+
+    6 decl: ALIAS PATH INDICES .
+
+    $default  reduce using rule 6 (decl)
+
+
+state 24
+
+   14 exp: exp . OPERATOR exp
+   14    | exp OPERATOR exp .
+
+    OPERATOR  shift, and go to state 18
+
+    OPERATOR  [reduce using rule 14 (exp)]
+    $default  reduce using rule 14 (exp)
+
+
+state 25
+
+    7 list: list COMMA . exp
+
+    L_PAREN   shift, and go to state 1
+    FUNCTION  shift, and go to state 3
+    NUMBER    shift, and go to state 4
+    ALIAS     shift, and go to state 10
+    PATH      shift, and go to state 6
+
+    exp  go to state 27
+
+
+state 26
+
+   15 exp: FUNCTION L_PAREN list R_PAREN .
+
+    $default  reduce using rule 15 (exp)
+
+
+state 27
+
+    7 list: list COMMA exp .
+   14 exp: exp . OPERATOR exp
+
+    OPERATOR  shift, and go to state 18
+
+    $default  reduce using rule 7 (list)

@@ -50,16 +50,20 @@ void ReadResponseHandler(CManager cm, CMConnection conn, void *vevent, void *cli
     return;
 };
 
+CManagerSingleton &CManagerSingleton::Instance(RemoteCommon::Remote_evpath_state &ev_state)
+{
+    std::mutex mtx;
+    const std::lock_guard<std::mutex> lock(mtx);
+    static CManagerSingleton instance;
+    ev_state = instance.internalEvState;
+    return instance;
+}
+
 void Remote::InitCMData()
 {
-    std::lock_guard<std::mutex> lockGuard(m_CMInitMutex);
-    bool first = true;
-    auto &CM = CManagerSingleton::Instance(first);
-    ev_state.cm = CM.m_cm;
-    RegisterFormats(ev_state);
-    if (first)
-    {
-        CMfork_comm_thread(ev_state.cm);
+    (void)CManagerSingleton::Instance(ev_state);
+    static std::once_flag flag;
+    std::call_once(flag, [&]() {
         CMregister_handler(ev_state.OpenResponseFormat, (CMHandlerFunc)OpenResponseHandler,
                            &ev_state);
         CMregister_handler(ev_state.ReadResponseFormat, (CMHandlerFunc)ReadResponseHandler,
@@ -68,11 +72,11 @@ void Remote::InitCMData()
                            (CMHandlerFunc)OpenSimpleResponseHandler, &ev_state);
         CMregister_handler(ev_state.ReadResponseFormat, (CMHandlerFunc)ReadResponseHandler,
                            &ev_state);
-    }
+    });
 }
 
 void Remote::Open(const std::string hostname, const int32_t port, const std::string filename,
-                  const Mode mode)
+                  const Mode mode, bool RowMajorOrdering)
 {
 
     RemoteCommon::_OpenFileMsg open_msg;
@@ -102,6 +106,7 @@ void Remote::Open(const std::string hostname, const int32_t port, const std::str
         break;
     }
     open_msg.OpenResponseCondition = CMCondition_get(ev_state.cm, m_conn);
+    open_msg.RowMajorOrder = RowMajorOrdering;
     CMCondition_set_client_data(ev_state.cm, open_msg.OpenResponseCondition, (void *)this);
     CMwrite(m_conn, ev_state.OpenFileFormat, &open_msg);
     CMCondition_wait(ev_state.cm, open_msg.OpenResponseCondition);
@@ -171,7 +176,7 @@ bool Remote::WaitForGet(GetHandle handle) { return CMCondition_wait(ev_state.cm,
 #else
 
 void Remote::Open(const std::string hostname, const int32_t port, const std::string filename,
-                  const Mode mode){};
+                  const Mode mode, bool RowMajorOrdering){};
 
 void Remote::OpenSimpleFile(const std::string hostname, const int32_t port,
                             const std::string filename){};

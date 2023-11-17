@@ -1,12 +1,11 @@
-include(ProcessorCount)
-ProcessorCount(NCPUS)
-math(EXPR N2CPUS "${NCPUS}*2")
-
 set(ENV{CC}  icc)
 set(ENV{CXX} icpc)
 set(ENV{FC}  ifort)
 
 set(dashboard_cache "
+BUILD_TESTING:BOOL=ON
+ADIOS2_BUILD_EXAMPLES:BOOL=ON
+
 ADIOS2_USE_BZip2:BOOL=ON
 ADIOS2_USE_Blosc:BOOL=ON
 ADIOS2_USE_DataMan:BOOL=ON
@@ -25,9 +24,6 @@ CMAKE_C_FLAGS:STRING=-Wall -diag-disable=10441
 CMAKE_C_FLAGS_DEBUG:STRING=-g -O0
 CMAKE_CXX_FLAGS:STRING=-Wall -diag-disable=10441
 CMAKE_CXX_FLAGS_DEBUG:STRING=-g -O0
-
-MPIEXEC_EXTRA_FLAGS:STRING=--allow-run-as-root --oversubscribe
-MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 ")
 
 set(CTEST_CMAKE_GENERATOR "Unix Makefiles")

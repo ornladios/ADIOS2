@@ -8,7 +8,7 @@ object.  Current supported operations are:
 
 1. Data compression/decompression, lossy and lossless.
 
-This section provides a description of the :ref:`Available Operators` in ADIOS2
+This section provides a description of the supported operators in ADIOS2
 and their specific parameters to allow extra-control from the user. Parameters
 are passed in key-value pairs for:
 

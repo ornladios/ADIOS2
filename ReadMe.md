@@ -70,7 +70,7 @@ Once ADIOS2 is installed refer to:
 
 ## Releases
 
-* Latest release: [v2.9.0](https://github.com/ornladios/ADIOS2/releases/tag/v2.9.0)
+* Latest release: [v2.9.2](https://github.com/ornladios/ADIOS2/releases/tag/v2.9.2)
 
 * Previous releases: [https://github.com/ornladios/ADIOS2/releases](https://github.com/ornladios/ADIOS2/releases)
 
@@ -78,7 +78,6 @@ Once ADIOS2 is installed refer to:
 
 ADIOS2 is an open source project: Questions, discussion, and contributions are welcome. Join us at:
 
-- Slack workspace: [![Slack](https://img.shields.io/badge/slack-ADIOS2-pink.svg)](https://adios2.spack.io) 
 - Mailing list: adios-ecp@kitware.com 
 - Github Discussions: https://github.com/ornladios/ADIOS2/discussions
 

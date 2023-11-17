@@ -10,6 +10,9 @@
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
 #include "adios2/core/VariableBase.h"
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+#include "adios2/core/VariableDerived.h"
+#endif
 #include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/format/buffer/ffs/BufferFFS.h"
 
@@ -34,14 +37,14 @@ namespace format
 BP5Serializer::BP5Serializer() { Init(); }
 BP5Serializer::~BP5Serializer()
 {
-    if (Info.RecList)
+    if (!Info.RecMap.empty())
     {
-        for (int i = 0; i < Info.RecCount; i++)
+        for (auto &rec : Info.RecMap)
         {
-            if (Info.RecList[i].OperatorType)
-                free(Info.RecList[i].OperatorType);
+            if (rec.second.OperatorType)
+                free(rec.second.OperatorType);
         }
-        free(Info.RecList);
+        Info.RecMap.clear();
     }
     if (Info.MetaFieldCount)
         free_FMfield_list(Info.MetaFields);
@@ -64,7 +67,6 @@ void BP5Serializer::Init()
     // Re-init Info to zero
     Info = FFSWriterMarshalBase();
     Info.RecCount = 0;
-    Info.RecList = (BP5Serializer::BP5WriterRec)malloc(sizeof(Info.RecList[0]));
     Info.MetaFieldCount = 0;
     Info.MetaFields = NULL;
     Info.LocalFMContext = create_local_FMcontext();
@@ -80,16 +82,13 @@ void BP5Serializer::Init()
     ((BP5MetadataInfoStruct *)MetadataBuf)->BitField = (std::size_t *)malloc(sizeof(size_t));
     ((BP5MetadataInfoStruct *)MetadataBuf)->DataBlockSize = 0;
 }
-BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Key)
+BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Key) const
 {
-    for (int i = 0; i < Info.RecCount; i++)
+    auto it = Info.RecMap.find(Key);
+    if (it != Info.RecMap.end())
     {
-        if (Info.RecList[i].Key == Key)
-        {
-            return &Info.RecList[i];
-        }
+        return const_cast<BP5WriterRec>(&(it->second));
     }
-
     return NULL;
 }
 
@@ -238,25 +237,104 @@ char *BP5Serializer::BuildVarName(const char *base_name, const ShapeID Shape, co
     return Ret;
 }
 
-static char *BuildLongName(const char *base_name, const ShapeID Shape, const int type,
-                           const size_t element_size, const char *StructID)
+/*
+ * Do base64 encoding of binary buffer, returning a malloc'd string
+ */
+static const char num_to_char[] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static char *base64_encode(const char *buffer, unsigned int len)
 {
-    const char *Prefix = NamePrefix(Shape);
-    size_t StructIDLen = 0;
-    if (StructID)
-        StructIDLen = strlen(StructID);
-    size_t Len = strlen(base_name) + 3 + strlen(Prefix) + StructIDLen + 16;
-    char *Ret = (char *)malloc(Len);
-    if (StructID)
+    char *buf;
+    int buflen = 0;
+    int c1, c2, c3;
+    int maxlen = len * 4 / 3 + 4;
+#ifdef OVERKILL
+    maxlen = len * 2 + 2;
+#endif
+
+    buf = (char *)malloc(maxlen * sizeof(char));
+    if (buf == NULL)
     {
-        snprintf(Ret, Len, "%s_%zd_%d_%s", Prefix, element_size, type, StructID);
+        return NULL;
     }
     else
     {
-        snprintf(Ret, Len, "%s_%zd_%d", Prefix, element_size, type);
+        memset(buf, 0, maxlen * sizeof(char));
+    }
+
+    while (len)
+    {
+
+        c1 = (unsigned char)*buffer++;
+        buf[buflen++] = num_to_char[c1 >> 2];
+
+        if (--len == 0)
+            c2 = 0;
+        else
+            c2 = (unsigned char)*buffer++;
+        buf[buflen++] = num_to_char[((c1 & 0x3) << 4) | ((c2 & 0xf0) >> 4)];
+
+        if (len == 0)
+        {
+            buf[buflen++] = '=';
+            buf[buflen++] = '=';
+            break;
+        }
+
+        if (--len == 0)
+            c3 = 0;
+        else
+            c3 = (unsigned char)*buffer++;
+
+        buf[buflen++] = num_to_char[((c2 & 0xf) << 2) | ((c3 & 0xc0) >> 6)];
+        if (len == 0)
+        {
+            buf[buflen++] = '=';
+
+            break;
+        }
+
+        --len;
+        buf[buflen++] = num_to_char[c3 & 0x3f];
+    }
+
+    buf[buflen] = 0;
+
+    return buf;
+}
+
+static char *BuildLongName(const char *base_name, const ShapeID Shape, const int type,
+                           const size_t element_size, const char *StructID, const char *ExprStr)
+{
+    const char *Prefix = NamePrefix(Shape);
+    size_t StructIDLen = 0;
+    size_t ExprLen = 0;
+    char *ExpressionInsert = (char *)"_";
+    if (StructID)
+        StructIDLen = strlen(StructID);
+    if (ExprStr)
+    {
+        char *ExprEnc = base64_encode(ExprStr, (int)(strlen(ExprStr) + 1));
+        ExprLen = strlen(ExprEnc);
+        ExpressionInsert = (char *)malloc(ExprLen + 16); // str + enough for len and separators
+        snprintf(ExpressionInsert, ExprLen + 16, "-%zu-%s-", ExprLen, ExprEnc);
+        free(ExprEnc);
+    }
+    size_t Len = strlen(base_name) + 3 + ExprLen + strlen(Prefix) + StructIDLen + 16;
+    char *Ret = (char *)malloc(Len);
+    if (StructID)
+    {
+        snprintf(Ret, Len, "%s%s%zd_%d_%s", Prefix, ExpressionInsert, element_size, type, StructID);
+    }
+    else
+    {
+        snprintf(Ret, Len, "%s%s%zd_%d", Prefix, ExpressionInsert, element_size, type);
     }
     strcat(Ret, "_");
     strcat(Ret, base_name);
+    if (ExprStr)
+        free(ExpressionInsert);
     return Ret;
 }
 
@@ -424,9 +502,11 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
                                                            size_t DimCount)
 {
     core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
-    Info.RecList =
-        (BP5WriterRec)realloc(Info.RecList, (Info.RecCount + 1) * sizeof(Info.RecList[0]));
-    BP5WriterRec Rec = &Info.RecList[Info.RecCount];
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    core::VariableDerived *VD = dynamic_cast<core::VariableDerived *>(VB);
+#endif
+    auto obj = Info.RecMap.insert(std::make_pair(Variable, _BP5WriterRec()));
+    BP5WriterRec Rec = &obj.first->second;
     if (Type == DataType::String)
         ElemSize = sizeof(char *);
     Rec->Key = Variable;
@@ -502,7 +582,12 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
         }
         // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
         // and Offsets matching _MetaArrayRec
-        char *LongName = BuildLongName(Name, VB->m_ShapeID, (int)Type, ElemSize, TextStructID);
+        const char *ExprString = NULL;
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+        ExprString = VD ? VD->m_Expr.ExprString.c_str() : NULL;
+#endif
+        char *LongName =
+            BuildLongName(Name, VB->m_ShapeID, (int)Type, ElemSize, TextStructID, ExprString);
 
         const char *ArrayTypeName = "MetaArray";
         int FieldSize = sizeof(MetaArrayRec);
@@ -648,7 +733,18 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
     };
 
     core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    core::VariableDerived *VD = dynamic_cast<core::VariableDerived *>(VB);
+#endif
 
+    bool WriteData = true;
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    if (VD)
+    {
+        // All other types of Derived types we don't write data
+        WriteData = (VD->GetDerivedType() == DerivedVarType::StoreData);
+    }
+#endif
     BP5MetadataInfoStruct *MBase;
 
     BP5WriterRec Rec = LookupWriterRec(Variable);
@@ -719,7 +815,12 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
 
         MinMaxStruct MinMax;
         MinMax.Init(Type);
-        if ((m_StatsLevel > 0) && !Span)
+        bool DerivedWithoutStats = false;
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+        DerivedWithoutStats = VD && (VD->GetDerivedType() == DerivedVarType::ExpressionString);
+#endif
+        bool DoMinMax = ((m_StatsLevel > 0) && !DerivedWithoutStats);
+        if (DoMinMax && !Span)
         {
             GetMinMax(Data, ElemCount, (DataType)Rec->Type, MinMax, MemSpace);
         }
@@ -733,7 +834,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
             for (size_t i = 0; i < DimCount; i++)
             {
                 tmpCount.push_back(Count[i]);
-                tmpOffsets.push_back(Offsets[i]);
+                if (Offsets)
+                    tmpOffsets.push_back(Offsets[i]);
             }
             size_t AllocSize = ElemCount * ElemSize + 100;
             BufferV::BufferPos pos = CurDataBuffer->Allocate(AllocSize, ElemSize);
@@ -747,6 +849,11 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
                     (const char *)Data, tmpCount, (DataType)Rec->Type, CompressedData,
                     VB->m_Operations[0]->GetHeaderSize(), MemSpace);
             CurDataBuffer->DownsizeLastAlloc(AllocSize, CompressedSize);
+        }
+        else if (!WriteData)
+        {
+            DataOffset = (size_t)-1;
+            DeferAddToVec = false;
         }
         else if (Span == nullptr)
         {
@@ -785,7 +892,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
                 MetaEntry->Offsets = CopyDims(DimCount, Offsets);
             else
                 MetaEntry->Offsets = NULL;
-            if (m_StatsLevel > 0)
+            if (DoMinMax)
             {
                 void **MMPtrLoc = (void **)(((char *)MetaEntry) + Rec->MinMaxOffset);
                 *MMPtrLoc = (void *)malloc(ElemSize * 2);
@@ -827,7 +934,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
                     (size_t *)realloc(OpEntry->DataBlockSize, OpEntry->BlockCount * sizeof(size_t));
                 OpEntry->DataBlockSize[OpEntry->BlockCount - 1] = CompressedSize;
             }
-            if (m_StatsLevel > 0)
+            if (DoMinMax)
             {
                 void **MMPtrLoc = (void **)(((char *)MetaEntry) + Rec->MinMaxOffset);
                 *MMPtrLoc = (void *)realloc(*MMPtrLoc, MetaEntry->BlockCount * ElemSize * 2);
@@ -856,6 +963,87 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
                     AppendDims(MetaEntry->Offsets, PreviousDBCount, DimCount, Offsets);
         }
     }
+}
+
+const void *BP5Serializer::SearchDeferredBlocks(size_t MetaOffset, size_t BlockID)
+{
+    for (auto &Def : DeferredExterns)
+    {
+        if ((Def.MetaOffset == MetaOffset) && (Def.BlockID == BlockID))
+        {
+            return Def.Data;
+        }
+    }
+    return NULL;
+}
+
+MinVarInfo *BP5Serializer::MinBlocksInfo(const core::VariableBase &Var)
+{
+    BP5WriterRec VarRec = LookupWriterRec((void *)&Var);
+
+    if (!VarRec)
+        return NULL;
+
+    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, (size_t *)Var.m_Shape.data());
+
+    BP5MetadataInfoStruct *MBase = (struct BP5MetadataInfoStruct *)MetadataBuf;
+
+    int AlreadyWritten = BP5BitfieldTest(MBase, VarRec->FieldID);
+
+    if (!AlreadyWritten)
+        return MV;
+
+    if (Var.m_SingleValue)
+    {
+        // single value case
+        MinBlockInfo Blk;
+        Blk.MinMax.Init(Var.m_Type);
+        Blk.WriterID = (int)-1;
+        Blk.BlockID = 0;
+        Blk.Start = NULL;
+        Blk.Count = NULL;
+        if (Var.m_Type != DataType::String)
+        {
+            Blk.BufferP = (char *)(MetadataBuf) + VarRec->MetaOffset;
+        }
+        else
+        {
+            char **StrPtr = (char **)((char *)(MetadataBuf) + VarRec->MetaOffset);
+            Blk.BufferP = *StrPtr;
+        }
+        MV->BlocksInfo.push_back(Blk);
+    }
+    else
+    {
+        // everything else
+        MetaArrayRec *MetaEntry = (MetaArrayRec *)((char *)(MetadataBuf) + VarRec->MetaOffset);
+        for (size_t b = 0; b < MetaEntry->BlockCount; b++)
+        {
+            MinBlockInfo Blk;
+            Blk.MinMax.Init(Var.m_Type);
+            Blk.WriterID = (int)-1;
+            Blk.BlockID = 0;
+            Blk.Start = NULL;
+            if (MetaEntry->Offsets)
+            {
+                Blk.Start = &(MetaEntry->Offsets[b * MetaEntry->Dims]);
+            }
+            Blk.Count = &(MetaEntry->Count[b * MetaEntry->Dims]);
+            if (MetaEntry->DataBlockLocation[b] < m_PriorDataBufferSizeTotal)
+            {
+                Blk.BufferP = (void *)(intptr_t)(-1); // data is out of memory
+            }
+            else
+            {
+                Blk.BufferP = (void *)SearchDeferredBlocks(VarRec->MetaOffset, b);
+                if (!Blk.BufferP)
+                    Blk.BufferP = CurDataBuffer->GetPtr(MetaEntry->DataBlockLocation[b] -
+                                                        m_PriorDataBufferSizeTotal);
+            }
+            MV->BlocksInfo.push_back(Blk);
+        }
+    }
+    return MV;
 }
 
 void BP5Serializer::MarshalAttribute(const char *Name, const DataType Type, size_t ElemSize,
@@ -1060,9 +1248,9 @@ BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer, bool forceCopyDeferr
 
 void BP5Serializer::CollectFinalShapeValues()
 {
-    for (int i = 0; i < Info.RecCount; i++)
+    for (auto it : Info.RecMap)
     {
-        BP5WriterRec Rec = &Info.RecList[i];
+        BP5WriterRec Rec = &it.second;
         if (Rec->Shape == ShapeID::GlobalArray)
         {
             core::VariableBase *VB = static_cast<core::VariableBase *>(Rec->Key);

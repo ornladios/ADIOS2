@@ -2,6 +2,8 @@
 Operator
 ********
 
+.. _sec:basics_interface_components_operator:
+
 The Operator abstraction allows ADIOS2 to act upon the user application data, either from a ``adios2::Variable`` or a set of Variables in an ``adios2::IO`` object.
 Current supported operations are:
 

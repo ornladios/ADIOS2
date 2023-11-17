@@ -51,7 +51,7 @@ jobs:
     outputs:
       num_code_changes: ${{ steps.get_code_changes.outputs.num_code_changes }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Check for appropriately named topic branch
@@ -80,10 +80,10 @@ jobs:
       image: ghcr.io/ornladios/adios2:ci-formatting
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           path: gha
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -153,10 +153,10 @@ jobs:
             shared: static
             parallel: serial
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           path: gha
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -218,10 +218,10 @@ jobs:
         parallel: [ompi]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           path: gha
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -285,10 +285,10 @@ jobs:
             compiler: xcode13_4_1
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           path: gha
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -352,10 +352,10 @@ jobs:
         shell: bash
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           path: gha
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
@@ -386,7 +386,7 @@ jobs:
         baseos: [ubuntu-bionic]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: ci-source
@@ -448,24 +448,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        code: [examples, lammps, tau]
+        code: [lammps, tau]
         include:
-          - code: examples
-            repo: ornladios/ADIOS2-Examples
-            ref: master
           - code: lammps
             repo: pnorbert/lammps
             ref: fix-deprecated-adios-init
           - code: tau
-            repo: ornladios/ADIOS2-Examples
-            ref: master
-
     defaults:
       run:
         shell: bash -c "docker exec adios2-ci bash --login -e $(echo {0} | sed 's|/home/runner/work|/__w|g')"
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        if: ${{ matrix.repo != '' }}
         with:
           repository: ${{ matrix.repo }}
           ref: ${{ matrix.ref }}
@@ -523,10 +518,10 @@ jobs:
         language: [ 'cpp' ]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         path: gha
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         ref: ${{ github.event.pull_request.head.sha }}
         path: source
@@ -535,8 +530,10 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         config: |
+          paths:
+            - source
           paths-ignore:
-            - source/thirdparty/
+            - source/thirdparty
     - name: Setup
       run: gha/scripts/ci/gh-actions/linux-setup.sh
     - name: Update

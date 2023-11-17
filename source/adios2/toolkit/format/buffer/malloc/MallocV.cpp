@@ -7,6 +7,7 @@
  */
 
 #include "MallocV.h"
+#include "adios2/helper/adiosFunctions.h"
 #include "adios2/toolkit/format/buffer/BufferV.h"
 
 #include <algorithm>
@@ -74,7 +75,12 @@ size_t MallocV::AddToVec(const size_t size, const void *buf, size_t align, bool 
             m_InternalBlock = (char *)realloc(m_InternalBlock, NewSize);
             m_AllocatedSize = NewSize;
         }
-        memcpy(m_InternalBlock + m_internalPos, buf, size);
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+        if (MemSpace == MemorySpace::GPU)
+            helper::CopyFromGPUToBuffer(m_InternalBlock, m_internalPos, buf, MemSpace, size);
+#endif
+        if (MemSpace == MemorySpace::Host)
+            memcpy(m_InternalBlock + m_internalPos, buf, size);
 
         if (DataV.size() && !DataV.back().External &&
             (m_internalPos == (DataV.back().Offset + DataV.back().Size)))
@@ -156,6 +162,8 @@ void *MallocV::GetPtr(int bufferIdx, size_t posInBuffer)
         return m_InternalBlock + posInBuffer;
     }
 }
+
+void *MallocV::GetPtr(size_t posInBuffer) { return m_InternalBlock + posInBuffer; }
 
 std::vector<core::iovec> MallocV::DataVec() noexcept
 {
