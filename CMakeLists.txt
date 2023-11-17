@@ -173,7 +173,6 @@ adios_option(Catalyst   "Enable support for in situ visualization plugin using P
 adios_option(SQLite3    "Enable support for SQLite3 required by campaign manager" OFF)
 adios_option(AWSSDK     "Enable support for S3 compatible storage using AWS SDK's S3 module" OFF)
 adios_option(Derived_Variable    "Enable support for derived variables" OFF)
->>>>>>> master
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
