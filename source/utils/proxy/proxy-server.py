@@ -4,7 +4,7 @@
 # Accepts incoming HTTP requests and transform them to sftp requests
 # using pycurl or paramiko libraries
 
-import sys
+from functools import partial
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import paramiko
 import getpass
@@ -20,8 +20,6 @@ logging.basicConfig(level=logging.INFO)
 Typical test command
 curl --http0.9 http://127.0.0.1:9999/path/test.bp/md.idx -i -H "Range: bytes=0-10"
 """
-buf = BytesIO()
-curl = pycurl.Curl()
 
 
 def setup_args():
@@ -81,29 +79,48 @@ class ADIOS_HTTP_PARAMIKO_Request(BaseHTTPRequestHandler):
         self.wfile.write("Ok".encode("utf-8"))
 
 
+
 class ADIOS_HTTP_CURL_Request(BaseHTTPRequestHandler):
+    buf = BytesIO()
+    curl = pycurl.Curl()
+    def __init__(self, REMOTE_HOST, user, password, *args, **kwargs):
+        self.REMOTE_HOST = REMOTE_HOST
+        self.user = user
+        self.password = password
+        super().__init__(*args, **kwargs)
+
+        #trying to connect
+        self.curl.setopt(pycurl.URL, "sftp://" + self.REMOTE_HOST)
+        self.curl.setopt(pycurl.WRITEFUNCTION, self.buf.write)
+        self.curl.setopt(pycurl.NOPROGRESS, 1)
+        self.curl.setopt(pycurl.USERPWD, user + ":" + password)
+        self.curl.setopt(self.curl.NOBODY, 1)
+        try:
+            self.curl.perform()
+        except Exception:
+            logging.info("connection error")
+            exit(1)
+
+        self.curl.setopt(pycurl.NOBODY, 0)
+
     def do_GET(self):
         logging.info("GET request, Path: %s Headers: %s\n", str(self.path), str(self.headers))
         filepath = self.path
-        curl.reset()
-        curl.setopt(pycurl.URL, "sftp://" + REMOTE_HOST + "/" + filepath)
-        curl.setopt(pycurl.WRITEFUNCTION, buf.write)
-        curl.setopt(pycurl.NOPROGRESS, 1)
-        curl.setopt(pycurl.USERPWD, user + ":" + password)
+        self.curl.reset()
+        self.curl.setopt(pycurl.URL, "sftp://" + REMOTE_HOST + "/" + filepath)
+        self.curl.setopt(pycurl.WRITEFUNCTION, self.buf.write)
+        self.curl.setopt(pycurl.NOPROGRESS, 1)
+        self.curl.setopt(pycurl.USERPWD, user + ":" + password)
         header = self.headers["Range"]
         if header:
             ranges = header.split("=")[1]
             """this is in fact ADIOS2 block. Expecting a reasonable size"""
-            curl.setopt(pycurl.RANGE, ranges)
-            buf.truncate(0)
-            buf.seek(0)
-            """if credentials are not correct 3 times, your access will be blocked"""
-            try:
-                curl.perform()
-            except Exception:
-                exit(1)
+            self.curl.setopt(pycurl.RANGE, ranges)
+            self.buf.truncate(0)
+            self.buf.seek(0)
+            self.curl.perform()
             """send data back"""
-            val = buf.getvalue()
+            val = self.buf.getvalue()
             logging.info("sending %s bytes", str(len(val)))
             self.wfile.write(val)
 
@@ -112,14 +129,10 @@ class ADIOS_HTTP_CURL_Request(BaseHTTPRequestHandler):
         header = self.headers["Content-Length"]
 
         if header:
-            curl.setopt(curl.NOBODY, 1)
-            try:
-                curl.perform()
-            except Exception:
-                exit(1)
-
-            size = curl.getinfo(curl.CONTENT_LENGTH_DOWNLOAD)
-            curl.setopt(curl.NOBODY, 0)
+            self.curl.setopt(self.curl.NOBODY, 1)
+            self.curl.perform()
+            size = self.curl.getinfo(self.curl.CONTENT_LENGTH_DOWNLOAD)
+            self.curl.setopt(self.curl.NOBODY, 0)
             """send data back"""
             logging.info("sending %s", str(int(size)))
             self.wfile.write(bytes(str(int(size)), "utf-8)"))
@@ -178,22 +191,9 @@ def main_paramiko(client, REMOTE_HOST, user, pkey, password):
 
 
 def main_curl(REMOTE_HOST, user, pkey, password):
-    global curl
-    #trying to connect
-    curl.setopt(pycurl.URL, "sftp://" + REMOTE_HOST)
-    curl.setopt(pycurl.WRITEFUNCTION, buf.write)
-    curl.setopt(pycurl.NOPROGRESS, 1)
-    curl.setopt(pycurl.USERPWD, user + ":" + password)
-    curl.setopt(curl.NOBODY, 1)
-    try:
-        curl.perform()
-    except Exception:
-        logging.info("connection error")
-        exit(1)
 
-    curl.setopt(curl.NOBODY, 0)
-
-    server = HTTPServer((HOST, PORT), ADIOS_HTTP_CURL_Request)
+    handler = partial(ADIOS_HTTP_CURL_Request, REMOTE_HOST, user, password)
+    server = HTTPServer((HOST, PORT), handler)
     try:
         # Listen for requests
         logging.info("Server now serving on port %s", str(PORT))
