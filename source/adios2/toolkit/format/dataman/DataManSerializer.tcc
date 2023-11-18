@@ -25,35 +25,43 @@ namespace format
 template <>
 inline void DataManSerializer::CalculateMinMax<std::complex<float>>(const std::complex<float> *data,
                                                                     const Dims &count,
+                                                                    const MemorySpace varMemSpace,
                                                                     nlohmann::json &metaj)
 {
 }
 
 template <>
-inline void
-DataManSerializer::CalculateMinMax<std::complex<double>>(const std::complex<double> *data,
-                                                         const Dims &count, nlohmann::json &metaj)
+inline void DataManSerializer::CalculateMinMax<std::complex<double>>(
+    const std::complex<double> *data, const Dims &count, const MemorySpace varMemSpace,
+    nlohmann::json &metaj)
 {
 }
 
 template <typename T>
-void DataManSerializer::CalculateMinMax(const T *data, const Dims &count, nlohmann::json &metaj)
+void DataManSerializer::CalculateMinMax(const T *data, const Dims &count,
+                                        const MemorySpace varMemSpace, nlohmann::json &metaj)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     size_t size = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
     T max = std::numeric_limits<T>::min();
     T min = std::numeric_limits<T>::max();
-
-    for (size_t j = 0; j < size; ++j)
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    if (varMemSpace == MemorySpace::GPU)
+        helper::GetGPUMinMax(data, size, min, max);
+#endif
+    if (varMemSpace == MemorySpace::Host)
     {
-        T value = data[j];
-        if (value > max)
+        for (size_t j = 0; j < size; ++j)
         {
-            max = value;
-        }
-        if (value < min)
-        {
-            min = value;
+            T value = data[j];
+            if (value > max)
+            {
+                max = value;
+            }
+            if (value < min)
+            {
+                min = value;
+            }
         }
     }
 
@@ -73,16 +81,16 @@ void DataManSerializer::PutData(const core::Variable<T> &variable, const std::st
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     PutData(variable.GetData(), variable.m_Name, variable.m_Shape, variable.m_Start,
-            variable.m_Count, variable.m_MemoryStart, variable.m_MemoryCount, doid, step, rank,
-            address, variable.m_Operations, localBuffer, metadataJson);
+            variable.m_Count, variable.m_MemoryStart, variable.m_MemoryCount, variable.m_MemSpace,
+            doid, step, rank, address, variable.m_Operations, localBuffer, metadataJson);
 }
 
 template <class T>
 void DataManSerializer::PutData(const T *inputData, const std::string &varName,
                                 const Dims &varShape, const Dims &varStart, const Dims &varCount,
                                 const Dims &varMemStart, const Dims &varMemCount,
-                                const std::string &doid, const size_t step, const int rank,
-                                const std::string &address,
+                                const MemorySpace varMemSpace, const std::string &doid,
+                                const size_t step, const int rank, const std::string &address,
                                 const std::vector<std::shared_ptr<core::Operator>> &ops,
                                 VecPtr localBuffer, JsonPtr metadataJson)
 {
@@ -111,7 +119,7 @@ void DataManSerializer::PutData(const T *inputData, const std::string &varName,
 
     if (m_EnableStat)
     {
-        CalculateMinMax(inputData, varCount, metaj);
+        CalculateMinMax(inputData, varCount, varMemSpace, metaj);
     }
 
     if (not m_IsRowMajor)
@@ -171,7 +179,13 @@ void DataManSerializer::PutData(const T *inputData, const std::string &varName,
     }
     else
     {
-        std::memcpy(localBuffer->data() + localBuffer->size() - datasize, inputData, datasize);
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+        if (varMemSpace == MemorySpace::GPU)
+            helper::CopyFromGPUToBuffer(localBuffer->data(), localBuffer->size() - datasize,
+                                        inputData, varMemSpace, datasize);
+#endif
+        if (varMemSpace == MemorySpace::Host)
+            std::memcpy(localBuffer->data() + localBuffer->size() - datasize, inputData, datasize);
     }
 
     if (metadataJson == nullptr)
@@ -189,7 +203,8 @@ void DataManSerializer::PutData(const T *inputData, const std::string &varName,
 
 template <class T>
 int DataManSerializer::GetData(T *outputData, const std::string &varName, const Dims &varStart,
-                               const Dims &varCount, const size_t step, const Dims &varMemStart,
+                               const Dims &varCount, const size_t step,
+                               const MemorySpace varMemSpace, const Dims &varMemStart,
                                const Dims &varMemCount)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
@@ -238,7 +253,7 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName, const 
                 m_OperatorMapMutex.unlock();
                 decompressBuffer.reserve(helper::GetTotalSize(j.count, sizeof(T)));
                 core::Decompress(j.buffer->data() + j.position, j.size, decompressBuffer.data(),
-                                 MemorySpace::Host);
+                                 varMemSpace);
                 decompressed = true;
                 input_data = decompressBuffer.data();
             }
@@ -261,14 +276,14 @@ int DataManSerializer::GetData(T *outputData, const std::string &varName, const 
                     helper::NdCopy(input_data, j.start, j.count, true, j.isLittleEndian,
                                    reinterpret_cast<char *>(outputData), varStart, varCount, true,
                                    m_IsLittleEndian, sizeof(T), j.start, j.count, varMemStart,
-                                   varMemCount);
+                                   varMemCount, false, varMemSpace);
                 }
                 else
                 {
                     helper::NdCopy(input_data, j.start, j.count, j.isRowMajor, j.isLittleEndian,
                                    reinterpret_cast<char *>(outputData), varStart, varCount,
                                    m_IsRowMajor, m_IsLittleEndian, sizeof(T), j.start, j.count,
-                                   varMemStart, varMemCount);
+                                   varMemStart, varMemCount, false, varMemSpace);
                 }
             }
             else
