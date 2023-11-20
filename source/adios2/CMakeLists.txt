@@ -205,7 +205,7 @@ if (ADIOS2_HAVE_SST)
   add_subdirectory(toolkit/remote)
 endif()
    
-if(ADIOS2_HAVE_SQLite3)
+if(ADIOS2_HAVE_Campaign)
   target_sources(adios2_core PRIVATE 
           engine/campaign/CampaignReader.cpp 
           engine/campaign/CampaignReader.tcc 
