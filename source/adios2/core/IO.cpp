@@ -24,7 +24,6 @@
 #include "adios2/engine/bp4/BP4Writer.h"
 #include "adios2/engine/bp5/BP5Reader.h"
 #include "adios2/engine/bp5/BP5Writer.h"
-#include "adios2/engine/campaign/CampaignReader.h"
 #include "adios2/engine/inline/InlineReader.h"
 #include "adios2/engine/inline/InlineWriter.h"
 #include "adios2/engine/mhs/MhsReader.h"
@@ -53,6 +52,10 @@
 #ifdef ADIOS2_HAVE_DAOS // external dependencies
 #include "adios2/engine/daos/DaosReader.h"
 #include "adios2/engine/daos/DaosWriter.h"
+#endif
+
+#ifdef ADIOS2_HAVE_CAMPAIGN // external dependencies
+#include "adios2/engine/campaign/CampaignReader.h"
 #endif
 
 namespace adios2
@@ -127,9 +130,16 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
      {IO::NoEngine("ERROR: nullcore engine does not support read mode"),
       IO::MakeEngine<engine::NullWriter>}},
     {"plugin", {IO::MakeEngine<plugin::PluginEngine>, IO::MakeEngine<plugin::PluginEngine>}},
+
     {"campaign",
+#ifdef ADIOS2_HAVE_CAMPAIGN
      {IO::MakeEngine<engine::CampaignReader>,
-      IO::NoEngine("ERROR: campaign engine does not support write mode")}},
+      IO::NoEngine("ERROR: campaign engine does not support write mode")}
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "support for campaign management, can't use Campaign engine\n")
+#endif
+    },
 };
 
 const std::unordered_map<std::string, bool> ReadRandomAccess_Supported = {
