@@ -14,7 +14,7 @@ from time import time
 
 # from adios2.adios2_campaign_manager import *
 
-ADIOS_ACM_VERSION = "1.0"
+ADIOS_ACA_VERSION = "1.0"
 
 
 def SetupArgs():
@@ -45,7 +45,7 @@ def SetupArgs():
     # default values
     args.update = False
     args.CampaignFileName = args.campaign_store + "/" + \
-        args.project + "_" + args.app + "_" + args.shot + ".acm"
+        args.project + "_" + args.app + "_" + args.shot + ".aca"
     args.LocalCampaignDir = "adios-campaign/"
 
     # print("Verbosity = {0}".format(args.verbose))
@@ -239,7 +239,7 @@ def Create(args: dict, cur: sqlite3.Cursor):
     cur.execute(
         "create table info(id TEXT, name TEXT, version TEXT, ctime INT)")
     cur.execute('insert into info values (?, ?, ?, ?)',
-                ("ACM", "ADIOS Campaign Archive", ADIOS_ACM_VERSION, epoch))
+                ("ACA", "ADIOS Campaign Archive", ADIOS_ACA_VERSION, epoch))
     cur.execute("create table host" +
                 "(hostname TEXT PRIMARY KEY, longhostname TEXT)")
     cur.execute("create table directory" +
