@@ -127,14 +127,17 @@ jobs:
         os: [ubuntu20.04]
         compiler: [gcc8, gcc9, gcc10, gcc11, clang6, clang10]
         shared: [shared]
-        parallel: [ompi]
+        parallel: [mpich]
         include:
           - os: ubuntu20.04
-            compiler: gcc10
-            parallel: mpich
+            compiler: gcc8
+            parallel: ompi
           - os: ubuntu20.04
             compiler: gcc8
             parallel: serial
+          - os: ubuntu20.04
+            compiler: clang6
+            parallel: ompi
           - os: ubuntu20.04
             compiler: clang6
             parallel: serial
@@ -215,7 +218,7 @@ jobs:
       matrix:
         os: [el8]
         compiler: [icc, oneapi]
-        parallel: [ompi]
+        parallel: [mpich]
 
     steps:
       - uses: actions/checkout@v4

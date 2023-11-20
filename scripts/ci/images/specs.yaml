@@ -1,5 +1,0 @@
-spack:
-  view: true
-  specs:
-    # https://github.com/ornladios/ADIOS2/issues/3754
-    - mgard@2023-01-10

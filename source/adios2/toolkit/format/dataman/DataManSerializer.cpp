@@ -600,8 +600,8 @@ void DataManSerializer::Log(const int level, const std::string &message, const b
 void DataManSerializer::PutData(const std::string *inputData, const std::string &varName,
                                 const Dims &varShape, const Dims &varStart, const Dims &varCount,
                                 const Dims &varMemStart, const Dims &varMemCount,
-                                const std::string &doid, const size_t step, const int rank,
-                                const std::string &address,
+                                const MemorySpace varMemSpace, const std::string &doid,
+                                const size_t step, const int rank, const std::string &address,
                                 const std::vector<std::shared_ptr<core::Operator>> &ops,
                                 VecPtr localBuffer, JsonPtr metadataJson)
 {
@@ -646,8 +646,14 @@ void DataManSerializer::PutData(const std::string *inputData, const std::string 
 
     localBuffer->resize(localBuffer->size() + inputData->size());
 
-    std::memcpy(localBuffer->data() + localBuffer->size() - inputData->size(), inputData->data(),
-                inputData->size());
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    if (varMemSpace == MemorySpace::GPU)
+        helper::CopyFromGPUToBuffer(localBuffer->data(), localBuffer->size() - inputData->size(),
+                                    inputData->data(), varMemSpace, inputData->size());
+#endif
+    if (varMemSpace == MemorySpace::Host)
+        std::memcpy(localBuffer->data() + localBuffer->size() - inputData->size(),
+                    inputData->data(), inputData->size());
 
     if (metadataJson == nullptr)
     {
@@ -665,7 +671,8 @@ void DataManSerializer::PutData(const std::string *inputData, const std::string 
 template <>
 int DataManSerializer::GetData(std::string *outputData, const std::string &varName,
                                const Dims &varStart, const Dims &varCount, const size_t step,
-                               const Dims &varMemStart, const Dims &varMemCount)
+                               const MemorySpace varMemSpace, const Dims &varMemStart,
+                               const Dims &varMemCount)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
 

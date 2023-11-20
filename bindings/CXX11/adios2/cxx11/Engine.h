@@ -212,11 +212,12 @@ public:
     void Put(Variable<T> variable, U const &data, const Mode launch = Mode::Deferred)
     {
         auto bufferView = static_cast<AdiosView<U>>(data);
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
         auto bufferMem = bufferView.memory_space();
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
         auto variableMem = variable.GetMemorySpace();
         CheckMemorySpace(variableMem, bufferMem);
 #endif
+        variable.SetMemorySpace(bufferMem);
         Put(variable, bufferView.data(), launch);
     }
 
