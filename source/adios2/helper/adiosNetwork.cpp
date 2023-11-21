@@ -14,11 +14,11 @@
 
 #include <string.h> // memcpy
 
+#ifndef _WIN32
+
 #include <netdb.h>      //getFQDN
 #include <sys/socket.h> //getFQDN
 #include <sys/types.h>  //getFQDN
-
-#ifndef _WIN32
 
 #if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_TABLE)
 
@@ -34,7 +34,11 @@
 #include <nlohmann_json.hpp>
 
 #endif // ADIOS2_HAVE_DATAMAN || ADIOS2_HAVE_TABLE
-#endif // _WIN32
+
+#else // _WIN32
+#include <tchar.h>
+#include <windows.h> // GetComputerName
+#endif               // _WIN32
 
 namespace adios2
 {
@@ -50,6 +54,7 @@ std::string GetFQDN() noexcept
     memset(hostname, 0, sizeof(hostname));
     if (GetComputerName(infoBuf, &bufCharCount))
     {
+        int i;
         for (i = 0; i < sizeof(hostname); i++)
         {
             hostname[i] = infoBuf[i];
