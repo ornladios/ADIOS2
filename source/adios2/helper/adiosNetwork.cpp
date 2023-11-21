@@ -20,17 +20,16 @@
 
 #ifndef _WIN32
 
-
 #if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_TABLE)
 
 #include <iostream>
 #include <thread>
 
-#include <unistd.h> // gethostname
 #include <arpa/inet.h>  //AvailableIpAddresses() inet_ntoa
 #include <net/if.h>     //AvailableIpAddresses() struct if_nameindex
 #include <netinet/in.h> //AvailableIpAddresses() struct sockaddr_in
 #include <sys/ioctl.h>  //AvailableIpAddresses() ioctl
+#include <unistd.h>     // gethostname
 
 #include <nlohmann_json.hpp>
 
