@@ -7,7 +7,7 @@
 # Note the use of multiple checkout actions in most jobs.  This has been
 # implemented to allow the use of CI scripts at a different ref or sha than
 # the source code they're evaluating.  For push events (when a pull_request is
-# merged) ther is no difference.  However, for pull_request events this allows
+# merged) there is no difference.  However, for pull_request events this allows
 # us test code at the head of a pull_request using the CI scripts from the
 # prospectively merged pull_request, which will include any CI updates that
 # may have made it to the target branch after the pull_request was started.
@@ -451,8 +451,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        code: [lammps, tau]
+        code: [examples, lammps, tau]
         include:
+          - code: examples
           - code: lammps
             repo: pnorbert/lammps
             ref: fix-deprecated-adios-init
