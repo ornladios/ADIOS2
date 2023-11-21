@@ -15,6 +15,9 @@
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
 #ifdef HAVE_WINDOWS_H
 #include <winsock.h>
 #endif
@@ -34,7 +37,7 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <limits.h>
-#include <string.h>
+#include <strings.h>
 #else
 #include "kernel/pbio_kernel.h"
 #include "kernel/kpbio.h"
@@ -44,9 +47,6 @@
 #include "assert.h"
 #include "fm.h"
 #include "fm_internal.h"
-#if defined(_MSC_VER)
-#define strdup _strdup
-#endif
 
 static int server_register_format(FMContext fmc, FMFormat fmformat);
 static int self_server_register_format(FMContext fmc,
@@ -203,7 +203,8 @@ create_local_FMcontext()
 }
 
 static void
-free_FMformat(FMFormat body)
+free_FMformat(body)
+FMFormat body;
 {
     int i;
     body->ref_count--;
@@ -297,7 +298,11 @@ FMformatID_len(char *buffer)
 }
 
 extern void
-add_opt_info_FMformat(FMFormat format, int typ, int len, void *block)
+add_opt_info_FMformat(format, typ, len, block)
+FMFormat format;
+int typ;
+int len;
+void *block;
 {
     int count = 0;
     if (format->opt_info == NULL) {
@@ -383,13 +388,15 @@ FMget_compat_formats(FMFormat fmformat)
 }
     
 FMFormat
-get_local_format_IOcontext(FMContext iocontext, void *buffer)
+get_local_format_IOcontext(iocontext, buffer)
+FMContext iocontext;
+void *buffer;
 {
     FMContext fmc = (FMContext) iocontext;
     int i;
     if (get_format_server_verbose()) {
-	printf("Get Format searching in context %p for format ", 
-	       iocontext);
+	printf("Get Format searching in context %lx for format ", 
+	       (long)iocontext);
 	print_server_ID(buffer);
 	printf("\n");
     }
@@ -455,7 +462,9 @@ get_local_format_IOcontext(FMContext iocontext, void *buffer)
 }
 
 FMFormat
-FMformat_from_ID(FMContext iocontext, char *buffer)
+FMformat_from_ID(iocontext, buffer)
+FMContext iocontext;
+char *buffer;
 {
     FMContext fmc = (FMContext) iocontext;
     FMFormat new_format;
@@ -526,21 +535,22 @@ FMformat_from_ID(FMContext iocontext, char *buffer)
 	new_format = server_get_format(iocontext, buffer);
     }
     if (get_format_server_verbose()) {
-	printf("Read format from format server  %p\n",
-	       new_format);
+	printf("Read format from format server  %lx\n",
+	       (long)new_format);
 	if (new_format != NULL) {
 	    dump_FMFormat(new_format);
 	} else {
 	    printf("Format unknown.  Request was: ");
 	    print_server_ID((void*)buffer);
-	    printf("\n\tcontext was %p\n", iocontext);
+	    printf("\n\tcontext was %lx\n", (long)iocontext);
 	}
     }
     return new_format;
 }
 
 char **
-get_subformat_names(FMFieldList field_list)
+get_subformat_names(field_list)
+FMFieldList field_list;
 {
     int name_count = 0;
     int field = 0;
@@ -566,8 +576,11 @@ get_subformat_names(FMFieldList field_list)
 
 static
 void
-get_subformats_context(FMFormat fmformat, FMFormat **format_list_p, int *format_count_p,
-		       FMFormat **stack_p)
+get_subformats_context(fmformat, format_list_p, format_count_p, stack_p)
+FMFormat fmformat;
+FMFormat **format_list_p;
+int *format_count_p;
+FMFormat **stack_p;
 {
     int field;
     int stack_depth = 0;
@@ -604,7 +617,8 @@ get_subformats_context(FMFormat fmformat, FMFormat **format_list_p, int *format_
 }
 
 FMFormat *
-get_subformats_IOformat(FMFormat fmformat)
+get_subformats_IOformat(fmformat)
+FMFormat fmformat;
 {
     int format_count = 0;
     FMFormat *format_list = malloc(sizeof(FMFormat));
@@ -625,7 +639,9 @@ FMformat_index(FMFormat f)
 }
 
 FMFormat
-FMformat_by_index(FMContext fmc, int index)
+FMformat_by_index(fmc, index)
+FMContext fmc;
+int index;
 {
     if (index < fmc->reg_format_count) {
 	return fmc->format_list[index];
@@ -667,7 +683,8 @@ new_FMFormat()
 
 extern
 void
-expand_FMContext(FMContext fmc)
+expand_FMContext(fmc)
+FMContext fmc;
 {
     int new_count = fmc->format_list_size + 10;
     int new_size = sizeof(FMFormat) * (new_count);
@@ -885,7 +902,9 @@ typedef struct {
 } *sld;
 
 static int
-type_alignment(FMFormat fmformat, int field)
+type_alignment(fmformat, field)
+FMFormat fmformat;
+int field;
 {
     FMVarInfoList var = &fmformat->var_list[field];
     FMTypeDesc *t = &var->type_desc;
@@ -1176,7 +1195,8 @@ gen_var_dimens(FMFormat fmformat, int field)
 }
 
 extern void
-set_alignment(FMFormat fmformat)
+set_alignment(fmformat)
+FMFormat fmformat;
 {
     int field_align;
     int field;
@@ -1191,7 +1211,9 @@ set_alignment(FMFormat fmformat)
 
 	
 extern int
-generate_var_list(FMFormat fmformat, FMFormat *formats)
+generate_var_list(fmformat, formats)
+FMFormat fmformat;
+FMFormat *formats;
 {
     FMVarInfoList new_var_list;
     FMFieldList field_list = fmformat->field_list;
@@ -1259,16 +1281,19 @@ generate_var_list(FMFormat fmformat, FMFormat *formats)
 }
 
 static format_rep
-add_server_subformat_rep(FMFormat fmformat, char *super_rep, size_t *super_rep_size)
+add_server_subformat_rep(fmformat, super_rep, super_rep_size)
+FMFormat fmformat;
+char *super_rep;
+int *super_rep_size;
 {
     int byte_reversal = fmformat->byte_reversal;
-    size_t rep_size = (sizeof(struct _field_wire_format_1) *
+    int rep_size = (sizeof(struct _field_wire_format_1) *
 		     (fmformat->field_count));
     int i;
     int opt_info_count = 0;
     struct _subformat_wire_format *rep;
     char *string_base;
-    ssize_t cur_offset;
+    int cur_offset;
     struct _field_wire_format_1 *fields;
     int OUR_BYTE_ORDER = WORDS_BIGENDIAN;
     int OTHER_BYTE_ORDER = (WORDS_BIGENDIAN ? 0 : 1);
@@ -1281,11 +1306,11 @@ add_server_subformat_rep(FMFormat fmformat, char *super_rep, size_t *super_rep_s
 
     rep_size += sizeof(struct _subformat_wire_format_1);
 
-    rep_size = (rep_size + 3) & (size_t)-4;  /* round up by even 4 */
+    rep_size = (rep_size + 3) & -4;  /* round up by even 4 */
     while (fmformat->opt_info && 
 	   (fmformat->opt_info[opt_info_count].info_type != 0)) {
 	rep_size += fmformat->opt_info[opt_info_count].info_len;
-	rep_size = (rep_size + 3) & (size_t)-4;  /* round up by even 4 */
+	rep_size = (rep_size + 3) & -4;  /* round up by even 4 */
 	opt_info_count++;
     }
     rep_size += (opt_info_count + 1) * sizeof(struct _opt_info_wire_format);
@@ -1305,7 +1330,7 @@ add_server_subformat_rep(FMFormat fmformat, char *super_rep, size_t *super_rep_s
 
     string_base = (char *) rep;
 
-    rep->f.f1.name_offset = (unsigned int)cur_offset;
+    rep->f.f1.name_offset = cur_offset;
     if (byte_reversal) byte_swap((char*) &rep->f.f1.name_offset, 4);
     strcpy(string_base + cur_offset, fmformat->format_name);
     cur_offset += strlen(fmformat->format_name) + 1;
@@ -1326,12 +1351,12 @@ add_server_subformat_rep(FMFormat fmformat, char *super_rep, size_t *super_rep_s
 	if (byte_reversal) byte_swap((char*) &fields[i].field_size, 4);
 	fields[i].field_offset = fmformat->field_list[i].field_offset;
 	if (byte_reversal) byte_swap((char*) &fields[i].field_offset, 4);
-	fields[i].field_name_offset = (unsigned int)cur_offset;
+	fields[i].field_name_offset = cur_offset;
 	if (byte_reversal) byte_swap((char*) &fields[i].field_name_offset, 4);
 	strcpy(string_base + cur_offset, 
 	       fmformat->field_list[i].field_name);
 	cur_offset += strlen(fmformat->field_list[i].field_name) + 1;
-	fields[i].field_type_offset = (unsigned int) cur_offset;
+	fields[i].field_type_offset = cur_offset;
 	if (byte_reversal) byte_swap((char*) &fields[i].field_type_offset, 4);
 	strcpy(string_base + cur_offset,
 	       fmformat->field_list[i].field_type);
@@ -1346,7 +1371,7 @@ add_server_subformat_rep(FMFormat fmformat, char *super_rep, size_t *super_rep_s
 	    *(string_base + cur_offset++) = 0;
 	}
 	rep->f.f1.opt_info_offset = cur_offset & 0xffff;
-	rep->f.f1.top_bytes_opt_info_offset = (unsigned short)(cur_offset >> 16);
+	rep->f.f1.top_bytes_opt_info_offset = cur_offset >> 16;
 	if (byte_reversal) byte_swap((char*) &rep->f.f1.opt_info_offset, 2);
 	if (byte_reversal) byte_swap((char*) &rep->f.f1.top_bytes_opt_info_offset, 2);
 	info_base = cur_offset +string_base;
@@ -1365,7 +1390,7 @@ add_server_subformat_rep(FMFormat fmformat, char *super_rep, size_t *super_rep_s
 	    if (byte_reversal) byte_swap((char*) &tmp_base.info_type, 4);
 	    tmp_base.info_len = fmformat->opt_info[i].info_len;
 	    if (byte_reversal) byte_swap((char*) &tmp_base.info_len, 4);
-	    tmp_base.info_offset = (int) cur_offset;
+	    tmp_base.info_offset = cur_offset;
 	    if (byte_reversal) byte_swap((char*) &tmp_base.info_offset, 4);
 	    memcpy(info_base + i*sizeof(tmp_base), &tmp_base, sizeof(tmp_base));
 	    memcpy(string_base + cur_offset, 
@@ -1382,20 +1407,21 @@ add_server_subformat_rep(FMFormat fmformat, char *super_rep, size_t *super_rep_s
 	*(string_base + cur_offset++) = 0;
     }
     assert(cur_offset == rep_size);
-    rep->f.f1.subformat_rep_length = htons((short)rep_size);
-    rep->f.f1.top_bytes_subformat_rep_length = htons((short)(rep_size>>16));
+    rep->f.f1.subformat_rep_length = htons(rep_size);
+    rep->f.f1.top_bytes_subformat_rep_length = htons(rep_size>>16);
     *super_rep_size += rep_size;
     return (format_rep) super_rep;
 }
 
 static format_rep
-build_server_format_rep(FMFormat fmformat)
+build_server_format_rep(fmformat)
+FMFormat fmformat;
 {
     int subformat_count = 0;
     FMFormat *subformats = fmformat->subformats;
     int i;
     struct _format_wire_format *rep = malloc(sizeof(*rep));
-    size_t rep_size = sizeof(*rep);
+    int rep_size = sizeof(*rep);
     int OUR_BYTE_ORDER = WORDS_BIGENDIAN;
     int OTHER_BYTE_ORDER = (WORDS_BIGENDIAN ? 0 : 1);
 
@@ -1415,7 +1441,7 @@ build_server_format_rep(FMFormat fmformat)
     rep->f.f1.server_rep_version = 2;
     rep->f.f1.subformat_count = subformat_count;
     rep->f.f1.recursive_flag = 0;  /* GSE must set right */
-    rep->f.f1.top_bytes_format_rep_length = htons((short)(rep_size>>16));
+    rep->f.f1.top_bytes_format_rep_length = htons(rep_size>>16);
     return (format_rep) rep;
 }
 
@@ -1426,7 +1452,9 @@ build_server_format_rep(FMFormat fmformat)
  * server_format_rep fields.
  */
 static FMFormat
-search_compatible_formats(FMContext iocontext, FMFormat fmformat)
+search_compatible_formats(iocontext, fmformat)
+FMContext iocontext;
+FMFormat fmformat;
 {
     int i, search_rep_length;
     FMContext fmc = (FMContext) iocontext;
@@ -1436,7 +1464,7 @@ search_compatible_formats(FMContext iocontext, FMFormat fmformat)
     }
     search_rep_length = ntohs(fmformat->server_format_rep->format_rep_length);
     if (fmformat->server_format_rep->server_rep_version > 0) {
-	search_rep_length += (ntohs(fmformat->server_format_rep->top_bytes_format_rep_length) << 16);
+	search_rep_length += (ntohs(fmformat->server_format_rep->top_bytes_format_rep_length) >> 16);
     }
 
     /* search locally first */
@@ -1455,8 +1483,8 @@ search_compatible_formats(FMContext iocontext, FMFormat fmformat)
 	rep_length = ntohs(tmp->server_format_rep->format_rep_length);
 	if (search_rep_length != rep_length) {
 	    if (get_format_server_verbose()) {
-		printf("Format %s found in context %p, but server reps have different lengths, %d and %d\n",
-		       fmformat->format_name, iocontext,
+		printf("Format %s found in context %lx, but server reps have different lengths, %d and %d\n",
+		       fmformat->format_name, (long) iocontext,
 		       search_rep_length, rep_length);
 	    }
 	    continue;
@@ -1466,8 +1494,8 @@ search_compatible_formats(FMContext iocontext, FMFormat fmformat)
 	    return tmp;
 	} else {
 	    if (get_format_server_verbose()) {
-		printf("Format %s found in context %p, but server reps are different\n",
-		       fmformat->format_name, iocontext);
+		printf("Format %s found in context %lx, but server reps are different\n",
+		       fmformat->format_name, (long) iocontext);
 	    }
 	}
     }
@@ -1545,7 +1573,7 @@ validate_and_copy_field_list(FMFieldList field_list, FMFormat fmformat)
 	int simple_string = 0;
 	if (strchr(field_list[field].field_type, '[') == NULL) {
 	    /* not an array */
-	    if (strchr(field_list[field].field_type, '*') == NULL) {
+	    if (index(field_list[field].field_type, '*') == NULL) {
 		if (FMstr_to_data_type(field_list[field].field_type) == string_type) {
 		    simple_string = 1;
 		}
@@ -1556,7 +1584,7 @@ validate_and_copy_field_list(FMFieldList field_list, FMFormat fmformat)
 	} else {
 	    int ret = is_var_array_field(field_list, field);
 	    if (ret == -1) return NULL;   /* rejected */
-	    if ((ret == 1) || (strchr(field_list[field].field_type, '*'))) {
+	    if ((ret == 1) || (index(field_list[field].field_type, '*'))) {
 		/* variant array, real_field_size is
 		 * fmc->pointer_size */
 		field_size = fmformat->pointer_size;
@@ -1696,7 +1724,9 @@ void add_format(FMFormat f, FMFormat* sorted, FMFormat *visited, FMFormat* stack
 
 static
 int
-topo_order_subformats(FMFormat super_format, int format_count)
+topo_order_subformats(super_format, format_count)
+FMFormat super_format;
+int format_count;
 {
     FMFormat sorted[100], visit[100], stack[100];
     int sorted_count = 1;
@@ -1915,8 +1945,8 @@ register_data_format(FMContext context, FMStructDescList struct_list)
 		    return NULL;
 	    }
 	    if (get_format_server_verbose()) {
-		printf("Registered format with format server - %p  in context %p\n",
-		    formats[0], context);
+		printf("Registered format with format server - %lx  in context %lx\n",
+		    (long) formats[0], (long) context);
 		dump_FMFormat(formats[0]);
 	    }
 	} else {
@@ -1925,8 +1955,8 @@ register_data_format(FMContext context, FMStructDescList struct_list)
 	    cache_format->ref_count++;
 
 	    if (get_format_server_verbose()) {
-		printf("Cache hit on format registration %p \"%s\" ", 
-		       cache_format, cache_format->format_name);
+		printf("Cache hit on format registration %lx \"%s\" ", 
+		       (long)cache_format, cache_format->format_name);
 		print_format_ID(cache_format);
 		printf("\n");
 	    }
@@ -1980,15 +2010,17 @@ generate_format3_server_ID(server_ID_type *server_ID,
 	printf("\n");
     }
     ((version_3_format_ID *) server_ID->value)->rep_len = 
-	htons((short)(server_format_rep_length >> 2));   // Mod length by 4
-    ((version_3_format_ID *) server_ID->value)->top_byte_rep_len = (unsigned char)
-	htons((short)(server_format_rep_length >> 18));  // Essentially, we capture the top 26 bytes of the server length
+	htons(server_format_rep_length >> 2);   // Mod length by 4
+    ((version_3_format_ID *) server_ID->value)->top_byte_rep_len = 
+	htons(server_format_rep_length >> 18);  // Essentially, we capture the top 26 bytes of the server length
     ((version_3_format_ID *) server_ID->value)->hash1 = htonl(hash1);
     ((version_3_format_ID *) server_ID->value)->hash2 = htonl(hash2);
 }
 
 static int
-self_server_register_format(FMContext fmc, FMFormat fmformat)
+self_server_register_format(fmc, fmformat)
+FMContext fmc;
+FMFormat fmformat;
 {
     format_rep server_format_rep;
     /* we're a format server ourselves, assign an ID */
@@ -2016,7 +2048,8 @@ self_server_register_format(FMContext fmc, FMFormat fmformat)
 }
 
 int
-count_FMfield(FMFieldList list)
+count_FMfield(list)
+FMFieldList list;
 {
     int i = 0;
     while (list[i].field_name != NULL) {
@@ -2027,7 +2060,9 @@ count_FMfield(FMFieldList list)
 
 extern
 int
-struct_size_IOfield(FMContext fmc, FMFieldList list)
+struct_size_IOfield(fmc, list)
+FMContext fmc;
+FMFieldList list;
 {
     int i = 0;
     int struct_size = 0;
@@ -2058,20 +2093,24 @@ struct_size_IOfield(FMContext fmc, FMFieldList list)
 }
 
 extern int
-struct_size_field_list(FMFieldList list, int pointer_size)
+struct_size_field_list(list, pointer_size)
+FMFieldList list;
+int pointer_size;
 {
     return FMstruct_size_field_list(list, pointer_size);
 }
 
 extern
 int
-FMstruct_size_field_list(FMFieldList list, int pointer_size)
+FMstruct_size_field_list(list, pointer_size)
+FMFieldList list;
+int pointer_size;
 {
     int i = 0;
     int struct_size = 0;
     while (list[i].field_name != NULL) {
 	int field_size = 0;
-	if ((is_var_array_field(list, i) == 1) || (strchr(list[i].field_type, '*'))) {
+	if ((is_var_array_field(list, i) == 1) || (index(list[i].field_type, '*'))) {
 	    /* variant array, real_field_size is fmformat->pointer_size */
 	    field_size = pointer_size;
 	} else {
@@ -2090,14 +2129,16 @@ FMstruct_size_field_list(FMFieldList list, int pointer_size)
 
 extern
 FMFieldList
-field_list_of_IOformat(FMFormat format)
+field_list_of_IOformat(format)
+FMFormat format;
 {
     return format->field_list;
 }
 
 extern
 int
-compare_field_lists(FMFieldList list1, FMFieldList list2)
+compare_field_lists(list1, list2)
+FMFieldList list1, list2;
 {
     int i = 0;
     do {
@@ -2131,7 +2172,8 @@ compare_field_lists(FMFieldList list1, FMFieldList list2)
  */
 extern
 FMFieldList
-max_field_lists(FMFieldList list1, FMFieldList list2)
+max_field_lists(list1, list2)
+FMFieldList list1, list2;
 {
     FMFieldList max_field_list = NULL;
     FMFieldList tlist2;
@@ -2225,7 +2267,8 @@ max_field_lists(FMFieldList list1, FMFieldList list2)
 
 extern
 FMFieldList
-copy_field_list(FMFieldList list)
+copy_field_list(list)
+FMFieldList list;
 {
     int field_count = count_FMfield(list);
     FMFieldList new_field_list;
@@ -2248,7 +2291,8 @@ copy_field_list(FMFieldList list)
 
 extern
 FMStructDescList
-FMcopy_struct_list(FMStructDescList list)
+FMcopy_struct_list(list)
+FMStructDescList list;
 {
     int format_count = 0;
     FMStructDescList new_list;
@@ -2273,7 +2317,8 @@ FMcopy_struct_list(FMStructDescList list)
 
 extern
 void
-free_field_list(FMFieldList list)
+free_field_list(list)
+FMFieldList list;
 {
     int i = 0;
     while (list[i].field_name != NULL) {
@@ -2286,7 +2331,8 @@ free_field_list(FMFieldList list)
 
 extern
 void
-FMfree_struct_list(FMStructDescList list)
+FMfree_struct_list(list)
+FMStructDescList list;
 {
     int format_count = 0;
     int format;
@@ -2328,7 +2374,9 @@ field_name_compar(const void *a, const void *b)
 }
 
 FMformat_order
-FMformat_cmp(FMFormat format1, FMFormat format2)
+FMformat_cmp(format1, format2)
+FMFormat format1;
+FMFormat format2;
 {
     FMformat_order tmp_result = Format_Equal;
     FMFieldList field_list1 =
@@ -2473,7 +2521,8 @@ FMformat_cmp(FMFormat format1, FMFormat format2)
 
 extern
 char *
-name_of_FMformat(FMFormat format)
+name_of_FMformat(format)
+FMFormat format;
 {
     return format->format_name;
 }
@@ -2485,13 +2534,15 @@ format_list_of_FMFormat(FMFormat format)
 }
 
 extern FMdata_type
-FMarray_str_to_data_type(const char *str, long *element_count_ptr)
+FMarray_str_to_data_type(str, element_count_ptr)
+const char *str;
+long *element_count_ptr;
 {
     FMdata_type ret_type;
     char field_type[1024];
     char *left_paren;
     long element_count = 1;
-    size_t field_type_len;
+    int field_type_len;
 #ifdef MODULE
     char *temp_ptr = 0;
 #endif
@@ -2501,7 +2552,7 @@ FMarray_str_to_data_type(const char *str, long *element_count_ptr)
 	return ret_type;
     }
     field_type_len = left_paren - str;
-    strncpy(field_type, str, sizeof(field_type));
+    strncpy(field_type, str, field_type_len);
     field_type[field_type_len] = 0;
     ret_type = FMstr_to_data_type(field_type);
     while (left_paren != NULL) {
@@ -2530,7 +2581,9 @@ FMarray_str_to_data_type(const char *str, long *element_count_ptr)
 }
 
 extern int
-field_type_eq(const char *str1, const char *str2)
+field_type_eq(str1, str2)
+const char *str1;
+const char *str2;
 {
     FMdata_type t1, t2;
     long t1_count, t2_count;
@@ -2547,8 +2600,8 @@ field_type_eq(const char *str1, const char *str2)
 	char *colon2 = strchr(tmp_str2, ':');
 	char *lparen1 = strchr(str1, '[');
 	char *lparen2 = strchr(str2, '[');
-	size_t count1 = 0;
-	size_t count2 = 0;
+	int count1 = 0;
+	int count2 = 0;
 
 	if (colon1 != NULL) {
 	    count1 = colon1 - tmp_str1;
@@ -2574,7 +2627,8 @@ field_type_eq(const char *str1, const char *str2)
 }
 
 extern char *
-base_data_type(const char *str)
+base_data_type(str)
+const char *str;
 {
     char *typ;
     while (isspace((int)*str) || (*str == '*') || (*str == '(')) {	/* skip preceeding space */
@@ -2591,13 +2645,15 @@ base_data_type(const char *str)
 }
 
 extern char *
-FMbase_type(const char *field_type)
+FMbase_type(field_type)
+const char *field_type;
 {
     return base_data_type(field_type);
 }
 
 extern FMdata_type
-FMstr_to_data_type(const char *str)
+FMstr_to_data_type(str)
+const char *str;
 {
     const char *end;
     while (isspace((int)*str) || (*str == '*') || (*str == '(')) {	/* skip preceeding space */
@@ -2809,7 +2865,8 @@ IOget_array_size_dimen(const char *str, FMFieldList fields, int dimen, int *cont
 }
 
 extern const char *
-data_type_to_str(FMdata_type dat)
+data_type_to_str(dat)
+FMdata_type dat;
 {
     switch (dat) {
     case integer_type:
@@ -2833,8 +2890,12 @@ data_type_to_str(FMdata_type dat)
 
 extern
 void
-get_FMformat_characteristics(FMFormat format, FMfloat_format *ff, FMinteger_format *intf,
-			     int *column_major, int *pointer_size)
+get_FMformat_characteristics(format, ff, intf, column_major, pointer_size)
+FMFormat format;
+FMfloat_format *ff;
+FMinteger_format *intf;
+int *column_major;
+int *pointer_size;
 {
     if (WORDS_BIGENDIAN) {
 	if (format->byte_reversal) {
@@ -2857,21 +2918,24 @@ get_FMformat_characteristics(FMFormat format, FMfloat_format *ff, FMinteger_form
 
 extern
 int
-pointer_size_of_IOformat(FMFormat format)
+pointer_size_of_IOformat(format)
+FMFormat format;
 {
     return format->pointer_size;
 }
 
 extern
 FMContext
-fmc_of_IOformat(FMFormat format)
+fmc_of_IOformat(format)
+FMFormat format;
 {
     return format->context;
 }
 
 
 extern void
-dump_FMFormat(FMFormat fmformat)
+dump_FMFormat(fmformat)
+FMFormat fmformat;
 {
     int index, i;
     printf("\tFormat \"%s\"; size = %d; Field_Count = %d; Endian = %d; Float format = %s;\n\t\t  Pointer size = %d; Column_major_arrays = %d; Alignment = %d; Index = %d, File Version = %d; ",
@@ -2944,7 +3008,8 @@ dump_FMFormat(FMFormat fmformat)
 }
 
 extern void
-dump_FMFormat_as_XML(FMFormat fmformat)
+dump_FMFormat_as_XML(fmformat)
+FMFormat fmformat;
 {
     int index, i;
     printf("<FMFormat>\n");
@@ -2974,13 +3039,15 @@ dump_FMFormat_as_XML(FMFormat fmformat)
 }
 
 extern void
-add_ref_FMcontext(FMContext c)
+add_ref_FMcontext(c)
+FMContext c;
 {
     c->ref_count++;
 }
 
 extern void
-free_FMcontext(FMContext c)
+free_FMcontext(c)
+FMContext c;
 {
     int i;
     c->ref_count--;
@@ -2997,8 +3064,13 @@ free_FMcontext(FMContext c)
 #define DUMP
 #ifdef DUMP
 static void
-free_FMfield(FMFormat fmformat, int field, void *data, void *string_base,
-	     int encode, int verbose)
+free_FMfield(fmformat, field, data, string_base, encode, verbose)
+FMFormat fmformat;
+int field;
+void *data;
+void *string_base;
+int encode;
+int verbose;
 {
     FMFieldList iofield = &fmformat->field_list[field];
     FMVarInfoList iovar = &fmformat->var_list[field];
@@ -3012,15 +3084,15 @@ free_FMfield(FMFormat fmformat, int field, void *data, void *string_base,
  
     if ((iovar->string == 0) &&
 	(iovar->var_array == 0) &&
-	(strchr(iofield->field_type, '*') == NULL) &&
+	(index(iofield->field_type, '*') == NULL) &&
 	(iovar->data_type != unknown_type)) {
 	/* must be simple data type or array of simple data types */
 	return;
     }
     dimension = FMget_array_element_count(fmformat, iovar, data, encode);
-    if ((iovar->var_array) || (strchr(iofield->field_type, '*') != NULL)) {
+    if ((iovar->var_array) || (index(iofield->field_type, '*') != NULL)) {
 	FMgetFieldStruct descr;  /* OK */
-	size_t tmp_offset;
+	long tmp_offset;
 	descr.offset = iofield->field_offset;
 	descr.size = fmformat->pointer_size;
 	descr.data_type = integer_type;
@@ -3056,13 +3128,15 @@ free_FMfield(FMFormat fmformat, int field, void *data, void *string_base,
 	    data_offset += sub_field_size;
 	}
     }
-    if ((iovar->var_array) || (strchr(iofield->field_type, '*') != NULL)) {
+    if ((iovar->var_array) || (index(iofield->field_type, '*') != NULL)) {
 	free(data);
     }    
 }
 
 extern void
-FMfree_var_rec_elements(FMFormat fmformat, void *data)
+FMfree_var_rec_elements(fmformat, data)
+FMFormat fmformat;
+void *data;
 {
     int index;
     if (fmformat->variant == 0) return;  /* nothing to do */
@@ -3075,8 +3149,8 @@ extern long
 FMget_array_element_count(FMFormat f, FMVarInfoList var, char *data, int encode)
 {
     int i;
-    size_t count = 1;
-    size_t tmp;
+    long count = 1;
+    long tmp;
     for (i = 0; i < var->dimen_count; i++) {
 	if (var->dimens[i].static_size != 0) {
 	    count = count * var->dimens[i].static_size;
@@ -3096,12 +3170,14 @@ FMget_array_element_count(FMFormat f, FMVarInfoList var, char *data, int encode)
 	    count = count * tmp;
 	}
     }
-    return (long) count;
+    return count;
 }
 #endif
 
 static void
-byte_swap(char *data, int size)
+byte_swap(data, size)
+char *data;
+int size;
 {
     int i;
     assert((size % 2) == 0);
@@ -3119,13 +3195,16 @@ byte_swap(char *data, int size)
 #define FILE_INT INT4
 
 static int
-put_serverAtomicInt(void *fd, FILE_INT *file_int_ptr, FMContext fmc)
+put_serverAtomicInt(fd, file_int_ptr, fmc)
+void *fd;
+FILE_INT *file_int_ptr;
+FMContext fmc;
 {
 #if SIZEOF_INT == 4
     int tmp_value = *file_int_ptr;
     int junk_errno;
     char *junk_result_str;
-    if (ffs_server_write_func(fd, &tmp_value, 4, &junk_errno, &junk_result_str) != 4) {
+    if (os_server_write_func(fd, &tmp_value, 4, &junk_errno, &junk_result_str) != 4) {
 	printf("SERVER WRITE FAILED, ERRNO = %d\n", junk_errno);
 	return 0;
     }
@@ -3136,13 +3215,16 @@ put_serverAtomicInt(void *fd, FILE_INT *file_int_ptr, FMContext fmc)
 }
 
 static int
-get_serverAtomicInt(void *fd, FILE_INT *file_int_ptr, int byte_reversal)
+get_serverAtomicInt(fd, file_int_ptr, byte_reversal)
+void *fd;
+FILE_INT *file_int_ptr;
+int byte_reversal;
 {
 #if SIZEOF_INT == 4
     int tmp_value;
     int junk_errno;
     char *junk_result_str;
-    if (ffs_server_read_func(fd, &tmp_value, 4, &junk_errno, &junk_result_str) != 4) {
+    if (os_server_read_func(fd, &tmp_value, 4, &junk_errno, &junk_result_str) != 4) {
 	printf("SERVER READ FAILED, ERRNO = %d\n", junk_errno);
 
 	return 0;
@@ -3160,18 +3242,15 @@ extern int
 unix_timeout_read_func(void *conn, void *buffer, int length, 
 		       int *errno_p, char **result_p);
 
-#ifdef _MSC_VER
-#define srand48(x) srand((int)(x))
-#define drand48() ((double)rand()/RAND_MAX)
-#define sleep(sec)  Sleep(1000 * sec)
-#endif
-
 extern int
-serverAtomicRead(void *fd, void *buffer, int length)
+serverAtomicRead(fd, buffer, length)
+void *fd;
+void *buffer;
+int length;
 {
     char *junk_result_str = NULL;
     int junk_errno;
-    int ret = ffs_server_read_func(fd, buffer, length, &junk_errno,
+    int ret = os_server_read_func(fd, buffer, length, &junk_errno,
 				  &junk_result_str);
 
     if (getenv("BAD_CLIENT") && (drand48() < 0.0001)) sleep(600);
@@ -3188,18 +3267,22 @@ serverAtomicRead(void *fd, void *buffer, int length)
 }
 
 extern int
-serverAtomicWrite(void *fd, void *buffer, int length)
+serverAtomicWrite(fd, buffer, length)
+void *fd;
+void *buffer;
+int length;
 {
     char *junk_result_str;
     int junk_errno;
     if (getenv("BAD_CLIENT") && (drand48() < 0.001)) sleep(600);
-    return ffs_server_write_func(fd, buffer, length, &junk_errno,
+    return os_server_write_func(fd, buffer, length, &junk_errno,
 				&junk_result_str);
 }
 
 
 static void
-provisional_use_warning(int fd)
+provisional_use_warning(fd)
+int fd;
 {
     static int warned = 0;
 
@@ -3218,7 +3301,9 @@ dump_server_error(char *string, FMContext context)
 }
 
 static int
-server_register_format(FMContext fmc, FMFormat format)
+server_register_format(fmc, format)
+FMContext fmc;
+FMFormat format;
 {
     int tries = 0;
 
@@ -3251,12 +3336,12 @@ server_register_format(FMContext fmc, FMFormat format)
 	format_rep rep = format->server_format_rep;
 
 	tmp.len = rep->format_rep_length;
-	ret = ffs_server_write_func(fmc->server_fd, &tmp, sizeof(tmp),
+	ret = os_server_write_func(fmc->server_fd, &tmp, sizeof(tmp),
 				   &errno, &errstr);
 	if (ret != sizeof(tmp)) 
 	    goto retry;
 
-	ret = ffs_server_write_func(fmc->server_fd, 
+	ret = os_server_write_func(fmc->server_fd, 
 				   (char*) rep + sizeof(tmp.len),
 				   ntohs(rep->format_rep_length) - sizeof(tmp.len),
 				   &errno, &errstr);
@@ -3269,7 +3354,7 @@ server_register_format(FMContext fmc, FMFormat format)
 	    goto retry;
 	}
 	if (ret_info[0] == 'P') {
-	    provisional_use_warning((int) (intptr_t) fmc->server_fd);
+	    provisional_use_warning((int) (long) fmc->server_fd);
 	} else {
 	    if (ret_info[0] != 'I') {
 		dump_server_error("Bad character from format server\n", fmc);
@@ -3296,7 +3381,11 @@ static const char xchars[] = "0123456789abcdef";
 #define nibble2hex(val) (xchars[val & 0x0f])
 
 static char *
-stringify_field_type(const char *type, FMFormat base_format, char *buffer, int size)
+stringify_field_type(type, base_format, buffer, size)
+const char *type;
+FMFormat base_format;
+char *buffer;
+int size;
 {
     char *index_start;
     unsigned char *server_ID;
@@ -3349,7 +3438,9 @@ stringify_field_type(const char *type, FMFormat base_format, char *buffer, int s
 }
 
 extern int
-global_name_eq(FMFormat format1, FMFormat format2)
+global_name_eq(format1, format2)
+FMFormat format1;
+FMFormat format2;
 {
     if (format1->server_ID.length != format2->server_ID.length)
 	return 0;
@@ -3359,16 +3450,18 @@ global_name_eq(FMFormat format1, FMFormat format2)
 
 extern
 char *
-global_name_of_FMFormat(FMFormat format)
+global_name_of_FMFormat(format)
+FMFormat format;
 {
-    int size = (int) strlen(format->format_name) + 3 +
+    int size = strlen(format->format_name) + 3 +
     2 * format->server_ID.length;
     char *buffer = malloc(size);
     return stringify_field_type(format->format_name, format, buffer, size);
 }
 
 static FMFormat
-expand_subformat_from_rep_0(struct _subformat_wire_format *rep)
+expand_subformat_from_rep_0(rep)
+struct _subformat_wire_format *rep;
 {
     FMFormat format = new_FMFormat();
     struct _field_wire_format_0 *fields;
@@ -3481,7 +3574,8 @@ expand_subformat_from_rep_0(struct _subformat_wire_format *rep)
 
 
 static FMFormat
-expand_subformat_from_rep_1(struct _subformat_wire_format *rep)
+expand_subformat_from_rep_1(rep)
+struct _subformat_wire_format *rep;
 {
     FMFormat format = new_FMFormat();
     struct _field_wire_format_1 *fields;
@@ -3596,7 +3690,8 @@ expand_subformat_from_rep_1(struct _subformat_wire_format *rep)
 
 
 static FMFormat
-expand_subformat_from_rep(struct _subformat_wire_format *rep)
+expand_subformat_from_rep(rep)
+struct _subformat_wire_format *rep;
 {
     if (rep->f.f0.server_rep_version == 0) {
 	return expand_subformat_from_rep_0(rep);
@@ -3612,7 +3707,8 @@ expand_subformat_from_rep(struct _subformat_wire_format *rep)
 }
 
 extern FMFormat
-expand_format_from_rep(format_rep rep)
+expand_format_from_rep(rep)
+format_rep rep;
 {
     int format_count;
     FMFormat top_format;
@@ -3724,16 +3820,20 @@ fill_derived_format_values(FMContext fmc, FMFormat format)
 }
 
 extern void
-add_format_to_iofile(FMContext fmc, FMFormat format, int id_size,
-		     void *id_buffer, int index)
+add_format_to_iofile(fmc, format, id_size, id_buffer, index)
+FMContext fmc;
+FMFormat format;
+int id_size;
+void *id_buffer;
+int index;
 {
     int subformat_count = 0;
     int i, field;
 
     if (get_format_server_verbose()) {
-	printf("Entering format %s (%p) into context %p ", 
-	       format->format_name, format,
-	       fmc);
+	printf("Entering format %s (%lx) into context %lx ", 
+	       format->format_name, (long)format,
+	       (long)fmc);
 	print_server_ID(id_buffer);
     }
     while (format->subformats && format->subformats[subformat_count]) {
@@ -3793,11 +3893,6 @@ add_format_to_iofile(FMContext fmc, FMFormat format, int id_size,
     }
 }
 
-#ifdef _MSC_VER
-#define srand48(x) srand((int)(x))
-#define drand48() ((double)rand()/RAND_MAX)
-#endif
-
 int
 FMcontext_get_format_server_identifier(FMContext fmc)
 {
@@ -3805,7 +3900,7 @@ FMcontext_get_format_server_identifier(FMContext fmc)
 	return -1;
     }
     if (fmc->format_server_identifier == 0) {
-	srand48(time(0));
+	srand48(getpid());
 	if (establish_server_connection_ptr(fmc, host_and_fallback) == 0) {
 	    if (establish_server_connection_ptr(fmc, host_and_fallback) == 0) {
 		printf("Failed to contact format server\n");
@@ -3816,7 +3911,9 @@ FMcontext_get_format_server_identifier(FMContext fmc)
 }
 
 static FMFormat
-server_get_format(FMContext iocontext, void *buffer)
+server_get_format(iocontext, buffer)
+FMContext iocontext;
+void *buffer;
 {
     FMContext fmc = (FMContext) iocontext;
     FMFormat format = NULL;
@@ -3861,7 +3958,7 @@ server_get_format(FMContext iocontext, void *buffer)
 	    goto retry;
 	}
 	if (return_char == 'P') {
-	    provisional_use_warning((int) (intptr_t) fmc->server_fd);
+	    provisional_use_warning((int) (long) fmc->server_fd);
 	    if (serverAtomicRead(fmc->server_fd, &return_char, 1) != 1) {
 		if (get_format_server_verbose()) {
 		    printf("Retrying because of failed read\n");
@@ -3923,7 +4020,9 @@ server_get_format(FMContext iocontext, void *buffer)
 }
 
 extern void
-server_get_server_ID(void *fd, void *server_ID)
+server_get_server_ID(fd, server_ID)
+void *fd;
+void *server_ID;
 {
     int id_size = 8;
 
@@ -3940,14 +4039,14 @@ stringify_server_ID(unsigned char *ID, char *buffer, int len)
     case 0:
 	if (len < id_size * 2) break;
 	for (i = 0; i < id_size; i++) {
-	    point += snprintf(&buffer[point], len - point, "%2x", ID[i]);
+	    point += sprintf(&buffer[point], "%2x", ID[i]);
 	}
 	break;
     case 1:{
 	version_1_format_ID id1;
 	memcpy(&id1, ID, 10);
 	if (len < 3+3+6+10+6+50) /* approx size */ return;
-	snprintf(buffer, len, "<ID ver=%d, salt %d, port %d, IP_addr %x, formatID %d>\n",
+	sprintf(buffer, "<ID ver=%d, salt %d, port %d, IP_addr %x, formatID %d>\n",
 	       id1.version, id1.salt, ntohs(id1.port),
 	       ntohl(id1.IP_addr), ntohs(id1.format_identifier));
 	    break;
@@ -3955,21 +4054,22 @@ stringify_server_ID(unsigned char *ID, char *buffer, int len)
     case 2:{
 	version_2_format_ID *id2 = (version_2_format_ID*)ID;
 	if (len < 3+3+6+10+6+50) /* approx size */ return;
-	snprintf(buffer, len, "<ID ver=%d, unused %d, rep_len %d, hash1 %x, hash2 %x>\n",
+	sprintf(buffer, "<ID ver=%d, unused %d, rep_len %d, hash1 %x, hash2 %x>\n",
 	       id2->version, id2->unused, ntohs(id2->rep_len) << 2,
 	       ntohl(id2->hash1), ntohl(id2->hash2));
 	    break;
 	}
     default:
 	if (len < 30) return;
-	snprintf(buffer, len, "<Unknown format version %d\n",
+	sprintf(buffer, "<Unknown format version %d\n",
 	       *((unsigned char *) ID));
 	break;
     }
 }
 
 extern void
-print_server_ID(unsigned char *ID)
+print_server_ID(ID)
+unsigned char *ID;
 {
     char buffer[256];
     stringify_server_ID(ID, buffer, sizeof(buffer));
@@ -3985,7 +4085,8 @@ fprint_server_ID(void *file, unsigned char *ID)
 }
 
 extern void
-print_format_ID(FMFormat format)
+print_format_ID(format)
+FMFormat format;
 {
     print_server_ID( (unsigned char *) format->server_ID.value);
 }
@@ -4017,7 +4118,8 @@ void *format_ID;
 #endif
 
 extern int
-get_rep_len_format_ID(void *format_ID)
+get_rep_len_format_ID(format_ID)
+void *format_ID;
 {
     switch (version_of_format_ID(format_ID)) {
     case 2:{
@@ -4071,7 +4173,10 @@ void *format_ID;
 
 /* write header information to the format server */
 extern int
-server_write_header(FMContext fmc, int enc_len, unsigned char *enc_buffer)
+server_write_header(fmc, enc_len, enc_buffer)
+FMContext fmc;
+int enc_len;
+unsigned char *enc_buffer;
 {
     FILE_INT magic = MAGIC_NUMBER + CURRENT_PROTOCOL_VERSION;
     FILE_INT server_pid;
@@ -4121,7 +4226,9 @@ version_of_format_ID(void *server_ID)
 }
 
 extern char *
-get_server_rep_FMformat(FMFormat format, int *rep_length)
+get_server_rep_FMformat(format, rep_length)
+FMFormat format;
+int *rep_length;
 {
     if (format->server_format_rep == NULL) {
 	format->server_format_rep = 
@@ -4135,22 +4242,28 @@ get_server_rep_FMformat(FMFormat format, int *rep_length)
 }
 
 extern char *
-get_server_ID_FMformat(FMFormat format, int *id_length)
+get_server_ID_FMformat(format, id_length)
+FMFormat format;
+int *id_length;
 {
     *id_length = format->server_ID.length;
     return format->server_ID.value;
 }
 
 extern FMContext
-FMContext_from_FMformat(FMFormat format)
+FMContext_from_FMformat(format)
+FMFormat format;
 {
     return format->context;
 }
 
 
 extern FMFormat
-load_external_format_FMcontext(FMContext iocontext, char *server_id, int id_size,
-			       char *server_rep)
+load_external_format_FMcontext(iocontext, server_id, id_size, server_rep)
+FMContext iocontext;
+char *server_id;
+int id_size;
+char *server_rep;
 {
     FMFormat format = get_local_format_IOcontext(iocontext, server_id);
 
@@ -4190,24 +4303,3 @@ set_array_order_FMContext(FMContext iofile, int column_major)
     iofile->native_column_major_arrays = column_major;
 }
 
-#undef malloc
-#undef realloc
-
-void* ffs_malloc(size_t s)
-{
-    void* tmp = malloc(s);
-    if (!tmp) {
-	fprintf(stderr, "FFS out of memory\n");
-	exit(1);
-    }
-    return tmp;
-}
-void* ffs_realloc(void* ptr, size_t s)
-{
-    void* tmp = realloc(ptr, s);
-    if (!tmp) {
-	fprintf(stderr, "FFS out of memory\n");
-	exit(1);
-    }
-    return tmp;
-}

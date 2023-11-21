@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.0)
 
 # The directory label is used for CDash to treat FFS as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS FFS)
@@ -7,7 +7,7 @@ if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
 
-project(FFS VERSION 3.0.0)
+project(FFS VERSION 2.0.0)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -20,7 +20,6 @@ else()
 endif()
 mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
 
-list(INSERT CMAKE_PREFIX_PATH 0 ${CMAKE_INSTALL_PREFIX})
 list(INSERT CMAKE_MODULE_PATH 0 ${PROJECT_SOURCE_DIR}/cmake)
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY
@@ -55,23 +54,6 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE RelWithDebInfo)
 endif()
 
-if(WIN32)
-  # Automagic to do the DLL / LIB song and dance
-  set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS TRUE)
-
-  # Silence MSVC warnings
-  if(CMAKE_C_COMPILER_ID MATCHES "MSVC" OR
-     CMAKE_C_SIMULATE_ID MATCHES "MSVC")
-    add_definitions(
-      -D_CRT_SECURE_NO_DEPRECATE
-      -D_CRT_SECURE_NO_WARNINGS
-      -D_SCL_SECURE_NO_DEPRECATE
-      -D_WINSOCK_DEPRECATED_NO_WARNINGS
-      -D_CRT_NONSTDC_NO_DEPRECATE)
-    set (MSVC_PERL_FLAGS "-msvc-long")
-  endif()
-endif()
-
 include(CMakeDependentOption)
 
 # Setup shared library defaults.  If explicitly specified somehow, then default
@@ -82,19 +64,6 @@ cmake_dependent_option(BUILD_SHARED_LIBS
   "Build shared libraries (so/dylib/dll)." ${SHARED_LIBS_SUPPORTED}
   "SHARED_LIBS_SUPPORTED" OFF)
 mark_as_advanced(BUILD_SHARED_LIBS)
-if(MSVC)
-    add_definitions(-D_CRT_SECURE_NO_WARNINGS -DFFS_SRC)
-endif()
-
-# Default to a RelWithDebInfo build if not specified
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY VALUE RelWithDebInfo)
-endif()
-
-set(TARGET_DEP_INC)
-set(TARGET_DEP_LIBS)
-set(PKG_DEP_PKG)
-set(PKG_DEP_LIBS)
 
 include(CheckFunctionExists)
 include(CheckIncludeFiles)
@@ -119,25 +88,19 @@ if(NOT (DEFINED NO_SOCKETS))
     set(NO_SOCKETS TRUE)
   endif()
 endif()
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    set(WINDOWS TRUE)
-endif()
-
-if(NO_SOCKETS AND !WINDOWS)
+if(NO_SOCKETS)
   set(FM_SOCKET_IO null_io.c)
-elseif(WINDOWS)
-  set(FM_SOCKET_IO "server_acts.c;nt_io.c")
-  set(FFS_FILE_IO nt_io.c)
+elseif(WIN32)
+  set(FM_SOCKET_IO server_acts.c nt_io.c)
 else()
-  set(FM_SOCKET_IO "server_acts.c;unix_io.c")
-  set(FFS_FILE_IO unix_io.c)
+  set(FM_SOCKET_IO server_acts.c unix_io.c)
 endif()
 
 set(FM_SRC_LIST
    fm_formats.c fm_dump.c lookup3.c string_conversion.c fm_get.c xml.c
-   ${FM_SOCKET_IO} ${FFS_FILE_IO})
+   ${FM_SOCKET_IO})
 foreach(FM_SRC ${FM_SRC_LIST})
-  list(APPEND FM_MASTER_SRC_LIST fm/${FM_SRC} )
+  list(APPEND FM_MASTER_SRC_LIST fm/${FM_SRC})
 endforeach()
 
 set(COD_SRC_LIST cg.c standard.c)
@@ -146,7 +109,7 @@ foreach(COD_SRC ${COD_SRC_LIST})
 endforeach()
 
 set(FFS_SRC_LIST
-  ffs.c ffs_formats.c ffs_conv.c ffs_gen.c ffs_file.c evol.c
+  ffs.c ffs_formats.c ffs_conv.c ffs_gen.c ffs_file.c unix_io.c evol.c
   ffs_marshal.c)
 foreach(FFS_SRC ${FFS_SRC_LIST})
   list(APPEND FFS_MASTER_SRC_LIST ffs/${FFS_SRC})
@@ -191,7 +154,7 @@ add_custom_target(generated DEPENDS cod_node.c ${BISON_CODParser_OUTPUT_SOURCE})
 list(APPEND COD_MASTER_SRC_LIST
   ${BISON_CODParser_OUTPUT_SOURCE}
   ${CMAKE_CURRENT_BINARY_DIR}/cod_node.c)
-  
+
 list(APPEND FFS_MASTER_SRC_LIST ${FM_MASTER_SRC_LIST} ${COD_MASTER_SRC_LIST})
 
 set(FFS_LIBRARY_PREFIX "" CACHE STRING
@@ -216,9 +179,6 @@ if(SHARED_LIBS_SUPPORTED)
 else()
   set(NO_DYNAMIC_LINKING TRUE)
 endif()
-#if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-  set(NO_DYNAMIC_LINKING TRUE)
-#endif()
 
 target_include_directories(ffs PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
@@ -229,7 +189,7 @@ target_include_directories(ffs PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/ffs>
   $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
-find_package(dill 3.0.0)
+find_package(dill 2.3.1 QUIET)
 
 option(FFS_USE_DILL "Enable Dill code generation" ${DILL_FOUND})
 
@@ -264,6 +224,8 @@ CHECK_INCLUDE_FILE(sys/time.h HAVE_SYS_TIME_H)
 CHECK_INCLUDE_FILE(sys/times.h HAVE_SYS_TIMES_H)
 CHECK_INCLUDE_FILE(sys/uio.h HAVE_SYS_UIO_H)
 CHECK_INCLUDE_FILE(sys/un.h HAVE_SYS_UN_H)
+CHECK_INCLUDE_FILE(netinet/in.h HAVE_NETINET_IN_H)
+CHECK_INCLUDE_FILE(arpa/inet.h HAVE_ARPA_INET_H)
 CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 CHECK_INCLUDE_FILE(windows.h HAVE_WINDOWS_H)
 CHECK_INCLUDE_FILE(winsock.h HAVE_WINSOCK_H)
@@ -271,7 +233,7 @@ CHECK_INCLUDE_FILE(winsock.h HAVE_WINSOCK_H)
 if(SIZEOF_SIZE_T EQUAL SIZEOF_INT)
   set(UIO_SIZE_T_TYPE "unsigned int")
 else()
-  set(UIO_SIZE_T_TYPE "size_t")
+  set(UIO_SIZE_T_TYPE "unsigned long")
 endif()
 
 configure_file(ffs/ffs.h.in ffs/ffs.h @ONLY)
@@ -300,7 +262,7 @@ if(NOT HAS_IOV_BASE_IOVEC)
 endif()
 
 if(NOT DEFINED FORMAT_SERVER_HOST)
-  set(FORMAT_SERVER_HOST "formathost.cercs.gatech.edu")
+  set(FORMAT_SERVER_HOST "eisenhauer.dyndns.org")
 endif()
 
 if(NOT DEFINED FORMAT_SERVICE_DOMAIN)
