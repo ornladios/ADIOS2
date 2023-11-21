@@ -19,6 +19,7 @@
 #include <netdb.h>      //getFQDN
 #include <sys/socket.h> //getFQDN
 #include <sys/types.h>  //getFQDN
+#include <unistd.h>     // gethostname
 
 #if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_TABLE)
 
@@ -29,7 +30,6 @@
 #include <net/if.h>     //AvailableIpAddresses() struct if_nameindex
 #include <netinet/in.h> //AvailableIpAddresses() struct sockaddr_in
 #include <sys/ioctl.h>  //AvailableIpAddresses() ioctl
-#include <unistd.h>     // gethostname
 
 #include <nlohmann_json.hpp>
 
