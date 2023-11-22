@@ -20,6 +20,12 @@ authors = [
 description = "The Adaptable Input Output System version 2"
 readme = "ReadMe.md"
 requires-python = ">=3.8"
+keywords = [
+    "Python",
+    "Web",
+    "Application",
+    "Framework",
+]
 classifiers = [
     "Programming Language :: C++",
     "License :: OSI Approved :: Apache Software License",
@@ -27,6 +33,12 @@ classifiers = [
 ]
 dependencies = [
   "numpy",
+]
+
+[project.optional-dependencies]
+dev = [
+  'black',
+  "pip>=21.3",
 ]
 
 [project.urls]
@@ -63,3 +75,12 @@ ADIOS2_USE_ZeroMQ = "OFF"
 ADIOS2_USE_ZFP = "OFF"
 BUILD_TESTING = "OFF"
 ADIOS2_INSTALL_GENERATE_CONFIG = "OFF"
+
+[tool.black]
+line-length = 99
+target-version = ['py38', 'py39', 'py310']
+include = 'python/adios2/.*.py|testing/adios2/python/.*.py'
+
+[tool.pylint]
+disable = ['E0401', 'W0102', 'R0904', 'R0913', 'R0401']
+good-names = ['io']

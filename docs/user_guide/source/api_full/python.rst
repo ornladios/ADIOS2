@@ -10,30 +10,30 @@ The full Python APIs follow very closely the full C++11 API interface.
 
 ADIOS class
 --------------
-.. autoclass:: adios2::ADIOS
+.. autoclass:: adios2.bindings.adios2_bindings::ADIOS
     :members:
 
 IO class
 --------------
-.. autoclass:: adios2::IO
+.. autoclass:: adios2.bindings.adios2_bindings::IO
     :members:
 
 Variable class
 --------------
-.. autoclass:: adios2::Variable
+.. autoclass:: adios2.bindings.adios2_bindings::Variable
     :members:
 
 Attribute class
 ---------------
-.. autoclass:: adios2::Attribute
+.. autoclass:: adios2.bindings.adios2_bindings::Attribute
     :members:
 
 Engine class
 --------------
-.. autoclass:: adios2::Engine
+.. autoclass:: adios2.bindings.adios2_bindings::Engine
     :members:
 
 Operator class
 --------------
-.. autoclass:: adios2::Operator
+.. autoclass:: adios2.bindings.adios2_bindings::Operator
     :members:

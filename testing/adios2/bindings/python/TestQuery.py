@@ -1,7 +1,7 @@
 #
 from mpi4py import MPI
 import numpy as np
-import adios2
+import adios2.bindings as adios2
 import sys
 
 # MPI

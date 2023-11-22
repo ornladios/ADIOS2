@@ -71,7 +71,8 @@ public:
                               const std::string &variableName = "",
                               const std::string separator = "/");
 
-    Attribute InquireAttribute(const std::string &name);
+    Attribute InquireAttribute(const std::string &name, const std::string &variableName = "",
+                               const std::string separator = "/");
 
     bool RemoveVariable(const std::string &name);
 

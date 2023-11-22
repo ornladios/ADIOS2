@@ -17,13 +17,10 @@ python_add_test(NAME Bindings.Python.TypeExceptionOnGet.Serial SCRIPT TestGetExc
 
 if(ADIOS2_HAVE_MPI)
   add_python_mpi_test(BPWriteReadTypes)
-  add_python_mpi_test(BPWriteTypesHighLevelAPI)
-  add_python_mpi_test(BPWriteTypesHighLevelAPILocal)
   add_python_mpi_test(BPWriteReadString)
   add_python_mpi_test(BPReadMultisteps)
   add_python_mpi_test(BPWriteRead2D)
   add_python_mpi_test(BPBlocksInfo)
-  add_python_mpi_test(BPChangingShapeHighLevelAPI)
   add_python_mpi_test(NullEngine)
   add_python_mpi_test(Query)
   add_python_mpi_test(QueryLocalArray)
@@ -31,13 +28,5 @@ if(ADIOS2_HAVE_MPI)
   #if(ADIOS2_HAVE_HDF5)
   #  add_python_mpi_test(BPWriteTypesHighLevelAPI_HDF5)
   #endif()
-    
-  if(ADIOS2_HAVE_ZFP)
-    add_python_mpi_test(BPZfpHighLevelAPI)
-  endif()
-    
-  if(ADIOS2_HAVE_PNG)
-    add_python_mpi_test(BPPNGHighLevelAPI)
-  endif()
 endif()
 

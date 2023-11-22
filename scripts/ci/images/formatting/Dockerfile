@@ -6,6 +6,8 @@ RUN dnf update -y && \
     curl \
     git \
     python3-flake8 \
+    python3-pylint \
+    python3-black \
     ShellCheck \
     && \
     dnf clean all

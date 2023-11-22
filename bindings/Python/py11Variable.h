@@ -95,6 +95,8 @@ public:
 
     size_t BlockID() const;
 
+    size_t SingleValue() const;
+
     /**
      * EXPERIMENTAL: Adds operation and parameters to current Variable object
      * @param op operator to be added
@@ -105,10 +107,25 @@ public:
     size_t AddOperation(const Operator op, const Params &parameters = Params());
 
     /**
+     * EXPERIMENTAL: Adds operation and parameters to current Variable object
+     * @param op operator to be added
+     * @param parameters key/value settings particular to the Variable, not to
+     * be confused by op own parameters
+     * @return operation index handler in Operations()
+     */
+    size_t AddOperation(const std::string &op, const Params &parameters = Params());
+
+    /**
      * EXPERIMENTAL: inspects current operators added with AddOperator
      * @return vector of Variable<T>::OperatorInfo
      */
     std::vector<Operator> Operations() const;
+
+    /**
+     * Removes all current Operations associated with AddOperation.
+     * Provides the posibility to apply or not operators on a step basis.
+     */
+    void RemoveOperations();
 
     /** Contains sub-block information for a particular Variable<T> */
     struct Info

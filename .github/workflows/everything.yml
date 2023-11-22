@@ -90,9 +90,15 @@ jobs:
       - name: CXX
         working-directory: source
         run: ../gha/scripts/ci/scripts/run-clang-format.sh
-      - name: Python
+      - name: Python flake8
         working-directory: source
         run: ../gha/scripts/ci/scripts/run-flake8.sh
+      - name: Python pylint
+        working-directory: source
+        run: ../gha/scripts/ci/scripts/run-pylint.sh
+      - name: Python black
+        working-directory: source
+        run: ../gha/scripts/ci/scripts/run-black.sh
       - name: Shell
         working-directory: source
         run: ../gha/scripts/ci/scripts/run-shellcheck.sh

@@ -60,6 +60,12 @@ public:
 
     void EndStep();
 
+    /**
+     * Returns current status information for each engine.
+     * @return if between BeginStep/EndStep() pair
+     */
+    bool BetweenStepPairs() const;
+
     void Flush(const int transportIndex = -1);
 
     void Close(const int transportIndex = -1);

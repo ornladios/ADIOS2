@@ -1,7 +1,7 @@
 
 import numpy as np
 import logging
-import adios2
+import adios2.bindings as adios2
 
 if __name__ == '__main__':
     __spec__ = None

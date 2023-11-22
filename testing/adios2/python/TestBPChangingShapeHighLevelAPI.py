@@ -11,7 +11,7 @@
 
 import numpy as np
 from mpi4py import MPI
-import adios2
+from adios2 import Stream
 
 comm = MPI.COMM_WORLD
 rank = comm.Get_rank()
@@ -25,13 +25,17 @@ start = [[rank * nx[0]], [rank * nx[1]]]
 count = [[nx[0]], [nx[1]]]
 
 # Write different sized arrays as separate steps
-with adios2.open('out.bp', 'w', comm) as f:
-    f.write('z', data[0], shape[0], start[0], count[0], end_step=True)
-    f.write('z', data[1], shape[1], start[1], count[1], end_step=True)
+with Stream("out.bp", "w", comm) as s:
+    s.begin_step()
+    s.write("z", data[0], shape[0], start[0], count[0])
+    s.end_step()
+    s.begin_step()
+    s.write("z", data[1], shape[1], start[1], count[1])
+    s.end_step()
 
 # Read back arrays
-with adios2.open('out.bp', 'r', comm) as f:
-    for f_step in f:
-        shape_z = int(f_step.available_variables()['z']['Shape'])
+with Stream("out.bp", "r", comm) as s:
+    for step in s.steps():
+        shape_z = int(step.available_variables()["z"]["Shape"])
         print(shape_z)
-        assert (shape_z == int(shape[f_step.current_step()][0]))
+        assert shape_z == int(shape[step.current_step()][0])
