@@ -1,5 +1,3 @@
-scripts/ci/circle/postCDashStatus.sh
-scripts/ci/circle/run.sh
 scripts/ci/gh-actions/check-branch-name.sh
 scripts/ci/gh-actions/get-changed-files.sh
 scripts/ci/gh-actions/macos-setup.sh
