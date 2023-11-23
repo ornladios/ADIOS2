@@ -15,11 +15,6 @@ scripts/developer/setup.sh
 scripts/docker/setup-user.sh
 scripts/runconf/runconf.sh
 scripts/runconf/runconf_olcf.sh
-testing/contract/lammps/build.sh
-testing/contract/lammps/config.sh
-testing/contract/lammps/install.sh
-testing/contract/lammps/setup.sh
-testing/contract/lammps/test.sh
 testing/contract/scorpio/build.sh
 testing/contract/scorpio/config.sh
 testing/contract/scorpio/install.sh
