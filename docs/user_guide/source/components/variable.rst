@@ -6,15 +6,17 @@ An ``adios2::Variable`` is the link between a piece of data coming from an appli
 This component handles all application variables classified by data type and shape.
 
 Each ``IO`` holds a set of Variables, and each ``Variable`` is identified with a unique name.
-They are created using the reference from ``IO::DefineVariable<T>`` or retrieved using the pointer from ``IO::InquireVariable<T>`` functions in :ref:`IO`.
+They are created using the reference from ``IO::DefineVariable<T>`` or retrieved using the pointer from
+``IO::InquireVariable<T>`` functions in :ref:`IO`.
 
 Data Types
---------------------
+----------
 
 Only primitive types are supported in ADIOS2.
-Fixed-width types from `<cinttypes> and <cstdint> <https://en.cppreference.com/w/cpp/types/integer>`_  should be preferred when writing portable code.
-ADIOS2 maps primitive types to equivalent fixed-width types (e.g. ``int`` -> ``int32_t``).
-In C++, acceptable types ``T`` in ``Variable<T>`` along with their preferred fix-width equivalent in 64-bit platforms are given below:
+Fixed-width types from `<cinttypes> and <cstdint> <https://en.cppreference.com/w/cpp/types/integer>`_  should be
+preferred when writing portable code. ADIOS2 maps primitive types to equivalent fixed-width types
+(e.g. ``int`` -> ``int32_t``). In C++, acceptable types ``T`` in ``Variable<T>`` along with their preferred fix-width
+equivalent in 64-bit platforms are given below:
 
 .. code-block:: c++
 
@@ -52,19 +54,19 @@ In C++, acceptable types ``T`` in ``Variable<T>`` along with their preferred fix
    Python APIs: use the equivalent fixed-width types from numpy.
    If ``dtype`` is not specified, ADIOS2 handles numpy defaults just fine as long as primitive types are passed.
 
-
 Shapes
----------------------
+------
 
 ADIOS2 is designed for MPI applications.
 Thus different application data shapes must be supported depending on their scope within a particular MPI communicator.
-The shape is defined at creation from the ``IO`` object by providing the dimensions: shape, start, count in the ``IO::DefineVariable<T>``.
-The supported shapes are described below.
+The shape is defined at creation from the ``IO`` object by providing the dimensions: shape, start, count in the
+``IO::DefineVariable<T>``. The supported shapes are described below.
 
 
 1. **Global Single Value**:
 Only a name is required for their definition.
-These variables are helpful for storing global information, preferably managed by only one MPI process, that may or may not change over steps: *e.g.* total number of particles, collective norm, number of nodes/cells, etc.
+These variables are helpful for storing global information, preferably managed by only one MPI process, that may or may
+not change over steps: *e.g.* total number of particles, collective norm, number of nodes/cells, etc.
 
    .. code-block:: c++
 
@@ -157,8 +159,80 @@ be applicable to it.
 
    JoinedArrays are currently only supported by BP4 and BP5 engines,
    as well as the SST engine with BP5 marshalling.
-   
+
+Global Array Capabilities and Limitations
+-----------------------------------------
+
+ADIOS2 is focusing on writing and reading N-dimensional, distributed, global arrays of primitive types. The basic idea
+is that, usually, a simulation has such a data structure in memory (distributed across multiple processes) and wants to
+dump its content regularly as it progresses. ADIOS2 was designed to:
+
+1. to do this writing and reading as fast as possible
+2. to enable reading any subsection of the array
+
+.. image:: https://imgur.com/6nX67yq.png
+   :width: 400
+
+The figure above shows a parallel application of 12 processes producing a 2D array. Each process has a 2D array locally
+and the output is created by placing them into a 4x3 pattern. A reading application's individual process then can read
+any subsection of the entire global array. In the figure, a 6 process application decomposes the array in a 3x2 pattern
+and each process reads a 2D array whose content comes from multiple producer processes.
+
+The figure hopefully helps to understand the basic concept but it can be also misleading if it suggests limitations that
+are not there. Global Array is simply a boundary in N-dimensional space where processes can place their blocks of data.
+In the global space:
+
+1. one process can place multiple blocks
+
+  .. image:: https://imgur.com/Pb1s03h.png
+     :width: 400
+
+2. does NOT need to be fully covered by the blocks
+
+  .. image:: https://imgur.com/qJBXYcQ.png
+     :width: 400
+
+  * at reading, unfilled positions will not change the allocated memory
+
+3. blocks can overlap
+
+  .. image:: https://imgur.com/GA59lZ2.png
+     :width: 300
+
+  * the reader will get values in an overlapping position from one of the block but there is no control over from which
+    block
+
+4. each process can put a different size of block, or put multiple blocks of different sizes
+
+5. some process may not contribute anything to the global array
+
+Over multiple output steps
+
+1. the processes CAN change the size (and number) of blocks in the array
+
+  * E.g. atom table: global size is fixed but atoms wander around processes, so their block size is changing
+
+    .. image:: https://imgur.com/DorjG2q.png
+       :width: 400
+
+2. the global dimensions CAN change over output steps
+
+  * but then you cannot read multiple steps at once
+  * E.g. particle table size changes due to particles disappearing or appearing
+
+    .. image:: https://imgur.com/nkuHeVX.png
+       :width: 400
 
 
+Limitations of the ADIOS global array concept
 
+1. Indexing starts from 0
+2. Cyclic data patterns are not supported; only blocks can be written or read
+3. If Some blocks may fully or partially fall outside of the global boundary, the reader will not be able to read those
+   parts
 
+.. note::
+
+   Technically, the content of the individual blocks is kept in the BP format (but not in HDF5 format) and in staging.
+   If you really, really want to retrieve all the blocks, you need to handle this array as a Local Array and read the
+   blocks one by one.
