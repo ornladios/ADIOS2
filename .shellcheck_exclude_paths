@@ -15,8 +15,3 @@ scripts/developer/setup.sh
 scripts/docker/setup-user.sh
 scripts/runconf/runconf.sh
 scripts/runconf/runconf_olcf.sh
-testing/contract/tau/build.sh
-testing/contract/tau/config.sh
-testing/contract/tau/install.sh
-testing/contract/tau/setup.sh
-testing/contract/tau/test.sh
