@@ -97,8 +97,8 @@ class ADIOS_HTTP_CURL_Request(BaseHTTPRequestHandler):
         self.curl.setopt(self.curl.NOBODY, 1)
         try:
             self.curl.perform()
-        except Exception:
-            logging.info("connection error")
+        except Exception as e:
+            logging.info("connection error %s", str(e))
             exit(1)
 
         self.curl.setopt(pycurl.NOBODY, 0)
@@ -118,7 +118,11 @@ class ADIOS_HTTP_CURL_Request(BaseHTTPRequestHandler):
             self.curl.setopt(pycurl.RANGE, ranges)
             self.buf.truncate(0)
             self.buf.seek(0)
-            self.curl.perform()
+            try:
+                self.curl.perform()
+            except Exception as e:
+                logging.info("connection error %s ", str(e))
+                exit(1)
             """send data back"""
             val = self.buf.getvalue()
             logging.info("sending %s bytes", str(len(val)))
@@ -130,7 +134,11 @@ class ADIOS_HTTP_CURL_Request(BaseHTTPRequestHandler):
 
         if header:
             self.curl.setopt(self.curl.NOBODY, 1)
-            self.curl.perform()
+            try:
+                self.curl.perform()
+            except Exception as e:
+                logging.info("connection error %s", str(e))
+                exit(1)
             size = self.curl.getinfo(self.curl.CONTENT_LENGTH_DOWNLOAD)
             self.curl.setopt(self.curl.NOBODY, 0)
             """send data back"""
@@ -153,8 +161,8 @@ def auth(args):
         key_password = ""
         try:
             key_password = getpass.getpass()
-        except Exception as error:
-            logging.info('ERROR: %s', str(error))
+        except Exception as e:
+            logging.info('ERROR: %s', str(e))
         pkey = paramiko.RSAKey.from_private_key_file(auth_key, password=key_password)
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -162,8 +170,8 @@ def auth(args):
     user = input("Username: ")
     try:
         password = getpass.getpass()
-    except Exception as error:
-        logging.info('ERROR : %s', str(error))
+    except Exception as e:
+        logging.info('ERROR : %s', str(e))
     return (client, REMOTE_HOST, user, pkey, password)
 
 
