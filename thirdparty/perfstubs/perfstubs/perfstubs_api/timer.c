@@ -102,7 +102,7 @@ PS_WEAK_PRE void ps_tool_free_counter_data(ps_tool_counter_data_t *) PS_WEAK_POS
 PS_WEAK_PRE void ps_tool_free_metadata(ps_tool_metadata_t *) PS_WEAK_POST;
 #endif
 
-void initialize_library(const int rank) {
+void initialize_library() {
 #ifdef PERFSTUBS_USE_STATIC
     /* The initialization function is the only required one */
     initialize_functions[0] = &ps_tool_initialize;
@@ -110,8 +110,7 @@ void initialize_library(const int rank) {
         perfstubs_initialized = PERFSTUBS_FAILURE;
         return;
     }
-    if (rank == 0)
-        printf("Found ps_tool_initialize(), registering tool\n");
+    printf("Found ps_tool_initialize(), registering tool\n");
     finalize_functions[0] = &ps_tool_finalize;
     pause_measurement_functions[0] = &ps_tool_pause_measurement;
     resume_measurement_functions[0] = &ps_tool_resume_measurement;
@@ -219,13 +218,13 @@ static inline void ps_register_thread_internal(void) {
 }
 
 /* Initialization */
-void ps_initialize_(const int rank) {
+void ps_initialize_(void) {
     int i;
     /* Only do this once */
     if (perfstubs_initialized != PERFSTUBS_UNKNOWN) {
         return;
     }
-    initialize_library(rank);
+    initialize_library();
     for (i = 0 ; i < num_tools_registered ; i++) {
         initialize_functions[i]();
     }
