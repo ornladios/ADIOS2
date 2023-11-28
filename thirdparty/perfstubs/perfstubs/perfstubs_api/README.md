@@ -1,6 +1,6 @@
-# Profiling Interface for ADIOS2
+# Profiling Interface for Libraries and Applications
 
-Copyright (c) 2019-2020 University of Oregon
+Copyright (c) 2019-2022 University of Oregon
 Distributed under the BSD Software License
 (See accompanying file LICENSE.txt)
 
@@ -10,7 +10,7 @@ This is a generic design and implementation for other libraries and tools.
 ## Todo Items
 - [x] Make the interface generic.
     - [x] Replace ADIOST-specific symbols with generic versions that will be
-      implemented by interested measurement libraries (i.e. Score-P). 
+      implemented by interested measurement libraries (i.e. Score-P).
     - ~~[ ] New environment variable specifying location of library containing
       function implementations.~~
     - [x] Remove dynamic-linking specific approach (checking ```LD_PRELOAD```)
