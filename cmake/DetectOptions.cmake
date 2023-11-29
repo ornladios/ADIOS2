@@ -52,7 +52,9 @@ endfunction()
 # Extract the common prefix from a collection of variables
 function(lists_get_prefix listVars outVar)
   foreach(l IN LISTS listVars)
+    message("  l: ${l}")
     foreach(d IN LISTS ${l})
+      message("    d: ${d}")
       if(NOT prefix)
         set(prefix "${d}")
         continue()
@@ -64,6 +66,7 @@ function(lists_get_prefix listVars outVar)
       endif()
     endforeach()
   endforeach()
+  message("setting ${outVar} = ${prefix} in the PARENT_SCOPE")
   set(${outVar} "${prefix}" PARENT_SCOPE)
 endfunction()
 
@@ -423,21 +426,30 @@ endif()
 
 if(Python_Interpreter_FOUND)
   # Setup output directories
-  if(Python_Development_FOUND)
-    lists_get_prefix("Python_INCLUDE_DIRS;Python_LIBRARIES;Python_SITEARCH" _Python_DEVPREFIX)
+  if (ADIOS2_PIP_INSTALL)
+    # do it the pip way
+    set(CMAKE_INSTALL_PYTHONDIR ${Python_SITEARCH})
+    set(CMAKE_PYTHON_OUTPUT_DIRECTORY
+      ${PROJECT_BINARY_DIR}/${Python_SITEARCH}
+    )
   else()
-    lists_get_prefix("Python_EXECUTABLE;Python_SITEARCH" _Python_DEVPREFIX)
+    if(Python_Development_FOUND)
+      lists_get_prefix("Python_INCLUDE_DIRS;Python_LIBRARIES;Python_SITEARCH" _Python_DEVPREFIX)
+    else()
+      lists_get_prefix("Python_EXECUTABLE;Python_SITEARCH" _Python_DEVPREFIX)
+    endif()
+    message("This is borked! _Python_DEVPREFIX = ${_Python_DEVPREFIX}, Python_SITEARCH = ${Python_SITEARCH}")
+    string_strip_prefix(
+      "${_Python_DEVPREFIX}" "${Python_SITEARCH}" CMAKE_INSTALL_PYTHONDIR_DEFAULT
+    )
+    set(CMAKE_INSTALL_PYTHONDIR "${CMAKE_INSTALL_PYTHONDIR_DEFAULT}"
+      CACHE PATH "Install directory for python modules"
+    )
+    set(CMAKE_PYTHON_OUTPUT_DIRECTORY
+      ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR}
+    )
   endif()
-  string_strip_prefix(
-    "${_Python_DEVPREFIX}" "${Python_SITEARCH}" CMAKE_INSTALL_PYTHONDIR_DEFAULT
-  )
-  set(CMAKE_INSTALL_PYTHONDIR "${CMAKE_INSTALL_PYTHONDIR_DEFAULT}"
-    CACHE PATH "Install directory for python modules"
-  )
   mark_as_advanced(CMAKE_INSTALL_PYTHONDIR)
-  set(CMAKE_PYTHON_OUTPUT_DIRECTORY
-    ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR}
-  )
 endif()
 
 # Sst

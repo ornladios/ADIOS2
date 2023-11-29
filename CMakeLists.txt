@@ -109,6 +109,10 @@ set(ADIOS2_EXECUTABLE_SUFFIX "${ADIOS2_LIBRARY_SUFFIX}" CACHE STRING
   "Suffix to append to executable names")
 mark_as_advanced(ADIOS2_LIBRARY_SUFFIX ADIOS2_EXECUTABLE_SUFFIX)
 
+# Advanced option to tell CMake the build is on behalf of pip
+set(ADIOS2_PIP_INSTALL OFF CACHE BOOL "Turn on for pip install")
+mark_as_advanced(ADIOS2_PIP_INSTALL)
+
 # Use meta-compile features if available, otherwise use specific language
 # features
 if(CMAKE_CXX_COMPILER_ID MATCHES "^(GNU|Intel|Clang|AppleClang|MSVC)$")
@@ -371,8 +375,8 @@ endif()
 message("")
 message("ADIOS2 build configuration:")
 message("  ADIOS Version: ${ADIOS2_VERSION}")
-message("  C++ Compiler : ${CMAKE_CXX_COMPILER_ID} " 
-                         "${CMAKE_CXX_COMPILER_VERSION} " 
+message("  C++ Compiler : ${CMAKE_CXX_COMPILER_ID} "
+                         "${CMAKE_CXX_COMPILER_VERSION} "
                          "${CMAKE_CXX_COMPILER_WRAPPER}")
 message("    ${CMAKE_CXX_COMPILER}")
 message("")
