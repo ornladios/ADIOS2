@@ -17,6 +17,12 @@ set(EVPATH_LIBRARY_COMPONENT adios2_evpath-libraries)
 set(EVPATH_ARCHIVE_COMPONENT adios2_evpath-development)
 set(EVPATH_HEADER_COMPONENT adios2_evpath-development)
 
+if (ADIOS2_USE_PIP)
+  # If these are not correct for python packaging, auditwheel will fail
+  string(REGEX REPLACE "[^/]+" ".." relative_base "${EVPATH_INSTALL_MODULE_DIR}")
+  list(APPEND CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
+endif ()
+
 add_subdirectory(EVPath)
 set(EVPath_DIR ${CMAKE_CURRENT_BINARY_DIR}/EVPath CACHE INTERNAL "")
 setup_libversion_dir(EVPath)

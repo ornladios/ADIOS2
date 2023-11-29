@@ -22,6 +22,19 @@ project(ADIOS2 VERSION ${ADIOS2_VERSION})
 # Some boilerplate to setup nice output directories
 #------------------------------------------------------------------------------#
 include(GNUInstallDirs)
+
+if (ADIOS2_USE_PIP)
+  # Only UNIX is supported currently
+  if (UNIX)
+    # Linux bundles what libraries we have when they're put beside the modules.
+    set(CMAKE_INSTALL_LIBDIR "adios2")
+    set(CMAKE_INSTALL_INCLUDEDIR "adios2/include")
+    # ELF loader settings.
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
+    list(APPEND CMAKE_INSTALL_RPATH "$ORIGIN")
+  endif ()
+endif ()
+
 set(CMAKE_INSTALL_CMAKEDIR ${CMAKE_INSTALL_LIBDIR}/cmake/adios2
   CACHE STRING "Installation CMake subdirectory")
 mark_as_advanced(CMAKE_INSTALL_CMAKEDIR)
@@ -172,6 +185,8 @@ adios_option(Sodium     "Enable support for Sodium for encryption" AUTO)
 adios_option(Catalyst   "Enable support for in situ visualization plugin using ParaView Catalyst" AUTO)
 adios_option(AWSSDK     "Enable support for S3 compatible storage using AWS SDK's S3 module" OFF)
 adios_option(Derived_Variable    "Enable support for derived variables" OFF)
+adios_option(PIP        "Enable support for pip packaging" OFF)
+mark_as_advanced(ADIOS2_USE_PIP)
 include(${PROJECT_SOURCE_DIR}/cmake/DetectOptions.cmake)
 
 if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
@@ -242,7 +257,7 @@ endif()
 
 
 set(ADIOS2_CONFIG_OPTS
-    DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python Blosc2 BZip2
+    DataMan DataSpaces HDF5 HDF5_VOL MHS SST Fortran MPI Python PIP Blosc2 BZip2
     LIBPRESSIO MGARD MGARD_MDR PNG SZ ZFP DAOS IME O_DIRECT Sodium Catalyst SysVShMem UCX
     ZeroMQ Profiling Endian_Reverse Derived_Variable AWSSDK GPU_Support CUDA Kokkos
     Kokkos_CUDA Kokkos_HIP Kokkos_SYCL
@@ -283,12 +298,12 @@ if(BUILD_SHARED_LIBS AND ADIOS2_RUN_INSTALL_TEST)
         set(ADIOS2_RUN_INSTALL_TEST FALSE)
       endif()
     else()
-      set(CMAKE_INSTALL_RPATH "@loader_path/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
+      list(APPEND CMAKE_INSTALL_RPATH "@loader_path/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
     endif()
 
   elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
     # Linux needs some specialized RPATH handling
-    set(CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
+    list(APPEND CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
   endif()
 endif()
 
@@ -371,8 +386,8 @@ endif()
 message("")
 message("ADIOS2 build configuration:")
 message("  ADIOS Version: ${ADIOS2_VERSION}")
-message("  C++ Compiler : ${CMAKE_CXX_COMPILER_ID} " 
-                         "${CMAKE_CXX_COMPILER_VERSION} " 
+message("  C++ Compiler : ${CMAKE_CXX_COMPILER_ID} "
+                         "${CMAKE_CXX_COMPILER_VERSION} "
                          "${CMAKE_CXX_COMPILER_WRAPPER}")
 message("    ${CMAKE_CXX_COMPILER}")
 message("")

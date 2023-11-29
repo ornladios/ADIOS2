@@ -4,6 +4,7 @@
 [![GitHub (pre-)release](https://img.shields.io/github/release/ornladios/adios2/all.svg)]()
 [![Spack Version](https://img.shields.io/spack/v/adios2.svg)](https://spack.readthedocs.io/en/latest/package_list.html#adios2)
 [![Conda Version](https://img.shields.io/conda/vn/conda-forge/adios2)](https://anaconda.org/conda-forge/adios2)
+[![PyPI version](https://badge.fury.io/py/adios2.svg)](https://badge.fury.io/py/adios2)
 
 [![Circle CI](https://circleci.com/gh/ornladios/ADIOS2.svg?style=shield)](https://circleci.com/gh/ornladios/ADIOS2)
 
@@ -23,7 +24,7 @@ ADIOS2 can be used on supercomputers, cloud systems, and personal computers.
 ADIOS2 focuses on:
 
 1. **Performance** I/O scalability in high performance computing (HPC) applications.
-2. **Adaptability** unified interfaces to allow for several modes of transport (files, memory-to-memory)  
+2. **Adaptability** unified interfaces to allow for several modes of transport (files, memory-to-memory)
 3. **Ease of Use** two-level application programming interface (APIs)
 * Full APIs for HPC applications: C++11, Fortran 90, C 99, Python 2 and 3
 * Simplified High-Level APIs for data analysis: Python 2 and 3, C++11, Matlab
@@ -63,7 +64,7 @@ For a `cmake` configuration example see [scripts/runconf/runconf.sh](https://git
 * Docker images: under [scripts/docker](https://github.com/ornladios/ADIOS2/tree/master/scripts/docker)
 
 
-Once ADIOS2 is installed refer to: 
+Once ADIOS2 is installed refer to:
 
 * [Linking ADIOS2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#linking-adios-2)
 
@@ -78,7 +79,7 @@ Once ADIOS2 is installed refer to:
 
 ADIOS2 is an open source project: Questions, discussion, and contributions are welcome. Join us at:
 
-- Mailing list: adios-ecp@kitware.com 
+- Mailing list: adios-ecp@kitware.com
 - Github Discussions: https://github.com/ornladios/ADIOS2/discussions
 
 ## Reporting Bugs
@@ -103,7 +104,7 @@ See the accompanying [Copyright.txt](Copyright.txt) for more details.
 
 * scripts - Project maintenance and development scripts
 
-* source - Internal source code for private components 
+* source - Internal source code for private components
 * adios2 - source directory for the ADIOS2 library to be installed under install-dir/lib/libadios2.
 * utils  - source directory for the binary utilities, to be installed under install-dir/bin
 

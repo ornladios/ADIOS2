@@ -104,4 +104,6 @@ if(CMAKE_VERSION VERSION_LESS 3.14)
   endforeach()
 endif()
 
-add_subdirectory(util)
+if (NOT ADIOS2_USE_PIP)
+  add_subdirectory(util)
+endif ()
