@@ -46,7 +46,7 @@ adios2_adios *adios2_init_config_mpi(const char *config_file, MPI_Comm comm);
 
 #else
 #define adios2_init() adios2_init_serial()
-#define adios2_init_config(config_file) adios2_init_config_seria(config_file)
+#define adios2_init_config(config_file) adios2_init_config_serial(config_file)
 #endif
 
 /**
