@@ -209,6 +209,13 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
     hints->mode =
         FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX | FI_ASYNC_IOV | FI_RX_CQ_DATA;
     hints->ep_attr->type = FI_EP_RDM;
+    {
+        char const *prov_name = "shm";
+        size_t len = strlen(prov_name) + 1;
+        char *construct_prov_name = malloc(len);
+        memcpy(construct_prov_name, prov_name, len);
+        hints->fabric_attr->prov_name = construct_prov_name;
+    }
 
     uint32_t fi_version;
 #ifdef SST_HAVE_CRAY_CXI
@@ -246,7 +253,7 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
         hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
     }
 #else
-    fi_version = FI_VERSION(1, 5);
+    fi_version = FI_VERSION(1, 18);
 
     // Alternatively, one could set mr_mode to
     // FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL
@@ -256,9 +263,9 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
     // The RDMA DP is able to deal with this appropriately, and does so right
     // before calling fi_fabric() further below in this function.
     // The main reason for keeping FI_MR_BASIC here is backward compatibility.
-    hints->domain_attr->mr_mode = FI_MR_BASIC;
+    hints->domain_attr->mr_mode = FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY;
     hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
-    hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
+    // hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
 #endif
 
     /*
@@ -293,6 +300,12 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
     {
         char *prov_name = info->fabric_attr->prov_name;
         char *domain_name = info->domain_attr->name;
+
+        if (info->tx_attr->inject_size > 0)
+        {
+            info = info->next;
+            continue;
+        }
 
         if (ifname && strcmp(ifname, domain_name) == 0)
         {
@@ -460,7 +473,7 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
     }
 
     av_attr.type = FI_AV_MAP;
-    av_attr.count = DP_AV_DEF_SIZE;
+    // av_attr.count = DP_AV_DEF_SIZE;
     av_attr.ep_per_node = 0;
     result = fi_av_open(fabric->domain, &av_attr, &fabric->av, fabric->ctx);
     if (result != FI_SUCCESS)
@@ -1342,8 +1355,9 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_S
 
     ReaderRollHandle = &ContactInfo->ReaderRollHandle;
     ReaderRollHandle->Block = calloc(readerCohortSize, sizeof(struct _RdmaBuffer));
+    static uint64_t key = 12345;
     sst_fi_mr_reg(Svcs, WS_Stream->CP_Stream, Fabric->domain, ReaderRollHandle->Block,
-                  readerCohortSize * sizeof(struct _RdmaBuffer), FI_REMOTE_WRITE, 0, 0, 0,
+                  readerCohortSize * sizeof(struct _RdmaBuffer), FI_REMOTE_WRITE, 0, ++key, 0,
                   &WSR_Stream->rrmr, Fabric->ctx, Fabric->signal,
                   Fabric->info->domain_attr->mr_mode);
     ReaderRollHandle->Key = fi_mr_key(WSR_Stream->rrmr);
@@ -2081,6 +2095,7 @@ static struct _CP_DP_Interface RdmaDPInterface = {0};
  */
 static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params)
 {
+    return 100;
     struct fi_info *hints, *info, *originfo;
     char const *ifname;
     char *forkunsafe;
