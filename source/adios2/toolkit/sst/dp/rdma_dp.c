@@ -54,6 +54,54 @@ pthread_mutex_t wsr_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_mutex_t ts_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 /*
+ * Wrapper for fi_mr_reg() with additional parameters endpoint and mr_mode.
+ * If mr_mode includes FI_MR_ENDPOINT, the memory region must be bound to the
+ * endpoint and enabled before use.
+ */
+int sst_fi_mr_reg(
+    /* first two parameters for verbose logging */
+    CP_Services Svcs, void *CP_Stream,
+    /* regular fi_mir_reg() parameters*/
+    struct fid_domain *domain, const void *buf, size_t len, uint64_t acs, uint64_t offset,
+    uint64_t requested_key, uint64_t flags, struct fid_mr **mr, void *context,
+    /* additional parameters for binding the mr to the endpoint*/
+    struct fid_ep *endpoint, int mr_mode)
+{
+    int res = fi_mr_reg(domain, buf, len, acs, offset, requested_key, flags, mr, context);
+    int is_mr_endpoint = (mr_mode & FI_MR_ENDPOINT) != 0;
+    if (!is_mr_endpoint)
+    {
+        return res;
+    }
+    if (res != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose, "fi_mr_reg failed with %ul (%s)\n", res,
+                      fi_strerror(res));
+        return res;
+    }
+
+    /*
+     * When the domain_attr->mr_mode includes FI_MR_ENDPOINT, the memory region
+     * needs to be bound to the endpoint and explicitly enabled after that.
+     */
+    res = fi_mr_bind(*mr, &endpoint->fid, 0);
+    if (res != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose, "fi_mr_bind failed with %ul (%s)\n", res,
+                      fi_strerror(res));
+        return res;
+    }
+    res = fi_mr_enable(*mr);
+    if (res != FI_SUCCESS)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose, "fi_mr_enable failed with %ul (%s)\n", res,
+                      fi_strerror(res));
+        return res;
+    }
+    return res;
+}
+
+/*
  * Simple wrapper to create a log entry upon failing fi_*() function calls.
  */
 int guard_fi_return(int code, CP_Services Svcs, CManager cm, char const *msg)
@@ -265,7 +313,9 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
 
     fabric->addr_len = info->src_addrlen;
 
-    info->domain_attr->mr_mode = FI_MR_BASIC;
+    info->domain_attr->mr_mode = FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL | FI_MR_VIRT_ADDR |
+                                 (FI_MR_ENDPOINT & info->domain_attr->mr_mode);
+
 #ifdef SST_HAVE_CRAY_DRC
     if (strstr(info->fabric_attr->prov_name, "gni") && fabric->auth_key)
     {
@@ -929,9 +979,10 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_S
 
     ReaderRollHandle = &ContactInfo->ReaderRollHandle;
     ReaderRollHandle->Block = calloc(readerCohortSize, sizeof(struct _RdmaBuffer));
-    fi_mr_reg(Fabric->domain, ReaderRollHandle->Block,
-              readerCohortSize * sizeof(struct _RdmaBuffer), FI_REMOTE_WRITE, 0, 0, 0,
-              &WSR_Stream->rrmr, Fabric->ctx);
+    sst_fi_mr_reg(Svcs, WS_Stream->CP_Stream, Fabric->domain, ReaderRollHandle->Block,
+                  readerCohortSize * sizeof(struct _RdmaBuffer), FI_REMOTE_WRITE, 0, 0, 0,
+                  &WSR_Stream->rrmr, Fabric->ctx, Fabric->signal,
+                  Fabric->info->domain_attr->mr_mode);
     ReaderRollHandle->Key = fi_mr_key(WSR_Stream->rrmr);
 
     WSR_Stream->WriterContactInfo = ContactInfo;
@@ -1069,7 +1120,9 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank, lo
     if (Fabric->local_mr_req)
     {
         // register dest buffer
-        fi_mr_reg(Fabric->domain, Buffer, Length, FI_READ, 0, 0, 0, &ret->LocalMR, Fabric->ctx);
+        sst_fi_mr_reg(Svcs, RS_Stream->CP_Stream, Fabric->domain, Buffer, Length, FI_READ, 0, 0, 0,
+                      &ret->LocalMR, Fabric->ctx, Fabric->signal,
+                      Fabric->info->domain_attr->mr_mode);
         LocalDesc = fi_mr_desc(ret->LocalMR);
     }
 
@@ -1394,8 +1447,9 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct 
     Entry->BufferSlot = -1;
     Entry->Desc = NULL;
 
-    fi_mr_reg(Fabric->domain, Data->block, Data->DataSize, FI_WRITE | FI_REMOTE_READ, 0, 0, 0,
-              &Entry->mr, Fabric->ctx);
+    sst_fi_mr_reg(Svcs, Stream->CP_Stream, Fabric->domain, Data->block, Data->DataSize,
+                  FI_WRITE | FI_REMOTE_READ, 0, 0, 0, &Entry->mr, Fabric->ctx, Fabric->signal,
+                  Fabric->info->domain_attr->mr_mode);
     Entry->Key = fi_mr_key(Entry->mr);
     if (Fabric->local_mr_req)
     {
@@ -1871,15 +1925,17 @@ static void PostPreload(CP_Services Svcs, Rdma_RS_Stream Stream, long Timestep)
 
     PreloadBuffer->BufferLen = 2 * StepLog->BufferSize;
     PreloadBuffer->Handle.Block = malloc(PreloadBuffer->BufferLen);
-    fi_mr_reg(Fabric->domain, PreloadBuffer->Handle.Block, PreloadBuffer->BufferLen,
-              FI_REMOTE_WRITE, 0, 0, 0, &Stream->pbmr, Fabric->ctx);
+    sst_fi_mr_reg(Svcs, Stream->CP_Stream, Fabric->domain, PreloadBuffer->Handle.Block,
+                  PreloadBuffer->BufferLen, FI_REMOTE_WRITE, 0, 0, 0, &Stream->pbmr, Fabric->ctx,
+                  Fabric->signal, Fabric->info->domain_attr->mr_mode);
     PreloadKey = fi_mr_key(Stream->pbmr);
 
     SBSize = sizeof(*SendBuffer) * StepLog->WRanks;
     SendBuffer = malloc(SBSize);
     if (Fabric->local_mr_req)
     {
-        fi_mr_reg(Fabric->domain, SendBuffer, SBSize, FI_WRITE, 0, 0, 0, &sbmr, Fabric->ctx);
+        sst_fi_mr_reg(Svcs, Stream->CP_Stream, Fabric->domain, SendBuffer, SBSize, FI_WRITE, 0, 0,
+                      0, &sbmr, Fabric->ctx, Fabric->signal, Fabric->info->domain_attr->mr_mode);
         sbdesc = fi_mr_desc(sbmr);
     }
 
@@ -1887,8 +1943,9 @@ static void PostPreload(CP_Services Svcs, Rdma_RS_Stream Stream, long Timestep)
     {
         RBLen = 2 * StepLog->Entries * DP_DATA_RECV_SIZE;
         Stream->RecvDataBuffer = malloc(RBLen);
-        fi_mr_reg(Fabric->domain, Stream->RecvDataBuffer, RBLen, FI_RECV, 0, 0, 0, &Stream->rbmr,
-                  Fabric->ctx);
+        sst_fi_mr_reg(Svcs, Stream->CP_Stream, Fabric->domain, Stream->RecvDataBuffer, RBLen,
+                      FI_RECV, 0, 0, 0, &Stream->rbmr, Fabric->ctx, Fabric->signal,
+                      Fabric->info->domain_attr->mr_mode);
         Stream->rbdesc = fi_mr_desc(Stream->rbmr);
         RecvBuffer = (uint8_t *)Stream->RecvDataBuffer;
         for (i = 0; i < 2 * StepLog->Entries; i++)
@@ -1911,9 +1968,10 @@ static void PostPreload(CP_Services Svcs, Rdma_RS_Stream Stream, long Timestep)
         if (RankLog->Entries > 0)
         {
             RankLog->Buffer = (void *)RawPLBuffer;
-            fi_mr_reg(Fabric->domain, RankLog->ReqLog,
-                      (sizeof(struct _RdmaBuffer) * RankLog->Entries) + sizeof(uint64_t),
-                      FI_REMOTE_READ, 0, 0, 0, &RankLog->preqbmr, Fabric->ctx);
+            sst_fi_mr_reg(Svcs, Stream->CP_Stream, Fabric->domain, RankLog->ReqLog,
+                          (sizeof(struct _RdmaBuffer) * RankLog->Entries) + sizeof(uint64_t),
+                          FI_REMOTE_READ, 0, 0, 0, &RankLog->preqbmr, Fabric->ctx, Fabric->signal,
+                          Fabric->info->domain_attr->mr_mode);
             for (j = 0; j < RankLog->Entries; j++)
             {
                 ReqLog = &RankLog->ReqLog[j];
@@ -2062,8 +2120,9 @@ static void PullSelection(CP_Services Svcs, Rdma_WSR_Stream Stream)
     ReqBuffer.Handle.Block = ReadBuffer = malloc(ReqBuffer.BufferLen);
     if (Fabric->local_mr_req)
     {
-        fi_mr_reg(Fabric->domain, ReqBuffer.Handle.Block, ReqBuffer.BufferLen, FI_READ, 0, 0, 0,
-                  &rrmr, Fabric->ctx);
+        sst_fi_mr_reg(Svcs, WS_Stream->CP_Stream, Fabric->domain, ReqBuffer.Handle.Block,
+                      ReqBuffer.BufferLen, FI_READ, 0, 0, 0, &rrmr, Fabric->ctx, Fabric->signal,
+                      Fabric->info->domain_attr->mr_mode);
         rrdesc = fi_mr_desc(rrmr);
     }
 
