@@ -120,6 +120,7 @@ struct fabric_state
     struct fi_info *info;
     // struct fi_info *linfo;
     int local_mr_req;
+    int mr_virt_addr; /* Stores if the mr_mode includes FI_MR_VIRT_ADDR */
     int rx_cq_data;
     size_t addr_len;
     size_t msg_prefix_size;
@@ -313,8 +314,23 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
 
     fabric->addr_len = info->src_addrlen;
 
-    info->domain_attr->mr_mode = FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL | FI_MR_VIRT_ADDR |
-                                 (FI_MR_ENDPOINT & info->domain_attr->mr_mode);
+    /*
+     * The libfabric data-plane of SST was originally programmed to use
+     * FI_MR_BASIC as mr_mode, which is equivalent to
+     * FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL.
+     *
+     * However, HPE's CXI provider requires two changes to that:
+     * (1) It does not support FI_MR_VIRT_ADDR.
+     * (2) It requires use of FI_MR_ENDPOINT.
+     *
+     * So we propagate the bit value currently contained in the mr_mode
+     * for these flags.
+     */
+    info->domain_attr->mr_mode = FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL |
+                                 (FI_MR_ENDPOINT & info->domain_attr->mr_mode) |
+                                 (FI_MR_VIRT_ADDR & info->domain_attr->mr_mode);
+
+    fabric->mr_virt_addr = info->domain_attr->mr_mode & FI_MR_VIRT_ADDR ? 1 : 0;
 
 #ifdef SST_HAVE_CRAY_DRC
     if (strstr(info->fabric_attr->prov_name, "gni") && fabric->auth_key)
@@ -1126,7 +1142,15 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank, lo
         LocalDesc = fi_mr_desc(ret->LocalMR);
     }
 
-    Addr = Info->Block + Offset;
+    if (Fabric->mr_virt_addr)
+    {
+        Addr = Info->Block + Offset;
+    }
+    else
+    {
+        Addr = NULL;
+        Addr += Offset;
+    }
 
     Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                   "Remote read target is Rank %d (Offset = %zi, Length = %zi)\n", Rank, Offset,
@@ -1836,7 +1860,12 @@ static void PushData(CP_Services Svcs, Rdma_WSR_Stream Stream, TimestepList Step
             {
                 rc = fi_writedata(Fabric->signal, StepBuffer + Req->Offset, Req->BufferLen,
                                   Step->Desc, Data, Stream->ReaderAddr[RankReq->Rank],
-                                  (uint64_t)Req->Handle.Block +
+                                  /*
+                                   * If mr_virt_addr is zero, we need just the offset,
+                                   * otherwise we need the remote virtual address composed by
+                                   * base pointer + offset.
+                                   */
+                                  Fabric->mr_virt_addr * (uint64_t)Req->Handle.Block +
                                       (BufferSlot * RankReq->PreloadBufferSize),
                                   RollBuffer->Offset, (void *)(Step->Timestep));
             } while (rc == -EAGAIN);
@@ -1990,8 +2019,13 @@ static void PostPreload(CP_Services Svcs, Rdma_RS_Stream Stream, long Timestep)
             SendBuffer[WRidx].Offset = (uint64_t)PreloadKey;
             SendBuffer[WRidx].Handle.Block = (void *)RankLog->ReqLog;
             SendBuffer[WRidx].Handle.Key = fi_mr_key(RankLog->preqbmr);
-            RollDest =
-                (uint64_t)Stream->WriterRoll[i].Block + (sizeof(struct _RdmaBuffer) * Stream->Rank);
+            /*
+             * If mr_virt_addr is zero, we need just the offset,
+             * otherwise we need the remote virtual address composed by
+             * base pointer + offset.
+             */
+            RollDest = Fabric->mr_virt_addr * (uint64_t)Stream->WriterRoll[i].Block +
+                       (sizeof(struct _RdmaBuffer) * Stream->Rank);
             guard_fi_return((int)fi_write(Fabric->signal, &SendBuffer[WRidx],
                                           sizeof(struct _RdmaBuffer), sbdesc, Stream->WriterAddr[i],
                                           RollDest, Stream->WriterRoll[i].Key, &SendBuffer[WRidx]),
@@ -2129,11 +2163,17 @@ static void PullSelection(CP_Services Svcs, Rdma_WSR_Stream Stream)
     for (RankReq = Stream->PreloadReq; RankReq; RankReq = RankReq->next)
     {
         RankReq->ReqLog = (RdmaBuffer)ReadBuffer;
-        guard_fi_return((int)fi_read(Fabric->signal, RankReq->ReqLog, RankReq->BufferSize, rrdesc,
-                                     Stream->ReaderAddr[RankReq->Rank],
-                                     (uint64_t)ReaderRoll[RankReq->Rank].Handle.Block,
-                                     ReaderRoll[RankReq->Rank].Handle.Key, RankReq),
-                        Svcs, WS_Stream->CP_Stream, "[PullSelection] fi_read() failed with:");
+        guard_fi_return(
+            (int)fi_read(Fabric->signal, RankReq->ReqLog, RankReq->BufferSize, rrdesc,
+                         Stream->ReaderAddr[RankReq->Rank],
+                         /*
+                          * If mr_virt_addr is 0, then this is a simple
+                          * null-pointer, indicating no offset. Otherwise, we
+                          * need the remote virtual memory read address.
+                          */
+                         Fabric->mr_virt_addr * (uint64_t)ReaderRoll[RankReq->Rank].Handle.Block,
+                         ReaderRoll[RankReq->Rank].Handle.Key, RankReq),
+            Svcs, WS_Stream->CP_Stream, "[PullSelection] fi_read() failed with:");
         ReadBuffer += RankReq->BufferSize;
     }
 
