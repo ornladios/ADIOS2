@@ -20,8 +20,9 @@
 #include <rdma/fi_rma.h>
 
 #ifdef SST_HAVE_CRAY_CXI
-// Needs to be included before rdma/fi_cxi_ext.h
 #include <stdbool.h>
+// This comment prevents clang-format from reordering these includes.
+// The CXI extension header requires the bool header, but does not include it on its own.
 #include <rdma/fi_cxi_ext.h>
 #endif
 
