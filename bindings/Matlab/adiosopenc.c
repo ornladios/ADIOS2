@@ -140,11 +140,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     /********************************************************/
     /* Open ADIOS file now and get variables and attributes */
-#if ADIOS2_USE_MPI
-    adiosobj = adios2_init(false);
-#else
-    adiosobj = adios2_init();
-#endif
+    adiosobj = adios2_init_serial();
     group = adios2_declare_io(adiosobj, "matlabiogroup"); // name is arbitrary
     fp = adios2_open(group, fname, adios2_mode_read);
     if (fp == NULL)
