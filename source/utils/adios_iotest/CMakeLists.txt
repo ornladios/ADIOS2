@@ -29,11 +29,12 @@ if(ADIOS2_HAVE_HDF5 AND HDF5_IS_PARALLEL)
 
 endif()
 
+if (NOT ADIOS2_PIP_INSTALL)
+  install(TARGETS adios_iotest EXPORT adios2
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_tools-runtime
+  )
 
-install(TARGETS adios_iotest EXPORT adios2
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_tools-runtime
-)
-
-install(DIRECTORY iotest-config/
-   DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/iotest-config COMPONENT adios2_tools-data
-)
+  install(DIRECTORY iotest-config/
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/iotest-config COMPONENT adios2_tools-data
+  )
+endif()

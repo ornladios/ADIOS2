@@ -21,6 +21,9 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+  "numpy",
+]
 
 [project.urls]
 Homepage = "https://github.com/ornladios/adios2"
@@ -28,7 +31,6 @@ Issues = "https://github.com/ornladios/adios2/issues"
 
 [tool.scikit-build]
 wheel.packages = ["adios2"]
-build-dir = "/data/scott/Documents/adios2/pip_build"
 
 [tool.scikit-build.cmake.define]
 ADIOS2_USE_Python = "ON"
@@ -37,9 +39,11 @@ ADIOS2_USE_MPI = "OFF"
 ADIOS2_USE_HDF5 = "OFF"
 ADIOS2_USE_HDF5_VOL = "OFF"
 ADIOS2_USE_BZip2 = "OFF"
-ADIOS2_USE_Blosc = "OFF"
+ADIOS2_USE_Blosc2 = "OFF"
 ADIOS2_USE_DataMan = "OFF"
 ADIOS2_USE_SZ = "OFF"
 ADIOS2_USE_ZeroMQ = "OFF"
 ADIOS2_USE_ZFP = "OFF"
 ADIOS2_PIP_INSTALL = "ON"
+BUILD_TESTING = "OFF"
+ADIOS2_INSTALL_GENERATE_CONFIG = "OFF"

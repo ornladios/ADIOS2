@@ -398,7 +398,9 @@ if(NOT SHARED_LIBS_SUPPORTED)
   endif()
 endif()
 
-if(ADIOS2_USE_Python STREQUAL AUTO)
+if(ADIOS2_PIP_INSTALL)
+  find_package(Python 3 REQUIRED COMPONENTS Interpreter Development.Module NumPy)
+elseif(ADIOS2_USE_Python STREQUAL AUTO)
   find_package(Python 3 COMPONENTS Interpreter Development NumPy)
   if(Python_FOUND AND ADIOS2_HAVE_MPI)
     find_package(PythonModule COMPONENTS mpi4py mpi4py/mpi4py.h)
@@ -426,29 +428,21 @@ endif()
 
 if(Python_Interpreter_FOUND)
   # Setup output directories
-  if (ADIOS2_PIP_INSTALL)
-    # do it the pip way
-    set(CMAKE_INSTALL_PYTHONDIR ${Python_SITEARCH})
-    set(CMAKE_PYTHON_OUTPUT_DIRECTORY
-      ${PROJECT_BINARY_DIR}/${Python_SITEARCH}
-    )
+  if(Python_Development_FOUND)
+    lists_get_prefix("Python_INCLUDE_DIRS;Python_LIBRARIES;Python_SITEARCH" _Python_DEVPREFIX)
   else()
-    if(Python_Development_FOUND)
-      lists_get_prefix("Python_INCLUDE_DIRS;Python_LIBRARIES;Python_SITEARCH" _Python_DEVPREFIX)
-    else()
-      lists_get_prefix("Python_EXECUTABLE;Python_SITEARCH" _Python_DEVPREFIX)
-    endif()
-    message("This is borked! _Python_DEVPREFIX = ${_Python_DEVPREFIX}, Python_SITEARCH = ${Python_SITEARCH}")
-    string_strip_prefix(
-      "${_Python_DEVPREFIX}" "${Python_SITEARCH}" CMAKE_INSTALL_PYTHONDIR_DEFAULT
-    )
-    set(CMAKE_INSTALL_PYTHONDIR "${CMAKE_INSTALL_PYTHONDIR_DEFAULT}"
-      CACHE PATH "Install directory for python modules"
-    )
-    set(CMAKE_PYTHON_OUTPUT_DIRECTORY
-      ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR}
-    )
+    lists_get_prefix("Python_EXECUTABLE;Python_SITEARCH" _Python_DEVPREFIX)
   endif()
+  message("This is borked! _Python_DEVPREFIX = ${_Python_DEVPREFIX}, Python_SITEARCH = ${Python_SITEARCH}")
+  string_strip_prefix(
+    "${_Python_DEVPREFIX}" "${Python_SITEARCH}" CMAKE_INSTALL_PYTHONDIR_DEFAULT
+  )
+  set(CMAKE_INSTALL_PYTHONDIR "${CMAKE_INSTALL_PYTHONDIR_DEFAULT}"
+    CACHE PATH "Install directory for python modules"
+  )
+  set(CMAKE_PYTHON_OUTPUT_DIRECTORY
+    ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR}
+  )
   mark_as_advanced(CMAKE_INSTALL_PYTHONDIR)
 endif()
 

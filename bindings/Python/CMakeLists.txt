@@ -47,12 +47,11 @@ set_target_properties(adios2_py PROPERTIES
   COMPILE_PDB_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2
 )
 
-
 if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   if (ADIOS2_PIP_INSTALL)
-  set_target_properties(adios2_py PROPERTIES
-    INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}"
-  )
+    set_target_properties(adios2_py PROPERTIES
+      INSTALL_RPATH "${CMAKE_INSTALL_RPATH}"
+    )
   else()
     string(REGEX REPLACE "[^/]+" ".." relative_base "${CMAKE_INSTALL_PYTHONDIR}/adios2")
     set_target_properties(adios2_py PROPERTIES
@@ -61,11 +60,21 @@ if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   endif()
 endif()
 
-install(TARGETS adios2_py
-  DESTINATION ${CMAKE_INSTALL_PYTHONDIR}/adios2
-  COMPONENT adios2_python-python
+if (ADIOS2_PIP_INSTALL)
+  install(TARGETS adios2_py
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    COMPONENT adios2_python-python)
+  install(FILES ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/__init__.py
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    COMPONENT adios2_python-python)
+else ()
+  install(TARGETS adios2_py
+    DESTINATION ${CMAKE_INSTALL_PYTHONDIR}
+    COMPONENT adios2_python-python
+  )
+  install(FILES ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/__init__.py
+    DESTINATION ${CMAKE_INSTALL_PYTHONDIR}
+    COMPONENT adios2_python-python
 )
-install(FILES ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/__init__.py
-  DESTINATION ${CMAKE_INSTALL_PYTHONDIR}/adios2
-  COMPONENT adios2_python-python
-)
+endif ()
+

@@ -18,6 +18,39 @@ setup_version(2.9.0)
 
 project(ADIOS2 VERSION ${ADIOS2_VERSION})
 
+# Advanced option to tell CMake the build is on behalf of pip
+set(ADIOS2_PIP_INSTALL OFF CACHE BOOL "Turn on for pip install")
+mark_as_advanced(ADIOS2_PIP_INSTALL)
+
+if (ADIOS2_PIP_INSTALL)
+  # Required for shared library placement.
+  if (WIN32)
+    # Defaults are fine; handled by `delvewheel`.
+  elseif (APPLE)
+    set(CMAKE_INSTALL_LIBDIR
+      # Store libraries in a subdirectory here.
+      "adios2/.dylibs")
+  else ()
+    set(CMAKE_INSTALL_LIBDIR
+      # Linux bundles what libraries we have when they're put beside the modules.
+      "adios2")
+  endif ()
+
+  if (APPLE)
+    # macOS loader settings.
+    set(CMAKE_BUILD_WITH_INSTALL_NAME_DIR ON)
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
+    set(CMAKE_INSTALL_NAME_DIR "@rpath")
+    list(APPEND CMAKE_INSTALL_RPATH
+      "@loader_path")
+  elseif (UNIX)
+    # ELF loader settings.
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH ON)
+    list(APPEND CMAKE_INSTALL_RPATH
+      "$ORIGIN")
+  endif ()
+endif ()
+
 #------------------------------------------------------------------------------#
 # Some boilerplate to setup nice output directories
 #------------------------------------------------------------------------------#
@@ -108,10 +141,6 @@ set(ADIOS2_LIBRARY_SUFFIX "" CACHE STRING
 set(ADIOS2_EXECUTABLE_SUFFIX "${ADIOS2_LIBRARY_SUFFIX}" CACHE STRING
   "Suffix to append to executable names")
 mark_as_advanced(ADIOS2_LIBRARY_SUFFIX ADIOS2_EXECUTABLE_SUFFIX)
-
-# Advanced option to tell CMake the build is on behalf of pip
-set(ADIOS2_PIP_INSTALL OFF CACHE BOOL "Turn on for pip install")
-mark_as_advanced(ADIOS2_PIP_INSTALL)
 
 # Use meta-compile features if available, otherwise use specific language
 # features
@@ -287,12 +316,12 @@ if(BUILD_SHARED_LIBS AND ADIOS2_RUN_INSTALL_TEST)
         set(ADIOS2_RUN_INSTALL_TEST FALSE)
       endif()
     else()
-      set(CMAKE_INSTALL_RPATH "@loader_path/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
+      list(APPEND CMAKE_INSTALL_RPATH "@loader_path/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
     endif()
 
   elseif(CMAKE_SYSTEM_NAME MATCHES "Linux")
     # Linux needs some specialized RPATH handling
-    set(CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
+    list(APPEND CMAKE_INSTALL_RPATH "$ORIGIN/${relative_base}/${CMAKE_INSTALL_LIBDIR}")
   endif()
 endif()
 
