@@ -3,12 +3,17 @@
 set -x
 set -e
 
-source $(dirname $(readlink -f ${BASH_SOURCE}))/setup.sh
+# shellcheck disable=SC1091
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/setup.sh"
 
-mkdir -p ${test_dir}
-cd ${test_dir}
+# Fail if is not set
+build_dir="${build_dir:?}"
+test_dir="${test_dir:?}"
 
-mpiexec --oversubscribe -np 4 ${build_dir}/examples/adios/example3 -v
+mkdir -p "${test_dir}"
+cd "${test_dir}"
+
+mpiexec --oversubscribe -np 4 "${build_dir}/examples/adios/example3" -v
 
 bpls -d example3_1.nc.bp.dir/example3_1.nc.bp.0 > 0.dump
 diff -u 0.dump /opt/adios2/source/testing/contract/scorpio/0.dump

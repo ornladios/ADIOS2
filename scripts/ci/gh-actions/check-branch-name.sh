@@ -4,7 +4,7 @@ if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]
 then
   if [ -z "${BASE_REF}" ]
   then
-    BASE_REF="$(jq -r .pull_request.base.ref ${GITHUB_EVENT_PATH})"
+    BASE_REF="$(jq -r .pull_request.base.ref "${GITHUB_EVENT_PATH}")"
   fi
   echo "Base ref: ${BASE_REF}"
   echo "Head ref: ${GITHUB_HEAD_REF}"
