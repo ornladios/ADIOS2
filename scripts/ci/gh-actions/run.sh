@@ -100,19 +100,19 @@ export ADIOS2_IP=127.0.0.1
 export OMP_NUM_THREADS=1
 
 # Load any additional setup scripts
-if [ -f gha/scripts/ci/setup-run/ci-${GH_YML_JOBNAME}.sh ]
+if [ -f "gha/scripts/ci/setup-run/ci-${GH_YML_JOBNAME}.sh" ]
 then
   SETUP_RUN_SCRIPT=gha/scripts/ci/setup-run/ci-${GH_YML_JOBNAME}.sh
-elif [ -f gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}-${GH_YML_MATRIX_PARALLEL}.sh ]
+elif [ -f "gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}-${GH_YML_MATRIX_PARALLEL}.sh" ]
 then
   SETUP_RUN_SCRIPT=gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}-${GH_YML_MATRIX_PARALLEL}.sh
-elif [ -f gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}.sh ]
+elif [ -f "gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}.sh" ]
 then
   SETUP_RUN_SCRIPT=gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}-${GH_YML_MATRIX_COMPILER}.sh
-elif [ -f gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}.sh ]
+elif [ -f "gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}.sh" ]
 then
   SETUP_RUN_SCRIPT=gha/scripts/ci/setup-run/ci-${GH_YML_MATRIX_OS}.sh
-elif [ -f gha/scripts/ci/setup-run/ci-${GH_YML_BASE_OS}.sh ]
+elif [ -f "gha/scripts/ci/setup-run/ci-${GH_YML_BASE_OS}.sh" ]
 then
   SETUP_RUN_SCRIPT=gha/scripts/ci/setup-run/ci-${GH_YML_BASE_OS}.sh
 fi
@@ -126,7 +126,8 @@ echo "::endgroup::"
 echo "::group::Job-run setup (if any)"
 if [ "${SETUP_RUN_SCRIPT:-UNSET}" != "UNSET" ]
 then
-  source ${SETUP_RUN_SCRIPT}
+  # shellcheck source=/dev/null
+  source "${SETUP_RUN_SCRIPT}"
 fi
 echo "::endgroup::"
 
@@ -139,7 +140,8 @@ echo "::group::CTest version"
 echo "::endgroup::"
 
 echo "::group::Execute job step"
-"${CTEST}" -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF ${CTEST_STEP_ARGS}
+# shellcheck disable=SC2086
+"${CTEST}" -VV -S "${CTEST_SCRIPT}" -Ddashboard_full=OFF ${CTEST_STEP_ARGS}
 RET=$?
 echo "::endgroup::"
 

@@ -48,23 +48,4 @@ if(ADIOS2_HAVE_MPI)
   install(DIRECTORY "catalyst" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott-struct)
 
   install(PROGRAMS "cleanup.sh" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott-struct)
-
-  find_package(VTK QUIET)
-  if(VTK_FOUND)
-    add_executable(adios2_simulations_gray-scott-struct_curvature analysis/curvature.cpp)
-    target_link_libraries(adios2_simulations_gray-scott-struct_curvature adios2::cxx11_mpi MPI::MPI_C ${VTK_LIBRARIES})
-    install(TARGETS adios2_simulations_gray-scott-struct_curvature RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-    add_executable(adios2_simulations_gray-scott-struct_find_blobs analysis/find_blobs.cpp)
-    target_link_libraries(adios2_simulations_gray-scott-struct_find_blobs adios2::cxx11_mpi MPI::MPI_C ${VTK_LIBRARIES})
-    install(TARGETS adios2_simulations_gray-scott-struct_find_blobs RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-    add_executable(adios2_simulations_gray-scott-struct_isosurface analysis/isosurface.cpp)
-    target_link_libraries(adios2_simulations_gray-scott-struct_isosurface adios2::cxx11_mpi MPI::MPI_C ${VTK_LIBRARIES})
-    install(TARGETS adios2_simulations_gray-scott-struct_isosurface RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-    # add_executable(adios2_simulations_gray-scott-struct_render_isosurface plot/render_isosurface.cpp)
-    # target_link_libraries(adios2_simulations_gray-scott_struct_render-isosurface adios2::cxx11_mpi MPI::MPI_C ${VTK_LIBRARIES})
-    # install(TARGETS adios2_simulations_gray-scott-struct_render_isosurface RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-  endif()
 endif()

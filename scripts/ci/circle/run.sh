@@ -1,5 +1,6 @@
 #!/bin/bash --login
 
+# shellcheck source=/dev/null
 . /etc/profile.d/modules.sh
 
 # Parse the branch name used by the PR
@@ -8,8 +9,9 @@ REALBRANCH="${CIRCLE_BRANCH}"
 if [ -n "${CIRCLE_PR_NUMBER}" ]
 then
   APIURL="${API_BASE}/pulls/${CIRCLE_PR_NUMBER}"
-  RESULT="$(curl -s ${APIURL} | python3 -c "import sys, json; print(json.load(sys.stdin)['head']['ref'])" 2> /dev/null)"
-  if [ $? -eq 0 ]
+  RESULT="$(curl -s "${APIURL}" | python3 -c "import sys, json; print(json.load(sys.stdin)['head']['ref'])" 2> /dev/null)"
+  exit_status=$?
+  if [ "$exit_status" -eq 0 ]
   then
     REALBRANCH="$(echo "${RESULT}" | tr '/' '-')"
   fi
@@ -70,8 +72,9 @@ echo "**********Env End************"
 
 echo "**********CTest Begin**********"
 ${CTEST} --version
-echo ${CTEST} -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF ${CTEST_STEP_ARGS}
-${CTEST} -VV -S ${CTEST_SCRIPT} -Ddashboard_full=OFF ${CTEST_STEP_ARGS}
+echo ${CTEST} -VV -S "${CTEST_SCRIPT}" -Ddashboard_full=OFF "${CTEST_STEP_ARGS}"
+# shellcheck disable=SC2086
+${CTEST} -VV -S "${CTEST_SCRIPT}" -Ddashboard_full=OFF ${CTEST_STEP_ARGS}
 RET=$?
 echo "**********CTest End************"
 
