@@ -248,6 +248,14 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
 #else
     fi_version = FI_VERSION(1, 5);
 
+    // Alternatively, one could set mr_mode to
+    // FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL
+    // here. These flags are equivalent to FI_MR_BASIC, but unlike basic
+    // registration, providers are not forced to keep those flags when they
+    // think that not using the flags is better.
+    // The RDMA DP is able to deal with this appropriately, and does so right
+    // before calling fi_fabric() further below in this function.
+    // The main reason for keeping FI_MR_BASIC here is backward compatibility.
     hints->domain_attr->mr_mode = FI_MR_BASIC;
     hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
     hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
@@ -392,11 +400,17 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
      * So we propagate the bit value currently contained in the mr_mode
      * for these flags.
      */
-    info->domain_attr->mr_mode = FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL |
-                                 (FI_MR_ENDPOINT & info->domain_attr->mr_mode) |
-                                 (FI_MR_VIRT_ADDR & info->domain_attr->mr_mode);
-
-    fabric->mr_virt_addr = info->domain_attr->mr_mode & FI_MR_VIRT_ADDR ? 1 : 0;
+    if (info->domain_attr->mr_mode != FI_MR_BASIC)
+    {
+        info->domain_attr->mr_mode = FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL |
+                                     (FI_MR_ENDPOINT & info->domain_attr->mr_mode) |
+                                     (FI_MR_VIRT_ADDR & info->domain_attr->mr_mode);
+        fabric->mr_virt_addr = info->domain_attr->mr_mode & FI_MR_VIRT_ADDR ? 1 : 0;
+    }
+    else
+    {
+        fabric->mr_virt_addr = 1;
+    }
 
 #ifdef SST_HAVE_CRAY_DRC
     if (strstr(info->fabric_attr->prov_name, "gni") && fabric->auth_key)
