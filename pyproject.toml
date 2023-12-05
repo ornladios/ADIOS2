@@ -1,10 +1,10 @@
 [build-system]
-requires = ["scikit-build-core", "numpy"]
+requires = ["scikit-build-core", "numpy", "setuptools_scm>=8"]
 build-backend = "scikit_build_core.build"
 
 [project]
 name = "adios2_scottwittenburg"
-version = "2.9.2"
+dynamic = ["version"]
 authors = [
   { name="Chuck Atkins", email="chuck.atkins@kitware.com" },
   { name="Greg S. Eisenhauer", email="eisen@cc.gatech.edu" },
@@ -31,6 +31,10 @@ Issues = "https://github.com/ornladios/adios2/issues"
 
 [tool.scikit-build]
 wheel.packages = ["adios2"]
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+
+[tool.setuptools_scm]  # Section required
+write_to = "_version.py"
 
 [tool.scikit-build.cmake.define]
 ADIOS2_USE_Python = "ON"
