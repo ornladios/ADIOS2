@@ -90,7 +90,7 @@ void read1D(int nproc, int rank, const std::string &filename, const int nsteps, 
         /* get variables with 1D shape */
 
         std::string out;
-        for (size_t step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
+        for (int step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
         {
             if (nsteps != 0 && step == nsteps)
                 break;
@@ -215,7 +215,7 @@ void read3D(int nproc, int rank, const std::string &filename, const int nsteps, 
         adios2::Engine reader = io.Open(filename, adios2::Mode::Read);
 
         std::string out;
-        for (size_t step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
+        for (int step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
         {
             if (nsteps != 0 && step == nsteps)
                 break;
@@ -371,7 +371,7 @@ void read3DPlane(int nproc, int rank, const std::string &filename, const int nst
 
         adios2::Engine reader = io.Open(filename, adios2::Mode::Read);
         std::string out;
-        for (size_t step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
+        for (int step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
         {
             if (nsteps != 0 && step == nsteps)
                 break;
