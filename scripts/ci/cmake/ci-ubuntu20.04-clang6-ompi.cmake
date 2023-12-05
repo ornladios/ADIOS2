@@ -1,7 +1,3 @@
-include(ProcessorCount)
-ProcessorCount(NCPUS)
-math(EXPR N2CPUS "${NCPUS}*2")
-
 set(ENV{CC}  clang-6.0)
 set(ENV{CXX} clang++-6.0)
 set(ENV{FC}  gfortran-11)
@@ -36,9 +32,6 @@ CMAKE_CXX_COMPILER_LAUNCHER=ccache
 CMAKE_C_FLAGS:STRING=-Wall
 CMAKE_CXX_FLAGS:STRING=-Wall
 CMAKE_Fortran_FLAGS:STRING=-Wall
-
-MPIEXEC_EXTRA_FLAGS:STRING=--allow-run-as-root --oversubscribe
-MPIEXEC_MAX_NUMPROCS:STRING=${N2CPUS}
 ")
 
 # We have a dedicated build for this setup without MPI

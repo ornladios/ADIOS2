@@ -76,6 +76,8 @@ And finally, use the standard invocation to install:
 CMake Options
 *************
 
+.. _sec:source_cmake_options:
+
 The following options can be specified with CMake's ``-DVAR=VALUE`` syntax. The default option is highlighted.
 
 ============================= ================ ==========================================================================================================================================================================================================================

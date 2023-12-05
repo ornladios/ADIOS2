@@ -495,34 +495,78 @@ void BP5Writer::MarshalAttributes()
     }
 }
 
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+void BP5Writer::ComputeDerivedVariables()
+{
+    auto const &m_VariablesDerived = m_IO.GetDerivedVariables();
+    auto const &m_Variables = m_IO.GetVariables();
+    // parse all derived variables
+    for (auto it = m_VariablesDerived.begin(); it != m_VariablesDerived.end(); it++)
+    {
+        // identify the variables used in the derived variable
+        auto derivedVar = dynamic_cast<core::VariableDerived *>((*it).second.get());
+        std::vector<std::string> varList = derivedVar->VariableNameList();
+        // to create a mapping between variable name and the varInfo (dim and data pointer)
+        std::map<std::string, MinVarInfo> nameToVarInfo;
+        bool computeDerived = true;
+        for (auto varName : varList)
+        {
+            auto itVariable = m_Variables.find(varName);
+            if (itVariable == m_Variables.end())
+                helper::Throw<std::invalid_argument>("Core", "IO", "DefineDerivedVariable",
+                                                     "using undefine variable " + varName +
+                                                         " in defining the derived variable " +
+                                                         (*it).second->m_Name);
+            // extract the dimensions and data for each variable
+            VariableBase *varBase = itVariable->second.get();
+            auto mvi = WriterMinBlocksInfo(*varBase);
+            if (mvi->BlocksInfo.size() == 0)
+            {
+                computeDerived = false;
+                std::cout << "Variable " << itVariable->first << " not written in this step";
+                std::cout << " .. skip derived variable " << (*it).second->m_Name << std::endl;
+                break;
+            }
+            nameToVarInfo.insert({varName, *mvi});
+        }
+        // skip computing derived variables if it contains variables that are not written this step
+        if (!computeDerived)
+            continue;
+
+        // compute the values for the derived variables that are not type ExpressionString
+        std::vector<std::tuple<void *, Dims, Dims>> DerivedBlockData;
+        if (derivedVar->GetDerivedType() != DerivedVarType::ExpressionString)
+        {
+            DerivedBlockData = derivedVar->ApplyExpression(nameToVarInfo);
+        }
+
+        // Send the derived variable to ADIOS2 internal logic
+        for (auto derivedBlock : DerivedBlockData)
+        {
+            // set the shape of the variable for each block
+            if (!(*it).second->IsConstantDims())
+            {
+                (*it).second->m_Start = std::get<1>(derivedBlock);
+                (*it).second->m_Count = std::get<2>(derivedBlock);
+            }
+            PutCommon(*(*it).second.get(), std::get<0>(derivedBlock), true /* sync */);
+            free(std::get<0>(derivedBlock));
+        }
+    }
+}
+#endif
+
 void BP5Writer::EndStep()
 {
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    ComputeDerivedVariables();
+#endif
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP5Writer::EndStep");
     m_Profiler.Start("ES");
 
     m_Profiler.Start("ES_close");
     MarshalAttributes();
-
-#ifdef NOT_DEF
-    const auto &vars = m_IO.GetVariables();
-    for (const auto &varPair : vars)
-    {
-        auto baseVar = varPair.second.get();
-        auto mvi = WriterMinBlocksInfo(*baseVar);
-        if (mvi)
-        {
-            std::cout << "Info for Variable " << varPair.first << std::endl;
-            PrintMVI(std::cout, *mvi);
-            if (baseVar->m_Type == DataType::Double)
-                std::cout << "Double value is " << *((double *)mvi->BlocksInfo[0].BufferP)
-                          << std::endl;
-            delete mvi;
-        }
-        else
-            std::cout << "Variable " << varPair.first << " not written on this step" << std::endl;
-    }
-#endif
 
     // true: advances step
     auto TSInfo = m_BP5Serializer.CloseTimestep((int)m_WriterStep,

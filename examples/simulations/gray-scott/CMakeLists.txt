@@ -43,27 +43,9 @@ if(ADIOS2_HAVE_MPI)
     "simulation/settings-inline.json"
     "plot/decomp.py" "plot/gsplot.py" "plot/pdfplot.py"
     "ReadMe.md"
-    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/examples/simulations/gray-scott)
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott)
 
-  install(DIRECTORY "catalyst" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/examples/simulations/gray-scott)
+  install(DIRECTORY "catalyst" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott)
 
-  install(PROGRAMS "cleanup.sh" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/examples/simulations/gray-scott)
-
-  find_package(VTK QUIET)
-  if(VTK_FOUND)
-    add_executable(adios2_simulations_gray-scott_curvature analysis/curvature.cpp)
-    target_link_libraries(adios2_simulations_gray-scott_curvature adios2::cxx11_mpi MPI::MPI_C ${VTK_LIBRARIES})
-    install(TARGETS adios2_simulations_gray-scott_curvature RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-    add_executable(adios2_simulations_gray-scott_find-blobs analysis/find_blobs.cpp)
-    target_link_libraries(adios2_simulations_gray-scott_find-blobs adios2::cxx11_mpi MPI::MPI_C ${VTK_LIBRARIES})
-    install(TARGETS adios2_simulations_gray-scott_find-blobs RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-    add_executable(adios2_simulations_gray-scott_isosurface analysis/isosurface.cpp)
-    target_link_libraries(adios2_simulations_gray-scott_isosurface adios2::cxx11_mpi MPI::MPI_C ${VTK_LIBRARIES})
-    install(TARGETS adios2_simulations_gray-scott_isosurface RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-    # add_executable(adios2_simulations_gray-scott_render-isosurface plot/render_isosurface.cpp)
-    # target_link_libraries(adios2_simulations_gray-scott_render-isosurface adios2::cxx11_mpi MPI::MPI_C ${VTK_LIBRARIES})
-  endif()
+  install(PROGRAMS "cleanup.sh" DESTINATION ${CMAKE_INSTALL_PREFIX}/share/adios2/gray-scott)
 endif()

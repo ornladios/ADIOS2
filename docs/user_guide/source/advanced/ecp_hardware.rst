@@ -33,27 +33,29 @@ your tests.
 Examples of launching ADIOS2 SST unit tests using MPI DP:
 
 .. code-block:: bash
- # We omit some of the srun (SLURM) arguments which are specific of the project
- # you are working on. Note that you could avoid calling srun directly by
- # setting the CMAKE variable `MPIEXEC_EXECUTABLE`.
 
- # Launch simple writer test instance
- srun {PROJFLAGS }-N 1 /gpfs/alpine/proj-shared/csc331/vbolea/ADIOS2-build/bin/TestCommonWrite SST mpi_dp_test CPCommPattern=Min,MarshalMethod=BP5'
+  # We omit some of the srun (SLURM) arguments which are specific of the project
+  # you are working on. Note that you could avoid calling srun directly by
+  # setting the CMAKE variable `MPIEXEC_EXECUTABLE`.
 
- # On another terminal launch multiple instances of the Reader test
- srun {PROJFLAGS} -N 2 /gpfs/alpine/proj-shared/csc331/vbolea/ADIOS2-build/bin/TestCommonRead SST mpi_dp_test
+  # Launch simple writer test instance
+  srun {PROJFLAGS } -N 1 /gpfs/alpine/proj-shared/csc331/vbolea/ADIOS2-build/bin/TestCommonWrite SST mpi_dp_test CPCommPattern=Min,MarshalMethod=BP5
+
+  # On another terminal launch multiple instances of the Reader test
+  srun {PROJFLAGS} -N 2 /gpfs/alpine/proj-shared/csc331/vbolea/ADIOS2-build/bin/TestCommonRead SST mpi_dp_test
 
 Alternatively, you can configure your CMake build to use srun directly:
 
 .. code-block:: bash
- cmake . -DMPIEXEC_EXECUTABLE:FILEPATH="/usr/bin/srun" \
-         -DMPIEXEC_EXTRA_FLAGS:STRING="-A{YourProject} -pbatch -t10" \
-         -DMPIEXEC_NUMPROC_FLAG:STRING="-N" \
-         -DMPIEXEC_MAX_NUMPROCS:STRING="-8" \
-         -DADIOS2_RUN_MPI_MPMD_TESTS=OFF
 
- cmake --build .
- ctest
+  cmake . -DMPIEXEC_EXECUTABLE:FILEPATH="/usr/bin/srun" \
+       -DMPIEXEC_EXTRA_FLAGS:STRING="-A{YourProject} -pbatch -t10" \
+       -DMPIEXEC_NUMPROC_FLAG:STRING="-N" \
+       -DMPIEXEC_MAX_NUMPROCS:STRING="-8" \
+       -DADIOS2_RUN_MPI_MPMD_TESTS=OFF
 
- # monitor your jobs
- watch -n1 squeue -l -u $USER
+  cmake --build .
+  ctest
+
+  # monitor your jobs
+  watch -n1 squeue -l -u $USER

@@ -39,6 +39,7 @@ def reader(ad):
     var_greeting = io.InquireVariable("Greeting")
     message = r.Get(var_greeting)
     r.EndStep()
+    r.Close()
     return message
 
 

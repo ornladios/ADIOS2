@@ -27,8 +27,6 @@ if(NOT TARGET adios2_core)
   endif()
   list(APPEND _components CXX)
 
-  find_package(SZ QUIET)
-
   find_package(ADIOS2 REQUIRED COMPONENTS ${_components})
 endif()
 
@@ -47,12 +45,6 @@ install(TARGETS adios2_hello_bpPutDeferred RUNTIME DESTINATION ${CMAKE_INSTALL_B
 add_executable(adios2_hello_bpSubStreams bpSubStreams.cpp)
 target_link_libraries(adios2_hello_bpSubStreams adios2::cxx11)
 install(TARGETS adios2_hello_bpSubStreams RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-if(ADIOS2_HAVE_SZ)
-  add_executable(adios2_hello_bpSZ bpSZ.cpp)
-  target_link_libraries(adios2_hello_bpSZ adios2::cxx11)
-  install(TARGETS adios2_hello_bpSZ RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-endif()
 
 if(ADIOS2_HAVE_Fortran)
   add_executable(adios2_hello_bpWriter_f bpWriter.F90)
@@ -76,12 +68,6 @@ if(ADIOS2_HAVE_MPI)
   add_executable(adios2_hello_bpSubStreams_mpi bpSubStreams.cpp)
   target_link_libraries(adios2_hello_bpSubStreams_mpi adios2::cxx11_mpi MPI::MPI_C)
   install(TARGETS adios2_hello_bpSubStreams_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-
-  if(ADIOS2_HAVE_SZ)
-    add_executable(adios2_hello_bpSZ_mpi bpSZ.cpp)
-    target_link_libraries(adios2_hello_bpSZ_mpi adios2::cxx11_mpi MPI::MPI_C)
-    install(TARGETS adios2_hello_bpSZ_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-  endif()
 
   if(ADIOS2_HAVE_Fortran)
     add_executable(adios2_hello_bpWriter_f_mpi bpWriter.F90)

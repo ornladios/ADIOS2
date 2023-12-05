@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2020 University of Oregon
+// Copyright (c) 2019-2022 University of Oregon
 // Distributed under the BSD Software License
 // (See accompanying file LICENSE.txt)
 

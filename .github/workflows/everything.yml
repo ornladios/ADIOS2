@@ -7,7 +7,7 @@
 # Note the use of multiple checkout actions in most jobs.  This has been
 # implemented to allow the use of CI scripts at a different ref or sha than
 # the source code they're evaluating.  For push events (when a pull_request is
-# merged) ther is no difference.  However, for pull_request events this allows
+# merged) there is no difference.  However, for pull_request events this allows
 # us test code at the head of a pull_request using the CI scripts from the
 # prospectively merged pull_request, which will include any CI updates that
 # may have made it to the target branch after the pull_request was started.
@@ -127,14 +127,17 @@ jobs:
         os: [ubuntu20.04]
         compiler: [gcc8, gcc9, gcc10, gcc11, clang6, clang10]
         shared: [shared]
-        parallel: [ompi]
+        parallel: [mpich]
         include:
           - os: ubuntu20.04
-            compiler: gcc10
-            parallel: mpich
+            compiler: gcc8
+            parallel: ompi
           - os: ubuntu20.04
             compiler: gcc8
             parallel: serial
+          - os: ubuntu20.04
+            compiler: clang6
+            parallel: ompi
           - os: ubuntu20.04
             compiler: clang6
             parallel: serial
@@ -215,7 +218,7 @@ jobs:
       matrix:
         os: [el8]
         compiler: [icc, oneapi]
-        parallel: [ompi]
+        parallel: [mpich]
 
     steps:
       - uses: actions/checkout@v4
@@ -448,8 +451,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        code: [lammps, tau]
+        code: [examples, lammps, tau]
         include:
+          - code: examples
           - code: lammps
             repo: pnorbert/lammps
             ref: fix-deprecated-adios-init

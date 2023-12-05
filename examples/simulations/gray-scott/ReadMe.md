@@ -17,7 +17,7 @@ care of this aspect).
 From a scratch directory copy the config files from your installation of adios2:
 
 ```
-$ cp -r <adios2-install-prefix>/share/adios2/examples/simulations/gray-scott .
+$ cp -r <adios2-install-prefix>/share/adios2/gray-scott .
 $ cd gray-scott
 $ mpirun -n 4 adios2_simulations_gray-scott settings-files.json
 ========================================

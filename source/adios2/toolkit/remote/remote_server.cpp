@@ -272,8 +272,8 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
         Response.ReadResponseCondition = GetMsg->GetResponseCondition;                             \
         Response.Dest = GetMsg->Dest; /* final data destination in client memory space */          \
         if (verbose >= 2)                                                                          \
-            std::cout << "Returning " << Response.Size << " " << readable_size(Response.Size)      \
-                      << " for Get<" << TypeOfVar << ">(" << VarName << ")" << b << std::endl;     \
+            std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << TypeOfVar  \
+                      << ">(" << VarName << ")" << b << std::endl;                                 \
         f->m_BytesSent += Response.Size;                                                           \
         f->m_OperationCount++;                                                                     \
         TotalGetBytesSent += Response.Size;                                                        \
@@ -349,6 +349,38 @@ static void KillResponseHandler(CManager cm, CMConnection conn, void *vevent, vo
     exit(0);
 }
 
+static void StatusServerHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
+                                attr_list attrs)
+{
+    StatusServerMsg status_msg = static_cast<StatusServerMsg>(vevent);
+    struct Remote_evpath_state *ev_state = static_cast<struct Remote_evpath_state *>(client_data);
+    _StatusResponseMsg status_response_msg;
+    char hostbuffer[256];
+
+    // To retrieve hostname
+    gethostname(hostbuffer, sizeof(hostbuffer));
+    memset(&status_response_msg, 0, sizeof(status_response_msg));
+    status_response_msg.StatusResponseCondition = status_msg->StatusResponseCondition;
+    status_response_msg.Hostname = &hostbuffer[0];
+    std::stringstream Status;
+    Status << "ADIOS files Opened: " << ADIOSFilesOpened << " (" << TotalGets << " gets for "
+           << readable_size(TotalGetBytesSent) << ")  Simple files opened: " << SimpleFilesOpened
+           << " (" << TotalSimpleReads << " reads for " << readable_size(TotalSimpleBytesSent)
+           << ")";
+    status_response_msg.Status = strdup(Status.str().c_str());
+    CMwrite(conn, ev_state->StatusResponseFormat, &status_response_msg);
+    free(status_response_msg.Status);
+}
+
+static void StatusResponseHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
+                                  attr_list attrs)
+{
+    StatusResponseMsg status_response_msg = static_cast<StatusResponseMsg>(vevent);
+    std::cout << "Server running on " << status_response_msg->Hostname
+              << " current status: " << status_response_msg->Status << std::endl;
+    exit(0);
+}
+
 void ServerRegisterHandlers(struct Remote_evpath_state &ev_state)
 {
     CMregister_handler(ev_state.OpenFileFormat, OpenHandler, &ev_state);
@@ -357,6 +389,8 @@ void ServerRegisterHandlers(struct Remote_evpath_state &ev_state)
     CMregister_handler(ev_state.ReadRequestFormat, ReadRequestHandler, &ev_state);
     CMregister_handler(ev_state.KillServerFormat, KillServerHandler, &ev_state);
     CMregister_handler(ev_state.KillResponseFormat, KillResponseHandler, &ev_state);
+    CMregister_handler(ev_state.StatusServerFormat, StatusServerHandler, &ev_state);
+    CMregister_handler(ev_state.StatusResponseFormat, StatusResponseHandler, &ev_state);
 }
 
 static const char *hostname = "localhost";
@@ -390,12 +424,41 @@ void connect_and_kill(int ServerPort)
     exit(0);
 }
 
+void connect_and_get_status(int ServerPort)
+{
+    CManager cm = CManager_create();
+    _StatusServerMsg status_msg;
+    struct Remote_evpath_state ev_state;
+    attr_list contact_list = create_attr_list();
+    atom_t CM_IP_PORT = -1;
+    atom_t CM_IP_HOSTNAME = -1;
+    CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
+    CM_IP_PORT = attr_atom_from_string("IP_PORT");
+    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)hostname);
+    add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)ServerPort);
+    CMConnection conn = CMinitiate_conn(cm, contact_list);
+    if (!conn)
+        return;
+
+    ev_state.cm = cm;
+
+    RegisterFormats(ev_state);
+
+    ServerRegisterHandlers(ev_state);
+
+    memset(&status_msg, 0, sizeof(status_msg));
+    status_msg.StatusResponseCondition = CMCondition_get(ev_state.cm, conn);
+    CMwrite(conn, ev_state.StatusServerFormat, &status_msg);
+    CMCondition_wait(ev_state.cm, status_msg.StatusResponseCondition);
+    exit(0);
+}
+
 static atom_t CM_IP_PORT = -1;
 
 static bool server_timeout(void *CMvoid, int time_since_service)
 {
     CManager cm = (CManager)CMvoid;
-    if (verbose)
+    if (verbose && (time_since_service > 90))
         std::cout << time_since_service << " seconds since last service.\n";
     if (time_since_service > 600)
     {
@@ -430,6 +493,7 @@ int main(int argc, char **argv)
     struct Remote_evpath_state ev_state;
     int background = 0;
     int kill_server = 0;
+    int status_server = 0;
     int no_timeout = 0; // default to timeout
 
     for (int i = 1; i < argc; i++)
@@ -442,31 +506,27 @@ int main(int argc, char **argv)
         {
             kill_server++;
         }
+        else if (strcmp(argv[i], "-status") == 0)
+        {
+            status_server++;
+        }
         else if (strcmp(argv[i], "-no_timeout") == 0)
         {
             no_timeout++;
         }
-        if (argv[i][0] == '-')
+        else if (strcmp(argv[i], "-v") == 0)
         {
-            size_t j = 1;
-            while (argv[i][j] != 0)
-            {
-                if (argv[i][j] == 'v')
-                {
-                    verbose++;
-                }
-                else if (argv[i][j] == 'q')
-                {
-                    verbose--;
-                }
-                j++;
-            }
+            verbose++;
+        }
+        else if (strcmp(argv[i], "-q") == 0)
+        {
+            verbose--;
         }
         else
         {
             fprintf(stderr, "Unknown argument \"%s\"\n", argv[i]);
-            fprintf(stderr,
-                    "Usage:  remote_server [-background] [-kill_server] [-no_timeout] [-v] [-q]\n");
+            fprintf(stderr, "Usage:  remote_server [-background] [-kill_server] [-no_timeout] "
+                            "[-status] [-v] [-q]\n");
             exit(1);
         }
     }
@@ -474,6 +534,11 @@ int main(int argc, char **argv)
     if (kill_server)
     {
         connect_and_kill(ServerPort);
+        exit(0);
+    }
+    if (status_server)
+    {
+        connect_and_get_status(ServerPort);
         exit(0);
     }
     if (background)
@@ -519,7 +584,6 @@ int main(int argc, char **argv)
 
     ServerRegisterHandlers(ev_state);
 
-    std::cout << "doing Run Network" << std::endl;
     CMrun_network(cm);
     return 0;
 }

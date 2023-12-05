@@ -67,6 +67,9 @@ function(lists_get_prefix listVars outVar)
   set(${outVar} "${prefix}" PARENT_SCOPE)
 endfunction()
 
+# Multithreading
+find_package(Threads REQUIRED)
+
 # Blosc2
 if(ADIOS2_USE_Blosc2 STREQUAL AUTO)
   # Prefect CONFIG mode
@@ -192,6 +195,10 @@ if(PNG_FOUND)
 endif()
 
 set(mpi_find_components C)
+
+if(ADIOS2_USE_Derived_Variable)
+    set(ADIOS2_HAVE_Derived_Variable TRUE)
+endif()
 
 if(ADIOS2_USE_Kokkos AND ADIOS2_USE_CUDA)
   message(FATAL_ERROR "ADIOS2_USE_Kokkos is incompatible with ADIOS2_USE_CUDA")
@@ -553,9 +560,6 @@ endif()
 if(AWSSDK_FOUND)
     set(ADIOS2_HAVE_AWSSDK TRUE)
 endif()
-
-# Multithreading
-find_package(Threads REQUIRED)
 
 # Floating point detection
 include(CheckTypeRepresentation)
