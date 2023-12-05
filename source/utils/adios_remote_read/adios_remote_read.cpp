@@ -76,8 +76,8 @@ std::string &getOutputString(int rank, int output_line_length, std::string &out,
 void read1D(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
             std::vector<std::string> &required_variables, int output_line_length)
 {
-    unsigned int startX;
-    unsigned int countX;
+    int startX;
+    int countX;
 
     try
     {
@@ -199,12 +199,12 @@ void read3D(int nproc, int rank, const std::string &filename, const int nsteps, 
             std::vector<std::string> &required_variables, int direction, double ratio,
             int output_line_length)
 {
-    unsigned int startX;
-    unsigned int startY;
-    unsigned int startZ;
-    unsigned int countX;
-    unsigned int countY;
-    unsigned int countZ;
+    int startX;
+    int startY;
+    int startZ;
+    int countX;
+    int countY;
+    int countZ;
 
     try
     {
@@ -356,12 +356,12 @@ void read3DPlane(int nproc, int rank, const std::string &filename, const int nst
                  int output_line_length)
 {
 
-    unsigned int startX;
-    unsigned int startY;
-    unsigned int startZ;
-    unsigned int countX;
-    unsigned int countY;
-    unsigned int countZ;
+    int startX;
+    int startY;
+    int startZ;
+    int countX;
+    int countY;
+    int countZ;
 
     try
     {
