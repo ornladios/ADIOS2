@@ -80,8 +80,9 @@ install(TARGETS adios_reorganize
 
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(adios_iotest)
+  add_subdirectory(adios_remote_read)
 endif()
-add_subdirectory(adios_remote_read)
+
 
 if(Python_Interpreter_FOUND)
   add_subdirectory(bp4dbg)
