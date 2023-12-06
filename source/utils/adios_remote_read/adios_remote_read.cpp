@@ -37,7 +37,7 @@ enum test_cases
  * @param variables list of variables to read
  * @param output_length number of numbers to print in one line
  */
-void read1D(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
+void read1D(unsigned int nproc, unsigned int rank, const std::string &filename, const int nsteps, adios2::IO &io,
             std::vector<std::string> &variables, int output_length);
 /**
  * @brief read one or multiple 3D variables. Measure and report into a log reading time
@@ -49,7 +49,7 @@ void read1D(int nproc, int rank, const std::string &filename, const int nsteps, 
  * @param ratio defines an amount of data to read. 1.0 corresponds to 100%
  * @param output_length number of numbers to print in one line
  */
-void read3D(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
+void read3D(unsigned int nproc, unsigned int rank, const std::string &filename, const int nsteps, adios2::IO &io,
             std::vector<std::string> &variables, int direction, double ratio,
             int output_line_length);
 /**
@@ -63,7 +63,7 @@ void read3D(int nproc, int rank, const std::string &filename, const int nsteps, 
  * @param ratio defines an amount of data to read. 1.0 corresponds to 100%
  * @param output_length number of numbers to print in one line
  */
-void read3DPlane(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
+void read3DPlane(unsigned int nproc, unsigned int rank, const std::string &filename, const int nsteps, adios2::IO &io,
                  std::vector<std::string> &variables, int direction, double ratio,
                  int output_line_length);
 
@@ -73,11 +73,11 @@ void read3DPlane(int nproc, int rank, const std::string &filename, const int nst
 std::string &getOutputString(int rank, int output_line_length, std::string &out,
                              const std::vector<double> &data);
 
-void read1D(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
+void read1D(unsigned int nproc, unsigned int rank, const std::string &filename, const int nsteps, adios2::IO &io,
             std::vector<std::string> &required_variables, int output_line_length)
 {
-    int startX;
-    int countX;
+    unsigned int startX;
+    unsigned int countX;
 
     try
     {
@@ -195,16 +195,16 @@ std::string &getOutputString(int rank, int output_line_length, std::string &out,
     return out;
 }
 
-void read3D(int nproc, int rank, const std::string &filename, const int nsteps, adios2::IO &io,
+void read3D(unsigned int nproc, unsigned int rank, const std::string &filename, const int nsteps, adios2::IO &io,
             std::vector<std::string> &required_variables, int direction, double ratio,
             int output_line_length)
 {
-    int startX;
-    int startY;
-    int startZ;
-    int countX;
-    int countY;
-    int countZ;
+    unsigned int startX;
+    unsigned int startY;
+    unsigned int startZ;
+    unsigned int countX;
+    unsigned int countY;
+    unsigned int countZ;
 
     try
     {
@@ -356,12 +356,12 @@ void read3DPlane(int nproc, int rank, const std::string &filename, const int nst
                  int output_line_length)
 {
 
-    int startX;
-    int startY;
-    int startZ;
-    int countX;
-    int countY;
-    int countZ;
+    unsigned int startX;
+    unsigned int startY;
+    unsigned int startZ;
+    unsigned int countX;
+    unsigned int countY;
+    unsigned int countZ;
 
     try
     {
