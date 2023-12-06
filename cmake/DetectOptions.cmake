@@ -450,6 +450,14 @@ if(ADIOS2_USE_SST AND NOT WIN32)
     if(CrayDRC_FOUND)
       set(ADIOS2_SST_HAVE_CRAY_DRC TRUE)
     endif()
+
+    try_compile(ADIOS2_SST_HAVE_CRAY_CXI
+      ${ADIOS2_BINARY_DIR}/check_libfabric_cxi
+      ${ADIOS2_SOURCE_DIR}/cmake/check_libfabric_cxi.c
+      CMAKE_FLAGS
+        "-DINCLUDE_DIRECTORIES=${LIBFABRIC_INCLUDE_DIRS}"
+        "-DLINK_DIRECTORIES=${LIBFABRIC_LIBRARIES}")
+    message(STATUS "Libfabric support for the HPE CXI provider: ${ADIOS2_SST_HAVE_CRAY_CXI}")
   endif()
   if(ADIOS2_HAVE_MPI)
     set(CMAKE_REQUIRED_LIBRARIES "MPI::MPI_C;Threads::Threads")
