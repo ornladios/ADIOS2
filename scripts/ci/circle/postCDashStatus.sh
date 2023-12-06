@@ -17,7 +17,7 @@ build_status_body() {
 EOF
 }
 
-PYTHON_SCRIPT="${SOURCE_DIR}/scripts/ci/findStatus.py"
+PYTHON_SCRIPT="${SOURCE_DIR}/scripts/ci/circle/findStatus.py"
 curl -u "${USER}:${TOKEN}" "${API_BASE}/commits/${COMMIT}/statuses" | python3 "${PYTHON_SCRIPT}" --context ${CDASH_STATUS_CONTEXT}
 exit_status=$?
 if [ "$exit_status" -ne 0 ]
