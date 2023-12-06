@@ -306,7 +306,7 @@ void read3D(unsigned int nproc, unsigned int rank, const std::string &filename, 
                     }
                     var.SetSelection(adios2::Box<adios2::Dims>({startX, startY, startZ},
                                                                {countX, countY, countZ}));
-                    size_t elementsSize = var.SelectionSize();
+                    auto  elementsSize = var.SelectionSize();
                     std::vector<double> data3D(elementsSize);
                     reader.Get<double>(var, data3D.data(), adios2::Mode::Sync);
                     if (DEBUG)
@@ -483,7 +483,7 @@ void read3DPlane(int nproc, int rank, const std::string &filename, const int nst
                     var.SetSelection(adios2::Box<adios2::Dims>({startX, startY, startZ},
                                                                {countX, countY, countZ}));
 
-                    size_t elementsSize = var.SelectionSize();
+                    auto elementsSize = var.SelectionSize();
                     std::vector<double> data2D(elementsSize);
                     reader.Get<double>(var, data2D.data(), adios2::Mode::Sync);
                     if (DEBUG)
@@ -554,8 +554,8 @@ int main(int argc, char *argv[])
     int output_line_length = 10;
 
     // should be adjusted for getopt
-    auto start = std::vector<size_t>(3);
-    auto count = std::vector<size_t>(3);
+    auto start = std::vector<unsigned int>(3);
+    auto count = std::vector<unsigned int>(3);
     std::vector<std::string> variables;
 
     option longopts[] = {{"help", no_argument, NULL, 'h'},
