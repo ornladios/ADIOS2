@@ -351,9 +351,9 @@ void read3D(unsigned long nproc, unsigned long rank, const std::string &filename
     }
 }
 
-void read3DPlane(unsigned long nproc, unsigned long rank, const std::string &filename, const int nsteps, adios2::IO &io,
-                 std::vector<std::string> &required_variables, int direction, double ratio,
-                 int output_line_length)
+void read3DPlane(unsigned long nproc, unsigned long rank, const std::string &filename,
+                 const int nsteps, adios2::IO &io, std::vector<std::string> &required_variables,
+                 int direction, double ratio, int output_line_length)
 {
 
     unsigned long startX;
