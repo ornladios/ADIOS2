@@ -306,7 +306,7 @@ void read3D(unsigned int nproc, unsigned int rank, const std::string &filename, 
                     }
                     var.SetSelection(adios2::Box<adios2::Dims>({startX, startY, startZ},
                                                                {countX, countY, countZ}));
-                    auto  elementsSize = var.SelectionSize();
+                    auto elementsSize = var.SelectionSize();
                     std::vector<double> data3D(elementsSize);
                     reader.Get<double>(var, data3D.data(), adios2::Mode::Sync);
                     if (DEBUG)
