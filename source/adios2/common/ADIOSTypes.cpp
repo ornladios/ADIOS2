@@ -405,7 +405,7 @@ bool TypeHasMinMax(DataType adiosvartype)
     case DataType::Float:
     case DataType::Double:
     case DataType::LongDouble:
-	return true;
+        return true;
     default:
         return false;
     }
