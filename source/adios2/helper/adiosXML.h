@@ -26,9 +26,14 @@ namespace adios2
 namespace helper
 {
 
-void ParseConfigXML(core::ADIOS &adios, const std::string &configFile,
-                    std::map<std::string, core::IO> &ios,
-                    std::unordered_map<std::string, std::pair<std::string, Params>> &operators);
+void ParseConfigXMLIO(core::ADIOS &adios, const std::string &configFileXML,
+                      const std::string &configFileContents, core::IO &io,
+                      std::unordered_map<std::string, std::pair<std::string, Params>> &operators);
+
+std::string
+ParseConfigXML(core::ADIOS &adios, const std::string &configFile,
+               std::map<std::string, core::IO> &ios,
+               std::unordered_map<std::string, std::pair<std::string, Params>> &operators);
 
 } // end namespace helper
 } // end namespace adios2
