@@ -3,9 +3,9 @@ name: Python Packaging
 on:
   workflow_dispatch:
   pull_request:
-  # push:
-  #   branches:
-  #     - main
+  push:
+    branches:
+      - master
   release:
     types:
       - published
@@ -19,6 +19,9 @@ jobs:
 
       - name: Build SDist
         run: pipx run build --sdist
+        env:
+          # TODO: debug only, prevents upload failure due to "local" version
+          SETUPTOOLS_SCM_PRETEND_VERSION: "2.9.2.post431"
 
       - uses: actions/upload-artifact@v3
         with:
@@ -35,20 +38,19 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          submodules: true
 
       - uses: pypa/cibuildwheel@v2.16
         env:
           CIBW_BUILD: cp*-manylinux_x86_64
+          # TODO: debug only, prevents upload failure due to "local" version
+          SETUPTOOLS_SCM_PRETEND_VERSION: "2.9.2.post431"
 
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
           path: wheelhouse/*.whl
 
-  upload_all:
+  upload_pypi:
     needs: [build_wheels, make_sdist]
     environment: pypi
     permissions:
@@ -61,5 +63,27 @@ jobs:
           name: artifact
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+
+  upload_test_pypi:
+    needs: [build_wheels, make_sdist]
+    environment: pypi
+    permissions:
+      id-token: write
+    runs-on: ubuntu-latest
+    # Upload to Test PyPI for every commit on main branch
+    # if: github.event_name == 'push' && github.event.ref == 'refs/heads/master'
+    # TODO: debug only, test publishing to testpypi on this PR
+    if: github.event_name == 'pull_request' && github.event.action == 'synchronize' && github.event.pull_request.head.ref == 'add-pip-packaging'
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact
+          path: dist
+
+      - name: Publish package distributions to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
 
