@@ -284,9 +284,12 @@ Params IO::GetVariableInfo(const std::string &variableName, const std::set<std::
 
     if (keys.empty() || (keysLC.count("min") == 1 && keysLC.count("max") == 1))
     {
-        const auto pairMinMax = variable.MinMax();
-        info["Min"] = helper::ValueToString(pairMinMax.first);
-        info["Max"] = helper::ValueToString(pairMinMax.second);
+        if (TypeHasMinMax(helper::GetDataType<T>()))
+        {
+            const auto pairMinMax = variable.MinMax();
+            info["Min"] = helper::ValueToString(pairMinMax.first);
+            info["Max"] = helper::ValueToString(pairMinMax.second);
+        }
     }
     else if (keysLC.count("min") == 1)
     {
