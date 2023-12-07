@@ -94,16 +94,16 @@ public:
     // put a variable for writer
     void PutData(const std::string *inputData, const std::string &varName, const Dims &varShape,
                  const Dims &varStart, const Dims &varCount, const Dims &varMemStart,
-                 const Dims &varMemCount, const std::string &doid, const size_t step,
-                 const int rank, const std::string &address,
+                 const Dims &varMemCount, const MemorySpace varMemSpace, const std::string &doid,
+                 const size_t step, const int rank, const std::string &address,
                  const std::vector<std::shared_ptr<core::Operator>> &ops,
                  VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
 
     template <class T>
     void PutData(const T *inputData, const std::string &varName, const Dims &varShape,
                  const Dims &varStart, const Dims &varCount, const Dims &varMemStart,
-                 const Dims &varMemCount, const std::string &doid, const size_t step,
-                 const int rank, const std::string &address,
+                 const Dims &varMemCount, const MemorySpace varMemSpace, const std::string &doid,
+                 const size_t step, const int rank, const std::string &address,
                  const std::vector<std::shared_ptr<core::Operator>> &ops,
                  VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
 
@@ -134,8 +134,8 @@ public:
 
     template <class T>
     int GetData(T *output_data, const std::string &varName, const Dims &varStart,
-                const Dims &varCount, const size_t step, const Dims &varMemStart = Dims(),
-                const Dims &varMemCount = Dims());
+                const Dims &varCount, const size_t step, const MemorySpace varMemSpace,
+                const Dims &varMemStart = Dims(), const Dims &varMemCount = Dims());
 
     void Erase(const size_t step, const bool allPreviousSteps = false);
 
@@ -166,7 +166,8 @@ private:
     nlohmann::json DeserializeJson(const char *start, size_t size);
 
     template <typename T>
-    void CalculateMinMax(const T *data, const Dims &count, nlohmann::json &metaj);
+    void CalculateMinMax(const T *data, const Dims &count, const MemorySpace varMemSpace,
+                         nlohmann::json &metaj);
 
     bool StepHasMinimumBlocks(const size_t step, const int requireMinimumBlocks);
 

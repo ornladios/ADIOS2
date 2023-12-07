@@ -67,6 +67,9 @@ function(lists_get_prefix listVars outVar)
   set(${outVar} "${prefix}" PARENT_SCOPE)
 endfunction()
 
+# Multithreading
+find_package(Threads REQUIRED)
+
 # Blosc2
 if(ADIOS2_USE_Blosc2 STREQUAL AUTO)
   # Prefect CONFIG mode
@@ -192,6 +195,10 @@ if(PNG_FOUND)
 endif()
 
 set(mpi_find_components C)
+
+if(ADIOS2_USE_Derived_Variable)
+    set(ADIOS2_HAVE_Derived_Variable TRUE)
+endif()
 
 if(ADIOS2_USE_Kokkos AND ADIOS2_USE_CUDA)
   message(FATAL_ERROR "ADIOS2_USE_Kokkos is incompatible with ADIOS2_USE_CUDA")
@@ -443,6 +450,14 @@ if(ADIOS2_USE_SST AND NOT WIN32)
     if(CrayDRC_FOUND)
       set(ADIOS2_SST_HAVE_CRAY_DRC TRUE)
     endif()
+
+    try_compile(ADIOS2_SST_HAVE_CRAY_CXI
+      ${ADIOS2_BINARY_DIR}/check_libfabric_cxi
+      ${ADIOS2_SOURCE_DIR}/cmake/check_libfabric_cxi.c
+      CMAKE_FLAGS
+        "-DINCLUDE_DIRECTORIES=${LIBFABRIC_INCLUDE_DIRS}"
+        "-DLINK_DIRECTORIES=${LIBFABRIC_LIBRARIES}")
+    message(STATUS "Libfabric support for the HPE CXI provider: ${ADIOS2_SST_HAVE_CRAY_CXI}")
   endif()
   if(ADIOS2_HAVE_MPI)
     set(CMAKE_REQUIRED_LIBRARIES "MPI::MPI_C;Threads::Threads")
@@ -553,9 +568,6 @@ endif()
 if(AWSSDK_FOUND)
     set(ADIOS2_HAVE_AWSSDK TRUE)
 endif()
-
-# Multithreading
-find_package(Threads REQUIRED)
 
 # Floating point detection
 include(CheckTypeRepresentation)

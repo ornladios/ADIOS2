@@ -65,6 +65,7 @@ set(SST_CONFIG_OPTS
   UCX
   FI_GNI
   CRAY_DRC
+  CRAY_CXI
   NVStream
   MPI
 )

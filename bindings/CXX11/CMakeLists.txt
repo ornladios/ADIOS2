@@ -37,6 +37,12 @@ target_include_directories(adios2_cxx11
 
 add_library(adios2::cxx11 ALIAS adios2_cxx11)
 
+if (ADIOS2_HAVE_Derived_Variable)
+    target_sources(adios2_cxx11 PRIVATE
+      adios2/cxx11/VariableDerived.cpp
+  )
+endif()
+
 if(ADIOS2_HAVE_MPI)
   add_library(adios2_cxx11_mpi
     adios2/cxx11/ADIOSMPI.cpp
@@ -78,6 +84,14 @@ install(
   DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/cxx11/fstream
   COMPONENT adios2_cxx11-development
 )
+
+if (ADIOS2_HAVE_Derived_Variable)
+    install(
+        FILES adios2/cxx11/VariableDerived.h
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/adios2/cxx11
+        COMPONENT adios2_cxx11-development
+    )
+endif()
 
 install(
   FILES adios2/cxx11/ADIOS.h

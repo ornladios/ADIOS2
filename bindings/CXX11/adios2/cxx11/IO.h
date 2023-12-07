@@ -20,6 +20,9 @@
 #include "Group.h"
 #include "Operator.h"
 #include "Variable.h"
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+#include "VariableDerived.h"
+#endif
 #include "VariableNT.h"
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/common/ADIOSTypes.h"
@@ -151,7 +154,11 @@ public:
     Variable<T> DefineVariable(const std::string &name, const Dims &shape = Dims(),
                                const Dims &start = Dims(), const Dims &count = Dims(),
                                const bool constantDims = false);
-
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    VariableDerived
+    DefineDerivedVariable(const std::string &name, const std::string &expression,
+                          const DerivedVarType varType = DerivedVarType::MetadataOnly);
+#endif
     VariableNT DefineVariable(const DataType type, const std::string &name,
                               const Dims &shape = Dims(), const Dims &start = Dims(),
                               const Dims &count = Dims(), const bool constantDims = false);

@@ -103,6 +103,18 @@ typedef struct _KillResponseMsg
     char *Status;
 } *KillResponseMsg;
 
+typedef struct _StatusServerMsg
+{
+    int StatusResponseCondition;
+} *StatusServerMsg;
+
+typedef struct _StatusResponseMsg
+{
+    int StatusResponseCondition;
+    char *Hostname;
+    char *Status;
+} *StatusResponseMsg;
+
 enum VerbosityLevel
 {
     NoVerbose = 0,       // Generally no output (but not absolutely quiet?)
@@ -129,6 +141,8 @@ struct Remote_evpath_state
     CMFormat CloseFileFormat;
     CMFormat KillServerFormat;
     CMFormat KillResponseFormat;
+    CMFormat StatusServerFormat;
+    CMFormat StatusResponseFormat;
 };
 
 void RegisterFormats(struct Remote_evpath_state &ev_state);

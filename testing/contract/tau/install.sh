@@ -3,6 +3,10 @@
 set -x
 set -e
 
-source $(dirname $(readlink -f ${BASH_SOURCE}))/setup.sh
+# shellcheck disable=SC1091
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/setup.sh"
 
-cmake --install ${build_dir}
+# Fail if is not set
+build_dir="${build_dir:?}"
+
+cmake --install "${build_dir}"

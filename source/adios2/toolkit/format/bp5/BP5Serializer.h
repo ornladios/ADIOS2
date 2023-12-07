@@ -244,6 +244,9 @@ private:
         size_t ElemCount;
         void *Array;
     } ArrayRec;
+
+private:
+    const void *SearchDeferredBlocks(size_t MetaOffset, size_t blocknum);
 };
 
 } // end namespace format

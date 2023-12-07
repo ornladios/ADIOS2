@@ -280,24 +280,24 @@ single reader, but only upon request (with a request being initiated
 by the reader doing BeginStep()).  Normal reader-side rules (like
 BeginStep timeouts) and writer-side rules (like queue limit behavior) apply.
 
-============================= ===================== ====================================================
- **Key**                        **Value Format**      **Default** and Examples
-============================= ===================== ====================================================
- RendezvousReaderCount           integer             **1**
- RegistrationMethod              string              **File**, Screen
- QueueLimit                      integer             **0** (no queue limits)
- QueueFullPolicy                 string              **Block**, Discard
- ReserveQueueLimit               integer             **0** (no queue limits)
- DataTransport                   string              **default varies by platform**, UCX, MPI, RDMA, WAN
- WANDataTransport                string              **sockets**, enet, ib
- ControlTransport                string              **TCP**, Scalable
- MarshalMethod                   string              **BP5**, BP, FFS
- NetworkInterface                string              **NULL**
- ControlInterface                string              **NULL**
- DataInterface                   string              **NULL**
- FirstTimestepPrecious           boolean             **FALSE**, true, no, yes
- AlwaysProvideLatestTimestep     boolean             **FALSE**, true, no, yes
- OpenTimeoutSecs                 integer             **60**
- SpeculativePreloadMode          string              **AUTO**, ON, OFF
- SpecAutoNodeThreshold           integer             **1**
-============================= ===================== =====================================================
++-----------------------------+---------------------+----------------------------------------------------+
+| **Key**                     | **Value Format**    | **Default** and Examples                           |
++-----------------------------+---------------------+----------------------------------------------------+
+| RendezvousReaderCount       | integer             | **1**                                              |
+| RegistrationMethod          | string              | **File**, Screen                                   |
+| QueueLimit                  | integer             | **0** (no queue limits)                            |
+| QueueFullPolicy             | string              | **Block**, Discard                                 |
+| ReserveQueueLimit           | integer             | **0** (no queue limits)                            |
+| DataTransport               | string              | **default varies by platform**, UCX, MPI, RDMA, WAN|
+| WANDataTransport            | string              | **sockets**, enet, ib                              |
+| ControlTransport            | string              | **TCP**, Scalable                                  |
+| MarshalMethod               | string              | **BP5**, BP, FFS                                   |
+| NetworkInterface            | string              | **NULL**                                           |
+| ControlInterface            | string              | **NULL**                                           |
+| DataInterface               | string              | **NULL**                                           |
+| FirstTimestepPrecious       | boolean             | **FALSE**, true, no, yes                           |
+| AlwaysProvideLatestTimestep | boolean             | **FALSE**, true, no, yes                           |
+| OpenTimeoutSecs             | integer             | **60**                                             |
+| SpeculativePreloadMode      | string              | **AUTO**, ON, OFF                                  |
+| SpecAutoNodeThreshold       | integer             | **1**                                              |
++-----------------------------+---------------------+----------------------------------------------------+

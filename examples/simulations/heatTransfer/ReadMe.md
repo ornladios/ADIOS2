@@ -22,6 +22,13 @@ an application to the ADIOS2 library for its IO.
 
 #### Example
 
+##### 1. Build the example
+$ mkdir build
+$ cd build
+$ cmake -DCMAKE_PREFIX_PATH=<adios2-install-dir> -DCMAKE_INSTALL_PREFIX=install ..
+$ make -j 8
+$ cd ..
+
 ##### 1. Produce an output
 
 ```
@@ -44,24 +51,23 @@ The adios1, ph5 and hdf5 versions of the example do not use XML config files, so
 argument.
 
 ```
-$ mpirun -np 12 ./bin/adios2_simulations_heatTransferWrite ../examples/simulations/heatTransfer/heat_file.xml heat.bp 4
-3 5 10 10 10
-$ mpirun -np 12 ./bin/adios2_simulations_heatTransferWrite ../examples/simulations/heatTransfer/heat_file.xml heat.h5 4
-3 5 10 10 10
+$ mpirun -np 12 ./build/write/adios2_simulations_heatTransferWrite heat_file.xml heat.bp 4 3 5 10 10 10
+$ mpirun -np 12 ./build/write/adios2_simulations_heatTransferWrite heat_hdf5.xml heat.h5 4 3 5 10 10 10
 ```
 
 ##### 2. Read the output step-by-step and print data into text files (data.<rank> per reader process)
 
 ```
-Reader Usage:   heatRead config input N M
-  config: XML config file to use
-  input:  name of input data file/stream
-  N:      number of processes in X dimension
-  M:      number of processes in Y dimension
+Reader Usage: heatRead  config  input  output N  M
+  config:  XML config file to use
+  input:   name of input data file/stream
+  output:  name of output data file/stream
+  N:       number of processes in X dimension
+  M:       number of processes in Y dimension
 ```
 
 ```
-$ mpirun -np 2 ./bin/heatTransfer_read ../examples/simulations/heatTransfer/heat_file.xml heat 2 1
+$ mpirun -np 2 ./build/read/adios2_simulations_heatTransferRead  heat_file.xml heat.bp read.bp 2 1
 ```
 
 ##### Notes:

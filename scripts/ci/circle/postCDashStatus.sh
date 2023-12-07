@@ -4,7 +4,7 @@ USER=${STATUS_ROBOT_NAME}
 TOKEN=${STATUS_ROBOT_KEY}
 COMMIT=${CIRCLE_SHA1}
 CDASH_STATUS_CONTEXT="cdash"
-SOURCE_DIR="$(readlink -f ${CIRCLE_WORKING_DIRECTORY}/source)"
+SOURCE_DIR="$(readlink -f "${CIRCLE_WORKING_DIRECTORY}"/source)"
 
 build_status_body() {
   cat <<EOF
@@ -17,9 +17,10 @@ build_status_body() {
 EOF
 }
 
-PYTHON_SCRIPT="${SOURCE_DIR}/scripts/ci/findStatus.py"
-curl -u "${USER}:${TOKEN}" "${API_BASE}/commits/${COMMIT}/statuses" | python3 ${PYTHON_SCRIPT} --context ${CDASH_STATUS_CONTEXT}
-if [ $? -ne 0 ]
+PYTHON_SCRIPT="${SOURCE_DIR}/scripts/ci/circle/findStatus.py"
+curl -u "${USER}:${TOKEN}" "${API_BASE}/commits/${COMMIT}/statuses" | python3 "${PYTHON_SCRIPT}" --context ${CDASH_STATUS_CONTEXT}
+exit_status=$?
+if [ "$exit_status" -ne 0 ]
 then
   echo "Need to post a status for context ${CDASH_STATUS_CONTEXT}"
   postBody="$(build_status_body)"

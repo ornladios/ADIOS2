@@ -3,7 +3,7 @@ ADIOS2 query API
 #################
 
 The query API in ADIOS2 allows a client to pass a query in XML or json format,
-and get back a list of blocks or subblocks that contains hits. 
+and get back a list of blocks or sub-blocks that contains hits.
 Both BP4 and BP5 engines are supported.  
 
 
@@ -21,14 +21,14 @@ to construct a query and evaluate using the engine.
         // configFile has query, can be either xml or json
         QueryWorker(const std::string &configFile, adios2::Engine &engine);
 
-	// touched_blocks is a list of regions specified by (start, count),
-	// that contains data that satisfies the query file
+	     // touched_blocks is a list of regions specified by (start, count),
+	     // that contains data that satisfies the query file
         void GetResultCoverage(std::vector<adios2::Box<adios2::Dims>> &touched_blocks);
     ... 
     }
 
 A Sample Compound Query  
-----------------------
+-----------------------
 
 This query targets a 1D variable "doubleV", data of interest is (x  > 6.6) or (x < -0.17) or (2.8 < x < 2.9) 
 In addition, this query also specied an output region [start=5,count=80]. 

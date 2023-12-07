@@ -37,9 +37,17 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    advanced/aggregation
    advanced/memory_management
    advanced/gpu_aware
+   advanced/query
    advanced/plugins
    advanced/ecp_hardware
-   
+
+.. toctree::
+   :caption: Tutorials
+
+   tutorials/overview
+   tutorials/downloadAndBuild
+   tutorials/basicTutorials
+
 .. toctree::
    :caption: Ecosystem Tools
 
