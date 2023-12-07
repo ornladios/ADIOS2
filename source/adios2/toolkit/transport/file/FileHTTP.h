@@ -71,7 +71,6 @@ private:
     int m_socketFileDescriptor = -1;
     int m_Errno = 0;
     bool m_IsOpening = false;
-    bool m_DirectIO = false;
     /* if filename is very lomg, we can get lout from array boundaries */
     char request_template[128] = "GET %s HTTP/1.1\r\nHost: %s\r\nRange: bytes=%d-%d\r\n\r\n";
     std::string m_hostname = "localhost";
