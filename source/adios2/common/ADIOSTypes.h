@@ -336,6 +336,12 @@ constexpr double Linf_norm = std::numeric_limits<double>::infinity();
 int TypeElementSize(DataType adiosvartype);
 
 /**
+ *  Return true if a type has a reasonable Min/Max (is a simple integer or float type), false
+ * otherwise
+ */
+bool TypeHasMinMax(DataType adiosvartype);
+
+/**
  * ToString
  * makes a string from an enum class like ShapeID etc, for debugging etc
  * It is also overloaded elsewhere to allow for a readable representation of

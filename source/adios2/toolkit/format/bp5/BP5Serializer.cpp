@@ -819,7 +819,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
         DerivedWithoutStats = VD && (VD->GetDerivedType() == DerivedVarType::ExpressionString);
 #endif
-        bool DoMinMax = ((m_StatsLevel > 0) && !DerivedWithoutStats);
+        bool DoMinMax =
+            ((m_StatsLevel > 0) && !DerivedWithoutStats && TypeHasMinMax((DataType)Rec->Type));
         if (DoMinMax && !Span)
         {
             GetMinMax(Data, ElemCount, (DataType)Rec->Type, MinMax, MemSpace);

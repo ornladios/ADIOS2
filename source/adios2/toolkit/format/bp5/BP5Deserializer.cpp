@@ -2347,6 +2347,13 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
                                      MinMaxStruct &MinMax)
 {
     BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
+    if (!TypeHasMinMax(VarRec->Type))
+    {
+        // this type doesn't even have a min/max
+        helper::Throw<std::logic_error>("Toolkit", "format::BP5Deserializer", "VariableMinMax",
+                                        "Min/Max requested for invalid variable type");
+    }
+
     if ((VarRec->OrigShapeID == ShapeID::LocalArray) ||
         (VarRec->OrigShapeID == ShapeID::JoinedArray) ||
         (VarRec->OrigShapeID == ShapeID::GlobalArray))
