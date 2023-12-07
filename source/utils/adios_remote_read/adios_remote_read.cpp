@@ -37,8 +37,8 @@ enum test_cases
  * @param variables list of variables to read
  * @param output_length number of numbers to print in one line
  */
-void read1D(unsigned long nproc, unsigned long rank, const std::string &filename, const int nsteps,
-            adios2::IO &io, std::vector<std::string> &variables, int output_length);
+void read1D(size_t nproc, size_t rank, const std::string &filename, const size_t nsteps,
+            adios2::IO &io, std::vector<std::string> &variables, size_t output_length);
 /**
  * @brief read one or multiple 3D variables. Measure and report into a log reading time
  * @param nproc number of MPI ranks
@@ -49,9 +49,9 @@ void read1D(unsigned long nproc, unsigned long rank, const std::string &filename
  * @param ratio defines an amount of data to read. 1.0 corresponds to 100%
  * @param output_length number of numbers to print in one line
  */
-void read3D(unsigned long nproc, unsigned long rank, const std::string &filename, const int nsteps,
+void read3D(size_t nproc, size_t rank, const std::string &filename, const size_t nsteps,
             adios2::IO &io, std::vector<std::string> &variables, int direction, double ratio,
-            int output_line_length);
+            size_t output_line_length);
 /**
  * @brief read one or multiple 3D variables. Measure and report into a log reading time
  * @param nproc number of MPI ranks
@@ -63,21 +63,21 @@ void read3D(unsigned long nproc, unsigned long rank, const std::string &filename
  * @param ratio defines an amount of data to read. 1.0 corresponds to 100%
  * @param output_length number of numbers to print in one line
  */
-void read3DPlane(unsigned long nproc, unsigned long rank, const std::string &filename,
-                 const int nsteps, adios2::IO &io, std::vector<std::string> &variables,
-                 int direction, double ratio, int output_line_length);
+void read3DPlane(size_t nproc, size_t rank, const std::string &filename, const size_t nsteps,
+                 adios2::IO &io, std::vector<std::string> &variables, int direction, double ratio,
+                 size_t output_line_length);
 
 /**
  * @brief  internal function for printing the output
  */
-std::string &getOutputString(int rank, int output_line_length, std::string &out,
+std::string &getOutputString(size_t rank, size_t output_line_length, std::string &out,
                              const std::vector<double> &data);
 
-void read1D(unsigned long nproc, unsigned long rank, const std::string &filename, const int nsteps,
-            adios2::IO &io, std::vector<std::string> &required_variables, int output_line_length)
+void read1D(size_t nproc, size_t rank, const std::string &filename, const size_t nsteps,
+            adios2::IO &io, std::vector<std::string> &required_variables, size_t output_line_length)
 {
-    unsigned long startX;
-    unsigned long countX;
+    size_t startX;
+    size_t countX;
 
     try
     {
@@ -90,7 +90,7 @@ void read1D(unsigned long nproc, unsigned long rank, const std::string &filename
         /* get variables with 1D shape */
 
         std::string out;
-        for (int step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
+        for (size_t step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
         {
             if (nsteps != 0 && step == nsteps)
                 break;
@@ -174,12 +174,12 @@ void read1D(unsigned long nproc, unsigned long rank, const std::string &filename
     }
 }
 
-std::string &getOutputString(int rank, int output_line_length, std::string &out,
+std::string &getOutputString(size_t rank, size_t output_line_length, std::string &out,
                              const std::vector<double> &data)
 {
 
     out += "rank " + std::to_string(rank) + ":" + "\n";
-    int counter = 0;
+    size_t counter = 0;
 
     for (auto v : data)
     {
@@ -195,16 +195,16 @@ std::string &getOutputString(int rank, int output_line_length, std::string &out,
     return out;
 }
 
-void read3D(unsigned long nproc, unsigned long rank, const std::string &filename, const int nsteps,
+void read3D(size_t nproc, size_t rank, const std::string &filename, const size_t nsteps,
             adios2::IO &io, std::vector<std::string> &required_variables, int direction,
-            double ratio, int output_line_length)
+            double ratio, size_t output_line_length)
 {
-    unsigned long startX;
-    unsigned long startY;
-    unsigned long startZ;
-    unsigned long countX;
-    unsigned long countY;
-    unsigned long countZ;
+    size_t startX;
+    size_t startY;
+    size_t startZ;
+    size_t countX;
+    size_t countY;
+    size_t countZ;
 
     try
     {
@@ -215,7 +215,7 @@ void read3D(unsigned long nproc, unsigned long rank, const std::string &filename
         adios2::Engine reader = io.Open(filename, adios2::Mode::Read);
 
         std::string out;
-        for (int step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
+        for (size_t step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
         {
             if (nsteps != 0 && step == nsteps)
                 break;
@@ -351,17 +351,17 @@ void read3D(unsigned long nproc, unsigned long rank, const std::string &filename
     }
 }
 
-void read3DPlane(unsigned long nproc, unsigned long rank, const std::string &filename,
-                 const int nsteps, adios2::IO &io, std::vector<std::string> &required_variables,
-                 int direction, double ratio, int output_line_length)
+void read3DPlane(size_t nproc, size_t rank, const std::string &filename, const size_t nsteps,
+                 adios2::IO &io, std::vector<std::string> &required_variables, int direction,
+                 double ratio, size_t output_line_length)
 {
 
-    unsigned long startX;
-    unsigned long startY;
-    unsigned long startZ;
-    unsigned long countX;
-    unsigned long countY;
-    unsigned long countZ;
+    size_t startX;
+    size_t startY;
+    size_t startZ;
+    size_t countX;
+    size_t countY;
+    size_t countZ;
 
     try
     {
@@ -371,7 +371,7 @@ void read3DPlane(unsigned long nproc, unsigned long rank, const std::string &fil
 
         adios2::Engine reader = io.Open(filename, adios2::Mode::Read);
         std::string out;
-        for (int step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
+        for (size_t step = 0; reader.BeginStep() == adios2::StepStatus::OK; ++step)
         {
             if (nsteps != 0 && step == nsteps)
                 break;
@@ -551,11 +551,11 @@ int main(int argc, char *argv[])
     std::string transport = "filesystem";
     int mode = -1;
     double ratio = 1.0;
-    int output_line_length = 10;
+    size_t output_line_length = 10;
 
     // should be adjusted for getopt
-    auto start = std::vector<unsigned int>(3);
-    auto count = std::vector<unsigned int>(3);
+    auto start = std::vector<size_t>(3);
+    auto count = std::vector<size_t>(3);
     std::vector<std::string> variables;
 
     option longopts[] = {{"help", no_argument, NULL, 'h'},
