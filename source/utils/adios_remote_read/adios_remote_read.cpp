@@ -259,14 +259,14 @@ void read3D(size_t nproc, size_t rank, const std::string &filename, const size_t
                     }
                     else
                     {
-                        startX = (size_t)((1 - ratio) / 2.0 * globalSizeX);
-                        countX = (size_t)(globalSizeX * ratio);
+                        startX = static_cast<size_t>((1 - ratio) / 2.0 * globalSizeX);
+                        countX = static_cast<size_t>(globalSizeX * ratio);
 
-                        startY = (size_t)((1 - ratio) / 2.0 * globalSizeY);
-                        countY = (size_t)(globalSizeY * ratio);
+                        startY = static_cast<size_t>((1 - ratio) / 2.0 * globalSizeY);
+                        countY = static_cast<size_t>(globalSizeY * ratio);
 
-                        startZ = (size_t)((1 - ratio) / 2.0 * globalSizeZ);
-                        countZ = (size_t)(globalSizeZ * ratio);
+                        startZ = static_cast<size_t>((1 - ratio) / 2.0 * globalSizeZ);
+                        countZ = static_cast<size_t>(globalSizeZ * ratio);
                     }
 
                     switch (direction)
@@ -423,8 +423,8 @@ void read3DPlane(size_t nproc, size_t rank, const std::string &filename, const s
                         }
                         else
                         {
-                            startZ = (size_t)((1 - ratio) / 2.0 * globalSizeZ);
-                            countZ = (size_t)(globalSizeZ * ratio);
+                            startZ = static_cast<size_t>((1 - ratio) / 2.0 * globalSizeZ);
+                            countZ = static_cast<size_t>(globalSizeZ * ratio);
                         }
 
                         break;
@@ -446,8 +446,8 @@ void read3DPlane(size_t nproc, size_t rank, const std::string &filename, const s
                         }
                         else
                         {
-                            startZ = (size_t)((1 - ratio) / 2.0 * globalSizeZ);
-                            countZ = (size_t)(globalSizeZ * ratio);
+                            startZ = static_cast<size_t>((1 - ratio) / 2.0 * globalSizeZ);
+                            countZ = static_cast<size_t>(globalSizeZ * ratio);
                         }
 
                         break;
@@ -472,8 +472,8 @@ void read3DPlane(size_t nproc, size_t rank, const std::string &filename, const s
                         }
                         else
                         {
-                            startX = (size_t)(1 - ratio) / 2.0 * globalSizeX;
-                            countX = (size_t)(globalSizeX * ratio);
+                            startX = static_cast<size_t>((1 - ratio) / 2.0 * globalSizeX);
+                            countX = static_cast<size_t>(globalSizeX * ratio);
                         }
 
                         break;
