@@ -68,7 +68,7 @@ jobs:
 
   upload_test_pypi:
     needs: [build_wheels, make_sdist]
-    environment: pypi
+    environment: testpypi
     permissions:
       id-token: write
     runs-on: ubuntu-latest
