@@ -130,11 +130,11 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string 
         }
         if (helper::EndsWith(configFile, ".xml"))
         {
-            XMLInit(configFile);
+            m_ConfigFileContents = XMLInit(configFile);
         }
         else if (helper::EndsWith(configFile, ".yaml") || helper::EndsWith(configFile, ".yml"))
         {
-            YAMLInit(configFile);
+            m_ConfigFileContents = YAMLInit(configFile);
         }
     }
 #ifdef ADIOS2_HAVE_KOKKOS
@@ -189,6 +189,20 @@ IO &ADIOS::DeclareIO(const std::string name, const ArrayOrdering ArrayOrder)
     IO &io = ioPair.first->second;
     io.SetDeclared();
     io.SetArrayOrder(ArrayOrder);
+
+    // Configure new IO objects with config file (if present)
+    if (!m_ConfigFile.empty() && !m_ConfigFileContents.empty())
+    {
+        if (helper::EndsWith(m_ConfigFile, ".xml"))
+        {
+            XMLIOInit(m_ConfigFile, m_ConfigFileContents, io);
+        }
+        else if (helper::EndsWith(m_ConfigFile, ".yaml") || helper::EndsWith(m_ConfigFile, ".yml"))
+        {
+            YAMLInitIO(m_ConfigFile, m_ConfigFileContents, io);
+        }
+    }
+
     return io;
 }
 
@@ -286,14 +300,26 @@ void ADIOS::CheckOperator(const std::string name) const
     }
 }
 
-void ADIOS::XMLInit(const std::string &configFileXML)
+std::string ADIOS::XMLInit(const std::string &configFileXML)
 {
-    helper::ParseConfigXML(*this, configFileXML, m_IOs, m_Operators);
+    return helper::ParseConfigXML(*this, configFileXML, m_IOs, m_Operators);
 }
 
-void ADIOS::YAMLInit(const std::string &configFileYAML)
+void ADIOS::XMLIOInit(const std::string &configFileXML, const std::string &configFileContents,
+                      core::IO &io)
 {
-    helper::ParseConfigYAML(*this, configFileYAML, m_IOs);
+    helper::ParseConfigXMLIO(*this, configFileXML, configFileContents, io, m_Operators);
+}
+
+std::string ADIOS::YAMLInit(const std::string &configFileYAML)
+{
+    return helper::ParseConfigYAML(*this, configFileYAML, m_IOs);
+}
+
+void ADIOS::YAMLInitIO(const std::string &configFileYAML, const std::string &configFileContents,
+                       core::IO &io)
+{
+    helper::ParseConfigYAMLIO(*this, configFileYAML, configFileContents, io);
 }
 
 void ADIOS::Global_init_AWS_API()
