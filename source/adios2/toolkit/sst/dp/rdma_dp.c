@@ -303,11 +303,11 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
         char *prov_name = info->fabric_attr->prov_name;
         char *domain_name = info->domain_attr->name;
 
-        if (info->tx_attr->inject_size > 0)
-        {
-            info = info->next;
-            continue;
-        }
+        // if (info->tx_attr->inject_size > 0)
+        // {
+        //     info = info->next;
+        //     continue;
+        // }
 
         if (ifname && strcmp(ifname, domain_name) == 0)
         {
@@ -1100,6 +1100,10 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream, void **Rea
     {
         return NULL;
     }
+    if (Stream->Fabric->info->addr_format == FI_ADDR_STR)
+    {
+        printf("Reader address: %s\n", (char const *)ContactInfo->Address);
+    }
 
     Stream->PreloadStep = -1;
     Stream->ContactInfo = ContactInfo;
@@ -1373,15 +1377,19 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_S
     {
         return NULL;
     }
+    if (Fabric->info->addr_format == FI_ADDR_STR)
+    {
+        printf("Writer address: %s\n", (char const *)ContactInfo->Address);
+    }
 
     ReaderRollHandle = &ContactInfo->ReaderRollHandle;
     ReaderRollHandle->Block = calloc(readerCohortSize, sizeof(struct _RdmaBuffer));
-    static uint64_t key = 12345;
     sst_fi_mr_reg(Svcs, WS_Stream->CP_Stream, Fabric->domain, ReaderRollHandle->Block,
-                  readerCohortSize * sizeof(struct _RdmaBuffer), FI_REMOTE_WRITE, 0, ++key, 0,
+                  readerCohortSize * sizeof(struct _RdmaBuffer), FI_REMOTE_WRITE, 0, 0, 0,
                   &WSR_Stream->rrmr, Fabric->ctx, Fabric->signal,
                   Fabric->info->domain_attr->mr_mode);
     ReaderRollHandle->Key = fi_mr_key(WSR_Stream->rrmr);
+    printf("Key: %lu\n", ReaderRollHandle->Key);
 
     WSR_Stream->WriterContactInfo = ContactInfo;
 
@@ -1543,8 +1551,15 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank, lo
 
     do
     {
+        printf("Going into fi_read()\n");
         rc = fi_read(Fabric->signal, Buffer, Length, LocalDesc, SrcAddress, (uint64_t)Addr,
                      Info->Key, ret);
+        // if(rc == -EAGAIN)
+        // {
+        //     struct fi_cq_data_entry CQEntry = {0};
+        //     ssize_t sq_rc;
+        //     sq_rc = fi_cq_sread(Fabric->cq_signal, (void *)(&CQEntry), 1, NULL, -1);
+        // }
     } while (rc == -EAGAIN);
 
     if (rc != 0)
