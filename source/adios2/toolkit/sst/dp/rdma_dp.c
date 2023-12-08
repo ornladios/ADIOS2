@@ -1086,7 +1086,7 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream, void **Rea
         return NULL;
     }
 
-    ContactInfo->Length = 24;
+    ContactInfo->Length = Fabric->info->src_addrlen;
     ContactInfo->Address = malloc(ContactInfo->Length);
     if (guard_fi_return(
             fi_getname((fid_t)Fabric->signal, ContactInfo->Address, &ContactInfo->Length), Svcs,
@@ -1353,7 +1353,7 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_S
     ContactInfo = calloc(1, sizeof(struct _RdmaWriterContactInfo));
     ContactInfo->WS_Stream = WSR_Stream;
 
-    ContactInfo->Length = 24;
+    ContactInfo->Length = Fabric->info->src_addrlen;
     ContactInfo->Address = malloc(ContactInfo->Length);
     if (guard_fi_return(
             fi_getname((fid_t)Fabric->signal, ContactInfo->Address, &ContactInfo->Length), Svcs,
