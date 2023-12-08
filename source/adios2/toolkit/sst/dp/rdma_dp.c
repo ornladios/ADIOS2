@@ -1088,9 +1088,15 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream, void **Rea
 
     ContactInfo->Length = Fabric->info->src_addrlen;
     ContactInfo->Address = malloc(ContactInfo->Length);
-    if (guard_fi_return(
-            fi_getname((fid_t)Fabric->signal, ContactInfo->Address, &ContactInfo->Length), Svcs,
-            CP_Stream, "[RdmaInitReader] fi_getname() failed with:") != FI_SUCCESS)
+    int error_code = fi_getname((fid_t)Fabric->signal, ContactInfo->Address, &ContactInfo->Length);
+    if (error_code == -FI_ETOOSMALL)
+    {
+        // Try again, fabric info might have under-reported the address length
+        ContactInfo->Address = realloc(ContactInfo->Address, ContactInfo->Length);
+        error_code = fi_getname((fid_t)Fabric->signal, ContactInfo->Address, &ContactInfo->Length);
+    }
+    if (guard_fi_return(error_code, Svcs, CP_Stream,
+                        "[RdmaInitWriterPerReader] fi_getname() failed with") != FI_SUCCESS)
     {
         return NULL;
     }
@@ -1355,10 +1361,15 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_S
 
     ContactInfo->Length = Fabric->info->src_addrlen;
     ContactInfo->Address = malloc(ContactInfo->Length);
-    if (guard_fi_return(
-            fi_getname((fid_t)Fabric->signal, ContactInfo->Address, &ContactInfo->Length), Svcs,
-            WS_Stream->CP_Stream,
-            "[RdmaInitWriterPerReader] fi_getname() failed with") != FI_SUCCESS)
+    int error_code = fi_getname((fid_t)Fabric->signal, ContactInfo->Address, &ContactInfo->Length);
+    if (error_code == -FI_ETOOSMALL)
+    {
+        // Try again, fabric info might have under-reported the address length
+        ContactInfo->Address = realloc(ContactInfo->Address, ContactInfo->Length);
+        error_code = fi_getname((fid_t)Fabric->signal, ContactInfo->Address, &ContactInfo->Length);
+    }
+    if (guard_fi_return(error_code, Svcs, WS_Stream->CP_Stream,
+                        "[RdmaInitWriterPerReader] fi_getname() failed with") != FI_SUCCESS)
     {
         return NULL;
     }
