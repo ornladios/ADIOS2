@@ -1523,7 +1523,7 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_S
     ReaderRollHandle = &ContactInfo->ReaderRollHandle;
     ReaderRollHandle->Block = calloc(readerCohortSize, sizeof(struct _RdmaBuffer));
     sst_fi_mr_reg(Svcs, WS_Stream->CP_Stream, Fabric->domain, ReaderRollHandle->Block,
-                  readerCohortSize * sizeof(struct _RdmaBuffer), FI_REMOTE_WRITE, 0, 0, 0,
+                  readerCohortSize * sizeof(struct _RdmaBuffer), FI_REMOTE_READ, 0, 0, 0,
                   &WSR_Stream->rrmr, Fabric->ctx, Fabric->signal,
                   Fabric->info->domain_attr->mr_mode);
     ReaderRollHandle->Key = fi_mr_key(WSR_Stream->rrmr);
