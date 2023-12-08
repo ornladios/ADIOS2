@@ -415,9 +415,9 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
      */
     if (info->domain_attr->mr_mode != FI_MR_BASIC)
     {
-        info->domain_attr->mr_mode = FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL |
-                                     (FI_MR_ENDPOINT & info->domain_attr->mr_mode) |
-                                     (FI_MR_VIRT_ADDR & info->domain_attr->mr_mode);
+        // info->domain_attr->mr_mode = FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL |
+        //                              (FI_MR_ENDPOINT & info->domain_attr->mr_mode) |
+        //                              (FI_MR_VIRT_ADDR & info->domain_attr->mr_mode);
         fabric->mr_virt_addr = info->domain_attr->mr_mode & FI_MR_VIRT_ADDR ? 1 : 0;
     }
     else
@@ -438,7 +438,6 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
         Svcs->verbose(CP_Stream, DPCriticalVerbose, "copying the fabric info failed.\n");
         return;
     }
-
     Svcs->verbose(CP_Stream, DPTraceVerbose,
                   "Fabric parameters to use at fabric initialization: %s\n",
                   fi_tostr(fabric->info, FI_TYPE_INFO));
