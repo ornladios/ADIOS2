@@ -37,7 +37,7 @@ namespace adios2
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
-    MemorySpace Variable<T>::GetMemorySpace()                                                      \
+    MemorySpace Variable<T>::GetDefaultMemorySpace()                                               \
     {                                                                                              \
         return m_Variable->m_MemSpace;                                                             \
     }                                                                                              \
