@@ -37,6 +37,7 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                                         "BeginStep/EndStep pairs");
     }
 
+    auto memSpace = variable.GetMemorySpace(values);
     if ((Params.MarshalMethod == SstMarshalFFS) || (Params.MarshalMethod == SstMarshalBP5))
     {
         size_t *Shape = NULL;
@@ -107,7 +108,7 @@ void SstWriter::PutSyncCommon(Variable<T> &variable, const T *values)
                                sourceRowMajor, false, (char *)ptr, MemoryStart, varCount,
                                sourceRowMajor, false, (int)ObjSize, helper::CoreDims(),
                                helper::CoreDims(), helper::CoreDims(), helper::CoreDims(),
-                               false /* safemode */, variable.m_MemSpace);
+                               false /* safemode */, memSpace);
             }
             else
             {
