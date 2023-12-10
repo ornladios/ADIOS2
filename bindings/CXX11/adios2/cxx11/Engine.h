@@ -214,8 +214,9 @@ public:
         auto bufferView = static_cast<AdiosView<U>>(data);
         auto bufferMem = bufferView.memory_space();
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
-        auto variableMem = variable.GetMemorySpace();
-        CheckMemorySpace(variableMem, bufferMem);
+        auto varMemSpace = variable.GetDefaultMemorySpace();
+        if (varMemSpace != MemorySpace::Detect)
+            CheckMemorySpace(varMemSpace, bufferMem);
 #endif
         variable.SetMemorySpace(bufferMem);
         Put(variable, bufferView.data(), launch);
@@ -418,8 +419,13 @@ public:
     void Get(Variable<T> variable, U const &data, const Mode launch = Mode::Deferred)
     {
         auto adios_data = static_cast<AdiosView<U>>(data);
-        auto mem_space = adios_data.memory_space();
-        variable.SetMemorySpace(mem_space);
+        auto bufferMem = adios_data.memory_space();
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+        auto varMemSpace = variable.GetDefaultMemorySpace();
+        if (varMemSpace != MemorySpace::Detect)
+            CheckMemorySpace(varMemSpace, bufferMem);
+#endif
+        variable.SetMemorySpace(bufferMem);
         Get(variable, adios_data.data(), launch);
     }
 

@@ -158,7 +158,7 @@ public:
      * Get the memory space that was set by the application
      * @return the memory space stored in the Variable object
      */
-    MemorySpace GetMemorySpace();
+    MemorySpace GetDefaultMemorySpace();
 
     /**
      * Set new shape, care must be taken when reading back the variable for

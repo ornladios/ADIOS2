@@ -45,17 +45,15 @@ size_t VariableBase::TotalSize() const noexcept { return helper::GetTotalSize(m_
 MemorySpace VariableBase::GetMemorySpace(const void *ptr)
 {
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
-    if (m_MemSpace != MemorySpace::Detect)
+    if (m_MemSpace == MemorySpace::Detect)
     {
-        return m_MemSpace;
-    }
-
-    if (helper::IsGPUbuffer(ptr))
-    {
-        return MemorySpace::GPU;
+        if (helper::IsGPUbuffer(ptr))
+            m_MemSpace = MemorySpace::GPU;
+        else
+            m_MemSpace = MemorySpace::Host;
     }
 #endif
-    return MemorySpace::Host;
+    return m_MemSpace;
 }
 
 void VariableBase::SetMemorySpace(const MemorySpace mem) { m_MemSpace = mem; }

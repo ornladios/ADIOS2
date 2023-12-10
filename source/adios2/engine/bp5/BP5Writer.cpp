@@ -1729,7 +1729,8 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
     }
 
     // if the user buffer is allocated on the GPU always use sync mode
-    if (variable.GetMemorySpace(values) != MemorySpace::Host)
+    auto memSpace = variable.GetMemorySpace(values);
+    if (memSpace != MemorySpace::Host)
         sync = true;
 
     size_t *Shape = NULL;
@@ -1800,8 +1801,7 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
         helper::NdCopy((const char *)values, helper::CoreDims(ZeroDims), MemoryCount,
                        sourceRowMajor, false, (char *)ptr, MemoryStart, varCount, sourceRowMajor,
                        false, (int)ObjSize, helper::CoreDims(), helper::CoreDims(),
-                       helper::CoreDims(), helper::CoreDims(), false /* safemode */,
-                       variable.m_MemSpace);
+                       helper::CoreDims(), helper::CoreDims(), false /* safemode */, memSpace);
     }
     else
     {
