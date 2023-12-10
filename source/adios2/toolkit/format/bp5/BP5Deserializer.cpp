@@ -1429,7 +1429,11 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
         Req.RequestType = Global;
         Req.BlockID = (size_t)-1;
         Req.Count = variable.m_Count;
+        if (MemSpace != MemorySpace::Host)
+            std::reverse(Req.Count.begin(), Req.Count.end());
         Req.Start = variable.m_Start;
+        if (MemSpace != MemorySpace::Host)
+            std::reverse(Req.Start.begin(), Req.Start.end());
         Req.Step = AbsStep;
         Req.RelStep = RelStep;
         Req.MemSpace = MemSpace;
@@ -1448,6 +1452,11 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
         {
             Req.Start = variable.m_Start;
             Req.Count = variable.m_Count;
+            if (MemSpace != MemorySpace::Host)
+            {
+                std::reverse(Req.Start.begin(), Req.Start.end());
+                std::reverse(Req.Count.begin(), Req.Count.end());
+            }
         }
         Req.Data = DestData;
         Req.MemSpace = MemSpace;
@@ -1569,6 +1578,23 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
             {
                 MetaArrayRecOperator *writer_meta_base = (MetaArrayRecOperator *)GetMetadataBase(
                     (struct BP5VarRec *)Req->VarRec, Req->Step, WriterRank);
+                size_t *WriterOffsets;
+                size_t *WriterCount;
+                if (Req->MemSpace != MemorySpace::Host)
+                {
+                    WriterOffsets = (size_t *)malloc(VarRec->DimCount * sizeof(size_t));
+                    WriterCount = (size_t *)malloc(VarRec->DimCount * sizeof(size_t));
+                    for (size_t i = 0; i < VarRec->DimCount; i++)
+                    {
+                        WriterOffsets[i] = writer_meta_base->Offsets[VarRec->DimCount - 1 - i];
+                        WriterCount[i] = writer_meta_base->Count[VarRec->DimCount - 1 - i];
+                    }
+                }
+                else
+                {
+                    WriterOffsets = writer_meta_base->Offsets;
+                    WriterCount = writer_meta_base->Count;
+                }
                 if (!writer_meta_base)
                 {
                     continue; // Not writen on this step
@@ -1591,9 +1617,8 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                         RR.DirectToAppMemory =
                             IsContiguousTransfer(Req, &writer_meta_base->Offsets[StartDim],
                                                  &writer_meta_base->Count[StartDim]);
-                    RR.ReadLength =
-                        helper::GetDataTypeSize(VarRec->Type) *
-                        CalcBlockLength(VarRec->DimCount, &writer_meta_base->Count[StartDim]);
+                    RR.ReadLength = helper::GetDataTypeSize(VarRec->Type) *
+                                    CalcBlockLength(VarRec->DimCount, &WriterCount[StartDim]);
                     RR.OffsetInBlock = 0;
                     if (RR.DirectToAppMemory)
                     {
@@ -1623,6 +1648,11 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                     break;
                 }
                 NodeFirstBlock += writer_meta_base->BlockCount;
+                if (Req->MemSpace != MemorySpace::Host)
+                {
+                    free(WriterOffsets);
+                    free(WriterCount);
+                }
             }
         }
         else
@@ -1635,6 +1665,23 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                     (struct BP5VarRec *)Req->VarRec, Req->Step, WriterRank);
                 if (!writer_meta_base)
                     continue; // Not writen on this step
+                size_t *WriterOffsets;
+                size_t *WriterCount;
+                if (Req->MemSpace != MemorySpace::Host)
+                {
+                    WriterOffsets = (size_t *)malloc(VarRec->DimCount * sizeof(size_t));
+                    WriterCount = (size_t *)malloc(VarRec->DimCount * sizeof(size_t));
+                    for (size_t i = 0; i < VarRec->DimCount; i++)
+                    {
+                        WriterOffsets[i] = writer_meta_base->Offsets[VarRec->DimCount - 1 - i];
+                        WriterCount[i] = writer_meta_base->Count[VarRec->DimCount - 1 - i];
+                    }
+                }
+                else
+                {
+                    WriterOffsets = writer_meta_base->Offsets;
+                    WriterCount = writer_meta_base->Count;
+                }
 
                 for (size_t Block = 0; Block < writer_meta_base->BlockCount; Block++)
                 {
@@ -1644,10 +1691,9 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
 
                     size_t StartDim = Block * VarRec->DimCount;
                     if (IntersectionStartCount(VarRec->DimCount, Req->Start.data(),
-                                               Req->Count.data(),
-                                               &writer_meta_base->Offsets[StartDim],
-                                               &writer_meta_base->Count[StartDim],
-                                               &intersectionstart[0], &intersectioncount[0]))
+                                               Req->Count.data(), &WriterOffsets[StartDim],
+                                               &WriterCount[StartDim], &intersectionstart[0],
+                                               &intersectioncount[0]))
                     {
                         if (VarRec->Operator != NULL)
                         {
@@ -1676,11 +1722,11 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                         {
                             for (size_t Dim = 0; Dim < VarRec->DimCount; Dim++)
                             {
-                                intersectionstart[Dim] -= writer_meta_base->Offsets[StartDim + Dim];
+                                intersectionstart[Dim] -= WriterOffsets[StartDim + Dim];
                             }
                             size_t StartOffsetInBlock =
                                 VB->m_ElementSize *
-                                LinearIndex(VarRec->DimCount, &writer_meta_base->Count[StartDim],
+                                LinearIndex(VarRec->DimCount, &WriterCount[StartDim],
                                             &intersectionstart[0], m_ReaderIsRowMajor);
                             for (size_t Dim = 0; Dim < VarRec->DimCount; Dim++)
                             {
@@ -1689,7 +1735,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                             }
                             size_t EndOffsetInBlock =
                                 VB->m_ElementSize *
-                                (LinearIndex(VarRec->DimCount, &writer_meta_base->Count[StartDim],
+                                (LinearIndex(VarRec->DimCount, &WriterCount[StartDim],
                                              &intersectionend[0], m_ReaderIsRowMajor) +
                                  1);
                             ReadRequest RR;
@@ -1703,9 +1749,8 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                             if (Req->MemSpace != MemorySpace::Host)
                                 RR.DirectToAppMemory = false;
                             else
-                                RR.DirectToAppMemory =
-                                    IsContiguousTransfer(Req, &writer_meta_base->Offsets[StartDim],
-                                                         &writer_meta_base->Count[StartDim]);
+                                RR.DirectToAppMemory = IsContiguousTransfer(
+                                    Req, &WriterOffsets[StartDim], &WriterCount[StartDim]);
                             if (RR.DirectToAppMemory)
                             {
                                 /*
@@ -1717,7 +1762,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                                  */
 
                                 ssize_t ContigOffset =
-                                    (writer_meta_base->Offsets[StartDim + 0] - Req->Start[0]) *
+                                    (WriterOffsets[StartDim + 0] - Req->Start[0]) *
                                     VB->m_ElementSize;
                                 if (ContigOffset < 0)
                                     ContigOffset = 0;
@@ -1739,6 +1784,11 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                             Ret.push_back(RR);
                         }
                     }
+                }
+                if (Req->MemSpace != MemorySpace::Host)
+                {
+                    free(WriterOffsets);
+                    free(WriterCount);
                 }
             }
         }
@@ -1827,6 +1877,13 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         std::reverse(inCount.begin(), inCount.end());
         std::reverse(outStart.begin(), outStart.end());
         std::reverse(outCount.begin(), outCount.end());
+        std::reverse(outMemStart.begin(), outMemStart.end());
+        std::reverse(outMemCount.begin(), outMemCount.end());
+    }
+    if (Req.MemSpace != MemorySpace::Host)
+    {
+        std::reverse(inStart.begin(), inStart.end());
+        std::reverse(inCount.begin(), inCount.end());
         std::reverse(outMemStart.begin(), outMemStart.end());
         std::reverse(outMemCount.begin(), outMemCount.end());
     }
