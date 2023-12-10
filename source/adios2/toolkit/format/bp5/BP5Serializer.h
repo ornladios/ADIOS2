@@ -232,9 +232,9 @@ private:
     char *BuildArrayDBCountName(const char *base_name, const int type, const int element_size);
     char *BuildArrayBlockCountName(const char *base_name, const int type, const int element_size);
     char *TranslateADIOS2Type2FFS(const DataType Type);
-    size_t *CopyDims(const size_t Count, const size_t *Vals);
+    size_t *CopyDims(const size_t Count, const size_t *Vals, MemorySpace memSpace);
     size_t *AppendDims(size_t *OldDims, const size_t OldCount, const size_t Count,
-                       const size_t *Vals);
+                       const size_t *Vals, MemorySpace memSpace);
 
     void DumpDeferredBlocks(bool forceCopyDeferred = false);
     void VariableStatsEnabled(void *Variable);

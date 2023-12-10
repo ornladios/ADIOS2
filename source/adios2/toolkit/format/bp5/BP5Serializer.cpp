@@ -640,17 +640,29 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
     return Rec;
 }
 
-size_t *BP5Serializer::CopyDims(const size_t Count, const size_t *Vals)
+size_t *BP5Serializer::CopyDims(const size_t Count, const size_t *Vals, const MemorySpace memSpace)
 {
     size_t *Ret = (size_t *)malloc(Count * sizeof(Ret[0]));
+    if (memSpace != MemorySpace::Host)
+    {
+        for (size_t i = 0; i < Count; ++i)
+            Ret[Count - 1 - i] = Vals[i];
+        return Ret;
+    }
     memcpy(Ret, Vals, Count * sizeof(Ret[0]));
     return Ret;
 }
 
 size_t *BP5Serializer::AppendDims(size_t *OldDims, const size_t OldCount, const size_t Count,
-                                  const size_t *Vals)
+                                  const size_t *Vals, const MemorySpace memSpace)
 {
     size_t *Ret = (size_t *)realloc(OldDims, (OldCount + Count) * sizeof(Ret[0]));
+    if (memSpace != MemorySpace::Host)
+    {
+        for (size_t i = 0; i < Count; ++i)
+            Ret[OldCount + Count - 1 - i] = Vals[i];
+        return Ret;
+    }
     memcpy(Ret + OldCount, Vals, Count * sizeof(Ret[0]));
     return Ret;
 }
@@ -874,11 +886,11 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
         {
             if (Shape)
                 // this will be overwritten in EndStep with the final shape
-                MetaEntry->Shape = CopyDims(DimCount, Shape);
+                MetaEntry->Shape = CopyDims(DimCount, Shape, MemSpace);
             else
                 MetaEntry->Shape = NULL;
             MetaEntry->DBCount = DimCount;
-            MetaEntry->Count = CopyDims(DimCount, Count);
+            MetaEntry->Count = CopyDims(DimCount, Count, MemSpace);
             MetaEntry->BlockCount = 1;
             MetaEntry->DataBlockLocation = (size_t *)malloc(sizeof(size_t));
             MetaEntry->DataBlockLocation[0] = DataOffset;
@@ -889,7 +901,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
                 OpEntry->DataBlockSize[0] = CompressedSize;
             }
             if (Offsets)
-                MetaEntry->Offsets = CopyDims(DimCount, Offsets);
+                MetaEntry->Offsets = CopyDims(DimCount, Offsets, MemSpace);
             else
                 MetaEntry->Offsets = NULL;
             if (DoMinMax)
@@ -923,7 +935,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
             //
             MetaEntry->DBCount += DimCount;
             MetaEntry->BlockCount++;
-            MetaEntry->Count = AppendDims(MetaEntry->Count, PreviousDBCount, DimCount, Count);
+            MetaEntry->Count =
+                AppendDims(MetaEntry->Count, PreviousDBCount, DimCount, Count, MemSpace);
             MetaEntry->DataBlockLocation = (size_t *)realloc(
                 MetaEntry->DataBlockLocation, MetaEntry->BlockCount * sizeof(size_t));
             MetaEntry->DataBlockLocation[MetaEntry->BlockCount - 1] = DataOffset;
@@ -960,7 +973,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
             }
             if (Offsets)
                 MetaEntry->Offsets =
-                    AppendDims(MetaEntry->Offsets, PreviousDBCount, DimCount, Offsets);
+                    AppendDims(MetaEntry->Offsets, PreviousDBCount, DimCount, Offsets, MemSpace);
         }
     }
 }
@@ -1254,14 +1267,20 @@ void BP5Serializer::CollectFinalShapeValues()
         if (Rec->Shape == ShapeID::GlobalArray)
         {
             core::VariableBase *VB = static_cast<core::VariableBase *>(Rec->Key);
+            MemorySpace memSpace = VB->m_MemSpace;
             struct BP5MetadataInfoStruct *MBase = (struct BP5MetadataInfoStruct *)MetadataBuf;
             int AlreadyWritten = BP5BitfieldTest(MBase, Rec->FieldID);
             if (!AlreadyWritten)
                 continue;
 
             MetaArrayRec *MetaEntry = (MetaArrayRec *)((char *)(MetadataBuf) + Rec->MetaOffset);
-
-            memcpy(MetaEntry->Shape, VB->Shape().data(), Rec->DimCount * sizeof(size_t));
+            if (memSpace != MemorySpace::Host)
+            {
+                for (size_t i = 0; i < Rec->DimCount; ++i)
+                    MetaEntry->Shape[Rec->DimCount - 1 - i] = VB->Shape().data()[i];
+            }
+            else
+                memcpy(MetaEntry->Shape, VB->Shape().data(), Rec->DimCount * sizeof(size_t));
         }
     }
 }
