@@ -117,7 +117,6 @@ int sst_fi_mr_reg(
  */
 int guard_fi_return(int code, CP_Services Svcs, CManager cm, char const *msg)
 {
-    printf("[RDMA CALL  guard_fi_return]\n");
     if (code != FI_SUCCESS)
     {
         Svcs->verbose(cm, DPCriticalVerbose, "%s: %s (%lu)\n", msg, fi_strerror(code), code);
@@ -324,7 +323,6 @@ static char const *get_preferred_domain(struct _SstParams *Params)
 static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, CP_Services Svcs,
                         void *CP_Stream, char const *ifname)
 {
-    printf("[RDMA CALL  init_fabric]\n");
     struct fi_info *hints, *info, *originfo, *useinfo;
     struct fi_av_attr av_attr = {FI_AV_UNSPEC};
     struct fi_cq_attr cq_attr = {0};
@@ -674,7 +672,6 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
 
 static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_Stream)
 {
-    printf("[RDMA CALL  fini_fabric]\n");
 
     fabric->cq_manual_progress.do_continue = 0;
     // free other stuff
@@ -916,7 +913,6 @@ typedef struct _RdmaWriterContactInfo
 
 static TimestepList GetStep(Rdma_WS_Stream Stream, long Timestep)
 {
-    printf("[RDMA CALL  GetStep]\n");
     TimestepList Step;
 
     pthread_mutex_lock(&ts_mutex);
@@ -934,7 +930,6 @@ static TimestepList GetStep(Rdma_WS_Stream Stream, long Timestep)
 static int get_cxi_auth_key_from_env(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params,
                                      struct cxi_auth_key *key, char **used_device)
 {
-    printf("[RDMA CALL  get_cxi_auth_key_from_env]\n");
     int vni, first_vni, second_vni, svc_id;
 
     // Just some safety against faulty strings in string processing.
@@ -1106,7 +1101,6 @@ static int get_cxi_auth_key_from_env(CP_Services Svcs, void *CP_Stream, struct _
 
 static int get_cxi_auth_key_from_writer(struct cxi_auth_key *key, attr_list WriterContact)
 {
-    printf("[RDMA CALL  get_cxi_auth_key_from_writer]\n");
     long vni;
     if (!get_long_attr(WriterContact, attr_atom_from_string("vni"), &vni))
     {
@@ -1121,7 +1115,6 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream, void **Rea
                                    struct _SstParams *Params, attr_list WriterContact,
                                    SstStats Stats)
 {
-    printf("[RDMA CALL  RdmaInitReader]\n");
     Rdma_RS_Stream Stream = malloc(sizeof(struct _Rdma_RS_Stream));
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     RdmaReaderContactInfo ContactInfo = malloc(sizeof(struct _RdmaReaderContactInfo));
@@ -1272,7 +1265,6 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream, void **Rea
 static void RdmaReadPatternLocked(CP_Services Svcs, DP_WSR_Stream WSRStream_v,
                                   long EffectiveTimestep)
 {
-    printf("[RDMA CALL  RdmaReadPatternLocked]\n");
     Rdma_WSR_Stream WSR_Stream = (Rdma_WSR_Stream)WSRStream_v;
     Rdma_WS_Stream WS_Stream = WSR_Stream->WS_Stream;
 
@@ -1296,7 +1288,6 @@ static void RdmaReadPatternLocked(CP_Services Svcs, DP_WSR_Stream WSRStream_v,
 
 static void RdmaWritePatternLocked(CP_Services Svcs, DP_RS_Stream Stream_v, long EffectiveTimestep)
 {
-    printf("[RDMA CALL  RdmaWritePatternLocked]\n");
     Rdma_RS_Stream Stream = (Rdma_RS_Stream)Stream_v;
 
     if (Stream->PreloadAvail)
@@ -1319,7 +1310,6 @@ static void RdmaWritePatternLocked(CP_Services Svcs, DP_RS_Stream Stream_v, long
 static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params,
                                    attr_list DPAttrs, SstStats Stats)
 {
-    printf("[RDMA CALL  RdmaInitWriter]\n");
     Rdma_WS_Stream Stream = malloc(sizeof(struct _Rdma_WS_Stream));
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     char *PreloadEnv;
@@ -1468,7 +1458,6 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_S
                                              void **providedReaderInfo_v,
                                              void **WriterContactInfoPtr)
 {
-    printf("[RDMA CALL  RdmaInitWriterPerReader]\n");
     Rdma_WS_Stream WS_Stream = (Rdma_WS_Stream)WS_Stream_v;
     Rdma_WSR_Stream WSR_Stream = malloc(sizeof(*WSR_Stream));
     FabricState Fabric = WS_Stream->Fabric;
@@ -1563,7 +1552,6 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Stre
                                           int writerCohortSize, CP_PeerCohort PeerCohort,
                                           void **providedWriterInfo_v)
 {
-    printf("[RDMA CALL  RdmaProvideWriterDataToReader]\n");
     Rdma_RS_Stream RS_Stream = (Rdma_RS_Stream)RS_Stream_v;
     FabricState Fabric = RS_Stream->Fabric;
     RdmaWriterContactInfo *providedWriterInfo = (RdmaWriterContactInfo *)providedWriterInfo_v;
@@ -1601,7 +1589,6 @@ static void RdmaProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Stre
 static void LogRequest(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank, long Timestep,
                        size_t Offset, size_t Length)
 {
-    printf("[RDMA CALL  LogRequest]\n");
     RdmaStepLogEntry *StepLog_p;
     RdmaStepLogEntry StepLog;
     RdmaBuffer LogEntry;
@@ -1660,7 +1647,6 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank, lo
                         size_t Offset, size_t Length, void *Buffer, RdmaBufferHandle Info,
                         RdmaCompletionHandle *ret_v)
 {
-    printf("[RDMA CALL  PostRead]\n");
     FabricState Fabric = RS_Stream->Fabric;
     fi_addr_t SrcAddress = RS_Stream->WriterAddr[Rank];
     void *LocalDesc = NULL;
@@ -1732,7 +1718,6 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank, lo
 static RdmaBuffer GetRequest(Rdma_RS_Stream Stream, RdmaStepLogEntry StepLog, int Rank,
                              size_t Offset, size_t Length)
 {
-    printf("[RDMA CALL  GetRequest]\n");
 
     RdmaRankReqLog RankLog = &StepLog->RankLog[Rank];
     RdmaBuffer Req;
@@ -1841,7 +1826,6 @@ static void *RdmaReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int R
 
 static void RdmaNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v, int FailedPeerRank)
 {
-    printf("[RDMA CALL  RdmaNotifyConnFailure]\n");
     /* DP_RS_Stream is the return from InitReader */
     Rdma_RS_Stream Stream = (Rdma_RS_Stream)Stream_v;
     Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
@@ -1855,7 +1839,6 @@ static void RdmaNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v, int F
  */
 static int DoPushWait(CP_Services Svcs, Rdma_RS_Stream Stream, RdmaCompletionHandle Handle)
 {
-    printf("[RDMA CALL  DoPushWait]\n");
     FabricState Fabric = Stream->Fabric;
     RdmaStepLogEntry StepLog = Stream->PreloadStepLog;
     RdmaRankReqLog RankLog;
@@ -1928,7 +1911,6 @@ static int DoPushWait(CP_Services Svcs, Rdma_RS_Stream Stream, RdmaCompletionHan
 
 static int WaitForAnyPull(CP_Services Svcs, Rdma_RS_Stream Stream)
 {
-    printf("[RDMA CALL  WaitForAnyPull]\n");
     FabricState Fabric = Stream->Fabric;
     RdmaCompletionHandle Handle_t;
     struct fi_cq_data_entry CQEntry = {0};
@@ -1953,7 +1935,6 @@ static int WaitForAnyPull(CP_Services Svcs, Rdma_RS_Stream Stream)
 
 static int DoPullWait(CP_Services Svcs, Rdma_RS_Stream Stream, RdmaCompletionHandle Handle)
 {
-    printf("[RDMA CALL  DoPullWait]\n");
     while (Handle->Pending > 0)
     {
         if (WaitForAnyPull(Svcs, Stream) == 0)
@@ -1968,7 +1949,6 @@ static int DoPullWait(CP_Services Svcs, Rdma_RS_Stream Stream, RdmaCompletionHan
  */
 static int RdmaWaitForCompletion(CP_Services Svcs, void *Handle_v)
 {
-    printf("[RDMA CALL  RdmaWaitForCompletion]\n");
     RdmaCompletionHandle Handle = (RdmaCompletionHandle)Handle_v;
     Rdma_RS_Stream Stream = Handle->CPStream;
 
@@ -1988,7 +1968,6 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct 
                                 struct _SstData *LocalMetadata, long Timestep,
                                 void **TimestepInfoPtr)
 {
-    printf("[RDMA CALL  RdmaProvideTimestep]\n");
     Rdma_WS_Stream Stream = (Rdma_WS_Stream)Stream_v;
     TimestepList Entry = malloc(sizeof(struct _TimestepEntry));
     RdmaBufferHandle Info = malloc(sizeof(struct _RdmaBufferHandle));
@@ -2033,7 +2012,6 @@ static void RdmaProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct 
 
 static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, long Timestep)
 {
-    printf("[RDMA CALL  RdmaReleaseTimestep]\n");
     Rdma_WS_Stream Stream = (Rdma_WS_Stream)Stream_v;
     TimestepList *List = &Stream->Timesteps;
     TimestepList ReleaseTSL;
@@ -2076,7 +2054,6 @@ static void RdmaReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, long Ti
 
 static void RdmaDestroyRankReqLog(Rdma_RS_Stream RS_Stream, RdmaRankReqLog RankReqLog)
 {
-    printf("[RDMA CALL  RdmaDestroyRankReqLog]\n");
     int i;
 
     for (i = 0; i < RS_Stream->WriterCohortSize; i++)
@@ -2091,7 +2068,6 @@ static void RdmaDestroyRankReqLog(Rdma_RS_Stream RS_Stream, RdmaRankReqLog RankR
 
 static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 {
-    printf("[RDMA CALL  RdmaDestroyReader]\n");
     Rdma_RS_Stream RS_Stream = (Rdma_RS_Stream)RS_Stream_v;
     RdmaStepLogEntry StepLog = RS_Stream->StepLog;
     RdmaStepLogEntry tStepLog;
@@ -2131,7 +2107,6 @@ static void RdmaDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 
 static void RdmaDestroyWriterPerReader(CP_Services Svcs, DP_WSR_Stream WSR_Stream_v)
 {
-    printf("[RDMA CALL  RdmaDestroyWriterPerReader]\n");
     Rdma_WSR_Stream WSR_Stream = {0};
     memcpy(&WSR_Stream, &WSR_Stream_v, sizeof(Rdma_WSR_Stream));
     Rdma_WS_Stream WS_Stream = WSR_Stream->WS_Stream;
@@ -2195,7 +2170,6 @@ static FMStructDescRec RdmaBufferHandleStructs[] = {
 
 static void RdmaDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
 {
-    printf("[RDMA CALL  RdmaDestroyWriter]\n");
     Rdma_WS_Stream WS_Stream = (Rdma_WS_Stream)WS_Stream_v;
     long Timestep;
 #ifdef SST_HAVE_CRAY_DRC
@@ -2269,7 +2243,6 @@ static struct _CP_DP_Interface RdmaDPInterface = {0};
  */
 static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params)
 {
-    printf("[RDMA CALL  RdmaGetPriority]\n");
     return 100;
     struct fi_info *hints, *info, *originfo;
     char const *ifname;
@@ -2389,13 +2362,11 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
  */
 static void RdmaUnGetPriority(CP_Services Svcs, void *CP_Stream)
 {
-    printf("[RDMA CALL  RdmaUnGetPriority]\n");
     Svcs->verbose(CP_Stream, DPPerStepVerbose, "RDMA Dataplane unloading\n");
 }
 
 static void PushData(CP_Services Svcs, Rdma_WSR_Stream Stream, TimestepList Step, int BufferSlot)
 {
-    printf("[RDMA CALL  PushData]\n");
     Rdma_WS_Stream WS_Stream = Stream->WS_Stream;
     FabricState Fabric = WS_Stream->Fabric;
     RdmaRankReqLog RankReq = Stream->PreloadReq;
@@ -2447,7 +2418,6 @@ static void PushData(CP_Services Svcs, Rdma_WSR_Stream Stream, TimestepList Step
 static void RdmaReaderRegisterTimestep(CP_Services Svcs, DP_WSR_Stream WSRStream_v, long Timestep,
                                        SstPreloadModeType PreloadMode)
 {
-    printf("[RDMA CALL  RdmaReaderRegisterTimestep]\n");
     Rdma_WSR_Stream WSR_Stream = (Rdma_WSR_Stream)WSRStream_v;
     Rdma_WS_Stream WS_Stream = WSR_Stream->WS_Stream;
     TimestepList Step;
@@ -2475,7 +2445,6 @@ static void RdmaReaderRegisterTimestep(CP_Services Svcs, DP_WSR_Stream WSRStream
 
 static void PostPreload(CP_Services Svcs, Rdma_RS_Stream Stream, long Timestep)
 {
-    printf("[RDMA CALL  PostPreload]\n");
     RdmaStepLogEntry StepLog;
     FabricState Fabric = Stream->Fabric;
     RdmaBuffer PreloadBuffer = &Stream->PreloadBuffer;
@@ -2631,7 +2600,6 @@ static void PostPreload(CP_Services Svcs, Rdma_RS_Stream Stream, long Timestep)
 static void RdmaTimestepArrived(CP_Services Svcs, DP_RS_Stream Stream_v, long Timestep,
                                 SstPreloadModeType PreloadMode)
 {
-    printf("[RDMA CALL  RdmaTimestepArrived]\n");
     Rdma_RS_Stream Stream = (Rdma_RS_Stream)Stream_v;
 
     Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "%s with Timestep = %li, PreloadMode = %d\n",
@@ -2659,7 +2627,6 @@ static void RdmaTimestepArrived(CP_Services Svcs, DP_RS_Stream Stream_v, long Ti
 
 static void RdmaReaderReleaseTimestep(CP_Services Svcs, DP_RS_Stream Stream_v, long Timestep)
 {
-    printf("[RDMA CALL  RdmaReaderReleaseTimestep]\n");
     Rdma_RS_Stream Stream = (Rdma_RS_Stream)Stream_v;
 
     pthread_mutex_lock(&ts_mutex);
@@ -2677,7 +2644,6 @@ static void RdmaReaderReleaseTimestep(CP_Services Svcs, DP_RS_Stream Stream_v, l
 
 static void PullSelection(CP_Services Svcs, Rdma_WSR_Stream Stream)
 {
-    printf("[RDMA CALL  PullSelection]\n");
     Rdma_WS_Stream WS_Stream = Stream->WS_Stream;
     FabricState Fabric = WS_Stream->Fabric;
     RdmaBuffer ReaderRoll = (RdmaBuffer)Stream->ReaderRoll->Handle.Block;
@@ -2761,7 +2727,6 @@ static void PullSelection(CP_Services Svcs, Rdma_WSR_Stream Stream)
 
 static void CompletePush(CP_Services Svcs, Rdma_WSR_Stream Stream, TimestepList Step)
 {
-    printf("[RDMA CALL  CompletePush]\n");
     Rdma_WS_Stream WS_Stream = Stream->WS_Stream;
     FabricState Fabric = WS_Stream->Fabric;
     TimestepList CQStep;
@@ -2808,7 +2773,6 @@ static void CompletePush(CP_Services Svcs, Rdma_WSR_Stream Stream, TimestepList 
 
 static void RdmaReleaseTimestepPerReader(CP_Services Svcs, DP_WSR_Stream Stream_v, long Timestep)
 {
-    printf("[RDMA CALL  RdmaReleaseTimestepPerReader]\n");
     Rdma_WSR_Stream Stream = (Rdma_WSR_Stream)Stream_v;
     Rdma_WS_Stream WS_Stream = Stream->WS_Stream;
     TimestepList Step = GetStep(WS_Stream, Timestep);
