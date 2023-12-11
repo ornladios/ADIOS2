@@ -203,6 +203,7 @@ static void *make_progress(void *params_)
                     fi_strerror(error.err),
                     fi_cq_strerror(params->cq_signal, error.err, error.err_data, NULL, error.len));
             }
+            printf("Backung off for %d seconds\n", current_backoff_seconds);
             sleep(current_backoff_seconds);
             if(current_backoff_seconds < SST_BACKOFF_SECONDS_MAX)
             {
@@ -367,7 +368,8 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
     {
         fi_version = FI_VERSION(1, 5);
 
-        hints->domain_attr->mr_mode = FI_MR_BASIC;
+        hints->domain_attr->mr_mode =
+            FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL;
         hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
         // data progress unspecified, both are fine
         // hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
@@ -383,7 +385,7 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
     // The RDMA DP is able to deal with this appropriately, and does so right
     // before calling fi_fabric() further below in this function.
     // The main reason for keeping FI_MR_BASIC here is backward compatibility.
-    hints->domain_attr->mr_mode = FI_MR_BASIC;
+    hints->domain_attr->mr_mode = FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL;
     hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
     // data progress unspecified, both are fine
     // hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
