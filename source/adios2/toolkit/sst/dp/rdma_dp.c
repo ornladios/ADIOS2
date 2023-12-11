@@ -181,10 +181,15 @@ struct fi_cq_data_entry *cq_manual_progress_pop(struct cq_manual_progress *self)
     return res;
 }
 
+#define SST_BACKOFF_SECONDS_MAX 5
+
 static void *make_progress(void *params_)
 {
     struct cq_manual_progress *params = (struct cq_manual_progress *)params_;
     struct fi_cq_data_entry *CQEntry = malloc(sizeof(struct fi_cq_data_entry));
+
+    unsigned int current_backoff_seconds = 0;
+
     while (params->do_continue)
     {
         printf("~~~~~~~~a little bit of progress?\n");
@@ -201,7 +206,11 @@ static void *make_progress(void *params_)
                     fi_strerror(error.err),
                     fi_cq_strerror(params->cq_signal, error.err, error.err_data, NULL, error.len));
             }
-            sleep(5);
+            sleep(current_backoff_seconds);
+            if(current_backoff_seconds < SST_BACKOFF_SECONDS_MAX)
+            {
+                ++current_backoff_seconds;
+            }
         }
         else
         {
@@ -211,6 +220,7 @@ static void *make_progress(void *params_)
             next_item->next = NULL;
             cq_manual_progress_push(params, next_item);
             CQEntry = malloc(sizeof(struct fi_cq_data_entry));
+            current_backoff_seconds = 0;
         }
     }
     return NULL;
@@ -247,12 +257,17 @@ struct fabric_state
 
 void cq_read(struct fabric_state *fabric, struct fi_cq_data_entry *CQEntry)
 {
+    unsigned int current_backoff_seconds = 0;
     while (1)
     {
         struct fi_cq_data_entry *res = cq_manual_progress_pop(&fabric->cq_manual_progress);
         if (res == NULL)
         {
-            sleep(5);
+            sleep(current_backoff_seconds);
+            if(current_backoff_seconds < SST_BACKOFF_SECONDS_MAX)
+            {
+                ++current_backoff_seconds;
+            }
             continue;
         }
         memcpy(CQEntry, res, sizeof(struct fi_cq_data_entry));
