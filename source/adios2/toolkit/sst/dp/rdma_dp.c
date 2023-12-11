@@ -343,7 +343,8 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
 
         hints->domain_attr->mr_mode = FI_MR_ENDPOINT;
         hints->domain_attr->control_progress = FI_PROGRESS_MANUAL;
-        hints->domain_attr->data_progress = FI_PROGRESS_MANUAL;
+        // data progress unspecified, both are fine
+        // hints->domain_attr->data_progress = FI_PROGRESS_MANUAL;
 
         // Authentication is needed
         // TODO: the first ID in SLINGSHOT_SVC_IDS is chosen, but we should
@@ -368,7 +369,8 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
 
         hints->domain_attr->mr_mode = FI_MR_BASIC;
         hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
-        hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
+        // data progress unspecified, both are fine
+        // hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
     }
 #else
     fi_version = FI_VERSION(1, 5);
@@ -383,6 +385,7 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
     // The main reason for keeping FI_MR_BASIC here is backward compatibility.
     hints->domain_attr->mr_mode = FI_MR_BASIC;
     hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
+    // data progress unspecified, both are fine
     // hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
 #endif
 
@@ -2229,7 +2232,6 @@ static struct _CP_DP_Interface RdmaDPInterface = {0};
  */
 static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params)
 {
-    return 100;
     struct fi_info *hints, *info, *originfo;
     char const *ifname;
     char *forkunsafe;
@@ -2257,7 +2259,8 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
 
         hints->domain_attr->mr_mode = FI_MR_ENDPOINT;
         hints->domain_attr->control_progress = FI_PROGRESS_MANUAL;
-        hints->domain_attr->data_progress = FI_PROGRESS_MANUAL;
+        // data progress unspecified, both are fine
+        // hints->domain_attr->data_progress = FI_PROGRESS_MANUAL;
     }
     else
     {
@@ -2270,7 +2273,8 @@ static int RdmaGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams 
 
         hints->domain_attr->mr_mode = FI_MR_BASIC;
         hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
-        hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
+        // data progress unspecified, both are fine
+        // hints->domain_attr->data_progress = FI_PROGRESS_AUTO;
     }
 
     ifname = get_preferred_domain(Params);
