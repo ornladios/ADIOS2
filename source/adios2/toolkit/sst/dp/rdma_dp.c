@@ -78,6 +78,7 @@ int sst_fi_mr_reg(
     /* additional parameters for binding the mr to the endpoint*/
     struct fid_ep *endpoint, int mr_mode)
 {
+    printf("Registering from %p to %p\n", buf, buf + len);
     int res = fi_mr_reg(domain, buf, len, acs, offset, requested_key, flags, mr, context);
     int is_mr_endpoint = (mr_mode & FI_MR_ENDPOINT) != 0;
     if (!is_mr_endpoint)
@@ -187,7 +188,7 @@ static void *make_progress(void *params_)
     while (params->do_continue)
     {
         printf("~~~~~~~~a little bit of progress?\n");
-        ssize_t rc = fi_cq_read(params->cq_signal, (void *)(&CQEntry), 1);
+        ssize_t rc = fi_cq_read(params->cq_signal, (void *)CQEntry, 1);
         if (rc < 1)
         {
             struct fi_cq_err_entry error;
@@ -1522,11 +1523,11 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_S
 
     ReaderRollHandle = &ContactInfo->ReaderRollHandle;
     ReaderRollHandle->Block = calloc(readerCohortSize, sizeof(struct _RdmaBuffer));
-    sst_fi_mr_reg(Svcs, WS_Stream->CP_Stream, Fabric->domain, ReaderRollHandle->Block,
-                  readerCohortSize * sizeof(struct _RdmaBuffer), FI_REMOTE_READ, 0, 0, 0,
-                  &WSR_Stream->rrmr, Fabric->ctx, Fabric->signal,
-                  Fabric->info->domain_attr->mr_mode);
-    ReaderRollHandle->Key = fi_mr_key(WSR_Stream->rrmr);
+    // sst_fi_mr_reg(Svcs, WS_Stream->CP_Stream, Fabric->domain, ReaderRollHandle->Block,
+    //               readerCohortSize * sizeof(struct _RdmaBuffer), FI_REMOTE_READ, 0, 0, 0,
+    //               &WSR_Stream->rrmr, Fabric->ctx, Fabric->signal,
+    //               Fabric->info->domain_attr->mr_mode);
+    ReaderRollHandle->Key = 0; //fi_mr_key(WSR_Stream->rrmr);
     printf("Key: %lu\n", ReaderRollHandle->Key);
 
     WSR_Stream->WriterContactInfo = ContactInfo;
@@ -1689,7 +1690,8 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank, lo
 
     do
     {
-        printf("Going into fi_read()\n");
+        printf("Going into fi_read() from %p (= %p + %lu) to %p\n", Addr, Info->Block, Offset,
+               Addr + Length);
         rc = fi_read(Fabric->signal, Buffer, Length, LocalDesc, SrcAddress, (uint64_t)Addr,
                      Info->Key, ret);
         // if(rc == -EAGAIN)
