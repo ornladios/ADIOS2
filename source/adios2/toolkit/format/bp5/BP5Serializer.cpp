@@ -1276,7 +1276,7 @@ void BP5Serializer::CollectFinalShapeValues()
             MetaArrayRec *MetaEntry = (MetaArrayRec *)((char *)(MetadataBuf) + Rec->MetaOffset);
             if (memSpace != MemorySpace::Host)
             {
-                for (size_t i = 0; i < Rec->DimCount; ++i)
+                for (int i = 0; i < Rec->DimCount; ++i)
                     MetaEntry->Shape[Rec->DimCount - 1 - i] = VB->Shape().data()[i];
             }
             else

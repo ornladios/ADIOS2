@@ -20,10 +20,11 @@ int BPWrite(const std::string fname, const size_t Nx, const size_t Ny, const siz
     // Initialize the simulation data
     Kokkos::View<float **, MemSpace> gpuSimData("simBuffer", Nx, Ny);
     static_assert(Kokkos::SpaceAccessibility<ExecSpace, MemSpace>::accessible, "");
-    Kokkos::parallel_for("initBuffer", Kokkos::RangePolicy<ExecSpace>(0, Nx), KOKKOS_LAMBDA(int i) {
-        for (int j = 0; j < Ny; j++)
-            gpuSimData(i, j) = static_cast<float>(i);
-    });
+    Kokkos::parallel_for(
+        "initBuffer", Kokkos::RangePolicy<ExecSpace>(0, Nx), KOKKOS_LAMBDA(int i) {
+            for (int j = 0; j < Ny; j++)
+                gpuSimData(i, j) = static_cast<float>(i);
+        });
     Kokkos::fence();
 
     adios2::ADIOS adios;
@@ -48,11 +49,11 @@ int BPWrite(const std::string fname, const size_t Nx, const size_t Ny, const siz
         bpWriter.EndStep();
 
         // Update values in the simulation data
-        Kokkos::parallel_for("updateBuffer", Kokkos::RangePolicy<ExecSpace>(0, Nx),
-                             KOKKOS_LAMBDA(int i) {
-                                 for (int j = 0; j < Ny; j++)
-                                     gpuSimData(i, j) += 10;
-                             });
+        Kokkos::parallel_for(
+            "updateBuffer", Kokkos::RangePolicy<ExecSpace>(0, Nx), KOKKOS_LAMBDA(int i) {
+                for (int j = 0; j < Ny; j++)
+                    gpuSimData(i, j) += 10;
+            });
         Kokkos::fence();
     }
 
