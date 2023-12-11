@@ -54,9 +54,12 @@ public:
     /* User requested memory space */
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
     MemorySpace m_MemSpace = MemorySpace::Detect;
-    bool m_MemSpaceLayoutMismatch = true;
 #else
     MemorySpace m_MemSpace = MemorySpace::Host;
+#endif
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    ArrayOrdering m_BaseLayout;
+    ArrayOrdering m_ArrayLayout = ArrayOrdering::Auto;
 #endif
 
     ShapeID m_ShapeID = ShapeID::Unknown; ///< see shape types in ADIOSTypes.h
@@ -124,9 +127,20 @@ public:
      */
     size_t TotalSize() const noexcept;
 
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
-    void setMemSpaceLayoutMismatch(bool mismatch);
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    /**
+     * Get the layout used by the user buffers
+     * @return the layout used by the user buffers (RowMajor or ColumnMajor)
+     */
+    ArrayOrdering GetArrayLayout();
+
+    /**
+     * Set the layout used by the user buffers
+     * @param the layout that will be used by future put/gets
+     */
+    void SetArrayLayout(const ArrayOrdering layout);
 #endif
+
     /**
      * Get the memory space where a given buffers was allocated
      * @param pointer to the user data
@@ -221,6 +235,8 @@ public:
      */
     void CheckRandomAccessConflict(const std::string hint) const;
 
+    Dims Shape(const size_t step, const MemorySpace memSpace,
+               const ArrayOrdering layout = ArrayOrdering::Auto) const;
     Dims Shape(const size_t step = adios2::EngineCurrentStep) const;
 
     /**
@@ -247,8 +263,8 @@ protected:
 
     void CheckRandomAccess(const size_t step, const std::string hint) const;
 
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
-	inline void UpdateLayout(Dims &shape);
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    inline void UpdateLayout(Dims &shape);
 #endif
 };
 

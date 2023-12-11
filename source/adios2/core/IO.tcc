@@ -62,10 +62,8 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape, cons
         }
     }
 
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
-    // if column major, there is no layout mismatch between GPU and CPU pointers
-    if (m_ArrayOrder == ArrayOrdering::ColumnMajor)
-       variable.setMemSpaceLayoutMismatch(false);
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    variable.m_BaseLayout = m_ArrayOrder;
 #endif
     return variable;
 }
@@ -101,6 +99,14 @@ Variable<T> *IO::InquireVariable(const std::string &name) noexcept
             return nullptr;
         }
     }
+    /*
+    auto layout_atr = InquireAttribute<std::string>("layout", variable->m_Name, ".");
+    if (layout_atr != nullptr)
+    {
+        ArrayOrdering layout = ArrayOrdering::RowMajor;
+        if (layout_atr->m_DataSingleValue == "Left") layout = ArrayOrdering::ColumnMajor;
+        variable->SetArrayLayout(layout);
+    } */
     return variable;
 }
 

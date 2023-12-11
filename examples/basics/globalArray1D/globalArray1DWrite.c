@@ -29,6 +29,7 @@ void writer(adios2_adios *adios)
     gather_decomp_1d(&fixed_count, &fixed_shape, &fixed_start);
 
     adios2_io *io = adios2_declare_io(adios, "output");
+    adios2_set_engine(io, "bp4");
     size_t shape[1];
     shape[0] = (size_t)fixed_shape;
 

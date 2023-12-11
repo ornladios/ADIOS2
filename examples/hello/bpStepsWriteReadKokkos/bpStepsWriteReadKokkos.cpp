@@ -7,10 +7,12 @@
  */
 #include <ios>
 #include <iostream>
+#include <string>
 #include <vector>
 
-#include <adios2.h>
 #include <Kokkos_Core.hpp>
+#include <adios2.h>
+#include <adios2/cxx11/KokkosView.h>
 #if ADIOS2_USE_MPI
 #include <mpi.h>
 #endif
@@ -29,9 +31,9 @@ int BPWrite(const std::string fname, const size_t Nx, const size_t Ny, const siz
     Kokkos::fence();
 
 #if ADIOS2_USE_MPI
-        adios2::ADIOS adios(MPI_COMM_WORLD);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-        adios2::ADIOS adios;
+    adios2::ADIOS adios;
 #endif
     adios2::IO io = adios.DeclareIO("WriteIO");
     io.SetEngine(engine);
@@ -64,35 +66,25 @@ int BPWrite(const std::string fname, const size_t Nx, const size_t Ny, const siz
 
     bpWriter.Close();
     ExecSpace exe_space;
-    std::cout << "Done writing on memory space: " << exe_space.name() << std::endl;
+    if (rank == 0)
+        std::cout << "Done writing on memory space: " << exe_space.name() << std::endl;
     return 0;
-}
-
-template <class MemSpace>
-std::array<size_t, 2> GetDimenstions(adios2::Variable<float> data, int size)
-{
-    return {data.Shape()[1], static_cast<size_t>(data.Shape()[0] / size)};
-}
-
-template <>
-std::array<size_t, 2> GetDimenstions<Kokkos::HostSpace>(adios2::Variable<float> data, int size)
-{
-    return {static_cast<size_t>(data.Shape()[0] / size), data.Shape()[1]};
 }
 
 template <class MemSpace, class ExecSpace>
 int BPRead(const std::string fname, const std::string engine, int rank, int size)
 {
 #if ADIOS2_USE_MPI
-        adios2::ADIOS adios(MPI_COMM_WORLD);
+    adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
-        adios2::ADIOS adios;
+    adios2::ADIOS adios;
 #endif
     adios2::IO io = adios.DeclareIO("ReadIO");
     io.SetEngine(engine);
 
     ExecSpace exe_space;
-    std::cout << "Read on memory space: " << exe_space.name() << std::endl;
+    if (rank == 0)
+        std::cout << "Read on memory space: " << exe_space.name() << std::endl;
 
     adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -107,24 +99,44 @@ int BPRead(const std::string fname, const std::string engine, int rank, int size
                       << step << "needs to have two dimensions" << std::endl;
             break;
         }
+        adios2::MemorySpace adiosMemSpace = adios2::MemorySpace::Host;
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+        if (!std::is_same<MemSpace, Kokkos::HostSpace>::value)
+            adiosMemSpace = adios2::MemorySpace::GPU;
+#endif
+        auto dims = data.Shape(adiosMemSpace);
+        size_t Nx = dims[0];
+        size_t Ny = dims[1];
 
-        auto dims = GetDimenstions<MemSpace>(data, size);
-        size_t Nx = dims[0], Ny = dims[1];
-        const adios2::Dims start{static_cast<size_t>(rank * Nx), 0};
-        const adios2::Box<adios2::Dims> sel(start, {Nx, Ny});
-        data.SetSelection(sel);
-
+        if (Nx > Ny)
+        {
+            Nx = Nx / size;
+            const adios2::Dims start{static_cast<size_t>(rank * Nx), 0};
+            const adios2::Box<adios2::Dims> sel(start, {Nx, Ny});
+            data.SetSelection(sel);
+        }
+        else
+        {
+            Nx = Ny / size;
+            const adios2::Dims start{0, static_cast<size_t>(rank * Ny)};
+            const adios2::Box<adios2::Dims> sel(start, {Nx, Ny});
+            data.SetSelection(sel);
+        }
         Kokkos::View<float **, MemSpace> gpuSimData("simBuffer", Nx, Ny);
-        bpReader.Get(data, gpuSimData.data());
+
+        bpReader.Get(data, gpuSimData);
         bpReader.EndStep();
 
         auto cpuData = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, gpuSimData);
-		std::cout << "Rank " << rank << std::endl;
-        for (size_t i = 0; i < Nx; i++)
+        if (rank == 0)
         {
-            for (size_t j = 0; j < Ny; j++)
-                std::cout << cpuData(i, j) << " ";
-            std::cout << std::endl;
+            std::cout << "Rank 0: " << std::endl;
+            for (size_t i = 0; i < Nx; i++)
+            {
+                for (size_t j = 0; j < Ny; j++)
+                    std::cout << cpuData(i, j) << " ";
+                std::cout << std::endl;
+            }
         }
     }
 
@@ -147,7 +159,8 @@ int main(int argc, char **argv)
     size = 1;
 #endif
     const std::string engine = argv[1] ? argv[1] : "BPFile";
-    std::cout << "Using engine " << engine << std::endl;
+    if (rank == 0)
+        std::cout << "Using engine " << engine << std::endl;
     const size_t Nx = 4, Ny = 10, nSteps = 1;
     const std::string fromMemSpace = "Default";
     const std::string toMemSpace = "Default";
@@ -155,29 +168,32 @@ int main(int argc, char **argv)
     const std::string filename = engine + "StepsWriteReadKokkos";
     Kokkos::initialize(argc, argv);
     {
-        std::cout << "Using engine " << engine << std::endl;
-
         if (fromMemSpace == "Default")
         {
             using mem_space = Kokkos::DefaultExecutionSpace::memory_space;
-            std::cout << "Writing on memory space: DefaultMemorySpace" << std::endl;
+            if (rank == 0)
+                std::cout << "Writing on memory space: DefaultMemorySpace" << std::endl;
             BPWrite<mem_space, Kokkos::DefaultExecutionSpace>(filename + ".bp", Nx, Ny, nSteps,
                                                               engine, rank, size);
         }
         else
         {
-            std::cout << "Writing on memory space: HostSpace" << std::endl;
-            BPWrite<Kokkos::HostSpace, Kokkos::Serial>(filename + ".bp", nSteps, Nx, Ny, engine, rank, size);
+            if (rank == 0)
+                std::cout << "Writing on memory space: HostSpace" << std::endl;
+            BPWrite<Kokkos::HostSpace, Kokkos::Serial>(filename + ".bp", nSteps, Nx, Ny, engine,
+                                                       rank, size);
         }
         if (toMemSpace == "Default")
         {
             using mem_space = Kokkos::DefaultExecutionSpace::memory_space;
-            std::cout << "Reading on memory space: DefaultMemorySpace" << std::endl;
+            if (rank == 0)
+                std::cout << "Reading on memory space: DefaultMemorySpace" << std::endl;
             BPRead<mem_space, Kokkos::DefaultExecutionSpace>(filename + ".bp", engine, rank, size);
         }
         else
         {
-            std::cout << "Reading on memory space: HostSpace" << std::endl;
+            if (rank == 0)
+                std::cout << "Reading on memory space: HostSpace" << std::endl;
             BPRead<Kokkos::HostSpace, Kokkos::Serial>(filename + ".bp", engine, rank, size);
         }
     }
