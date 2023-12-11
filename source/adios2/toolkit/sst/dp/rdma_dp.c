@@ -191,7 +191,7 @@ static void *make_progress(void *params_)
         ssize_t rc = fi_cq_read(params->cq_signal, (void *)CQEntry, 1);
         if (rc < 1)
         {
-            struct fi_cq_err_entry error;
+            struct fi_cq_err_entry error = {.err = 0};
             fi_cq_readerr(params->cq_signal, &error, 0);
             if (error.err != -FI_SUCCESS)
             {
@@ -530,9 +530,9 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
      */
     if (info->domain_attr->mr_mode != FI_MR_BASIC)
     {
-        // info->domain_attr->mr_mode = FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL |
-        //                              (FI_MR_ENDPOINT & info->domain_attr->mr_mode) |
-        //                              (FI_MR_VIRT_ADDR & info->domain_attr->mr_mode);
+        info->domain_attr->mr_mode = FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL |
+                                     (FI_MR_ENDPOINT & info->domain_attr->mr_mode) |
+                                     (FI_MR_VIRT_ADDR & info->domain_attr->mr_mode);
         fabric->mr_virt_addr = info->domain_attr->mr_mode & FI_MR_VIRT_ADDR ? 1 : 0;
     }
     else
@@ -1523,11 +1523,11 @@ static DP_WSR_Stream RdmaInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_S
 
     ReaderRollHandle = &ContactInfo->ReaderRollHandle;
     ReaderRollHandle->Block = calloc(readerCohortSize, sizeof(struct _RdmaBuffer));
-    // sst_fi_mr_reg(Svcs, WS_Stream->CP_Stream, Fabric->domain, ReaderRollHandle->Block,
-    //               readerCohortSize * sizeof(struct _RdmaBuffer), FI_REMOTE_READ, 0, 0, 0,
-    //               &WSR_Stream->rrmr, Fabric->ctx, Fabric->signal,
-    //               Fabric->info->domain_attr->mr_mode);
-    ReaderRollHandle->Key = 0; //fi_mr_key(WSR_Stream->rrmr);
+    sst_fi_mr_reg(Svcs, WS_Stream->CP_Stream, Fabric->domain, ReaderRollHandle->Block,
+                  readerCohortSize * sizeof(struct _RdmaBuffer), FI_REMOTE_WRITE, 0, 0, 0,
+                  &WSR_Stream->rrmr, Fabric->ctx, Fabric->signal,
+                  Fabric->info->domain_attr->mr_mode);
+    ReaderRollHandle->Key = fi_mr_key(WSR_Stream->rrmr);
     printf("Key: %lu\n", ReaderRollHandle->Key);
 
     WSR_Stream->WriterContactInfo = ContactInfo;
