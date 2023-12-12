@@ -25,6 +25,7 @@ namespace interop
 template <class T>
 void HDF5Common::DefineDataset(core::Variable<T> &variable)
 {
+    CheckVariableOperations(variable);
     size_t dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
     hid_t h5Type = GetHDF5Type<T>();
 
@@ -118,6 +119,7 @@ template <class T>
 void HDF5Common::Write(core::Variable<T> &variable, const T *values)
 {
     CheckWriteGroup();
+    CheckVariableOperations(variable);
     size_t dimSize = std::max(variable.m_Shape.size(), variable.m_Count.size());
     hid_t h5Type = GetHDF5Type<T>();
 

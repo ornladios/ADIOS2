@@ -1709,6 +1709,16 @@ void HDF5Common::StaticGetAdiosStepString(std::string &stepName, size_t ts)
     stepName = "/Step" + std::to_string(ts);
 }
 
+void HDF5Common::CheckVariableOperations(const core::VariableBase &variable) const
+{
+    if (!variable.m_Operations.empty())
+    {
+        helper::Throw<std::runtime_error>("Toolkit", "interop::hdf5::HDF5Common",
+                                          "CheckVariableOperations",
+                                          "ADIOS2 Operators are not supported for HDF5 engine");
+    }
+}
+
 #define declare_template_instantiation(T)                                                          \
     template void HDF5Common::Write(core::Variable<T> &, const T *);
 
