@@ -11,7 +11,7 @@
  * other new outputs are created.
  *
  * Campaign management handles BP4/BP5  outputs
- * 
+ *
  * Campaign management needs to be turned on explicitly at configuration time
  *   -DADIOS2_USE_Campaign=ON
  *
@@ -22,17 +22,18 @@
  *   dataStep{N}.bp   a file series every step (written by all)
  *   dataAnother.h5:  written by rank 1..N from another ADIOS object
  *   dataNew{N}.bp :  a new file when restarting from step N
- *   dataFinal.bp:    written by rank 1 from a third ADIOS object at the end 
+ *   dataFinal.bp:    written by rank 1 from a third ADIOS object at the end
  *
  * After running this example, the adios2_campaign_manager scripts must be used
  * to create/update/delete a campaign archive from this run
  * Then, the Campaign engine can be used in reading codes to use the campaign
- * archive to read the content. 
- * 
+ * archive to read the content.
+ *
  * E.g.
  *   adios2_campaign_manager -n example_campaign-write_101 -c ~/.campaign-store create
  *   adios2_campaign_manager -n example_campaign-write_101 -c ~/.campaign-store info
- *   bpls -E campaign -P "cachepath=/tmp/campaign" ~/.campaign-store/example_campaign-write_101.aca -la
+ *   bpls -E campaign -P "cachepath=/tmp/campaign" \
+ *        ~/.campaign-store/example_campaign-write_101.aca -la
  *
  * Created on: May 17, 2023
  *      Author: Norbert Podhorszki <pnorbert@ornl.gov>
