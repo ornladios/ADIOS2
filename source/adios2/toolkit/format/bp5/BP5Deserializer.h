@@ -190,9 +190,6 @@ private:
         nullptr; // may be a pointer into MetadataBaseArray or m_FreeableMBA
     std::vector<void *> *m_FreeableMBA = nullptr;
 
-    std::vector<void *> *m_JoinedDimenOffsetArrays = nullptr;
-    std::vector<void *> *m_FreeableJDOA = nullptr;
-
     // for random access mode, for each timestep, for each writerrank, what
     // metameta info applies to the metadata
     std::vector<std::vector<ControlInfo *>> m_ControlArray;
@@ -200,8 +197,9 @@ private:
     // address of the metadata
     std::vector<std::vector<void *> *> MetadataBaseArray;
     // for random access mode, for each timestep, for each writerrank, base
-    // address of the joined dim arrays
-    std::vector<std::vector<void *> *> JoinedDimArray;
+    // address of the joined dim arrays, for streaming use 0 index
+    std::vector<std::vector<size_t *>> JoinedDimArray;
+    size_t JDAIdx = 0;
 
     ControlInfo *ControlBlocks = nullptr;
     ControlInfo *GetPriorControl(FMFormat Format);

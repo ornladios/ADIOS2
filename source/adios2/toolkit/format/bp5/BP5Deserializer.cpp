@@ -761,14 +761,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
             m_FreeableMBA = nullptr;
         }
 
-        JoinedDimArray.resize(Step + 1);
-        if (JoinedDimArray[Step] == nullptr)
-        {
-            m_JoinedDimenOffsetArrays = new std::vector<void *>();
-            m_JoinedDimenOffsetArrays->resize(writerCohortSize);
-            JoinedDimArray[Step] = m_JoinedDimenOffsetArrays;
-            m_FreeableJDOA = nullptr;
-        }
+        JDAIdx = Step;
     }
     else
     {
@@ -782,16 +775,13 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
             m_MetadataBaseAddrs->resize(writerCohortSize);
         }
 
-        if (!m_JoinedDimenOffsetArrays)
-        {
-            m_JoinedDimenOffsetArrays = new std::vector<void *>();
-            m_FreeableJDOA = m_JoinedDimenOffsetArrays;
-        }
-        if (writerCohortSize > m_JoinedDimenOffsetArrays->size())
-        {
-            m_JoinedDimenOffsetArrays->resize(writerCohortSize);
-        }
+        JDAIdx = 0;
     }
+    JoinedDimArray.resize(JDAIdx + 1);
+    JoinedDimArray[JDAIdx].resize(writerCohortSize);
+    std::cout << "JoinedDimArray[" << JDAIdx << "] size = " << JoinedDimArray[JDAIdx].size()
+              << std::endl;
+
     (*m_MetadataBaseAddrs)[WriterRank] = BaseData;
 
     size_t JoinedDimenTotal = 0;
@@ -823,13 +813,15 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
 
     //  Allocate memory to hold new offset values for Joined Arrays
     size_t CurJoinedDimenOffset = 0;
-    size_t *JoinedDimenOffsetArray = NULL;
     if (JoinedDimenTotal)
-        JoinedDimenOffsetArray =
-            (size_t *)malloc(JoinedDimenTotal * writerCohortSize * sizeof(size_t));
+    {
+        JoinedDimArray[JDAIdx][WriterRank] =
+            (size_t *)realloc(JoinedDimArray[JDAIdx][WriterRank],
+                              JoinedDimenTotal * writerCohortSize * sizeof(size_t));
+    }
 
-    // store this away so it can be deallocated later
-    (*m_JoinedDimenOffsetArrays)[WriterRank] = JoinedDimenOffsetArray;
+    // shortcut name. should be const
+    size_t *JoinedDimenOffsetArray = JoinedDimArray[JDAIdx][WriterRank];
 
     for (int i = 0; i < Control->ControlCount; i++)
     {
@@ -2002,13 +1994,19 @@ BP5Deserializer::~BP5Deserializer()
     {
         delete m_FreeableMBA;
     }
-    if (m_FreeableJDOA)
-    {
-        delete m_FreeableJDOA;
-    }
     for (auto &step : MetadataBaseArray)
     {
         delete step;
+    }
+    for (auto &pvec : JoinedDimArray)
+    {
+        for (auto &p : pvec)
+        {
+            if (p)
+            {
+                free(p);
+            }
+        }
     }
 }
 
