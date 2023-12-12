@@ -779,8 +779,6 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
     }
     JoinedDimArray.resize(JDAIdx + 1);
     JoinedDimArray[JDAIdx].resize(writerCohortSize);
-    std::cout << "JoinedDimArray[" << JDAIdx << "] size = " << JoinedDimArray[JDAIdx].size()
-              << std::endl;
 
     (*m_MetadataBaseAddrs)[WriterRank] = BaseData;
 
