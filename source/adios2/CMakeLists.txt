@@ -65,8 +65,6 @@ add_library(adios2_core
   engine/inline/InlineReader.cpp engine/inline/InlineReader.tcc
   engine/inline/InlineWriter.cpp engine/inline/InlineWriter.tcc
 
-  engine/campaign/CampaignManager.cpp 
-
   engine/null/NullWriter.cpp engine/null/NullWriter.tcc
   engine/null/NullReader.cpp engine/null/NullReader.tcc
 
@@ -210,7 +208,8 @@ if(ADIOS2_HAVE_Campaign)
   target_sources(adios2_core PRIVATE 
           engine/campaign/CampaignReader.cpp 
           engine/campaign/CampaignReader.tcc 
-          engine/campaign/CampaignData.cpp)
+          engine/campaign/CampaignData.cpp
+          engine/campaign/CampaignManager.cpp)
   target_link_libraries(adios2_core PRIVATE SQLite::SQLite3 ZLIB::ZLIB)
 endif()
 

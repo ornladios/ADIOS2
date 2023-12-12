@@ -15,11 +15,14 @@
 #ifndef ADIOS2_ENGINE_CAMPAIGNMANAGER_H_
 #define ADIOS2_ENGINE_CAMPAIGNMANAGER_H_
 
-#include "CampaignRecord.h"
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/helper/adiosComm.h"
 
+#ifdef ADIOS2_HAVE_CAMPAIGN
+#include "CampaignRecord.h"
+
 #include <fstream>
+#endif /* ADIOS2_HAVE_CAMPAIGN */
 
 namespace adios2
 {
@@ -31,7 +34,7 @@ namespace engine
 
 class CampaignManager
 {
-
+#ifdef ADIOS2_HAVE_CAMPAIGN
 public:
     CampaignManager(helper::Comm &comm);
     ~CampaignManager();
@@ -48,6 +51,16 @@ private:
     CampaignRecordMap cmap;
     std::ofstream m_Output;
     const std::string m_CampaignDir = "adios-campaign";
+
+#else
+public:
+    CampaignManager(helper::Comm &comm){};
+    ~CampaignManager() = default;
+    void Open(const std::string &name){};
+    void Record(const std::string &name, const size_t step, const double time){};
+    void Close(){};
+
+#endif /* ADIOS2_HAVE_CAMPAIGN */
 };
 
 } // end namespace engine
