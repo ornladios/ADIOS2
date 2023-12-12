@@ -245,6 +245,8 @@ private:
     void GetHDF5SpaceSpec(const core::Variable<T> &variable, std::vector<hsize_t> &,
                           std::vector<hsize_t> &, std::vector<hsize_t> &);
 
+    void CheckVariableOperations(const core::VariableBase &variable) const;
+
     bool m_WriteMode = false;
 
     size_t m_NumAdiosSteps = 0;

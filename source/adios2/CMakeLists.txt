@@ -191,6 +191,7 @@ target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEA
 
 if(UNIX)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FilePOSIX.cpp)
+  target_sources(adios2_core PRIVATE toolkit/transport/file/FileHTTP.cpp)
 endif()
 
 if(ADIOS2_HAVE_AWSSDK)
@@ -332,6 +333,9 @@ endif()
 if(ADIOS2_HAVE_MGARD)
   target_sources(adios2_core PRIVATE operator/compress/CompressMGARDPlus.cpp)
   target_sources(adios2_core PRIVATE operator/compress/CompressMGARD.cpp)
+  if(ADIOS2_HAVE_MGARD_MDR)
+      target_sources(adios2_core PRIVATE operator/refactor/RefactorMDR.cpp)
+  endif()
   target_link_libraries(adios2_core PRIVATE mgard::mgard)
 endif()
 

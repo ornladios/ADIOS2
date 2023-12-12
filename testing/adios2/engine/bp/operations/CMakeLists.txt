@@ -60,6 +60,12 @@ if(ADIOS2_HAVE_MGARD)
       target_link_libraries(${tgt} CUDA::cudart)
     endforeach()
   endif()
+
+  if(ADIOS2_HAVE_MGARD_MDR)
+    gtest_add_tests_helper(WriteReadMGARDMDR MPI_ALLOW BP Engine.BP. .BP5
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+    )
+  endif()
 endif()
 
 if(ADIOS2_HAVE_BZip2)

@@ -140,9 +140,9 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
     /********************************************************/
     /* Open ADIOS file now and get variables and attributes */
-    adiosobj = adios2_init(false);
+    adiosobj = adios2_init_serial();
     group = adios2_declare_io(adiosobj, "matlabiogroup"); // name is arbitrary
-    fp = adios2_open(group, fname, adios2_mode_read);
+    fp = adios2_open(group, fname, adios2_mode_readRandomAccess);
     if (fp == NULL)
     {
         mexErrMsgIdAndTxt("MATLAB:adiosopenc:open", "Opening the file failed\n");

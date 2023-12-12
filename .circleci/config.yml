@@ -3,6 +3,10 @@ defaults: &defaults
     - checkout:
         path: source
     - run:
+        # https://discuss.circleci.com/t/circle-working-directory-doesnt-expand/17007
+        name: "Fix CIRCLE_WORKING_DIRECTORY"
+        command: echo 'CIRCLE_WORKING_DIRECTORY="${CIRCLE_WORKING_DIRECTORY/#\~/$HOME}"' >> $BASH_ENV
+    - run:
         name: CDash
         command: bash source/scripts/ci/circle/postCDashStatus.sh
     - run:

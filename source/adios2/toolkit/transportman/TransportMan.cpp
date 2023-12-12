@@ -38,6 +38,9 @@
 #endif
 
 #include "adios2/toolkit/transport/file/FileFStream.h"
+#ifndef _WIN32
+#include "adios2/toolkit/transport/file/FileHTTP.h"
+#endif
 #include "adios2/toolkit/transport/file/FileStdio.h"
 #include "adios2/toolkit/transport/null/NullTransport.h"
 
@@ -599,6 +602,18 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(const std::string &fi
         else if (library == "awssdk")
         {
             transport = std::make_shared<transport::FileAWSSDK>(m_Comm);
+        }
+#endif
+#ifndef _WIN32
+        else if (library == "http")
+        {
+            transport = std::make_shared<transport::FileHTTP>(m_Comm);
+            if (lf_GetBuffered("false"))
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "TransportMan", "OpenFileTransport",
+                    library + " transport does not support buffered I/O.");
+            }
         }
 #endif
         else if (library == "null")

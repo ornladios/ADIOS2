@@ -761,14 +761,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
             m_FreeableMBA = nullptr;
         }
 
-        JoinedDimArray.resize(Step + 1);
-        if (JoinedDimArray[Step] == nullptr)
-        {
-            m_JoinedDimenOffsetArrays = new std::vector<void *>();
-            m_JoinedDimenOffsetArrays->resize(writerCohortSize);
-            JoinedDimArray[Step] = m_JoinedDimenOffsetArrays;
-            m_FreeableJDOA = nullptr;
-        }
+        JDAIdx = Step;
     }
     else
     {
@@ -782,16 +775,11 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
             m_MetadataBaseAddrs->resize(writerCohortSize);
         }
 
-        if (!m_JoinedDimenOffsetArrays)
-        {
-            m_JoinedDimenOffsetArrays = new std::vector<void *>();
-            m_FreeableJDOA = m_JoinedDimenOffsetArrays;
-        }
-        if (writerCohortSize > m_JoinedDimenOffsetArrays->size())
-        {
-            m_JoinedDimenOffsetArrays->resize(writerCohortSize);
-        }
+        JDAIdx = 0;
     }
+    JoinedDimArray.resize(JDAIdx + 1);
+    JoinedDimArray[JDAIdx].resize(writerCohortSize);
+
     (*m_MetadataBaseAddrs)[WriterRank] = BaseData;
 
     size_t JoinedDimenTotal = 0;
@@ -823,13 +811,15 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
 
     //  Allocate memory to hold new offset values for Joined Arrays
     size_t CurJoinedDimenOffset = 0;
-    size_t *JoinedDimenOffsetArray = NULL;
     if (JoinedDimenTotal)
-        JoinedDimenOffsetArray =
-            (size_t *)malloc(JoinedDimenTotal * writerCohortSize * sizeof(size_t));
+    {
+        JoinedDimArray[JDAIdx][WriterRank] =
+            (size_t *)realloc(JoinedDimArray[JDAIdx][WriterRank],
+                              JoinedDimenTotal * writerCohortSize * sizeof(size_t));
+    }
 
-    // store this away so it can be deallocated later
-    (*m_JoinedDimenOffsetArrays)[WriterRank] = JoinedDimenOffsetArray;
+    // shortcut name. should be const
+    size_t *JoinedDimenOffsetArray = JoinedDimArray[JDAIdx][WriterRank];
 
     for (int i = 0; i < Control->ControlCount; i++)
     {
@@ -1778,12 +1768,29 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
             DestSize *= writer_meta_base->Count[dim + Read.BlockID * writer_meta_base->Dims];
         }
         decompressBuffer.resize(DestSize);
+
+        // Get the operator of the variable if exists or create one
+        std::shared_ptr<Operator> op = nullptr;
+        VariableBase *VB = static_cast<VariableBase *>(((struct BP5VarRec *)Req.VarRec)->Variable);
+        if (!VB->m_Operations.empty())
+        {
+            op = VB->m_Operations[0];
+        }
+        else
+        {
+            Operator::OperatorType compressorType =
+                static_cast<Operator::OperatorType>(IncomingData[0]);
+            op = MakeOperator(OperatorTypeToString(compressorType), {});
+        }
+        op->SetAccuracy(VB->GetAccuracyRequested());
+
         {
             std::lock_guard<std::mutex> lockGuard(mutexDecompress);
             core::Decompress(
                 IncomingData,
                 ((MetaArrayRecOperator *)writer_meta_base)->DataBlockSize[Read.BlockID],
-                decompressBuffer.data(), Req.MemSpace);
+                decompressBuffer.data(), Req.MemSpace, op);
+            VB->m_AccuracyProvided = op->GetAccuracy();
         }
         IncomingData = decompressBuffer.data();
         VirtualIncomingData = IncomingData;
@@ -1985,13 +1992,19 @@ BP5Deserializer::~BP5Deserializer()
     {
         delete m_FreeableMBA;
     }
-    if (m_FreeableJDOA)
-    {
-        delete m_FreeableJDOA;
-    }
     for (auto &step : MetadataBaseArray)
     {
         delete step;
+    }
+    for (auto &pvec : JoinedDimArray)
+    {
+        for (auto &p : pvec)
+        {
+            if (p)
+            {
+                free(p);
+            }
+        }
     }
 }
 

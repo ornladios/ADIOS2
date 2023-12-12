@@ -117,6 +117,32 @@ TEST_F(XMLConfigTest, OpNoneException)
 #endif
 }
 
+TEST_F(XMLConfigTest, RemoveIO)
+{
+    const std::string configFile(configDir + std::string(&adios2::PathSeparator, 1) +
+                                 "configRemoveIO.xml");
+
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(configFile, MPI_COMM_WORLD);
+#else
+    adios2::ADIOS adios(configFile);
+#endif
+
+    adios2::IO io;
+    adios2::Engine engine;
+
+    std::string io_name_ = "checkpoint";
+    for (int c = 0; c < 3; c++)
+    {
+        io = adios.DeclareIO(io_name_);
+        std::string filename = "test.bp";
+        engine = io.Open(filename, adios2::Mode::Write);
+        EXPECT_TRUE(io.EngineType() == "BP4");
+        engine.Close();
+        adios.RemoveIO(io_name_);
+    }
+}
+
 int main(int argc, char **argv)
 {
 #if ADIOS2_USE_MPI

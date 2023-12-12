@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2020 University of Oregon
+// Copyright (c) 2019-2022 University of Oregon
 // Distributed under the BSD Software License
 // (See accompanying file LICENSE.txt)
 
@@ -24,7 +24,8 @@
  * not just the function name.  If the compiler doesn't support it,
  * just use the function name. */
 
-#if defined(__GNUC__)
+/* ISO C doesn't allow __PRETTY_FUNCTION__, so only do it with C++ */
+#if defined(__GNUC__) && defined(__cplusplus)
 #define __PERFSTUBS_FUNCTION__ __PRETTY_FUNCTION__
 #else
 #define __PERFSTUBS_FUNCTION__ __func__
@@ -49,7 +50,7 @@ extern int perfstubs_initialized;
 extern "C" {
 #endif
 
-void  ps_initialize_(const int rank);
+void  ps_initialize_(void);
 void  ps_finalize_(void);
 void  ps_pause_measurement_(void);
 void  ps_resume_measurement_(void);
@@ -75,12 +76,12 @@ void  ps_set_metadata_(const char *name, const char *value);
 
 /* data query API */
 
-void  ps_get_timer_data_(ps_tool_timer_data_t *timer_data, int tool_id);
-void  ps_get_counter_data_(ps_tool_counter_data_t *counter_data, int tool_id);
-void  ps_get_metadata_(ps_tool_metadata_t *metadata, int tool_id);
-void  ps_free_timer_data_(ps_tool_timer_data_t *timer_data, int tool_id);
-void  ps_free_counter_data_(ps_tool_counter_data_t *counter_data, int tool_id);
-void  ps_free_metadata_(ps_tool_metadata_t *metadata, int tool_id);
+void  ps_get_timer_data_(ps_tool_timer_data_t *timer_data);
+void  ps_get_counter_data_(ps_tool_counter_data_t *counter_data);
+void  ps_get_metadata_(ps_tool_metadata_t *metadata);
+void  ps_free_timer_data_(ps_tool_timer_data_t *timer_data);
+void  ps_free_counter_data_(ps_tool_counter_data_t *counter_data);
+void  ps_free_metadata_(ps_tool_metadata_t *metadata);
 
 char* ps_make_timer_name_(const char * file, const char * func, int line);
 
@@ -93,7 +94,7 @@ char* ps_make_timer_name_(const char * file, const char * func, int line);
  * line or in a config.h file, however your project does it
  */
 
-#define PERFSTUBS_INITIALIZE(rank) ps_initialize_(rank);
+#define PERFSTUBS_INITIALIZE() ps_initialize_();
 
 #define PERFSTUBS_FINALIZE() ps_finalize_();
 
@@ -170,7 +171,7 @@ char* ps_make_timer_name_(const char * file, const char * func, int line);
 
 #else // defined(PERFSTUBS_USE_TIMERS)
 
-#define PERFSTUBS_INITIALIZE(rank)
+#define PERFSTUBS_INITIALIZE()
 #define PERFSTUBS_FINALIZE()
 #define PERFSTUBS_PAUSE_MEASUREMENT()
 #define PERFSTUBS_RESUME_MEASUREMENT()

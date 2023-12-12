@@ -10,3 +10,4 @@ Interface Components
 .. include:: engine.rst
 .. include:: operator.rst
 .. include:: runtime.rst
+.. include:: anatomy.rst

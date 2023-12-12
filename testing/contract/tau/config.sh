@@ -3,11 +3,15 @@
 set -x
 set -e
 
-source $(dirname $(readlink -f ${BASH_SOURCE}))/setup.sh
+# shellcheck disable=SC1091
+source "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/setup.sh"
 
-mkdir -p ${build_dir}
-cd ${build_dir}
+# Fail if is not set
+source_dir="${source_dir:?}"
+build_dir="${build_dir:?}"
+install_dir="${install_dir:?}"
 
-cmake \
-  -DCMAKE_INSTALL_PREFIX=${install_dir} \
-  ${source_dir}
+mkdir -p "${build_dir}"
+cd "${build_dir}"
+
+cmake -DCMAKE_INSTALL_PREFIX="${install_dir}" "${source_dir}"

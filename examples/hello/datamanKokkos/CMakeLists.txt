@@ -19,7 +19,16 @@ if(NOT TARGET adios2_core)
 
   find_package(ZeroMQ 4.1 QUIET)
 
+  find_package(Kokkos 3.7 QUIET)
+  if(Kokkos_FOUND AND DEFINED Kokkos_CXX_COMPILER)
+    set(CMAKE_CXX_COMPILER "${Kokkos_CXX_COMPILER}")
+  endif()
+
   find_package(ADIOS2 REQUIRED COMPONENTS ${_components})
+else()
+  if(DEFINED Kokkos_CXX_COMPILER)
+    set(CMAKE_CXX_COMPILER "${Kokkos_CXX_COMPILER}")
+  endif()
 endif()
 
 if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_DataMan)

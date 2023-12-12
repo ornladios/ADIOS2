@@ -63,102 +63,97 @@ Params YAMLNodeMapToParams(const YAML::Node &node, const std::string &hint)
     return parameters;
 }
 
+constexpr bool isMandatory = true;
+constexpr bool isNotMandatory = false;
 } // end empty  namespace
 
-void ParseConfigYAML(core::ADIOS &adios, const std::string &configFileYAML,
-                     std::map<std::string, core::IO> &ios)
+void IOVariableYAML(const YAML::Node &variableMap, core::IO &currentIO, const std::string &hint)
+{
+    const YAML::Node &variableNameScalar =
+        YAMLNode("Variable", variableMap, hint, isMandatory, YAML::NodeType::Scalar);
+    const std::string variableName = variableNameScalar.as<std::string>();
+
+    const YAML::Node operationsSequence =
+        YAMLNode("Operations", variableMap, hint, isNotMandatory, YAML::NodeType::Sequence);
+
+    if (operationsSequence)
+    {
+        // loop through each transport node
+        const std::string errorMessage =
+            " in operations node from variable " + variableName + ", " + hint;
+
+        for (auto it = operationsSequence.begin(); it != operationsSequence.end(); ++it)
+        {
+            const YAML::Node typeScalar =
+                YAMLNode("Type", *it, errorMessage, isMandatory, YAML::NodeType::Scalar);
+
+            Params parameters = YAMLNodeMapToParams(*it, hint);
+            const std::string operatorType = EraseKey<std::string>("Type", parameters);
+
+            currentIO.m_VarOpsPlaceholder[variableName].emplace_back(operatorType, parameters);
+        }
+    }
+}
+
+void IOYAML(core::ADIOS &adios, const YAML::Node &ioMap, core::IO &io, const std::string &hint)
+{
+    // Engine parameters
+    const YAML::Node engineMap = YAMLNode("Engine", ioMap, hint, false, YAML::NodeType::Map);
+
+    if (engineMap)
+    {
+        Params parameters = YAMLNodeMapToParams(engineMap, hint);
+        auto itType = parameters.find("Type");
+        if (itType != parameters.end())
+        {
+            const std::string type = EraseKey<std::string>("Type", parameters);
+            io.SetEngine(type);
+        }
+        io.SetParameters(parameters);
+    }
+
+    // Variables
+    const YAML::Node variablesSequence =
+        YAMLNode("Variables", ioMap, hint, false, YAML::NodeType::Sequence);
+
+    if (variablesSequence)
+    {
+        // loop through each variable node
+        for (const YAML::Node &variableMap : variablesSequence)
+        {
+            IOVariableYAML(variableMap, io, hint);
+        }
+    }
+
+    // Transports
+    const YAML::Node transportsSequence =
+        YAMLNode("Transports", ioMap, hint, false, YAML::NodeType::Sequence);
+
+    if (transportsSequence)
+    {
+        // loop through each transport node
+        for (auto it = transportsSequence.begin(); it != transportsSequence.end(); ++it)
+        {
+            YAMLNode("Type", *it, " in transport node " + hint, isMandatory,
+                     YAML::NodeType::Scalar);
+
+            Params parameters = YAMLNodeMapToParams(*it, hint);
+            const std::string type = EraseKey<std::string>("Type", parameters);
+
+            io.AddTransport(type, parameters);
+        }
+    }
+}
+
+void ParseConfigYAMLIO(core::ADIOS &adios, const std::string &configFileYAML,
+                       const std::string &configFileContents, core::IO &io)
 {
     const std::string hint =
         "when parsing config file " + configFileYAML + " in call to ADIOS constructor";
 
-    constexpr bool isMandatory = true;
-    constexpr bool isNotMandatory = false;
-
-    auto lf_IOVariableYAML = [&](const YAML::Node &variableMap, core::IO &currentIO) {
-        const YAML::Node &variableNameScalar =
-            YAMLNode("Variable", variableMap, hint, isMandatory, YAML::NodeType::Scalar);
-        const std::string variableName = variableNameScalar.as<std::string>();
-
-        const YAML::Node operationsSequence =
-            YAMLNode("Operations", variableMap, hint, isNotMandatory, YAML::NodeType::Sequence);
-
-        if (operationsSequence)
-        {
-            // loop through each transport node
-            const std::string errorMessage =
-                " in operations node from variable " + variableName + ", " + hint;
-
-            for (auto it = operationsSequence.begin(); it != operationsSequence.end(); ++it)
-            {
-                const YAML::Node typeScalar =
-                    YAMLNode("Type", *it, errorMessage, isMandatory, YAML::NodeType::Scalar);
-
-                Params parameters = YAMLNodeMapToParams(*it, hint);
-                const std::string operatorType = EraseKey<std::string>("Type", parameters);
-
-                currentIO.m_VarOpsPlaceholder[variableName].push_back({operatorType, parameters});
-            }
-        }
-    };
-
-    auto lf_IOYAML = [&](const std::string &ioName, const YAML::Node &ioMap) {
-        // Build the IO object
-        auto itCurrentIO =
-            ios.emplace(std::piecewise_construct, std::forward_as_tuple(ioName),
-                        std::forward_as_tuple(adios, ioName, true, adios.m_HostLanguage));
-        core::IO &currentIO = itCurrentIO.first->second;
-
-        // Engine parameters
-        const YAML::Node engineMap = YAMLNode("Engine", ioMap, hint, false, YAML::NodeType::Map);
-
-        if (engineMap)
-        {
-            Params parameters = YAMLNodeMapToParams(engineMap, hint);
-            auto itType = parameters.find("Type");
-            if (itType != parameters.end())
-            {
-                const std::string type = EraseKey<std::string>("Type", parameters);
-                currentIO.SetEngine(type);
-            }
-            currentIO.SetParameters(parameters);
-        }
-
-        // Variables
-        const YAML::Node variablesSequence =
-            YAMLNode("Variables", ioMap, hint, false, YAML::NodeType::Sequence);
-
-        if (variablesSequence)
-        {
-            // loop through each variable node
-            for (const YAML::Node &variableMap : variablesSequence)
-            {
-                lf_IOVariableYAML(variableMap, currentIO);
-            }
-        }
-
-        // Transports
-        const YAML::Node transportsSequence =
-            YAMLNode("Transports", ioMap, hint, false, YAML::NodeType::Sequence);
-
-        if (transportsSequence)
-        {
-            // loop through each transport node
-            for (auto it = transportsSequence.begin(); it != transportsSequence.end(); ++it)
-            {
-                YAMLNode("Type", *it, " in transport node " + hint, isMandatory,
-                         YAML::NodeType::Scalar);
-
-                Params parameters = YAMLNodeMapToParams(*it, hint);
-                const std::string type = EraseKey<std::string>("Type", parameters);
-
-                currentIO.AddTransport(type, parameters);
-            }
-        }
-    };
-
-    // BODY OF FUNCTION STARTS HERE
-    const std::string fileContents = adios.GetComm().BroadcastFile(configFileYAML, hint);
-    const YAML::Node document = YAML::Load(fileContents);
+    // the following copy is needed because YAML::Load modifies configFileContents
+    const std::string configFileContentsCopy = configFileContents;
+    const YAML::Node document = YAML::Load(configFileContentsCopy);
 
     if (!document)
     {
@@ -177,9 +172,52 @@ void ParseConfigYAML(core::ADIOS &adios, const std::string &configFileYAML,
         if (ioScalar)
         {
             const std::string ioName = ioScalar.as<std::string>();
-            lf_IOYAML(ioName, *itNode);
+            if (ioName == io.m_Name)
+            {
+                IOYAML(adios, *itNode, io, hint);
+                return;
+            }
         }
     }
+}
+
+std::string ParseConfigYAML(core::ADIOS &adios, const std::string &configFileYAML,
+                            std::map<std::string, core::IO> &ios)
+{
+    const std::string hint =
+        "when parsing config file " + configFileYAML + " in call to ADIOS constructor";
+
+    const std::string configFileContents = adios.GetComm().BroadcastFile(configFileYAML, hint);
+    // the following copy is needed because YAML::Load modifies configFileContents
+    const std::string configFileContentsCopy = configFileContents;
+    const YAML::Node document = YAML::Load(configFileContentsCopy);
+
+    if (!document)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosYAML", "ParseConfigYAML",
+            "parser error in file " + configFileYAML +
+                " invalid format check with any YAML editor if format is "
+                "ill-formed, " +
+                hint);
+    }
+
+    for (auto itNode = document.begin(); itNode != document.end(); ++itNode)
+    {
+        const YAML::Node ioScalar =
+            YAMLNode("IO", *itNode, hint, isNotMandatory, YAML::NodeType::Scalar);
+        if (ioScalar)
+        {
+            const std::string ioName = ioScalar.as<std::string>();
+            // Build the IO object
+            auto itCurrentIO =
+                ios.emplace(std::piecewise_construct, std::forward_as_tuple(ioName),
+                            std::forward_as_tuple(adios, ioName, true, adios.m_HostLanguage));
+            core::IO &currentIO = itCurrentIO.first->second;
+            IOYAML(adios, *itNode, currentIO, hint);
+        }
+    }
+    return configFileContents;
 }
 
 } // end namespace helper

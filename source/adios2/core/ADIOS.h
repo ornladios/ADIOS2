@@ -170,6 +170,7 @@ private:
 
     /** XML File to be read containing configuration information */
     const std::string m_ConfigFile;
+    std::string m_ConfigFileContents;
 
     /**
      * @brief List of IO class objects defined from either ADIOS
@@ -193,9 +194,15 @@ private:
 
     void CheckOperator(const std::string name) const;
 
-    void XMLInit(const std::string &configFileXML);
+    std::string XMLInit(const std::string &configFileXML);
 
-    void YAMLInit(const std::string &configFileYAML);
+    void XMLIOInit(const std::string &configFileXML, const std::string &configFileContents,
+                   core::IO &io);
+
+    std::string YAMLInit(const std::string &configFileYAML);
+
+    void YAMLInitIO(const std::string &configFileYAML, const std::string &configFileContents,
+                    core::IO &io);
 
 private:
     /* Global services that we want to initialize at most once and shutdown
