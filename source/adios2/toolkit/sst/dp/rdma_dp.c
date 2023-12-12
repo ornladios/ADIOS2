@@ -8,8 +8,6 @@
 #include <unistd.h>
 
 #include "adios2/common/ADIOSConfig.h"
-#include "rdma/fi_eq.h"
-#include "rdma/fi_errno.h"
 #include <atl.h>
 #include <evpath.h>
 
@@ -203,7 +201,6 @@ static void *make_progress(void *params_)
                     fi_strerror(error.err),
                     fi_cq_strerror(params->cq_signal, error.err, error.err_data, NULL, error.len));
             }
-            printf("Backung off for %d seconds\n", current_backoff_seconds);
             sleep(current_backoff_seconds);
             if(current_backoff_seconds < SST_BACKOFF_SECONDS_MAX)
             {
@@ -248,7 +245,7 @@ struct fabric_state
     uint32_t credential;
     struct fi_gni_auth_key *auth_key;
 #endif /* SST_HAVE_CRAY_DRC */
-    struct cq_manual_progress cq_manual_progress;
+    struct cq_manual_progress *cq_manual_progress;
     pthread_t pthread_id;
 };
 
@@ -257,7 +254,7 @@ void cq_read(struct fabric_state *fabric, struct fi_cq_data_entry *CQEntry)
     unsigned int current_backoff_seconds = 0;
     while (1)
     {
-        struct fi_cq_data_entry *res = cq_manual_progress_pop(&fabric->cq_manual_progress);
+        struct fi_cq_data_entry *res = cq_manual_progress_pop(fabric->cq_manual_progress);
         if (res == NULL)
         {
             sleep(current_backoff_seconds);
@@ -647,18 +644,24 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
 
     fi_freeinfo(originfo);
 
-    fabric->cq_manual_progress.cq_signal = fabric->cq_signal;
-    if (pthread_mutex_init(&fabric->cq_manual_progress.cq_event_list_mutex, NULL) != 0)
+    fabric->cq_manual_progress = NULL;
+
+    struct cq_manual_progress *manual_progress = malloc(sizeof(struct cq_manual_progress));
+
+    manual_progress->cq_signal = fabric->cq_signal;
+    if (pthread_mutex_init(&manual_progress->cq_event_list_mutex, NULL) != 0)
     {
         Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not init mutex.\n");
         return;
     }
-    fabric->cq_manual_progress.cq_event_list = NULL;
-    fabric->cq_manual_progress.Svcs = Svcs;
-    fabric->cq_manual_progress.Stream = CP_Stream;
-    fabric->cq_manual_progress.do_continue = 1;
+    manual_progress->cq_event_list = NULL;
+    manual_progress->Svcs = Svcs;
+    manual_progress->Stream = CP_Stream;
+    manual_progress->do_continue = 1;
 
-    if (pthread_create(&fabric->pthread_id, NULL, &make_progress, &fabric->cq_manual_progress) != 0)
+    fabric->cq_manual_progress = manual_progress;
+
+    if (pthread_create(&fabric->pthread_id, NULL, &make_progress, fabric->cq_manual_progress) != 0)
     {
         Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not start thread.\n");
         return;
@@ -668,13 +671,27 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
 static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_Stream)
 {
 
-    fabric->cq_manual_progress.do_continue = 0;
-    // free other stuff
-
-    if (pthread_join(fabric->pthread_id, NULL) != 0)
+    if (fabric->cq_manual_progress)
     {
-        Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not join thread.\n");
-        return;
+
+        fabric->cq_manual_progress->do_continue = 0;
+
+        if (pthread_join(fabric->pthread_id, NULL) != 0)
+        {
+            Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not join thread.\n");
+            return;
+        }
+
+        pthread_mutex_destroy(&fabric->cq_manual_progress->cq_event_list_mutex);
+
+        struct cq_event_list *head = fabric->cq_manual_progress->cq_event_list;
+        while (head)
+        {
+            struct cq_event_list *next = head->next;
+            free(head);
+            head = next;
+        }
+        free(fabric->cq_manual_progress);
     }
 
     int res;
