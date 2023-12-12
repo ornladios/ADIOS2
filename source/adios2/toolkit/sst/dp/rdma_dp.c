@@ -124,22 +124,6 @@ int guard_fi_return(int code, CP_Services Svcs, CManager cm, char const *msg)
     return code;
 }
 
-struct pending_fi_reads
-{
-    int source_rank;
-
-    struct fid_ep *ep;
-    void *buf;
-    size_t len;
-    void *desc;
-    fi_addr_t src_addr;
-    uint64_t addr;
-    uint64_t key;
-    void *context;
-
-    struct pending_fi_reads *next;
-};
-
 struct cq_event_list
 {
     struct fi_cq_data_entry *value;
@@ -151,9 +135,6 @@ struct cq_manual_progress
     struct fid_cq *cq_signal;
     pthread_mutex_t cq_event_list_mutex;
     struct cq_event_list *cq_event_list;
-
-    struct pending_fi_reads *pending_fi_reads;
-    pthread_mutex_t pending_fi_reads_mutex;
 
     CP_Services Svcs;
     void *Stream;
@@ -200,67 +181,16 @@ struct fi_cq_data_entry *cq_manual_progress_pop(struct cq_manual_progress *self)
 
 #define SST_BACKOFF_SECONDS_MAX 5
 
-static void process_pending_fi_reads(struct cq_manual_progress *self)
-{
-    pthread_mutex_lock(&self->pending_fi_reads_mutex);
-
-    struct pending_fi_reads *head = self->pending_fi_reads;
-    self->pending_fi_reads = NULL;
-    struct pending_fi_reads **reinsert = &self->pending_fi_reads;
-
-    while (head)
-    {
-        printf("Processing read of size %lu from %p to %p\n", head->len, (void *)head->addr,
-               head->buf);
-        ssize_t rc = fi_read(head->ep, head->buf, head->len, head->desc, head->src_addr, head->addr,
-                             head->key, head->context);
-        switch (rc)
-        {
-        case -EAGAIN: {
-            struct pending_fi_reads *next = head->next;
-            head->next = NULL;
-            *reinsert = head;
-            reinsert = &head->next;
-            head = next;
-            break;
-        }
-        case 0: {
-            self->Svcs->verbose(self->Stream, DPTraceVerbose,
-                                "Posted RDMA get for Writer Rank %d for handle %p\n",
-                                head->source_rank, head->context);
-            struct pending_fi_reads *next = head->next;
-            free(head);
-            head = next;
-            break;
-        }
-        default: {
-            self->Svcs->verbose(
-                self->Stream, DPCriticalVerbose,
-                "fi_read failed with code %d. Will skip, but there might be hangups.\n", rc);
-            struct pending_fi_reads *next = head->next;
-            free(head);
-            head = next;
-            break;
-        }
-        }
-    }
-
-    pthread_mutex_unlock(&self->pending_fi_reads_mutex);
-}
-
 static void *make_progress(void *params_)
 {
     struct cq_manual_progress *params = (struct cq_manual_progress *)params_;
-    size_t const n_entries = 100;
-    struct fi_cq_data_entry *CQEntries = malloc(n_entries * sizeof(struct fi_cq_data_entry));
+    struct fi_cq_data_entry *CQEntry = malloc(sizeof(struct fi_cq_data_entry));
 
     unsigned int current_backoff_seconds = 0;
 
     while (params->do_continue)
     {
-        process_pending_fi_reads(params);
-
-        ssize_t rc = fi_cq_read(params->cq_signal, (void *)CQEntries, n_entries);
+        ssize_t rc = fi_cq_read(params->cq_signal, (void *)CQEntry, 1);
         if (rc < 1)
         {
             struct fi_cq_err_entry error = {.err = 0};
@@ -273,29 +203,23 @@ static void *make_progress(void *params_)
                     fi_strerror(error.err),
                     fi_cq_strerror(params->cq_signal, error.err, error.err_data, NULL, error.len));
             }
-            printf("Backing off for %d seconds\n", current_backoff_seconds);
+            printf("Backung off for %d seconds\n", current_backoff_seconds);
             sleep(current_backoff_seconds);
-            if (current_backoff_seconds < SST_BACKOFF_SECONDS_MAX)
+            if(current_backoff_seconds < SST_BACKOFF_SECONDS_MAX)
             {
                 ++current_backoff_seconds;
             }
         }
         else
         {
-            for (size_t i = 0; i < rc; ++i)
-            {
-
-                struct cq_event_list *next_item = malloc(sizeof(struct cq_event_list));
-                struct fi_cq_data_entry *new_entry = malloc(sizeof(struct fi_cq_data_entry));
-                memcpy(new_entry, &CQEntries[i], sizeof(struct fi_cq_data_entry));
-                next_item->value = new_entry;
-                next_item->next = NULL;
-                cq_manual_progress_push(params, next_item);
-            }
+            struct cq_event_list *next_item = malloc(sizeof(struct cq_event_list));
+            next_item->value = CQEntry;
+            next_item->next = NULL;
+            cq_manual_progress_push(params, next_item);
+            CQEntry = malloc(sizeof(struct fi_cq_data_entry));
             current_backoff_seconds = 0;
         }
     }
-    free(CQEntries);
     return NULL;
 }
 
@@ -1725,6 +1649,7 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank, lo
     void *LocalDesc = NULL;
     uint8_t *Addr;
     RdmaCompletionHandle ret;
+    ssize_t rc;
 
     *ret_v = malloc(sizeof(struct _RdmaCompletionHandle));
     ret = *ret_v;
@@ -1758,30 +1683,27 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank, lo
                   "Remote read target is Rank %d (Offset = %zi, Length = %zi)\n", Rank, Offset,
                   Length);
 
+    do
     {
-        struct pending_fi_reads *post_read = malloc(sizeof(struct pending_fi_reads));
-        post_read->source_rank = Rank;
-        post_read->ep = Fabric->signal;
-        post_read->buf = Buffer;
-        post_read->len = Length;
-        post_read->desc = LocalDesc;
-        post_read->src_addr = SrcAddress;
-        post_read->addr = (uint64_t)Addr;
-        post_read->key = Info->Key;
-        post_read->context = ret;
+        rc = fi_read(Fabric->signal, Buffer, Length, LocalDesc, SrcAddress, (uint64_t)Addr,
+                     Info->Key, ret);
+    } while (rc == -EAGAIN);
 
-        pthread_mutex_lock(&Fabric->cq_manual_progress.pending_fi_reads_mutex);
-
-        post_read->next = Fabric->cq_manual_progress.pending_fi_reads;
-        Fabric->cq_manual_progress.pending_fi_reads = post_read;
-
-        pthread_mutex_unlock(&Fabric->cq_manual_progress.pending_fi_reads_mutex);
+    if (rc != 0)
+    {
+        Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose, "fi_read failed with code %d.\n",
+                      rc);
+        return (rc);
     }
-    // @todo: replace with an atomic and update in the thread?
-    // better safeguard against failures: if a read fails, we should not count it
-    RS_Stream->PendingReads++;
+    else
+    {
 
-    return (0);
+        Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
+                      "Posted RDMA get for Writer Rank %d for handle %p\n", Rank, (void *)ret);
+        RS_Stream->PendingReads++;
+    }
+
+    return (rc);
 }
 
 static RdmaBuffer GetRequest(Rdma_RS_Stream Stream, RdmaStepLogEntry StepLog, int Rank,
