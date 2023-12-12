@@ -66,7 +66,6 @@ std::string GetFQDN() noexcept
     }
 #else
     struct addrinfo hints, *info, *p;
-    int gai_result;
 
     hostname[1023] = '\0';
     gethostname(hostname, 1023);
@@ -76,7 +75,7 @@ std::string GetFQDN() noexcept
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_flags = AI_CANONNAME;
 
-    if ((gai_result = getaddrinfo(hostname, NULL, &hints, &info)) == 0)
+    if (getaddrinfo(hostname, NULL, &hints, &info) == 0)
     {
         for (p = info; p != NULL; p = p->ai_next)
         {
