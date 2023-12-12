@@ -175,6 +175,7 @@ if(TARGET LibPressio::libpressio)
 endif()
 
 # MGARD
+set(ADIOS2_HAVE_MGARD_MDR FALSE)
 if(ADIOS2_USE_MGARD STREQUAL AUTO)
   find_package(mgard CONFIG)
 elseif(ADIOS2_USE_MGARD)
@@ -182,6 +183,9 @@ elseif(ADIOS2_USE_MGARD)
 endif()
 if(mgard_FOUND)
   set(ADIOS2_HAVE_MGARD TRUE)
+  if(MGARD_ENABLE_MDR)
+     set(ADIOS2_HAVE_MGARD_MDR TRUE)
+ endif()
 endif()
 
 # PNG

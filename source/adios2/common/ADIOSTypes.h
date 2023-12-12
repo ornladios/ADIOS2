@@ -310,6 +310,22 @@ using Box = std::pair<T, T>;
 template <typename T, typename Enable = void>
 struct TypeInfo;
 
+/** Data accuracy **/
+
+/* Error. Accuracy can be requested for reading data.
+   norm: 0.0 = L2, inf() = Linf
+   relative: true = relative error, false = absolute error
+ */
+struct Accuracy
+{
+    double error;
+    double norm;
+    bool relative;
+};
+
+constexpr double L2_norm = 0.0;
+constexpr double Linf_norm = std::numeric_limits<double>::infinity();
+
 /**
  *  Return the actual size in bytes of elements of the given type.  Returns -1
  * for strings.
@@ -402,6 +418,19 @@ constexpr char tolerance[] = "tolerance";
 constexpr char accuracy[] = "accuracy";
 constexpr char s[] = "s";
 }
+}
+#endif
+
+#ifdef ADIOS2_HAVE_MGARD_MDR
+
+constexpr char MDR[] = "mdr";
+
+namespace mdr
+{
+constexpr double DOUBLE_ROUNDING_ERROR_LIMIT = 5.0e-16;
+constexpr double FLOAT_ROUNDING_ERROR_LIMIT = 3.0e-7;
+namespace key
+{}
 }
 #endif
 

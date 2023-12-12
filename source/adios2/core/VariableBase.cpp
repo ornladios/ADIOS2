@@ -204,6 +204,14 @@ void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
     m_MemoryCount = memorySelection.second;
 }
 
+void VariableBase::SetAccuracy(const adios2::Accuracy &a) noexcept
+{
+    m_AccuracyRequested = a;
+    m_AccuracyProvided = {0.0, a.norm, a.relative};
+}
+adios2::Accuracy VariableBase::GetAccuracy() const noexcept { return m_AccuracyProvided; }
+adios2::Accuracy VariableBase::GetAccuracyRequested() const noexcept { return m_AccuracyRequested; }
+
 size_t VariableBase::GetAvailableStepsStart() const { return m_AvailableStepsStart; }
 
 size_t VariableBase::GetAvailableStepsCount() const { return m_AvailableStepsCount; }

@@ -11,6 +11,8 @@
 #include "Operator.h"
 #include "adios2/helper/adiosFunctions.h"
 
+#include <iostream>
+
 namespace adios2
 {
 namespace core
@@ -29,6 +31,9 @@ void Operator::SetParameter(const std::string key, const std::string value) noex
 }
 
 Params &Operator::GetParameters() noexcept { return m_Parameters; }
+
+void Operator::SetAccuracy(const adios2::Accuracy &a) noexcept { m_AccuracyRequested = a; }
+adios2::Accuracy Operator::GetAccuracy() const noexcept { return m_AccuracyProvided; }
 
 #define declare_type(T)                                                                            \
                                                                                                    \
@@ -95,6 +100,12 @@ Dims Operator::ConvertDims(const Dims &dimensions, const DataType type, const si
 }
 
 size_t Operator::GetHeaderSize() const { return 0; }
+
+size_t Operator::GetEstimatedSize(const size_t ElemCount, const size_t ElemSize, const size_t ndims,
+                                  const size_t *dims) const
+{
+    return ElemCount * ElemSize + 128;
+};
 
 // PRIVATE
 void Operator::CheckCallbackType(const std::string type) const

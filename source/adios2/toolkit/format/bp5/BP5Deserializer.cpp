@@ -1778,12 +1778,29 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
             DestSize *= writer_meta_base->Count[dim + Read.BlockID * writer_meta_base->Dims];
         }
         decompressBuffer.resize(DestSize);
+
+        // Get the operator of the variable if exists or create one
+        std::shared_ptr<Operator> op = nullptr;
+        VariableBase *VB = static_cast<VariableBase *>(((struct BP5VarRec *)Req.VarRec)->Variable);
+        if (!VB->m_Operations.empty())
+        {
+            op = VB->m_Operations[0];
+        }
+        else
+        {
+            Operator::OperatorType compressorType =
+                static_cast<Operator::OperatorType>(IncomingData[0]);
+            op = MakeOperator(OperatorTypeToString(compressorType), {});
+        }
+        op->SetAccuracy(VB->GetAccuracyRequested());
+
         {
             std::lock_guard<std::mutex> lockGuard(mutexDecompress);
             core::Decompress(
                 IncomingData,
                 ((MetaArrayRecOperator *)writer_meta_base)->DataBlockSize[Read.BlockID],
-                decompressBuffer.data(), Req.MemSpace);
+                decompressBuffer.data(), Req.MemSpace, op);
+            VB->m_AccuracyProvided = op->GetAccuracy();
         }
         IncomingData = decompressBuffer.data();
         VirtualIncomingData = IncomingData;

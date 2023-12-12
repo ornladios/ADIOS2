@@ -37,6 +37,7 @@ public:
         COMPRESS_SZ = 6,
         COMPRESS_ZFP = 7,
         COMPRESS_MGARDPLUS = 8,
+        REFACTOR_MDR = 41,
         CALLBACK_SIGNATURE1 = 51,
         CALLBACK_SIGNATURE2 = 52,
         PLUGIN_INTERFACE = 53,
@@ -56,6 +57,9 @@ public:
 
     Params &GetParameters() noexcept;
 
+    void SetAccuracy(const adios2::Accuracy &a) noexcept;
+    adios2::Accuracy GetAccuracy() const noexcept;
+
 #define declare_type(T)                                                                            \
     virtual void RunCallback1(const T *, const std::string &, const std::string &,                 \
                               const std::string &, const size_t, const Dims &, const Dims &,       \
@@ -67,6 +71,10 @@ public:
                               const size_t, const Dims &, const Dims &, const Dims &) const;
 
     virtual size_t GetHeaderSize() const;
+
+    /** Give an upper bound estimate how big the transformed data could be */
+    virtual size_t GetEstimatedSize(const size_t ElemCount, const size_t ElemSize,
+                                    const size_t ndims, const size_t *dims) const;
 
     /**
      * @param dataIn
@@ -93,6 +101,11 @@ public:
 protected:
     /** Parameters associated with a particular Operator */
     Params m_Parameters;
+
+    /** user requested accuracy */
+    Accuracy m_AccuracyRequested = {0.0, 0.0, false};
+    /** provided accuracy */
+    Accuracy m_AccuracyProvided = {0.0, 0.0, false};
 
     /**
      * Used by lossy compressors with a limitation on complex data types or

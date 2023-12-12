@@ -83,6 +83,7 @@ std::string format;           // format string for one data element (e.g. %6.2f)
 std::string transport_params; // Transport parameters (e.g. "Library=stdio,verbose=3")
 std::string engine_name;      // Engine name (e.g. "BP5")
 std::string engine_params;    // Engine parameters (e.g. "SelectSteps=0:5:2")
+std::string accuracy_def;     // Accuracy definition (e.g. "accuracy="0.0,0.0,rel")
 
 // Flags from arguments or defaults
 bool dump; // dump data not just list info(flag == 1)
@@ -102,6 +103,8 @@ bool hidden_attrs;       // show hidden attrs in BP file
 int hidden_attrs_flag;   // to be passed on in option struct
 bool show_decomp;        // show decomposition of arrays
 bool show_version;       // print binary version info of file before work
+adios2::Accuracy accuracy;
+bool accuracyWasSet = false;
 
 // other global variables
 char *prgname; /* argv[0] */
@@ -169,6 +172,10 @@ void display_help()
            "file\n"
            "  --decomp    | -D           Show decomposition of variables as layed "
            "out in file\n"
+           "  --error     | -X string    Specify read accuracy (error,norm,rel|abs)\n"
+           "                             e.g. error=\"0.0,0.0,abs\"\n"
+           "                             L2 norm = 0.0, Linf = inf\n"
+
            "  --transport-parameters | -T         Specify File transport "
            "parameters\n"
            "                                      e.g. \"Library=stdio\"\n"
@@ -636,6 +643,9 @@ int bplsMain(int argc, char *argv[])
                            "Print version information (add -verbose for additional"
                            " information)");
     arg.AddBooleanArgument("-V", &show_version, "");
+    arg.AddArgument("--error", argT::SPACE_ARGUMENT, &accuracy_def,
+                    "| -X string    Specify read accuracy (error,norm,rel|abs)");
+    arg.AddArgument("-X", argT::SPACE_ARGUMENT, &accuracy_def, "");
     arg.AddArgument("--transport-parameters", argT::SPACE_ARGUMENT, &transport_params,
                     "| -T string    Specify File transport parameters manually");
     arg.AddArgument("-T", argT::SPACE_ARGUMENT, &transport_params, "");
@@ -704,6 +714,10 @@ int bplsMain(int argc, char *argv[])
 
     if (attrsonly)
         listattrs = true;
+
+    retval = parseAccuracy();
+    if (retval)
+        return retval;
 
     if (verbose > 1)
         printSettings();
@@ -1273,6 +1287,7 @@ int printVariableInfo(core::Engine *fp, core::IO *io, core::Variable<T> *variabl
 
     if (dump && !show_decomp)
     {
+        variable->SetAccuracy(accuracy);
         // print variable content
         if (variable->m_ShapeID == ShapeID::LocalArray)
         {
@@ -2210,6 +2225,14 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         }
     } // end while sum < nelems
     print_endline();
+
+    if (accuracyWasSet)
+    {
+        adios2::Accuracy a = variable->GetAccuracy();
+        std::cout << "Read accuracy was (error = " << a.error << ", norm = " << a.norm << ", "
+                  << (a.relative ? "rel" : "abs") << ")\n";
+    }
+
     return 0;
 }
 
@@ -3800,6 +3823,61 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io, core::Variable<T> *
         }
         ++stepRelative;
     }
+}
+
+int parseAccuracy()
+{
+    if (accuracy_def.empty())
+        return 0;
+
+    // Vector of string to save tokens
+    std::vector<std::string> tokens;
+
+    // stringstream class check1
+    std::stringstream ss(accuracy_def);
+
+    std::string intermediate;
+
+    // Tokenizing w.r.t. space ','
+    while (getline(ss, intermediate, ','))
+    {
+        tokens.push_back(intermediate);
+    }
+
+    if (tokens.size() != 3)
+    {
+        std::cout
+            << "ERROR: --error definition needs 3 values: error, norm, and relative|absolute\n"
+            << " error >= 0.0, norm >= 0.0 or inf, third arg is \"rel\" or \"abs\"\n";
+        return 1;
+    }
+
+    accuracy.error = adios2::helper::StringTo<double>(tokens[0], "error value for accuracy");
+    std::string normval = adios2::helper::LowerCase(tokens[2]);
+    if (normval == "inf")
+        accuracy.norm = std::numeric_limits<double>::infinity();
+    else
+        accuracy.norm = adios2::helper::StringTo<double>(tokens[1], "norm value for accuracy");
+    std::string relval = adios2::helper::LowerCase(tokens[2]);
+    if (relval == "rel")
+        accuracy.relative = true;
+    else if (relval == "abs")
+        accuracy.relative = false;
+    else
+    {
+        std::cout << "ERROR: --error third value must be \"rel\" or \"abs\" but it was \""
+                  << tokens[2] << "\"\n";
+        return 1;
+    }
+
+    accuracyWasSet = true;
+    if (verbose > 0)
+    {
+        std::cout << "Read accuracy is set to (error = " << accuracy.error
+                  << ", norm = " << accuracy.norm << ", " << (accuracy.relative ? "rel" : "abs")
+                  << ")\n";
+    }
+    return 0;
 }
 
 // parse a string "0, 3; 027" into an integer array
