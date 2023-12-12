@@ -251,7 +251,8 @@ static void process_pending_fi_reads(struct cq_manual_progress *self)
 static void *make_progress(void *params_)
 {
     struct cq_manual_progress *params = (struct cq_manual_progress *)params_;
-    struct fi_cq_data_entry *CQEntry = malloc(sizeof(struct fi_cq_data_entry));
+    size_t const n_entries = 100;
+    struct fi_cq_data_entry *CQEntries = malloc(n_entries * sizeof(struct fi_cq_data_entry));
 
     unsigned int current_backoff_seconds = 0;
 
@@ -259,7 +260,7 @@ static void *make_progress(void *params_)
     {
         process_pending_fi_reads(params);
 
-        ssize_t rc = fi_cq_read(params->cq_signal, (void *)CQEntry, 1);
+        ssize_t rc = fi_cq_read(params->cq_signal, (void *)CQEntries, n_entries);
         if (rc < 1)
         {
             struct fi_cq_err_entry error = {.err = 0};
@@ -274,21 +275,27 @@ static void *make_progress(void *params_)
             }
             printf("Backing off for %d seconds\n", current_backoff_seconds);
             sleep(current_backoff_seconds);
-            if(current_backoff_seconds < SST_BACKOFF_SECONDS_MAX)
+            if (current_backoff_seconds < SST_BACKOFF_SECONDS_MAX)
             {
                 ++current_backoff_seconds;
             }
         }
         else
         {
-            struct cq_event_list *next_item = malloc(sizeof(struct cq_event_list));
-            next_item->value = CQEntry;
-            next_item->next = NULL;
-            cq_manual_progress_push(params, next_item);
-            CQEntry = malloc(sizeof(struct fi_cq_data_entry));
+            for (size_t i = 0; i < rc; ++i)
+            {
+
+                struct cq_event_list *next_item = malloc(sizeof(struct cq_event_list));
+                struct fi_cq_data_entry *new_entry = malloc(sizeof(struct fi_cq_data_entry));
+                memcpy(new_entry, &CQEntries[i], sizeof(struct fi_cq_data_entry));
+                next_item->value = new_entry;
+                next_item->next = NULL;
+                cq_manual_progress_push(params, next_item);
+            }
             current_backoff_seconds = 0;
         }
     }
+    free(CQEntries);
     return NULL;
 }
 
