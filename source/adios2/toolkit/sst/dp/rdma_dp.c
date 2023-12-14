@@ -184,11 +184,15 @@ static void *make_progress(void *params_)
     struct cq_manual_progress *params = (struct cq_manual_progress *)params_;
     struct fi_cq_data_entry *CQEntry = malloc(sizeof(struct fi_cq_data_entry));
 
-    unsigned int current_backoff_seconds = 0;
-
     while (params->do_continue)
     {
-        ssize_t rc = fi_cq_read(params->cq_signal, (void *)CQEntry, 1);
+        /*
+         * The main purpose of this worker thread is to make repeated blocking calls to the blocking
+         * fi_cq_sread() with a timeout of 5 seconds. Some providers don't make progress in a timely
+         * fashion otherwise (e.g. shm).
+         */
+        ssize_t rc =
+            fi_cq_sread(params->cq_signal, (void *)CQEntry, 1, NULL, SST_BACKOFF_SECONDS_MAX);
         if (rc < 1)
         {
             struct fi_cq_err_entry error = {.err = 0};
@@ -201,11 +205,6 @@ static void *make_progress(void *params_)
                     fi_strerror(error.err),
                     fi_cq_strerror(params->cq_signal, error.err, error.err_data, NULL, error.len));
             }
-            sleep(current_backoff_seconds);
-            if(current_backoff_seconds < SST_BACKOFF_SECONDS_MAX)
-            {
-                ++current_backoff_seconds;
-            }
         }
         else
         {
@@ -214,7 +213,6 @@ static void *make_progress(void *params_)
             next_item->next = NULL;
             cq_manual_progress_push(params, next_item);
             CQEntry = malloc(sizeof(struct fi_cq_data_entry));
-            current_backoff_seconds = 0;
         }
     }
     return NULL;
