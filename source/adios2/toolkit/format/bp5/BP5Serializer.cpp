@@ -1374,15 +1374,6 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep, bool forc
 
     BufferFFS *AttrData = NULL;
 
-    // old way of doing attributes
-    if (NewAttribute && Info.AttributeFields)
-    {
-        AttributeEncodeBuffer = create_FFSBuffer();
-        void *AttributeBlock = FFSencode(AttributeEncodeBuffer, Info.AttributeFormat,
-                                         Info.AttributeData, &AttributeSize);
-        AttrData = new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
-    }
-
     if (PendingAttrs)
     {
         if (!GenericAttributeFormat)
