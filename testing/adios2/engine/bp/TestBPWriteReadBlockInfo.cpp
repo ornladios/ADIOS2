@@ -845,7 +845,7 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
                 EXPECT_NE(var_localStr, nullptr);
                 adios2_varinfo *vi_localStr = adios2_inquire_blockinfo(engineR, var_localStr, 0);
                 CheckStepsBlockInfo1D_C(var_localStr, vi_localStr, t, mpiSize, 1);
-                adios2_free_blockinfo(vi_local);
+                adios2_free_blockinfo(vi_localStr);
             }
             {
                 auto *var_iString = adios2_inquire_variable(ioR, "iString");
