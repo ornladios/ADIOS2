@@ -4,7 +4,10 @@
 #------------------------------------------------------------------------------#
 
 add_subdirectory(adios2)
-add_subdirectory(utils)
+
+if (NOT ADIOS2_USE_PIP)
+  add_subdirectory(utils)
+endif()
 
 if(ADIOS2_HAVE_HDF5_VOL)
   add_subdirectory(h5vol)
