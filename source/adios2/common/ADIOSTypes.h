@@ -230,11 +230,11 @@ struct MinVarInfo
     size_t Step;
     bool WasLocalValue; // writer: localValue -> reader: 1D global array
     int Dims;
-    size_t *Shape;
+    const size_t *Shape;
     bool IsValue = false;
     bool IsReverseDims = false;
     std::vector<struct MinBlockInfo> BlocksInfo;
-    MinVarInfo(int D, size_t *S)
+    MinVarInfo(const int D, const size_t *S)
     : Dims(D), Shape(S), IsValue(false), IsReverseDims(false), BlocksInfo({})
     {
     }
@@ -294,6 +294,9 @@ constexpr bool ConstantDims = true;
 constexpr bool end_step = true;
 constexpr bool LocalValue = true;
 constexpr bool GlobalValue = false;
+
+constexpr size_t UnknownStep = MaxU64;
+constexpr double UnknownTime = std::numeric_limits<double>::infinity();
 
 using Dims = std::vector<size_t>;
 using Params = std::map<std::string, std::string>;

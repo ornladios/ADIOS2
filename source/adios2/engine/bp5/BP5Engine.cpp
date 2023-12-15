@@ -139,8 +139,7 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
     for (auto &p : io.m_Parameters)
     {
         const std::string key = helper::LowerCase(p.first);
-        const std::string value = helper::LowerCase(p.second);
-        params_lowercase[key] = value;
+        params_lowercase[key] = p.second;
     }
 
     auto lf_SetBoolParameter = [&](const std::string key, bool &parameter, bool def) {
@@ -240,8 +239,7 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
         parameter = def;
         if (itKey != params_lowercase.end())
         {
-            std::string value = itKey->second;
-            std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+            const std::string value = helper::LowerCase(itKey->second);
             if (value == "malloc")
             {
                 parameter = (int)BufferVType::MallocVType;
@@ -266,8 +264,7 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
         parameter = def;
         if (itKey != params_lowercase.end())
         {
-            std::string value = itKey->second;
-            std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+            const std::string value = helper::LowerCase(itKey->second);
             if (value == "everyonewrites" || value == "auto")
             {
                 parameter = (int)AggregationType::EveryoneWrites;
@@ -297,8 +294,7 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
         parameter = def;
         if (itKey != params_lowercase.end())
         {
-            std::string value = itKey->second;
-            std::transform(value.begin(), value.end(), value.begin(), ::tolower);
+            const std::string value = helper::LowerCase(itKey->second);
             if (value == "guided" || value == "auto" || value == "on" || value == "true")
             {
                 parameter = (int)AsyncWrite::Guided;

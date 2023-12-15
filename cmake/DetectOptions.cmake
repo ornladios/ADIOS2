@@ -576,6 +576,30 @@ if(AWSSDK_FOUND)
     set(ADIOS2_HAVE_AWSSDK TRUE)
 endif()
 
+# Campaign Management
+if(ADIOS2_USE_Campaign STREQUAL AUTO)
+  find_package(SQLite3)
+  if (SQLite3_FOUND)
+    find_package(ZLIB)
+  endif()
+  if (SQLite3_FOUND AND ZLIB_FOUND)
+    message(STATUS "Sqlite3 and ZLIB found. Turn on Campaign Management")
+    set(ADIOS2_HAVE_Campaign TRUE)
+  endif()
+elseif(ADIOS2_USE_Campaign)
+  find_package(SQLite3 REQUIRED)
+  if (SQLite3_FOUND)
+    find_package(ZLIB REQUIRED)
+  endif()
+  if (SQLite3_FOUND AND ZLIB_FOUND)
+    message(STATUS "Sqlite3 and ZLIB found. Turn on Campaign Management")
+    set(ADIOS2_HAVE_Campaign TRUE)
+  endif()
+endif()  
+
+# Multithreading
+find_package(Threads REQUIRED)
+
 # Floating point detection
 include(CheckTypeRepresentation)
 

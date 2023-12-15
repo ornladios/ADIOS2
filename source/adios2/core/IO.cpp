@@ -54,6 +54,10 @@
 #include "adios2/engine/daos/DaosWriter.h"
 #endif
 
+#ifdef ADIOS2_HAVE_CAMPAIGN // external dependencies
+#include "adios2/engine/campaign/CampaignReader.h"
+#endif
+
 namespace adios2
 {
 namespace core
@@ -126,6 +130,24 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
      {IO::NoEngine("ERROR: nullcore engine does not support read mode"),
       IO::MakeEngine<engine::NullWriter>}},
     {"plugin", {IO::MakeEngine<plugin::PluginEngine>, IO::MakeEngine<plugin::PluginEngine>}},
+
+    {"campaign",
+#ifdef ADIOS2_HAVE_CAMPAIGN
+     {IO::MakeEngine<engine::CampaignReader>,
+      IO::NoEngine("ERROR: campaign engine does not support write mode")}
+#else
+     IO::NoEngineEntry("ERROR: this version didn't compile with "
+                       "support for campaign management, can't use Campaign engine\n")
+#endif
+    },
+};
+
+const std::unordered_map<std::string, bool> ReadRandomAccess_Supported = {
+    {"bp3", false},     {"bp4", false},        {"bp5", true},      {"dataman", false},
+    {"ssc", false},     {"mhs", false},        {"sst", false},     {"daos", false},
+    {"effis", false},   {"dataspaces", false}, {"hdf5", false},    {"skeleton", true},
+    {"inline", false},  {"null", true},        {"nullcore", true}, {"plugin", false},
+    {"campaign", true},
 };
 
 // Synchronize access to the factory in case one thread is
@@ -587,11 +609,6 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         //          << std::endl;
     }
 
-    if ((engineTypeLC != "bp5") && (mode_to_use == Mode::ReadRandomAccess))
-    {
-        // only BP5 special-cases file-reader random access mode
-        mode_to_use = Mode::Read;
-    }
     // For the inline engine, there must be exactly 1 reader, and exactly 1
     // writer.
     if (engineTypeLC == "inline")
@@ -630,6 +647,19 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
                 msg += "The inline engine requires exactly one writer and one "
                        "reader.";
                 helper::Throw<std::runtime_error>("Core", "IO", "Open", msg);
+            }
+        }
+    }
+
+    if (mode_to_use == Mode::ReadRandomAccess)
+    {
+        // older engines don't know about ReadRandomAccess Mode
+        auto it = ReadRandomAccess_Supported.find(engineTypeLC);
+        if (it != ReadRandomAccess_Supported.end())
+        {
+            if (!it->second)
+            {
+                mode_to_use = Mode::Read;
             }
         }
     }

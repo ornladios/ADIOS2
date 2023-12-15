@@ -3,9 +3,7 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-add_subdirectory(basics)
-add_subdirectory(hello)
-add_subdirectory(plugins)
-add_subdirectory(simulations)
-add_subdirectory(useCases)
-add_subdirectory(campaign)
+if(ADIOS2_HAVE_MPI)
+  add_executable(adios2_campaign_write_mpi campaign_write.cpp)
+  target_link_libraries(adios2_campaign_write_mpi adios2::cxx11_mpi adios2_core MPI::MPI_C)
+endif()

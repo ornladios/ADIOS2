@@ -12,7 +12,15 @@
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 
+#include <string.h> // memcpy
+
 #ifndef _WIN32
+
+#include <netdb.h>      //getFQDN
+#include <sys/socket.h> //getFQDN
+#include <sys/types.h>  //getFQDN
+#include <unistd.h>     // gethostname
+
 #if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_TABLE)
 
 #include <iostream>
@@ -21,16 +29,89 @@
 #include <arpa/inet.h>  //AvailableIpAddresses() inet_ntoa
 #include <net/if.h>     //AvailableIpAddresses() struct if_nameindex
 #include <netinet/in.h> //AvailableIpAddresses() struct sockaddr_in
-#include <string.h>     //AvailableIpAddresses() strncp
 #include <sys/ioctl.h>  //AvailableIpAddresses() ioctl
-#include <unistd.h>     //AvailableIpAddresses() close
 
 #include <nlohmann_json.hpp>
+
+#endif // ADIOS2_HAVE_DATAMAN || ADIOS2_HAVE_TABLE
+
+#else // _WIN32
+#include <tchar.h>
+#include <windows.h> // GetComputerName
+#endif               // _WIN32
 
 namespace adios2
 {
 namespace helper
 {
+
+std::string GetFQDN() noexcept
+{
+    char hostname[1024];
+#ifdef WIN32
+    TCHAR infoBuf[1024];
+    DWORD bufCharCount = sizeof(hostname);
+    memset(hostname, 0, sizeof(hostname));
+    if (GetComputerName(infoBuf, &bufCharCount))
+    {
+        int i;
+        for (i = 0; i < sizeof(hostname); i++)
+        {
+            hostname[i] = infoBuf[i];
+        }
+    }
+    else
+    {
+        strcpy(hostname, "Unknown_Host_Name");
+    }
+#else
+    struct addrinfo hints, *info, *p;
+
+    hostname[1023] = '\0';
+    gethostname(hostname, 1023);
+
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_flags = AI_CANONNAME;
+
+    if (getaddrinfo(hostname, NULL, &hints, &info) == 0)
+    {
+        for (p = info; p != NULL; p = p->ai_next)
+        {
+            printf("hostname: %s\n", p->ai_canonname);
+            if (strchr(p->ai_canonname, '.') != NULL)
+            {
+                strncpy(hostname, p->ai_canonname, sizeof(hostname));
+                break;
+            }
+        }
+    }
+    else
+    {
+        strcpy(hostname, "Unknown_Host_Name");
+    }
+    freeaddrinfo(info);
+#endif
+    return std::string(hostname);
+}
+
+std::string GetClusterName() noexcept
+{
+    std::string fqdn = GetFQDN();
+    if (fqdn.rfind("login", 0) == 0)
+    {
+        fqdn.erase(0, fqdn.find('.') + 1);
+    }
+    if (fqdn.rfind("batch", 0) == 0)
+    {
+        fqdn.erase(0, fqdn.find('.') + 1);
+    }
+    return fqdn.substr(0, fqdn.find('.'));
+}
+
+#ifndef _WIN32
+#if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_TABLE)
 
 #if defined(__clang__)
 #if __has_feature(memory_sanitizer)
@@ -239,8 +320,8 @@ void HandshakeReader(Comm const &comm, size_t &appID, std::vector<std::string> &
     fullAddresses = j.get<std::vector<std::string>>();
 }
 
+#endif // ADIOS2_HAVE_DATAMAN || ADIOS2_HAVE_TABLE
+#endif // _WIN32
+
 } // end namespace helper
 } // end namespace adios2
-
-#endif
-#endif

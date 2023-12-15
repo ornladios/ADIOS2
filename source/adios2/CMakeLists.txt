@@ -203,7 +203,15 @@ if (ADIOS2_HAVE_SST)
   target_link_libraries(adios2_core PRIVATE adios2::thirdparty::EVPath)
   add_subdirectory(toolkit/remote)
 endif()
-
+   
+if(ADIOS2_HAVE_Campaign)
+  target_sources(adios2_core PRIVATE 
+          engine/campaign/CampaignReader.cpp 
+          engine/campaign/CampaignReader.tcc 
+          engine/campaign/CampaignData.cpp
+          engine/campaign/CampaignManager.cpp)
+  target_link_libraries(adios2_core PRIVATE SQLite::SQLite3 ZLIB::ZLIB)
+endif()
 
 if(ADIOS2_HAVE_DAOS)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FileDaos.cpp

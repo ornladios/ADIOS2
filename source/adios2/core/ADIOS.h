@@ -25,6 +25,9 @@
 #include "adios2/core/VariableStruct.h"
 #include "adios2/helper/adiosComm.h"
 
+// Campaign Manager as Global Service
+#include <adios2/engine/campaign/CampaignManager.h>
+
 namespace adios2
 {
 namespace core
@@ -158,6 +161,9 @@ public:
      * in main thread. Useful when using Async IO */
     void ExitComputationBlock() noexcept;
 
+    void RecordOutputStep(const std::string &name, const size_t step = UnknownStep,
+                          const double time = UnknownTime);
+
 private:
     /** Communicator given to parallel constructor. */
     helper::Comm m_Comm;
@@ -179,6 +185,9 @@ private:
 
     /** operators created with DefineOperator */
     std::unordered_map<std::string, std::pair<std::string, Params>> m_Operators;
+
+    /** campaign manager */
+    engine::CampaignManager m_CampaignManager;
 
     /** Flag for Enter/ExitComputationBlock */
     bool enteredComputationBlock = false;
