@@ -182,7 +182,8 @@ struct fi_cq_data_entry *cq_manual_progress_pop(struct cq_manual_progress *self)
 static void *make_progress(void *params_)
 {
     struct cq_manual_progress *params = (struct cq_manual_progress *)params_;
-    struct fi_cq_data_entry *CQEntry = malloc(sizeof(struct fi_cq_data_entry));
+    size_t const batch_size = 100;
+    struct fi_cq_data_entry *CQEntries = malloc(batch_size * sizeof(struct fi_cq_data_entry));
 
     while (params->do_continue)
     {
@@ -191,8 +192,10 @@ static void *make_progress(void *params_)
          * fi_cq_sread() with a timeout of 5 seconds. Some providers don't make progress in a timely
          * fashion otherwise (e.g. shm).
          */
-        ssize_t rc =
-            fi_cq_sread(params->cq_signal, (void *)CQEntry, 1, NULL, SST_BACKOFF_SECONDS_MAX);
+        printf("Going into fi_cq_sread()\n");
+        ssize_t rc = fi_cq_sread(params->cq_signal, (void *)CQEntries, batch_size, NULL,
+                                 SST_BACKOFF_SECONDS_MAX * 1000);
+        printf("fi_cq_sread()=%ld\n", rc);
         if (rc < 1)
         {
             struct fi_cq_err_entry error = {.err = 0};
@@ -208,13 +211,19 @@ static void *make_progress(void *params_)
         }
         else
         {
-            struct cq_event_list *next_item = malloc(sizeof(struct cq_event_list));
-            next_item->value = CQEntry;
-            next_item->next = NULL;
-            cq_manual_progress_push(params, next_item);
-            CQEntry = malloc(sizeof(struct fi_cq_data_entry));
+            for (size_t i = 0; i < rc; ++i)
+            {
+                struct cq_event_list *next_item = malloc(sizeof(struct cq_event_list));
+                struct fi_cq_data_entry * value = malloc(sizeof(struct fi_cq_data_entry));
+                memcpy(value, &CQEntries[i], sizeof(struct fi_cq_data_entry));
+                next_item->value = value;
+                next_item->next = NULL;
+                cq_manual_progress_push(params, next_item);
+            }
         }
     }
+    free(CQEntries);
+    printf("Returning from thread\n");
     return NULL;
 }
 
