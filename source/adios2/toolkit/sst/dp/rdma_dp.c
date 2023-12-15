@@ -411,6 +411,14 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
 
     fabric->info = NULL;
 
+    char const * provider_name = NULL;
+    if((provider_name = getenv("FABRIC_PROVIDER")))
+    {
+        size_t len = strlen(provider_name);
+        hints->fabric_attr->prov_name = malloc(len + 1);
+        memcpy(hints->fabric_attr->prov_name, provider_name, len + 1);
+    }
+
     pthread_mutex_lock(&fabric_mutex);
     fi_getinfo(fi_version, NULL, NULL, 0, hints, &info);
     pthread_mutex_unlock(&fabric_mutex);
