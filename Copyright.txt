@@ -16,12 +16,18 @@ limitations under the License.
 
 The following individuals and institutions are among the Contributors:
 
+* Ana Gainaru <gainarua@ornl.gov>
+* Caitlin Ross <caitlin.ross@kitware.com>
 * Chuck Atkins <chuck.atkins@kitware.com>
-* Greg S. Eisenhauer <eisen@cc.gatech.edu> 
-* William F. Godoy <godoywf@ornl.gov>
+* Greg Eisenhauer <eisen@cc.gatech.edu>
+* Dmitry Ganyushin <ganyushindi@ornl.gov>
 * Junmin Gu <jgu@lbl.gov>
 * Norbert Podhorszki <pnorbert@ornl.gov>
 * Ruonan (Jason) Wang <wangr1@ornl.gov>
+* Scott Wittenburg <scott.wittenburg@kitware.com>
+* Spiros Tsalikis <spiros.tsalikis@kitware.com>
+* V. A. Bolea Sanchez <vicente.bolea@kitware.com>
+* William F. Godoy <godoywf@ornl.gov>
 
 See version control history for details of individual contributions.
 
