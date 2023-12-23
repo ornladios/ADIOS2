@@ -54,6 +54,7 @@ public:
     /* User requested memory space */
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
     MemorySpace m_MemSpace = MemorySpace::Detect;
+    bool m_MemSpaceLayoutMismatch = true;
 #else
     MemorySpace m_MemSpace = MemorySpace::Host;
 #endif
@@ -123,6 +124,9 @@ public:
      */
     size_t TotalSize() const noexcept;
 
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    void setMemSpaceLayoutMismatch(bool mismatch);
+#endif
     /**
      * Get the memory space where a given buffers was allocated
      * @param pointer to the user data
@@ -242,6 +246,10 @@ protected:
     void CheckDimensionsCommon(const std::string hint) const;
 
     void CheckRandomAccess(const size_t step, const std::string hint) const;
+
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    void VariableBase::UpdateLayout(bool updateShape=true, bool updateCount=true, bool updateStart=true);
+#endif
 };
 
 } // end namespace core

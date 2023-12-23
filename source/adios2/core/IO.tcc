@@ -62,6 +62,11 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape, cons
         }
     }
 
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    // if column major, there is no layout mismatch between GPU and CPU pointers
+    if (m_ArrayOrder == ArrayOrdering::ColumnMajor)
+       variable.setMemSpaceLayoutMismatch(false);
+#endif
     return variable;
 }
 
