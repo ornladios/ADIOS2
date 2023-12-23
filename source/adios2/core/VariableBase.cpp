@@ -640,7 +640,7 @@ Dims VariableBase::Shape(const size_t step) const
 }
 
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
-inline void VariableBase::UpdateLayout(Dims shape)
+inline void VariableBase::UpdateLayout(Dims &shape)
 {
     // if the default execution layout for the memory space
     // is not the same as the selected column/row major format

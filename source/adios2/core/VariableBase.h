@@ -248,7 +248,7 @@ protected:
     void CheckRandomAccess(const size_t step, const std::string hint) const;
 
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
-	inline void UpdateLayout(Dims shape);
+	inline void UpdateLayout(Dims &shape);
 #endif
 };
 

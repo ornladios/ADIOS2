@@ -24,7 +24,7 @@ int BPWrite(const std::string fname, const size_t Nx, const size_t Ny, const siz
     static_assert(Kokkos::SpaceAccessibility<ExecSpace, MemSpace>::accessible, "");
     Kokkos::parallel_for("initBuffer", Kokkos::RangePolicy<ExecSpace>(0, Nx), KOKKOS_LAMBDA(int i) {
         for (int j = 0; j < Ny; j++)
-            gpuSimData(i, j) = static_cast<float>(rank + 1);
+            gpuSimData(i, j) = static_cast<float>(rank + i);
     });
     Kokkos::fence();
 
@@ -68,6 +68,18 @@ int BPWrite(const std::string fname, const size_t Nx, const size_t Ny, const siz
     return 0;
 }
 
+template <class MemSpace>
+std::array<size_t, 2> GetDimenstions(adios2::Variable<float> data, int size)
+{
+    return {data.Shape()[1], static_cast<size_t>(data.Shape()[0] / size)};
+}
+
+template <>
+std::array<size_t, 2> GetDimenstions<Kokkos::HostSpace>(adios2::Variable<float> data, int size)
+{
+    return {static_cast<size_t>(data.Shape()[0] / size), data.Shape()[1]};
+}
+
 template <class MemSpace, class ExecSpace>
 int BPRead(const std::string fname, const std::string engine, int rank, int size)
 {
@@ -96,7 +108,8 @@ int BPRead(const std::string fname, const std::string engine, int rank, int size
             break;
         }
 
-        size_t Nx = static_cast<size_t>(data.Shape()[0] / size), Ny = data.Shape()[1];
+        auto dims = GetDimenstions<MemSpace>(data, size);
+        size_t Nx = dims[0], Ny = dims[1];
         const adios2::Dims start{static_cast<size_t>(rank * Nx), 0};
         const adios2::Box<adios2::Dims> sel(start, {Nx, Ny});
         data.SetSelection(sel);
@@ -135,7 +148,7 @@ int main(int argc, char **argv)
 #endif
     const std::string engine = argv[1] ? argv[1] : "BPFile";
     std::cout << "Using engine " << engine << std::endl;
-    const size_t Nx = 2, Ny = 11, nSteps = 1;
+    const size_t Nx = 4, Ny = 10, nSteps = 1;
     const std::string fromMemSpace = "Default";
     const std::string toMemSpace = "Default";
 
