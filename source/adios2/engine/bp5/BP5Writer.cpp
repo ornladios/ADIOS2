@@ -474,6 +474,11 @@ void BP5Writer::MarshalAttributes()
 
             m_BP5Serializer.MarshalAttribute(name.c_str(), type, sizeof(char *), element_count,
                                              data_addr);
+            if (!attribute.m_IsSingleValue)
+            {
+                // array of strings
+                free(data_addr);
+            }
         }
 #define declare_type(T)                                                                            \
     else if (type == helper::GetDataType<T>())                                                     \
