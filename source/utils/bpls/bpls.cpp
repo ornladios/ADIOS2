@@ -3069,7 +3069,9 @@ size_t relative_to_absolute_step(core::Engine *fp, core::Variable<T> *variable,
 
     if (minBlocks)
     {
-        return minBlocks->Step;
+        size_t Step = minBlocks->Step;
+        delete minBlocks;
+        return Step;
     }
 
     const std::map<size_t, std::vector<size_t>> &indices =
