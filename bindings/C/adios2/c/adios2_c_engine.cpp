@@ -749,6 +749,8 @@ void adios2_free_blockinfo(adios2_varinfo *data_blocks)
             free(data_blocks->BlocksInfo[i].Start);
             free(data_blocks->BlocksInfo[i].Count);
         }
+        if (data_blocks->Shape)
+            free(data_blocks->Shape);
         free(data_blocks->BlocksInfo);
         free(data_blocks);
     }
