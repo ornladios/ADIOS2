@@ -3328,22 +3328,21 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     /* Print block info */
     DataType adiosvartype = variable->m_Type;
 
-    MinVarInfo *minBlocksInfo = nullptr;
-    minBlocksInfo =
-        fp->MinBlocksInfo(*variable, variable->m_AvailableStepsCount - 1 /* relative step 0 */);
+    MinVarInfo *mBI = nullptr;
+    mBI = fp->MinBlocksInfo(*variable, variable->m_AvailableStepsCount - 1 /* relative step 0 */);
 
     // first step
-    if (minBlocksInfo)
+    if (mBI)
     {
-        size_t laststep = minBlocksInfo->Step; // used relative last step above
-        delete minBlocksInfo;
+        size_t laststep = mBI->Step; // used relative last step above
+        delete mBI;
         int ndigits_nsteps = ndigits(laststep);
         if (variable->m_ShapeID == ShapeID::GlobalValue ||
             variable->m_ShapeID == ShapeID::LocalValue)
         {
             for (size_t RelStep = 0; RelStep < variable->m_AvailableStepsCount; RelStep++)
             {
-                minBlocksInfo = fp->MinBlocksInfo(*variable, RelStep);
+                auto minBlocksInfo = fp->MinBlocksInfo(*variable, RelStep);
                 auto blocks = minBlocksInfo->BlocksInfo;
                 fprintf(outf, "%c       step %*zu: ", commentchar, ndigits_nsteps,
                         minBlocksInfo->Step);
@@ -3380,6 +3379,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     }
                     fprintf(outf, "\n");
                 }
+                delete minBlocksInfo;
             }
         }
         else
@@ -3387,7 +3387,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
             // arrays
             for (size_t RelStep = 0; RelStep < variable->m_AvailableStepsCount; RelStep++)
             {
-                minBlocksInfo = fp->MinBlocksInfo(*variable, RelStep);
+                auto minBlocksInfo = fp->MinBlocksInfo(*variable, RelStep);
                 auto blocks = minBlocksInfo->BlocksInfo;
                 size_t ndim = variable->m_Count.size();
                 int ndigits_nblocks;
@@ -3490,6 +3490,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                         readVarBlock(fp, io, variable, RelStep, j, c, s);
                     }
                 }
+                delete minBlocksInfo;
             }
         }
         return;
@@ -3825,6 +3826,8 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io, core::Variable<T> *
         }
         ++stepRelative;
     }
+    if (minBlocks)
+        delete minBlocks;
 }
 
 int parseAccuracy()
