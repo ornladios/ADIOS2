@@ -885,6 +885,8 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
             adios2_end_step(engineR);
         }
         adios2_close(engineR);
+        adios2_bool remove_result;
+        adios2_remove_io(&remove_result, adiosH, "ReadIO");
     }
 }
 
