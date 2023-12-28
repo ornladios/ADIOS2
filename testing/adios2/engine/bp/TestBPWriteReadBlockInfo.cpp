@@ -837,6 +837,7 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
                 EXPECT_NE(var_local, nullptr);
                 adios2_varinfo *vi_local = adios2_inquire_blockinfo(engineR, var_local, 0);
                 CheckStepsBlockInfo1D_C(var_local, vi_local, t, mpiSize, 1);
+                adios2_free_blockinfo(vi_local);
             }
             {
                 auto *var_localStr = adios2_inquire_variable(ioR, "localStr");
@@ -844,24 +845,28 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
                 EXPECT_NE(var_localStr, nullptr);
                 adios2_varinfo *vi_localStr = adios2_inquire_blockinfo(engineR, var_localStr, 0);
                 CheckStepsBlockInfo1D_C(var_localStr, vi_localStr, t, mpiSize, 1);
+                adios2_free_blockinfo(vi_localStr);
             }
             {
                 auto *var_iString = adios2_inquire_variable(ioR, "iString");
                 EXPECT_NE(var_iString, nullptr);
                 adios2_varinfo *vi_iString = adios2_inquire_blockinfo(engineR, var_iString, 0);
                 CheckStepsBlockInfo1D_C(var_iString, vi_iString, t, mpiSize, 1);
+                adios2_free_blockinfo(vi_iString);
             }
             {
                 auto *var_i8 = adios2_inquire_variable(ioR, "i8");
                 EXPECT_NE(var_i8, nullptr);
                 adios2_varinfo *vi_i8 = adios2_inquire_blockinfo(engineR, var_i8, 0);
                 CheckStepsBlockInfo1D_C(var_i8, vi_i8, t, mpiSize, Nx);
+                adios2_free_blockinfo(vi_i8);
             }
             {
                 auto *var_r64 = adios2_inquire_variable(ioR, "r64");
                 EXPECT_NE(var_r64, nullptr);
                 adios2_varinfo *vi_r64 = adios2_inquire_blockinfo(engineR, var_r64, 0);
                 CheckStepsBlockInfo1D_C(var_r64, vi_r64, t, mpiSize, Nx);
+                adios2_free_blockinfo(vi_r64);
             }
             /*
             auto *var_i16 = adios2_inquire_variable(ioR, "i16");
@@ -880,6 +885,9 @@ TEST_F(BPWriteReadBlockInfo, BPWriteReadBlockInfo1D8_C)
             adios2_end_step(engineR);
         }
         adios2_close(engineR);
+        adios2_bool remove_result;
+        adios2_remove_io(&remove_result, adiosH, "ReadIO");
+        adios2_finalize(adiosH);
     }
 }
 

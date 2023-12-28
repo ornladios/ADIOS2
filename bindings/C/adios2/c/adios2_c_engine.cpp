@@ -699,8 +699,7 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine, adios2_variable 
                 b[i].MinUnion.uint64 = 0;
                 // minBlocksInfo->BlocksInfo[i].MaxUnion;
                 b[i].MaxUnion.uint64 = 0;
-                b[i].Value.str = (char *)malloc(blocksInfo[i].Value.size() + 1);
-                std::strcpy(b[i].Value.str, blocksInfo[i].Value.data());
+                b[i].Value.str = (char *)blocksInfo[i].Value.data();
             };
         }
 #define declare_template_instantiation(T)                                                          \
@@ -749,6 +748,8 @@ void adios2_free_blockinfo(adios2_varinfo *data_blocks)
             free(data_blocks->BlocksInfo[i].Start);
             free(data_blocks->BlocksInfo[i].Count);
         }
+        if (data_blocks->Shape)
+            free(data_blocks->Shape);
         free(data_blocks->BlocksInfo);
         free(data_blocks);
     }

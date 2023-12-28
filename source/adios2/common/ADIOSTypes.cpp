@@ -390,6 +390,27 @@ int TypeElementSize(DataType adiosvartype)
     }
 }
 
+bool TypeHasMinMax(DataType adiosvartype)
+{
+    switch (adiosvartype)
+    {
+    case DataType::UInt8:
+    case DataType::Int8:
+    case DataType::UInt16:
+    case DataType::Int16:
+    case DataType::UInt32:
+    case DataType::Int32:
+    case DataType::UInt64:
+    case DataType::Int64:
+    case DataType::Float:
+    case DataType::Double:
+    case DataType::LongDouble:
+        return true;
+    default:
+        return false;
+    }
+}
+
 static void PrintMBI(std::ostream &os, const MinBlockInfo &blk, int Dims)
 {
     os << "Writer: " << blk.WriterID << ", Blk: " << blk.BlockID << ", Start: {";

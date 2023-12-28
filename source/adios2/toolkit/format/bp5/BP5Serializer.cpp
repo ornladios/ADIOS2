@@ -819,7 +819,8 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
         DerivedWithoutStats = VD && (VD->GetDerivedType() == DerivedVarType::ExpressionString);
 #endif
-        bool DoMinMax = ((m_StatsLevel > 0) && !DerivedWithoutStats);
+        bool DoMinMax =
+            ((m_StatsLevel > 0) && !DerivedWithoutStats && TypeHasMinMax((DataType)Rec->Type));
         if (DoMinMax && !Span)
         {
             GetMinMax(Data, ElemCount, (DataType)Rec->Type, MinMax, MemSpace);
@@ -1373,15 +1374,6 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep, bool forc
 
     BufferFFS *AttrData = NULL;
 
-    // old way of doing attributes
-    if (NewAttribute && Info.AttributeFields)
-    {
-        AttributeEncodeBuffer = create_FFSBuffer();
-        void *AttributeBlock = FFSencode(AttributeEncodeBuffer, Info.AttributeFormat,
-                                         Info.AttributeData, &AttributeSize);
-        AttrData = new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
-    }
-
     if (PendingAttrs)
     {
         if (!GenericAttributeFormat)
@@ -1406,6 +1398,17 @@ BP5Serializer::TimestepInfo BP5Serializer::CloseTimestep(int timestep, bool forc
         FMfree_var_rec_elements(GenericAttributeFormat, PendingAttrs);
         delete (PendingAttrs);
         PendingAttrs = nullptr;
+    }
+    else
+    {
+        // old way of doing attributes
+        if (NewAttribute && Info.AttributeFields)
+        {
+            AttributeEncodeBuffer = create_FFSBuffer();
+            void *AttributeBlock = FFSencode(AttributeEncodeBuffer, Info.AttributeFormat,
+                                             Info.AttributeData, &AttributeSize);
+            AttrData = new BufferFFS(AttributeEncodeBuffer, AttributeBlock, AttributeSize);
+        }
     }
 
     // FMdump_encoded_data(Info.MetaFormat, MetaDataBlock, 1024000);

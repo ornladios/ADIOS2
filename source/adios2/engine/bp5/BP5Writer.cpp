@@ -59,7 +59,7 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
     // std::cout << "BEGIN STEP starts at: " << ts.count() << std::endl;
     m_BetweenStepPairs = true;
 
-    if (m_WriterStep > 0)
+    if (!m_IsFirstStep)
     {
         m_LastTimeBetweenSteps = Now() - m_EndStepEnd;
         m_TotalTimeBetweenSteps += m_LastTimeBetweenSteps;
@@ -71,7 +71,7 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
         }
     }
 
-    if ((m_WriterStep == 0) && m_Parameters.UseOneTimeAttributes)
+    if (m_IsFirstStep && m_Parameters.UseOneTimeAttributes)
     {
         const auto &attributes = m_IO.GetAttributes();
 
@@ -79,7 +79,11 @@ StepStatus BP5Writer::BeginStep(StepMode mode, const float timeoutSeconds)
         {
             m_BP5Serializer.OnetimeMarshalAttribute(*(attributePair.second));
         }
+        m_MarshalAttributesNecessary = false;
     }
+
+    // one-time stuff after Open must be done above
+    m_IsFirstStep = false;
 
     if (m_Parameters.AsyncWrite)
     {
@@ -474,6 +478,11 @@ void BP5Writer::MarshalAttributes()
 
             m_BP5Serializer.MarshalAttribute(name.c_str(), type, sizeof(char *), element_count,
                                              data_addr);
+            if (!attribute.m_IsSingleValue)
+            {
+                // array of strings
+                free(data_addr);
+            }
         }
 #define declare_type(T)                                                                            \
     else if (type == helper::GetDataType<T>())                                                     \

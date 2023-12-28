@@ -70,6 +70,7 @@ private:
     transportman::TransportMan m_FileMetaMetadataManager;
 
     int64_t m_WriterStep = 0;
+    bool m_IsFirstStep = true; // might not be 0 for append
     /*
      *  Burst buffer variables
      */
