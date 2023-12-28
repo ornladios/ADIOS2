@@ -293,6 +293,7 @@ void SstWriter::EndStep()
             //  Free data and metadata blocks here.  BlockToFree is the newblock
             //  value in the enclosing function.
             free(BlockToFree->MetaMetaBlocks);
+            delete BlockToFree->TSInfo->DataBuffer;
             delete BlockToFree->TSInfo;
             delete BlockToFree;
         };
