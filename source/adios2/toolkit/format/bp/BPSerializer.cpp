@@ -232,7 +232,8 @@ void BPSerializer::PutMinifooter(const uint64_t pgIndexStart, const uint64_t var
     };
 
     const std::string majorVersion(std::to_string(ADIOS2_VERSION_MAJOR));
-    const std::string minorVersion(std::to_string(ADIOS2_VERSION_MINOR));
+    const char minorVersionChar = '0' + ADIOS2_VERSION_MINOR;
+    const std::string minorVersion(1, minorVersionChar);
     const std::string patchVersion(std::to_string(ADIOS2_VERSION_PATCH));
 
     const std::string versionLongTag("ADIOS-BP v" + majorVersion + "." + minorVersion + "." +
