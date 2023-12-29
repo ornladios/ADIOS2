@@ -61,7 +61,8 @@ void BP4Serializer::MakeHeader(BufferSTL &b, const std::string fileType, const b
     }
 
     const std::string majorVersion(std::to_string(ADIOS2_VERSION_MAJOR));
-    const std::string minorVersion(std::to_string(ADIOS2_VERSION_MINOR));
+    const char minorVersionChar = '0' + ADIOS2_VERSION_MINOR;
+    const std::string minorVersion(1, minorVersionChar);
     const std::string patchVersion(std::to_string(ADIOS2_VERSION_PATCH));
 
     // byte 0-31: Readable tag
