@@ -171,6 +171,12 @@ void Engine::EndStep()
     m_Engine->EndStep();
 }
 
+bool Engine::BetweenStepPairs() const
+{
+    helper::CheckForNullptr(m_Engine, "for engine, in call to Engine::EndStep");
+    return m_Engine->BetweenStepPairs();
+}
+
 void Engine::Flush(const int transportIndex)
 {
     helper::CheckForNullptr(m_Engine, "for engine, in call to Engine::Flush");
@@ -243,20 +249,37 @@ std::vector<std::map<std::string, std::string>> Engine::BlocksInfo(std::string &
         {
             std::map<std::string, std::string> info_map;
             std::stringstream start_ss;
-            std::cout << "Info loop" << std::endl;
-            for (size_t i = 0; i < (size_t)minBlocksInfo->Dims; ++i)
+            if (info.Start == nullptr)
             {
-                if (i != 0)
-                    start_ss << ",";
-                start_ss << info.Start[i];
+                start_ss << "0";
+            }
+            else
+            {
+                for (size_t i = 0; i < (size_t)minBlocksInfo->Dims; ++i)
+                {
+                    if (i)
+                    {
+                        start_ss << ",";
+                    }
+                    start_ss << info.Start[i];
+                }
             }
             info_map["Start"] = start_ss.str();
             std::stringstream count_ss;
-            for (size_t i = 0; i < (size_t)minBlocksInfo->Dims; ++i)
+            if (info.Count == nullptr)
             {
-                if (i != 0)
-                    count_ss << ",";
-                count_ss << info.Count[i];
+                count_ss << "0";
+            }
+            else
+            {
+                for (size_t i = 0; i < (size_t)minBlocksInfo->Dims; ++i)
+                {
+                    if (i)
+                    {
+                        count_ss << ",";
+                    }
+                    count_ss << info.Count[i];
+                }
             }
             info_map["Count"] = count_ss.str();
             info_map["WriterID"] = std::to_string(info.WriterID);
@@ -317,6 +340,7 @@ std::vector<std::map<std::string, std::string>> Engine::BlocksInfo(std::string &
             info_map["IsReverseDims"] = minBlocksInfo->IsReverseDims ? "True" : "False";
             rv.push_back(info_map);
         }
+        delete minBlocksInfo;
         return rv;
     }
     // Use the macro incantation to call the right instantiation of

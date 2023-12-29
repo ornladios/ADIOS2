@@ -330,6 +330,13 @@ add_subdirectory(source)
 add_subdirectory(bindings)
 
 #------------------------------------------------------------------------------#
+# Language Libraries
+#------------------------------------------------------------------------------#
+if(ADIOS2_HAVE_Python)
+  add_subdirectory(python)
+endif()
+
+#------------------------------------------------------------------------------#
 # Plugins
 #------------------------------------------------------------------------------#
 add_subdirectory(plugins)
@@ -341,6 +348,7 @@ option(ADIOS2_BUILD_EXAMPLES "Build examples" OFF)
 if(ADIOS2_BUILD_EXAMPLES)
   add_subdirectory(examples)
 endif()
+
 
 #------------------------------------------------------------------------------#
 # Testing

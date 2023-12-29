@@ -170,12 +170,13 @@ Attribute IO::DefineAttribute(const std::string &name, const std::vector<std::st
                                                          variableName, separator));
 }
 
-Attribute IO::InquireAttribute(const std::string &name)
+Attribute IO::InquireAttribute(const std::string &name, const std::string &variableName,
+                               const std::string separator)
 {
     helper::CheckForNullptr(m_IO, "for attribute " + name + ", in call to IO::InquireAttribute");
 
     core::AttributeBase *attribute = nullptr;
-    const DataType type(m_IO->InquireAttributeType(name));
+    const DataType type(m_IO->InquireAttributeType(name, variableName, separator));
 
     if (type == DataType::None)
     {
@@ -183,7 +184,7 @@ Attribute IO::InquireAttribute(const std::string &name)
 #define declare_template_instantiation(T)                                                          \
     else if (type == helper::GetDataType<T>())                                                     \
     {                                                                                              \
-        attribute = m_IO->InquireAttribute<T>(name);                                               \
+        attribute = m_IO->InquireAttribute<T>(name, variableName, separator);                      \
     }
     ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

@@ -12,7 +12,7 @@
 from adios2NPTypes import SmallTestData
 from mpi4py import MPI
 import numpy as np
-import adios2
+import adios2.bindings as adios2
 
 
 def check_object(adios2_object, name):

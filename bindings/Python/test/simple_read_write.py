@@ -1,4 +1,5 @@
-import adios2
+from adios2 import *
+import adios2.bindings as bindings
 
 import sys
 import unittest
@@ -10,30 +11,30 @@ class TestSimpleReadWrite(unittest.TestCase):
 
     def _write(self, ad, greeting):
         """write a string to a bp file"""
-        io = ad.DeclareIO("hello-world-writer")
-        var_greeting = io.DefineVariable("Greeting")
-        w = io.Open(DATA_FILENAME, adios2.Mode.Write)
-        w.BeginStep()
-        w.Put(var_greeting, greeting)
-        w.EndStep()
-        w.Close()
+        io = ad.declare_io("hello-world-writer")
+        var_greeting = io.define_variable("Greeting")
+        w = io.open(DATA_FILENAME, bindings.Mode.Write)
+        w.begin_step()
+        w.put(var_greeting, greeting)
+        w.end_step()
+        w.close()
         return 0
 
     def _read(self, ad):
         """read a string from to a bp file"""
-        io = ad.DeclareIO("hello-world-reader")
-        r = io.Open(DATA_FILENAME, adios2.Mode.Read)
-        r.BeginStep()
-        var_greeting = io.InquireVariable("Greeting")
-        message = r.Get(var_greeting)
-        r.EndStep()
-        r.Close()
+        io = ad.declare_io("hello-world-reader")
+        r = io.open(DATA_FILENAME, bindings.Mode.Read)
+        r.begin_step()
+        var_greeting = io.inquire_variable("Greeting")
+        message = r.get(var_greeting)
+        r.end_step()
+        r.close()
         return message
 
     def test_simple_read_write(self):
         """driver function"""
         print("ADIOS2 version {0}".format(adios2.__version__))
-        ad = adios2.ADIOS()
+        ad = adios2.Adios()
         greeting = "Hello World from ADIOS2"
         self._write(ad, greeting)
         message = self._read(ad)

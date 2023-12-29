@@ -80,6 +80,12 @@ size_t Variable::AddOperation(const Operator op, const Params &parameters)
     return m_VariableBase->AddOperation(op.m_Type, params);
 }
 
+size_t Variable::AddOperation(const std::string &op, const Params &parameters)
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::AddOperation");
+    return m_VariableBase->AddOperation(op, parameters);
+}
+
 std::vector<Operator> Variable::Operations() const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Operations");
@@ -92,6 +98,8 @@ std::vector<Operator> Variable::Operations() const
     }
     return operations;
 }
+
+void Variable::RemoveOperations() { m_VariableBase->RemoveOperations(); }
 
 std::string Variable::Name() const
 {
@@ -174,19 +182,25 @@ Dims Variable::Count() const
 size_t Variable::Steps() const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Steps");
-    return m_VariableBase->m_StepsCount;
+    return m_VariableBase->m_AvailableStepsCount;
 }
 
 size_t Variable::StepsStart() const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::StepsStart");
-    return m_VariableBase->m_StepsStart;
+    return m_VariableBase->m_AvailableStepsStart;
 }
 
 size_t Variable::BlockID() const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::BlockID");
     return m_VariableBase->m_BlockID;
+}
+
+size_t Variable::SingleValue() const
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::SingleValue");
+    return m_VariableBase->m_SingleValue;
 }
 
 // size_t Variable::AddOperation(const Operator op, const Params &parameters) {}

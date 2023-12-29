@@ -10,7 +10,7 @@
 import unittest
 import numpy as np
 from mpi4py import MPI
-import adios2
+import adios2.bindings as adios2
 
 TESTDATA_FILENAME = "steps_int32.bp"
 

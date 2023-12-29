@@ -10,7 +10,7 @@
 
 
 from adios2NPTypes import SmallTestData
-import adios2
+import adios2.bindings as adios2
 
 
 # Test data

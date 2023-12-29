@@ -11,4 +11,4 @@ then
   cd ${SOURCE_DIR}
 fi
 
-exec flake8 --config=flake8.cfg .
+exec flake8 .
