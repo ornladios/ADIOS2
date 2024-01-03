@@ -15,23 +15,23 @@
 
 /* random integer from {minv, minv+1, ..., maxv}
  including minv and maxv */
-long long int get_random(int minv, int maxv)
+size_t get_random(int minv, int maxv, int rank)
 {
-    long long int n;
+    size_t n;
     time_t t;
     /* Intializes random number generator */
-    srand((unsigned)time(&t));
-    n = (rand() % (maxv - minv + 1)) + minv;
+    srand((unsigned)time(&t) + rank);
+    n = (size_t)((rand() % (maxv - minv + 1)) + minv);
     return n;
 }
 /* gather the local sizes of arrays and sum them up
  so that each process knows the global shape
  and its own offset in the global space */
-void gather_decomp_1d(long long int *mysize, long long int *myshape, long long int *myoffset)
+void gather_decomp_1d(size_t *mysize, size_t *myshape, size_t *myoffset)
 {
-    long long int *sizes;
+    size_t *sizes;
     int i;
-    sizes = malloc(sizeof(long long int) * (size_t)nproc);
+    sizes = malloc(sizeof(size_t) * (size_t)nproc);
     MPI_Allgather(mysize, 1, MPI_LONG_LONG, sizes, 1, MPI_LONG_LONG, app_comm);
 
     *myshape = 0;
@@ -49,14 +49,14 @@ void gather_decomp_1d(long long int *mysize, long long int *myshape, long long i
     return;
 }
 
-void decomp_1d(long long int globalsize, long long int *myoffset, long long int *mysize)
+void decomp_1d(size_t *globalsize, size_t *myoffset, size_t *mysize)
 {
-    long long int rem;
-    *mysize = globalsize / nproc;
-    rem = globalsize - (nproc * *mysize);
+    size_t rem;
+    *mysize = *globalsize / nproc;
+    rem = *globalsize - (nproc * *mysize);
     if (rank < rem)
     {
-        mysize = mysize + 1;
+        *mysize = *mysize + 1;
         *myoffset = rank * *mysize;
     }
     else
