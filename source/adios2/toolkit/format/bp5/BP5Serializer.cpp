@@ -468,6 +468,8 @@ void BP5Serializer::AddDoubleArrayField(FMFieldList *FieldP, int *CountP, const 
 void BP5Serializer::ValidateWriterRec(BP5Serializer::BP5WriterRec Rec, void *Variable)
 {
     core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
+
+    Rec->Key = Variable; // reset this, because Variable might have been destroyed and recreated
     if ((VB->m_Operations.size() == 0) && Rec->OperatorType)
     {
         // removed operator case
