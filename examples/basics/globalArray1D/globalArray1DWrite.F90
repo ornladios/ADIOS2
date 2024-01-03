@@ -85,7 +85,7 @@ subroutine writer
             "  bpls -la adios2-global-array-1d-f.bp ", &
             "GlobalArray -d -t -n ", fixed_shape(1)
         write (*,'(a)') &
-            "  mpirun -n 2 ./adios2-global-array-1d-read-f "
+            "  mpirun -n 2 ./adios2_basics_globalArray1DRead_f "
     endif
 end subroutine writer
 
