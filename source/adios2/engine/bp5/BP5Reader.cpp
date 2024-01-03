@@ -349,16 +349,182 @@ void BP5Reader::PerformRemoteGets()
     // TP startGenerate = NOW();
     auto GetRequests = m_BP5Deserializer->PendingGetRequests;
     std::vector<Remote::GetHandle> handles;
+
+    #ifdef ADIOS2_HAVE_KVCACHE // open kv cache connection
+    struct RequestInfo
+    {
+        size_t ReqSeq;
+        DataType varType;
+        size_t ReqCount;
+        std::string CacheKey;
+        size_t TypeSize;
+        Dims Count;
+        Dims Start;
+        void *Data;
+    };
+    std::vector<RequestInfo> getRequestsInfo;
+    
+    if (getenv("useKVCache")) 
+    {
+        m_KVCacheCommon.openConnection();
+
+        std::vector<RequestInfo> getRequestsInfo;
+    }
+    #endif
+
+    int req_seq = -1;
+    std::vector<Remote::GetHandle> handles;
     for (auto &Req : GetRequests)
     {
-        auto handle =
-            m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count, Req.Start, Req.Data);
+        req_seq++;
+        #ifdef ADIOS2_HAVE_KVCACHE // get data from cache
+        if (getenv("useKVCache"))
+        {
+            const DataType varType = m_IO.InquireVariableType(Req.VarName);
+            QueryBox targetBox(Req.Start, Req.Count);
+            size_t numOfElements = targetBox.size();
+            std::string keyPrefix = m_KVCacheCommon.keyPrefix(Req.VarName, Req.RelStep, Req.BlockID);
+            std::string targetKey = m_KVCacheCommon.keyComposition(keyPrefix, Req.Start, Req.Count);
+
+            // Exact Match: check if targetKey exists
+            if (m_KVCacheCommon.exists(targetKey))
+            {
+#define declare_type_get(T)                                                                        \
+    if (varType == helper::GetDataType<T>())                                                       \
+    {                                                                                              \
+        std::vector<T> reqData;                                                                    \
+        reqData.resize(numOfElements);                                                             \
+        m_KVCacheCommon.get(targetKey, reqData);                                                   \
+        std::memcpy(Req.Data, reqData.data(), numOfElements * sizeof(T));                          \
+    }
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_get)
+#undef declare_type_get
+
+            } else {
+                int max_depth = 999;
+                std::set<std::string> samePrefixKeys;
+                m_KVCacheCommon.keyPrefixExistence(keyPrefix, samePrefixKeys);
+                std::vector<QueryBox> regularBoxes;
+                std::vector<QueryBox> cachedBoxes;
+                std::vector<std::string> cachedKeys;
+
+                if (getenv("maxDepth"))
+                {
+                    max_depth = std::stoi(getenv("maxDepth"));
+                }
+
+                /*
+                std::cout << "Setting max_depth is: " << max_depth << std::endl;
+
+                // print the size of samePrefixKeys
+                std::cout << "Same prefix keys size: " << samePrefixKeys.size() << std::endl;
+                // print out samePrefixKeys
+                for (auto &key : samePrefixKeys)
+                {
+                    std::cout << "Same prefix keys: " << key << std::endl;
+                }
+                */
+
+                if (samePrefixKeys.size() > 0)
+                {   
+                    targetBox.getMaxInteractBox(samePrefixKeys, max_depth, 0, regularBoxes, cachedBoxes, cachedKeys);
+                } else {
+                    regularBoxes.push_back(targetBox);
+                }
+
+                /*
+                // print out regularBoxes and cachedBoxes size
+                std::cout << "Going to retrieve regular boxes size: " << regularBoxes.size() << std::endl;
+                std::cout << "Already cached boxes size: " << cachedBoxes.size() << std::endl;
+
+                // print out regularBoxes and cachedBoxes by toString
+                for (int i = 0; i < regularBoxes.size(); i++)
+                {
+                    std::cout << "Regular box " << i << " : " << regularBoxes[i].toString() << " size: " << regularBoxes[i].size() << std::endl;
+                }
+
+                for (int i = 0; i < cachedBoxes.size(); i++)
+                {
+                    std::cout << "Cached box " << i << " : " << cachedBoxes[i].toString() << " size: " << cachedBoxes[i].size() << std::endl;
+                }
+                */
+
+               std::cout << "Going to retrieve "<< regularBoxes.size() " boxes from remote server, and " << cachedBoxes.size() << " boxes from cache" << std::endl;
+
+
+#define declare_type_full_contain(T)                                                               \
+    if (varType == helper::GetDataType<T>())                                                       \
+    {                                                                                              \
+        const int typeSize = sizeof(T);                                                            \
+        for (auto &box : regularBoxes){                                                            \
+            RequestInfo ReqInfo;                                                                   \
+            ReqInfo.ReqSeq = req_seq;                                                              \
+            ReqInfo.varType = varType;                                                             \
+            ReqInfo.ReqCount = box.size();                                                         \
+            ReqInfo.CacheKey = m_KVCacheCommon.keyComposition(keyPrefix, box.start, box.count);    \
+            ReqInfo.TypeSize = typeSize;                                                                                  \
+            ReqInfo.Count = box.count;                                                                                    \
+            ReqInfo.Start = box.start;                                                                                    \
+            ReqInfo.Data = malloc(box.size() * sizeof(T));                                                                \
+            auto handle = m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, box.count, box.start, ReqInfo.Data);       \
+            handles.push_back(handle);                                                                                    \
+            getRequestsInfo.push_back(ReqInfo);                                                                           \
+        }                                                                                          \
+        for (int i = 0; i < cachedBoxes.size(); i++){                                              \
+            std::string boxKey = cachedKeys[i];                                                    \
+            QueryBox box(boxKey);                                                                  \
+            std::vector<T> srcData;                                                                \
+            srcData.resize(box.size());                                                            \
+            m_KVCacheCommon.get(boxKey, srcData);                                                  \
+            helper::NdCopy(reinterpret_cast<char*>(srcData.data()), helper::CoreDims(cachedBoxes[i].start), cachedBoxes[i].count, true, false, reinterpret_cast<char*>(Req.Data), Req.Start, Req.Count, true, false, typeSize); \
+        }                                                                                          \
+    }
+ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_full_contain)
+#undef declare_type_full_contain
+            }
+
+            continue;
+        }
+        #endif
+
+        auto handle = m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count, Req.Start, Req.Data);
         handles.push_back(handle);
     }
+
+    std::size_t handle_seq = -1;
     for (auto &handle : handles)
     {
+        handle_seq++;
         m_Remote->WaitForGet(handle);
+        #ifdef ADIOS2_HAVE_KVCACHE // close cache connection
+        if (getenv("useKVCache"))
+        {
+            auto &ReqInfo = getRequestsInfo[handle_seq];
+            auto &Req = GetRequests[ReqInfo.ReqSeq];
+            helper::NdCopy(reinterpret_cast<char*>(ReqInfo.Data), helper::CoreDims(ReqInfo.Start), ReqInfo.Count, true, false, reinterpret_cast<char*>(Req.Data), Req.Start, Req.Count, true, false, ReqInfo.TypeSize);
+
+            #define declare_type_set(T)                                                                        \
+                if (ReqInfo.varType == helper::GetDataType<T>())                                               \
+                {                                                                                              \
+                    std::vector<T> reqData;                                                                    \
+                    reqData.resize(ReqInfo.ReqCount);                                                          \
+                    std::memcpy(reqData.data(), Req.Data, ReqInfo.ReqCount * sizeof(T));                       \
+                    m_KVCacheCommon.set(ReqInfo.CacheKey, reqData);                                            \
+                }
+                ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_set)
+            #undef declare_type_set
+            
+            free(ReqInfo.Data);
+        }
+        #endif
     }
+
+    #ifdef ADIOS2_HAVE_KVCACHE // close cache connection
+    if (getenv("useKVCache"))
+    {
+        m_KVCacheCommon.closeConnection();
+    }
+    #endif
 }
 
 void BP5Reader::PerformLocalGets()

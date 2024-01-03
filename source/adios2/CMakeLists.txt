@@ -247,7 +247,20 @@ if (ADIOS2_HAVE_SST)
   target_link_libraries(adios2_core PRIVATE adios2::thirdparty::EVPath)
   add_subdirectory(toolkit/remote)
 endif()
-   
+
+if (ADIOS2_HAVE_KVCACHE)
+  target_sources(adios2_core PRIVATE  toolkit/cache/KVCacheCommon.h
+    toolkit/cache/KVCacheCommon.tcc)
+  target_link_libraries(adios2_core PRIVATE hiredis::hiredis)
+
+  # Ensure the rpath is set correctly
+  # message(STATUS "PACKAGE_PREFIX_DIR: ${PACKAGE_PREFIX_DIR}")
+  set_target_properties(adios2_core PROPERTIES
+    BUILD_RPATH "$ORIGIN:${PACKAGE_PREFIX_DIR}/lib"
+    INSTALL_RPATH "$ORIGIN:${PACKAGE_PREFIX_DIR}/lib"
+  )
+endif ()
+
 if(ADIOS2_HAVE_Campaign)
   target_sources(adios2_core PRIVATE 
           engine/campaign/CampaignReader.cpp 

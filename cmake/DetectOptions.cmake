@@ -606,6 +606,21 @@ elseif(ADIOS2_USE_Campaign)
   endif()
 endif()  
 
+# KVCache
+if(ADIOS2_USE_Cache STREQUAL AUTO)
+    find_package(hiredis REQUIRED)
+    if (hiredis_FOUND)
+      message(STATUS "hiredis found. Turn on KVCache")
+      set(ADIOS2_HAVE_KVCACHE TRUE)
+    endif()
+elseif(ADIOS2_USE_Cache)
+    find_package(hiredis REQUIRED)
+    if (hiredis_FOUND)
+      message(STATUS "hiredis found. Turn on KVCache")
+      set(ADIOS2_HAVE_KVCACHE TRUE)
+    endif()
+endif()
+
 # Multithreading
 find_package(Threads REQUIRED)
 

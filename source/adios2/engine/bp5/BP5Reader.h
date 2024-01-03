@@ -20,6 +20,10 @@
 #include "adios2/toolkit/remote/Remote.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
+#ifdef ADIOS2_HAVE_KVCACHE
+#include "adios2/toolkit/cache/KVCacheCommon.h"
+#endif
+
 #include <chrono>
 #include <map>
 #include <vector>
@@ -98,7 +102,9 @@ private:
     std::unique_ptr<Remote> m_Remote;
     bool m_WriterIsActive = true;
     adios2::profiling::JSONProfiler m_JSONProfiler;
-
+    #ifdef ADIOS2_HAVE_KVCACHE
+    KVCacheCommon m_KVCacheCommon;
+    #endif
     /** used for per-step reads, TODO: to be moved to BP5Deserializer */
     size_t m_CurrentStep = 0;
     size_t m_StepsCount = 0;
