@@ -14,7 +14,6 @@ set(MEMORYCHECK_SUPPRESSIONS_FILE ${CMAKE_SOURCE_DIR}/scripts/dashboard/nightly/
 
 # Ignore tests that are currently failing, remove tests here as they are fixed
 list(APPEND CTEST_CUSTOM_MEMCHECK_IGNORE 
-Engine.BP.BPWriteReadAsStreamTestADIOS2.ReaderWriterDefineVariable.BP5.Serial
 Remote.BPWriteReadADIOS2stdio.GetRemote
 Remote.BPWriteMemorySelectionRead.GetRemote
 Remote.BPWriteMemorySelectionRead.FileRemote

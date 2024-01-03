@@ -167,7 +167,7 @@ private:
         FMFormat AttributeFormat = NULL;
         void *AttributeData = NULL;
         int AttributeSize = 0;
-        std::unordered_map<void *, _BP5WriterRec> RecMap;
+        std::unordered_map<std::string, _BP5WriterRec> RecNameMap;
     };
 
     FMFormat GenericAttributeFormat = NULL;

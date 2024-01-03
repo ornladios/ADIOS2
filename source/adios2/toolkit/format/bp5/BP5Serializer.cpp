@@ -37,14 +37,14 @@ namespace format
 BP5Serializer::BP5Serializer() { Init(); }
 BP5Serializer::~BP5Serializer()
 {
-    if (!Info.RecMap.empty())
+    if (!Info.RecNameMap.empty())
     {
-        for (auto &rec : Info.RecMap)
+        for (auto &rec : Info.RecNameMap)
         {
             if (rec.second.OperatorType)
                 free(rec.second.OperatorType);
         }
-        Info.RecMap.clear();
+        Info.RecNameMap.clear();
     }
     if (Info.MetaFieldCount)
         free_FMfield_list(Info.MetaFields);
@@ -82,12 +82,13 @@ void BP5Serializer::Init()
     ((BP5MetadataInfoStruct *)MetadataBuf)->BitField = (std::size_t *)malloc(sizeof(size_t));
     ((BP5MetadataInfoStruct *)MetadataBuf)->DataBlockSize = 0;
 }
-BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Key) const
+BP5Serializer::BP5WriterRec BP5Serializer::LookupWriterRec(void *Variable) const
 {
-    auto it = Info.RecMap.find(Key);
-    if (it != Info.RecMap.end())
+    core::VariableBase *VB = static_cast<core::VariableBase *>(Variable);
+    auto it2 = Info.RecNameMap.find(VB->m_Name);
+    if (it2 != Info.RecNameMap.end())
     {
-        return const_cast<BP5WriterRec>(&(it->second));
+        return const_cast<BP5WriterRec>(&(it2->second));
     }
     return NULL;
 }
@@ -505,7 +506,7 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
     core::VariableDerived *VD = dynamic_cast<core::VariableDerived *>(VB);
 #endif
-    auto obj = Info.RecMap.insert(std::make_pair(Variable, _BP5WriterRec()));
+    auto obj = Info.RecNameMap.insert(std::make_pair(VB->m_Name, _BP5WriterRec()));
     BP5WriterRec Rec = &obj.first->second;
     if (Type == DataType::String)
         ElemSize = sizeof(char *);
@@ -1250,7 +1251,7 @@ BufferV *BP5Serializer::ReinitStepData(BufferV *DataBuffer, bool forceCopyDeferr
 
 void BP5Serializer::CollectFinalShapeValues()
 {
-    for (auto it : Info.RecMap)
+    for (auto it : Info.RecNameMap)
     {
         BP5WriterRec Rec = &it.second;
         if (Rec->Shape == ShapeID::GlobalArray)
