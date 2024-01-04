@@ -1988,8 +1988,6 @@ BP5Deserializer::~BP5Deserializer()
             free(VarRec.second->Operator);
         if (VarRec.second->Def)
             delete VarRec.second->Def;
-        //        if (VarRec.second->ReaderDef)
-        //            delete VarRec.second->ReaderDef;
         delete VarRec.second;
     }
     if (m_FreeableMBA)
