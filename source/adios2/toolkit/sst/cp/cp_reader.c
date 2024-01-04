@@ -1221,6 +1221,7 @@ static void waitForMetadataWithTimeout(SstStream Stream, float timeout_secs)
         if (timercmp(&now, &end, >))
         {
             CP_verbose(Stream, PerRankVerbose, "Returning from wait after timing out\n");
+            free(TimeoutTask);
             return;
         }
         /* wait until we get the timestep metadata or something else changes */
