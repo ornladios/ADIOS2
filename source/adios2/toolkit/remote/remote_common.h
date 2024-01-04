@@ -95,6 +95,7 @@ typedef struct _CloseFileMsg
 typedef struct _KillServerMsg
 {
     int KillResponseCondition;
+    size_t unused; // small messages call stack addressing issues?
 } *KillServerMsg;
 
 typedef struct _KillResponseMsg
