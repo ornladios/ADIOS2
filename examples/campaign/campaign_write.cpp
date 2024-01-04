@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
             writerAll.Put(varYAll, y.data());
             writerAll.Put(varZAll, z.data());
             writerAll.Put(varStepAll, step);
-            writerAll.Put(varPhysStepAll, physicalStep);
+            writerAll.Put(varPhysStepAll, (size_t)physicalStep);
             writerAll.Put(varPhysTimeAll, physicalTime);
 
             writerAll.EndStep();
@@ -301,7 +301,7 @@ int main(int argc, char *argv[])
                 ioStep.Open("dataStep" + std::to_string(step) + ".bp", adios2::Mode::Write);
             writerStep.Put(varZStep, z.data());
             writerStep.Put(varStepStep, step);
-            writerStep.Put(varPhysStepStep, physicalStep);
+            writerStep.Put(varPhysStepStep, (size_t)physicalStep);
             writerStep.Put(varPhysTimeStep, physicalTime);
             writerStep.Close();
 
@@ -334,7 +334,7 @@ int main(int argc, char *argv[])
                     ioNew.Open("dataNew" + std::to_string(step) + ".bp", adios2::Mode::Write);
                 writerNew.Put(varYNew, y.data());
                 writerNew.Put(varStepNew, step);
-                writerNew.Put(varPhysStepNew, physicalStep);
+                writerNew.Put(varPhysStepNew, (size_t)physicalStep);
                 writerNew.Put(varPhysTimeNew, physicalTime);
                 writerNew.Close();
             }
@@ -379,7 +379,7 @@ int main(int argc, char *argv[])
             adios2::Engine writerFinal = ioFinal.Open("dataFinal.bp", mode);
             writerFinal.Put(varXFinal, x.data());
             writerFinal.Put(varStepFinal, startStep + nSteps - 1);
-            writerFinal.Put(varPhysStepFinal, physicalStep);
+            writerFinal.Put(varPhysStepFinal, (size_t)physicalStep);
             writerFinal.Put(varPhysTimeFinal, physicalTime);
             writerFinal.Close();
         }
