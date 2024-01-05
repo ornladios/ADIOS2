@@ -37,6 +37,8 @@ namespace format
 BP5Serializer::BP5Serializer() { Init(); }
 BP5Serializer::~BP5Serializer()
 {
+    if (CurDataBuffer)
+        delete CurDataBuffer;
     if (!Info.RecNameMap.empty())
     {
         for (auto &rec : Info.RecNameMap)
@@ -553,6 +555,8 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
         struct_list[0].struct_size = (int)SD->StructSize();
 
         FMFormat Format = register_data_format(Info.LocalFMContext, &struct_list[0]);
+        free_FMfield_list(List);
+        free((void *)struct_list[0].format_name);
 
         int IDLength;
         char *ServerID = get_server_ID_FMformat(Format, &IDLength);
@@ -639,6 +643,8 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
         // Changing the formats renders these invalid
         Info.MetaFormat = NULL;
     }
+    if (TextStructID)
+        free((void *)TextStructID);
     Info.RecCount++;
     return Rec;
 }
