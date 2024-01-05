@@ -85,12 +85,8 @@ if __name__ == "__main__":
     myrank = mpi.rank["app"]
 
     # Read the data from this object
-    if not args.nompi:
-        fr = Stream(args.instream, "r", mpi.comm_app, config_file="adios2.xml",
-                    io_name="PDFAnalysisOutput")
-    else:
-        fr = Stream(args.instream, "r", config_file="adios2.xml",
-                    io_name="PDFAnalysisOutput")
+    fr = Stream(args.instream, "r", comm=mpi.comm_app, config_file="adios2.xml",
+                io_name="PDFAnalysisOutput")
 
     # Read through the steps, one at a time
     plot_step = 0

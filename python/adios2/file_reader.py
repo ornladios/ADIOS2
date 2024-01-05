@@ -12,9 +12,14 @@ class FileReader(Stream):
     def __repr__(self):
         return f"<adios.file named {self._io_name}>"
 
-    def __init__(self, path, comm=None, *, engine_type=None, config_file=None, io_name=None):
+    def __init__(self, path, *, comm=None, engine_type=None, config_file=None, io_name=None):
         super().__init__(
-            path, "rra", comm, engine_type=engine_type, config_file=config_file, io_name=io_name
+            path,
+            "rra",
+            comm=comm,
+            engine_type=engine_type,
+            config_file=config_file,
+            io_name=io_name,
         )
 
     def variables(self):

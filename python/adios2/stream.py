@@ -30,7 +30,7 @@ class Stream:
     """High level implementation of the Stream class from the core API"""
 
     def __init__(
-        self, path, mode="r", comm=None, *, engine_type=None, config_file=None, io_name=None
+        self, path, mode="r", *, comm=None, engine_type=None, config_file=None, io_name=None
     ):
 
         # pylint: disable=R0912 # Too many branches

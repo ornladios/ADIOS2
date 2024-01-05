@@ -132,7 +132,7 @@ if __name__ == "__main__":
     myrank = mpi.rank["app"]
 
     # Read the data from this object
-    fr = Stream(args.instream, "r", mpi.comm_app, config_file="adios2.xml",
+    fr = Stream(args.instream, "r", comm=mpi.comm_app, config_file="adios2.xml",
                 io_name="SimulationOutput")
 
     if args.outfile.endswith(".bp"):
