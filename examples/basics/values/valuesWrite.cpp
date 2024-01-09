@@ -19,6 +19,7 @@
  */
 
 #include <iostream>
+#include <string>
 #include <vector>
 
 #include <adios2.h>
@@ -80,6 +81,8 @@ int main(int argc, char *argv[])
 
         // 2. Global value, same value across processes, varying value over time
         adios2::Variable<int> varStep = io.DefineVariable<int>("Step");
+        adios2::Variable<std::string> varGlobalString =
+            io.DefineVariable<std::string>("GlobalString");
 
         // 3. Local value, varying across processes, constant over time
         adios2::Variable<int> varProcessID =
@@ -110,6 +113,11 @@ int main(int argc, char *argv[])
                     writer.Put<int>(varNproc, nproc);
                 }
                 writer.Put<int>(varStep, step);
+
+                std::string str = "This is step " + std::to_string(step);
+                // str will go out of scope before EndStep(), so we must use
+                // Sync mode in Put()
+                writer.Put<std::string>(varGlobalString, str, adios2::Mode::Sync);
             }
 
             // 3. and 4. Writing a local value on every process. Will be shown

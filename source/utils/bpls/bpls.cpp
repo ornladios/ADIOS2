@@ -1144,21 +1144,27 @@ int printVariableInfo(core::Engine *fp, core::IO *io, core::Variable<T> *variabl
             if (timestep == false)
             {
                 MinMaxStruct MinMax;
-                if (fp->VariableMinMax(*variable, DefaultSizeT, MinMax))
+                try
                 {
-                    fprintf(outf, " = ");
-                    print_data(&MinMax.MinUnion, 0, adiosvartype, false);
-                    fprintf(outf, " / ");
-                    print_data(&MinMax.MaxUnion, 0, adiosvartype, false);
+                    if (fp->VariableMinMax(*variable, DefaultSizeT, MinMax))
+                    {
+                        fprintf(outf, " = ");
+                        print_data(&MinMax.MinUnion, 0, adiosvartype, false);
+                        fprintf(outf, " / ");
+                        print_data(&MinMax.MaxUnion, 0, adiosvartype, false);
+                    }
+                    else
+                    {
+                        fprintf(outf, " = ");
+                        print_data(&variable->m_Min, 0, adiosvartype, false);
+                        fprintf(outf, " / ");
+                        print_data(&variable->m_Max, 0, adiosvartype, false);
+                    }
+                    // fprintf(outf," {MIN / MAX} ");
                 }
-                else
+                catch (std::logic_error &)
                 {
-                    fprintf(outf, " = ");
-                    print_data(&variable->m_Min, 0, adiosvartype, false);
-                    fprintf(outf, " / ");
-                    print_data(&variable->m_Max, 0, adiosvartype, false);
                 }
-                // fprintf(outf," {MIN / MAX} ");
             }
 #if 0
             else
