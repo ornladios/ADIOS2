@@ -7,57 +7,67 @@
 #include "decomp.h"
 #include "mpivars.h"
 #include <adios2_c.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 void reader(adios2_adios *adios)
 {
     int step;
-    float *g;
+    float *g = NULL;
     const char *streamname = "adios2-global-array-1d-c.bp";
     adios2_step_status err;
 
-    long long int fixed_shape = 0, fixed_start = 0, fixed_count = 0;
+    size_t shape[1], start[1], count[1];
 
     adios2_io *io = adios2_declare_io(adios, "input");
-    size_t shape[1];
-    shape[0] = (size_t)fixed_shape;
 
     adios2_engine *engine = adios2_open(io, streamname, adios2_mode_read);
     step = 0;
-    do
+    while (1)
     {
         adios2_begin_step(engine, adios2_step_mode_read, 10.0, &err);
+        if (err == adios2_step_status_end_of_stream)
+        {
+            break;
+        }
+        if (err != adios2_step_status_ok)
+        {
+            printf("Unexpected status when calling adios2_begin_step() for step %d", step);
+            break;
+        }
         adios2_variable *var_g = adios2_inquire_variable(io, "GlobalArray");
         if (step == 0)
         {
             /* fixed_shape is allocated in the next call*/
             adios2_variable_shape(shape, var_g);
-            fixed_shape = (long long int)shape[0];
-            decomp_1d(fixed_shape, &fixed_start, &fixed_count);
-            g = malloc((size_t)fixed_count * sizeof(float));
+            decomp_1d(shape, start, count);
+            g = malloc(count[0] * sizeof(float));
 
-            printf("Read plan rank = %d global shape = %lld local count = %lld "
-                   "offset = %lld\n",
-                   rank, fixed_shape, fixed_count, fixed_start);
+            printf("Read plan rank = %d global shape = %zu local count = %zu offset = %zu\n", rank,
+                   shape[0], count[0], start[0]);
         }
+
+        adios2_variable *var = adios2_inquire_variable(io, "GlobalArray");
+        if (!var)
+        {
+            printf("ERROR: Variable 'GlobalArray' was not found in step %d", step);
+            break;
+        }
+
+        adios2_set_selection(var, 1, start, count);
+        // Initiate reading data in default/deferred mode: data is available after end_step
+        adios2_get(engine, var, g, adios2_mode_deferred);
+
         adios2_end_step(engine);
         step++;
-    } while (err != adios2_step_status_end_of_stream);
+    }
     // Close the output
     adios2_close(engine);
-    free(g);
 
-    if (rank == 0)
+    if (g != NULL)
     {
-        printf("Try the following: \n");
-        printf("  bpls -la adios2-global-array-1d-c.bp GlobalArray -d -n "
-               "%lld \n",
-               fixed_shape);
-        printf("  bpls -la adios2-global-array-1d-c.bp GlobalArray -d -t -n "
-               "%lld \n ",
-               fixed_shape);
-        printf("  mpirun -n 2 ./adios2-global-array-1d-read-c \n");
+        free(g);
     }
 }
 
