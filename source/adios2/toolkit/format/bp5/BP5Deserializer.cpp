@@ -1577,13 +1577,23 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                         throw std::runtime_error("No data exists for this variable");
                     if (Req->MemSpace != MemorySpace::Host)
                         RR.DirectToAppMemory = false;
+                    else if (VarRec->Operator != NULL)
+                        RR.DirectToAppMemory = false;
                     else
                         RR.DirectToAppMemory =
                             IsContiguousTransfer(Req, &writer_meta_base->Offsets[StartDim],
                                                  &writer_meta_base->Count[StartDim]);
-                    RR.ReadLength =
-                        helper::GetDataTypeSize(VarRec->Type) *
-                        CalcBlockLength(VarRec->DimCount, &writer_meta_base->Count[StartDim]);
+                    if (VarRec->Operator)
+                    {
+                        // have to have the whole thing
+                        RR.ReadLength = writer_meta_base->DataBlockSize[NeededBlock];
+                    }
+                    else
+                    {
+                        RR.ReadLength =
+                            helper::GetDataTypeSize(VarRec->Type) *
+                            CalcBlockLength(VarRec->DimCount, &writer_meta_base->Count[StartDim]);
+                    }
                     RR.OffsetInBlock = 0;
                     if (RR.DirectToAppMemory)
                     {
