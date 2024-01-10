@@ -17,6 +17,7 @@
 #include <iostream>
 
 #include <nlohmann_json.hpp>
+#include <sqlite3.h>
 
 namespace adios2
 {
@@ -25,20 +26,55 @@ namespace core
 namespace engine
 {
 
-static std::string CMapToJson(const CampaignRecordMap &cmap, const int rank, const std::string name)
+int CMapToSqlite(const CampaignRecordMap &cmap, const int rank, std::string name)
 {
-    nlohmann::json j = nlohmann::json::array();
+    sqlite3 *db;
+    int rc;
+    char *zErrMsg = 0;
+    std::string sqlcmd;
+    std::string db_name = name + ".db";
+    rc = sqlite3_open(db_name.c_str(), &db);
+
+    if (rc != SQLITE_OK)
+    {
+        std::cout << "SQL error: " << zErrMsg << std::endl;
+        std::string m(zErrMsg);
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "WriteCampaignData",
+                                             "SQL error on writing records:");
+        sqlite3_free(zErrMsg);
+    }
+    sqlcmd =
+        "CREATE TABLE table1 (name TEXT,varying_deltas INT,delta_step INT, delta_time REAL);\n";
+    sqlcmd += "INSERT INTO table1 VALUES\n";
+
     for (auto &r : cmap)
     {
-        nlohmann::json c = nlohmann::json{{"name", r.first},
-                                          {"varying_deltas", r.second.varying_deltas},
-                                          {"delta_step", r.second.delta_step},
-                                          {"delta_time", r.second.delta_time},
-                                          {"steps", r.second.steps},
-                                          {"times", r.second.times}};
-        j.push_back(c);
+        // vectors r.second.steps and  std::to_string(r.second.times) should go to another table
+        // check for nans
+        double delta_time = 0.0;
+        if (!std::isnan(r.second.delta_time))
+            delta_time = r.second.delta_time;
+        size_t delta_step = 0;
+        if (!std::isnan(r.second.delta_step))
+            delta_time = r.second.delta_step;
+        sqlcmd += "   ('" + r.first + "'" + "," + std::to_string(r.second.varying_deltas) + "," +
+                  std::to_string(delta_step) + "," + std::to_string(delta_time) + "),\n";
     }
-    return nlohmann::to_string(j);
+    sqlcmd.replace(sqlcmd.size() - 2, 1, ";");
+    std::cout << sqlcmd << std::endl;
+    rc = sqlite3_exec(db, sqlcmd.c_str(), 0, 0, &zErrMsg);
+    if (rc != SQLITE_OK)
+    {
+        std::cout << "SQL error: " << zErrMsg << std::endl;
+        std::string m(zErrMsg);
+        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "WriteCampaignData",
+                                             "SQL error on writing records:");
+        sqlite3_free(zErrMsg);
+    }
+
+    sqlite3_close(db);
+
+    return 0;
 }
 
 CampaignManager::CampaignManager(adios2::helper::Comm &comm)
@@ -65,7 +101,7 @@ CampaignManager::~CampaignManager()
 
 void CampaignManager::Open(const std::string &name)
 {
-    m_Name = m_CampaignDir + "/" + name + "_" + std::to_string(m_WriterRank) + ".json";
+    m_Name = m_CampaignDir + "/" + name + "_" + std::to_string(m_WriterRank);
     if (m_Verbosity == 5)
     {
         std::cout << "Campaign Manager " << m_WriterRank << " Open(" << m_Name << ")\n";
@@ -118,11 +154,12 @@ void CampaignManager::Close()
 {
     if (!cmap.empty())
     {
-        m_Output.open(m_Name, std::ofstream::out);
-        m_Opened = true;
-        m_Output << std::setw(4) << CMapToJson(cmap, m_WriterRank, m_Name) << std::endl;
-        m_Output.close();
-        m_Opened = false;
+        CMapToSqlite(cmap, m_WriterRank, m_Name);
+//        m_Output.open(m_Name, std::ofstream::out);
+//        m_Opened = true;
+//        m_Output << std::setw(4) << CMapToJson(cmap, m_WriterRank, m_Name) << std::endl;
+//        m_Output.close();
+//        m_Opened = false;
     }
 }
 
