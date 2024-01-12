@@ -14,7 +14,7 @@ def Locate(rank, nproc, datasize):
 class MPISetup(object):
     readargs = []
     size = 1
-    rank = {"app": 0, "x": 0, "y": 0}
+    rank = {"app": 0, "x": 0, "y": 0, "z": 0}
 
     def __init__(self, args, appID):
 
@@ -56,6 +56,7 @@ class MPISetup(object):
                 raise ValueError("nx must = 1 without MPI")
             if self.ny != 1:
                 raise ValueError("ny must = 1 without MPI")
+            self.comm_app = None
 
     #            self.readargs.extend([args.xmlfile, "heat"])
 
