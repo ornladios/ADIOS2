@@ -51,7 +51,7 @@ def compress_png(compression_level):
     count2D = [Nx, Ny]
 
     # writer
-    with Stream(fname, "w", comm) as s:
+    with Stream(fname, "w", comm=comm) as s:
         for step in s.steps(NSteps):
             s.write(
                 "u8",
@@ -89,7 +89,7 @@ def compress_png(compression_level):
             )
 
     # reader
-    with Stream(fname, "r", comm) as s:
+    with Stream(fname, "r", comm=comm) as s:
         for step in s.steps():
             in_u8s = step.read("u8", start3D, count3D)
             in_u32s = step.read("u32", start2D, count2D)
