@@ -43,25 +43,7 @@ int CMapToSqlite(const CampaignRecordMap &cmap, const int rank, std::string name
                                              "SQL error on writing records:");
         sqlite3_free(zErrMsg);
     }
-    sqlcmd =
-        "CREATE TABLE table1 (name TEXT,varying_deltas INT,delta_step INT, delta_time REAL);\n";
-    sqlcmd += "INSERT INTO table1 VALUES\n";
-
-    for (auto &r : cmap)
-    {
-        // vectors r.second.steps and  std::to_string(r.second.times) should go to another table
-        // check for nans
-        double delta_time = 0.0;
-        if (!std::isnan(r.second.delta_time))
-            delta_time = r.second.delta_time;
-        size_t delta_step = 0;
-        if (!std::isnan(r.second.delta_step))
-            delta_time = r.second.delta_step;
-        sqlcmd += "   ('" + r.first + "'" + "," + std::to_string(r.second.varying_deltas) + "," +
-                  std::to_string(delta_step) + "," + std::to_string(delta_time) + "),\n";
-    }
-    sqlcmd.replace(sqlcmd.size() - 2, 1, ";");
-    std::cout << sqlcmd << std::endl;
+    sqlcmd = "CREATE TABLE files (name, varying_deltas, delta_step, delta_time);";
     rc = sqlite3_exec(db, sqlcmd.c_str(), 0, 0, &zErrMsg);
     if (rc != SQLITE_OK)
     {
@@ -70,6 +52,34 @@ int CMapToSqlite(const CampaignRecordMap &cmap, const int rank, std::string name
         helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "WriteCampaignData",
                                              "SQL error on writing records:");
         sqlite3_free(zErrMsg);
+    }
+
+    size_t rowid = 1;
+    for (auto &r : cmap)
+    {
+        // vectors r.second.steps and  std::to_string(r.second.times) should go to another table
+        // check for NaNs
+        double delta_time = 0.0;
+        if (!std::isnan(r.second.delta_time))
+            delta_time = r.second.delta_time;
+        size_t delta_step = 0;
+        if (!std::isnan(r.second.delta_step))
+            delta_time = r.second.delta_step;
+        sqlcmd = "INSERT INTO files (rowid, name, varying_deltas, delta_step, delta_time)\n";
+        sqlcmd += "VALUES(" + std::to_string(rowid) + "," + "'" + r.first + "'" + "," +
+                  std::to_string(r.second.varying_deltas) + "," + std::to_string(delta_step) + "," +
+                  std::to_string(delta_time) + ");";
+        rowid++;
+        std::cout << sqlcmd << std::endl;
+        rc = sqlite3_exec(db, sqlcmd.c_str(), 0, 0, &zErrMsg);
+        if (rc != SQLITE_OK)
+        {
+            std::cout << "SQL error: " << zErrMsg << std::endl;
+            std::string m(zErrMsg);
+            helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "WriteCampaignData",
+                                                 "SQL error on writing records:");
+            sqlite3_free(zErrMsg);
+        }
     }
 
     sqlite3_close(db);
@@ -155,11 +165,6 @@ void CampaignManager::Close()
     if (!cmap.empty())
     {
         CMapToSqlite(cmap, m_WriterRank, m_Name);
-//        m_Output.open(m_Name, std::ofstream::out);
-//        m_Opened = true;
-//        m_Output << std::setw(4) << CMapToJson(cmap, m_WriterRank, m_Name) << std::endl;
-//        m_Output.close();
-//        m_Opened = false;
     }
 }
 
