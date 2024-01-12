@@ -42,13 +42,13 @@ def CompressZfp2D(rate):
     count = [Ny, Nx]
 
     # writer
-    with Stream(fname, "w", comm) as s:
+    with Stream(fname, "w", comm=comm) as s:
         for _ in s.steps(NSteps):
             s.write("r32", r32s, shape, start, count, [("zfp", {"accuracy": str(rate)})])
             s.write("r64", r64s, shape, start, count, [("zfp", {"accuracy": str(rate)})])
 
     # reader
-    with Stream(fname, "r", comm) as s:
+    with Stream(fname, "r", comm=comm) as s:
         for _ in s.steps():
             in_r32s = s.read("r32", start, count)
             in_r64s = s.read("r64", start, count)

@@ -21,11 +21,11 @@ class test_adios_write_read_string_full_api(unittest.TestCase):
         bpFilename = "string_test_highAPI.bp"
         varname = "mystringvar"
 
-        with Stream(bpFilename, "w", comm) as s:
+        with Stream(bpFilename, "w", comm=comm) as s:
             for step in s.steps(N_STEPS):
                 s.write(varname, theString + str(step.current_step()))
 
-        with Stream(bpFilename, "r", comm) as s:
+        with Stream(bpFilename, "r", comm=comm) as s:
             for _ in s.steps():
                 step = s.current_step()
                 result = s.read(varname)
@@ -34,13 +34,13 @@ class test_adios_write_read_string_full_api(unittest.TestCase):
     def test_read_strings_all_steps(self):
         comm = MPI.COMM_WORLD
         fileName = "string_test_all.bp"
-        with Stream(fileName, "w", comm) as s:
+        with Stream(fileName, "w", comm=comm) as s:
             i = 0
             for _ in s.steps(N_STEPS):
                 s.write("string_variable", "written {}".format(i))
                 i += 1
 
-        # with Stream(fileName, "rra", comm) as s:
+        # with Stream(fileName, "rra", comm = comm) as s:
         #    n = s.num_steps()
         #    name = "string_variable"
         #    result = s.read_string(name, 0, n)

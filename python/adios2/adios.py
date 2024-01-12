@@ -11,14 +11,20 @@ from adios2.operator import Operator
 class Adios:
     """High level representation of the ADIOS class in the adios2.bindings"""
 
-    def __init__(self, comm=None):
+    def __init__(self, config_file=None, comm=None):
         if comm and not bindings.is_built_with_mpi:
             raise RuntimeError("Cannot use MPI since ADIOS2 was built without MPI support")
 
-        if comm:
-            self.impl = bindings.ADIOS(comm)
+        if config_file:
+            if comm:
+                self.impl = bindings.ADIOS(config_file, comm)
+            else:
+                self.impl = bindings.ADIOS(config_file)
         else:
-            self.impl = bindings.ADIOS()
+            if comm:
+                self.impl = bindings.ADIOS(comm)
+            else:
+                self.impl = bindings.ADIOS()
 
     @property
     def impl(self):
