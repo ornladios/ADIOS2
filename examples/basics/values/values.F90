@@ -111,7 +111,7 @@ subroutine reader
     ! Note, every process reads everything in this example
     
     call adios2_declare_io(io, adios, "ValuesInput", ierr)
-    call adios2_open(engine, io, "adios2-values-f.bp", adios2_mode_read, MPI_COMM_SELF, ierr)
+    call adios2_open(engine, io, "adios2-values-f.bp", adios2_mode_readRandomAccess, MPI_COMM_SELF, ierr)
     
     call adios2_inquire_variable(var_gc, io, "GlobalConstant", ierr)
     call adios2_get(engine, var_gc, gc , ierr)
