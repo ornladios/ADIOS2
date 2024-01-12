@@ -29,9 +29,22 @@ def type_adios_to_numpy(name):
 class Stream:
     """High level implementation of the Stream class from the core API"""
 
-    def __init__(self, path, mode="r", comm=None, engine_type="BPStream", config_file=None):
+    def __init__(
+        self, path, mode="r", *, comm=None, engine_type=None, config_file=None, io_name=None
+    ):
+
+        # pylint: disable=R0912 # Too many branches
         if comm and not bindings.is_built_with_mpi:
             raise RuntimeError("Cannot use MPI since ADIOS2 was built without MPI support")
+
+        if config_file and engine_type:
+            raise RuntimeError("Arguments 'engine_type' and 'config_file' cannot be used together")
+
+        if config_file and not io_name:
+            raise RuntimeError("Argument 'io_name' is required when using 'config_file'")
+
+        if not engine_type:
+            engine_type = "File"
 
         # pylint: disable=E1121
         if config_file:
@@ -39,14 +52,19 @@ class Stream:
                 self._adios = Adios(config_file, comm)
             else:
                 self._adios = Adios(config_file)
+            self._io_name = io_name
+
         else:
             if comm:
                 self._adios = Adios(comm)
             else:
                 self._adios = Adios()
+            self._io_name = f"stream:{path}:engine_type:{engine_type}:mode:{mode}"
+
         # pylint: enable=E1121
-        self._io_name = f"stream:{path}:engine_type:{engine_type}:mode:{mode}"
         self._io = self._adios.declare_io(self._io_name)
+        if not config_file:
+            self._io.set_engine(engine_type)
 
         if mode == "r":
             self._mode = bindings.Mode.Read

@@ -27,7 +27,7 @@ start = [rank * nx]
 count = [nx]
 
 # Writer
-with Stream("types_np.bp", "w", comm) as s:
+with Stream("types_np.bp", "w", comm=comm) as s:
     for step in s.steps(5):
         data.update(rank, step.current_step(), size)
         s.write("rank", np.array(rank), shape=[LocalValueDim])
@@ -100,7 +100,7 @@ comm.Barrier()
 # Reader
 data = SmallTestData()
 
-with Stream("types_np.bp", "r", comm) as fr:
+with Stream("types_np.bp", "r", comm=comm) as fr:
     # file only
     assert fr.num_steps() == 5
 
