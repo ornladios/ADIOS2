@@ -32,6 +32,7 @@ public:
      * @param comm passed to m_Comm
      */
     Remote();
+    ~Remote();
 
     explicit operator bool() const { return m_Active; }
 
@@ -55,7 +56,7 @@ private:
 #ifdef ADIOS2_HAVE_SST
     void InitCMData();
     RemoteCommon::Remote_evpath_state ev_state;
-    CMConnection m_conn;
+    CMConnection m_conn = NULL;
     std::mutex m_CMInitMutex;
 #endif
     bool m_Active = false;

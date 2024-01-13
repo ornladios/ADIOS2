@@ -15,6 +15,12 @@ namespace adios2
 Remote::Remote() {}
 
 #ifdef ADIOS2_HAVE_SST
+Remote::~Remote()
+{
+    if (m_conn)
+        CMConnection_close(m_conn);
+}
+
 void OpenResponseHandler(CManager cm, CMConnection conn, void *vevent, void *client_data,
                          attr_list attrs)
 {
@@ -86,9 +92,10 @@ void Remote::Open(const std::string hostname, const int32_t port, const std::str
     atom_t CM_IP_HOSTNAME = -1;
     CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
     CM_IP_PORT = attr_atom_from_string("IP_PORT");
-    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)hostname.c_str());
+    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
     add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
     m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+    free_attr_list(contact_list);
     if (!m_conn)
         return;
 
@@ -124,9 +131,10 @@ void Remote::OpenSimpleFile(const std::string hostname, const int32_t port,
     atom_t CM_IP_HOSTNAME = -1;
     CM_IP_HOSTNAME = attr_atom_from_string("IP_HOST");
     CM_IP_PORT = attr_atom_from_string("IP_PORT");
-    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)hostname.c_str());
+    add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
     add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
     m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+    free_attr_list(contact_list);
     if (!m_conn)
         return;
 
@@ -193,5 +201,6 @@ Remote::GetHandle Remote::Read(size_t Start, size_t Size, void *Dest)
 {
     return static_cast<GetHandle>(0);
 };
+Remote::~Remote() {}
 #endif
 } // end namespace adios2

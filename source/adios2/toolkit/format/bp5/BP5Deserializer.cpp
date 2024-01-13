@@ -1996,6 +1996,8 @@ BP5Deserializer::~BP5Deserializer()
         free(VarRec.second->VarName);
         if (VarRec.second->Operator)
             free(VarRec.second->Operator);
+        if (VarRec.second->Def)
+            delete VarRec.second->Def;
         delete VarRec.second;
     }
     if (m_FreeableMBA)
