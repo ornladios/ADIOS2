@@ -106,7 +106,9 @@ public:
 
     Dims Count() const;
 
-    size_t SelectionSize() const;
+    size_t SelectionSize() const; // selection size with striding AND steps
+
+    Box<Dims> Selection() const; // selection with striding but without steps
 
     std::pair<T, T> MinMax(const size_t step = adios2::DefaultSizeT) const;
 
@@ -120,6 +122,8 @@ private:
     Dims DoCount() const;
 
     size_t DoSelectionSize() const;
+
+    Box<Dims> DoSelection() const;
 
     std::pair<T, T> DoMinMax(const size_t step) const;
 

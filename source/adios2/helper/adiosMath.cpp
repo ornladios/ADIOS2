@@ -503,5 +503,74 @@ Box<Dims> GetSubBlock(const Dims &count, const BlockDivisionInfo &info,
     return std::make_pair(sbStart, sbCount);
 }
 
+/*/
+Dims GetStridedSelection(const Dims &count, const Dims &stride, const Dims &offset)
+{
+    Dims sel(count.size());
+    for (size_t i = 0; i < count.size(); ++i)
+    {
+        auto d = std::div((long long)(count[i] - offset[i]), (long long)stride[i]);
+        sel[i] = (size_t)d.quot;
+        if (d.rem)
+        {
+            sel[i]++;
+        };
+    }
+    return sel;
+}
+*/
+
+Box<Dims> GetStridedSelection(const Dims &start, const Dims &count, const Dims &stride,
+                              const Dims &offset)
+{
+    Box<Dims> box;
+    Dims &st = box.first;
+    Dims &ct = box.second;
+    st.resize(count.size());
+    ct.resize(count.size());
+    for (size_t i = 0; i < count.size(); ++i)
+    {
+        auto d = std::div((long long)(count[i] - offset[i]), (long long)stride[i]);
+        ct[i] = (size_t)d.quot;
+        if (d.rem)
+        {
+            ct[i]++;
+        };
+        st[i] = start[i] + offset[i];
+    }
+    return box;
+}
+
+Box<Dims> GetStridedSelection(const Dims &start, const Dims &count, const Dims &stride)
+{
+    return GetStridedSelection(start, count, stride, Dims(count.size(), 0ULL));
+}
+
+template <class T>
+bool equal_within_ulps(
+    T x, T y, std::size_t n = 1,
+    typename std::enable_if<not std::numeric_limits<T>::is_integer, T>::type * = 0)
+{
+    //  Taken from https://en.cppreference.com/w/cpp/types/numeric_limits/epsilon
+
+    // Since `epsilon()` is the gap size (ULP, unit in the last place)
+    // of floating-point numbers in interval [1, 2), we can scale it to
+    // the gap size in interval [2^e, 2^{e+1}), where `e` is the exponent
+    // of `x` and `y`.
+
+    // If `x` and `y` have different gap sizes (which means they have
+    // different exponents), we take the smaller one. Taking the bigger
+    // one is also reasonable, I guess.
+    const T m = std::min(std::fabs(x), std::fabs(y));
+
+    // Subnormal numbers have fixed exponent, which is `min_exponent - 1`.
+    const int exp = m < std::numeric_limits<T>::min() ? std::numeric_limits<T>::min_exponent - 1
+                                                      : std::ilogb(m);
+
+    // We consider `x` and `y` equal if the difference between them is
+    // within `n` ULPs.
+    return std::fabs(x - y) <= n * std::ldexp(std::numeric_limits<T>::epsilon(), exp);
+}
+
 } // end namespace helper
 } // end namespace adios2

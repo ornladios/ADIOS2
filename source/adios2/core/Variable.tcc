@@ -16,6 +16,8 @@
 #include "adios2/core/Engine.h"
 #include "adios2/helper/adiosFunctions.h"
 
+#include <cstdlib> // std::div
+
 namespace adios2
 {
 namespace core
@@ -99,7 +101,29 @@ Dims Variable<T>::DoCount() const
 template <class T>
 size_t Variable<T>::DoSelectionSize() const
 {
-    return helper::GetTotalSize(DoCount()) * m_StepsCount;
+    Box<Dims> box = DoSelection();
+    return helper::GetTotalSize(box.second) * m_StepsCount;
+}
+
+template <class T>
+Box<Dims> Variable<T>::DoSelection() const
+{
+    Dims countWithoutStride = DoCount();
+    Dims start;
+    if (m_Start.empty())
+    {
+        start.resize(countWithoutStride.size(), 0);
+    }
+    else
+    {
+        start = m_Start;
+    }
+
+    if (m_Stride.empty())
+    {
+        return Box<Dims>(m_Start, countWithoutStride);
+    }
+    return helper::GetStridedSelection(start, countWithoutStride, m_Stride);
 }
 
 template <class T>
