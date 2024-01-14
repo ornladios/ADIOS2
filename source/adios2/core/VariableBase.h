@@ -107,6 +107,10 @@ public:
     /** provided accuracy */
     Accuracy m_AccuracyProvided = {0.0, 0.0, false};
 
+    /** stride for reading data */
+    Dims m_Stride;                // n-dim sizes
+    DoubleMatrix m_StrideStencil; // how to calculate points in stride
+
     /** Index to Step and blocks' (inside a step) characteristics position in a
      * serial metadata buffer
      * <pre>
@@ -204,6 +208,14 @@ public:
 
     /** Return the requested accuracy set by user with SetAccuracy */
     adios2::Accuracy GetAccuracyRequested() const noexcept;
+
+    /**
+     * Set striding before reading
+     * @param stride = vector of stride in each dimension
+     * @param stencil = n-dim matrix for computing each data point
+     * @param offset = starting point for striding
+     */
+    void SetStride(const Dims &stride, const DoubleMatrix &stencil = {});
 
     size_t GetAvailableStepsStart() const;
 

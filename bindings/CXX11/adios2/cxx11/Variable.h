@@ -230,8 +230,15 @@ public:
     void SetAccuracy(const adios2::Accuracy &a);
 
     /**
+     * Set striding before reading
+     * @param stride = vector of stride in each dimension
+     * @param stencil = n-dim matrix for computing each data point
+     */
+    void SetStride(const Dims &stride, const DoubleMatrix &stencil = {});
+
+    /**
      * Returns the number of elements required for pre-allocation based on
-     * current count and stepsCount
+     * current count, stepsCount, and stride
      * @return elements of type T required for pre-allocation
      */
     size_t SelectionSize() const;
@@ -286,6 +293,12 @@ public:
      */
     adios2::Dims Count() const;
 
+    /**
+     * Inspects selection with striding but without steps
+     * @return pair of start, count vector, that is the actual selection
+     * in global space after applying striding
+     */
+    Box<Dims> Selection() const;
     /**
      * For readRandomAccess mode, inspect the number of available steps
      * @return available steps

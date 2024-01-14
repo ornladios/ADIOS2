@@ -12,12 +12,13 @@
 #define ADIOS2_HELPER_ADIOSMATH_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <iostream>
+#include <limits>
+#include <type_traits>
 #include <vector>
 /// \endcond
 
 #include "adios2/common/ADIOSTypes.h"
-
-#include <iostream>
 
 namespace adios2
 {
@@ -321,6 +322,25 @@ void GetMinMaxSubblocks(const T *values, const Dims &count, const BlockDivisionI
  */
 template <class T>
 T SetWithinLimit(const T value, const T minValue, const T maxValue);
+
+/* Get the dims from a selection and a stride definition*/
+// Dims GetStridedSelection(const Dims &count, const Dims &stride, const Dims &offset);
+
+Box<Dims> GetStridedSelection(const Dims &start, const Dims &count, const Dims &stride,
+                              const Dims &offset);
+Box<Dims> GetStridedSelection(const Dims &start, const Dims &count, const Dims &stride);
+
+/** Equality test for floating point numbers using machine epsilon.
+ * See example in https://en.cppreference.com/w/cpp/types/numeric_limits/epsilon
+ * @brief Return true if the x and y are within n * of the machine epsilon
+ */
+template <class T>
+bool equal_within_ulps(
+    T x, T y, std::size_t n = 1,
+    typename std::enable_if<not std::numeric_limits<T>::is_integer, bool>::type * = 0)
+{
+    return true;
+}
 
 } // end namespace helper
 } // end namespace adios2

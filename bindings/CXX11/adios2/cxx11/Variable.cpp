@@ -85,6 +85,13 @@ namespace adios2
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
+    void Variable<T>::SetStride(const Dims &stride, const DoubleMatrix &stencil)                   \
+    {                                                                                              \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::SetStride");                  \
+        return m_Variable->SetStride(stride, stencil);                                             \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
     size_t Variable<T>::SelectionSize() const                                                      \
     {                                                                                              \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::SelectionSize");              \
@@ -153,6 +160,12 @@ namespace adios2
         return m_Variable->Count();                                                                \
     }                                                                                              \
                                                                                                    \
+    template <>                                                                                    \
+    Box<Dims> Variable<T>::Selection() const                                                       \
+    {                                                                                              \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Selection");                  \
+        return m_Variable->Selection();                                                            \
+    }                                                                                              \
     template <>                                                                                    \
     size_t Variable<T>::Steps() const                                                              \
     {                                                                                              \

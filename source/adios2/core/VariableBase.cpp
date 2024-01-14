@@ -12,7 +12,10 @@
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <algorithm> //std::count
-#include <iterator>  //std::next
+#include <iomanip>
+#include <iterator> //std::next
+#include <numeric>  //std::accumulate
+#include <sstream>
 #include <stdexcept> //std::invalid_argument
 /// \endcond
 
@@ -22,6 +25,7 @@
 #include "adios2/core/Variable.h"
 #include "adios2/helper/adiosFunctions.h" //helper::GetTotalSize
 #include "adios2/helper/adiosString.h"
+#include "adios2/helper/adiosType.h"
 #include "adios2/operator/OperatorFactory.h"
 
 #include "adios2/helper/adiosGPUFunctions.h"
@@ -281,6 +285,71 @@ void VariableBase::SetAccuracy(const adios2::Accuracy &a) noexcept
 }
 adios2::Accuracy VariableBase::GetAccuracy() const noexcept { return m_AccuracyProvided; }
 adios2::Accuracy VariableBase::GetAccuracyRequested() const noexcept { return m_AccuracyRequested; }
+
+void VariableBase::SetStride(const Dims &stride, const DoubleMatrix &stencil)
+{
+    m_Stride = stride;
+    size_t ndim;
+    if (m_ShapeID == ShapeID::GlobalArray)
+    {
+        ndim = m_Shape.size();
+    }
+    else if (m_ShapeID == ShapeID::LocalArray)
+    {
+        ndim = stride.size(); // TODO!!! Ho do we get the ndim of a local array?
+    }
+    else
+    {
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetStride",
+                                             "Stride is only allowed for arrays");
+    }
+
+    if (stencil.shape.empty())
+    {
+        m_StrideStencil = DoubleMatrix({1}, {1.0});
+    }
+    else
+    {
+        m_StrideStencil = stencil;
+    }
+
+    if (m_Stride.size() != ndim)
+    {
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetStride",
+                                             "invalid stride dimensions " +
+                                                 std::to_string(stride.size()) +
+                                                 ", must be equal to the shape of the variable");
+    }
+
+    if (helper::IsIntegerType(m_Type))
+    {
+        if (m_StrideStencil.shape.size() != 1 || m_StrideStencil.data.size() != 1 ||
+            m_StrideStencil.data[0] != 1)
+        {
+            helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetStride",
+                                                 "invalid stencil for an integer data. "
+                                                 "It must be adios2::DoubleMatrix({1},{1.0}");
+        }
+    }
+    else if (helper::IsFloatingPointType(m_Type))
+    {
+        double sum = std::accumulate(m_StrideStencil.data.begin(), m_StrideStencil.data.end(), 0.0);
+        if (!helper::equal_within_ulps(sum, 1.0))
+        {
+            std::ostringstream s;
+            s << std::fixed << std::setprecision(16) << sum;
+            helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetStride",
+                                                 "invalid stencil for an floating point data. "
+                                                 "The sum of elements is " +
+                                                     s.str() + " must equal to 1.0");
+        }
+    }
+    else
+    {
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetStride",
+                                             "Stride is not allowed for non-numeric types");
+    }
+}
 
 size_t VariableBase::GetAvailableStepsStart() const { return m_AvailableStepsStart; }
 

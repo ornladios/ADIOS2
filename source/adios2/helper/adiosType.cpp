@@ -105,6 +105,39 @@ size_t GetDataTypeSize(DataType type)
     return 0;
 }
 
+bool IsIntegerType(DataType type) noexcept
+{
+    switch (type)
+    {
+    case DataType::Int8:
+    case DataType::Int16:
+    case DataType::Int32:
+    case DataType::Int64:
+    case DataType::UInt8:
+    case DataType::UInt16:
+    case DataType::UInt32:
+    case DataType::UInt64:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool IsFloatingPointType(DataType type) noexcept
+{
+    switch (type)
+    {
+    case DataType::Float:
+    case DataType::Double:
+    case DataType::FloatComplex:
+    case DataType::DoubleComplex:
+    case DataType::LongDouble:
+        return true;
+    default:
+        return false;
+    }
+}
+
 std::string DimsToCSV(const Dims &dimensions) noexcept
 {
     std::string dimsCSV;
