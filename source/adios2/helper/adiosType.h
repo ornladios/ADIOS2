@@ -195,6 +195,16 @@ DataType GetDataTypeFromString(std::string const &) noexcept;
 size_t GetDataTypeSize(DataType type);
 
 /**
+ * @return true if DataType is an integer type
+ */
+bool IsIntegerType(DataType type) noexcept;
+
+/**
+ * @return true if DataType is an floating point type
+ */
+bool IsFloatingPointType(DataType type) noexcept;
+
+/**
  * Converts a vector of dimensions to a CSV string
  * @param dims vector of dimensions
  * @return comma separate value (CSV)

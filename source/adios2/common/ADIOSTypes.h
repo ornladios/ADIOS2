@@ -21,6 +21,7 @@
 #include <complex>
 #include <limits>
 #include <map>
+#include <numeric> //std::accumulate
 #include <string>
 #include <type_traits>
 #include <utility> //std::pair
@@ -324,6 +325,17 @@ struct Accuracy
 
 constexpr double L2_norm = 0.0;
 constexpr double Linf_norm = std::numeric_limits<double>::infinity();
+
+/** Reading with stride **/
+
+struct DoubleMatrix
+{
+    Dims shape;
+    std::vector<double> data;
+    DoubleMatrix();
+    DoubleMatrix(const Dims &dims, const std::vector<double> &d);
+    DoubleMatrix(const Dims &dims, const double *d);
+};
 
 /**
  *  Return the actual size in bytes of elements of the given type.  Returns -1

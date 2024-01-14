@@ -76,6 +76,12 @@ namespace core
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
+    Box<Dims> Variable<T>::Selection() const                                                       \
+    {                                                                                              \
+        return DoSelection();                                                                      \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
     std::pair<T, T> Variable<T>::MinMax(const size_t step) const                                   \
     {                                                                                              \
         return DoMinMax(step);                                                                     \

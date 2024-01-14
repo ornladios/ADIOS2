@@ -461,4 +461,16 @@ void PrintMVI(std::ostream &os, const MinVarInfo &mvi)
     os << std::endl;
 }
 
+DoubleMatrix::DoubleMatrix(){};
+DoubleMatrix::DoubleMatrix(const Dims &dims, const std::vector<double> &d) : shape(dims), data(d){};
+DoubleMatrix::DoubleMatrix(const Dims &dims, const double *d) : shape(dims)
+{
+    size_t n = 0;
+    for (const auto d : dims)
+    {
+        n *= d;
+    }
+    data = std::vector<double>(d, d + n);
+};
+
 } // end namespace adios2
