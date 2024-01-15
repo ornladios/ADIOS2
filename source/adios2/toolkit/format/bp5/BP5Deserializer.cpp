@@ -34,6 +34,7 @@
 
 #include <array>
 #include <float.h>
+#include <iomanip>
 #include <limits.h>
 #include <math.h>
 #include <string.h>
@@ -1751,18 +1752,59 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
 }
 
 template <class T>
+static void print2D(const std::string name, const T *in, const CoreDims &count)
+{
+    std::cout << name << " = {\n  "; // << std::setprecision(2);
+    size_t pos = 0;
+    for (size_t i = 0; i < count[0]; ++i)
+    {
+        for (size_t j = 0; j < count[1]; ++j)
+        {
+            std::cout << in[pos] << " ";
+            ++pos;
+        }
+        std::cout << "\n  ";
+    }
+    std::cout << "}" << std::endl;
+}
+
+template <class T>
 void StrideCopyT(const T *in, const CoreDims &inStart, const CoreDims &inCount,
                  const bool inIsLittleEndian, T *out, const CoreDims &outStart,
                  const CoreDims &outCount, const bool outIsLittleEndian,
+                 const CoreDims &strideStart, const CoreDims &strideCount,
                  MemorySpace MemSpace = MemorySpace::Host)
 {
+    std::cout << "StrideCopyT: inStart = " << DimsToString(inStart)
+              << " inCount = " << DimsToString(inCount) << " outStart = " << DimsToString(outStart)
+              << " outCount = " << DimsToString(outCount)
+              << " strideStart = " << DimsToString(strideStart)
+              << " srideCount = " << DimsToString(strideCount) << std::endl;
+    print2D("Incoming block", in, inCount);
+
+    /* *in points to very first point of data in N-dim space where striding starts */
+    size_t outPos = 0;
+    for (size_t i = 0; i < outCount[0]; ++i)
+    {
+        size_t rowIn = strideStart[0] + i * strideCount[0];
+        size_t inPos = rowIn * inCount[1] + strideStart[1];
+        for (size_t j = 0; j < outCount[1]; ++j)
+        {
+            out[outPos] = in[inPos];
+            ++outPos;
+            inPos += strideCount[1];
+        }
+    }
+
+    print2D("Outgoing block", out, outCount);
+    std::cout << std::endl;
 }
 
 static inline void StrideCopy(const DataType dtype, const void *in, const CoreDims &inStart,
                               const CoreDims &inCount, const bool inIsLittleEndian, void *out,
                               const CoreDims &outStart, const CoreDims &outCount,
-                              const bool outIsLittleEndian,
-                              MemorySpace MemSpace = MemorySpace::Host)
+                              const bool outIsLittleEndian, const CoreDims &strideStart,
+                              const CoreDims &strideCount, MemorySpace MemSpace = MemorySpace::Host)
 {
     switch (dtype)
     {
@@ -1771,58 +1813,69 @@ static inline void StrideCopy(const DataType dtype, const void *in, const CoreDi
     case DataType::Char:
     case DataType::Int8:
         StrideCopyT<int8_t>((int8_t *)in, inStart, inCount, inIsLittleEndian, (int8_t *)out,
-                            outStart, outCount, outIsLittleEndian, MemSpace);
+                            outStart, outCount, outIsLittleEndian, strideStart, strideCount,
+                            MemSpace);
         break;
     case DataType::Int16:
         StrideCopyT<int16_t>((int16_t *)in, inStart, inCount, inIsLittleEndian, (int16_t *)out,
-                             outStart, outCount, outIsLittleEndian, MemSpace);
+                             outStart, outCount, outIsLittleEndian, strideStart, strideCount,
+                             MemSpace);
         break;
     case DataType::Int32:
         StrideCopyT<int32_t>((int32_t *)in, inStart, inCount, inIsLittleEndian, (int32_t *)out,
-                             outStart, outCount, outIsLittleEndian, MemSpace);
+                             outStart, outCount, outIsLittleEndian, strideStart, strideCount,
+                             MemSpace);
         break;
     case DataType::Int64:
         StrideCopyT<int64_t>((int64_t *)in, inStart, inCount, inIsLittleEndian, (int64_t *)out,
-                             outStart, outCount, outIsLittleEndian, MemSpace);
+                             outStart, outCount, outIsLittleEndian, strideStart, strideCount,
+                             MemSpace);
         break;
     case DataType::UInt8:
         StrideCopyT<uint8_t>((uint8_t *)in, inStart, inCount, inIsLittleEndian, (uint8_t *)out,
-                             outStart, outCount, outIsLittleEndian, MemSpace);
+                             outStart, outCount, outIsLittleEndian, strideStart, strideCount,
+                             MemSpace);
         break;
     case DataType::UInt16:
         StrideCopyT<uint16_t>((uint16_t *)in, inStart, inCount, inIsLittleEndian, (uint16_t *)out,
-                              outStart, outCount, outIsLittleEndian, MemSpace);
+                              outStart, outCount, outIsLittleEndian, strideStart, strideCount,
+                              MemSpace);
         break;
     case DataType::UInt32:
         StrideCopyT<uint32_t>((uint32_t *)in, inStart, inCount, inIsLittleEndian, (uint32_t *)out,
-                              outStart, outCount, outIsLittleEndian, MemSpace);
+                              outStart, outCount, outIsLittleEndian, strideStart, strideCount,
+                              MemSpace);
         break;
     case DataType::UInt64:
         StrideCopyT<uint64_t>((uint64_t *)in, inStart, inCount, inIsLittleEndian, (uint64_t *)out,
-                              outStart, outCount, outIsLittleEndian, MemSpace);
+                              outStart, outCount, outIsLittleEndian, strideStart, strideCount,
+                              MemSpace);
         break;
     case DataType::Float:
         StrideCopyT<float>((float *)in, inStart, inCount, inIsLittleEndian, (float *)out, outStart,
-                           outCount, outIsLittleEndian, MemSpace);
+                           outCount, outIsLittleEndian, strideStart, strideCount, MemSpace);
         break;
     case DataType::Double:
         StrideCopyT<double>((double *)in, inStart, inCount, inIsLittleEndian, (double *)out,
-                            outStart, outCount, outIsLittleEndian, MemSpace);
+                            outStart, outCount, outIsLittleEndian, strideStart, strideCount,
+                            MemSpace);
         break;
     case DataType::LongDouble:
         StrideCopyT<long double>((long double *)in, inStart, inCount, inIsLittleEndian,
                                  (long double *)out, outStart, outCount, outIsLittleEndian,
-                                 MemSpace);
+                                 strideStart, strideCount, MemSpace);
         break;
     case DataType::FloatComplex:
         StrideCopyT<std::complex<float>>((std::complex<float> *)in, inStart, inCount,
                                          inIsLittleEndian, (std::complex<float> *)out, outStart,
-                                         outCount, outIsLittleEndian, MemSpace);
+                                         outCount, outIsLittleEndian, strideStart, strideCount,
+                                         MemSpace);
         break;
     case DataType::DoubleComplex:
         StrideCopyT<std::complex<double>>((std::complex<double> *)in, inStart, inCount,
                                           inIsLittleEndian, (std::complex<double> *)out, outStart,
-                                          outCount, outIsLittleEndian, MemSpace);
+                                          outCount, outIsLittleEndian, strideStart, strideCount,
+                                          MemSpace);
         break;
     default:
         break;
@@ -1937,23 +1990,98 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
     bool freeStridedData = false;
     if (!VB->m_Stride.empty())
     {
-        char *dataptr = VirtualIncomingData;
-        // TODO: calculate stride offset from the stride and
+        DimsArray strideCount(VB->m_Stride);
+        if (!m_ReaderIsRowMajor)
+        {
+            std::reverse(strideCount.begin(), strideCount.end());
+        }
+
+        const Box<Dims> selectionBox = helper::StartEndBox(Dims(outStart.begin(), outStart.end()),
+                                                           Dims(outCount.begin(), outCount.end()));
+        const Box<Dims> BlockBox = helper::StartEndBox(Dims(inStart.begin(), inStart.end()),
+                                                       Dims(inCount.begin(), inCount.end()));
+        // const Box<Dims> IntersectionBox = helper::IntersectionBox(selectionBox, BlockBox);
+
+        // IntersectionStartCount gives back
+        // - start: offset in global space
+        // - count: the size of box inside the current block
+        // Still need to calculate the stride offset inside the current block
+        const Box<Dims> IntersectionBox = helper::IntersectionStartCount(
+            Dims(outStart.begin(), outStart.end()), Dims(outCount.begin(), outCount.end()),
+            Dims(inStart.begin(), inStart.end()), Dims(inCount.begin(), inCount.end()));
+
+        std::cout << "selectionBox = " << BoxToString(selectionBox)
+                  << " BlockBox = " << BoxToString(BlockBox)
+                  << " intersectionBox = " << BoxToString(IntersectionBox) << std::endl;
+
+        // calculate stride offset from the stride and
         // from the position of this block inside the selection
         Dims strideOffset(DimCount, 0ULL); // FIXME
-        Box<Dims> stridedBox =
-            helper::GetStridedSelection(Req.Start, Req.Count, VB->m_Stride, strideOffset);
-        Dims &st = stridedBox.first;
-        Dims &ct = stridedBox.second;
+        for (size_t i = 0; i < DimCount; ++i)
+        {
+            strideOffset[i] = (IntersectionBox.first[i] - outStart[i]) % strideCount[i];
+        }
+        std::cout << "strideOffset = " << DimsToString(strideOffset) << std::endl;
+
+        Box<Dims> stridedBox = helper::GetStridedSelection(
+            IntersectionBox.first, IntersectionBox.second, VB->m_Stride, strideOffset);
+        DimsArray st(stridedBox.first);
+        DimsArray ct(stridedBox.second);
+
+        // Still need to calculate the offset inside the current block
+        for (size_t i = 0; i < DimCount; ++i)
+        {
+            auto d1 = std::div((long long)(st[i] - outStart[i]), (long long)strideCount[i]);
+            st[i] = (size_t)d1.quot + outStart[i];
+            if (d1.rem)
+            {
+                st[i]++;
+            }
+        }
+
         size_t nElems = helper::GetTotalSize(stridedBox.second);
-        stridedData = (char *)malloc(nElems * ElementSize);
+
+        std::cout << "stridedBox = {" << DimsToString(st) << ", " << DimsToString(ct)
+                  << "}  nElems = " << nElems << std::endl;
+
+        stridedData = (char *)calloc(nElems, ElementSize);
         freeStridedData = true;
 
-        StrideCopy(((struct BP5VarRec *)Req.VarRec)->Type, dataptr, inStart, inCount, true,
-                   stridedData, st, ct, true, Req.MemSpace);
+        /*
 
-        stridedData = VirtualIncomingData;
-        freeStridedData = false;
+        std::cout << "RankOffset = " << DimsToString(DimCount, RankOffset)
+                  << " RankSize = " << DimsToString(DimCount, RankSize)
+                  << " SelOffset = " << DimsToString(DimCount, SelOffset)
+                  << " SelSize = " << DimsToString(DimCount, SelSize)
+                  << " Req.Start= " << DimsToString(Req.Start)
+                  << " Req.Count = " << DimsToString(Req.Count)
+                  << " Stride = " << DimsToString(VB->m_Stride)
+                  << " strideOffset = " << DimsToString(strideOffset)
+                  << " stride nElems = " << nElems << std::endl;
+
+                std::cout << "inStart = " << DimsToString(inStart) << " inCount = " <<
+           DimsToString(inCount)
+                          << " outStart = " << DimsToString(outStart)
+                          << " outCount = " << DimsToString(outCount) << std::endl;
+        */
+
+        char *dataptr = IncomingData;
+        StrideCopy(((struct BP5VarRec *)Req.VarRec)->Type, dataptr, inStart, inCount, true,
+                   stridedData, st, ct, true, strideOffset, strideCount, Req.MemSpace);
+
+        /* Set the "incoming box" to the strided space instead of the global space
+           for the NdCopy operation */
+        for (size_t i = 0; i < DimCount; ++i)
+        {
+            inStart[i] = st[i];
+            inCount[i] = ct[i];
+            auto d = std::div((long long)(outCount[i]), (long long)strideCount[i]);
+            outCount[i] = (size_t)d.quot;
+            if (d.rem)
+            {
+                outCount[i]++;
+            };
+        }
     }
     else
     {
@@ -2009,6 +2137,12 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
     }
     else
     {
+
+        std::cout << "NdCopy inStart = " << DimsToString(inStart)
+                  << " inCount = " << DimsToString(inCount)
+                  << " outStart = " << DimsToString(outStart)
+                  << " outCount = " << DimsToString(outCount) << "\n"
+                  << std::endl;
         helper::NdCopy(stridedData, inStart, inCount, true, true, (char *)Req.Data, outStart,
                        outCount, true, true, ElementSize, CoreDims(), CoreDims(), CoreDims(),
                        CoreDims(), false, Req.MemSpace);
