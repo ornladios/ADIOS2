@@ -19,6 +19,7 @@
 /// \endcond
 
 #include "adios2/common/ADIOSTypes.h"
+#include "adios2/helper/adiosType.h"
 
 namespace adios2
 {
@@ -130,6 +131,18 @@ void SetParameterValue(const std::string key, const Params &parameters, T &value
 std::string DimsToString(const Dims &dimensions);
 
 Dims StringToDims(const std::string &dimensions);
+
+/**
+ * Returns a single string with dimension values
+ * @param ndim input
+ * @param dimensions input
+ * @return string dimensions values
+ */
+std::string DimsToString(const size_t ndim, const std::size_t *dimensions);
+
+std::string DimsToString(const CoreDims &dimensions);
+
+std::string BoxToString(const Box<Dims> &box);
 
 /**
  * Sets global name: prefix + separator + localName. If prefix is empty it

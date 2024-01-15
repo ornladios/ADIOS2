@@ -361,6 +361,31 @@ std::string DimsToString(const Dims &dimensions)
     return dimensionsString;
 }
 
+std::string DimsToString(const size_t ndim, const std::size_t *dimensions)
+{
+    // std::string dimensionsString("Dims(" + std::to_string(ndim) + "):[");
+    std::string dimensionsString("[");
+
+    for (size_t i = 0; i < ndim; ++i)
+    {
+        dimensionsString += std::to_string(dimensions[i]) + ", ";
+    }
+    dimensionsString.pop_back();
+    dimensionsString.pop_back();
+    dimensionsString += "]";
+    return dimensionsString;
+}
+
+std::string DimsToString(const CoreDims &dimensions)
+{
+    return DimsToString(dimensions.size(), dimensions.begin());
+}
+
+std::string BoxToString(const Box<Dims> &box)
+{
+    return "Box(" + DimsToString(box.first) + ", " + DimsToString(box.second) + ")";
+}
+
 Dims StringToDims(const std::string &dimensions)
 {
     std::vector<size_t> shape;
