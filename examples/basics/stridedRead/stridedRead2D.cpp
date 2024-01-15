@@ -22,7 +22,7 @@ constexpr double TWOPI = 2.0 * M_PI;
 
 void writer(adios2::ADIOS &adios, const std::size_t nx, const std::size_t ny)
 {
-    auto lf_compute = [](const std::size_t nx, const std::size_t ny) -> std::vector<double> {
+    auto lf_computeTrig = [](const std::size_t nx, const std::size_t ny) -> std::vector<double> {
         const double sp = TWOPI / nx;
         std::vector<double> array(nx * ny);
         size_t pos = 0;
@@ -38,6 +38,22 @@ void writer(adios2::ADIOS &adios, const std::size_t nx, const std::size_t ny)
         return array;
     };
 
+    auto lf_computeID = [](const std::size_t nx, const std::size_t ny) -> std::vector<double> {
+        std::vector<double> array(nx * ny);
+        size_t pos = 0;
+        for (size_t i = 0; i < nx; ++i)
+        {
+            double c = i * 1.0;
+            for (size_t j = 0; j < ny; ++j)
+            {
+                array[pos] = c;
+                c += 0.01;
+                pos++;
+            }
+        }
+        return array;
+    };
+
     adios2::IO io = adios.DeclareIO("stridedRead2D-writer");
 
     const adios2::Dims shape = {nx, ny};
@@ -46,7 +62,7 @@ void writer(adios2::ADIOS &adios, const std::size_t nx, const std::size_t ny)
 
     adios2::Engine writer = io.Open("stridedRead2D.bp", adios2::Mode::Write);
 
-    const std::vector<double> array = lf_compute(nx, ny);
+    const std::vector<double> array = lf_computeID(nx, ny);
 
     writer.BeginStep();
 
@@ -88,6 +104,7 @@ const std::vector<double> M2 = {
 void reader(adios2::ADIOS &adios)
 {
     adios2::IO io = adios.DeclareIO("stridedRead2D-reader");
+    io.SetParameter("Threads", "1");
     adios2::Engine reader = io.Open("stridedRead2D.bp", adios2::Mode::Read);
     reader.BeginStep();
 
@@ -96,14 +113,14 @@ void reader(adios2::ADIOS &adios)
     adios2::Variable<double> varGlobal2D = io.InquireVariable<double>("global2d");
     std::vector<double> global2D;
     varGlobal2D.SetSelection(
-        {{10, 10}, {varGlobal2D.Shape()[0] - 20, varGlobal2D.Shape()[1] - 20}});
-    varGlobal2D.SetStride({2, 2}, stencil2D);
+        {{11, 10}, {varGlobal2D.Shape()[0] - 20, varGlobal2D.Shape()[1] - 20}});
+    varGlobal2D.SetStride({2, 3}, stencil2D);
     size_t sg = varGlobal2D.SelectionSize();
     global2D.resize(sg);
 
+    auto sel = varGlobal2D.Selection();
     {
         // details about the selection after striding
-        auto sel = varGlobal2D.Selection();
         std::cout << "Global array selection: size is " << sg << " start = { ";
         for (auto s : sel.first)
         {
@@ -121,10 +138,16 @@ void reader(adios2::ADIOS &adios)
 
     reader.EndStep();
 
-    std::cout << "Global array read with stride = {" << std::setprecision(2);
-    for (auto d : global2D)
+    std::cout << "Global array read with stride = {\n  ";
+    size_t pos = 0;
+    for (size_t i = 0; i < sel.second[0]; ++i)
     {
-        std::cout << d << " ";
+        // size_t pos = i * sel.second[1];
+        for (size_t j = 0; j < sel.second[1]; ++j)
+        {
+            std::cout << global2D[pos++] << " ";
+        }
+        std::cout << "\n  ";
     }
     std::cout << "}" << std::endl;
 
