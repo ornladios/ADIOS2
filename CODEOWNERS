@@ -1,6 +1,3 @@
-# KW's stuff
-CMakeLists.txt @vicentebolea @caitlinross
-
 # Caitlin's stuff
 plugins/ @caitlinross
 
@@ -10,11 +7,11 @@ plugins/ @caitlinross
 *.in @vicentebolea
 *.json @vicentebolea
 *.sh @vicentebolea
-*.txt  @vicentebolea
 *.yaml @vicentebolea
 *.yml @vicentebolea
 cmake/ @vicentebolea
 scripts/ @vicentebolea
+python/ @vicentebolea
 .github/ @vicentebolea
 .circleci/ @vicentebolea
 source/adios2/toolkit/sst/dp/mpi_dp.c @vicentebolea
