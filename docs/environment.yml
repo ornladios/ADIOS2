@@ -4,14 +4,14 @@ channels:
   - conda-forge
 
 dependencies:
-  - breathe==4.35.0
+  - breathe
   - cmake
-  - docutils==0.17
+  - docutils
   - libpython-static
   - numpy
   - pip
-  - sphinx=5.3
+  - sphinx
   - pip:
-    - blockdiag==3.0.0
-    - sphinxcontrib-blockdiag==3.0.0
-    - sphinx_rtd_theme==1.1.1
+    - blockdiag
+    - sphinxcontrib-blockdiag
+    - sphinx_rtd_theme
