@@ -54,37 +54,12 @@ int CMapToSqlite(const CampaignRecordMap &cmap, const int rank, std::string name
         sqlite3_free(zErrMsg);
     }
 
-    //    sqlcmd = "CREATE TABLE data (name);";
-    //    rc = sqlite3_exec(db, sqlcmd.c_str(), 0, 0, &zErrMsg);
-    //    if (rc != SQLITE_OK)
-    //    {
-    //        std::cout << "SQL error: " << zErrMsg << std::endl;
-    //        std::string m(zErrMsg);
-    //        helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "WriteCampaignData",
-    //                                             "SQL error on writing records:");
-    //        sqlite3_free(zErrMsg);
-    //    }
-
     size_t rowid = 1000;
     for (auto &r : cmap)
     {
-        // vectors r.second.steps and  std::to_string(r.second.times) should go to another table
-        // check for NaNs
-        double delta_time = 0.0;
-        if (!std::isnan(r.second.delta_time))
-            delta_time = r.second.delta_time;
-        size_t delta_step = 0;
-        if (!std::isnan(r.second.delta_step))
-            delta_time = r.second.delta_step;
-        //        sqlcmd = "INSERT INTO files (rowid, name, varying_deltas, delta_step,
-        //        delta_time)\n"; sqlcmd += "VALUES(" + std::to_string(rowid) + "," + "'" + r.first
-        //        + "'" + "," +
-        //                  std::to_string(r.second.varying_deltas) + "," +
-        //                  std::to_string(delta_step) + "," + std::to_string(delta_time) + ");";
         sqlcmd = "INSERT INTO bpfiles (rowid, name)\n";
         sqlcmd += "VALUES(" + std::to_string(rowid) + "," + "'" + r.first + "'" + ");";
         rowid++;
-        std::cout << sqlcmd << std::endl;
         rc = sqlite3_exec(db, sqlcmd.c_str(), 0, 0, &zErrMsg);
         if (rc != SQLITE_OK)
         {
