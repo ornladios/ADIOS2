@@ -1752,6 +1752,17 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
 }
 
 template <class T>
+static void print1D(const std::string name, const T *in, const CoreDims &count)
+{
+    std::cout << name << " = {\n  "; // << std::setprecision(2);
+    for (size_t i = 0; i < count[0]; ++i)
+    {
+        std::cout << in[i] << " ";
+    }
+    std::cout << "}" << std::endl;
+}
+
+template <class T>
 static void print2D(const std::string name, const T *in, const CoreDims &count)
 {
     std::cout << name << " = {\n  "; // << std::setprecision(2);
@@ -1769,20 +1780,65 @@ static void print2D(const std::string name, const T *in, const CoreDims &count)
 }
 
 template <class T>
-void StrideCopyT(const T *in, const CoreDims &inStart, const CoreDims &inCount,
-                 const bool inIsLittleEndian, T *out, const CoreDims &outStart,
-                 const CoreDims &outCount, const bool outIsLittleEndian,
-                 const CoreDims &strideStart, const CoreDims &strideCount,
-                 MemorySpace MemSpace = MemorySpace::Host)
+static void print3D(const std::string name, const T *in, const CoreDims &count)
 {
-    std::cout << "StrideCopyT: inStart = " << DimsToString(inStart)
+    std::cout << name << " = {\n"; // << std::setprecision(2);
+    size_t pos = 0;
+    for (size_t i = 0; i < count[0]; ++i)
+    {
+        std::cout << "    {\n    ";
+        for (size_t j = 0; j < count[1]; ++j)
+        {
+            for (size_t k = 0; k < count[2]; ++k)
+            {
+                std::cout << in[pos] << " ";
+                ++pos;
+            }
+        }
+        std::cout << "    }\n";
+    }
+    std::cout << "  }" << std::endl;
+}
+
+template <class T>
+void StrideCopy1D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
+                  const bool inIsLittleEndian, T *out, const CoreDims &outStart,
+                  const CoreDims &outCount, const bool outIsLittleEndian,
+                  const CoreDims &strideStart, const CoreDims &strideCount,
+                  MemorySpace MemSpace = MemorySpace::Host)
+{
+    std::cout << "StrideCopy1D: inStart = " << DimsToString(inStart)
               << " inCount = " << DimsToString(inCount) << " outStart = " << DimsToString(outStart)
               << " outCount = " << DimsToString(outCount)
               << " strideStart = " << DimsToString(strideStart)
               << " srideCount = " << DimsToString(strideCount) << std::endl;
-    print2D("Incoming block", in, inCount);
+    print1D("Incoming block", in, inCount);
 
-    /* *in points to very first point of data in N-dim space where striding starts */
+    size_t inPos = strideStart[0];
+    for (size_t i = 0; i < outCount[0]; ++i)
+    {
+        out[i] = in[inPos];
+        inPos += strideCount[0];
+    }
+
+    print1D("Outgoing block", out, outCount);
+    std::cout << std::endl;
+}
+
+template <class T>
+void StrideCopy2D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
+                  const bool inIsLittleEndian, T *out, const CoreDims &outStart,
+                  const CoreDims &outCount, const bool outIsLittleEndian,
+                  const CoreDims &strideStart, const CoreDims &strideCount,
+                  MemorySpace MemSpace = MemorySpace::Host)
+{
+    /*std::cout << "StrideCopy2D: inStart = " << DimsToString(inStart)
+              << " inCount = " << DimsToString(inCount) << " outStart = " << DimsToString(outStart)
+              << " outCount = " << DimsToString(outCount)
+              << " strideStart = " << DimsToString(strideStart)
+              << " srideCount = " << DimsToString(strideCount) << std::endl;*/
+    // print2D("Incoming block", in, inCount);
+
     size_t outPos = 0;
     for (size_t i = 0; i < outCount[0]; ++i)
     {
@@ -1796,8 +1852,72 @@ void StrideCopyT(const T *in, const CoreDims &inStart, const CoreDims &inCount,
         }
     }
 
-    print2D("Outgoing block", out, outCount);
+    // print2D("Outgoing block", out, outCount);
     std::cout << std::endl;
+}
+
+template <class T>
+void StrideCopy3D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
+                  const bool inIsLittleEndian, T *out, const CoreDims &outStart,
+                  const CoreDims &outCount, const bool outIsLittleEndian,
+                  const CoreDims &strideStart, const CoreDims &strideCount,
+                  MemorySpace MemSpace = MemorySpace::Host)
+{
+    std::cout << "StrideCopy3D: inStart = " << DimsToString(inStart)
+              << " inCount = " << DimsToString(inCount) << " outStart = " << DimsToString(outStart)
+              << " outCount = " << DimsToString(outCount)
+              << " strideStart = " << DimsToString(strideStart)
+              << " srideCount = " << DimsToString(strideCount) << std::endl;
+    print3D("Incoming block", in, inCount);
+
+    /* FIXME: this is not done yet*/
+    size_t outPos = 0;
+    for (size_t i = 0; i < outCount[0]; ++i)
+    {
+        size_t rowIn = strideStart[0] + i * strideCount[0];
+        size_t inPos = rowIn * inCount[1] + strideStart[1];
+        for (size_t j = 0; j < outCount[1]; ++j)
+        {
+            for (size_t k = 0; k < outCount[3]; ++k)
+            {
+                out[outPos] = in[inPos];
+                ++outPos;
+                inPos += strideCount[1];
+            }
+        }
+    }
+
+    print3D("Outgoing block", out, outCount);
+    std::cout << std::endl;
+}
+
+template <class T>
+void StrideCopyT(const T *in, const CoreDims &inStart, const CoreDims &inCount,
+                 const bool inIsLittleEndian, T *out, const CoreDims &outStart,
+                 const CoreDims &outCount, const bool outIsLittleEndian,
+                 const CoreDims &strideStart, const CoreDims &strideCount,
+                 MemorySpace MemSpace = MemorySpace::Host)
+{
+    switch (inCount.size())
+    {
+    case 1:
+        return StrideCopy1D(in, inStart, inCount, inIsLittleEndian, out, outStart, outCount,
+                            outIsLittleEndian, strideStart, strideCount, MemSpace);
+        break;
+    case 2:
+        return StrideCopy2D(in, inStart, inCount, inIsLittleEndian, out, outStart, outCount,
+                            outIsLittleEndian, strideStart, strideCount, MemSpace);
+        break;
+    case 3:
+        return StrideCopy3D(in, inStart, inCount, inIsLittleEndian, out, outStart, outCount,
+                            outIsLittleEndian, strideStart, strideCount, MemSpace);
+        break;
+    default:
+        helper::Throw<std::invalid_argument>(
+            "Toolkit", "format::bp::BP5Deserializer", "StrideCopyT",
+            "Dimension " + std::to_string(inCount.size()) + "not supported");
+        break;
+    }
 }
 
 static inline void StrideCopy(const DataType dtype, const void *in, const CoreDims &inStart,
@@ -2019,7 +2139,17 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         Dims strideOffset(DimCount, 0ULL); // FIXME
         for (size_t i = 0; i < DimCount; ++i)
         {
-            strideOffset[i] = (IntersectionBox.first[i] - outStart[i]) % strideCount[i];
+            size_t rem = (IntersectionBox.first[i] - outStart[i]) % strideCount[i];
+            // Rem is the number of skipped elements in preceding blocks.
+            // We need to skip in this bock: stride-rem, or 0 if rem is 0
+            if (rem)
+            {
+                strideOffset[i] = strideCount[i] - rem;
+            }
+            else
+            {
+                strideOffset[i] = 0;
+            }
         }
         std::cout << "strideOffset = " << DimsToString(strideOffset) << std::endl;
 
@@ -2138,11 +2268,11 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
     else
     {
 
-        std::cout << "NdCopy inStart = " << DimsToString(inStart)
+        /*std::cout << "NdCopy inStart = " << DimsToString(inStart)
                   << " inCount = " << DimsToString(inCount)
                   << " outStart = " << DimsToString(outStart)
                   << " outCount = " << DimsToString(outCount) << "\n"
-                  << std::endl;
+                  << std::endl;*/
         helper::NdCopy(stridedData, inStart, inCount, true, true, (char *)Req.Data, outStart,
                        outCount, true, true, ElementSize, CoreDims(), CoreDims(), CoreDims(),
                        CoreDims(), false, Req.MemSpace);
