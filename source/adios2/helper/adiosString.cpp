@@ -14,6 +14,7 @@
 #include "adiosType.h" //BytesFactor
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <cmath> // isinf()
 #include <fstream>
 #include <ios> //std::ios_base::failure
 #include <sstream>
@@ -507,6 +508,35 @@ std::string RemoveTrailingSlash(const std::string &name) noexcept
         --len;
     }
     return name.substr(0, len);
+}
+
+std::string AccuracyToString(const adios2::Accuracy &a) noexcept
+{
+    // std::string dimensionsString("Dims(" + std::to_string(ndim) + "):[");
+    std::string str = "Accuracy{error = " + std::to_string(a.error) + ", norm = ";
+
+    if (a.norm == L2_norm)
+    {
+        str += "L2_norm";
+    }
+    else if (std::isinf(a.norm))
+    {
+        str += "Linf_norm";
+    }
+    else if (std::isnan(a.norm))
+    {
+        str += "nan";
+    }
+    else
+    {
+        str += std::to_string(a.norm);
+    }
+
+    str += ", ";
+    str += (a.relative ? "rel" : "abs");
+    str += "}";
+
+    return str;
 }
 
 } // end namespace helper
