@@ -13,4 +13,5 @@ add_subdirectory(queryWorker)
 add_subdirectory(values)
 add_subdirectory(variablesShapes)
 add_subdirectory(stridedRead)
+add_subdirectory(readByAccuracy)
 

@@ -206,6 +206,11 @@ std::set<std::string> PrefixMatches(const std::string &prefix,
  */
 std::string RemoveTrailingSlash(const std::string &name) noexcept;
 
+/**
+ * Return a string from an adios2::Accuracy object
+ */
+std::string AccuracyToString(const adios2::Accuracy &a) noexcept;
+
 } // end namespace helper
 } // end namespace adios2
 
