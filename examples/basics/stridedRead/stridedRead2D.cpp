@@ -62,7 +62,7 @@ void writer(adios2::ADIOS &adios, const std::size_t nx, const std::size_t ny)
 
     adios2::Engine writer = io.Open("stridedRead2D.bp", adios2::Mode::Write);
 
-    const std::vector<double> array = lf_computeID(nx, ny);
+    const std::vector<double> array = lf_computeTrig(nx, ny);
 
     writer.BeginStep();
 
@@ -109,12 +109,13 @@ void reader(adios2::ADIOS &adios)
     reader.BeginStep();
 
     adios2::DoubleMatrix stencil2D({3, 3}, M2);
+    adios2::Dims stride = {2, 3};
 
     adios2::Variable<double> varGlobal2D = io.InquireVariable<double>("global2d");
     std::vector<double> global2D;
     varGlobal2D.SetSelection(
         {{11, 10}, {varGlobal2D.Shape()[0] - 20, varGlobal2D.Shape()[1] - 20}});
-    varGlobal2D.SetStride({2, 3}, stencil2D);
+    varGlobal2D.SetStride(stride, stencil2D);
     size_t sg = varGlobal2D.SelectionSize();
     global2D.resize(sg);
 
@@ -137,21 +138,37 @@ void reader(adios2::ADIOS &adios)
     reader.Get(varGlobal2D, global2D);
 
     reader.EndStep();
-
-    std::cout << "Global array read with stride = {\n  ";
-    size_t pos = 0;
-    for (size_t i = 0; i < sel.second[0]; ++i)
-    {
-        // size_t pos = i * sel.second[1];
-        for (size_t j = 0; j < sel.second[1]; ++j)
-        {
-            std::cout << global2D[pos++] << " ";
-        }
-        std::cout << "\n  ";
-    }
-    std::cout << "}" << std::endl;
-
     reader.Close();
+
+    // write out the result
+    {
+        adios2::IO io = adios.DeclareIO("stridedRead2D-write-again");
+        std::string outname =
+            "global2d-" + std::to_string(stride[0]) + "-" + std::to_string(stride[1]);
+        adios2::Variable<double> v = io.DefineVariable<double>(outname, sel.second, {0, 0},
+                                                               sel.second, adios2::ConstantDims);
+
+        adios2::Engine writer = io.Open("stridedRead2D.bp", adios2::Mode::Append);
+        writer.BeginStep();
+        writer.Put(v, global2D.data());
+        writer.EndStep();
+        writer.Close();
+
+        /*
+        std::cout << "Global array read with stride = {\n  ";
+        size_t pos = 0;
+        for (size_t i = 0; i < sel.second[0]; ++i)
+        {
+            // size_t pos = i * sel.second[1];
+            for (size_t j = 0; j < sel.second[1]; ++j)
+            {
+                std::cout << global2D[pos++] << " ";
+            }
+            std::cout << "\n  ";
+        }
+        std::cout << "}" << std::endl;
+        */
+    }
 }
 
 int main(int argc, char *argv[])
