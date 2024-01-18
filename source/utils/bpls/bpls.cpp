@@ -84,6 +84,7 @@ std::string transport_params; // Transport parameters (e.g. "Library=stdio,verbo
 std::string engine_name;      // Engine name (e.g. "BP5")
 std::string engine_params;    // Engine parameters (e.g. "SelectSteps=0:5:2")
 std::string accuracy_def;     // Accuracy definition (e.g. "accuracy="0.0,0.0,rel")
+std::string stride;           // Stride definition (e.g. --stride "2,3")
 
 // Flags from arguments or defaults
 bool dump; // dump data not just list info(flag == 1)
@@ -110,6 +111,7 @@ bool accuracyWasSet = false;
 char *prgname; /* argv[0] */
 // long timefrom, timeto;
 int64_t istart[MAX_DIMS], icount[MAX_DIMS]; // negative values are allowed
+int64_t istride[MAX_DIMS];                  // negative values are NOT allowed
 int ndimsspecified = 0;
 #ifdef USE_C_REGEX
 regex_t varregex[MAX_MASKS]; // compiled regular expressions of varmask
@@ -160,6 +162,8 @@ void display_help()
            "  --count     | -c \"spec\"    Number of elements in each dimension\n"
            "                               -1 denotes 'until end' of dimension\n"
            "                               (default is -1 for all dimensions)\n"
+           "  --stride \"spec\"            Stride with number of elements in each dimension\n"
+           "                               Steps are not included in this specification!\n"
            "  --noindex   | -y           Print data without array indices\n"
            "  --string    | -S           Print 8bit integer arrays as strings\n"
            "  --columns   | -n \"cols\"    Number of data elements per row to "
@@ -614,6 +618,8 @@ int bplsMain(int argc, char *argv[])
                     "denotes 'until end' of dimension. default is -1 for all "
                     "dimensions");
     arg.AddArgument("-c", argT::SPACE_ARGUMENT, &count, "");
+    arg.AddArgument("--stride", argT::SPACE_ARGUMENT, &stride,
+                    "            Stride with number of elements in each dimension.");
     arg.AddBooleanArgument("--noindex", &noindex, " | -y Print data without array indices");
     arg.AddBooleanArgument("-y", &noindex, "");
     arg.AddBooleanArgument("--timestep", &timestep, " | -t Print values of timestep elements");
@@ -695,6 +701,7 @@ int bplsMain(int argc, char *argv[])
     /* Process dimension specifications */
     parseDimSpec(start, istart);
     parseDimSpec(count, icount);
+    parseDimSpec(stride, istride, false);
 
     // process the regular expressions
     if (use_regexp)
@@ -783,6 +790,7 @@ void init_globals()
     {
         istart[i] = 0LL;
         icount[i] = -1LL; // read full var by default
+        istride[i] = 1LL;
     }
     ndimsspecified = 0;
 }
@@ -830,6 +838,11 @@ void printSettings(void)
     if (count.size())
     {
         PRINT_DIMS_INT64("  count", icount, ndimsspecified, i);
+        printf("\n");
+    }
+    if (stride.size())
+    {
+        PRINT_DIMS_INT64("  stride", istride, ndimsspecified, i);
         printf("\n");
     }
 
@@ -1932,6 +1945,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         count_t[MAX_DIMS]; // processed <0 values in start/count
     uint64_t s[MAX_DIMS],
         c[MAX_DIMS]; // for block reading of smaller chunks
+    uint64_t c_stride[MAX_DIMS];
     int tdims;       // number of dimensions including time
     int tidx;        // 0 or 1 to account for time dimension
     uint64_t nelems; // number of elements to read
@@ -1944,6 +1958,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     uint64_t actualreadn;     // our decision how much to read at once
     uint64_t readn[MAX_DIMS]; // how big chunk to read in in each dimension?
     int ndigits_dims[32];     // # of digits (to print) of each dimension
+    adios2::Dims strideDims;  // filled if striding is specified
 
     const size_t elemsize = variable->m_ElementSize;
     const int nsteps = (timestep ? 1 : static_cast<int>(variable->GetAvailableStepsCount()));
@@ -2078,6 +2093,15 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                    start_t[j + tidx], j + tidx, count_t[j + tidx], nelems);
     }
 
+    if (stride.size())
+    {
+
+        for (j = 0; j < ndim; j++)
+        {
+            strideDims.push_back(static_cast<size_t>(istride[j]));
+        }
+    }
+
     if (verbose > 1)
     {
         printf(" total size of data to read = %" PRIu64 "\n", nelems * elemsize);
@@ -2093,16 +2117,37 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     if (xmlprint && nelems > maxreadn)
         maxreadn = nelems;
 
-    // special case: string. Need to use different elemsize
-    /*if (vi->type == DataType::String)
-    {
-        if (vi->value)
-            elemsize = strlen(vi->value) + 1;
-        maxreadn = elemsize;
-    }*/
+        // special case: string. Need to use different elemsize
+        /*if (vi->type == DataType::String)
+        {
+            if (vi->value)
+                elemsize = strlen(vi->value) + 1;
+            maxreadn = elemsize;
+        }*/
 
-    // allocate data array
-    // data = (T *)malloc(maxreadn * elemsize);
+        // allocate data array
+        // data = (T *)malloc(maxreadn * elemsize);
+
+        // If stride is specified, we need to update count_t now
+#if 0
+    if (!strideDims.empty() && variable->m_ShapeID == ShapeID::GlobalArray)
+    {
+        const Dims sv = helper::Uint64ArrayToSizetVector(tdims - tidx, start_t + tidx);
+        const Dims cv = helper::Uint64ArrayToSizetVector(tdims - tidx, count_t + tidx);
+        variable->SetSelection({sv, cv});
+        variable->SetStride(strideDims);
+        auto sel = variable->Selection();
+        printf("sv = %s cv = %s sel.first = %s sel.second = %s count_t={",
+               helper::DimsToString(sv).c_str(), helper::DimsToString(cv).c_str(),
+               helper::DimsToString(sel.first).c_str(), helper::DimsToString(sel.second).c_str());
+        for (j = tidx; j < tdims; j++)
+        {
+            // count_t[j] = sel.second[j - tidx];
+            printf("%" PRIu64 " ", count_t[j]);
+        }
+        printf("}\n");
+    }
+#endif
 
     // determine strategy how to read in:
     //  - at once
@@ -2121,7 +2166,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         }
         else
         {
-            readn[i] = maxreadn / (int)sum; // sum is small for 4 bytes here
+            readn[i] = maxreadn / sum;
             // this may be over the max count for this dimension
             if (readn[i] > count_t[i])
                 readn[i] = count_t[i];
@@ -2141,6 +2186,7 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
     {
         s[j] = start_t[j];
         c[j] = readn[j];
+        c_stride[j] = c[j];
 
         ndigits_dims[j] =
             ndigits(start_t[j] + count_t[j] - 1); // -1: dim=100 results in 2 digits (0..99)
@@ -2183,6 +2229,27 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
         if (variable->m_ShapeID == ShapeID::GlobalArray)
         {
             variable->SetSelection({startv, countv});
+            if (!strideDims.empty())
+            {
+                variable->SetStride(strideDims);
+                auto sel = variable->Selection();
+                // printf("startv = %s countv = %s sel.first = %s sel.second = %s c_stride={",
+                //        helper::DimsToString(startv).c_str(),
+                //        helper::DimsToString(countv).c_str(),
+                //        helper::DimsToString(sel.first).c_str(),
+                //        helper::DimsToString(sel.second).c_str());
+                for (j = 0; j < tdims; j++)
+                {
+                    c_stride[j] = sel.second[j];
+                    // printf("%" PRIu64 " ", c_stride[j]);
+                }
+                // printf("}\n");
+            }
+            /*else
+            {
+                printf("startv = %s countv = %s \n", helper::DimsToString(startv).c_str(),
+                       helper::DimsToString(countv).c_str());
+            }*/
         }
 
         if (tidx)
@@ -2198,9 +2265,8 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
 
         dataV.resize(variable->SelectionSize());
         fp->Get(*variable, dataV, adios2::Mode::Sync);
-
         // print slice
-        print_dataset(dataV.data(), variable->m_Type, s, c, tdims, ndigits_dims);
+        print_dataset(dataV.data(), variable->m_Type, s, c_stride, tdims, ndigits_dims);
 
         // prepare for next read
         sum += actualreadn;
@@ -3896,7 +3962,7 @@ int parseAccuracy()
 // parse a string "0, 3; 027" into an integer array
 // of [0,3,27]
 // exits if parsing failes
-void parseDimSpec(const std::string &str, int64_t *dims)
+void parseDimSpec(const std::string &str, int64_t *dims, bool negativeAllowed)
 {
     if (str.empty())
         return;
@@ -3917,6 +3983,14 @@ void parseDimSpec(const std::string &str, int64_t *dims)
         {
             fprintf(stderr,
                     "Error: could not convert field into a value: "
+                    "%s from \"%s\"\n",
+                    token, str.c_str());
+            exit(200);
+        }
+        if (dims[i] < 0 && !negativeAllowed)
+        {
+            fprintf(stderr,
+                    "Error: Negative value is not allowed for this spec: "
                     "%s from \"%s\"\n",
                     token, str.c_str());
             exit(200);
