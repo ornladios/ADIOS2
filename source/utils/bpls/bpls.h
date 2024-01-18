@@ -56,7 +56,7 @@ struct Entry
 char *mystrndup(const char *s, size_t n);
 void init_globals();
 void processDimSpecs();
-void parseDimSpec(const std::string &str, int64_t *dims);
+void parseDimSpec(const std::string &str, int64_t *dims, bool negativeAllowed = true);
 int parseAccuracy();
 int compile_regexp_masks(void);
 void printSettings(void);
