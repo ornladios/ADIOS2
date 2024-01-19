@@ -1805,7 +1805,7 @@ void StrideCopy1D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
                   const bool inIsLittleEndian, T *out, const CoreDims &outStart,
                   const CoreDims &outCount, const bool outIsLittleEndian,
                   const CoreDims &strideStart, const CoreDims &strideCount,
-                  MemorySpace MemSpace = MemorySpace::Host)
+                  const DoubleMatrix &stencil, MemorySpace MemSpace = MemorySpace::Host)
 {
     std::cout << "StrideCopy1D: inStart = " << DimsToString(inStart)
               << " inCount = " << DimsToString(inCount) << " outStart = " << DimsToString(outStart)
@@ -1830,14 +1830,72 @@ void StrideCopy2D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
                   const bool inIsLittleEndian, T *out, const CoreDims &outStart,
                   const CoreDims &outCount, const bool outIsLittleEndian,
                   const CoreDims &strideStart, const CoreDims &strideCount,
-                  MemorySpace MemSpace = MemorySpace::Host)
+                  const DoubleMatrix &stencil, MemorySpace MemSpace = MemorySpace::Host)
 {
     /*std::cout << "StrideCopy2D: inStart = " << DimsToString(inStart)
               << " inCount = " << DimsToString(inCount) << " outStart = " << DimsToString(outStart)
               << " outCount = " << DimsToString(outCount)
               << " strideStart = " << DimsToString(strideStart)
               << " srideCount = " << DimsToString(strideCount) << std::endl;*/
-    // print2D("Incoming block", in, inCount);
+    print2D("Incoming block", in, inCount);
+#if 0
+    size_t outPos = 0;
+    for (size_t i = 0; i < outCount[0]; ++i)
+    {
+        size_t rowIn = strideStart[0] + i * strideCount[0];
+        size_t inPos = rowIn * inCount[1] + strideStart[1];
+        for (size_t j = 0; j < outCount[1]; ++j)
+        {
+            out[outPos] = in[inPos];
+            ++outPos;
+            inPos += strideCount[1];
+        }
+    }
+#else
+    print2D("Incoming stencil", stencil.data.data(), CoreDims(stencil.shape));
+    // window of values to calculate with the stencil
+    std::vector<T> window(stencil.shape[0] * stencil.shape[1]);
+    {
+        // initialize window: center value is in[strideStart[]],
+        // the left and top off center is initialized with the same value
+        // to the right/below, resp. if they fall outside of the boundary
+        // (top-left corner) of the input buffer (i.e. no data available)
+
+        // start with last position in data to start filling the stencil backwards
+        const size_t nX = strideStart[0] + (stencil.shape[0] / 2);
+        const size_t nY = strideStart[1] + (stencil.shape[1] / 2);
+        size_t winPos = window.size() - 1;
+
+        size_t idx0 = 0;
+        for (; idx0 <= nX && idx0 < stencil.shape[0]; ++idx0)
+        {
+            // rows within the input array
+            size_t inPos = (nX - idx0) * inCount[1] + nY;
+            size_t idx1 = 0;
+            for (; idx1 <= nY && idx1 < stencil.shape[1]; ++idx1)
+            {
+                // columns within the input array
+                window[winPos] = in[inPos];
+                --winPos;
+                --inPos;
+            }
+            for (; idx1 < stencil.shape[1]; ++idx1)
+            {
+                // window point left to edge of input, copy value on the right.
+                window[winPos] = window[winPos + 1];
+                --winPos;
+            }
+        }
+        for (; idx0 < stencil.shape[0]; ++idx0)
+        {
+            // rows outside the input array: copy last row of window to this
+            // one
+            memcpy(window.data() + (stencil.shape[0] - idx0 - 1) * stencil.shape[1],
+                   window.data() + (stencil.shape[0] - idx0) * stencil.shape[1],
+                   stencil.shape[1] * sizeof(T));
+        }
+    }
+    print2D("Window initialized", window.data(), CoreDims(stencil.shape));
 
     size_t outPos = 0;
     for (size_t i = 0; i < outCount[0]; ++i)
@@ -1851,8 +1909,8 @@ void StrideCopy2D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
             inPos += strideCount[1];
         }
     }
-
-    // print2D("Outgoing block", out, outCount);
+#endif
+    print2D("Outgoing block", out, outCount);
     std::cout << std::endl;
 }
 
@@ -1861,7 +1919,7 @@ void StrideCopy3D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
                   const bool inIsLittleEndian, T *out, const CoreDims &outStart,
                   const CoreDims &outCount, const bool outIsLittleEndian,
                   const CoreDims &strideStart, const CoreDims &strideCount,
-                  MemorySpace MemSpace = MemorySpace::Host)
+                  const DoubleMatrix &stencil, MemorySpace MemSpace = MemorySpace::Host)
 {
     std::cout << "StrideCopy3D: inStart = " << DimsToString(inStart)
               << " inCount = " << DimsToString(inCount) << " outStart = " << DimsToString(outStart)
@@ -1896,21 +1954,21 @@ void StrideCopyT(const T *in, const CoreDims &inStart, const CoreDims &inCount,
                  const bool inIsLittleEndian, T *out, const CoreDims &outStart,
                  const CoreDims &outCount, const bool outIsLittleEndian,
                  const CoreDims &strideStart, const CoreDims &strideCount,
-                 MemorySpace MemSpace = MemorySpace::Host)
+                 const DoubleMatrix &stencil, MemorySpace MemSpace = MemorySpace::Host)
 {
     switch (inCount.size())
     {
     case 1:
         return StrideCopy1D(in, inStart, inCount, inIsLittleEndian, out, outStart, outCount,
-                            outIsLittleEndian, strideStart, strideCount, MemSpace);
+                            outIsLittleEndian, strideStart, strideCount, stencil, MemSpace);
         break;
     case 2:
         return StrideCopy2D(in, inStart, inCount, inIsLittleEndian, out, outStart, outCount,
-                            outIsLittleEndian, strideStart, strideCount, MemSpace);
+                            outIsLittleEndian, strideStart, strideCount, stencil, MemSpace);
         break;
     case 3:
         return StrideCopy3D(in, inStart, inCount, inIsLittleEndian, out, outStart, outCount,
-                            outIsLittleEndian, strideStart, strideCount, MemSpace);
+                            outIsLittleEndian, strideStart, strideCount, stencil, MemSpace);
         break;
     default:
         helper::Throw<std::invalid_argument>(
@@ -1924,7 +1982,8 @@ static inline void StrideCopy(const DataType dtype, const void *in, const CoreDi
                               const CoreDims &inCount, const bool inIsLittleEndian, void *out,
                               const CoreDims &outStart, const CoreDims &outCount,
                               const bool outIsLittleEndian, const CoreDims &strideStart,
-                              const CoreDims &strideCount, MemorySpace MemSpace = MemorySpace::Host)
+                              const CoreDims &strideCount, const DoubleMatrix &stencil,
+                              MemorySpace MemSpace = MemorySpace::Host)
 {
     switch (dtype)
     {
@@ -1934,68 +1993,69 @@ static inline void StrideCopy(const DataType dtype, const void *in, const CoreDi
     case DataType::Int8:
         StrideCopyT<int8_t>((int8_t *)in, inStart, inCount, inIsLittleEndian, (int8_t *)out,
                             outStart, outCount, outIsLittleEndian, strideStart, strideCount,
-                            MemSpace);
+                            stencil, MemSpace);
         break;
     case DataType::Int16:
         StrideCopyT<int16_t>((int16_t *)in, inStart, inCount, inIsLittleEndian, (int16_t *)out,
                              outStart, outCount, outIsLittleEndian, strideStart, strideCount,
-                             MemSpace);
+                             stencil, MemSpace);
         break;
     case DataType::Int32:
         StrideCopyT<int32_t>((int32_t *)in, inStart, inCount, inIsLittleEndian, (int32_t *)out,
                              outStart, outCount, outIsLittleEndian, strideStart, strideCount,
-                             MemSpace);
+                             stencil, MemSpace);
         break;
     case DataType::Int64:
         StrideCopyT<int64_t>((int64_t *)in, inStart, inCount, inIsLittleEndian, (int64_t *)out,
                              outStart, outCount, outIsLittleEndian, strideStart, strideCount,
-                             MemSpace);
+                             stencil, MemSpace);
         break;
     case DataType::UInt8:
         StrideCopyT<uint8_t>((uint8_t *)in, inStart, inCount, inIsLittleEndian, (uint8_t *)out,
                              outStart, outCount, outIsLittleEndian, strideStart, strideCount,
-                             MemSpace);
+                             stencil, MemSpace);
         break;
     case DataType::UInt16:
         StrideCopyT<uint16_t>((uint16_t *)in, inStart, inCount, inIsLittleEndian, (uint16_t *)out,
                               outStart, outCount, outIsLittleEndian, strideStart, strideCount,
-                              MemSpace);
+                              stencil, MemSpace);
         break;
     case DataType::UInt32:
         StrideCopyT<uint32_t>((uint32_t *)in, inStart, inCount, inIsLittleEndian, (uint32_t *)out,
                               outStart, outCount, outIsLittleEndian, strideStart, strideCount,
-                              MemSpace);
+                              stencil, MemSpace);
         break;
     case DataType::UInt64:
         StrideCopyT<uint64_t>((uint64_t *)in, inStart, inCount, inIsLittleEndian, (uint64_t *)out,
                               outStart, outCount, outIsLittleEndian, strideStart, strideCount,
-                              MemSpace);
+                              stencil, MemSpace);
         break;
     case DataType::Float:
         StrideCopyT<float>((float *)in, inStart, inCount, inIsLittleEndian, (float *)out, outStart,
-                           outCount, outIsLittleEndian, strideStart, strideCount, MemSpace);
+                           outCount, outIsLittleEndian, strideStart, strideCount, stencil,
+                           MemSpace);
         break;
     case DataType::Double:
         StrideCopyT<double>((double *)in, inStart, inCount, inIsLittleEndian, (double *)out,
                             outStart, outCount, outIsLittleEndian, strideStart, strideCount,
-                            MemSpace);
+                            stencil, MemSpace);
         break;
     case DataType::LongDouble:
         StrideCopyT<long double>((long double *)in, inStart, inCount, inIsLittleEndian,
                                  (long double *)out, outStart, outCount, outIsLittleEndian,
-                                 strideStart, strideCount, MemSpace);
+                                 strideStart, strideCount, stencil, MemSpace);
         break;
     case DataType::FloatComplex:
         StrideCopyT<std::complex<float>>((std::complex<float> *)in, inStart, inCount,
                                          inIsLittleEndian, (std::complex<float> *)out, outStart,
                                          outCount, outIsLittleEndian, strideStart, strideCount,
-                                         MemSpace);
+                                         stencil, MemSpace);
         break;
     case DataType::DoubleComplex:
         StrideCopyT<std::complex<double>>((std::complex<double> *)in, inStart, inCount,
                                           inIsLittleEndian, (std::complex<double> *)out, outStart,
                                           outCount, outIsLittleEndian, strideStart, strideCount,
-                                          MemSpace);
+                                          stencil, MemSpace);
         break;
     default:
         break;
@@ -2197,7 +2257,8 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
 
         char *dataptr = IncomingData;
         StrideCopy(((struct BP5VarRec *)Req.VarRec)->Type, dataptr, inStart, inCount, true,
-                   stridedData, st, ct, true, strideOffset, strideCount, Req.MemSpace);
+                   stridedData, st, ct, true, strideOffset, strideCount, VB->m_StrideStencil,
+                   Req.MemSpace);
 
         /* Set the "incoming box" to the strided space instead of the global space
            for the NdCopy operation */
