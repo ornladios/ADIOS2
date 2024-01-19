@@ -296,7 +296,7 @@ void VariableBase::SetStride(const Dims &stride, const DoubleMatrix &stencil)
     }
     else if (m_ShapeID == ShapeID::LocalArray)
     {
-        ndim = stride.size(); // TODO!!! Ho do we get the ndim of a local array?
+        ndim = stride.size(); // FIXME: Need to get the ndim of a local array?
     }
     else
     {
@@ -306,7 +306,8 @@ void VariableBase::SetStride(const Dims &stride, const DoubleMatrix &stencil)
 
     if (stencil.shape.empty())
     {
-        m_StrideStencil = DoubleMatrix({1}, {1.0});
+        Dims s(ndim, 1ULL);
+        m_StrideStencil = DoubleMatrix(s, {1.0});
     }
     else
     {
@@ -316,9 +317,28 @@ void VariableBase::SetStride(const Dims &stride, const DoubleMatrix &stencil)
     if (m_Stride.size() != ndim)
     {
         helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetStride",
-                                             "invalid stride dimensions " +
+                                             "invalid number of stride dimensions " +
                                                  std::to_string(stride.size()) +
                                                  ", must be equal to the shape of the variable");
+    }
+
+    if (m_StrideStencil.shape.size() != ndim)
+    {
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetStride",
+                                             "invalid number of stencil dimensions " +
+                                                 std::to_string(m_StrideStencil.shape.size()) +
+                                                 ", must be equal to the shape of the variable");
+    }
+
+    for (size_t i = 0; i < ndim; ++i)
+    {
+        if (m_StrideStencil.shape[i] % 2 != 1)
+        {
+            helper::Throw<std::invalid_argument>(
+                "Core", "VariableBase", "SetStride",
+                "invalid stencil dimension " + std::to_string(m_StrideStencil.shape[i]) +
+                    ", must be an odd number. The stencil must have a center value");
+        }
     }
 
     if (helper::IsIntegerType(m_Type))
