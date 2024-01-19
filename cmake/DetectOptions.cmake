@@ -70,6 +70,16 @@ endfunction()
 # Multithreading
 find_package(Threads REQUIRED)
 
+# BigWhoop
+if(ADIOS2_USE_BigWhoop STREQUAL AUTO)
+ find_package(BWC CONFIG)
+elseif(ADIOS2_USE_BigWhoop)
+  find_package(BWC REQUIRED CONFIG)
+endif()
+if(TARGET bwc::bwclib)
+  set(ADIOS2_HAVE_BigWhoop TRUE)
+endif()
+
 # Blosc2
 if(ADIOS2_USE_Blosc2 STREQUAL AUTO)
   find_package(Blosc2 2.10.1 QUIET)

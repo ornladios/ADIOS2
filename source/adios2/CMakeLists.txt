@@ -358,6 +358,11 @@ if(ADIOS2_HAVE_DataSpaces)
   target_link_libraries(adios2_core_mpi PRIVATE DataSpaces::DataSpaces)
 endif()
 
+if(ADIOS2_HAVE_BigWhoop)
+  target_sources(adios2_core PRIVATE operator/compress/CompressBigWhoop.cpp)
+  target_link_libraries(adios2_core PRIVATE bwc::bwclib)
+endif()
+
 set(maybe_adios2_blosc2)
 if(ADIOS2_HAVE_Blosc2)
   target_sources(adios2_core PRIVATE operator/compress/CompressBlosc.cpp)

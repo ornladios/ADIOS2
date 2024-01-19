@@ -38,6 +38,7 @@ cmake -DCMAKE_INSTALL_PREFIX=${PWD}/install \
           -DADIOS2_USE_DataMan=${VALUE} \
           -DADIOS2_USE_DataSpaces=${VALUE} \
           -DADIOS2_USE_Table=${VALUE} \
+          -DADIOS2_USE_BigWhoop=${VALUE} \
           -DADIOS2_USE_BZip2=${VALUE} \
           -DADIOS2_USE_PNG=${VALUE} \
           -DADIOS2_USE_Blosc=${VALUE} \
