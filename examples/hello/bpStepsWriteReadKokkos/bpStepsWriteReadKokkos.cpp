@@ -7,31 +7,40 @@
  */
 #include <ios>
 #include <iostream>
+#include <string>
 #include <vector>
 
-#include <adios2.h>
-
 #include <Kokkos_Core.hpp>
+#include <adios2.h>
+#include <adios2/cxx11/KokkosView.h>
+#if ADIOS2_USE_MPI
+#include <mpi.h>
+#endif
 
 template <class MemSpace, class ExecSpace>
 int BPWrite(const std::string fname, const size_t Nx, const size_t Ny, const size_t nSteps,
-            const std::string engine)
+            const std::string engine, int rank, int size)
 {
     // Initialize the simulation data
     Kokkos::View<float **, MemSpace> gpuSimData("simBuffer", Nx, Ny);
     static_assert(Kokkos::SpaceAccessibility<ExecSpace, MemSpace>::accessible, "");
-    Kokkos::parallel_for("initBuffer", Kokkos::RangePolicy<ExecSpace>(0, Nx), KOKKOS_LAMBDA(int i) {
-        for (int j = 0; j < Ny; j++)
-            gpuSimData(i, j) = static_cast<float>(i);
-    });
+    Kokkos::parallel_for(
+        "initBuffer", Kokkos::RangePolicy<ExecSpace>(0, Nx), KOKKOS_LAMBDA(int i) {
+            for (int j = 0; j < Ny; j++)
+                gpuSimData(i, j) = static_cast<float>(rank + i);
+        });
     Kokkos::fence();
 
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
     adios2::ADIOS adios;
+#endif
     adios2::IO io = adios.DeclareIO("WriteIO");
     io.SetEngine(engine);
 
-    const adios2::Dims shape{Nx, Ny};
-    const adios2::Dims start{0, 0};
+    const adios2::Dims shape{static_cast<size_t>(size * Nx), Ny};
+    const adios2::Dims start{static_cast<size_t>(rank * Nx), 0};
     const adios2::Dims count{Nx, Ny};
     auto data = io.DefineVariable<float>("bpFloats", shape, start, count);
 
@@ -40,7 +49,7 @@ int BPWrite(const std::string fname, const size_t Nx, const size_t Ny, const siz
     // Simulation steps
     for (unsigned int step = 0; step < nSteps; ++step)
     {
-        adios2::Box<adios2::Dims> sel({0, 0}, {Nx, Ny});
+        adios2::Box<adios2::Dims> sel({static_cast<size_t>(rank * Nx), 0}, {Nx, Ny});
         data.SetSelection(sel);
 
         bpWriter.BeginStep();
@@ -48,41 +57,35 @@ int BPWrite(const std::string fname, const size_t Nx, const size_t Ny, const siz
         bpWriter.EndStep();
 
         // Update values in the simulation data
-        Kokkos::parallel_for("updateBuffer", Kokkos::RangePolicy<ExecSpace>(0, Nx),
-                             KOKKOS_LAMBDA(int i) {
-                                 for (int j = 0; j < Ny; j++)
-                                     gpuSimData(i, j) += 10;
-                             });
+        Kokkos::parallel_for(
+            "updateBuffer", Kokkos::RangePolicy<ExecSpace>(0, Nx), KOKKOS_LAMBDA(int i) {
+                for (int j = 0; j < Ny; j++)
+                    gpuSimData(i, j) += 10;
+            });
         Kokkos::fence();
     }
 
     bpWriter.Close();
     ExecSpace exe_space;
-    std::cout << "Done writing on memory space: " << exe_space.name() << std::endl;
+    if (rank == 0)
+        std::cout << "Done writing on memory space: " << exe_space.name() << std::endl;
     return 0;
 }
 
-template <class MemSpace>
-std::array<size_t, 2> GetDimenstions(adios2::Variable<float> data)
-{
-    return {data.Shape()[1], data.Shape()[0]};
-}
-
-template <>
-std::array<size_t, 2> GetDimenstions<Kokkos::HostSpace>(adios2::Variable<float> data)
-{
-    return {data.Shape()[0], data.Shape()[1]};
-}
-
 template <class MemSpace, class ExecSpace>
-int BPRead(const std::string fname, const std::string engine)
+int BPRead(const std::string fname, const std::string engine, int rank, int size)
 {
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
     adios2::ADIOS adios;
+#endif
     adios2::IO io = adios.DeclareIO("ReadIO");
     io.SetEngine(engine);
 
     ExecSpace exe_space;
-    std::cout << "Read on memory space: " << exe_space.name() << std::endl;
+    if (rank == 0)
+        std::cout << "Read on memory space: " << exe_space.name() << std::endl;
 
     adios2::Engine bpReader = io.Open(fname, adios2::Mode::Read);
 
@@ -97,23 +100,44 @@ int BPRead(const std::string fname, const std::string engine)
                       << step << "needs to have two dimensions" << std::endl;
             break;
         }
+        adios2::MemorySpace adiosMemSpace = adios2::MemorySpace::Host;
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+        if (!std::is_same<MemSpace, Kokkos::HostSpace>::value)
+            adiosMemSpace = adios2::MemorySpace::GPU;
+#endif
+        auto dims = data.Shape(adiosMemSpace);
+        size_t Nx = dims[0];
+        size_t Ny = dims[1];
 
-        const adios2::Dims start{0, 0};
-        const adios2::Box<adios2::Dims> sel(start, data.Shape());
-        data.SetSelection(sel);
-
-        auto dims = GetDimenstions<MemSpace>(data);
-        size_t Nx = dims[0], Ny = dims[1];
+        if (Nx > Ny)
+        {
+            Nx = Nx / size;
+            const adios2::Dims start{static_cast<size_t>(rank * Nx), 0};
+            const adios2::Box<adios2::Dims> sel(start, {Nx, Ny});
+            data.SetSelection(sel);
+        }
+        else
+        {
+            Ny = Ny / size;
+            const adios2::Dims start{0, static_cast<size_t>(rank * Ny)};
+            const adios2::Box<adios2::Dims> sel(start, {Nx, Ny});
+            data.SetSelection(sel);
+        }
         Kokkos::View<float **, MemSpace> gpuSimData("simBuffer", Nx, Ny);
-        bpReader.Get(data, gpuSimData.data());
+
+        bpReader.Get(data, gpuSimData);
         bpReader.EndStep();
 
         auto cpuData = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, gpuSimData);
-        for (size_t i = 0; i < Nx; i++)
+        if (rank == 0)
         {
-            for (size_t j = 0; j < Ny; j++)
-                std::cout << cpuData(i, j) << " ";
-            std::cout << std::endl;
+            std::cout << "Rank 0: " << std::endl;
+            for (size_t i = 0; i < Nx; i++)
+            {
+                for (size_t j = 0; j < Ny; j++)
+                    std::cout << cpuData(i, j) << " ";
+                std::cout << std::endl;
+            }
         }
     }
 
@@ -123,41 +147,61 @@ int BPRead(const std::string fname, const std::string engine)
 
 int main(int argc, char **argv)
 {
+    int rank, size;
+#if ADIOS2_USE_MPI
+    int provided;
+
+    // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
+    MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+#else
+    rank = 0;
+    size = 1;
+#endif
     const std::string engine = argv[1] ? argv[1] : "BPFile";
-    std::cout << "Using engine " << engine << std::endl;
-    const size_t Nx = 6, Ny = 10, nSteps = 1;
+    if (rank == 0)
+        std::cout << "Using engine " << engine << std::endl;
+    const size_t Nx = 3, Ny = 4, nSteps = 1;
     const std::string fromMemSpace = "Default";
     const std::string toMemSpace = "Default";
 
     const std::string filename = engine + "StepsWriteReadKokkos";
     Kokkos::initialize(argc, argv);
     {
-        std::cout << "Using engine " << engine << std::endl;
-
         if (fromMemSpace == "Default")
         {
             using mem_space = Kokkos::DefaultExecutionSpace::memory_space;
-            std::cout << "Writing on memory space: DefaultMemorySpace" << std::endl;
+            if (rank == 0)
+                std::cout << "Writing on memory space: DefaultMemorySpace" << std::endl;
             BPWrite<mem_space, Kokkos::DefaultExecutionSpace>(filename + ".bp", Nx, Ny, nSteps,
-                                                              engine);
+                                                              engine, rank, size);
         }
         else
         {
-            std::cout << "Writing on memory space: HostSpace" << std::endl;
-            BPWrite<Kokkos::HostSpace, Kokkos::Serial>(filename + ".bp", nSteps, Nx, Ny, engine);
+            if (rank == 0)
+                std::cout << "Writing on memory space: HostSpace" << std::endl;
+            BPWrite<Kokkos::HostSpace, Kokkos::Serial>(filename + ".bp", nSteps, Nx, Ny, engine,
+                                                       rank, size);
         }
         if (toMemSpace == "Default")
         {
             using mem_space = Kokkos::DefaultExecutionSpace::memory_space;
-            std::cout << "Reading on memory space: DefaultMemorySpace" << std::endl;
-            BPRead<mem_space, Kokkos::DefaultExecutionSpace>(filename + ".bp", engine);
+            if (rank == 0)
+                std::cout << "Reading on memory space: DefaultMemorySpace" << std::endl;
+            BPRead<mem_space, Kokkos::DefaultExecutionSpace>(filename + ".bp", engine, rank, size);
         }
         else
         {
-            std::cout << "Reading on memory space: HostSpace" << std::endl;
-            BPRead<Kokkos::HostSpace, Kokkos::Serial>(filename + ".bp", engine);
+            if (rank == 0)
+                std::cout << "Reading on memory space: HostSpace" << std::endl;
+            BPRead<Kokkos::HostSpace, Kokkos::Serial>(filename + ".bp", engine, rank, size);
         }
     }
     Kokkos::finalize();
+#if ADIOS2_USE_MPI
+    MPI_Finalize();
+#endif
+
     return 0;
 }
