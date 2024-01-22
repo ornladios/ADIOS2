@@ -269,6 +269,10 @@ public:
      * @return shape vector
      */
     adios2::Dims Shape(const size_t step = adios2::EngineCurrentStep) const;
+    adios2::Dims Shape(const ArrayOrdering layout,
+                       const size_t step = adios2::EngineCurrentStep) const;
+    adios2::Dims Shape(const MemorySpace memSpace,
+                       const size_t step = adios2::EngineCurrentStep) const;
 
     /**
      * Inspects current start point

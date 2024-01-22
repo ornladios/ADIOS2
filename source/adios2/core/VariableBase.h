@@ -256,6 +256,8 @@ public:
      */
     void CheckRandomAccessConflict(const std::string hint) const;
 
+    Dims Shape(const size_t step, const MemorySpace memSpace,
+               const ArrayOrdering layout = ArrayOrdering::Auto) const;
     Dims Shape(const size_t step = adios2::EngineCurrentStep) const;
 
     /**

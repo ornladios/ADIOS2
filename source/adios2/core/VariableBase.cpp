@@ -643,6 +643,24 @@ void VariableBase::CheckRandomAccess(const size_t step, const std::string hint) 
     }
 }
 
+Dims VariableBase::Shape(const size_t step, const MemorySpace memSpace,
+                         const ArrayOrdering layout) const
+{
+    auto dims = Shape(step);
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    bool mismatchMemSpace =
+        (memSpace != MemorySpace::Host && m_BaseLayout != ArrayOrdering::ColumnMajor);
+    bool mismatchLayout = (layout != m_BaseLayout && layout != ArrayOrdering::Auto);
+    if (mismatchMemSpace || mismatchLayout)
+    {
+        Dims flipDims(dims.size());
+        std::reverse_copy(dims.begin(), dims.end(), flipDims.begin());
+        return flipDims;
+    }
+#endif
+    return dims;
+}
+
 Dims VariableBase::Shape(const size_t step) const
 {
     CheckRandomAccess(step, "Shape");
