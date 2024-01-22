@@ -1421,6 +1421,8 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
         Req.BlockID = (size_t)-1;
         Req.Count = variable.m_Count;
         Req.Start = variable.m_Start;
+        Req.Stride = &(variable.m_Stride);
+        Req.Stencil = &(variable.m_StrideStencil);
         Req.Step = AbsStep;
         Req.RelStep = RelStep;
         Req.MemSpace = MemSpace;
@@ -1439,6 +1441,8 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
         {
             Req.Start = variable.m_Start;
             Req.Count = variable.m_Count;
+            Req.Stride = &(variable.m_Stride);
+            Req.Stencil = &(variable.m_StrideStencil);
         }
         Req.Data = DestData;
         Req.MemSpace = MemSpace;
@@ -1837,7 +1841,7 @@ void StrideCopy2D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
               << " outCount = " << DimsToString(outCount)
               << " strideStart = " << DimsToString(strideStart)
               << " srideCount = " << DimsToString(strideCount) << std::endl;*/
-    print2D("Incoming block", in, inCount);
+    // print2D("Incoming block", in, inCount);
 #if 0
     size_t outPos = 0;
     for (size_t i = 0; i < outCount[0]; ++i)
@@ -1910,7 +1914,7 @@ void StrideCopy2D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
         }
     }
 #endif
-    print2D("Outgoing block", out, outCount);
+    // print2D("Outgoing block", out, outCount);
     std::cout << std::endl;
 }
 

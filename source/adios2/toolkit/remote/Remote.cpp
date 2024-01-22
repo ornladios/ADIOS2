@@ -148,7 +148,7 @@ void Remote::OpenSimpleFile(const std::string hostname, const int32_t port,
 }
 
 Remote::GetHandle Remote::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count, Dims &Start,
-                              void *dest)
+                              Dims &Stride, DoubleMatrix &Stencil, void *dest)
 {
     RemoteCommon::_GetRequestMsg GetMsg;
     memset(&GetMsg, 0, sizeof(GetMsg));
@@ -160,6 +160,10 @@ Remote::GetHandle Remote::Get(char *VarName, size_t Step, size_t BlockID, Dims &
     GetMsg.DimCount = Count.size();
     GetMsg.Count = Count.data();
     GetMsg.Start = Start.data();
+    GetMsg.Stride = Stride.data();
+    GetMsg.StencilDimCount = Stencil.shape.size();
+    GetMsg.StencilDims = Stencil.shape.data();
+    GetMsg.Stencil = Stencil.data.data();
     GetMsg.Dest = dest;
     CMwrite(m_conn, ev_state.GetRequestFormat, &GetMsg);
     CMCondition_wait(ev_state.cm, GetMsg.GetResponseCondition);

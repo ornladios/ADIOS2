@@ -59,6 +59,10 @@ typedef struct _GetRequestMsg
     int DimCount;
     size_t *Count;
     size_t *Start;
+    size_t *Stride;
+    int StencilDimCount;
+    size_t *StencilDims;
+    double *Stencil;
     void *Dest;
 } *GetRequestMsg;
 

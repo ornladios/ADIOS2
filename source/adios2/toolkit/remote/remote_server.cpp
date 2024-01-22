@@ -248,6 +248,22 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
         }
     }
 
+    Dims stride;
+    DoubleMatrix stencil;
+    if (GetMsg->Stride)
+    {
+        for (int i = 0; i < GetMsg->DimCount; i++)
+        {
+            stride.push_back(GetMsg->Stride[i]);
+        }
+        Dims stencilDims;
+        for (int i = 0; i < GetMsg->StencilDimCount; i++)
+        {
+            stencilDims.push_back(GetMsg->StencilDims[i]);
+        }
+        stencil = DoubleMatrix(stencilDims, GetMsg->Stencil);
+    }
+
     try
     {
         if (TypeOfVar == adios2::DataType::None)
@@ -266,6 +282,8 @@ static void GetRequestHandler(CManager cm, CMConnection conn, void *vevent, void
             var->SetBlockSelection(GetMsg->BlockID);                                               \
         if (GetMsg->Start)                                                                         \
             var->SetSelection(b);                                                                  \
+        if (GetMsg->Stride)                                                                        \
+            var->SetStride(stride, stencil);                                                       \
         f->m_engine->Get(*var, RetData, Mode::Sync);                                               \
         Response.Size = RetData.size() * sizeof(T);                                                \
         Response.ReadData = (char *)RetData.data();                                                \
