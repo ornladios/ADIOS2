@@ -61,6 +61,11 @@ FMField GetRequestList[] = {
     {"DimCount", "integer", sizeof(size_t), FMOffset(GetRequestMsg, DimCount)},
     {"Count", "integer[DimCount]", sizeof(size_t), FMOffset(GetRequestMsg, Count)},
     {"Start", "integer[DimCount]", sizeof(size_t), FMOffset(GetRequestMsg, Start)},
+    {"Stride", "integer[DimCount]", sizeof(size_t), FMOffset(GetRequestMsg, Stride)},
+    {"StencilDimCount", "integer", sizeof(size_t), FMOffset(GetRequestMsg, StencilDimCount)},
+    {"StencilDims", "integer[StencilDimCount]", sizeof(size_t),
+     FMOffset(GetRequestMsg, StencilDims)},
+    {"Stencil", "integer[StencilDimCount]", sizeof(double), FMOffset(GetRequestMsg, Stencil)},
     {"Dest", "integer", sizeof(size_t), FMOffset(GetRequestMsg, Dest)},
     {NULL, NULL, 0, 0}};
 

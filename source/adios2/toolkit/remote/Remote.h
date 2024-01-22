@@ -43,7 +43,8 @@ public:
 
     typedef int GetHandle;
 
-    GetHandle Get(char *VarName, size_t Step, size_t BlockID, Dims &Count, Dims &Start, void *dest);
+    GetHandle Get(char *VarName, size_t Step, size_t BlockID, Dims &Count, Dims &Start,
+                  Dims &Stride, DoubleMatrix &Stencil, void *dest);
 
     bool WaitForGet(GetHandle handle);
 

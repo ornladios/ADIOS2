@@ -105,6 +105,8 @@ public:
         Dims Start;
         Dims Count;
         MemorySpace MemSpace;
+        Dims *Stride;
+        DoubleMatrix *Stencil;
         void *Data;
     };
     std::vector<BP5ArrayRequest> PendingGetRequests;
