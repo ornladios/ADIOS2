@@ -465,7 +465,7 @@ DoubleMatrix::DoubleMatrix(){};
 DoubleMatrix::DoubleMatrix(const Dims &dims, const std::vector<double> &d) : shape(dims), data(d){};
 DoubleMatrix::DoubleMatrix(const Dims &dims, const double *d) : shape(dims)
 {
-    size_t n = 0;
+    size_t n = 1;
     for (const auto d : dims)
     {
         n *= d;
