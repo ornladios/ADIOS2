@@ -194,8 +194,7 @@ static void *make_progress(void *params_)
          * fashion otherwise (e.g. shm).
          */
         printf("Going into fi_cq_sread()\n");
-        ssize_t rc = fi_cq_sread(params->cq_signal, (void *)CQEntries, batch_size, NULL,
-                                 SST_BACKOFF_SECONDS_MAX * 1000);
+        ssize_t rc = fi_cq_sread(params->cq_signal, (void *)CQEntries, batch_size, NULL, -1);
         printf("fi_cq_sread()=%ld\n", rc);
         if (rc < 1)
         {
@@ -691,6 +690,7 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
     {
 
         fabric->cq_manual_progress->do_continue = 0;
+        fi_cq_signal(fabric->cq_signal);
 
         if (pthread_join(fabric->pthread_id, NULL) != 0)
         {
