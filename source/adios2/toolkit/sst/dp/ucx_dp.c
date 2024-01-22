@@ -57,6 +57,9 @@ struct fabric_state
 
     ucp_address_t *local_addr;
     size_t local_addr_len;
+
+    pthread_t progress_thread;
+    char keep_making_progress;
 };
 
 /*
@@ -115,7 +118,7 @@ static ucs_status_t init_fabric(struct fabric_state *fabric, struct _SstParams *
         return status;
     }
     ucp_params.field_mask = UCP_PARAM_FIELD_FEATURES;
-    ucp_params.features = UCP_FEATURE_RMA;
+    ucp_params.features = UCP_FEATURE_RMA | UCP_FEATURE_WAKEUP;
 
     status = ucp_init(&ucp_params, config, &fabric->ucp_context);
     if (status != UCS_OK)
@@ -282,6 +285,21 @@ static DP_RS_Stream UcxInitReader(CP_Services Svcs, void *CP_Stream, void **Read
     return Stream;
 }
 
+typedef struct fabric_state progress_thread_params;
+
+static void *make_progress(void *params_)
+{
+    progress_thread_params *params = params_;
+    while (params->keep_making_progress)
+    {
+        ucp_worker_wait(params->ucp_worker);
+        while (ucp_worker_progress(params->ucp_worker) != 0)
+        { // go again}
+        }
+    }
+    return NULL;
+}
+
 static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params,
                                   attr_list DPAttrs, SstStats Stats)
 {
@@ -302,6 +320,13 @@ static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream, struct _Sst
     }
 
     Stream->CP_Stream = CP_Stream;
+
+    Stream->Fabric->keep_making_progress = 1;
+    if (pthread_create(&Stream->Fabric->progress_thread, NULL, &make_progress, Stream->Fabric) != 0)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not start thread.\n");
+        return NULL;
+    }
 
     return (void *)Stream;
 }
@@ -700,6 +725,14 @@ static void UcxDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
     pthread_mutex_unlock(&ucx_ts_mutex);
 
     Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose, "Tearing down RDMA state on writer.\n");
+
+    WS_Stream->Fabric->keep_making_progress = 0;
+    ucp_worker_signal(WS_Stream->Fabric->ucp_worker);
+    if (pthread_join(WS_Stream->Fabric->progress_thread, NULL) != 0)
+    {
+        Svcs->verbose(WS_Stream, DPCriticalVerbose, "Could not join thread.\n");
+        return;
+    }
 
     if (WS_Stream->Fabric)
     {
