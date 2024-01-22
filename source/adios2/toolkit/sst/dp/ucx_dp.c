@@ -98,7 +98,6 @@ struct fabric_state
 static ucs_status_t init_fabric(struct fabric_state *fabric, struct _SstParams *Params,
                                 CP_Services Svcs, void *CP_Stream)
 {
-    printf("CALL init_fabric\n");
     ucp_params_t ucp_params;
     ucp_worker_params_t worker_params;
     ucp_config_t *config;
@@ -154,7 +153,6 @@ static ucs_status_t init_fabric(struct fabric_state *fabric, struct _SstParams *
 
 static void fini_fabric(struct fabric_state *fabric)
 {
-    printf("CALL fini_fabric\n");
     ucp_worker_destroy(fabric->ucp_worker);
     ucp_cleanup(fabric->ucp_context);
 }
@@ -248,7 +246,6 @@ static DP_RS_Stream UcxInitReader(CP_Services Svcs, void *CP_Stream, void **Read
                                   struct _SstParams *Params, attr_list WriterContact,
                                   SstStats Stats)
 {
-    printf("CALL UcxInitReader\n");
     Ucx_RS_Stream Stream = malloc(sizeof(struct _Ucx_RS_Stream));
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     ucs_status_t status;
@@ -288,7 +285,6 @@ static DP_RS_Stream UcxInitReader(CP_Services Svcs, void *CP_Stream, void **Read
 static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params,
                                   attr_list DPAttrs, SstStats Stats)
 {
-    printf("CALL UcxInitWriter\n");
     Ucx_WS_Stream Stream = malloc(sizeof(struct _Ucx_WS_Stream));
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     ucs_status_t status;
@@ -315,7 +311,6 @@ static DP_WSR_Stream UcxInitWriterPerReader(CP_Services Svcs, DP_WS_Stream WS_St
                                             void **providedReaderInfo_v,
                                             void **WriterContactInfoPtr)
 {
-    printf("CALL UcxInitWriterPerReader\n");
     Ucx_WS_Stream WS_Stream = (Ucx_WS_Stream)WS_Stream_v;
     Ucx_WSR_Stream WSR_Stream = malloc(sizeof(*WSR_Stream));
     FabricState Fabric = WS_Stream->Fabric;
@@ -353,7 +348,6 @@ static void UcxProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Strea
                                          int writerCohortSize, CP_PeerCohort PeerCohort,
                                          void **providedWriterInfo_v)
 {
-    printf("CALL UcxProvideWriterDataToReader\n");
     Ucx_RS_Stream RS_Stream = (Ucx_RS_Stream)RS_Stream_v;
     FabricState Fabric = RS_Stream->Fabric;
     UcxWriterContactInfo *providedWriterInfo = (UcxWriterContactInfo *)providedWriterInfo_v;
@@ -391,7 +385,6 @@ static void UcxProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Strea
 static void *UcxReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Rank, long Timestep,
                                  size_t Offset, size_t Length, void *Buffer, void *DP_TimestepInfo)
 {
-    printf("CALL UcxReadRemoteMemory\n");
     Ucx_RS_Stream RS_Stream = (Ucx_RS_Stream)Stream_v;
     UcxBufferHandle Info = (UcxBufferHandle)DP_TimestepInfo;
     uint8_t *Addr;
@@ -461,7 +454,6 @@ static void *UcxReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Ra
 
 static void UcxNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v, int FailedPeerRank)
 {
-    printf("CALL UcxNotifyConnFailure\n");
     /* DP_RS_Stream is the return from InitReader */
     Ucx_RS_Stream Stream = (Ucx_RS_Stream)Stream_v;
     Svcs->verbose(Stream->CP_Stream, DPTraceVerbose,
@@ -477,7 +469,6 @@ static void UcxNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v, int Fa
  */
 static int UcxWaitForCompletion(CP_Services Svcs, void *Handle_v)
 {
-    printf("CALL UcxWaitForCompletion\n");
     UcxCompletionHandle Handle = (UcxCompletionHandle)Handle_v;
     Ucx_RS_Stream Stream = Handle->CPStream;
     ucs_status_t status = UCS_ERR_LAST;
@@ -514,7 +505,6 @@ static void UcxProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct _
                                struct _SstData *LocalMetadata, long Timestep,
                                void **TimestepInfoPtr)
 {
-    printf("CALL UcxProvideTimestep\n");
     Ucx_WS_Stream Stream = (Ucx_WS_Stream)Stream_v;
     TimestepList Entry = malloc(sizeof(struct _TimestepEntry));
     UcxBufferHandle Info = malloc(sizeof(struct _UcxBufferHandle));
@@ -582,7 +572,6 @@ static void UcxProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct _
 
 static void UcxReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, long Timestep)
 {
-    printf("CALL UcxReleaseTimestep\n");
     Ucx_WS_Stream Stream = (Ucx_WS_Stream)Stream_v;
     FabricState Fabric = Stream->Fabric;
     TimestepList *List = &Stream->Timesteps;
@@ -627,7 +616,6 @@ static void UcxReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, long Tim
 
 static void UcxDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 {
-    printf("CALL UcxDestroyReader\n");
     Ucx_RS_Stream RS_Stream = (Ucx_RS_Stream)RS_Stream_v;
 
     Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose, "Tearing down RDMA state on reader.\n");
@@ -642,7 +630,6 @@ static void UcxDestroyReader(CP_Services Svcs, DP_RS_Stream RS_Stream_v)
 
 static void UcxDestroyWriterPerReader(CP_Services Svcs, DP_WSR_Stream WSR_Stream_v)
 {
-    printf("CALL UcxDestroyWriterPerReader\n");
     Ucx_WSR_Stream WSR_Stream = {0};
     memcpy(&WSR_Stream, &WSR_Stream_v, sizeof(Ucx_WSR_Stream));
     Ucx_WS_Stream WS_Stream = WSR_Stream->WS_Stream;
@@ -690,7 +677,6 @@ static FMStructDescRec UcxBufferHandleStructs[] = {
 
 static void UcxDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
 {
-    printf("CALL UcxDestroyWriter\n");
     Ucx_WS_Stream WS_Stream = (Ucx_WS_Stream)WS_Stream_v;
     long Timestep;
 
@@ -738,7 +724,6 @@ static struct _CP_DP_Interface UcxDPInterface = {0};
 
 static int UcxGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params)
 {
-    printf("CALL UcxGetPriority\n");
     /* TODO: Improve priority algorithm */
     int ux_dp_priority = 10;
 
@@ -751,14 +736,12 @@ static int UcxGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams *
  */
 static void UcxUnGetPriority(CP_Services Svcs, void *CP_Stream)
 {
-    printf("CALL UcxUnGetPriority\n");
     Svcs->verbose(CP_Stream, DPPerStepVerbose, "UCX Dataplane unloading\n");
 }
 
 static void UcxTimestepArrived(CP_Services Svcs, DP_RS_Stream Stream_v, long Timestep,
                                SstPreloadModeType PreloadMode)
 {
-    printf("CALL UcxTimestepArrived\n");
     Ucx_RS_Stream Stream = (Ucx_RS_Stream)Stream_v;
 
     Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "%s with Timestep = %li, PreloadMode = %d\n",
@@ -767,7 +750,6 @@ static void UcxTimestepArrived(CP_Services Svcs, DP_RS_Stream Stream_v, long Tim
 
 extern NO_SANITIZE_THREAD CP_DP_Interface LoadUcxDP()
 {
-    printf("CALL LoadUcxDP\n");
     UcxDPInterface.DPName = "ucx";
     UcxDPInterface.ReaderContactFormats = UcxReaderContactStructs;
     UcxDPInterface.WriterContactFormats = UcxWriterContactStructs;
