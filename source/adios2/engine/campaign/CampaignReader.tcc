@@ -68,6 +68,8 @@ CampaignReader::TranslateToActualVariable(Variable<T> &variable)
     v->m_MemoryStart = variable.m_MemoryStart;
     v->m_MemoryCount = variable.m_MemoryCount;
     v->m_MemSpace = variable.m_MemSpace;
+    v->m_Stride = variable.m_Stride;
+    v->m_StrideStencil = variable.m_StrideStencil;
     return std::make_pair(v, e);
 }
 
