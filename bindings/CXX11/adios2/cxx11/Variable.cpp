@@ -37,7 +37,7 @@ namespace adios2
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
-    MemorySpace Variable<T>::GetDefaultMemorySpace()                                               \
+    MemorySpace Variable<T>::GetMemorySpace()                                                      \
     {                                                                                              \
         return m_Variable->m_MemSpace;                                                             \
     }                                                                                              \
@@ -265,6 +265,14 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #define declare_template_instantiation(T) template class detail::Span<T>;
 ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
+
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+#define declare_layout_template_instantiation(T)                                                   \
+    template void Variable<T>::SetArrayLayout(const ArrayOrdering layout);                         \
+    template ArrayOrdering Variable<T>::GetArrayLayout();
+ADIOS2_FOREACH_TYPE_1ARG(declare_layout_template_instantiation)
+#undef declare_layout_template_instantiation
+#endif
 
 #define declare_template_instantiation(T)                                                          \
     template std::vector<typename Variable<T>::Info> Variable<T>::ToBlocksInfoMin(                 \

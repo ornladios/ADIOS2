@@ -215,6 +215,20 @@ std::string ToString(const Variable<T> &variable)
     return std::string("Variable<") + variable.Type() + ">(Name: \"" + variable.Name() + "\")";
 }
 
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+template <class T>
+void Variable<T>::SetArrayLayout(const ArrayOrdering layout)
+{
+    m_Variable->SetArrayLayout(layout);
+}
+
+template <class T>
+adios2::ArrayOrdering Variable<T>::GetArrayLayout()
+{
+    return m_Variable->GetArrayLayout();
+}
+#endif
+
 namespace detail
 {
 // Span

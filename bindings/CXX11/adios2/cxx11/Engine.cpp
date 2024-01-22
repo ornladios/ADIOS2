@@ -17,16 +17,6 @@
 namespace adios2
 {
 
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
-void Engine::CheckMemorySpace(MemorySpace variableMem, MemorySpace bufferMem)
-{
-    if (variableMem != bufferMem)
-        helper::Throw<std::runtime_error>(
-            "CXX-Bindings", "Engine", "Put",
-            "Memory space mismatch between the pre-set value and the Kokkos::View");
-}
-#endif
-
 Engine::operator bool() const noexcept
 {
     if (m_Engine == nullptr)
