@@ -62,6 +62,9 @@ Variable<T> &IO::DefineVariable(const std::string &name, const Dims &shape, cons
         }
     }
 
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    variable.m_BaseLayout = m_ArrayOrder;
+#endif
     return variable;
 }
 

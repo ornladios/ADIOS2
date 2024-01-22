@@ -42,23 +42,82 @@ VariableBase::VariableBase(const std::string &name, const DataType type, const s
 
 size_t VariableBase::TotalSize() const noexcept { return helper::GetTotalSize(m_Count); }
 
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+ArrayOrdering VariableBase::GetArrayLayout() { return m_ArrayLayout; }
+
+void VariableBase::SetArrayLayout(const ArrayOrdering layout)
+{
+    // first time the layout is being set
+    if (m_ArrayLayout == ArrayOrdering::Auto)
+    {
+        m_ArrayLayout = layout;
+        // adjust the variable dimensions for the given layout
+        UpdateLayout(m_Shape);
+        UpdateLayout(m_Count);
+        UpdateLayout(m_Start);
+        return;
+    }
+    if (m_ArrayLayout != layout)
+    {
+        std::string ExistingLayout("RightMajor");
+        std::string NewLayout("RightMajor");
+        if (m_ArrayLayout == ArrayOrdering::ColumnMajor)
+            ExistingLayout = "LeftMajor";
+        if (layout == ArrayOrdering::ColumnMajor)
+            NewLayout = "LeftMajor";
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetArrayLayout",
+                                             "Variable " + m_Name + " is " + ExistingLayout +
+                                                 " and cannot received a " + NewLayout + " buffer");
+    }
+}
+#endif
+
 MemorySpace VariableBase::GetMemorySpace(const void *ptr)
 {
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    ArrayOrdering layout = m_BaseLayout;
+#endif
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
-    if (m_MemSpace != MemorySpace::Detect)
+    // first time the memory space is set
+    if (m_MemSpace == MemorySpace::Detect)
     {
-        return m_MemSpace;
-    }
-
-    if (helper::IsGPUbuffer(ptr))
-    {
-        return MemorySpace::GPU;
+        if (helper::IsGPUbuffer(ptr))
+        {
+            m_MemSpace = MemorySpace::GPU;
+            layout = ArrayOrdering::ColumnMajor;
+        }
+        else
+            m_MemSpace = MemorySpace::Host;
     }
 #endif
-    return MemorySpace::Host;
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    // set the layout based on the buffer memory space
+    // skipping throwing an exception for a mismatch
+    if (m_ArrayLayout == ArrayOrdering::Auto)
+        SetArrayLayout(layout);
+#endif
+    return m_MemSpace;
 }
 
-void VariableBase::SetMemorySpace(const MemorySpace mem) { m_MemSpace = mem; }
+void VariableBase::SetMemorySpace(const MemorySpace mem)
+{
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    if (m_MemSpace != MemorySpace::Detect && m_MemSpace != mem)
+    {
+        std::string ExistingMemSpace("Host");
+        std::string NewMemSpace("Host");
+        if (m_MemSpace == MemorySpace::GPU)
+            ExistingMemSpace = "GPU";
+        if (mem == MemorySpace::GPU)
+            NewMemSpace = "GPU";
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetMemorySpace",
+                                             "Variable " + m_Name + " is set to " +
+                                                 ExistingMemSpace + " and cannot received a " +
+                                                 NewMemSpace + " buffer");
+    }
+#endif
+    m_MemSpace = mem;
+}
 
 void VariableBase::SetShape(const adios2::Dims &shape)
 {
@@ -93,6 +152,9 @@ void VariableBase::SetShape(const adios2::Dims &shape)
     }
 
     m_Shape = shape;
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    UpdateLayout(m_Shape);
+#endif
 }
 
 void VariableBase::SetBlockSelection(const size_t blockID)
@@ -148,6 +210,10 @@ void VariableBase::SetSelection(const Box<Dims> &boxDims)
     m_Start = start;
     m_Count = count;
     m_SelectionType = SelectionType::BoundingBox;
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    UpdateLayout(m_Count);
+    UpdateLayout(m_Start);
+#endif
 }
 
 void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
@@ -202,6 +268,10 @@ void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
 
     m_MemoryStart = memorySelection.first;
     m_MemoryCount = memorySelection.second;
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    UpdateLayout(m_MemoryCount);
+    UpdateLayout(m_MemoryStart);
+#endif
 }
 
 void VariableBase::SetAccuracy(const adios2::Accuracy &a) noexcept
@@ -573,6 +643,24 @@ void VariableBase::CheckRandomAccess(const size_t step, const std::string hint) 
     }
 }
 
+Dims VariableBase::Shape(const size_t step, const MemorySpace memSpace,
+                         const ArrayOrdering layout) const
+{
+    auto dims = Shape(step);
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    bool mismatchMemSpace =
+        (memSpace != MemorySpace::Host && m_BaseLayout != ArrayOrdering::ColumnMajor);
+    bool mismatchLayout = (layout != m_BaseLayout && layout != ArrayOrdering::Auto);
+    if (mismatchMemSpace || mismatchLayout)
+    {
+        Dims flipDims(dims.size());
+        std::reverse_copy(dims.begin(), dims.end(), flipDims.begin());
+        return flipDims;
+    }
+#endif
+    return dims;
+}
+
 Dims VariableBase::Shape(const size_t step) const
 {
     CheckRandomAccess(step, "Shape");
@@ -602,5 +690,16 @@ Dims VariableBase::Shape(const size_t step) const
     return m_Shape;
 }
 
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+inline void VariableBase::UpdateLayout(Dims &shape)
+{
+    // if the default execution layout for the memory space
+    // is not the same as the selected column/row major format
+    if (m_BaseLayout != m_ArrayLayout && m_ArrayLayout != ArrayOrdering::Auto)
+    {
+        std::reverse(shape.begin(), shape.end());
+    }
+}
+#endif
 } // end namespace core
 } // end namespace adios2

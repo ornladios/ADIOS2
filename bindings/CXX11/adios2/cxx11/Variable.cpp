@@ -126,6 +126,20 @@ namespace adios2
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
+    Dims Variable<T>::Shape(const ArrayOrdering layout, const size_t step) const                   \
+    {                                                                                              \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Shape");                      \
+        return m_Variable->Shape(step, MemorySpace::Host, layout);                                 \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
+    Dims Variable<T>::Shape(const MemorySpace memSpace, const size_t step) const                   \
+    {                                                                                              \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Shape");                      \
+        return m_Variable->Shape(step, memSpace);                                                  \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
     Dims Variable<T>::Start() const                                                                \
     {                                                                                              \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Start");                      \
@@ -265,6 +279,14 @@ ADIOS2_FOREACH_TYPE_1ARG(declare_template_instantiation)
 #define declare_template_instantiation(T) template class detail::Span<T>;
 ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
+
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+#define declare_layout_template_instantiation(T)                                                   \
+    template void Variable<T>::SetArrayLayout(const ArrayOrdering layout);                         \
+    template ArrayOrdering Variable<T>::GetArrayLayout();
+ADIOS2_FOREACH_TYPE_1ARG(declare_layout_template_instantiation)
+#undef declare_layout_template_instantiation
+#endif
 
 #define declare_template_instantiation(T)                                                          \
     template std::vector<typename Variable<T>::Info> Variable<T>::ToBlocksInfoMin(                 \
