@@ -126,6 +126,20 @@ namespace adios2
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
+    Dims Variable<T>::Shape(const ArrayOrdering layout, const size_t step) const                   \
+    {                                                                                              \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Shape");                      \
+        return m_Variable->Shape(step, MemorySpace::Host, layout);                                 \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
+    Dims Variable<T>::Shape(const MemorySpace memSpace, const size_t step) const                   \
+    {                                                                                              \
+        helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Shape");                      \
+        return m_Variable->Shape(step, memSpace);                                                  \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
     Dims Variable<T>::Start() const                                                                \
     {                                                                                              \
         helper::CheckForNullptr(m_Variable, "in call to Variable<T>::Start");                      \
