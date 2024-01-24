@@ -2238,9 +2238,9 @@ int readVar(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                 //        helper::DimsToString(countv).c_str(),
                 //        helper::DimsToString(sel.first).c_str(),
                 //        helper::DimsToString(sel.second).c_str());
-                for (j = 0; j < tdims; j++)
+                for (j = 0; j < tdims - tidx; j++)
                 {
-                    c_stride[j] = sel.second[j];
+                    c_stride[j + tidx] = sel.second[j];
                     // printf("%" PRIu64 " ", c_stride[j]);
                 }
                 // printf("}\n");
