@@ -131,7 +131,7 @@ public:
     virtual ~VariableBase() = default;
 
     /**
-     * Returns the total number of elements
+     * Returns the total number of elements, using count and striding but without steps
      * @return number of elements
      */
     size_t TotalSize() const noexcept;

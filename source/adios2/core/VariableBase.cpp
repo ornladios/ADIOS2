@@ -44,7 +44,18 @@ VariableBase::VariableBase(const std::string &name, const DataType type, const s
     InitShapeType();
 }
 
-size_t VariableBase::TotalSize() const noexcept { return helper::GetTotalSize(m_Count); }
+size_t VariableBase::TotalSize() const noexcept
+{
+    if (m_Stride.empty())
+    {
+        return helper::GetTotalSize(m_Count);
+    }
+    else
+    {
+        auto box = helper::GetStridedSelection(m_Start, m_Count, m_Stride);
+        return helper::GetTotalSize(box.second);
+    }
+}
 
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
 ArrayOrdering VariableBase::GetArrayLayout() { return m_ArrayLayout; }
