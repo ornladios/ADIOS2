@@ -21,8 +21,7 @@ namespace adios2
 namespace format
 {
 
-static void print_array(const std::string name, const uint8_t *ptr,
-                        const size_t size)
+static void print_array(const std::string name, const uint8_t *ptr, const size_t size)
 {
     std::cout << name << " ptr = " << (void *)ptr << "= [ ";
     for (size_t n = 0; n < size; ++n)
@@ -46,13 +45,11 @@ TEST(ChunkV, AlignmentToMemBlockSize)
     size_t AllocSize = 51;
 
     {
-        adios2::format::BufferV::BufferPos pos =
-            b.Allocate(AllocSize, AlignnmentSize);
+        adios2::format::BufferV::BufferPos pos = b.Allocate(AllocSize, AlignnmentSize);
         ASSERT_EQ(pos.bufferIdx, 0);
         ASSERT_EQ(pos.globalPos, 0);
         ASSERT_EQ(pos.posInBuffer, 0);
-        uint8_t *ptr = reinterpret_cast<uint8_t *>(
-            b.GetPtr(pos.bufferIdx, pos.posInBuffer));
+        uint8_t *ptr = reinterpret_cast<uint8_t *>(b.GetPtr(pos.bufferIdx, pos.posInBuffer));
         for (uint8_t n = 0; n < AllocSize; ++n)
         {
             ptr[n] = n;
@@ -68,13 +65,11 @@ TEST(ChunkV, AlignmentToMemBlockSize)
     {
         /* second block should fit in existing chunk but aligned to 56 bytes
            (first AllocSize aligned to AlignmentSize is 56) */
-        adios2::format::BufferV::BufferPos pos =
-            b.Allocate(AllocSize, AlignnmentSize);
+        adios2::format::BufferV::BufferPos pos = b.Allocate(AllocSize, AlignnmentSize);
         ASSERT_EQ(pos.bufferIdx, 0);
         ASSERT_EQ(pos.globalPos, 56);
         ASSERT_EQ(pos.posInBuffer, 56);
-        uint8_t *ptr = reinterpret_cast<uint8_t *>(
-            b.GetPtr(pos.bufferIdx, pos.posInBuffer));
+        uint8_t *ptr = reinterpret_cast<uint8_t *>(b.GetPtr(pos.bufferIdx, pos.posInBuffer));
         for (uint8_t n = 0; n < AllocSize; ++n)
         {
             ptr[n] = n;
@@ -91,13 +86,11 @@ TEST(ChunkV, AlignmentToMemBlockSize)
            - first chunk should be 128 bytes long (aligned to 32)
            - globalPos should be 128 (0 in this second chunk)
         */
-        adios2::format::BufferV::BufferPos pos =
-            b.Allocate(AllocSize, AlignnmentSize);
+        adios2::format::BufferV::BufferPos pos = b.Allocate(AllocSize, AlignnmentSize);
         ASSERT_EQ(pos.bufferIdx, 1);
         ASSERT_EQ(pos.globalPos, 128);
         ASSERT_EQ(pos.posInBuffer, 0);
-        uint8_t *ptr = reinterpret_cast<uint8_t *>(
-            b.GetPtr(pos.bufferIdx, pos.posInBuffer));
+        uint8_t *ptr = reinterpret_cast<uint8_t *>(b.GetPtr(pos.bufferIdx, pos.posInBuffer));
         for (uint8_t n = 0; n < AllocSize; ++n)
         {
             ptr[n] = n;
@@ -113,10 +106,8 @@ TEST(ChunkV, AlignmentToMemBlockSize)
          * be here */
         ASSERT_EQ(vec[1].iov_len, 51);
 
-        const uint8_t *chunk0 =
-            reinterpret_cast<const uint8_t *>(vec[0].iov_base);
-        const uint8_t *chunk1 =
-            reinterpret_cast<const uint8_t *>(vec[1].iov_base);
+        const uint8_t *chunk0 = reinterpret_cast<const uint8_t *>(vec[0].iov_base);
+        const uint8_t *chunk1 = reinterpret_cast<const uint8_t *>(vec[1].iov_base);
         /* first array in chunk0[0..AllocSize-1]*/
         ASSERT_EQ(chunk0[0], 0);
         ASSERT_EQ(chunk0[AllocSize - 1], AllocSize - 1);
