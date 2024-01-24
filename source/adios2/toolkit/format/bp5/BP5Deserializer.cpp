@@ -1811,12 +1811,12 @@ void StrideCopy1D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
                   const CoreDims &strideStart, const CoreDims &strideCount,
                   const DoubleMatrix &stencil, MemorySpace MemSpace = MemorySpace::Host)
 {
-    std::cout << "StrideCopy1D: inStart = " << DimsToString(inStart)
+    /*std::cout << "StrideCopy1D: inStart = " << DimsToString(inStart)
               << " inCount = " << DimsToString(inCount) << " outStart = " << DimsToString(outStart)
               << " outCount = " << DimsToString(outCount)
               << " strideStart = " << DimsToString(strideStart)
-              << " srideCount = " << DimsToString(strideCount) << std::endl;
-    print1D("Incoming block", in, inCount);
+              << " srideCount = " << DimsToString(strideCount) << std::endl;*/
+    // print1D("Incoming block", in, inCount);
 
     size_t inPos = strideStart[0];
     for (size_t i = 0; i < outCount[0]; ++i)
@@ -1825,8 +1825,7 @@ void StrideCopy1D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
         inPos += strideCount[0];
     }
 
-    print1D("Outgoing block", out, outCount);
-    std::cout << std::endl;
+    // print1D("Outgoing block", out, outCount);
 }
 
 template <class T>
@@ -1856,8 +1855,8 @@ void StrideCopy2D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
         }
     }
 #else
-    print2D("Incoming stencil", stencil.data.data(), CoreDims(stencil.shape));
-    // window of values to calculate with the stencil
+    // print2D("Incoming stencil", stencil.data.data(), CoreDims(stencil.shape));
+    //  window of values to calculate with the stencil
     std::vector<T> window(stencil.shape[0] * stencil.shape[1]);
     {
         // initialize window: center value is in[strideStart[]],
@@ -1899,7 +1898,7 @@ void StrideCopy2D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
                    stencil.shape[1] * sizeof(T));
         }
     }
-    print2D("Window initialized", window.data(), CoreDims(stencil.shape));
+    // print2D("Window initialized", window.data(), CoreDims(stencil.shape));
 
     size_t outPos = 0;
     for (size_t i = 0; i < outCount[0]; ++i)
@@ -1915,7 +1914,6 @@ void StrideCopy2D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
     }
 #endif
     // print2D("Outgoing block", out, outCount);
-    std::cout << std::endl;
 }
 
 template <class T>
@@ -1930,7 +1928,7 @@ void StrideCopy3D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
               << " outCount = " << DimsToString(outCount)
               << " strideStart = " << DimsToString(strideStart)
               << " srideCount = " << DimsToString(strideCount) << std::endl;
-    print3D("Incoming block", in, inCount);
+    // print3D("Incoming block", in, inCount);
 
     /* FIXME: this is not done yet*/
     size_t outPos = 0;
@@ -1949,8 +1947,7 @@ void StrideCopy3D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
         }
     }
 
-    print3D("Outgoing block", out, outCount);
-    std::cout << std::endl;
+    // print3D("Outgoing block", out, outCount);
 }
 
 template <class T>
@@ -2194,9 +2191,9 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
             Dims(outStart.begin(), outStart.end()), Dims(outCount.begin(), outCount.end()),
             Dims(inStart.begin(), inStart.end()), Dims(inCount.begin(), inCount.end()));
 
-        std::cout << "selectionBox = " << BoxToString(selectionBox)
+        /*std::cout << "selectionBox = " << BoxToString(selectionBox)
                   << " BlockBox = " << BoxToString(BlockBox)
-                  << " intersectionBox = " << BoxToString(IntersectionBox) << std::endl;
+                  << " intersectionBox = " << BoxToString(IntersectionBox) << std::endl;*/
 
         // calculate stride offset from the stride and
         // from the position of this block inside the selection
@@ -2215,7 +2212,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
                 strideOffset[i] = 0;
             }
         }
-        std::cout << "strideOffset = " << DimsToString(strideOffset) << std::endl;
+        /*std::cout << "strideOffset = " << DimsToString(strideOffset) << std::endl;*/
 
         Box<Dims> stridedBox = helper::GetStridedSelection(
             IntersectionBox.first, IntersectionBox.second, VB->m_Stride, strideOffset);
@@ -2235,30 +2232,11 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
 
         size_t nElems = helper::GetTotalSize(stridedBox.second);
 
-        std::cout << "stridedBox = {" << DimsToString(st) << ", " << DimsToString(ct)
-                  << "}  nElems = " << nElems << std::endl;
+        /*std::cout << "stridedBox = {" << DimsToString(st) << ", " << DimsToString(ct)
+                  << "}  nElems = " << nElems << std::endl;*/
 
         stridedData = (char *)calloc(nElems, ElementSize);
         freeStridedData = true;
-
-        /*
-
-        std::cout << "RankOffset = " << DimsToString(DimCount, RankOffset)
-                  << " RankSize = " << DimsToString(DimCount, RankSize)
-                  << " SelOffset = " << DimsToString(DimCount, SelOffset)
-                  << " SelSize = " << DimsToString(DimCount, SelSize)
-                  << " Req.Start= " << DimsToString(Req.Start)
-                  << " Req.Count = " << DimsToString(Req.Count)
-                  << " Stride = " << DimsToString(VB->m_Stride)
-                  << " strideOffset = " << DimsToString(strideOffset)
-                  << " stride nElems = " << nElems << std::endl;
-
-                std::cout << "inStart = " << DimsToString(inStart) << " inCount = " <<
-           DimsToString(inCount)
-                          << " outStart = " << DimsToString(outStart)
-                          << " outCount = " << DimsToString(outCount) << std::endl;
-        */
-
         char *dataptr = IncomingData;
         StrideCopy(((struct BP5VarRec *)Req.VarRec)->Type, dataptr, inStart, inCount, true,
                    stridedData, st, ct, true, strideOffset, strideCount, VB->m_StrideStencil,
@@ -2336,7 +2314,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
         /*std::cout << "NdCopy inStart = " << DimsToString(inStart)
                   << " inCount = " << DimsToString(inCount)
                   << " outStart = " << DimsToString(outStart)
-                  << " outCount = " << DimsToString(outCount) << "\n"
+                  << " outCount = " << DimsToString(outCount) << " data = " << (uint64_t)(Req.Data)
                   << std::endl;*/
         helper::NdCopy(stridedData, inStart, inCount, true, true, (char *)Req.Data, outStart,
                        outCount, true, true, ElementSize, CoreDims(), CoreDims(), CoreDims(),
