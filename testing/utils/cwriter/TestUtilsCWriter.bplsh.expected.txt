@@ -21,6 +21,8 @@ The time dimension is the first dimension then.
   --count     | -c "spec"    Number of elements in each dimension
                                -1 denotes 'until end' of dimension
                                (default is -1 for all dimensions)
+  --stride "spec"            Stride with number of elements in each dimension
+                               Steps are not included in this specification!
   --noindex   | -y           Print data without array indices
   --string    | -S           Print 8bit integer arrays as strings
   --columns   | -n "cols"    Number of data elements per row to print
