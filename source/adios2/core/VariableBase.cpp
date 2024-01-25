@@ -300,7 +300,7 @@ adios2::Accuracy VariableBase::GetAccuracyRequested() const noexcept { return m_
 void VariableBase::SetStride(const Dims &stride, const DoubleMatrix &stencil)
 {
     m_Stride = stride;
-    size_t ndim;
+    size_t ndim = 0;
     if (m_ShapeID == ShapeID::GlobalArray)
     {
         ndim = m_Shape.size();
