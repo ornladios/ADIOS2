@@ -93,7 +93,6 @@ void writer(adios2::ADIOS &adios, const std::size_t nx, const std::size_t ny)
     writer.Close();
 }
 
-constexpr double sixteenth = 1.0 / 16;
 constexpr double eighth = 1.0 / 8;
 const std::vector<double> M2 = {
     0.0,    eighth,     0.0,    // 1
