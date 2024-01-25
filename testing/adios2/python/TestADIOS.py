@@ -19,17 +19,17 @@ class Test_adios(unittest.TestCase):
 
     def test_declare_io(self):
         adios = Adios()
-        writer = adios.declare_io("BPWriter")
-        self.assertNotEqual(writer, None)
+        io = adios.declare_io("BPWriter")
+        self.assertNotEqual(io, None)
 
     def test_at_io(self):
         adios = Adios()
-        writer = adios.declare_io("BPWriter")
+        io = adios.declare_io("BPWriter")
         reader = adios.declare_io("BPReader")
         x = adios.at_io("BPReader")
-        self.assertNotEqual(writer, reader)
+        self.assertNotEqual(io, reader)
         self.assertEqual(reader, x)
-        self.assertNotEqual(writer, x)
+        self.assertNotEqual(io, x)
 
     def test_remove_io(self):
         adios = Adios()

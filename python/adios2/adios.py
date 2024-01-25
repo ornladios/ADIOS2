@@ -42,7 +42,7 @@ class Adios:
         Args:
             name (str): IO instance name
         """
-        return IO(self.impl.DeclareIO(name), name)
+        return IO(self.impl.DeclareIO(name), name, self)
 
     def at_io(self, name):
         """
@@ -56,7 +56,7 @@ class Adios:
         io = None
         io_instance = self.impl.AtIO(name)
         if io_instance:
-            io = IO(io_instance, name)
+            io = IO(io_instance, name, self)
         return io
 
     def remove_io(self, name):
