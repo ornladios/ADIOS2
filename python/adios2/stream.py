@@ -2,11 +2,10 @@
   Distributed under the OSI-approved Apache License, Version 2.0.  See
   accompanying file Copyright.txt for details.
 """
-
-from adios2.adios import Adios
-from adios2 import bindings
-
+from functools import singledispatchmethod
+from sys import maxsize
 import numpy as np
+from adios2 import bindings, Adios, IO, Variable
 
 
 def type_adios_to_numpy(name):
@@ -26,58 +25,60 @@ def type_adios_to_numpy(name):
     }[name]
 
 
+def string_to_mode(mode: str) -> [bindings.Mode, bool]:
+    """Convert high level open mode to adios2.bindings.Mode"""
+    read_mode = False
+    if mode == "r":
+        bmode = bindings.Mode.Read
+        read_mode = True
+    elif mode == "rra":
+        bmode = bindings.Mode.ReadRandomAccess
+        read_mode = True
+    elif mode == "w":
+        bmode = bindings.Mode.Write
+    elif mode == "a":
+        bmode = bindings.Mode.Append
+    else:
+        raise ValueError()
+    return bmode, read_mode
+
+
+# pylint: disable=R0902   # Too many instance attributes
 class Stream:
     """High level implementation of the Stream class from the core API"""
 
-    def __init__(
-        self, path, mode="r", *, comm=None, engine_type=None, config_file=None, io_name=None
-    ):
-
+    @singledispatchmethod
+    def __init__(self, path, mode, comm=None):
         # pylint: disable=R0912 # Too many branches
         if comm and not bindings.is_built_with_mpi:
             raise RuntimeError("Cannot use MPI since ADIOS2 was built without MPI support")
 
-        if config_file and engine_type:
-            raise RuntimeError("Arguments 'engine_type' and 'config_file' cannot be used together")
-
-        if config_file and not io_name:
-            raise RuntimeError("Argument 'io_name' is required when using 'config_file'")
-
-        if not engine_type:
-            engine_type = "File"
-
         # pylint: disable=E1121
-        if config_file:
-            if comm:
-                self._adios = Adios(config_file, comm)
-            else:
-                self._adios = Adios(config_file)
-            self._io_name = io_name
-
+        if comm:
+            self._adios = Adios(comm)
         else:
-            if comm:
-                self._adios = Adios(comm)
-            else:
-                self._adios = Adios()
-            self._io_name = f"stream:{path}:engine_type:{engine_type}:mode:{mode}"
+            self._adios = Adios()
+
+        self._io_name = f"stream:{path}:mode:{mode}"
 
         # pylint: enable=E1121
         self._io = self._adios.declare_io(self._io_name)
-        if not config_file:
-            self._io.set_engine(engine_type)
-
-        if mode == "r":
-            self._mode = bindings.Mode.Read
-        elif mode == "rra":
-            self._mode = bindings.Mode.ReadRandomAccess
-        elif mode == "w":
-            self._mode = bindings.Mode.Write
-        else:
-            raise ValueError()
-
+        self._mode, self._read_mode = string_to_mode(mode)
         self._engine = self._io.open(path, self._mode)
-        self.index = 0
-        self.max_steps = 0
+        self.index = -1
+        self.max_steps = maxsize
+        self._step_status = bindings.StepStatus.EndOfStream
+
+    # e.g. Stream(io: adios2.IO, path, mode)
+    @__init__.register(IO)
+    def _(self, io: IO, path, mode, comm=None):
+        self._io = io
+        self._adios = io.adios()
+        self._mode, self._read_mode = string_to_mode(mode)
+        self._engine = self._io.open(path, self._mode, comm)
+        self.index = -1
+        self.max_steps = maxsize
+        self._step_status = bindings.StepStatus.EndOfStream
 
     @property
     def mode(self):
@@ -112,16 +113,26 @@ class Stream:
         return self
 
     def __next__(self):
-        if self.index > 0:
+        if self.index >= 0 and self._step_status == bindings.StepStatus.OK:
             self.end_step()
-        if self.index == self.max_steps:
-            self.index = 0
-            self.max_steps = 0
+        if self.index == self.max_steps - 1:
+            self._step_status = bindings.StepStatus.EndOfStream
             raise StopIteration
 
         self.index += 1
-        self.begin_step()
+        self._step_status = self.begin_step()
+        if self._step_status == bindings.StepStatus.EndOfStream:
+            raise StopIteration
+
+        if self._step_status == bindings.StepStatus.OtherError:
+            print("ERROR: Stream returned an error. Ending the loop")
+            raise StopIteration
+
         return self
+
+    def step_status(self):
+        """Inspect the stream status. Return adios2.bindings.StepStatus"""
+        return self._step_status
 
     def set_parameters(self, **kwargs):
         """
@@ -136,25 +147,6 @@ class Stream:
                 parameter value
         """
         self._io.set_parameters(**kwargs)
-
-    def set_transport(self, transport, parameters={}):
-        """
-        Adds a transport and its parameters to current IO. Must be
-        supported by current engine type.
-
-        Parameters
-            type
-                must be a supported transport type for current engine.
-
-            parameters
-                acceptable parameters for a particular transport
-                CAN'T use the keywords "Transport" or "transport" in key
-
-        Returns
-            transport_index
-                handler to added transport
-        """
-        self._io.add_transport(transport, parameters)
 
     def available_variables(self):
         """
@@ -210,7 +202,28 @@ class Stream:
         """
         return self._io.inquire_variable(name)
 
-    def write(self, name, content, shape=[], start=[], count=[], operations=None):
+    @singledispatchmethod
+    def write(self, variable: Variable, content):
+        """
+        writes a variable
+
+        Parameters
+            variable
+                adios2.Variable object to be written
+                Use variable.set_selection(), set_shape(), add_operation_string()
+                to prepare a write
+
+            content
+                variable data values
+        """
+        if isinstance(content, list):
+            content_np = np.array(content)
+            self._engine.put(variable, content_np, bindings.Mode.Sync)
+        else:
+            self._engine.put(variable, content, bindings.Mode.Sync)
+
+    @write.register(str)
+    def _(self, name, content, shape=[], start=[], count=[], operations=None):
         """
         writes a variable
 
@@ -259,13 +272,59 @@ class Stream:
             for operation in operations:
                 variable.add_operation_string(operation[0], operation[1])
 
-        if isinstance(content, list):
-            content_np = np.array(content)
-            self._engine.put(variable, content_np, bindings.Mode.Sync)
-        else:
-            self._engine.put(variable, content, bindings.Mode.Sync)
+        self.write(variable, content)
 
-    def read(self, name, start=[], count=[], block_id=None, step_selection=None):
+    @singledispatchmethod
+    def read(self, variable: Variable):
+        """
+        Random access read allowed to select steps,
+        only valid with Stream Engines
+
+        Parameters
+            variable
+                adios2.Variable object to be read
+                Use variable.set_selection(), set_block_selection(), set_step_selection()
+                to prepare a read
+        Returns
+            array
+                resulting array from selection
+        """
+        dtype = type_adios_to_numpy(variable.type())
+        count = variable.count()
+        if count != []:
+            # array
+            # steps = variable.get_steps_from_step_selection()
+            # if steps == 0:
+            #     steps = 1
+            # Missing from C++ API: get the steps set for a variable.
+            # Calculate the steps from size of count and total size that
+            # we can get from the C++ API.
+            size_per_step = np.prod(count)
+            size_all_steps = variable.selection_size()
+            steps = int(size_all_steps / size_per_step)
+            if size_all_steps % size_per_step != 0:
+                print(
+                    f"Stream read(), step calculation for array went horribly wrong "
+                    f" variable name = {variable.name()}"
+                    f" selection size = {size_all_steps}  size per step = {size_per_step}"
+                )
+
+            output_shape = np.array(count)
+            output_shape[0] *= steps
+            print(
+                f"Stream.read variable {variable.name()} dtype = {dtype} "
+                f"shape = {output_shape}, steps = {variable.steps()}"
+            )
+        else:
+            # scalar
+            output_shape = (variable.selection_size(),)
+
+        output = np.zeros(output_shape, dtype=dtype)
+        self._engine.get(variable, output)
+        return output
+
+    @read.register(str)
+    def _(self, name: str, start=[], count=[], block_id=None, step_selection=None):
         """
         Random access read allowed to select steps,
         only valid with Stream Engines
@@ -294,10 +353,11 @@ class Stream:
         if not variable:
             raise ValueError()
 
-        if step_selection and not self.mode == bindings.Mode.ReadRandomAccess:
+        if step_selection and not self._mode == bindings.Mode.ReadRandomAccess:
             raise RuntimeError("step_selection parameter requires 'rra' mode")
 
         if step_selection:
+            print(f"Stream.read step selection = {step_selection}")
             variable.set_step_selection(step_selection)
 
         if block_id:
@@ -309,18 +369,7 @@ class Stream:
         if start != [] and count != []:
             variable.set_selection([start, count])
 
-        output_shape = (variable.selection_size(),)
-        if count != []:
-            if step_selection:
-                output_shape = np.array(count) * step_selection[1]
-            else:
-                output_shape = count
-
-        dtype = type_adios_to_numpy(variable.type())
-
-        output = np.zeros(output_shape, dtype=dtype)
-        self._engine.get(variable, output)
-        return output
+        return self.read(variable)
 
     def write_attribute(self, name, content, variable_name="", separator="/"):
         """
@@ -410,8 +459,9 @@ class Stream:
         in file based engines)
         """
 
-        if not self.engine.between_step_pairs():
-            self.engine.begin_step()
+        if not self._engine.between_step_pairs():
+            return self._engine.begin_step()
+        return bindings.StepStatus.OtherError
 
     def end_step(self):
         """
@@ -439,12 +489,29 @@ class Stream:
 
     def current_step(self):
         """
-        Inspect current step when using for-in loops, read mode only
+        Inspect current step of the stream. The steps run from 0.
+
+        Note that in a real stream, steps from the producer may be missed if
+        the consumer is slow and the producer is told to discard steps
+        when no one is reading them in time. You may see non-consecutive
+        numbers from this function call in this case.
+
+        Use loop_index() to get a loop counter in a for ... .steps() loop.
 
         Returns
             current step
         """
         return self._engine.current_step()
+
+    def loop_index(self):
+        """
+        Inspect the loop counter when using for-in loops. This function returns
+        consecutive numbers from 0.
+
+        Returns
+            the loop counter
+        """
+        return self.index
 
     def steps(self, num_steps=0):
         """
@@ -454,23 +521,43 @@ class Stream:
         Write Mode: num_steps is a mandatory argument and should specify the number
         of steps.
 
-        Read Mode: num_steps should not be used and there will be as much iterations
-        as steps exits.
+        Read Mode: if num_steps is not specified there will be as much iterations
+        as provided by the actual engine. If num_steps is given and there is not
+        that many steps in a file/stream, an error will occur.
 
         IMPORTANT NOTE: Do not use with ReadRandomAccess mode.
         """
+        if not self._read_mode and num_steps == 0:
+            raise RuntimeError("Stream.steps() in write mode requires num_steps")
+
+        if self._mode == bindings.Mode.ReadRandomAccess:
+            raise RuntimeError("Stream.steps() is not allowed in ReadRandomAccess mode")
+
+        if self._mode == bindings.Mode.Read and not self.index < 0:
+            raise RuntimeError(
+                "Stream.steps() can only be called once in Read mode."
+                " Close the stream and reopen to run another iteration loop."
+            )
+
         if num_steps > 0:
             self.max_steps = num_steps
         else:
-            self.max_steps = self._engine.steps()
+            self.max_steps = maxsize  # engine steps will limit the loop
 
-        self.index = 0
+        # in write mode we can run yet another loop
+        self.index = -1
+
         return self
 
     def num_steps(self):
-        """READ MODE ONLY. Return the number of steps available."""
-        if self.mode not in (bindings.Mode.ReadRandomAccess, bindings.Mode.Read):
-            raise RuntimeError("num_steps requires Read/ReadRandomOnly mode")
+        """
+        READ MODE ONLY. Return the number of steps available.
+        Note that this is the steps of a file/stream. Each variable has 
+        its own steps, which needs to inspected with var=stream.inquire_variable() and then
+        with var.steps()
+        """
+        if not self._read_mode:
+            raise RuntimeError("num_steps requires Read/ReadRandomAccess mode")
 
         return self._engine.steps()
 
@@ -485,10 +572,10 @@ class Stream:
         Returns:
             list of dictionaries with information of each step
         """
-        if self.mode not in (bindings.Mode.ReadRandomAccess, bindings.Mode.Read):
-            raise RuntimeError("all_blocks_info requires Read/ReadRandomOnly mode")
+        if not self._read_mode:
+            raise RuntimeError("all_blocks_info requires Read/ReadRandomAccess mode")
 
-        if self.mode == bindings.Mode.Read:
+        if self._mode == bindings.Mode.Read:
             self.begin_step()
 
-        return self.engine.all_blocks_info(name)
+        return self._engine.all_blocks_info(name)
