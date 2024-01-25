@@ -431,7 +431,7 @@ void BP5Writer::NotifyEngineAttribute(std::string name, AttributeBase *Attr, voi
 
 void BP5Writer::MarshalAttributes()
 {
-    PERFSTUBS_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER("BP5Writer::MarshalAttributes");
     const auto &attributes = m_IO.GetAttributes();
 
     // if there are no new attributes, nothing to do
