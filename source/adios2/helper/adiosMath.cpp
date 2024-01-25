@@ -546,30 +546,14 @@ Box<Dims> GetStridedSelection(const Dims &start, const Dims &count, const Dims &
     return GetStridedSelection(start, count, stride, Dims(count.size(), 0ULL));
 }
 
-template <class T>
-bool equal_within_ulps(
-    T x, T y, std::size_t n = 1,
-    typename std::enable_if<not std::numeric_limits<T>::is_integer, T>::type * = 0)
+bool equal_within_ulps(double x, double y, std::size_t n)
 {
     //  Taken from https://en.cppreference.com/w/cpp/types/numeric_limits/epsilon
-
-    // Since `epsilon()` is the gap size (ULP, unit in the last place)
-    // of floating-point numbers in interval [1, 2), we can scale it to
-    // the gap size in interval [2^e, 2^{e+1}), where `e` is the exponent
-    // of `x` and `y`.
-
-    // If `x` and `y` have different gap sizes (which means they have
-    // different exponents), we take the smaller one. Taking the bigger
-    // one is also reasonable, I guess.
-    const T m = std::min(std::fabs(x), std::fabs(y));
-
-    // Subnormal numbers have fixed exponent, which is `min_exponent - 1`.
-    const int exp = m < std::numeric_limits<T>::min() ? std::numeric_limits<T>::min_exponent - 1
-                                                      : std::ilogb(m);
-
-    // We consider `x` and `y` equal if the difference between them is
-    // within `n` ULPs.
-    return std::fabs(x - y) <= n * std::ldexp(std::numeric_limits<T>::epsilon(), exp);
+    const double m = std::min(std::fabs(x), std::fabs(y));
+    const int exp = m < std::numeric_limits<double>::min()
+                        ? std::numeric_limits<double>::min_exponent - 1
+                        : std::ilogb(m);
+    return std::fabs(x - y) <= n * std::ldexp(std::numeric_limits<double>::epsilon(), exp);
 }
 
 } // end namespace helper

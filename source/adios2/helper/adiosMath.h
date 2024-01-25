@@ -334,13 +334,7 @@ Box<Dims> GetStridedSelection(const Dims &start, const Dims &count, const Dims &
  * See example in https://en.cppreference.com/w/cpp/types/numeric_limits/epsilon
  * @brief Return true if the x and y are within n * of the machine epsilon
  */
-template <class T>
-bool equal_within_ulps(
-    T x, T y, std::size_t n = 1,
-    typename std::enable_if<not std::numeric_limits<T>::is_integer, bool>::type * = 0)
-{
-    return true;
-}
+bool equal_within_ulps(double x, double y, std::size_t n = 1);
 
 } // end namespace helper
 } // end namespace adios2
