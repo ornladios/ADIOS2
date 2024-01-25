@@ -57,8 +57,6 @@ size_t ChunkV::ChunkAlloc(Chunk &v, const size_t size)
             v.Ptr = (char *)((p + m_MemAlign - 1) & ~(m_MemAlign - 1));
         }
         v.Size = actualsize;
-        /*std::cout << "    ChunkAlloc: buf = " << (void *)v.Ptr
-                  << " size = " << actualsize << std::endl;*/
         return actualsize;
     }
     else
@@ -105,15 +103,20 @@ size_t ChunkV::AddToVec(const size_t size, const void *buf, size_t align, bool C
             // realloc down to used size (helpful?) and set size in array
             /*std::cout << "    downsize ptr = " << m_Chunks.back().Ptr
                       << " to size = " << m_TailChunkPos << std::endl;*/
-            size_t actualsize = ChunkAlloc(m_Chunks.back(), m_TailChunkPos);
+            Chunk &c = m_Chunks.back();
+            size_t actualsize = ChunkAlloc(c, m_TailChunkPos);
             size_t alignment = actualsize - m_TailChunkPos;
             if (alignment)
             {
-                auto p = m_Chunks.back().Ptr + m_TailChunkPos;
+                auto p = c.Ptr + m_TailChunkPos;
                 std::fill(p, p + alignment, 0);
             }
             retOffset += alignment;
-            DataV.back().Size = actualsize;
+            // Update entry in DataV as size and potentiall ptr has changed
+            // Learned from sanitizer: downsizing realloc still may change pointer
+            VecEntry &dv = DataV.back();
+            dv.Size = actualsize;
+            dv.Base = c.Ptr;
             m_TailChunkPos = 0;
             m_TailChunk = nullptr;
             AppendPossible = false;
@@ -183,14 +186,20 @@ BufferV::BufferPos ChunkV::Allocate(const size_t size, size_t align)
     {
         // No room in current chunk, close it out
         // realloc down to used size (helpful?) and set size in array
-        size_t actualsize = ChunkAlloc(m_Chunks.back(), m_TailChunkPos);
+        Chunk &c = m_Chunks.back();
+        size_t actualsize = ChunkAlloc(c, m_TailChunkPos);
         size_t alignment = actualsize - m_TailChunkPos;
         if (alignment)
         {
-            auto p = m_Chunks.back().Ptr + m_TailChunkPos;
+            auto p = c.Ptr + m_TailChunkPos;
             std::fill(p, p + alignment, 0);
+            CurOffset += alignment;
         }
-        DataV.back().Size = actualsize;
+        // Update entry in DataV as size and potentiall ptr has changed
+        // Learned from sanitizer: downsizing realloc still may change pointer
+        VecEntry &dv = DataV.back();
+        dv.Size = actualsize;
+        dv.Base = c.Ptr;
         m_TailChunkPos = 0;
         m_TailChunk = nullptr;
         AppendPossible = false;
