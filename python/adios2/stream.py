@@ -552,7 +552,7 @@ class Stream:
     def num_steps(self):
         """
         READ MODE ONLY. Return the number of steps available.
-        Note that this is the steps of a file/stream. Each variable has 
+        Note that this is the steps of a file/stream. Each variable has
         its own steps, which needs to inspected with var=stream.inquire_variable() and then
         with var.steps()
         """
