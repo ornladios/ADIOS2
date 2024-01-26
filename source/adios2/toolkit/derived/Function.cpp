@@ -74,10 +74,9 @@ Dims AggrSameDimsFunc(std::vector<Dims> input)
             helper::Throw<std::invalid_argument>("Derived", "Function", "AggrSameDimFunc",
                                                  "Invalid variable dimensions");
     }
-    // return the first dimension
+    // return original dimensions with added dimension of number of inputs
     Dims output = input[0];
-    size_t num_dims = output.size();
-    output.insert(output.begin(), num_dims);
+    output.push_back(input.size());
     return output;
 }
 
@@ -91,26 +90,42 @@ Dims AggrSameDimsFunc(std::vector<Dims> input)
  *     count - number of elements in data
  *     stride - how to access neighbours
  */
-template <class T>
-T linear_interp (T* data, size_t index, size_t count, size_t stride)
+//template <class T>
+float linear_interp (DerivedData input, size_t index, size_t dim)
 {
+    size_t stride = 1;
+    size_t range;
+    size_t offset;
+    float result;
+    float* data = (float*)input.Data;
+
+    for (size_t i = 0; i < input.Count.size() - (dim + 1); ++i)
+      {
+	stride *= input.Count[input.Count.size() - (i + 1)];
+      }
     size_t ind1 = index - stride;
     size_t ind2 = index + stride;
-    bool boundary = false;
-    if (index < stride)
-      {
-        ind1 = index;
-        boundary = true;
-      }
-    if (count - index <= stride)
-      {
-        ind2 = index;
-        boundary = true;
-      }
-     // If stride is out of bounds in both directions, ind1 = ind2 = index
-     // return 0
+    range = stride * input.Count[dim];
+    offset = index % range;
     
-     return (data[ind2] - data[ind1]) / (boundary? 1: 2);
+    if ((offset < stride) && (range - offset <= stride))
+      {
+	return 0;
+      }
+    else if (offset < stride)
+      {
+	result = data[ind2] - data[index];
+      }
+    else if (range - offset <= stride)
+      {
+	result = data[index] - data[ind1];
+      }
+    else
+      {
+	result = (data[ind2] - data[ind1]) / 2;
+      }
+
+    return result;
 }
 
 /*
@@ -151,24 +166,16 @@ DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
     // ToDo - template type
     float* data = (float*)malloc(dataSize * sizeof(float) * 3);
     curl.Start = inputData[0].Start;
-    curl.Start.insert(curl.Start.begin(), 0);
+    curl.Start.push_back(0);
     curl.Count = inputData[0].Count;
-    curl.Count.insert(curl.Count.begin(), 3);
+    curl.Count.push_back(3);
 
-    for (size_t i = 0; i < xcount; ++i)
+    for (size_t i = 0; i < dataSize; ++i)
     {
-        for (size_t j = 0; j < ycount; ++j)
-        {
-            for (size_t k = 0; k < zcount; ++k)
-            {
-                size_t index = (i * xstride) + (j * ystride) + (k * zstride);
-                data[3 * index] = linear_interp((float*)inputData[2].Data, index, dataSize, ystride) - linear_interp((float*)inputData[1].Data, index, dataSize, zstride);
-                data[3 * index + 1] = linear_interp((float*)inputData[0].Data, index, dataSize, zstride) - linear_interp((float*)inputData[2].Data, index, dataSize, xstride);
-                data[3 * index + 2] = linear_interp((float*)inputData[1].Data, index, dataSize, xstride) - linear_interp((float*)inputData[0].Data, index, dataSize, ystride);
-            }
-        }
+      data[3 * i] = linear_interp(inputData[2], i, 1) - linear_interp(inputData[1], i, 2);
+      data[3 * i + 1] = linear_interp(inputData[0], i, 2) - linear_interp(inputData[2], i, 0);
+      data[3 * i + 2] = linear_interp(inputData[1], i, 0) - linear_interp(inputData[0], i, 1);
     }
-
     curl.Data = data;
     return curl;
 }
