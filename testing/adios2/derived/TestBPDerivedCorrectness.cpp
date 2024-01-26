@@ -249,6 +249,7 @@ std::vector<std::vector<float>> computecurl3D (std::vector<float> inputX, std::v
 TEST(DerivedCorrectness, CurlCorrectnessTest)
 {
     const size_t Nx = 5, Ny = 7, Nz = 11;
+    float error_limit = 0.000001;
 
     // Application variable
     std::vector<float> simArray1(Nx * Ny * Nz);
@@ -261,19 +262,18 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
 	    for (float z = 0; z < Nz; ++z)
 	    {
 	      size_t idx = (x * Ny * Nz) + (y * Nz) + z;
-	      /**/// Linear curl example
+	      // Linear curl example
 	      simArray1[idx] = (6 * x * y) + (7 * z);
 	      simArray2[idx] = (4 * x * z) + pow(y, 2);
 	      simArray3[idx] = sqrt(z) + (2 * x * y);
-	      /* */
-	      /*/// Less linear example
+	      /* Less linear example
 	      simArray1[idx] = sin(z);
 	      simArray2[idx] = 4 * x;
 	      simArray3[idx] = pow(y, 2) * cos(x);
 	      */
-	      /*/// Nonlinear example
+	      /* Nonlinear example
 	      simArray1[idx] = exp(2 * y) * sin(x);
-	      simArray2[idx] = sqrt(z) * cos(x);
+	      simArray2[idx] = sqrt(z + 1) * cos(x);
 	      simArray3[idx] = pow(x, 2) * sin(y) + (6 * z);
 	      */
 	    }
@@ -345,47 +345,58 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
 	    for (float z = 0; z < Nz; ++z)
 	    {
 		size_t idx = (x * Ny * Nz) + (y * Nz) + z;
-		/**/// Linear example
+		// Linear example
 		curl_x = -(2 * x);
 		curl_y = 7 - (2 * y);
 		curl_z = (4 * z) - (6 * x);
-		/* */
-		/*/// Less linear
+		/* Less linear
 		curl_x = 2 * y * cos(x);
 		curl_y = cos(z) + (pow(y, 2) * sin(x));
 		curl_z = 4;
 		*/
-		/*/// Nonlinear example
-		  curl_x = pow(x, 2) * cos(y) - (cos(x) / (2 * sqrt(z)));
-		  curl_y = -2 * x * sin(y);
-		  curl_z = -sqrt(z) * sin(x) - (2 * exp(2 * y) * sin(x));
+		/* Nonlinear example
+		curl_x = pow(x, 2) * cos(y) - (cos(x) / (2 * sqrt(z + 1)));
+		curl_y = -2 * x * sin(y);
+		curl_z = -sqrt(z + 1) * sin(x) - (2 * exp(2 * y) * sin(x));
 		*/
 		if (fabs(curl_x) == std::numeric_limits<float>::infinity())
 		{
 		    err_x = 0;
 		    ++inf_x;
 		}
+		else if (fabs(curl_x) < 1)
+		{
+		    err_x = fabs(curl_x - readCurl[3 * idx]) / (1 + fabs(curl_x));		 		  
+		}
 		else
 		{
-		    err_x = fabs(curl_x - readCurl[3 * idx]) / (1 + fabs(curl_x));
+		    err_x = fabs(curl_x - readCurl[3 * idx]) / fabs(curl_x);
 		}
 		if (fabs(curl_y) == std::numeric_limits<float>::infinity())
 	        {
 		    err_y = 0;
 		    ++inf_y;
 		}
-		else
+		else if (fabs(curl_y) < 1)
 	        {
 		    err_y = fabs(curl_y - readCurl[3 * idx + 1]) / (1 + fabs(curl_y));
+		}
+		else
+		{
+		    err_y = fabs(curl_y - readCurl[3 * idx + 1]) / fabs(curl_y);
 		}
 		if (fabs(curl_z) == std::numeric_limits<float>::infinity())
 	        {
 		    err_z = 0;
 		    ++inf_z;
 		}
-		else
+		else if (fabs(curl_z) < 1)
 	        {
 		    err_z = fabs(curl_z - readCurl[3 * idx + 2]) / (1 + fabs(curl_z));
+		}
+		else
+		{
+		    err_z = fabs(curl_z - readCurl[3 * idx + 2]) / fabs(curl_z);
 		}
 	      sum_x += err_x;
 	      sum_y += err_y;
@@ -400,12 +411,15 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
     bpFileReader.Close();
     std::cout << "Finished reading curl. Ave rel error: " << (sum_x + sum_y + sum_z)/ ((3 * Nx * Ny * Nz) - (inf_x + inf_y + inf_z)) << std::endl;
     std::cout << "\tave in x: " << (sum_x / ((Nx * Ny * Nz) - inf_x)) << std::endl;
+    std::cout << "\tskipped x values (infinity): " << inf_x << std::endl;
     std::cout << "\tave in y: " << (sum_y / ((Nx * Ny * Nz) - inf_y)) << std::endl;
+    std::cout << "\tskipped y values (infinity): " << inf_y << std::endl;
     std::cout << "\tave in z: " << (sum_z / ((Nx * Ny * Nz) - inf_z)) << std::endl;
-    EXPECT_LT((sum_x + sum_y + sum_z) / ((3 * Nx * Ny * Nz) - (inf_x + inf_y + inf_z)), 0.5);
-    EXPECT_LT(sum_x / ((Nx * Ny * Nz) - inf_x), 0.7);
-    EXPECT_LT(sum_y / ((Nx * Ny * Nz) - inf_y), 0.7);
-    EXPECT_LT(sum_z / ((Nx * Ny * Nz) - inf_z), 0.7);
+    std::cout << "\tskipped z values (infinity): " << inf_z << std::endl;
+    EXPECT_LT((sum_x + sum_y + sum_z) / ((3 * Nx * Ny * Nz) - (inf_x + inf_y + inf_z)), error_limit);
+    EXPECT_LT(sum_x / ((Nx * Ny * Nz) - inf_x), error_limit);
+    EXPECT_LT(sum_y / ((Nx * Ny * Nz) - inf_y), error_limit);
+    EXPECT_LT(sum_z / ((Nx * Ny * Nz) - inf_z), error_limit);
 }
 
 int main(int argc, char **argv)
