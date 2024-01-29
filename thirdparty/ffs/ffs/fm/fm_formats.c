@@ -1982,7 +1982,7 @@ generate_format3_server_ID(server_ID_type *server_ID,
     ((version_3_format_ID *) server_ID->value)->rep_len = 
 	htons((short)(server_format_rep_length >> 2));   // Mod length by 4
     ((version_3_format_ID *) server_ID->value)->top_byte_rep_len = (unsigned char)
-	htons((short)(server_format_rep_length >> 18));  // Essentially, we capture the top 26 bytes of the server length
+	0xff & (server_format_rep_length >> 18);
     ((version_3_format_ID *) server_ID->value)->hash1 = htonl(hash1);
     ((version_3_format_ID *) server_ID->value)->hash2 = htonl(hash2);
 }
@@ -3953,11 +3953,12 @@ stringify_server_ID(unsigned char *ID, char *buffer, int len)
 	    break;
 	}
     case 2:{
-	version_2_format_ID *id2 = (version_2_format_ID*)ID;
+	version_3_format_ID *id3 = (version_3_format_ID*)ID;
 	if (len < 3+3+6+10+6+50) /* approx size */ return;
-	snprintf(buffer, len, "<ID ver=%d, unused %d, rep_len %d, hash1 %x, hash2 %x>\n",
-	       id2->version, id2->unused, ntohs(id2->rep_len) << 2,
-	       ntohl(id2->hash1), ntohl(id2->hash2));
+	int rep_len = get_rep_len_format_ID(ID);
+	snprintf(buffer, len, "<ID ver=%d, rep_len %d, hash1 %x, hash2 %x>\n",
+	       id3->version, rep_len,
+	       ntohl(id3->hash1), ntohl(id3->hash2));
 	    break;
 	}
     default:
@@ -4021,11 +4022,10 @@ get_rep_len_format_ID(void *format_ID)
 {
     switch (version_of_format_ID(format_ID)) {
     case 2:{
-	    version_2_format_ID *id2 = (version_2_format_ID *) format_ID;
-	    short tmp;
-	    memcpy(&tmp, &id2->rep_len, 2);
-		tmp = ntohs(tmp);
-	    return tmp << 2;
+	    version_3_format_ID *id3 = (version_3_format_ID *) format_ID;
+	    int rep_len = htons(id3->rep_len);
+	    rep_len += (id3->top_byte_rep_len << 16);
+	    return rep_len << 2;
 	}
     case 0:
     case 1:
