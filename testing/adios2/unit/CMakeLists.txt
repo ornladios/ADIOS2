@@ -4,5 +4,7 @@
 #------------------------------------------------------------------------------#
 
 gtest_add_tests_helper(ChunkV MPI_NONE "" Unit. "")
-gtest_add_tests_helper(PosixTransport MPI_NONE "" Unit. "")
+if(UNIX)
+  gtest_add_tests_helper(PosixTransport MPI_NONE "" Unit. "")
+endif()
 
