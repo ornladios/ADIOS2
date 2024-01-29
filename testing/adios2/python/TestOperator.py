@@ -10,10 +10,10 @@ class TestOperator(unittest.TestCase):
     def test_operator_basic(self):
         adios = Adios()
         op1 = adios.define_operator("noop", "null")
-        with adios.declare_io("BPWriter") as writer:
-            temps = writer.define_variable("temps", np.empty([4], dtype=np.int64))
+        with adios.declare_io("BPWriter") as io:
+            temps = io.define_variable("temps", np.empty([4], dtype=np.int64))
             temps.add_operation(op1)
-            with writer.open("pythontestvariable.bp", bindings.Mode.Write) as engine:
+            with io.open("pythontestvariable.bp", bindings.Mode.Write) as engine:
                 temps_measures = np.array([35, 40, 30, 45], dtype=np.int64)
                 engine.put(temps, temps_measures)
 
