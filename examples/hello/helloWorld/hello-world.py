@@ -2,7 +2,7 @@
 # Distributed under the OSI-approved Apache License, Version 2.0.  See
 # accompanying file Copyright.txt for details.
 #
-# hello-world.py : adios2 low-level API example to write and read a
+# hello-world.py : adios2 Python API example to write and read a
 #                   string Variable with a greeting
 #
 #  Created on: 2/2/2021
@@ -10,7 +10,7 @@
 #
 import sys
 from mpi4py import MPI
-import adios2
+from adios2 import Stream, FileReader
 
 DATA_FILENAME = "hello-world-py.bp"
 # MPI
@@ -19,37 +19,37 @@ rank = comm.Get_rank()
 size = comm.Get_size()
 
 
-def writer(ad, greeting):
+def writer(greeting):
     """write a string to a bp file"""
-    io = ad.DeclareIO("hello-world-writer")
-    var_greeting = io.DefineVariable("Greeting")
-    w = io.Open(DATA_FILENAME, adios2.Mode.Write)
-    w.BeginStep()
-    w.Put(var_greeting, greeting)
-    w.EndStep()
-    w.Close()
+    with Stream(DATA_FILENAME, "w", comm) as fh:
+        fh.write("Greeting", greeting)
     return 0
 
 
-def reader(ad):
-    """read a string from to a bp file"""
-    io = ad.DeclareIO("hello-world-reader")
-    r = io.Open(DATA_FILENAME, adios2.Mode.Read)
-    r.BeginStep()
-    var_greeting = io.InquireVariable("Greeting")
-    message = r.Get(var_greeting)
-    r.EndStep()
-    r.Close()
+def reader():
+    """read a string from a bp file as Stream"""
+    message = f"variable Greeting not found in {DATA_FILENAME}"
+    with Stream(DATA_FILENAME, "r", comm) as fh:
+        for _ in fh.steps():
+            message = fh.read("Greeting")
+    return message
+
+
+def filereader():
+    """read a string from a bp file using random access read mode"""
+    with FileReader(DATA_FILENAME, comm) as fh:
+        message = fh.read("Greeting")
     return message
 
 
 def main():
     """driver function"""
-    ad = adios2.ADIOS(comm)
     greeting = "Hello World from ADIOS2"
-    writer(ad, greeting)
-    message = reader(ad)
-    print("{}".format(message))
+    writer(greeting)
+    message = reader()
+    print("As read from adios2.Stream: {}".format(message))
+    message2 = filereader()
+    print("As read from adios2.FileReader: {}".format(message2))
     return 0
 
 

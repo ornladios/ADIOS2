@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from adios2 import Stream  # pylint: disable=import-error
+from adios2 import Adios, Stream  # pylint: disable=import-error
 import argparse
 import numpy as np  # pylint: disable=import-error
 import matplotlib.pyplot as plt  # pylint: disable=import-error
@@ -85,8 +85,9 @@ if __name__ == "__main__":
     myrank = mpi.rank["app"]
 
     # Read the data from this object
-    fr = Stream(args.instream, "r", comm=mpi.comm_app, config_file="adios2.xml",
-                io_name="PDFAnalysisOutput")
+    adios = Adios("adios2.xml", mpi.comm_app)
+    io = adios.declare_io("PDFAnalysisOutput")
+    fr = Stream(io, args.instream, "r", mpi.comm_app)
 
     # Read through the steps, one at a time
     plot_step = 0

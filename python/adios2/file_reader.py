@@ -2,8 +2,8 @@
   Distributed under the OSI-approved Apache License, Version 2.0.  See
   accompanying file Copyright.txt for details.
 """
-
-from adios2.stream import Stream
+from functools import singledispatchmethod
+from adios2 import Stream, IO
 
 
 class FileReader(Stream):
@@ -12,15 +12,17 @@ class FileReader(Stream):
     def __repr__(self):
         return f"<adios.file named {self._io_name}>"
 
-    def __init__(self, path, *, comm=None, engine_type=None, config_file=None, io_name=None):
-        super().__init__(
-            path,
-            "rra",
-            comm=comm,
-            engine_type=engine_type,
-            config_file=config_file,
-            io_name=io_name,
-        )
+    @singledispatchmethod
+    def __init__(self, path, comm=None):
+        super().__init__(path, "rra", comm)
+
+    # e.g. FileReader(io: adios2.IO, path, mode)
+    # pylint: disable=E1121
+    @__init__.register(IO)
+    def _(self, io: IO, path, mode, comm=None):
+        super().__init__(io, path, "rra", comm)
+
+    # pylint: enable=E1121
 
     def variables(self):
         """Returns the list of variables contained in the opened file"""

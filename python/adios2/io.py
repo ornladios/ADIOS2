@@ -12,9 +12,10 @@ from adios2.engine import Engine
 class IO:
     """High level representation of the IO class in the adios2.bindings"""
 
-    def __init__(self, impl, name):
+    def __init__(self, impl, name, adiosobj):
         self.impl = impl
         self._name = name
+        self._adios = adiosobj
 
     @property
     def impl(self):
@@ -35,6 +36,10 @@ class IO:
         if isinstance(other, IO):
             return self._name == other._name
         return False
+
+    def adios(self):
+        """Adios instance associated to this IO"""
+        return self._adios
 
     def define_attribute(
         self,
