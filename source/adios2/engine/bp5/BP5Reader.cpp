@@ -225,6 +225,12 @@ std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan
         }
         FileManager.OpenFileID(subFileName, SubfileNum, Mode::Read, m_IO.m_TransportsParameters[0],
                                /*{{"transport", "File"}},*/ false);
+        if (!m_WriterIsActive)
+        {
+            Params transportParameters;
+            transportParameters["FailOnEOF"] = "true";
+            FileManager.SetParameters(transportParameters, -1);
+        }
     }
     TP endSubfile = NOW();
     double timeSubfile = DURATION(startSubfile, endSubfile);
@@ -300,6 +306,11 @@ void BP5Reader::PerformLocalGets()
                 m_WriterMap[m_WriterMapIndex[r2.Timestep]].RankToSubfile[r2.WriterRank]);
     };
 
+    if (!m_InitialWriterActiveCheckDone)
+    {
+        CheckWriterActive();
+        m_InitialWriterActiveCheckDone = true;
+    }
     // TP start = NOW();
     PERFSTUBS_SCOPED_TIMER("BP5Reader::PerformGets");
     m_JSONProfiler.Start("DataRead");
