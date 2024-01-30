@@ -4,8 +4,6 @@
  *
  * TransportMan.h : manages a vector of transports
  *
- *  Created on: May 23, 2017
- *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_TRANSPORTMANAGER_H_
@@ -209,6 +207,13 @@ public:
      * @param profile
      */
     bool FileExists(const std::string &name, const Params &parameters, const bool profile);
+
+    /**
+     * Set Transport Paramers
+     * @param params
+     * @param transportIndex
+     */
+    void SetParameters(const Params &params, const int transportIndex = -1);
 
 protected:
     core::IO &m_IO;

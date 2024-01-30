@@ -4,8 +4,6 @@
  *
  * TransportMan.cpp
  *
- *  Created on: May 23, 2017
- *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #include "TransportMan.h"
@@ -408,6 +406,26 @@ void TransportMan::ReadFile(char *buffer, const size_t size, const size_t start,
     auto itTransport = m_Transports.find(transportIndex);
     CheckFile(itTransport, ", in call to ReadFile with index " + std::to_string(transportIndex));
     itTransport->second->Read(buffer, size, start);
+}
+
+void TransportMan::SetParameters(const Params &params, const int transportIndex)
+{
+    if (transportIndex == -1)
+    {
+        for (auto &transportPair : m_Transports)
+        {
+            auto &transport = transportPair.second;
+
+            transport->SetParameters(params);
+        }
+    }
+    else
+    {
+        auto itTransport = m_Transports.find(transportIndex);
+        CheckFile(itTransport,
+                  ", in call to SetParameters with index " + std::to_string(transportIndex));
+        itTransport->second->SetParameters(params);
+    }
 }
 
 void TransportMan::FlushFiles(const int transportIndex)
