@@ -2,13 +2,12 @@
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
  * accompanying file Copyright.txt for details.
  *
- * FileDescriptor.cpp file I/O using POSIX I/O library
+ * FilePOSIX.cpp file I/O using POSIX I/O library
  *
- *  Created on: Oct 6, 2016
- *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "FilePOSIX.h"
 #include "adios2/helper/adiosLog.h"
+#include "adios2/helper/adiosString.h"
 
 #ifdef ADIOS2_HAVE_O_DIRECT
 #ifndef _GNU_SOURCE
@@ -22,7 +21,8 @@
 #include <fcntl.h>     // open
 #include <sys/stat.h>  // open, fstat
 #include <sys/types.h> // open
-#include <unistd.h>    // write, close, ftruncate
+#include <thread>
+#include <unistd.h> // write, close, ftruncate
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <ios> //std::ios_base::failure
@@ -398,6 +398,7 @@ void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
 void FilePOSIX::Read(char *buffer, size_t size, size_t start)
 {
     auto lf_Read = [&](char *buffer, size_t size) {
+        size_t backoff_ns = 20;
         while (size > 0)
         {
             ProfilerStart("read");
@@ -416,6 +417,25 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
                 helper::Throw<std::ios_base::failure>(
                     "Toolkit", "transport::file::FilePOSIX", "Read",
                     "couldn't read from file " + m_Name + " " + SysErrMsg());
+            }
+            else if (readSize == 0)
+            {
+                if (m_FailOnEOF)
+                {
+                    helper::Throw<std::ios_base::failure>(
+                        "Toolkit", "transport::file::FilePOSIX", "Read",
+                        "Read past end of file on " + m_Name + " " + SysErrMsg());
+                }
+                else
+                {
+                    // read past EOF, but we're to wait for data.  Exponential backoff with a limit
+                    // of .5 sec (500,000,000 nanosec)
+                    std::this_thread::sleep_for(std::chrono::nanoseconds(backoff_ns));
+                    constexpr size_t backoff_limit = 500 * 1000 * 1000;
+                    backoff_ns *= 2;
+                    if (backoff_ns > backoff_limit)
+                        backoff_ns = backoff_limit;
+                }
             }
 
             buffer += readSize;
@@ -594,6 +614,15 @@ void FilePOSIX::Truncate(const size_t length)
 }
 
 void FilePOSIX::MkDir(const std::string &fileName) {}
+
+void FilePOSIX::SetParameters(const Params &params)
+{
+    // Parameters are set from config parameters if present
+    // Otherwise, they are set from environment if present
+    // Otherwise, they remain at their default value
+
+    helper::GetParameter(params, "FailOnEOF", m_FailOnEOF);
+}
 
 } // end namespace transport
 } // end namespace adios2

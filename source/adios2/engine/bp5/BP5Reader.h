@@ -113,6 +113,8 @@ private:
 
     Minifooter m_Minifooter;
 
+    bool m_InitialWriterActiveCheckDone = false;
+
     void Init();
     void InitParameters();
     void InitTransports();
