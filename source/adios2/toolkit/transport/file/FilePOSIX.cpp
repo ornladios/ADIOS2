@@ -28,9 +28,9 @@
 #include <io.h>
 #define close _close
 #define open _open
-#define lseek(a, b, c) _lseek(a, (long) b, c)
-#define write(a, b, c) _write(a, b, (unsigned int) c)
-#define read(a, b, c) _read(a, b, (unsigned int) c)
+#define lseek(a, b, c) _lseek(a, (long)b, c)
+#define write(a, b, c) _write(a, b, (unsigned int)c)
+#define read(a, b, c) _read(a, b, (unsigned int)c)
 #define ftruncate _chsize
 #endif
 
