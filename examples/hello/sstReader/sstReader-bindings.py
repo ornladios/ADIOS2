@@ -36,7 +36,15 @@ while True:
     sstReader.EndStep()
 
     print(
-        "Rank=", rank, "loop index =", loopStep, "stream step =", currentStep, "data =", floatArray
+        "Rank=",
+        rank,
+        "loop index =",
+        loopStep,
+        "stream step =",
+        currentStep,
+        "data =",
+        floatArray,
+        flush=True,
     )
     loopStep = loopStep + 1
 

@@ -27,7 +27,7 @@ RUN dnf install -y \
         patch \
         patchelf \
         python39-devel \
-        python3-pip \
+        python39-pip \
         tar \
         tcl \
         unzip \
