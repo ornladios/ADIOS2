@@ -10,7 +10,7 @@ extern "C" {
 typedef struct _FMContextStruct *FMContext;
 
 #if defined(_MSC_VER) && !defined(FFS_SRC)
-#define FFS_DECLSPEC    __declspec(dllimport)
+#define FFS_DECLSPEC
 #else
 #define FFS_DECLSPEC
 #endif

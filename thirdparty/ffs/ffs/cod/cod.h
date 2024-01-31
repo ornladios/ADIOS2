@@ -8,7 +8,7 @@ extern "C" {
 
 #ifndef FFS_DECL_SPEC
 #if defined(_MSC_VER) && !defined(FFS_SRC)
-#define FFS_DECLSPEC    __declspec(dllimport)
+#define FFS_DECLSPEC
 #else
 #define FFS_DECLSPEC
 #endif
