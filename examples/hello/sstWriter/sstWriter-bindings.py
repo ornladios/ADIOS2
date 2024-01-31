@@ -33,7 +33,7 @@ ioArray = sstIO.DefineVariable(
 
 sstWriter = sstIO.Open("helloSst", adios2.Mode.Write)
 for i in range(4):
-    print("Rank=", rank, "loop index =", i, "data =", myArray)
+    print("Rank=", rank, "loop index =", i, "data =", myArray, flush=True)
     sstWriter.BeginStep()
     sstWriter.Put(ioArray, myArray, adios2.Mode.Sync)
     myArray += increment

@@ -34,7 +34,7 @@ with Stream(io, "helloSst", "w", comm) as stream:
         sleep(1.0)
 
         stream.write("bpFloats", myArray, [size * nx], [rank * nx], [nx])
-        print("Rank=", rank, "loop index =", currentStep, "data =", myArray)
+        print("Rank=", rank, "loop index =", currentStep, "data =", myArray, flush=True)
         myArray += increment
         # Warning: the data of the current step is not published until
         # the next loop entry or the exit of the loop

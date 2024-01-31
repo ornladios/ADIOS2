@@ -311,10 +311,6 @@ class Stream:
 
             output_shape = np.array(count)
             output_shape[0] *= steps
-            print(
-                f"Stream.read variable {variable.name()} dtype = {dtype} "
-                f"shape = {output_shape}, steps = {variable.steps()}"
-            )
         else:
             # scalar
             output_shape = (variable.selection_size(),)

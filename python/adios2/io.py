@@ -103,10 +103,7 @@ class IO:
                 value
                     attribute information dictionary
         """
-        attributes = {}
-        for name, attr in self.impl.AvailableAttributes():
-            attributes[name] = Attribute(attr, name)
-        return attributes
+        return self.impl.AvailableAttributes()
 
     def remove_attribute(self, name):
         """
