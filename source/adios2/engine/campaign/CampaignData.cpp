@@ -195,11 +195,16 @@ int inflateToFile(const unsigned char *source, const size_t blobsize, std::ofstr
         strm.avail_in = (uInt)(blobsize > CHUNK ? CHUNK : blobsize);
         strm.next_in = p;
 
+        std::cout<<"avail_in = "<< strm.avail_in <<std::endl;
+        std::cout<<"next_in = "<< static_cast<void*>(p) <<std::endl;
+
         /* run inflate() on input until output buffer not full */
         do
         {
             strm.avail_out = CHUNK;
             strm.next_out = out.data();
+            std::cout<<"avail_out = "<< strm.avail_out <<std::endl;
+            std::cout<<"next_out = "<< static_cast<void*>(strm.next_out) << std::endl;
             ret = inflate(&strm, Z_NO_FLUSH);
             switch (ret)
             {
@@ -213,6 +218,10 @@ int inflateToFile(const unsigned char *source, const size_t blobsize, std::ofstr
             }
             have = CHUNK - strm.avail_out;
             dest->write(reinterpret_cast<char *>(out.data()), have);
+            if(dest->bad())    //bad() function will check for badbit
+            {
+                std::cout<<"Writing to file failed"<<std::endl;
+            }
 
         } while (strm.avail_out == 0);
 
@@ -310,12 +319,12 @@ void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfi
     int iBlobsize = sqlite3_column_bytes(statement, 0);
     const void *p = sqlite3_column_blob(statement, 0);
 
-    /*std::cout << "-- Retrieved from DB data of " << bpfile.name
+    std::cout << "-- Retrieved from DB data of " << bpfile.name
               << " size = " << iBlobsize
               << " compressed = " << bpfile.compressed
               << " compressed size = " << bpfile.lengthCompressed
               << " original size = " << bpfile.lengthOriginal << " blob = " << p
-              << "\n";*/
+              << "\n";
 
     size_t blobsize = static_cast<size_t>(iBlobsize);
     std::ofstream f;
