@@ -190,7 +190,8 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode, const helper::
             errno = 0;
             if (chainComm.Rank() == 0)
             {
-                m_FileDescriptor = open(m_Name.c_str(),
+                m_FileDescriptor =
+                    open(m_Name.c_str(),
                          __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, directio), 0666);
             }
             else
