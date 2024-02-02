@@ -168,7 +168,8 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
    allocated for processing, Z_DATA_ERROR if the deflate data is
    invalid or incomplete, Z_VERSION_ERROR if the version of zlib.h and
    the version of the library linked do not match, or Z_ERRNO if there
-   is an error reading or writing the files. */
+   is an error reading or writing the files.
+   http://www.zlib.net/zlib_how.html */
 int inflateToFile(const unsigned char *source, const size_t blobsize, std::ofstream *dest)
 {
     constexpr size_t CHUNK = 16777216;
@@ -190,21 +191,19 @@ int inflateToFile(const unsigned char *source, const size_t blobsize, std::ofstr
 
     /* decompress until deflate stream ends or end of file */
     unsigned char *p = const_cast<unsigned char *>(source);
+    uInt pos = 0;
     do
     {
-        strm.avail_in = (uInt)(blobsize > CHUNK ? CHUNK : blobsize);
-        strm.next_in = p;
+        uInt CHUNK_SIZE = static_cast<uInt>(blobsize > CHUNK ? CHUNK : blobsize);
+        strm.avail_in = CHUNK_SIZE;
 
-        std::cout<<"avail_in = "<< strm.avail_in <<std::endl;
-        std::cout<<"next_in = "<< static_cast<void*>(p) <<std::endl;
+        strm.next_in = p + pos;
 
         /* run inflate() on input until output buffer not full */
         do
         {
             strm.avail_out = CHUNK;
             strm.next_out = out.data();
-            std::cout<<"avail_out = "<< strm.avail_out <<std::endl;
-            std::cout<<"next_out = "<< static_cast<void*>(strm.next_out) << std::endl;
             ret = inflate(&strm, Z_NO_FLUSH);
             switch (ret)
             {
@@ -218,13 +217,14 @@ int inflateToFile(const unsigned char *source, const size_t blobsize, std::ofstr
             }
             have = CHUNK - strm.avail_out;
             dest->write(reinterpret_cast<char *>(out.data()), have);
-            if(dest->bad())    //bad() function will check for badbit
+            if (dest->bad())
             {
-                std::cout<<"Writing to file failed"<<std::endl;
+                helper::Throw<std::runtime_error>("Core", "Campaign", "Inflate",
+                                                  "error writing file ");
             }
 
         } while (strm.avail_out == 0);
-
+        pos += CHUNK_SIZE;
         /* done when inflate() says it's done */
     } while (ret != Z_STREAM_END);
 
