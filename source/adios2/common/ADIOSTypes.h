@@ -243,11 +243,7 @@ struct MinVarInfo
 void PrintMVI(std::ostream &os, const MinVarInfo &mvi);
 
 // adios defaults
-#ifdef _WIN32
-const std::string DefaultFileLibrary("fstream");
-#else
 const std::string DefaultFileLibrary("POSIX");
-#endif
 const std::string DefaultTimeUnit("Microseconds");
 constexpr TimeUnit DefaultTimeUnitEnum(TimeUnit::Microseconds);
 
