@@ -15,9 +15,7 @@
 #include "adios2/helper/adiosFunctions.h" //CreateDirectory
 
 /// transports
-#ifndef _WIN32
 #include "adios2/toolkit/transport/file/FilePOSIX.h"
-#endif
 #ifdef ADIOS2_HAVE_DAOS
 #include "adios2/toolkit/transport/file/FileDaos.h"
 #endif
@@ -574,7 +572,6 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(const std::string &fi
                 transport->SetBuffer(nullptr, 0);
             }
         }
-#ifndef _WIN32
         else if (library == "posix")
         {
             transport = std::make_shared<transport::FilePOSIX>(m_Comm);
@@ -585,7 +582,6 @@ std::shared_ptr<Transport> TransportMan::OpenFileTransport(const std::string &fi
                     library + " transport does not support buffered I/O.");
             }
         }
-#endif
 #ifdef ADIOS2_HAVE_DAOS
         else if (library == "daos")
         {
