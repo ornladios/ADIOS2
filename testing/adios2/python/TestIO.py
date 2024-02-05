@@ -24,13 +24,22 @@ class TestIO(unittest.TestCase):
         self.assertNotEqual(ts, coords)
         self.assertNotEqual(ts, x)
         self.assertEqual(coords, x)
+        self.assertIs(io.inquire_attribute("notanattribute"), None)
 
-    def test_available_attribute(self):
+    def test_available_attributes(self):
         adios = Adios()
         io = adios.declare_io("BPWriter")
         io.define_attribute("timestamp", "20231122")
-        io.inquire_attribute("timestamp")
-        self.assertIs(io.inquire_attribute("coords"), None)
+        io.define_attribute("stringarray", ["one", "two", "three"])
+        io.define_attribute("afloat", 3.14)
+        io.define_attribute("floatarray", [3.14, 6.28])
+        attrs = io.available_attributes()
+        print("Available attributes:")
+        for aname, ainfo in attrs.items():
+            print(f"    {aname}:\t{ainfo}")
+        self.assertEqual(attrs['timestamp']['Value'], '"20231122"')
+        self.assertEqual(attrs['stringarray']['Value'], '{ "one", "two", "three" }')
+        self.assertFalse('coords' in attrs)
 
     def test_remove_attribute(self):
         adios = Adios()
@@ -96,6 +105,7 @@ class TestIO(unittest.TestCase):
         io.add_transport("File", {"Library": "POSIX"})
         engine = io.open("pythontest.bp", bindings.Mode.Write)
         self.assertNotEqual(engine, None)
+        engine.close()
 
 
 if __name__ == "__main__":
