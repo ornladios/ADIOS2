@@ -66,7 +66,15 @@ class IO:
                 e.g. variable_name + separator + name ("var/attr")
                 Not used if variable_name is empty
         """
-        return Attribute(self.impl, name, content, variable_name, separator)
+
+        # string or list of strings passed on as is
+        if isinstance(content, list) and isinstance(content[0], str):
+            return Attribute(self.impl, name, content, variable_name, separator)
+        if isinstance(content, str):
+            return Attribute(self.impl, name, content, variable_name, separator)
+
+        # python values (single or list) needs to be passed as a numpy array
+        return Attribute(self.impl, name, np.asarray(content), variable_name, separator)
 
     def inquire_attribute(self, name, variable_name="", separator="/"):
         """
