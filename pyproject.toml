@@ -48,6 +48,9 @@ Documentation = "https://adios2.readthedocs.io/"
 Discussions = "https://github.com/ornladios/ADIOS2/discussions"
 Changelog = "https://github.com/ornladios/ADIOS2/releases"
 
+[project.entry-points."xarray.backends"]
+adios = "adios2.xarraybackend:AdiosBackendEntrypoint"
+
 [tool.cibuildwheel]
 # Trigger an install of the package, and run a basic test
 test-command = "python -m unittest adios2.test.simple_read_write.TestSimpleReadWrite"

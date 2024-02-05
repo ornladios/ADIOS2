@@ -37,9 +37,9 @@ class TestIO(unittest.TestCase):
         print("Available attributes:")
         for aname, ainfo in attrs.items():
             print(f"    {aname}:\t{ainfo}")
-        self.assertEqual(attrs['timestamp']['Value'], '"20231122"')
-        self.assertEqual(attrs['stringarray']['Value'], '{ "one", "two", "three" }')
-        self.assertFalse('coords' in attrs)
+        self.assertEqual(attrs["timestamp"]["Value"], '"20231122"')
+        self.assertEqual(attrs["stringarray"]["Value"], '{ "one", "two", "three" }')
+        self.assertFalse("coords" in attrs)
 
     def test_remove_attribute(self):
         adios = Adios()
