@@ -37,3 +37,8 @@ Operator class
 --------------
 .. autoclass:: adios2.bindings.adios2_bindings::Operator
     :members:
+
+Query class
+--------------
+.. autoclass:: adios2.bindings.adios2_bindings::Query
+    :members:
