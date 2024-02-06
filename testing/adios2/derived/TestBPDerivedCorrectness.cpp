@@ -248,8 +248,8 @@ std::vector<std::vector<float>> computecurl3D (std::vector<float> inputX, std::v
 
 TEST(DerivedCorrectness, CurlCorrectnessTest)
 {
-    const size_t Nx = 5, Ny = 7, Nz = 11;
-    float error_limit = 0.000001;
+    const size_t Nx = 25, Ny = 70, Nz = 13;
+    float error_limit = 0.0000001;
 
     // Application variable
     std::vector<float> simArray1(Nx * Ny * Nz);
@@ -401,21 +401,10 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
 	      sum_x += err_x;
 	      sum_y += err_y;
 	      sum_z += err_z;
-	      std::cout << "Test curl at (" << x << ", " << y << ", " << z << ")\n";
-	      std::cout << "\tExpected: <" << curl_x << ", " << curl_y << ", " << curl_z << ">\n";
-	      std::cout << "\t    Read: <" << readCurl[3 * idx] << ", " << readCurl[3 * idx + 1] << ", " << readCurl[3 * idx + 2] << ">" << std::endl;
-	      std::cout << "\tRelative error: " << err_x << ", " << err_y << ", " << err_z << std::endl;
 	    }
 	}
     }
     bpFileReader.Close();
-    std::cout << "Finished reading curl. Ave rel error: " << (sum_x + sum_y + sum_z)/ ((3 * Nx * Ny * Nz) - (inf_x + inf_y + inf_z)) << std::endl;
-    std::cout << "\tave in x: " << (sum_x / ((Nx * Ny * Nz) - inf_x)) << std::endl;
-    std::cout << "\tskipped x values (infinity): " << inf_x << std::endl;
-    std::cout << "\tave in y: " << (sum_y / ((Nx * Ny * Nz) - inf_y)) << std::endl;
-    std::cout << "\tskipped y values (infinity): " << inf_y << std::endl;
-    std::cout << "\tave in z: " << (sum_z / ((Nx * Ny * Nz) - inf_z)) << std::endl;
-    std::cout << "\tskipped z values (infinity): " << inf_z << std::endl;
     EXPECT_LT((sum_x + sum_y + sum_z) / ((3 * Nx * Ny * Nz) - (inf_x + inf_y + inf_z)), error_limit);
     EXPECT_LT(sum_x / ((Nx * Ny * Nz) - inf_x), error_limit);
     EXPECT_LT(sum_y / ((Nx * Ny * Nz) - inf_y), error_limit);
