@@ -202,6 +202,27 @@ class Stream:
         """
         return self._io.inquire_variable(name)
 
+    def inquire_attribute(self, name, variable_name="", separator="/"):
+        """
+        Inquire an attribute
+
+        Parameters
+            name
+                attribute name
+
+            variable_name
+                if attribute is associated with a variable
+
+            separator
+                concatenation string between variable_name and attribute
+                e.g. variable_name + separator + name ("var/attr")
+                Not used if variable_name is empty
+
+        Returns
+            The attribute if it is defined, otherwise None
+        """
+        return self._io.inquire_attribute(name, variable_name, separator)
+
     @singledispatchmethod
     def write(self, variable: Variable, content):
         """
