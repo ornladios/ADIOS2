@@ -70,8 +70,8 @@ void BP5Reader::InstallMetadataForTimestep(size_t Step)
     {
         // variable metadata for timestep
         size_t ThisMDSize =
-            helper::ReadValue<uint64_t>(m_Metadata.m_Buffer, Position, m_Minifooter.IsLittleEndian);
-        char *ThisMD = m_Metadata.m_Buffer.data() + MDPosition;
+            helper::ReadValue<uint64_t>(m_Metadata.Data(), Position, m_Minifooter.IsLittleEndian);
+        char *ThisMD = m_Metadata.Data() + MDPosition;
         if (m_OpenMode == Mode::ReadRandomAccess)
         {
             m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, WriterRank, Step);
@@ -86,8 +86,8 @@ void BP5Reader::InstallMetadataForTimestep(size_t Step)
     {
         // attribute metadata for timestep
         size_t ThisADSize =
-            helper::ReadValue<uint64_t>(m_Metadata.m_Buffer, Position, m_Minifooter.IsLittleEndian);
-        char *ThisAD = m_Metadata.m_Buffer.data() + MDPosition;
+            helper::ReadValue<uint64_t>(m_Metadata.Data(), Position, m_Minifooter.IsLittleEndian);
+        char *ThisAD = m_Metadata.Data() + MDPosition;
         if (ThisADSize > 0)
             m_BP5Deserializer->InstallAttributeData(ThisAD, ThisADSize);
         MDPosition += ThisADSize;
@@ -820,8 +820,7 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
                 for (auto p : m_FilteredMetadataInfo)
                 {
                     m_JSONProfiler.AddBytes("metadataread", p.second);
-                    m_MDFileManager.ReadFile(m_Metadata.m_Buffer.data() + mempos, p.second,
-                                             p.first);
+                    m_MDFileManager.ReadFile(m_Metadata.Data() + mempos, p.second, p.first);
                     mempos += p.second;
                 }
                 m_MDFileAlreadyReadSize = expectedMinFileSize;
@@ -863,13 +862,20 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
             }
         }
 
-        // broadcast buffer to all ranks from zero
-        m_Comm.BroadcastVector(m_Metadata.m_Buffer);
-
         // broadcast metadata index buffer to all ranks from zero
         m_Comm.BroadcastVector(m_MetaMetadata.m_Buffer);
 
         InstallMetaMetaData(m_MetaMetadata);
+
+        size_t inputSize = m_Comm.BroadcastValue(m_Metadata.Size(), 0);
+
+        if (m_Comm.Rank() != 0)
+        {
+            std::cout << "Resizing non rank zero metadata buffer to " << inputSize << std::endl;
+            m_Metadata.Resize(inputSize, "metadata broadcast");
+        }
+
+        m_Comm.Bcast(m_Metadata.Data(), inputSize, 0);
 
         if (m_OpenMode == Mode::ReadRandomAccess)
         {

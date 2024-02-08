@@ -1567,13 +1567,13 @@ std::vector<core::iovec> BP5Serializer::BreakoutContiguousMetadata(
     for (size_t Rank = 0; Rank < Counts.size(); Rank++)
     {
         uint64_t NMMBCount, MBCount, ABCount, DSCount, WDPCount;
-        helper::CopyFromBuffer(Aggregate, Position, &NMMBCount);
+        helper::CopyFromBuffer(Aggregate.data(), Position, &NMMBCount);
         for (uint64_t i = 0; i < NMMBCount; i++)
         {
             uint64_t IDLen;
             uint64_t InfoLen;
-            helper::CopyFromBuffer(Aggregate, Position, &IDLen);
-            helper::CopyFromBuffer(Aggregate, Position, &InfoLen);
+            helper::CopyFromBuffer(Aggregate.data(), Position, &IDLen);
+            helper::CopyFromBuffer(Aggregate.data(), Position, &InfoLen);
             uint64_t IDPosition = Position;
             uint64_t InfoPosition = Position + IDLen;
             Position = InfoPosition + InfoLen;
@@ -1592,33 +1592,33 @@ std::vector<core::iovec> BP5Serializer::BreakoutContiguousMetadata(
                 UniqueMetaMetaBlocks.push_back(New);
             }
         }
-        helper::CopyFromBuffer(Aggregate, Position, &MBCount);
+        helper::CopyFromBuffer(Aggregate.data(), Position, &MBCount);
         for (uint64_t i = 0; i < MBCount; ++i)
         {
             uint64_t MEBSize;
-            helper::CopyFromBuffer(Aggregate, Position, &MEBSize);
+            helper::CopyFromBuffer(Aggregate.data(), Position, &MEBSize);
             MetadataBlocks.push_back({Aggregate.data() + Position, MEBSize});
             Position += MEBSize;
         }
-        helper::CopyFromBuffer(Aggregate, Position, &ABCount);
+        helper::CopyFromBuffer(Aggregate.data(), Position, &ABCount);
         for (uint64_t i = 0; i < ABCount; ++i)
         {
             uint64_t AEBSize;
-            helper::CopyFromBuffer(Aggregate, Position, &AEBSize);
+            helper::CopyFromBuffer(Aggregate.data(), Position, &AEBSize);
             AttributeBlocks.push_back({Aggregate.data() + Position, AEBSize});
             Position += AEBSize;
         }
         uint64_t element;
-        helper::CopyFromBuffer(Aggregate, Position, &DSCount);
+        helper::CopyFromBuffer(Aggregate.data(), Position, &DSCount);
         for (uint64_t i = 0; i < DSCount; ++i)
         {
-            helper::CopyFromBuffer(Aggregate, Position, &element);
+            helper::CopyFromBuffer(Aggregate.data(), Position, &element);
             DataSizes.push_back(element);
         }
-        helper::CopyFromBuffer(Aggregate, Position, &WDPCount);
+        helper::CopyFromBuffer(Aggregate.data(), Position, &WDPCount);
         for (uint64_t i = 0; i < WDPCount; ++i)
         {
-            helper::CopyFromBuffer(Aggregate, Position, &element);
+            helper::CopyFromBuffer(Aggregate.data(), Position, &element);
             WriterDataPositions.push_back(element);
         }
     }
