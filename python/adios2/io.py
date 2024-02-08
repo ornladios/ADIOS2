@@ -68,7 +68,7 @@ class IO:
         """
 
         # string or list of strings passed on as is
-        if isinstance(content, list) and isinstance(content[0], str):
+        if isinstance(content, list) and len(content) > 0 and isinstance(content[0], str):
             return Attribute(self.impl, name, content, variable_name, separator)
         if isinstance(content, str):
             return Attribute(self.impl, name, content, variable_name, separator)
