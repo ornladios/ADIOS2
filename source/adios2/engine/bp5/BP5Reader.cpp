@@ -871,7 +871,6 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
 
         if (m_Comm.Rank() != 0)
         {
-            std::cout << "Resizing non rank zero metadata buffer to " << inputSize << std::endl;
             m_Metadata.Resize(inputSize, "metadata broadcast");
         }
 

@@ -70,7 +70,7 @@ void BufferMalloc::Reset(const bool resetAbsolutePosition, const bool zeroInitia
         // just zero out the first and last 1kb
         const size_t bufsize = m_size;
         size_t s = (bufsize < 1024 ? bufsize : 1024);
-        //        std::fill_n(m_Buffer.begin(), s, 0);
+        std::fill_n(m_Buffer.begin(), s, 0);
         if (bufsize > 1024)
         {
             size_t pos = bufsize - 1024;
@@ -79,7 +79,7 @@ void BufferMalloc::Reset(const bool resetAbsolutePosition, const bool zeroInitia
                 pos = 1024;
             }
             s = bufsize - pos;
-            //            std::fill_n(next(m_Buffer.begin(), pos), s, 0);
+            std::fill_n(next(m_Buffer.begin(), pos), s, 0);
         }
     }
 }
