@@ -5,7 +5,7 @@
 from functools import singledispatchmethod
 from adios2 import Stream, IO
 
-
+# pylint: disable=W0221
 class FileReader(Stream):
     """High level implementation of the FileReader class for read Random access mode"""
 
@@ -19,7 +19,7 @@ class FileReader(Stream):
     # e.g. FileReader(io: adios2.IO, path, mode)
     # pylint: disable=E1121
     @__init__.register(IO)
-    def _(self, io: IO, path, mode, comm=None):
+    def _(self, io: IO, path, comm=None):
         super().__init__(io, path, "rra", comm)
 
     # pylint: enable=E1121

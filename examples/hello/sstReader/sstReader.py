@@ -34,4 +34,5 @@ with Stream(io, "helloSst", "r", comm) as stream:
             currentStep,
             "data =",
             floatArray,
+            flush=True,
         )
