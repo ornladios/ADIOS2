@@ -5,8 +5,6 @@
  * adiosMemory.h : Memory copy operations functions using std::copy std::insert
  * and std::memcpy
  *
- *  Created on: May 17, 2017
- *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #ifndef ADIOS2_HELPER_ADIOSMEMORY_H_
@@ -83,7 +81,7 @@ void CopyToBufferThreads(std::vector<char> &buffer, size_t &position, const T *s
                          const size_t elements = 1, const unsigned int threads = 1) noexcept;
 
 template <class T>
-void ReverseCopyFromBuffer(const std::vector<char> &buffer, size_t &position, T *destination,
+void ReverseCopyFromBuffer(const char *buffer, size_t &position, T *destination,
                            const size_t elements = 1) noexcept;
 
 /**
@@ -95,7 +93,7 @@ void ReverseCopyFromBuffer(const std::vector<char> &buffer, size_t &position, T 
  * @param elements  number of elements of destination type
  */
 template <class T>
-void CopyFromBuffer(const std::vector<char> &buffer, size_t &position, T *destination,
+void CopyFromBuffer(const char *buffer, size_t &position, T *destination,
                     const size_t elements = 1) noexcept;
 
 /**
@@ -109,6 +107,9 @@ void InsertU64(std::vector<char> &buffer, const T element) noexcept;
 template <class T>
 T ReadValue(const std::vector<char> &buffer, size_t &position,
             const bool isLittleEndian = true) noexcept;
+
+template <class T>
+T ReadValue(const char *buffer, size_t &position, const bool isLittleEndian = true) noexcept;
 
 /** Read in 'nElems' elements from buffer into output array
  * output must be pre-allocated.

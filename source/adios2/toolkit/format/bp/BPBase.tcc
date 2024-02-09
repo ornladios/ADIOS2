@@ -232,17 +232,17 @@ inline void BPBase::ParseCharacteristics(const std::vector<char> &buffer, size_t
 #ifdef ADIOS2_HAVE_ENDIAN_REVERSE
                 if (helper::IsLittleEndian() != isLittleEndian)
                 {
-                    helper::ReverseCopyFromBuffer(buffer, position,
+                    helper::ReverseCopyFromBuffer(buffer.data(), position,
                                                   characteristics.Statistics.Values.data(), size);
                 }
                 else
                 {
-                    helper::CopyFromBuffer(buffer, position,
+                    helper::CopyFromBuffer(buffer.data(), position,
                                            characteristics.Statistics.Values.data(), size);
                 }
 #else
-                helper::CopyFromBuffer(buffer, position, characteristics.Statistics.Values.data(),
-                                       size);
+                helper::CopyFromBuffer(buffer.data(), position,
+                                       characteristics.Statistics.Values.data(), size);
 #endif
             }
             break;
