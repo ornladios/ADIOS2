@@ -1,6 +1,6 @@
 program bpWriter
 #if ADIOS2_USE_MPI
-    use mpi
+    use mpi_f08
 #endif
     use adios2
 

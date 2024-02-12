@@ -7,7 +7,7 @@ end subroutine usage
 program TestSstRead
   use sst_test_data
 #if ADIOS2_USE_MPI
-  use mpi
+  use mpi_f08
 #endif
   use adios2
   implicit none

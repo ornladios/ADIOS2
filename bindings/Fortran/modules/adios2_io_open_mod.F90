@@ -28,7 +28,8 @@ module adios2_io_open_mod
             type(adios2_io), intent(in) :: io
             character*(*), intent(in) :: name
             integer, intent(in) :: adios2_mode
-            integer, intent(in) :: comm
+            !integer, intent(in) :: comm
+            TYPE(MPI_Comm), intent(in) :: comm
             integer, intent(out) :: ierr
         end subroutine
 

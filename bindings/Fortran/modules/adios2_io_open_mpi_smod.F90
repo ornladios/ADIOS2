@@ -37,7 +37,8 @@ contains
         type(adios2_io), intent(in) :: io
         character*(*), intent(in) :: name
         integer, intent(in) :: adios2_mode
-        integer, intent(in) :: comm
+        !integer, intent(in) :: comm
+        TYPE(MPI_Comm), intent (in):: comm
         integer, intent(out) :: ierr
 
         call adios2_open_new_comm_f2c(engine%f2c, io%f2c, &

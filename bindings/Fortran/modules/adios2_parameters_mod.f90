@@ -9,6 +9,7 @@
 !
 
 module adios2_parameters_mod
+    use mpi_f08
     implicit none
 
     ! Types

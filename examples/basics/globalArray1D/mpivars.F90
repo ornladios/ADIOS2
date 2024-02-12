@@ -1,8 +1,10 @@
 module mpivars
+    use mpi_f08
     implicit none
-    include 'mpif.h'
+    !include 'mpif.h'
 
-    integer:: app_comm, rank, nproc
+    integer:: rank, nproc
+    TYPE(MPI_Comm):: app_comm
     integer:: wrank, wnproc
     integer:: ierr
 
