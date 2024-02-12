@@ -4,7 +4,12 @@
 #
 # bpWriter.py : only works with MPI version
 #  Created on: Feb 2, 2017
-#      Author: William F Godoy godoywf@ornl.gov
+#      Authors: William F Godoy godoywf@ornl.gov
+#               Norbert Podhorszki pnorbert@ornl.gov
+#
+# We use adios2.Adios and adios2.IO classes to set up the IO parameters.
+# For default IO, it is sufficient to use the adios2.Stream class alone.
+
 from mpi4py import MPI
 import numpy
 import adios2
@@ -16,32 +21,30 @@ size = comm.Get_size()
 
 # User data
 myArray = numpy.array([0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0])
+myArray = myArray + (rank * 10)
 Nx = myArray.size
 
 # ADIOS MPI Communicator
-adios = adios2.ADIOS(comm)
+adios = adios2.Adios(config_file=None, comm=comm)
 
 # ADIOS IO
-bpIO = adios.DeclareIO("BPFile_N2N")
-bpIO.SetEngine("BPFile")
-# bpIO.SetParameters( {"Threads" : "2", "ProfileUnits" : "Microseconds",
-# "InitialBufferSize" : "17Kb"} )
+bpIO = adios.declare_io("BPFile_N2N")
+
 bpIOParams = {}
 bpIOParams["Threads"] = "2"
 bpIOParams["ProfileUnits"] = "Microseconds"
 bpIOParams["InitialBufferSize"] = "17Kb"
-bpIO.SetParameters(bpIOParams)
+bpIO.set_parameters(bpIOParams)
 
-fileID = bpIO.AddTransport("File", {"Library": "fstream"})
+bpIO.add_transport("File", {"Library": "fstream"})
+bpIO.set_engine("BPFile")
+a = bpIO.adios()
 
-# ADIOS Variable name, shape, start, offset, constant dims
-ioArray = bpIO.DefineVariable(
-    "bpArray", myArray, [size * Nx], [rank * Nx], [Nx], adios2.ConstantDims
-)
+# ADIOS output stream
+with adios2.Stream(bpIO, "bpWriter-py.bp", "w", comm) as fh:
+    fh.write("bpArray", myArray, [size * Nx], [rank * Nx], [Nx])
 
-# ADIOS Engine
-bpFileWriter = bpIO.Open("npArray.bp", adios2.Mode.Write)
-bpFileWriter.BeginStep()
-bpFileWriter.Put(ioArray, myArray, adios2.Mode.Sync)
-bpFileWriter.EndStep()
-bpFileWriter.Close()
+# Read content:
+# bpls -la bpWriter-py.bp
+# bpls -la bpWriter-py.bp -d bpArray -n 10
+# bpls -la bpWriter-py.bp -d bpArray -n 10 -D

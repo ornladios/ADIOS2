@@ -9,6 +9,7 @@
  */
 
 #include <adios2.h>
+#include <chrono>
 #include <iostream>
 #include <mpi.h>
 #include <numeric>
@@ -85,6 +86,7 @@ int main(int argc, char *argv[])
         engine.Put(floatArrayVar, floatVector.data(), adios2::Mode::Sync);
         PrintData(floatVector, engine.CurrentStep());
         engine.EndStep();
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     }
 
     engine.Close();

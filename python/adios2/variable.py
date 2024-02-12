@@ -88,16 +88,18 @@ class Variable:
         """
         self.impl.SetStepSelection(step_selection)
 
-    def shape(self, step=0):
+    def shape(self, step=None):
         """
         Get the shape assigned to the given step for this variable.
 
         Args:
-            step (int): Desired step
+            step (int): Desired step. Only in ReadRandomAccess mode
 
         Returns:
             list: shape of the specified step in the form of [start, count].
         """
+        if step is None:
+            return self.impl.Shape()
         return self.impl.Shape(step)
 
     def shape_id(self):
@@ -147,10 +149,12 @@ class Variable:
 
     def steps(self):
         """
-        The current selected steps of the variable.
+        The number of steps of the variable. This is always 1 in a stream.
+        In ReadRandomAccess mode, this function returns the total number
+        of steps available, which can be used when selecting steps for read.
 
         Returns:
-            int: The current selected steps of the variable.
+            int: The avaialble steps of the variable.
         """
         return self.impl.Steps()
 

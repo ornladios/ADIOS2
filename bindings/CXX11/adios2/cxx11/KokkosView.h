@@ -28,6 +28,23 @@ struct memspace_kokkos_to_adios2
 };
 #endif
 
+template <typename T>
+struct layout_kokkos_to_adios2
+{
+    static constexpr adios2::ArrayOrdering value = adios2::ArrayOrdering::RowMajor;
+};
+
+template <>
+struct layout_kokkos_to_adios2<Kokkos::LayoutLeft>
+{
+    static constexpr adios2::ArrayOrdering value = adios2::ArrayOrdering::ColumnMajor;
+};
+
+template <>
+struct layout_kokkos_to_adios2<Kokkos::LayoutRight>
+{
+    static constexpr adios2::ArrayOrdering value = adios2::ArrayOrdering::RowMajor;
+};
 } // namespace detail
 
 template <class T, class... Parameters>
@@ -36,6 +53,7 @@ class AdiosView<Kokkos::View<T, Parameters...>>
     using data_type = typename Kokkos::View<T, Parameters...>::value_type;
     data_type *pointer;
     adios2::MemorySpace mem_space;
+    adios2::ArrayOrdering m_layout;
 
 public:
     template <class... P>
@@ -44,11 +62,14 @@ public:
         pointer = v.data();
         mem_space =
             detail::memspace_kokkos_to_adios2<typename Kokkos::View<T, P...>::memory_space>::value;
+        m_layout =
+            detail::layout_kokkos_to_adios2<typename Kokkos::View<T, P...>::array_layout>::value;
     }
 
     data_type const *data() const { return pointer; }
     data_type *data() { return pointer; }
     adios2::MemorySpace memory_space() const { return mem_space; }
+    adios2::ArrayOrdering layout() const { return m_layout; }
 };
 
 }

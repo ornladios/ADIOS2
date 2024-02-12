@@ -431,7 +431,7 @@ void BP5Writer::NotifyEngineAttribute(std::string name, AttributeBase *Attr, voi
 
 void BP5Writer::MarshalAttributes()
 {
-    PERFSTUBS_SCOPED_TIMER_FUNC();
+    PERFSTUBS_SCOPED_TIMER("BP5Writer::MarshalAttributes");
     const auto &attributes = m_IO.GetAttributes();
 
     // if there are no new attributes, nothing to do
@@ -1729,7 +1729,8 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
     }
 
     // if the user buffer is allocated on the GPU always use sync mode
-    if (variable.GetMemorySpace(values) != MemorySpace::Host)
+    auto memSpace = variable.GetMemorySpace(values);
+    if (memSpace != MemorySpace::Host)
         sync = true;
 
     size_t *Shape = NULL;
@@ -1800,8 +1801,7 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
         helper::NdCopy((const char *)values, helper::CoreDims(ZeroDims), MemoryCount,
                        sourceRowMajor, false, (char *)ptr, MemoryStart, varCount, sourceRowMajor,
                        false, (int)ObjSize, helper::CoreDims(), helper::CoreDims(),
-                       helper::CoreDims(), helper::CoreDims(), false /* safemode */,
-                       variable.m_MemSpace);
+                       helper::CoreDims(), helper::CoreDims(), false /* safemode */, memSpace);
     }
     else
     {

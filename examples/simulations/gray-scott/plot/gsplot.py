@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from adios2 import Stream  # pylint: disable=import-error
+from adios2 import Adios, Stream  # pylint: disable=import-error
 import argparse
 import numpy as np  # pylint: disable=import-error
 import matplotlib.pyplot as plt  # pylint: disable=import-error
@@ -132,8 +132,9 @@ if __name__ == "__main__":
     myrank = mpi.rank["app"]
 
     # Read the data from this object
-    fr = Stream(args.instream, "r", comm=mpi.comm_app, config_file="adios2.xml",
-                io_name="SimulationOutput")
+    adios = Adios("adios2.xml", mpi.comm_app)
+    io = adios.declare_io("SimulationOutput")
+    fr = Stream(io, args.instream, "r", mpi.comm_app)
 
     if args.outfile.endswith(".bp"):
         global writer
@@ -144,7 +145,8 @@ if __name__ == "__main__":
     # Read through the steps, one at a time
     plot_step = 0
     for fr_step in fr.steps():
-        #        if fr_step.current_step()
+        # print(f"loop status = {fr_step.step_status()} "
+        #       f"step = {fr.current_step()} counter={fr.loop_index()}")
         start, size, fullshape = mpi.Partition_3D_3D(fr, args)
         cur_step = fr_step.current_step()
         vars_info = fr.available_variables()
