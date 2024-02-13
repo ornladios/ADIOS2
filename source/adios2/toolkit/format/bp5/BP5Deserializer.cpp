@@ -2304,9 +2304,9 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
             intersectStart[d] += VB->m_MemoryStart[d];
             blockStart[d] += VB->m_MemoryStart[d];
         }
-        helper::NdCopy(stridedData, intersectStart, intersectCount, true, true, (char *)Req.Data,
-                       intersectStart, intersectCount, true, true, ElementSize, intersectStart,
-                       blockCount, memoryStart, memoryCount, false);
+        helper::NdCopy(VirtualIncomingData, intersectStart, intersectCount, true, true,
+                       (char *)Req.Data, intersectStart, intersectCount, true, true, ElementSize,
+                       intersectStart, blockCount, memoryStart, memoryCount, false);
     }
     else
     {
