@@ -37,6 +37,7 @@
 #include <iomanip>
 #include <limits.h>
 #include <math.h>
+#include <numeric> // std::accumulate
 #include <string.h>
 
 using namespace adios2::helper;
@@ -1786,22 +1787,23 @@ static void print2D(const std::string name, const T *in, const CoreDims &count)
 template <class T>
 static void print3D(const std::string name, const T *in, const CoreDims &count)
 {
-    std::cout << name << " = {\n"; // << std::setprecision(2);
+    std::cout << name << " = \n{"; // << std::setprecision(2);
     size_t pos = 0;
     for (size_t i = 0; i < count[0]; ++i)
     {
-        std::cout << "    {\n    ";
+        std::cout << "\n    {";
         for (size_t j = 0; j < count[1]; ++j)
         {
+            std::cout << "\n        ";
             for (size_t k = 0; k < count[2]; ++k)
             {
                 std::cout << in[pos] << " ";
                 ++pos;
             }
         }
-        std::cout << "    }\n";
+        std::cout << "\n    }";
     }
-    std::cout << "  }" << std::endl;
+    std::cout << "\n}" << std::endl;
 }
 
 template <class T>
@@ -1819,9 +1821,9 @@ void StrideCopy1D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
     // print1D("Incoming block", in, inCount);
 
     size_t inPos = strideStart[0];
-    for (size_t i = 0; i < outCount[0]; ++i)
+    for (size_t z = 0; z < outCount[0]; ++z)
     {
-        out[i] = in[inPos];
+        out[z] = in[inPos];
         inPos += strideCount[0];
     }
 
@@ -1835,12 +1837,12 @@ void StrideCopy2D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
                   const CoreDims &strideStart, const CoreDims &strideCount,
                   const DoubleMatrix &stencil, MemorySpace MemSpace = MemorySpace::Host)
 {
-    /*std::cout << "StrideCopy2D: inStart = " << DimsToString(inStart)
+    std::cout << "StrideCopy2D: inStart = " << DimsToString(inStart)
               << " inCount = " << DimsToString(inCount) << " outStart = " << DimsToString(outStart)
               << " outCount = " << DimsToString(outCount)
               << " strideStart = " << DimsToString(strideStart)
-              << " srideCount = " << DimsToString(strideCount) << std::endl;*/
-    // print2D("Incoming block", in, inCount);
+              << " srideCount = " << DimsToString(strideCount) << std::endl;
+    print2D("Incoming block", in, inCount);
 #if 0
     size_t outPos = 0;
     for (size_t i = 0; i < outCount[0]; ++i)
@@ -1901,11 +1903,11 @@ void StrideCopy2D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
     // print2D("Window initialized", window.data(), CoreDims(stencil.shape));
 
     size_t outPos = 0;
-    for (size_t i = 0; i < outCount[0]; ++i)
+    for (size_t y = 0; y < outCount[0]; ++y)
     {
-        size_t rowIn = strideStart[0] + i * strideCount[0];
+        size_t rowIn = y * strideCount[0] + strideStart[0];
         size_t inPos = rowIn * inCount[1] + strideStart[1];
-        for (size_t j = 0; j < outCount[1]; ++j)
+        for (size_t z = 0; z < outCount[1]; ++z)
         {
             out[outPos] = in[inPos];
             ++outPos;
@@ -1913,7 +1915,7 @@ void StrideCopy2D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
         }
     }
 #endif
-    // print2D("Outgoing block", out, outCount);
+    print2D("Outgoing block", out, outCount);
 }
 
 template <class T>
@@ -1928,23 +1930,89 @@ void StrideCopy3D(const T *in, const CoreDims &inStart, const CoreDims &inCount,
               << " outCount = " << DimsToString(outCount)
               << " strideStart = " << DimsToString(strideStart)
               << " srideCount = " << DimsToString(strideCount) << std::endl;
-    // print3D("Incoming block", in, inCount);
+    print3D("Incoming block", in, inCount);
 
-    /* FIXME: this is not done yet*/
     size_t outPos = 0;
-    for (size_t i = 0; i < outCount[0]; ++i)
+    for (size_t x = 0; x < outCount[0]; ++x)
     {
-        size_t rowIn = strideStart[0] + i * strideCount[0];
-        size_t inPos = rowIn * inCount[1] + strideStart[1];
-        for (size_t j = 0; j < outCount[1]; ++j)
+        size_t inStartX = x * strideCount[0] + strideStart[0];
+        size_t inPosX = inStartX * inCount[1] * inCount[2];
+        std::cout << " Slice " << x << " inStartX = " << inStartX << " inPosX = " << inPosX
+                  << std::endl;
+        for (size_t y = 0; y < outCount[1]; ++y)
         {
-            for (size_t k = 0; k < outCount[3]; ++k)
+            size_t rowIn = y * strideCount[1] + strideStart[1];
+            size_t inPos = inPosX + rowIn * inCount[2] + strideStart[2];
+            for (size_t z = 0; z < outCount[2]; ++z)
             {
                 out[outPos] = in[inPos];
                 ++outPos;
-                inPos += strideCount[1];
+                inPos += strideCount[2];
             }
         }
+    }
+
+    print3D("Outgoing block", out, outCount);
+}
+
+template <class T>
+void StrideCopyND(const T *in, const CoreDims &inStart, const CoreDims &inCount,
+                  const bool inIsLittleEndian, T *out, const CoreDims &outStart,
+                  const CoreDims &outCount, const bool outIsLittleEndian,
+                  const CoreDims &strideStart, const CoreDims &strideCount,
+                  const DoubleMatrix &stencil, MemorySpace MemSpace = MemorySpace::Host)
+{
+    auto lf_incrementCounter = [&](std::vector<size_t> &counter, const CoreDims &outCount,
+                                   const size_t ndim) {
+        for (int d = (int)ndim - 1; d >= 0; --d)
+        {
+            if (counter[d] < outCount[d] - 1)
+            {
+                ++counter[d];
+                break;
+            }
+            else
+            {
+                counter[d] = 0;
+            }
+        }
+    };
+
+    std::cout << "StrideCopyND: inStart = " << DimsToString(inStart)
+              << " inCount = " << DimsToString(inCount) << " outStart = " << DimsToString(outStart)
+              << " outCount = " << DimsToString(outCount)
+              << " strideStart = " << DimsToString(strideStart)
+              << " srideCount = " << DimsToString(strideCount) << std::endl;
+    // print3D("Incoming block", in, inCount);
+
+    size_t outPos = 0;
+    size_t ndim = inCount.size();
+    size_t nTotal = std::accumulate(outCount.begin(), outCount.end(), 1, std::multiplies<size_t>());
+    std::vector<size_t> counter(ndim, 0);
+
+    std::vector<size_t> prodSizes(ndim, 1);
+    for (size_t d = ndim - 1; d > 0; --d)
+    {
+        prodSizes[d - 1] = inCount[d] * prodSizes[d];
+    }
+
+    while (outPos < nTotal)
+    {
+        size_t inPos = 0;
+        for (size_t d = 0; d < ndim - 1; ++d)
+        {
+            size_t inStartX = counter[d] * strideCount[d] + strideStart[d];
+            inPos += inStartX * prodSizes[d];
+        }
+        inPos += strideStart[ndim - 1];
+        for (size_t z = 0; z < outCount[ndim - 1]; ++z)
+        {
+            out[outPos] = in[inPos];
+            ++outPos;
+            inPos += strideCount[ndim - 1];
+        }
+        // increment by one in first N-1 dimensions (leave alone the last dim)
+        lf_incrementCounter(counter, outCount, ndim - 1);
     }
 
     // print3D("Outgoing block", out, outCount);
@@ -1957,7 +2025,9 @@ void StrideCopyT(const T *in, const CoreDims &inStart, const CoreDims &inCount,
                  const CoreDims &strideStart, const CoreDims &strideCount,
                  const DoubleMatrix &stencil, MemorySpace MemSpace = MemorySpace::Host)
 {
-    switch (inCount.size())
+    return StrideCopyND(in, inStart, inCount, inIsLittleEndian, out, outStart, outCount,
+                        outIsLittleEndian, strideStart, strideCount, stencil, MemSpace);
+    /*switch (inCount.size())
     {
     case 1:
         return StrideCopy1D(in, inStart, inCount, inIsLittleEndian, out, outStart, outCount,
@@ -1976,7 +2046,7 @@ void StrideCopyT(const T *in, const CoreDims &inStart, const CoreDims &inCount,
             "Toolkit", "format::bp::BP5Deserializer", "StrideCopyT",
             "Dimension " + std::to_string(inCount.size()) + "not supported");
         break;
-    }
+    }*/
 }
 
 static inline void StrideCopy(const DataType dtype, const void *in, const CoreDims &inStart,

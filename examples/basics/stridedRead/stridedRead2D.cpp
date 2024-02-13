@@ -62,7 +62,7 @@ void writer(adios2::ADIOS &adios, const std::size_t nx, const std::size_t ny)
 
     adios2::Engine writer = io.Open("stridedRead2D.bp", adios2::Mode::Write);
 
-    const std::vector<double> array = lf_computeTrig(nx, ny);
+    const std::vector<double> array = lf_computeID(nx, ny);
 
     writer.BeginStep();
 
@@ -72,7 +72,7 @@ void writer(adios2::ADIOS &adios, const std::size_t nx, const std::size_t ny)
     size_t qy1 = (ny / 2);
     size_t qy2 = ny - qy1;
 
-    varGlobal2D.SetSelection({{0, 0}, {qx1, qx2}});
+    varGlobal2D.SetSelection({{0, 0}, {qx1, qy1}});
     varGlobal2D.SetMemorySelection({{0, 0}, {nx, ny}});
     writer.Put(varGlobal2D, array.data());
 
@@ -80,7 +80,7 @@ void writer(adios2::ADIOS &adios, const std::size_t nx, const std::size_t ny)
     varGlobal2D.SetMemorySelection({{0, qy1}, {nx, ny}});
     writer.Put(varGlobal2D, array.data());
 
-    varGlobal2D.SetSelection({{qx1, 0}, {qx2, qx2}});
+    varGlobal2D.SetSelection({{qx1, 0}, {qx2, qy1}});
     varGlobal2D.SetMemorySelection({{qx1, 0}, {nx, ny}});
     writer.Put(varGlobal2D, array.data());
 
@@ -153,7 +153,6 @@ void reader(adios2::ADIOS &adios)
         writer.EndStep();
         writer.Close();
 
-        /*
         std::cout << "Global array read with stride = {\n  ";
         size_t pos = 0;
         for (size_t i = 0; i < sel.second[0]; ++i)
@@ -166,7 +165,6 @@ void reader(adios2::ADIOS &adios)
             std::cout << "\n  ";
         }
         std::cout << "}" << std::endl;
-        */
     }
 }
 
@@ -174,8 +172,8 @@ int main(int argc, char *argv[])
 {
     try
     {
-        constexpr std::size_t nx = 100;
-        constexpr std::size_t ny = 100;
+        constexpr std::size_t nx = 105;
+        constexpr std::size_t ny = 99;
         adios2::ADIOS adios;
         writer(adios, nx, ny);
         reader(adios);
