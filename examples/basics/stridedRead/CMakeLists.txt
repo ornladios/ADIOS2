@@ -19,3 +19,7 @@ add_executable(adios2_basics_stridedRead2D stridedRead2D.cpp)
 target_link_libraries(adios2_basics_stridedRead2D adios2::cxx11 adios2_core)
 install(TARGETS adios2_basics_stridedRead2D RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
+add_executable(adios2_basics_stridedRead3D stridedRead3D.cpp)
+target_link_libraries(adios2_basics_stridedRead3D adios2::cxx11 adios2_core)
+install(TARGETS adios2_basics_stridedRead3D RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
