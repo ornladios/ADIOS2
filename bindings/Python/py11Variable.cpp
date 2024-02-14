@@ -69,6 +69,32 @@ size_t Variable::SelectionSize() const
     return size;
 }
 
+Box<Dims> Variable::Selection() const
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::Selection");
+    const adios2::DataType typeCpp = m_VariableBase->m_Type;
+
+    if (typeCpp == adios2::DataType::Struct)
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                                          \
+    else if (typeCpp == adios2::helper::GetDataType<T>())                                          \
+    {                                                                                              \
+        const adios2::core::Variable<T> *variable =                                                \
+            dynamic_cast<const adios2::core::Variable<T> *>(m_VariableBase);                       \
+        return variable->Selection();                                                              \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+}
+
+void Variable::SetStride(const Dims &stride)
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::SetStride");
+    return m_VariableBase->SetStride(stride);
+}
+
 size_t Variable::AddOperation(const Operator op, const Params &parameters)
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::AddOperation");

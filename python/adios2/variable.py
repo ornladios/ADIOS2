@@ -38,7 +38,7 @@ class Variable:
         Current selected count for this variable.
 
         Returns:
-            int: Current selected count.
+            list (int): Current selected count.
         """
         return self.impl.Count()
 
@@ -50,6 +50,15 @@ class Variable:
             int: Current selection size selected.
         """
         return self.impl.SelectionSize()
+
+    def selection(self):
+        """
+        Current selection for this variable after set_selection() and set_stride()
+
+        Returns:
+            list (int): Current selection
+        """
+        return self.impl.Selection()
 
     def set_block_selection(self, block_id):
         """
@@ -87,6 +96,16 @@ class Variable:
             step_selection (list): On the form of [start, count].
         """
         self.impl.SetStepSelection(step_selection)
+
+    def set_stride(self, stride):
+        """
+        Set Stridin(dimensions) for this variable
+
+        Args:
+            stride (list): stride value for each dimension,
+                Each value must be at least 1.
+        """
+        self.impl.SetStride(stride)
 
     def shape(self, step=None):
         """
@@ -131,10 +150,10 @@ class Variable:
 
     def sizeof(self):
         """
-        Size in bytes of the contents of the variable.
+        Size in bytes of the data type of the variable.
 
         Returns:
-            int: size in bytes of the contents.
+            int: size in bytes of the content data type.
         """
         return self.impl.Sizeof()
 

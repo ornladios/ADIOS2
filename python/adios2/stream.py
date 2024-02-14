@@ -311,7 +311,7 @@ class Stream:
                 resulting array from selection
         """
         dtype = type_adios_to_numpy(variable.type())
-        count = variable.count()
+        count = variable.selection()[1]
         if count != []:
             # array
             # steps = variable.get_steps_from_step_selection()
@@ -341,7 +341,7 @@ class Stream:
         return output
 
     @read.register(str)
-    def _(self, name: str, start=[], count=[], block_id=None, step_selection=None):
+    def _(self, name: str, start=[], count=[], block_id=None, step_selection=None, stride=None):
         """
         Random access read allowed to select steps,
         only valid with Stream Engines
@@ -385,6 +385,9 @@ class Stream:
 
         if start != [] and count != []:
             variable.set_selection([start, count])
+
+        if stride:
+            variable.set_stride(stride)
 
         return self.read(variable)
 
