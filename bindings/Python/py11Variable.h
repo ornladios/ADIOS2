@@ -47,6 +47,10 @@ public:
 
     size_t SelectionSize() const;
 
+    Box<Dims> Selection() const;
+
+    void SetStride(const Dims &stride);
+
     std::string Name() const;
 
     std::string Type() const;

@@ -49,12 +49,19 @@ def SetupArgs():
         help="The 2D plane to be displayed/stored xy/yz/xz/all",
         default="yz",
     )
+    parser.add_argument(
+        "--stride",
+        "-stride",
+        help="Stride (same value for all dimensions)",
+        default="1",
+    )
     args = parser.parse_args()
 
     args.displaysec = float(args.displaysec)
     args.nx = int(args.nx)
     args.ny = int(args.ny)
     args.nz = int(args.nz)
+    args.stride = int(args.stride)
 
     if args.plane not in ("xz", "yz", "xy", "all"):
         raise ValueError("Input argument --plane must be one of xz/yz/xy/all")
@@ -113,9 +120,9 @@ def Plot2D(plane_direction, data, args, fullshape, step, fontsize):
     plt.clf()
 
 
-def read_data(args, fr, start_coord, size_dims):
+def read_data(args, fr, start_coord, size_dims, stride):
     var1 = args.varname
-    data = fr.read(var1, start_coord, size_dims)
+    data = fr.read(var1, start_coord, size_dims, stride=stride)
     data = np.squeeze(data)
     return data
 
@@ -153,12 +160,20 @@ if __name__ == "__main__":
         #        print (vars_info)
         shape3_str = vars_info[args.varname]["Shape"].split(",")
         shape3 = list(map(int, shape3_str))
-        sim_step = fr_step.read("step")
+        stride = []
+        stridedshape = []
+        for i in range(len(shape3)):
+            stride.append(args.stride) 
+            stridedshape.append(int(shape3[i] / args.stride))
+
+        sim_step = fr_step.read("step")[0]
 
         if myrank == 0:
             print(
-                "GS Plot step {0} processing simulation output step {1} or computation"
-                "step {2}".format(plot_step, cur_step, sim_step),
+                f"GS Plot step {plot_step} processing simulation output step {cur_step}"
+                f" or computation step {sim_step}\n",
+                f"    variable  {args.varname} full shape {fullshape}"
+                f" stride {stride} strided shape {stridedshape}",
                 flush=True,
             )
         #            if cur_step == 0:
@@ -166,21 +181,21 @@ if __name__ == "__main__":
 
         if args.plane in ("xy", "all"):
             data = read_data(
-                args, fr_step, [0, 0, int(shape3[2] / 2)], [shape3[0], shape3[1], 1]
+                args, fr_step, [0, 0, int(shape3[2] / 2)], [shape3[0], shape3[1], 1], stride
             )
-            Plot2D("xy", data, args, fullshape, sim_step, fontsize)
+            Plot2D("xy", data, args, stridedshape, sim_step, fontsize)
 
         if args.plane in ("xz", "all"):
             data = read_data(
-                args, fr_step, [0, int(shape3[1] / 2), 0], [shape3[0], 1, shape3[2]]
+                args, fr_step, [0, int(shape3[1] / 2), 0], [shape3[0], 1, shape3[2]], stride
             )
-            Plot2D("xz", data, args, fullshape, sim_step, fontsize)
+            Plot2D("xz", data, args, stridedshape, sim_step, fontsize)
 
         if args.plane in ("yz", "all"):
             data = read_data(
-                args, fr_step, [int(shape3[0] / 2), 0, 0], [1, shape3[1], shape3[2]]
+                args, fr_step, [int(shape3[0] / 2), 0, 0], [1, shape3[1], shape3[2]], stride
             )
-            Plot2D("yz", data, args, fullshape, sim_step, fontsize)
+            Plot2D("yz", data, args, stridedshape, sim_step, fontsize)
         plot_step = plot_step + 1
 
     fr.close()
