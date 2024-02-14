@@ -1960,10 +1960,10 @@ void StrideCopyND(const T *in, const CoreDims &inStart, const CoreDims &inCount,
                   const bool inIsLittleEndian, T *out, const CoreDims &outStart,
                   const CoreDims &outCount, const bool outIsLittleEndian,
                   const CoreDims &strideStart, const CoreDims &strideCount,
-                  const DoubleMatrix &stencil, MemorySpace MemSpace = MemorySpace::Host)
+                  MemorySpace MemSpace = MemorySpace::Host)
 {
-    auto lf_incrementCounter = [&](std::vector<size_t> &counter, const CoreDims &outCount,
-                                   const size_t ndim) {
+    auto lf_incrementCounter = [](std::vector<size_t> &counter, const CoreDims &outCount,
+                                  const size_t ndim) {
         for (int d = (int)ndim - 1; d >= 0; --d)
         {
             if (counter[d] < outCount[d] - 1)
@@ -1988,31 +1988,121 @@ void StrideCopyND(const T *in, const CoreDims &inStart, const CoreDims &inCount,
     size_t outPos = 0;
     size_t ndim = inCount.size();
     size_t nTotal = std::accumulate(outCount.begin(), outCount.end(), 1, std::multiplies<size_t>());
-    std::vector<size_t> counter(ndim, 0);
 
-    std::vector<size_t> prodSizes(ndim, 1);
+    std::vector<size_t> inProdSizes(ndim, 1); // total # of elems in lower dims
     for (size_t d = ndim - 1; d > 0; --d)
     {
-        prodSizes[d - 1] = inCount[d] * prodSizes[d];
+        inProdSizes[d - 1] = inCount[d] * inProdSizes[d];
     }
 
+    std::vector<size_t> outPosND(ndim, 0); // m-dim position in 'out' array
+    std::vector<size_t> inPosND(ndim, 0);  // m-dim position in 'in' array
     while (outPos < nTotal)
     {
-        size_t inPos = 0;
-        for (size_t d = 0; d < ndim - 1; ++d)
+        size_t inPos1D = 0;
+        for (size_t d = 0; d < ndim; ++d)
         {
-            size_t inStartX = counter[d] * strideCount[d] + strideStart[d];
-            inPos += inStartX * prodSizes[d];
+            inPosND[d] = outPosND[d] * strideCount[d] + strideStart[d];
+            inPos1D += inPosND[d] * inProdSizes[d];
         }
-        inPos += strideStart[ndim - 1];
+        // go through linear dimension in a tighter loop
         for (size_t z = 0; z < outCount[ndim - 1]; ++z)
         {
-            out[outPos] = in[inPos];
+            out[outPos] = in[inPos1D];
             ++outPos;
-            inPos += strideCount[ndim - 1];
+            inPos1D += strideCount[ndim - 1];
         }
         // increment by one in first N-1 dimensions (leave alone the last dim)
-        lf_incrementCounter(counter, outCount, ndim - 1);
+        lf_incrementCounter(outPosND, outCount, ndim - 1);
+    }
+
+    // print3D("Outgoing block", out, outCount);
+}
+
+template <class T>
+void StrideCopyNDStencil(const T *in, const CoreDims &inStart, const CoreDims &inCount,
+                         const bool inIsLittleEndian, T *out, const CoreDims &outStart,
+                         const CoreDims &outCount, const bool outIsLittleEndian,
+                         const CoreDims &strideStart, const CoreDims &strideCount,
+                         const DoubleMatrix &stencil, MemorySpace MemSpace = MemorySpace::Host)
+{
+    auto lf_incrementCounter = [](std::vector<size_t> &counter, const CoreDims &outCount,
+                                  const size_t ndim) {
+        for (int d = (int)ndim - 1; d >= 0; --d)
+        {
+            if (counter[d] < outCount[d] - 1)
+            {
+                ++counter[d];
+                break;
+            }
+            else
+            {
+                counter[d] = 0;
+            }
+        }
+    };
+
+    auto lf_fillWindow = [](std::vector<T> &windowData, const std::vector<int64_t> &windowPos,
+                            const size_t ndim, const std::vector<size_t> &inProdSizes,
+                            const size_t stencilNumElems, const std::vector<size_t> &stencilShape,
+                            const T *in, const T value) {
+        std::vector<int64_t> pos(windowPos);
+        for (size_t n = 0; n < stencilNumElems; ++n)
+        {
+            ;
+        }
+    };
+
+    std::cout << "StrideCopyNDStencil: inStart = " << DimsToString(inStart)
+              << " inCount = " << DimsToString(inCount) << " outStart = " << DimsToString(outStart)
+              << " outCount = " << DimsToString(outCount)
+              << " strideStart = " << DimsToString(strideStart)
+              << " srideCount = " << DimsToString(strideCount) << std::endl;
+    // print3D("Incoming block", in, inCount);
+
+    size_t outPos = 0;
+    size_t ndim = inCount.size();
+    size_t outNumElems =
+        std::accumulate(outCount.begin(), outCount.end(), 1, std::multiplies<size_t>());
+
+    std::vector<size_t> inProdSizes(ndim, 1); // total # of elems in lower dims
+    for (size_t d = ndim - 1; d > 0; --d)
+    {
+        inProdSizes[d - 1] = inCount[d] * inProdSizes[d];
+    }
+
+    size_t stencilNumElems = helper::GetTotalSize(stencil.shape);
+    // stencil window on 'in', n-dim position, each pos[d] can be < 0 or > inCount[d]
+    std::vector<int64_t> windowPosND(ndim);
+    std::vector<T> windowData(stencilNumElems);
+    std::vector<size_t> stencilBackOffset(ndim);
+    for (size_t d = 0; d < ndim; ++d)
+    {
+        stencilBackOffset[d] = stencil.shape[d] / 2;
+    }
+
+    std::vector<size_t> outPosND(ndim, 0); // m-dim position in 'out' array
+    std::vector<size_t> inPosND(ndim, 0);  // m-dim position in 'in' array
+    while (outPos < outNumElems)
+    {
+        size_t inPos1D = 0;
+        for (size_t d = 0; d < ndim; ++d)
+        {
+            inPosND[d] = outPosND[d] * strideCount[d] + strideStart[d];
+            inPos1D += inPosND[d] * inProdSizes[d];
+            windowPosND[d] = inPosND[d] - stencilBackOffset[d];
+        }
+        // go through linear dimension in a tighter loop
+        for (size_t z = 0; z < outCount[ndim - 1]; ++z)
+        {
+            lf_fillWindow(windowData, windowPosND, ndim, inProdSizes, stencilNumElems,
+                          stencil.shape, in, in[inPos1D]);
+            out[outPos] = in[inPos1D];
+            ++outPos;
+            inPos1D += strideCount[ndim - 1];
+        }
+        // increment by one in first N-1 dimensions (leave alone the last dim)
+        lf_incrementCounter(outPosND, outCount, ndim - 1);
     }
 
     // print3D("Outgoing block", out, outCount);
@@ -2025,8 +2115,16 @@ void StrideCopyT(const T *in, const CoreDims &inStart, const CoreDims &inCount,
                  const CoreDims &strideStart, const CoreDims &strideCount,
                  const DoubleMatrix &stencil, MemorySpace MemSpace = MemorySpace::Host)
 {
-    return StrideCopyND(in, inStart, inCount, inIsLittleEndian, out, outStart, outCount,
-                        outIsLittleEndian, strideStart, strideCount, stencil, MemSpace);
+    if (stencil.data.size() == 1)
+    {
+        return StrideCopyND(in, inStart, inCount, inIsLittleEndian, out, outStart, outCount,
+                            outIsLittleEndian, strideStart, strideCount, MemSpace);
+    }
+    else
+    {
+        return StrideCopyNDStencil(in, inStart, inCount, inIsLittleEndian, out, outStart, outCount,
+                                   outIsLittleEndian, strideStart, strideCount, stencil, MemSpace);
+    }
     /*switch (inCount.size())
     {
     case 1:
