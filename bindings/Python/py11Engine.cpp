@@ -70,10 +70,42 @@ void Engine::Put(Variable variable, const pybind11::array &array, const Mode lau
     else
     {
         throw std::invalid_argument("ERROR: for variable " + variable.Name() +
-                                    " numpy array type is not supported or "
+                                    " numpy array type " + variable.Type() +
+                                    " is not supported (found type " + ToString(type) +
+                                    ") or "
                                     "is not memory contiguous "
                                     ", in call to Put\n");
     }
+}
+
+void Engine::Put(Variable variable, const std::vector<int64_t> &ints, const Mode launch)
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Put list of ints");
+    helper::CheckForNullptr(variable.m_VariableBase,
+                            "for variable, in call to Engine::Put list of ints");
+
+    m_Engine->Put(*dynamic_cast<core::Variable<int64_t> *>(variable.m_VariableBase),
+                  reinterpret_cast<const int64_t *>(ints.data()), launch);
+}
+
+void Engine::Put(Variable variable, const std::vector<double> &floats, const Mode launch)
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Put list of floats");
+    helper::CheckForNullptr(variable.m_VariableBase,
+                            "for variable, in call to Engine::Put list of floats");
+
+    m_Engine->Put(*dynamic_cast<core::Variable<double> *>(variable.m_VariableBase),
+                  reinterpret_cast<const double *>(floats.data()), launch);
+}
+
+void Engine::Put(Variable variable, const std::vector<std::complex<double>> &complexes,
+                 const Mode launch)
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Put list of complexes");
+    helper::CheckForNullptr(variable.m_VariableBase,
+                            "for variable, in call to Engine::Put list of complexes");
+    m_Engine->Put(*dynamic_cast<core::Variable<std::complex<double>> *>(variable.m_VariableBase),
+                  reinterpret_cast<const std::complex<double> *>(complexes.data()), launch);
 }
 
 void Engine::Put(Variable variable, const std::string &string)

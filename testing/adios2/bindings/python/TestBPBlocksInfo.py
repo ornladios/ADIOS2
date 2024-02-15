@@ -38,22 +38,22 @@ for i in range(0, Nx):
 adios = adios2.ADIOS(comm)
 ioWrite = adios.DeclareIO("ioWriter")
 
-varTemperature = ioWrite.DefineVariable("temperature2D", temperatures, shape,
-                                        start, count, adios2.ConstantDims)
+varTemperature = ioWrite.DefineVariable(
+    "temperature2D", temperatures, shape, start, count, adios2.ConstantDims
+)
 
-obpStream = ioWrite.Open('HeatMap2D_py.bp', adios2.Mode.Write)
+obpStream = ioWrite.Open("HeatMap2D_py.bp", adios2.Mode.Write)
 obpStream.Put(varTemperature, temperatures)
 obpStream.Close()
 
 
 if rank == 0:
     ioRead = adios.DeclareIO("ioReader")
-    ibpStream = ioRead.Open('HeatMap2D_py.bp', adios2.Mode.ReadRandomAccess,
-                            MPI.COMM_SELF)
+    ibpStream = ioRead.Open("HeatMap2D_py.bp", adios2.Mode.ReadRandomAccess, MPI.COMM_SELF)
     var_inTemperature = ioRead.InquireVariable("temperature2D")
 
     info = ibpStream.BlocksInfo("temperature2D", 0)
     assert info is not None
-    assert info[0]['Start'] == '0,0'
-    assert info[0]['Count'] == '10,10'
-    assert info[0]['WriterID'] == '0'
+    assert info[0]["Start"] == "0,0"
+    assert info[0]["Count"] == "10,10"
+    assert info[0]["WriterID"] == "0"

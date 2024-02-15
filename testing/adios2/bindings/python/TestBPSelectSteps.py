@@ -25,13 +25,11 @@ count = [Nx]
 
 
 class TestAdiosSelectSteps(unittest.TestCase):
-
     def setUp(self):
         total_steps = 10
         with adios2.open(TESTDATA_FILENAME, "w", comm) as fh:
             for i in range(total_steps):
-                fh.write("step", np.full((Nx), i, dtype=np.int32),
-                         shape, start, count)
+                fh.write("step", np.full((Nx), i, dtype=np.int32), shape, start, count)
                 fh.end_step()
 
     def test_select_steps_reading_fullAPI(self):
@@ -40,18 +38,22 @@ class TestAdiosSelectSteps(unittest.TestCase):
         adios = adios2.ADIOS()
         ioReadBP = adios.DeclareIO("hellopy")
         ioReadBP.SetParameter(TESTDATA_FILENAME, param_string)
-        fh = ioReadBP.Open(TESTDATA_FILENAME,
-                           adios2.Mode.ReadRandomAccess, comm)
+        fh = ioReadBP.Open(TESTDATA_FILENAME, adios2.Mode.ReadRandomAccess, comm)
         var = ioReadBP.InquireVariable("step")
         var.SetSelection([[0], [size * Nx]])
         var.SetStepSelection([0, len(selected_steps)])
         data = np.zeros((len(selected_steps), size * Nx), dtype=np.int32)
         fh.Get(var, data)
         fh.PerformGets()
-        self.assertTrue(all(
-            [list(data[i]) == [selected_steps[i] for x in range(len(data[i]))]
-                for i in range(len(selected_steps))]))
+        self.assertTrue(
+            all(
+                [
+                    list(data[i]) == [selected_steps[i] for x in range(len(data[i]))]
+                    for i in range(len(selected_steps))
+                ]
+            )
+        )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

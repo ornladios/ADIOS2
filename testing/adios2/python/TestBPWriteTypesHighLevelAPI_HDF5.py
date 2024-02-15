@@ -10,24 +10,26 @@
 #      Author: William F Godoy godoywf@ornl.gov
 
 from adios2NPTypes import SmallTestData
-from mpi4py import MPI
 import numpy as np
-import adios2.bindings as adios2
+from adios2 import Adios, Stream
 
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
+rank = 0
+size = 1
 
 # Test data
-data = SmallTestData()
+data = SmallTestData(rank)
 nx = data.Nx
 
 shape = [size * nx]
 start = [rank * nx]
 count = [nx]
 
+adios = Adios()
+io = adios.declare_io("writeh5")
+io.set_engine("HDF5")
+
 # Writer
-with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
+with Stream(io, "types_np.h5", "w") as fw:
     for i in range(0, 5):
         data.update(rank, i, size)
 
@@ -97,12 +99,13 @@ with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
 
         fw.end_step()
 
-comm.Barrier()
-
 # Reader
-data = SmallTestData()
+data = SmallTestData(rank)
 
-with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
+io = adios.declare_io("readh5")
+io.set_engine("HDF5")
+
+with Stream("types_np.h5", "r") as fr:
     for fr_step in fr:
         step = fr_step.current_step()
         data.update(rank, step, size)
@@ -115,8 +118,8 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
         #                 print("\t" + key + ": " + value)
         #             print("\n")
 
-        if step == 0:
-            inTag = fr_step.read_string("tag")
+        if rank == 0 and step == 0:
+            inTag = fr_step.read("tag")
             inI8 = fr_step.read("gvarI8")
             inI16 = fr_step.read("gvarI16")
             inI32 = fr_step.read("gvarI32")
@@ -128,7 +131,7 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             inR32 = fr_step.read("gvarR32")
             inR64 = fr_step.read("gvarR64")
 
-            if inTag[0] != "Testing ADIOS2 high-level API":
+            if inTag != "Testing ADIOS2 high-level API":
                 print("InTag: " + str(inTag))
                 raise ValueError("tag variable read failed")
 
@@ -163,7 +166,7 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
                 raise ValueError("gvarR64 read failed")
 
             # attributes
-            inTag = fr_step.read_attribute_string("attrStr")
+            inTag = fr_step.read_attribute("attrStr")
             inI8 = fr_step.read_attribute("attrI8")
             inI16 = fr_step.read_attribute("attrI16")
             inI32 = fr_step.read_attribute("attrI32")
@@ -302,8 +305,8 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
 
         stepStr = "Step:" + str(step)
 
-        instepStr = fr_step.read_string("steps")
-        if instepStr[0] != stepStr:
+        instepStr = fr_step.read("steps")
+        if instepStr != stepStr:
             raise ValueError("steps variable read failed: " + instepStr + " " + stepStr)
 
         indataI8 = fr_step.read("varI8", start, count)
