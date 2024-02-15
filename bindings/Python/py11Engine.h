@@ -49,6 +49,12 @@ public:
     StepStatus BeginStep();
 
     void Put(Variable variable, const pybind11::array &array, const Mode launch = Mode::Deferred);
+    void Put(Variable variable, const std::vector<int64_t> &ints,
+             const Mode launch = Mode::Deferred);
+    void Put(Variable variable, const std::vector<double> &doubles,
+             const Mode launch = Mode::Deferred);
+    void Put(Variable variable, const std::vector<std::complex<double>> &complexes,
+             const Mode launch = Mode::Deferred);
     void Put(Variable variable, const std::string &string);
     void PerformPuts();
     void PerformDataWrite();

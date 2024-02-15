@@ -101,6 +101,51 @@ Variable IO::DefineVariable(const std::string &name, const pybind11::array &arra
     return Variable(variable);
 }
 
+Variable IO::DefineVariable(const std::string &name, const pybind11::object &value,
+                            const Dims &shape, const Dims &start, const Dims &count,
+                            const bool isConstantDims)
+{
+    helper::CheckForNullptr(m_IO, "for variable " + name + ", in call to IO::DefineVariable");
+    core::VariableBase *variable = nullptr;
+    const auto t = value.get_type();
+    const auto ts = pybind11::str(t);
+    const auto tss = pybind11::cast<std::string>(ts);
+    if (pybind11::isinstance<pybind11::str>(value))
+    {
+        variable = &m_IO->DefineVariable<std::string>(name);
+    }
+    else if (pybind11::isinstance<pybind11::int_>(value))
+    {
+        variable = &m_IO->DefineVariable<int64_t>(name, shape, start, count, isConstantDims);
+    }
+    else if (pybind11::isinstance<pybind11::float_>(value))
+    {
+        variable = &m_IO->DefineVariable<double>(name, shape, start, count, isConstantDims);
+    }
+    else if (tss == "<class 'complex'>")
+    {
+        variable =
+            &m_IO->DefineVariable<std::complex<double>>(name, shape, start, count, isConstantDims);
+    }
+    else if (tss == "<class 'numpy.complex64'>")
+    {
+        variable =
+            &m_IO->DefineVariable<std::complex<float>>(name, shape, start, count, isConstantDims);
+    }
+    else if (tss == "<class 'numpy.complex128'>")
+    {
+        variable =
+            &m_IO->DefineVariable<std::complex<double>>(name, shape, start, count, isConstantDims);
+    }
+    else
+    {
+        throw std::invalid_argument("ERROR: variable " + name +
+                                    " can't be defined with an object with type " + tss +
+                                    ", in call to DefineVariable\n");
+    }
+    return Variable(variable);
+}
+
 Variable IO::InquireVariable(const std::string &name)
 {
     helper::CheckForNullptr(m_IO, "for variable " + name + ", in call to IO::InquireVariable");
@@ -126,7 +171,6 @@ Attribute IO::DefineAttribute(const std::string &name, const pybind11::array &ar
                               const std::string &variableName, const std::string separator)
 {
     helper::CheckForNullptr(m_IO, "for attribute " + name + ", in call to IO::DefineAttribute");
-
     core::AttributeBase *attribute = nullptr;
 
     if (false)
@@ -156,7 +200,6 @@ Attribute IO::DefineAttribute(const std::string &name, const std::string &string
                               const std::string &variableName, const std::string separator)
 {
     helper::CheckForNullptr(m_IO, "for attribute " + name + ", in call to IO::DefineAttribute");
-
     return Attribute(
         &m_IO->DefineAttribute<std::string>(name, stringValue, variableName, separator));
 }
@@ -165,9 +208,76 @@ Attribute IO::DefineAttribute(const std::string &name, const std::vector<std::st
                               const std::string &variableName, const std::string separator)
 {
     helper::CheckForNullptr(m_IO, "for attribute " + name + ", in call to IO::DefineAttribute");
-
     return Attribute(&m_IO->DefineAttribute<std::string>(name, strings.data(), strings.size(),
                                                          variableName, separator));
+}
+
+Attribute IO::DefineAttribute(const std::string &name, const std::vector<int> &ints,
+                              const std::string &variableName, const std::string separator)
+{
+    helper::CheckForNullptr(m_IO, "for attribute " + name + ", in call to IO::DefineAttribute");
+    return Attribute(
+        &m_IO->DefineAttribute<int>(name, ints.data(), ints.size(), variableName, separator));
+}
+
+Attribute IO::DefineAttribute(const std::string &name, const std::vector<double> &doubles,
+                              const std::string &variableName, const std::string separator)
+{
+    helper::CheckForNullptr(m_IO, "for attribute " + name + ", in call to IO::DefineAttribute");
+    return Attribute(&m_IO->DefineAttribute<double>(name, doubles.data(), doubles.size(),
+                                                    variableName, separator));
+}
+
+Attribute IO::DefineAttribute(const std::string &name,
+                              const std::vector<std::complex<double>> &complexdoubles,
+                              const std::string &variableName, const std::string separator)
+{
+    helper::CheckForNullptr(m_IO, "for attribute " + name + ", in call to IO::DefineAttribute");
+    return Attribute(&m_IO->DefineAttribute<std::complex<double>>(
+        name, complexdoubles.data(), complexdoubles.size(), variableName, separator));
+}
+
+Attribute IO::DefineAttribute(const std::string &name, const pybind11::object &value,
+                              const std::string &variableName, const std::string separator)
+{
+    helper::CheckForNullptr(m_IO, "for attribute " + name + ", in call to IO::DefineAttribute");
+
+    core::AttributeBase *attribute = nullptr;
+    const auto t = value.get_type();
+    const auto ts = pybind11::str(t);
+    const auto tss = pybind11::cast<std::string>(ts);
+    if (pybind11::isinstance<pybind11::int_>(value))
+    {
+        auto v = pybind11::cast<const int64_t>(value);
+        attribute = &m_IO->DefineAttribute(name, v, variableName, separator);
+    }
+    else if (pybind11::isinstance<pybind11::float_>(value))
+    {
+        auto v = pybind11::cast<const double>(value);
+        attribute = &m_IO->DefineAttribute(name, v, variableName, separator);
+    }
+    else if (tss == "<class 'complex'>")
+    {
+        auto v = pybind11::cast<const std::complex<double>>(value);
+        attribute = &m_IO->DefineAttribute(name, v, variableName, separator);
+    }
+    else if (tss == "<class 'numpy.complex64'>")
+    {
+        auto v = pybind11::cast<const std::complex<float>>(value);
+        attribute = &m_IO->DefineAttribute(name, v, variableName, separator);
+    }
+    else if (tss == "<class 'numpy.complex128'>")
+    {
+        auto v = pybind11::cast<const std::complex<double>>(value);
+        attribute = &m_IO->DefineAttribute(name, v, variableName, separator);
+    }
+    else
+    {
+        throw std::invalid_argument("ERROR: attribute " + name +
+                                    " can't be defined with an object with type " + tss +
+                                    ", in call to DefineAttribute\n");
+    }
+    return Attribute(attribute);
 }
 
 Attribute IO::InquireAttribute(const std::string &name, const std::string &variableName,

@@ -16,19 +16,19 @@ import adios2.bindings as adios2
 
 def check_object(adios2_object, name):
     if adios2_object is False:
-        raise ValueError(str(name) + ' not found')
+        raise ValueError(str(name) + " not found")
 
 
 def check_name(name, name_list):
     if name not in name_list:
-        raise ValueError(str(name) + ' not found in list')
+        raise ValueError(str(name) + " not found in list")
 
 
 def check_array(np1, np2, hint):
     if (np1 == np2).all() is False:
         print("InData: " + str(np1))
         print("Data: " + str(np2))
-        raise ValueError('Array read failed ' + str(hint))
+        raise ValueError("Array read failed " + str(hint))
 
 
 # MPI
@@ -38,11 +38,33 @@ size = comm.Get_size()
 Nx = 8
 
 # list of tested attributes and variables
-attr_names = ["attrString", "attrStringArray", "attrI8", "attrI16", "attrI32", "attrI64",
-              "attrU8", "attrU16", "attrU32", "attrU64", "attrR32", "attrR64"]
-var_names = ["varStr", "varI8", "varI16", "varI32", "varI64",
-             "varU8", "varU16", "varU32", "varU64",
-                      "varR32", "varR64"]
+attr_names = [
+    "attrString",
+    "attrStringArray",
+    "attrI8",
+    "attrI16",
+    "attrI32",
+    "attrI64",
+    "attrU8",
+    "attrU16",
+    "attrU32",
+    "attrU64",
+    "attrR32",
+    "attrR64",
+]
+var_names = [
+    "varStr",
+    "varI8",
+    "varI16",
+    "varI32",
+    "varI64",
+    "varU8",
+    "varU16",
+    "varU32",
+    "varU64",
+    "varR32",
+    "varR64",
+]
 
 # Start ADIOS
 adios = adios2.ADIOS(comm)
@@ -58,29 +80,19 @@ data = SmallTestData()
 # All local variables
 varStr = ioWriter.DefineVariable("varStr")
 
-varI8 = ioWriter.DefineVariable(
-    "varI8", data.I8, shape, start, count, adios2.ConstantDims)
-varI16 = ioWriter.DefineVariable(
-    "varI16", data.I16, shape, start, count, adios2.ConstantDims)
-varI32 = ioWriter.DefineVariable(
-    "varI32", data.I32, shape, start, count, adios2.ConstantDims)
-varI64 = ioWriter.DefineVariable(
-    "varI64", data.I64, shape, start, count, adios2.ConstantDims)
+varI8 = ioWriter.DefineVariable("varI8", data.I8, shape, start, count, adios2.ConstantDims)
+varI16 = ioWriter.DefineVariable("varI16", data.I16, shape, start, count, adios2.ConstantDims)
+varI32 = ioWriter.DefineVariable("varI32", data.I32, shape, start, count, adios2.ConstantDims)
+varI64 = ioWriter.DefineVariable("varI64", data.I64, shape, start, count, adios2.ConstantDims)
 
-varU8 = ioWriter.DefineVariable(
-    "varU8", data.U8, shape, start, count, adios2.ConstantDims)
-varU16 = ioWriter.DefineVariable(
-    "varU16", data.U16, shape, start, count, adios2.ConstantDims)
-varU32 = ioWriter.DefineVariable(
-    "varU32", data.U32, shape, start, count, adios2.ConstantDims)
-varU64 = ioWriter.DefineVariable(
-    "varU64", data.U64, shape, start, count, adios2.ConstantDims)
+varU8 = ioWriter.DefineVariable("varU8", data.U8, shape, start, count, adios2.ConstantDims)
+varU16 = ioWriter.DefineVariable("varU16", data.U16, shape, start, count, adios2.ConstantDims)
+varU32 = ioWriter.DefineVariable("varU32", data.U32, shape, start, count, adios2.ConstantDims)
+varU64 = ioWriter.DefineVariable("varU64", data.U64, shape, start, count, adios2.ConstantDims)
 
-varR32 = ioWriter.DefineVariable(
-    "varR32", data.R32, shape, start, count, adios2.ConstantDims)
+varR32 = ioWriter.DefineVariable("varR32", data.R32, shape, start, count, adios2.ConstantDims)
 
-varR64 = ioWriter.DefineVariable(
-    "varR64", data.R64, shape, start, count, adios2.ConstantDims)
+varR64 = ioWriter.DefineVariable("varR64", data.R64, shape, start, count, adios2.ConstantDims)
 
 attString = ioWriter.DefineAttribute("attrString", "one")
 attStringArray = ioWriter.DefineAttribute("attrStringArray", ["one", "two", "three"])
@@ -96,13 +108,12 @@ attR32 = ioWriter.DefineAttribute("attrR32", data.R32)
 attR64 = ioWriter.DefineAttribute("attrR64", data.R64)
 
 ioWriter.SetEngine("BPFile")
-ioParams = {'Threads': '1', 'InitialBufferSize': '17Kb'}
+ioParams = {"Threads": "1", "InitialBufferSize": "17Kb"}
 ioWriter.SetParameters(ioParams)
 
 engineType = ioWriter.EngineType()
 if engineType != "BPFile":
-    raise ValueError(str(engineType) +
-                     ' incorrect engine type, should be BPFile')
+    raise ValueError(str(engineType) + " incorrect engine type, should be BPFile")
 
 ioWriter.SetParameter("profileunits", "microseconds")
 ioWriter.AddTransport("file")
@@ -120,7 +131,6 @@ writer = ioWriter.Open("npTypes.bp", adios2.Mode.Write)
 writer.LockWriterDefinitions()
 
 for i in range(0, nsteps):
-
     data.update(rank, i, size)
 
     writer.BeginStep()
@@ -175,16 +185,16 @@ check_object(attrR64, "attrR64")
 attrStringData = attrString.DataString()
 print(f"attrString = {attrStringData}", flush=True)
 if attrStringData[0] != "one":
-    raise ValueError('attrString failed')
+    raise ValueError("attrString failed")
 
 attrStringData = attrStringArray.DataString()
 print(f"attrStringArray = {attrStringData}", flush=True)
 if attrStringData[0] != "one":
-    raise ValueError('attrStringData[0] failed')
+    raise ValueError("attrStringData[0] failed")
 if attrStringData[1] != "two":
-    raise ValueError('attrStringData[1] failed')
+    raise ValueError("attrStringData[1] failed")
 if attrStringData[2] != "three":
-    raise ValueError('attrStringData[2] failed')
+    raise ValueError("attrStringData[2] failed")
 
 attrI8Data = attrI8.Data()
 attrI16Data = attrI16.Data()
@@ -197,16 +207,16 @@ attrU64Data = attrU64.Data()
 attrR32Data = attrR32.Data()
 attrR64Data = attrR64.Data()
 
-check_array(attrI8Data, data.I8, 'I8')
-check_array(attrI16Data, data.I16, 'I16')
-check_array(attrI32Data, data.I32, 'I32')
-check_array(attrI64Data, data.I64, 'I64')
-check_array(attrU8Data, data.U8, 'U8')
-check_array(attrU16Data, data.U16, 'U16')
-check_array(attrU32Data, data.U32, 'U32')
-check_array(attrU64Data, data.U64, 'U64')
-check_array(attrR32Data, data.R32, 'R32')
-check_array(attrR64Data, data.R64, 'R64')
+check_array(attrI8Data, data.I8, "I8")
+check_array(attrI16Data, data.I16, "I16")
+check_array(attrI32Data, data.I32, "I32")
+check_array(attrI64Data, data.I64, "I64")
+check_array(attrU8Data, data.U8, "U8")
+check_array(attrU16Data, data.U16, "U16")
+check_array(attrU32Data, data.U32, "U32")
+check_array(attrU64Data, data.U64, "U64")
+check_array(attrR32Data, data.R32, "R32")
+check_array(attrR64Data, data.R64, "R64")
 
 attributesInfo = ioReader.AvailableAttributes()
 for name, info in attributesInfo.items():
@@ -251,11 +261,11 @@ for name, info in variablesInfo.items():
         print("\n")
 
 
-result = adios.RemoveIO('writer')
+result = adios.RemoveIO("writer")
 if result is False:
-    raise ValueError('Could not remove IO writer')
+    raise ValueError("Could not remove IO writer")
 
-assert (reader.Steps() == nsteps)
+assert reader.Steps() == nsteps
 
 
 reader.Close()
@@ -263,10 +273,10 @@ reader.Close()
 ioReader.RemoveAllVariables()
 varStr = ioReader.InquireVariable("varStr")
 if varStr is True:
-    raise ValueError('Could remove reader variables')
+    raise ValueError("Could remove reader variables")
 
 adios.RemoveAllIOs()
 try:
-    ioWriter = adios.DeclareIO('reader')
+    ioWriter = adios.DeclareIO("reader")
 except ValueError:
-    raise ValueError('Could not re-Declare IO reader')
+    raise ValueError("Could not re-Declare IO reader")

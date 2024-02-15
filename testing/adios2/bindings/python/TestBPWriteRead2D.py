@@ -38,10 +38,11 @@ for i in range(0, Nx):
 adios = adios2.ADIOS(comm)
 ioWrite = adios.DeclareIO("ioWriter")
 
-varTemperature = ioWrite.DefineVariable("temperature2D", temperatures, shape,
-                                        start, count, adios2.ConstantDims)
+varTemperature = ioWrite.DefineVariable(
+    "temperature2D", temperatures, shape, start, count, adios2.ConstantDims
+)
 
-obpStream = ioWrite.Open('HeatMap2D_py.bp', adios2.Mode.Write)
+obpStream = ioWrite.Open("HeatMap2D_py.bp", adios2.Mode.Write)
 obpStream.Put(varTemperature, temperatures)
 obpStream.Close()
 
@@ -49,12 +50,11 @@ obpStream.Close()
 if rank == 0:
     # ADIOS2 read
     ioRead = adios.DeclareIO("ioReader")
-    ibpStream = ioRead.Open('HeatMap2D_py.bp', adios2.Mode.ReadRandomAccess,
-                            MPI.COMM_SELF)
+    ibpStream = ioRead.Open("HeatMap2D_py.bp", adios2.Mode.ReadRandomAccess, MPI.COMM_SELF)
     var_inTemperature = ioRead.InquireVariable("temperature2D")
 
     if var_inTemperature is False:
-        raise ValueError('var_inTemperature is False')
+        raise ValueError("var_inTemperature is False")
 
     assert var_inTemperature is not None
     readOffset = [2, 2]
@@ -66,8 +66,7 @@ if rank == 0:
     ibpStream.Close()
 
     # print('Incoming temperature map\n', inTemperatures)
-    expected = np.array([[22, 23, 24, 25],
-                         [32, 33, 34, 35],
-                         [42, 43, 44, 45],
-                         [52, 53, 54, 55]], np.int32)
+    expected = np.array(
+        [[22, 23, 24, 25], [32, 33, 34, 35], [42, 43, 44, 45], [52, 53, 54, 55]], np.int32
+    )
     assert np.array_equal(inTemperatures, expected)

@@ -43,6 +43,9 @@ a = bpIO.adios()
 # ADIOS output stream
 with adios2.Stream(bpIO, "bpWriter-py.bp", "w", comm) as fh:
     fh.write("bpArray", myArray, [size * Nx], [rank * Nx], [Nx])
+    fh.write("Nx", Nx)
+    fh.write_attribute("size", Nx, "bpArray")
+    fh.write_attribute("dimensions", ["Nx"], "bpArray")
 
 # Read content:
 # bpls -la bpWriter-py.bp

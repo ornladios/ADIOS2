@@ -13,6 +13,7 @@
 
 #include <pybind11/numpy.h>
 
+#include <complex>
 #include <string>
 
 #include "py11Attribute.h"
@@ -57,6 +58,10 @@ public:
                             const Dims &shape, const Dims &start, const Dims &count,
                             const bool isConstantDims);
 
+    Variable DefineVariable(const std::string &name, const pybind11::object &value,
+                            const Dims &shape, const Dims &start, const Dims &count,
+                            const bool isConstantDims);
+
     Variable InquireVariable(const std::string &name);
 
     Attribute DefineAttribute(const std::string &name, const pybind11::array &array,
@@ -70,6 +75,22 @@ public:
     Attribute DefineAttribute(const std::string &name, const std::vector<std::string> &strings,
                               const std::string &variableName = "",
                               const std::string separator = "/");
+
+    Attribute DefineAttribute(const std::string &name, const std::vector<int> &ints,
+                              const std::string &variableName = "",
+                              const std::string separator = "/");
+
+    Attribute DefineAttribute(const std::string &name, const std::vector<double> &doubles,
+                              const std::string &variableName = "",
+                              const std::string separator = "/");
+
+    Attribute DefineAttribute(const std::string &name,
+                              const std::vector<std::complex<double>> &complexdoubles,
+                              const std::string &variableName = "",
+                              const std::string separator = "/");
+
+    Attribute DefineAttribute(const std::string &name, const pybind11::object &value,
+                              const std::string &variableName, const std::string separator);
 
     Attribute InquireAttribute(const std::string &name, const std::string &variableName = "",
                                const std::string separator = "/");

@@ -1,26 +1,22 @@
-
 import numpy as np
 import logging
 import adios2.bindings as adios2
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     __spec__ = None
 
 
 def main():
-
     print("====================================")
 
     format = "%(asctime)s: %(message)s"
-    logging.basicConfig(format=format, level=logging.INFO,
-                        datefmt="%H:%M:%S")
+    logging.basicConfig(format=format, level=logging.INFO, datefmt="%H:%M:%S")
     writer()
     reader_fail()
     reader_success()
 
 
 def writer():
-
     logging.info(" Writer: initiating writing")
     data = np.arange(3, dtype=np.float32)
     logging.info(f"        data dtypes: {data.dtype!s}")
@@ -33,8 +29,7 @@ def writer():
     IO = adios_io.DeclareIO("writer")
 
     writer = IO.Open("testdatafile", adios2.Mode.Write)
-    writebuffer = IO.DefineVariable("np_data", data, shape, start,
-                                    count, adios2.ConstantDims)
+    writebuffer = IO.DefineVariable("np_data", data, shape, start, count, adios2.ConstantDims)
     if writebuffer:
         writer.BeginStep()
         writer.Put(writebuffer, data, adios2.Mode.Sync)
@@ -48,7 +43,6 @@ def writer():
 
 
 def reader_fail():
-
     adios_io = adios2.ADIOS()
     io = adios_io.DeclareIO("reader")
 
@@ -85,11 +79,12 @@ def reader_fail():
             raise StopIteration(f"next step failed to initiate {stepStatus!s}")
         reader.EndStep()
     reader.Close()
-    logging.info(" Reader: finished reading",)
+    logging.info(
+        " Reader: finished reading",
+    )
 
 
 def reader_success():
-
     adios_io = adios2.ADIOS()
     io = adios_io.DeclareIO("reader")
 
@@ -126,7 +121,9 @@ def reader_success():
             raise StopIteration(f"next step failed to initiate {stepStatus!s}")
         reader.EndStep()
     reader.Close()
-    logging.info(" Reader: finished reading",)
+    logging.info(
+        " Reader: finished reading",
+    )
 
 
 if __name__ == "__main__":

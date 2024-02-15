@@ -67,13 +67,13 @@ class IO:
                 Not used if variable_name is empty
         """
 
-        # string or list of strings passed on as is
-        if isinstance(content, list) and len(content) > 0 and isinstance(content[0], str):
-            return Attribute(self.impl, name, content, variable_name, separator)
-        if isinstance(content, str):
+        if isinstance(content, (np.ndarray, str, list)):
             return Attribute(self.impl, name, content, variable_name, separator)
 
-        # python values (single or list) needs to be passed as a numpy array
+        if not hasattr(content, "__len__") and isinstance(content, (int, float, complex)):
+            return Attribute(self.impl, name, content, variable_name, separator)
+
+        # Anything else, try to pass as a numpy array (and get an error here if that fails)
         return Attribute(self.impl, name, np.asarray(content), variable_name, separator)
 
     def inquire_attribute(self, name, variable_name="", separator="/"):
@@ -161,13 +161,18 @@ class IO:
                 Whether dimensions are constant
         """
         var_impl = None
-        if isinstance(content, np.ndarray):
+        if isinstance(content, list) and len(content) > 0:
+            var_impl = self.impl.DefineVariable(
+                name, content[0], shape, start, count, is_constant_dims
+            )
+
+        elif content is None:
+            var_impl = self.impl.DefineVariable(name, "", shape, start, count, is_constant_dims)
+
+        else:
             var_impl = self.impl.DefineVariable(
                 name, content, shape, start, count, is_constant_dims
             )
-
-        else:
-            var_impl = self.impl.DefineVariable(name)
 
         return Variable(var_impl)
 

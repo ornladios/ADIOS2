@@ -46,10 +46,15 @@ ioArray = bpIO.DefineVariable(
     "bpArray", myArray, [size * Nx], [rank * Nx], [Nx], adios2.ConstantDims
 )
 
+varNx = bpIO.DefineVariable("Nx", numpy.array(Nx))  # type is derived from numpy array type
+bpIO.DefineAttribute("size", Nx, "bpArray")
+bpIO.DefineAttribute("dimensions", ["Nx"], "bpArray")
+
 # ADIOS Engine
 bpFileWriter = bpIO.Open("bpWriter-py-bindings.bp", adios2.Mode.Write)
 bpFileWriter.BeginStep()
 bpFileWriter.Put(ioArray, myArray, adios2.Mode.Sync)
+bpFileWriter.Put(varNx, numpy.array(Nx), adios2.Mode.Sync)
 bpFileWriter.EndStep()
 bpFileWriter.Close()
 
