@@ -136,8 +136,9 @@ if (ADIOS2_HAVE_Derived_Variable)
       toolkit/derived/Function.cpp toolkit/derived/Function.tcc
       toolkit/derived/ExprHelper.h)
   add_library(adios2_core_derived
-      toolkit/derived/parser/lexer.cpp
-      toolkit/derived/parser/parser.cpp
+      toolkit/derived/parser/pregen-source/lexer.cpp
+      toolkit/derived/parser/pregen-source/parser.cpp
+      toolkit/derived/parser/ASTDriver.cpp
       toolkit/derived/parser/ASTNode.cpp)
   target_link_libraries(adios2_core PRIVATE adios2_core_derived)
   set(maybe_adios2_core_derived adios2_core_derived)
