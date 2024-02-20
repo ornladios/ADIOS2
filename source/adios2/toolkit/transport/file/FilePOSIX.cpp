@@ -1,6 +1,4 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
  *
  * FilePOSIX.cpp file I/O using POSIX I/O library
  *
@@ -437,9 +435,19 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
             {
                 if (m_FailOnEOF)
                 {
-                    helper::Throw<std::ios_base::failure>(
-                        "Toolkit", "transport::file::FilePOSIX", "Read",
-                        "Read past end of file on " + m_Name + " " + SysErrMsg());
+                    // we got an EOF on data that *should* be present,
+                    // but maybe we've got filesystem consistency
+                    // issues.  We'll wait, but if the backoff time
+                    // reaches 30 seconds (nearly 45 seconds total
+                    // wait time) and we still don't have data, treat
+                    // this as a real failure and throw an exception.
+                    std::this_thread::sleep_for(std::chrono::nanoseconds(backoff_ns));
+                    backoff_ns *= 2;
+                    if (std::chrono::nanoseconds(backoff_ns) > std::chrono::seconds(30))
+                        helper::Throw<std::ios_base::failure>(
+                            "Toolkit", "transport::file::FilePOSIX", "Read",
+                            "Read past end of file on " + m_Name + " trying to read " +
+                                std::to_string(size) + " bytes " + SysErrMsg());
                 }
                 else
                 {
