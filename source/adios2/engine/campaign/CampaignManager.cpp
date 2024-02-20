@@ -54,12 +54,10 @@ int CMapToSqlite(const CampaignRecordMap &cmap, const int rank, std::string name
         sqlite3_free(zErrMsg);
     }
 
-    size_t rowid = 1000;
     for (auto &r : cmap)
     {
         sqlcmd = "INSERT INTO bpfiles (name)\n";
         sqlcmd += "VALUES('" + r.first + "');";
-        rowid++;
         rc = sqlite3_exec(db, sqlcmd.c_str(), 0, 0, &zErrMsg);
         if (rc != SQLITE_OK)
         {
