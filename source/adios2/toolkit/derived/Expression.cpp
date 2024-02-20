@@ -3,7 +3,7 @@
 
 #include "Expression.h"
 #include "parser/ASTNode.h"
-#include "parser/parser.h"
+#include "parser.h"
 
 namespace adios2
 {
