@@ -270,9 +270,9 @@ jobs:
 
     runs-on: ${{ matrix.image }}
     env:
-      GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+      GH_YML_JOBNAME: ${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.shared }}-${{ matrix.parallel }}
       GH_YML_BASE_OS: macOS
-      GH_YML_MATRIX_OS: ${{ matrix.os }}
+      GH_YML_MATRIX_OS: ${{ matrix.image }}
       GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
       GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
       CCACHE_BASEDIR: "${GITHUB_WORKSPACE}"
@@ -283,15 +283,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos11, macos12]
-        parallel: [serial]
+        image: [macos-11, macos-12]
+        shared: [static, shared]
         include:
-          - os: macos11
-            image: macos-11
+          - parallel: serial
+          - image: macos-11
             compiler: xcode13_0
-          - os: macos12
-            image: macos-12
+          - image: macos-12
             compiler: xcode13_4_1
+        exclude:
+          - image: macos-11
+            shared: static
 
     steps:
       - uses: actions/checkout@v4
@@ -308,9 +310,9 @@ jobs:
         id: restore-cache
         with:
           path: .ccache
-          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
+          key: ccache-${{ matrix.image}}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
           restore-keys: |
-            ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+            ccache-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}
       - name: Configure cache
         run: ccache -z
       - name: Update
@@ -327,7 +329,7 @@ jobs:
         id: save-cache
         with:
           path: .ccache
-          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
+          key: ccache-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
       - name: Test
         run: gha/scripts/ci/gh-actions/run.sh test
 
