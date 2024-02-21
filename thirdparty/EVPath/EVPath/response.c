@@ -1974,7 +1974,7 @@ extern sm_ref
 cod_build_param_node(const char *id, sm_ref typ, int param_num);
 extern void
 cod_add_decl_to_parse_context(const char *name, sm_ref item, cod_parse_context context);
-extern FFS_DECLSPEC void
+extern void
 cod_add_param(const char *id, const char *typ, int param_num,
 	      cod_parse_context context);
 

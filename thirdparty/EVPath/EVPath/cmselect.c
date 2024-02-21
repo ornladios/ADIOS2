@@ -879,7 +879,7 @@ int err;
  *  NT Sux.
  */
 
-int
+static int
 pipe(SOCKET *filedes)
 {
     
