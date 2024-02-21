@@ -3700,7 +3700,7 @@ INT_EVextract_stone_events(CManager cm, EVstone stone_id)
     stone_type stone;
     EVevent_list list = malloc(sizeof(list[0]));
 
-    list[0].length = -1;
+    list[0].length = (size_t)-1;
     stone = stone_struct(evp, stone_id);
     if (!stone) return NULL;
     list = extract_events_from_queue(cm, stone->queue, list);
@@ -3764,7 +3764,7 @@ extract_events_from_queue(CManager cm, queue_ptr que, EVevent_list list)
     first = que->queue_head;
     last = que->queue_tail;
                 
-    while (list[num_of_elements].length != -1) num_of_elements++;
+    while (list[num_of_elements].length != (size_t)-1) num_of_elements++;
     while(first != NULL && last != NULL) {
 	list = (EVevent_list) realloc (list, (num_of_elements + 2) * sizeof(list[0]));
 	current_entry = &list[num_of_elements];
@@ -3779,7 +3779,7 @@ extract_events_from_queue(CManager cm, queue_ptr que, EVevent_list list)
 	num_of_elements++;
 	first = first->next;
     }
-    list[num_of_elements].length = -1;
+    list[num_of_elements].length = (size_t)-1;
     return list;
 }
 
