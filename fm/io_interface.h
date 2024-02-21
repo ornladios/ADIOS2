@@ -1,4 +1,4 @@
-#if defined(HAVE_WINDOWS_H) && !defined(NEED_IOVEC_DEFINE) && !defined(_STRUCT_IOVEC)
+#if defined(_MSC_VER) && !defined(_STRUCT_IOVEC)
 #define _STRUCT_IOVEC
 struct	iovec {
     const void *iov_base;

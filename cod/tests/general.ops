@@ -906,6 +906,7 @@ EOF
 	    $cnt = $cnt + 3;
 	}
     }
+    print COUT "    (void) rand1_p;\n    (void) rand2_p;\n";
     foreach $dr_type (split(' ', "f d c s i l uc us u ul")) {
         $rand_type = $rand_types{$dr_type};
         $c_type = $c_types{$dr_type};
