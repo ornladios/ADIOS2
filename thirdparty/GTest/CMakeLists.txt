@@ -7,8 +7,6 @@ if(BUILD_SHARED_LIBS)
 endif()
 set(BUILD_SHARED_LIBS OFF)
 
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug")
-
 add_subdirectory(googletest EXCLUDE_FROM_ALL)
 
 message_end_thirdparty()
