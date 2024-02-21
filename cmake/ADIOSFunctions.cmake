@@ -91,7 +91,7 @@ function(python_add_test)
     set_property(TEST ${ARGS_NAME} PROPERTY
       ENVIRONMENT
         "PYTHONPATH=${ADIOS2_BINARY_DIR}/${CMAKE_INSTALL_PYTHONDIR};$ENV{PYTHONPATH}"
-        "PATH=$<TARGET_FILE_DIR:adios2>;$ENV{PATH}"
+        "PATH=$<TARGET_FILE_DIR:adios2_py>;$ENV{PATH}"
     )
   endif()
 endfunction()

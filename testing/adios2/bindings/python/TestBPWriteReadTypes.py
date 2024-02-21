@@ -38,7 +38,7 @@ size = comm.Get_size()
 Nx = 8
 
 # list of tested attributes and variables
-attr_names = ["attrString", "attrI8", "attrI16", "attrI32", "attrI64",
+attr_names = ["attrString", "attrStringArray", "attrI8", "attrI16", "attrI32", "attrI64",
               "attrU8", "attrU16", "attrU32", "attrU64", "attrR32", "attrR64"]
 var_names = ["varStr", "varI8", "varI16", "varI32", "varI64",
              "varU8", "varU16", "varU32", "varU64",
@@ -82,7 +82,8 @@ varR32 = ioWriter.DefineVariable(
 varR64 = ioWriter.DefineVariable(
     "varR64", data.R64, shape, start, count, adios2.ConstantDims)
 
-attString = ioWriter.DefineAttribute("attrString", ["one", "two", "three"])
+attString = ioWriter.DefineAttribute("attrString", "one")
+attStringArray = ioWriter.DefineAttribute("attrStringArray", ["one", "two", "three"])
 attI8 = ioWriter.DefineAttribute("attrI8", data.I8)
 attI16 = ioWriter.DefineAttribute("attrI16", data.I16)
 attI32 = ioWriter.DefineAttribute("attrI32", data.I32)
@@ -146,6 +147,7 @@ ioReader = adios.DeclareIO("reader")
 reader = ioReader.Open("npTypes.bp", adios2.Mode.ReadRandomAccess)
 
 attrString = ioReader.InquireAttribute("attrString")
+attrStringArray = ioReader.InquireAttribute("attrStringArray")
 attrI8 = ioReader.InquireAttribute("attrI8")
 attrI16 = ioReader.InquireAttribute("attrI16")
 attrI32 = ioReader.InquireAttribute("attrI32")
@@ -158,6 +160,7 @@ attrR32 = ioReader.InquireAttribute("attrR32")
 attrR64 = ioReader.InquireAttribute("attrR64")
 
 check_object(attrString, "attrString")
+check_object(attrStringArray, "attrStringArray")
 check_object(attrI8, "attrI8")
 check_object(attrI16, "attrI16")
 check_object(attrI32, "attrI32")
@@ -170,6 +173,12 @@ check_object(attrR32, "attrR32")
 check_object(attrR64, "attrR64")
 
 attrStringData = attrString.DataString()
+print(f"attrString = {attrStringData}", flush=True)
+if attrStringData[0] != "one":
+    raise ValueError('attrString failed')
+
+attrStringData = attrStringArray.DataString()
+print(f"attrStringArray = {attrStringData}", flush=True)
 if attrStringData[0] != "one":
     raise ValueError('attrStringData[0] failed')
 if attrStringData[1] != "two":

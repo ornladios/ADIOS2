@@ -2,7 +2,6 @@
 
 import argparse
 import glob
-import json
 import sqlite3
 import zlib
 from datetime import datetime
@@ -145,7 +144,7 @@ def AddDatasetToArchive(args: dict, dataset: str, cur: sqlite3.Cursor, hostID: i
         print(f"WARNING: Dataset {dataset} is not an ADIOS dataset. Skip")
 
 
-def ProcessJsonFile(args: dict, jsonlist: list, cur: sqlite3.Cursor, hostID: int, dirID: int):
+def ProcessDBFile(args: dict, jsonlist: list, cur: sqlite3.Cursor, hostID: int, dirID: int):
     for entry in jsonlist:
         # print(f"Process entry {entry}:")
         if isinstance(entry, dict):
@@ -217,7 +216,7 @@ def Update(args: dict, cur: sqlite3.Cursor):
     #                      (shortHostName, longHostName))
     # hostID = curHost.lastrowid
 
-    curDir = cur.execute('insert into directory values (?, ?)',
+    curDir = cur.execute('insert or replace into directory values (?, ?)',
                          (hostID, rootdir))
     dirID = curDir.lastrowid
     con.commit()
@@ -225,7 +224,7 @@ def Update(args: dict, cur: sqlite3.Cursor):
     db_list = MergeDBFiles(dbFileList)
 
     # print(f"Merged json = {jsonlist}")
-    ProcessJsonFile(args, db_list, cur, hostID, dirID)
+    ProcessDBFile(args, db_list, cur, hostID, dirID)
 
     con.commit()
 

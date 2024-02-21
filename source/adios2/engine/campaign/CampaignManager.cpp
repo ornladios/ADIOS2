@@ -30,7 +30,7 @@ int CMapToSqlite(const CampaignRecordMap &cmap, const int rank, std::string name
 {
     sqlite3 *db;
     int rc;
-    char *zErrMsg = 0;
+    char *zErrMsg = nullptr;
     std::string sqlcmd;
     std::string db_name = name + ".db";
     rc = sqlite3_open(db_name.c_str(), &db);
@@ -43,7 +43,7 @@ int CMapToSqlite(const CampaignRecordMap &cmap, const int rank, std::string name
                                              "SQL error on writing records:");
         sqlite3_free(zErrMsg);
     }
-    sqlcmd = "CREATE TABLE bpfiles (name);";
+    sqlcmd = "CREATE TABLE if not exists bpfiles (name);";
     rc = sqlite3_exec(db, sqlcmd.c_str(), 0, 0, &zErrMsg);
     if (rc != SQLITE_OK)
     {
@@ -54,12 +54,10 @@ int CMapToSqlite(const CampaignRecordMap &cmap, const int rank, std::string name
         sqlite3_free(zErrMsg);
     }
 
-    size_t rowid = 1000;
     for (auto &r : cmap)
     {
-        sqlcmd = "INSERT INTO bpfiles (rowid, name)\n";
-        sqlcmd += "VALUES(" + std::to_string(rowid) + "," + "'" + r.first + "'" + ");";
-        rowid++;
+        sqlcmd = "INSERT INTO bpfiles (name)\n";
+        sqlcmd += "VALUES('" + r.first + "');";
         rc = sqlite3_exec(db, sqlcmd.c_str(), 0, 0, &zErrMsg);
         if (rc != SQLITE_OK)
         {
