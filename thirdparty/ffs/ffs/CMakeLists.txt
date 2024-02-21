@@ -186,6 +186,10 @@ add_custom_command(
 
 add_custom_target(docs ALL DEPENDS "cod_node.c")
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+   SET_SOURCE_FILES_PROPERTIES(cod.tab.c PROPERTIES COMPILE_FLAGS -Wno-unused-function)
+endif()
+
 add_custom_target(generated DEPENDS cod_node.c ${BISON_CODParser_OUTPUT_SOURCE})
 
 list(APPEND COD_MASTER_SRC_LIST

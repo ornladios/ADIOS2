@@ -199,6 +199,10 @@ typedef struct timeval {
     long tv_usec;
 } timeval;
 #endif
+typedef struct timezone {
+    int tz_minuteswest;     /* minutes west of Greenwich */
+    int tz_dsttime;         /* type of DST correction */
+} timezone;
 
 int gettimeofday(struct timeval* tp, struct timezone* tzp)
 {
@@ -464,7 +468,7 @@ cod_add_standard_elements(cod_parse_context context)
 }
 #endif /* LINUX_KERNEL_MODULE */
 
-#if NO_DYNAMIC_LINKING
+#if defined(NO_DYNAMIC_LINKING) && !defined(_MSC_VER)
 #define sym(x) (void*)(intptr_t)x
 #else
 #define sym(x) (void*)0

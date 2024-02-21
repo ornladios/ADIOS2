@@ -41,7 +41,7 @@ main(int argc, char **argv)
 {
 
     FMStructDescRec str_list[5];
-    struct timespec start, stop;
+    struct timespec start = {0,0}, stop = {0,0};
     
     FMContext context;
     int field_count = 20000;
