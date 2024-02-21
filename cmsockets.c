@@ -1135,7 +1135,7 @@ libcmsockets_LTX_NBwritev_func(CMtrans_services svc, socket_conn_data_ptr scd, v
     return init_bytes - left;
 }
 
-int socket_global_init = 0;
+static int socket_global_init = 0;
 
 #ifdef HAVE_WINDOWS_H
 /* Winsock init stuff, ask for ver 2.2 */

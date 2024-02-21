@@ -646,7 +646,7 @@ libcmudp_LTX_writev_func(CMtrans_services svc, udp_conn_data_ptr ucd, struct iov
 }
 
 #ifdef HAVE_WINDOWS_H
-int socket_global_init = 0;
+static int socket_global_init = 0;
 /* Winsock init stuff, ask for ver 1.1 */
 static WORD wVersionRequested = MAKEWORD(1, 1);
 static WSADATA wsaData;
