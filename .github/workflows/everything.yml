@@ -339,7 +339,7 @@ jobs:
 
     runs-on: ${{ matrix.image }}
     env:
-      GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+      GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ matrix.parallel }}
       GH_YML_BASE_OS: Windows
       GH_YML_MATRIX_OS: ${{ matrix.os }}
       GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
@@ -349,6 +349,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [win2019, win2022]
+        shared: [shared]
         parallel: [serial, ompi]
         include:
           - os: win2019
@@ -357,6 +358,11 @@ jobs:
           - os: win2022
             image: windows-2022
             compiler: vs2022
+          - os: win2022
+            image: windows-2022
+            shared: static
+            compiler: vs2022
+            parallel: serial
 
     defaults:
       run:
