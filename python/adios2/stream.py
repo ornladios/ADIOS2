@@ -22,6 +22,8 @@ def type_adios_to_numpy(name):
         "uint64_t": np.uint64,
         "float": np.float32,
         "double": np.float64,
+        "complex": np.complex64,
+        "double complex": np.complex128,
     }[name]
 
 
@@ -187,6 +189,7 @@ class Stream:
     def define_variable(self, name):
         """
         Define new variable without specifying its type and content.
+        This only works for string output variables
         """
         return self._io.define_variable(name)
 
@@ -237,11 +240,7 @@ class Stream:
             content
                 variable data values
         """
-        if isinstance(content, list):
-            content_np = np.array(content)
-            self._engine.put(variable, content_np, bindings.Mode.Sync)
-        else:
-            self._engine.put(variable, content, bindings.Mode.Sync)
+        self._engine.put(variable, content, bindings.Mode.Sync)
 
     @write.register(str)
     def _(self, name, content, shape=[], start=[], count=[], operations=None):
@@ -270,15 +269,20 @@ class Stream:
         variable = self._io.inquire_variable(name)
 
         if not variable:
-            # Sequences variables
+            # Sequence variables
             if isinstance(content, np.ndarray):
                 variable = self._io.define_variable(name, content, shape, start, count)
             elif isinstance(content, list):
-                content_np = np.array(content)
-                variable = self._io.define_variable(name, content_np, shape, start, count)
-            # Scalars variables
-            elif isinstance(content, str) or not hasattr(content, "__len__"):
-                variable = self.define_variable(name)
+                if shape == [] and count == []:
+                    shape = [len(content)]
+                    count = shape
+                    start = [0]
+                variable = self._io.define_variable(name, content, shape, start, count)
+            # Scalar variables
+            elif isinstance(content, str):
+                variable = self._io.define_variable(name, content)
+            elif not hasattr(content, "__len__"):
+                variable = self._io.define_variable(name, content, [], [], [])
             else:
                 raise ValueError
 
@@ -370,14 +374,13 @@ class Stream:
         if not variable:
             raise ValueError()
 
-        if step_selection and not self._mode == bindings.Mode.ReadRandomAccess:
+        if step_selection is not None and not self._mode == bindings.Mode.ReadRandomAccess:
             raise RuntimeError("step_selection parameter requires 'rra' mode")
 
-        if step_selection:
-            print(f"Stream.read step selection = {step_selection}")
+        if step_selection is not None:
             variable.set_step_selection(step_selection)
 
-        if block_id:
+        if block_id is not None:
             variable.set_block_selection(block_id)
 
         if variable.type() == "string" and variable.single_value() is True:

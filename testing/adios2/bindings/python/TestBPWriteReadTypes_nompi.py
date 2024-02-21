@@ -22,29 +22,19 @@ bpIO = adios.DeclareIO("NPTypes")
 
 # ADIOS Variable name, shape, start, offset, constant dims
 # All local variables
-varI8 = bpIO.DefineVariable(
-    "varI8", data.I8, [], [], [data.I8.size], adios2.ConstantDims)
-varI16 = bpIO.DefineVariable(
-    "varI16", data.I16, [], [], [data.I16.size], adios2.ConstantDims)
-varI32 = bpIO.DefineVariable(
-    "varI32", data.I32, [], [], [data.I32.size], adios2.ConstantDims)
-varI64 = bpIO.DefineVariable(
-    "varI64", data.I64, [], [], [data.I64.size], adios2.ConstantDims)
+varI8 = bpIO.DefineVariable("varI8", data.I8, [], [], [data.I8.size], adios2.ConstantDims)
+varI16 = bpIO.DefineVariable("varI16", data.I16, [], [], [data.I16.size], adios2.ConstantDims)
+varI32 = bpIO.DefineVariable("varI32", data.I32, [], [], [data.I32.size], adios2.ConstantDims)
+varI64 = bpIO.DefineVariable("varI64", data.I64, [], [], [data.I64.size], adios2.ConstantDims)
 
-varU8 = bpIO.DefineVariable(
-    "varUI8", data.U8, [], [], [data.U8.size], adios2.ConstantDims)
-varU16 = bpIO.DefineVariable(
-    "varUI16", data.U16, [], [], [data.U16.size], adios2.ConstantDims)
-varU32 = bpIO.DefineVariable(
-    "varUI32", data.U32, [], [], [data.U32.size], adios2.ConstantDims)
-varU64 = bpIO.DefineVariable(
-    "varUI64", data.U64, [], [], [data.U64.size], adios2.ConstantDims)
+varU8 = bpIO.DefineVariable("varUI8", data.U8, [], [], [data.U8.size], adios2.ConstantDims)
+varU16 = bpIO.DefineVariable("varUI16", data.U16, [], [], [data.U16.size], adios2.ConstantDims)
+varU32 = bpIO.DefineVariable("varUI32", data.U32, [], [], [data.U32.size], adios2.ConstantDims)
+varU64 = bpIO.DefineVariable("varUI64", data.U64, [], [], [data.U64.size], adios2.ConstantDims)
 
-varR32 = bpIO.DefineVariable(
-    "varR32", data.R32, [], [], [data.R32.size], adios2.ConstantDims)
+varR32 = bpIO.DefineVariable("varR32", data.R32, [], [], [data.R32.size], adios2.ConstantDims)
 
-varR64 = bpIO.DefineVariable(
-    "varR64", data.R64, [], [], [data.R64.size], adios2.ConstantDims)
+varR64 = bpIO.DefineVariable("varR64", data.R64, [], [], [data.R64.size], adios2.ConstantDims)
 
 
 # ADIOS Engine

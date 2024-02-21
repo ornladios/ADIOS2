@@ -17,12 +17,12 @@ import adios2.bindings as adios2
 
 def check_object(adios2_object, name):
     if adios2_object is None:
-        raise ValueError(str(name) + ' not found')
+        raise ValueError(str(name) + " not found")
 
 
 def check_name(name, name_list):
     if name not in name_list:
-        raise ValueError(str(name) + ' not found in list')
+        raise ValueError(str(name) + " not found in list")
 
 
 # MPI
@@ -43,29 +43,19 @@ data = SmallTestData()
 
 # ADIOS Variable name, shape, start, offset, constant dims
 # All local variables
-varI8 = ioWriter.DefineVariable(
-    "varI8", data.I8, shape, start, count, adios2.ConstantDims)
-varI16 = ioWriter.DefineVariable(
-    "varI16", data.I16, shape, start, count, adios2.ConstantDims)
-varI32 = ioWriter.DefineVariable(
-    "varI32", data.I32, shape, start, count, adios2.ConstantDims)
-varI64 = ioWriter.DefineVariable(
-    "varI64", data.I64, shape, start, count, adios2.ConstantDims)
+varI8 = ioWriter.DefineVariable("varI8", data.I8, shape, start, count, adios2.ConstantDims)
+varI16 = ioWriter.DefineVariable("varI16", data.I16, shape, start, count, adios2.ConstantDims)
+varI32 = ioWriter.DefineVariable("varI32", data.I32, shape, start, count, adios2.ConstantDims)
+varI64 = ioWriter.DefineVariable("varI64", data.I64, shape, start, count, adios2.ConstantDims)
 
-varU8 = ioWriter.DefineVariable(
-    "varU8", data.U8, shape, start, count, adios2.ConstantDims)
-varU16 = ioWriter.DefineVariable(
-    "varU16", data.U16, shape, start, count, adios2.ConstantDims)
-varU32 = ioWriter.DefineVariable(
-    "varU32", data.U32, shape, start, count, adios2.ConstantDims)
-varU64 = ioWriter.DefineVariable(
-    "varU64", data.U64, shape, start, count, adios2.ConstantDims)
+varU8 = ioWriter.DefineVariable("varU8", data.U8, shape, start, count, adios2.ConstantDims)
+varU16 = ioWriter.DefineVariable("varU16", data.U16, shape, start, count, adios2.ConstantDims)
+varU32 = ioWriter.DefineVariable("varU32", data.U32, shape, start, count, adios2.ConstantDims)
+varU64 = ioWriter.DefineVariable("varU64", data.U64, shape, start, count, adios2.ConstantDims)
 
-varR32 = ioWriter.DefineVariable(
-    "varR32", data.R32, shape, start, count, adios2.ConstantDims)
+varR32 = ioWriter.DefineVariable("varR32", data.R32, shape, start, count, adios2.ConstantDims)
 
-varR64 = ioWriter.DefineVariable(
-    "varR64", data.R64, shape, start, count, adios2.ConstantDims)
+varR64 = ioWriter.DefineVariable("varR64", data.R64, shape, start, count, adios2.ConstantDims)
 
 attString = ioWriter.DefineAttribute("attrString", ["hello attribute"])
 attI8 = ioWriter.DefineAttribute("attrI8", data.I8)
@@ -74,7 +64,6 @@ attI8 = ioWriter.DefineAttribute("attrI8", data.I8)
 writer = ioWriter.Open("npTypes.bp", adios2.Mode.Write)
 
 for i in range(0, 3):
-
     npi8 = np.full((Nx), i, dtype=np.int8)
     npi16 = np.full((Nx), i, dtype=np.int16)
     npi32 = np.full((Nx), i, dtype=np.int32)
@@ -138,9 +127,19 @@ check_object(varR64, "varR64")
 
 
 attr_names = ["attrString", "attrI8"]
-var_names = ["varStr", "varI8", "varI16", "varI32", "varI64",
-             "varU8", "varU16", "varU32", "varU64",
-                      "varR32", "varR64"]
+var_names = [
+    "varStr",
+    "varI8",
+    "varI16",
+    "varI32",
+    "varI64",
+    "varU8",
+    "varU16",
+    "varU32",
+    "varU64",
+    "varR32",
+    "varR64",
+]
 
 attributesInfo = ioReader.AvailableAttributes()
 for name, info in attributesInfo.items():
@@ -226,34 +225,34 @@ reader.PerformGets()
 for i in range(0, 3):
     for j in range(0, Nx):
         if inI8[i][j] != i:
-            raise ValueError('failed reading I8')
+            raise ValueError("failed reading I8")
 
         if inI16[i][j] != i:
-            raise ValueError('failed reading I16')
+            raise ValueError("failed reading I16")
 
         if inI32[i][j] != i:
-            raise ValueError('failed reading I32')
+            raise ValueError("failed reading I32")
 
         if inI64[i][j] != i:
-            raise ValueError('failed reading I64')
+            raise ValueError("failed reading I64")
 
         if inU8[i][j] != i:
-            raise ValueError('failed reading U8')
+            raise ValueError("failed reading U8")
 
         if inU16[i][j] != i:
-            raise ValueError('failed reading U16')
+            raise ValueError("failed reading U16")
 
         if inU32[i][j] != i:
-            raise ValueError('failed reading U32')
+            raise ValueError("failed reading U32")
 
         if inU64[i][j] != i:
-            raise ValueError('failed reading U64')
+            raise ValueError("failed reading U64")
 
         if inR32[i][j] != i:
-            raise ValueError('failed reading R32')
+            raise ValueError("failed reading R32")
 
         if inR64[i][j] != i:
-            raise ValueError('failed reading R64')
+            raise ValueError("failed reading R64")
 
 
 # here tests reader data

@@ -17,7 +17,7 @@ class TestEngine(unittest.TestCase):
         adios = Adios()
         with adios.declare_io("BPWriter") as io:
             pressure = io.define_variable("pressure")
-            temps = io.define_variable("temps", np.empty([4], dtype=np.int64))
+            temps = io.define_variable("temps", np.empty([1], dtype=np.int64))
             with io.open("pythontestengine.bp", bindings.Mode.Write) as engine:
                 engine.put(pressure, "35PSI")
                 temps_measures = np.array([35, 40, 30, 45], dtype=np.int64)
@@ -29,7 +29,7 @@ class TestEngine(unittest.TestCase):
             pressure = io.define_variable("pressure")
             temps = io.define_variable(
                 name="temps",
-                content=np.empty([4], dtype=np.int64),
+                content=np.empty([1], dtype=np.int64),
                 start=[0],
                 shape=[4],
                 count=[4],

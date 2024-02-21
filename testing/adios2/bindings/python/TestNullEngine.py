@@ -36,16 +36,17 @@ for i in range(0, Nx):
 adios = adios2.ADIOS(comm)
 ioWrite = adios.DeclareIO("ioWriter")
 
-varTemperature = ioWrite.DefineVariable("temperature2D", temperatures, shape,
-                                        start, count, adios2.ConstantDims)
+varTemperature = ioWrite.DefineVariable(
+    "temperature2D", temperatures, shape, start, count, adios2.ConstantDims
+)
 ioWrite.SetEngine("NULL")
 
-nullWriter = ioWrite.Open('NULL_py.bp', adios2.Mode.Write)
+nullWriter = ioWrite.Open("NULL_py.bp", adios2.Mode.Write)
 
-assert (nullWriter.Type() == "NullWriter")
+assert nullWriter.Type() == "NullWriter"
 
 status = nullWriter.BeginStep()
-assert (status == adios2.StepStatus.OK)
+assert status == adios2.StepStatus.OK
 
 nullWriter.Put(varTemperature, temperatures)
 nullWriter.EndStep()
@@ -54,19 +55,19 @@ nullWriter.Close()
 # ADIOS2 read
 ioRead = adios.DeclareIO("ioReader")
 ioRead.SetEngine("null")
-nullReader = ioRead.Open('NULL_py.bp', adios2.Mode.Read, MPI.COMM_SELF)
+nullReader = ioRead.Open("NULL_py.bp", adios2.Mode.Read, MPI.COMM_SELF)
 
-assert (nullReader.Type() == "NullReader")
+assert nullReader.Type() == "NullReader"
 
 inTemperatures = np.zeros(1, dtype=np.int32)
 
 status = nullReader.BeginStep()
-assert (status == adios2.StepStatus.EndOfStream)
+assert status == adios2.StepStatus.EndOfStream
 
 var_inTemperature = ioRead.InquireVariable("temperature2D")
 
-if (var_inTemperature is True):
-    raise ValueError('var_inTemperature is not False')
+if var_inTemperature is True:
+    raise ValueError("var_inTemperature is not False")
 
 # nullReader.Get(var_inTemperature, inTemperatures)
 

@@ -11,6 +11,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <complex>
 #include <sstream>
 #include <stdexcept>
 
@@ -204,6 +205,15 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              pybind11::arg("count") = adios2::Dims(), pybind11::arg("isConstantDims") = false)
 
         .def("DefineVariable",
+             (adios2::py11::Variable(adios2::py11::IO::*)(
+                 const std::string &, const pybind11::object &, const adios2::Dims &,
+                 const adios2::Dims &, const adios2::Dims &, const bool)) &
+                 adios2::py11::IO::DefineVariable,
+             pybind11::return_value_policy::move, pybind11::arg("name"), pybind11::arg("value"),
+             pybind11::arg("shape") = adios2::Dims(), pybind11::arg("start") = adios2::Dims(),
+             pybind11::arg("count") = adios2::Dims(), pybind11::arg("isConstantDims") = false)
+
+        .def("DefineVariable",
              (adios2::py11::Variable(adios2::py11::IO::*)(const std::string &)) &
                  adios2::py11::IO::DefineVariable,
              pybind11::return_value_policy::move, pybind11::arg("name"))
@@ -241,6 +251,38 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
                  const std::string)) &
                  adios2::py11::IO::DefineAttribute,
              pybind11::arg("name"), pybind11::arg("strings"), pybind11::arg("variable_name") = "",
+             pybind11::arg("separator") = "/", pybind11::return_value_policy::move)
+
+        .def("DefineAttribute",
+             (adios2::py11::Attribute(adios2::py11::IO::*)(
+                 const std::string &, const std::vector<int> &, const std::string &,
+                 const std::string)) &
+                 adios2::py11::IO::DefineAttribute,
+             pybind11::arg("name"), pybind11::arg("ints"), pybind11::arg("variable_name") = "",
+             pybind11::arg("separator") = "/", pybind11::return_value_policy::move)
+
+        .def("DefineAttribute",
+             (adios2::py11::Attribute(adios2::py11::IO::*)(
+                 const std::string &, const std::vector<double> &, const std::string &,
+                 const std::string)) &
+                 adios2::py11::IO::DefineAttribute,
+             pybind11::arg("name"), pybind11::arg("doubles"), pybind11::arg("variable_name") = "",
+             pybind11::arg("separator") = "/", pybind11::return_value_policy::move)
+
+        .def("DefineAttribute",
+             (adios2::py11::Attribute(adios2::py11::IO::*)(
+                 const std::string &, const std::vector<std::complex<double>> &,
+                 const std::string &, const std::string)) &
+                 adios2::py11::IO::DefineAttribute,
+             pybind11::arg("name"), pybind11::arg("complexes"), pybind11::arg("variable_name") = "",
+             pybind11::arg("separator") = "/", pybind11::return_value_policy::move)
+
+        .def("DefineAttribute",
+             (adios2::py11::Attribute(adios2::py11::IO::*)(
+                 const std::string &, const pybind11::object &, const std::string &,
+                 const std::string)) &
+                 adios2::py11::IO::DefineAttribute,
+             pybind11::arg("name"), pybind11::arg("value"), pybind11::arg("variable_name") = "",
              pybind11::arg("separator") = "/", pybind11::return_value_policy::move)
 
         .def("Open", (adios2::py11::Engine(adios2::py11::IO::*)(const std::string &, const int)) &
@@ -384,6 +426,28 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
 
         .def("Put", (void(adios2::py11::Engine::*)(adios2::py11::Variable, const std::string &)) &
                         adios2::py11::Engine::Put)
+
+        .def("Put",
+             (void(adios2::py11::Engine::*)(adios2::py11::Variable, const std::vector<int64_t> &,
+                                            const adios2::Mode launch)) &
+                 adios2::py11::Engine::Put,
+             pybind11::arg("variable"), pybind11::arg("ints"),
+             pybind11::arg("launch") = adios2::Mode::Sync)
+
+        .def("Put",
+             (void(adios2::py11::Engine::*)(adios2::py11::Variable, const std::vector<double> &,
+                                            const adios2::Mode launch)) &
+                 adios2::py11::Engine::Put,
+             pybind11::arg("variable"), pybind11::arg("floats"),
+             pybind11::arg("launch") = adios2::Mode::Sync)
+
+        .def("Put",
+             (void(adios2::py11::Engine::*)(adios2::py11::Variable,
+                                            const std::vector<std::complex<double>> &,
+                                            const adios2::Mode launch)) &
+                 adios2::py11::Engine::Put,
+             pybind11::arg("variable"), pybind11::arg("complexes"),
+             pybind11::arg("launch") = adios2::Mode::Sync)
 
         .def("PerformPuts", &adios2::py11::Engine::PerformPuts)
 
