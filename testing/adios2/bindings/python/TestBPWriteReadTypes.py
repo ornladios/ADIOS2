@@ -49,8 +49,8 @@ attr_names = [
     "attrU16",
     "attrU32",
     "attrU64",
-    "attrR32",
-    "attrR64",
+    "varR32/attrR32",
+    "varR64::attrR64",
 ]
 var_names = [
     "varStr",
@@ -104,8 +104,9 @@ attU8 = ioWriter.DefineAttribute("attrU8", data.U8)
 attU16 = ioWriter.DefineAttribute("attrU16", data.U16)
 attU32 = ioWriter.DefineAttribute("attrU32", data.U32)
 attU64 = ioWriter.DefineAttribute("attrU64", data.U64)
-attR32 = ioWriter.DefineAttribute("attrR32", data.R32)
-attR64 = ioWriter.DefineAttribute("attrR64", data.R64)
+# add an attribute to a variable
+attR32 = ioWriter.DefineAttribute("attrR32", data.R32, "varR32")
+attR64 = ioWriter.DefineAttribute("attrR64", data.R64, "varR64", "::")
 
 ioWriter.SetEngine("BPFile")
 ioParams = {"Threads": "1", "InitialBufferSize": "17Kb"}
@@ -166,8 +167,8 @@ attrU8 = ioReader.InquireAttribute("attrU8")
 attrU16 = ioReader.InquireAttribute("attrU16")
 attrU32 = ioReader.InquireAttribute("attrU32")
 attrU64 = ioReader.InquireAttribute("attrU64")
-attrR32 = ioReader.InquireAttribute("attrR32")
-attrR64 = ioReader.InquireAttribute("attrR64")
+attrR32 = ioReader.InquireAttribute("attrR32", "varR32")
+attrR64 = ioReader.InquireAttribute("attrR64", "varR64", "::")
 
 check_object(attrString, "attrString")
 check_object(attrStringArray, "attrStringArray")
@@ -179,8 +180,14 @@ check_object(attrU8, "attrU8")
 check_object(attrU16, "attrU16")
 check_object(attrU32, "attrU32")
 check_object(attrU64, "attrU64")
-check_object(attrR32, "attrR32")
-check_object(attrR64, "attrR64")
+check_object(attrR32, "varR32/attrR32")
+check_object(attrR64, "varR64::attrR64")
+
+# alternative inquire format
+attrR32 = ioReader.InquireAttribute("varR32/attrR32")
+attrR64 = ioReader.InquireAttribute("varR64::attrR64")
+check_object(attrR32, "varR32/attrR32")
+check_object(attrR64, "varR64::attrR64")
 
 attrStringData = attrString.DataString()
 print(f"attrString = {attrStringData}", flush=True)
@@ -218,6 +225,7 @@ check_array(attrU64Data, data.U64, "U64")
 check_array(attrR32Data, data.R32, "R32")
 check_array(attrR64Data, data.R64, "R64")
 
+print("=========== Attributes ===========")
 attributesInfo = ioReader.AvailableAttributes()
 for name, info in attributesInfo.items():
     check_name(name, attr_names)
@@ -227,6 +235,27 @@ for name, info in attributesInfo.items():
             print("\t" + key + ": " + value)
         print("\n")
 
+print("=========== Available attributes of varR32 ===========")
+attributesInfoR32 = ioReader.AvailableAttributes("varR32")
+for name, info in attributesInfoR32.items():
+    check_name(name, ["attrR32"])
+    if rank == 0:
+        print("attribute_name: " + name)
+        for key, value in info.items():
+            print("\t" + key + ": " + value)
+        print("\n")
+
+print("=========== Available attributes of varR64 ===========")
+attributesInfoR32 = ioReader.AvailableAttributes("varR64", "::")
+for name, info in attributesInfoR32.items():
+    check_name(name, ["attrR64"])
+    if rank == 0:
+        print("attribute_name: " + name)
+        for key, value in info.items():
+            print("\t" + key + ": " + value)
+        print("\n")
+
+print("=========== Variables ===========")
 varStr = ioReader.InquireVariable("varStr")
 varI8 = ioReader.InquireVariable("varI8")
 varI16 = ioReader.InquireVariable("varI16")

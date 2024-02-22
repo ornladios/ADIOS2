@@ -292,8 +292,11 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
                                                                 adios2::py11::MPI4PY_Comm comm)) &
                          adios2::py11::IO::Open)
 #endif
+        .def("AvailableAttributes", &adios2::py11::IO::AvailableAttributes,
+             pybind11::arg("varname") = "", pybind11::arg("separator") = "/",
+             pybind11::return_value_policy::move)
+
         .def("AvailableVariables", &adios2::py11::IO::AvailableVariables)
-        .def("AvailableAttributes", &adios2::py11::IO::AvailableAttributes)
         .def("FlushAll", &adios2::py11::IO::FlushAll)
         .def("EngineType", &adios2::py11::IO::EngineType)
         .def("RemoveVariable", &adios2::py11::IO::RemoveVariable)

@@ -172,10 +172,21 @@ class Stream:
         """
         return self._io.available_variables()
 
-    def available_attributes(self):
+    def available_attributes(self, varname="", separator="/"):
         """
         Returns a 2-level dictionary with attribute information.
         Read mode only.
+
+        Parameters
+            variable_name
+                If varname is set, attributes assigned to that variable are returned.
+                The keys returned are attribute names with the prefix of varname + separator
+                removed.
+
+            separator
+                concatenation string between variable_name and attribute
+                e.g. varname + separator + name ("var/attr")
+                Not used if varname is empty
 
         Returns
             attributes dictionary
@@ -184,7 +195,7 @@ class Stream:
                 value
                     attribute information dictionary
         """
-        return self._io.available_attributes()
+        return self._io.available_attributes(varname, separator)
 
     def define_variable(self, name):
         """

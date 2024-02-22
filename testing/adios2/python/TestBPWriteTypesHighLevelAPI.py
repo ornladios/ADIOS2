@@ -56,9 +56,8 @@ with Stream("types_np.bp", "w", comm=comm) as s:
             s.write("a_float_list", data.float_list)
             s.write("a_complex_list", data.complex_list)
 
-            # single value attributes
+            # single value attributes with numpy variables
             s.write_attribute("attrStr", "Testing single string attribute")
-            s.write_attribute("attrNx", data.Nx)
             s.write_attribute("attrI8", np.array(data.i8[0]))
             s.write_attribute("attrI16", np.array(data.i16[0]))
             s.write_attribute("attrI32", np.array(data.i32[0]))
@@ -71,15 +70,19 @@ with Stream("types_np.bp", "w", comm=comm) as s:
             s.write_attribute("attrR64", np.array(data.r64[0]))
             s.write_attribute("attrC64", np.array(data.c64[0]))
 
+            # single value attributes with Python variables
+            s.write_attribute("attrNx", data.Nx)
             s.write_attribute("attr_int_value", i)
             s.write_attribute("attr_float_value", f)
             s.write_attribute("attr_complex_value", c)
 
+            # array attributes with Python lists
             s.write_attribute("attr_int_list", data.int_list)
             s.write_attribute("attr_float_list", data.float_list)
             s.write_attribute("attr_complex_list", data.complex_list)
-
             s.write_attribute("attrStrArray", ["string1", "string2", "string3"])
+
+            # array attributes with numpy arrays
             s.write_attribute("attrI8Array", data.i8)
             s.write_attribute("attrI16Array", data.i16)
             s.write_attribute("attrI32Array", data.i32)
@@ -106,6 +109,9 @@ with Stream("types_np.bp", "w", comm=comm) as s:
         s.write("varC64", data.c64, shape, start, count)
 
         if rank == 0 and step.current_step() == 0:
+            # attribute assigned to variable
+            s.write_attribute("size", data.Nx, "varI8")
+            s.write_attribute("size", data.Nx, "varI16", "::")
             s.write_attribute("varattrStrArray", ["varattr1", "varattr2", "varattr3"], "steps")
             s.write_attribute("varattrI8Array", data.i8, "varI8")
             s.write_attribute("varattrI16Array", data.i16, "varI16")
@@ -375,6 +381,41 @@ with Stream("types_np.bp", "r", comm=comm) as fr:
 
             if not (inR64 == data.r64).all():
                 raise ValueError("var attrR64 array read failed")
+
+            # Attributes assigned to a variable
+            sizeI8 = fr_step.read_attribute("size", "varI8")
+            sizeI16 = fr_step.read_attribute("size", "varI16", "::")
+
+            if sizeI8[0] != data.Nx:
+                raise ValueError("attribute varI8/size read failed")
+
+            if sizeI16[0] != data.Nx:
+                raise ValueError("attribute varI16::size read failed")
+
+            sizeI8 = fr_step.read_attribute("varI8/size")
+            sizeI16 = fr_step.read_attribute("varI16::size")
+
+            if sizeI8[0] != data.Nx:
+                raise ValueError("attribute varI8/size read failed")
+
+            if sizeI16[0] != data.Nx:
+                raise ValueError("attribute varI16::size read failed")
+
+            step_attrs = fr_step.available_attributes()
+            # for name, info in step_attrs.items():
+            #     print(f"attribute {name} : {info}")
+
+            step_attrs = fr_step.available_attributes("varI8")
+            # for name, info in step_attrs.items():
+            #    print(f"attribute {name} : {info}")
+            if not [*step_attrs] == ["size", "varattrI8Array"]:
+                raise ValueError("getting attributes of varI8 failed")
+
+            step_attrs = fr_step.available_attributes("varI16", "::")
+            for name, info in step_attrs.items():
+                print(f"attribute {name} : {info}")
+            if not [*step_attrs] == ["size"]:
+                raise ValueError("getting attributes of varI16 with separator :: failed")
 
         stepStr = "Step:" + str(step)
 
