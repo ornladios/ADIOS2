@@ -933,7 +933,7 @@ YY_DECL
 
 
 #line 123 "..//lexer.l"
-  // A handy shortcut to the location held by the ASTDriver.
+  // A handy shortcut to the location held by the adios2::detail::ASTDriver.
   adios2::detail::location& loc = drv.location;
   // Code run each time yylex is called.
   loc.step ();
@@ -2220,11 +2220,11 @@ make_INT (const std::string &s, const adios2::detail::parser::location_type& loc
   return adios2::detail::parser::make_INT ((int) n, loc);
 }
 
-ASTNode*
-ASTDriver::parse (const char* input)
+adios2::detail::ASTNode*
+adios2::detail::ASTDriver::parse (const std::string input)
 {
   adios2::detail::parser parse (*this);
-  yy_scan_string(input);
+  yy_scan_string(input.c_str());
   parse.set_debug_level (trace_parsing);
   parse ();
   std::cout << "Parsed input: " << input << std::endl;

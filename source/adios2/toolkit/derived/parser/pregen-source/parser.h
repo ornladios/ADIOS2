@@ -50,9 +50,15 @@
   #include <tuple>
   #include <vector>
   #include <string>
-  class ASTDriver;
+  namespace adios2
+  {
+    namespace detail
+    {
+      class ASTDriver;
+    }
+  }
 
-#line 56 "parser.h"
+#line 62 "parser.h"
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -193,7 +199,7 @@
 
 #line 6 "..//parser.y"
 namespace adios2 { namespace detail {
-#line 197 "parser.h"
+#line 203 "parser.h"
 
 
 
@@ -1635,7 +1641,7 @@ switch (yykind)
 
 #line 6 "..//parser.y"
 } } // adios2::detail
-#line 1639 "parser.h"
+#line 1645 "parser.h"
 
 
 

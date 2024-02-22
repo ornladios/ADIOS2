@@ -1,5 +1,10 @@
 #include "ASTDriver.h"
 
+namespace adios2
+{
+namespace detail
+{
+
 using indx_type = std::vector<std::tuple<int, int, int>>;
 
 ASTDriver::ASTDriver()
@@ -82,4 +87,7 @@ void ASTDriver::createNode(std::string alias, indx_type indices)
   ASTNode *node = new ASTNode("INDEX", indices);
   node->pushback_subexpr(new ASTNode("ALIAS", alias));
   holding.push(node);
+}
+
+}
 }

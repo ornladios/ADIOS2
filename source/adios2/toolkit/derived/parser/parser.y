@@ -12,7 +12,13 @@
   #include <tuple>
   #include <vector>
   #include <string>
-  class ASTDriver;
+  namespace adios2
+  {
+    namespace detail
+    {
+      class ASTDriver;
+    }
+  }
 }
 
 // The parsing context.

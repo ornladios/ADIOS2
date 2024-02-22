@@ -9,8 +9,13 @@
 #include "ASTNode.h"
 
 # define YY_DECL \
-  adios2::detail::parser::symbol_type yylex (ASTDriver& drv)
+  adios2::detail::parser::symbol_type yylex (adios2::detail::ASTDriver& drv)
 YY_DECL;
+
+namespace adios2
+{
+namespace detail
+{
 
 using indx_type = std::vector<std::tuple<int, int, int>>;
 
@@ -20,7 +25,7 @@ public:
   ASTDriver ();
 
   // Defined in lexer.l
-  ASTNode *parse (const char* input);
+  ASTNode *parse (const std::string input);
 
   ASTNode* getAST ();
 
@@ -57,4 +62,7 @@ private:
   // map alias names to variable names and indices from alias definition
   std::map<std::string, std::tuple<std::string, indx_type>> aliases;
 };
+
+}
+}
 #endif // ! ASTDRIVER_HH_

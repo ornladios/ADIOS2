@@ -4,6 +4,11 @@
 #include <string>
 #include <tuple>
 
+namespace adios2
+{
+namespace detail
+{
+
 class ASTNode
 {
 public:
@@ -23,6 +28,7 @@ public:
   std::string get_alias();
   std::string get_varname();
   std::vector<std::tuple<int, int, int>> get_indices();
+  double get_value();
   void set_varname(const std::string);
   void set_indices(const std::vector<std::tuple<int, int, int>>);
 
@@ -32,6 +38,10 @@ private:
   std::string alias;
   std::string varname;
   std::vector<std::tuple<int, int, int>> indices;
+  double value;
 };
+
+}
+}
 #endif // ! ASTNODE_HH
 
