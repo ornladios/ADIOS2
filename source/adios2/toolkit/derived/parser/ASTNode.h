@@ -1,14 +1,8 @@
-#ifndef ADIOS2_DERIVED_PARSER_ASTNODE_H_
-#define ADIOS2_DERIVED_PARSER_ASTNODE_H_
-
-#include <iostream>
-#include <map>
-#include <string>
+#ifndef ASTNODE_HH
+# define ASTNODE_HH
 #include <vector>
-
-#include "../ExprHelper.h"
-
-/*****************************************/
+#include <string>
+#include <tuple>
 
 namespace adios2
 {
@@ -18,41 +12,36 @@ namespace detail
 class ASTNode
 {
 public:
-    ASTNode();
-    ASTNode(ExpressionOperator);
-    ASTNode(ExpressionOperator, const char *a);
-    ASTNode(ExpressionOperator, double val);
-    ASTNode(ExpressionOperator, ASTNode *e);
-    ASTNode(ExpressionOperator, ASTNode *e, const char *i);
-    ASTNode(ExpressionOperator, ASTNode *e1, ASTNode *e2);
+  ASTNode ();
+  ASTNode (std::string);
+  ASTNode (std::string, size_t);
+  ASTNode (std::string, std::string);
+  ASTNode (std::string, std::vector<std::tuple<int, int, int>>);
 
-    // Copy constructor
-    ASTNode(const ASTNode &e);
+  void set_num_subexprs(size_t);
+  void pushback_subexpr(ASTNode*);
+  void insert_subexpr_n(ASTNode*, size_t);
+  std::string printpretty(std::string);
 
-    ~ASTNode();
+  std::vector<ASTNode*> get_subexprs();
+  std::string get_opname();
+  std::string get_alias();
+  std::string get_varname();
+  std::vector<std::tuple<int, int, int>> get_indices();
+  double get_value();
+  void set_varname(const std::string);
+  void set_indices(const std::vector<std::tuple<int, int, int>>);
 
-    static std::pair<std::string, std::string> lookup_var(const std::string var_alias);
-    static std::string lookup_var_path(const std::string var_alias);
-    static std::string lookup_var_indices(const std::string var_alias);
-    static void add_lookup_entry(const std::string alias, const std::string var_name,
-                                 const std::string indices);
-
-    void add_subexpr(ASTNode *e);
-    void add_back_subexpr(ASTNode *e, size_t i);
-    void extend_subexprs(size_t n);
-    void infer_type();
-    void printpretty(std::string indent = "");
-
-    // private:
-    ExpressionOperator operation;
-    std::string alias;
-    std::string indices;
-    double value;
-    std::vector<ASTNode *> sub_expr;
-
-    static std::map<std::string, std::pair<std::string, std::string>> var_lookup;
+private:
+  std::vector<ASTNode*> sub_exprs;
+  std::string opname;
+  std::string alias;
+  std::string varname;
+  std::vector<std::tuple<int, int, int>> indices;
+  double value;
 };
 
 }
 }
-#endif
+#endif // ! ASTNODE_HH
+

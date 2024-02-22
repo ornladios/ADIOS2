@@ -9,32 +9,32 @@ import numpy as np
 class TestEngine(unittest.TestCase):
     def test_close(self):
         adios = Adios()
-        writer = adios.declare_io("BPWriter")
-        with writer.open("pythontestengine.bp", bindings.Mode.Write):
+        io = adios.declare_io("BPWriter")
+        with io.open("pythontestengine.bp", bindings.Mode.Write):
             pass
 
     def test_put(self):
         adios = Adios()
-        with adios.declare_io("BPWriter") as writer:
-            pressure = writer.define_variable("pressure")
-            temps = writer.define_variable("temps", np.empty([4], dtype=np.int64))
-            with writer.open("pythontestengine.bp", bindings.Mode.Write) as engine:
+        with adios.declare_io("BPWriter") as io:
+            pressure = io.define_variable("pressure")
+            temps = io.define_variable("temps", np.empty([4], dtype=np.int64))
+            with io.open("pythontestengine.bp", bindings.Mode.Write) as engine:
                 engine.put(pressure, "35PSI")
                 temps_measures = np.array([35, 40, 30, 45], dtype=np.int64)
                 engine.put(temps, temps_measures)
 
     def test_get(self):
         adios = Adios()
-        with adios.declare_io("BPWriter") as writer:
-            pressure = writer.define_variable("pressure")
-            temps = writer.define_variable(
+        with adios.declare_io("BPWriter") as io:
+            pressure = io.define_variable("pressure")
+            temps = io.define_variable(
                 name="temps",
                 content=np.empty([4], dtype=np.int64),
                 start=[0],
                 shape=[4],
                 count=[4],
             )
-            with writer.open("pythontestengine.bp", bindings.Mode.Write) as engine:
+            with io.open("pythontestengine.bp", bindings.Mode.Write) as engine:
                 engine.put(pressure, "35PSI")
                 temps_measures = np.array([35, 40, 30, 45], dtype=np.int64)
                 engine.put(temps, temps_measures)
@@ -59,9 +59,9 @@ class TestEngine(unittest.TestCase):
 
     def test_steps(self):
         adios = Adios()
-        with adios.declare_io("BPWriter") as writer:
-            pressure = writer.define_variable("pressure")
-            with writer.open("pythontestengine.bp", bindings.Mode.Write) as engine:
+        with adios.declare_io("BPWriter") as io:
+            pressure = io.define_variable("pressure")
+            with io.open("pythontestengine.bp", bindings.Mode.Write) as engine:
                 for step in range(0, 10):
                     engine.begin_step()
                     self.assertTrue(engine.between_step_pairs())
@@ -80,9 +80,9 @@ class TestEngine(unittest.TestCase):
 
     def test_blockinfo(self):
         adios = Adios()
-        with adios.declare_io("BPWriter") as writer:
-            temps = writer.define_variable("temps", np.empty([4], dtype=np.int64))
-            with writer.open("pythontestengine.bp", bindings.Mode.Write) as engine:
+        with adios.declare_io("BPWriter") as io:
+            temps = io.define_variable("temps", np.empty([4], dtype=np.int64))
+            with io.open("pythontestengine.bp", bindings.Mode.Write) as engine:
                 temps_measures = np.array([35, 40, 30, 45], dtype=np.int64)
                 engine.put(temps, temps_measures)
 

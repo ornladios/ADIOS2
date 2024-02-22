@@ -1,14 +1,11 @@
 /*
- * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * accompanying file Copyright.txt for details.
  *
- * FileDescriptor.cpp file I/O using POSIX I/O library
+ * FilePOSIX.cpp file I/O using POSIX I/O library
  *
- *  Created on: Oct 6, 2016
- *      Author: William F Godoy godoywf@ornl.gov
  */
 #include "FilePOSIX.h"
 #include "adios2/helper/adiosLog.h"
+#include "adios2/helper/adiosString.h"
 
 #ifdef ADIOS2_HAVE_O_DIRECT
 #ifndef _GNU_SOURCE
@@ -22,7 +19,19 @@
 #include <fcntl.h>     // open
 #include <sys/stat.h>  // open, fstat
 #include <sys/types.h> // open
-#include <unistd.h>    // write, close, ftruncate
+#include <thread>
+#ifndef _MSC_VER
+#include <unistd.h> // write, close, ftruncate
+#define O_BINARY 0
+#else
+#include <io.h>
+#define close _close
+#define open _open
+#define lseek(a, b, c) _lseek(a, (long)b, c)
+#define write(a, b, c) _write(a, b, (unsigned int)c)
+#define read(a, b, c) _read(a, b, (unsigned int)c)
+#define ftruncate _chsize
+#endif
 
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <ios> //std::ios_base::failure
@@ -77,7 +86,7 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode, const bool as
     auto lf_AsyncOpenWrite = [&](const std::string &name, const bool directio) -> int {
         ProfilerStart("open");
         errno = 0;
-        int flag = __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio);
+        int flag = __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, directio);
         int FD = open(m_Name.c_str(), flag, 0666);
         m_Errno = errno;
         ProfilerStop("open");
@@ -102,7 +111,8 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode, const bool as
             ProfilerStart("open");
             errno = 0;
             m_FileDescriptor =
-                open(m_Name.c_str(), __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio), 0666);
+                open(m_Name.c_str(),
+                     __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, directio), 0666);
             m_Errno = errno;
             ProfilerStop("open");
         }
@@ -111,7 +121,8 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode, const bool as
     case Mode::Append:
         ProfilerStart("open");
         errno = 0;
-        m_FileDescriptor = open(m_Name.c_str(), __GetOpenFlag(O_RDWR | O_CREAT, directio), 0777);
+        m_FileDescriptor =
+            open(m_Name.c_str(), __GetOpenFlag(O_RDWR | O_CREAT | O_BINARY, directio), 0777);
         lseek(m_FileDescriptor, 0, SEEK_END);
         m_Errno = errno;
         ProfilerStop("open");
@@ -120,7 +131,7 @@ void FilePOSIX::Open(const std::string &name, const Mode openMode, const bool as
     case Mode::Read:
         ProfilerStart("open");
         errno = 0;
-        m_FileDescriptor = open(m_Name.c_str(), O_RDONLY);
+        m_FileDescriptor = open(m_Name.c_str(), O_RDONLY | O_BINARY);
         m_Errno = errno;
         ProfilerStop("open");
         break;
@@ -142,7 +153,7 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode, const helper::
     auto lf_AsyncOpenWrite = [&](const std::string &name, const bool directio) -> int {
         ProfilerStart("open");
         errno = 0;
-        int flag = __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio);
+        int flag = __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, directio);
         int FD = open(m_Name.c_str(), flag, 0666);
         m_Errno = errno;
         ProfilerStop("open");
@@ -177,12 +188,14 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode, const helper::
             errno = 0;
             if (chainComm.Rank() == 0)
             {
-                m_FileDescriptor = open(
-                    m_Name.c_str(), __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC, directio), 0666);
+                m_FileDescriptor =
+                    open(m_Name.c_str(),
+                         __GetOpenFlag(O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, directio), 0666);
             }
             else
             {
-                m_FileDescriptor = open(m_Name.c_str(), __GetOpenFlag(O_WRONLY, directio), 0666);
+                m_FileDescriptor =
+                    open(m_Name.c_str(), __GetOpenFlag(O_WRONLY | O_BINARY, directio), 0666);
                 lseek(m_FileDescriptor, 0, SEEK_SET);
             }
             m_Errno = errno;
@@ -196,11 +209,11 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode, const helper::
         if (chainComm.Rank() == 0)
         {
             m_FileDescriptor =
-                open(m_Name.c_str(), __GetOpenFlag(O_RDWR | O_CREAT, directio), 0666);
+                open(m_Name.c_str(), __GetOpenFlag(O_RDWR | O_CREAT | O_BINARY, directio), 0666);
         }
         else
         {
-            m_FileDescriptor = open(m_Name.c_str(), __GetOpenFlag(O_RDWR, directio));
+            m_FileDescriptor = open(m_Name.c_str(), __GetOpenFlag(O_RDWR | O_BINARY, directio));
         }
         lseek(m_FileDescriptor, 0, SEEK_END);
         m_Errno = errno;
@@ -210,7 +223,7 @@ void FilePOSIX::OpenChain(const std::string &name, Mode openMode, const helper::
     case Mode::Read:
         ProfilerStart("open");
         errno = 0;
-        m_FileDescriptor = open(m_Name.c_str(), O_RDONLY);
+        m_FileDescriptor = open(m_Name.c_str(), O_RDONLY | O_BINARY);
         m_Errno = errno;
         ProfilerStop("open");
         break;
@@ -398,6 +411,7 @@ void FilePOSIX::WriteV(const core::iovec *iov, const int iovcnt, size_t start)
 void FilePOSIX::Read(char *buffer, size_t size, size_t start)
 {
     auto lf_Read = [&](char *buffer, size_t size) {
+        size_t backoff_ns = 20;
         while (size > 0)
         {
             ProfilerStart("read");
@@ -416,6 +430,35 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
                 helper::Throw<std::ios_base::failure>(
                     "Toolkit", "transport::file::FilePOSIX", "Read",
                     "couldn't read from file " + m_Name + " " + SysErrMsg());
+            }
+            else if (readSize == 0)
+            {
+                if (m_FailOnEOF)
+                {
+                    // we got an EOF on data that *should* be present,
+                    // but maybe we've got filesystem consistency
+                    // issues.  We'll wait, but if the backoff time
+                    // reaches 30 seconds (nearly 45 seconds total
+                    // wait time) and we still don't have data, treat
+                    // this as a real failure and throw an exception.
+                    std::this_thread::sleep_for(std::chrono::nanoseconds(backoff_ns));
+                    backoff_ns *= 2;
+                    if (std::chrono::nanoseconds(backoff_ns) > std::chrono::seconds(30))
+                        helper::Throw<std::ios_base::failure>(
+                            "Toolkit", "transport::file::FilePOSIX", "Read",
+                            "Read past end of file on " + m_Name + " trying to read " +
+                                std::to_string(size) + " bytes " + SysErrMsg());
+                }
+                else
+                {
+                    // read past EOF, but we're to wait for data.  Exponential backoff with a limit
+                    // of .5 sec (500,000,000 nanosec)
+                    std::this_thread::sleep_for(std::chrono::nanoseconds(backoff_ns));
+                    constexpr size_t backoff_limit = 500 * 1000 * 1000;
+                    backoff_ns *= 2;
+                    if (backoff_ns > backoff_limit)
+                        backoff_ns = backoff_limit;
+                }
             }
 
             buffer += readSize;
@@ -594,6 +637,15 @@ void FilePOSIX::Truncate(const size_t length)
 }
 
 void FilePOSIX::MkDir(const std::string &fileName) {}
+
+void FilePOSIX::SetParameters(const Params &params)
+{
+    // Parameters are set from config parameters if present
+    // Otherwise, they are set from environment if present
+    // Otherwise, they remain at their default value
+
+    helper::GetParameter(params, "FailOnEOF", m_FailOnEOF);
+}
 
 } // end namespace transport
 } // end namespace adios2

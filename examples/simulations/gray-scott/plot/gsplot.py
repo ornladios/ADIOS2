@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import adios2  # pylint: disable=import-error
+from adios2 import Adios, Stream  # pylint: disable=import-error
 import argparse
 import numpy as np  # pylint: disable=import-error
 import matplotlib.pyplot as plt  # pylint: disable=import-error
@@ -98,21 +98,14 @@ def Plot2D(plane_direction, data, args, fullshape, step, fontsize):
         plt.show()
         plt.pause(displaysec)
     elif args.outfile.endswith(".bp"):
-        if step == 0:
-            global adios
-            global ioWriter
-            global var
-            global writer
-            adios = adios2.ADIOS(mpi.comm_app)
-            ioWriter = adios.DeclareIO("VizOutput")
-            var = ioWriter.DefineVariable(
-                args.varname, data.shape, [0, 0], data.shape, adios2.ConstantDims, data
-            )
-            writer = ioWriter.Open(args.outfile, adios2.Mode.Write)
-
-        writer.BeginStep()
-        writer.Put(var, data, adios2.Mode.Sync)
-        writer.EndStep()
+        global writer
+#        print("plot to file, step = ", step)
+#        if step == 0:
+#            writer = Stream(args.outfile, "w")
+#
+        writer.begin_step()
+        writer.write(args.varname, data, data.shape, [0, 0], data.shape)
+        writer.end_step()
     else:
         imgfile = args.outfile + "{0:0>5}".format(step) + "_" + plane_direction + ".png"
         fig.savefig(imgfile)
@@ -139,15 +132,21 @@ if __name__ == "__main__":
     myrank = mpi.rank["app"]
 
     # Read the data from this object
-    fr = adios2.open(args.instream, "r", mpi.comm_app, "adios2.xml", "SimulationOutput")
-    #    vars_info = fr.availablevariables()
+    adios = Adios("adios2.xml", mpi.comm_app)
+    io = adios.declare_io("SimulationOutput")
+    fr = Stream(io, args.instream, "r", mpi.comm_app)
+
+    if args.outfile.endswith(".bp"):
+        global writer
+        writer = Stream(args.outfile, "w")
 
     # Get the ADIOS selections -- equally partition the data if parallelization is requested
 
     # Read through the steps, one at a time
     plot_step = 0
-    for fr_step in fr:
-        #        if fr_step.current_step()
+    for fr_step in fr.steps():
+        # print(f"loop status = {fr_step.step_status()} "
+        #       f"step = {fr.current_step()} counter={fr.loop_index()}")
         start, size, fullshape = mpi.Partition_3D_3D(fr, args)
         cur_step = fr_step.current_step()
         vars_info = fr.available_variables()
@@ -185,3 +184,5 @@ if __name__ == "__main__":
         plot_step = plot_step + 1
 
     fr.close()
+    if args.outfile.endswith(".bp"):
+        writer.close()

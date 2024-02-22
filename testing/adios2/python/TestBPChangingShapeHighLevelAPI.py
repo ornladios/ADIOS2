@@ -25,7 +25,7 @@ start = [[rank * nx[0]], [rank * nx[1]]]
 count = [[nx[0]], [nx[1]]]
 
 # Write different sized arrays as separate steps
-with Stream("out.bp", "w", comm) as s:
+with Stream("out.bp", "w", comm=comm) as s:
     s.begin_step()
     s.write("z", data[0], shape[0], start[0], count[0])
     s.end_step()
@@ -34,7 +34,7 @@ with Stream("out.bp", "w", comm) as s:
     s.end_step()
 
 # Read back arrays
-with Stream("out.bp", "r", comm) as s:
+with Stream("out.bp", "r", comm=comm) as s:
     for step in s.steps():
         shape_z = int(step.available_variables()["z"]["Shape"])
         print(shape_z)

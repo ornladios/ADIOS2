@@ -17,6 +17,17 @@
 #include <mpi.h>
 #endif
 
+template <class T>
+void PrintData(const std::vector<T> &data, const int rank, const size_t step)
+{
+    std::cout << "Rank: " << rank << " Step: " << step << " [";
+    for (size_t i = 0; i < data.size(); ++i)
+    {
+        std::cout << data[i] << " ";
+    }
+    std::cout << "]" << std::endl;
+}
+
 int main(int argc, char *argv[])
 {
 
@@ -42,6 +53,7 @@ int main(int argc, char *argv[])
         static_cast<float>(10.0 * rank + 6), static_cast<float>(10.0 * rank + 7),
         static_cast<float>(10.0 * rank + 8), static_cast<float>(10.0 * rank + 9)};
     const std::size_t Nx = myFloats.size();
+    const float increment = Nx * size * 1.0;
 
     try
     {
@@ -60,9 +72,17 @@ int main(int argc, char *argv[])
         // Open returns a smart pointer to Engine containing the Derived class
         adios2::Engine sstWriter = sstIO.Open("helloSst", adios2::Mode::Write);
 
-        sstWriter.BeginStep();
-        sstWriter.Put<float>(bpFloats, myFloats.data());
-        sstWriter.EndStep();
+        for (size_t i = 0; i < 4; ++i)
+        {
+            PrintData(myFloats, rank, i);
+            sstWriter.BeginStep();
+            sstWriter.Put<float>(bpFloats, myFloats.data());
+            sstWriter.EndStep();
+            for (size_t k = 0; k < myFloats.size(); ++k)
+            {
+                myFloats[k] += increment;
+            }
+        }
         sstWriter.Close();
     }
     catch (std::invalid_argument &e)

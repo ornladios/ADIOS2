@@ -4,8 +4,6 @@
  *
  * BP5Reader.h
  *
- *  Created on: Aug 1, 2018
- *      Author: Lipeng Wan wanl@ornl.gov
  */
 
 #ifndef ADIOS2_ENGINE_BP5_BP5READER_H_
@@ -18,6 +16,7 @@
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosRangeFilter.h"
 #include "adios2/toolkit/format/bp5/BP5Deserializer.h"
+#include "adios2/toolkit/format/buffer/heap/BufferMalloc.h"
 #include "adios2/toolkit/remote/Remote.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
@@ -112,6 +111,8 @@ private:
     std::vector<std::pair<uint64_t, uint64_t>> m_FilteredMetadataInfo;
 
     Minifooter m_Minifooter;
+
+    bool m_InitialWriterActiveCheckDone = false;
 
     void Init();
     void InitParameters();
@@ -223,7 +224,7 @@ private:
 
     format::BufferSTL m_MetadataIndex;
     format::BufferSTL m_MetaMetadata;
-    format::BufferSTL m_Metadata;
+    format::BufferMalloc m_Metadata;
 
     void InstallMetaMetaData(format::BufferSTL MetaMetadata);
     void InstallMetadataForTimestep(size_t Step);

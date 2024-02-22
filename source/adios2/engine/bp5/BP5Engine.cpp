@@ -184,7 +184,7 @@ void BP5Engine::ParseParams(IO &io, struct BP5Params &Params)
         parameter = def;
         if (itKey != params_lowercase.end())
         {
-            std::string value = itKey->second;
+            std::string value = helper::LowerCase(itKey->second);
             parameter =
                 helper::StringToByteUnits(value, "for Parameter key=" + key + "in call to Open");
         }

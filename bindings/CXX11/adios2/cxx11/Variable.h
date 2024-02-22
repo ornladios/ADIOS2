@@ -160,6 +160,20 @@ public:
      */
     MemorySpace GetMemorySpace();
 
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    /**
+     * Sets the  for all following Puts
+     * to either host (default) or device (currently only CUDA supported)
+     * @param mem memory space where Put buffers are allocated
+     */
+    void SetArrayLayout(const adios2::ArrayOrdering layout);
+    /**
+     * Get the memory space that was set by the application
+     * @return the memory space stored in the Variable object
+     */
+    adios2::ArrayOrdering GetArrayLayout();
+#endif
+
     /**
      * Set new shape, care must be taken when reading back the variable for
      * different steps. Only applies to Global arrays.
@@ -255,6 +269,10 @@ public:
      * @return shape vector
      */
     adios2::Dims Shape(const size_t step = adios2::EngineCurrentStep) const;
+    adios2::Dims Shape(const ArrayOrdering layout,
+                       const size_t step = adios2::EngineCurrentStep) const;
+    adios2::Dims Shape(const MemorySpace memSpace,
+                       const size_t step = adios2::EngineCurrentStep) const;
 
     /**
      * Inspects current start point

@@ -2,7 +2,6 @@
 
 import argparse
 import glob
-import json
 import sqlite3
 import zlib
 from datetime import datetime
@@ -145,7 +144,7 @@ def AddDatasetToArchive(args: dict, dataset: str, cur: sqlite3.Cursor, hostID: i
         print(f"WARNING: Dataset {dataset} is not an ADIOS dataset. Skip")
 
 
-def ProcessJsonFile(args: dict, jsonlist: list, cur: sqlite3.Cursor, hostID: int, dirID: int):
+def ProcessDBFile(args: dict, jsonlist: list, cur: sqlite3.Cursor, hostID: int, dirID: int):
     for entry in jsonlist:
         # print(f"Process entry {entry}:")
         if isinstance(entry, dict):
@@ -217,15 +216,15 @@ def Update(args: dict, cur: sqlite3.Cursor):
     #                      (shortHostName, longHostName))
     # hostID = curHost.lastrowid
 
-    curDir = cur.execute('insert into directory values (?, ?)',
+    curDir = cur.execute('insert or replace into directory values (?, ?)',
                          (hostID, rootdir))
     dirID = curDir.lastrowid
     con.commit()
 
-    jsonlist = MergeJsonFiles(jsonFileList)
+    db_list = MergeDBFiles(dbFileList)
 
     # print(f"Merged json = {jsonlist}")
-    ProcessJsonFile(args, jsonlist, cur, hostID, dirID)
+    ProcessDBFile(args, db_list, cur, hostID, dirID)
 
     con.commit()
 
@@ -250,11 +249,24 @@ def Create(args: dict, cur: sqlite3.Cursor):
     Update(args, cur)
 
 
-def MergeJsonFiles(jsonfiles: list):
+def MergeDBFiles(dbfiles: list):
+    # read db files here
     result = list()
-    for f1 in jsonfiles:
-        with open(f1, 'r') as infile:
-            result.extend(json.load(infile))
+    for f1 in dbfiles:
+        try:
+            con = sqlite3.connect(f1)
+        except sqlite3.Error as e:
+            print(e)
+
+        cur = con.cursor()
+        try:
+            cur.execute("select  * from bpfiles")
+        except sqlite3.Error as e:
+            print(e)
+        record = cur.fetchall()
+        for item in record:
+            result.append({"name": item[0]})
+        cur.close()
     return result
 
 
@@ -291,8 +303,8 @@ if __name__ == "__main__":
     else:
         CheckLocalCampaignDir(args)
         # List the local campaign directory
-        jsonFileList = glob.glob(args.LocalCampaignDir + '/*.json')
-        if len(jsonFileList) == 0:
+        dbFileList = glob.glob(args.LocalCampaignDir + '/*.db')
+        if len(dbFileList) == 0:
             print("There are no campaign data files in  " + args.LocalCampaignDir)
             exit(2)
 

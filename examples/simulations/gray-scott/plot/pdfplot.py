@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import adios2  # pylint: disable=import-error
+from adios2 import Adios, Stream  # pylint: disable=import-error
 import argparse
 import numpy as np  # pylint: disable=import-error
 import matplotlib.pyplot as plt  # pylint: disable=import-error
@@ -85,16 +85,13 @@ if __name__ == "__main__":
     myrank = mpi.rank["app"]
 
     # Read the data from this object
-    if not args.nompi:
-        fr = adios2.open(
-            args.instream, "r", mpi.comm_app, "adios2.xml", "PDFAnalysisOutput"
-        )
-    else:
-        fr = adios2.open(args.instream, "r", "adios2.xml", "PDFAnalysisOutput")
+    adios = Adios("adios2.xml", mpi.comm_app)
+    io = adios.declare_io("PDFAnalysisOutput")
+    fr = Stream(io, args.instream, "r", mpi.comm_app)
 
     # Read through the steps, one at a time
     plot_step = 0
-    for fr_step in fr:
+    for fr_step in fr.steps():
         cur_step = fr_step.current_step()
         vars_info = fr_step.available_variables()
         # print (vars_info)
@@ -103,13 +100,12 @@ if __name__ == "__main__":
         shape2_str = vars_info[pdfvar]["Shape"].split(",")
         shape2 = list(map(int, shape2_str))
 
-        start = np.zeros(2, dtype=np.int64)
-        count = np.zeros(2, dtype=np.int64)
         # Equally partition the PDF arrays among readers
-        start[0], count[0] = decomp.Locate(myrank, mpi.size, shape2[0])
-        start[1], count[1] = (0, shape2[1])
-        start_bins = np.array([0], dtype=np.int64)
-        count_bins = np.array([shape2[1]], dtype=np.int64)
+        s0, c0 = decomp.Locate(myrank, mpi.size, shape2[0])
+        start = [s0, 0]
+        count = [c0, shape2[1]]
+        start_bins = [0]
+        count_bins = [shape2[1]]
 
         # print("Rank {0} reads {1}  slices from offset {2}".format(myrank, count[0], start[0]))
 

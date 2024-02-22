@@ -4,8 +4,6 @@
  *
  * FileDescriptor.h wrapper of POSIX library functions for file I/O
  *
- *  Created on: Oct 6, 2016
- *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #ifndef ADIOS2_TOOLKIT_TRANSPORT_FILE_FILEDESCRIPTOR_H_
@@ -68,10 +66,13 @@ public:
 
     void MkDir(const std::string &fileName) final;
 
+    void SetParameters(const Params &params) final;
+
 private:
     /** POSIX file handle returned by Open */
     int m_FileDescriptor = -1;
     int m_Errno = 0;
+    bool m_FailOnEOF = false; // default to false for historic reasons
     bool m_IsOpening = false;
     std::future<int> m_OpenFuture;
     bool m_DirectIO = false;

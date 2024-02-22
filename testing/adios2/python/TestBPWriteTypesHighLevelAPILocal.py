@@ -33,7 +33,7 @@ start = []
 count = [nx]
 
 # Writer
-with Stream("types_np_local.bp", "w", comm) as s:
+with Stream("types_np_local.bp", "w", comm=comm) as s:
     for step in s.steps(5):
         data.update(rank, step.current_step(), size)
         s.write("varI8", data.i8, shape, start, count)
@@ -50,7 +50,7 @@ with Stream("types_np_local.bp", "w", comm) as s:
 # Reader
 data = SmallTestData()
 
-with Stream("types_np_local.bp", "r", comm) as s:
+with Stream("types_np_local.bp", "r", comm=comm) as s:
     for fr_step in s.steps():
         step = fr_step.current_step()
 

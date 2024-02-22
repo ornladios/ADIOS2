@@ -38,10 +38,6 @@ class Engine
     friend class IO;
     friend class QueryWorker;
 
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
-    void CheckMemorySpace(MemorySpace variableMem, MemorySpace bufferMem);
-#endif
-
 public:
     /**
      * Empty (default) constructor, use it as a placeholder for future
@@ -212,12 +208,12 @@ public:
     void Put(Variable<T> variable, U const &data, const Mode launch = Mode::Deferred)
     {
         auto bufferView = static_cast<AdiosView<U>>(data);
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
         auto bufferMem = bufferView.memory_space();
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
-        auto variableMem = variable.GetMemorySpace();
-        CheckMemorySpace(variableMem, bufferMem);
-#endif
+        auto bufferLayout = bufferView.layout();
         variable.SetMemorySpace(bufferMem);
+        variable.SetArrayLayout(bufferLayout);
+#endif
         Put(variable, bufferView.data(), launch);
     }
 
@@ -417,10 +413,14 @@ public:
               class = typename std::enable_if<std::is_convertible<U, AdiosView<U>>::value>::type>
     void Get(Variable<T> variable, U const &data, const Mode launch = Mode::Deferred)
     {
-        auto adios_data = static_cast<AdiosView<U>>(data);
-        auto mem_space = adios_data.memory_space();
-        variable.SetMemorySpace(mem_space);
-        Get(variable, adios_data.data(), launch);
+        auto bufferView = static_cast<AdiosView<U>>(data);
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+        auto bufferMem = bufferView.memory_space();
+        auto bufferLayout = bufferView.layout();
+        variable.SetMemorySpace(bufferMem);
+        variable.SetArrayLayout(bufferLayout);
+#endif
+        Get(variable, bufferView.data(), launch);
     }
 
     /** Perform all Get calls in Deferred mode up to this point */

@@ -26,9 +26,8 @@ RUN dnf install -y \
         mpich-devel \
         patch \
         patchelf \
-        python3-devel \
-        python3-mpi4py-mpich \
-        python3-pip \
+        python39-devel \
+        python39-pip \
         tar \
         tcl \
         unzip \
@@ -41,6 +40,7 @@ RUN dnf install -y \
 # Install the compilers from an external repo
 COPY oneAPI.repo /etc/yum.repos.d/
 RUN pip3 install numpy && \
+    pip3 install mpi4py-mpich && \
     dnf install -y \
         intel-oneapi-compiler-dpcpp-cpp-2023.2.1 \
         intel-oneapi-compiler-fortran-2023.2.1 \

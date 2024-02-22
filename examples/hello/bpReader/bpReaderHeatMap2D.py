@@ -7,11 +7,12 @@
 #
 #  Created on: Dec 5th, 2017
 #      Author: William F Godoy godoywf@ornl.gov
+#              Norbert Podhorszki pnorbert@ornl.gov
 #
 
 from mpi4py import MPI
 import numpy
-import adios2
+from adios2 import Stream
 
 # MPI
 comm = MPI.COMM_WORLD
@@ -26,7 +27,7 @@ count = [Nx, Ny]
 start = [rank * Nx, 0]
 shape = [size * Nx, Ny]
 
-temperatures = numpy.zeros(Nx * Ny, dtype=numpy.int)
+temperatures = numpy.zeros(Nx * Ny, dtype=int)
 
 for i in range(0, Nx):
     iGlobal = start[0] + i
@@ -34,49 +35,19 @@ for i in range(0, Nx):
     for j in range(0, Ny):
         value = iGlobal * shape[1] + j
         temperatures[i * Nx + j] = value
-        print(str(i) + "," + str(j) + " " + str(value))
+#        print(str(i) + "," + str(j) + " " + str(value))
 
-
-# ADIOS portion
-adios = adios2.ADIOS(comm)
-ioWrite = adios.DeclareIO("ioWriter")
-
-varTemperature = ioWrite.DefineVariable(
-    "temperature2D", temperatures, shape, start, count, adios2.ConstantDims
-)
-
-obpStream = ioWrite.Open("HeatMap2D_py.bp", adios2.Mode.Write)
-obpStream.BeginStep()
-obpStream.Put(varTemperature, temperatures)
-obpStream.EndStep()
-obpStream.Close()
-
+with Stream("HeatMap2D_py.bp", "w", comm) as obpStream:
+    obpStream.write("temperature2D", temperatures, shape, start, count)
 
 if rank == 0:
-    ioRead = adios.DeclareIO("ioReader")
+    with Stream("HeatMap2D_py.bp", "r", MPI.COMM_SELF) as ibpStream:
+        for _ in ibpStream.steps():
+            var_inTemperature = ibpStream.inquire_variable("temperature2D")
+            if var_inTemperature is not None:
+                var_inTemperature.set_selection([[2, 2], [4, 4]])
+                inTemperatures = ibpStream.read(var_inTemperature)
 
-    ibpStream = ioRead.Open("HeatMap2D_py.bp", adios2.Mode.Read, MPI.COMM_SELF)
-
-    ibpStream.BeginStep()
-
-    var_inTemperature = ioRead.InquireVariable("temperature2D")
-
-    if var_inTemperature is not None:
-        var_inTemperature.SetSelection([[2, 2], [4, 4]])
-
-        inSize = var_inTemperature.SelectionSize()
-        print("Incoming size " + str(inSize))
-        inTemperatures = numpy.zeros(inSize, dtype=numpy.int)
-
-        ibpStream.Get(var_inTemperature, inTemperatures, adios2.Mode.Sync)
-
-        print("Incoming temperature map")
-
-        for i in range(0, inTemperatures.size):
-            print(str(inTemperatures[i]) + " ")
-
-            if (i + 1) % 4 == 0:
-                print()
-
-    ibpStream.EndStep()
-    ibpStream.Close()
+            print("Incoming temperature map")
+            for i in range(0, inTemperatures.shape[1]):
+                print(str(inTemperatures[i]) + " ")
