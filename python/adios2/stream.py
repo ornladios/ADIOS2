@@ -2,6 +2,7 @@
   Distributed under the OSI-approved Apache License, Version 2.0.  See
   accompanying file Copyright.txt for details.
 """
+
 from functools import singledispatchmethod
 from sys import maxsize
 import numpy as np
@@ -349,7 +350,11 @@ class Stream:
             output_shape[0] *= steps
         else:
             # scalar
-            output_shape = (variable.selection_size(),)
+            size_all_steps = variable.selection_size()
+            if size_all_steps > 1:
+                output_shape = [size_all_steps]
+            else:
+                output_shape = []
 
         output = np.zeros(output_shape, dtype=dtype)
         self._engine.get(variable, output)
