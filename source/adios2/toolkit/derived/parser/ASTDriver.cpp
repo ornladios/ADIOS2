@@ -13,7 +13,8 @@ ASTDriver::ASTDriver()
 
 ASTNode* ASTDriver::getAST ()
 {
-  std::cout << "Getting AST. Nodes in holding: " << holding.size() << std::endl;
+  // TODO: check only one ASTNode remains in holding
+  // else throw error that parsing failed
   resolve(holding.top());
   return holding.top();
 }
@@ -52,7 +53,6 @@ indx_type ASTDriver::lookup_var_indices(const std::string alias)
 
 void ASTDriver::add_lookup_entry(std::string alias, std::string var_name, indx_type indices)
 {
-  //  aliases.insert(std::tuple<std::string, std::tuple<std::string, indx_type>>(
   aliases.insert({alias, {var_name, indices}});
 }
 
@@ -63,12 +63,11 @@ void ASTDriver::add_lookup_entry(std::string alias, std::string var_name)
 
 void ASTDriver::createNode(std::string op_name, size_t numsubexprs)
 {
-  std::cout << "Creating Node " << op_name << " with " << numsubexprs << " subexprs. Current number of ASTNodes in holding: " << holding.size() << std::endl;
-  
-  // TODO: convert string op_name to enum (check op existst)
   ASTNode *node = new ASTNode(op_name, numsubexprs);
   for (size_t i = 1; i <= numsubexprs; ++i)
     {
+      // TODO: check that holding contains ASTNode(s)
+      // else throw error that parsing failed
       ASTNode *subexpr = holding.top();
       node->insert_subexpr_n(subexpr, numsubexprs - i);
       holding.pop();

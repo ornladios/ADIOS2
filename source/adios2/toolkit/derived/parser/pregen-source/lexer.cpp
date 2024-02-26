@@ -531,8 +531,8 @@ int yy_flex_debug = 1;
 
 static const flex_int16_t yy_rule_linenum[16] =
     {   0,
-      128,  129,  131,  132,  133,  134,  135,  136,  137,  139,
-      140,  141,  142,  143,  144
+      109,  110,  112,  113,  114,  115,  116,  117,  118,  120,
+      121,  122,  123,  124,  125
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -544,34 +544,16 @@ static const flex_int16_t yy_rule_linenum[16] =
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
 #line 1 "..//lexer.l"
-/* Scanner for calc++.   -*- C++ -*-
-
-   Copyright (C) 2005-2015, 2018-2021 Free Software Foundation, Inc.
-
-   This file is part of Bison, the GNU Compiler Compiler.
-
-   This program is free software: you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
-   the Free Software Foundation, either version 3 of the License, or
-   (at your option) any later version.
-
-   This program is distributed in the hope that it will be useful,
-   but WITHOUT ANY WARRANTY; without even the implied warranty of
-   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-   GNU General Public License for more details.
-
-   You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
-#line 21 "..//lexer.l"
-# include <cerrno>
-# include <climits>
-# include <cstdlib>
-# include <cstring> // strerror
-# include <string>
+#line 2 "..//lexer.l"
+#include <cerrno>
+#include <climits>
+#include <cstdlib>
+#include <cstring> // strerror
+#include <string>
 #include "ASTDriver.h"
-# include "parser.h"
-#line 573 "lexer.cpp"
-#line 31 "..//lexer.l"
+#include "parser.h"
+#line 555 "lexer.cpp"
+#line 12 "..//lexer.l"
 #if defined __clang__
 # define CLANG_VERSION (__clang_major__ * 100 + __clang_minor__)
 #endif
@@ -640,18 +622,18 @@ char *yytext;
 #if defined GCC_VERSION && 900 <= GCC_VERSION
 # pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
-#line 643 "lexer.cpp"
+#line 625 "lexer.cpp"
 #define YY_NO_INPUT 1
-#line 104 "..//lexer.l"
+#line 85 "..//lexer.l"
   // A number symbol corresponding to the value in S.
   adios2::detail::parser::symbol_type
   make_INT (const std::string &s, const adios2::detail::parser::location_type& loc);
-#line 649 "lexer.cpp"
-#line 117 "..//lexer.l"
+#line 631 "lexer.cpp"
+#line 98 "..//lexer.l"
   // Code run each time a pattern is matched.
   # define YY_USER_ACTION  loc.columns (yyleng);
-#line 653 "lexer.cpp"
-#line 654 "lexer.cpp"
+#line 635 "lexer.cpp"
+#line 636 "lexer.cpp"
 
 #define INITIAL 0
 
@@ -929,16 +911,16 @@ YY_DECL
 
 	{
 /* %% [7.0] user's declarations go here */
-#line 120 "..//lexer.l"
+#line 101 "..//lexer.l"
 
 
-#line 123 "..//lexer.l"
+#line 104 "..//lexer.l"
   // A handy shortcut to the location held by the adios2::detail::ASTDriver.
   adios2::detail::location& loc = drv.location;
   // Code run each time yylex is called.
   loc.step ();
 
-#line 941 "lexer.cpp"
+#line 923 "lexer.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -1016,93 +998,93 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 128 "..//lexer.l"
+#line 109 "..//lexer.l"
 loc.step ();
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 129 "..//lexer.l"
+#line 110 "..//lexer.l"
 loc.lines (yyleng); loc.step (); return adios2::detail::parser::make_ENDL (loc);
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 131 "..//lexer.l"
+#line 112 "..//lexer.l"
 return adios2::detail::parser::make_ASSIGN  (loc);
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 132 "..//lexer.l"
+#line 113 "..//lexer.l"
 return adios2::detail::parser::make_COMMA   (loc);
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 133 "..//lexer.l"
+#line 114 "..//lexer.l"
 return adios2::detail::parser::make_COLON   (loc);
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 134 "..//lexer.l"
+#line 115 "..//lexer.l"
 return adios2::detail::parser::make_L_PAREN (loc);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 135 "..//lexer.l"
+#line 116 "..//lexer.l"
 return adios2::detail::parser::make_R_PAREN (loc);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 136 "..//lexer.l"
+#line 117 "..//lexer.l"
 return adios2::detail::parser::make_L_BRACE (loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 137 "..//lexer.l"
+#line 118 "..//lexer.l"
 return adios2::detail::parser::make_R_BRACE (loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 139 "..//lexer.l"
+#line 120 "..//lexer.l"
 return make_INT (yytext, loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 140 "..//lexer.l"
+#line 121 "..//lexer.l"
 return adios2::detail::parser::make_VAR (loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 141 "..//lexer.l"
+#line 122 "..//lexer.l"
 return adios2::detail::parser::make_OPERATOR (yytext, loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 142 "..//lexer.l"
+#line 123 "..//lexer.l"
 return adios2::detail::parser::make_IDENTIFIER (yytext, loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 143 "..//lexer.l"
+#line 124 "..//lexer.l"
 return adios2::detail::parser::make_VARNAME (yytext, loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 144 "..//lexer.l"
+#line 125 "..//lexer.l"
 {
              throw adios2::detail::parser::syntax_error
                (loc, "invalid character: " + std::string(yytext));
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 148 "..//lexer.l"
+#line 129 "..//lexer.l"
 return adios2::detail::parser::make_YYEOF (loc);
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 149 "..//lexer.l"
+#line 130 "..//lexer.l"
 ECHO;
 	YY_BREAK
-#line 1105 "lexer.cpp"
+#line 1087 "lexer.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -2207,7 +2189,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 149 "..//lexer.l"
+#line 130 "..//lexer.l"
 
 
 adios2::detail::parser::symbol_type
@@ -2227,7 +2209,6 @@ adios2::detail::ASTDriver::parse (const std::string input)
   yy_scan_string(input.c_str());
   parse.set_debug_level (trace_parsing);
   parse ();
-  std::cout << "Parsed input: " << input << std::endl;
   return getAST();
 }
 

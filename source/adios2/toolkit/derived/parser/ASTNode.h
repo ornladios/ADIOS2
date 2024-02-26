@@ -1,5 +1,5 @@
 #ifndef ASTNODE_HH
-# define ASTNODE_HH
+#define ASTNODE_HH
 #include <vector>
 #include <string>
 #include <tuple>
@@ -29,6 +29,7 @@ public:
   std::string get_varname();
   std::vector<std::tuple<int, int, int>> get_indices();
   double get_value();
+
   void set_varname(const std::string);
   void set_indices(const std::vector<std::tuple<int, int, int>>);
 

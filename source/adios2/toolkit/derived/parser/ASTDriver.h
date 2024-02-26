@@ -1,5 +1,5 @@
 #ifndef ASTDRIVER_HH_
-# define ASTDRIVER_HH_
+#define ASTDRIVER_HH_
 
 #include <string>
 #include <tuple>
@@ -8,7 +8,7 @@
 #include "parser.h"
 #include "ASTNode.h"
 
-# define YY_DECL \
+#define YY_DECL \
   adios2::detail::parser::symbol_type yylex (adios2::detail::ASTDriver& drv)
 YY_DECL;
 
@@ -43,23 +43,21 @@ public:
   void createNode(std::string, indx_type);
   
   // Whether to generate parser debug traces.
-  bool trace_parsing;
+  bool trace_parsing = false;
   // Whether to generate scanner debug traces.
-  bool trace_scanning;
+  bool trace_scanning = false;
   // The token's location used by the scanner.
   adios2::detail::location location;
 
 private:
   ASTNode* root;
 
-  // count of how many ASTNodes exist
-  size_t num_nodes;
-
   // While parsing, holds ASTNodes until parent node is created
   // (since root node is created last from bottom up design)
   std::stack<ASTNode*> holding;
-  
-  // map alias names to variable names and indices from alias definition
+
+  // Variable lookup table: maps alias names
+  // to variable names and indices from alias definition
   std::map<std::string, std::tuple<std::string, indx_type>> aliases;
 };
 

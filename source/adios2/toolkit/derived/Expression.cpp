@@ -11,14 +11,16 @@ namespace detail
 // helper function
 adios2::detail::ExpressionOperator convert_op(std::string opname)
 {
+  adios2::detail::ExpressionOperator op;
   try
     {
-      return adios2::detail::get_op(opname);
+      op = adios2::detail::get_op(opname);
     }
   catch (std::out_of_range& e)
     {
       helper::Throw<std::invalid_argument>("Derived", "ExprHelper", "get_op", "Parser cannot recognize operator '" + opname + "'.");
-    }  
+    }
+  return op;
 };
   
 adios2::derived::ExpressionTree ASTNode_to_ExpressionTree(adios2::detail::ASTNode *node)

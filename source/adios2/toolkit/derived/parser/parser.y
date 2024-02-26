@@ -1,4 +1,4 @@
-%skeleton "lalr1.cc" // -*- C++ -*-
+%skeleton "lalr1.cc"
 %require "3.8.2"
 %header
 
@@ -48,16 +48,7 @@
   VAR     "var"
 ;
 
-/*
-%token <double> NUM
-%token <std::string> ALIAS
-%token <std::string> PATH
-%token <std::string> FUNCTION
-*/
 %token <std::string> OPERATOR
-/*
-%token <std::vector<size_t>> INDICES
-*/
 %token <std::string> IDENTIFIER "identifier"
 %token <std::string> VARNAME
 %token <int> INT "number"
@@ -68,7 +59,7 @@
 
 %%
 %start unit;
-unit: assignments exp  { /*drv.root = $2;*//*drv.result = $2;*/ };
+unit: assignments exp  { };
 
 assignments:
   %empty                 {}
