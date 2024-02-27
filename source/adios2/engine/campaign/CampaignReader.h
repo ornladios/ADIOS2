@@ -76,6 +76,7 @@ private:
 
     void Init() final; ///< called from constructor, gets the selected Skeleton
                        /// transport method from settings
+    void ReadConfig(std::string path);
     void InitParameters() final;
     void InitTransports() final;
 
