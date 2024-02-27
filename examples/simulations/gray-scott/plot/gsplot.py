@@ -107,6 +107,7 @@ def Plot2D(plane_direction, data, args, fullshape, step, fontsize):
         writer.write(args.varname, data, data.shape, [0, 0], data.shape)
         writer.end_step()
     else:
+        print(step)
         imgfile = args.outfile + "{0:0>5}".format(step) + "_" + plane_direction + ".png"
         fig.savefig(imgfile)
 

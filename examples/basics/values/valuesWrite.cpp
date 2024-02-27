@@ -27,9 +27,13 @@
 #include <mpi.h>
 #endif
 
+const std::string MYSTR = "abcdefghijklmnopqrstuvwxyz";
+constexpr int NSTEPS = 5;
+
 int main(int argc, char *argv[])
 {
     int rank = 0, nproc = 1;
+    int retval = 0;
 #if ADIOS2_USE_MPI
     int provided;
 
@@ -38,12 +42,10 @@ int main(int argc, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
 #endif
-    const int NSTEPS = 5;
 
     // generate different random numbers on each process,
     // but always the same sequence at each run
     srand(rank * 32767);
-
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
@@ -69,8 +71,8 @@ int main(int argc, char *argv[])
         // Get io settings from the config file or
         // create one with default settings here
         adios2::IO io = adios.DeclareIO("Output");
-        io.SetEngine("BPFile");
-        io.SetParameters({{"verbose", "4"}});
+        // io.SetEngine("SST");
+        // io.SetParameters({{"DataTransport", "WAN"}});
         /*
          * Define variables
          */
@@ -81,6 +83,7 @@ int main(int argc, char *argv[])
 
         // 2. Global value, same value across processes, varying value over time
         adios2::Variable<int> varStep = io.DefineVariable<int>("Step");
+
         adios2::Variable<std::string> varGlobalString =
             io.DefineVariable<std::string>("GlobalString");
 
@@ -88,12 +91,21 @@ int main(int argc, char *argv[])
         adios2::Variable<int> varProcessID =
             io.DefineVariable<int>("ProcessID", {adios2::LocalValueDim});
 
+        adios2::Variable<std::string> varLocalString =
+            io.DefineVariable<std::string>("LocalString", {adios2::LocalValueDim});
+
         // 4. Local value, varying across processes, varying over time
         adios2::Variable<unsigned int> varNparts =
             io.DefineVariable<unsigned int>("Nparts", {adios2::LocalValueDim});
 
-        // Open file. "w" means we overwrite any existing file on disk,
-        // but Advance() will append steps to the same file.
+        // A string global value, written by every process, just to see
+        // how messy this gets. This will show up as a single string but then
+        // it has multiple blocks that can be accessed with extra effort
+        adios2::Variable<std::string> varGlobalStringEveryoneWrites =
+            io.DefineVariable<std::string>("GlobalStringEveryoneWrites");
+
+        // Open file. "Write mode" means we overwrite any existing file on disk,
+        // but BeginStep()..EndStep() will append steps to the same file.
         adios2::Engine writer = io.Open("values.bp", adios2::Mode::Write);
 
         for (int step = 0; step < NSTEPS; step++)
@@ -125,6 +137,11 @@ int main(int argc, char *argv[])
             if (step == 0)
             {
                 writer.Put<int>(varProcessID, rank);
+                int off = rand() % 15 + 1;
+                int len = rand() % 10 + 2;
+                std::string str = MYSTR.substr(off, len);
+                writer.Put<std::string>(varLocalString, str, adios2::Mode::Sync);
+                writer.Put<std::string>(varGlobalStringEveryoneWrites, str, adios2::Mode::Sync);
             }
             writer.Put<unsigned int>(varNparts, Nparts);
 
@@ -144,6 +161,7 @@ int main(int argc, char *argv[])
             std::cout << "Invalid argument exception, STOPPING PROGRAM\n";
             std::cout << e.what() << "\n";
         }
+        retval = 1;
     }
     catch (std::ios_base::failure &e)
     {
@@ -152,6 +170,7 @@ int main(int argc, char *argv[])
             std::cout << "System exception, STOPPING PROGRAM\n";
             std::cout << e.what() << "\n";
         }
+        retval = 1;
     }
     catch (std::exception &e)
     {
@@ -160,11 +179,11 @@ int main(int argc, char *argv[])
             std::cout << "Exception, STOPPING PROGRAM\n";
             std::cout << e.what() << "\n";
         }
+        retval = 1;
     }
 
 #if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
-
-    return 0;
+    return retval;
 }
