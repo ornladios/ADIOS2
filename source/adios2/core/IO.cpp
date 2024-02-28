@@ -556,6 +556,10 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         {
             engineTypeLC = "hdf5";
         }
+        else if (helper::EndsWith(name, ".aca", false))
+        {
+            engineTypeLC = "campaign";
+        }
         else if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess))
         {
             if (adios2sys::SystemTools::FileIsDirectory(name))
