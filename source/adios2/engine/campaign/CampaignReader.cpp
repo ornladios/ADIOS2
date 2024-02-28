@@ -116,14 +116,15 @@ void CampaignReader::EndStep()
 
 void CampaignReader::Init()
 {
-    // read config parameters from ~/.config/adios2
+    // read config parameters from config file
+    const std::string cfgFile = "/.config/adios2/campaign.cfg";
     std::string homePath;
 #ifdef _WIN32
     homePath = getenv("HOMEPATH");
 #else
     homePath = getenv("HOME");
 #endif
-    ReadConfig(std::string(homePath + "/.config/adios2"));
+    ReadConfig(std::string(homePath + cfgFile));
     InitParameters();
     InitTransports();
 }
