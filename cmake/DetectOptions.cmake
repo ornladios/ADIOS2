@@ -92,15 +92,14 @@ if(Blosc2_FOUND)
 
   set(adios2_blosc2_tgt Blosc2::Blosc2)
   if (Blosc2_VERSION VERSION_GREATER_EQUAL 2.10.1)
-    if (Blosc2_shlib_available)
-      set(adios2_blosc2_tgt Blosc2::blosc2_$<IF:$<BOOL:${ADIOS2_Blosc2_PREFER_SHARED}>,shared,static>)
+    if (Blosc2_shlib_available AND ADIOS2_Blosc2_PREFER_SHARED)
+      set(adios2_blosc2_tgt Blosc2::blosc2_shared)
     else()
       set(adios2_blosc2_tgt Blosc2::blosc2_static)
     endif()
   endif()
 
-  add_library(adios2_blosc2 INTERFACE)
-  target_link_libraries(adios2_blosc2 INTERFACE ${adios2_blosc2_tgt})
+  add_library(adios2_blosc2 ALIAS ${adios2_blosc2_tgt})
 endif()
 
 # BZip2
