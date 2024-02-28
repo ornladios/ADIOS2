@@ -37,7 +37,7 @@
 
 %define api.token.prefix {TOK_}
 %token
-  ASSIGN  ":="
+  ASSIGN  "="
   COMMA   ","
   COLON   ":"
   L_PAREN "("
@@ -45,65 +45,66 @@
   L_BRACE "["
   R_BRACE "]"
   ENDL    "\n"
-  VAR     "var"
 ;
 
 %token <std::string> OPERATOR
 %token <std::string> IDENTIFIER "identifier"
 %token <std::string> VARNAME
 %token <int> INT "number"
-%nterm <int> exp
 %nterm <int> list
 %nterm <std::vector<std::tuple<int, int, int>>> indices_list
 %nterm <std::tuple<int, int, int>> index
+%left OPERATOR ENDL
 
 %%
-%start unit;
-unit: assignments exp  { };
-
-assignments:
-  %empty                 {}
-| VAR assignment ENDL assignments {}
+%start lines;
+lines:
+  assignment ENDL lines {}
+| exp {}
+;
 
 assignment:
   IDENTIFIER ASSIGN VARNAME { drv.add_lookup_entry($1,  $3); }
 | IDENTIFIER ASSIGN IDENTIFIER { drv.add_lookup_entry($1,  $3); }
 | IDENTIFIER ASSIGN VARNAME L_BRACE indices_list R_BRACE { drv.add_lookup_entry($1, $3, $5); }
-| IDENTIFIER ASSIGN IDENTIFIER L_BRACE indices_list R_BRACE { drv.add_lookup_entry($1, $3, $5); };
-
-indices_list:
-indices_list COMMA index { $1.push_back($3); $$ = $1; }
-| index { $$ = {$1}; }
-| %empty { $$ = {}; };
-
-index:
-INT COLON INT COLON INT { $$ = {$1, $3, $5}; }
-| COLON INT COLON INT   { $$ = {-1, $2, $4}; }
-| INT COLON COLON INT   { $$ = {$1, -1, $4}; }
-| INT COLON INT COLON   { $$ = {$1, $3,  1}; }
-| INT COLON INT         { $$ = {$1, $3,  1}; }
-| COLON COLON INT       { $$ = {-1, -1, $3}; }
-| COLON INT COLON       { $$ = {-1, $2,  1}; }
-| COLON INT             { $$ = {-1, $2,  1}; }
-| INT COLON COLON       { $$ = {$1, -1,  1}; }
-| INT COLON             { $$ = {$1, -1,  1}; }
-| INT                   { $$ = {$1, $1,  1}; }
-| %empty                { $$ = {-1, -1,  1}; }
+| IDENTIFIER ASSIGN IDENTIFIER L_BRACE indices_list R_BRACE { drv.add_lookup_entry($1, $3, $5); }
 ;
 
 exp:
-  "number"
-| exp OPERATOR exp   { drv.createNode($2, 2); }
+  "number" {  }
+| exp OPERATOR exp { drv.createNode($2, 2); }
+| "(" exp ")" {  }
 | IDENTIFIER "(" list ")" { drv.createNode($1, $3); }
 | IDENTIFIER "[" indices_list "]" { drv.createNode($1, $3); }
 | IDENTIFIER  { drv.createNode($1); }
-| "(" exp ")"   {  }
+;
+
+
+indices_list:
+  %empty { $$ = {}; }
+| indices_list COMMA index { $1.push_back($3); $$ = $1; }
+| index { $$ = {$1}; }
+;
+
+index:
+  %empty                  { $$ = {-1, -1,  1}; }
+| INT COLON INT COLON INT { $$ = {$1, $3, $5}; }
+| COLON INT COLON INT     { $$ = {-1, $2, $4}; }
+| INT COLON COLON INT     { $$ = {$1, -1, $4}; }
+| INT COLON INT COLON     { $$ = {$1, $3,  1}; }
+| INT COLON INT           { $$ = {$1, $3,  1}; }
+| COLON COLON INT         { $$ = {-1, -1, $3}; }
+| COLON INT COLON         { $$ = {-1, $2,  1}; }
+| COLON INT               { $$ = {-1, $2,  1}; }
+| INT COLON COLON         { $$ = {$1, -1,  1}; }
+| INT COLON               { $$ = {$1, -1,  1}; }
+| INT                     { $$ = {$1, $1,  1}; }
 ;
 
 list:
-exp COMMA list { $$ = $3 + 1; }
+  %empty { $$ = 0; }
+| exp COMMA list { $$ = $3 + 1; }
 | exp { $$ = 1; }
-| %empty { $$ = 0; }
 %%
 
 void

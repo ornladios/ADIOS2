@@ -1,597 +1,577 @@
-State 15 conflicts: 2 reduce/reduce
-State 27 conflicts: 1 shift/reduce
-State 28 conflicts: 2 reduce/reduce
-State 29 conflicts: 2 reduce/reduce
+State 11 conflicts: 2 reduce/reduce
+State 26 conflicts: 2 reduce/reduce
+State 27 conflicts: 2 reduce/reduce
 
 
 Grammar
 
-    0 $accept: unit $end
+    0 $accept: lines $end
 
-    1 unit: assignments exp
+    1 lines: assignment "\n" lines
+    2      | exp
 
-    2 assignments: ε
-    3            | "var" assignment "\n" assignments
+    3 assignment: "identifier" "=" VARNAME
+    4           | "identifier" "=" "identifier"
+    5           | "identifier" "=" VARNAME "[" indices_list "]"
+    6           | "identifier" "=" "identifier" "[" indices_list "]"
 
-    4 assignment: "identifier" ":=" VARNAME
-    5           | "identifier" ":=" "identifier"
-    6           | "identifier" ":=" VARNAME "[" indices_list "]"
-    7           | "identifier" ":=" "identifier" "[" indices_list "]"
+    7 exp: "number"
+    8    | exp OPERATOR exp
+    9    | "(" exp ")"
+   10    | "identifier" "(" list ")"
+   11    | "identifier" "[" indices_list "]"
+   12    | "identifier"
 
-    8 indices_list: indices_list "," index
-    9             | index
-   10             | ε
+   13 indices_list: ε
+   14             | indices_list "," index
+   15             | index
 
-   11 index: "number" ":" "number" ":" "number"
-   12      | ":" "number" ":" "number"
-   13      | "number" ":" ":" "number"
-   14      | "number" ":" "number" ":"
-   15      | "number" ":" "number"
-   16      | ":" ":" "number"
-   17      | ":" "number" ":"
-   18      | ":" "number"
-   19      | "number" ":" ":"
-   20      | "number" ":"
-   21      | "number"
-   22      | ε
+   16 index: ε
+   17      | "number" ":" "number" ":" "number"
+   18      | ":" "number" ":" "number"
+   19      | "number" ":" ":" "number"
+   20      | "number" ":" "number" ":"
+   21      | "number" ":" "number"
+   22      | ":" ":" "number"
+   23      | ":" "number" ":"
+   24      | ":" "number"
+   25      | "number" ":" ":"
+   26      | "number" ":"
+   27      | "number"
 
-   23 exp: "number"
-   24    | exp OPERATOR exp
-   25    | "identifier" "(" list ")"
-   26    | "identifier" "[" indices_list "]"
-   27    | "identifier"
-   28    | "(" exp ")"
-
-   29 list: exp "," list
+   28 list: ε
+   29     | exp "," list
    30     | exp
-   31     | ε
 
 
 Terminals, with rules where they appear
 
     $end (0) 0
     error (256)
-    ":=" (258) 4 5 6 7
-    "," (259) 8 29
-    ":" (260) 11 12 13 14 15 16 17 18 19 20
-    "(" (261) 25 28
-    ")" (262) 25 28
-    "[" (263) 6 7 26
-    "]" (264) 6 7 26
-    "\n" (265) 3
-    "var" (266) 3
-    OPERATOR <std::string> (267) 24
-    "identifier" <std::string> (268) 4 5 6 7 25 26 27
-    VARNAME <std::string> (269) 4 6
-    "number" <int> (270) 11 12 13 14 15 16 17 18 19 20 21 23
+    "=" (258) 3 4 5 6
+    "," (259) 14 29
+    ":" (260) 17 18 19 20 21 22 23 24 25 26
+    "(" (261) 9 10
+    ")" (262) 9 10
+    "[" (263) 5 6 11
+    "]" (264) 5 6 11
+    "\n" (265) 1
+    OPERATOR <std::string> (266) 8
+    "identifier" <std::string> (267) 3 4 5 6 10 11 12
+    VARNAME <std::string> (268) 3 5
+    "number" <int> (269) 7 17 18 19 20 21 22 23 24 25 26 27
 
 
 Nonterminals, with rules where they appear
 
-    $accept (16)
+    $accept (15)
         on left: 0
-    unit (17)
-        on left: 1
-        on right: 0
-    assignments (18)
-        on left: 2 3
-        on right: 1 3
-    assignment (19)
-        on left: 4 5 6 7
-        on right: 3
-    indices_list <std::vector<std::tuple<int, int, int>>> (20)
-        on left: 8 9 10
-        on right: 6 7 8 26
-    index <std::tuple<int, int, int>> (21)
-        on left: 11 12 13 14 15 16 17 18 19 20 21 22
-        on right: 8 9
-    exp <int> (22)
-        on left: 23 24 25 26 27 28
-        on right: 1 24 28 29 30
-    list <int> (23)
-        on left: 29 30 31
-        on right: 25 29
+    lines (16)
+        on left: 1 2
+        on right: 0 1
+    assignment (17)
+        on left: 3 4 5 6
+        on right: 1
+    exp (18)
+        on left: 7 8 9 10 11 12
+        on right: 2 8 9 29 30
+    indices_list <std::vector<std::tuple<int, int, int>>> (19)
+        on left: 13 14 15
+        on right: 5 6 11 14
+    index <std::tuple<int, int, int>> (20)
+        on left: 16 17 18 19 20 21 22 23 24 25 26 27
+        on right: 14 15
+    list <int> (21)
+        on left: 28 29 30
+        on right: 10 29
 
 
 State 0
 
-    0 $accept: • unit $end
+    0 $accept: • lines $end
 
-    "var"  shift, and go to state 1
+    "("           shift, and go to state 1
+    "identifier"  shift, and go to state 2
+    "number"      shift, and go to state 3
 
-    $default  reduce using rule 2 (assignments)
-
-    unit         go to state 2
-    assignments  go to state 3
+    lines       go to state 4
+    assignment  go to state 5
+    exp         go to state 6
 
 
 State 1
 
-    3 assignments: "var" • assignment "\n" assignments
+    9 exp: "(" • exp ")"
 
-    "identifier"  shift, and go to state 4
+    "("           shift, and go to state 1
+    "identifier"  shift, and go to state 7
+    "number"      shift, and go to state 3
 
-    assignment  go to state 5
+    exp  go to state 8
 
 
 State 2
 
-    0 $accept: unit • $end
+    3 assignment: "identifier" • "=" VARNAME
+    4           | "identifier" • "=" "identifier"
+    5           | "identifier" • "=" VARNAME "[" indices_list "]"
+    6           | "identifier" • "=" "identifier" "[" indices_list "]"
+   10 exp: "identifier" • "(" list ")"
+   11    | "identifier" • "[" indices_list "]"
+   12    | "identifier" •
 
-    $end  shift, and go to state 6
+    "="  shift, and go to state 9
+    "("  shift, and go to state 10
+    "["  shift, and go to state 11
+
+    $default  reduce using rule 12 (exp)
 
 
 State 3
 
-    1 unit: assignments • exp
+    7 exp: "number" •
 
-    "("           shift, and go to state 7
-    "identifier"  shift, and go to state 8
-    "number"      shift, and go to state 9
-
-    exp  go to state 10
+    $default  reduce using rule 7 (exp)
 
 
 State 4
 
-    4 assignment: "identifier" • ":=" VARNAME
-    5           | "identifier" • ":=" "identifier"
-    6           | "identifier" • ":=" VARNAME "[" indices_list "]"
-    7           | "identifier" • ":=" "identifier" "[" indices_list "]"
+    0 $accept: lines • $end
 
-    ":="  shift, and go to state 11
+    $end  shift, and go to state 12
 
 
 State 5
 
-    3 assignments: "var" assignment • "\n" assignments
+    1 lines: assignment • "\n" lines
 
-    "\n"  shift, and go to state 12
+    "\n"  shift, and go to state 13
 
 
 State 6
 
-    0 $accept: unit $end •
+    2 lines: exp •
+    8 exp: exp • OPERATOR exp
 
-    $default  accept
+    OPERATOR  shift, and go to state 14
+
+    $default  reduce using rule 2 (lines)
 
 
 State 7
 
-   28 exp: "(" • exp ")"
+   10 exp: "identifier" • "(" list ")"
+   11    | "identifier" • "[" indices_list "]"
+   12    | "identifier" •
 
-    "("           shift, and go to state 7
-    "identifier"  shift, and go to state 8
-    "number"      shift, and go to state 9
+    "("  shift, and go to state 10
+    "["  shift, and go to state 11
 
-    exp  go to state 13
+    $default  reduce using rule 12 (exp)
 
 
 State 8
 
-   25 exp: "identifier" • "(" list ")"
-   26    | "identifier" • "[" indices_list "]"
-   27    | "identifier" •
+    8 exp: exp • OPERATOR exp
+    9    | "(" exp • ")"
 
-    "("  shift, and go to state 14
-    "["  shift, and go to state 15
-
-    $default  reduce using rule 27 (exp)
+    ")"       shift, and go to state 15
+    OPERATOR  shift, and go to state 14
 
 
 State 9
 
-   23 exp: "number" •
+    3 assignment: "identifier" "=" • VARNAME
+    4           | "identifier" "=" • "identifier"
+    5           | "identifier" "=" • VARNAME "[" indices_list "]"
+    6           | "identifier" "=" • "identifier" "[" indices_list "]"
 
-    $default  reduce using rule 23 (exp)
+    "identifier"  shift, and go to state 16
+    VARNAME       shift, and go to state 17
 
 
 State 10
 
-    1 unit: assignments exp •
-   24 exp: exp • OPERATOR exp
+   10 exp: "identifier" "(" • list ")"
 
-    OPERATOR  shift, and go to state 16
+    "("           shift, and go to state 1
+    "identifier"  shift, and go to state 7
+    "number"      shift, and go to state 3
 
-    $default  reduce using rule 1 (unit)
+    $default  reduce using rule 28 (list)
+
+    exp   go to state 18
+    list  go to state 19
 
 
 State 11
 
-    4 assignment: "identifier" ":=" • VARNAME
-    5           | "identifier" ":=" • "identifier"
-    6           | "identifier" ":=" • VARNAME "[" indices_list "]"
-    7           | "identifier" ":=" • "identifier" "[" indices_list "]"
+   11 exp: "identifier" "[" • indices_list "]"
 
-    "identifier"  shift, and go to state 17
-    VARNAME       shift, and go to state 18
+    ":"       shift, and go to state 20
+    "number"  shift, and go to state 21
+
+    ","       reduce using rule 13 (indices_list)
+    ","       [reduce using rule 16 (index)]
+    "]"       reduce using rule 13 (indices_list)
+    "]"       [reduce using rule 16 (index)]
+    $default  reduce using rule 13 (indices_list)
+
+    indices_list  go to state 22
+    index         go to state 23
 
 
 State 12
 
-    3 assignments: "var" assignment "\n" • assignments
+    0 $accept: lines $end •
 
-    "var"  shift, and go to state 1
-
-    $default  reduce using rule 2 (assignments)
-
-    assignments  go to state 19
+    $default  accept
 
 
 State 13
 
-   24 exp: exp • OPERATOR exp
-   28    | "(" exp • ")"
+    1 lines: assignment "\n" • lines
 
-    ")"       shift, and go to state 20
-    OPERATOR  shift, and go to state 16
+    "("           shift, and go to state 1
+    "identifier"  shift, and go to state 2
+    "number"      shift, and go to state 3
+
+    lines       go to state 24
+    assignment  go to state 5
+    exp         go to state 6
 
 
 State 14
 
-   25 exp: "identifier" "(" • list ")"
+    8 exp: exp OPERATOR • exp
 
-    "("           shift, and go to state 7
-    "identifier"  shift, and go to state 8
-    "number"      shift, and go to state 9
+    "("           shift, and go to state 1
+    "identifier"  shift, and go to state 7
+    "number"      shift, and go to state 3
 
-    $default  reduce using rule 31 (list)
-
-    exp   go to state 21
-    list  go to state 22
+    exp  go to state 25
 
 
 State 15
 
-   26 exp: "identifier" "[" • indices_list "]"
+    9 exp: "(" exp ")" •
 
-    ":"       shift, and go to state 23
-    "number"  shift, and go to state 24
-
-    ","       reduce using rule 10 (indices_list)
-    ","       [reduce using rule 22 (index)]
-    "]"       reduce using rule 10 (indices_list)
-    "]"       [reduce using rule 22 (index)]
-    $default  reduce using rule 10 (indices_list)
-
-    indices_list  go to state 25
-    index         go to state 26
+    $default  reduce using rule 9 (exp)
 
 
 State 16
 
-   24 exp: exp OPERATOR • exp
+    4 assignment: "identifier" "=" "identifier" •
+    6           | "identifier" "=" "identifier" • "[" indices_list "]"
 
-    "("           shift, and go to state 7
-    "identifier"  shift, and go to state 8
-    "number"      shift, and go to state 9
-
-    exp  go to state 27
-
-
-State 17
-
-    5 assignment: "identifier" ":=" "identifier" •
-    7           | "identifier" ":=" "identifier" • "[" indices_list "]"
-
-    "["  shift, and go to state 28
-
-    $default  reduce using rule 5 (assignment)
-
-
-State 18
-
-    4 assignment: "identifier" ":=" VARNAME •
-    6           | "identifier" ":=" VARNAME • "[" indices_list "]"
-
-    "["  shift, and go to state 29
+    "["  shift, and go to state 26
 
     $default  reduce using rule 4 (assignment)
 
 
-State 19
+State 17
 
-    3 assignments: "var" assignment "\n" assignments •
+    3 assignment: "identifier" "=" VARNAME •
+    5           | "identifier" "=" VARNAME • "[" indices_list "]"
 
-    $default  reduce using rule 3 (assignments)
+    "["  shift, and go to state 27
 
-
-State 20
-
-   28 exp: "(" exp ")" •
-
-    $default  reduce using rule 28 (exp)
+    $default  reduce using rule 3 (assignment)
 
 
-State 21
+State 18
 
-   24 exp: exp • OPERATOR exp
+    8 exp: exp • OPERATOR exp
    29 list: exp • "," list
    30     | exp •
 
-    ","       shift, and go to state 30
-    OPERATOR  shift, and go to state 16
+    ","       shift, and go to state 28
+    OPERATOR  shift, and go to state 14
 
     $default  reduce using rule 30 (list)
 
 
+State 19
+
+   10 exp: "identifier" "(" list • ")"
+
+    ")"  shift, and go to state 29
+
+
+State 20
+
+   18 index: ":" • "number" ":" "number"
+   22      | ":" • ":" "number"
+   23      | ":" • "number" ":"
+   24      | ":" • "number"
+
+    ":"       shift, and go to state 30
+    "number"  shift, and go to state 31
+
+
+State 21
+
+   17 index: "number" • ":" "number" ":" "number"
+   19      | "number" • ":" ":" "number"
+   20      | "number" • ":" "number" ":"
+   21      | "number" • ":" "number"
+   25      | "number" • ":" ":"
+   26      | "number" • ":"
+   27      | "number" •
+
+    ":"  shift, and go to state 32
+
+    $default  reduce using rule 27 (index)
+
+
 State 22
 
-   25 exp: "identifier" "(" list • ")"
+   11 exp: "identifier" "[" indices_list • "]"
+   14 indices_list: indices_list • "," index
 
-    ")"  shift, and go to state 31
+    ","  shift, and go to state 33
+    "]"  shift, and go to state 34
 
 
 State 23
 
-   12 index: ":" • "number" ":" "number"
-   16      | ":" • ":" "number"
-   17      | ":" • "number" ":"
-   18      | ":" • "number"
+   15 indices_list: index •
 
-    ":"       shift, and go to state 32
-    "number"  shift, and go to state 33
+    $default  reduce using rule 15 (indices_list)
 
 
 State 24
 
-   11 index: "number" • ":" "number" ":" "number"
-   13      | "number" • ":" ":" "number"
-   14      | "number" • ":" "number" ":"
-   15      | "number" • ":" "number"
-   19      | "number" • ":" ":"
-   20      | "number" • ":"
-   21      | "number" •
+    1 lines: assignment "\n" lines •
 
-    ":"  shift, and go to state 34
-
-    $default  reduce using rule 21 (index)
+    $default  reduce using rule 1 (lines)
 
 
 State 25
 
-    8 indices_list: indices_list • "," index
-   26 exp: "identifier" "[" indices_list • "]"
+    8 exp: exp • OPERATOR exp
+    8    | exp OPERATOR exp •
 
-    ","  shift, and go to state 35
-    "]"  shift, and go to state 36
+    $default  reduce using rule 8 (exp)
 
 
 State 26
 
-    9 indices_list: index •
+    6 assignment: "identifier" "=" "identifier" "[" • indices_list "]"
 
-    $default  reduce using rule 9 (indices_list)
+    ":"       shift, and go to state 20
+    "number"  shift, and go to state 21
+
+    ","       reduce using rule 13 (indices_list)
+    ","       [reduce using rule 16 (index)]
+    "]"       reduce using rule 13 (indices_list)
+    "]"       [reduce using rule 16 (index)]
+    $default  reduce using rule 13 (indices_list)
+
+    indices_list  go to state 35
+    index         go to state 23
 
 
 State 27
 
-   24 exp: exp • OPERATOR exp
-   24    | exp OPERATOR exp •
+    5 assignment: "identifier" "=" VARNAME "[" • indices_list "]"
 
-    OPERATOR  shift, and go to state 16
+    ":"       shift, and go to state 20
+    "number"  shift, and go to state 21
 
-    OPERATOR  [reduce using rule 24 (exp)]
-    $default  reduce using rule 24 (exp)
+    ","       reduce using rule 13 (indices_list)
+    ","       [reduce using rule 16 (index)]
+    "]"       reduce using rule 13 (indices_list)
+    "]"       [reduce using rule 16 (index)]
+    $default  reduce using rule 13 (indices_list)
+
+    indices_list  go to state 36
+    index         go to state 23
 
 
 State 28
 
-    7 assignment: "identifier" ":=" "identifier" "[" • indices_list "]"
+   29 list: exp "," • list
 
-    ":"       shift, and go to state 23
-    "number"  shift, and go to state 24
+    "("           shift, and go to state 1
+    "identifier"  shift, and go to state 7
+    "number"      shift, and go to state 3
 
-    ","       reduce using rule 10 (indices_list)
-    ","       [reduce using rule 22 (index)]
-    "]"       reduce using rule 10 (indices_list)
-    "]"       [reduce using rule 22 (index)]
-    $default  reduce using rule 10 (indices_list)
+    $default  reduce using rule 28 (list)
 
-    indices_list  go to state 37
-    index         go to state 26
+    exp   go to state 18
+    list  go to state 37
 
 
 State 29
 
-    6 assignment: "identifier" ":=" VARNAME "[" • indices_list "]"
+   10 exp: "identifier" "(" list ")" •
 
-    ":"       shift, and go to state 23
-    "number"  shift, and go to state 24
-
-    ","       reduce using rule 10 (indices_list)
-    ","       [reduce using rule 22 (index)]
-    "]"       reduce using rule 10 (indices_list)
-    "]"       [reduce using rule 22 (index)]
-    $default  reduce using rule 10 (indices_list)
-
-    indices_list  go to state 38
-    index         go to state 26
+    $default  reduce using rule 10 (exp)
 
 
 State 30
 
-   29 list: exp "," • list
+   22 index: ":" ":" • "number"
 
-    "("           shift, and go to state 7
-    "identifier"  shift, and go to state 8
-    "number"      shift, and go to state 9
-
-    $default  reduce using rule 31 (list)
-
-    exp   go to state 21
-    list  go to state 39
+    "number"  shift, and go to state 38
 
 
 State 31
 
-   25 exp: "identifier" "(" list ")" •
+   18 index: ":" "number" • ":" "number"
+   23      | ":" "number" • ":"
+   24      | ":" "number" •
 
-    $default  reduce using rule 25 (exp)
+    ":"  shift, and go to state 39
+
+    $default  reduce using rule 24 (index)
 
 
 State 32
 
-   16 index: ":" ":" • "number"
+   17 index: "number" ":" • "number" ":" "number"
+   19      | "number" ":" • ":" "number"
+   20      | "number" ":" • "number" ":"
+   21      | "number" ":" • "number"
+   25      | "number" ":" • ":"
+   26      | "number" ":" •
 
-    "number"  shift, and go to state 40
+    ":"       shift, and go to state 40
+    "number"  shift, and go to state 41
+
+    $default  reduce using rule 26 (index)
 
 
 State 33
 
-   12 index: ":" "number" • ":" "number"
-   17      | ":" "number" • ":"
-   18      | ":" "number" •
+   14 indices_list: indices_list "," • index
 
-    ":"  shift, and go to state 41
+    ":"       shift, and go to state 20
+    "number"  shift, and go to state 21
 
-    $default  reduce using rule 18 (index)
+    $default  reduce using rule 16 (index)
+
+    index  go to state 42
 
 
 State 34
 
-   11 index: "number" ":" • "number" ":" "number"
-   13      | "number" ":" • ":" "number"
-   14      | "number" ":" • "number" ":"
-   15      | "number" ":" • "number"
-   19      | "number" ":" • ":"
-   20      | "number" ":" •
+   11 exp: "identifier" "[" indices_list "]" •
 
-    ":"       shift, and go to state 42
-    "number"  shift, and go to state 43
-
-    $default  reduce using rule 20 (index)
+    $default  reduce using rule 11 (exp)
 
 
 State 35
 
-    8 indices_list: indices_list "," • index
+    6 assignment: "identifier" "=" "identifier" "[" indices_list • "]"
+   14 indices_list: indices_list • "," index
 
-    ":"       shift, and go to state 23
-    "number"  shift, and go to state 24
-
-    $default  reduce using rule 22 (index)
-
-    index  go to state 44
+    ","  shift, and go to state 33
+    "]"  shift, and go to state 43
 
 
 State 36
 
-   26 exp: "identifier" "[" indices_list "]" •
+    5 assignment: "identifier" "=" VARNAME "[" indices_list • "]"
+   14 indices_list: indices_list • "," index
 
-    $default  reduce using rule 26 (exp)
+    ","  shift, and go to state 33
+    "]"  shift, and go to state 44
 
 
 State 37
-
-    7 assignment: "identifier" ":=" "identifier" "[" indices_list • "]"
-    8 indices_list: indices_list • "," index
-
-    ","  shift, and go to state 35
-    "]"  shift, and go to state 45
-
-
-State 38
-
-    6 assignment: "identifier" ":=" VARNAME "[" indices_list • "]"
-    8 indices_list: indices_list • "," index
-
-    ","  shift, and go to state 35
-    "]"  shift, and go to state 46
-
-
-State 39
 
    29 list: exp "," list •
 
     $default  reduce using rule 29 (list)
 
 
+State 38
+
+   22 index: ":" ":" "number" •
+
+    $default  reduce using rule 22 (index)
+
+
+State 39
+
+   18 index: ":" "number" ":" • "number"
+   23      | ":" "number" ":" •
+
+    "number"  shift, and go to state 45
+
+    $default  reduce using rule 23 (index)
+
+
 State 40
 
-   16 index: ":" ":" "number" •
+   19 index: "number" ":" ":" • "number"
+   25      | "number" ":" ":" •
 
-    $default  reduce using rule 16 (index)
+    "number"  shift, and go to state 46
+
+    $default  reduce using rule 25 (index)
 
 
 State 41
 
-   12 index: ":" "number" ":" • "number"
-   17      | ":" "number" ":" •
+   17 index: "number" ":" "number" • ":" "number"
+   20      | "number" ":" "number" • ":"
+   21      | "number" ":" "number" •
 
-    "number"  shift, and go to state 47
+    ":"  shift, and go to state 47
 
-    $default  reduce using rule 17 (index)
+    $default  reduce using rule 21 (index)
 
 
 State 42
 
-   13 index: "number" ":" ":" • "number"
-   19      | "number" ":" ":" •
+   14 indices_list: indices_list "," index •
 
-    "number"  shift, and go to state 48
-
-    $default  reduce using rule 19 (index)
+    $default  reduce using rule 14 (indices_list)
 
 
 State 43
 
-   11 index: "number" ":" "number" • ":" "number"
-   14      | "number" ":" "number" • ":"
-   15      | "number" ":" "number" •
-
-    ":"  shift, and go to state 49
-
-    $default  reduce using rule 15 (index)
-
-
-State 44
-
-    8 indices_list: indices_list "," index •
-
-    $default  reduce using rule 8 (indices_list)
-
-
-State 45
-
-    7 assignment: "identifier" ":=" "identifier" "[" indices_list "]" •
-
-    $default  reduce using rule 7 (assignment)
-
-
-State 46
-
-    6 assignment: "identifier" ":=" VARNAME "[" indices_list "]" •
+    6 assignment: "identifier" "=" "identifier" "[" indices_list "]" •
 
     $default  reduce using rule 6 (assignment)
 
 
+State 44
+
+    5 assignment: "identifier" "=" VARNAME "[" indices_list "]" •
+
+    $default  reduce using rule 5 (assignment)
+
+
+State 45
+
+   18 index: ":" "number" ":" "number" •
+
+    $default  reduce using rule 18 (index)
+
+
+State 46
+
+   19 index: "number" ":" ":" "number" •
+
+    $default  reduce using rule 19 (index)
+
+
 State 47
 
-   12 index: ":" "number" ":" "number" •
+   17 index: "number" ":" "number" ":" • "number"
+   20      | "number" ":" "number" ":" •
 
-    $default  reduce using rule 12 (index)
+    "number"  shift, and go to state 48
+
+    $default  reduce using rule 20 (index)
 
 
 State 48
 
-   13 index: "number" ":" ":" "number" •
+   17 index: "number" ":" "number" ":" "number" •
 
-    $default  reduce using rule 13 (index)
-
-
-State 49
-
-   11 index: "number" ":" "number" ":" • "number"
-   14      | "number" ":" "number" ":" •
-
-    "number"  shift, and go to state 50
-
-    $default  reduce using rule 14 (index)
-
-
-State 50
-
-   11 index: "number" ":" "number" ":" "number" •
-
-    $default  reduce using rule 11 (index)
+    $default  reduce using rule 17 (index)

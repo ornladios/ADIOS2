@@ -21,7 +21,7 @@ public:
   void set_num_subexprs(size_t);
   void pushback_subexpr(ASTNode*);
   void insert_subexpr_n(ASTNode*, size_t);
-  std::string printpretty(std::string);
+  std::string printpretty(std::string = "");
 
   std::vector<ASTNode*> get_subexprs();
   std::string get_opname();

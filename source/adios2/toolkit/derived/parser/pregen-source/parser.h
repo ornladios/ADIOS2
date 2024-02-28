@@ -419,7 +419,6 @@ namespace adios2 { namespace detail {
     union union_type
     {
       // "number"
-      // exp
       // list
       char dummy1[sizeof (int)];
 
@@ -485,7 +484,7 @@ namespace adios2 { namespace detail {
     TOK_YYEOF = 0,                 // "end of file"
     TOK_YYerror = 1,               // error
     TOK_YYUNDEF = 2,               // "invalid token"
-    TOK_ASSIGN = 3,                // ":="
+    TOK_ASSIGN = 3,                // "="
     TOK_COMMA = 4,                 // ","
     TOK_COLON = 5,                 // ":"
     TOK_L_PAREN = 6,               // "("
@@ -493,11 +492,10 @@ namespace adios2 { namespace detail {
     TOK_L_BRACE = 8,               // "["
     TOK_R_BRACE = 9,               // "]"
     TOK_ENDL = 10,                 // "\n"
-    TOK_VAR = 11,                  // "var"
-    TOK_OPERATOR = 12,             // OPERATOR
-    TOK_IDENTIFIER = 13,           // "identifier"
-    TOK_VARNAME = 14,              // VARNAME
-    TOK_INT = 15                   // "number"
+    TOK_OPERATOR = 11,             // OPERATOR
+    TOK_IDENTIFIER = 12,           // "identifier"
+    TOK_VARNAME = 13,              // VARNAME
+    TOK_INT = 14                   // "number"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -514,12 +512,12 @@ namespace adios2 { namespace detail {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 16, ///< Number of tokens.
+        YYNTOKENS = 15, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
         S_YYUNDEF = 2,                           // "invalid token"
-        S_ASSIGN = 3,                            // ":="
+        S_ASSIGN = 3,                            // "="
         S_COMMA = 4,                             // ","
         S_COLON = 5,                             // ":"
         S_L_PAREN = 6,                           // "("
@@ -527,19 +525,17 @@ namespace adios2 { namespace detail {
         S_L_BRACE = 8,                           // "["
         S_R_BRACE = 9,                           // "]"
         S_ENDL = 10,                             // "\n"
-        S_VAR = 11,                              // "var"
-        S_OPERATOR = 12,                         // OPERATOR
-        S_IDENTIFIER = 13,                       // "identifier"
-        S_VARNAME = 14,                          // VARNAME
-        S_INT = 15,                              // "number"
-        S_YYACCEPT = 16,                         // $accept
-        S_unit = 17,                             // unit
-        S_assignments = 18,                      // assignments
-        S_assignment = 19,                       // assignment
-        S_indices_list = 20,                     // indices_list
-        S_index = 21,                            // index
-        S_exp = 22,                              // exp
-        S_list = 23                              // list
+        S_OPERATOR = 11,                         // OPERATOR
+        S_IDENTIFIER = 12,                       // "identifier"
+        S_VARNAME = 13,                          // VARNAME
+        S_INT = 14,                              // "number"
+        S_YYACCEPT = 15,                         // $accept
+        S_lines = 16,                            // lines
+        S_assignment = 17,                       // assignment
+        S_exp = 18,                              // exp
+        S_indices_list = 19,                     // indices_list
+        S_index = 20,                            // index
+        S_list = 21                              // list
       };
     };
 
@@ -577,7 +573,6 @@ namespace adios2 { namespace detail {
         switch (this->kind ())
     {
       case symbol_kind::S_INT: // "number"
-      case symbol_kind::S_exp: // exp
       case symbol_kind::S_list: // list
         value.move< int > (std::move (that.value));
         break;
@@ -700,7 +695,6 @@ namespace adios2 { namespace detail {
 switch (yykind)
     {
       case symbol_kind::S_INT: // "number"
-      case symbol_kind::S_exp: // exp
       case symbol_kind::S_list: // list
         value.template destroy< int > ();
         break;
@@ -817,7 +811,7 @@ switch (yykind)
       {
 #if !defined _MSC_VER || defined __clang__
         YY_ASSERT (tok == token::TOK_YYEOF
-                   || (token::TOK_YYerror <= tok && tok <= token::TOK_VAR));
+                   || (token::TOK_YYerror <= tok && tok <= token::TOK_ENDL));
 #endif
       }
 #if 201103L <= YY_CPLUSPLUS
@@ -1055,21 +1049,6 @@ switch (yykind)
       make_ENDL (const location_type& l)
       {
         return symbol_type (token::TOK_ENDL, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_VAR (location_type l)
-      {
-        return symbol_type (token::TOK_VAR, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_VAR (const location_type& l)
-      {
-        return symbol_type (token::TOK_VAR, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1476,9 +1455,9 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 49,     ///< Last index in yytable_.
-      yynnts_ = 8,  ///< Number of nonterminal symbols.
-      yyfinal_ = 6 ///< Termination state number.
+      yylast_ = 51,     ///< Last index in yytable_.
+      yynnts_ = 7,  ///< Number of nonterminal symbols.
+      yyfinal_ = 12 ///< Termination state number.
     };
 
 
@@ -1504,7 +1483,6 @@ switch (yykind)
     switch (this->kind ())
     {
       case symbol_kind::S_INT: // "number"
-      case symbol_kind::S_exp: // exp
       case symbol_kind::S_list: // list
         value.copy< int > (YY_MOVE (that.value));
         break;
@@ -1555,7 +1533,6 @@ switch (yykind)
     switch (this->kind ())
     {
       case symbol_kind::S_INT: // "number"
-      case symbol_kind::S_exp: // exp
       case symbol_kind::S_list: // list
         value.move< int > (YY_MOVE (s.value));
         break;
@@ -1641,7 +1618,7 @@ switch (yykind)
 
 #line 6 "..//parser.y"
 } } // adios2::detail
-#line 1645 "parser.h"
+#line 1622 "parser.h"
 
 
 

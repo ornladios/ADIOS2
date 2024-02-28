@@ -79,7 +79,7 @@
 #endif
 %}
 
-%option noyywrap nounput noinput batch debug
+%option noyywrap nounput noinput batch
 
 %{
   // A number symbol corresponding to the value in S.
@@ -88,7 +88,6 @@
 %}
 
 op    [-+*/^]
-var   "var"
 id    [a-zA-Z][a-zA-Z_0-9_]*
 path  [a-zA-Z][a-zA-Z0-9_\\./-]*
 int   [0-9]+
@@ -108,7 +107,7 @@ blank [ \t\r]
 {blank}+   loc.step ();
 \n+        loc.lines (yyleng); loc.step (); return adios2::detail::parser::make_ENDL (loc);
 
-":="       return adios2::detail::parser::make_ASSIGN  (loc);
+"="        return adios2::detail::parser::make_ASSIGN  (loc);
 ","        return adios2::detail::parser::make_COMMA   (loc);
 ":"        return adios2::detail::parser::make_COLON   (loc);
 "("        return adios2::detail::parser::make_L_PAREN (loc);
@@ -117,7 +116,6 @@ blank [ \t\r]
 "]"        return adios2::detail::parser::make_R_BRACE (loc);
 
 {int}      return make_INT (yytext, loc);
-{var}      return adios2::detail::parser::make_VAR (loc);
 {op}       return adios2::detail::parser::make_OPERATOR (yytext, loc);
 {id}       return adios2::detail::parser::make_IDENTIFIER (yytext, loc);
 {path}     return adios2::detail::parser::make_VARNAME (yytext, loc);

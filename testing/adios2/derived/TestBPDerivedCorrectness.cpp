@@ -42,9 +42,9 @@ TEST(DerivedCorrectness, AddCorrectnessTest)
     auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     // clang-format off
     auto addU = bpOut.DefineDerivedVariable(derivedname,
-                                            "var x:=" + varname[0] + " \n"
-                                            "var y:=" + varname[1] + " \n"
-                                            "var z:=" + varname[2] + " \n"
+                                            "x =" + varname[0] + " \n"
+                                            "y =" + varname[1] + " \n"
+                                            "z =" + varname[2] + " \n"
                                             "x+y+z",
                                             adios2::DerivedVarType::StoreData);
     // clang-format on
@@ -117,9 +117,9 @@ TEST(DerivedCorrectness, MagCorrectnessTest)
     auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     // clang-format off
     auto magU = bpOut.DefineDerivedVariable(derivedname,
-                                            "var x:=" + varname[0] + " \n"
-                                            "var y:=" + varname[1] + " \n"
-                                            "var z:=" + varname[2] + " \n"
+                                            "x =" + varname[0] + " \n"
+                                            "y =" + varname[1] + " \n"
+                                            "z =" + varname[2] + " \n"
                                             "magnitude(x,y,z)",
                                             adios2::DerivedVarType::StoreData);
     // clang-format on
@@ -290,9 +290,9 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
     auto VZ = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     // clang-format off
     auto curlV = bpOut.DefineDerivedVariable(derivedname,
-                                            "var Vx:=" + varname[0] + " \n"
-                                            "var Vy:=" + varname[1] + " \n"
-                                            "var Vz:=" + varname[2] + " \n"
+                                            "Vx =" + varname[0] + " \n"
+                                            "Vy =" + varname[1] + " \n"
+                                            "Vz =" + varname[2] + " \n"
                                             "curl(Vx,Vy,Vz)",
                                             adios2::DerivedVarType::StoreData);
     // clang-format on

@@ -3,7 +3,7 @@ PARSER_SOURCE = ../
 OPT = -std=c++11 -I$(PARSER_SOURCE) -I./
 BISON = bison
 
-simple-c: $(PARSER_SOURCE)/parser-test-driver.cpp $(PARSER_SOURCE)/ASTDriver.cpp $(PARSER_SOURCE)/ASTNode.cpp lexer.cpp parser.cpp
+simple-c: $(PARSER_SOURCE)/test-driver.cpp $(PARSER_SOURCE)/ASTDriver.cpp $(PARSER_SOURCE)/ASTNode.cpp lexer.cpp parser.cpp
 	$(CC) $(OPT) $^ -o $@
 
 lexer.h lexer.cpp: $(PARSER_SOURCE)/lexer.l

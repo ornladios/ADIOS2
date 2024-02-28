@@ -49,22 +49,22 @@ void ASTNode::insert_subexpr_n(ASTNode *subexpr, size_t index)
 
 std::string ASTNode::printpretty(std::string indent)
 {
-  std::string result = indent + opname + "\n";
+  std::string result = indent + "Node: " + opname + "\n";
   if (!alias.empty())
     {
-      result += indent + "(alias: " + alias + ")\n";
+      result += indent + " (alias: \"" + alias + "\")\n";
     }
   if (!varname.empty())
     {
-      result += indent + "(varname: " + varname + ")\n";
+      result += indent + " (varname: \"" + varname + "\")\n";
     }
   else if (!alias.empty())
     {
-      result += indent + "(varname not found)\n";
+      result += indent + " (varname not found)\n";
     }
   if (!indices.empty())
     {
-      result += indent + "(indices: [ ";
+      result += indent + " (indices: [ ";
       for (std::tuple<int, int, int> idx: indices)
 	{
 	  result += std::to_string(std::get<0>(idx)) + ":";
