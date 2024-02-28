@@ -934,6 +934,7 @@ void HDF5Common::ReadStringScalarDataset(hid_t dataSetId, std::string &result)
         hid_t d_space = H5Dget_space(dataSetId);
         std::vector<char> vc(typesize); // byte buffer to vlen strings
         auto status = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, vc.data());
+	CHECK_H5_RETURN(status, "ReadStringScalar_variable_str");
         result.assign(*((char **)vc.data()));
 
         // free dynamically allocated vlen memory from H5Dread
