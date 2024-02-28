@@ -28,6 +28,12 @@ if(NOT TARGET adios2_core)
   list(APPEND _components CXX)
 
   find_package(ADIOS2 REQUIRED COMPONENTS ${_components})
+
+  # add adios2::core when using adios2::helper::* functions outside the ADIOS2 build
+  list(APPEND _other_dependencies adios2::core)
+else()
+  # add adios2_core when using adios2::helper::* functions within the ADIOS2 build
+  list(APPEND _other_dependencies adios2_core)
 endif()
 
 add_executable(adios2_basics_valuesWrite valuesWrite.cpp)
@@ -35,18 +41,17 @@ target_link_libraries(adios2_basics_valuesWrite adios2::cxx11)
 install(TARGETS adios2_basics_valuesWrite RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_executable(adios2_basics_valuesRead valuesRead.cpp)
-# add adios2_core when using adios2::helper::* functions
-target_link_libraries(adios2_basics_valuesRead adios2::cxx11 adios2_core)
+target_link_libraries(adios2_basics_valuesRead adios2::cxx11 ${_other_dependencies})
 install(TARGETS adios2_basics_valuesRead RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 add_executable(adios2_basics_valuesReadRandom valuesReadRandom.cpp)
 # add adios2_core when using adios2::helper::* functions
-target_link_libraries(adios2_basics_valuesReadRandom adios2::cxx11 adios2_core)
+target_link_libraries(adios2_basics_valuesReadRandom adios2::cxx11 ${_other_dependencies})
 install(TARGETS adios2_basics_valuesReadRandom RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_basics_valuesWrite_mpi valuesWrite.cpp)
-  target_link_libraries(adios2_basics_valuesWrite_mpi adios2::cxx11_mpi adios2_core MPI::MPI_C)
+  target_link_libraries(adios2_basics_valuesWrite_mpi adios2::cxx11_mpi MPI::MPI_C)
   install(TARGETS adios2_basics_valuesWrite_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   if(ADIOS2_HAVE_Fortran)
