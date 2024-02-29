@@ -3,12 +3,11 @@
 # accompanying file Copyright.txt for details.
 #------------------------------------------------------------------------------#
 
-#add_subdirectory(basics)
-#add_subdirectory(derived)
-#add_subdirectory(hello)
-#add_subdirectory(plugins)
-#add_subdirectory(simulations)
-#add_subdirectory(useCases)
-#if(ADIOS2_USE_Campaign)
-#    add_subdirectory(campaign)
-#endif()
+add_subdirectory(basics)
+add_subdirectory(hello)
+add_subdirectory(plugins)
+add_subdirectory(simulations)
+add_subdirectory(useCases)
+if(ADIOS2_USE_Campaign)
+    add_subdirectory(campaign)
+endif()
