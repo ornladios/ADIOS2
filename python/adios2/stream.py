@@ -536,9 +536,10 @@ class Stream:
         """
         self._engine.close()
         self._engine = None
-        self._io.flush_all()
+        if not self._read_mode:
+            self._io.flush_all()
+            self._adios.flush_all()
         self._io = None
-        self._adios.flush_all()
         self._adios = None
 
     def current_step(self):
