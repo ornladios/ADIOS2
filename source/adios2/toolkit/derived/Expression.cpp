@@ -11,23 +11,24 @@ namespace detail
 // helper function
 adios2::detail::ExpressionOperator convert_op(std::string opname)
 {
-  adios2::detail::ExpressionOperator op;
-  try
+    adios2::detail::ExpressionOperator op;
+    try
     {
-      op = adios2::detail::get_op(opname);
+        op = adios2::detail::get_op(opname);
     }
-  catch (std::out_of_range& e)
+    catch (std::out_of_range &e)
     {
-      helper::Throw<std::invalid_argument>("Derived", "ExprHelper", "get_op", "Parser cannot recognize operator '" + opname + "'.");
+        helper::Throw<std::invalid_argument>("Derived", "ExprHelper", "get_op",
+                                             "Parser cannot recognize operator '" + opname + "'.");
     }
-  return op;
+    return op;
 };
-  
+
 adios2::derived::ExpressionTree ASTNode_to_ExpressionTree(adios2::detail::ASTNode *node)
 {
     adios2::derived::ExpressionTree exprTree_node(convert_op(node->get_opname()));
     for (adios2::detail::ASTNode *e : node->get_subexprs())
-    {      
+    {
         switch (convert_op(e->get_opname()))
         {
         case adios2::detail::ExpressionOperator::OP_ALIAS: // add variable given by alias
@@ -39,13 +40,13 @@ adios2::derived::ExpressionTree ASTNode_to_ExpressionTree(adios2::detail::ASTNod
                 index_expr.add_child(e->lookup_var_path(e->alias));
                 expTree_node->add_child(expr);
             }*/
-  	    exprTree_node.add_child(e->get_varname());
+            exprTree_node.add_child(e->get_varname());
             break;
         case adios2::detail::ExpressionOperator::OP_PATH: // add variable name
-	    exprTree_node.add_child(e->get_varname());
+            exprTree_node.add_child(e->get_varname());
             break;
         case adios2::detail::ExpressionOperator::OP_NUM: // set the base value for the operation
-	    exprTree_node.set_base(e->get_value());
+            exprTree_node.set_base(e->get_value());
             break;
         default: // if the children nodes are other expressions, convert them to expressions
             auto temp_node = ASTNode_to_ExpressionTree(e);
@@ -79,7 +80,7 @@ namespace derived
 Expression::Expression(std::string string_exp)
 : ExprString(string_exp), m_Shape({0}), m_Start({0}), m_Count({0})
 {
-  adios2::detail::ASTDriver drv;
+    adios2::detail::ASTDriver drv;
     adios2::detail::ASTNode *root_node = drv.parse(string_exp);
     m_Expr = adios2::detail::ASTNode_to_ExpressionTree(root_node);
 }
