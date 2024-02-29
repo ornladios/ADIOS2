@@ -321,7 +321,7 @@ main(int argc, char **argv)
 	EVdrain_stone(cm, term1);
 	events = EVextract_stone_events(cm, term1);
 	count = 0;
-	while (events && (events[count].length != -1)) {
+	while (events && (events[count].length != (size_t)-1)) {
 	    EVsubmit_encoded(cm, term0, events[count].buffer, events[count].length, attrs);
 	    count++;
 	}

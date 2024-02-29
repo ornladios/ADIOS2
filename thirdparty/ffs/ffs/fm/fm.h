@@ -9,18 +9,12 @@ extern "C" {
 
 typedef struct _FMContextStruct *FMContext;
 
-#if defined(_MSC_VER) && !defined(FFS_SRC)
-#define FFS_DECLSPEC    __declspec(dllimport)
-#else
-#define FFS_DECLSPEC
-#endif
-
-extern FFS_DECLSPEC FMContext create_FMcontext();
-extern FFS_DECLSPEC FMContext create_local_FMcontext();
-extern FFS_DECLSPEC void free_FMcontext(FMContext c);
-extern FFS_DECLSPEC void add_ref_FMcontext(FMContext c);
-extern FFS_DECLSPEC void FMcontext_allow_self_formats(FMContext fmc);
-extern FFS_DECLSPEC int
+extern FMContext create_FMcontext();
+extern FMContext create_local_FMcontext();
+extern void free_FMcontext(FMContext c);
+extern void add_ref_FMcontext(FMContext c);
+extern void FMcontext_allow_self_formats(FMContext fmc);
+extern int
 FMcontext_get_format_server_identifier(FMContext fmc);
 
 
@@ -85,19 +79,19 @@ typedef enum {
 typedef struct _FMFormatBody *FMFormatBodyPtr;
 typedef FMFormatBodyPtr FMFormat;
 
-extern FFS_DECLSPEC char *
+extern char *
 get_server_rep_FMformat(FMFormat ioformat, int *rep_length);
 
-extern FFS_DECLSPEC char *
+extern char *
 get_server_ID_FMformat(FMFormat ioformat, int *id_length);
 
-extern FFS_DECLSPEC FMContext
+extern FMContext
 FMContext_from_FMformat(FMFormat ioformat);
 
-extern FFS_DECLSPEC int
+extern int
 get_rep_len_format_ID(void *format_ID);
 
-extern FFS_DECLSPEC void
+extern void
 set_array_order_FMContext(FMContext iofile, int column_major);
 
 FMFormat
@@ -109,23 +103,23 @@ FMformat_index(FMFormat f);
 FMFormat
 FMformat_by_index(FMContext c, int index);
 
-extern FFS_DECLSPEC FMFormat
+extern FMFormat
 load_external_format_FMcontext(FMContext iocontext, char *server_id,
 				     int id_size, char *server_rep);
 
-extern FFS_DECLSPEC void
+extern void
 add_opt_info_FMformat(FMFormat format, int typ, int len, void *block);
 
-extern FFS_DECLSPEC FMFormat
+extern FMFormat
 FMregister_simple_format(FMContext context, char *format_name, FMFieldList field_list, int struct_size);
 
-extern FFS_DECLSPEC FMFormat
+extern FMFormat
 register_data_format(FMContext context, FMStructDescList struct_list);
 
-extern FFS_DECLSPEC FMFormat
+extern FMFormat
 FMregister_data_format(FMContext context, FMStructDescList struct_list);
 
-extern FFS_DECLSPEC void free_FMfield_list(FMFieldList list);
+extern void free_FMfield_list(FMFieldList list);
 
 /*!
  * lookup the FMFormat associated with a particular FMStructDescList
@@ -148,7 +142,7 @@ extern FFS_DECLSPEC void free_FMfield_list(FMFieldList list);
  * address.   Normally if you use static format lists, the addresses will 
  * be unique. 
  */
-extern FFS_DECLSPEC FMFormat
+extern FMFormat
 FMlookup_format(FMContext context, FMStructDescList struct_list);
 
 typedef enum {Format_Less, Format_Greater, Format_Equal, 
@@ -161,125 +155,125 @@ typedef struct compat_formats {
     char *xform_code;
 } *FMcompat_formats;
 
-extern FFS_DECLSPEC FMcompat_formats
+extern FMcompat_formats
 FMget_compat_formats(FMFormat ioformat);
 
-extern FFS_DECLSPEC char *
+extern char *
 name_of_FMformat(FMFormat format);
 
-extern FFS_DECLSPEC FMStructDescList
+extern FMStructDescList
 format_list_of_FMFormat(FMFormat format);
 
-extern FFS_DECLSPEC void
+extern void
 FMlocalize_structs(FMStructDescList list);
 
-extern FFS_DECLSPEC char *
+extern char *
 global_name_of_FMFormat(FMFormat format);
 
-extern FFS_DECLSPEC FMFieldList
+extern FMFieldList
 copy_field_list(FMFieldList list);
 
-extern FFS_DECLSPEC FMStructDescList
+extern FMStructDescList
 FMcopy_struct_list(FMStructDescList list);
 
-extern FFS_DECLSPEC void
+extern void
 FMfree_struct_list(FMStructDescList list);
 
-extern FFS_DECLSPEC int
+extern int
 FMstruct_size_field_list(FMFieldList list, int pointer_size);
 
-extern FFS_DECLSPEC FMStructDescList
+extern FMStructDescList
 FMlocalize_formats(FMStructDescList list);
 
-extern FFS_DECLSPEC int 
+extern int 
 count_FMfield(FMFieldList list);
 
-extern FFS_DECLSPEC void print_server_ID(unsigned char *ID);
-extern FFS_DECLSPEC void print_format_ID(FMFormat ioformat);
-extern FFS_DECLSPEC void fprint_server_ID(void * file,unsigned char *ID);
+extern void print_server_ID(unsigned char *ID);
+extern void print_format_ID(FMFormat ioformat);
+extern void fprint_server_ID(void * file,unsigned char *ID);
 
-extern FFS_DECLSPEC int FMformatID_len(char *buffer);
+extern int FMformatID_len(char *buffer);
 
-extern FFS_DECLSPEC int
+extern int
 FMdump_data(FMFormat format, void *data, int character_limit);
 
-extern FFS_DECLSPEC int
+extern int
 FMdump_encoded_data(FMFormat format, void *data, int character_limit);
 
-extern FFS_DECLSPEC void
+extern void
 FMdump_XML(FMFormat format, void *data, int encoded);
 
-extern FFS_DECLSPEC void
+extern void
 FMdump_encoded_XML(FMContext c, void *data, int character_limit);
 
-extern FFS_DECLSPEC int
+extern int
 FMfdump_data(void *file, FMFormat format, void *data, int character_limit);
 
-extern FFS_DECLSPEC int
+extern int
 FMfdump_encoded_data(void *file, FMFormat format, void *data, int character_limit);
 
-extern FFS_DECLSPEC void
+extern void
 FMfdump_XML(void *file, FMFormat format, void *data, int encoded);
 
-extern FFS_DECLSPEC void
+extern void
 FMfdump_encoded_XML(void *file, FMContext c, void *data, int character_limit);
 
-extern FFS_DECLSPEC char*
+extern char*
 FMunencoded_to_XML_string(FMContext fmcontext, FMFormat format, void *data);
 
-extern FFS_DECLSPEC void
+extern void
 FMfree_var_rec_elements(FMFormat format, void *data);
 
-extern FFS_DECLSPEC char *FMbase_type(const char *field_type);
+extern char *FMbase_type(const char *field_type);
 
 #define XML_OPT_INFO 0x584D4C20
 #define COMPAT_OPT_INFO 0x45564F4C
 #define COMPAT_OPT_INFO_FMFILE 0x45564F4D
 
 typedef struct _FMgetFieldStruct *FMFieldPtr;
-extern FFS_DECLSPEC FMFieldPtr get_FMfieldPtrFromList(FMFieldList field_list, 
+extern FMFieldPtr get_FMfieldPtrFromList(FMFieldList field_list, 
 					 const char *fieldname);
 
-extern FFS_DECLSPEC void *
+extern void *
 get_FMfieldAddr_by_name(FMFieldList field_list, const char *fieldname, void *data);
-extern FFS_DECLSPEC void *
+extern void *
 get_FMPtrField_by_name(FMFieldList field_list, const char *fieldname, void *data, int encode);
-extern FFS_DECLSPEC int
+extern int
 set_FMPtrField_by_name(FMFieldList field_list, const char *fieldname, void *data, void *ptr_value);
-extern FFS_DECLSPEC int
+extern int
 get_FMfieldInt_by_name(FMFieldList field_list, const char *fieldname, void *data);
-extern FFS_DECLSPEC size_t
+extern size_t
 get_FMfieldLong_by_name(FMFieldList field_list, const char *fieldname, void *data);
 
-extern FFS_DECLSPEC void * FMheader_skip(FMContext c, void *data);
-extern FFS_DECLSPEC char *get_FMstring_base(FMFieldPtr iofield, void *data, void *string_base);
-extern FFS_DECLSPEC void *get_FMFieldAddr(FMFieldPtr iofield, void *data);
-extern FFS_DECLSPEC void *get_FMaddr (FMFieldPtr iofield, void *data, void *string_base, int encode);
-extern FFS_DECLSPEC void *put_FMaddr (FMFieldPtr iofield, void *data);
-extern FFS_DECLSPEC float get_FMfloat(FMFieldPtr iofield, void *data);
-extern FFS_DECLSPEC double get_FMdouble(FMFieldPtr iofield, void *data);
-extern FFS_DECLSPEC short get_FMshort(FMFieldPtr iofield, void *data);
-extern FFS_DECLSPEC int get_FMint(FMFieldPtr iofield, void *data);
-extern FFS_DECLSPEC size_t get_FMlong(FMFieldPtr iofield, void *data);
-extern FFS_DECLSPEC void get_FMlong8(FMFieldPtr iofield, void *data, unsigned long *low_long, long *high_long);
+extern void * FMheader_skip(FMContext c, void *data);
+extern char *get_FMstring_base(FMFieldPtr iofield, void *data, void *string_base);
+extern void *get_FMFieldAddr(FMFieldPtr iofield, void *data);
+extern void *get_FMaddr (FMFieldPtr iofield, void *data, void *string_base, int encode);
+extern void *put_FMaddr (FMFieldPtr iofield, void *data);
+extern float get_FMfloat(FMFieldPtr iofield, void *data);
+extern double get_FMdouble(FMFieldPtr iofield, void *data);
+extern short get_FMshort(FMFieldPtr iofield, void *data);
+extern int get_FMint(FMFieldPtr iofield, void *data);
+extern size_t get_FMlong(FMFieldPtr iofield, void *data);
+extern void get_FMlong8(FMFieldPtr iofield, void *data, unsigned long *low_long, long *high_long);
 #if defined(SIZEOF_LONG_LONG)
 #if SIZEOF_LONG_LONG != 0
-extern FFS_DECLSPEC long long get_FMlong_long(FMFieldPtr iofield, void *data);
-extern FFS_DECLSPEC unsigned long long get_FMulong_long(FMFieldPtr iofield, void *data);
+extern long long get_FMlong_long(FMFieldPtr iofield, void *data);
+extern unsigned long long get_FMulong_long(FMFieldPtr iofield, void *data);
 #endif
 #endif
 #if defined(SIZEOF_LONG_DOUBLE)
 #if SIZEOF_LONG_DOUBLE != 0
-extern FFS_DECLSPEC long double get_FMlong_double(FMFieldPtr iofield, void *data);
+extern long double get_FMlong_double(FMFieldPtr iofield, void *data);
 #endif
 #endif
-extern FFS_DECLSPEC unsigned short get_FMushort(FMFieldPtr iofield, void *data);
-extern FFS_DECLSPEC unsigned int get_FMuint(FMFieldPtr iofield, void *data);
-extern FFS_DECLSPEC size_t get_FMulong(FMFieldPtr iofield, void *data);
-extern FFS_DECLSPEC int get_FMulong8(FMFieldPtr iofield, void *data, unsigned long *low_long, unsigned long *high_long);
-extern FFS_DECLSPEC char *get_FMstring(FMFieldPtr iofield, void *data);
-extern FFS_DECLSPEC char get_FMchar(FMFieldPtr iofield, void *data);
-extern FFS_DECLSPEC int get_FMenum(FMFieldPtr iofield, void *data);
+extern unsigned short get_FMushort(FMFieldPtr iofield, void *data);
+extern unsigned int get_FMuint(FMFieldPtr iofield, void *data);
+extern size_t get_FMulong(FMFieldPtr iofield, void *data);
+extern int get_FMulong8(FMFieldPtr iofield, void *data, unsigned long *low_long, unsigned long *high_long);
+extern char *get_FMstring(FMFieldPtr iofield, void *data);
+extern char get_FMchar(FMFieldPtr iofield, void *data);
+extern int get_FMenum(FMFieldPtr iofield, void *data);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

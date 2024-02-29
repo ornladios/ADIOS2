@@ -6,14 +6,6 @@
 extern "C" {
 #endif
 
-#ifndef FFS_DECL_SPEC
-#if defined(_MSC_VER) && !defined(FFS_SRC)
-#define FFS_DECLSPEC    __declspec(dllimport)
-#else
-#define FFS_DECLSPEC
-#endif
-#endif
-
 #include <stdint.h>
 
 /*!
@@ -112,7 +104,7 @@ typedef cod_extern_entry *cod_extern_list;
  * \return Will return a new initialized cod_parse_context unless there is
  * no available memory.
  */
-extern FFS_DECLSPEC cod_parse_context new_cod_parse_context(void);
+extern cod_parse_context new_cod_parse_context(void);
 
 /*!
  * Free a handle to an cod_parse_context.
@@ -121,7 +113,7 @@ extern FFS_DECLSPEC cod_parse_context new_cod_parse_context(void);
  * Calling this routine frees all memory associated with the parse context,
  * but not that of code that has been generated from this context.
  */
-extern FFS_DECLSPEC void cod_free_parse_context(cod_parse_context context);
+extern void cod_free_parse_context(cod_parse_context context);
 
 /*!
  * Associate a set of "name, external address" pairs with a parse context 
@@ -135,7 +127,7 @@ extern FFS_DECLSPEC void cod_free_parse_context(cod_parse_context context);
  * \param externs the list of "name, external address" pairs to be
  *  associated.  This list should be terminated with a {NULL, 0} pair.
  */
-extern FFS_DECLSPEC void cod_assoc_externs(cod_parse_context context,
+extern void cod_assoc_externs(cod_parse_context context,
 				    cod_extern_list externs);
 
 /*!
@@ -151,7 +143,7 @@ extern FFS_DECLSPEC void cod_assoc_externs(cod_parse_context context,
  * 	"int proc(double d, int *i)"
  *  
  */
-extern FFS_DECLSPEC void
+extern void
 cod_subroutine_declaration(const char *decl, cod_parse_context context);
 
 /*!
@@ -163,7 +155,7 @@ cod_subroutine_declaration(const char *decl, cod_parse_context context);
  *  the structure.
  * \param context the context in which the type is to be made available.
  */
-extern FFS_DECLSPEC void cod_add_simple_struct_type(const char *name, FMFieldList field_list, 
+extern void cod_add_simple_struct_type(const char *name, FMFieldList field_list, 
 				       cod_parse_context context);
 
 /*!
@@ -174,7 +166,7 @@ extern FFS_DECLSPEC void cod_add_simple_struct_type(const char *name, FMFieldLis
  *  the structures.
  * \param context the context in which the type is to be made available.
  */
-extern FFS_DECLSPEC void cod_add_struct_type(FMStructDescList format_list, 
+extern void cod_add_struct_type(FMStructDescList format_list, 
 				cod_parse_context context);
 
 /*!
@@ -185,7 +177,7 @@ extern FFS_DECLSPEC void cod_add_struct_type(FMStructDescList format_list,
  * \param param_num the numeral of the new parameter (0 is first)
  * \param context the context in which the subroutine is being declared.
  */
-extern FFS_DECLSPEC void
+extern void
 cod_add_param(const char *id, const char *typ, int param_num, 
 	      cod_parse_context context);
 
@@ -199,7 +191,7 @@ cod_add_param(const char *id, const char *typ, int param_num,
  * \param context the context in which the subroutine is being declared.
  */
 #ifdef __FM__
-extern FFS_DECLSPEC void
+extern void
 cod_add_encoded_param(const char *id, char *data, int param_num, 
 		      FMContext c, cod_parse_context context);
 #endif
@@ -210,7 +202,7 @@ cod_add_encoded_param(const char *id, char *data, int param_num,
  * \param typ the data type of the return value.
  * \param context the context in which the subroutine is being declared.
  */
-extern FFS_DECLSPEC void
+extern void
 cod_set_return_type(char *typ, cod_parse_context context);
 
 /*!
@@ -263,7 +255,7 @@ int cod_code_verify(char *code, cod_parse_context context);
  *
  * \param code the handle to the resources that will be free'd.
  */
-extern FFS_DECLSPEC void cod_code_free(cod_code code);
+extern void cod_code_free(cod_code code);
 
 /*!
  * create an execution context associated with a code block
@@ -271,7 +263,7 @@ extern FFS_DECLSPEC void cod_code_free(cod_code code);
  * \param code the handle to the code bloc
  * \return the created execution context
  */
-extern FFS_DECLSPEC cod_exec_context cod_create_exec_context(cod_code code);
+extern cod_exec_context cod_create_exec_context(cod_code code);
 
 /*!
  * Free all resources associated with the generated code associated with the
@@ -279,7 +271,7 @@ extern FFS_DECLSPEC cod_exec_context cod_create_exec_context(cod_code code);
  *
  * \param code the handle to the resources that will be free'd.
  */
-extern FFS_DECLSPEC void cod_exec_context_free(cod_exec_context ec);
+extern void cod_exec_context_free(cod_exec_context ec);
 
 /*!
  * Associate application-level data with an execution context.  This is
@@ -291,7 +283,7 @@ extern FFS_DECLSPEC void cod_exec_context_free(cod_exec_context ec);
  * \param key the value that will serve as a key to retrieve the data
  * \param value the 'long' data that will be associated with the key
  */
-extern FFS_DECLSPEC void cod_assoc_client_data(cod_exec_context ec, int key, intptr_t value);
+extern void cod_assoc_client_data(cod_exec_context ec, int key, intptr_t value);
 
 /*!
  * Retrieve application-level data with an execution context.  This is
@@ -305,7 +297,7 @@ extern FFS_DECLSPEC void cod_assoc_client_data(cod_exec_context ec, int key, int
  * \param key the value that will serve as a key to retrieve the data
  * \return the 'long' data that was associated with the key
  */
-extern FFS_DECLSPEC intptr_t cod_get_client_data(cod_exec_context ec, int key);
+extern intptr_t cod_get_client_data(cod_exec_context ec, int key);
 
 /*!
  * Extract static state from an execution context.  
@@ -315,7 +307,7 @@ extern FFS_DECLSPEC intptr_t cod_get_client_data(cod_exec_context ec, int key);
  *  the length of the returned state block
  * \return a pointer to the extracted state
  */
-extern FFS_DECLSPEC void *cod_extract_state(cod_exec_context ec, int *length_p);
+extern void *cod_extract_state(cod_exec_context ec, int *length_p);
 
 /*!
  * Install static state into an execution context.  
@@ -325,7 +317,7 @@ extern FFS_DECLSPEC void *cod_extract_state(cod_exec_context ec, int *length_p);
  * \param state_size the size of the state block
  * \return 1 on success, 0 on failure
  */
-extern FFS_DECLSPEC int cod_install_state(cod_exec_context ec, void *state, int length);
+extern int cod_install_state(cod_exec_context ec, void *state, int length);
 
 /*!
  * \brief This parses a string to determine what external
@@ -356,7 +348,7 @@ int cod_parse_for_globals(char *code, cod_parse_context context);
  *
  * \param context the cod_parse_context to be duplicated.
  */
-extern FFS_DECLSPEC cod_parse_context cod_copy_context(cod_parse_context context);
+extern cod_parse_context cod_copy_context(cod_parse_context context);
 
 /*!
  * Duplicate a handle to an cod_parse_context, specifically adapting the results to 
@@ -365,7 +357,7 @@ extern FFS_DECLSPEC cod_parse_context cod_copy_context(cod_parse_context context
  *
  * \param context the cod_parse_context to be duplicated.
  */
-extern FFS_DECLSPEC cod_parse_context cod_copy_globals(cod_parse_context context);
+extern cod_parse_context cod_copy_globals(cod_parse_context context);
 
 /*!
  *  err_out_func_t is a function pointer type.   Functions matching this
@@ -408,7 +400,7 @@ void cod_dump(cod_code code);
  *  \param format2 the old format. This is the format of the output message.
  *  \param xform_code  The COD code string that transforms data from format1 to format2.
  */
-extern FFS_DECLSPEC cod_code
+extern cod_code
 gen_rollback_code(FMStructDescList format1, FMStructDescList format2, char *xform_code);
 
 /*!
@@ -417,7 +409,7 @@ gen_rollback_code(FMStructDescList format1, FMStructDescList format2, char *xfor
  * \param value The value of the constant
  * \param context the context in which this is to be created
 */
-extern FFS_DECLSPEC void cod_add_int_constant_to_parse_context(const char *id, int value,
+extern void cod_add_int_constant_to_parse_context(const char *id, int value,
     cod_parse_context context); 
 
 /*!
@@ -426,7 +418,7 @@ extern FFS_DECLSPEC void cod_add_int_constant_to_parse_context(const char *id, i
  * \param value The value to send
  * \param context The context in which the subroutine has been declared.
 */
-extern FFS_DECLSPEC void cod_set_closure(char *name, void* value, cod_parse_context context);
+extern void cod_set_closure(char *name, void* value, cod_parse_context context);
 
 #if defined(__cplusplus) || defined(c_plusplus)
 }

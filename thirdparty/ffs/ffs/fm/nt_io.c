@@ -82,7 +82,7 @@ char **result_p;
 	    (tmp != WSAEINTR)) {
 	    /* serious error */
 	    fprintf(stderr, "WINSOCK ERROR during receive, %i on socket %p\n",
-		    tmp, conn);
+		    (int)tmp, conn);
 	    return -1;
 	} else {
 		if (tmp == WSAECONNRESET)
@@ -110,7 +110,7 @@ char **result_p;
 
 		    /* serious error */
 		    fprintf(stderr, "WINSOCK ERROR during receive2, %i on socket %p\n",
-			    tmp, conn);
+			    (int) tmp, conn);
 		    return (length - left);
 		} else {
 			if (tmp == WSAECONNRESET)
@@ -141,10 +141,9 @@ char **result_p;
 
     while (left > 0) {
 	bResult = WriteFile((HANDLE) conn, (char *) buffer + length - left, 
-			    left, &iget, NULL);
+			    left, (unsigned long *)&iget, NULL);
 	if (!bResult) {
 	    DWORD tmp = GetLastError();
-	    if (errno_p) tmp = tmp;
 	    if ((tmp != WSAEWOULDBLOCK) &&
 		(tmp != WSAEINPROGRESS) &&
 		(tmp != WSAEINTR)) {
@@ -277,7 +276,7 @@ char **result_p;
 
     int i = 0;
     for (; i < icount; i++) {
-	if (nt_socket_read_func(conn, iov[i].iov_base, iov[i].iov_len,
+	if (nt_socket_read_func(conn, (void*)iov[i].iov_base, iov[i].iov_len,
 				errno_p, result_p) != iov[i].iov_len) {
 	    return i;
 	}
@@ -297,7 +296,7 @@ char **result_p;
 
     int i = 0;
     for (; i < icount; i++) {
-	if (nt_file_read_func(conn, iov[i].iov_base, iov[i].iov_len, errno_p,
+	if (nt_file_read_func(conn, (void*)iov[i].iov_base, iov[i].iov_len, errno_p,
 			      result_p) != iov[i].iov_len) {
 	    return i;
 	}
@@ -316,7 +315,7 @@ char** result_p;
 
     int i = 0;
     for (; i < icount; i++) {
-	if (nt_file_write_func(conn, iov[i].iov_base, iov[i].iov_len, errno_p,
+	if (nt_file_write_func(conn, (void*)iov[i].iov_base, iov[i].iov_len, errno_p,
 	    result_p) != iov[i].iov_len) {
 	    return i;
 	}

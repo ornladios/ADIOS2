@@ -2,6 +2,7 @@
   Distributed under the OSI-approved Apache License, Version 2.0.  See
   accompanying file Copyright.txt for details.
 """
+
 from functools import singledispatchmethod
 from sys import maxsize
 import numpy as np
@@ -22,6 +23,8 @@ def type_adios_to_numpy(name):
         "uint64_t": np.uint64,
         "float": np.float32,
         "double": np.float64,
+        "complex": np.complex64,
+        "double complex": np.complex128,
     }[name]
 
 
@@ -47,6 +50,9 @@ def string_to_mode(mode: str) -> [bindings.Mode, bool]:
 class Stream:
     """High level implementation of the Stream class from the core API"""
 
+    # Default timeout for stream.begin_step()
+    DEFAULT_TIMEOUT_SEC = -1.0
+
     @singledispatchmethod
     def __init__(self, path, mode, comm=None):
         # pylint: disable=R0912 # Too many branches
@@ -68,6 +74,7 @@ class Stream:
         self.index = -1
         self.max_steps = maxsize
         self._step_status = bindings.StepStatus.EndOfStream
+        self._step_timeout_sec = self.DEFAULT_TIMEOUT_SEC
 
     # e.g. Stream(io: adios2.IO, path, mode)
     @__init__.register(IO)
@@ -79,6 +86,7 @@ class Stream:
         self.index = -1
         self.max_steps = maxsize
         self._step_status = bindings.StepStatus.EndOfStream
+        self._step_timeout_sec = self.DEFAULT_TIMEOUT_SEC
 
     @property
     def mode(self):
@@ -120,8 +128,15 @@ class Stream:
             raise StopIteration
 
         self.index += 1
-        self._step_status = self.begin_step()
+        self._step_status = self.begin_step(timeout=self._step_timeout_sec)
         if self._step_status == bindings.StepStatus.EndOfStream:
+            raise StopIteration
+
+        if self._step_status == bindings.StepStatus.NotReady:
+            print(
+                "ERROR: Stream returned no new step within the time limit of"
+                f" {self._step_timeout_sec} seconds. Ending the loop"
+            )
             raise StopIteration
 
         if self._step_status == bindings.StepStatus.OtherError:
@@ -170,10 +185,21 @@ class Stream:
         """
         return self._io.available_variables()
 
-    def available_attributes(self):
+    def available_attributes(self, varname="", separator="/"):
         """
         Returns a 2-level dictionary with attribute information.
         Read mode only.
+
+        Parameters
+            variable_name
+                If varname is set, attributes assigned to that variable are returned.
+                The keys returned are attribute names with the prefix of varname + separator
+                removed.
+
+            separator
+                concatenation string between variable_name and attribute
+                e.g. varname + separator + name ("var/attr")
+                Not used if varname is empty
 
         Returns
             attributes dictionary
@@ -182,11 +208,12 @@ class Stream:
                 value
                     attribute information dictionary
         """
-        return self._io.available_attributes()
+        return self._io.available_attributes(varname, separator)
 
     def define_variable(self, name):
         """
         Define new variable without specifying its type and content.
+        This only works for string output variables
         """
         return self._io.define_variable(name)
 
@@ -226,7 +253,9 @@ class Stream:
     @singledispatchmethod
     def write(self, variable: Variable, content):
         """
-        writes a variable
+        Writes a variable.
+        Note that the content will be available for consumption only at
+        the end of the for loop or in the end_step() call.
 
         Parameters
             variable
@@ -237,16 +266,12 @@ class Stream:
             content
                 variable data values
         """
-        if isinstance(content, list):
-            content_np = np.array(content)
-            self._engine.put(variable, content_np, bindings.Mode.Sync)
-        else:
-            self._engine.put(variable, content, bindings.Mode.Sync)
+        self._engine.put(variable, content, bindings.Mode.Sync)
 
     @write.register(str)
     def _(self, name, content, shape=[], start=[], count=[], operations=None):
         """
-        writes a variable
+        Writes a variable
 
         Parameters
             name
@@ -270,15 +295,20 @@ class Stream:
         variable = self._io.inquire_variable(name)
 
         if not variable:
-            # Sequences variables
+            # Sequence variables
             if isinstance(content, np.ndarray):
                 variable = self._io.define_variable(name, content, shape, start, count)
             elif isinstance(content, list):
-                content_np = np.array(content)
-                variable = self._io.define_variable(name, content_np, shape, start, count)
-            # Scalars variables
-            elif isinstance(content, str) or not hasattr(content, "__len__"):
-                variable = self.define_variable(name)
+                if shape == [] and count == []:
+                    shape = [len(content)]
+                    count = shape
+                    start = [0]
+                variable = self._io.define_variable(name, content, shape, start, count)
+            # Scalar variables
+            elif isinstance(content, str):
+                variable = self._io.define_variable(name, content)
+            elif not hasattr(content, "__len__"):
+                variable = self._io.define_variable(name, content, [], [], [])
             else:
                 raise ValueError
 
@@ -334,7 +364,11 @@ class Stream:
             output_shape[0] *= steps
         else:
             # scalar
-            output_shape = (variable.selection_size(),)
+            size_all_steps = variable.selection_size()
+            if size_all_steps > 1:
+                output_shape = [size_all_steps]
+            else:
+                output_shape = []
 
         output = np.zeros(output_shape, dtype=dtype)
         self._engine.get(variable, output)
@@ -370,14 +404,13 @@ class Stream:
         if not variable:
             raise ValueError()
 
-        if step_selection and not self._mode == bindings.Mode.ReadRandomAccess:
+        if step_selection is not None and not self._mode == bindings.Mode.ReadRandomAccess:
             raise RuntimeError("step_selection parameter requires 'rra' mode")
 
-        if step_selection:
-            print(f"Stream.read step selection = {step_selection}")
+        if step_selection is not None:
             variable.set_step_selection(step_selection)
 
-        if block_id:
+        if block_id is not None:
             variable.set_block_selection(block_id)
 
         if variable.type() == "string" and variable.single_value() is True:
@@ -466,25 +499,29 @@ class Stream:
 
         return attribute.data_string()
 
-    def begin_step(self):
+    def begin_step(self, *, timeout=DEFAULT_TIMEOUT_SEC):
         """
-        Write mode: advances to the next step. Convenient when declaring
-        variable attributes as advancing to the next step is not attached
-        to any variable.
+        Write mode: declare the starting of an output step. Pass data in
+        stream.write() and stream.write_attribute(). All data will be published
+        in end_step().
 
         Read mode: in streaming mode releases the current step (no effect
         in file based engines)
         """
+        if self._read_mode:
+            mode = bindings.StepMode.Read
+        else:
+            mode = bindings.StepMode.Append
 
         if not self._engine.between_step_pairs():
-            return self._engine.begin_step()
+            return self._engine.begin_step(mode=mode, timeoutSeconds=timeout)
         return bindings.StepStatus.OtherError
 
     def end_step(self):
         """
-        Write mode: advances to the next step. Convenient when declaring
-        variable attributes as advancing to the next step is not attached
-        to any variable.
+        Write mode: declaring the end of an output step. All data passed in
+        stream.write() and all attributes passed in stream.write_attribute()
+        will be published for consumers.
 
         Read mode: in streaming mode releases the current step (no effect
         in file based engines)
@@ -530,7 +567,7 @@ class Stream:
         """
         return self.index
 
-    def steps(self, num_steps=0):
+    def steps(self, num_steps=0, *, timeout=DEFAULT_TIMEOUT_SEC):
         """
         Returns an interator that can be use to itererate throught the steps.
         In each iteration begin_step() and end_step() will be internally called.
@@ -560,6 +597,8 @@ class Stream:
             self.max_steps = num_steps
         else:
             self.max_steps = maxsize  # engine steps will limit the loop
+
+        self._step_timeout_sec = timeout
 
         # in write mode we can run yet another loop
         self.index = -1

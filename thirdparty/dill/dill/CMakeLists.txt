@@ -117,6 +117,9 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "i.86|x86_64|AMD64")
   if(NOT (CMAKE_SIZEOF_VOID_P EQUAL SIZEOF_LONG))
     set(BASE_OPS_ARG "-msvc_long")
   endif()
+  if(BUILD_SHARED_LIBS)
+    set(BASE_OPS_ARG "${BASE_OPS_ARG} -build_shared")
+  endif()
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm.5.*")
   set(NATIVE_ARCH arm5)
   set(HOST_ARM5 1)
@@ -280,6 +283,8 @@ add_custom_command(
   COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/base.ops ${BASE_OPS_ARG}
   DEPENDS base.ops
 ) 
+
+message (STATUS "base.ops argument is ${BASE_OPS_ARG}")
 
 option(DILL_MULTI_TARGET  "Build all available target architectures" OFF)
 
