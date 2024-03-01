@@ -11,7 +11,7 @@ VariableDerived::VariableDerived(const std::string &name, adios2::derived::Expre
                                  const DerivedVarType varType)
 : VariableBase(name, exprType, helper::GetDataTypeSize(exprType), expr.GetShape(), expr.GetStart(),
                expr.GetCount(), isConstant),
-  m_Expr(expr), m_DerivedType(varType)
+  m_DerivedType(varType), m_Expr(expr)
 {
 }
 

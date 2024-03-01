@@ -78,7 +78,7 @@ namespace derived
 {
 
 Expression::Expression(std::string string_exp)
-: ExprString(string_exp), m_Shape({0}), m_Start({0}), m_Count({0})
+: m_Shape({0}), m_Start({0}), m_Count({0}), ExprString(string_exp)
 {
     adios2::detail::ASTDriver drv;
     adios2::detail::ASTNode *root_node = drv.parse(string_exp);
