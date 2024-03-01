@@ -113,7 +113,8 @@ public:
 
     std::map<std::string, Params> AvailableVariables();
 
-    std::map<std::string, Params> AvailableAttributes();
+    std::map<std::string, Params> AvailableAttributes(const std::string &varname = "",
+                                                      const std::string &separator = "/");
 
     std::string VariableType(const std::string &name) const;
 

@@ -4,7 +4,7 @@ install(CODE "
 "
   COMPONENT adios2_core-development
 )
-file(GLOB ADIOS2_MODULE_FILES 
+file(GLOB ADIOS2_MODULE_FILES
   "${ADIOS2_SOURCE_DIR}/cmake/Find*.cmake"
   "${ADIOS2_SOURCE_DIR}/cmake/CMake*.cmake"
 )
