@@ -300,8 +300,9 @@ void BP5Reader::PerformRemoteGets()
 
 void BP5Reader::PerformLocalGets()
 {
-    auto lf_CompareReqSubfile = [&](adios2::format::BP5Deserializer::ReadRequest &r1,
-                                    adios2::format::BP5Deserializer::ReadRequest &r2) -> bool {
+    auto lf_CompareReqSubfile =
+        [&](const adios2::format::BP5Deserializer::ReadRequest &r1,
+            const adios2::format::BP5Deserializer::ReadRequest &r2) -> bool {
         return (m_WriterMap[m_WriterMapIndex[r1.Timestep]].RankToSubfile[r1.WriterRank] <
                 m_WriterMap[m_WriterMapIndex[r2.Timestep]].RankToSubfile[r2.WriterRank]);
     };
