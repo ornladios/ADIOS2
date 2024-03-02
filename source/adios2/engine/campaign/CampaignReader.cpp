@@ -351,6 +351,31 @@ MinVarInfo *CampaignReader::MinBlocksInfo(const VariableBase &Var, size_t Step) 
     return nullptr;
 }
 
+bool CampaignReader::VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const
+{
+    auto it = m_VarInternalInfo.find(Var.m_Name);
+    if (it != m_VarInternalInfo.end())
+    {
+        VariableBase *vb = reinterpret_cast<VariableBase *>(it->second.originalVar);
+        Engine *e = m_Engines[it->second.engineIdx];
+        return e->VarShape(*vb, Step, Shape);
+    }
+    return false;
+}
+
+bool CampaignReader::VariableMinMax(const VariableBase &Var, const size_t Step,
+                                    MinMaxStruct &MinMax)
+{
+    auto it = m_VarInternalInfo.find(Var.m_Name);
+    if (it != m_VarInternalInfo.end())
+    {
+        VariableBase *vb = reinterpret_cast<VariableBase *>(it->second.originalVar);
+        Engine *e = m_Engines[it->second.engineIdx];
+        return e->VariableMinMax(*vb, Step, MinMax);
+    }
+    return false;
+}
+
 #define declare_type(T)                                                                            \
     void CampaignReader::DoGetSync(Variable<T> &variable, T *data)                                 \
     {                                                                                              \
