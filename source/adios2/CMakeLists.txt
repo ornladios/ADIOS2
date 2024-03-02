@@ -147,9 +147,11 @@ if (ADIOS2_HAVE_Derived_Variable)
     BISON_TARGET(MyParser
       toolkit/derived/parser/parser.y
       ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
+      COMPILE_FLAGS "-o parser.cpp --header=parser.h"
       DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/parser.h)
     FLEX_TARGET(MyScanner
       toolkit/derived/parser/lexer.l
+      COMPILE_FLAGS "-o lexer.cpp --header-file=lexer.h" 
       ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp
       DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/lexer.h)
     ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)

@@ -2,7 +2,7 @@ FUNCTION (SETUP_ADIOS_BISON_FLEX_SUB)
 
 IF ((${CMAKE_SYSTEM_NAME} STREQUAL "Darwin") OR
    (${CMAKE_SYSTEM_NAME} STREQUAL "Linux"))
-   set (BISON_FLEX_PRECOMPILE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/toolkit/derived/parser/pregen-source")
+   set (BISON_FLEX_PRECOMPILE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/toolkit/derived/parser/pregen-source/Linux")
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "Windows")
    set (BISON_FLEX_PRECOMPILE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/toolkit/derived/parser/pregen-source/Windows")
 else()

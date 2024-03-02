@@ -1,11 +1,19 @@
 %{
 #include <cerrno>
-#include <climits>
 #include <cstdlib>
 #include <cstring> // strerror
 #include <string>
 #include "ASTDriver.h"
 #include "parser.h"
+#if defined(_MSC_VER)
+#include <io.h>
+#define YY_NO_UNISTD_H
+#define strdup _strdup
+#define isatty _isatty
+#define fileno _fileno
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
 %}
 
 %{
