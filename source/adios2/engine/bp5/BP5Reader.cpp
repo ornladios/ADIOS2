@@ -493,7 +493,7 @@ void BP5Reader::Init()
         m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Name, m_OpenMode, RowMajorOrdering);
         remoteSpecified = true;
     }
-    if (remoteSpecified and !m_Remote)
+    if (remoteSpecified && !m_Remote)
     {
         helper::Throw<std::ios_base::failure>(
             "Engine", "BP5Reader", "OpenFiles",
