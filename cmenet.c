@@ -1414,7 +1414,7 @@ int err;
  *  NT Sux.
  */
 
-int
+static int
 pipe(filedes)
 SOCKET filedes[2];
 {
