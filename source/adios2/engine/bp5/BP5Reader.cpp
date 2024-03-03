@@ -445,6 +445,8 @@ void BP5Reader::PerformLocalGets()
 // PRIVATE
 void BP5Reader::Init()
 {
+    bool remoteSpecified = false;
+
     if ((m_OpenMode != Mode::Read) && (m_OpenMode != Mode::ReadRandomAccess))
     {
         helper::Throw<std::invalid_argument>("Engine", "BP5Reader", "Init",
@@ -484,10 +486,19 @@ void BP5Reader::Init()
     {
         m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Parameters.RemoteDataPath,
                       m_OpenMode, RowMajorOrdering);
+        remoteSpecified = true;
     }
     else if (getenv("DoRemote"))
     {
         m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Name, m_OpenMode, RowMajorOrdering);
+        remoteSpecified = true;
+    }
+    if (remoteSpecified and !m_Remote)
+    {
+        helper::Throw<std::ios_base::failure>(
+            "Engine", "BP5Reader", "OpenFiles",
+            "Remote file " + m_Name +
+                " cannot be opened. Possible server or file specification error.");
     }
 }
 
