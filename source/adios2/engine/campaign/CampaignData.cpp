@@ -42,15 +42,6 @@ static int sqlcb_host(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     CampaignHost ch;
-    /*
-    std::cout << "SQL: host record: ";
-    for (int i = 0; i < argc; i++)
-    {
-        std::cout << azColName[i] << " = " << (argv[i] ? argv[i] : "NULL")
-                  << std::endl;
-    }
-    std::cout << std::endl;
-    */
     ch.hostname = std::string(argv[0]);
     ch.longhostname = std::string(argv[1]);
     cdp->hosts.push_back(ch);
@@ -277,8 +268,6 @@ static bool isFileNewer(const std::string path, long ctime)
     long ctSec = timeToSec(ct);
     long ctimeSec = timeToSec(ctime);
 
-    /*std::cout << "   Stat(" << path << "): size = " << s.st_size
-              << " ct = " << ctSec << " ctime = " << ctimeSec << "\n";*/
     return (ctSec > ctimeSec);
 }
 
@@ -297,7 +286,6 @@ void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfi
     sqlite3_stmt *statement;
     sqlcmd =
         "SELECT data FROM bpfile WHERE bpdatasetid = " + id + " AND name = '" + bpfile.name + "'";
-    // std::cout << "SQL statement: " << sqlcmd << "\n";
     rc = sqlite3_prepare_v2(db, sqlcmd.c_str(), sqlcmd.size(), &statement, NULL);
     if (rc != SQLITE_OK)
     {
@@ -318,11 +306,6 @@ void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfi
 
     int iBlobsize = sqlite3_column_bytes(statement, 0);
     const void *p = sqlite3_column_blob(statement, 0);
-
-    std::cout << "-- Retrieved from DB data of " << bpfile.name << " size = " << iBlobsize
-              << " compressed = " << bpfile.compressed
-              << " compressed size = " << bpfile.lengthCompressed
-              << " original size = " << bpfile.lengthOriginal << " blob = " << p << "\n";
 
     size_t blobsize = static_cast<size_t>(iBlobsize);
     std::ofstream f;
