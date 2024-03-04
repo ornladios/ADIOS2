@@ -17,8 +17,6 @@
 
 import configparser
 import getpass
-import os
-import socket
 import select
 
 try:
@@ -244,7 +242,8 @@ def main():
 
     try:
         forward_tunnel(
-            int(config[remotename]['ForwardSSHPort']), remote[0], int(remote[1]), client.get_transport()
+            int(config[remotename]['ForwardSSHPort']), remote[0], int(remote[1]),
+            client.get_transport()
         )
     except KeyboardInterrupt:
         print("C-c: Port forwarding stopped.")
