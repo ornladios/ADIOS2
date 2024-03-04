@@ -279,6 +279,10 @@ void BP5Reader::PerformGets()
     {
         bool RowMajorOrdering = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
 
+        // If nothing is pending, don't open
+        if (m_BP5Deserializer->PendingGetRequests.size() == 0)
+            return;
+
         if (!m_Parameters.RemoteDataPath.empty())
         {
             m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Parameters.RemoteDataPath,
