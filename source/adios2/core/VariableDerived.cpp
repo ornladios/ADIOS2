@@ -52,7 +52,7 @@ VariableDerived::ApplyExpression(std::map<std::string, MinVarInfo> NameToMVI)
         {
             Dims start;
             Dims count;
-            for (size_t d = 0; d < variable.second.Dims; d++)
+            for (int d = 0; d < variable.second.Dims; d++)
             {
                 start.push_back(variable.second.BlocksInfo[i].Start[d]);
                 count.push_back(variable.second.BlocksInfo[i].Count[d]);
