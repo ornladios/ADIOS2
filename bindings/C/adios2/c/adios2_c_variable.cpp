@@ -358,7 +358,8 @@ adios2_error adios2_variable_ndims(size_t *ndims, const adios2_variable *variabl
     }
 }
 
-adios2_error adios2_variable_shape(size_t *shape, const adios2_variable *variable)
+adios2_error adios2_variable_shape_with_memory_space(size_t *shape, const adios2_variable *variable,
+                                                     adios2_memory_space mem)
 {
     try
     {
@@ -380,7 +381,11 @@ adios2_error adios2_variable_shape(size_t *shape, const adios2_variable *variabl
     {                                                                                              \
         const adios2::core::Variable<T> *variable =                                                \
             dynamic_cast<const adios2::core::Variable<T> *>(variableBase);                         \
-        const adios2::Dims shapeCpp = variable->Shape(adios2::EngineCurrentStep);                  \
+        adios2::Dims shapeCpp;                                                                     \
+        if (mem == adios2_memory_space_host)                                                       \
+            shapeCpp = variable->Shape(adios2::EngineCurrentStep);                                 \
+        else                                                                                       \
+            shapeCpp = variable->Shape(adios2::EngineCurrentStep, adios2_ToMemorySpace(mem));      \
         std::copy(shapeCpp.begin(), shapeCpp.end(), shape);                                        \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
@@ -392,6 +397,11 @@ adios2_error adios2_variable_shape(size_t *shape, const adios2_variable *variabl
     {
         return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_variable_shape"));
     }
+}
+
+adios2_error adios2_variable_shape(size_t *shape, const adios2_variable *variable)
+{
+    return adios2_variable_shape_with_memory_space(shape, variable, adios2_memory_space_host);
 }
 
 adios2_error adios2_variable_start(size_t *start, const adios2_variable *variable)
