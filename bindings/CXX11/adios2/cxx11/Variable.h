@@ -148,9 +148,9 @@ public:
     explicit operator bool() const noexcept;
 
     /**
-     * Sets the memory space for all following Puts
-     * to either host (default) or device (currently only CUDA supported)
-     * @param mem memory space where Put buffers are allocated
+     * Sets the memory space for all following Puts/Gets
+     * to either host (default) or device
+     * @param mem memory space where Put/Get buffers are allocated
      */
     void SetMemorySpace(const MemorySpace mem);
 
