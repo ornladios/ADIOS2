@@ -157,6 +157,16 @@ adios2_error adios2_variable_ndims(size_t *ndims, const adios2_variable *variabl
 adios2_error adios2_variable_shape(size_t *shape, const adios2_variable *variable);
 
 /**
+ * Retrieve current variable shape for a given memory space
+ * @param shape output, must be pre-allocated with ndims
+ * @param variable handler
+ * @param memory space
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_shape_with_memory_space(size_t *shape, const adios2_variable *variable,
+                                                     const adios2_memory_space mem);
+
+/**
  * Retrieve current variable start
  * @param start output, single value
  * @param variable handler
