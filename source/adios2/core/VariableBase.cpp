@@ -77,19 +77,19 @@ MemorySpace VariableBase::GetMemorySpace(const void *ptr)
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     ArrayOrdering layout = m_BaseLayout;
 #endif
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
     // first time the memory space is set
     if (m_MemSpace == MemorySpace::Detect)
     {
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
         if (helper::IsGPUbuffer(ptr))
         {
             m_MemSpace = MemorySpace::GPU;
             layout = ArrayOrdering::ColumnMajor;
         }
         else
+#endif
             m_MemSpace = MemorySpace::Host;
     }
-#endif
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     // set the layout based on the buffer memory space
     // skipping throwing an exception for a mismatch

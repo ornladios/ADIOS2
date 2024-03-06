@@ -45,10 +45,8 @@ enum class DerivedVarType
 /** Memory space for the user provided buffers */
 enum class MemorySpace
 {
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
     Detect, ///< Detect the memory space automatically
-#endif
-    Host, ///< Host memory space
+    Host,   ///< Host memory space
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
     GPU ///< GPU memory space
 #endif
