@@ -156,6 +156,11 @@ if (ADIOS2_HAVE_Derived_Variable)
       DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/lexer.h)
     ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
   endif()
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp PROPERTIES COMPILE_FLAGS -Wno-sign-compare)
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/parser.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-but-set-variable)
+  endif()
   add_library(adios2_core_derived
       ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp
       ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
