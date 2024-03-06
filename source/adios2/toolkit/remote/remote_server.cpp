@@ -304,7 +304,25 @@ static void ReadRequestHandler(CManager cm, CMConnection conn, void *vevent, voi
         f->m_CurrentOffset = ReadMsg->Offset;
     }
     char *tmp = (char *)malloc(ReadMsg->Size);
-    read(f->m_FileDescriptor, tmp, ReadMsg->Size);
+    size_t remaining = ReadMsg->Size;
+    char *pointer = tmp;
+    while (remaining > 0)
+    {
+        ssize_t ret = read(f->m_FileDescriptor, pointer, remaining);
+        if (ret <= 0)
+        {
+            // EOF or error,  should send a message back, but we haven't define error handling yet
+            std::cout << "Read failed! BAD!" << std::endl;
+            // instead free tmp and return;
+            free(tmp);
+            return;
+        }
+        else
+        {
+            remaining -= ret;
+            pointer += ret;
+        }
+    }
     f->m_CurrentOffset += ReadMsg->Size;
     _ReadResponseMsg Response;
     memset(&Response, 0, sizeof(Response));
