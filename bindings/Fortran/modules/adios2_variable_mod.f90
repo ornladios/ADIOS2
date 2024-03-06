@@ -86,6 +86,20 @@ contains
 
     end subroutine
 
+    subroutine adios2_set_memory_space_host(variable, ierr)
+        type(adios2_variable), intent(in) :: variable
+        integer, intent(out) :: ierr
+
+        call adios2_set_memory_space_f2c(variable%f2c, adios2_memory_space_host, ierr)
+    end subroutine
+
+    subroutine adios2_set_memory_space_gpu(variable, ierr)
+        type(adios2_variable), intent(in) :: variable
+        integer, intent(out) :: ierr
+
+        call adios2_set_memory_space_f2c(variable%f2c, adios2_memory_space_gpu, ierr)
+    end subroutine
+
     subroutine adios2_set_shape(variable, ndims, shape_dims, ierr)
         type(adios2_variable), intent(in) :: variable
         integer, intent(in) :: ndims
