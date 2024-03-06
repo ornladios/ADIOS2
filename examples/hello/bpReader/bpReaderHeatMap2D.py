@@ -42,13 +42,13 @@ with Stream("HeatMap2D_py.bp", "w", comm) as obpStream:
         obpStream.write("N", [size, Nx, Ny])  # will be an array in output
         obpStream.write("Nx", numpy.array(Nx))  # will be a scalar in output
         obpStream.write("Ny", Ny)  # will be a scalar in output
-        obpStream.write_attribute("nproc", size) # will be a single value attribute in output
+        obpStream.write_attribute("nproc", size)  # will be a single value attribute in output
         obpStream.write_attribute("dimensions", [size * Nx, Ny], "temperature2D")
 
 if not rank:
     with FileReader("HeatMap2D_py.bp", MPI.COMM_SELF) as ibpFile:
         # scalar variables are read as a numpy array with 0 dimension
-        in_nx = ibpFile.read("Nx")  
+        in_nx = ibpFile.read("Nx")
         in_ny = ibpFile.read("Ny")
         print(f"Incoming nx, ny = {in_nx}, {in_ny}")
 
@@ -66,7 +66,9 @@ if not rank:
         if var_inTemperature is not None:
             var_inTemperature.set_selection([[2, 2], [4, 4]])
             inTemperatures = ibpFile.read(var_inTemperature)
-            print(f"Incoming temperature map with selection "
-                  f"start = {var_inTemperature.start()}, count = {var_inTemperature.count()}")
+            print(
+                f"Incoming temperature map with selection "
+                f"start = {var_inTemperature.start()}, count = {var_inTemperature.count()}"
+            )
             for i in range(0, inTemperatures.shape[1]):
                 print(str(inTemperatures[i]))
