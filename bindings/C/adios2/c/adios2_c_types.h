@@ -161,9 +161,9 @@ union adios2_PrimitiveStdtypeUnion
 
 typedef enum
 {
+    adios2_memory_space_detect = 0,
     adios2_memory_space_host = 1,
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
-    adios2_memory_space_detect = 0,
     adios2_memory_space_gpu = 2,
 #endif
 } adios2_memory_space;
