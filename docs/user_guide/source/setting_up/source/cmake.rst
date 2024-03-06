@@ -8,31 +8,77 @@ To build ADIOS v2.x, clone the repository and invoke the canonical CMake build s
 
     $ git clone https://github.com/ornladios/ADIOS2.git ADIOS2
     $ mkdir adios2-build && cd adios2-build
-    $ cmake ../ADIOS2
-    -- The C compiler identification is GNU 7.3.0
-    -- The CXX compiler identification is GNU 7.3.0
+    $ cmake ../ADIOS2 cmake -DADIOS2_BUILD_EXAMPLES=ON
+    -- The C compiler identification is GNU 9.4.0
+    -- The CXX compiler identification is GNU 9.4.0
     ...
 
     ADIOS2 build configuration:
+      ADIOS Version: 2.10.0
+      C++ Compiler : GNU 9.4.0
+        /usr/bin/c++
+
+      Fortran Compiler : GNU 9.4.0
+        /usr/bin/f95
+
+      Installation prefix: /usr/local
+            bin: bin
+           lib: lib
+        include: include
+         cmake: lib/cmake/adios2
+        python: lib/python3/dist-packages
+
       ...
       Features:
         Library Type: shared
         Build Type:   Release
-        Testing: ON
+        Testing: OFF
+        Examples: ON
         Build Options:
-          BZip2    : ON
-          ZFP      : OFF
-          SZ       : OFF
-          MGARD    : OFF
-          MPI      : ON
-          DataMan  : ON
-          SST      : ON
-          ZeroMQ   : ON
-          HDF5     : ON
-          Python   : ON
-          Fortran  : ON
-          SysVShMem: ON
-          Endian_Reverse: OFF
+          DataMan            : ON
+          DataSpaces         : OFF
+          HDF5               : OFF
+          HDF5_VOL           : OFF
+          MHS                : ON
+          SST                : ON
+          Fortran            : ON
+          MPI                : ON
+          Python             : ON
+          PIP                : OFF
+          Blosc2             : OFF
+          BZip2              : ON
+          LIBPRESSIO         : OFF
+          MGARD              : OFF
+          MGARD_MDR          : OFF
+          PNG                : OFF
+          SZ                 : OFF
+          ZFP                : ON
+          DAOS               : OFF
+          IME                : OFF
+          O_DIRECT           : ON
+          Sodium             : ON
+          Catalyst           : OFF
+          SysVShMem          : ON
+          UCX                : OFF
+          ZeroMQ             : ON
+          Profiling          : ON
+          Endian_Reverse     : OFF
+          Derived_Variable   : OFF
+          AWSSDK             : OFF
+          GPU_Support        : OFF
+          CUDA               : OFF
+          Kokkos             : OFF
+          Kokkos_CUDA        : OFF
+          Kokkos_HIP         : OFF
+          Kokkos_SYCL        : OFF
+          Campaign           : OFF
+
+
+If a desired feature is OFF in the report above, tell cmake where to find the required dependencies for that feature and manually turn it on. E.g.:
+
+.. code-block:: bash
+
+    $ cmake ... -DADIOS2_USE_Blosc2=ON   -DCMAKE_PREFIX_PATH="<path to c-blosc2 installation>"
 
 
 Then compile using
@@ -41,7 +87,7 @@ Then compile using
 
     $ make -j 16
 
-Optionally, run the tests:
+Optionally, run the tests (need to configure with ``-DBUILD_TESTING=ON`` cmake flag)
 
 .. code-block:: bash
 
@@ -94,7 +140,7 @@ VAR                            VALUE                     Description
 ``ADIOS2_USE_SZ``              **ON**/OFF      `SZ <https://github.com/disheng222/SZ>`_ compression (experimental).
 ``ADIOS2_USE_MGARD``           **ON**/OFF      `MGARD <https://github.com/CODARcode/MGARD>`_ compression (experimental).
 ``ADIOS2_USE_PNG``             **ON**/OFF      `PNG <https://libpng.org>`_ compression (experimental).
-``ADIOS2_USE_Blosc``           **ON**/OFF      `Blosc <http://blosc.org/>`_ compression (experimental).
+``ADIOS2_USE_Blosc2``           **ON**/OFF      `Blosc <http://blosc.org/>`_ compression (experimental).
 ``ADIOS2_USE_Endian_Reverse``  ON/**OFF**      Enable endian conversion if a different endianness is detected between write and read.
 ``ADIOS2_USE_IME``             ON/**OFF**      DDN IME transport.
 ============================= ================ ==========================================================================================================================================================================================================================
@@ -109,6 +155,7 @@ In addition to the ``ADIOS2_USE_Feature`` options, the following options are als
 ``BUILD_TESTING``                      ON/**OFF**                                     Build test code.
 ``CMAKE_INSTALL_PREFIX``               /path/to/install (``/usr/local``)              Installation location.
 ``CMAKE_BUILD_TYPE``                   Debug/**Release**/RelWithDebInfo/MinSizeRel    Compiler optimization levels.
+``CMAKE_PREFIX_PATH``                  Semi-colon separeated list of paths            Location of extra dependencies
 ==================================== =============================================== ===============================
 
 
