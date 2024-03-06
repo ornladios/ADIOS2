@@ -58,8 +58,10 @@ with Stream("types_np.bp", "w", comm=comm) as s:
 
             # single value attributes with numpy variables
             s.write_attribute("attrStr", "Testing single string attribute")
-            print(f"---- type of np.array(data.i8[0]) is {type(np.array(data.i8[0]))}"
-                  f" shape = {np.array(data.i8[0]).shape}")
+            print(
+                f"---- type of np.array(data.i8[0]) is {type(np.array(data.i8[0]))}"
+                f" shape = {np.array(data.i8[0]).shape}"
+            )
             s.write_attribute("attrI8", np.array(data.i8[0]))
             s.write_attribute("attrI16", np.array(data.i16[0]))
             s.write_attribute("attrI32", np.array(data.i32[0]))
