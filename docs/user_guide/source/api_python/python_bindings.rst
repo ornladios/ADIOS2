@@ -10,7 +10,7 @@ Python bindings to C++
 
     import adios2.bindings as adios2
 
-The full Python APIs follow very closely the full C++11 API interface. All of its functionality is now in the native API as well, so its use is discouraged for future scripts.
+The full Python APIs follows very closely the full C++11 API interface. All of its functionality is now in the native API as well, so its use is discouraged for future scripts.
 
 Examples using the Python bindings in the ADIOS2 repository
 -----------------------------------------------------------

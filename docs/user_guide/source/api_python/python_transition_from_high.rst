@@ -2,7 +2,7 @@
 Transition from old API to new API
 **********************************
 
-A python script using the high-level API of 2.9 and earlier need to be modified to work with 2.10 and later.
+A python script using the high-level API of 2.9 and earlier needs to be modified to work with 2.10 and later.
 
 - adios2.open() is replaced with adios2.Stream(), and does not have 4th and 5th optional arguments for external xml and IO name.
 - the ``for in file`` is replaced with ``for _ in file.steps()`` but it works for both writing (by specifying the number of output steps) and reading (for the number of available steps in a stream/file).
