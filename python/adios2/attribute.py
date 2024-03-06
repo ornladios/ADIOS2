@@ -41,6 +41,15 @@ class Attribute:
             Type of the Attribute as a str.
         """
         return self.impl.Type()
+    
+    def single_value(self):
+        """
+        True if the attribute is a single value, False if it is an array
+
+        Returns:
+            True or False.
+        """
+        return self.impl.SingleValue()
 
     def data(self):
         """
@@ -49,7 +58,10 @@ class Attribute:
         Returns:
             Content of the Attribute as a non string.
         """
-        return self.impl.Data()
+        if self.single_value():
+            return self.impl.Data()[0]
+        else:
+            return self.impl.Data()
 
     def data_string(self):
         """
@@ -58,4 +70,7 @@ class Attribute:
         Returns:
             Content of the Attribute as a str.
         """
-        return self.impl.DataString()
+        if self.single_value():
+            return self.impl.DataString()[0]
+        else:
+            return self.impl.DataString()

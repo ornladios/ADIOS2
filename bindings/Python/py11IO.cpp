@@ -180,8 +180,15 @@ Attribute IO::DefineAttribute(const std::string &name, const pybind11::array &ar
     else if (pybind11::isinstance<pybind11::array_t<T, pybind11::array::c_style>>(array))          \
     {                                                                                              \
         const T *data = reinterpret_cast<const T *>(array.data());                                 \
-        const size_t size = static_cast<size_t>(array.size());                                     \
-        attribute = &m_IO->DefineAttribute<T>(name, data, size, variableName, separator);          \
+        if (array.ndim())                                                                          \
+        {                                                                                          \
+            const size_t size = static_cast<size_t>(array.size());                                 \
+            attribute = &m_IO->DefineAttribute<T>(name, data, size, variableName, separator);      \
+        }                                                                                          \
+        else                                                                                       \
+        {                                                                                          \
+            attribute = &m_IO->DefineAttribute<T>(name, data[0], variableName, separator);         \
+        }                                                                                          \
     }
     ADIOS2_FOREACH_NUMPY_ATTRIBUTE_TYPE_1ARG(declare_type)
 #undef declare_type
