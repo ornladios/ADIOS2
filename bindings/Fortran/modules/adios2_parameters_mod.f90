@@ -60,6 +60,7 @@ module adios2_parameters_mod
     integer, parameter :: adios2_mode_deferred = 4
     integer, parameter :: adios2_mode_sync = 5
 
+    integer, parameter :: adios2_memory_space_detect = 0
     integer, parameter :: adios2_memory_space_host = 1
     integer, parameter :: adios2_memory_space_gpu = 2
 
