@@ -2,7 +2,7 @@
 Python Example Code
 *******************
 
-The Python APIs follow closely Python style directives. They rely on numpy and, optionally, on ``mpi4py``, if the underlying ADIOS2 library is compiled with MPI.
+The Python APIs follows closely Python style directives. They rely on numpy and, optionally, on ``mpi4py``, if the underlying ADIOS2 library is compiled with MPI.
 
 For online examples on MyBinder :
 

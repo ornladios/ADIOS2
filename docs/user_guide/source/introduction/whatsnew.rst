@@ -24,7 +24,7 @@ New/updated features
 --------------------
 
  - BP5 is supported on Windows now 
- - SST staging engine is GPU-Aware now
+ - SST and DataMan staging engines are GPU-Aware now
  - SYCL support added for Intel GPUs (besides CUDA and HIP for NVidia and AMD GPUs)
  - the SST/libfabric data transport now works on Frontier (besides the MPI data transport)
 
