@@ -37,6 +37,8 @@ public:
 
     std::string Type() const;
 
+    bool SingleValue() const;
+
     pybind11::array Data();
 
     std::vector<std::string> DataString();

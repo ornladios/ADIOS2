@@ -58,6 +58,8 @@ with Stream("types_np.bp", "w", comm=comm) as s:
 
             # single value attributes with numpy variables
             s.write_attribute("attrStr", "Testing single string attribute")
+            print(f"---- type of np.array(data.i8[0]) is {type(np.array(data.i8[0]))}"
+                  f" shape = {np.array(data.i8[0]).shape}")
             s.write_attribute("attrI8", np.array(data.i8[0]))
             s.write_attribute("attrI16", np.array(data.i16[0]))
             s.write_attribute("attrI32", np.array(data.i32[0]))
@@ -148,6 +150,7 @@ with Stream("types_np.bp", "r", comm=comm) as fr:
 
         if rank == 0 and step == 0:
             inTag = fr_step.read("tag")
+            print(f"tag = {inTag}")
             nx = fr_step.read("nx")
             print(f"nx = {nx}")
             assert nx == data.Nx
@@ -198,9 +201,11 @@ with Stream("types_np.bp", "r", comm=comm) as fr:
 
             # attributes
             inTag = fr_step.read_attribute("attrStr")
+            print(f"attrStr = {inTag}")
             inNx = fr_step.read_attribute("attrNx")
             inI8 = fr_step.read_attribute("attrI8")
             inI16 = fr_step.read_attribute("attrI16")
+            print(f"attrI16 = {inI16}")
             inI32 = fr_step.read_attribute("attrI32")
             inI64 = fr_step.read_attribute("attrI64")
             inU8 = fr_step.read_attribute("attrU8")
@@ -210,40 +215,40 @@ with Stream("types_np.bp", "r", comm=comm) as fr:
             inR32 = fr_step.read_attribute("attrR32")
             inR64 = fr_step.read_attribute("attrR64")
 
-            if inTag[0] != "Testing single string attribute":
+            if inTag != "Testing single string attribute":
                 raise ValueError("attr string read failed")
 
             if inNx != data.Nx:
                 raise ValueError("attrNx read failed")
 
-            if inI8[0] != data.i8[0]:
+            if inI8 != data.i8[0]:
                 raise ValueError("attrI8 read failed")
 
-            if inI16[0] != data.i16[0]:
+            if inI16 != data.i16[0]:
                 raise ValueError("attrI16 read failed")
 
-            if inI32[0] != data.i32[0]:
+            if inI32 != data.i32[0]:
                 raise ValueError("attrI32 read failed")
 
-            if inI64[0] != data.i64[0]:
+            if inI64 != data.i64[0]:
                 raise ValueError("attrI64 read failed")
 
-            if inU8[0] != data.u8[0]:
+            if inU8 != data.u8[0]:
                 raise ValueError("attrU8 read failed")
 
-            if inU16[0] != data.u16[0]:
+            if inU16 != data.u16[0]:
                 raise ValueError("attrU16 read failed")
 
-            if inU32[0] != data.u32[0]:
+            if inU32 != data.u32[0]:
                 raise ValueError("attrU32 read failed")
 
-            if inU64[0] != data.u64[0]:
+            if inU64 != data.u64[0]:
                 raise ValueError("attrU64 read failed")
 
-            if inR32[0] != data.r32[0]:
+            if inR32 != data.r32[0]:
                 raise ValueError("attrR32 read failed")
 
-            if inR64[0] != data.r64[0]:
+            if inR64 != data.r64[0]:
                 raise ValueError("attrR64 read failed")
 
             in_an_int_value = fr_step.read("an_int_value")
@@ -278,9 +283,11 @@ with Stream("types_np.bp", "r", comm=comm) as fr:
             print(f"a_complex_list = {a_complex_list} of type {type(a_complex_list)}")
 
             # Array attribute
-            inTag = fr_step.read_attribute_string("attrStrArray")
+            inTag = fr_step.read_attribute("attrStrArray")
+            print(f"attrStrArray = {inTag}")
             inI8 = fr_step.read_attribute("attrI8Array")
             inI16 = fr_step.read_attribute("attrI16Array")
+            print(f"attrI16Array = {inI16}")
             inI32 = fr_step.read_attribute("attrI32Array")
             inI64 = fr_step.read_attribute("attrI64Array")
             inU8 = fr_step.read_attribute("attrU8Array")
@@ -386,19 +393,19 @@ with Stream("types_np.bp", "r", comm=comm) as fr:
             sizeI8 = fr_step.read_attribute("size", "varI8")
             sizeI16 = fr_step.read_attribute("size", "varI16", "::")
 
-            if sizeI8[0] != data.Nx:
+            if sizeI8 != data.Nx:
                 raise ValueError("attribute varI8/size read failed")
 
-            if sizeI16[0] != data.Nx:
+            if sizeI16 != data.Nx:
                 raise ValueError("attribute varI16::size read failed")
 
             sizeI8 = fr_step.read_attribute("varI8/size")
             sizeI16 = fr_step.read_attribute("varI16::size")
 
-            if sizeI8[0] != data.Nx:
+            if sizeI8 != data.Nx:
                 raise ValueError("attribute varI8/size read failed")
 
-            if sizeI16[0] != data.Nx:
+            if sizeI16 != data.Nx:
                 raise ValueError("attribute varI16::size read failed")
 
             step_attrs = fr_step.available_attributes()
