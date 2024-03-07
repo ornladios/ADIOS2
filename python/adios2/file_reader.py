@@ -25,7 +25,3 @@ class FileReader(Stream):
         super().__init__(io, path, "rra", comm)
 
     # pylint: enable=E1121
-
-    def variables(self):
-        """Returns the list of variables contained in the opened file"""
-        return [self._io.inquire_variable(var) for var in self.available_variables()]
