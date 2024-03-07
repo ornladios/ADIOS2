@@ -18,6 +18,7 @@ adios2::detail::ExpressionOperator convert_op(std::string opname)
     }
     catch (std::out_of_range &e)
     {
+        (void)e; // use e
         helper::Throw<std::invalid_argument>("Derived", "ExprHelper", "get_op",
                                              "Parser cannot recognize operator '" + opname + "'.");
     }

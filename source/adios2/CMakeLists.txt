@@ -136,6 +136,7 @@ if (ADIOS2_HAVE_Derived_Variable)
       toolkit/derived/Function.cpp toolkit/derived/Function.tcc
       toolkit/derived/ExprHelper.h)
   set_target_properties(adios2_core PROPERTIES
+  				   COMPILE_FLAGS "/wd4005 /wd4065 /wd4267 -DYY_NO_UNISTD_H"
   				   INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source/adios2/toolkit/derived/parser>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source/adios2>")
   find_package(BISON "3.8.2")
   find_package(FLEX)
@@ -173,6 +174,9 @@ if (ADIOS2_HAVE_Derived_Variable)
 					   OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_derived)
   target_link_libraries(adios2_core PRIVATE adios2_core_derived)
   set(maybe_adios2_core_derived adios2_core_derived)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set_target_properties(adios2_core_derived PROPERTIES COMPILE_FLAGS "/wd4005 /wd4267 /wd4065 -DYY_NO_UNISTD_H")
+  endif()
 endif()
 
 set(maybe_adios2_core_cuda)

@@ -70,7 +70,7 @@ TEST(DerivedCorrectness, AddCorrectnessTest)
     std::vector<float> readAdd;
 
     float calcA;
-    float epsilon = 0.01;
+    float epsilon = (float)0.01;
     for (size_t i = 0; i < steps; i++)
     {
         bpFileReader.BeginStep();
@@ -145,7 +145,7 @@ TEST(DerivedCorrectness, MagCorrectnessTest)
     std::vector<float> readMag;
 
     float calcM;
-    float epsilon = 0.01;
+    float epsilon = (float)0.01;
     for (size_t i = 0; i < steps; i++)
     {
         bpFileReader.BeginStep();
@@ -162,7 +162,7 @@ TEST(DerivedCorrectness, MagCorrectnessTest)
 
         for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
         {
-            calcM = sqrt(pow(readUx[ind], 2) + pow(readUy[ind], 2) + pow(readUz[ind], 2));
+            calcM = (float) sqrt(pow(readUx[ind], 2) + pow(readUy[ind], 2) + pow(readUz[ind], 2));
             EXPECT_TRUE(fabs(calcM - readMag[ind]) < epsilon);
         }
     }
