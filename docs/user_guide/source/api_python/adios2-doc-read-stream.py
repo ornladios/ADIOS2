@@ -16,7 +16,7 @@ with Stream("cfd.bp", "r") as s:
 
         if s.current_step() == 0:
             nproc = s.read("nproc")
-            print(f"nproc is {nproc} of type {type(nproc)}")
+            print(f"nproc is {nproc} of type {type(nproc)} with ndim {nproc.ndim}")
 
         # read variables return a numpy array with corresponding selection
         physical_time = s.read("physical_time")
@@ -26,6 +26,6 @@ with Stream("cfd.bp", "r") as s:
         print(f"temperature array size is {temperature.size} of shape {temperature.shape}")
         print(f"temperature unit is {temp_unit} of type {type(temp_unit)}")
         pressure = s.read("pressure")
-        press_unit = s.read_attribute("pressure/unit")
+        press_unit = s.read_attribute("unit", "pressure")
         print(f"pressure unit is {press_unit} of type {type(press_unit)}")
         print()

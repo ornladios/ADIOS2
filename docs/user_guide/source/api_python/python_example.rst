@@ -44,6 +44,7 @@ Python Write example
    count = [nx]
    
    temperature = np.zeros(nx, dtype=np.double)
+   pressure = np.ones(nx, dtype=np.double)
    delta_time = 0.01
    physical_time = 0.0
    nsteps = 5
@@ -125,8 +126,8 @@ Python Read "step-by-step" example
     nproc is 4 of type <class 'numpy.ndarray'>
     physical_time is 0.0 of type <class 'numpy.ndarray'>
     temperature array size is 40 of shape (40,)
-    temperature unit is ['K'] of type <class 'list'>
-    pressure unit is ['Pa'] of type <class 'list'>
+    temperature unit is K of type <class 'str'>
+    pressure unit is Pa of type <class 'str'>
 
     Current step is 1
     variable_name: physical_time    AvailableStepsCount: 1  Max: 0.01       Min: 0.01       Shape:          SingleValue: true   Type: double
@@ -134,8 +135,8 @@ Python Read "step-by-step" example
     variable_name: temperature      AvailableStepsCount: 1  Max: 0  Min: 0  Shape: 40       SingleValue: false      Type: double
     physical_time is 0.01 of type <class 'numpy.ndarray'>
     temperature array size is 40 of shape (40,)
-    temperature unit is ['K'] of type <class 'list'>
-    pressure unit is ['Pa'] of type <class 'list'>
+    temperature unit is K of type <class 'str'>
+    pressure unit is Pa of type <class 'str'>
 
     ...
 
@@ -156,14 +157,18 @@ Python Read Random Access example
             for key, value in info.items():
                 print("\t" + key + ": " + value, end=" ")
             print()
+        print()
 
         nproc = s.read("nproc")
-        print(f"nproc is {nproc} of type {type(nproc)}")
+        print(f"nproc is {nproc} of type {type(nproc)} with ndim {nproc.ndim}")
         
         # read variables return a numpy array with corresponding selection
         steps = int(vars['physical_time']['AvailableStepsCount'])
         physical_time = s.read("physical_time", step_selection=[0, steps])
-        print(f"physical_time is {physical_time} of type {type(physical_time)}")
+        print(
+            f"physical_time is {physical_time} of type {type(physical_time)} with "
+            f"ndim {physical_time.ndim} shape = {physical_time.shape}"
+        )
 
         steps = int(vars['temperature']['AvailableStepsCount'])
         temperature = s.read("temperature", step_selection=[0, steps])
@@ -183,8 +188,9 @@ Python Read Random Access example
     variable_name: physical_time    AvailableStepsCount: 5  Max: 0.04       Min: 0  Shape:          SingleValue: true       Type: double
     variable_name: pressure         AvailableStepsCount: 5  Max: 1  Min: 1  Shape: 40       SingleValue: false      Type: double
     variable_name: temperature      AvailableStepsCount: 5  Max: 0  Min: 0  Shape: 40       SingleValue: false      Type: double
-    nproc is 4 of type <class 'numpy.ndarray'>
-    physical_time is [0.   0.01 0.02 0.03 0.04] of type <class 'numpy.ndarray'>
+
+    nproc is 4 of type <class 'numpy.ndarray'> with ndim 0
+    physical_time is [0.   0.01 0.02 0.03 0.04] of type <class 'numpy.ndarray'> with ndim 1 shape = (5,)
     temperature array size is 200 of shape (200,)
-    temperature unit is ['K'] of type <class 'list'>
+    temperature unit is K of type <class 'str'>
 

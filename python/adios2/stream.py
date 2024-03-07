@@ -325,11 +325,9 @@ class Stream:
 
         self.write(variable, content)
 
-    @singledispatchmethod
-    def read(self, variable: Variable):
+    def _read_var(self, variable: Variable):
         """
-        Random access read allowed to select steps,
-        only valid with Stream Engines
+        Internal common function to read. Settings must be done to Variable before the call.
 
         Parameters
             variable
@@ -342,6 +340,7 @@ class Stream:
         """
         dtype = type_adios_to_numpy(variable.type())
         count = variable.count()
+
         if count != []:
             # array
             # steps = variable.get_steps_from_step_selection()
@@ -365,7 +364,8 @@ class Stream:
         else:
             # scalar
             size_all_steps = variable.selection_size()
-            if size_all_steps > 1:
+            # if size_all_steps > 1:
+            if self._mode == bindings.Mode.ReadRandomAccess and variable.steps() > 1:
                 output_shape = [size_all_steps]
             else:
                 output_shape = []
@@ -374,11 +374,56 @@ class Stream:
         self._engine.get(variable, output)
         return output
 
+    @singledispatchmethod
+    def read(self, variable: Variable, start=[], count=[], block_id=None, step_selection=None):
+        """
+        Read a variable.
+        Random access read allowed to select steps.
+
+        Parameters
+            variable
+                adios2.Variable object to be read
+                Use variable.set_selection(), set_block_selection(), set_step_selection()
+                to prepare a read
+
+            start
+                variable offset dimensions
+
+            count
+                variable local dimensions from offset
+
+            block_id
+                (int) Required for reading local variables, local array, and local
+                value.
+
+            step_selection
+                (list): On the form of [start, count].
+        Returns
+            array
+                resulting array from selection
+        """
+        if step_selection is not None and not self._mode == bindings.Mode.ReadRandomAccess:
+            raise RuntimeError("step_selection parameter requires 'rra' mode")
+
+        if step_selection is not None:
+            variable.set_step_selection(step_selection)
+
+        if block_id is not None:
+            variable.set_block_selection(block_id)
+
+        if variable.type() == "string" and variable.single_value() is True:
+            return self._engine.get(variable)
+
+        if start != [] and count != []:
+            variable.set_selection([start, count])
+
+        return self._read_var(variable)
+
     @read.register(str)
     def _(self, name: str, start=[], count=[], block_id=None, step_selection=None):
         """
-        Random access read allowed to select steps,
-        only valid with Stream Engines
+        Read a variable.
+        Random access read allowed to select steps.
 
         Parameters
             name
@@ -404,22 +449,7 @@ class Stream:
         if not variable:
             raise ValueError()
 
-        if step_selection is not None and not self._mode == bindings.Mode.ReadRandomAccess:
-            raise RuntimeError("step_selection parameter requires 'rra' mode")
-
-        if step_selection is not None:
-            variable.set_step_selection(step_selection)
-
-        if block_id is not None:
-            variable.set_block_selection(block_id)
-
-        if variable.type() == "string" and variable.single_value() is True:
-            return self._engine.get(variable)
-
-        if start != [] and count != []:
-            variable.set_selection([start, count])
-
-        return self.read(variable)
+        return self.read(variable, start, count, block_id, step_selection)
 
     def write_attribute(self, name, content, variable_name="", separator="/"):
         """
