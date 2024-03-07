@@ -1,0 +1,29 @@
+/*
+* Distributed under the OSI-approved Apache License, Version 2.0.  See
+* accompanying file Copyright.txt for details.
+* ganyushin@gmail.com
+*/
+#include "Xrootd.h"
+#include "adios2/core/ADIOS.h"
+#include "adios2/helper/adiosLog.h"
+#include "adios2/helper/adiosString.h"
+#include "adios2/helper/adiosSystem.h"
+
+namespace adios2
+{
+void Xrootd::Open(const std::string hostname, const int32_t port, const std::string filename,
+                  const Mode mode, bool RowMajorOrdering)
+{
+    //TODO
+    return;
+}
+
+Xrootd::GetHandle Xrootd::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count, Dims &Start,
+                              void *dest)
+{
+    //TODO
+    return 0;
+
+}
+
+}
