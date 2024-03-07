@@ -109,6 +109,7 @@ add_library(adios2_core
   toolkit/query/BlockIndex.cpp
 
   toolkit/remote/Remote.cpp
+  toolkit/xrootd/Xrootd.cpp
 
   toolkit/transport/Transport.cpp
   toolkit/transport/file/FileStdio.cpp
