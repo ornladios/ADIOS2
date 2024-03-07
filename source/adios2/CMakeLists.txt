@@ -136,7 +136,6 @@ if (ADIOS2_HAVE_Derived_Variable)
       toolkit/derived/Function.cpp toolkit/derived/Function.tcc
       toolkit/derived/ExprHelper.h)
   set_target_properties(adios2_core PROPERTIES
-  				   COMPILE_FLAGS "/wd4005 /wd4065 /wd4267 -DYY_NO_UNISTD_H"
   				   INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source/adios2/toolkit/derived/parser>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source/adios2>")
   find_package(BISON "3.8.2")
   find_package(FLEX)
