@@ -18,6 +18,7 @@
 #include "adios2/toolkit/format/bp5/BP5Deserializer.h"
 #include "adios2/toolkit/format/buffer/heap/BufferMalloc.h"
 #include "adios2/toolkit/remote/Remote.h"
+#include "adios2/toolkit/xrootd/Xrootd.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
 #include <chrono>
@@ -93,6 +94,7 @@ private:
     /* transport manager for managing the active flag file */
     transportman::TransportMan m_ActiveFlagFileManager;
     Remote m_Remote;
+    Xrootd m_Xrootd;
     bool m_WriterIsActive = true;
     adios2::profiling::JSONProfiler m_JSONProfiler;
 
@@ -249,6 +251,8 @@ private:
     void PerformLocalGets();
 
     void PerformRemoteGets();
+
+    void PerformXrootdGets();
 
     void DestructorClose(bool Verbose) noexcept;
 

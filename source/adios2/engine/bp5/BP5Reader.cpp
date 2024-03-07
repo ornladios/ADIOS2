@@ -297,6 +297,14 @@ void BP5Reader::PerformRemoteGets()
         m_Remote.Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count, Req.Start, Req.Data);
     }
 }
+void BP5Reader::PerformXrootdGets()
+{
+    auto GetRequests = m_BP5Deserializer->PendingGetRequests;
+    for (auto &Req : GetRequests)
+    {
+        m_Xrootd.Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count, Req.Start, Req.Data);
+    }
+}
 
 void BP5Reader::PerformLocalGets()
 {
