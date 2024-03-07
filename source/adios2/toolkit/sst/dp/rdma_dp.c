@@ -1703,20 +1703,8 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank, lo
                   "Remote read target is Rank %d (Offset = %zi, Length = %zi)\n", Rank, Offset,
                   Length);
 
-    /*
-     * The shm provider often returns -EAGAIN thousands of times.
-     * Yielding the thread after a certain number of attempts helps reduce context switches.
-     */
-    size_t const batch_size = 2000;
-    size_t counter = 1;
     do
     {
-        if (counter++ >= batch_size)
-        {
-            sched_yield();
-            counter = 0;
-        }
-        ++counter;
         rc = fi_read(Fabric->signal, Buffer, Length, LocalDesc, SrcAddress, (uint64_t)Addr,
                      Info->Key, ret);
     } while (rc == -EAGAIN);
