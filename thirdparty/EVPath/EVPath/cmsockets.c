@@ -457,7 +457,6 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
 	    int err = WSAGetLastError();
 	    if (err != WSAEWOULDBLOCK || err != WSAEINPROGRESS) {
 #endif
-		printf("Errno was %d\n", errno);
 		svc->trace_out(cm, "CMSocket connect FAILURE --> Connect() to IP %s failed", ip_str);
 		close(sock);
 #ifdef WSAEWOULDBLOCK
