@@ -160,6 +160,8 @@ if (ADIOS2_HAVE_Derived_Variable)
     SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp PROPERTIES COMPILE_FLAGS -Wno-sign-compare)
   elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
     SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/parser.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-but-set-variable)
+  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    SET_SOURCE_FILES_PROPERTIES(toolkit/derived/Expression.cpp toolkit/derived/Function.cpp PROPERTIES COMPILE_FLAGS "/wd4005 /wd4065 /wd4267 -DYY_NO_UNISTD_H")
   endif()
   add_library(adios2_core_derived
       ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp
