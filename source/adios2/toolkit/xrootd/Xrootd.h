@@ -1,14 +1,14 @@
 /*
-* Distributed under the OSI-approved Apache License, Version 2.0.  See
-* accompanying file Copyright.txt for details.
-* ganyushin@gmail.com
-*/
+ * Distributed under the OSI-approved Apache License, Version 2.0.  See
+ * accompanying file Copyright.txt for details.
+ * ganyushin@gmail.com
+ */
 
 #ifndef ADIOS2_XROOTD_H
 #define ADIOS2_XROOTD_H
 
-#include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/toolkit/profiling/iochrono/IOChrono.h"
 
 namespace adios2
 {
@@ -32,7 +32,6 @@ public:
 
     int64_t m_ID;
     size_t m_Size;
-
 };
 
 } // end namespace adios2
