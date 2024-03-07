@@ -430,9 +430,7 @@ else()
 endif()
 
 # The main "adios2" target provides all interfaces.
-add_library(adios2 INTERFACE
-        toolkit/xrootd/Xrootd.cpp
-        toolkit/xrootd/Xrootd.h)
+add_library(adios2 INTERFACE)
 target_link_libraries(adios2 INTERFACE
   ${maybe_adios2_c_mpi} adios2_c
   ${maybe_adios2_cxx11_mpi} adios2_cxx11

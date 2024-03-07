@@ -11,6 +11,8 @@
 
 namespace adios2
 {
+Xrootd::Xrootd(){}
+Xrootd::~Xrootd(){}
 void Xrootd::Open(const std::string hostname, const int32_t port, const std::string filename,
                   const Mode mode, bool RowMajorOrdering)
 {
