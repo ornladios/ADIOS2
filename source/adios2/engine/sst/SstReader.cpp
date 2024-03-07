@@ -669,28 +669,46 @@ bool SstReader::VariableMinMax(const VariableBase &Var, const size_t Step, MinMa
     return m_BP5Deserializer->VariableMinMax(Var, Step, MinMax);
 }
 
+void *SstReader::performDeferredReadRemoteMemory(DeferredReadRemoteMemory const &params)
+{
+    return SstReadRemoteMemory(m_Input, (int)params.rank, CurrentStep(), params.payloadStart,
+                               params.payloadSize, params.buffer, params.dp_info);
+}
+
+constexpr static size_t BATCH_SIZE = 10;
+
 void SstReader::BP5PerformGets()
 {
     size_t maxReadSize;
     auto ReadRequests = m_BP5Deserializer->GenerateReadRequests(true, &maxReadSize);
     std::vector<void *> sstReadHandlers;
-    for (const auto &Req : ReadRequests)
+
+    auto iterator = ReadRequests.cbegin();
+    auto end = ReadRequests.cend();
+    while (iterator != end)
     {
-        void *dp_info = NULL;
-        if (m_CurrentStepMetaData->DP_TimestepInfo)
+        sstReadHandlers.clear();
+        size_t counter = 0;
+        for (; counter < BATCH_SIZE && iterator != end; ++iterator, ++counter)
         {
-            dp_info = m_CurrentStepMetaData->DP_TimestepInfo[Req.WriterRank];
+            auto const &Req = *iterator;
+
+            void *dp_info = NULL;
+            if (m_CurrentStepMetaData->DP_TimestepInfo)
+            {
+                dp_info = m_CurrentStepMetaData->DP_TimestepInfo[Req.WriterRank];
+            }
+            auto ret = SstReadRemoteMemory(m_Input, (int)Req.WriterRank, Req.Timestep, Req.StartOffset,
+                                           Req.ReadLength, Req.DestinationAddr, dp_info);
+            sstReadHandlers.push_back(ret);
         }
-        auto ret = SstReadRemoteMemory(m_Input, (int)Req.WriterRank, Req.Timestep, Req.StartOffset,
-                                       Req.ReadLength, Req.DestinationAddr, dp_info);
-        sstReadHandlers.push_back(ret);
-    }
-    for (const auto &i : sstReadHandlers)
-    {
-        if (SstWaitForCompletion(m_Input, i) != SstSuccess)
+        for (const auto &i : sstReadHandlers)
         {
-            helper::Throw<std::runtime_error>("Engine", "SstReader", "BP5PerformGets",
-                                              "Writer failed before returning data");
+            if (SstWaitForCompletion(m_Input, i) != SstSuccess)
+            {
+                helper::Throw<std::runtime_error>("Engine", "SstReader", "BP5PerformGets",
+                                                  "Writer failed before returning data");
+            }
         }
     }
 
@@ -710,7 +728,7 @@ void SstReader::PerformGets()
     }
     else if (m_WriterMarshalMethod == SstMarshalBP)
     {
-        std::vector<void *> sstReadHandlers;
+        std::vector<DeferredReadRemoteMemory> sstReadHandlers;
         std::vector<std::vector<char>> buffers;
         size_t iter = 0;
 
@@ -739,13 +757,26 @@ void SstReader::PerformGets()
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         }
-        // wait for all SstRead requests to finish
-        for (const auto &i : sstReadHandlers)
+        // run read requests in batches and wait for them to finish
+        auto iterator = sstReadHandlers.cbegin();
+        auto end = sstReadHandlers.cend();
+        std::vector<void *> enqueuedHandlers;
+        enqueuedHandlers.reserve(BATCH_SIZE);
+        while (iterator != end)
         {
-            if (SstWaitForCompletion(m_Input, i) != SstSuccess)
+            size_t counter = 0;
+            enqueuedHandlers.clear();
+            for (; counter < BATCH_SIZE && iterator != end; ++iterator, ++counter)
             {
-                helper::Throw<std::runtime_error>("Engine", "SstReader", "PerformGets",
-                                                  "Writer failed before returning data");
+                enqueuedHandlers.push_back(performDeferredReadRemoteMemory(*iterator));
+            }
+            for (const auto &i : enqueuedHandlers)
+            {
+                if (SstWaitForCompletion(m_Input, i) != SstSuccess)
+                {
+                    helper::Throw<std::runtime_error>("Engine", "SstReader", "PerformGets",
+                                                      "Writer failed before returning data");
+                }
             }
         }
 
