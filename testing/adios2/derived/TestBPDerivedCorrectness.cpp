@@ -162,7 +162,7 @@ TEST(DerivedCorrectness, MagCorrectnessTest)
 
         for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
         {
-            calcM = (float) sqrt(pow(readUx[ind], 2) + pow(readUy[ind], 2) + pow(readUz[ind], 2));
+            calcM = (float)sqrt(pow(readUx[ind], 2) + pow(readUy[ind], 2) + pow(readUz[ind], 2));
             EXPECT_TRUE(fabs(calcM - readMag[ind]) < epsilon);
         }
     }
