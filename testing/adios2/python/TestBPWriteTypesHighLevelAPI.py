@@ -84,7 +84,8 @@ with Stream("types_np.bp", "w", comm=comm) as s:
             s.write_attribute("attr_int_list", data.int_list)
             s.write_attribute("attr_float_list", data.float_list)
             s.write_attribute("attr_complex_list", data.complex_list)
-            s.write_attribute("attrStrArray", ["string1", "string2", "string3"])
+            s.write_attribute("attrStrArray1", ["string1"])
+            s.write_attribute("attrStrArray3", ["string1", "string2", "string3"])
 
             # array attributes with numpy arrays
             s.write_attribute("attrI8Array", data.i8)
@@ -285,8 +286,10 @@ with Stream("types_np.bp", "r", comm=comm) as fr:
             print(f"a_complex_list = {a_complex_list} of type {type(a_complex_list)}")
 
             # Array attribute
-            inTag = fr_step.read_attribute("attrStrArray")
-            print(f"attrStrArray = {inTag}")
+            inStr1 = fr_step.read_attribute("attrStrArray1")
+            print(f"attrStrArray1 = {inStr1}")
+            inStr3 = fr_step.read_attribute("attrStrArray3")
+            print(f"attrStrArray3 = {inStr3}")
             inI8 = fr_step.read_attribute("attrI8Array")
             inI16 = fr_step.read_attribute("attrI16Array")
             print(f"attrI16Array = {inI16}")
@@ -299,8 +302,11 @@ with Stream("types_np.bp", "r", comm=comm) as fr:
             inR32 = fr_step.read_attribute("attrR32Array")
             inR64 = fr_step.read_attribute("attrR64Array")
 
-            if inTag != ["string1", "string2", "string3"]:
-                raise ValueError("attrStrArray read failed")
+            if inStr1 != ["string1"]:
+                raise ValueError("attrStrArray1 read failed")
+
+            if inStr3 != ["string1", "string2", "string3"]:
+                raise ValueError("attrStrArray3 read failed")
 
             if not (inI8 == data.i8).all():
                 raise ValueError("attrI8 array read failed")
