@@ -16,14 +16,18 @@ Xrootd::~Xrootd(){}
 void Xrootd::Open(const std::string hostname, const int32_t port, const std::string filename,
                   const Mode mode, bool RowMajorOrdering)
 {
+#ifdef ADIOS2_HAVE_XROOTD
     // TODO
+#endif
     return;
 }
 
 Xrootd::GetHandle Xrootd::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count, Dims &Start,
                               void *dest)
 {
+#ifdef ADIOS2_HAVE_XROOTD
     // TODO
+#endif
     return 0;
 }
 
