@@ -47,6 +47,7 @@ typedef int16_t flex_int16_t;
 typedef uint16_t flex_uint16_t;
 typedef int32_t flex_int32_t;
 typedef uint32_t flex_uint32_t;
+typedef uint64_t flex_uint64_t;
 #else
 typedef signed char flex_int8_t;
 typedef short int flex_int16_t;
@@ -155,7 +156,7 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 typedef size_t yy_size_t;
 #endif
 
-extern int yyleng;
+extern yy_size_t yyleng;
 
 extern FILE *yyin, *yyout;
 
@@ -198,7 +199,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	int yy_n_chars;
+	yy_size_t yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -267,8 +268,8 @@ static YY_BUFFER_STATE * yy_buffer_stack = NULL; /**< Stack as an array. */
 
 /* yy_hold_char holds the character lost when yytext is formed. */
 static char yy_hold_char;
-static int yy_n_chars;		/* number of characters read into yy_ch_buf */
-int yyleng;
+static yy_size_t yy_n_chars;		/* number of characters read into yy_ch_buf */
+yy_size_t yyleng;
 
 /* Points to current character in buffer. */
 static char *yy_c_buf_p = NULL;
@@ -295,7 +296,7 @@ static void yy_init_buffer ( YY_BUFFER_STATE b, FILE *file  );
 
 YY_BUFFER_STATE yy_scan_buffer ( char *base, yy_size_t size  );
 YY_BUFFER_STATE yy_scan_string ( const char *yy_str  );
-YY_BUFFER_STATE yy_scan_bytes ( const char *bytes, int len  );
+YY_BUFFER_STATE yy_scan_bytes ( const char *bytes, yy_size_t len  );
 
 void *yyalloc ( yy_size_t  );
 void *yyrealloc ( void *, yy_size_t  );
@@ -351,7 +352,7 @@ static void yynoreturn yy_fatal_error ( const char* msg  );
  */
 #define YY_DO_BEFORE_ACTION \
 	(yytext_ptr) = yy_bp; \
-	yyleng = (int) (yy_cp - yy_bp); \
+	yyleng = (yy_size_t) (yy_cp - yy_bp); \
 	(yy_hold_char) = *yy_cp; \
 	*yy_cp = '\0'; \
 	(yy_c_buf_p) = yy_cp;
@@ -459,6 +460,7 @@ char *yytext;
 #line 2 "lexer.l"
 #include <cerrno>
 #include <cstdlib>
+#include <limits.h>
 #include <cstring> // strerror
 #include <string>
 #include "ASTDriver.h"
@@ -472,8 +474,8 @@ char *yytext;
 #include <sys/types.h>
 #include <sys/stat.h>
 #endif
-#line 475 "lexer.cpp"
-#line 20 "lexer.l"
+#line 477 "lexer.cpp"
+#line 21 "lexer.l"
 #if defined __clang__
 # define CLANG_VERSION (__clang_major__ * 100 + __clang_minor__)
 #endif
@@ -542,18 +544,18 @@ char *yytext;
 #if defined GCC_VERSION && 900 <= GCC_VERSION
 # pragma GCC diagnostic ignored "-Wuseless-cast"
 #endif
-#line 545 "lexer.cpp"
+#line 547 "lexer.cpp"
 #define YY_NO_INPUT 1
-#line 93 "lexer.l"
+#line 94 "lexer.l"
   // A number symbol corresponding to the value in S.
   adios2::detail::parser::symbol_type
   make_INT (const std::string &s, const adios2::detail::parser::location_type& loc);
-#line 551 "lexer.cpp"
-#line 105 "lexer.l"
+#line 553 "lexer.cpp"
+#line 106 "lexer.l"
   // Code run each time a pattern is matched.
   # define YY_USER_ACTION  loc.columns (yyleng);
-#line 555 "lexer.cpp"
-#line 556 "lexer.cpp"
+#line 557 "lexer.cpp"
+#line 558 "lexer.cpp"
 
 #define INITIAL 0
 
@@ -592,7 +594,7 @@ FILE *yyget_out ( void );
 
 void yyset_out  ( FILE * _out_str  );
 
-			int yyget_leng ( void );
+			yy_size_t yyget_leng ( void );
 
 char *yyget_text ( void );
 
@@ -659,7 +661,7 @@ static int input ( void );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		int n; \
+		yy_size_t n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -768,16 +770,16 @@ YY_DECL
 		}
 
 	{
-#line 108 "lexer.l"
+#line 109 "lexer.l"
 
 
-#line 111 "lexer.l"
+#line 112 "lexer.l"
   // A handy shortcut to the location held by the adios2::detail::ASTDriver.
   adios2::detail::location& loc = drv.location;
   // Code run each time yylex is called.
   loc.step ();
 
-#line 780 "lexer.cpp"
+#line 782 "lexer.cpp"
 
 	while ( /*CONSTCOND*/1 )		/* loops until end-of-file is reached */
 		{
@@ -832,88 +834,88 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 116 "lexer.l"
+#line 117 "lexer.l"
 loc.step ();
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 117 "lexer.l"
+#line 118 "lexer.l"
 loc.lines (yyleng); loc.step (); return adios2::detail::parser::make_ENDL (loc);
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 119 "lexer.l"
+#line 120 "lexer.l"
 return adios2::detail::parser::make_ASSIGN  (loc);
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 120 "lexer.l"
+#line 121 "lexer.l"
 return adios2::detail::parser::make_COMMA   (loc);
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 121 "lexer.l"
+#line 122 "lexer.l"
 return adios2::detail::parser::make_COLON   (loc);
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 122 "lexer.l"
+#line 123 "lexer.l"
 return adios2::detail::parser::make_L_PAREN (loc);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 123 "lexer.l"
+#line 124 "lexer.l"
 return adios2::detail::parser::make_R_PAREN (loc);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 124 "lexer.l"
+#line 125 "lexer.l"
 return adios2::detail::parser::make_L_BRACE (loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 125 "lexer.l"
+#line 126 "lexer.l"
 return adios2::detail::parser::make_R_BRACE (loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 127 "lexer.l"
+#line 128 "lexer.l"
 return make_INT (yytext, loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 128 "lexer.l"
+#line 129 "lexer.l"
 return adios2::detail::parser::make_OPERATOR (yytext, loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 129 "lexer.l"
+#line 130 "lexer.l"
 return adios2::detail::parser::make_IDENTIFIER (yytext, loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 130 "lexer.l"
+#line 131 "lexer.l"
 return adios2::detail::parser::make_VARNAME (yytext, loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 131 "lexer.l"
+#line 132 "lexer.l"
 {
              throw adios2::detail::parser::syntax_error
                (loc, "invalid character: " + std::string(yytext));
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 135 "lexer.l"
+#line 136 "lexer.l"
 return adios2::detail::parser::make_YYEOF (loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 136 "lexer.l"
+#line 137 "lexer.l"
 ECHO;
 	YY_BREAK
-#line 916 "lexer.cpp"
+#line 918 "lexer.cpp"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -1099,7 +1101,7 @@ static int yy_get_next_buffer (void)
 
 	else
 		{
-			int num_to_read =
+			yy_size_t num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
@@ -1113,7 +1115,7 @@ static int yy_get_next_buffer (void)
 
 			if ( b->yy_is_our_buffer )
 				{
-				int new_size = b->yy_buf_size * 2;
+				yy_size_t new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -1171,7 +1173,7 @@ static int yy_get_next_buffer (void)
 
 	if (((yy_n_chars) + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
 		/* Extend the array by 50%, plus the number we really need. */
-		int new_size = (yy_n_chars) + number_to_move + ((yy_n_chars) >> 1);
+		yy_size_t new_size = (yy_n_chars) + number_to_move + ((yy_n_chars) >> 1);
 		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yyrealloc(
 			(void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf, (yy_size_t) new_size  );
 		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
@@ -1274,7 +1276,7 @@ static int yy_get_next_buffer (void)
 
 		else
 			{ /* need more input */
-			int offset = (int) ((yy_c_buf_p) - (yytext_ptr));
+			yy_size_t offset = (yy_c_buf_p) - (yytext_ptr);
 			++(yy_c_buf_p);
 
 			switch ( yy_get_next_buffer(  ) )
@@ -1643,12 +1645,12 @@ YY_BUFFER_STATE yy_scan_string (const char * yystr )
  * 
  * @return the newly allocated buffer state object.
  */
-YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, int  _yybytes_len )
+YY_BUFFER_STATE yy_scan_bytes  (const char * yybytes, yy_size_t  _yybytes_len )
 {
 	YY_BUFFER_STATE b;
 	char *buf;
 	yy_size_t n;
-	int i;
+	yy_size_t i;
     
 	/* Get memory for full buffer, including space for trailing EOB's. */
 	n = (yy_size_t) (_yybytes_len + 2);
@@ -1690,7 +1692,7 @@ static void yynoreturn yy_fatal_error (const char* msg )
 	do \
 		{ \
 		/* Undo effects of setting up yytext. */ \
-        int yyless_macro_arg = (n); \
+        yy_size_t yyless_macro_arg = (n); \
         YY_LESS_LINENO(yyless_macro_arg);\
 		yytext[yyleng] = (yy_hold_char); \
 		(yy_c_buf_p) = yytext + yyless_macro_arg; \
@@ -1730,7 +1732,7 @@ FILE *yyget_out  (void)
 /** Get the length of the current token.
  * 
  */
-int yyget_leng  (void)
+yy_size_t yyget_leng  (void)
 {
         return yyleng;
 }
@@ -1880,7 +1882,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 136 "lexer.l"
+#line 137 "lexer.l"
 
 
 adios2::detail::parser::symbol_type

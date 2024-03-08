@@ -1,6 +1,7 @@
 %{
 #include <cerrno>
 #include <cstdlib>
+#include <limits.h>
 #include <cstring> // strerror
 #include <string>
 #include "ASTDriver.h"
