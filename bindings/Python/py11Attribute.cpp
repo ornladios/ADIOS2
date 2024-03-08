@@ -36,6 +36,12 @@ std::string Attribute::Type() const
     return ToString(m_Attribute->m_Type);
 }
 
+bool Attribute::SingleValue() const
+{
+    helper::CheckForNullptr(m_Attribute, "in call to Attribute::SingleValue");
+    return m_Attribute->m_IsSingleValue;
+}
+
 std::vector<std::string> Attribute::DataString()
 {
     helper::CheckForNullptr(m_Attribute, "in call to Attribute::DataStrings");
