@@ -54,7 +54,7 @@ Writing GPU buffers
 The ADIOS2 API for Device pointers is identical to using Host buffers for both the read and write logic.
 Internally each ADIOS2 variable holds a memory space for the data it receives. Once the memory space is set (eithr directly by the user through calls to ``SetMemorySpace`` or after detecting the buffer memory space the first ``Put`` or ``Get`` call) to either Host or Device, it cannot be changed.
 
-The `examples/hello` folder contains several codes that use Device buffers:
+The ``examples/hello`` folder contains several codes that use Device buffers:
  - `bpStepsWriteRead{Cuda|Hip}` show CUDA and HIP codes using BP5 with GPU pointers
  - `bpStepsWriteReadKokkos contains` Fortran and C++ codes using ``Kokkos::View`` with different memory spaces and a Kokkos code using different layouts on Host buffers
  - `datamanKokkos` shows an example of streaming a ``Kokkos::View`` with DataMan using different memory spaces
@@ -112,6 +112,34 @@ ADIOS2 supports GPU buffers provided in the form of ``Kokkos::View`` directly in
    bpWriter.Put(data, gpuSimData);
 
 If the CUDA backend is being used (and not Kokkos) to enable GPU support in ADIOS2, Kokkos applications can still directly pass ``Kokkos::View`` as long as the correct external header is included: ``#include <adios2/cxx11/KokkosView.h>``.
+
+*******************
+Reading GPU buffers
+*******************
+
+The GPU-aware backend allows different layouts for global arrays without requiring the user to update the code for each case. The user defines the shape of the global array and ADIOS2 adjusts the dimensions for each rank according to the buffer layout and memory space.
+
+The following example shows a global array of shape (4, 3) when running with 2 ranks, each contributing half of it.
+
+.. code-block:: text
+
+   Write on LayoutRight, read on LayoutRight
+   1 1 1  // rank 0
+   2 2 2
+   3 3 3  // rank 1
+   4 4 4
+   Write on LayoutRight, read on LayoutLeft
+   1 2 3 4
+   1 2 3 4
+   1 2 3 4
+
+On the read side, the Shape function can take a memory space or a layout to return the correct dimensions of the variable.
+For the previous example, if a C++ code using two ranks wants to read the data into a GPU buffer, the Shape of the local array should be (3, 2). If the same data will be read on CPU buffers, the shape should be (2, 3). Both of the following code would give acceptable answers:
+
+.. code-block:: c++
+
+   auto dims_host = data.Shape(adios2::MemorySpace::Host);
+   auto dims_device = data.Shape(adios2::ArrayOrdering::ColumnMajor);
 
 ***************
 Build scripts
