@@ -1,5 +1,5 @@
 program TestBPWriteReadHeatMap5D
-  use mpi
+  use mpi_f08
   use adios2
 
   implicit none

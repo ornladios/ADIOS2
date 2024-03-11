@@ -34,28 +34,51 @@ module adios2_adios_init_mpi_mod
 
 contains
 
-    ADIOS2_MODULE_PROCEDURE subroutine adios2_init_mpi( &
-            adios, comm, ierr)
-        type(adios2_adios), intent(out) :: adios
-        integer, intent(in) :: comm
-        integer, intent(out) :: ierr
+!    ADIOS2_MODULE_PROCEDURE subroutine adios2_init_mpi( &
+!            adios, comm, ierr)
+!        type(adios2_adios), intent(out) :: adios
+!        integer, intent(in) :: comm
+!        integer, intent(out) :: ierr
+!
+!        call adios2_init_config_mpi(adios, char(0), comm, ierr)
+!    end subroutine
+
+        ADIOS2_MODULE_PROCEDURE subroutine adios2_init_mpi( &
+        adios, comm, ierr)
+                type(adios2_adios), intent(out) :: adios
+                TYPE(MPI_Comm), intent(in) :: comm
+                integer, intent(out) :: ierr
 
         call adios2_init_config_mpi(adios, char(0), comm, ierr)
-    end subroutine
+                end subroutine
 
-    ADIOS2_MODULE_PROCEDURE subroutine adios2_init_config_mpi( &
-            adios, config_file, comm, ierr)
+!    ADIOS2_MODULE_PROCEDURE subroutine adios2_init_config_mpi( &
+!            adios, config_file, comm, ierr)
+!        type(adios2_adios), intent(out) :: adios
+!        character*(*), intent(in) :: config_file
+!        integer, intent(in) :: comm
+!        integer, intent(out) :: ierr
+!        ! local
+!
+!        call adios2_init_config_mpi_f2c(adios%f2c, &
+!                                        TRIM(ADJUSTL(config_file))//char(0), &
+!                                        comm, ierr)
+!        if( ierr == 0 ) adios%valid = .true.
+!    end subroutine
+
+        ADIOS2_MODULE_PROCEDURE subroutine adios2_init_config_mpi( &
+        adios, config_file, comm, ierr)
         type(adios2_adios), intent(out) :: adios
         character*(*), intent(in) :: config_file
-        integer, intent(in) :: comm
+        TYPE(MPI_Comm), intent(in) :: comm
         integer, intent(out) :: ierr
         ! local
 
         call adios2_init_config_mpi_f2c(adios%f2c, &
-                                        TRIM(ADJUSTL(config_file))//char(0), &
-                                        comm, ierr)
+        TRIM(ADJUSTL(config_file))//char(0), &
+        comm, ierr)
         if( ierr == 0 ) adios%valid = .true.
-    end subroutine
+        end subroutine
 
 #ifdef ADIOS2_HAVE_FORTRAN_SUBMODULES
 end submodule

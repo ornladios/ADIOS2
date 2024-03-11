@@ -23,15 +23,26 @@ module adios2_adios_init_mod
         end subroutine
 
 #ifdef ADIOS2_HAVE_MPI_F
+!        module subroutine adios2_init_mpi(adios, comm, ierr)
+!            type(adios2_adios), intent(out) :: adios
+!            integer, intent(in) :: comm
+!            integer, intent(out) :: ierr
+!        end subroutine
+!        module subroutine adios2_init_config_mpi(adios, config_file, comm, ierr)
+!            type(adios2_adios), intent(out) :: adios
+!            character*(*), intent(in) :: config_file
+!            integer, intent(in) :: comm
+!            integer, intent(out) :: ierr
+!        end subroutine
         module subroutine adios2_init_mpi(adios, comm, ierr)
             type(adios2_adios), intent(out) :: adios
-            integer, intent(in) :: comm
+            TYPE(MPI_Comm), intent(in) :: comm
             integer, intent(out) :: ierr
         end subroutine
         module subroutine adios2_init_config_mpi(adios, config_file, comm, ierr)
             type(adios2_adios), intent(out) :: adios
             character*(*), intent(in) :: config_file
-            integer, intent(in) :: comm
+            TYPE(MPI_comm), intent(in) :: comm
             integer, intent(out) :: ierr
         end subroutine
 #endif
