@@ -28,24 +28,27 @@ public:
             throw std::runtime_error("Unable to evaluate query! Invalid Variable detected");
         }
 
-        if (m_IdxReader.m_EngineType.find("5") != std::string::npos) // a bp5 reader
-            RunBP5Stat(query, resultBlockIDs);
-        else
-            RunBP4Stat(query, resultBlockIDs);
-    }
-
-    void RunBP5Stat(const QueryVar &query, std::vector<BlockHit> &hitBlocks)
-    {
         size_t currStep = m_IdxReader.CurrentStep();
         adios2::Dims currShape = m_VarPtr->Shape();
         if (!query.IsSelectionValid(currShape))
             return;
 
         auto MinBlocksInfo = m_IdxReader.MinBlocksInfo(*m_VarPtr, currStep);
-        if (!MinBlocksInfo)
-        { // no info, can't do anything
-            return;
+
+        if (MinBlocksInfo != nullptr)
+        {
+            RunStatMinBlocksInfo(query, MinBlocksInfo, resultBlockIDs);
+            delete MinBlocksInfo;
         }
+        else
+        {
+            RunStatBlocksInfo(query, currStep, resultBlockIDs);
+        }
+    }
+
+    void RunStatMinBlocksInfo(const QueryVar &query, const adios2::MinVarInfo *MinBlocksInfo,
+                              std::vector<BlockHit> &hitBlocks)
+    {
         for (auto &blockInfo : MinBlocksInfo->BlocksInfo)
         {
             T bmin = *(T *)&blockInfo.MinMax.MinUnion;
@@ -78,16 +81,11 @@ public:
                 hitBlocks.push_back(BlockHit(blockInfo.BlockID));
             }
         }
-        delete MinBlocksInfo;
     }
 
-    void RunBP4Stat(const QueryVar &query, std::vector<BlockHit> &hitBlocks)
+    void RunStatBlocksInfo(const QueryVar &query, const size_t currStep,
+                           std::vector<BlockHit> &hitBlocks)
     {
-        size_t currStep = m_IdxReader.CurrentStep();
-        adios2::Dims currShape = m_VarPtr->Shape();
-        if (!query.IsSelectionValid(currShape))
-            return;
-
         std::vector<typename adios2::core::Variable<T>::BPInfo> varBlocksInfo =
             m_IdxReader.BlocksInfo(*m_VarPtr, currStep);
 
