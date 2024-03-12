@@ -44,6 +44,7 @@ add_library(adios2_fortran
   modules/adios2_io_open_mod.F90
   modules/adios2_io_open_serial_smod.F90
   modules/adios2_io_define_variable_mod.f90
+  modules/adios2_io_define_derived_variable_mod.f90
   modules/adios2_io_define_attribute_mod.f90
   modules/adios2_engine_mod.f90
   modules/adios2_engine_begin_step_mod.f90
@@ -54,6 +55,7 @@ add_library(adios2_fortran
   modules/adios2_variable_max_mod.f90
   modules/adios2_operator_mod.f90
 )
+
 set_property(TARGET adios2_fortran PROPERTY EXPORT_NAME fortran)
 set_property(TARGET adios2_fortran PROPERTY OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_fortran)
 
