@@ -23,6 +23,7 @@ extern "C" {
 typedef struct adios2_adios adios2_adios;
 typedef struct adios2_io adios2_io;
 typedef struct adios2_variable adios2_variable;
+typedef struct adios2_derived_variable adios2_derived_variable;
 typedef struct adios2_attribute adios2_attribute;
 typedef struct adios2_engine adios2_engine;
 typedef struct adios2_operator adios2_operator;
@@ -138,6 +139,16 @@ typedef enum
     adios2_arrayordering_columnmajor,
     adios2_arrayordering_auto
 } adios2_arrayordering;
+
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+/** Type of derived variables */
+typedef enum
+{
+    adios2_derived_var_type_metadata_only = 0,
+    adios2_derived_var_type_expression_string = 1,
+    adios2_derived_var_type_store_data = 2
+} adios2_derived_var_type;
+#endif
 
 static const size_t adios2_string_array_element_max_size = 4096;
 

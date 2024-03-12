@@ -201,6 +201,20 @@ void FC_GLOBAL(adios2_define_variable_f2c,
     }
 }
 
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+void FC_GLOBAL(adios2_define_derived_variable_f2c,
+               ADIOS2_DEFINE_DERIVED_VARIABLE_F2C)(adios2_derived_variable **variable,
+                                                   adios2_io **io, const char *name,
+                                                   const char *expression, const int *type,
+                                                   int *ierr)
+{
+    *variable = adios2_define_derived_variable(*io, name, expression,
+                                               static_cast<adios2_derived_var_type>(*type));
+    *ierr = (*variable == NULL) ? static_cast<int>(adios2_error_exception)
+                                : static_cast<int>(adios2_error_none);
+}
+#endif
+
 struct cnamelist
 {
     char **names;
