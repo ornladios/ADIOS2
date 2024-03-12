@@ -86,3 +86,24 @@ OLCF installs the E4S packages in individual modules, hence `adios2` is also ava
     C++ Compiler:  GNU 12.2.0 (CrayPrgEnv)
     Target OS:     Linux-5.14.21-150400.24.11_12.0.57-cray_shasta_c
     Target Arch:   x86_64
+
+*****************************************
+ALCF Aurora
+*****************************************
+
+To use adios2 on Aurora,
+
+-	Load the default oneAPI (loaded automatically on login)
+- module use /soft/modulefiles
+- module load spack-pe-oneapi/0.5-rc1
+
+This is a "metamoduile" that makes many software packages from E4S loadable as modules.
+
+.. code-block:: bash
+
+  $ module use /soft/modulefiles
+  $ module load spack-pe-oneapi/0.5-rc1
+  $ module avail adios2
+
+  ---------- /soft/packaging/spack/oneapi/0.5-rc1/modulefiles/Core -----------
+  adios2/2.9.0-oneapi-mpich-testing
