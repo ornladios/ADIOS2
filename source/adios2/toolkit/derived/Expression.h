@@ -23,7 +23,7 @@ namespace derived
  */
 struct OpInfo
 {
-    adios2::detail::ExpressionOperator operation = detail::ExpressionOperator::OP_NULL;
+    adios2::detail::ExpressionOperator operation;
     std::vector<std::tuple<size_t, size_t, size_t>> indices;
     double constant;
 };
@@ -34,7 +34,7 @@ public:
     std::vector<std::tuple<ExpressionTree, std::string, bool>> sub_exprs;
     OpInfo detail;
 
-    ExpressionTree(){};
+    ExpressionTree() : detail({adios2::detail::ExpressionOperator::OP_NULL, {}, 0}) {}
     ExpressionTree(adios2::detail::ExpressionOperator o) : detail({o, {}, 0}) {}
     ExpressionTree(adios2::detail::ExpressionOperator o, double c) : detail({o, {}, 0}) {}
     ExpressionTree(std::vector<std::tuple<size_t, size_t, size_t>> indices)
