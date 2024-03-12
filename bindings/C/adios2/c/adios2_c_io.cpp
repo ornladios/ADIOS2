@@ -150,12 +150,13 @@ adios2_error adios2_set_transport_parameter(adios2_io *io, const size_t transpor
     }
 }
 
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
 adios2_derived_variable *adios2_define_derived_variable(adios2_io *io, const char *name,
                                                         const char *expression,
                                                         const adios2_derived_var_type type)
 {
     adios2_derived_variable *variable = nullptr;
-#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+
     try
     {
         adios2::helper::CheckForNullptr(io, "for adios2_io, in call to adios2_define_variable");
@@ -182,14 +183,9 @@ adios2_derived_variable *adios2_define_derived_variable(adios2_io *io, const cha
 
         adios2::helper::ExceptionToError("adios2_define_variable");
     }
-#else
-    std::cout << "ADIOS2 Warning:  adios2_define_derived_variable() is not supported in the "
-                 "current ADIOS2 build. The expression "
-              << expression << " will be ignored and the variable " << name
-              << " will not be produced." << std::endl;
-#endif
     return variable;
 }
+#endif
 
 adios2_variable *adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
                                         const size_t ndims, const size_t *shape,
