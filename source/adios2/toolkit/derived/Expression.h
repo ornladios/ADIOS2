@@ -23,7 +23,7 @@ namespace derived
  */
 struct OpInfo
 {
-    adios2::detail::ExpressionOperator operation;
+    adios2::detail::ExpressionOperator operation = detail::ExpressionOperator::OP_NULL;
     std::vector<std::tuple<size_t, size_t, size_t>> indices;
     double constant;
 };
