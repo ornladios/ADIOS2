@@ -16,5 +16,5 @@ More specifically, we will go through the following examples:
 
 More advance tutorials that cover more information related to:
 
-- Running ADIOS2 at scale (through files or streaming) with hands-on excercises: `Exascale I/O tutorial <http://tinyurl.com/adios-eied>`
-- Using ADIOS2 with Paraview, TAU, Catalyst, FIDES, VTK-M: `ADIOS2 tutorial at SC23 <http://tinyurl.com/adios-sc2023>`
+- Running ADIOS2 at scale (through files or streaming) with hands-on excercises: `Exascale I/O tutorial <http://tinyurl.com/adios-eied>`_
+- Using ADIOS2 with Paraview, TAU, Catalyst, FIDES, VTK-M: `ADIOS2 tutorial at SC23 <http://tinyurl.com/adios-sc2023>`_
