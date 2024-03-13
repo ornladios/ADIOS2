@@ -150,6 +150,43 @@ adios2_error adios2_set_transport_parameter(adios2_io *io, const size_t transpor
     }
 }
 
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+adios2_derived_variable *adios2_define_derived_variable(adios2_io *io, const char *name,
+                                                        const char *expression,
+                                                        const adios2_derived_var_type type)
+{
+    adios2_derived_variable *variable = nullptr;
+
+    try
+    {
+        adios2::helper::CheckForNullptr(io, "for adios2_io, in call to adios2_define_variable");
+        adios2::core::IO &ioCpp = *reinterpret_cast<adios2::core::IO *>(io);
+        adios2::DerivedVarType typeCpp = adios2::DerivedVarType::MetadataOnly;
+        switch (type)
+        {
+        case adios2_derived_var_type_metadata_only:
+            typeCpp = adios2::DerivedVarType::MetadataOnly;
+            break;
+        case adios2_derived_var_type_expression_string:
+            typeCpp = adios2::DerivedVarType::ExpressionString;
+            break;
+        case adios2_derived_var_type_store_data:
+            typeCpp = adios2::DerivedVarType::StoreData;
+            break;
+        }
+        adios2::core::VariableDerived *variableCpp = nullptr;
+        variableCpp = &ioCpp.DefineDerivedVariable(name, expression, typeCpp);
+        variable = reinterpret_cast<adios2_derived_variable *>(variableCpp);
+    }
+    catch (...)
+    {
+
+        adios2::helper::ExceptionToError("adios2_define_variable");
+    }
+    return variable;
+}
+#endif
+
 adios2_variable *adios2_define_variable(adios2_io *io, const char *name, const adios2_type type,
                                         const size_t ndims, const size_t *shape,
                                         const size_t *start, const size_t *count,
