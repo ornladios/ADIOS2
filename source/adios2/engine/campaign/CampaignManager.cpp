@@ -81,7 +81,6 @@ CampaignManager::CampaignManager(adios2::helper::Comm &comm)
     {
         std::cout << "Campaign Manager " << m_WriterRank << " constructor called" << std::endl;
     }
-    helper::CreateDirectory(m_CampaignDir);
 }
 
 CampaignManager::~CampaignManager()
@@ -103,6 +102,7 @@ void CampaignManager::Open(const std::string &name)
     {
         std::cout << "Campaign Manager " << m_WriterRank << " Open(" << m_Name << ")\n";
     }
+    m_Opened = true;
 }
 
 void CampaignManager::Record(const std::string &name, const size_t step, const double time)
@@ -151,8 +151,10 @@ void CampaignManager::Close()
 {
     if (!cmap.empty())
     {
+        helper::CreateDirectory(m_CampaignDir);
         CMapToSqlite(cmap, m_WriterRank, m_Name);
     }
+    m_Opened = false;
 }
 
 } // end namespace engine
