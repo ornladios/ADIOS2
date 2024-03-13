@@ -29,7 +29,7 @@ ASTNode::ASTNode(std::string op, std::vector<std::tuple<int, int, int>> i)
 
 ASTNode::~ASTNode()
 {
-    for (ASTNode* sub_expr : sub_exprs)
+    for (ASTNode *sub_expr : sub_exprs)
     {
         delete sub_expr;
     }

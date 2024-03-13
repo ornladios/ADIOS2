@@ -9,12 +9,9 @@ using indx_type = std::vector<std::tuple<int, int, int>>;
 
 ASTDriver::ASTDriver() {}
 
-ASTDriver::ASTDriver(const std::string input)
-{
-    ASTDriver::parse(input);
-}
+ASTDriver::ASTDriver(const std::string input) { ASTDriver::parse(input); }
 
-ASTDriver::~ASTDriver ()
+ASTDriver::~ASTDriver()
 {
     while (holding.size() > 0)
     {
