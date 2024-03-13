@@ -27,6 +27,15 @@ ASTNode::ASTNode(std::string op, std::vector<std::tuple<int, int, int>> i)
     indices = i;
 }
 
+ASTNode::~ASTNode()
+{
+    for (ASTNode* sub_expr : sub_exprs)
+    {
+        delete sub_expr;
+    }
+    sub_exprs.clear();
+}
+
 void ASTNode::set_num_subexprs(size_t n) { sub_exprs.resize(n); }
 
 void ASTNode::pushback_subexpr(ASTNode *subexpr) { sub_exprs.push_back(subexpr); }

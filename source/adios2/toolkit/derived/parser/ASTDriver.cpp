@@ -9,6 +9,20 @@ using indx_type = std::vector<std::tuple<int, int, int>>;
 
 ASTDriver::ASTDriver() {}
 
+ASTDriver::ASTDriver(const std::string input)
+{
+    ASTDriver::parse(input);
+}
+
+ASTDriver::~ASTDriver ()
+{
+    while (holding.size() > 0)
+    {
+        delete holding.top();
+        holding.pop();
+    }
+}
+
 ASTNode *ASTDriver::getAST()
 {
     // TODO: check only one ASTNode remains in holding

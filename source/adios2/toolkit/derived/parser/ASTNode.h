@@ -17,6 +17,7 @@ public:
     ASTNode(std::string, size_t);
     ASTNode(std::string, std::string);
     ASTNode(std::string, std::vector<std::tuple<int, int, int>>);
+    ~ASTNode();
 
     void set_num_subexprs(size_t);
     void pushback_subexpr(ASTNode *);

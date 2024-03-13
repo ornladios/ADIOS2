@@ -456,8 +456,8 @@ int yy_flex_debug = 0;
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "lexer.l"
-#line 2 "lexer.l"
+#line 1 "../lexer.l"
+#line 2 "../lexer.l"
 #include <cerrno>
 #include <cstdlib>
 #include <limits.h>
@@ -475,7 +475,7 @@ char *yytext;
 #include <sys/stat.h>
 #endif
 #line 477 "lexer.cpp"
-#line 21 "lexer.l"
+#line 21 "../lexer.l"
 #if defined __clang__
 # define CLANG_VERSION (__clang_major__ * 100 + __clang_minor__)
 #endif
@@ -546,12 +546,12 @@ char *yytext;
 #endif
 #line 547 "lexer.cpp"
 #define YY_NO_INPUT 1
-#line 94 "lexer.l"
+#line 94 "../lexer.l"
   // A number symbol corresponding to the value in S.
   adios2::detail::parser::symbol_type
   make_INT (const std::string &s, const adios2::detail::parser::location_type& loc);
 #line 553 "lexer.cpp"
-#line 106 "lexer.l"
+#line 106 "../lexer.l"
   // Code run each time a pattern is matched.
   # define YY_USER_ACTION  loc.columns (yyleng);
 #line 557 "lexer.cpp"
@@ -770,10 +770,10 @@ YY_DECL
 		}
 
 	{
-#line 109 "lexer.l"
+#line 109 "../lexer.l"
 
 
-#line 112 "lexer.l"
+#line 112 "../lexer.l"
   // A handy shortcut to the location held by the adios2::detail::ASTDriver.
   adios2::detail::location& loc = drv.location;
   // Code run each time yylex is called.
@@ -834,85 +834,85 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 117 "lexer.l"
+#line 117 "../lexer.l"
 loc.step ();
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 118 "lexer.l"
+#line 118 "../lexer.l"
 loc.lines (yyleng); loc.step (); return adios2::detail::parser::make_ENDL (loc);
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 120 "lexer.l"
+#line 120 "../lexer.l"
 return adios2::detail::parser::make_ASSIGN  (loc);
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 121 "lexer.l"
+#line 121 "../lexer.l"
 return adios2::detail::parser::make_COMMA   (loc);
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 122 "lexer.l"
+#line 122 "../lexer.l"
 return adios2::detail::parser::make_COLON   (loc);
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 123 "lexer.l"
+#line 123 "../lexer.l"
 return adios2::detail::parser::make_L_PAREN (loc);
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 124 "lexer.l"
+#line 124 "../lexer.l"
 return adios2::detail::parser::make_R_PAREN (loc);
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 125 "lexer.l"
+#line 125 "../lexer.l"
 return adios2::detail::parser::make_L_BRACE (loc);
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 126 "lexer.l"
+#line 126 "../lexer.l"
 return adios2::detail::parser::make_R_BRACE (loc);
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 128 "lexer.l"
+#line 128 "../lexer.l"
 return make_INT (yytext, loc);
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 129 "lexer.l"
+#line 129 "../lexer.l"
 return adios2::detail::parser::make_OPERATOR (yytext, loc);
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 130 "lexer.l"
+#line 130 "../lexer.l"
 return adios2::detail::parser::make_IDENTIFIER (yytext, loc);
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 131 "lexer.l"
+#line 131 "../lexer.l"
 return adios2::detail::parser::make_VARNAME (yytext, loc);
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 132 "lexer.l"
+#line 132 "../lexer.l"
 {
              throw adios2::detail::parser::syntax_error
                (loc, "invalid character: " + std::string(yytext));
 }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 136 "lexer.l"
+#line 136 "../lexer.l"
 return adios2::detail::parser::make_YYEOF (loc);
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 137 "lexer.l"
+#line 137 "../lexer.l"
 ECHO;
 	YY_BREAK
 #line 918 "lexer.cpp"
@@ -1882,7 +1882,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 137 "lexer.l"
+#line 137 "../lexer.l"
 
 
 adios2::detail::parser::symbol_type
@@ -1895,13 +1895,12 @@ make_INT (const std::string &s, const adios2::detail::parser::location_type& loc
   return adios2::detail::parser::make_INT ((int) n, loc);
 }
 
-adios2::detail::ASTNode*
+void
 adios2::detail::ASTDriver::parse (const std::string input)
 {
   adios2::detail::parser parse (*this);
   yy_scan_string(input.c_str());
   parse.set_debug_level (trace_parsing);
   parse ();
-  return getAST();
 }
 

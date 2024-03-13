@@ -22,9 +22,11 @@ class ASTDriver
 {
 public:
     ASTDriver();
+    ASTDriver(const std::string input);
+    ~ASTDriver();
 
     // Defined in lexer.l
-    ASTNode *parse(const std::string input);
+    void parse(const std::string input);
 
     ASTNode *getAST();
 
@@ -49,8 +51,6 @@ public:
     adios2::detail::location location;
 
 private:
-    ASTNode *root;
-
     // While parsing, holds ASTNodes until parent node is created
     // (since root node is created last from bottom up design)
     std::stack<ASTNode *> holding;

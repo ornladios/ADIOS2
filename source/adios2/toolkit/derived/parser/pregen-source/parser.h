@@ -45,7 +45,7 @@
 #ifndef YY_YY_PARSER_H_INCLUDED
 # define YY_YY_PARSER_H_INCLUDED
 // "%code requires" blocks.
-#line 11 "..//parser.y"
+#line 11 "../parser.y"
 
   #include <tuple>
   #include <vector>
@@ -197,7 +197,7 @@
 # define YYDEBUG 1
 #endif
 
-#line 6 "..//parser.y"
+#line 6 "../parser.y"
 namespace adios2 { namespace detail {
 #line 203 "parser.h"
 
@@ -1616,7 +1616,7 @@ switch (yykind)
   }
 
 
-#line 6 "..//parser.y"
+#line 6 "../parser.y"
 } } // adios2::detail
 #line 1622 "parser.h"
 

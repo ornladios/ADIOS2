@@ -145,12 +145,11 @@ make_INT (const std::string &s, const adios2::detail::parser::location_type& loc
   return adios2::detail::parser::make_INT ((int) n, loc);
 }
 
-adios2::detail::ASTNode*
+void
 adios2::detail::ASTDriver::parse (const std::string input)
 {
   adios2::detail::parser parse (*this);
   yy_scan_string(input.c_str());
   parse.set_debug_level (trace_parsing);
   parse ();
-  return getAST();
 }
