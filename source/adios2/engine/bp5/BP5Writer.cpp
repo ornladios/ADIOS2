@@ -516,7 +516,7 @@ void BP5Writer::ComputeDerivedVariables()
         auto derivedVar = dynamic_cast<core::VariableDerived *>((*it).second.get());
         std::vector<std::string> varList = derivedVar->VariableNameList();
         // to create a mapping between variable name and the varInfo (dim and data pointer)
-        std::map<std::string, MinVarInfo> nameToVarInfo;
+        std::map<std::string, std::unique_ptr<MinVarInfo>> nameToVarInfo;
         bool computeDerived = true;
         for (auto varName : varList)
         {
@@ -536,7 +536,7 @@ void BP5Writer::ComputeDerivedVariables()
                 std::cout << " .. skip derived variable " << (*it).second->m_Name << std::endl;
                 break;
             }
-            nameToVarInfo.insert({varName, *mvi});
+            nameToVarInfo.insert({varName, std::unique_ptr<MinVarInfo>(mvi)});
         }
         // skip computing derived variables if it contains variables that are not written this step
         if (!computeDerived)
@@ -881,7 +881,8 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
 
         switch (recordID)
         {
-        case IndexRecord::WriterMapRecord: {
+        case IndexRecord::WriterMapRecord:
+        {
             m_AppendWriterCount =
                 (uint32_t)helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
             m_AppendAggregatorCount =
@@ -896,7 +897,8 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
             position += m_AppendWriterCount * sizeof(uint64_t);
             break;
         }
-        case IndexRecord::StepRecord: {
+        case IndexRecord::StepRecord:
+        {
             position += 2 * sizeof(uint64_t); // MetadataPos, MetadataSize
             const uint64_t FlushCount =
                 helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
@@ -965,7 +967,8 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
 
         switch (recordID)
         {
-        case IndexRecord::WriterMapRecord: {
+        case IndexRecord::WriterMapRecord:
+        {
             m_AppendWriterCount =
                 (uint32_t)helper::ReadValue<uint64_t>(buffer, position, IsLittleEndian);
             m_AppendAggregatorCount =
@@ -983,7 +986,8 @@ uint64_t BP5Writer::CountStepsInMetadataIndex(format::BufferSTL &bufferSTL)
             }
             break;
         }
-        case IndexRecord::StepRecord: {
+        case IndexRecord::StepRecord:
+        {
             m_AppendMetadataIndexPos =
                 position - sizeof(unsigned char) - sizeof(uint64_t); // pos of RecordID
             const uint64_t MetadataPos =
