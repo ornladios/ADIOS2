@@ -166,6 +166,16 @@ EncryptionOperator::InverseOperate(const char *bufferIn, const size_t sizeIn, ch
 
 bool EncryptionOperator::IsDataTypeValid(const DataType type) const { return true; }
 
+size_t EncryptionOperator::GetEstimatedSize(const size_t ElemCount, const size_t ElemSize,
+                                            const size_t ndims, const size_t *dims) const
+{
+    size_t sizeIn = ElemCount * ElemSize;
+    return (sizeof(size_t)                // Data size
+            + crypto_secretbox_NONCEBYTES // Nonce
+            + sizeIn                      // Data
+            + crypto_secretbox_MACBYTES   // MAC
+    );
+}
 } // end namespace plugin
 } // end namespace adios2
 

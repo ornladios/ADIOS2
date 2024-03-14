@@ -92,6 +92,7 @@ private:
 
     /* transport manager for managing the active flag file */
     transportman::TransportMan m_ActiveFlagFileManager;
+    bool m_dataIsRemote = false;
     Remote m_Remote;
     bool m_WriterIsActive = true;
     adios2::profiling::JSONProfiler m_JSONProfiler;

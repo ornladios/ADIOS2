@@ -201,6 +201,27 @@ void FC_GLOBAL(adios2_define_variable_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_define_derived_variable_f2c,
+               ADIOS2_DEFINE_DERIVED_VARIABLE_F2C)(adios2_derived_variable **variable,
+                                                   adios2_io **io, const char *name,
+                                                   const char *expression, const int *type,
+                                                   int *ierr)
+{
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    *variable = adios2_define_derived_variable(*io, name, expression,
+                                               static_cast<adios2_derived_var_type>(*type));
+    *ierr = (*variable == NULL) ? static_cast<int>(adios2_error_exception)
+                                : static_cast<int>(adios2_error_none);
+#else
+    std::cout << "ADIOS2 Warning:  adios2_define_derived_variable() is not supported in the "
+                 "current ADIOS2 build. The expression "
+              << expression << " will be ignored and the variable " << name
+              << " will not be produced." << std::endl;
+    *variable = nullptr;
+    *ierr = static_cast<int>(adios2_error_exception);
+#endif
+}
+
 struct cnamelist
 {
     char **names;

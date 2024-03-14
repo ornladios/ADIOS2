@@ -35,6 +35,7 @@ with Stream(io, "types_np.h5", "w") as fw:
 
         if rank == 0 and i == 0:
             fw.write("tag", "Testing ADIOS2 high-level API")
+            fw.write("nx", data.Nx)
             fw.write("gvarI8", np.array(data.i8[0]))
             fw.write("gvarI16", np.array(data.i16[0]))
             fw.write("gvarI32", np.array(data.i32[0]))
@@ -48,6 +49,7 @@ with Stream(io, "types_np.h5", "w") as fw:
 
             # single value attributes
             fw.write_attribute("attrStr", "Testing single string attribute")
+            fw.write_attribute("attrNx", data.Nx)
             fw.write_attribute("attrI8", np.array(data.i8[0]))
             fw.write_attribute("attrI16", np.array(data.i16[0]))
             fw.write_attribute("attrI32", np.array(data.i32[0]))
@@ -120,6 +122,7 @@ with Stream("types_np.h5", "r") as fr:
 
         if rank == 0 and step == 0:
             inTag = fr_step.read("tag")
+            inNx = fr_step.read("nx")
             inI8 = fr_step.read("gvarI8")
             inI16 = fr_step.read("gvarI16")
             inI32 = fr_step.read("gvarI32")
@@ -133,6 +136,9 @@ with Stream("types_np.h5", "r") as fr:
 
             if inTag != "Testing ADIOS2 high-level API":
                 print("InTag: " + str(inTag))
+                raise ValueError("tag variable read failed")
+
+            if inNx != nx:
                 raise ValueError("tag variable read failed")
 
             if inI8 != data.i8[0]:
@@ -167,6 +173,7 @@ with Stream("types_np.h5", "r") as fr:
 
             # attributes
             inTag = fr_step.read_attribute("attrStr")
+            inNx = fr_step.read_attribute("attrNx")
             inI8 = fr_step.read_attribute("attrI8")
             inI16 = fr_step.read_attribute("attrI16")
             inI32 = fr_step.read_attribute("attrI32")
@@ -178,37 +185,40 @@ with Stream("types_np.h5", "r") as fr:
             inR32 = fr_step.read_attribute("attrR32")
             inR64 = fr_step.read_attribute("attrR64")
 
-            if inTag[0] != "Testing single string attribute":
+            if inTag != "Testing single string attribute":
                 raise ValueError("attr string read failed")
 
-            if inI8[0] != data.i8[0]:
+            if inNx != nx:
                 raise ValueError("attrI8 read failed")
 
-            if inI16[0] != data.i16[0]:
+            if inI8 != data.i8[0]:
+                raise ValueError("attrI8 read failed")
+
+            if inI16 != data.i16[0]:
                 raise ValueError("attrI16 read failed")
 
-            if inI32[0] != data.i32[0]:
+            if inI32 != data.i32[0]:
                 raise ValueError("attrI32 read failed")
 
-            if inI64[0] != data.i64[0]:
+            if inI64 != data.i64[0]:
                 raise ValueError("attrI64 read failed")
 
-            if inU8[0] != data.u8[0]:
+            if inU8 != data.u8[0]:
                 raise ValueError("attrU8 read failed")
 
-            if inU16[0] != data.u16[0]:
+            if inU16 != data.u16[0]:
                 raise ValueError("attrU16 read failed")
 
-            if inU32[0] != data.u32[0]:
+            if inU32 != data.u32[0]:
                 raise ValueError("attrU32 read failed")
 
-            if inU64[0] != data.u64[0]:
+            if inU64 != data.u64[0]:
                 raise ValueError("attrU64 read failed")
 
-            if inR32[0] != data.r32[0]:
+            if inR32 != data.r32[0]:
                 raise ValueError("attrR32 read failed")
 
-            if inR64[0] != data.r64[0]:
+            if inR64 != data.r64[0]:
                 raise ValueError("attrR64 read failed")
 
             # Array attribute

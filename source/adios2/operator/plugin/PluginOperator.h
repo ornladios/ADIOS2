@@ -37,6 +37,9 @@ public:
     PluginOperator(const Params &parameters);
     virtual ~PluginOperator();
 
+    size_t GetEstimatedSize(const size_t ElemCount, const size_t ElemSize, const size_t ndims,
+                            const size_t *dims) const override;
+
     size_t Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
                    const DataType type, char *bufferOut) override;
 

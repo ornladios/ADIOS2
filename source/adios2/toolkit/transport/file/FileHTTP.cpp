@@ -187,7 +187,7 @@ void FileHTTP::Read(char *buffer, size_t size, size_t start)
         MAX_REQUEST_LEN = 1024
     };
     char request[MAX_REQUEST_LEN] = {'\0'};
-    int request_len = snprintf(request, MAX_REQUEST_LEN, request_template, m_Name.c_str(),
+    int request_len = snprintf(request, MAX_REQUEST_LEN, request_template.c_str(), m_Name.c_str(),
                                m_hostname.c_str(), start, start + size - 1);
     if (request_len >= MAX_REQUEST_LEN)
     {
