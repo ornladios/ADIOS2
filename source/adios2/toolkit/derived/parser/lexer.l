@@ -114,7 +114,7 @@ blank [ \t\r]
   loc.step ();
 %}
 {blank}+   loc.step ();
-\n+        loc.lines (yyleng); loc.step (); return adios2::detail::parser::make_ENDL (loc);
+\n+        loc.lines (yyleng); loc.step ();
 
 "="        return adios2::detail::parser::make_ASSIGN  (loc);
 ","        return adios2::detail::parser::make_COMMA   (loc);

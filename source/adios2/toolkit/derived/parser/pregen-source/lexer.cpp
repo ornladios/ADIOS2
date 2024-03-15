@@ -841,7 +841,7 @@ case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
 #line 118 "../lexer.l"
-loc.lines (yyleng); loc.step (); return adios2::detail::parser::make_ENDL (loc);
+loc.lines (yyleng); loc.step ();
 	YY_BREAK
 case 3:
 YY_RULE_SETUP

@@ -491,11 +491,10 @@ namespace adios2 { namespace detail {
     TOK_R_PAREN = 7,               // ")"
     TOK_L_BRACE = 8,               // "["
     TOK_R_BRACE = 9,               // "]"
-    TOK_ENDL = 10,                 // "\n"
-    TOK_OPERATOR = 11,             // OPERATOR
-    TOK_IDENTIFIER = 12,           // "identifier"
-    TOK_VARNAME = 13,              // VARNAME
-    TOK_INT = 14                   // "number"
+    TOK_OPERATOR = 10,             // OPERATOR
+    TOK_IDENTIFIER = 11,           // "identifier"
+    TOK_VARNAME = 12,              // VARNAME
+    TOK_INT = 13                   // "number"
       };
       /// Backward compatibility alias (Bison 3.6).
       typedef token_kind_type yytokentype;
@@ -512,7 +511,7 @@ namespace adios2 { namespace detail {
     {
       enum symbol_kind_type
       {
-        YYNTOKENS = 15, ///< Number of tokens.
+        YYNTOKENS = 14, ///< Number of tokens.
         S_YYEMPTY = -2,
         S_YYEOF = 0,                             // "end of file"
         S_YYerror = 1,                           // error
@@ -524,18 +523,17 @@ namespace adios2 { namespace detail {
         S_R_PAREN = 7,                           // ")"
         S_L_BRACE = 8,                           // "["
         S_R_BRACE = 9,                           // "]"
-        S_ENDL = 10,                             // "\n"
-        S_OPERATOR = 11,                         // OPERATOR
-        S_IDENTIFIER = 12,                       // "identifier"
-        S_VARNAME = 13,                          // VARNAME
-        S_INT = 14,                              // "number"
-        S_YYACCEPT = 15,                         // $accept
-        S_lines = 16,                            // lines
-        S_assignment = 17,                       // assignment
-        S_exp = 18,                              // exp
-        S_indices_list = 19,                     // indices_list
-        S_index = 20,                            // index
-        S_list = 21                              // list
+        S_OPERATOR = 10,                         // OPERATOR
+        S_IDENTIFIER = 11,                       // "identifier"
+        S_VARNAME = 12,                          // VARNAME
+        S_INT = 13,                              // "number"
+        S_YYACCEPT = 14,                         // $accept
+        S_lines = 15,                            // lines
+        S_assignment = 16,                       // assignment
+        S_exp = 17,                              // exp
+        S_indices_list = 18,                     // indices_list
+        S_index = 19,                            // index
+        S_list = 20                              // list
       };
     };
 
@@ -811,7 +809,7 @@ switch (yykind)
       {
 #if !defined _MSC_VER || defined __clang__
         YY_ASSERT (tok == token::TOK_YYEOF
-                   || (token::TOK_YYerror <= tok && tok <= token::TOK_ENDL));
+                   || (token::TOK_YYerror <= tok && tok <= token::TOK_R_BRACE));
 #endif
       }
 #if 201103L <= YY_CPLUSPLUS
@@ -1034,21 +1032,6 @@ switch (yykind)
       make_R_BRACE (const location_type& l)
       {
         return symbol_type (token::TOK_R_BRACE, l);
-      }
-#endif
-#if 201103L <= YY_CPLUSPLUS
-      static
-      symbol_type
-      make_ENDL (location_type l)
-      {
-        return symbol_type (token::TOK_ENDL, std::move (l));
-      }
-#else
-      static
-      symbol_type
-      make_ENDL (const location_type& l)
-      {
-        return symbol_type (token::TOK_ENDL, l);
       }
 #endif
 #if 201103L <= YY_CPLUSPLUS
@@ -1455,7 +1438,7 @@ switch (yykind)
     /// Constants.
     enum
     {
-      yylast_ = 51,     ///< Last index in yytable_.
+      yylast_ = 53,     ///< Last index in yytable_.
       yynnts_ = 7,  ///< Number of nonterminal symbols.
       yyfinal_ = 12 ///< Termination state number.
     };
@@ -1618,7 +1601,7 @@ switch (yykind)
 
 #line 6 "../parser.y"
 } } // adios2::detail
-#line 1622 "parser.h"
+#line 1605 "parser.h"
 
 
 
