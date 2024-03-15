@@ -145,7 +145,7 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart, const 
     *headerPtr = DataHeader{};
     bufferOutOffset += sizeof(DataHeader);
 
-    int32_t typesize = helper::GetDataTypeSize(type);
+    int32_t typesize = static_cast<int32_t>(helper::GetDataTypeSize(type));
     if (typesize > BLOSC_MAX_TYPESIZE)
         typesize = 1;
 
@@ -166,7 +166,7 @@ size_t CompressBlosc::Operate(const char *dataIn, const Dims &blockStart, const 
                 "Operator", "CompressBlosc", "Operate",
                 "blosc library linked does not support compressor " + compressor);
         }
-        blosc2_set_nthreads(threads);
+        blosc2_set_nthreads(static_cast<int16_t>(threads));
         blosc1_set_blocksize(blockSize);
 
         uint32_t chunk = 0;
@@ -327,7 +327,7 @@ size_t CompressBlosc::DecompressChunkedFormat(const char *bufferIn, const size_t
                     helper::StringTo<int32_t>(value, "when setting Blosc nthreads parameter\n"));
             }
         }
-        blosc2_set_nthreads(threads);
+        blosc2_set_nthreads(static_cast<int16_t>(threads));
 
         while (inputOffset < inputDataSize)
         {
@@ -398,8 +398,9 @@ size_t CompressBlosc::DecompressOldFormat(const char *bufferIn, const size_t siz
                 helper::StringTo<int32_t>(value, "when setting Blosc nthreads parameter\n"));
         }
     }
-    blosc2_set_nthreads(threads);
-    const int decompressedSize = blosc2_decompress(bufferIn, sizeIn, dataOut, sizeOut);
+    blosc2_set_nthreads(static_cast<int16_t>(threads));
+    const int decompressedSize = blosc2_decompress(bufferIn, static_cast<int32_t>(sizeIn), dataOut,
+                                                   static_cast<int32_t>(sizeOut));
     blosc2_destroy();
     return static_cast<size_t>(decompressedSize);
 }
