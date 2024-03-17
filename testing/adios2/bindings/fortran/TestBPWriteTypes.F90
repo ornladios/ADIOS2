@@ -166,7 +166,7 @@ program TestBPWriteTypes
 
    ! derived variable
    call adios2_define_derived_variable(derived_variable, ioWrite, "derived/magnitude_of_var_R64", &
-      "x:var_R64 y:var_R64 z:var_R64 magnitude(x,y,z)", adios2_derived_var_type_metadata_only, ierr)
+      "x=var_R64 y=var_R64 z=var_R64 magnitude(x,y,z)", adios2_derived_var_type_metadata_only, ierr)
 #if ADIOS2_USE_Derived_Variable
 #define TOTAL_VAR_COUNT 15
 #else
