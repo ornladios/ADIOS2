@@ -35,7 +35,7 @@ BP5Reader::BP5Reader(IO &io, const std::string &name, const Mode mode, helper::C
 : Engine("BP5Reader", io, name, mode, std::move(comm)), m_MDFileManager(io, m_Comm),
   m_DataFileManager(io, m_Comm), m_MDIndexFileManager(io, m_Comm),
   m_FileMetaMetadataManager(io, m_Comm), m_ActiveFlagFileManager(io, m_Comm), m_Remote(),
-  m_JSONProfiler(m_Comm)
+  m_Xrootd(), m_JSONProfiler(m_Comm)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Open");
     Init();
@@ -499,6 +499,10 @@ void BP5Reader::Init()
     else if (getenv("DoRemote"))
     {
         m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Name, m_OpenMode, RowMajorOrdering);
+    }
+    else if (getenv("DoXrootd"))
+    {
+        m_Xrootd.Open("localhost", 1094, m_Name, m_OpenMode, RowMajorOrdering);
     }
 }
 

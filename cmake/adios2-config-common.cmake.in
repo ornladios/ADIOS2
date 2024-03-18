@@ -142,6 +142,11 @@ if(NOT @BUILD_SHARED_LIBS@)
     find_dependency(AWSSDK)
   endif()
 
+  set(ADIOS2_HAVE_XRootD @ADIOS2_HAVE_XRootD@)
+  if(ADIOS2_HAVE_XRootD)
+      find_dependency(XRootD)
+  endif()
+
 
   adios2_add_thirdparty_target(pugixml)
   set(ADIOS2_USE_EXTERNAL_PUGIXML @ADIOS2_USE_EXTERNAL_PUGIXML@)
