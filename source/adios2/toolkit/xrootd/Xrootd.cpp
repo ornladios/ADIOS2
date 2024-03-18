@@ -8,10 +8,17 @@
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
 #include "adios2/helper/adiosSystem.h"
+#ifdef ADIOS2_HAVE_XRootD
+#include "XrdSsi/XrdSsiProvider.hh"
+#include "XrdSsi/XrdSsiService.hh"
+#endif
+
 
 namespace adios2
 {
-Xrootd::Xrootd(){}
+Xrootd::Xrootd(){
+    contact = "localhost:1094";
+}
 Xrootd::~Xrootd(){}
 void Xrootd::Open(const std::string hostname, const int32_t port, const std::string filename,
                   const Mode mode, bool RowMajorOrdering)

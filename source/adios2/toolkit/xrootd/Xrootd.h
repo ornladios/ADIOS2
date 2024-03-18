@@ -9,7 +9,10 @@
 
 #include "adios2/common/ADIOSConfig.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
-
+#ifdef ADIOS2_HAVE_XRootD
+#include "XrdSsi/XrdSsiProvider.hh"
+#include "XrdSsi/XrdSsiService.hh"
+#endif
 namespace adios2
 {
 class Xrootd
@@ -17,6 +20,12 @@ class Xrootd
 
 public:
     profiling::IOChrono m_Profiler;
+#ifdef ADIOS2_HAVE_XRootD
+    XrdSsiProvider *XrdSsiProviderClient;
+    XrdSsiErrInfo          eInfo;
+#endif
+    int                    reqLen;
+    std::string contact;
 
     Xrootd();
     ~Xrootd();
