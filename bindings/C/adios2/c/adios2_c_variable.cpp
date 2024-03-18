@@ -104,11 +104,7 @@ adios2::MemorySpace adios2_ToMemorySpace(const adios2_memory_space Cmem)
 
 adios2_memory_space adios2_FromMemorySpace(const adios2::MemorySpace mem)
 {
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
     adios2_memory_space Cmem = adios2_memory_space_detect;
-#else
-    adios2_memory_space Cmem = adios2_memory_space_host;
-#endif
     switch (mem)
     {
 
