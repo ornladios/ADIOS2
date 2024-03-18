@@ -38,7 +38,10 @@ program TestBPReadGlobalsByName
     call adios2_put(writer, "sml_outpsi", 0.295477_8, ierr)
     call adios2_close(writer, ierr)
 
-    if(ierr /= 0) stop 'Problems writing'
+    if(ierr /= 0) then
+       write(*,*) 'Problems writing'
+       stop 1
+    end if
     call MPI_Barrier(MPI_COMM_WORLD, ierr)
 
     ! reader
@@ -60,11 +63,13 @@ program TestBPReadGlobalsByName
     print *, irank, 'sml_outpsi', sml_outpsi
 
     if( diag_1d_nsp /= 1 ) then
-        stop 'diag_1d_nsp is not 1'
+       write(*,*) 'diag_1d_nsp is not 1'
+       stop 1
     end if
 
     if( sml_outpsi /= 0.295477_8 ) then
-        stop 'sml_outpsi is not 0.295477'
+       write(*,*) 'sml_outpsi is not 0.295477'
+       stop 1
     end if
 
     call MPI_Finalize(ierr)
