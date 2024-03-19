@@ -8,7 +8,7 @@
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
 #include "adios2/helper/adiosSystem.h"
-#ifdef ADIOS2_HAVE_XRootD
+#ifdef ADIOS2_HAVE_XROOTD
 #include "XrdSsi/XrdSsiProvider.hh"
 #include "XrdSsi/XrdSsiService.hh"
 #endif

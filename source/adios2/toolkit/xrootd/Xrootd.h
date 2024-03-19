@@ -6,10 +6,10 @@
 
 #ifndef ADIOS2_XROOTD_H
 #define ADIOS2_XROOTD_H
-
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/core/ADIOS.h"
 #include "adios2/toolkit/profiling/iochrono/IOChrono.h"
-#ifdef ADIOS2_HAVE_XRootD
+#ifdef ADIOS2_HAVE_XROOTD
 #include "XrdSsi/XrdSsiProvider.hh"
 #include "XrdSsi/XrdSsiService.hh"
 #endif
@@ -20,7 +20,7 @@ class Xrootd
 
 public:
     profiling::IOChrono m_Profiler;
-#ifdef ADIOS2_HAVE_XRootD
+#ifdef ADIOS2_HAVE_XROOTD
     XrdSsiProvider *XrdSsiProviderClient;
     XrdSsiErrInfo          eInfo;
 #endif
