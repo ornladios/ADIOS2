@@ -49,7 +49,7 @@ void DataManSerializer::CalculateMinMax(const T *data, const Dims &count,
     if (varMemSpace == MemorySpace::GPU)
         helper::GetGPUMinMax(data, size, min, max);
 #endif
-    if (varMemSpace == MemorySpace::Host)
+    if ((varMemSpace == MemorySpace::Host) || (varMemSpace == MemorySpace::Detect))
     {
         for (size_t j = 0; j < size; ++j)
         {
@@ -184,7 +184,7 @@ void DataManSerializer::PutData(const T *inputData, const std::string &varName,
             helper::CopyFromGPUToBuffer(localBuffer->data(), localBuffer->size() - datasize,
                                         inputData, varMemSpace, datasize);
 #endif
-        if (varMemSpace == MemorySpace::Host)
+        if ((varMemSpace == MemorySpace::Host) || (varMemSpace == MemorySpace::Detect))
             std::memcpy(localBuffer->data() + localBuffer->size() - datasize, inputData, datasize);
     }
 
