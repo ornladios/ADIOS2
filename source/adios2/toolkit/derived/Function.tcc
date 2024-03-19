@@ -22,7 +22,7 @@ T *ApplyOneToOne(std::vector<DerivedData> inputData, size_t dataSize,
         std::cout << "Allocation failed for the derived data" << std::endl;
         // TODO - throw an exception
     }
-    memset(outValues, 0, dataSize * sizeof(T));
+    memset((void *)outValues, 0, dataSize * sizeof(T));
     for (auto &variable : inputData)
     {
         for (size_t i = 0; i < dataSize; i++)

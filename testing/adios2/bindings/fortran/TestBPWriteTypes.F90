@@ -51,14 +51,26 @@ program TestBPWriteTypes
    start_dims(1) = irank*inx
    count_dims(1) = inx
 
-   if( adios%valid .eqv. .true. ) stop 'Invalid adios default'
-   if( ioWrite%valid .eqv. .true. ) stop 'Invalid io default'
+   if( adios%valid .eqv. .true. ) then
+      write(*,*) 'Invalid adios default'
+      stop 1
+   end if
+   if( ioWrite%valid .eqv. .true. ) then
+      write(*,*) 'Invalid io default'
+      stop 1
+   end if
 
    do i=1,12
-      if( variables(i)%valid .eqv. .true. ) stop 'Invalid variables default'
+      if( variables(i)%valid .eqv. .true. ) then
+         write(*,*) 'Invalid variables default'
+         stop 1
+      end if
    end do
 
-   if( bpWriter%valid .eqv. .true. ) stop 'Invalid engine default'
+   if( bpWriter%valid .eqv. .true. ) then
+      write(*,*) 'Invalid engine default'
+      stop 1
+   end if
 
 
    ! Create adios handler passing the communicator and error flag
@@ -67,38 +79,62 @@ program TestBPWriteTypes
 #else
    call adios2_init(adios, ierr)
 #endif
-   if( adios%valid .eqv. .false. ) stop 'Invalid adios2_init'
+   if( adios%valid .eqv. .false. ) then
+      write(*,*) 'Invalid adios2_init'
+      stop 1
+   end if
 
    !!!!!!!!!!!!!!!!!!!!!!!! WRITER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    ! Declare an IO process configuration inside adios
    call adios2_declare_io(ioWrite, adios, "ioWrite", ierr)
-   if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_declare_io'
+   if( ioWrite%valid .eqv. .false. ) then
+      write(*,*) 'Invalid adios2_declare_io'
+      stop 1
+   end if
 
    call adios2_at_io(ioWrite, adios, "ioWrite", ierr)
-   if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_at_io'
+   if( ioWrite%valid .eqv. .false. ) then
+      write(*,*) 'Invalid adios2_at_io'
+      stop 1
+   end if
 
    call adios2_in_config_file(result, ioWrite, ierr)
-   if( result .eqv. .true. ) stop 'Invalid ioWrite adios2_in_config_file'
+   if( result .eqv. .true. ) then
+      write(*,*) 'Invalid ioWrite adios2_in_config_file'
+      stop 1
+   end if
 
    call adios2_set_engine(ioWrite, 'File', ierr)
 
    call adios2_set_parameter(ioWrite, 'ProfileUnits', 'Microseconds', ierr)
 
    call adios2_get_parameter(param_value, ioWrite, 'ProfileUnits', ierr)
-   if( param_value /= "Microseconds") stop 'Failed adios2_get_parameter ProfileUnits'
+   if( param_value /= "Microseconds") then
+      write(*,*) 'Failed adios2_get_parameter ProfileUnits'
+      stop 1
+   end if
 
    call adios2_set_parameters(ioWrite, 'Threads=2, CollectiveMetadata = OFF', ierr)
 
    call adios2_get_parameter(param_value, ioWrite, 'Threads', ierr)
-   if( param_value /= "2") stop 'Failed adios2_get_parameter Threads'
+   if( param_value /= "2") then
+      write(*,*) 'Failed adios2_get_parameter Threads'
+      stop 1
+   end if
 
    call adios2_get_parameter(param_value, ioWrite, 'CollectiveMetadata', ierr)
-   if( param_value /= "OFF") stop 'Failed adios2_get_parameter CollectiveMetadata'
+   if( param_value /= "OFF") then
+      write(*,*) 'Failed adios2_get_parameter CollectiveMetadata'
+      stop 1
+   end if
 
    ! set back the default to make sure writing/reading test works
    call adios2_clear_parameters(ioWrite, ierr)
    call adios2_get_parameter(param_value, ioWrite, 'CollectiveMetadata', ierr)
-   if( param_value /= "") stop 'Still Could retrieve parameter CollectiveMetadata after clearing all parameters'
+   if( param_value /= "") then
+      write(*,*) 'Still Could retrieve parameter CollectiveMetadata after clearing all parameters'
+      stop 1
+   end if
 
    deallocate(param_value)
 
@@ -166,41 +202,71 @@ program TestBPWriteTypes
 
    ! derived variable
    call adios2_define_derived_variable(derived_variable, ioWrite, "derived/magnitude_of_var_R64", &
-      "x:var_R64 y:var_R64 z:var_R64 magnitude(x,y,z)", adios2_derived_var_type_metadata_only, ierr)
-
+      "x=var_R64 y=var_R64 z=var_R64 magnitude(x,y,z)", adios2_derived_var_type_metadata_only, ierr)
+#if ADIOS2_HAVE_Derived_Variable
+#define TOTAL_VAR_COUNT 15
+#else
+#define TOTAL_VAR_COUNT 14
+#endif
    do i=1,13
-      if( variables(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_variable'
+      if( variables(i)%valid .eqv. .false. ) then
+         write(*,*) 'Invalid adios2_define_variable'
+         stop 1
+      end if
    end do
 
    ! Testing adios2_variable_name for just two cases
    call adios2_variable_name(varName, variables(1), ierr)
-   if (varName /= 'var_I8') stop 'Invalid adios2_variable_name'
+   if (varName /= 'var_I8') then
+      write(*,*) 'Invalid adios2_variable_name'
+      stop 1
+   end if
 
    call adios2_variable_name(varName, variables(2), ierr)
-   if (varName /= 'var_I16') stop 'Invalid adios2_variable_name'
+   if (varName /= 'var_I16') then
+      write(*,*) 'Invalid adios2_variable_name'
+      stop 1
+   end if
 
    deallocate(varName)
 
    ! Open myVector_f.bp in write mode, this launches an engine
-   if( ioWrite%valid .eqv. .false. ) stop 'Invalid adios2_io'
-   if( bpWriter%valid .eqv. .true. ) stop 'Invalid adios2_engine pre-open'
+   if( ioWrite%valid .eqv. .false. ) then
+      write(*,*) 'Invalid adios2_io'
+      stop 1
+   end if
+   if( bpWriter%valid .eqv. .true. ) then
+      write(*,*) 'Invalid adios2_engine pre-open'
+      stop 1
+   end if
 
    call adios2_open(bpWriter, ioWrite, "ftypes.bp", adios2_mode_write, ierr)
 
-   if( bpWriter%valid .eqv. .false. ) stop 'Invalid adios2_engine post-open'
-   if( TRIM(bpWriter%name) /= "ftypes.bp") stop 'Invalid adios2_engine name'
+   if( bpWriter%valid .eqv. .false. ) then
+      write(*,*) 'Invalid adios2_engine post-open'
+      stop 1
+   end if
+   if( TRIM(bpWriter%name) /= "ftypes.bp") then
+      write(*,*) 'Invalid adios2_engine name'
+      stop 1
+   end if
 
    if( TRIM(bpWriter%type) /= 'BP5Writer') then
       write(*,*) 'Engine Type ', TRIM(bpWriter%type)
-      stop 'Invalid adios2_engine type'
+      write(*,*) 'Invalid adios2_engine type'
+      stop 1
    end if
    call adios2_io_engine_type(engineType, ioWrite, ierr)
    if( engineType /= 'File') then ! FIXME, different from the above!
       write(*,*) 'Engine Type ', engineType
-      stop 'Invalid type from adios2_engine_type'
+      write(*,*) 'Invalid type from adios2_engine_type'
+      stop 1
    end if
 
-   if( bpWriter%mode /= adios2_mode_write) stop 'Invalid adios2_engine mode'
+   if( bpWriter%mode /= adios2_mode_write) then
+      write(*,*) 'Invalid adios2_engine mode'
+      stop 1
+   end if
 
    ! Put array contents to bp buffer, based on var1 metadata
    do i = 1, 3
@@ -232,7 +298,10 @@ program TestBPWriteTypes
    ! Closes engine1 and deallocates it, becomes unreachable
    call adios2_close(bpWriter, ierr)
 
-   if( bpWriter%valid .eqv. .true. ) stop 'Invalid adios2_close'
+   if( bpWriter%valid .eqv. .true. ) then
+      write(*,*) 'Invalid adios2_close'
+      stop 1
+   end if
 
    !!!!!!!!!!!!!!!!!!!!!!!! READER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
    ! Declare io reader
@@ -241,80 +310,179 @@ program TestBPWriteTypes
    call adios2_open(bpReader, ioRead, "ftypes.bp", adios2_mode_readRandomAccess, ierr)
 
    call adios2_steps(nsteps, bpReader, ierr)
-   if(nsteps /= 3) stop 'ftypes.bp must have 3 steps'
+   if(nsteps /= 3) then
+      write(*,*) 'ftypes.bp must have 3 steps'
+      stop 1
+   end if
 
    call adios2_available_variables(ioRead, namestruct, ierr)
-   if (ierr /= 0) stop 'adios2_available_variables returned with error'
-   if (.not.namestruct%valid) stop 'adios2_available_variables returned invalid struct'
+   if (ierr /= 0) then
+      write(*,*) 'adios2_available_variables returned with error'
+      stop 1
+   end if
+   if (.not.namestruct%valid) then
+      write(*,*) 'adios2_available_variables returned invalid struct'
+      stop 1
+   end if
    write(*,*) 'Number of variables = ', namestruct%count
    write(*,*) 'Max name length = ', namestruct%max_name_len
-   if (namestruct%count /= 14) stop 'adios2_available_variables returned not the expected 14'
+   if (namestruct%count /= TOTAL_VAR_COUNT) then
+      write(*,*) 'adios2_available_variables returned not the expected 14'
+      stop 1
+   end if
 
    allocate(varnamelist(namestruct%count))
 
    call adios2_retrieve_names(namestruct, varnamelist, ierr)
-   if (ierr /= 0) stop 'adios2_retrieve_names returned with error'
+   if (ierr /= 0) then
+      write(*,*) 'adios2_retrieve_names returned with error'
+      stop 1
+   end if
    do i=1,namestruct%count
       write(*,'("Var[",i2,"] = ",a12)') i, varnamelist(i)
    end do
    deallocate(varnamelist)
 
-   if (namestruct%f2c /= 0_8) stop 'namestruct f2c pointer is not null after adios2_retrieve_names()'
-   if (namestruct%valid) stop 'namestruct is not invalidated after adios2_retrieve_names()'
+   if (namestruct%f2c /= 0_8) then
+      write(*,*) 'namestruct f2c pointer is not null after adios2_retrieve_names()'
+      stop 1
+   end if
+   if (namestruct%valid) then
+      write(*,*) 'namestruct is not invalidated after adios2_retrieve_names()'
+      stop 1
+   end if
 
 
    call adios2_inquire_variable(variables(1), ioRead, "var_I8", ierr)
-   if (variables(1)%name /= 'var_I8') stop 'var_I8 not recognized'
-   if (variables(1)%type /= adios2_type_integer1) stop 'var_I8 type not recognized'
+   if (variables(1)%name /= 'var_I8') then
+      write(*,*) 'var_I8 not recognized'
+      stop 1
+   end if
+   if (variables(1)%type /= adios2_type_integer1) then
+      write(*,*) 'var_I8 type not recognized'
+      stop 1
+   end if
    call adios2_variable_shape(shape_in, ndims, variables(1), ierr)
-   if (ndims /= 1) stop 'var_I8 ndims is not 1'
-   if (shape_in(1) /= isize*inx) stop 'var_I8 shape_in read failed'
+   if (ndims /= 1) then
+      write(*,*) 'var_I8 ndims is not 1'
+      stop 1
+   end if
+   if (shape_in(1) /= isize*inx) then
+      write(*,*) 'var_I8 shape_in read failed'
+      stop 1
+   end if
 
    call adios2_inquire_variable(variables(2), ioRead, "var_I16", ierr)
-   if (variables(2)%name /= 'var_I16') stop 'var_I16 not recognized'
-   if (variables(2)%type /= adios2_type_integer2) stop 'var_I16 type not recognized'
+   if (variables(2)%name /= 'var_I16') then
+      write(*,*) 'var_I16 not recognized'
+      stop 1
+   end if
+   if (variables(2)%type /= adios2_type_integer2) then
+      write(*,*) 'var_I16 type not recognized'
+      stop 1
+   end if
    call adios2_variable_shape(shape_in, ndims, variables(2), ierr)
-   if (ndims /= 1) stop 'var_I16 ndims is not 1'
-   if (shape_in(1) /= isize*inx) stop 'var_I16 shape_in read failed'
+   if (ndims /= 1) then
+      write(*,*) 'var_I16 ndims is not 1'
+      stop 1
+   end if
+   if (shape_in(1) /= isize*inx) then
+      write(*,*) 'var_I16 shape_in read failed'
+      stop 1
+   end if
 
    call adios2_inquire_variable(variables(3), ioRead, "var_I32", ierr)
-   if (variables(3)%name /= 'var_I32') stop 'var_I32 not recognized'
-   if (variables(3)%type /= adios2_type_integer4) stop 'var_I32 type not recognized'
+   if (variables(3)%name /= 'var_I32') then
+      write(*,*) 'var_I32 not recognized'
+      stop 1
+   end if
+   if (variables(3)%type /= adios2_type_integer4) then
+      write(*,*) 'var_I32 type not recognized'
+      stop 1
+   end if
    call adios2_variable_shape(shape_in, ndims, variables(3), ierr)
-   if (ndims /= 1) stop 'var_I32 ndims is not 1'
-   if (shape_in(1) /= isize*inx) stop 'var_I32 shape_in read failed'
+   if (ndims /= 1) then
+      write(*,*) 'var_I32 ndims is not 1'
+      stop 1
+   end if
+   if (shape_in(1) /= isize*inx) then
+      write(*,*) 'var_I32 shape_in read failed'
+      stop 1
+   end if
 
    call adios2_inquire_variable(variables(4), ioRead, "var_I64", ierr)
-   if (variables(4)%name /= 'var_I64') stop 'var_I64 not recognized'
-   if (variables(4)%type /= adios2_type_integer8) stop 'var_I64 type not recognized'
+   if (variables(4)%name /= 'var_I64') then
+      write(*,*) 'var_I64 not recognized'
+      stop 1
+   end if
+   if (variables(4)%type /= adios2_type_integer8) then
+      write(*,*) 'var_I64 type not recognized'
+      stop 1
+   end if
    call adios2_variable_shape(shape_in, ndims, variables(4), ierr)
-   if (ndims /= 1) stop 'var_I64 ndims is not 1'
-   if (shape_in(1) /= isize*inx) stop 'var_I64 shape_in read failed'
+   if (ndims /= 1) then
+      write(*,*) 'var_I64 ndims is not 1'
+      stop 1
+   end if
+   if (shape_in(1) /= isize*inx) then
+      write(*,*) 'var_I64 shape_in read failed'
+      stop 1
+   end if
 
    call adios2_inquire_variable(variables(5), ioRead, "var_R32", ierr)
-   if (variables(5)%name /= 'var_R32') stop 'var_R32 not recognized'
-   if (variables(5)%type /= adios2_type_real) stop 'var_R32 type not recognized'
+   if (variables(5)%name /= 'var_R32') then
+      write(*,*) 'var_R32 not recognized'
+      stop 1
+   end if
+   if (variables(5)%type /= adios2_type_real) then
+      write(*,*) 'var_R32 type not recognized'
+      stop 1
+   end if
    call adios2_variable_shape(shape_in, ndims, variables(5), ierr)
-   if (ndims /= 1) stop 'var_R32 ndims is not 1'
-   if (shape_in(1) /= isize*inx) stop 'var_R32 shape_in read failed'
+   if (ndims /= 1) then
+      write(*,*) 'var_R32 ndims is not 1'
+      stop 1
+   end if
+   if (shape_in(1) /= isize*inx) then
+      write(*,*) 'var_R32 shape_in read failed'
+      stop 1
+   end if
 
    call adios2_inquire_variable(variables(6), ioRead, "var_R64", ierr)
-   if (variables(6)%name /= 'var_R64') stop 'var_R64 not recognized'
-   if (variables(6)%type /= adios2_type_dp) stop 'var_R64 type not recognized'
+   if (variables(6)%name /= 'var_R64') then
+      write(*,*) 'var_R64 not recognized'
+      stop 1
+   end if
+   if (variables(6)%type /= adios2_type_dp) then
+      write(*,*) 'var_R64 type not recognized'
+      stop 1
+   end if
    call adios2_variable_shape(shape_in, ndims, variables(6), ierr)
-   if (ndims /= 1) stop 'var_R64 ndims is not 1'
-   if (shape_in(1) /= isize*inx) stop 'var_R64 shape_in read failed'
+   if (ndims /= 1) then
+      write(*,*) 'var_R64 ndims is not 1'
+      stop 1
+   end if
+   if (shape_in(1) /= isize*inx) then
+      write(*,*) 'var_R64 shape_in read failed'
+      stop 1
+   end if
 
    call adios2_inquire_variable(variables(13), ioRead, "gvar_Str", ierr)
    call adios2_get(bpReader, variables(13), inString, ierr)
    call adios2_perform_gets(bpReader, ierr)
-   if( inString /= data_Strings(1) ) stop 'gvar_Str read failed'
+   if( inString /= data_Strings(1) ) then
+      write(*,*) 'gvar_Str read failed'
+      stop 1
+   end if
 
    call adios2_inquire_variable(variables(14), ioRead, "lvar_i32", ierr)
    allocate(inRanks(isize))
    call adios2_get(bpReader, variables(14), inRanks, ierr)
    call adios2_perform_gets(bpReader, ierr)
-   if( inRanks(irank+1) /= irank ) stop 'lvar_i32 read failed'
+   if( inRanks(irank+1) /= irank ) then
+      write(*,*) 'lvar_i32 read failed'
+      stop 1
+   end if
    deallocate(inRanks)
 
    call adios2_close(bpReader, ierr)

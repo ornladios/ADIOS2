@@ -516,7 +516,7 @@ void BP5Writer::ComputeDerivedVariables()
         auto derivedVar = dynamic_cast<core::VariableDerived *>((*it).second.get());
         std::vector<std::string> varList = derivedVar->VariableNameList();
         // to create a mapping between variable name and the varInfo (dim and data pointer)
-        std::map<std::string, MinVarInfo> nameToVarInfo;
+        std::map<std::string, std::unique_ptr<MinVarInfo>> nameToVarInfo;
         bool computeDerived = true;
         for (auto varName : varList)
         {
@@ -536,7 +536,7 @@ void BP5Writer::ComputeDerivedVariables()
                 std::cout << " .. skip derived variable " << (*it).second->m_Name << std::endl;
                 break;
             }
-            nameToVarInfo.insert({varName, *mvi});
+            nameToVarInfo.insert({varName, std::unique_ptr<MinVarInfo>(mvi)});
         }
         // skip computing derived variables if it contains variables that are not written this step
         if (!computeDerived)
