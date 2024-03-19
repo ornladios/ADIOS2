@@ -44,7 +44,7 @@ program TestBPMemorySpace
      ! check that the default execution space is Detect
      call adios2_get_memory_space(mem, variable, ierr)
      if (mem /= adios2_memory_space_detect) then
-        write(*,*) 'Invalid adios2_memory_space'
+        write(*,*) 'Invalid default adios2_memory_space'
         stop 1
      end if
 
@@ -52,7 +52,7 @@ program TestBPMemorySpace
      call adios2_set_memory_space(variable, adios2_memory_space_gpu, ierr)
      call adios2_get_memory_space(mem, variable, ierr)
      if (mem /= adios2_memory_space_gpu) then
-        write(*,*) 'Invalid adios2_memory_space'
+        write(*,*) 'Invalid set adios2_memory_space'
         stop 1
      end if
 
