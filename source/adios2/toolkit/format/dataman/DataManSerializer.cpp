@@ -651,7 +651,7 @@ void DataManSerializer::PutData(const std::string *inputData, const std::string 
         helper::CopyFromGPUToBuffer(localBuffer->data(), localBuffer->size() - inputData->size(),
                                     inputData->data(), varMemSpace, inputData->size());
 #endif
-    if ((varMemSpace == MemorySpace::Host) || (varMemSpace == MemorySpace::Detect))
+    if (varMemSpace == MemorySpace::Host)
         std::memcpy(localBuffer->data() + localBuffer->size() - inputData->size(),
                     inputData->data(), inputData->size());
 

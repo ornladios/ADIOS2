@@ -27,8 +27,8 @@ std::string ToString(MemorySpace value)
     case MemorySpace::Host:
         return "MemorySpace::Host";
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
-    case MemorySpace::LocalValue:
-        return "MemorySpace::CPU";
+    case MemorySpace::GPU:
+        return "MemorySpace::GPU";
 #endif
     default:
         return "ToString: Unknown MemorySpace";
