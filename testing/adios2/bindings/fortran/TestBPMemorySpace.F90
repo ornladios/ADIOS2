@@ -43,6 +43,12 @@ program TestBPMemorySpace
 
      ! check that the default execution space is Detect
      call adios2_get_memory_space(mem, variable, ierr)
+     if (mem == adios2_memory_space_detect) then
+        write(*,*) 'Detect memory space'
+     end if
+     if (mem == adios2_memory_space_host) then
+        write(*,*) 'Host memory space'
+     end if
      if (mem /= adios2_memory_space_detect) then
         write(*,*) 'Invalid default adios2_memory_space'
         stop 1
