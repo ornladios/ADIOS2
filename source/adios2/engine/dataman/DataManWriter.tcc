@@ -41,7 +41,7 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
         Dims start = variable.m_Start;
         Dims count = variable.m_Count;
         Dims shape = variable.m_Shape;
-        Dims memstart = variable.m_MemoryStart;
+        Dims memstart = variable.GetMemorySpace();
         Dims memcount = variable.m_MemoryCount;
         std::reverse(start.begin(), start.end());
         std::reverse(count.begin(), count.end());
@@ -49,7 +49,7 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
         std::reverse(memstart.begin(), memstart.end());
         std::reverse(memcount.begin(), memcount.end());
         m_Serializer.PutData(variable.m_Data, variable.m_Name, shape, start, count, memstart,
-                             memcount, variable.m_MemSpace, m_Name, CurrentStep(), m_MpiRank, "",
+                             memcount, variable.GetMemorySpace(), m_Name, CurrentStep(), m_MpiRank, "",
                              variable.m_Operations);
     }
 

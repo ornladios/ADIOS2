@@ -81,7 +81,7 @@ void DataManSerializer::PutData(const core::Variable<T> &variable, const std::st
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     PutData(variable.GetData(), variable.m_Name, variable.m_Shape, variable.m_Start,
-            variable.m_Count, variable.m_MemoryStart, variable.m_MemoryCount, variable.m_MemSpace,
+            variable.m_Count, variable.m_MemoryStart, variable.m_MemoryCount, variable.GetMemoryspace(),
             doid, step, rank, address, variable.m_Operations, localBuffer, metadataJson);
 }
 
