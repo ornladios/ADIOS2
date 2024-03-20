@@ -79,11 +79,7 @@ adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims, con
 
 adios2::MemorySpace adios2_ToMemorySpace(const adios2_memory_space Cmem)
 {
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
     adios2::MemorySpace mem = adios2::MemorySpace::Detect;
-#else
-    adios2::MemorySpace mem = adios2::MemorySpace::Host;
-#endif
     switch (Cmem)
     {
 
@@ -104,11 +100,7 @@ adios2::MemorySpace adios2_ToMemorySpace(const adios2_memory_space Cmem)
 
 adios2_memory_space adios2_FromMemorySpace(const adios2::MemorySpace mem)
 {
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
     adios2_memory_space Cmem = adios2_memory_space_detect;
-#else
-    adios2_memory_space Cmem = adios2_memory_space_host;
-#endif
     switch (mem)
     {
 

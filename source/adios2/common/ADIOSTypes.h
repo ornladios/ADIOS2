@@ -355,6 +355,7 @@ std::string ToString(SelectionType value);
 std::string ToString(DataType type);
 std::string ToString(const Dims &dims);
 std::string ToString(const Box<Dims> &box);
+std::string ToString(const MemorySpace value);
 
 /**
  * os << [adios2_type] enables output of adios2 enums/classes directly
