@@ -18,6 +18,23 @@
 namespace adios2
 {
 
+std::string ToString(MemorySpace value)
+{
+    switch (value)
+    {
+    case MemorySpace::Detect:
+        return "MemorySpace::Detect";
+    case MemorySpace::Host:
+        return "MemorySpace::Host";
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    case MemorySpace::GPU:
+        return "MemorySpace::GPU";
+#endif
+    default:
+        return "ToString: Unknown MemorySpace";
+    }
+}
+
 std::string ToString(ShapeID value)
 {
     switch (value)
