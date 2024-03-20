@@ -34,7 +34,7 @@ inline Variable<T> CampaignReader::DuplicateVariable(Variable<T> *variable, IO &
     v.m_ReadAsJoined = variable->m_ReadAsJoined;
     v.m_ReadAsLocalValue = variable->m_ReadAsLocalValue;
     v.m_RandomAccess = variable->m_RandomAccess;
-    v.m_MemSpace = variable->GetMemorySpace();
+    v.m_MemSpace = variable->m_MemSpace;
     v.m_JoinedDimPos = variable->m_JoinedDimPos;
     v.m_AvailableStepBlockIndexOffsets = variable->m_AvailableStepBlockIndexOffsets;
     v.m_AvailableShapes = variable->m_AvailableShapes;
@@ -67,7 +67,7 @@ CampaignReader::TranslateToActualVariable(Variable<T> &variable)
     v->m_BlockID = variable.m_BlockID;
     v->m_MemoryStart = variable.m_MemoryStart;
     v->m_MemoryCount = variable.m_MemoryCount;
-    v->m_MemSpace = variable.GetMemorySpace();
+    v->m_MemSpace = variable.m_MemSpace;
     return std::make_pair(v, e);
 }
 

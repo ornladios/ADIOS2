@@ -119,7 +119,7 @@ void BP3Serializer::PutSpanMetadata(const core::Variable<T> &variable,
         m_Profiler.Start("minmax");
         T min, max;
         helper::GetMinMaxThreads(span.Data(), span.Size(), min, max, m_Parameters.Threads,
-                                 variable.GetMemorySpace());
+                                 variable.m_MemSpace);
         m_Profiler.Stop("minmax");
 
         // Put min/max in variable index
