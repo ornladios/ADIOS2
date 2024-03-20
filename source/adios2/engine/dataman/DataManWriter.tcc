@@ -49,8 +49,8 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
         std::reverse(memstart.begin(), memstart.end());
         std::reverse(memcount.begin(), memcount.end());
         m_Serializer.PutData(variable.m_Data, variable.m_Name, shape, start, count, memstart,
-                             memcount, variable.GetMemorySpace(values), m_Name, CurrentStep(), m_MpiRank, "",
-                             variable.m_Operations);
+                             memcount, variable.GetMemorySpace(values), m_Name, CurrentStep(),
+                             m_MpiRank, "", variable.m_Operations);
     }
 
     if (m_MonitorActive)
