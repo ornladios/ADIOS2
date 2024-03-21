@@ -85,7 +85,6 @@ public:
     XrdSsiErrInfo eInfo;
 #endif
     int reqLen;
-    std::string contact;
 
     Xrootd();
     ~Xrootd();

@@ -303,13 +303,19 @@ XrdSsiClUI::XrdSsiClUI()
 
 namespace adios2
 {
-Xrootd::Xrootd() { contact = "localhost:1094"; }
+Xrootd::Xrootd() {
+
+}
 Xrootd::~Xrootd() {}
 void Xrootd::Open(const std::string hostname, const int32_t port, const std::string filename,
                   const Mode mode, bool RowMajorOrdering)
 {
 #ifdef ADIOS2_HAVE_XROOTD
-    if (!(clUI.ssiService = XrdSsiProviderClient->GetService(eInfo, clUI.contact)))
+
+    const char contact_c[32] = "localhost:1094";
+    const std::string  contact = hostname + ":" + std::to_string(port);
+    //if (!clUI.ParseCL(2, (char **)contact.c_str())){};
+    if (!(clUI.ssiService = XrdSsiProviderClient->GetService(eInfo, contact.c_str())))
     {
         fprintf(XrdSsiCl::outErr, "Unable to get service object for %s; %s\n", clUI.contact,
                 eInfo.Get().c_str());
