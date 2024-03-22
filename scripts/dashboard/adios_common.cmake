@@ -62,6 +62,8 @@
 #   set(ENV{FC}  /path/to/fc)   # Fortran compiler (optional)
 #   set(ENV{LD_LIBRARY_PATH} /path/to/vendor/lib) # (if necessary)
 
+set(CTEST_CONFIGURATION_TYPE Release)
+
 set(CTEST_PROJECT_NAME "ADIOS2")
 set(CTEST_DROP_SITE "open.cdash.org")
 if(NOT dashboard_git_url)
