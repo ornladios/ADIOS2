@@ -8,6 +8,16 @@ Write-Host "::group::Installing NumPy"
 pip install "numpy>=1.19"
 Write-Host "::endgroup::"
 
+Write-Host "::group::Setup CONDA"
+$Env:Path += ";$Env:CONDA\condabin"
+conda.bat init powershell
+conda.bat init bash
+Write-Host "::endgroup::"
+
+Write-Host "::group::Installing c-blosc2"
+conda.bat install -y conda-forge::c-blosc2
+Write-Host "::endgroup::"
+
 if($Env:GH_YML_MATRIX_PARALLEL -eq "ompi")
 {
   # This is taken from the MSMPI VCPKG
