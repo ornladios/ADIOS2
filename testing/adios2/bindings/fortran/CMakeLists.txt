@@ -15,6 +15,9 @@ macro(fortran_add_test_helper testname mpi)
     add_executable(${tgt} Test${testname}.F90)
     set_target_properties(${tgt} PROPERTIES LINKER_LANGUAGE Fortran)
     target_link_libraries(${tgt} adios2::fortran)
+    if (ADIOS2_HAVE_Derived_Variable)
+        target_compile_definitions(${tgt} PRIVATE -DADIOS2_HAVE_Derived_Variable=1)
+    endif()
     add_test(
       NAME ${pfx}${testname}.Serial
       COMMAND ${tgt}
@@ -26,6 +29,9 @@ macro(fortran_add_test_helper testname mpi)
     add_executable(${tgt} Test${testname}.F90)
     set_target_properties(${tgt} PROPERTIES LINKER_LANGUAGE Fortran)
     target_link_libraries(${tgt} adios2::fortran_mpi MPI::MPI_Fortran)
+    if (ADIOS2_HAVE_Derived_Variable)
+        target_compile_definitions(${tgt} PRIVATE -DADIOS2_HAVE_Derived_Variable=1)
+    endif()
     add_test(
       NAME ${pfx}${testname}.MPI
       COMMAND ${MPIEXEC_COMMAND} $<TARGET_FILE:${tgt}>

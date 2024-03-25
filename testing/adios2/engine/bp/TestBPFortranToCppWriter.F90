@@ -83,7 +83,10 @@ program TestBPFortranToCppWriter
       call adios2_begin_step(bpWriter, ierr)
 
       call adios2_current_step(current_step, bpWriter, ierr)
-      if (current_step /= s - 1) stop 'wrong current step'
+      if (current_step /= s - 1) then
+         write(*,*) 'wrong current step'
+         stop 1
+      end if
 
       if (irank == 0 .and. s == 1) then
          call adios2_put(bpWriter, vGlobalValue, inx, ierr)

@@ -746,11 +746,11 @@ ADIOS2 Fortran bindings handlers are mapped 1-to-1 to the ADIOS2 components desc
       integer, intent(out) :: ierr
       
 
-* :f90:`subroutine adios2_set_steps_selection` set a list of steps by specifying the starting step and the step count
+* :f90:`subroutine adios2_set_step_selection` set a list of steps by specifying the starting step and the step count
    
    .. code-block:: fortran
    
-      subroutine adios2_set_selection(variable, step_start, step_count, ierr)
+      subroutine adios2_set_step_selection(variable, step_start, step_count, ierr)
       
       ! WHERE
       

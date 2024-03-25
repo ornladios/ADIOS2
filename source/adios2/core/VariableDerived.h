@@ -32,7 +32,7 @@ public:
     ApplyExpression(std::map<std::string, std::vector<void *>> NameToData,
                     std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
     std::vector<std::tuple<void *, Dims, Dims>>
-    ApplyExpression(std::map<std::string, MinVarInfo> mvi);
+    ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &mvi);
 };
 
 } // end namespace core

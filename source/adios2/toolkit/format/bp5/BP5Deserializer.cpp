@@ -1994,6 +1994,8 @@ BP5Deserializer::~BP5Deserializer()
         m_Engine->m_IO.RemoveVariable(VarRec.second->VarName);
 
         free(VarRec.second->VarName);
+        if (VarRec.second->ExprStr)
+            free(VarRec.second->ExprStr);
         if (VarRec.second->Operator)
             free(VarRec.second->Operator);
         if (VarRec.second->Def)

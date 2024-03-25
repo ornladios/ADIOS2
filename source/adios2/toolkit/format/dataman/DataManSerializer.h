@@ -110,8 +110,8 @@ public:
     // another wrapper for PutData which accepts adios2::core::Variable
     template <class T>
     void PutData(const core::Variable<T> &variable, const std::string &doid, const size_t step,
-                 const int rank, const std::string &address, VecPtr localBuffer = nullptr,
-                 JsonPtr metadataJson = nullptr);
+                 const int rank, const MemorySpace varMemSpace, const std::string &address,
+                 VecPtr localBuffer = nullptr, JsonPtr metadataJson = nullptr);
 
     // attach attributes to local pack
     void AttachAttributesToLocalPack();
