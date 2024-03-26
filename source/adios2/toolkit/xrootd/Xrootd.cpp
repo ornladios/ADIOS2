@@ -300,18 +300,18 @@ XrdSsiClUI::XrdSsiClUI()
 
     cLine.Attach(STDIN_FILENO);
 }
-
-//namespace adios2
-//{
-adios2::Xrootd::Xrootd() {
+extern XrdSsiProvider *XrdSsiProviderClient;
+namespace adios2
+{
+Xrootd::Xrootd() {
 
 }
-adios2::Xrootd::~Xrootd() {}
-void adios2::Xrootd::Open(const std::string hostname, const int32_t port, const std::string filename,
+Xrootd::~Xrootd() {}
+void Xrootd::Open(const std::string hostname, const int32_t port, const std::string filename,
                   const Mode mode, bool RowMajorOrdering)
 {
 #ifdef ADIOS2_HAVE_XROOTD
-    extern XrdSsiProvider *XrdSsiProviderClient;
+
     const char contact_c[32] = "localhost:1094";
     const std::string  contact = hostname + ":" + std::to_string(port);
     //if (!clUI.ParseCL(2, (char **)contact.c_str())){};
@@ -324,7 +324,7 @@ void adios2::Xrootd::Open(const std::string hostname, const int32_t port, const 
     return;
 }
 
-adios2::Xrootd::GetHandle adios2::Xrootd::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count, Dims &Start,
+Xrootd::GetHandle Xrootd::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count, Dims &Start,
                               void *dest)
 {
 #ifdef ADIOS2_HAVE_XROOTD
@@ -360,4 +360,4 @@ adios2::Xrootd::GetHandle adios2::Xrootd::Get(char *VarName, size_t Step, size_t
     return 0;
 }
 
-//}
+}
