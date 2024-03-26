@@ -84,9 +84,9 @@ def CheckCampaignStore(args):
 def CheckLocalCampaignDir(args):
     if not isdir(args.LocalCampaignDir):
         print(
-            "ERROR: Shot campaign data '"
-            + args.LocalCampaignDir
-            + "' does not exist. Run this command where the code was executed.",
+            "ERROR: Shot campaign data '" +
+            args.LocalCampaignDir +
+            "' does not exist. Run this command where the code was executed.",
             flush=True,
         )
         exit(1)
@@ -186,7 +186,8 @@ def AddDatasetToArchive(hostID: int, dirID: int, dataset: str, cur: sqlite3.Curs
         )
         rowID = curDS.lastrowid
         # print(
-        #     f"Inserted bpdataset {dataset} in database on host {hostID} in dir {dirID}, rowid = {rowID}"
+        #     f"Inserted bpdataset {dataset} in database on host {hostID}"
+        #     f" in dir {dirID}, rowid = {rowID}"
         # )
     return rowID
 
@@ -303,15 +304,15 @@ def Create(args: dict, cur: sqlite3.Cursor):
     cur.execute("create table host" + "(hostname TEXT PRIMARY KEY, longhostname TEXT)")
     cur.execute("create table directory" + "(hostid INT, name TEXT, PRIMARY KEY (hostid, name))")
     cur.execute(
-        "create table bpdataset"
-        + "(hostid INT, dirid INT, name TEXT, ctime INT"
-        + ", PRIMARY KEY (hostid, dirid, name))"
+        "create table bpdataset" +
+        "(hostid INT, dirid INT, name TEXT, ctime INT" +
+        ", PRIMARY KEY (hostid, dirid, name))"
     )
     cur.execute(
-        "create table bpfile"
-        + "(bpdatasetid INT, name TEXT, compression INT, lenorig INT"
-        + ", lencompressed INT, ctime INT, data BLOB"
-        + ", PRIMARY KEY (bpdatasetid, name))"
+        "create table bpfile" +
+        "(bpdatasetid INT, name TEXT, compression INT, lenorig INT" +
+        ", lencompressed INT, ctime INT, data BLOB" +
+        ", PRIMARY KEY (bpdatasetid, name))"
     )
     Update(args, cur)
 
@@ -345,11 +346,11 @@ def Info(args: dict, cur: sqlite3.Cursor):
         for dir in dirs:
             print(f"    dir = {dir[1]}")
             res3 = cur.execute(
-                'select rowid, name, ctime from bpdataset where hostid = "'
-                + str(host[0])
-                + '" and dirid = "'
-                + str(dir[0])
-                + '"'
+                'select rowid, name, ctime from bpdataset where hostid = "' +
+                str(host[0]) +
+                '" and dirid = "' +
+                str(dir[0]) +
+                '"'
             )
             bpdatasets = res3.fetchall()
             for bpdataset in bpdatasets:
