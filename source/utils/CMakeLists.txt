@@ -119,6 +119,6 @@ endif()
 
 if (ADIOS2_HAVE_XRootD)
   add_library(adios2_xrootd SHARED xrootd-plugin/XrdSsiSvProvider.cpp xrootd-plugin/XrdSsiSvService.cpp xrootd-plugin/XrdSsiSvStreamActive.cpp xrootd-plugin/XrdSsiSvStreamPassive.cpp)
-  target_include_directories(adios2_xrootd PRIVATE xrootd-plugin ${XROOTD_INCLUDE_DIRS})
+  target_include_directories(adios2_xrootd PRIVATE ${PROJECT_SOURCE_DIR}/bindings/CXX11 ${XROOTD_INCLUDE_DIRS})
   target_link_libraries(adios2_xrootd PRIVATE adios2_core)
 endif ()

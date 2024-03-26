@@ -42,12 +42,14 @@ public:
     int timeOut;
     int readSZ;
     uint32_t resOpts;
-    XrdSsiResource::Affinity affVal;
     bool isAsync;
     bool doEcho;
     bool doOnce;
     bool doNop;
+#ifdef ADIOS2_HAVE_XROOTD
+    XrdSsiResource::Affinity affVal;
     XrdSsiService *ssiService;
+#endif
     char *reqBuff;
 
     XrdSsiClUI();
@@ -63,8 +65,10 @@ private:
     void SetAff(const char *aName);
     bool Usage();
 
+#ifdef ADIOS2_HAVE_XROOTD
     XrdSysMutex uiMutex;
     XrdOucStream cLine;
+#endif
     char prompt[80];
     static const int minBsz = 1024;            // 1 KB
     static const int maxBsz = 8 * 1024 * 1024; // 8 MB
@@ -81,7 +85,7 @@ class Xrootd
 public:
     profiling::IOChrono m_Profiler;
 #ifdef ADIOS2_HAVE_XROOTD
-    XrdSsiProvider *XrdSsiProviderClient;
+
     XrdSsiErrInfo eInfo;
 #endif
     int reqLen;

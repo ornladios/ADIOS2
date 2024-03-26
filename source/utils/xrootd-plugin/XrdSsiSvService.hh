@@ -34,7 +34,7 @@
 #include "XrdSsi/XrdSsiResponder.hh"
 #include "XrdSsi/XrdSsiService.hh"
 
-#include <adios2.h>
+#include "adios2.h"
 //ADIOS initialization
 // Here we define out service implementation. We need to inherit the Service
 // class but equally important we need to also inherit the Responder class in
