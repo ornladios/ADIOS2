@@ -116,3 +116,8 @@ if(ADIOS2_HAVE_HDF5)
     )
   endif()
 endif()
+
+if(ADIOS2_HAVE_XRootD)
+  add_library( libSsiSv SHARED xrootd-plugin/XrdSsiSvProvider.cpp xrootd-plugin/XrdSsiSvService.cpp xrootd-plugin/XrdSsiSvStreamActive.cpp xrootd-plugin/XrdSsiSvStreamPassive.cpp)
+  target_link_libraries(libSsiSv PRIVATE adios2_core)
+endif ()
