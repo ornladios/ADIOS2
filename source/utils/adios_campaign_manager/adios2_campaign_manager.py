@@ -62,7 +62,9 @@ def SetupArgs():
     if args.campaign is not None:
         if not args.campaign.endswith(".aca"):
             args.CampaignFileName += ".aca"
-        if args.campaign_store is not None:
+        if (not exists(args.CampaignFileName) and
+                not args.CampaignFileName.startswith("/") and
+                args.campaign_store is not None):
             args.CampaignFileName = args.campaign_store + "/" + args.CampaignFileName
 
     args.LocalCampaignDir = "adios-campaign/"
@@ -359,19 +361,25 @@ def Info(args: dict, cur: sqlite3.Cursor):
 
 
 def List():
-    if args.campaign_store is None:
-        print("ERROR: Set --campaign_store for this command")
-        return 1
+    path = args.campaign
+    if path is None:
+        if args.campaign_store is None:
+            print("ERROR: Set --campaign_store for this command")
+            return 1
+        path = args.campaign_store
     else:
-        # List the local campaign store
-        acaList = glob.glob(args.campaign_store + "/**/*.aca", recursive=True)
-        if len(acaList) == 0:
-            print("There are no campaign archives in  " + args.campaign_store)
-            return 2
-        else:
-            startCharPos = len(args.campaign_store) + 1
-            for f in acaList:
-                print(f[startCharPos:])
+        while path[-1] == "/":
+            path = path[:-1]
+
+    # List the local campaign store
+    acaList = glob.glob(path + "/**/*.aca", recursive=True)
+    if len(acaList) == 0:
+        print("There are no campaign archives in  " + path)
+        return 2
+    else:
+        startCharPos = len(path) + 1
+        for f in acaList:
+            print(f[startCharPos:])
     return 0
 
 
