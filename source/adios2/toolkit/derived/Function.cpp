@@ -39,7 +39,7 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
         T *magValues = ApplyOneToOne<T>(inputData, dataSize, [](T a, T b) { return a + b * b; });  \
         for (size_t i = 0; i < dataSize; i++)                                                      \
         {                                                                                          \
-            magValues[i] = std::sqrt(magValues[i]);                                                \
+            magValues[i] = (T)std::sqrt(magValues[i]);                                             \
         }                                                                                          \
         return DerivedData({(void *)magValues, inputData[0].Start, inputData[0].Count});           \
     }

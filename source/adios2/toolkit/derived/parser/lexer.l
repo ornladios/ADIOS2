@@ -1,11 +1,20 @@
 %{
 #include <cerrno>
-#include <climits>
 #include <cstdlib>
+#include <limits.h>
 #include <cstring> // strerror
 #include <string>
 #include "ASTDriver.h"
 #include "parser.h"
+#if defined(_MSC_VER)
+#include <io.h>
+#define YY_NO_UNISTD_H
+#define strdup _strdup
+#define isatty _isatty
+#define fileno _fileno
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
 %}
 
 %{
@@ -105,7 +114,7 @@ blank [ \t\r]
   loc.step ();
 %}
 {blank}+   loc.step ();
-\n+        loc.lines (yyleng); loc.step (); return adios2::detail::parser::make_ENDL (loc);
+\n+        loc.lines (yyleng); loc.step ();
 
 "="        return adios2::detail::parser::make_ASSIGN  (loc);
 ","        return adios2::detail::parser::make_COMMA   (loc);
@@ -136,12 +145,11 @@ make_INT (const std::string &s, const adios2::detail::parser::location_type& loc
   return adios2::detail::parser::make_INT ((int) n, loc);
 }
 
-adios2::detail::ASTNode*
+void
 adios2::detail::ASTDriver::parse (const std::string input)
 {
   adios2::detail::parser parse (*this);
   yy_scan_string(input.c_str());
   parse.set_debug_level (trace_parsing);
   parse ();
-  return getAST();
 }

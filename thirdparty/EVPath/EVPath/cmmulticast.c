@@ -449,7 +449,7 @@ libcmmulticast_LTX_writev_func(CMtrans_services svc, mcast_conn_data_ptr mcd, st
 }
 
 #ifdef HAVE_WINDOWS_H
-int socket_global_init = 0;
+static int socket_global_init = 0;
 /* Winsock init stuff, ask for ver 1.1 */
 static WORD wVersionRequested = MAKEWORD(1, 1);
 static WSADATA wsaData;

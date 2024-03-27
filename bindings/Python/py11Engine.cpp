@@ -70,10 +70,42 @@ void Engine::Put(Variable variable, const pybind11::array &array, const Mode lau
     else
     {
         throw std::invalid_argument("ERROR: for variable " + variable.Name() +
-                                    " numpy array type is not supported or "
+                                    " numpy array type " + variable.Type() +
+                                    " is not supported (found type " + ToString(type) +
+                                    ") or "
                                     "is not memory contiguous "
                                     ", in call to Put\n");
     }
+}
+
+void Engine::Put(Variable variable, const std::vector<int64_t> &ints, const Mode launch)
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Put list of ints");
+    helper::CheckForNullptr(variable.m_VariableBase,
+                            "for variable, in call to Engine::Put list of ints");
+
+    m_Engine->Put(*dynamic_cast<core::Variable<int64_t> *>(variable.m_VariableBase),
+                  reinterpret_cast<const int64_t *>(ints.data()), launch);
+}
+
+void Engine::Put(Variable variable, const std::vector<double> &floats, const Mode launch)
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Put list of floats");
+    helper::CheckForNullptr(variable.m_VariableBase,
+                            "for variable, in call to Engine::Put list of floats");
+
+    m_Engine->Put(*dynamic_cast<core::Variable<double> *>(variable.m_VariableBase),
+                  reinterpret_cast<const double *>(floats.data()), launch);
+}
+
+void Engine::Put(Variable variable, const std::vector<std::complex<double>> &complexes,
+                 const Mode launch)
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Put list of complexes");
+    helper::CheckForNullptr(variable.m_VariableBase,
+                            "for variable, in call to Engine::Put list of complexes");
+    m_Engine->Put(*dynamic_cast<core::Variable<std::complex<double>> *>(variable.m_VariableBase),
+                  reinterpret_cast<const std::complex<double> *>(complexes.data()), launch);
 }
 
 void Engine::Put(Variable variable, const std::string &string)
@@ -235,12 +267,18 @@ std::vector<std::map<std::string, std::string>> Engine::BlocksInfo(std::string &
                                                                    const size_t step) const
 {
     std::vector<std::map<std::string, std::string>> rv;
+    auto &varMap = m_Engine->m_IO.GetVariables();
+    auto itVariable = varMap.find(var_name);
+    if (itVariable == varMap.end())
+    {
+        return rv;
+    }
 
     // Grab the specified variable object and get its type string
     adios2::DataType var_type = m_Engine->GetIO().InquireVariableType(var_name);
 
     MinVarInfo *minBlocksInfo = nullptr;
-    auto itVariable = m_Engine->m_IO.GetVariables().find(var_name);
+
     auto Variable = itVariable->second.get();
     minBlocksInfo = m_Engine->MinBlocksInfo(*Variable, 0);
     if (minBlocksInfo)
@@ -261,7 +299,8 @@ std::vector<std::map<std::string, std::string>> Engine::BlocksInfo(std::string &
                     {
                         start_ss << ",";
                     }
-                    start_ss << info.Start[i];
+                    start_ss << (minBlocksInfo->WasLocalValue ? reinterpret_cast<size_t>(info.Start)
+                                                              : info.Start[i]);
                 }
             }
             info_map["Start"] = start_ss.str();
@@ -278,7 +317,8 @@ std::vector<std::map<std::string, std::string>> Engine::BlocksInfo(std::string &
                     {
                         count_ss << ",";
                     }
-                    count_ss << info.Count[i];
+                    count_ss << (minBlocksInfo->WasLocalValue ? reinterpret_cast<size_t>(info.Count)
+                                                              : info.Count[i]);
                 }
             }
             info_map["Count"] = count_ss.str();

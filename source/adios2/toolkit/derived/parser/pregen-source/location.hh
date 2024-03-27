@@ -53,7 +53,7 @@
 #  endif
 # endif
 
-#line 6 "..//parser.y"
+#line 6 "../parser.y"
 namespace adios2 { namespace detail {
 #line 59 "location.hh"
 
@@ -299,7 +299,7 @@ namespace adios2 { namespace detail {
     return ostr;
   }
 
-#line 6 "..//parser.y"
+#line 6 "../parser.y"
 } } // adios2::detail
 #line 305 "location.hh"
 

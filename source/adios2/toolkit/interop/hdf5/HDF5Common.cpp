@@ -929,13 +929,29 @@ void HDF5Common::ReadStringScalarDataset(hid_t dataSetId, std::string &result)
     hid_t h5Type = H5Dget_type(dataSetId); // get actual type;
     size_t typesize = H5Tget_size(h5Type);
 
-    char *val = (char *)(calloc(typesize, sizeof(char)));
-    hid_t ret2 = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
-    CHECK_H5_RETURN(ret2, "ReadStringScalarDataset");
+    if (H5Tis_variable_str(h5Type))
+    {
+        hid_t d_space = H5Dget_space(dataSetId);
+        std::vector<char> vc(typesize); // byte buffer to vlen strings
+        auto status = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, vc.data());
+        CHECK_H5_RETURN(status, "ReadStringScalar_variable_str");
+        result.assign(*((char **)vc.data()));
 
-    result.assign(val, typesize);
-    free(val);
+        // free dynamically allocated vlen memory from H5Dread
+        // recent versions shift to use H5Treclaim()
+        H5Dvlen_reclaim(h5Type, d_space, H5P_DEFAULT, vc.data());
 
+        // H5Treclaim(attr_type, attr_space, H5P_DEFAULT, vc.data());
+    }
+    else
+    {
+        char *val = (char *)(calloc(typesize, sizeof(char)));
+        hid_t ret2 = H5Dread(dataSetId, h5Type, H5S_ALL, H5S_ALL, H5P_DEFAULT, val);
+        CHECK_H5_RETURN(ret2, "ReadStringScalarDataset");
+
+        result.assign(val, typesize);
+        free(val);
+    }
     H5Tclose(h5Type);
 }
 
@@ -1213,6 +1229,52 @@ void HDF5Common::ReadInStringAttr(core::IO &io, const std::string &attrName, hid
     hsize_t typeSize = H5Tget_size(h5Type);
     H5S_class_t stype = H5Sget_simple_extent_type(sid);
 
+    if (H5Tis_variable_str(h5Type))
+    {
+        hid_t attr_space = H5Aget_space(attrId);
+        if (H5S_SCALAR == stype)
+        {
+            std::vector<char> vc(typeSize); // byte buffer to vlen strings
+            auto status = H5Aread(attrId, h5Type, vc.data());
+            CHECK_H5_RETURN(status, "ReadInStringAttr_scalar")
+
+            std::string c_str(*((char **)vc.data()));
+
+            // free dynamically allocated vlen memory from H5Aread
+            // later versions use H5Treclaim() instead.
+            H5Dvlen_reclaim(h5Type, attr_space, H5P_DEFAULT, vc.data());
+
+            io.DefineAttribute<std::string>(attrName, c_str);
+        }
+        else
+        {
+            hsize_t ndims = H5Sget_simple_extent_ndims(sid);
+            if (ndims != 1)
+                CHECK_H5_RETURN(-1, "Only handles 1-D string array");
+
+            // ndims must be 1
+            hsize_t dims[1];
+            hid_t ret = H5Sget_simple_extent_dims(sid, dims, NULL);
+            CHECK_H5_RETURN(ret, "ReadInStringAttr");
+
+            std::vector<char *> vc(dims[0]);
+            auto status = H5Aread(attrId, h5Type, vc.data());
+            CHECK_H5_RETURN(status, "ReadInStringAttr");
+
+            std::vector<std::string> stringArray;
+            for (auto const &val : vc)
+                // stringArray.push_back(auxiliary::strip(std::string(val), {'\0'}));
+                stringArray.push_back(std::string(val));
+
+            status = H5Dvlen_reclaim(h5Type, attr_space, H5P_DEFAULT, vc.data());
+            io.DefineAttribute<std::string>(attrName, stringArray.data(), dims[0]);
+        }
+
+        return;
+    }
+    //
+    // regular string, not variables
+    //
     if (H5S_SCALAR == stype)
     {
         auto val = std::unique_ptr<char[]>(new char[typeSize]);

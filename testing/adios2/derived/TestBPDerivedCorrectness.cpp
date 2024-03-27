@@ -4,6 +4,7 @@
 #include <cmath>
 #include <limits>
 #include <iostream>
+#include <limits>
 #include <numeric>
 #include <random>
 #include <stdexcept>
@@ -41,17 +42,17 @@ TEST(DerivedCorrectness, AddCorrectnessTest)
     auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     // clang-format off
-    auto addU = bpOut.DefineDerivedVariable(derivedname,
-                                            "x =" + varname[0] + " \n"
-                                            "y =" + varname[1] + " \n"
-                                            "z =" + varname[2] + " \n"
-                                            "x+y+z",
-                                            adios2::DerivedVarType::StoreData);
+    bpOut.DefineDerivedVariable(derivedname,
+                                "x =" + varname[0] + " \n"
+                                "y =" + varname[1] + " \n"
+                                "z =" + varname[2] + " \n"
+                                "x+y+z",
+                                adios2::DerivedVarType::StoreData);
     // clang-format on
     std::string filename = "expAdd.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
 
-    for (int i = 0; i < steps; i++)
+    for (size_t i = 0; i < steps; i++)
     {
         bpFileWriter.BeginStep();
         bpFileWriter.Put(Ux, simArray1.data());
@@ -70,8 +71,8 @@ TEST(DerivedCorrectness, AddCorrectnessTest)
     std::vector<float> readAdd;
 
     float calcA;
-    float epsilon = 0.01;
-    for (int i = 0; i < steps; i++)
+    float epsilon = (float)0.01;
+    for (size_t i = 0; i < steps; i++)
     {
         bpFileReader.BeginStep();
         bpFileReader.Get(varname[0], readUx);
@@ -116,17 +117,17 @@ TEST(DerivedCorrectness, MagCorrectnessTest)
     auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     // clang-format off
-    auto magU = bpOut.DefineDerivedVariable(derivedname,
-                                            "x =" + varname[0] + " \n"
-                                            "y =" + varname[1] + " \n"
-                                            "z =" + varname[2] + " \n"
-                                            "magnitude(x,y,z)",
-                                            adios2::DerivedVarType::StoreData);
+    bpOut.DefineDerivedVariable(derivedname,
+                                "x =" + varname[0] + " \n"
+                                "y =" + varname[1] + " \n"
+                                "z =" + varname[2] + " \n"
+                                "magnitude(x,y,z)",
+                                adios2::DerivedVarType::StoreData);
     // clang-format on
     std::string filename = "expMagnitude.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
 
-    for (int i = 0; i < steps; i++)
+    for (size_t i = 0; i < steps; i++)
     {
         bpFileWriter.BeginStep();
         bpFileWriter.Put(Ux, simArray1.data());
@@ -145,8 +146,8 @@ TEST(DerivedCorrectness, MagCorrectnessTest)
     std::vector<float> readMag;
 
     float calcM;
-    float epsilon = 0.01;
-    for (int i = 0; i < steps; i++)
+    float epsilon = (float)0.01;
+    for (size_t i = 0; i < steps; i++)
     {
         bpFileReader.BeginStep();
         auto varx = bpIn.InquireVariable<float>(varname[0]);
@@ -162,88 +163,11 @@ TEST(DerivedCorrectness, MagCorrectnessTest)
 
         for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
         {
-            calcM = sqrt(pow(readUx[ind], 2) + pow(readUy[ind], 2) + pow(readUz[ind], 2));
+            calcM = (float)sqrt(pow(readUx[ind], 2) + pow(readUy[ind], 2) + pow(readUz[ind], 2));
             EXPECT_TRUE(fabs(calcM - readMag[ind]) < epsilon);
         }
     }
     bpFileReader.Close();
-}
-
-/*
- * Linear Interpolation - average difference around point "idx"
- *
- */
-// T linear_interp (T* data, size_t idx, size_t count, size_t stride, size_t margin, bool center)
-float linear_interp (std::vector<float> data, size_t idx, size_t count, size_t stride)
-{
-    size_t ind1 = idx - stride;
-    size_t ind2 = idx + stride;
-    bool boundary = false;
-    if (idx < stride)
-      {
-	ind1 = idx;
-	boundary = true;
-      }
-    if (count - idx <= stride)
-      {
-	ind2 = idx;
-	boundary = true;
-      }
-     // If stride is out of bounds in both directions, ind1 = ind2 = idx
-    // return 0
-    return (data[ind2] - data[ind1]) / (boundary? 1: 2);
-}
-
-/*
- * Input: 3D vector field F(x,y,z)= {F1(x,y,z), F2(x,y,z), F3(x,y,z)}
- *
- *     inputData - (3) components of 3D vector field
- *     margin - how many elements to each size will be used in approximating partial derivatives
- *     center - include point (x,y,z) in approximating of partial derivative at that point
- *
- * Computation:
- *     curl(F(x,y,z)) = (partial(F3,y) - partial(F2,z))i
- *                    + (partial(F1,z) - partial(F3,x))j
- *                    + (partial(F2,x) - partial(F1,y))k
- * 
- *     boundaries are calculated only with data in block
- *         (ex: partial derivatives in x direction at point (0,0,0)
- *              only use data from (1,0,0), etc )
- *
- * Return: 
- *     (3) components of curl
- */
-//std::vector<T*> computecurl3D
-//const std::vector<DerivedData> inputData, size_t xcount, size_t ycount, size_t zcount, size_t margin, bool center, std::function<T(T*, size_t, size_t, size_t, size_t, bool)> pdcomp)
-std::vector<std::vector<float>> computecurl3D (std::vector<float> inputX, std::vector<float> inputY, std::vector<float> inputZ, size_t xcount, size_t ycount, size_t zcount)
-{
-    // ToDo - verify how to navigate over the inputData spaces
-    size_t dataSize = xcount * ycount * zcount;
-    size_t xstride = ycount * zcount;
-    size_t ystride = zcount;
-    size_t zstride = 1;
-
-    std::vector<float> curlx(dataSize);
-    std::vector<float> curly(dataSize);
-    std::vector<float> curlz(dataSize);
-    std::vector<std::vector<float>> curl = {curlx, curly, curlz};
-    // std::vector<T*> curl = {(T*)malloc(xcount * ycount * zcount * sizeof(T)), (T*)malloc(xcount * ycount * zcount * sizeof(T)), (T*)malloc(xcount * ycount * zcount * sizeof(T))};
-
-    for (size_t i = 0; i < xcount; ++i)
-    {
-        for (size_t j = 0; j < ycount; ++j)
-        {
-            for (size_t k = 0; k < zcount; ++k)
-            {
-                size_t idx = (i * xstride) + (j * ystride) + (k * zstride);
-                curl[0][idx] = linear_interp(inputZ, idx, dataSize, ystride) - linear_interp(inputY, idx, dataSize, zstride);
-                curl[1][idx] = linear_interp(inputX, idx, dataSize, zstride) - linear_interp(inputZ, idx, dataSize, xstride);
-                curl[2][idx] = linear_interp(inputY, idx, dataSize, xstride) - linear_interp(inputX, idx, dataSize, ystride);
-            }
-        }
-    }
-
-    return curl;
 }
 
 TEST(DerivedCorrectness, CurlCorrectnessTest)

@@ -102,8 +102,15 @@ class Engine:
         """
         if isinstance(content, np.ndarray):
             self.impl.Put(variable.impl, content, mode)
-        else:
+        elif isinstance(content, str):
             self.impl.Put(variable.impl, content)
+        elif isinstance(content, list):
+            self.impl.Put(variable.impl, content)
+        elif not hasattr(content, "__len__"):
+            content = np.array([content])
+            self.impl.Put(variable.impl, content)
+        else:
+            raise ValueError
 
     def perform_puts(self):
         """Perform the puts calls"""

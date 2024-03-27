@@ -499,8 +499,16 @@ int Reorganize::ProcessMetadata(core::Engine &rStream, core::IO &io, const core:
         if (v->m_ShapeID == adios2::ShapeID::LocalArray)                                           \
         {                                                                                          \
                                                                                                    \
-            auto blocks = rStream.BlocksInfo(*v, rStream.CurrentStep());                           \
-            nBlocks = blocks.size();                                                               \
+            const auto minBlocks = rStream.MinBlocksInfo(*v, step);                                \
+            if (minBlocks)                                                                         \
+            {                                                                                      \
+                nBlocks = minBlocks->BlocksInfo.size();                                            \
+            }                                                                                      \
+            else                                                                                   \
+            {                                                                                      \
+                auto blocks = rStream.BlocksInfo(*v, rStream.CurrentStep());                       \
+                nBlocks = blocks.size();                                                           \
+            }                                                                                      \
         }                                                                                          \
         variable = v;                                                                              \
     }

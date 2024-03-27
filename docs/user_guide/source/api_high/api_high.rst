@@ -28,14 +28,11 @@ Currently ADIOS2 support bindings for the following languages and their minimum 
 +----------+----------+-----------------------+-------------+
 | C++      | 11/newer | ``#include adios2.h`` | ``fstream`` |
 +----------+----------+-----------------------+-------------+
-| Python   | 2.7/3    | ``import adios2``     | Python IO   |
-+----------+----------+-----------------------+-------------+
 | Matlab   |          |                       |             |
 +----------+----------+-----------------------+-------------+
 
 The following sections provide a summary of the API calls on each language and links to Write and Read examples to put it all together.
 
 .. include:: cxx11.rst
-.. include:: python.rst
 .. include:: matlab.rst
 

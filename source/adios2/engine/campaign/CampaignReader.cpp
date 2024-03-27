@@ -116,10 +116,47 @@ void CampaignReader::EndStep()
 
 void CampaignReader::Init()
 {
+    // read config parameters from config file
+    const std::string cfgFile = "/.config/adios2/campaign.cfg";
+    std::string homePath;
+#ifdef _WIN32
+    homePath = getenv("HOMEPATH");
+#else
+    homePath = getenv("HOME");
+#endif
+    ReadConfig(std::string(homePath + cfgFile));
     InitParameters();
     InitTransports();
 }
 
+void CampaignReader::ReadConfig(std::string configPath)
+{
+    std::ifstream fileStream(configPath);
+
+    if (!fileStream)
+    {
+        return;
+    }
+
+    std::ostringstream fileSS;
+    fileSS << fileStream.rdbuf();
+    fileStream.close();
+    size_t posEndline = 0;
+    size_t posSpace = 0;
+    std::string token;
+    std::string endline = "\n";
+    std::string fileString = fileSS.str();
+    while ((posEndline = fileString.find(endline)) != std::string::npos)
+    {
+        std::string line = fileString.substr(0, posEndline);
+        posSpace = fileString.find(" ");
+        std::string token1 = line.substr(0, posSpace);
+        std::string token2 = line.substr(posSpace + 1, line.size());
+        // trim?
+        fileString.erase(0, posEndline + endline.length());
+    }
+    return;
+}
 void CampaignReader::InitParameters()
 {
     for (const auto &pair : m_IO.m_Parameters)
@@ -312,6 +349,31 @@ MinVarInfo *CampaignReader::MinBlocksInfo(const VariableBase &Var, size_t Step) 
         }
     }
     return nullptr;
+}
+
+bool CampaignReader::VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const
+{
+    auto it = m_VarInternalInfo.find(Var.m_Name);
+    if (it != m_VarInternalInfo.end())
+    {
+        VariableBase *vb = reinterpret_cast<VariableBase *>(it->second.originalVar);
+        Engine *e = m_Engines[it->second.engineIdx];
+        return e->VarShape(*vb, Step, Shape);
+    }
+    return false;
+}
+
+bool CampaignReader::VariableMinMax(const VariableBase &Var, const size_t Step,
+                                    MinMaxStruct &MinMax)
+{
+    auto it = m_VarInternalInfo.find(Var.m_Name);
+    if (it != m_VarInternalInfo.end())
+    {
+        VariableBase *vb = reinterpret_cast<VariableBase *>(it->second.originalVar);
+        Engine *e = m_Engines[it->second.engineIdx];
+        return e->VariableMinMax(*vb, Step, MinMax);
+    }
+    return false;
 }
 
 #define declare_type(T)                                                                            \

@@ -147,9 +147,11 @@ if (ADIOS2_HAVE_Derived_Variable)
     BISON_TARGET(MyParser
       toolkit/derived/parser/parser.y
       ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
+      COMPILE_FLAGS "-o parser.cpp --header=parser.h"
       DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/parser.h)
     FLEX_TARGET(MyScanner
       toolkit/derived/parser/lexer.l
+      COMPILE_FLAGS "-o lexer.cpp --header-file=lexer.h" 
       ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp
       DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/lexer.h)
     ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
@@ -166,6 +168,9 @@ if (ADIOS2_HAVE_Derived_Variable)
 					   OUTPUT_NAME adios2${ADIOS2_LIBRARY_SUFFIX}_core_derived)
   target_link_libraries(adios2_core PRIVATE adios2_core_derived)
   set(maybe_adios2_core_derived adios2_core_derived)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set_target_properties(adios2_core_derived PROPERTIES COMPILE_FLAGS "/wd4005 /wd4267 /wd4065 -DYY_NO_UNISTD_H")
+  endif()
 endif()
 
 set(maybe_adios2_core_cuda)
@@ -505,7 +510,7 @@ install(DIRECTORY toolkit/
 )
 
 # Library installation
-install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_cuda} ${maybe_adios2_core_kokkos} ${maybe_adios2_blosc2} ${maybe_adios2_core_derived} EXPORT adios2Exports
+install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_cuda} ${maybe_adios2_core_kokkos} ${maybe_adios2_core_derived} EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-development

@@ -10,29 +10,32 @@
 #      Author: William F Godoy godoywf@ornl.gov
 
 from adios2NPTypes import SmallTestData
-from mpi4py import MPI
 import numpy as np
-import adios2.bindings as adios2
+from adios2 import Adios, Stream
 
-comm = MPI.COMM_WORLD
-rank = comm.Get_rank()
-size = comm.Get_size()
+rank = 0
+size = 1
 
 # Test data
-data = SmallTestData()
+data = SmallTestData(rank)
 nx = data.Nx
 
 shape = [size * nx]
 start = [rank * nx]
 count = [nx]
 
+adios = Adios()
+io = adios.declare_io("writeh5")
+io.set_engine("HDF5")
+
 # Writer
-with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
+with Stream(io, "types_np.h5", "w") as fw:
     for i in range(0, 5):
         data.update(rank, i, size)
 
         if rank == 0 and i == 0:
             fw.write("tag", "Testing ADIOS2 high-level API")
+            fw.write("nx", data.Nx)
             fw.write("gvarI8", np.array(data.i8[0]))
             fw.write("gvarI16", np.array(data.i16[0]))
             fw.write("gvarI32", np.array(data.i32[0]))
@@ -46,6 +49,7 @@ with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
 
             # single value attributes
             fw.write_attribute("attrStr", "Testing single string attribute")
+            fw.write_attribute("attrNx", data.Nx)
             fw.write_attribute("attrI8", np.array(data.i8[0]))
             fw.write_attribute("attrI16", np.array(data.i16[0]))
             fw.write_attribute("attrI32", np.array(data.i32[0]))
@@ -97,12 +101,13 @@ with adios2.open("types_np.h5", "w", comm, "HDF5") as fw:
 
         fw.end_step()
 
-comm.Barrier()
-
 # Reader
-data = SmallTestData()
+data = SmallTestData(rank)
 
-with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
+io = adios.declare_io("readh5")
+io.set_engine("HDF5")
+
+with Stream("types_np.h5", "r") as fr:
     for fr_step in fr:
         step = fr_step.current_step()
         data.update(rank, step, size)
@@ -115,8 +120,9 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
         #                 print("\t" + key + ": " + value)
         #             print("\n")
 
-        if step == 0:
-            inTag = fr_step.read_string("tag")
+        if rank == 0 and step == 0:
+            inTag = fr_step.read("tag")
+            inNx = fr_step.read("nx")
             inI8 = fr_step.read("gvarI8")
             inI16 = fr_step.read("gvarI16")
             inI32 = fr_step.read("gvarI32")
@@ -128,8 +134,11 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             inR32 = fr_step.read("gvarR32")
             inR64 = fr_step.read("gvarR64")
 
-            if inTag[0] != "Testing ADIOS2 high-level API":
+            if inTag != "Testing ADIOS2 high-level API":
                 print("InTag: " + str(inTag))
+                raise ValueError("tag variable read failed")
+
+            if inNx != nx:
                 raise ValueError("tag variable read failed")
 
             if inI8 != data.i8[0]:
@@ -163,7 +172,8 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
                 raise ValueError("gvarR64 read failed")
 
             # attributes
-            inTag = fr_step.read_attribute_string("attrStr")
+            inTag = fr_step.read_attribute("attrStr")
+            inNx = fr_step.read_attribute("attrNx")
             inI8 = fr_step.read_attribute("attrI8")
             inI16 = fr_step.read_attribute("attrI16")
             inI32 = fr_step.read_attribute("attrI32")
@@ -175,37 +185,40 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
             inR32 = fr_step.read_attribute("attrR32")
             inR64 = fr_step.read_attribute("attrR64")
 
-            if inTag[0] != "Testing single string attribute":
+            if inTag != "Testing single string attribute":
                 raise ValueError("attr string read failed")
 
-            if inI8[0] != data.i8[0]:
+            if inNx != nx:
                 raise ValueError("attrI8 read failed")
 
-            if inI16[0] != data.i16[0]:
+            if inI8 != data.i8[0]:
+                raise ValueError("attrI8 read failed")
+
+            if inI16 != data.i16[0]:
                 raise ValueError("attrI16 read failed")
 
-            if inI32[0] != data.i32[0]:
+            if inI32 != data.i32[0]:
                 raise ValueError("attrI32 read failed")
 
-            if inI64[0] != data.i64[0]:
+            if inI64 != data.i64[0]:
                 raise ValueError("attrI64 read failed")
 
-            if inU8[0] != data.u8[0]:
+            if inU8 != data.u8[0]:
                 raise ValueError("attrU8 read failed")
 
-            if inU16[0] != data.u16[0]:
+            if inU16 != data.u16[0]:
                 raise ValueError("attrU16 read failed")
 
-            if inU32[0] != data.u32[0]:
+            if inU32 != data.u32[0]:
                 raise ValueError("attrU32 read failed")
 
-            if inU64[0] != data.u64[0]:
+            if inU64 != data.u64[0]:
                 raise ValueError("attrU64 read failed")
 
-            if inR32[0] != data.r32[0]:
+            if inR32 != data.r32[0]:
                 raise ValueError("attrR32 read failed")
 
-            if inR64[0] != data.r64[0]:
+            if inR64 != data.r64[0]:
                 raise ValueError("attrR64 read failed")
 
             # Array attribute
@@ -302,8 +315,8 @@ with adios2.open("types_np.h5", "r", comm, "HDF5") as fr:
 
         stepStr = "Step:" + str(step)
 
-        instepStr = fr_step.read_string("steps")
-        if instepStr[0] != stepStr:
+        instepStr = fr_step.read("steps")
+        if instepStr != stepStr:
             raise ValueError("steps variable read failed: " + instepStr + " " + stepStr)
 
         indataI8 = fr_step.read("varI8", start, count)

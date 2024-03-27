@@ -1,3 +1,40 @@
+===================
+What's new in 2.10?
+===================
+
+This is a major release with new features and lots of bug fixes. The main new feature is the new Python API. 
+
+Python
+------
+Before, ADIOS had two separate APIs for Python. The low-level ("Full") API was written with Pybind11 and directly mimicked the C++ API. The high-level API was another, smaller, and more pythonesque API that allowed for easier scripting with Python. The main problems with these two were that they were independent, and that the high-level API was not complete. Once a developer needed a feature only available in the full API, they had to start from scratch writing a script with the full API. 
+
+In 2.10, there is officially one Python API, written in Python, which in turn uses the old Pybind11 classes. The new API combines the high-level features of the old high-level API -- hopefully in a more consistent and likeable way, -- and the full feature set of the low-level bindings. 
+
+.. note::
+
+   Old scripts that used the full API can still run without almost any modification, just change the import line from ``import adios2`` to ``import adios2.bindings as adios2``
+
+   Old scripts that used the high-level API must be modified to make them work with the new API, see :ref:`Transition from old API to new API`
+
+
+See :ref:`Python API`
+
+
+New/updated features
+--------------------
+
+ - BP5 is supported on Windows now 
+ - SST and DataMan staging engines are GPU-Aware now
+ - SYCL support added for Intel GPUs (besides CUDA and HIP for NVidia and AMD GPUs)
+ - the SST/libfabric data transport now works on Frontier (besides the MPI data transport)
+
+
+Packaging
+----------
+
+  - adios2 package is now on `PyPi <https://pypi.org/project/adios2/>`_
+
+
 ==================
 What's new in 2.9?
 ==================

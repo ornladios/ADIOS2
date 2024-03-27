@@ -50,6 +50,8 @@ public:
     void EndStep() final;
 
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
+    bool VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const;
+    bool VariableMinMax(const VariableBase &, const size_t Step, MinMaxStruct &MinMax);
 
 private:
     int m_Verbosity = 0;              // runtime parameter Verbose
@@ -76,6 +78,7 @@ private:
 
     void Init() final; ///< called from constructor, gets the selected Skeleton
                        /// transport method from settings
+    void ReadConfig(std::string path);
     void InitParameters() final;
     void InitTransports() final;
 

@@ -223,7 +223,7 @@ main(int argc, char**argv)
 	str.j = 4;
 	str.k = 10;
 	str.l = 3;
-	long tmp = func(EC_param1 param);
+	(void) func(EC_param1 param);
 	assert(func(EC_param1 param) == 90);
 	cod_exec_context_free(ec);
 	cod_code_free(gen_code);

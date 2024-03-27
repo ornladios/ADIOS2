@@ -42,7 +42,7 @@
 
 
 // Unqualified %code blocks.
-#line 33 "..//parser.y"
+#line 33 "../parser.y"
 
 #include "ASTDriver.h"
 #include "ASTNode.h"
@@ -138,7 +138,7 @@
 #define YYERROR         goto yyerrorlab
 #define YYRECOVERING()  (!!yyerrstatus_)
 
-#line 6 "..//parser.y"
+#line 6 "../parser.y"
 namespace adios2 { namespace detail {
 #line 144 "parser.cpp"
 
@@ -637,182 +637,182 @@ namespace adios2 { namespace detail {
         {
           switch (yyn)
             {
-  case 2: // lines: assignment "\n" lines
-#line 62 "..//parser.y"
-                        {}
+  case 2: // lines: assignment lines
+#line 61 "../parser.y"
+                   {}
 #line 644 "parser.cpp"
     break;
 
   case 3: // lines: exp
-#line 63 "..//parser.y"
+#line 62 "../parser.y"
       {}
 #line 650 "parser.cpp"
     break;
 
   case 4: // assignment: "identifier" "=" VARNAME
-#line 67 "..//parser.y"
+#line 66 "../parser.y"
                             { drv.add_lookup_entry(yystack_[2].value.as < std::string > (),  yystack_[0].value.as < std::string > ()); }
 #line 656 "parser.cpp"
     break;
 
   case 5: // assignment: "identifier" "=" "identifier"
-#line 68 "..//parser.y"
+#line 67 "../parser.y"
                                { drv.add_lookup_entry(yystack_[2].value.as < std::string > (),  yystack_[0].value.as < std::string > ()); }
 #line 662 "parser.cpp"
     break;
 
   case 6: // assignment: "identifier" "=" VARNAME "[" indices_list "]"
-#line 69 "..//parser.y"
+#line 68 "../parser.y"
                                                          { drv.add_lookup_entry(yystack_[5].value.as < std::string > (), yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<std::tuple<int, int, int>> > ()); }
 #line 668 "parser.cpp"
     break;
 
   case 7: // assignment: "identifier" "=" "identifier" "[" indices_list "]"
-#line 70 "..//parser.y"
+#line 69 "../parser.y"
                                                             { drv.add_lookup_entry(yystack_[5].value.as < std::string > (), yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<std::tuple<int, int, int>> > ()); }
 #line 674 "parser.cpp"
     break;
 
   case 8: // exp: "number"
-#line 74 "..//parser.y"
+#line 73 "../parser.y"
            {  }
 #line 680 "parser.cpp"
     break;
 
   case 9: // exp: exp OPERATOR exp
-#line 75 "..//parser.y"
+#line 74 "../parser.y"
                    { drv.createNode(yystack_[1].value.as < std::string > (), 2); }
 #line 686 "parser.cpp"
     break;
 
   case 10: // exp: "(" exp ")"
-#line 76 "..//parser.y"
+#line 75 "../parser.y"
               {  }
 #line 692 "parser.cpp"
     break;
 
   case 11: // exp: "identifier" "(" list ")"
-#line 77 "..//parser.y"
+#line 76 "../parser.y"
                           { drv.createNode(yystack_[3].value.as < std::string > (), yystack_[1].value.as < int > ()); }
 #line 698 "parser.cpp"
     break;
 
   case 12: // exp: "identifier" "[" indices_list "]"
-#line 78 "..//parser.y"
+#line 77 "../parser.y"
                                   { drv.createNode(yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<std::tuple<int, int, int>> > ()); }
 #line 704 "parser.cpp"
     break;
 
   case 13: // exp: "identifier"
-#line 79 "..//parser.y"
+#line 78 "../parser.y"
               { drv.createNode(yystack_[0].value.as < std::string > ()); }
 #line 710 "parser.cpp"
     break;
 
   case 14: // indices_list: %empty
-#line 84 "..//parser.y"
+#line 83 "../parser.y"
          { yylhs.value.as < std::vector<std::tuple<int, int, int>> > () = {}; }
 #line 716 "parser.cpp"
     break;
 
   case 15: // indices_list: indices_list "," index
-#line 85 "..//parser.y"
+#line 84 "../parser.y"
                            { yystack_[2].value.as < std::vector<std::tuple<int, int, int>> > ().push_back(yystack_[0].value.as < std::tuple<int, int, int> > ()); yylhs.value.as < std::vector<std::tuple<int, int, int>> > () = yystack_[2].value.as < std::vector<std::tuple<int, int, int>> > (); }
 #line 722 "parser.cpp"
     break;
 
   case 16: // indices_list: index
-#line 86 "..//parser.y"
+#line 85 "../parser.y"
         { yylhs.value.as < std::vector<std::tuple<int, int, int>> > () = {yystack_[0].value.as < std::tuple<int, int, int> > ()}; }
 #line 728 "parser.cpp"
     break;
 
   case 17: // index: %empty
-#line 90 "..//parser.y"
+#line 89 "../parser.y"
                           { yylhs.value.as < std::tuple<int, int, int> > () = {-1, -1,  1}; }
 #line 734 "parser.cpp"
     break;
 
   case 18: // index: "number" ":" "number" ":" "number"
-#line 91 "..//parser.y"
+#line 90 "../parser.y"
                           { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[4].value.as < int > (), yystack_[2].value.as < int > (), yystack_[0].value.as < int > ()}; }
 #line 740 "parser.cpp"
     break;
 
   case 19: // index: ":" "number" ":" "number"
-#line 92 "..//parser.y"
+#line 91 "../parser.y"
                           { yylhs.value.as < std::tuple<int, int, int> > () = {-1, yystack_[2].value.as < int > (), yystack_[0].value.as < int > ()}; }
 #line 746 "parser.cpp"
     break;
 
   case 20: // index: "number" ":" ":" "number"
-#line 93 "..//parser.y"
+#line 92 "../parser.y"
                           { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[3].value.as < int > (), -1, yystack_[0].value.as < int > ()}; }
 #line 752 "parser.cpp"
     break;
 
   case 21: // index: "number" ":" "number" ":"
-#line 94 "..//parser.y"
+#line 93 "../parser.y"
                           { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[3].value.as < int > (), yystack_[1].value.as < int > (),  1}; }
 #line 758 "parser.cpp"
     break;
 
   case 22: // index: "number" ":" "number"
-#line 95 "..//parser.y"
+#line 94 "../parser.y"
                           { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[2].value.as < int > (), yystack_[0].value.as < int > (),  1}; }
 #line 764 "parser.cpp"
     break;
 
   case 23: // index: ":" ":" "number"
-#line 96 "..//parser.y"
+#line 95 "../parser.y"
                           { yylhs.value.as < std::tuple<int, int, int> > () = {-1, -1, yystack_[0].value.as < int > ()}; }
 #line 770 "parser.cpp"
     break;
 
   case 24: // index: ":" "number" ":"
-#line 97 "..//parser.y"
+#line 96 "../parser.y"
                           { yylhs.value.as < std::tuple<int, int, int> > () = {-1, yystack_[1].value.as < int > (),  1}; }
 #line 776 "parser.cpp"
     break;
 
   case 25: // index: ":" "number"
-#line 98 "..//parser.y"
+#line 97 "../parser.y"
                           { yylhs.value.as < std::tuple<int, int, int> > () = {-1, yystack_[0].value.as < int > (),  1}; }
 #line 782 "parser.cpp"
     break;
 
   case 26: // index: "number" ":" ":"
-#line 99 "..//parser.y"
+#line 98 "../parser.y"
                           { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[2].value.as < int > (), -1,  1}; }
 #line 788 "parser.cpp"
     break;
 
   case 27: // index: "number" ":"
-#line 100 "..//parser.y"
+#line 99 "../parser.y"
                           { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[1].value.as < int > (), -1,  1}; }
 #line 794 "parser.cpp"
     break;
 
   case 28: // index: "number"
-#line 101 "..//parser.y"
+#line 100 "../parser.y"
                           { yylhs.value.as < std::tuple<int, int, int> > () = {yystack_[0].value.as < int > (), yystack_[0].value.as < int > (),  1}; }
 #line 800 "parser.cpp"
     break;
 
   case 29: // list: %empty
-#line 105 "..//parser.y"
+#line 104 "../parser.y"
          { yylhs.value.as < int > () = 0; }
 #line 806 "parser.cpp"
     break;
 
   case 30: // list: exp "," list
-#line 106 "..//parser.y"
+#line 105 "../parser.y"
                  { yylhs.value.as < int > () = yystack_[0].value.as < int > () + 1; }
 #line 812 "parser.cpp"
     break;
 
   case 31: // list: exp
-#line 107 "..//parser.y"
+#line 106 "../parser.y"
       { yylhs.value.as < int > () = 1; }
 #line 818 "parser.cpp"
     break;
@@ -1003,8 +1003,8 @@ namespace adios2 { namespace detail {
     static const char *const yy_sname[] =
     {
     "end of file", "error", "invalid token", "=", ",", ":", "(", ")", "[",
-  "]", "\n", "OPERATOR", "identifier", "VARNAME", "number", "$accept",
-  "lines", "assignment", "exp", "indices_list", "index", "list", YY_NULLPTR
+  "]", "OPERATOR", "identifier", "VARNAME", "number", "$accept", "lines",
+  "assignment", "exp", "indices_list", "index", "list", YY_NULLPTR
     };
     return yy_sname[yysymbol];
   }
@@ -1273,34 +1273,34 @@ namespace adios2 { namespace detail {
   }
 
 
-  const signed char parser::yypact_ninf_ = -21;
+  const signed char parser::yypact_ninf_ = -7;
 
   const signed char parser::yytable_ninf_ = -1;
 
   const signed char
   parser::yypact_[] =
   {
-       2,     9,    22,   -21,    19,    10,    15,    32,    11,    -8,
-       9,    -4,   -21,     2,     9,   -21,    31,    33,    13,    26,
-      -3,    30,    25,   -21,   -21,   -21,    -4,    -4,     9,   -21,
-      29,    37,    -2,    -4,   -21,    27,    28,   -21,   -21,    34,
-      35,    39,   -21,   -21,   -21,   -21,   -21,    36,   -21
+       6,     9,    22,    -7,     5,     6,    13,    27,    -6,    -4,
+       9,    -3,    -7,    -7,     9,    -7,    30,    31,    14,    24,
+      -2,    35,    12,    -7,    -7,    -3,    -3,     9,    -7,    28,
+      37,     1,    -3,    -7,    23,    25,    -7,    -7,    32,    33,
+      38,    -7,    -7,    -7,    -7,    -7,    34,    -7
   };
 
   const signed char
   parser::yydefact_[] =
   {
        0,     0,    13,     8,     0,     0,     3,    13,     0,     0,
-      29,    14,     1,     0,     0,    10,     5,     4,    31,     0,
-       0,    28,     0,    16,     2,     9,    14,    14,    29,    11,
-       0,    25,    27,    17,    12,     0,     0,    30,    23,    24,
-      26,    22,    15,     7,     6,    19,    20,    21,    18
+      29,    14,     1,     2,     0,    10,     5,     4,    31,     0,
+       0,    28,     0,    16,     9,    14,    14,    29,    11,     0,
+      25,    27,    17,    12,     0,     0,    30,    23,    24,    26,
+      22,    15,     7,     6,    19,    20,    21,    18
   };
 
   const signed char
   parser::yypgoto_[] =
   {
-     -21,    38,   -21,    -1,   -20,    12,    18
+      -7,    39,    -7,    -1,    11,    16,    26
   };
 
   const signed char
@@ -1312,48 +1312,48 @@ namespace adios2 { namespace detail {
   const signed char
   parser::yytable_[] =
   {
-       8,    20,    30,    40,    16,    17,    35,    36,     1,    18,
-      21,    31,    41,    25,     2,     1,     3,    28,    15,    12,
-      13,     7,    14,     3,    14,     9,    14,    18,    10,    33,
-      11,    33,    33,    29,    34,    32,    43,    44,    10,    26,
-      11,    27,    39,    38,    47,    42,    37,     0,    45,    46,
-      48,    24
+       8,    15,    20,    29,    14,    12,    39,    16,    17,    18,
+      21,    30,     1,    24,    40,     1,    32,     2,    27,     3,
+       7,    33,     3,    14,    14,     9,    18,    32,    10,    32,
+      11,    28,    42,    10,    43,    11,    34,    35,    25,    26,
+      31,    37,    38,    46,    13,    44,    45,    47,    41,     0,
+       0,     0,     0,    36
   };
 
   const signed char
   parser::yycheck_[] =
   {
-       1,     5,     5,     5,    12,    13,    26,    27,     6,    10,
-      14,    14,    14,    14,    12,     6,    14,     4,     7,     0,
-      10,    12,    11,    14,    11,     3,    11,    28,     6,     4,
-       8,     4,     4,     7,     9,     5,     9,     9,     6,     8,
-       8,     8,     5,    14,     5,    33,    28,    -1,    14,    14,
-      14,    13
+       1,     7,     5,     5,    10,     0,     5,    11,    12,    10,
+      13,    13,     6,    14,    13,     6,     4,    11,     4,    13,
+      11,     9,    13,    10,    10,     3,    27,     4,     6,     4,
+       8,     7,     9,     6,     9,     8,    25,    26,     8,     8,
+       5,    13,     5,     5,     5,    13,    13,    13,    32,    -1,
+      -1,    -1,    -1,    27
   };
 
   const signed char
   parser::yystos_[] =
   {
-       0,     6,    12,    14,    16,    17,    18,    12,    18,     3,
-       6,     8,     0,    10,    11,     7,    12,    13,    18,    21,
-       5,    14,    19,    20,    16,    18,     8,     8,     4,     7,
-       5,    14,     5,     4,     9,    19,    19,    21,    14,     5,
-       5,    14,    20,     9,     9,    14,    14,     5,    14
+       0,     6,    11,    13,    15,    16,    17,    11,    17,     3,
+       6,     8,     0,    15,    10,     7,    11,    12,    17,    20,
+       5,    13,    18,    19,    17,     8,     8,     4,     7,     5,
+      13,     5,     4,     9,    18,    18,    20,    13,     5,     5,
+      13,    19,     9,     9,    13,    13,     5,    13
   };
 
   const signed char
   parser::yyr1_[] =
   {
-       0,    15,    16,    16,    17,    17,    17,    17,    18,    18,
-      18,    18,    18,    18,    19,    19,    19,    20,    20,    20,
-      20,    20,    20,    20,    20,    20,    20,    20,    20,    21,
-      21,    21
+       0,    14,    15,    15,    16,    16,    16,    16,    17,    17,
+      17,    17,    17,    17,    18,    18,    18,    19,    19,    19,
+      19,    19,    19,    19,    19,    19,    19,    19,    19,    20,
+      20,    20
   };
 
   const signed char
   parser::yyr2_[] =
   {
-       0,     2,     3,     1,     3,     3,     6,     6,     1,     3,
+       0,     2,     2,     1,     3,     3,     6,     6,     1,     3,
        3,     4,     4,     1,     0,     3,     1,     0,     5,     4,
        4,     4,     3,     3,     3,     2,     3,     2,     1,     0,
        3,     1
@@ -1366,10 +1366,10 @@ namespace adios2 { namespace detail {
   const signed char
   parser::yyrline_[] =
   {
-       0,    62,    62,    63,    67,    68,    69,    70,    74,    75,
-      76,    77,    78,    79,    84,    85,    86,    90,    91,    92,
-      93,    94,    95,    96,    97,    98,    99,   100,   101,   105,
-     106,   107
+       0,    61,    61,    62,    66,    67,    68,    69,    73,    74,
+      75,    76,    77,    78,    83,    84,    85,    89,    90,    91,
+      92,    93,    94,    95,    96,    97,    98,    99,   100,   104,
+     105,   106
   };
 
   void
@@ -1400,11 +1400,11 @@ namespace adios2 { namespace detail {
 #endif // YYDEBUG
 
 
-#line 6 "..//parser.y"
+#line 6 "../parser.y"
 } } // adios2::detail
 #line 1406 "parser.cpp"
 
-#line 108 "..//parser.y"
+#line 107 "../parser.y"
 
 
 void

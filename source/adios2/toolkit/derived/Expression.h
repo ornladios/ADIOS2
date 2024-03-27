@@ -34,7 +34,7 @@ public:
     std::vector<std::tuple<ExpressionTree, std::string, bool>> sub_exprs;
     OpInfo detail;
 
-    ExpressionTree(){};
+    ExpressionTree() : detail({adios2::detail::ExpressionOperator::OP_NULL, {}, 0}) {}
     ExpressionTree(adios2::detail::ExpressionOperator o) : detail({o, {}, 0}) {}
     ExpressionTree(adios2::detail::ExpressionOperator o, double c) : detail({o, {}, 0}) {}
     ExpressionTree(std::vector<std::tuple<size_t, size_t, size_t>> indices)

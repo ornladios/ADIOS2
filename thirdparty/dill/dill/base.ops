@@ -6,8 +6,11 @@ $MSVC_LONG = 0;
 while ($_ = $ARGV[0]) {
 	shift;
 	last if /^--$/;
-	if (/^-msvc_long/) {$MSVC_LONG = 1;}
+	if (/-msvc_long/) {$MSVC_LONG = 1;}
+	if (/-build_shared/) {$BUILD_SHARED = 1;}
 }
+
+print "BUILD_SHARED is $BUILD_SHARED\n";
 
 sub upperc {
     local($_) = pop(@_);
@@ -65,7 +68,11 @@ print HOUT "#define dill_jalp(s, return_addr_reg, target) (s->j->jal)(s, return_
 
 print HOUT "#define dill_special(s, type, param) if (s->j->special) (s->j->special)(s, type, param)\n";
 print HOUT "#if defined(_MSC_VER) && !defined(DILL_SRC)\n";
-print HOUT "#define DILL_DECLSPEC    __declspec(dllimport)\n";
+if ($BUILD_SHARED) {
+    print HOUT "#define DILL_DECLSPEC    __declspec(dllimport)\n";
+} else {
+    print HOUT "#define DILL_DECLSPEC\n";
+}
 print HOUT "#else\n";
 print HOUT "#define DILL_DECLSPEC\n";
 print HOUT "#endif\n";

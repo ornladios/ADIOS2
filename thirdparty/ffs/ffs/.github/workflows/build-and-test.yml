@@ -88,11 +88,14 @@ jobs:
         jobname: [
           windows2019-vs2019-clang,
           windows2022-vs2022-msvc,
+          windows2022-vs2022-msvc-static,
           macos-clang ]
         include:
         - jobname: windows2019-vs2019-clang
           vm: windows-2019
         - jobname: windows2022-vs2022-msvc
+          vm: windows-2022
+        - jobname: windows2022-vs2022-msvc-static
           vm: windows-2022
         - jobname: macos-clang
           vm: macos-latest

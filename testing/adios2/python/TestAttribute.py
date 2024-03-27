@@ -12,14 +12,14 @@ class Test_attribute(unittest.TestCase):
         with adios.declare_io("BPWriter") as io:
             ts = io.define_attribute("timestamp", "20231122")
             self.assertEqual(ts.name(), "timestamp")
-            self.assertEqual(ts.data_string(), ["20231122"])
+            self.assertEqual(ts.data_string(), "20231122")
 
     def test_create_reader(self):
         adios = Adios()
         with adios.declare_io("BPWriter") as io:
             ts = io.define_attribute("timestamp", "20231122")
             self.assertEqual(ts.name(), "timestamp")
-            self.assertEqual(ts.data_string(), ["20231122"])
+            self.assertEqual(ts.data_string(), "20231122")
 
     def test_create_write_ndarray(self):
         adios = Adios()

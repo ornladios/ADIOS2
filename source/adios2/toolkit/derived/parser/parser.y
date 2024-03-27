@@ -44,7 +44,6 @@
   R_PAREN ")"
   L_BRACE "["
   R_BRACE "]"
-  ENDL    "\n"
 ;
 
 %token <std::string> OPERATOR
@@ -54,12 +53,12 @@
 %nterm <int> list
 %nterm <std::vector<std::tuple<int, int, int>>> indices_list
 %nterm <std::tuple<int, int, int>> index
-%left OPERATOR ENDL
+%left OPERATOR
 
 %%
 %start lines;
 lines:
-  assignment ENDL lines {}
+  assignment lines {}
 | exp {}
 ;
 

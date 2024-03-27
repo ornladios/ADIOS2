@@ -148,6 +148,7 @@ cg_required_align(dill_stream s, sm_ref node)
     required_align = dill_type_align(s, DILL_P);
     break;
   default:
+   required_align = 0; //silence warning
     assert(0);
   }
   return required_align;
@@ -1750,6 +1751,7 @@ execute_operator_cg(dill_stream s, operator_t op, int op_type, dill_reg result, 
 		} else if (typ->node_type == cod_array_type_decl) {
 		    size = typ->node.array_type_decl.cg_element_size;
 		} else {
+		    size = 1; // avoid warning
 		    assert(0);
 		}
 	    } else if ((ptr->node_type == cod_operator) && (ptr->node.operator.op == op_address)) {
@@ -1758,6 +1760,7 @@ execute_operator_cg(dill_stream s, operator_t op, int op_type, dill_reg result, 
 		if (cod_expr_is_string(ptr)) {
 		    size = 1;
 		} else {
+		    size = 1;  // silence warning
 		    assert(FALSE);
 		}
 	    }
@@ -1898,6 +1901,7 @@ execute_operator_cg(dill_stream s, operator_t op, int op_type, dill_reg result, 
 		    if (cod_expr_is_string(ptr)) {
 			size = 1;
 		    } else {
+			size = 1; // avoid warning
 			assert(FALSE);
 		    }
 		}

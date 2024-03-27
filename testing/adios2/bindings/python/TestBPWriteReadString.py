@@ -15,14 +15,13 @@ N_STEPS = 3
 
 
 class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
-
     def test_write_read_string_fullAPI(self):
         comm = MPI.COMM_WORLD
-        theString = 'hello adios'
-        bpFilename = 'string_test_fullAPI.bp'
-        varname = 'mystringvar'
+        theString = "hello adios"
+        bpFilename = "string_test_fullAPI.bp"
+        varname = "mystringvar"
         adios = adios2.ADIOS(comm)
-        ioWrite = adios.DeclareIO('ioWriter')
+        ioWrite = adios.DeclareIO("ioWriter")
         adEngine = ioWrite.Open(bpFilename, adios2.Mode.Write)
         varMyString = ioWrite.DefineVariable(varname)
         for step in range(N_STEPS):
@@ -31,7 +30,7 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
             adEngine.EndStep()
         adEngine.Close()
 
-        ioRead = adios.DeclareIO('ioReader')
+        ioRead = adios.DeclareIO("ioReader")
         adEngine = ioRead.Open(bpFilename, adios2.Mode.Read)
         for step in range(N_STEPS):
             adEngine.BeginStep()
@@ -42,5 +41,5 @@ class TestAdiosWriteReadStringfullAPI(unittest.TestCase):
         adEngine.Close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
