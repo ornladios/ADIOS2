@@ -73,9 +73,9 @@ TEST_F(AccuracyTests, DefaultAccuracy)
         bpWriter.Close();
 
         auto accuracyGot = var.GetAccuracy();
-        assert(accuracyGot.error == 0.0); // no error whatsoever
-        assert(accuracyGot.norm == accuracyRequested.norm);
-        assert(accuracyGot.relative == accuracyRequested.relative);
+        EXPECT_EQ(accuracyGot.error, 0.0); // no error whatsoever
+        EXPECT_EQ(accuracyGot.norm, accuracyRequested.norm);
+        EXPECT_EQ(accuracyGot.relative, accuracyRequested.relative);
     }
     // Reader
     {
@@ -100,9 +100,10 @@ TEST_F(AccuracyTests, DefaultAccuracy)
         bpReader.PerformGets();
 
         auto accuracyGot = varRange.GetAccuracy();
-        assert(accuracyGot.error == 0.0); // no error whatsoever
-        assert(accuracyGot.norm == accuracyRequested.norm);
-        assert(accuracyGot.relative == accuracyRequested.relative);
+        EXPECT_EQ(accuracyGot.error, 0.0); // no error whatsoever
+        EXPECT_EQ(accuracyGot.error, 0.0); // no error whatsoever
+        EXPECT_EQ(accuracyGot.norm, accuracyRequested.norm);
+        EXPECT_EQ(accuracyGot.relative, accuracyRequested.relative);
 
         std::vector<int64_t> iStartEndData;
         iStartEndData.reserve(gNx); // maximum possible
