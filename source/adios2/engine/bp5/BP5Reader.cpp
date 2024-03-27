@@ -272,22 +272,26 @@ std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan
 
 void BP5Reader::PerformGets()
 {
-//    if (m_Xrootd)
-//    {
-//        PerformXrootdGets();
-    if (m_Remote)
+    //TODODG
+    if (true)
     {
-        PerformRemoteGets();
-    }
-    else
+        PerformXrootdGets();
+    } else
     {
-        PerformLocalGets();
-    }
+        if (m_Remote)
+        {
+            PerformRemoteGets();
+        }
+        else
+        {
+            PerformLocalGets();
+        }
 
-    // clear pending requests inside deserializer
-    {
-        std::vector<adios2::format::BP5Deserializer::ReadRequest> empty;
-        m_BP5Deserializer->FinalizeGets(empty);
+        // clear pending requests inside deserializer
+        {
+            std::vector<adios2::format::BP5Deserializer::ReadRequest> empty;
+            m_BP5Deserializer->FinalizeGets(empty);
+        }
     }
 }
 
