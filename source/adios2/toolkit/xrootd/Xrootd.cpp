@@ -312,9 +312,9 @@ void Xrootd::Open(const std::string hostname, const int32_t port, const std::str
 {
 #ifdef ADIOS2_HAVE_XROOTD
 
-    const char contact_c[32] = "localhost:1094";
     const std::string  contact = hostname + ":" + std::to_string(port);
-    //if (!clUI.ParseCL(2, (char **)contact.c_str())){};
+    clUI.cmdName = strdup("adios:");
+    clUI.contact = strdup(contact.c_str());
     if (!(clUI.ssiService = XrdSsiProviderClient->GetService(eInfo, contact.c_str())))
     {
         fprintf(XrdSsiCl::outErr, "Unable to get service object for %s; %s\n", clUI.contact,
