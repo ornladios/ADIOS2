@@ -85,45 +85,44 @@ Dims AggrSameDimsFunc(std::vector<Dims> input)
  *  can be used to approximate derivatives
  *
  * Input:
- *     data - assumed to be uniform/densely populated
+ *     input - data assumed to be uniform/densely populated
  *     index - index of point of interest
- *     count - number of elements in data
- *     stride - how to access neighbours
+ *     dim - in which dimension we are approximating the partial derivative
  */
-//template <class T>
-float linear_interp (DerivedData input, size_t index, size_t dim)
+// template <class T>
+float linear_interp(DerivedData input, size_t index, size_t dim)
 {
     size_t stride = 1;
     size_t range;
     size_t offset;
     float result;
-    float* data = (float*)input.Data;
+    float *data = (float *)input.Data;
 
     for (size_t i = 0; i < input.Count.size() - (dim + 1); ++i)
-      {
-	stride *= input.Count[input.Count.size() - (i + 1)];
-      }
+    {
+        stride *= input.Count[input.Count.size() - (i + 1)];
+    }
     size_t ind1 = index - stride;
     size_t ind2 = index + stride;
     range = stride * input.Count[dim];
     offset = index % range;
-    
+
     if ((offset < stride) && (range - offset <= stride))
-      {
-	return 0;
-      }
+    {
+        return 0;
+    }
     else if (offset < stride)
-      {
-	result = data[ind2] - data[index];
-      }
+    {
+        result = data[ind2] - data[index];
+    }
     else if (range - offset <= stride)
-      {
-	result = data[index] - data[ind1];
-      }
+    {
+        result = data[index] - data[ind1];
+    }
     else
-      {
-	result = (data[ind2] - data[ind1]) / 2;
-      }
+    {
+        result = (data[ind2] - data[ind1]) / 2;
+    }
 
     return result;
 }
@@ -132,39 +131,23 @@ float linear_interp (DerivedData input, size_t index, size_t dim)
  * Input: 3D vector field F(x,y,z)= {F1(x,y,z), F2(x,y,z), F3(x,y,z)}
  *
  *     inputData - (3) components of 3D vector field
- *     margin - how many elements to each size will be used in approximating partial derivatives
- *     center - include point (x,y,z) in approximating of partial derivative at that point
  *
  * Computation:
  *     curl(F(x,y,z)) = (partial(F3,y) - partial(F2,z))i
  *                    + (partial(F1,z) - partial(F3,x))j
  *                    + (partial(F2,x) - partial(F1,y))k
- * 
+ *
  *     boundaries are calculated only with data in block
  *         (ex: partial derivatives in x direction at point (0,0,0)
  *              only use data from (1,0,0), etc )
- *
- * Return: 
- *     (3) components of curl
  */
-/*
-template <class T>
-std::vector<T*> computecurl3D (const std::vector<DerivedData> inputData, size_t margin, bool center, std::function<T(T*, size_t, size_t, size_t, size_t, bool)> pdcomp)
-*/
 DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
 {
-    // ToDo - verify how to navigate over the inputData spaces
-    size_t xcount = inputData[0].Count[0];
-    size_t ycount = inputData[0].Count[1];
-    size_t zcount = inputData[0].Count[2];
-    size_t dataSize = xcount * ycount * zcount;
-    size_t xstride = ycount * zcount;
-    size_t ystride = zcount;
-    size_t zstride = 1;
+    size_t dataSize = inputData[0].Count[0] * inputData[0].Count[1] * inputData[0].Count[2];
 
     DerivedData curl;
     // ToDo - template type
-    float* data = (float*)malloc(dataSize * sizeof(float) * 3);
+    float *data = (float *)malloc(dataSize * sizeof(float) * 3);
     curl.Start = inputData[0].Start;
     curl.Start.push_back(0);
     curl.Count = inputData[0].Count;
@@ -172,9 +155,9 @@ DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
 
     for (size_t i = 0; i < dataSize; ++i)
     {
-      data[3 * i] = linear_interp(inputData[2], i, 1) - linear_interp(inputData[1], i, 2);
-      data[3 * i + 1] = linear_interp(inputData[0], i, 2) - linear_interp(inputData[2], i, 0);
-      data[3 * i + 2] = linear_interp(inputData[1], i, 0) - linear_interp(inputData[0], i, 1);
+        data[3 * i] = linear_interp(inputData[2], i, 1) - linear_interp(inputData[1], i, 2);
+        data[3 * i + 1] = linear_interp(inputData[0], i, 2) - linear_interp(inputData[2], i, 0);
+        data[3 * i + 2] = linear_interp(inputData[1], i, 0) - linear_interp(inputData[0], i, 1);
     }
     curl.Data = data;
     return curl;
