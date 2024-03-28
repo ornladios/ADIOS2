@@ -57,7 +57,7 @@ private:
 public:
     CampaignManager(helper::Comm &comm){};
     ~CampaignManager() = default;
-    void Open(const std::string &name){};
+    void Open(const std::string &name, const INIOptions &options){};
     void Record(const std::string &name, const size_t step, const double time){};
     void Close(){};
 
