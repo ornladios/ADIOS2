@@ -357,6 +357,33 @@ std::string ToString(const Dims &dims);
 std::string ToString(const Box<Dims> &box);
 std::string ToString(const MemorySpace value);
 
+/** UserOptions holds all user options from ~/.config/adios2/adios2.yaml */
+struct UserOptions
+{
+    struct General
+    {
+        int verbose;
+    };
+
+    struct Campaign
+    {
+        bool active;
+        int verbose;
+        std::string hostname;
+        std::string campaignstorepath;
+        std::string cachepath;
+    };
+
+    struct SST
+    {
+        int verbose;
+    };
+
+    General general;
+    Campaign campaign;
+    SST sst;
+};
+
 /**
  * os << [adios2_type] enables output of adios2 enums/classes directly
  * to output streams (e.g. std::cout), if ToString() can handle [adios2_type].

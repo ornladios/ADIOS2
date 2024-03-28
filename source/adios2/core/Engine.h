@@ -505,6 +505,9 @@ protected:
      *  if no communicator is passed */
     helper::Comm m_Comm;
 
+    /** User options parsed by the ADIOS object, here just for easy reference */
+    const UserOptions &m_UserOptions;
+
     /** keeps track of current advance status */
     StepStatus m_AdvanceStatus = StepStatus::OK;
 
