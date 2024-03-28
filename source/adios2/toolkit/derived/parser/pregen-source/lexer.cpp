@@ -1903,4 +1903,3 @@ adios2::detail::ASTDriver::parse (const std::string input)
   parse.set_debug_level (trace_parsing);
   parse ();
 }
-
