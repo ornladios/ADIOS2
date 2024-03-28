@@ -2,7 +2,6 @@
 #include <cstring>
 
 #include <cmath>
-#include <limits>
 #include <iostream>
 #include <limits>
 #include <numeric>
@@ -183,24 +182,24 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
     {
         for (float y = 0; y < Ny; ++y)
         {
-	    for (float z = 0; z < Nz; ++z)
-	    {
-	      size_t idx = (x * Ny * Nz) + (y * Nz) + z;
-	      // Linear curl example
-	      simArray1[idx] = (6 * x * y) + (7 * z);
-	      simArray2[idx] = (4 * x * z) + pow(y, 2);
-	      simArray3[idx] = sqrt(z) + (2 * x * y);
-	      /* Less linear example
-	      simArray1[idx] = sin(z);
-	      simArray2[idx] = 4 * x;
-	      simArray3[idx] = pow(y, 2) * cos(x);
-	      */
-	      /* Nonlinear example
-	      simArray1[idx] = exp(2 * y) * sin(x);
-	      simArray2[idx] = sqrt(z + 1) * cos(x);
-	      simArray3[idx] = pow(x, 2) * sin(y) + (6 * z);
-	      */
-	    }
+            for (float z = 0; z < Nz; ++z)
+            {
+                size_t idx = (x * Ny * Nz) + (y * Nz) + z;
+                // Linear curl example
+                simArray1[idx] = (6 * x * y) + (7 * z);
+                simArray2[idx] = (4 * x * z) + pow(y, 2);
+                simArray3[idx] = sqrt(z) + (2 * x * y);
+                /* Less linear example
+                simArray1[idx] = sin(z);
+                simArray2[idx] = 4 * x;
+                simArray3[idx] = pow(y, 2) * cos(x);
+                */
+                /* Nonlinear example
+                simArray1[idx] = exp(2 * y) * sin(x);
+                simArray2[idx] = sqrt(z + 1) * cos(x);
+                simArray3[idx] = pow(x, 2) * sin(y) + (6 * z);
+                */
+            }
         }
     }
 
@@ -264,72 +263,73 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
     float err_x, err_y, err_z;
     for (float x = 0; x < Nx; ++x)
     {
-	for (float y = 0; y < Ny; ++y)
-	{
-	    for (float z = 0; z < Nz; ++z)
-	    {
-		size_t idx = (x * Ny * Nz) + (y * Nz) + z;
-		// Linear example
-		curl_x = -(2 * x);
-		curl_y = 7 - (2 * y);
-		curl_z = (4 * z) - (6 * x);
-		/* Less linear
-		curl_x = 2 * y * cos(x);
-		curl_y = cos(z) + (pow(y, 2) * sin(x));
-		curl_z = 4;
-		*/
-		/* Nonlinear example
-		curl_x = pow(x, 2) * cos(y) - (cos(x) / (2 * sqrt(z + 1)));
-		curl_y = -2 * x * sin(y);
-		curl_z = -sqrt(z + 1) * sin(x) - (2 * exp(2 * y) * sin(x));
-		*/
-		if (fabs(curl_x) == std::numeric_limits<float>::infinity())
-		{
-		    err_x = 0;
-		    ++inf_x;
-		}
-		else if (fabs(curl_x) < 1)
-		{
-		    err_x = fabs(curl_x - readCurl[3 * idx]) / (1 + fabs(curl_x));		 		  
-		}
-		else
-		{
-		    err_x = fabs(curl_x - readCurl[3 * idx]) / fabs(curl_x);
-		}
-		if (fabs(curl_y) == std::numeric_limits<float>::infinity())
-	        {
-		    err_y = 0;
-		    ++inf_y;
-		}
-		else if (fabs(curl_y) < 1)
-	        {
-		    err_y = fabs(curl_y - readCurl[3 * idx + 1]) / (1 + fabs(curl_y));
-		}
-		else
-		{
-		    err_y = fabs(curl_y - readCurl[3 * idx + 1]) / fabs(curl_y);
-		}
-		if (fabs(curl_z) == std::numeric_limits<float>::infinity())
-	        {
-		    err_z = 0;
-		    ++inf_z;
-		}
-		else if (fabs(curl_z) < 1)
-	        {
-		    err_z = fabs(curl_z - readCurl[3 * idx + 2]) / (1 + fabs(curl_z));
-		}
-		else
-		{
-		    err_z = fabs(curl_z - readCurl[3 * idx + 2]) / fabs(curl_z);
-		}
-	      sum_x += err_x;
-	      sum_y += err_y;
-	      sum_z += err_z;
-	    }
-	}
+        for (float y = 0; y < Ny; ++y)
+        {
+            for (float z = 0; z < Nz; ++z)
+            {
+                size_t idx = (x * Ny * Nz) + (y * Nz) + z;
+                // Linear example
+                curl_x = -(2 * x);
+                curl_y = 7 - (2 * y);
+                curl_z = (4 * z) - (6 * x);
+                /* Less linear
+                curl_x = 2 * y * cos(x);
+                curl_y = cos(z) + (pow(y, 2) * sin(x));
+                curl_z = 4;
+                */
+                /* Nonlinear example
+                curl_x = pow(x, 2) * cos(y) - (cos(x) / (2 * sqrt(z + 1)));
+                curl_y = -2 * x * sin(y);
+                curl_z = -sqrt(z + 1) * sin(x) - (2 * exp(2 * y) * sin(x));
+                */
+                if (fabs(curl_x) == std::numeric_limits<float>::infinity())
+                {
+                    err_x = 0;
+                    ++inf_x;
+                }
+                else if (fabs(curl_x) < 1)
+                {
+                    err_x = fabs(curl_x - readCurl[3 * idx]) / (1 + fabs(curl_x));
+                }
+                else
+                {
+                    err_x = fabs(curl_x - readCurl[3 * idx]) / fabs(curl_x);
+                }
+                if (fabs(curl_y) == std::numeric_limits<float>::infinity())
+                {
+                    err_y = 0;
+                    ++inf_y;
+                }
+                else if (fabs(curl_y) < 1)
+                {
+                    err_y = fabs(curl_y - readCurl[3 * idx + 1]) / (1 + fabs(curl_y));
+                }
+                else
+                {
+                    err_y = fabs(curl_y - readCurl[3 * idx + 1]) / fabs(curl_y);
+                }
+                if (fabs(curl_z) == std::numeric_limits<float>::infinity())
+                {
+                    err_z = 0;
+                    ++inf_z;
+                }
+                else if (fabs(curl_z) < 1)
+                {
+                    err_z = fabs(curl_z - readCurl[3 * idx + 2]) / (1 + fabs(curl_z));
+                }
+                else
+                {
+                    err_z = fabs(curl_z - readCurl[3 * idx + 2]) / fabs(curl_z);
+                }
+                sum_x += err_x;
+                sum_y += err_y;
+                sum_z += err_z;
+            }
+        }
     }
     bpFileReader.Close();
-    EXPECT_LT((sum_x + sum_y + sum_z) / ((3 * Nx * Ny * Nz) - (inf_x + inf_y + inf_z)), error_limit);
+    EXPECT_LT((sum_x + sum_y + sum_z) / ((3 * Nx * Ny * Nz) - (inf_x + inf_y + inf_z)),
+              error_limit);
     EXPECT_LT(sum_x / ((Nx * Ny * Nz) - inf_x), error_limit);
     EXPECT_LT(sum_y / ((Nx * Ny * Nz) - inf_y), error_limit);
     EXPECT_LT(sum_z / ((Nx * Ny * Nz) - inf_z), error_limit);
