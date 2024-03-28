@@ -212,12 +212,12 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
     auto VY = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto VZ = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     // clang-format off
-    auto curlV = bpOut.DefineDerivedVariable(derivedname,
-                                            "Vx =" + varname[0] + " \n"
-                                            "Vy =" + varname[1] + " \n"
-                                            "Vz =" + varname[2] + " \n"
-                                            "curl(Vx,Vy,Vz)",
-                                            adios2::DerivedVarType::StoreData);
+    bpOut.DefineDerivedVariable(derivedname,
+                                "Vx =" + varname[0] + " \n"
+                                "Vy =" + varname[1] + " \n"
+                                "Vz =" + varname[2] + " \n"
+                                "curl(Vx,Vy,Vz)",
+                                adios2::DerivedVarType::StoreData);
     // clang-format on
     std::string filename = "expCurl.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
