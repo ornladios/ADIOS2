@@ -29,7 +29,7 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> input, DataType type);
 DerivedData Curl3DFunc(std::vector<DerivedData> input, DataType type);
 
 template <class T>
-T linear_interp (T* data, size_t index, size_t count, size_t stride = 1);
+T linear_interp(T *data, size_t index, size_t count, size_t stride = 1);
 
 Dims SameDimsFunc(std::vector<Dims> input);
 Dims AggrSameDimsFunc(std::vector<Dims> input);
