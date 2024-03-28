@@ -2,6 +2,10 @@ install(PROGRAMS adios2_campaign_manager.py
   RENAME adios2_campaign_manager
   DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_scripts-runtime
 )
+install(PROGRAMS adios2_connect.py
+        RENAME adios2_connect
+        DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_scripts-runtime
+)
 #install(
 #  FILES
 #    adios2/bp4dbg/__init__.py
