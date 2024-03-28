@@ -288,7 +288,7 @@ void FC_GLOBAL(adios2_retrieve_namelist_f2c,
                 len = static_cast<size_t>(namelist_len);
             }
             // copy C string without '\0'
-            strncpy(fs, info->names[i], len);
+            memcpy(fs, info->names[i], len);
             // pad with spaces
             memset(fs + len, ' ', namelist_len - len);
         }

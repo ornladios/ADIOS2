@@ -62,6 +62,8 @@
 #   set(ENV{FC}  /path/to/fc)   # Fortran compiler (optional)
 #   set(ENV{LD_LIBRARY_PATH} /path/to/vendor/lib) # (if necessary)
 
+set(CTEST_CONFIGURATION_TYPE Release)
+
 set(CTEST_PROJECT_NAME "ADIOS2")
 set(CTEST_DROP_SITE "open.cdash.org")
 if(NOT dashboard_git_url)
@@ -91,7 +93,7 @@ endif()
 if((CMAKE_VERSION VERSION_GREATER 3.16.20191201 ) AND
    (ADIOS_TEST_REPEAT GREATER 0) AND
    NOT "REPEAT" IN_LIST CTEST_TEST_ARGS)
-  list(APPEND CTEST_TEST_ARGS REPEAT "UNTIL_PASS:${ADIOS_TEST_REPEAT}")
+  list(APPEND CTEST_TEST_ARGS REPEAT "UNTIL_FAIL:${ADIOS_TEST_REPEAT}")
 endif()
 
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
