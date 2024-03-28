@@ -40,6 +40,7 @@ add_library(adios2_core
   helper/adiosXML.cpp
   helper/adiosXMLUtil.cpp
   helper/adiosYAML.cpp
+  helper/adiosINI.cpp
   helper/adiosLog.cpp
   helper/adiosRangeFilter.cpp
 
@@ -223,6 +224,7 @@ target_link_libraries(adios2_core PRIVATE
   adios2::thirdparty::nlohmann_json
   adios2::thirdparty::perfstubs-interface
   adios2::thirdparty::ffs
+  adios2::thirdparty::inih
 )
 target_link_libraries(adios2_core PUBLIC ${CMAKE_THREAD_LIBS_INIT})
 target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEATURES}>")

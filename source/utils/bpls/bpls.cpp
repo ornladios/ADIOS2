@@ -1555,13 +1555,25 @@ std::vector<std::string> getEnginesList(const std::string path)
     return list;
 }
 
-int doList(const char *path)
+int doList(std::string path)
 {
     char init_params[128];
     int adios_verbose = 2;
 
     if (verbose > 1)
-        printf("\nADIOS Open: read header info from %s\n", path);
+        printf("\nADIOS Open: read header info from %s\n", path.c_str());
+
+    // initialize BP reader
+    if (verbose > 1)
+        adios_verbose = 3; // print info lines
+    if (verbose > 2)
+        adios_verbose = 4; // print debug lines
+    snprintf(init_params, sizeof(init_params), "verbose=%d", adios_verbose);
+    if (hidden_attrs)
+        strcat(init_params, ";show_hidden_attrs");
+
+    core::ADIOS adios("C++");
+    const adios2::INIOptions userOptions = adios.GetUserOptions();
 
     std::string tpl = helper::LowerCase(transport_params);
     bool remoteFile =
@@ -1579,23 +1591,34 @@ int doList(const char *path)
     }
     else
     {
-        if (!adios2sys::SystemTools::FileExists(path))
+        bool exists = adios2sys::SystemTools::FileExists(path);
+        if (!exists && !userOptions.campaign.campaignstorepath.empty() && path[0] != PathSeparator)
         {
-            fprintf(stderr, "\nError: input path %s does not exist\n", path);
+            std::string path2 = userOptions.campaign.campaignstorepath + PathSeparator + path;
+            exists = adios2sys::SystemTools::FileExists(path2);
+            if (exists)
+            {
+                path = path2.c_str();
+            }
+            else
+            {
+                std::string path3 =
+                    userOptions.campaign.campaignstorepath + PathSeparator + path + ".aca";
+                exists = adios2sys::SystemTools::FileExists(path3);
+                if (exists)
+                {
+                    path = path3.c_str();
+                }
+            }
+        }
+
+        if (!exists)
+        {
+            fprintf(stderr, "\nError: input path %s does not exist\n", path.c_str());
             return 4;
         }
     }
 
-    // initialize BP reader
-    if (verbose > 1)
-        adios_verbose = 3; // print info lines
-    if (verbose > 2)
-        adios_verbose = 4; // print debug lines
-    snprintf(init_params, sizeof(init_params), "verbose=%d", adios_verbose);
-    if (hidden_attrs)
-        strcat(init_params, ";show_hidden_attrs");
-
-    core::ADIOS adios("C++");
     core::IO &io = adios.DeclareIO("bpls");
     if (timestep)
     {

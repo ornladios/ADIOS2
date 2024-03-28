@@ -9,7 +9,8 @@
 using namespace adios2;
 using namespace adios2::core;
 
-void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
+void SstParamParser::ParseParams(IO &io, struct _SstParams &Params,
+                                 const adios2::INIOptions &userOptions)
 {
     std::memset(&Params, 0, sizeof(Params));
 
@@ -253,6 +254,8 @@ void SstParamParser::ParseParams(IO &io, struct _SstParams &Params)
         }
         return false;
     };
+
+    Params.verbose = userOptions.sst.verbose;
 
 #define get_params(Param, Type, Typedecl, Default)                                                 \
     Params.Param = Default;                                                                        \

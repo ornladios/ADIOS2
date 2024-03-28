@@ -140,6 +140,9 @@ endif()
 find_package(EVPath REQUIRED)
 adios2_add_thirdparty_target(EVPath EVPath::EVPath)
 
+add_subdirectory(inih)
+adios2_add_thirdparty_target(inih inih)
+
 # Keep this at the end so we see the verbose messages at least once
 set(ADIOS2_THIRDPARTY_VERBOSE_DISABLE TRUE CACHE INTERNAL "" FORCE)
 message("")
