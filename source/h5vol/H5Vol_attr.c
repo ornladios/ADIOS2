@@ -183,7 +183,7 @@ herr_t H5VL_adios2_attr_get(void *obj, H5VL_attr_get_args_t *args, hid_t dxpl_id
             *ret_val = strlen(attrDef->m_Name);
             if (buf)
             {
-                strncpy(buf, attrDef->m_Name, *ret_val);
+                memcpy(buf, attrDef->m_Name, *ret_val);
             }
         }
         else if (H5VL_OBJECT_BY_IDX == loc_params->type)
