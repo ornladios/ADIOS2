@@ -315,7 +315,7 @@ program TestBPWriteTypes
    call adios2_declare_io(ioRead, adios, "ioRead", ierr)
    ! Open bpReader engine
 #if ADIOS2_USE_MPI
-   call adios2_open(bpReader, ioRead, "ftypes_MPI.bp", adios2_mode_readRandomAccess, ierr)
+   call adios2_open(bpReader, ioRead, "ftypes_mpi.bp", adios2_mode_readRandomAccess, ierr)
 #else
    call adios2_open(bpReader, ioRead, "ftypes.bp", adios2_mode_readRandomAccess, ierr)
 #endif
