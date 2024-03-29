@@ -249,7 +249,11 @@ program TestBPWriteTypes
       write(*,*) 'Invalid adios2_engine post-open'
       stop 1
    end if
+#if ADIOS2_USE_MPI
+   if( TRIM(bpWriter%name) /= "ftypes_mpi.bp") then
+#else
    if( TRIM(bpWriter%name) /= "ftypes.bp") then
+#endif
       write(*,*) 'Invalid adios2_engine name'
       stop 1
    end if
