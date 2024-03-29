@@ -240,8 +240,11 @@ program TestBPWriteTypes
       stop 1
    end if
 
+#if ADIOS2_USE_MPI
+   call adios2_open(bpWriter, ioWrite, "ftypes_mpi.bp", adios2_mode_write, ierr)
+#else
    call adios2_open(bpWriter, ioWrite, "ftypes.bp", adios2_mode_write, ierr)
-
+#endif
    if( bpWriter%valid .eqv. .false. ) then
       write(*,*) 'Invalid adios2_engine post-open'
       stop 1
@@ -307,8 +310,11 @@ program TestBPWriteTypes
    ! Declare io reader
    call adios2_declare_io(ioRead, adios, "ioRead", ierr)
    ! Open bpReader engine
+#if ADIOS2_USE_MPI
+   call adios2_open(bpReader, ioRead, "ftypes_MPI.bp", adios2_mode_readRandomAccess, ierr)
+#else
    call adios2_open(bpReader, ioRead, "ftypes.bp", adios2_mode_readRandomAccess, ierr)
-
+#endif
    call adios2_steps(nsteps, bpReader, ierr)
    if(nsteps /= 3) then
       write(*,*) 'ftypes.bp must have 3 steps'

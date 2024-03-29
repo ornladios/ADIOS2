@@ -35,7 +35,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteRead1D8.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -47,6 +46,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteRead1D8_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteRead1D8.bp");
 #endif
 
     // Write test data using BP
@@ -419,7 +421,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
-    const std::string fname("ADIOS2BPWriteRead2D2x4Test.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -434,6 +435,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D2x4)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteRead2D2x4Test_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteRead2D2x4Test.bp");
 #endif
 
     // Write test data using ADIOS2
@@ -739,7 +743,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("ADIOS2BPWriteRead2D4x2Test.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -753,6 +756,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test.bp");
 #endif
 
     // Write test data using ADIOS2
@@ -1045,7 +1051,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead10D2x2)
 {
     // Each process would write a 2x2x...x2 9D array and all processes would
     // form a 10D NumberOfProcess x 2 x ... x 2) array
-    const std::string fname("ADIOS2BPWriteRead10D2x2Test.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of steps
@@ -1054,6 +1059,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead10D2x2)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteRead10D2x2Test_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteRead10D2x2Test.bp");
 #endif
 
     size_t NX = static_cast<unsigned int>(mpiSize);
@@ -1227,7 +1235,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("ADIOS2BPWriteRead2D4x2Test_ReadMultiSteps.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -1242,6 +1249,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_ReadMultiSteps)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_ReadMultiSteps_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_ReadMultiSteps.bp");
 #endif
 
     // Write test data using ADIOS2
@@ -1534,7 +1544,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("ADIOS2BPWriteRead2D4x2Test_Overflow.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -1549,6 +1558,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead2D4x2_MultiStepsOverflow)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_Overflow_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteRead2D4x2Test_Overflow.bp");
 #endif
 
     // Write test data using ADIOS2
@@ -1790,7 +1802,6 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("ReadStartCount.bp");
 
     int mpiRank = 0, mpiSize = 1;
 
@@ -1799,6 +1810,9 @@ TEST_F(BPWriteReadTestADIOS2, ReadStartCount)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ReadStartCount_MPI.bp");
+#else
+    const std::string fname("ReadStartCount.bp");
 #endif
 
     std::vector<int64_t> localData(Nx);
@@ -2027,7 +2041,6 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteReadEmptyProcess)
 TEST_F(BPWriteReadTestADIOS2, GetDeferredInClose)
 {
     // Test if Get() will retrieve data in Close()
-    const std::string fname("GetDeferredInClose.bp");
 
     int mpiRank = 0, mpiSize = 1;
 
@@ -2036,6 +2049,9 @@ TEST_F(BPWriteReadTestADIOS2, GetDeferredInClose)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("GetDeferredInClose_MPI.bp");
+#else
+    const std::string fname("GetDeferredInClose.bp");
 #endif
 
     std::vector<int64_t> localData(Nx);
@@ -2095,7 +2111,6 @@ TEST_F(BPWriteReadTestADIOS2, GetDeferredInClose)
 TEST_F(BPWriteReadTestADIOS2, GetDeferredInEndStep)
 {
     // Test if Get() will retrieve data in EndStep()
-    const std::string fname("GetDeferredInEndStep.bp");
 
     int mpiRank = 0, mpiSize = 1;
 
@@ -2104,6 +2119,9 @@ TEST_F(BPWriteReadTestADIOS2, GetDeferredInEndStep)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("GetDeferredInEndStep_MPI.bp");
+#else
+    const std::string fname("GetDeferredInEndStep.bp");
 #endif
 
     std::vector<int64_t> localData(Nx);
@@ -2164,7 +2182,6 @@ TEST_F(BPWriteReadTestADIOS2, GetDeferredInEndStep)
 TEST_F(BPWriteReadTestADIOS2, GetDeferredWithoutEndStep)
 {
     // Test if Get() will retrieve data in Close() when EndStep() is not called
-    const std::string fname("GetDeferredWithoutEndStep.bp");
 
     int mpiRank = 0, mpiSize = 1;
 
@@ -2173,6 +2190,9 @@ TEST_F(BPWriteReadTestADIOS2, GetDeferredWithoutEndStep)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("GetDeferredWithoutEndStep_MPI.bp");
+#else
+    const std::string fname("GetDeferredWithoutEndStep.bp");
 #endif
 
     std::vector<int64_t> localData(Nx);

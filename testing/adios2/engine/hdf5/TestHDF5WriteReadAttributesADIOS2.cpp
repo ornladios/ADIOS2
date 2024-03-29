@@ -25,9 +25,6 @@ public:
 // ADIOS2 write, read for single value attributes
 TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
 {
-    const std::string fName =
-        "." + std::string(&adios2::PathSeparator, 1) + "ADIOS2BPWriteAttributeReadSingleTypes.h5";
-
     const std::string zero = std::to_string(0);
     const std::string s1_Single = std::string("s1_Single_") + zero;
     const std::string s1_Array = std::string("s1_Array_") + zero;
@@ -50,8 +47,14 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
 // Write test data using BP
 #ifdef TEST_HDF5_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
+    const std::string fName = "." + std::string(&adios2::PathSeparator, 1) +
+                              "ADIOS2BPWriteAttributeReadSingleTypes_MPI.h5";
+
 #else
     adios2::ADIOS adios;
+    const std::string fName =
+        "." + std::string(&adios2::PathSeparator, 1) + "ADIOS2BPWriteAttributeReadSingleTypes.h5";
+
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -185,13 +188,16 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadSingleTypes)
 // ADIOS2 write read for array attributes
 TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
 {
-    const std::string fName =
-        "." + std::string(&adios2::PathSeparator, 1) + "ADIOS2BPWriteAttributeReadArrayTypes.h5";
 
 #ifdef TEST_HDF5_MPI
     int mpiRank = 0, mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fName = "." + std::string(&adios2::PathSeparator, 1) +
+                              "ADIOS2BPWriteAttributeReadArrayTypes_MPI.h5";
+#else
+    const std::string fName =
+        "." + std::string(&adios2::PathSeparator, 1) + "ADIOS2BPWriteAttributeReadArrayTypes.h5";
 #endif
 
     const std::string zero = std::to_string(0);
@@ -361,9 +367,6 @@ TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypes)
 
 TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
 {
-    const std::string fName =
-        "." + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadSingleTypesVar.h5";
-
     const std::string zero = std::to_string(0);
     const std::string s1_Single = std::string("s1_Single_") + zero;
     const std::string i8_Single = std::string("i8_Single_") + zero;
@@ -387,8 +390,14 @@ TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
 // Write test data using BP
 #ifdef TEST_HDF5_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
+    const std::string fName =
+        "." + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadSingleTypesVar_MPI.h5";
+
 #else
     adios2::ADIOS adios;
+    const std::string fName =
+        "." + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadSingleTypesVar.h5";
+
 #endif
     {
         adios2::IO io = adios.DeclareIO("TestIO");
@@ -511,13 +520,15 @@ TEST_F(BPWriteReadAttributeTestADIOS2, BPWriteReadSingleTypesVar)
 // ADIOS2 write read for array attributes
 TEST_F(BPWriteReadAttributeTestADIOS2, ADIOS2BPWriteReadArrayTypesVar)
 {
-    const std::string fName =
-        "." + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadArrayTypesVar.h5";
-
 #ifdef TEST_HDF5_MPI
     int mpiRank = 0, mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fName =
+        "." + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadArrayTypesVar_MPI.h5";
+#else
+    const std::string fName =
+        "." + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadArrayTypesVar.h5";
 #endif
 
     const std::string zero = std::to_string(0);

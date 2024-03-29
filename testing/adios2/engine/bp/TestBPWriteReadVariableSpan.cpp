@@ -28,7 +28,6 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadSpan1D8.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -40,6 +39,9 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteReadSpan1D8_MPI.bp");
+#else
+    const std::string fname("BPWriteReadSpan1D8.bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -317,7 +319,6 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
-    const std::string fname("BPWriteReadSpan2D2x4.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -332,6 +333,9 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteReadSpan2D2x4_MPI.bp");
+#else
+    const std::string fname("BPWriteReadSpan2D2x4.bp");
 #endif
 
     // Write test data using ADIOS2
@@ -628,7 +632,6 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4)
 
 TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
 {
-    const std::string fname("BPWriteReadSpan1D8Local.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -640,6 +643,9 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8Local)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteReadSpan1D8Local_MPI.bp");
+#else
+    const std::string fname("BPWriteReadSpan1D8Local.bp");
 #endif
     // Write test data using BP
 
@@ -877,7 +883,6 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
-    const std::string fname("BPWriteReadSpan2D2x4Local.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -892,6 +897,9 @@ TEST_F(BPWriteReadSpan, BPWriteRead2D2x4Local)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteReadSpan2D2x4Local_MPI.bp");
+#else
+    const std::string fname("BPWriteReadSpan2D2x4Local.bp");
 #endif
 
     // Write test data using ADIOS2
@@ -1156,7 +1164,6 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadSpan1D8FillValue.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -1168,6 +1175,9 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteReadSpan1D8FillValue_MPI.bp");
+#else
+    const std::string fname("BPWriteReadSpan1D8FillValue.bp");
 #endif
 
     // Write test data using BP
@@ -1469,7 +1479,6 @@ TEST_F(BPWriteReadSpan, BPWriteRead1D8FillValue)
 #ifdef ADIOS2_HAVE_BZIP2
 TEST_F(BPWriteReadSpan, BPWriteSpanOperatorException)
 {
-    const std::string fname("BPWriteSpanOperatorException.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -1481,6 +1490,9 @@ TEST_F(BPWriteReadSpan, BPWriteSpanOperatorException)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteSpanOperatorException_MPI.bp");
+#else
+    const std::string fname("BPWriteSpanOperatorException.bp");
 #endif
 
     // Write test data using BP

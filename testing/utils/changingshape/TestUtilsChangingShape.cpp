@@ -23,7 +23,6 @@ int main(int argc, char **argv)
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
 
-    const std::string fname("TestUtilsChangingShape.bp");
     const int nsteps = 10;
     // Number of rows
     const size_t Nx = 8;
@@ -38,8 +37,10 @@ int main(int argc, char **argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
     adios2::ADIOS adios(MPI_COMM_WORLD);
+    const std::string fname("TestUtilsChangingShape_MPI.bp");
 #else
     adios2::ADIOS adios;
+    const std::string fname("TestUtilsChangingShape.bp");
 #endif
     // Writer
     adios2::IO outIO = adios.DeclareIO("Output");

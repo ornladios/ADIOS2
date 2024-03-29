@@ -27,13 +27,15 @@ TEST_F(ADIOSReadDirectIOTest, BufferResize)
        and the last chunck is resized back. It should be properly aligned
        to not cause any problems at writing that chunk.
     */
-    std::string filename = "ADIOSDirectIO.bp";
 
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    std::string filename = "ADIOSDirectIO_MPI.bp";
+#else
+    std::string filename = "ADIOSDirectIO.bp";
 #endif
 
     // Write test data using BP

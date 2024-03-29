@@ -32,7 +32,6 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteRead1D8_hl.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -44,6 +43,9 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteRead1D8_hl_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteRead1D8_hl.bp");
 #endif
 
     // write test data using BP
