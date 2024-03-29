@@ -1971,7 +1971,6 @@ TEST_F(BPWriteReadMultiblockTest, MultiblockPerformDataWrite)
     }
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("MultiblockPerformDataWrite.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of elements per blocks (blocksize)
@@ -1990,8 +1989,10 @@ TEST_F(BPWriteReadMultiblockTest, MultiblockPerformDataWrite)
 
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
+    const std::string fname("MultiblockPerformDataWrite_MPI.bp");
 #else
     adios2::ADIOS adios;
+    const std::string fname("MultiblockPerformDataWrite.bp");
 #endif
     /* Write output */
     {
