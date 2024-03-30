@@ -661,14 +661,14 @@ TEST_F(StreamWriteReadHighLevelAPI, DoubleOpenException)
 
     {
 #if ADIOS2_USE_MPI
-	const std::string fname("ADIOS2BP_hl_exception_MPI.bp");
+        const std::string fname("ADIOS2BP_hl_exception_MPI.bp");
 
         adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
         EXPECT_THROW(oStream.open("second", adios2::fstream::out, MPI_COMM_WORLD, engineName),
                      std::invalid_argument);
 
 #else
-	const std::string fname("ADIOS2BP_hl_exception.bp");
+        const std::string fname("ADIOS2BP_hl_exception.bp");
 
         adios2::fstream oStream(fname, adios2::fstream::out);
         EXPECT_THROW(oStream.open("second", adios2::fstream::out, engineName),
