@@ -33,7 +33,6 @@ TEST_F(BPWriteNullTest, BPWrite1D1x8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteNull.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -45,6 +44,9 @@ TEST_F(BPWriteNullTest, BPWrite1D1x8)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteNull_MPI.bp");
+#else
+    const std::string fname("BPWriteNull.bp");
 #endif
 
     // Write test data using BP
@@ -317,7 +319,6 @@ TEST_F(BPWriteNullTest, BPWrite2D4x2)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("BPWrite2D4x2TestNull.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -331,6 +332,9 @@ TEST_F(BPWriteNullTest, BPWrite2D4x2)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWrite2D4x2TestNull_MPI.bp");
+#else
+    const std::string fname("BPWrite2D4x2TestNull.bp");
 #endif
 
     // Write test data using ADIOS2

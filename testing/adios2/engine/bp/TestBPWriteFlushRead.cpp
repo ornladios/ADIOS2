@@ -111,9 +111,13 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
             io2D.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
         }
 
+#if ADIOS2_USE_MPI
+        adios2::Engine bpWriter1D = io1D.Open("Flush1D_MPI.bp", adios2::Mode::Write);
+        adios2::Engine bpWriter2D = io2D.Open("Flush2D_MPI.bp", adios2::Mode::Write);
+#else
         adios2::Engine bpWriter1D = io1D.Open("Flush1D.bp", adios2::Mode::Write);
         adios2::Engine bpWriter2D = io2D.Open("Flush2D.bp", adios2::Mode::Write);
-
+#endif
         for (size_t step = 0; step < NSteps / 2; ++step)
         {
             SmallTestData currentTestData =
@@ -160,8 +164,11 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
                 io.SetEngine(engineName);
             }
 
+#if ADIOS2_USE_MPI
+            adios2::Engine bpReader = io.Open("Flush1D_MPI.bp", adios2::Mode::Read);
+#else
             adios2::Engine bpReader = io.Open("Flush1D.bp", adios2::Mode::Read);
-
+#endif
             unsigned int t = 0;
 
             while (bpReader.BeginStep(adios2::StepMode::Read, 0.0) == adios2::StepStatus::OK)
@@ -312,8 +319,11 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2D)
                 io.SetEngine(engineName);
             }
 
+#if ADIOS2_USE_MPI
+            adios2::Engine bpReader = io.Open("Flush2D_MPI.bp", adios2::Mode::Read);
+#else
             adios2::Engine bpReader = io.Open("Flush2D.bp", adios2::Mode::Read);
-
+#endif
             unsigned int t = 0;
 
             while (bpReader.BeginStep(adios2::StepMode::Read, 0.0) == adios2::StepStatus::OK)
@@ -553,8 +563,13 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
             io2D.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
         }
 
+#if ADIOS2_USE_MPI
+        adios2::Engine bpWriter1D = io1D.Open("Flush1Dstdio_MPI.bp", adios2::Mode::Write);
+        adios2::Engine bpWriter2D = io2D.Open("Flush2Dstdio_MPI.bp", adios2::Mode::Write);
+#else
         adios2::Engine bpWriter1D = io1D.Open("Flush1Dstdio.bp", adios2::Mode::Write);
         adios2::Engine bpWriter2D = io2D.Open("Flush2Dstdio.bp", adios2::Mode::Write);
+#endif
 
         for (size_t step = 0; step < NSteps / 2; ++step)
         {
@@ -602,8 +617,11 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
                 io.SetEngine(engineName);
             }
 
+#if ADIOS2_USE_MPI
+            adios2::Engine bpReader = io.Open("Flush1Dstdio_MPI.bp", adios2::Mode::Read);
+#else
             adios2::Engine bpReader = io.Open("Flush1Dstdio.bp", adios2::Mode::Read);
-
+#endif
             unsigned int t = 0;
 
             while (bpReader.BeginStep(adios2::StepMode::Read, 0.0) == adios2::StepStatus::OK)
@@ -754,7 +772,11 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dstdio)
                 io.SetEngine(engineName);
             }
 
+#if ADIOS2_USE_MPI
+            adios2::Engine bpReader = io.Open("Flush2Dstdio_MPI.bp", adios2::Mode::Read);
+#else
             adios2::Engine bpReader = io.Open("Flush2Dstdio.bp", adios2::Mode::Read);
+#endif
 
             unsigned int t = 0;
 
@@ -995,8 +1017,13 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
             io2D.DefineVariable<double>("r64", shape, start, count, adios2::ConstantDims);
         }
 
+#if ADIOS2_USE_MPI
+        adios2::Engine bpWriter1D = io1D.Open("Flush1Dfstream_MPI.bp", adios2::Mode::Write);
+        adios2::Engine bpWriter2D = io2D.Open("Flush2Dfstream_MPI.bp", adios2::Mode::Write);
+#else
         adios2::Engine bpWriter1D = io1D.Open("Flush1Dfstream.bp", adios2::Mode::Write);
         adios2::Engine bpWriter2D = io2D.Open("Flush2Dfstream.bp", adios2::Mode::Write);
+#endif
 
         for (size_t step = 0; step < NSteps / 2; ++step)
         {
@@ -1044,7 +1071,11 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
                 io.SetEngine(engineName);
             }
 
+#if ADIOS2_USE_MPI
+            adios2::Engine bpReader = io.Open("Flush1Dfstream_MPI.bp", adios2::Mode::Read);
+#else
             adios2::Engine bpReader = io.Open("Flush1Dfstream.bp", adios2::Mode::Read);
+#endif
 
             unsigned int t = 0;
 
@@ -1196,7 +1227,11 @@ TEST_F(BPWriteFlushRead, ADIOS2BPWrite1D2Dfstream)
                 io.SetEngine(engineName);
             }
 
+#if ADIOS2_USE_MPI
+            adios2::Engine bpReader = io.Open("Flush2Dfstream_MPI.bp", adios2::Mode::Read);
+#else
             adios2::Engine bpReader = io.Open("Flush2Dfstream.bp", adios2::Mode::Read);
+#endif
 
             unsigned int t = 0;
 

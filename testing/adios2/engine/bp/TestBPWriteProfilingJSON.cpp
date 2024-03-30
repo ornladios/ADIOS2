@@ -43,7 +43,6 @@ TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
 {
     // Use a relative path + file name to test path in file name capability
     std::string fname;
-    fname = "foo/ADIOS2BPWriteProfilingJSON.bp";
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -55,6 +54,9 @@ TEST_F(BPWriteProfilingJSONTest, DISABLED_ADIOS2BPWriteProfilingJSON)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    fname = "foo/ADIOS2BPWriteProfilingJSON_MPI.bp";
+#else
+    fname = "foo/ADIOS2BPWriteProfilingJSON.bp";
 #endif
 
     // Write test data and profiling.json using ADIOS2

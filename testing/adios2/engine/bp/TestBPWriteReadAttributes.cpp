@@ -28,8 +28,6 @@ public:
 // ADIOS2 write, read for single value attributes
 TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
 {
-    const std::string fName =
-        "foo" + std::string(&adios2::PathSeparator, 1) + "WriteAttributeReadSingleTypes.bp";
 
     const std::string zero = std::to_string(0);
     const std::string s1_Single = std::string("s1_Single_") + zero;
@@ -56,7 +54,11 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
 // Write test data using BP
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "WriteAttributeReadSingleTypes_MPI.bp";
 #else
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "WriteAttributeReadSingleTypes.bp";
     adios2::ADIOS adios;
 #endif
     {
@@ -227,13 +229,16 @@ TEST_F(BPWriteReadAttributes, WriteReadSingleTypes)
 // ADIOS2 write read for array attributes
 TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
 {
-    const std::string fName =
-        "foo" + std::string(&adios2::PathSeparator, 1) + "WriteAttributeReadArrayTypes.bp";
 
 #if ADIOS2_USE_MPI
     int mpiRank = 0, mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "WriteAttributeReadArrayTypes_MPI.bp";
+#else
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "WriteAttributeReadArrayTypes.bp";
 #endif
 
     const std::string zero = std::to_string(0);
@@ -443,8 +448,6 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypes)
 
 TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
 {
-    const std::string fName =
-        "foo" + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadSingleTypesVar.bp";
 
     const std::string zero = std::to_string(0);
     const std::string s1_Single = std::string("s1_Single_") + zero;
@@ -472,7 +475,11 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
 // Write test data using BP
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
+    const std::string fName = "foo" + std::string(&adios2::PathSeparator, 1) +
+                              "BPWriteAttributeReadSingleTypesVar_MPI.bp";
 #else
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadSingleTypesVar.bp";
     adios2::ADIOS adios;
 #endif
     {
@@ -630,13 +637,16 @@ TEST_F(BPWriteReadAttributes, BPWriteReadSingleTypesVar)
 // ADIOS2 write read for array attributes
 TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
 {
-    const std::string fName =
-        "foo" + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadArrayTypesVar.bp";
 
 #if ADIOS2_USE_MPI
     int mpiRank = 0, mpiSize = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadArrayTypesVar_MPI.bp";
+#else
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "BPWriteAttributeReadArrayTypesVar.bp";
 #endif
 
     const std::string zero = std::to_string(0);
@@ -849,8 +859,6 @@ TEST_F(BPWriteReadAttributes, WriteReadArrayTypesVar)
 
 TEST_F(BPWriteReadAttributes, WriteReadStreamVarp)
 {
-    const std::string fName =
-        "foo" + std::string(&adios2::PathSeparator, 1) + "AttributesWriteReadVar.bp";
 
     const std::string separator = "\\";
 
@@ -864,6 +872,11 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVarp)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "AttributesWriteReadVar_MPI.bp";
+#else
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "AttributesWriteReadVar.bp";
 #endif
 
     SmallTestData currentTestData = generateNewSmallTestData(m_TestData, 0, 0, 0);
@@ -1003,8 +1016,6 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamVarp)
 
 TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
 {
-    const std::string fName =
-        "foo" + std::string(&adios2::PathSeparator, 1) + "AttributesWriteReadModifiable.bp";
 
     const std::string separator = "\\";
 
@@ -1018,6 +1029,11 @@ TEST_F(BPWriteReadAttributes, WriteReadStreamModifiable)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "AttributesWriteReadModifiable_MPI.bp";
+#else
+    const std::string fName =
+        "foo" + std::string(&adios2::PathSeparator, 1) + "AttributesWriteReadModifiable.bp";
 #endif
 
     const double d3[3] = {-1.1, -1.2, -1.3};

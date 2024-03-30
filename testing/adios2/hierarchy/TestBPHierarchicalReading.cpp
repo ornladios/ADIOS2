@@ -23,17 +23,19 @@ public:
 
 TEST_F(ADIOSHierarchicalReadVariableTest, Read)
 {
-    std::string filename = "ADIOSHierarchicalReadVariable." + engineName + ".bp";
-
     // Number of steps
     const std::size_t NSteps = 2;
 
     long unsigned int rank, size;
 
 #if ADIOS2_USE_MPI
+    std::string filename = "ADIOSHierarchicalReadVariable." + engineName + "_MPI.bp";
+
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #else
+    std::string filename = "ADIOSHierarchicalReadVariable." + engineName + ".bp";
+
     rank = 0;
     size = 1;
 #endif

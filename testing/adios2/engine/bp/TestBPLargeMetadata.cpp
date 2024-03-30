@@ -34,7 +34,6 @@ TEST_F(BPLargeMetadata, BPWrite1D_LargeMetadata)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("BPWrite1D_LargeMetadata.bp");
 
     int mpiRank = 0, mpiSize = 1;
 
@@ -45,6 +44,9 @@ TEST_F(BPLargeMetadata, BPWrite1D_LargeMetadata)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWrite1D_LargeMetadata_MPI.bp");
+#else
+    const std::string fname("BPWrite1D_LargeMetadata.bp");
 #endif
 
     // Write test data using ADIOS2
@@ -99,7 +101,6 @@ TEST_F(BPLargeMetadata, BPWrite1D_LargeMetadata)
 
 TEST_F(BPLargeMetadata, ManyLongStrings)
 {
-    const std::string fname("BPWrite1D_LargeMetadataStrings.bp");
     const std::string longString = "test_string "
                                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
                                    "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
@@ -110,8 +111,10 @@ TEST_F(BPLargeMetadata, ManyLongStrings)
 
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
+    const std::string fname("BPWrite1D_LargeMetadataStrings_MPI.bp");
 #else
     adios2::ADIOS adios;
+    const std::string fname("BPWrite1D_LargeMetadataStrings.bp");
 #endif
 
     adios2::IO io = adios.DeclareIO("myIO");

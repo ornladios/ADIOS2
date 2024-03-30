@@ -76,8 +76,13 @@ program TestBPFortranToCppWriter
    if (irank == 0) print *,"engine type :",trim(engine_type)
 
 
+#if ADIOS2_USE_MPI
+   call adios2_open(bpWriter, ioWrite, "FortranToCpp_MPI.bp", &
+      adios2_mode_write, ierr)
+#else
    call adios2_open(bpWriter, ioWrite, "FortranToCpp.bp", &
       adios2_mode_write, ierr)
+#endif
 
    do s = 1, 3
       call adios2_begin_step(bpWriter, ierr)

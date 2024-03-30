@@ -20,7 +20,6 @@ std::string engineName; // comes from command line
 
 void MGARDAccuracy2D(const std::string tolerance)
 {
-    const std::string fname("BPWRMGARDCU2D_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     const size_t Nx = 100;
@@ -33,6 +32,9 @@ void MGARDAccuracy2D(const std::string tolerance)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRMGARDCU2D_" + tolerance + "_MPI.bp");
+#else
+    const std::string fname("BPWRMGARDCU2D_" + tolerance + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -140,7 +142,6 @@ void MGARDAccuracySmall(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRMGARD1D_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -155,6 +156,9 @@ void MGARDAccuracySmall(const std::string tolerance)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRMGARD1D_" + tolerance + "_MPI.bp");
+#else
+    const std::string fname("BPWRMGARD1D_" + tolerance + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
