@@ -31,15 +31,16 @@ TEST_F(BPChangingShape, BPWriteReadShape2D)
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
 
-    const std::string fname("BPChangingShape.bp");
     const int nsteps = 10;
     int rank = 0, nproc = 1;
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    const std::string fname("BPChangingShape_MPI.bp");
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
+    const std::string fname("BPChangingShape.bp");
     adios2::ADIOS adios;
 #endif
     // Writer

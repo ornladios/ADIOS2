@@ -22,7 +22,6 @@ void ZFPRateCUDA(const std::string rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRZFP1D_" + rate + ".bp");
 
     // Number of rows
     const size_t Nx = 100;
@@ -34,6 +33,9 @@ void ZFPRateCUDA(const std::string rate)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRZFP1D_" + rate + "_MPI.bp");
+#else
+    const std::string fname("BPWRZFP1D_" + rate + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
