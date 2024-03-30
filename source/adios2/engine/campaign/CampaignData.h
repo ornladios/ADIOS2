@@ -56,7 +56,7 @@ struct CampaignData
 {
     std::string version;
     std::vector<CampaignHost> hosts;
-    std::map<int, CampaignBPDataset> bpdatasets;
+    std::map<size_t, CampaignBPDataset> bpdatasets;
 };
 
 void ReadCampaignData(sqlite3 *db, CampaignData &cd);
