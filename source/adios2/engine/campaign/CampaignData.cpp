@@ -69,12 +69,13 @@ static int sqlcb_bpdataset(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     CampaignBPDataset cds;
-    size_t hostid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
-    size_t dirid = helper::StringToSizeT(std::string(argv[1]), "SQL callback convert text to int");
+    size_t dsid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
+    size_t hostid = helper::StringToSizeT(std::string(argv[1]), "SQL callback convert text to int");
+    size_t dirid = helper::StringToSizeT(std::string(argv[2]), "SQL callback convert text to int");
     cds.hostIdx = hostid - 1; // SQL rows start from 1, vector idx start from 0
     cds.dirIdx = dirid - 1;
-    cds.name = argv[2];
-    cdp->bpdatasets.push_back(cds);
+    cds.name = argv[3];
+    cdp->bpdatasets[dsid] = cds;
     return 0;
 };
 
@@ -83,7 +84,7 @@ static int sqlcb_bpfile(void *p, int argc, char **argv, char **azColName)
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     CampaignBPFile cf;
     size_t dsid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
-    cf.bpDatasetIdx = dsid - 1;
+    cf.bpDatasetIdx = dsid;
     cf.name = std::string(argv[1]);
     int comp = helper::StringTo<int>(std::string(argv[2]), "SQL callback convert text to int");
     cf.compressed = (bool)comp;
@@ -137,7 +138,7 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
         sqlite3_free(zErrMsg);
     }
 
-    sqlcmd = "SELECT hostid, dirid, name FROM bpdataset";
+    sqlcmd = "SELECT rowid, hostid, dirid, name FROM bpdataset";
     rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_bpdataset, &cd, &zErrMsg);
     if (rc != SQLITE_OK)
     {
@@ -290,7 +291,7 @@ void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfi
     int rc;
     char *zErrMsg = 0;
     std::string sqlcmd;
-    std::string id = std::to_string(bpfile.bpDatasetIdx + 1);
+    std::string id = std::to_string(bpfile.bpDatasetIdx);
 
     sqlite3_stmt *statement;
     sqlcmd =

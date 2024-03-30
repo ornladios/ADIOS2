@@ -14,8 +14,8 @@
 
 #include <fstream>
 #include <iostream>
+#include <map>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 #include <sqlite3.h>
@@ -37,7 +37,7 @@ struct CampaignHost
 struct CampaignBPFile
 {
     std::string name;
-    size_t bpDatasetIdx;
+    size_t bpDatasetIdx; // index of parent CampaignBPDataset in the map
     bool compressed;
     size_t lengthOriginal;
     size_t lengthCompressed;
@@ -56,7 +56,7 @@ struct CampaignData
 {
     std::string version;
     std::vector<CampaignHost> hosts;
-    std::vector<CampaignBPDataset> bpdatasets;
+    std::map<int, CampaignBPDataset> bpdatasets;
 };
 
 void ReadCampaignData(sqlite3 *db, CampaignData &cd);
