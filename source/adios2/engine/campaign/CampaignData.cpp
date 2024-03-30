@@ -91,8 +91,7 @@ static int sqlcb_bpfile(void *p, int argc, char **argv, char **azColName)
         helper::StringToSizeT(std::string(argv[3]), "SQL callback convert text to int");
     cf.lengthCompressed =
         helper::StringToSizeT(std::string(argv[4]), "SQL callback convert text to int");
-    cf.ctime = static_cast<long>(
-        helper::StringTo<int64_t>(std::string(argv[5]), "SQL callback convert ctime to int"));
+    cf.ctime = helper::StringTo<int64_t>(std::string(argv[5]), "SQL callback convert ctime to int");
 
     CampaignBPDataset &cds = cdp->bpdatasets[cf.bpDatasetIdx];
     cds.files.push_back(cf);
@@ -232,9 +231,9 @@ int inflateToFile(const unsigned char *source, const size_t blobsize, std::ofstr
     return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
 }
 
-static long timeToSec(long ct)
+static int64_t timeToSec(int64_t ct)
 {
-    long t;
+    int64_t t;
     if (ct > 99999999999999999)
     {
         /* nanosec to sec */
@@ -257,7 +256,7 @@ static long timeToSec(long ct)
     return t;
 }
 
-static bool isFileNewer(const std::string path, long ctime)
+static bool isFileNewer(const std::string path, int64_t ctime)
 {
     int result;
 #ifdef _WIN32
@@ -272,9 +271,9 @@ static bool isFileNewer(const std::string path, long ctime)
         return false;
     }
 
-    long ct = s.st_ctime;
-    long ctSec = timeToSec(ct);
-    long ctimeSec = timeToSec(ctime);
+    int64_t ct = static_cast<int64_t>(s.st_ctime);
+    int64_t ctSec = timeToSec(ct);
+    int64_t ctimeSec = timeToSec(ctime);
 
     /*std::cout << "   Stat(" << path << "): size = " << s.st_size
               << " ct = " << ctSec << " ctime = " << ctimeSec << "\n";*/
@@ -297,7 +296,7 @@ void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfi
     sqlcmd =
         "SELECT data FROM bpfile WHERE bpdatasetid = " + id + " AND name = '" + bpfile.name + "'";
     // std::cout << "SQL statement: " << sqlcmd << "\n";
-    rc = sqlite3_prepare_v2(db, sqlcmd.c_str(), sqlcmd.size(), &statement, NULL);
+    rc = sqlite3_prepare_v2(db, sqlcmd.c_str(), static_cast<int>(sqlcmd.size()), &statement, NULL);
     if (rc != SQLITE_OK)
     {
         std::cout << "SQL error: " << zErrMsg << std::endl;
