@@ -214,8 +214,9 @@ void CampaignReader::InitTransports()
             }
         }
         std::cout << "  datasets:\n";
-        for (auto &ds : m_CampaignData.bpdatasets)
+        for (auto &it : m_CampaignData.bpdatasets)
         {
+            CampaignBPDataset &ds = it.second;
             std::cout << "    " << m_CampaignData.hosts[ds.hostIdx].hostname << ":"
                       << m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] << PathSeparator
                       << ds.name << "\n";
@@ -231,8 +232,9 @@ void CampaignReader::InitTransports()
     // std::cout << "JSON rank " << m_ReaderRank << ": " << js.size() <<
     // std::endl;
     int i = 0;
-    for (auto &ds : m_CampaignData.bpdatasets)
+    for (auto &it : m_CampaignData.bpdatasets)
     {
+        CampaignBPDataset &ds = it.second;
         adios2::core::IO &io = m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(i));
         std::string localPath;
         if (m_CampaignData.hosts[ds.hostIdx].hostname != m_Options.hostname)
