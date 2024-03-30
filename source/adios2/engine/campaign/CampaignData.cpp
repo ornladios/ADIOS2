@@ -17,7 +17,6 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <zlib.h>
 
 namespace adios2
