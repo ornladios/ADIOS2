@@ -33,19 +33,19 @@ CampaignReader::CampaignReader(IO &io, const std::string &name, const Mode mode,
 : Engine("CampaignReader", io, name, mode, std::move(comm))
 {
     m_ReaderRank = m_Comm.Rank();
-    Init();
-    if (m_Options.verbose == 5)
+    if (m_Options.verbose > 1)
     {
         std::cout << "Campaign Reader " << m_ReaderRank << " Open(" << m_Name << ") in constructor."
                   << std::endl;
     }
+    Init();
     m_IsOpen = true;
 }
 
 CampaignReader::~CampaignReader()
 {
     /* CampaignReader destructor does close and finalize */
-    if (m_Options.verbose == 5)
+    if (m_Options.verbose > 1)
     {
         std::cout << "Campaign Reader " << m_ReaderRank << " destructor on " << m_Name << "\n";
     }
@@ -62,7 +62,7 @@ StepStatus CampaignReader::BeginStep(const StepMode mode, const float timeoutSec
     // so this forced increase should not be here
     ++m_CurrentStep;
 
-    if (m_Options.verbose == 5)
+    if (m_Options.verbose > 1)
     {
         std::cout << "Campaign Reader " << m_ReaderRank << "   BeginStep() new step "
                   << m_CurrentStep << "\n";
@@ -89,7 +89,7 @@ StepStatus CampaignReader::BeginStep(const StepMode mode, const float timeoutSec
 
 void CampaignReader::PerformGets()
 {
-    if (m_Options.verbose == 5)
+    if (m_Options.verbose > 1)
     {
         std::cout << "Campaign Reader " << m_ReaderRank << "     PerformGets()\n";
     }
@@ -107,7 +107,7 @@ void CampaignReader::EndStep()
         PerformGets();
     }
 
-    if (m_Options.verbose == 5)
+    if (m_Options.verbose > 1)
     {
         std::cout << "Campaign Reader " << m_ReaderRank << "   EndStep()\n";
     }
@@ -198,7 +198,7 @@ void CampaignReader::InitTransports()
 
     ReadCampaignData(m_DB, m_CampaignData);
 
-    if (m_Options.verbose == 1)
+    if (m_Options.verbose > 0)
     {
         std::cout << "Local hostname = " << m_Options.hostname << "\n";
         std::cout << "Database result:\n  version = " << m_CampaignData.version << "\n  hosts:\n";
@@ -243,12 +243,14 @@ void CampaignReader::InitTransports()
                 m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] + PathSeparator + ds.name;
             const std::string remoteURL =
                 m_CampaignData.hosts[ds.hostIdx].hostname + ":" + remotePath;
-            if (m_Options.verbose == 1)
-            {
-                std::cout << "Open remote file " << remoteURL << "\n";
-            }
             localPath = m_Options.cachepath + PathSeparator +
-                        m_CampaignData.hosts[ds.hostIdx].hostname + PathSeparator + ds.name;
+                        m_CampaignData.hosts[ds.hostIdx].hostname + PathSeparator + m_Name +
+                        PathSeparator + ds.name;
+            if (m_Options.verbose > 0)
+            {
+                std::cout << "Open remote file " << remoteURL
+                          << "\n    and use local cache for metadata at " << localPath << " \n";
+            }
             helper::CreateDirectory(localPath);
             for (auto &bpf : ds.files)
             {
@@ -263,7 +265,7 @@ void CampaignReader::InitTransports()
         {
             localPath =
                 m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] + PathSeparator + ds.name;
-            if (m_Options.verbose == 1)
+            if (m_Options.verbose > 0)
             {
                 std::cout << "Open local file " << localPath << "\n";
             }
@@ -305,7 +307,7 @@ void CampaignReader::InitTransports()
 
 void CampaignReader::DoClose(const int transportIndex)
 {
-    if (m_Options.verbose == 5)
+    if (m_Options.verbose > 1)
     {
         std::cout << "Campaign Reader " << m_ReaderRank << " Close(" << m_Name << ")\n";
     }
