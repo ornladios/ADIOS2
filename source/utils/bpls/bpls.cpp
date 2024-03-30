@@ -1598,7 +1598,7 @@ int doList(std::string path)
             exists = adios2sys::SystemTools::FileExists(path2);
             if (exists)
             {
-                path = path2.c_str();
+                ; // path = path2.c_str();
             }
             else
             {
@@ -1607,7 +1607,7 @@ int doList(std::string path)
                 exists = adios2sys::SystemTools::FileExists(path3);
                 if (exists)
                 {
-                    path = path3.c_str();
+                    path += ".aca"; // path = path3.c_str();
                 }
             }
         }
