@@ -172,19 +172,22 @@ TEST(DerivedCorrectness, MagCorrectnessTest)
 TEST(DerivedCorrectness, CurlCorrectnessTest)
 {
     const size_t Nx = 25, Ny = 70, Nz = 13;
-    float error_limit = 0.0000001;
+    float error_limit = 0.0000001f;
 
     // Application variable
     std::vector<float> simArray1(Nx * Ny * Nz);
     std::vector<float> simArray2(Nx * Ny * Nz);
     std::vector<float> simArray3(Nx * Ny * Nz);
-    for (float x = 0; x < Nx; ++x)
+    for (size_t i = 0; i < Nx; ++i)
     {
-        for (float y = 0; y < Ny; ++y)
+        for (size_t j = 0; j < Ny; ++j)
         {
-            for (float z = 0; z < Nz; ++z)
+            for (size_t k = 0; k < Nz; ++k)
             {
-                size_t idx = (x * Ny * Nz) + (y * Nz) + z;
+                size_t idx = (i * Ny * Nz) + (j * Nz) + k;
+		float x = static_cast<float>(i);
+		float y = static_cast<float>(j);
+		float z = static_cast<float>(k);
                 // Linear curl example
                 simArray1[idx] = (6 * x * y) + (7 * z);
                 simArray2[idx] = (4 * x * z) + pow(y, 2);
