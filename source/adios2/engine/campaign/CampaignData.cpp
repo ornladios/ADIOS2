@@ -17,7 +17,6 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <zlib.h>
 
 namespace adios2
@@ -70,12 +69,13 @@ static int sqlcb_bpdataset(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     CampaignBPDataset cds;
-    size_t hostid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
-    size_t dirid = helper::StringToSizeT(std::string(argv[1]), "SQL callback convert text to int");
+    size_t dsid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
+    size_t hostid = helper::StringToSizeT(std::string(argv[1]), "SQL callback convert text to int");
+    size_t dirid = helper::StringToSizeT(std::string(argv[2]), "SQL callback convert text to int");
     cds.hostIdx = hostid - 1; // SQL rows start from 1, vector idx start from 0
     cds.dirIdx = dirid - 1;
-    cds.name = argv[2];
-    cdp->bpdatasets.push_back(cds);
+    cds.name = argv[3];
+    cdp->bpdatasets[dsid] = cds;
     return 0;
 };
 
@@ -84,7 +84,7 @@ static int sqlcb_bpfile(void *p, int argc, char **argv, char **azColName)
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     CampaignBPFile cf;
     size_t dsid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
-    cf.bpDatasetIdx = dsid - 1;
+    cf.bpDatasetIdx = dsid;
     cf.name = std::string(argv[1]);
     int comp = helper::StringTo<int>(std::string(argv[2]), "SQL callback convert text to int");
     cf.compressed = (bool)comp;
@@ -92,8 +92,7 @@ static int sqlcb_bpfile(void *p, int argc, char **argv, char **azColName)
         helper::StringToSizeT(std::string(argv[3]), "SQL callback convert text to int");
     cf.lengthCompressed =
         helper::StringToSizeT(std::string(argv[4]), "SQL callback convert text to int");
-    cf.ctime = static_cast<long>(
-        helper::StringTo<int64_t>(std::string(argv[5]), "SQL callback convert ctime to int"));
+    cf.ctime = helper::StringTo<int64_t>(std::string(argv[5]), "SQL callback convert ctime to int");
 
     CampaignBPDataset &cds = cdp->bpdatasets[cf.bpDatasetIdx];
     cds.files.push_back(cf);
@@ -139,7 +138,7 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
         sqlite3_free(zErrMsg);
     }
 
-    sqlcmd = "SELECT hostid, dirid, name FROM bpdataset";
+    sqlcmd = "SELECT rowid, hostid, dirid, name FROM bpdataset";
     rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_bpdataset, &cd, &zErrMsg);
     if (rc != SQLITE_OK)
     {
@@ -233,9 +232,9 @@ int inflateToFile(const unsigned char *source, const size_t blobsize, std::ofstr
     return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
 }
 
-static long timeToSec(long ct)
+static int64_t timeToSec(int64_t ct)
 {
-    long t;
+    int64_t t;
     if (ct > 99999999999999999)
     {
         /* nanosec to sec */
@@ -258,7 +257,7 @@ static long timeToSec(long ct)
     return t;
 }
 
-static bool isFileNewer(const std::string path, long ctime)
+static bool isFileNewer(const std::string path, int64_t ctime)
 {
     int result;
 #ifdef _WIN32
@@ -273,9 +272,9 @@ static bool isFileNewer(const std::string path, long ctime)
         return false;
     }
 
-    long ct = s.st_ctime;
-    long ctSec = timeToSec(ct);
-    long ctimeSec = timeToSec(ctime);
+    int64_t ct = static_cast<int64_t>(s.st_ctime);
+    int64_t ctSec = timeToSec(ct);
+    int64_t ctimeSec = timeToSec(ctime);
 
     /*std::cout << "   Stat(" << path << "): size = " << s.st_size
               << " ct = " << ctSec << " ctime = " << ctimeSec << "\n";*/
@@ -292,13 +291,13 @@ void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfi
     int rc;
     char *zErrMsg = 0;
     std::string sqlcmd;
-    std::string id = std::to_string(bpfile.bpDatasetIdx + 1);
+    std::string id = std::to_string(bpfile.bpDatasetIdx);
 
     sqlite3_stmt *statement;
     sqlcmd =
         "SELECT data FROM bpfile WHERE bpdatasetid = " + id + " AND name = '" + bpfile.name + "'";
     // std::cout << "SQL statement: " << sqlcmd << "\n";
-    rc = sqlite3_prepare_v2(db, sqlcmd.c_str(), sqlcmd.size(), &statement, NULL);
+    rc = sqlite3_prepare_v2(db, sqlcmd.c_str(), static_cast<int>(sqlcmd.size()), &statement, NULL);
     if (rc != SQLITE_OK)
     {
         std::cout << "SQL error: " << zErrMsg << std::endl;

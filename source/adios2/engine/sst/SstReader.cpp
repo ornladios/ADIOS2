@@ -509,7 +509,7 @@ void SstReader::Init()
 {
     SstParamParser Parser;
 
-    Parser.ParseParams(m_IO, Params);
+    Parser.ParseParams(m_IO, Params, m_UserOptions);
 }
 
 #define declare_gets(T)                                                                            \

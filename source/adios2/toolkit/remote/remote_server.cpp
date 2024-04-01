@@ -543,8 +543,9 @@ int main(int argc, char **argv)
         else
         {
             fprintf(stderr, "Unknown argument \"%s\"\n", argv[i]);
-            fprintf(stderr, "Usage:  remote_server [-background] [-kill_server] [-no_timeout] "
-                            "[-status] [-v] [-q]\n");
+            fprintf(stderr,
+                    "Usage:  adios2_remote_server [-background] [-kill_server] [-no_timeout] "
+                    "[-status] [-v] [-q]\n");
             exit(1);
         }
     }
