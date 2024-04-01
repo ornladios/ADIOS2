@@ -3,7 +3,6 @@
 
 #include <cmath>
 #include <iostream>
-#include <limits>
 #include <numeric>
 #include <random>
 #include <stdexcept>
@@ -190,8 +189,8 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
                 float z = static_cast<float>(k);
                 // Linear curl example
                 simArray1[idx] = (6 * x * y) + (7 * z);
-                simArray2[idx] = (4 * x * z) + pow(y, 2);
-                simArray3[idx] = sqrt(z) + (2 * x * y);
+                simArray2[idx] = (4 * x * z) + powf(y, 2);
+                simArray3[idx] = sqrtf(z) + (2 * x * y);
                 /* Less linear example
                 simArray1[idx] = sin(z);
                 simArray2[idx] = 4 * x;
@@ -245,11 +244,6 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
     double sum_x = 0;
     double sum_y = 0;
     double sum_z = 0;
-    // keep count of how many data points were ignored
-    // error values will be skipped for data values of infinity
-    size_t inf_x = 0;
-    size_t inf_y = 0;
-    size_t inf_z = 0;
     bpFileReader.BeginStep();
     auto varVX = bpIn.InquireVariable<float>(varname[0]);
     auto varVY = bpIn.InquireVariable<float>(varname[1]);
@@ -285,12 +279,7 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
                 curl_y = -2 * x * sin(y);
                 curl_z = -sqrt(z + 1) * sin(x) - (2 * exp(2 * y) * sin(x));
                 */
-                if (fabs(curl_x) == std::numeric_limits<float>::infinity())
-                {
-                    err_x = 0;
-                    ++inf_x;
-                }
-                else if (fabs(curl_x) < 1)
+                if (fabs(curl_x) < 1)
                 {
                     err_x = fabs(curl_x - readCurl[3 * idx]) / (1 + fabs(curl_x));
                 }
@@ -298,12 +287,7 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
                 {
                     err_x = fabs(curl_x - readCurl[3 * idx]) / fabs(curl_x);
                 }
-                if (fabs(curl_y) == std::numeric_limits<float>::infinity())
-                {
-                    err_y = 0;
-                    ++inf_y;
-                }
-                else if (fabs(curl_y) < 1)
+                if (fabs(curl_y) < 1)
                 {
                     err_y = fabs(curl_y - readCurl[3 * idx + 1]) / (1 + fabs(curl_y));
                 }
@@ -311,12 +295,7 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
                 {
                     err_y = fabs(curl_y - readCurl[3 * idx + 1]) / fabs(curl_y);
                 }
-                if (fabs(curl_z) == std::numeric_limits<float>::infinity())
-                {
-                    err_z = 0;
-                    ++inf_z;
-                }
-                else if (fabs(curl_z) < 1)
+                if (fabs(curl_z) < 1)
                 {
                     err_z = fabs(curl_z - readCurl[3 * idx + 2]) / (1 + fabs(curl_z));
                 }
@@ -331,11 +310,10 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
         }
     }
     bpFileReader.Close();
-    EXPECT_LT((sum_x + sum_y + sum_z) / ((3 * Nx * Ny * Nz) - (inf_x + inf_y + inf_z)),
-              error_limit);
-    EXPECT_LT(sum_x / ((Nx * Ny * Nz) - inf_x), error_limit);
-    EXPECT_LT(sum_y / ((Nx * Ny * Nz) - inf_y), error_limit);
-    EXPECT_LT(sum_z / ((Nx * Ny * Nz) - inf_z), error_limit);
+    EXPECT_LT((sum_x + sum_y + sum_z) / (3 * Nx * Ny * Nz), error_limit);
+    EXPECT_LT(sum_x / (Nx * Ny * Nz), error_limit);
+    EXPECT_LT(sum_y / (Nx * Ny * Nz), error_limit);
+    EXPECT_LT(sum_z / (Nx * Ny * Nz), error_limit);
 }
 
 int main(int argc, char **argv)
