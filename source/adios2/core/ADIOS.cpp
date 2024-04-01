@@ -180,6 +180,19 @@ ADIOS::~ADIOS()
     }
 }
 
+void ADIOS::SetUserOptionDefaults()
+{
+    m_UserOptions.general.verbose = 0;
+
+    m_UserOptions.campaign.active = true;
+    m_UserOptions.campaign.verbose = 0;
+    m_UserOptions.campaign.hostname = "";
+    m_UserOptions.campaign.campaignstorepath = "";
+    m_UserOptions.campaign.cachepath = "/tmp/adios2-cache";
+
+    m_UserOptions.sst.verbose = 0;
+}
+
 void ADIOS::ProcessUserConfig()
 {
     // read config parameters from config file
@@ -189,6 +202,7 @@ void ADIOS::ProcessUserConfig()
 #else
     homePath = getenv("HOME");
 #endif
+    SetUserOptionDefaults();
     const std::string cfgFile = homePath + "/.config/adios2/adios2.yaml";
     if (adios2sys::SystemTools::FileExists(cfgFile))
     {
