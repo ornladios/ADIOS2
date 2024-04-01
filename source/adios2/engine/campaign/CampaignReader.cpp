@@ -33,22 +33,12 @@ CampaignReader::CampaignReader(IO &io, const std::string &name, const Mode mode,
 : Engine("CampaignReader", io, name, mode, std::move(comm))
 {
     m_ReaderRank = m_Comm.Rank();
-    if (m_Options.verbose > 1)
-    {
-        std::cout << "Campaign Reader " << m_ReaderRank << " Open(" << m_Name << ") in constructor."
-                  << std::endl;
-    }
     Init();
     m_IsOpen = true;
 }
 
 CampaignReader::~CampaignReader()
 {
-    /* CampaignReader destructor does close and finalize */
-    if (m_Options.verbose > 1)
-    {
-        std::cout << "Campaign Reader " << m_ReaderRank << " destructor on " << m_Name << "\n";
-    }
     if (m_IsOpen)
     {
         DestructorClose(m_FailVerbose);

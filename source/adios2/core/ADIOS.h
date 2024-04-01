@@ -165,7 +165,7 @@ public:
                           const double time = UnknownTime);
 
     /** A constant reference to the user options from ~/.config/adios2/adios2.yaml */
-    static const adios2::UserOptions &GetUserOptions();
+    const adios2::UserOptions &GetUserOptions();
 
 private:
     /** Communicator given to parallel constructor. */
@@ -207,6 +207,7 @@ private:
     void YAMLInitIO(const std::string &configFileYAML, const std::string &configFileContents,
                     core::IO &io);
 
+    adios2::UserOptions m_UserOptions;
     void ProcessUserConfig();
 
 private:

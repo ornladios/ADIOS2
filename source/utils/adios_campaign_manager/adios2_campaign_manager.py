@@ -15,7 +15,7 @@ from time import time_ns
 
 # from adios2.adios2_campaign_manager import *
 
-ADIOS_ACA_VERSION = "1.0"
+ADIOS_ACA_VERSION = "0.1"
 
 @dataclass
 class UserOption:
@@ -375,7 +375,6 @@ def Info(args: dict, cur: sqlite3.Cursor):
                 '"'
             )
             bpdatasets = res3.fetchall()
-            print(f"BPDATASETS type = {type(bpdatasets)}")
             for bpdataset in bpdatasets:
                 t = timestamp_to_datetime(bpdataset[2])
                 print(f"        dataset = {bpdataset[1]}     created on {t}")
