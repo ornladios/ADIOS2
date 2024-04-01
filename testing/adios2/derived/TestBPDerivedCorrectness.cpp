@@ -185,9 +185,9 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
             for (size_t k = 0; k < Nz; ++k)
             {
                 size_t idx = (i * Ny * Nz) + (j * Nz) + k;
-		float x = static_cast<float>(i);
-		float y = static_cast<float>(j);
-		float z = static_cast<float>(k);
+                float x = static_cast<float>(i);
+                float y = static_cast<float>(j);
+                float z = static_cast<float>(k);
                 // Linear curl example
                 simArray1[idx] = (6 * x * y) + (7 * z);
                 simArray2[idx] = (4 * x * z) + pow(y, 2);
