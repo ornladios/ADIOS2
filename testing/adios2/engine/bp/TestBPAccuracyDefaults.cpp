@@ -31,7 +31,6 @@ public:
 // Check if SetAccuracy/GetAccuracy default behavior works
 TEST_F(AccuracyTests, DefaultAccuracy)
 {
-    const std::string fname("DefaultAccuracy.bp");
 
     int mpiRank = 0, mpiSize = 1;
 
@@ -40,6 +39,9 @@ TEST_F(AccuracyTests, DefaultAccuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("DefaultAccuracy_MPI.bp");
+#else
+    const std::string fname("DefaultAccuracy.bp");
 #endif
 
     std::vector<int64_t> localData(Nx);

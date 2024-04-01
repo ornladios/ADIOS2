@@ -19,7 +19,6 @@ void SZAccuracy1D(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRSZ1D_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -38,6 +37,9 @@ void SZAccuracy1D(const std::string accuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRSZ1D_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWRSZ1D_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -151,7 +153,6 @@ void SZAccuracy2D(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRSZ2D_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -171,6 +172,9 @@ void SZAccuracy2D(const std::string accuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRSZ2D_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWRSZ2D_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -284,7 +288,6 @@ void SZAccuracy3D(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRSZ3D_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -305,6 +308,9 @@ void SZAccuracy3D(const std::string accuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRSZ3D_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWRSZ3D_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -420,7 +426,6 @@ void SZAccuracy1DSel(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRSZ1DSel_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -439,6 +444,9 @@ void SZAccuracy1DSel(const std::string accuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRSZ1DSel_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWRSZ1DSel_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -552,7 +560,6 @@ void SZAccuracy2DSel(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRSZ2DSel_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -572,6 +579,9 @@ void SZAccuracy2DSel(const std::string accuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRSZ2DSel_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWRSZ2DSel_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -689,7 +699,6 @@ void SZAccuracy3DSel(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRSZ3DSel_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -710,6 +719,9 @@ void SZAccuracy3DSel(const std::string accuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRSZ3DSel_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWRSZ3DSel_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -829,7 +841,6 @@ void SZAccuracy2DSmallSel(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRSZ2DSmallSel_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -848,6 +859,9 @@ void SZAccuracy2DSmallSel(const std::string accuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRSZ2DSmallSel_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWRSZ2DSmallSel_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI

@@ -33,7 +33,6 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadMultiblock1D8.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -45,6 +44,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock1D8)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteReadMultiblock1D8_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteReadMultiblock1D8.bp");
 #endif
 
     // Write test data using BP
@@ -773,7 +775,6 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
-    const std::string fname("ADIOS2BPWriteReadMultiblock2D2x4Test.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -788,6 +789,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D2x4)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteReadMultiblock2D2x4Test_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteReadMultiblock2D2x4Test.bp");
 #endif
 
     // Write test data using ADIOS2
@@ -1182,7 +1186,6 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("ADIOS2BPWriteReadMultiblock2D4x2Test.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -1196,6 +1199,9 @@ TEST_F(BPWriteReadMultiblockTest, ADIOS2BPWriteReadMultiblock2D4x2)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteReadMultiblock2D4x2Test_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteReadMultiblock2D4x2Test.bp");
 #endif
 
     // Write test data using ADIOS2
@@ -1971,7 +1977,6 @@ TEST_F(BPWriteReadMultiblockTest, MultiblockPerformDataWrite)
     }
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("MultiblockPerformDataWrite.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of elements per blocks (blocksize)
@@ -1990,8 +1995,10 @@ TEST_F(BPWriteReadMultiblockTest, MultiblockPerformDataWrite)
 
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
+    const std::string fname("MultiblockPerformDataWrite_MPI.bp");
 #else
     adios2::ADIOS adios;
+    const std::string fname("MultiblockPerformDataWrite.bp");
 #endif
     /* Write output */
     {
@@ -2102,7 +2109,6 @@ TEST_F(BPWriteReadMultiblockTest, MultiblockNullBlocks)
 {
     // Each process would write a 2x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("MultiblockNullBlocks.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of elements per blocks (blocksize)
@@ -2115,6 +2121,9 @@ TEST_F(BPWriteReadMultiblockTest, MultiblockNullBlocks)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("MultiblockNullBlocks_MPI.bp");
+#else
+    const std::string fname("MultiblockNullBlocks.bp");
 #endif
 
 #if ADIOS2_USE_MPI

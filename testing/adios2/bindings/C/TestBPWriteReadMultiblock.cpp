@@ -94,7 +94,11 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
         adios2_variable *varR64 = adios2_define_variable(
             ioH, "varR64", adios2_type_double, 1, shape, start, count, adios2_constant_dims_false);
 
+#if ADIOS2_USE_MPI
+        adios2_engine *engineH = adios2_open(ioH, "cmblocks_MPI.bp", adios2_mode_write);
+#else
         adios2_engine *engineH = adios2_open(ioH, "cmblocks.bp", adios2_mode_write);
+#endif
 
         for (size_t i = 0; i < steps; ++i)
         {
@@ -172,8 +176,11 @@ TEST_F(BPWriteReadMultiblockCC, ZeroSizeBlocks)
         std::vector<double> inR64(data_Nx / 2);
 
         adios2_io *ioH = adios2_declare_io(adiosH, "Reader");
+#if ADIOS2_USE_MPI
+        adios2_engine *engineH = adios2_open(ioH, "cmblocks_MPI.bp", adios2_mode_read);
+#else
         adios2_engine *engineH = adios2_open(ioH, "cmblocks.bp", adios2_mode_read);
-
+#endif
         size_t nsteps;
         adios2_steps(&nsteps, engineH);
         EXPECT_EQ(nsteps, steps);

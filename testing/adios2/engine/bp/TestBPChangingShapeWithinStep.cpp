@@ -38,7 +38,6 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
     auto params = std::get<1>(GetParam());
     double epsilon = std::get<2>(GetParam());
 
-    const std::string fname("BPChangingShapeMultiblock_" + operatorName + ".bp");
     const int nsteps = 2;
     const std::vector<int> nblocks = {2, 3};
     const int N = 16384; // size of one block (should be big enough to compress)
@@ -48,8 +47,10 @@ TEST_P(BPChangingShapeWithinStep, MultiBlock)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+    const std::string fname("BPChangingShapeMultiblock_" + operatorName + "_MPI.bp");
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
+    const std::string fname("BPChangingShapeMultiblock_" + operatorName + ".bp");
     adios2::ADIOS adios;
 #endif
 

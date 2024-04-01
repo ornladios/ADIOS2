@@ -19,7 +19,6 @@ void BZIP2Accuracy1D(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWR_BZIP2_1D_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -38,6 +37,9 @@ void BZIP2Accuracy1D(const std::string accuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWR_BZIP2_1D_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWR_BZIP2_1D_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -152,7 +154,6 @@ void BZIP2Accuracy1DLocal(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // write a Nx 1D array
-    const std::string fname("BPWR_BZIP2_1D_Local_" + accuracy + ".bp");
 
     int mpiRank = 0;
     // Number of rows
@@ -170,6 +171,9 @@ void BZIP2Accuracy1DLocal(const std::string accuracy)
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
+    const std::string fname("BPWR_BZIP2_1D_Local_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWR_BZIP2_1D_Local_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -280,7 +284,6 @@ void BZIP2Accuracy2D(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRBZIP22D_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -300,6 +303,9 @@ void BZIP2Accuracy2D(const std::string accuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRBZIP22D_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWRBZIP22D_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -414,7 +420,6 @@ void BZIP2Accuracy3D(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRBZIP23D_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -435,6 +440,9 @@ void BZIP2Accuracy3D(const std::string accuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRBZIP23D_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWRBZIP23D_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -551,7 +559,6 @@ void BZIP2Accuracy1DSel(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRBZIP21DSel_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -570,6 +577,9 @@ void BZIP2Accuracy1DSel(const std::string accuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRBZIP21DSel_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWRBZIP21DSel_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -682,7 +692,6 @@ void BZIP2Accuracy2DSel(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRBZIP22DSel_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -702,6 +711,9 @@ void BZIP2Accuracy2DSel(const std::string accuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRBZIP22DSel_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWRBZIP22DSel_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -816,7 +828,6 @@ void BZIP2Accuracy3DSel(const std::string accuracy)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRBZIP23DSel_" + accuracy + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -837,6 +848,9 @@ void BZIP2Accuracy3DSel(const std::string accuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRBZIP23DSel_" + accuracy + "_MPI.bp");
+#else
+    const std::string fname("BPWRBZIP23DSel_" + accuracy + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI

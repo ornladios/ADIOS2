@@ -52,7 +52,11 @@ TEST_F(ADIOS2_C_API, ADIOS2BPMemorySpaceGPU)
 
 TEST_F(ADIOS2_C_API, ADIOS2BPMemorySpaceShape)
 {
+#if ADIOS2_USE_MPI
+    const char fname[] = "ADIOS2_C_API.ADIOS2BPMemorySpace_MPI.bp";
+#else
     const char fname[] = "ADIOS2_C_API.ADIOS2BPMemorySpace.bp";
+#endif
     // write
     {
         adios2_io *ioH = adios2_declare_io(adiosH, "CMemSpace");

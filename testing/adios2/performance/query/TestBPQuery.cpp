@@ -81,7 +81,11 @@ public:
 void BPQueryTest::QueryIntVar(const std::string &fname, adios2::ADIOS &adios,
                               const std::string &engineName)
 {
+#if ADIOS2_USE_MPI
+    std::string ioName = "IOQueryTestInt_MPI" + engineName;
+#else
     std::string ioName = "IOQueryTestInt" + engineName;
+#endif
     adios2::IO io = adios.DeclareIO(ioName.c_str());
 
     if (!engineName.empty())
@@ -235,12 +239,13 @@ TEST_F(BPQueryTest, BP5)
     std::string engineName = "BP5";
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname(engineName + "Query1D.bp");
 
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
+    const std::string fname(engineName + "Query1D_MPI.bp");
 #else
     adios2::ADIOS adios;
+    const std::string fname(engineName + "Query1D.bp");
 #endif
 
     WriteFile(fname, adios, engineName);

@@ -131,6 +131,7 @@ void Writer(const Dims &shape, const Dims &start, const Dims &count, const size_
     size_t datasize = std::accumulate(count.begin(), count.end(), 1, std::multiplies<size_t>());
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
+    fileName = "TestBPWriteReadSzComplex_MPI";
 #else
     adios2::ADIOS adios;
 #endif

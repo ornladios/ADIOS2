@@ -28,7 +28,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadLocal1DSel.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -40,6 +39,9 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DSel)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteReadLocal1DSel_MPI.bp");
+#else
+    const std::string fname("BPWriteReadLocal1DSel.bp");
 #endif
 
     // Write test data using BP
@@ -440,7 +442,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadLocal2D2x4Sel.bp");
 
     int mpiRank = 0, mpiSize = 1;
     const size_t Nx = 4;
@@ -452,6 +453,9 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D2x4Sel)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteReadLocal2D2x4Sel_MPI.bp");
+#else
+    const std::string fname("BPWriteReadLocal2D2x4Sel.bp");
 #endif
 
     // Write test data using BP
@@ -899,7 +903,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadLocal2D4x2Sel.bp");
 
     int mpiRank = 0, mpiSize = 1;
     const size_t Nx = 2;
@@ -911,6 +914,9 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal2D4x2Sel)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteReadLocal2D4x2Sel_MPI.bp");
+#else
+    const std::string fname("BPWriteReadLocal2D4x2Sel.bp");
 #endif
 
     // Write test data using BP
@@ -1357,7 +1363,6 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadLocal1DAllStepsSel.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -1369,6 +1374,9 @@ TEST_F(BPWriteReadLocalVariablesSel, BPWriteReadLocal1DAllStepsSel)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteReadLocal1DAllStepsSel_MPI.bp");
+#else
+    const std::string fname("BPWriteReadLocal1DAllStepsSel.bp");
 #endif
 
     // Write test data using BP

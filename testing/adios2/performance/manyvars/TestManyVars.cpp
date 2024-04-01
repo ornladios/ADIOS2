@@ -235,8 +235,13 @@ public:
         NBLOCKS = p.nblocks;
         NSTEPS = p.nsteps;
         REDEFINE = redefineVars;
+#if ADIOS2_USE_MPI
+        snprintf(FILENAME, sizeof(FILENAME), "manyVars.%zu_%zu_%zu%s_MPI.bp", NVARS, NBLOCKS,
+                 NSTEPS, REDEFINE ? "_redefine" : "");
+#else
         snprintf(FILENAME, sizeof(FILENAME), "manyVars.%zu_%zu_%zu%s.bp", NVARS, NBLOCKS, NSTEPS,
                  REDEFINE ? "_redefine" : "");
+#endif
 
         alloc_vars();
 #if ADIOS2_USE_MPI

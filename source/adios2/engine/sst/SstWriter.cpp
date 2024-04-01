@@ -389,7 +389,7 @@ void SstWriter::Init()
 {
     SstParamParser Parser;
 
-    Parser.ParseParams(m_IO, Params);
+    Parser.ParseParams(m_IO, Params, m_UserOptions);
 
     if (Params.verbose < 0 || Params.verbose > 5)
     {

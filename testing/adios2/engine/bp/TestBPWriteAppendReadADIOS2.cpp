@@ -34,7 +34,6 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
-    const std::string fname("ADIOS2BPWriteAppendRead2D2x4Test.bp");
 
     const std::string zero = std::to_string(0);
     const std::string s1_Single = std::string("s1_Single_") + zero;
@@ -70,6 +69,9 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteAppendRead2D2x4Test_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteAppendRead2D2x4Test.bp");
 #endif
 
     // Write test data using ADIOS2
@@ -643,7 +645,6 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendRead2D2x4)
 // Write with append combined with aggregation, same aggregation ratio
 TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadAggregate)
 {
-    const std::string fname("ADIOS2BPWriteAppendReadAggregate.bp");
     int mpiRank = 0, mpiSize = 1;
     const std::size_t Nx = 4;
     const std::size_t Ny = 2;
@@ -652,8 +653,10 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadAggregate)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteAppendReadAggregate_MPI.bp");
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
+    const std::string fname("ADIOS2BPWriteAppendReadAggregate.bp");
     adios2::ADIOS adios;
 #endif
     {
@@ -741,7 +744,6 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadAggregate)
 // Write with append combined with aggregation, same aggregation ratio
 TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingAggregation)
 {
-    const std::string fname("ADIOS2BPWriteAppendReadVaryingAggregate.bp");
     int mpiRank = 0, mpiSize = 1;
     const std::size_t Nx = 4;
     const std::size_t Ny = 2;
@@ -750,8 +752,10 @@ TEST_F(BPWriteAppendReadTestADIOS2, ADIOS2BPWriteAppendReadVaryingAggregation)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteAppendReadVaryingAggregate_MPI.bp");
     adios2::ADIOS adios(MPI_COMM_WORLD);
 #else
+    const std::string fname("ADIOS2BPWriteAppendReadVaryingAggregate.bp");
     adios2::ADIOS adios;
 #endif
     {

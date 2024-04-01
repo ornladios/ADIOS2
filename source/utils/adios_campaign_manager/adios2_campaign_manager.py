@@ -4,6 +4,8 @@ import argparse
 import glob
 import sqlite3
 import zlib
+import yaml
+from dataclasses import dataclass
 from datetime import datetime
 from os import chdir, getcwd, remove, stat
 from os.path import exists, isdir, expanduser
@@ -15,19 +17,32 @@ from time import time_ns
 
 ADIOS_ACA_VERSION = "1.0"
 
+@dataclass
+class UserOption:
+    adios_campaign_store: str = None
+    hostname: str = None
+    verbose: int = 0
 
-def ReadConfig():
-    path = expanduser("~/.config/adios2/campaign.cfg")
+
+def ReadUserConfig():
+    path = expanduser("~/.config/adios2/adios2.yaml")
+    opts = UserOption()
     try:
+        doc = {}
         with open(path) as f:
-            lines = f.readlines()
-            for line in lines:
-                lst = line.split()
-                if lst[0] == "campaignstorepath":
-                    adios_campaign_store = expanduser(lst[1])
+            doc = yaml.safe_load(f)
+        camp = doc.get("Campaign")
+        if isinstance(camp, dict):
+            for key, value in camp.items():
+                if key == "campaignstorepath":
+                    opts.adios_campaign_store = expanduser(value)
+                if key == "hostname":
+                    opts.hostname = value
+                if key == "verbose":
+                    opts.verbose = value
     except FileNotFoundError:
-        adios_campaign_store = None
-    return adios_campaign_store
+        None
+    return opts
 
 
 def SetupArgs():
@@ -50,9 +65,13 @@ def SetupArgs():
     args = parser.parse_args()
 
     # default values
-    args.update = False
+    args.user_options = ReadUserConfig()
+
+    if args.verbose == 0:
+        args.verbose = args.user_options.verbose
+
     if args.campaign_store is None:
-        args.campaign_store = ReadConfig()
+        args.campaign_store = args.user_options.adios_campaign_store
 
     if args.campaign_store is not None:
         while args.campaign_store[-1] == "/":
@@ -223,7 +242,10 @@ def GetHostName():
         host = sub("^login[0-9]*\\.", "", host)
     if host.startswith("batch"):
         host = sub("^batch[0-9]*\\.", "", host)
-    shorthost = host.split(".")[0]
+    if args.user_options.hostname is None:
+        shorthost = host.split(".")[0]
+    else:
+        shorthost = args.user_options.hostname
     return host, shorthost
 
 
@@ -278,8 +300,6 @@ def AddDirectory(hostID: int, path: str) -> int:
 
 def Update(args: dict, cur: sqlite3.Cursor):
     longHostName, shortHostName = GetHostName()
-    if args.hostname is not None:
-        shortHostName = args.hostname
 
     hostID = AddHostName(longHostName, shortHostName)
 
@@ -355,6 +375,7 @@ def Info(args: dict, cur: sqlite3.Cursor):
                 '"'
             )
             bpdatasets = res3.fetchall()
+            print(f"BPDATASETS type = {type(bpdatasets)}")
             for bpdataset in bpdatasets:
                 t = timestamp_to_datetime(bpdataset[2])
                 print(f"        dataset = {bpdataset[1]}     created on {t}")

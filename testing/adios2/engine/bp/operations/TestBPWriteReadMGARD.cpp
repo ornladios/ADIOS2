@@ -20,7 +20,6 @@ void MGARDAccuracy1D(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRMGARD1D_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -39,6 +38,9 @@ void MGARDAccuracy1D(const std::string tolerance)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRMGARD1D_" + tolerance + "_MPI.bp");
+#else
+    const std::string fname("BPWRMGARD1D_" + tolerance + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -175,7 +177,6 @@ void MGARDAccuracy2D(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRMGARD2D_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -195,6 +196,9 @@ void MGARDAccuracy2D(const std::string tolerance)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRMGARD2D_" + tolerance + "_MPI.bp");
+#else
+    const std::string fname("BPWRMGARD2D_" + tolerance + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -336,7 +340,6 @@ void MGARDAccuracy3D(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRMGARD3D_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -357,6 +360,9 @@ void MGARDAccuracy3D(const std::string tolerance)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRMGARD3D_" + tolerance + "_MPI.bp");
+#else
+    const std::string fname("BPWRMGARD3D_" + tolerance + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -498,7 +504,6 @@ void MGARDAccuracy1DSel(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRMGARD1DSel_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -517,6 +522,9 @@ void MGARDAccuracy1DSel(const std::string tolerance)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRMGARD1DSel_" + tolerance + "_MPI.bp");
+#else
+    const std::string fname("BPWRMGARD1DSel_" + tolerance + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -627,7 +635,6 @@ void MGARDAccuracy2DSel(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRMGARD2DSel_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -647,6 +654,9 @@ void MGARDAccuracy2DSel(const std::string tolerance)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRMGARD2DSel_" + tolerance + "_MPI.bp");
+#else
+    const std::string fname("BPWRMGARD2DSel_" + tolerance + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -759,7 +769,6 @@ void MGARDAccuracy3DSel(const std::string tolerance)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRMGARD3DSel_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -780,6 +789,9 @@ void MGARDAccuracy3DSel(const std::string tolerance)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRMGARD3DSel_" + tolerance + "_MPI.bp");
+#else
+    const std::string fname("BPWRMGARD3DSel_" + tolerance + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -899,7 +911,6 @@ void MGARDNullBlocks(const std::string tolerance)
 
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRMGARDNull_" + tolerance + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -915,6 +926,9 @@ void MGARDNullBlocks(const std::string tolerance)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRMGARDNull_" + tolerance + "_MPI.bp");
+#else
+    const std::string fname("BPWRMGARDNull_" + tolerance + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
