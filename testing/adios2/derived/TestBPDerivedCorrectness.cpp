@@ -192,14 +192,14 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
                 simArray2[idx] = (4 * x * z) + powf(y, 2);
                 simArray3[idx] = sqrtf(z) + (2 * x * y);
                 /* Less linear example
-                simArray1[idx] = sin(z);
+                simArray1[idx] = sinf(z);
                 simArray2[idx] = 4 * x;
-                simArray3[idx] = pow(y, 2) * cos(x);
+                simArray3[idx] = powf(y, 2) * cosf(x);
                 */
                 /* Nonlinear example
-                simArray1[idx] = exp(2 * y) * sin(x);
-                simArray2[idx] = sqrt(z + 1) * cos(x);
-                simArray3[idx] = pow(x, 2) * sin(y) + (6 * z);
+                simArray1[idx] = expf(2 * y) * sinf(x);
+                simArray2[idx] = sqrtf(z + 1) * cosf(x);
+                simArray3[idx] = powf(x, 2) * sinf(y) + (6 * z);
                 */
             }
         }
@@ -258,26 +258,29 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
 
     float curl_x, curl_y, curl_z;
     float err_x, err_y, err_z;
-    for (float x = 0; x < Nx; ++x)
+    for (size_t i = 0; i < Nx; ++i)
     {
-        for (float y = 0; y < Ny; ++y)
+        for (size_t j = 0; j < Ny; ++j)
         {
-            for (float z = 0; z < Nz; ++z)
+            for (size_t k = 0; k < Nz; ++k)
             {
-                size_t idx = (x * Ny * Nz) + (y * Nz) + z;
+                size_t idx = (i * Ny * Nz) + (j * Nz) + k;
+                float x = static_cast<float>(i);
+                float y = static_cast<float>(j);
+                float z = static_cast<float>(k);
                 // Linear example
                 curl_x = -(2 * x);
                 curl_y = 7 - (2 * y);
                 curl_z = (4 * z) - (6 * x);
                 /* Less linear
-                curl_x = 2 * y * cos(x);
-                curl_y = cos(z) + (pow(y, 2) * sin(x));
+                curl_x = 2 * y * cosf(x);
+                curl_y = cosf(z) + (powf(y, 2) * sinf(x));
                 curl_z = 4;
                 */
                 /* Nonlinear example
-                curl_x = pow(x, 2) * cos(y) - (cos(x) / (2 * sqrt(z + 1)));
-                curl_y = -2 * x * sin(y);
-                curl_z = -sqrt(z + 1) * sin(x) - (2 * exp(2 * y) * sin(x));
+                curl_x = powf(x, 2) * cosf(y) - (cosf(x) / (2 * sqrtf(z + 1)));
+                curl_y = -2 * x * sinf(y);
+                curl_z = -sqrtf(z + 1) * sinf(x) - (2 * expf(2 * y) * sinf(x));
                 */
                 if (fabs(curl_x) < 1)
                 {
