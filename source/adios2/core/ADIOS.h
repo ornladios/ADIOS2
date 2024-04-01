@@ -208,6 +208,7 @@ private:
                     core::IO &io);
 
     adios2::UserOptions m_UserOptions;
+    void SetUserOptionDefaults();
     void ProcessUserConfig();
 
 private:
