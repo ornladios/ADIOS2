@@ -193,6 +193,13 @@ std::set<std::string> PrefixMatches(const std::string &prefix,
  */
 std::string RemoveTrailingSlash(const std::string &name) noexcept;
 
+/**
+ * Generate a random string of length between 1 and 64
+ * This is a dummy string generator, don't use it for uuid or
+ * for generating truly random unique strings en masse
+ */
+std::string RandomString(const size_t length);
+
 } // end namespace helper
 } // end namespace adios2
 
