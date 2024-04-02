@@ -345,6 +345,7 @@ Xrootd::GetHandle Xrootd::Get(char *VarName, size_t Step, size_t BlockID, Dims &
         rSpec.hAvoid = clUI.avoids;
     rSpec.affinity = clUI.affVal;
     rSpec.rOpts = clUI.resOpts;
+    reqLen = strlen(reqData) + 1;
 
     // Normally, we would maintain a pool of request objects to avoid new/delete
     // calls. For our simple client we have no context so we simply always get a
