@@ -291,6 +291,28 @@ void CampaignReader::InitTransports()
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         }
+
+        for (auto &ar : amap)
+        {
+            auto aname = ar.first;
+            std::string fname = ds.name;
+            std::string newname = fname + "/" + aname;
+
+            const DataType type = io.InquireAttributeType(aname);
+
+            if (type == DataType::Struct)
+            {
+            }
+#define declare_type(T)                                                                            \
+    else if (type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        Attribute<T> *ai = io.InquireAttribute<T>(aname);                                          \
+        Attribute<T> v = DuplicateAttribute(ai, m_IO, newname);                                    \
+    }
+
+            ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
+#undef declare_type
+        }
         ++i;
     }
 }

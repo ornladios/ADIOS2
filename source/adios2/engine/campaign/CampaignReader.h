@@ -116,6 +116,13 @@ private:
                                   VarInternalInfo &vii);
 
     /**
+     * Create a new attribute with name `name` in `io`
+     * based on an existing attribute.
+     */
+    template <class T>
+    Attribute<T> DuplicateAttribute(Attribute<T> *attribute, IO &io, std::string &name);
+
+    /**
      * Create a new variable with name `name` in `io`
      * based on an existing variable.
      */
