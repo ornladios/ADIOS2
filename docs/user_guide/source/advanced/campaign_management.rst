@@ -183,5 +183,4 @@ Limitations
 ===========
 
 - The Campaign Reader engine only supports ReadRandomAccess mode, not step-by-step reading. Campaign management will need to change in the future to support sorting the steps from different outputs to a coherent order. 
-- Attributes are not processed by the Campaign Reader yet
 - Updates to moving data for other location is not supported yet
