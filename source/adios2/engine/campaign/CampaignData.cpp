@@ -318,10 +318,10 @@ void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfi
     int iBlobsize = sqlite3_column_bytes(statement, 0);
     const void *p = sqlite3_column_blob(statement, 0);
 
-    std::cout << "-- Retrieved from DB data of " << bpfile.name << " size = " << iBlobsize
+    /*std::cout << "-- Retrieved from DB data of " << bpfile.name << " size = " << iBlobsize
               << " compressed = " << bpfile.compressed
               << " compressed size = " << bpfile.lengthCompressed
-              << " original size = " << bpfile.lengthOriginal << " blob = " << p << "\n";
+              << " original size = " << bpfile.lengthOriginal << " blob = " << p << "\n";*/
 
     size_t blobsize = static_cast<size_t>(iBlobsize);
     std::ofstream f;

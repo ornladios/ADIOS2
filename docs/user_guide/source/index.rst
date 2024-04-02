@@ -40,6 +40,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    advanced/gpu_aware
    advanced/query
    advanced/plugins
+   advanced/campaign_management
    advanced/ecp_hardware
 
 .. toctree::

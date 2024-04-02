@@ -266,19 +266,6 @@ void ParseUserOptionsFile(Comm &comm, const std::string &configFileYAML, UserOpt
 
     const std::string configFileContents = comm.BroadcastFile(configFileYAML, hint);
 
-    /*
-     * Set defaults first
-     */
-    options.general.verbose = 0;
-
-    options.campaign.active = true;
-    options.campaign.verbose = 0;
-    options.campaign.hostname = "";
-    options.campaign.campaignstorepath = "";
-    options.campaign.cachepath = "/tmp/adios2-cache";
-
-    options.sst.verbose = 0;
-
     const YAML::Node document = YAML::Load(configFileContents);
     if (!document)
     {

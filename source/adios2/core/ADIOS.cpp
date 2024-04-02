@@ -108,8 +108,7 @@ static std::atomic_uint adios_refcount(0); // adios objects at the same time
 static std::atomic_uint adios_count(0);    // total adios objects during runtime
 
 /** User defined options from ~/.config/adios2/adios2.yaml if it exists */
-static adios2::UserOptions UserOptions;
-const adios2::UserOptions &ADIOS::GetUserOptions() { return UserOptions; };
+const adios2::UserOptions &ADIOS::GetUserOptions() { return m_UserOptions; };
 
 ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string hostLanguage)
 : m_HostLanguage(hostLanguage), m_Comm(std::move(comm)), m_ConfigFile(configFile),
@@ -149,10 +148,11 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string 
 #ifdef ADIOS2_HAVE_KOKKOS
     m_GlobalServices.Init_Kokkos_API();
 #endif
-    if (UserOptions.campaign.active)
+    if (m_UserOptions.campaign.active)
     {
-        std::string campaignName = "campaign_" + std::to_string(adios_count);
-        m_CampaignManager.Open(campaignName, UserOptions);
+        std::string campaignName =
+            "campaign_" + helper::RandomString(8) + "_" + std::to_string(adios_count);
+        m_CampaignManager.Open(campaignName, m_UserOptions);
     }
 }
 
@@ -175,10 +175,23 @@ ADIOS::~ADIOS()
     {
         m_GlobalServices.Finalize();
     }
-    if (UserOptions.campaign.active)
+    if (m_UserOptions.campaign.active)
     {
         m_CampaignManager.Close();
     }
+}
+
+void ADIOS::SetUserOptionDefaults()
+{
+    m_UserOptions.general.verbose = 0;
+
+    m_UserOptions.campaign.active = true;
+    m_UserOptions.campaign.verbose = 0;
+    m_UserOptions.campaign.hostname = "";
+    m_UserOptions.campaign.campaignstorepath = "";
+    m_UserOptions.campaign.cachepath = "/tmp/adios2-cache";
+
+    m_UserOptions.sst.verbose = 0;
 }
 
 void ADIOS::ProcessUserConfig()
@@ -190,10 +203,11 @@ void ADIOS::ProcessUserConfig()
 #else
     homePath = getenv("HOME");
 #endif
+    SetUserOptionDefaults();
     const std::string cfgFile = homePath + "/.config/adios2/adios2.yaml";
     if (adios2sys::SystemTools::FileExists(cfgFile))
     {
-        helper::ParseUserOptionsFile(m_Comm, cfgFile, UserOptions, homePath);
+        helper::ParseUserOptionsFile(m_Comm, cfgFile, m_UserOptions, homePath);
     }
 }
 
@@ -358,7 +372,7 @@ void ADIOS::YAMLInitIO(const std::string &configFileYAML, const std::string &con
 
 void ADIOS::RecordOutputStep(const std::string &name, const size_t step, const double time)
 {
-    if (UserOptions.campaign.active)
+    if (m_UserOptions.campaign.active)
     {
         m_CampaignManager.Record(name, step, time);
     }
