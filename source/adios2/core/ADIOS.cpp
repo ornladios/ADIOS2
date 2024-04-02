@@ -150,7 +150,8 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string 
 #endif
     if (m_UserOptions.campaign.active)
     {
-        std::string campaignName = "campaign_" + std::to_string(adios_count);
+        std::string campaignName =
+            "campaign_" + helper::RandomString(8) + "_" + std::to_string(adios_count);
         m_CampaignManager.Open(campaignName, m_UserOptions);
     }
 }

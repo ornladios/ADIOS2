@@ -16,6 +16,7 @@
 /// \cond EXCLUDE_FROM_DOXYGEN
 #include <fstream>
 #include <ios> //std::ios_base::failure
+#include <random>
 #include <sstream>
 #include <stdexcept> // std::invalid_argument
 /// \endcond
@@ -482,6 +483,24 @@ std::string RemoveTrailingSlash(const std::string &name) noexcept
         --len;
     }
     return name.substr(0, len);
+}
+
+std::string RandomString(const size_t length)
+{
+    size_t len = length;
+    if (len == 0)
+        len = 1;
+    if (len > 64)
+        len = 64;
+
+    std::string str("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyzA");
+
+    std::random_device rd;
+    std::mt19937 generator(rd());
+
+    std::shuffle(str.begin(), str.end(), generator);
+
+    return str.substr(0, len);
 }
 
 } // end namespace helper
