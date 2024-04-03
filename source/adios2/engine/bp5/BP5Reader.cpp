@@ -272,6 +272,36 @@ std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan
 
 void BP5Reader::PerformGets()
 {
+    // if dataIsRemote is true and m_Remote is not true, this is our first time through
+    // PerformGets() Either we don't need a remote open (m_dataIsRemote=false), or we need to Open
+    // remote file (or die trying)
+    if (m_dataIsRemote && !m_Remote)
+    {
+        bool RowMajorOrdering = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
+
+        // If nothing is pending, don't open
+        if (m_BP5Deserializer->PendingGetRequests.size() == 0)
+            return;
+
+        if (!m_Parameters.RemoteDataPath.empty())
+        {
+            m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Parameters.RemoteDataPath,
+                          m_OpenMode, RowMajorOrdering);
+        }
+        else if (getenv("DoRemote"))
+        {
+            m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Name, m_OpenMode,
+                          RowMajorOrdering);
+        }
+        if (!m_Remote)
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Engine", "BP5Reader", "OpenFiles",
+                "Remote file " + m_Name +
+                    " cannot be opened. Possible server or file specification error.");
+        }
+    }
+
     if (m_Remote)
     {
         PerformRemoteGets();
@@ -300,8 +330,9 @@ void BP5Reader::PerformRemoteGets()
 
 void BP5Reader::PerformLocalGets()
 {
-    auto lf_CompareReqSubfile = [&](adios2::format::BP5Deserializer::ReadRequest &r1,
-                                    adios2::format::BP5Deserializer::ReadRequest &r2) -> bool {
+    auto lf_CompareReqSubfile =
+        [&](const adios2::format::BP5Deserializer::ReadRequest &r1,
+            const adios2::format::BP5Deserializer::ReadRequest &r2) -> bool {
         return (m_WriterMap[m_WriterMapIndex[r1.Timestep]].RankToSubfile[r1.WriterRank] <
                 m_WriterMap[m_WriterMapIndex[r2.Timestep]].RankToSubfile[r2.WriterRank]);
     };
@@ -476,18 +507,11 @@ void BP5Reader::Init()
     OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
     UpdateBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
 
-    //  This isn't how we'll trigger remote ops in the end, but a temporary
-    //  solution
-    bool RowMajorOrdering = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
+    // Don't try to open the remote file when we open local metadata.  Do that on demand.
     if (!m_Parameters.RemoteDataPath.empty())
-    {
-        m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Parameters.RemoteDataPath,
-                      m_OpenMode, RowMajorOrdering);
-    }
-    else if (getenv("DoRemote"))
-    {
-        m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Name, m_OpenMode, RowMajorOrdering);
-    }
+        m_dataIsRemote = true;
+    if (getenv("DoRemote"))
+        m_dataIsRemote = true;
 }
 
 void BP5Reader::InitParameters()

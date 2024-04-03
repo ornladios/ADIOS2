@@ -23,7 +23,6 @@ void ZFPRate1D(const std::string rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRZFPOdd1D_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -42,6 +41,9 @@ void ZFPRate1D(const std::string rate)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRZFPOdd1D_" + rate + "_MPI.bp");
+#else
+    const std::string fname("BPWRZFPOdd1D_" + rate + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -169,7 +171,6 @@ void ZFPRate2D(const std::string rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRZFPOdd2D_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -189,6 +190,9 @@ void ZFPRate2D(const std::string rate)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRZFPOdd2D_" + rate + "_MPI.bp");
+#else
+    const std::string fname("BPWRZFPOdd2D_" + rate + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -318,7 +322,6 @@ void ZFPRate3D(const std::string rate)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRZFPOdd3D_" + rate + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -339,6 +342,9 @@ void ZFPRate3D(const std::string rate)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRZFPOdd3D_" + rate + "_MPI.bp");
+#else
+    const std::string fname("BPWRZFPOdd3D_" + rate + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI

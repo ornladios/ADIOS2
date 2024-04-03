@@ -79,9 +79,6 @@ size_t GetAndPrintBufferSize(adios2::Engine &engine, const std::string &info,
 // Put(Sync) and Put(Deferred) should have the same buffer consumption
 TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
 {
-    std::string fnameSync = "ADIOS2BPBufferSizeSync.bp";
-    std::string fnameDeferred = "ADIOS2BPBufferSizeDeferred.bp";
-    std::string fnameDeferredPP = "ADIOS2BPBufferSizeDeferredPP.bp";
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
     const std::size_t Nx = 10485760; // 10M elements, 80MB variable
@@ -94,6 +91,14 @@ TEST_F(BPBufferSizeTest, SyncDeferredIdenticalUsage)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    std::string fnameSync = "ADIOS2BPBufferSizeSync_MPI.bp";
+    std::string fnameDeferred = "ADIOS2BPBufferSizeDeferred_MPI.bp";
+    std::string fnameDeferredPP = "ADIOS2BPBufferSizeDeferredPP_MPI.bp";
+#else
+    std::string fnameSync = "ADIOS2BPBufferSizeSync.bp";
+    std::string fnameDeferred = "ADIOS2BPBufferSizeDeferred.bp";
+    std::string fnameDeferredPP = "ADIOS2BPBufferSizeDeferredPP.bp";
+
 #endif
 
     // Write test data using BP

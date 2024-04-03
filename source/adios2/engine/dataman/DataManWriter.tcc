@@ -31,10 +31,11 @@ void DataManWriter::PutSyncCommon(Variable<T> &variable, const T *values)
 template <class T>
 void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
 {
+    auto varMemSpace = variable.GetMemorySpace(values);
     variable.SetData(values);
     if (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor)
     {
-        m_Serializer.PutData(variable, m_Name, CurrentStep(), m_MpiRank, "");
+        m_Serializer.PutData(variable, m_Name, CurrentStep(), m_MpiRank, varMemSpace, "");
     }
     else
     {
@@ -49,7 +50,7 @@ void DataManWriter::PutDeferredCommon(Variable<T> &variable, const T *values)
         std::reverse(memstart.begin(), memstart.end());
         std::reverse(memcount.begin(), memcount.end());
         m_Serializer.PutData(variable.m_Data, variable.m_Name, shape, start, count, memstart,
-                             memcount, variable.m_MemSpace, m_Name, CurrentStep(), m_MpiRank, "",
+                             memcount, varMemSpace, m_Name, CurrentStep(), m_MpiRank, "",
                              variable.m_Operations);
     }
 

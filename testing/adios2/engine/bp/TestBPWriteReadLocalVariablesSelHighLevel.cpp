@@ -28,7 +28,6 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DSel)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadLocal1DSelHighLevel.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -40,6 +39,9 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DSel)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteReadLocal1DSelHighLevel_MPI.bp");
+#else
+    const std::string fname("BPWriteReadLocal1DSelHighLevel.bp");
 #endif
 
     // Write test data using BP
@@ -168,7 +170,6 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DSel)
 
 TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal2D2x4Sel)
 {
-    const std::string fname("BPWriteReadLocal2D2x4SelHighLevel.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -181,6 +182,9 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal2D2x4Sel)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteReadLocal2D2x4SelHighLevel_MPI.bp");
+#else
+    const std::string fname("BPWriteReadLocal2D2x4SelHighLevel.bp");
 #endif
 
     // Write test data using BP
@@ -332,7 +336,6 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DAllStepsSel)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWriteReadLocal1DAllStepsSelHighLevel.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -344,6 +347,9 @@ TEST_F(BPWriteReadLocalVariablesSelHighLevel, BPWriteReadLocal1DAllStepsSel)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWriteReadLocal1DAllStepsSelHighLevel_MPI.bp");
+#else
+    const std::string fname("BPWriteReadLocal1DAllStepsSelHighLevel.bp");
 #endif
 
     // Write test data using BP

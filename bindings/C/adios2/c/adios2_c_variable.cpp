@@ -77,6 +77,82 @@ adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims, con
     }
 }
 
+adios2::MemorySpace adios2_ToMemorySpace(const adios2_memory_space Cmem)
+{
+    adios2::MemorySpace mem = adios2::MemorySpace::Detect;
+    switch (Cmem)
+    {
+
+    case adios2_memory_space_host:
+        mem = adios2::MemorySpace::Host;
+        break;
+
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    case adios2_memory_space_gpu:
+        mem = adios2::MemorySpace::GPU;
+        break;
+#endif
+    default:
+        break;
+    }
+    return mem;
+}
+
+adios2_memory_space adios2_FromMemorySpace(const adios2::MemorySpace mem)
+{
+    adios2_memory_space Cmem = adios2_memory_space_detect;
+    switch (mem)
+    {
+
+    case adios2::MemorySpace::Host:
+        Cmem = adios2_memory_space_host;
+        break;
+
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    case adios2::MemorySpace::GPU:
+        Cmem = adios2_memory_space_gpu;
+        break;
+#endif
+    default:
+        break;
+    }
+    return Cmem;
+}
+
+adios2_error adios2_set_memory_space(adios2_variable *variable, const adios2_memory_space mem)
+{
+    try
+    {
+        adios2::core::VariableBase *variableBase =
+            reinterpret_cast<adios2::core::VariableBase *>(variable);
+        variableBase->SetMemorySpace(adios2_ToMemorySpace(mem));
+
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_set_memory_space"));
+    }
+}
+
+adios2_error adios2_get_memory_space(adios2_memory_space *mem, adios2_variable *variable)
+{
+    try
+    {
+        adios2::core::VariableBase *variableBase =
+            reinterpret_cast<adios2::core::VariableBase *>(variable);
+        *mem = adios2_FromMemorySpace(variableBase->m_MemSpace);
+
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_set_memory_space"));
+    }
+}
+
 adios2_error adios2_set_block_selection(adios2_variable *variable, const size_t block_id)
 {
     try
@@ -274,7 +350,8 @@ adios2_error adios2_variable_ndims(size_t *ndims, const adios2_variable *variabl
     }
 }
 
-adios2_error adios2_variable_shape(size_t *shape, const adios2_variable *variable)
+adios2_error adios2_variable_shape_with_memory_space(size_t *shape, const adios2_variable *variable,
+                                                     adios2_memory_space mem)
 {
     try
     {
@@ -296,7 +373,11 @@ adios2_error adios2_variable_shape(size_t *shape, const adios2_variable *variabl
     {                                                                                              \
         const adios2::core::Variable<T> *variable =                                                \
             dynamic_cast<const adios2::core::Variable<T> *>(variableBase);                         \
-        const adios2::Dims shapeCpp = variable->Shape(adios2::EngineCurrentStep);                  \
+        adios2::Dims shapeCpp;                                                                     \
+        if (mem == adios2_memory_space_host)                                                       \
+            shapeCpp = variable->Shape(adios2::EngineCurrentStep);                                 \
+        else                                                                                       \
+            shapeCpp = variable->Shape(adios2::EngineCurrentStep, adios2_ToMemorySpace(mem));      \
         std::copy(shapeCpp.begin(), shapeCpp.end(), shape);                                        \
     }
         ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
@@ -308,6 +389,11 @@ adios2_error adios2_variable_shape(size_t *shape, const adios2_variable *variabl
     {
         return static_cast<adios2_error>(adios2::helper::ExceptionToError("adios2_variable_shape"));
     }
+}
+
+adios2_error adios2_variable_shape(size_t *shape, const adios2_variable *variable)
+{
+    return adios2_variable_shape_with_memory_space(shape, variable, adios2_memory_space_host);
 }
 
 adios2_error adios2_variable_start(size_t *start, const adios2_variable *variable)

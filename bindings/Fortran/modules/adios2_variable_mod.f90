@@ -86,6 +86,22 @@ contains
 
     end subroutine
 
+    subroutine adios2_set_memory_space(variable, mem, ierr)
+        type(adios2_variable), intent(in) :: variable
+        integer, intent(in) :: mem
+        integer, intent(out) :: ierr
+
+        call adios2_set_memory_space_f2c(variable%f2c, mem, ierr)
+    end subroutine
+
+    subroutine adios2_get_memory_space(mem, variable, ierr)
+        integer, intent(out) :: mem
+        type(adios2_variable), intent(in) :: variable
+        integer, intent(out) :: ierr
+
+        call adios2_get_memory_space_f2c(mem, variable%f2c, ierr)
+    end subroutine
+
     subroutine adios2_set_shape(variable, ndims, shape_dims, ierr)
         type(adios2_variable), intent(in) :: variable
         integer, intent(in) :: ndims

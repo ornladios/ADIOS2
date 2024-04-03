@@ -79,6 +79,28 @@ void PluginOperator::PluginInit(const std::string &pluginName, const std::string
     m_Impl->m_Plugin = m_Impl->m_HandleCreate(m_Parameters);
 }
 
+size_t PluginOperator::GetEstimatedSize(const size_t ElemCount, const size_t ElemSize,
+                                        const size_t ndims, const size_t *dims) const
+{
+    // Need to calculate the size of the header written by Operate and then add our plugin's size.
+    constexpr size_t commonHeaderSize =
+        sizeof(m_TypeEnum) + sizeof(std::uint8_t) + sizeof(std::uint16_t);
+
+    auto &pp = m_Impl->m_PluginParams;
+    // Want to use std::transform_reduce but C++11
+    size_t paramsSize = 1; // for the number of parameters
+    for (auto &&p : pp)
+    {
+        // Need length and string for key and values.
+        paramsSize += p.first.size() + p.second.size() + 2;
+    }
+
+    // Plugin's estimate of size so it doesn't need to know about headers.
+    auto implSize = m_Impl->m_Plugin->GetEstimatedSize(ElemCount, ElemSize, ndims, dims);
+
+    return commonHeaderSize + paramsSize + implSize;
+}
+
 size_t PluginOperator::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
                                const DataType type, char *bufferOut)
 {

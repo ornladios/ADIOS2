@@ -15,6 +15,9 @@ macro(fortran_add_test_helper testname mpi)
     add_executable(${tgt} Test${testname}.F90)
     set_target_properties(${tgt} PROPERTIES LINKER_LANGUAGE Fortran)
     target_link_libraries(${tgt} adios2::fortran)
+    if (ADIOS2_HAVE_Derived_Variable)
+        target_compile_definitions(${tgt} PRIVATE -DADIOS2_HAVE_Derived_Variable=1)
+    endif()
     add_test(
       NAME ${pfx}${testname}.Serial
       COMMAND ${tgt}
@@ -26,6 +29,9 @@ macro(fortran_add_test_helper testname mpi)
     add_executable(${tgt} Test${testname}.F90)
     set_target_properties(${tgt} PROPERTIES LINKER_LANGUAGE Fortran)
     target_link_libraries(${tgt} adios2::fortran_mpi MPI::MPI_Fortran)
+    if (ADIOS2_HAVE_Derived_Variable)
+        target_compile_definitions(${tgt} PRIVATE -DADIOS2_HAVE_Derived_Variable=1)
+    endif()
     add_test(
       NAME ${pfx}${testname}.MPI
       COMMAND ${MPIEXEC_COMMAND} $<TARGET_FILE:${tgt}>
@@ -54,6 +60,10 @@ fortran_add_test_helper(BPReadGlobalsByName MPI_ONLY)
 fortran_add_test_helper(BPWriteMemorySelectionRead2D MPI_ONLY)
 fortran_add_test_helper(BPWriteMemorySelectionRead3D MPI_ONLY)
 fortran_add_test_helper(NullEngine MPI_ONLY)
+fortran_add_test_helper(BPMemorySpace MPI_NONE)
+if(ADIOS2_HAVE_GPU_Support)
+  fortran_add_test_helper(BPMemorySpaceGPU MPI_NONE)
+endif()
 
 if(ADIOS2_HAVE_MPI)
   add_subdirectory(operation) 

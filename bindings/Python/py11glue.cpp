@@ -395,7 +395,8 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         .def("Name", &adios2::py11::Attribute::Name)
         .def("Type", &adios2::py11::Attribute::Type)
         .def("DataString", &adios2::py11::Attribute::DataString)
-        .def("Data", &adios2::py11::Attribute::Data);
+        .def("Data", &adios2::py11::Attribute::Data)
+        .def("SingleValue", &adios2::py11::Attribute::SingleValue);
 
     pybind11::class_<adios2::py11::Engine>(m, "Engine")
         // Python 2

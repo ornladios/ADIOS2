@@ -45,7 +45,11 @@ public:
 
 TEST_F(ADIOS2_C_API, ADIOS2BPWriteTypes)
 {
+#if ADIOS2_USE_MPI
+    const char fname[] = "ADIOS2_C_API.ADIOS2BPWriteTypes_MPI.bp";
+#else
     const char fname[] = "ADIOS2_C_API.ADIOS2BPWriteTypes.bp";
+#endif
     // write
     {
         // IO
@@ -408,7 +412,11 @@ std::string adios2_engine_name_as_string(adios2_engine *engineH)
 
 TEST_F(ADIOS2_C_API_IO, Engine)
 {
+#if ADIOS2_USE_MPI
+    const char fname[] = "ADIOS2_C_API_IO.engine_MPI.bp";
+#else
     const char fname[] = "ADIOS2_C_API_IO.engine.bp";
+#endif
     int ierr;
 
     ierr = adios2_set_engine(ioH, "bpfile");

@@ -11,7 +11,7 @@ VariableDerived::VariableDerived(const std::string &name, adios2::derived::Expre
                                  const DerivedVarType varType)
 : VariableBase(name, exprType, helper::GetDataTypeSize(exprType), expr.GetShape(), expr.GetStart(),
                expr.GetCount(), isConstant),
-  m_Expr(expr), m_DerivedType(varType)
+  m_DerivedType(varType), m_Expr(expr)
 {
 }
 
@@ -27,15 +27,15 @@ void VariableDerived::UpdateExprDim(std::map<std::string, std::tuple<Dims, Dims,
 }
 
 std::vector<std::tuple<void *, Dims, Dims>>
-VariableDerived::ApplyExpression(std::map<std::string, MinVarInfo> NameToMVI)
+VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &NameToMVI)
 {
     size_t numBlocks = 0;
     // check that all variables have the same number of blocks
-    for (auto variable : NameToMVI)
+    for (const auto &variable : NameToMVI)
     {
         if (numBlocks == 0)
-            numBlocks = variable.second.BlocksInfo.size();
-        if (numBlocks != variable.second.BlocksInfo.size())
+            numBlocks = variable.second->BlocksInfo.size();
+        if (numBlocks != variable.second->BlocksInfo.size())
             helper::Throw<std::invalid_argument>("Core", "VariableDerived", "ApplyExpression",
                                                  " variables do not have the same number of blocks "
                                                  " in computing the derived variable " +
@@ -44,7 +44,7 @@ VariableDerived::ApplyExpression(std::map<std::string, MinVarInfo> NameToMVI)
 
     std::map<std::string, std::vector<adios2::derived::DerivedData>> inputData;
     // create the map between variable name and DerivedData object
-    for (auto variable : NameToMVI)
+    for (const auto &variable : NameToMVI)
     {
         // add the dimensions of all blocks into a vector
         std::vector<adios2::derived::DerivedData> varData;
@@ -52,13 +52,13 @@ VariableDerived::ApplyExpression(std::map<std::string, MinVarInfo> NameToMVI)
         {
             Dims start;
             Dims count;
-            for (size_t d = 0; d < variable.second.Dims; d++)
+            for (int d = 0; d < variable.second->Dims; d++)
             {
-                start.push_back(variable.second.BlocksInfo[i].Start[d]);
-                count.push_back(variable.second.BlocksInfo[i].Count[d]);
+                start.push_back(variable.second->BlocksInfo[i].Start[d]);
+                count.push_back(variable.second->BlocksInfo[i].Count[d]);
             }
             varData.push_back(adios2::derived::DerivedData(
-                {variable.second.BlocksInfo[i].BufferP, start, count}));
+                {variable.second->BlocksInfo[i].BufferP, start, count}));
         }
         inputData.insert({variable.first, varData});
     }

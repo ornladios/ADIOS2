@@ -28,7 +28,6 @@ TEST_F(BPWriteReadMGARDMDR, BPWRMGARD1D)
 {
     // Refactor a dataset with MDR, then
     // read back with various accuracies
-    const std::string fname("BPWRMGARDMDR1D.bp");
 
     int mpiRank = 0, mpiSize = 1;
     const size_t Nx = 30000; // 100k minimum data size for MDR
@@ -49,6 +48,9 @@ TEST_F(BPWriteReadMGARDMDR, BPWRMGARD1D)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRMGARDMDR1D_MPI.bp");
+#else
+    const std::string fname("BPWRMGARDMDR1D.bp");
 #endif
 
 #if ADIOS2_USE_MPI

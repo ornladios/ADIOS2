@@ -30,6 +30,22 @@ extern "C" {
 adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims, const size_t *shape);
 
 /**
+ * Sets the memory space for all following Puts/Gets
+ * to either host (default) or device
+ * @param mem memory space where Put/Get buffers are allocated
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_set_memory_space(adios2_variable *variable, const adios2_memory_space mem);
+
+/**
+ * Get the memory space that was set by the application for a given variable
+ * @param memory space output, the variable memory space
+ * @param variable handler
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_get_memory_space(adios2_memory_space *mem, adios2_variable *variable);
+
+/**
  * Read mode only. Required for reading local variables. For Global Arrays it
  * will Set
  * the appropriate Start and Count Selection for the global array
@@ -139,6 +155,16 @@ adios2_error adios2_variable_ndims(size_t *ndims, const adios2_variable *variabl
  * @return adios2_error 0: success, see enum adios2_error for errors
  */
 adios2_error adios2_variable_shape(size_t *shape, const adios2_variable *variable);
+
+/**
+ * Retrieve current variable shape for a given memory space
+ * @param shape output, must be pre-allocated with ndims
+ * @param variable handler
+ * @param memory space
+ * @return adios2_error 0: success, see enum adios2_error for errors
+ */
+adios2_error adios2_variable_shape_with_memory_space(size_t *shape, const adios2_variable *variable,
+                                                     const adios2_memory_space mem);
 
 /**
  * Retrieve current variable start

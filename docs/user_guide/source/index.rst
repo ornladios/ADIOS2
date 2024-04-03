@@ -30,6 +30,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    operators/operators
    api_full/api_full
    api_high/api_high
+   api_python/api_python
 
 .. toctree::
    :caption: Advanced Topics
@@ -39,6 +40,7 @@ Funded by the `Exascale Computing Project (ECP) <https://www.exascaleproject.org
    advanced/gpu_aware
    advanced/query
    advanced/plugins
+   advanced/campaign_management
    advanced/ecp_hardware
 
 .. toctree::

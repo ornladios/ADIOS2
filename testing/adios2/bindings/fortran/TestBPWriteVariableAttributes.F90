@@ -34,13 +34,16 @@ program TestBPWriteVariableAttributes
     ! Failed with ci/circleci: suse-pgi-openmpi (exceptions trigger abort)
 !    call adios2_define_attribute(failed_att, ioWrite, 'att_String', &
 !                                 'ADIOS2 String attribute', 'myVar2', '/', ierr)
-!    if(ierr == 0) stop 'myVar2 does not exist, should not create attribute att_String'
+!    if(ierr == 0) then 'myVar2 does not exist, should not create attribute att_String'
 !    if(failed_att%valid .eqv. .true.) then
 !        stop 'failed attribute must not exist '
 !    end if
 
     do i=1,14
-        if( attributes(i)%valid .eqv. .true. ) stop 'Invalid attribute default'
+       if( attributes(i)%valid .eqv. .true. ) then
+          write(*,*) 'Invalid attribute default'
+          stop 1
+       end if
     end do
 
     ! single value
@@ -89,7 +92,10 @@ program TestBPWriteVariableAttributes
                                  data_R64, 3, var%name, ierr)
 
     do i=1,14
-        if( attributes(i)%valid .eqv. .false. ) stop 'Invalid adios2_define_attribute'
+       if( attributes(i)%valid .eqv. .false. ) then
+          write(*,*) 'Invalid adios2_define_attribute'
+          stop 1
+       end if
     end do
 
     call adios2_open(bpWriter, ioWrite, "fvarattr_types.bp", adios2_mode_write, &

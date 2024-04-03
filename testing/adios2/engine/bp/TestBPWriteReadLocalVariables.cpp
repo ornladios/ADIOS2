@@ -29,7 +29,6 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadLocal1D.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -41,6 +40,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1D)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteReadLocal1D_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteReadLocal1D.bp");
 #endif
 
     // Write test data using BP
@@ -418,7 +420,6 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D2x4)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadLocal2D2x4.bp");
 
     int mpiRank = 0, mpiSize = 1;
     const size_t Nx = 4;
@@ -430,6 +431,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D2x4)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteReadLocal2D2x4_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteReadLocal2D2x4.bp");
 #endif
 
     // Write test data using BP
@@ -793,7 +797,6 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D4x2)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadLocal2D4x2.bp");
 
     int mpiRank = 0, mpiSize = 1;
     const size_t Nx = 2;
@@ -805,6 +808,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2D4x2)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteReadLocal2D4x2_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteReadLocal2D4x2.bp");
 #endif
 
     // Write test data using BP
@@ -1169,7 +1175,6 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DAllSteps)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadLocal1DAllSteps.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -1181,6 +1186,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DAllSteps)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteReadLocal1DAllSteps_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteReadLocal1DAllSteps.bp");
 #endif
 
     // Write test data using BP
@@ -1443,7 +1451,6 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DBlockInfo)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteReadLocal1DBlockInfo.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -1455,6 +1462,9 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DBlockInfo)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteReadLocal1DBlockInfo_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteReadLocal1DBlockInfo.bp");
 #endif
 
     // Write test data using BP
@@ -1721,13 +1731,14 @@ TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal1DSubFile)
 TEST_F(BPWriteReadLocalVariables, ADIOS2BPWriteReadLocal2DChangeCount)
 {
 
-    const std::string fname("BPWRLocal2DChangeCount_" + engineName + ".bp");
-
     int mpiRank = 0;
     int mpiSize = 1;
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRLocal2DChangeCount_" + engineName + "_MPI.bp");
+#else
+    const std::string fname("BPWRLocal2DChangeCount_" + engineName + ".bp");
 #endif
 
     const size_t Nx0 = static_cast<size_t>(std::pow(2 - mpiRank, 2)) + 1;

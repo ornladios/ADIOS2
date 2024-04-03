@@ -292,7 +292,6 @@ void CUDAWriteReadMemorySelection()
 
 void CUDAWriteReadMPI1D(const std::string mode)
 {
-    const std::string fname("BPWRCU1D_" + mode + ".bp");
     adios2::Mode ioMode = adios2::Mode::Deferred;
     if (mode == "Sync")
         ioMode = adios2::Mode::Sync;
@@ -306,6 +305,9 @@ void CUDAWriteReadMPI1D(const std::string mode)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRCU1D_" + mode + "_MPI.bp");
+#else
+    const std::string fname("BPWRCU1D_" + mode + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
