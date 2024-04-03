@@ -55,7 +55,8 @@ Dims SameDimsFunc(std::vector<Dims> input)
     if (input.size() > 1)
     {
         Dims first_element = input[0];
-        bool dim_are_equal = std::all_of(input.begin() + 1, input.end(), [&first_element](Dims x) { return x == first_element; });
+        bool dim_are_equal = std::all_of(input.begin() + 1, input.end(),
+                                         [&first_element](Dims x) { return x == first_element; });
         if (!dim_are_equal)
             helper::Throw<std::invalid_argument>("Derived", "Function", "SameDimsFunc",
                                                  "Invalid variable dimensions");
@@ -71,7 +72,8 @@ Dims CurlDimsFunc(std::vector<Dims> input)
     if (input.size() > 1)
     {
         Dims first_element = input[0];
-        bool dim_are_equal = std::all_of(input.begin() + 1, input.end(), [&first_element](Dims x) { return x == first_element; });
+        bool dim_are_equal = std::all_of(input.begin() + 1, input.end(),
+                                         [&first_element](Dims x) { return x == first_element; });
         if (!dim_are_equal)
             helper::Throw<std::invalid_argument>("Derived", "Function", "CurlDimsFunc",
                                                  "Invalid variable dimensions");
