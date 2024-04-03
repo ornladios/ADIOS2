@@ -1243,7 +1243,8 @@ void BP5Reader::DoClose(const int transportIndex)
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Close");
     if (m_OpenMode == Mode::ReadRandomAccess)
     {
-        PerformGets();
+        //TODODG
+       // PerformGets();
     }
     else if (m_BetweenStepPairs)
     {

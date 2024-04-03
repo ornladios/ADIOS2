@@ -261,7 +261,8 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
     // because we were cancelled.
     //
     Finished();
-    delete this;
+    //TODODG
+    //delete this;
 }
 
 /******************************************************************************/
@@ -357,6 +358,12 @@ Xrootd::GetHandle Xrootd::Get(char *VarName, size_t Step, size_t BlockID, Dims &
     // response is ready or an error occured our callback is invoked.
     //
     clUI.ssiService->ProcessRequest(*reqP, rSpec);
+    //thread synchronization
+    sleep(1);
+    //copy
+    int len;
+    char* req = reqP->GetRequest(len);
+    memcpy(dest, req, len);
 #endif
     return 0;
 }
