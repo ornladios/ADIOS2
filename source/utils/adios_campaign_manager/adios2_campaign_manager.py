@@ -59,9 +59,8 @@ def SetupArgs():
     parser.add_argument(
         "--campaign_store", "-s", help="Path to local campaign store", default=None
     )
-    parser.add_argument(
-        "--hostname", "-n", help="Host name unique for hosts in a campaign", required=False
-    )
+    parser.add_argument("--hostname", "-n", help="Host name unique for hosts in a campaign")
+    parser.add_argument("-f", "--files", nargs="+", help="Add ADIOS files manually")
     args = parser.parse_args()
 
     # default values
@@ -77,6 +76,9 @@ def SetupArgs():
         while args.campaign_store[-1] == "/":
             args.campaign_store = args.campaign_store[:-1]
 
+    if args.hostname is None:
+        args.hostname = args.user_options.hostname
+
     args.CampaignFileName = args.campaign
     if args.campaign is not None:
         if not args.campaign.endswith(".aca"):
@@ -86,7 +88,8 @@ def SetupArgs():
                 args.campaign_store is not None):
             args.CampaignFileName = args.campaign_store + "/" + args.CampaignFileName
 
-    args.LocalCampaignDir = "adios-campaign/"
+    if args.files is None:
+        args.LocalCampaignDir = "adios-campaign/"
 
     if args.verbose > 0:
         print(f"# Verbosity = {args.verbose}")
@@ -213,27 +216,23 @@ def AddDatasetToArchive(hostID: int, dirID: int, dataset: str, cur: sqlite3.Curs
     return rowID
 
 
-def ProcessDBFile(args: dict, jsonlist: list, cur: sqlite3.Cursor, hostID: int, dirID: int):
-    for entry in jsonlist:
-        # print(f"Process entry {entry}:")
-        if isinstance(entry, dict):
-            if "name" in entry:
-                dsID = 0
-                dataset = entry["name"]
-                if IsADIOSDataset(dataset):
-                    dsID = AddDatasetToArchive(hostID, dirID, dataset, cur)
-                    cwd = getcwd()
-                    chdir(dataset)
-                    mdFileList = glob.glob("*md.*")
-                    profileList = glob.glob("profiling.json")
-                    files = mdFileList + profileList
-                    for f in files:
-                        AddFileToArchive(args, f, cur, dsID)
-                    chdir(cwd)
-                else:
-                    print(f"WARNING: Dataset {dataset} is not an ADIOS dataset. Skip")
+def ProcessFiles(args: dict, cur: sqlite3.Cursor, hostID: int, dirID: int):
+    for entry in args.files:
+        print(f"Process entry {entry}:")
+        dsID = 0
+        dataset = entry
+        if IsADIOSDataset(dataset):
+            dsID = AddDatasetToArchive(hostID, dirID, dataset, cur)
+            cwd = getcwd()
+            chdir(dataset)
+            mdFileList = glob.glob("*md.*")
+            profileList = glob.glob("profiling.json")
+            files = mdFileList + profileList
+            for f in files:
+                AddFileToArchive(args, f, cur, dsID)
+            chdir(cwd)
         else:
-            print(f"WARNING: your object is not a dictionary, skip : {entry}")
+            print(f"WARNING: Dataset {dataset} is not an ADIOS dataset. Skip")
 
 
 def GetHostName():
@@ -242,7 +241,7 @@ def GetHostName():
         host = sub("^login[0-9]*\\.", "", host)
     if host.startswith("batch"):
         host = sub("^batch[0-9]*\\.", "", host)
-    if args.user_options.hostname is None:
+    if args.hostname is None:
         shorthost = host.split(".")[0]
     else:
         shorthost = args.user_options.hostname
@@ -278,7 +277,7 @@ def MergeDBFiles(dbfiles: list):
             print(e)
         record = cur.fetchall()
         for item in record:
-            result.append({"name": item[0]})
+            result.append(item[0])
         cur.close()
     return result
 
@@ -305,13 +304,9 @@ def Update(args: dict, cur: sqlite3.Cursor):
 
     rootdir = getcwd()
     dirID = AddDirectory(hostID, rootdir)
-
     con.commit()
 
-    db_list = MergeDBFiles(dbFileList)
-
-    # print(f"Merged json = {jsonlist}")
-    ProcessDBFile(args, db_list, cur, hostID, dirID)
+    ProcessFiles(args, cur, hostID, dirID)
 
     con.commit()
 
@@ -440,12 +435,14 @@ if __name__ == "__main__":
     if args.command == "info":
         Info(args, cur)
     else:
-        CheckLocalCampaignDir(args)
-        # List the local campaign directory
-        dbFileList = glob.glob(args.LocalCampaignDir + "/*.db")
-        if len(dbFileList) == 0:
-            print("There are no campaign data files in  " + args.LocalCampaignDir)
-            exit(2)
+        if args.files is None:
+            CheckLocalCampaignDir(args)
+            # List the local campaign directory
+            dbFileList = glob.glob(args.LocalCampaignDir + "/*.db")
+            if len(dbFileList) == 0:
+                print("There are no campaign data files in  " + args.LocalCampaignDir)
+                exit(2)
+            args.files = MergeDBFiles(dbFileList)
 
         if args.command == "create":
             Create(args, cur)
