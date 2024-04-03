@@ -8,9 +8,10 @@
 #endif
 #ifdef HAVE_WINDOWS_H
 #define FD_SETSIZE 1024
+
 #include <winsock2.h>
-#include <Ws2def.h>
 #include <ws2tcpip.h>
+#include <windows.h>
 #define __ANSI_CPP__
 #ifndef INET_ADDRSTRLEN
 #define INET_ADDRSTRLEN 50
