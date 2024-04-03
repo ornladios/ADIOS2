@@ -32,11 +32,11 @@ template <class T>
 T linear_interp(T *data, size_t index, size_t count, size_t stride = 1);
 
 Dims SameDimsFunc(std::vector<Dims> input);
-Dims AggrSameDimsFunc(std::vector<Dims> input);
+Dims CurlDimsFunc(std::vector<Dims> input);
 
 const std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
     {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, AggrSameDimsFunc}},
+    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc}},
     {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc}}};
 
 template <class T>

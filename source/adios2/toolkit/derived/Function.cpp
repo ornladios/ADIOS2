@@ -54,9 +54,10 @@ Dims SameDimsFunc(std::vector<Dims> input)
     // check that all dimenstions are the same
     if (input.size() > 1)
     {
-        bool dim_are_equal = std::equal(input.begin() + 1, input.end(), input.begin());
+        Dims first_element = input[0];
+        bool dim_are_equal = std::all_of(input.begin() + 1, input.end(), [&first_element](Dims x) { return x == first_element; });
         if (!dim_are_equal)
-            helper::Throw<std::invalid_argument>("Derived", "Function", "SameDimFunc",
+            helper::Throw<std::invalid_argument>("Derived", "Function", "SameDimsFunc",
                                                  "Invalid variable dimensions");
     }
     // return the first dimension
@@ -64,14 +65,15 @@ Dims SameDimsFunc(std::vector<Dims> input)
 }
 
 // Input Dims are the same, output is combination of all inputs
-Dims AggrSameDimsFunc(std::vector<Dims> input)
+Dims CurlDimsFunc(std::vector<Dims> input)
 {
     // check that all dimenstions are the same
     if (input.size() > 1)
     {
-        bool dim_are_equal = std::equal(input.begin() + 1, input.end(), input.begin());
+        Dims first_element = input[0];
+        bool dim_are_equal = std::all_of(input.begin() + 1, input.end(), [&first_element](Dims x) { return x == first_element; });
         if (!dim_are_equal)
-            helper::Throw<std::invalid_argument>("Derived", "Function", "AggrSameDimFunc",
+            helper::Throw<std::invalid_argument>("Derived", "Function", "CurlDimsFunc",
                                                  "Invalid variable dimensions");
     }
     // return original dimensions with added dimension of number of inputs
