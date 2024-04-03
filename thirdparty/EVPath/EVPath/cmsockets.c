@@ -5,6 +5,7 @@
 #ifdef HAVE_WINDOWS_H
 #define FD_SETSIZE 1024
 #include <winsock2.h>
+#include <ws2tcpip.h>
 #include <windows.h>
 #include <process.h>
 #include <time.h>
@@ -48,8 +49,6 @@
 #include <net/if.h>
 #include <sys/ioctl.h>
 #include <errno.h>
-#else
-#include <ws2tcpip.h>
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

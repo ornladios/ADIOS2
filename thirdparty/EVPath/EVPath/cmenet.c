@@ -52,11 +52,13 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 #else
-#include <windows.h>
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
-#include <ws2tcpip.h>
+#include <winsock2.h>
+#include <Ws2def.h>
+/* #include <ws2tcpip.h> */
+#include <windows.h>
 #endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
