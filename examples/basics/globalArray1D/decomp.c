@@ -54,7 +54,7 @@ void decomp_1d(size_t *globalsize, size_t *myoffset, size_t *mysize)
     size_t rem;
     *mysize = *globalsize / nproc;
     rem = *globalsize - (nproc * *mysize);
-    if (rank < rem)
+    if (rank < (int) rem)
     {
         *mysize = *mysize + 1;
         *myoffset = rank * *mysize;
