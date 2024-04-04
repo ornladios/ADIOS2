@@ -397,9 +397,8 @@ static void UcxProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Strea
         if (status != UCS_OK)
         {
             Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
-                          "UCX Error during ucp_ep_create() with: %s.\n",
+                          "UCX Error during ucp_ep_create() with: %s. Let's ignore....\n",
                           ucs_status_string(status));
-            return;
         }
         Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,
                       "Received contact info for WS_stream %p, WSR Rank %d\n",
