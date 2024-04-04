@@ -10,7 +10,7 @@ if (NOT ADIOS2_USE_PIP)
     PRIVATE $<$<PLATFORM_ID:Windows>:shlwapi>)
 
   get_property(pugixml_headers_path
-    TARGET pugixml
+    TARGET adios2::thirdparty::pugixml
     PROPERTY INTERFACE_INCLUDE_DIRECTORIES
   )
 
