@@ -243,8 +243,8 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
     if (dlen > 0)
     {
         totbytes += dlen;
-        if (clUI.doEcho && dlen < 80)
-            fwrite(buff, dlen, 1, XrdSsiCl::outFile);
+    /*    if (clUI.doEcho && dlen < 80)
+            fwrite(buff, dlen, 1, XrdSsiCl::outFile); */
         responseBuffer = new char [dlen];
         responseBufferLen = dlen;
         memcpy(responseBuffer, buff, dlen);
