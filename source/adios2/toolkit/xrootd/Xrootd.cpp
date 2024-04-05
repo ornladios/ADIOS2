@@ -100,6 +100,9 @@ public:
     }
 
     static myRequest *currentRequest;
+    //TODODG private
+    char *responseBuffer;
+    int responseBufferLen;
 
 private:
     XrdSsiResource rSpec;
@@ -242,6 +245,9 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
         totbytes += dlen;
         if (clUI.doEcho && dlen < 80)
             fwrite(buff, dlen, 1, XrdSsiCl::outFile);
+        responseBuffer = new char [dlen];
+        responseBufferLen = dlen;
+        memcpy(responseBuffer, buff, dlen);
     }
 
     // Now we check if we need to ask for more data. If last is false, we do!
@@ -261,8 +267,7 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
     // because we were cancelled.
     //
     Finished();
-    //TODODG
-    //delete this;
+ //   delete this;
 }
 
 /******************************************************************************/
@@ -360,10 +365,9 @@ Xrootd::GetHandle Xrootd::Get(char *VarName, size_t Step, size_t BlockID, Dims &
     clUI.ssiService->ProcessRequest(*reqP, rSpec);
     //thread synchronization
     sleep(1);
-    //copy
-    int len;
-    char* req = reqP->GetRequest(len);
-    memcpy(dest, req, len);
+    memcpy(dest, reqP->responseBuffer, reqP->responseBufferLen);
+    //TODODG
+    // memory?
 #endif
     return 0;
 }

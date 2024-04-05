@@ -1243,8 +1243,8 @@ void BP5Reader::DoClose(const int transportIndex)
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Close");
     if (m_OpenMode == Mode::ReadRandomAccess)
     {
-        //TODODG
-       // PerformGets();
+        //TODODG do not make it by xrootd
+        //PerformGets();
     }
     else if (m_BetweenStepPairs)
     {
