@@ -76,8 +76,8 @@ private:
     /* if filename is very lomg, we can get lout from array boundaries */
     std::string request_template = "GET %s HTTP/1.1\r\nHost: %s\r\nRange: bytes=%d-%d\r\n\r\n";
     std::string m_hostname = "localhost";
-    int m_server_port = 9999;
 #ifdef ADIOS_SOCKET_LINUX
+    int m_server_port = 9999;
     struct sockaddr_in sockaddr_in;
 #endif
     /* protocol number */
