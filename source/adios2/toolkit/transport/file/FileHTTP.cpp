@@ -69,10 +69,11 @@ void FileHTTP::Open(const std::string &name, const Mode openMode, const bool asy
                                               "error: inet_addr " +
                                                   std::string(*(hostent->h_addr_list)));
     }
+#ifdef ADIOS_SOCKET_LINUX
     sockaddr_in.sin_addr.s_addr = in_addr;
     sockaddr_in.sin_family = AF_INET;
     sockaddr_in.sin_port = htons(m_server_port);
-
+#endif
     return;
 }
 
@@ -201,12 +202,14 @@ void FileHTTP::Read(char *buffer, size_t size, size_t start)
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "Read",
                                               "cannot open socket");
     }
+#ifdef ADIOS_SOCKET_LINUX
     /* Actually connect. */
     if (connect(m_socketFileDescriptor, (struct sockaddr *)&sockaddr_in, sizeof(sockaddr_in)) == -1)
     {
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "Read",
                                               "cannot connect");
     }
+#endif
     /* Send HTTP request. */
     int nbytes_total = 0;
     while (nbytes_total < request_len)
@@ -263,12 +266,14 @@ size_t FileHTTP::GetSize()
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "GetSize",
                                               "cannot bind socket");
     }
+#ifdef ADIOS_SOCKET_LINUX
     /* Actually connect. */
     if (connect(m_socketFileDescriptor, (struct sockaddr *)&sockaddr_in, sizeof(sockaddr_in)) == -1)
     {
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "GetSize",
                                               "cannot connect");
     }
+#endif
     /* Send HTTP request. */
     int nbytes_total = 0;
     while (nbytes_total < request_len)

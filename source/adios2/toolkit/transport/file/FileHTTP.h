@@ -12,7 +12,9 @@
 
 #include "../Transport.h"
 #include "adios2/common/ADIOSConfig.h"
+#ifdef ADIOS_SOCKET_LINUX
 #include <netinet/in.h>
+#endif
 
 namespace adios2
 {
@@ -75,7 +77,9 @@ private:
     std::string request_template = "GET %s HTTP/1.1\r\nHost: %s\r\nRange: bytes=%d-%d\r\n\r\n";
     std::string m_hostname = "localhost";
     int m_server_port = 9999;
+#ifdef ADIOS_SOCKET_LINUX
     struct sockaddr_in sockaddr_in;
+#endif
     /* protocol number */
     int m_p_proto;
 
