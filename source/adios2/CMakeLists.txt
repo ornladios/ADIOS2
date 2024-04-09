@@ -229,7 +229,7 @@ target_compile_features(adios2_core PUBLIC "$<BUILD_INTERFACE:${ADIOS2_CXX11_FEA
 
 
 target_sources(adios2_core PRIVATE toolkit/transport/file/FilePOSIX.cpp)
-if(UNIX) 
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   target_sources(adios2_core PRIVATE toolkit/transport/file/FileHTTP.cpp)
 endif()
 
