@@ -338,7 +338,7 @@ Xrootd::GetHandle Xrootd::Get(char *VarName, size_t Step, size_t BlockID, Dims &
     XrdSsiResource rSpec((std::string)rName);
     myRequest *reqP;
     //TODODG
-    char reqData[512] = "get a myVector_cpp.bp";
+    const std::string reqData = "get " + fileName + " " +  std::string (VarName);
 
     // The first step is to define the resource we will be using. So, just
     // initialize a resource object. It need only to exist during ProcessRequest()
@@ -351,13 +351,14 @@ Xrootd::GetHandle Xrootd::Get(char *VarName, size_t Step, size_t BlockID, Dims &
         rSpec.hAvoid = clUI.avoids;
     rSpec.affinity = clUI.affVal;
     rSpec.rOpts = clUI.resOpts;
-    reqLen = strlen(reqData) + 1;
+    reqLen = strlen(reqData.c_str()) + 1;
 
     // Normally, we would maintain a pool of request objects to avoid new/delete
     // calls. For our simple client we have no context so we simply always get a
     // new object.
     //
-    reqP = new myRequest(clUI, rName, GetReqID(), reqData, reqLen);
+    char* reqDataStr = strdup(reqData.c_str());
+    reqP = new myRequest(clUI, rName, GetReqID(), reqDataStr, reqLen);
     reqP->SetResource(rSpec);
     // We simply hand off the request to the service to deal with it. When a
     // response is ready or an error occured our callback is invoked.
