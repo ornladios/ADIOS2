@@ -317,7 +317,7 @@ void Xrootd::Open(const std::string hostname, const int32_t port, const std::str
                   const Mode mode, bool RowMajorOrdering)
 {
 #ifdef ADIOS2_HAVE_XROOTD
-
+    fileName = filename;
     const std::string  contact = hostname + ":" + std::to_string(port);
     clUI.cmdName = strdup("adios:");
     clUI.contact = strdup(contact.c_str());

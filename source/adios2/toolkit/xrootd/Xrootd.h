@@ -89,6 +89,7 @@ public:
     XrdSsiErrInfo eInfo;
 #endif
     int reqLen;
+    std::string fileName;
 
     Xrootd();
     ~Xrootd();
