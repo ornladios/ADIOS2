@@ -435,14 +435,13 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             *quest = 0;
         }
         // assume that a vaiable and step and are coming in the request string
-        std::string varName = "bpFloats";
         size_t dim1 = 10;
         size_t dim2 = 10;
         adios2::Box<adios2::Dims> sel1({0}, {dim2});
         std::vector<float> resBuffer;
         m_io = adios.DeclareIO("xtoord");
-        m_engine = m_io.Open(reqArgs, adios2::Mode::ReadRandomAccess);
-        adios2::Variable<float> var = m_io.InquireVariable<float>(varName.c_str());
+        m_engine = m_io.Open(reqData, adios2::Mode::ReadRandomAccess);
+        adios2::Variable<float> var = m_io.InquireVariable<float>(reqArgs);
         var.SetSelection(sel1);
         var.SetStepSelection({0, 1});
         m_engine.Get(var, resBuffer, adios2::Mode::Sync);
