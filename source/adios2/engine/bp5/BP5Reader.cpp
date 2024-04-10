@@ -272,26 +272,25 @@ std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan
 
 void BP5Reader::PerformGets()
 {
-    //TODODG
-    if (true)
+    switch (m_mode)
     {
+    case 0:
+        PerformLocalGets();
+        break;
+    case 1:
+        PerformRemoteGets();
+        break;
+    case 2:
         PerformXrootdGets();
-    } else
-    {
-        if (m_Remote)
-        {
-            PerformRemoteGets();
-        }
-        else
-        {
-            PerformLocalGets();
-        }
+        break;
+    default:
+        break;
+    }
 
-        // clear pending requests inside deserializer
-        {
-            std::vector<adios2::format::BP5Deserializer::ReadRequest> empty;
-            m_BP5Deserializer->FinalizeGets(empty);
-        }
+    // clear pending requests inside deserializer
+    {
+        std::vector<adios2::format::BP5Deserializer::ReadRequest> empty;
+        m_BP5Deserializer->FinalizeGets(empty);
     }
 }
 
@@ -502,10 +501,12 @@ void BP5Reader::Init()
     }
     else if (getenv("DoRemote"))
     {
+        m_mode = 1;
         m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Name, m_OpenMode, RowMajorOrdering);
     }
     else if (getenv("DoXrootd"))
     {
+        m_mode = 2;
         m_Xrootd.Open("localhost", 1094, m_Name, m_OpenMode, RowMajorOrdering);
     }
 }

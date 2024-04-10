@@ -419,7 +419,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         XrdSysThread::Run(&tid, SvWecho, (void *)this, 0, "wecho");
         return;
     }
-    if (!strcmp(reqData, "get"))
+    if (!strcmp(reqData, "get" ))
     {
         pthread_t tid;
         reqData = reqInfo.GetToken(&reqArgs);
@@ -456,7 +456,6 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         // olnly of a thread is finished
         return;
     }
-
     // Ok we don't know what this is
     //
     RespondErr("Invalid request.", EINVAL);
