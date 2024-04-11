@@ -247,7 +247,20 @@ void XrdSsiSvService::ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resR
     agent = new XrdSsiSvService(resRef.rName.c_str());
     agent->ProcessRequest4Me(&reqRef);
 }
+/******************************************************************************/
+/*         help function to split strings                                     */
+/******************************************************************************/
+std::vector<std::string> split (const std::string &s, char delim) {
+    std::vector<std::string> result;
+    std::stringstream ss (s);
+    std::string item;
 
+    while (getline (ss, item, delim)) {
+        result.push_back (item);
+    }
+
+    return result;
+}
 /******************************************************************************/
 /*                     P r o c e s s R e q u e s t 4 M e                      */
 /******************************************************************************/
@@ -426,24 +439,36 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         respDly = atoi(reqData);
         if (!reqArgs || !(*reqArgs))
         {
-            RespondErr("Echo string not specified.", EINVAL);
+            RespondErr("Arguments are expected", EINVAL);
             return;
         }
-        if ((quest = index(reqArgs, '?')))
-        {
-            Copy2Buff(respMeta, sizeof(respMeta), quest + 1, strlen(quest + 1) + 1);
-            *quest = 0;
-        }
-        // assume that a vaiable and step and are coming in the request string
-        size_t dim1 = 10;
-        size_t dim2 = 10;
-        adios2::Box<adios2::Dims> sel1({0}, {dim2});
+//        if ((quest = index(reqArgs, '?')))
+//        {
+//            Copy2Buff(respMeta, sizeof(respMeta), quest + 1, strlen(quest + 1) + 1);
+//            *quest = 0;
+//        }
+        /* parameters  name, step, blockID, count0, count1, count2, ...  start0, start1, start2 */
+        std::vector<std::string> requestParams = split (reqArgs, '&');
+
         std::vector<float> resBuffer;
         m_io = adios.DeclareIO("xtoord");
         m_engine = m_io.Open(reqData, adios2::Mode::ReadRandomAccess);
-        adios2::Variable<float> var = m_io.InquireVariable<float>(reqArgs);
-        var.SetSelection(sel1);
-        var.SetStepSelection({0, 1});
+        adios2::Variable<float> var = m_io.InquireVariable<float>(requestParams[0]);
+        size_t step = std::stoi(requestParams[1]);
+        var.SetStepSelection({step, step + 1});
+
+        size_t paramLength = (requestParams.size() - 3) / 2;
+        adios2::Dims s(paramLength);
+        adios2::Dims c(paramLength);
+        for (auto i = 0; i < paramLength; i++)
+        {
+            c[i] = std::stoi(requestParams[3 + i]);
+            s[i] = std::stoi(requestParams[3 + paramLength + i]);
+
+        }
+        adios2::Box<adios2::Dims> varSel(s, c);
+        var.SetSelection(varSel);
+
         m_engine.Get(var, resBuffer, adios2::Mode::Sync);
         size_t responseSize = resBuffer.size();
 
