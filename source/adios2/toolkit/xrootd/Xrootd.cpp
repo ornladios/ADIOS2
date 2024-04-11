@@ -337,8 +337,20 @@ Xrootd::GetHandle Xrootd::Get(char *VarName, size_t Step, size_t BlockID, Dims &
     char rName[512] = "/adios";
     XrdSsiResource rSpec((std::string)rName);
     myRequest *reqP;
-    //TODODG
-    const std::string reqData = "get " + fileName + " " +  std::string (VarName);
+    std::string reqData = "get " + fileName + " " +  std::string (VarName);
+    reqData += "&" + std::to_string(Step);
+    reqData += "&" + std::to_string(BlockID);
+
+    for (auto&  c : Count)
+    {
+        reqData += "&" + std::to_string(c);
+    }
+
+    for (auto&  s : Start)
+    {
+        reqData += "&" + std::to_string(s);
+    }
+
 
     // The first step is to define the resource we will be using. So, just
     // initialize a resource object. It need only to exist during ProcessRequest()
