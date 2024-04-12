@@ -45,6 +45,10 @@
 #include "XrdSsiSvStreamActive.hh"
 #include "XrdSsiSvStreamPassive.hh"
 
+#include "adios2/common/ADIOSMacros.h"
+#include "adios2/common/ADIOSTypes.h"
+#include "adios2/helper/adiosFunctions.h"
+
 using namespace std;
 
 /******************************************************************************/
@@ -450,35 +454,47 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         /* parameters  name, step, blockID, count0, count1, count2, ...  start0, start1, start2 */
         std::vector<std::string> requestParams = split (reqArgs, '&');
 
-        std::vector<float> resBuffer;
         m_io = adios.DeclareIO("xtoord");
         //const core::VarMap &zvariables = m_io.GetVariables();
         m_engine = m_io.Open(reqData, adios2::Mode::ReadRandomAccess);
         std::string VarName = requestParams[0];
         adios2::DataType TypeOfVar = m_io.InquireVariableType(VarName);
-        adios2::Variable<float> var = m_io.InquireVariable<float>(VarName);
-        size_t step = std::stoi(requestParams[1]);
-        var.SetStepSelection({step, step + 1});
-
-        size_t paramLength = (requestParams.size() - 3) / 2;
-        adios2::Dims s(paramLength);
-        adios2::Dims c(paramLength);
-        for (auto i = 0; i < paramLength; i++)
+        try
         {
-            c[i] = std::stoi(requestParams[3 + i]);
-            s[i] = std::stoi(requestParams[3 + paramLength + i]);
-
+            if (TypeOfVar == adios2::DataType::None)
+            {
+            }
+#define GET(T)                                                                                     \
+    else if (TypeOfVar == adios2::helper::GetDataType<T>())                                        \
+    {                                                                                              \
+        adios2::Variable<T> var = m_io.InquireVariable<T>(VarName);                                \
+        std::vector<T> resBuffer;                                                                  \
+        size_t step = std::stoi(requestParams[1]);                                                 \
+        var.SetStepSelection({step, step + 1});                                                    \
+        size_t paramLength = (requestParams.size() - 3) / 2;                                       \
+        adios2::Dims s(paramLength);                                                               \
+        adios2::Dims c(paramLength);                                                               \
+        for (auto i = 0; i < paramLength; i++)                                                     \
+        {                                                                                          \
+            c[i] = std::stoi(requestParams[3 + i]);                                                \
+            s[i] = std::stoi(requestParams[3 + paramLength + i]);                                  \
+        }                                                                                          \
+        adios2::Box<adios2::Dims> varSel(s, c);                                                    \
+        var.SetSelection(varSel);                                                                  \
+        m_engine.Get(var, resBuffer, adios2::Mode::Sync);                                          \
+        size_t responseSize = resBuffer.size();                                                    \
+        responseBuffer = new char[responseSize * sizeof(float)];                                   \
+        responseBufferSize = responseSize * sizeof(float);                                         \
+        memcpy(responseBuffer, resBuffer.data(), responseSize * sizeof(float));                    \
+        XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "get");                               \
+    }
+            ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
+#undef GET
         }
-        adios2::Box<adios2::Dims> varSel(s, c);
-        var.SetSelection(varSel);
-
-        m_engine.Get(var, resBuffer, adios2::Mode::Sync);
-        size_t responseSize = resBuffer.size();
-
-        responseBuffer = new char[responseSize * sizeof(float)];
-        responseBufferSize = responseSize * sizeof(float);
-        memcpy(responseBuffer, resBuffer.data(), responseSize * sizeof(float));
-        XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "get");
+    catch (const std::exception &exc)
+    {
+        RespondErr("Returning exception for Get ", EINVAL);
+    }
         // detached thread. Memory should not be deallocated yet,
         // olnly of a thread is finished
         return;
