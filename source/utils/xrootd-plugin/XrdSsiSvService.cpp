@@ -452,8 +452,11 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
 
         std::vector<float> resBuffer;
         m_io = adios.DeclareIO("xtoord");
+        //const core::VarMap &zvariables = m_io.GetVariables();
         m_engine = m_io.Open(reqData, adios2::Mode::ReadRandomAccess);
-        adios2::Variable<float> var = m_io.InquireVariable<float>(requestParams[0]);
+        std::string VarName = requestParams[0];
+        adios2::DataType TypeOfVar = m_io.InquireVariableType(VarName);
+        adios2::Variable<float> var = m_io.InquireVariable<float>(VarName);
         size_t step = std::stoi(requestParams[1]);
         var.SetStepSelection({step, step + 1});
 
