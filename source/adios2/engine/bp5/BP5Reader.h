@@ -90,10 +90,12 @@ private:
     size_t m_MetaMetaDataFileAlreadyReadSize = 0;
     /* How many bytes of meta-metadata have we already processed? */
     size_t m_MetaMetaDataFileAlreadyProcessedSize = 0;
+
     /* transport manager for managing the active flag file */
     transportman::TransportMan m_ActiveFlagFileManager;
     /* mode of read local, remote, xrootd */
     size_t m_mode = 0;
+    bool m_dataIsRemote = false;
     Remote m_Remote;
     Xrootd m_Xrootd;
     bool m_WriterIsActive = true;

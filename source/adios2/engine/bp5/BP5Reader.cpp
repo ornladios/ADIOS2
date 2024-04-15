@@ -272,6 +272,43 @@ std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan
 
 void BP5Reader::PerformGets()
 {
+    // if dataIsRemote is true and m_Remote is not true, this is our first time through
+    // PerformGets() Either we don't need a remote open (m_dataIsRemote=false), or we need to Open
+    // remote file (or die trying)
+    if (m_dataIsRemote && !m_Remote)
+    {
+        bool RowMajorOrdering = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
+
+        // If nothing is pending, don't open
+        if (m_BP5Deserializer->PendingGetRequests.size() == 0)
+            return;
+
+        if (!m_Parameters.RemoteDataPath.empty())
+        {
+            m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Parameters.RemoteDataPath,
+                          m_OpenMode, RowMajorOrdering);
+        }
+        else if (getenv("DoRemote"))
+        {
+            m_mode = 1;
+            m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Name, m_OpenMode,
+                          RowMajorOrdering);
+        }
+        else if (getenv("DoXrootd"))
+        {
+            m_mode = 2;
+            m_Xrootd.Open("localhost", RemoteCommon::ServerPort, m_Name, m_OpenMode,
+                          RowMajorOrdering);
+        }
+        if (!m_Remote && m_mode == 1)
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Engine", "BP5Reader", "OpenFiles",
+                "Remote file " + m_Name +
+                    " cannot be opened. Possible server or file specification error.");
+        }
+    }
+
     switch (m_mode)
     {
     case 0:
@@ -491,24 +528,11 @@ void BP5Reader::Init()
     OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
     UpdateBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
 
-    //  This isn't how we'll trigger remote ops in the end, but a temporary
-    //  solution
-    bool RowMajorOrdering = (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor);
+    // Don't try to open the remote file when we open local metadata.  Do that on demand.
     if (!m_Parameters.RemoteDataPath.empty())
-    {
-        m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Parameters.RemoteDataPath,
-                      m_OpenMode, RowMajorOrdering);
-    }
-    else if (getenv("DoRemote"))
-    {
-        m_mode = 1;
-        m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Name, m_OpenMode, RowMajorOrdering);
-    }
-    else if (getenv("DoXrootd"))
-    {
-        m_mode = 2;
-        m_Xrootd.Open("localhost", 1094, m_Name, m_OpenMode, RowMajorOrdering);
-    }
+        m_dataIsRemote = true;
+    if (getenv("DoRemote"))
+        m_dataIsRemote = true;
 }
 
 void BP5Reader::InitParameters()
@@ -1242,10 +1266,9 @@ void BP5Reader::DoGetStructDeferred(VariableStruct &variable, void *data)
 void BP5Reader::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Close");
-    if (m_OpenMode == Mode::ReadRandomAccess)
+    if (m_OpenMode == Mode::ReadRandomAccess && m_mode != 2)
     {
-        //TODODG do not make it by xrootd
-        //PerformGets();
+        PerformGets();
     }
     else if (m_BetweenStepPairs)
     {

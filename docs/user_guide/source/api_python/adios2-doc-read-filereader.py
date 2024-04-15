@@ -9,14 +9,18 @@ with FileReader("cfd.bp") as s:
         for key, value in info.items():
             print("\t" + key + ": " + value, end=" ")
         print()
+    print()
 
     nproc = s.read("nproc")
-    print(f"nproc is {nproc} of type {type(nproc)}")
+    print(f"nproc is {nproc} of type {type(nproc)} with ndim {nproc.ndim}")
 
     # read variables return a numpy array with corresponding selection
     steps = int(vars["physical_time"]["AvailableStepsCount"])
     physical_time = s.read("physical_time", step_selection=[0, steps])
-    print(f"physical_time is {physical_time} of type {type(physical_time)}")
+    print(
+        f"physical_time is {physical_time} of type {type(physical_time)} with "
+        f"ndim {physical_time.ndim} shape = {physical_time.shape}"
+    )
 
     steps = int(vars["temperature"]["AvailableStepsCount"])
     temperature = s.read("temperature", step_selection=[0, steps])
