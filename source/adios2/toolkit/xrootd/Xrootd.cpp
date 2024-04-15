@@ -40,7 +40,7 @@ FILE *outFile = outErr;
 /******************************************************************************/
 /*                      F i l e   L o c a l   I t e m s                       */
 /******************************************************************************/
-
+#ifdef ADIOS2_HAVE_XROOTD
 namespace
 {
 XrdSysMutex gMutex;
@@ -117,6 +117,7 @@ private:
     bool retry;
 };
 myRequest *myRequest::currentRequest = 0; // Pointer to current request
+
 /******************************************************************************/
 /*                      m y R e q u e s t : : A l e r t                       */
 /******************************************************************************/
@@ -307,6 +308,7 @@ XrdSsiClUI::XrdSsiClUI()
     cLine.Attach(STDIN_FILENO);
 }
 extern XrdSsiProvider *XrdSsiProviderClient;
+#endif
 namespace adios2
 {
 Xrootd::Xrootd() {
