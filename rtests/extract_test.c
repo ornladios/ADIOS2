@@ -19,6 +19,7 @@
 #define srand48(x)
 #define kill(x,y) TerminateProcess(OpenProcess(0, 0, (DWORD)x),y)
 #else
+#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #endif

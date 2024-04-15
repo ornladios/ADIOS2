@@ -114,10 +114,7 @@ static char*WSAerror_str(int err);
 #endif
 
 static void
-init_select_data(svc, sdp, cm)
-CMtrans_services svc;
-select_data_ptr *sdp;
-CManager cm;
+init_select_data(CMtrans_services svc, select_data_ptr *sdp, CManager cm)
 {
     select_data_ptr sd = malloc(sizeof(struct select_data));
     *sdp = sd;
@@ -157,9 +154,7 @@ typedef struct _periodic_task {
 } task_handle_s;
 
 static void
-free_epoll_data(svc, sdp)
-CMtrans_services svc;
-select_data_ptr *sdp;
+free_epoll_data(CMtrans_services svc, select_data_ptr *sdp)
 {
     periodic_task_handle tasks;
     select_data_ptr sd = *sdp;
@@ -184,10 +179,7 @@ select_data_ptr *sdp;
 	((tvp)->tv_usec cmp (uvp)->tv_usec))))
 
 static void
-set_soonest_timeout(timeout, task_list, now)
-struct timeval *timeout;
-periodic_task_handle task_list;
-struct timeval now;
+set_soonest_timeout(struct timeval *timeout, periodic_task_handle task_list, struct timeval now)
 {
     struct timeval this_delay;
     if (task_list == NULL) return;
@@ -210,10 +202,7 @@ struct timeval now;
 }
 
 static void
-increment_time(time, increment_sec, increment_usec)
-struct timeval *time;
-int increment_sec;
-int increment_usec;
+increment_time(struct timeval *time, int increment_sec, int increment_usec)
 {
     time->tv_usec += increment_usec;
     time->tv_sec += increment_sec;
@@ -227,11 +216,7 @@ static void
 shutdown_wake_mechanism(select_data_ptr sd);
 
 static void
-socket_select(svc, sd, timeout_sec, timeout_usec)
-CMtrans_services svc;
-select_data_ptr sd;
-int timeout_sec;
-int timeout_usec;
+socket_select(CMtrans_services svc, select_data_ptr sd, int timeout_sec, int timeout_usec)
 {
     int i, res;
     int fd;
@@ -475,13 +460,7 @@ int timeout_usec;
 }
 
 extern void
-libcmepoll_LTX_add_select(svc, sdp, fd, func, arg1, arg2)
-CMtrans_services svc;
-select_data_ptr *sdp;
-int fd;
-select_list_func func;
-void *arg1;
-void *arg2;
+libcmepoll_LTX_add_select(CMtrans_services svc, select_data_ptr *sdp, int fd, select_list_func func, void *arg1, void *arg2)
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
     struct epoll_event ep_event;
@@ -540,13 +519,7 @@ void *arg2;
 }
 
 extern void
-libcmepoll_LTX_write_select(svc, sdp, fd, func, arg1, arg2)
-CMtrans_services svc;
-select_data_ptr *sdp;
-int fd;
-select_list_func func;
-void *arg1;
-void *arg2;
+libcmepoll_LTX_write_select(CMtrans_services svc, select_data_ptr *sdp, int fd, select_list_func func, void *arg1, void *arg2)
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
     struct epoll_event ep_event;
@@ -616,15 +589,7 @@ void *arg2;
 }
 
 extern periodic_task_handle
-libcmepoll_LTX_add_periodic(svc, sdp, interval_sec, interval_usec,
-			     func, arg1, arg2)
-CMtrans_services svc;
-select_data_ptr *sdp;
-int interval_sec;
-int interval_usec;
-select_list_func func;
-void *arg1;
-void *arg2;
+libcmepoll_LTX_add_periodic(CMtrans_services svc, select_data_ptr *sdp, int interval_sec, int interval_usec, select_list_func func, void *arg1, void *arg2)
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
     periodic_task_handle handle = malloc(sizeof(struct _periodic_task));
@@ -671,15 +636,7 @@ void *arg2;
 
 
 extern periodic_task_handle
-libcmepoll_LTX_add_delayed_task(svc, sdp, delay_sec, delay_usec, 
-				 func, arg1, arg2)
-CMtrans_services svc;
-select_data_ptr *sdp;
-int delay_sec;
-int delay_usec;
-select_list_func func;
-void *arg1;
-void *arg2;
+libcmepoll_LTX_add_delayed_task(CMtrans_services svc, select_data_ptr *sdp, int delay_sec, int delay_usec, select_list_func func, void *arg1, void *arg2)
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
     periodic_task_handle handle = malloc(sizeof(struct _periodic_task));
@@ -725,9 +682,7 @@ void *arg2;
 }
 
 static int
-remove_periodic_task(sd, handle)
-select_data_ptr sd;
-periodic_task_handle handle;
+remove_periodic_task(select_data_ptr sd, periodic_task_handle handle)
 {
     periodic_task_handle list, last = NULL;
     list = sd->periodic_task_list;
@@ -765,10 +720,7 @@ periodic_task_handle handle;
 
 
 extern void
-libcmepoll_LTX_remove_periodic(svc, sdp, handle)
-CMtrans_services svc;
-select_data_ptr *sdp;
-periodic_task_handle handle;
+libcmepoll_LTX_remove_periodic(CMtrans_services svc, select_data_ptr *sdp, periodic_task_handle handle)
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
     if (sd == NULL) return;
@@ -778,10 +730,7 @@ periodic_task_handle handle;
 }
 
 extern void
-libcmepoll_LTX_remove_select(svc, sdp, fd)
-CMtrans_services svc;
-select_data_ptr *sdp;
-int fd;
+libcmepoll_LTX_remove_select(CMtrans_services svc, select_data_ptr *sdp, int fd)
 {
     select_data_ptr sd = *((select_data_ptr *)sdp);
 
@@ -812,8 +761,7 @@ int fd;
 }
 
 static void
-shutdown_wake_mechanism(sd)
-select_data_ptr sd;
+shutdown_wake_mechanism(select_data_ptr sd)
 {
     if (sd->wake_read_fd == -1) return;
     close(sd->wake_read_fd);
@@ -821,9 +769,7 @@ select_data_ptr sd;
     sd->wake_read_fd = sd->wake_write_fd = -1;
 }
 
-static void read_wake_fd(fd_as_ptr, junk)
-void *fd_as_ptr;
-void *junk;
+static void read_wake_fd(void *fd_as_ptr, void *junk)
 {
     char buffer;
     int fd = (int) (long)fd_as_ptr;
@@ -838,8 +784,7 @@ void *junk;
 
 #ifdef HAVE_WINDOWS_H
 static char*
-WSAerror_str(err)
-int err;
+WSAerror_str(int err)
 {
     switch(err) {
     case WSAEINTR: return "WSAEINTR";
@@ -900,9 +845,8 @@ int err;
  *  NT Sux.
  */
 
-int
-pipe(filedes)
-int filedes[2];
+static int
+pipe(int filedes[2])
 {
     
     int length;
@@ -990,9 +934,7 @@ int filedes[2];
 #endif
 
 static void
-setup_wake_mechanism(svc, sdp)
-CMtrans_services svc;
-select_data_ptr *sdp;
+setup_wake_mechanism(CMtrans_services svc, select_data_ptr *sdp)
 {
     int filedes[2];
 
@@ -1015,9 +957,7 @@ select_data_ptr *sdp;
 }
 
 extern void
-libcmepoll_LTX_wake_function(svc, sdp)
-CMtrans_services svc;
-select_data_ptr *sdp;
+libcmepoll_LTX_wake_function(CMtrans_services svc, select_data_ptr *sdp)
 {
     if (*sdp != NULL) {
 	wake_server_thread(*sdp);
@@ -1025,8 +965,7 @@ select_data_ptr *sdp;
 }
 
 static void
-wake_server_thread(sd)
-select_data_ptr sd;
+wake_server_thread(select_data_ptr sd)
 {
     static char buffer = 'W';  /* doesn't matter what we write */
     if (sd->wake_write_fd != -1) {
@@ -1041,9 +980,7 @@ select_data_ptr sd;
 }
 
 extern void
-libcmepoll_LTX_blocking_function(svc, client_data)
-CMtrans_services svc;
-void *client_data;
+libcmepoll_LTX_blocking_function(CMtrans_services svc, void *client_data)
 {
     select_data_ptr sd = *((select_data_ptr *)client_data);
     if (sd == NULL) {
@@ -1058,9 +995,7 @@ void *client_data;
 }
 
 extern void
-libcmepoll_LTX_polling_function(svc, client_data)
-CMtrans_services svc;
-void *client_data;
+libcmepoll_LTX_polling_function(CMtrans_services svc, void *client_data)
 {
     select_data_ptr sd = *((select_data_ptr *)client_data);
     if (sd == NULL) {
@@ -1075,10 +1010,7 @@ void *client_data;
 }
 
 extern void
-libcmepoll_LTX_select_initialize(svc, cm, client_data)
-CMtrans_services svc;
-CManager cm;
-void *client_data;
+libcmepoll_LTX_select_initialize(CMtrans_services svc, CManager cm, void *client_data)
 {
     if (*((select_data_ptr *)client_data) == NULL) {
 	init_select_data(svc, (select_data_ptr*)client_data, cm);
@@ -1086,10 +1018,7 @@ void *client_data;
 }
 
 extern void
-libcmepoll_LTX_select_shutdown(svc, cm, client_data)
-CMtrans_services svc;
-CManager cm;
-void *client_data;
+libcmepoll_LTX_select_shutdown(CMtrans_services svc, CManager cm, void *client_data)
 {
     select_data_ptr *sdp = client_data;
     select_data_ptr sd = *sdp;
@@ -1103,10 +1032,7 @@ void *client_data;
 }
 
 extern void
-libcmepoll_LTX_select_free(svc, cm, client_data)
-CMtrans_services svc;
-CManager cm;
-void *client_data;
+libcmepoll_LTX_select_free(CMtrans_services svc, CManager cm, void *client_data)
 {
     select_data_ptr *sdp = client_data;
     select_data_ptr sd = *sdp;
@@ -1119,9 +1045,7 @@ void *client_data;
 }
 
 extern void
-libcmepoll_LTX_select_stop(svc, client_data)
-CMtrans_services svc;
-void *client_data;
+libcmepoll_LTX_select_stop(CMtrans_services svc, void *client_data)
 {
     if (*((select_data_ptr *)client_data) != NULL) {
 	(*((select_data_ptr*)client_data))->closed = 1;
