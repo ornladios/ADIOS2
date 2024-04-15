@@ -369,9 +369,7 @@ static inline uint16_t get_local_lid(struct ibv_context *context, int port)
 }
 
 static int
-check_host(hostname, sin_addr)
-	char *hostname;
-void *sin_addr;
+check_host(char *hostname,void *sin_addr)
 {
 	struct hostent *host_addr;
 	host_addr = gethostbyname(hostname);
@@ -393,8 +391,7 @@ void *sin_addr;
 }
 
 static ib_conn_data_ptr 
-create_ib_conn_data(svc)
-	CMtrans_services svc;
+create_ib_conn_data(CMtrans_services svc)
 {
 	ib_conn_data_ptr ib_conn_data = svc->malloc_func(sizeof(struct ib_connection_data));
 	memset(ib_conn_data, 0, sizeof(struct ib_connection_data));
@@ -946,9 +943,7 @@ CMIB_data_available(transport_entry trans, CMConnection conn)
  * Accept socket connection
  */
 static void
-ib_accept_conn(void_trans, void_conn_sock)
-	void *void_trans;
-void *void_conn_sock;
+ib_accept_conn(void *void_trans, void *void_conn_sock)
 {
 	transport_entry trans = (transport_entry) void_trans;
 	int conn_sock = (int) (long) void_conn_sock;
@@ -1106,9 +1101,7 @@ void *void_conn_sock;
 }
 
 extern void
-libcmib_LTX_shutdown_conn(svc, scd)
-	CMtrans_services svc;
-ib_conn_data_ptr scd;
+libcmib_LTX_shutdown_conn(CMtrans_services svc, ib_conn_data_ptr scd)
 {
 	svc->trace_out(scd->sd->cm, "CMIB shutdown_conn, removing select %d\n",
 	               scd->fd);
@@ -1141,14 +1134,7 @@ is_private_10(int IP)
 }
 
 static int
-initiate_conn(cm, svc, trans, attrs, ib_conn_data, conn_attr_list, no_more_redirect)
-	CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
-ib_conn_data_ptr ib_conn_data;
-attr_list conn_attr_list;
-int no_more_redirect;
+initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs, ib_conn_data_ptr ib_conn_data, attr_list conn_attr_list, int no_more_redirect)
 {
 	int sock;
 
@@ -1413,11 +1399,7 @@ int no_more_redirect;
  * (name_str stores the machine name).
  */
 extern CMConnection
-libcmib_LTX_initiate_conn(cm, svc, trans, attrs)
-	CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
+libcmib_LTX_initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs)
 {
 	ib_conn_data_ptr ib_conn_data = create_ib_conn_data(svc);
 	attr_list conn_attr_list = create_attr_list();
@@ -1447,11 +1429,7 @@ attr_list attrs;
  * same as ours and if the IP_PORT matches the one we are listening on.
  */
 extern int
-libcmib_LTX_self_check(cm, svc, trans, attrs)
-	CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
+libcmib_LTX_self_check(CManager cm, CMtrans_services svc, transport_entry trans, attr_list attrs)
 {
 
 	ib_client_data_ptr sd = trans->trans_data;
@@ -1499,12 +1477,9 @@ attr_list attrs;
 }
 
 extern int
-libcmib_LTX_connection_eq(cm, svc, trans, attrs, scd)
-	CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list attrs;
-ib_conn_data_ptr scd;
+libcmib_LTX_connection_eq(CManager cm, CMtrans_services svc, 
+			  transport_entry trans, attr_list attrs,
+			  ib_conn_data_ptr scd)
 {
 
 	int int_port_num;
@@ -1548,11 +1523,8 @@ ib_conn_data_ptr scd;
  * Create an IP socket for connection from other CMs
  */
 extern attr_list
-libcmib_LTX_non_blocking_listen(cm, svc, trans, listen_info)
-	CManager cm;
-CMtrans_services svc;
-transport_entry trans;
-attr_list listen_info;
+libcmib_LTX_non_blocking_listen(CManager cm, CMtrans_services svc,
+				transport_entry trans, attr_list listen_info)
 {
 	ib_client_data_ptr sd = trans->trans_data;
 	unsigned int length;
@@ -1714,11 +1686,8 @@ struct iovec {
 #endif
 
 extern void
-libcmib_LTX_set_write_notify(trans, svc, scd, enable)
-	transport_entry trans;
-CMtrans_services svc;
-ib_conn_data_ptr scd;
-int enable;
+libcmib_LTX_set_write_notify(transport_entry trans, CMtrans_services svc,
+			     ib_conn_data_ptr scd, int enable)
 {
 	if (enable != 0) {
 		svc->fd_write_select(trans->cm, scd->fd, (select_list_func) trans->write_possible,
@@ -1910,12 +1879,8 @@ libcmib_LTX_writev_complete_notify_func(CMtrans_services svc,
 }
 
 extern int
-libcmib_LTX_writev_func(svc, scd, iovs, iovcnt, attrs)
-CMtrans_services svc;
-ib_conn_data_ptr scd;
-void *iovs;
-int iovcnt;
-attr_list attrs;
+libcmib_LTX_writev_func(CMtrans_services svc, ib_conn_data_ptr scd,
+			void *iovs, int iovcnt, attr_list attrs)
 {
     return libcmib_LTX_writev_complete_notify_func(svc, scd, iovs, iovcnt, 
 						   attrs, NULL, NULL);
@@ -1934,9 +1899,7 @@ free_ib_data(CManager cm, void *sdv)
 }
 
 extern void *
-libcmib_LTX_initialize(cm, svc)
-	CManager cm;
-CMtrans_services svc;
+libcmib_LTX_initialize(CManager cm, CMtrans_services svc)
 {
 	static int atom_init = 0;
 
