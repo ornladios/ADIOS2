@@ -289,138 +289,7 @@ cod_dup_list(sm_list list)
 #  endif
 # endif
 
-
-/* Debug traces.  */
-#ifndef YYDEBUG
-# define YYDEBUG 0
-#endif
-#if YYDEBUG
-extern int yydebug;
-#endif
-
-/* Token kinds.  */
-#ifndef YYTOKENTYPE
-# define YYTOKENTYPE
-  enum yytokentype
-  {
-    YYEMPTY = -2,
-    YYEOF = 0,                     /* "end of file"  */
-    YYerror = 256,                 /* error  */
-    YYUNDEF = 257,                 /* "invalid token"  */
-    ARROW = 258,                   /* ARROW  */
-    LPAREN = 259,                  /* LPAREN  */
-    RPAREN = 260,                  /* RPAREN  */
-    LCURLY = 261,                  /* LCURLY  */
-    RCURLY = 262,                  /* RCURLY  */
-    COLON = 263,                   /* COLON  */
-    QUESTION = 264,                /* QUESTION  */
-    LBRACKET = 265,                /* LBRACKET  */
-    RBRACKET = 266,                /* RBRACKET  */
-    DOT = 267,                     /* DOT  */
-    STAR = 268,                    /* STAR  */
-    AT = 269,                      /* AT  */
-    SLASH = 270,                   /* SLASH  */
-    MODULUS = 271,                 /* MODULUS  */
-    PLUS = 272,                    /* PLUS  */
-    MINUS = 273,                   /* MINUS  */
-    TILDE = 274,                   /* TILDE  */
-    LEQ = 275,                     /* LEQ  */
-    LT = 276,                      /* LT  */
-    GEQ = 277,                     /* GEQ  */
-    GT = 278,                      /* GT  */
-    EQ = 279,                      /* EQ  */
-    NEQ = 280,                     /* NEQ  */
-    LEFT_SHIFT = 281,              /* LEFT_SHIFT  */
-    RIGHT_SHIFT = 282,             /* RIGHT_SHIFT  */
-    ASSIGN = 283,                  /* ASSIGN  */
-    MUL_ASSIGN = 284,              /* MUL_ASSIGN  */
-    DIV_ASSIGN = 285,              /* DIV_ASSIGN  */
-    MOD_ASSIGN = 286,              /* MOD_ASSIGN  */
-    ADD_ASSIGN = 287,              /* ADD_ASSIGN  */
-    SUB_ASSIGN = 288,              /* SUB_ASSIGN  */
-    LEFT_ASSIGN = 289,             /* LEFT_ASSIGN  */
-    RIGHT_ASSIGN = 290,            /* RIGHT_ASSIGN  */
-    AND_ASSIGN = 291,              /* AND_ASSIGN  */
-    XOR_ASSIGN = 292,              /* XOR_ASSIGN  */
-    OR_ASSIGN = 293,               /* OR_ASSIGN  */
-    LOG_OR = 294,                  /* LOG_OR  */
-    LOG_AND = 295,                 /* LOG_AND  */
-    ARITH_OR = 296,                /* ARITH_OR  */
-    ARITH_AND = 297,               /* ARITH_AND  */
-    ARITH_XOR = 298,               /* ARITH_XOR  */
-    INC_OP = 299,                  /* INC_OP  */
-    DEC_OP = 300,                  /* DEC_OP  */
-    BANG = 301,                    /* BANG  */
-    SEMI = 302,                    /* SEMI  */
-    IF = 303,                      /* IF  */
-    ELSE = 304,                    /* ELSE  */
-    FOR = 305,                     /* FOR  */
-    DO = 306,                      /* DO  */
-    WHILE = 307,                   /* WHILE  */
-    CHAR = 308,                    /* CHAR  */
-    SHORT = 309,                   /* SHORT  */
-    INT = 310,                     /* INT  */
-    LONG = 311,                    /* LONG  */
-    UNSIGNED = 312,                /* UNSIGNED  */
-    SIGNED = 313,                  /* SIGNED  */
-    FLOAT = 314,                   /* FLOAT  */
-    DOUBLE = 315,                  /* DOUBLE  */
-    VOID = 316,                    /* VOID  */
-    STRING = 317,                  /* STRING  */
-    STATIC = 318,                  /* STATIC  */
-    EXTERN_TOKEN = 319,            /* EXTERN_TOKEN  */
-    STRUCT = 320,                  /* STRUCT  */
-    ENUM = 321,                    /* ENUM  */
-    UNION = 322,                   /* UNION  */
-    CONST = 323,                   /* CONST  */
-    SIZEOF = 324,                  /* SIZEOF  */
-    TYPEDEF = 325,                 /* TYPEDEF  */
-    RETURN_TOKEN = 326,            /* RETURN_TOKEN  */
-    CONTINUE = 327,                /* CONTINUE  */
-    BREAK = 328,                   /* BREAK  */
-    GOTO = 329,                    /* GOTO  */
-    PRINT = 330,                   /* PRINT  */
-    COMMA = 331,                   /* COMMA  */
-    DOTDOTDOT = 332,               /* DOTDOTDOT  */
-    integer_constant = 333,        /* integer_constant  */
-    character_constant = 334,      /* character_constant  */
-    string_constant = 335,         /* string_constant  */
-    floating_constant = 336,       /* floating_constant  */
-    identifier_ref = 337,          /* identifier_ref  */
-    type_identifier = 338,                 /* type_id  */
-    enumeration_constant = 339     /* enumeration_constant  */
-  };
-  typedef enum yytokentype yytoken_kind_t;
-#endif
-
-/* Value type.  */
-#if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-union YYSTYPE
-{
-#line 201 "cod.y"
-
-    lx_info info;
-    sm_ref reference;
-    operator_t operator;
-    sm_list list;
-    char *string;
-
-#line 409 "cod.tab.c"
-
-};
-typedef union YYSTYPE YYSTYPE;
-# define YYSTYPE_IS_TRIVIAL 1
-# define YYSTYPE_IS_DECLARED 1
-#endif
-
-
-extern YYSTYPE yylval;
-
-
-int yyparse (void);
-
-
-
+#include "cod.tab.h"
 /* Symbol kind.  */
 enum yysymbol_kind_t
 {
@@ -508,7 +377,7 @@ enum yysymbol_kind_t
   YYSYMBOL_string_constant = 80,           /* string_constant  */
   YYSYMBOL_floating_constant = 81,         /* floating_constant  */
   YYSYMBOL_identifier_ref = 82,            /* identifier_ref  */
-  YYSYMBOL_type_identifier = 83,                   /* type_id  */
+  YYSYMBOL_type_identifier = 83,           /* type_identifier  */
   YYSYMBOL_enumeration_constant = 84,      /* enumeration_constant  */
   YYSYMBOL_YYACCEPT = 85,                  /* $accept  */
   YYSYMBOL_start = 86,                     /* start  */
@@ -1019,18 +888,19 @@ static const char *const yytname[] =
   "ENUM", "UNION", "CONST", "SIZEOF", "TYPEDEF", "RETURN_TOKEN",
   "CONTINUE", "BREAK", "GOTO", "PRINT", "COMMA", "DOTDOTDOT",
   "integer_constant", "character_constant", "string_constant",
-  "floating_constant", "identifier_ref", "type_identifier", "enumeration_constant",
-  "$accept", "start", "primary_expression", "postfix_expression",
-  "argument_expression_list", "unary_expression", "unary_operator",
-  "cast_expression", "multiplicative_expression", "additive_expression",
-  "shift_expression", "relational_expression", "equality_expression",
-  "and_expression", "exclusive_or_expression", "inclusive_or_expression",
-  "logical_and_expression", "logical_or_expression",
-  "conditional_expression", "assignment_operator", "assignment_expression",
-  "expression", "constant_expression", "init_declarator_list",
-  "declaration", "$@1", "@2", "declaration_specifiers", "init_declarator",
-  "storage_class_specifier", "type_specifier", "struct_or_union_specifier",
-  "struct_or_union", "struct_declaration_list", "struct_declaration",
+  "floating_constant", "identifier_ref", "type_identifier",
+  "enumeration_constant", "$accept", "start", "primary_expression",
+  "postfix_expression", "argument_expression_list", "unary_expression",
+  "unary_operator", "cast_expression", "multiplicative_expression",
+  "additive_expression", "shift_expression", "relational_expression",
+  "equality_expression", "and_expression", "exclusive_or_expression",
+  "inclusive_or_expression", "logical_and_expression",
+  "logical_or_expression", "conditional_expression", "assignment_operator",
+  "assignment_expression", "expression", "constant_expression",
+  "init_declarator_list", "declaration", "$@1", "@2",
+  "declaration_specifiers", "init_declarator", "storage_class_specifier",
+  "type_specifier", "struct_or_union_specifier", "struct_or_union",
+  "struct_declaration_list", "struct_declaration",
   "struct_declarator_list", "struct_declarator",
   "specifier_qualifier_list", "enum_specifier", "enumerator_list",
   "enumerator", "type_qualifier", "declarator", "direct_declarator",
@@ -1928,7 +1798,7 @@ yyreduce:
                          {
 	    yyparse_value = (sm_ref)(yyvsp[0].list);
 	}
-#line 1932 "cod.tab.c"
+#line 1802 "cod.tab.c"
     break;
 
   case 3: /* start: compound_statement  */
@@ -1936,7 +1806,7 @@ yyreduce:
                            {
 	    yyparse_value = (yyvsp[0].reference);
 	}
-#line 1940 "cod.tab.c"
+#line 1810 "cod.tab.c"
     break;
 
   case 4: /* primary_expression: identifier_ref  */
@@ -1946,13 +1816,13 @@ yyreduce:
 	    (yyval.reference)->node.identifier.id = (yyvsp[0].info).string;
 	    (yyval.reference)->node.identifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 1950 "cod.tab.c"
+#line 1820 "cod.tab.c"
     break;
 
   case 6: /* primary_expression: LPAREN expression RPAREN  */
 #line 377 "cod.y"
         { (yyval.reference) = (yyvsp[-1].reference); }
-#line 1956 "cod.tab.c"
+#line 1826 "cod.tab.c"
     break;
 
   case 8: /* postfix_expression: postfix_expression LBRACKET expression RBRACKET  */
@@ -1963,7 +1833,7 @@ yyreduce:
 	    (yyval.reference)->node.element_ref.expression = (yyvsp[-1].reference);
 	    (yyval.reference)->node.element_ref.array_ref = (yyvsp[-3].reference);
 	}
-#line 1967 "cod.tab.c"
+#line 1837 "cod.tab.c"
     break;
 
   case 9: /* postfix_expression: postfix_expression DOT identifier_ref  */
@@ -1974,7 +1844,7 @@ yyreduce:
 	    (yyval.reference)->node.field_ref.lx_field = (yyvsp[0].info).string;
 	    (yyval.reference)->node.field_ref.struct_ref = (yyvsp[-2].reference);
 	}
-#line 1978 "cod.tab.c"
+#line 1848 "cod.tab.c"
     break;
 
   case 10: /* postfix_expression: postfix_expression LPAREN argument_expression_list RPAREN  */
@@ -1985,7 +1855,7 @@ yyreduce:
 	    (yyval.reference)->node.subroutine_call.arguments = (yyvsp[-1].list);
 	    (yyval.reference)->node.subroutine_call.sm_func_ref = (yyvsp[-3].reference);
 	}
-#line 1989 "cod.tab.c"
+#line 1859 "cod.tab.c"
     break;
 
   case 11: /* postfix_expression: postfix_expression LPAREN RPAREN  */
@@ -1996,7 +1866,7 @@ yyreduce:
 	    (yyval.reference)->node.subroutine_call.arguments = NULL;
 	    (yyval.reference)->node.subroutine_call.sm_func_ref = (yyvsp[-2].reference);
 	}
-#line 2000 "cod.tab.c"
+#line 1870 "cod.tab.c"
     break;
 
   case 12: /* postfix_expression: postfix_expression ARROW identifier_ref  */
@@ -2007,7 +1877,7 @@ yyreduce:
 	    (yyval.reference)->node.field_ref.lx_field = (yyvsp[0].info).string;
 	    (yyval.reference)->node.field_ref.struct_ref = (yyvsp[-2].reference);
 	}
-#line 2011 "cod.tab.c"
+#line 1881 "cod.tab.c"
     break;
 
   case 13: /* postfix_expression: postfix_expression INC_OP  */
@@ -2019,7 +1889,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = NULL;
 	    (yyval.reference)->node.operator.left = (yyvsp[-1].reference);
 	}
-#line 2023 "cod.tab.c"
+#line 1893 "cod.tab.c"
     break;
 
   case 14: /* postfix_expression: postfix_expression DEC_OP  */
@@ -2031,7 +1901,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = NULL;
 	    (yyval.reference)->node.operator.left = (yyvsp[-1].reference);
 	}
-#line 2035 "cod.tab.c"
+#line 1905 "cod.tab.c"
     break;
 
   case 15: /* argument_expression_list: assignment_expression  */
@@ -2041,7 +1911,7 @@ yyreduce:
 		(yyval.list)->node = (yyvsp[0].reference);
 		(yyval.list)->next = NULL;
 	}
-#line 2045 "cod.tab.c"
+#line 1915 "cod.tab.c"
     break;
 
   case 16: /* argument_expression_list: argument_expression_list COMMA assignment_expression  */
@@ -2056,7 +1926,7 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 2060 "cod.tab.c"
+#line 1930 "cod.tab.c"
     break;
 
   case 18: /* unary_expression: INC_OP unary_expression  */
@@ -2068,7 +1938,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2072 "cod.tab.c"
+#line 1942 "cod.tab.c"
     break;
 
   case 19: /* unary_expression: DEC_OP unary_expression  */
@@ -2080,7 +1950,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2084 "cod.tab.c"
+#line 1954 "cod.tab.c"
     break;
 
   case 20: /* unary_expression: unary_operator cast_expression  */
@@ -2092,7 +1962,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2096 "cod.tab.c"
+#line 1966 "cod.tab.c"
     break;
 
   case 21: /* unary_expression: SIZEOF unary_expression  */
@@ -2104,7 +1974,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2108 "cod.tab.c"
+#line 1978 "cod.tab.c"
     break;
 
   case 22: /* unary_expression: SIZEOF LPAREN type_name RPAREN  */
@@ -2122,7 +1992,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = cast;
 	    (yyval.reference)->node.operator.left = NULL;
 	}
-#line 2126 "cod.tab.c"
+#line 1996 "cod.tab.c"
     break;
 
   case 23: /* unary_operator: ARITH_AND  */
@@ -2130,7 +2000,7 @@ yyreduce:
                     {
 	    (yyval.info).op = op_address;
 	}
-#line 2134 "cod.tab.c"
+#line 2004 "cod.tab.c"
     break;
 
   case 24: /* unary_operator: STAR  */
@@ -2138,7 +2008,7 @@ yyreduce:
                {
 	    (yyval.info).op = op_deref;
 	}
-#line 2142 "cod.tab.c"
+#line 2012 "cod.tab.c"
     break;
 
   case 25: /* unary_operator: PLUS  */
@@ -2146,7 +2016,7 @@ yyreduce:
                {
 	    (yyval.info).op = op_plus;
 	}
-#line 2150 "cod.tab.c"
+#line 2020 "cod.tab.c"
     break;
 
   case 26: /* unary_operator: MINUS  */
@@ -2154,7 +2024,7 @@ yyreduce:
                 {
 	    (yyval.info).op = op_minus;
 	}
-#line 2158 "cod.tab.c"
+#line 2028 "cod.tab.c"
     break;
 
   case 27: /* unary_operator: TILDE  */
@@ -2162,7 +2032,7 @@ yyreduce:
                 {
 	    (yyval.info).op = op_not;
 	}
-#line 2166 "cod.tab.c"
+#line 2036 "cod.tab.c"
     break;
 
   case 28: /* unary_operator: BANG  */
@@ -2170,7 +2040,7 @@ yyreduce:
                {
 	    (yyval.info).op = op_log_neg;
 	  }
-#line 2174 "cod.tab.c"
+#line 2044 "cod.tab.c"
     break;
 
   case 30: /* cast_expression: LPAREN type_name RPAREN cast_expression  */
@@ -2181,7 +2051,7 @@ yyreduce:
 	    (yyval.reference)->node.cast.type_spec = (yyvsp[-2].list);
 	    (yyval.reference)->node.cast.expression = (yyvsp[0].reference);
 	}
-#line 2185 "cod.tab.c"
+#line 2055 "cod.tab.c"
     break;
 
   case 32: /* multiplicative_expression: multiplicative_expression STAR cast_expression  */
@@ -2193,7 +2063,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2197 "cod.tab.c"
+#line 2067 "cod.tab.c"
     break;
 
   case 33: /* multiplicative_expression: multiplicative_expression SLASH cast_expression  */
@@ -2205,7 +2075,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2209 "cod.tab.c"
+#line 2079 "cod.tab.c"
     break;
 
   case 34: /* multiplicative_expression: multiplicative_expression MODULUS cast_expression  */
@@ -2217,7 +2087,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2221 "cod.tab.c"
+#line 2091 "cod.tab.c"
     break;
 
   case 36: /* additive_expression: additive_expression PLUS multiplicative_expression  */
@@ -2229,7 +2099,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2233 "cod.tab.c"
+#line 2103 "cod.tab.c"
     break;
 
   case 37: /* additive_expression: additive_expression MINUS multiplicative_expression  */
@@ -2241,7 +2111,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2245 "cod.tab.c"
+#line 2115 "cod.tab.c"
     break;
 
   case 39: /* shift_expression: shift_expression LEFT_SHIFT additive_expression  */
@@ -2253,7 +2123,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2257 "cod.tab.c"
+#line 2127 "cod.tab.c"
     break;
 
   case 40: /* shift_expression: shift_expression RIGHT_SHIFT additive_expression  */
@@ -2265,7 +2135,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2269 "cod.tab.c"
+#line 2139 "cod.tab.c"
     break;
 
   case 42: /* relational_expression: relational_expression LT shift_expression  */
@@ -2277,7 +2147,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2281 "cod.tab.c"
+#line 2151 "cod.tab.c"
     break;
 
   case 43: /* relational_expression: relational_expression GT shift_expression  */
@@ -2289,7 +2159,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2293 "cod.tab.c"
+#line 2163 "cod.tab.c"
     break;
 
   case 44: /* relational_expression: relational_expression LEQ shift_expression  */
@@ -2301,7 +2171,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2305 "cod.tab.c"
+#line 2175 "cod.tab.c"
     break;
 
   case 45: /* relational_expression: relational_expression GEQ shift_expression  */
@@ -2313,7 +2183,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2317 "cod.tab.c"
+#line 2187 "cod.tab.c"
     break;
 
   case 47: /* equality_expression: equality_expression EQ relational_expression  */
@@ -2325,7 +2195,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2329 "cod.tab.c"
+#line 2199 "cod.tab.c"
     break;
 
   case 48: /* equality_expression: equality_expression NEQ relational_expression  */
@@ -2337,7 +2207,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2341 "cod.tab.c"
+#line 2211 "cod.tab.c"
     break;
 
   case 50: /* and_expression: and_expression ARITH_AND equality_expression  */
@@ -2349,7 +2219,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2353 "cod.tab.c"
+#line 2223 "cod.tab.c"
     break;
 
   case 52: /* exclusive_or_expression: exclusive_or_expression ARITH_XOR and_expression  */
@@ -2361,7 +2231,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2365 "cod.tab.c"
+#line 2235 "cod.tab.c"
     break;
 
   case 54: /* inclusive_or_expression: inclusive_or_expression ARITH_OR exclusive_or_expression  */
@@ -2373,7 +2243,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2377 "cod.tab.c"
+#line 2247 "cod.tab.c"
     break;
 
   case 56: /* logical_and_expression: logical_and_expression LOG_AND inclusive_or_expression  */
@@ -2385,7 +2255,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2389 "cod.tab.c"
+#line 2259 "cod.tab.c"
     break;
 
   case 58: /* logical_or_expression: logical_or_expression LOG_OR logical_and_expression  */
@@ -2397,7 +2267,7 @@ yyreduce:
 	    (yyval.reference)->node.operator.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.operator.left = (yyvsp[-2].reference);
 	}
-#line 2401 "cod.tab.c"
+#line 2271 "cod.tab.c"
     break;
 
   case 60: /* conditional_expression: logical_or_expression QUESTION expression COLON conditional_expression  */
@@ -2409,79 +2279,79 @@ yyreduce:
 	    (yyval.reference)->node.conditional_operator.e1 = (yyvsp[-2].reference);
 	    (yyval.reference)->node.conditional_operator.e2 = (yyvsp[0].reference);
 	}
-#line 2413 "cod.tab.c"
+#line 2283 "cod.tab.c"
     break;
 
   case 61: /* assignment_operator: ASSIGN  */
 #line 746 "cod.y"
         { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_eq;}
-#line 2419 "cod.tab.c"
+#line 2289 "cod.tab.c"
     break;
 
   case 62: /* assignment_operator: MUL_ASSIGN  */
 #line 748 "cod.y"
         { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_mult;}
-#line 2425 "cod.tab.c"
+#line 2295 "cod.tab.c"
     break;
 
   case 63: /* assignment_operator: DIV_ASSIGN  */
 #line 750 "cod.y"
         { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_div;}
-#line 2431 "cod.tab.c"
+#line 2301 "cod.tab.c"
     break;
 
   case 64: /* assignment_operator: MOD_ASSIGN  */
 #line 752 "cod.y"
         { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_modulus;}
-#line 2437 "cod.tab.c"
+#line 2307 "cod.tab.c"
     break;
 
   case 65: /* assignment_operator: ADD_ASSIGN  */
 #line 754 "cod.y"
         { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_plus;}
-#line 2443 "cod.tab.c"
+#line 2313 "cod.tab.c"
     break;
 
   case 66: /* assignment_operator: SUB_ASSIGN  */
 #line 756 "cod.y"
         { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_minus;}
-#line 2449 "cod.tab.c"
+#line 2319 "cod.tab.c"
     break;
 
   case 67: /* assignment_operator: LEFT_ASSIGN  */
 #line 758 "cod.y"
         { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_left_shift;}
-#line 2455 "cod.tab.c"
+#line 2325 "cod.tab.c"
     break;
 
   case 68: /* assignment_operator: RIGHT_ASSIGN  */
 #line 760 "cod.y"
         { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_right_shift;}
-#line 2461 "cod.tab.c"
+#line 2331 "cod.tab.c"
     break;
 
   case 69: /* assignment_operator: AND_ASSIGN  */
 #line 762 "cod.y"
         { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_arith_and;}
-#line 2467 "cod.tab.c"
+#line 2337 "cod.tab.c"
     break;
 
   case 70: /* assignment_operator: XOR_ASSIGN  */
 #line 764 "cod.y"
         { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_arith_xor;}
-#line 2473 "cod.tab.c"
+#line 2343 "cod.tab.c"
     break;
 
   case 71: /* assignment_operator: OR_ASSIGN  */
 #line 766 "cod.y"
         { (yyval.info) = (yyvsp[0].info); (yyval.info).op = op_arith_or;}
-#line 2479 "cod.tab.c"
+#line 2349 "cod.tab.c"
     break;
 
   case 72: /* assignment_expression: conditional_expression  */
 #line 771 "cod.y"
         { (yyval.reference) = (yyvsp[0].reference);}
-#line 2485 "cod.tab.c"
+#line 2355 "cod.tab.c"
     break;
 
   case 73: /* assignment_expression: unary_expression assignment_operator assignment_expression  */
@@ -2493,13 +2363,13 @@ yyreduce:
 	    (yyval.reference)->node.assignment_expression.right = (yyvsp[0].reference);
 	    (yyval.reference)->node.assignment_expression.op = (yyvsp[-1].info).op;
 	}
-#line 2497 "cod.tab.c"
+#line 2367 "cod.tab.c"
     break;
 
   case 74: /* expression: assignment_expression  */
 #line 785 "cod.y"
             {(yyval.reference) = (yyvsp[0].reference);}
-#line 2503 "cod.tab.c"
+#line 2373 "cod.tab.c"
     break;
 
   case 75: /* expression: expression COMMA assignment_expression  */
@@ -2510,7 +2380,7 @@ yyreduce:
 	    (yyval.reference)->node.comma_expression.left = (yyvsp[-2].reference);
 	    (yyval.reference)->node.comma_expression.right = (yyvsp[0].reference);
 	}
-#line 2514 "cod.tab.c"
+#line 2384 "cod.tab.c"
     break;
 
   case 77: /* init_declarator_list: init_declarator  */
@@ -2520,7 +2390,7 @@ yyreduce:
 		(yyval.list)->node = (yyvsp[0].reference);
 		(yyval.list)->next = NULL;
 	}
-#line 2524 "cod.tab.c"
+#line 2394 "cod.tab.c"
     break;
 
   case 78: /* init_declarator_list: init_declarator_list COMMA init_declarator  */
@@ -2536,7 +2406,7 @@ yyreduce:
 	    tmp->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 2540 "cod.tab.c"
+#line 2410 "cod.tab.c"
     break;
 
   case 79: /* $@1: %empty  */
@@ -2547,7 +2417,7 @@ yyreduce:
 		     YYACCEPT;
 		 }
 	     }
-#line 2551 "cod.tab.c"
+#line 2421 "cod.tab.c"
     break;
 
   case 80: /* @2: %empty  */
@@ -2579,7 +2449,7 @@ yyreduce:
 		    YYACCEPT;
 		}
 	    }
-#line 2583 "cod.tab.c"
+#line 2453 "cod.tab.c"
     break;
 
   case 81: /* declaration: declaration_specifiers $@1 init_declarator_list @2 SEMI  */
@@ -2639,7 +2509,7 @@ yyreduce:
 		}
 		(void)(yyvsp[-1].reference);
 	    }
-#line 2643 "cod.tab.c"
+#line 2513 "cod.tab.c"
     break;
 
   case 82: /* declaration: declaration_specifiers SEMI  */
@@ -2647,7 +2517,7 @@ yyreduce:
                                       {
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 2651 "cod.tab.c"
+#line 2521 "cod.tab.c"
     break;
 
   case 83: /* declaration_specifiers: storage_class_specifier  */
@@ -2657,7 +2527,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 2661 "cod.tab.c"
+#line 2531 "cod.tab.c"
     break;
 
   case 84: /* declaration_specifiers: storage_class_specifier declaration_specifiers  */
@@ -2668,7 +2538,7 @@ yyreduce:
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 2672 "cod.tab.c"
+#line 2542 "cod.tab.c"
     break;
 
   case 85: /* declaration_specifiers: type_specifier  */
@@ -2678,7 +2548,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 2682 "cod.tab.c"
+#line 2552 "cod.tab.c"
     break;
 
   case 86: /* declaration_specifiers: type_specifier declaration_specifiers  */
@@ -2689,7 +2559,7 @@ yyreduce:
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 2693 "cod.tab.c"
+#line 2563 "cod.tab.c"
     break;
 
   case 87: /* declaration_specifiers: type_qualifier  */
@@ -2699,7 +2569,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 2703 "cod.tab.c"
+#line 2573 "cod.tab.c"
     break;
 
   case 88: /* declaration_specifiers: type_qualifier declaration_specifiers  */
@@ -2710,7 +2580,7 @@ yyreduce:
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 2714 "cod.tab.c"
+#line 2584 "cod.tab.c"
     break;
 
   case 90: /* init_declarator: declarator ASSIGN initializer  */
@@ -2727,7 +2597,7 @@ yyreduce:
 		    tmp->node.declaration.init_value = (yyvsp[0].reference);
 		}
 	    }
-#line 2731 "cod.tab.c"
+#line 2601 "cod.tab.c"
     break;
 
   case 91: /* storage_class_specifier: TYPEDEF  */
@@ -2737,7 +2607,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = TYPEDEF;
 	}
-#line 2741 "cod.tab.c"
+#line 2611 "cod.tab.c"
     break;
 
   case 92: /* storage_class_specifier: STATIC  */
@@ -2747,7 +2617,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = STATIC;
 	}
-#line 2751 "cod.tab.c"
+#line 2621 "cod.tab.c"
     break;
 
   case 93: /* storage_class_specifier: EXTERN_TOKEN  */
@@ -2757,7 +2627,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = EXTERN_TOKEN;
 	}
-#line 2761 "cod.tab.c"
+#line 2631 "cod.tab.c"
     break;
 
   case 94: /* type_specifier: CHAR  */
@@ -2767,7 +2637,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = CHAR;
 	}
-#line 2771 "cod.tab.c"
+#line 2641 "cod.tab.c"
     break;
 
   case 95: /* type_specifier: SHORT  */
@@ -2777,7 +2647,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = SHORT;
 	}
-#line 2781 "cod.tab.c"
+#line 2651 "cod.tab.c"
     break;
 
   case 96: /* type_specifier: INT  */
@@ -2787,7 +2657,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = INT;
 	}
-#line 2791 "cod.tab.c"
+#line 2661 "cod.tab.c"
     break;
 
   case 97: /* type_specifier: LONG  */
@@ -2797,7 +2667,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = LONG;
 	}
-#line 2801 "cod.tab.c"
+#line 2671 "cod.tab.c"
     break;
 
   case 98: /* type_specifier: FLOAT  */
@@ -2807,7 +2677,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = FLOAT;
 	}
-#line 2811 "cod.tab.c"
+#line 2681 "cod.tab.c"
     break;
 
   case 99: /* type_specifier: DOUBLE  */
@@ -2817,7 +2687,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = DOUBLE;
 	}
-#line 2821 "cod.tab.c"
+#line 2691 "cod.tab.c"
     break;
 
   case 100: /* type_specifier: VOID  */
@@ -2827,7 +2697,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = VOID;
 	}
-#line 2831 "cod.tab.c"
+#line 2701 "cod.tab.c"
     break;
 
   case 101: /* type_specifier: SIGNED  */
@@ -2837,7 +2707,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = SIGNED;
 	}
-#line 2841 "cod.tab.c"
+#line 2711 "cod.tab.c"
     break;
 
   case 102: /* type_specifier: UNSIGNED  */
@@ -2847,7 +2717,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = UNSIGNED;
 	}
-#line 2851 "cod.tab.c"
+#line 2721 "cod.tab.c"
     break;
 
   case 103: /* type_specifier: STRING  */
@@ -2857,17 +2727,17 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = STRING;
 	}
-#line 2861 "cod.tab.c"
+#line 2731 "cod.tab.c"
     break;
 
   case 104: /* type_specifier: type_identifier  */
 #line 1042 "cod.y"
-                  {
+                          {
 	    (yyval.reference) = cod_new_identifier();
 	    (yyval.reference)->node.identifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.identifier.id = (yyvsp[0].info).string;
 	}
-#line 2871 "cod.tab.c"
+#line 2741 "cod.tab.c"
     break;
 
   case 105: /* type_specifier: struct_or_union_specifier  */
@@ -2875,7 +2745,7 @@ yyreduce:
                                     {
 	    (yyval.reference) = (yyvsp[0].reference);
 	}
-#line 2879 "cod.tab.c"
+#line 2749 "cod.tab.c"
     break;
 
   case 106: /* type_specifier: enum_specifier  */
@@ -2883,7 +2753,7 @@ yyreduce:
                          {
 	    (yyval.reference) = (yyvsp[0].reference);
 	}
-#line 2887 "cod.tab.c"
+#line 2757 "cod.tab.c"
     break;
 
   case 107: /* struct_or_union_specifier: struct_or_union identifier_ref LCURLY struct_declaration_list RCURLY  */
@@ -2891,7 +2761,7 @@ yyreduce:
                                                                                {
 	    (yyval.reference) = cod_build_parsed_type_node(yycontext, (yyvsp[-3].info).string, (yyvsp[-1].list));
 	}
-#line 2895 "cod.tab.c"
+#line 2765 "cod.tab.c"
     break;
 
   case 108: /* struct_or_union_specifier: struct_or_union LCURLY struct_declaration_list RCURLY  */
@@ -2899,7 +2769,7 @@ yyreduce:
                                                                 {
 	    (yyval.reference) = cod_build_parsed_type_node(yycontext, strdup("anon"), (yyvsp[-1].list));
 	}
-#line 2903 "cod.tab.c"
+#line 2773 "cod.tab.c"
     break;
 
   case 109: /* struct_or_union_specifier: struct_or_union identifier_ref  */
@@ -2907,7 +2777,7 @@ yyreduce:
                                          {
 	    (yyval.reference) = cod_build_parsed_type_node(yycontext, (yyvsp[0].info).string, NULL);
 	}
-#line 2911 "cod.tab.c"
+#line 2781 "cod.tab.c"
     break;
 
   case 111: /* struct_or_union: UNION  */
@@ -2915,7 +2785,7 @@ yyreduce:
                 {
             yyerror("UNIONs not supported!");
 	}
-#line 2919 "cod.tab.c"
+#line 2789 "cod.tab.c"
     break;
 
   case 113: /* struct_declaration_list: struct_declaration_list struct_declaration  */
@@ -2928,13 +2798,13 @@ yyreduce:
 	    tmp->next =(yyvsp[0].list);
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 2932 "cod.tab.c"
+#line 2802 "cod.tab.c"
     break;
 
   case 114: /* struct_declaration: specifier_qualifier_list SEMI  */
 #line 1088 "cod.y"
                                         { }
-#line 2938 "cod.tab.c"
+#line 2808 "cod.tab.c"
     break;
 
   case 115: /* struct_declaration: specifier_qualifier_list struct_declarator_list SEMI  */
@@ -2986,7 +2856,7 @@ yyreduce:
 		}
 	    }
 	}
-#line 2990 "cod.tab.c"
+#line 2860 "cod.tab.c"
     break;
 
   case 116: /* struct_declarator_list: struct_declarator  */
@@ -2996,7 +2866,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 3000 "cod.tab.c"
+#line 2870 "cod.tab.c"
     break;
 
   case 117: /* struct_declarator_list: struct_declarator_list COMMA struct_declarator  */
@@ -3011,7 +2881,7 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 3015 "cod.tab.c"
+#line 2885 "cod.tab.c"
     break;
 
   case 119: /* specifier_qualifier_list: type_specifier specifier_qualifier_list  */
@@ -3022,7 +2892,7 @@ yyreduce:
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 3026 "cod.tab.c"
+#line 2896 "cod.tab.c"
     break;
 
   case 120: /* specifier_qualifier_list: type_specifier  */
@@ -3032,7 +2902,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 3036 "cod.tab.c"
+#line 2906 "cod.tab.c"
     break;
 
   case 121: /* specifier_qualifier_list: type_qualifier specifier_qualifier_list  */
@@ -3043,7 +2913,7 @@ yyreduce:
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = tmp;
 	}
-#line 3047 "cod.tab.c"
+#line 2917 "cod.tab.c"
     break;
 
   case 122: /* specifier_qualifier_list: type_qualifier  */
@@ -3053,7 +2923,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 3057 "cod.tab.c"
+#line 2927 "cod.tab.c"
     break;
 
   case 123: /* enum_specifier: ENUM LCURLY enumerator_list RCURLY  */
@@ -3065,7 +2935,7 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-3].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3069 "cod.tab.c"
+#line 2939 "cod.tab.c"
     break;
 
   case 124: /* enum_specifier: ENUM LCURLY enumerator_list COMMA RCURLY  */
@@ -3077,7 +2947,7 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-4].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3081 "cod.tab.c"
+#line 2951 "cod.tab.c"
     break;
 
   case 125: /* enum_specifier: ENUM identifier_ref LCURLY enumerator_list RCURLY  */
@@ -3089,7 +2959,7 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-4].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3093 "cod.tab.c"
+#line 2963 "cod.tab.c"
     break;
 
   case 126: /* enum_specifier: ENUM identifier_ref LCURLY enumerator_list COMMA RCURLY  */
@@ -3101,7 +2971,7 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-5].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3105 "cod.tab.c"
+#line 2975 "cod.tab.c"
     break;
 
   case 127: /* enum_specifier: ENUM identifier_ref  */
@@ -3113,7 +2983,7 @@ yyreduce:
 	    (yyval.reference)->node.enum_type_decl.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	    // cod_add_defined_type(decl->node.declaration.id, yycontext);
 	}
-#line 3117 "cod.tab.c"
+#line 2987 "cod.tab.c"
     break;
 
   case 128: /* enumerator_list: enumerator  */
@@ -3124,7 +2994,7 @@ yyreduce:
 	    tmp->next = NULL;
 	    (yyval.list) = tmp;
 	}
-#line 3128 "cod.tab.c"
+#line 2998 "cod.tab.c"
     break;
 
   case 129: /* enumerator_list: enumerator_list COMMA enumerator  */
@@ -3135,7 +3005,7 @@ yyreduce:
 	    tmp->next = (yyvsp[-2].list);
 	    (yyval.list) = tmp;
 	}
-#line 3139 "cod.tab.c"
+#line 3009 "cod.tab.c"
     break;
 
   case 130: /* enumerator: identifier_ref ASSIGN constant_expression  */
@@ -3145,7 +3015,7 @@ yyreduce:
 	    (yyval.reference)->node.enumerator.id = (yyvsp[-2].info).string;
 	    (yyval.reference)->node.enumerator.const_expression = (yyvsp[0].reference);
 	}
-#line 3149 "cod.tab.c"
+#line 3019 "cod.tab.c"
     break;
 
   case 131: /* enumerator: identifier_ref  */
@@ -3155,7 +3025,7 @@ yyreduce:
 	    (yyval.reference)->node.enumerator.id = (yyvsp[0].info).string;
 	    (yyval.reference)->node.enumerator.const_expression = NULL;
 	}
-#line 3159 "cod.tab.c"
+#line 3029 "cod.tab.c"
     break;
 
   case 132: /* type_qualifier: CONST  */
@@ -3165,7 +3035,7 @@ yyreduce:
 	    (yyval.reference)->node.type_specifier.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	    (yyval.reference)->node.type_specifier.token = CONST;
 	}
-#line 3169 "cod.tab.c"
+#line 3039 "cod.tab.c"
     break;
 
   case 134: /* declarator: pointer direct_declarator  */
@@ -3181,7 +3051,7 @@ yyreduce:
 		cod_print((yyval.reference));
 	    }
 	}
-#line 3185 "cod.tab.c"
+#line 3055 "cod.tab.c"
     break;
 
   case 135: /* direct_declarator: identifier_ref  */
@@ -3195,7 +3065,7 @@ yyreduce:
 		(yyval.reference)->node.declaration.is_subroutine = 0;
 		(yyval.reference)->node.declaration.params = NULL;
 	    }
-#line 3199 "cod.tab.c"
+#line 3069 "cod.tab.c"
     break;
 
   case 136: /* direct_declarator: LPAREN declarator RPAREN  */
@@ -3203,7 +3073,7 @@ yyreduce:
                                    {
 	    (yyval.reference) = (yyvsp[-1].reference);
 	}
-#line 3207 "cod.tab.c"
+#line 3077 "cod.tab.c"
     break;
 
   case 137: /* direct_declarator: identifier_ref LPAREN parameter_type_list RPAREN  */
@@ -3217,7 +3087,7 @@ yyreduce:
 		(yyval.reference)->node.declaration.is_subroutine = 1;
 		(yyval.reference)->node.declaration.params = (yyvsp[-1].list);
 	}
-#line 3221 "cod.tab.c"
+#line 3091 "cod.tab.c"
     break;
 
   case 138: /* direct_declarator: identifier_ref LPAREN RPAREN  */
@@ -3231,7 +3101,7 @@ yyreduce:
 		(yyval.reference)->node.declaration.is_subroutine = 1;
 		(yyval.reference)->node.declaration.params = NULL;
 	}
-#line 3235 "cod.tab.c"
+#line 3105 "cod.tab.c"
     break;
 
   case 139: /* direct_declarator: direct_declarator LBRACKET constant_expression RBRACKET  */
@@ -3243,7 +3113,7 @@ yyreduce:
 		(yyval.reference)->node.array_type_decl.element_ref = (yyvsp[-3].reference);
 		(yyval.reference)->node.array_type_decl.sm_dynamic_size = NULL;
 	}
-#line 3247 "cod.tab.c"
+#line 3117 "cod.tab.c"
     break;
 
   case 140: /* direct_declarator: direct_declarator LBRACKET RBRACKET  */
@@ -3255,7 +3125,7 @@ yyreduce:
 		(yyval.reference)->node.array_type_decl.element_ref = (yyvsp[-2].reference);
 		(yyval.reference)->node.array_type_decl.sm_dynamic_size = NULL;
 	}
-#line 3259 "cod.tab.c"
+#line 3129 "cod.tab.c"
     break;
 
   case 141: /* pointer: STAR  */
@@ -3268,7 +3138,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = NULL;
 	}
-#line 3272 "cod.tab.c"
+#line 3142 "cod.tab.c"
     break;
 
   case 142: /* pointer: STAR type_qualifier_list  */
@@ -3281,7 +3151,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[0].list);
 	}
-#line 3285 "cod.tab.c"
+#line 3155 "cod.tab.c"
     break;
 
   case 143: /* pointer: STAR pointer  */
@@ -3294,7 +3164,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[0].list);
 	}
-#line 3298 "cod.tab.c"
+#line 3168 "cod.tab.c"
     break;
 
   case 144: /* pointer: STAR type_qualifier_list pointer  */
@@ -3313,7 +3183,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[-1].list);
 	}
-#line 3317 "cod.tab.c"
+#line 3187 "cod.tab.c"
     break;
 
   case 145: /* pointer: AT  */
@@ -3329,7 +3199,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = NULL;
 	}
-#line 3333 "cod.tab.c"
+#line 3203 "cod.tab.c"
     break;
 
   case 146: /* pointer: AT type_qualifier_list  */
@@ -3345,7 +3215,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[0].list);
 	}
-#line 3349 "cod.tab.c"
+#line 3219 "cod.tab.c"
     break;
 
   case 147: /* pointer: AT pointer  */
@@ -3361,7 +3231,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[0].list);
 	}
-#line 3365 "cod.tab.c"
+#line 3235 "cod.tab.c"
     break;
 
   case 148: /* pointer: AT type_qualifier_list pointer  */
@@ -3383,7 +3253,7 @@ yyreduce:
 	    (yyval.list)->node = star;
 	    (yyval.list)->next = (yyvsp[-1].list);
 	}
-#line 3387 "cod.tab.c"
+#line 3257 "cod.tab.c"
     break;
 
   case 149: /* type_qualifier_list: type_qualifier  */
@@ -3393,7 +3263,7 @@ yyreduce:
 	    (yyval.list)->node = (yyvsp[0].reference);
 	    (yyval.list)->next = NULL;
 	}
-#line 3397 "cod.tab.c"
+#line 3267 "cod.tab.c"
     break;
 
   case 150: /* type_qualifier_list: type_qualifier_list type_qualifier  */
@@ -3408,7 +3278,7 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 3412 "cod.tab.c"
+#line 3282 "cod.tab.c"
     break;
 
   case 152: /* parameter_type_list: parameter_list COMMA DOTDOTDOT  */
@@ -3425,7 +3295,7 @@ yyreduce:
 	    id->node.declaration.id = strdup("...");
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 3429 "cod.tab.c"
+#line 3299 "cod.tab.c"
     break;
 
   case 153: /* parameter_list: parameter_declaration  */
@@ -3435,7 +3305,7 @@ yyreduce:
 		(yyval.list)->node = (yyvsp[0].reference);
 		(yyval.list)->next = NULL;
 	}
-#line 3439 "cod.tab.c"
+#line 3309 "cod.tab.c"
     break;
 
   case 154: /* parameter_list: parameter_list COMMA parameter_declaration  */
@@ -3450,7 +3320,7 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 3454 "cod.tab.c"
+#line 3324 "cod.tab.c"
     break;
 
   case 155: /* parameter_declaration: declaration_specifiers  */
@@ -3464,7 +3334,7 @@ yyreduce:
 	    (yyval.reference)->node.declaration.params = NULL;
 	    (yyval.reference)->node.declaration.type_spec = (yyvsp[0].list);
 	}
-#line 3468 "cod.tab.c"
+#line 3338 "cod.tab.c"
     break;
 
   case 156: /* parameter_declaration: declaration_specifiers declarator  */
@@ -3506,7 +3376,7 @@ yyreduce:
 		    printf("unexpected node in parameter_declaration");
 		}
 	}
-#line 3510 "cod.tab.c"
+#line 3380 "cod.tab.c"
     break;
 
   case 158: /* type_name: specifier_qualifier_list abstract_declarator  */
@@ -3519,7 +3389,7 @@ yyreduce:
 	    tmp->next = (yyvsp[0].list);
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 3523 "cod.tab.c"
+#line 3393 "cod.tab.c"
     break;
 
   case 160: /* initializer: LCURLY initializer_list RCURLY  */
@@ -3528,7 +3398,7 @@ yyreduce:
 	    (yyval.reference) = cod_new_initializer_list();
 	    (yyval.reference)->node.initializer_list.initializers = (yyvsp[-1].list);
 	}
-#line 3532 "cod.tab.c"
+#line 3402 "cod.tab.c"
     break;
 
   case 161: /* initializer: LCURLY initializer_list COMMA RCURLY  */
@@ -3537,13 +3407,13 @@ yyreduce:
 	    (yyval.reference) = cod_new_initializer_list();
 	    (yyval.reference)->node.initializer_list.initializers = (yyvsp[-2].list);
 	}
-#line 3541 "cod.tab.c"
+#line 3411 "cod.tab.c"
     break;
 
   case 162: /* initializer: assignment_expression  */
 #line 1579 "cod.y"
                                 { (yyval.reference) = (yyvsp[0].reference);}
-#line 3547 "cod.tab.c"
+#line 3417 "cod.tab.c"
     break;
 
   case 163: /* initializer_list: designation initializer  */
@@ -3556,7 +3426,7 @@ yyreduce:
 	    (yyval.list)->node = initializer;
 	    (yyval.list)->next = NULL;
 	}
-#line 3560 "cod.tab.c"
+#line 3430 "cod.tab.c"
     break;
 
   case 164: /* initializer_list: initializer  */
@@ -3569,7 +3439,7 @@ yyreduce:
 	    (yyval.list)->node = initializer;
 	    (yyval.list)->next = NULL;
 	}
-#line 3573 "cod.tab.c"
+#line 3443 "cod.tab.c"
     break;
 
   case 165: /* initializer_list: initializer_list COMMA designation initializer  */
@@ -3587,7 +3457,7 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-3].list);
 	}
-#line 3591 "cod.tab.c"
+#line 3461 "cod.tab.c"
     break;
 
   case 166: /* initializer_list: initializer_list COMMA initializer  */
@@ -3605,13 +3475,13 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-2].list);
 	}
-#line 3609 "cod.tab.c"
+#line 3479 "cod.tab.c"
     break;
 
   case 167: /* designation: designator_list ASSIGN  */
 #line 1630 "cod.y"
         { (yyval.list) = (yyvsp[-1].list);}
-#line 3615 "cod.tab.c"
+#line 3485 "cod.tab.c"
     break;
 
   case 168: /* designator_list: designator  */
@@ -3621,7 +3491,7 @@ yyreduce:
 		(yyval.list)->node = (yyvsp[0].reference);
 		(yyval.list)->next = NULL;
 	}
-#line 3625 "cod.tab.c"
+#line 3495 "cod.tab.c"
     break;
 
   case 169: /* designator_list: designator_list designator  */
@@ -3636,7 +3506,7 @@ yyreduce:
 	    tmp->next->next = NULL;
 	    (yyval.list) = (yyvsp[-1].list);
 	}
-#line 3640 "cod.tab.c"
+#line 3510 "cod.tab.c"
     break;
 
   case 170: /* designator: LBRACKET constant_expression RBRACKET  */
@@ -3646,7 +3516,7 @@ yyreduce:
 	    (yyval.reference)->node.designator.expression = (yyvsp[-1].reference);
 	    (yyval.reference)->node.designator.id = NULL;
 	}
-#line 3650 "cod.tab.c"
+#line 3520 "cod.tab.c"
     break;
 
   case 171: /* designator: DOT identifier_ref  */
@@ -3656,7 +3526,7 @@ yyreduce:
 	    (yyval.reference)->node.designator.expression = NULL;
 	    (yyval.reference)->node.designator.id = (yyvsp[0].info).string;
 	}
-#line 3660 "cod.tab.c"
+#line 3530 "cod.tab.c"
     break;
 
   case 172: /* decls_stmts_list: statement  */
@@ -3667,7 +3537,7 @@ yyreduce:
 	    tmp->next = NULL;
 	    (yyval.list) = tmp;
 	}
-#line 3671 "cod.tab.c"
+#line 3541 "cod.tab.c"
     break;
 
   case 173: /* decls_stmts_list: declaration  */
@@ -3675,7 +3545,7 @@ yyreduce:
                        {
 	    (yyval.list) = (yyvsp[0].list);
 	   }
-#line 3679 "cod.tab.c"
+#line 3549 "cod.tab.c"
     break;
 
   case 174: /* decls_stmts_list: error SEMI  */
@@ -3683,7 +3553,7 @@ yyreduce:
                      {
 	      (yyval.list) = NULL;
 	  }
-#line 3687 "cod.tab.c"
+#line 3557 "cod.tab.c"
     break;
 
   case 175: /* decls_stmts_list: decls_stmts_list statement  */
@@ -3694,7 +3564,7 @@ yyreduce:
 	    tmp->next = NULL;
 	    (yyval.list) = cod_append_list((yyvsp[-1].list), tmp);
 	}
-#line 3698 "cod.tab.c"
+#line 3568 "cod.tab.c"
     break;
 
   case 176: /* decls_stmts_list: decls_stmts_list declaration  */
@@ -3702,7 +3572,7 @@ yyreduce:
                                        {
 	    (yyval.list) = cod_append_list((yyvsp[-1].list), (yyvsp[0].list));
 	}
-#line 3706 "cod.tab.c"
+#line 3576 "cod.tab.c"
     break;
 
   case 183: /* labeled_statement: identifier_ref COLON statement  */
@@ -3712,7 +3582,7 @@ yyreduce:
 	    (yyval.reference)->node.label_statement.name =  (yyvsp[-2].info).string;
 	    (yyval.reference)->node.label_statement.statement = (yyvsp[0].reference);
 	}
-#line 3716 "cod.tab.c"
+#line 3586 "cod.tab.c"
     break;
 
   case 184: /* compound_statement: LCURLY RCURLY  */
@@ -3720,7 +3590,7 @@ yyreduce:
                       {
 	    (yyval.reference) = cod_new_compound_statement();
 	}
-#line 3724 "cod.tab.c"
+#line 3594 "cod.tab.c"
     break;
 
   case 185: /* compound_statement: LCURLY decls_stmts_list RCURLY  */
@@ -3731,13 +3601,13 @@ yyreduce:
 	    (yyval.reference)->node.compound_statement.decls = (yyvsp[-1].list);
 	    cod_remove_defined_types(yycontext, count);
 	}
-#line 3735 "cod.tab.c"
+#line 3605 "cod.tab.c"
     break;
 
   case 186: /* declaration_list: declaration  */
 #line 1720 "cod.y"
                     { (yyval.list) = (yyvsp[0].list); }
-#line 3741 "cod.tab.c"
+#line 3611 "cod.tab.c"
     break;
 
   case 187: /* declaration_list: declaration_list declaration  */
@@ -3754,7 +3624,7 @@ yyreduce:
 		(yyval.list) = (yyvsp[-1].list);
 	    }
 	}
-#line 3758 "cod.tab.c"
+#line 3628 "cod.tab.c"
     break;
 
   case 188: /* jump_statement: RETURN_TOKEN expression SEMI  */
@@ -3764,7 +3634,7 @@ yyreduce:
 	    (yyval.reference)->node.return_statement.expression = (yyvsp[-1].reference);
 	    (yyval.reference)->node.return_statement.lx_srcpos = (yyvsp[-2].info).lx_srcpos;
 	}
-#line 3768 "cod.tab.c"
+#line 3638 "cod.tab.c"
     break;
 
   case 189: /* jump_statement: RETURN_TOKEN SEMI  */
@@ -3774,7 +3644,7 @@ yyreduce:
 	    (yyval.reference)->node.return_statement.expression = NULL;
 	    (yyval.reference)->node.return_statement.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	}
-#line 3778 "cod.tab.c"
+#line 3648 "cod.tab.c"
     break;
 
   case 190: /* jump_statement: CONTINUE SEMI  */
@@ -3785,7 +3655,7 @@ yyreduce:
 	    (yyval.reference)->node.jump_statement.goto_target = NULL;
 	    (yyval.reference)->node.jump_statement.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	}
-#line 3789 "cod.tab.c"
+#line 3659 "cod.tab.c"
     break;
 
   case 191: /* jump_statement: BREAK SEMI  */
@@ -3796,7 +3666,7 @@ yyreduce:
 	    (yyval.reference)->node.jump_statement.goto_target = NULL;
 	    (yyval.reference)->node.jump_statement.lx_srcpos = (yyvsp[-1].info).lx_srcpos;
 	}
-#line 3800 "cod.tab.c"
+#line 3670 "cod.tab.c"
     break;
 
   case 192: /* jump_statement: GOTO identifier_ref SEMI  */
@@ -3807,7 +3677,7 @@ yyreduce:
 	    (yyval.reference)->node.jump_statement.goto_target = (yyvsp[-1].info).string;
 	    (yyval.reference)->node.jump_statement.lx_srcpos = (yyvsp[-2].info).lx_srcpos;
 	}
-#line 3811 "cod.tab.c"
+#line 3681 "cod.tab.c"
     break;
 
   case 193: /* expression_statement: SEMI  */
@@ -3815,7 +3685,7 @@ yyreduce:
              {
 	    (yyval.reference) = NULL;
 	}
-#line 3819 "cod.tab.c"
+#line 3689 "cod.tab.c"
     break;
 
   case 194: /* expression_statement: expression SEMI  */
@@ -3824,7 +3694,7 @@ yyreduce:
 	    (yyval.reference) = cod_new_expression_statement();
 	    (yyval.reference)->node.expression_statement.expression = (yyvsp[-1].reference);
 	}
-#line 3828 "cod.tab.c"
+#line 3698 "cod.tab.c"
     break;
 
   case 195: /* selection_statement: IF LPAREN expression RPAREN statement  */
@@ -3836,7 +3706,7 @@ yyreduce:
 	    (yyval.reference)->node.selection_statement.then_part = (yyvsp[0].reference);
 	    (yyval.reference)->node.selection_statement.else_part = NULL;
 	}
-#line 3840 "cod.tab.c"
+#line 3710 "cod.tab.c"
     break;
 
   case 196: /* selection_statement: IF LPAREN expression RPAREN statement ELSE statement  */
@@ -3848,7 +3718,7 @@ yyreduce:
 	    (yyval.reference)->node.selection_statement.then_part = (yyvsp[-2].reference);
 	    (yyval.reference)->node.selection_statement.else_part = (yyvsp[0].reference);
 	}
-#line 3852 "cod.tab.c"
+#line 3722 "cod.tab.c"
     break;
 
   case 197: /* iteration_statement: FOR LPAREN expression_opt SEMI expression_opt SEMI expression_opt RPAREN statement  */
@@ -3861,7 +3731,7 @@ yyreduce:
 	    (yyval.reference)->node.iteration_statement.iter_expr = (yyvsp[-2].reference);
 	    (yyval.reference)->node.iteration_statement.statement = (yyvsp[0].reference);
 	}
-#line 3865 "cod.tab.c"
+#line 3735 "cod.tab.c"
     break;
 
   case 198: /* iteration_statement: WHILE LPAREN expression RPAREN statement  */
@@ -3874,7 +3744,7 @@ yyreduce:
 	    (yyval.reference)->node.iteration_statement.iter_expr = NULL;
 	    (yyval.reference)->node.iteration_statement.statement = (yyvsp[0].reference);
 	}
-#line 3878 "cod.tab.c"
+#line 3748 "cod.tab.c"
     break;
 
   case 199: /* iteration_statement: DO statement WHILE LPAREN expression RPAREN SEMI  */
@@ -3888,13 +3758,13 @@ yyreduce:
 	    (yyval.reference)->node.iteration_statement.iter_expr = NULL;
 	    (yyval.reference)->node.iteration_statement.statement = (yyvsp[-5].reference);
 	}
-#line 3892 "cod.tab.c"
+#line 3762 "cod.tab.c"
     break;
 
   case 200: /* expression_opt: %empty  */
 #line 1841 "cod.y"
         { (yyval.reference) = NULL; }
-#line 3898 "cod.tab.c"
+#line 3768 "cod.tab.c"
     break;
 
   case 202: /* constant: integer_constant  */
@@ -3905,7 +3775,7 @@ yyreduce:
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3909 "cod.tab.c"
+#line 3779 "cod.tab.c"
     break;
 
   case 203: /* constant: floating_constant  */
@@ -3916,7 +3786,7 @@ yyreduce:
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3920 "cod.tab.c"
+#line 3790 "cod.tab.c"
     break;
 
   case 204: /* constant: string_constant  */
@@ -3927,7 +3797,7 @@ yyreduce:
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3931 "cod.tab.c"
+#line 3801 "cod.tab.c"
     break;
 
   case 205: /* constant: character_constant  */
@@ -3938,7 +3808,7 @@ yyreduce:
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3942 "cod.tab.c"
+#line 3812 "cod.tab.c"
     break;
 
   case 206: /* constant: enumeration_constant  */
@@ -3949,11 +3819,11 @@ yyreduce:
 	    (yyval.reference)->node.constant.const_val = (yyvsp[0].info).string;
 	    (yyval.reference)->node.constant.lx_srcpos = (yyvsp[0].info).lx_srcpos;
 	}
-#line 3953 "cod.tab.c"
+#line 3823 "cod.tab.c"
     break;
 
 
-#line 3957 "cod.tab.c"
+#line 3827 "cod.tab.c"
 
       default: break;
     }
@@ -8715,7 +8585,7 @@ space_to_underscore(char *str){
     while(*str != '\0'){
 	if(isspace(*str))
 	    *str = '_';
-	    str++;
+	str++;
     }
 }
 
@@ -9000,7 +8870,7 @@ evaluate_constant_return_expr(cod_parse_context context, sm_ref expr, int *free_
 	    *free_result = 1;
 	} else {
 	    /* we get an integer result */
-	    intptr_t left_val = 0, right_val = 0, value;
+	    intptr_t left_val = 0, right_val = 0, value = 0;
 	    char str_val[40];
 	    if (expr->node.operator.left)
 		left_val = get_constant_long_value(context, left);
@@ -9079,7 +8949,7 @@ evaluate_constant_return_expr(cod_parse_context context, sm_ref expr, int *free_
 	    }
 	    ret = cod_new_constant();
 	    ret->node.constant.token = integer_constant;
-	    sprintf(str_val, "%Id", value);
+	    sprintf(str_val, "%zd", value);
 	    ret->node.constant.const_val = strdup(str_val);
 	    *free_result = 1;
 	}

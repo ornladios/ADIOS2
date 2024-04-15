@@ -186,6 +186,10 @@ add_custom_command(
 
 add_custom_target(docs ALL DEPENDS "cod_node.c")
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+   SET_SOURCE_FILES_PROPERTIES(cod.tab.c PROPERTIES COMPILE_FLAGS -Wno-unused-function)
+endif()
+
 add_custom_target(generated DEPENDS cod_node.c ${BISON_CODParser_OUTPUT_SOURCE})
 
 list(APPEND COD_MASTER_SRC_LIST
@@ -254,6 +258,7 @@ endif()
 CHECK_INCLUDE_FILE(malloc.h HAVE_MALLOC_H)
 CHECK_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
 CHECK_INCLUDE_FILE(netdb.h HAVE_NETDB_H)
+CHECK_INCLUDE_FILE(netinet/in.h HAVE_NETINET_IN_H)
 CHECK_INCLUDE_FILE(sockLib.h HAVE_SOCKLIB_H)
 CHECK_INCLUDE_FILE(stdarg.h STDC_HEADERS)
 CHECK_INCLUDE_FILE(stdlib.h HAVE_STDLIB_H)
