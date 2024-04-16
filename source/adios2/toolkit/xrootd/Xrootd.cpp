@@ -12,7 +12,6 @@
 #include "XrdSsi/XrdSsiProvider.hh"
 #include "XrdSsi/XrdSsiRequest.hh"
 #include "XrdSsi/XrdSsiService.hh"
-#endif
 
 /******************************************************************************/
 /*                               D e f i n e s                                */
@@ -40,7 +39,6 @@ FILE *outFile = outErr;
 /******************************************************************************/
 /*                      F i l e   L o c a l   I t e m s                       */
 /******************************************************************************/
-#ifdef ADIOS2_HAVE_XROOTD
 namespace
 {
 XrdSysMutex gMutex;
