@@ -21,8 +21,6 @@ void Blosc2Accuracy1D(const std::string accuracy, const std::string threshold,
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWR_Blosc2_1D_" + accuracy + "_" + threshold + "_" + doshuffle +
-                            ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -41,6 +39,11 @@ void Blosc2Accuracy1D(const std::string accuracy, const std::string threshold,
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWR_Blosc2_1D_" + accuracy + "_" + threshold + "_" + doshuffle +
+                            "_MPI.bp");
+#else
+    const std::string fname("BPWR_Blosc2_1D_" + accuracy + "_" + threshold + "_" + doshuffle +
+                            ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -160,8 +163,6 @@ void Blosc2Accuracy2D(const std::string accuracy, const std::string threshold,
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRBlosc22D_" + accuracy + "_" + threshold + threshold + "_" +
-                            doshuffle + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -181,6 +182,11 @@ void Blosc2Accuracy2D(const std::string accuracy, const std::string threshold,
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRBlosc22D_" + accuracy + "_" + threshold + threshold + "_" +
+                            doshuffle + "_MPI.bp");
+#else
+    const std::string fname("BPWRBlosc22D_" + accuracy + "_" + threshold + threshold + "_" +
+                            doshuffle + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -300,8 +306,6 @@ void Blosc2Accuracy3D(const std::string accuracy, const std::string threshold,
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRBlosc23D_" + accuracy + "_" + threshold + threshold + "_" +
-                            doshuffle + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -322,6 +326,11 @@ void Blosc2Accuracy3D(const std::string accuracy, const std::string threshold,
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRBlosc23D_" + accuracy + "_" + threshold + threshold + "_" +
+                            doshuffle + "_MPI.bp");
+#else
+    const std::string fname("BPWRBlosc23D_" + accuracy + "_" + threshold + threshold + "_" +
+                            doshuffle + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -443,8 +452,6 @@ void Blosc2Accuracy1DSel(const std::string accuracy, const std::string threshold
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRBlosc21DSel_" + accuracy + "_" + threshold + threshold + "_" +
-                            doshuffle + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -463,6 +470,11 @@ void Blosc2Accuracy1DSel(const std::string accuracy, const std::string threshold
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRBlosc21DSel_" + accuracy + "_" + threshold + threshold + "_" +
+                            doshuffle + "_MPI.bp");
+#else
+    const std::string fname("BPWRBlosc21DSel_" + accuracy + "_" + threshold + threshold + "_" +
+                            doshuffle + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -580,8 +592,6 @@ void Blosc2Accuracy2DSel(const std::string accuracy, const std::string threshold
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRBlosc22DSel_" + accuracy + "_" + threshold + threshold + "_" +
-                            doshuffle + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -601,6 +611,11 @@ void Blosc2Accuracy2DSel(const std::string accuracy, const std::string threshold
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRBlosc22DSel_" + accuracy + "_" + threshold + threshold + "_" +
+                            doshuffle + "_MPI.bp");
+#else
+    const std::string fname("BPWRBlosc22DSel_" + accuracy + "_" + threshold + threshold + "_" +
+                            doshuffle + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -720,8 +735,6 @@ void Blosc2Accuracy3DSel(const std::string accuracy, const std::string threshold
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRBlosc23DSel_" + accuracy + "_" + threshold + threshold + "_" +
-                            doshuffle + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -742,6 +755,11 @@ void Blosc2Accuracy3DSel(const std::string accuracy, const std::string threshold
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRBlosc23DSel_" + accuracy + "_" + threshold + threshold + "_" +
+                            doshuffle + "_MPI.bp");
+#else
+    const std::string fname("BPWRBlosc23DSel_" + accuracy + "_" + threshold + threshold + "_" +
+                            doshuffle + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI
@@ -867,8 +885,6 @@ void Blosc2NullBlocks(const std::string accuracy, const std::string threshold,
 
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("BPWRBlosc2NullBlock_" + accuracy + "_" + threshold + threshold + "_" +
-                            doshuffle + ".bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -883,6 +899,11 @@ void Blosc2NullBlocks(const std::string accuracy, const std::string threshold,
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("BPWRBlosc2NullBlock_" + accuracy + "_" + threshold + threshold + "_" +
+                            doshuffle + "_MPI.bp");
+#else
+    const std::string fname("BPWRBlosc2NullBlock_" + accuracy + "_" + threshold + threshold + "_" +
+                            doshuffle + ".bp");
 #endif
 
 #if ADIOS2_USE_MPI

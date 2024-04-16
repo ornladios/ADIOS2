@@ -31,12 +31,13 @@ void DataManReader::GetSyncCommon(Variable<T> &variable, T *data)
 template <class T>
 void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
+    auto varMemSpace = variable.GetMemorySpace(data);
     if (m_IO.m_ArrayOrder == ArrayOrdering::RowMajor)
     {
         while (true)
         {
             int ret = m_Serializer.GetData(data, variable.m_Name, variable.m_Start,
-                                           variable.m_Count, m_CurrentStep, variable.m_MemSpace,
+                                           variable.m_Count, m_CurrentStep, varMemSpace,
                                            variable.m_MemoryStart, variable.m_MemoryCount);
             if (ret == 0)
             {
@@ -57,7 +58,7 @@ void DataManReader::GetDeferredCommon(Variable<T> &variable, T *data)
         while (true)
         {
             int ret = m_Serializer.GetData(data, variable.m_Name, start, count, m_CurrentStep,
-                                           variable.m_MemSpace, memstart, memcount);
+                                           varMemSpace, memstart, memcount);
             if (ret == 0)
             {
                 break;

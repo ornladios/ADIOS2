@@ -65,6 +65,44 @@ Params YAMLNodeMapToParams(const YAML::Node &node, const std::string &hint)
 
 constexpr bool isMandatory = true;
 constexpr bool isNotMandatory = false;
+
+inline void FixHomePath(std::string &path, std::string &homePath)
+{
+    if (!path.empty() && path[0] == '~')
+    {
+        path = homePath + path.substr(1);
+    }
+}
+
+/*std::string NodeType(const YAML::Node &node)
+{
+    switch (node.Type())
+    {
+    case YAML::NodeType::Null:
+        return "Null";
+    case YAML::NodeType::Scalar:
+        return "Scalar";
+    case YAML::NodeType::Sequence:
+        return "Sequence";
+    case YAML::NodeType::Map:
+        return "Map";
+    case YAML::NodeType::Undefined:
+        return "Undefined";
+    }
+    return "NoIdeaWhatThisIs";
+}*/
+
+template <class T>
+void SetOption(T &value, const std::string nodeName, const YAML::Node &upperNode,
+               const std::string &hint)
+{
+    auto node = YAMLNode(nodeName, upperNode, hint, isNotMandatory, YAML::NodeType::Scalar);
+    if (node)
+    {
+        value = node.as<T>();
+    }
+}
+
 } // end empty  namespace
 
 void IOVariableYAML(const YAML::Node &variableMap, core::IO &currentIO, const std::string &hint)
@@ -218,6 +256,63 @@ std::string ParseConfigYAML(core::ADIOS &adios, const std::string &configFileYAM
         }
     }
     return configFileContents;
+}
+
+void ParseUserOptionsFile(Comm &comm, const std::string &configFileYAML, UserOptions &options,
+                          std::string &homePath)
+{
+    const std::string hint =
+        "when parsing user config file " + configFileYAML + " in call to ADIOS constructor";
+
+    const std::string configFileContents = comm.BroadcastFile(configFileYAML, hint);
+
+    const YAML::Node document = YAML::Load(configFileContents);
+    if (!document)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosUserOptions", "ParseUserOptionsFile",
+            "parser error in file " + configFileYAML +
+                " invalid format. Check with any YAML editor if format is ill-formed, " + hint);
+    }
+
+    /*
+     * This code section below determines what options we recognize at all from the
+     * ~/.config/adios2/adios2.yaml file
+     */
+    {
+        UserOptions::General &opts = options.general;
+        const YAML::Node general =
+            YAMLNode("General", document, hint, isNotMandatory, YAML::NodeType::Map);
+        if (general)
+        {
+            SetOption(opts.verbose, "verbose", general, hint);
+        }
+    }
+
+    {
+        UserOptions::Campaign &opts = options.campaign;
+        const YAML::Node campaign =
+            YAMLNode("Campaign", document, hint, isNotMandatory, YAML::NodeType::Map);
+        if (campaign)
+        {
+            SetOption(opts.verbose, "verbose", campaign, hint);
+            SetOption(opts.active, "active", campaign, hint);
+            SetOption(opts.hostname, "hostname", campaign, hint);
+            SetOption(opts.campaignstorepath, "campaignstorepath", campaign, hint);
+            FixHomePath(opts.campaignstorepath, homePath);
+            SetOption(opts.cachepath, "cachepath", campaign, hint);
+            FixHomePath(opts.cachepath, homePath);
+        }
+    }
+
+    {
+        UserOptions::SST &opts = options.sst;
+        const YAML::Node sst = YAMLNode("SST", document, hint, isNotMandatory, YAML::NodeType::Map);
+        if (sst)
+        {
+            SetOption(opts.verbose, "verbose", sst, hint);
+        }
+    }
 }
 
 } // end namespace helper

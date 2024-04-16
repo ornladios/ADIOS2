@@ -4,8 +4,6 @@
  *
  * adiosNetwork.cpp implementation of adiosNetwork.h functions
  *
- *  Created on: March 22, 2019
- *      Author: William F Godoy godoywf@ornl.gov
  */
 
 #include "adiosNetwork.h"
@@ -79,10 +77,10 @@ std::string GetFQDN() noexcept
     {
         for (p = info; p != NULL; p = p->ai_next)
         {
-            printf("hostname: %s\n", p->ai_canonname);
+            // printf("hostname: %s\n", p->ai_canonname);
             if (strchr(p->ai_canonname, '.') != NULL)
             {
-                strncpy(hostname, p->ai_canonname, sizeof(hostname));
+                strncpy(hostname, p->ai_canonname, sizeof(hostname) - 1);
                 break;
             }
         }
@@ -138,7 +136,7 @@ AvailableIpAddresses() noexcept
     for (struct if_nameindex *p = head; !(p->if_index == 0 && p->if_name == NULL); ++p)
     {
         struct ifreq req;
-        strncpy(req.ifr_name, p->if_name, IFNAMSIZ);
+        strncpy(req.ifr_name, p->if_name, IFNAMSIZ - 1);
         if (ioctl(socket_handler, SIOCGIFADDR, &req) < 0)
         {
             if (errno == EADDRNOTAVAIL)

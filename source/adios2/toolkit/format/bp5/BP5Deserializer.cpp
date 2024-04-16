@@ -366,7 +366,7 @@ BP5Deserializer::ControlInfo *BP5Deserializer::BuildControl(FMFormat Format)
     size_t VarIndex = 0;
     while (FieldList[i].field_name)
     {
-        size_t HeaderSkip;
+        size_t HeaderSkip = 0;
         char *ExprStr = NULL;
         int Derived = 0;
         ret = (ControlInfo *)realloc(ret, sizeof(*ret) + ControlCount * sizeof(struct ControlInfo));
@@ -1994,6 +1994,8 @@ BP5Deserializer::~BP5Deserializer()
         m_Engine->m_IO.RemoveVariable(VarRec.second->VarName);
 
         free(VarRec.second->VarName);
+        if (VarRec.second->ExprStr)
+            free(VarRec.second->ExprStr);
         if (VarRec.second->Operator)
             free(VarRec.second->Operator);
         if (VarRec.second->Def)

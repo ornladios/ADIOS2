@@ -96,7 +96,10 @@ program TestBPWriteReadHeatMapSZ3D
   call adios2_add_operation(operation_id, var_temperatures(5), &
                             sz_operator, 'accuracy', '0.01', ierr)
 
-  if( operation_id /= 0 ) stop 'operation_id not added for real type'
+  if( operation_id /= 0 ) then
+     write(*,*) 'operation_id not added for real type'
+     stop 1
+  end if
 
 
   call adios2_define_variable(var_temperatures(6), ioPut, &
@@ -107,7 +110,10 @@ program TestBPWriteReadHeatMapSZ3D
   call adios2_add_operation(operation_id, var_temperatures(6), &
                             sz_operator, 'accuracy', '0.01', ierr)
 
-  if( operation_id /= 0 ) stop 'operation_id not added for dp type'
+  if( operation_id /= 0 ) then
+     write(*,*) 'operation_id not added for dp type'
+     stop 1
+  end if
 
   call adios2_open(bpWriter, ioPut, 'HeatMapSZ3D_f.bp', adios2_mode_write, &
                    ierr)
@@ -205,12 +211,30 @@ program TestBPWriteReadHeatMapSZ3D
       end do
     end do
 
-    if (sum_i1 /= 1000*isize) stop 'Test failed integer*1'
-    if (sum_i2 /= 1000*isize) stop 'Test failed integer*2'
-    if (sum(sel_temperatures_i4) /= 1000*isize) stop 'Test failed integer*4'
-    if (sum(sel_temperatures_i8) /= 1000*isize) stop 'Test failed integer*8'
-    if (sum(sel_temperatures_r4) /= 1000*isize) stop 'Test failed real*4'
-    if (sum(sel_temperatures_r8) /= 1000*isize) stop 'Test failed real*8'
+    if (sum_i1 /= 1000*isize) then
+       write(*,*) 'Test failed integer*1'
+       stop 1
+    end if
+    if (sum_i2 /= 1000*isize) then
+       write(*,*) 'Test failed integer*2'
+       stop 1
+    end if
+    if (sum(sel_temperatures_i4) /= 1000*isize) then
+       write(*,*) 'Test failed integer*4'
+       stop 1
+    end if
+    if (sum(sel_temperatures_i8) /= 1000*isize) then
+       write(*,*) 'Test failed integer*8'
+       stop 1
+    end if
+    if (sum(sel_temperatures_r4) /= 1000*isize) then
+       write(*,*) 'Test failed real*4'
+       stop 1
+    end if
+    if (sum(sel_temperatures_r8) /= 1000*isize) then
+       write(*,*) 'Test failed real*8'
+       stop 1
+    end if
 
     if (allocated(sel_temperatures_i1)) deallocate (sel_temperatures_i1)
     if (allocated(sel_temperatures_i2)) deallocate (sel_temperatures_i2)

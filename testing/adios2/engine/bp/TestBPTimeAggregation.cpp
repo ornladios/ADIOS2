@@ -21,7 +21,6 @@ void TimeAggregation1D8(const std::string flushstepscount)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname = "BPTimeAggregation1D8_" + flushstepscount + ".bp";
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -33,6 +32,9 @@ void TimeAggregation1D8(const std::string flushstepscount)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname = "BPTimeAggregation1D8_" + flushstepscount + "_MPI.bp";
+#else
+    const std::string fname = "BPTimeAggregation1D8_" + flushstepscount + ".bp";
 #endif
 
     // Write test data using ADIOS2
@@ -343,7 +345,6 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
-    const std::string fname = "BPTimeAggregation2D2x4_" + flushstepscount + ".bp";
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -358,6 +359,9 @@ void TimeAggregation2D4x2(const std::string flushstepscount)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname = "BPTimeAggregation2D2x4_" + flushstepscount + "_MPI.bp";
+#else
+    const std::string fname = "BPTimeAggregation2D2x4_" + flushstepscount + ".bp";
 #endif
 
     // Write test data using ADIOS2

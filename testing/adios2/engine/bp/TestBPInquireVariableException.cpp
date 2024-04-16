@@ -18,7 +18,6 @@ public:
 
 TEST_F(ADIOSInquireVariableException, Read)
 {
-    std::string filename = "ADIOSInquireVariableException";
 
     // Number of steps
     const std::size_t NSteps = 5;
@@ -28,6 +27,9 @@ TEST_F(ADIOSInquireVariableException, Read)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+    std::string filename = "ADIOSInquireVariableException";
+#else
+    std::string filename = "ADIOSInquireVariableException";
 #endif
 
     // Write test data using BP

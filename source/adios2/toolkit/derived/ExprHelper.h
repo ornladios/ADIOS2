@@ -21,7 +21,8 @@ enum ExpressionOperator
     OP_ADD,
     OP_SQRT,
     OP_POW,
-    OP_MAGN
+    OP_MAGN,
+    OP_CURL
 };
 
 struct OperatorProperty
@@ -39,6 +40,7 @@ const std::map<ExpressionOperator, OperatorProperty> op_property = {
     {ExpressionOperator::OP_ADD, {"ADD", true}},
     {ExpressionOperator::OP_SQRT, {"SQRT", false}},
     {ExpressionOperator::OP_POW, {"POW", false}},
+    {ExpressionOperator::OP_CURL, {"CURL", false}},
     {ExpressionOperator::OP_MAGN, {"MAGNITUDE", false}}};
 
 const std::map<std::string, ExpressionOperator> string_to_op = {
@@ -49,6 +51,7 @@ const std::map<std::string, ExpressionOperator> string_to_op = {
     {"add", ExpressionOperator::OP_ADD},        {"ADD", ExpressionOperator::OP_ADD},
     {"SQRT", ExpressionOperator::OP_SQRT},      {"sqrt", ExpressionOperator::OP_SQRT},
     {"POW", ExpressionOperator::OP_POW},        {"^", ExpressionOperator::OP_POW},
+    {"CURL", ExpressionOperator::OP_CURL},      {"curl", ExpressionOperator::OP_CURL},
     {"MAGNITUDE", ExpressionOperator::OP_MAGN}, {"magnitude", ExpressionOperator::OP_MAGN}};
 
 inline std::string get_op_name(ExpressionOperator op) { return op_property.at(op).name; }

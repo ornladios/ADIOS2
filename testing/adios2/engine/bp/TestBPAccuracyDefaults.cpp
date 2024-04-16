@@ -31,7 +31,6 @@ public:
 // Check if SetAccuracy/GetAccuracy default behavior works
 TEST_F(AccuracyTests, DefaultAccuracy)
 {
-    const std::string fname("DefaultAccuracy.bp");
 
     int mpiRank = 0, mpiSize = 1;
 
@@ -40,6 +39,9 @@ TEST_F(AccuracyTests, DefaultAccuracy)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("DefaultAccuracy_MPI.bp");
+#else
+    const std::string fname("DefaultAccuracy.bp");
 #endif
 
     std::vector<int64_t> localData(Nx);
@@ -73,9 +75,9 @@ TEST_F(AccuracyTests, DefaultAccuracy)
         bpWriter.Close();
 
         auto accuracyGot = var.GetAccuracy();
-        assert(accuracyGot.error == 0.0); // no error whatsoever
-        assert(accuracyGot.norm == accuracyRequested.norm);
-        assert(accuracyGot.relative == accuracyRequested.relative);
+        EXPECT_EQ(accuracyGot.error, 0.0); // no error whatsoever
+        EXPECT_EQ(accuracyGot.norm, accuracyRequested.norm);
+        EXPECT_EQ(accuracyGot.relative, accuracyRequested.relative);
     }
     // Reader
     {
@@ -100,9 +102,10 @@ TEST_F(AccuracyTests, DefaultAccuracy)
         bpReader.PerformGets();
 
         auto accuracyGot = varRange.GetAccuracy();
-        assert(accuracyGot.error == 0.0); // no error whatsoever
-        assert(accuracyGot.norm == accuracyRequested.norm);
-        assert(accuracyGot.relative == accuracyRequested.relative);
+        EXPECT_EQ(accuracyGot.error, 0.0); // no error whatsoever
+        EXPECT_EQ(accuracyGot.error, 0.0); // no error whatsoever
+        EXPECT_EQ(accuracyGot.norm, accuracyRequested.norm);
+        EXPECT_EQ(accuracyGot.relative, accuracyRequested.relative);
 
         std::vector<int64_t> iStartEndData;
         iStartEndData.reserve(gNx); // maximum possible

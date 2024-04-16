@@ -23,8 +23,11 @@ void LocalAggregate1D(const std::string substreams)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
+#if ADIOS2_USE_MPI
+    const std::string fname("LocalAggregate1D_" + substreams + "_MPI.bp");
+#else
     const std::string fname("LocalAggregate1D_" + substreams + ".bp");
-
+#endif
     int mpiRank = 0, mpiSize = 1;
     // Number of steps
     constexpr size_t NSteps = 5;
@@ -151,8 +154,11 @@ void LocalAggregate1DBlock0(const std::string substreams)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
+#if ADIOS2_USE_MPI
+    const std::string fname("LocalAggregate1DSubFile_" + substreams + "_MPI.bp");
+#else
     const std::string fname("LocalAggregate1DSubFile_" + substreams + ".bp");
-
+#endif
     int mpiRank = 0, mpiSize = 1;
     // Number of steps
     constexpr size_t NSteps = 5;

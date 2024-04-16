@@ -188,7 +188,7 @@ jobs:
       - name: Build
         run: gha/scripts/ci/gh-actions/run.sh build
       - name: Print ccache statistics
-        run: ccache -s
+        run: ccache -s | tee $GITHUB_STEP_SUMMARY
       - name: Save cache
         uses: actions/cache/save@v3
         if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}

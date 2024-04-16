@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
     char engineName[32] = "BPFile";
     if (argc > 1)
     {
-        strncpy(engineName, argv[1], sizeof(engineName));
+        strncpy(engineName, argv[1], sizeof(engineName) - 1);
     }
 
     // IO

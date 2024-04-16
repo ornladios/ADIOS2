@@ -122,6 +122,26 @@ adios2_variable *adios2_define_variable(adios2_io *io, const char *name, const a
                                         const size_t *start, const size_t *count,
                                         const adios2_constant_dims constant_dims);
 
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+/**
+ * @brief Define a derived variable within io
+ * @param io handler that owns the variable
+ * @param name unique variable identifier
+ * @param type primitive type from enum adios2_type in adios2_c_types.h
+ * @param ndims number of dimensions
+ * @param shape global dimension
+ * @param start local offset
+ * @param count local dimension
+ * @param constant_dims adios2_constant_dims_true:: shape, start, count
+ * won't change; adios2_constant_dims_false: shape, start, count will change
+ * after definition
+ * @return success: handler, failure: NULL
+ */
+adios2_derived_variable *adios2_define_derived_variable(adios2_io *io, const char *name,
+                                                        const char *expression,
+                                                        const adios2_derived_var_type type);
+#endif
+
 /**
  * @brief Retrieve a variable handler within current io handler
  * @param io handler to variable io owner

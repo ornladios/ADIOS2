@@ -18,6 +18,7 @@
 #include <utility> //std::pair
 /// \endcond
 
+#include "adios2/common/ADIOSTypes.h" // UserOptions
 #include "adios2/core/ADIOS.h"
 #include "adios2/core/IO.h"
 
@@ -30,6 +31,9 @@ void ParseConfigYAMLIO(core::ADIOS &adios, const std::string &configFileYAML,
 
 std::string ParseConfigYAML(core::ADIOS &adios, const std::string &configFileYAML,
                             std::map<std::string, core::IO> &ios);
+
+void ParseUserOptionsFile(Comm &comm, const std::string &configFileYAML, UserOptions &options,
+                          std::string &homePath);
 
 } // end namespace helper
 } // end namespace adios2

@@ -67,11 +67,17 @@ program TestBPWriteReadHeatMapZfp2DRemove
     if( mod(i,2) == 0 ) then
       call adios2_add_operation(operation_id, var_temperatures(1), &
                             zfp_operator, 'rate', '8', ierr)
-      if( operation_id /= 0 ) stop 'operation_id not added for real type'
+      if( operation_id /= 0 ) then
+         write(*,*) 'operation_id not added for real type'
+         stop 1
+      end if
       
       call adios2_add_operation(operation_id, var_temperatures(2), &
                             zfp_operator, 'rate', '8', ierr)
-      if( operation_id /= 0 ) stop 'operation_id not added for dp type'
+      if( operation_id /= 0 ) then
+         write(*,*) 'operation_id not added for dp type'
+         stop 1
+      end if
                     
     else
       call adios2_remove_operations(var_temperatures(1), ierr)
@@ -125,8 +131,14 @@ program TestBPWriteReadHeatMapZfp2DRemove
       call adios2_get(bpReader, var_temperaturesIn(2), sel_temperatures_r8, ierr)
       call adios2_end_step(bpReader, ierr)
 
-      if (sum(sel_temperatures_r4) /= 100*isize) stop 'Test failed real*4'
-      if (sum(sel_temperatures_r8) /= 100*isize) stop 'Test failed real*8'
+      if (sum(sel_temperatures_r4) /= 100*isize) then
+         write(*,*) 'Test failed real*4'
+         stop 1
+      end if
+      if (sum(sel_temperatures_r8) /= 100*isize) then
+         write(*,*) 'Test failed real*8'
+         stop 1
+      end if
     
     end do  
 

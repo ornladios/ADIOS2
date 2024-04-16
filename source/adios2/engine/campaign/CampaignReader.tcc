@@ -53,6 +53,19 @@ inline Variable<T> CampaignReader::DuplicateVariable(Variable<T> *variable, IO &
 }
 
 template <class T>
+inline Attribute<T> CampaignReader::DuplicateAttribute(Attribute<T> *attribute, IO &io,
+                                                       std::string &name)
+{
+    if (attribute->m_IsSingleValue)
+    {
+        auto &a = io.DefineAttribute<T>(name, attribute->m_DataSingleValue);
+        return a;
+    }
+    auto &a = io.DefineAttribute<T>(name, attribute->m_DataArray.data(), attribute->m_Elements);
+    return a;
+}
+
+template <class T>
 inline std::pair<Variable<T> *, Engine *>
 CampaignReader::TranslateToActualVariable(Variable<T> &variable)
 {

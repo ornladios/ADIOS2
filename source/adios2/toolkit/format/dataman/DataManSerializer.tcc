@@ -76,13 +76,14 @@ void DataManSerializer::CalculateMinMax(const T *data, const Dims &count,
 
 template <class T>
 void DataManSerializer::PutData(const core::Variable<T> &variable, const std::string &doid,
-                                const size_t step, const int rank, const std::string &address,
-                                VecPtr localBuffer, JsonPtr metadataJson)
+                                const size_t step, const int rank, const MemorySpace memSpace,
+                                const std::string &address, VecPtr localBuffer,
+                                JsonPtr metadataJson)
 {
     PERFSTUBS_SCOPED_TIMER_FUNC();
     PutData(variable.GetData(), variable.m_Name, variable.m_Shape, variable.m_Start,
-            variable.m_Count, variable.m_MemoryStart, variable.m_MemoryCount, variable.m_MemSpace,
-            doid, step, rank, address, variable.m_Operations, localBuffer, metadataJson);
+            variable.m_Count, variable.m_MemoryStart, variable.m_MemoryCount, memSpace, doid, step,
+            rank, address, variable.m_Operations, localBuffer, metadataJson);
 }
 
 template <class T>

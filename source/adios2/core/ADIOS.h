@@ -164,6 +164,9 @@ public:
     void RecordOutputStep(const std::string &name, const size_t step = UnknownStep,
                           const double time = UnknownTime);
 
+    /** A constant reference to the user options from ~/.config/adios2/adios2.yaml */
+    const adios2::UserOptions &GetUserOptions();
+
 private:
     /** Communicator given to parallel constructor. */
     helper::Comm m_Comm;
@@ -203,6 +206,10 @@ private:
 
     void YAMLInitIO(const std::string &configFileYAML, const std::string &configFileContents,
                     core::IO &io);
+
+    adios2::UserOptions m_UserOptions;
+    void SetUserOptionDefaults();
+    void ProcessUserConfig();
 
 private:
     /* Global services that we want to initialize at most once and shutdown

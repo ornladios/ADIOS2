@@ -462,8 +462,12 @@ TEST_F(H5VolWriteReadTest, H5VolWriteHDF5Read1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname = "H5VolTest1D8.bp";
 
+#ifdef TEST_HDF5_MPI
+    const std::string fname = "H5VolTest1D8_MPI.bp";
+#else
+    const std::string fname = "H5VolTest1D8.bp";
+#endif
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
     const std::size_t Nx = 8;
@@ -649,8 +653,11 @@ TEST_F(H5VolWriteReadTest, H5VolWriteHDF5Read2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
+#ifdef TEST_HDF5_MPI
+    std::string fname = "H5VolTest2D2x4_MPI.bp";
+#else
     std::string fname = "H5VolTest2D2x4.bp";
-
+#endif
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
     const std::size_t Nx = 4;
