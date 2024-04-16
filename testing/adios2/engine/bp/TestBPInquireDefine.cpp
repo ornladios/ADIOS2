@@ -24,7 +24,6 @@ public:
 
 TEST_F(ADIOSInquireDefineTest, Read)
 {
-    std::string filename = "ADIOSInquireDefine.bp";
 
     // Number of steps
     const int32_t NSteps = 5;
@@ -33,6 +32,9 @@ TEST_F(ADIOSInquireDefineTest, Read)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    std::string filename = "ADIOSInquireDefine_MPI.bp";
+#else
+    std::string filename = "ADIOSInquireDefine.bp";
 #endif
 
     // Write test data using BP

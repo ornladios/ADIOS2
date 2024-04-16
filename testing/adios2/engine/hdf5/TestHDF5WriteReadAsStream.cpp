@@ -26,7 +26,6 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2HDF5WriteReadAsStream1D8.h5");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -38,6 +37,9 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead1D8)
 #ifdef TEST_HDF5_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2HDF5WriteReadAsStream1D8_MPI.h5");
+#else
+    const std::string fname("ADIOS2HDF5WriteReadAsStream1D8.h5");
 #endif
 
     // Write test data using HDF5
@@ -395,7 +397,6 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
-    const std::string fname("ADIOS2HDF5WriteReadAsStream2D2x4Test.h5");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -410,6 +411,9 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D2x4)
 #ifdef TEST_HDF5_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2HDF5WriteReadAsStream2D2x4Test_MPI.h5");
+#else
+    const std::string fname("ADIOS2HDF5WriteReadAsStream2D2x4Test.h5");
 #endif
 
     // Write test data using ADIOS2
@@ -634,7 +638,6 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("ADIOS2HDF5WriteReadAsStream2D4x2Test.h5");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -648,6 +651,9 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
 #ifdef TEST_HDF5_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2HDF5WriteReadAsStream2D4x2Test_MPI.h5");
+#else
+    const std::string fname("ADIOS2HDF5WriteReadAsStream2D4x2Test.h5");
 #endif
 
     // Write test data using ADIOS2
@@ -874,9 +880,6 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ADIOS2HDF5WriteRead2D4x2)
 
 TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
 {
-    const std::string fnameFloat("HDF5ReaderWriterDefineVariable_float.h5");
-    const std::string fname("HDF5ReaderWriterDefineVariable_all.h5");
-
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
     const std::size_t Nx = 2;
@@ -889,6 +892,11 @@ TEST_F(HDF5WriteReadAsStreamTestADIOS2, ReaderWriterDefineVariable)
 #ifdef TEST_HDF5_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fnameFloat("HDF5ReaderWriterDefineVariable_float.h5");
+    const std::string fname("HDF5ReaderWriterDefineVariable_all.h5");
+#else
+    const std::string fnameFloat("HDF5ReaderWriterDefineVariable_float.h5");
+    const std::string fname("HDF5ReaderWriterDefineVariable_all.h5");
 #endif
 
     // Write test data using ADIOS2

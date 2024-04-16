@@ -27,7 +27,6 @@ TEST_F(NullWriteReadTests_C_API, NullWriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("NullWriteRead1D8_c.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -45,8 +44,10 @@ TEST_F(NullWriteReadTests_C_API, NullWriteRead1D8)
 
 #if ADIOS2_USE_MPI
     adios2_adios *adios = adios2_init_mpi(MPI_COMM_WORLD);
+    const std::string fname("NullWriteRead1D8_c_MPI.bp");
 #else
     adios2_adios *adios = adios2_init_serial();
+    const std::string fname("NullWriteRead1D8_c.bp");
 #endif
     {
         adios2_io *io = adios2_declare_io(adios, "WriteNull");

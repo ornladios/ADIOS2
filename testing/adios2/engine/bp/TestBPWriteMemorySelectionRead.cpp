@@ -174,7 +174,6 @@ MPI_Comm testComm;
 
 void BPSteps1D(const size_t ghostCells)
 {
-    const std::string fname("BPSteps1D_" + std::to_string(ghostCells));
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -186,6 +185,9 @@ void BPSteps1D(const size_t ghostCells)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
     MPI_Comm_size(testComm, &mpiSize);
+    const std::string fname("BPSteps1D_" + std::to_string(ghostCells) + "_MPI");
+#else
+    const std::string fname("BPSteps1D_" + std::to_string(ghostCells));
 #endif
 
 #if ADIOS2_USE_MPI
@@ -386,7 +388,6 @@ void BPSteps1D(const size_t ghostCells)
 
 void BPSteps2D4x2(const size_t ghostCells)
 {
-    const std::string fname("BPSteps2D4x2_" + std::to_string(ghostCells));
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -402,6 +403,9 @@ void BPSteps2D4x2(const size_t ghostCells)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
     MPI_Comm_size(testComm, &mpiSize);
+    const std::string fname("BPSteps2D4x2_" + std::to_string(ghostCells) + "_MPI");
+#else
+    const std::string fname("BPSteps2D4x2_" + std::to_string(ghostCells));
 #endif
 
 #if ADIOS2_USE_MPI
@@ -612,7 +616,6 @@ void BPSteps2D4x2(const size_t ghostCells)
 
 void BPSteps3D8x2x4(const size_t ghostCells)
 {
-    const std::string fname("BPSteps3D8x2x4_" + std::to_string(ghostCells));
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -630,6 +633,9 @@ void BPSteps3D8x2x4(const size_t ghostCells)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(testComm, &mpiRank);
     MPI_Comm_size(testComm, &mpiSize);
+    const std::string fname("BPSteps3D8x2x4_" + std::to_string(ghostCells) + "_MPI");
+#else
+    const std::string fname("BPSteps3D8x2x4_" + std::to_string(ghostCells));
 #endif
 
 #if ADIOS2_USE_MPI

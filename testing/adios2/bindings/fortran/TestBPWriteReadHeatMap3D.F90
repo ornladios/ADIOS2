@@ -190,12 +190,30 @@ program TestBPWriteReadHeatMap3D
       end do
     end do
 
-    if (sum_i1 /= 500*isize) stop 'Test failed integer*1'
-    if (sum_i2 /= 500*isize) stop 'Test failed integer*2'
-    if (sum(sel_temperatures_i4) /= 500*isize) stop 'Test failed integer*4'
-    if (sum(sel_temperatures_i8) /= 500*isize) stop 'Test failed integer*8'
-    if (sum(sel_temperatures_r4) /= 500*isize) stop 'Test failed real*4'
-    if (sum(sel_temperatures_r8) /= 500*isize) stop 'Test failed real*8'
+    if (sum_i1 /= 500*isize) then
+       write(*,*) 'Test failed integer*1'
+       stop 1
+    end if
+    if (sum_i2 /= 500*isize) then
+       write(*,*) 'Test failed integer*2'
+       stop 1
+    end if
+    if (sum(sel_temperatures_i4) /= 500*isize) then
+       write(*,*) 'Test failed integer*4'
+       stop 1
+    end if
+    if (sum(sel_temperatures_i8) /= 500*isize) then
+       write(*,*) 'Test failed integer*8'
+       stop 1
+    end if
+    if (sum(sel_temperatures_r4) /= 500*isize) then
+       write(*,*) 'Test failed real*4'
+       stop 1
+    end if
+    if (sum(sel_temperatures_r8) /= 500*isize) then
+       write(*,*) 'Test failed real*8'
+       stop 1
+    end if
 
     if (allocated(sel_temperatures_i1)) deallocate (sel_temperatures_i1)
     if (allocated(sel_temperatures_i2)) deallocate (sel_temperatures_i2)

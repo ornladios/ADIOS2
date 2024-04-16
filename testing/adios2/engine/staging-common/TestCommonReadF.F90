@@ -113,91 +113,223 @@ program TestSstRead
 
 
     call adios2_inquire_variable(variables(1), ioRead, "i8", ierr)
-    if (variables(1)%name /= 'i8') stop 'i8 not recognized'
-    if (variables(1)%type /= adios2_type_integer1) stop 'i8 type not recognized'
+    if (variables(1)%name /= 'i8') then
+       write(*,*) 'i8 not recognized'
+       stop 1
+    end if
+    if (variables(1)%type /= adios2_type_integer1) then
+       write(*,*) 'i8 type not recognized'
+       stop 1
+    end if
     call adios2_variable_shape(shape_in, ndims, variables(1),  ierr)
-    if (ndims /= 1) stop 'i8 ndims is not 1'
-    if (modulo(shape_in(1), int(nx, 8)) /= 0) stop 'i8 shape_in read failed'
+    if (ndims /= 1) then
+       write(*,*) 'i8 ndims is not 1'
+       stop 1
+    end if
+    if (modulo(shape_in(1), int(nx, 8)) /= 0) then
+       write(*,*) 'i8 shape_in read failed'
+       stop 1
+    end if
     writerSize = INT(shape_in(1)) / nx
     deallocate(shape_in)
 
     call adios2_inquire_variable(variables(2), ioRead, "i16", ierr)
-    if (variables(2)%name /= 'i16') stop 'i16 not recognized'
-    if (variables(2)%type /= adios2_type_integer2) stop 'i16 type not recognized'
+    if (variables(2)%name /= 'i16') then
+       write(*,*) 'i16 not recognized'
+       stop 1
+    end if
+    if (variables(2)%type /= adios2_type_integer2) then
+       write(*,*) 'i16 type not recognized'
+       stop 1
+    end if
     call adios2_variable_shape( shape_in, ndims, variables(2), ierr)
-    if (ndims /= 1) stop 'i16 ndims is not 1'
-    if (shape_in(1) /= nx*writerSize) stop 'i16 shape_in read failed'
+    if (ndims /= 1) then
+       write(*,*) 'i16 ndims is not 1'
+       stop 1
+    end if
+    if (shape_in(1) /= nx*writerSize) then
+       write(*,*) 'i16 shape_in read failed'
+       stop 1
+    end if
     deallocate(shape_in)
 
     call adios2_inquire_variable(variables(3), ioRead, "i32", ierr)
-    if (variables(3)%name /= 'i32') stop 'i32 not recognized'
-    if (variables(3)%type /= adios2_type_integer4) stop 'i32 type not recognized'
+    if (variables(3)%name /= 'i32') then
+       write(*,*) 'i32 not recognized'
+       stop 1
+    end if
+    if (variables(3)%type /= adios2_type_integer4) then
+       write(*,*) 'i32 type not recognized'
+       stop 1
+    end if
     call adios2_variable_shape(shape_in, ndims, variables(3), ierr)
-    if (ndims /= 1) stop 'i32 ndims is not 1'
-    if (shape_in(1) /= nx*writerSize) stop 'i32 shape_in read failed'
+    if (ndims /= 1) then
+       write(*,*) 'i32 ndims is not 1'
+       stop 1
+    end if
+    if (shape_in(1) /= nx*writerSize) then
+       write(*,*) 'i32 shape_in read failed'
+       stop 1
+    end if
     deallocate(shape_in)
 
     call adios2_inquire_variable(variables(4), ioRead, "i64", ierr)
-    if (variables(4)%name /= 'i64') stop 'i64 not recognized'
-    if (variables(4)%type /= adios2_type_integer8) stop 'i64 type not recognized'
+    if (variables(4)%name /= 'i64') then
+       write(*,*) 'i64 not recognized'
+       stop 1
+    end if
+    if (variables(4)%type /= adios2_type_integer8) then
+       write(*,*) 'i64 type not recognized'
+       stop 1
+    end if
     call adios2_variable_shape(shape_in, ndims, variables(4), ierr)
-    if (ndims /= 1) stop 'i64 ndims is not 1'
-    if (shape_in(1) /= nx*writerSize) stop 'i64 shape_in read failed'
+    if (ndims /= 1) then
+       write(*,*) 'i64 ndims is not 1'
+       stop 1
+    end if
+    if (shape_in(1) /= nx*writerSize) then
+       write(*,*) 'i64 shape_in read failed'
+       stop 1
+    end if
     deallocate(shape_in)
 
     call adios2_inquire_variable(variables(5), ioRead, "r32", ierr)
-    if (variables(5)%name /= 'r32') stop 'r32 not recognized'
-    if (variables(5)%type /= adios2_type_real) stop 'r32 type not recognized'
+    if (variables(5)%name /= 'r32') then
+       write(*,*) 'r32 not recognized'
+       stop 1
+    end if
+    if (variables(5)%type /= adios2_type_real) then
+       write(*,*) 'r32 type not recognized'
+       stop 1
+    end if
     call adios2_variable_shape(shape_in, ndims, variables(5), ierr)
-    if (ndims /= 1) stop 'r32 ndims is not 1'
-    if (shape_in(1) /= nx*writerSize) stop 'r32 shape_in read failed'
+    if (ndims /= 1) then
+       write(*,*) 'r32 ndims is not 1'
+       stop 1
+    end if
+    if (shape_in(1) /= nx*writerSize) then
+       write(*,*) 'r32 shape_in read failed'
+       stop 1
+    end if
     deallocate(shape_in)
 
     call adios2_inquire_variable(variables(6), ioRead, "r64", ierr)
-    if (variables(6)%name /= 'r64') stop 'r64 not recognized'
-    if (variables(6)%type /= adios2_type_dp) stop 'r64 type not recognized'
+    if (variables(6)%name /= 'r64') then
+       write(*,*) 'r64 not recognized'
+       stop 1
+    end if
+    if (variables(6)%type /= adios2_type_dp) then
+       write(*,*) 'r64 type not recognized'
+       stop 1
+    end if
     call adios2_variable_shape(shape_in, ndims, variables(6), ierr)
-    if (ndims /= 1) stop 'r64 ndims is not 1'
-    if (shape_in(1) /= nx*writerSize) stop 'r64 shape_in read failed'
+    if (ndims /= 1) then
+       write(*,*) 'r64 ndims is not 1'
+       stop 1
+    end if
+    if (shape_in(1) /= nx*writerSize) then
+       write(*,*) 'r64 shape_in read failed'
+       stop 1
+    end if
     deallocate(shape_in)
 
     call adios2_inquire_variable(variables(7), ioRead, "r64_2d", ierr)
-    if (variables(7)%name /= 'r64_2d') stop 'r64_2d not recognized'
-    if (variables(7)%type /= adios2_type_dp) stop 'r64_2d type not recognized'
+    if (variables(7)%name /= 'r64_2d') then
+       write(*,*) 'r64_2d not recognized'
+       stop 1
+    end if
+    if (variables(7)%type /= adios2_type_dp) then
+       write(*,*) 'r64_2d type not recognized'
+       stop 1
+    end if
     call adios2_variable_shape( shape_in, ndims, variables(7), ierr)
-    if (ndims /= 2) stop 'r64_2d ndims is not 2'
-    if (shape_in(1) /= 2) stop 'r64_2d shape_in(1) read failed'
-    if (shape_in(2) /= nx*writerSize) stop 'r64_2d shape_in(2) read failed'
+    if (ndims /= 2) then
+       write(*,*) 'r64_2d ndims is not 2'
+       stop 1
+    end if
+    if (shape_in(1) /= 2) then
+       write(*,*) 'r64_2d shape_in(1) read failed'
+       stop 1
+    end if
+    if (shape_in(2) /= nx*writerSize) then
+       write(*,*) 'r64_2d shape_in(2) read failed'
+       stop 1
+    end if
     deallocate(shape_in)
 
     call adios2_inquire_variable(variables(8), ioRead, "r64_2d_rev", ierr)
-    if (variables(8)%name /= 'r64_2d_rev') stop 'r64_2d_rev not recognized'
-    if (variables(8)%type /= adios2_type_dp) stop 'r64_2d_rev type not recognized'
+    if (variables(8)%name /= 'r64_2d_rev') then
+       write(*,*) 'r64_2d_rev not recognized'
+       stop 1
+    end if
+    if (variables(8)%type /= adios2_type_dp) then
+       write(*,*) 'r64_2d_rev type not recognized'
+       stop 1
+    end if
     call adios2_variable_shape(shape_in, ndims, variables(8), ierr)
-    if (ndims /= 2) stop 'r64_2d_rev ndims is not 2'
-    if (shape_in(1) /= nx*writerSize) stop 'r64_2d_rev shape_in(2) read failed'
-    if (shape_in(2) /= 2) stop 'r64_2d_rev shape_in(1) read failed'
+    if (ndims /= 2) then
+       write(*,*) 'r64_2d_rev ndims is not 2'
+       stop 1
+    end if
+    if (shape_in(1) /= nx*writerSize) then
+       write(*,*) 'r64_2d_rev shape_in(2) read failed'
+       stop 1
+    end if
+    if (shape_in(2) /= 2) then
+       write(*,*) 'r64_2d_rev shape_in(1) read failed'
+       stop 1
+    end if
     deallocate(shape_in)
 
     call adios2_inquire_variable(variables(10), ioRead, "c32", ierr)
-    if (variables(10)%name /= 'c32') stop 'c32 not recognized'
-    if (variables(10)%type /= adios2_type_complex) stop 'c32 type not recognized'
+    if (variables(10)%name /= 'c32') then
+       write(*,*) 'c32 not recognized'
+       stop 1
+    end if
+    if (variables(10)%type /= adios2_type_complex) then
+       write(*,*) 'c32 type not recognized'
+       stop 1
+    end if
     call adios2_variable_shape(shape_in, ndims, variables(10), ierr)
-    if (ndims /= 1) stop 'c32 ndims is not 1'
-    if (shape_in(1) /= nx*writerSize) stop 'c32 shape_in read failed'
+    if (ndims /= 1) then
+       write(*,*) 'c32 ndims is not 1'
+       stop 1
+    end if
+    if (shape_in(1) /= nx*writerSize) then
+       write(*,*) 'c32 shape_in read failed'
+       stop 1
+    end if
     deallocate(shape_in)
 
     call adios2_inquire_variable(variables(11), ioRead, "c64", ierr)
-    if (variables(11)%name /= 'c64') stop 'c64 not recognized'
-    if (variables(11)%type /= adios2_type_complex_dp) stop 'c64 type not recognized'
+    if (variables(11)%name /= 'c64') then
+       write(*,*) 'c64 not recognized'
+       stop 1
+    end if
+    if (variables(11)%type /= adios2_type_complex_dp) then
+       write(*,*) 'c64 type not recognized'
+       stop 1
+    end if
     call adios2_variable_shape(shape_in, ndims, variables(11), ierr)
-    if (ndims /= 1) stop 'c64 ndims is not 1'
-    if (shape_in(1) /= nx*writerSize) stop 'c64 shape_in read failed'
+    if (ndims /= 1) then
+       write(*,*) 'c64 ndims is not 1'
+       stop 1
+    end if
+    if (shape_in(1) /= nx*writerSize) then
+       write(*,*) 'c64 shape_in read failed'
+       stop 1
+    end if
     deallocate(shape_in)
 
     call adios2_inquire_variable(variables(12), ioRead, "scalar_r64", ierr)
-    if (variables(12)%name /= 'scalar_r64') stop 'scalar_r64 not recognized'
-    if (variables(12)%type /= adios2_type_dp) stop 'scalar_r64 type not recognized'
+    if (variables(12)%name /= 'scalar_r64') then
+       write(*,*) 'scalar_r64 not recognized'
+       stop 1
+    end if
+    if (variables(12)%type /= adios2_type_dp) then
+       write(*,*) 'scalar_r64 type not recognized'
+       stop 1
+    end if
 
     myStart = (writerSize * Nx / isize) * irank
     myLength = ((writerSize * Nx + isize - 1) / isize)
@@ -274,7 +406,10 @@ program TestSstRead
 
   ! Deallocates adios and calls its destructor
   call adios2_finalize(adios, ierr)
-  if( adios%valid .eqv. .true. ) stop 'Invalid adios2_finalize'
+  if( adios%valid .eqv. .true. ) then
+     write(*,*) 'Invalid adios2_finalize'
+     stop 1
+  end if
 
 
 #if ADIOS2_USE_MPI

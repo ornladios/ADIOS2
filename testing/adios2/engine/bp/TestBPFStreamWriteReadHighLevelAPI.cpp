@@ -32,7 +32,6 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BPWriteRead1D8_hl.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -44,6 +43,9 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPWriteRead1D8)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPWriteRead1D8_hl_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPWriteRead1D8_hl.bp");
 #endif
 
     // write test data using BP
@@ -414,7 +416,6 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
 {
     // Each process would write a 2x4 array and all processes would
     // form a 2D 2 * (numberOfProcess*Nx) matrix where Nx is 4 here
-    const std::string fname("ADIOS2BPwriteRead2D2x4Test_hl.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -429,6 +430,9 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D2x4)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPwriteRead2D2x4Test_hl_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPwriteRead2D2x4Test_hl.bp");
 #endif
 
     // write test data using ADIOS2
@@ -534,7 +538,6 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
 {
     // Each process would write a 4x2 array and all processes would
     // form a 2D 4 * (NumberOfProcess * Nx) matrix where Nx is 2 here
-    const std::string fname("ADIOS2BPwriteRead2D4x2Test_hl.bp");
 
     int mpiRank = 0, mpiSize = 1;
     // Number of rows
@@ -548,6 +551,9 @@ TEST_F(StreamWriteReadHighLevelAPI, ADIOS2BPwriteRead2D4x2)
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("ADIOS2BPwriteRead2D4x2Test_hl_MPI.bp");
+#else
+    const std::string fname("ADIOS2BPwriteRead2D4x2Test_hl.bp");
 #endif
 
     // write test data using ADIOS2
@@ -652,16 +658,18 @@ TEST_F(StreamWriteReadHighLevelAPI, DoubleOpenException)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    const std::string fname("ADIOS2BP_hl_exception.bp");
 
     {
 #if ADIOS2_USE_MPI
+        const std::string fname("ADIOS2BP_hl_exception_MPI.bp");
 
         adios2::fstream oStream(fname, adios2::fstream::out, MPI_COMM_WORLD, engineName);
         EXPECT_THROW(oStream.open("second", adios2::fstream::out, MPI_COMM_WORLD, engineName),
                      std::invalid_argument);
 
 #else
+        const std::string fname("ADIOS2BP_hl_exception.bp");
+
         adios2::fstream oStream(fname, adios2::fstream::out);
         EXPECT_THROW(oStream.open("second", adios2::fstream::out, engineName),
                      std::invalid_argument);

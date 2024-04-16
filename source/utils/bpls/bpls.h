@@ -17,6 +17,7 @@
 #include "adios2/core/Info.h"
 
 #include <map>
+#include <string>
 
 namespace adios2
 {
@@ -60,7 +61,7 @@ void parseDimSpec(const std::string &str, int64_t *dims);
 int parseAccuracy();
 int compile_regexp_masks(void);
 void printSettings(void);
-int doList(const char *path);
+int doList(std::string path);
 void mergeLists(int nV, char **listV, int nA, char **listA, char **mlist, bool *isVar);
 
 template <class T>

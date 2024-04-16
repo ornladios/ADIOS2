@@ -156,64 +156,172 @@ program TestBPWriteMemorySelectionRead3D
     expected_max = current_step
 
     call adios2_inquire_variable(vars_in(1), ioGet, 'var_i1', ierr)
-    if( vars_in(1)%valid .eqv. .false. ) stop 'i1 invalid error'
-    if( vars_in(1)%name /= 'var_i1' ) stop 'i1 name error'
-    if( vars_in(1)%type /= adios2_type_integer1 ) stop 'i1 type error'
-    if( vars_in(1)%ndims /= 3 ) stop 'i1 dims error'
+    if( vars_in(1)%valid .eqv. .false. ) then
+       write(*,*) 'i1 invalid error'
+       stop 1
+    end if
+    if( vars_in(1)%name /= 'var_i1' ) then
+       write(*,*) 'i1 name error'
+       stop 1
+    end if
+    if( vars_in(1)%type /= adios2_type_integer1 ) then
+       write(*,*) 'i1 type error'
+       stop 1
+    end if
+    if( vars_in(1)%ndims /= 3 ) then
+       write(*,*) 'i1 dims error'
+       stop 1
+    end if
     call adios2_variable_min(min_i1, vars_in(1), ierr)
-    if(min_i1 /= expected_min ) stop 'i1 min error'
+    if(min_i1 /= expected_min ) then
+       write(*,*) 'i1 min error'
+       stop 1
+    end if
     call adios2_variable_max(max_i1, vars_in(1), ierr)
-    if(max_i1 /= expected_max ) stop 'i1 max error'
+    if(max_i1 /= expected_max ) then
+       write(*,*) 'i1 max error'
+       stop 1
+    end if
 
     call adios2_inquire_variable(vars_in(2), ioGet, 'var_i2', ierr)
-    if( vars_in(2)%valid .eqv. .false. ) stop 'i2 invalid error'
-    if( vars_in(2)%name /= 'var_i2' ) stop 'i2 name error'
-    if( vars_in(2)%type /= adios2_type_integer2 ) stop 'i2 type error'
-    if( vars_in(2)%ndims /= 3 ) stop 'i2 dims error'
+    if( vars_in(2)%valid .eqv. .false. ) then
+       write(*,*) 'i2 invalid error'
+       stop 1
+    end if
+    if( vars_in(2)%name /= 'var_i2' ) then
+       write(*,*) 'i2 name error'
+       stop 1
+    end if
+    if( vars_in(2)%type /= adios2_type_integer2 ) then
+       write(*,*) 'i2 type error'
+       stop 1
+    end if
+    if( vars_in(2)%ndims /= 3 ) then
+       write(*,*) 'i2 dims error'
+       stop 1
+    end if
     call adios2_variable_min(min_i2, vars_in(2), ierr)
-    if(min_i2 /= expected_min ) stop 'i2 min error'
+    if(min_i2 /= expected_min ) then
+       write(*,*) 'i2 min error'
+       stop 1
+    end if
     call adios2_variable_max(max_i2, vars_in(2), ierr)
-    if(max_i2 /= expected_max ) stop 'i2 max error'
+    if(max_i2 /= expected_max ) then
+       write(*,*) 'i2 max error'
+       stop 1
+    end if
 
     call adios2_inquire_variable(vars_in(3), ioGet, 'var_i4', ierr)
-    if( vars_in(3)%valid .eqv. .false. ) stop 'i4 invalid error'
-    if( vars_in(3)%name /= 'var_i4' ) stop 'i4 name error'
-    if( vars_in(3)%type /= adios2_type_integer4 ) stop 'i4 type error'
-    if( vars_in(3)%ndims /= 3 ) stop 'i4 dims error'
+    if( vars_in(3)%valid .eqv. .false. ) then
+       write(*,*) 'i4 invalid error'
+       stop 1
+    end if
+    if( vars_in(3)%name /= 'var_i4' ) then
+       write(*,*) 'i4 name error'
+       stop 1
+    end if
+    if( vars_in(3)%type /= adios2_type_integer4 ) then
+       write(*,*) 'i4 type error'
+       stop 1
+    end if
+    if( vars_in(3)%ndims /= 3 ) then
+       write(*,*) 'i4 dims error'
+       stop 1
+    end if
     call adios2_variable_min(min_i4, vars_in(3), ierr)
-    if(min_i4 /= expected_min ) stop 'i4 min error'
+    if(min_i4 /= expected_min ) then
+       write(*,*) 'i4 min error'
+       stop 1
+    end if
     call adios2_variable_max(max_i4, vars_in(3), ierr)
-    if(max_i4 /= expected_max ) stop 'i4 max error'
+    if(max_i4 /= expected_max ) then
+       write(*,*) 'i4 max error'
+       stop 1
+    end if
 
     call adios2_inquire_variable(vars_in(4), ioGet, 'var_i8', ierr)
-    if( vars_in(4)%valid .eqv. .false. ) stop 'i8 invalid error'
-    if( vars_in(4)%name /= 'var_i8' ) stop 'i8 name error'
-    if( vars_in(4)%type /= adios2_type_integer8 ) stop 'i8 type error'
-    if( vars_in(4)%ndims /= 3 ) stop 'i8 dims error'
+    if( vars_in(4)%valid .eqv. .false. ) then
+       write(*,*) 'i8 invalid error'
+       stop 1
+    end if
+    if( vars_in(4)%name /= 'var_i8' ) then
+       write(*,*) 'i8 name error'
+       stop 1
+    end if
+    if( vars_in(4)%type /= adios2_type_integer8 ) then
+       write(*,*) 'i8 type error'
+       stop 1
+    end if
+    if( vars_in(4)%ndims /= 3 ) then
+       write(*,*) 'i8 dims error'
+       stop 1
+    end if
     call adios2_variable_min(min_i8, vars_in(4), ierr)
-    if(min_i8 /= expected_min ) stop 'i8 min error'
+    if(min_i8 /= expected_min ) then
+       write(*,*) 'i8 min error'
+       stop 1
+    end if
     call adios2_variable_max(max_i8, vars_in(4), ierr)
-    if(max_i8 /= expected_max ) stop 'i8 max error'
+    if(max_i8 /= expected_max ) then
+       write(*,*) 'i8 max error'
+       stop 1
+    end if
 
     call adios2_inquire_variable(vars_in(5), ioGet, 'var_r4', ierr)
-    if( vars_in(5)%valid .eqv. .false. ) stop 'r4 invalid error'
-    if( vars_in(5)%name /= 'var_r4' ) stop 'r4 name error'
-    if( vars_in(5)%type /= adios2_type_real ) stop 'r4 type error'
-    if( vars_in(5)%ndims /= 3 ) stop 'r4 dims error'
+    if( vars_in(5)%valid .eqv. .false. ) then
+       write(*,*) 'r4 invalid error'
+       stop 1
+    end if
+    if( vars_in(5)%name /= 'var_r4' ) then
+       write(*,*) 'r4 name error'
+       stop 1
+    end if
+    if( vars_in(5)%type /= adios2_type_real ) then
+       write(*,*) 'r4 type error'
+       stop 1
+    end if
+    if( vars_in(5)%ndims /= 3 ) then
+       write(*,*) 'r4 dims error'
+       stop 1
+    end if
     call adios2_variable_min(min_r4, vars_in(5), ierr)
-    if(min_r4 /= float(expected_min) ) stop 'r4 min error'
+    if(min_r4 /= float(expected_min) ) then
+       write(*,*) 'r4 min error'
+       stop 1
+    end if
     call adios2_variable_max(max_r4, vars_in(5), ierr)
-    if(max_r4 /= float(expected_max) ) stop 'r4 max error'
+    if(max_r4 /= float(expected_max) ) then
+       write(*,*) 'r4 max error'
+       stop 1
+    end if
 
     call adios2_inquire_variable(vars_in(6), ioGet, 'var_r8', ierr)
-    if( vars_in(6)%valid .eqv. .false. ) stop 'r8 invalid error'
-    if( vars_in(6)%name /= 'var_r8' ) stop 'r8 name error'
-    if( vars_in(6)%type /= adios2_type_dp ) stop 'r8 type error'
-    if( vars_in(6)%ndims /= 3 ) stop 'r8 dims error'
+    if( vars_in(6)%valid .eqv. .false. ) then
+       write(*,*) 'r8 invalid error'
+       stop 1
+    end if
+    if( vars_in(6)%name /= 'var_r8' ) then
+       write(*,*) 'r8 name error'
+       stop 1
+    end if
+    if( vars_in(6)%type /= adios2_type_dp ) then
+       write(*,*) 'r8 type error'
+       stop 1
+    end if
+    if( vars_in(6)%ndims /= 3 ) then
+       write(*,*) 'r8 dims error'
+       stop 1
+    end if
     call adios2_variable_min(min_r8, vars_in(6), ierr)
-    if(min_r8 /= float(expected_min) ) stop 'r8 min error'
+    if(min_r8 /= float(expected_min) ) then
+       write(*,*) 'r8 min error'
+       stop 1
+    end if
     call adios2_variable_max(max_r8, vars_in(6), ierr)
-    if(max_r8 /= float(expected_max) ) stop 'r8 max error'
+    if(max_r8 /= float(expected_max) ) then
+       write(*,*) 'r8 max error'
+       stop 1
+    end if
 
     call adios2_get(bpReader, 'var_i1', in_data_i1, ierr)
     call adios2_get(bpReader, 'var_i2', in_data_i2, ierr)
@@ -226,12 +334,30 @@ program TestBPWriteMemorySelectionRead3D
     do k=1,isize*nz
       do j=1,ny
         do i=1,nx
-          if(in_data_i1(i,j,k) /= current_step) stop 'i1 read error'
-          if(in_data_i2(i,j,k) /= current_step) stop 'i2 read error'
-          if(in_data_i4(i,j,k) /= current_step) stop 'i4 read error'
-          if(in_data_i8(i,j,k) /= current_step) stop 'i8 read error'
-          if(in_data_r4(i,j,k) /= REAL(current_step, 4)) stop 'r4 read error'
-          if(in_data_r8(i,j,k) /= current_step) stop 'r8 read error'
+           if(in_data_i1(i,j,k) /= current_step) then
+              write(*,*) 'i1 read error'
+              stop 1
+           end if
+           if(in_data_i2(i,j,k) /= current_step) then
+              write(*,*) 'i2 read error'
+              stop 1
+           end if
+           if(in_data_i4(i,j,k) /= current_step) then
+              write(*,*) 'i4 read error'
+              stop 1
+           end if
+           if(in_data_i8(i,j,k) /= current_step) then
+              write(*,*) 'i8 read error'
+              stop 1
+           end if
+           if(in_data_r4(i,j,k) /= REAL(current_step, 4)) then
+              write(*,*) 'r4 read error'
+              stop 1
+           end if
+           if(in_data_r8(i,j,k) /= current_step) then
+              write(*,*) 'r8 read error'
+              stop 1
+           end if
         end do
       end do
     end do

@@ -54,10 +54,8 @@ public:
     bool VariableMinMax(const VariableBase &, const size_t Step, MinMaxStruct &MinMax);
 
 private:
-    int m_Verbosity = 0;              // runtime parameter Verbose
-    std::string m_Hostname;           // runtime parameter Hostname
-    std::string m_CachePath = "/tmp"; // runtime parameter CachePath
-    int m_ReaderRank;                 // my rank in the readers' comm
+    UserOptions::Campaign m_Options;
+    int m_ReaderRank; // my rank in the readers' comm
 
     int m_CurrentStep = 0;
 
@@ -116,6 +114,13 @@ private:
     template <class T>
     Variable<T> DuplicateVariable(Variable<T> *variable, IO &io, std::string &name,
                                   VarInternalInfo &vii);
+
+    /**
+     * Create a new attribute with name `name` in `io`
+     * based on an existing attribute.
+     */
+    template <class T>
+    Attribute<T> DuplicateAttribute(Attribute<T> *attribute, IO &io, std::string &name);
 
     /**
      * Create a new variable with name `name` in `io`

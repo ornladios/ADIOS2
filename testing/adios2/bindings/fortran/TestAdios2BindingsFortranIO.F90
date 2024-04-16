@@ -60,7 +60,10 @@ contains
 
     ! FIXME, shouldn't we be able to do this by handle?
     call adios2_remove_io(result, adios, "TestIo", ierr)
-    if ((ierr /= 0) .or. (result .neqv. .true.)) stop "FAIL: adios2_remove_io"
+    if ((ierr /= 0) .or. (result .neqv. .true.)) then
+       write(*,*) "FAIL: adios2_remove_io"
+       stop 1
+    end if
     call testing_adios_finalize()
 
   end subroutine testing_adios_io_finalize
@@ -88,18 +91,27 @@ subroutine testing_adios_io_engine()
   call adios2_set_engine(io, "file", ierr)
 
   call adios2_io_engine_type(engine_type, io, ierr)
-  if (engine_type /= "file") stop "FAIL adios2_io_engine_type"
+  if (engine_type /= "file") then
+     write(*,*) "FAIL adios2_io_engine_type"
+     stop 1
+  end if
   deallocate(engine_type)
 
   call adios2_open(engine, io, "ftypes.bp", adios2_mode_write, ierr)
 
-  if (engine%type /= "BP5Writer") stop "FAIL engine%type"
+  if (engine%type /= "BP5Writer") then
+     write(*,*) "FAIL engine%type"
+     stop 1
+  end if
   ! // FIXME, I'd like to check that the engine type itself is correct, but
   ! // there's no (function-style) API to get it
   ! // FIXME, I'd like to check the engine's name, but there's no API to get it
 
   call adios2_io_engine_type(engine_type, io, ierr)
-  if (engine_type /= "file") stop "FAIL adios2_io_engine_type"
+  if (engine_type /= "file") then
+     write(*,*) "FAIL adios2_io_engine_type"
+     stop 1
+  end if
   deallocate(engine_type)
 
   call testing_adios_io_finalize()
@@ -123,18 +135,27 @@ subroutine testing_adios_io_engine_default()
   call adios2_set_engine(io, "", ierr)
 
   call adios2_io_engine_type(engine_type, io, ierr)
-  if (engine_type /= "") stop "FAIL adios2_io_engine_type"
+  if (engine_type /= "") then
+     write(*,*) "FAIL adios2_io_engine_type"
+     stop 1
+  end if
   deallocate(engine_type)
 
   call adios2_open(engine, io, "ftypes.bp", adios2_mode_write, ierr)
 
-  if (engine%type /= "BP5Writer") stop "FAIL engine%type"
+  if (engine%type /= "BP5Writer") then
+     write(*,*) "FAIL engine%type"
+     stop 1
+  end if
   ! // FIXME, I'd like to check that the engine type itself is correct, but
   ! // there's no (function-style) API to get it
   ! // FIXME, I'd like to check the engine's name, but there's no API to get it
 
   call adios2_io_engine_type(engine_type, io, ierr)
-  if (engine_type /= "") stop "FAIL adios2_io_engine_type"
+  if (engine_type /= "") then
+     write(*,*) "FAIL adios2_io_engine_type"
+     stop 1
+  end if
   deallocate(engine_type)
 
   call testing_adios_io_finalize

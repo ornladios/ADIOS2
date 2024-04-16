@@ -52,11 +52,7 @@ public:
     const size_t m_ElementSize;
 
     /* User requested memory space */
-#ifdef ADIOS2_HAVE_GPU_SUPPORT
     MemorySpace m_MemSpace = MemorySpace::Detect;
-#else
-    MemorySpace m_MemSpace = MemorySpace::Host;
-#endif
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     ArrayOrdering m_BaseLayout;
     ArrayOrdering m_ArrayLayout = ArrayOrdering::Auto;

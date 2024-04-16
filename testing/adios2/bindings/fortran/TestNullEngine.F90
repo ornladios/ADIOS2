@@ -39,7 +39,10 @@
      ! Declare an IO process configuration inside adios
      call adios2_declare_io(ioWrite, adios, "nullWriter", ierr)
      call adios2_set_engine(ioWrite, "NULL", ierr)
-     if (TRIM(ioWrite%engine_type) /= "NULL") stop 'Wrong io engine_type'
+     if (TRIM(ioWrite%engine_type) /= "NULL") then
+        write(*,*) 'Wrong io engine_type'
+        stop 1
+     end if
 
      ! Defines a variable to be written in bp format
      call adios2_define_variable(var, ioWrite, "var_R64", &
@@ -70,11 +73,15 @@
          call adios2_begin_step(nullReader, adios2_step_mode_read, -1.0, &
                                 step_status, ierr)
          if (step_status /= adios2_step_status_end_of_stream) then
-             stop 'null engine status failed'
+            write(*,*) 'null engine status failed'
+            stop 1
          end if
 
          call adios2_inquire_variable(varIn, ioRead, "var_R64", ierr)
-         if (varIn%valid .eqv. .true.) stop 'var_R64 inquire error'
+         if (varIn%valid .eqv. .true.) then
+            write(*,*) 'var_R64 inquire error'
+            stop 1
+         end if
 
          call adios2_get(nullReader, varIn, inR64, ierr)
          call adios2_perform_gets(nullReader, ierr)

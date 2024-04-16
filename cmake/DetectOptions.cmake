@@ -72,31 +72,26 @@ find_package(Threads REQUIRED)
 
 # Blosc2
 if(ADIOS2_USE_Blosc2 STREQUAL AUTO)
-  # Prefect CONFIG mode
-  find_package(Blosc2 2.4 CONFIG QUIET)
-  if(NOT Blosc2_FOUND)
-    find_package(Blosc2 2.4 MODULE QUIET)
-  endif()
+  find_package(Blosc2 2.10.1 QUIET)
 elseif(ADIOS2_USE_Blosc2)
-  # Prefect CONFIG mode
-  find_package(Blosc2 2.4 CONFIG)
-  if(NOT Blosc2_FOUND)
-    find_package(Blosc2 2.4 MODULE REQUIRED)
-  endif()
+  find_package(Blosc2 2.10.1)
 endif()
 if(Blosc2_FOUND)
   set(ADIOS2_HAVE_Blosc2 TRUE)
   if(TARGET Blosc2::blosc2_shared)
-    set(Blosc2_shlib_available ON)
+    set(blosc2_shlib_available ON)
   endif()
 
-  set(adios2_blosc2_tgt Blosc2::Blosc2)
-  if (Blosc2_VERSION VERSION_GREATER_EQUAL 2.10.1)
-    if (Blosc2_shlib_available AND ADIOS2_Blosc2_PREFER_SHARED)
-      set(adios2_blosc2_tgt Blosc2::blosc2_shared)
-    else()
-      set(adios2_blosc2_tgt Blosc2::blosc2_static)
-    endif()
+  if(TARGET Blosc2::blosc2_static)
+    set(blosc2_slib_available ON)
+  endif()
+
+  if (blosc2_shlib_available AND (NOT blosc2_slib_available OR ADIOS2_Blosc2_PREFER_SHARED))
+    set(adios2_blosc2_tgt Blosc2::blosc2_shared)
+  elseif(blosc2_slib_available)
+    set(adios2_blosc2_tgt Blosc2::blosc2_static)
+  else()
+    message(FATAL_ERROR "Blosc2 cmake package found but no targets exists inside it.")
   endif()
 
   add_library(adios2_blosc2 ALIAS ${adios2_blosc2_tgt})
@@ -465,13 +460,14 @@ if(ADIOS2_USE_SST AND NOT WIN32)
         "-DLINK_DIRECTORIES=${LIBFABRIC_LIBRARIES}")
     message(STATUS "Libfabric support for the HPE CXI provider: ${ADIOS2_SST_HAVE_CRAY_CXI}")
   endif()
-  if(ADIOS2_HAVE_MPI)
+  if(ADIOS2_HAVE_MPI AND NOT "${ADIOS2_SST_HAVE_MPI_DP}")
     set(CMAKE_REQUIRED_LIBRARIES "MPI::MPI_C;Threads::Threads")
     include(CheckCXXSourceRuns)
     check_cxx_source_runs([=[
         #include <chrono>
         #include <future>
         #include <mpi.h>
+	#include <thread>
         #include <stdlib.h>
 
         #if !defined(MPICH)
@@ -496,7 +492,11 @@ if(ADIOS2_USE_SST AND NOT WIN32)
     ADIOS2_HAVE_MPI_CLIENT_SERVER)
     unset(CMAKE_REQUIRED_LIBRARIES)
     if (ADIOS2_HAVE_MPI_CLIENT_SERVER)
-      set(ADIOS2_SST_HAVE_MPI TRUE)
+      set(ADIOS2_SST_HAVE_MPI_DP TRUE)
+    else()
+      if ("${ADIOS2_SST_EXPECT_MPI_DP}") 
+          message(FATAL_ERROR "Expected MPI to support Client-server connection model, but test failed.")
+      endif()
     endif()
   endif()
   # UCX

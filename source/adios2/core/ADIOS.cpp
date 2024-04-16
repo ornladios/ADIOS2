@@ -19,6 +19,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosCommDummy.h"
 #include "adios2/helper/adiosFunctions.h" //InquireKey, BroadcastFile
+#include "adios2/helper/adiosYAML.h"
 #include "adios2/operator/OperatorFactory.h"
 #include <adios2sys/SystemTools.hxx>
 
@@ -106,6 +107,9 @@ std::mutex PerfStubsMutex;
 static std::atomic_uint adios_refcount(0); // adios objects at the same time
 static std::atomic_uint adios_count(0);    // total adios objects during runtime
 
+/** User defined options from ~/.config/adios2/adios2.yaml if it exists */
+const adios2::UserOptions &ADIOS::GetUserOptions() { return m_UserOptions; };
+
 ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string hostLanguage)
 : m_HostLanguage(hostLanguage), m_Comm(std::move(comm)), m_ConfigFile(configFile),
   m_CampaignManager(m_Comm)
@@ -124,6 +128,7 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string 
         }
     }
 #endif
+    ProcessUserConfig();
     if (!configFile.empty())
     {
         if (!adios2sys::SystemTools::FileExists(configFile))
@@ -143,8 +148,12 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string 
 #ifdef ADIOS2_HAVE_KOKKOS
     m_GlobalServices.Init_Kokkos_API();
 #endif
-    std::string campaignName = "campaign_" + std::to_string(adios_count);
-    m_CampaignManager.Open(campaignName);
+    if (m_UserOptions.campaign.active)
+    {
+        std::string campaignName =
+            "campaign_" + helper::RandomString(8) + "_" + std::to_string(adios_count);
+        m_CampaignManager.Open(campaignName, m_UserOptions);
+    }
 }
 
 ADIOS::ADIOS(const std::string configFile, const std::string hostLanguage)
@@ -166,7 +175,40 @@ ADIOS::~ADIOS()
     {
         m_GlobalServices.Finalize();
     }
-    m_CampaignManager.Close();
+    if (m_UserOptions.campaign.active)
+    {
+        m_CampaignManager.Close();
+    }
+}
+
+void ADIOS::SetUserOptionDefaults()
+{
+    m_UserOptions.general.verbose = 0;
+
+    m_UserOptions.campaign.active = true;
+    m_UserOptions.campaign.verbose = 0;
+    m_UserOptions.campaign.hostname = "";
+    m_UserOptions.campaign.campaignstorepath = "";
+    m_UserOptions.campaign.cachepath = "/tmp/adios2-cache";
+
+    m_UserOptions.sst.verbose = 0;
+}
+
+void ADIOS::ProcessUserConfig()
+{
+    // read config parameters from config file
+    std::string homePath;
+#ifdef _WIN32
+    homePath = getenv("HOMEPATH");
+#else
+    homePath = getenv("HOME");
+#endif
+    SetUserOptionDefaults();
+    const std::string cfgFile = homePath + "/.config/adios2/adios2.yaml";
+    if (adios2sys::SystemTools::FileExists(cfgFile))
+    {
+        helper::ParseUserOptionsFile(m_Comm, cfgFile, m_UserOptions, homePath);
+    }
 }
 
 IO &ADIOS::DeclareIO(const std::string name, const ArrayOrdering ArrayOrder)
@@ -330,7 +372,10 @@ void ADIOS::YAMLInitIO(const std::string &configFileYAML, const std::string &con
 
 void ADIOS::RecordOutputStep(const std::string &name, const size_t step, const double time)
 {
-    m_CampaignManager.Record(name, step, time);
+    if (m_UserOptions.campaign.active)
+    {
+        m_CampaignManager.Record(name, step, time);
+    }
 }
 
 void ADIOS::Global_init_AWS_API()

@@ -76,14 +76,22 @@ program TestBPFortranToCppWriter
    if (irank == 0) print *,"engine type :",trim(engine_type)
 
 
+#if ADIOS2_USE_MPI
+   call adios2_open(bpWriter, ioWrite, "FortranToCpp_MPI.bp", &
+      adios2_mode_write, ierr)
+#else
    call adios2_open(bpWriter, ioWrite, "FortranToCpp.bp", &
       adios2_mode_write, ierr)
+#endif
 
    do s = 1, 3
       call adios2_begin_step(bpWriter, ierr)
 
       call adios2_current_step(current_step, bpWriter, ierr)
-      if (current_step /= s - 1) stop 'wrong current step'
+      if (current_step /= s - 1) then
+         write(*,*) 'wrong current step'
+         stop 1
+      end if
 
       if (irank == 0 .and. s == 1) then
          call adios2_put(bpWriter, vGlobalValue, inx, ierr)

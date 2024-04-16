@@ -16,6 +16,7 @@
 #define ADIOS2_ENGINE_CAMPAIGNMANAGER_H_
 
 #include "adios2/common/ADIOSConfig.h"
+#include "adios2/common/ADIOSTypes.h"
 #include "adios2/helper/adiosComm.h"
 
 #ifdef ADIOS2_HAVE_CAMPAIGN
@@ -39,15 +40,15 @@ public:
     CampaignManager(helper::Comm &comm);
     ~CampaignManager();
 
-    void Open(const std::string &name);
+    void Open(const std::string &name, const UserOptions &options);
     void Record(const std::string &name, const size_t step, const double time);
     void Close();
 
 private:
+    UserOptions::Campaign m_Options;
     bool m_Opened = false;
     std::string m_Name;
     int m_WriterRank;
-    int m_Verbosity = 0;
     CampaignRecordMap cmap;
     std::ofstream m_Output;
     const std::string m_CampaignDir = "adios-campaign";
@@ -56,7 +57,7 @@ private:
 public:
     CampaignManager(helper::Comm &comm){};
     ~CampaignManager() = default;
-    void Open(const std::string &name){};
+    void Open(const std::string &name, const UserOptions &options){};
     void Record(const std::string &name, const size_t step, const double time){};
     void Close(){};
 

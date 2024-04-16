@@ -27,13 +27,15 @@ public:
 
 TEST_F(BPFortranToCppRead, ADIOS2BPFortranToCppRead)
 {
-    const std::string fname("FortranToCpp.bp");
 
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
+    const std::string fname("FortranToCpp_MPI.bp");
+#else
+    const std::string fname("FortranToCpp.bp");
 #endif
 
 #if ADIOS2_USE_MPI
