@@ -438,7 +438,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         XrdSysThread::Run(&tid, SvWecho, (void *)this, 0, "wecho");
         return;
     }
-    if (!strcmp(reqData, "get" ))
+    if (!strcmp(reqData, "get"))
     {
         pthread_t tid;
         reqData = reqInfo.GetToken(&reqArgs);
