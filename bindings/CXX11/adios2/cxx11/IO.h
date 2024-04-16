@@ -187,7 +187,6 @@ public:
      */
     DataType InquireVariableType(const std::string &name);
 
-
     VariableNT InquireStructVariable(const std::string &name);
 
     VariableNT InquireStructVariable(const std::string &name, const StructDefinition def);

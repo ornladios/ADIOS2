@@ -100,7 +100,6 @@ public:
     }
 
     static myRequest *currentRequest;
-    //TODODG private
     char *responseBuffer;
     int responseBufferLen;
 
@@ -244,8 +243,6 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
     if (dlen > 0)
     {
         totbytes += dlen;
-    /*    if (clUI.doEcho && dlen < 80)
-            fwrite(buff, dlen, 1, XrdSsiCl::outFile); */
         responseBuffer = new char [dlen];
         responseBufferLen = dlen;
         memcpy(responseBuffer, buff, dlen);
@@ -268,7 +265,7 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
     // because we were cancelled.
     //
     Finished();
- //   delete this;
+    //   delete this;
 }
 
 /******************************************************************************/
@@ -311,16 +308,14 @@ extern XrdSsiProvider *XrdSsiProviderClient;
 #endif
 namespace adios2
 {
-Xrootd::Xrootd() {
-
-}
+Xrootd::Xrootd() {}
 Xrootd::~Xrootd() {}
 void Xrootd::Open(const std::string hostname, const int32_t port, const std::string filename,
                   const Mode mode, bool RowMajorOrdering)
 {
 #ifdef ADIOS2_HAVE_XROOTD
     fileName = filename;
-    const std::string  contact = hostname + ":" + std::to_string(port);
+    const std::string contact = hostname + ":" + std::to_string(port);
     clUI.cmdName = strdup("adios:");
     clUI.contact = strdup(contact.c_str());
     if (!(clUI.ssiService = XrdSsiProviderClient->GetService(eInfo, contact.c_str())))
@@ -339,20 +334,19 @@ Xrootd::GetHandle Xrootd::Get(char *VarName, size_t Step, size_t BlockID, Dims &
     char rName[512] = "/adios";
     XrdSsiResource rSpec((std::string)rName);
     myRequest *reqP;
-    std::string reqData = "get " + fileName + " " +  std::string (VarName);
+    std::string reqData = "get " + fileName + " " + std::string(VarName);
     reqData += "&" + std::to_string(Step);
     reqData += "&" + std::to_string(BlockID);
 
-    for (auto&  c : Count)
+    for (auto &c : Count)
     {
         reqData += "&" + std::to_string(c);
     }
 
-    for (auto&  s : Start)
+    for (auto &s : Start)
     {
         reqData += "&" + std::to_string(s);
     }
-
 
     // The first step is to define the resource we will be using. So, just
     // initialize a resource object. It need only to exist during ProcessRequest()
@@ -371,18 +365,16 @@ Xrootd::GetHandle Xrootd::Get(char *VarName, size_t Step, size_t BlockID, Dims &
     // calls. For our simple client we have no context so we simply always get a
     // new object.
     //
-    char* reqDataStr = strdup(reqData.c_str());
+    char *reqDataStr = strdup(reqData.c_str());
     reqP = new myRequest(clUI, rName, GetReqID(), reqDataStr, reqLen);
     reqP->SetResource(rSpec);
     // We simply hand off the request to the service to deal with it. When a
     // response is ready or an error occured our callback is invoked.
     //
     clUI.ssiService->ProcessRequest(*reqP, rSpec);
-    //thread synchronization
+    // thread synchronization
     sleep(1);
     memcpy(dest, reqP->responseBuffer, reqP->responseBufferLen);
-    //TODODG
-    // memory?
 #endif
     return 0;
 }

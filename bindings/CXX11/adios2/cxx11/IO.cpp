@@ -226,16 +226,10 @@ VariableNT IO::InquireVariable(const std::string &name)
     }
 }
 
-/**
-     * @brief Returns the type of an existing variable as an string
-     * @param name input variable name
-     * @return type primitive type
- */
 DataType IO::InquireVariableType(const std::string &name)
-    {
-        return (m_IO->InquireVariableType(name));
-    };
-
+{
+    return (m_IO->InquireVariableType(name));
+}
 
 VariableNT IO::InquireStructVariable(const std::string &name)
 {

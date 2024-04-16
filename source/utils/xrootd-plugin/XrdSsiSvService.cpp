@@ -254,13 +254,15 @@ void XrdSsiSvService::ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resR
 /******************************************************************************/
 /*         help function to split strings                                     */
 /******************************************************************************/
-std::vector<std::string> split (const std::string &s, char delim) {
+std::vector<std::string> split(const std::string &s, char delim)
+{
     std::vector<std::string> result;
-    std::stringstream ss (s);
+    std::stringstream ss(s);
     std::string item;
 
-    while (getline (ss, item, delim)) {
-        result.push_back (item);
+    while (getline(ss, item, delim))
+    {
+        result.push_back(item);
     }
 
     return result;
@@ -446,13 +448,8 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             RespondErr("Arguments are expected", EINVAL);
             return;
         }
-//        if ((quest = index(reqArgs, '?')))
-//        {
-//            Copy2Buff(respMeta, sizeof(respMeta), quest + 1, strlen(quest + 1) + 1);
-//            *quest = 0;
-//        }
         /* parameters  name, step, blockID, count0, count1, count2, ...  start0, start1, start2 */
-        std::vector<std::string> requestParams = split (reqArgs, '&');
+        std::vector<std::string> requestParams = split(reqArgs, '&');
 
         m_io = adios.DeclareIO("xtoord");
         m_engine = m_io.Open(reqData, adios2::Mode::ReadRandomAccess);
@@ -490,10 +487,10 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
             ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
 #undef GET
         }
-    catch (const std::exception &exc)
-    {
-        RespondErr("Returning exception for Get ", EINVAL);
-    }
+        catch (const std::exception &exc)
+        {
+            RespondErr("Returning exception for Get ", EINVAL);
+        }
         // detached thread. Memory should not be deallocated yet,
         // olnly of a thread is finished
         return;

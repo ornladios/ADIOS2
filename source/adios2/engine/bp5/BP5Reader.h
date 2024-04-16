@@ -18,8 +18,8 @@
 #include "adios2/toolkit/format/bp5/BP5Deserializer.h"
 #include "adios2/toolkit/format/buffer/heap/BufferMalloc.h"
 #include "adios2/toolkit/remote/Remote.h"
-#include "adios2/toolkit/xrootd/Xrootd.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
+#include "adios2/toolkit/xrootd/Xrootd.h"
 
 #include <chrono>
 #include <map>
