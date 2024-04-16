@@ -8,12 +8,29 @@
  *      Author: Dmitry Ganyushin  ganyushin@gmail.com
  */
 #include "FileHTTP.h"
+#include <cstring>
+#ifdef _MSC_VER
+#define FD_SETSIZE 1024
+#include <process.h>
+#include <time.h>
+#include <winsock2.h>
+
+#include <windows.h>
+#define getpid() _getpid()
+#define read(fd, buf, len) recv(fd, (buf), (len), 0)
+#define write(fd, buf, len) send(fd, buf, (len), 0)
+#define close(x) closesocket(x)
+#define INST_ADDRSTRLEN 50
+#else
+#include <netinet/in.h>
 #include <sys/socket.h>
 
 #include <arpa/inet.h>
 #include <cstring>
 #include <netdb.h>
+#include <netinet/in.h>
 #include <unistd.h>
+#endif
 namespace adios2
 {
 namespace transport
@@ -43,7 +60,7 @@ void FileHTTP::Open(const std::string &name, const Mode openMode, const bool asy
 {
     struct protoent *protoent;
     struct hostent *hostent;
-    in_addr_t in_addr;
+    uint32_t addr_tmp;
 
     m_Name = name;
     /* Build the socket. */
@@ -58,20 +75,21 @@ void FileHTTP::Open(const std::string &name, const Mode openMode, const bool asy
     /* get from parameters. Where the proxy should run*/
 
     /* Build the address. */
+#define _WINSOCK_DEPRECATED_NO_WARNINGS 1
     hostent = gethostbyname(m_hostname.c_str());
     if (hostent == NULL)
     {
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "Open",
                                               "error: gethostbyname " + m_hostname);
     }
-    in_addr = inet_addr(inet_ntoa(*(struct in_addr *)*(hostent->h_addr_list)));
-    if (in_addr == (in_addr_t)-1)
+    addr_tmp = inet_addr(inet_ntoa(*(struct in_addr *)*(hostent->h_addr_list)));
+    if (addr_tmp == INADDR_NONE)
     {
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "Open",
                                               "error: inet_addr " +
                                                   std::string(*(hostent->h_addr_list)));
     }
-    sockaddr_in.sin_addr.s_addr = in_addr;
+    sockaddr_in.sin_addr.s_addr = addr_tmp;
     sockaddr_in.sin_family = AF_INET;
     sockaddr_in.sin_port = htons(m_server_port);
 
@@ -227,8 +245,9 @@ void FileHTTP::Read(char *buffer, size_t size, size_t start)
     size_t bytes_recd = 0;
     while (bytes_recd < size)
     {
-        nbytes_total = read(m_socketFileDescriptor, buffer + bytes_recd,
-                            std::min(size - bytes_recd, BUF_SIZE));
+        size_t remaining = size - bytes_recd;
+        int read_len = (int)(remaining < BUF_SIZE ? remaining : BUF_SIZE);
+        nbytes_total = read(m_socketFileDescriptor, buffer + bytes_recd, read_len);
         if (nbytes_total == -1)
         {
             helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileHTTP", "Read",

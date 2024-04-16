@@ -12,7 +12,20 @@
 
 #include "../Transport.h"
 #include "adios2/common/ADIOSConfig.h"
+#ifdef _MSC_VER
+#define FD_SETSIZE 1024
+#include <process.h>
+#include <time.h>
+#include <winsock2.h>
+
+#include <windows.h>
+#define getpid() _getpid()
+#else
+#include <sys/socket.h>
+
 #include <netinet/in.h>
+#define SOCKET int
+#endif
 
 namespace adios2
 {
@@ -68,7 +81,7 @@ public:
 
 private:
     /** POSIX file handle returned by Open */
-    int m_socketFileDescriptor = -1;
+    SOCKET m_socketFileDescriptor = -1;
     int m_Errno = 0;
     bool m_IsOpening = false;
     /* if filename is very lomg, we can get lout from array boundaries */
