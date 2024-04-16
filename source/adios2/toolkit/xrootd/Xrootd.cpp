@@ -243,7 +243,7 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
     if (dlen > 0)
     {
         totbytes += dlen;
-        responseBuffer = new char [dlen];
+        responseBuffer = new char[dlen];
         responseBufferLen = dlen;
         memcpy(responseBuffer, buff, dlen);
     }
