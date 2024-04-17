@@ -92,6 +92,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
 #else
     m.attr("is_built_with_mpi") = false;
 #endif
+    m.attr("is_char_signed") = (char)-1 < 0;
 
     // enum classes
     pybind11::enum_<adios2::Mode>(m, "Mode")
