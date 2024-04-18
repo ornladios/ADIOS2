@@ -31,6 +31,7 @@ The time dimension is the first dimension then.
   --error     | -X string    Specify read accuracy (error,norm,rel|abs)
                              e.g. error="0.0,0.0,abs"
                              L2 norm = 0.0, Linf = inf
+  --show-derived             Show the expression string for derived vars
   --transport-parameters | -T         Specify File transport parameters
                                       e.g. "Library=stdio"
   --engine               | -E <name>  Specify ADIOS Engine
