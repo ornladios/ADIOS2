@@ -121,6 +121,12 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             EXPECT_TRUE(var_r32);
             auto var_r64 = io.DefineVariable<double>("r64", shape, start, count);
             EXPECT_TRUE(var_r64);
+            auto var_chars = io.DefineVariable<char>("chars", shape, start, count);
+            EXPECT_TRUE(var_chars);
+            auto var_schars = io.DefineVariable<signed char>("schars", shape, start, count);
+            EXPECT_TRUE(var_schars);
+            auto var_uchars = io.DefineVariable<unsigned char>("uchars", shape, start, count);
+            EXPECT_TRUE(var_uchars);
         }
 
         if (!engineName.empty())
@@ -169,6 +175,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             auto var_u64 = io.InquireVariable<uint64_t>("u64");
             auto var_r32 = io.InquireVariable<float>("r32");
             auto var_r64 = io.InquireVariable<double>("r64");
+            auto var_chars = io.InquireVariable<char>("chars");
+            auto var_schars = io.InquireVariable<signed char>("schars");
+            auto var_uchars = io.InquireVariable<unsigned char>("uchars");
 
             // Make a 1D selection to describe the local dimensions of the
             // variable we write and its offsets in the global spaces
@@ -187,6 +196,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             var_u64.SetSelection(sel);
             var_r32.SetSelection(sel);
             var_r64.SetSelection(sel);
+            var_chars.SetSelection(sel);
+            var_schars.SetSelection(sel);
+            var_uchars.SetSelection(sel);
 
             // Write each one
             // fill in the variable with values from starting index to
@@ -206,6 +218,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             bpWriter.Put(var_u64, currentTestData.U64.data());
             bpWriter.Put(var_r32, currentTestData.R32.data());
             bpWriter.Put(var_r64, currentTestData.R64.data());
+            bpWriter.Put(var_chars, currentTestData.CHARS.data());
+            bpWriter.Put(var_schars, currentTestData.SCHARS.data());
+            bpWriter.Put(var_uchars, currentTestData.UCHARS.data());
 
             bpWriter.EndStep();
         }
@@ -307,6 +322,24 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         ASSERT_EQ(var_r64.Steps(), NSteps);
         ASSERT_EQ(var_r64.Shape()[0], mpiSize * Nx);
 
+        auto var_chars = io.InquireVariable<char>("chars");
+        EXPECT_TRUE(var_chars);
+        ASSERT_EQ(var_chars.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_chars.Steps(), NSteps);
+        ASSERT_EQ(var_chars.Shape()[0], mpiSize * Nx);
+
+        auto var_schars = io.InquireVariable<signed char>("schars");
+        EXPECT_TRUE(var_schars);
+        ASSERT_EQ(var_schars.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_schars.Steps(), NSteps);
+        ASSERT_EQ(var_schars.Shape()[0], mpiSize * Nx);
+
+        auto var_uchars = io.InquireVariable<unsigned char>("uchars");
+        EXPECT_TRUE(var_uchars);
+        ASSERT_EQ(var_uchars.ShapeID(), adios2::ShapeID::GlobalArray);
+        ASSERT_EQ(var_uchars.Steps(), NSteps);
+        ASSERT_EQ(var_uchars.Shape()[0], mpiSize * Nx);
+
         // TODO: other types
 
         SmallTestData testData;
@@ -324,6 +357,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         std::array<double, Nx> R64;
         std::array<char, Nx> CHAR;
         // std::array<bool, Nx> TF;
+        std::array<char, Nx> CHARS;
+        std::array<signed char, Nx> SCHARS;
+        std::array<unsigned char, Nx> UCHARS;
 
         const adios2::Dims start{mpiRank * Nx};
         const adios2::Dims count{Nx};
@@ -346,6 +382,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
         var_r32.SetSelection(sel);
         var_r64.SetSelection(sel);
 
+        var_chars.SetSelection(sel);
+        var_schars.SetSelection(sel);
+        var_uchars.SetSelection(sel);
+
         for (size_t t = 0; t < NSteps; ++t)
         {
             // var_bool.SetStepSelection({t, 1});
@@ -363,6 +403,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
 
             var_r32.SetStepSelection({t, 1});
             var_r64.SetStepSelection({t, 1});
+
+            var_chars.SetStepSelection({t, 1});
+            var_schars.SetStepSelection({t, 1});
+            var_uchars.SetStepSelection({t, 1});
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData =
@@ -384,6 +428,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             bpReader.Get(var_r32, R32.data());
             bpReader.Get(var_r64, R64.data());
 
+            bpReader.Get(var_chars, CHARS.data());
+            bpReader.Get(var_schars, SCHARS.data());
+            bpReader.Get(var_uchars, UCHARS.data());
             bpReader.PerformGets();
 
             EXPECT_EQ(IString, currentTestData.S1);
@@ -406,6 +453,9 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
                 EXPECT_EQ(U64[i], currentTestData.U64[i]) << msg;
                 EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
                 EXPECT_EQ(R64[i], currentTestData.R64[i]) << msg;
+                EXPECT_EQ(CHARS[i], currentTestData.CHARS[i]) << msg;
+                EXPECT_EQ(SCHARS[i], currentTestData.SCHARS[i]) << msg;
+                EXPECT_EQ(UCHARS[i], currentTestData.UCHARS[i]) << msg;
             }
         }
         bpReader.Close();

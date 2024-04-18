@@ -66,6 +66,16 @@ struct SmallTestData
 
     std::array<char, 10> CHAR = {{'a', 'b', 'c', 'y', 'z', 'A', 'B', 'C', 'Y', 'Z'}};
     std::array<bool, 10> TF = {{true, false, true, true, false, false, true, false, false, true}};
+
+    std::array<char, 10> CHARS = {(char)0, (char)1,  (char)-2, (char)3,  (char)-4,
+                                  (char)5, (char)-6, (char)7,  (char)-8, (char)9};
+    std::array<signed char, 10> SCHARS = {
+        (signed char)0, (signed char)1,  (signed char)-2, (signed char)3,  (signed char)-4,
+        (signed char)5, (signed char)-6, (signed char)7,  (signed char)-8, (signed char)9};
+    std::array<unsigned char, 10> UCHARS = {(unsigned char)0,  (unsigned char)1,  (unsigned char)-2,
+                                            (unsigned char)3,  (unsigned char)-4, (unsigned char)5,
+                                            (unsigned char)-6, (unsigned char)7,  (unsigned char)-8,
+                                            (unsigned char)9};
 };
 
 SmallTestData generateNewSmallTestData(SmallTestData in, size_t step, size_t rank, size_t size)
@@ -109,6 +119,12 @@ SmallTestData generateNewSmallTestData(SmallTestData in, size_t step, size_t ran
         }
     });
 
+    std::for_each(in.CHARS.begin(), in.CHARS.end(), [&](char &v) { v += static_cast<char>(j); });
+    std::for_each(in.SCHARS.begin(), in.SCHARS.end(),
+                  [&](signed char &v) { v += static_cast<signed char>(j); });
+    std::for_each(in.UCHARS.begin(), in.UCHARS.end(),
+                  [&](unsigned char &v) { v += static_cast<unsigned char>(j); });
+
     return in;
 }
 
@@ -149,6 +165,12 @@ void UpdateSmallTestData(SmallTestData &in, int step, int rank, int size)
             v = 'A' + (v - 'Z') - 1;
         }
     });
+
+    std::for_each(in.CHARS.begin(), in.CHARS.end(), [&](char &v) { v += static_cast<char>(j); });
+    std::for_each(in.SCHARS.begin(), in.SCHARS.end(),
+                  [&](signed char &v) { v += static_cast<signed char>(j); });
+    std::for_each(in.UCHARS.begin(), in.UCHARS.end(),
+                  [&](unsigned char &v) { v += static_cast<unsigned char>(j); });
 }
 
 #endif // TESTING_ADIOS2_ENGINE_SMALLTESTDATA_H_

@@ -11,8 +11,14 @@ from adios2 import bindings, Adios, IO, Variable
 
 def type_adios_to_numpy(name):
     """Translation between numpy and adios2 types"""
+    if name == "char":
+        if bindings.is_char_signed:
+            print("type_adios_to_numpy char --> signed int8")
+            return np.int8
+        print("type_adios_to_numpy char --> unsigned uint8")
+        return np.uint8
+
     return {
-        "char": np.int8,
         "int8_t": np.int8,
         "uint8_t": np.uint8,
         "int16_t": np.int16,
