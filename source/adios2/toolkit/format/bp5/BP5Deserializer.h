@@ -82,6 +82,7 @@ public:
     MinVarInfo *MinBlocksInfo(const VariableBase &Var, const size_t Step);
     bool VarShape(const VariableBase &, const size_t Step, Dims &Shape) const;
     bool VariableMinMax(const VariableBase &var, const size_t Step, MinMaxStruct &MinMax);
+    char *VariableExprStr(const VariableBase &var);
     void GetAbsoluteSteps(const VariableBase &variable, std::vector<size_t> &keys) const;
 
     const bool m_WriterIsRowMajor;

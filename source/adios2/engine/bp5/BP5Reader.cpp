@@ -726,6 +726,11 @@ bool BP5Reader::VariableMinMax(const VariableBase &Var, const size_t Step, MinMa
     return m_BP5Deserializer->VariableMinMax(Var, Step, MinMax);
 }
 
+const char *BP5Reader::VariableExprStr(const VariableBase &Var)
+{
+    return static_cast<const char *>(m_BP5Deserializer->VariableExprStr(Var));
+}
+
 void BP5Reader::InitTransports()
 {
     if (m_IO.m_TransportsParameters.empty())

@@ -20,6 +20,7 @@
 #include "bpls.h"
 #include "verinfo.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cinttypes>
 #include <cstdio>
@@ -103,6 +104,7 @@ bool hidden_attrs;       // show hidden attrs in BP file
 int hidden_attrs_flag;   // to be passed on in option struct
 bool show_decomp;        // show decomposition of arrays
 bool show_version;       // print binary version info of file before work
+bool show_derived_expr;  // show the expression string for derived vars
 adios2::Accuracy accuracy;
 bool accuracyWasSet = false;
 
@@ -176,6 +178,7 @@ void display_help()
            "                             e.g. error=\"0.0,0.0,abs\"\n"
            "                             L2 norm = 0.0, Linf = inf\n"
 
+           "  --show-derived             Show the expression string for derived vars\n"
            "  --transport-parameters | -T         Specify File transport "
            "parameters\n"
            "                                      e.g. \"Library=stdio\"\n"
@@ -655,6 +658,8 @@ int bplsMain(int argc, char *argv[])
     arg.AddArgument("--engine-params", argT::SPACE_ARGUMENT, &engine_params,
                     "| -P string    Specify ADIOS Engine Parameters manually");
     arg.AddArgument("-P", argT::SPACE_ARGUMENT, &engine_params, "");
+    arg.AddBooleanArgument("--show-derived", &show_derived_expr,
+                           "Show the expression string for derived variables");
 
     if (!arg.Parse())
     {
@@ -779,6 +784,7 @@ void init_globals()
     printByteAsChar = false;
     show_decomp = false;
     show_version = false;
+    show_derived_expr = false;
     for (i = 0; i < MAX_DIMS; i++)
     {
         istart[i] = 0LL;
@@ -1288,6 +1294,17 @@ int printVariableInfo(core::Engine *fp, core::IO *io, core::Variable<T> *variabl
             {
                 print_decomp(fp, io, variable);
             }
+        }
+    }
+
+    if (show_derived_expr)
+    {
+        const char *ExprPtr = fp->VariableExprStr(*variable);
+        if (ExprPtr != NULL)
+        {
+            std::string ExprStr(ExprPtr);
+            std::replace(ExprStr.begin(), ExprStr.end(), '\n', ' ');
+            fprintf(outf, "    Derived variable with expression: %s\n", ExprStr.c_str());
         }
     }
 
