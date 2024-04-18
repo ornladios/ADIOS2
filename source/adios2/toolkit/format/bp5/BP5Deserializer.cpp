@@ -2443,5 +2443,11 @@ bool BP5Deserializer::VariableMinMax(const VariableBase &Var, const size_t Step,
     return true;
 }
 
+char *BP5Deserializer::VariableExprStr(const VariableBase &Var)
+{
+    BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
+    return VarRec->ExprStr;
+}
+
 }
 }
