@@ -147,7 +147,7 @@ void display_help()
            */
            "  --timestep  | -t           Read content step by step (stream "
            "reading)\n"
-           "  --flatten                  Flatten Steps into one step\n"
+           "  --flatten                  Flatten Steps into one step (open in flatten mode)\n"
            "  --dump      | -d           Dump matched variables/attributes\n"
            "                               To match attributes too, add option "
            "-a\n"
