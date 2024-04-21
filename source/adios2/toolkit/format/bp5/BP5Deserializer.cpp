@@ -980,7 +980,13 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
             {
                 VarRec->FirstTSSeen = Step;
             }
-            if (m_RandomAccessMode && (VarRec->LastTSAdded != Step))
+            if (m_FlattenSteps)
+            {
+                static_cast<VariableBase *>(VarRec->Variable)->m_AvailableStepsCount = 1;
+                VarRec->LastTSAdded = 0;
+                VarRec->FirstTSSeen = 0;
+            }
+            else if (m_RandomAccessMode && (VarRec->LastTSAdded != Step))
             {
                 static_cast<VariableBase *>(VarRec->Variable)->m_AvailableStepsCount++;
                 VarRec->LastTSAdded = Step;
@@ -1545,198 +1551,223 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
 {
     std::vector<BP5Deserializer::ReadRequest> Ret;
     *maxReadSize = 0;
+    size_t StepLoopStart, StepLoopEnd;
 
     for (size_t ReqIndex = 0; ReqIndex < PendingGetRequests.size(); ReqIndex++)
     {
         auto Req = &PendingGetRequests[ReqIndex];
         auto VarRec = (struct BP5VarRec *)Req->VarRec;
         VariableBase *VB = static_cast<VariableBase *>(VarRec->Variable);
-        if (Req->RequestType == Local)
+        if (m_FlattenSteps)
         {
-            const size_t writerCohortSize = WriterCohortSize(Req->Step);
-            size_t NodeFirstBlock = 0;
-            for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
-            {
-                MetaArrayRecOperator *writer_meta_base = (MetaArrayRecOperator *)GetMetadataBase(
-                    (struct BP5VarRec *)Req->VarRec, Req->Step, WriterRank);
-                if (!writer_meta_base)
-                {
-                    continue; // Not writen on this step
-                }
-                size_t NodeLastBlock = NodeFirstBlock + writer_meta_base->BlockCount - 1;
-                if ((NodeFirstBlock <= Req->BlockID) && (NodeLastBlock >= Req->BlockID))
-                {
-                    // block is here
-                    size_t NeededBlock = Req->BlockID - NodeFirstBlock;
-                    size_t StartDim = NeededBlock * VarRec->DimCount;
-                    ReadRequest RR;
-                    RR.Timestep = Req->Step;
-                    RR.WriterRank = WriterRank;
-                    RR.StartOffset = writer_meta_base->DataBlockLocation[NeededBlock];
-                    if (RR.StartOffset == (size_t)-1)
-                        throw std::runtime_error("No data exists for this variable");
-                    if (Req->MemSpace != MemorySpace::Host)
-                        RR.DirectToAppMemory = false;
-                    else if (VarRec->Operator != NULL)
-                        RR.DirectToAppMemory = false;
-                    else
-                        RR.DirectToAppMemory =
-                            IsContiguousTransfer(Req, &writer_meta_base->Offsets[StartDim],
-                                                 &writer_meta_base->Count[StartDim]);
-                    if (VarRec->Operator)
-                    {
-                        // have to have the whole thing
-                        RR.ReadLength = writer_meta_base->DataBlockSize[NeededBlock];
-                    }
-                    else
-                    {
-                        RR.ReadLength =
-                            helper::GetDataTypeSize(VarRec->Type) *
-                            CalcBlockLength(VarRec->DimCount, &writer_meta_base->Count[StartDim]);
-                    }
-                    RR.OffsetInBlock = 0;
-                    if (RR.DirectToAppMemory)
-                    {
-                        RR.DestinationAddr = (char *)Req->Data;
-                        if (Req->Start.size() != 0)
-                        {
-                            RR.ReadLength = helper::GetDataTypeSize(VarRec->Type) *
-                                            CalcBlockLength(VarRec->DimCount, Req->Count.data());
-                            /* DirectToAppMemory handles only 1D, so offset calc
-                             * is 1D only for the moment */
-                            RR.StartOffset += helper::GetDataTypeSize(VarRec->Type) * Req->Start[0];
-                        }
-                    }
-                    else
-                    {
-                        RR.DestinationAddr = nullptr;
-                        if (doAllocTempBuffers)
-                        {
-                            RR.DestinationAddr = (char *)malloc(RR.ReadLength);
-                        }
-                        *maxReadSize =
-                            (*maxReadSize < RR.ReadLength ? RR.ReadLength : *maxReadSize);
-                    }
-                    RR.ReqIndex = ReqIndex;
-                    RR.BlockID = NeededBlock;
-                    Ret.push_back(RR);
-                    break;
-                }
-                NodeFirstBlock += writer_meta_base->BlockCount;
-            }
+            StepLoopStart = 0;
+            StepLoopEnd = m_ControlArray.size();
         }
         else
         {
-            /* global case */
-            const size_t writerCohortSize = WriterCohortSize(Req->Step);
-            for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
+            StepLoopStart = Req->Step;
+            StepLoopEnd = Req->Step + 1;
+        }
+
+        if (Req->RequestType == Local)
+        {
+            size_t NodeFirstBlock = 0;
+            for (size_t Step = StepLoopStart; Step < StepLoopEnd; Step++)
             {
-                MetaArrayRecOperator *writer_meta_base = (MetaArrayRecOperator *)GetMetadataBase(
-                    (struct BP5VarRec *)Req->VarRec, Req->Step, WriterRank);
-                if (!writer_meta_base)
-                    continue; // Not writen on this step
-
-                for (size_t Block = 0; Block < writer_meta_base->BlockCount; Block++)
+                const size_t writerCohortSize = WriterCohortSize(Step);
+                for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
                 {
-                    std::array<size_t, helper::MAX_DIMS> intersectionstart;
-                    std::array<size_t, helper::MAX_DIMS> intersectionend;
-                    std::array<size_t, helper::MAX_DIMS> intersectioncount;
-
-                    size_t StartDim = Block * VarRec->DimCount;
-                    if (IntersectionStartCount(VarRec->DimCount, Req->Start.data(),
-                                               Req->Count.data(),
-                                               &writer_meta_base->Offsets[StartDim],
-                                               &writer_meta_base->Count[StartDim],
-                                               &intersectionstart[0], &intersectioncount[0]))
+                    MetaArrayRecOperator *writer_meta_base =
+                        (MetaArrayRecOperator *)GetMetadataBase((struct BP5VarRec *)Req->VarRec,
+                                                                Step, WriterRank);
+                    if (!writer_meta_base)
                     {
-                        if (VarRec->Operator != NULL)
+                        continue; // Not writen on this step
+                    }
+                    size_t NodeLastBlock = NodeFirstBlock + writer_meta_base->BlockCount - 1;
+                    if ((NodeFirstBlock <= Req->BlockID) && (NodeLastBlock >= Req->BlockID))
+                    {
+                        // block is here
+                        size_t NeededBlock = Req->BlockID - NodeFirstBlock;
+                        size_t StartDim = NeededBlock * VarRec->DimCount;
+                        ReadRequest RR;
+                        RR.Timestep = Req->Step;
+                        RR.WriterRank = WriterRank;
+                        RR.StartOffset = writer_meta_base->DataBlockLocation[NeededBlock];
+                        if (RR.StartOffset == (size_t)-1)
+                            throw std::runtime_error("No data exists for this variable");
+                        if (Req->MemSpace != MemorySpace::Host)
+                            RR.DirectToAppMemory = false;
+                        else if (VarRec->Operator != NULL)
+                            RR.DirectToAppMemory = false;
+                        else
+                            RR.DirectToAppMemory =
+                                IsContiguousTransfer(Req, &writer_meta_base->Offsets[StartDim],
+                                                     &writer_meta_base->Count[StartDim]);
+                        if (VarRec->Operator)
                         {
-                            // need the whole thing for decompression anyway
-                            ReadRequest RR;
-                            RR.Timestep = Req->Step;
-                            RR.WriterRank = WriterRank;
-                            RR.StartOffset = writer_meta_base->DataBlockLocation[Block];
-                            RR.ReadLength = writer_meta_base->DataBlockSize[Block];
+                            // have to have the whole thing
+                            RR.ReadLength = writer_meta_base->DataBlockSize[NeededBlock];
+                        }
+                        else
+                        {
+                            RR.ReadLength = helper::GetDataTypeSize(VarRec->Type) *
+                                            CalcBlockLength(VarRec->DimCount,
+                                                            &writer_meta_base->Count[StartDim]);
+                        }
+                        RR.OffsetInBlock = 0;
+                        if (RR.DirectToAppMemory)
+                        {
+                            RR.DestinationAddr = (char *)Req->Data;
+                            if (Req->Start.size() != 0)
+                            {
+                                RR.ReadLength =
+                                    helper::GetDataTypeSize(VarRec->Type) *
+                                    CalcBlockLength(VarRec->DimCount, Req->Count.data());
+                                /* DirectToAppMemory handles only 1D, so offset calc
+                                 * is 1D only for the moment */
+                                RR.StartOffset +=
+                                    helper::GetDataTypeSize(VarRec->Type) * Req->Start[0];
+                            }
+                        }
+                        else
+                        {
                             RR.DestinationAddr = nullptr;
-                            if (RR.StartOffset == (size_t)-1)
-                                throw std::runtime_error("No data exists for this variable");
                             if (doAllocTempBuffers)
                             {
                                 RR.DestinationAddr = (char *)malloc(RR.ReadLength);
                             }
                             *maxReadSize =
                                 (*maxReadSize < RR.ReadLength ? RR.ReadLength : *maxReadSize);
-                            RR.DirectToAppMemory = false;
-                            RR.ReqIndex = ReqIndex;
-                            RR.BlockID = Block;
-                            RR.OffsetInBlock = 0;
-                            Ret.push_back(RR);
                         }
-                        else
-                        {
-                            for (size_t Dim = 0; Dim < VarRec->DimCount; Dim++)
-                            {
-                                intersectionstart[Dim] -= writer_meta_base->Offsets[StartDim + Dim];
-                            }
-                            size_t StartOffsetInBlock =
-                                VB->m_ElementSize *
-                                LinearIndex(VarRec->DimCount, &writer_meta_base->Count[StartDim],
-                                            &intersectionstart[0], m_ReaderIsRowMajor);
-                            for (size_t Dim = 0; Dim < VarRec->DimCount; Dim++)
-                            {
-                                intersectionend[Dim] =
-                                    intersectionstart[Dim] + intersectioncount[Dim] - 1;
-                            }
-                            size_t EndOffsetInBlock =
-                                VB->m_ElementSize *
-                                (LinearIndex(VarRec->DimCount, &writer_meta_base->Count[StartDim],
-                                             &intersectionend[0], m_ReaderIsRowMajor) +
-                                 1);
-                            ReadRequest RR;
-                            RR.Timestep = Req->Step;
-                            RR.WriterRank = WriterRank;
-                            RR.StartOffset =
-                                writer_meta_base->DataBlockLocation[Block] + StartOffsetInBlock;
-                            if (writer_meta_base->DataBlockLocation[Block] == (size_t)-1)
-                                throw std::runtime_error("No data exists for this variable");
-                            RR.ReadLength = EndOffsetInBlock - StartOffsetInBlock;
-                            if (Req->MemSpace != MemorySpace::Host)
-                                RR.DirectToAppMemory = false;
-                            else
-                                RR.DirectToAppMemory =
-                                    IsContiguousTransfer(Req, &writer_meta_base->Offsets[StartDim],
-                                                         &writer_meta_base->Count[StartDim]);
-                            if (RR.DirectToAppMemory)
-                            {
-                                /*
-                                 * DirectToAppMemory handles only 1D, so offset
-                                 * calc is 1D only for the moment ContigOffset
-                                 * handles the case where our destination is not
-                                 * the start of the destination memory (because
-                                 * some other block filled in that start)
-                                 */
+                        RR.ReqIndex = ReqIndex;
+                        RR.BlockID = NeededBlock;
+                        Ret.push_back(RR);
+                        break;
+                    }
+                    NodeFirstBlock += writer_meta_base->BlockCount;
+                }
+            }
+        }
+        else
+        {
+            /* global case */
+            for (size_t Step = StepLoopStart; Step < StepLoopEnd; Step++)
+            {
+                const size_t writerCohortSize = WriterCohortSize(Step);
+                for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
+                {
+                    MetaArrayRecOperator *writer_meta_base =
+                        (MetaArrayRecOperator *)GetMetadataBase((struct BP5VarRec *)Req->VarRec,
+                                                                Step, WriterRank);
+                    if (!writer_meta_base)
+                        continue; // Not writen on this step
 
-                                ssize_t ContigOffset =
-                                    (writer_meta_base->Offsets[StartDim + 0] - Req->Start[0]) *
-                                    VB->m_ElementSize;
-                                if (ContigOffset < 0)
-                                    ContigOffset = 0;
-                                RR.DestinationAddr = (char *)Req->Data + ContigOffset;
-                            }
-                            else
+                    for (size_t Block = 0; Block < writer_meta_base->BlockCount; Block++)
+                    {
+                        std::array<size_t, helper::MAX_DIMS> intersectionstart;
+                        std::array<size_t, helper::MAX_DIMS> intersectionend;
+                        std::array<size_t, helper::MAX_DIMS> intersectioncount;
+
+                        size_t StartDim = Block * VarRec->DimCount;
+                        if (IntersectionStartCount(VarRec->DimCount, Req->Start.data(),
+                                                   Req->Count.data(),
+                                                   &writer_meta_base->Offsets[StartDim],
+                                                   &writer_meta_base->Count[StartDim],
+                                                   &intersectionstart[0], &intersectioncount[0]))
+                        {
+                            if (VarRec->Operator != NULL)
                             {
+                                // need the whole thing for decompression anyway
+                                ReadRequest RR;
+                                RR.Timestep = Step;
+                                RR.WriterRank = WriterRank;
+                                RR.StartOffset = writer_meta_base->DataBlockLocation[Block];
+                                RR.ReadLength = writer_meta_base->DataBlockSize[Block];
                                 RR.DestinationAddr = nullptr;
+                                if (RR.StartOffset == (size_t)-1)
+                                    throw std::runtime_error("No data exists for this variable");
                                 if (doAllocTempBuffers)
                                 {
                                     RR.DestinationAddr = (char *)malloc(RR.ReadLength);
                                 }
                                 *maxReadSize =
                                     (*maxReadSize < RR.ReadLength ? RR.ReadLength : *maxReadSize);
+                                RR.DirectToAppMemory = false;
+                                RR.ReqIndex = ReqIndex;
+                                RR.BlockID = Block;
+                                RR.OffsetInBlock = 0;
+                                Ret.push_back(RR);
                             }
-                            RR.OffsetInBlock = StartOffsetInBlock;
-                            RR.ReqIndex = ReqIndex;
-                            RR.BlockID = Block;
-                            Ret.push_back(RR);
+                            else
+                            {
+                                for (size_t Dim = 0; Dim < VarRec->DimCount; Dim++)
+                                {
+                                    intersectionstart[Dim] -=
+                                        writer_meta_base->Offsets[StartDim + Dim];
+                                }
+                                size_t StartOffsetInBlock =
+                                    VB->m_ElementSize *
+                                    LinearIndex(VarRec->DimCount,
+                                                &writer_meta_base->Count[StartDim],
+                                                &intersectionstart[0], m_ReaderIsRowMajor);
+                                for (size_t Dim = 0; Dim < VarRec->DimCount; Dim++)
+                                {
+                                    intersectionend[Dim] =
+                                        intersectionstart[Dim] + intersectioncount[Dim] - 1;
+                                }
+                                size_t EndOffsetInBlock =
+                                    VB->m_ElementSize *
+                                    (LinearIndex(VarRec->DimCount,
+                                                 &writer_meta_base->Count[StartDim],
+                                                 &intersectionend[0], m_ReaderIsRowMajor) +
+                                     1);
+                                ReadRequest RR;
+                                RR.Timestep = Step;
+                                RR.WriterRank = WriterRank;
+                                RR.StartOffset =
+                                    writer_meta_base->DataBlockLocation[Block] + StartOffsetInBlock;
+                                if (writer_meta_base->DataBlockLocation[Block] == (size_t)-1)
+                                    throw std::runtime_error("No data exists for this variable");
+                                RR.ReadLength = EndOffsetInBlock - StartOffsetInBlock;
+                                if (Req->MemSpace != MemorySpace::Host)
+                                    RR.DirectToAppMemory = false;
+                                else
+                                    RR.DirectToAppMemory = IsContiguousTransfer(
+                                        Req, &writer_meta_base->Offsets[StartDim],
+                                        &writer_meta_base->Count[StartDim]);
+                                if (RR.DirectToAppMemory)
+                                {
+                                    /*
+                                     * DirectToAppMemory handles only 1D, so offset
+                                     * calc is 1D only for the moment ContigOffset
+                                     * handles the case where our destination is not
+                                     * the start of the destination memory (because
+                                     * some other block filled in that start)
+                                     */
+
+                                    ssize_t ContigOffset =
+                                        (writer_meta_base->Offsets[StartDim + 0] - Req->Start[0]) *
+                                        VB->m_ElementSize;
+                                    if (ContigOffset < 0)
+                                        ContigOffset = 0;
+                                    RR.DestinationAddr = (char *)Req->Data + ContigOffset;
+                                }
+                                else
+                                {
+                                    RR.DestinationAddr = nullptr;
+                                    if (doAllocTempBuffers)
+                                    {
+                                        RR.DestinationAddr = (char *)malloc(RR.ReadLength);
+                                    }
+                                    *maxReadSize = (*maxReadSize < RR.ReadLength ? RR.ReadLength
+                                                                                 : *maxReadSize);
+                                }
+                                RR.OffsetInBlock = StartOffsetInBlock;
+                                RR.ReqIndex = ReqIndex;
+                                RR.BlockID = Block;
+                                Ret.push_back(RR);
+                            }
                         }
                     }
                 }
@@ -1756,7 +1787,7 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
 
     int ElementSize = ((struct BP5VarRec *)Req.VarRec)->ElementSize;
     MetaArrayRec *writer_meta_base = (MetaArrayRec *)GetMetadataBase(
-        ((struct BP5VarRec *)Req.VarRec), Req.Step, Read.WriterRank);
+        ((struct BP5VarRec *)Req.VarRec), Read.Timestep, Read.WriterRank);
 
     size_t *GlobalDimensions = writer_meta_base->Shape;
     auto DimCount = writer_meta_base->Dims;
@@ -1966,9 +1997,9 @@ int BP5Deserializer::FindOffset(size_t Dims, const size_t *Size, const size_t *I
  */
 
 BP5Deserializer::BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor,
-                                 bool RandomAccessMode)
+                                 bool RandomAccessMode, bool FlattenSteps)
 : m_WriterIsRowMajor{WriterIsRowMajor}, m_ReaderIsRowMajor{ReaderIsRowMajor},
-  m_RandomAccessMode{RandomAccessMode}
+  m_RandomAccessMode{RandomAccessMode}, m_FlattenSteps{FlattenSteps}
 {
     FMContext Tmp = create_local_FMcontext();
     ReaderFFSContext = create_FFSContext_FM(Tmp);
@@ -2065,40 +2096,9 @@ void *BP5Deserializer::GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t Wr
 
 MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelStep)
 {
-    BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
-
-    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, VarRec->GlobalDims);
-
-    size_t AbsStep = RelStep;
-
-    if (m_RandomAccessMode)
-    {
-        AbsStep = VarRec->AbsStepFromRel[RelStep];
-    }
-    const size_t writerCohortSize = WriterCohortSize(AbsStep);
-    size_t Id = 0;
-    MV->Step = RelStep;
-    MV->Dims = (int)VarRec->DimCount;
-    MV->Shape = NULL;
-    MV->IsReverseDims = ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
-
-    MV->WasLocalValue = (VarRec->OrigShapeID == ShapeID::LocalValue);
-    if ((VarRec->OrigShapeID == ShapeID::LocalValue) ||
-        (VarRec->OrigShapeID == ShapeID::GlobalValue))
-    {
-        if (VarRec->OrigShapeID == ShapeID::LocalValue)
-        {
-            // appear as an array locally
-            MV->IsValue = false;
-            MV->Dims = 1;
-            MV->Shape = (size_t *)writerCohortSize;
-        }
-        else
-        {
-            MV->IsValue = true;
-        }
-        MV->BlocksInfo.reserve(writerCohortSize);
-
+    auto PossiblyAddValueBlocks = [this](MinVarInfo *MV, BP5VarRec *VarRec, size_t &Id,
+                                         const size_t AbsStep) {
+        const size_t writerCohortSize = WriterCohortSize(AbsStep);
         for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
         {
             MetaArrayRec *writer_meta_base =
@@ -2124,63 +2124,122 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
                 MV->BlocksInfo.push_back(Blk);
             }
         }
+    };
+
+    BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
+
+    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, VarRec->GlobalDims);
+
+    size_t AbsStep = RelStep;
+    size_t StepLoopStart, StepLoopEnd;
+
+    if (m_RandomAccessMode)
+    {
+        AbsStep = VarRec->AbsStepFromRel[RelStep];
+    }
+    if (m_FlattenSteps)
+    {
+        StepLoopStart = 0;
+        StepLoopEnd = m_ControlArray.size();
+    }
+    else
+    {
+        StepLoopStart = AbsStep;
+        StepLoopEnd = AbsStep + 1;
+    }
+    size_t Id = 0;
+    MV->Step = RelStep;
+    MV->Dims = (int)VarRec->DimCount;
+    MV->Shape = NULL;
+    MV->IsReverseDims = ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
+
+    MV->WasLocalValue = (VarRec->OrigShapeID == ShapeID::LocalValue);
+    if ((VarRec->OrigShapeID == ShapeID::LocalValue) ||
+        (VarRec->OrigShapeID == ShapeID::GlobalValue))
+    {
+        const size_t writerCohortSize = WriterCohortSize(AbsStep);
+        if (VarRec->OrigShapeID == ShapeID::LocalValue)
+        {
+            // appear as an array locally
+            MV->IsValue = false;
+            MV->Dims = 1;
+            MV->Shape = (size_t *)writerCohortSize;
+        }
+        else
+        {
+            MV->IsValue = true;
+        }
+        MV->BlocksInfo.reserve(writerCohortSize);
+
+        for (size_t Step = StepLoopStart; Step < StepLoopEnd; Step++)
+        {
+            PossiblyAddValueBlocks(MV, VarRec, Id, AbsStep);
+        }
         return MV;
     }
-    for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
+    for (size_t Step = StepLoopStart; Step < StepLoopEnd; Step++)
     {
-        MetaArrayRec *writer_meta_base =
-            (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
-        if (writer_meta_base)
+        const size_t writerCohortSize = WriterCohortSize(Step);
+        for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
         {
-            if (MV->Shape == NULL)
+            MetaArrayRec *writer_meta_base =
+                (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
+            if (writer_meta_base)
             {
-                MV->Shape = writer_meta_base->Shape;
+                if (MV->Shape == NULL)
+                {
+                    MV->Shape = writer_meta_base->Shape;
+                }
+                size_t WriterBlockCount =
+                    writer_meta_base->Dims ? writer_meta_base->DBCount / writer_meta_base->Dims : 1;
+                Id += WriterBlockCount;
             }
-            size_t WriterBlockCount =
-                writer_meta_base->Dims ? writer_meta_base->DBCount / writer_meta_base->Dims : 1;
-            Id += WriterBlockCount;
         }
     }
     MV->BlocksInfo.reserve(Id);
 
     Id = 0;
-    for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
+    for (size_t Step = StepLoopStart; Step < StepLoopEnd; Step++)
     {
-        MetaArrayRec *writer_meta_base =
-            (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
+        const size_t writerCohortSize = WriterCohortSize(Step);
+        for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
+        {
+            MetaArrayRec *writer_meta_base =
+                (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
 
-        if (!writer_meta_base)
-            continue;
-        size_t WriterBlockCount = MV->Dims ? writer_meta_base->DBCount / MV->Dims : 1;
-        MinMaxStruct *MMs = NULL;
-        if (VarRec->MinMaxOffset != SIZE_MAX)
-        {
-            MMs = *(MinMaxStruct **)(((char *)writer_meta_base) + VarRec->MinMaxOffset);
-        }
-        for (size_t i = 0; i < WriterBlockCount; i++)
-        {
-            size_t *Offsets = NULL;
-            size_t *Count = NULL;
-            if (writer_meta_base->Offsets)
-                Offsets = writer_meta_base->Offsets + (i * MV->Dims);
-            if (writer_meta_base->Count)
-                Count = writer_meta_base->Count + (i * MV->Dims);
-            MinBlockInfo Blk;
-            Blk.WriterID = (int)WriterRank;
-            Blk.BlockID = Id++;
-            Blk.Start = Offsets;
-            Blk.Count = Count;
-            Blk.MinMax.Init(VarRec->Type);
-            if (MMs)
+            if (!writer_meta_base)
+                continue;
+            size_t WriterBlockCount = MV->Dims ? writer_meta_base->DBCount / MV->Dims : 1;
+            MinMaxStruct *MMs = NULL;
+            if (VarRec->MinMaxOffset != SIZE_MAX)
             {
-
-                char *BlockMinAddr = (((char *)MMs) + 2 * i * VarRec->ElementSize);
-                char *BlockMaxAddr = (((char *)MMs) + (2 * i + 1) * VarRec->ElementSize);
-                ApplyElementMinMax(Blk.MinMax, VarRec->Type, (void *)BlockMinAddr);
-                ApplyElementMinMax(Blk.MinMax, VarRec->Type, (void *)BlockMaxAddr);
+                MMs = *(MinMaxStruct **)(((char *)writer_meta_base) + VarRec->MinMaxOffset);
             }
-            // Blk.BufferP
-            MV->BlocksInfo.push_back(Blk);
+            for (size_t i = 0; i < WriterBlockCount; i++)
+            {
+                size_t *Offsets = NULL;
+                size_t *Count = NULL;
+                if (writer_meta_base->Offsets)
+                    Offsets = writer_meta_base->Offsets + (i * MV->Dims);
+                if (writer_meta_base->Count)
+                    Count = writer_meta_base->Count + (i * MV->Dims);
+                MinBlockInfo Blk;
+                Blk.WriterID = (int)WriterRank;
+                Blk.BlockID = Id++;
+                Blk.Start = Offsets;
+                Blk.Count = Count;
+                Blk.MinMax.Init(VarRec->Type);
+                if (MMs)
+                {
+
+                    char *BlockMinAddr = (((char *)MMs) + 2 * i * VarRec->ElementSize);
+                    char *BlockMaxAddr = (((char *)MMs) + (2 * i + 1) * VarRec->ElementSize);
+                    ApplyElementMinMax(Blk.MinMax, VarRec->Type, (void *)BlockMinAddr);
+                    ApplyElementMinMax(Blk.MinMax, VarRec->Type, (void *)BlockMaxAddr);
+                }
+                // Blk.BufferP
+                MV->BlocksInfo.push_back(Blk);
+            }
         }
     }
     return MV;

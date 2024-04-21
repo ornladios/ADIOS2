@@ -135,7 +135,8 @@ void Engine::Put(VariableStruct &variable, const void *data, const Mode launch)
 
 void Engine::Get(VariableStruct &variable, void *data, const Mode launch)
 {
-    CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess}, "in call to Get");
+    CommonChecks(variable, data, {Mode::Read, Mode::ReadRandomAccess, Mode::ReadFlattenSteps},
+                 "in call to Get");
 
     switch (launch)
     {

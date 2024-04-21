@@ -23,7 +23,8 @@ Stream::Stream(const std::string &name, const Mode mode, helper::Comm comm,
 : m_ADIOS(std::make_shared<ADIOS>(std::move(comm), hostLanguage)), m_IO(&m_ADIOS->DeclareIO(name)),
   m_Name(name), m_Mode(mode), m_EngineType(engineType)
 {
-    if ((mode == adios2::Mode::Read) || (mode == adios2::Mode::ReadRandomAccess))
+    if ((mode == adios2::Mode::Read) || (mode == adios2::Mode::ReadRandomAccess) ||
+        (mode == adios2::Mode::ReadFlattenSteps))
     {
         CheckOpen();
     }
@@ -41,7 +42,8 @@ Stream::Stream(const std::string &name, const Mode mode, helper::Comm comm,
 : m_ADIOS(std::make_shared<ADIOS>(configFile, std::move(comm), hostLanguage)),
   m_IO(&m_ADIOS->DeclareIO(ioInConfigFile)), m_Name(name), m_Mode(mode)
 {
-    if ((mode == adios2::Mode::Read) || (mode == adios2::Mode::ReadRandomAccess))
+    if ((mode == adios2::Mode::Read) || (mode == adios2::Mode::ReadRandomAccess) ||
+        (mode == adios2::Mode::ReadFlattenSteps))
     {
         CheckOpen();
     }
