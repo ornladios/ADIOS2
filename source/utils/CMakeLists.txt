@@ -13,17 +13,11 @@ configure_file(
 add_executable(bpls ./bpls/bpls.cpp)
 target_link_libraries(bpls
                       PUBLIC adios2_core adios2sys
-                      PRIVATE $<$<PLATFORM_ID:Windows>:shlwapi>)
-
-get_property(pugixml_headers_path
-  TARGET pugixml
-  PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-)
+                      PRIVATE adios2::thirdparty::pugixml $<$<PLATFORM_ID:Windows>:shlwapi>)
 
 target_include_directories(bpls PRIVATE
   ${PROJECT_BINARY_DIR}
   ${PROJECT_SOURCE_DIR}/bindings/C
-  ${pugixml_headers_path}
 )
 
 set_property(TARGET bpls PROPERTY OUTPUT_NAME bpls${ADIOS2_EXECUTABLE_SUFFIX})
