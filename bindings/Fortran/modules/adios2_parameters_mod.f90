@@ -56,6 +56,7 @@ module adios2_parameters_mod
    integer, parameter :: adios2_mode_read = 2
    integer, parameter :: adios2_mode_append = 3
    integer, parameter :: adios2_mode_readRandomAccess = 6
+   integer, parameter :: adios2_mode_readFlattenSteps = 7
 
    integer, parameter :: adios2_mode_deferred = 4
    integer, parameter :: adios2_mode_sync = 5

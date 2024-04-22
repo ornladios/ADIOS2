@@ -177,6 +177,8 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
     std::string strMode = "Streaming";
     if (open_msg->Mode == RemoteOpenRandomAccess)
         strMode = "RandomAccess";
+    if (open_msg->Mode == RemoteOpenFlattenSteps)
+        strMode = "FlattenSteps";
     std::cout << "Got an open request (mode " << strMode << ") for file " << open_msg->FileName
               << std::endl;
     AnonADIOSFile *f =
