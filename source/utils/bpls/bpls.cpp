@@ -96,6 +96,7 @@ bool listmeshes;         // do list meshes too
 bool attrsonly;          // do list attributes only
 bool longopt;            // -l is turned on
 bool timestep;           // read step by step
+bool flatten;            // flatten steps to one
 bool filestream = false; // are we using an engine through FileStream?
 bool noindex;            // do no print array indices with data
 bool printByteAsChar;    // print 8 bit integer arrays as string
@@ -146,6 +147,7 @@ void display_help()
            */
            "  --timestep  | -t           Read content step by step (stream "
            "reading)\n"
+           "  --flatten                  Flatten Steps into one step (open in flatten mode)\n"
            "  --dump      | -d           Dump matched variables/attributes\n"
            "                               To match attributes too, add option "
            "-a\n"
@@ -620,6 +622,7 @@ int bplsMain(int argc, char *argv[])
     arg.AddBooleanArgument("--noindex", &noindex, " | -y Print data without array indices");
     arg.AddBooleanArgument("-y", &noindex, "");
     arg.AddBooleanArgument("--timestep", &timestep, " | -t Print values of timestep elements");
+    arg.AddBooleanArgument("--flatten", &flatten, " Flatten steps to one");
     arg.AddBooleanArgument("-t", &timestep, "");
     arg.AddBooleanArgument("--attrs", &listattrs, " | -a List/match attributes too");
     arg.AddBooleanArgument("-a", &listattrs, "");
@@ -770,6 +773,7 @@ void init_globals()
     output_xml = false;
     noindex = false;
     timestep = false;
+    flatten = false;
     sortnames = false;
     listattrs = false;
     listmeshes = false;
@@ -863,6 +867,8 @@ void printSettings(void)
         printf("      -V : show binary version info of file\n");
     if (timestep)
         printf("      -t : read step-by-step\n");
+    if (flatten)
+        printf("      --flatten : flatten steps into one\n");
 
     if (hidden_attrs)
     {
@@ -1676,6 +1682,10 @@ int doList(std::string path)
             if (timestep)
             {
                 fp = &io.Open(path, Mode::Read);
+            }
+            else if (flatten)
+            {
+                fp = &io.Open(path, Mode::ReadFlattenSteps);
             }
             else
             {
@@ -2923,7 +2933,8 @@ bool print_data_xml(const char *s, const size_t length)
     return false;
 }
 
-int print_data(const void *data, int item, DataType adiosvartype, bool allowformat)
+int print_data(const void *data, int item, DataType adiosvartype, bool allowformat,
+               bool char_star_string)
 {
     bool f = format.size() && allowformat;
     const char *fmt = format.c_str();
@@ -2946,9 +2957,15 @@ int print_data(const void *data, int item, DataType adiosvartype, bool allowform
         break;
 
     case DataType::String: {
-        // fprintf(outf, (f ? fmt : "\"%s\""), ((char *)data) + item);
-        const std::string *dataStr = reinterpret_cast<const std::string *>(data);
-        fprintf(outf, (f ? fmt : "\"%s\""), dataStr[item].c_str());
+        if (char_star_string)
+        {
+            fprintf(outf, (f ? fmt : "\"%s\""), *((char **)data));
+        }
+        else
+        {
+            const std::string *dataStr = reinterpret_cast<const std::string *>(data);
+            fprintf(outf, (f ? fmt : "\"%s\""), dataStr[item].c_str());
+        }
         break;
     }
 
@@ -3397,7 +3414,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                 if (blocks.size() == 1)
                 {
                     fprintf(outf, " = ");
-                    print_data(blocks[0].BufferP, 0, adiosvartype, true);
+                    print_data(blocks[0].BufferP, 0, adiosvartype, true, /* MBI */ true);
                     fprintf(outf, "\n");
                 }
                 else
@@ -3410,7 +3427,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     int col = 0;
                     for (size_t j = 0; j < blocks.size(); j++)
                     {
-                        print_data(blocks[j].BufferP, 0, adiosvartype, true);
+                        print_data(blocks[j].BufferP, 0, adiosvartype, true, /* MBI */ true);
                         ++col;
                         if (j < blocks.size() - 1)
                         {

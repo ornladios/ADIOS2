@@ -80,6 +80,7 @@ enum class Mode
     Read,
     Append,
     ReadRandomAccess, // reader random access mode
+    ReadFlattenSteps, // reader flatten steps to one
     // launch execution modes
     Sync,
     Deferred

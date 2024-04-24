@@ -15,6 +15,7 @@ enum RemoteFileMode
 {
     RemoteOpen,
     RemoteOpenRandomAccess,
+    RemoteOpenFlattenSteps,
 };
 /*
  */

@@ -34,6 +34,9 @@ adios2::Mode adios2_ToMode(const adios2_mode mode, const std::string &hint)
     case adios2_mode_readRandomAccess:
         modeCpp = adios2::Mode::ReadRandomAccess;
         break;
+    case adios2_mode_readFlattenSteps:
+        modeCpp = adios2::Mode::ReadFlattenSteps;
+        break;
     case adios2_mode_deferred:
         modeCpp = adios2::Mode::Deferred;
         break;
@@ -62,6 +65,9 @@ adios2_mode adios2_fromMode(const adios2::Mode mode, const std::string &hint)
         break;
     case adios2::Mode::ReadRandomAccess:
         modeC = adios2_mode_readRandomAccess;
+        break;
+    case adios2::Mode::ReadFlattenSteps:
+        modeC = adios2_mode_readFlattenSteps;
         break;
     case adios2::Mode::Deferred:
         modeC = adios2_mode_deferred;

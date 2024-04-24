@@ -72,7 +72,7 @@ void BP5Reader::InstallMetadataForTimestep(size_t Step)
         size_t ThisMDSize =
             helper::ReadValue<uint64_t>(m_Metadata.Data(), Position, m_Minifooter.IsLittleEndian);
         char *ThisMD = m_Metadata.Data() + MDPosition;
-        if (m_OpenMode == Mode::ReadRandomAccess)
+        if ((m_OpenMode == Mode::ReadRandomAccess) || (m_OpenMode == Mode::ReadFlattenSteps))
         {
             m_BP5Deserializer->InstallMetaData(ThisMD, ThisMDSize, WriterRank, Step);
         }
@@ -98,7 +98,7 @@ StepStatus BP5Reader::BeginStep(StepMode mode, const float timeoutSeconds)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::BeginStep");
 
-    if (m_OpenMode == Mode::ReadRandomAccess)
+    if (m_OpenMode != Mode::Read)
     {
         helper::Throw<std::logic_error>("Engine", "BP5Reader", "BeginStep",
                                         "BeginStep called in random access mode");
@@ -184,7 +184,7 @@ size_t BP5Reader::CurrentStep() const { return m_CurrentStep; }
 
 void BP5Reader::EndStep()
 {
-    if (m_OpenMode == Mode::ReadRandomAccess)
+    if (m_OpenMode != Mode::Read)
     {
         helper::Throw<std::logic_error>("Engine", "BP5Reader", "EndStep",
                                         "EndStep called in random access mode");
@@ -475,12 +475,14 @@ void BP5Reader::PerformLocalGets()
 // PRIVATE
 void BP5Reader::Init()
 {
-    if ((m_OpenMode != Mode::Read) && (m_OpenMode != Mode::ReadRandomAccess))
+    if ((m_OpenMode != Mode::Read) && (m_OpenMode != Mode::ReadRandomAccess) &&
+        (m_OpenMode != Mode::ReadFlattenSteps))
     {
-        helper::Throw<std::invalid_argument>("Engine", "BP5Reader", "Init",
-                                             "BPFileReader only supports OpenMode::Read or "
-                                             "OpenMode::ReadRandomAccess from" +
-                                                 m_Name);
+        helper::Throw<std::invalid_argument>(
+            "Engine", "BP5Reader", "Init",
+            "BPFileReader only supports OpenMode::Read, "
+            "OpenMode::ReadRandomAccess, or OpenMode::ReadFlattenSteps from" +
+                m_Name);
     }
 
     // if IO was involved in reading before this flag may be true now
@@ -519,7 +521,7 @@ void BP5Reader::InitParameters()
     ParseParams(m_IO, m_Parameters);
     if (m_Parameters.OpenTimeoutSecs < 0.0f)
     {
-        if (m_OpenMode == Mode::ReadRandomAccess)
+        if ((m_OpenMode == Mode::ReadRandomAccess) || (m_OpenMode == Mode::ReadFlattenSteps))
         {
             m_Parameters.OpenTimeoutSecs = 0.0f;
         }
@@ -808,7 +810,8 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
         if (!m_BP5Deserializer)
         {
             m_BP5Deserializer = new format::BP5Deserializer(m_WriterIsRowMajor, m_ReaderIsRowMajor,
-                                                            (m_OpenMode == Mode::ReadRandomAccess));
+                                                            (m_OpenMode != Mode::Read),
+                                                            (m_OpenMode == Mode::ReadFlattenSteps));
             m_BP5Deserializer->m_Engine = this;
         }
     }
@@ -905,7 +908,7 @@ void BP5Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pol
 
         m_Comm.Bcast(m_Metadata.Data(), inputSize, 0);
 
-        if (m_OpenMode == Mode::ReadRandomAccess)
+        if ((m_OpenMode == Mode::ReadRandomAccess) || (m_OpenMode == Mode::ReadFlattenSteps))
         {
             for (size_t Step = 0; Step < m_MetadataIndexTable.size(); Step++)
             {
@@ -1250,7 +1253,7 @@ void BP5Reader::DoGetStructDeferred(VariableStruct &variable, void *data)
 void BP5Reader::DoClose(const int transportIndex)
 {
     PERFSTUBS_SCOPED_TIMER("BP5Reader::Close");
-    if (m_OpenMode == Mode::ReadRandomAccess)
+    if ((m_OpenMode == Mode::ReadRandomAccess) || (m_OpenMode == Mode::ReadFlattenSteps))
     {
         PerformGets();
     }
@@ -1311,7 +1314,13 @@ void BP5Reader::FlushProfiler()
     }
 }
 
-size_t BP5Reader::DoSteps() const { return m_StepsCount; }
+size_t BP5Reader::DoSteps() const
+{
+    if (m_OpenMode == Mode::ReadFlattenSteps)
+        return 1;
+    else
+        return m_StepsCount;
+}
 
 void BP5Reader::NotifyEngineNoVarsQuery()
 {
