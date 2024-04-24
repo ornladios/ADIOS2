@@ -646,13 +646,11 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D2x4)
             bpReader.Get(var_r64, R64.data());
 
             bpReader.PerformGets();
-            std::cout << "On rank " << mpiRank << "I8[0] is " << I8[0]
-                      << " given start[0][1] =  " << start[0] << ", " << start[1] << std::endl;
             // Generate test data for each rank uniquely
             SmallTestData currentTestData =
                 generateNewSmallTestData(m_TestData, static_cast<int>(0), mpiRank, mpiSize);
 
-            //            EXPECT_EQ(IString, currentTestData.S1);
+	    EXPECT_EQ(IString, currentTestData.S1);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
