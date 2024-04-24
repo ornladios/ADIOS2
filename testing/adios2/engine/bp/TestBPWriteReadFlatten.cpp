@@ -40,9 +40,6 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead1D8)
     // Number of rows
     const size_t Nx = 8;
 
-    // Number of steps
-    const size_t NSteps = 3;
-
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -367,9 +364,6 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D2x4)
     // Number of rows
     const std::size_t Ny = 2;
 
-    // Number of steps
-    const std::size_t NSteps = 3;
-
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -689,9 +683,6 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D4x2)
     // Number of cols
     const std::size_t Ny = 4;
 
-    // Number of steps
-    const std::size_t NSteps = 3;
-
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
     MPI_Comm_size(MPI_COMM_WORLD, &mpiSize);
@@ -995,8 +986,6 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead10D2x2)
     // form a 10D NumberOfProcess x 2 x ... x 2) array
 
     int mpiRank = 0, mpiSize = 1;
-    // Number of steps
-    const std::size_t NSteps = 3;
 
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &mpiRank);
