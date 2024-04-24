@@ -157,21 +157,21 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead1D8)
             // starting index + count
             bpWriter.BeginStep();
 
-	    if (step == mpiRank)
-	    {
-		bpWriter.Put(var_char, currentTestData.CHAR.data());
-		bpWriter.Put(var_iString, currentTestData.S1);
-		bpWriter.Put(var_i8, currentTestData.I8.data());
-		bpWriter.Put(var_i16, currentTestData.I16.data());
-		bpWriter.Put(var_i32, currentTestData.I32.data());
-		bpWriter.Put(var_i64, currentTestData.I64.data());
-		bpWriter.Put(var_u8, currentTestData.U8.data());
-		bpWriter.Put(var_u16, currentTestData.U16.data());
-		bpWriter.Put(var_u32, currentTestData.U32.data());
-		bpWriter.Put(var_u64, currentTestData.U64.data());
-		bpWriter.Put(var_r32, currentTestData.R32.data());
-		bpWriter.Put(var_r64, currentTestData.R64.data());
-	    }
+            if (step == mpiRank)
+            {
+                bpWriter.Put(var_char, currentTestData.CHAR.data());
+                bpWriter.Put(var_iString, currentTestData.S1);
+                bpWriter.Put(var_i8, currentTestData.I8.data());
+                bpWriter.Put(var_i16, currentTestData.I16.data());
+                bpWriter.Put(var_i32, currentTestData.I32.data());
+                bpWriter.Put(var_i64, currentTestData.I64.data());
+                bpWriter.Put(var_u8, currentTestData.U8.data());
+                bpWriter.Put(var_u16, currentTestData.U16.data());
+                bpWriter.Put(var_u32, currentTestData.U32.data());
+                bpWriter.Put(var_u64, currentTestData.U64.data());
+                bpWriter.Put(var_r32, currentTestData.R32.data());
+                bpWriter.Put(var_r64, currentTestData.R64.data());
+            }
             bpWriter.EndStep();
         }
 
@@ -303,14 +303,14 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead1D8)
             var_r32.SetSelection(sel);
             var_r64.SetSelection(sel);
 
-	    // default step selection should be 0, 1, so no need for that
+            // default step selection should be 0, 1, so no need for that
 
             // Generate test data for each rank uniquely
             SmallTestData currentTestData =
                 generateNewSmallTestData(m_TestData, static_cast<int>(0), mpiRank, mpiSize);
 
-	    bpReader.Get(var_char, CHAR.data());
-	    bpReader.Get(var_iString, IString);
+            bpReader.Get(var_char, CHAR.data());
+            bpReader.Get(var_iString, IString);
             bpReader.Get(var_i8, I8.data());
             bpReader.Get(var_i16, I16.data());
             bpReader.Get(var_i32, I32.data());
@@ -474,20 +474,20 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D2x4)
             // fill in the variable with values from starting index to
             // starting index + count
             bpWriter.BeginStep();
-	    if (step == mpiRank)
-	    {
-            bpWriter.Put(var_iString, currentTestData.S1);
-            bpWriter.Put(var_i8, currentTestData.I8.data());
-            bpWriter.Put(var_i16, currentTestData.I16.data());
-            bpWriter.Put(var_i32, currentTestData.I32.data());
-            bpWriter.Put(var_i64, currentTestData.I64.data());
-            bpWriter.Put(var_u8, currentTestData.U8.data());
-            bpWriter.Put(var_u16, currentTestData.U16.data());
-            bpWriter.Put(var_u32, currentTestData.U32.data());
-            bpWriter.Put(var_u64, currentTestData.U64.data());
-            bpWriter.Put(var_r32, currentTestData.R32.data());
-            bpWriter.Put(var_r64, currentTestData.R64.data());
-	    }
+            if (step == mpiRank)
+            {
+                bpWriter.Put(var_iString, currentTestData.S1);
+                bpWriter.Put(var_i8, currentTestData.I8.data());
+                bpWriter.Put(var_i16, currentTestData.I16.data());
+                bpWriter.Put(var_i32, currentTestData.I32.data());
+                bpWriter.Put(var_i64, currentTestData.I64.data());
+                bpWriter.Put(var_u8, currentTestData.U8.data());
+                bpWriter.Put(var_u16, currentTestData.U16.data());
+                bpWriter.Put(var_u32, currentTestData.U32.data());
+                bpWriter.Put(var_u64, currentTestData.U64.data());
+                bpWriter.Put(var_r32, currentTestData.R32.data());
+                bpWriter.Put(var_r64, currentTestData.R64.data());
+            }
             bpWriter.EndStep();
         }
 
@@ -646,12 +646,13 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D2x4)
             bpReader.Get(var_r64, R64.data());
 
             bpReader.PerformGets();
-	    std::cout << "On rank " << mpiRank << "I8[0] is " << I8[0] << " given start[0][1] =  " << start[0] << ", " << start[1] << std::endl;
+            std::cout << "On rank " << mpiRank << "I8[0] is " << I8[0]
+                      << " given start[0][1] =  " << start[0] << ", " << start[1] << std::endl;
             // Generate test data for each rank uniquely
             SmallTestData currentTestData =
                 generateNewSmallTestData(m_TestData, static_cast<int>(0), mpiRank, mpiSize);
 
-	    //            EXPECT_EQ(IString, currentTestData.S1);
+            //            EXPECT_EQ(IString, currentTestData.S1);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
@@ -796,19 +797,19 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D4x2)
             // fill in the variable with values from starting index to
             // starting index + count
             bpWriter.BeginStep();
-	    if (step == mpiRank)
-	    {
-            bpWriter.Put(var_i8, currentTestData.I8.data());
-            bpWriter.Put(var_i16, currentTestData.I16.data());
-            bpWriter.Put(var_i32, currentTestData.I32.data());
-            bpWriter.Put(var_i64, currentTestData.I64.data());
-            bpWriter.Put(var_u8, currentTestData.U8.data());
-            bpWriter.Put(var_u16, currentTestData.U16.data());
-            bpWriter.Put(var_u32, currentTestData.U32.data());
-            bpWriter.Put(var_u64, currentTestData.U64.data());
-            bpWriter.Put(var_r32, currentTestData.R32.data());
-            bpWriter.Put(var_r64, currentTestData.R64.data());
-	    }
+            if (step == mpiRank)
+            {
+                bpWriter.Put(var_i8, currentTestData.I8.data());
+                bpWriter.Put(var_i16, currentTestData.I16.data());
+                bpWriter.Put(var_i32, currentTestData.I32.data());
+                bpWriter.Put(var_i64, currentTestData.I64.data());
+                bpWriter.Put(var_u8, currentTestData.U8.data());
+                bpWriter.Put(var_u16, currentTestData.U16.data());
+                bpWriter.Put(var_u32, currentTestData.U32.data());
+                bpWriter.Put(var_u64, currentTestData.U64.data());
+                bpWriter.Put(var_r32, currentTestData.R32.data());
+                bpWriter.Put(var_r64, currentTestData.R64.data());
+            }
             bpWriter.EndStep();
         }
 
@@ -1054,8 +1055,8 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead10D2x2)
 
         for (size_t step = 0; step < mpiSize; ++step)
         {
-            //double d = mpiRank + 1 + step / 10.0;
-	    double d = mpiRank + 1 / 10.0;  // every step is the same
+            // double d = mpiRank + 1 + step / 10.0;
+            double d = mpiRank + 1 / 10.0; // every step is the same
             // Generate test data for each process uniquely
             std::for_each(R64w.begin(), R64w.end(), [&](double &v) {
                 v = d;
@@ -1080,12 +1081,12 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead10D2x2)
             // fill in the variable with values from starting index to
             // starting index + count
             bpWriter.BeginStep();
-	    // write ranks in reverse, end down
-	    if (step == mpiSize - mpiRank - 1)
-	    {
-            bpWriter.Put(var_r64, R64w.data());
-            bpWriter.Put(var_cr64, CR64w.data());
-	    }
+            // write ranks in reverse, end down
+            if (step == mpiSize - mpiRank - 1)
+            {
+                bpWriter.Put(var_r64, R64w.data());
+                bpWriter.Put(var_cr64, CR64w.data());
+            }
             bpWriter.EndStep();
         }
 
@@ -1241,13 +1242,13 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteReadEmptyProcess)
                 generateNewSmallTestData(m_TestData, static_cast<int>(0), mpiRank, mpiSize);
 
             bpWriter.BeginStep();
-	    if (step == mpiRank)
-	    {
-            if (mpiRank != 0)
+            if (step == mpiRank)
             {
-                bpWriter.Put(var_r32, currentTestData.R32.data());
+                if (mpiRank != 0)
+                {
+                    bpWriter.Put(var_r32, currentTestData.R32.data());
+                }
             }
-	    }
             bpWriter.EndStep();
         }
 
@@ -1308,7 +1309,6 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteReadEmptyProcess)
                     EXPECT_EQ(R32[i], currentTestData.R32[i]) << msg;
                 }
             }
-
         }
         bpReader.Close();
     }
