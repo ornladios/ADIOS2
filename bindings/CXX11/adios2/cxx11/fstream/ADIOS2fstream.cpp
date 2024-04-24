@@ -89,6 +89,9 @@ adios2::Mode fstream::ToMode(const openmode mode) const noexcept
     case (openmode::in_random_access):
         modeCpp = adios2::Mode::ReadRandomAccess;
         break;
+    case (openmode::in_flatten_steps):
+        modeCpp = adios2::Mode::ReadFlattenSteps;
+        break;
     case (openmode::app):
         modeCpp = adios2::Mode::Append;
         break;

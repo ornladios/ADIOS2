@@ -109,6 +109,9 @@ void Remote::Open(const std::string hostname, const int32_t port, const std::str
     case Mode::ReadRandomAccess:
         open_msg.Mode = RemoteCommon::RemoteFileMode::RemoteOpenRandomAccess;
         break;
+    case Mode::ReadFlattenSteps:
+        open_msg.Mode = RemoteCommon::RemoteFileMode::RemoteOpenFlattenSteps;
+        break;
     default:
         break;
     }

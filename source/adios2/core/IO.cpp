@@ -150,6 +150,14 @@ const std::unordered_map<std::string, bool> ReadRandomAccess_Supported = {
     {"campaign", true},
 };
 
+const std::unordered_map<std::string, bool> ReadFlattenSteps_Supported = {
+    {"bp3", false},     {"bp4", false},        {"bp5", true},      {"dataman", false},
+    {"ssc", false},     {"mhs", false},        {"sst", false},     {"daos", false},
+    {"effis", false},   {"dataspaces", false}, {"hdf5", false},    {"skeleton", false},
+    {"inline", false},  {"null", true},        {"nullcore", true}, {"plugin", false},
+    {"campaign", true},
+};
+
 // Synchronize access to the factory in case one thread is
 // looking up while another registers additional entries.
 std::mutex FactoryMutex;
@@ -560,7 +568,8 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         {
             engineTypeLC = "campaign";
         }
-        else if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess))
+        else if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess) ||
+                 (mode_to_use == Mode::ReadFlattenSteps))
         {
             if (adios2sys::SystemTools::FileIsDirectory(name))
             {
@@ -668,10 +677,26 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm)
         }
     }
 
+    if (mode_to_use == Mode::ReadFlattenSteps)
+    {
+        // older engines don't know about ReadFlattenSteps Mode, throw an exception
+        auto it = ReadFlattenSteps_Supported.find(engineTypeLC);
+        if (it != ReadFlattenSteps_Supported.end())
+        {
+            if (!it->second)
+            {
+                helper::Throw<std::runtime_error>("Core", "IO", "Open",
+                                                  "Engine " + engineTypeLC +
+                                                      " doesn't support ReadFlattenSteps mode");
+            }
+        }
+    }
+
     auto f = FactoryLookup(engineTypeLC);
     if (f != Factory.end())
     {
-        if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess))
+        if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess) ||
+            (mode_to_use == Mode::ReadFlattenSteps))
         {
             engine = f->second.MakeReader(*this, name, mode_to_use, std::move(comm));
         }
