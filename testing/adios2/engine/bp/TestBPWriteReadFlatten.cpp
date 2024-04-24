@@ -650,7 +650,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D2x4)
             SmallTestData currentTestData =
                 generateNewSmallTestData(m_TestData, static_cast<int>(0), mpiRank, mpiSize);
 
-	    EXPECT_EQ(IString, currentTestData.S1);
+            EXPECT_EQ(IString, currentTestData.S1);
 
             for (size_t i = 0; i < Nx * Ny; ++i)
             {
