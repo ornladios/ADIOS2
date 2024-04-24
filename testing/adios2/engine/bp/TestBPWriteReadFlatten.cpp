@@ -112,7 +112,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead1D8)
 
         EXPECT_EQ(bpWriter.OpenMode(), adios2::Mode::Write);
 
-        for (size_t step = 0; step < mpiSize; ++step)
+        for (size_t step = 0; step < (size_t)mpiSize; ++step)
         {
             // Generate test data for each process uniquely (all as if for step 0)
             SmallTestData currentTestData =
@@ -154,7 +154,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead1D8)
             // starting index + count
             bpWriter.BeginStep();
 
-            if (step == mpiRank)
+            if (step == (size_t)mpiRank)
             {
                 bpWriter.Put(var_char, currentTestData.CHAR.data());
                 bpWriter.Put(var_iString, currentTestData.S1);
@@ -431,7 +431,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D2x4)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (size_t step = 0; step < mpiSize; ++step)
+        for (size_t step = 0; step < (size_t)mpiSize; ++step)
         {
             // Generate test data for each process uniquely
             SmallTestData currentTestData =
@@ -468,7 +468,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D2x4)
             // fill in the variable with values from starting index to
             // starting index + count
             bpWriter.BeginStep();
-            if (step == mpiRank)
+            if (step == (size_t)mpiRank)
             {
                 bpWriter.Put(var_iString, currentTestData.S1);
                 bpWriter.Put(var_i8, currentTestData.I8.data());
@@ -750,7 +750,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D4x2)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (size_t step = 0; step < mpiSize; ++step)
+        for (size_t step = 0; step < (size_t)mpiSize; ++step)
         {
             // Generate test data for each process uniquely
             SmallTestData currentTestData =
@@ -786,7 +786,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D4x2)
             // fill in the variable with values from starting index to
             // starting index + count
             bpWriter.BeginStep();
-            if (step == mpiRank)
+            if (step == (size_t)mpiRank)
             {
                 bpWriter.Put(var_i8, currentTestData.I8.data());
                 bpWriter.Put(var_i16, currentTestData.I16.data());
@@ -1040,7 +1040,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead10D2x2)
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
-        for (size_t step = 0; step < mpiSize; ++step)
+        for (size_t step = 0; step < (size_t)mpiSize; ++step)
         {
             // double d = mpiRank + 1 + step / 10.0;
             double d = mpiRank + 1 / 10.0; // every step is the same
@@ -1069,7 +1069,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead10D2x2)
             // starting index + count
             bpWriter.BeginStep();
             // write ranks in reverse, end down
-            if (step == mpiSize - mpiRank - 1)
+            if (step == (size_t)(mpiSize - mpiRank - 1))
             {
                 bpWriter.Put(var_r64, R64w.data());
                 bpWriter.Put(var_cr64, CR64w.data());
@@ -1229,7 +1229,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteReadEmptyProcess)
                 generateNewSmallTestData(m_TestData, static_cast<int>(0), mpiRank, mpiSize);
 
             bpWriter.BeginStep();
-            if (step == mpiRank)
+            if (step == (size_t)mpiRank)
             {
                 if (mpiRank != 0)
                 {
