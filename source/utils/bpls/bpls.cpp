@@ -2933,7 +2933,8 @@ bool print_data_xml(const char *s, const size_t length)
     return false;
 }
 
-int print_data(const void *data, int item, DataType adiosvartype, bool allowformat)
+int print_data(const void *data, int item, DataType adiosvartype, bool allowformat,
+               bool char_star_string)
 {
     bool f = format.size() && allowformat;
     const char *fmt = format.c_str();
@@ -2956,9 +2957,15 @@ int print_data(const void *data, int item, DataType adiosvartype, bool allowform
         break;
 
     case DataType::String: {
-        // fprintf(outf, (f ? fmt : "\"%s\""), ((char *)data) + item);
-        const std::string *dataStr = reinterpret_cast<const std::string *>(data);
-        fprintf(outf, (f ? fmt : "\"%s\""), dataStr[item].c_str());
+        if (char_star_string)
+        {
+            fprintf(outf, (f ? fmt : "\"%s\""), *((char **)data));
+        }
+        else
+        {
+            const std::string *dataStr = reinterpret_cast<const std::string *>(data);
+            fprintf(outf, (f ? fmt : "\"%s\""), dataStr[item].c_str());
+        }
         break;
     }
 
@@ -3407,7 +3414,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                 if (blocks.size() == 1)
                 {
                     fprintf(outf, " = ");
-                    print_data(blocks[0].BufferP, 0, adiosvartype, true);
+                    print_data(blocks[0].BufferP, 0, adiosvartype, true, /* MBI */ true);
                     fprintf(outf, "\n");
                 }
                 else
@@ -3420,7 +3427,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     int col = 0;
                     for (size_t j = 0; j < blocks.size(); j++)
                     {
-                        print_data(blocks[j].BufferP, 0, adiosvartype, true);
+                        print_data(blocks[j].BufferP, 0, adiosvartype, true, /* MBI */ true);
                         ++col;
                         if (j < blocks.size() - 1)
                         {

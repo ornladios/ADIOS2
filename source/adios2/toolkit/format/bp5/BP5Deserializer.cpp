@@ -2173,7 +2173,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
 
         for (size_t Step = StepLoopStart; Step < StepLoopEnd; Step++)
         {
-            PossiblyAddValueBlocks(MV, VarRec, Id, AbsStep);
+            PossiblyAddValueBlocks(MV, VarRec, Id, Step);
         }
         return MV;
     }
