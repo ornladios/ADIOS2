@@ -11,7 +11,7 @@
 #   # Client maintainer: me@mydomain.net
 #   set(CTEST_SITE "machine.site")
 #   set(CTEST_BUILD_NAME "Platform-Compiler")
-#   set(CTEST_CONFIGURATION_TYPE Debug)
+#   set(CTEST_CONFIGURATION_TYPE Release)
 #   set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 #   include(${CTEST_SCRIPT_DIRECTORY}/adios_common.cmake)
 #
