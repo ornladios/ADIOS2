@@ -86,6 +86,7 @@ Start editing the skeleton file `ADIOS2/examples/hello/helloWorld/hello-world_tu
 
   adios2::Engine reader = io.Open("hello-world-cpp.bp", adios2::Mode::Read);
   std::string greeting;
+  reader.BeginStep();
   reader.Get(varGreeting, greeting);
   reader.EndStep();
   reader.Close();
@@ -93,7 +94,7 @@ Start editing the skeleton file `ADIOS2/examples/hello/helloWorld/hello-world_tu
 
 .. note::
 
-  The ``BeginStep`` and ``EndStep`` calls are required when **reading** one step and multiple steps. We will see in
+  In Mode::Read, the ``BeginStep`` and ``EndStep`` calls are required when **reading** one step and multiple steps. We will see in
   another tutorial how to read multiple steps. It's important to note that the ``BeginStep`` should be called **before**
   all ``Inquire*`` / ``Available*`` function calls.
 
