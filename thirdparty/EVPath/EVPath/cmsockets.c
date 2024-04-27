@@ -879,6 +879,26 @@ set_block_state(CMtrans_services svc, socket_conn_data_ptr scd,
 		       scd->fd);
     }
 #else
+    if ((needed_block_state == Block) && (scd->block_state == Non_Block)) {
+      u_long mode = 0;  // 0 to enable blocking socket
+      int ret = ioctlsocket(scd->fd, FIONBIO, &mode);
+      scd->block_state = Block;
+      if (ret != NO_ERROR)
+	printf("ioctlsocket failed with error: %ld\n", ret);
+
+      svc->trace_out(scd->sd->cm, "CMSocket switch fd %d to blocking WIN properly",
+		     scd->fd);
+    } else if ((needed_block_state == Non_Block) && 
+	       (scd->block_state == Block)) {
+      u_long mode = 1;  // 1 to enable non-blocking socket
+      int ret = ioctlsocket(scd->fd, FIONBIO, &mode);
+      if (ret != NO_ERROR)
+	printf("ioctlsocket failed with error: %ld\n", ret);
+
+      scd->block_state = Non_Block;
+      svc->trace_out(scd->sd->cm, "CMSocket switch fd %d to nonblocking WIN properly",
+		     scd->fd);
+    }
 #endif
 }
 
@@ -909,7 +929,8 @@ libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr 
     iget = read(scd->fd, (char *) buffer, (int)requested_len);
     if ((iget == -1) || (iget == 0)) {
 	int lerrno = errno;
-	if ((lerrno != EWOULDBLOCK) &&
+	if ((lerrno != 0) &&
+	    (lerrno != EWOULDBLOCK) &&
 	    (lerrno != EAGAIN) &&
 	    (lerrno != EINTR)) {
 	    /* serious error */

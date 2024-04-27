@@ -263,7 +263,7 @@ main(int argc, char **argv)
     int regression_master = 1;
     int forked = 0;
 
-    argv0 = argv[0];\
+    argv0 = argv[0];
     while (argv[1] && (argv[1][0] == '-')) {
 	if (strcmp(&argv[1][1], "size") == 0) {
 	    if (sscanf(argv[2], "%d", &size) != 1) {
@@ -600,25 +600,28 @@ do_regression_master_test()
 	printf("Waiting for remote....\n");
     }
     while (!done) {
-#ifdef HAVE_WINDOWS_H
-	if (_cwait(&exit_state, subproc_proc, 0) == -1) {
-	    perror("cwait");
-	}
-	if (exit_state == 0) {
-	    if (quiet <= 0)
-		printf("Subproc exitted\n");
-	} else {
-	    printf("Single remote subproc exit with status %d\n",
-		exit_state);
-	}
-#else
-	int result;
 	if (quiet <= 0) {
 	    printf(",");
 	    fflush(stdout);
 	}
 	CMsleep(cm, 50);	done++;
 
+#ifdef HAVE_WINDOWS_H
+	DWORD result = WaitForSingleObject((HANDLE)subproc_proc, 1 );
+	if (result != WAIT_TIMEOUT) {
+	  DWORD exitCode = 0;
+	  GetExitCodeProcess((HANDLE)subproc_proc, &exitCode);
+	  exit_state = exitCode;
+	  if (exit_state == 0) {
+	    printf("Passed single remote subproc test\n");
+	  } else {
+	    printf("Single remote subproc exit with status %d\n",
+		   exit_state);
+	  }
+	  done++;
+	}
+#else
+	int result;
 	result = waitpid(subproc_proc, &exit_state, WNOHANG);
 	if (result == -1) {
 	    perror("waitpid");
