@@ -23,7 +23,16 @@ a hostname is identified using gethostname and getdomainname and it translates
 to any interfaces.
 */
 
+#ifdef _MSC_VER
+#include "win_interface.h"
+#else
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <pthread.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <unistd.h>
+#endif
 #include <assert.h>
 #include <atl.h>
 #include <ctype.h>
@@ -31,14 +40,10 @@ to any interfaces.
 #include <getopt.h>
 #include <limits.h>
 #include <math.h>
-#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
 #include <sys/stat.h>
-#include <sys/time.h>
-#include <unistd.h>
 #ifdef HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif
@@ -46,7 +51,6 @@ to any interfaces.
 #include "adios2/common/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
-#include <pthread.h>
 
 #include "sst.h"
 

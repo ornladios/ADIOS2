@@ -226,7 +226,7 @@ void SstWriter::MarshalAttributes()
         void *data_addr = &attribute.m_DataSingleValue;                                            \
         if (!attribute.m_IsSingleValue)                                                            \
         {                                                                                          \
-            element_count = attribute.m_Elements;                                                  \
+            element_count = (int)attribute.m_Elements;                                             \
             data_addr = attribute.m_DataArray.data();                                              \
         }                                                                                          \
         if (Params.MarshalMethod == SstMarshalFFS)                                                 \

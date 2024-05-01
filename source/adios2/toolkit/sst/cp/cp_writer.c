@@ -6,13 +6,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#ifndef _MSC_VER
+#include <pthread.h>
 #include <sys/time.h>
 #include <unistd.h>
+#else
+#include "../win_interface.h"
+#endif
 
 #include "adios2/common/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
-#include <pthread.h>
 
 #include "sst.h"
 
@@ -102,7 +106,7 @@ struct NameListEntry
 
 struct NameListEntry *FileNameList = NULL;
 
-static void RemoveAllFilesInList()
+static void RemoveAllFilesInList(void)
 {
     while (FileNameList)
     {
@@ -126,14 +130,16 @@ static void AddNameToExitList(const char *FileName)
     static int First = 1;
     if (First)
     {
-        struct sigaction sa;
         First = 0;
         atexit(RemoveAllFilesInList);
 
+#ifndef _MSC_VER
+        struct sigaction sa;
         memset(&sa, 0, sizeof(sa));
         sa.sa_handler = ExitAndRemoveFiles;
         sigemptyset(&sa.sa_mask);
         sigaction(SIGINT, &sa, NULL);
+#endif
     }
 
     struct NameListEntry *NewHead = malloc(sizeof(*NewHead));
@@ -324,7 +330,7 @@ registered with DP deregister that timestep with DP CallRemoveQueueEntries
 static void QueueMaintenance(SstStream Stream)
 {
     STREAM_ASSERT_LOCKED(Stream);
-    long SmallestLastReleasedTimestep = LONG_MAX;
+    size_t SmallestLastReleasedTimestep = (size_t)-1;
     long ReserveCount;
     int SomeReaderIsOpening = 0;
 
@@ -349,7 +355,7 @@ static void QueueMaintenance(SstStream Stream)
             SomeReaderIsOpening++;
         }
     }
-    if (SmallestLastReleasedTimestep != LONG_MAX)
+    if (SmallestLastReleasedTimestep != (size_t)-1)
     {
         CP_verbose(Stream, TraceVerbose,
                    "QueueMaintenance, smallest last released = %ld, count = %d\n",
@@ -384,7 +390,8 @@ static void QueueMaintenance(SstStream Stream)
     List = Stream->QueuedTimesteps;
     while (List)
     {
-        if (List->Timestep <= SmallestLastReleasedTimestep)
+        if ((SmallestLastReleasedTimestep != (size_t)-1) &&
+            (List->Timestep <= SmallestLastReleasedTimestep))
         {
             ReserveCount--;
             if (ReserveCount < 0)
@@ -677,9 +684,9 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize, CP_ReaderInitInfo 
     return 1;
 }
 
-static long earliestAvailableTimestepNumber(SstStream Stream, long CurrentTimestep)
+static size_t earliestAvailableTimestepNumber(SstStream Stream, size_t CurrentTimestep)
 {
-    long Ret = CurrentTimestep;
+    size_t Ret = CurrentTimestep;
     CPTimestepList List = Stream->QueuedTimesteps;
     STREAM_MUTEX_LOCK(Stream);
     while (List)
@@ -717,7 +724,7 @@ static void UntagPreciousTimesteps(SstStream Stream)
     }
 }
 
-static void SubRefTimestep(SstStream Stream, long Timestep, int SetLast)
+static void SubRefTimestep(SstStream Stream, size_t Timestep, int SetLast)
 {
     CPTimestepList List;
     List = Stream->QueuedTimesteps;
@@ -743,7 +750,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     void *free_block = NULL;
     int WriterResponseCondition = -1;
     CMConnection conn = NULL;
-    long MyStartingTimestep, GlobalStartingTimestep;
+    size_t MyStartingTimestep, GlobalStartingTimestep;
     WS_ReaderInfo CP_WSR_Stream = malloc(sizeof(*CP_WSR_Stream));
 
     CP_verbose(Stream, PerRankVerbose, "Beginning writer-side reader open protocol\n");
@@ -976,7 +983,7 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg, void
     }
 }
 
-static void AddTSToSentList(SstStream Stream, WS_ReaderInfo Reader, long Timestep)
+static void AddTSToSentList(SstStream Stream, WS_ReaderInfo Reader, size_t Timestep)
 {
     struct _SentTimestepRec *Item = malloc(sizeof(*Item)), *List = Reader->SentTimestepList;
     Item->Timestep = Timestep;
@@ -995,10 +1002,10 @@ static void AddTSToSentList(SstStream Stream, WS_ReaderInfo Reader, long Timeste
     }
 }
 
-static void DerefSentTimestep(SstStream Stream, WS_ReaderInfo Reader, long Timestep)
+static void DerefSentTimestep(SstStream Stream, WS_ReaderInfo Reader, size_t Timestep)
 {
     struct _SentTimestepRec *List = Reader->SentTimestepList, *Last = NULL;
-    CP_verbose(Stream, PerRankVerbose, "Reader sent timestep list %p, trying to release %ld\n",
+    CP_verbose(Stream, PerRankVerbose, "Reader sent timestep list %p, trying to release %zd\n",
                Reader->SentTimestepList, Timestep);
 
     while (List)
@@ -1007,7 +1014,7 @@ static void DerefSentTimestep(SstStream Stream, WS_ReaderInfo Reader, long Times
         int Freed = 0;
         struct _SentTimestepRec *Next = List->Next;
         CP_verbose(Stream, TraceVerbose,
-                   "Reader considering sent timestep %ld,trying to release %ld\n", List->Timestep,
+                   "Reader considering sent timestep %ld,trying to release %zd\n", List->Timestep,
                    Timestep);
         if (List->Timestep == Timestep)
         {
@@ -1134,7 +1141,8 @@ static void SendTimestepEntryToReaders(SstStream Stream, CPTimestepList Entry)
         CP_verbose(Stream, PerRankVerbose, "Round Robin Distribution, step sent to reader %d\n",
                    Stream->NextRRDistribution);
         WS_ReaderInfo CP_WSR_Stream = Stream->Readers[Stream->NextRRDistribution];
-        SendTimestepEntryToSingleReader(Stream, Entry, CP_WSR_Stream, Stream->NextRRDistribution);
+        SendTimestepEntryToSingleReader(Stream, Entry, CP_WSR_Stream,
+                                        (int)Stream->NextRRDistribution);
         Stream->NextRRDistribution++;
     }
     case StepsOnDemand: {
@@ -1210,7 +1218,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                Reader, Reader->StartingTimestep, Stream->LastProvidedTimestep);
     if (Stream->ConfigParams->StepDistributionMode == StepsAllToAll)
     {
-        for (long TS = Reader->StartingTimestep; TS <= Stream->LastProvidedTimestep; TS++)
+        for (size_t TS = Reader->StartingTimestep; TS <= Stream->LastProvidedTimestep; TS++)
         {
             CPTimestepList List = Stream->QueuedTimesteps;
             while (List)
@@ -1536,13 +1544,13 @@ void SstWriterClose(SstStream Stream)
 
                 while (List)
                 {
-                    char tmp[20];
+                    char tmp[30];
                     CP_verbose(Stream, TraceVerbose,
                                "IN TS WAIT, ENTRIES are Timestep %ld (exp %d, "
                                "Prec %d, Ref %d), Count now %d\n",
                                List->Timestep, List->Expired, List->PreciousTimestep,
                                List->ReferenceCount, Stream->QueuedTimestepCount);
-                    snprintf(tmp, sizeof(tmp), "%ld ", List->Timestep);
+                    snprintf(tmp, sizeof(tmp), "%zd ", List->Timestep);
                     StringList = realloc(StringList, strlen(StringList) + strlen(tmp) + 1);
                     strcat(StringList, tmp);
                     List = List->Next;
@@ -1797,7 +1805,7 @@ static void ProcessReaderStatusList(SstStream Stream, ReturnMetadataInfo Metadat
     STREAM_MUTEX_UNLOCK(Stream);
 }
 
-static void ActOnTSLockStatus(SstStream Stream, long Timestep)
+static void ActOnTSLockStatus(SstStream Stream, size_t Timestep)
 {
     int SomethingSent = 0;
     STREAM_MUTEX_LOCK(Stream);
@@ -2040,7 +2048,7 @@ on reader close:
 
  */
 extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, SstData Data,
-                                       long Timestep, FFSFormatList Formats,
+                                       size_t Timestep, FFSFormatList Formats,
                                        DataFreeFunc FreeTimestep, void *FreeClientData,
                                        SstData AttributeData, DataFreeFunc FreeAttributeData,
                                        void *FreeAttributelientData)

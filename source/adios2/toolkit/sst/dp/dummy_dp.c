@@ -10,6 +10,9 @@
 
 #include "dp_interface.h"
 #include <adios2-perfstubs-interface.h>
+#ifdef _MSC_VER
+#define strdup _strdup
+#endif
 
 /*
  *  Some conventions:
@@ -70,7 +73,7 @@ typedef struct _Dummy_WSR_Stream
 
 typedef struct _TimestepEntry
 {
-    long Timestep;
+    size_t Timestep;
     struct _SstData *Data;
     struct _DummyPerTimestepInfo *DP_TimestepInfo;
     struct _TimestepEntry *Next;
@@ -104,7 +107,7 @@ typedef struct _DummyWriterContactInfo
 
 typedef struct _DummyReadRequestMsg
 {
-    long Timestep;
+    size_t Timestep;
     size_t Offset;
     size_t Length;
     void *WS_Stream;
@@ -114,7 +117,7 @@ typedef struct _DummyReadRequestMsg
 } *DummyReadRequestMsg;
 
 static FMField DummyReadRequestList[] = {
-    {"Timestep", "integer", sizeof(long), FMOffset(DummyReadRequestMsg, Timestep)},
+    {"Timestep", "integer", sizeof(size_t), FMOffset(DummyReadRequestMsg, Timestep)},
     {"Offset", "integer", sizeof(size_t), FMOffset(DummyReadRequestMsg, Offset)},
     {"Length", "integer", sizeof(size_t), FMOffset(DummyReadRequestMsg, Length)},
     {"WS_Stream", "integer", sizeof(void *), FMOffset(DummyReadRequestMsg, WS_Stream)},
@@ -129,7 +132,7 @@ static FMStructDescRec DummyReadRequestStructs[] = {
 
 typedef struct _DummyReadReplyMsg
 {
-    long Timestep;
+    size_t Timestep;
     size_t DataLength;
     void *RS_Stream;
     char *Data;
@@ -137,7 +140,7 @@ typedef struct _DummyReadReplyMsg
 } *DummyReadReplyMsg;
 
 static FMField DummyReadReplyList[] = {
-    {"Timestep", "integer", sizeof(long), FMOffset(DummyReadReplyMsg, Timestep)},
+    {"Timestep", "integer", sizeof(size_t), FMOffset(DummyReadReplyMsg, Timestep)},
     {"RS_Stream", "integer", sizeof(void *), FMOffset(DummyReadReplyMsg, RS_Stream)},
     {"DataLength", "integer", sizeof(size_t), FMOffset(DummyReadReplyMsg, DataLength)},
     {"Data", "char[DataLength]", sizeof(char), FMOffset(DummyReadReplyMsg, Data)},
@@ -244,7 +247,7 @@ static void DummyReadRequestHandler(CManager cm, CMConnection conn, void *msg_v,
      * Shouldn't ever get here because we should never get a request for a
      * timestep that we don't have.
      */
-    fprintf(stderr, "Failed to read Timestep %ld, not found\n", ReadRequestMsg->Timestep);
+    fprintf(stderr, "Failed to read Timestep %zd, not found\n", ReadRequestMsg->Timestep);
     /*
      * in the interest of not failing a writer on a reader failure, don't
      * assert(0) here.  Probably this sort of error should close the link to
@@ -440,8 +443,8 @@ typedef struct _DummyPerTimestepInfo
  * handle.
  *
  */
-static void *DummyReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Rank, long Timestep,
-                                   size_t Offset, size_t Length, void *Buffer,
+static void *DummyReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Rank,
+                                   size_t Timestep, size_t Offset, size_t Length, void *Buffer,
                                    void *DP_TimestepInfo)
 {
     Dummy_RS_Stream Stream =
@@ -537,7 +540,7 @@ static int DummyWaitForCompletion(CP_Services Svcs, void *Handle_v)
  *
  */
 static void DummyProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct _SstData *Data,
-                                 struct _SstData *LocalMetadata, long Timestep,
+                                 struct _SstData *LocalMetadata, size_t Timestep,
                                  void **TimestepInfoPtr)
 {
     Dummy_WS_Stream Stream = (Dummy_WS_Stream)Stream_v;
@@ -545,9 +548,9 @@ static void DummyProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct
     struct _DummyPerTimestepInfo *Info = malloc(sizeof(struct _DummyPerTimestepInfo));
 
     Info->CheckString = malloc(64);
-    snprintf(Info->CheckString, 64, "Dummy info for timestep %ld from rank %d", Timestep,
+    snprintf(Info->CheckString, 64, "Dummy info for timestep %zd from rank %d", Timestep,
              Stream->Rank);
-    Info->CheckInt = Stream->Rank * 1000 + Timestep;
+    Info->CheckInt = Stream->Rank * 1000 + (int)Timestep;
     Entry->Data = Data;
     Entry->Timestep = Timestep;
     Entry->DP_TimestepInfo = Info;
@@ -565,12 +568,12 @@ static void DummyProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct
  *
  */
 
-static void DummyReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, long Timestep)
+static void DummyReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, size_t Timestep)
 {
     Dummy_WS_Stream Stream = (Dummy_WS_Stream)Stream_v;
     TimestepList List = Stream->Timesteps;
 
-    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "Releasing timestep %ld\n", Timestep);
+    Svcs->verbose(Stream->CP_Stream, DPTraceVerbose, "Releasing timestep %zd\n", Timestep);
     if (Stream->Timesteps->Timestep == Timestep)
     {
         Stream->Timesteps = List->Next;
@@ -595,7 +598,7 @@ static void DummyReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, long T
          * Shouldn't ever get here because we should never release a
          * timestep that we don't have.
          */
-        fprintf(stderr, "Failed to release Timestep %ld, not found\n", Timestep);
+        fprintf(stderr, "Failed to release Timestep %zd, not found\n", Timestep);
         assert(0);
     }
 }
@@ -646,10 +649,10 @@ extern CP_DP_Interface LoadDummyDP()
     dummyDPInterface.initWriter = DummyInitWriter;
     dummyDPInterface.initWriterPerReader = DummyInitWriterPerReader;
     dummyDPInterface.provideWriterDataToReader = DummyProvideWriterDataToReader;
-    dummyDPInterface.readRemoteMemory = DummyReadRemoteMemory;
+    dummyDPInterface.readRemoteMemory = (CP_DP_ReadRemoteMemoryFunc)DummyReadRemoteMemory;
     dummyDPInterface.waitForCompletion = DummyWaitForCompletion;
-    dummyDPInterface.provideTimestep = DummyProvideTimestep;
-    dummyDPInterface.releaseTimestep = DummyReleaseTimestep;
+    dummyDPInterface.provideTimestep = (CP_DP_ProvideTimestepFunc)DummyProvideTimestep;
+    dummyDPInterface.releaseTimestep = (CP_DP_ReleaseTimestepFunc)DummyReleaseTimestep;
 
     // See dp_interface.h for more routines in the interface, but the basic
     // necessities to get started are above. The remainder allow for locking

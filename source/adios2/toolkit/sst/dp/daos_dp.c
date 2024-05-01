@@ -764,11 +764,11 @@ extern CP_DP_Interface LoadDaosDP()
     daosDPInterface.initWriter = DaosInitWriter;
     daosDPInterface.initWriterPerReader = DaosInitWriterPerReader;
     daosDPInterface.provideWriterDataToReader = DaosProvideWriterDataToReader;
-    daosDPInterface.readRemoteMemory = DaosReadRemoteMemory;
+    daosDPInterface.readRemoteMemory = (CP_DP_ReadRemoteMemoryFunc)DaosReadRemoteMemory;
     daosDPInterface.waitForCompletion = DaosWaitForCompletion;
     daosDPInterface.notifyConnFailure = DaosNotifyConnFailure;
-    daosDPInterface.provideTimestep = DaosProvideTimestep;
-    daosDPInterface.releaseTimestep = DaosReleaseTimestep;
+    daosDPInterface.provideTimestep = (CP_DP_ProvideTimestepFunc)DaosProvideTimestep;
+    daosDPInterface.releaseTimestep = (CP_DP_ReleaseTimestepFunc)DaosReleaseTimestep;
     daosDPInterface.readerRegisterTimestep = NULL;
     daosDPInterface.readerReleaseTimestep = NULL;
     daosDPInterface.destroyReader = DaosDestroyReader;

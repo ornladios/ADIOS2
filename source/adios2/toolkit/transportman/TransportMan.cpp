@@ -82,6 +82,9 @@ void TransportMan::MkDirsBarrier(const std::vector<std::string> &fileNames,
                 }
                 else
                 {
+#ifdef CreateDirectory
+#undef CreateDirectory
+#endif
                     helper::CreateDirectory(path);
                 }
             }

@@ -1,6 +1,11 @@
 #include <assert.h>
 #include <limits.h>
+#ifndef _MSC_VER
 #include <pthread.h>
+#else
+#include "../win_interface.h"
+#endif
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -78,11 +83,11 @@ typedef struct _Evpath_RS_Stream
     struct _EvpathReaderContactInfo *MyContactInfo;
 
     SstPreloadModeType CurPreloadMode;
-    long PreloadActiveTimestep;
+    size_t PreloadActiveTimestep;
     long TotalReadRequests;
     long ReadRequestsFromPreload;
     SstStats Stats;
-    long LastPreloadTimestep;
+    size_t LastPreloadTimestep;
 } *Evpath_RS_Stream;
 
 typedef struct _Evpath_WSR_Stream
@@ -90,7 +95,7 @@ typedef struct _Evpath_WSR_Stream
     struct _Evpath_WS_Stream *WS_Stream;
     CP_PeerCohort PeerCohort;
     int ReaderCohortSize;
-    int ReadPatternLockTimestep;
+    size_t ReadPatternLockTimestep;
     char *ReaderRequestArray;
     SstPreloadModeType CurPreloadMode;
     struct _EvpathReaderContactInfo *ReaderContactInfo;
@@ -99,7 +104,7 @@ typedef struct _Evpath_WSR_Stream
 
 typedef struct _TimestepEntry
 {
-    long Timestep;
+    size_t Timestep;
     struct _SstData Data;
     struct _EvpathPerTimestepInfo *DP_TimestepInfo;
     struct _ReaderRequestTrackRec *ReaderRequests;
@@ -108,11 +113,11 @@ typedef struct _TimestepEntry
 
 typedef struct _RSTimestepEntry
 {
-    long Timestep;
+    size_t Timestep;
     int WriterRank;
     char *Data;
-    long DataSize;
-    long DataStart;
+    size_t DataSize;
+    size_t DataStart;
     struct _RSTimestepEntry *Next;
 } *RSTimestepList;
 
@@ -154,7 +159,7 @@ typedef struct _EvpathWriterContactInfo
 
 typedef struct _EvpathReadRequestMsg
 {
-    long Timestep;
+    size_t Timestep;
     size_t Offset;
     size_t Length;
     void *WS_Stream;
@@ -164,7 +169,7 @@ typedef struct _EvpathReadRequestMsg
 } *EvpathReadRequestMsg;
 
 static FMField EvpathReadRequestList[] = {
-    {"Timestep", "integer", sizeof(long), FMOffset(EvpathReadRequestMsg, Timestep)},
+    {"Timestep", "integer", sizeof(size_t), FMOffset(EvpathReadRequestMsg, Timestep)},
     {"Offset", "integer", sizeof(size_t), FMOffset(EvpathReadRequestMsg, Offset)},
     {"Length", "integer", sizeof(size_t), FMOffset(EvpathReadRequestMsg, Length)},
     {"WS_Stream", "integer", sizeof(void *), FMOffset(EvpathReadRequestMsg, WS_Stream)},
@@ -179,7 +184,7 @@ static FMStructDescRec EvpathReadRequestStructs[] = {
 
 typedef struct _EvpathReadReplyMsg
 {
-    long Timestep;
+    size_t Timestep;
     size_t DataLength;
     void *RS_Stream;
     char *Data;
@@ -187,7 +192,7 @@ typedef struct _EvpathReadReplyMsg
 } *EvpathReadReplyMsg;
 
 static FMField EvpathReadReplyList[] = {
-    {"Timestep", "integer", sizeof(long), FMOffset(EvpathReadReplyMsg, Timestep)},
+    {"Timestep", "integer", sizeof(size_t), FMOffset(EvpathReadReplyMsg, Timestep)},
     {"RS_Stream", "integer", sizeof(void *), FMOffset(EvpathReadReplyMsg, RS_Stream)},
     {"DataLength", "integer", sizeof(size_t), FMOffset(EvpathReadReplyMsg, DataLength)},
     {"Data", "char[DataLength]", sizeof(char), FMOffset(EvpathReadReplyMsg, Data)},
@@ -203,7 +208,7 @@ static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v, 
 
 typedef struct _EvpathPreloadMsg
 {
-    long Timestep;
+    size_t Timestep;
     size_t DataLength;
     int WriterRank;
     void *RS_Stream;
@@ -211,7 +216,7 @@ typedef struct _EvpathPreloadMsg
 } *EvpathPreloadMsg;
 
 static FMField EvpathPreloadList[] = {
-    {"Timestep", "integer", sizeof(long), FMOffset(EvpathPreloadMsg, Timestep)},
+    {"Timestep", "integer", sizeof(size_t), FMOffset(EvpathPreloadMsg, Timestep)},
     {"DataLength", "integer", sizeof(size_t), FMOffset(EvpathPreloadMsg, DataLength)},
     {"WriterRank", "integer", sizeof(size_t), FMOffset(EvpathPreloadMsg, WriterRank)},
     {"RS_Stream", "integer", sizeof(void *), FMOffset(EvpathPreloadMsg, RS_Stream)},
@@ -224,7 +229,7 @@ static FMStructDescRec EvpathPreloadStructs[] = {
 
 static void EvpathPreloadHandler(CManager cm, CMConnection conn, void *msg_v, void *client_Data,
                                  attr_list attrs);
-static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream, long Timestep);
+static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream, size_t Timestep);
 static void SendPreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream, TimestepList TS);
 static void SendSpeculativePreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_Stream,
                                        TimestepList TS);
@@ -423,7 +428,7 @@ static void EvpathReadRequestHandler(CManager cm, CMConnection incoming_conn, vo
      */
     fprintf(stderr, "\n\n\n\n");
     fprintf(stderr,
-            "Writer rank %d - Failed to read Timestep %ld, not found.  This is "
+            "Writer rank %d - Failed to read Timestep %zd, not found.  This is "
             "an internal inconsistency\n",
             WSR_Stream->WS_Stream->Rank, ReadRequestMsg->Timestep);
     fprintf(stderr,
@@ -449,8 +454,8 @@ typedef struct _EvpathCompletionHandle
     void *Buffer;
     int Failed;
     int Rank;
-    long Offset;
-    long Length;
+    size_t Offset;
+    size_t Length;
     struct _EvpathCompletionHandle *Next;
 } *EvpathCompletionHandle;
 
@@ -504,36 +509,36 @@ static void EvpathReadReplyHandler(CManager cm, CMConnection conn, void *msg_v, 
 
 /*
  * To "fingerprint" a data block, take 8 sample bytes in it and put
- * them in a long.  If a sample point is zero, use the next non-zero
+ * them in an int64_t.  If a sample point is zero, use the next non-zero
  * byte.  This is only used in verbose mode as an indication that
  * we're dealing with a copy of the memory region between reader and
  * writer, so we're not being pedantic about anything here.
  */
-static unsigned long writeBlockFingerprint(char *Page, size_t Size)
+static uint64_t writeBlockFingerprint(char *block, size_t psize)
 {
-    size_t Start = Size / 16;
-    size_t Stride = Size / 8;
-    unsigned long Print = 0;
-    if (!Page)
+    size_t Start = psize / 16;
+    size_t Stride = psize / 8;
+    size_t print = 0;
+    if (!block)
         return 0;
-    for (int i = 0; i < 8; i++)
+    for (size_t i = 0; i < 8; i++)
     {
         size_t Index = Start + Stride * i;
         unsigned char Component = 0;
-        while ((Page[Index] == 0) && (Index < (Size - 1)))
+        while ((block[Index] == 0) && (Index < (psize - 1)))
         {
             Component++;
             Index++;
         }
-        Component += (unsigned char)Page[Index];
-        Print |= (((unsigned long)Component) << (8 * i));
+        Component += (unsigned char)block[Index];
+        print |= (((size_t)Component) << (8 * i));
     }
-    return Print;
+    return print;
 }
 
 // reader-side routine, called from the main program
 static int HandleRequestWithPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream, int Rank,
-                                      long Timestep, size_t Offset, size_t Length, void *Buffer)
+                                      size_t Timestep, size_t Offset, size_t Length, void *Buffer)
 {
     RSTimestepList Entry = NULL;
     Entry = RS_Stream->QueuedTimesteps;
@@ -554,7 +559,7 @@ static int HandleRequestWithPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stre
 }
 
 // reader-side routine, called from the main program
-static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream, long Timestep)
+static void DiscardPriorPreloaded(CP_Services Svcs, Evpath_RS_Stream RS_Stream, size_t Timestep)
 {
     RSTimestepList Entry, Last = NULL;
     Entry = RS_Stream->QueuedTimesteps;
@@ -924,7 +929,7 @@ typedef struct _EvpathPerTimestepInfo
 
 // reader-side routine, called from the main program
 static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int Rank,
-                                    long Timestep, size_t Offset, size_t Length, void *Buffer,
+                                    size_t Timestep, size_t Offset, size_t Length, void *Buffer,
                                     void *DP_TimestepInfo)
 {
     Evpath_RS_Stream Stream =
@@ -936,7 +941,7 @@ static void *EvpathReadRemoteMemory(CP_Services Svcs, DP_RS_Stream Stream_v, int
     struct _EvpathReadRequestMsg ReadRequestMsg;
 
     int HadPreload;
-    static long LastRequestedTimestep = -1;
+    static size_t LastRequestedTimestep = -1;
 
     pthread_mutex_lock(&Stream->DataLock);
     if ((LastRequestedTimestep != -1) && (LastRequestedTimestep != Timestep))
@@ -1082,7 +1087,7 @@ static void EvpathNotifyConnFailure(CP_Services Svcs, DP_RS_Stream Stream_v, int
 
 // writer-side routine, called from the main program
 static void EvpathWSReaderRegisterTimestep(CP_Services Svcs, DP_WSR_Stream WSRStream_v,
-                                           long Timestep, SstPreloadModeType PreloadMode)
+                                           size_t Timestep, SstPreloadModeType PreloadMode)
 {
     Evpath_WSR_Stream WSR_Stream = (Evpath_WSR_Stream)WSRStream_v;
     Evpath_WS_Stream WS_Stream = WSR_Stream->WS_Stream; /* pointer to writer struct */
@@ -1144,7 +1149,7 @@ static void EvpathWSReaderRegisterTimestep(CP_Services Svcs, DP_WSR_Stream WSRSt
 }
 
 // reader-side routine, called from the network handler thread
-static void EvpathRSTimestepArrived(CP_Services Svcs, DP_RS_Stream RS_Stream_v, long Timestep,
+static void EvpathRSTimestepArrived(CP_Services Svcs, DP_RS_Stream RS_Stream_v, size_t Timestep,
                                     SstPreloadModeType PreloadMode)
 {
     Evpath_RS_Stream RS_Stream = (Evpath_RS_Stream)RS_Stream_v;
@@ -1219,7 +1224,7 @@ static void SendSpeculativePreloadMsgs(CP_Services Svcs, Evpath_WSR_Stream WSR_S
     }
 }
 
-static void EvpathReaderReleaseTimestep(CP_Services Svcs, DP_WSR_Stream Stream_v, long Timestep)
+static void EvpathReaderReleaseTimestep(CP_Services Svcs, DP_WSR_Stream Stream_v, size_t Timestep)
 {
     Evpath_WSR_Stream WSR_Stream = (Evpath_WSR_Stream)Stream_v;
     Evpath_WS_Stream WS_Stream = WSR_Stream->WS_Stream; /* pointer to writer struct */
@@ -1269,7 +1274,7 @@ static void EvpathReaderReleaseTimestep(CP_Services Svcs, DP_WSR_Stream Stream_v
 }
 
 static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struct _SstData *Data,
-                                  struct _SstData *LocalMetadata, long Timestep,
+                                  struct _SstData *LocalMetadata, size_t Timestep,
                                   void **TimestepInfoPtr)
 {
     Evpath_WS_Stream WS_Stream = (Evpath_WS_Stream)Stream_v;
@@ -1312,7 +1317,7 @@ static void EvpathProvideTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, struc
     *TimestepInfoPtr = NULL;
 }
 
-static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, long Timestep)
+static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, size_t Timestep)
 {
     Evpath_WS_Stream WS_Stream = (Evpath_WS_Stream)Stream_v;
     TimestepList List;
@@ -1379,7 +1384,7 @@ static void EvpathReleaseTimestep(CP_Services Svcs, DP_WS_Stream Stream_v, long 
          * Shouldn't ever get here because we should never release a
          * timestep that we don't have.
          */
-        fprintf(stderr, "Failed to release Timestep %ld, not found\n", Timestep);
+        fprintf(stderr, "Failed to release Timestep %zd, not found\n", Timestep);
         assert(0);
     }
     pthread_mutex_unlock(&WS_Stream->DataLock);
@@ -1443,8 +1448,8 @@ extern NO_SANITIZE_THREAD CP_DP_Interface LoadEVpathDP()
     evpathDPInterface.readRemoteMemory = EvpathReadRemoteMemory;
     evpathDPInterface.waitForCompletion = EvpathWaitForCompletion;
     evpathDPInterface.notifyConnFailure = EvpathNotifyConnFailure;
-    evpathDPInterface.provideTimestep = EvpathProvideTimestep;
-    evpathDPInterface.releaseTimestep = EvpathReleaseTimestep;
+    evpathDPInterface.provideTimestep = (CP_DP_ProvideTimestepFunc)EvpathProvideTimestep;
+    evpathDPInterface.releaseTimestep = (CP_DP_ReleaseTimestepFunc)EvpathReleaseTimestep;
     evpathDPInterface.readerRegisterTimestep = EvpathWSReaderRegisterTimestep;
     evpathDPInterface.readerReleaseTimestep = EvpathReaderReleaseTimestep;
     evpathDPInterface.WSRreadPatternLocked = NULL;

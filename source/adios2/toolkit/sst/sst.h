@@ -103,18 +103,18 @@ extern SstStream SstReaderOpen(const char *filename, SstParams Params, SMPI_Comm
 extern void SstReaderGetParams(SstStream stream, SstMarshalMethod *WriterMarshalMethod,
                                int *WriterIsRowMajor);
 extern SstFullMetadata SstGetCurMetadata(SstStream stream);
-extern SstMetaMetaList SstGetNewMetaMetaData(SstStream stream, long timestep);
-extern SstBlock SstGetAttributeData(SstStream stream, long timestep);
-extern void *SstReadRemoteMemory(SstStream s, int rank, long timestep, size_t offset, size_t length,
-                                 void *buffer, void *DP_TimestepInfo);
+extern SstMetaMetaList SstGetNewMetaMetaData(SstStream stream, size_t timestep);
+extern SstBlock SstGetAttributeData(SstStream stream, size_t timestep);
+extern void *SstReadRemoteMemory(SstStream s, int rank, size_t timestep, size_t offset,
+                                 size_t length, void *buffer, void *DP_TimestepInfo);
 extern SstStatusValue SstWaitForCompletion(SstStream stream, void *completion);
 extern void SstReleaseStep(SstStream stream);
 extern SstStatusValue SstAdvanceStep(SstStream stream, const float timeout_sec);
 extern void SstReaderClose(SstStream stream);
-extern long SstCurrentStep(SstStream s);
+extern size_t SstCurrentStep(SstStream s);
 /*  SstReaderDefinitionLock is called once only, on transition from unlock to
  * locked definitions */
-extern void SstReaderDefinitionLock(SstStream stream, long EffectiveTimestep);
+extern void SstReaderDefinitionLock(SstStream stream, size_t EffectiveTimestep);
 
 /*
  *  Calls that support FFS-based marshaling, source code in cp/ffs_marshal.c
