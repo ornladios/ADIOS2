@@ -330,7 +330,7 @@ registered with DP deregister that timestep with DP CallRemoveQueueEntries
 static void QueueMaintenance(SstStream Stream)
 {
     STREAM_ASSERT_LOCKED(Stream);
-    size_t SmallestLastReleasedTimestep = (size_t)-1;
+    int64_t SmallestLastReleasedTimestep = -1;
     long ReserveCount;
     int SomeReaderIsOpening = 0;
 
@@ -355,7 +355,7 @@ static void QueueMaintenance(SstStream Stream)
             SomeReaderIsOpening++;
         }
     }
-    if (SmallestLastReleasedTimestep != (size_t)-1)
+    if (SmallestLastReleasedTimestep != -1)
     {
         CP_verbose(Stream, TraceVerbose,
                    "QueueMaintenance, smallest last released = %ld, count = %d\n",
@@ -390,8 +390,7 @@ static void QueueMaintenance(SstStream Stream)
     List = Stream->QueuedTimesteps;
     while (List)
     {
-        if ((SmallestLastReleasedTimestep != (size_t)-1) &&
-            (List->Timestep <= SmallestLastReleasedTimestep))
+        if (List->Timestep <= SmallestLastReleasedTimestep)
         {
             ReserveCount--;
             if (ReserveCount < 0)
