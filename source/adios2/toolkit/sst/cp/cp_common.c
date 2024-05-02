@@ -450,7 +450,7 @@ static FMStructDescRec MetaDataPlusDPInfoStructs[] = {
 
 static FMField TimestepMetadataList[] = {
     {"RS_Stream", "integer", sizeof(void *), FMOffset(struct _TimestepMetadataMsg *, RS_Stream)},
-    {"timestep", "integer", sizeof(size_t), FMOffset(struct _TimestepMetadataMsg *, Timestep)},
+    {"timestep", "integer", sizeof(ssize_t), FMOffset(struct _TimestepMetadataMsg *, Timestep)},
     {"cohort_size", "integer", sizeof(int), FMOffset(struct _TimestepMetadataMsg *, CohortSize)},
     {"preload_mode", "integer", sizeof(int), FMOffset(struct _TimestepMetadataMsg *, PreloadMode)},
     {"formats", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
@@ -477,7 +477,7 @@ static FMField TimestepMetadataDistributionList[] = {
     {NULL, NULL, 0, 0}};
 
 static FMField ReleaseRecList[] = {
-    {"Timestep", "integer", sizeof(size_t), FMOffset(struct _ReleaseRec *, Timestep)},
+    {"Timestep", "integer", sizeof(ssize_t), FMOffset(struct _ReleaseRec *, Timestep)},
     {"Reader", "integer", sizeof(void *), FMOffset(struct _ReleaseRec *, Reader)},
     {NULL, NULL, 0, 0}};
 
@@ -519,7 +519,7 @@ static FMStructDescRec ReturnMetadataInfoStructs[] = {
 
 static FMField ReleaseTimestepList[] = {
     {"WSR_Stream", "integer", sizeof(void *), FMOffset(struct _ReleaseTimestepMsg *, WSR_Stream)},
-    {"Timestep", "integer", sizeof(size_t), FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
+    {"Timestep", "integer", sizeof(ssize_t), FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec ReleaseTimestepStructs[] = {
@@ -529,7 +529,8 @@ static FMStructDescRec ReleaseTimestepStructs[] = {
 static FMField LockReaderDefinitionsList[] = {
     {"WSR_Stream", "integer", sizeof(void *),
      FMOffset(struct _LockReaderDefinitionsMsg *, WSR_Stream)},
-    {"Timestep", "integer", sizeof(size_t), FMOffset(struct _LockReaderDefinitionsMsg *, Timestep)},
+    {"Timestep", "integer", sizeof(ssize_t),
+     FMOffset(struct _LockReaderDefinitionsMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec LockReaderDefinitionsStructs[] = {
@@ -539,7 +540,7 @@ static FMStructDescRec LockReaderDefinitionsStructs[] = {
 
 static FMField CommPatternLockedList[] = {
     {"RS_Stream", "integer", sizeof(void *), FMOffset(struct _CommPatternLockedMsg *, RS_Stream)},
-    {"Timestep", "integer", sizeof(size_t), FMOffset(struct _CommPatternLockedMsg *, Timestep)},
+    {"Timestep", "integer", sizeof(ssize_t), FMOffset(struct _CommPatternLockedMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CommPatternLockedStructs[] = {
@@ -574,7 +575,8 @@ static FMStructDescRec ReaderRequestStepStructs[] = {
 
 static FMField WriterCloseList[] = {
     {"RS_Stream", "integer", sizeof(void *), FMOffset(struct _WriterCloseMsg *, RS_Stream)},
-    {"FinalTimestep", "integer", sizeof(size_t), FMOffset(struct _WriterCloseMsg *, FinalTimestep)},
+    {"FinalTimestep", "integer", sizeof(ssize_t),
+     FMOffset(struct _WriterCloseMsg *, FinalTimestep)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec WriterCloseStructs[] = {

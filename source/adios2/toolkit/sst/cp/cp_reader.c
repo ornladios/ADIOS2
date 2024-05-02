@@ -310,9 +310,9 @@ extern void ReaderConnCloseHandler(CManager cm, CMConnection ClosedConn, void *c
 
 //  SstCurrentStep is only called by the main program thread and
 //  needs no locking as it only accesses data set by the main thread
-extern size_t SstCurrentStep(SstStream Stream) { return Stream->ReaderTimestep; }
+extern size_t SstCurrentStep(SstStream Stream) { return (size_t)Stream->ReaderTimestep; }
 
-static void releasePriorTimesteps(SstStream Stream, size_t Latest);
+static void releasePriorTimesteps(SstStream Stream, ssize_t Latest);
 static void sendOneToEachWriterRank(SstStream s, CMFormat f, void *Msg, void **WS_StreamPtr);
 
 static void **ParticipateInReaderInitDataExchange(SstStream Stream, void *dpInfo,
@@ -465,7 +465,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 
     Stream->CPInfo = CP_getCPInfo(Stream->ConfigParams->ControlModule);
 
-    Stream->FinalTimestep = (size_t)-1; /* set this on close */
+    Stream->FinalTimestep = SSIZE_T_MAX; /* set this on close */
     Stream->LastDPNotifiedTimestep = -1;
 
     gettimeofday(&Start, NULL);
@@ -803,8 +803,7 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadat
                                        CMConnection conn)
 {
     STREAM_ASSERT_LOCKED(Stream);
-    if ((Stream->DiscardPriorTimestep != (size_t)-1) &&
-        (tsm->Timestep < Stream->DiscardPriorTimestep))
+    if (tsm->Timestep < Stream->DiscardPriorTimestep)
     {
         struct _ReleaseTimestepMsg Msg;
         memset(&Msg, 0, sizeof(Msg));
@@ -1116,10 +1115,10 @@ extern void CP_CommPatternLockedHandler(CManager cm, CMConnection conn, void *Ms
     STREAM_MUTEX_UNLOCK(Stream);
 }
 
-static size_t MaxQueuedMetadata(SstStream Stream)
+static ssize_t MaxQueuedMetadata(SstStream Stream)
 {
     struct _TimestepMetadataList *Next;
-    size_t MaxTimestep = (size_t)-1;
+    ssize_t MaxTimestep = -1;
     STREAM_ASSERT_LOCKED(Stream);
     Next = Stream->Timesteps;
     if (Next == NULL)
@@ -1129,7 +1128,7 @@ static size_t MaxQueuedMetadata(SstStream Stream)
     }
     while (Next)
     {
-        if ((MaxTimestep == (size_t)-1) || (Next->MetadataMsg->Timestep >= MaxTimestep))
+        if (Next->MetadataMsg->Timestep >= MaxTimestep)
         {
             MaxTimestep = Next->MetadataMsg->Timestep;
         }
@@ -1139,10 +1138,10 @@ static size_t MaxQueuedMetadata(SstStream Stream)
     return MaxTimestep;
 }
 
-static size_t NextQueuedMetadata(SstStream Stream)
+static ssize_t NextQueuedMetadata(SstStream Stream)
 {
     struct _TimestepMetadataList *Next;
-    size_t MinTimestep = LONG_MAX;
+    ssize_t MinTimestep = SSIZE_T_MAX;
     STREAM_ASSERT_LOCKED(Stream);
     Next = Stream->Timesteps;
     if (Next == NULL)
@@ -1244,7 +1243,7 @@ static void waitForMetadataWithTimeout(SstStream Stream, float timeout_secs)
     /* NOTREACHED */
 }
 
-static void releasePriorTimesteps(SstStream Stream, size_t Latest)
+static void releasePriorTimesteps(SstStream Stream, ssize_t Latest)
 {
     struct _TimestepMetadataList *Next, *Last;
     STREAM_ASSERT_LOCKED(Stream);
@@ -1313,7 +1312,7 @@ static void releasePriorTimesteps(SstStream Stream, size_t Latest)
     }
 }
 
-static void FreeTimestep(SstStream Stream, size_t Timestep)
+static void FreeTimestep(SstStream Stream, ssize_t Timestep)
 {
     /*
      * remove local metadata for that timestep
@@ -1355,7 +1354,7 @@ static void FreeTimestep(SstStream Stream, size_t Timestep)
     }
 }
 
-static TSMetadataList waitForNextMetadata(SstStream Stream, size_t LastTimestep)
+static TSMetadataList waitForNextMetadata(SstStream Stream, ssize_t LastTimestep)
 {
     TSMetadataList FoundTS = NULL;
     CP_verbose(Stream, PerRankVerbose, "Wait for next metadata after last timestep %d\n",
@@ -1369,8 +1368,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, size_t LastTimestep)
             CP_verbose(Stream, TraceVerbose, "Examining metadata for Timestep %d\n",
                        Next->MetadataMsg->Timestep);
             if (((Next->MetadataMsg->Metadata == NULL) ||
-                 ((Stream->DiscardPriorTimestep != (size_t)-1) &&
-                  (Next->MetadataMsg->Timestep < Stream->DiscardPriorTimestep))) &&
+                 (Next->MetadataMsg->Timestep < Stream->DiscardPriorTimestep)) &&
                 (FoundTS == NULL))
             {
                 /*
@@ -1399,10 +1397,9 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, size_t LastTimestep)
                 FreeTimestep(Stream, Tmp->MetadataMsg->Timestep);
                 continue;
             }
-            if ((LastTimestep == (size_t)-1) || (Next->MetadataMsg->Timestep >= LastTimestep))
+            if (Next->MetadataMsg->Timestep >= LastTimestep)
             {
-                if ((FoundTS == NULL) &&
-                    ((LastTimestep == (size_t)-1) || (Next->MetadataMsg->Timestep > LastTimestep)))
+                if ((FoundTS == NULL) && (Next->MetadataMsg->Timestep > LastTimestep))
                 {
                     FoundTS = Next;
                     break;
@@ -1425,8 +1422,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, size_t LastTimestep)
         }
         /* didn't find a good next timestep, check Stream status */
         if ((Stream->Status != Established) ||
-            ((Stream->FinalTimestep != (size_t)-1) &&
-             ((LastTimestep == (size_t)-1) || (Stream->FinalTimestep >= LastTimestep))))
+            ((Stream->FinalTimestep != SSIZE_T_MAX) && (Stream->FinalTimestep >= LastTimestep)))
         {
             CP_verbose(Stream, TraceVerbose, "Stream Final Timestep is %d, last timestep was %d\n",
                        Stream->FinalTimestep, LastTimestep);
@@ -1468,11 +1464,12 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, size_t LastTimestep)
 //  thread, it needs no locking.
 extern SstFullMetadata SstGetCurMetadata(SstStream Stream) { return Stream->CurrentMetadata; }
 
-extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, size_t Timestep)
+extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, size_t UTimestep)
 {
+    ssize_t Timestep = (ssize_t)UTimestep;
     int RetCount = 0;
     STREAM_MUTEX_LOCK(Stream);
-    size_t LastRetTimestep = (size_t)(-1);
+    ssize_t LastRetTimestep = -1;
     int i;
     for (i = 0; i < Stream->InternalMetaMetaCount; i++)
     {
@@ -1489,7 +1486,7 @@ extern SstMetaMetaList SstGetNewMetaMetaData(SstStream Stream, size_t Timestep)
     int j = 0;
     for (i = 0; i < Stream->InternalMetaMetaCount; i++)
     {
-        if ((LastRetTimestep == (size_t)-1) ||
+        if ((LastRetTimestep == -1) ||
             (Stream->InternalMetaMetaInfo[i].TimestepAdded >= LastRetTimestep))
         {
             // no copies, keep memory ownership in SST
@@ -1527,7 +1524,7 @@ static void AddToReadStats(SstStream Stream, int Rank, size_t Timestep, size_t L
 #define min(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 
-static void ReleaseTSReadStats(SstStream Stream, size_t Timestep)
+static void ReleaseTSReadStats(SstStream Stream, ssize_t Timestep)
 {
     int ThisFanIn = 0;
     if (Stream->RanksRead)
@@ -1553,9 +1550,10 @@ static void ReleaseTSReadStats(SstStream Stream, size_t Timestep)
 
 //  SstReadRemotememory is only called by the main
 //  program thread.
-extern void *SstReadRemoteMemory(SstStream Stream, int Rank, size_t Timestep, size_t Offset,
+extern void *SstReadRemoteMemory(SstStream Stream, int Rank, size_t UTimestep, size_t Offset,
                                  size_t Length, void *Buffer, void *DP_TimestepInfo)
 {
+    ssize_t Timestep = (ssize_t)UTimestep; // internal uses of Timestep are signed
     if (Stream->ConfigParams->ReaderShortCircuitReads)
         return NULL;
     Stream->Stats.BytesTransferred += Length;
@@ -1630,8 +1628,9 @@ static void sendOneToEachWriterRank(SstStream Stream, CMFormat f, void *Msg, voi
 
 //  SstReaderDefinitionLock is only called by the main
 //  program thread.
-extern void SstReaderDefinitionLock(SstStream Stream, size_t EffectiveTimestep)
+extern void SstReaderDefinitionLock(SstStream Stream, size_t UEffectiveTimestep)
 {
+    ssize_t EffectiveTimestep = (ssize_t)UEffectiveTimestep; // internal uses of Timestep are signed
     struct _LockReaderDefinitionsMsg Msg;
 
     memset(&Msg, 0, sizeof(Msg));
@@ -1646,7 +1645,7 @@ extern void SstReaderDefinitionLock(SstStream Stream, size_t EffectiveTimestep)
 //  representation of the resleased timestep.
 extern void SstReleaseStep(SstStream Stream)
 {
-    size_t Timestep = Stream->ReaderTimestep;
+    ssize_t Timestep = Stream->ReaderTimestep;
     struct _ReleaseTimestepMsg Msg;
 
     PERFSTUBS_TIMER_START_FUNC(timer);
@@ -1717,11 +1716,11 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         {
             float timeout_sec;
             int mode;
-            size_t LatestTimestep;
+            ssize_t LatestTimestep;
         };
         struct _GlobalOpInfo my_info;
         struct _GlobalOpInfo *global_info = NULL;
-        size_t NextTimestep;
+        ssize_t NextTimestep;
 
         if (Stream->Rank == 0)
         {
@@ -1738,8 +1737,8 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
                     0, Stream->mpiComm);
         if (Stream->Rank == 0)
         {
-            size_t Biggest = 0;
-            size_t Smallest = (size_t)-1;
+            ssize_t Biggest = -1;
+            ssize_t Smallest = SSIZE_T_MAX;
             for (int i = 0; i < Stream->CohortSize; i++)
             {
                 if (global_info[i].LatestTimestep > Biggest)
@@ -1771,7 +1770,7 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
              * what happens everywhere.
              */
 
-            if (Smallest == (size_t)-1)
+            if (Biggest == -1)
             {
                 // AllQueuesEmpty
                 if (timeout_sec >= 0.0)
@@ -1954,8 +1953,8 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
         }
         if ((timeout_sec >= 0.0) || (mode == SstLatestAvailable))
         {
-            size_t NextTimestep = (size_t)-1;
-            size_t LatestTimestep = MaxQueuedMetadata(Stream);
+            ssize_t NextTimestep = -1;
+            ssize_t LatestTimestep = MaxQueuedMetadata(Stream);
             /*
              * Several situations are possible here, depending upon
              * whether or not a timeout is specified and/or

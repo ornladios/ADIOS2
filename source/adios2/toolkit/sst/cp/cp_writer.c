@@ -330,7 +330,7 @@ registered with DP deregister that timestep with DP CallRemoveQueueEntries
 static void QueueMaintenance(SstStream Stream)
 {
     STREAM_ASSERT_LOCKED(Stream);
-    int64_t SmallestLastReleasedTimestep = -1;
+    ssize_t SmallestLastReleasedTimestep = SSIZE_T_MAX;
     long ReserveCount;
     int SomeReaderIsOpening = 0;
 
@@ -348,14 +348,16 @@ static void QueueMaintenance(SstStream Stream)
         if (Stream->Readers[i]->ReaderStatus == Established)
         {
             if (Stream->Readers[i]->LastReleasedTimestep < SmallestLastReleasedTimestep)
+            {
                 SmallestLastReleasedTimestep = Stream->Readers[i]->LastReleasedTimestep;
+            }
         }
         else if (Stream->Readers[i]->ReaderStatus == Opening)
         {
             SomeReaderIsOpening++;
         }
     }
-    if (SmallestLastReleasedTimestep != -1)
+    if (SmallestLastReleasedTimestep != SSIZE_T_MAX)
     {
         CP_verbose(Stream, TraceVerbose,
                    "QueueMaintenance, smallest last released = %ld, count = %d\n",
@@ -683,9 +685,9 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize, CP_ReaderInitInfo 
     return 1;
 }
 
-static size_t earliestAvailableTimestepNumber(SstStream Stream, size_t CurrentTimestep)
+static ssize_t earliestAvailableTimestepNumber(SstStream Stream, ssize_t CurrentTimestep)
 {
-    size_t Ret = CurrentTimestep;
+    ssize_t Ret = CurrentTimestep;
     CPTimestepList List = Stream->QueuedTimesteps;
     STREAM_MUTEX_LOCK(Stream);
     while (List)
@@ -723,7 +725,7 @@ static void UntagPreciousTimesteps(SstStream Stream)
     }
 }
 
-static void SubRefTimestep(SstStream Stream, size_t Timestep, int SetLast)
+static void SubRefTimestep(SstStream Stream, ssize_t Timestep, int SetLast)
 {
     CPTimestepList List;
     List = Stream->QueuedTimesteps;
@@ -749,7 +751,7 @@ WS_ReaderInfo WriterParticipateInReaderOpen(SstStream Stream)
     void *free_block = NULL;
     int WriterResponseCondition = -1;
     CMConnection conn = NULL;
-    size_t MyStartingTimestep, GlobalStartingTimestep;
+    ssize_t MyStartingTimestep, GlobalStartingTimestep;
     WS_ReaderInfo CP_WSR_Stream = malloc(sizeof(*CP_WSR_Stream));
 
     CP_verbose(Stream, PerRankVerbose, "Beginning writer-side reader open protocol\n");
@@ -982,7 +984,7 @@ void sendOneToWSRCohort(WS_ReaderInfo CP_WSR_Stream, CMFormat f, void *Msg, void
     }
 }
 
-static void AddTSToSentList(SstStream Stream, WS_ReaderInfo Reader, size_t Timestep)
+static void AddTSToSentList(SstStream Stream, WS_ReaderInfo Reader, ssize_t Timestep)
 {
     struct _SentTimestepRec *Item = malloc(sizeof(*Item)), *List = Reader->SentTimestepList;
     Item->Timestep = Timestep;
@@ -1001,7 +1003,7 @@ static void AddTSToSentList(SstStream Stream, WS_ReaderInfo Reader, size_t Times
     }
 }
 
-static void DerefSentTimestep(SstStream Stream, WS_ReaderInfo Reader, size_t Timestep)
+static void DerefSentTimestep(SstStream Stream, WS_ReaderInfo Reader, ssize_t Timestep)
 {
     struct _SentTimestepRec *List = Reader->SentTimestepList, *Last = NULL;
     CP_verbose(Stream, PerRankVerbose, "Reader sent timestep list %p, trying to release %zd\n",
@@ -1217,7 +1219,7 @@ static void waitForReaderResponseAndSendQueued(WS_ReaderInfo Reader)
                Reader, Reader->StartingTimestep, Stream->LastProvidedTimestep);
     if (Stream->ConfigParams->StepDistributionMode == StepsAllToAll)
     {
-        for (size_t TS = Reader->StartingTimestep; TS <= Stream->LastProvidedTimestep; TS++)
+        for (ssize_t TS = Reader->StartingTimestep; TS <= Stream->LastProvidedTimestep; TS++)
         {
             CPTimestepList List = Stream->QueuedTimesteps;
             while (List)
@@ -1804,7 +1806,7 @@ static void ProcessReaderStatusList(SstStream Stream, ReturnMetadataInfo Metadat
     STREAM_MUTEX_UNLOCK(Stream);
 }
 
-static void ActOnTSLockStatus(SstStream Stream, size_t Timestep)
+static void ActOnTSLockStatus(SstStream Stream, ssize_t Timestep)
 {
     int SomethingSent = 0;
     STREAM_MUTEX_LOCK(Stream);
@@ -2047,7 +2049,7 @@ on reader close:
 
  */
 extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, SstData Data,
-                                       size_t Timestep, FFSFormatList Formats,
+                                       ssize_t Timestep, FFSFormatList Formats,
                                        DataFreeFunc FreeTimestep, void *FreeClientData,
                                        SstData AttributeData, DataFreeFunc FreeAttributeData,
                                        void *FreeAttributelientData)
@@ -2111,6 +2113,7 @@ extern void SstInternalProvideTimestep(SstStream Stream, SstData LocalMetadata, 
     Entry->FreeClientData = FreeClientData;
     Entry->Next = Stream->QueuedTimesteps;
     Entry->InProgressFlag = 1;
+
     Stream->QueuedTimesteps = Entry;
     Stream->QueuedTimestepCount++;
     Stream->Stats.TimestepsCreated++;
