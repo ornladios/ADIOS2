@@ -593,7 +593,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
         /* the response value is set in the handler */
         volatile struct _WriterResponseMsg *response = NULL;
         CMCondition_set_client_data(Stream->CPInfo->SharedCM->cm,
-                                    ReaderRegister.WriterResponseCondition, &response);
+                                    ReaderRegister.WriterResponseCondition, (void *)&response);
 
         if (CMwrite(rank0_to_rank0_conn, Stream->CPInfo->SharedCM->ReaderRegisterFormat,
                     &ReaderRegister) != 1)
