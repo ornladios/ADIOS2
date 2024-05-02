@@ -65,6 +65,7 @@ def SetupFidesReader(json, bp, sst):
 
 # takes in a producer and view and sets up the visualization pipeline
 def SetupVisPipeline(producer, view):
+    Show(producer, view, 'UniformGridRepresentation')
     view.ResetCamera()
 
     # get color transfer function/color map for 'U'
