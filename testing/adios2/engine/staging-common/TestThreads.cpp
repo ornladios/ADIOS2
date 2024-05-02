@@ -10,7 +10,7 @@
 
 #include "ParseArgs.h"
 
-using dt = long long;
+using dt = int64_t;
 
 int value_errors = 0;
 
@@ -62,7 +62,7 @@ int Read(std::string BaseName, int ID)
         }
 
         adios2::Variable<dt> var = io.InquireVariable<dt>("data");
-        Reader.Get(var, ar.begin());
+        Reader.Get(var, &ar[0]);
         Reader.EndStep();
         dt expect = 0;
         for (auto &val : ar)

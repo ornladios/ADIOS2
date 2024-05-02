@@ -878,7 +878,7 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadat
 
 struct _SstMetaMetaBlockInternal
 {
-    size_t TimestepAdded;
+    ssize_t TimestepAdded;
     char *BlockData;
     size_t BlockSize;
     char *ID;
