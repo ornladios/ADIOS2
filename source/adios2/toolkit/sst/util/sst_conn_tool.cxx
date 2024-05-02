@@ -6,16 +6,15 @@
 
 #if ADIOS2_USE_MPI
 #include "adios2/helper/adiosCommMPI.h"
-static adios2::helper::Comm CommWorld =
-    adios2::helper::CommWithMPI(MPI_COMM_WORLD);
+static adios2::helper::Comm CommWorld = adios2::helper::CommWithMPI(MPI_COMM_WORLD);
 #else
 #include "adios2/helper/adiosCommDummy.h"
 static adios2::helper::Comm CommWorld = adios2::helper::CommDummy();
 #endif
 
+extern "C" {
 SMPI_Comm SMPI_COMM_WORLD = &CommWorld;
 
-extern "C" {
 int SMPI_Init(int *argc, char ***argv)
 {
 #if ADIOS2_USE_MPI
