@@ -41,7 +41,7 @@ int Read(std::string BaseName, int ID)
             std::lock_guard<std::mutex> guard(StdOutMtx);
             std::cout << "Reader: passed Open" << std::endl;
         }
-        std::array<dt, 1000> ar;
+        dt ar[1000];
 
         auto status = Reader.BeginStep();
         {
