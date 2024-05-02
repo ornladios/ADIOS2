@@ -118,7 +118,8 @@ bool Write(std::string BaseName, int ID)
             std::cout << "Writer completed Open() " << std::endl;
         }
         Writer.BeginStep();
-        Writer.Put<dt>(var, ar.begin());
+        dt *tmp = &ar.front();
+        Writer.Put<dt>(var, tmp);
         Writer.EndStep();
         Writer.Close();
         {
@@ -142,6 +143,10 @@ class TestThreads : public ::testing::Test
 public:
     TestThreads() = default;
 };
+
+#ifdef _MSC_VER
+#define getpid _getpid
+#endif
 
 TEST_F(TestThreads, Basic)
 {
