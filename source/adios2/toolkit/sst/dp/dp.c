@@ -9,6 +9,11 @@
 #include "dp_interface.h"
 #include "sst.h"
 #include "sst_data.h"
+#ifdef _MSC_VER
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#define strdup _strdup
+#endif
 
 #ifdef SST_HAVE_LIBFABRIC
 extern CP_DP_Interface LoadRdmaDP();

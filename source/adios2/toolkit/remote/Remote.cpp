@@ -8,6 +8,9 @@
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
 #include "adios2/helper/adiosSystem.h"
+#ifdef _MSC_VER
+#define strdup(x) _strdup(x)
+#endif
 
 namespace adios2
 {
@@ -160,7 +163,7 @@ Remote::GetHandle Remote::Get(char *VarName, size_t Step, size_t BlockID, Dims &
     GetMsg.VarName = VarName;
     GetMsg.Step = Step;
     GetMsg.BlockID = BlockID;
-    GetMsg.DimCount = Count.size();
+    GetMsg.DimCount = (int)Count.size();
     GetMsg.Count = Count.data();
     GetMsg.Start = Start.data();
     GetMsg.Dest = dest;

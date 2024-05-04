@@ -16,7 +16,10 @@
 #include <regex>
 #include <sys/stat.h>  // open, fstat
 #include <sys/types.h> // open
-#include <unistd.h>    // write, close, ftruncate
+#ifdef _MSC_VER
+#else
+#include <unistd.h> // write, close, ftruncate
+#endif
 
 namespace adios2
 {

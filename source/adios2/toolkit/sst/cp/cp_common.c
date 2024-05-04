@@ -8,6 +8,13 @@
 #include "adios2/common/ADIOSConfig.h"
 #include <atl.h>
 #include <evpath.h>
+#ifndef _MSC_VER
+#include <pthread.h>
+#include <sys/time.h>
+#include <unistd.h>
+#else
+#include "../win_interface.h"
+#endif
 
 #include "sst.h"
 
@@ -443,7 +450,7 @@ static FMStructDescRec MetaDataPlusDPInfoStructs[] = {
 
 static FMField TimestepMetadataList[] = {
     {"RS_Stream", "integer", sizeof(void *), FMOffset(struct _TimestepMetadataMsg *, RS_Stream)},
-    {"timestep", "integer", sizeof(int), FMOffset(struct _TimestepMetadataMsg *, Timestep)},
+    {"timestep", "integer", sizeof(ssize_t), FMOffset(struct _TimestepMetadataMsg *, Timestep)},
     {"cohort_size", "integer", sizeof(int), FMOffset(struct _TimestepMetadataMsg *, CohortSize)},
     {"preload_mode", "integer", sizeof(int), FMOffset(struct _TimestepMetadataMsg *, PreloadMode)},
     {"formats", "*FFSFormatBlock", sizeof(struct FFSFormatBlock),
@@ -470,7 +477,7 @@ static FMField TimestepMetadataDistributionList[] = {
     {NULL, NULL, 0, 0}};
 
 static FMField ReleaseRecList[] = {
-    {"Timestep", "integer", sizeof(long), FMOffset(struct _ReleaseRec *, Timestep)},
+    {"Timestep", "integer", sizeof(ssize_t), FMOffset(struct _ReleaseRec *, Timestep)},
     {"Reader", "integer", sizeof(void *), FMOffset(struct _ReleaseRec *, Reader)},
     {NULL, NULL, 0, 0}};
 
@@ -512,7 +519,7 @@ static FMStructDescRec ReturnMetadataInfoStructs[] = {
 
 static FMField ReleaseTimestepList[] = {
     {"WSR_Stream", "integer", sizeof(void *), FMOffset(struct _ReleaseTimestepMsg *, WSR_Stream)},
-    {"Timestep", "integer", sizeof(int), FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
+    {"Timestep", "integer", sizeof(ssize_t), FMOffset(struct _ReleaseTimestepMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec ReleaseTimestepStructs[] = {
@@ -522,7 +529,8 @@ static FMStructDescRec ReleaseTimestepStructs[] = {
 static FMField LockReaderDefinitionsList[] = {
     {"WSR_Stream", "integer", sizeof(void *),
      FMOffset(struct _LockReaderDefinitionsMsg *, WSR_Stream)},
-    {"Timestep", "integer", sizeof(int), FMOffset(struct _LockReaderDefinitionsMsg *, Timestep)},
+    {"Timestep", "integer", sizeof(ssize_t),
+     FMOffset(struct _LockReaderDefinitionsMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec LockReaderDefinitionsStructs[] = {
@@ -532,7 +540,7 @@ static FMStructDescRec LockReaderDefinitionsStructs[] = {
 
 static FMField CommPatternLockedList[] = {
     {"RS_Stream", "integer", sizeof(void *), FMOffset(struct _CommPatternLockedMsg *, RS_Stream)},
-    {"Timestep", "integer", sizeof(int), FMOffset(struct _CommPatternLockedMsg *, Timestep)},
+    {"Timestep", "integer", sizeof(ssize_t), FMOffset(struct _CommPatternLockedMsg *, Timestep)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec CommPatternLockedStructs[] = {
@@ -567,7 +575,8 @@ static FMStructDescRec ReaderRequestStepStructs[] = {
 
 static FMField WriterCloseList[] = {
     {"RS_Stream", "integer", sizeof(void *), FMOffset(struct _WriterCloseMsg *, RS_Stream)},
-    {"FinalTimestep", "integer", sizeof(int), FMOffset(struct _WriterCloseMsg *, FinalTimestep)},
+    {"FinalTimestep", "integer", sizeof(ssize_t),
+     FMOffset(struct _WriterCloseMsg *, FinalTimestep)},
     {NULL, NULL, 0, 0}};
 
 static FMStructDescRec WriterCloseStructs[] = {
@@ -729,7 +738,7 @@ void **CP_consolidateDataToRankZero(SstStream Stream, void *LocalInfo, FFSTypeHa
      * can gather the data
      */
 
-    SMPI_Gatherv(Buffer, DataSize, SMPI_CHAR, RecvBuffer, RecvCounts, Displs, SMPI_CHAR, 0,
+    SMPI_Gatherv(Buffer, (int)DataSize, SMPI_CHAR, RecvBuffer, RecvCounts, Displs, SMPI_CHAR, 0,
                  Stream->mpiComm);
     free_FFSBuffer(Buf);
 
@@ -836,7 +845,7 @@ void **CP_consolidateDataToAll(SstStream Stream, void *LocalInfo, FFSTypeHandle 
      * can gather the data
      */
 
-    SMPI_Allgatherv(Buffer, DataSize, SMPI_CHAR, RecvBuffer, RecvCounts, Displs, SMPI_CHAR,
+    SMPI_Allgatherv(Buffer, (int)DataSize, SMPI_CHAR, RecvBuffer, RecvCounts, Displs, SMPI_CHAR,
                     Stream->mpiComm);
     free_FFSBuffer(Buf);
 
@@ -1025,7 +1034,7 @@ static void ReadableSizeString(size_t SizeInBytes, char *Output, size_t size)
     }
     else
     {
-        snprintf(Output, size, "%ld %s", SizeInBytes, byteUnits[i]);
+        snprintf(Output, size, "%zd %s", SizeInBytes, byteUnits[i]);
     }
 };
 

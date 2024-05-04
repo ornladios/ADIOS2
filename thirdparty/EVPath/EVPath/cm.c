@@ -232,7 +232,7 @@ static thr_thread_t
 thr_fork(void*(*func)(void*), void *arg)
 {
     thr_thread_t new_thread = 0;
-    int err = thr_thread_create(&new_thread, NULL, (void*(*)(void*))func, arg);
+    int err = thr_thread_create(&new_thread, NULL, (void*)func, arg);
     if (err != 0) {
 	return (thr_thread_t) (intptr_t)NULL;
     } else {
@@ -258,7 +258,7 @@ INT_CMfork_comm_thread(CManager cm)
 	    if (server_thread ==  (thr_thread_t)(intptr_t) NULL) {
 		return 0;
 	    }
-	    cm->control_list->server_thread = server_thread;
+	    cm->control_list->server_thread = thr_get_thread_id(server_thread);
 	    cm->control_list->has_thread = 1;
 	    cm->reference_count++;
 	    CMtrace_out(cm, CMFreeVerbose, "Forked - CManager %p ref count now %d\n", 
@@ -1053,7 +1053,7 @@ CManager_free(CManager cm)
      new_list->select_data = NULL;
      new_list->add_select = NULL;
      new_list->remove_select = NULL;
-     new_list->server_thread =  (thr_thread_t)(intptr_t) NULL;
+     new_list->server_thread =  (thr_thread_id)0;
      new_list->network_blocking_function.func = NULL;
      new_list->network_polling_function.func = NULL;
      new_list->polling_function_list = NULL;
@@ -2088,6 +2088,7 @@ timeout_conn(CManager cm, void *client_data)
      if (cm_preread_hook) {
 	 do_read = cm_preread_hook(buffer_full_point - buffer_data_end, tmp_message_buffer);
      }
+     CMtrace_out(cm, CMLowLevelVerbose, "P5\n");
      if (do_read) {
 	 if (trans->read_to_buffer_func) {
 	 /* 
@@ -3851,7 +3852,7 @@ CM_init_select(CMControlList cl, CManager cm)
 	}
 	CMtrace_out(cm, CMLowLevelVerbose,
 		    "CM - Forked comm thread %p\n", (void*)(intptr_t)server_thread);
-	cm->control_list->server_thread = server_thread;
+	cm->control_list->server_thread = thr_get_thread_id(server_thread);
 	cm->control_list->cl_reference_count++;
 	cm->control_list->free_reference_count++;
 	cl->has_thread = 1;

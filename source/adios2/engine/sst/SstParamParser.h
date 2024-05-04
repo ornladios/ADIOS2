@@ -5,7 +5,9 @@
 #include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/IO.h"
 #include <iostream>
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
 
 #include "adios2/toolkit/sst/sst.h"
 

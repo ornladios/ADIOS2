@@ -10,7 +10,7 @@
 
 #include "ParseArgs.h"
 
-using dt = long long;
+using dt = int64_t;
 
 int value_errors = 0;
 
@@ -41,7 +41,7 @@ int Read(std::string BaseName, int ID)
             std::lock_guard<std::mutex> guard(StdOutMtx);
             std::cout << "Reader: passed Open" << std::endl;
         }
-        std::array<dt, 1000> ar;
+        dt ar[1000];
 
         auto status = Reader.BeginStep();
         {
@@ -62,7 +62,7 @@ int Read(std::string BaseName, int ID)
         }
 
         adios2::Variable<dt> var = io.InquireVariable<dt>("data");
-        Reader.Get(var, ar.begin());
+        Reader.Get(var, &ar[0]);
         Reader.EndStep();
         dt expect = 0;
         for (auto &val : ar)
@@ -118,7 +118,8 @@ bool Write(std::string BaseName, int ID)
             std::cout << "Writer completed Open() " << std::endl;
         }
         Writer.BeginStep();
-        Writer.Put<dt>(var, ar.begin());
+        dt *tmp = &ar.front();
+        Writer.Put<dt>(var, tmp);
         Writer.EndStep();
         Writer.Close();
         {
@@ -142,6 +143,10 @@ class TestThreads : public ::testing::Test
 public:
     TestThreads() = default;
 };
+
+#ifdef _MSC_VER
+#define getpid _getpid
+#endif
 
 TEST_F(TestThreads, Basic)
 {

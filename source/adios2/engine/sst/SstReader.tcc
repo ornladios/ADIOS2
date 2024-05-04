@@ -65,7 +65,7 @@ void SstReader::ReadVariableBlocksRequests(Variable<T> &variable,
                     std::stringstream ss;
                     ss << "SST Bytes Read from remote rank " << rank;
                     PERFSTUBS_SAMPLE_COUNTER(ss.str().c_str(), payloadSize);
-                    auto ret = SstReadRemoteMemory(m_Input, rank, CurrentStep(), payloadStart,
+                    auto ret = SstReadRemoteMemory(m_Input, (int)rank, CurrentStep(), payloadStart,
                                                    payloadSize, buffer, dp_info);
                     sstReadHandlers.push_back(ret);
                 }
@@ -87,7 +87,7 @@ void SstReader::ReadVariableBlocksRequests(Variable<T> &variable,
                             subStreamInfo.IntersectionBox, m_BP3Deserializer->m_IsRowMajor,
                             elementOffset))
                     {
-                        auto ret = SstReadRemoteMemory(m_Input, rank, CurrentStep(),
+                        auto ret = SstReadRemoteMemory(m_Input, (int)rank, CurrentStep(),
                                                        writerBlockStart, writerBlockSize,
                                                        blockInfo.Data + elementOffset, dp_info);
                         sstReadHandlers.push_back(ret);
@@ -100,7 +100,7 @@ void SstReader::ReadVariableBlocksRequests(Variable<T> &variable,
                         buffers.emplace_back();
                         buffers.back().resize(writerBlockSize);
                         auto ret =
-                            SstReadRemoteMemory(m_Input, rank, CurrentStep(), writerBlockStart,
+                            SstReadRemoteMemory(m_Input, (int)rank, CurrentStep(), writerBlockStart,
                                                 writerBlockSize, buffers.back().data(), dp_info);
                         sstReadHandlers.push_back(ret);
                     }

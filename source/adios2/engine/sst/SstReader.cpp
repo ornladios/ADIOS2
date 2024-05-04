@@ -544,7 +544,7 @@ void SstReader::Init()
                 Count = variable.m_Count.data();                                                   \
                 NeedSync =                                                                         \
                     SstFFSGetLocalDeferred(m_Input, (void *)&variable, variable.m_Name.c_str(),    \
-                                           DimCount, variable.m_BlockID, Count, data);             \
+                                           DimCount, (int)variable.m_BlockID, Count, data);        \
             }                                                                                      \
             if (NeedSync)                                                                          \
             {                                                                                      \
@@ -595,7 +595,7 @@ void SstReader::Init()
                 DimCount = variable.m_Count.size();                                                \
                 Count = variable.m_Count.data();                                                   \
                 SstFFSGetLocalDeferred(m_Input, (void *)&variable, variable.m_Name.c_str(),        \
-                                       DimCount, variable.m_BlockID, Count, data);                 \
+                                       DimCount, (int)variable.m_BlockID, Count, data);            \
             }                                                                                      \
         }                                                                                          \
         if (m_WriterMarshalMethod == SstMarshalBP)                                                 \
@@ -681,7 +681,7 @@ void SstReader::BP5PerformGets()
         {
             dp_info = m_CurrentStepMetaData->DP_TimestepInfo[Req.WriterRank];
         }
-        auto ret = SstReadRemoteMemory(m_Input, Req.WriterRank, Req.Timestep, Req.StartOffset,
+        auto ret = SstReadRemoteMemory(m_Input, (int)Req.WriterRank, Req.Timestep, Req.StartOffset,
                                        Req.ReadLength, Req.DestinationAddr, dp_info);
         sstReadHandlers.push_back(ret);
     }

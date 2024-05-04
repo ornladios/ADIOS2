@@ -2716,17 +2716,19 @@ extern NO_SANITIZE_THREAD CP_DP_Interface LoadRdmaDP()
     RdmaDPInterface.initWriter = RdmaInitWriter;
     RdmaDPInterface.initWriterPerReader = RdmaInitWriterPerReader;
     RdmaDPInterface.provideWriterDataToReader = RdmaProvideWriterDataToReader;
-    RdmaDPInterface.readRemoteMemory = RdmaReadRemoteMemory;
+    RdmaDPInterface.readRemoteMemory = (CP_DP_ReadRemoteMemoryFunc)RdmaReadRemoteMemory;
     RdmaDPInterface.waitForCompletion = RdmaWaitForCompletion;
     RdmaDPInterface.notifyConnFailure = RdmaNotifyConnFailure;
-    RdmaDPInterface.provideTimestep = RdmaProvideTimestep;
-    RdmaDPInterface.readerRegisterTimestep = RdmaReaderRegisterTimestep;
-    RdmaDPInterface.releaseTimestep = RdmaReleaseTimestep;
-    RdmaDPInterface.readerReleaseTimestep = RdmaReleaseTimestepPerReader;
-    RdmaDPInterface.WSRreadPatternLocked = RdmaReadPatternLocked;
-    RdmaDPInterface.RSreadPatternLocked = RdmaWritePatternLocked;
-    RdmaDPInterface.RSReleaseTimestep = RdmaReaderReleaseTimestep;
-    RdmaDPInterface.timestepArrived = RdmaTimestepArrived;
+    RdmaDPInterface.provideTimestep = (CP_DP_ProvideTimestepFunc)RdmaProvideTimestep;
+    RdmaDPInterface.readerRegisterTimestep =
+        (CP_DP_PerReaderTimestepRegFunc)RdmaReaderRegisterTimestep;
+    RdmaDPInterface.releaseTimestep = (CP_DP_ReleaseTimestepFunc)RdmaReleaseTimestep;
+    RdmaDPInterface.readerReleaseTimestep =
+        (CP_DP_PerReaderReleaseTimestepFunc)RdmaReleaseTimestepPerReader;
+    RdmaDPInterface.WSRreadPatternLocked = (CP_DP_WSR_ReadPatternLockedFunc)RdmaReadPatternLocked;
+    RdmaDPInterface.RSreadPatternLocked = (CP_DP_WSR_ReadPatternLockedFunc)RdmaWritePatternLocked;
+    RdmaDPInterface.RSReleaseTimestep = (CP_DP_RSReleaseTimestepFunc)RdmaReaderReleaseTimestep;
+    RdmaDPInterface.timestepArrived = (CP_DP_ReaderTimestepArrivalFunc)RdmaTimestepArrived;
     RdmaDPInterface.destroyReader = RdmaDestroyReader;
     RdmaDPInterface.destroyWriter = RdmaDestroyWriter;
     RdmaDPInterface.destroyWriterPerReader = RdmaDestroyWriterPerReader;

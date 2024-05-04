@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
         static_cast<float>(10.0 * rank + 6), static_cast<float>(10.0 * rank + 7),
         static_cast<float>(10.0 * rank + 8), static_cast<float>(10.0 * rank + 9)};
     const std::size_t Nx = myFloats.size();
-    const float increment = Nx * size * 1.0;
+    const float increment = (float)(Nx * size * 1.0);
 
     try
     {

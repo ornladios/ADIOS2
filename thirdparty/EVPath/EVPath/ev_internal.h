@@ -234,7 +234,7 @@ typedef struct _EVclient_sources {
 
 typedef struct _ev_handler_activation_rec {
     struct _ev_handler_activation_rec *prev;
-    thr_thread_t thread_id;
+    thr_thread_id thread_id;
     EVstone stone_id;
     struct _ev_handler_activation_rec *next;
 } ev_handler_activation_rec, *ev_handler_activation_ptr;

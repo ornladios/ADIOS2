@@ -5,6 +5,9 @@
 #include "adios2/helper/adiosFunctions.h"
 
 #include "adios2/toolkit/sst/sst.h"
+#ifdef _MSC_VER
+#define strdup(x) _strdup(x)
+#endif
 
 using namespace adios2;
 using namespace adios2::core;

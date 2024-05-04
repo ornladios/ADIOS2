@@ -178,7 +178,7 @@ typedef void *DP_CompletionHandle;
  * the writer side in ProvideTimestepFunc.
  */
 typedef DP_CompletionHandle (*CP_DP_ReadRemoteMemoryFunc)(CP_Services Svcs, DP_RS_Stream RS_Stream,
-                                                          int Rank, long Timestep, size_t Offset,
+                                                          int Rank, size_t Timestep, size_t Offset,
                                                           size_t Length, void *Buffer,
                                                           void *DP_TimestepInfo);
 
@@ -217,7 +217,7 @@ typedef void (*CP_DP_NotifyConnFailureFunc)(CP_Services Svcs, DP_RS_Stream RS_St
  */
 typedef void (*CP_DP_ProvideTimestepFunc)(CP_Services Svcs, DP_WS_Stream Stream,
                                           struct _SstData *Data, struct _SstData *LocalMetadata,
-                                          long Timestep, void **TimestepInfoPtr);
+                                          size_t Timestep, void **TimestepInfoPtr);
 
 typedef enum
 {
@@ -233,7 +233,7 @@ typedef enum
  * specific reader.
  */
 typedef void (*CP_DP_PerReaderTimestepRegFunc)(CP_Services Svcs, DP_WSR_Stream Stream,
-                                               long Timestep, SstPreloadModeType PreloadMode);
+                                               size_t Timestep, SstPreloadModeType PreloadMode);
 
 /*!
  * CP_DP_ReaderTimestepArrivalFunc is the type of a dataplane function that
@@ -241,7 +241,7 @@ typedef void (*CP_DP_PerReaderTimestepRegFunc)(CP_Services Svcs, DP_WSR_Stream S
  * the reader side..
  */
 typedef void (*CP_DP_ReaderTimestepArrivalFunc)(CP_Services Svcs, DP_RS_Stream Stream,
-                                                long Timestep, SstPreloadModeType PreloadMode);
+                                                size_t Timestep, SstPreloadModeType PreloadMode);
 
 /*!
  * CP_DP_ReadPatternLockedFunc is the type of a dataplane function
@@ -250,7 +250,7 @@ typedef void (*CP_DP_ReaderTimestepArrivalFunc)(CP_Services Svcs, DP_RS_Stream S
  * writer has also specified that his write geometry will not change.
  */
 typedef void (*CP_DP_ReadPatternLockedFunc)(CP_Services Svcs, DP_WSR_Stream Stream,
-                                            long EffectiveTimestep);
+                                            size_t EffectiveTimestep);
 
 /*!
  * CP_DP_WSR_ReadPatternLockedFunc is the type of a dataplane function
@@ -258,7 +258,7 @@ typedef void (*CP_DP_ReadPatternLockedFunc)(CP_Services Svcs, DP_WSR_Stream Stre
  * have agreed that the read geometry will not change.
  */
 typedef void (*CP_DP_WSR_ReadPatternLockedFunc)(CP_Services Svcs, DP_WSR_Stream Stream,
-                                                long EffectiveTimestep);
+                                                size_t EffectiveTimestep);
 
 /*!
  * CP_DP_RS_ReadPatternLockedFunc is the type of a dataplane function
@@ -266,7 +266,7 @@ typedef void (*CP_DP_WSR_ReadPatternLockedFunc)(CP_Services Svcs, DP_WSR_Stream 
  * have agreed that the read geometry will not change.
  */
 typedef void (*CP_DP_RS_ReadPatternLockedFunc)(CP_Services Svcs, DP_RS_Stream Stream,
-                                               long EffectiveTimestep);
+                                               size_t EffectiveTimestep);
 
 /*!
  * CP_DP_ReleaseTimestepFunc is the type of a dataplane function that
@@ -274,7 +274,7 @@ typedef void (*CP_DP_RS_ReadPatternLockedFunc)(CP_Services Svcs, DP_RS_Stream St
  * will no longer be the subject of remote read requests, so its resources
  * may be released.
  */
-typedef void (*CP_DP_ReleaseTimestepFunc)(CP_Services Svcs, DP_WS_Stream Stream, long Timestep);
+typedef void (*CP_DP_ReleaseTimestepFunc)(CP_Services Svcs, DP_WS_Stream Stream, size_t Timestep);
 
 /*!
  * CP_DP_PerReaderReleaseTimestepFunc is the type of a dataplane function
@@ -286,7 +286,7 @@ typedef void (*CP_DP_ReleaseTimestepFunc)(CP_Services Svcs, DP_WS_Stream Stream,
  * ReleaseTimestepFunc.
  */
 typedef void (*CP_DP_PerReaderReleaseTimestepFunc)(CP_Services Svcs, DP_WSR_Stream Stream,
-                                                   long Timestep);
+                                                   size_t Timestep);
 
 /*!
  * CP_DP_RSReleaseTimestepFunc is the type of a READER-SIDE dataplane function
@@ -294,7 +294,7 @@ typedef void (*CP_DP_PerReaderReleaseTimestepFunc)(CP_Services Svcs, DP_WSR_Stre
  * will no longer be the subject of remote read requests, so its resources
  * may be released.
  */
-typedef void (*CP_DP_RSReleaseTimestepFunc)(CP_Services Svcs, DP_RS_Stream Stream, long Timestep);
+typedef void (*CP_DP_RSReleaseTimestepFunc)(CP_Services Svcs, DP_RS_Stream Stream, size_t Timestep);
 
 /*!
  * CP_DP_GetPriorityFunc is the type of a dataplane initialization
