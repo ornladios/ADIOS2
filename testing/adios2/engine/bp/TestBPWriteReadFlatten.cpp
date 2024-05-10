@@ -106,6 +106,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead1D8)
             io.SetParameters(engineParameters);
         }
 
+        io.SetParameters("FlattenSteps=on");
         io.AddTransport("file");
 
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
@@ -188,7 +189,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead1D8)
             io.SetParameters(engineParameters);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadFlattenSteps);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), 1);
 
@@ -429,6 +430,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D2x4)
         }
         io.AddTransport("file");
 
+        io.SetParameters("FlattenSteps=on");
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < (size_t)mpiSize; ++step)
@@ -501,7 +503,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D2x4)
             io.SetParameters(engineParameters);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadFlattenSteps);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), 1);
         auto var_iString = io.InquireVariable<std::string>("iString");
@@ -748,6 +750,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D4x2)
 
         io.AddTransport("file");
 
+        io.SetParameters("FlattenSteps=on");
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < (size_t)mpiSize; ++step)
@@ -818,7 +821,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead2D4x2)
             io.SetParameters(engineParameters);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadFlattenSteps);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), 1);
 
@@ -1038,6 +1041,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead10D2x2)
 
         io.AddTransport("file");
 
+        io.SetParameters("FlattenSteps=on");
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < (size_t)mpiSize; ++step)
@@ -1093,7 +1097,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteRead10D2x2)
             io.SetParameters(engineParameters);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadFlattenSteps);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         EXPECT_EQ(bpReader.Steps(), 1);
 
@@ -1220,6 +1224,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteReadEmptyProcess)
             io.SetParameters(engineParameters);
         }
 
+        io.SetParameters("FlattenSteps=on");
         adios2::Engine bpWriter = io.Open(fname, adios2::Mode::Write);
 
         for (size_t step = 0; step < NSteps; ++step)
@@ -1255,7 +1260,7 @@ TEST_F(BPWriteReadTestFlatten, FlattenBPWriteReadEmptyProcess)
             io.SetParameters(engineParameters);
         }
 
-        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadFlattenSteps);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         for (size_t step = 0; step < 1; ++step)
         {

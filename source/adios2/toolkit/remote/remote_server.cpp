@@ -106,8 +106,6 @@ public:
         m_mode = mode;
         if (m_mode == RemoteOpenRandomAccess)
             adios_read_mode = adios2::Mode::ReadRandomAccess;
-        if (m_mode == RemoteOpenFlattenSteps)
-            adios_read_mode = adios2::Mode::ReadFlattenSteps;
         m_engine = &m_io->Open(FileName, adios_read_mode);
         memcpy(&m_ID, m_IOname.c_str(), sizeof(m_ID));
     }
@@ -191,8 +189,6 @@ static void OpenHandler(CManager cm, CMConnection conn, void *vevent, void *clie
     std::string strMode = "Streaming";
     if (open_msg->Mode == RemoteOpenRandomAccess)
         strMode = "RandomAccess";
-    if (open_msg->Mode == RemoteOpenFlattenSteps)
-        strMode = "FlattenSteps";
     std::cout << "Got an open request (mode " << strMode << ") for file " << open_msg->FileName
               << std::endl;
     AnonADIOSFile *f =

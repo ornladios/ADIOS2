@@ -103,7 +103,6 @@ typedef enum
     adios2_mode_read = 2,
     adios2_mode_append = 3,
     adios2_mode_readRandomAccess = 6,
-    adios2_mode_readFlattenSteps = 7,
 
     adios2_mode_deferred = 4,
     adios2_mode_sync = 5

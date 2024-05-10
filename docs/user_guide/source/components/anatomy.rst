@@ -169,13 +169,3 @@ mode.  Also newer file Engines like BP5 to not allow
     |--> ADIOS goes out of scope or adios2_finalize()
     
 
-In addition to the two read modes discussed above, ADIOS has another
-input mode named `adios2::Mode::ReadFlattenSteps`. This is a highly
-specialized mode built that is unlikely to be of general utility, but
-we describe it for completeness.  In `ReadFlattenSteps` mode, ADIOS
-loads all the metadata in the file upon Open (just like
-`ReadRandomAccess` mode, but everything that was written appears that
-it was output on the same step, regardless of how many steps actually
-appear in the file.  This affects the operation of many reader-side
-ADIOS functions, including Steps(), BlocksInfo(), Get(), etc.
-
