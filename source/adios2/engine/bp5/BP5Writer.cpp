@@ -507,9 +507,11 @@ void BP5Writer::MarshalAttributes()
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
 void BP5Writer::ComputeDerivedVariables()
 {
+    PERFSTUBS_SCOPED_TIMER("BP5Writer::ComputeDerivedVariables");
     auto const &m_VariablesDerived = m_IO.GetDerivedVariables();
     auto const &m_Variables = m_IO.GetVariables();
     // parse all derived variables
+    m_Profiler.Start("DeriveVars");
     for (auto it = m_VariablesDerived.begin(); it != m_VariablesDerived.end(); it++)
     {
         // identify the variables used in the derived variable
@@ -562,6 +564,7 @@ void BP5Writer::ComputeDerivedVariables()
             free(std::get<0>(derivedBlock));
         }
     }
+    m_Profiler.Stop("DeriveVars");
 }
 #endif
 

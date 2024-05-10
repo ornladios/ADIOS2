@@ -56,6 +56,8 @@ JSONProfiler::JSONProfiler(helper::Comm const &comm) : m_Comm(comm)
     AddTimerWatch("DC_WaitOnAsync2");
     AddTimerWatch("PDW");
 
+    AddTimerWatch("DeriveVars");
+
     m_Profiler.m_Bytes.emplace("buffering", 0);
     AddTimerWatch("DataRead");
     m_Profiler.m_Bytes.emplace("dataread", 0);
