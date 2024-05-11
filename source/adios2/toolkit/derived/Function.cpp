@@ -5,6 +5,7 @@
 #include "Function.tcc"
 #include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
+#include <adios2-perfstubs-interface.h>
 #include <cmath>
 
 namespace adios2
@@ -14,6 +15,7 @@ namespace derived
 
 DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 {
+    PERFSTUBS_SCOPED_TIMER("derived::Function::AddFunc");
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
 
@@ -31,6 +33,7 @@ DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 
 DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
 {
+    PERFSTUBS_SCOPED_TIMER("derived::Function::MagnitudeFunc");
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
 #define declare_type_mag(T)                                                                        \
@@ -147,6 +150,7 @@ float linear_interp(DerivedData input, size_t index, size_t dim)
  */
 DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
 {
+    PERFSTUBS_SCOPED_TIMER("derived::Function::Curl3DFunc");
     size_t dataSize = inputData[0].Count[0] * inputData[0].Count[1] * inputData[0].Count[2];
 
     DerivedData curl;
