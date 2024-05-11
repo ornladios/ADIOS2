@@ -63,65 +63,29 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
  *         (ex: partial derivatives in x direction at point (0,0,0)
  *              only use data from (1,0,0), etc )
  */
-inline size_t returnIndex(size_t x, size_t y, size_t z, size_t dims[3])
-{
-    return z + y * dims[2] + x * dims[2] * dims[1];
-}
-
 DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
 {
-    PERFSTUBS_SCOPED_TIMER("derived::Function::Curl3DFunc");
-    size_t dataSize = inputData[0].Count[0] * inputData[0].Count[1] * inputData[0].Count[2];
     size_t dims[3] = {inputData[0].Count[0], inputData[0].Count[1], inputData[0].Count[2]};
 
     DerivedData curl;
-    // ToDo - template type
-    float *data = (float *)malloc(dataSize * sizeof(float) * 3);
     curl.Start = inputData[0].Start;
     curl.Start.push_back(0);
     curl.Count = inputData[0].Count;
     curl.Count.push_back(3);
 
-    float *input1 = (float *)inputData[0].Data;
-    float *input2 = (float *)inputData[1].Data;
-    float *input3 = (float *)inputData[2].Data;
-    size_t index = 0;
-    for (int i = 0; i < dims[0]; ++i)
-    {
-                size_t prev_i = std::max(0, i - 1), next_i = std::min((int)dims[0] - 1, i + 1);
-        for (int j = 0; j < dims[1]; ++j)
-        {
-            size_t prev_j = std::max(0, j - 1), next_j = std::min((int)dims[1] - 1, j + 1);
-            for (int k = 0; k < dims[2]; ++k)
-            {
-        size_t prev_k = std::max(0, k - 1), next_k = std::min((int)dims[2] - 1, k + 1);
-                // curl[0] = dv3 / dy - dv2 / dz
-                data[3 * index] = (input3[returnIndex(i, next_j, k, dims)] -
-                                   input3[returnIndex(i, prev_j, k, dims)]) /
-                                  (next_j - prev_j);
-                data[3 * index] += (input2[returnIndex(i, j, prev_k, dims)] -
-                                    input2[returnIndex(i, j, next_k, dims)]) /
-                                   (next_k - prev_k);
-                // curl[1] = dv1 / dz - dv3 / dx
-                data[3 * index + 1] = (input1[returnIndex(i, j, next_k, dims)] -
-                                       input1[returnIndex(i, j, prev_k, dims)]) /
-                                      (next_k - prev_k);
-                data[3 * index + 1] += (input3[returnIndex(prev_i, j, k, dims)] -
-                                        input3[returnIndex(next_i, j, k, dims)]) /
-                                       (next_i - prev_i);
-                // curl[2] = dv2 / dx - dv1 / dy
-                data[3 * index + 2] = (input2[returnIndex(next_i, j, k, dims)] -
-                                       input2[returnIndex(prev_i, j, k, dims)]) /
-                                      (next_i - prev_i);
-                data[3 * index + 2] += (input1[returnIndex(i, prev_j, k, dims)] -
-                                        input1[returnIndex(i, next_j, k, dims)]) /
-                                       (next_j - prev_j);
-                index++;
-            }
-        }
+#define declare_type_curl(T)                                                                       \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *input1 = (T *)inputData[0].Data;                                                        \
+        T *input2 = (T *)inputData[1].Data;                                                        \
+        T *input3 = (T *)inputData[2].Data;                                                        \
+        curl.Data = ApplyCurl(input1, input2, input3, dims);                                       \
+        return curl;                                                                               \
     }
-    curl.Data = data;
-    return curl;
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_curl)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "Curl3DFunc",
+                                         "Invalid variable types");
+    return DerivedData();
 }
 
 Dims SameDimsFunc(std::vector<Dims> input)
@@ -160,7 +124,8 @@ Dims CurlDimsFunc(std::vector<Dims> input)
 }
 
 #define declare_template_instantiation(T)                                                          \
-    T *ApplyOneToOne(std::vector<DerivedData>, size_t, std::function<T(T, T)>);
+    T *ApplyOneToOne(std::vector<DerivedData>, size_t, std::function<T(T, T)>);                    \
+    T *ApplyCurl(T *input1, T *input2, T *input3, size_t dims[3]);
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation

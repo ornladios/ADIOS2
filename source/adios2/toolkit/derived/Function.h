@@ -40,6 +40,9 @@ template <class T>
 T *ApplyOneToOne(std::vector<DerivedData> inputData, size_t dataSize,
                  std::function<T(T, T)> compFct);
 
+template <class T>
+T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dims[3]);
+
 }
 }
 #endif
