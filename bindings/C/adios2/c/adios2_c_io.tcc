@@ -36,10 +36,6 @@ adios2::Mode adios2_ToOpenMode(const adios2_mode modeC)
         mode = adios2::Mode::ReadRandomAccess;
         break;
 
-    case adios2_mode_readFlattenSteps:
-        mode = adios2::Mode::ReadFlattenSteps;
-        break;
-
     default:
         break;
     }

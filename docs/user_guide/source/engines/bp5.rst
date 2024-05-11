@@ -130,6 +130,14 @@ This engine allows the user to fine tune the buffering operations through the fo
    
    #. **Threads**: Read side: Specify how many threads one process can use to speed up reading. The default value is *0*, to let the engine estimate the number of threads based on how many processes are running on the compute node and how many hardware threads are available on the compute node but it will use maximum 16 threads. Value *1* forces the engine to read everything within the main thread of the process. Other values specify the exact number of threads the engine can use. Although multithreaded reading works in a single *Get(adios2::Mode::Sync)* call if the read selection spans multiple data blocks in the file, the best parallelization is achieved by using deferred mode and reading everything in *PerformGets()/EndStep()*.   
 
+   #. **FlattenSteps**: This is a writer-side parameter specifies that the
+      reader should interpret multiple writer-created timesteps as a
+      single timestep, essentially flattening all Put()s into a single step.
+
+   #. **IgnoreFlattenSteps**: This is a reader-side parameter that
+      tells the reader to ignore any FlattenSteps parameter supplied
+      to the writer.
+
 ============================== ===================== ===========================================================
  **Key**                       **Value Format**      **Default** and Examples
 ============================== ===================== ===========================================================
@@ -156,6 +164,8 @@ This engine allows the user to fine tune the buffering operations through the fo
  StatsLevel                     integer, 0 or 1       **1**, 0
  MaxOpenFilesAtOnce             integer >= 0          **UINT_MAX**, 1024, 1
  Threads                        integer >= 0          **0**, 1, 32
+ FlattenSteps                   boolean               **off**, on, true, false
+ IgnoreFlattenSteps             boolean               **off**, on, true, false
 ============================== ===================== ===========================================================
 
 
