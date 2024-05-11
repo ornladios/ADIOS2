@@ -56,15 +56,33 @@ public:
 
     format::BufferSTL m_MetadataIndex;
 
-    /** Positions of flags in Index Table Header that Reader uses */
-    static constexpr size_t m_IndexHeaderSize = 64;
-    static constexpr size_t m_EndianFlagPosition = 36;
-    static constexpr size_t m_BPVersionPosition = 37;
-    static constexpr size_t m_BPMinorVersionPosition = 38;
-    static constexpr size_t m_ActiveFlagPosition = 39;
-    static constexpr size_t m_ColumnMajorFlagPosition = 40;
-    static constexpr size_t m_VersionTagPosition = 0;
-    static constexpr size_t m_VersionTagLength = 32;
+    /** Positions of flags in Index Table Header that Reader uses - MUST BE 64 bytes total */
+    struct BP5IndexTableHeader
+    {
+        char VersionTag[32];
+        uint8_t adiosMajorVersion;
+        uint8_t adiosMinorVersion;
+        uint8_t adiosPatchVersion;
+        uint8_t unused1;        // init to zero
+        uint8_t isLittleEndian; // boolean
+        uint8_t bpVersion;      // 5 here
+        uint8_t bpMinorVersion;
+        uint8_t activeFlag;
+        char columnMajor;     // y or n
+        uint8_t flattenSteps; // writer requests all steps flattened to one on read
+        char unused2[22];     // init to zero
+    };
+    static constexpr size_t m_IndexHeaderSize = sizeof(BP5IndexTableHeader);
+    static constexpr size_t m_EndianFlagPosition = offsetof(BP5IndexTableHeader, isLittleEndian);
+    static constexpr size_t m_BPVersionPosition = offsetof(BP5IndexTableHeader, bpVersion);
+    static constexpr size_t m_BPMinorVersionPosition =
+        offsetof(BP5IndexTableHeader, bpMinorVersion);
+    static constexpr size_t m_ActiveFlagPosition = offsetof(BP5IndexTableHeader, activeFlag);
+    static constexpr size_t m_ColumnMajorFlagPosition = offsetof(BP5IndexTableHeader, columnMajor);
+    static constexpr size_t m_FlattenStepsPosition = offsetof(BP5IndexTableHeader, flattenSteps);
+    static constexpr size_t m_VersionTagPosition = offsetof(BP5IndexTableHeader, VersionTag);
+    static constexpr size_t m_VersionTagLength = sizeof(BP5IndexTableHeader().VersionTag);
+    static constexpr size_t m_HeaderTailPadding = sizeof(BP5IndexTableHeader().unused2);
 
     static constexpr uint8_t m_BP5MinorVersion = 2;
 
@@ -154,6 +172,8 @@ public:
     MACRO(StatsBlockSize, SizeBytes, size_t, DefaultStatsBlockSize)                                \
     MACRO(Threads, UInt, unsigned int, 0)                                                          \
     MACRO(UseOneTimeAttributes, Bool, bool, true)                                                  \
+    MACRO(FlattenSteps, Bool, bool, false)                                                         \
+    MACRO(IgnoreFlattenSteps, Bool, bool, false)                                                   \
     MACRO(RemoteDataPath, String, std::string, "")                                                 \
     MACRO(MaxOpenFilesAtOnce, UInt, unsigned int, UINT_MAX)
 
