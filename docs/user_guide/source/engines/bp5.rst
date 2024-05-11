@@ -166,7 +166,6 @@ This engine allows the user to fine tune the buffering operations through the fo
  Threads                        integer >= 0          **0**, 1, 32
  FlattenSteps                   boolean               **off**, on, true, false
  IgnoreFlattenSteps             boolean               **off**, on, true, false
- Threads                        integer >= 0          **0**, 1, 32
 ============================== ===================== ===========================================================
 
 
