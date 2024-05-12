@@ -8,6 +8,7 @@
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
 #include "adios2/helper/adiosSystem.h"
+#include "adios2/toolkit/remote/EVPathRemote.h"
 
 #include <cstdio>  // remove
 #include <cstring> // strerror
@@ -95,9 +96,10 @@ void FileRemote::Open(const std::string &name, const Mode openMode, const bool a
 
     case Mode::Read: {
         ProfilerStart("open");
-        m_Remote.OpenSimpleFile("localhost", RemoteCommon::ServerPort, m_Name);
+        m_Remote = std::make_unique<EVPathRemote>();
+        m_Remote->OpenSimpleFile("localhost", EVPathRemoteCommon::ServerPort, m_Name);
         ProfilerStop("open");
-        m_Size = m_Remote.m_Size;
+        m_Size = m_Remote->m_Size;
         break;
     }
     default:
@@ -156,7 +158,7 @@ void FileRemote::Read(char *buffer, size_t size, size_t start)
                                                   " whose size is " + std::to_string(m_Size));
     }
 
-    m_Remote.Read(start, size, buffer);
+    m_Remote->Read(start, size, buffer);
     if (m_IsCached)
     {
     }

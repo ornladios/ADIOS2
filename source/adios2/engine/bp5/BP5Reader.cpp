@@ -10,6 +10,7 @@
 #include "BP5Reader.tcc"
 
 #include "adios2/helper/adiosMath.h" // SetWithinLimit
+#include "adios2/toolkit/remote/EVPathRemote.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include <adios2-perfstubs-interface.h>
 
@@ -283,15 +284,26 @@ void BP5Reader::PerformGets()
         if (m_BP5Deserializer->PendingGetRequests.size() == 0)
             return;
 
+        std::string RemoteName;
         if (!m_Parameters.RemoteDataPath.empty())
         {
-            m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Parameters.RemoteDataPath,
-                          m_OpenMode, RowMajorOrdering);
+            RemoteName = m_Parameters.RemoteDataPath;
         }
         else if (getenv("DoRemote"))
         {
-            m_Remote.Open("localhost", RemoteCommon::ServerPort, m_Name, m_OpenMode,
-                          RowMajorOrdering);
+            RemoteName = m_Name;
+        }
+#ifdef ADIOS2_HAVE_SST
+        m_Remote = std::make_unique<EVPathRemote>();
+        m_Remote->Open("localhost", EVPathRemoteCommon::ServerPort, RemoteName, m_OpenMode,
+                       RowMajorOrdering);
+#endif
+        if (m_Remote == nullptr)
+        {
+            helper::Throw<std::ios_base::failure>(
+                "Engine", "BP5Reader", "OpenFiles",
+                "Remote file " + m_Name +
+                    " cannot be opened. Possible server or file specification error.");
         }
         if (!m_Remote)
         {
@@ -324,7 +336,7 @@ void BP5Reader::PerformRemoteGets()
     auto GetRequests = m_BP5Deserializer->PendingGetRequests;
     for (auto &Req : GetRequests)
     {
-        m_Remote.Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count, Req.Start, Req.Data);
+        m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count, Req.Start, Req.Data);
     }
 }
 

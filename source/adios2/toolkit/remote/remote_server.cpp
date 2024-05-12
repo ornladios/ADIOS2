@@ -36,7 +36,7 @@
 
 #include "remote_common.h"
 
-using namespace adios2::RemoteCommon;
+using namespace adios2::EVPathRemoteCommon;
 
 using namespace adios2::core;
 using namespace adios2;
@@ -94,8 +94,9 @@ public:
     std::string m_FileName;
     size_t m_BytesSent = 0;
     size_t m_OperationCount = 0;
-    RemoteFileMode m_mode = RemoteCommon::RemoteFileMode::RemoteOpen;
-    AnonADIOSFile(std::string FileName, RemoteCommon::RemoteFileMode mode, bool RowMajorArrays)
+    RemoteFileMode m_mode = EVPathRemoteCommon::RemoteFileMode::RemoteOpen;
+    AnonADIOSFile(std::string FileName, EVPathRemoteCommon::RemoteFileMode mode,
+                  bool RowMajorArrays)
     {
         Mode adios_read_mode = adios2::Mode::Read;
         m_FileName = FileName;
