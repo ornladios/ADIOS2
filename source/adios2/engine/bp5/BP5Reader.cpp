@@ -293,8 +293,9 @@ void BP5Reader::PerformGets()
         {
             RemoteName = m_Name;
         }
+        (void)RowMajorOrdering; // Use in case no remotes available
 #ifdef ADIOS2_HAVE_SST
-        m_Remote = std::make_unique<EVPathRemote>();
+        m_Remote = std::unique_ptr<EVPathRemote>(new EVPathRemote());
         m_Remote->Open("localhost", EVPathRemoteCommon::ServerPort, RemoteName, m_OpenMode,
                        RowMajorOrdering);
 #endif

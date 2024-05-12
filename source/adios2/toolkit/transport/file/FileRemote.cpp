@@ -96,7 +96,7 @@ void FileRemote::Open(const std::string &name, const Mode openMode, const bool a
 
     case Mode::Read: {
         ProfilerStart("open");
-        m_Remote = std::make_unique<EVPathRemote>();
+        m_Remote = std::unique_ptr<EVPathRemote>(new EVPathRemote());
         m_Remote->OpenSimpleFile("localhost", EVPathRemoteCommon::ServerPort, m_Name);
         ProfilerStop("open");
         m_Size = m_Remote->m_Size;
