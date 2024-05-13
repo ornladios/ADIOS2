@@ -28,9 +28,6 @@ DerivedData AddFunc(std::vector<DerivedData> input, DataType type);
 DerivedData MagnitudeFunc(std::vector<DerivedData> input, DataType type);
 DerivedData Curl3DFunc(std::vector<DerivedData> input, DataType type);
 
-template <class T>
-T linear_interp(T *data, size_t index, size_t count, size_t stride = 1);
-
 Dims SameDimsFunc(std::vector<Dims> input);
 Dims CurlDimsFunc(std::vector<Dims> input);
 
@@ -42,6 +39,9 @@ const std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunction
 template <class T>
 T *ApplyOneToOne(std::vector<DerivedData> inputData, size_t dataSize,
                  std::function<T(T, T)> compFct);
+
+template <class T>
+T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dims[3]);
 
 }
 }

@@ -52,6 +52,46 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
+/*
+ * Input: 3D vector field F(x,y,z)= {F1(x,y,z), F2(x,y,z), F3(x,y,z)}
+ *
+ *     inputData - (3) components of 3D vector field
+ *
+ * Computation:
+ *     curl(F(x,y,z)) = (partial(F3,y) - partial(F2,z))i
+ *                    + (partial(F1,z) - partial(F3,x))j
+ *                    + (partial(F2,x) - partial(F1,y))k
+ *
+ *     boundaries are calculated only with data in block
+ *         (ex: partial derivatives in x direction at point (0,0,0)
+ *              only use data from (1,0,0), etc )
+ */
+DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::Curl3DFunc");
+    size_t dims[3] = {inputData[0].Count[0], inputData[0].Count[1], inputData[0].Count[2]};
+
+    DerivedData curl;
+    curl.Start = inputData[0].Start;
+    curl.Start.push_back(0);
+    curl.Count = inputData[0].Count;
+    curl.Count.push_back(3);
+
+#define declare_type_curl(T)                                                                       \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *input1 = (T *)inputData[0].Data;                                                        \
+        T *input2 = (T *)inputData[1].Data;                                                        \
+        T *input3 = (T *)inputData[2].Data;                                                        \
+        curl.Data = ApplyCurl(input1, input2, input3, dims);                                       \
+        return curl;                                                                               \
+    }
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_curl)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "Curl3DFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
 Dims SameDimsFunc(std::vector<Dims> input)
 {
     // check that all dimenstions are the same
@@ -87,92 +127,9 @@ Dims CurlDimsFunc(std::vector<Dims> input)
     return output;
 }
 
-/*
- * Linear Interpolation - average difference around point "index"
- *  can be used to approximate derivatives
- *
- * Input:
- *     input - data assumed to be uniform/densely populated
- *     index - index of point of interest
- *     dim - in which dimension we are approximating the partial derivative
- */
-// template <class T>
-float linear_interp(DerivedData input, size_t index, size_t dim)
-{
-    size_t stride = 1;
-    size_t range;
-    size_t offset;
-    float result;
-    float *data = (float *)input.Data;
-
-    for (size_t i = 0; i < input.Count.size() - (dim + 1); ++i)
-    {
-        stride *= input.Count[input.Count.size() - (i + 1)];
-    }
-    size_t ind1 = index - stride;
-    size_t ind2 = index + stride;
-    range = stride * input.Count[dim];
-    offset = index % range;
-
-    if ((offset < stride) && (range - offset <= stride))
-    {
-        return 0;
-    }
-    else if (offset < stride)
-    {
-        result = data[ind2] - data[index];
-    }
-    else if (range - offset <= stride)
-    {
-        result = data[index] - data[ind1];
-    }
-    else
-    {
-        result = (data[ind2] - data[ind1]) / 2;
-    }
-
-    return result;
-}
-
-/*
- * Input: 3D vector field F(x,y,z)= {F1(x,y,z), F2(x,y,z), F3(x,y,z)}
- *
- *     inputData - (3) components of 3D vector field
- *
- * Computation:
- *     curl(F(x,y,z)) = (partial(F3,y) - partial(F2,z))i
- *                    + (partial(F1,z) - partial(F3,x))j
- *                    + (partial(F2,x) - partial(F1,y))k
- *
- *     boundaries are calculated only with data in block
- *         (ex: partial derivatives in x direction at point (0,0,0)
- *              only use data from (1,0,0), etc )
- */
-DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
-{
-    PERFSTUBS_SCOPED_TIMER("derived::Function::Curl3DFunc");
-    size_t dataSize = inputData[0].Count[0] * inputData[0].Count[1] * inputData[0].Count[2];
-
-    DerivedData curl;
-    // ToDo - template type
-    float *data = (float *)malloc(dataSize * sizeof(float) * 3);
-    curl.Start = inputData[0].Start;
-    curl.Start.push_back(0);
-    curl.Count = inputData[0].Count;
-    curl.Count.push_back(3);
-
-    for (size_t i = 0; i < dataSize; ++i)
-    {
-        data[3 * i] = linear_interp(inputData[2], i, 1) - linear_interp(inputData[1], i, 2);
-        data[3 * i + 1] = linear_interp(inputData[0], i, 2) - linear_interp(inputData[2], i, 0);
-        data[3 * i + 2] = linear_interp(inputData[1], i, 0) - linear_interp(inputData[0], i, 1);
-    }
-    curl.Data = data;
-    return curl;
-}
-
 #define declare_template_instantiation(T)                                                          \
-    T *ApplyOneToOne(std::vector<DerivedData>, size_t, std::function<T(T, T)>);
+    T *ApplyOneToOne(std::vector<DerivedData>, size_t, std::function<T(T, T)>);                    \
+    T *ApplyCurl(T *input1, T *input2, T *input3, size_t dims[3]);
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
 #undef declare_template_instantiation
