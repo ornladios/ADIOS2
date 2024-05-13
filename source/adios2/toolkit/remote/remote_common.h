@@ -5,7 +5,7 @@
 
 namespace adios2
 {
-namespace RemoteCommon
+namespace EVPathRemoteCommon
 {
 
 const int ServerPort = 26200;

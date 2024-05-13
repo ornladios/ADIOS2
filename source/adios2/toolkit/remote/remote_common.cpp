@@ -5,7 +5,7 @@
 
 namespace adios2
 {
-namespace RemoteCommon
+namespace EVPathRemoteCommon
 {
 
 FMField OpenFileList[] = {
@@ -134,23 +134,30 @@ FMStructDescRec StatusResponseStructs[] = {
     {"StatusResponse", StatusResponseList, sizeof(struct _StatusResponseMsg), NULL},
     {NULL, NULL, 0, NULL}};
 
-void RegisterFormats(RemoteCommon::Remote_evpath_state &ev_state)
+void RegisterFormats(EVPathRemoteCommon::Remote_evpath_state &ev_state)
 {
-    ev_state.OpenFileFormat = CMregister_format(ev_state.cm, RemoteCommon::OpenFileStructs);
+    ev_state.OpenFileFormat = CMregister_format(ev_state.cm, EVPathRemoteCommon::OpenFileStructs);
     ev_state.OpenSimpleFileFormat =
-        CMregister_format(ev_state.cm, RemoteCommon::OpenSimpleFileStructs);
-    ev_state.OpenResponseFormat = CMregister_format(ev_state.cm, RemoteCommon::OpenResponseStructs);
+        CMregister_format(ev_state.cm, EVPathRemoteCommon::OpenSimpleFileStructs);
+    ev_state.OpenResponseFormat =
+        CMregister_format(ev_state.cm, EVPathRemoteCommon::OpenResponseStructs);
     ev_state.OpenSimpleResponseFormat =
-        CMregister_format(ev_state.cm, RemoteCommon::OpenSimpleResponseStructs);
-    ev_state.GetRequestFormat = CMregister_format(ev_state.cm, RemoteCommon::GetRequestStructs);
-    ev_state.ReadRequestFormat = CMregister_format(ev_state.cm, RemoteCommon::ReadRequestStructs);
-    ev_state.ReadResponseFormat = CMregister_format(ev_state.cm, RemoteCommon::ReadResponseStructs);
-    ev_state.CloseFileFormat = CMregister_format(ev_state.cm, RemoteCommon::CloseFileStructs);
-    ev_state.KillServerFormat = CMregister_format(ev_state.cm, RemoteCommon::KillServerStructs);
-    ev_state.KillResponseFormat = CMregister_format(ev_state.cm, RemoteCommon::KillResponseStructs);
-    ev_state.StatusServerFormat = CMregister_format(ev_state.cm, RemoteCommon::StatusServerStructs);
+        CMregister_format(ev_state.cm, EVPathRemoteCommon::OpenSimpleResponseStructs);
+    ev_state.GetRequestFormat =
+        CMregister_format(ev_state.cm, EVPathRemoteCommon::GetRequestStructs);
+    ev_state.ReadRequestFormat =
+        CMregister_format(ev_state.cm, EVPathRemoteCommon::ReadRequestStructs);
+    ev_state.ReadResponseFormat =
+        CMregister_format(ev_state.cm, EVPathRemoteCommon::ReadResponseStructs);
+    ev_state.CloseFileFormat = CMregister_format(ev_state.cm, EVPathRemoteCommon::CloseFileStructs);
+    ev_state.KillServerFormat =
+        CMregister_format(ev_state.cm, EVPathRemoteCommon::KillServerStructs);
+    ev_state.KillResponseFormat =
+        CMregister_format(ev_state.cm, EVPathRemoteCommon::KillResponseStructs);
+    ev_state.StatusServerFormat =
+        CMregister_format(ev_state.cm, EVPathRemoteCommon::StatusServerStructs);
     ev_state.StatusResponseFormat =
-        CMregister_format(ev_state.cm, RemoteCommon::StatusResponseStructs);
+        CMregister_format(ev_state.cm, EVPathRemoteCommon::StatusResponseStructs);
 }
 }
 }

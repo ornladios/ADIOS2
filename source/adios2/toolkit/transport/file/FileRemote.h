@@ -73,7 +73,7 @@ private:
     // static class Impl m_ImplSingleton;
     // Impl *m_Impl;
     // std::unique_ptr<Impl> m_Impl;
-    Remote m_Remote;
+    std::unique_ptr<Remote> m_Remote;
     int m_Errno = 0;
     bool m_IsOpening = false;
     std::future<int> m_OpenFuture;
