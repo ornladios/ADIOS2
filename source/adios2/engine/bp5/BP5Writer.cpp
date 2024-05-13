@@ -507,9 +507,11 @@ void BP5Writer::MarshalAttributes()
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
 void BP5Writer::ComputeDerivedVariables()
 {
+    PERFSTUBS_SCOPED_TIMER("BP5Writer::ComputeDerivedVariables");
     auto const &m_VariablesDerived = m_IO.GetDerivedVariables();
     auto const &m_Variables = m_IO.GetVariables();
     // parse all derived variables
+    m_Profiler.Start("DeriveVars");
     for (auto it = m_VariablesDerived.begin(); it != m_VariablesDerived.end(); it++)
     {
         // identify the variables used in the derived variable
@@ -562,6 +564,7 @@ void BP5Writer::ComputeDerivedVariables()
             free(std::get<0>(derivedBlock));
         }
     }
+    m_Profiler.Stop("DeriveVars");
 }
 #endif
 
@@ -1218,9 +1221,12 @@ void BP5Writer::MakeHeader(std::vector<char> &buffer, size_t &position, const st
         helper::CopyToBuffer(buffer, position, version.c_str());
     };
 
-    // auto &buffer = b.m_Buffer;
-    // auto &position = b.m_Position;
-    // auto &absolutePosition = b.m_AbsolutePosition;
+    if (sizeof(BP5IndexTableHeader) != 64)
+    {
+        std::cerr << "BP6 Index Table Header must be 64 bytes" << std::endl;
+        exit(1);
+    }
+
     if (position > 0)
     {
         helper::Throw<std::invalid_argument>(
@@ -1273,11 +1279,7 @@ void BP5Writer::MakeHeader(std::vector<char> &buffer, size_t &position, const st
     lf_CopyVersionChar(majorVersion, buffer, position);
     lf_CopyVersionChar(minorVersion, buffer, position);
     lf_CopyVersionChar(patchVersion, buffer, position);
-    ++position;
-
-    // Note: Reader does process and use bytes 36-38 in
-    // BP4Deserialize.cpp::ParseMetadataIndex().
-    // Order and position must match there.
+    position = m_EndianFlagPosition;
 
     // byte 36: endianness
     if (position != m_EndianFlagPosition)
@@ -1327,8 +1329,9 @@ void BP5Writer::MakeHeader(std::vector<char> &buffer, size_t &position, const st
     const uint8_t columnMajor = (m_IO.m_ArrayOrder == ArrayOrdering::ColumnMajor) ? 'y' : 'n';
     helper::CopyToBuffer(buffer, position, &columnMajor);
 
-    // byte 41-63: unused
-    position += 23;
+    helper::CopyToBuffer(buffer, position, &m_Parameters.FlattenSteps);
+    // remainder  unused
+    position = m_IndexHeaderSize;
     // absolutePosition = position;
 }
 

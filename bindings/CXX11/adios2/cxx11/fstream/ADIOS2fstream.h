@@ -48,7 +48,6 @@ public:
         out,              //!< write
         in,               //!< read
         in_random_access, //!< read_random_access
-        in_flatten_steps, //!< flatten all input steps to 1
         app               //!< append, not yet supported
     };
 
