@@ -178,6 +178,13 @@ public:
     template <class T>
     Variable<T> InquireVariable(const std::string &name);
 
+    /**
+     * @brief Returns the type of an existing variable as an string
+     * @param name input variable name
+     * @return type primitive type
+     */
+    DataType InquireVariableType(const std::string &name) const noexcept;
+
     VariableNT InquireVariable(const std::string &name);
 
     VariableNT InquireStructVariable(const std::string &name);

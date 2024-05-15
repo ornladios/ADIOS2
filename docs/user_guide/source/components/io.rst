@@ -185,7 +185,11 @@ If the inquired variable/attribute is not found, then the overloaded ``bool()`` 
 
 .. caution::
 
-   Since ``InquireVariable`` and ``InquireAttribute`` are template functions, both the name and type must match the data you are looking for.
+   Since ``InquireVariable`` and ``InquireAttribute`` are template
+   functions, both the name and type must match the data you are
+   looking for.  If you do not know the type of the variable you are
+   inquiring about, it can be accessed with the
+   ``InquireVariableType`` function.
 
 
 Opening an Engine

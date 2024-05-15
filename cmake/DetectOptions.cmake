@@ -575,6 +575,16 @@ if(AWSSDK_FOUND)
     set(ADIOS2_HAVE_AWSSDK TRUE)
 endif()
 
+# XRootD
+if(ADIOS2_USE_XRootD STREQUAL AUTO)
+  find_package(XRootD QUIET COMPONENTS CLIENT UTILS SSI)
+elseif(ADIOS2_USE_XRootD)
+  find_package(XRootD REQUIRED COMPONENTS CLIENT UTILS SSI)
+endif()
+if(XRootD_FOUND)
+  set(ADIOS2_HAVE_XRootD TRUE)
+endif()
+
 # Campaign Management
 if(ADIOS2_USE_Campaign STREQUAL AUTO)
   find_package(SQLite3)

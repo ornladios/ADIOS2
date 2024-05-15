@@ -205,6 +205,13 @@ VariableNT IO::DefineStructVariable(const std::string &name, const StructDefinit
                                                   count, constantDims));
 }
 
+DataType IO::InquireVariableType(const std::string &name) const noexcept
+{
+    helper::CheckForNullptr(m_IO, "for variable name " + name + ", in call to IO::InquireVariable");
+    auto type = m_IO->InquireVariableType(name);
+    return type;
+}
+
 VariableNT IO::InquireVariable(const std::string &name)
 {
     helper::CheckForNullptr(m_IO, "for variable name " + name + ", in call to IO::InquireVariable");
