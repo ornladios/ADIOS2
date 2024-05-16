@@ -11,6 +11,7 @@
 
 #include "adios2/helper/adiosMath.h" // SetWithinLimit
 #include "adios2/toolkit/remote/EVPathRemote.h"
+#include "adios2/toolkit/remote/XrootdRemote.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
 #include <adios2-perfstubs-interface.h>
 
@@ -289,15 +290,26 @@ void BP5Reader::PerformGets()
         {
             RemoteName = m_Parameters.RemoteDataPath;
         }
-        else if (getenv("DoRemote"))
+        else if (getenv("DoRemote") || getenv("DoXRootD"))
         {
             RemoteName = m_Name;
         }
         (void)RowMajorOrdering; // Use in case no remotes available
+#ifdef ADIOS2_HAVE_XROOTD
+        if (getenv("DoXRootD"))
+        {
+            m_Remote = std::unique_ptr<XrootdRemote>(new XrootdRemote());
+            m_Remote->Open("localhost", 1049, m_Name, m_OpenMode, RowMajorOrdering);
+        }
+        else
+#endif
 #ifdef ADIOS2_HAVE_SST
-        m_Remote = std::unique_ptr<EVPathRemote>(new EVPathRemote());
-        m_Remote->Open("localhost", EVPathRemoteCommon::ServerPort, RemoteName, m_OpenMode,
-                       RowMajorOrdering);
+            if (getenv("DoRemote"))
+        {
+            m_Remote = std::unique_ptr<EVPathRemote>(new EVPathRemote());
+            m_Remote->Open("localhost", EVPathRemoteCommon::ServerPort, RemoteName, m_OpenMode,
+                           RowMajorOrdering);
+        }
 #endif
         if (m_Remote == nullptr)
         {

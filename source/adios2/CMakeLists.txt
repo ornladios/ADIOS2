@@ -236,6 +236,12 @@ if(ADIOS2_HAVE_AWSSDK)
   target_link_libraries(adios2_core PRIVATE ${AWSSDK_LINK_LIBRARIES})
 endif()
 
+if(ADIOS2_HAVE_XRootD)
+  target_sources(adios2_core PRIVATE toolkit/remote/XrootdRemote.cpp)
+  target_include_directories(adios2_core PRIVATE ${XROOTD_INCLUDE_DIRS})
+  target_link_libraries(adios2_core PRIVATE ${XROOTD_CLIENT_LIBRARIES} ${XROOTD_UTILS_LIBRARIES} ${XROOTD_SSI_LIBRARIES})
+endif()
+
 if (ADIOS2_HAVE_SST)
   # EVPath-enabled remote file transport
   target_sources(adios2_core PRIVATE toolkit/remote/remote_common.cpp toolkit/transport/file/FileRemote.cpp toolkit/remote/EVPathRemote.cpp)
