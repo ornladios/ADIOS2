@@ -14,7 +14,9 @@
 #include <iostream> //std::cout
 #include <mpi.h>
 #include <stdexcept> //std::invalid_argument std::exception
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
 #include <vector>
 
 void writeMe(adios2::IO &hdf5IO, int rank, int size, const char *testFileName)
