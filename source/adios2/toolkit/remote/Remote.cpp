@@ -37,7 +37,7 @@ Remote::GetHandle Remote::Get(char *VarName, size_t Step, size_t BlockID, Dims &
                               void *dest)
 {
     ThrowUp("RemoteGet");
-    return (intptr_t)0;
+    return (Remote::GetHandle)(intptr_t)0;
 };
 
 bool Remote::WaitForGet(GetHandle handle)
@@ -49,7 +49,7 @@ bool Remote::WaitForGet(GetHandle handle)
 Remote::GetHandle Remote::Read(size_t Start, size_t Size, void *Dest)
 {
     ThrowUp("RemoteRead");
-    return 0;
+    return (Remote::GetHandle)0;
 };
 Remote::~Remote() {}
 Remote::Remote() {}
