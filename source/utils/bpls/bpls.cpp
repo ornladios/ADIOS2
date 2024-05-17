@@ -1307,11 +1307,9 @@ int printVariableInfo(core::Engine *fp, core::IO *io, core::Variable<T> *variabl
 
     if (show_derived_expr)
     {
-        const char *ExprPtr = fp->VariableExprStr(*variable);
-        if (ExprPtr != NULL)
+        std::string ExprStr = fp->VariableExprStr(*variable);
+        if (ExprStr.size() > 0)
         {
-            std::string ExprStr(ExprPtr);
-            std::replace(ExprStr.begin(), ExprStr.end(), '\n', ' ');
             fprintf(outf, "    Derived variable with expression: %s\n", ExprStr.c_str());
         }
     }

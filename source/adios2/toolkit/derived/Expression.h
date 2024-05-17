@@ -54,6 +54,7 @@ public:
     ApplyExpression(DataType type, size_t numBlocks,
                     std::map<std::string, std::vector<DerivedData>> nameToData);
     void print();
+    std::string toStringExpr();
 };
 
 class Expression
