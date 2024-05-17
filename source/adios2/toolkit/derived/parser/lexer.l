@@ -149,6 +149,7 @@ void
 adios2::detail::ASTDriver::parse (const std::string input)
 {
   adios2::detail::parser parse (*this);
+  yy_flex_debug = trace_scanning;
   yy_scan_string(input.c_str());
   parse.set_debug_level (trace_parsing);
   parse ();

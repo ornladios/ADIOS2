@@ -167,6 +167,42 @@ void ExpressionTree::print()
     }
 }
 
+std::string ExpressionTree::toStringExpr()
+{
+    std::string result = "";
+    result += get_op_name(detail.operation) + "(";
+    for (std::tuple<ExpressionTree, std::string, bool> t : sub_exprs)
+    {
+        if (std::get<2>(t) == true)
+        {
+            result += std::get<0>(t).toStringExpr();
+        }
+        else
+        {
+            result += "{" + std::get<1>(t) + "}";
+            if (!detail.indices.empty())
+            {
+                result += "[ ";
+                for (std::tuple<int, int, int> idx : detail.indices)
+                {
+                    result += (std::get<0>(idx) < 0 ? "" : std::to_string(std::get<0>(idx))) + ":";
+                    result += (std::get<1>(idx) < 0 ? "" : std::to_string(std::get<1>(idx))) + ":";
+                    result += (std::get<2>(idx) < 0 ? "" : std::to_string(std::get<2>(idx))) + ",";
+                }
+                // remove last comma
+                result.pop_back();
+                result += " ]";
+            }
+        }
+        result += ",";
+    }
+    // remove last comma
+    result.pop_back();
+    result += ")";
+
+    return result;
+}
+
 Dims ExpressionTree::GetDims(std::map<std::string, Dims> NameToDims)
 {
     std::vector<Dims> exprDims;
