@@ -172,7 +172,7 @@ EVPathRemote::GetHandle EVPathRemote::Get(char *VarName, size_t Step, size_t Blo
     GetMsg.Dest = dest;
     CMwrite(m_conn, ev_state.GetRequestFormat, &GetMsg);
     CMCondition_wait(ev_state.cm, GetMsg.GetResponseCondition);
-    return GetMsg.GetResponseCondition;
+    return (Remote::GetHandle)(intptr_t)GetMsg.GetResponseCondition;
 }
 
 EVPathRemote::GetHandle EVPathRemote::Read(size_t Start, size_t Size, void *Dest)
@@ -186,12 +186,12 @@ EVPathRemote::GetHandle EVPathRemote::Read(size_t Start, size_t Size, void *Dest
     ReadMsg.Dest = Dest;
     CMwrite(m_conn, ev_state.ReadRequestFormat, &ReadMsg);
     CMCondition_wait(ev_state.cm, ReadMsg.ReadResponseCondition);
-    return ReadMsg.ReadResponseCondition;
+    return (Remote::GetHandle)(intptr_t)ReadMsg.ReadResponseCondition;
 }
 
 bool EVPathRemote::WaitForGet(GetHandle handle)
 {
-    return CMCondition_wait(ev_state.cm, (int)handle);
+    return CMCondition_wait(ev_state.cm, (int)(intptr_t)handle);
 }
 #else
 

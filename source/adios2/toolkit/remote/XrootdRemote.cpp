@@ -3,6 +3,8 @@
  * accompanying file Copyright.txt for details.
  * ganyushin@gmail.com
  */
+#include <future>
+
 #include "XrootdRemote.h"
 #include "adios2/core/ADIOS.h"
 #include "adios2/helper/adiosLog.h"
@@ -100,6 +102,8 @@ public:
     static myRequest *currentRequest;
     char *responseBuffer;
     int responseBufferLen;
+    char *dest;
+    std::promise<void> *promise;
 
 private:
     XrdSsiResource rSpec;
@@ -130,8 +134,9 @@ void myRequest::Alert(XrdSsiRespInfoMsg &aMsg)
 
     // Print what we received
     //
-    fprintf(XrdSsiCl::outFile, "%s@%s: Rcvd %d bytes alert: '%s'\n", rName, GetEndPoint().c_str(),
-            theMsz, theMsg);
+    //    fprintf(XrdSsiCl::outFile, "%s@%s: Rcvd %d bytes alert: '%s'\n", rName,
+    //    GetEndPoint().c_str(),
+    //            theMsz, theMsg);
 
     // Recycle the message
     //
@@ -199,15 +204,15 @@ bool myRequest::ProcessResponse(const XrdSsiErrInfo &eInfo, const XrdSsiRespInfo
     // theMD = GetMetadata(theML);
     if (rInfo.mdlen)
     {
-        fprintf(XrdSsiCl::outFile,
-                "%s@%s: Rcvd %s response "
-                "with %d metabytes '%s'\n",
-                rName, GetEndPoint().c_str(), rInfo.State(), rInfo.mdlen, rInfo.mdata);
+        //        fprintf(XrdSsiCl::outFile,
+        //                "%s@%s: Rcvd %s response "
+        //                "with %d metabytes '%s'\n",
+        //                rName, GetEndPoint().c_str(), rInfo.State(), rInfo.mdlen, rInfo.mdata);
     }
     else
     {
-        fprintf(XrdSsiCl::outFile, "%s@%s: Rcvd %s response\n", rName, GetEndPoint().c_str(),
-                rInfo.State());
+        // fprintf(XrdSsiCl::outFile, "%s@%s: Rcvd %s response\n", rName, GetEndPoint().c_str(),
+        //           rInfo.State());
     }
 
     // While a response can have one of several forms a good response can only be
@@ -232,6 +237,7 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
                 "%s@%s; %s\n",
                 rName, GetEndPoint().c_str(), eInfo.Get().c_str());
         Finished();
+        promise->set_value();
         delete this;
         return;
     }
@@ -256,12 +262,12 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
 
     // End with new line character
     //
-    fprintf(XrdSsiCl::outFile, "\nReceived %d bytes from %s@%s\n", totbytes, rName,
-            GetEndPoint().c_str());
+    memcpy(dest, responseBuffer, responseBufferLen);
 
     // We are done with our request. We avoid calling Finished if we got here
     // because we were cancelled.
     //
+    promise->set_value();
     Finished();
     //   delete this;
 }
@@ -325,11 +331,19 @@ void XrootdRemote::Open(const std::string hostname, const int32_t port, const st
     return;
 }
 
+bool XrootdRemote::WaitForGet(GetHandle handle)
+{
+    std::promise<void> *p = (std::promise<void> *)handle;
+    p->get_future().wait();
+    delete p;
+    return true;
+}
+
 Remote::GetHandle XrootdRemote::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count,
                                     Dims &Start, void *dest)
 {
 #ifdef ADIOS2_HAVE_XROOTD
-    char rName[512] = "/adios";
+    char rName[512] = "/home/eisen/xroot/data";
     XrdSsiResource rSpec((std::string)rName);
     myRequest *reqP;
     std::string reqData = "get " + fileName + " " + std::string(VarName);
@@ -366,15 +380,18 @@ Remote::GetHandle XrootdRemote::Get(char *VarName, size_t Step, size_t BlockID, 
     char *reqDataStr = strdup(reqData.c_str());
     reqP = new myRequest(clUI, rName, GetReqID(), reqDataStr, reqLen);
     reqP->SetResource(rSpec);
+    reqP->dest = (char *)dest;
+    reqP->promise = new std::promise<void>();
     // We simply hand off the request to the service to deal with it. When a
     // response is ready or an error occured our callback is invoked.
     //
     clUI.ssiService->ProcessRequest(*reqP, rSpec);
     // thread synchronization
-    sleep(1);
-    memcpy(dest, reqP->responseBuffer, reqP->responseBufferLen);
+    WaitForGet((void *)(reqP->promise));
+    return (intptr_t)0;
+#else
+    return (intptr_t)0;
 #endif
-    return 0;
 }
 
 XrootdRemote::GetHandle XrootdRemote::Read(size_t Start, size_t Size, void *Dest)

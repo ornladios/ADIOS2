@@ -37,7 +37,7 @@ Remote::GetHandle Remote::Get(char *VarName, size_t Step, size_t BlockID, Dims &
                               void *dest)
 {
     ThrowUp("RemoteGet");
-    return 0;
+    return (intptr_t)0;
 };
 
 bool Remote::WaitForGet(GetHandle handle)

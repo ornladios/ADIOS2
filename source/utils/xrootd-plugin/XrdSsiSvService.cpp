@@ -456,7 +456,6 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         m_engine = m_io.Open(reqData, adios2::Mode::ReadRandomAccess);
         std::string VarName = requestParams[0];
         auto var = m_io.InquireVariable(VarName);
-
         adios2::DataType TypeOfVar = m_io.InquireVariableType(VarName);
         try
         {
@@ -469,7 +468,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         adios2::Variable<T> var = m_io.InquireVariable<T>(VarName);                                \
         std::vector<T> resBuffer;                                                                  \
         size_t step = std::stoi(requestParams[1]);                                                 \
-        var.SetStepSelection({step, step + 1});                                                    \
+        var.SetStepSelection({step, 1});                                                           \
         size_t paramLength = (requestParams.size() - 3) / 2;                                       \
         adios2::Dims s(paramLength);                                                               \
         adios2::Dims c(paramLength);                                                               \
@@ -482,9 +481,9 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         var.SetSelection(varSel);                                                                  \
         m_engine.Get(var, resBuffer, adios2::Mode::Sync);                                          \
         size_t responseSize = resBuffer.size();                                                    \
-        responseBuffer = new char[responseSize * sizeof(float)];                                   \
-        responseBufferSize = responseSize * sizeof(float);                                         \
-        memcpy(responseBuffer, resBuffer.data(), responseSize * sizeof(float));                    \
+        responseBuffer = new char[responseSize * sizeof(T)];                                       \
+        responseBufferSize = responseSize * sizeof(T);                                             \
+        memcpy(responseBuffer, resBuffer.data(), responseSize * sizeof(T));                        \
         XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "get");                               \
     }
             ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)

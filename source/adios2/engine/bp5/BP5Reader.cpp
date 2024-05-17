@@ -299,7 +299,7 @@ void BP5Reader::PerformGets()
         if (getenv("DoXRootD"))
         {
             m_Remote = std::unique_ptr<XrootdRemote>(new XrootdRemote());
-            m_Remote->Open("localhost", 1049, m_Name, m_OpenMode, RowMajorOrdering);
+            m_Remote->Open("localhost", 1094, m_Name, m_OpenMode, RowMajorOrdering);
         }
         else
 #endif
@@ -535,7 +535,7 @@ void BP5Reader::Init()
     // Don't try to open the remote file when we open local metadata.  Do that on demand.
     if (!m_Parameters.RemoteDataPath.empty())
         m_dataIsRemote = true;
-    if (getenv("DoRemote"))
+    if (getenv("DoRemote") || getenv("DoXRootD"))
         m_dataIsRemote = true;
 }
 
