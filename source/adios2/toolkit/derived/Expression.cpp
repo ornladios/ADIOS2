@@ -93,6 +93,8 @@ Dims Expression::GetStart() { return m_Start; }
 
 Dims Expression::GetCount() { return m_Count; }
 
+std::string Expression::toStringExpr() { return m_Expr.toStringExpr(); }
+
 void Expression::SetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims)
 {
     std::map<std::string, Dims> NameToCount, NameToStart, NameToShape;
@@ -165,6 +167,42 @@ void ExpressionTree::print()
             std::cout << "string: " << std::get<1>(t) << std::endl;
         }
     }
+}
+
+std::string ExpressionTree::toStringExpr()
+{
+    std::string result = "";
+    result += get_op_name(detail.operation) + "(";
+    for (std::tuple<ExpressionTree, std::string, bool> t : sub_exprs)
+    {
+        if (std::get<2>(t) == true)
+        {
+            result += std::get<0>(t).toStringExpr();
+        }
+        else
+        {
+            result += "{" + std::get<1>(t) + "}";
+            if (!detail.indices.empty())
+            {
+                result += "[ ";
+                for (std::tuple<int, int, int> idx : detail.indices)
+                {
+                    result += (std::get<0>(idx) < 0 ? "" : std::to_string(std::get<0>(idx))) + ":";
+                    result += (std::get<1>(idx) < 0 ? "" : std::to_string(std::get<1>(idx))) + ":";
+                    result += (std::get<2>(idx) < 0 ? "" : std::to_string(std::get<2>(idx))) + ",";
+                }
+                // remove last comma
+                result.pop_back();
+                result += " ]";
+            }
+        }
+        result += ",";
+    }
+    // remove last comma
+    result.pop_back();
+    result += ")";
+
+    return result;
 }
 
 Dims ExpressionTree::GetDims(std::map<std::string, Dims> NameToDims)

@@ -751,9 +751,18 @@ bool BP5Reader::VariableMinMax(const VariableBase &Var, const size_t Step, MinMa
     return m_BP5Deserializer->VariableMinMax(Var, Step, MinMax);
 }
 
-const char *BP5Reader::VariableExprStr(const VariableBase &Var)
+std::string BP5Reader::VariableExprStr(const VariableBase &Var)
 {
-    return static_cast<const char *>(m_BP5Deserializer->VariableExprStr(Var));
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    char *expPtr = m_BP5Deserializer->VariableExprStr(Var);
+    if (expPtr != nullptr)
+    {
+        derived::Expression expr(expPtr);
+        return expr.toStringExpr();
+    }
+#endif
+    std::string noDerive("");
+    return noDerive;
 }
 
 void BP5Reader::InitTransports()

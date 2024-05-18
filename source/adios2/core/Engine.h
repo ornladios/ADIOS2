@@ -482,7 +482,7 @@ public:
         return false;
     }
 
-    virtual const char *VariableExprStr(const VariableBase &) { return NULL; }
+    virtual std::string VariableExprStr(const VariableBase &) { return NULL; }
 
     /** Notify the engine when a new attribute is defined. Called from IO.tcc
      */

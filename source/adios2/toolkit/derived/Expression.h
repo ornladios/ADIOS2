@@ -54,6 +54,7 @@ public:
     ApplyExpression(DataType type, size_t numBlocks,
                     std::map<std::string, std::vector<DerivedData>> nameToData);
     void print();
+    std::string toStringExpr();
 };
 
 class Expression
@@ -73,6 +74,7 @@ public:
     Dims GetShape();
     Dims GetStart();
     Dims GetCount();
+    std::string toStringExpr();
     void SetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
     std::vector<std::string> VariableNameList();
     std::vector<DerivedData>
