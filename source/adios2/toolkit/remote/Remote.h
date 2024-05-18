@@ -33,7 +33,7 @@ public:
     virtual void OpenSimpleFile(const std::string hostname, const int32_t port,
                                 const std::string filename);
 
-    typedef int GetHandle;
+    typedef void *GetHandle;
 
     virtual GetHandle Get(char *VarName, size_t Step, size_t BlockID, Dims &Count, Dims &Start,
                           void *dest);

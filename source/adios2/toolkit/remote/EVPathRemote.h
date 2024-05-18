@@ -43,8 +43,6 @@ public:
 
     void OpenSimpleFile(const std::string hostname, const int32_t port, const std::string filename);
 
-    typedef int GetHandle;
-
     GetHandle Get(char *VarName, size_t Step, size_t BlockID, Dims &Count, Dims &Start, void *dest);
 
     bool WaitForGet(GetHandle handle);
