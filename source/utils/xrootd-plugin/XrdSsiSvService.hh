@@ -39,6 +39,7 @@
 //  Here we define out service implementation. We need to inherit the Service
 //  class but equally important we need to also inherit the Responder class in
 //  order to post a response to the request object.
+#include "AdiosFilePool.h"
 
 class XrdSsiSvService : public XrdSsiService, public XrdSsiResponder
 {
@@ -79,8 +80,27 @@ public:
 
     XrdSsiSvService(const char *sname = 0)
     {
+        std::cout << "XrdSsiSvService Constructor called Sname = ";
+        if (sname)
+            std::cout << std::string(sname);
+        else
+            std::cout << "NULL";
+        std::cout << std::endl;
         sName = strdup(sname ? sname : "");
         *respMeta = 0;
+    }
+
+    XrdSsiSvService(const char *sname, ADIOSFilePool *parentPoolPointer = NULL)
+    {
+        std::cout << "XrdSsiSvService Constructor called Sname = ";
+        if (sname)
+            std::cout << std::string(sname);
+        else
+            std::cout << "NULL";
+        std::cout << std::endl;
+        sName = strdup(sname ? sname : "");
+        *respMeta = 0;
+        m_FilePoolPtr = parentPoolPointer;
     }
 
 protected:
@@ -97,7 +117,7 @@ protected:
     //! Stop() method to effectively delete the service object.
     //-----------------------------------------------------------------------------
 
-    ~XrdSsiSvService() {}
+    ~XrdSsiSvService() { std::cout << "XrdSsiSvService Destructor called" << std::endl; }
 
 private:
     int Copy2Buff(char *dest, int dsz, const char *src, int ssz);
@@ -119,8 +139,8 @@ private:
     int respDly;
     int streamRdSz;
     bool streamActv;
-    adios2::ADIOS adios;
-    adios2::IO m_io;
     adios2::Engine m_engine;
+    adios2::ADIOSFilePool m_ParentFilePool; // unused except in parent object
+    adios2::ADIOSFilePool *m_FilePoolPtr;   // pointer to parent object pool
 };
 #endif
