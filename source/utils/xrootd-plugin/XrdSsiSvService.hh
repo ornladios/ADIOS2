@@ -57,7 +57,7 @@ public:
     void doWecho()
     {
         sleep(respDly);
-        Respond(respBuff, respMeta);
+        Respond(responseBuffer, respMeta);
     }
 
     void doAdiosGet() { AdiosRespond(responseBuffer, respMeta); }
@@ -116,8 +116,7 @@ protected:
     //! Destructor is protected. You cannot use delete on a service, use the
     //! Stop() method to effectively delete the service object.
     //-----------------------------------------------------------------------------
-
-    ~XrdSsiSvService() { std::cout << "XrdSsiSvService Destructor called" << std::endl; }
+  ~XrdSsiSvService();
 
 private:
     int Copy2Buff(char *dest, int dsz, const char *src, int ssz);
@@ -132,8 +131,9 @@ private:
     static char alertMsg[256];
     static int alertNum;
     char *sName;
-    char respBuff[1024];
     char *responseBuffer;
+    adios2::DataType TypeOfVector;
+    void *VectorP;
     int responseBufferSize = 0;
     char respMeta[512];
     int respDly;

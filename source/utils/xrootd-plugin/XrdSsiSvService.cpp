@@ -252,6 +252,14 @@ void XrdSsiSvService::ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resR
     agent = new XrdSsiSvService(resRef.rName.c_str(), &m_ParentFilePool);
     agent->ProcessRequest4Me(&reqRef);
 }
+XrdSsiSvService::~XrdSsiSvService()
+{
+    if (sName)
+        free(sName);
+    if (VectorP != nullptr)
+        delete static_cast<std::vector<char> *>(VectorP);
+    std::cout << "XrdSsiSvService Destructor called" << std::endl;
+}
 /******************************************************************************/
 /*         help function to split strings                                     */
 /******************************************************************************/
@@ -420,25 +428,6 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         return;
     }
 
-    if (!strcmp(reqData, "wecho"))
-    {
-        pthread_t tid;
-        reqData = reqInfo.GetToken(&reqArgs);
-        respDly = atoi(reqData);
-        if (!reqArgs || !(*reqArgs))
-        {
-            RespondErr("Echo string not specified.", EINVAL);
-            return;
-        }
-        if ((quest = index(reqArgs, '?')))
-        {
-            Copy2Buff(respMeta, sizeof(respMeta), quest + 1, strlen(quest + 1) + 1);
-            *quest = 0;
-        }
-        Copy2Buff(respBuff, sizeof(respBuff), reqArgs, strlen(reqArgs) + 1);
-        XrdSysThread::Run(&tid, SvWecho, (void *)this, 0, "wecho");
-        return;
-    }
 #define HasPrefix(s, p) (s.compare(0, sizeof(p) - 1, p) == 0)
     if (!strcmp(reqData, "get"))
     {
@@ -519,17 +508,17 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
     else if (TypeOfVar == adios2::helper::GetDataType<T>())                                        \
     {                                                                                              \
         adios2::Variable<T> var = io.InquireVariable<T>(VarName);                                  \
-        std::vector<T> resBuffer;                                                                  \
+        std::vector<T> *resBuffer = new std::vector<T>();                                          \
         if (BlockID != (size_t)-1)                                                                 \
             var.SetBlockSelection(BlockID);                                                        \
         var.SetStepSelection({Step, 1});                                                           \
         if (Start.size())                                                                          \
             var.SetSelection(varSel);                                                              \
-        engine.Get(var, resBuffer, adios2::Mode::Sync);                                            \
-        size_t responseSize = resBuffer.size();                                                    \
-        responseBuffer = new char[responseSize * sizeof(T)];                                       \
+        engine.Get(var, *resBuffer, adios2::Mode::Sync);                                           \
+        size_t responseSize = resBuffer->size();                                                   \
+        responseBuffer = (char *)resBuffer->data();                                                \
         responseBufferSize = responseSize * sizeof(T);                                             \
-        memcpy(responseBuffer, resBuffer.data(), responseSize * sizeof(T));                        \
+        VectorP = static_cast<void *>(resBuffer);                                                  \
         XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "get");                               \
     }
             ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
@@ -578,39 +567,7 @@ void XrdSsiSvService::Respond(const char *rData, const char *mData)
     XrdSsiResponder::Status rc;
     int rLen;
 
-    // Handle meta data first. We copy the metadata into a buffer that must live
-    // even after we return because the data may be sent later.
-    //
-    if (mData && *mData)
-    {
-        rLen = strlen(mData) + 1;
-        if (mData != respMeta)
-            rLen = Copy2Buff(respMeta, sizeof(respMeta), mData, rLen);
-        if ((rc = SetMetadata(respMeta, rLen)))
-            ResponseFailed(rc);
-    }
-
-    // Check if all we are doing is sending metadata
-    //
-    if (!(*rData))
-    {
-        if ((rc = SetNilResponse()))
-            ResponseFailed(rc);
-        return;
-    }
-
-    // We copy the response into a buffer that must live even after we return to
-    // the caller because the data in that buffer will be sent back to the client.
-    //
-    rLen = strlen(rData) + 1;
-    if (rData != respBuff)
-        rLen = Copy2Buff(respBuff, sizeof(respBuff), rData, rLen);
-
-    // We use the inherited method XrdSsiResponder::SetResponse to post the response
-    // Note we always send the null byte to make it easy on the client :-)
-    //
-    if ((rc = SetResponse(respBuff, rLen)))
-        ResponseFailed(rc);
+    throw std::logic_error("Respond shouldn't be called");
 }
 void XrdSsiSvService::AdiosRespond(const char *rData, const char *mData)
 {
@@ -639,15 +596,11 @@ void XrdSsiSvService::AdiosRespond(const char *rData, const char *mData)
     // We copy the response into a buffer that must live even after we return to
     // the caller because the data in that buffer will be sent back to the client.
     //
-    // rLen = strlen(rData)+1;
     rLen = responseBufferSize;
-    if (rData != respBuff)
-        rLen = Copy2Buff(respBuff, sizeof(respBuff), rData, rLen);
-
     // We use the inherited method XrdSsiResponder::SetResponse to post the response
     // Note we always send the null byte to make it easy on the client :-)
     //
-    if ((rc = SetResponse(respBuff, rLen)))
+    if ((rc = SetResponse(responseBuffer, rLen)))
         ResponseFailed(rc);
 }
 
