@@ -221,7 +221,7 @@ void VariableBase::SetMemorySelection(const Box<Dims> &memorySelection)
     const Dims &memoryStart = memorySelection.first;
     const Dims &memoryCount = memorySelection.second;
 
-    if(memoryStart.empty() && memoryCount.empty())
+    if (memoryStart.empty() && memoryCount.empty())
     {
         m_MemoryStart.clear();
         m_MemoryCount.clear();
