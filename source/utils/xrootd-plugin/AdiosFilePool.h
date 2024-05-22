@@ -7,6 +7,8 @@
 #define ADIOSFILEPOOL_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <algorithm>
+#include <cstring>
 #include <mutex>
 #include <random>
 #include <string>
@@ -45,7 +47,7 @@ public:
         m_io = adios.DeclareIO(m_IOname, ArrayOrder);
         adios_read_mode = adios2::Mode::ReadRandomAccess;
         m_engine = m_io.Open(FileName, adios_read_mode);
-        memcpy(&m_ID, m_IOname.c_str(), sizeof(m_ID));
+        std::memcpy(&m_ID, m_IOname.c_str(), sizeof(m_ID));
     }
     ~AnonADIOSFile()
     {

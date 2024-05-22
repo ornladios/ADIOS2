@@ -242,16 +242,6 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
         return;
     }
 
-    // Display the data if we actually have some.
-    //
-    if (dlen > 0)
-    {
-        totbytes += dlen;
-        responseBuffer = new char[dlen];
-        responseBufferLen = dlen;
-        memcpy(responseBuffer, buff, dlen);
-    }
-
     // Now we check if we need to ask for more data. If last is false, we do!
     //
     if (!last && !clUI.doOnce)
@@ -260,16 +250,17 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
         return;
     }
 
-    // End with new line character
+    // fill in destination buffer
     //
-    memcpy(dest, responseBuffer, responseBufferLen);
+    totbytes += dlen;
+    memcpy(dest, buff, dlen);
 
     // We are done with our request. We avoid calling Finished if we got here
     // because we were cancelled.
     //
     promise->set_value();
     Finished();
-    //   delete this;
+    delete this;
 }
 
 /******************************************************************************/
@@ -346,7 +337,7 @@ Remote::GetHandle XrootdRemote::Get(char *VarName, size_t Step, size_t BlockID, 
                                     Dims &Start, void *dest)
 {
 #ifdef ADIOS2_HAVE_XROOTD
-    char rName[512] = "/Users/eisen/xroot/data";
+    char rName[512] = "/home/eisen/xroot/data";
     XrdSsiResource rSpec((std::string)rName);
     myRequest *reqP;
     std::string reqData = "get Filename=" + std::string(m_Filename) + std::string("&RMOrder=") +
