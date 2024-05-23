@@ -56,11 +56,10 @@ public:
 
     void doWecho()
     {
-        sleep(respDly);
-        Respond(responseBuffer, respMeta);
+        Respond(m_responseBuffer, m_respMeta);
     }
 
-    void doAdiosGet() { AdiosRespond(responseBuffer, respMeta); }
+    void doAdiosGet() { AdiosRespond(m_responseBuffer, m_respMeta); }
 
     //-----------------------------------------------------------------------------
     //! Prepare for request arrival.
@@ -80,26 +79,14 @@ public:
 
     XrdSsiSvService(const char *sname = 0)
     {
-        std::cout << "XrdSsiSvService Constructor called Sname = ";
-        if (sname)
-            std::cout << std::string(sname);
-        else
-            std::cout << "NULL";
-        std::cout << std::endl;
         sName = strdup(sname ? sname : "");
-        *respMeta = 0;
+        *m_respMeta = 0;
     }
 
     XrdSsiSvService(const char *sname, ADIOSFilePool *parentPoolPointer = NULL)
     {
-        std::cout << "XrdSsiSvService Constructor called Sname = ";
-        if (sname)
-            std::cout << std::string(sname);
-        else
-            std::cout << "NULL";
-        std::cout << std::endl;
         sName = strdup(sname ? sname : "");
-        *respMeta = 0;
+        *m_respMeta = 0;
         m_FilePoolPtr = parentPoolPointer;
     }
 
@@ -126,20 +113,16 @@ private:
     void RespondErr(const char *eText, int eNum);
     void ResponseFailed(XrdSsiResponder::Status rc);
     void SendAlert(char *aMsg, int aNum);
-    static char objType;
 
     static char alertMsg[256];
     static int alertNum;
     char *sName;
-    char *responseBuffer;
-    adios2::DataType TypeOfVector;
-    void *VectorP;
-    int responseBufferSize = 0;
-    char respMeta[512];
-    int respDly;
+    char *m_responseBuffer = NULL;
+    int m_responseBufferSize = 0;
+    char m_respMeta[512];
+    char m_respData[1024];
     int streamRdSz;
     bool streamActv;
-    adios2::Engine m_engine;
     adios2::ADIOSFilePool m_ParentFilePool; // unused except in parent object
     adios2::ADIOSFilePool *m_FilePoolPtr;   // pointer to parent object pool
 };

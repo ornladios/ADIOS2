@@ -118,9 +118,10 @@ void XrdSsiSvService::Finished(XrdSsiRequest &rqstR, const XrdSsiRespInfo &rInfo
     // we lost the connection to the client. This provides us the opportunity to
     // reclaim any resources tied up with the request object.
     //
-    const char *what = (cancel ? "cancelled" : "completed");
+    //    const char *what = (cancel ? "cancelled" : "completed");
 
-    TRACE("Request " << hex << &rqstR << dec << " has been " << what << " resp " << rInfo.State());
+    //    TRACE("Request " << hex << &rqstR << dec << " has been " << what << " resp " <<
+    //    rInfo.State());
 
     // Now free up resources depending on how we responded
     //
@@ -172,11 +173,6 @@ bool XrdSsiSvService::Prepare(XrdSsiErrInfo &eInfo, const XrdSsiResource &rDesc)
     //
     static int busyCount = 0;
     const char *rDest, *rName = rDesc.rName.c_str();
-
-    // Do some tracing
-    //
-    TRACE("User='" << rDesc.rUser.c_str() << "'"
-                   << " rName= " << rName << " cgi='" << rDesc.rInfo.c_str() << "'");
 
     // We test the "busy" return. A session of "/.../busy" triggers this and
     // eventualy we will fail the provision. We ignore MT issues for this.
@@ -256,9 +252,10 @@ XrdSsiSvService::~XrdSsiSvService()
 {
     if (sName)
         free(sName);
-    if (VectorP != nullptr)
-        delete static_cast<std::vector<char> *>(VectorP);
-    std::cout << "XrdSsiSvService Destructor called" << std::endl;
+    if (m_responseBuffer != &m_respData[0])
+        free(m_responseBuffer);
+    if (m_FilePoolPtr == nullptr)
+        std::cout << "Root XrdSsiSvService Destructor called" << std::endl;
 }
 /******************************************************************************/
 /*         help function to split strings                                     */
@@ -492,6 +489,14 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
                 Start.push_back(S);
             }
         }
+        //  Get a "anonymous" engine with this file open with this array order.
+        //  (any other differentiating characteristics of an ADIOS Open should be included in these
+        //  parameters.) We'll use this engine for the Get(), then return it to the pool. Memory to
+        //  hold data from this Get is allocated here, but associated with this instance and is only
+        //  destroyed when this instance is destroyed. We use a small buffer in the instance for
+        //  small gets to avoid malloc overhead. There is only one filePool object that is ever
+        //  used, that of the original XrdSsiSvService object for ADIOS.  Each "child" of this
+        //  object has a pointer to the parent's object.
         auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder);
         pthread_t tid;
         auto engine = poolEntry->m_engine;
@@ -508,17 +513,18 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
     else if (TypeOfVar == adios2::helper::GetDataType<T>())                                        \
     {                                                                                              \
         adios2::Variable<T> var = io.InquireVariable<T>(VarName);                                  \
-        std::vector<T> *resBuffer = new std::vector<T>();                                          \
         if (BlockID != (size_t)-1)                                                                 \
             var.SetBlockSelection(BlockID);                                                        \
         var.SetStepSelection({Step, 1});                                                           \
         if (Start.size())                                                                          \
             var.SetSelection(varSel);                                                              \
-        engine.Get(var, *resBuffer, adios2::Mode::Sync);                                           \
-        size_t responseSize = resBuffer->size();                                                   \
-        responseBuffer = (char *)resBuffer->data();                                                \
-        responseBufferSize = responseSize * sizeof(T);                                             \
-        VectorP = static_cast<void *>(resBuffer);                                                  \
+        m_responseBufferSize = var.SelectionSize() * sizeof(T);                                    \
+        if (m_responseBufferSize > sizeof(m_respData))                                             \
+            m_responseBuffer = (char *)malloc(m_responseBufferSize);                               \
+        else                                                                                       \
+            m_responseBuffer = &m_respData[0];                                                     \
+        engine.Get(var, (T *)m_responseBuffer, adios2::Mode::Sync);                                \
+        m_FilePoolPtr->Return(poolEntry);                                                          \
         XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "get");                               \
     }
             ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
@@ -530,7 +536,6 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         }
         // detached thread. Memory should not be deallocated yet,
         // olnly of a thread is finished
-        m_FilePoolPtr->Return(poolEntry);
         return;
     }
     // Ok we don't know what this is
@@ -580,9 +585,9 @@ void XrdSsiSvService::AdiosRespond(const char *rData, const char *mData)
     if (mData && *mData)
     {
         rLen = strlen(mData) + 1;
-        if (mData != respMeta)
-            rLen = Copy2Buff(respMeta, sizeof(respMeta), mData, rLen);
-        if ((rc = SetMetadata(respMeta, rLen)))
+        if (mData != m_respMeta)
+            rLen = Copy2Buff(m_respMeta, sizeof(m_respMeta), mData, rLen);
+        if ((rc = SetMetadata(m_respMeta, rLen)))
             ResponseFailed(rc);
     }
 
@@ -596,11 +601,11 @@ void XrdSsiSvService::AdiosRespond(const char *rData, const char *mData)
     // We copy the response into a buffer that must live even after we return to
     // the caller because the data in that buffer will be sent back to the client.
     //
-    rLen = responseBufferSize;
+    rLen = m_responseBufferSize;
     // We use the inherited method XrdSsiResponder::SetResponse to post the response
     // Note we always send the null byte to make it easy on the client :-)
     //
-    if ((rc = SetResponse(responseBuffer, rLen)))
+    if ((rc = SetResponse(m_responseBuffer, rLen)))
         ResponseFailed(rc);
 }
 
