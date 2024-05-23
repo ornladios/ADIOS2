@@ -347,9 +347,16 @@ void BP5Reader::PerformRemoteGets()
 {
     // TP startGenerate = NOW();
     auto GetRequests = m_BP5Deserializer->PendingGetRequests;
+    std::vector<Remote::GetHandle> handles;
     for (auto &Req : GetRequests)
     {
-        m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count, Req.Start, Req.Data);
+        auto handle =
+            m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count, Req.Start, Req.Data);
+        handles.push_back(handle);
+    }
+    for (auto &handle : handles)
+    {
+        m_Remote->WaitForGet(handle);
     }
 }
 

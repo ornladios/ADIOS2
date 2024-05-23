@@ -39,6 +39,7 @@
 //  Here we define out service implementation. We need to inherit the Service
 //  class but equally important we need to also inherit the Responder class in
 //  order to post a response to the request object.
+#include "AdiosFilePool.h"
 
 class XrdSsiSvService : public XrdSsiService, public XrdSsiResponder
 {
@@ -56,7 +57,7 @@ public:
     void doWecho()
     {
         sleep(respDly);
-        Respond(respBuff, respMeta);
+        Respond(responseBuffer, respMeta);
     }
 
     void doAdiosGet() { AdiosRespond(responseBuffer, respMeta); }
@@ -79,8 +80,27 @@ public:
 
     XrdSsiSvService(const char *sname = 0)
     {
+        std::cout << "XrdSsiSvService Constructor called Sname = ";
+        if (sname)
+            std::cout << std::string(sname);
+        else
+            std::cout << "NULL";
+        std::cout << std::endl;
         sName = strdup(sname ? sname : "");
         *respMeta = 0;
+    }
+
+    XrdSsiSvService(const char *sname, ADIOSFilePool *parentPoolPointer = NULL)
+    {
+        std::cout << "XrdSsiSvService Constructor called Sname = ";
+        if (sname)
+            std::cout << std::string(sname);
+        else
+            std::cout << "NULL";
+        std::cout << std::endl;
+        sName = strdup(sname ? sname : "");
+        *respMeta = 0;
+        m_FilePoolPtr = parentPoolPointer;
     }
 
 protected:
@@ -96,8 +116,7 @@ protected:
     //! Destructor is protected. You cannot use delete on a service, use the
     //! Stop() method to effectively delete the service object.
     //-----------------------------------------------------------------------------
-
-    ~XrdSsiSvService() {}
+  ~XrdSsiSvService();
 
 private:
     int Copy2Buff(char *dest, int dsz, const char *src, int ssz);
@@ -112,15 +131,16 @@ private:
     static char alertMsg[256];
     static int alertNum;
     char *sName;
-    char respBuff[1024];
     char *responseBuffer;
+    adios2::DataType TypeOfVector;
+    void *VectorP;
     int responseBufferSize = 0;
     char respMeta[512];
     int respDly;
     int streamRdSz;
     bool streamActv;
-    adios2::ADIOS adios;
-    adios2::IO m_io;
     adios2::Engine m_engine;
+    adios2::ADIOSFilePool m_ParentFilePool; // unused except in parent object
+    adios2::ADIOSFilePool *m_FilePoolPtr;   // pointer to parent object pool
 };
 #endif

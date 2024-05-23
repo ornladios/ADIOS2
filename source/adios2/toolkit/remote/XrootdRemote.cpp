@@ -242,16 +242,6 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
         return;
     }
 
-    // Display the data if we actually have some.
-    //
-    if (dlen > 0)
-    {
-        totbytes += dlen;
-        responseBuffer = new char[dlen];
-        responseBufferLen = dlen;
-        memcpy(responseBuffer, buff, dlen);
-    }
-
     // Now we check if we need to ask for more data. If last is false, we do!
     //
     if (!last && !clUI.doOnce)
@@ -260,16 +250,17 @@ void myRequest::ProcessResponseData(const XrdSsiErrInfo &eInfo, char *buff, int 
         return;
     }
 
-    // End with new line character
+    // fill in destination buffer
     //
-    memcpy(dest, responseBuffer, responseBufferLen);
+    totbytes += dlen;
+    memcpy(dest, buff, dlen);
 
     // We are done with our request. We avoid calling Finished if we got here
     // because we were cancelled.
     //
     promise->set_value();
     Finished();
-    //   delete this;
+    delete this;
 }
 
 /******************************************************************************/
@@ -318,7 +309,10 @@ void XrootdRemote::Open(const std::string hostname, const int32_t port, const st
                         const Mode mode, bool RowMajorOrdering)
 {
 #ifdef ADIOS2_HAVE_XROOTD
-    fileName = filename;
+    m_Filename = filename;
+    m_Mode = mode;
+    m_RowMajorOrdering = RowMajorOrdering;
+
     const std::string contact = hostname + ":" + std::to_string(port);
     clUI.cmdName = strdup("adios:");
     clUI.contact = strdup(contact.c_str());
@@ -346,18 +340,21 @@ Remote::GetHandle XrootdRemote::Get(char *VarName, size_t Step, size_t BlockID, 
     char rName[512] = "/home/eisen/xroot/data";
     XrdSsiResource rSpec((std::string)rName);
     myRequest *reqP;
-    std::string reqData = "get " + fileName + " " + std::string(VarName);
-    reqData += "&" + std::to_string(Step);
-    reqData += "&" + std::to_string(BlockID);
+    std::string reqData = "get Filename=" + std::string(m_Filename) + std::string("&RMOrder=") +
+                          std::to_string(m_RowMajorOrdering) + std::string("&Varname=") +
+                          std::string(VarName);
+    reqData += "&Step=" + std::to_string(Step);
+    reqData += "&Block=" + std::to_string(BlockID);
+    reqData += "&Dims=" + std::to_string(Count.size());
 
     for (auto &c : Count)
     {
-        reqData += "&" + std::to_string(c);
+        reqData += "&Count=" + std::to_string(c);
     }
 
     for (auto &s : Start)
     {
-        reqData += "&" + std::to_string(s);
+        reqData += "&Start=" + std::to_string(s);
     }
 
     // The first step is to define the resource we will be using. So, just
@@ -387,10 +384,9 @@ Remote::GetHandle XrootdRemote::Get(char *VarName, size_t Step, size_t BlockID, 
     //
     clUI.ssiService->ProcessRequest(*reqP, rSpec);
     // thread synchronization
-    WaitForGet((void *)(reqP->promise));
-    return (intptr_t)0;
+    return (GetHandle)(intptr_t)(reqP->promise);
 #else
-    return (intptr_t)0;
+    return (GetHandle)(intptr_t)0;
 #endif
 }
 

@@ -90,7 +90,9 @@ public:
     XrdSsiErrInfo eInfo;
 #endif
     int reqLen;
-    std::string fileName;
+    std::string m_Filename;
+    Mode m_Mode;
+    bool m_RowMajorOrdering;
 
     XrootdRemote();
     ~XrootdRemote();

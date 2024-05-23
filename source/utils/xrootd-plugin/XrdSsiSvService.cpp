@@ -249,8 +249,16 @@ void XrdSsiSvService::ProcessRequest(XrdSsiRequest &reqRef, XrdSsiResource &resR
     // efficient ways of doing this (e.g. a dedicated task object) but this is OK.
     // The agent will delete itself when the request is actually finished.
     //
-    agent = new XrdSsiSvService(resRef.rName.c_str());
+    agent = new XrdSsiSvService(resRef.rName.c_str(), &m_ParentFilePool);
     agent->ProcessRequest4Me(&reqRef);
+}
+XrdSsiSvService::~XrdSsiSvService()
+{
+    if (sName)
+        free(sName);
+    if (VectorP != nullptr)
+        delete static_cast<std::vector<char> *>(VectorP);
+    std::cout << "XrdSsiSvService Destructor called" << std::endl;
 }
 /******************************************************************************/
 /*         help function to split strings                                     */
@@ -328,7 +336,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         for (int i = 0; i < alertNum; i++)
         {
             if (myMsg)
-                sprintf(alertMsg, "Alert msg %d", i + 1);
+                snprintf(alertMsg, sizeof(alertMsg), "Alert msg %d", i + 1);
             AlertMsg *theMsg = new AlertMsg(alertMsg);
             Alert(*theMsg);
         }
@@ -420,43 +428,77 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         return;
     }
 
-    if (!strcmp(reqData, "wecho"))
-    {
-        pthread_t tid;
-        reqData = reqInfo.GetToken(&reqArgs);
-        respDly = atoi(reqData);
-        if (!reqArgs || !(*reqArgs))
-        {
-            RespondErr("Echo string not specified.", EINVAL);
-            return;
-        }
-        if ((quest = index(reqArgs, '?')))
-        {
-            Copy2Buff(respMeta, sizeof(respMeta), quest + 1, strlen(quest + 1) + 1);
-            *quest = 0;
-        }
-        Copy2Buff(respBuff, sizeof(respBuff), reqArgs, strlen(reqArgs) + 1);
-        XrdSysThread::Run(&tid, SvWecho, (void *)this, 0, "wecho");
-        return;
-    }
+#define HasPrefix(s, p) (s.compare(0, sizeof(p) - 1, p) == 0)
     if (!strcmp(reqData, "get"))
     {
-        pthread_t tid;
-        reqData = reqInfo.GetToken(&reqArgs);
-        respDly = atoi(reqData);
-        if (!reqArgs || !(*reqArgs))
-        {
-            RespondErr("Arguments are expected", EINVAL);
-            return;
-        }
-        /* parameters  name, step, blockID, count0, count1, count2, ...  start0, start1, start2 */
+        std::string Filename;
+        std::string VarName;
+        adios2::Dims Start, Count;
+        size_t BlockID, DimCount, Step;
+        bool ArrayOrder;
         std::vector<std::string> requestParams = split(reqArgs, '&');
-
-        m_io = adios.DeclareIO("xrootd");
-        m_engine = m_io.Open(reqData, adios2::Mode::ReadRandomAccess);
-        std::string VarName = requestParams[0];
-        auto var = m_io.InquireVariable(VarName);
-        adios2::DataType TypeOfVar = m_io.InquireVariableType(VarName);
+        for (auto &param : requestParams)
+        {
+            if (HasPrefix(param, "Filename="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                Filename = param.substr(pos);
+            }
+            else if (HasPrefix(param, "Varname="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                VarName = param.substr(pos);
+            }
+            else if (HasPrefix(param, "RMOrder="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                size_t A;
+                sstream >> A;
+                ArrayOrder = (bool)A;
+            }
+            else if (HasPrefix(param, "Dims="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                sstream >> DimCount;
+            }
+            else if (HasPrefix(param, "Step="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                sstream >> Step;
+            }
+            else if (HasPrefix(param, "Block="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                sstream >> BlockID;
+            }
+            else if (HasPrefix(param, "Count="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                size_t C;
+                sstream >> C;
+                Count.push_back(C);
+            }
+            else if (HasPrefix(param, "Start="))
+            {
+                std::size_t pos = param.find("=") + 1;
+                std::stringstream sstream(param.substr(pos));
+                size_t S;
+                sstream >> S;
+                Start.push_back(S);
+            }
+        }
+        auto poolEntry = m_FilePoolPtr->GetFree(Filename, ArrayOrder);
+        pthread_t tid;
+        auto engine = poolEntry->m_engine;
+        auto io = poolEntry->m_io;
+        auto var = io.InquireVariable(VarName);
+        adios2::Box<adios2::Dims> varSel(Start, Count);
+        adios2::DataType TypeOfVar = io.InquireVariableType(VarName);
         try
         {
             if (TypeOfVar == adios2::DataType::None)
@@ -465,25 +507,18 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
 #define GET(T)                                                                                     \
     else if (TypeOfVar == adios2::helper::GetDataType<T>())                                        \
     {                                                                                              \
-        adios2::Variable<T> var = m_io.InquireVariable<T>(VarName);                                \
-        std::vector<T> resBuffer;                                                                  \
-        size_t step = std::stoi(requestParams[1]);                                                 \
-        var.SetStepSelection({step, 1});                                                           \
-        size_t paramLength = (requestParams.size() - 3) / 2;                                       \
-        adios2::Dims s(paramLength);                                                               \
-        adios2::Dims c(paramLength);                                                               \
-        for (auto i = 0; i < paramLength; i++)                                                     \
-        {                                                                                          \
-            c[i] = std::stoi(requestParams[3 + i]);                                                \
-            s[i] = std::stoi(requestParams[3 + paramLength + i]);                                  \
-        }                                                                                          \
-        adios2::Box<adios2::Dims> varSel(s, c);                                                    \
-        var.SetSelection(varSel);                                                                  \
-        m_engine.Get(var, resBuffer, adios2::Mode::Sync);                                          \
-        size_t responseSize = resBuffer.size();                                                    \
-        responseBuffer = new char[responseSize * sizeof(T)];                                       \
+        adios2::Variable<T> var = io.InquireVariable<T>(VarName);                                  \
+        std::vector<T> *resBuffer = new std::vector<T>();                                          \
+        if (BlockID != (size_t)-1)                                                                 \
+            var.SetBlockSelection(BlockID);                                                        \
+        var.SetStepSelection({Step, 1});                                                           \
+        if (Start.size())                                                                          \
+            var.SetSelection(varSel);                                                              \
+        engine.Get(var, *resBuffer, adios2::Mode::Sync);                                           \
+        size_t responseSize = resBuffer->size();                                                   \
+        responseBuffer = (char *)resBuffer->data();                                                \
         responseBufferSize = responseSize * sizeof(T);                                             \
-        memcpy(responseBuffer, resBuffer.data(), responseSize * sizeof(T));                        \
+        VectorP = static_cast<void *>(resBuffer);                                                  \
         XrdSysThread::Run(&tid, SvAdiosGet, (void *)this, 0, "get");                               \
     }
             ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(GET)
@@ -495,6 +530,7 @@ void XrdSsiSvService::ProcessRequest4Me(XrdSsiRequest *rqstP)
         }
         // detached thread. Memory should not be deallocated yet,
         // olnly of a thread is finished
+        m_FilePoolPtr->Return(poolEntry);
         return;
     }
     // Ok we don't know what this is
@@ -531,39 +567,7 @@ void XrdSsiSvService::Respond(const char *rData, const char *mData)
     XrdSsiResponder::Status rc;
     int rLen;
 
-    // Handle meta data first. We copy the metadata into a buffer that must live
-    // even after we return because the data may be sent later.
-    //
-    if (mData && *mData)
-    {
-        rLen = strlen(mData) + 1;
-        if (mData != respMeta)
-            rLen = Copy2Buff(respMeta, sizeof(respMeta), mData, rLen);
-        if ((rc = SetMetadata(respMeta, rLen)))
-            ResponseFailed(rc);
-    }
-
-    // Check if all we are doing is sending metadata
-    //
-    if (!(*rData))
-    {
-        if ((rc = SetNilResponse()))
-            ResponseFailed(rc);
-        return;
-    }
-
-    // We copy the response into a buffer that must live even after we return to
-    // the caller because the data in that buffer will be sent back to the client.
-    //
-    rLen = strlen(rData) + 1;
-    if (rData != respBuff)
-        rLen = Copy2Buff(respBuff, sizeof(respBuff), rData, rLen);
-
-    // We use the inherited method XrdSsiResponder::SetResponse to post the response
-    // Note we always send the null byte to make it easy on the client :-)
-    //
-    if ((rc = SetResponse(respBuff, rLen)))
-        ResponseFailed(rc);
+    throw std::logic_error("Respond shouldn't be called");
 }
 void XrdSsiSvService::AdiosRespond(const char *rData, const char *mData)
 {
@@ -592,15 +596,11 @@ void XrdSsiSvService::AdiosRespond(const char *rData, const char *mData)
     // We copy the response into a buffer that must live even after we return to
     // the caller because the data in that buffer will be sent back to the client.
     //
-    // rLen = strlen(rData)+1;
     rLen = responseBufferSize;
-    if (rData != respBuff)
-        rLen = Copy2Buff(respBuff, sizeof(respBuff), rData, rLen);
-
     // We use the inherited method XrdSsiResponder::SetResponse to post the response
     // Note we always send the null byte to make it easy on the client :-)
     //
-    if ((rc = SetResponse(respBuff, rLen)))
+    if ((rc = SetResponse(responseBuffer, rLen)))
         ResponseFailed(rc);
 }
 
