@@ -89,7 +89,7 @@ def SetupArgs():
             args.CampaignFileName = args.campaign_store + "/" + args.CampaignFileName
 
     if args.files is None:
-        args.LocalCampaignDir = "adios-campaign/"
+        args.LocalCampaignDir = ".adios-campaign/"
 
     if args.verbose > 0:
         print(f"# Verbosity = {args.verbose}")

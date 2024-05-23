@@ -185,7 +185,7 @@ void ADIOS::SetUserOptionDefaults()
 {
     m_UserOptions.general.verbose = 0;
 
-    m_UserOptions.campaign.active = true;
+    m_UserOptions.campaign.active = false;
     m_UserOptions.campaign.verbose = 0;
     m_UserOptions.campaign.hostname = "";
     m_UserOptions.campaign.campaignstorepath = "";
