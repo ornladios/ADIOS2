@@ -14,7 +14,9 @@
 #include <iostream> //std::cout
 #include <mpi.h>
 #include <stdexcept> //std::invalid_argument std::exception
+#ifndef _MSC_VER
 #include <unistd.h>
+#endif
 #include <vector>
 
 void writeMe(adios2::IO &hdf5IO, int rank, int size, const char *testFileName)
@@ -34,8 +36,8 @@ void writeMe(adios2::IO &hdf5IO, int rank, int size, const char *testFileName)
     const std::size_t Nx = 1024;
     const std::size_t Ny = 1024 * scale;
 
-    std::vector<float> myFloats(Nx * Ny, 0.1 * rank);
-    std::vector<int> myInts(Nx * Ny, 1 + rank);
+    std::vector<float> myFloats(Nx * Ny, 0.1f * rank);
+    std::vector<int> myInts(Nx * Ny, (int)(1 + rank));
 
     hdf5IO.SetParameter("IdleH5Writer",
                         "true"); // set this if not all ranks are writting
@@ -101,7 +103,7 @@ void ReadVarData(adios2::IO h5IO, adios2::Engine &h5Reader, const std::string &n
 
     if (var)
     {
-        int nDims = var.Shape().size();
+        int nDims = (int)var.Shape().size();
         size_t totalSize = 1;
         for (int i = 0; i < nDims; i++)
         {
