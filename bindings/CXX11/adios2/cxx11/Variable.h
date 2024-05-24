@@ -214,7 +214,7 @@ public:
      * variable.Count() = {Ny,Nx}, then memoryCount = {Ny+2,Nx+2}
      * </pre>
      */
-    void SetMemorySelection(const adios2::Box<adios2::Dims> &memorySelection);
+    void SetMemorySelection(const adios2::Box<adios2::Dims> &memorySelection = {{}, {}});
 
     /**
      * Sets a step selection modifying current startStep, countStep
