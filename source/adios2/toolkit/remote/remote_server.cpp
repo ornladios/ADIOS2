@@ -619,9 +619,14 @@ int main(int argc, char **argv)
         }
         /* I'm the child, close IO FDs so that ctest continues.  No verbosity here */
         verbose = 0;
-        close(0);
-        close(1);
-        close(2);
+
+        //  Why close a bunch of FDs here?  Because something in the xrootd library is opening new
+        //  fds (upon library init, so before main()) and perhaps using it to track instances?
+        //  Whatever it is doing is interfering with CTest and putting things in the background
+        for (int fd = 0; fd < 13; fd++)
+        {
+            close(fd);
+        }
 #endif
     }
 
