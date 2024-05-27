@@ -15,6 +15,8 @@
 #include <pthread.h>
 #define thr_mutex_t pthread_mutex_t
 #define thr_thread_t pthread_t
+#define thr_thread_id thr_thread_t
+#define thr_get_thread_id(t) (t)
 #define thr_condition_t pthread_cond_t
 #define thr_thread_self() pthread_self()
 #define thr_thread_exit(status) pthread_exit(status);
@@ -34,24 +36,35 @@
 #else
 //#include <mutex>
 #include <Windows.h>
-#define thr_mutex_t HANDLE
-#define thr_thread_t DWORD
-#define thr_condition_t HANDLE
-#define thr_thread_create(w,x,y,z) 0
+extern int win_thread_create(HANDLE* w, void* x, void* y, void* z);
+extern void win_mutex_init(SRWLOCK *m);
+extern void win_mutex_lock(SRWLOCK* m);
+extern void win_mutex_unlock(SRWLOCK* m);
+extern void win_mutex_free(SRWLOCK* m);
+extern void win_condition_init(CONDITION_VARIABLE *c);
+extern void win_condition_wait(CONDITION_VARIABLE *c, SRWLOCK *m);
+extern void win_condition_signal(CONDITION_VARIABLE *c);
+extern void win_condition_free(CONDITION_VARIABLE *c);
+#define thr_mutex_t SRWLOCK
+#define thr_thread_t HANDLE
+#define thr_thread_id DWORD
+#define thr_condition_t CONDITION_VARIABLE
+#define thr_thread_create(w,x,y,z) win_thread_create(w,x,y,z)
 #define thr_thread_self() GetCurrentThreadId()
-#define thr_thread_exit(status) 
+#define thr_thread_exit(status) ExitThread((DWORD)(intptr_t)status)
+#define thr_get_thread_id(t) GetThreadId(t)
 #define thr_thread_detach(thread) 
 #define thr_thread_yield() 
 #define thr_thread_join(t, s) (void)s
-#define thr_mutex_init(m) 
-#define thr_mutex_lock(m)
-#define thr_mutex_unlock(m)
-#define thr_mutex_free(m)
-#define thr_condition_init(c)
-#define thr_condition_wait(c, m)
-#define thr_condition_signal(c)
-#define thr_condition_broadcast(c) 
-#define thr_condition_free(c) 
+#define thr_mutex_init(m) win_mutex_init(&m)
+#define thr_mutex_lock(m) win_mutex_lock(&m)
+#define thr_mutex_unlock(m) win_mutex_unlock(&m)
+#define thr_mutex_free(m) win_mutex_free(&m)
+#define thr_condition_init(c) win_condition_init(&c)
+#define thr_condition_wait(c, m) win_condition_wait(&c, &m)
+#define thr_condition_signal(c) win_condition_signal(&c)
+#define thr_condition_broadcast(c) error
+#define thr_condition_free(c) win_condition_free(&c)
 #endif
 
 #include <ev_internal.h>
@@ -240,7 +253,7 @@ typedef struct _CMControlList {
     int closed;
     int has_thread;
     int cond_polling;
-    thr_thread_t server_thread;
+    thr_thread_id server_thread;
 } CMControlList_s;
 
 struct queued_data_rec {
