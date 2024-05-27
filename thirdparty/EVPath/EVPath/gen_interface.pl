@@ -333,22 +333,38 @@ sub mod_EVhandler {
 {
     local ($/, *INPUT);
 	
+    $cat = "cat";
+    if ($^O eq "MSWin32") {
+      $cat = "powershell.exe Get-Content";
+    }
     $cat_args = "";
     $has_ev_dfg = 0;
     $cm_only = 0;
+    $index = 0;
     foreach my $a(@ARGV) {
-	if ($a =~ "-CM_ONLY") {
-	    $cm_only = 1;
-	    next;
-	}
-	$a=~s/ /\\ /g;
-	$cat_args .= "$a ";
-	if ($a =~ /ev_dfg/) {
-	    $has_evdfg = 1;
-	}
+      if ($a =~ "-CM_ONLY") {
+          $cm_only = 1;
+          next;
+      }
+      $a=~s/ /\\ /g;
+
+      if ($^O eq "MSWin32") {
+        $sep = ",";
+      } else {
+        $sep = " ";
+      }
+      if ($index == 0)
+      {
+        $sep = "";
+      }
+      $cat_args .= "$sep$a";
+      if ($a =~ /ev_dfg/) {
+          $has_evdfg = 1;
+      }
+      $index++;
     }
-    unless (open(INPUT, "cat $cat_args |")) {
-	die "sudden flaming death, no file: $cat_args\n";
+    unless (open(INPUT, "$cat $cat_args |")) {
+	    die "sudden flaming death, no file: $cat_args\n";
     }
 
     $_ = <INPUT>;
