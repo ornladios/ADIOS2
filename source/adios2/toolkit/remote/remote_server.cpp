@@ -627,7 +627,7 @@ int main(int argc, char **argv)
         //  been dup()'d in library initialization.  We don't need those FDs and we have to close
         //  them to make sure we disassociate from the CTest parent (or else fixture startup hangs).
         //  It doesn't seem to work to close them before the fork, so we close them afterwards.
-        for (int fd = 0; fd <= 128; fd++)
+        for (int fd = 0; fd <= 16; fd++)
         {
             if (fd_is_valid(fd))
             {
