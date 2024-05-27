@@ -171,7 +171,6 @@ EVPathRemote::GetHandle EVPathRemote::Get(char *VarName, size_t Step, size_t Blo
     GetMsg.Start = Start.data();
     GetMsg.Dest = dest;
     CMwrite(m_conn, ev_state.GetRequestFormat, &GetMsg);
-    CMCondition_wait(ev_state.cm, GetMsg.GetResponseCondition);
     return (Remote::GetHandle)(intptr_t)GetMsg.GetResponseCondition;
 }
 
