@@ -20,6 +20,9 @@
 #include <sys/types.h> // open
 #ifndef _MSC_VER
 #include <unistd.h> // write, close, ftruncate
+
+static int fd_is_valid(int fd) { return fcntl(fd, F_GETFD) != -1 || errno != EBADF; }
+
 #else
 #include <io.h>
 #define strdup _strdup
@@ -620,12 +623,23 @@ int main(int argc, char **argv)
         /* I'm the child, close IO FDs so that ctest continues.  No verbosity here */
         verbose = 0;
 
-        //  Why close a bunch of FDs here?  Because something in the xrootd library is opening new
-        //  fds (upon library init, so before main()) and perhaps using it to track instances?
-        //  Whatever it is doing is interfering with CTest and putting things in the background
-        for (int fd = 0; fd < 13; fd++)
+        //  Why close a bunch of FDs here?  Well, if we've linked with XRootD, stderr might have
+        //  been dup()'d in library initialization.  We don't need those FDs and we have to close
+        //  them to make sure we disassociate from the CTest parent (or else fixture startup hangs).
+        //  It doesn't seem to work to close them before the fork, so we close them afterwards.
+        for (int fd = 0; fd <= 128; fd++)
         {
-            close(fd);
+            if (fd_is_valid(fd))
+            {
+                // OK, fd is valid, should we close it?
+                if ((lseek(fd, 0, SEEK_CUR) == -1) && (errno == ESPIPE))
+                {
+                    // In the circumstances we care about (running under CTest), we want to close
+                    // FDs that are pipes.  The condition above tests for that and we should get
+                    // here only if it's a pipe.
+                    close(fd);
+                }
+            }
         }
 #endif
     }
