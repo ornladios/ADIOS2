@@ -11,3 +11,7 @@ add_subdirectory(useCases)
 if(ADIOS2_USE_Campaign)
     add_subdirectory(campaign)
 endif()
+if(ADIOS2_USE_Derived_Variable)
+    add_subdirectory(derived)
+endif()
+
