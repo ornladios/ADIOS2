@@ -172,10 +172,10 @@ public:
     MACRO(StatsBlockSize, SizeBytes, size_t, DefaultStatsBlockSize)                                \
     MACRO(Threads, UInt, unsigned int, 0)                                                          \
     MACRO(UseOneTimeAttributes, Bool, bool, true)                                                  \
-    MACRO(FlattenSteps, Bool, bool, false)                                                         \
-    MACRO(IgnoreFlattenSteps, Bool, bool, false)                                                   \
     MACRO(RemoteDataPath, String, std::string, "")                                                 \
-    MACRO(MaxOpenFilesAtOnce, UInt, unsigned int, UINT_MAX)
+    MACRO(MaxOpenFilesAtOnce, UInt, unsigned int, UINT_MAX)                                        \
+    MACRO(FlattenSteps, Bool, bool, false)                                                         \
+    MACRO(IgnoreFlattenSteps, Bool, bool, false)
 
     struct BP5Params
     {

@@ -1997,6 +1997,12 @@ int BP5Deserializer::FindOffset(size_t Dims, const size_t *Size, const size_t *I
  */
 
 BP5Deserializer::BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor,
+                                 bool RandomAccessMode)
+: BP5Deserializer::BP5Deserializer(WriterIsRowMajor, ReaderIsRowMajor, RandomAccessMode, false)
+{
+}
+
+BP5Deserializer::BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor,
                                  bool RandomAccessMode, bool FlattenSteps)
 : m_WriterIsRowMajor{WriterIsRowMajor}, m_ReaderIsRowMajor{ReaderIsRowMajor},
   m_RandomAccessMode{RandomAccessMode}, m_FlattenSteps{FlattenSteps}

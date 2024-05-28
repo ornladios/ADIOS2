@@ -35,8 +35,9 @@ class BP5Deserializer : virtual public BP5Base
 {
 
 public:
-    BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor, bool RandomAccessMode = false,
-                    bool FlattenSteps = false);
+    BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor, bool RandomAccessMode = false);
+    BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor, bool RandomAccessMode,
+                    bool FlattenSteps);
 
     ~BP5Deserializer();
 
