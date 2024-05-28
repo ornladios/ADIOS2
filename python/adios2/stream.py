@@ -43,9 +43,6 @@ def string_to_mode(mode: str) -> [bindings.Mode, bool]:
     elif mode == "rra":
         bmode = bindings.Mode.ReadRandomAccess
         read_mode = True
-    elif mode == "rfs":
-        bmode = bindings.Mode.ReadFlattenSteps
-        read_mode = True
     elif mode == "w":
         bmode = bindings.Mode.Write
     elif mode == "a":
