@@ -57,6 +57,8 @@ public:
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
     bool VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const;
     bool VariableMinMax(const VariableBase &, const size_t Step, MinMaxStruct &MinMax);
+    const char *VariableExprStr(const VariableBase &Var);
+    void SetFlattenMode(bool flatten) { m_FlattenSteps = flatten; };
 
 private:
     format::BP5Deserializer *m_BP5Deserializer = nullptr;
@@ -222,6 +224,7 @@ private:
     uint32_t m_WriterColumnMajor = 0;
     bool m_ReaderIsRowMajor = true;
     bool m_WriterIsRowMajor = true;
+    bool m_FlattenSteps = false; // set to true of writer requested all steps be flattened into 1
 
     format::BufferSTL m_MetadataIndex;
     format::BufferSTL m_MetaMetadata;

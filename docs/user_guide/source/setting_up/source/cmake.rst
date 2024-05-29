@@ -8,7 +8,7 @@ To build ADIOS v2.x, clone the repository and invoke the canonical CMake build s
 
     $ git clone https://github.com/ornladios/ADIOS2.git ADIOS2
     $ mkdir adios2-build && cd adios2-build
-    $ cmake ../ADIOS2 cmake -DADIOS2_BUILD_EXAMPLES=ON
+    $ cmake ../ADIOS2 -DADIOS2_BUILD_EXAMPLES=ON
     -- The C compiler identification is GNU 9.4.0
     -- The CXX compiler identification is GNU 9.4.0
     ...
@@ -111,10 +111,11 @@ Optionally, run the tests (need to configure with ``-DBUILD_TESTING=ON`` cmake f
     Total Test time (real) =   95.95 sec
 
 
-And finally, use the standard invocation to install:
+And finally, use the standard invocation to install (setting the install path beforehand):
 
 .. code-block:: bash
 
+    $ cmake ../ADIOS2 -DCMAKE_INSTALL_PREFIX=/path/to/where/adios/will/be/installed
     $ make install
 
 

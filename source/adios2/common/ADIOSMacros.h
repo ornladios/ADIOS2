@@ -33,6 +33,7 @@
  </pre>
 */
 #define ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(MACRO)                                     \
+    MACRO(char)                                                                                    \
     MACRO(int8_t)                                                                                  \
     MACRO(int16_t)                                                                                 \
     MACRO(int32_t)                                                                                 \
@@ -43,8 +44,7 @@
     MACRO(uint64_t)                                                                                \
     MACRO(float)                                                                                   \
     MACRO(double)                                                                                  \
-    MACRO(long double)                                                                             \
-    MACRO(char)
+    MACRO(long double)
 
 #define ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(MACRO)                                               \
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(MACRO)                                         \
@@ -52,15 +52,16 @@
     MACRO(std::complex<double>)
 
 #define ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_1ARG(MACRO)                                               \
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(MACRO)                                                   \
-    MACRO(std::string)
+    MACRO(std::string)                                                                             \
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(MACRO)
 
 #define ADIOS2_FOREACH_STDTYPE_1ARG(MACRO)                                                         \
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(MACRO)                                                   \
-    MACRO(std::string)
+    MACRO(std::string)                                                                             \
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(MACRO)
 
 #define ADIOS2_FOREACH_TYPE_1ARG(MACRO)                                                            \
     MACRO(std::string)                                                                             \
+    MACRO(char)                                                                                    \
     MACRO(signed char)                                                                             \
     MACRO(unsigned char)                                                                           \
     MACRO(short)                                                                                   \
@@ -75,10 +76,10 @@
     MACRO(double)                                                                                  \
     MACRO(long double)                                                                             \
     MACRO(std::complex<float>)                                                                     \
-    MACRO(std::complex<double>)                                                                    \
-    MACRO(char)
+    MACRO(std::complex<double>)
 
 #define ADIOS2_FOREACH_PRIMITIVE_TYPE_1ARG(MACRO)                                                  \
+    MACRO(char)                                                                                    \
     MACRO(signed char)                                                                             \
     MACRO(unsigned char)                                                                           \
     MACRO(short)                                                                                   \
@@ -93,8 +94,7 @@
     MACRO(double)                                                                                  \
     MACRO(long double)                                                                             \
     MACRO(std::complex<float>)                                                                     \
-    MACRO(std::complex<double>)                                                                    \
-    MACRO(char)
+    MACRO(std::complex<double>)
 
 #define ADIOS2_FOREACH_COMPLEX_PRIMITIVE_TYPE_1ARG(MACRO)                                          \
     MACRO(float)                                                                                   \
@@ -102,9 +102,9 @@
     MACRO(long double)
 
 #define ADIOS2_FOREACH_CHAR_TYPE_1ARG(MACRO)                                                       \
+    MACRO(char)                                                                                    \
     MACRO(signed char)                                                                             \
-    MACRO(unsigned char)                                                                           \
-    MACRO(char)
+    MACRO(unsigned char)
 
 #define ADIOS2_FOREACH_NUMERIC_TYPE_1ARG(MACRO)                                                    \
     MACRO(short)                                                                                   \
@@ -123,6 +123,7 @@
 
 #define ADIOS2_FOREACH_ATTRIBUTE_TYPE_1ARG(MACRO)                                                  \
     MACRO(std::string)                                                                             \
+    MACRO(char)                                                                                    \
     MACRO(signed char)                                                                             \
     MACRO(unsigned char)                                                                           \
     MACRO(short)                                                                                   \
@@ -137,10 +138,10 @@
     MACRO(double)                                                                                  \
     MACRO(long double)                                                                             \
     MACRO(std::complex<float>)                                                                     \
-    MACRO(std::complex<double>)                                                                    \
-    MACRO(char)
+    MACRO(std::complex<double>)
 
 #define ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_TYPE_1ARG(MACRO)                                        \
+    MACRO(char)                                                                                    \
     MACRO(signed char)                                                                             \
     MACRO(unsigned char)                                                                           \
     MACRO(short)                                                                                   \
@@ -155,8 +156,7 @@
     MACRO(double)                                                                                  \
     MACRO(long double)                                                                             \
     MACRO(std::complex<float>)                                                                     \
-    MACRO(std::complex<double>)                                                                    \
-    MACRO(char)
+    MACRO(std::complex<double>)
 
 /**
  <pre>
@@ -185,6 +185,7 @@
 #define ADIOS2_FOREACH_ATTRIBUTE_STDTYPE_2ARGS(MACRO)                                              \
     MACRO(std::string, string)                                                                     \
     MACRO(int8_t, int8)                                                                            \
+    MACRO(char, char)                                                                              \
     MACRO(uint8_t, uint8)                                                                          \
     MACRO(int16_t, int16)                                                                          \
     MACRO(uint16_t, uint16)                                                                        \
@@ -196,11 +197,11 @@
     MACRO(double, double)                                                                          \
     MACRO(long double, ldouble)                                                                    \
     MACRO(std::complex<float>, cfloat)                                                             \
-    MACRO(std::complex<double>, cdouble)                                                           \
-    MACRO(char, char)
+    MACRO(std::complex<double>, cdouble)
 
 #define ADIOS2_FOREACH_PRIMITVE_STDTYPE_2ARGS(MACRO)                                               \
     MACRO(int8_t, int8)                                                                            \
+    MACRO(char, char)                                                                              \
     MACRO(uint8_t, uint8)                                                                          \
     MACRO(int16_t, int16)                                                                          \
     MACRO(uint16_t, uint16)                                                                        \
@@ -212,8 +213,7 @@
     MACRO(double, double)                                                                          \
     MACRO(long double, ldouble)                                                                    \
     MACRO(std::complex<float>, cfloat)                                                             \
-    MACRO(std::complex<double>, cdouble)                                                           \
-    MACRO(char, char)
+    MACRO(std::complex<double>, cdouble)
 
 #define ADIOS2_FOREACH_MINMAX_STDTYPE_2ARGS(MACRO)                                                 \
     MACRO(int8_t, int8)                                                                            \

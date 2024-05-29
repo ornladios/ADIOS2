@@ -88,7 +88,8 @@ bool matchesAMask(const char *name);
 int print_start(const std::string &fnamestr);
 void print_slice_info(core::VariableBase *variable, bool timed, uint64_t *s, uint64_t *c,
                       Dims count);
-int print_data(const void *data, int item, DataType adiosvartypes, bool allowformat);
+int print_data(const void *data, int item, DataType adiosvartypes, bool allowformat,
+               bool char_star_string = false);
 
 /* s is a character array not necessarily null terminated.
  * return false on OK print, true if it not XML (not printed)*/

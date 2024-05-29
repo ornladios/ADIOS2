@@ -36,6 +36,8 @@ class BP5Deserializer : virtual public BP5Base
 
 public:
     BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor, bool RandomAccessMode = false);
+    BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor, bool RandomAccessMode,
+                    bool FlattenSteps);
 
     ~BP5Deserializer();
 
@@ -173,6 +175,7 @@ private:
     FFSContext ReaderFFSContext;
 
     const bool m_RandomAccessMode;
+    const bool m_FlattenSteps;
 
     std::vector<size_t> m_WriterCohortSize; // per step, in random mode
     size_t m_CurrentWriterCohortSize;       // valid in streaming mode

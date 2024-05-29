@@ -114,7 +114,10 @@ named `adios2::Mode::ReadRandomAccess`. `adios2::Mode::Read` mode allows data ac
 current timestep. `ReadRandomAccess` can only be used with file engines and involves loading all the file metadata at
 once. So it can be more memory intensive than `adios2::Mode::Read` mode, but allows reading data from any timestep using
 `SetStepSelection()`. If you use `adios2::Mode::ReadRandomAccess` mode, be sure to allocate enough memory to hold
-multiple steps of the variable content.
+multiple steps of the variable content.  Note that ADIOS streaming
+engines (like SST, DataMan, etc.) do not support `ReadRandomAccess`
+mode.  Also newer file Engines like BP5 to not allow
+`BeginStep/EndStep` calls in `ReadRandomAccess` mode.
 
 .. code:: C++
 
@@ -134,3 +137,35 @@ multiple steps of the variable content.
     |   |--> IO goes out of scope
     |
     |--> ADIOS goes out of scope or adios2_finalize()
+
+Previously we explored how to read using the input mode `adios2::Mode::Read`. Nonetheless, ADIOS has another input mode
+named `adios2::Mode::ReadRandomAccess`. `adios2::Mode::Read` mode allows data access only timestep by timestep using
+`BeginStep/EndStep`, but generally it is more memory efficient as ADIOS is only required to load metadata for the
+current timestep. `ReadRandomAccess` can only be used with file engines and involves loading all the file metadata at
+once. So it can be more memory intensive than `adios2::Mode::Read` mode, but allows reading data from any timestep using
+`SetStepSelection()`. If you use `adios2::Mode::ReadRandomAccess` mode, be sure to allocate enough memory to hold
+multiple steps of the variable content.  Note that ADIOS streaming
+engines (like SST, DataMan, etc.) do not support `ReadRandomAccess`
+mode.  Also newer file Engines like BP5 to not allow
+`BeginStep/EndStep` calls in `ReadRandomAccess` mode.
+
+.. code:: C++
+
+    ADIOS adios("config.xml", MPI_COMM_WORLD);
+    |
+    |   IO io = adios.DeclareIO(...);
+    |   |
+    |   |   Engine e = io.Open("InputFileName.bp", adios2::Mode::ReadRandomAccess);
+    |   |   |
+    |   |   |   Variable var = io.InquireVariable(...)
+    |   |   |   |   var.SetStepSelection()
+    |   |   |   |   e.Get(var, datapointer);
+    |   |   |   |
+    |   |   |
+    |   |   e.Close();
+    |   |
+    |   |--> IO goes out of scope
+    |
+    |--> ADIOS goes out of scope or adios2_finalize()
+    
+

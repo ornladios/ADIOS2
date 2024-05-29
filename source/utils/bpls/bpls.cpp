@@ -95,6 +95,7 @@ bool listmeshes;         // do list meshes too
 bool attrsonly;          // do list attributes only
 bool longopt;            // -l is turned on
 bool timestep;           // read step by step
+bool ignore_flatten;     // dont flatten steps to one
 bool filestream = false; // are we using an engine through FileStream?
 bool noindex;            // do no print array indices with data
 bool printByteAsChar;    // print 8 bit integer arrays as string
@@ -144,6 +145,8 @@ void display_help()
            */
            "  --timestep  | -t           Read content step by step (stream "
            "reading)\n"
+           "  --ignore_flatten           Display steps as written (don't flatten, even if writer "
+           "said to)\n"
            "  --dump      | -d           Dump matched variables/attributes\n"
            "                               To match attributes too, add option "
            "-a\n"
@@ -445,6 +448,7 @@ bool introspectAsBPDir(const std::string &name) noexcept
     char patch = buffer[34];
     bool isBigEndian = static_cast<bool>(buffer[36]);
     uint8_t BPVersion = static_cast<uint8_t>(buffer[37]);
+    uint8_t flatten = static_cast<uint8_t>(buffer[41]);
     bool isActive = false;
     if (BPVersion == 4)
     {
@@ -457,9 +461,9 @@ bool introspectAsBPDir(const std::string &name) noexcept
     {
         uint8_t minversion = static_cast<uint8_t>(buffer[38]);
         isActive = static_cast<bool>(buffer[39]);
-        printf("ADIOS-BP Version %d.%d %s - ADIOS v%c.%c.%c %s\n", BPVersion, minversion,
+        printf("ADIOS-BP Version %d.%d %s - ADIOS v%c.%c.%c %s%s\n", BPVersion, minversion,
                (isBigEndian ? "Big Endian" : "Little Endian"), major, minor, patch,
-               (isActive ? "- active" : ""));
+               (isActive ? "- active" : ""), (flatten ? "- flatten_steps " : ""));
     }
     else
     {
@@ -617,6 +621,7 @@ int bplsMain(int argc, char *argv[])
     arg.AddBooleanArgument("--noindex", &noindex, " | -y Print data without array indices");
     arg.AddBooleanArgument("-y", &noindex, "");
     arg.AddBooleanArgument("--timestep", &timestep, " | -t Print values of timestep elements");
+    arg.AddBooleanArgument("--ignore_flatten", &ignore_flatten, " Don't flatten steps to one");
     arg.AddBooleanArgument("-t", &timestep, "");
     arg.AddBooleanArgument("--attrs", &listattrs, " | -a List/match attributes too");
     arg.AddBooleanArgument("-a", &listattrs, "");
@@ -765,6 +770,7 @@ void init_globals()
     output_xml = false;
     noindex = false;
     timestep = false;
+    ignore_flatten = false;
     sortnames = false;
     listattrs = false;
     listmeshes = false;
@@ -857,6 +863,8 @@ void printSettings(void)
         printf("      -V : show binary version info of file\n");
     if (timestep)
         printf("      -t : read step-by-step\n");
+    if (ignore_flatten)
+        printf("      --ignore_flatten : ignore FlattenSteps writer specification\n");
 
     if (hidden_attrs)
     {
@@ -1649,6 +1657,11 @@ int doList(std::string path)
         io.SetParameters(p);
     }
 
+    if (ignore_flatten)
+    {
+        io.SetParameters("IgnoreFlattenSteps=on");
+    }
+
     for (auto &engineName : engineList)
     {
         if (verbose > 2)
@@ -1677,7 +1690,13 @@ int doList(std::string path)
             break;
     }
 
-    if (fp != nullptr)
+    if (fp == nullptr)
+    {
+        fprintf(stderr, "\nError: Could not open this file with any ADIOS2 "
+                        "file reading engines\n");
+        return 4;
+    }
+
     {
         //, variables, timesteps, and attributes
         // all parameters are integers,
@@ -1746,12 +1765,6 @@ int doList(std::string path)
             return 4;
         }
         fp->Close();
-    }
-    else
-    {
-        fprintf(stderr, "\nError: Could not open this file with any ADIOS2 "
-                        "file reading engines\n");
-        return 4;
     }
     return 0;
 }
@@ -2906,7 +2919,8 @@ bool print_data_xml(const char *s, const size_t length)
     return false;
 }
 
-int print_data(const void *data, int item, DataType adiosvartype, bool allowformat)
+int print_data(const void *data, int item, DataType adiosvartype, bool allowformat,
+               bool char_star_string)
 {
     bool f = format.size() && allowformat;
     const char *fmt = format.c_str();
@@ -2929,9 +2943,15 @@ int print_data(const void *data, int item, DataType adiosvartype, bool allowform
         break;
 
     case DataType::String: {
-        // fprintf(outf, (f ? fmt : "\"%s\""), ((char *)data) + item);
-        const std::string *dataStr = reinterpret_cast<const std::string *>(data);
-        fprintf(outf, (f ? fmt : "\"%s\""), dataStr[item].c_str());
+        if (char_star_string)
+        {
+            fprintf(outf, (f ? fmt : "\"%s\""), *((char **)data));
+        }
+        else
+        {
+            const std::string *dataStr = reinterpret_cast<const std::string *>(data);
+            fprintf(outf, (f ? fmt : "\"%s\""), dataStr[item].c_str());
+        }
         break;
     }
 
@@ -3380,7 +3400,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                 if (blocks.size() == 1)
                 {
                     fprintf(outf, " = ");
-                    print_data(blocks[0].BufferP, 0, adiosvartype, true);
+                    print_data(blocks[0].BufferP, 0, adiosvartype, true, /* MBI */ true);
                     fprintf(outf, "\n");
                 }
                 else
@@ -3393,7 +3413,7 @@ void print_decomp(core::Engine *fp, core::IO *io, core::Variable<T> *variable)
                     int col = 0;
                     for (size_t j = 0; j < blocks.size(); j++)
                     {
-                        print_data(blocks[j].BufferP, 0, adiosvartype, true);
+                        print_data(blocks[j].BufferP, 0, adiosvartype, true, /* MBI */ true);
                         ++col;
                         if (j < blocks.size() - 1)
                         {
@@ -3673,9 +3693,12 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io, core::Variable<T> *
     DataType adiosvartype = variable->m_Type;
     const auto minBlocks = fp->MinBlocksInfo(*variable, fp->CurrentStep());
 
-    std::vector<typename core::Variable<T>::BPInfo> coreBlocks =
-        fp->BlocksInfo(*variable, fp->CurrentStep());
+    std::vector<typename core::Variable<T>::BPInfo> coreBlocks;
 
+    if (!minBlocks)
+    {
+        coreBlocks = fp->BlocksInfo(*variable, fp->CurrentStep());
+    }
     if (!minBlocks && coreBlocks.empty())
     {
         return;
