@@ -95,8 +95,11 @@ private:
     std::future<int> m_OpenFuture;
     size_t m_SeekPos = 0;
     size_t m_Size = 0;
+    int m_Verbose = 0;
+    bool m_RecheckMetadata = true; // always check if cached metadata is complete
 
     void SetUpCache();
+    void CheckCache(const size_t fileSize);
     std::string m_CachePath;        // local cache directory
     bool m_CachingThisFile = false; // save content to local cache
     FileFStream *m_CacheFileWrite;
