@@ -94,9 +94,9 @@ inline void FixHomePath(std::string &path, std::string &homePath)
 
 template <class T>
 void SetOption(T &value, const std::string nodeName, const YAML::Node &upperNode,
-               const std::string &hint)
+               const std::string &hint, bool mandatory = isNotMandatory)
 {
-    auto node = YAMLNode(nodeName, upperNode, hint, isNotMandatory, YAML::NodeType::Scalar);
+    auto node = YAMLNode(nodeName, upperNode, hint, mandatory, YAML::NodeType::Scalar);
     if (node)
     {
         value = node.as<T>();
@@ -272,7 +272,7 @@ void ParseUserOptionsFile(Comm &comm, const std::string &configFileYAML, UserOpt
         helper::Throw<std::invalid_argument>(
             "Helper", "adiosUserOptions", "ParseUserOptionsFile",
             "parser error in file " + configFileYAML +
-                " invalid format. Check with any YAML editor if format is ill-formed, " + hint);
+                ": invalid format. Check with any YAML editor if format is ill-formed, " + hint);
     }
 
     /*
@@ -312,6 +312,135 @@ void ParseUserOptionsFile(Comm &comm, const std::string &configFileYAML, UserOpt
         {
             SetOption(opts.verbose, "verbose", sst, hint);
         }
+    }
+}
+
+HostAccessProtocol GetHostAccessProtocol(std::string valueStr)
+{
+    std::transform(valueStr.begin(), valueStr.end(), valueStr.begin(), ::tolower);
+    if (valueStr == "ssh")
+    {
+        return HostAccessProtocol::SSH;
+    }
+    else if (valueStr == "s3")
+    {
+        return HostAccessProtocol::S3;
+    }
+    else if (valueStr == "xrootd")
+    {
+        return HostAccessProtocol::XRootD;
+    }
+    return HostAccessProtocol::Invalid;
+}
+
+HostAuthProtocol GetHostAuthProtocol(std::string valueStr)
+{
+    std::transform(valueStr.begin(), valueStr.end(), valueStr.begin(), ::tolower);
+    if (valueStr == "password")
+    {
+        return HostAuthProtocol::Password;
+    }
+    else if (valueStr == "x509" || valueStr == "x.509")
+    {
+        return HostAuthProtocol::X509;
+    }
+    return HostAuthProtocol::Invalid;
+}
+
+void ParseHostOptionsFile(Comm &comm, const std::string &configFileYAML, HostOptions &hosts,
+                          std::string &homePath)
+{
+    const std::string hint =
+        "when parsing host config file " + configFileYAML + " in call to ADIOS constructor";
+
+    const std::string configFileContents = comm.BroadcastFile(configFileYAML, hint);
+
+    const YAML::Node document = YAML::Load(configFileContents);
+    if (!document)
+    {
+        helper::Throw<std::invalid_argument>(
+            "Helper", "adiosHostOptions", "ParseHostOptionsFile",
+            "parser error in file " + configFileYAML +
+                ": invalid format. Check with any YAML editor if format is ill-formed, " + hint);
+    }
+
+    if (!document.IsMap())
+    {
+        helper::Throw<std::invalid_argument>("Helper", "adiosHostOptions", "ParseHostOptionsFile",
+                                             "parser error: not a YAML Map of hosts, " + hint);
+    }
+
+    /* top level is a dictionary of <hostname, dictionary of options> */
+    for (auto itDoc = document.begin(); itDoc != document.end(); ++itDoc)
+    {
+        std::string hostname = itDoc->first.as<std::string>();
+
+        /* a dictionary of host options, with each entry a dictionary */
+        YAML::Node hostentry = itDoc->second;
+        if (!hostentry.IsMap())
+        {
+            helper::Throw<std::invalid_argument>(
+                "Helper", "adiosHostOptions", "ParseHostOptionsFile",
+                "parser error for host " + hostname +
+                    ": each host must have a YAML Map of options, " + hint);
+        }
+
+        std::vector<HostConfig> hostConfigs;
+        for (auto itHost = hostentry.begin(); itHost != hostentry.end(); ++itHost)
+        {
+            /* one connection setup as a dictionary */
+            HostConfig hc;
+            hc.name = itHost->first.as<std::string>();
+            const YAML::Node &hostmap = itHost->second;
+            if (!hostmap.IsMap())
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Helper", "adiosHostOptions", "ParseHostOptionsFile",
+                    "parser error for host " + hostname +
+                        ": each entry in the list must be a YAML Map, " + hint);
+            }
+
+            std::string protocolStr;
+            SetOption(protocolStr, "protocol", hostmap, hint, isMandatory);
+            hc.protocol = GetHostAccessProtocol(protocolStr);
+            switch (hc.protocol)
+            {
+            case HostAccessProtocol::SSH: {
+                std::string authStr;
+                SetOption(authStr, "authentication", hostmap, hint, isMandatory);
+                hc.authentication = GetHostAuthProtocol(authStr);
+                SetOption(hc.hostname, "host", hostmap, hint, isMandatory);
+                SetOption(hc.username, "user", hostmap, hint, isNotMandatory);
+                SetOption(hc.remoteServerPath, "serverpath", hostmap, hint, isMandatory);
+                SetOption(hc.port, "port", hostmap, hint, isNotMandatory);
+                break;
+            }
+            case HostAccessProtocol::XRootD: {
+                std::string authStr;
+                SetOption(authStr, "authentication", hostmap, hint, isMandatory);
+                hc.authentication = GetHostAuthProtocol(authStr);
+                SetOption(hc.hostname, "host", hostmap, hint, isMandatory);
+                SetOption(hc.username, "user", hostmap, hint, isNotMandatory);
+                SetOption(hc.remoteServerPath, "serverpath", hostmap, hint, isNotMandatory);
+                SetOption(hc.port, "port", hostmap, hint, isNotMandatory);
+                break;
+            }
+            case HostAccessProtocol::S3: {
+                SetOption(hc.awsProfile, "profile", hostmap, hint, isNotMandatory);
+                SetOption(hc.endpoint, "endpoint", hostmap, hint, isMandatory);
+                SetOption(hc.isAWS_EC2, "aws_ec2_metadata", hostmap, hint, isNotMandatory);
+                break;
+            }
+            default:
+                helper::Throw<std::invalid_argument>(
+                    "Helper", "adiosHostOptions", "ParseHostOptionsFile",
+                    "parser error: invalid access host protocol '" + protocolStr + " for " +
+                        hc.name + "', " + hint);
+            }
+
+            hostConfigs.push_back(hc);
+        }
+        hosts.emplace(hostname, hostConfigs);
     }
 }
 

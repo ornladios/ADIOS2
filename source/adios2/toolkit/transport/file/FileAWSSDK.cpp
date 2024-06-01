@@ -69,6 +69,8 @@ void FileAWSSDK::SetParameters(const Params &params)
         }
     }
 
+    helper::SetParameterValueInt("verbose", params, m_Verbose, "");
+
     core::ADIOS::Global_init_AWS_API();
 
     s3ClientConfig = new Aws::S3::S3ClientConfiguration;
@@ -77,7 +79,11 @@ void FileAWSSDK::SetParameters(const Params &params)
     s3ClientConfig->enableEndpointDiscovery = false;
 
     s3Client = new Aws::S3::S3Client(*s3ClientConfig);
-    std::cout << "AWS Transport created with endpoint = '" << m_Endpoint << "'" << std::endl;
+    if (m_Verbose > 0)
+    {
+        std::cout << "FileAWSSDK::SetParameters: AWS Transport created with endpoint = '"
+                  << m_Endpoint << "'" << std::endl;
+    }
 }
 
 void FileAWSSDK::WaitForOpen()
@@ -129,7 +135,10 @@ void FileAWSSDK::SetUpCache()
                 m_IsCached = true;
                 m_CachingThisFile = false;
                 delete m_CacheFileWrite;
-                std::cout << "Already cached " << path << std::endl;
+                if (m_Verbose > 0)
+                {
+                    std::cout << "FileAWSSDK::SetUpCache: Already cached " << path << std::endl;
+                }
             }
         }
         catch (std::ios_base::failure &)
@@ -140,7 +149,10 @@ void FileAWSSDK::SetUpCache()
         if (m_CachingThisFile)
         {
             m_CacheFileWrite->Open(path, Mode::Write);
-            std::cout << "Caching turn on for " << path << std::endl;
+            if (m_Verbose > 0)
+            {
+                std::cout << "FileAWSSDK::SetUpCache: Caching turn on for " << path << std::endl;
+            }
         }
     }
 }
@@ -176,9 +188,12 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode, const bool a
         head_object_request.SetBucket(m_BucketName);
         head_object_request.SetKey(m_ObjectName);
 
-        std::cout << "S3 HeadObjectRequests bucket='" << head_object_request.GetBucket()
-                  << "'  object = '" << head_object_request.GetKey() << "'" << std::endl;
-
+        if (m_Verbose > 0)
+        {
+            std::cout << "FileAWSSDK::Open: S3 HeadObjectRequests bucket='"
+                      << head_object_request.GetBucket() << "'  object = '"
+                      << head_object_request.GetKey() << "'" << std::endl;
+        }
         head_object = s3Client->HeadObject(head_object_request);
         if (!head_object.IsSuccess())
         {
@@ -262,8 +277,11 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
     if (m_IsCached)
     {
         m_CacheFileRead->Read(buffer, size, m_SeekPos);
-        std::cout << "Read from cache " << m_CacheFileRead->m_Name << " start = " << m_SeekPos
-                  << " size = " << size << std::endl;
+        if (m_Verbose > 0)
+        {
+            std::cout << "FileAWSSDK::Read: Read from cache " << m_CacheFileRead->m_Name
+                      << " start = " << m_SeekPos << " size = " << size << std::endl;
+        }
         return;
     }
 
@@ -286,10 +304,13 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
     }
     else
     {
-        std::cout << "Successfully retrieved '" << m_ObjectName << "' from '" << m_BucketName
-                  << "'."
-                  << "\nObject length = " << outcome.GetResult().GetContentLength()
-                  << "\nRange requested = " << range.str() << std::endl;
+        if (m_Verbose > 0)
+        {
+            std::cout << "FileAWSSDK::Read: Successfully retrieved '" << m_ObjectName << "' from '"
+                      << m_BucketName << "'."
+                      << "\nObject length = " << outcome.GetResult().GetContentLength()
+                      << "\nRange requested = " << range.str() << std::endl;
+        }
         auto body = outcome.GetResult().GetBody().rdbuf();
         body->sgetn(buffer, size);
 
@@ -297,8 +318,11 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
         if (m_CachingThisFile)
         {
             m_CacheFileWrite->Write(buffer, size, m_SeekPos);
-            std::cout << "Written to cache " << m_CacheFileWrite->m_Name << " start = " << m_SeekPos
-                      << " size = " << size << std::endl;
+            if (m_Verbose > 0)
+            {
+                std::cout << "FileAWSSDK::Read: Written to cache " << m_CacheFileWrite->m_Name
+                          << " start = " << m_SeekPos << " size = " << size << std::endl;
+            }
         }
     }
 }
@@ -325,7 +349,10 @@ void FileAWSSDK::Flush() {}
 void FileAWSSDK::Close()
 {
     WaitForOpen();
-    std::cout << "FileAWSSDK::Close(" << m_Name << ") Enter" << std::endl;
+    if (m_Verbose > 0)
+    {
+        std::cout << "FileAWSSDK::Close(" << m_Name << ") Enter" << std::endl;
+    }
     ProfilerStart("close");
     errno = 0;
     m_Errno = errno;

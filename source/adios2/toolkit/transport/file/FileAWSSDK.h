@@ -95,6 +95,7 @@ private:
     std::future<int> m_OpenFuture;
     size_t m_SeekPos = 0;
     size_t m_Size = 0;
+    int m_Verbose = 0;
 
     void SetUpCache();
     std::string m_CachePath;        // local cache directory

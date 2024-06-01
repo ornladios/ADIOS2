@@ -7,6 +7,7 @@ import zlib
 import yaml
 from dataclasses import dataclass
 from datetime import datetime
+from dateutil.parser import parse
 from os import chdir, getcwd, remove, stat
 from os.path import exists, isdir, expanduser
 from re import sub
@@ -16,6 +17,7 @@ from time import time_ns
 # from adios2.adios2_campaign_manager import *
 
 ADIOS_ACA_VERSION = "0.1"
+
 
 @dataclass
 class UserOption:
@@ -45,6 +47,17 @@ def ReadUserConfig():
     return opts
 
 
+def ReadHostConfig() -> dict:
+    path = expanduser("~/.config/adios2/hosts.yaml")
+    doc = {}
+    try:
+        with open(path) as f:
+            doc = yaml.safe_load(f)
+    except FileNotFoundError:
+        None
+    return doc
+
+
 def SetupArgs():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -60,11 +73,19 @@ def SetupArgs():
         "--campaign_store", "-s", help="Path to local campaign store", default=None
     )
     parser.add_argument("--hostname", "-n", help="Host name unique for hosts in a campaign")
+    parser.add_argument("--s3_bucket", "-b", help="Bucket on S3 server", default=None)
+    parser.add_argument(
+        "--s3_datetime",
+        "-t",
+        help="Datetime of data on S3 server in " "'2024-04-19 10:20:15 -0400' format",
+        default=None,
+    )
     parser.add_argument("-f", "--files", nargs="+", help="Add ADIOS files manually")
     args = parser.parse_args()
 
     # default values
     args.user_options = ReadUserConfig()
+    args.host_options = ReadHostConfig()
 
     if args.verbose == 0:
         args.verbose = args.user_options.verbose
@@ -76,16 +97,32 @@ def SetupArgs():
         while args.campaign_store[-1] == "/":
             args.campaign_store = args.campaign_store[:-1]
 
+    args.remote_data = False
     if args.hostname is None:
         args.hostname = args.user_options.hostname
+    elif args.hostname in args.host_options and args.hostname != args.user_options.hostname:
+        args.remote_data = True
+        hostopt = args.host_options.get(args.hostname)
+        if hostopt is not None:
+            optID = next(iter(hostopt))
+            if hostopt[optID]["protocol"].casefold() == "s3":
+                args.s3_endpoint = hostopt[optID]["endpoint"]
+                if args.s3_bucket is None:
+                    print("ERROR: Remote option for an S3 server requires --s3_bucket")
+                    exit(1)
+                if args.s3_datetime is None:
+                    print("ERROR: Remote option for an S3 server requires --s3_datetime")
+                    exit(1)
 
     args.CampaignFileName = args.campaign
     if args.campaign is not None:
         if not args.campaign.endswith(".aca"):
             args.CampaignFileName += ".aca"
-        if (not exists(args.CampaignFileName) and
-                not args.CampaignFileName.startswith("/") and
-                args.campaign_store is not None):
+        if (
+            not exists(args.CampaignFileName)
+            and not args.CampaignFileName.startswith("/")
+            and args.campaign_store is not None
+        ):
             args.CampaignFileName = args.campaign_store + "/" + args.CampaignFileName
 
     if args.files is None:
@@ -108,12 +145,19 @@ def CheckCampaignStore(args):
 def CheckLocalCampaignDir(args):
     if not isdir(args.LocalCampaignDir):
         print(
-            "ERROR: Shot campaign data '" +
-            args.LocalCampaignDir +
-            "' does not exist. Run this command where the code was executed.",
+            "ERROR: Shot campaign data '"
+            + args.LocalCampaignDir
+            + "' does not exist. Run this command where the code was executed.",
             flush=True,
         )
         exit(1)
+
+
+def parse_date_to_utc(date, fmt=None):
+    if fmt is None:
+        fmt = "%Y-%m-%d %H:%M:%S %z"  # Defaults to : 2022-08-31 07:47:30 -0000
+    get_date_obj = parse(str(date))
+    return get_date_obj.timestamp()
 
 
 def IsADIOSDataset(dataset):
@@ -187,9 +231,9 @@ def AddFileToArchive(args: dict, filename: str, cur: sqlite3.Cursor, dsID: int):
     )
 
 
-def AddDatasetToArchive(hostID: int, dirID: int, dataset: str, cur: sqlite3.Cursor) -> int:
-    statres = stat(dataset)
-    ct = statres.st_ctime_ns
+def AddDatasetToArchive(
+    args: dict, hostID: int, dirID: int, dataset: str, cur: sqlite3.Cursor
+) -> int:
     select_cmd = (
         "select rowid from bpdataset "
         f"where hostid = {hostID} and dirid = {dirID} and name = '{dataset}'"
@@ -204,6 +248,15 @@ def AddDatasetToArchive(hostID: int, dirID: int, dataset: str, cur: sqlite3.Curs
         )
     else:
         print(f"Add dataset {dataset} to archive")
+        if args.remote_data:
+            if args.s3_datetime:
+                ct = parse_date_to_utc(args.s3_datetime)
+            else:
+                ct = 0
+        else:
+            statres = stat(dataset)
+            ct = statres.st_ctime_ns
+
         curDS = cur.execute(
             "insert into bpdataset (hostid, dirid, name, ctime) values (?, ?, ?, ?)",
             (hostID, dirID, dataset, ct),
@@ -221,8 +274,10 @@ def ProcessFiles(args: dict, cur: sqlite3.Cursor, hostID: int, dirID: int):
         print(f"Process entry {entry}:")
         dsID = 0
         dataset = entry
-        if IsADIOSDataset(dataset):
-            dsID = AddDatasetToArchive(hostID, dirID, dataset, cur)
+        if args.remote_data:
+            dsID = AddDatasetToArchive(args, hostID, dirID, dataset, cur)
+        elif IsADIOSDataset(dataset):
+            dsID = AddDatasetToArchive(args, hostID, dirID, dataset, cur)
             cwd = getcwd()
             chdir(dataset)
             mdFileList = glob.glob("*md.*")
@@ -236,16 +291,20 @@ def ProcessFiles(args: dict, cur: sqlite3.Cursor, hostID: int, dirID: int):
 
 
 def GetHostName():
-    host = getfqdn()
-    if host.startswith("login"):
-        host = sub("^login[0-9]*\\.", "", host)
-    if host.startswith("batch"):
-        host = sub("^batch[0-9]*\\.", "", host)
-    if args.hostname is None:
-        shorthost = host.split(".")[0]
+    if args.s3_endpoint:
+        longhost = args.s3_endpoint
     else:
-        shorthost = args.user_options.hostname
-    return host, shorthost
+        longhost = getfqdn()
+        if longhost.startswith("login"):
+            longhost = sub("^login[0-9]*\\.", "", longhost)
+        if longhost.startswith("batch"):
+            longhost = sub("^batch[0-9]*\\.", "", longhost)
+
+    if args.hostname is None:
+        shorthost = longhost.split(".")[0]
+    else:
+        shorthost = args.hostname
+    return longhost, shorthost
 
 
 def AddHostName(longHostName, shortHostName):
@@ -302,7 +361,10 @@ def Update(args: dict, cur: sqlite3.Cursor):
 
     hostID = AddHostName(longHostName, shortHostName)
 
-    rootdir = getcwd()
+    if args.remote_data and args.s3_bucket is not None:
+        rootdir = args.s3_bucket
+    else:
+        rootdir = getcwd()
     dirID = AddDirectory(hostID, rootdir)
     con.commit()
 
@@ -321,15 +383,15 @@ def Create(args: dict, cur: sqlite3.Cursor):
     cur.execute("create table host" + "(hostname TEXT PRIMARY KEY, longhostname TEXT)")
     cur.execute("create table directory" + "(hostid INT, name TEXT, PRIMARY KEY (hostid, name))")
     cur.execute(
-        "create table bpdataset" +
-        "(hostid INT, dirid INT, name TEXT, ctime INT" +
-        ", PRIMARY KEY (hostid, dirid, name))"
+        "create table bpdataset"
+        + "(hostid INT, dirid INT, name TEXT, ctime INT"
+        + ", PRIMARY KEY (hostid, dirid, name))"
     )
     cur.execute(
-        "create table bpfile" +
-        "(bpdatasetid INT, name TEXT, compression INT, lenorig INT" +
-        ", lencompressed INT, ctime INT, data BLOB" +
-        ", PRIMARY KEY (bpdatasetid, name))"
+        "create table bpfile"
+        + "(bpdatasetid INT, name TEXT, compression INT, lenorig INT"
+        + ", lencompressed INT, ctime INT, data BLOB"
+        + ", PRIMARY KEY (bpdatasetid, name))"
     )
     Update(args, cur)
 
@@ -363,11 +425,11 @@ def Info(args: dict, cur: sqlite3.Cursor):
         for dir in dirs:
             print(f"    dir = {dir[1]}")
             res3 = cur.execute(
-                'select rowid, name, ctime from bpdataset where hostid = "' +
-                str(host[0]) +
-                '" and dirid = "' +
-                str(dir[0]) +
-                '"'
+                'select rowid, name, ctime from bpdataset where hostid = "'
+                + str(host[0])
+                + '" and dirid = "'
+                + str(dir[0])
+                + '"'
             )
             bpdatasets = res3.fetchall()
             for bpdataset in bpdatasets:
