@@ -409,6 +409,7 @@ struct HostConfig
 
     /* ssh and xrootd parameters */
     uint16_t port = 0;
+    uint16_t localPort = 0;
     std::string hostname = "";
     std::string username = "";
     std::string remoteServerPath = "";
@@ -418,6 +419,8 @@ struct HostConfig
     std::string endpoint = "";
     std::string awsProfile = "default"; // profile name in ~/.aws/credentials
     bool isAWS_EC2 = false;
+
+    int verbose = 0;
 };
 
 /** HostOptions holds all user options from ~/.config/adios2/hosts.yaml */

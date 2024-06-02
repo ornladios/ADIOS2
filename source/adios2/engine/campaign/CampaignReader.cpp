@@ -245,26 +245,28 @@ void CampaignReader::InitTransports()
                     p.emplace("cache", m_Options.cachepath + PathSeparator +
                                            m_CampaignData.hosts[ds.hostIdx].hostname +
                                            PathSeparator + m_Name);
-                    p.emplace("verbose", "0");
+                    p.emplace("verbose", std::to_string(ho.verbose));
                     io.AddTransport("File", p);
                     io.SetEngine("BP5");
                     localPath = m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] +
                                 PathSeparator + ds.name;
                     if (ho.isAWS_EC2)
                     {
-                        setenv("AWS_EC2_METADATA_DISABLED", "false", (int)true);
+                        adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=false");
                     }
                     else
                     {
-                        setenv("AWS_EC2_METADATA_DISABLED", "true", (int)true);
+                        adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=true");
                     }
+
                     if (ho.awsProfile.empty())
                     {
-                        setenv("AWS_PROFILE", "default", (int)true);
+                        adios2sys::SystemTools::PutEnv("AWS_PROFILE=default");
                     }
                     else
                     {
-                        setenv("AWS_PROFILE", ho.awsProfile.c_str(), (int)true);
+                        std::string es = "AWS_PROFILE=" + ho.awsProfile;
+                        adios2sys::SystemTools::PutEnv(es);
                     }
 
                     done = true;

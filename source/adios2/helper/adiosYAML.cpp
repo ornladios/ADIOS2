@@ -400,6 +400,7 @@ void ParseHostOptionsFile(Comm &comm, const std::string &configFileYAML, HostOpt
                         ": each entry in the list must be a YAML Map, " + hint);
             }
 
+            SetOption(hc.verbose, "verbose", hostmap, hint);
             std::string protocolStr;
             SetOption(protocolStr, "protocol", hostmap, hint, isMandatory);
             hc.protocol = GetHostAccessProtocol(protocolStr);
@@ -410,9 +411,10 @@ void ParseHostOptionsFile(Comm &comm, const std::string &configFileYAML, HostOpt
                 SetOption(authStr, "authentication", hostmap, hint, isMandatory);
                 hc.authentication = GetHostAuthProtocol(authStr);
                 SetOption(hc.hostname, "host", hostmap, hint, isMandatory);
-                SetOption(hc.username, "user", hostmap, hint, isNotMandatory);
+                SetOption(hc.username, "user", hostmap, hint);
                 SetOption(hc.remoteServerPath, "serverpath", hostmap, hint, isMandatory);
-                SetOption(hc.port, "port", hostmap, hint, isNotMandatory);
+                SetOption(hc.port, "port", hostmap, hint);
+                SetOption(hc.localPort, "local_port", hostmap, hint);
                 break;
             }
             case HostAccessProtocol::XRootD: {
@@ -420,15 +422,15 @@ void ParseHostOptionsFile(Comm &comm, const std::string &configFileYAML, HostOpt
                 SetOption(authStr, "authentication", hostmap, hint, isMandatory);
                 hc.authentication = GetHostAuthProtocol(authStr);
                 SetOption(hc.hostname, "host", hostmap, hint, isMandatory);
-                SetOption(hc.username, "user", hostmap, hint, isNotMandatory);
-                SetOption(hc.remoteServerPath, "serverpath", hostmap, hint, isNotMandatory);
-                SetOption(hc.port, "port", hostmap, hint, isNotMandatory);
+                SetOption(hc.username, "user", hostmap, hint);
+                SetOption(hc.remoteServerPath, "serverpath", hostmap, hint);
+                SetOption(hc.port, "port", hostmap, hint);
                 break;
             }
             case HostAccessProtocol::S3: {
-                SetOption(hc.awsProfile, "profile", hostmap, hint, isNotMandatory);
+                SetOption(hc.awsProfile, "profile", hostmap, hint);
                 SetOption(hc.endpoint, "endpoint", hostmap, hint, isMandatory);
-                SetOption(hc.isAWS_EC2, "aws_ec2_metadata", hostmap, hint, isNotMandatory);
+                SetOption(hc.isAWS_EC2, "aws_ec2_metadata", hostmap, hint);
                 break;
             }
             default:
