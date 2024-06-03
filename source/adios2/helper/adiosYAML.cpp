@@ -431,6 +431,7 @@ void ParseHostOptionsFile(Comm &comm, const std::string &configFileYAML, HostOpt
                 SetOption(hc.awsProfile, "profile", hostmap, hint);
                 SetOption(hc.endpoint, "endpoint", hostmap, hint, isMandatory);
                 SetOption(hc.isAWS_EC2, "aws_ec2_metadata", hostmap, hint);
+                SetOption(hc.recheckMetadata, "recheck_metadata", hostmap, hint);
                 break;
             }
             default:

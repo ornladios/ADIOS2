@@ -419,6 +419,7 @@ struct HostConfig
     std::string endpoint = "";
     std::string awsProfile = "default"; // profile name in ~/.aws/credentials
     bool isAWS_EC2 = false;
+    bool recheckMetadata = true;
 
     int verbose = 0;
 };

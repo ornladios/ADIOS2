@@ -71,6 +71,10 @@ void FileAWSSDK::SetParameters(const Params &params)
 
     helper::SetParameterValueInt("verbose", params, m_Verbose, "");
 
+    std::string recheckStr = "true";
+    helper::SetParameterValue("recheck_metadata", params, recheckStr);
+    m_RecheckMetadata = helper::StringTo<bool>(recheckStr, "");
+
     core::ADIOS::Global_init_AWS_API();
 
     s3ClientConfig = new Aws::S3::S3ClientConfiguration;
@@ -82,7 +86,8 @@ void FileAWSSDK::SetParameters(const Params &params)
     if (m_Verbose > 0)
     {
         std::cout << "FileAWSSDK::SetParameters: AWS Transport created with endpoint = '"
-                  << m_Endpoint << "'" << std::endl;
+                  << m_Endpoint << "'"
+                  << " recheck_metadata = " << m_RecheckMetadata << std::endl;
     }
 }
 
@@ -114,31 +119,58 @@ void FileAWSSDK::SetUpCache()
     if (m_CachingThisFile)
     {
         std::string const ep = std::regex_replace(m_Endpoint, std::regex("/|:"), "_");
-
-        m_CacheFileWrite = new FileFStream(m_Comm);
         const std::string path(m_CachePath + PathSeparator + ep + PathSeparator + m_BucketName +
                                PathSeparator + m_ObjectName);
         m_CacheFilePath = path;
-        const auto lastPathSeparator(path.find_last_of(PathSeparator));
-        if (lastPathSeparator != std::string::npos)
+        if (!m_RecheckMetadata)
         {
-            const std::string dirpath(path.substr(0, lastPathSeparator));
-            helper::CreateDirectory(dirpath);
+            m_CacheFileRead = new FileFStream(m_Comm);
+            try
+            {
+                m_CacheFileRead->Open(path, Mode::Read);
+                m_Size = m_CacheFileRead->GetSize();
+                m_IsCached = true;
+                m_CachingThisFile = false;
+                if (m_Verbose > 0)
+                {
+                    std::cout << "FileAWSSDK::SetUpCache: Already cached " << path
+                              << ", size = " << m_Size << std::endl;
+                }
+            }
+            catch (std::ios_base::failure &)
+            {
+                delete m_CacheFileRead;
+                m_IsCached = false;
+            }
         }
+    }
+}
 
+void FileAWSSDK::CheckCache(const size_t fileSize)
+{
+    if (m_CachingThisFile)
+    {
+        /* Check if cache file exists and size equals the cloud version*/
         m_CacheFileRead = new FileFStream(m_Comm);
         try
         {
-            m_CacheFileRead->Open(path, Mode::Read);
-            if (m_CacheFileRead->GetSize() == m_Size)
+            m_CacheFileRead->Open(m_CacheFilePath, Mode::Read);
+            size_t cacheSize = m_CacheFileRead->GetSize();
+            if (cacheSize == fileSize)
             {
                 m_IsCached = true;
                 m_CachingThisFile = false;
-                delete m_CacheFileWrite;
                 if (m_Verbose > 0)
                 {
-                    std::cout << "FileAWSSDK::SetUpCache: Already cached " << path << std::endl;
+                    std::cout << "FileAWSSDK::CheckCache: Already cached " << m_CacheFilePath
+                              << ", full size = " << cacheSize << std::endl;
                 }
+            }
+            else
+            {
+                std::cout << "FileAWSSDK::CheckCache: Partially cached " << m_CacheFilePath
+                          << ", cached size = " << cacheSize << " full size = " << fileSize
+                          << std::endl;
             }
         }
         catch (std::ios_base::failure &)
@@ -148,10 +180,19 @@ void FileAWSSDK::SetUpCache()
 
         if (m_CachingThisFile)
         {
-            m_CacheFileWrite->Open(path, Mode::Write);
+            /* Create output file for caching this data later */
+            const auto lastPathSeparator(m_CacheFilePath.find_last_of(PathSeparator));
+            if (lastPathSeparator != std::string::npos)
+            {
+                const std::string dirpath(m_CacheFilePath.substr(0, lastPathSeparator));
+                helper::CreateDirectory(dirpath);
+            }
+            m_CacheFileWrite = new FileFStream(m_Comm);
+            m_CacheFileWrite->Open(m_CacheFilePath, Mode::Write);
             if (m_Verbose > 0)
             {
-                std::cout << "FileAWSSDK::SetUpCache: Caching turn on for " << path << std::endl;
+                std::cout << "FileAWSSDK::CheckCache: Caching turn on for " << m_CacheFilePath
+                          << std::endl;
             }
         }
     }
@@ -184,31 +225,42 @@ void FileAWSSDK::Open(const std::string &name, const Mode openMode, const bool a
     case Mode::Read: {
         ProfilerStart("open");
         errno = 0;
-        Aws::S3::Model::HeadObjectRequest head_object_request;
-        head_object_request.SetBucket(m_BucketName);
-        head_object_request.SetKey(m_ObjectName);
 
-        if (m_Verbose > 0)
-        {
-            std::cout << "FileAWSSDK::Open: S3 HeadObjectRequests bucket='"
-                      << head_object_request.GetBucket() << "'  object = '"
-                      << head_object_request.GetKey() << "'" << std::endl;
-        }
-        head_object = s3Client->HeadObject(head_object_request);
-        if (!head_object.IsSuccess())
-        {
-            helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileAWSSDK", "Open",
-                                                 "'bucket/object'  " + m_Name + " does not exist ");
-        }
-        else
-        {
-            m_Size = head_object.GetResult().GetContentLength();
+        SetUpCache();
+        // m_IsCached=true if already found in cache and m_RecheckMetadata=false
+        // m_CachingThisFile=true if we want caching and m_IsCached=false
+        // m_CacheFilePath is the path to the local file in cache
 
-            /* Cache: check if we want to cache this file (metadata files) */
-            SetUpCache();
-        }
+        if (!m_IsCached)
+        {
+            Aws::S3::Model::HeadObjectRequest head_object_request;
+            head_object_request.SetBucket(m_BucketName);
+            head_object_request.SetKey(m_ObjectName);
 
-        m_Errno = errno;
+            if (m_Verbose > 0)
+            {
+                std::cout << "FileAWSSDK::Open: S3 HeadObjectRequests bucket='"
+                          << head_object_request.GetBucket() << "'  object = '"
+                          << head_object_request.GetKey() << "'" << std::endl;
+            }
+            head_object = s3Client->HeadObject(head_object_request);
+            if (!head_object.IsSuccess())
+            {
+                helper::Throw<std::invalid_argument>(
+                    "Toolkit", "transport::file::FileAWSSDK", "Open",
+                    "'bucket/object'  " + m_Name + " does not exist ");
+            }
+            else
+            {
+                m_Size = head_object.GetResult().GetContentLength();
+                /* Cache: check if we want to cache this file (metadata files)
+                   and if we already have it fully in the cache
+                */
+                CheckCache(m_Size);
+            }
+
+            m_Errno = errno;
+        }
         ProfilerStop("open");
         break;
     }
@@ -369,10 +421,12 @@ void FileAWSSDK::Close()
     if (m_CachingThisFile)
     {
         m_CacheFileWrite->Close();
+        delete m_CacheFileWrite;
     }
     if (m_IsCached)
     {
         m_CacheFileRead->Close();
+        delete m_CacheFileRead;
     }
 
     m_IsOpen = false;
@@ -391,7 +445,7 @@ void FileAWSSDK::Delete()
 
 void FileAWSSDK::CheckFile(const std::string hint) const
 {
-    if (!head_object.IsSuccess())
+    if (!m_IsCached && !head_object.IsSuccess())
     {
         helper::Throw<std::ios_base::failure>("Toolkit", "transport::file::FileAWSSDK", "CheckFile",
                                               hint);

@@ -246,6 +246,7 @@ void CampaignReader::InitTransports()
                                            m_CampaignData.hosts[ds.hostIdx].hostname +
                                            PathSeparator + m_Name);
                     p.emplace("verbose", std::to_string(ho.verbose));
+                    p.emplace("recheck_metadata", (ho.recheckMetadata ? "true" : "false"));
                     io.AddTransport("File", p);
                     io.SetEngine("BP5");
                     localPath = m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] +
