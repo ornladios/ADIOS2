@@ -98,6 +98,7 @@ def SetupArgs():
             args.campaign_store = args.campaign_store[:-1]
 
     args.remote_data = False
+    args.s3_endpoint = None
     if args.hostname is None:
         args.hostname = args.user_options.hostname
     elif args.hostname in args.host_options and args.hostname != args.user_options.hostname:
