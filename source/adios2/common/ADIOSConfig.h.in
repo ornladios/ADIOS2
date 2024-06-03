@@ -31,7 +31,16 @@
 
 @ADIOS2_CONFIG_DEFINES@
 
-#define ADIOS2_FEATURE_LIST @ADIOS2_CONFIG_FEATURE_LIST@
+/*
+ * Constant defines: These are available unconditionally
+ * in the current version of ADIOS2.
+ */
+
+#define ADIOS2_HAVE_BP3
+#define ADIOS2_HAVE_BP4
+#define ADIOS2_HAVE_BP5
+
+#define ADIOS2_FEATURE_LIST "BP3" "BP4" "BP5" @ADIOS2_CONFIG_FEATURE_LIST@
 
 /* Everything between here and the note above is programatically generated */
 
