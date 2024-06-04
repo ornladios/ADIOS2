@@ -370,6 +370,7 @@ void FileAWSSDK::Read(char *buffer, size_t size, size_t start)
         if (m_CachingThisFile)
         {
             m_CacheFileWrite->Write(buffer, size, m_SeekPos);
+            m_CacheFileWrite->Flush();
             if (m_Verbose > 0)
             {
                 std::cout << "FileAWSSDK::Read: Written to cache " << m_CacheFileWrite->m_Name
