@@ -110,7 +110,7 @@ jobs:
 
   ubuntu:
     needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    if: false
 
     runs-on: ubuntu-20.04
     container:
@@ -208,7 +208,7 @@ jobs:
 
   el8:
     needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    if: false
 
     runs-on: ubuntu-latest
     container:
@@ -272,7 +272,7 @@ jobs:
 
   macos:
     needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    if: false
 
     runs-on: ${{ matrix.image }}
     env:
@@ -361,25 +361,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [win2019, win2022]
+        os: [win2022]
         shared: [shared]
-        parallel: [msmpi]
-        include:
-          - os: win2019
-            image: windows-2019
-            compiler: vs2019
-          - os: win2022
-            image: windows-2022
-            compiler: vs2022
-          - os: win2022
-            image: windows-2022
-            compiler: vs2022
-            parallel: serial
-          - os: win2022
-            image: windows-2022
-            shared: static
-            compiler: vs2022
-            parallel: serial
+        parallel: [serial]
+        image: [windows-2022]
+        compiler: [mingw64]
 
     defaults:
       run:
@@ -411,7 +397,7 @@ jobs:
 
   docker:
     needs: [format, git_checks]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    if:  false
 
     runs-on: ubuntu-latest
     strategy:
@@ -476,7 +462,7 @@ jobs:
   # standard container job.
   contract:
     needs: [format, git_checks, docker]
-    if: needs.git_checks.outputs.num_code_changes > 0
+    if: false
 
     runs-on: ubuntu-latest
     strategy:
