@@ -6,3 +6,5 @@ dependencies:
   - numpy>=1.19
   - python=3.10
   - hdf5
+  - m2w64-dlfcn
+  - m2w64-toolchain
