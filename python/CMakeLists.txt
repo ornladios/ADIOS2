@@ -15,4 +15,5 @@ endif()
 install(DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/
   DESTINATION ${install_location}
   COMPONENT adios2_python-python
+  ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
 )

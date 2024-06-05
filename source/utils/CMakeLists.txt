@@ -23,6 +23,7 @@ target_include_directories(bpls PRIVATE
 set_property(TARGET bpls PROPERTY OUTPUT_NAME bpls${ADIOS2_EXECUTABLE_SUFFIX})
 install(TARGETS bpls EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_tools-runtime
+  ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
 )
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/bpls/bpls.cmake.gen.in
@@ -70,6 +71,7 @@ install(TARGETS adios_reorganize
   ${maybe_adios_reorganize_mpi}
   EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_tools-runtime
+  ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
 )
 
 if(ADIOS2_HAVE_MPI)
@@ -83,13 +85,17 @@ if(Python_Interpreter_FOUND)
   install(PROGRAMS adios2_json_pp.py
     RENAME adios2_json_pp
     DESTINATION ${CMAKE_INSTALL_BINDIR}
-    COMPONENT adios2_scripts-runtime)
+    COMPONENT adios2_scripts-runtime
+    ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
+  )
 endif()
 
 install(PROGRAMS adios2_deactivate_bp
   RENAME adios2_deactivate_bp
   DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT adios2_scripts-runtime)
+  COMPONENT adios2_scripts-runtime
+  ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
+)
 
 # Simplified wrappers for adios2_reorganize
 configure_file(

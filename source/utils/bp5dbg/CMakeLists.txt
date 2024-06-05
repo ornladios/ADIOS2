@@ -1,6 +1,7 @@
 install(PROGRAMS bp5dbg.py
   RENAME bp5dbg
   DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_scripts-runtime
+  ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
 )
 install(
   FILES
@@ -10,4 +11,5 @@ install(
     adios2/bp5dbg/metametadata.py
     adios2/bp5dbg/idxtable.py
   DESTINATION ${CMAKE_INSTALL_PYTHONDIR}/adios2/bp5dbg COMPONENT adios2_scripts-runtime
+  ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
 )
