@@ -32,6 +32,7 @@ endif()
 
 install(TARGETS adios_iotest EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_tools-runtime
+  ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
 )
 
 install(DIRECTORY iotest-config/

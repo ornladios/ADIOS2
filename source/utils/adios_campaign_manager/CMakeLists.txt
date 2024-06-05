@@ -1,6 +1,7 @@
 install(PROGRAMS adios2_campaign_manager.py
   RENAME adios2_campaign_manager
   DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_scripts-runtime
+  ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
 )
 #install(
 #  FILES

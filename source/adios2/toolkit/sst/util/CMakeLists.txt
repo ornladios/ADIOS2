@@ -24,4 +24,5 @@ target_include_directories(sst_conn_tool PRIVATE .. ../cp )
 
 install(TARGETS sst_conn_tool EXPORT adios2
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_tools-runtime
+  ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
 )
