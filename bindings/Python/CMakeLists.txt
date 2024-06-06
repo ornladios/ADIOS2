@@ -60,12 +60,15 @@ endif()
 install(TARGETS adios2_py
   DESTINATION ${install_location}/bindings
   COMPONENT adios2_python-python
+  ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
 )
 install(FILES ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/bindings/__init__.py
   DESTINATION ${install_location}/bindings
   COMPONENT adios2_python-python
+  ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
 )
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test
   DESTINATION ${install_location}
   COMPONENT adios2_python-python
+  ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
 )
