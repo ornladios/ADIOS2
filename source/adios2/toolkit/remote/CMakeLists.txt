@@ -15,5 +15,6 @@ if (NOT ADIOS2_USE_PIP)
   set_property(TARGET adios2_remote_server PROPERTY OUTPUT_NAME adios2_remote_server${ADIOS2_EXECUTABLE_SUFFIX})
   install(TARGETS adios2_remote_server EXPORT adios2
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_tools-runtime
+    ${ADIOS2_MAYBE_EXCLUDE_FROM_ALL}
   )
 endif ()
