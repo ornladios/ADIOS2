@@ -102,6 +102,7 @@ check_type_size("void*" CMAKE_SIZEOF_VOID_P)
 check_type_size("long" SIZEOF_LONG)
 set(NATIVE_CG TRUE)
 unset(NATIVE_ARCH)
+set(DILL_NATIVE_ONLY_DEFAULT ON)
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "i.86|x86_64|AMD64|amd64")
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(NATIVE_ARCH x86_64)
@@ -148,9 +149,10 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "s64fx")
   set(HOST_SPARCV9 1)
   set(ARCH_FILE sparc)
 else()
-  message(STATUS "NO CG for Processor \"${CMAKE_SYSTEM_PROCESSOR}\"")
+  message(STATUS "DILL - NO Native CG for Processor \"${CMAKE_SYSTEM_PROCESSOR}\"")
   set(NATIVE_CG FALSE)
   set(NATIVE_ARCH UNSUPPORTED)
+  set(DILL_NATIVE_ONLY_DEFAULT OFF)
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux")
@@ -186,7 +188,7 @@ set(ARM_HARD_FLOAT ${HARDFP_AVAILABLE})
 
 option(DILL_IGNORE_NATIVE  "Build to do emulation, regardless of architecture"
   OFF)
-option(DILL_NATIVE_ONLY  "Build to native code only"  ON)
+option(DILL_NATIVE_ONLY  "Build to native code only"  ${DILL_NATIVE_ONLY_DEFAULT})
 if(DILL_IGNORE_NATIVE)
   set(NATIVE_CG FALSE)
   set(NATIVE_ARCH UNSUPPORTED)
@@ -198,7 +200,7 @@ else()
   find_package(LibFFI)
 endif()
 if(LIBFFI_FOUND)
-  message(STATUS "Enabling emulation")
+  message(STATUS "DILL - Enabling emulation")
   set(EMULATION_POSSIBLE TRUE)
 elseif((DILL_IGNORE_NATIVE OR (NATIVE_ARCH STREQUAL "UNSUPPORTED")) AND NOT DILL_NATIVE_ONLY)
   find_program (AUTOCONF autoconf)
@@ -206,15 +208,15 @@ elseif((DILL_IGNORE_NATIVE OR (NATIVE_ARCH STREQUAL "UNSUPPORTED")) AND NOT DILL
   if ((AUTOCONF STREQUAL "AUTOCONF-NOTFOUND") OR (AUTOMAKE STREQUAL "AUTOMAKE-NOTFOUND"))
     if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
       # I am top-level project.
-      message(FATAL_ERROR "DILL_IGNORE_NATIVE set or native architecture unsupported, but autoconf or automake not found, so unable to build libffi")
+      message(FATAL_ERROR "DILL - DILL_IGNORE_NATIVE set or native architecture unsupported, but autoconf or automake not found, so unable to build libffi")
     else()
       # I am called from other project with add_subdirectory().
-      message(STATUS "DILL_IGNORE_NATIVE set or native architecture unsupported, but autoconf or automake not found, so unable to build libffi")
+      message(STATUS "DILL - DILL_IGNORE_NATIVE set or native architecture unsupported, but autoconf or automake not found, so unable to build libffi")
       return()
     endif()
   endif()
   set(LIBFFI_INTERNAL ON)
-  message(STATUS "Using private copy of libffi")
+  message(STATUS "DILL - Using private copy of libffi")
   include(ExternalProject)
   if(BUILD_SHARED_LIBS)
     set(libffi_shared_args --enable-shared --disable-static)
@@ -258,10 +260,10 @@ elseif((DILL_IGNORE_NATIVE OR (NATIVE_ARCH STREQUAL "UNSUPPORTED")) AND NOT DILL
       DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT ${DILL_HEADER_COMPONENT})
   endif()
 
-  message(STATUS "Enabling emulation")
+  message(STATUS "DILL - Enabling emulation")
   set(EMULATION_POSSIBLE TRUE)
 else()
-  message(STATUS "Disabling emulation")
+  message(STATUS "DILL - Disabling emulation")
   set(EMULATION_POSSIBLE FALSE)
 endif()
 
@@ -294,7 +296,7 @@ message (STATUS "base.ops argument is ${BASE_OPS_ARG}")
 option(DILL_MULTI_TARGET  "Build all available target architectures" OFF)
 
 if(DILL_MULTI_TARGET)
-  message(STATUS "arch files is ${arch_files}")
+  message(STATUS "DILL - arch files is ${arch_files}")
   list(APPEND SRC_list ${arch_files})
 elseif(NOT ${NATIVE_ARCH} STREQUAL "UNSUPPORTED")
   list(APPEND SRC_list dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c)
@@ -312,7 +314,7 @@ if(DILL_MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
   endif()
   if(NOT DILL_MULTI_TARGET AND NOT NATIVE_CG)
     message(STATUS
-      "Configure has detected no native dynamic code generation support 
+      "DILL - Configure has detected no native dynamic code generation support 
    for this architecture (\"${NATIVE_ARCH}\").  However, the libffi
    library was found, so a library configured for emulation will be built."
     )
@@ -323,15 +325,14 @@ else()
   if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
     # I am top-level project.
     message(FATAL_ERROR
-	"Configure has detected no native dynamic code generation support 
+	"DILL - Configure has detected no native dynamic code generation support 
 	 for this architecture (\"${NATIVE_ARCH}\"), -DDILL_MULTI_TARGET=ON 
 	 was not specified, and no emulation is possible (libffi library 
 	 not found)  NO LIBRARY WILL BE BUILT" )
   else()
     message(STATUS
-	"No native dynamic code generation support for this architecture 
-	(\"${CMAKE_SYSTEM_PROCESSOR}\"), -DDILL_MULTI_TARGET=ON was not specified, and no emulation 
-	is possible (libffi library not found) NO DILL LIBRARY WILL BE BUILT, but this is not a failure")
+	"DILL - No native dynamic code generation support for this architecture and no emulation 
+	is possible (libffi library not found or failed to build) NO DILL LIBRARY WILL BE BUILT, but this is not a failure")
     return()
   endif()
 endif()
