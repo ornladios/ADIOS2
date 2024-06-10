@@ -10,7 +10,6 @@ AnonADIOSFile *ADIOSFilePool::GetFree(std::string Filename, bool RowMajorArrays)
     auto res = map.find(index);
 
     SubPool *subpool;
-    AnonADIOSFile *ret;
     if (res != map.end())
     {
         subpool = res->second.get();

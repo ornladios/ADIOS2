@@ -150,6 +150,26 @@ if ((NOT WIN32) AND ADIOS2_HAVE_SST)
    add_file_remote_tests_helper(WriteMemorySelectionRead)
 endif()
 
+if (ADIOS2_HAVE_XRootD)
+   macro(add_get_xrremote_tests_helper testname)
+      add_test(NAME "Remote.BP${testname}.GetXRRemote" COMMAND Test.Engine.BP.${testname}.Serial bp5)
+      set_tests_properties(Remote.BP${testname}.GetXRRemote PROPERTIES FIXTURES_REQUIRED XRServer ENVIRONMENT "DoXRootD=1")
+   endmacro()
+
+   add_test(NAME generateXRootDConfig COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/generateXRootDConfig.sh $<TARGET_FILE:adios2_xrootd>  )
+   add_test(NAME remoteXRServerSetup   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/start_xrootd.sh ${XROOTD_SERVER_BINARY} ${CMAKE_CURRENT_BINARY_DIR})
+
+   set_tests_properties(remoteXRServerSetup         PROPERTIES FIXTURES_SETUP    XRServer)
+   set_tests_properties(remoteXRServerSetup PROPERTIES DEPENDS "generateXRootDConfig")
+
+   add_test(NAME remoteXRServerCleanup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/kill_xrootd.sh )
+   set_tests_properties(remoteXRServerCleanup         PROPERTIES FIXTURES_CLEANUP    XRServer)
+
+   ##### add remote tests below this line
+   add_get_xrremote_tests_helper(WriteReadADIOS2stdio)
+   add_get_xrremote_tests_helper(WriteMemorySelectionRead)
+endif()
+
 if(ADIOS2_HAVE_MPI)
   list(APPEND BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.MPI" "Engine.BP.BPLargeMetadata.ManyLongStrings.BP5.MPI")
 endif()
