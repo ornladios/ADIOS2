@@ -12,6 +12,10 @@ namespace adios2
 {
 namespace derived
 {
+std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
+    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc}},
+    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc}},
+    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc}}};
 
 DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 {
