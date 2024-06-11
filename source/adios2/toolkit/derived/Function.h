@@ -31,10 +31,7 @@ DerivedData Curl3DFunc(std::vector<DerivedData> input, DataType type);
 Dims SameDimsFunc(std::vector<Dims> input);
 Dims CurlDimsFunc(std::vector<Dims> input);
 
-const std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
-    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc}}};
+extern std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions;
 
 template <class T>
 T *ApplyOneToOne(std::vector<DerivedData> inputData, size_t dataSize,
