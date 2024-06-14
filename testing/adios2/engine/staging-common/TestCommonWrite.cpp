@@ -93,7 +93,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         (void)io.DefineVariable<double>("scalar_r64");
         (void)io.DefineVariable<int8_t>("i8", shape, start, count);
         (void)io.DefineVariable<int16_t>("i16", shape, start, count);
-        (void)io.DefineVariable<int32_t>("i32", shape, start, count);
+        (void)io.DefineVariable<int32_t>("i32(bob)", shape, start, count);
         (void)io.DefineVariable<int64_t>("i64", shape, start, count);
         auto var_r32 = io.DefineVariable<float>("r32", shape, start, count);
         auto var_r64 = io.DefineVariable<double>("r64", shape, start_r64, count_r64);
@@ -128,7 +128,7 @@ TEST_F(CommonWriteTest, ADIOS2CommonWrite)
         auto scalar_r64 = io.InquireVariable<double>("scalar_r64");
         auto var_i8 = io.InquireVariable<int8_t>("i8");
         auto var_i16 = io.InquireVariable<int16_t>("i16");
-        auto var_i32 = io.InquireVariable<int32_t>("i32");
+        auto var_i32 = io.InquireVariable<int32_t>("i32(bob)");
         auto var_i64 = io.InquireVariable<int64_t>("i64");
         auto var_r32 = io.InquireVariable<float>("r32");
         auto var_r64 = io.InquireVariable<double>("r64");
