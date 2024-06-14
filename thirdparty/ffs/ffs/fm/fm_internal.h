@@ -129,6 +129,7 @@ typedef struct _FMContextStruct {
     int server_pid;
     int format_server_identifier;
     int server_byte_reversal;
+    int ignore_default_values;
 
     int format_list_size;
     FMFormat *format_list;

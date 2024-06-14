@@ -181,6 +181,7 @@ new_FMContext()
     c->native_column_major_arrays = 0;
     c->native_pointer_size = sizeof(char*);
     c->errno_val = 0;
+    c->ignore_default_values = 0;
     c->result = NULL;
     
     c->self_server = 0;
@@ -191,6 +192,11 @@ new_FMContext()
     c->master_context = NULL;
 
     return (c);
+}
+
+extern void set_ignore_default_values_FMcontext(FMContext c)
+{
+    c->ignore_default_values = 1;
 }
 
 extern
@@ -1593,7 +1599,11 @@ validate_and_copy_field_list(FMFieldList field_list, FMFormat fmformat)
 					 field_list[field].field_offset +
 					    field_size);
 	new_field_list[field].field_name = strdup(field_list[field].field_name);
-	field_name_strip_default((char *)new_field_list[field].field_name);
+	if  (fmformat->context->ignore_default_values) {
+	    new_field_list[field].field_name = strdup(new_field_list[field].field_name);
+	} else {
+	    field_name_strip_default((char *)new_field_list[field].field_name);
+	}
 	new_field_list[field].field_type = strdup(field_list[field].field_type);
 	new_field_list[field].field_size = field_list[field].field_size;
 	if (simple_string) {
