@@ -1600,7 +1600,7 @@ validate_and_copy_field_list(FMFieldList field_list, FMFormat fmformat)
 					    field_size);
 	new_field_list[field].field_name = strdup(field_list[field].field_name);
 	if  (fmformat->context->ignore_default_values) {
-	    new_field_list[field].field_name = strdup(new_field_list[field].field_name);
+	    new_field_list[field].field_name = new_field_list[field].field_name;
 	} else {
 	    field_name_strip_default((char *)new_field_list[field].field_name);
 	}
