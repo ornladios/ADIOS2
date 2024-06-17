@@ -2002,6 +2002,7 @@ BP5Deserializer::BP5Deserializer(bool WriterIsRowMajor, bool ReaderIsRowMajor,
   m_RandomAccessMode{RandomAccessMode}, m_FlattenSteps{FlattenSteps}
 {
     FMContext Tmp = create_local_FMcontext();
+    set_ignore_default_values_FMcontext(Tmp);
     ReaderFFSContext = create_FFSContext_FM(Tmp);
     free_FMcontext(Tmp);
 }

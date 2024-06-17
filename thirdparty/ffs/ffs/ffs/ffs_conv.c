@@ -370,7 +370,7 @@ create_conversion(FFSTypeHandle src_ioformat, FMFieldList target_field_list, int
 	 */
 	input_index = 0;
 	
-	if (strchr(nfl_sort[i].field_name, '(') == NULL) {
+	if ((strchr(nfl_sort[i].field_name, '(') == NULL) || conv_ptr->context->fmc->ignore_default_values) {
 	    /* no default value */
 	    search_name = (char *) nfl_sort[i].field_name;
 	} else {

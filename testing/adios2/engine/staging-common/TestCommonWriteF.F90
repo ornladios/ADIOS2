@@ -135,7 +135,7 @@ program TestSstWrite
        shape_dims, start_dims, count_dims, &
        adios2_constant_dims, ierr)
 
-  call adios2_define_variable(variables(3), ioWrite, "i32", &
+  call adios2_define_variable(variables(3), ioWrite, "i32(testparen)", &
        adios2_type_integer4, 1, &
        shape_dims, start_dims, count_dims, &
        adios2_constant_dims, ierr)

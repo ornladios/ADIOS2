@@ -72,6 +72,7 @@ void BP5Serializer::Init()
     Info.MetaFieldCount = 0;
     Info.MetaFields = NULL;
     Info.LocalFMContext = create_local_FMcontext();
+    set_ignore_default_values_FMcontext(Info.LocalFMContext);
     AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, "BitFieldCount", "integer",
                    sizeof(size_t));
     AddSimpleField(&Info.MetaFields, &Info.MetaFieldCount, "BitField", "integer[BitFieldCount]",
