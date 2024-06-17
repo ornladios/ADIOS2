@@ -153,22 +153,22 @@ program TestSstRead
     end if
     deallocate(shape_in)
 
-    call adios2_inquire_variable(variables(3), ioRead, "i32", ierr)
-    if (variables(3)%name /= 'i32') then
-       write(*,*) 'i32 not recognized'
+    call adios2_inquire_variable(variables(3), ioRead, "i32(testparen)", ierr)
+    if (variables(3)%name /= 'i32(testparen)') then
+       write(*,*) 'i32(testparen) not recognized'
        stop 1
     end if
     if (variables(3)%type /= adios2_type_integer4) then
-       write(*,*) 'i32 type not recognized'
+       write(*,*) 'i32(testparen) type not recognized'
        stop 1
     end if
     call adios2_variable_shape(shape_in, ndims, variables(3), ierr)
     if (ndims /= 1) then
-       write(*,*) 'i32 ndims is not 1'
+       write(*,*) 'i32(testparen) ndims is not 1'
        stop 1
     end if
     if (shape_in(1) /= nx*writerSize) then
-       write(*,*) 'i32 shape_in read failed'
+       write(*,*) 'i32(testparen) shape_in read failed'
        stop 1
     end if
     deallocate(shape_in)
