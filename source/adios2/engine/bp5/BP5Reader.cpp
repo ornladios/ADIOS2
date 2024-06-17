@@ -13,6 +13,7 @@
 #include "adios2/toolkit/remote/EVPathRemote.h"
 #include "adios2/toolkit/remote/XrootdRemote.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
+#include "adios2sys/SystemTools.hxx"
 #include <adios2-perfstubs-interface.h>
 
 #include <chrono>
@@ -1341,7 +1342,7 @@ void BP5Reader::FlushProfiler()
     {
         std::string profileFileName;
         transport::FileFStream profilingJSONStream(m_Comm);
-        std::string bpBaseName = m_Name;
+        std::string bpBaseName = adios2sys::SystemTools::GetFilenameName(m_Name);
 
         auto PID = getpid();
         std::stringstream PIDstr;
