@@ -1336,28 +1336,28 @@ void BP5Reader::FlushProfiler()
     auto transportTypes = m_DataFileManager.GetTransportsTypes();
     auto transportProfilers = m_DataFileManager.GetTransportsProfilers();
 
-    auto lf_AddMe =
-      [&](transportman::TransportMan& tm) -> void {
+    auto lf_AddMe = [&](transportman::TransportMan &tm) -> void {
         auto tmpT = tm.GetTransportsTypes();
         auto tmpP = tm.GetTransportsProfilers();
 
-        if (tmpT.size() > 0)  {
-           transportTypes.insert(transportTypes.end(), tmpT.begin(), tmpT.end());
-           transportProfilers.insert(transportProfilers.end(), tmpP.begin(), tmpP.end());
+        if (tmpT.size() > 0)
+        {
+            transportTypes.insert(transportTypes.end(), tmpT.begin(), tmpT.end());
+            transportProfilers.insert(transportProfilers.end(), tmpP.begin(), tmpP.end());
         }
-      };
+    };
 
-     lf_AddMe(m_MDFileManager);
-     lf_AddMe(m_MDIndexFileManager);
-     lf_AddMe(m_FileMetaMetadataManager);
+    lf_AddMe(m_MDFileManager);
+    lf_AddMe(m_MDIndexFileManager);
+    lf_AddMe(m_FileMetaMetadataManager);
 
-     for (unsigned int i = 0; i < m_Threads; ++i)
-     {
-       lf_AddMe(fileManagers[i]);
-     }
- 
-     const std::string LineJSON(m_JSONProfiler.GetRankProfilingJSON(transportTypes, transportProfilers) +
-                                ",\n");
+    for (unsigned int i = 0; i < m_Threads; ++i)
+    {
+        lf_AddMe(fileManagers[i]);
+    }
+
+    const std::string LineJSON(
+        m_JSONProfiler.GetRankProfilingJSON(transportTypes, transportProfilers) + ",\n");
 
     const std::vector<char> profilingJSON(m_JSONProfiler.AggregateProfilingJSON(LineJSON));
 
