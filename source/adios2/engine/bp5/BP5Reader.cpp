@@ -226,7 +226,7 @@ std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan
             FileManager.CloseFiles((int)m->first);
         }
         FileManager.OpenFileID(subFileName, SubfileNum, Mode::Read, m_IO.m_TransportsParameters[0],
-                               /*{{"transport", "File"}},*/ false);
+                               /*{{"transport", "File"}},*/ true);
         if (!m_WriterIsActive)
         {
             Params transportParameters;
@@ -621,7 +621,7 @@ size_t BP5Reader::OpenWithTimeout(transportman::TransportMan &tm,
         try
         {
             errno = 0;
-            const bool profile = false; // m_BP4Deserializer.m_Profiler.m_IsActive;
+            const bool profile = true; // m_BP4Deserializer.m_Profiler.m_IsActive;
             tm.OpenFiles(fileNames, adios2::Mode::Read, m_IO.m_TransportsParameters, profile);
             flag = 0; // found file
             break;
@@ -1333,8 +1333,32 @@ void BP5Reader::DoClose(const int transportIndex)
 
 void BP5Reader::FlushProfiler()
 {
+    auto transportTypes = m_DataFileManager.GetTransportsTypes();
+    auto transportProfilers = m_DataFileManager.GetTransportsProfilers();
 
-    auto LineJSON = m_JSONProfiler.GetRankProfilingJSON({}, {});
+    auto lf_AddMe = [&](transportman::TransportMan &tm) -> void {
+        auto tmpT = tm.GetTransportsTypes();
+        auto tmpP = tm.GetTransportsProfilers();
+
+        if (tmpT.size() > 0)
+        {
+            transportTypes.insert(transportTypes.end(), tmpT.begin(), tmpT.end());
+            transportProfilers.insert(transportProfilers.end(), tmpP.begin(), tmpP.end());
+        }
+    };
+
+    lf_AddMe(m_MDFileManager);
+    lf_AddMe(m_MDIndexFileManager);
+    lf_AddMe(m_FileMetaMetadataManager);
+
+    for (unsigned int i = 0; i < m_Threads; ++i)
+    {
+        lf_AddMe(fileManagers[i]);
+    }
+
+    const std::string LineJSON(
+        m_JSONProfiler.GetRankProfilingJSON(transportTypes, transportProfilers) + ",\n");
+
     const std::vector<char> profilingJSON(m_JSONProfiler.AggregateProfilingJSON(LineJSON));
 
     if (m_RankMPI == 0)
