@@ -17,6 +17,8 @@ RUN if ! [ -d /spack ]; then \
     fi
 
 COPY 0001-mpich-support-ch3-sock.patch /spack
+COPY 0002-adios2-add-xrootd-variant.patch /spack
+
 COPY packages.yaml /etc/spack/packages.yaml
 
 WORKDIR /spack
@@ -26,6 +28,7 @@ RUN if [ ${E4S_VERSION%.*} -le 23 ]; then git apply 0001-mpich-support-ch3-sock.
 # Install base specs
 RUN . /spack/share/spack/setup-env.sh && \
     if test -n "${EXTERNAL_PACKAGES}"; then spack external find ${EXTERNAL_PACKAGES}; fi && \
+    git apply 0002-adios2-add-xrootd-variant.patch && \
     spack mirror add E4S "https://cache.e4s.io/${E4S_VERSION}" && \
     export ADIOS_SPEC_NO_MPI="adios2~mpi${EXTRA_VARIANTS}" && \
     export ADIOS_SPEC_OPENMPI="adios2+mpi${EXTRA_VARIANTS} ^openmpi" && \
