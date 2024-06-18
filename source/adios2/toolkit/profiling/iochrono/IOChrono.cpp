@@ -122,8 +122,17 @@ std::string JSONProfiler::GetRankProfilingJSON(
         rankLog += ", \"transport_" + std::to_string(t) + "\":{";
         rankLog += "\"type\":\"" + transportsTypes[t] + "\"";
 
-        size_t wBytes = transportsProfilers[t]->m_Bytes.at("write");
-        rankLog += ", \"wbytes\":" + std::to_string(wBytes);
+        if (transportsProfilers[t]->m_Bytes.find("write") != transportsProfilers[t]->m_Bytes.end())
+        {
+            size_t wBytes = transportsProfilers[t]->m_Bytes.at("write");
+            rankLog += ", \"wbytes\":" + std::to_string(wBytes);
+        }
+        else if (transportsProfilers[t]->m_Bytes.find("read") !=
+                 transportsProfilers[t]->m_Bytes.end())
+        {
+            size_t rBytes = transportsProfilers[t]->m_Bytes.at("read");
+            rankLog += ", \"rbytes\":" + std::to_string(rBytes);
+        }
 
         for (const auto &transportTimerPair : transportsProfilers[t]->m_Timers)
         {
