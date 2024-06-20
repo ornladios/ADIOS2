@@ -3,8 +3,8 @@
 
 #include "Function.h"
 #include "Function.tcc"
-#include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosLog.h"
 #include <adios2-perfstubs-interface.h>
 #include <cmath>
 
@@ -12,11 +12,6 @@ namespace adios2
 {
 namespace derived
 {
-std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
-    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc}}};
-
 DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AddFunc");

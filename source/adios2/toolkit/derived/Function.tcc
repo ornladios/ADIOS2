@@ -2,6 +2,7 @@
 #define ADIOS2_DERIVED_Function_TCC_
 
 #include "Function.h"
+#include "adios2/helper/adiosLog.h"
 #include <algorithm>
 #include <cstring>
 #include <iostream>
