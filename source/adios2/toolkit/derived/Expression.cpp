@@ -308,9 +308,23 @@ ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
     // apply the computation operator on all blocks
     std::vector<DerivedData> outputData(numBlocks);
     auto op_fct = OpFunctions.at(detail.operation);
-    for (size_t blk = 0; blk < numBlocks; blk++)
+    // TO-DO: decide which functions should call ExtractDimension
+    // right now, just assume positive constant means Extract
+    if (detail.constant > 0)
     {
-        outputData[blk] = op_fct.ComputeFct(exprData[blk], type);
+        std::cout << "ExpressionTree::ApplyExpression - call ExtractDimensionN" << std::endl;
+        for (size_t blk = 0; blk < numBlocks; blk++)
+        {
+            outputData[blk] =
+                op_fct.ComputeFct(ExtractDimensionN(exprData[blk][0], type, detail.constant), type);
+        }
+    }
+    else
+    {
+        for (size_t blk = 0; blk < numBlocks; blk++)
+        {
+            outputData[blk] = op_fct.ComputeFct(exprData[blk], type);
+        }
     }
     // deallocate intermediate data after computing the operation
     for (size_t blk = 0; blk < numBlocks; blk++)

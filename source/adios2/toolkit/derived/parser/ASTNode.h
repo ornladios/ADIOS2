@@ -16,6 +16,7 @@ public:
     ASTNode(std::string);
     ASTNode(std::string, size_t);
     ASTNode(std::string, std::string);
+    ASTNode(std::string, double);
     ASTNode(std::string, std::vector<std::tuple<int, int, int>>);
     ~ASTNode();
 

@@ -202,6 +202,61 @@ DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
+std::vector<DerivedData> ExtractDimensionN(DerivedData inputData, DataType type, size_t dim)
+{
+    size_t num_data_sets = inputData.Count[dim];
+    size_t num_chunks = 1;
+    size_t chunk_length = 1;
+    for (size_t i = 0; i < dim; ++i)
+    {
+        num_chunks *= inputData.Count[i];
+    }
+    for (size_t i = dim + 1; i < inputData.Count.size(); ++i)
+    {
+        chunk_length *= inputData.Count[i];
+    }
+
+    Dims set_Start;
+    Dims set_Count;
+    for (size_t i = 0; i < inputData.Start.size(); ++i)
+    {
+        if (i != dim)
+        {
+            set_Start.push_back(inputData.Start[i]);
+            set_Count.push_back(inputData.Count[i]);
+        }
+    }
+
+    std::vector<DerivedData> result;
+    size_t chunk_size = chunk_length * helper::GetDataTypeSize(type);
+    // TO DO - FREE
+    for (size_t i = 0; i < num_data_sets; ++i)
+        result.push_back({malloc(num_chunks * chunk_size), set_Start, set_Count});
+
+    // How does Start factor in?
+    //  size_t data_iter = 0;
+    char *input_ptr = (char *)inputData.Data;
+    for (size_t chunk = 0; chunk < num_chunks; ++chunk)
+    {
+        for (size_t data_set = 0; data_set < num_data_sets; ++data_set)
+        {
+            char *result_ptr = (char *)(result[data_set].Data);
+            memcpy(result_ptr + (chunk * chunk_size),
+                   input_ptr + (((num_data_sets * chunk) + data_set) * chunk_size), chunk_size);
+
+            // memcpy(&(result[data_set].Data[chunk * chunk_length]), &(inputData.Data[data_iter]),
+            /*
+          for (size_t chunk_iter = 0; chunk_iter < chunk_length; ++chunk_iter)
+            {
+              result[data_set].Data[(chunk * chunk_length) + chunk_iter] =
+          inputData.Data[data_iter++];
+              }*/
+        }
+    }
+
+    return result;
+}
+
 Dims SameDimsFunc(std::vector<Dims> input)
 {
     // check that all dimenstions are the same

@@ -40,6 +40,7 @@ public:
     void add_lookup_entry(std::string alias, std::string var_name);
 
     void createNode(std::string, size_t);
+    void createNode(double);
     void createNode(std::string);
     void createNode(std::string, indx_type);
 
