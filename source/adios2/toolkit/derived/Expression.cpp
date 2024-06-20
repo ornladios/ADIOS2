@@ -1,6 +1,8 @@
 #ifndef ADIOS2_DERIVED_Expression_CPP_
 #define ADIOS2_DERIVED_Expression_CPP_
 
+#include <functional>
+
 #include "Expression.h"
 #include "Function.h"
 #include "adios2/helper/adiosLog.h"
