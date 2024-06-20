@@ -36,7 +36,7 @@ int main(int argc, char **argv)
             }
         }
     }
-    
+
     adios2::ADIOS adios;
     adios2::IO bpOut = adios.DeclareIO("BPWriteExpression");
 
@@ -52,19 +52,24 @@ int main(int argc, char **argv)
     bpFileReader.Get(varCurl, readCurl);
     bpFileReader.EndStep();
 
-    /*
     auto curlV =
         bpOut.DefineVariable<float>("copied/curlV", {Nx, Ny, Nz, 3}, {0, 0, 0, 0}, {Nx, Ny, Nz, 3});
     // clang-format off
+    /*
     bpOut.DefineDerivedVariable("derived/magofcurl",
                                "cx =copied/curlV[::3] \n"
                                "cy =copied/curlV[1::3] \n"
                                "cz =copied/curlV[2::3] \n"
-                               "magnitude(cx, cy, cz)",
+                               "magnitude(cx, cy, cz)",			       
+                               adios2::DerivedVarType::StoreData);
+    */
+    bpOut.DefineDerivedVariable("derived/magofcurl",
+                               "curlV =copied/curlV \n"
+                               "magnitude(curlV, 3)",
                                adios2::DerivedVarType::StoreData);
     // clang-format on
-    */
 
+    /*
     auto VX = bpOut.DefineVariable<float>("sim/VX", {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto VY = bpOut.DefineVariable<float>("sim/VY", {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto VZ = bpOut.DefineVariable<float>("sim/VZ", {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
@@ -74,14 +79,17 @@ int main(int argc, char **argv)
                                 "Vz =sim/VZ \n"
                                 "magnitude(curl(Vx,Vy,Vz),3)",
                                 adios2::DerivedVarType::StoreData);
+    */
 
     adios2::Engine bpFileWriter = bpOut.Open("expMagCurl.bp", adios2::Mode::Write);
 
     bpFileWriter.BeginStep();
-    //bpFileWriter.Put(curlV, readCurl.data());
+    bpFileWriter.Put(curlV, readCurl.data());
+    /*
     bpFileWriter.Put(VX, simArray1.data());
     bpFileWriter.Put(VY, simArray2.data());
     bpFileWriter.Put(VZ, simArray3.data());
+    */
     bpFileWriter.EndStep();
     bpFileWriter.Close();
 
