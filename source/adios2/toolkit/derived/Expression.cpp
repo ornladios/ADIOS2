@@ -2,14 +2,49 @@
 #define ADIOS2_DERIVED_Expression_CPP_
 
 #include "Expression.h"
+#include "Function.h"
+#include "adios2/helper/adiosLog.h"
 #include "parser/ASTDriver.h"
 
 namespace adios2
 {
 namespace detail
 {
+struct OperatorProperty
+{
+    std::string name;
+    bool is_associative;
+};
+
+const std::map<ExpressionOperator, OperatorProperty> op_property = {
+    {ExpressionOperator::OP_NULL, {"NULL", false}},
+    {ExpressionOperator::OP_ALIAS, {"ALIAS", false}}, /* Parser-use only */
+    {ExpressionOperator::OP_PATH, {"PATH", false}},   /* Parser-use only */
+    {ExpressionOperator::OP_NUM, {"NUM", false}},     /* Parser-use only */
+    {ExpressionOperator::OP_INDEX, {"INDEX", false}},
+    {ExpressionOperator::OP_ADD, {"ADD", true}},
+    {ExpressionOperator::OP_SQRT, {"SQRT", false}},
+    {ExpressionOperator::OP_POW, {"POW", false}},
+    {ExpressionOperator::OP_CURL, {"CURL", false}},
+    {ExpressionOperator::OP_MAGN, {"MAGNITUDE", false}}};
+
+const std::map<std::string, ExpressionOperator> string_to_op = {
+    {"ALIAS", ExpressionOperator::OP_ALIAS}, /* Parser-use only */
+    {"PATH", ExpressionOperator::OP_PATH},   /* Parser-use only */
+    {"NUM", ExpressionOperator::OP_NUM},     /* Parser-use only */
+    {"INDEX", ExpressionOperator::OP_INDEX},    {"+", ExpressionOperator::OP_ADD},
+    {"add", ExpressionOperator::OP_ADD},        {"ADD", ExpressionOperator::OP_ADD},
+    {"SQRT", ExpressionOperator::OP_SQRT},      {"sqrt", ExpressionOperator::OP_SQRT},
+    {"POW", ExpressionOperator::OP_POW},        {"^", ExpressionOperator::OP_POW},
+    {"CURL", ExpressionOperator::OP_CURL},      {"curl", ExpressionOperator::OP_CURL},
+    {"MAGNITUDE", ExpressionOperator::OP_MAGN}, {"magnitude", ExpressionOperator::OP_MAGN}};
+
+inline std::string get_op_name(ExpressionOperator op) { return op_property.at(op).name; }
+
+inline ExpressionOperator get_op(std::string op) { return string_to_op.at(op); }
+
 // helper function
-adios2::detail::ExpressionOperator convert_op(std::string opname)
+ExpressionOperator convert_op(std::string opname)
 {
     adios2::detail::ExpressionOperator op;
     try
@@ -77,6 +112,16 @@ adios2::derived::ExpressionTree ASTNode_to_ExpressionTree(adios2::detail::ASTNod
 
 namespace derived
 {
+struct OperatorFunctions
+{
+    std::function<DerivedData(std::vector<DerivedData>, DataType)> ComputeFct;
+    std::function<Dims(std::vector<Dims>)> DimsFct;
+};
+
+std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
+    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc}},
+    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc}},
+    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc}}};
 
 Expression::Expression(std::string string_exp)
 : m_Shape({0}), m_Start({0}), m_Count({0}), ExprString(string_exp)
