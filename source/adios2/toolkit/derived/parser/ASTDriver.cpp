@@ -72,8 +72,6 @@ void ASTDriver::add_lookup_entry(std::string alias, std::string var_name)
 
 void ASTDriver::createNode(std::string op_name, size_t numsubexprs)
 {
-    std::cout << "ASTDrive createNode - " << op_name;
-    std::cout << " with " << numsubexprs << " subexprs" << std::endl;
     ASTNode *node = new ASTNode(op_name, numsubexprs);
     for (size_t i = 1; i <= numsubexprs; ++i)
     {
@@ -88,24 +86,18 @@ void ASTDriver::createNode(std::string op_name, size_t numsubexprs)
 
 void ASTDriver::createNode(double num)
 {
-    std::cout << "ASTDrive createNode - num ";
-    std::cout << num << std::endl;
     ASTNode *node = new ASTNode("NUM", num);
     holding.push(node);
 }
 
 void ASTDriver::createNode(std::string alias)
 {
-    std::cout << "ASTDrive createNode - alias ";
-    std::cout << alias << std::endl;
     ASTNode *node = new ASTNode("ALIAS", alias);
     holding.push(node);
 }
 
 void ASTDriver::createNode(std::string alias, indx_type indices)
 {
-    std::cout << "ASTDrive createNode - alias" << alias;
-    std::cout << " with indices." << std::endl;
     ASTNode *node = new ASTNode("INDEX", indices);
     node->pushback_subexpr(new ASTNode("ALIAS", alias));
     holding.push(node);
