@@ -1,9 +1,7 @@
 #ifndef ADIOS2_CORE_VARIABLE_DERIVED_H_
 #define ADIOS2_CORE_VARIABLE_DERIVED_H_
 
-#include "adios2/common/ADIOSTypes.h"
 #include "adios2/core/VariableBase.h"
-#include "adios2/helper/adiosType.h"
 #include "adios2/toolkit/derived/Expression.h"
 
 namespace adios2

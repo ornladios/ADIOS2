@@ -133,8 +133,7 @@ if (ADIOS2_HAVE_Derived_Variable)
   target_sources(adios2_core PRIVATE
       core/VariableDerived.cpp
       toolkit/derived/Expression.cpp
-      toolkit/derived/Function.cpp toolkit/derived/Function.tcc
-      toolkit/derived/ExprHelper.h)
+      toolkit/derived/Function.cpp toolkit/derived/Function.tcc)
   set_target_properties(adios2_core PROPERTIES
   				   INCLUDE_DIRECTORIES "$<BUILD_INTERFACE:${ADIOS2_SOURCE_DIR}/source/adios2/toolkit/derived/parser>;$<BUILD_INTERFACE:${ADIOS2_BINARY_DIR}/source/adios2>")
   find_package(BISON "3.8.2")
