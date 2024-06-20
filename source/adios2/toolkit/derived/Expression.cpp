@@ -308,11 +308,11 @@ ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
     // apply the computation operator on all blocks
     std::vector<DerivedData> outputData(numBlocks);
     auto op_fct = OpFunctions.at(detail.operation);
-    // TO-DO: decide which functions should call ExtractDimension
-    // right now, just assume positive constant means Extract
-    if (detail.constant > 0)
+    // If function called over single expression with a constant,
+    // (ex: magnitude(curl(x,y,z), 3))
+    // assume user wants to extract dimension
+    if (detail.constant > 0 && sub_exprs.size() == 1)
     {
-        std::cout << "ExpressionTree::ApplyExpression - call ExtractDimensionN" << std::endl;
         for (size_t blk = 0; blk < numBlocks; blk++)
         {
             outputData[blk] =
