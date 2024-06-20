@@ -81,7 +81,7 @@ int main(int argc, char **argv)
                                 adios2::DerivedVarType::StoreData);
     */
 
-    adios2::Engine bpFileWriter = bpOut.Open("expMagCurl.bp", adios2::Mode::Write);
+    adios2::Engine bpFileWriter = bpOut.Open("expMagCopiedCurl.bp", adios2::Mode::Write);
 
     bpFileWriter.BeginStep();
     bpFileWriter.Put(curlV, readCurl.data());
