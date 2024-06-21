@@ -3,8 +3,10 @@
 
 #include "Function.h"
 #include "adios2/helper/adiosLog.h"
+
 #include <algorithm>
 #include <cstring>
+#include <functional>
 #include <iostream>
 #include <numeric>
 

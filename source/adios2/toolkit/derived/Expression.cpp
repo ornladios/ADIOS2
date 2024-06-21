@@ -6,6 +6,8 @@
 #include "adios2/helper/adiosLog.h"
 #include "parser/ASTDriver.h"
 
+#include <functional>
+
 namespace adios2
 {
 namespace detail
