@@ -7,6 +7,7 @@
 #include <cstring>
 #include <iostream>
 #include <numeric>
+#include <functional>
 
 namespace adios2
 {
