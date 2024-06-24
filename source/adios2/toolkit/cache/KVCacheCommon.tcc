@@ -32,7 +32,7 @@ void KVCacheCommon::closeConnection()
 }
 
 template <typename T>
-void KVCacheCommon::set(std::string key, const std::vector<T>& vec)
+void KVCacheCommon::set(std::string key, const std::vector<T> &vec)
 {
     encodeVector(vec, m_value);
     m_command = "SET " + key + " " + m_value;
@@ -49,7 +49,7 @@ void KVCacheCommon::set(std::string key, const std::vector<T>& vec)
 }
 
 template <typename T>
-void KVCacheCommon::get(std::string key, std::vector<T>& vec)
+void KVCacheCommon::get(std::string key, std::vector<T> &vec)
 {
     m_command = "GET " + key;
     m_redisReply = (redisReply *)redisCommand(m_redisContext, m_command.c_str());
@@ -140,9 +140,10 @@ void KVCacheCommon::keyPrefixExistence(const std::string &key_prefix, std::set<s
 }
 
 template <typename T>
-void KVCacheCommon::encodeVector(const std::vector<T>& vec, std::string& encodedString) {
+void KVCacheCommon::encodeVector(const std::vector<T> &vec, std::string &encodedString)
+{
     size_t vecSize = vec.size() * sizeof(T);
-    const unsigned char* vecBytes = reinterpret_cast<const unsigned char*>(vec.data());
+    const unsigned char *vecBytes = reinterpret_cast<const unsigned char *>(vec.data());
 
     size_t encodedSize = vecSize * 3 / 2;
     std::vector<unsigned char> encodedBytes(encodedSize);
@@ -157,11 +158,14 @@ void KVCacheCommon::encodeVector(const std::vector<T>& vec, std::string& encoded
 }
 
 template <typename T>
-void KVCacheCommon::decodeVector(const std::string& str, std::vector<T>& vec) {
+void KVCacheCommon::decodeVector(const std::string &str, std::vector<T> &vec)
+{
     size_t decodedSize = str.size() * 2;
     std::vector<unsigned char> decodedBytes(decodedSize);
 
-    size_t sizeAfterDecoded = adios2sysBase64_Decode(reinterpret_cast<const unsigned char*>(str.data()), str.size(), decodedBytes.data(), decodedSize);
+    size_t sizeAfterDecoded =
+        adios2sysBase64_Decode(reinterpret_cast<const unsigned char *>(str.data()), str.size(),
+                               decodedBytes.data(), decodedSize);
 
     // Resize the vector to the actual size
     decodedBytes.resize(sizeAfterDecoded);
@@ -169,8 +173,7 @@ void KVCacheCommon::decodeVector(const std::string& str, std::vector<T>& vec) {
     // Copy the decoded bytes to the vector
     vec.resize(sizeAfterDecoded / sizeof(T));
     memcpy(vec.data(), decodedBytes.data(), sizeAfterDecoded);
-
 }
 
-}; // namespace adios2
+};     // namespace adios2
 #endif // KVCACHECOMMON_TCC

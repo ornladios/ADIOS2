@@ -608,7 +608,7 @@ endif()
 
 # KVCache
 if(ADIOS2_USE_Cache STREQUAL AUTO)
-    find_package(hiredis REQUIRED)
+    find_package(hiredis)
     if (hiredis_FOUND)
       message(STATUS "hiredis found. Turn on KVCache")
       set(ADIOS2_HAVE_KVCACHE TRUE)

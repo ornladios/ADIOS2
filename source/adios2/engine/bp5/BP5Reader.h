@@ -102,9 +102,9 @@ private:
     std::unique_ptr<Remote> m_Remote;
     bool m_WriterIsActive = true;
     adios2::profiling::JSONProfiler m_JSONProfiler;
-    #ifdef ADIOS2_HAVE_KVCACHE
+#ifdef ADIOS2_HAVE_KVCACHE
     KVCacheCommon m_KVCacheCommon;
-    #endif
+#endif
     /** used for per-step reads, TODO: to be moved to BP5Deserializer */
     size_t m_CurrentStep = 0;
     size_t m_StepsCount = 0;

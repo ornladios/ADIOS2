@@ -4,12 +4,12 @@
 
 #ifndef ADIOS2_KVCACHECOMMON_H
 #define ADIOS2_KVCACHECOMMON_H
-#include <hiredis/hiredis.h>
 #include "adios2/toolkit/cache/QueryBox.h"
 #include <adios2sys/Base64.h>
-#include <cstring>  // For memcpy
-#include <vector>
+#include <cstring> // For memcpy
+#include <hiredis/hiredis.h>
 #include <string>
+#include <vector>
 
 // namespace adios2::KVCache
 
@@ -27,17 +27,17 @@ public:
     std::string m_value;
     std::string m_command;
 
-    KVCacheCommon(std::string host="localhost", int port=6379): m_host(host), m_port(port){};
+    KVCacheCommon(std::string host = "localhost", int port = 6379) : m_host(host), m_port(port){};
 
     inline void openConnection();
 
     inline void closeConnection();
 
     template <typename T>
-    void set(std::string key, const std::vector<T>& vec);
+    void set(std::string key, const std::vector<T> &vec);
 
     template <typename T>
-    void get(std::string key, std::vector<T>& vec);
+    void get(std::string key, std::vector<T> &vec);
 
     inline void del(std::string key);
 
@@ -50,12 +50,11 @@ public:
     inline void keyPrefixExistence(const std::string &key_prefix, std::set<std::string> &keys);
 
     template <typename T>
-    void encodeVector(const std::vector<T>& vec, std::string& encodedString);
+    void encodeVector(const std::vector<T> &vec, std::string &encodedString);
 
     template <typename T>
-    void decodeVector(const std::string& str, std::vector<T>& vec);
+    void decodeVector(const std::string &str, std::vector<T> &vec);
 };
-
 
 }; // adios2
 
