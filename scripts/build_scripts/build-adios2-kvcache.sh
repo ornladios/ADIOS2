@@ -5,9 +5,9 @@
 #            We need to build it from source code. You can also use the following scripts to install hiredis (v1.2.0).
 
 # sample usage: in project home directory:
-# source examples/cache/build_cache.sh --build 
-# source examples/cache/build_cache.sh --start
-# source examples/cache/build_cache.sh --stop
+# source scripts/build_scripts/build-adios2-kvcache.sh --build 
+# source scripts/build_scripts/build-adios2-kvcache.sh --start
+# source scripts/build_scripts/build-adios2-kvcache.sh --stop
 
 if [ -z ${BUILD_DIR} ]
 then
@@ -60,9 +60,9 @@ start_services() {
     export DoRemote=1
     export useKVCache=1
     export PYTHONPATH=${SW_DIR}/adios2/local/lib/python3.10/dist-packages/
-    export LD_LIBRARY_PATH=${SW_DIR}/adios2/lib:${SW_DIR}/hiredis/lib:$LD_LIBRARY_PATH
+    # export LD_LIBRARY_PATH=${SW_DIR}/adios2/lib:${SW_DIR}/hiredis/lib:$LD_LIBRARY_PATH
     nohup ${SW_DIR}/redis/src/redis-server > ${SW_DIR}redis_server.log 2>&1 &
-    nohup ${SW_DIR}/adios2/bin/adios2_remote_server > ${SW_DIR}remote_server.log 2>&1 &
+    nohup ${SW_DIR}/adios2/bin/adios2_remote_server -v > ${SW_DIR}remote_server.log 2>&1 &
     sleep 5
     nohup ${SW_DIR}/redis/src/redis-cli monitor > ${SW_DIR}redis_monitor.log 2>&1 &
     echo "Services started and environment variables set."

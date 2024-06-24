@@ -46,7 +46,8 @@ CMakeSettings.json
 *.egg-info/
 
 # CMake generated files
-build-*/
+build/
+build-cache*/
 cmake-build-*/
 .idea/
 .vscode/

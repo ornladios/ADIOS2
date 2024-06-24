@@ -367,13 +367,10 @@ void BP5Reader::PerformRemoteGets()
     if (getenv("useKVCache")) 
     {
         m_KVCacheCommon.openConnection();
-
-        std::vector<RequestInfo> getRequestsInfo;
     }
     #endif
 
     int req_seq = -1;
-    std::vector<Remote::GetHandle> handles;
     for (auto &Req : GetRequests)
     {
         req_seq++;
@@ -413,18 +410,6 @@ void BP5Reader::PerformRemoteGets()
                     max_depth = std::stoi(getenv("maxDepth"));
                 }
 
-                /*
-                std::cout << "Setting max_depth is: " << max_depth << std::endl;
-
-                // print the size of samePrefixKeys
-                std::cout << "Same prefix keys size: " << samePrefixKeys.size() << std::endl;
-                // print out samePrefixKeys
-                for (auto &key : samePrefixKeys)
-                {
-                    std::cout << "Same prefix keys: " << key << std::endl;
-                }
-                */
-
                 if (samePrefixKeys.size() > 0)
                 {   
                     targetBox.getMaxInteractBox(samePrefixKeys, max_depth, 0, regularBoxes, cachedBoxes, cachedKeys);
@@ -432,24 +417,7 @@ void BP5Reader::PerformRemoteGets()
                     regularBoxes.push_back(targetBox);
                 }
 
-                /*
-                // print out regularBoxes and cachedBoxes size
-                std::cout << "Going to retrieve regular boxes size: " << regularBoxes.size() << std::endl;
-                std::cout << "Already cached boxes size: " << cachedBoxes.size() << std::endl;
-
-                // print out regularBoxes and cachedBoxes by toString
-                for (int i = 0; i < regularBoxes.size(); i++)
-                {
-                    std::cout << "Regular box " << i << " : " << regularBoxes[i].toString() << " size: " << regularBoxes[i].size() << std::endl;
-                }
-
-                for (int i = 0; i < cachedBoxes.size(); i++)
-                {
-                    std::cout << "Cached box " << i << " : " << cachedBoxes[i].toString() << " size: " << cachedBoxes[i].size() << std::endl;
-                }
-                */
-
-               std::cout << "Going to retrieve "<< regularBoxes.size() " boxes from remote server, and " << cachedBoxes.size() << " boxes from cache" << std::endl;
+               std::cout << "Going to retrieve "<< regularBoxes.size() << " boxes from remote server, and " << cachedBoxes.size() << " boxes from cache" << std::endl;
 
 
 #define declare_type_full_contain(T)                                                               \
