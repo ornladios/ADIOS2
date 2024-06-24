@@ -9,50 +9,54 @@
 # source scripts/build_scripts/build-adios2-kvcache.sh --start
 # source scripts/build_scripts/build-adios2-kvcache.sh --stop
 
-if [ -z ${BUILD_DIR} ]
+if [ -z "${BUILD_DIR}" ]
 then
-    BUILD_DIR=${PWD}/build-cache-test
+    BUILD_DIR="${PWD}"/build
 fi
 
-if [ ! -d ${BUILD_DIR} ]
+if [ ! -d "${BUILD_DIR}" ]
 then
-    mkdir -p ${BUILD_DIR}
+    mkdir -p "${BUILD_DIR}"
 fi
 
-SW_DIR=${BUILD_DIR}/sw
-if [ ! -d ${SW_DIR} ]
+SW_DIR="${BUILD_DIR}"/sw
+if [ ! -d "${SW_DIR}" ]
 then
-    mkdir -p ${SW_DIR}
+    mkdir -p "${SW_DIR}"
 fi
 
 build_cache() {
     # redis - in-memory data structure store
-    redis_dir=${SW_DIR}/redis
-    if [ ! -d ${redis_dir} ]
+    redis_dir="${SW_DIR}"/redis-7.2.3
+    if [ ! -d "${redis_dir}" ]
     then
-        git clone https://github.com/redis/redis.git ${redis_dir}
-        cd ${redis_dir}
-        git checkout tags/7.2.3
+        cd "${SW_DIR}" || exit
+        curl -L -o redis-7.2.3.tar.gz https://github.com/redis/redis/archive/refs/tags/7.2.3.tar.gz
+        tar -xzf redis-7.2.3.tar.gz
+        rm redis-7.2.3.tar.gz
+        cd "${redis_dir}" || exit
         # cannot accleerate by 'make -j8'. It will cause error.
         make
 
         # hiredis - C client library to connect Redis server
-        cd ${redis_dir}/deps/hiredis
-        mkdir build && cd build
-        cmake .. -DCMAKE_INSTALL_PREFIX=${SW_DIR}/hiredis
+        cd "${redis_dir}"/deps/hiredis || exit
+        mkdir build && cd build || exit
+        cmake .. -DCMAKE_INSTALL_PREFIX="${SW_DIR}"/hiredis
         make -j32
         make install
     fi
 
-    cd ${BUILD_DIR}
+    cd "${BUILD_DIR}" || exit
     cmake .. -DADIOS2_USE_Cache=ON \
             -DADIOS2_USE_Python=ON \
-            -DCMAKE_PREFIX_PATH=${SW_DIR} \
-            -DCMAKE_INSTALL_PREFIX=${SW_DIR}/adios2
+            -DCMAKE_PREFIX_PATH="${SW_DIR}" \
+            -DCMAKE_INSTALL_PREFIX="${SW_DIR}"/adios2
 
     make -j32
     make install
-    cd ${BUILD_DIR}/../
+    cd "${BUILD_DIR}"/../ || exit
+    echo "Build completed."
+    unset BUILD_DIR
 }
 
 start_services() {
@@ -60,11 +64,10 @@ start_services() {
     export DoRemote=1
     export useKVCache=1
     export PYTHONPATH=${SW_DIR}/adios2/local/lib/python3.10/dist-packages/
-    # export LD_LIBRARY_PATH=${SW_DIR}/adios2/lib:${SW_DIR}/hiredis/lib:$LD_LIBRARY_PATH
-    nohup ${SW_DIR}/redis/src/redis-server > ${SW_DIR}redis_server.log 2>&1 &
-    nohup ${SW_DIR}/adios2/bin/adios2_remote_server -v > ${SW_DIR}remote_server.log 2>&1 &
+    nohup "${SW_DIR}"/redis-7.2.3/src/redis-server > "${SW_DIR}"/redis_server.log 2>&1 &
+    nohup "${SW_DIR}"/adios2/bin/adios2_remote_server -v > "${SW_DIR}"/remote_server.log 2>&1 &
     sleep 5
-    nohup ${SW_DIR}/redis/src/redis-cli monitor > ${SW_DIR}redis_monitor.log 2>&1 &
+    nohup "${SW_DIR}"/redis-7.2.3/src/redis-cli monitor > "${SW_DIR}"/redis_monitor.log 2>&1 &
     echo "Services started and environment variables set."
 }
 
@@ -77,7 +80,6 @@ stop_services() {
     unset DoRemote
     unset useKVCache
     unset PYTHONPATH
-    unset LD_LIBRARY_PATH
     echo "Services stopped."
 }
 
