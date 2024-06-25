@@ -370,10 +370,9 @@ void BP5Reader::PerformRemoteGets()
     }
 #endif
 
-    int req_seq = -1;
-    for (auto &Req : GetRequests)
+    for(size_t req_seq = 0; req_seq < GetRequests.size(); req_seq++)
     {
-        req_seq++;
+        auto &Req = GetRequests[req_seq];
 #ifdef ADIOS2_HAVE_KVCACHE // get data from cache
         if (getenv("useKVCache"))
         {
@@ -472,10 +471,9 @@ void BP5Reader::PerformRemoteGets()
         handles.push_back(handle);
     }
 
-    std::size_t handle_seq = -1;
-    for (auto &handle : handles)
+    for (size_t handle_seq = 0; handle_seq < handles.size(); handle_seq++)
     {
-        handle_seq++;
+        auto handle = handles[handle_seq];
         m_Remote->WaitForGet(handle);
 #ifdef ADIOS2_HAVE_KVCACHE // close cache connection
         if (getenv("useKVCache"))
