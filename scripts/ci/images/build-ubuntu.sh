@@ -3,7 +3,7 @@
 set -ex
 
 # Build the base image
-docker build --rm -f ./Dockerfile.ci-spack-ubuntu20.04-base -t ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-base .
+docker build --progress=plain --build-arg EXTRA_VARIANTS="+blosc+ssc" --rm -f ./Dockerfile.ci-spack-ubuntu20.04-base -t ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-base .
 
 # Which is also the gcc11 image
 docker tag ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-base ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-gcc11

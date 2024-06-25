@@ -2,7 +2,7 @@ packages:
   all:
     target: [haswell]
   adios2:
-    require: '+blosc+bzip2+zfp+sz+png+sst+dataman+ssc+hdf5+python+fortran'
+    require: '+bzip2+zfp+sz+png+sst+dataman+hdf5+python+fortran'
   mpich:
     require: 'device=ch3:sock'
   openmpi:
