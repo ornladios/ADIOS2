@@ -57,12 +57,13 @@ build_cache() {
     cd "${BUILD_DIR}"/../ || exit
     echo "Build completed."
     unset BUILD_DIR
+
+    export DoRemote=1
+    export useKVCache=1
 }
 
 start_services() {
     echo "Starting redis server and setting environment variables..."
-    export DoRemote=1
-    export useKVCache=1
     export PYTHONPATH=${SW_DIR}/adios2/local/lib/python3.10/dist-packages/
     nohup "${SW_DIR}"/redis-7.2.3/src/redis-server > "${SW_DIR}"/redis_server.log 2>&1 &
     nohup "${SW_DIR}"/adios2/bin/adios2_remote_server -v > "${SW_DIR}"/remote_server.log 2>&1 &
