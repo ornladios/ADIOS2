@@ -370,7 +370,7 @@ void BP5Reader::PerformRemoteGets()
     }
 #endif
 
-    for(size_t req_seq = 0; req_seq < GetRequests.size(); req_seq++)
+    for (size_t req_seq = 0; req_seq < GetRequests.size(); req_seq++)
     {
         auto &Req = GetRequests[req_seq];
 #ifdef ADIOS2_HAVE_KVCACHE // get data from cache
