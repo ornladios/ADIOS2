@@ -194,7 +194,7 @@ public:
 
     void getMaxInteractBox(const std::set<std::string> &samePrefixKeys, const size_t &max_depth,
                            size_t current_depth, std::vector<QueryBox> &regularBoxes,
-                           std::vector<QueryBox> &cachedBox, std::vector<std::string> &cachedKeys)
+                           std::vector<std::string> &cachedKeys)
     {
         if (current_depth > max_depth)
         {
@@ -205,8 +205,6 @@ public:
         std::string maxInteractKey;
         for (auto &key : samePrefixKeys)
         {
-            // std::cout << "Same Prefix Keys: " << key << " Current Depth: " << current_depth <<
-            // std::endl;
             QueryBox const box(key);
             QueryBox intersection;
             if (this->isInteracted(box, intersection))
@@ -221,10 +219,10 @@ public:
 
         if (maxInteractBox.count.size() == 0)
         {
+            regularBoxes.push_back(*this);
             return;
         }
 
-        cachedBox.push_back(maxInteractBox);
         cachedKeys.push_back(maxInteractKey);
 
         if (current_depth == max_depth)
@@ -238,7 +236,7 @@ public:
             for (auto &box : nextBoxes)
             {
                 box.getMaxInteractBox(samePrefixKeys, max_depth, current_depth, regularBoxes,
-                                      cachedBox, cachedKeys);
+                                      cachedKeys);
             }
         }
     }
@@ -269,4 +267,4 @@ public:
     }
 };
 };
-#endif // UNITTEST_QUERYBOX_H
+#endif // ADIOS2_KVCACHE_QUERYBOX_H

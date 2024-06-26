@@ -21,7 +21,7 @@
 #include "adios2/toolkit/transportman/TransportMan.h"
 
 #ifdef ADIOS2_HAVE_KVCACHE
-#include "adios2/toolkit/cache/KVCacheCommon.h"
+#include "adios2/toolkit/kvcache/KVCacheCommon.h"
 #endif
 
 #include <chrono>

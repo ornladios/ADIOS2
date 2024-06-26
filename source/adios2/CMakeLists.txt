@@ -249,8 +249,8 @@ if (ADIOS2_HAVE_SST)
 endif()
 
 if (ADIOS2_HAVE_KVCACHE)
-  target_sources(adios2_core PRIVATE  toolkit/cache/KVCacheCommon.h
-    toolkit/cache/KVCacheCommon.tcc)
+  target_sources(adios2_core PRIVATE  toolkit/kvcache/KVCacheCommon.h
+    toolkit/kvcache/KVCacheCommon.cpp)
   target_link_libraries(adios2_core PRIVATE hiredis::hiredis)
 endif ()
 

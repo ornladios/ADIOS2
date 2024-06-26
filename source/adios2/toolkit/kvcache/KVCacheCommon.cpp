@@ -1,8 +1,10 @@
 //
 // Created by cguo51 on 12/30/23.
 //
-#ifndef KVCACHECOMMON_TCC
-#define KVCACHECOMMON_TCC
+#ifndef KVCACHECOMMON_CPP
+#define KVCACHECOMMON_CPP
+
+#include "KVCacheCommon.h"
 
 namespace adios2
 {
@@ -31,35 +33,30 @@ void KVCacheCommon::closeConnection()
     std::cout << "KVCache connection closed" << std::endl;
 }
 
-template <typename T>
-void KVCacheCommon::set(std::string key, const std::vector<T> &vec)
+void KVCacheCommon::set(const char *key, size_t size, void *data)
 {
-    encodeVector(vec, m_value);
-    m_command = "SET " + key + " " + m_value;
-    m_redisReply = (redisReply *)redisCommand(m_redisContext, m_command.c_str());
+    m_redisReply = (redisReply *)redisCommand(m_redisContext, "SET %s %b", key, data, size);
     if (m_redisReply == NULL)
     {
         std::cout << "Error to set key: " << key << std::endl;
     }
     else
     {
-        std::cout << "SET Key: " << key << " Value size: " << vec.size() << std::endl;
+        std::cout << "SET Key: " << key << " Value size: " << size << std::endl;
         freeReplyObject(m_redisReply);
     }
 }
 
-template <typename T>
-void KVCacheCommon::get(std::string key, std::vector<T> &vec)
+void KVCacheCommon::get(const char *key, size_t size, void *data)
 {
-    m_command = "GET " + key;
-    m_redisReply = (redisReply *)redisCommand(m_redisContext, m_command.c_str());
+    m_redisReply = (redisReply *)redisCommand(m_redisContext, "GET %s", key);
     if (m_redisReply == NULL)
     {
         std::cout << "Error to get key: " << key << std::endl;
     }
     else
     {
-        decodeVector(m_redisReply->str, vec);
+        memcpy(data, m_redisReply->str, size);
         freeReplyObject(m_redisReply);
     }
 }
@@ -139,41 +136,5 @@ void KVCacheCommon::keyPrefixExistence(const std::string &key_prefix, std::set<s
     }
 }
 
-template <typename T>
-void KVCacheCommon::encodeVector(const std::vector<T> &vec, std::string &encodedString)
-{
-    size_t vecSize = vec.size() * sizeof(T);
-    const unsigned char *vecBytes = reinterpret_cast<const unsigned char *>(vec.data());
-
-    size_t encodedSize = vecSize * 3 / 2;
-    std::vector<unsigned char> encodedBytes(encodedSize);
-
-    size_t sizeAfterEncoded = adios2sysBase64_Encode(vecBytes, vecSize, encodedBytes.data(), 0);
-
-    // Resize the vector to the actual size
-    encodedBytes.resize(sizeAfterEncoded);
-
-    // Convert the encoded bytes to a string
-    encodedString.assign(encodedBytes.begin(), encodedBytes.end());
-}
-
-template <typename T>
-void KVCacheCommon::decodeVector(const std::string &str, std::vector<T> &vec)
-{
-    size_t decodedSize = str.size() * 2;
-    std::vector<unsigned char> decodedBytes(decodedSize);
-
-    size_t sizeAfterDecoded =
-        adios2sysBase64_Decode(reinterpret_cast<const unsigned char *>(str.data()), str.size(),
-                               decodedBytes.data(), decodedSize);
-
-    // Resize the vector to the actual size
-    decodedBytes.resize(sizeAfterDecoded);
-
-    // Copy the decoded bytes to the vector
-    vec.resize(sizeAfterDecoded / sizeof(T));
-    memcpy(vec.data(), decodedBytes.data(), sizeAfterDecoded);
-}
-
 };     // namespace adios2
-#endif // KVCACHECOMMON_TCC
+#endif // KVCACHECOMMON_CPP
