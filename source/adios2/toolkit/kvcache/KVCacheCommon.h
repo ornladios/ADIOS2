@@ -25,28 +25,28 @@ public:
 
     KVCacheCommon(std::string host = "localhost", int port = 6379) : m_host(host), m_port(port){};
 
-    void openConnection();
+    void OpenConnection();
 
-    void closeConnection();
+    void CloseConnection();
 
-    void set(const char *key, size_t size, void *data);
+    void Set(const char *key, size_t size, void *data);
 
-    void get(const char *key, size_t size, void *data);
+    void Get(const char *key, size_t size, void *data);
 
     // Batch operations in pipeline, mode 0 for SET, 1 for GET
     void AppendCommandInBatch(const char *key, size_t mode, size_t size, void *data);
 
     void ExecuteBatch(const char *key, size_t mode, size_t size, void *data);
 
-    void del(std::string key);
+    void Del(std::string key);
 
-    bool exists(std::string key);
+    bool Exists(std::string key);
 
-    std::string keyPrefix(char *VarName, size_t AbsStep, size_t BlockID);
+    std::string KeyPrefix(char *VarName, size_t AbsStep, size_t BlockID);
 
-    std::string keyComposition(const std::string &key_prefix, Dims Start, Dims Count);
+    std::string KeyComposition(const std::string &key_prefix, Dims Start, Dims Count);
 
-    void keyPrefixExistence(const std::string &key_prefix, std::set<std::string> &keys);
+    void KeyPrefixExistence(const std::string &key_prefix, std::set<std::string> &keys);
 };
 
 }; // adios2

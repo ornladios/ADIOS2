@@ -9,7 +9,7 @@
 namespace adios2
 {
 
-void KVCacheCommon::openConnection()
+void KVCacheCommon::OpenConnection()
 {
     m_redisContext = redisConnect(m_host.c_str(), m_port);
     if (m_redisContext == NULL || m_redisContext->err)
@@ -27,13 +27,13 @@ void KVCacheCommon::openConnection()
     }
 }
 
-void KVCacheCommon::closeConnection()
+void KVCacheCommon::CloseConnection()
 {
     redisFree(m_redisContext);
     std::cout << "KVCache connection closed" << std::endl;
 }
 
-void KVCacheCommon::set(const char *key, size_t size, void *data)
+void KVCacheCommon::Set(const char *key, size_t size, void *data)
 {
     m_redisReply = (redisReply *)redisCommand(m_redisContext, "SET %s %b", key, data, size);
     if (m_redisReply == NULL)
@@ -47,7 +47,7 @@ void KVCacheCommon::set(const char *key, size_t size, void *data)
     }
 }
 
-void KVCacheCommon::get(const char *key, size_t size, void *data)
+void KVCacheCommon::Get(const char *key, size_t size, void *data)
 {
     m_redisReply = (redisReply *)redisCommand(m_redisContext, "GET %s", key);
     if (m_redisReply == NULL)
@@ -89,7 +89,7 @@ void KVCacheCommon::ExecuteBatch(const char *key, size_t mode, size_t size, void
     }
 }
 
-void KVCacheCommon::del(std::string key)
+void KVCacheCommon::Del(std::string key)
 {
     m_redisReply = (redisReply *)redisCommand(m_redisContext, "DEL %s", key.c_str());
     if (m_redisReply == NULL)
@@ -102,7 +102,7 @@ void KVCacheCommon::del(std::string key)
     }
 }
 
-bool KVCacheCommon::exists(std::string key)
+bool KVCacheCommon::Exists(std::string key)
 {
     m_redisReply = (redisReply *)redisCommand(m_redisContext, "EXISTS %s", key.c_str());
     if (m_redisReply != NULL)
@@ -118,14 +118,14 @@ bool KVCacheCommon::exists(std::string key)
     return false;
 }
 
-std::string KVCacheCommon::keyPrefix(char *VarName, size_t AbsStep, size_t BlockID)
+std::string KVCacheCommon::KeyPrefix(char *VarName, size_t AbsStep, size_t BlockID)
 {
     return VarName + std::to_string(AbsStep) + std::to_string(BlockID);
 }
 
-std::string KVCacheCommon::keyComposition(const std::string &key_prefix, Dims Start, Dims Count)
+std::string KVCacheCommon::KeyComposition(const std::string &key_prefix, Dims Start, Dims Count)
 {
-    std::string box = QueryBox::serializeQueryBox(QueryBox{Start, Count});
+    std::string box = QueryBox::SerializeQueryBox(QueryBox{Start, Count});
     std::string cacheKey = key_prefix + box;
     // replace special characters
     std::replace(cacheKey.begin(), cacheKey.end(), '"', '_');
@@ -139,7 +139,7 @@ std::string KVCacheCommon::keyComposition(const std::string &key_prefix, Dims St
     return cacheKey;
 }
 
-void KVCacheCommon::keyPrefixExistence(const std::string &key_prefix, std::set<std::string> &keys)
+void KVCacheCommon::KeyPrefixExistence(const std::string &key_prefix, std::set<std::string> &keys)
 {
     m_redisReply = (redisReply *)redisCommand(m_redisContext, "KEYS %s*", key_prefix.c_str());
     if (m_redisReply == NULL)

@@ -363,12 +363,12 @@ void BP5Reader::PerformRemoteGets()
         Dims Start;
         void *Data;
     };
-    std::vector<RequestInfo> getRequestsInfo;
+    std::vector<RequestInfo> remoteRequestsInfo;
     std::vector<RequestInfo> cachedRequestsInfo;
 
     if (getenv("useKVCache"))
     {
-        m_KVCacheCommon.openConnection();
+        m_KVCacheCommon.OpenConnection();
     }
 #endif
 
@@ -382,8 +382,8 @@ void BP5Reader::PerformRemoteGets()
             QueryBox targetBox(Req.Start, Req.Count);
             size_t numOfElements = targetBox.size();
             std::string keyPrefix =
-                m_KVCacheCommon.keyPrefix(Req.VarName, Req.RelStep, Req.BlockID);
-            std::string targetKey = m_KVCacheCommon.keyComposition(keyPrefix, Req.Start, Req.Count);
+                m_KVCacheCommon.KeyPrefix(Req.VarName, Req.RelStep, Req.BlockID);
+            std::string targetKey = m_KVCacheCommon.KeyComposition(keyPrefix, Req.Start, Req.Count);
             size_t varSize = helper::GetDataTypeSize(varType);
 
             RequestInfo ReqInfo;
@@ -392,7 +392,7 @@ void BP5Reader::PerformRemoteGets()
             ReqInfo.TypeSize = varSize;
 
             // Exact Match: check if targetKey exists
-            if (m_KVCacheCommon.exists(targetKey))
+            if (m_KVCacheCommon.Exists(targetKey))
             {
                 ReqInfo.CacheKey = targetKey;
                 ReqInfo.ReqCount = numOfElements;
@@ -403,7 +403,7 @@ void BP5Reader::PerformRemoteGets()
             {
                 int max_depth = 999;
                 std::set<std::string> samePrefixKeys;
-                m_KVCacheCommon.keyPrefixExistence(keyPrefix, samePrefixKeys);
+                m_KVCacheCommon.KeyPrefixExistence(keyPrefix, samePrefixKeys);
                 std::vector<QueryBox> regularBoxes;
                 std::vector<std::string> cachedKeys;
 
@@ -414,7 +414,7 @@ void BP5Reader::PerformRemoteGets()
 
                 if (samePrefixKeys.size() > 0)
                 {
-                    targetBox.getMaxInteractBox(samePrefixKeys, max_depth, 0, regularBoxes,
+                    targetBox.GetMaxInteractBox(samePrefixKeys, max_depth, 0, regularBoxes,
                                                 cachedKeys);
                 }
                 else
@@ -432,14 +432,14 @@ void BP5Reader::PerformRemoteGets()
 
                     ReqInfo.ReqCount = box.size();
                     ReqInfo.CacheKey =
-                        m_KVCacheCommon.keyComposition(keyPrefix, box.start, box.count);
+                        m_KVCacheCommon.KeyComposition(keyPrefix, box.start, box.count);
                     ReqInfo.Count = box.count;
                     ReqInfo.Start = box.start;
                     ReqInfo.Data = malloc(box.size() * varSize);
                     auto handle = m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, box.count,
                                                 box.start, ReqInfo.Data);
                     handles.push_back(handle);
-                    getRequestsInfo.push_back(ReqInfo);
+                    remoteRequestsInfo.push_back(ReqInfo);
                 }
 
                 // Get data from cache
@@ -499,7 +499,7 @@ void BP5Reader::PerformRemoteGets()
 #ifdef ADIOS2_HAVE_KVCACHE // set data to cache
         if (getenv("useKVCache"))
         {
-            auto &ReqInfo = getRequestsInfo[handle_seq];
+            auto &ReqInfo = remoteRequestsInfo[handle_seq];
             auto &Req = GetRequests[ReqInfo.ReqSeq];
             helper::NdCopy(reinterpret_cast<char *>(ReqInfo.Data), ReqInfo.Start, ReqInfo.Count,
                            true, false, reinterpret_cast<char *>(Req.Data), Req.Start, Req.Count,
@@ -518,10 +518,10 @@ void BP5Reader::PerformRemoteGets()
         // Execute batch commands of Set
         for (size_t handle_seq = 0; handle_seq < handles.size(); handle_seq++)
         {
-            auto &ReqInfo = getRequestsInfo[handle_seq];
+            auto &ReqInfo = remoteRequestsInfo[handle_seq];
             m_KVCacheCommon.ExecuteBatch(ReqInfo.CacheKey.c_str(), 0, 0, nullptr);
         }
-        m_KVCacheCommon.closeConnection();
+        m_KVCacheCommon.CloseConnection();
     }
 #endif
 }

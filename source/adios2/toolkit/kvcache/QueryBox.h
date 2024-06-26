@@ -58,7 +58,7 @@ public:
     }
 
     // Serialize QueryBox to a string, like __count_:_64_64_64___start_:_0_0_0__
-    static std::string serializeQueryBox(const QueryBox &box)
+    static std::string SerializeQueryBox(const QueryBox &box)
     {
         nlohmann::json jsonBox;
         jsonBox["start"] = box.start;
@@ -71,7 +71,7 @@ public:
 
     // determine if a query box is interacted in another query box, return intersection part as a
     // new query box
-    bool isInteracted(const QueryBox &box, QueryBox &intersection) const
+    bool IsInteracted(const QueryBox &box, QueryBox &intersection) const
     {
         if (start.size() != box.start.size() || start.size() != count.size() ||
             start.size() != box.count.size())
@@ -97,7 +97,7 @@ public:
     }
 
     // determine if a query box is fully contained in another query box
-    bool isFullContainedBy(const QueryBox &box)
+    bool IsFullContainedBy(const QueryBox &box)
     {
         if (start.size() != box.start.size() || start.size() != count.size() ||
             start.size() != box.count.size())
@@ -116,7 +116,7 @@ public:
 
     // cut a query box from another interaction box, return a list of regular box
     // remainingBox is the big one, this is small one
-    void interactionCut(const QueryBox &remainingBox, std::vector<QueryBox> &regularBoxes)
+    void InteractionCut(const QueryBox &remainingBox, std::vector<QueryBox> &regularBoxes)
     {
         if (remainingBox == *this)
         {
@@ -188,11 +188,11 @@ public:
                     }
                 }
             }
-            interactionCut(remainingBox1, regularBoxes);
+            InteractionCut(remainingBox1, regularBoxes);
         }
     }
 
-    void getMaxInteractBox(const std::set<std::string> &samePrefixKeys, const size_t &max_depth,
+    void GetMaxInteractBox(const std::set<std::string> &samePrefixKeys, const size_t &max_depth,
                            size_t current_depth, std::vector<QueryBox> &regularBoxes,
                            std::vector<std::string> &cachedKeys)
     {
@@ -207,7 +207,7 @@ public:
         {
             QueryBox const box(key);
             QueryBox intersection;
-            if (this->isInteracted(box, intersection))
+            if (this->IsInteracted(box, intersection))
             {
                 if (maxInteractBox.size() < intersection.size())
                 {
@@ -227,15 +227,15 @@ public:
 
         if (current_depth == max_depth)
         {
-            maxInteractBox.interactionCut(*this, regularBoxes);
+            maxInteractBox.InteractionCut(*this, regularBoxes);
         }
         else
         {
             std::vector<QueryBox> nextBoxes;
-            maxInteractBox.interactionCut(*this, nextBoxes);
+            maxInteractBox.InteractionCut(*this, nextBoxes);
             for (auto &box : nextBoxes)
             {
-                box.getMaxInteractBox(samePrefixKeys, max_depth, current_depth, regularBoxes,
+                box.GetMaxInteractBox(samePrefixKeys, max_depth, current_depth, regularBoxes,
                                       cachedKeys);
             }
         }
