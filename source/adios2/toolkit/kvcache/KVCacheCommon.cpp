@@ -61,10 +61,37 @@ void KVCacheCommon::get(const char *key, size_t size, void *data)
     }
 }
 
+void KVCacheCommon::AppendCommandInBatch(const char *key, size_t mode, size_t size, void *data)
+{
+    if (mode == 0)
+    {
+        redisAppendCommand(m_redisContext, "SET %s %b", key, data, size);
+    }
+    else if (mode == 1)
+    {
+        redisAppendCommand(m_redisContext, "GET %s", key);
+    }
+}
+
+void KVCacheCommon::ExecuteBatch(const char *key, size_t mode, size_t size, void *data)
+{
+    if (redisGetReply(m_redisContext, (void **)&m_redisReply) == REDIS_OK)
+    {
+        if (mode == 1)
+        {
+            memcpy(data, m_redisReply->str, size);
+        }
+        freeReplyObject(m_redisReply);
+    }
+    else
+    {
+        std::cout << "Error to execute batch command: " << key << std::endl;
+    }
+}
+
 void KVCacheCommon::del(std::string key)
 {
-    m_command = "DEL " + key;
-    m_redisReply = (redisReply *)redisCommand(m_redisContext, m_command.c_str());
+    m_redisReply = (redisReply *)redisCommand(m_redisContext, "DEL %s", key.c_str());
     if (m_redisReply == NULL)
     {
         std::cout << "Error to delete key: " << key << std::endl;
@@ -77,14 +104,8 @@ void KVCacheCommon::del(std::string key)
 
 bool KVCacheCommon::exists(std::string key)
 {
-    m_command = "EXISTS " + key;
-    m_redisReply = (redisReply *)redisCommand(m_redisContext, m_command.c_str());
-    if (m_redisReply == NULL)
-    {
-        std::cout << "The Key: " << key << " does not exist" << std::endl;
-        return false;
-    }
-    else
+    m_redisReply = (redisReply *)redisCommand(m_redisContext, "EXISTS %s", key.c_str());
+    if (m_redisReply != NULL)
     {
         if (!m_redisReply->integer)
         {
@@ -94,6 +115,7 @@ bool KVCacheCommon::exists(std::string key)
         freeReplyObject(m_redisReply);
         return true;
     }
+    return false;
 }
 
 std::string KVCacheCommon::keyPrefix(char *VarName, size_t AbsStep, size_t BlockID)
@@ -119,9 +141,7 @@ std::string KVCacheCommon::keyComposition(const std::string &key_prefix, Dims St
 
 void KVCacheCommon::keyPrefixExistence(const std::string &key_prefix, std::set<std::string> &keys)
 {
-    std::string keyPattern = key_prefix + "*";
-    m_command = "KEYS " + keyPattern;
-    m_redisReply = (redisReply *)redisCommand(m_redisContext, m_command.c_str());
+    m_redisReply = (redisReply *)redisCommand(m_redisContext, "KEYS %s*", key_prefix.c_str());
     if (m_redisReply == NULL)
     {
         std::cout << "Error to get keys with prefix: " << key_prefix << std::endl;

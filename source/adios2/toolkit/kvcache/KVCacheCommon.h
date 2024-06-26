@@ -22,9 +22,6 @@ public:
     int m_port;
     redisContext *m_redisContext;
     redisReply *m_redisReply;
-    std::string m_key;
-    std::string m_value;
-    std::string m_command;
 
     KVCacheCommon(std::string host = "localhost", int port = 6379) : m_host(host), m_port(port){};
 
@@ -35,6 +32,11 @@ public:
     void set(const char *key, size_t size, void *data);
 
     void get(const char *key, size_t size, void *data);
+
+    // Batch operations in pipeline, mode 0 for SET, 1 for GET
+    void AppendCommandInBatch(const char *key, size_t mode, size_t size, void *data);
+
+    void ExecuteBatch(const char *key, size_t mode, size_t size, void *data);
 
     void del(std::string key);
 

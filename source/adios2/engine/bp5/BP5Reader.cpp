@@ -358,6 +358,7 @@ void BP5Reader::PerformRemoteGets()
         size_t ReqCount;
         std::string CacheKey;
         size_t TypeSize;
+        bool DirectCopy;
         Dims Count;
         Dims Start;
         void *Data;
@@ -385,10 +386,18 @@ void BP5Reader::PerformRemoteGets()
             std::string targetKey = m_KVCacheCommon.keyComposition(keyPrefix, Req.Start, Req.Count);
             size_t varSize = helper::GetDataTypeSize(varType);
 
+            RequestInfo ReqInfo;
+            ReqInfo.ReqSeq = req_seq;
+            ReqInfo.varType = varType;
+            ReqInfo.TypeSize = varSize;
+
             // Exact Match: check if targetKey exists
             if (m_KVCacheCommon.exists(targetKey))
             {
-                m_KVCacheCommon.get(targetKey.c_str(), numOfElements * varSize, Req.Data);
+                ReqInfo.CacheKey = targetKey;
+                ReqInfo.ReqCount = numOfElements;
+                ReqInfo.DirectCopy = true;
+                cachedRequestsInfo.push_back(ReqInfo);
             }
             else
             {
@@ -417,11 +426,6 @@ void BP5Reader::PerformRemoteGets()
                           << " boxes from remote server, and " << cachedKeys.size()
                           << " boxes from cache" << std::endl;
 
-                RequestInfo ReqInfo;
-                ReqInfo.ReqSeq = req_seq;
-                ReqInfo.varType = varType;
-                ReqInfo.TypeSize = varSize;
-
                 // Get data from remote server
                 for (auto &box : regularBoxes)
                 {
@@ -442,6 +446,7 @@ void BP5Reader::PerformRemoteGets()
                 for (auto &boxKey : cachedKeys)
                 {
                     ReqInfo.CacheKey = boxKey;
+                    ReqInfo.DirectCopy = false;
                     cachedRequestsInfo.push_back(ReqInfo);
                 }
             }
@@ -455,21 +460,34 @@ void BP5Reader::PerformRemoteGets()
         handles.push_back(handle);
     }
 
-#ifdef ADIOS2_HAVE_KVCACHE // get data from cache together while waiting for remote data, and can
-                           // easily be optimized by using multi-threads later
+#ifdef ADIOS2_HAVE_KVCACHE // get data in redis pipeline
     if (getenv("useKVCache"))
     {
         // Get data from cache server
         for (auto &ReqInfo : cachedRequestsInfo)
         {
-            QueryBox box(ReqInfo.CacheKey);
+            m_KVCacheCommon.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 1, 0, nullptr);
+        }
+
+        for (auto &ReqInfo : cachedRequestsInfo)
+        {
             auto &Req = GetRequests[ReqInfo.ReqSeq];
-            void *data = malloc(box.size() * ReqInfo.TypeSize);
-            m_KVCacheCommon.get(ReqInfo.CacheKey.c_str(), box.size() * ReqInfo.TypeSize, data);
-            helper::NdCopy(reinterpret_cast<char *>(data), box.start, box.count, true, false,
-                           reinterpret_cast<char *>(Req.Data), Req.Start, Req.Count, true, false,
-                           ReqInfo.TypeSize);
-            free(data);
+            if (ReqInfo.DirectCopy)
+            {
+                m_KVCacheCommon.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1,
+                                             ReqInfo.ReqCount * ReqInfo.TypeSize, Req.Data);
+            }
+            else
+            {
+                QueryBox box(ReqInfo.CacheKey);
+                void *data = malloc(box.size() * ReqInfo.TypeSize);
+                m_KVCacheCommon.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1,
+                                             box.size() * ReqInfo.TypeSize, data);
+                helper::NdCopy(reinterpret_cast<char *>(data), box.start, box.count, true, false,
+                               reinterpret_cast<char *>(Req.Data), Req.Start, Req.Count, true,
+                               false, ReqInfo.TypeSize);
+                free(data);
+            }
         }
     }
 #endif
@@ -486,8 +504,9 @@ void BP5Reader::PerformRemoteGets()
             helper::NdCopy(reinterpret_cast<char *>(ReqInfo.Data), ReqInfo.Start, ReqInfo.Count,
                            true, false, reinterpret_cast<char *>(Req.Data), Req.Start, Req.Count,
                            true, false, ReqInfo.TypeSize);
-            m_KVCacheCommon.set(ReqInfo.CacheKey.c_str(), ReqInfo.ReqCount * ReqInfo.TypeSize,
-                                ReqInfo.Data);
+
+            m_KVCacheCommon.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 0,
+                                                 ReqInfo.ReqCount * ReqInfo.TypeSize, ReqInfo.Data);
             free(ReqInfo.Data);
         }
 #endif
@@ -496,6 +515,12 @@ void BP5Reader::PerformRemoteGets()
 #ifdef ADIOS2_HAVE_KVCACHE // close cache connection
     if (getenv("useKVCache"))
     {
+        // Execute batch commands of Set
+        for (size_t handle_seq = 0; handle_seq < handles.size(); handle_seq++)
+        {
+            auto &ReqInfo = getRequestsInfo[handle_seq];
+            m_KVCacheCommon.ExecuteBatch(ReqInfo.CacheKey.c_str(), 0, 0, nullptr);
+        }
         m_KVCacheCommon.closeConnection();
     }
 #endif
