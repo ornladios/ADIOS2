@@ -363,6 +363,7 @@ void BP5Reader::PerformRemoteGets()
         void *Data;
     };
     std::vector<RequestInfo> getRequestsInfo;
+    std::vector<RequestInfo> cachedRequestsInfo;
 
     if (getenv("useKVCache"))
     {
@@ -416,16 +417,18 @@ void BP5Reader::PerformRemoteGets()
                           << " boxes from remote server, and " << cachedKeys.size()
                           << " boxes from cache" << std::endl;
 
+                RequestInfo ReqInfo;
+                ReqInfo.ReqSeq = req_seq;
+                ReqInfo.varType = varType;
+                ReqInfo.TypeSize = varSize;
+
                 // Get data from remote server
                 for (auto &box : regularBoxes)
                 {
-                    RequestInfo ReqInfo;
-                    ReqInfo.ReqSeq = req_seq;
-                    ReqInfo.varType = varType;
+
                     ReqInfo.ReqCount = box.size();
                     ReqInfo.CacheKey =
                         m_KVCacheCommon.keyComposition(keyPrefix, box.start, box.count);
-                    ReqInfo.TypeSize = varSize;
                     ReqInfo.Count = box.count;
                     ReqInfo.Start = box.start;
                     ReqInfo.Data = malloc(box.size() * varSize);
@@ -438,13 +441,8 @@ void BP5Reader::PerformRemoteGets()
                 // Get data from cache
                 for (auto &boxKey : cachedKeys)
                 {
-                    QueryBox box(boxKey);
-                    void *data = malloc(box.size() * varSize);
-                    m_KVCacheCommon.get(boxKey.c_str(), box.size() * varSize, data);
-                    helper::NdCopy(reinterpret_cast<char *>(data), box.start, box.count, true,
-                                   false, reinterpret_cast<char *>(Req.Data), Req.Start, Req.Count,
-                                   true, false, varSize);
-                    free(data);
+                    ReqInfo.CacheKey = boxKey;
+                    cachedRequestsInfo.push_back(ReqInfo);
                 }
             }
 
@@ -457,11 +455,30 @@ void BP5Reader::PerformRemoteGets()
         handles.push_back(handle);
     }
 
+#ifdef ADIOS2_HAVE_KVCACHE // get data from cache together while waiting for remote data, and can
+                           // easily be optimized by using multi-threads later
+    if (getenv("useKVCache"))
+    {
+        // Get data from cache server
+        for (auto &ReqInfo : cachedRequestsInfo)
+        {
+            QueryBox box(ReqInfo.CacheKey);
+            auto &Req = GetRequests[ReqInfo.ReqSeq];
+            void *data = malloc(box.size() * ReqInfo.TypeSize);
+            m_KVCacheCommon.get(ReqInfo.CacheKey.c_str(), box.size() * ReqInfo.TypeSize, data);
+            helper::NdCopy(reinterpret_cast<char *>(data), box.start, box.count, true, false,
+                           reinterpret_cast<char *>(Req.Data), Req.Start, Req.Count, true, false,
+                           ReqInfo.TypeSize);
+            free(data);
+        }
+    }
+#endif
+
     for (size_t handle_seq = 0; handle_seq < handles.size(); handle_seq++)
     {
         auto handle = handles[handle_seq];
         m_Remote->WaitForGet(handle);
-#ifdef ADIOS2_HAVE_KVCACHE // close cache connection
+#ifdef ADIOS2_HAVE_KVCACHE // set data to cache
         if (getenv("useKVCache"))
         {
             auto &ReqInfo = getRequestsInfo[handle_seq];
