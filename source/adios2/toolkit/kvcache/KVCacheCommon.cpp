@@ -29,8 +29,11 @@ void KVCacheCommon::OpenConnection()
 
 void KVCacheCommon::CloseConnection()
 {
-    redisFree(m_redisContext);
-    std::cout << "KVCache connection closed" << std::endl;
+    if (m_redisContext != nullptr)
+    {
+        m_redisContext = nullptr;
+        std::cout << "KVCache connection closed" << std::endl;
+    }
 }
 
 void KVCacheCommon::Set(const char *key, size_t size, void *data)
