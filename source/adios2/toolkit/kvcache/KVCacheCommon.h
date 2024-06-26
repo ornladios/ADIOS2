@@ -25,6 +25,8 @@ public:
 
     KVCacheCommon(std::string host = "localhost", int port = 6379) : m_host(host), m_port(port){};
 
+    ~KVCacheCommon() { CloseConnection(); }
+
     void OpenConnection();
 
     void CloseConnection();

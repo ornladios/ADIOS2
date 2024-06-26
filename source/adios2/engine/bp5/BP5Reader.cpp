@@ -312,6 +312,12 @@ void BP5Reader::PerformGets()
                            RowMajorOrdering);
         }
 #endif
+#ifdef ADIOS2_HAVE_KVCACHE
+        if (getenv("useKVCache"))
+        {
+            m_KVCache.OpenConnection();
+        }
+#endif
         if (m_Remote == nullptr)
         {
             helper::Throw<std::ios_base::failure>(
@@ -365,11 +371,6 @@ void BP5Reader::PerformRemoteGets()
     };
     std::vector<RequestInfo> remoteRequestsInfo;
     std::vector<RequestInfo> cachedRequestsInfo;
-
-    if (getenv("useKVCache"))
-    {
-        m_KVCacheCommon.OpenConnection();
-    }
 #endif
 
     for (size_t req_seq = 0; req_seq < GetRequests.size(); req_seq++)
@@ -381,9 +382,8 @@ void BP5Reader::PerformRemoteGets()
             const DataType varType = m_IO.InquireVariableType(Req.VarName);
             QueryBox targetBox(Req.Start, Req.Count);
             size_t numOfElements = targetBox.size();
-            std::string keyPrefix =
-                m_KVCacheCommon.KeyPrefix(Req.VarName, Req.RelStep, Req.BlockID);
-            std::string targetKey = m_KVCacheCommon.KeyComposition(keyPrefix, Req.Start, Req.Count);
+            std::string keyPrefix = m_KVCache.KeyPrefix(Req.VarName, Req.RelStep, Req.BlockID);
+            std::string targetKey = m_KVCache.KeyComposition(keyPrefix, Req.Start, Req.Count);
             size_t varSize = helper::GetDataTypeSize(varType);
 
             RequestInfo ReqInfo;
@@ -392,7 +392,7 @@ void BP5Reader::PerformRemoteGets()
             ReqInfo.TypeSize = varSize;
 
             // Exact Match: check if targetKey exists
-            if (m_KVCacheCommon.Exists(targetKey))
+            if (m_KVCache.Exists(targetKey))
             {
                 ReqInfo.CacheKey = targetKey;
                 ReqInfo.ReqCount = numOfElements;
@@ -403,7 +403,7 @@ void BP5Reader::PerformRemoteGets()
             {
                 int max_depth = 999;
                 std::set<std::string> samePrefixKeys;
-                m_KVCacheCommon.KeyPrefixExistence(keyPrefix, samePrefixKeys);
+                m_KVCache.KeyPrefixExistence(keyPrefix, samePrefixKeys);
                 std::vector<QueryBox> regularBoxes;
                 std::vector<std::string> cachedKeys;
 
@@ -431,8 +431,7 @@ void BP5Reader::PerformRemoteGets()
                 {
 
                     ReqInfo.ReqCount = box.size();
-                    ReqInfo.CacheKey =
-                        m_KVCacheCommon.KeyComposition(keyPrefix, box.start, box.count);
+                    ReqInfo.CacheKey = m_KVCache.KeyComposition(keyPrefix, box.start, box.count);
                     ReqInfo.Count = box.count;
                     ReqInfo.Start = box.start;
                     ReqInfo.Data = malloc(box.size() * varSize);
@@ -466,7 +465,7 @@ void BP5Reader::PerformRemoteGets()
         // Get data from cache server
         for (auto &ReqInfo : cachedRequestsInfo)
         {
-            m_KVCacheCommon.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 1, 0, nullptr);
+            m_KVCache.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 1, 0, nullptr);
         }
 
         for (auto &ReqInfo : cachedRequestsInfo)
@@ -474,15 +473,15 @@ void BP5Reader::PerformRemoteGets()
             auto &Req = GetRequests[ReqInfo.ReqSeq];
             if (ReqInfo.DirectCopy)
             {
-                m_KVCacheCommon.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1,
-                                             ReqInfo.ReqCount * ReqInfo.TypeSize, Req.Data);
+                m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1,
+                                       ReqInfo.ReqCount * ReqInfo.TypeSize, Req.Data);
             }
             else
             {
                 QueryBox box(ReqInfo.CacheKey);
                 void *data = malloc(box.size() * ReqInfo.TypeSize);
-                m_KVCacheCommon.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1,
-                                             box.size() * ReqInfo.TypeSize, data);
+                m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1, box.size() * ReqInfo.TypeSize,
+                                       data);
                 helper::NdCopy(reinterpret_cast<char *>(data), box.start, box.count, true, false,
                                reinterpret_cast<char *>(Req.Data), Req.Start, Req.Count, true,
                                false, ReqInfo.TypeSize);
@@ -505,8 +504,8 @@ void BP5Reader::PerformRemoteGets()
                            true, false, reinterpret_cast<char *>(Req.Data), Req.Start, Req.Count,
                            true, false, ReqInfo.TypeSize);
 
-            m_KVCacheCommon.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 0,
-                                                 ReqInfo.ReqCount * ReqInfo.TypeSize, ReqInfo.Data);
+            m_KVCache.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 0,
+                                           ReqInfo.ReqCount * ReqInfo.TypeSize, ReqInfo.Data);
             free(ReqInfo.Data);
         }
 #endif
@@ -519,9 +518,8 @@ void BP5Reader::PerformRemoteGets()
         for (size_t handle_seq = 0; handle_seq < handles.size(); handle_seq++)
         {
             auto &ReqInfo = remoteRequestsInfo[handle_seq];
-            m_KVCacheCommon.ExecuteBatch(ReqInfo.CacheKey.c_str(), 0, 0, nullptr);
+            m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 0, 0, nullptr);
         }
-        m_KVCacheCommon.CloseConnection();
     }
 #endif
 }

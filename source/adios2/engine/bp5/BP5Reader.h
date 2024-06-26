@@ -103,7 +103,7 @@ private:
     bool m_WriterIsActive = true;
     adios2::profiling::JSONProfiler m_JSONProfiler;
 #ifdef ADIOS2_HAVE_KVCACHE
-    KVCacheCommon m_KVCacheCommon;
+    KVCacheCommon m_KVCache;
 #endif
     /** used for per-step reads, TODO: to be moved to BP5Deserializer */
     size_t m_CurrentStep = 0;
