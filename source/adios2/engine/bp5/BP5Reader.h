@@ -260,6 +260,8 @@ private:
 
     void PerformRemoteGets();
 
+    void PerformRemoteGetsWithKVCache();
+
     void DestructorClose(bool Verbose) noexcept;
 
     /* Communicator connecting ranks on each Compute Node.
