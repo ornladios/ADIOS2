@@ -1,27 +1,39 @@
 # vim: ft=dockerfile
-FROM ecpe4s/ubuntu20.04-runner-amd64-gcc-11.4:2023.08.01
+ARG BASE_IMAGE=ecpe4s/ubuntu20.04-runner-amd64-gcc-11.4:2023.08.01
+FROM $BASE_IMAGE
 
 ARG E4S_VERSION=23.08
+ARG ENABLED_ENVS="serial,ompi,mpich"
+ARG EXTERNAL_PACKAGES
+ARG EXTRA_VARIANTS
+
 
 # Clone and patch spack
-RUN cd / && \
-    git clone --depth 1 --single-branch --branch e4s-${E4S_VERSION} https://github.com/spack/spack
+WORKDIR /
+RUN if ! [ -d /spack ]; then \
+      git clone --depth 1 --single-branch --branch e4s-${E4S_VERSION} https://github.com/spack/spack; \
+    else \
+      git fetch --all && git checkout -t origin/e4s-${E4S_VERSION}; \
+    fi
 
-COPY packages.yaml /etc/spack/packages.yaml
-# TODO: Patch only needed until we merge https://github.com/spack/spack/pull/40964
 COPY 0001-mpich-support-ch3-sock.patch /spack
+COPY packages.yaml /etc/spack/packages.yaml
+
+WORKDIR /spack
+# TODO: Patch only needed until we merge https://github.com/spack/spack/pull/40964
+RUN if [ ${E4S_VERSION%.*} -le 23 ]; then git apply 0001-mpich-support-ch3-sock.patch; fi
 
 # Install base specs
-RUN cd spack && \
-    git apply 0001-mpich-support-ch3-sock.patch && \
-    . /spack/share/spack/setup-env.sh && \
+RUN . /spack/share/spack/setup-env.sh && \
+    if test -n "${EXTERNAL_PACKAGES}"; then spack external find ${EXTERNAL_PACKAGES}; fi && \
     spack mirror add E4S "https://cache.e4s.io/${E4S_VERSION}" && \
-    export ADIOS_SPEC_NO_MPI="adios2~mpi" && \
-    export ADIOS_SPEC_OPENMPI="adios2+mpi^openmpi" && \
-    export ADIOS_SPEC_MPICH="adios2+mpi^mpich" && \
+    export ADIOS_SPEC_NO_MPI="adios2~mpi${EXTRA_VARIANTS}" && \
+    export ADIOS_SPEC_OPENMPI="adios2+mpi${EXTRA_VARIANTS} ^openmpi" && \
+    export ADIOS_SPEC_MPICH="adios2+mpi${EXTRA_VARIANTS} ^mpich" && \
     spack config add "config:checksum:false" && \
     spack config add "config:build_jobs:$(nproc)" && \
     spack config add "concretizer:unify:true" && \
+    if echo "$ENABLED_ENVS" | grep -q serial; then \
     spack env create adios2-ci-serial && \
     spack -e adios2-ci-serial add ${ADIOS_SPEC_NO_MPI} && \
     spack -e adios2-ci-serial concretize && \
@@ -29,7 +41,9 @@ RUN cd spack && \
       --include-build-deps \
       --no-check-signature \
       --fail-fast \
-      --only dependencies && \
+      --only dependencies; \
+    fi && \
+    if echo "$ENABLED_ENVS" | grep -q ompi ; then \
     spack env create adios2-ci-ompi && \
     spack -e adios2-ci-ompi add ${ADIOS_SPEC_OPENMPI} && \
     spack -e adios2-ci-ompi concretize && \
@@ -37,7 +51,9 @@ RUN cd spack && \
       --include-build-deps \
       --no-check-signature \
       --fail-fast \
-      --only dependencies && \
+      --only dependencies; \
+    fi && \
+    if echo "$ENABLED_ENVS" | grep -q mpich; then \
     spack env create adios2-ci-mpich && \
     spack -e adios2-ci-mpich add ${ADIOS_SPEC_MPICH} && \
     spack -e adios2-ci-mpich concretize && \
@@ -45,7 +61,8 @@ RUN cd spack && \
       --include-build-deps \
       --no-check-signature \
       --fail-fast \
-      --only dependencies && \
+      --only dependencies; \
+    fi && \
     spack clean -a && \
     echo "source /spack/share/spack/setup-env.sh" >> /etc/profile.d/zz-spack.sh
 

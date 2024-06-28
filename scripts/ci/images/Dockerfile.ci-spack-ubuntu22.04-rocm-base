@@ -1,0 +1,23 @@
+ARG BASE_IMAGE=rocm/dev-ubuntu-22.04
+FROM $BASE_IMAGE
+
+# Base dependencies for building VTK-m projects
+RUN apt update && \
+    DEBIAN_FRONTEND=noninteractive apt install -y --no-install-recommends \
+    ccache \
+    cmake \
+    curl \
+    g++ \
+    gfortran-11 \
+    git \
+    git-lfs \
+    git-lfs \
+    libcurl4-gnutls-dev \
+    make \
+    mpich \
+    ninja-build \
+    pkg-config \
+    rocthrust-dev \
+    \
+    && \
+    apt clean
