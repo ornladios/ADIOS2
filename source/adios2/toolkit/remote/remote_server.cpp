@@ -655,7 +655,9 @@ int main(int argc, char **argv)
                 }
                 char buffer[256];
                 fread(buffer, 1, 256, f);
-                printf("%s", buffer);
+                // Note: printf("%s", buffer); does not seem to flush properly
+                fprintf(stdout, "%s", buffer);
+                fflush(stdout);
             }
             close(0);
             close(1);
