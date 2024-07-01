@@ -5,158 +5,248 @@
 #ifndef ADIOS2_KVCACHE_QUERYBOX_H
 #define ADIOS2_KVCACHE_QUERYBOX_H
 
-#include <adios2/common/ADIOSTypes.h>
+#include <adios2/helper/adiosType.h>
+#include <cstring>
 #include <iostream>
-#include <nlohmann_json.hpp>
 #include <set>
+#include <vector>
 
 namespace adios2
 {
-// QueryBox is a class to represent a query box in a multi-dimensional space
+
+namespace kvcache
+{
+
+// QueryBox is a class to represent a box in a multi-dimensional space
 class QueryBox
 {
 public:
-    adios2::Dims start{};
-    adios2::Dims count{};
+    helper::DimsArray Start;
+    helper::DimsArray Count;
+    size_t DimCount;
 
-    // constructor
-    QueryBox() = default;
-    QueryBox(const adios2::Dims &start, const adios2::Dims &count) : start(start), count(count){};
-    QueryBox(const std::string &key)
+    QueryBox() : Start(helper::MAX_DIMS), Count(helper::MAX_DIMS), DimCount(helper::MAX_DIMS) {}
+
+    explicit QueryBox(size_t dimCount) : Start(dimCount), Count(dimCount) {
+        DimCount = dimCount;
+        for (size_t i = 0; i < DimCount; ++i)
+        {
+            Start[i] = 0;
+            Count[i] = 0;
+        }
+    }
+
+    QueryBox(const helper::DimsArray &start, const helper::DimsArray &count)
+    : Start(start.size()), Count(count.size())
     {
-        // sample key: "U3218446744073709551615__count_:_64_64_64___start_:_0_0_0__", count [64, 64,
-        // 64], start [0, 0, 0] using Dims = std::vector<size_t>;
-        auto lf_ExtractDimensions = [](const std::string &key,
-                                       const std::string &delimiter) -> Dims {
-            size_t const pos = key.find(delimiter);
-            size_t const end = key.find("__", pos + delimiter.length());
-            std::string dimStr =
-                key.substr(pos + delimiter.length(), end - pos - delimiter.length());
-            Dims dimensions;
-            std::istringstream dimStream(dimStr);
-            std::string token;
-            while (std::getline(dimStream, token, '_'))
+        DimCount = start.size();
+        for (size_t i = 0; i < DimCount; ++i)
+        {
+            Start[i] = start[i];
+            Count[i] = count[i];
+        }
+    }
+
+    QueryBox(const QueryBox &box) : Start(box.Start.size()), Count(box.Count.size())
+    {
+        DimCount = box.DimCount;
+        for (size_t i = 0; i < DimCount; ++i)
+        {
+            Start[i] = box.Start[i];
+            Count[i] = box.Count[i];
+        }
+    }
+
+    // Constructor with key string
+    explicit QueryBox(const std::string &key)
+    : Start(helper::MAX_DIMS), Count(helper::MAX_DIMS), DimCount(helper::MAX_DIMS)
+    {
+        // Lambda function to extract dimensions from key string
+        auto lf_ExtractDimensions = [](const std::string &key, const std::string &delimiter,
+                                       std::string &dimStr) {
+            size_t pos = key.find(delimiter);
+            if (pos == std::string::npos)
             {
-                dimensions.push_back(std::stoul(token));
+                throw std::invalid_argument("Delimiter not found in key");
             }
-            return dimensions;
+            size_t end = key.find("|", pos + delimiter.length());
+            if (end == std::string::npos)
+            {
+                throw std::invalid_argument("End delimiter not found in key");
+            }
+            dimStr = key.substr(pos + delimiter.length(), end - pos - delimiter.length());
         };
 
-        this->start = lf_ExtractDimensions(key, "__start_:_");
-        this->count = lf_ExtractDimensions(key, "__count_:_");
+        auto lf_ExtractBox = [](const std::string &dimStr, helper::DimsArray &data) {
+            std::istringstream dimStream(dimStr);
+            std::string token;
+            size_t i = 0;
+            while (std::getline(dimStream, token, '_'))
+            {
+                data[i] = std::stoul(token);
+                i++;
+            }
+        };
+
+        std::string startDimStr;
+        std::string countDimStr;
+
+        lf_ExtractDimensions(key, "|Start_", startDimStr);
+        lf_ExtractDimensions(key, "|Count_", countDimStr);
+
+        DimCount = std::count(startDimStr.begin(), startDimStr.end(), '_') + 1;
+
+        lf_ExtractBox(startDimStr, Start);
+        lf_ExtractBox(countDimStr, Count);
     }
 
     // size
     size_t size() const
     {
         size_t s = 1;
-        for (auto &d : count)
+        for (size_t i = 0; i < DimCount; ++i)
         {
-            s *= d;
+            s *= Count[i];
         }
         return s;
     }
 
-    // Serialize QueryBox to a string, like __count_:_64_64_64___start_:_0_0_0__
-    static std::string SerializeQueryBox(const QueryBox &box)
+    // ToString
+    std::string toString() const
     {
-        nlohmann::json jsonBox;
-        jsonBox["start"] = box.start;
-        jsonBox["count"] = box.count;
-        return jsonBox.dump();
+        std::string str = "|Start_";
+        for (size_t i = 0; i < DimCount; ++i)
+        {
+            str += std::to_string(Start[i]);
+            if (i != DimCount - 1)
+            {
+                str += "_";
+            }
+        }
+        str += "|Count_";
+        for (size_t i = 0; i < DimCount; ++i)
+        {
+            str += std::to_string(Count[i]);
+            if (i != DimCount - 1)
+            {
+                str += "_";
+            }
+        }
+        str += "|";
+        return str;
     }
 
-    // determine if a query box is equal to another query box
-    bool operator==(const QueryBox &box) const { return start == box.start && count == box.count; }
+    // determine if a box is equal to another box
+    bool operator==(const QueryBox &box) const
+    {
+        return std::strcmp(toString().c_str(), box.toString().c_str()) == 0;
+    }
 
-    // determine if a query box is interacted in another query box, return intersection part as a
-    // new query box
+    // Assignment operator
+    QueryBox &operator=(const QueryBox &box)
+    {
+        if (this == &box)
+        {
+            return *this; // handle self-assignment
+        }
+
+        // Copy the size
+        DimCount = box.DimCount;
+
+        // Copy elements
+        for (size_t i = 0; i < DimCount; ++i)
+        {
+            Start[i] = box.Start[i];
+            Count[i] = box.Count[i];
+        }
+
+        return *this;
+    }
+
+    // convert helper::DimsArray to std::vector<size_t>
+    void StartToVector(std::vector<size_t> &vec) const
+    {
+        for (size_t i = 0; i < DimCount; ++i)
+        {
+            vec.push_back(Start[i]);
+        }
+    }
+
+    void CountToVector(std::vector<size_t> &vec) const
+    {
+        for (size_t i = 0; i < DimCount; ++i)
+        {
+            vec.push_back(Count[i]);
+        }
+    }
+
+    // check if *this is interacted in another box, return the new intersection box pointer
     bool IsInteracted(const QueryBox &box, QueryBox &intersection) const
     {
-        if (start.size() != box.start.size() || start.size() != count.size() ||
-            start.size() != box.count.size())
+        if (DimCount != box.DimCount)
         {
             return false;
         }
-        for (size_t i = 0; i < start.size(); ++i)
+
+        for (size_t i = 0; i < DimCount; ++i)
         {
-            if (start[i] > box.start[i] + box.count[i] || box.start[i] > start[i] + count[i])
+            if (Start[i] > box.Start[i] + box.Count[i] || box.Start[i] > Start[i] + Count[i])
             {
                 return false;
             }
         }
-        intersection.start.resize(start.size());
-        intersection.count.resize(count.size());
-        for (size_t i = 0; i < start.size(); ++i)
+
+        for (size_t i = 0; i < DimCount; ++i)
         {
-            intersection.start[i] = std::max(start[i], box.start[i]);
-            intersection.count[i] =
-                std::min(start[i] + count[i], box.start[i] + box.count[i]) - intersection.start[i];
+            intersection.Start[i] = std::max(Start[i], box.Start[i]);
+            intersection.Count[i] =
+                std::min(Start[i] + Count[i], box.Start[i] + box.Count[i]) - intersection.Start[i];
         }
         return true;
     }
 
-    // determine if a query box is fully contained in another query box
-    bool IsFullContainedBy(const QueryBox &box)
+    // cut *this from big box, return a list of regular boxes
+    // Note: *this must be fully contained by big box
+    void NdCut(const QueryBox &bigBox, std::vector<QueryBox> &regularBoxes)
     {
-        if (start.size() != box.start.size() || start.size() != count.size() ||
-            start.size() != box.count.size())
-        {
-            return false;
-        }
-        for (size_t i = 0; i < start.size(); ++i)
-        {
-            if (start[i] < box.start[i] || start[i] + count[i] > box.start[i] + box.count[i])
-            {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    // cut a query box from another interaction box, return a list of regular box
-    // remainingBox is the big one, this is small one
-    void InteractionCut(const QueryBox &remainingBox, std::vector<QueryBox> &regularBoxes)
-    {
-        if (remainingBox == *this)
+        if (bigBox == *this)
         {
             return;
         }
 
-        // find the max cut dimension
+        // find the cut dimension with the biggest size
         size_t maxCutDimSize = 0;
-        QueryBox maxCutDimBox;
-        for (size_t i = 0; i < start.size(); ++i)
+        QueryBox maxCutDimBox(DimCount);
+        for (size_t i = 0; i < DimCount; ++i)
         {
-            if (start[i] == remainingBox.start[i] && count[i] == remainingBox.count[i])
+            // if the start and count are the same, means no cut in this dimension, skip
+            if (Start[i] == bigBox.Start[i] && Count[i] == bigBox.Count[i])
             {
                 continue;
             }
             else
             {
-                if (start[i] != remainingBox.start[i])
+                if (Start[i] != bigBox.Start[i])
                 {
-                    size_t cutDimDiff = start[i] - remainingBox.start[i];
-                    size_t cutDimSize = remainingBox.size() / remainingBox.count[i] * cutDimDiff;
+                    size_t cutDimDiff = Start[i] - bigBox.Start[i];
+                    size_t cutDimSize = bigBox.size() / bigBox.Count[i] * cutDimDiff;
                     if (cutDimSize > maxCutDimSize)
                     {
                         maxCutDimSize = cutDimSize;
-                        maxCutDimBox = QueryBox(remainingBox.start, remainingBox.count);
-                        maxCutDimBox.count[i] = cutDimDiff;
+                        maxCutDimBox = bigBox;
+                        maxCutDimBox.Count[i] = cutDimDiff;
                     }
                 }
-
-                if (start[i] + count[i] != remainingBox.start[i] + remainingBox.count[i])
+                if (Start[i] + Count[i] != bigBox.Start[i] + bigBox.Count[i])
                 {
-                    size_t cutDimDiff =
-                        remainingBox.start[i] + remainingBox.count[i] - start[i] - count[i];
-                    size_t cutDimSize = remainingBox.size() / count[i] * cutDimDiff;
+                    size_t cutDimDiff = bigBox.Start[i] + bigBox.Count[i] - Start[i] - Count[i];
+                    size_t cutDimSize = bigBox.size() / bigBox.Count[i] * cutDimDiff;
                     if (cutDimSize > maxCutDimSize)
                     {
                         maxCutDimSize = cutDimSize;
-                        maxCutDimBox = QueryBox(remainingBox.start, remainingBox.count);
-                        maxCutDimBox.start[i] = start[i] + count[i];
-                        maxCutDimBox.count[i] = cutDimDiff;
+                        maxCutDimBox = bigBox;
+                        maxCutDimBox.Start[i] = Start[i] + Count[i];
+                        maxCutDimBox.Count[i] = cutDimDiff;
                     }
                 }
             }
@@ -166,29 +256,30 @@ public:
         if (maxCutDimSize > 0)
         {
             regularBoxes.push_back(maxCutDimBox);
-            QueryBox remainingBox1 = QueryBox(remainingBox.start, remainingBox.count);
-            for (size_t i = 0; i < remainingBox.start.size(); ++i)
+            QueryBox bigBoxRemained(bigBox);
+            for (size_t i = 0; i < DimCount; ++i)
             {
-                if (maxCutDimBox.start[i] == remainingBox.start[i] &&
-                    maxCutDimBox.count[i] == remainingBox.count[i])
+                if (maxCutDimBox.Start[i] == bigBox.Start[i] &&
+                    maxCutDimBox.Count[i] == bigBox.Count[i])
                 {
                     continue;
                 }
                 else
                 {
-                    if (maxCutDimBox.start[i] != remainingBox.start[i])
+                    if (maxCutDimBox.Start[i] == bigBox.Start[i])
                     {
-                        remainingBox1.count[i] = maxCutDimBox.start[i] - remainingBox.start[i];
+                        bigBoxRemained.Start[i] = maxCutDimBox.Start[i] + maxCutDimBox.Count[i];
+                        bigBoxRemained.Count[i] =
+                            bigBox.Start[i] + bigBox.Count[i] - bigBoxRemained.Start[i];
                     }
                     else
                     {
-                        remainingBox1.start[i] = maxCutDimBox.start[i] + maxCutDimBox.count[i];
-                        remainingBox1.count[i] =
-                            remainingBox.start[i] + remainingBox.count[i] - remainingBox1.start[i];
+                        bigBoxRemained.Count[i] = maxCutDimBox.Start[i] - bigBox.Start[i];
                     }
                 }
             }
-            InteractionCut(remainingBox1, regularBoxes);
+
+            NdCut(bigBoxRemained, regularBoxes);
         }
     }
 
@@ -201,23 +292,25 @@ public:
             return;
         }
         current_depth++;
-        QueryBox maxInteractBox;
+        QueryBox maxInteractBox(this->DimCount);
         std::string maxInteractKey;
+        bool foundMaxInteract = false;
         for (auto &key : samePrefixKeys)
         {
             QueryBox const box(key);
-            QueryBox intersection;
+            QueryBox intersection(this->DimCount);
             if (this->IsInteracted(box, intersection))
             {
                 if (maxInteractBox.size() < intersection.size())
                 {
                     maxInteractBox = intersection;
                     maxInteractKey = key;
+                    foundMaxInteract = true;
                 }
             }
         }
 
-        if (maxInteractBox.count.size() == 0)
+        if (!foundMaxInteract)
         {
             regularBoxes.push_back(*this);
             return;
@@ -225,14 +318,20 @@ public:
 
         cachedKeys.push_back(maxInteractKey);
 
+        // If the current box is the max interact box, return, avoid cutting
+        if (this->size() == maxInteractBox.size())
+        {
+            return;
+        }
+
         if (current_depth == max_depth)
         {
-            maxInteractBox.InteractionCut(*this, regularBoxes);
+            maxInteractBox.NdCut(*this, regularBoxes);
         }
         else
         {
             std::vector<QueryBox> nextBoxes;
-            maxInteractBox.InteractionCut(*this, nextBoxes);
+            maxInteractBox.NdCut(*this, nextBoxes);
             for (auto &box : nextBoxes)
             {
                 box.GetMaxInteractBox(samePrefixKeys, max_depth, current_depth, regularBoxes,
@@ -240,31 +339,9 @@ public:
             }
         }
     }
+};
 
-    // rewrite toString
-    std::string toString() const
-    {
-        std::string str = "Box start: [";
-        for (size_t i = 0; i < start.size(); ++i)
-        {
-            str += std::to_string(start[i]);
-            if (i != start.size() - 1)
-            {
-                str += ", ";
-            }
-        }
-        str += "], count: [";
-        for (size_t i = 0; i < count.size(); ++i)
-        {
-            str += std::to_string(count[i]);
-            if (i != count.size() - 1)
-            {
-                str += ", ";
-            }
-        }
-        str += "]";
-        return str;
-    }
-};
-};
+} // namespace kvcache
+} // namespace adios2
+
 #endif // ADIOS2_KVCACHE_QUERYBOX_H

@@ -16,21 +16,20 @@
 namespace adios2
 {
 
+namespace kvcache
+{
+
 class KVCacheCommon
 {
 #ifdef ADIOS2_HAVE_KVCACHE
 private:
-    std::string m_host;
-    int m_port;
     redisContext *m_redisContext;
     redisReply *m_redisReply;
 
 public:
-    KVCacheCommon(std::string host = "localhost", int port = 6379) : m_host(host), m_port(port){};
-
     ~KVCacheCommon() { CloseConnection(); }
 
-    void OpenConnection();
+    void OpenConnection(std::string host = "localhost", int port = 6379);
 
     void CloseConnection();
 
@@ -49,8 +48,6 @@ public:
 
     std::string KeyPrefix(char *VarName, size_t AbsStep, size_t BlockID);
 
-    std::string KeyComposition(const std::string &key_prefix, Dims Start, Dims Count);
-
     void KeyPrefixExistence(const std::string &key_prefix, std::set<std::string> &keys);
 #else
 public:
@@ -62,15 +59,11 @@ public:
     void ExecuteBatch(const char *key, size_t mode, size_t size, void *data){};
     bool Exists(std::string key) { return false; };
     std::string KeyPrefix(char *VarName, size_t AbsStep, size_t BlockID) { return ""; };
-    std::string KeyComposition(const std::string &key_prefix, Dims Start, Dims Count)
-    {
-        return "";
-    };
     void KeyPrefixExistence(const std::string &key_prefix, std::set<std::string> &keys){};
 
 #endif /* ADIOS2_HAVE_KVCACHE */
 };
-
+}; // namespace kvcache
 }; // adios2
 
 #endif // ADIOS2_KVCACHECOMMON_H

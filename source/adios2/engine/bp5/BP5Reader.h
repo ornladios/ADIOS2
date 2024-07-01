@@ -101,7 +101,7 @@ private:
     adios2::profiling::JSONProfiler m_JSONProfiler;
 
     /* KVCache for remote data */
-    KVCacheCommon m_KVCache;
+    kvcache::KVCacheCommon m_KVCache;
 
     /** used for per-step reads, TODO: to be moved to BP5Deserializer */
     size_t m_CurrentStep = 0;

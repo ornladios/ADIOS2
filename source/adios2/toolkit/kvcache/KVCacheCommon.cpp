@@ -8,10 +8,11 @@
 
 namespace adios2
 {
-
-void KVCacheCommon::OpenConnection()
+namespace kvcache
 {
-    m_redisContext = redisConnect(m_host.c_str(), m_port);
+void KVCacheCommon::OpenConnection(std::string host, int port)
+{
+    m_redisContext = redisConnect(host.c_str(), port);
     if (m_redisContext == NULL || m_redisContext->err)
     {
         std::cout << "Error to connect to kvcache server: " << m_redisContext->errstr << std::endl;
@@ -126,22 +127,6 @@ std::string KVCacheCommon::KeyPrefix(char *VarName, size_t AbsStep, size_t Block
     return VarName + std::to_string(AbsStep) + std::to_string(BlockID);
 }
 
-std::string KVCacheCommon::KeyComposition(const std::string &key_prefix, Dims Start, Dims Count)
-{
-    std::string box = QueryBox::SerializeQueryBox(QueryBox{Start, Count});
-    std::string cacheKey = key_prefix + box;
-    // replace special characters
-    std::replace(cacheKey.begin(), cacheKey.end(), '"', '_');
-    std::replace(cacheKey.begin(), cacheKey.end(), ',', '_');
-    std::replace(cacheKey.begin(), cacheKey.end(), '(', '_');
-    std::replace(cacheKey.begin(), cacheKey.end(), ')', '_');
-    std::replace(cacheKey.begin(), cacheKey.end(), '[', '_');
-    std::replace(cacheKey.begin(), cacheKey.end(), ']', '_');
-    std::replace(cacheKey.begin(), cacheKey.end(), '{', '_');
-    std::replace(cacheKey.begin(), cacheKey.end(), '}', '_');
-    return cacheKey;
-}
-
 void KVCacheCommon::KeyPrefixExistence(const std::string &key_prefix, std::set<std::string> &keys)
 {
     m_redisReply = (redisReply *)redisCommand(m_redisContext, "KEYS %s*", key_prefix.c_str());
@@ -158,6 +143,6 @@ void KVCacheCommon::KeyPrefixExistence(const std::string &key_prefix, std::set<s
         freeReplyObject(m_redisReply);
     }
 }
-
+};     // namespace kvcache
 };     // namespace adios2
 #endif // KVCACHECOMMON_CPP
