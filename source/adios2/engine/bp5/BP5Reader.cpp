@@ -478,7 +478,11 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
             void *data = malloc(box.size() * ReqInfo.TypeSize);
             m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1, box.size() * ReqInfo.TypeSize,
                                    data);
-            helper::NdCopy(reinterpret_cast<char *>(data), box.Start, box.Count, true, false,
+
+            helper::DimsArray startArray(box.DimCount, box.Start);
+            helper::DimsArray countArray(box.DimCount, box.Count);
+
+            helper::NdCopy(reinterpret_cast<char *>(data), startArray, countArray, true, false,
                            reinterpret_cast<char *>(Req.Data), Req.Start, Req.Count, true, false,
                            ReqInfo.TypeSize);
             free(data);
@@ -491,13 +495,13 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
         m_Remote->WaitForGet(handle);
         auto &ReqInfo = remoteRequestsInfo[handle_seq];
         auto &Req = GetRequests[ReqInfo.ReqSeq];
-        std::vector<size_t> start;
-        std::vector<size_t> count;
-        ReqInfo.ReqBox.StartToVector(start);
-        ReqInfo.ReqBox.CountToVector(count);
 
-        helper::NdCopy(reinterpret_cast<char *>(ReqInfo.Data), start, count, true, false, reinterpret_cast<char *>(Req.Data),
-                       Req.Start, Req.Count, true, false, ReqInfo.TypeSize);
+        helper::DimsArray startArray(ReqInfo.ReqBox.DimCount, ReqInfo.ReqBox.Start);
+        helper::DimsArray countArray(ReqInfo.ReqBox.DimCount, ReqInfo.ReqBox.Count);
+
+        helper::NdCopy(reinterpret_cast<char *>(ReqInfo.Data), startArray, countArray, true, false,
+                       reinterpret_cast<char *>(Req.Data), Req.Start, Req.Count, true, false,
+                       ReqInfo.TypeSize);
 
         m_KVCache.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 0,
                                        ReqInfo.ReqCount * ReqInfo.TypeSize, ReqInfo.Data);

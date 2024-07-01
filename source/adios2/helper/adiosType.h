@@ -177,6 +177,16 @@ public:
     {
         std::copy(d1.begin(), d1.end(), &Dimensions[0]);
     }
+
+    DimsArray(const DimsArray &d1) : CoreDims(d1.size(), &Dimensions[0])
+    {
+        std::copy(d1.begin(), d1.end(), &Dimensions[0]);
+    }
+
+    DimsArray(const size_t count, const DimsArray &d1) : CoreDims(count, &Dimensions[0])
+    {
+        std::copy(d1.begin(), d1.end(), &Dimensions[0]);
+    }
 };
 
 /**

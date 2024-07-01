@@ -27,7 +27,8 @@ public:
 
     QueryBox() : Start(helper::MAX_DIMS), Count(helper::MAX_DIMS), DimCount(helper::MAX_DIMS) {}
 
-    explicit QueryBox(size_t dimCount) : Start(dimCount), Count(dimCount) {
+    explicit QueryBox(size_t dimCount) : Start(dimCount), Count(dimCount)
+    {
         DimCount = dimCount;
         for (size_t i = 0; i < DimCount; ++i)
         {
