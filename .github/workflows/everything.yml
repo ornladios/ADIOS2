@@ -161,6 +161,10 @@ jobs:
             compiler: gcc8
             shared: static
             parallel: serial
+          - os: ubuntu22.04
+            compiler: rocm
+            parallel: serial
+            constrains: build_only
     steps:
       - uses: actions/checkout@v4
         with:

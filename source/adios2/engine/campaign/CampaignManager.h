@@ -51,7 +51,7 @@ private:
     int m_WriterRank;
     CampaignRecordMap cmap;
     std::ofstream m_Output;
-    const std::string m_CampaignDir = "adios-campaign";
+    const std::string m_CampaignDir = ".adios-campaign";
 
 #else
 public:

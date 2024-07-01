@@ -110,6 +110,9 @@ static std::atomic_uint adios_count(0);    // total adios objects during runtime
 /** User defined options from ~/.config/adios2/adios2.yaml if it exists */
 const adios2::UserOptions &ADIOS::GetUserOptions() { return m_UserOptions; };
 
+/** A constant reference to the host options from ~/.config/adios2/hosts.yaml */
+const adios2::HostOptions &ADIOS::GetHostOptions() { return m_HostOptions; };
+
 ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string hostLanguage)
 : m_HostLanguage(hostLanguage), m_Comm(std::move(comm)), m_ConfigFile(configFile),
   m_CampaignManager(m_Comm)
@@ -129,6 +132,7 @@ ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string 
     }
 #endif
     ProcessUserConfig();
+    ProcessHostConfig();
     if (!configFile.empty())
     {
         if (!adios2sys::SystemTools::FileExists(configFile))
@@ -185,7 +189,7 @@ void ADIOS::SetUserOptionDefaults()
 {
     m_UserOptions.general.verbose = 0;
 
-    m_UserOptions.campaign.active = true;
+    m_UserOptions.campaign.active = false;
     m_UserOptions.campaign.verbose = 0;
     m_UserOptions.campaign.hostname = "";
     m_UserOptions.campaign.campaignstorepath = "";
@@ -208,6 +212,22 @@ void ADIOS::ProcessUserConfig()
     if (adios2sys::SystemTools::FileExists(cfgFile))
     {
         helper::ParseUserOptionsFile(m_Comm, cfgFile, m_UserOptions, homePath);
+    }
+}
+
+void ADIOS::ProcessHostConfig()
+{
+    // read config parameters from config file
+    std::string homePath;
+#ifdef _WIN32
+    homePath = getenv("HOMEPATH");
+#else
+    homePath = getenv("HOME");
+#endif
+    const std::string cfgFile = homePath + "/.config/adios2/hosts.yaml";
+    if (adios2sys::SystemTools::FileExists(cfgFile))
+    {
+        helper::ParseHostOptionsFile(m_Comm, cfgFile, m_HostOptions, homePath);
     }
 }
 
