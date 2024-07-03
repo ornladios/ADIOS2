@@ -8,7 +8,7 @@
 #include <adios2/helper/adiosType.h>
 #include <cstring>
 #include <iostream>
-#include <set>
+#include <unordered_set>
 #include <vector>
 
 namespace adios2
@@ -23,14 +23,10 @@ class QueryBox
 public:
     helper::DimsArray Start;
     helper::DimsArray Count;
-    size_t DimCount;
-
-    QueryBox() : Start(helper::MAX_DIMS), Count(helper::MAX_DIMS), DimCount(helper::MAX_DIMS) {}
 
     explicit QueryBox(size_t dimCount) : Start(dimCount), Count(dimCount)
     {
-        DimCount = dimCount;
-        for (size_t i = 0; i < DimCount; ++i)
+        for (size_t i = 0; i < dimCount; ++i)
         {
             Start[i] = 0;
             Count[i] = 0;
@@ -38,74 +34,17 @@ public:
     }
 
     QueryBox(const helper::DimsArray &start, const helper::DimsArray &count)
-    : Start(start.size()), Count(count.size())
+    : Start(start), Count(count)
     {
-        DimCount = start.size();
-        for (size_t i = 0; i < DimCount; ++i)
-        {
-            Start[i] = start[i];
-            Count[i] = count[i];
-        }
     }
 
-    QueryBox(const QueryBox &box) : Start(box.Start.size()), Count(box.Count.size())
-    {
-        DimCount = box.DimCount;
-        for (size_t i = 0; i < DimCount; ++i)
-        {
-            Start[i] = box.Start[i];
-            Count[i] = box.Count[i];
-        }
-    }
-
-    // Constructor with key string
-    explicit QueryBox(const std::string &key)
-    : Start(helper::MAX_DIMS), Count(helper::MAX_DIMS), DimCount(helper::MAX_DIMS)
-    {
-        // Lambda function to extract dimensions from key string
-        auto lf_ExtractDimensions = [](const std::string &key, const std::string &delimiter,
-                                       std::string &dimStr) {
-            size_t pos = key.find(delimiter);
-            if (pos == std::string::npos)
-            {
-                throw std::invalid_argument("Delimiter not found in key");
-            }
-            size_t end = key.find("|", pos + delimiter.length());
-            if (end == std::string::npos)
-            {
-                throw std::invalid_argument("End delimiter not found in key");
-            }
-            dimStr = key.substr(pos + delimiter.length(), end - pos - delimiter.length());
-        };
-
-        auto lf_ExtractBox = [](const std::string &dimStr, helper::DimsArray &data) {
-            std::istringstream dimStream(dimStr);
-            std::string token;
-            size_t i = 0;
-            while (std::getline(dimStream, token, '_'))
-            {
-                data[i] = std::stoul(token);
-                i++;
-            }
-        };
-
-        std::string startDimStr;
-        std::string countDimStr;
-
-        lf_ExtractDimensions(key, "|Start_", startDimStr);
-        lf_ExtractDimensions(key, "|Count_", countDimStr);
-
-        DimCount = std::count(startDimStr.begin(), startDimStr.end(), '_') + 1;
-
-        lf_ExtractBox(startDimStr, Start);
-        lf_ExtractBox(countDimStr, Count);
-    }
+    QueryBox(const QueryBox &box) : Start(box.Start), Count(box.Count) {}
 
     // size
     size_t size() const
     {
         size_t s = 1;
-        for (size_t i = 0; i < DimCount; ++i)
+        for (size_t i = 0; i < Count.size(); ++i)
         {
             s *= Count[i];
         }
@@ -116,19 +55,19 @@ public:
     std::string toString() const
     {
         std::string str = "|Start_";
-        for (size_t i = 0; i < DimCount; ++i)
+        for (size_t i = 0; i < Start.size(); ++i)
         {
             str += std::to_string(Start[i]);
-            if (i != DimCount - 1)
+            if (i != Start.size() - 1)
             {
                 str += "_";
             }
         }
         str += "|Count_";
-        for (size_t i = 0; i < DimCount; ++i)
+        for (size_t i = 0; i < Start.size(); ++i)
         {
             str += std::to_string(Count[i]);
-            if (i != DimCount - 1)
+            if (i != Start.size() - 1)
             {
                 str += "_";
             }
@@ -151,11 +90,8 @@ public:
             return *this; // handle self-assignment
         }
 
-        // Copy the size
-        DimCount = box.DimCount;
-
         // Copy elements
-        for (size_t i = 0; i < DimCount; ++i)
+        for (size_t i = 0; i < box.Start.size(); ++i)
         {
             Start[i] = box.Start[i];
             Count[i] = box.Count[i];
@@ -167,7 +103,7 @@ public:
     // convert helper::DimsArray to std::vector<size_t>
     void StartToVector(std::vector<size_t> &vec) const
     {
-        for (size_t i = 0; i < DimCount; ++i)
+        for (size_t i = 0; i < Start.size(); ++i)
         {
             vec.push_back(Start[i]);
         }
@@ -175,7 +111,7 @@ public:
 
     void CountToVector(std::vector<size_t> &vec) const
     {
-        for (size_t i = 0; i < DimCount; ++i)
+        for (size_t i = 0; i < Count.size(); ++i)
         {
             vec.push_back(Count[i]);
         }
@@ -184,12 +120,12 @@ public:
     // check if *this is interacted in another box, return the new intersection box pointer
     bool IsInteracted(const QueryBox &box, QueryBox &intersection) const
     {
-        if (DimCount != box.DimCount)
+        if (Start.size() != box.Start.size())
         {
             return false;
         }
 
-        for (size_t i = 0; i < DimCount; ++i)
+        for (size_t i = 0; i < Start.size(); ++i)
         {
             if (Start[i] > box.Start[i] + box.Count[i] || box.Start[i] > Start[i] + Count[i])
             {
@@ -197,7 +133,7 @@ public:
             }
         }
 
-        for (size_t i = 0; i < DimCount; ++i)
+        for (size_t i = 0; i < Start.size(); ++i)
         {
             intersection.Start[i] = std::max(Start[i], box.Start[i]);
             intersection.Count[i] =
@@ -217,8 +153,8 @@ public:
 
         // find the cut dimension with the biggest size
         size_t maxCutDimSize = 0;
-        QueryBox maxCutDimBox(DimCount);
-        for (size_t i = 0; i < DimCount; ++i)
+        QueryBox maxCutDimBox(Start.size());
+        for (size_t i = 0; i < Start.size(); ++i)
         {
             // if the start and count are the same, means no cut in this dimension, skip
             if (Start[i] == bigBox.Start[i] && Count[i] == bigBox.Count[i])
@@ -258,7 +194,7 @@ public:
         {
             regularBoxes.push_back(maxCutDimBox);
             QueryBox bigBoxRemained(bigBox);
-            for (size_t i = 0; i < DimCount; ++i)
+            for (size_t i = 0; i < Start.size(); ++i)
             {
                 if (maxCutDimBox.Start[i] == bigBox.Start[i] &&
                     maxCutDimBox.Count[i] == bigBox.Count[i])
@@ -284,59 +220,89 @@ public:
         }
     }
 
-    void GetMaxInteractBox(const std::set<std::string> &samePrefixKeys, const size_t &max_depth,
-                           size_t current_depth, std::vector<QueryBox> &regularBoxes,
-                           std::vector<std::string> &cachedKeys)
+    void GetMaxInteractBox(const std::unordered_set<std::string> &samePrefixKeys,
+                           const size_t &max_depth, size_t current_depth,
+                           std::vector<QueryBox> &regularBoxes, std::vector<QueryBox> &cachedBoxes)
     {
+        // Lambda function to extract dimensions from key string
+        auto lf_ExtractDimensions = [](const std::string &key, const std::string &delimiter,
+                                       helper::DimsArray &data) {
+            size_t pos = key.find(delimiter);
+            if (pos == std::string::npos)
+            {
+                throw std::invalid_argument("Delimiter not found in key");
+            }
+            size_t end = key.find("|", pos + delimiter.length());
+            if (end == std::string::npos)
+            {
+                throw std::invalid_argument("End delimiter not found in key");
+            }
+            std::string dimStr =
+                key.substr(pos + delimiter.length(), end - pos - delimiter.length());
+            std::istringstream dimStream(dimStr);
+            std::string token;
+            size_t i = 0;
+            while (std::getline(dimStream, token, '_'))
+            {
+                data[i] = std::stoul(token);
+                i++;
+            }
+        };
+
         if (current_depth > max_depth)
         {
             return;
         }
         current_depth++;
-        QueryBox maxInteractBox(this->DimCount);
-        std::string maxInteractKey;
-        bool foundMaxInteract = false;
+
+        QueryBox maxSourceBox(this->Start.size());
+        QueryBox maxInteract(this->Start.size());
         for (auto &key : samePrefixKeys)
         {
-            QueryBox const box(key);
-            QueryBox intersection(this->DimCount);
+            // Initialize the box from the key
+            size_t DimCount = std::count(key.begin(), key.end(), '_') / 2;
+            QueryBox box(DimCount);
+            lf_ExtractDimensions(key, "|Start_", box.Start);
+            lf_ExtractDimensions(key, "|Count_", box.Count);
+
+            QueryBox intersection(this->Start.size());
             if (this->IsInteracted(box, intersection))
             {
-                if (maxInteractBox.size() < intersection.size())
+                if (maxInteract.size() < intersection.size())
                 {
-                    maxInteractBox = intersection;
-                    maxInteractKey = key;
-                    foundMaxInteract = true;
+                    maxInteract = intersection;
+                    maxSourceBox = box;
                 }
             }
         }
 
-        if (!foundMaxInteract)
+        if (maxInteract.size() == 0)
         {
             regularBoxes.push_back(*this);
+            // existing cache has no intersection with new request, return
             return;
         }
 
-        cachedKeys.push_back(maxInteractKey);
+        cachedBoxes.push_back(maxSourceBox);
 
-        // If the current box is the max interact box, return, avoid cutting
-        if (this->size() == maxInteractBox.size())
+        // If the interaction of current box is equal to the new request, return, avoid cutting
+        if (this->size() == maxInteract.size())
         {
             return;
         }
 
         if (current_depth == max_depth)
         {
-            maxInteractBox.NdCut(*this, regularBoxes);
+            maxInteract.NdCut(*this, regularBoxes);
         }
         else
         {
             std::vector<QueryBox> nextBoxes;
-            maxInteractBox.NdCut(*this, nextBoxes);
+            maxInteract.NdCut(*this, nextBoxes);
             for (auto &box : nextBoxes)
             {
                 box.GetMaxInteractBox(samePrefixKeys, max_depth, current_depth, regularBoxes,
-                                      cachedKeys);
+                                      cachedBoxes);
             }
         }
     }

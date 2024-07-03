@@ -369,57 +369,58 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
     struct RequestInfo
     {
         size_t ReqSeq;
-        DataType varType;
-        size_t ReqCount;
-        std::string CacheKey;
         size_t TypeSize;
+        size_t ReqSize;
+        std::string CacheKey;
         bool DirectCopy;
         kvcache::QueryBox ReqBox;
         void *Data;
+
+        // Constructor to initialize Start and Count with DimCount
+        RequestInfo(size_t dimCount) : ReqBox(dimCount) {}
     };
     std::vector<RequestInfo> remoteRequestsInfo;
     std::vector<RequestInfo> cachedRequestsInfo;
 
     for (size_t req_seq = 0; req_seq < GetRequests.size(); req_seq++)
     {
-        auto &Req = GetRequests[req_seq];
+        const auto &Req = GetRequests[req_seq];
         const DataType varType = m_IO.InquireVariableType(Req.VarName);
 
-        kvcache::QueryBox targetBox(Req.Start, Req.Count);
-        size_t numOfElements = targetBox.size();
-        std::string keyPrefix = m_KVCache.KeyPrefix(Req.VarName, Req.RelStep, Req.BlockID);
-        std::string targetKey = keyPrefix + targetBox.toString();
-        size_t varSize = helper::GetDataTypeSize(varType);
-
-        RequestInfo ReqInfo;
+        RequestInfo ReqInfo(Req.Count.size());
         ReqInfo.ReqSeq = req_seq;
-        ReqInfo.varType = varType;
-        ReqInfo.TypeSize = varSize;
+        ReqInfo.TypeSize = helper::GetDataTypeSize(varType);
+
+        kvcache::QueryBox targetBox(Req.Start, Req.Count);
+        std::string keyPrefix =
+            Req.VarName + std::to_string(Req.RelStep) + std::to_string(Req.BlockID);
+        std::string targetKey = keyPrefix + targetBox.toString();
 
         // Exact Match: check if targetKey exists
         if (m_KVCache.Exists(targetKey))
         {
             ReqInfo.CacheKey = targetKey;
-            ReqInfo.ReqCount = numOfElements;
             ReqInfo.DirectCopy = true;
+            ReqInfo.ReqSize = targetBox.size();
             cachedRequestsInfo.push_back(ReqInfo);
         }
         else
         {
             int max_depth = 999;
-            std::set<std::string> samePrefixKeys;
-            m_KVCache.KeyPrefixExistence(keyPrefix, samePrefixKeys);
-            std::vector<kvcache::QueryBox> regularBoxes;
-            std::vector<std::string> cachedKeys;
-
             if (getenv("maxDepth"))
             {
                 max_depth = std::stoi(getenv("maxDepth"));
             }
 
+            std::unordered_set<std::string> samePrefixKeys;
+            std::vector<kvcache::QueryBox> regularBoxes;
+            std::vector<kvcache::QueryBox> cachedBoxes;
+            m_KVCache.KeyPrefixExistence(keyPrefix, samePrefixKeys);
+
             if (samePrefixKeys.size() > 0)
             {
-                targetBox.GetMaxInteractBox(samePrefixKeys, max_depth, 0, regularBoxes, cachedKeys);
+                targetBox.GetMaxInteractBox(samePrefixKeys, max_depth, 0, regularBoxes,
+                                            cachedBoxes);
             }
             else
             {
@@ -427,17 +428,17 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
             }
 
             std::cout << "Going to retrieve " << regularBoxes.size()
-                      << " boxes from remote server, and " << cachedKeys.size()
+                      << " boxes from remote server, and " << cachedBoxes.size()
                       << " boxes from cache" << std::endl;
 
             // Get data from remote server
             for (auto &box : regularBoxes)
             {
 
-                ReqInfo.ReqCount = box.size();
+                ReqInfo.ReqSize = box.size();
                 ReqInfo.CacheKey = keyPrefix + box.toString();
                 ReqInfo.ReqBox = box;
-                ReqInfo.Data = malloc(box.size() * varSize);
+                ReqInfo.Data = malloc(ReqInfo.ReqSize * ReqInfo.TypeSize);
                 std::vector<size_t> start;
                 std::vector<size_t> count;
                 box.StartToVector(start);
@@ -449,9 +450,10 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
             }
 
             // Get data from cache
-            for (auto &boxKey : cachedKeys)
+            for (auto &box : cachedBoxes)
             {
-                ReqInfo.CacheKey = boxKey;
+                ReqInfo.CacheKey = keyPrefix + box.toString();
+                ReqInfo.ReqBox = box;
                 ReqInfo.DirectCopy = false;
                 cachedRequestsInfo.push_back(ReqInfo);
             }
@@ -469,22 +471,17 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
         auto &Req = GetRequests[ReqInfo.ReqSeq];
         if (ReqInfo.DirectCopy)
         {
-            m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1, ReqInfo.ReqCount * ReqInfo.TypeSize,
+            m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1, ReqInfo.ReqSize * ReqInfo.TypeSize,
                                    Req.Data);
         }
         else
         {
-            kvcache::QueryBox box(ReqInfo.CacheKey);
-            void *data = malloc(box.size() * ReqInfo.TypeSize);
-            m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1, box.size() * ReqInfo.TypeSize,
+            void *data = malloc(ReqInfo.ReqBox.size() * ReqInfo.TypeSize);
+            m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1, ReqInfo.ReqBox.size() * ReqInfo.TypeSize,
                                    data);
-
-            helper::DimsArray startArray(box.DimCount, box.Start);
-            helper::DimsArray countArray(box.DimCount, box.Count);
-
-            helper::NdCopy(reinterpret_cast<char *>(data), startArray, countArray, true, false,
-                           reinterpret_cast<char *>(Req.Data), Req.Start, Req.Count, true, false,
-                           ReqInfo.TypeSize);
+            helper::NdCopy(reinterpret_cast<char *>(data), ReqInfo.ReqBox.Start,
+                           ReqInfo.ReqBox.Count, true, false, reinterpret_cast<char *>(Req.Data),
+                           Req.Start, Req.Count, true, false, ReqInfo.TypeSize);
             free(data);
         }
     }
@@ -495,16 +492,12 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
         m_Remote->WaitForGet(handle);
         auto &ReqInfo = remoteRequestsInfo[handle_seq];
         auto &Req = GetRequests[ReqInfo.ReqSeq];
-
-        helper::DimsArray startArray(ReqInfo.ReqBox.DimCount, ReqInfo.ReqBox.Start);
-        helper::DimsArray countArray(ReqInfo.ReqBox.DimCount, ReqInfo.ReqBox.Count);
-
-        helper::NdCopy(reinterpret_cast<char *>(ReqInfo.Data), startArray, countArray, true, false,
-                       reinterpret_cast<char *>(Req.Data), Req.Start, Req.Count, true, false,
-                       ReqInfo.TypeSize);
+        helper::NdCopy(reinterpret_cast<char *>(ReqInfo.Data), ReqInfo.ReqBox.Start,
+                       ReqInfo.ReqBox.Count, true, false, reinterpret_cast<char *>(Req.Data),
+                       Req.Start, Req.Count, true, false, ReqInfo.TypeSize);
 
         m_KVCache.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 0,
-                                       ReqInfo.ReqCount * ReqInfo.TypeSize, ReqInfo.Data);
+                                       ReqInfo.ReqSize * ReqInfo.TypeSize, ReqInfo.Data);
         free(ReqInfo.Data);
     }
 

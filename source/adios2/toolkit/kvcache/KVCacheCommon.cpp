@@ -93,19 +93,6 @@ void KVCacheCommon::ExecuteBatch(const char *key, size_t mode, size_t size, void
     }
 }
 
-void KVCacheCommon::Del(std::string key)
-{
-    m_redisReply = (redisReply *)redisCommand(m_redisContext, "DEL %s", key.c_str());
-    if (m_redisReply == NULL)
-    {
-        std::cout << "Error to delete key: " << key << std::endl;
-    }
-    else
-    {
-        freeReplyObject(m_redisReply);
-    }
-}
-
 bool KVCacheCommon::Exists(std::string key)
 {
     m_redisReply = (redisReply *)redisCommand(m_redisContext, "EXISTS %s", key.c_str());
@@ -122,12 +109,8 @@ bool KVCacheCommon::Exists(std::string key)
     return false;
 }
 
-std::string KVCacheCommon::KeyPrefix(char *VarName, size_t AbsStep, size_t BlockID)
-{
-    return VarName + std::to_string(AbsStep) + std::to_string(BlockID);
-}
-
-void KVCacheCommon::KeyPrefixExistence(const std::string &key_prefix, std::set<std::string> &keys)
+void KVCacheCommon::KeyPrefixExistence(const std::string &key_prefix,
+                                       std::unordered_set<std::string> &keys)
 {
     m_redisReply = (redisReply *)redisCommand(m_redisContext, "KEYS %s*", key_prefix.c_str());
     if (m_redisReply == NULL)

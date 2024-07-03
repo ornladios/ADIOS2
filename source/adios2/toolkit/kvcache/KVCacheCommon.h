@@ -42,13 +42,9 @@ public:
 
     void ExecuteBatch(const char *key, size_t mode, size_t size, void *data);
 
-    void Del(std::string key);
-
     bool Exists(std::string key);
 
-    std::string KeyPrefix(char *VarName, size_t AbsStep, size_t BlockID);
-
-    void KeyPrefixExistence(const std::string &key_prefix, std::set<std::string> &keys);
+    void KeyPrefixExistence(const std::string &key_prefix, std::unordered_set<std::string> &keys);
 #else
 public:
     KVCacheCommon() = default;
@@ -58,8 +54,7 @@ public:
     void AppendCommandInBatch(const char *key, size_t mode, size_t size, void *data){};
     void ExecuteBatch(const char *key, size_t mode, size_t size, void *data){};
     bool Exists(std::string key) { return false; };
-    std::string KeyPrefix(char *VarName, size_t AbsStep, size_t BlockID) { return ""; };
-    void KeyPrefixExistence(const std::string &key_prefix, std::set<std::string> &keys){};
+    void KeyPrefixExistence(const std::string &key_prefix, std::unordered_set<std::string> &keys){};
 
 #endif /* ADIOS2_HAVE_KVCACHE */
 };
