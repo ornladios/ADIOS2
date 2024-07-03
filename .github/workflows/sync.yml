@@ -1,7 +1,6 @@
 name: OLCF sync script
 
 on:
-  push:
   schedule:
     - cron: "0/10 * * * *"
   workflow_dispatch:
