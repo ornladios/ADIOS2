@@ -115,7 +115,10 @@ public:
     // memory remains valid as long as it is necessary.  If you don't
     // know the memory will be valid the entire time, use the
     // DimsArray class which copies the dimension data.
-    CoreDims(std::vector<size_t> vec) : DimCount(vec.size()), DimensSpan(vec.data()) {}
+    CoreDims(const std::vector<size_t> &vec)
+    : DimCount(vec.size()), DimensSpan((size_t *)vec.data())
+    {
+    }
     CoreDims(size_t count, size_t *span_val) : DimCount(count), DimensSpan(span_val) {}
 
     size_t size() const { return DimCount; }
@@ -149,6 +152,11 @@ public:
     //  constructor with no init of values
     DimsArray(const size_t count) : CoreDims(count, &Dimensions[0]) {}
 
+    DimsArray(const DimsArray &d1) : CoreDims(d1.size(), &Dimensions[0])
+    {
+        std::copy(d1.begin(), d1.end(), &Dimensions[0]);
+    }
+
     //  constructor with single init value
     DimsArray(const size_t count, const size_t init) : CoreDims(count, &Dimensions[0])
     {
@@ -158,7 +166,7 @@ public:
         }
     }
     //  constructor from vector
-    DimsArray(const std::vector<size_t> vec) : CoreDims(vec.size(), &Dimensions[0])
+    DimsArray(const std::vector<size_t> &vec) : CoreDims(vec.size(), &Dimensions[0])
     {
         for (size_t i = 0; i < vec.size(); i++)
         {
