@@ -57,12 +57,17 @@ public:
         return ss.str();
     }
 
-    bool OutputWritten = false;
+    bool StreamOutputWritten = false;
+    bool FileOutputWritten = false;
 
-    void CreateOutput()
+    void CreateOutput(bool stream)
     {
         // This is not really a test but to create a dataset for all read tests
-        if (OutputWritten)
+        if (stream && StreamOutputWritten)
+        {
+            return;
+        }
+        if (!stream && FileOutputWritten)
         {
             return;
         }
@@ -77,7 +82,11 @@ public:
 #else
         adios2::ADIOS adios;
 #endif
-        std::string filename = "BPReadMultithreaded" + std::to_string(mpiSize) + ".bp";
+        std::string filename;
+        if (stream)
+            filename = "BPReadMultithreaded" + std::to_string(mpiSize) + "_Stream.bp";
+        else
+            filename = "BPReadMultithreaded" + std::to_string(mpiSize) + "_File.bp";
         adios2::IO ioWrite = adios.DeclareIO("TestIOWrite");
         ioWrite.SetEngine(engineName);
         adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
@@ -103,7 +112,10 @@ public:
             engine.EndStep();
         }
         engine.Close();
-        OutputWritten = true;
+        if (stream)
+            StreamOutputWritten = true;
+        else
+            FileOutputWritten = true;
     }
 };
 
@@ -131,8 +143,8 @@ TEST_P(BPReadMultithreadedTestP, ReadFile)
 #else
     adios2::ADIOS adios;
 #endif
-    CreateOutput();
-    std::string filename = "BPReadMultithreaded" + std::to_string(mpiSize) + ".bp";
+    CreateOutput(false);
+    std::string filename = "BPReadMultithreaded" + std::to_string(mpiSize) + "_File.bp";
     adios2::IO ioRead = adios.DeclareIO("TestIORead");
     ioRead.SetEngine(engineName);
     ioRead.SetParameter("Threads", std::to_string(nThreads));
@@ -199,8 +211,8 @@ TEST_P(BPReadMultithreadedTestP, ReadStream)
 #else
     adios2::ADIOS adios;
 #endif
-    CreateOutput();
-    std::string filename = "BPReadMultithreaded" + std::to_string(mpiSize) + ".bp";
+    CreateOutput(true);
+    std::string filename = "BPReadMultithreaded" + std::to_string(mpiSize) + "_Stream.bp";
     adios2::IO ioRead = adios.DeclareIO("TestIORead");
     ioRead.SetEngine(engineName);
     ioRead.SetParameter("Threads", std::to_string(nThreads));
