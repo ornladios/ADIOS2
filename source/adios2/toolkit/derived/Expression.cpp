@@ -315,8 +315,8 @@ ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
     {
         for (size_t blk = 0; blk < numBlocks; blk++)
         {
-            outputData[blk] =
-                op_fct.ComputeFct(ExtractDimensionN(exprData[blk][0], type, detail.constant), type);
+            outputData[blk] = op_fct.ComputeFct(
+                ExtractDimensionN(exprData[blk][0], type, (size_t)detail.constant), type);
         }
     }
     else
