@@ -481,7 +481,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
                                    ReqInfo.ReqBox.size() * ReqInfo.TypeSize, data);
             helper::NdCopy(reinterpret_cast<char *>(data), ReqInfo.ReqBox.Start,
                            ReqInfo.ReqBox.Count, true, false, reinterpret_cast<char *>(Req.Data),
-                           Req.Start, Req.Count, true, false, ReqInfo.TypeSize);
+                           Req.Start, Req.Count, true, false, static_cast<int>(ReqInfo.TypeSize));
             free(data);
         }
     }
@@ -494,7 +494,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
         auto &Req = GetRequests[ReqInfo.ReqSeq];
         helper::NdCopy(reinterpret_cast<char *>(ReqInfo.Data), ReqInfo.ReqBox.Start,
                        ReqInfo.ReqBox.Count, true, false, reinterpret_cast<char *>(Req.Data),
-                       Req.Start, Req.Count, true, false, ReqInfo.TypeSize);
+                       Req.Start, Req.Count, true, false, static_cast<int>(ReqInfo.TypeSize));
 
         m_KVCache.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 0,
                                        ReqInfo.ReqSize * ReqInfo.TypeSize, ReqInfo.Data);
