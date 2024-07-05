@@ -85,7 +85,7 @@ bool IsGPUbuffer(const void *ptr)
     hipError_t ret;
     hipPointerAttribute_t attr;
     ret = hipPointerGetAttributes(&attr, ptr);
-#if defined(ROCM_VERSION_MAJOR) && ROCM_VERSION_MAJOR < 6
+#if defined(HIP_VERSION_MAJOR) && HIP_VERSION_MAJOR < 6
     if (ret == hipSuccess && attr.memoryType == hipMemoryTypeDevice)
 #else
     if (ret == hipSuccess && attr.type == hipMemoryTypeDevice)
