@@ -20,9 +20,9 @@ jobs:
       - run: pip install python-dateutil PyGithub
       - run: >
           .gitlab/config/SpackCIBridge.py
-            ornladios/ADIOS2 git@code.ornl.gov:ecpcitest/adios2.git
-            https://code.ornl.gov/ ecpcitest/adios2
-            --prereq-check=format --prereq-check=git_checks --disable-status-post
+          ornladios/ADIOS2 git@code.ornl.gov:ecpcitest/adios2.git
+          https://code.ornl.gov/ ecpcitest/adios2
+          --prereq-check=format --prereq-check=git_checks --disable-status-post
         env:
           GITLAB_SSH_KEY_BASE64: ${{ secrets.GITLAB_SSH_KEY_BASE64}}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
