@@ -17,7 +17,7 @@ namespace derived
 
 template <class T>
 T *ApplyOneToOne(std::vector<DerivedData> inputData, size_t dataSize,
-                 std::function<T(T, T)> compFct)
+                 std::function<T(T, T)> compFct, bool clear)
 {
     T *outValues = (T *)malloc(dataSize * sizeof(T));
     if (outValues == nullptr)
@@ -25,13 +25,28 @@ T *ApplyOneToOne(std::vector<DerivedData> inputData, size_t dataSize,
         std::cout << "Allocation failed for the derived data" << std::endl;
         // TODO - throw an exception
     }
-    memset((void *)outValues, 0, dataSize * sizeof(T));
-    for (auto &variable : inputData)
+    if (clear)
     {
-        for (size_t i = 0; i < dataSize; i++)
+        memset((void *)outValues, 0, dataSize * sizeof(T));
+        for (auto &variable : inputData)
         {
-            T data = *(reinterpret_cast<T *>(variable.Data) + i);
-            outValues[i] = compFct(outValues[i], data);
+            for (size_t i = 0; i < dataSize; i++)
+            {
+                T data = *(reinterpret_cast<T *>(variable.Data) + i);
+                outValues[i] = compFct(outValues[i], data);
+            }
+        }
+    }
+    else
+    {
+        memcpy((void *)outValues, inputData[0].Data, dataSize * sizeof(T));
+        for (size_t var = 1; var < inputData.size(); ++var)
+        {
+            for (size_t i = 0; i < dataSize; i++)
+            {
+                T data = *(reinterpret_cast<T *>(inputData[var].Data) + i);
+                outValues[i] = compFct(outValues[i], data);
+            }
         }
     }
     return outValues;

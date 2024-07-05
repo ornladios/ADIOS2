@@ -21,11 +21,31 @@ DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_add(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *addValues = ApplyOneToOne<T>(inputData, dataSize, [](T a, T b) { return a + b; });      \
+        T *addValues =                                                                             \
+            ApplyOneToOne<T>(inputData, dataSize, [](T a, T b) { return a + b; }, false);          \
         return DerivedData({(void *)addValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_add)
     helper::Throw<std::invalid_argument>("Derived", "Function", "AddFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::AddFunc");
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+#define declare_type_subtract(T)                                                                   \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *subtractValues =                                                                        \
+            ApplyOneToOne<T>(inputData, dataSize, [](T a, T b) { return a - b; }, false);          \
+        return DerivedData({(void *)subtractValues, inputData[0].Start, inputData[0].Count});      \
+    }
+    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_subtract)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "SubtractFunc",
                                          "Invalid variable types");
     return DerivedData();
 }
@@ -38,7 +58,8 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_mag(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *magValues = ApplyOneToOne<T>(inputData, dataSize, [](T a, T b) { return a + b * b; });  \
+        T *magValues =                                                                             \
+            ApplyOneToOne<T>(inputData, dataSize, [](T a, T b) { return a + b * b; }, true);       \
         for (size_t i = 0; i < dataSize; i++)                                                      \
         {                                                                                          \
             magValues[i] = (T)std::sqrt(magValues[i]);                                             \
@@ -127,7 +148,8 @@ Dims CurlDimsFunc(std::vector<Dims> input)
 }
 
 #define declare_template_instantiation(T)                                                          \
-    T *ApplyOneToOne(std::vector<DerivedData>, size_t, std::function<T(T, T)>);                    \
+    T *ApplyOneToOne(std::vector<DerivedData>, size_t, std::function<T(T, T)>,                     \
+                     bool clear = false);                                                          \
     T *ApplyCurl(T *input1, T *input2, T *input3, size_t dims[3]);
 
 ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_template_instantiation)
