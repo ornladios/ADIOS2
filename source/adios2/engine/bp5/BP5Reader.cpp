@@ -477,8 +477,8 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
         else
         {
             void *data = malloc(ReqInfo.ReqBox.size() * ReqInfo.TypeSize);
-            m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1, ReqInfo.ReqBox.size() * ReqInfo.TypeSize,
-                                   data);
+            m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1,
+                                   ReqInfo.ReqBox.size() * ReqInfo.TypeSize, data);
             helper::NdCopy(reinterpret_cast<char *>(data), ReqInfo.ReqBox.Start,
                            ReqInfo.ReqBox.Count, true, false, reinterpret_cast<char *>(Req.Data),
                            Req.Start, Req.Count, true, false, ReqInfo.TypeSize);
