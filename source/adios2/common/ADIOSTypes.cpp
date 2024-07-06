@@ -35,6 +35,23 @@ std::string ToString(MemorySpace value)
     }
 }
 
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+std::string ToString(DerivedVarType value)
+{
+    switch (value)
+    {
+    case DerivedVarType::MetadataOnly:
+        return "DerivedVarType::MetadataOnly";
+    case DerivedVarType::ExpressionString:
+        return "DerivedVarType::ExpressionString";
+    case DerivedVarType::StoreData:
+        return "DerivedVarType::StoreData";
+    default:
+        return "ToString:  Unknown DerivedVarType";
+    }
+};
+#endif
+
 std::string ToString(ShapeID value)
 {
     switch (value)

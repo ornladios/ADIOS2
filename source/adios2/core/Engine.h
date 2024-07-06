@@ -472,6 +472,13 @@ public:
     }
 
     //  in this call, Step is RELATIVE, not absolute
+    virtual MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step,
+                                      const size_t WriterID, const size_t BlockID) const
+    {
+        return nullptr;
+    }
+
+    //  in this call, Step is RELATIVE, not absolute
     virtual bool VarShape(const VariableBase &, const size_t Step, Dims &Shape) const
     {
         return false;

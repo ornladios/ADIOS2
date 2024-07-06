@@ -77,10 +77,14 @@ public:
                                                   size_t *maxReadSize);
     void FinalizeGet(const ReadRequest &, const bool freeAddr);
     void FinalizeGets(std::vector<ReadRequest> &);
+    void FinalizeDerivedGets(std::vector<ReadRequest> &);
+    void ClearGetState();
 
     MinVarInfo *AllRelativeStepsMinBlocksInfo(const VariableBase &var);
     MinVarInfo *AllStepsMinBlocksInfo(const VariableBase &var);
     MinVarInfo *MinBlocksInfo(const VariableBase &Var, const size_t Step);
+    MinVarInfo *MinBlocksInfo(const VariableBase &Var, const size_t Step, const size_t WriterID,
+                              const size_t BlockID);
     bool VarShape(const VariableBase &, const size_t Step, Dims &Shape) const;
     bool VariableMinMax(const VariableBase &var, const size_t Step, MinMaxStruct &MinMax);
     char *VariableExprStr(const VariableBase &var);
@@ -107,6 +111,7 @@ public:
         Dims Start;
         Dims Count;
         MemorySpace MemSpace;
+        std::map<std::string, std::unique_ptr<MinVarInfo>> *DerivedInputMap;
         void *Data;
     };
     std::vector<BP5ArrayRequest> PendingGetRequests;
@@ -117,6 +122,7 @@ private:
     {
         size_t VarNum;
         void *Variable = NULL;
+        void *DerivedVariable = NULL;
         char *VarName = NULL;
         size_t DimCount = 0;
         size_t JoinedDimen = SIZE_MAX;
@@ -234,6 +240,7 @@ private:
 
     void *GetMetadataBase(BP5VarRec *VarRec, size_t Step, size_t WriterRank) const;
     bool IsContiguousTransfer(BP5ArrayRequest *Req, size_t *offsets, size_t *count);
+    char *FillBlock(std::map<BP5VarRec *, MinVarInfo *> &map);
 
     size_t CurTimestep = 0;
 

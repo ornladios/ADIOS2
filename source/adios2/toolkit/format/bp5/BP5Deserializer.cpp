@@ -655,6 +655,9 @@ void BP5Deserializer::SetupForStep(size_t Step, size_t WriterCount)
         for (auto RecPair : VarByKey)
         {
             m_Engine->m_IO.RemoveVariable(RecPair.second->VarName);
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+            m_Engine->m_IO.RemoveDerivedVariable(RecPair.second->VarName);
+#endif
             RecPair.second->Variable = NULL;
             if (RecPair.second->OrigShapeID == ShapeID::JoinedArray)
             {
@@ -918,6 +921,17 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
 
                 if (!VarRec->Variable)
                 {
+                    if (VarRec->Derived)
+                    {
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+                        // define the derived copy first, so we don't throw an error on actual var
+                        // definition
+                        auto tmp = m_Engine->m_IO.DefineDerivedVariable(
+                            VarRec->VarName, VarRec->ExprStr, DerivedVarType::MetadataOnly);
+                        VarRec->DerivedVariable = (void *)&tmp;
+#endif
+                    }
+
                     VarRec->Variable =
                         ArrayVarSetup(m_Engine, VarRec->VarName, VarRec->Type, (int)meta_base->Dims,
                                       meta_base->Shape, meta_base->Offsets, meta_base->Count,
@@ -1552,12 +1566,17 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
     std::vector<BP5Deserializer::ReadRequest> Ret;
     *maxReadSize = 0;
     size_t StepLoopStart, StepLoopEnd;
+    const VarMap &var_map = m_Engine->m_IO.GetVariables();
 
     for (size_t ReqIndex = 0; ReqIndex < PendingGetRequests.size(); ReqIndex++)
     {
         auto Req = &PendingGetRequests[ReqIndex];
         auto VarRec = (struct BP5VarRec *)Req->VarRec;
         VariableBase *VB = static_cast<VariableBase *>(VarRec->Variable);
+        std::vector<std::string> derivedVarInputNameList;
+        std::vector<VariableBase *> derivedVarInputVarList;
+        std::map<std::string, std::unique_ptr<MinVarInfo>> *nameToVarInfo;
+
         if (m_FlattenSteps)
         {
             StepLoopStart = 0;
@@ -1569,6 +1588,32 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
             StepLoopEnd = Req->Step + 1;
         }
 
+        if (VarRec->Derived)
+        {
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+            auto &derivedMap = m_Engine->m_IO.GetDerivedVariables();
+            auto derivedVar = static_cast<VariableDerived *>(derivedMap.at(VarRec->VarName).get());
+            derivedVarInputNameList = derivedVar->VariableNameList();
+            nameToVarInfo = new std::map<std::string, std::unique_ptr<MinVarInfo>>();
+            // to create a mapping between variable name and the varInfo (dim and data pointer)
+            Req->DerivedInputMap = nameToVarInfo;
+            for (auto varName : derivedVarInputNameList)
+            {
+                auto itVariable = var_map.find(varName);
+                if (itVariable == var_map.end())
+                    helper::Throw<std::invalid_argument>("Core", "IO", "DefineDerivedVariable",
+                                                         "using undefine variable " + varName +
+                                                             " in defining the derived variable ");
+                // extract the dimensions and data for each variable
+                VariableBase *varBase = itVariable->second.get();
+                nameToVarInfo->insert({varName, std::unique_ptr<MinVarInfo>(nullptr)});
+                derivedVarInputVarList.push_back(varBase);
+            }
+#else
+            (void)nameToVarInfo;
+            (void)var_map;
+#endif
+        }
         if (Req->RequestType == Local)
         {
             size_t NodeFirstBlock = 0;
@@ -1676,7 +1721,47 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                                                    &writer_meta_base->Count[StartDim],
                                                    &intersectionstart[0], &intersectioncount[0]))
                         {
-                            if (VarRec->Operator != NULL)
+                            if (VarRec->Derived)
+                            {
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+                                for (auto varBase : derivedVarInputVarList)
+                                {
+                                    ReadRequest RR;
+                                    BP5VarRec *VarRec = VarByName.at(varBase->m_Name);
+                                    MetaArrayRecOperator *writer_meta_base_input =
+                                        (MetaArrayRecOperator *)GetMetadataBase(VarRec, Step,
+                                                                                WriterRank);
+                                    RR.Timestep = Step;
+                                    RR.WriterRank = WriterRank;
+                                    RR.StartOffset = writer_meta_base_input->DataBlockLocation[0];
+                                    RR.ReadLength =
+                                        helper::GetDataTypeSize(VarRec->Type) *
+                                        CalcBlockLength(VarRec->DimCount, Req->Count.data());
+                                    RR.DestinationAddr = (char *)malloc(RR.ReadLength);
+                                    RR.DirectToAppMemory = false;
+                                    RR.ReqIndex = ReqIndex;
+                                    RR.BlockID = Block;
+                                    RR.OffsetInBlock = 0;
+                                    Ret.push_back(RR);
+                                    auto mvi =
+                                        m_Engine->MinBlocksInfo(*varBase, Step, WriterRank, Block);
+                                    mvi->BlocksInfo[0].BufferP = RR.DestinationAddr;
+                                    if ((*nameToVarInfo)[varBase->m_Name] == nullptr)
+                                    {
+                                        // new blocks info for this input variable
+                                        (*nameToVarInfo)[varBase->m_Name] =
+                                            std::unique_ptr<MinVarInfo>(std::move(mvi));
+                                    }
+                                    else
+                                    {
+                                        // add to existing blocks info for this input variable
+                                        (*nameToVarInfo)[varBase->m_Name]->BlocksInfo.push_back(
+                                            mvi->BlocksInfo[0]);
+                                    }
+                                }
+#endif
+                            }
+                            else if (VarRec->Operator != NULL)
                             {
                                 // need the whole thing for decompression anyway
                                 ReadRequest RR;
@@ -1779,10 +1864,18 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
 
 void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
 {
-    auto Req = PendingGetRequests[Read.ReqIndex];
+    auto &Req = PendingGetRequests[Read.ReqIndex];
+    auto VarRec = (struct BP5VarRec *)Req.VarRec;
 
     // if we could do this, nothing else to do
     if (Read.DirectToAppMemory)
+        return;
+
+    // if this is a read of a derived input value, we *must* do these
+    // later (we might be doing FinalizeGet() on a per-read basis and
+    // in a random order, so we have to wait until they are all done
+    // before we generate derived values.
+    if (VarRec->Derived)
         return;
 
     int ElementSize = ((struct BP5VarRec *)Req.VarRec)->ElementSize;
@@ -1935,13 +2028,47 @@ void BP5Deserializer::FinalizeGet(const ReadRequest &Read, const bool freeAddr)
     }
 }
 
+void BP5Deserializer::FinalizeDerivedGets(std::vector<ReadRequest> &Reads)
+{
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    for (size_t ReqIndex = 0; ReqIndex < PendingGetRequests.size(); ReqIndex++)
+    {
+        auto &Req = PendingGetRequests[ReqIndex];
+        auto VarRec = (struct BP5VarRec *)Req.VarRec;
+        if (!VarRec->Derived)
+            continue;
+        auto &derivedMap = m_Engine->m_IO.GetDerivedVariables();
+        auto derivedVar = static_cast<VariableDerived *>(derivedMap.at(VarRec->VarName).get());
+
+        auto nameToVarInfo = Req.DerivedInputMap;
+        auto DerivedBlockData = derivedVar->ApplyExpression(*nameToVarInfo);
+
+        auto entry = nameToVarInfo->begin();
+        for (size_t i = 0; i < DerivedBlockData.size(); i++)
+        {
+            auto &DBlock = DerivedBlockData[i];
+
+            auto inStart = std::get<1>(DBlock);
+            auto inCount = std::get<2>(DBlock);
+            auto values = std::get<0>(DBlock);
+            helper::NdCopy((const char *)values, inStart, inCount, true, true, (char *)Req.Data,
+                           Req.Start, Req.Count, true, true, VarRec->ElementSize, CoreDims(),
+                           CoreDims(), CoreDims(), CoreDims(), false, Req.MemSpace);
+            free(std::get<0>(DBlock));
+        }
+        delete nameToVarInfo;
+    }
+#endif
+}
+
+void BP5Deserializer::ClearGetState() { PendingGetRequests.clear(); }
+
 void BP5Deserializer::FinalizeGets(std::vector<ReadRequest> &Reads)
 {
     for (const auto &Read : Reads)
     {
         FinalizeGet(Read, true);
     }
-    PendingGetRequests.clear();
 }
 
 void BP5Deserializer::MapGlobalToLocalIndex(size_t Dims, const size_t *GlobalIndex,
@@ -2024,6 +2151,9 @@ BP5Deserializer::~BP5Deserializer()
     {
         /* remove any variables that we've created from our IO */
         m_Engine->m_IO.RemoveVariable(VarRec.second->VarName);
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+        m_Engine->m_IO.RemoveDerivedVariable(VarRec.second->VarName);
+#endif
 
         free(VarRec.second->VarName);
         if (VarRec.second->ExprStr)
@@ -2242,6 +2372,99 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
                 MV->BlocksInfo.push_back(Blk);
             }
         }
+    }
+    return MV;
+}
+
+MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelStep,
+                                           size_t WriterRank, size_t BlockID)
+{
+    // this is only called for global and local arrays, so limited
+    BP5VarRec *VarRec = LookupVarByKey((void *)&Var);
+
+    MinVarInfo *MV = new MinVarInfo((int)VarRec->DimCount, VarRec->GlobalDims);
+
+    size_t AbsStep = RelStep;
+    size_t StepLoopStart, StepLoopEnd;
+
+    if (m_RandomAccessMode)
+    {
+        AbsStep = VarRec->AbsStepFromRel[RelStep];
+    }
+    if (m_FlattenSteps)
+    {
+        StepLoopStart = 0;
+        StepLoopEnd = m_ControlArray.size();
+    }
+    else
+    {
+        StepLoopStart = AbsStep;
+        StepLoopEnd = AbsStep + 1;
+    }
+    size_t Id = 0;
+    MV->Step = RelStep;
+    MV->Dims = (int)VarRec->DimCount;
+    MV->Shape = NULL;
+    MV->IsReverseDims = ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
+
+    MV->WasLocalValue = (VarRec->OrigShapeID == ShapeID::LocalValue);
+    if ((VarRec->OrigShapeID == ShapeID::LocalValue) ||
+        (VarRec->OrigShapeID == ShapeID::GlobalValue))
+    {
+        // Throw
+    }
+    for (size_t Step = StepLoopStart; Step < StepLoopEnd; Step++)
+    {
+        MetaArrayRec *writer_meta_base = (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
+        if (writer_meta_base)
+        {
+            if (MV->Shape == NULL)
+            {
+                MV->Shape = writer_meta_base->Shape;
+            }
+            Id += 1; // one block
+        }
+    }
+    MV->BlocksInfo.reserve(Id);
+
+    Id = BlockID;
+    for (size_t Step = StepLoopStart; Step < StepLoopEnd; Step++)
+    {
+        MetaArrayRec *writer_meta_base = (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
+
+        if (!writer_meta_base)
+            continue;
+        size_t WriterBlockCount = MV->Dims ? writer_meta_base->DBCount / MV->Dims : 1;
+        if (BlockID >= WriterBlockCount)
+        {
+            // throw
+        }
+        MinMaxStruct *MMs = NULL;
+        if (VarRec->MinMaxOffset != SIZE_MAX)
+        {
+            MMs = *(MinMaxStruct **)(((char *)writer_meta_base) + VarRec->MinMaxOffset);
+        }
+        size_t *Offsets = NULL;
+        size_t *Count = NULL;
+        if (writer_meta_base->Offsets)
+            Offsets = writer_meta_base->Offsets + (BlockID * MV->Dims);
+        if (writer_meta_base->Count)
+            Count = writer_meta_base->Count + (BlockID * MV->Dims);
+        MinBlockInfo Blk;
+        Blk.WriterID = (int)WriterRank;
+        Blk.BlockID = Id;
+        Blk.Start = Offsets;
+        Blk.Count = Count;
+        Blk.MinMax.Init(VarRec->Type);
+        if (MMs)
+        {
+            char *BlockMinAddr = (((char *)MMs) + 2 * BlockID * VarRec->ElementSize);
+            char *BlockMaxAddr = (((char *)MMs) + (2 * BlockID + 1) * VarRec->ElementSize);
+            ApplyElementMinMax(Blk.MinMax, VarRec->Type, (void *)BlockMinAddr);
+            ApplyElementMinMax(Blk.MinMax, VarRec->Type, (void *)BlockMaxAddr);
+        }
+        // Blk.BufferP
+        MV->BlocksInfo.push_back(Blk);
     }
     return MV;
 }

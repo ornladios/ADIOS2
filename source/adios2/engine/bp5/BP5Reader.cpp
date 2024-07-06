@@ -355,10 +355,7 @@ void BP5Reader::PerformGets()
     }
 
     // clear pending requests inside deserializer
-    {
-        std::vector<adios2::format::BP5Deserializer::ReadRequest> empty;
-        m_BP5Deserializer->FinalizeGets(empty);
-    }
+    m_BP5Deserializer->ClearGetState();
 }
 
 void BP5Reader::PerformRemoteGetsWithKVCache()
@@ -661,6 +658,8 @@ void BP5Reader::PerformLocalGets()
             m_BP5Deserializer->FinalizeGet(Req, false);
         }
     }
+    m_BP5Deserializer->FinalizeDerivedGets(ReadRequests);
+    m_BP5Deserializer->ClearGetState();
     m_JSONProfiler.Stop("DataRead");
     /*TP end = NOW();
     double t1 = DURATION(start, end);
@@ -912,6 +911,12 @@ void BP5Reader::OpenFiles(TimePoint &timeoutInstant, const Seconds &pollSeconds,
 MinVarInfo *BP5Reader::MinBlocksInfo(const VariableBase &Var, const size_t Step) const
 {
     return m_BP5Deserializer->MinBlocksInfo(Var, Step);
+}
+
+MinVarInfo *BP5Reader::MinBlocksInfo(const VariableBase &Var, const size_t Step,
+                                     const size_t WriterID, const size_t BlockID) const
+{
+    return m_BP5Deserializer->MinBlocksInfo(Var, Step, WriterID, BlockID);
 }
 
 bool BP5Reader::VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const

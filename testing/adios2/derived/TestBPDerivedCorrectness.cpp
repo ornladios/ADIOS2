@@ -9,15 +9,32 @@
 #include <vector>
 
 #include <adios2.h>
+
 #include <gtest/gtest.h>
 
-TEST(DerivedCorrectness, AddCorrectnessTest)
+class DerivedCorrectness : public ::testing::Test
+{
+public:
+    DerivedCorrectness() = default;
+};
+
+class DerivedCorrectnessP : public DerivedCorrectness,
+                            public ::testing::WithParamInterface<adios2::DerivedVarType>
+{
+protected:
+    adios2::DerivedVarType GetThreads() { return GetParam(); };
+};
+
+TEST_P(DerivedCorrectnessP, AddCorrectnessTest)
 {
     const size_t Nx = 10, Ny = 3, Nz = 6;
     const size_t steps = 2;
     // Application variable
     std::default_random_engine generator;
     std::uniform_real_distribution<float> distribution(0.0, 10.0);
+
+    adios2::DerivedVarType mode = GetParam();
+    std::cout << "Mode is " << mode << std::endl;
 
     std::vector<float> simArray1(Nx * Ny * Nz);
     std::vector<float> simArray2(Nx * Ny * Nz);
@@ -45,7 +62,7 @@ TEST(DerivedCorrectness, AddCorrectnessTest)
                                 "y =" + varname[1] + " \n"
                                 "z =" + varname[2] + " \n"
                                 "x+y+z",
-                                adios2::DerivedVarType::StoreData);
+                                mode);
     // clang-format on
     std::string filename = "expAdd.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
@@ -88,7 +105,7 @@ TEST(DerivedCorrectness, AddCorrectnessTest)
     bpFileReader.Close();
 }
 
-TEST(DerivedCorrectness, SubtractCorrectnessTest)
+TEST_P(DerivedCorrectnessP, SubtractCorrectnessTest)
 {
     const size_t Nx = 10, Ny = 3, Nz = 6;
     const size_t steps = 2;
@@ -165,13 +182,16 @@ TEST(DerivedCorrectness, SubtractCorrectnessTest)
     bpFileReader.Close();
 }
 
-TEST(DerivedCorrectness, MagCorrectnessTest)
+TEST_P(DerivedCorrectnessP, MagCorrectnessTest)
 {
     const size_t Nx = 2, Ny = 3, Nz = 10;
     const size_t steps = 2;
     // Application variable
     std::default_random_engine generator;
     std::uniform_real_distribution<float> distribution(0.0, 10.0);
+
+    adios2::DerivedVarType mode = GetParam();
+    std::cout << "Mode is " << mode << std::endl;
 
     std::vector<float> simArray1(Nx * Ny * Nz);
     std::vector<float> simArray2(Nx * Ny * Nz);
@@ -197,7 +217,7 @@ TEST(DerivedCorrectness, MagCorrectnessTest)
                                 "y =" + varname[1] + " \n"
                                 "z =" + varname[2] + " \n"
                                 "magnitude(x,y,z)",
-                                adios2::DerivedVarType::StoreData);
+                                mode);
     // clang-format on
     std::string filename = "expMagnitude.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
@@ -245,10 +265,13 @@ TEST(DerivedCorrectness, MagCorrectnessTest)
     bpFileReader.Close();
 }
 
-TEST(DerivedCorrectness, CurlCorrectnessTest)
+TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
 {
     const size_t Nx = 25, Ny = 70, Nz = 13;
     float error_limit = 0.0000001f;
+
+    adios2::DerivedVarType mode = GetParam();
+    std::cout << "Mode is " << mode << std::endl;
 
     // Application variable
     std::vector<float> simArray1(Nx * Ny * Nz);
@@ -296,7 +319,7 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
                                 "Vy =" + varname[1] + " \n"
                                 "Vz =" + varname[2] + " \n"
                                 "curl(Vx,Vy,Vz)",
-                                adios2::DerivedVarType::StoreData);
+                                mode);
     // clang-format on
     std::string filename = "expCurl.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
@@ -395,6 +418,10 @@ TEST(DerivedCorrectness, CurlCorrectnessTest)
     EXPECT_LT(sum_y / (Nx * Ny * Nz), error_limit);
     EXPECT_LT(sum_z / (Nx * Ny * Nz), error_limit);
 }
+
+INSTANTIATE_TEST_SUITE_P(DerivedCorrectness, DerivedCorrectnessP,
+                         ::testing::Values(adios2::DerivedVarType::MetadataOnly,
+                                           adios2::DerivedVarType::StoreData));
 
 int main(int argc, char **argv)
 {
