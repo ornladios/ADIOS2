@@ -17,6 +17,7 @@ enum ExpressionOperator
     OP_NUM,   /* Parser-use only */
     OP_INDEX,
     OP_ADD,
+    OP_SUBTRACT,
     OP_SQRT,
     OP_POW,
     OP_MAGN,
