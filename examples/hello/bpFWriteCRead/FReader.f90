@@ -29,6 +29,8 @@ program FReader
         ! Open in write mode, this launches an engine
         call adios2_open(engine, io, "CppWriter.bp", adios2_mode_read, ierr)
 
+        call adios2_begin_step(io, ierr)
+
         call adios2_inquire_variable(var, io, 'data2D', ierr)
 
         if( ierr == adios2_found ) then
@@ -55,6 +57,8 @@ program FReader
             if( allocated(data) ) deallocate(data)
 
         end if
+
+        call adios2_end_step(io, ierr)
 
         call adios2_close(engine, ierr)
         call adios2_finalize(adios, ierr)
