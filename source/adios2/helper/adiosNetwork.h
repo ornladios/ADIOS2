@@ -13,6 +13,7 @@
 #define ADIOS2_HELPER_ADIOSNETWORK_H_
 
 /// \cond EXCLUDE_FROM_DOXYGEN
+#include <memory>
 #include <string>
 #include <vector>
 /// \endcond
@@ -59,6 +60,24 @@ void HandshakeReader(Comm const &comm, size_t &appID, std::vector<std::string> &
 
 #endif // ADIOS2_HAVE_DATAMAN || ADIOS2_HAVE_TABLE
 #endif // _WIN32
+
+struct NetworkSocketData;
+
+class NetworkSocket
+{
+public:
+    NetworkSocket();
+    ~NetworkSocket();
+
+    bool valid() const;
+
+    void Connect(std::string hostname, uint16_t port, std::string protocol = "tcp");
+    void RequestResponse(const std::string &request, char *response, size_t maxResponseSize);
+    void Close();
+
+private:
+    NetworkSocketData *m_Data;
+};
 
 } // end namespace helper
 } // end namespace adios2

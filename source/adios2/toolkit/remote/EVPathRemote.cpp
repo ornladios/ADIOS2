@@ -21,7 +21,7 @@
 namespace adios2
 {
 
-EVPathRemote::EVPathRemote() {}
+EVPathRemote::EVPathRemote(const adios2::HostOptions &hostOptions) : Remote(hostOptions) {}
 
 #ifdef ADIOS2_HAVE_SST
 EVPathRemote::~EVPathRemote()

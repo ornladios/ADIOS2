@@ -81,6 +81,7 @@ private:
     size_t m_Size = 0;
 
     void SetUpCache();
+    std::string m_Hostname; // name from hosts.yaml
     std::string m_FileName;
     std::string m_CachePath;        // local cache directory
     bool m_CachingThisFile = false; // save content to local cache

@@ -175,6 +175,7 @@ public:
     MACRO(FlattenSteps, Bool, bool, false)                                                         \
     MACRO(IgnoreFlattenSteps, Bool, bool, false)                                                   \
     MACRO(RemoteDataPath, String, std::string, "")                                                 \
+    MACRO(RemoteHost, String, std::string, "")                                                     \
     MACRO(MaxOpenFilesAtOnce, UInt, unsigned int, UINT_MAX)
 
     struct BP5Params

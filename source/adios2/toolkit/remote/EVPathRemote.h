@@ -33,7 +33,7 @@ public:
      * @param type from derived class
      * @param comm passed to m_Comm
      */
-    EVPathRemote();
+    EVPathRemote(const adios2::HostOptions &hostOptions);
     ~EVPathRemote();
 
     explicit operator bool() const { return m_Active; }

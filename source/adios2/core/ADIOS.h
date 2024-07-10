@@ -226,9 +226,15 @@ private:
     class GlobalServices;
     static class GlobalServices m_GlobalServices;
 
+    // a class pointer to one of the active ADIOS object's host options
+    // to make it accessible everwhere within a process
+    static adios2::HostOptions *m_StaticHostOptions;
+
 public:
     /** Global service AWS SDK initialization */
     static void Global_init_AWS_API();
+
+    static const adios2::HostOptions &StaticGetHostOptions();
 };
 
 } // end namespace core
