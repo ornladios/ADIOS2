@@ -26,14 +26,14 @@
 #include <arpa/inet.h>
 #endif
 #include "evpath.h"
-#ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
+
 #ifdef _MSC_VER
 #define drand48() (((double)rand())/((double)RAND_MAX))
 #define lrand48() rand()
 #define srand48(x)
 #define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
+#else
+#include <sys/wait.h>
 #endif
 typedef struct _msg_rec {
     char *contact_list;

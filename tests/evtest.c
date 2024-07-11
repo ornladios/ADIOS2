@@ -18,6 +18,7 @@
 #define srand48(x)
 #define kill(x,y) TerminateProcess(OpenProcess(0,0,(DWORD)x),y)
 #else
+#include <sys/socket.h>
 #include <sys/wait.h>
 #include <arpa/inet.h>
 #endif
@@ -369,11 +370,11 @@ do_regression_master_test()
 	printf("Waiting for remote....\n");
     }
 #ifdef HAVE_WINDOWS_H
-    if (_cwait(&exit_state, subproc_proc, 0) == -1) {
-	perror("cwait");
-    }
+    WaitForSingleObject((HANDLE)subproc_proc, INFINITE );
+    DWORD exitCode = 0;
+    GetExitCodeProcess((HANDLE)subproc_proc, &exitCode);
+    exit_state = exitCode;
     if (exit_state == 0) {
-	if (quiet <= 0) 
 	    printf("Passed single remote subproc test\n");
     } else {
 	printf("Single remote subproc exit with status %d\n",
