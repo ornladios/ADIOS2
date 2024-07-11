@@ -57,8 +57,6 @@ int main(int argc, char *argv[])
 
         bpReader.EndStep();
 
-        bpReader.Close();
-
         std::cout << "Selection size: " << bpData.SelectionSize() << "\n";
         for (size_t i = 0; i < bpData.Count()[0]; ++i)
         {
@@ -70,6 +68,8 @@ int main(int argc, char *argv[])
             std::cout << "\n";
         }
         std::cout << "\n";
+
+        bpReader.Close();
     }
 
     MPI_Finalize();
