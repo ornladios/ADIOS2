@@ -17,6 +17,7 @@
 #include "adios2/helper/adiosRangeFilter.h"
 #include "adios2/toolkit/format/bp5/BP5Deserializer.h"
 #include "adios2/toolkit/format/buffer/heap/BufferMalloc.h"
+#include "adios2/toolkit/kvcache/KVCacheCommon.h"
 #include "adios2/toolkit/remote/Remote.h"
 #include "adios2/toolkit/transportman/TransportMan.h"
 
@@ -98,6 +99,9 @@ private:
     std::unique_ptr<Remote> m_Remote;
     bool m_WriterIsActive = true;
     adios2::profiling::JSONProfiler m_JSONProfiler;
+
+    /* KVCache for remote data */
+    kvcache::KVCacheCommon m_KVCache;
 
     /** used for per-step reads, TODO: to be moved to BP5Deserializer */
     size_t m_CurrentStep = 0;
@@ -253,6 +257,8 @@ private:
     void PerformLocalGets();
 
     void PerformRemoteGets();
+
+    void PerformRemoteGetsWithKVCache();
 
     void DestructorClose(bool Verbose) noexcept;
 
