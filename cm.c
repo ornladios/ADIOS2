@@ -20,6 +20,8 @@
 #define FD_SETSIZE 1024
 #include <winsock2.h>
 #define __ANSI_CPP__
+#define lrand48() rand()
+#define srand48(x) srand((unsigned int)(x))
 #else
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -775,7 +777,7 @@ INT_CManager_create_control(char *control_module)
     cm->transports = NULL;
     cm->initialized = 0;
     cm->reference_count = 1;
-    long seed = getpid() + time(NULL);
+    uint64_t seed = getpid() + time(NULL);
     srand48(seed);
     cm->CManager_ID = (int)lrand48();
 
