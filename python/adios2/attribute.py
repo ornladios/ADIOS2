@@ -58,8 +58,6 @@ class Attribute:
         Returns:
             Content of the Attribute as a non string.
         """
-        if self.single_value():
-            return self.impl.Data()[0]
         return self.impl.Data()
 
     def data_string(self):

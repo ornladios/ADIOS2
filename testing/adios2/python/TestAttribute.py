@@ -27,6 +27,7 @@ class Test_attribute(unittest.TestCase):
             arr = np.array([2023, 11, 22])
             ts = io.define_attribute("timestamp", arr)
             self.assertEqual(ts.name(), "timestamp")
+            print(f"ts.data = {ts.data()}")
             self.assertTrue(np.array_equal(ts.data(), [2023, 11, 22]))
 
 

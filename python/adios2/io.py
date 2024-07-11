@@ -67,7 +67,10 @@ class IO:
                 Not used if variable_name is empty
         """
 
-        if isinstance(content, (np.ndarray, str, list)):
+        if isinstance(content, np.ndarray):
+            content = content.tolist()
+
+        if isinstance(content, (str, list)):
             return Attribute(self.impl, name, content, variable_name, separator)
 
         if not hasattr(content, "__len__") and isinstance(content, (int, float, complex)):
