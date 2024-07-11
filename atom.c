@@ -494,6 +494,7 @@ static void nt_socket_init_func(){}
 
 
 static char *in_use_values[] = {
+"CM_CMANAGER_ID",
 "CM_BW_MEASURED_COF",
 "CM_BW_MEASURED_VALUE",
 "CM_BW_MEASURE_INTERVAL",
