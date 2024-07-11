@@ -60,6 +60,7 @@ extern void libcmselect_LTX_select_stop(CMtrans_services svc,void *client_data);
 static void CMinitialize (CManager cm);
 
 static atom_t CM_TRANSPORT = -1;
+static atom_t CM_CMANAGER_ID = -1;
 static atom_t CM_NETWORK_POSTFIX = -1;
 static atom_t CM_CONN_BLOCKING = -1;
 atom_t CM_REBWM_RLEN = -1;
@@ -575,6 +576,7 @@ CMinternal_listen(CManager cm, attr_list listen_info, int try_others)
 	    attrs = (*trans_list)->listen(cm, &CMstatic_trans_svcs,
 					  *trans_list,
 					  listen_info);
+	    add_attr(attrs, CM_CMANAGER_ID, Attr_Int4, (intptr_t)cm->CManager_ID);
 	    if (iface) {
 		add_string_attr(attrs, CM_IP_INTERFACE, strdup(iface));
 	    }
@@ -752,6 +754,7 @@ INT_CManager_create_control(char *control_module)
 
     if (atom_init == 0) {
 	CM_TRANSPORT = attr_atom_from_string("CM_TRANSPORT");
+	CM_CMANAGER_ID = attr_atom_from_string("CM_CMANAGER_ID");
 	CM_NETWORK_POSTFIX = attr_atom_from_string("CM_NETWORK_POSTFIX");
 	CM_CONN_BLOCKING = attr_atom_from_string("CM_CONN_BLOCKING");
 	CM_REBWM_RLEN = attr_atom_from_string("CM_REG_BW_RUN_LEN");
@@ -772,6 +775,9 @@ INT_CManager_create_control(char *control_module)
     cm->transports = NULL;
     cm->initialized = 0;
     cm->reference_count = 1;
+    long seed = getpid() + time(NULL);
+    srand48(seed);
+    cm->CManager_ID = (int)lrand48();
 
     char *tmp;
     if ((tmp = getenv("CMControlModule"))) {
@@ -1490,7 +1496,7 @@ INT_CMget_ip_config_diagnostics(CManager cm)
      msg[0] = 0x434d4800;  /* CMH\0 */
      msg[1] = (CURRENT_HANDSHAKE_VERSION << 24) + sizeof(msg);
      msg[2] = cm->FFSserver_identifier;
-     msg[3] = 5;  /* not implemented yet */
+     msg[3] = cm->CManager_ID;
      msg[4] = 0;  /* not implemented yet */
      if (conn->remote_format_server_ID != 0) {
 	 /* set high bit if we already have his ID */
@@ -1691,12 +1697,16 @@ timeout_conn(CManager cm, void *client_data)
 	 fprintf(cm->CMTrace_file, "In CMinternal_get_conn, attrs ");
 	 if (attrs) fdump_attr_list(cm->CMTrace_file, attrs); else fprintf(cm->CMTrace_file, "\n");
      }
+     int target_cm_id = -1;
+     (void) get_int_attr(attrs, CM_CMANAGER_ID, &target_cm_id);
      for (i=0; i<cm->connection_count; i++) {
 	 CMConnection tmp = cm->connections[i];
 	 if (tmp->closed || tmp->failed) continue;
-	 if (tmp->trans->connection_eq(cm, &CMstatic_trans_svcs,
-					tmp->trans, attrs,
-					tmp->transport_data)) {
+
+	 if ((tmp->remote_CManager_ID == target_cm_id) ||
+	     tmp->trans->connection_eq(cm, &CMstatic_trans_svcs,
+				       tmp->trans, attrs,
+				       tmp->transport_data)) {
 
 	     CMtrace_out(tmp->cm, CMFreeVerbose, "internal_get_conn found conn=%p ref count will be %d\n", 
 			 tmp, tmp->conn_ref_count +1);

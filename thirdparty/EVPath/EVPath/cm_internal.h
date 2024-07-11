@@ -151,6 +151,7 @@ typedef struct _CManager {
     int initialized;
     int reference_count;
     char *control_module_choice;  /* this is static, doesn't need to be free'd */
+    int CManager_ID;
 
     CMControlList control_list;	/* the control list for this DE */
 
