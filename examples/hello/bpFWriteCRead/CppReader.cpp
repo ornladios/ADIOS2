@@ -70,7 +70,6 @@ int main(int argc, char *argv[])
         std::cout << "\n";
 
         bpReader.Close();
-
     }
 
     MPI_Finalize();
