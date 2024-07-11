@@ -8,6 +8,7 @@ namespace adios2
 namespace derived
 {
 DerivedData AddFunc(std::vector<DerivedData> input, DataType type);
+DerivedData SubtractFunc(std::vector<DerivedData> input, DataType type);
 DerivedData MagnitudeFunc(std::vector<DerivedData> input, DataType type);
 DerivedData Curl3DFunc(std::vector<DerivedData> input, DataType type);
 

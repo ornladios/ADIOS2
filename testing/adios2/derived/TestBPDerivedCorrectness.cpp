@@ -15,7 +15,7 @@ TEST(DerivedCorrectness, AddCorrectnessTest)
 {
     const size_t Nx = 10, Ny = 3, Nz = 6;
     const size_t steps = 2;
-    /** Application variable */
+    // Application variable
     std::default_random_engine generator;
     std::uniform_real_distribution<float> distribution(0.0, 10.0);
 
@@ -83,6 +83,83 @@ TEST(DerivedCorrectness, AddCorrectnessTest)
         {
             calcA = readUx[ind] + readUy[ind] + readUz[ind];
             EXPECT_TRUE(fabs(calcA - readAdd[ind]) < epsilon);
+        }
+    }
+    bpFileReader.Close();
+}
+
+TEST(DerivedCorrectness, SubtractCorrectnessTest)
+{
+    const size_t Nx = 10, Ny = 3, Nz = 6;
+    const size_t steps = 2;
+    /** Application variable */
+    std::default_random_engine generator;
+    std::uniform_real_distribution<float> distribution(0.0, 10.0);
+
+    std::vector<float> simArray1(Nx * Ny * Nz);
+    std::vector<float> simArray2(Nx * Ny * Nz);
+    std::vector<float> simArray3(Nx * Ny * Nz);
+    for (size_t i = 0; i < Nx * Ny * Nz; ++i)
+    {
+        simArray1[i] = distribution(generator);
+        simArray2[i] = distribution(generator);
+        simArray3[i] = distribution(generator);
+    }
+
+    adios2::ADIOS adios;
+
+    adios2::IO bpOut = adios.DeclareIO("BPWriteSubtractExpression");
+
+    std::vector<std::string> varname = {"sim4/Ux", "sim4/Uy", "sim4/Uz"};
+    std::string derivedname = "derived/subtractU";
+
+    auto Ux = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    // clang-format off
+    bpOut.DefineDerivedVariable(derivedname,
+                                "x =" + varname[0] + " \n"
+                                "y =" + varname[1] + " \n"
+                                "z =" + varname[2] + " \n"
+                                "x-y-z",
+                                adios2::DerivedVarType::StoreData);
+    // clang-format on
+    std::string filename = "expSubtract.bp";
+    adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
+
+    for (size_t i = 0; i < steps; i++)
+    {
+        bpFileWriter.BeginStep();
+        bpFileWriter.Put(Ux, simArray1.data());
+        bpFileWriter.Put(Uy, simArray2.data());
+        bpFileWriter.Put(Uz, simArray3.data());
+        bpFileWriter.EndStep();
+    }
+    bpFileWriter.Close();
+
+    adios2::IO bpIn = adios.DeclareIO("BPReadExpression");
+    adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
+
+    std::vector<float> readUx;
+    std::vector<float> readUy;
+    std::vector<float> readUz;
+    std::vector<float> readSubtract;
+
+    float calcS;
+    float epsilon = (float)0.01;
+    for (size_t i = 0; i < steps; i++)
+    {
+        bpFileReader.BeginStep();
+        bpFileReader.Get(varname[0], readUx);
+        bpFileReader.Get(varname[1], readUy);
+        bpFileReader.Get(varname[2], readUz);
+        bpFileReader.Get(derivedname, readSubtract);
+        bpFileReader.EndStep();
+
+        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
+        {
+            calcS = readUx[ind] - readUy[ind] - readUz[ind];
+            EXPECT_TRUE(fabs(calcS - readSubtract[ind]) < epsilon);
         }
     }
     bpFileReader.Close();

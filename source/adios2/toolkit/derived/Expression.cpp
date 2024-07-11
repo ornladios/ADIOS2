@@ -25,6 +25,7 @@ const std::map<ExpressionOperator, OperatorProperty> op_property = {
     {ExpressionOperator::OP_NUM, {"NUM", false}},     /* Parser-use only */
     {ExpressionOperator::OP_INDEX, {"INDEX", false}},
     {ExpressionOperator::OP_ADD, {"ADD", true}},
+    {ExpressionOperator::OP_SUBTRACT, {"SUBTRACT", true}},
     {ExpressionOperator::OP_SQRT, {"SQRT", false}},
     {ExpressionOperator::OP_POW, {"POW", false}},
     {ExpressionOperator::OP_CURL, {"CURL", false}},
@@ -36,6 +37,7 @@ const std::map<std::string, ExpressionOperator> string_to_op = {
     {"NUM", ExpressionOperator::OP_NUM},     /* Parser-use only */
     {"INDEX", ExpressionOperator::OP_INDEX},    {"+", ExpressionOperator::OP_ADD},
     {"add", ExpressionOperator::OP_ADD},        {"ADD", ExpressionOperator::OP_ADD},
+    {"-", ExpressionOperator::OP_SUBTRACT},     {"SUBTRACT", ExpressionOperator::OP_SUBTRACT},
     {"SQRT", ExpressionOperator::OP_SQRT},      {"sqrt", ExpressionOperator::OP_SQRT},
     {"POW", ExpressionOperator::OP_POW},        {"^", ExpressionOperator::OP_POW},
     {"CURL", ExpressionOperator::OP_CURL},      {"curl", ExpressionOperator::OP_CURL},
@@ -122,6 +124,7 @@ struct OperatorFunctions
 
 std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
     {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc}},
+    {adios2::detail::ExpressionOperator::OP_SUBTRACT, {SubtractFunc, SameDimsFunc}},
     {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc}},
     {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc}}};
 
