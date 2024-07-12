@@ -3,7 +3,7 @@
   module purge
   module load ${JOB_MODULES}
   module list
-  export PATH="/gpfs/wolf/csc303/scratch/vbolea/ci/utils:$PATH"
+  export PATH="/gpfs/wolf/ums029/scratch/vbolea/ci/utils:$PATH"
 
 .ascent-common:
   except:
@@ -13,13 +13,13 @@
   interruptible: true
   variables:
     CCACHE_BASEDIR:       "/gpfs/wolf/"
-    CCACHE_DIR:           "/gpfs/wolf/csc303/scratch/vbolea/ci/ccache"
+    CCACHE_DIR:           "/gpfs/wolf/ums029/scratch/vbolea/ci/ccache"
     # -isystem= is not affected by CCACHE_BASEDIR, thus we must ignore it
     CCACHE_IGNOREOPTIONS: "-isystem=*"
     CCACHE_NOHASHDIR:     "true"
 
     CUDAHOSTCXX:          "g++"
-    CUSTOM_CI_BUILDS_DIR: "/gpfs/wolf/csc303/scratch/vbolea/ci/adios2"
+    CUSTOM_CI_BUILDS_DIR: "/gpfs/wolf/ums029/scratch/vbolea/ci/adios2"
     GITLAB_SITE:          "OLCF Ascent"
     CI_BIN_DIR:           "$CI_PROJECT_DIR/build"
     SCHEDULER_PARAMETERS: -P CSC303 -W 1:00 -nnodes 1 -alloc_flags gpudefault
@@ -128,7 +128,7 @@ sync-github-prs:
   only:
     - schedules
   variables:
-    CUSTOM_CI_BUILDS_DIR: "/gpfs/wolf/csc303/scratch/vbolea/ci/adios2"
+    CUSTOM_CI_BUILDS_DIR: "/gpfs/wolf/ums029/scratch/vbolea/ci/adios2"
   script:
-    - export PATH="/gpfs/wolf/csc303/scratch/vbolea/ci/utils:$PATH"
+    - export PATH="/gpfs/wolf/ums029/scratch/vbolea/ci/utils:$PATH"
     - .gitlab/config/SpackCIBridge.py ornladios/ADIOS2 git@code.ornl.gov:ecpcitest/adios2.git https://code.ornl.gov/ ecpcitest/adios2 --prereq-check=format --prereq-check=git_checks
