@@ -6,4 +6,4 @@ child_pipeline_{branch}:
     include:
       - project: 'ci/ums029/dev/adios2'
         ref: '{branch}'
-        file: '.gitlab/gitlab-ci-crusher.yml'
+        file: '.gitlab/gitlab-ci-frontier.yml'
