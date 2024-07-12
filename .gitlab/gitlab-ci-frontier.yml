@@ -1,4 +1,4 @@
-# Ad-hoc build that runs in the ECP Hardware, concretely in OLCF Crusher.
+# Ad-hoc build that runs in the ECP Hardware, concretely in OLCF Frontier.
 
 stages:
   - pre
@@ -23,13 +23,17 @@ stages:
   ccache -s
 
 .frontier-common:
+  variables:
+    CUSTOM_CI_BUILDS_DIR: "/lustre/orion/ums029/scratch/ums029_auser/ci/adios2/runtime"
+    OLCF_SERVICE_ACCOUNT: "ums029_auser"
+
+.frontier-cmake-common:
   rules:
     - if: $CI_PIPELINE_SOURCE =~ /parent_pipeline|web/
   interruptible: true
   variables:
     CCACHE_BASEDIR:       "/lustre/orion/ums029/scratch/"
     CCACHE_DIR:           "/lustre/orion/ums029/scratch/ums029_auser/ci/adios2/ccache"
-    CUSTOM_CI_BUILDS_DIR: "/lustre/orion/ums029/scratch/ums029_auser/ci/adios2/runtime"
 
     # -isystem= is not affected by CCACHE_BASEDIR, thus we must ignore it
     CCACHE_IGNOREOPTIONS: "-isystem=*"
@@ -42,9 +46,11 @@ stages:
 
     # We do not want to use the user's ~/.gitconfig
     GIT_CONFIG_GLOBAL:    "true"
-    GITLAB_SITE:          "OLCF Crusher"
+    GITLAB_SITE:          "OLCF Frontier"
     CI_BIN_DIR:           "$CI_PROJECT_DIR/build"
-    OLCF_SERVICE_ACCOUNT: "ums029_auser"
+
+  extends:
+    .frontier-common
 
 .setup-common:
   stage: setup
@@ -105,7 +111,7 @@ setup:frontier-kokkos-hip:
       -DKokkos_ENABLE_HIP_RELOCATABLE_DEVICE_CODE:BOOL=OFF
       -DKokkos_ENABLE_SERIAL:BOOL=ON
   extends:
-    - .frontier-common
+    - .frontier-cmake-common
     - .setup-common
     - .kokkos-hip-common
   before_script:
@@ -115,7 +121,7 @@ setup:frontier-kokkos-hip:
 
 build:frontier-kokkos-hip:
   extends:
-    - .frontier-common
+    - .frontier-cmake-common
     - .build-common
     - .kokkos-hip-common
   before_script:
@@ -137,7 +143,7 @@ build:frontier-kokkos-hip:
       zstd
       DefApps
   extends:
-    - .frontier-common
+    - .frontier-cmake-common
 
 setup:frontier-cray:
   extends:
@@ -157,10 +163,11 @@ build:frontier-cray:
   rules:
     - if: $CI_PIPELINE_SOURCE =~ /parent_pipeline|web/
   tags: [ shell ]
+  extends:
+    .frontier-common
   variables:
     STATUS_PROJECT: ornladios/ADIOS2
-    STATUS_NAME: OLCF Crusher (Frontier)
-    OLCF_SERVICE_ACCOUNT: "ums029_auser"
+    STATUS_NAME: OLCF Frontier
   before_script: |
     git fetch
     source scripts/ci/gitlab-ci/setup-vars.sh
@@ -176,14 +183,12 @@ pending:
   stage: pre
   variables:
     STATUS_DESC: Pipeline is running
-    OLCF_SERVICE_ACCOUNT: "ums029_auser"
   extends:
     - .report-status
 success:
   stage: post
   variables:
     STATUS_DESC: Pipeline succeeded
-    OLCF_SERVICE_ACCOUNT: "ums029_auser"
   extends:
     - .report-status
   dependencies:
@@ -196,7 +201,6 @@ failure:
       when: on_failure
   variables:
     STATUS_DESC: Pipeline failed
-    OLCF_SERVICE_ACCOUNT: "ums029_auser"
   extends:
     - .report-status
   dependencies:
@@ -205,25 +209,37 @@ failure:
 
 generate_pipelines:
   stage: setup
+  extends:
+    .frontier-common
   tags: [frontier, shell]
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
   variables:
-    CUSTOM_CI_BUILDS_DIR: "/lustre/orion/ums029/scratch/ums029_auser/ci/adios2/runtime"
-    OLCF_SERVICE_ACCOUNT: "ums029_auser"
+    GL_PROJECT_ID: 105
+    # This the commit where the frontier CI was added, we want to avoid testing
+    # commits before this.
+    ROOT_COMMIT_SHA: 30368427fc41d57e428cdd15e7629dded2f71728
   script:
-    - .gitlab/config/generate_pipelines.py -u "https://code.olcf.ornl.gov/" -p 105 -n ornladios/ADIOS2 -f .gitlab/config/dynamic_pipeline.yml.in > generated_pipelines.yml
+    - pip install --user urllib3 requests GitPython
+    - >
+      .gitlab/config/generate_pipelines.py
+      -u "https://code.olcf.ornl.gov/"
+      -r "${ROOT_COMMIT_SHA}"
+      -p "${GL_PROJECT_ID}"
+      -n ornladios/ADIOS2
+      -f .gitlab/config/dynamic_pipeline.yml.in
+      > generated_pipelines.yml
+
   artifacts:
     paths:
       - generated_pipelines.yml
 
 launch_pipelines:
   stage: build
+  extends:
+    .frontier-common
   rules:
     - if: $CI_PIPELINE_SOURCE == "schedule"
-  variables:
-    CUSTOM_CI_BUILDS_DIR: "/lustre/orion/ums029/scratch/ums029_auser/ci/adios2/runtime"
-    OLCF_SERVICE_ACCOUNT: "ums029_auser"
   trigger:
     include:
       - artifact: generated_pipelines.yml

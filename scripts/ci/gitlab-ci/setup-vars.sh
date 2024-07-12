@@ -22,7 +22,7 @@ else
   export CI_BRANCH_REF="${DOWNSTREAM_BRANCH_REF}"
 fi
 
-# In OLCF Crusher we must fix the build directory in the yml.
+# In OLCF Frontier we must fix the build directory in the yml.
 if [ -z "$CI_BIN_DIR" ]
 then
   export CI_BIN_DIR="${CI_ROOT_DIR}/${CI_BUILD_NAME}"
