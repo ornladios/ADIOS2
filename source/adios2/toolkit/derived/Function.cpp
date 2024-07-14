@@ -33,6 +33,23 @@ T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
     return outValues;
 }
 
+// types not supported for apply one to one
+template <class Iterator>
+std::complex<float> *ApplyOneToOne(
+    Iterator /*input 1*/, Iterator /*input 2*/, size_t /*size*/,
+    std::function<std::complex<float>(std::complex<float>, std::complex<float>)> /*oerator*/)
+{
+    return NULL;
+}
+
+template <class Iterator>
+std::complex<double> *ApplyOneToOne(
+    Iterator /*input 1*/, Iterator /*input 2*/, size_t /*size*/,
+    std::function<std::complex<double>(std::complex<double>, std::complex<double>)> /*oerator*/)
+{
+    return NULL;
+}
+
 inline size_t returnIndex(size_t x, size_t y, size_t z, const size_t dims[3])
 {
     return z + y * dims[2] + x * dims[2] * dims[1];
@@ -44,13 +61,13 @@ T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dim
     size_t dataSize = dims[0] * dims[1] * dims[2];
     T *data = (T *)malloc(dataSize * sizeof(float) * 3);
     size_t index = 0;
-    for (int i = 0; i < dims[0]; ++i)
+    for (int i = 0; i < (int)dims[0]; ++i)
     {
         size_t prev_i = std::max(0, i - 1), next_i = std::min((int)dims[0] - 1, i + 1);
-        for (int j = 0; j < dims[1]; ++j)
+        for (int j = 0; j < (int)dims[1]; ++j)
         {
             size_t prev_j = std::max(0, j - 1), next_j = std::min((int)dims[1] - 1, j + 1);
-            for (int k = 0; k < dims[2]; ++k)
+            for (int k = 0; k < (int)dims[2]; ++k)
             {
                 size_t prev_k = std::max(0, k - 1), next_k = std::min((int)dims[2] - 1, k + 1);
                 // curl[0] = dv3 / dy - dv2 / dz
@@ -108,8 +125,8 @@ DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_add(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *addValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,      \
-                                                [](T a, T b) { return a + b; });                   \
+        T *addValues = detail::ApplyOneToOne(inputData.begin(), inputData.end(), dataSize,         \
+                                             [](T a, T b) { return a + b; });                      \
         return DerivedData({(void *)addValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_add)
@@ -127,8 +144,8 @@ DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_subtract(T)                                                                   \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *subtractValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(),       \
-                                                     dataSize, [](T a, T b) { return a + b; });    \
+        T *subtractValues = detail::ApplyOneToOne(inputData.begin() + 1, inputData.end(),          \
+                                                  dataSize, [](T a, T b) { return a + b; });       \
         for (size_t i = 0; i < dataSize; i++)                                                      \
             subtractValues[i] =                                                                    \
                 *(reinterpret_cast<T *>(inputData[0].Data) + i) - subtractValues[i];               \
@@ -148,8 +165,8 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_mag(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *magValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,      \
-                                                [](T a, T b) { return a + b * b; });               \
+        T *magValues = detail::ApplyOneToOne(inputData.begin(), inputData.end(), dataSize,         \
+                                             [](T a, T b) { return a + b * b; });                  \
         for (size_t i = 0; i < dataSize; i++)                                                      \
         {                                                                                          \
             magValues[i] = (T)std::sqrt(magValues[i]);                                             \
