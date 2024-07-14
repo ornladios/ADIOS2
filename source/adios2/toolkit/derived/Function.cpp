@@ -93,8 +93,8 @@ DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_add(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *addValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,         \
-                                             [](T a, T b) { return a + b; });                      \
+        T *addValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,      \
+                                                [](T a, T b) { return a + b; });                   \
         return DerivedData({(void *)addValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_add)
@@ -112,8 +112,8 @@ DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_subtract(T)                                                                   \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *subtractValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(),          \
-                                                  dataSize, [](T a, T b) { return a + b; });       \
+        T *subtractValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(),       \
+                                                     dataSize, [](T a, T b) { return a + b; });    \
         for (size_t i = 0; i < dataSize; i++)                                                      \
             subtractValues[i] =                                                                    \
                 *(reinterpret_cast<T *>(inputData[0].Data) + i) - subtractValues[i];               \
@@ -133,8 +133,8 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_mag(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *magValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,         \
-                                             [](T a, T b) { return a + b * b; });                  \
+        T *magValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,      \
+                                                [](T a, T b) { return a + b * b; });               \
         for (size_t i = 0; i < dataSize; i++)                                                      \
         {                                                                                          \
             magValues[i] = (T)std::sqrt(magValues[i]);                                             \
