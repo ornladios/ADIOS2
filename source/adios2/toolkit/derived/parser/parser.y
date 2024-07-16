@@ -49,7 +49,8 @@
 %token <std::string> OPERATOR
 %token <std::string> IDENTIFIER "identifier"
 %token <std::string> VARNAME
-%token <int> INT "number"
+%token <double> DOUBLE "number"
+%token <int> INT
 %nterm <int> list
 %nterm <std::vector<std::tuple<int, int, int>>> indices_list
 %nterm <std::tuple<int, int, int>> index
@@ -70,7 +71,8 @@ assignment:
 ;
 
 exp:
-  "number" {  }
+  "number" { drv.createNode($1); }
+| INT { drv.createNode($1); }
 | exp OPERATOR exp { drv.createNode($2, 2); }
 | "(" exp ")" {  }
 | IDENTIFIER "(" list ")" { drv.createNode($1, $3); }

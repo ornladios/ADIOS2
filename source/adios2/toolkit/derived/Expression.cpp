@@ -235,7 +235,7 @@ std::string ExpressionTree::toStringExpr()
             if (!detail.indices.empty())
             {
                 result += "[ ";
-                for (std::tuple<int, int, int> idx : detail.indices)
+                for (std::tuple<size_t, size_t, size_t> idx : detail.indices)
                 {
                     result += (std::get<0>(idx) < 0 ? "" : std::to_string(std::get<0>(idx))) + ":";
                     result += (std::get<1>(idx) < 0 ? "" : std::to_string(std::get<1>(idx))) + ":";
@@ -308,9 +308,23 @@ ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
     // apply the computation operator on all blocks
     std::vector<DerivedData> outputData(numBlocks);
     auto op_fct = OpFunctions.at(detail.operation);
-    for (size_t blk = 0; blk < numBlocks; blk++)
+    // If function called over single expression with a constant,
+    // (ex: magnitude(curl(x,y,z), 3))
+    // assume user wants to extract dimension
+    if (detail.constant > 0 && sub_exprs.size() == 1)
     {
-        outputData[blk] = op_fct.ComputeFct(exprData[blk], type);
+        for (size_t blk = 0; blk < numBlocks; blk++)
+        {
+            outputData[blk] = op_fct.ComputeFct(
+                ExtractDimensionN(exprData[blk][0], type, (size_t)detail.constant), type);
+        }
+    }
+    else
+    {
+        for (size_t blk = 0; blk < numBlocks; blk++)
+        {
+            outputData[blk] = op_fct.ComputeFct(exprData[blk], type);
+        }
     }
     // deallocate intermediate data after computing the operation
     for (size_t blk = 0; blk < numBlocks; blk++)

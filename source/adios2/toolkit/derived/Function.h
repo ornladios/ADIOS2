@@ -12,6 +12,8 @@ DerivedData SubtractFunc(std::vector<DerivedData> input, DataType type);
 DerivedData MagnitudeFunc(std::vector<DerivedData> input, DataType type);
 DerivedData Curl3DFunc(std::vector<DerivedData> input, DataType type);
 
+std::vector<DerivedData> ExtractDimensionN(DerivedData inputData, DataType type, size_t dim);
+
 Dims SameDimsFunc(std::vector<Dims> input);
 Dims CurlDimsFunc(std::vector<Dims> input);
 }

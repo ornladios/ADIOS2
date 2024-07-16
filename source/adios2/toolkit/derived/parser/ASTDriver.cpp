@@ -84,6 +84,12 @@ void ASTDriver::createNode(std::string op_name, size_t numsubexprs)
     holding.push(node);
 }
 
+void ASTDriver::createNode(double num)
+{
+    ASTNode *node = new ASTNode("NUM", num);
+    holding.push(node);
+}
+
 void ASTDriver::createNode(std::string alias)
 {
     ASTNode *node = new ASTNode("ALIAS", alias);
