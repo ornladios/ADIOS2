@@ -695,6 +695,7 @@ void SstReader::BP5PerformGets()
     }
 
     m_BP5Deserializer->FinalizeGets(ReadRequests);
+    m_BP5Deserializer->ClearGetState();
 }
 
 void SstReader::PerformGets()

@@ -349,6 +349,22 @@ bool IO::RemoveVariable(const std::string &name) noexcept
     return isRemoved;
 }
 
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+bool IO::RemoveDerivedVariable(const std::string &name) noexcept
+{
+    PERFSTUBS_SCOPED_TIMER("IO::RemoveVariable");
+    bool isRemoved = false;
+    auto itVariable = m_VariablesDerived.find(name);
+    // variable exists
+    if (itVariable != m_VariablesDerived.end())
+    {
+        m_VariablesDerived.erase(itVariable);
+        isRemoved = true;
+    }
+    return isRemoved;
+}
+#endif
+
 void IO::RemoveAllVariables() noexcept
 {
     PERFSTUBS_SCOPED_TIMER("IO::RemoveAllVariables");

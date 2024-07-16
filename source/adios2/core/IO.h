@@ -235,6 +235,18 @@ public:
      */
     bool RemoveVariable(const std::string &name) noexcept;
 
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+    /**
+     * @brief Removes an existing DerivedVariable in current IO object.
+     * Dangerous function since references and
+     * pointers can be dangling after this call.
+     * @param name unique identifier input
+     * @return true: found and removed variable, false: not found, nothing to
+     * remove
+     */
+    bool RemoveDerivedVariable(const std::string &name) noexcept;
+#endif
+
     /**
      * @brief Removes all existing variables in current IO object.
      * Dangerous function since references and

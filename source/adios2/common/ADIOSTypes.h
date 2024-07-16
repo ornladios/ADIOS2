@@ -344,6 +344,9 @@ bool TypeHasMinMax(DataType adiosvartype);
  */
 
 std::string ToString(ShapeID value);
+#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
+std::string ToString(DerivedVarType value);
+#endif
 std::string ToString(IOMode value);
 std::string ToString(Mode value);
 std::string ToString(ReadMultiplexPattern value);
