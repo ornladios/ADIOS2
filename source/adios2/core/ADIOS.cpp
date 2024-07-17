@@ -102,8 +102,8 @@ public:
 };
 
 ADIOS::GlobalServices ADIOS::m_GlobalServices;
-
-std::atomic<adios2::HostOptions *> m_StaticHostOptions = nullptr;
+adios2::HostOptions *StaticHostOptions = nullptr;
+static std::mutex StaticHostOptionsMutex;
 
 std::mutex PerfStubsMutex;
 static std::atomic_uint adios_refcount(0); // adios objects at the same time
@@ -115,7 +115,7 @@ const adios2::UserOptions &ADIOS::GetUserOptions() { return m_UserOptions; };
 /** A constant reference to the host options from ~/.config/adios2/hosts.yaml */
 const adios2::HostOptions &ADIOS::GetHostOptions() { return m_HostOptions; };
 /** A constant reference to the host options from ~/.config/adios2/hosts.yaml */
-const adios2::HostOptions &ADIOS::StaticGetHostOptions() { return *m_StaticHostOptions; };
+const adios2::HostOptions &ADIOS::StaticGetHostOptions() { return *StaticHostOptions; };
 
 ADIOS::ADIOS(const std::string configFile, helper::Comm comm, const std::string hostLanguage)
 : m_HostLanguage(hostLanguage), m_Comm(std::move(comm)), m_ConfigFile(configFile),
@@ -233,7 +233,10 @@ void ADIOS::ProcessHostConfig()
     {
         helper::ParseHostOptionsFile(m_Comm, cfgFile, m_HostOptions, homePath);
     }
-    m_StaticHostOptions = &m_HostOptions;
+    {
+        std::lock_guard<std::mutex> lck(StaticHostOptionsMutex);
+        StaticHostOptions = &m_HostOptions;
+    }
 }
 
 IO &ADIOS::DeclareIO(const std::string name, const ArrayOrdering ArrayOrder)
