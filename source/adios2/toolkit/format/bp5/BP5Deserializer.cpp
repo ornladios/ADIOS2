@@ -2623,19 +2623,57 @@ bool BP5Deserializer::VarShape(const VariableBase &Var, const size_t RelStep, Di
             AbsStep = VarRec->AbsStepFromRel[RelStep];
         }
     }
-    for (size_t WriterRank = 0; WriterRank < WriterCohortSize(AbsStep); WriterRank++)
+    if (VarRec->OrigShapeID == ShapeID::GlobalArray)
     {
-        MetaArrayRec *writer_meta_base =
-            (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
-        if (writer_meta_base && writer_meta_base->Shape)
+        // Take the first shape in any writer that wrote it, they should all be the same
+        for (size_t WriterRank = 0; WriterRank < WriterCohortSize(AbsStep); WriterRank++)
         {
-            Shape.resize(writer_meta_base->Dims);
-            for (size_t i = 0; i < writer_meta_base->Dims; i++)
+            MetaArrayRec *writer_meta_base =
+                (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
+            if (writer_meta_base && writer_meta_base->Shape)
             {
-                Shape[i] = writer_meta_base->Shape[i];
+                Shape.resize(writer_meta_base->Dims);
+                for (size_t i = 0; i < writer_meta_base->Dims; i++)
+                {
+                    Shape[i] = writer_meta_base->Shape[i];
+                }
+                return true;
             }
-            return true;
         }
+    }
+    else
+    {
+        // Joined array case, first Shape gives us structure, then add joined dimensions
+        bool first = true;
+        for (size_t WriterRank = 0; WriterRank < WriterCohortSize(AbsStep); WriterRank++)
+        {
+            MetaArrayRec *writer_meta_base =
+                (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
+            if (writer_meta_base && writer_meta_base->Shape)
+            {
+                for (size_t Block = 0; Block < writer_meta_base->BlockCount; Block++)
+                {
+                    if (first)
+                    {
+                        Shape.resize(writer_meta_base->Dims);
+                        for (size_t i = 0; i < writer_meta_base->Dims; i++)
+                        {
+                            Shape[i] = writer_meta_base->Shape[i];
+                        }
+                        Shape[VarRec->JoinedDimen] =
+                            writer_meta_base->Count[VarRec->JoinedDimen + VarRec->DimCount * Block];
+                        first = false;
+                    }
+                    else
+                    {
+                        Shape[VarRec->JoinedDimen] +=
+                            writer_meta_base->Count[VarRec->JoinedDimen + VarRec->DimCount * Block];
+                    }
+                }
+            }
+        }
+        if (!first)
+            return true;
     }
     return false;
 }
