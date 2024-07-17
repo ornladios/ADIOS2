@@ -102,7 +102,8 @@ public:
 };
 
 ADIOS::GlobalServices ADIOS::m_GlobalServices;
-adios2::HostOptions *ADIOS::m_StaticHostOptions = nullptr;
+
+std::atomic<adios2::HostOptions *> m_StaticHostOptions = nullptr;
 
 std::mutex PerfStubsMutex;
 static std::atomic_uint adios_refcount(0); // adios objects at the same time
