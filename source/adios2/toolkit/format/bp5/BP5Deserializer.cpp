@@ -659,13 +659,16 @@ void BP5Deserializer::SetupForStep(size_t Step, size_t WriterCount)
             m_Engine->m_IO.RemoveDerivedVariable(RecPair.second->VarName);
 #endif
             RecPair.second->Variable = NULL;
-            if (RecPair.second->OrigShapeID == ShapeID::JoinedArray)
-            {
-                auto VarRec = RecPair.second;
-                VarRec->JoinedDimen = SIZE_MAX;
-                VarRec->LastJoinedOffset = NULL;
-                VarRec->LastJoinedShape = NULL;
-            }
+        }
+    }
+    for (auto RecPair : VarByKey)
+    {
+        if (RecPair.second->OrigShapeID == ShapeID::JoinedArray)
+        {
+            auto VarRec = RecPair.second;
+            VarRec->JoinedDimen = SIZE_MAX;
+            VarRec->LastJoinedOffset = NULL;
+            VarRec->LastJoinedShape = NULL;
         }
     }
     m_CurrentWriterCohortSize = WriterCount;
