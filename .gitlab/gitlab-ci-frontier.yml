@@ -135,13 +135,13 @@ build:frontier-kokkos-hip:
   variables:
     # Order matters
     JOB_MODULES: >-
+      DefApps
       PrgEnv-cray
       cmake
       git
       ninja
       libffi
       zstd
-      DefApps
   extends:
     - .frontier-cmake-common
 
