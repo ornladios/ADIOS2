@@ -54,6 +54,21 @@ void FileRemote::SetParameters(const Params &params)
             m_CachePath = std::string(Env);
         }
     }
+    helper::SetParameterValue("host", params, m_Hostname);
+    if (m_Hostname.empty())
+    {
+        auto remotehost = getenv("DoFileRemote");
+        if (remotehost)
+        {
+            m_Hostname = "localhost";
+        }
+        else
+        {
+            helper::Throw<std::invalid_argument>("Toolkit", "transport::file::FileRemote",
+                                                 "SetParameters",
+                                                 "parameter 'host' is required for this transport");
+        }
+    }
 }
 
 void FileRemote::WaitForOpen() {}
@@ -96,8 +111,10 @@ void FileRemote::Open(const std::string &name, const Mode openMode, const bool a
 
     case Mode::Read: {
         ProfilerStart("open");
-        m_Remote = std::unique_ptr<EVPathRemote>(new EVPathRemote());
-        m_Remote->OpenSimpleFile("localhost", EVPathRemoteCommon::ServerPort, m_Name);
+        m_Remote =
+            std::unique_ptr<EVPathRemote>(new EVPathRemote(core::ADIOS::StaticGetHostOptions()));
+        int localPort = m_Remote->LaunchRemoteServerViaConnectionManager(m_Hostname);
+        m_Remote->OpenSimpleFile("localhost", localPort, m_Name);
         ProfilerStop("open");
         m_Size = m_Remote->m_Size;
         break;

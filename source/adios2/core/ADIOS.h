@@ -229,6 +229,8 @@ private:
 public:
     /** Global service AWS SDK initialization */
     static void Global_init_AWS_API();
+
+    static const adios2::HostOptions &StaticGetHostOptions();
 };
 
 } // end namespace core

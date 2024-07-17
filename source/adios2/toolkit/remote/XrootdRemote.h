@@ -94,7 +94,7 @@ public:
     Mode m_Mode;
     bool m_RowMajorOrdering;
 
-    XrootdRemote();
+    XrootdRemote(const adios2::HostOptions &hostOptions);
     ~XrootdRemote();
 
     void Open(const std::string hostname, const int32_t port, const std::string filename,

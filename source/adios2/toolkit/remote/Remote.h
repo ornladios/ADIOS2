@@ -22,8 +22,12 @@ class Remote
 {
 
 public:
-    Remote();
+    Remote(const adios2::HostOptions &hostOptions);
     virtual ~Remote();
+
+    // Talk to local connection manager and ask for an existing or new SSH connection
+    // to 'remoteHost'. Return the local port through which one can talk to the remote server
+    int LaunchRemoteServerViaConnectionManager(const std::string remoteHost);
 
     virtual explicit operator bool() const { return false; }
 
@@ -43,6 +47,9 @@ public:
     virtual GetHandle Read(size_t Start, size_t Size, void *Dest);
 
     size_t m_Size;
+
+private:
+    const std::shared_ptr<adios2::HostOptions> m_HostOptions;
 };
 
 } // end namespace adios2

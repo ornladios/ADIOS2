@@ -14,10 +14,14 @@
 
 #ifndef _WIN32
 
-#include <netdb.h>      //getFQDN
+#include <netinet/in.h>
 #include <sys/socket.h> //getFQDN
-#include <sys/types.h>  //getFQDN
-#include <unistd.h>     // gethostname
+
+#include <arpa/inet.h>
+#include <netdb.h>     //getFQDN
+#include <sys/types.h> //getFQDN
+#include <unistd.h>    // gethostname
+#define SOCKET int
 
 #if defined(ADIOS2_HAVE_DATAMAN) || defined(ADIOS2_HAVE_TABLE)
 
@@ -27,13 +31,24 @@
 #include <arpa/inet.h>  //AvailableIpAddresses() inet_ntoa
 #include <net/if.h>     //AvailableIpAddresses() struct if_nameindex
 #include <netinet/in.h> //AvailableIpAddresses() struct sockaddr_in
-#include <sys/ioctl.h>  //AvailableIpAddresses() ioctl
-
 #include <nlohmann_json.hpp>
+#include <sys/ioctl.h> //AvailableIpAddresses() ioctl
 
 #endif // ADIOS2_HAVE_DATAMAN || ADIOS2_HAVE_TABLE
 
 #else // _WIN32
+#define FD_SETSIZE 1024
+#include <process.h>
+#include <time.h>
+#include <winsock2.h> // SOCKET struct
+
+#include <WS2tcpip.h>
+#define getpid() _getpid()
+#define read(fd, buf, len) recv(fd, (buf), (len), 0)
+#define write(fd, buf, len) send(fd, buf, (len), 0)
+#define close(x) closesocket(x)
+#define INST_ADDRSTRLEN 50
+
 #include <tchar.h>
 #include <windows.h> // GetComputerName
 #endif               // _WIN32
@@ -320,6 +335,115 @@ void HandshakeReader(Comm const &comm, size_t &appID, std::vector<std::string> &
 
 #endif // ADIOS2_HAVE_DATAMAN || ADIOS2_HAVE_TABLE
 #endif // _WIN32
+
+struct NetworkSocketData
+{
+    sockaddr_in m_Sockaddr;
+    SOCKET m_Socket;
+};
+
+NetworkSocket::NetworkSocket()
+{
+    m_Data = new NetworkSocketData();
+    m_Data->m_Socket = -1;
+};
+
+NetworkSocket::~NetworkSocket() { delete m_Data; };
+
+bool NetworkSocket::valid() const { return (m_Data->m_Socket > 0); }
+
+static sockaddr_in ResolveHostName(std::string m_hostname, uint16_t m_server_port)
+{
+    sockaddr_in sockaddr;
+
+#define _WINSOCK_DEPRECATED_NO_WARNINGS 1
+    struct hostent *hostent = gethostbyname(m_hostname.c_str());
+    if (hostent == NULL)
+    {
+        helper::Throw<std::ios_base::failure>("Helper", "helper:adiosNetwork", "ResolveHostName",
+                                              "error: gethostbyname " + m_hostname);
+    }
+
+    uint32_t addr_tmp = inet_addr(inet_ntoa(*(struct in_addr *)*(hostent->h_addr_list)));
+    if (addr_tmp == INADDR_NONE)
+    {
+        helper::Throw<std::ios_base::failure>("Helper", "helper:adiosNetwork", "ResolveHostName",
+                                              "error: inet_addr " +
+                                                  std::string(*(hostent->h_addr_list)));
+    }
+
+    sockaddr.sin_addr.s_addr = addr_tmp;
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_port = htons(m_server_port);
+    return sockaddr;
+}
+
+void NetworkSocket::Connect(std::string hostname, uint16_t port, std::string protocol)
+{
+    struct protoent *protoent = getprotobyname(protocol.c_str());
+    if (protoent == NULL)
+    {
+        helper::Throw<std::ios_base::failure>("Helper", "helper:adiosNetwork", "ConnectToServer",
+                                              "error: Cannot make getprotobyname \"" + protocol +
+                                                  "\"");
+    }
+
+    m_Data->m_Sockaddr = ResolveHostName(hostname, port);
+
+    m_Data->m_Socket = socket(AF_INET, SOCK_STREAM, protoent->p_proto);
+    if (m_Data->m_Socket == -1)
+    {
+        helper::Throw<std::ios_base::failure>("Helper", "helper:adiosNetwork", "ConnectToServer",
+                                              "error: Cannot create socket");
+    }
+
+    int result = connect(m_Data->m_Socket, (sockaddr *)&(m_Data->m_Sockaddr), sizeof(sockaddr));
+
+    if (result == -1)
+    {
+        helper::Throw<std::ios_base::failure>("Helper", "helper:adiosNetwork", "ConnectToServer",
+                                              "error: Cannot connect to server at " + hostname +
+                                                  ":" + std::to_string(port));
+    }
+}
+
+void NetworkSocket::RequestResponse(const std::string &request, char *response,
+                                    size_t maxResponseSize)
+{
+#ifdef _WIN32
+    int result;
+    int len = static_cast<int>(request.length());
+    int maxlen = static_cast<int>(maxResponseSize) - 1;
+#else
+    ssize_t result;
+    size_t len = request.length();
+    size_t maxlen = maxResponseSize - 1;
+#endif
+    result = write(m_Data->m_Socket, request.c_str(), len);
+    if (result == -1)
+    {
+        helper::Throw<std::ios_base::failure>("Helper", "helper:adiosNetwork", "RequestResponse",
+                                              "error: Cannot send request");
+    }
+
+    result = read(m_Data->m_Socket, response, maxlen);
+    if (result == -1)
+    {
+        helper::Throw<std::ios_base::failure>("Helper", "helper:adiosNetwork", "RequestResponse",
+                                              "error: Cannot get response");
+    }
+    // safely null terminate
+    response[result] = '\0';
+}
+
+void NetworkSocket::Close()
+{
+    if (m_Data->m_Socket != -1)
+    {
+        close(m_Data->m_Socket);
+        m_Data->m_Socket = -1;
+    }
+}
 
 } // end namespace helper
 } // end namespace adios2

@@ -299,17 +299,17 @@ void BP5Reader::PerformGets()
 #ifdef ADIOS2_HAVE_XROOTD
         if (getenv("DoXRootD"))
         {
-            m_Remote = std::unique_ptr<XrootdRemote>(new XrootdRemote());
+            m_Remote = std::unique_ptr<XrootdRemote>(new XrootdRemote(m_HostOptions));
             m_Remote->Open("localhost", 1094, m_Name, m_OpenMode, RowMajorOrdering);
         }
         else
 #endif
 #ifdef ADIOS2_HAVE_SST
-            if (getenv("DoRemote"))
         {
-            m_Remote = std::unique_ptr<EVPathRemote>(new EVPathRemote());
-            m_Remote->Open("localhost", EVPathRemoteCommon::ServerPort, RemoteName, m_OpenMode,
-                           RowMajorOrdering);
+            m_Remote = std::unique_ptr<EVPathRemote>(new EVPathRemote(m_HostOptions));
+            int localPort =
+                m_Remote->LaunchRemoteServerViaConnectionManager(m_Parameters.RemoteHost);
+            m_Remote->Open("localhost", localPort, RemoteName, m_OpenMode, RowMajorOrdering);
         }
 #endif
 #ifdef ADIOS2_HAVE_KVCACHE

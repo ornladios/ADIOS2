@@ -297,6 +297,7 @@ void CampaignReader::InitTransports()
                     SaveToFile(m_DB, localPath + PathSeparator + bpf.name, bpf);
                 }
                 io.SetParameter("RemoteDataPath", remotePath);
+                io.SetParameter("RemoteHost", m_CampaignData.hosts[ds.hostIdx].hostname);
             }
         }
         else
