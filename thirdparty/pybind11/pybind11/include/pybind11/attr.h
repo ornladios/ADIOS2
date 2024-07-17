@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "detail/common.h"
 #include "cast.h"
 
 #include <functional>
@@ -24,6 +25,9 @@ struct is_method {
     handle class_;
     explicit is_method(const handle &c) : class_(c) {}
 };
+
+/// Annotation for setters
+struct is_setter {};
 
 /// Annotation for operators
 struct is_operator {};
@@ -187,8 +191,8 @@ struct argument_record {
 struct function_record {
     function_record()
         : is_constructor(false), is_new_style_constructor(false), is_stateless(false),
-          is_operator(false), is_method(false), has_args(false), has_kwargs(false),
-          prepend(false) {}
+          is_operator(false), is_method(false), is_setter(false), has_args(false),
+          has_kwargs(false), prepend(false) {}
 
     /// Function name
     char *name = nullptr; /* why no C++ strings? They generate heavier code.. */
@@ -228,6 +232,9 @@ struct function_record {
 
     /// True if this is a method
     bool is_method : 1;
+
+    /// True if this is a setter
+    bool is_setter : 1;
 
     /// True if the function has a '*args' argument
     bool has_args : 1;
@@ -344,9 +351,11 @@ struct type_record {
 
         bases.append((PyObject *) base_info->type);
 
-        if (base_info->type->tp_dictoffset != 0) {
-            dynamic_attr = true;
-        }
+#if PY_VERSION_HEX < 0x030B0000
+        dynamic_attr |= base_info->type->tp_dictoffset != 0;
+#else
+        dynamic_attr |= (base_info->type->tp_flags & Py_TPFLAGS_MANAGED_DICT) != 0;
+#endif
 
         if (caster) {
             base_info->implicit_casts.emplace_back(type, caster);
@@ -396,7 +405,7 @@ struct process_attribute<doc> : process_attribute_default<doc> {
 template <>
 struct process_attribute<const char *> : process_attribute_default<const char *> {
     static void init(const char *d, function_record *r) { r->doc = const_cast<char *>(d); }
-    static void init(const char *d, type_record *r) { r->doc = const_cast<char *>(d); }
+    static void init(const char *d, type_record *r) { r->doc = d; }
 };
 template <>
 struct process_attribute<char *> : process_attribute<const char *> {};
@@ -421,6 +430,12 @@ struct process_attribute<is_method> : process_attribute_default<is_method> {
         r->is_method = true;
         r->scope = s.class_;
     }
+};
+
+/// Process an attribute which indicates that this function is a setter
+template <>
+struct process_attribute<is_setter> : process_attribute_default<is_setter> {
+    static void init(const is_setter &, function_record *r) { r->is_setter = true; }
 };
 
 /// Process an attribute which indicates the parent scope of a method
@@ -477,7 +492,7 @@ struct process_attribute<arg_v> : process_attribute_default<arg_v> {
         }
 
         if (!a.value) {
-#if !defined(NDEBUG)
+#if defined(PYBIND11_DETAILED_ERROR_MESSAGES)
             std::string descr("'");
             if (a.name) {
                 descr += std::string(a.name) + ": ";
@@ -498,7 +513,8 @@ struct process_attribute<arg_v> : process_attribute_default<arg_v> {
 #else
             pybind11_fail("arg(): could not convert default argument "
                           "into a Python object (type not registered yet?). "
-                          "Compile in debug mode for more information.");
+                          "#define PYBIND11_DETAILED_ERROR_MESSAGES or compile in debug mode for "
+                          "more information.");
 #endif
         }
         r->args.emplace_back(a.name, a.descr, a.value.inc_ref(), !a.flag_noconvert, a.flag_none);

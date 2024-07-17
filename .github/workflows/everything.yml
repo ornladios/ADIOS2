@@ -287,12 +287,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [macos-12]
+        image: [macos-13, macos-14]
         shared: [static, shared]
         include:
           - parallel: serial
-          - image: macos-12
-            compiler: xcode13_4_1
+          - image: macos-13
+            compiler: xcode14_2
+          - image: macos-14
+            compiler: xcode15_4
+        exclude:
+          - image: macos-13
+            shared: static
 
     steps:
       - uses: actions/checkout@v4
