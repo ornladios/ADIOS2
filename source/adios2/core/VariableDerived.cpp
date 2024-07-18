@@ -77,6 +77,35 @@ VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInf
     return blockData;
 }
 
+std::vector<std::tuple<void *, Dims, Dims>> VariableDerived::GenerateDerivedDims(
+    std::map<std::string, std::unique_ptr<MinVarInfo>> &NameToVarInfo)
+{
+    size_t numBlocks = 0;
+    // check that all variables have the same number of blocks
+    for (const auto &variable : NameToVarInfo)
+    {
+        if (numBlocks == 0)
+            numBlocks = variable.second->BlocksInfo.size();
+        if (numBlocks != variable.second->BlocksInfo.size())
+            helper::Throw<std::invalid_argument>("Core", "VariableDerived", "ApplyExpression",
+                                                 " variables do not have the same number of blocks "
+                                                 " in computing the derived variable " +
+                                                     m_Name);
+    }
+    std::vector<std::tuple<void *, Dims, Dims>> blockData;
+    for (size_t i = 0; i < numBlocks; i++)
+    {
+        auto &blockEntry = NameToVarInfo.begin()->second;
+        Dims Start(blockEntry->BlocksInfo[i].Start,
+                   blockEntry->BlocksInfo[i].Start + blockEntry->Dims);
+        Dims Count(blockEntry->BlocksInfo[i].Count,
+                   blockEntry->BlocksInfo[i].Count + blockEntry->Dims);
+        blockData.emplace_back((void *)NULL, Start, Count);
+    }
+
+    return blockData;
+}
+
 std::vector<void *>
 VariableDerived::ApplyExpression(std::map<std::string, std::vector<void *>> NameToData,
                                  std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims)

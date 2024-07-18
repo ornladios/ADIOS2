@@ -33,6 +33,8 @@ public:
                     std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
     std::vector<std::tuple<void *, Dims, Dims>>
     ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &mvi);
+    std::vector<std::tuple<void *, Dims, Dims>>
+    GenerateDerivedDims(std::map<std::string, std::unique_ptr<MinVarInfo>> &NameToVarInfo);
 };
 
 } // end namespace core
