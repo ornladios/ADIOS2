@@ -421,8 +421,8 @@ TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
 
 INSTANTIATE_TEST_SUITE_P(DerivedCorrectness, DerivedCorrectnessP,
                          ::testing::Values(adios2::DerivedVarType::MetadataOnly,
+                                           adios2::DerivedVarType::ExpressionString,
                                            adios2::DerivedVarType::StoreData));
-
 int main(int argc, char **argv)
 {
     int result;
