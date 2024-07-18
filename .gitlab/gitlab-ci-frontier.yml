@@ -91,10 +91,11 @@ stages:
     # Order matters
     JOB_MODULES: >-
       DefApps
+      PrgEnv-gnu
+      gcc-native/12
       craype-accel-amd-gfx90a
-      gcc/12
-      cmake
       rocm/5.4.3
+      cmake
       git
       ninja
       libffi
