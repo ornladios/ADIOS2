@@ -18,6 +18,8 @@ enum ExpressionOperator
     OP_INDEX,
     OP_ADD,
     OP_SUBTRACT,
+    OP_MULT,
+    OP_DIV,
     OP_SQRT,
     OP_POW,
     OP_MAGN,

@@ -9,6 +9,10 @@ namespace derived
 {
 DerivedData AddFunc(std::vector<DerivedData> input, DataType type);
 DerivedData SubtractFunc(std::vector<DerivedData> input, DataType type);
+DerivedData MultFunc(std::vector<DerivedData> input, DataType type);
+DerivedData DivFunc(std::vector<DerivedData> input, DataType type);
+DerivedData SqrtFunc(std::vector<DerivedData> input, DataType type);
+DerivedData PowFunc(std::vector<DerivedData> input, DataType type);
 DerivedData MagnitudeFunc(std::vector<DerivedData> input, DataType type);
 DerivedData Curl3DFunc(std::vector<DerivedData> input, DataType type);
 
