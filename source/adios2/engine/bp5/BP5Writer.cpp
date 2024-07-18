@@ -550,6 +550,11 @@ void BP5Writer::ComputeDerivedVariables()
         {
             DerivedBlockData = derivedVar->ApplyExpression(nameToVarInfo);
         }
+        else
+        {
+            // for expressionString, just generate the blocksinfo
+            DerivedBlockData = derivedVar->GenerateDerivedDims(nameToVarInfo);
+        }
 
         // Send the derived variable to ADIOS2 internal logic
         for (auto derivedBlock : DerivedBlockData)
@@ -561,7 +566,8 @@ void BP5Writer::ComputeDerivedVariables()
                 (*it).second->m_Count = std::get<2>(derivedBlock);
             }
             PutCommon(*(*it).second.get(), std::get<0>(derivedBlock), true /* sync */);
-            free(std::get<0>(derivedBlock));
+            if (derivedVar->GetDerivedType() != DerivedVarType::ExpressionString)
+                free(std::get<0>(derivedBlock));
         }
     }
     m_Profiler.Stop("DeriveVars");
