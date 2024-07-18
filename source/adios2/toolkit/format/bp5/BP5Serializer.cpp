@@ -591,7 +591,8 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
         // and Offsets matching _MetaArrayRec
         const char *ExprString = NULL;
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
-        ExprString = VD ? VD->m_Expr.ExprString.c_str() : NULL;
+        if (VD && (VD->GetDerivedType() != DerivedVarType::StoreData))
+            ExprString = VD->m_Expr.ExprString.c_str();
 #endif
         char *LongName =
             BuildLongName(Name, VB->m_ShapeID, (int)Type, ElemSize, TextStructID, ExprString);
