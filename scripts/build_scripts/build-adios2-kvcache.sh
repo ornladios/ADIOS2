@@ -47,7 +47,7 @@ build_cache() {
     fi
 
     cd "${BUILD_DIR}" || exit
-    cmake .. -DADIOS2_USE_Cache=ON \
+    cmake .. -DADIOS2_USE_KVCACHE=ON \
             -DADIOS2_USE_Python=ON \
             -DCMAKE_PREFIX_PATH="${SW_DIR}/hiredis" \
             -DCMAKE_INSTALL_PREFIX="${SW_DIR}"/adios2
