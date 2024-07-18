@@ -90,6 +90,7 @@ stages:
     LD_LIBRARY_PATH: "$Kokkos_DIR/lib64/:$LD_LIBRARY_PATH"
     # Order matters
     JOB_MODULES: >-
+      DefApps
       craype-accel-amd-gfx90a
       gcc/12
       cmake
