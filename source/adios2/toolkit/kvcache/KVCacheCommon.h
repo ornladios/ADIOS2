@@ -23,8 +23,8 @@ class KVCacheCommon
 {
 #ifdef ADIOS2_HAVE_KVCACHE
 private:
-    redisContext *m_redisContext;
-    redisReply *m_redisReply;
+    redisContext *m_redisContext = nullptr;
+    redisReply *m_redisReply = nullptr;
 
 public:
     ~KVCacheCommon() { CloseConnection(); }
