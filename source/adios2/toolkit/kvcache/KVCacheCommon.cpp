@@ -119,7 +119,7 @@ void KVCacheCommon::KeyPrefixExistence(const std::string &key_prefix,
     }
     else
     {
-        for (int i = 0; i < m_redisReply->elements; i++)
+        for (size_t i = 0; i < m_redisReply->elements; i++)
         {
             keys.insert(m_redisReply->element[i]->str);
         }
