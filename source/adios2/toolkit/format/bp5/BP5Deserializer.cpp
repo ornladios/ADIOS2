@@ -1739,7 +1739,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                                     RR.StartOffset = writer_meta_base_input->DataBlockLocation[0];
                                     RR.ReadLength =
                                         helper::GetDataTypeSize(VarRec->Type) *
-                                        CalcBlockLength(VarRec->DimCount, Req->Count.data());
+                                        CalcBlockLength(VarRec->DimCount, varBase->m_Count.data());
                                     RR.DestinationAddr = (char *)malloc(RR.ReadLength);
                                     RR.DirectToAppMemory = false;
                                     RR.ReqIndex = ReqIndex;
