@@ -109,7 +109,7 @@ typedef struct func_list_item {
 } FunctionListElement;
 
 typedef struct select_data {
-    thr_thread_t server_thread;
+    thr_thread_id server_thread;
 
     void *fdset;		/* bitmap of the fds for read select */
     void *write_set;		/* bitmap of the fds for write select */
@@ -153,7 +153,7 @@ init_select_data(CMtrans_services svc, select_data_ptr *sdp, CManager cm)
     EVPATH_FD_ZERO((fd_set *) sd->fdset);
     sd->write_set = svc->malloc_func(sizeof(fd_set));
     EVPATH_FD_ZERO((fd_set *) sd->write_set);
-    sd->server_thread =  (thr_thread_t)(intptr_t) NULL;
+    sd->server_thread =  (thr_thread_id)(intptr_t) NULL;
     sd->closed = 0;
     sd->sel_item_max = 0;
     sd->select_items = (FunctionListElement *) svc->malloc_func(sizeof(FunctionListElement));
@@ -179,7 +179,7 @@ init_select_data(CMtrans_services svc, select_data_ptr *sdp, CManager cm)
 typedef struct _periodic_task {
     int period_sec;
     int period_usec;
-    thr_thread_t executing;
+    thr_thread_id executing;
     struct timeval next_time;
     select_list_func func;
     void *arg1;
@@ -221,7 +221,7 @@ set_soonest_timeout(struct timeval *timeout, periodic_task_handle task_list, str
     if (task_list == NULL) return;
     this_delay.tv_sec = task_list->next_time.tv_sec - now.tv_sec;
     this_delay.tv_usec = task_list->next_time.tv_usec - now.tv_usec;
-    if (task_list->executing == (thr_thread_t)-1) {
+    if (task_list->executing == (thr_thread_id)-1) {
 	/* this task not executing already, see when it needs to run  */
 	if (this_delay.tv_usec < 0) {
 	    this_delay.tv_sec--;
@@ -260,7 +260,7 @@ socket_select(CMtrans_services svc, select_data_ptr sd, int timeout_sec, int tim
     int tmp_select_consistency_number = sd->select_consistency_number;
 
     if (sd->closed) {
-	sd->server_thread =  (thr_thread_t)(intptr_t) NULL; 
+	sd->server_thread =  (thr_thread_id)(intptr_t) NULL; 
 	return;
     }
 
@@ -268,7 +268,7 @@ socket_select(CMtrans_services svc, select_data_ptr sd, int timeout_sec, int tim
 	/* assert CM is locked */
 	assert(CM_LOCKED(svc, sd->cm));
     }
-    if (sd->server_thread ==  (thr_thread_t)(intptr_t) NULL) {
+    if (sd->server_thread ==  (thr_thread_id)(intptr_t) NULL) {
 	/* no server thread set, must be this one */
 	sd->server_thread = thr_thread_self();
     }
@@ -321,7 +321,7 @@ socket_select(CMtrans_services svc, select_data_ptr sd, int timeout_sec, int tim
 	ACQUIRE_CM_LOCK(svc, sd->cm);
     }
     if (sd->closed) {
-	sd->server_thread =  (thr_thread_t)(intptr_t) NULL; 
+	sd->server_thread =  (thr_thread_id)(intptr_t) NULL; 
 	return;
     }
 #ifndef HAVE_WINDOWS_H
@@ -440,7 +440,7 @@ socket_select(CMtrans_services svc, select_data_ptr sd, int timeout_sec, int tim
     if (res != 0) {
 	for (i = 0; i <= sd->sel_item_max; i++) {
 	    if (sd->closed) {
-		sd->server_thread = (thr_thread_t)(intptr_t) NULL;
+		sd->server_thread = (thr_thread_id)(intptr_t) NULL;
 		return;
 	    }
 	    if (FD_ISSET(i, &wr_set)) {
@@ -496,14 +496,14 @@ socket_select(CMtrans_services svc, select_data_ptr sd, int timeout_sec, int tim
 		increment_time(&this_periodic_task->next_time,
 			       this_periodic_task->period_sec,
 			       this_periodic_task->period_usec);
-		if (this_periodic_task->executing == (thr_thread_t)-1) {
+		if (this_periodic_task->executing == (thr_thread_id)-1) {
 		    this_periodic_task->executing = thr_thread_self();
 		    DROP_CM_LOCK(svc, sd->cm);
 		    this_periodic_task->func(this_periodic_task->arg1,
 					     this_periodic_task->arg2);
 		    ACQUIRE_CM_LOCK(svc, sd->cm);
 		    next = this_periodic_task->next;
-		    this_periodic_task->executing = (thr_thread_t) -1;
+		    this_periodic_task->executing = (thr_thread_id) -1;
 		    if ((this_periodic_task->period_sec == 0) &&
 			(this_periodic_task->period_usec == 0)) {
 		        remove_periodic_task(sd, this_periodic_task);
@@ -652,7 +652,7 @@ libcmselect_LTX_add_periodic(CMtrans_services svc, select_data_ptr *sdp, int int
     }
     handle->period_sec = interval_sec;
     handle->period_usec = interval_usec;
-    handle->executing = (thr_thread_t) -1;
+    handle->executing = (thr_thread_id) -1;
 #ifndef HAVE_WINDOWS_H
     gettimeofday(&handle->next_time, NULL);
 #else
@@ -699,7 +699,7 @@ libcmselect_LTX_add_delayed_task(CMtrans_services svc, select_data_ptr *sdp, int
     }
     handle->period_sec = 0;
     handle->period_usec = 0;
-    handle->executing = (thr_thread_t) -1;
+    handle->executing = (thr_thread_id) -1;
 #ifndef HAVE_WINDOWS_H
     gettimeofday(&handle->next_time, NULL);
 #else
@@ -751,7 +751,7 @@ remove_periodic_task(select_data_ptr sd, periodic_task_handle handle)
     if (handle->executing != thr_thread_self()) {
 	/* someone besides us executing this ? */
         int i = 0;
-	while (handle->executing != (thr_thread_t)-1) {
+	while (handle->executing != (thr_thread_id)-1) {
 	    /* wait until they're done */
 	    thr_thread_yield();
 	    i++;
@@ -879,7 +879,7 @@ int err;
  *  NT Sux.
  */
 
-int
+static int
 pipe(SOCKET *filedes)
 {
     
