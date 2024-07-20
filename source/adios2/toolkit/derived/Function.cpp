@@ -11,6 +11,28 @@ namespace adios2
 {
 namespace detail
 {
+template <class T>
+T *ApplyOneToOne(T *data, size_t dataSize, size_t nVariables, std::function<T(T, T)> compFct)
+{
+    T *outValues = (T *)malloc(dataSize * sizeof(T));
+    if (outValues == nullptr)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "ApplyOneToOne",
+                                             "Error allocating memory for the derived variable");
+    }
+    memset(outValues, 0, dataSize * sizeof(T));
+    for (size_t i = 0; i < dataSize; i++)
+    {
+        size_t start = nVariables * i;
+        for (size_t variable = 0; variable < nVariables; ++variable)
+        {
+            T dataElem = *(data + start + variable);
+            outValues[i] = compFct(outValues[i], dataElem);
+        }
+    }
+    return outValues;
+}
+
 template <class T, class Iterator>
 T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
                  std::function<T(T, T)> compFct)
@@ -44,13 +66,13 @@ T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dim
     size_t dataSize = dims[0] * dims[1] * dims[2];
     T *data = (T *)malloc(dataSize * sizeof(float) * 3);
     size_t index = 0;
-    for (int i = 0; i < dims[0]; ++i)
+    for (int i = 0; i < (int)dims[0]; ++i)
     {
         size_t prev_i = std::max(0, i - 1), next_i = std::min((int)dims[0] - 1, i + 1);
-        for (int j = 0; j < dims[1]; ++j)
+        for (int j = 0; j < (int)dims[1]; ++j)
         {
             size_t prev_j = std::max(0, j - 1), next_j = std::min((int)dims[1] - 1, j + 1);
-            for (int k = 0; k < dims[2]; ++k)
+            for (int k = 0; k < (int)dims[2]; ++k)
             {
                 size_t prev_k = std::max(0, k - 1), next_k = std::min((int)dims[2] - 1, k + 1);
                 // curl[0] = dv3 / dy - dv2 / dz
@@ -81,20 +103,39 @@ T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dim
     return data;
 }
 
-// types not supported for curl
-std::complex<float> *ApplyCurl(const std::complex<float> * /*input 1*/,
-                               const std::complex<float> * /*input 2*/,
-                               const std::complex<float> * /*input 3*/, const size_t[3] /*dims*/)
+size_t getDataSize(std::vector<derived::DerivedData> inputData, size_t &nDims)
 {
-    return NULL;
+    if (inputData.size() == 0) // at least one variable is needed for the derived function
+        helper::Throw<std::invalid_argument>("Derived", "Function", "getDataSize",
+                                             "Not enough variables to compute the derived values");
+
+    // if there is only one variable, operands are concatenated into the last dimension
+    if (inputData.size() == 1)
+    {
+        nDims = inputData[0].Count.size() - 1;
+        return std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count) - 1, 1,
+                               std::multiplies<size_t>());
+    }
+
+    // otherwise
+    return std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count), 1,
+                           std::multiplies<size_t>());
 }
 
-std::complex<double> *ApplyCurl(const std::complex<double> * /*input 1*/,
-                                const std::complex<double> * /*input 2*/,
-                                const std::complex<double> * /*input 3*/, const size_t[3] /*dims*/)
+void getDims(std::vector<derived::DerivedData> inputData, Dims &start, Dims &count)
 {
-    return NULL;
+    if (inputData.size() == 1)
+    {
+        std::copy(inputData[0].Count.begin(), inputData[0].Count.end() - 1, count.begin());
+        std::copy(inputData[0].Start.begin(), inputData[0].Start.end() - 1, start.begin());
+    }
+    else
+    {
+        std::copy(inputData[0].Count.begin(), inputData[0].Count.end(), count.begin());
+        std::copy(inputData[0].Start.begin(), inputData[0].Start.end(), start.begin());
+    }
 }
+
 }
 
 namespace derived
@@ -102,17 +143,28 @@ namespace derived
 DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AddFunc");
-    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
-                                      1, std::multiplies<size_t>());
+    size_t nDims = inputData[0].Count.size();
+    size_t dataSize = detail::getDataSize(inputData, nDims);
+    Dims startOut(nDims), countOut(nDims);
+    detail::getDims(inputData, startOut, countOut);
 
 #define declare_type_add(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *addValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,      \
-                                                [](T a, T b) { return a + b; });                   \
-        return DerivedData({(void *)addValues, inputData[0].Start, inputData[0].Count});           \
+        T *addValues;                                                                              \
+        if (inputData.size() == 1)                                                                 \
+        {                                                                                          \
+            size_t numVar = inputData[0].Count.back();                                             \
+            addValues =                                                                            \
+                detail::ApplyOneToOne<T>(reinterpret_cast<T *>(inputData[0].Data), dataSize,       \
+                                         numVar, [](T a, T b) { return a + b; });                  \
+        }                                                                                          \
+        else                                                                                       \
+            addValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,     \
+                                                 [](T a, T b) { return a + b; });                  \
+        return DerivedData({(void *)addValues, startOut, countOut});                               \
     }
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_add)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_add)
     helper::Throw<std::invalid_argument>("Derived", "Function", "AddFunc",
                                          "Invalid variable types");
     return DerivedData();
@@ -134,7 +186,7 @@ DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
                 *(reinterpret_cast<T *>(inputData[0].Data) + i) - subtractValues[i];               \
         return DerivedData({(void *)subtractValues, inputData[0].Start, inputData[0].Count});      \
     }
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_subtract)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_subtract)
     helper::Throw<std::invalid_argument>("Derived", "Function", "SubtractFunc",
                                          "Invalid variable types");
     return DerivedData();
@@ -143,20 +195,32 @@ DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
 DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::MagnitudeFunc");
-    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
-                                      1, std::multiplies<size_t>());
+    size_t nDims = inputData[0].Count.size();
+    size_t dataSize = detail::getDataSize(inputData, nDims);
+    Dims startOut(nDims), countOut(nDims);
+    detail::getDims(inputData, startOut, countOut);
+
 #define declare_type_mag(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *magValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,      \
-                                                [](T a, T b) { return a + b * b; });               \
+        T *magValues;                                                                              \
+        if (inputData.size() == 1)                                                                 \
+        {                                                                                          \
+            size_t numVar = inputData[0].Count.back();                                             \
+            magValues =                                                                            \
+                detail::ApplyOneToOne<T>(reinterpret_cast<T *>(inputData[0].Data), dataSize,       \
+                                         numVar, [](T a, T b) { return a + b * b; });              \
+        }                                                                                          \
+        else                                                                                       \
+            magValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,     \
+                                                 [](T a, T b) { return a + b * b; });              \
         for (size_t i = 0; i < dataSize; i++)                                                      \
         {                                                                                          \
             magValues[i] = (T)std::sqrt(magValues[i]);                                             \
         }                                                                                          \
-        return DerivedData({(void *)magValues, inputData[0].Start, inputData[0].Count});           \
+        return DerivedData({(void *)magValues, startOut, countOut});                               \
     }
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_mag)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_mag)
     helper::Throw<std::invalid_argument>("Derived", "Function", "MagnitudeFunc",
                                          "Invalid variable types");
     return DerivedData();
@@ -196,13 +260,14 @@ DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
         curl.Data = detail::ApplyCurl(input1, input2, input3, dims);                               \
         return curl;                                                                               \
     }
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_curl)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_curl)
     helper::Throw<std::invalid_argument>("Derived", "Function", "Curl3DFunc",
                                          "Invalid variable types");
     return DerivedData();
 }
 
-Dims SameDimsFunc(std::vector<Dims> input)
+// return the same dimension regardless on the input format
+Dims SameDimsStrictFunc(std::vector<Dims> input)
 {
     // check that all dimenstions are the same
     if (input.size() > 1)
@@ -216,6 +281,16 @@ Dims SameDimsFunc(std::vector<Dims> input)
     }
     // return the first dimension
     return input[0];
+}
+
+// if only one input is provided the operation will be aggregated over the last dimension
+Dims SameDimsDefaultFunc(std::vector<Dims> input)
+{
+    if (input.size() > 1)
+        return SameDimsStrictFunc(input);
+    Dims outDims(input[0].size() - 1);
+    std::copy(input[0].begin(), input[0].end() - 1, outDims.begin());
+    return outDims;
 }
 
 // Input Dims are the same, output is combination of all inputs

@@ -123,10 +123,10 @@ struct OperatorFunctions
 };
 
 std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
-    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_SUBTRACT, {SubtractFunc, SameDimsFunc}},
+    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsDefaultFunc}},
+    {adios2::detail::ExpressionOperator::OP_SUBTRACT, {SubtractFunc, SameDimsStrictFunc}},
     {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc}}};
+    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsDefaultFunc}}};
 
 Expression::Expression(std::string string_exp)
 : m_Shape({0}), m_Start({0}), m_Count({0}), ExprString(string_exp)
@@ -235,7 +235,7 @@ std::string ExpressionTree::toStringExpr()
             if (!detail.indices.empty())
             {
                 result += "[ ";
-                for (std::tuple<int, int, int> idx : detail.indices)
+                for (std::tuple<size_t, size_t, size_t> idx : detail.indices)
                 {
                     result += (std::get<0>(idx) < 0 ? "" : std::to_string(std::get<0>(idx))) + ":";
                     result += (std::get<1>(idx) < 0 ? "" : std::to_string(std::get<1>(idx))) + ":";
