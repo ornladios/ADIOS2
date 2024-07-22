@@ -38,10 +38,10 @@ if(ADIOS2_HAVE_MPI)
   install(TARGETS adios2_hello_helloWorld_c_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   add_executable(adios2_hello_helloWorld_mpi hello-world.cpp)
-  target_link_libraries(adios2_hello_helloWorld_mpi adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_hello_helloWorld_mpi adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_hello_helloWorld_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   add_executable(adios2_hello_helloWorld_hl_mpi hello-world-hl.cpp)
-  target_link_libraries(adios2_hello_helloWorld_hl_mpi adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_hello_helloWorld_hl_mpi adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_hello_helloWorld_hl_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

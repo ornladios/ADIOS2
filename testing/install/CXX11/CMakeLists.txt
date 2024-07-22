@@ -15,11 +15,8 @@ target_link_libraries(adios_cxx11_test adios2::cxx11)
 add_test(NAME adios_cxx11_test COMMAND adios_cxx11_test)
 
 if(ADIOS2_HAVE_MPI)
-  # Avoid using MPI::MPI_CXX
-  enable_language(C)
-
   find_package(MPI REQUIRED)
-  set(mpilib MPI::MPI_C)
+  set(mpilib MPI::MPI_CXX)
   set(src main_mpi.cxx)
   set(mpiexec ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS})
   add_compile_definitions(OMPI_SKIP_MPICXX MPICH_SKIP_MPICXX)

@@ -29,6 +29,6 @@ if(ADIOS2_HAVE_MPI AND Threads_FOUND)
     ../write/HeatTransfer.cpp
     ../write/Settings.cpp
   )
-  target_link_libraries(adios2_simulations_heatTransferInline adios2::cxx11_mpi MPI::MPI_C ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(adios2_simulations_heatTransferInline adios2::cxx11_mpi MPI::MPI_CXX ${CMAKE_THREAD_LIBS_INIT})
   install(TARGETS adios2_simulations_heatTransferInline RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

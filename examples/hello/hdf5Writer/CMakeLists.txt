@@ -29,7 +29,7 @@ if(ADIOS2_HAVE_HDF5)
 
   if(ADIOS2_HAVE_MPI)
     add_executable(adios2_hello_hdf5Writer_mpi hdf5Writer.cpp)
-    target_link_libraries(adios2_hello_hdf5Writer_mpi adios2::cxx11_mpi MPI::MPI_C)
+    target_link_libraries(adios2_hello_hdf5Writer_mpi adios2::cxx11_mpi MPI::MPI_CXX)
     install(TARGETS adios2_hello_hdf5Writer_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
   endif()
 endif()

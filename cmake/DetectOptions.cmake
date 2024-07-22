@@ -461,7 +461,7 @@ if(ADIOS2_USE_SST AND NOT WIN32)
     message(STATUS "Libfabric support for the HPE CXI provider: ${ADIOS2_SST_HAVE_CRAY_CXI}")
   endif()
   if(ADIOS2_HAVE_MPI AND NOT "${ADIOS2_SST_HAVE_MPI_DP}")
-    set(CMAKE_REQUIRED_LIBRARIES "MPI::MPI_C;Threads::Threads")
+    set(CMAKE_REQUIRED_LIBRARIES "MPI::MPI_CXX;Threads::Threads")
     include(CheckCXXSourceRuns)
     check_cxx_source_runs([=[
         #include <chrono>
