@@ -189,7 +189,7 @@ adios_option(AWSSDK     "Enable support for S3 compatible storage using AWS SDK'
 adios_option(Derived_Variable    "Enable support for derived variables" OFF)
 adios_option(PIP        "Enable support for pip packaging" OFF)
 adios_option(XRootD     "Enable support for XRootD" AUTO)
-adios_option(KVCACHE    "Enable support for KVCache" AUTO)
+adios_option(KVCACHE    "Enable support for KVCache" OFF)
 
 option(ADIOS2_LIBADIOS_MODE "Install only C/C++ library components" OFF)
 mark_as_advanced(ADIOS2_LIBADIOS_MODE)
