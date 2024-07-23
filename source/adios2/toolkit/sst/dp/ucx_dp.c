@@ -424,7 +424,8 @@ static void UcxProvideWriterDataToReader(CP_Services Svcs, DP_RS_Stream RS_Strea
         if (status != UCS_OK)
         {
             Svcs->verbose(RS_Stream->CP_Stream, DPCriticalVerbose,
-                          "UCX Error during ucp_ep_create() with: %s. Let's ignore....\n",
+                          "UCX Error during ucp_ep_create() with: %s. Let's ignore for now, this "
+                          "point-to-point connection might not be needed.\n",
                           ucs_status_string(status));
         }
         Svcs->verbose(RS_Stream->CP_Stream, DPTraceVerbose,

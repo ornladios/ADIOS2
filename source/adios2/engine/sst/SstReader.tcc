@@ -15,7 +15,6 @@
 
 #include "adios2/helper/adiosFunctions.h" //GetDataType<T>
 #include <adios2-perfstubs-interface.h>
-#include <initializer_list>
 
 namespace adios2
 {

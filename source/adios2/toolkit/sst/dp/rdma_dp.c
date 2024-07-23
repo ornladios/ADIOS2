@@ -123,26 +123,37 @@ int guard_fi_return(int code, CP_Services Svcs, CManager cm, char const *msg)
     return code;
 }
 
+// Linked list of events that were retrieved by the progress thread
+// and that can be requested by the main thread
 struct cq_event_list
 {
     struct fi_cq_data_entry *value;
+    // possibly null
+    // if not a single item is emplaced, then cq_manual_progress.cq_event_list is null
     struct cq_event_list *next;
 };
 
+// Parameters for make_progress(), launched as a separate threads
+// to make manual progress in fabrics that require it
 struct cq_manual_progress
 {
     struct fid_cq *cq_signal;
 
     struct cq_event_list *cq_event_list;
+    // for thread-safe concurrent access (1 writer 1 reader)
     pthread_mutex_t cq_event_list_mutex;
-    pthread_cond_t cq_even_list_signal;
+    // are there any events currently in the list?
     char cq_event_list_filled;
+    // signal is sent when an item is enplaced
+    pthread_cond_t cq_even_list_signal;
 
     CP_Services Svcs;
     void *Stream;
+    // main thread sets this to 0 for telling the thread to come home again
     int do_continue;
 };
 
+// called by progress thread
 void cq_manual_progress_push(struct cq_manual_progress *self, struct cq_event_list *item)
 {
     pthread_mutex_lock(&self->cq_event_list_mutex);
@@ -164,6 +175,8 @@ void cq_manual_progress_push(struct cq_manual_progress *self, struct cq_event_li
     pthread_cond_signal(&self->cq_even_list_signal);
 }
 
+// called by main thread
+// will block until data becomes available
 struct fi_cq_data_entry *cq_manual_progress_pop(struct cq_manual_progress *self)
 {
     struct fi_cq_data_entry *res;
@@ -254,6 +267,9 @@ struct fabric_state
     pthread_t pthread_id;
 };
 
+// Wrapper for fi_cq_sread to be called in its stead from the main thread.
+// If a progress thread is running, then we wait for data to become available there.
+// Otherwise fi_cq_sread() is called synchronously.
 void cq_read(struct fabric_state *fabric, struct fi_cq_data_entry *CQEntry, CP_Services Svcs,
              void *Stream)
 {
@@ -387,14 +403,13 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
 #else
     fi_version = FI_VERSION(1, 5);
 
-    // Alternatively, one could set mr_mode to
-    // FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL
-    // here. These flags are equivalent to FI_MR_BASIC, but unlike basic
+    // These flags are the same as required by FI_MR_BASIC, but unlike basic
     // registration, providers are not forced to keep those flags when they
     // think that not using the flags is better.
     // The RDMA DP is able to deal with this appropriately, and does so right
     // before calling fi_fabric() further below in this function.
-    // The main reason for keeping FI_MR_BASIC here is backward compatibility.
+    // So, we specify these flags instead of FI_MR_BASIC in order to leave the
+    // decision up to the providers.
     hints->domain_attr->mr_mode = FI_MR_VIRT_ADDR | FI_MR_ALLOCATED | FI_MR_PROV_KEY | FI_MR_LOCAL;
     hints->domain_attr->control_progress = FI_PROGRESS_AUTO;
     // data progress unspecified, both are fine
@@ -673,6 +688,9 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
     {
 
         fabric->cq_manual_progress->do_continue = 0;
+        // make_progress() is still cluelessly waiting for anything to happen
+        // before it gets the chance to check the do_continue flag.
+        // so we give it some event.
         fi_cq_signal(fabric->cq_signal);
 
         if (pthread_join(fabric->pthread_id, NULL) != 0)
@@ -1319,6 +1337,10 @@ static void RdmaWritePatternLocked(CP_Services Svcs, DP_RS_Stream Stream_v, long
     }
 }
 
+// This is currently called only by the writer thread right after init_fabric().
+// Could be called by the reader, too, in order to make progress in the background.
+// But unlike for the writer, it's not necessary as the reader will
+// make explicit synchronous progress upon requesting data.
 static int init_progress_thread(FabricState fabric, CP_Services Svcs, void *CP_Stream)
 {
     if (fabric->info->domain_attr->data_progress != FI_PROGRESS_MANUAL)
