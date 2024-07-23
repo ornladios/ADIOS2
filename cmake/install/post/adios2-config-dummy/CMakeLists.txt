@@ -42,7 +42,7 @@ if(ADIOS2_HAVE_MPI)
   target_link_libraries(mpi_with_C adios2::c_mpi adios2::c MPI::MPI_C)
 
   add_executable(mpi_without_CXX foo.cxx main.cxx)
-  target_link_libraries(mpi_without_CXX MPI::MPI_C)
+  target_link_libraries(mpi_without_CXX MPI::MPI_CXX)
   add_executable(mpi_with_CXX foo.cxx main.cxx)
   target_compile_definitions(mpi_with_CXX PRIVATE WITH_ADIOS2)
   target_link_libraries(mpi_with_CXX adios2::cxx11_mpi adios2::cxx11 MPI::MPI_CXX)

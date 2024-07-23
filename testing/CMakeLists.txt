@@ -82,7 +82,7 @@ function(gtest_add_tests_helper testname mpi src_pfx tst_pfx tst_sfx)
 
     if(NOT TARGET ${tgt})
       add_executable(${tgt} Test${src_pfx}${testname}.cpp)
-      target_link_libraries(${tgt} adios2::cxx11_mpi adios2::c_mpi adios2_core_mpi MPI::MPI_C adios2::thirdparty::gtest)
+      target_link_libraries(${tgt} adios2::cxx11_mpi adios2::c_mpi adios2_core_mpi MPI::MPI_CXX adios2::thirdparty::gtest)
     endif()
 
     gtest_add_tests(TARGET ${tgt}

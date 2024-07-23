@@ -30,10 +30,10 @@ install(TARGETS adios2_basics_variablesShapes_hl RUNTIME DESTINATION ${CMAKE_INS
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_basics_variablesShapes_mpi variablesShapes.cpp)
-  target_link_libraries(adios2_basics_variablesShapes_mpi adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_basics_variablesShapes_mpi adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_basics_variablesShapes_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   add_executable(adios2_basics_variablesShapes_hl_mpi variablesShapes_hl.cpp)
-  target_link_libraries(adios2_basics_variablesShapes_hl_mpi adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_basics_variablesShapes_hl_mpi adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_basics_variablesShapes_hl_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

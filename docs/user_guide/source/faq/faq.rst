@@ -61,7 +61,7 @@ If using cmake, there are different targets to build parallel
         find_package(ADIOS2 REQUIRED)
         #...
         add_library(my_library src1.cxx src2.cxx)
-        target_link_libraries(my_library PRIVATE adios2::cxx11_mpi MPI::MPI_C)
+        target_link_libraries(my_library PRIVATE adios2::cxx11_mpi MPI::MPI_CXX)
         #...
         add_library(my_f_library src1.F90 src2.F90)
         target_link_libraries(my_f_library PRIVATE adios2::fortran_mpi adios2::fortran MPI::MPI_Fortran)

@@ -26,6 +26,6 @@ install(TARGETS adios2_hello_bpAttributeWriteRead RUNTIME DESTINATION ${CMAKE_IN
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_hello_bpAttributeWriteRead_mpi bpAttributeWriteRead.cpp)
-  target_link_libraries(adios2_hello_bpAttributeWriteRead_mpi adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_hello_bpAttributeWriteRead_mpi adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_hello_bpAttributeWriteRead_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
