@@ -198,9 +198,9 @@ void CampaignReader::InitTransports()
             CampaignHost &h = m_CampaignData.hosts[hostidx];
             std::cout << "    host =" << h.hostname << "  long name = " << h.longhostname
                       << "  directories: \n";
-            for (size_t diridx = 0; diridx < h.directory.size(); ++diridx)
+            for (size_t diridx = 0; diridx < h.dirIdx.size(); ++diridx)
             {
-                std::cout << "      dir = " << h.directory[diridx] << "\n";
+                std::cout << "      dir = " << m_CampaignData.directory[h.dirIdx[diridx]] << "\n";
             }
         }
         std::cout << "  datasets:\n";
@@ -208,8 +208,7 @@ void CampaignReader::InitTransports()
         {
             CampaignBPDataset &ds = it.second;
             std::cout << "    " << m_CampaignData.hosts[ds.hostIdx].hostname << ":"
-                      << m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] << PathSeparator
-                      << ds.name << "\n";
+                      << m_CampaignData.directory[ds.dirIdx] << PathSeparator << ds.name << "\n";
             for (auto &bpf : ds.files)
             {
                 std::cout << "      file: " << bpf.name << "\n";
@@ -237,8 +236,7 @@ void CampaignReader::InitTransports()
                 if (ho.protocol == HostAccessProtocol::S3)
                 {
                     const std::string endpointURL = ho.endpoint;
-                    const std::string objPath =
-                        m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] + "/" + ds.name;
+                    const std::string objPath = m_CampaignData.directory[ds.dirIdx] + "/" + ds.name;
                     Params p;
                     p.emplace("Library", "awssdk");
                     p.emplace("endpoint", endpointURL);
@@ -249,8 +247,7 @@ void CampaignReader::InitTransports()
                     p.emplace("recheck_metadata", (ho.recheckMetadata ? "true" : "false"));
                     io.AddTransport("File", p);
                     io.SetEngine("BP5");
-                    localPath = m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] +
-                                PathSeparator + ds.name;
+                    localPath = m_CampaignData.directory[ds.dirIdx] + PathSeparator + ds.name;
                     if (ho.isAWS_EC2)
                     {
                         adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=false");
@@ -277,7 +274,7 @@ void CampaignReader::InitTransports()
             if (!done)
             {
                 const std::string remotePath =
-                    m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] + PathSeparator + ds.name;
+                    m_CampaignData.directory[ds.dirIdx] + PathSeparator + ds.name;
                 const std::string remoteURL =
                     m_CampaignData.hosts[ds.hostIdx].hostname + ":" + remotePath;
                 localPath = m_Options.cachepath + PathSeparator +
@@ -302,8 +299,7 @@ void CampaignReader::InitTransports()
         }
         else
         {
-            localPath =
-                m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] + PathSeparator + ds.name;
+            localPath = m_CampaignData.directory[ds.dirIdx] + PathSeparator + ds.name;
             if (m_Options.verbose > 0)
             {
                 std::cout << "Open local file " << localPath << "\n";
