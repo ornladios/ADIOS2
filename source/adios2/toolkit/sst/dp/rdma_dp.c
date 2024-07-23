@@ -663,44 +663,6 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
         return;
     }
 
-    fabric->cq_manual_progress = NULL;
-
-    if (info->domain_attr->data_progress == FI_PROGRESS_MANUAL)
-    {
-        Svcs->verbose(
-            CP_Stream, DPTraceVerbose,
-            "Using a separate thread to comply with the fabric's manual progress preference.\n");
-
-        struct cq_manual_progress *manual_progress = malloc(sizeof(struct cq_manual_progress));
-
-        manual_progress->cq_signal = fabric->cq_signal;
-        if (pthread_mutex_init(&manual_progress->cq_event_list_mutex, NULL) != 0)
-        {
-            Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not init mutex.\n");
-            return;
-        }
-        manual_progress->cq_event_list = NULL;
-        manual_progress->cq_event_list_filled = 0;
-        manual_progress->Svcs = Svcs;
-        manual_progress->Stream = CP_Stream;
-        manual_progress->do_continue = 1;
-        pthread_cond_init(&manual_progress->cq_even_list_signal, NULL);
-
-        fabric->cq_manual_progress = manual_progress;
-
-        if (pthread_create(&fabric->pthread_id, NULL, &make_progress, fabric->cq_manual_progress) !=
-            0)
-        {
-            Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not start thread.\n");
-            return;
-        }
-    }
-    else
-    {
-        Svcs->verbose(CP_Stream, DPTraceVerbose,
-                      "Using the fabric's automatic progress capability.\n");
-    }
-
     fi_freeinfo(originfo);
 }
 
@@ -1357,6 +1319,44 @@ static void RdmaWritePatternLocked(CP_Services Svcs, DP_RS_Stream Stream_v, long
     }
 }
 
+static int init_progress_thread(FabricState fabric, CP_Services Svcs, void *CP_Stream)
+{
+    if (fabric->info->domain_attr->data_progress != FI_PROGRESS_MANUAL)
+    {
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "Using the fabric's automatic progress capability.\n");
+        return EXIT_SUCCESS;
+    }
+    Svcs->verbose(
+        CP_Stream, DPTraceVerbose,
+        "Using a separate thread to comply with the fabric's manual progress preference.\n");
+
+    struct cq_manual_progress *manual_progress = malloc(sizeof(struct cq_manual_progress));
+
+    manual_progress->cq_signal = fabric->cq_signal;
+    if (pthread_mutex_init(&manual_progress->cq_event_list_mutex, NULL) != 0)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not init mutex.\n");
+        return EXIT_FAILURE;
+    }
+    manual_progress->cq_event_list = NULL;
+    manual_progress->cq_event_list_filled = 0;
+    manual_progress->Svcs = Svcs;
+    manual_progress->Stream = CP_Stream;
+    manual_progress->do_continue = 1;
+    pthread_cond_init(&manual_progress->cq_even_list_signal, NULL);
+
+    fabric->cq_manual_progress = manual_progress;
+
+    if (pthread_create(&fabric->pthread_id, NULL, &make_progress, fabric->cq_manual_progress) != 0)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not start thread.\n");
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
 static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params,
                                    attr_list DPAttrs, SstStats Stats)
 {
@@ -1481,6 +1481,11 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream, struct _Ss
 
     Svcs->verbose(CP_Stream, DPTraceVerbose, "Fabric Parameters:\n%s\n",
                   fi_tostr(Fabric->info, FI_TYPE_INFO));
+
+    if (init_progress_thread(Fabric, Svcs, CP_Stream) == EXIT_FAILURE)
+    {
+        goto err_out;
+    }
 
     /*
      * save the CP_stream value of later use
