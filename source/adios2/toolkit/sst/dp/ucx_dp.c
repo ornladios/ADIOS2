@@ -17,6 +17,7 @@
  */
 
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <pthread.h>
@@ -292,7 +293,6 @@ static void *make_progress(void *params_)
     progress_thread_params *params = params_;
     while (params->keep_making_progress)
     {
-        ucp_worker_wait(params->ucp_worker);
         while (ucp_worker_progress(params->ucp_worker) != 0)
         { // go again}
         }
@@ -306,6 +306,9 @@ static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream, struct _Sst
     Ucx_WS_Stream Stream = malloc(sizeof(struct _Ucx_WS_Stream));
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     ucs_status_t status;
+    char const *use_progress_thread_envvar;
+    size_t const max_len = 4;
+    char use_progress_thread[max_len];
 
     memset(Stream, 0, sizeof(struct _Ucx_WS_Stream));
 
@@ -321,11 +324,35 @@ static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream, struct _Sst
 
     Stream->CP_Stream = CP_Stream;
 
-    Stream->Fabric->keep_making_progress = 1;
-    if (pthread_create(&Stream->Fabric->progress_thread, NULL, &make_progress, Stream->Fabric) != 0)
+    /*
+     * `export UCX_POSIX_USE_PROC_LINK=n` might be necessary to make this work.
+     */
+    use_progress_thread_envvar = getenv("UCX_WRITER_PROGRESS_THREAD");
+    if (use_progress_thread_envvar)
     {
-        Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not start thread.\n");
-        return NULL;
+        strncpy(use_progress_thread, use_progress_thread_envvar, max_len);
+    }
+
+    for (size_t i = 0; i < max_len; ++i)
+    {
+        use_progress_thread[i] = (char)tolower((int)use_progress_thread[i]);
+    }
+
+    if (use_progress_thread_envvar && strncmp(use_progress_thread, "1", max_len) == 0 ||
+        strncmp(use_progress_thread, "yes", max_len) == 0 ||
+        strncmp(use_progress_thread, "on", max_len) == 0)
+    {
+        Stream->Fabric->keep_making_progress = 1;
+        if (pthread_create(&Stream->Fabric->progress_thread, NULL, &make_progress,
+                           Stream->Fabric) != 0)
+        {
+            Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not start thread.\n");
+            return NULL;
+        }
+    }
+    else
+    {
+        Stream->Fabric->keep_making_progress = 0;
     }
 
     return (void *)Stream;
@@ -726,12 +753,15 @@ static void UcxDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
 
     Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose, "Tearing down RDMA state on writer.\n");
 
-    WS_Stream->Fabric->keep_making_progress = 0;
-    ucp_worker_signal(WS_Stream->Fabric->ucp_worker);
-    if (pthread_join(WS_Stream->Fabric->progress_thread, NULL) != 0)
+    if(WS_Stream->Fabric->keep_making_progress == 1)
     {
-        Svcs->verbose(WS_Stream, DPCriticalVerbose, "Could not join thread.\n");
-        return;
+        WS_Stream->Fabric->keep_making_progress = 0;
+        ucp_worker_signal(WS_Stream->Fabric->ucp_worker);
+        if (pthread_join(WS_Stream->Fabric->progress_thread, NULL) != 0)
+        {
+            Svcs->verbose(WS_Stream, DPCriticalVerbose, "Could not join thread.\n");
+            return;
+        }
     }
 
     if (WS_Stream->Fabric)
