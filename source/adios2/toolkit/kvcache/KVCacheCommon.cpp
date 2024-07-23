@@ -13,12 +13,13 @@ namespace kvcache
 void KVCacheCommon::OpenConnection(std::string host, int port)
 {
     m_redisContext = redisConnect(host.c_str(), port);
-    if (m_redisContext == NULL || m_redisContext->err)
+    if (m_redisContext == nullptr || m_redisContext->err)
     {
         std::cout << "Error to connect to kvcache server: " << m_redisContext->errstr << std::endl;
         if (m_redisContext)
         {
             redisFree(m_redisContext);
+            m_redisContext = nullptr;
         }
     }
     else

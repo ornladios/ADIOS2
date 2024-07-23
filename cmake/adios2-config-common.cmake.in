@@ -158,6 +158,11 @@ if(NOT @BUILD_SHARED_LIBS@)
     find_dependency(SQLite3)
   endif()
 
+  set(ADIOS2_HAVE_KVCACHE @ADIOS2_HAVE_KVCACHE@)
+  if(ADIOS2_HAVE_KVCACHE)
+    find_dependency(hiredis)
+  endif()
+
 
   adios2_add_thirdparty_target(pugixml)
   set(ADIOS2_USE_EXTERNAL_PUGIXML @ADIOS2_USE_EXTERNAL_PUGIXML@)
