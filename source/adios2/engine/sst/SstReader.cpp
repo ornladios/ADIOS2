@@ -784,15 +784,32 @@ void SstReader::PerformGets()
         auto iterator = sstReadHandlers.cbegin();
         auto end = sstReadHandlers.cend();
         std::vector<void *> enqueuedHandlers;
+        std::vector<void *> nextEnqueuedHandlers;
         enqueuedHandlers.reserve(BATCH_SIZE);
-        while (iterator != end)
-        {
-            size_t counter = 0;
-            enqueuedHandlers.clear();
-            for (; counter < BATCH_SIZE && iterator != end; ++iterator, ++counter)
+        nextEnqueuedHandlers.reserve(BATCH_SIZE);
+
+        auto enqueue_next = [&](std::vector<void *> &enqueuedHandlers) {
+            if (iterator == end)
             {
-                enqueuedHandlers.push_back(performDeferredReadRemoteMemory(*iterator));
+                return false;
             }
+            enqueuedHandlers.push_back(performDeferredReadRemoteMemory(*iterator));
+            ++iterator;
+            return true;
+        };
+
+        // Initiate request queue with first BATCH_SIZE requests
+        for (size_t i = 0; i < BATCH_SIZE; ++i)
+        {
+            if (!enqueue_next(enqueuedHandlers))
+            {
+                break;
+            }
+        }
+
+        while (!enqueuedHandlers.empty())
+        {
+            nextEnqueuedHandlers.clear();
             for (const auto &i : enqueuedHandlers)
             {
                 if (SstWaitForCompletion(m_Input, i) != SstSuccess)
@@ -800,7 +817,9 @@ void SstReader::PerformGets()
                     helper::Throw<std::runtime_error>("Engine", "SstReader", "PerformGets",
                                                       "Writer failed before returning data");
                 }
+                enqueue_next(nextEnqueuedHandlers);
             }
+            enqueuedHandlers.swap(nextEnqueuedHandlers);
         }
 
         for (const std::string &name : m_BP3Deserializer->m_DeferredVariables)
