@@ -31,7 +31,7 @@ struct CampaignHost
 {
     std::string hostname;
     std::string longhostname;
-    std::vector<std::string> directory;
+    std::vector<size_t> dirIdx; // index in CampaignData.directory global list of dirs
 };
 
 struct CampaignBPFile
@@ -56,6 +56,7 @@ struct CampaignData
 {
     std::string version;
     std::vector<CampaignHost> hosts;
+    std::vector<std::string> directory;
     std::map<size_t, CampaignBPDataset> bpdatasets;
 };
 
