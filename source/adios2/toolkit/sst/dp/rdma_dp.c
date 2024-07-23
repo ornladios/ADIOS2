@@ -344,6 +344,7 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
     hints->mode =
         FI_CONTEXT | FI_LOCAL_MR | FI_CONTEXT2 | FI_MSG_PREFIX | FI_ASYNC_IOV | FI_RX_CQ_DATA;
     hints->ep_attr->type = FI_EP_RDM;
+    hints->domain_attr->threading = FI_THREAD_SAFE;
 
     uint32_t fi_version;
 #ifdef SST_HAVE_CRAY_CXI
