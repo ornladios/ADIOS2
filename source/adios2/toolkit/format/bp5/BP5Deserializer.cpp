@@ -1730,16 +1730,16 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                                 for (auto varBase : derivedVarInputVarList)
                                 {
                                     ReadRequest RR;
-                                    BP5VarRec *VarRec = VarByName.at(varBase->m_Name);
+                                    BP5VarRec *VarPrimaryRec = VarByName.at(varBase->m_Name);
                                     MetaArrayRecOperator *writer_meta_base_input =
-                                        (MetaArrayRecOperator *)GetMetadataBase(VarRec, Step,
+                                        (MetaArrayRecOperator *)GetMetadataBase(VarPrimaryRec, Step,
                                                                                 WriterRank);
                                     RR.Timestep = Step;
                                     RR.WriterRank = WriterRank;
                                     RR.StartOffset = writer_meta_base_input->DataBlockLocation[0];
-                                    RR.ReadLength =
-                                        helper::GetDataTypeSize(VarRec->Type) *
-                                        CalcBlockLength(VarRec->DimCount, varBase->m_Count.data());
+                                    RR.ReadLength = helper::GetDataTypeSize(VarPrimaryRec->Type) *
+                                                    CalcBlockLength(VarPrimaryRec->DimCount,
+                                                                    varBase->m_Count.data());
                                     RR.DestinationAddr = (char *)malloc(RR.ReadLength);
                                     RR.DirectToAppMemory = false;
                                     RR.ReqIndex = ReqIndex;
