@@ -2046,7 +2046,6 @@ void BP5Deserializer::FinalizeDerivedGets(std::vector<ReadRequest> &Reads)
         auto nameToVarInfo = Req.DerivedInputMap;
         auto DerivedBlockData = derivedVar->ApplyExpression(*nameToVarInfo);
 
-        auto entry = nameToVarInfo->begin();
         for (size_t i = 0; i < DerivedBlockData.size(); i++)
         {
             auto &DBlock = DerivedBlockData[i];

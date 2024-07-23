@@ -235,7 +235,7 @@ std::string ExpressionTree::toStringExpr()
             if (!detail.indices.empty())
             {
                 result += "[ ";
-                for (std::tuple<int, int, int> idx : detail.indices)
+                for (std::tuple<size_t, size_t, size_t> idx : detail.indices)
                 {
                     result += (std::get<0>(idx) < 0 ? "" : std::to_string(std::get<0>(idx))) + ":";
                     result += (std::get<1>(idx) < 0 ? "" : std::to_string(std::get<1>(idx))) + ":";

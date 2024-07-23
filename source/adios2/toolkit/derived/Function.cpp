@@ -44,13 +44,13 @@ T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dim
     size_t dataSize = dims[0] * dims[1] * dims[2];
     T *data = (T *)malloc(dataSize * sizeof(float) * 3);
     size_t index = 0;
-    for (int i = 0; i < dims[0]; ++i)
+    for (int i = 0; i < (int)dims[0]; ++i)
     {
         size_t prev_i = std::max(0, i - 1), next_i = std::min((int)dims[0] - 1, i + 1);
-        for (int j = 0; j < dims[1]; ++j)
+        for (int j = 0; j < (int)dims[1]; ++j)
         {
             size_t prev_j = std::max(0, j - 1), next_j = std::min((int)dims[1] - 1, j + 1);
-            for (int k = 0; k < dims[2]; ++k)
+            for (int k = 0; k < (int)dims[2]; ++k)
             {
                 size_t prev_k = std::max(0, k - 1), next_k = std::min((int)dims[2] - 1, k + 1);
                 // curl[0] = dv3 / dy - dv2 / dz
