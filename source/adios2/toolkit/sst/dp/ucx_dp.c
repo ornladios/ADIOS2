@@ -294,11 +294,52 @@ static void *make_progress(void *params_)
     while (params->keep_making_progress)
     {
         while (ucp_worker_progress(params->ucp_worker) != 0)
-        { // go again}
+        { // go again
         }
+        ucp_worker_wait(params->ucp_worker);
     }
     return NULL;
 }
+
+typedef enum
+{
+    ProgressThreadUnspecified,
+    ProgressThreadYes,
+    ProgressThreadNo
+} ProgressThread;
+
+/*
+ * `export UCX_POSIX_USE_PROC_LINK=n` might be necessary to make this work.
+ */
+static ProgressThread use_progress_thread()
+{
+    size_t const max_len = 4;
+    char const *use_progress_thread_envvar = getenv("UCX_PROGRESS_THREAD");
+    char use_progress_thread[max_len];
+
+    if (!use_progress_thread_envvar)
+    {
+        return ProgressThreadUnspecified;
+    }
+
+    strncpy(use_progress_thread, use_progress_thread_envvar, max_len);
+    for (size_t i = 0; i < max_len; ++i)
+    {
+        use_progress_thread[i] = (char)tolower((int)use_progress_thread[i]);
+    }
+
+    if (use_progress_thread_envvar && strncmp(use_progress_thread, "1", max_len) == 0 ||
+        strncmp(use_progress_thread, "yes", max_len) == 0 ||
+        strncmp(use_progress_thread, "on", max_len) == 0)
+    {
+        return ProgressThreadYes;
+    }
+    else
+    {
+        return ProgressThreadNo;
+    }
+}
+
 
 static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params,
                                   attr_list DPAttrs, SstStats Stats)
@@ -306,9 +347,6 @@ static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream, struct _Sst
     Ucx_WS_Stream Stream = malloc(sizeof(struct _Ucx_WS_Stream));
     SMPI_Comm comm = Svcs->getMPIComm(CP_Stream);
     ucs_status_t status;
-    char const *use_progress_thread_envvar;
-    size_t const max_len = 4;
-    char use_progress_thread[max_len];
 
     memset(Stream, 0, sizeof(struct _Ucx_WS_Stream));
 
@@ -324,35 +362,34 @@ static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream, struct _Sst
 
     Stream->CP_Stream = CP_Stream;
 
-    /*
-     * `export UCX_POSIX_USE_PROC_LINK=n` might be necessary to make this work.
-     */
-    use_progress_thread_envvar = getenv("UCX_WRITER_PROGRESS_THREAD");
-    if (use_progress_thread_envvar)
+    switch (use_progress_thread())
     {
-        strncpy(use_progress_thread, use_progress_thread_envvar, max_len);
-    }
-
-    for (size_t i = 0; i < max_len; ++i)
-    {
-        use_progress_thread[i] = (char)tolower((int)use_progress_thread[i]);
-    }
-
-    if (use_progress_thread_envvar && strncmp(use_progress_thread, "1", max_len) == 0 ||
-        strncmp(use_progress_thread, "yes", max_len) == 0 ||
-        strncmp(use_progress_thread, "on", max_len) == 0)
-    {
+    case ProgressThreadUnspecified:
+        // Since UCX does not allow asking the worker if it supports
+        // automatic progress, we can do no more here than make a generic
+        // decision for all users here.
+        // We consider manual progress as an optional feature that needs to be
+        // actively switched on. Treat this case same as ProgressThreadNo.
+        Svcs->verbose(
+            CP_Stream, DPTraceVerbose,
+            "Not using a separate thread for manual progress since it was not requested.\n");
+        Stream->Fabric->keep_making_progress = 0;
+        break;
+    case ProgressThreadNo:
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "Not using a separate thread for manual progress upon user request.\n");
+        Stream->Fabric->keep_making_progress = 0;
+        break;
+    case ProgressThreadYes:
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "Using a separate thread for manual progress upon user request.\n");
         Stream->Fabric->keep_making_progress = 1;
-        if (pthread_create(&Stream->Fabric->progress_thread, NULL, &make_progress,
-                           Stream->Fabric) != 0)
+        if (pthread_create(&Stream->Fabric->progress_thread, NULL, &make_progress, Stream->Fabric) != 0)
         {
             Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not start thread.\n");
             return NULL;
         }
-    }
-    else
-    {
-        Stream->Fabric->keep_making_progress = 0;
+        break;
     }
 
     return (void *)Stream;
