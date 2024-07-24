@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <pthread.h>
@@ -1140,6 +1141,115 @@ static int get_cxi_auth_key_from_writer(struct cxi_auth_key *key, attr_list Writ
 }
 #endif
 
+typedef enum
+{
+    ProgressThreadUnspecified,
+    ProgressThreadYes,
+    ProgressThreadNo
+} ProgressThread;
+
+static ProgressThread use_progress_thread()
+{
+    size_t const max_len = 4;
+    char const *use_progress_thread_envvar = getenv("FABRIC_PROGRESS_THREAD");
+    char use_progress_thread[max_len];
+
+    if (!use_progress_thread_envvar)
+    {
+        return ProgressThreadUnspecified;
+    }
+
+    strncpy(use_progress_thread, use_progress_thread_envvar, max_len);
+    for (size_t i = 0; i < max_len; ++i)
+    {
+        use_progress_thread[i] = (char)tolower((int)use_progress_thread[i]);
+    }
+
+    if (use_progress_thread_envvar && strncmp(use_progress_thread, "1", max_len) == 0 ||
+        strncmp(use_progress_thread, "yes", max_len) == 0 ||
+        strncmp(use_progress_thread, "on", max_len) == 0)
+    {
+        return ProgressThreadYes;
+    }
+    else
+    {
+        return ProgressThreadNo;
+    }
+}
+
+// Called by writer as well as by the reader.
+// For the writer, a separate progress thread is not needed as the reader will
+// make explicit synchronous progress upon requesting data.
+// In consequence, a progress thread is by default only launched on the writer
+// side under the condition that the fabric indicates manual data progress.
+// This behavior can be overridden using the environment variable `FABRIC_PROGRESS_THREAD`.
+// Use cases for this:
+//
+// 1. Turn on a progress thread on the reader side as well for making progress
+//    asynchronously in the background.
+// 2. The tcp provider claims that it supports automatic progress, but seems to hang up
+//    if a progress thread is not launched on the writer side.
+//    The env. var. can be used when the fabric behavior does not match its promises.
+// 3. If for any reason the use of progress threads causes trouble, they can be turned
+//    off this way.
+static int init_progress_thread(FabricState fabric, CP_Services Svcs, void *CP_Stream,
+                                int is_reader)
+{
+    switch (use_progress_thread())
+    {
+    case ProgressThreadUnspecified:
+        if (is_reader)
+        {
+            // Reader does not make manual progress by default.
+            // It will make synchronous progress anyway upon waiting for data.
+            return EXIT_SUCCESS;
+        }
+        if (fabric->info->domain_attr->data_progress != FI_PROGRESS_MANUAL)
+        {
+            Svcs->verbose(CP_Stream, DPTraceVerbose,
+                          "Using the fabric's automatic progress capability.\n");
+            return EXIT_SUCCESS;
+        }
+        Svcs->verbose(
+            CP_Stream, DPTraceVerbose,
+            "Using a separate thread to comply with the fabric's manual progress preference.\n");
+        break;
+    case ProgressThreadYes:
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "Using a separate thread for manual progress upon user request.\n");
+        break;
+    case ProgressThreadNo:
+        Svcs->verbose(CP_Stream, DPTraceVerbose,
+                      "Not using a separate thread for manual progress upon user request.\n");
+        return EXIT_SUCCESS;
+    }
+
+    struct cq_manual_progress *manual_progress = malloc(sizeof(struct cq_manual_progress));
+
+    manual_progress->cq_signal = fabric->cq_signal;
+    if (pthread_mutex_init(&manual_progress->cq_event_list_mutex, NULL) != 0)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not init mutex.\n");
+        return EXIT_FAILURE;
+    }
+    manual_progress->cq_event_list = NULL;
+    manual_progress->cq_event_list_filled = 0;
+    manual_progress->Svcs = Svcs;
+    manual_progress->Stream = CP_Stream;
+    manual_progress->do_continue = 1;
+    pthread_cond_init(&manual_progress->cq_even_list_signal, NULL);
+
+    fabric->cq_manual_progress = manual_progress;
+
+    if (pthread_create(&fabric->pthread_id, NULL, &make_progress, fabric->cq_manual_progress) != 0)
+    {
+        Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not start thread.\n");
+        return EXIT_FAILURE;
+    }
+
+    return EXIT_SUCCESS;
+}
+
 static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream, void **ReaderContactInfoPtr,
                                    struct _SstParams *Params, attr_list WriterContact,
                                    SstStats Stats)
@@ -1259,6 +1369,11 @@ static DP_RS_Stream RdmaInitReader(CP_Services Svcs, void *CP_Stream, void **Rea
         return NULL;
     }
 
+    if (init_progress_thread(Fabric, Svcs, CP_Stream, /* is_reader = */ 1) == EXIT_FAILURE)
+    {
+        return NULL;
+    }
+
     ContactInfo->Length = Fabric->info->src_addrlen;
     ContactInfo->Address = malloc(ContactInfo->Length);
     int error_code = fi_getname((fid_t)Fabric->signal, ContactInfo->Address, &ContactInfo->Length);
@@ -1335,48 +1450,6 @@ static void RdmaWritePatternLocked(CP_Services Svcs, DP_RS_Stream Stream_v, long
                       "because preloading is disabled. Enable by setting the environment "
                       "variable SST_DP_PRELOAD to 'yes'\n");
     }
-}
-
-// This is currently called only by the writer thread right after init_fabric().
-// Could be called by the reader, too, in order to make progress in the background.
-// But unlike for the writer, it's not necessary as the reader will
-// make explicit synchronous progress upon requesting data.
-static int init_progress_thread(FabricState fabric, CP_Services Svcs, void *CP_Stream)
-{
-    if (fabric->info->domain_attr->data_progress != FI_PROGRESS_MANUAL)
-    {
-        Svcs->verbose(CP_Stream, DPTraceVerbose,
-                      "Using the fabric's automatic progress capability.\n");
-        return EXIT_SUCCESS;
-    }
-    Svcs->verbose(
-        CP_Stream, DPTraceVerbose,
-        "Using a separate thread to comply with the fabric's manual progress preference.\n");
-
-    struct cq_manual_progress *manual_progress = malloc(sizeof(struct cq_manual_progress));
-
-    manual_progress->cq_signal = fabric->cq_signal;
-    if (pthread_mutex_init(&manual_progress->cq_event_list_mutex, NULL) != 0)
-    {
-        Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not init mutex.\n");
-        return EXIT_FAILURE;
-    }
-    manual_progress->cq_event_list = NULL;
-    manual_progress->cq_event_list_filled = 0;
-    manual_progress->Svcs = Svcs;
-    manual_progress->Stream = CP_Stream;
-    manual_progress->do_continue = 1;
-    pthread_cond_init(&manual_progress->cq_even_list_signal, NULL);
-
-    fabric->cq_manual_progress = manual_progress;
-
-    if (pthread_create(&fabric->pthread_id, NULL, &make_progress, fabric->cq_manual_progress) != 0)
-    {
-        Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not start thread.\n");
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
 }
 
 static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params,
@@ -1504,7 +1577,7 @@ static DP_WS_Stream RdmaInitWriter(CP_Services Svcs, void *CP_Stream, struct _Ss
     Svcs->verbose(CP_Stream, DPTraceVerbose, "Fabric Parameters:\n%s\n",
                   fi_tostr(Fabric->info, FI_TYPE_INFO));
 
-    if (init_progress_thread(Fabric, Svcs, CP_Stream) == EXIT_FAILURE)
+    if (init_progress_thread(Fabric, Svcs, CP_Stream, /* is_reader = */ 0) == EXIT_FAILURE)
     {
         goto err_out;
     }
