@@ -46,10 +46,7 @@ If you find ADIOS2 useful, please cite our [SoftwareX paper](https://doi.org/10.
 * From packages, please find packages information below at the packages section.
 * From source: [Install ADIOS2 documentation](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#).
   - For a `cmake` configuration example see [scripts/runconf/runconf.sh](https://github.com/ornladios/ADIOS2/blob/master/scripts/runconf/runconf.sh)
-
-Once ADIOS2 is installed refer to:
-
-* [Linking ADIOS2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#linking-adios-2)
+  - Once ADIOS2 is installed refer to: [Linking ADIOS2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#linking-adios-2)
 
 ## Releases
 
