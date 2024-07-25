@@ -141,6 +141,7 @@ if ((NOT WIN32) AND ADIOS2_HAVE_SST)
     endmacro()
 
     add_get_kvcache_tests_helper(WriteReadADIOS2stdio)
+    add_get_kvcache_tests_helper(WriteMemorySelectionRead)
   endif()
 
    ##### add remote tests below this line
