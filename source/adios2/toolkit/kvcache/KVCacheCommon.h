@@ -9,6 +9,8 @@
 #include <string>
 #include <vector>
 
+#include <adios2sys/MD5.h> // Include the MD5 header
+
 #ifdef ADIOS2_HAVE_KVCACHE
 #include <hiredis/hiredis.h>
 #endif
@@ -21,6 +23,9 @@ namespace kvcache
 
 class KVCacheCommon
 {
+public:
+    std::string m_RemotePathHash = "";
+
 #ifdef ADIOS2_HAVE_KVCACHE
 private:
     redisContext *m_redisContext = nullptr;
@@ -45,6 +50,8 @@ public:
     bool Exists(std::string key);
 
     void KeyPrefixExistence(const std::string &key_prefix, std::unordered_set<std::string> &keys);
+
+    void RemotePathHashMd5(const std::string &remotePath);
 #else
 public:
     KVCacheCommon() = default;
@@ -55,7 +62,7 @@ public:
     void ExecuteBatch(const char *key, size_t mode, size_t size, void *data){};
     bool Exists(std::string key) { return false; };
     void KeyPrefixExistence(const std::string &key_prefix, std::unordered_set<std::string> &keys){};
-
+    void RemotePathHashMd5(const std::string &remotePath){};
 #endif /* ADIOS2_HAVE_KVCACHE */
 };
 }; // namespace kvcache

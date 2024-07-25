@@ -128,6 +128,21 @@ if ((NOT WIN32) AND ADIOS2_HAVE_SST)
    add_test(NAME remoteServerCleanup COMMAND adios2_remote_server -kill_server)
    set_tests_properties(remoteServerCleanup         PROPERTIES FIXTURES_CLEANUP    Server)
 
+  if (ADIOS2_HAVE_KVCACHE)
+    add_test(NAME redisServerSetup COMMAND ${REDIS_SERVER_BINARY} --daemonize yes)
+    set_tests_properties(redisServerSetup PROPERTIES FIXTURES_SETUP RedisServer)
+
+    add_test(NAME redisServerCleanup COMMAND ${REDIS_CLI_BINARY} shutdown)
+    set_tests_properties(redisServerCleanup PROPERTIES FIXTURES_CLEANUP RedisServer)
+
+    macro(add_get_kvcache_tests_helper testname)
+      add_test(NAME "Remote.BP${testname}.GetKVCache" COMMAND Test.Engine.BP.${testname}.Serial bp5)
+      set_tests_properties(Remote.BP${testname}.GetKVCache PROPERTIES FIXTURES_REQUIRED "Server;RedisServer" ENVIRONMENT "DoRemote=1;useKVCache=1")
+    endmacro()
+
+    add_get_kvcache_tests_helper(WriteReadADIOS2stdio)
+  endif()
+
    ##### add remote tests below this line
    add_get_remote_tests_helper(WriteReadADIOS2stdio)
    add_get_remote_tests_helper(WriteMemorySelectionRead)

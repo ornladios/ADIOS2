@@ -316,6 +316,7 @@ void BP5Reader::PerformGets()
         if (getenv("useKVCache"))
         {
             m_KVCache.OpenConnection();
+            m_KVCache.RemotePathHashMd5(RemoteName);
         }
 #endif
         if (m_Remote == nullptr)
@@ -390,7 +391,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
 
         kvcache::QueryBox targetBox(Req.Start, Req.Count);
         std::string keyPrefix =
-            Req.VarName + std::to_string(Req.RelStep) + std::to_string(Req.BlockID);
+            m_KVCache.m_RemotePathHash + "|" + Req.VarName + std::to_string(Req.RelStep);
         std::string targetKey = keyPrefix + targetBox.toString();
 
         // Exact Match: check if targetKey exists
@@ -400,6 +401,8 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
             ReqInfo.DirectCopy = true;
             ReqInfo.ReqSize = targetBox.size();
             cachedRequestsInfo.push_back(ReqInfo);
+
+            std::cout << "Found " << targetKey << " in cache" << std::endl;
         }
         else
         {
