@@ -43,29 +43,17 @@ If you find ADIOS2 useful, please cite our [SoftwareX paper](https://doi.org/10.
 
 ## Getting ADIOS2
 
+* From packages, please find packages information below at the packages section.
 * From source: [Install ADIOS2 documentation](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#).
-For a `cmake` configuration example see [scripts/runconf/runconf.sh](https://github.com/ornladios/ADIOS2/blob/master/scripts/runconf/runconf.sh)
-
-
-* Conda packages:
-* [https://anaconda.org/conda-forge/adios2](https://anaconda.org/conda-forge/adios2)
-
-
-* Spack: [adios2 package](https://spack.readthedocs.io/en/latest/package_list.html#adios2)
-
-
-* Docker images: under [scripts/docker](https://github.com/ornladios/ADIOS2/tree/master/scripts/docker)
-
+  - For a `cmake` configuration example see [scripts/runconf/runconf.sh](https://github.com/ornladios/ADIOS2/blob/master/scripts/runconf/runconf.sh)
 
 Once ADIOS2 is installed refer to:
 
 * [Linking ADIOS2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#linking-adios-2)
 
-
 ## Releases
 
 * Latest release: [v2.10.1](https://github.com/ornladios/ADIOS2/releases/tag/v2.10.1)
-
 * Previous releases: [https://github.com/ornladios/ADIOS2/releases](https://github.com/ornladios/ADIOS2/releases)
 
 ## Packages
@@ -81,6 +69,7 @@ Once ADIOS2 is installed refer to:
 | Debian Unstable     | [![Debian Unstable package](https://repology.org/badge/version-for-repo/debian_unstable/adios2.svg)](https://repology.org/project/adios2/versions)         |
 | OpenSUSE TumbleWeed | [![openSUSE Tumbleweed package](https://repology.org/badge/version-for-repo/opensuse_tumbleweed/adios2.svg)](https://repology.org/project/adios2/versions) |
 | OpenSUSE Leap 15.6  | [![openSUSE Leap 15.6 package](https://repology.org/badge/version-for-repo/opensuse_leap_15_6/adios2.svg)](https://repology.org/project/adios2/versions)   |
+| Dockerhub           | ![Docker Image Version](https://img.shields.io/docker/v/ornladios/adios2)                                                                                  |
 
 ## Community
 
