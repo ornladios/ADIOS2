@@ -108,13 +108,13 @@ jobs:
 # Build and test jobs
 #######################################
 
-  linux_ubuntu:
+  ubuntu:
     needs: [format, git_checks]
     if: needs.git_checks.outputs.num_code_changes > 0
 
     runs-on: ubuntu-20.04
     container:
-      image: ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-${{ matrix.compiler }}
+      image: ghcr.io/ornladios/adios2:ci-spack-${{ matrix.os }}-${{ matrix.compiler }}
       options: --shm-size=1g
       env:
         GH_YML_JOBNAME: ${{ matrix.os }}-${{ matrix.compiler }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ matrix.parallel }}
@@ -131,8 +131,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu20.04]
-        compiler: [gcc8, gcc9, gcc10, gcc11, clang6, clang10]
-        shared: [shared]
+        compiler: [gcc8, gcc9, gcc10, clang6, clang10]
         parallel: [mpich]
         include:
           - os: ubuntu20.04
@@ -149,22 +148,25 @@ jobs:
             parallel: serial
           - os: ubuntu20.04
             compiler: gcc8
+            parallel: serial
             shared: static
-            parallel: ompi
+          - os: ubuntu20.04
+            compiler: gcc8
+            shared: static
+            parallel: mpich
             constrains: build_only
           - os: ubuntu20.04
             compiler: clang6
             shared: static
-            parallel: ompi
+            parallel: mpich
             constrains: build_only
-          - os: ubuntu20.04
-            compiler: gcc8
-            shared: static
-            parallel: serial
           - os: ubuntu22.04
             compiler: rocm
             parallel: serial
             constrains: build_only
+          - os: ubuntu22.04
+            compiler: gcc11
+            parallel: mpich
     steps:
       - uses: actions/checkout@v4
         with:
@@ -204,7 +206,7 @@ jobs:
         if: ${{ matrix.constrains != 'build_only' }}
         run: gha/scripts/ci/gh-actions/run.sh test
 
-  linux_el8:
+  el8:
     needs: [format, git_checks]
     if: needs.git_checks.outputs.num_code_changes > 0
 
@@ -574,7 +576,7 @@ jobs:
 #######################################
 
   build_and_test:
-    needs: [linux_el8, linux_ubuntu, macos, docker, contract]
+    needs: [el8, ubuntu, macos, docker, contract]
     runs-on: ubuntu-latest
     steps:
       - run: echo "All required jobs complete"
