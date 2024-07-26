@@ -7,9 +7,21 @@ set(dashboard_cache "
 BUILD_TESTING:BOOL=ON
 ADIOS2_BUILD_EXAMPLES:BOOL=ON
 
+ADIOS2_USE_AWSSDK:BOOL=ON
+ADIOS2_USE_Blosc2:BOOL=ON
+ADIOS2_USE_Bzip2:BOOL=ON
+ADIOS2_USE_DataMan:BOOL=ON
 ADIOS2_USE_Fortran:BOOL=ON
+ADIOS2_USE_HDF5:BOOL=ON
 ADIOS2_USE_MPI:BOOL=OFF
-ADISO2_USE_Python:BOOL=ON
+ADIOS2_USE_Python:BOOL=ON
+ADIOS2_USE_Sodium:BOOL=ON
+ADIOS2_USE_ZeroMQ:BOOL=ON
+ADIOS2_USE_ZFP:BOOL=ON
+
+Python_ROOT_DIR:PATH=$ENV{CMAKE_PREFIX_PATH}
+Python_FIND_STRATEGY:STRING=LOCATION
+Python_FIND_FRAMEWORK:STRING=FIRST
 
 CMAKE_C_COMPILER_LAUNCHER=ccache
 CMAKE_CXX_COMPILER_LAUNCHER=ccache
@@ -22,7 +34,8 @@ set(ENV{MACOSX_DEPLOYMENT_TARGET} "14.5")
 set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
 set(CTEST_TEST_ARGS
-  # Unclear why these tests currently die.  Disabling until it can be addressed.
-  EXCLUDE "Install.Make.*"
+  # Install.Make ticket: https://github.com/ornladios/ADIOS2/issues/4272
+  # DataMan tickets: https://github.com/ornladios/ADIOS2/issues/4273
+  EXCLUDE "Install.Make|Test.Engine.DataManSingleValues|Test.Engine.DataMan1xN.Serial"
 )
 include(${CMAKE_CURRENT_LIST_DIR}/ci-common.cmake)

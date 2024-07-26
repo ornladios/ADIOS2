@@ -276,30 +276,37 @@ jobs:
 
     runs-on: ${{ matrix.image }}
     env:
-      GH_YML_JOBNAME: ${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.shared }}-${{ matrix.parallel }}
-      GH_YML_BASE_OS: macOS
-      GH_YML_MATRIX_OS: ${{ matrix.image }}
-      GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
-      GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
+      # Only way to source a file in a non interactive/non login shell.
+      BASH_ENV: "/Users/runner/.bash_profile"
       CCACHE_BASEDIR: "${GITHUB_WORKSPACE}"
-      CCACHE_DIR: "${GITHUB_WORKSPACE}/.ccache"
-      CCACHE_COMPRESS: true
       CCACHE_COMPRESSLEVEL: 6
+      CCACHE_COMPRESS: true
+      CCACHE_DIR: "${GITHUB_WORKSPACE}/.ccache"
+      GH_YML_BASE_OS: macOS
+      GH_YML_JOBNAME: ${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.shared }}-${{ matrix.parallel }}
+      GH_YML_MATRIX_ARCH : ${{ matrix.arch }}
+      GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
+      GH_YML_MATRIX_OS: ${{ matrix.image }}
+      GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
 
     strategy:
       fail-fast: false
       matrix:
         image: [macos-13, macos-14]
-        shared: [static, shared]
+        shared: [shared, static]
         include:
-          - parallel: serial
           - image: macos-13
+            arch: x64
             compiler: xcode14_2
           - image: macos-14
+            arch: arm64
             compiler: xcode15_4
+          - parallel: serial
         exclude:
           - image: macos-13
             shared: static
+
+    name: macos (${{ matrix.image }}, ${{ matrix.compiler}}, ${{ matrix.arch }}, ${{ matrix.shared }}, ${{ matrix.parallel }})
 
     steps:
       - uses: actions/checkout@v4

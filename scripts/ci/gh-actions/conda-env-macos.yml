@@ -1,0 +1,13 @@
+name: adios2
+variables:
+  CMAKE_PREFIX_PATH: "/Users/runner/miniconda3/envs/adios2/:$CMAKE_PREFIX_PATH"
+dependencies:
+  - aws-sdk-cpp
+  - c-blosc2
+  - ccache
+  - hdf5
+  - ninja
+  - numpy>=1.19
+  - python=3.10
+  - zeromq
+  - zfp
