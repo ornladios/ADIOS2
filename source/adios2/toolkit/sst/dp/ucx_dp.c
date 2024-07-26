@@ -314,7 +314,7 @@ typedef enum
 static ProgressThread use_progress_thread()
 {
     size_t const max_len = 4;
-    char const *use_progress_thread_envvar = getenv("UCX_PROGRESS_THREAD");
+    char const *use_progress_thread_envvar = getenv("SST_UCX_PROGRESS_THREAD");
     char use_progress_thread[max_len];
 
     if (!use_progress_thread_envvar)
