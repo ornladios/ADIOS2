@@ -356,7 +356,7 @@ jobs:
       matrix:
         os: [win2019, win2022]
         shared: [shared]
-        parallel: [serial, ompi]
+        parallel: [serial, msmpi]
         include:
           - os: win2019
             image: windows-2019
