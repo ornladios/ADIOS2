@@ -128,7 +128,7 @@ void KVCacheCommon::KeyPrefixExistence(const std::string &key_prefix,
     }
 }
 
-void KVCacheCommon::RemotePathHashMd5(const std::string &remotePath)
+void KVCacheCommon::RemotePathHashMd5(const std::string &remotePath, std::string &result)
 {
     adios2sysMD5 *md5 = adios2sysMD5_New();
     if (!md5)
@@ -155,7 +155,7 @@ void KVCacheCommon::RemotePathHashMd5(const std::string &remotePath)
     adios2sysMD5_Delete(md5);
 
     // from 0 to 31
-    m_RemotePathHash = std::string(hexDigest, 32);
+    result = std::string(hexDigest, 32);
 }
 };     // namespace kvcache
 };     // namespace adios2

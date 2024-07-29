@@ -23,9 +23,6 @@ namespace kvcache
 
 class KVCacheCommon
 {
-public:
-    std::string m_RemotePathHash = "";
-
 #ifdef ADIOS2_HAVE_KVCACHE
 private:
     redisContext *m_redisContext = nullptr;
@@ -51,7 +48,7 @@ public:
 
     void KeyPrefixExistence(const std::string &key_prefix, std::unordered_set<std::string> &keys);
 
-    void RemotePathHashMd5(const std::string &remotePath);
+    void RemotePathHashMd5(const std::string &remotePath, std::string &result);
 #else
 public:
     KVCacheCommon() = default;
@@ -62,7 +59,7 @@ public:
     void ExecuteBatch(const char *key, size_t mode, size_t size, void *data){};
     bool Exists(std::string key) { return false; };
     void KeyPrefixExistence(const std::string &key_prefix, std::unordered_set<std::string> &keys){};
-    void RemotePathHashMd5(const std::string &remotePath){};
+    void RemotePathHashMd5(const std::string &remotePath, std::string &result){};
 #endif /* ADIOS2_HAVE_KVCACHE */
 };
 }; // namespace kvcache
