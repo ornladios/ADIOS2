@@ -7,6 +7,7 @@ on:
 
 jobs:
   sync-script:
+    if: github.repository == 'ornladios/ADIOS2'
     name: Sync Script
     runs-on: ubuntu-20.04
     environment: sync-script
