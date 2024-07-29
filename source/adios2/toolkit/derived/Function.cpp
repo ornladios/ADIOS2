@@ -39,6 +39,33 @@ inline size_t returnIndex(size_t x, size_t y, size_t z, const size_t dims[3])
 }
 
 template <class T>
+T *ApplySin(const T *input, const size_t dataSize)
+{
+    T *sinValues = (T *)malloc(dataSize * sizeof(T));
+    for (size_t i = 0; i < dataSize; i++)
+        sinValues[i] = std::sin(*(input + i));
+    return sinValues;
+}
+
+template <class T>
+T *ApplyCos(const T *input, const size_t dataSize)
+{
+    T *cosValues = (T *)malloc(dataSize * sizeof(T));
+    for (size_t i = 0; i < dataSize; i++)
+        cosValues[i] = std::cos(*(input + i));
+    return cosValues;
+}
+
+template <class T>
+T *ApplyTan(const T *input, const size_t dataSize)
+{
+    T *tanValues = (T *)malloc(dataSize * sizeof(T));
+    for (size_t i = 0; i < dataSize; i++)
+        tanValues[i] = std::tan(*(input + i));
+    return tanValues;
+}
+
+template <class T>
 T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dims[3])
 {
     size_t dataSize = dims[0] * dims[1] * dims[2];
@@ -122,6 +149,60 @@ DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_subtract)
     helper::Throw<std::invalid_argument>("Derived", "Function", "SubtractFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData SinFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::SinFunc");
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+#define declare_type_sin(T)                                                                        \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *sinValues = detail::ApplySin<T>((T *)inputData[0].Data, dataSize);                      \
+        return DerivedData({(void *)sinValues, inputData[0].Start, inputData[0].Count});           \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sin)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "SinFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::CosFunc");
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+#define declare_type_cos(T)                                                                        \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *cosValues = detail::ApplyCos<T>((T *)inputData[0].Data, dataSize);                      \
+        return DerivedData({(void *)cosValues, inputData[0].Start, inputData[0].Count});           \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_cos)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "CosFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::TanFunc");
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+#define declare_type_tan(T)                                                                        \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *tanValues = detail::ApplyTan<T>((T *)inputData[0].Data, dataSize);                      \
+        return DerivedData({(void *)tanValues, inputData[0].Start, inputData[0].Count});           \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_tan)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "TanFunc",
                                          "Invalid variable types");
     return DerivedData();
 }

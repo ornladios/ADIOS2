@@ -20,6 +20,9 @@ enum ExpressionOperator
     OP_SUBTRACT,
     OP_SQRT,
     OP_POW,
+    OP_SIN,
+    OP_COS,
+    OP_TAN,
     OP_MAGN,
     OP_CURL
 };
