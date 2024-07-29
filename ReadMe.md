@@ -1,15 +1,8 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Documentation](https://readthedocs.org/projects/adios2/badge/?version=latest)](https://adios2.readthedocs.io/en/latest/?badge=latest)
-
-[![GitHub (pre-)release](https://img.shields.io/github/release/ornladios/adios2/all.svg)]()
-[![Spack Version](https://img.shields.io/spack/v/adios2.svg)](https://spack.readthedocs.io/en/latest/package_list.html#adios2)
-[![Conda Version](https://img.shields.io/conda/vn/conda-forge/adios2)](https://anaconda.org/conda-forge/adios2)
-[![PyPI version](https://badge.fury.io/py/adios2.svg)](https://badge.fury.io/py/adios2)
-
 [![Circle CI](https://circleci.com/gh/ornladios/ADIOS2.svg?style=shield)](https://circleci.com/gh/ornladios/ADIOS2)
-
-[![Coverity Scan Build Status](https://scan.coverity.com/projects/11116/badge.svg)](https://scan.coverity.com/projects/ornladios-adios2)
-
+[![GitHub release](https://img.shields.io/github/release/ornladios/adios2/all.svg)]()
+[![latest packaged version(s)](https://repology.org/badge/latest-versions/adios2.svg)](https://repology.org/project/adios2/versions) 
 
 # ADIOS2 : The Adaptable Input Output System version 2
 
@@ -50,30 +43,31 @@ If you find ADIOS2 useful, please cite our [SoftwareX paper](https://doi.org/10.
 
 ## Getting ADIOS2
 
+* From packages, please find packages information below at the packages section.
 * From source: [Install ADIOS2 documentation](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#).
-For a `cmake` configuration example see [scripts/runconf/runconf.sh](https://github.com/ornladios/ADIOS2/blob/master/scripts/runconf/runconf.sh)
-
-
-* Conda packages:
-* [https://anaconda.org/conda-forge/adios2](https://anaconda.org/conda-forge/adios2)
-
-
-* Spack: [adios2 package](https://spack.readthedocs.io/en/latest/package_list.html#adios2)
-
-
-* Docker images: under [scripts/docker](https://github.com/ornladios/ADIOS2/tree/master/scripts/docker)
-
-
-Once ADIOS2 is installed refer to:
-
-* [Linking ADIOS2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#linking-adios-2)
-
+  - For a `cmake` configuration example see [scripts/runconf/runconf.sh](https://github.com/ornladios/ADIOS2/blob/master/scripts/runconf/runconf.sh)
+  - Once ADIOS2 is installed refer to: [Linking ADIOS2](https://adios2.readthedocs.io/en/latest/setting_up/setting_up.html#linking-adios-2)
 
 ## Releases
 
 * Latest release: [v2.10.1](https://github.com/ornladios/ADIOS2/releases/tag/v2.10.1)
-
 * Previous releases: [https://github.com/ornladios/ADIOS2/releases](https://github.com/ornladios/ADIOS2/releases)
+
+## Packages
+
+| Platform            | Package                                                                                                                                                    |
+|---------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Summary             | [![latest packaged version(s)](https://repology.org/badge/latest-versions/adios2.svg)](https://repology.org/project/adios2/versions)                       |
+| Conda               | [![Conda Version](https://img.shields.io/conda/vn/conda-forge/adios2)](https://anaconda.org/conda-forge/adios2)                                            |
+| Spack               | [![Spack package](https://repology.org/badge/version-for-repo/spack/adios2.svg)](https://repology.org/project/adios2/versions)                             |
+| Homebrew            | [![Homebrew package](https://repology.org/badge/version-for-repo/homebrew/adios2.svg)](https://repology.org/project/adios2/versions)                       |
+| Ubuntu 24.04        | [![Ubuntu 24.04 package](https://repology.org/badge/version-for-repo/ubuntu_24_04/adios2.svg)](https://repology.org/project/adios2/versions)               |
+| Debian 13           | [![Debian 13 package](https://repology.org/badge/version-for-repo/debian_13/adios2.svg)](https://repology.org/project/adios2/versions)                     |
+| Debian Unstable     | [![Debian Unstable package](https://repology.org/badge/version-for-repo/debian_unstable/adios2.svg)](https://repology.org/project/adios2/versions)         |
+| OpenSUSE TumbleWeed | [![openSUSE Tumbleweed package](https://repology.org/badge/version-for-repo/opensuse_tumbleweed/adios2.svg)](https://repology.org/project/adios2/versions) |
+| OpenSUSE Leap 15.6  | [![openSUSE Leap 15.6 package](https://repology.org/badge/version-for-repo/opensuse_leap_15_6/adios2.svg)](https://repology.org/project/adios2/versions)   |
+| vcpkg               | [![Vcpkg package](https://repology.org/badge/version-for-repo/vcpkg/adios2.svg)](https://repology.org/project/adios2/versions)                             |
+| Dockerhub           | ![Docker Image Version](https://img.shields.io/docker/v/ornladios/adios2)                                                                                  |
 
 ## Community
 
