@@ -199,6 +199,43 @@ struct fi_cq_data_entry *cq_manual_progress_pop(struct cq_manual_progress *self)
     return res;
 }
 
+static void make_some_progress(struct cq_manual_progress *params, int timeout,
+                               struct fi_cq_data_entry *CQEntries, size_t batch_size)
+{
+    struct fi_cq_data_entry data_entry;
+    if (!CQEntries || batch_size == 0)
+    {
+        // use stack-allocated "buffer"
+        CQEntries = &data_entry;
+        batch_size = 1;
+    }
+    ssize_t rc = fi_cq_sread(params->cq_signal, (void *)CQEntries, batch_size, NULL, timeout);
+    if (rc < 1)
+    {
+        struct fi_cq_err_entry error = {.err = 0};
+        fi_cq_readerr(params->cq_signal, &error, 0);
+        if (error.err != -FI_SUCCESS)
+        {
+            params->Svcs->verbose(
+                params->Stream, DPCriticalVerbose,
+                "[PullSelection] no completion event (%d (%s - %s)).\n", rc, fi_strerror(error.err),
+                fi_cq_strerror(params->cq_signal, error.err, error.err_data, NULL, error.len));
+        }
+    }
+    else
+    {
+        for (size_t i = 0; i < rc; ++i)
+        {
+            struct cq_event_list *next_item = malloc(sizeof(struct cq_event_list));
+            struct fi_cq_data_entry *value = malloc(sizeof(struct fi_cq_data_entry));
+            memcpy(value, &CQEntries[i], sizeof(struct fi_cq_data_entry));
+            next_item->value = value;
+            next_item->next = NULL;
+            cq_manual_progress_push(params, next_item);
+        }
+    }
+}
+
 static void *make_progress(void *params_)
 {
     struct cq_manual_progress *params = (struct cq_manual_progress *)params_;
@@ -212,32 +249,7 @@ static void *make_progress(void *params_)
          * fi_cq_sread(). Some providers don't make progress in a timely fashion otherwise (e.g.
          * shm).
          */
-        ssize_t rc = fi_cq_sread(params->cq_signal, (void *)CQEntries, batch_size, NULL, -1);
-        if (rc < 1)
-        {
-            struct fi_cq_err_entry error = {.err = 0};
-            fi_cq_readerr(params->cq_signal, &error, 0);
-            if (error.err != -FI_SUCCESS)
-            {
-                params->Svcs->verbose(
-                    params->Stream, DPCriticalVerbose,
-                    "[PullSelection] no completion event (%d (%s - %s)).\n", rc,
-                    fi_strerror(error.err),
-                    fi_cq_strerror(params->cq_signal, error.err, error.err_data, NULL, error.len));
-            }
-        }
-        else
-        {
-            for (size_t i = 0; i < rc; ++i)
-            {
-                struct cq_event_list *next_item = malloc(sizeof(struct cq_event_list));
-                struct fi_cq_data_entry * value = malloc(sizeof(struct fi_cq_data_entry));
-                memcpy(value, &CQEntries[i], sizeof(struct fi_cq_data_entry));
-                next_item->value = value;
-                next_item->next = NULL;
-                cq_manual_progress_push(params, next_item);
-            }
-        }
+        make_some_progress(params, -1, CQEntries, batch_size);
     }
     return NULL;
 }
@@ -279,6 +291,22 @@ void cq_read(struct fabric_state *fabric, struct fi_cq_data_entry *CQEntry, CP_S
 {
     if (fabric->cq_manual_progress)
     {
+        if (fabric->pthread_id == 0)
+        {
+            // We're on the reader side. No progress thread was launched, but
+            // the fabric demands manual progress.
+            // We cannot directly call fi_cq_sread() now since it might have
+            // been called before at other places. There might be results
+            // in the queue.
+            if (!fabric->cq_manual_progress->cq_event_list_filled)
+            {
+                make_some_progress(fabric->cq_manual_progress, -1, NULL, 0);
+                if (!fabric->cq_manual_progress->cq_event_list_filled)
+                {
+                    Svcs->verbose(Stream, DPCriticalVerbose, "[cq_read] no completion event.");
+                }
+            }
+        }
         struct fi_cq_data_entry *res = cq_manual_progress_pop(fabric->cq_manual_progress);
         memcpy(CQEntry, res, sizeof(struct fi_cq_data_entry));
         free(res);
@@ -293,9 +321,8 @@ void cq_read(struct fabric_state *fabric, struct fi_cq_data_entry *CQEntry, CP_S
             if (error.err != -FI_SUCCESS)
             {
                 Svcs->verbose(
-                    Stream, DPCriticalVerbose,
-                    "[PullSelection] no completion event (%d (%s - %s)).\n", rc,
-                    fi_strerror(error.err),
+                    Stream, DPCriticalVerbose, "[cq_read] no completion event (%d (%s - %s)).\n",
+                    rc, fi_strerror(error.err),
                     fi_cq_strerror(fabric->cq_signal, error.err, error.err_data, NULL, error.len));
             }
         }
@@ -700,10 +727,13 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
         // so we give it some event.
         fi_cq_signal(fabric->cq_signal);
 
-        if (pthread_join(fabric->pthread_id, NULL) != 0)
+        if(fabric->pthread_id != 0)
         {
-            Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not join thread.\n");
-            return;
+            if (pthread_join(fabric->pthread_id, NULL) != 0)
+            {
+                Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not join thread.\n");
+                return;
+            }
         }
 
         pthread_mutex_destroy(&fabric->cq_manual_progress->cq_event_list_mutex);
@@ -1206,14 +1236,18 @@ static ProgressThread use_progress_thread()
 static int init_progress_thread(FabricState fabric, CP_Services Svcs, void *CP_Stream,
                                 int is_reader)
 {
+    int do_init_thread = 1;
     switch (use_progress_thread())
     {
     case ProgressThreadUnspecified:
         if (is_reader)
         {
-            // Reader does not make manual progress by default.
-            // It will make synchronous progress anyway upon waiting for data.
-            return EXIT_SUCCESS;
+            // Reader does not need to launch a thread for making progress as it
+            // will naturally arrive at points where it can make progress
+            // synchronously.
+            // In this case, just initiate the progress queue (struct cq_manual_progress)
+            // so the reader knows to make progress at those points.
+            do_init_thread = 0;
         }
         if (fabric->info->domain_attr->data_progress != FI_PROGRESS_MANUAL)
         {
@@ -1252,10 +1286,18 @@ static int init_progress_thread(FabricState fabric, CP_Services Svcs, void *CP_S
 
     fabric->cq_manual_progress = manual_progress;
 
-    if (pthread_create(&fabric->pthread_id, NULL, &make_progress, fabric->cq_manual_progress) != 0)
+    if (do_init_thread)
     {
-        Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not start thread.\n");
-        return EXIT_FAILURE;
+        if (pthread_create(&fabric->pthread_id, NULL, &make_progress, fabric->cq_manual_progress) !=
+            0)
+        {
+            Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not start thread.\n");
+            return EXIT_FAILURE;
+        }
+    }
+    else
+    {
+        fabric->pthread_id = 0;
     }
 
     return EXIT_SUCCESS;
@@ -1851,6 +1893,16 @@ static ssize_t PostRead(CP_Services Svcs, Rdma_RS_Stream RS_Stream, int Rank, lo
     {
         rc = fi_read(Fabric->signal, Buffer, Length, LocalDesc, SrcAddress, (uint64_t)Addr,
                      Info->Key, ret);
+        if (Fabric->cq_manual_progress && Fabric->pthread_id == 0)
+        {
+            /*
+             * Cannot make a blocking call here since maybe the fi_read() task
+             * above did not register, so there is nothing to wait for.
+             * Need to specify either a timeout or call this non-blockingly to
+             * ensure that this returns.
+             */
+            make_some_progress(Fabric->cq_manual_progress, 0, NULL, 0);
+        }
     } while (rc == -EAGAIN);
 
     if (rc != 0)
