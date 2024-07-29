@@ -626,6 +626,9 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
     }
 
     av_attr.type = FI_AV_MAP;
+    // The shm provider crashes in fi_cq_read() if specifying
+    // a count larger than 256 here.
+    // As this an optimization flag only, it seems safer to skip it here.
     if (strncmp(fabric->info->fabric_attr->prov_name, "shm", 4) != 0)
     {
         av_attr.count = DP_AV_DEF_SIZE;
