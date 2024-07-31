@@ -33,36 +33,27 @@ T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
     return outValues;
 }
 
+template <class T>
+T *ApplyOneToOneOnce(T *inputData, size_t dataSize, std::function<T(T)> compFct)
+{
+    T *outValues = (T *)malloc(dataSize * sizeof(T));
+    if (outValues == nullptr)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "ApplyOneToOneOnce",
+                                             "Error allocating memory for the derived variable");
+    }
+    memset(outValues, 0, dataSize * sizeof(T));
+    for (size_t i = 0; i < dataSize; i++)
+    {
+        T data = *(reinterpret_cast<T *>(inputData + i));
+        outValues[i] = compFct(data);
+    }
+    return outValues;
+}
+
 inline size_t returnIndex(size_t x, size_t y, size_t z, const size_t dims[3])
 {
     return z + y * dims[2] + x * dims[2] * dims[1];
-}
-
-template <class T>
-T *ApplySin(const T *input, const size_t dataSize)
-{
-    T *sinValues = (T *)malloc(dataSize * sizeof(T));
-    for (size_t i = 0; i < dataSize; i++)
-        sinValues[i] = std::sin(*(input + i));
-    return sinValues;
-}
-
-template <class T>
-T *ApplyCos(const T *input, const size_t dataSize)
-{
-    T *cosValues = (T *)malloc(dataSize * sizeof(T));
-    for (size_t i = 0; i < dataSize; i++)
-        cosValues[i] = std::cos(*(input + i));
-    return cosValues;
-}
-
-template <class T>
-T *ApplyTan(const T *input, const size_t dataSize)
-{
-    T *tanValues = (T *)malloc(dataSize * sizeof(T));
-    for (size_t i = 0; i < dataSize; i++)
-        tanValues[i] = std::tan(*(input + i));
-    return tanValues;
 }
 
 template <class T>
@@ -162,7 +153,8 @@ DerivedData SinFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_sin(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *sinValues = detail::ApplySin<T>((T *)inputData[0].Data, dataSize);                      \
+        T *sinValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,              \
+                                                    [](T a) { return std::sin(a); });              \
         return DerivedData({(void *)sinValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sin)
@@ -180,7 +172,8 @@ DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_cos(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *cosValues = detail::ApplyCos<T>((T *)inputData[0].Data, dataSize);                      \
+        T *cosValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,              \
+                                                    [](T a) { return std::cos(a); });              \
         return DerivedData({(void *)cosValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_cos)
@@ -198,11 +191,69 @@ DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_tan(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *tanValues = detail::ApplyTan<T>((T *)inputData[0].Data, dataSize);                      \
+        T *tanValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,              \
+                                                    [](T a) { return std::tan(a); });              \
         return DerivedData({(void *)tanValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_tan)
     helper::Throw<std::invalid_argument>("Derived", "Function", "TanFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData AsinFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::AsinFunc");
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+#define declare_type_asin(T)                                                                       \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *asinValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,             \
+                                                     [](T a) { return std::asin(a); });            \
+        return DerivedData({(void *)asinValues, inputData[0].Start, inputData[0].Count});          \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_asin)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "AsinFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData AcosFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::AcosFunc");
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+#define declare_type_acos(T)                                                                       \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *acosValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,             \
+                                                     [](T a) { return std::acos(a); });            \
+        return DerivedData({(void *)acosValues, inputData[0].Start, inputData[0].Count});          \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_acos)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "AcosFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::AtanFunc");
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+#define declare_type_atan(T)                                                                       \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *atanValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,             \
+                                                     [](T a) { return std::atan(a); });            \
+        return DerivedData({(void *)atanValues, inputData[0].Start, inputData[0].Count});          \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_atan)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "AtanFunc",
                                          "Invalid variable types");
     return DerivedData();
 }

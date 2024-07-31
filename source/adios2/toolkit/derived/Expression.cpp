@@ -31,6 +31,9 @@ const std::map<ExpressionOperator, OperatorProperty> op_property = {
     {ExpressionOperator::OP_SIN, {"SIN", false}},
     {ExpressionOperator::OP_COS, {"COS", false}},
     {ExpressionOperator::OP_TAN, {"TAN", false}},
+    {ExpressionOperator::OP_ASIN, {"ASIN", false}},
+    {ExpressionOperator::OP_ACOS, {"ACOS", false}},
+    {ExpressionOperator::OP_ATAN, {"ATAN", false}},
     {ExpressionOperator::OP_CURL, {"CURL", false}},
     {ExpressionOperator::OP_MAGN, {"MAGNITUDE", false}}};
 
@@ -38,15 +41,16 @@ const std::map<std::string, ExpressionOperator> string_to_op = {
     {"ALIAS", ExpressionOperator::OP_ALIAS}, /* Parser-use only */
     {"PATH", ExpressionOperator::OP_PATH},   /* Parser-use only */
     {"NUM", ExpressionOperator::OP_NUM},     /* Parser-use only */
-    {"INDEX", ExpressionOperator::OP_INDEX},   {"+", ExpressionOperator::OP_ADD},
-    {"add", ExpressionOperator::OP_ADD},       {"ADD", ExpressionOperator::OP_ADD},
-    {"-", ExpressionOperator::OP_SUBTRACT},    {"SUBTRACT", ExpressionOperator::OP_SUBTRACT},
-    {"SQRT", ExpressionOperator::OP_SQRT},     {"sqrt", ExpressionOperator::OP_SQRT},
-    {"POW", ExpressionOperator::OP_POW},       {"^", ExpressionOperator::OP_POW},
-    {"sin", ExpressionOperator::OP_SIN},       {"cos", ExpressionOperator::OP_COS},
-    {"tan", ExpressionOperator::OP_TAN},       {"CURL", ExpressionOperator::OP_CURL},
-    {"curl", ExpressionOperator::OP_CURL},     {"MAGNITUDE", ExpressionOperator::OP_MAGN},
-    {"magnitude", ExpressionOperator::OP_MAGN}};
+    {"INDEX", ExpressionOperator::OP_INDEX},    {"+", ExpressionOperator::OP_ADD},
+    {"add", ExpressionOperator::OP_ADD},        {"ADD", ExpressionOperator::OP_ADD},
+    {"-", ExpressionOperator::OP_SUBTRACT},     {"SUBTRACT", ExpressionOperator::OP_SUBTRACT},
+    {"SQRT", ExpressionOperator::OP_SQRT},      {"sqrt", ExpressionOperator::OP_SQRT},
+    {"POW", ExpressionOperator::OP_POW},        {"^", ExpressionOperator::OP_POW},
+    {"sin", ExpressionOperator::OP_SIN},        {"cos", ExpressionOperator::OP_COS},
+    {"tan", ExpressionOperator::OP_TAN},        {"asin", ExpressionOperator::OP_ASIN},
+    {"acos", ExpressionOperator::OP_ACOS},      {"atan", ExpressionOperator::OP_ATAN},
+    {"CURL", ExpressionOperator::OP_CURL},      {"curl", ExpressionOperator::OP_CURL},
+    {"MAGNITUDE", ExpressionOperator::OP_MAGN}, {"magnitude", ExpressionOperator::OP_MAGN}};
 
 inline std::string get_op_name(ExpressionOperator op) { return op_property.at(op).name; }
 
@@ -133,6 +137,9 @@ std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
     {adios2::detail::ExpressionOperator::OP_SIN, {SinFunc, SameDimsFunc}},
     {adios2::detail::ExpressionOperator::OP_COS, {CosFunc, SameDimsFunc}},
     {adios2::detail::ExpressionOperator::OP_TAN, {TanFunc, SameDimsFunc}},
+    {adios2::detail::ExpressionOperator::OP_ASIN, {AsinFunc, SameDimsFunc}},
+    {adios2::detail::ExpressionOperator::OP_ACOS, {AcosFunc, SameDimsFunc}},
+    {adios2::detail::ExpressionOperator::OP_ATAN, {AtanFunc, SameDimsFunc}},
     {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc}},
     {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc}}};
 
