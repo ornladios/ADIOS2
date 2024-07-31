@@ -334,7 +334,27 @@ get_qual_hostname(char *buf, int len, attr_list attrs,
     trace_func(trace_data, "CM<IP_CONFIG> - Tentative Qualified hostname %s", buf);
     if (memchr(buf, '.', strlen(buf)) == NULL) {
 	/* useless hostname if it's not fully qualified */
-	buf[0] = 0;
+	struct addrinfo hints, *info, *p;
+	int gai_result;
+
+	char hostname[1024];
+	hostname[1023] = '\0';
+	gethostname(hostname, 1023);
+
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_UNSPEC; /*either IPV4 or IPV6*/
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_CANONNAME;
+
+	if ((gai_result = getaddrinfo(hostname, NULL, &hints, &info)) != 0) {
+	    fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(gai_result));
+	}
+
+	for(p = info; p != NULL; p = p->ai_next) {
+	    strcpy(buf, p->ai_canonname);
+	}
+
+	freeaddrinfo(info);
     }
     if ((buf[0] != 0) && ((host = gethostbyname(buf)) == NULL)) {
 	/* useless hostname if we can't translate it */
