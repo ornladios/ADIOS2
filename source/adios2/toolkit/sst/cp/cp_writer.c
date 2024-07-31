@@ -1296,9 +1296,6 @@ SstStream SstWriterOpen(const char *Name, SstParams Params, SMPI_Comm comm)
 
     FinalizeCPInfo(Stream->CPInfo, Stream->DP_Interface);
 
-    int port;
-    char *ContactStr = CP_GetContactString(Stream, NULL);
-
     if (Stream->RendezvousReaderCount > 0)
     {
         Stream->FirstReaderCondition = CMCondition_get(Stream->CPInfo->SharedCM->cm, NULL);
