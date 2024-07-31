@@ -16,4 +16,3 @@ if($Env:GH_YML_MATRIX_PARALLEL -eq "msmpi")
   conda.bat install -n adios2 -c conda-forge -y "msmpi" "mpi4py"
   Write-Host "::endgroup::"
 }
-
