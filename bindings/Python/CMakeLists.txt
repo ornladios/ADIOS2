@@ -3,6 +3,7 @@ Python_add_library(adios2_py MODULE
   py11ADIOS.cpp
   py11IO.cpp
   py11Variable.cpp
+  py11VariableDerived.cpp
   py11Attribute.cpp
   py11Engine.cpp
   py11Operator.cpp

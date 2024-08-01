@@ -5,7 +5,7 @@
 
 
 class Variable:
-    """High level representation of the Attribute class in the adios2.bindings"""
+    """High level representation of the Variable class in the adios2.bindings"""
 
     def __init__(self, implementation):
         self.impl = implementation

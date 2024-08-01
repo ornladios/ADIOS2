@@ -19,6 +19,7 @@
 #include "py11Attribute.h"
 #include "py11Engine.h"
 #include "py11Variable.h"
+#include "py11VariableDerived.h"
 #include "py11types.h"
 
 namespace adios2
@@ -61,6 +62,10 @@ public:
     Variable DefineVariable(const std::string &name, const pybind11::object &value,
                             const Dims &shape, const Dims &start, const Dims &count,
                             const bool isConstantDims);
+
+    VariableDerived
+    DefineDerivedVariable(const std::string &name, const std::string &expression,
+                          const DerivedVarType varType = DerivedVarType::MetadataOnly);
 
     Variable InquireVariable(const std::string &name);
 
