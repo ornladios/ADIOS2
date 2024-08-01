@@ -577,6 +577,7 @@ extern void FFSFreeMarshalData(SstStream Stream);
 extern void getPeerArrays(int MySize, int MyRank, int PeerSize, int **forwardArray,
                           int **reverseArray);
 extern void AddToLastCallFreeList(void *Block);
+extern CMConnection Tunneling_get_conn(CManager cm, attr_list attrs);
 
 enum VerbosityLevel
 {
@@ -602,3 +603,4 @@ extern CPNetworkInfoFunc globalNetinfoCallback;
 extern void SSTSetNetworkCallback(CPNetworkInfoFunc callback);
 extern void DoStreamSummary(SstStream Stream);
 #define SSIZE_T_MAX (9223372036854775807)
+extern int IP_PORT_ATOM;
