@@ -3,6 +3,7 @@ Python_add_library(adios2_py MODULE
   py11ADIOS.cpp
   py11IO.cpp
   py11Variable.cpp
+  py11VariableDerived.cpp
   py11Attribute.cpp
   py11Engine.cpp
   py11Operator.cpp
@@ -29,20 +30,31 @@ target_link_libraries(adios2_py PRIVATE
   adios2::thirdparty::pybind11
   ${maybe_mpi4py}
   )
+
 configure_file(
   ${CMAKE_CURRENT_SOURCE_DIR}/__init__.py.in
   ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/bindings/__init__.py
   @ONLY
 )
 
+# usercustomize.py will be read by python before everything else.
+# This is needed for Windows since Windows requires to point Python to the dll
+# locations of ADIOS2 during our unit tests execution.
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/usercustomize.py.in
+  ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/usercustomize.py
+  @ONLY
+)
+
+# We need the $<0:> for the Windows python unittests to work
 set_target_properties(adios2_py PROPERTIES
   CXX_VISIBILITY_PRESET hidden
   OUTPUT_NAME adios2_bindings${ADIOS2_LIBRARY_SUFFIX}
-  ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/bindings
-  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/bindings
-  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/bindings
-  PDB_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/bindings
-  COMPILE_PDB_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/bindings
+  ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/bindings$<0:>
+  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/bindings$<0:>
+  RUNTIME_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/bindings$<0:>
+  PDB_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/bindings$<0:>
+  COMPILE_PDB_OUTPUT_DIRECTORY ${CMAKE_PYTHON_OUTPUT_DIRECTORY}/adios2/bindings$<0:>
 )
 
 set(install_location "${CMAKE_INSTALL_PYTHONDIR}/adios2")

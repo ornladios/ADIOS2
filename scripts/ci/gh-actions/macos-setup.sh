@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+set -xe
 
 echo "Setting up default XCode version"
 if [ -z "${GH_YML_MATRIX_COMPILER}" ]
@@ -15,40 +15,39 @@ then
   exit 2
 fi
 sudo xcode-select --switch "/Applications/Xcode_${XCODE_VER}.app"
-
-echo "Installing CMake"
-
-{
-  readonly version="3.24.2"
-  readonly checksum="efb11a78c064dd7c54a50b8da247254d252112c402c6e48cb7db3f9c84a4e5ad"
-  readonly pkg="cmake-${version}-macos-universal.tar.gz"
-  echo "${checksum}  ${pkg}" > cmake.sha256sum
-
-  curl -OL "https://github.com/Kitware/CMake/releases/download/v${version}/${pkg}"
-  shasum -a 256 --check cmake.sha256sum
-
-  sudo tar -xvzf ${pkg} --strip-components 1 -C /Applications/
-}
-
-
-echo "Installing Ninja"
-brew install ninja
-
-echo "Installing GCC"
-brew install gcc
 sudo ln -v -s "$(which gfortran-11)" /usr/local/bin/gfortran
 
-echo "Installing blosc compression"
-brew install c-blosc
+echo "Installing Miniconda"
 
-echo "Installing python3"
-brew install python numpy
-
-echo "Installing ccache"
-brew install ccache
-
-if [[ "$GH_YML_JOBNAME" =~ -ompi ]]
+if [ "${RUNNER_ARCH}" = "X64" ]
 then
-  echo "Installing OpenMPI"
-  brew install openmpi mpi4py
+  readonly checksum="6d7c1cc138adfc4bb2ccbb8a22eb8e9eb13a366b6af0d63245b643e6c3a3c708"
+  readonly pkg="Miniconda3-py310_24.5.0-0-MacOSX-x86_64.sh"
+elif [ "${RUNNER_ARCH}" = "ARM64" ]
+then
+  readonly checksum="e422602aa19140c600b5889e5b41a0d7187640107ea82fcb5da857dd25330148"
+  readonly pkg="Miniconda3-py310_24.5.0-0-MacOSX-arm64.sh"
+else
+  echo "Error: unknown platform: ${RUNNER_ARCH} "
+  exit 3
 fi
+echo "${checksum}  ${pkg}" > miniconda.sha256sum
+
+curl -OL "https://repo.anaconda.com/miniconda/${pkg}"
+shasum -a 256 --check miniconda.sha256sum
+bash "./${pkg}" -b
+
+# shellcheck source=/dev/null
+source "/Users/runner/miniconda3/bin/activate"
+
+# Canonical installation of Miniconda
+conda init --all
+conda update --all -y
+conda config --add channels conda-forge
+conda config --set channel_priority strict
+
+conda env create --verbose -f "gha/scripts/ci/gh-actions/conda-env-macos.yml"
+
+conda list -n adios2
+conda info --verbose
+echo 'conda activate adios2' >> /Users/runner/.bash_profile

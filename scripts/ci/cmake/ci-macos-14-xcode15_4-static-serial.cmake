@@ -46,7 +46,8 @@ set(ENV{MACOSX_DEPLOYMENT_TARGET} "14.5")
 set(CTEST_CMAKE_GENERATOR "Ninja")
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")
 set(CTEST_TEST_ARGS
-  # Unclear why these tests currently die.  Disabling until it can be addressed.
-  EXCLUDE "Install.Make.*"
+  # Install.Make ticket: https://github.com/ornladios/ADIOS2/issues/4272
+  # DataMan tickets: https://github.com/ornladios/ADIOS2/issues/4273
+  EXCLUDE "Install.Make|Test.Engine.DataManSingleValues|Test.Engine.DataMan1xN.Serial"
 )
 include(${CMAKE_CURRENT_LIST_DIR}/ci-common.cmake)

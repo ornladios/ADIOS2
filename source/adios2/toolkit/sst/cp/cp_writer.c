@@ -211,6 +211,7 @@ static void writeContactInfoScreen(const char *Name, SstStream Stream, attr_list
             "available to the reader.\n",
             Name);
     fprintf(stdout, "\t%s\n", Contact);
+    fflush(stdout);
     free(Contact);
 }
 
@@ -584,8 +585,8 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize, CP_ReaderInitInfo 
             if (!reader->Connections[peer].CMconn)
             {
                 reader->Connections[peer].CMconn =
-                    CMget_conn(reader->ParentStream->CPInfo->SharedCM->cm,
-                               reader->Connections[peer].ContactList);
+                    Tunneling_get_conn(reader->ParentStream->CPInfo->SharedCM->cm,
+                                       reader->Connections[peer].ContactList);
             }
 
             if (!reader->Connections[peer].CMconn)
@@ -633,7 +634,7 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize, CP_ReaderInitInfo 
             }
             if (reader->ParentStream->ConnectionUsleepMultiplier != 0)
                 usleep(WriterRank * reader->ParentStream->ConnectionUsleepMultiplier);
-            reader->Connections[peer].CMconn = CMget_conn(
+            reader->Connections[peer].CMconn = Tunneling_get_conn(
                 reader->ParentStream->CPInfo->SharedCM->cm, reader->Connections[peer].ContactList);
 
             if (!reader->Connections[peer].CMconn)
@@ -663,7 +664,7 @@ static int initWSReader(WS_ReaderInfo reader, int ReaderSize, CP_ReaderInitInfo 
         {
             if (!reader->Connections[0].CMconn)
             {
-                reader->Connections[0].CMconn = CMget_conn(
+                reader->Connections[0].CMconn = Tunneling_get_conn(
                     reader->ParentStream->CPInfo->SharedCM->cm, reader->Connections[0].ContactList);
             }
             if (!reader->Connections[0].CMconn)

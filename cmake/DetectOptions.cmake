@@ -609,16 +609,30 @@ endif()
 # KVCache
 if(ADIOS2_USE_KVCACHE STREQUAL AUTO)
     find_package(hiredis QUIET)
-    if (hiredis_FOUND)
-      message(STATUS "hiredis found. Turn on KVCache")
-      set(ADIOS2_HAVE_KVCACHE TRUE)
-    endif()
 elseif(ADIOS2_USE_KVCACHE)
     find_package(hiredis REQUIRED)
-    if (hiredis_FOUND)
-      message(STATUS "hiredis found. Turn on KVCache")
-      set(ADIOS2_HAVE_KVCACHE TRUE)
-    endif()
+endif()
+if (hiredis_FOUND)
+  message(STATUS "hiredis found. Turn on KVCache")
+  set(ADIOS2_HAVE_KVCACHE TRUE)
+  FIND_PROGRAM(REDIS_SERVER_BINARY redis-server
+    HINTS
+    ${REDIS_DIR}
+    $ENV{REDIS_DIR}
+    /usr
+    /opt/redis
+    PATH_SUFFIXES src
+  )
+  message(STATUS "redis server binary is ${REDIS_SERVER_BINARY}")
+  FIND_PROGRAM(REDIS_CLI_BINARY redis-cli
+    HINTS
+    ${REDIS_DIR}
+    $ENV{REDIS_DIR}
+    /usr
+    /opt/redis
+    PATH_SUFFIXES src
+  )
+  message(STATUS "redis cli binary is ${REDIS_CLI_BINARY}")
 endif()
 
 # Multithreading

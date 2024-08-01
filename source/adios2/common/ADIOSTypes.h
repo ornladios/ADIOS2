@@ -33,7 +33,6 @@
 namespace adios2
 {
 
-#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
 /** Type of derived variables */
 enum class DerivedVarType
 {
@@ -41,7 +40,6 @@ enum class DerivedVarType
     ExpressionString, ///< Store only the expression string
     StoreData         ///< Store data and metadata
 };
-#endif
 
 /** Memory space for the user provided buffers */
 enum class MemorySpace

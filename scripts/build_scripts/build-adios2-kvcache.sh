@@ -27,28 +27,30 @@ fi
 
 build_cache() {
     # redis - in-memory data structure store
-    redis_dir="${SW_DIR}"/redis-7.2.3
-    if [ ! -d "${redis_dir}" ]
+    REDIS_DIR="${SW_DIR}"/redis-7.2.3/
+    if [ ! -d "${REDIS_DIR}" ]
     then
         cd "${SW_DIR}" || exit
         curl -L -o redis-7.2.3.tar.gz https://github.com/redis/redis/archive/refs/tags/7.2.3.tar.gz
         tar -xzf redis-7.2.3.tar.gz
         rm redis-7.2.3.tar.gz
-        cd "${redis_dir}" || exit
+        cd "${REDIS_DIR}" || exit
         # cannot accleerate by 'make -j8'. It will cause error.
         make
 
         # hiredis - C client library to connect Redis server
-        cd "${redis_dir}"/deps/hiredis || exit
+        cd "${REDIS_DIR}"/deps/hiredis || exit
         mkdir build && cd build || exit
         cmake .. -DCMAKE_INSTALL_PREFIX="${SW_DIR}"/hiredis
         make -j32
         make install
     fi
+    export REDIS_DIR="${REDIS_DIR}"
 
     cd "${BUILD_DIR}" || exit
     cmake .. -DADIOS2_USE_KVCACHE=ON \
             -DADIOS2_USE_Python=ON \
+            -DBUILD_TESTING=ON \
             -DCMAKE_PREFIX_PATH="${SW_DIR}/hiredis" \
             -DCMAKE_INSTALL_PREFIX="${SW_DIR}"/adios2
 

@@ -65,7 +65,7 @@ jobs:
           ls -la *-changed-files.txt
           NUM_CHANGES=$(wc -l < filtered-changed-files.txt)
           echo "Number of files changed (filtered): ${NUM_CHANGES}"
-          echo "::set-output name=num_code_changes::${NUM_CHANGES}"
+          echo "num_code_changes=${NUM_CHANGES}" >> $GITHUB_OUTPUT
 
 #######################################
 # Formatting jobs
@@ -176,7 +176,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
       - name: Restore cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         id: restore-cache
         with:
           path: .ccache
@@ -196,7 +196,7 @@ jobs:
       - name: Print ccache statistics
         run: ccache -s | tee $GITHUB_STEP_SUMMARY
       - name: Save cache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
         id: save-cache
         with:
@@ -241,7 +241,7 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
       - name: Restore cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         id: restore-cache
         with:
           path: .ccache
@@ -261,7 +261,7 @@ jobs:
       - name: Print ccache statistics
         run: ccache -s
       - name: Save cache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
         id: save-cache
         with:
@@ -276,30 +276,37 @@ jobs:
 
     runs-on: ${{ matrix.image }}
     env:
-      GH_YML_JOBNAME: ${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.shared }}-${{ matrix.parallel }}
-      GH_YML_BASE_OS: macOS
-      GH_YML_MATRIX_OS: ${{ matrix.image }}
-      GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
-      GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
+      # Only way to source a file in a non interactive/non login shell.
+      BASH_ENV: "/Users/runner/.bash_profile"
       CCACHE_BASEDIR: "${GITHUB_WORKSPACE}"
-      CCACHE_DIR: "${GITHUB_WORKSPACE}/.ccache"
-      CCACHE_COMPRESS: true
       CCACHE_COMPRESSLEVEL: 6
+      CCACHE_COMPRESS: true
+      CCACHE_DIR: "${GITHUB_WORKSPACE}/.ccache"
+      GH_YML_BASE_OS: macOS
+      GH_YML_JOBNAME: ${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.shared }}-${{ matrix.parallel }}
+      GH_YML_MATRIX_ARCH : ${{ matrix.arch }}
+      GH_YML_MATRIX_COMPILER: ${{ matrix.compiler }}
+      GH_YML_MATRIX_OS: ${{ matrix.image }}
+      GH_YML_MATRIX_PARALLEL: ${{ matrix.parallel }}
 
     strategy:
       fail-fast: false
       matrix:
         image: [macos-13, macos-14]
-        shared: [static, shared]
+        shared: [shared, static]
         include:
-          - parallel: serial
           - image: macos-13
+            arch: x64
             compiler: xcode14_2
           - image: macos-14
+            arch: arm64
             compiler: xcode15_4
+          - parallel: serial
         exclude:
           - image: macos-13
             shared: static
+
+    name: macos (${{ matrix.image }}, ${{ matrix.compiler}}, ${{ matrix.arch }}, ${{ matrix.shared }}, ${{ matrix.parallel }})
 
     steps:
       - uses: actions/checkout@v4
@@ -312,7 +319,7 @@ jobs:
       - name: Setup
         run: gha/scripts/ci/gh-actions/macos-setup.sh
       - name: Restore cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         id: restore-cache
         with:
           path: .ccache
@@ -330,7 +337,7 @@ jobs:
       - name: Print ccache statistics
         run: ccache -s
       - name: Save cache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
         id: save-cache
         with:
@@ -356,7 +363,7 @@ jobs:
       matrix:
         os: [win2019, win2022]
         shared: [shared]
-        parallel: [serial, msmpi]
+        parallel: [msmpi]
         include:
           - os: win2019
             image: windows-2019
@@ -364,6 +371,10 @@ jobs:
           - os: win2022
             image: windows-2022
             compiler: vs2022
+          - os: win2022
+            image: windows-2022
+            compiler: vs2022
+            parallel: serial
           - os: win2022
             image: windows-2022
             shared: static
@@ -433,7 +444,7 @@ jobs:
             docker save -o ci-docker.tar ornladios/adios2:ci-tmp
             ls -lah ci-docker.tar
       - name: Upload
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           retention-days: 1
           name: ci-docker ${{ matrix.baseos }} ${{ github.sha }}
@@ -490,7 +501,7 @@ jobs:
           ref: ${{ matrix.ref }}
           path: source
       - name: Download CI docker image
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: ci-docker ubuntu-bionic ${{ github.sha }}
       - name: Initialize containers
@@ -550,7 +561,7 @@ jobs:
         ref: ${{ github.event.pull_request.head.sha }}
         path: source
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
         config: |
@@ -567,7 +578,7 @@ jobs:
     - name: Build
       run: gha/scripts/ci/gh-actions/run.sh build
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{matrix.language}}"
 

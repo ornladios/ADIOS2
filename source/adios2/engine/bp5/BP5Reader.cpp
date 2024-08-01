@@ -316,6 +316,10 @@ void BP5Reader::PerformGets()
         if (getenv("useKVCache"))
         {
             m_KVCache.OpenConnection();
+            if (m_Fingerprint.empty())
+            {
+                m_KVCache.RemotePathHashMd5(RemoteName, m_Fingerprint);
+            }
         }
 #endif
         if (m_Remote == nullptr)
@@ -389,8 +393,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
         ReqInfo.TypeSize = helper::GetDataTypeSize(varType);
 
         kvcache::QueryBox targetBox(Req.Start, Req.Count);
-        std::string keyPrefix =
-            Req.VarName + std::to_string(Req.RelStep) + std::to_string(Req.BlockID);
+        std::string keyPrefix = m_Fingerprint + "|" + Req.VarName + std::to_string(Req.RelStep);
         std::string targetKey = keyPrefix + targetBox.toString();
 
         // Exact Match: check if targetKey exists
@@ -400,6 +403,8 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
             ReqInfo.DirectCopy = true;
             ReqInfo.ReqSize = targetBox.size();
             cachedRequestsInfo.push_back(ReqInfo);
+
+            std::cout << "Found " << targetKey << " in cache" << std::endl;
         }
         else
         {

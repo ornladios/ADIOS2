@@ -6,6 +6,12 @@
 #include <string.h>
 #include <sys/timeb.h>
 #include <time.h>
+#define getpid() _getpid()
+#define read(fd, buf, len) recv(fd, (buf), (len), 0)
+#define write(fd, buf, len) send(fd, buf, (len), 0)
+#define close(x) closesocket(x)
+#define INST_ADDRSTRLEN 50
+
 #define pthread_mutex_t SRWLOCK
 #define pthread_thread_t HANDLE
 #define pthread_thread_id DWORD
