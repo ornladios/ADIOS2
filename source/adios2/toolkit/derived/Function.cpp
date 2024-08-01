@@ -13,7 +13,7 @@ namespace detail
 {
 template <class T, class Iterator>
 T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
-                 std::function<T(T, T)> compFct, T identity = (T)0)
+                 std::function<T(T, T)> compFct, T initVal = (T)0)
 {
     T *outValues = (T *)malloc(dataSize * sizeof(T));
     if (outValues == nullptr)
@@ -21,14 +21,14 @@ T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
         helper::Throw<std::invalid_argument>("Derived", "Function", "ApplyOneToOne",
                                              "Error allocating memory for the derived variable");
     }
-    if (identity == (T)0)
+    if (initVal == (T)0)
     {
         memset(outValues, 0, dataSize * sizeof(T));
     }
     else
     {
         for (size_t i = 0; i < dataSize; i++)
-            outValues[i] = identity;
+            outValues[i] = initVal;
     }
     for (Iterator variable = inputBegin; variable != inputEnd; ++variable)
     {
