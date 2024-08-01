@@ -525,33 +525,6 @@ char	*strtok(char *s1, const char *s2);\n\
 int	 strxfrm(char *s1, const char *s2, int size);\n\
 ";
 
-static cod_extern_entry strings_externs[] = 
-{
-#ifndef _MSC_VER
-    {"bcmp", (void*)(intptr_t)bcmp},
-    {"bcopy", (void*)(intptr_t)bcopy},
-    {"bzero", (void*)(intptr_t)bzero},
-    {"index", (void*)(intptr_t)index},
-    {"rindex", (void*)(intptr_t)rindex},
-    {"ffs", (void*)(intptr_t)ffs},
-    {"strcasecmp", (void*)(intptr_t)strcasecmp},
-    {"strncasecmp", (void*)(intptr_t)strncasecmp},
-#endif
-    {NULL, NULL}
-};
-
-static char strings_extern_string[] = "\n\
-int	 bcmp(const void *m1, const void *m2, int size);\n\
-void	 bcopy(const void *m1, void *m2, int size);\n\
-void	 bzero(void *m, int size);\n\
-char	*index(const char *s1, int c);\n\
-char	*rindex(const char *s1, int c);\n\
-int	 ffs(int);\n\
-int	 strcasecmp(const char *s1, const char *s2);\n\
-int	 strncasecmp(const char *s1, const char *s2, int size);\n\
-";
-
-
 #include <math.h>
 
 static cod_extern_entry math_externs[] = 
@@ -694,9 +667,6 @@ cod_process_include(char *name, cod_parse_context context)
     if (strncmp(name, "string", char_count) == 0) {
 	cod_assoc_externs(context, string_externs);
 	cod_parse_for_context(string_extern_string, context);
-    } else if (strncmp(name, "strings", char_count) == 0) {
-	cod_assoc_externs(context, strings_externs);
-	cod_parse_for_context(strings_extern_string, context);
     } else if (strncmp(name, "math", char_count) == 0) {
 	dlload_externs("libm", math_externs);
 	cod_assoc_externs(context, math_externs);
