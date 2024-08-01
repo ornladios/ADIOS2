@@ -41,27 +41,44 @@ T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
     return outValues;
 }
 
+template <class T>
+T *ApplyOneToOneOnce(T *inputData, size_t dataSize, std::function<T(T)> compFct)
+{
+    T *outValues = (T *)malloc(dataSize * sizeof(T));
+    if (outValues == nullptr)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "ApplyOneToOneOnce",
+                                             "Error allocating memory for the derived variable");
+    }
+    for (size_t i = 0; i < dataSize; i++)
+    {
+        T data = *(reinterpret_cast<T *>(inputData + i));
+        outValues[i] = compFct(data);
+    }
+    return outValues;
+}
+
+template <class T>
+T *ApplyOneToOneOnce(T *inputData1, T *inputData2, size_t dataSize, std::function<T(T, T)> compFct)
+{
+    T *outValues = (T *)malloc(dataSize * sizeof(T));
+    if (outValues == nullptr)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "ApplyOneToOneOnce",
+                                             "Error allocating memory for the derived variable");
+    }
+    for (size_t i = 0; i < dataSize; i++)
+    {
+        T data1 = *(reinterpret_cast<T *>(inputData1 + i));
+        T data2 = *(reinterpret_cast<T *>(inputData2 + i));
+        outValues[i] = compFct(data1, data2);
+    }
+    return outValues;
+}
+
 inline size_t returnIndex(size_t x, size_t y, size_t z, const size_t dims[3])
 {
     return z + y * dims[2] + x * dims[2] * dims[1];
-}
-
-template <class T>
-T *ApplyPow(const T *base, const T *exponent, const size_t dataSize)
-{
-    T *powValues = (T *)malloc(dataSize * sizeof(T));
-    for (size_t i = 0; i < dataSize; i++)
-        powValues[i] = std::pow(*(base + i), *(exponent + i));
-    return powValues;
-}
-
-template <class T>
-T *ApplySqrt(const T *input, const size_t dataSize)
-{
-    T *sqrtValues = (T *)malloc(dataSize * sizeof(T));
-    for (size_t i = 0; i < dataSize; i++)
-        sqrtValues[i] = std::sqrt(*(input + i));
-    return sqrtValues;
 }
 
 template <class T>
@@ -161,9 +178,8 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_mult(T)                                                                       \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *multValues = detail::ApplyOneToOne<T>(                                                  \
-            inputData.begin() + 1, inputData.end(), dataSize, [](T a, T b) { return a * b; },      \
-            (T)1);                                                                                 \
+        T *multValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(), dataSize, \
+                                                 [](T a, T b) { return a * b; }, (T)1);            \
         for (size_t i = 0; i < dataSize; i++)                                                      \
             multValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) * multValues[i];       \
         return DerivedData({(void *)multValues, inputData[0].Start, inputData[0].Count});          \
@@ -183,9 +199,8 @@ DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_div(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *divValues = detail::ApplyOneToOne<T>(                                                   \
-            inputData.begin() + 1, inputData.end(), dataSize, [](T a, T b) { return a / b; },      \
-            (T)1);                                                                                 \
+        T *divValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(), dataSize,  \
+                                                [](T a, T b) { return a / b; }, (T)1);             \
         for (size_t i = 0; i < dataSize; i++)                                                      \
             divValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) * divValues[i];         \
         return DerivedData({(void *)divValues, inputData[0].Start, inputData[0].Count});           \
@@ -199,13 +214,19 @@ DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
 DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::SqrtFunc");
+    if (inputData.size() != 1)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "SqrtFunc",
+                                             "Invalid number of arguments passed to SqrtFunc");
+    }
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
 
 #define declare_type_sqrt(T)                                                                       \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *sqrtValues = detail::ApplySqrt<T>((T *)inputData[0].Data, dataSize);                    \
+        T *sqrtValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,             \
+                                                     [](T a) { return sqrt(a); });                 \
         return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});          \
     }
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_sqrt)
@@ -217,6 +238,11 @@ DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
 DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::PowFunc");
+    if (inputData.size() != 2)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "SqrtFunc",
+                                             "Invalid number of arguments passed to SqrtFunc");
+    }
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
 #define declare_type_pow(T)                                                                        \
@@ -224,7 +250,8 @@ DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
     {                                                                                              \
         T *base = (T *)inputData[0].Data;                                                          \
         T *exponent = (T *)inputData[1].Data;                                                      \
-        T *powValues = detail::ApplyPow(base, exponent, dataSize);                                 \
+        T *powValues = detail::ApplyOneToOneOnce<T>(base, exponent, dataSize,                      \
+                                                    [](T a, T b) { return pow(a, b); });           \
         return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_pow)
