@@ -42,7 +42,6 @@ T *ApplyOneToOneOnce(T *inputData, size_t dataSize, std::function<T(T)> compFct)
         helper::Throw<std::invalid_argument>("Derived", "Function", "ApplyOneToOneOnce",
                                              "Error allocating memory for the derived variable");
     }
-    memset(outValues, 0, dataSize * sizeof(T));
     for (size_t i = 0; i < dataSize; i++)
     {
         T data = *(reinterpret_cast<T *>(inputData + i));
