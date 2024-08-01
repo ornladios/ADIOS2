@@ -37,16 +37,17 @@ const std::map<std::string, ExpressionOperator> string_to_op = {
     {"ALIAS", ExpressionOperator::OP_ALIAS}, /* Parser-use only */
     {"PATH", ExpressionOperator::OP_PATH},   /* Parser-use only */
     {"NUM", ExpressionOperator::OP_NUM},     /* Parser-use only */
-    {"INDEX", ExpressionOperator::OP_INDEX},    {"+", ExpressionOperator::OP_ADD},
-    {"add", ExpressionOperator::OP_ADD},        {"ADD", ExpressionOperator::OP_ADD},
-    {"-", ExpressionOperator::OP_SUBTRACT},     {"SUBTRACT", ExpressionOperator::OP_SUBTRACT},
-    {"/", ExpressionOperator::OP_DIV},          {"divide", ExpressionOperator::OP_DIV},
-    {"DIVIDE", ExpressionOperator::OP_DIV},     {"*", ExpressionOperator::OP_MULT},
-    {"multiply", ExpressionOperator::OP_MULT},  {"MULTIPLY", ExpressionOperator::OP_MULT},
-    {"SQRT", ExpressionOperator::OP_SQRT},      {"sqrt", ExpressionOperator::OP_SQRT},
-    {"POW", ExpressionOperator::OP_POW},        {"^", ExpressionOperator::OP_POW},
-    {"CURL", ExpressionOperator::OP_CURL},      {"curl", ExpressionOperator::OP_CURL},
-    {"MAGNITUDE", ExpressionOperator::OP_MAGN}, {"magnitude", ExpressionOperator::OP_MAGN}};
+    {"INDEX", ExpressionOperator::OP_INDEX},   {"+", ExpressionOperator::OP_ADD},
+    {"add", ExpressionOperator::OP_ADD},       {"ADD", ExpressionOperator::OP_ADD},
+    {"-", ExpressionOperator::OP_SUBTRACT},    {"SUBTRACT", ExpressionOperator::OP_SUBTRACT},
+    {"/", ExpressionOperator::OP_DIV},         {"divide", ExpressionOperator::OP_DIV},
+    {"DIVIDE", ExpressionOperator::OP_DIV},    {"*", ExpressionOperator::OP_MULT},
+    {"multiply", ExpressionOperator::OP_MULT}, {"MULTIPLY", ExpressionOperator::OP_MULT},
+    {"SQRT", ExpressionOperator::OP_SQRT},     {"sqrt", ExpressionOperator::OP_SQRT},
+    {"pow", ExpressionOperator::OP_POW},       {"POW", ExpressionOperator::OP_POW},
+    {"^", ExpressionOperator::OP_POW},         {"CURL", ExpressionOperator::OP_CURL},
+    {"curl", ExpressionOperator::OP_CURL},     {"MAGNITUDE", ExpressionOperator::OP_MAGN},
+    {"magnitude", ExpressionOperator::OP_MAGN}};
 
 inline std::string get_op_name(ExpressionOperator op) { return op_property.at(op).name; }
 
