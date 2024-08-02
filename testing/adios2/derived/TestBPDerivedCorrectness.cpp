@@ -51,12 +51,12 @@ TEST_P(DerivedCorrectnessP, SimpleFunctionsCorrectnessTest)
     adios2::IO bpOut = adios.DeclareIO("BPWriteAddExpression");
 
     std::vector<std::string> varname = {"sim1/Ux", "sim1/Uy", "sim1/Uz"};
-    std::string derAddName = "derived/add";
-    std::string derSubtrName = "derived/subtr";
-    std::string derMultName = "derived/mult";
-    std::string derDivName = "derived/div";
-    std::string derPowName = "derived/pow";
-    std::string derSqrtName = "derived/sqrt";
+    const std::string derAddName = "derived/add";
+    const std::string derSubtrName = "derived/subtr";
+    const std::string derMultName = "derived/mult";
+    const std::string derDivName = "derived/div";
+    const std::string derPowName = "derived/pow";
+    const std::string derSqrtName = "derived/sqrt";
 
     auto Ux = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
@@ -96,7 +96,7 @@ TEST_P(DerivedCorrectnessP, SimpleFunctionsCorrectnessTest)
                                 "sqrt(x)",
                                 mode);
     // clang-format on
-    std::string filename = "expSimple.bp";
+    std::string filename = "derivedScalar.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
 
     for (size_t i = 0; i < steps; i++)
