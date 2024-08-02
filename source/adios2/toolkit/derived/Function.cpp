@@ -178,8 +178,9 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_mult(T)                                                                       \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *multValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(), dataSize, \
-                                                 [](T a, T b) { return a * b; }, (T)1);            \
+        T *multValues = detail::ApplyOneToOne<T>(                                                  \
+            inputData.begin() + 1, inputData.end(), dataSize, [](T a, T b) { return a * b; },      \
+            (T)1);                                                                                 \
         for (size_t i = 0; i < dataSize; i++)                                                      \
             multValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) * multValues[i];       \
         return DerivedData({(void *)multValues, inputData[0].Start, inputData[0].Count});          \
@@ -199,8 +200,9 @@ DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_div(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *divValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(), dataSize,  \
-                                                [](T a, T b) { return a / b; }, (T)1);             \
+        T *divValues = detail::ApplyOneToOne<T>(                                                   \
+            inputData.begin() + 1, inputData.end(), dataSize, [](T a, T b) { return a / b; },      \
+            (T)1);                                                                                 \
         for (size_t i = 0; i < dataSize; i++)                                                      \
             divValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) * divValues[i];         \
         return DerivedData({(void *)divValues, inputData[0].Start, inputData[0].Count});           \
