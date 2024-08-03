@@ -227,8 +227,8 @@ DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
     PERFSTUBS_SCOPED_TIMER("derived::Function::PowFunc");
     if (inputData.size() != 2)
     {
-        helper::Throw<std::invalid_argument>("Derived", "Function", "SqrtFunc",
-                                             "Invalid number of arguments passed to SqrtFunc");
+        helper::Throw<std::invalid_argument>("Derived", "Function", "PowFunc",
+                                             "Invalid number of arguments passed to PowFunc");
     }
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
