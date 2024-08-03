@@ -42,23 +42,6 @@ T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
 }
 
 template <class T>
-T *ApplyOneToOneOnce(T *inputData, size_t dataSize, std::function<T(T)> compFct)
-{
-    T *outValues = (T *)malloc(dataSize * sizeof(T));
-    if (outValues == nullptr)
-    {
-        helper::Throw<std::invalid_argument>("Derived", "Function", "ApplyOneToOneOnce",
-                                             "Error allocating memory for the derived variable");
-    }
-    for (size_t i = 0; i < dataSize; i++)
-    {
-        T data = *(reinterpret_cast<T *>(inputData + i));
-        outValues[i] = compFct(data);
-    }
-    return outValues;
-}
-
-template <class T>
 T *ApplyOneToOneOnce(T *inputData1, T *inputData2, size_t dataSize, std::function<T(T, T)> compFct)
 {
     T *outValues = (T *)malloc(dataSize * sizeof(T));
@@ -227,8 +210,10 @@ DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_sqrt(T)                                                                       \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *sqrtValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,             \
-                                                     [](T a) { return sqrt(a); });                 \
+        T *sqrtValues = (T *)malloc(dataSize * sizeof(T));                                         \
+        std::transform(reinterpret_cast<T *>(inputData[0].Data),                                   \
+                       reinterpret_cast<T *>(inputData[0].Data) + dataSize, sqrtValues,            \
+                       [](T &a) { return sqrt(a); });                                              \
         return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});          \
     }
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_sqrt)
