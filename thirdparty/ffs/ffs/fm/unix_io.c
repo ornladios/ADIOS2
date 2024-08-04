@@ -23,6 +23,9 @@
 #include <sys/uio.h>
 #define HAVE_IOVEC_DEFINE
 #endif
+#ifdef HAVE_WINSOCK2_H
+#include "winsock2.h"
+#endif
 #include <stdio.h>
 #include "fm.h"
 #include "fm_internal.h"

@@ -99,6 +99,9 @@
 /* Define to 1 if you have the <winsock.h> header file. */
 #cmakedefine HAVE_WINSOCK_H
 
+/* Define to 1 if you have the <winsock2.h> header file. */
+#cmakedefine HAVE_WINSOCK2_H
+
 /* Define if you need struct iovec to be defined */
 #cmakedefine NEED_IOVEC_DEFINE
 
