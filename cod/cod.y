@@ -6447,7 +6447,7 @@ space_to_underscore(char *str){
     while(*str != '\0'){
 	if(isspace(*str))
 	    *str = '_';
-	    str++;
+	str++;
     }
 }
 
@@ -6732,7 +6732,7 @@ evaluate_constant_return_expr(cod_parse_context context, sm_ref expr, int *free_
 	    *free_result = 1;
 	} else {
 	    /* we get an integer result */
-	    intptr_t left_val = 0, right_val = 0, value;
+	    intptr_t left_val = 0, right_val = 0, value = 0;
 	    char str_val[40];
 	    if (expr->node.operator.left)
 		left_val = get_constant_long_value(context, left);

@@ -7,7 +7,7 @@ if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
 
-project(FFS VERSION 3.0.0)
+project(FFS VERSION 3.1.1)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -186,6 +186,10 @@ add_custom_command(
 
 add_custom_target(docs ALL DEPENDS "cod_node.c")
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+   SET_SOURCE_FILES_PROPERTIES(cod.tab.c PROPERTIES COMPILE_FLAGS -Wno-unused-function)
+endif()
+
 add_custom_target(generated DEPENDS cod_node.c ${BISON_CODParser_OUTPUT_SOURCE})
 
 list(APPEND COD_MASTER_SRC_LIST
@@ -254,6 +258,7 @@ endif()
 CHECK_INCLUDE_FILE(malloc.h HAVE_MALLOC_H)
 CHECK_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
 CHECK_INCLUDE_FILE(netdb.h HAVE_NETDB_H)
+CHECK_INCLUDE_FILE(netinet/in.h HAVE_NETINET_IN_H)
 CHECK_INCLUDE_FILE(sockLib.h HAVE_SOCKLIB_H)
 CHECK_INCLUDE_FILE(stdarg.h STDC_HEADERS)
 CHECK_INCLUDE_FILE(stdlib.h HAVE_STDLIB_H)
@@ -267,6 +272,7 @@ CHECK_INCLUDE_FILE(sys/un.h HAVE_SYS_UN_H)
 CHECK_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 CHECK_INCLUDE_FILE(windows.h HAVE_WINDOWS_H)
 CHECK_INCLUDE_FILE(winsock.h HAVE_WINSOCK_H)
+CHECK_INCLUDE_FILE(winsock2.h HAVE_WINSOCK2_H)
 
 if(SIZEOF_SIZE_T EQUAL SIZEOF_INT)
   set(UIO_SIZE_T_TYPE "unsigned int")
