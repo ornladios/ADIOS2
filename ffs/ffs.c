@@ -1563,6 +1563,8 @@ add_to_tmp_buffer(FFSBuffer buf, size_t size)
 }
 
 #if SIZEOF_LONG != 8
+#ifndef WORDS_BIGENDIAN
+
 static int words_bigendian = -1;
 
 static int
@@ -1577,7 +1579,6 @@ set_bigendian () {
   words_bigendian = (u.c[sizeof (long) - 1] == 1);
   return words_bigendian;
 }
-#ifndef WORDS_BIGENDIAN
 #define WORDS_BIGENDIAN ((words_bigendian == -1) ? set_bigendian() : words_bigendian)
 #endif
 #endif
