@@ -146,8 +146,8 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_mult(T)                                                                       \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *multValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,     \
-                                                 [](T a, T b) { return a * b; }, 1);               \
+        T *multValues = detail::ApplyOneToOne<T>(                                                  \
+            inputData.begin(), inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);      \
         return DerivedData({(void *)multValues, inputData[0].Start, inputData[0].Count});          \
     }
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_mult)
@@ -168,8 +168,8 @@ DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_div(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *divValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(), dataSize,  \
-                                                [](T a, T b) { return a * b; }, 1);                \
+        T *divValues = detail::ApplyOneToOne<T>(                                                   \
+            inputData.begin() + 1, inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);  \
         for (size_t i = 0; i < dataSize; i++)                                                      \
             divValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) / divValues[i];         \
         return DerivedData({(void *)divValues, inputData[0].Start, inputData[0].Count});           \
