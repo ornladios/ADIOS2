@@ -39,6 +39,9 @@
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #cmakedefine HAVE_NETINET_IN_H
 
+/* Define to 1 if you have the <arpa/inet.h> header file. */
+#cmakedefine HAVE_ARPA_INET_H
+
 /* Define to 1 if you have the <sockLib.h> header file. */
 #cmakedefine HAVE_SOCKLIB_H
 

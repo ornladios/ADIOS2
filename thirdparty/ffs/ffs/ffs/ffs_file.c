@@ -9,7 +9,12 @@
 #include "stdlib.h"
 #ifndef _MSC_VER
 #include "unistd.h"
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
+#ifdef NETINET_IN_H
+#include <netinet/in.h>
+#endif
 #else
 #include <winsock.h>
 #include <io.h>
