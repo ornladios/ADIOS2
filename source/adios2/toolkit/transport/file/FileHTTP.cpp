@@ -23,12 +23,16 @@
 #define INST_ADDRSTRLEN 50
 #else
 #include <netinet/in.h>
-#include <sys/socket.h>
-
+#ifdef __WIN32__
+// Not visual studio, but still windows
+#include <winsock2.h>
+#else
 #include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#endif
 #include <cstring>
 #include <netdb.h>
-#include <netinet/in.h>
 #include <unistd.h>
 #endif
 namespace adios2
