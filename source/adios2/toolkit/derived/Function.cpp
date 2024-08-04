@@ -21,15 +21,13 @@ T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
         helper::Throw<std::invalid_argument>("Derived", "Function", "ApplyOneToOne",
                                              "Error allocating memory for the derived variable");
     }
-    if (initVal == (T)0)
+
+    // initialize the output buffer with the data from the first buffer
+    for (size_t i = 0; i < dataSize; i++)
     {
-        memset(outValues, 0, dataSize * sizeof(T));
+        outValues[i] = initVal;
     }
-    else
-    {
-        for (size_t i = 0; i < dataSize; i++)
-            outValues[i] = initVal;
-    }
+    // apply the aggregation function on all other buffers
     for (Iterator variable = inputBegin; variable != inputEnd; ++variable)
     {
         for (size_t i = 0; i < dataSize; i++)
@@ -37,24 +35,6 @@ T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
             T data = *(reinterpret_cast<T *>((*variable).Data) + i);
             outValues[i] = compFct(outValues[i], data);
         }
-    }
-    return outValues;
-}
-
-template <class T>
-T *ApplyOneToOneOnce(T *inputData1, T *inputData2, size_t dataSize, std::function<T(T, T)> compFct)
-{
-    T *outValues = (T *)malloc(dataSize * sizeof(T));
-    if (outValues == nullptr)
-    {
-        helper::Throw<std::invalid_argument>("Derived", "Function", "ApplyOneToOneOnce",
-                                             "Error allocating memory for the derived variable");
-    }
-    for (size_t i = 0; i < dataSize; i++)
-    {
-        T data1 = *(reinterpret_cast<T *>(inputData1 + i));
-        T data2 = *(reinterpret_cast<T *>(inputData2 + i));
-        outValues[i] = compFct(data1, data2);
     }
     return outValues;
 }
@@ -111,6 +91,7 @@ T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dim
 
 namespace derived
 {
+// Perform a reduce sum over all variables in the std::vector
 DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AddFunc");
@@ -130,12 +111,15 @@ DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
+// Perform a subtraction from the first variable of all other variables in the std::vector
 DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
 {
-    PERFSTUBS_SCOPED_TIMER("derived::Function::AddFunc");
+    PERFSTUBS_SCOPED_TIMER("derived::Function::SubtractFunc");
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
 
+// Perform a reduce sum over all variables in the std::vector except the first one
+// and remove this sum from the first buffer
 #define declare_type_subtract(T)                                                                   \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
@@ -152,6 +136,7 @@ DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
+// Perform a reduce multiply over all variables in the std::vector
 DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::MultFunc");
@@ -161,11 +146,8 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_mult(T)                                                                       \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *multValues = detail::ApplyOneToOne<T>(                                                  \
-            inputData.begin() + 1, inputData.end(), dataSize, [](T a, T b) { return a * b; },      \
-            (T)1);                                                                                 \
-        for (size_t i = 0; i < dataSize; i++)                                                      \
-            multValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) * multValues[i];       \
+        T *multValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,     \
+                                                 [](T a, T b) { return a * b; }, 1);               \
         return DerivedData({(void *)multValues, inputData[0].Start, inputData[0].Count});          \
     }
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_mult)
@@ -174,20 +156,22 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
+// Perform a division from the first variable of all other variables in the std::vector
 DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::DivFunc");
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
 
+// Perform a reduce multiply over all variables in the std::vector except the first one
+// and divide this value from the first buffer
 #define declare_type_div(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *divValues = detail::ApplyOneToOne<T>(                                                   \
-            inputData.begin() + 1, inputData.end(), dataSize, [](T a, T b) { return a / b; },      \
-            (T)1);                                                                                 \
+        T *divValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(), dataSize,  \
+                                                [](T a, T b) { return a * b; }, 1);                \
         for (size_t i = 0; i < dataSize; i++)                                                      \
-            divValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) * divValues[i];         \
+            divValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) / divValues[i];         \
         return DerivedData({(void *)divValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_div)
@@ -196,6 +180,7 @@ DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
+// Apply Sqrt over all elements in the variable
 DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::SqrtFunc");
@@ -222,10 +207,11 @@ DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
+// Apply Pow over all elements in the variable
 DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::PowFunc");
-    if (inputData.size() != 2)
+    if (inputData.size() != 1)
     {
         helper::Throw<std::invalid_argument>("Derived", "Function", "PowFunc",
                                              "Invalid number of arguments passed to PowFunc");
@@ -235,10 +221,10 @@ DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_pow(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *base = (T *)inputData[0].Data;                                                          \
-        T *exponent = (T *)inputData[1].Data;                                                      \
-        T *powValues = detail::ApplyOneToOneOnce<T>(base, exponent, dataSize,                      \
-                                                    [](T a, T b) { return pow(a, b); });           \
+        T *powValues = (T *)malloc(dataSize * sizeof(T));                                          \
+        std::transform(reinterpret_cast<T *>(inputData[0].Data),                                   \
+                       reinterpret_cast<T *>(inputData[0].Data) + dataSize, powValues,             \
+                       [](T &a) { return pow(a, 2); });                                            \
         return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_pow)

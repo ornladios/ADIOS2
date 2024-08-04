@@ -25,7 +25,7 @@ protected:
     adios2::DerivedVarType GetThreads() { return GetParam(); };
 };
 
-TEST_P(DerivedCorrectnessP, SimpleFunctionsCorrectnessTest)
+TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
 {
     const size_t Nx = 10, Ny = 3, Nz = 6;
     const size_t steps = 2;
@@ -88,8 +88,7 @@ TEST_P(DerivedCorrectnessP, SimpleFunctionsCorrectnessTest)
                                 mode);
     bpOut.DefineDerivedVariable(derPowName,
                                 "x =" + varname[0] + " \n"
-                                "y =" + varname[1] + " \n"
-                                "pow(x,y)",
+                                "pow(x)",
                                 mode);
     bpOut.DefineDerivedVariable(derSqrtName,
                                 "x =" + varname[0] + " \n"
@@ -152,7 +151,7 @@ TEST_P(DerivedCorrectnessP, SimpleFunctionsCorrectnessTest)
             calcDerived = readUx[ind] / readUy[ind] / readUz[ind];
             EXPECT_TRUE(fabs(calcDerived - readDiv[ind]) < epsilon);
 
-            calcDerived = std::pow(readUx[ind], readUy[ind]);
+            calcDerived = std::pow(readUx[ind], 2);
             EXPECT_TRUE(fabs(calcDerived - readPow[ind]) < epsilon);
 
             calcDerived = std::sqrt(readUx[ind]);
