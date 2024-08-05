@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #ifdef HAVE_WINSOCK2_H
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
+#endif
 #include <winsock2.h>
 #include <windows.h>
 #define drand48() (((double)rand())/((double)RAND_MAX))

@@ -3,7 +3,9 @@
 #include <sys/types.h>
 
 #ifdef HAVE_WINDOWS_H
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
+#endif
 #include <winsock2.h>
 #include <windows.h>
 #include <process.h>
@@ -457,7 +459,6 @@ initiate_conn(CManager cm, CMtrans_services svc, transport_entry trans, attr_lis
 	    int err = WSAGetLastError();
 	    if (err != WSAEWOULDBLOCK || err != WSAEINPROGRESS) {
 #endif
-		printf("Errno was %d\n", errno);
 		svc->trace_out(cm, "CMSocket connect FAILURE --> Connect() to IP %s failed", ip_str);
 		close(sock);
 #ifdef WSAEWOULDBLOCK
@@ -857,7 +858,7 @@ static void
 set_block_state(CMtrans_services svc, socket_conn_data_ptr scd,
 		socket_block_state needed_block_state)
 {
-#ifndef _MSC_VER
+#ifndef _WIN32
     int fdflags = fcntl(scd->fd, F_GETFL, 0);
     if (fdflags == -1) {
 	perror("getflags\n");
@@ -880,6 +881,26 @@ set_block_state(CMtrans_services svc, socket_conn_data_ptr scd,
 		       scd->fd);
     }
 #else
+    if ((needed_block_state == Block) && (scd->block_state == Non_Block)) {
+      u_long mode = 0;  // 0 to enable blocking socket
+      int ret = ioctlsocket(scd->fd, FIONBIO, &mode);
+      scd->block_state = Block;
+      if (ret != NO_ERROR)
+	printf("ioctlsocket failed with error: %ld\n", ret);
+
+      svc->trace_out(scd->sd->cm, "CMSocket switch fd %d to blocking WIN properly",
+		     scd->fd);
+    } else if ((needed_block_state == Non_Block) && 
+	       (scd->block_state == Block)) {
+      u_long mode = 1;  // 1 to enable non-blocking socket
+      int ret = ioctlsocket(scd->fd, FIONBIO, &mode);
+      if (ret != NO_ERROR)
+	printf("ioctlsocket failed with error: %ld\n", ret);
+
+      scd->block_state = Non_Block;
+      svc->trace_out(scd->sd->cm, "CMSocket switch fd %d to nonblocking WIN properly",
+		     scd->fd);
+    }
 #endif
 }
 
@@ -887,7 +908,7 @@ extern ssize_t
 libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr scd, void *buffer, ssize_t requested_len, int non_blocking)
 {
     ssize_t left, iget;
-#ifndef _MSC_VER
+#ifndef _WIN32
     // GSE
     int fdflags = fcntl(scd->fd, F_GETFL, 0);
     if (fdflags == -1) {
@@ -910,7 +931,8 @@ libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr 
     iget = read(scd->fd, (char *) buffer, (int)requested_len);
     if ((iget == -1) || (iget == 0)) {
 	int lerrno = errno;
-	if ((lerrno != EWOULDBLOCK) &&
+	if ((lerrno != 0) &&
+	    (lerrno != EWOULDBLOCK) &&
 	    (lerrno != EAGAIN) &&
 	    (lerrno != EINTR)) {
 	    /* serious error */
@@ -1135,7 +1157,7 @@ libcmsockets_LTX_NBwritev_func(CMtrans_services svc, socket_conn_data_ptr scd, v
     return init_bytes - left;
 }
 
-int socket_global_init = 0;
+static int socket_global_init = 0;
 
 #ifdef HAVE_WINDOWS_H
 /* Winsock init stuff, ask for ver 2.2 */
