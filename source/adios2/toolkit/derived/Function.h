@@ -9,6 +9,12 @@ namespace derived
 {
 DerivedData AddFunc(std::vector<DerivedData> input, DataType type);
 DerivedData SubtractFunc(std::vector<DerivedData> input, DataType type);
+DerivedData SinFunc(std::vector<DerivedData> input, DataType type);
+DerivedData CosFunc(std::vector<DerivedData> input, DataType type);
+DerivedData TanFunc(std::vector<DerivedData> input, DataType type);
+DerivedData AsinFunc(std::vector<DerivedData> input, DataType type);
+DerivedData AcosFunc(std::vector<DerivedData> input, DataType type);
+DerivedData AtanFunc(std::vector<DerivedData> input, DataType type);
 DerivedData MagnitudeFunc(std::vector<DerivedData> input, DataType type);
 DerivedData Curl3DFunc(std::vector<DerivedData> input, DataType type);
 

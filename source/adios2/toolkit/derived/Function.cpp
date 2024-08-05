@@ -33,6 +33,23 @@ T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
     return outValues;
 }
 
+template <class T>
+T *ApplyOneToOneOnce(T *inputData, size_t dataSize, std::function<T(T)> compFct)
+{
+    T *outValues = (T *)malloc(dataSize * sizeof(T));
+    if (outValues == nullptr)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "ApplyOneToOneOnce",
+                                             "Error allocating memory for the derived variable");
+    }
+    for (size_t i = 0; i < dataSize; i++)
+    {
+        T data = *(reinterpret_cast<T *>(inputData + i));
+        outValues[i] = compFct(data);
+    }
+    return outValues;
+}
+
 inline size_t returnIndex(size_t x, size_t y, size_t z, const size_t dims[3])
 {
     return z + y * dims[2] + x * dims[2] * dims[1];
@@ -122,6 +139,120 @@ DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_subtract)
     helper::Throw<std::invalid_argument>("Derived", "Function", "SubtractFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData SinFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::SinFunc");
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+#define declare_type_sin(T)                                                                        \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *sinValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,              \
+                                                    [](T a) { return std::sin(a); });              \
+        return DerivedData({(void *)sinValues, inputData[0].Start, inputData[0].Count});           \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sin)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "SinFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::CosFunc");
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+#define declare_type_cos(T)                                                                        \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *cosValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,              \
+                                                    [](T a) { return std::cos(a); });              \
+        return DerivedData({(void *)cosValues, inputData[0].Start, inputData[0].Count});           \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_cos)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "CosFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::TanFunc");
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+#define declare_type_tan(T)                                                                        \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *tanValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,              \
+                                                    [](T a) { return std::tan(a); });              \
+        return DerivedData({(void *)tanValues, inputData[0].Start, inputData[0].Count});           \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_tan)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "TanFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData AsinFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::AsinFunc");
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+#define declare_type_asin(T)                                                                       \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *asinValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,             \
+                                                     [](T a) { return std::asin(a); });            \
+        return DerivedData({(void *)asinValues, inputData[0].Start, inputData[0].Count});          \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_asin)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "AsinFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData AcosFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::AcosFunc");
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+#define declare_type_acos(T)                                                                       \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *acosValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,             \
+                                                     [](T a) { return std::acos(a); });            \
+        return DerivedData({(void *)acosValues, inputData[0].Start, inputData[0].Count});          \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_acos)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "AcosFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::AtanFunc");
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+#define declare_type_atan(T)                                                                       \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *atanValues = detail::ApplyOneToOneOnce<T>((T *)inputData[0].Data, dataSize,             \
+                                                     [](T a) { return std::atan(a); });            \
+        return DerivedData({(void *)atanValues, inputData[0].Start, inputData[0].Count});          \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_atan)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "AtanFunc",
                                          "Invalid variable types");
     return DerivedData();
 }

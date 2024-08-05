@@ -25,46 +25,68 @@ protected:
     adios2::DerivedVarType GetThreads() { return GetParam(); };
 };
 
-TEST_P(DerivedCorrectnessP, AddCorrectnessTest)
+TEST_P(DerivedCorrectnessP, TrigCorrectnessTest)
 {
     const size_t Nx = 10, Ny = 3, Nz = 6;
     const size_t steps = 2;
     // Application variable
     std::default_random_engine generator;
-    std::uniform_real_distribution<float> distribution(0.0, 10.0);
+    std::uniform_real_distribution<float> randomDist(0.0, 100.0);
+    std::uniform_real_distribution<float> sinDist(-1.0, 1.0);
 
     adios2::DerivedVarType mode = GetParam();
     std::cout << "Mode is " << mode << std::endl;
 
     std::vector<float> simArray1(Nx * Ny * Nz);
     std::vector<float> simArray2(Nx * Ny * Nz);
-    std::vector<float> simArray3(Nx * Ny * Nz);
     for (size_t i = 0; i < Nx * Ny * Nz; ++i)
     {
-        simArray1[i] = distribution(generator);
-        simArray2[i] = distribution(generator);
-        simArray3[i] = distribution(generator);
+        simArray1[i] = randomDist(generator);
+        simArray2[i] = sinDist(generator);
     }
 
     adios2::ADIOS adios;
 
-    adios2::IO bpOut = adios.DeclareIO("BPWriteAddExpression");
+    adios2::IO bpOut = adios.DeclareIO("BPWriteSinExpression");
 
-    std::vector<std::string> varname = {"sim1/Ux", "sim1/Uy", "sim1/Uz"};
-    std::string derivedname = "derived/addU";
+    std::string randDistVar = "sim/randDist";
+    std::string sinDistVar = "sim/sinDist";
+    std::string derSinName = "derived/sin";
+    std::string derCosName = "derived/cos";
+    std::string derTanName = "derived/tan";
+    std::string derAsinName = "derived/asin";
+    std::string derAcosName = "derived/acos";
+    std::string derAtanName = "derived/atan";
 
-    auto Ux = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Ux = bpOut.DefineVariable<float>(randDistVar, {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Uy = bpOut.DefineVariable<float>(sinDistVar, {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     // clang-format off
-    bpOut.DefineDerivedVariable(derivedname,
-                                "x =" + varname[0] + " \n"
-                                "y =" + varname[1] + " \n"
-                                "z =" + varname[2] + " \n"
-                                "x+y+z",
+    bpOut.DefineDerivedVariable(derSinName,
+                                "x =" + randDistVar + " \n"
+                                "sin(x)",
+                                mode);
+    bpOut.DefineDerivedVariable(derCosName,
+                                "x =" + randDistVar + " \n"
+                                "cos(x)",
+                                mode);
+    bpOut.DefineDerivedVariable(derTanName,
+                                "x =" + randDistVar + " \n"
+                                "tan(x)",
+                                mode);
+    bpOut.DefineDerivedVariable(derAsinName,
+                                "x =" + sinDistVar + " \n"
+                                "asin(x)",
+                                mode);
+    bpOut.DefineDerivedVariable(derAcosName,
+                                "x =" + sinDistVar + " \n"
+                                "acos(x)",
+                                mode);
+    bpOut.DefineDerivedVariable(derAtanName,
+                                "x =" + randDistVar + " \n"
+                                "atan(x)",
                                 mode);
     // clang-format on
-    std::string filename = "expAdd.bp";
+    std::string filename = "expTrig.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
 
     for (size_t i = 0; i < steps; i++)
@@ -72,7 +94,6 @@ TEST_P(DerivedCorrectnessP, AddCorrectnessTest)
         bpFileWriter.BeginStep();
         bpFileWriter.Put(Ux, simArray1.data());
         bpFileWriter.Put(Uy, simArray2.data());
-        bpFileWriter.Put(Uz, simArray3.data());
         bpFileWriter.EndStep();
     }
     bpFileWriter.Close();
@@ -80,26 +101,65 @@ TEST_P(DerivedCorrectnessP, AddCorrectnessTest)
     adios2::IO bpIn = adios.DeclareIO("BPReadExpression");
     adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
 
-    std::vector<float> readUx;
-    std::vector<float> readUy;
-    std::vector<float> readUz;
-    std::vector<float> readAdd;
+    std::vector<float> readRandDist;
+    std::vector<float> readSinDist;
+    std::vector<float> readSin;
+    std::vector<float> readCos;
+    std::vector<float> readTan;
+    std::vector<float> readAsin;
+    std::vector<float> readAcos;
+    std::vector<float> readAtan;
 
-    float calcA;
+    float calcTrig;
     float epsilon = (float)0.01;
     for (size_t i = 0; i < steps; i++)
     {
         bpFileReader.BeginStep();
-        bpFileReader.Get(varname[0], readUx);
-        bpFileReader.Get(varname[1], readUy);
-        bpFileReader.Get(varname[2], readUz);
-        bpFileReader.Get(derivedname, readAdd);
+        bpFileReader.Get(randDistVar, readRandDist);
+        bpFileReader.Get(sinDistVar, readSinDist);
+
+        bpFileReader.Get(derSinName, readSin);
+        bpFileReader.Get(derCosName, readCos);
+        bpFileReader.Get(derTanName, readTan);
+        bpFileReader.Get(derAsinName, readAsin);
+        bpFileReader.Get(derAcosName, readAcos);
+        bpFileReader.Get(derAtanName, readAtan);
         bpFileReader.EndStep();
 
         for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
         {
-            calcA = readUx[ind] + readUy[ind] + readUz[ind];
-            EXPECT_TRUE(fabs(calcA - readAdd[ind]) < epsilon);
+            calcTrig = std::sin(readRandDist[ind]);
+            EXPECT_TRUE(fabs(calcTrig - readSin[ind]) < epsilon);
+        }
+
+        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
+        {
+            calcTrig = std::cos(readRandDist[ind]);
+            EXPECT_TRUE(fabs(calcTrig - readCos[ind]) < epsilon);
+        }
+
+        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
+        {
+            calcTrig = std::tan(readRandDist[ind]);
+            EXPECT_TRUE(fabs(calcTrig - readTan[ind]) < epsilon);
+        }
+
+        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
+        {
+            calcTrig = std::asin(readSinDist[ind]);
+            EXPECT_TRUE(fabs(calcTrig - readAsin[ind]) < epsilon);
+        }
+
+        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
+        {
+            calcTrig = std::acos(readSinDist[ind]);
+            EXPECT_TRUE(fabs(calcTrig - readAcos[ind]) < epsilon);
+        }
+
+        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
+        {
+            calcTrig = std::atan(readRandDist[ind]);
+            EXPECT_TRUE(fabs(calcTrig - readAtan[ind]) < epsilon);
         }
     }
     bpFileReader.Close();
