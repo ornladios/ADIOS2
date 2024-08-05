@@ -150,7 +150,7 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
             inputData.begin(), inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);      \
         return DerivedData({(void *)multValues, inputData[0].Start, inputData[0].Count});          \
     }
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_mult)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_mult)
     helper::Throw<std::invalid_argument>("Derived", "Function", "MultFunc",
                                          "Invalid variable types");
     return DerivedData();
@@ -174,7 +174,7 @@ DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
             divValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) / divValues[i];         \
         return DerivedData({(void *)divValues, inputData[0].Start, inputData[0].Count});           \
     }
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_div)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_div)
     helper::Throw<std::invalid_argument>("Derived", "Function", "DivFunc",
                                          "Invalid variable types");
     return DerivedData();
@@ -201,7 +201,7 @@ DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
                        [](T &a) { return sqrt(a); });                                              \
         return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});          \
     }
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_sqrt)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sqrt)
     helper::Throw<std::invalid_argument>("Derived", "Function", "SqrtFunc",
                                          "Invalid variable types");
     return DerivedData();
@@ -227,7 +227,7 @@ DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
                        [](T &a) { return pow(a, 2); });                                            \
         return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});           \
     }
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_pow)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_pow)
     helper::Throw<std::invalid_argument>("Derived", "Function", "PowFunc",
                                          "Invalid variable types");
     return DerivedData();
