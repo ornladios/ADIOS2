@@ -603,7 +603,7 @@ double dgettimeofday( void )
 
 /**************OS FUNCTIONS**************/
 char*  os_type() {
-#ifndef _MSC_VER
+#ifndef _WIN32
   static struct utsname output;
   static int first = 1;
   if (first) {
@@ -617,7 +617,7 @@ char*  os_type() {
 }
 
 char*  os_release() {
-#ifndef _MSC_VER
+#ifndef _WIN32
   static struct utsname output;
   static int first = 1;
   if (first) {
