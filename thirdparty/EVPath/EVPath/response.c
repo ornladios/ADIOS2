@@ -1709,7 +1709,7 @@ static long lrand48()
 static double drand48() {
     return (double)(rand()) / (double)(RAND_MAX);
 }
-#ifdef _MSVC
+#ifndef HAVE_UNISTD_H
 static void
 sleep(int t)
 {

@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.5)
 # GTKorvo
 set(CMAKE_DIRECTORY_LABELS EVPath)
 
-project(EVPath VERSION 4.5.2 LANGUAGES C CXX)
+project(EVPath VERSION 4.5.3 LANGUAGES C CXX)
 
 # Enable <PackageName>_ROOT variables for dependency searching
 # CMake v3.12
