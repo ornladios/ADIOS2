@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-#ifdef __WIN32
+#ifdef _WIN32
 #ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
 #endif
