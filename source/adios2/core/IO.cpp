@@ -890,8 +890,8 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
 
     derived::Expression derived_exp(exp_string);
     std::vector<std::string> var_list = derived_exp.VariableNameList();
-    DataType expressionType = DataType::None;
     bool isConstant = true;
+    std::map<std::string, DataType> name_to_type;
     std::map<std::string, std::tuple<Dims, Dims, Dims>> name_to_dims;
     // check correctness for the variable names and types within the expression
     for (auto var_name : var_list)
@@ -902,20 +902,15 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
                                                  "using undefine variable " + var_name +
                                                      " in defining the derived variable " + name);
         DataType var_type = InquireVariableType(var_name);
-        if (expressionType == DataType::None)
-            expressionType = var_type;
-        if (expressionType != var_type)
-            helper::Throw<std::invalid_argument>("Core", "IO", "DefineDerivedVariable",
-                                                 "all variables within a derived variable "
-                                                 " must have the same type ");
+        name_to_type.insert({var_name, var_type});
         if ((itVariable->second)->IsConstantDims() == false)
             isConstant = false;
         name_to_dims.insert({var_name,
                              {(itVariable->second)->m_Start, (itVariable->second)->m_Count,
                               (itVariable->second)->m_Shape}});
     }
-    // std::cout << "Derived variable " << name << ": PASS : variables exist and have the same type"
-    //          << std::endl;
+    // set the type of the expression and check correcness
+    DataType expressionType = derived_exp.GetType(name_to_type);
     // set the initial shape of the expression and check correcness
     derived_exp.SetDims(name_to_dims);
     // std::cout << "Derived variable " << name << ": PASS : initial variable dimensions are valid"

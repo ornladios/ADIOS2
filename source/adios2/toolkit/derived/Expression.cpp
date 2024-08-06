@@ -159,6 +159,11 @@ void Expression::SetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> Nam
     m_Shape = m_Expr.GetDims(NameToShape);
 }
 
+DataType Expression::GetType(std::map<std::string, DataType> NameToType)
+{
+    return m_Expr.GetType(NameToType);
+}
+
 std::vector<DerivedData>
 Expression::ApplyExpression(DataType type, size_t numBlocks,
                             std::map<std::string, std::vector<DerivedData>> nameToData)
@@ -274,6 +279,34 @@ Dims ExpressionTree::GetDims(std::map<std::string, Dims> NameToDims)
     auto op_fct = OpFunctions.at(detail.operation);
     Dims opDims = op_fct.DimsFct(exprDims);
     return opDims;
+}
+
+DataType ExpressionTree::GetType(std::map<std::string, DataType> NameToType)
+{
+    std::vector<DataType> exprType;
+    for (auto subexp : sub_exprs)
+    {
+        // if the sub_expression is a leaf, we get the type of the current oeration
+        if (!std::get<2>(subexp))
+        {
+            DataType varType = NameToType[std::get<1>(subexp)];
+            if (detail.operation == detail::ExpressionOperator::OP_POW)
+                exprType.push_back(DataType::Float);
+            else
+                exprType.push_back(varType);
+        }
+        else
+        {
+            exprType.push_back(std::get<0>(subexp).GetType(NameToType));
+        }
+    }
+
+    // check that all types are the same
+    for (size_t i = 1; i < exprType.size(); i++)
+        if (exprType[i - 1] != exprType[i])
+            helper::Throw<std::invalid_argument>("Derived", "Expression", "GetType",
+                                                 "Derived expression operators are not the same");
+    return exprType[0];
 }
 
 std::vector<DerivedData>
