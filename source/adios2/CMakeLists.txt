@@ -472,11 +472,13 @@ endif()
 if(ADIOS2_HAVE_MPI)
   set(maybe_adios2_c_mpi adios2_c_mpi)
   set(maybe_adios2_cxx11_mpi adios2_cxx11_mpi)
-  set(maybe_adios2_core_mpi adios2_core_mpi adios2_core_mpi_c)
+  set(maybe_adios2_core_mpi adios2_core_mpi)
+  set(maybe_adios2_core_mpi_c adios2_core_mpi_c)
 else()
   set(maybe_adios2_c_mpi)
   set(maybe_adios2_cxx11_mpi)
   set(maybe_adios2_core_mpi)
+  set(maybe_adios2_core_mpi_c)
 endif()
 
 # The main "adios2" target provides all interfaces.
@@ -531,7 +533,7 @@ install(DIRECTORY toolkit/
 )
 
 # Library installation
-install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_cuda} ${maybe_adios2_core_kokkos} ${maybe_adios2_core_derived} EXPORT adios2Exports
+install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_mpi_c} ${maybe_adios2_core_cuda} ${maybe_adios2_core_kokkos} ${maybe_adios2_core_derived} EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-development
