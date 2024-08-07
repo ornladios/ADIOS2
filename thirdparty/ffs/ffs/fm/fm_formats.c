@@ -3170,7 +3170,7 @@ extern int
 unix_timeout_read_func(void *conn, void *buffer, int length, 
 		       int *errno_p, char **result_p);
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 #define srand48(x) srand((int)(x))
 #define drand48() ((double)rand()/RAND_MAX)
 #define sleep(sec)  Sleep(1000 * sec)
