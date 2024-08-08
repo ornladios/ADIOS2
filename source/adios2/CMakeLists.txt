@@ -142,9 +142,7 @@ if (ADIOS2_HAVE_Derived_Variable)
   if(NOT BISON_FOUND OR NOT FLEX_FOUND OR (NOT BISON_VERSION VERSION_GREATER_EQUAL "3.8.2"))
     include(ADIOSBisonFlexSub)
     SETUP_ADIOS_BISON_FLEX_SUB()
-    message("BISON not found, do not generate files ${BISON_VERSION}")
   else()
-    message("BISON found ${BISON_VERSION}")
     BISON_TARGET(MyParser
       toolkit/derived/parser/parser.y
       ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
