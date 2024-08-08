@@ -120,13 +120,14 @@ struct OperatorFunctions
 {
     std::function<DerivedData(std::vector<DerivedData>, DataType)> ComputeFct;
     std::function<Dims(std::vector<Dims>)> DimsFct;
+    std::function<DataType(DataType)> TypeFct;
 };
 
 std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
-    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_SUBTRACT, {SubtractFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc}}};
+    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_SUBTRACT, {SubtractFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc, SameTypeFunc}}};
 
 Expression::Expression(std::string string_exp)
 : m_Shape({0}), m_Start({0}), m_Count({0}), ExprString(string_exp)
@@ -157,6 +158,11 @@ void Expression::SetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> Nam
     m_Count = m_Expr.GetDims(NameToCount);
     m_Start = m_Expr.GetDims(NameToStart);
     m_Shape = m_Expr.GetDims(NameToShape);
+}
+
+DataType Expression::GetType(std::map<std::string, DataType> NameToType)
+{
+    return m_Expr.GetType(NameToType);
 }
 
 std::vector<DerivedData>
@@ -274,6 +280,34 @@ Dims ExpressionTree::GetDims(std::map<std::string, Dims> NameToDims)
     auto op_fct = OpFunctions.at(detail.operation);
     Dims opDims = op_fct.DimsFct(exprDims);
     return opDims;
+}
+
+DataType ExpressionTree::GetType(std::map<std::string, DataType> NameToType)
+{
+    std::vector<DataType> exprType;
+    for (auto subexp : sub_exprs)
+    {
+        // if the sub_expression is a leaf, we get the type of the current oeration
+        if (!std::get<2>(subexp))
+        {
+            DataType varType = NameToType[std::get<1>(subexp)];
+            exprType.push_back(varType);
+        }
+        else
+        {
+            exprType.push_back(std::get<0>(subexp).GetType(NameToType));
+        }
+    }
+
+    // check that all types are the same
+    for (size_t i = 1; i < exprType.size(); i++)
+        if (exprType[i - 1] != exprType[i])
+            helper::Throw<std::invalid_argument>("Derived", "Expression", "GetType",
+                                                 "Derived expression operators are not the same");
+    // get the output type after applying the operator
+    auto op_fct = OpFunctions.at(detail.operation);
+    DataType opType = op_fct.TypeFct(exprType[0]);
+    return opType;
 }
 
 std::vector<DerivedData>
