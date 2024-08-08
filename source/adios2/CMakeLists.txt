@@ -139,7 +139,7 @@ if (ADIOS2_HAVE_Derived_Variable)
   find_package(BISON "3.8.2")
   find_package(FLEX)
 
-  if(NOT BISON_FOUND OR NOT FLEX_FOUND)
+  if(NOT BISON_FOUND OR NOT FLEX_FOUND OR (NOT BISON_VERSION VERSION_GREATER_EQUAL "3.8.2"))
     include(ADIOSBisonFlexSub)
     SETUP_ADIOS_BISON_FLEX_SUB()
   else()
@@ -155,13 +155,15 @@ if (ADIOS2_HAVE_Derived_Variable)
       DEFINES_FILE ${CMAKE_CURRENT_BINARY_DIR}/lexer.h)
     ADD_FLEX_BISON_DEPENDENCY(MyScanner MyParser)
   endif()
-  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp PROPERTIES COMPILE_FLAGS -Wno-sign-compare)
-  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+  elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
     SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/parser.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-but-set-variable)
-  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "IntelLLVM")
+  elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
     SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/parser.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-but-set-variable)
-  elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "IntelLLVM")
+    SET_SOURCE_FILES_PROPERTIES(${CMAKE_CURRENT_BINARY_DIR}/parser.cpp PROPERTIES COMPILE_FLAGS -Wno-unused-but-set-variable)
+  elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     SET_SOURCE_FILES_PROPERTIES(toolkit/derived/Expression.cpp toolkit/derived/Function.cpp PROPERTIES COMPILE_FLAGS "/wd4005 /wd4065 /wd4267 -DYY_NO_UNISTD_H")
   endif()
   add_library(adios2_core_derived
@@ -472,11 +474,13 @@ endif()
 if(ADIOS2_HAVE_MPI)
   set(maybe_adios2_c_mpi adios2_c_mpi)
   set(maybe_adios2_cxx11_mpi adios2_cxx11_mpi)
-  set(maybe_adios2_core_mpi adios2_core_mpi adios2_core_mpi_c)
+  set(maybe_adios2_core_mpi adios2_core_mpi)
+  set(maybe_adios2_core_mpi_c adios2_core_mpi_c)
 else()
   set(maybe_adios2_c_mpi)
   set(maybe_adios2_cxx11_mpi)
   set(maybe_adios2_core_mpi)
+  set(maybe_adios2_core_mpi_c)
 endif()
 
 # The main "adios2" target provides all interfaces.
@@ -531,7 +535,7 @@ install(DIRECTORY toolkit/
 )
 
 # Library installation
-install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_cuda} ${maybe_adios2_core_kokkos} ${maybe_adios2_core_derived} EXPORT adios2Exports
+install(TARGETS adios2_core ${maybe_adios2_core_mpi} ${maybe_adios2_core_mpi_c} ${maybe_adios2_core_cuda} ${maybe_adios2_core_kokkos} ${maybe_adios2_core_derived} EXPORT adios2Exports
   RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
   ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-development

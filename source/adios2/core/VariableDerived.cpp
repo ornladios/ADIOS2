@@ -8,10 +8,11 @@ namespace core
 
 VariableDerived::VariableDerived(const std::string &name, adios2::derived::Expression expr,
                                  const DataType exprType, const bool isConstant,
-                                 const DerivedVarType varType)
+                                 const DerivedVarType varType,
+                                 const std::map<std::string, DataType> nameToType)
 : VariableBase(name, exprType, helper::GetDataTypeSize(exprType), expr.GetShape(), expr.GetStart(),
                expr.GetCount(), isConstant),
-  m_DerivedType(varType), m_Expr(expr)
+  m_DerivedType(varType), m_NameToType(nameToType), m_Expr(expr)
 {
 }
 
@@ -52,13 +53,14 @@ VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInf
         {
             Dims start;
             Dims count;
+            DataType type = m_NameToType[variable.first];
             for (int d = 0; d < variable.second->Dims; d++)
             {
                 start.push_back(variable.second->BlocksInfo[i].Start[d]);
                 count.push_back(variable.second->BlocksInfo[i].Count[d]);
             }
             varData.push_back(adios2::derived::DerivedData(
-                {variable.second->BlocksInfo[i].BufferP, start, count}));
+                {variable.second->BlocksInfo[i].BufferP, start, count, type}));
         }
         inputData.insert({variable.first, varData});
     }

@@ -7,7 +7,9 @@
 #include <sys/sockio.h>
 #endif
 #ifdef HAVE_WINDOWS_H
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
+#endif
 #include <winsock2.h>
 #include <Ws2def.h>
 #include <ws2tcpip.h>
@@ -504,7 +506,7 @@ dump_output(int length_estimate, char *format, ...)
 #ifndef HOST_NAME_MAX
 #define HOST_NAME_MAX 255
 #endif
-#ifdef _MSC_VER
+#ifdef _WIN32
 static int inet_aton(const char* cp, struct in_addr* addr)
 {
     addr->s_addr = inet_addr(cp);

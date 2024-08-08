@@ -5,7 +5,7 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <winsock2.h>
 #include <time.h>
 #include <sys/timeb.h>

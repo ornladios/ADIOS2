@@ -154,3 +154,9 @@ adios2::detail::ASTDriver::parse (const std::string input)
   parse.set_debug_level (trace_parsing);
   parse ();
 }
+
+void
+adios2::detail::ASTDriver::destroy_lex_structures ()
+{
+    yylex_destroy();
+}

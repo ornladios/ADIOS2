@@ -3,7 +3,9 @@
 #include <sys/types.h>
 
 #ifdef HAVE_WINDOWS_H
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
+#endif
 #include <winsock2.h>
 #include <windows.h>
 #define getpid()    _getpid()

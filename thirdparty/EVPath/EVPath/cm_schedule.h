@@ -7,8 +7,10 @@
 extern "C" {
 #endif
 
-#ifdef _MSC_VER
+#ifdef _WIN32
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
+#endif
 #include <winsock2.h>
 #endif
 typedef struct _avail_period {

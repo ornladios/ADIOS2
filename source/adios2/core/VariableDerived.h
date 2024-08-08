@@ -15,11 +15,13 @@ namespace core
 class VariableDerived : public VariableBase
 {
     DerivedVarType m_DerivedType;
+    std::map<std::string, DataType> m_NameToType;
 
 public:
     adios2::derived::Expression m_Expr;
     VariableDerived(const std::string &name, adios2::derived::Expression expr,
-                    const DataType exprType, const bool isConstant, const DerivedVarType varType);
+                    const DataType exprType, const bool isConstant, const DerivedVarType varType,
+                    const std::map<std::string, DataType> nameToType);
     ~VariableDerived() = default;
 
     DerivedVarType GetDerivedType();
