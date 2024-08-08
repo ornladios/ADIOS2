@@ -27,6 +27,7 @@ public:
 
     // Defined in lexer.l
     void parse(const std::string input);
+    void destroy_lex_structures();
 
     ASTNode *getAST();
 
