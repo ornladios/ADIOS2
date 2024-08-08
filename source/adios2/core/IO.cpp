@@ -918,8 +918,8 @@ VariableDerived &IO::DefineDerivedVariable(const std::string &name, const std::s
 
     // create derived variable with the expression
     auto itVariablePair = m_VariablesDerived.emplace(
-        name, std::unique_ptr<VariableBase>(
-                  new VariableDerived(name, derived_exp, expressionType, isConstant, varType)));
+        name, std::unique_ptr<VariableBase>(new VariableDerived(
+                  name, derived_exp, expressionType, isConstant, varType, name_to_type)));
     VariableDerived &variable = static_cast<VariableDerived &>(*itVariablePair.first->second);
 
     // check IO placeholder for variable operations

@@ -120,13 +120,14 @@ struct OperatorFunctions
 {
     std::function<DerivedData(std::vector<DerivedData>, DataType)> ComputeFct;
     std::function<Dims(std::vector<Dims>)> DimsFct;
+    std::function<DataType(DataType)> TypeFct;
 };
 
 std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
-    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_SUBTRACT, {SubtractFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc}}};
+    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_SUBTRACT, {SubtractFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc, SameTypeFunc}}};
 
 Expression::Expression(std::string string_exp)
 : m_Shape({0}), m_Start({0}), m_Count({0}), ExprString(string_exp)
@@ -290,10 +291,7 @@ DataType ExpressionTree::GetType(std::map<std::string, DataType> NameToType)
         if (!std::get<2>(subexp))
         {
             DataType varType = NameToType[std::get<1>(subexp)];
-            if (detail.operation == detail::ExpressionOperator::OP_POW)
-                exprType.push_back(DataType::Float);
-            else
-                exprType.push_back(varType);
+            exprType.push_back(varType);
         }
         else
         {
@@ -306,7 +304,10 @@ DataType ExpressionTree::GetType(std::map<std::string, DataType> NameToType)
         if (exprType[i - 1] != exprType[i])
             helper::Throw<std::invalid_argument>("Derived", "Expression", "GetType",
                                                  "Derived expression operators are not the same");
-    return exprType[0];
+    // get the output type after applying the operator
+    auto op_fct = OpFunctions.at(detail.operation);
+    DataType opType = op_fct.TypeFct(exprType[0]);
+    return opType;
 }
 
 std::vector<DerivedData>
