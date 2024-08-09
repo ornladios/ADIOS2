@@ -4,6 +4,10 @@ Write-Host "::group::Setup CONDA"
 $Env:Path += ";$Env:CONDA\condabin"
 conda.bat init powershell
 conda.bat init bash
+conda.bat update --all -y
+conda.bat config --add channels conda-forge
+conda.bat config --add channels msys2
+conda.bat config --set channel_priority strict
 Write-Host "::endgroup::"
 
 Write-Host "::group::Installing common deps"
@@ -16,3 +20,6 @@ if($Env:GH_YML_MATRIX_PARALLEL -eq "msmpi")
   conda.bat install -n adios2 -c conda-forge -y "msmpi" "mpi4py"
   Write-Host "::endgroup::"
 }
+
+conda.bat list -n adios2
+conda.bat info --verbose
