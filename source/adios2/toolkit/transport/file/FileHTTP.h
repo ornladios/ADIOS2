@@ -11,15 +11,16 @@
 #define ADIOS2_FILEHTTP_H
 
 #ifdef _WIN32
+#ifndef FD_SET_SIZE
+#define FD_SETSIZE 1024
+#endif
 #include <winsock2.h>
 #endif
 #include "../Transport.h"
 #include "adios2/common/ADIOSConfig.h"
 #ifdef _MSC_VER
-#define FD_SETSIZE 1024
 #include <process.h>
 #include <time.h>
-
 #include <windows.h>
 #define getpid() _getpid()
 #else
