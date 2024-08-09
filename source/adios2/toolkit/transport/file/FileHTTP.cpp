@@ -22,13 +22,10 @@
 #define close(x) closesocket(x)
 #define INST_ADDRSTRLEN 50
 #else
-#include <netinet/in.h>
-#include <sys/socket.h>
-
-#include <arpa/inet.h>
 #include <cstring>
+#ifndef _WIN32
 #include <netdb.h>
-#include <netinet/in.h>
+#endif
 #include <unistd.h>
 #endif
 namespace adios2
