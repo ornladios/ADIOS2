@@ -185,10 +185,10 @@ using cfloat = std::complex<float>;
 using cdouble = std::complex<double>;
 
 // Limit, using uint64_t to make it portable
-constexpr uint64_t MaxU64 = std::numeric_limits<uint64_t>::max();
-constexpr size_t MaxSizeT = std::numeric_limits<size_t>::max();
-constexpr size_t DefaultSizeT = std::numeric_limits<size_t>::max();
-constexpr size_t EngineCurrentStep = std::numeric_limits<size_t>::max();
+constexpr uint64_t MaxU64 = (std::numeric_limits<uint64_t>::max)();
+constexpr size_t MaxSizeT = (std::numeric_limits<size_t>::max)();
+constexpr size_t DefaultSizeT = (std::numeric_limits<size_t>::max)();
+constexpr size_t EngineCurrentStep = (std::numeric_limits<size_t>::max)();
 
 union PrimitiveStdtypeUnion
 {
