@@ -26,6 +26,8 @@ const std::map<ExpressionOperator, OperatorProperty> op_property = {
     {ExpressionOperator::OP_INDEX, {"INDEX", false}},
     {ExpressionOperator::OP_ADD, {"ADD", true}},
     {ExpressionOperator::OP_SUBTRACT, {"SUBTRACT", true}},
+    {ExpressionOperator::OP_MULT, {"MULT", false}},
+    {ExpressionOperator::OP_DIV, {"DIV", false}},
     {ExpressionOperator::OP_SQRT, {"SQRT", false}},
     {ExpressionOperator::OP_POW, {"POW", false}},
     {ExpressionOperator::OP_CURL, {"CURL", false}},
@@ -35,13 +37,17 @@ const std::map<std::string, ExpressionOperator> string_to_op = {
     {"ALIAS", ExpressionOperator::OP_ALIAS}, /* Parser-use only */
     {"PATH", ExpressionOperator::OP_PATH},   /* Parser-use only */
     {"NUM", ExpressionOperator::OP_NUM},     /* Parser-use only */
-    {"INDEX", ExpressionOperator::OP_INDEX},    {"+", ExpressionOperator::OP_ADD},
-    {"add", ExpressionOperator::OP_ADD},        {"ADD", ExpressionOperator::OP_ADD},
-    {"-", ExpressionOperator::OP_SUBTRACT},     {"SUBTRACT", ExpressionOperator::OP_SUBTRACT},
-    {"SQRT", ExpressionOperator::OP_SQRT},      {"sqrt", ExpressionOperator::OP_SQRT},
-    {"POW", ExpressionOperator::OP_POW},        {"^", ExpressionOperator::OP_POW},
-    {"CURL", ExpressionOperator::OP_CURL},      {"curl", ExpressionOperator::OP_CURL},
-    {"MAGNITUDE", ExpressionOperator::OP_MAGN}, {"magnitude", ExpressionOperator::OP_MAGN}};
+    {"INDEX", ExpressionOperator::OP_INDEX},   {"+", ExpressionOperator::OP_ADD},
+    {"add", ExpressionOperator::OP_ADD},       {"ADD", ExpressionOperator::OP_ADD},
+    {"-", ExpressionOperator::OP_SUBTRACT},    {"SUBTRACT", ExpressionOperator::OP_SUBTRACT},
+    {"/", ExpressionOperator::OP_DIV},         {"divide", ExpressionOperator::OP_DIV},
+    {"DIVIDE", ExpressionOperator::OP_DIV},    {"*", ExpressionOperator::OP_MULT},
+    {"multiply", ExpressionOperator::OP_MULT}, {"MULTIPLY", ExpressionOperator::OP_MULT},
+    {"SQRT", ExpressionOperator::OP_SQRT},     {"sqrt", ExpressionOperator::OP_SQRT},
+    {"pow", ExpressionOperator::OP_POW},       {"POW", ExpressionOperator::OP_POW},
+    {"^", ExpressionOperator::OP_POW},         {"CURL", ExpressionOperator::OP_CURL},
+    {"curl", ExpressionOperator::OP_CURL},     {"MAGNITUDE", ExpressionOperator::OP_MAGN},
+    {"magnitude", ExpressionOperator::OP_MAGN}};
 
 inline std::string get_op_name(ExpressionOperator op) { return op_property.at(op).name; }
 
@@ -126,6 +132,10 @@ struct OperatorFunctions
 std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
     {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_SUBTRACT, {SubtractFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_MULT, {MultFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_DIV, {DivFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_POW, {PowFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_SQRT, {SqrtFunc, SameDimsFunc, FloatTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc, SameTypeFunc}}};
 
