@@ -191,14 +191,31 @@ DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
     }
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
+    DataType inputType = inputData[0].Type;
 
 #define declare_type_sqrt(T)                                                                       \
-    if (type == helper::GetDataType<T>())                                                          \
+    if (inputType == helper::GetDataType<T>())                                                     \
     {                                                                                              \
-        T *sqrtValues = (T *)malloc(dataSize * sizeof(T));                                         \
+        if (inputType == DataType::Float)                                                          \
+        {                                                                                          \
+            float *sqrtValues = (float *)malloc(dataSize * sizeof(float));                         \
+            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
+                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, sqrtValues,        \
+                           [](T &a) { return std::sqrt(a); });                                     \
+            return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});      \
+        }                                                                                          \
+        if (inputType == DataType::LongDouble)                                                     \
+        {                                                                                          \
+            long double *sqrtValues = (long double *)malloc(dataSize * sizeof(long double));       \
+            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
+                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, sqrtValues,        \
+                           [](T &a) { return std::sqrt(a); });                                     \
+            return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});      \
+        }                                                                                          \
+        double *sqrtValues = (double *)malloc(dataSize * sizeof(double));                          \
         std::transform(reinterpret_cast<T *>(inputData[0].Data),                                   \
                        reinterpret_cast<T *>(inputData[0].Data) + dataSize, sqrtValues,            \
-                       [](T &a) { return sqrt(a); });                                              \
+                       [](T &a) { return std::sqrt(a); });                                         \
         return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sqrt)
@@ -218,13 +235,31 @@ DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
     }
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
+    DataType inputType = inputData[0].Type;
+
 #define declare_type_pow(T)                                                                        \
-    if (type == helper::GetDataType<T>())                                                          \
+    if (inputType == helper::GetDataType<T>())                                                     \
     {                                                                                              \
-        T *powValues = (T *)malloc(dataSize * sizeof(T));                                          \
+        if (inputType == DataType::Float)                                                          \
+        {                                                                                          \
+            float *powValues = (float *)malloc(dataSize * sizeof(float));                          \
+            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
+                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, powValues,         \
+                           [](T &a) { return std::pow(a, 2); });                                   \
+            return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});       \
+        }                                                                                          \
+        if (inputType == DataType::LongDouble)                                                     \
+        {                                                                                          \
+            long double *powValues = (long double *)malloc(dataSize * sizeof(long double));        \
+            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
+                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, powValues,         \
+                           [](T &a) { return std::pow(a, 2); });                                   \
+            return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});       \
+        }                                                                                          \
+        double *powValues = (double *)malloc(dataSize * sizeof(double));                           \
         std::transform(reinterpret_cast<T *>(inputData[0].Data),                                   \
                        reinterpret_cast<T *>(inputData[0].Data) + dataSize, powValues,             \
-                       [](T &a) { return pow(a, 2); });                                            \
+                       [](T &a) { return std::pow(a, 2); });                                       \
         return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_pow)
@@ -334,7 +369,7 @@ DataType SameTypeFunc(DataType input) { return input; }
 
 DataType FloatTypeFunc(DataType input)
 {
-    if ((input == DataType::Double) || (input == DataType::LongDouble))
+    if ((input == DataType::Float) || (input == DataType::LongDouble))
         return input;
     if ((input == DataType::FloatComplex) || (input == DataType::DoubleComplex))
         return input;
