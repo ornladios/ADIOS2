@@ -20,6 +20,15 @@
 #define ZFP_DEFAULT_EXECUTION_POLICY zfp_exec_serial
 #endif
 
+/* CMake will make sure zfp >= 0.5.3
+   ZFP features 4D input data since version 0.5.4
+   https://zfp.readthedocs.io/en/release0.5.4/versions.html */
+#if  ZFP_VERSION_MAJOR > 0 \
+  || ZFP_VERSION_MINOR > 5 \
+  || ZFP_VERSION_MINOR == 5 && ZFP_VERSION_PATCH > 3
+#define ADIOS2_HAVE_ZFP_4D 1
+#endif
+
 namespace adios2
 {
 namespace core
@@ -75,7 +84,11 @@ size_t CompressZFP::Operate(const char *dataIn, const Dims &blockStart, const Di
     PutParameters(bufferOut, bufferOutOffset, m_Parameters);
     // zfp V1 metadata end
 
+#ifdef ADIOS2_HAVE_ZFP_4D
+    Dims convertedDims = ConvertDims(blockCount, type, 4);
+#else
     Dims convertedDims = ConvertDims(blockCount, type, 3);
+#endif
 
     zfp_field *field = GetZFPField(dataIn, convertedDims, type);
     zfp_stream *stream = GetZFPStream(convertedDims, type, m_Parameters);
@@ -163,7 +176,11 @@ size_t CompressZFP::DecompressV1(const char *bufferIn, const size_t sizeIn, char
                           ". Please make sure a compatible version is used for decompression.";
     const Params parameters = GetParameters(bufferIn, bufferInOffset);
 
+#ifdef ADIOS2_HAVE_ZFP_4D
+    Dims convertedDims = ConvertDims(blockCount, type, 4);
+#else
     Dims convertedDims = ConvertDims(blockCount, type, 3);
+#endif
 
     zfp_field *field = nullptr;
     zfp_stream *stream = nullptr;
@@ -249,6 +266,13 @@ zfp_field *GetZFPField(const char *data, const Dims &dimensions, DataType type)
         field = zfp_field_3d(const_cast<char *>(data), zfpType, dimensions[0], dimensions[1],
                              dimensions[2]);
     }
+#ifdef ADIOS2_HAVE_ZFP_4D
+    else if (dimensions.size() == 4)
+    {
+        field = zfp_field_4d(const_cast<char *>(data), zfpType, dimensions[0], dimensions[1],
+                             dimensions[2], dimensions[3]);
+    }
+#endif
     else
     {
         helper::Throw<std::invalid_argument>("Operator", "CompressZFP", "GetZfpField",
