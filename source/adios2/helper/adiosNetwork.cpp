@@ -6,9 +6,12 @@
  *
  */
 
-#include "adiosNetwork.h"
+#ifdef _WIN32
+#include <winsock2.h> // SOCKET struct
+#endif
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/transport/file/FileFStream.h"
+#include "adiosNetwork.h"
 
 #include <string.h> // memcpy
 
@@ -37,7 +40,9 @@
 #endif // ADIOS2_HAVE_DATAMAN || ADIOS2_HAVE_TABLE
 
 #else // _WIN32
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
+#endif
 #include <process.h>
 #include <time.h>
 #include <winsock2.h> // SOCKET struct
