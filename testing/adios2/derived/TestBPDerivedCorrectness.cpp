@@ -118,10 +118,11 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
     std::vector<float> readSubtr;
     std::vector<float> readMult;
     std::vector<float> readDiv;
-    std::vector<float> readPow;
-    std::vector<float> readSqrt;
+    std::vector<double> readPow;
+    std::vector<double> readSqrt;
 
-    float calcDerived;
+    float calcFloat;
+    double calcDouble;
     float epsilon = (float)0.01;
     for (size_t i = 0; i < steps; i++)
     {
@@ -139,23 +140,23 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
 
         for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
         {
-            calcDerived = readUx[ind] + readUy[ind] + readUz[ind];
-            EXPECT_TRUE(fabs(calcDerived - readAdd[ind]) < epsilon);
+            calcFloat = readUx[ind] + readUy[ind] + readUz[ind];
+            EXPECT_TRUE(fabs(calcFloat - readAdd[ind]) < epsilon);
 
-            calcDerived = readUx[ind] - readUy[ind] - readUz[ind];
-            EXPECT_TRUE(fabs(calcDerived - readSubtr[ind]) < epsilon);
+            calcFloat = readUx[ind] - readUy[ind] - readUz[ind];
+            EXPECT_TRUE(fabs(calcFloat - readSubtr[ind]) < epsilon);
 
-            calcDerived = readUx[ind] * readUy[ind] * readUz[ind];
-            EXPECT_TRUE(fabs(calcDerived - readMult[ind]) < epsilon);
+            calcFloat = readUx[ind] * readUy[ind] * readUz[ind];
+            EXPECT_TRUE(fabs(calcFloat - readMult[ind]) < epsilon);
 
-            calcDerived = readUx[ind] / readUy[ind] / readUz[ind];
-            EXPECT_TRUE(fabs(calcDerived - readDiv[ind]) < epsilon);
+            calcFloat = readUx[ind] / readUy[ind] / readUz[ind];
+            EXPECT_TRUE(fabs(calcFloat - readDiv[ind]) < epsilon);
 
-            calcDerived = std::pow(readUx[ind], 2);
-            EXPECT_TRUE(fabs(calcDerived - readPow[ind]) < epsilon);
+            calcDouble = std::pow(readUx[ind], 2);
+            EXPECT_TRUE(fabs(calcDouble - readPow[ind]) < epsilon);
 
-            calcDerived = std::sqrt(readUx[ind]);
-            EXPECT_TRUE(fabs(calcDerived - readSqrt[ind]) < epsilon);
+            calcDouble = std::sqrt(readUx[ind]);
+            EXPECT_TRUE(fabs(calcDouble - readSqrt[ind]) < epsilon);
         }
     }
     bpFileReader.Close();
