@@ -689,7 +689,7 @@ void SstReader::BP5PerformGets()
     auto iterator = ReadRequests.cbegin();
     auto end = ReadRequests.cend();
 
-    auto enqueue_next = [&](std::vector<void *>& sstReadHandlers_lambda) {
+    auto enqueue_next = [&](std::vector<void *> &sstReadHandlers_lambda) {
         if (iterator == end)
         {
             return false;

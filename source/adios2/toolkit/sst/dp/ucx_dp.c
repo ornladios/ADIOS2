@@ -340,7 +340,6 @@ static ProgressThread use_progress_thread()
     }
 }
 
-
 static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params,
                                   attr_list DPAttrs, SstStats Stats)
 {
@@ -384,7 +383,8 @@ static DP_WS_Stream UcxInitWriter(CP_Services Svcs, void *CP_Stream, struct _Sst
         Svcs->verbose(CP_Stream, DPTraceVerbose,
                       "Using a separate thread for manual progress upon user request.\n");
         Stream->Fabric->keep_making_progress = 1;
-        if (pthread_create(&Stream->Fabric->progress_thread, NULL, &make_progress, Stream->Fabric) != 0)
+        if (pthread_create(&Stream->Fabric->progress_thread, NULL, &make_progress,
+                           Stream->Fabric) != 0)
         {
             Svcs->verbose(CP_Stream, DPCriticalVerbose, "Could not start thread.\n");
             return NULL;
@@ -791,7 +791,7 @@ static void UcxDestroyWriter(CP_Services Svcs, DP_WS_Stream WS_Stream_v)
 
     Svcs->verbose(WS_Stream->CP_Stream, DPTraceVerbose, "Tearing down RDMA state on writer.\n");
 
-    if(WS_Stream->Fabric->keep_making_progress == 1)
+    if (WS_Stream->Fabric->keep_making_progress == 1)
     {
         WS_Stream->Fabric->keep_making_progress = 0;
         ucp_worker_signal(WS_Stream->Fabric->ucp_worker);

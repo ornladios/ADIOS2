@@ -62,7 +62,7 @@ private:
         char *buffer;
         void *dp_info;
     };
-    void * performDeferredReadRemoteMemory(DeferredReadRemoteMemory const &);
+    void *performDeferredReadRemoteMemory(DeferredReadRemoteMemory const &);
 
     template <class T>
     void ReadVariableBlocksRequests(Variable<T> &variable,

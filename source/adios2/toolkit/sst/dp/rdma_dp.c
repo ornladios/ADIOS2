@@ -462,8 +462,8 @@ static void init_fabric(struct fabric_state *fabric, struct _SstParams *Params, 
 
     fabric->info = NULL;
 
-    char const * provider_name = NULL;
-    if((provider_name = getenv("FABRIC_PROVIDER")))
+    char const *provider_name = NULL;
+    if ((provider_name = getenv("FABRIC_PROVIDER")))
     {
         size_t len = strlen(provider_name);
         hints->fabric_attr->prov_name = malloc(len + 1);
@@ -727,7 +727,7 @@ static void fini_fabric(struct fabric_state *fabric, CP_Services Svcs, void *CP_
         // so we give it some event.
         fi_cq_signal(fabric->cq_signal);
 
-        if(fabric->pthread_id != 0)
+        if (fabric->pthread_id != 0)
         {
             if (pthread_join(fabric->pthread_id, NULL) != 0)
             {
