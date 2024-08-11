@@ -1206,9 +1206,9 @@ static ProgressThread use_progress_thread()
         use_progress_thread[i] = (char)tolower((int)use_progress_thread[i]);
     }
 
-    if (use_progress_thread_envvar && strncmp(use_progress_thread, "1", max_len) == 0 ||
-        strncmp(use_progress_thread, "yes", max_len) == 0 ||
-        strncmp(use_progress_thread, "on", max_len) == 0)
+    if (use_progress_thread_envvar && ((strncmp(use_progress_thread, "1", max_len) == 0) ||
+                                       (strncmp(use_progress_thread, "yes", max_len) == 0) ||
+                                       (strncmp(use_progress_thread, "on", max_len) == 0)))
     {
         return ProgressThreadYes;
     }
