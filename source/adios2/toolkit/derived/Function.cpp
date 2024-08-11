@@ -44,13 +44,13 @@ T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dim
     size_t dataSize = dims[0] * dims[1] * dims[2];
     T *data = (T *)malloc(dataSize * sizeof(float) * 3);
     size_t index = 0;
-    for (int i = 0; i < dims[0]; ++i)
+    for (int i = 0; i < (int)dims[0]; ++i)
     {
         size_t prev_i = std::max(0, i - 1), next_i = std::min((int)dims[0] - 1, i + 1);
-        for (int j = 0; j < dims[1]; ++j)
+        for (int j = 0; j < (int)dims[1]; ++j)
         {
             size_t prev_j = std::max(0, j - 1), next_j = std::min((int)dims[1] - 1, j + 1);
-            for (int k = 0; k < dims[2]; ++k)
+            for (int k = 0; k < (int)dims[2]; ++k)
             {
                 size_t prev_k = std::max(0, k - 1), next_k = std::min((int)dims[2] - 1, k + 1);
                 // curl[0] = dv3 / dy - dv2 / dz
@@ -81,20 +81,6 @@ T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dim
     return data;
 }
 
-// types not supported for curl
-std::complex<float> *ApplyCurl(const std::complex<float> * /*input 1*/,
-                               const std::complex<float> * /*input 2*/,
-                               const std::complex<float> * /*input 3*/, const size_t[3] /*dims*/)
-{
-    return NULL;
-}
-
-std::complex<double> *ApplyCurl(const std::complex<double> * /*input 1*/,
-                                const std::complex<double> * /*input 2*/,
-                                const std::complex<double> * /*input 3*/, const size_t[3] /*dims*/)
-{
-    return NULL;
-}
 }
 
 namespace derived
@@ -112,7 +98,7 @@ DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
                                                 [](T a, T b) { return a + b; });                   \
         return DerivedData({(void *)addValues, inputData[0].Start, inputData[0].Count});           \
     }
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_add)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_add)
     helper::Throw<std::invalid_argument>("Derived", "Function", "AddFunc",
                                          "Invalid variable types");
     return DerivedData();
@@ -134,7 +120,7 @@ DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
                 *(reinterpret_cast<T *>(inputData[0].Data) + i) - subtractValues[i];               \
         return DerivedData({(void *)subtractValues, inputData[0].Start, inputData[0].Count});      \
     }
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_subtract)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_subtract)
     helper::Throw<std::invalid_argument>("Derived", "Function", "SubtractFunc",
                                          "Invalid variable types");
     return DerivedData();
@@ -156,7 +142,7 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
         }                                                                                          \
         return DerivedData({(void *)magValues, inputData[0].Start, inputData[0].Count});           \
     }
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_mag)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_mag)
     helper::Throw<std::invalid_argument>("Derived", "Function", "MagnitudeFunc",
                                          "Invalid variable types");
     return DerivedData();
@@ -196,7 +182,7 @@ DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
         curl.Data = detail::ApplyCurl(input1, input2, input3, dims);                               \
         return curl;                                                                               \
     }
-    ADIOS2_FOREACH_PRIMITIVE_STDTYPE_1ARG(declare_type_curl)
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_curl)
     helper::Throw<std::invalid_argument>("Derived", "Function", "Curl3DFunc",
                                          "Invalid variable types");
     return DerivedData();
@@ -237,6 +223,16 @@ Dims CurlDimsFunc(std::vector<Dims> input)
     return output;
 }
 
+DataType SameTypeFunc(DataType input) { return input; }
+
+DataType FloatTypeFunc(DataType input)
+{
+    if ((input == DataType::Double) || (input == DataType::LongDouble))
+        return input;
+    if ((input == DataType::FloatComplex) || (input == DataType::DoubleComplex))
+        return input;
+    return DataType::Float;
+}
 }
 } // namespace adios2
 #endif

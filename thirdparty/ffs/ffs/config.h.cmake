@@ -39,6 +39,9 @@
 /* Define to 1 if you have the <netinet/in.h> header file. */
 #cmakedefine HAVE_NETINET_IN_H
 
+/* Define to 1 if you have the <arpa/inet.h> header file. */
+#cmakedefine HAVE_ARPA_INET_H
+
 /* Define to 1 if you have the <sockLib.h> header file. */
 #cmakedefine HAVE_SOCKLIB_H
 
@@ -98,6 +101,9 @@
 
 /* Define to 1 if you have the <winsock.h> header file. */
 #cmakedefine HAVE_WINSOCK_H
+
+/* Define to 1 if you have the <winsock2.h> header file. */
+#cmakedefine HAVE_WINSOCK2_H
 
 /* Define if you need struct iovec to be defined */
 #cmakedefine NEED_IOVEC_DEFINE

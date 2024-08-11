@@ -397,7 +397,7 @@ attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params, SMPI
                 (globalNetinfoCallback)(2, CMContactString, NULL);
             }
             WriterRank0Contact = attr_list_from_string(CMContactString);
-            conn = CMget_conn(Stream->CPInfo->SharedCM->cm, WriterRank0Contact);
+            conn = Tunneling_get_conn(Stream->CPInfo->SharedCM->cm, WriterRank0Contact);
             free_attr_list(WriterRank0Contact);
         }
         if (conn)

@@ -158,6 +158,11 @@ if(NOT @BUILD_SHARED_LIBS@)
     find_dependency(SQLite3)
   endif()
 
+  set(ADIOS2_HAVE_KVCACHE @ADIOS2_HAVE_KVCACHE@)
+  if(ADIOS2_HAVE_KVCACHE)
+    find_dependency(hiredis)
+  endif()
+
 
   adios2_add_thirdparty_target(pugixml)
   set(ADIOS2_USE_EXTERNAL_PUGIXML @ADIOS2_USE_EXTERNAL_PUGIXML@)
@@ -230,13 +235,6 @@ if(NOT TARGET adios2::core)
     list(FILTER _adios2_link_libs EXCLUDE REGEX "^adios2::(c|c_mpi)$")
     set_property(TARGET adios2::adios2 PROPERTY INTERFACE_LINK_LIBRARIES "${_adios2_link_libs}")
     unset(_adios2_link_libs)
-    if(TARGET adios2::core_mpi)
-      # Since C is not available, use MPI through MPI_CXX instead.
-      get_property(_adios2_link_libs TARGET adios2::core_mpi PROPERTY INTERFACE_LINK_LIBRARIES)
-      string(REGEX REPLACE "MPI::MPI_C(;|>|$)" "MPI::MPI_CXX\\1" _adios2_link_libs "${_adios2_link_libs}")
-      set_property(TARGET adios2::core_mpi PROPERTY INTERFACE_LINK_LIBRARIES "${_adios2_link_libs}")
-      unset(_adios2_link_libs)
-    endif()
   endif()
   if(NOT CMAKE_CXX_COMPILER_LOADED)
     # Since CXX is not available, take out CXX bindings from legacy library.

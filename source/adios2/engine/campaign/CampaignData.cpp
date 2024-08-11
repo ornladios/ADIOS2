@@ -61,7 +61,8 @@ static int sqlcb_directory(void *p, int argc, char **argv, char **azColName)
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
     size_t hostid = helper::StringToSizeT(std::string(argv[0]), "SQL callback convert text to int");
     size_t hostidx = hostid - 1; // SQL rows start from 1, vector idx start from 0
-    cdp->hosts[hostidx].directory.push_back(argv[1]);
+    cdp->directory.push_back(argv[1]);
+    cdp->hosts[hostidx].dirIdx.push_back(cdp->directory.size() - 1);
     return 0;
 };
 
@@ -73,7 +74,7 @@ static int sqlcb_bpdataset(void *p, int argc, char **argv, char **azColName)
     size_t hostid = helper::StringToSizeT(std::string(argv[1]), "SQL callback convert text to int");
     size_t dirid = helper::StringToSizeT(std::string(argv[2]), "SQL callback convert text to int");
     cds.hostIdx = hostid - 1; // SQL rows start from 1, vector idx start from 0
-    cds.dirIdx = dirid - 1;
+    cds.dirIdx = dirid - 1;   // SQL rows start from 1, vector idx start from 0
     cds.name = argv[3];
     cdp->bpdatasets[dsid] = cds;
     return 0;

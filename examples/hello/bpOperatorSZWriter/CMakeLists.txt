@@ -30,7 +30,7 @@ if(ADIOS2_HAVE_SZ)
 
   if (ADIOS2_HAVE_MPI)
     add_executable(adios2_hello_bpOperatorSZWriter_mpi bpOperatorSZWriter.cpp)
-    target_link_libraries(adios2_hello_bpOperatorSZWriter_mpi adios2::cxx11_mpi MPI::MPI_C)
+    target_link_libraries(adios2_hello_bpOperatorSZWriter_mpi adios2::cxx11_mpi MPI::MPI_CXX)
     install(TARGETS adios2_hello_bpOperatorSZWriter_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
   endif ()
 endif()

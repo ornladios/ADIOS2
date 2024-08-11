@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.5)
 # GTKorvo
 set(CMAKE_DIRECTORY_LABELS EVPath)
 
-project(EVPath VERSION 4.5.0 LANGUAGES C CXX)
+project(EVPath VERSION 4.5.3 LANGUAGES C CXX)
 
 # Enable <PackageName>_ROOT variables for dependency searching
 # CMake v3.12
@@ -297,10 +297,13 @@ if(EVPATH_TRANSPORT_MODULES)
 
   add_library(cmselect MODULE cmselect.c)
   add_library(cmsockets MODULE cmsockets.c ip_config.c)
-  add_library(cmudp MODULE cmudp.c)
-  add_library(cmmulticast MODULE cmmulticast.c)
-
-  foreach(M cmselect cmsockets cmudp cmmulticast)
+  list (APPEND tgts cmselect cmsockets)
+  if(NOT WIN32)
+    add_library(cmudp MODULE cmudp.c)
+    add_library(cmmulticast MODULE cmmulticast.c)
+    list (APPEND tgts  cmudp cmmulticast)
+  endif()
+  foreach(M ${tgts})
     set_target_properties(${M} PROPERTIES
       OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}${M}
       LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR}
@@ -310,10 +313,12 @@ if(EVPATH_TRANSPORT_MODULES)
 
   target_link_libraries(cmselect PRIVATE evpath_headers atl::atl)
   target_link_libraries(cmsockets PRIVATE evpath_headers atl::atl)
-  target_link_libraries(cmudp PRIVATE evpath_headers atl::atl)
-  target_link_libraries(cmmulticast PRIVATE evpath_headers atl::atl)
-
-  list(APPEND EVPATH_TRANSPORT_TARGETS cmselect cmsockets cmudp cmmulticast)
+  list(APPEND EVPATH_TRANSPORT_TARGETS cmselect cmsockets)
+  if(NOT WIN32)
+    target_link_libraries(cmudp PRIVATE evpath_headers atl::atl)
+    target_link_libraries(cmmulticast PRIVATE evpath_headers atl::atl)
+    list (APPEND EVPATH_TRANSPORT_TARGETS  cmudp cmmulticast)
+  endif()
 
   if (HAVE_SYS_EPOLL_H)
      add_library(cmepoll MODULE cmepoll.c)
@@ -604,6 +609,8 @@ CHECK_INCLUDE_FILE(hostlib.h HAVE_HOSTLIB_H)
 CHECK_INCLUDE_FILE(malloc.h HAVE_MALLOC_H)
 CHECK_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
 CHECK_INCLUDE_FILE(netdb.h HAVE_NETDB_H)
+CHECK_INCLUDE_FILE(netinet/in.h HAVE_NETINET_IN_H)
+CHECK_INCLUDE_FILE(arpa/inet.h HAVE_ARPA_INET_H)
 CHECK_INCLUDE_FILE(sockLib.h HAVE_SOCKLIB_H)
 CHECK_INCLUDE_FILE(stdarg.h STDC_HEADERS)
 CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)

@@ -24,7 +24,7 @@ endif()
 
 if(ADIOS2_HAVE_MPI AND ADIOS2_HAVE_DataMan)
   add_executable(adios2_hello_datamanReader dataManReader.cpp)
-  target_link_libraries(adios2_hello_datamanReader adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_hello_datamanReader adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_hello_datamanReader RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 

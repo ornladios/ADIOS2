@@ -36,15 +36,15 @@ install(TARGETS adios2_hello_bpReader RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_hello_bpReader_mpi bpReader.cpp)
-  target_link_libraries(adios2_hello_bpReader_mpi adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_hello_bpReader_mpi adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_hello_bpReader_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   add_executable(adios2_hello_bpReaderHeatMap2D bpReaderHeatMap2D.cpp)
-  target_link_libraries(adios2_hello_bpReaderHeatMap2D adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_hello_bpReaderHeatMap2D adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_hello_bpReaderHeatMap2D RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   add_executable(adios2_hello_bpReaderHeatMap3D bpReaderHeatMap3D.cpp)
-  target_link_libraries(adios2_hello_bpReaderHeatMap3D adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_hello_bpReaderHeatMap3D adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_hello_bpReaderHeatMap3D RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 

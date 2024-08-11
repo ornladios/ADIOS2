@@ -31,10 +31,10 @@ install(TARGETS adios2_useCases_insituGlobalArraysReaderNxN RUNTIME DESTINATION 
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_useCases_insituGlobalArraysWriter_mpi insituGlobalArraysWriter.cpp)
-  target_link_libraries(adios2_useCases_insituGlobalArraysWriter_mpi adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_useCases_insituGlobalArraysWriter_mpi adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_useCases_insituGlobalArraysWriter_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   add_executable(adios2_useCases_insituGlobalArraysReaderNxN_mpi insituGlobalArraysReaderNxN.cpp)
-  target_link_libraries(adios2_useCases_insituGlobalArraysReaderNxN_mpi adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_useCases_insituGlobalArraysReaderNxN_mpi adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_useCases_insituGlobalArraysReaderNxN_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

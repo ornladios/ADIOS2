@@ -51,7 +51,7 @@ foreach(helper ${PROGS} )
 
   target_link_libraries(${helper} adios2::thirdparty::gtest ${Sst_LIBRARY})
   if(ADIOS2_HAVE_MPI)
-    target_link_libraries(${helper} adios2::cxx11_mpi adios2_core_mpi MPI::MPI_C)
+    target_link_libraries(${helper} adios2::cxx11_mpi adios2_core_mpi MPI::MPI_CXX)
   else()
     target_link_libraries(${helper} adios2::cxx11 adios2_core)
   endif()

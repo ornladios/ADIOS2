@@ -10,8 +10,8 @@ add_executable(Test.Engine.Skeleton.Writer TestSkeletonWriter.cpp)
 add_executable(Test.Engine.Skeleton.Reader TestSkeletonReader.cpp)
 
 if(ADIOS2_HAVE_MPI)
-  target_link_libraries(Test.Engine.Skeleton.Writer adios2::cxx11_mpi MPI::MPI_C)
-  target_link_libraries(Test.Engine.Skeleton.Reader adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(Test.Engine.Skeleton.Writer adios2::cxx11_mpi MPI::MPI_CXX)
+  target_link_libraries(Test.Engine.Skeleton.Reader adios2::cxx11_mpi MPI::MPI_CXX)
   set(cmd_executor
     ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS} ${MPIEXEC_NUMPROC_FLAG} 1
   )

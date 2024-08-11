@@ -26,6 +26,6 @@ install(TARGETS adios2_basics_globalArrayNDWrite RUNTIME DESTINATION ${CMAKE_INS
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_basics_globalArrayNDWrite_mpi globalArrayNDWrite.cpp)
-  target_link_libraries(adios2_basics_globalArrayNDWrite_mpi adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_basics_globalArrayNDWrite_mpi adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_basics_globalArrayNDWrite_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

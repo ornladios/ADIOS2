@@ -26,6 +26,6 @@ install(TARGETS adios2_basics_joinedArrayWrite RUNTIME DESTINATION ${CMAKE_INSTA
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_basics_joinedArrayWrite_mpi joinedArrayWrite.cpp)
-  target_link_libraries(adios2_basics_joinedArrayWrite_mpi adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_basics_joinedArrayWrite_mpi adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_basics_joinedArrayWrite_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()

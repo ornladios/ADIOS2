@@ -1730,16 +1730,16 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                                 for (auto varBase : derivedVarInputVarList)
                                 {
                                     ReadRequest RR;
-                                    BP5VarRec *VarRec = VarByName.at(varBase->m_Name);
+                                    BP5VarRec *VarPrimaryRec = VarByName.at(varBase->m_Name);
                                     MetaArrayRecOperator *writer_meta_base_input =
-                                        (MetaArrayRecOperator *)GetMetadataBase(VarRec, Step,
+                                        (MetaArrayRecOperator *)GetMetadataBase(VarPrimaryRec, Step,
                                                                                 WriterRank);
                                     RR.Timestep = Step;
                                     RR.WriterRank = WriterRank;
                                     RR.StartOffset = writer_meta_base_input->DataBlockLocation[0];
-                                    RR.ReadLength =
-                                        helper::GetDataTypeSize(VarRec->Type) *
-                                        CalcBlockLength(VarRec->DimCount, Req->Count.data());
+                                    RR.ReadLength = helper::GetDataTypeSize(VarPrimaryRec->Type) *
+                                                    CalcBlockLength(VarPrimaryRec->DimCount,
+                                                                    varBase->m_Count.data());
                                     RR.DestinationAddr = (char *)malloc(RR.ReadLength);
                                     RR.DirectToAppMemory = false;
                                     RR.ReqIndex = ReqIndex;
@@ -2046,7 +2046,6 @@ void BP5Deserializer::FinalizeDerivedGets(std::vector<ReadRequest> &Reads)
         auto nameToVarInfo = Req.DerivedInputMap;
         auto DerivedBlockData = derivedVar->ApplyExpression(*nameToVarInfo);
 
-        auto entry = nameToVarInfo->begin();
         for (size_t i = 0; i < DerivedBlockData.size(); i++)
         {
             auto &DBlock = DerivedBlockData[i];
@@ -2058,6 +2057,14 @@ void BP5Deserializer::FinalizeDerivedGets(std::vector<ReadRequest> &Reads)
                            Req.Start, Req.Count, true, true, VarRec->ElementSize, CoreDims(),
                            CoreDims(), CoreDims(), CoreDims(), false, Req.MemSpace);
             free(std::get<0>(DBlock));
+        }
+        // free the temporary blocks malloc'd in generateReadRequests
+        for (auto &entry : *nameToVarInfo)
+        {
+            for (auto &mbi : entry.second->BlocksInfo)
+            {
+                free(mbi.BufferP);
+            }
         }
         delete nameToVarInfo;
     }

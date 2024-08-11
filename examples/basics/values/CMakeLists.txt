@@ -36,7 +36,7 @@ install(TARGETS adios2_basics_valuesWrite RUNTIME DESTINATION ${CMAKE_INSTALL_BI
 
 if(ADIOS2_HAVE_MPI)
   add_executable(adios2_basics_valuesWrite_mpi valuesWrite.cpp)
-  target_link_libraries(adios2_basics_valuesWrite_mpi adios2::cxx11_mpi MPI::MPI_C)
+  target_link_libraries(adios2_basics_valuesWrite_mpi adios2::cxx11_mpi MPI::MPI_CXX)
   install(TARGETS adios2_basics_valuesWrite_mpi RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   if(ADIOS2_HAVE_Fortran)

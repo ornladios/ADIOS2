@@ -8,7 +8,7 @@ file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/iotest-config
 )
 
 add_executable(adios_iotest settings.cpp decomp.cpp processConfig.cpp ioGroup.cpp stream.cpp adiosStream.cpp adios_iotest.cpp)
-target_link_libraries(adios_iotest adios2::cxx11_mpi MPI::MPI_C adios2_core_mpi)
+target_link_libraries(adios_iotest adios2::cxx11_mpi MPI::MPI_CXX adios2_core_mpi)
 if(WIN32)
   target_link_libraries(adios_iotest getopt)
 endif()

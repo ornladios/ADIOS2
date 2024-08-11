@@ -105,6 +105,9 @@ private:
     /* KVCache for remote data */
     kvcache::KVCacheCommon m_KVCache;
 
+    /* Fingerprint to verify local validity against remote data */
+    std::string m_Fingerprint = "";
+
     /** used for per-step reads, TODO: to be moved to BP5Deserializer */
     size_t m_CurrentStep = 0;
     size_t m_StepsCount = 0;
