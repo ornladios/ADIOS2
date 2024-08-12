@@ -172,7 +172,7 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
                                          "Invalid variable types");
     return DerivedData();
 }
-  
+
 // Perform a division from the first variable of all other variables in the std::vector
 DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
 {
@@ -289,7 +289,7 @@ DerivedData SinFunc(std::vector<DerivedData> inputData, DataType type)
         return DerivedData({(void *)sinValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sin)
-    helper::Throw<std::invalid_argument>("Derived", "Function", "SinFunc", 
+    helper::Throw<std::invalid_argument>("Derived", "Function", "SinFunc",
                                          "Invalid variable types");
     return DerivedData();
 }
@@ -312,7 +312,7 @@ DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type)
                                          "Invalid variable types");
     return DerivedData();
 }
-  
+
 DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::TanFunc");
@@ -369,7 +369,7 @@ DerivedData AcosFunc(std::vector<DerivedData> inputData, DataType type)
                                          "Invalid variable types");
     return DerivedData();
 }
-  
+
 DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AtanFunc");
@@ -388,7 +388,7 @@ DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type)
                                          "Invalid variable types");
     return DerivedData();
 }
-  
+
 DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::MagnitudeFunc");
