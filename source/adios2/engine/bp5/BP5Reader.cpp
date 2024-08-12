@@ -394,7 +394,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
         const DataType varType = m_IO.InquireVariableType(Req.VarName);
 
         std::string keyPrefix = m_Fingerprint + "|" + Req.VarName + std::to_string(Req.RelStep);
-        if (Req.BlockID != -1)
+        if (Req.BlockID != std::numeric_limits<std::size_t>::max())
         {
             MinVarInfo *minBlocksInfo = nullptr;
             if (MinBlocksInfoMap.find(keyPrefix) == MinBlocksInfoMap.end())
