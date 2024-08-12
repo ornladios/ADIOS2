@@ -200,6 +200,11 @@ void BP5Reader::EndStep()
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP5Reader::EndStep");
     PerformGets();
+    for (auto &item : MinBlocksInfoMap)
+    {
+        delete item.second;
+    }
+    MinBlocksInfoMap.clear();
 }
 
 std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan &FileManager,
@@ -382,7 +387,6 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
     };
     std::vector<RequestInfo> remoteRequestsInfo;
     std::vector<RequestInfo> cachedRequestsInfo;
-    std::unordered_map<std::string, MinVarInfo *> MinBlocksInfoMap;
 
     for (size_t req_seq = 0; req_seq < GetRequests.size(); req_seq++)
     {
@@ -539,11 +543,6 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
         auto &ReqInfo = remoteRequestsInfo[handle_seq];
         m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 0, 0, nullptr);
     }
-
-    for (auto& item : MinBlocksInfoMap) {
-        delete item.second;
-    }
-    MinBlocksInfoMap.clear();
 }
 
 void BP5Reader::PerformRemoteGets()

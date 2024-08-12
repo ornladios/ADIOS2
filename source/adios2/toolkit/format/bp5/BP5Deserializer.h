@@ -249,8 +249,10 @@ private:
     std::mutex mutexDecompress;
 
 public:
-    VariableBase *GetVariableBaseFromBP5VarRec(void *VarRec) {return static_cast<VariableBase *>(static_cast<BP5VarRec *>(VarRec)->Variable);};
-
+    VariableBase *GetVariableBaseFromBP5VarRec(void *VarRec)
+    {
+        return static_cast<VariableBase *>(static_cast<BP5VarRec *>(VarRec)->Variable);
+    };
 };
 
 } // end namespace format
