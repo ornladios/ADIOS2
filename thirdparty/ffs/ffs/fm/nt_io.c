@@ -5,13 +5,15 @@
 #define HAVE_IOVEC_DEFINE
 #endif
 #define FD_SETSIZE 1024
+#ifdef HAVE_WINSOCK2_H
+#include "winsock2.h"
+#endif
 #include <windows.h>
 #include <stdio.h>
 #include <fcntl.h>
 #include <io.h>
-#include "ffs.h"
-#include "io_interface.h"
-#include "ffs_internal.h"
+#include "fm.h"
+#include "fm_internal.h"
 
 static int
 nt_file_read_func(conn, buffer, length, errno_p, result_p)

@@ -18,6 +18,8 @@ enum ExpressionOperator
     OP_INDEX,
     OP_ADD,
     OP_SUBTRACT,
+    OP_MULT,
+    OP_DIV,
     OP_SQRT,
     OP_POW,
     OP_SIN,
@@ -72,6 +74,7 @@ public:
 
     std::vector<std::string> VariableNameList();
     Dims GetDims(std::map<std::string, Dims> NameToDims);
+    DataType GetType(std::map<std::string, DataType> NameToType);
     std::vector<DerivedData>
     ApplyExpression(DataType type, size_t numBlocks,
                     std::map<std::string, std::vector<DerivedData>> nameToData);
@@ -96,6 +99,7 @@ public:
     Dims GetShape();
     Dims GetStart();
     Dims GetCount();
+    DataType GetType(std::map<std::string, DataType> NameToType);
     std::string toStringExpr();
     void SetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
     std::vector<std::string> VariableNameList();

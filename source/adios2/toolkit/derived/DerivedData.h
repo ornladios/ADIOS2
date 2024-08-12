@@ -12,6 +12,7 @@ struct DerivedData
     void *Data;
     Dims Start;
     Dims Count;
+    DataType Type;
 };
 }
 }

@@ -13,7 +13,7 @@
 #include <string>
 #include <vector>
 
-#ifdef WIN32
+#ifdef _MSC_VER
 #define NOMINMAX
 #endif
 

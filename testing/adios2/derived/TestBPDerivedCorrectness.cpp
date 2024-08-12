@@ -25,6 +25,143 @@ protected:
     adios2::DerivedVarType GetThreads() { return GetParam(); };
 };
 
+TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
+{
+    const size_t Nx = 10, Ny = 3, Nz = 6;
+    const size_t steps = 2;
+    // Application variable
+    std::default_random_engine generator;
+    std::uniform_real_distribution<float> distribution(0.0, 10.0);
+
+    adios2::DerivedVarType mode = GetParam();
+    std::cout << "Mode is " << mode << std::endl;
+
+    std::vector<float> simArray1(Nx * Ny * Nz);
+    std::vector<float> simArray2(Nx * Ny * Nz);
+    std::vector<float> simArray3(Nx * Ny * Nz);
+    for (size_t i = 0; i < Nx * Ny * Nz; ++i)
+    {
+        simArray1[i] = distribution(generator);
+        simArray2[i] = distribution(generator);
+        simArray3[i] = distribution(generator);
+    }
+
+    adios2::ADIOS adios;
+
+    adios2::IO bpOut = adios.DeclareIO("BPWriteAddExpression");
+
+    std::vector<std::string> varname = {"sim1/Ux", "sim1/Uy", "sim1/Uz"};
+    const std::string derAddName = "derived/add";
+    const std::string derSubtrName = "derived/subtr";
+    const std::string derMultName = "derived/mult";
+    const std::string derDivName = "derived/div";
+    const std::string derPowName = "derived/pow";
+    const std::string derSqrtName = "derived/sqrt";
+
+    auto Ux = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    // clang-format off
+    bpOut.DefineDerivedVariable(derAddName,
+                                "x =" + varname[0] + " \n"
+                                "y =" + varname[1] + " \n"
+                                "z =" + varname[2] + " \n"
+                                "x+y+z",
+                                mode);
+    bpOut.DefineDerivedVariable(derSubtrName,
+                                "x =" + varname[0] + " \n"
+                                "y =" + varname[1] + " \n"
+                                "z =" + varname[2] + " \n"
+                                "x-y-z",
+                                mode);
+    bpOut.DefineDerivedVariable(derMultName,
+                                "x =" + varname[0] + " \n"
+                                "y =" + varname[1] + " \n"
+                                "z =" + varname[2] + " \n"
+                                "x*y*z",
+                                mode);
+    bpOut.DefineDerivedVariable(derDivName,
+                                "x =" + varname[0] + " \n"
+                                "y =" + varname[1] + " \n"
+                                "z =" + varname[2] + " \n"
+                                "divide(x,y,z)",
+                                mode);
+    bpOut.DefineDerivedVariable(derPowName,
+                                "x =" + varname[0] + " \n"
+                                "pow(x)",
+                                mode);
+    bpOut.DefineDerivedVariable(derSqrtName,
+                                "x =" + varname[0] + " \n"
+                                "sqrt(x)",
+                                mode);
+    // clang-format on
+    std::string filename = "derivedScalar.bp";
+    adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
+
+    for (size_t i = 0; i < steps; i++)
+    {
+        bpFileWriter.BeginStep();
+        bpFileWriter.Put(Ux, simArray1.data());
+        bpFileWriter.Put(Uy, simArray2.data());
+        bpFileWriter.Put(Uz, simArray3.data());
+        bpFileWriter.EndStep();
+    }
+    bpFileWriter.Close();
+
+    adios2::IO bpIn = adios.DeclareIO("BPReadExpression");
+    adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
+
+    std::vector<float> readUx;
+    std::vector<float> readUy;
+    std::vector<float> readUz;
+    std::vector<float> readAdd;
+    std::vector<float> readSubtr;
+    std::vector<float> readMult;
+    std::vector<float> readDiv;
+    std::vector<double> readPow;
+    std::vector<double> readSqrt;
+
+    float calcFloat;
+    double calcDouble;
+    float epsilon = (float)0.01;
+    for (size_t i = 0; i < steps; i++)
+    {
+        bpFileReader.BeginStep();
+        bpFileReader.Get(varname[0], readUx);
+        bpFileReader.Get(varname[1], readUy);
+        bpFileReader.Get(varname[2], readUz);
+        bpFileReader.Get(derAddName, readAdd);
+        bpFileReader.Get(derSubtrName, readSubtr);
+        bpFileReader.Get(derMultName, readMult);
+        bpFileReader.Get(derDivName, readDiv);
+        bpFileReader.Get(derPowName, readPow);
+        bpFileReader.Get(derSqrtName, readSqrt);
+        bpFileReader.EndStep();
+
+        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
+        {
+            calcFloat = readUx[ind] + readUy[ind] + readUz[ind];
+            EXPECT_TRUE(fabs(calcFloat - readAdd[ind]) < epsilon);
+
+            calcFloat = readUx[ind] - readUy[ind] - readUz[ind];
+            EXPECT_TRUE(fabs(calcFloat - readSubtr[ind]) < epsilon);
+
+            calcFloat = readUx[ind] * readUy[ind] * readUz[ind];
+            EXPECT_TRUE(fabs(calcFloat - readMult[ind]) < epsilon);
+
+            calcFloat = readUx[ind] / readUy[ind] / readUz[ind];
+            EXPECT_TRUE(fabs(calcFloat - readDiv[ind]) < epsilon);
+
+            calcDouble = std::pow(readUx[ind], 2);
+            EXPECT_TRUE(fabs(calcDouble - readPow[ind]) < epsilon);
+
+            calcDouble = std::sqrt(readUx[ind]);
+            EXPECT_TRUE(fabs(calcDouble - readSqrt[ind]) < epsilon);
+        }
+    }
+    bpFileReader.Close();
+}
+
 TEST_P(DerivedCorrectnessP, TrigCorrectnessTest)
 {
     const size_t Nx = 10, Ny = 3, Nz = 6;
@@ -160,83 +297,6 @@ TEST_P(DerivedCorrectnessP, TrigCorrectnessTest)
         {
             calcTrig = std::atan(readRandDist[ind]);
             EXPECT_TRUE(fabs(calcTrig - readAtan[ind]) < epsilon);
-        }
-    }
-    bpFileReader.Close();
-}
-
-TEST_P(DerivedCorrectnessP, SubtractCorrectnessTest)
-{
-    const size_t Nx = 10, Ny = 3, Nz = 6;
-    const size_t steps = 2;
-    /** Application variable */
-    std::default_random_engine generator;
-    std::uniform_real_distribution<float> distribution(0.0, 10.0);
-
-    std::vector<float> simArray1(Nx * Ny * Nz);
-    std::vector<float> simArray2(Nx * Ny * Nz);
-    std::vector<float> simArray3(Nx * Ny * Nz);
-    for (size_t i = 0; i < Nx * Ny * Nz; ++i)
-    {
-        simArray1[i] = distribution(generator);
-        simArray2[i] = distribution(generator);
-        simArray3[i] = distribution(generator);
-    }
-
-    adios2::ADIOS adios;
-
-    adios2::IO bpOut = adios.DeclareIO("BPWriteSubtractExpression");
-
-    std::vector<std::string> varname = {"sim4/Ux", "sim4/Uy", "sim4/Uz"};
-    std::string derivedname = "derived/subtractU";
-
-    auto Ux = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    // clang-format off
-    bpOut.DefineDerivedVariable(derivedname,
-                                "x =" + varname[0] + " \n"
-                                "y =" + varname[1] + " \n"
-                                "z =" + varname[2] + " \n"
-                                "x-y-z",
-                                adios2::DerivedVarType::StoreData);
-    // clang-format on
-    std::string filename = "expSubtract.bp";
-    adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
-
-    for (size_t i = 0; i < steps; i++)
-    {
-        bpFileWriter.BeginStep();
-        bpFileWriter.Put(Ux, simArray1.data());
-        bpFileWriter.Put(Uy, simArray2.data());
-        bpFileWriter.Put(Uz, simArray3.data());
-        bpFileWriter.EndStep();
-    }
-    bpFileWriter.Close();
-
-    adios2::IO bpIn = adios.DeclareIO("BPReadExpression");
-    adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
-
-    std::vector<float> readUx;
-    std::vector<float> readUy;
-    std::vector<float> readUz;
-    std::vector<float> readSubtract;
-
-    float calcS;
-    float epsilon = (float)0.01;
-    for (size_t i = 0; i < steps; i++)
-    {
-        bpFileReader.BeginStep();
-        bpFileReader.Get(varname[0], readUx);
-        bpFileReader.Get(varname[1], readUy);
-        bpFileReader.Get(varname[2], readUz);
-        bpFileReader.Get(derivedname, readSubtract);
-        bpFileReader.EndStep();
-
-        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
-        {
-            calcS = readUx[ind] - readUy[ind] - readUz[ind];
-            EXPECT_TRUE(fabs(calcS - readSubtract[ind]) < epsilon);
         }
     }
     bpFileReader.Close();

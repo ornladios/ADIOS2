@@ -17,7 +17,9 @@
 #include <stdlib.h>
 #include <limits.h>
 #ifdef HAVE_WINDOWS_H
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
+#endif
 #include <winsock2.h>
 #define __ANSI_CPP__
 #define lrand48() rand()
@@ -3981,7 +3983,7 @@ int offset_compare(const void* lhsv, const void* rhsv)
      return lhs->offset.tv_usec - rhs->offset.tv_usec;
  }
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 static inline void timeradd(struct timeval *a, struct timeval *b,
 							struct timeval *res)
 {
