@@ -196,7 +196,7 @@ DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
                                          "Invalid variable types");
     return DerivedData();
 }
-  
+
 // Apply Sqrt over all elements in the variable
 DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
 {
