@@ -1905,3 +1905,8 @@ adios2::detail::ASTDriver::parse (const std::string input)
   parse ();
 }
 
+void
+adios2::detail::ASTDriver::destroy_lex_structures ()
+{
+    yylex_destroy();
+}

@@ -2058,6 +2058,14 @@ void BP5Deserializer::FinalizeDerivedGets(std::vector<ReadRequest> &Reads)
                            CoreDims(), CoreDims(), CoreDims(), false, Req.MemSpace);
             free(std::get<0>(DBlock));
         }
+        // free the temporary blocks malloc'd in generateReadRequests
+        for (auto &entry : *nameToVarInfo)
+        {
+            for (auto &mbi : entry.second->BlocksInfo)
+            {
+                free(mbi.BufferP);
+            }
+        }
         delete nameToVarInfo;
     }
 #endif

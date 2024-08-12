@@ -223,6 +223,16 @@ Dims CurlDimsFunc(std::vector<Dims> input)
     return output;
 }
 
+DataType SameTypeFunc(DataType input) { return input; }
+
+DataType FloatTypeFunc(DataType input)
+{
+    if ((input == DataType::Double) || (input == DataType::LongDouble))
+        return input;
+    if ((input == DataType::FloatComplex) || (input == DataType::DoubleComplex))
+        return input;
+    return DataType::Float;
+}
 }
 } // namespace adios2
 #endif
