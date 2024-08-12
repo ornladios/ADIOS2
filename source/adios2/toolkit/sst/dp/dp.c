@@ -81,7 +81,7 @@ CP_DP_Interface SelectDP(CP_Services Svcs, void *CP_Stream, struct _SstParams *P
 
 #ifdef SST_HAVE_MPI_DP
     List = AddDPPossibility(Svcs, CP_Stream, List, LoadMpiDP(), "mpi", Params);
-#endif /* SST_HAVE_MPI */
+#endif /* SST_HAVE_MPI_DP */
 
     int SelectedDP = -1;
     int BestPriority = -1;
