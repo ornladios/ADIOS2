@@ -185,7 +185,7 @@ public:
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
     VariableDerived &
     DefineDerivedVariable(const std::string &name, const std::string &expression,
-                          const DerivedVarType varType = DerivedVarType::MetadataOnly);
+                          const DerivedVarType varType = DerivedVarType::StatsOnly);
 #endif
     VariableStruct &DefineStructVariable(const std::string &name, StructDefinition &def,
                                          const Dims &shape = Dims(), const Dims &start = Dims(),

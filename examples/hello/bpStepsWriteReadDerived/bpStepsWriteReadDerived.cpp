@@ -40,7 +40,7 @@ void writer(adios2::ADIOS &adios, const std::string &fname, const size_t Nx, uns
                                "x = bpFloats1 \n"
                                "y = bpFloats2 \n"
                                "magnitude(x, y)",
-                               adios2::DerivedVarType::MetadataOnly);
+                               adios2::DerivedVarType::StatsOnly);
     bpIO.DefineDerivedVariable("derived/sqrt",
                                "x = bpFloats1 \n"
                                "sqrt(x)",

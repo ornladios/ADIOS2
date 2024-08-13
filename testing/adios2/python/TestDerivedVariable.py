@@ -26,7 +26,7 @@ class TestDerivedVariable(unittest.TestCase):
             self.assertEqual(temps.shape(), [4])
             self.assertEqual(temps.sizeof(), 8)
             self.assertEqual(dmo.name(), "derived/metadataonly")
-            self.assertEqual(dmo.type(), DerivedVarType.MetadataOnly)
+            self.assertEqual(dmo.type(), DerivedVarType.StatsOnly)
             self.assertEqual(ds.name(), "derived/storedata")
             self.assertEqual(ds.type(), DerivedVarType.StoreData)
             self.assertEqual(de.name(), "derived/expressionstring")

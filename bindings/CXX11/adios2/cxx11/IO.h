@@ -157,7 +157,7 @@ public:
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
     VariableDerived
     DefineDerivedVariable(const std::string &name, const std::string &expression,
-                          const DerivedVarType varType = DerivedVarType::MetadataOnly);
+                          const DerivedVarType varType = DerivedVarType::StatsOnly);
 #endif
     VariableNT DefineVariable(const DataType type, const std::string &name,
                               const Dims &shape = Dims(), const Dims &start = Dims(),

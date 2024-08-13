@@ -17,7 +17,7 @@ The math expression defines aliases for ADIOS2 variables that will be used in th
 
     enum class DerivedVarType
     {
-        MetadataOnly, // only stats are saved
+        StatsOnly, // only stats are saved
         StoreData     // data is stored in addition to metadata
     }
 
@@ -31,7 +31,7 @@ There are currently two types of derived variables accepted by ADIOS2, one that 
                                 "x = var/Ux \n"
                                 "y = var/Uy \n"
                                 "magnitude(x, y)",
-                                adios2::DerivedVarType::MetadataOnly);
+                                adios2::DerivedVarType::StatsOnly);
 
 Derived variables can be defined at any time and are computed (and potentially stored) during the ``EndStep`` operation.
 

@@ -930,7 +930,7 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
                         // define the derived copy first, so we don't throw an error on actual var
                         // definition
                         auto tmp = m_Engine->m_IO.DefineDerivedVariable(
-                            VarRec->VarName, VarRec->ExprStr, DerivedVarType::MetadataOnly);
+                            VarRec->VarName, VarRec->ExprStr, DerivedVarType::StatsOnly);
                         VarRec->DerivedVariable = (void *)&tmp;
 #endif
                     }

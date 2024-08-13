@@ -65,7 +65,7 @@ public:
 
     VariableDerived
     DefineDerivedVariable(const std::string &name, const std::string &expression,
-                          const DerivedVarType varType = DerivedVarType::MetadataOnly);
+                          const DerivedVarType varType = DerivedVarType::StatsOnly);
 
     Variable InquireVariable(const std::string &name);
 
