@@ -200,6 +200,11 @@ void BP5Reader::EndStep()
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("BP5Reader::EndStep");
     PerformGets();
+    for (auto &item : MinBlocksInfoMap)
+    {
+        delete item.second;
+    }
+    MinBlocksInfoMap.clear();
 }
 
 std::pair<double, double> BP5Reader::ReadData(adios2::transportman::TransportMan &FileManager,
@@ -385,15 +390,44 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
 
     for (size_t req_seq = 0; req_seq < GetRequests.size(); req_seq++)
     {
-        const auto &Req = GetRequests[req_seq];
+        auto &Req = GetRequests[req_seq];
         const DataType varType = m_IO.InquireVariableType(Req.VarName);
+
+        std::string keyPrefix = m_Fingerprint + "|" + Req.VarName + std::to_string(Req.RelStep);
+        if (Req.BlockID != std::numeric_limits<std::size_t>::max())
+        {
+            MinVarInfo *minBlocksInfo = nullptr;
+            if (MinBlocksInfoMap.find(keyPrefix) == MinBlocksInfoMap.end())
+            {
+                VariableBase *VB = m_BP5Deserializer->GetVariableBaseFromBP5VarRec(Req.VarRec);
+                minBlocksInfo = MinBlocksInfo(*VB, Req.RelStep);
+                MinBlocksInfoMap[keyPrefix] = minBlocksInfo;
+            }
+            else
+            {
+                minBlocksInfo = MinBlocksInfoMap[keyPrefix];
+            }
+            Req.Start.resize(minBlocksInfo->Dims);
+            Req.Count.resize(minBlocksInfo->Dims);
+            for (auto &blockInfo : minBlocksInfo->BlocksInfo)
+            {
+                if (Req.BlockID == blockInfo.BlockID)
+                {
+                    for (int i = 0; i < minBlocksInfo->Dims; i++)
+                    {
+                        Req.Start[i] = blockInfo.Start[i];
+                        Req.Count[i] = blockInfo.Count[i];
+                    }
+                    break;
+                }
+            }
+        }
 
         RequestInfo ReqInfo(Req.Count.size());
         ReqInfo.ReqSeq = req_seq;
         ReqInfo.TypeSize = helper::GetDataTypeSize(varType);
 
         kvcache::QueryBox targetBox(Req.Start, Req.Count);
-        std::string keyPrefix = m_Fingerprint + "|" + Req.VarName + std::to_string(Req.RelStep);
         std::string targetKey = keyPrefix + targetBox.toString();
 
         // Exact Match: check if targetKey exists

@@ -104,6 +104,7 @@ private:
 
     /* KVCache for remote data */
     kvcache::KVCacheCommon m_KVCache;
+    std::unordered_map<std::string, MinVarInfo *> MinBlocksInfoMap;
 
     /* Fingerprint to verify local validity against remote data */
     std::string m_Fingerprint = "";
