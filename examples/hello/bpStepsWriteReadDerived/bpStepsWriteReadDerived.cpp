@@ -22,8 +22,8 @@ void update_array(std::vector<float> &array, int val)
                    [val](float v) -> float { return v + static_cast<float>(val); });
 }
 
-void writer(adios2::ADIOS &adios, const std::string &fname,
-            const size_t Nx, unsigned int nSteps, int rank, int size)
+void writer(adios2::ADIOS &adios, const std::string &fname, const size_t Nx, unsigned int nSteps,
+            int rank, int size)
 {
     std::vector<float> simData1(Nx, 0);
     std::vector<float> simData2(Nx, 0);
@@ -37,14 +37,14 @@ void writer(adios2::ADIOS &adios, const std::string &fname,
     auto bpFloats2 = bpIO.DefineVariable<float>("bpFloats2", shape, start, count);
 
     bpIO.DefineDerivedVariable("derived/magnitude",
-                            "x = bpFloats1 \n"
-                            "y = bpFloats2 \n"
-                            "magnitude(x, y)",
-                             adios2::DerivedVarType::MetadataOnly);
+                               "x = bpFloats1 \n"
+                               "y = bpFloats2 \n"
+                               "magnitude(x, y)",
+                               adios2::DerivedVarType::MetadataOnly);
     bpIO.DefineDerivedVariable("derived/sqrt",
-                            "x = bpFloats1 \n"
-                            "sqrt(x)",
-                             adios2::DerivedVarType::StoreData);
+                               "x = bpFloats1 \n"
+                               "sqrt(x)",
+                               adios2::DerivedVarType::StoreData);
     adios2::Engine bpWriter = bpIO.Open(fname, adios2::Mode::Write);
 
     for (unsigned int step = 0; step < nSteps; ++step)
