@@ -63,9 +63,8 @@ public:
                             const Dims &shape, const Dims &start, const Dims &count,
                             const bool isConstantDims);
 
-    VariableDerived
-    DefineDerivedVariable(const std::string &name, const std::string &expression,
-                          const DerivedVarType varType = DerivedVarType::StatsOnly);
+    VariableDerived DefineDerivedVariable(const std::string &name, const std::string &expression,
+                                          const DerivedVarType varType = DerivedVarType::StatsOnly);
 
     Variable InquireVariable(const std::string &name);
 
