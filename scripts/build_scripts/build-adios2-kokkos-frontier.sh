@@ -2,6 +2,7 @@
 # shellcheck disable=SC2191
 
 module load PrgEnv-gnu-amd/8.5.0
+module load craype-accel-amd-gfx90a
 module load cmake/3.23.2
 
 ######## User Configurations ########
