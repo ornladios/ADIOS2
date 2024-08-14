@@ -40,8 +40,8 @@ std::string ToString(DerivedVarType value)
 {
     switch (value)
     {
-    case DerivedVarType::MetadataOnly:
-        return "DerivedVarType::MetadataOnly";
+    case DerivedVarType::StatsOnly:
+        return "DerivedVarType::StatsOnly";
     case DerivedVarType::ExpressionString:
         return "DerivedVarType::ExpressionString";
     case DerivedVarType::StoreData:
