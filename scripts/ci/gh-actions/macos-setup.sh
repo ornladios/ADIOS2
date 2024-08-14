@@ -15,7 +15,7 @@ then
   exit 2
 fi
 sudo xcode-select --switch "/Applications/Xcode_${XCODE_VER}.app"
-sudo ln -v -s "$(which gfortran-11)" /usr/local/bin/gfortran
+sudo ln -v -s "$(which gfortran-12)" /usr/local/bin/gfortran
 
 echo "Installing Miniconda"
 
