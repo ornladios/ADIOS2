@@ -92,7 +92,7 @@ T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dim
 namespace derived
 {
 // Perform a reduce sum over all variables in the std::vector
-DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AddFunc");
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
@@ -101,8 +101,10 @@ DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_add(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *addValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,      \
-                                                [](T a, T b) { return a + b; });                   \
+        T *addValues = NULL;                                                                       \
+        if (DoCompute)                                                                             \
+            addValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,     \
+                                                 [](T a, T b) { return a + b; });                  \
         return DerivedData({(void *)addValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_add)
@@ -112,7 +114,7 @@ DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 }
 
 // Perform a subtraction from the first variable of all other variables in the std::vector
-DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::SubtractFunc");
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
@@ -123,11 +125,15 @@ DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_subtract(T)                                                                   \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *subtractValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(),       \
-                                                     dataSize, [](T a, T b) { return a + b; });    \
-        for (size_t i = 0; i < dataSize; i++)                                                      \
-            subtractValues[i] =                                                                    \
-                *(reinterpret_cast<T *>(inputData[0].Data) + i) - subtractValues[i];               \
+        T *subtractValues = NULL;                                                                  \
+        if (DoCompute)                                                                             \
+        {                                                                                          \
+            subtractValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(),      \
+                                                      dataSize, [](T a, T b) { return a + b; });   \
+            for (size_t i = 0; i < dataSize; i++)                                                  \
+                subtractValues[i] =                                                                \
+                    *(reinterpret_cast<T *>(inputData[0].Data) + i) - subtractValues[i];           \
+        }                                                                                          \
         return DerivedData({(void *)subtractValues, inputData[0].Start, inputData[0].Count});      \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_subtract)
@@ -137,7 +143,7 @@ DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
 }
 
 // Perform a reduce multiply over all variables in the std::vector
-DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::MultFunc");
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
@@ -146,8 +152,12 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_mult(T)                                                                       \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *multValues = detail::ApplyOneToOne<T>(                                                  \
-            inputData.begin(), inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);      \
+        T *multValues = NULL;                                                                      \
+        if (DoCompute)                                                                             \
+        {                                                                                          \
+            multValues = detail::ApplyOneToOne<T>(                                                 \
+                inputData.begin(), inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);  \
+        }                                                                                          \
         return DerivedData({(void *)multValues, inputData[0].Start, inputData[0].Count});          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_mult)
@@ -157,7 +167,7 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
 }
 
 // Perform a division from the first variable of all other variables in the std::vector
-DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::DivFunc");
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
@@ -168,10 +178,15 @@ DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_div(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *divValues = detail::ApplyOneToOne<T>(                                                   \
-            inputData.begin() + 1, inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);  \
-        for (size_t i = 0; i < dataSize; i++)                                                      \
-            divValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) / divValues[i];         \
+        T *divValues = NULL;                                                                       \
+        if (DoCompute)                                                                             \
+        {                                                                                          \
+            divValues = detail::ApplyOneToOne<T>(                                                  \
+                inputData.begin() + 1, inputData.end(), dataSize, [](T a, T b) { return a * b; },  \
+                1);                                                                                \
+            for (size_t i = 0; i < dataSize; i++)                                                  \
+                divValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) / divValues[i];     \
+        }                                                                                          \
         return DerivedData({(void *)divValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_div)
@@ -181,7 +196,7 @@ DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
 }
 
 // Apply Sqrt over all elements in the variable
-DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::SqrtFunc");
     if (inputData.size() != 1)
@@ -195,24 +210,30 @@ DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
 
     if (inputType == DataType::LongDouble)
     {
-        long double *sqrtValues = (long double *)malloc(dataSize * sizeof(long double));
-        std::transform(reinterpret_cast<long double *>(inputData[0].Data),
-                       reinterpret_cast<long double *>(inputData[0].Data) + dataSize, sqrtValues,
-                       [](long double &a) { return std::sqrt(a); });
+        long double *sqrtValues = NULL;
+        if (DoCompute)
+        {
+            sqrtValues = (long double *)malloc(dataSize * sizeof(long double));
+            std::transform(reinterpret_cast<long double *>(inputData[0].Data),
+                           reinterpret_cast<long double *>(inputData[0].Data) + dataSize,
+                           sqrtValues, [](long double &a) { return std::sqrt(a); });
+        }
         return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});
     }
 #define declare_type_sqrt(T)                                                                       \
-    if (inputType == helper::GetDataType<T>())                                                     \
+    else if (inputType == helper::GetDataType<T>())                                                \
     {                                                                                              \
-        if (inputType != DataType::LongDouble)                                                     \
+        double *sqrtValues = NULL;                                                                 \
+        if (DoCompute)                                                                             \
         {                                                                                          \
-            double *sqrtValues = (double *)malloc(dataSize * sizeof(double));                      \
+            sqrtValues = (double *)malloc(dataSize * sizeof(double));                              \
             std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
                            reinterpret_cast<T *>(inputData[0].Data) + dataSize, sqrtValues,        \
                            [](T &a) { return std::sqrt(a); });                                     \
-            return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});      \
         }                                                                                          \
+        return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});          \
     }
+
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sqrt)
     helper::Throw<std::invalid_argument>("Derived", "Function", "SqrtFunc",
                                          "Invalid variable types");
@@ -220,7 +241,7 @@ DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
 }
 
 // Apply Pow over all elements in the variable
-DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::PowFunc");
     if (inputData.size() != 1)
@@ -234,23 +255,28 @@ DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
 
     if (inputType == DataType::LongDouble)
     {
-        long double *powValues = (long double *)malloc(dataSize * sizeof(long double));
-        std::transform(reinterpret_cast<long double *>(inputData[0].Data),
-                       reinterpret_cast<long double *>(inputData[0].Data) + dataSize, powValues,
-                       [](long double &a) { return std::pow(a, 2); });
+        long double *powValues = NULL;
+        if (DoCompute)
+        {
+            powValues = (long double *)malloc(dataSize * sizeof(long double));
+            std::transform(reinterpret_cast<long double *>(inputData[0].Data),
+                           reinterpret_cast<long double *>(inputData[0].Data) + dataSize, powValues,
+                           [](long double &a) { return std::pow(a, 2); });
+        }
         return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});
     }
 #define declare_type_pow(T)                                                                        \
-    if (inputType == helper::GetDataType<T>())                                                     \
+    else if (inputType == helper::GetDataType<T>())                                                \
     {                                                                                              \
-        if (inputType != DataType::LongDouble)                                                     \
+        double *powValues = NULL;                                                                  \
+        if (DoCompute)                                                                             \
         {                                                                                          \
-            double *powValues = (double *)malloc(dataSize * sizeof(double));                       \
+            powValues = (double *)malloc(dataSize * sizeof(double));                               \
             std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
                            reinterpret_cast<T *>(inputData[0].Data) + dataSize, powValues,         \
                            [](T &a) { return std::pow(a, 2); });                                   \
-            return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});       \
         }                                                                                          \
+        return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_pow)
     helper::Throw<std::invalid_argument>("Derived", "Function", "PowFunc",
@@ -258,7 +284,7 @@ DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData SinFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData SinFunc(std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::SinFunc");
     if (inputData.size() != 1)
@@ -273,21 +299,28 @@ DerivedData SinFunc(std::vector<DerivedData> inputData, DataType type)
     if (inputType == DataType::LongDouble)
     {
         long double *sinValues = (long double *)malloc(dataSize * sizeof(long double));
-        std::transform(reinterpret_cast<long double *>(inputData[0].Data),
-                       reinterpret_cast<long double *>(inputData[0].Data) + dataSize, sinValues,
-                       [](long double &a) { return std::sin(a); });
-        return DerivedData({(void *)sinValues, inputData[0].Start, inputData[0].Count});
+        if (DoCompute)
+        {
+            std::transform(reinterpret_cast<long double *>(inputData[0].Data),
+                           reinterpret_cast<long double *>(inputData[0].Data) + dataSize, sinValues,
+                           [](long double &a) { return std::sin(a); });
+            return DerivedData({(void *)sinValues, inputData[0].Start, inputData[0].Count});
+        }
     }
 #define declare_type_sin(T)                                                                        \
     if (inputType == helper::GetDataType<T>())                                                     \
     {                                                                                              \
         if (inputType != DataType::LongDouble)                                                     \
         {                                                                                          \
-            double *sinValues = (double *)malloc(dataSize * sizeof(double));                       \
-            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
-                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, sinValues,         \
-                           [](T &a) { return std::sin(a); });                                      \
-            return DerivedData({(void *)sinValues, inputData[0].Start, inputData[0].Count});       \
+            double *sinValues = NULL;                                                              \
+            if (DoCompute)                                                                         \
+            {                                                                                      \
+                sinValues = (double *)malloc(dataSize * sizeof(double));                           \
+                std::transform(reinterpret_cast<T *>(inputData[0].Data),                           \
+                               reinterpret_cast<T *>(inputData[0].Data) + dataSize, sinValues,     \
+                               [](T &a) { return std::sin(a); });                                  \
+                return DerivedData({(void *)sinValues, inputData[0].Start, inputData[0].Count});   \
+            }                                                                                      \
         }                                                                                          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sin)
@@ -296,7 +329,7 @@ DerivedData SinFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::CosFunc");
     if (inputData.size() != 1)
@@ -310,10 +343,14 @@ DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type)
 
     if (inputType == DataType::LongDouble)
     {
-        long double *cosValues = (long double *)malloc(dataSize * sizeof(long double));
-        std::transform(reinterpret_cast<long double *>(inputData[0].Data),
-                       reinterpret_cast<long double *>(inputData[0].Data) + dataSize, cosValues,
-                       [](long double &a) { return std::cos(a); });
+        long double *cosValues = NULL;
+        if (DoCompute)
+        {
+            cosValues = (long double *)malloc(dataSize * sizeof(long double));
+            std::transform(reinterpret_cast<long double *>(inputData[0].Data),
+                           reinterpret_cast<long double *>(inputData[0].Data) + dataSize, cosValues,
+                           [](long double &a) { return std::cos(a); });
+        }
         return DerivedData({(void *)cosValues, inputData[0].Start, inputData[0].Count});
     }
 #define declare_type_cos(T)                                                                        \
@@ -321,10 +358,14 @@ DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type)
     {                                                                                              \
         if (inputType != DataType::LongDouble)                                                     \
         {                                                                                          \
-            double *cosValues = (double *)malloc(dataSize * sizeof(double));                       \
-            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
-                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, cosValues,         \
-                           [](T &a) { return std::cos(a); });                                      \
+            double *cosValues = NULL;                                                              \
+            if (DoCompute)                                                                         \
+            {                                                                                      \
+                cosValues = (double *)malloc(dataSize * sizeof(double));                           \
+                std::transform(reinterpret_cast<T *>(inputData[0].Data),                           \
+                               reinterpret_cast<T *>(inputData[0].Data) + dataSize, cosValues,     \
+                               [](T &a) { return std::cos(a); });                                  \
+            }                                                                                      \
             return DerivedData({(void *)cosValues, inputData[0].Start, inputData[0].Count});       \
         }                                                                                          \
     }
@@ -334,7 +375,7 @@ DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::TanFunc");
     if (inputData.size() != 1)
@@ -348,10 +389,14 @@ DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type)
 
     if (inputType == DataType::LongDouble)
     {
-        long double *tanValues = (long double *)malloc(dataSize * sizeof(long double));
-        std::transform(reinterpret_cast<long double *>(inputData[0].Data),
-                       reinterpret_cast<long double *>(inputData[0].Data) + dataSize, tanValues,
-                       [](long double &a) { return std::tan(a); });
+        long double *tanValues = NULL;
+        if (DoCompute)
+        {
+            tanValues = (long double *)malloc(dataSize * sizeof(long double));
+            std::transform(reinterpret_cast<long double *>(inputData[0].Data),
+                           reinterpret_cast<long double *>(inputData[0].Data) + dataSize, tanValues,
+                           [](long double &a) { return std::tan(a); });
+        }
         return DerivedData({(void *)tanValues, inputData[0].Start, inputData[0].Count});
     }
 #define declare_type_tan(T)                                                                        \
@@ -359,10 +404,14 @@ DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type)
     {                                                                                              \
         if (inputType != DataType::LongDouble)                                                     \
         {                                                                                          \
-            double *tanValues = (double *)malloc(dataSize * sizeof(double));                       \
-            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
-                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, tanValues,         \
-                           [](T &a) { return std::tan(a); });                                      \
+            double *tanValues = NULL;                                                              \
+            if (DoCompute)                                                                         \
+            {                                                                                      \
+                tanValues = (double *)malloc(dataSize * sizeof(double));                           \
+                std::transform(reinterpret_cast<T *>(inputData[0].Data),                           \
+                               reinterpret_cast<T *>(inputData[0].Data) + dataSize, tanValues,     \
+                               [](T &a) { return std::tan(a); });                                  \
+            }                                                                                      \
             return DerivedData({(void *)tanValues, inputData[0].Start, inputData[0].Count});       \
         }                                                                                          \
     }
@@ -372,7 +421,7 @@ DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData AsinFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData AsinFunc(std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AsinFunc");
     if (inputData.size() != 1)
@@ -386,10 +435,14 @@ DerivedData AsinFunc(std::vector<DerivedData> inputData, DataType type)
 
     if (inputType == DataType::LongDouble)
     {
-        long double *asinValues = (long double *)malloc(dataSize * sizeof(long double));
-        std::transform(reinterpret_cast<long double *>(inputData[0].Data),
-                       reinterpret_cast<long double *>(inputData[0].Data) + dataSize, asinValues,
-                       [](long double &a) { return std::asin(a); });
+        long double *asinValues = NULL;
+        if (DoCompute)
+        {
+            asinValues = (long double *)malloc(dataSize * sizeof(long double));
+            std::transform(reinterpret_cast<long double *>(inputData[0].Data),
+                           reinterpret_cast<long double *>(inputData[0].Data) + dataSize,
+                           asinValues, [](long double &a) { return std::asin(a); });
+        }
         return DerivedData({(void *)asinValues, inputData[0].Start, inputData[0].Count});
     }
 #define declare_type_asin(T)                                                                       \
@@ -397,10 +450,14 @@ DerivedData AsinFunc(std::vector<DerivedData> inputData, DataType type)
     {                                                                                              \
         if (inputType != DataType::LongDouble)                                                     \
         {                                                                                          \
-            double *asinValues = (double *)malloc(dataSize * sizeof(double));                      \
-            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
-                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, asinValues,        \
-                           [](T &a) { return std::asin(a); });                                     \
+            double *asinValues = NULL;                                                             \
+            if (DoCompute)                                                                         \
+            {                                                                                      \
+                double *asinValues = (double *)malloc(dataSize * sizeof(double));                  \
+                std::transform(reinterpret_cast<T *>(inputData[0].Data),                           \
+                               reinterpret_cast<T *>(inputData[0].Data) + dataSize, asinValues,    \
+                               [](T &a) { return std::asin(a); });                                 \
+            }                                                                                      \
             return DerivedData({(void *)asinValues, inputData[0].Start, inputData[0].Count});      \
         }                                                                                          \
     }
@@ -410,7 +467,7 @@ DerivedData AsinFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData AcosFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData AcosFunc(std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AcosFunc");
     if (inputData.size() != 1)
@@ -424,10 +481,14 @@ DerivedData AcosFunc(std::vector<DerivedData> inputData, DataType type)
 
     if (inputType == DataType::LongDouble)
     {
-        long double *acosValues = (long double *)malloc(dataSize * sizeof(long double));
-        std::transform(reinterpret_cast<long double *>(inputData[0].Data),
-                       reinterpret_cast<long double *>(inputData[0].Data) + dataSize, acosValues,
-                       [](long double &a) { return std::acos(a); });
+        long double *acosValues = NULL;
+        if (DoCompute)
+        {
+            acosValues = (long double *)malloc(dataSize * sizeof(long double));
+            std::transform(reinterpret_cast<long double *>(inputData[0].Data),
+                           reinterpret_cast<long double *>(inputData[0].Data) + dataSize,
+                           acosValues, [](long double &a) { return std::acos(a); });
+        }
         return DerivedData({(void *)acosValues, inputData[0].Start, inputData[0].Count});
     }
 #define declare_type_acos(T)                                                                       \
@@ -435,10 +496,14 @@ DerivedData AcosFunc(std::vector<DerivedData> inputData, DataType type)
     {                                                                                              \
         if (inputType != DataType::LongDouble)                                                     \
         {                                                                                          \
-            double *acosValues = (double *)malloc(dataSize * sizeof(double));                      \
-            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
-                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, acosValues,        \
-                           [](T &a) { return std::acos(a); });                                     \
+            double *acosValues = NULL;                                                             \
+            if (DoCompute)                                                                         \
+            {                                                                                      \
+                acosValues = (double *)malloc(dataSize * sizeof(double));                          \
+                std::transform(reinterpret_cast<T *>(inputData[0].Data),                           \
+                               reinterpret_cast<T *>(inputData[0].Data) + dataSize, acosValues,    \
+                               [](T &a) { return std::acos(a); });                                 \
+            }                                                                                      \
             return DerivedData({(void *)acosValues, inputData[0].Start, inputData[0].Count});      \
         }                                                                                          \
     }
@@ -448,7 +513,7 @@ DerivedData AcosFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AtanFunc");
     if (inputData.size() != 1)
@@ -462,10 +527,14 @@ DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type)
 
     if (inputType == DataType::LongDouble)
     {
-        long double *atanValues = (long double *)malloc(dataSize * sizeof(long double));
-        std::transform(reinterpret_cast<long double *>(inputData[0].Data),
-                       reinterpret_cast<long double *>(inputData[0].Data) + dataSize, atanValues,
-                       [](long double &a) { return std::atan(a); });
+        long double *atanValues = NULL;
+        if (DoCompute)
+        {
+            atanValues = (long double *)malloc(dataSize * sizeof(long double));
+            std::transform(reinterpret_cast<long double *>(inputData[0].Data),
+                           reinterpret_cast<long double *>(inputData[0].Data) + dataSize,
+                           atanValues, [](long double &a) { return std::atan(a); });
+        }
         return DerivedData({(void *)atanValues, inputData[0].Start, inputData[0].Count});
     }
 #define declare_type_atan(T)                                                                       \
@@ -473,10 +542,14 @@ DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type)
     {                                                                                              \
         if (inputType != DataType::LongDouble)                                                     \
         {                                                                                          \
-            double *atanValues = (double *)malloc(dataSize * sizeof(double));                      \
-            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
-                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, atanValues,        \
-                           [](T &a) { return std::atan(a); });                                     \
+            double *atanValues = NULL;                                                             \
+            if (DoCompute)                                                                         \
+            {                                                                                      \
+                double *atanValues = (double *)malloc(dataSize * sizeof(double));                  \
+                std::transform(reinterpret_cast<T *>(inputData[0].Data),                           \
+                               reinterpret_cast<T *>(inputData[0].Data) + dataSize, atanValues,    \
+                               [](T &a) { return std::atan(a); });                                 \
+            }                                                                                      \
             return DerivedData({(void *)atanValues, inputData[0].Start, inputData[0].Count});      \
         }                                                                                          \
     }
@@ -486,7 +559,7 @@ DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::MagnitudeFunc");
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
@@ -494,11 +567,15 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_mag(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *magValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,      \
-                                                [](T a, T b) { return a + b * b; });               \
-        for (size_t i = 0; i < dataSize; i++)                                                      \
+        T *magValues = NULL;                                                                       \
+        if (DoCompute)                                                                             \
         {                                                                                          \
-            magValues[i] = (T)std::sqrt(magValues[i]);                                             \
+            magValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,     \
+                                                 [](T a, T b) { return a + b * b; });              \
+            for (size_t i = 0; i < dataSize; i++)                                                  \
+            {                                                                                      \
+                magValues[i] = (T)std::sqrt(magValues[i]);                                         \
+            }                                                                                      \
         }                                                                                          \
         return DerivedData({(void *)magValues, inputData[0].Start, inputData[0].Count});           \
     }
@@ -522,7 +599,7 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
  *         (ex: partial derivatives in x direction at point (0,0,0)
  *              only use data from (1,0,0), etc )
  */
-DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
+DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type, bool DoCompute)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::Curl3DFunc");
     size_t dims[3] = {inputData[0].Count[0], inputData[0].Count[1], inputData[0].Count[2]};
@@ -532,14 +609,15 @@ DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
     curl.Start.push_back(0);
     curl.Count = inputData[0].Count;
     curl.Count.push_back(3);
-
+    curl.Data = NULL;
 #define declare_type_curl(T)                                                                       \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
         T *input1 = (T *)inputData[0].Data;                                                        \
         T *input2 = (T *)inputData[1].Data;                                                        \
         T *input3 = (T *)inputData[2].Data;                                                        \
-        curl.Data = detail::ApplyCurl(input1, input2, input3, dims);                               \
+        if (DoCompute)                                                                             \
+            curl.Data = detail::ApplyCurl(input1, input2, input3, dims);                           \
         return curl;                                                                               \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_curl)

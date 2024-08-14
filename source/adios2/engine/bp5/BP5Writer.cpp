@@ -546,15 +546,9 @@ void BP5Writer::ComputeDerivedVariables()
 
         // compute the values for the derived variables that are not type ExpressionString
         std::vector<std::tuple<void *, Dims, Dims>> DerivedBlockData;
-        if (derivedVar->GetDerivedType() != DerivedVarType::ExpressionString)
-        {
-            DerivedBlockData = derivedVar->ApplyExpression(nameToVarInfo);
-        }
-        else
-        {
-            // for expressionString, just generate the blocksinfo
-            DerivedBlockData = derivedVar->GenerateDerivedDims(nameToVarInfo);
-        }
+        // for expressionString, just generate the blocksinfo
+        bool DoCompute = derivedVar->GetDerivedType() != DerivedVarType::ExpressionString;
+        DerivedBlockData = derivedVar->ApplyExpression(nameToVarInfo, DoCompute);
 
         // Send the derived variable to ADIOS2 internal logic
         for (auto derivedBlock : DerivedBlockData)

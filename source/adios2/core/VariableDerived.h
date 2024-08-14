@@ -30,11 +30,10 @@ public:
 
     std::vector<void *>
     ApplyExpression(std::map<std::string, std::vector<void *>> NameToData,
-                    std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
+                    std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims,
+                    bool DoCompute = true);
     std::vector<std::tuple<void *, Dims, Dims>>
-    ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &mvi);
-    std::vector<std::tuple<void *, Dims, Dims>>
-    GenerateDerivedDims(std::map<std::string, std::unique_ptr<MinVarInfo>> &NameToVarInfo);
+    ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &mvi, bool DoCompute = true);
 };
 
 } // end namespace core

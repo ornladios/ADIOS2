@@ -133,7 +133,7 @@ namespace derived
 {
 struct OperatorFunctions
 {
-    std::function<DerivedData(std::vector<DerivedData>, DataType)> ComputeFct;
+    std::function<DerivedData(std::vector<DerivedData>, DataType, bool)> ComputeFct;
     std::function<Dims(std::vector<Dims>)> DimsFct;
     std::function<DataType(DataType)> TypeFct;
 };
@@ -192,9 +192,10 @@ DataType Expression::GetType(std::map<std::string, DataType> NameToType)
 
 std::vector<DerivedData>
 Expression::ApplyExpression(DataType type, size_t numBlocks,
-                            std::map<std::string, std::vector<DerivedData>> nameToData)
+                            std::map<std::string, std::vector<DerivedData>> nameToData,
+                            bool DoCompute)
 {
-    return m_Expr.ApplyExpression(type, numBlocks, nameToData);
+    return m_Expr.ApplyExpression(type, numBlocks, nameToData, DoCompute);
 }
 
 void ExpressionTree::set_base(double c) { detail.constant = c; }
@@ -337,18 +338,19 @@ DataType ExpressionTree::GetType(std::map<std::string, DataType> NameToType)
 
 std::vector<DerivedData>
 ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
-                                std::map<std::string, std::vector<DerivedData>> nameToData)
+                                std::map<std::string, std::vector<DerivedData>> nameToData,
+                                bool DoCompute)
 {
     // create operands for the computation function
     // exprData[0] = list of void* data for block 0 for each variable
     std::vector<std::vector<DerivedData>> exprData(numBlocks);
-    std::vector<bool> dealocate;
+    std::vector<bool> deallocate;
     for (auto subexp : sub_exprs)
     {
         if (!std::get<2>(subexp))
         {
-            // do not dealocate leafs (this is user data)
-            dealocate.push_back(false);
+            // do not deallocate leafs (this is user data)
+            deallocate.push_back(false);
             for (size_t blk = 0; blk < numBlocks; blk++)
             {
                 exprData[blk].push_back(nameToData[std::get<1>(subexp)][blk]);
@@ -356,7 +358,7 @@ ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
         }
         else
         {
-            dealocate.push_back(true);
+            deallocate.push_back(true);
             auto subexpData = std::get<0>(subexp).ApplyExpression(type, numBlocks, nameToData);
             for (size_t blk = 0; blk < numBlocks; blk++)
             {
@@ -369,14 +371,14 @@ ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
     auto op_fct = OpFunctions.at(detail.operation);
     for (size_t blk = 0; blk < numBlocks; blk++)
     {
-        outputData[blk] = op_fct.ComputeFct(exprData[blk], type);
+        outputData[blk] = op_fct.ComputeFct(exprData[blk], type, DoCompute);
     }
     // deallocate intermediate data after computing the operation
     for (size_t blk = 0; blk < numBlocks; blk++)
     {
         for (size_t i = 0; i < exprData[blk].size(); i++)
         {
-            if (dealocate[i] == false)
+            if (deallocate[i] == false)
                 continue;
             free(exprData[blk][i].Data);
         }
