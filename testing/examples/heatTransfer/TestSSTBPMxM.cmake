@@ -10,27 +10,29 @@ add_test(NAME HeatTransfer.SST.BP.MxM
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:adios2_simulations_heatTransferWrite>
         ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_sst_bp.xml
-        Write.bp 2 2 10 10 10 10 SST
+        WriteSSTBPMxM.bp 2 2 10 10 10 10 SST
     :
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:adios2_simulations_heatTransferRead>
         ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_sst_bp.xml
-        Write.bp Read.bp 2 2 SST
+        WriteSSTBPMxM.bp ReadSSTBPMxM.bp 2 2 SST
 )
 set_tests_properties(HeatTransfer.SST.BP.MxM PROPERTIES PROCESSORS 8)
 
 add_test(NAME HeatTransfer.SST.BP.MxM.Dump
+  WORKING_DIRECTORY SSTBPMxM
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-d 
-    -DINPUT_FILE=Read.bp
-    -DOUTPUT_FILE=Dump.txt
+    -DINPUT_FILE=ReadSSTBPMxM.bp
+    -DOUTPUT_FILE=DumpSSTBPMxM.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 
 add_test(NAME HeatTransfer.SST.BP.MxM.Validate
+  WORKING_DIRECTORY SSTBPMxM
   COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
-    Dump.txt
+    DumpSSTBPMxM.txt
 )
 
 SetupTestPipeline(HeatTransfer.SST.BP.MxM ";Dump;Validate" TRUE)
