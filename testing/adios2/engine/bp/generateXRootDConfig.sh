@@ -6,7 +6,7 @@ mkdir -p xroot/etc/xrootd
 {
     echo "xrootd.fslib libXrdSsi.so";
     echo ""
-    echo "all.export /home/eisen/xroot/data nolock r/w";
+    echo "all.export ${PWD}/xroot/data nolock r/w";
     echo ""
     echo "oss.statlib -2 libXrdSsi.so";
     echo ""
