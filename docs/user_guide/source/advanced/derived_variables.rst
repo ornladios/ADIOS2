@@ -54,14 +54,13 @@ Build ADIOS2 with support for derived variables
 
 By default the derived variables are ``OFF``. Building ADIOS2 with derived variables turned on requires ``-DADIOS2_USE_Derived_Variables=ON``.
 
-#################
+
 Supported derived operations
-#################
+--------------------------
 
 In the current implementation, all input variables for a derived operation need to have the same type.
 
 .. list-table:: Supported derived operations
-   :widths: 20 40 40
    :header-rows: 1
 
    * - Operation
