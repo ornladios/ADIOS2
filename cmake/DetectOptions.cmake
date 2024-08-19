@@ -460,7 +460,7 @@ if(ADIOS2_USE_SST AND NOT WIN32)
         "-DLINK_DIRECTORIES=${LIBFABRIC_LIBRARIES}")
     message(STATUS "Libfabric support for the HPE CXI provider: ${ADIOS2_SST_HAVE_CRAY_CXI}")
   endif()
-  if (ADIOS2_HAVE_MPI AND NOT ADIOS2_SST_HAVE_MPI_DP)
+  if (ADIOS2_HAVE_MPI)
     set(CMAKE_REQUIRED_LIBRARIES "MPI::MPI_CXX;Threads::Threads")
     include(CheckCXXSourceRuns)
     check_cxx_source_runs([=[
@@ -491,10 +491,10 @@ if(ADIOS2_USE_SST AND NOT WIN32)
         }]=]
     ADIOS2_HAVE_MPI_CLIENT_SERVER)
     unset(CMAKE_REQUIRED_LIBRARIES)
-  endif()
 
-  if (ADIOS2_HAVE_MPI_CLIENT_SERVER)
-    set(ADIOS2_SST_HAVE_MPI_DP TRUE)
+    if (ADIOS2_HAVE_MPI_CLIENT_SERVER)
+      set(ADIOS2_SST_HAVE_MPI_DP TRUE)
+    endif()
   endif()
 
   # UCX
