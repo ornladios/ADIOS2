@@ -168,14 +168,14 @@ TEST_P(DerivedCorrectnessP, TrigCorrectnessTest)
     const size_t steps = 2;
     // Application variable
     std::default_random_engine generator;
-    std::uniform_real_distribution<float> randomDist(0.0, 100.0);
-    std::uniform_real_distribution<float> sinDist(-1.0, 1.0);
+    std::uniform_real_distribution<double> randomDist(0.0, 100.0);
+    std::uniform_real_distribution<double> sinDist(-1.0, 1.0);
 
     adios2::DerivedVarType mode = GetParam();
     std::cout << "Mode is " << mode << std::endl;
 
-    std::vector<float> simArray1(Nx * Ny * Nz);
-    std::vector<float> simArray2(Nx * Ny * Nz);
+    std::vector<double> simArray1(Nx * Ny * Nz);
+    std::vector<double> simArray2(Nx * Ny * Nz);
     for (size_t i = 0; i < Nx * Ny * Nz; ++i)
     {
         simArray1[i] = randomDist(generator);
@@ -195,8 +195,8 @@ TEST_P(DerivedCorrectnessP, TrigCorrectnessTest)
     std::string derAcosName = "derived/acos";
     std::string derAtanName = "derived/atan";
 
-    auto Ux = bpOut.DefineVariable<float>(randDistVar, {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uy = bpOut.DefineVariable<float>(sinDistVar, {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Ux = bpOut.DefineVariable<double>(randDistVar, {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Uy = bpOut.DefineVariable<double>(sinDistVar, {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     // clang-format off
     bpOut.DefineDerivedVariable(derSinName,
                                 "x =" + randDistVar + " \n"
@@ -238,17 +238,17 @@ TEST_P(DerivedCorrectnessP, TrigCorrectnessTest)
     adios2::IO bpIn = adios.DeclareIO("BPReadExpression");
     adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
 
-    std::vector<float> readRandDist;
-    std::vector<float> readSinDist;
-    std::vector<float> readSin;
-    std::vector<float> readCos;
-    std::vector<float> readTan;
-    std::vector<float> readAsin;
-    std::vector<float> readAcos;
-    std::vector<float> readAtan;
+    std::vector<double> readRandDist;
+    std::vector<double> readSinDist;
+    std::vector<double> readSin;
+    std::vector<double> readCos;
+    std::vector<double> readTan;
+    std::vector<double> readAsin;
+    std::vector<double> readAcos;
+    std::vector<double> readAtan;
 
-    float calcTrig;
-    float epsilon = (float)0.01;
+    double calcTrig;
+    double epsilon = (double)0.01;
     for (size_t i = 0; i < steps; i++)
     {
         bpFileReader.BeginStep();

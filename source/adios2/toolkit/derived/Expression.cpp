@@ -145,12 +145,12 @@ std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
     {adios2::detail::ExpressionOperator::OP_DIV, {DivFunc, SameDimsFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_POW, {PowFunc, SameDimsFunc, FloatTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_SQRT, {SqrtFunc, SameDimsFunc, FloatTypeFunc}},
-    {adios2::detail::ExpressionOperator::OP_SIN, {SinFunc, SameDimsFunc, SameTypeFunc}},
-    {adios2::detail::ExpressionOperator::OP_COS, {CosFunc, SameDimsFunc, SameTypeFunc}},
-    {adios2::detail::ExpressionOperator::OP_TAN, {TanFunc, SameDimsFunc, SameTypeFunc}},
-    {adios2::detail::ExpressionOperator::OP_ASIN, {AsinFunc, SameDimsFunc, SameTypeFunc}},
-    {adios2::detail::ExpressionOperator::OP_ACOS, {AcosFunc, SameDimsFunc, SameTypeFunc}},
-    {adios2::detail::ExpressionOperator::OP_ATAN, {AtanFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_SIN, {SinFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_COS, {CosFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_TAN, {TanFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ASIN, {AsinFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ACOS, {AcosFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ATAN, {AtanFunc, SameDimsFunc, FloatTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc, SameTypeFunc}}};
 
