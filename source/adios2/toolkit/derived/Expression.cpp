@@ -139,20 +139,20 @@ struct OperatorFunctions
 };
 
 std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
-    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_SUBTRACT, {SubtractFunc, SameDimsFunc}},
+    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_SUBTRACT, {SubtractFunc, SameDimsFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_MULT, {MultFunc, SameDimsFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_DIV, {DivFunc, SameDimsFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_POW, {PowFunc, SameDimsFunc, FloatTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_SQRT, {SqrtFunc, SameDimsFunc, FloatTypeFunc}},
-    {adios2::detail::ExpressionOperator::OP_SIN, {SinFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_COS, {CosFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_TAN, {TanFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_ASIN, {AsinFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_ACOS, {AcosFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_ATAN, {AtanFunc, SameDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc}},
-    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc}}};
+    {adios2::detail::ExpressionOperator::OP_SIN, {SinFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_COS, {CosFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_TAN, {TanFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ASIN, {AsinFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ACOS, {AcosFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ATAN, {AtanFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc, SameTypeFunc}}};
 
 Expression::Expression(std::string string_exp)
 : m_Shape({0}), m_Start({0}), m_Count({0}), ExprString(string_exp)

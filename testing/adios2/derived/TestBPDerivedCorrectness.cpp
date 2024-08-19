@@ -457,7 +457,6 @@ TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
     std::vector<float> readVX;
     std::vector<float> readVY;
     std::vector<float> readVZ;
-    // TODO/DEBUG - VERIFY DATATYPE
     std::vector<float> readCurl;
 
     std::vector<std::vector<float>> calcCurl;
