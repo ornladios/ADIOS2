@@ -134,8 +134,9 @@ void myRequest::Alert(XrdSsiRespInfoMsg &aMsg)
 
     // Print what we received
     //
-    fprintf(XrdSsiCl::outFile, "%s@%s: Rcvd %d bytes alert: '%s'\n", rName, GetEndPoint().c_str(),
-            theMsz, theMsg);
+    //    fprintf(XrdSsiCl::outFile, "%s@%s: Rcvd %d bytes alert: '%s'\n", rName,
+    //    GetEndPoint().c_str(),
+    //            theMsz, theMsg);
 
     // Recycle the message
     //

@@ -157,9 +157,9 @@ if (ADIOS2_HAVE_XRootD)
    endmacro()
 
    add_test(NAME generateXRootDConfig COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/generateXRootDConfig.sh $<TARGET_FILE:adios2_xrootd>  )
-   add_test(NAME remoteXRServerSetup   COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/start_xrootd.sh ${XROOTD_SERVER_BINARY} ${CMAKE_CURRENT_BINARY_DIR})
+   add_test(NAME remoteXRServerSetup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/start_xrootd.sh ${XROOTD_SERVER_BINARY} ${CMAKE_CURRENT_BINARY_DIR})
 
-   set_tests_properties(remoteXRServerSetup         PROPERTIES FIXTURES_SETUP    XRServer)
+   set_tests_properties(remoteXRServerSetup PROPERTIES FIXTURES_SETUP XRServer)
    set_tests_properties(remoteXRServerSetup PROPERTIES DEPENDS "generateXRootDConfig")
 
    add_test(NAME remoteXRServerCleanup COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/kill_xrootd.sh )
