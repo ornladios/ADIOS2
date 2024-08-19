@@ -591,7 +591,6 @@ if(XRootD_FOUND)
 		/opt/xrootd
 		PATH_SUFFIXES bin
 		)
-		message (STATUS "xrootd server binary is ${XROOTD_SERVER_BINARY}")
 
 endif()
 
