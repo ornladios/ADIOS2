@@ -10,7 +10,7 @@ add_test(NAME HeatTransfer.BP3.zfp.Mx1.Write
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:adios2_simulations_heatTransferWrite>
         ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_bp3_zfp.xml
-        Write.bp 2 2 10 10 10 10
+        WriteBPFileMx1_zfp.bp 2 2 10 10 10 10
 )
 set_tests_properties(HeatTransfer.BP3.zfp.Mx1.Write PROPERTIES PROCESSORS 4)
 
@@ -19,14 +19,14 @@ add_test(NAME HeatTransfer.BP3.zfp.Mx1.Read
     ${MPIEXEC_NUMPROC_FLAG} 1
       $<TARGET_FILE:adios2_simulations_heatTransferRead>
         ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_bp3.xml
-        Write.bp Read.bp 1 1
+        WriteBPFileMx1_zfp.bp ReadBPFileMx1_zfp.bp 1 1
 )
 
 add_test(NAME HeatTransfer.BP3.zfp.Mx1.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-d 
-    -DINPUT_FILE=Read.bp
-    -DOUTPUT_FILE=Dump.txt
+    -DINPUT_FILE=ReadBPFileMx1_zfp.bp
+    -DOUTPUT_FILE=DumpBPFileMx1_zfp.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 
@@ -38,7 +38,7 @@ add_test(NAME HeatTransfer.BP4.zfp.Mx1.Write
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:adios2_simulations_heatTransferWrite>
         ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_bp4_zfp.xml
-        Write.bp 2 2 10 10 10 10
+        WriteBPFile4Mx1_zfp.bp 2 2 10 10 10 10
 )
 set_tests_properties(HeatTransfer.BP3.zfp.Mx1.Write PROPERTIES PROCESSORS 4)
 
@@ -47,14 +47,14 @@ add_test(NAME HeatTransfer.BP4.zfp.Mx1.Read
     ${MPIEXEC_NUMPROC_FLAG} 1
       $<TARGET_FILE:adios2_simulations_heatTransferRead>
         ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_bp4.xml
-        Write.bp Read.bp 1 1
+        WriteBPFile4Mx1_zfp.bp ReadBPFile4Mx1_zfp.bp 1 1
 )
 
 add_test(NAME HeatTransfer.BP4.zfp.Mx1.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-d 
-    -DINPUT_FILE=Read.bp
-    -DOUTPUT_FILE=Dump.txt
+    -DINPUT_FILE=ReadBPFile4Mx1_zfp.bp
+    -DOUTPUT_FILE=DumpBPFile4Mx1_zfp.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 

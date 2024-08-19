@@ -10,7 +10,7 @@ add_test(NAME HeatTransfer.BP3.Mx1.Write
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:adios2_simulations_heatTransferWrite>
         ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_bp3.xml
-        Write.bp 2 2 10 10 10 10
+        WriteBPFileMx1.bp 2 2 10 10 10 10
 )
 set_tests_properties(HeatTransfer.BP3.Mx1.Write PROPERTIES PROCESSORS 4)
 
@@ -19,21 +19,21 @@ add_test(NAME HeatTransfer.BP3.Mx1.Read
     ${MPIEXEC_NUMPROC_FLAG} 1
       $<TARGET_FILE:adios2_simulations_heatTransferRead>
         ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_bp3.xml
-        Write.bp Read.bp 1 1
+        WriteBPFileMx1.bp ReadBPFileMx1.bp 1 1
 )
 
 add_test(NAME HeatTransfer.BP3.Mx1.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-d 
-    -DINPUT_FILE=Read.bp
-    -DOUTPUT_FILE=Dump.txt
+    -DINPUT_FILE=ReadBPFileMx1.bp
+    -DOUTPUT_FILE=DumpBPFileMx1.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 
 add_test(NAME HeatTransfer.BP3.Mx1.Validate
   COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
-    Dump.txt
+    DumpBPFileMx1.txt
 )
 
 SetupTestPipeline(HeatTransfer.BP3.Mx1 "Write;Read;Dump;Validate" TRUE)
@@ -45,7 +45,7 @@ add_test(NAME HeatTransfer.BP4.Mx1.Write
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:adios2_simulations_heatTransferWrite>
         ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_bp4.xml
-        Write.bp 2 2 10 10 10 10
+        WriteBPFileMx1.bp 2 2 10 10 10 10
 )
 set_tests_properties(HeatTransfer.BP4.Mx1.Write PROPERTIES PROCESSORS 4)
 
@@ -54,21 +54,21 @@ add_test(NAME HeatTransfer.BP4.Mx1.Read
     ${MPIEXEC_NUMPROC_FLAG} 1
       $<TARGET_FILE:adios2_simulations_heatTransferRead>
         ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_bp4.xml
-        Write.bp Read.bp 1 1
+        WriteBPFileMx1.bp ReadBPFileMx1.bp 1 1
 )
 
 add_test(NAME HeatTransfer.BP4.Mx1.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-d 
-    -DINPUT_FILE=Read.bp
-    -DOUTPUT_FILE=Dump.txt
+    -DINPUT_FILE=ReadBPFileMx1.bp
+    -DOUTPUT_FILE=DumpBPFileMx1.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 
 add_test(NAME HeatTransfer.BP4.Mx1.Validate
   COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
-    Dump.txt
+    DumpBPFileMx1.txt
 )
 
 SetupTestPipeline(HeatTransfer.BP4.Mx1 "Write;Read;Dump;Validate" TRUE)

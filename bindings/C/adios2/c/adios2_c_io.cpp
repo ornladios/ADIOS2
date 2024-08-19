@@ -161,11 +161,11 @@ adios2_derived_variable *adios2_define_derived_variable(adios2_io *io, const cha
     {
         adios2::helper::CheckForNullptr(io, "for adios2_io, in call to adios2_define_variable");
         adios2::core::IO &ioCpp = *reinterpret_cast<adios2::core::IO *>(io);
-        adios2::DerivedVarType typeCpp = adios2::DerivedVarType::MetadataOnly;
+        adios2::DerivedVarType typeCpp = adios2::DerivedVarType::StatsOnly;
         switch (type)
         {
         case adios2_derived_var_type_metadata_only:
-            typeCpp = adios2::DerivedVarType::MetadataOnly;
+            typeCpp = adios2::DerivedVarType::StatsOnly;
             break;
         case adios2_derived_var_type_expression_string:
             typeCpp = adios2::DerivedVarType::ExpressionString;

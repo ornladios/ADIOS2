@@ -1,10 +1,9 @@
 #!/bin/bash
 # shellcheck disable=SC2191
 
-module load rocm/5.4.0
-module load gcc/11.2.0
-module load cmake/3.23.2
+module load PrgEnv-gnu-amd/8.5.0
 module load craype-accel-amd-gfx90a
+module load cmake/3.23.2
 
 ######## User Configurations ########
 Kokkos_HOME=$HOME/kokkos/kokkos

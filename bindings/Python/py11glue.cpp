@@ -126,7 +126,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         .export_values();
 
     pybind11::enum_<adios2::DerivedVarType>(m, "DerivedVarType")
-        .value("MetadataOnly", adios2::DerivedVarType::MetadataOnly)
+        .value("StatsOnly", adios2::DerivedVarType::StatsOnly)
         .value("ExpressionString", adios2::DerivedVarType::ExpressionString)
         .value("StoreData", adios2::DerivedVarType::StoreData)
         .export_values();
@@ -231,7 +231,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
                  adios2::py11::IO::DefineDerivedVariable,
              pybind11::return_value_policy::move, pybind11::arg("name"),
              pybind11::arg("expression"),
-             pybind11::arg("vartype") = adios2::DerivedVarType::MetadataOnly)
+             pybind11::arg("vartype") = adios2::DerivedVarType::StatsOnly)
 
         .def("InquireVariable", &adios2::py11::IO::InquireVariable,
              pybind11::return_value_policy::move)

@@ -255,7 +255,7 @@ class IO:
                 expression string using other variable names, operators and functions
 
             type
-                DerivedVarType.MetadataOnly     : store only the metadata of the derived variable
+                DerivedVarType.StatsOnly     : store only the metadata of the derived variable
                 DerivedVarType.ExpressionString : store only the definition, nothing else
                 DerivedVarType.StoreData        : store as a complete variable (data and metadata)
         """

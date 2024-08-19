@@ -6,6 +6,7 @@
 include(ADIOSFunctions)
 
 add_test(NAME HeatTransfer.SST.FFS.MxM
+  WORKING_DIRECTORY SSTFFSMxM
   COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:adios2_simulations_heatTransferWrite>
@@ -20,6 +21,7 @@ add_test(NAME HeatTransfer.SST.FFS.MxM
 set_tests_properties(HeatTransfer.SST.FFS.MxM PROPERTIES PROCESSORS 8)
 
 add_test(NAME HeatTransfer.SST.FFS.MxM.Dump
+  WORKING_DIRECTORY SSTFFSMxM
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-d 
     -DINPUT_FILE=Read.bp
@@ -28,6 +30,7 @@ add_test(NAME HeatTransfer.SST.FFS.MxM.Dump
 )
 
 add_test(NAME HeatTransfer.SST.FFS.MxM.Validate
+  WORKING_DIRECTORY SSTFFSMxM
   COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
     Dump.txt

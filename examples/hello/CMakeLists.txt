@@ -68,3 +68,7 @@ if(ADIOS2_HAVE_SST)
   add_subdirectory(sstReader)
   add_subdirectory(sstWriter)
 endif()
+
+if(ADIOS2_HAVE_Derived_Variable)
+    add_subdirectory(bpStepsWriteReadDerived)
+endif()
