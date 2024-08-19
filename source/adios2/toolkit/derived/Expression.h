@@ -78,13 +78,14 @@ public:
 
 class Expression
 {
-    ExpressionTree m_Expr;
 
     Dims m_Shape;
     Dims m_Start;
     Dims m_Count;
 
 public:
+    ExpressionTree m_Expr;
+
     Expression() = default;
     Expression(std::string expression);
 

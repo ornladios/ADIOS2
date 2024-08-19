@@ -95,14 +95,27 @@ std::vector<std::tuple<void *, Dims, Dims>> VariableDerived::GenerateDerivedDims
     std::vector<std::tuple<void *, Dims, Dims>> blockData;
     for (size_t i = 0; i < numBlocks; i++)
     {
-        auto &blockEntry = NameToVarInfo.begin()->second;
-        Dims Start(blockEntry->BlocksInfo[i].Start,
-                   blockEntry->BlocksInfo[i].Start + blockEntry->Dims);
-        Dims Count(blockEntry->BlocksInfo[i].Count,
-                   blockEntry->BlocksInfo[i].Count + blockEntry->Dims);
-        blockData.emplace_back((void *)NULL, Start, Count);
-    }
+        std::map<std::string, Dims> nameToCount;
+        std::map<std::string, Dims> nameToStart;
+        for (const auto &variable : NameToVarInfo)
+        {
+            Dims start;
+            Dims count;
+            for (int d = 0; d < variable.second->Dims; d++)
+            {
+                start.push_back(variable.second->BlocksInfo[i].Start[d]);
+                count.push_back(variable.second->BlocksInfo[i].Count[d]);
+            }
+            nameToCount.insert({variable.first, count});
+            nameToStart.insert({variable.first, start});
+        }
 
+        Dims outputCount = m_Expr.m_Expr.GetDims(nameToCount);
+        Dims outputStart = m_Expr.m_Expr.GetDims(nameToStart);
+
+        std::cout << "Get DetDimms returns " << outputCount << "    " << outputStart << std::endl;
+        blockData.push_back({nullptr, outputStart, outputCount});
+    }
     return blockData;
 }
 

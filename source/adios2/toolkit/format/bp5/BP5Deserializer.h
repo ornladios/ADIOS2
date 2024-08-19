@@ -111,8 +111,8 @@ public:
         Dims Start;
         Dims Count;
         MemorySpace MemSpace;
-        std::map<std::string, std::unique_ptr<MinVarInfo>> *DerivedInputMap;
-        void *Data;
+        std::map<std::string, std::unique_ptr<MinVarInfo>> *DerivedInputMap = NULL;
+        void *Data = NULL;
     };
     std::vector<BP5ArrayRequest> PendingGetRequests;
 
