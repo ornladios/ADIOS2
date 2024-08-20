@@ -10,6 +10,10 @@ else()
   set(MPIEXEC_COMMAND)
 endif()
 
+if(Python_Interpreter_FOUND)
+  add_subdirectory(bpcmp)
+endif()
+
 add_subdirectory(cwriter)
 add_subdirectory(changingshape)
 
