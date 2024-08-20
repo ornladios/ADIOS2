@@ -30,6 +30,12 @@ const std::map<ExpressionOperator, OperatorProperty> op_property = {
     {ExpressionOperator::OP_DIV, {"DIV", false}},
     {ExpressionOperator::OP_SQRT, {"SQRT", false}},
     {ExpressionOperator::OP_POW, {"POW", false}},
+    {ExpressionOperator::OP_SIN, {"SIN", false}},
+    {ExpressionOperator::OP_COS, {"COS", false}},
+    {ExpressionOperator::OP_TAN, {"TAN", false}},
+    {ExpressionOperator::OP_ASIN, {"ASIN", false}},
+    {ExpressionOperator::OP_ACOS, {"ACOS", false}},
+    {ExpressionOperator::OP_ATAN, {"ATAN", false}},
     {ExpressionOperator::OP_CURL, {"CURL", false}},
     {ExpressionOperator::OP_MAGN, {"MAGNITUDE", false}}};
 
@@ -45,6 +51,9 @@ const std::map<std::string, ExpressionOperator> string_to_op = {
     {"multiply", ExpressionOperator::OP_MULT}, {"MULTIPLY", ExpressionOperator::OP_MULT},
     {"SQRT", ExpressionOperator::OP_SQRT},     {"sqrt", ExpressionOperator::OP_SQRT},
     {"pow", ExpressionOperator::OP_POW},       {"POW", ExpressionOperator::OP_POW},
+    {"sin", ExpressionOperator::OP_SIN},       {"cos", ExpressionOperator::OP_COS},
+    {"tan", ExpressionOperator::OP_TAN},       {"asin", ExpressionOperator::OP_ASIN},
+    {"acos", ExpressionOperator::OP_ACOS},     {"atan", ExpressionOperator::OP_ATAN},
     {"^", ExpressionOperator::OP_POW},         {"CURL", ExpressionOperator::OP_CURL},
     {"curl", ExpressionOperator::OP_CURL},     {"MAGNITUDE", ExpressionOperator::OP_MAGN},
     {"magnitude", ExpressionOperator::OP_MAGN}};
@@ -136,6 +145,12 @@ std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
     {adios2::detail::ExpressionOperator::OP_DIV, {DivFunc, SameDimsFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_POW, {PowFunc, SameDimsFunc, FloatTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_SQRT, {SqrtFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_SIN, {SinFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_COS, {CosFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_TAN, {TanFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ASIN, {AsinFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ACOS, {AcosFunc, SameDimsFunc, FloatTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ATAN, {AtanFunc, SameDimsFunc, FloatTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc, SameTypeFunc}}};
 

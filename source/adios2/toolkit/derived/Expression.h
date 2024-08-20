@@ -22,6 +22,12 @@ enum ExpressionOperator
     OP_DIV,
     OP_SQRT,
     OP_POW,
+    OP_SIN,
+    OP_COS,
+    OP_TAN,
+    OP_ASIN,
+    OP_ACOS,
+    OP_ATAN,
     OP_MAGN,
     OP_CURL
 };
