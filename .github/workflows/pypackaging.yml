@@ -5,6 +5,15 @@ on:
     inputs:
       overrideVersion:
         description: Manually force a version
+      pypiServer:
+        description: Server to publish the pip package
+        required: true
+        default: 'testpypi'
+        type: choice
+        options:
+          - 'testpypi'
+          - 'pypi'
+
   pull_request:
   push:
     branches:
@@ -36,8 +45,8 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
+          name: artifact_sdist
           path: dist/*.tar.gz
-          overwrite: true
 
   build_wheels:
     name: Wheel on ${{ matrix.os }}
@@ -63,8 +72,8 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
+          name: artifact_wheels
           path: wheelhouse/*.whl
-          overwrite: true
 
   upload_pypi:
     needs: [build_wheels, make_sdist]
@@ -73,7 +82,7 @@ jobs:
       id-token: write
     runs-on: ubuntu-latest
     if: |
-      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'workflow_dispatch' && github.event.inputs.pypiServer == 'pypi' ||
       (
         github.event_name == 'release' &&
         github.event.action == 'published'
@@ -81,8 +90,8 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: artifact
           path: dist
+          merge-multiple: true
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
@@ -93,14 +102,15 @@ jobs:
     permissions:
       id-token: write
     runs-on: ubuntu-latest
-    # Upload to Test PyPI for every commit on main branch
-    if: github.event_name == 'push' && github.event.ref == 'refs/heads/master'
+    # We have limited space in TestPyPI, leave this for debugging
+    # in the future
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.pypiServer == 'testpypi'
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: artifact
           path: dist
-
+          merge-multiple: true
+      - run: ls -R dist
       - name: Publish package distributions to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
