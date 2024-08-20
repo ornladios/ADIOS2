@@ -39,23 +39,6 @@ T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
     return outValues;
 }
 
-template <class T>
-T *ApplyOneToOneOnce(T *inputData, size_t dataSize, std::function<T(T)> compFct)
-{
-    T *outValues = (T *)malloc(dataSize * sizeof(T));
-    if (outValues == nullptr)
-    {
-        helper::Throw<std::invalid_argument>("Derived", "Function", "ApplyOneToOneOnce",
-                                             "Error allocating memory for the derived variable");
-    }
-    for (size_t i = 0; i < dataSize; i++)
-    {
-        T data = *(reinterpret_cast<T *>(inputData + i));
-        outValues[i] = compFct(data);
-    }
-    return outValues;
-}
-
 inline size_t returnIndex(size_t x, size_t y, size_t z, const size_t dims[3])
 {
     return z + y * dims[2] + x * dims[2] * dims[1];
