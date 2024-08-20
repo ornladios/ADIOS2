@@ -79,9 +79,8 @@ public:
      * @param comm  communicator passed at Open or from ADIOS class
      * @param md Metadata already in memory
      */
-    Engine(const std::string engineType, IO &io, const std::string &name,
-           const Mode mode, helper::Comm comm, const char *md,
-           const size_t mdsize);
+    Engine(const std::string engineType, IO &io, const std::string &name, const Mode mode,
+           helper::Comm comm, const char *md, const size_t mdsize);
 
     virtual ~Engine();
 

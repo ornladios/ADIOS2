@@ -346,8 +346,8 @@ adios2_engine *adios2_open(adios2_io *io, const char *name, const adios2_mode mo
  * @param md file metadata residing in memory
  * @return success: handler, failure: NULL
  */
-adios2_engine *adios2_open_with_metadata(adios2_io *io, const char *name,
-                                         const char *md, const size_t mdsize);
+adios2_engine *adios2_open_with_metadata(adios2_io *io, const char *name, const char *md,
+                                         const size_t mdsize);
 
 #if ADIOS2_USE_MPI
 /**

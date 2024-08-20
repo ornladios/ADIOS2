@@ -67,8 +67,8 @@ TEST_F(BPOpenWithMetadata, ADIOS2BPOpenWithMetadata)
         for (size_t step = 0; step < NSteps; ++step)
         {
             // Generate test data for each process uniquely
-            SmallTestData currentTestData = generateNewSmallTestData(
-                m_TestData, static_cast<int>(step), 0, 1);
+            SmallTestData currentTestData =
+                generateNewSmallTestData(m_TestData, static_cast<int>(step), 0, 1);
 
             bpWriter.BeginStep();
             bpWriter.Put(v, currentTestData.R64.data());
@@ -91,8 +91,7 @@ TEST_F(BPOpenWithMetadata, ADIOS2BPOpenWithMetadata)
             io.SetParameters(engineParameters);
         }
 
-        adios2::Engine bpReader =
-            io.Open(fname, adios2::Mode::ReadRandomAccess);
+        adios2::Engine bpReader = io.Open(fname, adios2::Mode::ReadRandomAccess);
 
         bpReader.GetMetadata(&md, &mdsize);
 
