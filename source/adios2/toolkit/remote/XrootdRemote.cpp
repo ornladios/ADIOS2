@@ -125,12 +125,12 @@ myRequest *myRequest::currentRequest = 0; // Pointer to current request
 
 void myRequest::Alert(XrdSsiRespInfoMsg &aMsg)
 {
-    char *theMsg;
-    int theMsz;
+    // char *theMsg;
+    // int theMsz;
 
     // Get the message
     //
-    theMsg = aMsg.GetMsg(theMsz);
+    // theMsg = aMsg.GetMsg(theMsz);
 
     // Print what we received
     //
@@ -140,7 +140,7 @@ void myRequest::Alert(XrdSsiRespInfoMsg &aMsg)
 
     // Recycle the message
     //
-    aMsg.RecycleMsg();
+    // aMsg.RecycleMsg();
 }
 
 /******************************************************************************/
@@ -337,7 +337,7 @@ Remote::GetHandle XrootdRemote::Get(char *VarName, size_t Step, size_t BlockID, 
                                     Dims &Start, void *dest)
 {
 #ifdef ADIOS2_HAVE_XROOTD
-    char rName[512] = "/home/eisen/xroot/data";
+    char rName[512] = "/etc";
     XrdSsiResource rSpec((std::string)rName);
     myRequest *reqP;
     std::string reqData = "get Filename=" + std::string(m_Filename) + std::string("&RMOrder=") +
