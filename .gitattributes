@@ -15,6 +15,7 @@
 *.F90   text
 *.sh    text
 
+CMakeLists.txt whitespace=tab-in-indent
 *.cmake whitespace=tab-in-indent
 *.md    whitespace=tab-in-indent whitespace=-blank-at-eol conflict-marker-size=79
 *.rst   whitespace=tab-in-indent conflict-marker-size=79
