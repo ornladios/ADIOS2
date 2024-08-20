@@ -77,8 +77,8 @@ TEST_F(BPOpenWithMetadata, ADIOS2BPOpenWithMetadata)
         bpWriter.Close();
     }
 
-    char *md;
-    size_t mdsize;
+    char *md = nullptr;
+    size_t mdsize = 0;
 
     {
         adios2::IO io = adios.DeclareIO("ReadIO");
@@ -177,6 +177,11 @@ TEST_F(BPOpenWithMetadata, ADIOS2BPOpenWithMetadata)
             }
         }
         bpReader.Close();
+    }
+
+    if (md)
+    {
+        free(md);
     }
 }
 
