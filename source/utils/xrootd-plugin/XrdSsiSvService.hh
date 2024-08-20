@@ -45,19 +45,10 @@ class XrdSsiSvService : public XrdSsiService, public XrdSsiResponder
 {
 public:
     //-----------------------------------------------------------------------------
-    //! Attach to a previously detached server-side request.
-    //-----------------------------------------------------------------------------
-
-    virtual void Attach(XrdSsiRequest &reqRef, std::string handle) {}
-
-    //-----------------------------------------------------------------------------
     //! Do delayed echo (internal)
     //-----------------------------------------------------------------------------
 
-    void doWecho()
-    {
-        Respond(m_responseBuffer, m_respMeta);
-    }
+    void doWecho() { Respond(m_responseBuffer, m_respMeta); }
 
     void doAdiosGet() { AdiosRespond(m_responseBuffer, m_respMeta); }
 
@@ -103,7 +94,7 @@ protected:
     //! Destructor is protected. You cannot use delete on a service, use the
     //! Stop() method to effectively delete the service object.
     //-----------------------------------------------------------------------------
-  ~XrdSsiSvService();
+    ~XrdSsiSvService();
 
 private:
     int Copy2Buff(char *dest, int dsz, const char *src, int ssz);
@@ -118,7 +109,7 @@ private:
     static int alertNum;
     char *sName;
     char *m_responseBuffer = NULL;
-    int m_responseBufferSize = 0;
+    size_t m_responseBufferSize = 0;
     char m_respMeta[512];
     char m_respData[1024];
     int streamRdSz;

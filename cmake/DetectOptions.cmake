@@ -583,6 +583,15 @@ elseif(ADIOS2_USE_XRootD)
 endif()
 if(XRootD_FOUND)
   set(ADIOS2_HAVE_XRootD TRUE)
+  find_program(XROOTD_SERVER_BINARY xrootd
+               HINTS
+               ${XROOTD_DIR}
+               $ENV{XROOTD_DIR}
+               /usr
+               /opt/xrootd
+               PATH_SUFFIXES bin
+  )
+
 endif()
 
 # Campaign Management

@@ -6,6 +6,7 @@ ARG E4S_VERSION=23.08
 ARG ENABLED_ENVS="serial,ompi,mpich"
 ARG EXTERNAL_PACKAGES
 ARG EXTRA_VARIANTS
+ARG PATCH_VARIANT_XROOTD
 
 
 # Clone and patch spack
@@ -17,12 +18,14 @@ RUN if ! [ -d /spack ]; then \
     fi
 
 COPY 0001-mpich-support-ch3-sock.patch /spack
+COPY 0002-adios2-add-xrootd-variant.patch /spack
+
 COPY packages.yaml /etc/spack/packages.yaml
 
 WORKDIR /spack
 # TODO: Patch only needed until we merge https://github.com/spack/spack/pull/40964
 RUN if [ ${E4S_VERSION%.*} -le 23 ]; then git apply 0001-mpich-support-ch3-sock.patch; fi
-
+RUN if [ -n "${PATCH_VARIANT_XROOTD}" ]; then git apply 0002-adios2-add-xrootd-variant.patch; fi
 # Install base specs
 RUN . /spack/share/spack/setup-env.sh && \
     if test -n "${EXTERNAL_PACKAGES}"; then spack external find ${EXTERNAL_PACKAGES}; fi && \
