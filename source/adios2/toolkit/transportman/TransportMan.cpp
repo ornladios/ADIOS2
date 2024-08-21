@@ -372,6 +372,13 @@ void TransportMan::SeekTo(const size_t start, const int transportIndex)
     }
 }
 
+size_t TransportMan::CurrentPos(const int transportIndex)
+{
+    auto itTransport = m_Transports.find(transportIndex);
+    CheckFile(itTransport, ", in call to CurrentPos with index " + std::to_string(transportIndex));
+    return itTransport->second->CurrentPos();
+}
+
 void TransportMan::Truncate(const size_t length, const int transportIndex)
 {
     if (transportIndex == -1)

@@ -624,6 +624,8 @@ void FilePOSIX::Seek(const size_t start)
     }
 }
 
+size_t FilePOSIX::CurrentPos() { return static_cast<size_t>(lseek(m_FileDescriptor, 0, SEEK_CUR)); }
+
 void FilePOSIX::Truncate(const size_t length)
 {
     WaitForOpen();

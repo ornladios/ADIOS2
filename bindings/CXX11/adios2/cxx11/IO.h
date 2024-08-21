@@ -310,6 +310,21 @@ public:
     Engine Open(const std::string &name, const Mode mode, MPI_Comm comm);
 #endif
 
+    /**
+     * Overloaded version that is specifically for a serial program
+     * opening a file (not stream) with ReadRandomAccess mode and
+     * supplying the metadata already in memory. The metadata
+     * should be retrieved by another program calling engine.GetMetadata()
+     * after opening the file.
+     * @param name unique engine identifier within IO object
+     * (file name in case of File transports)
+     * @param md file metadata residing in memory
+     * @return a reference to a derived object of the Engine class
+     * @exception std::invalid_argument if Engine with unique name is already
+     * created with another Open
+     */
+    Engine Open(const std::string &name, const char *md, const size_t mdsize);
+
     /** Flushes all engines created with this IO with the Open function */
     void FlushAll();
 

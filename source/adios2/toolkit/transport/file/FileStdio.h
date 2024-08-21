@@ -61,6 +61,8 @@ public:
 
     void Seek(const size_t start) final;
 
+    size_t CurrentPos() final;
+
     void Truncate(const size_t length) final;
 
     void MkDir(const std::string &fileName) final;

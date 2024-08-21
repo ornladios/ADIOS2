@@ -45,6 +45,12 @@ Mode Engine::OpenMode() const
     return m_Engine->OpenMode();
 }
 
+void Engine::GetMetadata(char **md, size_t *size) const
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::GetMetadata");
+    m_Engine->GetMetadata(md, size);
+}
+
 StepStatus Engine::BeginStep()
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::BeginStep");

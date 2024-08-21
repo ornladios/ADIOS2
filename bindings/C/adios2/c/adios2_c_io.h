@@ -335,6 +335,20 @@ adios2_error adios2_remove_all_attributes(adios2_io *io);
  */
 adios2_engine *adios2_open(adios2_io *io, const char *name, const adios2_mode mode);
 
+/**
+ * Open an Engine to start heavy-weight input/output operations.
+ * This function is for opening a file (not stream) with ReadRandomAccess mode
+ * and supplying the metadata already in memory. The metadata should be
+ * retrieved by another program calling adios2_engine_get_metadata() after
+ * opening the file.
+ * @param io engine owner
+ * @param name unique engine identifier
+ * @param md file metadata residing in memory
+ * @return success: handler, failure: NULL
+ */
+adios2_engine *adios2_open_with_metadata(adios2_io *io, const char *name, const char *md,
+                                         const size_t mdsize);
+
 #if ADIOS2_USE_MPI
 /**
  * Open an Engine to start heavy-weight input/output operations.

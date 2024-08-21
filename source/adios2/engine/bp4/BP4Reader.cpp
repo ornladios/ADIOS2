@@ -15,6 +15,7 @@
 
 #include <chrono>
 #include <errno.h>
+#include <fstream>
 
 namespace adios2
 {
@@ -36,6 +37,19 @@ BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode, helper::C
     m_IsOpen = true;
 }
 
+BP4Reader::BP4Reader(IO &io, const std::string &name, const Mode mode, helper::Comm comm,
+                     const char *md, const size_t mdsize)
+: Engine("BP4Reader", io, name, mode, std::move(comm)), m_BP4Deserializer(m_Comm),
+  m_MDFileManager(io, m_Comm), m_DataFileManager(io, m_Comm), m_MDIndexFileManager(io, m_Comm),
+  m_ActiveFlagFileManager(io, m_Comm)
+{
+    PERFSTUBS_SCOPED_TIMER("BP4Reader::Open");
+    readMetadataFromFile = false;
+    Init();
+    // ProcessMetadataFromMemory(md);
+    m_IsOpen = true;
+}
+
 BP4Reader::~BP4Reader()
 {
     if (m_IsOpen)
@@ -43,6 +57,23 @@ BP4Reader::~BP4Reader()
         DestructorClose(m_FailVerbose);
     }
     m_IsOpen = false;
+}
+
+void BP4Reader::GetMetadata(char **md, size_t *size)
+{
+    uint64_t sizes[2] = {m_BP4Deserializer.m_Metadata.m_Buffer.size(),
+                         m_BP4Deserializer.m_MetadataIndex.m_Buffer.size()};
+
+    size_t mdsize = sizes[0] + sizes[1] + 2 * sizeof(uint64_t);
+    *md = (char *)malloc(mdsize);
+    *size = mdsize;
+    char *p = *md;
+    memcpy(p, sizes, sizeof(sizes));
+    p += sizeof(sizes);
+    memcpy(p, m_BP4Deserializer.m_Metadata.m_Buffer.data(), sizes[0]);
+    p += sizes[0];
+    memcpy(p, m_BP4Deserializer.m_MetadataIndex.m_Buffer.data(), sizes[1]);
+    p += sizes[1];
 }
 
 StepStatus BP4Reader::BeginStep(StepMode mode, const float timeoutSeconds)
@@ -188,24 +219,26 @@ void BP4Reader::Init()
     InitTransports();
 
     helper::RaiseLimitNoFile();
-
-    /* Do a collective wait for the file(s) to appear within timeout.
-       Make sure every process comes to the same conclusion */
-    const Seconds timeoutSeconds(m_BP4Deserializer.m_Parameters.OpenTimeoutSecs);
-
-    Seconds pollSeconds(m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs);
-    if (pollSeconds > timeoutSeconds)
+    if (readMetadataFromFile)
     {
-        pollSeconds = timeoutSeconds;
-    }
+        /* Do a collective wait for the file(s) to appear within timeout.
+           Make sure every process comes to the same conclusion */
+        const Seconds timeoutSeconds(m_BP4Deserializer.m_Parameters.OpenTimeoutSecs);
 
-    TimePoint timeoutInstant = Now() + timeoutSeconds;
+        Seconds pollSeconds(m_BP4Deserializer.m_Parameters.BeginStepPollingFrequencySecs);
+        if (pollSeconds > timeoutSeconds)
+        {
+            pollSeconds = timeoutSeconds;
+        }
 
-    OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
-    if (!m_BP4Deserializer.m_Parameters.StreamReader)
-    {
-        /* non-stream reader gets as much steps as available now */
-        InitBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
+        TimePoint timeoutInstant = Now() + timeoutSeconds;
+
+        OpenFiles(timeoutInstant, pollSeconds, timeoutSeconds);
+        if (!m_BP4Deserializer.m_Parameters.StreamReader)
+        {
+            /* non-stream reader gets as much steps as available now */
+            InitBuffer(timeoutInstant, pollSeconds / 10, timeoutSeconds);
+        }
     }
 }
 
@@ -528,6 +561,38 @@ void BP4Reader::InitBuffer(const TimePoint &timeoutInstant, const Seconds &pollS
          * is in the buffer but has not been processed yet.
          */
     }
+}
+
+void BP4Reader::ProcessMetadataFromMemory(const char *md)
+{
+    uint64_t size_mdidx, size_md;
+    const char *p = md;
+    memcpy(&size_md, p, sizeof(uint64_t));
+    p = p + sizeof(uint64_t);
+    memcpy(&size_mdidx, p, sizeof(uint64_t));
+    p = p + sizeof(uint64_t);
+
+    std::string hint("when processing metadata from memory");
+    size_t pos = 0;
+
+    m_BP4Deserializer.m_Metadata.Resize(size_md, hint);
+    helper::CopyToBuffer(m_BP4Deserializer.m_Metadata.m_Buffer, pos, p, size_md);
+    p = p + size_md;
+
+    pos = 0;
+    m_BP4Deserializer.m_MetadataIndex.Resize(size_mdidx, hint);
+    helper::CopyToBuffer(m_BP4Deserializer.m_MetadataIndex.m_Buffer, pos, p, size_mdidx);
+    p = p + size_mdidx;
+
+    /* Parse metadata index table */
+    m_BP4Deserializer.ParseMetadataIndex(m_BP4Deserializer.m_MetadataIndex, 0, true, false);
+    // now we are sure the index header has been parsed, first step parsing
+    // done
+    m_IdxHeaderParsed = true;
+
+    // fills IO with Variables and Attributes
+    m_MDFileProcessedSize =
+        m_BP4Deserializer.ParseMetadata(m_BP4Deserializer.m_Metadata, *this, true);
 }
 
 size_t BP4Reader::UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pollSeconds)
