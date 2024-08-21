@@ -29,6 +29,7 @@ enum ExpressionOperator
     OP_ACOS,
     OP_ATAN,
     OP_MAGN,
+    OP_CROSS,
     OP_CURL
 };
 }
