@@ -44,7 +44,7 @@ VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInf
                                                      m_Name);
     }
 
-    if (not DoCompute)
+    if (!DoCompute)
         return CreateEmptyData(NameToMVI, numBlocks);
 
     std::map<std::string, std::vector<adios2::derived::DerivedData>> inputData;
