@@ -73,7 +73,8 @@ public:
     void add_child(std::string var);
 
     std::vector<std::string> VariableNameList();
-    Dims GetDims(std::map<std::string, Dims> NameToDims);
+    std::tuple<Dims, Dims, Dims>
+    GetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
     DataType GetType(std::map<std::string, DataType> NameToType);
     std::vector<DerivedData>
     ApplyExpression(DataType type, size_t numBlocks,

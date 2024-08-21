@@ -626,14 +626,19 @@ DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type, 
     return DerivedData();
 }
 
-Dims SameDimsFunc(std::vector<Dims> input)
+/* Functions that return output dimensions
+ * Input: A list of variable dimensions (start, count, shape)
+ * Output: (start, count, shape) of the output operation */
+
+std::tuple<Dims, Dims, Dims> SameDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input)
 {
     // check that all dimenstions are the same
     if (input.size() > 1)
     {
-        Dims first_element = input[0];
-        bool dim_are_equal = std::all_of(input.begin() + 1, input.end(),
-                                         [&first_element](Dims x) { return x == first_element; });
+        auto first_element = input[0];
+        bool dim_are_equal = std::all_of(
+            input.begin() + 1, input.end(),
+            [&first_element](std::tuple<Dims, Dims, Dims> x) { return x == first_element; });
         if (!dim_are_equal)
             helper::Throw<std::invalid_argument>("Derived", "Function", "SameDimsFunc",
                                                  "Invalid variable dimensions");
@@ -643,21 +648,24 @@ Dims SameDimsFunc(std::vector<Dims> input)
 }
 
 // Input Dims are the same, output is combination of all inputs
-Dims CurlDimsFunc(std::vector<Dims> input)
+std::tuple<Dims, Dims, Dims> CurlDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input)
 {
     // check that all dimenstions are the same
     if (input.size() > 1)
     {
-        Dims first_element = input[0];
-        bool dim_are_equal = std::all_of(input.begin() + 1, input.end(),
-                                         [&first_element](Dims x) { return x == first_element; });
+        auto first_element = input[0];
+        bool dim_are_equal = std::all_of(
+            input.begin() + 1, input.end(),
+            [&first_element](std::tuple<Dims, Dims, Dims> x) { return x == first_element; });
         if (!dim_are_equal)
             helper::Throw<std::invalid_argument>("Derived", "Function", "CurlDimsFunc",
                                                  "Invalid variable dimensions");
     }
     // return original dimensions with added dimension of number of inputs
-    Dims output = input[0];
-    output.push_back(input.size());
+    std::tuple<Dims, Dims, Dims> output = input[0];
+    std::get<0>(output).push_back(0);
+    std::get<1>(output).push_back(input.size());
+    std::get<2>(output).push_back(input.size());
     return output;
 }
 

@@ -134,7 +134,7 @@ namespace derived
 struct OperatorFunctions
 {
     std::function<DerivedData(std::vector<DerivedData>, DataType, bool)> ComputeFct;
-    std::function<Dims(std::vector<Dims>)> DimsFct;
+    std::function<std::tuple<Dims, Dims, Dims>(std::vector<std::tuple<Dims, Dims, Dims>>)> DimsFct;
     std::function<DataType(DataType)> TypeFct;
 };
 
@@ -173,16 +173,10 @@ std::string Expression::toStringExpr() { return m_Expr.toStringExpr(); }
 
 void Expression::SetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims)
 {
-    std::map<std::string, Dims> NameToCount, NameToStart, NameToShape;
-    for (const auto &it : NameToDims)
-    {
-        NameToStart[it.first] = std::get<0>(it.second);
-        NameToCount[it.first] = std::get<1>(it.second);
-        NameToShape[it.first] = std::get<2>(it.second);
-    }
-    m_Count = m_Expr.GetDims(NameToCount);
-    m_Start = m_Expr.GetDims(NameToStart);
-    m_Shape = m_Expr.GetDims(NameToShape);
+    auto outDims = m_Expr.GetDims(NameToDims);
+    m_Count = std::get<1>(outDims);
+    m_Start = std::get<0>(outDims);
+    m_Shape = std::get<2>(outDims);
 }
 
 DataType Expression::GetType(std::map<std::string, DataType> NameToType)
@@ -287,9 +281,10 @@ std::string ExpressionTree::toStringExpr()
     return result;
 }
 
-Dims ExpressionTree::GetDims(std::map<std::string, Dims> NameToDims)
+std::tuple<Dims, Dims, Dims>
+ExpressionTree::GetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims)
 {
-    std::vector<Dims> exprDims;
+    std::vector<std::tuple<Dims, Dims, Dims>> exprDims;
     for (auto subexp : sub_exprs)
     {
         // if the sub_expression is a leaf, we get the shape from the input std::map
@@ -304,7 +299,7 @@ Dims ExpressionTree::GetDims(std::map<std::string, Dims> NameToDims)
     }
     // get the output dimensions after applying the operator
     auto op_fct = OpFunctions.at(detail.operation);
-    Dims opDims = op_fct.DimsFct(exprDims);
+    auto opDims = op_fct.DimsFct(exprDims);
     return opDims;
 }
 
