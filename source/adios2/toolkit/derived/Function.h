@@ -23,6 +23,7 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> input, DataType type);
 DerivedData Curl3DFunc(std::vector<DerivedData> input, DataType type);
 
 std::tuple<Dims, Dims, Dims> SameDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input);
+std::tuple<Dims, Dims, Dims> SameDimsWithAgrFunc(std::vector<std::tuple<Dims, Dims, Dims>> input);
 std::tuple<Dims, Dims, Dims> CurlDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input);
 
 DataType SameTypeFunc(DataType input);
