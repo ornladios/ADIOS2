@@ -5,34 +5,32 @@
 
 include(ADIOSFunctions)
 
-add_test(NAME HeatTransfer.SST.BP.MxM
+add_test(NAME HeatTransfer.SST.MxN
   COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
     ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:adios2_simulations_heatTransferWrite>
-        ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_sst_bp.xml
-        WriteSSTBPMxM.bp 2 2 10 10 10 10 SST
+        ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_sst.xml
+        WriteSSTMxN.bp 2 2 10 10 10 10 SST
     :
-    ${MPIEXEC_NUMPROC_FLAG} 4
+    ${MPIEXEC_NUMPROC_FLAG} 5
       $<TARGET_FILE:adios2_simulations_heatTransferRead>
-        ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_sst_bp.xml
-        WriteSSTBPMxM.bp ReadSSTBPMxM.bp 2 2 SST
+        ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_sst.xml
+        WriteSSTMxN.bp ReadSSTMxN.bp 1 5 SST
 )
-set_tests_properties(HeatTransfer.SST.BP.MxM PROPERTIES PROCESSORS 8)
+set_tests_properties(HeatTransfer.SST.MxN PROPERTIES PROCESSORS 7)
 
-add_test(NAME HeatTransfer.SST.BP.MxM.Dump
-  WORKING_DIRECTORY SSTBPMxM
+add_test(NAME HeatTransfer.SST.MxN.Dump
   COMMAND ${CMAKE_COMMAND}
     -DARG1=-d 
-    -DINPUT_FILE=ReadSSTBPMxM.bp
-    -DOUTPUT_FILE=DumpSSTBPMxM.txt
+    -DINPUT_FILE=ReadSSTMxN.bp
+    -DOUTPUT_FILE=DumpSSTMxN.txt
     -P "${PROJECT_BINARY_DIR}/$<CONFIG>/bpls.cmake"
 )
 
-add_test(NAME HeatTransfer.SST.BP.MxM.Validate
-  WORKING_DIRECTORY SSTBPMxM
+add_test(NAME HeatTransfer.SST.MxN.Validate
   COMMAND ${DIFF_COMMAND} -u -w
     ${CMAKE_CURRENT_SOURCE_DIR}/HeatTransfer.Dump.txt
-    DumpSSTBPMxM.txt
+    DumpSSTMxN.txt
 )
 
-SetupTestPipeline(HeatTransfer.SST.BP.MxM ";Dump;Validate" TRUE)
+SetupTestPipeline(HeatTransfer.SST.MxN ";Dump;Validate" TRUE)
