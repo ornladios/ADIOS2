@@ -102,8 +102,6 @@ jobs:
     permissions:
       id-token: write
     runs-on: ubuntu-latest
-    # We have limited space in TestPyPI, leave this for debugging
-    # in the future
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.pypiServer == 'testpypi'
     steps:
       - uses: actions/download-artifact@v4
