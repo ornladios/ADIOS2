@@ -32,10 +32,6 @@ public:
     std::vector<std::string> VariableNameList();
     void UpdateExprDim(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
 
-    std::vector<void *>
-    ApplyExpression(std::map<std::string, std::vector<void *>> NameToData,
-                    std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims,
-                    bool DoCompute = true);
     std::vector<std::tuple<void *, Dims, Dims>>
     ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &mvi, bool DoCompute = true);
 };

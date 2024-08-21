@@ -80,49 +80,6 @@ VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInf
     return blockData;
 }
 
-std::vector<void *>
-VariableDerived::ApplyExpression(std::map<std::string, std::vector<void *>> NameToData,
-                                 std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims,
-                                 bool DoCompute)
-{
-    size_t numBlocks = 0;
-    std::map<std::string, std::vector<adios2::derived::DerivedData>> inputData;
-    // check that all variables have the same number of blocks
-    for (auto variable : NameToData)
-    {
-        if (numBlocks == 0)
-            numBlocks = variable.second.size();
-        if (numBlocks != variable.second.size())
-            helper::Throw<std::invalid_argument>("Core", "VariableDerived", "ApplyExpression",
-                                                 " variables do not have the same number of blocks "
-                                                 " in computing the derived variable " +
-                                                     m_Name);
-    }
-    std::cout << "Derived variable " << m_Name
-              << ": PASS : variables have written the same num of blocks" << std::endl;
-    // create the map between variable name and DerivedData object
-    for (auto variable : NameToData)
-    {
-        // add the dimensions of all blocks into a vector
-        std::vector<adios2::derived::DerivedData> varData;
-        for (size_t i = 0; i < numBlocks; i++)
-        {
-            varData.push_back(adios2::derived::DerivedData(
-                {variable.second[i], std::get<0>(NameToDims[variable.first]),
-                 std::get<1>(NameToDims[variable.first])}));
-        }
-        inputData.insert({variable.first, varData});
-    }
-    std::vector<adios2::derived::DerivedData> outputData =
-        m_Expr.ApplyExpression(m_Type, numBlocks, inputData);
-    std::vector<void *> blockData;
-    for (size_t i = 0; i < numBlocks; i++)
-    {
-        blockData.push_back(outputData[i].Data);
-    }
-    return blockData;
-}
-
 std::vector<std::tuple<void *, Dims, Dims>>
 VariableDerived::CreateEmptyData(std::map<std::string, std::unique_ptr<MinVarInfo>> &NameToVarInfo,
                                  size_t numBlocks)
