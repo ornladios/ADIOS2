@@ -133,7 +133,7 @@ namespace derived
 {
 struct OperatorFunctions
 {
-    std::function<DerivedData(std::vector<DerivedData>, DataType, bool)> ComputeFct;
+    std::function<DerivedData(std::vector<DerivedData>, DataType)> ComputeFct;
     std::function<std::tuple<Dims, Dims, Dims>(std::vector<std::tuple<Dims, Dims, Dims>>)> DimsFct;
     std::function<DataType(DataType)> TypeFct;
 };
@@ -171,6 +171,12 @@ Dims Expression::GetCount() { return m_Count; }
 
 std::string Expression::toStringExpr() { return m_Expr.toStringExpr(); }
 
+std::tuple<Dims, Dims, Dims>
+Expression::GetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims)
+{
+    return m_Expr.GetDims(NameToDims);
+}
+
 void Expression::SetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims)
 {
     auto outDims = m_Expr.GetDims(NameToDims);
@@ -186,10 +192,9 @@ DataType Expression::GetType(std::map<std::string, DataType> NameToType)
 
 std::vector<DerivedData>
 Expression::ApplyExpression(DataType type, size_t numBlocks,
-                            std::map<std::string, std::vector<DerivedData>> nameToData,
-                            bool DoCompute)
+                            std::map<std::string, std::vector<DerivedData>> nameToData)
 {
-    return m_Expr.ApplyExpression(type, numBlocks, nameToData, DoCompute);
+    return m_Expr.ApplyExpression(type, numBlocks, nameToData);
 }
 
 void ExpressionTree::set_base(double c) { detail.constant = c; }
@@ -333,8 +338,7 @@ DataType ExpressionTree::GetType(std::map<std::string, DataType> NameToType)
 
 std::vector<DerivedData>
 ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
-                                std::map<std::string, std::vector<DerivedData>> nameToData,
-                                bool DoCompute)
+                                std::map<std::string, std::vector<DerivedData>> nameToData)
 {
     // create operands for the computation function
     // exprData[0] = list of void* data for block 0 for each variable
@@ -366,7 +370,7 @@ ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
     auto op_fct = OpFunctions.at(detail.operation);
     for (size_t blk = 0; blk < numBlocks; blk++)
     {
-        outputData[blk] = op_fct.ComputeFct(exprData[blk], type, DoCompute);
+        outputData[blk] = op_fct.ComputeFct(exprData[blk], type);
     }
     // deallocate intermediate data after computing the operation
     for (size_t blk = 0; blk < numBlocks; blk++)

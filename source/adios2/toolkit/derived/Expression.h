@@ -78,8 +78,7 @@ public:
     DataType GetType(std::map<std::string, DataType> NameToType);
     std::vector<DerivedData>
     ApplyExpression(DataType type, size_t numBlocks,
-                    std::map<std::string, std::vector<DerivedData>> nameToData,
-                    bool DoCompute = true);
+                    std::map<std::string, std::vector<DerivedData>> nameToData);
     void print();
     std::string toStringExpr();
 };
@@ -103,11 +102,13 @@ public:
     Dims GetCount();
     DataType GetType(std::map<std::string, DataType> NameToType);
     std::string toStringExpr();
+    std::tuple<Dims, Dims, Dims>
+    GetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
     void SetDims(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
     std::vector<std::string> VariableNameList();
     std::vector<DerivedData>
     ApplyExpression(DataType type, size_t numBlocks,
-                    std::map<std::string, std::vector<DerivedData>> nameToData, bool DoCompute);
+                    std::map<std::string, std::vector<DerivedData>> nameToData);
 };
 
 }

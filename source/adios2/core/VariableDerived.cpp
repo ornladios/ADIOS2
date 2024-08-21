@@ -44,6 +44,9 @@ VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInf
                                                      m_Name);
     }
 
+    if (not DoCompute)
+        return CreateEmptyData(NameToMVI, numBlocks);
+
     std::map<std::string, std::vector<adios2::derived::DerivedData>> inputData;
     // create the map between variable name and DerivedData object
     for (const auto &variable : NameToMVI)
@@ -65,9 +68,8 @@ VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInf
         }
         inputData.insert({variable.first, varData});
     }
-    // TODO check that the dimensions are still corrects
     std::vector<adios2::derived::DerivedData> outputData =
-        m_Expr.ApplyExpression(m_Type, numBlocks, inputData, DoCompute);
+        m_Expr.ApplyExpression(m_Type, numBlocks, inputData);
 
     std::vector<std::tuple<void *, Dims, Dims>> blockData;
     for (size_t i = 0; i < numBlocks; i++)
@@ -112,11 +114,39 @@ VariableDerived::ApplyExpression(std::map<std::string, std::vector<void *>> Name
         inputData.insert({variable.first, varData});
     }
     std::vector<adios2::derived::DerivedData> outputData =
-        m_Expr.ApplyExpression(m_Type, numBlocks, inputData, DoCompute);
+        m_Expr.ApplyExpression(m_Type, numBlocks, inputData);
     std::vector<void *> blockData;
     for (size_t i = 0; i < numBlocks; i++)
     {
         blockData.push_back(outputData[i].Data);
+    }
+    return blockData;
+}
+
+std::vector<std::tuple<void *, Dims, Dims>>
+VariableDerived::CreateEmptyData(std::map<std::string, std::unique_ptr<MinVarInfo>> &NameToVarInfo,
+                                 size_t numBlocks)
+{
+    std::vector<std::tuple<void *, Dims, Dims>> blockData;
+    for (size_t i = 0; i < numBlocks; i++)
+    {
+        std::map<std::string, std::tuple<Dims, Dims, Dims>> nameToDims;
+        for (const auto &variable : NameToVarInfo)
+        {
+            Dims start;
+            Dims count;
+            for (int d = 0; d < variable.second->Dims; d++)
+            {
+                start.push_back(variable.second->BlocksInfo[i].Start[d]);
+                count.push_back(variable.second->BlocksInfo[i].Count[d]);
+            }
+            std::tuple<Dims, Dims, Dims> varDims({start, count, m_Shape});
+            nameToDims.insert({variable.first, varDims});
+        }
+
+        auto outputDims = m_Expr.GetDims(nameToDims);
+
+        blockData.push_back({nullptr, std::get<0>(outputDims), std::get<1>(outputDims)});
     }
     return blockData;
 }
