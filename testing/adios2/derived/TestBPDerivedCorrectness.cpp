@@ -618,8 +618,8 @@ TEST_P(DerivedCorrectnessP, MagCurlCorrectnessTest)
     bpFileReader.Get(varmag, readMag);
     bpFileReader.EndStep();
 
-    float curl_x, curl_y, curl_z, mag_curl;
-    float err;
+    float curl_x, curl_y, curl_z;
+    double err;
     for (size_t i = 0; i < Nx; ++i)
     {
         for (size_t j = 0; j < Ny; ++j)
@@ -633,7 +633,7 @@ TEST_P(DerivedCorrectnessP, MagCurlCorrectnessTest)
                 curl_x = -(2 * x);
                 curl_y = 7 - (2 * y);
                 curl_z = (4 * z) - (6 * x);
-                mag_curl = sqrt(pow(curl_x, 2) + pow(curl_y, 2) + pow(curl_z, 2));
+                auto mag_curl = sqrt(pow(curl_x, 2) + pow(curl_y, 2) + pow(curl_z, 2));
                 if (fabs(mag_curl) < 1)
                 {
                     err = fabs(mag_curl - readMag[idx]) / (1 + fabs(mag_curl));
