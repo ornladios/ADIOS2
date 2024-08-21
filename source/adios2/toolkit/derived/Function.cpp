@@ -710,21 +710,24 @@ std::tuple<Dims, Dims, Dims> SameDimsWithAgrFunc(std::vector<std::tuple<Dims, Di
     return {outStart, outCount, outShape};
 }
 
-Dims Cross3DDimsFunc(std::vector<Dims> input)
+std::tuple<Dims, Dims, Dims> Cross3DDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input)
 {
     // check that all dimenstions are the same
     if (input.size() > 1)
     {
-        Dims first_element = input[0];
-        bool dim_are_equal = std::all_of(input.begin() + 1, input.end(),
-                                         [&first_element](Dims x) { return x == first_element; });
+        auto first_element = input[0];
+        bool dim_are_equal = std::all_of(
+            input.begin() + 1, input.end(),
+            [&first_element](std::tuple<Dims, Dims, Dims> x) { return x == first_element; });
         if (!dim_are_equal)
             helper::Throw<std::invalid_argument>("Derived", "Function", "Cross3DDimsFunc",
                                                  "Invalid variable dimensions");
     }
     // return original dimensions with added dimension of number of inputs
-    Dims output = input[0];
-    output.push_back(3);
+    std::tuple<Dims, Dims, Dims> output = input[0];
+    std::get<0>(output).push_back(0);
+    std::get<1>(output).push_back(3);
+    std::get<2>(output).push_back(3);
     return output;
 }
 
