@@ -546,10 +546,9 @@ void BP5Writer::ComputeDerivedVariables()
 
         // compute the values for the derived variables that are not type ExpressionString
         std::vector<std::tuple<void *, Dims, Dims>> DerivedBlockData;
-        if (derivedVar->GetDerivedType() != DerivedVarType::ExpressionString)
-        {
-            DerivedBlockData = derivedVar->ApplyExpression(nameToVarInfo);
-        }
+        // for expressionString, just generate the blocksinfo
+        bool DoCompute = derivedVar->GetDerivedType() != DerivedVarType::ExpressionString;
+        DerivedBlockData = derivedVar->ApplyExpression(nameToVarInfo, DoCompute);
 
         // Send the derived variable to ADIOS2 internal logic
         for (auto derivedBlock : DerivedBlockData)
@@ -561,7 +560,8 @@ void BP5Writer::ComputeDerivedVariables()
                 (*it).second->m_Count = std::get<2>(derivedBlock);
             }
             PutCommon(*(*it).second.get(), std::get<0>(derivedBlock), true /* sync */);
-            free(std::get<0>(derivedBlock));
+            if (derivedVar->GetDerivedType() != DerivedVarType::ExpressionString)
+                free(std::get<0>(derivedBlock));
         }
     }
     m_Profiler.Stop("DeriveVars");

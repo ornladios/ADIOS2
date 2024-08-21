@@ -591,9 +591,12 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
         // Array field.  To Metadata, add FMFields for DimCount, Shape, Count
         // and Offsets matching _MetaArrayRec
         const char *ExprString = NULL;
+        bool NeverMinMax = false;
 #ifdef ADIOS2_HAVE_DERIVED_VARIABLE
         if (VD && (VD->GetDerivedType() != DerivedVarType::StoreData))
             ExprString = VD->m_Expr.ExprString.c_str();
+        if (VD && (VD->GetDerivedType() == DerivedVarType::ExpressionString))
+            NeverMinMax = true;
 #endif
         char *LongName =
             BuildLongName(Name, VB->m_ShapeID, (int)Type, ElemSize, TextStructID, ExprString);
@@ -605,7 +608,7 @@ BP5Serializer::BP5WriterRec BP5Serializer::CreateWriterRec(void *Variable, const
             ArrayTypeName = "MetaArrayOp";
             FieldSize = sizeof(MetaArrayRecOperator);
         }
-        if (m_StatsLevel > 0)
+        if ((m_StatsLevel > 0) && !NeverMinMax)
         {
             char MMArrayName[40] = {0};
             strcat(MMArrayName, ArrayTypeName);

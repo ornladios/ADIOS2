@@ -202,17 +202,15 @@ DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
         return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});
     }
 #define declare_type_sqrt(T)                                                                       \
-    if (inputType == helper::GetDataType<T>())                                                     \
+    else if (inputType == helper::GetDataType<T>())                                                \
     {                                                                                              \
-        if (inputType != DataType::LongDouble)                                                     \
-        {                                                                                          \
-            double *sqrtValues = (double *)malloc(dataSize * sizeof(double));                      \
-            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
-                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, sqrtValues,        \
-                           [](T &a) { return std::sqrt(a); });                                     \
-            return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});      \
-        }                                                                                          \
+        double *sqrtValues = (double *)malloc(dataSize * sizeof(double));                          \
+        std::transform(reinterpret_cast<T *>(inputData[0].Data),                                   \
+                       reinterpret_cast<T *>(inputData[0].Data) + dataSize, sqrtValues,            \
+                       [](T &a) { return std::sqrt(a); });                                         \
+        return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});          \
     }
+
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sqrt)
     helper::Throw<std::invalid_argument>("Derived", "Function", "SqrtFunc",
                                          "Invalid variable types");
@@ -241,16 +239,13 @@ DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
         return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});
     }
 #define declare_type_pow(T)                                                                        \
-    if (inputType == helper::GetDataType<T>())                                                     \
+    else if (inputType == helper::GetDataType<T>())                                                \
     {                                                                                              \
-        if (inputType != DataType::LongDouble)                                                     \
-        {                                                                                          \
-            double *powValues = (double *)malloc(dataSize * sizeof(double));                       \
-            std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
-                           reinterpret_cast<T *>(inputData[0].Data) + dataSize, powValues,         \
-                           [](T &a) { return std::pow(a, 2); });                                   \
-            return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});       \
-        }                                                                                          \
+        double *powValues = (double *)malloc(dataSize * sizeof(double));                           \
+        std::transform(reinterpret_cast<T *>(inputData[0].Data),                                   \
+                       reinterpret_cast<T *>(inputData[0].Data) + dataSize, powValues,             \
+                       [](T &a) { return std::pow(a, 2); });                                       \
+        return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});           \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_pow)
     helper::Throw<std::invalid_argument>("Derived", "Function", "PowFunc",
@@ -532,7 +527,7 @@ DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
     curl.Start.push_back(0);
     curl.Count = inputData[0].Count;
     curl.Count.push_back(3);
-
+    curl.Data = NULL;
 #define declare_type_curl(T)                                                                       \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
@@ -548,14 +543,19 @@ DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-Dims SameDimsFunc(std::vector<Dims> input)
+/* Functions that return output dimensions
+ * Input: A list of variable dimensions (start, count, shape)
+ * Output: (start, count, shape) of the output operation */
+
+std::tuple<Dims, Dims, Dims> SameDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input)
 {
     // check that all dimenstions are the same
     if (input.size() > 1)
     {
-        Dims first_element = input[0];
-        bool dim_are_equal = std::all_of(input.begin() + 1, input.end(),
-                                         [&first_element](Dims x) { return x == first_element; });
+        auto first_element = input[0];
+        bool dim_are_equal = std::all_of(
+            input.begin() + 1, input.end(),
+            [&first_element](std::tuple<Dims, Dims, Dims> x) { return x == first_element; });
         if (!dim_are_equal)
             helper::Throw<std::invalid_argument>("Derived", "Function", "SameDimsFunc",
                                                  "Invalid variable dimensions");
@@ -565,21 +565,24 @@ Dims SameDimsFunc(std::vector<Dims> input)
 }
 
 // Input Dims are the same, output is combination of all inputs
-Dims CurlDimsFunc(std::vector<Dims> input)
+std::tuple<Dims, Dims, Dims> CurlDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input)
 {
     // check that all dimenstions are the same
     if (input.size() > 1)
     {
-        Dims first_element = input[0];
-        bool dim_are_equal = std::all_of(input.begin() + 1, input.end(),
-                                         [&first_element](Dims x) { return x == first_element; });
+        auto first_element = input[0];
+        bool dim_are_equal = std::all_of(
+            input.begin() + 1, input.end(),
+            [&first_element](std::tuple<Dims, Dims, Dims> x) { return x == first_element; });
         if (!dim_are_equal)
             helper::Throw<std::invalid_argument>("Derived", "Function", "CurlDimsFunc",
                                                  "Invalid variable dimensions");
     }
     // return original dimensions with added dimension of number of inputs
-    Dims output = input[0];
-    output.push_back(input.size());
+    std::tuple<Dims, Dims, Dims> output = input[0];
+    std::get<0>(output).push_back(0);
+    std::get<1>(output).push_back(input.size());
+    std::get<2>(output).push_back(input.size());
     return output;
 }
 
