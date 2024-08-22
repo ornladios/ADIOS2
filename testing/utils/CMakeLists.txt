@@ -10,7 +10,7 @@ else()
   set(MPIEXEC_COMMAND)
 endif()
 
-if(Python_Interpreter_FOUND)
+if(ADIOS2_HAVE_Python AND Python_Interpreter_FOUND)
   add_subdirectory(bpcmp)
 endif()
 

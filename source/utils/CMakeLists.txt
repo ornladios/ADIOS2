@@ -36,18 +36,19 @@ file(GENERATE
 )
 
 # BPCMP
-if(Python_Interpreter_FOUND)
+if(ADIOS2_HAVE_Python AND Python_Interpreter_FOUND)
   add_subdirectory(bpcmp)
+
+  configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/bpcmp/bpcmp.cmake.gen.in
+    ${PROJECT_BINARY_DIR}/bpcmp.cmake.gen
+    @ONLY
+  )
+  file(GENERATE
+    OUTPUT ${PROJECT_BINARY_DIR}/$<CONFIG>/bpcmp.cmake
+    INPUT ${PROJECT_BINARY_DIR}/bpcmp.cmake.gen
+  )
 endif()
-configure_file(
-  ${CMAKE_CURRENT_SOURCE_DIR}/bpcmp/bpcmp.cmake.gen.in
-  ${PROJECT_BINARY_DIR}/bpcmp.cmake.gen
-  @ONLY
-)
-file(GENERATE
-  OUTPUT ${PROJECT_BINARY_DIR}/$<CONFIG>/bpcmp.cmake
-  INPUT ${PROJECT_BINARY_DIR}/bpcmp.cmake.gen
-)
 
 # BPSPLIT
 #add_executable(bpsplit ./bpsplit/bpsplit.cpp)
