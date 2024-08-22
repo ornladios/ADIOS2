@@ -12,7 +12,6 @@
 
     <io name="writer">
         <engine type="SST">
-            <parameter key="MarshalMethod" value="FFS"/>
             <!--parameter key="DataTransport" value="rdma"-->
         </engine>
     </io>
@@ -24,7 +23,6 @@
 
     <io name="readerInput">
         <engine type="SST">
-            <parameter key="MarshalMethod" value="FFS"/>
             <!--parameter key="DataTransport" value="rdma"-->
         </engine>
     </io>

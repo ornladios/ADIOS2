@@ -11,14 +11,7 @@
         ====================================-->
 
     <io name="writer">
-        
-        <variable name="T">
-        	<operation type="zfp">
-        	    <parameter key="rate" value="18"/>
-        	</operation>
-        </variable>
-        
-        <engine type="BP3">
+        <engine type="BP5">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 
@@ -69,7 +62,7 @@
         =======================================-->
 
     <io name="readerInput">
-        <engine type="BP3">
+        <engine type="BP5">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 
@@ -100,7 +93,7 @@
         =======================================-->
     
     <io name="readerOutput">
-        <engine type="BP3">
+        <engine type="BP5">
             
             <!-- for vectorized memory operations, make sure your system 
                  enables threads--> 
