@@ -139,7 +139,7 @@ struct OperatorFunctions
 };
 
 std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
-    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_ADD, {AddFunc, SameDimsWithAgrFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_SUBTRACT, {SubtractFunc, SameDimsFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_MULT, {MultFunc, SameDimsFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_DIV, {DivFunc, SameDimsFunc, SameTypeFunc}},
@@ -152,7 +152,8 @@ std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
     {adios2::detail::ExpressionOperator::OP_ACOS, {AcosFunc, SameDimsFunc, FloatTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_ATAN, {AtanFunc, SameDimsFunc, FloatTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc, SameTypeFunc}},
-    {adios2::detail::ExpressionOperator::OP_MAGN, {MagnitudeFunc, SameDimsFunc, SameTypeFunc}}};
+    {adios2::detail::ExpressionOperator::OP_MAGN,
+     {MagnitudeFunc, SameDimsWithAgrFunc, SameTypeFunc}}};
 
 Expression::Expression(std::string string_exp)
 : m_Shape({0}), m_Start({0}), m_Count({0}), ExprString(string_exp)

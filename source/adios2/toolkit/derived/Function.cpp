@@ -39,6 +39,28 @@ T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
     return outValues;
 }
 
+template <class T>
+T *AggregateOnLastDim(T *data, size_t dataSize, size_t nVariables, std::function<T(T, T)> compFct)
+{
+    T *outValues = (T *)malloc(dataSize * sizeof(T));
+    if (outValues == nullptr)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "ApplyOneToOne",
+                                             "Error allocating memory for the derived variable");
+    }
+    memset(outValues, 0, dataSize * sizeof(T));
+    for (size_t i = 0; i < dataSize; i++)
+    {
+        size_t start = nVariables * i;
+        for (size_t variable = 0; variable < nVariables; ++variable)
+        {
+            T dataElem = *(data + start + variable);
+            outValues[i] = compFct(outValues[i], dataElem);
+        }
+    }
+    return outValues;
+}
+
 inline size_t returnIndex(size_t x, size_t y, size_t z, const size_t dims[3])
 {
     return z + y * dims[2] + x * dims[2] * dims[1];
@@ -92,9 +114,37 @@ T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dim
 namespace derived
 {
 // Perform a reduce sum over all variables in the std::vector
+DerivedData AddAggregatedFunc(DerivedData inputData, DataType type)
+{
+    // the aggregation is done over the last dimension so the total size is d1 * d2 * .. d_n-1
+    size_t dataSize = std::accumulate(std::begin(inputData.Count), std::end(inputData.Count) - 1, 1,
+                                      std::multiplies<size_t>());
+    size_t nDims = inputData.Count.size() - 1;
+    Dims startOut(nDims), countOut(nDims);
+    std::copy(inputData.Count.begin(), inputData.Count.end() - 1, countOut.begin());
+    std::copy(inputData.Start.begin(), inputData.Start.end() - 1, startOut.begin());
+
+#define declare_type_agradd(T)                                                                     \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        size_t numVar = inputData.Count.back();                                                    \
+        T *addValues =                                                                             \
+            detail::AggregateOnLastDim<T>(reinterpret_cast<T *>(inputData.Data), dataSize, numVar, \
+                                          [](T a, T b) { return a + b; });                         \
+        return DerivedData({(void *)addValues, startOut, countOut});                               \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_agradd)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "AddAggregateFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
 DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AddFunc");
+    // if there is only one element return the aggregate result
+    if (inputData.size() == 1)
+        return AddAggregatedFunc(inputData[0], type);
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
 
@@ -481,9 +531,42 @@ DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
+/* Magnitude can work on aggregated or separated  vectors*/
+DerivedData MagAggregatedFunc(DerivedData inputData, DataType type)
+{
+    // the aggregation is done over the last dimension so the total size is d1 * d2 * .. d_n-1
+    size_t dataSize = std::accumulate(std::begin(inputData.Count), std::end(inputData.Count) - 1, 1,
+                                      std::multiplies<size_t>());
+    size_t nDims = inputData.Count.size() - 1;
+    Dims startOut(nDims), countOut(nDims);
+    std::copy(inputData.Count.begin(), inputData.Count.end() - 1, countOut.begin());
+    std::copy(inputData.Start.begin(), inputData.Start.end() - 1, startOut.begin());
+
+#define declare_type_agrmag(T)                                                                     \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        size_t numVar = inputData.Count.back();                                                    \
+        T *magValues =                                                                             \
+            detail::AggregateOnLastDim<T>(reinterpret_cast<T *>(inputData.Data), dataSize, numVar, \
+                                          [](T a, T b) { return a + b * b; });                     \
+        for (size_t i = 0; i < dataSize; i++)                                                      \
+        {                                                                                          \
+            magValues[i] = (T)std::sqrt(magValues[i]);                                             \
+        }                                                                                          \
+        return DerivedData({(void *)magValues, startOut, countOut});                               \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_agrmag)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "AddAggregateFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
 DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::MagnitudeFunc");
+    // if there is only one element return the aggregate result
+    if (inputData.size() == 1)
+        return MagAggregatedFunc(inputData[0], type);
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
                                       1, std::multiplies<size_t>());
 #define declare_type_mag(T)                                                                        \
@@ -562,6 +645,19 @@ std::tuple<Dims, Dims, Dims> SameDimsFunc(std::vector<std::tuple<Dims, Dims, Dim
     }
     // return the first dimension
     return input[0];
+}
+
+std::tuple<Dims, Dims, Dims> SameDimsWithAgrFunc(std::vector<std::tuple<Dims, Dims, Dims>> input)
+{
+    if (input.size() > 1)
+        return SameDimsFunc(input);
+    Dims outStart(std::get<0>(input[0]).size() - 1);
+    Dims outCount(std::get<1>(input[0]).size() - 1);
+    Dims outShape(std::get<2>(input[0]).size() - 1);
+    std::copy(std::get<0>(input[0]).begin(), std::get<0>(input[0]).end() - 1, outStart.begin());
+    std::copy(std::get<1>(input[0]).begin(), std::get<1>(input[0]).end() - 1, outCount.begin());
+    std::copy(std::get<2>(input[0]).begin(), std::get<2>(input[0]).end() - 1, outShape.begin());
+    return {outStart, outCount, outShape};
 }
 
 // Input Dims are the same, output is combination of all inputs
