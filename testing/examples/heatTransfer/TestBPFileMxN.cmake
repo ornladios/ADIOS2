@@ -17,7 +17,7 @@ set_tests_properties(HeatTransfer.BP5.MxN.Write PROPERTIES PROCESSORS 4)
 
 add_test(NAME HeatTransfer.BP5.MxN.Read
   COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
-    ${MPIEXEC_NUMPROC_FLAG} 5
+    ${MPIEXEC_NUMPROC_FLAG} 4
       $<TARGET_FILE:adios2_simulations_heatTransferRead>
         ${PROJECT_SOURCE_DIR}/examples/simulations/heatTransfer/heat_bp5.xml
         WriteBPFileMxN.bp ReadBPFileMxN.bp 1 3
