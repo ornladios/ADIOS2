@@ -1,7 +1,7 @@
 COMPARE : FILE : TestBPcmp_set1.bp : FILE : TestBPcmp_set2.bp
 DIFFER : NUM_STEPS : 2 <> 3 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : MIN : 0.000224775 <> 2.00022 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : MAX : 10.6796 <> 11.6796 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : MIN : 4 <> 6 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : MAX : 10 <> 11 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
 DIFFER : VARIABLE : bpFloats : STEP : 0 : VALUES_SUMMARY : 6 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
 DIFFER : VARIABLE : bpFloats : STEP : 1 : VALUES_SUMMARY : 6 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
 DIFFER : VARIABLE : bpStep : NUM_STEPS : 2 <> 3 : TestBPcmp_set1.bp : TestBPcmp_set2.bp

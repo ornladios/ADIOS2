@@ -1,17 +1,17 @@
 COMPARE : FILE : TestBPcmp_set1.bp : FILE : TestBPcmp_set2.bp
 DIFFER : NUM_STEPS : 2 <> 3 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : STEP : 0 : POSITION : (0, 0) : VALUE : 0.0002247747 <> 2.0002248 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : STEP : 0 : POSITION : (0, 1) : VALUE : 0.8503245 <> 2.8503246 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : STEP : 0 : POSITION : (0, 2) : VALUE : 6.0135264 <> 8.013527 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : STEP : 0 : POSITION : (1, 0) : VALUE : 8.916113 <> 10.916113 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : STEP : 0 : POSITION : (1, 1) : VALUE : 9.679557 <> 11.679557 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : STEP : 0 : POSITION : (1, 2) : VALUE : 1.8968977 <> 3.8968978 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : STEP : 1 : POSITION : (0, 0) : VALUE : 1.0002248 <> 2.0002248 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : STEP : 1 : POSITION : (0, 1) : VALUE : 1.8503245 <> 2.8503246 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : STEP : 1 : POSITION : (0, 2) : VALUE : 7.0135264 <> 8.013527 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : STEP : 1 : POSITION : (1, 0) : VALUE : 9.916113 <> 10.916113 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : STEP : 1 : POSITION : (1, 1) : VALUE : 10.679557 <> 11.679557 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
-DIFFER : VARIABLE : bpFloats : STEP : 1 : POSITION : (1, 2) : VALUE : 2.8968978 <> 3.8968978 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : STEP : 0 : POSITION : (0, 0) : VALUE : 4.0 <> 6.0 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : STEP : 0 : POSITION : (0, 1) : VALUE : 5.0 <> 7.0 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : STEP : 0 : POSITION : (0, 2) : VALUE : 6.0 <> 8.0 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : STEP : 0 : POSITION : (1, 0) : VALUE : 7.0 <> 9.0 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : STEP : 0 : POSITION : (1, 1) : VALUE : 8.0 <> 10.0 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : STEP : 0 : POSITION : (1, 2) : VALUE : 9.0 <> 11.0 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : STEP : 1 : POSITION : (0, 0) : VALUE : 5.0 <> 6.0 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : STEP : 1 : POSITION : (0, 1) : VALUE : 6.0 <> 7.0 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : STEP : 1 : POSITION : (0, 2) : VALUE : 7.0 <> 8.0 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : STEP : 1 : POSITION : (1, 0) : VALUE : 8.0 <> 9.0 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : STEP : 1 : POSITION : (1, 1) : VALUE : 9.0 <> 10.0 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
+DIFFER : VARIABLE : bpFloats : STEP : 1 : POSITION : (1, 2) : VALUE : 10.0 <> 11.0 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
 DIFFER : VARIABLE : bpStep : NUM_STEPS : 2 <> 3 : TestBPcmp_set1.bp : TestBPcmp_set2.bp
 DIFFER : VARIABLE : bpStep : TYPE : uint32_t <> int32_t : TestBPcmp_set1.bp : TestBPcmp_set2.bp
 DIFFER : VARIABLE : bpStep : SINGLE_VALUE : true <> false : TestBPcmp_set1.bp : TestBPcmp_set2.bp

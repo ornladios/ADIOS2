@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <ios>
 #include <iostream>
-#include <random>
+#include <numeric>
 #include <stdexcept>
 #include <vector>
 
@@ -25,15 +25,8 @@ int main(int argc, char *argv[])
 
     const size_t Nx = 2, Ny = 3;
     const size_t steps = 2;
-    std::default_random_engine generator;
-    generator.seed(0);
-    std::uniform_real_distribution<float> distribution(0.0, 10.0);
-
     std::vector<float> commonArray(Nx * Ny);
-    for (size_t i = 0; i < Nx * Ny; ++i)
-    {
-        commonArray[i] = distribution(generator);
-    }
+    std::iota(commonArray.begin(), commonArray.end(), 4.0f);
 
 #if ADIOS2_USE_MPI
     adios2::ADIOS adios(MPI_COMM_WORLD);
