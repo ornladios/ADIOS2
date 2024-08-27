@@ -71,7 +71,6 @@ T *ApplyCross3D(const T *Ax, const T *Ay, const T *Az, const T *Bx, const T *By,
                 const size_t dataSize)
 {
     T *data = (T *)malloc(dataSize * sizeof(T) * 3);
-    size_t index = 0;
     for (size_t i = 0; i < dataSize; ++i)
     {
         data[3 * i] = (Ay[i] * Bz[i]) - (Az[i] * By[i]);
