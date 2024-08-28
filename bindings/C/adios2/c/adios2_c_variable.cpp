@@ -77,6 +77,23 @@ adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims, con
     }
 }
 
+adios2_error adios2_set_write_mode(adios2_variable *variable, const adios2_bool write_data)
+{
+    try
+    {
+        adios2::core::VariableBase *variableBase =
+            reinterpret_cast<adios2::core::VariableBase *>(variable);
+        variableBase->SetWriteMode(write_data);
+
+        return adios2_error_none;
+    }
+    catch (...)
+    {
+        return static_cast<adios2_error>(
+            adios2::helper::ExceptionToError("adios2_set_memory_space"));
+    }
+}
+
 adios2::MemorySpace adios2_ToMemorySpace(const adios2_memory_space Cmem)
 {
     adios2::MemorySpace mem = adios2::MemorySpace::Detect;

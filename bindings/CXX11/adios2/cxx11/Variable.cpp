@@ -31,6 +31,12 @@ namespace adios2
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
+    void Variable<T>::SetWriteMode(const bool writeData)                                           \
+    {                                                                                              \
+        m_Variable->SetWriteMode(writeData);                                                       \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
     void Variable<T>::SetMemorySpace(const MemorySpace mem)                                        \
     {                                                                                              \
         m_Variable->SetMemorySpace(mem);                                                           \

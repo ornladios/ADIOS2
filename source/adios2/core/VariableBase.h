@@ -131,6 +131,12 @@ public:
      */
     size_t TotalSize() const noexcept;
 
+    /**
+     * Set the write mode of a variable
+     * @param true - write data; false - write only stats
+     */
+    void SetWriteMode(const bool writeData);
+
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     /**
      * Get the layout used by the user buffers

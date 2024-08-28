@@ -148,6 +148,12 @@ public:
     explicit operator bool() const noexcept;
 
     /**
+     * Set the write mode of a variable
+     * @param true - write data; false - write only stats
+     */
+    void SetWriteMode(const bool writeData);
+
+    /**
      * Sets the memory space for all following Puts/Gets
      * to either host (default) or device
      * @param mem memory space where Put/Get buffers are allocated

@@ -30,6 +30,12 @@ extern "C" {
 adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims, const size_t *shape);
 
 /**
+ * Set the write mode of a variable
+ * @param true - write data; false - write only stats
+ */
+adios2_error adios2_set_write_mode(adios2_variable *variable, const adios2_bool write_data);
+
+/**
  * Sets the memory space for all following Puts/Gets
  * to either host (default) or device
  * @param mem memory space where Put/Get buffers are allocated
