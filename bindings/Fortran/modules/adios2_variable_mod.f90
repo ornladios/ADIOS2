@@ -19,6 +19,7 @@ module adios2_variable_mod
     external adios2_set_selection_f2c
     external adios2_set_shape_f2c
     external adios2_set_step_selection_f2c
+    external adios2_set_write_mode_f2c
     external adios2_variable_name_f2c
     external adios2_variable_name_length_f2c
     external adios2_variable_ndims_f2c
@@ -129,6 +130,14 @@ contains
 
         call adios2_set_selection_f2c(variable%f2c, ndims, start_dims, &
                                       count_dims, ierr)
+    end subroutine
+
+    subroutine adios2_set_write_mode(variable, mode, ierr)
+        type(adios2_variable), intent(in) :: variable
+        logical, intent(in) :: mode
+        integer, intent(out) :: ierr
+
+        call adios2_set_write_mode_f2c(variable%f2c, mode, ierr)
     end subroutine
 
     subroutine adios2_set_memory_selection(variable, ndims, &
