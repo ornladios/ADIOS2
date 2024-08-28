@@ -67,6 +67,20 @@ inline size_t returnIndex(size_t x, size_t y, size_t z, const size_t dims[3])
 }
 
 template <class T>
+T *ApplyCross3D(const T *Ax, const T *Ay, const T *Az, const T *Bx, const T *By, const T *Bz,
+                const size_t dataSize)
+{
+    T *data = (T *)malloc(dataSize * sizeof(T) * 3);
+    for (size_t i = 0; i < dataSize; ++i)
+    {
+        data[3 * i] = (Ay[i] * Bz[i]) - (Az[i] * By[i]);
+        data[3 * i + 1] = (Ax[i] * Bz[i]) - (Az[i] * Bx[i]);
+        data[3 * i + 2] = (Ax[i] * By[i]) - (Ay[i] * Bx[i]);
+    }
+    return data;
+}
+
+template <class T>
 T *ApplyCurl(const T *input1, const T *input2, const T *input3, const size_t dims[3])
 {
     size_t dataSize = dims[0] * dims[1] * dims[2];
@@ -586,6 +600,41 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
+DerivedData Cross3DFunc(const std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::Cross3DFunc");
+    if (inputData.size() != 6)
+    {
+        helper::Throw<std::invalid_argument>("Derived", "Function", "Cross3DFunc",
+                                             "Invalid number of arguments passed to Cross3DFunc");
+    }
+    size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
+                                      1, std::multiplies<size_t>());
+
+    DerivedData cross;
+    cross.Start = inputData[0].Start;
+    cross.Start.push_back(0);
+    cross.Count = inputData[0].Count;
+    cross.Count.push_back(3);
+
+#define declare_type_cross(T)                                                                      \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *Ax = (T *)inputData[0].Data;                                                            \
+        T *Ay = (T *)inputData[1].Data;                                                            \
+        T *Az = (T *)inputData[2].Data;                                                            \
+        T *Bx = (T *)inputData[3].Data;                                                            \
+        T *By = (T *)inputData[4].Data;                                                            \
+        T *Bz = (T *)inputData[5].Data;                                                            \
+        cross.Data = detail::ApplyCross3D(Ax, Ay, Az, Bx, By, Bz, dataSize);                       \
+        return cross;                                                                              \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_cross)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "Cross3DFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
 /*
  * Input: 3D vector field F(x,y,z)= {F1(x,y,z), F2(x,y,z), F3(x,y,z)}
  *
@@ -658,6 +707,27 @@ std::tuple<Dims, Dims, Dims> SameDimsWithAgrFunc(std::vector<std::tuple<Dims, Di
     std::copy(std::get<1>(input[0]).begin(), std::get<1>(input[0]).end() - 1, outCount.begin());
     std::copy(std::get<2>(input[0]).begin(), std::get<2>(input[0]).end() - 1, outShape.begin());
     return {outStart, outCount, outShape};
+}
+
+std::tuple<Dims, Dims, Dims> Cross3DDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input)
+{
+    // check that all dimenstions are the same
+    if (input.size() > 1)
+    {
+        auto first_element = input[0];
+        bool dim_are_equal = std::all_of(
+            input.begin() + 1, input.end(),
+            [&first_element](std::tuple<Dims, Dims, Dims> x) { return x == first_element; });
+        if (!dim_are_equal)
+            helper::Throw<std::invalid_argument>("Derived", "Function", "Cross3DDimsFunc",
+                                                 "Invalid variable dimensions");
+    }
+    // return original dimensions with added dimension of number of inputs
+    std::tuple<Dims, Dims, Dims> output = input[0];
+    std::get<0>(output).push_back(0);
+    std::get<1>(output).push_back(3);
+    std::get<2>(output).push_back(3);
+    return output;
 }
 
 // Input Dims are the same, output is combination of all inputs

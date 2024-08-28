@@ -320,7 +320,7 @@ TEST_P(DerivedCorrectnessP, TrigCorrectnessTest)
     bpFileReader.Close();
 }
 
-TEST_P(DerivedCorrectnessP, MagCorrectnessTest)
+TEST_P(DerivedCorrectnessP, VectorCorrectnessTest)
 {
     const size_t Nx = 2, Ny = 3, Nz = 10;
     const size_t steps = 2;
@@ -334,30 +334,50 @@ TEST_P(DerivedCorrectnessP, MagCorrectnessTest)
     std::vector<float> simArray1(Nx * Ny * Nz);
     std::vector<float> simArray2(Nx * Ny * Nz);
     std::vector<float> simArray3(Nx * Ny * Nz);
+    std::vector<float> simArray4(Nx * Ny * Nz);
+    std::vector<float> simArray5(Nx * Ny * Nz);
+    std::vector<float> simArray6(Nx * Ny * Nz);
     for (size_t i = 0; i < Nx * Ny * Nz; ++i)
     {
         simArray1[i] = distribution(generator);
         simArray2[i] = distribution(generator);
         simArray3[i] = distribution(generator);
+        simArray4[i] = distribution(generator);
+        simArray5[i] = distribution(generator);
+        simArray6[i] = distribution(generator);
     }
 
     adios2::ADIOS adios;
     adios2::IO bpOut = adios.DeclareIO("BPWriteExpression");
-    std::vector<std::string> varname = {"sim2/Ux", "sim2/Uy", "sim2/Uz"};
-    std::string derivedname = "derived/magU";
+    std::vector<std::string> varname = {"sim2/Ux", "sim2/Uy", "sim2/Uz",
+                                        "sim2/Vx", "sim2/Vy", "sim2/Vz"};
+    const std::string derMagName = "derived/magU";
+    const std::string derCrossName = "derived/crossU";
 
     auto Ux = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Vx = bpOut.DefineVariable<float>(varname[3], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Vy = bpOut.DefineVariable<float>(varname[4], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    auto Vz = bpOut.DefineVariable<float>(varname[5], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     // clang-format off
-    bpOut.DefineDerivedVariable(derivedname,
+    bpOut.DefineDerivedVariable(derMagName,
                                 "x =" + varname[0] + " \n"
                                 "y =" + varname[1] + " \n"
                                 "z =" + varname[2] + " \n"
                                 "magnitude(x,y,z)",
                                 mode);
+    bpOut.DefineDerivedVariable(derCrossName,
+                                "Ux =" + varname[0] + " \n"
+                                "Uy =" + varname[1] + " \n"
+                                "Uz =" + varname[2] + " \n"
+                                "Vx =" + varname[3] + " \n"
+                                "Vy =" + varname[4] + " \n"
+                                "Vz =" + varname[5] + " \n"
+                                "cross(Ux, Uy, Uz, Vx, Vy, Vz)",
+                                mode);
     // clang-format on
-    std::string filename = "expMagnitude.bp";
+    std::string filename = "expVector.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
 
     for (size_t i = 0; i < steps; i++)
@@ -366,6 +386,9 @@ TEST_P(DerivedCorrectnessP, MagCorrectnessTest)
         bpFileWriter.Put(Ux, simArray1.data());
         bpFileWriter.Put(Uy, simArray2.data());
         bpFileWriter.Put(Uz, simArray3.data());
+        bpFileWriter.Put(Vx, simArray4.data());
+        bpFileWriter.Put(Vy, simArray5.data());
+        bpFileWriter.Put(Vz, simArray6.data());
         bpFileWriter.EndStep();
     }
     bpFileWriter.Close();
@@ -376,28 +399,52 @@ TEST_P(DerivedCorrectnessP, MagCorrectnessTest)
     std::vector<float> readUx;
     std::vector<float> readUy;
     std::vector<float> readUz;
+    std::vector<float> readVx;
+    std::vector<float> readVy;
+    std::vector<float> readVz;
     std::vector<float> readMag;
+    std::vector<float> readCross;
 
-    float calcM;
+    float calcDerived;
     float epsilon = (float)0.01;
     for (size_t i = 0; i < steps; i++)
     {
         bpFileReader.BeginStep();
-        auto varx = bpIn.InquireVariable<float>(varname[0]);
-        auto vary = bpIn.InquireVariable<float>(varname[1]);
-        auto varz = bpIn.InquireVariable<float>(varname[2]);
-        auto varmag = bpIn.InquireVariable<float>(derivedname);
+        auto varUx = bpIn.InquireVariable<float>(varname[0]);
+        auto varUy = bpIn.InquireVariable<float>(varname[1]);
+        auto varUz = bpIn.InquireVariable<float>(varname[2]);
+        auto varVx = bpIn.InquireVariable<float>(varname[3]);
+        auto varVy = bpIn.InquireVariable<float>(varname[4]);
+        auto varVz = bpIn.InquireVariable<float>(varname[5]);
+        auto varmag = bpIn.InquireVariable<float>(derMagName);
+        auto varcross = bpIn.InquireVariable<float>(derCrossName);
 
-        bpFileReader.Get(varx, readUx);
-        bpFileReader.Get(vary, readUy);
-        bpFileReader.Get(varz, readUz);
+        bpFileReader.Get(varUx, readUx);
+        bpFileReader.Get(varUy, readUy);
+        bpFileReader.Get(varUz, readUz);
+        bpFileReader.Get(varVx, readVx);
+        bpFileReader.Get(varVy, readVy);
+        bpFileReader.Get(varVz, readVz);
         bpFileReader.Get(varmag, readMag);
+        bpFileReader.Get(varcross, readCross);
         bpFileReader.EndStep();
 
+        // Magnitude
         for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
         {
-            calcM = (float)sqrt(pow(readUx[ind], 2) + pow(readUy[ind], 2) + pow(readUz[ind], 2));
-            EXPECT_TRUE(fabs(calcM - readMag[ind]) < epsilon);
+            calcDerived =
+                (float)sqrt(pow(readUx[ind], 2) + pow(readUy[ind], 2) + pow(readUz[ind], 2));
+            EXPECT_TRUE(fabs(calcDerived - readMag[ind]) < epsilon);
+        }
+        // Cross Product
+        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
+        {
+            calcDerived = (readUy[ind] * readVz[ind]) - (readUz[ind] * readVy[ind]);
+            EXPECT_TRUE(fabs(calcDerived - readCross[3 * ind]) < epsilon);
+            calcDerived = (readUx[ind] * readVz[ind]) - (readUz[ind] * readVx[ind]);
+            EXPECT_TRUE(fabs(calcDerived - readCross[3 * ind + 1]) < epsilon);
+            calcDerived = (readUx[ind] * readVy[ind]) - (readUy[ind] * readVx[ind]);
+            EXPECT_TRUE(fabs(calcDerived - readCross[3 * ind + 2]) < epsilon);
         }
     }
     bpFileReader.Close();
