@@ -751,14 +751,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
     core::VariableDerived *VD = dynamic_cast<core::VariableDerived *>(VB);
 #endif
 
-    bool WriteData = true;
-#ifdef ADIOS2_HAVE_DERIVED_VARIABLE
-    if (VD)
-    {
-        // All other types of Derived types we don't write data
-        WriteData = (VD->GetDerivedType() == DerivedVarType::StoreData);
-    }
-#endif
+    bool WriteData = VB->m_WriteData;
     BP5MetadataInfoStruct *MBase;
 
     BP5WriterRec Rec = LookupWriterRec(Variable);

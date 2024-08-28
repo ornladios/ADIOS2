@@ -14,6 +14,8 @@ VariableDerived::VariableDerived(const std::string &name, adios2::derived::Expre
                expr.GetCount(), isConstant),
   m_DerivedType(varType), m_NameToType(nameToType), m_Expr(expr)
 {
+    if (varType != DerivedVarType::StoreData)
+        m_WriteData = false;
 }
 
 DerivedVarType VariableDerived::GetDerivedType() { return m_DerivedType; }
