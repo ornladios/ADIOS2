@@ -369,6 +369,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
                  return opBool;
              })
         .def("SetShape", &adios2::py11::Variable::SetShape)
+        .def("SetWriteMode", &adios2::py11::Variable::SetWriteMode)
         .def("SetBlockSelection", &adios2::py11::Variable::SetBlockSelection)
         .def("SetSelection", &adios2::py11::Variable::SetSelection)
         .def("SetStepSelection", &adios2::py11::Variable::SetStepSelection)

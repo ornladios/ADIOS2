@@ -39,6 +39,8 @@ public:
 
     void SetShape(const Dims &shape);
 
+    void SetWriteMode(const bool writeData);
+
     void SetBlockSelection(const size_t blockID);
 
     void SetSelection(const Box<Dims> &selection);
