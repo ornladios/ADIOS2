@@ -45,8 +45,10 @@ with Stream("types_np_local.bp", "w", comm=comm) as s:
         s.write("varI8", data.i8, shape, start, count)
         s.write("varI16", data.i16, shape, start, count)
         v = s.inquire_variable("varI16")
-        print(f"step {step} rank {rank} nx {nx} count = {v.count()} data.I16 = {data.i16[:nx]}",
-              flush=True)
+        print(
+            f"step {step} rank {rank} nx {nx} count = {v.count()} data.I16 = {data.i16[:nx]}",
+            flush=True,
+        )
 
         s.write("varI32", data.i32, shape, start, count)
         s.write("varI64", data.i64, shape, start, count)
@@ -91,8 +93,10 @@ with Stream("types_np_local.bp", "r", comm=comm) as s:
 
         in_int_list = fr_step.read("an_int_list", block_id=rank)
 
-        print(f"step {step} rank {rank} nx {nx} I16={indataI16} data.I16 = {data.i16[:nx]}",
-              flush=True)
+        print(
+            f"step {step} rank {rank} nx {nx} I16={indataI16} data.I16 = {data.i16[:nx]}",
+            flush=True,
+        )
 
         check_array(indataI8, data.i8[:nx], "i8")
         check_array(indataI16, data.i16[:nx], "i16")
@@ -115,12 +119,17 @@ if rank == 0:
             expected_num_blocks = size
             if step == 0 and size > 1:
                 expected_num_blocks = size - 1
-            print(f"step {step} rank {rank} number of blocks expected = {expected_num_blocks}"
-                  f", reported = {len(bis)}", flush=True)
+            print(
+                f"step {step} rank {rank} number of blocks expected = {expected_num_blocks}"
+                f", reported = {len(bis)}",
+                flush=True,
+            )
             if len(bis) != expected_num_blocks:
-                raise ValueError(f"Expected number of blocks in step {step} "
-                                 f"is {expected_num_blocks} but we found "
-                                 f"only {len(bis)} blocks.")
+                raise ValueError(
+                    f"Expected number of blocks in step {step} "
+                    f"is {expected_num_blocks} but we found "
+                    f"only {len(bis)} blocks."
+                )
 
             for r in range(size):
                 nx = data.Nx - r - step
@@ -128,12 +137,14 @@ if rank == 0:
                     nx = data.Nx
                 if step == 0 and size > 1 and r == size - 1:
                     continue
-                cnt = int(bis[r]['Count'])
+                cnt = int(bis[r]["Count"])
                 print(f"    block {r} size expected = {nx}, reported = {cnt}", flush=True)
                 if nx != cnt:
-                    raise ValueError(f"Expected size of block in step {step}, rank {r} "
-                                     f"is {nx} but we got reported to have "
-                                     f"{cnt} elements.")
+                    raise ValueError(
+                        f"Expected size of block in step {step}, rank {r} "
+                        f"is {nx} but we got reported to have "
+                        f"{cnt} elements."
+                    )
 
 
 comm.Barrier()
