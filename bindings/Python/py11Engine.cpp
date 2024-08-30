@@ -280,7 +280,8 @@ std::vector<std::map<std::string, std::string>> Engine::BlocksInfo(std::string &
     MinVarInfo *minBlocksInfo = nullptr;
 
     auto Variable = itVariable->second.get();
-    minBlocksInfo = m_Engine->MinBlocksInfo(*Variable, 0);
+    size_t s = (m_Engine->m_OpenMode == Mode::ReadRandomAccess ? step : 0);
+    minBlocksInfo = m_Engine->MinBlocksInfo(*Variable, s);
     if (minBlocksInfo)
     {
         for (auto &info : minBlocksInfo->BlocksInfo)
