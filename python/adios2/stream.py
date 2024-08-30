@@ -321,7 +321,7 @@ class Stream:
         if shape != [] and not variable.single_value():
             variable.set_shape(shape)
 
-        if start != [] and count != []:
+        if start != [] or count != []:
             variable.set_selection([start, count])
 
         if operations:
