@@ -1628,7 +1628,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                     MetaArrayRecOperator *writer_meta_base =
                         (MetaArrayRecOperator *)GetMetadataBase((struct BP5VarRec *)Req->VarRec,
                                                                 Step, WriterRank);
-                    if (!writer_meta_base)
+                    if (!writer_meta_base || !writer_meta_base->BlockCount)
                     {
                         continue; // Not writen on this step
                     }
