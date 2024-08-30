@@ -6,6 +6,12 @@ endif()
 if(ERROR_FILE)
   set(error_arg ERROR_FILE "${ERROR_FILE}")
 endif()
+if(NOT INPUT_FILE1)
+  set(error_arg INPUT_FILE1 "${INPUT_FILE1}")
+endif()
+if(NOT INPUT_FILE2)
+  set(error_arg INPUT_FILE2 "${INPUT_FILE2}")
+endif()
 
 execute_process(
   COMMAND ${Python_EXECUTABLE} ${PROJECT_BINARY_DIR}/bin/bpcmp.py ${INPUT_FILE1} ${INPUT_FILE2} ${ARG1} ${ARG2} ${ARG3}

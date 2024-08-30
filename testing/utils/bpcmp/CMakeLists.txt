@@ -1,12 +1,9 @@
-include(ADIOSFunctions)
-
 add_executable(Test.Utils.BPcmp TestUtilsBPcmp.cpp)
 
-target_link_libraries(Test.Utils.BPcmp adios2::c adios2::cxx11)
-set(cmd_executor)
+target_link_libraries(Test.Utils.BPcmp adios2::cxx11)
 
 add_test(NAME Utils.BPcmp
-  COMMAND ${cmd_executor} $<TARGET_FILE:Test.Utils.BPcmp>
+  COMMAND $<TARGET_FILE:Test.Utils.BPcmp>
 )
 # This test produces TestBPcmp_set1.bp and TestBPcmp_set2.bp
 
