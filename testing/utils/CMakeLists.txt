@@ -10,6 +10,10 @@ else()
   set(MPIEXEC_COMMAND)
 endif()
 
+if(ADIOS2_HAVE_Python)
+  add_subdirectory(bpcmp)
+endif()
+
 add_subdirectory(cwriter)
 add_subdirectory(changingshape)
 
