@@ -87,7 +87,6 @@ if(WIN32)
       -D_SCL_SECURE_NO_DEPRECATE
       -D_WINSOCK_DEPRECATED_NO_WARNINGS
       -D_CRT_NONSTDC_NO_DEPRECATE)
-    set (MSVC_PERL_FLAGS "-msvc-long")
   endif()
 endif()
 
@@ -138,7 +137,7 @@ add_library(EVPath
   cm.c cm_control.c cm_formats.c cm_util.c cm_transport.c 
   cm_lock.c cm_perf.c cm_pbio.c cm_interface.c version.c
   cm_threadio.c cm_evol.c evp.c response.c metrics.c 
-  dlloader.c ip_config.c chr_time.c
+  dlloader.c ip_config.c chr_time.c revpath.h revp_internal.h
   revp.c evp_compat.c thin_server.c evp_threads.c ev_dfg.c)
 add_library(EVPath::EVPath ALIAS EVPath)
 add_library(evpath ALIAS EVPath)
@@ -585,21 +584,44 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/
   FILES_MATCHING PATTERN "Find*.cmake" PATTERN "CMake*.cmake"
 )
 
-add_custom_command(
-  OUTPUT "cm_interface.c" "revp.c" "revpath.h"
-  SOURCE
-    ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h ${CMAKE_CURRENT_SOURCE_DIR}/ev_dfg.h
-  COMMAND perl
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen_interface.pl
-    ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/ev_dfg.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/cm_schedule.h
-  DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen_interface.pl
-    ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/ev_dfg.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/cm_schedule.h
-)
+find_package(Perl)
+
+if (PERL_FOUND) 
+  add_custom_command(
+    OUTPUT "cm_interface.c" "revp.c" "revpath.h" "revp_internal.h"
+    SOURCE
+      ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h ${CMAKE_CURRENT_SOURCE_DIR}/ev_dfg.h
+    COMMAND ${PERL_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/gen_interface.pl
+      ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/ev_dfg.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/cm_schedule.h
+    DEPENDS
+      ${CMAKE_CURRENT_SOURCE_DIR}/gen_interface.pl
+      ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/ev_dfg.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/cm_schedule.h
+  )
+else()
+    add_custom_command(OUTPUT cm_interface.c
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/cm_interface.c cm_interface.c
+                   COMMENT "Copying pregen cm_interface.c to build area")
+    add_custom_command(OUTPUT revp.c
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/revp.c revp.c
+                   COMMENT "Copying pregen revp.c to build area")
+    add_custom_command(OUTPUT revpath.h
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/revpath.h revpath.h
+                   COMMENT "Copying pregen revpath.h to build area")
+
+    add_custom_command(OUTPUT revp_internal.h
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/revp_internal.h revp_internal.h
+                   COMMENT "Copying pregen revp_internal.h to build area")
+
+endif()
 
 if(Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
   set(USE_PTHREADS TRUE)
