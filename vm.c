@@ -122,9 +122,7 @@ emu_func(ffi_cif* cif, void* vret, void* args[], void* client_data)
     }
 }
 
-extern void* emulate_clone_code(c, new_base, available_size) dill_stream c;
-void* new_base;
-int available_size;
+extern void* emulate_clone_code(dill_stream c, void* new_base, int available_size)
 {
     return c->p->fp;
 }

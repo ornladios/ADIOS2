@@ -11,11 +11,19 @@ include_directories(BEFORE
   ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/general.c
-  COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/general.ops
-  MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/general.ops
-)
+if (PERL_FOUND) 
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/general.c
+    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/general.ops
+    MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/general.ops
+  )
+else()
+  add_custom_command(OUTPUT  ${CMAKE_CURRENT_BINARY_DIR}/general.c
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/vtests/general.c  ${CMAKE_CURRENT_BINARY_DIR}/general.c
+                   COMMENT "Copying pregen general.c to build area")
+
+endif()
 
 foreach(TEST ${TESTS})
   add_executable(v${TEST} ${TEST}.c)

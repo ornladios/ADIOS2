@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 # The directory label is used for CDash to treat DILL as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS DILL)
 
-project(DILL VERSION 3.0.0 LANGUAGES C CXX)
+project(DILL VERSION 3.1.1 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -88,6 +88,7 @@ set(SRC_list
   dill_virtual.c
   virtual.c
   dill.c
+  dill.h
   vm.c
   x86_64_disassembler.c
 )
@@ -102,7 +103,8 @@ check_type_size("void*" CMAKE_SIZEOF_VOID_P)
 check_type_size("long" SIZEOF_LONG)
 set(NATIVE_CG TRUE)
 unset(NATIVE_ARCH)
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "i.86|x86_64|AMD64")
+set(DILL_NATIVE_ONLY_DEFAULT ON)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "i.86|x86_64|AMD64|amd64")
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(NATIVE_ARCH x86_64)
     set(HOST_X86_64 1)
@@ -116,6 +118,9 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "i.86|x86_64|AMD64")
   endif()
   if(NOT (CMAKE_SIZEOF_VOID_P EQUAL SIZEOF_LONG))
     set(BASE_OPS_ARG "-msvc_long")
+  endif()
+  if(BUILD_SHARED_LIBS)
+    set(BASE_OPS_ARG "${BASE_OPS_ARG} -build_shared")
   endif()
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "arm.5.*")
   set(NATIVE_ARCH arm5)
@@ -145,9 +150,10 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "s64fx")
   set(HOST_SPARCV9 1)
   set(ARCH_FILE sparc)
 else()
-  message(STATUS "NO CG for Processor \"${CMAKE_SYSTEM_PROCESSOR}\"")
+  message(STATUS "DILL - NO Native CG for Processor \"${CMAKE_SYSTEM_PROCESSOR}\"")
   set(NATIVE_CG FALSE)
   set(NATIVE_ARCH UNSUPPORTED)
+  set(DILL_NATIVE_ONLY_DEFAULT OFF)
 endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux")
@@ -183,30 +189,35 @@ set(ARM_HARD_FLOAT ${HARDFP_AVAILABLE})
 
 option(DILL_IGNORE_NATIVE  "Build to do emulation, regardless of architecture"
   OFF)
+option(DILL_NATIVE_ONLY  "Build to native code only"  ${DILL_NATIVE_ONLY_DEFAULT})
 if(DILL_IGNORE_NATIVE)
   set(NATIVE_CG FALSE)
   set(NATIVE_ARCH UNSUPPORTED)
 endif()
 set(LIBFFI_INTERNAL OFF)
-find_package(LibFFI)
+if (DILL_NATIVE_ONLY)
+  set(LIBFFI_FOUND FALSE)
+else()
+  find_package(LibFFI)
+endif()
 if(LIBFFI_FOUND)
-  message(STATUS "Enabling emulation")
+  message(STATUS "DILL - Enabling emulation")
   set(EMULATION_POSSIBLE TRUE)
-elseif(DILL_IGNORE_NATIVE OR (NATIVE_ARCH STREQUAL "UNSUPPORTED"))
+elseif((DILL_IGNORE_NATIVE OR (NATIVE_ARCH STREQUAL "UNSUPPORTED")) AND NOT DILL_NATIVE_ONLY)
   find_program (AUTOCONF autoconf)
   find_program (AUTOMAKE automake)
   if ((AUTOCONF STREQUAL "AUTOCONF-NOTFOUND") OR (AUTOMAKE STREQUAL "AUTOMAKE-NOTFOUND"))
     if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
       # I am top-level project.
-      message(FATAL_ERROR "DILL_IGNORE_NATIVE set or native architecture unsupported, but autoconf or automake not found, so unable to build libffi")
+      message(FATAL_ERROR "DILL - DILL_IGNORE_NATIVE set or native architecture unsupported, but autoconf or automake not found, so unable to build libffi")
     else()
       # I am called from other project with add_subdirectory().
-      message(STATUS "DILL_IGNORE_NATIVE set or native architecture unsupported, but autoconf or automake not found, so unable to build libffi")
+      message(STATUS "DILL - DILL_IGNORE_NATIVE set or native architecture unsupported, but autoconf or automake not found, so unable to build libffi")
       return()
     endif()
   endif()
   set(LIBFFI_INTERNAL ON)
-  message(STATUS "Using private copy of libffi")
+  message(STATUS "DILL - Using private copy of libffi")
   include(ExternalProject)
   if(BUILD_SHARED_LIBS)
     set(libffi_shared_args --enable-shared --disable-static)
@@ -250,41 +261,77 @@ elseif(DILL_IGNORE_NATIVE OR (NATIVE_ARCH STREQUAL "UNSUPPORTED"))
       DESTINATION "${CMAKE_INSTALL_CMAKEDIR}" COMPONENT ${DILL_HEADER_COMPONENT})
   endif()
 
-  message(STATUS "Enabling emulation")
+  message(STATUS "DILL - Enabling emulation")
   set(EMULATION_POSSIBLE TRUE)
 else()
-  message(STATUS "Disabling emulation")
+  message(STATUS "DILL - Disabling emulation")
   set(EMULATION_POSSIBLE FALSE)
 endif()
-
-find_package(Perl REQUIRED)
 
 option(DILL_ENABLE_DISASSEMBLY
   "enable binutils-based disassembly (default is OFF)" OFF)
 
+find_package(Perl)
+
 set(ARCHITECTURES sparc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm8)
 foreach(_arch ${ARCHITECTURES})
-  add_custom_command(
-    OUTPUT dill_${_arch}.c
-    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${_arch}.ops
-    DEPENDS ${_arch}.ops
-  ) 
+  if(PERL_FOUND)
+    if(_arch STREQUAL "virtual")
+      add_custom_command(
+        OUTPUT dill_${_arch}.c vm_include.c
+        COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${_arch}.ops
+        DEPENDS ${_arch}.ops
+      )
+    else()
+      add_custom_command(
+        OUTPUT dill_${_arch}.c
+        COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${_arch}.ops
+        DEPENDS ${_arch}.ops
+      )
+    endif()    
+  else()
+    add_custom_command(OUTPUT dill_${_arch}.c 
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/dill_${_arch}.c dill_${_arch}.c
+                   COMMENT "Copying pregen diil_${_arch}.c build area")
+    if(_arch STREQUAL "virtual")
+      add_custom_command(OUTPUT vm_include.c 
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/vm_include.c vm_include.c
+                   COMMENT "Copying pregen vm_include.c build area")
+    endif()
+  endif()
   list(APPEND arch_files dill_${_arch}.c ${_arch}.c)
   if(NOT _arch STREQUAL "virtual")
     list(APPEND arch_files ${_arch}_rt.c)
+  else()
+     add_custom_target(generate_vm_include DEPENDS vm_include.c)
   endif()
 endforeach()
 
-add_custom_command(
-  OUTPUT dill.h dill.c
-  COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/base.ops ${BASE_OPS_ARG}
-  DEPENDS base.ops
-) 
+if (PERL_FOUND)
+  add_custom_command(
+    OUTPUT dill.h dill.c
+    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/base.ops ${BASE_OPS_ARG}
+    DEPENDS base.ops
+  )
+else()
+  string(MAKE_C_IDENTIFIER "${BASE_OPS_ARG}" FLAGS_STR)
+  add_custom_command(OUTPUT dill.c 
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/dill${FLAGS_STR}.c dill.c
+                   COMMENT "Copying pregen diil.c build area")
+  add_custom_command(OUTPUT dill.h 
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/dill${FLAGS_STR}.h dill.h
+                   COMMENT "Copying pregen diil.h build area")
+
+endif()
 
 option(DILL_MULTI_TARGET  "Build all available target architectures" OFF)
 
 if(DILL_MULTI_TARGET)
-  message(STATUS "arch files is ${arch_files}")
+  message(STATUS "DILL - arch files is ${arch_files}")
   list(APPEND SRC_list ${arch_files})
 elseif(NOT ${NATIVE_ARCH} STREQUAL "UNSUPPORTED")
   list(APPEND SRC_list dill_${ARCH_FILE}.c ${ARCH_FILE}.c ${ARCH_FILE}_rt.c)
@@ -302,7 +349,7 @@ if(DILL_MULTI_TARGET OR NATIVE_CG OR EMULATION_POSSIBLE)
   endif()
   if(NOT DILL_MULTI_TARGET AND NOT NATIVE_CG)
     message(STATUS
-      "Configure has detected no native dynamic code generation support 
+      "DILL - Configure has detected no native dynamic code generation support 
    for this architecture (\"${NATIVE_ARCH}\").  However, the libffi
    library was found, so a library configured for emulation will be built."
     )
@@ -313,15 +360,14 @@ else()
   if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
     # I am top-level project.
     message(FATAL_ERROR
-	"Configure has detected no native dynamic code generation support 
+	"DILL - Configure has detected no native dynamic code generation support 
 	 for this architecture (\"${NATIVE_ARCH}\"), -DDILL_MULTI_TARGET=ON 
 	 was not specified, and no emulation is possible (libffi library 
 	 not found)  NO LIBRARY WILL BE BUILT" )
   else()
     message(STATUS
-	"No native dynamic code generation support for this architecture 
-	(\"${CMAKE_SYSTEM_PROCESSOR}\"), -DDILL_MULTI_TARGET=ON was not specified, and no emulation 
-	is possible (libffi library not found) NO DILL LIBRARY WILL BE BUILT, but this is not a failure")
+	"DILL - No native dynamic code generation support for this architecture and no emulation 
+	is possible (libffi library not found or failed to build) NO DILL LIBRARY WILL BE BUILT, but this is not a failure")
     return()
   endif()
 endif()
@@ -334,7 +380,6 @@ check_include_files(memory.h HAVE_MEMORY_H)
 check_include_files(sys/mman.h HAVE_SYS_MMAN_H)
 include(CheckSymbolExists)
 check_symbol_exists(__clear_cache "" CLEAR_CACHE_DEFINED)
-message(STATUS "Clear cache defined is ${CLEAR_CACHE_DEFINED}")
 
 set(NO_DISASSEMBLER TRUE)
 if(DILL_ENABLE_DISASSEMBLY)
@@ -380,6 +425,7 @@ set(DILL_LIBRARY_PREFIX "" CACHE STRING
 mark_as_advanced(DILL_LIBRARY_PREFIX)
 
 add_library(dill ${SRC_list})
+add_dependencies(dill generate_vm_include)
 set_target_properties(dill PROPERTIES
   OUTPUT_NAME ${DILL_LIBRARY_PREFIX}dill
   VERSION ${DILL_VERSION}
@@ -526,8 +572,10 @@ if(NOT DILL_QUIET)
   message(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
   message(STATUS "DILL_ENABLE_DISASSEMBLY = ${DILL_ENABLE_DISASSEMBLY}" )
   message(STATUS "DILL_MULTI_TARGET = ${DILL_MULTI_TARGET}" )
-  message(STATUS "BUILD_SHARED_LIBS = ${BUILD_SHARED_LIBS}" )
+  message(STATUS "DILL_IGNORE_NATIVE = ${DILL_IGNORE_NATIVE}" )
+  message(STATUS "DILL_NATIVE_ONLY = ${DILL_NATIVE_ONLY}" )
   message(STATUS "BUILD_TESTING = ${BUILD_TESTING}" )
+  message(STATUS "BUILD_SHARED_LIBS = ${BUILD_SHARED_LIBS}" )
   message(STATUS "Change a value with: cmake -D<Variable>=<Value>" )
   message(STATUS "-----------------------------------------------------------------------------")
 endif()
