@@ -7,7 +7,7 @@ if(POLICY CMP0074)
   cmake_policy(SET CMP0074 NEW)
 endif()
 
-project(FFS VERSION 3.1.3)
+project(FFS VERSION 3.1.4)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -68,7 +68,6 @@ if(WIN32)
       -D_SCL_SECURE_NO_DEPRECATE
       -D_WINSOCK_DEPRECATED_NO_WARNINGS
       -D_CRT_NONSTDC_NO_DEPRECATE)
-    set (MSVC_PERL_FLAGS "-msvc-long")
   endif()
 endif()
 
@@ -171,18 +170,29 @@ else()
   ADD_FLEX_BISON_DEPENDENCY(CODScanner CODParser)
 endif()
 
-find_package(Perl REQUIRED)
+find_package(Perl)
 
-add_custom_command(
-  OUTPUT "cod_node.c" 
-  COMMAND
-    ${PERL_EXECUTABLE} 
-      ${CMAKE_CURRENT_SOURCE_DIR}/cod/struct.pl
+if (PERL_FOUND) 
+  add_custom_command(
+    OUTPUT "cod_node.c" structs.h
+    COMMAND
+      ${PERL_EXECUTABLE} 
+        ${CMAKE_CURRENT_SOURCE_DIR}/cod/struct.pl
+        ${CMAKE_CURRENT_SOURCE_DIR}/cod/cod.structs
+    DEPENDS
+      lex.yy.c
       ${CMAKE_CURRENT_SOURCE_DIR}/cod/cod.structs
-  DEPENDS
-    lex.yy.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/cod/cod.structs
-    ${CMAKE_CURRENT_SOURCE_DIR}/cod/struct.pl)
+      ${CMAKE_CURRENT_SOURCE_DIR}/cod/struct.pl)
+else()
+    add_custom_command(OUTPUT cod_node.c
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/cod_node.c cod_node.c
+                   COMMENT "Copying pregen cod_node.c to build area")
+    add_custom_command(OUTPUT structs.h
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/structs.h structs.h
+                   COMMENT "Copying pregen structs.h to build area")
+endif()
 
 add_custom_target(docs ALL DEPENDS "cod_node.c")
 
@@ -194,7 +204,8 @@ add_custom_target(generated DEPENDS cod_node.c ${BISON_CODParser_OUTPUT_SOURCE})
 
 list(APPEND COD_MASTER_SRC_LIST
   ${BISON_CODParser_OUTPUT_SOURCE}
-  ${CMAKE_CURRENT_BINARY_DIR}/cod_node.c)
+  ${CMAKE_CURRENT_BINARY_DIR}/cod_node.c
+  ${CMAKE_CURRENT_BINARY_DIR}/structs.h)
   
 list(APPEND FFS_MASTER_SRC_LIST ${FM_MASTER_SRC_LIST} ${COD_MASTER_SRC_LIST})
 
