@@ -1692,14 +1692,50 @@ CMConnection Tunneling_get_conn(CManager cm, attr_list attrs)
             struct sockaddr_in s_I4;
         } sock_addr;
 
+        int server_addr = INADDR_LOOPBACK;
+        char *server_hostname = getenv("TUNNEL_SERVER_HOST");
+        if (server_hostname)
+        {
+            struct hostent *host_addr;
+            host_addr = gethostbyname(server_hostname);
+            if (host_addr == NULL)
+            {
+                int _addr;
+                _addr = inet_addr(server_hostname);
+                if (_addr == -1)
+                {
+                    /*
+                     *  not translatable as a hostname or
+                     * as a dot-style string IP address
+                     */
+                    return 0;
+                }
+                if (sizeof(int) == sizeof(struct in_addr))
+                    server_addr = (int)_addr;
+                else
+                {
+                    printf("Bad struct size\n");
+                    return NULL;
+                }
+            }
+            else
+            {
+                int tmp;
+                memcpy(&tmp, host_addr->h_addr, host_addr->h_length);
+                server_addr = ntohl(tmp);
+            }
+        }
         sock_addr.s_I4.sin_family = AF_INET;
-        sock_addr.s_I4.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+        sock_addr.s_I4.sin_addr.s_addr = htonl(server_addr);
         sock_addr.s_I4.sin_port = htons(30000);
 
         int sock = socket(AF_INET, SOCK_STREAM, 0);
         /* Actually connect. */
         if (connect(sock, (struct sockaddr *)&sock_addr.s_I4, sizeof(sock_addr)) == -1)
-            printf("Error\n");
+        {
+            printf("connect Error\n");
+            return NULL;
+        }
 
         /* Send request. */
         printf("Request is \"%s\"\n", request);
@@ -1740,7 +1776,7 @@ CMConnection Tunneling_get_conn(CManager cm, attr_list attrs)
         conn_attrs = create_attr_list();
         add_attr(conn_attrs, IP_PORT_ATOM, Attr_Int4, (attr_value)(intptr_t)forward_port);
 
-        add_attr(conn_attrs, IP_ADDR_ATOM, Attr_Int4, (attr_value)INADDR_LOOPBACK);
+        add_attr(conn_attrs, IP_ADDR_ATOM, Attr_Int4, (attr_value)server_addr);
 
         return CMget_conn(cm, conn_attrs);
     }
