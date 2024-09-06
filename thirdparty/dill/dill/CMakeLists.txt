@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.5)
 # The directory label is used for CDash to treat DILL as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS DILL)
 
-project(DILL VERSION 3.0.0 LANGUAGES C CXX)
+project(DILL VERSION 3.1.1 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -88,6 +88,7 @@ set(SRC_list
   dill_virtual.c
   virtual.c
   dill.c
+  dill.h
   vm.c
   x86_64_disassembler.c
 )
@@ -267,29 +268,65 @@ else()
   set(EMULATION_POSSIBLE FALSE)
 endif()
 
-find_package(Perl REQUIRED)
-
 option(DILL_ENABLE_DISASSEMBLY
   "enable binutils-based disassembly (default is OFF)" OFF)
 
+find_package(Perl)
+
 set(ARCHITECTURES sparc ppc64le virtual x86 x86_64 ia64 arm5 arm6 arm8)
 foreach(_arch ${ARCHITECTURES})
-  add_custom_command(
-    OUTPUT dill_${_arch}.c
-    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${_arch}.ops
-    DEPENDS ${_arch}.ops
-  ) 
+  if(PERL_FOUND)
+    if(_arch STREQUAL "virtual")
+      add_custom_command(
+        OUTPUT dill_${_arch}.c vm_include.c
+        COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${_arch}.ops
+        DEPENDS ${_arch}.ops
+      )
+    else()
+      add_custom_command(
+        OUTPUT dill_${_arch}.c
+        COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${_arch}.ops
+        DEPENDS ${_arch}.ops
+      )
+    endif()    
+  else()
+    add_custom_command(OUTPUT dill_${_arch}.c 
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/dill_${_arch}.c dill_${_arch}.c
+                   COMMENT "Copying pregen diil_${_arch}.c build area")
+    if(_arch STREQUAL "virtual")
+      add_custom_command(OUTPUT vm_include.c 
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/vm_include.c vm_include.c
+                   COMMENT "Copying pregen vm_include.c build area")
+    endif()
+  endif()
   list(APPEND arch_files dill_${_arch}.c ${_arch}.c)
   if(NOT _arch STREQUAL "virtual")
     list(APPEND arch_files ${_arch}_rt.c)
+  else()
+     add_custom_target(generate_vm_include DEPENDS vm_include.c)
   endif()
 endforeach()
 
-add_custom_command(
-  OUTPUT dill.h dill.c
-  COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/base.ops ${BASE_OPS_ARG}
-  DEPENDS base.ops
-) 
+if (PERL_FOUND)
+  add_custom_command(
+    OUTPUT dill.h dill.c
+    COMMAND ${PERL_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/base.ops ${BASE_OPS_ARG}
+    DEPENDS base.ops
+  )
+else()
+  string(MAKE_C_IDENTIFIER "${BASE_OPS_ARG}" FLAGS_STR)
+  add_custom_command(OUTPUT dill.c 
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/dill${FLAGS_STR}.c dill.c
+                   COMMENT "Copying pregen diil.c build area")
+  add_custom_command(OUTPUT dill.h 
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/dill${FLAGS_STR}.h dill.h
+                   COMMENT "Copying pregen diil.h build area")
+
+endif()
 
 message (STATUS "base.ops argument is ${BASE_OPS_ARG}")
 
@@ -390,6 +427,7 @@ set(DILL_LIBRARY_PREFIX "" CACHE STRING
 mark_as_advanced(DILL_LIBRARY_PREFIX)
 
 add_library(dill ${SRC_list})
+add_dependencies(dill generate_vm_include)
 set_target_properties(dill PROPERTIES
   OUTPUT_NAME ${DILL_LIBRARY_PREFIX}dill
   VERSION ${DILL_VERSION}

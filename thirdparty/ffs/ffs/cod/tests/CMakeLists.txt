@@ -3,11 +3,18 @@ set (PROGS t7)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
-ADD_CUSTOM_COMMAND(
-   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/general.c
-   COMMAND perl ${CMAKE_CURRENT_SOURCE_DIR}/general.ops
-   MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/general.ops
-)
+if (PERL_FOUND)
+  ADD_CUSTOM_COMMAND(
+     OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/general.c
+     COMMAND perl ${CMAKE_CURRENT_SOURCE_DIR}/general.pl
+     MAIN_DEPENDENCY ${CMAKE_CURRENT_SOURCE_DIR}/general.pl
+  )
+else()
+    add_custom_command(OUTPUT general.c
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/cod/tests/general.c general.c
+                   COMMENT "Copying pregen general.c to build area")
+endif()
 
 foreach (TEST ${TESTS} )
     ADD_EXECUTABLE(${TEST} ${TEST}.c data_funcs.c)
