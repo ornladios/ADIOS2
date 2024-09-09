@@ -151,10 +151,13 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart, const 
         return 0;
     }
 
+    mgard_x::Config config;
+    config.lossless = mgard_x::lossless_type::Huffman_Zstd;
+
     PutParameter(bufferOut, bufferOutOffset, true);
     void *compressedData = bufferOut + bufferOutOffset;
     mgard_x::compress(mgardDim, mgardType, mgardCount, tolerance, s, errorBoundType, dataIn,
-                      compressedData, sizeOut, true);
+                      compressedData, sizeOut, config, true);
     bufferOutOffset += sizeOut;
 
     return bufferOutOffset;
