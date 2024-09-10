@@ -19,6 +19,12 @@ file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/tls-naive)
 file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/ews-guided)
 file(MAKE_DIRECTORY ${BP5_ASYNC_DIR}/ews-naive)
 
+macro(bp5_gtest_add_tests_helper testname mpi)
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+  )
+endmacro()
+
 macro(bp3_bp4_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP3
     WORKING_DIRECTORY ${BP3_DIR} EXTRA_ARGS "BP3"
@@ -105,6 +111,7 @@ bp_gtest_add_tests_helper(WriteReadMultiblock MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadVector MPI_ALLOW)
 bp_gtest_add_tests_helper(WriteReadAttributesMultirank MPI_ALLOW)
 bp_gtest_add_tests_helper(LargeMetadata MPI_ALLOW)
+bp5_gtest_add_tests_helper(WriteStatsOnly MPI_ALLOW)
 
 set(BP5LargeMeta "Engine.BP.BPLargeMetadata.BPWrite1D_LargeMetadata.BP5.Serial")
 
