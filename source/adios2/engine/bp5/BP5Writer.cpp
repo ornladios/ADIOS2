@@ -617,13 +617,13 @@ void BP5Writer::EndStep()
     MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
         TSInfo.NewMetaMetaBlocks, {m}, {a}, {m_ThisTimestepDataSize}, {m_StartDataPos});
 
-    if (m_Aggregator->m_Comm.Size() > 1)
+    if (m_AggregatorMetadata.m_Comm.Size() > 1)
     { // level 1
         m_Profiler.Start("ES_meta1_gather");
         size_t LocalSize = MetaBuffer.size();
-        std::vector<size_t> RecvCounts = m_Aggregator->m_Comm.GatherValues(LocalSize, 0);
+        std::vector<size_t> RecvCounts = m_AggregatorMetadata.m_Comm.GatherValues(LocalSize, 0);
         std::vector<char> RecvBuffer;
-        if (m_Aggregator->m_Comm.Rank() == 0)
+        if (m_AggregatorMetadata.m_Comm.Rank() == 0)
         {
             uint64_t TotalSize = 0;
             for (auto &n : RecvCounts)
@@ -633,10 +633,10 @@ void BP5Writer::EndStep()
                       << TotalSize << " bytes from aggregator group"
                       << std::endl;*/
         }
-        m_Aggregator->m_Comm.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
-                                           RecvCounts.size(), RecvBuffer.data(), 0);
+        m_AggregatorMetadata.m_Comm.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
+                                                  RecvCounts.size(), RecvBuffer.data(), 0);
         m_Profiler.Stop("ES_meta1_gather");
-        if (m_Aggregator->m_Comm.Rank() == 0)
+        if (m_AggregatorMetadata.m_Comm.Rank() == 0)
         {
             std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
             std::vector<uint64_t> DataSizes;
@@ -654,17 +654,17 @@ void BP5Writer::EndStep()
     m_Profiler.Stop("ES_meta1");
     m_Profiler.Start("ES_meta2");
     // level 2
-    if (m_Aggregator->m_Comm.Rank() == 0)
+    if (m_AggregatorMetadata.m_Comm.Rank() == 0)
     {
         std::vector<char> RecvBuffer;
         std::vector<char> *buf;
         std::vector<size_t> RecvCounts;
         size_t LocalSize = MetaBuffer.size();
-        if (m_CommAggregators.Size() > 1)
+        if (m_CommMetadataAggregators.Size() > 1)
         {
             m_Profiler.Start("ES_meta2_gather");
-            RecvCounts = m_CommAggregators.GatherValues(LocalSize, 0);
-            if (m_CommAggregators.Rank() == 0)
+            RecvCounts = m_CommMetadataAggregators.GatherValues(LocalSize, 0);
+            if (m_CommMetadataAggregators.Rank() == 0)
             {
                 uint64_t TotalSize = 0;
                 for (auto &n : RecvCounts)
@@ -675,8 +675,8 @@ void BP5Writer::EndStep()
                           << std::endl;*/
             }
 
-            m_CommAggregators.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
-                                            RecvCounts.size(), RecvBuffer.data(), 0);
+            m_CommMetadataAggregators.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
+                                                    RecvCounts.size(), RecvBuffer.data(), 0);
             buf = &RecvBuffer;
             m_Profiler.Stop("ES_meta2_gather");
         }
@@ -686,7 +686,7 @@ void BP5Writer::EndStep()
             RecvCounts.push_back(LocalSize);
         }
 
-        if (m_CommAggregators.Rank() == 0)
+        if (m_CommMetadataAggregators.Rank() == 0)
         {
             std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
             std::vector<uint64_t> DataSizes;
@@ -1072,6 +1072,17 @@ void BP5Writer::InitAggregator()
      */
     int color = m_Aggregator->m_Comm.Rank();
     m_CommAggregators = m_Comm.Split(color, 0, "creating level 2 chain of aggregators at Open");
+
+    /* Metadata aggregator for two-level metadata aggregation */
+    {
+        size_t n = static_cast<size_t>(m_Comm.Size());
+        size_t a = (int)floor(sqrt((double)n));
+        m_AggregatorMetadata.Init(a, a, m_Comm);
+        /* chain of rank 0s form the second level of aggregation */
+        int color = m_AggregatorMetadata.m_Comm.Rank();
+        m_CommMetadataAggregators =
+            m_Comm.Split(color, 0, "creating level 2 chain of aggregators at Open");
+    }
 }
 
 void BP5Writer::InitTransports()
