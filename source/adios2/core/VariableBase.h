@@ -133,9 +133,9 @@ public:
 
     /**
      * Set the write mode of a variable
-     * @param true - write data; false - write only stats
+     * @param false - write data; true - write only stats
      */
-    void SetWriteMode(const bool writeData);
+    void StoreStatsOnly(const bool mode);
 
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     /**

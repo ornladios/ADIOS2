@@ -149,9 +149,9 @@ public:
 
     /**
      * Set the write mode of a variable
-     * @param true - write data; false - write only stats
+     * @param false - write data; true - write only stats
      */
-    void SetWriteMode(const bool writeData);
+    void StoreStatsOnly(const bool mode);
 
     /**
      * Sets the memory space for all following Puts/Gets

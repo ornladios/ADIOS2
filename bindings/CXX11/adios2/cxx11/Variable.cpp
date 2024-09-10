@@ -31,9 +31,9 @@ namespace adios2
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
-    void Variable<T>::SetWriteMode(const bool writeData)                                           \
+    void Variable<T>::StoreStatsOnly(const bool mode)                                              \
     {                                                                                              \
-        m_Variable->SetWriteMode(writeData);                                                       \
+        m_Variable->StoreStatsOnly(mode);                                                          \
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \

@@ -77,13 +77,13 @@ adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims, con
     }
 }
 
-adios2_error adios2_set_write_mode(adios2_variable *variable, const adios2_bool write_data)
+adios2_error adios2_store_stats_only(adios2_variable *variable, const adios2_bool mode)
 {
     try
     {
         adios2::core::VariableBase *variableBase =
             reinterpret_cast<adios2::core::VariableBase *>(variable);
-        variableBase->SetWriteMode(write_data);
+        variableBase->StoreStatsOnly(mode);
 
         return adios2_error_none;
     }

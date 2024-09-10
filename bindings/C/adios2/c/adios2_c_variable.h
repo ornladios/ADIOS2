@@ -31,9 +31,9 @@ adios2_error adios2_set_shape(adios2_variable *variable, const size_t ndims, con
 
 /**
  * Set the write mode of a variable
- * @param true - write data; false - write only stats
+ * @param false - write data; true - write only stats
  */
-adios2_error adios2_set_write_mode(adios2_variable *variable, const adios2_bool write_data);
+adios2_error adios2_store_stats_only(adios2_variable *variable, const adios2_bool mode);
 
 /**
  * Sets the memory space for all following Puts/Gets

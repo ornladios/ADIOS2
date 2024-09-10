@@ -27,10 +27,10 @@ void Variable::SetShape(const Dims &shape)
     m_VariableBase->SetShape(shape);
 }
 
-void Variable::SetWriteMode(const bool writeData)
+void Variable::StoreStatsOnly(const bool mode)
 {
-    helper::CheckForNullptr(m_VariableBase, "in call to Variable::SetWriteMode");
-    m_VariableBase->SetWriteMode(writeData);
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::StoreStatsOnly");
+    m_VariableBase->StoreStatsOnly(mode);
 }
 
 void Variable::SetBlockSelection(const size_t blockID)

@@ -39,7 +39,7 @@ public:
 
     void SetShape(const Dims &shape);
 
-    void SetWriteMode(const bool writeData);
+    void StoreStatsOnly(const bool mode);
 
     void SetBlockSelection(const size_t blockID);
 
