@@ -617,8 +617,9 @@ void BP5Writer::EndStep()
     MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
         TSInfo.NewMetaMetaBlocks, {m}, {a}, {m_ThisTimestepDataSize}, {m_StartDataPos});
 
-     std::string meta1_gather_str = "ES_meta1_gather_"+std::to_string(m_AggregatorMetadata.m_Comm.Size());
-     m_Profiler.AddTimerWatch(meta1_gather_str, true);
+    std::string meta1_gather_str =
+        "ES_meta1_gather_" + std::to_string(m_AggregatorMetadata.m_Comm.Size());
+    m_Profiler.AddTimerWatch(meta1_gather_str, true);
 
     if (m_AggregatorMetadata.m_Comm.Size() > 1)
     { // level 1
@@ -663,7 +664,8 @@ void BP5Writer::EndStep()
         std::vector<char> *buf;
         std::vector<size_t> RecvCounts;
         size_t LocalSize = MetaBuffer.size();
-        std::string meta2_gather_str = "ES_meta2_gather_"+std::to_string(m_CommMetadataAggregators.Size());
+        std::string meta2_gather_str =
+            "ES_meta2_gather_" + std::to_string(m_CommMetadataAggregators.Size());
         m_Profiler.AddTimerWatch(meta2_gather_str, true);
         if (m_CommMetadataAggregators.Size() > 1)
         {
@@ -1043,15 +1045,15 @@ void BP5Writer::InitAggregator()
     std::string init_str = "InitAgg";
     if (m_Parameters.AsyncWrite)
     {
-      init_str += "-async";
+        init_str += "-async";
     }
 
     if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWrites)
-      init_str +="-ew";
+        init_str += "-ew";
     else if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWritesSerial)
-      init_str += "-ews";
+        init_str += "-ews";
     else
-      init_str += "-tls";
+        init_str += "-tls";
 
     m_Profiler.AddTimerWatch(init_str);
     m_Profiler.Start(init_str);
@@ -1087,7 +1089,7 @@ void BP5Writer::InitAggregator()
         m_Aggregator = static_cast<aggregator::MPIAggregator *>(&m_AggregatorTwoLevelShm);
     }
 
-     m_Profiler.Stop(init_str);
+    m_Profiler.Stop(init_str);
 
     /* comm for Aggregators only.
      *  We are only interested in the chain of rank 0s
