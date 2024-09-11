@@ -811,6 +811,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
     else
     {
         MemorySpace MemSpace = VB->GetMemorySpace(Data);
+        MemorySpace spanMemSpace = MemSpace;
         MetaArrayRec *MetaEntry = (MetaArrayRec *)((char *)(MetadataBuf) + Rec->MetaOffset);
         size_t ElemCount = CalcSize(DimCount, Count);
         size_t DataOffset = 0;
@@ -880,6 +881,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
         {
             *Span = CurDataBuffer->Allocate(ElemCount * ElemSize, ElemSize);
             DataOffset = m_PriorDataBufferSizeTotal + Span->globalPos;
+            spanMemSpace = MemorySpace::Host;
         }
 
         if (!AlreadyWritten)
@@ -915,7 +917,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
                 }
                 else
                 {
-                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type, MemSpace,
+                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type, spanMemSpace,
                                        Rec->MetaOffset, Rec->MinMaxOffset, 0 /*BlockNum*/);
                 }
             }
@@ -959,7 +961,7 @@ void BP5Serializer::Marshal(void *Variable, const char *Name, const DataType Typ
                 }
                 else
                 {
-                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type, MemSpace,
+                    lf_QueueSpanMinMax(*Span, ElemCount, (DataType)Rec->Type, spanMemSpace,
                                        Rec->MetaOffset, Rec->MinMaxOffset,
                                        MetaEntry->BlockCount - 1 /*BlockNum*/);
                 }
