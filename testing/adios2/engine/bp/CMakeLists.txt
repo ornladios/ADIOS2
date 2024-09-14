@@ -279,6 +279,16 @@ gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .FileStream
   WORKING_DIRECTORY ${FS_DIR} EXTRA_ARGS "FileStream"
 )
 
+if(ADIOS2_HAVE_Kokkos)
+    gtest_add_tests_helper(WriteReadKokkos MPI_ALLOW BP Engine.BP. .BP5
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
+  )
+
+  foreach(tgt ${Test.Engine.BP.WriteReadKokkos-TARGETS})
+    target_link_libraries(${tgt} Kokkos::kokkos)
+  endforeach()
+endif()
+
 if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
   gtest_add_tests_helper(WriteReadCuda MPI_ALLOW BP Engine.BP. .BP4
     WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
