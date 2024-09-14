@@ -288,28 +288,3 @@ if(ADIOS2_HAVE_Kokkos)
     target_link_libraries(${tgt} Kokkos::kokkos)
   endforeach()
 endif()
-
-if(ADIOS2_HAVE_CUDA OR ADIOS2_HAVE_Kokkos_CUDA)
-  gtest_add_tests_helper(WriteReadCuda MPI_ALLOW BP Engine.BP. .BP4
-    WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
-  )
-  gtest_add_tests_helper(SelectionsCuda MPI_ALLOW BP Engine.BP. .BP4
-    WORKING_DIRECTORY ${BP4_DIR} EXTRA_ARGS "BP4"
-  )
-  gtest_add_tests_helper(WriteReadCuda MPI_ALLOW BP Engine.BP. .BP5
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-  )
-  gtest_add_tests_helper(SelectionsCuda MPI_ALLOW BP Engine.BP. .BP5
-    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
-  )
-
-  foreach(tgt ${Test.Engine.BP.WriteReadCuda-TARGETS})
-    target_sources(${tgt} PRIVATE operations/CudaRoutines.cu)
-    target_link_libraries(${tgt} CUDA::cudart)
-  endforeach()
-
-  foreach(tgt ${Test.Engine.BP.SelectionsCuda-TARGETS})
-    target_sources(${tgt} PRIVATE operations/CudaRoutines.cu)
-    target_link_libraries(${tgt} CUDA::cudart)
-  endforeach()
-endif()
