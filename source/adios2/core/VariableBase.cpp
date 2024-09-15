@@ -57,6 +57,8 @@ void VariableBase::SetArrayLayout(const ArrayOrdering layout)
         UpdateLayout(m_Shape);
         UpdateLayout(m_Count);
         UpdateLayout(m_Start);
+        UpdateLayout(m_MemoryStart);
+        UpdateLayout(m_MemoryCount);
         return;
     }
     if (m_ArrayLayout != layout)
@@ -117,6 +119,8 @@ void VariableBase::SetMemorySpace(const MemorySpace mem)
                                                  ExistingMemSpace + " and cannot received a " +
                                                  NewMemSpace + " buffer");
     }
+    if (mem == MemorySpace::GPU && m_ArrayLayout == ArrayOrdering::Auto)
+        SetArrayLayout(ArrayOrdering::ColumnMajor);
 #endif
     m_MemSpace = mem;
 }
