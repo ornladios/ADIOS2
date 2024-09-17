@@ -211,3 +211,9 @@ class Variable:
         Remove operations (operators) assigned to this Variable.
         """
         self.impl.RemoveOperations()
+
+    def store_stats_only(self, mode):
+        """
+        Select writing mode for variable (write data or just stats)
+        """
+        self.impl.StoreStatsOnly(mode)
