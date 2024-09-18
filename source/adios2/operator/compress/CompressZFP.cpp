@@ -23,9 +23,8 @@
 /* CMake will make sure zfp >= 0.5.3
    ZFP features 4D input data since version 0.5.4
    https://zfp.readthedocs.io/en/release0.5.4/versions.html */
-#if  ZFP_VERSION_MAJOR > 0 \
-  || ZFP_VERSION_MINOR > 5 \
-  || (ZFP_VERSION_MINOR == 5 && ZFP_VERSION_PATCH > 3)
+#if ZFP_VERSION_MAJOR > 0 || ZFP_VERSION_MINOR > 5 ||                                              \
+    (ZFP_VERSION_MINOR == 5 && ZFP_VERSION_PATCH > 3)
 #define ADIOS2_HAVE_ZFP_4D
 #endif
 
