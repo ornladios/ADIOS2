@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <iostream>
+#include <limits>
 #include <numeric>
 #include <random>
 #include <stdexcept>
@@ -58,6 +59,12 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
     const std::string derDivName = "derived/div";
     const std::string derPowName = "derived/pow";
     const std::string derSqrtName = "derived/sqrt";
+    const std::string derMinName = "derived/min";
+    const std::string derMaxName = "derived/max";
+    const std::string derSumName = "derived/sum";
+    const std::string derMeanName = "derived/mean";
+    const std::string derVarianceName = "derived/variance";
+    const std::string derStdevName = "derived/stdev";
 
     auto Ux = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
@@ -99,6 +106,30 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
                                 "x =" + varname[0] + " \n"
                                 "sqrt(x)",
                                 mode);
+    bpOut.DefineDerivedVariable(derMinName,
+                                "x =" + varname[0] + " \n"
+                                "min(x)",
+                                mode);
+    bpOut.DefineDerivedVariable(derMaxName,
+                                "x =" + varname[0] + " \n"
+                                "max(x)",
+                                mode);
+    bpOut.DefineDerivedVariable(derSumName,
+                                "x =" + varname[0] + " \n"
+                                "sum(x)",
+                                mode);
+    bpOut.DefineDerivedVariable(derMeanName,
+                                "x =" + varname[0] + " \n"
+                                "mean(x)",
+                                mode);
+    bpOut.DefineDerivedVariable(derVarianceName,
+                                "x =" + varname[0] + " \n"
+                                "variance(x)",
+                                mode);
+    bpOut.DefineDerivedVariable(derStdevName,
+                                "x =" + varname[0] + " \n"
+                                "stdev(x)",
+                                mode);
     // clang-format on
     std::string filename = "derivedScalar.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
@@ -126,6 +157,8 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
     std::vector<float> readDiv;
     std::vector<double> readPow;
     std::vector<double> readSqrt;
+    float readMin, readMax, readSum, readMean, readVariance;
+    double readStdev;
 
     float calcFloat;
     double calcDouble;
@@ -143,7 +176,17 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
         bpFileReader.Get(derDivName, readDiv);
         bpFileReader.Get(derPowName, readPow);
         bpFileReader.Get(derSqrtName, readSqrt);
+        bpFileReader.Get(derMinName, readMin);
+        bpFileReader.Get(derMaxName, readMax);
+        bpFileReader.Get(derSumName, readSum);
+        bpFileReader.Get(derMeanName, readMean);
+        bpFileReader.Get(derVarianceName, readVariance);
+        bpFileReader.Get(derStdevName, readStdev);
         bpFileReader.EndStep();
+
+        float min = std::numeric_limits<float>::max();
+        float max = std::numeric_limits<float>::min();
+        float sum = 0;
 
         for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
         {
@@ -164,7 +207,30 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
 
             calcDouble = std::sqrt(readUx[ind]);
             EXPECT_TRUE(fabs(calcDouble - readSqrt[ind]) < epsilon);
+
+            min = std::min(min, readUx[ind]);
+            max = std::max(max, readUx[ind]);
+            sum += readUx[ind];
         }
+
+        float mean = sum / (Nx * Ny * Nz);
+        EXPECT_TRUE(fabs(min - readMin) < epsilon);
+        EXPECT_TRUE(fabs(max - readMax) < epsilon);
+        EXPECT_TRUE(fabs(sum - readSum) < epsilon);
+        EXPECT_TRUE(fabs(mean - readMean) < epsilon);
+
+        float variance = 0;
+
+        // Calculate Variance now that mean is computed
+        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
+        {
+            variance += (readUx[ind] - mean) * (readUx[ind] - mean);
+        }
+        variance /= (Nx * Ny * Nz);
+        double stdev = std::sqrt(variance);
+
+        EXPECT_TRUE(fabs(variance - readVariance) < epsilon);
+        EXPECT_TRUE(fabs(stdev - readStdev) < epsilon);
 
         for (size_t ind = 0; ind < Nx * Ny; ++ind)
         {

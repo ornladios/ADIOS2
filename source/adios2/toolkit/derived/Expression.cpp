@@ -38,26 +38,58 @@ const std::map<ExpressionOperator, OperatorProperty> op_property = {
     {ExpressionOperator::OP_ATAN, {"ATAN", false}},
     {ExpressionOperator::OP_MAGN, {"MAGNITUDE", false}},
     {ExpressionOperator::OP_CROSS, {"CROSS", false}},
-    {ExpressionOperator::OP_CURL, {"CURL", false}}};
+    {ExpressionOperator::OP_CURL, {"CURL", false}},
+    {ExpressionOperator::OP_MIN, {"MIN", false}},
+    {ExpressionOperator::OP_MAX, {"MAX", false}},
+    {ExpressionOperator::OP_SUM, {"SUM", false}},
+    {ExpressionOperator::OP_MEAN, {"MEAN", false}},
+    {ExpressionOperator::OP_VARIANCE, {"VARIANCE", false}},
+    {ExpressionOperator::OP_STDEV, {"STDEV", false}}};
 
 const std::map<std::string, ExpressionOperator> string_to_op = {
     {"ALIAS", ExpressionOperator::OP_ALIAS}, /* Parser-use only */
     {"PATH", ExpressionOperator::OP_PATH},   /* Parser-use only */
     {"NUM", ExpressionOperator::OP_NUM},     /* Parser-use only */
-    {"INDEX", ExpressionOperator::OP_INDEX},    {"+", ExpressionOperator::OP_ADD},
-    {"add", ExpressionOperator::OP_ADD},        {"ADD", ExpressionOperator::OP_ADD},
-    {"-", ExpressionOperator::OP_SUBTRACT},     {"SUBTRACT", ExpressionOperator::OP_SUBTRACT},
-    {"/", ExpressionOperator::OP_DIV},          {"divide", ExpressionOperator::OP_DIV},
-    {"DIVIDE", ExpressionOperator::OP_DIV},     {"*", ExpressionOperator::OP_MULT},
-    {"multiply", ExpressionOperator::OP_MULT},  {"MULTIPLY", ExpressionOperator::OP_MULT},
-    {"SQRT", ExpressionOperator::OP_SQRT},      {"sqrt", ExpressionOperator::OP_SQRT},
-    {"pow", ExpressionOperator::OP_POW},        {"POW", ExpressionOperator::OP_POW},
-    {"sin", ExpressionOperator::OP_SIN},        {"cos", ExpressionOperator::OP_COS},
-    {"tan", ExpressionOperator::OP_TAN},        {"asin", ExpressionOperator::OP_ASIN},
-    {"acos", ExpressionOperator::OP_ACOS},      {"atan", ExpressionOperator::OP_ATAN},
-    {"^", ExpressionOperator::OP_POW},          {"magnitude", ExpressionOperator::OP_MAGN},
-    {"MAGNITUDE", ExpressionOperator::OP_MAGN}, {"cross", ExpressionOperator::OP_CROSS},
-    {"curl", ExpressionOperator::OP_CURL},      {"CURL", ExpressionOperator::OP_CURL}};
+    {"INDEX", ExpressionOperator::OP_INDEX},
+    {"+", ExpressionOperator::OP_ADD},
+    {"add", ExpressionOperator::OP_ADD},
+    {"ADD", ExpressionOperator::OP_ADD},
+    {"-", ExpressionOperator::OP_SUBTRACT},
+    {"SUBTRACT", ExpressionOperator::OP_SUBTRACT},
+    {"/", ExpressionOperator::OP_DIV},
+    {"divide", ExpressionOperator::OP_DIV},
+    {"DIVIDE", ExpressionOperator::OP_DIV},
+    {"*", ExpressionOperator::OP_MULT},
+    {"multiply", ExpressionOperator::OP_MULT},
+    {"MULTIPLY", ExpressionOperator::OP_MULT},
+    {"SQRT", ExpressionOperator::OP_SQRT},
+    {"sqrt", ExpressionOperator::OP_SQRT},
+    {"pow", ExpressionOperator::OP_POW},
+    {"POW", ExpressionOperator::OP_POW},
+    {"sin", ExpressionOperator::OP_SIN},
+    {"cos", ExpressionOperator::OP_COS},
+    {"tan", ExpressionOperator::OP_TAN},
+    {"asin", ExpressionOperator::OP_ASIN},
+    {"acos", ExpressionOperator::OP_ACOS},
+    {"atan", ExpressionOperator::OP_ATAN},
+    {"^", ExpressionOperator::OP_POW},
+    {"magnitude", ExpressionOperator::OP_MAGN},
+    {"MAGNITUDE", ExpressionOperator::OP_MAGN},
+    {"cross", ExpressionOperator::OP_CROSS},
+    {"curl", ExpressionOperator::OP_CURL},
+    {"CURL", ExpressionOperator::OP_CURL},
+    {"min", ExpressionOperator::OP_MIN},
+    {"MIN", ExpressionOperator::OP_MIN},
+    {"max", ExpressionOperator::OP_MAX},
+    {"MAX", ExpressionOperator::OP_MAX},
+    {"sum", ExpressionOperator::OP_SUM},
+    {"SUM", ExpressionOperator::OP_SUM},
+    {"mean", ExpressionOperator::OP_MEAN},
+    {"MEAN", ExpressionOperator::OP_MEAN},
+    {"variance", ExpressionOperator::OP_VARIANCE},
+    {"VARIANCE", ExpressionOperator::OP_VARIANCE},
+    {"stdev", ExpressionOperator::OP_STDEV},
+    {"STDEV", ExpressionOperator::OP_STDEV}};
 
 inline std::string get_op_name(ExpressionOperator op) { return op_property.at(op).name; }
 
@@ -155,7 +187,13 @@ std::map<adios2::detail::ExpressionOperator, OperatorFunctions> OpFunctions = {
     {adios2::detail::ExpressionOperator::OP_MAGN,
      {MagnitudeFunc, SameDimsWithAgrFunc, SameTypeFunc}},
     {adios2::detail::ExpressionOperator::OP_CROSS, {Cross3DFunc, Cross3DDimsFunc, SameTypeFunc}},
-    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc, SameTypeFunc}}};
+    {adios2::detail::ExpressionOperator::OP_CURL, {Curl3DFunc, CurlDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_MIN, {MinFunc, ScalarDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_MAX, {MaxFunc, ScalarDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_SUM, {SumFunc, ScalarDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_MEAN, {MeanFunc, ScalarDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_VARIANCE, {VarianceFunc, ScalarDimsFunc, SameTypeFunc}},
+    {adios2::detail::ExpressionOperator::OP_STDEV, {StDevFunc, ScalarDimsFunc, FloatTypeFunc}}};
 
 Expression::Expression(std::string string_exp)
 : m_Shape({0}), m_Start({0}), m_Count({0}), ExprString(string_exp)

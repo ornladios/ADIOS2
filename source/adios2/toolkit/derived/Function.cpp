@@ -40,6 +40,18 @@ T *ApplyOneToOne(Iterator inputBegin, Iterator inputEnd, size_t dataSize,
 }
 
 template <class T>
+T ApplyAllToOne(T *inputData, size_t dataSize, std::function<T(T, T)> compFct, T initVal = (T)0)
+{
+    T outVal = initVal;
+    for (size_t i = 0; i < dataSize; i++)
+    {
+        T data = *(reinterpret_cast<T *>(inputData + i));
+        outVal = compFct(outVal, data);
+    }
+    return outVal;
+}
+
+template <class T>
 T *AggregateOnLastDim(T *data, size_t dataSize, size_t nVariables, std::function<T(T, T)> compFct)
 {
     T *outValues = (T *)malloc(dataSize * sizeof(T));
@@ -210,8 +222,8 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_mult(T)                                                                       \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *multValues = detail::ApplyOneToOne<T>(                                                  \
-            inputData.begin(), inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);      \
+        T *multValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,     \
+                                                 [](T a, T b) { return a * b; }, 1);               \
         return DerivedData({(void *)multValues, inputData[0].Start, inputData[0].Count});          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_mult)
@@ -232,8 +244,8 @@ DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
 #define declare_type_div(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *divValues = detail::ApplyOneToOne<T>(                                                   \
-            inputData.begin() + 1, inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);  \
+        T *divValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(), dataSize,  \
+                                                [](T a, T b) { return a * b; }, 1);                \
         for (size_t i = 0; i < dataSize; i++)                                                      \
             divValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) / divValues[i];         \
         return DerivedData({(void *)divValues, inputData[0].Start, inputData[0].Count});           \
@@ -675,6 +687,166 @@ DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
+DerivedData MinFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::MinFunc");
+
+#define declare_type_min(T)                                                                        \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *minVal = (T *)malloc(sizeof(T));                                                        \
+        *minVal = *((T *)(inputData[0].Data));                                                     \
+        for (DerivedData d : inputData)                                                            \
+        {                                                                                          \
+            size_t dataSize = std::accumulate(std::begin(d.Count), std::end(d.Count), 1,           \
+                                              std::multiplies<size_t>());                          \
+            *minVal = detail::ApplyAllToOne<T>((T *)d.Data, dataSize,                              \
+                                               [](T a, T b) { return std::min(a, b); }, *minVal);  \
+        }                                                                                          \
+        return DerivedData({(void *)minVal, {0}, {1}});                                            \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_min)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "MinFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData MaxFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::MaxFunc");
+
+#define declare_type_max(T)                                                                        \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *maxVal = (T *)malloc(sizeof(T));                                                        \
+        *maxVal = *((T *)(inputData[0].Data));                                                     \
+        for (DerivedData d : inputData)                                                            \
+        {                                                                                          \
+            size_t dataSize = std::accumulate(std::begin(d.Count), std::end(d.Count), 1,           \
+                                              std::multiplies<size_t>());                          \
+            *maxVal = detail::ApplyAllToOne<T>((T *)d.Data, dataSize,                              \
+                                               [](T a, T b) { return std::max(a, b); }, *maxVal);  \
+        }                                                                                          \
+        return DerivedData({(void *)maxVal, {0}, {1}});                                            \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_max)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "MaxFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData SumFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::SumFunc");
+
+#define declare_type_sum(T)                                                                        \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *sumVal = (T *)malloc(sizeof(T));                                                        \
+        *sumVal = (T)0;                                                                            \
+        for (DerivedData d : inputData)                                                            \
+        {                                                                                          \
+            size_t dataSize = std::accumulate(std::begin(d.Count), std::end(d.Count), 1,           \
+                                              std::multiplies<size_t>());                          \
+            *sumVal = detail::ApplyAllToOne<T>((T *)inputData[0].Data, dataSize,                   \
+                                               [](T a, T b) { return a + b; }, *sumVal);           \
+        }                                                                                          \
+        return DerivedData({(void *)sumVal, {0}, {1}});                                            \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sum)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "SumFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData MeanFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::MeanFunc");
+
+#define declare_type_mean(T)                                                                       \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T *meanVal = (T *)malloc(sizeof(T));                                                       \
+        *meanVal = (T)0;                                                                           \
+        size_t totalSize = 0;                                                                      \
+        for (DerivedData d : inputData)                                                            \
+        {                                                                                          \
+            size_t dataSize = std::accumulate(std::begin(d.Count), std::end(d.Count), 1,           \
+                                              std::multiplies<size_t>());                          \
+            totalSize += dataSize;                                                                 \
+            *meanVal = detail::ApplyAllToOne<T>((T *)inputData[0].Data, dataSize,                  \
+                                                [](T a, T b) { return a + b; }, *meanVal);         \
+        }                                                                                          \
+        *meanVal /= (T)totalSize;                                                                  \
+        return DerivedData({(void *)meanVal, {0}, {1}});                                           \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_mean)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "MeanFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData VarianceFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::VarianceFunc");
+    DerivedData meanData = MeanFunc(inputData, type);
+    size_t totalSize = 0;
+    for (DerivedData d : inputData)
+        totalSize +=
+            std::accumulate(std::begin(d.Count), std::end(d.Count), 1, std::multiplies<size_t>());
+
+#define declare_type_variance(T)                                                                   \
+    if (type == helper::GetDataType<T>())                                                          \
+    {                                                                                              \
+        T meanVal = *((T *)meanData.Data);                                                         \
+        T *varianceVal = (T *)malloc(sizeof(T));                                                   \
+        *varianceVal = (T)0;                                                                       \
+        for (DerivedData d : inputData)                                                            \
+        {                                                                                          \
+            size_t dataSize = std::accumulate(std::begin(d.Count), std::end(d.Count), 1,           \
+                                              std::multiplies<size_t>());                          \
+            *varianceVal = detail::ApplyAllToOne<T>(                                               \
+                (T *)inputData[0].Data, dataSize,                                                  \
+                [&meanVal, &totalSize](T a, T b) {                                                 \
+                    return a + (((b - meanVal) * (b - meanVal)) / (T)totalSize);                   \
+                },                                                                                 \
+                *varianceVal);                                                                     \
+        }                                                                                          \
+        return DerivedData({(void *)varianceVal, {0}, {1}});                                       \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_variance)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "VarianceFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
+DerivedData StDevFunc(std::vector<DerivedData> inputData, DataType type)
+{
+    PERFSTUBS_SCOPED_TIMER("derived::Function::StdevFunc");
+    DataType inputType = inputData[0].Type;
+    DerivedData varianceData = VarianceFunc(inputData, inputType);
+
+    if (inputType == DataType::LongDouble)
+    {
+        long double varianceVal = *((long double *)varianceData.Data);
+        long double *stdevVal = (long double *)malloc(sizeof(long double));
+        *stdevVal = std::sqrt(varianceVal);
+        return DerivedData({(void *)stdevVal, {0}, {1}});
+    }
+#define declare_type_stdev(T)                                                                      \
+    else if (inputType == helper::GetDataType<T>())                                                \
+    {                                                                                              \
+        T varianceVal = *((T *)varianceData.Data);                                                 \
+        double *stdevVal = (double *)malloc(sizeof(double));                                       \
+        *stdevVal = std::sqrt(varianceVal);                                                        \
+        return DerivedData({(void *)stdevVal, {0}, {1}});                                          \
+    }
+    ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_stdev)
+    helper::Throw<std::invalid_argument>("Derived", "Function", "StdevFunc",
+                                         "Invalid variable types");
+    return DerivedData();
+}
+
 /* Functions that return output dimensions
  * Input: A list of variable dimensions (start, count, shape)
  * Output: (start, count, shape) of the output operation */
@@ -750,6 +922,11 @@ std::tuple<Dims, Dims, Dims> CurlDimsFunc(std::vector<std::tuple<Dims, Dims, Dim
     std::get<1>(output).push_back(input.size());
     std::get<2>(output).push_back(input.size());
     return output;
+}
+
+std::tuple<Dims, Dims, Dims> ScalarDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input)
+{
+    return {{1}, {0}, {1}};
 }
 
 DataType SameTypeFunc(DataType input) { return input; }
