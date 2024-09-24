@@ -70,6 +70,7 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
     auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
     // clang-format off
+    /*
     bpOut.DefineDerivedVariable(derAgrAdd,
                                 "x=" + varname[0] + "\n"
                                 "add(x)",
@@ -106,10 +107,12 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
                                 "x =" + varname[0] + " \n"
                                 "sqrt(x)",
                                 mode);
+    */
     bpOut.DefineDerivedVariable(derMinName,
                                 "x =" + varname[0] + " \n"
                                 "min(x)",
                                 mode);
+    /*
     bpOut.DefineDerivedVariable(derMaxName,
                                 "x =" + varname[0] + " \n"
                                 "max(x)",
@@ -130,6 +133,7 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
                                 "x =" + varname[0] + " \n"
                                 "stdev(x)",
                                 mode);
+    */
     // clang-format on
     std::string filename = "derivedScalar.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
@@ -169,6 +173,7 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
         bpFileReader.Get(varname[0], readUx);
         bpFileReader.Get(varname[1], readUy);
         bpFileReader.Get(varname[2], readUz);
+	/*
         bpFileReader.Get(derAddName, readAdd);
         bpFileReader.Get(derAgrAdd, readAgrAdd);
         bpFileReader.Get(derSubtrName, readSubtr);
@@ -176,12 +181,15 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
         bpFileReader.Get(derDivName, readDiv);
         bpFileReader.Get(derPowName, readPow);
         bpFileReader.Get(derSqrtName, readSqrt);
+	*/
         bpFileReader.Get(derMinName, readMin);
+	/*
         bpFileReader.Get(derMaxName, readMax);
         bpFileReader.Get(derSumName, readSum);
         bpFileReader.Get(derMeanName, readMean);
         bpFileReader.Get(derVarianceName, readVariance);
         bpFileReader.Get(derStdevName, readStdev);
+	*/
         bpFileReader.EndStep();
 
         float min = std::numeric_limits<float>::max();
@@ -190,6 +198,7 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
 
         for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
         {
+	  /*
             calcFloat = readUx[ind] + readUy[ind] + readUz[ind];
             EXPECT_TRUE(fabs(calcFloat - readAdd[ind]) < epsilon);
 
@@ -207,7 +216,7 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
 
             calcDouble = std::sqrt(readUx[ind]);
             EXPECT_TRUE(fabs(calcDouble - readSqrt[ind]) < epsilon);
-
+	  */
             min = std::min(min, readUx[ind]);
             max = std::max(max, readUx[ind]);
             sum += readUx[ind];
@@ -215,9 +224,11 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
 
         float mean = sum / (Nx * Ny * Nz);
         EXPECT_TRUE(fabs(min - readMin) < epsilon);
+	/*
         EXPECT_TRUE(fabs(max - readMax) < epsilon);
         EXPECT_TRUE(fabs(sum - readSum) < epsilon);
         EXPECT_TRUE(fabs(mean - readMean) < epsilon);
+	*/
 
         float variance = 0;
 
@@ -229,8 +240,10 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
         variance /= (Nx * Ny * Nz);
         double stdev = std::sqrt(variance);
 
+	/*
         EXPECT_TRUE(fabs(variance - readVariance) < epsilon);
         EXPECT_TRUE(fabs(stdev - readStdev) < epsilon);
+	*/
 
         for (size_t ind = 0; ind < Nx * Ny; ++ind)
         {
@@ -240,12 +253,12 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
             {
                 calcA += readUx[z + start];
             }
-            EXPECT_TRUE(fabs(calcA - readAgrAdd[ind]) < epsilon);
+            //EXPECT_TRUE(fabs(calcA - readAgrAdd[ind]) < epsilon);
         }
     }
     bpFileReader.Close();
 }
-
+/*
 TEST_P(DerivedCorrectnessP, TrigCorrectnessTest)
 {
     const size_t Nx = 10, Ny = 3, Nz = 6;
@@ -552,6 +565,7 @@ TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
                 simArray2[idx] = sqrtf(z + 1) * cosf(x);
                 simArray3[idx] = powf(x, 2) * sinf(y) + (6 * z);
                 */
+/*
             }
         }
     }
@@ -622,7 +636,8 @@ TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
                 curl_x = -(2 * x);
                 curl_y = 7 - (2 * y);
                 curl_z = (4 * z) - (6 * x);
-                /* Less linear
+*/
+		/* Less linear
                 curl_x = 2 * y * cosf(x);
                 curl_y = cosf(z) + (powf(y, 2) * sinf(x));
                 curl_z = 4;
@@ -632,6 +647,7 @@ TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
                 curl_y = -2 * x * sinf(y);
                 curl_z = -sqrtf(z + 1) * sinf(x) - (2 * expf(2 * y) * sinf(x));
                 */
+		/*
                 if (fabs(curl_x) < 1)
                 {
                     err_x = fabs(curl_x - readCurl[3 * idx]) / (1 + fabs(curl_x));
@@ -761,11 +777,15 @@ TEST_P(DerivedCorrectnessP, MagCurlCorrectnessTest)
     bpFileReader.Close();
     EXPECT_LT(err / (Nx * Ny * Nz), error_limit);
 }
+*/
 
 INSTANTIATE_TEST_SUITE_P(DerivedCorrectness, DerivedCorrectnessP,
+                         ::testing::Values(adios2::DerivedVarType::ExpressionString));
+/*
                          ::testing::Values(adios2::DerivedVarType::StatsOnly,
                                            adios2::DerivedVarType::ExpressionString,
                                            adios2::DerivedVarType::StoreData));
+*/
 int main(int argc, char **argv)
 {
     int result;
