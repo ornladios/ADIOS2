@@ -57,9 +57,16 @@ void InlineReader::Get(core::Variable<T> &variable, T **data) const
 template <class T>
 void InlineReader::GetDeferredCommon(Variable<T> &variable, T *data)
 {
-    helper::Throw<std::runtime_error>(
-        "Engine", "InlineReader", "GetDeferredCommon",
-        "GetBlockDeferredCommon should be used instead of GetDeferredCommon.");
+    if ((variable.m_ShapeID == ShapeID::GlobalValue) || (variable.m_ShapeID == ShapeID::LocalValue))
+    {
+        GetSyncCommon(variable, data);
+    }
+    else
+    {
+        helper::Throw<std::runtime_error>(
+            "Engine", "InlineReader", "GetDeferredCommon",
+            "GetBlockDeferredCommon should be used instead of GetDeferredCommon.");
+    }
 }
 
 template <class T>
