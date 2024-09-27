@@ -381,6 +381,10 @@ TEST_F(BPWriteReadTestADIOS2, ADIOS2BPWriteRead1D8)
             bpReader.Get(var_u32, U32.data());
             bpReader.Get(var_u64, U64.data());
 
+            {
+                float float_datum;
+                EXPECT_THROW(bpReader.Get(var_r32, float_datum), std::invalid_argument);
+            }
             bpReader.Get(var_r32, R32.data());
             bpReader.Get(var_r64, R64.data());
 
