@@ -1,0 +1,40 @@
+From dfe014d1eea8b0d0533b7519b4a4f58785e43298 Mon Sep 17 00:00:00 2001
+From: Vicente Adolfo Bolea Sanchez <vicente.bolea@kitware.com>
+Date: Tue, 18 Jun 2024 18:23:06 -0400
+Subject: [PATCH] adios2: add xrootd variant
+
+---
+ var/spack/repos/builtin/packages/adios2/package.py | 3 +++
+ 1 file changed, 3 insertions(+)
+
+diff --git a/var/spack/repos/builtin/packages/adios2/package.py b/var/spack/repos/builtin/packages/adios2/package.py
+index f6a5aba446..97f8322ff3 100644
+--- a/var/spack/repos/builtin/packages/adios2/package.py
++++ b/var/spack/repos/builtin/packages/adios2/package.py
+@@ -95,6 +95,7 @@ class Adios2(CMakePackage, CudaPackage):
+     variant("cuda", default=False, when="@2.8:", description="Enable CUDA support")
+     variant("python", default=False, description="Enable the Python bindings")
+     variant("fortran", default=True, description="Enable the Fortran bindings")
++    variant("xrootd", default=True, description="Enable the XRootD")
+ 
+     # Requires mature C++11 implementations
+     conflicts("%gcc@:4.7")
+@@ -148,6 +149,7 @@ class Adios2(CMakePackage, CudaPackage):
+     depends_on("py-mpi4py@2.0.0:", when="+mpi +python", type=("build", "run"))
+     depends_on("aws-sdk-cpp", when="+aws")
+     depends_on("libcatalyst@2", when="+libcatalyst")
++    depends_on("xrootd~davix", when="+xrootd")
+ 
+     # Fix findmpi when called by dependees
+     # See https://github.com/ornladios/ADIOS2/pull/1632
+@@ -197,6 +199,7 @@ def cmake_args(self):
+             from_variant("CMAKE_POSITION_INDEPENDENT_CODE", "pic"),
+             from_variant("BUILD_SHARED_LIBS", "shared"),
+             from_variant("ADIOS2_USE_AWSSDK", "aws"),
++            from_variant("ADIOS2_USE_XRootD", "xrootd"),
+             from_variant("ADIOS2_USE_Blosc", "blosc"),
+             from_variant("ADIOS2_USE_BZip2", "bzip2"),
+             from_variant("ADIOS2_USE_DataMan", "dataman"),
+-- 
+2.35.3
+
