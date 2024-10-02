@@ -31,6 +31,12 @@ namespace adios2
     }                                                                                              \
                                                                                                    \
     template <>                                                                                    \
+    void Variable<T>::StoreStatsOnly(const bool mode)                                              \
+    {                                                                                              \
+        m_Variable->StoreStatsOnly(mode);                                                          \
+    }                                                                                              \
+                                                                                                   \
+    template <>                                                                                    \
     void Variable<T>::SetMemorySpace(const MemorySpace mem)                                        \
     {                                                                                              \
         m_Variable->SetMemorySpace(mem);                                                           \

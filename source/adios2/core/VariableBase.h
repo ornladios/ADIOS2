@@ -51,6 +51,9 @@ public:
      *  VariableStruct -> from constructor sizeof(struct) */
     const size_t m_ElementSize;
 
+    /** Write data for the variable (True - default) or only write stats (False) */
+    bool m_WriteData = true;
+
     /* User requested memory space */
     MemorySpace m_MemSpace = MemorySpace::Detect;
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
@@ -127,6 +130,12 @@ public:
      * @return number of elements
      */
     size_t TotalSize() const noexcept;
+
+    /**
+     * Set the write mode of a variable
+     * @param false - write data; true - write only stats
+     */
+    void StoreStatsOnly(const bool mode);
 
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     /**

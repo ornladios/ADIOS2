@@ -42,6 +42,8 @@ VariableBase::VariableBase(const std::string &name, const DataType type, const s
 
 size_t VariableBase::TotalSize() const noexcept { return helper::GetTotalSize(m_Count); }
 
+void VariableBase::StoreStatsOnly(const bool mode) { m_WriteData = !(mode); }
+
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
 ArrayOrdering VariableBase::GetArrayLayout() { return m_ArrayLayout; }
 

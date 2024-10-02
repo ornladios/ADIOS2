@@ -27,6 +27,12 @@ void Variable::SetShape(const Dims &shape)
     m_VariableBase->SetShape(shape);
 }
 
+void Variable::StoreStatsOnly(const bool mode)
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::StoreStatsOnly");
+    m_VariableBase->StoreStatsOnly(mode);
+}
+
 void Variable::SetBlockSelection(const size_t blockID)
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::SetBlockSelection");

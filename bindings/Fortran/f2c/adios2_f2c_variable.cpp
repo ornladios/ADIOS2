@@ -97,6 +97,13 @@ void FC_GLOBAL(adios2_variable_steps_f2c,
     }
 }
 
+void FC_GLOBAL(adios2_store_stats_only_f2c, ADIOS2_SET_WRITE_MODE_F2C)(adios2_variable **variable,
+                                                                       const adios2_bool *mode,
+                                                                       int *ierr)
+{
+    *ierr = static_cast<int>(adios2_store_stats_only(*variable, *mode));
+}
+
 void FC_GLOBAL(adios2_set_memory_space_f2c, ADIOS2_SET_MEMORY_SPACE_F2C)(adios2_variable **variable,
                                                                          const int *mem, int *ierr)
 {
