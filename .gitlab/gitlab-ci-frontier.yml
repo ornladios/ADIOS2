@@ -1,5 +1,10 @@
 # Ad-hoc build that runs in the ECP Hardware, concretely in OLCF Frontier.
 
+default:
+  id_tokens:
+    OLCF_ID_TOKEN:
+      aud: https://code.olcf.ornl.gov
+
 stages:
   - pre
   - setup
