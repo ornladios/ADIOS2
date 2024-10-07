@@ -280,6 +280,10 @@ gtest_add_tests_helper(StepsInSituLocalArray MPI_ALLOW BP Engine.BP. .FileStream
 )
 
 if(ADIOS2_HAVE_Kokkos)
+  set(CMAKE_CXX_STANDARD 17)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_COMPILER "${Kokkos_CXX_COMPILER}")
+
     gtest_add_tests_helper(WriteReadKokkos MPI_ALLOW BP Engine.BP. .BP5
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
   )
