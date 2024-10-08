@@ -218,9 +218,7 @@ public:
         auto bufferView = static_cast<AdiosView<U>>(data);
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
         auto bufferMem = bufferView.memory_space();
-        auto bufferLayout = bufferView.layout();
         variable.SetMemorySpace(bufferMem);
-        variable.SetArrayLayout(bufferLayout);
 #endif
         Put(variable, bufferView.data(), launch);
     }
@@ -424,9 +422,7 @@ public:
         auto bufferView = static_cast<AdiosView<U>>(data);
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
         auto bufferMem = bufferView.memory_space();
-        auto bufferLayout = bufferView.layout();
         variable.SetMemorySpace(bufferMem);
-        variable.SetArrayLayout(bufferLayout);
 #endif
         Get(variable, bufferView.data(), launch);
     }
