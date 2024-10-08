@@ -21,11 +21,7 @@ public:
 
 TEST_F(ADIOS2_C_API, ADIOS2BPWriteStatsOnly)
 {
-#if ADIOS2_USE_MPI
-    const char fname[] = "ADIOS2_C_API.ADIOS2BPWriteStatsOnly_MPI.bp";
-#else
     const char fname[] = "ADIOS2_C_API.ADIOS2BPWriteStatsOnly.bp";
-#endif
     // write
     {
         adios2_io *ioH = adios2_declare_io(adiosH, "CWriteStats");
