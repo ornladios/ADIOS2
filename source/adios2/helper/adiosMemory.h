@@ -240,7 +240,8 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
            const bool outIsLittleEndian, const int typeSize,
            const CoreDims &inMemStart = CoreDims(), const CoreDims &inMemCount = CoreDims(),
            const CoreDims &outMemStart = CoreDims(), const CoreDims &outMemCount = CoreDims(),
-           const bool safeMode = false, MemorySpace MemSpace = MemorySpace::Host);
+           const bool safeMode = false, const MemorySpace MemSpace = MemorySpace::Host,
+           const bool duringWrite = false);
 
 template <class T>
 size_t PayloadSize(const T *data, const Dims &count) noexcept;

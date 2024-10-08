@@ -251,7 +251,7 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
            const CoreDims &outStart, const CoreDims &outCount, const bool outIsRowMajor,
            const bool outIsLittleEndian, const int typeSize, const CoreDims &inMemStart,
            const CoreDims &inMemCount, const CoreDims &outMemStart, const CoreDims &outMemCount,
-           const bool safeMode, MemorySpace MemSpace)
+           const bool safeMode, const MemorySpace MemSpace, const bool duringWrite)
 
 {
 
@@ -439,7 +439,7 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
             if (MemSpace == MemorySpace::GPU)
             {
                 helper::NdCopyGPU(inOvlpBase, outOvlpBase, inOvlpGapSize, outOvlpGapSize, ovlpCount,
-                                  minContDim, blockSize, MemSpace);
+                                  minContDim, blockSize, MemSpace, duringWrite);
                 return 0;
             }
 #endif
