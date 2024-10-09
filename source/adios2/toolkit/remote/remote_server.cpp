@@ -15,6 +15,7 @@
 #include <cstring> // strerror
 #include <errno.h> // errno
 #include <fcntl.h> // open
+#include <fstream>
 #include <inttypes.h>
 #include <regex>
 #include <sys/stat.h>  // open, fstat
