@@ -114,6 +114,11 @@ void SscReader::DoClose(const int transportIndex)
                     m_Verbosity >= 10 ? m_Comm.Rank() : 0, m_Comm.Rank(), 5, m_Verbosity,          \
                     helper::LogMode::INFO);                                                        \
         m_EngineInstance->GetDeferred(variable, data);                                             \
+        if ((variable.m_ShapeID == ShapeID::GlobalValue) ||                                        \
+            (variable.m_ShapeID == ShapeID::LocalValue))                                           \
+        {                                                                                          \
+            m_EngineInstance->PerformGets();                                                       \
+        }                                                                                          \
     }                                                                                              \
     std::vector<typename Variable<T>::BPInfo> SscReader::DoBlocksInfo(const Variable<T> &variable, \
                                                                       const size_t step) const     \

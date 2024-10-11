@@ -57,6 +57,8 @@ void VariableBase::SetArrayLayout(const ArrayOrdering layout)
         UpdateLayout(m_Shape);
         UpdateLayout(m_Count);
         UpdateLayout(m_Start);
+        UpdateLayout(m_MemoryStart);
+        UpdateLayout(m_MemoryCount);
         return;
     }
     if (m_ArrayLayout != layout)
@@ -103,6 +105,9 @@ MemorySpace VariableBase::GetMemorySpace(const void *ptr)
 
 void VariableBase::SetMemorySpace(const MemorySpace mem)
 {
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    ArrayOrdering layout = m_BaseLayout;
+#endif
 #ifdef ADIOS2_HAVE_GPU_SUPPORT
     if (m_MemSpace != MemorySpace::Detect && m_MemSpace != mem)
     {
@@ -117,6 +122,14 @@ void VariableBase::SetMemorySpace(const MemorySpace mem)
                                                  ExistingMemSpace + " and cannot received a " +
                                                  NewMemSpace + " buffer");
     }
+    if (mem == MemorySpace::GPU)
+        layout = ArrayOrdering::ColumnMajor;
+#endif
+#if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
+    // set the layout based on the buffer memory space
+    // skipping throwing an exception for a mismatch
+    if (m_ArrayLayout == ArrayOrdering::Auto)
+        SetArrayLayout(layout);
 #endif
     m_MemSpace = mem;
 }

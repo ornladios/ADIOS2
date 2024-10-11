@@ -15,6 +15,7 @@
 #include <cstring> // strerror
 #include <errno.h> // errno
 #include <fcntl.h> // open
+#include <fstream>
 #include <inttypes.h>
 #include <regex>
 #include <sys/stat.h>  // open, fstat
@@ -550,6 +551,7 @@ int main(int argc, char **argv)
     int kill_server = 0;
     int status_server = 0;
     int no_timeout = 0; // default to timeout
+    std::ofstream fileOut;
 
     for (int i = 1; i < argc; i++)
     {
@@ -581,12 +583,31 @@ int main(int argc, char **argv)
         {
             verbose--;
         }
+        else if (strcmp(argv[i], "-l") == 0)
+        {
+            i++;
+            if (argc <= i)
+            {
+                fprintf(stderr, "Flag -l requires an argument\n");
+                fprintf(stderr,
+                        "Usage:  adios2_remote_server [-background] [-kill_server] [-no_timeout] "
+                        "[-status] [-v] [-q] [-l logfile]\n");
+                exit(1);
+            }
+            char *filename = argv[i];
+            // Opening the output file stream and associate it with
+            // logfile
+            fileOut.open(filename);
+
+            // Redirecting cout to write to logfile
+            std::cout.rdbuf(fileOut.rdbuf());
+        }
         else
         {
             fprintf(stderr, "Unknown argument \"%s\"\n", argv[i]);
             fprintf(stderr,
                     "Usage:  adios2_remote_server [-background] [-kill_server] [-no_timeout] "
-                    "[-status] [-v] [-q]\n");
+                    "[-status] [-v] [-q] [-l logfile]\n");
             exit(1);
         }
     }
@@ -725,7 +746,7 @@ int main(int argc, char **argv)
     {
         int Port = -1;
         get_int_attr(listen_list, CM_IP_PORT, &Port);
-        printf("Listening on Port %d\n", Port);
+        std::cout << "Listening on Port " << Port << std::endl;
     }
     ev_state.cm = cm;
 

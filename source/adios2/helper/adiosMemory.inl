@@ -105,7 +105,7 @@ void CopyFromBufferToGPU(T *GPUbuffer, size_t position, const char *source, Memo
 
 static inline void NdCopyGPU(const char *&inOvlpBase, char *&outOvlpBase, CoreDims &inOvlpGapSize,
                              CoreDims &outOvlpGapSize, CoreDims &ovlpCount, size_t minContDim,
-                             size_t blockSize, MemorySpace memSpace)
+                             size_t blockSize, MemorySpace memSpace, bool duringWrite)
 {
     DimsArray pos(ovlpCount.size(), (size_t)0);
     size_t curDim = 0;
@@ -116,7 +116,10 @@ static inline void NdCopyGPU(const char *&inOvlpBase, char *&outOvlpBase, CoreDi
             pos[curDim]++;
             curDim++;
         }
-        CopyFromBufferToGPU(outOvlpBase, 0, inOvlpBase, memSpace, blockSize);
+	if (duringWrite)
+            CopyFromGPUToBuffer(outOvlpBase, 0, inOvlpBase, memSpace, blockSize);
+	else
+            CopyFromBufferToGPU(outOvlpBase, 0, inOvlpBase, memSpace, blockSize);
         inOvlpBase += blockSize;
         outOvlpBase += blockSize;
         do

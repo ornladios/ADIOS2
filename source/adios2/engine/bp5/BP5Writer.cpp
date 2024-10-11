@@ -1815,7 +1815,8 @@ void BP5Writer::PutCommon(VariableBase &variable, const void *values, bool sync)
         helper::NdCopy((const char *)values, helper::CoreDims(ZeroDims), MemoryCount,
                        sourceRowMajor, false, (char *)ptr, MemoryStart, varCount, sourceRowMajor,
                        false, (int)ObjSize, helper::CoreDims(), helper::CoreDims(),
-                       helper::CoreDims(), helper::CoreDims(), false /* safemode */, memSpace);
+                       helper::CoreDims(), helper::CoreDims(), false /* safemode */, memSpace,
+                       /* duringWrite */ true);
     }
     else
     {
