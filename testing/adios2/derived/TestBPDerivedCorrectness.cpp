@@ -161,8 +161,8 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
     std::vector<float> readDiv;
     std::vector<double> readPow;
     std::vector<double> readSqrt;
-    float readMin, readMax, readSum, readMean, readVariance;
-    double readStdev;
+    std::vector<float> readMin, readMax, readSum, readMean, readVariance;
+    std::vector<double> readStdev;
 
     float calcFloat;
     double calcDouble;
@@ -223,7 +223,7 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
         }
 
         float mean = sum / (Nx * Ny * Nz);
-        EXPECT_TRUE(fabs(min - readMin) < epsilon);
+        EXPECT_TRUE(fabs(min - readMin[0]) < epsilon);
 	/*
         EXPECT_TRUE(fabs(max - readMax) < epsilon);
         EXPECT_TRUE(fabs(sum - readSum) < epsilon);
