@@ -367,9 +367,6 @@ bool compareSelection2D(
             if (b(x, y) != a(start_0 + x, start_1 + y))
             {
                 lmatch++;
-                // Add lines back when using Kokkos 4.2
-                // Kokkos::printf("   Non-match at pos = (%d %d) : input = %f : output = %f\n", x,
-                //               y, a(start_0 + x, start_1 + y), b(x, y));
             }
         },
         match);
