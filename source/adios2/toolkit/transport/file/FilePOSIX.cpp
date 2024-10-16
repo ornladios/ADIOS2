@@ -534,7 +534,7 @@ void FilePOSIX::Flush()
 #if (_POSIX_C_SOURCE >= 199309L || _XOPEN_SOURCE >= 500)
     fdatasync(m_FileDescriptor);
 #else
-    fsync(m_FileDescriptor)
+    fsync(m_FileDescriptor);
 #endif
 #endif
 }
@@ -545,6 +545,11 @@ void FilePOSIX::Close()
     ProfilerStart("close");
     errno = 0;
     const int status = close(m_FileDescriptor);
+#if (_POSIX_C_SOURCE >= 199309L || _XOPEN_SOURCE >= 500)
+    fdatasync(m_FileDescriptor);
+#else
+    fsync(m_FileDescriptor);
+#endif
     m_Errno = errno;
     ProfilerStop("close");
 
