@@ -144,7 +144,7 @@ build:frontier-kokkos-hip:
   variables:
     # Order matters
     JOB_MODULES: >-
-      DefApps
+      Core/24.00
       PrgEnv-cray
       cmake
       git
