@@ -415,6 +415,7 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
     auto lf_Read = [&](char *buffer, size_t size) {
         size_t backoff_ns = 20;
         std::cout << "Start Read of size " << size << "  Start " << start << std::endl;
+	if (start != MaxSizeT) std::cout << "Start is MaxSizeT" << std::endl;
         while (size > 0)
         {
             ProfilerStart("read");
