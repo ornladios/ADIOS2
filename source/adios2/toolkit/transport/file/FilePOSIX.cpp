@@ -414,6 +414,9 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
 {
     auto lf_Read = [&](char *buffer, size_t size) {
         size_t backoff_ns = 20;
+        std::cout << "Start Read of size " << size << "  Start " << start << std::endl;
+        if (start != MaxSizeT)
+            std::cout << "Start is MaxSizeT" << std::endl;
         while (size > 0)
         {
             ProfilerStart("read");
@@ -421,6 +424,8 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
             const auto readSize = read(m_FileDescriptor, buffer, size);
             m_Errno = errno;
             ProfilerStop("read");
+            std::cout << "read of " << size << " returned " << readSize << ", errno " << errno
+                      << std::endl;
 
             if (readSize == -1)
             {
@@ -435,6 +440,7 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
             }
             else if (readSize == 0)
             {
+                std::cout << "ReadSize zero fail on eof is " << m_FailOnEOF << std::endl;
                 if (m_FailOnEOF)
                 {
                     // we got an EOF on data that *should* be present,
@@ -445,6 +451,7 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
                     // this as a real failure and throw an exception.
                     std::this_thread::sleep_for(std::chrono::nanoseconds(backoff_ns));
                     backoff_ns *= 2;
+                    std::cout << "failure backoff_ns now " << backoff_ns << std::endl;
                     if (std::chrono::nanoseconds(backoff_ns) > std::chrono::seconds(30))
                         helper::Throw<std::ios_base::failure>(
                             "Toolkit", "transport::file::FilePOSIX", "Read",
@@ -458,6 +465,7 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
                     std::this_thread::sleep_for(std::chrono::nanoseconds(backoff_ns));
                     constexpr size_t backoff_limit = 500 * 1000 * 1000;
                     backoff_ns *= 2;
+                    std::cout << "wait_forever backoff_ns now " << backoff_ns << std::endl;
                     if (backoff_ns > backoff_limit)
                         backoff_ns = backoff_limit;
                 }
@@ -466,6 +474,7 @@ void FilePOSIX::Read(char *buffer, size_t size, size_t start)
             buffer += readSize;
             size -= readSize;
         }
+        std::cout << "Returning with size " << size << std::endl;
     };
 
     WaitForOpen();
@@ -527,7 +536,7 @@ void FilePOSIX::Flush()
 #if (_POSIX_C_SOURCE >= 199309L || _XOPEN_SOURCE >= 500)
     fdatasync(m_FileDescriptor);
 #else
-    fsync(m_FileDescriptor)
+    fsync(m_FileDescriptor);
 #endif
 #endif
 }
@@ -538,6 +547,11 @@ void FilePOSIX::Close()
     ProfilerStart("close");
     errno = 0;
     const int status = close(m_FileDescriptor);
+#if (_POSIX_C_SOURCE >= 199309L || _XOPEN_SOURCE >= 500)
+    fdatasync(m_FileDescriptor);
+#else
+    fsync(m_FileDescriptor);
+#endif
     m_Errno = errno;
     ProfilerStop("close");
 
