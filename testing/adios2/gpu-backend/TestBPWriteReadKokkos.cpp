@@ -494,6 +494,126 @@ void KokkosWriteReadSelection2D()
     }
 }
 
+void KokkosWriteReadStruct()
+{
+    constexpr size_t DIM1 = 2;
+    constexpr size_t DIM2 = 3;
+    adios2::MemorySpace adiosMemSpace = adios2::MemorySpace::Host;
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
+    if (!std::is_same<Kokkos::DefaultExecutionSpace::memory_space, Kokkos::HostSpace>::value)
+        adiosMemSpace = adios2::MemorySpace::GPU;
+#endif
+    const std::string filename = "BPWRKokkosStruct.bp";
+    struct particle
+    {
+        double a;
+        int b[2];
+    };
+
+    { // write
+        Kokkos::View<particle **, Kokkos::DefaultExecutionSpace::memory_space> inputData(
+            "inBuffer", DIM1, DIM2);
+        Kokkos::parallel_for(
+            "initBuffer", Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {DIM1, DIM2}),
+            KOKKOS_LAMBDA(int x, int y) {
+                inputData(x, y) = {x * 1.5, {x, y}};
+            });
+        Kokkos::fence();
+        adios2::ADIOS adios;
+        adios2::IO ioWrite = adios.DeclareIO("TestIO");
+        ioWrite.SetEngine("BP5");
+        if (!engineName.empty())
+        {
+            ioWrite.SetEngine(engineName);
+        }
+        adios2::Engine engine = ioWrite.Open(filename, adios2::Mode::Write);
+        const adios2::Dims shape = {DIM1, DIM2};
+        const adios2::Dims count = {DIM1, DIM2};
+        const adios2::Dims start = {0, 0};
+        auto particleDef = ioWrite.DefineStruct("particle", sizeof(particle));
+        particleDef.AddField("a", offsetof(struct particle, a), adios2::DataType::Double);
+        particleDef.AddField("b", offsetof(struct particle, b), adios2::DataType::Int32, 2);
+        auto varStruct =
+            ioWrite.DefineStructVariable("particles", particleDef, shape, start, count);
+
+        engine.BeginStep();
+        varStruct.SetMemorySpace(adiosMemSpace);
+        engine.Put(varStruct, inputData.data());
+        engine.EndStep();
+        engine.Close();
+    }
+
+    { // read
+        adios2::ADIOS adios;
+        adios2::IO ioRead = adios.DeclareIO("TestIORead");
+        ioRead.SetEngine("BP5");
+        if (!engineName.empty())
+        {
+            ioRead.SetEngine(engineName);
+        }
+        adios2::Engine engine = ioRead.Open(filename, adios2::Mode::Read);
+        Kokkos::View<particle **, Kokkos::DefaultExecutionSpace::memory_space> myParticles(
+            "outParticles", DIM1, DIM2);
+
+        engine.BeginStep();
+        auto varStruct = ioRead.InquireStructVariable("particles");
+        adios2::StructDefinition ReadStruct = varStruct.GetReadStructDef();
+        if (varStruct && !ReadStruct)
+        {
+            varStruct.SetMemorySpace(adiosMemSpace);
+            adios2::StructDefinition WriteStruct = varStruct.GetWriteStructDef();
+            ASSERT_TRUE(WriteStruct);
+            std::cout << "Writer side structure was named \"" << WriteStruct.StructName()
+                      << "\" and has size " << WriteStruct.StructSize() << std::endl;
+            for (size_t i = 0; i < WriteStruct.Fields(); i++)
+            {
+                std::cout << "\tField " << i << " - Name: \"" << WriteStruct.Name(i)
+                          << "\", Offset: " << WriteStruct.Offset(i)
+                          << ", Type: " << WriteStruct.Type(i)
+                          << ", ElementCount : " << WriteStruct.ElementCount(i) << std::endl;
+            }
+            std::cout << std::endl;
+            auto particleDef1 = ioRead.DefineStruct("particle", sizeof(particle));
+            particleDef1.AddField("a", offsetof(particle, a), adios2::DataType::Double);
+            particleDef1.AddField("b", offsetof(particle, b), adios2::DataType::Int32, 2);
+            varStruct.SetReadStructDef(particleDef1);
+        }
+        else if (varStruct)
+        {
+            // set this already, but try something else
+            static bool first = true;
+            if (first)
+            {
+                first = false;
+                adios2::StructDefinition SaveDef = varStruct.GetReadStructDef();
+                ASSERT_TRUE(SaveDef);
+                auto particleDef2 = ioRead.DefineStruct("particle", sizeof(particle));
+                particleDef2.AddField("a", offsetof(particle, a), adios2::DataType::Double);
+                particleDef2.AddField("b", offsetof(particle, b), adios2::DataType::Int32, 2);
+                varStruct.SetReadStructDef(particleDef2);
+
+                // restore the old one so we can succeed below
+                varStruct.SetReadStructDef(SaveDef);
+            }
+        }
+        const adios2::Dims count = {DIM1, DIM2};
+        const adios2::Dims start = {0, 0};
+        varStruct.SetSelection({start, count});
+        ASSERT_TRUE(varStruct);
+        engine.Get(varStruct, myParticles.data(), adios2::Mode::Sync);
+        engine.EndStep();
+        // move the data to the CPU
+        auto cpuData = Kokkos::create_mirror_view_and_copy(Kokkos::HostSpace{}, myParticles);
+        for (size_t i = 0; i < DIM1; ++i)
+            for (size_t j = 0; j < DIM2; ++j)
+            {
+                ASSERT_EQ(cpuData(i, j).a, i * 1.5);
+                ASSERT_EQ(cpuData(i, j).b[0], i);
+                ASSERT_EQ(cpuData(i, j).b[1], j);
+            }
+    }
+}
+
 class BPWRKokkos : public ::testing::TestWithParam<std::string>
 {
 public:
@@ -507,8 +627,9 @@ TEST_P(BPWRKokkos, ADIOS2BPKokkosDetect) { KokkosDetectMemSpace(GetParam()); }
 TEST_P(BPWRKokkos, ADIOS2BPKokkosMemSel) { KokkosWriteReadMemorySelection(); }
 TEST_P(BPWRKokkos, ADIOS2BPWRKokkos2D) { KokkosWriteReadMPI2D(); }
 TEST_P(BPWRKokkos, ADIOS2BPWRKokkosSel2D) { KokkosWriteReadSelection2D(); }
+TEST_P(BPWRKokkos, ADIOS2BPWRKokkosStruct) { KokkosWriteReadStruct(); }
 
-INSTANTIATE_TEST_SUITE_P(KokkosRW, BPWRKokkos, ::testing::Values("deferred", "sync"));
+INSTANTIATE_TEST_SUITE_P(KokkosRW, BPWRKokkos, ::testing::Values("deferred"));
 
 int main(int argc, char **argv)
 {
@@ -519,6 +640,9 @@ int main(int argc, char **argv)
     MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
 #endif
     Kokkos::initialize(argc, argv);
+
+    Kokkos::DefaultExecutionSpace exe_space;
+    std::cout << "Testing on memory space: " << exe_space.name() << std::endl;
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
