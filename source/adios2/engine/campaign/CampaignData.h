@@ -12,6 +12,7 @@
 #ifndef ADIOS2_ENGINE_CAMPAIGNDATA_H_
 #define ADIOS2_ENGINE_CAMPAIGNDATA_H_
 
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <map>

@@ -367,8 +367,6 @@ bool compareSelection2D(
             if (b(x, y) != a(start_0 + x, start_1 + y))
             {
                 lmatch++;
-                Kokkos::printf("   Non-match at pos = (%d %d) : input = %f : output = %f\n", x, y,
-                               a(start_0 + x, start_1 + y), b(x, y));
             }
         },
         match);
@@ -520,6 +518,7 @@ int main(int argc, char **argv)
     // MPI_THREAD_MULTIPLE is only required if you enable the SST MPI_DP
     MPI_Init_thread(nullptr, nullptr, MPI_THREAD_MULTIPLE, &provided);
 #endif
+    Kokkos::initialize(argc, argv);
 
     int result;
     ::testing::InitGoogleTest(&argc, argv);
@@ -529,6 +528,7 @@ int main(int argc, char **argv)
     }
     result = RUN_ALL_TESTS();
 
+    Kokkos::finalize();
 #if ADIOS2_USE_MPI
     MPI_Finalize();
 #endif
