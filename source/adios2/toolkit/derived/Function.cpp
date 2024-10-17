@@ -926,7 +926,8 @@ std::tuple<Dims, Dims, Dims> CurlDimsFunc(std::vector<std::tuple<Dims, Dims, Dim
 
 std::tuple<Dims, Dims, Dims> ScalarDimsFunc(std::vector<std::tuple<Dims, Dims, Dims>> input)
 {
-    return {{1}, {0}, {1}};
+    // Start, Count, Shape
+    return {{0}, {1}, {1}};
 }
 
 DataType SameTypeFunc(DataType input) { return input; }
