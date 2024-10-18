@@ -1534,6 +1534,12 @@ void SstWriterClose(SstStream Stream)
             free(Stream->ReleaseList);
             Stream->ReleaseList = NULL;
         }
+        while (Stream->StepRequestQueue)
+        {
+            StepRequest Request = Stream->StepRequestQueue;
+            Stream->StepRequestQueue = Request->Next;
+            free(Request);
+        }
         while (Stream->QueuedTimesteps)
         {
             CP_verbose(Stream, PerStepVerbose,
