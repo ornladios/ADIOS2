@@ -40,7 +40,7 @@ public:
     typedef void *GetHandle;
 
     virtual GetHandle Get(char *VarName, size_t Step, size_t BlockID, Dims &Count, Dims &Start,
-                          void *dest);
+                          Accuracy &accuracy, void *dest);
 
     virtual bool WaitForGet(GetHandle handle);
 

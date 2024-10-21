@@ -45,6 +45,8 @@ inline Variable<T> CampaignReader::DuplicateVariable(Variable<T> *variable, IO &
     v.m_StepsCount = variable->m_StepsCount;
     v.m_Start = variable->m_Start;
     v.m_Count = variable->m_Count;
+    v.m_AccuracyRequested = variable->m_AccuracyRequested;
+    v.m_AccuracyProvided = variable->m_AccuracyProvided;
 
     v.m_Engine = this; // Variable::Shape() uses this member to call engine
     vii.originalVar = static_cast<void *>(variable);
@@ -81,6 +83,7 @@ CampaignReader::TranslateToActualVariable(Variable<T> &variable)
     v->m_MemoryStart = variable.m_MemoryStart;
     v->m_MemoryCount = variable.m_MemoryCount;
     v->m_MemSpace = variable.m_MemSpace;
+    v->m_AccuracyRequested = variable.m_AccuracyRequested;
     return std::make_pair(v, e);
 }
 

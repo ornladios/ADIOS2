@@ -334,7 +334,7 @@ bool XrootdRemote::WaitForGet(GetHandle handle)
 }
 
 Remote::GetHandle XrootdRemote::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count,
-                                    Dims &Start, void *dest)
+                                    Dims &Start, Accuracy &accuracy, void *dest)
 {
 #ifdef ADIOS2_HAVE_XROOTD
     char rName[512] = "/etc";
