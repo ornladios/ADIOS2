@@ -224,7 +224,7 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
     {                                                                                              \
         T *multValues = detail::ApplyOneToOne<T>(                                                  \
             inputData.begin(), inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);      \
-        return DerivedData({(void *)multValues, inputData[0].Start, inputData[0].Count}); \
+        return DerivedData({(void *)multValues, inputData[0].Start, inputData[0].Count});          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_mult)
     helper::Throw<std::invalid_argument>("Derived", "Function", "MultFunc",
