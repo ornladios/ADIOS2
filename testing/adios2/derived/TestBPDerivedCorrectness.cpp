@@ -621,7 +621,7 @@ TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
                 curl_x = -(2 * x);
                 curl_y = 7 - (2 * y);
                 curl_z = (4 * z) - (6 * x);
-		/* Less linear
+                /* Less linear
                 curl_x = 2 * y * cosf(x);
                 curl_y = cosf(z) + (powf(y, 2) * sinf(x));
                 curl_z = 4;
