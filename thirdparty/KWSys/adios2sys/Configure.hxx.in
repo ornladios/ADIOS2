@@ -17,7 +17,7 @@
 
 #if defined(__SUNPRO_CC) && __SUNPRO_CC > 0x5130 && defined(__has_attribute)
 #  define @KWSYS_NAMESPACE@_has_cpp_attribute(x) __has_attribute(x)
-#elif defined(__has_cpp_attribute)
+#elif defined(__clang__) && defined(__has_cpp_attribute)
 #  define @KWSYS_NAMESPACE@_has_cpp_attribute(x) __has_cpp_attribute(x)
 #else
 #  define @KWSYS_NAMESPACE@_has_cpp_attribute(x) 0
