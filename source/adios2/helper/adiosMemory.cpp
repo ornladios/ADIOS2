@@ -252,7 +252,18 @@ int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
            const bool outIsLittleEndian, const int typeSize, const CoreDims &inMemStart,
            const CoreDims &inMemCount, const CoreDims &outMemStart, const CoreDims &outMemCount,
            const bool safeMode, MemorySpace MemSpace)
+{
+    return NdCopy(in, inStart, inCount, inIsRowMajor, inIsLittleEndian, out, outStart, outCount,
+                  outIsRowMajor, outIsLittleEndian, typeSize, inMemStart, inMemCount, outMemStart,
+                  outMemCount, safeMode, MemSpace, false);
+}
 
+int NdCopy(const char *in, const CoreDims &inStart, const CoreDims &inCount,
+           const bool inIsRowMajor, const bool inIsLittleEndian, char *out,
+           const CoreDims &outStart, const CoreDims &outCount, const bool outIsRowMajor,
+           const bool outIsLittleEndian, const int typeSize, const CoreDims &inMemStart,
+           const CoreDims &inMemCount, const CoreDims &outMemStart, const CoreDims &outMemCount,
+           const bool safeMode, const MemorySpace MemSpace, const bool duringWrite)
 {
 
     // use values of ioStart and ioCount if ioMemStart and ioMemCount are
