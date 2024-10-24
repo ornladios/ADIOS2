@@ -35,9 +35,6 @@ std::string ParseConfigYAML(core::ADIOS &adios, const std::string &configFileYAM
 void ParseUserOptionsFile(Comm &comm, const std::string &configFileYAML, UserOptions &options,
                           std::string &homePath);
 
-void ParseHostOptionsFile(Comm &comm, const std::string &configFileYAML, HostOptions &hosts,
-                          std::string &homePath);
-
 } // end namespace helper
 } // end namespace adios2
 

@@ -21,7 +21,6 @@
 #include <complex>
 #include <limits>
 #include <map>
-#include <memory>
 #include <string>
 #include <type_traits>
 #include <utility> //std::pair
@@ -384,48 +383,6 @@ struct UserOptions
     Campaign campaign;
     SST sst;
 };
-
-/** Host access protocols */
-enum class HostAccessProtocol
-{
-    Invalid,
-    SSH,
-    XRootD,
-    S3
-};
-
-/** Host authentication protocols */
-enum class HostAuthProtocol
-{
-    Invalid,
-    Password,
-    X509
-};
-
-struct HostConfig
-{
-    std::string name; // Connection Option name
-    HostAccessProtocol protocol = HostAccessProtocol::Invalid;
-
-    /* ssh and xrootd parameters */
-    uint16_t port = 0;
-    uint16_t localPort = 0;
-    std::string hostname = "";
-    std::string username = "";
-    std::string remoteServerPath = "";
-    HostAuthProtocol authentication = HostAuthProtocol::Invalid;
-
-    /* s3 parameters */
-    std::string endpoint = "";
-    std::string awsProfile = "default"; // profile name in ~/.aws/credentials
-    bool isAWS_EC2 = false;
-    bool recheckMetadata = true;
-
-    int verbose = 0;
-};
-
-/** HostOptions holds all user options from ~/.config/adios2/hosts.yaml */
-using HostOptions = std::map<std::string, std::vector<HostConfig>>;
 
 /**
  * os << [adios2_type] enables output of adios2 enums/classes directly
