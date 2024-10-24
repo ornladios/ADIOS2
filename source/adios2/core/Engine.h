@@ -508,9 +508,6 @@ protected:
     /** User options parsed by the ADIOS object, here just for easy reference */
     const UserOptions &m_UserOptions;
 
-    /** Host options parsed by the ADIOS object, here just for easy reference */
-    const HostOptions &m_HostOptions;
-
     /** keeps track of current advance status */
     StepStatus m_AdvanceStatus = StepStatus::OK;
 

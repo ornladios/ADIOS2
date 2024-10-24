@@ -229,75 +229,27 @@ void CampaignReader::InitTransports()
         std::string localPath;
         if (m_CampaignData.hosts[ds.hostIdx].hostname != m_Options.hostname)
         {
-            bool done = false;
-            auto it = m_HostOptions.find(m_CampaignData.hosts[ds.hostIdx].hostname);
-            if (it != m_HostOptions.end())
+            const std::string remotePath =
+                m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] + PathSeparator + ds.name;
+            const std::string remoteURL =
+                m_CampaignData.hosts[ds.hostIdx].hostname + ":" + remotePath;
+            localPath = m_Options.cachepath + PathSeparator +
+                        m_CampaignData.hosts[ds.hostIdx].hostname + PathSeparator + m_Name +
+                        PathSeparator + ds.name;
+            if (m_Options.verbose > 0)
             {
-                const HostConfig &ho = (it->second).front();
-                if (ho.protocol == HostAccessProtocol::S3)
-                {
-                    const std::string endpointURL = ho.endpoint;
-                    const std::string objPath =
-                        m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] + "/" + ds.name;
-                    Params p;
-                    p.emplace("Library", "awssdk");
-                    p.emplace("endpoint", endpointURL);
-                    p.emplace("cache", m_Options.cachepath + PathSeparator +
-                                           m_CampaignData.hosts[ds.hostIdx].hostname +
-                                           PathSeparator + m_Name);
-                    p.emplace("verbose", std::to_string(ho.verbose));
-                    p.emplace("recheck_metadata", (ho.recheckMetadata ? "true" : "false"));
-                    io.AddTransport("File", p);
-                    io.SetEngine("BP5");
-                    localPath = m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] +
-                                PathSeparator + ds.name;
-                    if (ho.isAWS_EC2)
-                    {
-                        adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=false");
-                    }
-                    else
-                    {
-                        adios2sys::SystemTools::PutEnv("AWS_EC2_METADATA_DISABLED=true");
-                    }
-
-                    if (ho.awsProfile.empty())
-                    {
-                        adios2sys::SystemTools::PutEnv("AWS_PROFILE=default");
-                    }
-                    else
-                    {
-                        std::string es = "AWS_PROFILE=" + ho.awsProfile;
-                        adios2sys::SystemTools::PutEnv(es);
-                    }
-
-                    done = true;
-                }
+                std::cout << "Open remote file " << remoteURL
+                          << "\n    and use local cache for metadata at " << localPath << " \n";
             }
-
-            if (!done)
+            helper::CreateDirectory(localPath);
+            for (auto &bpf : ds.files)
             {
-                const std::string remotePath =
-                    m_CampaignData.hosts[ds.hostIdx].directory[ds.dirIdx] + PathSeparator + ds.name;
-                const std::string remoteURL =
-                    m_CampaignData.hosts[ds.hostIdx].hostname + ":" + remotePath;
-                localPath = m_Options.cachepath + PathSeparator +
-                            m_CampaignData.hosts[ds.hostIdx].hostname + PathSeparator + m_Name +
-                            PathSeparator + ds.name;
-                if (m_Options.verbose > 0)
-                {
-                    std::cout << "Open remote file " << remoteURL
-                              << "\n    and use local cache for metadata at " << localPath << " \n";
-                }
-                helper::CreateDirectory(localPath);
-                for (auto &bpf : ds.files)
-                {
-                    /*std::cout << "     save file " << remoteURL << "/" <<
-                       bpf.name
-                              << " to " << localPath << "/" << bpf.name << "\n";*/
-                    SaveToFile(m_DB, localPath + PathSeparator + bpf.name, bpf);
-                }
-                io.SetParameter("RemoteDataPath", remotePath);
+                /*std::cout << "     save file " << remoteURL << "/" <<
+                   bpf.name
+                          << " to " << localPath << "/" << bpf.name << "\n";*/
+                SaveToFile(m_DB, localPath + PathSeparator + bpf.name, bpf);
             }
+            io.SetParameter("RemoteDataPath", remotePath);
         }
         else
         {
