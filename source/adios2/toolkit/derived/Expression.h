@@ -30,7 +30,14 @@ enum ExpressionOperator
     OP_ATAN,
     OP_MAGN,
     OP_CROSS,
-    OP_CURL
+    OP_CURL,
+    OP_MIN,
+    OP_MAX,
+    OP_SUM,
+    OP_MEAN,
+    OP_MEDIAN,
+    OP_VARIANCE,
+    OP_STDEV
 };
 }
 
