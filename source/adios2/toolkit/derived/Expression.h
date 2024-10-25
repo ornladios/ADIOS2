@@ -1,13 +1,28 @@
 #ifndef ADIOS2_DERIVED_Expression_H_
 #define ADIOS2_DERIVED_Expression_H_
 
-#include "Function.h"
-#include "adios2/common/ADIOSTypes.h"
+#include "DerivedData.h"
 #include <string>
 #include <unordered_map>
 
 namespace adios2
 {
+namespace detail
+{
+enum ExpressionOperator
+{
+    OP_NULL,
+    OP_ALIAS, /* Parser-use only */
+    OP_PATH,  /* Parser-use only */
+    OP_NUM,   /* Parser-use only */
+    OP_INDEX,
+    OP_ADD,
+    OP_SQRT,
+    OP_POW,
+    OP_MAGN,
+    OP_CURL
+};
+}
 
 namespace derived
 {

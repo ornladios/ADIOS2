@@ -3,8 +3,8 @@
 
 #include "Function.h"
 #include "Function.tcc"
-#include "adios2/common/ADIOSMacros.h"
 #include "adios2/helper/adiosFunctions.h"
+#include "adios2/helper/adiosLog.h"
 #include <adios2-perfstubs-interface.h>
 #include <cmath>
 
@@ -12,7 +12,6 @@ namespace adios2
 {
 namespace derived
 {
-
 DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AddFunc");

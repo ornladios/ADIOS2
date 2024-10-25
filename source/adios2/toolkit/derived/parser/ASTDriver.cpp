@@ -13,6 +13,7 @@ ASTDriver::ASTDriver(const std::string input) { ASTDriver::parse(input); }
 
 ASTDriver::~ASTDriver()
 {
+    ASTDriver::destroy_lex_structures();
     while (holding.size() > 0)
     {
         delete holding.top();
