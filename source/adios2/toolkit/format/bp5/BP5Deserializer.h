@@ -143,7 +143,6 @@ private:
         size_t LastStepAdded = SIZE_MAX;
         std::vector<size_t> AbsStepFromRel; // per relative step vector
         std::vector<size_t> PerWriterMetaFieldOffset;
-        std::vector<size_t> PerWriterBlockStart;
     };
 
     struct ControlStruct
