@@ -1,4 +1,4 @@
-FROM ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-base
+FROM ghcr.io/ornladios/adios2:ci-spack-ubuntu20.04-base-20241030
 ARG GCC_VERSION=8
 
 RUN apt-get update && apt-get install -y \
