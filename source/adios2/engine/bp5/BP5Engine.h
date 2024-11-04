@@ -172,6 +172,8 @@ public:
     MACRO(StatsBlockSize, SizeBytes, size_t, DefaultStatsBlockSize)                                \
     MACRO(Threads, UInt, unsigned int, 0)                                                          \
     MACRO(UseOneTimeAttributes, Bool, bool, true)                                                  \
+    MACRO(UseSelectiveMetadataAggregation, Bool, bool, true)                                       \
+    MACRO(OneLevelGatherSizeLimit, Int, int, 6000)                                                 \
     MACRO(FlattenSteps, Bool, bool, false)                                                         \
     MACRO(IgnoreFlattenSteps, Bool, bool, false)                                                   \
     MACRO(RemoteDataPath, String, std::string, "")                                                 \

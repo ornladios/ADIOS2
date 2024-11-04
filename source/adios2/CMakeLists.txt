@@ -99,6 +99,7 @@ add_library(adios2_core
   toolkit/format/bp5/BP5Deserializer.cpp
   toolkit/format/bp5/BP5Deserializer.tcc
   toolkit/format/bp5/BP5Serializer.cpp
+  toolkit/format/bp5/BP5Helper.cpp
 
   toolkit/profiling/iochrono/Timer.cpp
   toolkit/profiling/iochrono/IOChrono.cpp
