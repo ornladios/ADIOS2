@@ -62,7 +62,8 @@ This engine allows the user to fine tune the buffering operations through the fo
 
 #. Aggregation
 
-   #. **AggregationType**: *TwoLevelShm*, *EveryoneWritesSerial* and *EveryoneWrites* are three aggregation strategies. See :ref:`Aggregation in BP5`. The default is *TwoLevelShm*.
+   #. **AggregationType**: *TwoLevelShm*, *EveryoneWritesSerial* and
+      *EveryoneWrites* are three data aggregation strategies. See :ref:`Aggregation in BP5`. The default is *TwoLevelShm*.
  
    #. **NumAggregators**: The number of processes that will ever write data directly to storage. The default is set to the number of compute nodes the application is running on (i.e. one process per compute node). TwoLevelShm will select a fixed number of processes *per compute-node* to get close to the intention of the user but does not guarantee the exact number of aggregators.
 
@@ -74,7 +75,23 @@ This engine allows the user to fine tune the buffering operations through the fo
 
    #. **MaxShmSize**: Upper limit for how much shared memory an aggregator process in *TwoLevelShm* can allocate. For optimum performance, this should be at least *2xM +1KB* where *M* is the maximum size any process writes in a single step. However, there is no point in allowing for more than 4GB. The default is 4GB.
 
+   #. **UseSelectiveMetadataAggregation**: There are two metadata
+      aggregation strategies in BP5.  If this parameter is true (the default),
+      SelectiveMetadataAggregation is employed, which uses a multi-phase approach
+      to limit the amount of data exchanged.   If false, a less
+      complex two-level metadata aggregation is performed.  In most
+      cases the default is more efficient.
 
+   #. **OneLevelGatherRankLimit**:  For the
+      SelectiveMetadataAggregation method, this parameter specifies an
+      MPI cohort size above which it resorts to a two-stage
+      aggregation process rather than gathering all metadata to rank 0
+      in one MPI collective operation.  Some HPC machines have
+      unpredictable behaviour with gatherv at both large numbers of
+      ranks and large amounts of data.  The default value (6000)
+      avoids this behaviour on ORNL's Frontier.  Higher or lower values may
+      be useful on other machines.
+      
 #. Buffering
 
    #. **BufferVType**: *chunk* or *malloc*, default is chunking. Chunking maintains the buffer as a list of memory blocks, either ADIOS-owned for sync-ed Puts and small Puts, and user-owned pointers of deferred Puts. Malloc maintains a single memory block and extends it (reallocates) whenever more data is buffered. Chunking incurs extra cost in I/O by having to write data in chunks (multiple write system calls), which can be helped by increasing *BufferChunkSize* and *MinDeferredSize*. Malloc incurs extra cost by reallocating memory whenever more data is buffered (by Put()), which can be helped by increasing *InitialBufferSize*. 
@@ -138,35 +155,37 @@ This engine allows the user to fine tune the buffering operations through the fo
       tells the reader to ignore any FlattenSteps parameter supplied
       to the writer.
 
-============================== ===================== ===========================================================
- **Key**                       **Value Format**      **Default** and Examples
-============================== ===================== ===========================================================
- OpenTimeoutSecs                float                 **0** for *ReadRandomAccess* mode, **3600** for *Read* mode, ``10.0``, ``5``
- BeginStepPollingFrequencySecs  float                 **1**, 10.0 
- AggregationType                string                **TwoLevelShm**, EveryoneWritesSerial, EveryoneWrites
- NumAggregators                 integer >= 1          **0 (one file per compute node)**
- AggregatorRatio                integer >= 1          not used unless set
- NumSubFiles                    integer >= 1          **=NumAggregators**, only used when *AggregationType=TwoLevelShm*
- StripeSize                     integer+units         **4KB**
- MaxShmSize                     integer+units         **4294762496**
- BufferVType                    string                **chunk**, malloc
- BufferChunkSize                integer+units         **128MB**, worth increasing up to min(2GB, datasize/process/step)
- MinDeferredSize                integer+units         **4MB**
- InitialBufferSize              float+units >= 16Kb   **16Kb**, 10Mb, 0.5Gb
- GrowthFactor                   float > 1             **1.05**, 1.01, 1.5, 2
- AppendAfterSteps               integer >= 0          **INT_MAX**
- SelectSteps                    string                "0 6 3 2", "1:5", "0:n:3  10:n:5"
- AsyncOpen                      string On/Off         **On**, Off, true, false
- AsyncWrite                     string On/Off         **Off**, On, true, false
- DirectIO                       string On/Off         **Off**, On, true, false
- DirectIOAlignOffset            integer >= 0          **512**
- DirectIOAlignBuffer            integer >= 0          set to DirectIOAlignOffset if unset
- StatsLevel                     integer, 0 or 1       **1**, 0
- MaxOpenFilesAtOnce             integer >= 0          **UINT_MAX**, 1024, 1
- Threads                        integer >= 0          **0**, 1, 32
- FlattenSteps                   boolean               **off**, on, true, false
- IgnoreFlattenSteps             boolean               **off**, on, true, false
-============================== ===================== ===========================================================
+=============================== ===================== ===========================================================
+ **Key**                        **Value Format**      **Default** and Examples
+=============================== ===================== ===========================================================
+ OpenTimeoutSecs                 float                 **0** for *ReadRandomAccess* mode, **3600** for *Read* mode, ``10.0``, ``5``
+ BeginStepPollingFrequencySecs   float                 **1**, 10.0 
+ AggregationType                 string                **TwoLevelShm**, EveryoneWritesSerial, EveryoneWrites
+ NumAggregators                  integer >= 1          **0 (one file per compute node)**
+ AggregatorRatio                 integer >= 1          not used unless set
+ NumSubFiles                     integer >= 1          **=NumAggregators**, only used when *AggregationType=TwoLevelShm*
+ StripeSize                      integer+units         **4KB**
+ MaxShmSize                      integer+units         **4294762496**
+ BufferVType                     string                **chunk**, malloc
+ BufferChunkSize                 integer+units         **128MB**, worth increasing up to min(2GB, datasize/process/step)
+ MinDeferredSize                 integer+units         **4MB**
+ InitialBufferSize               float+units >= 16Kb   **16Kb**, 10Mb, 0.5Gb
+ GrowthFactor                    float > 1             **1.05**, 1.01, 1.5, 2
+ AppendAfterSteps                integer >= 0          **INT_MAX**
+ SelectSteps                     string                "0 6 3 2", "1:5", "0:n:3  10:n:5"
+ AsyncOpen                       string On/Off         **On**, Off, true, false
+ AsyncWrite                      string On/Off         **Off**, On, true, false
+ DirectIO                        string On/Off         **Off**, On, true, false
+ DirectIOAlignOffset             integer >= 0          **512**
+ DirectIOAlignBuffer             integer >= 0          set to DirectIOAlignOffset if unset
+ UseSelectiveMetadataAggregation boolean               **On**, Off, true, false
+ OneLevelGatherRanksLimit        integer               **6000**
+ StatsLevel                      integer, 0 or 1       **1**, 0
+ MaxOpenFilesAtOnce              integer >= 0          **UINT_MAX**, 1024, 1
+ Threads                         integer >= 0          **0**, 1, 32
+ FlattenSteps                    boolean               **off**, on, true, false
+ IgnoreFlattenSteps              boolean               **off**, on, true, false
+=============================== ===================== ===========================================================
 
 
 Only file transport types are supported. Optional parameters for ``IO::AddTransport`` or in runtime config file transport field:

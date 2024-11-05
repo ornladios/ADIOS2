@@ -44,9 +44,21 @@ JSONProfiler::JSONProfiler(helper::Comm const &comm) : m_Comm(comm)
     AddTimerWatch("PP");
     AddTimerWatch("ES_meta1_gather", false);
     AddTimerWatch("ES_meta2_gather", false);
+    AddTimerWatch("ES_write_metadata", false);
+    AddTimerWatch("MetadataBlockWrite", false);
+    AddTimerWatch("ES_AGG1", false);
+    AddTimerWatch("ES_GatherMetadataBlocks", false);
+    AddTimerWatch("ES_simple_meta", false);
+    AddTimerWatch("ES_simple_gather", false);
 
     AddTimerWatch("ES_meta1");
     AddTimerWatch("ES_meta2");
+
+    AddTimerWatch("ES_aggregate_info", false);
+    AddTimerWatch("ES_gather_write_meta", false);
+    AddTimerWatch("FixedMetaInfoGather", false);
+    AddTimerWatch("MetaInfoBcast", false);
+    AddTimerWatch("SelectMetaInfoGather", false);
 
     AddTimerWatch("ES_close");
     AddTimerWatch("ES_AWD");

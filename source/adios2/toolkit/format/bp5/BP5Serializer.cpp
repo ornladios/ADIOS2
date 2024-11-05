@@ -6,6 +6,7 @@
  *
  */
 
+#include "BP5Helper.h"
 #include "adios2/core/Attribute.h"
 #include "adios2/core/Engine.h"
 #include "adios2/core/IO.h"
@@ -1474,6 +1475,8 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
     const uint64_t ABCount = AttributeEncodeBuffers.size();
     const uint64_t DSCount = DataSizes.size();
     const uint64_t WDPCount = WriterDataPositions.size();
+    std::set<BP5Helper::digest> AttrSet;
+    std::vector<bool> NeedThisAttr(AttributeEncodeBuffers.size());
 
     // count sizes
     RetSize += sizeof(NMMBCount); // NMMB count
@@ -1490,11 +1493,28 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
         RetSize += AlignedSize;
     }
     RetSize += sizeof(ABCount); // Number of attr blocks
+    size_t attrnum = 0;
+    for (auto &a : AttributeEncodeBuffers)
+    {
+        if (a.iov_base && (a.iov_len > 0))
+        {
+            auto thisAttrHash = BP5Helper::HashOfBlock(a.iov_base, a.iov_len);
+            NeedThisAttr[attrnum] = (AttrSet.count(thisAttrHash) == 0);
+            if (NeedThisAttr[attrnum])
+            {
+                AttrSet.insert(thisAttrHash);
+            }
+        }
+        attrnum++;
+    }
+    attrnum = 0;
     for (auto &a : AttributeEncodeBuffers)
     {
         RetSize += sizeof(uint64_t); // AttrEncodeLen
         size_t AlignedSize = ((a.iov_len + 7) & ~0x7);
-        RetSize += AlignedSize;
+        if (NeedThisAttr[attrnum])
+            RetSize += AlignedSize;
+        attrnum++;
     }
     RetSize += sizeof(DSCount);
     RetSize += DataSizes.size() * sizeof(uint64_t);
@@ -1528,9 +1548,10 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
     }
 
     helper::CopyToBuffer(Ret, Position, &ABCount);
+    attrnum = 0;
     for (auto &a : AttributeEncodeBuffers)
     {
-        if (a.iov_base)
+        if (a.iov_base && NeedThisAttr[attrnum])
         {
             size_t AlignedSize = ((a.iov_len + 7) & ~0x7);
             helper::CopyToBuffer(Ret, Position, &AlignedSize);
@@ -1546,6 +1567,7 @@ std::vector<char> BP5Serializer::CopyMetadataToContiguous(
             size_t ZeroSize = 0;
             helper::CopyToBuffer(Ret, Position, &ZeroSize);
         }
+        attrnum++;
     }
 
     helper::CopyToBuffer(Ret, Position, &DSCount);

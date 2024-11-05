@@ -23,13 +23,6 @@ namespace core
 namespace engine
 {
 
-/**
- * sub-block size for min/max calculation of large arrays in number of
- * elements (not bytes). The default big number per Put() default will
- * result in the original single min/max value-pair per block
- */
-constexpr size_t DefaultStatsBlockSize = 1125899906842624ULL;
-
 class BP5Engine
 {
 public:
@@ -148,7 +141,6 @@ public:
     MACRO(BurstBufferPath, String, std::string, "")                                                \
     MACRO(NodeLocal, Bool, bool, false)                                                            \
     MACRO(verbose, Int, int, 0)                                                                    \
-    MACRO(CollectiveMetadata, Bool, bool, true)                                                    \
     MACRO(NumAggregators, UInt, unsigned int, 0)                                                   \
     MACRO(AggregatorRatio, UInt, unsigned int, 0)                                                  \
     MACRO(NumSubFiles, UInt, unsigned int, 0)                                                      \
@@ -169,9 +161,10 @@ public:
     MACRO(SelectSteps, String, std::string, "")                                                    \
     MACRO(ReaderShortCircuitReads, Bool, bool, false)                                              \
     MACRO(StatsLevel, UInt, unsigned int, 1)                                                       \
-    MACRO(StatsBlockSize, SizeBytes, size_t, DefaultStatsBlockSize)                                \
     MACRO(Threads, UInt, unsigned int, 0)                                                          \
     MACRO(UseOneTimeAttributes, Bool, bool, true)                                                  \
+    MACRO(UseSelectiveMetadataAggregation, Bool, bool, true)                                       \
+    MACRO(OneLevelGatherRanksLimit, Int, int, 6000)                                                \
     MACRO(FlattenSteps, Bool, bool, false)                                                         \
     MACRO(IgnoreFlattenSteps, Bool, bool, false)                                                   \
     MACRO(RemoteDataPath, String, std::string, "")                                                 \
