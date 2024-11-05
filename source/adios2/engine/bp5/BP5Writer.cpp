@@ -661,7 +661,7 @@ void BP5Writer::SelectiveAggregationMetadata(format::BP5Serializer::TimestepInfo
             C /= 8;
         m_Profiler.Stop("ES_AGG1");
         m_Profiler.Start("ES_GatherMetadataBlocks");
-        if (m_Comm.Size() > m_Parameters.OneLevelGatherSizeLimit)
+        if (m_Comm.Size() > m_Parameters.OneLevelGatherRanksLimit)
         {
             BP5Helper::GathervArraysTwoLevel(
                 m_AggregatorMetadata.m_Comm, m_CommMetadataAggregators, m_Profiler,
@@ -688,7 +688,7 @@ void BP5Writer::SelectiveAggregationMetadata(format::BP5Serializer::TimestepInfo
     }
     else
     {
-        if (m_Comm.Size() > m_Parameters.OneLevelGatherSizeLimit)
+        if (m_Comm.Size() > m_Parameters.OneLevelGatherRanksLimit)
         {
             BP5Helper::GathervArraysTwoLevel(
                 m_AggregatorMetadata.m_Comm, m_CommMetadataAggregators, m_Profiler,
