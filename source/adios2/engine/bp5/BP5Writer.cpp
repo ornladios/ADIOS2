@@ -585,7 +585,7 @@ void BP5Writer::ComputeDerivedVariables()
             // extract the dimensions and data for each variable
             VariableBase *varBase = itVariable->second.get();
             auto mvi = WriterMinBlocksInfo(*varBase);
-            if (mvi->BlocksInfo.size() == 0)
+            if (!mvi || mvi->BlocksInfo.size() == 0)
             {
                 computeDerived = false;
                 break;
