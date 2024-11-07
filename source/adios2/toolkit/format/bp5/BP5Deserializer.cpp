@@ -1741,11 +1741,14 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                                         RR.Timestep = Step;
                                         RR.WriterRank = WriterRank;
                                         RR.StartOffset =
-                                            writer_meta_base_input->DataBlockLocation[0];
+                                            writer_meta_base_input->DataBlockLocation[Block];
+                                        // read whole block
+                                        size_t InputStartDim = Block * writer_meta_base_input->Dims;
                                         RR.ReadLength =
                                             helper::GetDataTypeSize(VarPrimaryRec->Type) *
-                                            CalcBlockLength(VarPrimaryRec->DimCount,
-                                                            varBase->m_Count.data());
+                                            CalcBlockLength(
+                                                writer_meta_base_input->Dims,
+                                                &writer_meta_base_input->Count[InputStartDim]);
                                         RR.DestinationAddr = (char *)malloc(RR.ReadLength);
                                         RR.DirectToAppMemory = false;
                                         RR.ReqIndex = ReqIndex;
