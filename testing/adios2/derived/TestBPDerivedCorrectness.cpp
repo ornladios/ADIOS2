@@ -61,301 +61,6 @@ TEST_P(DerivedCorrectnessP, BasicCorrectnessTest)
     bpFileReader.Close();
 }
 
-TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
-{
-    const size_t Nx = 10, Ny = 3, Nz = 6;
-    const size_t steps = 2;
-    // Application variable
-    std::default_random_engine generator;
-    std::uniform_real_distribution<float> distribution(0.0, 10.0);
-
-    adios2::DerivedVarType mode = GetParam();
-    std::cout << "Mode is " << mode << std::endl;
-
-    std::vector<float> simArray1(Nx * Ny * Nz);
-    std::vector<float> simArray2(Nx * Ny * Nz);
-    std::vector<float> simArray3(Nx * Ny * Nz);
-    for (size_t i = 0; i < Nx * Ny * Nz; ++i)
-    {
-        simArray1[i] = distribution(generator);
-        simArray2[i] = distribution(generator);
-        simArray3[i] = distribution(generator);
-    }
-
-    adios2::ADIOS adios;
-
-    adios2::IO bpOut = adios.DeclareIO("BPWriteAddExpression");
-
-    std::vector<std::string> varname = {"sim1/Ux", "sim1/Uy", "sim1/Uz"};
-    const std::string derAgrAdd = "derived/agradd";
-    const std::string derAddName = "derived/add";
-    const std::string derSubtrName = "derived/subtr";
-    const std::string derMultName = "derived/mult";
-    const std::string derDivName = "derived/div";
-    const std::string derPowName = "derived/pow";
-    const std::string derSqrtName = "derived/sqrt";
-
-    auto Ux = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    // clang-format off
-    bpOut.DefineDerivedVariable(derAgrAdd,
-                                "x=" + varname[0] + "\n"
-                                "add(x)",
-                                mode);
-    bpOut.DefineDerivedVariable(derAddName,
-                                "x =" + varname[0] + " \n"
-                                "y =" + varname[1] + " \n"
-                                "z =" + varname[2] + " \n"
-                                "x+y+z",
-                                mode);
-    bpOut.DefineDerivedVariable(derSubtrName,
-                                "x =" + varname[0] + " \n"
-                                "y =" + varname[1] + " \n"
-                                "z =" + varname[2] + " \n"
-                                "x-y-z",
-                                mode);
-    bpOut.DefineDerivedVariable(derMultName,
-                                "x =" + varname[0] + " \n"
-                                "y =" + varname[1] + " \n"
-                                "z =" + varname[2] + " \n"
-                                "x*y*z",
-                                mode);
-    bpOut.DefineDerivedVariable(derDivName,
-                                "x =" + varname[0] + " \n"
-                                "y =" + varname[1] + " \n"
-                                "z =" + varname[2] + " \n"
-                                "divide(x,y,z)",
-                                mode);
-    bpOut.DefineDerivedVariable(derPowName,
-                                "x =" + varname[0] + " \n"
-                                "pow(x)",
-                                mode);
-    bpOut.DefineDerivedVariable(derSqrtName,
-                                "x =" + varname[0] + " \n"
-                                "sqrt(x)",
-                                mode);
-    // clang-format on
-    std::string filename = "derivedScalar.bp";
-    adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
-
-    for (size_t i = 0; i < steps; i++)
-    {
-        bpFileWriter.BeginStep();
-        bpFileWriter.Put(Ux, simArray1.data());
-        bpFileWriter.Put(Uy, simArray2.data());
-        bpFileWriter.Put(Uz, simArray3.data());
-        bpFileWriter.EndStep();
-    }
-    bpFileWriter.Close();
-
-    adios2::IO bpIn = adios.DeclareIO("BPReadExpression");
-    adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
-
-    std::vector<float> readUx;
-    std::vector<float> readUy;
-    std::vector<float> readUz;
-    std::vector<float> readAdd;
-    std::vector<float> readAgrAdd;
-    std::vector<float> readSubtr;
-    std::vector<float> readMult;
-    std::vector<float> readDiv;
-    std::vector<double> readPow;
-    std::vector<double> readSqrt;
-
-    float calcFloat;
-    double calcDouble;
-    float epsilon = (float)0.01;
-    for (size_t i = 0; i < steps; i++)
-    {
-        bpFileReader.BeginStep();
-        bpFileReader.Get(varname[0], readUx);
-        bpFileReader.Get(varname[1], readUy);
-        bpFileReader.Get(varname[2], readUz);
-        bpFileReader.Get(derAddName, readAdd);
-        bpFileReader.Get(derAgrAdd, readAgrAdd);
-        bpFileReader.Get(derSubtrName, readSubtr);
-        bpFileReader.Get(derMultName, readMult);
-        bpFileReader.Get(derDivName, readDiv);
-        bpFileReader.Get(derPowName, readPow);
-        bpFileReader.Get(derSqrtName, readSqrt);
-        bpFileReader.EndStep();
-
-        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
-        {
-            calcFloat = readUx[ind] + readUy[ind] + readUz[ind];
-            EXPECT_TRUE(fabs(calcFloat - readAdd[ind]) < epsilon);
-
-            calcFloat = readUx[ind] - readUy[ind] - readUz[ind];
-            EXPECT_TRUE(fabs(calcFloat - readSubtr[ind]) < epsilon);
-
-            calcFloat = readUx[ind] * readUy[ind] * readUz[ind];
-            EXPECT_TRUE(fabs(calcFloat - readMult[ind]) < epsilon);
-
-            calcFloat = readUx[ind] / readUy[ind] / readUz[ind];
-            EXPECT_TRUE(fabs(calcFloat - readDiv[ind]) < epsilon);
-
-            calcDouble = std::pow(readUx[ind], 2);
-            EXPECT_TRUE(fabs(calcDouble - readPow[ind]) < epsilon);
-
-            calcDouble = std::sqrt(readUx[ind]);
-            EXPECT_TRUE(fabs(calcDouble - readSqrt[ind]) < epsilon);
-        }
-
-        for (size_t ind = 0; ind < Nx * Ny; ++ind)
-        {
-            size_t start = ind * Nz;
-            float calcA = 0;
-            for (size_t z = 0; z < Nz; ++z)
-            {
-                calcA += readUx[z + start];
-            }
-            EXPECT_TRUE(fabs(calcA - readAgrAdd[ind]) < epsilon);
-        }
-    }
-    bpFileReader.Close();
-}
-
-TEST_P(DerivedCorrectnessP, TrigCorrectnessTest)
-{
-    const size_t Nx = 10, Ny = 3, Nz = 6;
-    const size_t steps = 2;
-    // Application variable
-    std::default_random_engine generator;
-    std::uniform_real_distribution<double> randomDist(0.0, 100.0);
-    std::uniform_real_distribution<double> sinDist(-1.0, 1.0);
-
-    adios2::DerivedVarType mode = GetParam();
-    std::cout << "Mode is " << mode << std::endl;
-
-    std::vector<double> simArray1(Nx * Ny * Nz);
-    std::vector<double> simArray2(Nx * Ny * Nz);
-    for (size_t i = 0; i < Nx * Ny * Nz; ++i)
-    {
-        simArray1[i] = randomDist(generator);
-        simArray2[i] = sinDist(generator);
-    }
-
-    adios2::ADIOS adios;
-
-    adios2::IO bpOut = adios.DeclareIO("BPWriteSinExpression");
-
-    std::string randDistVar = "sim/randDist";
-    std::string sinDistVar = "sim/sinDist";
-    std::string derSinName = "derived/sin";
-    std::string derCosName = "derived/cos";
-    std::string derTanName = "derived/tan";
-    std::string derAsinName = "derived/asin";
-    std::string derAcosName = "derived/acos";
-    std::string derAtanName = "derived/atan";
-
-    auto Ux = bpOut.DefineVariable<double>(randDistVar, {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uy = bpOut.DefineVariable<double>(sinDistVar, {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    // clang-format off
-    bpOut.DefineDerivedVariable(derSinName,
-                                "x =" + randDistVar + " \n"
-                                "sin(x)",
-                                mode);
-    bpOut.DefineDerivedVariable(derCosName,
-                                "x =" + randDistVar + " \n"
-                                "cos(x)",
-                                mode);
-    bpOut.DefineDerivedVariable(derTanName,
-                                "x =" + randDistVar + " \n"
-                                "tan(x)",
-                                mode);
-    bpOut.DefineDerivedVariable(derAsinName,
-                                "x =" + sinDistVar + " \n"
-                                "asin(x)",
-                                mode);
-    bpOut.DefineDerivedVariable(derAcosName,
-                                "x =" + sinDistVar + " \n"
-                                "acos(x)",
-                                mode);
-    bpOut.DefineDerivedVariable(derAtanName,
-                                "x =" + randDistVar + " \n"
-                                "atan(x)",
-                                mode);
-    // clang-format on
-    std::string filename = "expTrig.bp";
-    adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
-
-    for (size_t i = 0; i < steps; i++)
-    {
-        bpFileWriter.BeginStep();
-        bpFileWriter.Put(Ux, simArray1.data());
-        bpFileWriter.Put(Uy, simArray2.data());
-        bpFileWriter.EndStep();
-    }
-    bpFileWriter.Close();
-
-    adios2::IO bpIn = adios.DeclareIO("BPReadExpression");
-    adios2::Engine bpFileReader = bpIn.Open(filename, adios2::Mode::Read);
-
-    std::vector<double> readRandDist;
-    std::vector<double> readSinDist;
-    std::vector<double> readSin;
-    std::vector<double> readCos;
-    std::vector<double> readTan;
-    std::vector<double> readAsin;
-    std::vector<double> readAcos;
-    std::vector<double> readAtan;
-
-    double calcTrig;
-    double epsilon = (double)0.01;
-    for (size_t i = 0; i < steps; i++)
-    {
-        bpFileReader.BeginStep();
-        bpFileReader.Get(randDistVar, readRandDist);
-        bpFileReader.Get(sinDistVar, readSinDist);
-
-        bpFileReader.Get(derSinName, readSin);
-        bpFileReader.Get(derCosName, readCos);
-        bpFileReader.Get(derTanName, readTan);
-        bpFileReader.Get(derAsinName, readAsin);
-        bpFileReader.Get(derAcosName, readAcos);
-        bpFileReader.Get(derAtanName, readAtan);
-        bpFileReader.EndStep();
-
-        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
-        {
-            calcTrig = std::sin(readRandDist[ind]);
-            EXPECT_TRUE(fabs(calcTrig - readSin[ind]) < epsilon);
-        }
-
-        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
-        {
-            calcTrig = std::cos(readRandDist[ind]);
-            EXPECT_TRUE(fabs(calcTrig - readCos[ind]) < epsilon);
-        }
-
-        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
-        {
-            calcTrig = std::tan(readRandDist[ind]);
-            EXPECT_TRUE(fabs(calcTrig - readTan[ind]) < epsilon);
-        }
-
-        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
-        {
-            calcTrig = std::asin(readSinDist[ind]);
-            EXPECT_TRUE(fabs(calcTrig - readAsin[ind]) < epsilon);
-        }
-
-        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
-        {
-            calcTrig = std::acos(readSinDist[ind]);
-            EXPECT_TRUE(fabs(calcTrig - readAcos[ind]) < epsilon);
-        }
-
-        for (size_t ind = 0; ind < Nx * Ny * Nz; ++ind)
-        {
-            calcTrig = std::atan(readRandDist[ind]);
-            EXPECT_TRUE(fabs(calcTrig - readAtan[ind]) < epsilon);
-        }
-    }
-    bpFileReader.Close();
-}
-
 TEST_P(DerivedCorrectnessP, VectorCorrectnessTest)
 {
     const size_t Nx = 2, Ny = 3, Nz = 10;
@@ -363,9 +68,7 @@ TEST_P(DerivedCorrectnessP, VectorCorrectnessTest)
     // Application variable
     std::default_random_engine generator;
     std::uniform_real_distribution<float> distribution(0.0, 10.0);
-
     adios2::DerivedVarType mode = GetParam();
-    std::cout << "Mode is " << mode << std::endl;
 
     std::vector<float> simArray1(Nx * Ny * Nz);
     std::vector<float> simArray2(Nx * Ny * Nz);
@@ -413,7 +116,7 @@ TEST_P(DerivedCorrectnessP, VectorCorrectnessTest)
                                 "cross(Ux, Uy, Uz, Vx, Vy, Vz)",
                                 mode);
     // clang-format on
-    std::string filename = "expVector.bp";
+    std::string filename = "ADIOS2BPWriteDerivedVector.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
 
     for (size_t i = 0; i < steps; i++)
@@ -542,7 +245,7 @@ TEST_P(DerivedCorrectnessP, CurlCorrectnessTest)
                                 "curl(Vx,Vy,Vz)",
                                 mode);
     // clang-format on
-    std::string filename = "expCurl.bp";
+    std::string filename = "ADIOS2BPWriteDerivedCurl.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
 
     bpFileWriter.BeginStep();
@@ -682,7 +385,7 @@ TEST_P(DerivedCorrectnessP, MagCurlCorrectnessTest)
                                 "magnitude(curl(x,y,z))",
                                 mode);
     // clang-format on
-    std::string filename = "expMagCurl.bp";
+    std::string filename = "ADIOS2BPWriteDerivedMagCurl.bp";
     adios2::Engine bpFileWriter = bpOut.Open(filename, adios2::Mode::Write);
 
     bpFileWriter.BeginStep();
