@@ -25,7 +25,6 @@ protected:
     adios2::DerivedVarType GetThreads() { return GetParam(); };
 };
 
-
 TEST_P(DerivedCorrectnessP, BasicCorrectnessTest)
 {
     adios2::DerivedVarType mode = GetParam();
