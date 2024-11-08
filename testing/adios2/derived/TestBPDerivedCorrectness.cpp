@@ -25,6 +25,43 @@ protected:
     adios2::DerivedVarType GetThreads() { return GetParam(); };
 };
 
+
+TEST_P(DerivedCorrectnessP, BasicCorrectnessTest)
+{
+    adios2::DerivedVarType mode = GetParam();
+    adios2::ADIOS adios;
+    adios2::IO bpOut = adios.DeclareIO("BPNoData");
+    EXPECT_THROW(bpOut.DefineDerivedVariable("derived", "x= var1 \n sqrt(x)", mode),
+                 std::invalid_argument);
+
+    const size_t N = 10;
+    std::default_random_engine generator;
+    std::uniform_real_distribution<float> distribution(0.0, 10.0);
+    std::vector<float> simArray1(N);
+    std::vector<float> simArray2(N);
+    for (size_t i = 0; i < N; ++i)
+        simArray1[i] = distribution(generator);
+
+    auto U = bpOut.DefineVariable<float>("var1", {N}, {0}, {N});
+    auto V = bpOut.DefineVariable<float>("var2", {N}, {0}, {N});
+    bpOut.DefineDerivedVariable("derived", "x= var1 \n sqrt(x)", mode);
+    adios2::Engine bpFileWriter = bpOut.Open("BPNoData.bp", adios2::Mode::Write);
+
+    bpFileWriter.BeginStep();
+    bpFileWriter.Put(V, simArray1.data());
+    bpFileWriter.EndStep();
+    bpFileWriter.Close();
+
+    // check that no derived data was written
+    adios2::IO bpIn = adios.DeclareIO("BPReadExpression");
+    adios2::Engine bpFileReader = bpIn.Open("BPNoData.bp", adios2::Mode::Read);
+    bpFileReader.BeginStep();
+    auto derVar = bpIn.InquireVariable<float>("derived");
+    EXPECT_FALSE(derVar);
+    bpFileReader.EndStep();
+    bpFileReader.Close();
+}
+
 TEST_P(DerivedCorrectnessP, VectorCorrectnessTest)
 {
     const size_t Nx = 2, Ny = 3, Nz = 10;
