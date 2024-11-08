@@ -291,7 +291,6 @@ BP5Deserializer::BP5VarRec *BP5Deserializer::CreateVarRec(const char *ArrayName)
     {
         const size_t writerCohortSize = WriterCohortSize(MaxSizeT);
         Ret->PerWriterMetaFieldOffset.resize(writerCohortSize);
-        Ret->PerWriterBlockStart.resize(writerCohortSize);
     }
     return Ret;
 }
@@ -840,9 +839,8 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
         {
             if (!m_RandomAccessMode)
             {
-                if (writerCohortSize > VarRec->PerWriterBlockStart.size())
+                if (writerCohortSize > VarRec->PerWriterMetaFieldOffset.size())
                 {
-                    VarRec->PerWriterBlockStart.resize(writerCohortSize);
                     VarRec->PerWriterMetaFieldOffset.resize(writerCohortSize);
                 }
                 VarRec->PerWriterMetaFieldOffset[WriterRank] = FieldOffset;
@@ -950,20 +948,6 @@ void BP5Deserializer::InstallMetaData(void *MetadataBlock, size_t BlockLen, size
                 }
 
                 VarRec->DimCount = meta_base->Dims;
-                if (!m_RandomAccessMode)
-                {
-                    if (WriterRank == 0)
-                    {
-                        VarRec->PerWriterBlockStart[WriterRank] = 0;
-                        if (writerCohortSize > 1)
-                            VarRec->PerWriterBlockStart[WriterRank + 1] = BlockCount;
-                    }
-                    if (WriterRank < static_cast<size_t>(writerCohortSize - 1))
-                    {
-                        VarRec->PerWriterBlockStart[WriterRank + 1] =
-                            VarRec->PerWriterBlockStart[WriterRank] + BlockCount;
-                    }
-                }
             }
             else
             {
@@ -2602,7 +2586,8 @@ size_t BP5Deserializer::RelativeToAbsoluteStep(const BP5VarRec *VarRec, size_t R
         {
             BP5MetadataInfoStruct *BaseData;
             BaseData = (BP5MetadataInfoStruct *)(*MetadataBaseArray[AbsStep])[WriterRank];
-            if (BP5BitfieldTest((BP5MetadataInfoStruct *)BaseData, (int)VarRec->VarNum))
+            if (BP5BitfieldTest((BP5MetadataInfoStruct *)BaseData,
+                                (int)VarRec->VarNum)) // GSE should be CIVarIndex?
             {
                 // variable appeared on this step
                 RelStep--;
