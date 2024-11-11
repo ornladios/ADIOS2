@@ -9,8 +9,8 @@
  */
 #include "CompressBigWhoop.h"
 #include "adios2/helper/adiosFunctions.h"
-#include <sstream>
 #include <bwc.h>
+#include <sstream>
 
 namespace adios2
 {
@@ -20,10 +20,9 @@ namespace compress
 {
 
 /**
- * Returns a adios2::dims object that contains five entries. If the input
- * dimensionality is smaller than five the additional dimensions are set
- * to defaultDimSize. Else the dimensions at the front are collapsed until
- * the dimensionality of the returned object is five.
+ * Returns a adios2::dims object that contains targetDims entries. If the input
+ * dimensionality is smaller the additional dimensions are set to defaultDimSize.
+ * Else the entries at the front are multiplied and collapsed.
  * @param dimension
  * @param type
  * @param targetDims
@@ -46,7 +45,7 @@ CompressBigWhoop::CompressBigWhoop(const Params &parameters)
 }
 
 size_t CompressBigWhoop::Operate(const char *dataIn, const Dims &blockStart, const Dims &blockCount,
-                            const DataType type, char *bufferOut)
+                                 const DataType type, char *bufferOut)
 {
     const uint8_t bufferVersion = 1;
     size_t bufferOutOffset = 0;
@@ -55,27 +54,21 @@ size_t CompressBigWhoop::Operate(const char *dataIn, const Dims &blockStart, con
 
     const size_t ndims = blockCount.size();
 
-    // bwc metadata
+    // bwc V1 metadata
     PutParameter(bufferOut, bufferOutOffset, ndims);
     for (const auto &d : blockCount)
     {
         PutParameter(bufferOut, bufferOutOffset, d);
     }
     PutParameter(bufferOut, bufferOutOffset, type);
-    //PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(BWC_VERSION_MAJOR));
-    //PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(BWC_VERSION_MINOR));
-    //PutParameter(bufferOut, bufferOutOffset, static_cast<uint8_t>(BWC_VERSION_PATCH));
-    //PutParameters(bufferOut, bufferOutOffset, m_Parameters);
-    // bwc metadata end
+    // bwc V1 metadata end
 
     Dims convertedDims = ConvertBwcDims(blockCount, type, 5, true, 1);
 
+    // Allocate BigWhoop coder
     bwc_precision bwcType = GetBWCType(type);
-    bwc_codec* coder = bwc_alloc_coder(convertedDims[0],
-                                       convertedDims[1],
-                                       convertedDims[2],
-                                       convertedDims[3],
-                                       convertedDims[4], bwcType);
+    bwc_codec *coder = bwc_alloc_coder(convertedDims[0], convertedDims[1], convertedDims[2],
+                                       convertedDims[3], convertedDims[4], bwcType);
     if (coder == nullptr)
     {
         helper::Throw<std::runtime_error>("Operator", "CompressBigWhoop", "Operate",
@@ -91,41 +84,51 @@ size_t CompressBigWhoop::Operate(const char *dataIn, const Dims &blockStart, con
     // Quantization setting
     auto itQM = m_Parameters.find("qm");
     const bool hasQM = itQM != m_Parameters.end();
-    if (hasQM) {
-        const int QM = helper::StringTo<int>(itQM->second, "setting 'qm' in call to CompressBigWhoop\n");
+    if (hasQM)
+    {
+        const int QM =
+            helper::StringTo<int>(itQM->second, "setting 'qm' in call to CompressBigWhoop\n");
         bwc_set_qm(coder, QM);
     }
 
     // Decomposition setting
     auto itTile = m_Parameters.find("tile");
     const bool hasTile = itTile != m_Parameters.end();
-    if (hasTile) {
-        const int tile = helper::StringTo<int>(itTile->second, "setting 'tile' in call to CompressBigWhoop\n");
-        bwc_set_tiles(coder,tile,tile,tile,tile,bwc_tile_sizeof);
+    if (hasTile)
+    {
+        const int tile =
+            helper::StringTo<int>(itTile->second, "setting 'tile' in call to CompressBigWhoop\n");
+        bwc_set_tiles(coder, tile, tile, tile, tile, bwc_tile_sizeof);
     }
     auto itPrecincts = m_Parameters.find("precincts");
     const bool hasPrecincts = itPrecincts != m_Parameters.end();
-    if (hasPrecincts) {
-        const int precincts = helper::StringTo<int>(itPrecincts->second, "setting 'precincts' in call to CompressBigWhoop\n");
-        bwc_set_precincts(coder,precincts,precincts,precincts,precincts);
+    if (hasPrecincts)
+    {
+        const int precincts = helper::StringTo<int>(
+            itPrecincts->second, "setting 'precincts' in call to CompressBigWhoop\n");
+        bwc_set_precincts(coder, precincts, precincts, precincts, precincts);
     }
     auto itCB = m_Parameters.find("codeblocks");
     const bool hasCB = itCB != m_Parameters.end();
-    if (hasCB) {
-        const int cb = helper::StringTo<int>(itCB->second, "setting 'codeblocks' in call to CompressBigWhoop\n");
-        bwc_set_codeblocks(coder,cb,cb,cb,cb);
+    if (hasCB)
+    {
+        const int cb = helper::StringTo<int>(itCB->second,
+                                             "setting 'codeblocks' in call to CompressBigWhoop\n");
+        bwc_set_codeblocks(coder, cb, cb, cb, cb);
     }
     auto itDecomp = m_Parameters.find("decomposition");
     const bool hasDecomp = itDecomp != m_Parameters.end();
-    if (hasDecomp) {
-        const int decomp = helper::StringTo<int>(itDecomp->second, "setting 'decomposition' in call to CompressBigWhoop\n");
-        bwc_set_decomp(coder,decomp,decomp,decomp,decomp);
+    if (hasDecomp)
+    {
+        const int decomp = helper::StringTo<int>(
+            itDecomp->second, "setting 'decomposition' in call to CompressBigWhoop\n");
+        bwc_set_decomp(coder, decomp, decomp, decomp, decomp);
     }
 
     // Compression
-    bwc_stream *stream = bwc_init_stream(const_cast<char *>(dataIn),
-                                         bufferOut + bufferOutOffset, comp);
-    bwc_create_compression(coder, stream, const_cast<char*>(rate.data()));
+    bwc_stream *stream =
+        bwc_init_stream(const_cast<char *>(dataIn), bufferOut + bufferOutOffset, comp);
+    bwc_create_compression(coder, stream, const_cast<char *>(rate.data()));
     size_t sizeOut = (size_t)bwc_compress(coder, stream);
 
     if (sizeOut == 0)
@@ -186,12 +189,6 @@ size_t CompressBigWhoop::DecompressV1(const char *bufferIn, const size_t sizeIn,
     // If a newer buffer format is implemented, create another function, e.g.
     // DecompressV2 and keep this function for decompressing legacy data.
 
-    //helper::Throw<std::runtime_error>("Operator", "CompressBigWhoop", "DecompressV1",
-                                      //"decompression is only a dummy right now");
-
-    bwc_codec* decoder = nullptr;
-    //bwc_stream *stream = nullptr;
-
     size_t bufferInOffset = 0;
 
     const size_t ndims = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
@@ -201,13 +198,15 @@ size_t CompressBigWhoop::DecompressV1(const char *bufferIn, const size_t sizeIn,
         blockCount[i] = GetParameter<size_t, size_t>(bufferIn, bufferInOffset);
     }
     const DataType type = GetParameter<DataType>(bufferIn, bufferInOffset);
-    //const Params parameters = GetParameters(bufferIn, bufferInOffset);
 
     Dims convertedDims = ConvertBwcDims(blockCount, type, 5, true, 1);
 
-    decoder = bwc_alloc_decoder();
-    bwc_stream* stream = bwc_init_stream(const_cast<char *>(bufferIn) + bufferInOffset,
-                                         dataOut, decomp);
+    // Allocate BigWhoop decoder
+    bwc_codec *decoder = bwc_alloc_decoder();
+
+    // Decompression
+    bwc_stream *stream =
+        bwc_init_stream(const_cast<char *>(bufferIn) + bufferInOffset, dataOut, decomp);
     bwc_create_decompression(decoder, stream, 0);
     bwc_decompress(decoder, stream);
 
