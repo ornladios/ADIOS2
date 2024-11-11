@@ -31,16 +31,6 @@ Dims ConvertBwcDims(const Dims &dimensions, const DataType type, const size_t ta
 bwc_precision GetBwcType(DataType type);
 
 /**
- * Constructor BigWhoop bwc_stream based on input information around the data
- * pointer
- * @param data
- * @param shape
- * @param type
- * @return bwc_stream*
- */
-bwc_stream *GetBwcData(const char *data, char *outbuf, const Dims &shape, bwc_mode mode);
-
-/**
  * Constructor BigWhoop bwc_codec based on input information around the data
  * pointer
  * @param data
@@ -264,20 +254,6 @@ bwc_precision GetBwcType(DataType type)
     }
 
     return bwcType;
-}
-
-bwc_stream *GetBwcData(const char* data, char* outbuf, bwc_precision bwcType, const Dims &dimensions, bwc_mode mode)
-{
-    bwc_stream *stream = bwc_init_stream(const_cast<char *>(data), outbuf, mode);
-
-    if (stream == nullptr)
-    {
-        helper::Throw<std::runtime_error>("Operator", "CompressBigWhoop", "GetBwcField",
-                                          "BigWhoop failed to make field for" +
-                                              std::to_string(dimensions.size()) + "D data.");
-    }
-
-    return stream;
 }
 
 bwc_codec *GetBwcField(const Params &parameters, bwc_precision bwcType, const Dims &dimensions, bwc_mode mode)
