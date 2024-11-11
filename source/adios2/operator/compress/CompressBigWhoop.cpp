@@ -19,26 +19,26 @@ namespace core
 namespace compress
 {
 
+/**
+ * Returns a adios2::dims object that contains five entries. If the input
+ * dimensionality is smaller than five the additional dimensions are set
+ * to defaultDimSize. Else the dimensions at the front are collapsed until
+ * the dimensionality of the returned object is five.
+ * @param dimension
+ * @param type
+ * @param targetDims
+ * @param enforceDims
+ * @return refined dimensions
+ */
 Dims ConvertBwcDims(const Dims &dimensions, const DataType type, const size_t targetDims,
-                    const bool enforceDims, const size_t defaultDimSize);
+                    const bool enforceDims, const size_t defaultDimSize = 1);
 
 /**
  * Returns BWC supported bwc_precision based on adios string type
- * @param type adios type as string, see GetDataType<T> in
- * helper/adiosType.inl
+ * @param type adios type as string, see GetDataType<T> in helper/adiosType.inl
  * @return bwc_precision
  */
-bwc_precision GetBwcType(DataType type);
-
-/**
- * Constructor BigWhoop bwc_codec based on input information around the data
- * pointer
- * @param data
- * @param shape
- * @param type
- * @return bwc_codec*
- */
-bwc_codec *GetBwcField(const Params &parameters, bwc_precision bwcType, const Dims &dimensions, bwc_mode mode);
+bwc_precision GetBWCType(DataType type);
 
 CompressBigWhoop::CompressBigWhoop(const Params &parameters)
 : Operator("bigwhoop", COMPRESS_BIGWHOOP, "compress", parameters)
@@ -70,14 +70,33 @@ size_t CompressBigWhoop::Operate(const char *dataIn, const Dims &blockStart, con
 
     Dims convertedDims = ConvertBwcDims(blockCount, type, 5, true, 1);
 
-    bwc_precision bwcType = GetBwcType(type);
-    bwc_codec* coder = GetBwcField(m_Parameters, bwcType, convertedDims, comp);
+    bwc_precision bwcType = GetBWCType(type);
+    bwc_codec* coder = bwc_alloc_coder(convertedDims[0],
+                                       convertedDims[1],
+                                       convertedDims[2],
+                                       convertedDims[3],
+                                       convertedDims[4], bwcType);
+    if (coder == nullptr)
+    {
+        helper::Throw<std::runtime_error>("Operator", "CompressBigWhoop", "Operate",
+                                          "BigWhoop failed to make coder codec");
+    }
 
-    std::string rate = "4";
+    // Rate control
+    std::string rate = "32";
     auto itRate = m_Parameters.find("rate");
     const bool hasRate = itRate != m_Parameters.end();
     rate = hasRate ? itRate->second : rate;
 
+    // Quantization setting
+    auto itQM = m_Parameters.find("qm");
+    const bool hasQM = itQM != m_Parameters.end();
+    if (hasQM) {
+        const int QM = helper::StringTo<int>(itQM->second, "setting 'qm' in call to CompressBigWhoop\n");
+        bwc_set_qm(coder, QM);
+    }
+
+    // Decomposition setting
     auto itTile = m_Parameters.find("tile");
     const bool hasTile = itTile != m_Parameters.end();
     if (hasTile) {
@@ -103,6 +122,7 @@ size_t CompressBigWhoop::Operate(const char *dataIn, const Dims &blockStart, con
         bwc_set_decomp(coder,decomp,decomp,decomp,decomp);
     }
 
+    // Compression
     bwc_stream *stream = bwc_init_stream(const_cast<char *>(dataIn),
                                          bufferOut + bufferOutOffset, comp);
     bwc_create_compression(coder, stream, const_cast<char*>(rate.data()));
@@ -227,7 +247,7 @@ Dims ConvertBwcDims(const Dims &dimensions, const DataType type, const size_t ta
     return ret;
 }
 
-bwc_precision GetBwcType(DataType type)
+bwc_precision GetBWCType(DataType type)
 {
     bwc_precision bwcType; //= bwc_precision_none;
 
@@ -249,66 +269,11 @@ bwc_precision GetBwcType(DataType type)
     }
     else
     {
-        helper::Throw<std::invalid_argument>("Operator", "CompressBWC", "GetBwcType",
+        helper::Throw<std::invalid_argument>("Operator", "CompressBWC", "GetBWCType",
                                              "invalid data type " + ToString(type));
     }
 
     return bwcType;
-}
-
-bwc_codec *GetBwcField(const Params &parameters, bwc_precision bwcType, const Dims &dimensions, bwc_mode mode)
-{
-    bwc_codec *coder = nullptr;
-
-    if (dimensions.size() == 1)
-    {
-        std::cout << "I am compressing in 1D bwc." << std::endl;
-        coder = bwc_alloc_coder(dimensions[0], 1, 1, 1, 1, bwcType);
-    }
-    else if (dimensions.size() == 2)
-    {
-        coder = bwc_alloc_coder(dimensions[0], dimensions[1], 1, 1, 1, bwcType);
-    }
-    else if (dimensions.size() == 3)
-    {
-        coder = bwc_alloc_coder(dimensions[0], dimensions[1], dimensions[2], 1, 1, bwcType);
-    }
-    else if (dimensions.size() == 4)
-    {
-        coder = bwc_alloc_coder(dimensions[0], dimensions[1], dimensions[2], dimensions[3], 1, bwcType);
-    }
-    else if (dimensions.size() == 5)
-    {
-        coder = bwc_alloc_coder(dimensions[0], dimensions[1], dimensions[2], dimensions[3], dimensions[4], bwcType);
-    }
-    else
-    {
-        helper::Throw<std::invalid_argument>("Operator", "CompressBigWhoop", "GetBwcField",
-                                             "BigWhoop does not support " +
-                                                 std::to_string(dimensions.size()) + "D data.");
-    }
-
-    auto itQM = parameters.find("qm");
-    const bool hasQM = itQM != parameters.end();
-
-    if (hasQM) {
-        const int QM = helper::StringTo<int>(itQM->second, "setting 'qm' in call to CompressBigWhoop\n");
-        bwc_set_qm(coder, QM);
-    } else {
-        bwc_set_qm(coder, 32);
-    }
-    //bwc_set_kernels(coder, bwc_dwt_9_7, bwc_dwt_9_7, bwc_dwt_9_7, bwc_dwt_9_7);
-    //bwc_set_quantization_style(coder, bwc_qt_derived);
-    //bwc_set_quantization_step_size(coder,0.001);
-    //bwc_set_error_resilience(coder);
-
-    if (coder == nullptr)
-    {
-        helper::Throw<std::runtime_error>("Operator", "CompressBigWhoop", "GetBwcField",
-                                          "BigWhoop failed to make coder codec");
-    }
-
-    return coder;
 }
 
 } // end namespace compress
