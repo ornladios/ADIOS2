@@ -49,6 +49,7 @@ jobs:
           path: dist/*.tar.gz
 
   build_wheels:
+    if: false
     name: Wheel on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
