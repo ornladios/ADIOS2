@@ -52,6 +52,7 @@ public:
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
     bool VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const;
     bool VariableMinMax(const VariableBase &, const size_t Step, MinMaxStruct &MinMax);
+    std::string VariableExprStr(const VariableBase &Var);
 
 private:
     UserOptions::Campaign m_Options;
