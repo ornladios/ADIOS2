@@ -429,6 +429,18 @@ bool CampaignReader::VariableMinMax(const VariableBase &Var, const size_t Step,
     return false;
 }
 
+std::string CampaignReader::VariableExprStr(const VariableBase &Var)
+{
+    auto it = m_VarInternalInfo.find(Var.m_Name);
+    if (it != m_VarInternalInfo.end())
+    {
+        VariableBase *vb = reinterpret_cast<VariableBase *>(it->second.originalVar);
+        Engine *e = m_Engines[it->second.engineIdx];
+        return e->VariableExprStr(*vb);
+    }
+    return "";
+}
+
 #define declare_type(T)                                                                            \
     void CampaignReader::DoGetSync(Variable<T> &variable, T *data)                                 \
     {                                                                                              \
