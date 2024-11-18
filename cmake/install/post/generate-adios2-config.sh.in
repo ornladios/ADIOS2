@@ -65,8 +65,8 @@ then
   # Convert relative paths to absolute based on DESTDIR
   PREFIX="${DESTDIR:-$(pwd)}/$1"
 else
-  # check if the PREFIX directory exists and prepend DESTDIR if not
-  if [ ! -d "${PREFIX}" ]
+  # Check if the DESTDIR directory exists and prepend it to PREFIX
+  if [ -d "${DESTDIR}" ]
   then
     PREFIX="${DESTDIR}$1"
   fi
