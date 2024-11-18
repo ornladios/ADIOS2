@@ -34,7 +34,7 @@ By default both backends are ``OFF`` even if CUDA or Kokkos are installed and av
 Building with CUDA enabled
 --------------------------
 
-The ADIOS2 default behavior is to turn ``OFF`` the CUDA backend. Building with the CUDA backend requires ``-DADIOS2_USE_Kokkos=ON`` and an available CUDA toolkit on the system.
+The ADIOS2 default behavior is to turn ``OFF`` the CUDA backend. Building with the CUDA backend requires ``-DADIOS2_USE_CUDA=ON`` and an available CUDA toolkit on the system.
 
 When building ADIOS2 with CUDA enabled, the user is responsible with setting the correct ``CMAKE_CUDA_ARCHITECTURES`` (e.g. for Summit the ``CMAKE_CUDA_ARCHITECTURES`` needs to be set to 70 to match the NVIDIA Volta V100).
 
