@@ -721,9 +721,13 @@ void BP5Writer::TwoLevelAggregationMetadata(format::BP5Serializer::TimestepInfo 
     MetaBuffer = m_BP5Serializer.CopyMetadataToContiguous(
         TSInfo.NewMetaMetaBlocks, {m}, {a}, {m_ThisTimestepDataSize}, {m_StartDataPos});
 
+    std::string meta1_gather_str =
+        "ES_meta1_gather_" + std::to_string(m_AggregatorMetadata.m_Comm.Size());
+    m_Profiler.AddTimerWatch(meta1_gather_str, true);
+
     if (m_AggregatorMetadata.m_Comm.Size() > 1)
     { // level 1
-        m_Profiler.Start("ES_meta1_gather");
+        m_Profiler.Start(meta1_gather_str);
         size_t LocalSize = MetaBuffer.size();
         std::vector<size_t> RecvCounts = m_AggregatorMetadata.m_Comm.GatherValues(LocalSize, 0);
         std::vector<char> RecvBuffer;
@@ -736,7 +740,7 @@ void BP5Writer::TwoLevelAggregationMetadata(format::BP5Serializer::TimestepInfo 
         }
         m_AggregatorMetadata.m_Comm.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
                                                   RecvCounts.size(), RecvBuffer.data(), 0);
-        m_Profiler.Stop("ES_meta1_gather");
+        m_Profiler.Stop(meta1_gather_str);
         if (m_AggregatorMetadata.m_Comm.Rank() == 0)
         {
             std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
@@ -761,9 +765,12 @@ void BP5Writer::TwoLevelAggregationMetadata(format::BP5Serializer::TimestepInfo 
         std::vector<char> *buf;
         std::vector<size_t> RecvCounts;
         size_t LocalSize = MetaBuffer.size();
+        std::string meta2_gather_str =
+            "ES_meta2_gather_" + std::to_string(m_CommMetadataAggregators.Size());
+        m_Profiler.AddTimerWatch(meta2_gather_str, true);
         if (m_CommMetadataAggregators.Size() > 1)
         {
-            m_Profiler.Start("ES_meta2_gather");
+            m_Profiler.Start(meta2_gather_str);
             RecvCounts = m_CommMetadataAggregators.GatherValues(LocalSize, 0);
             if (m_CommMetadataAggregators.Rank() == 0)
             {
@@ -779,7 +786,7 @@ void BP5Writer::TwoLevelAggregationMetadata(format::BP5Serializer::TimestepInfo 
             m_CommMetadataAggregators.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
                                                     RecvCounts.size(), RecvBuffer.data(), 0);
             buf = &RecvBuffer;
-            m_Profiler.Stop("ES_meta2_gather");
+            m_Profiler.Stop(meta2_gather_str);
         }
         else
         {
@@ -1183,6 +1190,21 @@ void BP5Writer::InitAggregator()
     // m_Aggregator.m_IsActive is always true
     // m_Aggregator.m_Comm.Rank() will always succeed (not abort)
     // m_Aggregator.m_SubFileIndex is always set
+    std::string init_str = "InitAgg";
+    if (m_Parameters.AsyncWrite)
+    {
+        init_str += "-async";
+    }
+
+    if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWrites)
+        init_str += "-ew";
+    else if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWritesSerial)
+        init_str += "-ews";
+    else
+        init_str += "-tls";
+
+    m_Profiler.AddTimerWatch(init_str);
+    m_Profiler.Start(init_str);
 
     if (m_Parameters.AggregationType == (int)AggregationType::EveryoneWrites ||
         m_Parameters.AggregationType == (int)AggregationType::EveryoneWritesSerial)
@@ -1214,6 +1236,8 @@ void BP5Writer::InitAggregator()
         DataWritingComm = &m_AggregatorTwoLevelShm.m_AggregatorChainComm;
         m_Aggregator = static_cast<aggregator::MPIAggregator *>(&m_AggregatorTwoLevelShm);
     }
+
+    m_Profiler.Stop(init_str);
 
     /* comm for Aggregators only.
      *  We are only interested in the chain of rank 0s
