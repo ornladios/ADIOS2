@@ -156,7 +156,8 @@ In addition to the ``ADIOS2_USE_Feature`` options, the following options are als
 ``BUILD_TESTING``                      ON/**OFF**                                     Build test code.
 ``CMAKE_INSTALL_PREFIX``               /path/to/install (``/usr/local``)              Installation location.
 ``CMAKE_BUILD_TYPE``                   Debug/**Release**/RelWithDebInfo/MinSizeRel    Compiler optimization levels.
-``CMAKE_PREFIX_PATH``                  Semi-colon separeated list of paths            Location of extra dependencies
+``CMAKE_PREFIX_PATH``                  Semi-colon separeated list of paths            Location of extra dependencies.
+``ADIOS2_USE_PIP``                     ON/**OFF**                                     ON when installing inside a Python venv or a PyPi package.
 ==================================== =============================================== ===============================
 
 
