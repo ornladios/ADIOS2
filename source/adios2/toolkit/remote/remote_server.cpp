@@ -488,6 +488,7 @@ static void ReadRequestHandler(CManager cm, CMConnection conn, void *vevent, voi
     Response.ReadData = (char *)tmp;
     Response.ReadResponseCondition = ReadMsg->ReadResponseCondition;
     Response.Dest = ReadMsg->Dest;
+    Response.OperatorType = Operator::OperatorType::COMPRESS_NULL;
     if (verbose >= 2)
         std::cout << "Returning " << readable_size(Response.Size) << " for Read " << std::endl;
     f->m_BytesSent += Response.Size;

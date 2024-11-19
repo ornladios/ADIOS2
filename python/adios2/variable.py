@@ -5,6 +5,7 @@
 
 from adios2 import bindings
 
+
 class Variable:
     """High level representation of the Variable class in the adios2.bindings"""
 
