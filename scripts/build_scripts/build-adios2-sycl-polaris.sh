@@ -2,7 +2,7 @@
 # shellcheck disable=SC2191
 
 module load oneapi
-module load cmake/3.23.2
+module load cmake
 module refresh
 
 ######## User Configurations ########
