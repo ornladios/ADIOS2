@@ -92,10 +92,10 @@ public:
      * m_BlocksInfo index (BP4 ONLY) */
     std::map<size_t, Span> m_BlocksSpan;
 
-    Variable<T>(const std::string &name, const Dims &shape, const Dims &start, const Dims &count,
-                const bool constantShape);
+    Variable(const std::string &name, const Dims &shape, const Dims &start, const Dims &count,
+             const bool constantShape);
 
-    ~Variable<T>() = default;
+    ~Variable() = default;
 
     BPInfo &SetBlockInfo(const T *data, const size_t stepsStart,
                          const size_t stepsCount = 1) noexcept;
