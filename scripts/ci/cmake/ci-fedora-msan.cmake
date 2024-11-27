@@ -19,6 +19,9 @@ set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
 set(CTEST_BUILD_FLAGS "-k -j4")
 set(CTEST_MEMORYCHECK_TYPE "MemorySanitizer")
 
+# Force serial tests
+set(CTEST_TEST_ARGS PARALLEL_LEVEL 1)
+
 list(APPEND EXCLUDE_EXPRESSIONS
   "Engine.BP.BPBufferSizeTest.SyncDeferredIdenticalUsage.BP3.Serial"
   "Engine.BP.BPBufferSizeTest.SyncDeferredIdenticalUsage.BP4.Serial"
