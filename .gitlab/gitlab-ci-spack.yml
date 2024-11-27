@@ -1,3 +1,4 @@
+#  This file is used to define the GitLab CI/CD pipeline for the ADIOS2 project.
 default:
   interruptible: true
   tags:
@@ -35,6 +36,7 @@ default:
       - $CI_BIN_DIR/testing/
       - $CI_BIN_DIR/source/**/*.h
       - $CI_BIN_DIR/source/**/*.in
+      - $CI_BIN_DIR/adios2_reorganize_wrapper
 
       # CTest and CMake install files.
       - $CI_BIN_DIR/CMakeCache.txt
@@ -54,38 +56,38 @@ default:
 #===============================================================================
 
 build:uo-sanitizer-asan:
-  image: ornladios/adios2:ci-fedora-asan
+  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20241205
   extends: [.common-build]
 
 build:uo-sanitizer-msan:
-  image: ornladios/adios2:ci-fedora-msan
+  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20241205
   extends: [.common-build]
 
 build:uo-sanitizer-tsan:
-  image: ornladios/adios2:ci-fedora-tsan
+  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20241205
   extends: [.common-build]
 
 build:uo-sanitizer-ubsan:
-  image: ornladios/adios2:ci-fedora-ubsan
+  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20241205
   extends: [.common-build]
 
 test:uo-sanitizer-asan:
-  image: ornladios/adios2:ci-fedora-asan
+  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20241205
   extends: [.common-test]
   needs: [build:uo-sanitizer-asan]
 
 test:uo-sanitizer-msan:
-  image: ornladios/adios2:ci-fedora-msan
+  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20241205
   extends: [.common-test]
   needs: [build:uo-sanitizer-msan]
 
 test:uo-sanitizer-tsan:
-  image: ornladios/adios2:ci-fedora-tsan
+  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20241205
   extends: [.common-test]
   needs: [build:uo-sanitizer-tsan]
 
 test:uo-sanitizer-ubsan:
-  image: ornladios/adios2:ci-fedora-ubsan
+  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20241205
   extends: [.common-test]
   needs: [build:uo-sanitizer-ubsan]
 
