@@ -25,28 +25,29 @@ defaults: &defaults
 version: 2
 
 jobs:
-  "fedora-ubsan":
+  "opensuse-tw-ubsan":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:ci-fedora-ubsan
-  "fedora-asan":
+      - image: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan
+  "opensuse-tw-asan":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:ci-fedora-asan
-  "fedora-msan":
+      - image: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan
+  "opensuse-tw-msan":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:ci-fedora-msan
-  "fedora-tsan":
+      - image: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan
+    resource_class: large
+  "opensuse-tw-tsan":
     <<: *defaults
     docker:
-      - image: ornladios/adios2:ci-fedora-tsan
+      - image: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan
 
 workflows:
   version: 2
   sanitizers:
     jobs:
-      - "fedora-ubsan"
-      - "fedora-asan"
-      - "fedora-msan"
-      - "fedora-tsan"
+      - "opensuse-tw-ubsan"
+      - "opensuse-tw-asan"
+      - "opensuse-tw-msan"
+      - "opensuse-tw-tsan"
