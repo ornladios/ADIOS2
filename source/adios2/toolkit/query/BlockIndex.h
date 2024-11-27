@@ -13,8 +13,7 @@ template <class T>
 class BlockIndex
 {
 public:
-    BlockIndex(adios2::core::Variable<T> *var, adios2::core::IO &io,
-                  adios2::core::Engine &reader)
+    BlockIndex(adios2::core::Variable<T> *var, adios2::core::IO &io, adios2::core::Engine &reader)
     : m_VarPtr(var), m_IdxIO(io), m_IdxReader(reader)
     {
     }
