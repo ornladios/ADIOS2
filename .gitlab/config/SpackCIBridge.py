@@ -19,7 +19,7 @@ import urllib.request
 class SpackCIBridge(object):
 
     def __init__(self, gitlab_repo="", gitlab_host="", gitlab_project="", github_project="",
-                 disable_status_post=True, sync_draft_prs=False,
+                 disable_status_post=True, status_context="", sync_draft_prs=False,
                  main_branch=None, prereq_checks=[]):
         self.gitlab_repo = gitlab_repo
         self.github_project = github_project
