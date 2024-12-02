@@ -8,7 +8,7 @@ on:
 jobs:
   sync-script-ornl:
     if: github.repository == 'ornladios/ADIOS2'
-    name: Sync Script
+    name: ORNL sync
     runs-on: ubuntu-20.04
     environment: sync-script
     steps:
@@ -21,16 +21,20 @@ jobs:
       - run: pip install python-dateutil PyGithub
       - run: >
           .gitlab/config/SpackCIBridge.py
-          ornladios/ADIOS2 git@code.ornl.gov:ecpcitest/adios2.git
-          https://code.ornl.gov/ ecpcitest/adios2
-          --prereq-check=format --prereq-check=git_checks --disable-status-post
+          ornladios/ADIOS2
+          git@code.ornl.gov:ecpcitest/adios2.git
+          https://code.ornl.gov/
+          ecpcitest/adios2
+          --prereq-check=format
+          --prereq-check=git_checks
+          --disable-status-post
         env:
           GITLAB_SSH_KEY_BASE64: ${{ secrets.GITLAB_SSH_KEY_BASE64}}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   sync-script-spack:
     if: github.repository == 'ornladios/ADIOS2'
-    name: Sync Script
+    name: Spack sync
     runs-on: ubuntu-20.04
     environment: sync-script
     steps:
@@ -43,9 +47,13 @@ jobs:
       - run: pip install python-dateutil PyGithub
       - run: >
           .gitlab/config/SpackCIBridge.py
-          ornladios/ADIOS2 git@ssh.gitlab.spack.io:adios2/adios2.git
-          https://gitlab.spack.io/ adios2/ADIOS2
-          --prereq-check=format --prereq-check=git_checks
+          ornladios/ADIOS2
+          git@ssh.gitlab.spack.io:adios2/adios2.git
+          https://gitlab.spack.io/
+          adios2/ADIOS2
+          --prereq-check=format
+          --prereq-check=git_checks
+          --status-context="Spack CI"
         env:
           GITLAB_SSH_KEY_BASE64: ${{ secrets.GITLAB_SPACK_SSH_KEY_BASE64}}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
