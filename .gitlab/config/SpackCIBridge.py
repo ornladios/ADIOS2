@@ -659,7 +659,7 @@ if __name__ == "__main__":
     parser.add_argument("gitlab_project", help="GitLab project (org/repo or user/repo)")
     parser.add_argument("--disable-status-post", action="store_true", default=False,
                         help="Do not post pipeline status to each GitHub PR")
-    parser.add_argument("--status-context", action="store_true", default="External Gitlab pipeline",
+    parser.add_argument("--status-context", type=str, default="External Gitlab pipeline",
                         help="The name of the status in the github status check")
     parser.add_argument("--sync-draft-prs", action="store_true", default=False,
                         help="Copy draft PRs from GitHub to GitLab")
