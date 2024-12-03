@@ -27,6 +27,7 @@ class SpackCIBridge(object):
         self.github_repo = "https://{0}@github.com/{1}.git".format(github_token, self.github_project)
         self.py_github = Github(github_token)
         self.py_gh_repo = self.py_github.get_repo(self.github_project, lazy=True)
+        self.status_context = status_context
 
         self.merge_msg_regex = re.compile(r"Merge\s+([^\s]+)\s+into\s+([^\s]+)")
         self.unmergeable_shas = []
