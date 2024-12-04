@@ -1,0 +1,16 @@
+version: 2
+jobs:
+  "post-cdash-status":
+    docker:
+      - image: cimg/base:2024.12
+    steps:
+      - checkout
+      - run:
+          name: CDash
+          command: ./scripts/ci/circle/post-cdash-status
+
+workflows:
+  version: 2
+  utils:
+    jobs:
+      - "post-cdash-status"
