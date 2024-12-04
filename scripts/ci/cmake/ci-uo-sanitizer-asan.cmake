@@ -20,8 +20,7 @@ ADIOS2_USE_ZFP:STRING=ON
 ")
 
 set(dashboard_track "Analysis")
-set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_BUILD_FLAGS "-k -j4")
+set(CTEST_CMAKE_GENERATOR "Ninja")
 set(CTEST_MEMORYCHECK_TYPE "AddressSanitizer")
 
 set(ADIOS_TEST_REPEAT 0)
