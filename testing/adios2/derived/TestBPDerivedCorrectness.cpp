@@ -789,6 +789,10 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
 
     result = RUN_ALL_TESTS();
-
+    
+#if ADIOS2_USE_MPI
+    MPI_Finalize();
+#endif
+    
     return result;
 }
