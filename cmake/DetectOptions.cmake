@@ -76,7 +76,9 @@ if(ADIOS2_USE_BigWhoop STREQUAL AUTO)
 elseif(ADIOS2_USE_BigWhoop)
   find_package(BWC REQUIRED CONFIG)
 endif()
-set(ADIOS2_HAVE_BigWhoop ${BWC_found})
+if(BWC_FOUND)
+  set(ADIOS2_HAVE_BigWhoop TRUE)
+endif()
 
 # Blosc2
 if(ADIOS2_USE_Blosc2 STREQUAL AUTO)
