@@ -33,7 +33,8 @@ public:
     void UpdateExprDim(std::map<std::string, std::tuple<Dims, Dims, Dims>> NameToDims);
 
     std::vector<std::tuple<void *, Dims, Dims>>
-    ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &mvi, bool DoCompute = true, int nproc = 1);
+    ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInfo>> &mvi, bool DoCompute = true,
+                    int nproc = 1);
 };
 
 } // end namespace core

@@ -222,8 +222,8 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type, int npro
 #define declare_type_mult(T)                                                                       \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *multValues = detail::ApplyOneToOne<T>(                                                  \
-            inputData.begin(), inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);      \
+        T *multValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,     \
+                                                 [](T a, T b) { return a * b; }, 1);               \
         return DerivedData({(void *)multValues, inputData[0].Start, inputData[0].Count});          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_mult)
@@ -244,8 +244,8 @@ DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type, int nproc
 #define declare_type_div(T)                                                                        \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
-        T *divValues = detail::ApplyOneToOne<T>(                                                   \
-            inputData.begin() + 1, inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);  \
+        T *divValues = detail::ApplyOneToOne<T>(inputData.begin() + 1, inputData.end(), dataSize,  \
+                                                [](T a, T b) { return a * b; }, 1);                \
         for (size_t i = 0; i < dataSize; i++)                                                      \
             divValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) / divValues[i];         \
         return DerivedData({(void *)divValues, inputData[0].Start, inputData[0].Count});           \
@@ -703,7 +703,7 @@ DerivedData MinFunc(std::vector<DerivedData> inputData, DataType type, int nproc
             *minVal = detail::ApplyAllToOne<T>((T *)d.Data, dataSize,                              \
                                                [](T a, T b) { return std::min(a, b); }, *minVal);  \
         }                                                                                          \
-        return DerivedData({(void *)minVal, {0}, {size_t(nproc)}});                                            \
+        return DerivedData({(void *)minVal, {0}, {size_t(nproc)}});                                \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_min)
     helper::Throw<std::invalid_argument>("Derived", "Function", "MinFunc",
@@ -727,7 +727,7 @@ DerivedData MaxFunc(std::vector<DerivedData> inputData, DataType type, int nproc
             *maxVal = detail::ApplyAllToOne<T>((T *)d.Data, dataSize,                              \
                                                [](T a, T b) { return std::max(a, b); }, *maxVal);  \
         }                                                                                          \
-        return DerivedData({(void *)maxVal, {0}, {size_t(nproc)}});                                            \
+        return DerivedData({(void *)maxVal, {0}, {size_t(nproc)}});                                \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_max)
     helper::Throw<std::invalid_argument>("Derived", "Function", "MaxFunc",
@@ -751,7 +751,7 @@ DerivedData SumFunc(std::vector<DerivedData> inputData, DataType type, int nproc
             *sumVal = detail::ApplyAllToOne<T>((T *)inputData[0].Data, dataSize,                   \
                                                [](T a, T b) { return a + b; }, *sumVal);           \
         }                                                                                          \
-        return DerivedData({(void *)sumVal, {0}, {size_t(nproc)}});                                            \
+        return DerivedData({(void *)sumVal, {0}, {size_t(nproc)}});                                \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sum)
     helper::Throw<std::invalid_argument>("Derived", "Function", "SumFunc",
@@ -778,7 +778,7 @@ DerivedData MeanFunc(std::vector<DerivedData> inputData, DataType type, int npro
                                                 [](T a, T b) { return a + b; }, *meanVal);         \
         }                                                                                          \
         *meanVal /= (T)totalSize;                                                                  \
-        return DerivedData({(void *)meanVal, {0}, {size_t(nproc)}});                                           \
+        return DerivedData({(void *)meanVal, {0}, {size_t(nproc)}});                               \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_mean)
     helper::Throw<std::invalid_argument>("Derived", "Function", "MeanFunc",
@@ -812,7 +812,7 @@ DerivedData VarianceFunc(std::vector<DerivedData> inputData, DataType type, int 
                 },                                                                                 \
                 *varianceVal);                                                                     \
         }                                                                                          \
-        return DerivedData({(void *)varianceVal, {0}, {size_t(nproc)}});                                       \
+        return DerivedData({(void *)varianceVal, {0}, {size_t(nproc)}});                           \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_variance)
     helper::Throw<std::invalid_argument>("Derived", "Function", "VarianceFunc",
@@ -839,7 +839,7 @@ DerivedData StDevFunc(std::vector<DerivedData> inputData, DataType type, int npr
         T varianceVal = *((T *)varianceData.Data);                                                 \
         double *stdevVal = (double *)malloc(sizeof(double));                                       \
         *stdevVal = std::sqrt(varianceVal);                                                        \
-        return DerivedData({(void *)stdevVal, {0}, {size_t(nproc)}});                                          \
+        return DerivedData({(void *)stdevVal, {0}, {size_t(nproc)}});                              \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_stdev)
     helper::Throw<std::invalid_argument>("Derived", "Function", "StdevFunc",

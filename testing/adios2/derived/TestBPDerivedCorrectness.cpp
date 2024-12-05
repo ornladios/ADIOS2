@@ -28,13 +28,13 @@ protected:
 
 TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
 {
-  int rank = 0;
-  int size = 1;
+    int rank = 0;
+    int size = 1;
 #if ADIOS2_USE_MPI
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
-    
+
     const size_t Nx = 10, Ny = 3, Nz = 6;
     const size_t steps = 2;
     // Application variable
@@ -77,8 +77,10 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
     const std::string derVarianceName = "derived/variance";
     const std::string derStdevName = "derived/stdev";
 
-    const adios2::Dims shape{static_cast<size_t>(Nx * size), static_cast<size_t>(Ny * size), static_cast<size_t>(Nz * size)};
-    const adios2::Dims start{static_cast<size_t>(Nx * rank), static_cast<size_t>(Ny * rank), static_cast<size_t>(Nz * rank)};
+    const adios2::Dims shape{static_cast<size_t>(Nx * size), static_cast<size_t>(Ny * size),
+                             static_cast<size_t>(Nz * size)};
+    const adios2::Dims start{static_cast<size_t>(Nx * rank), static_cast<size_t>(Ny * rank),
+                             static_cast<size_t>(Nz * rank)};
     const adios2::Dims count{Nx, Ny, Nz};
 
     auto Ux = bpOut.DefineVariable<float>(varname[0], shape, start, count);
