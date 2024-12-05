@@ -195,7 +195,7 @@ endif()
 set(mpi_find_components C)
 
 if(ADIOS2_USE_Derived_Variable)
-    set(ADIOS2_HAVE_Derived_Variable FALSE)
+    set(ADIOS2_HAVE_Derived_Variable TRUE)
 endif()
 
 if(ADIOS2_USE_Kokkos AND ADIOS2_USE_CUDA)

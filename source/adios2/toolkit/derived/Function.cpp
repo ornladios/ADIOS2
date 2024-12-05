@@ -165,7 +165,7 @@ DerivedData AddAggregatedFunc(DerivedData inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AddFunc");
     // if there is only one element return the aggregate result
@@ -188,7 +188,7 @@ DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
 }
 
 // Perform a subtraction from the first variable of all other variables in the std::vector
-DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::SubtractFunc");
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
@@ -213,7 +213,7 @@ DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
 }
 
 // Perform a reduce multiply over all variables in the std::vector
-DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::MultFunc");
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
@@ -233,7 +233,7 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
 }
 
 // Perform a division from the first variable of all other variables in the std::vector
-DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::DivFunc");
     size_t dataSize = std::accumulate(std::begin(inputData[0].Count), std::end(inputData[0].Count),
@@ -257,7 +257,7 @@ DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
 }
 
 // Apply Sqrt over all elements in the variable
-DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::SqrtFunc");
     if (inputData.size() != 1)
@@ -294,7 +294,7 @@ DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
 }
 
 // Apply Pow over all elements in the variable
-DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::PowFunc");
     if (inputData.size() != 1)
@@ -329,7 +329,7 @@ DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData SinFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData SinFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::SinFunc");
     if (inputData.size() != 1)
@@ -367,7 +367,7 @@ DerivedData SinFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::CosFunc");
     if (inputData.size() != 1)
@@ -405,7 +405,7 @@ DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::TanFunc");
     if (inputData.size() != 1)
@@ -443,7 +443,7 @@ DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData AsinFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData AsinFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AsinFunc");
     if (inputData.size() != 1)
@@ -481,7 +481,7 @@ DerivedData AsinFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData AcosFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData AcosFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AcosFunc");
     if (inputData.size() != 1)
@@ -519,7 +519,7 @@ DerivedData AcosFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::AtanFunc");
     if (inputData.size() != 1)
@@ -587,7 +587,7 @@ DerivedData MagAggregatedFunc(DerivedData inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::MagnitudeFunc");
     // if there is only one element return the aggregate result
@@ -612,7 +612,7 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData Cross3DFunc(const std::vector<DerivedData> inputData, DataType type)
+DerivedData Cross3DFunc(const std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::Cross3DFunc");
     if (inputData.size() != 6)
@@ -661,7 +661,7 @@ DerivedData Cross3DFunc(const std::vector<DerivedData> inputData, DataType type)
  *         (ex: partial derivatives in x direction at point (0,0,0)
  *              only use data from (1,0,0), etc )
  */
-DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
+DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::Curl3DFunc");
     size_t dims[3] = {inputData[0].Count[0], inputData[0].Count[1], inputData[0].Count[2]};
@@ -687,7 +687,7 @@ DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData MinFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData MinFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::MinFunc");
 
@@ -703,7 +703,7 @@ DerivedData MinFunc(std::vector<DerivedData> inputData, DataType type)
             *minVal = detail::ApplyAllToOne<T>((T *)d.Data, dataSize,                              \
                                                [](T a, T b) { return std::min(a, b); }, *minVal);  \
         }                                                                                          \
-        return DerivedData({(void *)minVal, {0}, {1}});                                            \
+        return DerivedData({(void *)minVal, {0}, {size_t(nproc)}});                                            \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_min)
     helper::Throw<std::invalid_argument>("Derived", "Function", "MinFunc",
@@ -711,7 +711,7 @@ DerivedData MinFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData MaxFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData MaxFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::MaxFunc");
 
@@ -727,7 +727,7 @@ DerivedData MaxFunc(std::vector<DerivedData> inputData, DataType type)
             *maxVal = detail::ApplyAllToOne<T>((T *)d.Data, dataSize,                              \
                                                [](T a, T b) { return std::max(a, b); }, *maxVal);  \
         }                                                                                          \
-        return DerivedData({(void *)maxVal, {0}, {1}});                                            \
+        return DerivedData({(void *)maxVal, {0}, {size_t(nproc)}});                                            \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_max)
     helper::Throw<std::invalid_argument>("Derived", "Function", "MaxFunc",
@@ -735,7 +735,7 @@ DerivedData MaxFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData SumFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData SumFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::SumFunc");
 
@@ -751,7 +751,7 @@ DerivedData SumFunc(std::vector<DerivedData> inputData, DataType type)
             *sumVal = detail::ApplyAllToOne<T>((T *)inputData[0].Data, dataSize,                   \
                                                [](T a, T b) { return a + b; }, *sumVal);           \
         }                                                                                          \
-        return DerivedData({(void *)sumVal, {0}, {1}});                                            \
+        return DerivedData({(void *)sumVal, {0}, {size_t(nproc)}});                                            \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sum)
     helper::Throw<std::invalid_argument>("Derived", "Function", "SumFunc",
@@ -759,7 +759,7 @@ DerivedData SumFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData MeanFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData MeanFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::MeanFunc");
 
@@ -778,7 +778,7 @@ DerivedData MeanFunc(std::vector<DerivedData> inputData, DataType type)
                                                 [](T a, T b) { return a + b; }, *meanVal);         \
         }                                                                                          \
         *meanVal /= (T)totalSize;                                                                  \
-        return DerivedData({(void *)meanVal, {0}, {1}});                                           \
+        return DerivedData({(void *)meanVal, {0}, {size_t(nproc)}});                                           \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_mean)
     helper::Throw<std::invalid_argument>("Derived", "Function", "MeanFunc",
@@ -786,10 +786,10 @@ DerivedData MeanFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData VarianceFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData VarianceFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::VarianceFunc");
-    DerivedData meanData = MeanFunc(inputData, type);
+    DerivedData meanData = MeanFunc(inputData, type, nproc);
     size_t totalSize = 0;
     for (DerivedData d : inputData)
         totalSize +=
@@ -812,7 +812,7 @@ DerivedData VarianceFunc(std::vector<DerivedData> inputData, DataType type)
                 },                                                                                 \
                 *varianceVal);                                                                     \
         }                                                                                          \
-        return DerivedData({(void *)varianceVal, {0}, {1}});                                       \
+        return DerivedData({(void *)varianceVal, {0}, {size_t(nproc)}});                                       \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_variance)
     helper::Throw<std::invalid_argument>("Derived", "Function", "VarianceFunc",
@@ -820,18 +820,18 @@ DerivedData VarianceFunc(std::vector<DerivedData> inputData, DataType type)
     return DerivedData();
 }
 
-DerivedData StDevFunc(std::vector<DerivedData> inputData, DataType type)
+DerivedData StDevFunc(std::vector<DerivedData> inputData, DataType type, int nproc)
 {
     PERFSTUBS_SCOPED_TIMER("derived::Function::StdevFunc");
     DataType inputType = inputData[0].Type;
-    DerivedData varianceData = VarianceFunc(inputData, inputType);
+    DerivedData varianceData = VarianceFunc(inputData, inputType, nproc);
 
     if (inputType == DataType::LongDouble)
     {
         long double varianceVal = *((long double *)varianceData.Data);
         long double *stdevVal = (long double *)malloc(sizeof(long double));
         *stdevVal = std::sqrt(varianceVal);
-        return DerivedData({(void *)stdevVal, {0}, {1}});
+        return DerivedData({(void *)stdevVal, {0}, {size_t(nproc)}});
     }
 #define declare_type_stdev(T)                                                                      \
     else if (inputType == helper::GetDataType<T>())                                                \
@@ -839,7 +839,7 @@ DerivedData StDevFunc(std::vector<DerivedData> inputData, DataType type)
         T varianceVal = *((T *)varianceData.Data);                                                 \
         double *stdevVal = (double *)malloc(sizeof(double));                                       \
         *stdevVal = std::sqrt(varianceVal);                                                        \
-        return DerivedData({(void *)stdevVal, {0}, {1}});                                          \
+        return DerivedData({(void *)stdevVal, {0}, {size_t(nproc)}});                                          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_stdev)
     helper::Throw<std::invalid_argument>("Derived", "Function", "StdevFunc",

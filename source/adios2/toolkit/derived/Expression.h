@@ -86,7 +86,7 @@ public:
     DataType GetType(std::map<std::string, DataType> NameToType);
     std::vector<DerivedData>
     ApplyExpression(DataType type, size_t numBlocks,
-                    std::map<std::string, std::vector<DerivedData>> nameToData);
+                    std::map<std::string, std::vector<DerivedData>> nameToData, int nproc);
     void print();
     std::string toStringExpr();
 };
@@ -116,7 +116,7 @@ public:
     std::vector<std::string> VariableNameList();
     std::vector<DerivedData>
     ApplyExpression(DataType type, size_t numBlocks,
-                    std::map<std::string, std::vector<DerivedData>> nameToData);
+                    std::map<std::string, std::vector<DerivedData>> nameToData, int nproc);
 };
 
 }

@@ -548,7 +548,7 @@ void BP5Writer::ComputeDerivedVariables()
         std::vector<std::tuple<void *, Dims, Dims>> DerivedBlockData;
         // for expressionString, just generate the blocksinfo
         bool DoCompute = derivedVar->GetDerivedType() != DerivedVarType::ExpressionString;
-        DerivedBlockData = derivedVar->ApplyExpression(nameToVarInfo, DoCompute);
+        DerivedBlockData = derivedVar->ApplyExpression(nameToVarInfo, DoCompute, m_Comm.Size());
 
         // Send the derived variable to ADIOS2 internal logic
         for (auto derivedBlock : DerivedBlockData)

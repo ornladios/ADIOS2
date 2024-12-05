@@ -28,6 +28,13 @@ protected:
 
 TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
 {
+  int rank = 0;
+  int size = 1;
+#if ADIOS2_USE_MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+#endif
+    
     const size_t Nx = 10, Ny = 3, Nz = 6;
     const size_t steps = 2;
     // Application variable
@@ -47,7 +54,11 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
         simArray3[i] = distribution(generator);
     }
 
+#if ADIOS2_USE_MPI
+    adios2::ADIOS adios(MPI_COMM_WORLD);
+#else
     adios2::ADIOS adios;
+#endif
 
     adios2::IO bpOut = adios.DeclareIO("BPWriteAddExpression");
 
@@ -66,9 +77,13 @@ TEST_P(DerivedCorrectnessP, ScalarFunctionsCorrectnessTest)
     const std::string derVarianceName = "derived/variance";
     const std::string derStdevName = "derived/stdev";
 
-    auto Ux = bpOut.DefineVariable<float>(varname[0], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uy = bpOut.DefineVariable<float>(varname[1], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
-    auto Uz = bpOut.DefineVariable<float>(varname[2], {Nx, Ny, Nz}, {0, 0, 0}, {Nx, Ny, Nz});
+    const adios2::Dims shape{static_cast<size_t>(Nx * size), static_cast<size_t>(Ny * size), static_cast<size_t>(Nz * size)};
+    const adios2::Dims start{static_cast<size_t>(Nx * rank), static_cast<size_t>(Ny * rank), static_cast<size_t>(Nz * rank)};
+    const adios2::Dims count{Nx, Ny, Nz};
+
+    auto Ux = bpOut.DefineVariable<float>(varname[0], shape, start, count);
+    auto Uy = bpOut.DefineVariable<float>(varname[1], shape, start, count);
+    auto Uz = bpOut.DefineVariable<float>(varname[2], shape, start, count);
     // clang-format off
     bpOut.DefineDerivedVariable(derAgrAdd,
                                 "x=" + varname[0] + "\n"

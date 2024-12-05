@@ -166,7 +166,7 @@ namespace derived
 {
 struct OperatorFunctions
 {
-    std::function<DerivedData(std::vector<DerivedData>, DataType)> ComputeFct;
+    std::function<DerivedData(std::vector<DerivedData>, DataType, int)> ComputeFct;
     std::function<std::tuple<Dims, Dims, Dims>(std::vector<std::tuple<Dims, Dims, Dims>>)> DimsFct;
     std::function<DataType(DataType)> TypeFct;
 };
@@ -233,9 +233,9 @@ DataType Expression::GetType(std::map<std::string, DataType> NameToType)
 
 std::vector<DerivedData>
 Expression::ApplyExpression(DataType type, size_t numBlocks,
-                            std::map<std::string, std::vector<DerivedData>> nameToData)
+                            std::map<std::string, std::vector<DerivedData>> nameToData, int nproc)
 {
-    return m_Expr.ApplyExpression(type, numBlocks, nameToData);
+    return m_Expr.ApplyExpression(type, numBlocks, nameToData, nproc);
 }
 
 void ExpressionTree::set_base(double c) { detail.constant = c; }
@@ -379,7 +379,7 @@ DataType ExpressionTree::GetType(std::map<std::string, DataType> NameToType)
 
 std::vector<DerivedData>
 ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
-                                std::map<std::string, std::vector<DerivedData>> nameToData)
+                                std::map<std::string, std::vector<DerivedData>> nameToData, int nproc)
 {
     // create operands for the computation function
     // exprData[0] = list of void* data for block 0 for each variable
@@ -399,7 +399,7 @@ ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
         else
         {
             deallocate.push_back(true);
-            auto subexpData = std::get<0>(subexp).ApplyExpression(type, numBlocks, nameToData);
+            auto subexpData = std::get<0>(subexp).ApplyExpression(type, numBlocks, nameToData, nproc);
             for (size_t blk = 0; blk < numBlocks; blk++)
             {
                 exprData[blk].push_back(subexpData[blk]);
@@ -411,7 +411,7 @@ ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
     auto op_fct = OpFunctions.at(detail.operation);
     for (size_t blk = 0; blk < numBlocks; blk++)
     {
-        outputData[blk] = op_fct.ComputeFct(exprData[blk], type);
+      outputData[blk] = op_fct.ComputeFct(exprData[blk], type, nproc);
     }
     // deallocate intermediate data after computing the operation
     for (size_t blk = 0; blk < numBlocks; blk++)
