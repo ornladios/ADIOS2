@@ -53,7 +53,7 @@ jobs:
           adios2/ADIOS2
           --prereq-check=format
           --prereq-check=git_checks
-          --status-context="UO CI (gitlab.spack.io)"
+          --status-context="Frank CI (sanitizers)"
           || true
         env:
           GITLAB_SSH_KEY_BASE64: ${{ secrets.GITLAB_SPACK_SSH_KEY_BASE64}}
