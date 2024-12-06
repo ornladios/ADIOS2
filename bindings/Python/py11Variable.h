@@ -49,6 +49,10 @@ public:
 
     size_t SelectionSize() const;
 
+    void SetAccuracy(const adios2::Accuracy &a);
+    adios2::Accuracy GetAccuracy() const;
+    adios2::Accuracy GetAccuracyRequested() const;
+
     std::string Name() const;
 
     std::string Type() const;

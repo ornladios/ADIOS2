@@ -59,6 +59,9 @@ typedef struct _GetRequestMsg
     int DimCount;
     size_t *Count;
     size_t *Start;
+    double Error;     // Requested error bound
+    double Norm;      // Requested error bound in this norm
+    uint8_t Relative; // relative or absolute error
     void *Dest;
 } *GetRequestMsg;
 
@@ -81,6 +84,7 @@ typedef struct _ReadResponseMsg
 {
     int ReadResponseCondition;
     void *Dest;
+    uint8_t OperatorType;
     size_t Size;
     char *ReadData;
 } *ReadResponseMsg;
