@@ -62,6 +62,9 @@ void adios2_available_engines(size_t *nentries, const char *const **list)
 }
 
 static const char *const operators[] = {
+#ifdef ADIOS2_HAVE_BIGWHOOP
+    "BigWhoop",
+#endif
 #ifdef ADIOS2_HAVE_BZIP2
     "BZip2",
 #endif

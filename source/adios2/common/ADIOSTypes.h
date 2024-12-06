@@ -438,6 +438,18 @@ std::ostream &operator<<(std::ostream &os, const T &value);
 namespace ops
 {
 
+// BWC PARAMETERS
+#ifdef ADIOS2_HAVE_BIGWHOOP
+constexpr char LossyBWC[] = "bigwhoop";
+namespace bigwhoop
+{
+namespace key
+{
+constexpr char rate[] = "rate";
+}
+}
+#endif
+
 // SZ PARAMETERS
 #ifdef ADIOS2_HAVE_SZ
 
