@@ -1700,7 +1700,7 @@ internal_cod_submit(cod_exec_context ec, int port, void *data, void *type_info)
     internal_cod_submit_general(ec, port, data, type_info, NULL, NULL);
 }
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 static long lrand48()
 {
     return rand();
@@ -1709,11 +1709,13 @@ static long lrand48()
 static double drand48() {
     return (double)(rand()) / (double)(RAND_MAX);
 }
+#ifndef HAVE_UNISTD_H
 static void
 sleep(int t)
 {
     Sleep(t * 1000);
 }
+#endif
 #endif
 static void
 add_standard_routines(stone_type stone, cod_parse_context context)

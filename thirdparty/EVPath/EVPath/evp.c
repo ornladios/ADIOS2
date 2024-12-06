@@ -1632,7 +1632,7 @@ pop_activation_record_from_stack(CManager cm, ev_handler_activation_ptr rec)
 {
     event_path_data evp = cm->evp;
     ev_handler_activation_ptr tmp;
-    thr_thread_t self = thr_thread_self();
+    thr_thread_id self = thr_thread_self();
     if (!evp->activation_stack) {
 	printf("Activation stack inconsistency!  No records!\n"); 
 	return;
@@ -1663,7 +1663,7 @@ find_activation_record_from_stack(CManager cm)
 {
     event_path_data evp = cm->evp;
     ev_handler_activation_ptr tmp;
-    thr_thread_t self = thr_thread_self();
+    thr_thread_id self = thr_thread_self();
     tmp = evp->activation_stack;
     while(tmp) {
 	if (tmp->thread_id == self) {

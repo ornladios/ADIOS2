@@ -3,10 +3,11 @@
 #include <sys/types.h>
 
 #ifdef HAVE_WINDOWS_H
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
+#endif
 #include <winsock2.h>
 #include <windows.h>
-#define getpid()	_getpid()
 #else
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -59,6 +60,9 @@
 #include <memory.h>
 #endif
 
+#ifdef _WIN32
+#define getpid()	_getpid()
+#endif
 #include <atl.h>
 #include "evpath.h"
 #include "cm_transport.h"
@@ -627,7 +631,7 @@ libcmudp_LTX_writev_func(CMtrans_services svc, udp_conn_data_ptr ucd, struct iov
     fd = ucd->utd->socket_fd;
     svc->trace_out(ucd->utd->cm, "CMUdp writev of %d vectors on fd %d",
 		   iovcnt, fd);
-#ifndef _MSC_VER
+#ifndef _WIN32
     struct sockaddr_in addr = ucd->dest_addr;
     struct msghdr msg;
     memset(&msg, 0, sizeof(msg));

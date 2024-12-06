@@ -96,13 +96,40 @@ run_subprocess(char **args)
 {
     char **run_args = args;
 #ifdef HAVE_WINDOWS_H
-    intptr_t child;
-    child = _spawnv(_P_NOWAIT, "./evtest.exe", args);
-    if (child == -1) {
-	printf("failed for evtest\n");
-	perror("spawnv");
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    char comm_line[8191];
+
+    ZeroMemory( &si, sizeof(si) );
+    si.cb = sizeof(si);
+    ZeroMemory( &pi, sizeof(pi) );
+    char module[MAX_PATH];
+    GetModuleFileName(NULL, &module[0], MAX_PATH);
+    int i = 1;
+    strcpy(comm_line, module);
+    strcat(comm_line, " ");
+    while (args[i] != NULL) {
+      strcat(comm_line, args[i]);
+      strcat(comm_line, " ");
+      i++;
+      
     }
-    return child;
+    if (!CreateProcess(module,
+		       comm_line,
+        NULL,           // Process handle not inheritable
+        NULL,           // Thread handle not inheritable
+        FALSE,          // Set handle inheritance to FALSE
+        0,              // No creation flags
+        NULL,           // Use parent's environment block
+        NULL,           // Use parent's starting directory 
+        &si,            // Pointer to STARTUPINFO structure
+		       &pi ) 
+    ) 
+    {
+        printf( "CreateProcess failed (%d).\n", GetLastError() );
+        return 0;
+    }
+    return (intptr_t) pi.hProcess;
 #else
     pid_t child;
     if (quiet <=0) {printf("Forking subprocess\n");}

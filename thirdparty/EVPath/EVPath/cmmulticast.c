@@ -3,12 +3,12 @@
 #include <sys/types.h>
 
 #ifdef HAVE_WINDOWS_H
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
+#endif
 #include <winsock2.h>
 #include <ws2ipdef.h>
 #include <windows.h>
-#define getpid()	_getpid()
-#define close(x) closesocket(x)
 #else
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
@@ -59,6 +59,10 @@
 #include <limits.h>
 #ifdef HAVE_MEMORY_H
 #include <memory.h>
+#endif
+#ifdef _WIN32
+#define getpid()	_getpid()
+#define close(x) closesocket(x)
 #endif
 
 #include <atl.h>
