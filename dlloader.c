@@ -8,7 +8,7 @@
 #include "dlloader.h"
 
 static char **search_list = NULL;
-#ifdef _MSC_VER
+#ifdef _WIN32
 #include <windows.h>
 
 static struct {
@@ -57,7 +57,11 @@ void* dlsym(void* handle, const char* name)
     return (void*)(intptr_t)fp;
 }
 
+#ifndef DLFCN_EXPORT
 const char* dlerror(void)
+#else
+DLFCN_EXPORT     char* dlerror(void)
+#endif
 {
     static char errstr[88];
 

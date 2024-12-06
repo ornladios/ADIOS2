@@ -46,7 +46,7 @@ static thr_thread_t
 thr_fork(void*(*func)(void*), void *arg)
 {
     thr_thread_t new_thread = 0;
-    int err = thr_thread_create(&new_thread, NULL, (void*(*)(void*))func, arg);
+    int err = thr_thread_create(&new_thread, 0, (void*)func, arg);
     if (err != 0) {
 	return  (thr_thread_t) (intptr_t) NULL;
     } else {
