@@ -25,14 +25,12 @@ typedef struct _nested_rec {
     complex item;
 } nested, *nested_ptr;
 
-static IOField nested_field_list[] =
-{
+static IOField nested_field_list[] = {
     {"item", "complex", sizeof(complex), IOOffset(nested_ptr, item)},
     {NULL, NULL, 0, 0}
 };
 
-static IOField complex_field_list[] =
-{
+static IOField complex_field_list[] = {
     {"r", "double", sizeof(double), IOOffset(complex_ptr, r)},
     {"i", "double", sizeof(double), IOOffset(complex_ptr, i)},
     {NULL, NULL, 0, 0}
@@ -48,8 +46,7 @@ typedef struct _simple_rec {
     int scan_sum;
 } simple_rec, *simple_rec_ptr;
 
-static IOField simple_field_list[] =
-{
+static IOField simple_field_list[] = {
     {"integer_field", "integer",
      sizeof(int), IOOffset(simple_rec_ptr, integer_field)},
     {"short_field", "integer",
@@ -67,15 +64,14 @@ static IOField simple_field_list[] =
     {NULL, NULL, 0, 0}
 };
 
-static CMFormatRec simple_format_list[] =
-{
+static CMFormatRec simple_format_list[] = {
     {"complex", complex_field_list},
     {"nested", nested_field_list},
     {NULL, NULL}
 };
 
 static
-void 
+    void
 generate_record(event)
 simple_rec_ptr event;
 {
@@ -103,7 +99,7 @@ simple_rec_ptr event;
 int quiet = -1;
 
 static
-void
+    void
 simple_handler(cm, conn, vevent, client_data, attrs)
 CManager cm;
 CMConnection conn;
@@ -123,8 +119,7 @@ attr_list attrs;
     sum = sum % 100;
     scan_sum = event->scan_sum;
     if (sum != scan_sum) {
-	printf("Received record checksum does not match. expected %d, got %d\n",
-	       (int) sum, (int) scan_sum);
+	printf("Received record checksum does not match. expected %d, got %d\n", (int) sum, (int) scan_sum);
     }
     if ((quiet <= 0) || (sum != scan_sum)) {
 	printf("In the handler, event data is :\n");
@@ -168,8 +163,7 @@ char **argv;
 	CMlisten_specific(cm, listen_list);
 	contact_list = CMget_contact_list(cm);
 	printf("Contact list \"%s\"\n", attr_list_to_string(contact_list));
-	format = CMregister_format(cm, "simple", simple_field_list,
-				   simple_format_list);
+	format = CMregister_format(cm, "simple", simple_field_list, simple_format_list);
 	CMregister_handler(format, simple_handler, NULL);
 	CMsleep(cm, 120);
     } else {
@@ -186,8 +180,7 @@ char **argv;
 		exit(1);
 	    }
 	}
-	format = CMregister_format(cm, "simple", simple_field_list,
-				   simple_format_list);
+	format = CMregister_format(cm, "simple", simple_field_list, simple_format_list);
 	generate_record(&data);
 	attrs = create_attr_list();
 #define CMDEMO_TEST_ATOM ATL_CHAR_CONS('C','\115','\104','t')

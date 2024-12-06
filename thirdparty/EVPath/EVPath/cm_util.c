@@ -1,5 +1,4 @@
 #include "config.h"
-#ifndef MODULE
 
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -12,11 +11,7 @@
 #include <varargs.h>
 #endif
 #include <errno.h>
-#else
-#include "kernel/kcm.h"
-#include "kernel/cm_kernel.h"
-#include "kernel/library.h"
-#endif
+
 #include "atl.h"
 #include "evpath.h"
 #include "chr_time.h"
@@ -297,3 +292,50 @@ INT_CMfree(void *ptr)
     free(ptr);
 }
 
+#ifdef _MSC_VER
+#include <windows.h>
+#include <tchar.h>
+#include <strsafe.h>
+int
+win_thread_create(HANDLE *threadp, void *attr, void *startfunc, void *arg)
+{
+    HANDLE h = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)startfunc, arg, 0, attr);
+    (*threadp) = h;
+    return 0;
+}
+void win_mutex_init(SRWLOCK *m)
+{
+    InitializeSRWLock(m);
+}
+
+
+void win_mutex_lock(SRWLOCK *m)
+{
+    AcquireSRWLockExclusive(m);
+}
+void win_mutex_unlock(SRWLOCK *m)
+{
+    ReleaseSRWLockExclusive(m);
+}
+void win_mutex_free(SRWLOCK *m)
+{
+  // nothing necessary
+}
+extern void win_condition_init(CONDITION_VARIABLE *c)
+{
+    InitializeConditionVariable(c);
+}
+extern void win_condition_wait(CONDITION_VARIABLE *c, SRWLOCK* m)
+{
+    SleepConditionVariableSRW(c, m, INFINITE, 0);
+}
+
+extern void win_condition_signal(CONDITION_VARIABLE *c)
+{
+    WakeConditionVariable(c);
+}
+extern void win_condition_free(CONDITION_VARIABLE *c)
+{
+  // nothing necessary
+}
+#endif

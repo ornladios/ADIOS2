@@ -1,4 +1,4 @@
-#! /usr/bin/env - perl
+#!perl
 use File::Basename;
 my $dirname = dirname(__FILE__);
 
