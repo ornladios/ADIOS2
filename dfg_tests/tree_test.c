@@ -6,6 +6,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <signal.h>
 
 #include "ev_dfg.h"
 #include "test_support.h"
@@ -56,6 +57,12 @@ be_test_master(int argc, char **argv)
 #ifdef HAVE_WINDOWS_H
     SetTimer(NULL, 5, 1000, (TIMERPROC) fail_and_die);
 #else
+    struct sigaction sigact;
+    sigact.sa_flags = 0;
+    sigact.sa_handler = fail_and_die;
+    sigemptyset(&sigact.sa_mask);
+    sigaddset(&sigact.sa_mask, SIGALRM);
+    sigaction(SIGALRM, &sigact, NULL);
     alarm(300);
 #endif
     if (argc == 1) {

@@ -5,6 +5,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <signal.h>
 #include <string.h>
 
 #include "cod.h"
@@ -71,6 +72,12 @@ be_test_master(int argc, char **argv)
 #ifdef HAVE_WINDOWS_H
     SetTimer(NULL, 5, 1000, (TIMERPROC) fail_and_die);
 #else
+    struct sigaction sigact;
+    sigact.sa_flags = 0;
+    sigact.sa_handler = fail_and_die;
+    sigemptyset(&sigact.sa_mask);
+    sigaddset(&sigact.sa_mask, SIGALRM);
+    sigaction(SIGALRM, &sigact, NULL);
     alarm(240);  /* reset time limit to 4 minutes */
 #endif
     if (argc == 1) {

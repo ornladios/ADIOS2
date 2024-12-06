@@ -1700,7 +1700,7 @@ internal_cod_submit(cod_exec_context ec, int port, void *data, void *type_info)
     internal_cod_submit_general(ec, port, data, type_info, NULL, NULL);
 }
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 static long lrand48()
 {
     return rand();
@@ -1709,11 +1709,13 @@ static long lrand48()
 static double drand48() {
     return (double)(rand()) / (double)(RAND_MAX);
 }
+#ifndef HAVE_UNISTD_H
 static void
 sleep(int t)
 {
     Sleep(t * 1000);
 }
+#endif
 #endif
 static void
 add_standard_routines(stone_type stone, cod_parse_context context)
@@ -1974,7 +1976,7 @@ extern sm_ref
 cod_build_param_node(const char *id, sm_ref typ, int param_num);
 extern void
 cod_add_decl_to_parse_context(const char *name, sm_ref item, cod_parse_context context);
-extern FFS_DECLSPEC void
+extern void
 cod_add_param(const char *id, const char *typ, int param_num,
 	      cod_parse_context context);
 
