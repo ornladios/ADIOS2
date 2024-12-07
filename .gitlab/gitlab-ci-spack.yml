@@ -1,14 +1,20 @@
-#  This file is used to define the GitLab CI/CD pipeline for the ADIOS2 project.
-.common-sanitizer:
-  variables:
-    GITLAB_SITE: "UO CI (gitlab.spack.io)"
-    CI_BIN_DIR:  "$CI_PROJECT_DIR/build"
+default:
+  interruptible: true
   tags:
     - medium
     - uo
     - public
     - x86_64
-  interruptible: true
+
+#  This file is used to define the GitLab CI/CD pipeline for the ADIOS2 project.
+.common-sanitizer:
+  rules:
+    - if: '$CI_PIPELINE_SOURCE != "schedule"'
+      when: on_success
+    - when: never
+  variables:
+    GITLAB_SITE: "UO CI (gitlab.spack.io)"
+    CI_BIN_DIR:  "$CI_PROJECT_DIR/build"
 
 .common-build:
   extends:
@@ -82,3 +88,41 @@ test:uo-sanitizer-ubsan:
   image: ornladios/adios2:ci-fedora-ubsan
   extends: [.common-test]
   needs: [build:uo-sanitizer-ubsan]
+
+deploy:sync-ornl:
+  environment: ornl
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: on_success
+    - when: never
+  image: ornladios/adios2:sync-20241206-b
+  script: >
+    .gitlab/config/SpackCIBridge.py
+    ornladios/ADIOS2
+    git@code.ornl.gov:ecpcitest/adios2.git
+    https://code.ornl.gov/
+    ecpcitest/adios2
+    --prereq-check=format
+    --prereq-check=git_checks
+    --disable-status-post
+  dependencies: []
+  needs: []
+
+deploy:sync-spack:
+  environment: spackio
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+      when: on_success
+    - when: never
+  image: ornladios/adios2:sync-20241206-b
+  script: >
+    .gitlab/config/SpackCIBridge.py
+    ornladios/ADIOS2
+    git@ssh.gitlab.spack.io:adios2/adios2.git
+    https://gitlab.spack.io/
+    adios2/ADIOS2
+    --prereq-check=format
+    --prereq-check=git_checks
+    --status-context="Frank CI (sanitizers)"
+  dependencies: []
+  needs: []
