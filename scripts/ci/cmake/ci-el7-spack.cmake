@@ -1,4 +1,4 @@
-# Client maintainer: chuck.atkins@kitware.com
+# Client maintainer: vicente.bolea@kitware.com
 
 include(ProcessorCount)
 ProcessorCount(NCPUS)

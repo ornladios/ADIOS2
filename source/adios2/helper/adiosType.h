@@ -146,7 +146,7 @@ public:
 class DimsArray : public CoreDims
 {
 private:
-    size_t Dimensions[MAX_DIMS];
+    size_t Dimensions[MAX_DIMS]{0};
 
 public:
     //  constructor with no init of values

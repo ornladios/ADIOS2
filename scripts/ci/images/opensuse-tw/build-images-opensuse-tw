@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# This script is used to build the openSUSE Tumbleweed images
+
+set -xeuo pipefail
+
+declare -r DOCKER_REPOSITORY=ghcr.io/ornladios/adios2
+declare -u ENABLE_PUSH=
+
+#=============================================================================
+# Functions
+
+# Function to build a docker image
+function docker_build() {
+  local docker_file=$1
+  local docker_tag=$2
+  local args=(--progress=plain --rm)
+
+  if [[ -n "${ENABLE_PUSH}" ]]; then
+    args+=("--push")
+  fi
+
+  sudo docker build "${args[@]}"  \
+    --file "${docker_file}" \
+    --tag "${DOCKER_REPOSITORY}:${docker_tag}-$(date +"%Y%m%d")" \
+    .
+}
+
+function usage() {
+  echo "Usage: $0 [-p <PROJECT>] [-m <MILESTONE>]"
+  echo "    -p    Push to the docker registry"
+  exit 0
+}
+
+#=============================================================================
+# Main
+while getopts "p" o; do
+  case "${o}" in
+    p) ENABLE_PUSH=true ;;
+    *) usage ;;
+  esac
+done
+
+docker_build opensuse-tw-sanitizer-base.dockerfile ci-opensuse-tw-sanitizer-base
+docker_build opensuse-tw-full-stack-onbuild.dockerfile ci-opensuse-tw-full-stack-onbuild
+docker_build opensuse-tw-asan.dockerfile ci-opensuse-tw-asan
+docker_build opensuse-tw-msan.dockerfile ci-opensuse-tw-msan
+docker_build opensuse-tw-tsan.dockerfile ci-opensuse-tw-tsan
+docker_build opensuse-tw-ubsan.dockerfile ci-opensuse-tw-ubsan
