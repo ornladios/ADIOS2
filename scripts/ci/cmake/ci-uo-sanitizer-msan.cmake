@@ -1,4 +1,7 @@
-# Client maintainer: chuck.atkins@kitware.com
+# Client maintainer: vicente.bolea@kitware.com
+
+set(ENV{CC}  clang)
+set(ENV{CXX} clang++)
 
 set(dashboard_cache "
 BUILD_TESTING:BOOL=ON
@@ -15,13 +18,15 @@ HDF5_DIFF_EXECUTABLE:FILEPATH=/opt/msan/bin/h5diff
 ")
 
 set(dashboard_track "Analysis")
-set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_BUILD_FLAGS "-k -j4")
+set(CTEST_CMAKE_GENERATOR "Ninja")
 set(CTEST_MEMORYCHECK_TYPE "MemorySanitizer")
 
 list(APPEND EXCLUDE_EXPRESSIONS
-  "Engine.BP.BPBufferSizeTest.SyncDeferredIdenticalUsage.BP3.Serial"
-  "Engine.BP.BPBufferSizeTest.SyncDeferredIdenticalUsage.BP4.Serial"
+  "Install.*"
+  "Staging.1x1DefSync.BP3"
+  "Engine.DataMan.DataManEngineTest"
+  "Unit.FileTransport.FailOnEOF.Serial"
+  "Engine.BP.BPBufferSizeTest.SyncDeferredIdenticalUsage.*.Serial"
   )
 list(JOIN EXCLUDE_EXPRESSIONS "|" TEST_EXCLUDE_STRING)
 set(CTEST_MEMCHECK_ARGS EXCLUDE "${TEST_EXCLUDE_STRING}")

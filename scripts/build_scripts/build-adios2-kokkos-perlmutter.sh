@@ -1,9 +1,10 @@
 #!/bin/bash
 # shellcheck disable=SC2191
 
-module load cudatoolkit/11.7
-module load gcc/11.2.0
-module load cmake/3.24.3
+module load PrgEnv-gnu
+module load cudatoolkit
+module load gcc
+module load cmake
 module refresh
 
 ######## User Configurations ########

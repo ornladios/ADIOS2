@@ -2,3 +2,4 @@ leak:ps_make_timer_name_
 leak:ibv_get_device_list
 leak:add_transport_to_cm
 leak:INT_CMadd_delayed_task
+leak:__vasprintf_internal

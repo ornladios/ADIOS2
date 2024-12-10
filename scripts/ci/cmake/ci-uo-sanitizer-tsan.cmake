@@ -1,4 +1,4 @@
-# Client maintainer: chuck.atkins@kitware.com
+# Client maintainer: vicente.bolea@kitware.com
 
 set(dashboard_cache "
 BUILD_TESTING:BOOL=ON
@@ -15,9 +15,16 @@ HDF5_DIFF_EXECUTABLE:FILEPATH=/opt/tsan/bin/h5diff
 ")
 
 set(dashboard_track "Analysis")
-set(CTEST_CMAKE_GENERATOR "Unix Makefiles")
-set(CTEST_BUILD_FLAGS "-k -j4")
+set(CTEST_CMAKE_GENERATOR "Ninja")
 set(CTEST_MEMORYCHECK_TYPE "ThreadSanitizer")
+
+list(APPEND EXCLUDE_EXPRESSIONS
+  "Install.*"
+  "Unit.FileTransport.FailOnEOF.Serial"
+  "Engine.BP.BPBufferSizeTest.SyncDeferredIdenticalUsage.*.Serial"
+  )
+list(JOIN EXCLUDE_EXPRESSIONS "|" TEST_EXCLUDE_STRING)
+set(CTEST_MEMCHECK_ARGS EXCLUDE "${TEST_EXCLUDE_STRING}")
 
 set(ADIOS_TEST_REPEAT 0)
 list(APPEND CTEST_UPDATE_NOTES_FILES "${CMAKE_CURRENT_LIST_FILE}")

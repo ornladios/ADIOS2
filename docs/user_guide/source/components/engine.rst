@@ -331,7 +331,8 @@ PerformDataWrite
 
 .. note::
 
-   Currently only supported by the BP5 file engine.
+   - Currently only supported by the ``BP5`` file engine.   
+   - This is a ``collective`` function.
 
 
 

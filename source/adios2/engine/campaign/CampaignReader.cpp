@@ -83,6 +83,10 @@ void CampaignReader::PerformGets()
     {
         std::cout << "Campaign Reader " << m_ReaderRank << "     PerformGets()\n";
     }
+    for (auto ep : m_Engines)
+    {
+        ep->PerformGets();
+    }
     m_NeedPerformGets = false;
 }
 
@@ -451,10 +455,8 @@ std::string CampaignReader::VariableExprStr(const VariableBase &Var)
     void CampaignReader::DoGetDeferred(Variable<T> &variable, T *data)                             \
     {                                                                                              \
         PERFSTUBS_SCOPED_TIMER("CampaignReader::Get");                                             \
-        auto it = m_VarInternalInfo.find(variable.m_Name);                                         \
-        Variable<T> *v = reinterpret_cast<Variable<T> *>(it->second.originalVar);                  \
-        Engine *e = m_Engines[it->second.engineIdx];                                               \
-        e->Get(*v, data, adios2::Mode::Deferred);                                                  \
+        auto p = TranslateToActualVariable(variable);                                              \
+        p.second->Get(*p.first, data, adios2::Mode::Deferred);                                     \
     }                                                                                              \
                                                                                                    \
     std::map<size_t, std::vector<typename Variable<T>::BPInfo>>                                    \

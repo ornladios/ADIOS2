@@ -94,6 +94,9 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
     m.attr("is_built_with_mpi") = false;
 #endif
 
+    m.attr("L2_norm") = adios2::L2_norm;
+    m.attr("Linf_norm") = adios2::Linf_norm;
+
     // enum classes
     pybind11::enum_<adios2::Mode>(m, "Mode")
         .value("Write", adios2::Mode::Write)
@@ -130,6 +133,18 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         .value("ExpressionString", adios2::DerivedVarType::ExpressionString)
         .value("StoreData", adios2::DerivedVarType::StoreData)
         .export_values();
+
+    pybind11::class_<adios2::Accuracy>(m, "Accuracy")
+        .def(pybind11::init<double, double, bool>())
+        .def_readwrite("error", &adios2::Accuracy::error)
+        .def_readwrite("norm", &adios2::Accuracy::norm)
+        .def_readwrite("relative", &adios2::Accuracy::relative)
+
+        .def("__repr__", [](const adios2::Accuracy &self) {
+            std::ostringstream _stream;
+            _stream << "(" << self.error << ", " << self.norm << ", " << self.relative << ")";
+            return _stream.str();
+        });
 
     pybind11::class_<adios2::py11::ADIOS>(m, "ADIOS")
         // Python 2
@@ -373,6 +388,9 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         .def("SetBlockSelection", &adios2::py11::Variable::SetBlockSelection)
         .def("SetSelection", &adios2::py11::Variable::SetSelection)
         .def("SetStepSelection", &adios2::py11::Variable::SetStepSelection)
+        .def("SetAccuracy", &adios2::py11::Variable::SetAccuracy)
+        .def("GetAccuracy", &adios2::py11::Variable::GetAccuracy)
+        .def("GetAccuracyRequested", &adios2::py11::Variable::GetAccuracyRequested)
         .def("SelectionSize", &adios2::py11::Variable::SelectionSize)
         .def("Name", &adios2::py11::Variable::Name)
         .def("Type", &adios2::py11::Variable::Type)

@@ -496,6 +496,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
     {
         auto &Req = GetRequests[req_seq];
         const DataType varType = m_IO.InquireVariableType(Req.VarName);
+        VariableBase *VB = m_BP5Deserializer->GetVariableBaseFromBP5VarRec(Req.VarRec);
 
         std::string keyPrefix = m_Fingerprint + "|" + Req.VarName + std::to_string(Req.RelStep);
         if (Req.BlockID != std::numeric_limits<std::size_t>::max())
@@ -503,7 +504,6 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
             MinVarInfo *minBlocksInfo = nullptr;
             if (MinBlocksInfoMap.find(keyPrefix) == MinBlocksInfoMap.end())
             {
-                VariableBase *VB = m_BP5Deserializer->GetVariableBaseFromBP5VarRec(Req.VarRec);
                 minBlocksInfo = MinBlocksInfo(*VB, Req.RelStep);
                 MinBlocksInfoMap[keyPrefix] = minBlocksInfo;
             }
@@ -584,7 +584,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
                 box.StartToVector(start);
                 box.CountToVector(count);
                 auto handle = m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, count, start,
-                                            ReqInfo.Data);
+                                            VB->m_AccuracyRequested, ReqInfo.Data);
                 handles.push_back(handle);
                 remoteRequestsInfo.push_back(ReqInfo);
             }
@@ -656,13 +656,72 @@ void BP5Reader::PerformRemoteGets()
     std::vector<Remote::GetHandle> handles;
     for (auto &Req : GetRequests)
     {
-        auto handle =
-            m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count, Req.Start, Req.Data);
+        VariableBase *VB = m_BP5Deserializer->GetVariableBaseFromBP5VarRec(Req.VarRec);
+        auto handle = m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count, Req.Start,
+                                    VB->m_AccuracyRequested, Req.Data);
         handles.push_back(handle);
     }
-    for (auto &handle : handles)
+
+    size_t nHandles = handles.size();
+    // TP endGenerate = NOW();
+    // double generateTime = DURATION(startGenerate, endGenerate);
+
+    size_t nextHandle = 0;
+    std::mutex mutexReadRequests;
+
+    auto lf_GetNextHandle = [&]() -> size_t {
+        std::lock_guard<std::mutex> lockGuard(mutexReadRequests);
+        size_t reqidx = MaxSizeT;
+        if (nextHandle < nHandles)
+        {
+            reqidx = nextHandle;
+            ++nextHandle;
+        }
+        return reqidx;
+    };
+
+    auto lf_WaitForGet = [&](const size_t threadID) -> bool {
+        while (true)
+        {
+            const auto reqidx = lf_GetNextHandle();
+            if (reqidx > nHandles)
+            {
+                break;
+            }
+            m_Remote->WaitForGet(handles[reqidx]);
+            // std::cout << "BP5Reader::PerformRemoteGets: thread " << threadID
+            //           << " done with response " << reqidx << std::endl;
+        }
+        return true;
+    };
+
+    if (m_Threads > 1 && nHandles > 1)
     {
-        m_Remote->WaitForGet(handle);
+        size_t nThreads = (m_Threads < nHandles ? m_Threads : nHandles);
+        std::vector<std::future<bool>> futures(nThreads - 1);
+
+        // launch Threads-1 threads to process subsets of handles,
+        // then main thread process the last subset
+        for (size_t tid = 0; tid < nThreads - 1; ++tid)
+        {
+            futures[tid] = std::async(std::launch::async, lf_WaitForGet, tid + 1);
+        }
+
+        // main thread runs last subset of reads
+        lf_WaitForGet(0);
+
+        // wait for all async threads
+        for (auto &f : futures)
+        {
+            f.get();
+        }
+    }
+    else
+    {
+        for (auto &handle : handles)
+        {
+            m_Remote->WaitForGet(handle);
+        }
     }
 }
 

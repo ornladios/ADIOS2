@@ -75,6 +75,24 @@ size_t Variable::SelectionSize() const
     return size;
 }
 
+void Variable::SetAccuracy(const adios2::Accuracy &a)
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::SetAccuracy");
+    m_VariableBase->SetAccuracy(a);
+}
+
+adios2::Accuracy Variable::GetAccuracy() const
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::GetAccuracy");
+    return m_VariableBase->GetAccuracy();
+}
+
+adios2::Accuracy Variable::GetAccuracyRequested() const
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::GetAccuracyRequested");
+    return m_VariableBase->GetAccuracyRequested();
+}
+
 size_t Variable::AddOperation(const Operator op, const Params &parameters)
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::AddOperation");

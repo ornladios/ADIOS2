@@ -61,6 +61,9 @@ FMField GetRequestList[] = {
     {"DimCount", "integer", sizeof(size_t), FMOffset(GetRequestMsg, DimCount)},
     {"Count", "integer[DimCount]", sizeof(size_t), FMOffset(GetRequestMsg, Count)},
     {"Start", "integer[DimCount]", sizeof(size_t), FMOffset(GetRequestMsg, Start)},
+    {"Error", "double", sizeof(double), FMOffset(GetRequestMsg, Error)},
+    {"Norm", "double", sizeof(double), FMOffset(GetRequestMsg, Norm)},
+    {"Relative", "integer", sizeof(uint8_t), FMOffset(GetRequestMsg, Relative)},
     {"Dest", "integer", sizeof(size_t), FMOffset(GetRequestMsg, Dest)},
     {NULL, NULL, 0, 0}};
 
@@ -83,6 +86,7 @@ FMField ReadResponseList[] = {
     {"ReadResponseCondition", "integer", sizeof(long),
      FMOffset(ReadResponseMsg, ReadResponseCondition)},
     {"Dest", "integer", sizeof(void *), FMOffset(ReadResponseMsg, Dest)},
+    {"OperatorType", "integer", sizeof(uint8_t), FMOffset(ReadResponseMsg, OperatorType)},
     {"Size", "integer", sizeof(size_t), FMOffset(ReadResponseMsg, Size)},
     {"ReadData", "char[Size]", sizeof(char), FMOffset(ReadResponseMsg, ReadData)},
     {NULL, NULL, 0, 0}};

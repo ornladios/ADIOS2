@@ -159,7 +159,6 @@ size_t CompressMGARD::Operate(const char *dataIn, const Dims &blockStart, const 
     mgard_x::compress(mgardDim, mgardType, mgardCount, tolerance, s, errorBoundType, dataIn,
                       compressedData, sizeOut, config, true);
     bufferOutOffset += sizeOut;
-
     return bufferOutOffset;
 }
 

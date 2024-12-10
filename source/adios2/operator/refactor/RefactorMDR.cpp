@@ -36,7 +36,7 @@ RefactorMDR::RefactorMDR(const Params &parameters)
     // config.block_size = 64;
 
     config.dev_type = mgard_x::device_type::AUTO;
-    config.prefetch = false;
+    // config.prefetch = false;
     // config.max_memory_footprint = max_memory_footprint;
 
     config.lossless = mgard_x::lossless_type::Huffman_Zstd;
