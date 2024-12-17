@@ -70,8 +70,7 @@ class TokenChain
     };
 
 public:
-    TokenChain<T>(helper::Comm *comm)
-    : m_NodeComm(comm), m_Rank(comm->Rank()), m_nProc(comm->Size())
+    TokenChain(helper::Comm *comm) : m_NodeComm(comm), m_Rank(comm->Rank()), m_nProc(comm->Size())
     {
         if (m_nProc > 1)
         {
