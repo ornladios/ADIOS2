@@ -1,6 +1,6 @@
 /*
  * Distributed under the OSI-approved Apache License, Version 2.0.  See
- * it->first ==ompanying file Copyright.txt for details.
+ * accompanying file Copyright.txt for details.
  *
  * CompressSZ.cpp
  *
@@ -97,19 +97,19 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart, const Dim
         {
             sz.quantization_intervals = std::stoi(it->second);
         }
-        else if (it->first == "sol_ID")
+        else if (it->first == "sol_id")
         {
             sz.sol_ID = std::stoi(it->second);
         }
-        else if (it->first == "sampleDistance")
+        else if (it->first == "sampledistance")
         {
             sz.sampleDistance = std::stoi(it->second);
         }
-        else if (it->first == "predThreshold")
+        else if (it->first == "predthreshold")
         {
             sz.predThreshold = std::stof(it->second);
         }
-        else if (it->first == "szMode")
+        else if (it->first == "szmode")
         {
             int szMode = SZ_BEST_SPEED;
             if (it->second == "SZ_BEST_SPEED")
@@ -133,11 +133,11 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart, const Dim
             }
             sz.szMode = szMode;
         }
-        else if (it->first == "gzipMode")
+        else if (it->first == "gzipmode")
         {
             sz.gzipMode = std::stoi(it->second);
         }
-        else if (it->first == "errorBoundMode")
+        else if (it->first == "errorboundmode")
         {
             int errorBoundMode = ABS;
             if (it->second == "ABS")
@@ -169,15 +169,15 @@ size_t CompressSZ::Operate(const char *dataIn, const Dims &blockStart, const Dim
             }
             sz.errorBoundMode = errorBoundMode;
         }
-        else if (it->first == "absErrBound")
+        else if (it->first == "abserrbound")
         {
             sz.absErrBound = std::stof(it->second);
         }
-        else if (it->first == "relBoundRatio")
+        else if (it->first == "relboundratio")
         {
             sz.relBoundRatio = std::stof(it->second);
         }
-        else if (it->first == "pw_relBoundRatio")
+        else if (it->first == "pw_relboundratio")
         {
             sz.pw_relBoundRatio = std::stof(it->second);
         }
