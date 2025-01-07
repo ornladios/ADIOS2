@@ -1,28 +1,10 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 
 # The directory label is used for CDash to treat EVPath as a subproject of
 # GTKorvo
 set(CMAKE_DIRECTORY_LABELS EVPath)
 
-project(EVPath VERSION 4.5.0 LANGUAGES C CXX)
-
-# Enable <PackageName>_ROOT variables for dependency searching
-# CMake v3.12
-if(POLICY CMP0074)
-  cmake_policy(SET CMP0074 NEW)
-endif()
-
-# Enable imported targets as library dependencies for CHECK_INCLUDE_FILE
-if(POLICY CMP0075)
-  cmake_policy(SET CMP0075 NEW)
-endif()
-
-# Let option(...) setings work with non-cache variables.  Useful for including
-# EVPath as a third party dependency in another project.
-# CMake v3.13
-if(POLICY CMP0077)
-  cmake_policy(SET CMP0077 NEW)
-endif()
+project(EVPath VERSION 4.5.4 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -87,7 +69,6 @@ if(WIN32)
       -D_SCL_SECURE_NO_DEPRECATE
       -D_WINSOCK_DEPRECATED_NO_WARNINGS
       -D_CRT_NONSTDC_NO_DEPRECATE)
-    set (MSVC_PERL_FLAGS "-msvc-long")
   endif()
 endif()
 
@@ -138,7 +119,7 @@ add_library(EVPath
   cm.c cm_control.c cm_formats.c cm_util.c cm_transport.c 
   cm_lock.c cm_perf.c cm_pbio.c cm_interface.c version.c
   cm_threadio.c cm_evol.c evp.c response.c metrics.c 
-  dlloader.c ip_config.c chr_time.c
+  dlloader.c ip_config.c chr_time.c revpath.h revp_internal.h
   revp.c evp_compat.c thin_server.c evp_threads.c ev_dfg.c)
 add_library(EVPath::EVPath ALIAS EVPath)
 add_library(evpath ALIAS EVPath)
@@ -297,10 +278,13 @@ if(EVPATH_TRANSPORT_MODULES)
 
   add_library(cmselect MODULE cmselect.c)
   add_library(cmsockets MODULE cmsockets.c ip_config.c)
-  add_library(cmudp MODULE cmudp.c)
-  add_library(cmmulticast MODULE cmmulticast.c)
-
-  foreach(M cmselect cmsockets cmudp cmmulticast)
+  list (APPEND tgts cmselect cmsockets)
+  if(NOT WIN32)
+    add_library(cmudp MODULE cmudp.c)
+    add_library(cmmulticast MODULE cmmulticast.c)
+    list (APPEND tgts  cmudp cmmulticast)
+  endif()
+  foreach(M ${tgts})
     set_target_properties(${M} PROPERTIES
       OUTPUT_NAME ${EVPATH_LIBRARY_PREFIX}${M}
       LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/${EVPATH_INSTALL_MODULE_DIR}
@@ -310,10 +294,12 @@ if(EVPATH_TRANSPORT_MODULES)
 
   target_link_libraries(cmselect PRIVATE evpath_headers atl::atl)
   target_link_libraries(cmsockets PRIVATE evpath_headers atl::atl)
-  target_link_libraries(cmudp PRIVATE evpath_headers atl::atl)
-  target_link_libraries(cmmulticast PRIVATE evpath_headers atl::atl)
-
-  list(APPEND EVPATH_TRANSPORT_TARGETS cmselect cmsockets cmudp cmmulticast)
+  list(APPEND EVPATH_TRANSPORT_TARGETS cmselect cmsockets)
+  if(NOT WIN32)
+    target_link_libraries(cmudp PRIVATE evpath_headers atl::atl)
+    target_link_libraries(cmmulticast PRIVATE evpath_headers atl::atl)
+    list (APPEND EVPATH_TRANSPORT_TARGETS  cmudp cmmulticast)
+  endif()
 
   if (HAVE_SYS_EPOLL_H)
      add_library(cmepoll MODULE cmepoll.c)
@@ -580,21 +566,42 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/
   FILES_MATCHING PATTERN "Find*.cmake" PATTERN "CMake*.cmake"
 )
 
-add_custom_command(
-  OUTPUT "cm_interface.c" "revp.c" "revpath.h"
-  SOURCE
-    ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h ${CMAKE_CURRENT_SOURCE_DIR}/ev_dfg.h
-  COMMAND perl
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen_interface.pl
-    ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/ev_dfg.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/cm_schedule.h
-  DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/gen_interface.pl
-    ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/ev_dfg.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/cm_schedule.h
-)
+find_package(Perl)
+
+if (PERL_FOUND) 
+  add_custom_command(
+    OUTPUT "cm_interface.c" "revp.c" "revpath.h" "revp_internal.h"
+    COMMAND ${PERL_EXECUTABLE}
+      ${CMAKE_CURRENT_SOURCE_DIR}/gen_interface.pl
+      ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/ev_dfg.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/cm_schedule.h
+    DEPENDS
+      ${CMAKE_CURRENT_SOURCE_DIR}/gen_interface.pl
+      ${CMAKE_CURRENT_SOURCE_DIR}/evpath.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/ev_dfg.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/cm_schedule.h
+  )
+else()
+    add_custom_command(OUTPUT cm_interface.c
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/cm_interface.c cm_interface.c
+                   COMMENT "Copying pregen cm_interface.c to build area")
+    add_custom_command(OUTPUT revp.c
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/revp.c revp.c
+                   COMMENT "Copying pregen revp.c to build area")
+    add_custom_command(OUTPUT revpath.h
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/revpath.h revpath.h
+                   COMMENT "Copying pregen revpath.h to build area")
+
+    add_custom_command(OUTPUT revp_internal.h
+                   COMMAND ${CMAKE_COMMAND} -E copy
+                       ${PROJECT_SOURCE_DIR}/pregen-source/revp_internal.h revp_internal.h
+                   COMMENT "Copying pregen revp_internal.h to build area")
+
+endif()
 
 if(Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
   set(USE_PTHREADS TRUE)
@@ -604,6 +611,8 @@ CHECK_INCLUDE_FILE(hostlib.h HAVE_HOSTLIB_H)
 CHECK_INCLUDE_FILE(malloc.h HAVE_MALLOC_H)
 CHECK_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
 CHECK_INCLUDE_FILE(netdb.h HAVE_NETDB_H)
+CHECK_INCLUDE_FILE(netinet/in.h HAVE_NETINET_IN_H)
+CHECK_INCLUDE_FILE(arpa/inet.h HAVE_ARPA_INET_H)
 CHECK_INCLUDE_FILE(sockLib.h HAVE_SOCKLIB_H)
 CHECK_INCLUDE_FILE(stdarg.h STDC_HEADERS)
 CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)

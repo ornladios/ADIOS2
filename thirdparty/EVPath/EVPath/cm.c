@@ -17,9 +17,13 @@
 #include <stdlib.h>
 #include <limits.h>
 #ifdef HAVE_WINDOWS_H
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
+#endif
 #include <winsock2.h>
 #define __ANSI_CPP__
+#define lrand48() rand()
+#define srand48(x) srand((unsigned int)(x))
 #else
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -60,6 +64,7 @@ extern void libcmselect_LTX_select_stop(CMtrans_services svc,void *client_data);
 static void CMinitialize (CManager cm);
 
 static atom_t CM_TRANSPORT = -1;
+static atom_t CM_CMANAGER_ID = -1;
 static atom_t CM_NETWORK_POSTFIX = -1;
 static atom_t CM_CONN_BLOCKING = -1;
 atom_t CM_REBWM_RLEN = -1;
@@ -232,7 +237,7 @@ static thr_thread_t
 thr_fork(void*(*func)(void*), void *arg)
 {
     thr_thread_t new_thread = 0;
-    int err = thr_thread_create(&new_thread, NULL, (void*(*)(void*))func, arg);
+    int err = thr_thread_create(&new_thread, NULL, (void*)func, arg);
     if (err != 0) {
 	return (thr_thread_t) (intptr_t)NULL;
     } else {
@@ -258,7 +263,7 @@ INT_CMfork_comm_thread(CManager cm)
 	    if (server_thread ==  (thr_thread_t)(intptr_t) NULL) {
 		return 0;
 	    }
-	    cm->control_list->server_thread = server_thread;
+	    cm->control_list->server_thread = thr_get_thread_id(server_thread);
 	    cm->control_list->has_thread = 1;
 	    cm->reference_count++;
 	    CMtrace_out(cm, CMFreeVerbose, "Forked - CManager %p ref count now %d\n", 
@@ -575,6 +580,7 @@ CMinternal_listen(CManager cm, attr_list listen_info, int try_others)
 	    attrs = (*trans_list)->listen(cm, &CMstatic_trans_svcs,
 					  *trans_list,
 					  listen_info);
+	    add_attr(attrs, CM_CMANAGER_ID, Attr_Int4, (intptr_t)cm->CManager_ID);
 	    if (iface) {
 		add_string_attr(attrs, CM_IP_INTERFACE, strdup(iface));
 	    }
@@ -752,6 +758,7 @@ INT_CManager_create_control(char *control_module)
 
     if (atom_init == 0) {
 	CM_TRANSPORT = attr_atom_from_string("CM_TRANSPORT");
+	CM_CMANAGER_ID = attr_atom_from_string("CM_CMANAGER_ID");
 	CM_NETWORK_POSTFIX = attr_atom_from_string("CM_NETWORK_POSTFIX");
 	CM_CONN_BLOCKING = attr_atom_from_string("CM_CONN_BLOCKING");
 	CM_REBWM_RLEN = attr_atom_from_string("CM_REG_BW_RUN_LEN");
@@ -772,6 +779,9 @@ INT_CManager_create_control(char *control_module)
     cm->transports = NULL;
     cm->initialized = 0;
     cm->reference_count = 1;
+    uint64_t seed = getpid() + time(NULL);
+    srand48(seed);
+    cm->CManager_ID = (int)lrand48();
 
     char *tmp;
     if ((tmp = getenv("CMControlModule"))) {
@@ -1053,7 +1063,7 @@ CManager_free(CManager cm)
      new_list->select_data = NULL;
      new_list->add_select = NULL;
      new_list->remove_select = NULL;
-     new_list->server_thread =  (thr_thread_t)(intptr_t) NULL;
+     new_list->server_thread =  (thr_thread_id)0;
      new_list->network_blocking_function.func = NULL;
      new_list->network_polling_function.func = NULL;
      new_list->polling_function_list = NULL;
@@ -1490,7 +1500,7 @@ INT_CMget_ip_config_diagnostics(CManager cm)
      msg[0] = 0x434d4800;  /* CMH\0 */
      msg[1] = (CURRENT_HANDSHAKE_VERSION << 24) + sizeof(msg);
      msg[2] = cm->FFSserver_identifier;
-     msg[3] = 5;  /* not implemented yet */
+     msg[3] = cm->CManager_ID;
      msg[4] = 0;  /* not implemented yet */
      if (conn->remote_format_server_ID != 0) {
 	 /* set high bit if we already have his ID */
@@ -1691,12 +1701,16 @@ timeout_conn(CManager cm, void *client_data)
 	 fprintf(cm->CMTrace_file, "In CMinternal_get_conn, attrs ");
 	 if (attrs) fdump_attr_list(cm->CMTrace_file, attrs); else fprintf(cm->CMTrace_file, "\n");
      }
+     int target_cm_id = -1;
+     (void) get_int_attr(attrs, CM_CMANAGER_ID, &target_cm_id);
      for (i=0; i<cm->connection_count; i++) {
 	 CMConnection tmp = cm->connections[i];
 	 if (tmp->closed || tmp->failed) continue;
-	 if (tmp->trans->connection_eq(cm, &CMstatic_trans_svcs,
-					tmp->trans, attrs,
-					tmp->transport_data)) {
+
+	 if ((tmp->remote_CManager_ID == target_cm_id) ||
+	     tmp->trans->connection_eq(cm, &CMstatic_trans_svcs,
+				       tmp->trans, attrs,
+				       tmp->transport_data)) {
 
 	     CMtrace_out(tmp->cm, CMFreeVerbose, "internal_get_conn found conn=%p ref count will be %d\n", 
 			 tmp, tmp->conn_ref_count +1);
@@ -2088,6 +2102,7 @@ timeout_conn(CManager cm, void *client_data)
      if (cm_preread_hook) {
 	 do_read = cm_preread_hook(buffer_full_point - buffer_data_end, tmp_message_buffer);
      }
+     CMtrace_out(cm, CMLowLevelVerbose, "P5\n");
      if (do_read) {
 	 if (trans->read_to_buffer_func) {
 	 /* 
@@ -3851,7 +3866,7 @@ CM_init_select(CMControlList cl, CManager cm)
 	}
 	CMtrace_out(cm, CMLowLevelVerbose,
 		    "CM - Forked comm thread %p\n", (void*)(intptr_t)server_thread);
-	cm->control_list->server_thread = server_thread;
+	cm->control_list->server_thread = thr_get_thread_id(server_thread);
 	cm->control_list->cl_reference_count++;
 	cm->control_list->free_reference_count++;
 	cl->has_thread = 1;
@@ -3968,7 +3983,7 @@ int offset_compare(const void* lhsv, const void* rhsv)
      return lhs->offset.tv_usec - rhs->offset.tv_usec;
  }
 
-#ifdef _MSC_VER
+#ifdef _WIN32
 static inline void timeradd(struct timeval *a, struct timeval *b,
 							struct timeval *res)
 {

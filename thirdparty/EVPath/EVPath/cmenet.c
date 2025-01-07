@@ -6,7 +6,9 @@
 
 #undef NDEBUG
 #ifdef HAVE_WINDOWS_H
+#ifndef FD_SETSIZE
 #define FD_SETSIZE 1024
+#endif
 #include <winsock2.h>
 #include <windows.h>
 #include <process.h>
@@ -39,8 +41,12 @@
 #ifdef HAVE_STREAMS_UN_H
 #include <streams/un.h>
 #endif
+#ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
+#endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
@@ -188,9 +194,6 @@ extern void ZPLENETdummy() {  // for warning suppression
 #define TRANSPORT_STRING "enet"
 #define INTERFACE_NAME(NAME) libcmenet_LTX_ ## NAME
 #include <enet/enet.h>
-#endif
-#ifndef _MSC_VER
-#include <arpa/inet.h>
 #endif
 #include <time.h>
 #ifdef HAVE_SYS_TIME_H
