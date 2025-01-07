@@ -1,4 +1,4 @@
-# Client maintainer: chuck.atkins@kitware.com
+# Client maintainer: vicente.bolea@kitware.com
 
 set(ENV{CC}  gcc)
 set(ENV{CXX} g++)
