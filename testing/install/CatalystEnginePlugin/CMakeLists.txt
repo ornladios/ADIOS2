@@ -21,7 +21,7 @@ add_executable(adios_plugin_engine_catalyst_test
     testCatalystEngine.cpp
 )
 target_link_libraries(adios_plugin_engine_catalyst_test adios2::cxx11)
-set(ENV{ADIOS2_PLUGIN_PATH} ${adios2_DIR}/../../)
+set(ENV{ADIOS2_PLUGIN_PATH} "${adios2_DIR}/../../../${ADIOS2_INSTALL_PLUGIN_LIBDIR}")
 configure_file(test-catalyst-config.xml ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 add_test(NAME adios_plugin_engine_catalyst_test COMMAND
     adios_plugin_engine_catalyst_test test-catalyst-config.xml)
