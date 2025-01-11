@@ -12,8 +12,7 @@ if(ADIOS2_HAVE_Catalyst)
     PRIVATE
       catalyst::catalyst)
   install(TARGETS ParaViewADIOSInSituEngine  EXPORT adios2Exports
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT adios2_core-runtime
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
-    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT adios2_core-development
+    RUNTIME DESTINATION ${ADIOS2_INSTALL_PLUGIN_BINDIR} COMPONENT adios2_core-runtime
+    LIBRARY DESTINATION ${ADIOS2_INSTALL_PLUGIN_LIBDIR} COMPONENT adios2_core-libraries NAMELINK_COMPONENT adios2_core-development
   )
 endif()

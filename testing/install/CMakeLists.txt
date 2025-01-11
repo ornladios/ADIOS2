@@ -24,6 +24,7 @@ function(add_install_cmake_test name)
     "-DBUILD_TYPE=$<CONFIG>"
     "-DMPIEXEC_EXECUTABLE=${MPIEXEC_EXECUTABLE}"
     "-DMPIEXEC_EXTRA_FLAGS=${MPIEXEC_EXTRA_FLAGS}"
+    "-DADIOS2_INSTALL_PLUGIN_LIBDIR=${ADIOS2_INSTALL_PLUGIN_LIBDIR}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/run_cmake.cmake"
     )
   set_tests_properties(Install.CMake.${name} PROPERTIES

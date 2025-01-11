@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
              * other parameters, they can be passed in here as well. */
             adios2::Params params;
             params["PluginName"] = "MyOperator";
-            params["PluginLibrary"] = "EncryptionOperator";
+            params["PluginLibrary"] = "adios2_encryption_operator";
             params["SecretKeyFile"] = "test-key";
             var.AddOperation("plugin", params);
         }

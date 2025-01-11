@@ -11,7 +11,7 @@ find_package(adios2 REQUIRED)
 
 option(BUILD_SHARED_LIBS "build shared libs" ON)
 
-set(ENV{ADIOS2_PLUGIN_PATH} "${adios2_DIR}/../../")
+set(ENV{ADIOS2_PLUGIN_PATH} "${adios2_DIR}/../../../${ADIOS2_INSTALL_PLUGIN_LIBDIR}")
 
 #---------- Operator Plugin Tests
 
