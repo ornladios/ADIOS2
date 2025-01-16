@@ -1024,16 +1024,45 @@ int iovcnt;
 }
 #endif
 
-int long_writev(CMtrans_services svc, socket_conn_data_ptr scd, void *iovs, int iovcnt)
-{
-    assert(0);   // for right now, don't try this
-    return 0;
-}
-
 #ifndef MAX_RW_COUNT
 // Not actually defined outside the kernel as far as I know  - GSE
 #define MAX_RW_COUNT 0x7ffff000
 #endif
+
+extern ssize_t
+libcmsockets_LTX_writev_func(CMtrans_services svc, socket_conn_data_ptr scd, void *iovs, int iovcnt, attr_list attrs);
+
+static ssize_t long_writev(CMtrans_services svc, socket_conn_data_ptr scd, struct iovec* iov, int iovcnt, attr_list attrs, ssize_t left)
+{
+    int cur_iov_base = 0;
+    int cur_iov_cnt = 0;
+    while (left > 0) {
+	ssize_t write_size = 0;
+	while (cur_iov_cnt + cur_iov_base < iovcnt) {
+	    cur_iov_cnt++;
+#define TRAIL_BUFFER 1024
+	    if ((write_size + iov[cur_iov_cnt + cur_iov_base -1].iov_len) + TRAIL_BUFFER > MAX_RW_COUNT) {
+		struct iovec saved_iov_entry = iov[cur_iov_cnt + cur_iov_base -1];
+		ssize_t new_iov_len = MAX_RW_COUNT - write_size - TRAIL_BUFFER;   // give some buffer
+		iov[cur_iov_cnt + cur_iov_base -1].iov_len = new_iov_len;
+		int ret = libcmsockets_LTX_writev_func(svc, scd, &iov[cur_iov_base], cur_iov_cnt, attrs);
+		if (ret != cur_iov_cnt) return ret + cur_iov_base;
+		iov[cur_iov_cnt + cur_iov_base -1].iov_len = saved_iov_entry.iov_len - new_iov_len;
+		iov[cur_iov_cnt + cur_iov_base -1].iov_base += new_iov_len;
+		write_size += new_iov_len;
+		left -= write_size;
+		cur_iov_base += cur_iov_cnt - 1;
+		cur_iov_cnt = 0;
+		write_size = 0;
+	    } else {
+		write_size += iov[cur_iov_cnt + cur_iov_base -1].iov_len;
+	    }
+	}
+	libcmsockets_LTX_writev_func(svc, scd, &iov[cur_iov_base], cur_iov_cnt, attrs);
+	left -= write_size;
+    }
+    return 0;
+}
 
 extern ssize_t
 libcmsockets_LTX_writev_func(CMtrans_services svc, socket_conn_data_ptr scd, void *iovs, int iovcnt, attr_list attrs)
@@ -1053,7 +1082,7 @@ libcmsockets_LTX_writev_func(CMtrans_services svc, socket_conn_data_ptr scd, voi
 		   left, fd);
     if (left > MAX_RW_COUNT) {
 	// more to write than unix lets us do in one call
-	return long_writev(svc, scd, iovs, iovcnt);
+	return long_writev(svc, scd, iovs, iovcnt, attrs, left);
     }
 		    
     while (left > 0) {
