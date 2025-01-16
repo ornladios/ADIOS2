@@ -111,6 +111,22 @@ ensure_writev_room(estate s, int add_count)
 }
 
 
+void
+roundup_tmp_buffer(FFSBuffer buf, int req_alignment)
+{
+    int pad = (req_alignment - buf->tmp_buffer_size) & (req_alignment -1);  /*  only works if req_align is power of two */
+    switch (req_alignment) {
+    case 1: case 2: case 4: case 8: case 16: break;
+    default:
+	assert(0);
+    }
+    if (pad) {
+	buf->tmp_buffer = realloc(buf->tmp_buffer, buf->tmp_buffer_size + pad);
+	memset((char*)buf->tmp_buffer + buf->tmp_buffer_size, 0, pad);
+	buf->tmp_buffer_size += pad;
+    }
+}
+
 size_t
 allocate_tmp_space(estate s, FFSBuffer buf, size_t length, int req_alignment, size_t *tmp_data_loc)
 {
@@ -277,6 +293,8 @@ FFSencode_internal(FFSBuffer b, FMFormat fmformat, void *data, size_t *buf_size,
 	tmp_data += fmformat->server_ID.length;
 	memcpy(tmp_data, &record_len, 8);
     }
+    // round up malloc to 8
+    roundup_tmp_buffer(b, 8);
     free_addr_list(&state);
     *buf_size = state.output_len;
     if (!state.iovec_is_stack) {
