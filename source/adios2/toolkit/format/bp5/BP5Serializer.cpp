@@ -1596,17 +1596,17 @@ std::vector<core::iovec> BP5Serializer::BreakoutContiguousMetadata(
             }
         }
         helper::CopyFromBuffer(Aggregate.data(), Position, &MBCount);
-        for (uint64_t i = 0; i < MBCount; ++i)
+        for (size_t i = 0; i < MBCount; ++i)
         {
-            uint64_t MEBSize;
+            size_t MEBSize;
             helper::CopyFromBuffer(Aggregate.data(), Position, &MEBSize);
             MetadataBlocks.push_back({Aggregate.data() + Position, MEBSize});
             Position += MEBSize;
         }
         helper::CopyFromBuffer(Aggregate.data(), Position, &ABCount);
-        for (uint64_t i = 0; i < ABCount; ++i)
+        for (size_t i = 0; i < ABCount; ++i)
         {
-            uint64_t AEBSize;
+            size_t AEBSize;
             helper::CopyFromBuffer(Aggregate.data(), Position, &AEBSize);
             AttributeBlocks.push_back({Aggregate.data() + Position, AEBSize});
             Position += AEBSize;
