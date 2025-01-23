@@ -1045,7 +1045,7 @@ static ssize_t long_writev(CMtrans_services svc, socket_conn_data_ptr scd, struc
 		   left, scd->fd);
     while (left > 0) {
 	ssize_t write_size = 0;
-	int ret;
+	ssize_t ret;
 	while (cur_iov_cnt + cur_iov_base < iovcnt) {
 	    cur_iov_cnt++;
 #define TRAIL_BUFFER 1024
@@ -1060,7 +1060,7 @@ static ssize_t long_writev(CMtrans_services svc, socket_conn_data_ptr scd, struc
 		    return ret + cur_iov_base;
 		}
 		iov[cur_iov_cnt + cur_iov_base -1].iov_len = saved_iov_entry.iov_len - new_iov_len;
-		iov[cur_iov_cnt + cur_iov_base -1].iov_base += new_iov_len;
+		iov[cur_iov_cnt + cur_iov_base -1].iov_base = (char*)iov[cur_iov_cnt + cur_iov_base -1].iov_base + new_iov_len;
 		write_size += new_iov_len;
 		left -= write_size;
 		cur_iov_base += cur_iov_cnt - 1;
