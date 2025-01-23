@@ -1,13 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 
 # The directory label is used for CDash to treat FFS as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS FFS)
 
-if(POLICY CMP0074)
-  cmake_policy(SET CMP0074 NEW)
-endif()
-
-project(FFS VERSION 3.1.5)
+project(FFS VERSION 3.1.7)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
