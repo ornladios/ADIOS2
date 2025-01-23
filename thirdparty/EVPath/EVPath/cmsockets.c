@@ -904,6 +904,12 @@ set_block_state(CMtrans_services svc, socket_conn_data_ptr scd,
 #endif
 }
 
+#ifndef MAX_RW_COUNT
+// Not actually defined outside the kernel as far as I know  - GSE
+#define MAX_RW_COUNT 0x7ffff000   
+//#define MAX_RW_COUNT 0x3ffff000    // Be more conservative.
+#endif
+
 extern ssize_t
 libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr scd, void *buffer, ssize_t requested_len, int non_blocking)
 {
@@ -928,7 +934,9 @@ libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr 
 		       scd->fd);
 	set_block_state(svc, scd, Non_Block);
     }
-    iget = read(scd->fd, (char *) buffer, (int)requested_len);
+    ssize_t read_len = requested_len;
+    if (read_len > MAX_RW_COUNT) read_len = MAX_RW_COUNT;
+    iget = read(scd->fd, (char *) buffer, (int)read_len);
     if ((iget == -1) || (iget == 0)) {
 	int lerrno = errno;
 	if ((lerrno != 0) &&
@@ -951,8 +959,10 @@ libcmsockets_LTX_read_to_buffer_func(CMtrans_services svc, socket_conn_data_ptr 
     left = requested_len - iget;
     while (left > 0) {
 	int lerrno;
+	read_len = left;
+	if (left > MAX_RW_COUNT) read_len = MAX_RW_COUNT;
 	iget = read(scd->fd, (char *) buffer + requested_len - left,
-		    (int)left);
+		    (int)read_len);
 	lerrno = errno;
 	if (iget == -1) {
 	    if ((lerrno != EWOULDBLOCK) &&
@@ -1024,11 +1034,6 @@ int iovcnt;
 }
 #endif
 
-#ifndef MAX_RW_COUNT
-// Not actually defined outside the kernel as far as I know  - GSE
-#define MAX_RW_COUNT 0x7ffff000
-#endif
-
 extern ssize_t
 libcmsockets_LTX_writev_func(CMtrans_services svc, socket_conn_data_ptr scd, void *iovs, int iovcnt, attr_list attrs);
 
@@ -1036,8 +1041,11 @@ static ssize_t long_writev(CMtrans_services svc, socket_conn_data_ptr scd, struc
 {
     int cur_iov_base = 0;
     int cur_iov_cnt = 0;
+    svc->trace_out(scd->sd->cm, "CMSocket doing long writev of %zd bytes on fd %d",
+		   left, scd->fd);
     while (left > 0) {
 	ssize_t write_size = 0;
+	int ret;
 	while (cur_iov_cnt + cur_iov_base < iovcnt) {
 	    cur_iov_cnt++;
 #define TRAIL_BUFFER 1024
@@ -1045,8 +1053,12 @@ static ssize_t long_writev(CMtrans_services svc, socket_conn_data_ptr scd, struc
 		struct iovec saved_iov_entry = iov[cur_iov_cnt + cur_iov_base -1];
 		ssize_t new_iov_len = MAX_RW_COUNT - write_size - TRAIL_BUFFER;   // give some buffer
 		iov[cur_iov_cnt + cur_iov_base -1].iov_len = new_iov_len;
-		int ret = libcmsockets_LTX_writev_func(svc, scd, &iov[cur_iov_base], cur_iov_cnt, attrs);
-		if (ret != cur_iov_cnt) return ret + cur_iov_base;
+		svc->trace_out(scd->sd->cm, "CMSocket doing long intermediate writev of %d buffers on fd %d",
+			       (int)new_iov_len, scd->fd);
+		ret = libcmsockets_LTX_writev_func(svc, scd, &iov[cur_iov_base], cur_iov_cnt, attrs);
+		if (ret != cur_iov_cnt) {
+		    return ret + cur_iov_base;
+		}
 		iov[cur_iov_cnt + cur_iov_base -1].iov_len = saved_iov_entry.iov_len - new_iov_len;
 		iov[cur_iov_cnt + cur_iov_base -1].iov_base += new_iov_len;
 		write_size += new_iov_len;
@@ -1058,10 +1070,15 @@ static ssize_t long_writev(CMtrans_services svc, socket_conn_data_ptr scd, struc
 		write_size += iov[cur_iov_cnt + cur_iov_base -1].iov_len;
 	    }
 	}
-	libcmsockets_LTX_writev_func(svc, scd, &iov[cur_iov_base], cur_iov_cnt, attrs);
+	svc->trace_out(scd->sd->cm, "CMSocket doing long final writev of %zd bytes on fd %d",
+		       left, scd->fd);
+	ret = libcmsockets_LTX_writev_func(svc, scd, &iov[cur_iov_base], cur_iov_cnt, attrs);
+	if (ret != cur_iov_cnt) {
+	    return ret + cur_iov_base;
+	}
 	left -= write_size;
     }
-    return 0;
+    return iovcnt;
 }
 
 extern ssize_t
