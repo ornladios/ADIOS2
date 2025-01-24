@@ -1,0 +1,4 @@
+version: 2
+sphinx:
+  # Path to your Sphinx configuration file.
+  configuration: docs/user_guide/source/conf.py
