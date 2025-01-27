@@ -58,14 +58,14 @@ BP5Helper::BuildNodeContrib(const digest attrHash, const size_t attrSize,
                  sizeof(uint64_t);
     ret.resize(len);
     size_t position = 0;
-    helper::CopyToBuffer(ret, position, &attrHash.x[0], sizeof(digest));
+    helper::CopyToBuffer(ret, position, (char *)&attrHash.x[0], sizeof(digest));
     helper::CopyToBuffer(ret, position, &attrSize, 1);
     helper::CopyToBuffer(ret, position, &MMBlocksSize, 1);
     for (auto &MM : MMBlocks)
     {
         digest D;
         std::memcpy(&D.x[0], MM.MetaMetaID, MM.MetaMetaIDLen);
-        helper::CopyToBuffer(ret, position, &D.x[0], sizeof(digest));
+        helper::CopyToBuffer(ret, position, (char *)&D.x[0], sizeof(digest));
         size_t AlignedSize = ((MM.MetaMetaInfoLen + 7) & ~0x7);
         helper::CopyToBuffer(ret, position, &AlignedSize, 1);
     }
@@ -196,7 +196,7 @@ void BP5Helper::BreakdownIncomingMInfo(
         bool needAttr = false;
         size_t MMBlockCount;
         size_t SecondRecvSize = 0;
-        helper::ReadArray(RecvBuffer, pos, &thisAttrHash.x[0], sizeof(thisAttrHash.x), false);
+        helper::ReadArray(RecvBuffer, pos, (char *)&thisAttrHash.x[0], sizeof(thisAttrHash.x), false);
         size_t AttrSize = helper::ReadValue<size_t>(RecvBuffer, pos, false);
         AttrSizes[node] = AttrSize;
         if (AttrSize && !AttrSet.count(thisAttrHash))
@@ -212,7 +212,7 @@ void BP5Helper::BreakdownIncomingMInfo(
         for (size_t block = 0; block < MMBlockCount; block++)
         {
             digest thisMMB;
-            helper::ReadArray(RecvBuffer, pos, &thisMMB.x[0], sizeof(thisMMB.x), false);
+            helper::ReadArray(RecvBuffer, pos, (char *)&thisMMB.x[0], sizeof(thisMMB.x), false);
             size_t thisMMBSize = helper::ReadValue<size_t>(RecvBuffer, pos, false);
             if (thisMMBSize && (!MMBSet.count(thisMMB)))
             {
