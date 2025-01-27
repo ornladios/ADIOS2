@@ -14,6 +14,10 @@
 #include "adios2/operator/plugin/PluginOperator.h"
 #include <numeric>
 
+#ifdef ADIOS2_HAVE_BIGWHOOP
+#include "adios2/operator/compress/CompressBigWhoop.h"
+#endif
+
 #ifdef ADIOS2_HAVE_BLOSC2
 #include "adios2/operator/compress/CompressBlosc.h"
 #endif
@@ -60,6 +64,8 @@ std::string OperatorTypeToString(const Operator::OperatorType type)
 {
     switch (type)
     {
+    case Operator::COMPRESS_BIGWHOOP:
+        return "bigwhoop";
     case Operator::COMPRESS_BLOSC:
         return "blosc";
     case Operator::COMPRESS_BZIP2:
@@ -93,7 +99,13 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &pa
 
     const std::string typeLowerCase = helper::LowerCase(type);
 
-    if (typeLowerCase == "blosc")
+    if (typeLowerCase == "bigwhoop")
+    {
+#ifdef ADIOS2_HAVE_BIGWHOOP
+        ret = std::make_shared<compress::CompressBigWhoop>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "blosc")
     {
 #ifdef ADIOS2_HAVE_BLOSC2
         ret = std::make_shared<compress::CompressBlosc>(parameters);

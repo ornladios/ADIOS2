@@ -12,10 +12,10 @@
 #include "common.h"
 
 #if defined(PYBIND11_SIMPLE_GIL_MANAGEMENT)
-#    include "../gil.h"
+#    include <pybind11/gil.h>
 #endif
 
-#include "../pytypes.h"
+#include <pybind11/pytypes.h>
 
 #include <exception>
 #include <mutex>
@@ -321,15 +321,17 @@ struct type_info {
 #    define PYBIND11_INTERNALS_KIND ""
 #endif
 
+#define PYBIND11_PLATFORM_ABI_ID                                                                  \
+    PYBIND11_INTERNALS_KIND PYBIND11_COMPILER_TYPE PYBIND11_STDLIB PYBIND11_BUILD_ABI             \
+        PYBIND11_BUILD_TYPE
+
 #define PYBIND11_INTERNALS_ID                                                                     \
     "__pybind11_internals_v" PYBIND11_TOSTRING(PYBIND11_INTERNALS_VERSION)                        \
-        PYBIND11_INTERNALS_KIND PYBIND11_COMPILER_TYPE PYBIND11_STDLIB                            \
-            PYBIND11_BUILD_ABI PYBIND11_BUILD_TYPE "__"
+        PYBIND11_PLATFORM_ABI_ID "__"
 
 #define PYBIND11_MODULE_LOCAL_ID                                                                  \
     "__pybind11_module_local_v" PYBIND11_TOSTRING(PYBIND11_INTERNALS_VERSION)                     \
-        PYBIND11_INTERNALS_KIND PYBIND11_COMPILER_TYPE PYBIND11_STDLIB                            \
-            PYBIND11_BUILD_ABI PYBIND11_BUILD_TYPE "__"
+        PYBIND11_PLATFORM_ABI_ID "__"
 
 /// Each module locally stores a pointer to the `internals` data. The data
 /// itself is shared among modules with the same `PYBIND11_INTERNALS_ID`.
@@ -553,7 +555,7 @@ PYBIND11_NOINLINE internals &get_internals() {
         }
 #endif
         internals_ptr->istate = tstate->interp;
-        state_dict[PYBIND11_INTERNALS_ID] = capsule(internals_pp);
+        state_dict[PYBIND11_INTERNALS_ID] = capsule(reinterpret_cast<void *>(internals_pp));
         internals_ptr->registered_exception_translators.push_front(&translate_exception);
         internals_ptr->static_property_type = make_static_property_type();
         internals_ptr->default_metaclass = make_default_metaclass();
