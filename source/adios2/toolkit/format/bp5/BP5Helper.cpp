@@ -196,7 +196,8 @@ void BP5Helper::BreakdownIncomingMInfo(
         bool needAttr = false;
         size_t MMBlockCount;
         size_t SecondRecvSize = 0;
-        helper::ReadArray(RecvBuffer, pos, (char *)&thisAttrHash.x[0], sizeof(thisAttrHash.x), false);
+        helper::ReadArray(RecvBuffer, pos, (char *)&thisAttrHash.x[0], sizeof(thisAttrHash.x),
+                          false);
         size_t AttrSize = helper::ReadValue<size_t>(RecvBuffer, pos, false);
         AttrSizes[node] = AttrSize;
         if (AttrSize && !AttrSet.count(thisAttrHash))
