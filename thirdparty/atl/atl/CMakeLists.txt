@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 
 # The directory label is used for CDash to treat ATL as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS ATL)
 
-project(ATL VERSION 2.2.1 LANGUAGES C)
+project(ATL VERSION 2.2.2 LANGUAGES C)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
