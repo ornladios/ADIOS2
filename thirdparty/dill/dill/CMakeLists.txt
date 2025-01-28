@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.14)
 
 # The directory label is used for CDash to treat DILL as a subproject of GTKorvo
 set(CMAKE_DIRECTORY_LABELS DILL)
 
-project(DILL VERSION 3.1.1 LANGUAGES C CXX)
+project(DILL VERSION 3.1.2 LANGUAGES C CXX)
 
 # Some boilerplate to setup nice output directories
 include(GNUInstallDirs)
@@ -156,8 +156,14 @@ else()
   set(DILL_NATIVE_ONLY_DEFAULT OFF)
 endif()
 
-if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux")
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
   set(USE_MMAP_CODE_SEG 1)
+elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  message(STATUS "DILL - NO Native CG without code signing on Darwin")
+  set(NATIVE_CG FALSE)
+  set(NATIVE_ARCH UNSUPPORTED)
+  set(DILL_IGNORE_NATIVE ON)
+  set(DILL_NATIVE_ONLY_DEFAULT OFF)
 elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
   set(USE_VIRTUAL_PROTECT 1)
   set(USE_WINDOWS_CALLS 1)

@@ -4476,6 +4476,8 @@ virtual_do_end(dill_stream s, int package)
         if (vmi->prefix_code_start == -1) {
             dill_retii(s, 0);
             s->p->virtual.cur_ip = s->p->cur_ip;
+	    s->p->virtual.code_base = s->p->code_base;
+	    s->p->virtual.code_limit = s->p->code_limit;
         }
         setup_VM_proc(s);
 #endif
