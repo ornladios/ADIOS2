@@ -29,6 +29,10 @@ public:
     // to 'remoteHost'. Return the local port through which one can talk to the remote server
     int LaunchRemoteServerViaConnectionManager(const std::string remoteHost);
 
+    // Talk to local connection manager and ask for a key
+    // Return a hex string of a key
+    std::string GetKeyFromConnectionManager(const std::string keyID);
+
     virtual explicit operator bool() const { return false; }
 
     virtual void Open(const std::string hostname, const int32_t port, const std::string filename,

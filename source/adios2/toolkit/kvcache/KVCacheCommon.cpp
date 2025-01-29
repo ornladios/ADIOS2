@@ -101,7 +101,7 @@ bool KVCacheCommon::Exists(std::string key)
     {
         if (!m_redisReply->integer)
         {
-            std::cout << "The Key: " << key << " does not exist" << std::endl;
+            // std::cout << "The Key: " << key << " does not exist" << std::endl;
             return false;
         }
         freeReplyObject(m_redisReply);

@@ -35,6 +35,12 @@ struct CampaignHost
     std::vector<size_t> dirIdx; // index in CampaignData.directory global list of dirs
 };
 
+struct CampaignKey
+{
+    std::string id;
+    std::string keyHex; // sodium key in hex format
+};
+
 struct CampaignBPFile
 {
     std::string name;
@@ -50,20 +56,33 @@ struct CampaignBPDataset
     std::string name;
     size_t hostIdx;
     size_t dirIdx;
+    bool hasKey;
+    size_t keyIdx;
     std::vector<CampaignBPFile> files;
+};
+
+struct CampaignVersion
+{
+    std::string versionStr;
+    int major;
+    int minor;
+    int micro;
+    double version;
 };
 
 struct CampaignData
 {
-    std::string version;
+    CampaignVersion version;
     std::vector<CampaignHost> hosts;
+    std::vector<CampaignKey> keys;
     std::vector<std::string> directory;
     std::map<size_t, CampaignBPDataset> bpdatasets;
 };
 
 void ReadCampaignData(sqlite3 *db, CampaignData &cd);
 
-void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfile);
+void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfile,
+                std::string &keyHex);
 
 } // end namespace engine
 } // end namespace core

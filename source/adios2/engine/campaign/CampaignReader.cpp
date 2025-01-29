@@ -14,6 +14,7 @@
 #include "adios2/helper/adiosFunctions.h" // CSVToVector
 #include "adios2/helper/adiosNetwork.h"   // GetFQDN
 #include "adios2/helper/adiosSystem.h"    // CreateDirectory
+#include "adios2/toolkit/remote/EVPathRemote.h"
 #include <adios2-perfstubs-interface.h>
 #include <adios2sys/SystemTools.hxx>
 
@@ -195,7 +196,8 @@ void CampaignReader::InitTransports()
     if (m_Options.verbose > 0)
     {
         std::cout << "Local hostname = " << m_Options.hostname << "\n";
-        std::cout << "Database result:\n  version = " << m_CampaignData.version << "\n  hosts:\n";
+        std::cout << "Database result:\n  version = " << m_CampaignData.version.version
+                  << "\n  hosts:\n";
 
         for (size_t hostidx = 0; hostidx < m_CampaignData.hosts.size(); ++hostidx)
         {
@@ -206,6 +208,12 @@ void CampaignReader::InitTransports()
             {
                 std::cout << "      dir = " << m_CampaignData.directory[h.dirIdx[diridx]] << "\n";
             }
+        }
+        std::cout << "  keys:\n";
+        for (size_t keyidx = 0; keyidx < m_CampaignData.keys.size(); ++keyidx)
+        {
+            CampaignKey &k = m_CampaignData.keys[keyidx];
+            std::cout << "    key = " << k.id << "\n";
         }
         std::cout << "  datasets:\n";
         for (auto &it : m_CampaignData.bpdatasets)
@@ -224,9 +232,11 @@ void CampaignReader::InitTransports()
     // nlohmann::json js = nlohmann::json::parse(cs);
     // std::cout << "JSON rank " << m_ReaderRank << ": " << js.size() <<
     // std::endl;
-    int i = 0;
+    std::unique_ptr<Remote> connectionManager = nullptr;
+    int i = -1;
     for (auto &it : m_CampaignData.bpdatasets)
     {
+        ++i;
         CampaignBPDataset &ds = it.second;
         adios2::core::IO &io = m_IO.m_ADIOS.DeclareIO("CampaignReader" + std::to_string(i));
         std::string localPath;
@@ -290,12 +300,56 @@ void CampaignReader::InitTransports()
                               << "\n    and use local cache for metadata at " << localPath << " \n";
                 }
                 helper::CreateDirectory(localPath);
+
+                std::string keyhex;
+                if (ds.hasKey)
+                {
+                    if (m_Options.verbose > 0)
+                    {
+                        std::cout << "The dataset is key protected with key id "
+                                  << m_CampaignData.keys[ds.keyIdx].id << "\n";
+                    }
+#ifdef ADIOS2_HAVE_SODIUM
+                    if (m_CampaignData.keys[ds.keyIdx].keyHex.empty())
+                    {
+                        // Retrieve key
+                        if (!connectionManager)
+                        {
+                            connectionManager = std::unique_ptr<Remote>(
+                                new Remote(core::ADIOS::StaticGetHostOptions()));
+                        }
+                        m_CampaignData.keys[ds.keyIdx].keyHex =
+                            connectionManager->GetKeyFromConnectionManager(
+                                m_CampaignData.keys[ds.keyIdx].id);
+
+                        if (m_Options.verbose > 0)
+                        {
+                            std::cout << "-- Received key " << m_CampaignData.keys[ds.keyIdx].keyHex
+                                      << "\n";
+                        }
+                    }
+
+                    if (m_CampaignData.keys[ds.keyIdx].keyHex == "0")
+                    {
+                        // We received no key, ignore files encrypted with this key
+                        std::cerr << "ERROR: don't have the key "
+                                  << m_CampaignData.keys[ds.keyIdx].id << " to decrypt " << ds.name
+                                  << ". Ignoring this dataset." << std::endl;
+                        continue;
+                    }
+
+                    keyhex = m_CampaignData.keys[ds.keyIdx].keyHex;
+#else
+                    helper::Throw<std::runtime_error>(
+                        "Engine", "CampaignReader", "InitTransports",
+                        "ADIOS needs to be built with libsodium and with SST to "
+                        "be able to process protected campaign files");
+#endif
+                }
+
                 for (auto &bpf : ds.files)
                 {
-                    /*std::cout << "     save file " << remoteURL << "/" <<
-                       bpf.name
-                              << " to " << localPath << "/" << bpf.name << "\n";*/
-                    SaveToFile(m_DB, localPath + PathSeparator + bpf.name, bpf);
+                    SaveToFile(m_DB, localPath + PathSeparator + bpf.name, bpf, keyhex);
                 }
                 io.SetParameter("RemoteDataPath", remotePath);
                 io.SetParameter("RemoteHost", m_CampaignData.hosts[ds.hostIdx].hostname);
@@ -362,7 +416,6 @@ void CampaignReader::InitTransports()
             ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
         }
-        ++i;
     }
 }
 
