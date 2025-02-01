@@ -1599,6 +1599,9 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                 auto &derivedMap = m_Engine->m_IO.GetDerivedVariables();
                 auto derivedVar =
                     static_cast<VariableDerived *>(derivedMap.at(VarRec->VarName).get());
+                auto start = static_cast<VariableBase *>(VarRec->Variable)->m_Start;
+                auto count = static_cast<VariableBase *>(VarRec->Variable)->m_Count;
+                derivedVar->SetSelection({start, count});
                 derivedVarInputNameList = derivedVar->VariableNameList();
                 nameToVarInfo = new std::map<std::string, std::unique_ptr<MinVarInfo>>();
                 // to create a mapping between variable name and the varInfo (dim and data pointer)
@@ -1613,6 +1616,7 @@ BP5Deserializer::GenerateReadRequests(const bool doAllocTempBuffers, size_t *max
                                 " in defining the derived variable ");
                     // extract the dimensions and data for each variable
                     VariableBase *varBase = itVariable->second.get();
+                    varBase->SetSelection({start, count});
                     nameToVarInfo->insert({varName, std::unique_ptr<MinVarInfo>(nullptr)});
                     derivedVarInputVarList.push_back(varBase);
                 }
