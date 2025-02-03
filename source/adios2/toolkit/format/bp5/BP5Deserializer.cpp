@@ -1271,7 +1271,7 @@ void BP5Deserializer::InstallAttributesV2(FFSTypeHandle FFSformat, void *BaseDat
     }
 }
 
-bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
+bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData, bool dataIsRemote)
 {
     if (!m_RandomAccessMode)
     {
@@ -1298,20 +1298,29 @@ bool BP5Deserializer::QueueGet(core::VariableBase &variable, void *DestData)
                     "(random access), or "
                     "number of BeginStep calls (streaming)");
         }
-        for (size_t RelStep = variable.m_StepsStart;
-             RelStep < variable.m_StepsStart + variable.m_StepsCount; RelStep++)
+        if (dataIsRemote && VarRec->OrigShapeID != ShapeID::LocalValue &&
+            VarRec->OrigShapeID != ShapeID::GlobalValue)
         {
-            const size_t AbsStep = VarRec->AbsStepFromRel[RelStep];
-            const size_t writerCohortSize = WriterCohortSize(AbsStep);
-            for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
+            ret = QueueGetSingleRemote(variable, DestData, variable.m_StepsStart,
+                                       variable.m_StepsCount);
+        }
+        else
+        {
+            for (size_t RelStep = variable.m_StepsStart;
+                 RelStep < variable.m_StepsStart + variable.m_StepsCount; RelStep++)
             {
-                if (GetMetadataBase(VarRec, AbsStep, WriterRank))
+                const size_t AbsStep = VarRec->AbsStepFromRel[RelStep];
+                const size_t writerCohortSize = WriterCohortSize(AbsStep);
+                for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
                 {
-                    // This writer wrote on this timestep
-                    ret = QueueGetSingle(variable, DestData, AbsStep, RelStep);
-                    size_t increment = variable.TotalSize() * variable.m_ElementSize;
-                    DestData = (void *)((char *)DestData + increment);
-                    break;
+                    if (GetMetadataBase(VarRec, AbsStep, WriterRank))
+                    {
+                        // This writer wrote on this timestep
+                        ret = QueueGetSingle(variable, DestData, AbsStep, RelStep);
+                        size_t increment = variable.TotalSize() * variable.m_ElementSize;
+                        DestData = (void *)((char *)DestData + increment);
+                        break;
+                    }
                 }
             }
         }
@@ -1429,6 +1438,7 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
         Req.Start = variable.m_Start;
         Req.Step = AbsStep;
         Req.RelStep = RelStep;
+        Req.StepCount = 1;
         Req.MemSpace = MemSpace;
         Req.Data = DestData;
         PendingGetRequests.push_back(Req);
@@ -1450,6 +1460,64 @@ bool BP5Deserializer::QueueGetSingle(core::VariableBase &variable, void *DestDat
         Req.MemSpace = MemSpace;
         Req.Step = AbsStep;
         Req.RelStep = RelStep;
+        Req.StepCount = 1;
+        PendingGetRequests.push_back(Req);
+    }
+    else
+    {
+        std::cout << "Missed get type " << variable.m_SelectionType << " shape "
+                  << variable.m_ShapeID << std::endl;
+    }
+    return true;
+}
+
+bool BP5Deserializer::QueueGetSingleRemote(core::VariableBase &variable, void *DestData,
+                                           size_t RelStep, size_t StepCount)
+{
+    BP5VarRec *VarRec = VarByKey[&variable];
+    if (variable.m_Type == adios2::DataType::Struct)
+    {
+        // This probably does not work at all. Need to be implemented
+        StructQueueReadChecks(dynamic_cast<core::VariableStruct *>(&variable), VarRec);
+    }
+
+    MemorySpace MemSpace = variable.GetMemorySpace(DestData);
+    if ((variable.m_SelectionType == adios2::SelectionType::BoundingBox) &&
+        ((variable.m_ShapeID == ShapeID::GlobalArray) ||
+         (variable.m_ShapeID == ShapeID::JoinedArray)))
+    {
+        BP5ArrayRequest Req;
+        Req.VarRec = VarRec;
+        Req.VarName = (char *)variable.m_Name.c_str();
+        Req.RequestType = Global;
+        Req.BlockID = (size_t)-1;
+        Req.Count = variable.m_Count;
+        Req.Start = variable.m_Start;
+        Req.Step = RelStep;
+        Req.RelStep = RelStep;
+        Req.StepCount = StepCount;
+        Req.MemSpace = MemSpace;
+        Req.Data = DestData;
+        PendingGetRequests.push_back(Req);
+    }
+    else if ((variable.m_SelectionType == adios2::SelectionType::WriteBlock) ||
+             (variable.m_ShapeID == ShapeID::LocalArray))
+    {
+        BP5ArrayRequest Req;
+        Req.VarRec = VarByKey[&variable];
+        Req.VarName = (char *)variable.m_Name.c_str();
+        Req.RequestType = Local;
+        Req.BlockID = variable.m_BlockID;
+        if (variable.m_SelectionType == adios2::SelectionType::BoundingBox)
+        {
+            Req.Start = variable.m_Start;
+            Req.Count = variable.m_Count;
+        }
+        Req.Data = DestData;
+        Req.MemSpace = MemSpace;
+        Req.Step = RelStep;
+        Req.RelStep = RelStep;
+        Req.StepCount = StepCount;
         PendingGetRequests.push_back(Req);
     }
     else

@@ -55,6 +55,7 @@ typedef struct _GetRequestMsg
     int64_t FileHandle;
     char *VarName;
     size_t Step;
+    size_t StepCount;
     int64_t BlockID;
     int DimCount;
     size_t *Count;

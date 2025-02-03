@@ -498,7 +498,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
         const DataType varType = m_IO.InquireVariableType(Req.VarName);
         VariableBase *VB = m_BP5Deserializer->GetVariableBaseFromBP5VarRec(Req.VarRec);
 
-        std::string keyPrefix = m_Fingerprint + "|" + Req.VarName + std::to_string(Req.RelStep);
+        std::string keyPrefix = m_Fingerprint + "|" + Req.VarName + "|";
         if (Req.BlockID != std::numeric_limits<std::size_t>::max())
         {
             MinVarInfo *minBlocksInfo = nullptr;
@@ -527,11 +527,15 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
             }
         }
 
-        RequestInfo ReqInfo(Req.Count.size());
+        // Start/Count in cache includes steps as first dimension
+        adios2::Dims cacheStart = helper::DimsWithStep(Req.RelStep, Req.Start);
+        adios2::Dims cacheCount = helper::DimsWithStep(Req.StepCount, Req.Count);
+
+        RequestInfo ReqInfo(cacheCount.size());
         ReqInfo.ReqSeq = req_seq;
         ReqInfo.TypeSize = helper::GetDataTypeSize(varType);
 
-        kvcache::QueryBox targetBox(Req.Start, Req.Count);
+        kvcache::QueryBox targetBox(cacheStart, cacheCount);
         std::string targetKey = keyPrefix + targetBox.toString();
 
         // Exact Match: check if targetKey exists
@@ -581,10 +585,12 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
                 ReqInfo.Data = malloc(ReqInfo.ReqSize * ReqInfo.TypeSize);
                 std::vector<size_t> start;
                 std::vector<size_t> count;
-                box.StartToVector(start);
-                box.CountToVector(count);
-                auto handle = m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, count, start,
-                                            VB->m_AccuracyRequested, ReqInfo.Data);
+                box.StartToVector(start, 1); // start without step
+                box.CountToVector(count, 1); // count without step
+                size_t stepStart = box.Start[0];
+                size_t stepCount = box.Count[0];
+                auto handle = m_Remote->Get(Req.VarName, stepStart, stepCount, Req.BlockID, count,
+                                            start, VB->m_AccuracyRequested, ReqInfo.Data);
                 handles.push_back(handle);
                 remoteRequestsInfo.push_back(ReqInfo);
             }
@@ -622,9 +628,12 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
             void *data = malloc(ReqInfo.ReqBox.size() * ReqInfo.TypeSize);
             m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1,
                                    ReqInfo.ReqBox.size() * ReqInfo.TypeSize, data);
+            // cache result includes steps, need to adjust output Start/Count for N+1 dim copy
+            adios2::Dims outStart = helper::DimsWithStep(Req.RelStep, Req.Start);
+            adios2::Dims outCount = helper::DimsWithStep(Req.StepCount, Req.Count);
             helper::NdCopy(reinterpret_cast<char *>(data), ReqInfo.ReqBox.Start,
                            ReqInfo.ReqBox.Count, true, false, reinterpret_cast<char *>(Req.Data),
-                           Req.Start, Req.Count, true, false, static_cast<int>(ReqInfo.TypeSize));
+                           outStart, outCount, true, false, static_cast<int>(ReqInfo.TypeSize));
             free(data);
         }
     }
@@ -635,9 +644,12 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
         m_Remote->WaitForGet(handle);
         auto &ReqInfo = remoteRequestsInfo[handle_seq];
         auto &Req = GetRequests[ReqInfo.ReqSeq];
+        // cache result includes steps, need to adjust output Start/Count for N+1 dim copy
+        adios2::Dims outStart = helper::DimsWithStep(Req.RelStep, Req.Start);
+        adios2::Dims outCount = helper::DimsWithStep(Req.StepCount, Req.Count);
         helper::NdCopy(reinterpret_cast<char *>(ReqInfo.Data), ReqInfo.ReqBox.Start,
                        ReqInfo.ReqBox.Count, true, false, reinterpret_cast<char *>(Req.Data),
-                       Req.Start, Req.Count, true, false, static_cast<int>(ReqInfo.TypeSize));
+                       outStart, outCount, true, false, static_cast<int>(ReqInfo.TypeSize));
 
         m_KVCache.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 0,
                                        ReqInfo.ReqSize * ReqInfo.TypeSize, ReqInfo.Data);
@@ -660,8 +672,8 @@ void BP5Reader::PerformRemoteGets()
     for (auto &Req : GetRequests)
     {
         VariableBase *VB = m_BP5Deserializer->GetVariableBaseFromBP5VarRec(Req.VarRec);
-        auto handle = m_Remote->Get(Req.VarName, Req.RelStep, Req.BlockID, Req.Count, Req.Start,
-                                    VB->m_AccuracyRequested, Req.Data);
+        auto handle = m_Remote->Get(Req.VarName, Req.RelStep, Req.StepCount, Req.BlockID, Req.Count,
+                                    Req.Start, VB->m_AccuracyRequested, Req.Data);
         handles.push_back(handle);
     }
 

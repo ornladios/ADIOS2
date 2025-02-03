@@ -333,9 +333,10 @@ bool XrootdRemote::WaitForGet(GetHandle handle)
     return true;
 }
 
-Remote::GetHandle XrootdRemote::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count,
-                                    Dims &Start, Accuracy &accuracy, void *dest)
+Remote::GetHandle XrootdRemote::Get(char *VarName, size_t Step, size_t StepCount, size_t BlockID,
+                                    Dims &Count, Dims &Start, Accuracy &accuracy, void *dest)
 {
+// FIXME: StepCount is not implemented here yet
 #ifdef ADIOS2_HAVE_XROOTD
     char rName[512] = "/etc";
     XrdSsiResource rSpec((std::string)rName);

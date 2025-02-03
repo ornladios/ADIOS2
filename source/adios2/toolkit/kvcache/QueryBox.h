@@ -54,7 +54,7 @@ public:
     // ToString
     std::string toString() const
     {
-        std::string str = "|Start_";
+        std::string str = "Start_";
         for (size_t i = 0; i < Start.size(); ++i)
         {
             str += std::to_string(Start[i]);
@@ -101,17 +101,17 @@ public:
     }
 
     // convert helper::DimsArray to std::vector<size_t>
-    void StartToVector(std::vector<size_t> &vec) const
+    void StartToVector(std::vector<size_t> &vec, size_t startPos = 0) const
     {
-        for (size_t i = 0; i < Start.size(); ++i)
+        for (size_t i = startPos; i < Start.size(); ++i)
         {
             vec.push_back(Start[i]);
         }
     }
 
-    void CountToVector(std::vector<size_t> &vec) const
+    void CountToVector(std::vector<size_t> &vec, size_t startPos = 0) const
     {
-        for (size_t i = 0; i < Count.size(); ++i)
+        for (size_t i = startPos; i < Count.size(); ++i)
         {
             vec.push_back(Count[i]);
         }
@@ -260,7 +260,9 @@ public:
         for (auto &key : samePrefixKeys)
         {
             // Initialize the box from the key
-            size_t DimCount = std::count(key.begin(), key.end(), '_') / 2;
+            auto sp = key.find("|Start");
+            auto cp = key.find("|Count");
+            size_t DimCount = std::count(key.begin() + sp, key.begin() + cp, '_');
             QueryBox box(DimCount);
             lf_ExtractDimensions(key, "|Start_", box.Start);
             lf_ExtractDimensions(key, "|Count_", box.Count);

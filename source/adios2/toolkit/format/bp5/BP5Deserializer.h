@@ -61,9 +61,11 @@ public:
 
     void SetupForStep(size_t Step, size_t WriterCount);
     // return from QueueGet is true if a sync is needed to fill the data
-    bool QueueGet(core::VariableBase &variable, void *DestData);
+    bool QueueGet(core::VariableBase &variable, void *DestData, bool dataIsRemote = false);
     bool QueueGetSingle(core::VariableBase &variable, void *DestData, size_t AbsStep,
                         size_t RelStep);
+    bool QueueGetSingleRemote(core::VariableBase &variable, void *DestData, size_t RelStep,
+                              size_t StepCount);
 
     /* generate read requests. return vector of requests AND the size of
      * the largest allocation block necessary for reading.
@@ -105,8 +107,9 @@ public:
         void *VarRec = NULL;
         char *VarName;
         enum RequestTypeEnum RequestType;
-        size_t Step;    // local operations use absolute steps
-        size_t RelStep; // preserve Relative Step for remote
+        size_t Step;      // local operations use absolute steps
+        size_t RelStep;   // preserve Relative Step for remote
+        size_t StepCount; // =1 for local, can be >1 for remote
         size_t BlockID;
         Dims Start;
         Dims Count;

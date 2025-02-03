@@ -188,6 +188,19 @@ public:
 };
 
 /**
+ * Make an adios2::Dims vector from steps + another Dims vector
+ * @return adios2::Dims vector, first element is 'firstElement', rest is input vector
+ */
+adios2::Dims DimsWithStep(size_t firstElement, adios2::Dims &dimsWithoutSteps) noexcept;
+
+/**
+ * Separate adios2::Dims vector with step
+ * @return tuple of first element, and an adios2::Dims vector without first element of input
+ * vector.
+ */
+std::tuple<size_t, adios2::Dims> DimsWithoutStep(adios2::Dims &dimsWithSteps) noexcept;
+
+/**
  * Gets type from template parameter T
  * @return DataType enumeration value
  */
