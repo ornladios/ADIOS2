@@ -339,6 +339,8 @@ endif()
 #------------------------------------------------------------------------------#
 # Plugins
 #------------------------------------------------------------------------------#
+set(ADIOS2_INSTALL_PLUGIN_LIBDIR ${CMAKE_INSTALL_BINDIR}/adios2-modules-${ADIOS2_LIBRARY_SOVERSION} CACHE STRING "")
+set(ADIOS2_INSTALL_PLUGIN_BINDIR ${CMAKE_INSTALL_LIBDIR}/adios2-modules-${ADIOS2_LIBRARY_SOVERSION} CACHE STRING "")
 add_subdirectory(plugins)
 
 #------------------------------------------------------------------------------#

@@ -13,7 +13,7 @@
         <variable name="data">
             <operation type="plugin">
                 <parameter key="PluginName" value="OperatorPlugin"/>
-                <parameter key="PluginLibrary" value="EncryptionOperator" />
+                <parameter key="PluginLibrary" value="adios2_encryption_operator" />
                 <parameter key="SecretKeyFile" value="test-key" />
             </operation>
         </variable>
@@ -30,7 +30,7 @@
         <variable name="data">
             <operation type="plugin">
                 <parameter key="PluginName" value="OperatorPlugin"/>
-                <parameter key="PluginLibrary" value="EncryptionOperator" />
+                <parameter key="PluginLibrary" value="adios2_encryption_operator" />
                 <parameter key="SecretKeyFile" value="test-key" />
             </operation>
         </variable>
