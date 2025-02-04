@@ -15,9 +15,15 @@
 
 #include <fstream>
 #include <iostream>
+#include <stdio.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <zlib.h>
+
+#ifdef ADIOS2_HAVE_SODIUM
+#include <sodium.h>
+#include <string.h>
+#endif
 
 namespace adios2
 {
@@ -33,7 +39,30 @@ namespace engine
 static int sqlcb_info(void *p, int argc, char **argv, char **azColName)
 {
     CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
-    cdp->version = std::string(argv[0]);
+    cdp->version.versionStr = std::string(argv[0]);
+
+    char rest[32];
+    std::sscanf(cdp->version.versionStr.c_str(), "%d.%d%s", &cdp->version.major,
+                &cdp->version.minor, rest);
+    if (rest[0])
+    {
+        sscanf(rest, ".%d%*s", &cdp->version.micro);
+    }
+    cdp->version.version = double(cdp->version.major);
+    if (cdp->version.minor < 10)
+        cdp->version.version += double(cdp->version.minor) / 10.0;
+    else if (cdp->version.minor < 100)
+        cdp->version.version += double(cdp->version.minor) / 100.0;
+
+    return 0;
+};
+
+static int sqlcb_key(void *p, int argc, char **argv, char **azColName)
+{
+    CampaignData *cdp = reinterpret_cast<CampaignData *>(p);
+    CampaignKey ck;
+    ck.id = std::string(argv[0]);
+    cdp->keys.push_back(ck);
     return 0;
 };
 
@@ -76,6 +105,16 @@ static int sqlcb_bpdataset(void *p, int argc, char **argv, char **azColName)
     cds.hostIdx = hostid - 1; // SQL rows start from 1, vector idx start from 0
     cds.dirIdx = dirid - 1;   // SQL rows start from 1, vector idx start from 0
     cds.name = argv[3];
+
+    cds.hasKey = false;
+    cds.keyIdx = 0;
+    if (cdp->version.version >= 0.2)
+    {
+        size_t keyid =
+            helper::StringToSizeT(std::string(argv[4]), "SQL callback convert text to int");
+        cds.hasKey = (keyid); // keyid == 0 means there is no key used
+        cds.keyIdx = size_t(keyid - 1);
+    }
     cdp->bpdatasets[dsid] = cds;
     return 0;
 };
@@ -117,6 +156,20 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
         sqlite3_free(zErrMsg);
     }
 
+    if (cd.version.version >= 0.2)
+    {
+        sqlcmd = "SELECT keyid FROM key";
+        rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_key, &cd, &zErrMsg);
+        if (rc != SQLITE_OK)
+        {
+            std::cout << "SQL error: " << zErrMsg << std::endl;
+            std::string m(zErrMsg);
+            helper::Throw<std::invalid_argument>("Engine", "CampaignReader", "ReadCampaignData",
+                                                 "SQL error on reading key records:" + m);
+            sqlite3_free(zErrMsg);
+        }
+    }
+
     sqlcmd = "SELECT hostname, longhostname FROM host";
     rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_host, &cd, &zErrMsg);
     if (rc != SQLITE_OK)
@@ -139,7 +192,14 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
         sqlite3_free(zErrMsg);
     }
 
-    sqlcmd = "SELECT rowid, hostid, dirid, name FROM bpdataset";
+    if (cd.version.version >= 0.2)
+    {
+        sqlcmd = "SELECT rowid, hostid, dirid, name, keyid FROM bpdataset";
+    }
+    else
+    {
+        sqlcmd = "SELECT rowid, hostid, dirid, name FROM bpdataset";
+    }
     rc = sqlite3_exec(db, sqlcmd.c_str(), sqlcb_bpdataset, &cd, &zErrMsg);
     if (rc != SQLITE_OK)
     {
@@ -282,7 +342,58 @@ static bool isFileNewer(const std::string path, int64_t ctime)
     return (ctSec > ctimeSec);
 }
 
-void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfile)
+#ifdef ADIOS2_HAVE_SODIUM
+void DecryptData(const unsigned char *encryptedData, size_t lenEncrypted, size_t lenDecrypted,
+                 const CampaignBPFile &bpfile, std::string keystr, unsigned char *decryptedData)
+{
+    if (sodium_init() < 0)
+    {
+        helper::Throw<std::runtime_error>("Engine", "CampaignReader", "InitTransports",
+                                          "libsodium could not be initialized");
+    }
+    unsigned char key[crypto_secretbox_KEYBYTES];
+
+    size_t bin_len;
+    sodium_hex2bin(key, crypto_secretbox_KEYBYTES, keystr.c_str(), keystr.size(), nullptr, &bin_len,
+                   nullptr);
+
+    if (bin_len != crypto_secretbox_KEYBYTES)
+    {
+        helper::Throw<std::runtime_error>("Engine", "CampaignReader", "InitTransports",
+                                          "Decoding hex key string " + keystr + " failed");
+    }
+
+    // grab the nonce ptr
+    size_t offset = 0;
+    const unsigned char *nonce = reinterpret_cast<const unsigned char *>(encryptedData + offset);
+    offset += crypto_secretbox_NONCEBYTES;
+
+    // grab the cipher text ptr
+    size_t cipherTextSize = lenDecrypted + crypto_secretbox_MACBYTES;
+    const unsigned char *cipherText =
+        reinterpret_cast<const unsigned char *>(encryptedData + offset);
+    offset += cipherTextSize;
+
+    if (offset != lenEncrypted)
+    {
+        helper::Throw<std::runtime_error>(
+            "Engine", "CampaignReader", "InitTransports",
+            "Encrypted data size for file " + bpfile.name +
+                " in the campaign database does not match expectations");
+    }
+
+    // decrypt directly into dataOut buffer
+    if (crypto_secretbox_open_easy(decryptedData, cipherText, cipherTextSize, nonce, key) != 0)
+    {
+        helper::Throw<std::runtime_error>("Engine", "CampaignReader", "InitTransports",
+                                          "Encrypted data of file " + bpfile.name +
+                                              " in the campaign database could not be decrypted");
+    }
+}
+#endif
+
+void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfile,
+                std::string &keyHex)
 {
     if (isFileNewer(path, bpfile.ctime))
     {
@@ -317,27 +428,46 @@ void SaveToFile(sqlite3 *db, const std::string &path, const CampaignBPFile &bpfi
     }
 
     int iBlobsize = sqlite3_column_bytes(statement, 0);
-    const void *p = sqlite3_column_blob(statement, 0);
+    const void *blob = sqlite3_column_blob(statement, 0);
 
     /*std::cout << "-- Retrieved from DB data of " << bpfile.name << " size = " << iBlobsize
-              << " compressed = " << bpfile.compressed
+              << " compressed = " << bpfile.compressed << " encryption key = " << keyHex
               << " compressed size = " << bpfile.lengthCompressed
-              << " original size = " << bpfile.lengthOriginal << " blob = " << p << "\n";*/
+              << " original size = " << bpfile.lengthOriginal << " blob = " << blob << "\n";*/
 
     size_t blobsize = static_cast<size_t>(iBlobsize);
+    void *q = const_cast<void *>(blob);
+    bool free_q = false;
+
+#ifdef ADIOS2_HAVE_SODIUM
+    if (!keyHex.empty())
+    {
+        size_t decryptedSize =
+            (bpfile.compressed ? bpfile.lengthCompressed : bpfile.lengthOriginal);
+        q = malloc(decryptedSize);
+        free_q = true;
+        DecryptData(static_cast<const unsigned char *>(blob), blobsize, decryptedSize, bpfile,
+                    keyHex, static_cast<unsigned char *>(q));
+    }
+#endif
+
     std::ofstream f;
     f.rdbuf()->pubsetbuf(0, 0);
     f.open(path, std::ios::out | std::ios::binary);
     if (bpfile.compressed)
     {
-        const unsigned char *ptr = static_cast<const unsigned char *>(p);
+        const unsigned char *ptr = static_cast<const unsigned char *>(q);
         inflateToFile(ptr, blobsize, &f);
     }
     else
     {
-        f.write(static_cast<const char *>(p), blobsize);
+        f.write(static_cast<const char *>(q), blobsize);
     }
     f.close();
+    if (free_q)
+    {
+        free(q);
+    }
 }
 
 } // end namespace engine

@@ -263,7 +263,10 @@ if(ADIOS2_HAVE_Campaign)
           engine/campaign/CampaignData.cpp
           engine/campaign/CampaignManager.cpp)
   target_link_libraries(adios2_core PRIVATE SQLite::SQLite3 ZLIB::ZLIB)
-endif()
+  if(ADIOS2_HAVE_Sodium)
+    target_link_libraries(adios2_core PRIVATE sodium)
+  endif(ADIOS2_HAVE_SODIUM)
+endif(ADIOS2_HAVE_Campaign)
 
 if(ADIOS2_HAVE_DAOS)
   target_sources(adios2_core PRIVATE toolkit/transport/file/FileDaos.cpp

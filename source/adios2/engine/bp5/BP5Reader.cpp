@@ -542,7 +542,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
             ReqInfo.ReqSize = targetBox.size();
             cachedRequestsInfo.push_back(ReqInfo);
 
-            std::cout << "Found " << targetKey << " in cache" << std::endl;
+            // std::cout << "Found " << targetKey << " in cache" << std::endl;
         }
         else
         {
@@ -567,9 +567,9 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
                 regularBoxes.push_back(targetBox);
             }
 
-            std::cout << "Going to retrieve " << regularBoxes.size()
+            /*std::cout << "Going to retrieve " << regularBoxes.size()
                       << " boxes from remote server, and " << cachedBoxes.size()
-                      << " boxes from cache" << std::endl;
+                      << " boxes from cache" << std::endl;*/
 
             // Get data from remote server
             for (auto &box : regularBoxes)
@@ -601,6 +601,9 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
     }
 
     // Get data from cache server
+    std::cout << "RemoteGet " << GetRequests.size() << " requests, fileID " << m_Fingerprint
+              << " cached " << cachedRequestsInfo.size() << " remote " << handles.size() << " items"
+              << std::endl;
     for (auto &ReqInfo : cachedRequestsInfo)
     {
         m_KVCache.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 1, 0, nullptr);
