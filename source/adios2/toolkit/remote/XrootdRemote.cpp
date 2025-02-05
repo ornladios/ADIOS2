@@ -321,6 +321,7 @@ void XrootdRemote::Open(const std::string hostname, const int32_t port, const st
         fprintf(XrdSsiCl::outErr, "Unable to get service object for %s; %s\n", clUI.contact,
                 eInfo.Get().c_str());
     }
+    m_OpenSuccess = true;
 #endif
     return;
 }

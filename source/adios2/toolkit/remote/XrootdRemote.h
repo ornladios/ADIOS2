@@ -93,9 +93,12 @@ public:
     std::string m_Filename;
     Mode m_Mode;
     bool m_RowMajorOrdering;
+    bool m_OpenSuccess = false;
 
     XrootdRemote(const adios2::HostOptions &hostOptions);
     ~XrootdRemote();
+
+    explicit operator bool() const { return m_OpenSuccess; }
 
     void Open(const std::string hostname, const int32_t port, const std::string filename,
               const Mode mode, bool RowMajorOrdering);
