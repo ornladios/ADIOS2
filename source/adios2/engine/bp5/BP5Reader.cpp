@@ -438,7 +438,7 @@ void BP5Reader::PerformGets()
                 "Remote file " + m_Name +
                     " cannot be opened. Possible server or file specification error.");
         }
-        if (!m_Remote)
+        if (!(*m_Remote)) // evaluate validity of object, not just that the pointer is non-NULL
         {
             helper::Throw<std::ios_base::failure>(
                 "Engine", "BP5Reader", "OpenFiles",
