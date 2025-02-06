@@ -265,7 +265,7 @@ if(ADIOS2_HAVE_Campaign)
   target_link_libraries(adios2_core PRIVATE SQLite::SQLite3 ZLIB::ZLIB)
   if(ADIOS2_HAVE_Sodium)
     target_link_libraries(adios2_core PRIVATE sodium)
-  endif(ADIOS2_HAVE_SODIUM)
+  endif(ADIOS2_HAVE_Sodium)
 endif(ADIOS2_HAVE_Campaign)
 
 if(ADIOS2_HAVE_DAOS)

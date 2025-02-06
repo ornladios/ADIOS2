@@ -184,8 +184,9 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
     m_Active = true;
 }
 
-EVPathRemote::GetHandle EVPathRemote::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count,
-                                          Dims &Start, Accuracy &accuracy, void *dest)
+EVPathRemote::GetHandle EVPathRemote::Get(char *VarName, size_t Step, size_t StepCount,
+                                          size_t BlockID, Dims &Count, Dims &Start,
+                                          Accuracy &accuracy, void *dest)
 {
     EVPathRemoteCommon::_GetRequestMsg GetMsg;
     memset(&GetMsg, 0, sizeof(GetMsg));
@@ -193,6 +194,7 @@ EVPathRemote::GetHandle EVPathRemote::Get(char *VarName, size_t Step, size_t Blo
     GetMsg.FileHandle = m_ID;
     GetMsg.VarName = VarName;
     GetMsg.Step = Step;
+    GetMsg.StepCount = StepCount;
     GetMsg.BlockID = BlockID;
     GetMsg.DimCount = (int)Count.size();
     GetMsg.Count = Count.data();

@@ -268,7 +268,9 @@ template <class T>
 void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonADIOSFile *f,
                           size_t readSize, T *RawData, void *Dest, int GetResponseCondition,
                           Accuracy acc, std::string name, adios2::DataType vartype,
-                          adios2::Dims count, adios2::Dims start, size_t blockid, bool boxselection)
+                          size_t stepStart, size_t stepCount, adios2::Dims count,
+                          adios2::Dims start, size_t blockid, bool boxselection)
+
 {
     _ReadResponseMsg Response;
     memset(&Response, 0, sizeof(Response));
@@ -292,7 +294,16 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
         // TODO: would be nicer:
         // op.SetAccuracy(Accuracy(GetMsg->error, GetMsg->norm, GetMsg->relative));
         T *CompressedData = (T *)malloc(Response.Size);
-        size_t result = op->Operate((char *)RawData, {}, count, vartype, (char *)CompressedData);
+        adios2::Dims c;
+        if (stepCount <= 1)
+        {
+            c = count;
+        }
+        else
+        {
+            c = helper::DimsWithStep(stepCount, count);
+        }
+        size_t result = op->Operate((char *)RawData, {}, c, vartype, (char *)CompressedData);
         if (result == 0)
         {
             Response.ReadData = (char *)RawData;
@@ -319,7 +330,8 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
         if (boxselection)
         {
             std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << vartype
-                      << ">(" << name << ") start = " << start << " count = " << count << std::endl;
+                      << ">(" << name << ") start = " << start << " count = " << count
+                      << " steps = " << stepStart << ".." << stepStart + stepCount - 1 << std::endl;
         }
         else
         {
@@ -352,7 +364,7 @@ void PrepareResponseForGet(CMConnection conn, struct Remote_evpath_state *ev_sta
     // This part cannot be threaded as ADIOS InquireVariable/Get are not thread-safe
     Variable<T> *var = f->m_io->InquireVariable<T>(VarName);
     if (f->m_mode == RemoteOpenRandomAccess)
-        var->SetStepSelection({GetMsg->Step, 1});
+        var->SetStepSelection({GetMsg->Step, GetMsg->StepCount});
     if (GetMsg->BlockID != -1)
         var->SetBlockSelection(GetMsg->BlockID);
     if (GetMsg->Start)
@@ -392,7 +404,9 @@ void PrepareResponseForGet(CMConnection conn, struct Remote_evpath_state *ev_sta
                 acc,
                 var->m_Name,
                 var->m_Type,
-                var->Count(), // correct for block selection too
+                var->m_StepsStart,
+                var->m_StepsCount,
+                var->Count(), // function, not m_Count is correct for block selections
                 var->m_Start,
                 var->m_BlockID,
                 (var->m_SelectionType == SelectionType::BoundingBox)}

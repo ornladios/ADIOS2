@@ -56,6 +56,7 @@ FMField GetRequestList[] = {
     {"FileHandle", "integer", sizeof(int64_t), FMOffset(GetRequestMsg, FileHandle)},
     {"RequestType", "integer", sizeof(int), FMOffset(GetRequestMsg, RequestType)},
     {"Step", "integer", sizeof(size_t), FMOffset(GetRequestMsg, Step)},
+    {"StepCount", "integer", sizeof(size_t), FMOffset(GetRequestMsg, StepCount)},
     {"VarName", "string", sizeof(char *), FMOffset(GetRequestMsg, VarName)},
     {"BlockID", "integer", sizeof(int64_t), FMOffset(GetRequestMsg, BlockID)},
     {"DimCount", "integer", sizeof(size_t), FMOffset(GetRequestMsg, DimCount)},

@@ -24,14 +24,14 @@ namespace engine
 
 inline void BP5Reader::GetSyncCommon(VariableBase &variable, void *data)
 {
-    bool need_sync = m_BP5Deserializer->QueueGet(variable, data);
+    bool need_sync = m_BP5Deserializer->QueueGet(variable, data, m_dataIsRemote);
     if (need_sync)
         PerformGets();
 }
 
 void BP5Reader::GetDeferredCommon(VariableBase &variable, void *data)
 {
-    (void)m_BP5Deserializer->QueueGet(variable, data);
+    (void)m_BP5Deserializer->QueueGet(variable, data, m_dataIsRemote);
 }
 
 } // end namespace engine

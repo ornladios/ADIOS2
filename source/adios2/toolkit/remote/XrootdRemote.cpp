@@ -334,9 +334,10 @@ bool XrootdRemote::WaitForGet(GetHandle handle)
     return true;
 }
 
-Remote::GetHandle XrootdRemote::Get(char *VarName, size_t Step, size_t BlockID, Dims &Count,
-                                    Dims &Start, Accuracy &accuracy, void *dest)
+Remote::GetHandle XrootdRemote::Get(char *VarName, size_t Step, size_t StepCount, size_t BlockID,
+                                    Dims &Count, Dims &Start, Accuracy &accuracy, void *dest)
 {
+// FIXME: StepCount is not implemented here yet
 #ifdef ADIOS2_HAVE_XROOTD
     char rName[512] = "/etc";
     XrdSsiResource rSpec((std::string)rName);
@@ -344,7 +345,8 @@ Remote::GetHandle XrootdRemote::Get(char *VarName, size_t Step, size_t BlockID, 
     std::string reqData = "get Filename=" + std::string(m_Filename) + std::string("&RMOrder=") +
                           std::to_string(m_RowMajorOrdering) + std::string("&Varname=") +
                           std::string(VarName);
-    reqData += "&Step=" + std::to_string(Step);
+    reqData += "&StepStart=" + std::to_string(Step);
+    reqData += "&StepCount=" + std::to_string(StepCount);
     reqData += "&Block=" + std::to_string(BlockID);
     reqData += "&Dims=" + std::to_string(Count.size());
 
