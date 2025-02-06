@@ -267,11 +267,11 @@ static void OpenSimpleHandler(CManager cm, CMConnection conn, void *vevent, void
 template <class T>
 void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonADIOSFile *f,
                           size_t readSize, T *RawData, void *Dest, int GetResponseCondition,
-                          Accuracy acc, Variable<T> *var)
+                          Accuracy acc, std::string name, adios2::DataType vartype,
+                          size_t stepStart, size_t stepCount, adios2::Dims count,
+                          adios2::Dims start, size_t blockid, bool boxselection)
 
 {
-    adios2::Dims count = var->Count();
-    bool boxselection = (var->m_SelectionType == SelectionType::BoundingBox);
     _ReadResponseMsg Response;
     memset(&Response, 0, sizeof(Response));
     Response.Size = readSize;
@@ -295,15 +295,15 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
         // op.SetAccuracy(Accuracy(GetMsg->error, GetMsg->norm, GetMsg->relative));
         T *CompressedData = (T *)malloc(Response.Size);
         adios2::Dims c;
-        if (var->m_StepsCount <= 1)
+        if (stepCount <= 1)
         {
             c = count;
         }
         else
         {
-            c = helper::DimsWithStep(var->m_StepsCount, count);
+            c = helper::DimsWithStep(stepCount, count);
         }
-        size_t result = op->Operate((char *)RawData, {}, c, var->m_Type, (char *)CompressedData);
+        size_t result = op->Operate((char *)RawData, {}, c, vartype, (char *)CompressedData);
         if (result == 0)
         {
             Response.ReadData = (char *)RawData;
@@ -329,15 +329,14 @@ void ReturnResponseThread(CMConnection conn, CMFormat ReadResponseFormat, AnonAD
     {
         if (boxselection)
         {
-            std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << var->m_Type
-                      << ">(" << var->m_Name << ") start = " << var->m_Start << " count = " << count
-                      << " steps = " << var->m_StepsStart << ".."
-                      << var->m_StepsStart + var->m_StepsCount - 1 << std::endl;
+            std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << vartype
+                      << ">(" << name << ") start = " << start << " count = " << count
+                      << " steps = " << stepStart << ".." << stepStart + stepCount - 1 << std::endl;
         }
         else
         {
-            std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << var->m_Type
-                      << ">(" << var->m_Name << ") block = " << var->m_BlockID << std::endl;
+            std::cout << "Returning " << readable_size(Response.Size) << " for Get<" << vartype
+                      << ">(" << name << ") block = " << blockid << std::endl;
         }
     }
     // std::cout << "-- start sending response --" << std::endl;
@@ -403,7 +402,14 @@ void PrepareResponseForGet(CMConnection conn, struct Remote_evpath_state *ev_sta
                 GetMsg->Dest,
                 GetMsg->GetResponseCondition,
                 acc,
-                var}
+                var->m_Name,
+                var->m_Type,
+                var->m_StepsStart,
+                var->m_StepsCount,
+                var->Count(), // function, not m_Count is correct for block selections
+                var->m_Start,
+                var->m_BlockID,
+                (var->m_SelectionType == SelectionType::BoundingBox)}
         .detach();
     return;
 }
