@@ -344,7 +344,8 @@ Remote::GetHandle XrootdRemote::Get(char *VarName, size_t Step, size_t StepCount
     std::string reqData = "get Filename=" + std::string(m_Filename) + std::string("&RMOrder=") +
                           std::to_string(m_RowMajorOrdering) + std::string("&Varname=") +
                           std::string(VarName);
-    reqData += "&Step=" + std::to_string(Step);
+    reqData += "&StepStart=" + std::to_string(Step);
+    reqData += "&StepCount=" + std::to_string(StepCount);
     reqData += "&Block=" + std::to_string(BlockID);
     reqData += "&Dims=" + std::to_string(Count.size());
 
