@@ -202,7 +202,7 @@ void CampaignReader::InitTransports()
         for (size_t hostidx = 0; hostidx < m_CampaignData.hosts.size(); ++hostidx)
         {
             CampaignHost &h = m_CampaignData.hosts[hostidx];
-            std::cout << "    host =" << h.hostname << "  long name = " << h.longhostname
+            std::cout << "    host = " << h.hostname << "  long name = " << h.longhostname
                       << "  directories: \n";
             for (size_t diridx = 0; diridx < h.dirIdx.size(); ++diridx)
             {
@@ -221,6 +221,7 @@ void CampaignReader::InitTransports()
             CampaignBPDataset &ds = it.second;
             std::cout << "    " << m_CampaignData.hosts[ds.hostIdx].hostname << ":"
                       << m_CampaignData.directory[ds.dirIdx] << PathSeparator << ds.name << "\n";
+            std::cout << "      uuid: " << ds.uuid << "\n";
             for (auto &bpf : ds.files)
             {
                 std::cout << "      file: " << bpf.name << "\n";
@@ -291,9 +292,8 @@ void CampaignReader::InitTransports()
                     m_CampaignData.directory[ds.dirIdx] + PathSeparator + ds.name;
                 const std::string remoteURL =
                     m_CampaignData.hosts[ds.hostIdx].hostname + ":" + remotePath;
-                localPath = m_Options.cachepath + PathSeparator +
-                            m_CampaignData.hosts[ds.hostIdx].hostname + PathSeparator + m_Name +
-                            PathSeparator + ds.name;
+                localPath = m_Options.cachepath + PathSeparator + ds.uuid.substr(0, 3) +
+                            PathSeparator + ds.uuid;
                 if (m_Options.verbose > 0)
                 {
                     std::cout << "Open remote file " << remoteURL
@@ -353,6 +353,20 @@ void CampaignReader::InitTransports()
                 }
                 io.SetParameter("RemoteDataPath", remotePath);
                 io.SetParameter("RemoteHost", m_CampaignData.hosts[ds.hostIdx].hostname);
+                io.SetParameter("UUID", ds.uuid);
+
+                // Save info in cache directory for cache manager and for humans
+                {
+                    std::ofstream f(localPath + PathSeparator + "info.txt");
+                    if (f.is_open())
+                    {
+                        f << "Campaign = " << m_Name << "\n";
+                        f << "Dataset = " << ds.name << "\n";
+                        f << "RemoteHost = " << m_CampaignData.hosts[ds.hostIdx].hostname << "\n";
+                        f << "RemoteDataPath = " << remotePath << "\n";
+                        f.close();
+                    }
+                }
             }
         }
         else

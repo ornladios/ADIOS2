@@ -115,6 +115,10 @@ static int sqlcb_bpdataset(void *p, int argc, char **argv, char **azColName)
         cds.hasKey = (keyid); // keyid == 0 means there is no key used
         cds.keyIdx = size_t(keyid - 1);
     }
+    if (cdp->version.version >= 0.3)
+    {
+        cds.uuid = std::string(argv[5]);
+    }
     cdp->bpdatasets[dsid] = cds;
     return 0;
 };
@@ -192,7 +196,11 @@ void ReadCampaignData(sqlite3 *db, CampaignData &cd)
         sqlite3_free(zErrMsg);
     }
 
-    if (cd.version.version >= 0.2)
+    if (cd.version.version >= 0.3)
+    {
+        sqlcmd = "SELECT rowid, hostid, dirid, name, keyid, uuid FROM bpdataset";
+    }
+    else if (cd.version.version >= 0.2)
     {
         sqlcmd = "SELECT rowid, hostid, dirid, name, keyid FROM bpdataset";
     }
