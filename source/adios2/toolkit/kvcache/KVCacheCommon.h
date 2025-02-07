@@ -6,6 +6,7 @@
 #define ADIOS2_KVCACHECOMMON_H
 #include "QueryBox.h"
 #include <cstring> // For memcpy
+#include <fstream>
 #include <string>
 #include <vector>
 
@@ -35,20 +36,30 @@ public:
 
     void CloseConnection();
 
+    void SetLocalCacheFile(const std::string localCacheFilePath);
+
     void Set(const char *key, size_t size, void *data);
 
     void Get(const char *key, size_t size, void *data);
 
-    // Batch operations in pipeline, mode 0 for SET, 1 for GET
-    void AppendCommandInBatch(const char *key, size_t mode, size_t size, void *data);
+    // Batch operations in pipeline, SET operation
+    void AppendSetCommandInBatch(const char *key, size_t size, void *data);
+    void ExecuteSetBatch(const char *key);
 
-    void ExecuteBatch(const char *key, size_t mode, size_t size, void *data);
+    // Batch operations in pipeline, GET operation
+    void AppendGetCommandInBatch(const char *key);
+    void ExecuteGetBatch(const char *key, size_t size, void *data);
 
     bool Exists(std::string key);
 
     void KeyPrefixExistence(const std::string &key_prefix, std::unordered_set<std::string> &keys);
 
     void RemotePathHashMd5(const std::string &remotePath, std::string &result);
+
+private:
+    std::string m_LocalCacheFilePath;
+    std::fstream m_CacheFile;
+
 #else
 public:
     KVCacheCommon() = default;

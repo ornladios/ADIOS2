@@ -425,10 +425,12 @@ void BP5Reader::PerformGets()
         if (getenv("useKVCache"))
         {
             m_KVCache.OpenConnection();
+            m_Fingerprint = m_Parameters.UUID;
             if (m_Fingerprint.empty())
             {
                 m_KVCache.RemotePathHashMd5(RemoteName, m_Fingerprint);
             }
+            m_KVCache.SetLocalCacheFile(m_Name + PathSeparator + "data");
         }
 #endif
         if (m_Remote == nullptr)
@@ -612,7 +614,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
               << std::endl;
     for (auto &ReqInfo : cachedRequestsInfo)
     {
-        m_KVCache.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 1, 0, nullptr);
+        m_KVCache.AppendGetCommandInBatch(ReqInfo.CacheKey.c_str());
     }
 
     for (auto &ReqInfo : cachedRequestsInfo)
@@ -620,14 +622,14 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
         auto &Req = GetRequests[ReqInfo.ReqSeq];
         if (ReqInfo.DirectCopy)
         {
-            m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1, ReqInfo.ReqSize * ReqInfo.TypeSize,
-                                   Req.Data);
+            m_KVCache.ExecuteGetBatch(ReqInfo.CacheKey.c_str(), ReqInfo.ReqSize * ReqInfo.TypeSize,
+                                      Req.Data);
         }
         else
         {
             void *data = malloc(ReqInfo.ReqBox.size() * ReqInfo.TypeSize);
-            m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 1,
-                                   ReqInfo.ReqBox.size() * ReqInfo.TypeSize, data);
+            m_KVCache.ExecuteGetBatch(ReqInfo.CacheKey.c_str(),
+                                      ReqInfo.ReqBox.size() * ReqInfo.TypeSize, data);
             // cache result includes steps, need to adjust output Start/Count for N+1 dim copy
             adios2::Dims outStart = helper::DimsWithStep(Req.RelStep, Req.Start);
             adios2::Dims outCount = helper::DimsWithStep(Req.StepCount, Req.Count);
@@ -638,6 +640,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
         }
     }
 
+    // Get data from remote and cache it
     for (size_t handle_seq = 0; handle_seq < handles.size(); handle_seq++)
     {
         auto handle = handles[handle_seq];
@@ -651,8 +654,8 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
                        ReqInfo.ReqBox.Count, true, false, reinterpret_cast<char *>(Req.Data),
                        outStart, outCount, true, false, static_cast<int>(ReqInfo.TypeSize));
 
-        m_KVCache.AppendCommandInBatch(ReqInfo.CacheKey.c_str(), 0,
-                                       ReqInfo.ReqSize * ReqInfo.TypeSize, ReqInfo.Data);
+        m_KVCache.AppendSetCommandInBatch(ReqInfo.CacheKey.c_str(),
+                                          ReqInfo.ReqSize * ReqInfo.TypeSize, ReqInfo.Data);
         free(ReqInfo.Data);
     }
 
@@ -660,7 +663,7 @@ void BP5Reader::PerformRemoteGetsWithKVCache()
     for (size_t handle_seq = 0; handle_seq < handles.size(); handle_seq++)
     {
         auto &ReqInfo = remoteRequestsInfo[handle_seq];
-        m_KVCache.ExecuteBatch(ReqInfo.CacheKey.c_str(), 0, 0, nullptr);
+        m_KVCache.ExecuteSetBatch(ReqInfo.CacheKey.c_str());
     }
 }
 
