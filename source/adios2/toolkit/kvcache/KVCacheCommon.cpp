@@ -132,27 +132,27 @@ void KVCacheCommon::ExecuteGetBatch(const char *key, size_t size, void *data)
             char *saveptr;
             char *endptr;
             char *token = strtok_r(m_redisReply->str, ":", &saveptr); // fileblock
-            // printf("  header = %s\n", token);
 
             token = strtok_r(NULL, ":", &saveptr); // offset=%d
-            // printf("  offset token = %s\n", token);
             cOffset = strtoull(token + 7, &endptr, 10);
-            std::cout << "  offset " << cOffset << std::endl;
 
             token = strtok_r(NULL, ":", &saveptr); // size=%d
-            // printf("  size token = %s\n", token);
             cSize = strtoull(token + 5, &endptr, 10);
-            std::cout << "  size = " << cSize << " expected size = " << size << std::endl;
 
             token = strtok_r(NULL, ":", &saveptr);
-            std::cout << "  completed scan? = " << (token ? "No, something left" : "Yes")
-                      << std::endl;
-            // assert(token == NULL);
+            if (token)
+            {
+                std::cout << "Cache Error: extra characters found in key-value pair "
+                             "pointing to cached data on disk. key = "
+                          << key << " offset = " << cOffset << " size = " << cSize << ", rest = ["
+                          << token << "]" << std::endl;
+            }
 
             if (size != cSize)
             {
-                std::cout << "Logical error in caching: expected block size = " << size
-                          << " but cache value says size = " << cSize;
+                std::cout << "Cache Error: expected block size = " << size
+                          << " but cache value says size = " << cSize << " for key = " << key
+                          << std::endl;
             }
 
             // data is in the cache file
@@ -162,19 +162,20 @@ void KVCacheCommon::ExecuteGetBatch(const char *key, size_t size, void *data)
                                  std::ios::in | std::ios::out | std::ios::app);
                 if (!m_CacheFile)
                 {
-                    std::cout << "Open Error details: " << strerror(errno) << std::endl;
+                    std::cout << "Cache Error: File Open Error details: " << strerror(errno)
+                              << std::endl;
                 }
             }
             m_CacheFile.seekg(cOffset, std::ios_base::beg);
             if (!m_CacheFile)
             {
-                std::cout << "Seek Error details: " << strerror(errno) << std::endl;
+                std::cout << "Cache Error: Seek Error details: " << strerror(errno) << std::endl;
             }
             errno = 0;
             m_CacheFile.read(static_cast<char *>(data), cSize);
             if (m_CacheFile.fail())
             {
-                std::cout << "Error when reading " << cSize << " bytes from cache file "
+                std::cout << "Cache Error: when reading " << cSize << " bytes from cache file "
                           << m_LocalCacheFilePath << " from offset " << cOffset
                           << " error: " << strerror(errno) << std::endl;
             }
