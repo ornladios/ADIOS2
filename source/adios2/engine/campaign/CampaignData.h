@@ -53,6 +53,7 @@ struct CampaignBPFile
 
 struct CampaignBPDataset
 {
+    std::string uuid;
     std::string name;
     size_t hostIdx;
     size_t dirIdx;
