@@ -42,11 +42,11 @@ public:
 
     void Get(const char *key, size_t size, void *data);
 
-    // Batch operations in pipeline, SET operation
+    // Batch operations in pipeline for the SET operation
     void AppendSetCommandInBatch(const char *key, size_t size, void *data);
     void ExecuteSetBatch(const char *key);
 
-    // Batch operations in pipeline, GET operation
+    // Batch operations in pipeline for the GET operation
     void AppendGetCommandInBatch(const char *key);
     void ExecuteGetBatch(const char *key, size_t size, void *data);
 

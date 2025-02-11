@@ -82,7 +82,7 @@ constexpr size_t MAX_SIZE_INSIDE_KV = 1024 * 1024;
 
 void KVCacheCommon::AppendSetCommandInBatch(const char *key, size_t size, void *data)
 {
-    // Write data to cache (reply in ExecuteBatch)
+    // Write data to cache  (need to be paired with ExecuteSetBatch)
     if (size > MAX_SIZE_INSIDE_KV)
     {
         // save data to file and add reference in key-value
@@ -117,7 +117,7 @@ void KVCacheCommon::ExecuteSetBatch(const char *key)
 
 void KVCacheCommon::AppendGetCommandInBatch(const char *key)
 {
-    // Read data from cache (combo with ExecuteBatch)
+    // Read data from cache (need to be paired with ExecuteGetBatch)
     redisAppendCommand(m_redisContext, "GET %s", key);
 }
 
