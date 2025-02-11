@@ -66,8 +66,10 @@ public:
     ~KVCacheCommon() = default;
     void OpenConnection(){};
     void CloseConnection(){};
-    void AppendCommandInBatch(const char *key, size_t mode, size_t size, void *data){};
-    void ExecuteBatch(const char *key, size_t mode, size_t size, void *data){};
+    void AppendSetCommandInBatch(const char *key, size_t size, void *data){};
+    void ExecuteSetBatch(const char *key){};
+    void AppendGetCommandInBatch(const char *key){};
+    void ExecuteGetBatch(const char *key, size_t size, void *data){};
     bool Exists(std::string key) { return false; };
     void KeyPrefixExistence(const std::string &key_prefix, std::unordered_set<std::string> &keys){};
     void RemotePathHashMd5(const std::string &remotePath, std::string &result){};
