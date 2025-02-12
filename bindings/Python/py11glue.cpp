@@ -495,6 +495,15 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              pybind11::arg("variable"), pybind11::arg("floats"),
              pybind11::arg("launch") = adios2::Mode::Sync)
 
+#ifdef ADIOS2_HAVE_CUDA
+        .def("Put",
+             (void(adios2::py11::Engine::*)(adios2::py11::Variable variable, long,
+                                            const adios2::Mode launch)) &
+                 adios2::py11::Engine::Put,
+             pybind11::arg("variable"), pybind11::arg("cypyPointer"),
+             pybind11::arg("launch") = adios2::Mode::Sync)
+#endif
+
         .def("Put",
              (void(adios2::py11::Engine::*)(adios2::py11::Variable,
                                             const std::vector<std::complex<double>> &,
@@ -513,6 +522,15 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
                  adios2::py11::Engine::Get,
              pybind11::arg("variable"), pybind11::arg("array"),
              pybind11::arg("launch") = adios2::Mode::Deferred)
+
+#ifdef ADIOS2_HAVE_CUDA
+        .def("Get",
+             (void(adios2::py11::Engine::*)(adios2::py11::Variable variable, long,
+                                            const adios2::Mode launch)) &
+                 adios2::py11::Engine::Get,
+             pybind11::arg("variable"), pybind11::arg("cupyPointer"),
+             pybind11::arg("launch") = adios2::Mode::Sync)
+#endif
 
         .def("Get",
              (std::string(adios2::py11::Engine::*)(adios2::py11::Variable,

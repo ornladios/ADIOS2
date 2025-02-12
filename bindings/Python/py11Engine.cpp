@@ -78,6 +78,39 @@ void Engine::Put(Variable variable, const pybind11::array &array, const Mode lau
     }
 }
 
+#ifdef ADIOS2_HAVE_CUDA
+void Engine::Put(Variable variable, long array, const Mode launch)
+{
+    helper::CheckForNullptr(m_Engine, "in call to Engine::Put list of cupy pointers");
+    helper::CheckForNullptr(variable.m_VariableBase,
+                            "for variable, in call to Engine::Put list of cupy pointers");
+
+    const adios2::DataType type = helper::GetDataTypeFromString(variable.Type());
+
+    if (type == adios2::DataType::Struct)
+    {
+        // not supported
+    }
+#define declare_type(T)                                                                            \
+    else if (type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        m_Engine->Put(*dynamic_cast<core::Variable<T> *>(variable.m_VariableBase),                 \
+                      reinterpret_cast<const T *>(array), launch);                                 \
+    }
+    ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
+#undef declare_type
+    else
+    {
+        throw std::invalid_argument("ERROR: for variable " + variable.Name() +
+                                    " cupy pointer type " + variable.Type() +
+                                    " is not supported (found type " + ToString(type) +
+                                    ") or "
+                                    "is not memory contiguous "
+                                    ", in call to Put\n");
+    }
+}
+#endif
+
 void Engine::Put(Variable variable, const std::vector<int64_t> &ints, const Mode launch)
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::Put list of ints");
@@ -169,6 +202,38 @@ void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
                                     ", in call to Get\n");
     }
 }
+
+#ifdef ADIOS2_HAVE_CUDA
+void Engine::Get(Variable variable, long array, const Mode launch)
+{
+    helper::CheckForNullptr(m_Engine, "for engine, in call to Engine::Get a cupy pointer");
+    helper::CheckForNullptr(variable.m_VariableBase,
+                            "for variable, in call to Engine::Get a cupy pointer");
+
+    const adios2::DataType type = helper::GetDataTypeFromString(variable.Type());
+
+    if (type == adios2::DataType::Struct)
+    {
+        // not supported
+    }
+#define declare_type(T)                                                                            \
+    else if (type == helper::GetDataType<T>())                                                     \
+    {                                                                                              \
+        m_Engine->Get(*dynamic_cast<core::Variable<T> *>(variable.m_VariableBase),                 \
+                      reinterpret_cast<T *>(array), launch);                                       \
+    }
+    ADIOS2_FOREACH_NUMPY_TYPE_1ARG(declare_type)
+#undef declare_type
+    else
+    {
+        throw std::invalid_argument("ERROR: in variable " + variable.Name() + " of type " +
+                                    variable.Type() +
+                                    ", cupy pointer type is 1) not supported, 2) a type mismatch or"
+                                    "3) is not memory contiguous "
+                                    ", in call to Get\n");
+    }
+}
+#endif
 
 std::string Engine::Get(Variable variable, const Mode launch)
 {
