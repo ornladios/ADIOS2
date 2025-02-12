@@ -149,7 +149,7 @@ adios2::ShapeID Variable::ShapeID() const
     return m_VariableBase->m_ShapeID;
 }
 
-Dims Variable::Shape(const size_t step) const
+Dims Variable::Shape(const size_t step)
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Shape");
 
@@ -173,6 +173,37 @@ Dims Variable::Shape(const size_t step) const
     return shape;
 }
 
+#ifdef ADIOS2_HAVE_CUDA
+void Variable::SetMemorySpace(const MemorySpace memSpace)
+{
+    m_VariableBase->SetMemorySpace(memSpace);
+}
+
+Dims Variable::Shape(const MemorySpace memSpace, const size_t step)
+{
+    helper::CheckForNullptr(m_VariableBase, "in call to Variable::Shape");
+
+    const adios2::DataType typeCpp = m_VariableBase->m_Type;
+    Dims shape;
+
+    if (typeCpp == adios2::DataType::Struct)
+    {
+        // not supported
+    }
+#define declare_template_instantiation(T)                                                          \
+    else if (typeCpp == adios2::helper::GetDataType<T>())                                          \
+    {                                                                                              \
+        const adios2::core::Variable<T> *variable =                                                \
+            dynamic_cast<const adios2::core::Variable<T> *>(m_VariableBase);                       \
+        shape = variable->Shape(step, memSpace);                                                   \
+    }
+    ADIOS2_FOREACH_STDTYPE_1ARG(declare_template_instantiation)
+#undef declare_template_instantiation
+
+    return shape;
+}
+
+#endif
 Dims Variable::Start() const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Start");

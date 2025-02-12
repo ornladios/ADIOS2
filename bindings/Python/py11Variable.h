@@ -73,7 +73,12 @@ public:
      * Inspects current shape
      * @return shape vector
      */
-    Dims Shape(const size_t step = adios2::EngineCurrentStep) const;
+    Dims Shape(const size_t step = adios2::EngineCurrentStep);
+#ifdef ADIOS2_HAVE_CUDA
+    Dims Shape(const MemorySpace memSpace, const size_t step = adios2::EngineCurrentStep);
+
+    void SetMemorySpace(const MemorySpace memSpace);
+#endif
 
     /**
      * Inspects current start point

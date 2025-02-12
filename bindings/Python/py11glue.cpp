@@ -134,6 +134,12 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         .value("StoreData", adios2::DerivedVarType::StoreData)
         .export_values();
 
+#ifdef ADIOS2_HAVE_CUDA
+    pybind11::enum_<adios2::MemorySpace>(m, "MemorySpace")
+        .value("Host", adios2::MemorySpace::Host)
+        .value("GPU", adios2::MemorySpace::GPU);
+#endif
+
     pybind11::class_<adios2::Accuracy>(m, "Accuracy")
         .def(pybind11::init<double, double, bool>())
         .def_readwrite("error", &adios2::Accuracy::error)
@@ -396,8 +402,20 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         .def("Type", &adios2::py11::Variable::Type)
         .def("Sizeof", &adios2::py11::Variable::Sizeof)
         .def("ShapeID", &adios2::py11::Variable::ShapeID)
-        .def("Shape", &adios2::py11::Variable::Shape,
+        .def("Shape",
+             (adios2::Dims(adios2::py11::Variable::*)(const size_t)) &
+                 adios2::py11::Variable::Shape,
              pybind11::arg("step") = adios2::EngineCurrentStep)
+#ifdef ADIOS2_HAVE_CUDA
+        .def("Shape",
+             (adios2::Dims(adios2::py11::Variable::*)(const adios2::MemorySpace, const size_t)) &
+                 adios2::py11::Variable::Shape,
+             pybind11::arg("memSpace"), pybind11::arg("step") = adios2::EngineCurrentStep)
+        .def("SetMemorySpace",
+             (void(adios2::py11::Variable::*)(const adios2::MemorySpace)) &
+                 adios2::py11::Variable::SetMemorySpace,
+             pybind11::arg("memSpace"))
+#endif
         .def("Start", &adios2::py11::Variable::Start)
         .def("Count", &adios2::py11::Variable::Count)
         .def("Steps", &adios2::py11::Variable::Steps)
