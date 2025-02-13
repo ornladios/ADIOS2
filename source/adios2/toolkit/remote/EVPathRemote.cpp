@@ -3,6 +3,9 @@
  * accompanying file Copyright.txt for details.
  *
  */
+#include <chrono>
+#include <thread>
+
 #include "EVPathRemote.h"
 #include "Remote.h"
 #include "adios2/core/ADIOS.h"
@@ -132,6 +135,12 @@ void EVPathRemote::Open(const std::string hostname, const int32_t port, const st
     add_attr(contact_list, CM_IP_HOSTNAME, Attr_String, (attr_value)strdup(hostname.c_str()));
     add_attr(contact_list, CM_IP_PORT, Attr_Int4, (attr_value)port);
     m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+    if ((m_conn == NULL) && (getenv("DoRemote") || getenv("DoFileRemote")))
+    {
+        // if we didn't find a server, but we're in testing, wait briefly and try again
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        m_conn = CMinitiate_conn(ev_state.cm, contact_list);
+    }
     free_attr_list(contact_list);
     if (!m_conn)
         return;
