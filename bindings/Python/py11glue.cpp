@@ -403,12 +403,13 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         .def("Sizeof", &adios2::py11::Variable::Sizeof)
         .def("ShapeID", &adios2::py11::Variable::ShapeID)
         .def("Shape",
-             (adios2::Dims(adios2::py11::Variable::*)(const size_t)) &
+             (adios2::Dims(adios2::py11::Variable::*)(const size_t) const) &
                  adios2::py11::Variable::Shape,
              pybind11::arg("step") = adios2::EngineCurrentStep)
 #ifdef ADIOS2_HAVE_CUDA
         .def("Shape",
-             (adios2::Dims(adios2::py11::Variable::*)(const adios2::MemorySpace, const size_t)) &
+             (adios2::Dims(adios2::py11::Variable::*)(const adios2::MemorySpace, const size_t)
+                  const) &
                  adios2::py11::Variable::Shape,
              pybind11::arg("memSpace"), pybind11::arg("step") = adios2::EngineCurrentStep)
         .def("SetMemorySpace",

@@ -149,7 +149,7 @@ adios2::ShapeID Variable::ShapeID() const
     return m_VariableBase->m_ShapeID;
 }
 
-Dims Variable::Shape(const size_t step)
+Dims Variable::Shape(const size_t step) const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Shape");
 
@@ -179,7 +179,7 @@ void Variable::SetMemorySpace(const MemorySpace memSpace)
     m_VariableBase->SetMemorySpace(memSpace);
 }
 
-Dims Variable::Shape(const MemorySpace memSpace, const size_t step)
+Dims Variable::Shape(const MemorySpace memSpace, const size_t step) const
 {
     helper::CheckForNullptr(m_VariableBase, "in call to Variable::Shape");
 
