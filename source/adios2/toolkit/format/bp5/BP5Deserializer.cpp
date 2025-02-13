@@ -2402,8 +2402,9 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
                 (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
             if (writer_meta_base)
             {
-	        //  We'll end up with the *last* valid shape, which works for m_FlattenSteps=true and should be immaterial otherise
-	        if (writer_meta_base->Shape != NULL)
+                //  We'll end up with the *last* valid shape, which works for m_FlattenSteps=true
+                //  and should be immaterial otherise
+                if (writer_meta_base->Shape != NULL)
                 {
                     MV->Shape = writer_meta_base->Shape;
                 }
@@ -2712,7 +2713,7 @@ bool BP5Deserializer::VarShape(const VariableBase &Var, const size_t RelStep, Di
     }
     if (m_FlattenSteps)
     {
-      AbsStep = VarRec->LastTSAdded;
+        AbsStep = VarRec->LastTSAdded;
     }
     if (VarRec->OrigShapeID == ShapeID::GlobalArray)
     {
