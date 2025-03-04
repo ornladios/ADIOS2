@@ -55,6 +55,10 @@
 #include "adios2/operator/compress/CompressZFP.h"
 #endif
 
+#ifdef ADIOS2_HAVE_ZSTD
+#include "adios2/operator/compress/CompressZSTD.h"
+#endif
+
 namespace adios2
 {
 namespace core
@@ -84,6 +88,8 @@ std::string OperatorTypeToString(const Operator::OperatorType type)
         return "sz";
     case Operator::COMPRESS_ZFP:
         return "zfp";
+    case Operator::COMPRESS_ZSTD:
+        return "zstd";
     case Operator::REFACTOR_MDR:
         return "mdr";
     case Operator::PLUGIN_INTERFACE:
@@ -157,6 +163,12 @@ std::shared_ptr<Operator> MakeOperator(const std::string &type, const Params &pa
     {
 #ifdef ADIOS2_HAVE_ZFP
         ret = std::make_shared<compress::CompressZFP>(parameters);
+#endif
+    }
+    else if (typeLowerCase == "zstd")
+    {
+#ifdef ADIOS2_HAVE_ZSTD
+        ret = std::make_shared<compress::CompressZSTD>(parameters);
 #endif
     }
     else if (typeLowerCase == "mdr")

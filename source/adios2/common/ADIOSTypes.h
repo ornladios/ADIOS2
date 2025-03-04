@@ -656,6 +656,38 @@ constexpr char doshuffle_bitshuffle[] = "BLOSC_BITSHUFFLE";
 
 #endif
 
+// ZSTD PARAMETERS
+#ifdef ADIOS2_HAVE_ZSTD
+
+constexpr char LosslessZSTD[] = "zstd";
+
+namespace zstd
+{
+
+namespace key
+{
+constexpr char compressionLevel[] = "compressionLevel";
+constexpr char nThreads[] = "nThreads";
+}
+
+namespace value
+{
+constexpr char compressionLevel_1[] = "1";
+constexpr char compressionLevel_2[] = "2";
+constexpr char compressionLevel_3[] = "3";
+constexpr char compressionLevel_5[] = "5";
+constexpr char compressionLevel_7[] = "7";
+constexpr char compressionLevel_9[] = "9";
+constexpr char compressionLevel_12[] = "12";
+constexpr char compressionLevel_15[] = "15";
+constexpr char compressionLevel_19[] = "19";
+constexpr char compressionLevel_22[] = "22";
+} // end namespace value
+
+} // end namespace zstd
+
+#endif
+
 } // end namespace ops
 
 } // end namespace adios2

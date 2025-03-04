@@ -79,3 +79,7 @@ endif()
 if(ADIOS2_HAVE_Blosc2)
   bp_gtest_add_tests_helper(WriteReadBlosc2 MPI_ALLOW)
 endif()
+
+if(ADIOS2_HAVE_ZSTD)
+  bp_gtest_add_tests_helper(WriteReadZSTD MPI_ALLOW)
+endif()

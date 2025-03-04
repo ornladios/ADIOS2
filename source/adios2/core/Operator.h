@@ -38,6 +38,7 @@ public:
         COMPRESS_ZFP = 7,
         COMPRESS_MGARDPLUS = 8,
         COMPRESS_BIGWHOOP = 9,
+        COMPRESS_ZSTD = 10,
         REFACTOR_MDR = 41,
         CALLBACK_SIGNATURE1 = 51,
         CALLBACK_SIGNATURE2 = 52,

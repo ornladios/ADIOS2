@@ -407,6 +407,11 @@ if(ADIOS2_HAVE_PNG)
   target_link_libraries(adios2_core PRIVATE PNG::PNG)
 endif()
 
+if(ADIOS2_HAVE_ZSTD)
+  target_sources(adios2_core PRIVATE operator/compress/CompressZSTD.cpp)
+  target_link_libraries(adios2_core PRIVATE ZSTD::ZSTD)
+endif()
+
 if(ADIOS2_HAVE_MHS)
 target_sources(adios2_core PRIVATE operator/compress/CompressSirius.cpp)
 endif()

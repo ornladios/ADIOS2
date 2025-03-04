@@ -206,6 +206,16 @@ if(PNG_FOUND)
   set(ADIOS2_HAVE_PNG TRUE)
 endif()
 
+# ZSTD
+if(ADIOS2_USE_ZSTD STREQUAL AUTO)
+  find_package(ZSTD)
+elseif(ADIOS2_USE_ZSTD)
+  find_package(ZSTD REQUIRED)
+endif()
+if(ZSTD_FOUND)
+  set(ADIOS2_HAVE_ZSTD TRUE)
+endif()
+
 set(mpi_find_components C)
 
 if(ADIOS2_USE_Derived_Variable)
