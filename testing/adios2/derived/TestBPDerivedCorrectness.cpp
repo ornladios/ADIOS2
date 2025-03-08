@@ -42,6 +42,7 @@ TEST_P(DerivedCorrectnessP, BasicCorrectnessTest)
         simArray1[i] = distribution(generator);
 
     auto U = bpOut.DefineVariable<float>("var1", {N}, {0}, {N});
+    EXPECT_TRUE(U); // needed to not have a warning for not using U
     auto V = bpOut.DefineVariable<float>("var2", {N}, {0}, {N});
     bpOut.DefineDerivedVariable("derived", "x= var1 \n sqrt(x)", mode);
     adios2::Engine bpFileWriter = bpOut.Open("BPNoData.bp", adios2::Mode::Write);

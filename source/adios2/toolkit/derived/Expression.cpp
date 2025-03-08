@@ -194,10 +194,10 @@ DataType Expression::GetType(std::map<std::string, DataType> NameToType)
 }
 
 std::vector<DerivedData>
-Expression::ApplyExpression(DataType type, size_t numBlocks,
+Expression::ApplyExpression(const size_t numBlocks,
                             std::map<std::string, std::vector<DerivedData>> nameToData)
 {
-    return m_Expr.ApplyExpression(type, numBlocks, nameToData);
+    return m_Expr.ApplyExpression(numBlocks, nameToData);
 }
 
 void ExpressionTree::set_base(double c) { detail.constant = c; }
@@ -340,7 +340,7 @@ DataType ExpressionTree::GetType(std::map<std::string, DataType> NameToType)
 }
 
 std::vector<DerivedData>
-ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
+ExpressionTree::ApplyExpression(const size_t numBlocks,
                                 std::map<std::string, std::vector<DerivedData>> nameToData)
 {
     // create operands for the computation function

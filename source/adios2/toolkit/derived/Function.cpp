@@ -133,11 +133,6 @@ DerivedData AddAggregatedFunc(DerivedData inputData, DataType type)
     // the aggregation is done over the last dimension so the total size is d1 * d2 * .. d_n-1
     size_t dataSize = std::accumulate(std::begin(inputData.Count), std::end(inputData.Count) - 1, 1,
                                       std::multiplies<size_t>());
-    size_t nDims = inputData.Count.size() - 1;
-    Dims startOut(nDims), countOut(nDims);
-    std::copy(inputData.Count.begin(), inputData.Count.end() - 1, countOut.begin());
-    std::copy(inputData.Start.begin(), inputData.Start.end() - 1, startOut.begin());
-
 #define declare_type_agradd(T)                                                                     \
     if (type == helper::GetDataType<T>())                                                          \
     {                                                                                              \
@@ -145,7 +140,7 @@ DerivedData AddAggregatedFunc(DerivedData inputData, DataType type)
         T *addValues =                                                                             \
             detail::AggregateOnLastDim<T>(reinterpret_cast<T *>(inputData.Data), dataSize, numVar, \
                                           [](T a, T b) { return a + b; });                         \
-        return DerivedData({(void *)addValues, startOut, countOut});                               \
+        return DerivedData({(void *)addValues});                                                   \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_agradd)
     helper::Throw<std::invalid_argument>("Derived", "Function", "AddAggregateFunc",
@@ -167,7 +162,7 @@ DerivedData AddFunc(std::vector<DerivedData> inputData, DataType type)
     {                                                                                              \
         T *addValues = detail::ApplyOneToOne<T>(inputData.begin(), inputData.end(), dataSize,      \
                                                 [](T a, T b) { return a + b; });                   \
-        return DerivedData({(void *)addValues, inputData[0].Start, inputData[0].Count});           \
+        return DerivedData({(void *)addValues});                                                   \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_add)
     helper::Throw<std::invalid_argument>("Derived", "Function", "AddFunc",
@@ -192,7 +187,7 @@ DerivedData SubtractFunc(std::vector<DerivedData> inputData, DataType type)
         for (size_t i = 0; i < dataSize; i++)                                                      \
             subtractValues[i] =                                                                    \
                 *(reinterpret_cast<T *>(inputData[0].Data) + i) - subtractValues[i];               \
-        return DerivedData({(void *)subtractValues, inputData[0].Start, inputData[0].Count});      \
+        return DerivedData({(void *)subtractValues});                                              \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_subtract)
     helper::Throw<std::invalid_argument>("Derived", "Function", "SubtractFunc",
@@ -212,7 +207,7 @@ DerivedData MultFunc(std::vector<DerivedData> inputData, DataType type)
     {                                                                                              \
         T *multValues = detail::ApplyOneToOne<T>(                                                  \
             inputData.begin(), inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);      \
-        return DerivedData({(void *)multValues, inputData[0].Start, inputData[0].Count});          \
+        return DerivedData({(void *)multValues});                                                  \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_mult)
     helper::Throw<std::invalid_argument>("Derived", "Function", "MultFunc",
@@ -236,7 +231,7 @@ DerivedData DivFunc(std::vector<DerivedData> inputData, DataType type)
             inputData.begin() + 1, inputData.end(), dataSize, [](T a, T b) { return a * b; }, 1);  \
         for (size_t i = 0; i < dataSize; i++)                                                      \
             divValues[i] = *(reinterpret_cast<T *>(inputData[0].Data) + i) / divValues[i];         \
-        return DerivedData({(void *)divValues, inputData[0].Start, inputData[0].Count});           \
+        return DerivedData({(void *)divValues});                                                   \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_div)
     helper::Throw<std::invalid_argument>("Derived", "Function", "DivFunc",
@@ -263,7 +258,7 @@ DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, sqrtValues,
                        [](long double &a) { return std::sqrt(a); });
-        return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});
+        return DerivedData({(void *)sqrtValues});
     }
 #define declare_type_sqrt(T)                                                                       \
     else if (inputType == helper::GetDataType<T>())                                                \
@@ -272,9 +267,8 @@ DerivedData SqrtFunc(std::vector<DerivedData> inputData, DataType type)
         std::transform(reinterpret_cast<T *>(inputData[0].Data),                                   \
                        reinterpret_cast<T *>(inputData[0].Data) + dataSize, sqrtValues,            \
                        [](T &a) { return std::sqrt(a); });                                         \
-        return DerivedData({(void *)sqrtValues, inputData[0].Start, inputData[0].Count});          \
+        return DerivedData({(void *)sqrtValues});                                                  \
     }
-
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sqrt)
     helper::Throw<std::invalid_argument>("Derived", "Function", "SqrtFunc",
                                          "Invalid variable types");
@@ -300,7 +294,7 @@ DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, powValues,
                        [](long double &a) { return std::pow(a, 2); });
-        return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});
+        return DerivedData({(void *)powValues});
     }
 #define declare_type_pow(T)                                                                        \
     else if (inputType == helper::GetDataType<T>())                                                \
@@ -309,7 +303,7 @@ DerivedData PowFunc(std::vector<DerivedData> inputData, DataType type)
         std::transform(reinterpret_cast<T *>(inputData[0].Data),                                   \
                        reinterpret_cast<T *>(inputData[0].Data) + dataSize, powValues,             \
                        [](T &a) { return std::pow(a, 2); });                                       \
-        return DerivedData({(void *)powValues, inputData[0].Start, inputData[0].Count});           \
+        return DerivedData({(void *)powValues});                                                   \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_pow)
     helper::Throw<std::invalid_argument>("Derived", "Function", "PowFunc",
@@ -335,7 +329,7 @@ DerivedData SinFunc(std::vector<DerivedData> inputData, DataType type)
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, sinValues,
                        [](long double &a) { return std::sin(a); });
-        return DerivedData({(void *)sinValues, inputData[0].Start, inputData[0].Count});
+        return DerivedData({(void *)sinValues});
     }
 #define declare_type_sin(T)                                                                        \
     if (inputType == helper::GetDataType<T>())                                                     \
@@ -346,7 +340,7 @@ DerivedData SinFunc(std::vector<DerivedData> inputData, DataType type)
             std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
                            reinterpret_cast<T *>(inputData[0].Data) + dataSize, sinValues,         \
                            [](T &a) { return std::sin(a); });                                      \
-            return DerivedData({(void *)sinValues, inputData[0].Start, inputData[0].Count});       \
+            return DerivedData({(void *)sinValues});                                               \
         }                                                                                          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_sin)
@@ -373,7 +367,7 @@ DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type)
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, cosValues,
                        [](long double &a) { return std::cos(a); });
-        return DerivedData({(void *)cosValues, inputData[0].Start, inputData[0].Count});
+        return DerivedData({(void *)cosValues});
     }
 #define declare_type_cos(T)                                                                        \
     if (inputType == helper::GetDataType<T>())                                                     \
@@ -384,7 +378,7 @@ DerivedData CosFunc(std::vector<DerivedData> inputData, DataType type)
             std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
                            reinterpret_cast<T *>(inputData[0].Data) + dataSize, cosValues,         \
                            [](T &a) { return std::cos(a); });                                      \
-            return DerivedData({(void *)cosValues, inputData[0].Start, inputData[0].Count});       \
+            return DerivedData({(void *)cosValues});                                               \
         }                                                                                          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_cos)
@@ -411,7 +405,7 @@ DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type)
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, tanValues,
                        [](long double &a) { return std::tan(a); });
-        return DerivedData({(void *)tanValues, inputData[0].Start, inputData[0].Count});
+        return DerivedData({(void *)tanValues});
     }
 #define declare_type_tan(T)                                                                        \
     if (inputType == helper::GetDataType<T>())                                                     \
@@ -422,7 +416,7 @@ DerivedData TanFunc(std::vector<DerivedData> inputData, DataType type)
             std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
                            reinterpret_cast<T *>(inputData[0].Data) + dataSize, tanValues,         \
                            [](T &a) { return std::tan(a); });                                      \
-            return DerivedData({(void *)tanValues, inputData[0].Start, inputData[0].Count});       \
+            return DerivedData({(void *)tanValues});                                               \
         }                                                                                          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_tan)
@@ -449,7 +443,7 @@ DerivedData AsinFunc(std::vector<DerivedData> inputData, DataType type)
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, asinValues,
                        [](long double &a) { return std::asin(a); });
-        return DerivedData({(void *)asinValues, inputData[0].Start, inputData[0].Count});
+        return DerivedData({(void *)asinValues});
     }
 #define declare_type_asin(T)                                                                       \
     if (inputType == helper::GetDataType<T>())                                                     \
@@ -460,7 +454,7 @@ DerivedData AsinFunc(std::vector<DerivedData> inputData, DataType type)
             std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
                            reinterpret_cast<T *>(inputData[0].Data) + dataSize, asinValues,        \
                            [](T &a) { return std::asin(a); });                                     \
-            return DerivedData({(void *)asinValues, inputData[0].Start, inputData[0].Count});      \
+            return DerivedData({(void *)asinValues});                                              \
         }                                                                                          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_asin)
@@ -487,7 +481,7 @@ DerivedData AcosFunc(std::vector<DerivedData> inputData, DataType type)
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, acosValues,
                        [](long double &a) { return std::acos(a); });
-        return DerivedData({(void *)acosValues, inputData[0].Start, inputData[0].Count});
+        return DerivedData({(void *)acosValues});
     }
 #define declare_type_acos(T)                                                                       \
     if (inputType == helper::GetDataType<T>())                                                     \
@@ -498,7 +492,7 @@ DerivedData AcosFunc(std::vector<DerivedData> inputData, DataType type)
             std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
                            reinterpret_cast<T *>(inputData[0].Data) + dataSize, acosValues,        \
                            [](T &a) { return std::acos(a); });                                     \
-            return DerivedData({(void *)acosValues, inputData[0].Start, inputData[0].Count});      \
+            return DerivedData({(void *)acosValues});                                              \
         }                                                                                          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_acos)
@@ -525,7 +519,7 @@ DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type)
         std::transform(reinterpret_cast<long double *>(inputData[0].Data),
                        reinterpret_cast<long double *>(inputData[0].Data) + dataSize, atanValues,
                        [](long double &a) { return std::atan(a); });
-        return DerivedData({(void *)atanValues, inputData[0].Start, inputData[0].Count});
+        return DerivedData({(void *)atanValues});
     }
 #define declare_type_atan(T)                                                                       \
     if (inputType == helper::GetDataType<T>())                                                     \
@@ -536,7 +530,7 @@ DerivedData AtanFunc(std::vector<DerivedData> inputData, DataType type)
             std::transform(reinterpret_cast<T *>(inputData[0].Data),                               \
                            reinterpret_cast<T *>(inputData[0].Data) + dataSize, atanValues,        \
                            [](T &a) { return std::atan(a); });                                     \
-            return DerivedData({(void *)atanValues, inputData[0].Start, inputData[0].Count});      \
+            return DerivedData({(void *)atanValues});                                              \
         }                                                                                          \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_atan)
@@ -551,10 +545,6 @@ DerivedData MagAggregatedFunc(DerivedData inputData, DataType type)
     // the aggregation is done over the last dimension so the total size is d1 * d2 * .. d_n-1
     size_t dataSize = std::accumulate(std::begin(inputData.Count), std::end(inputData.Count) - 1, 1,
                                       std::multiplies<size_t>());
-    size_t nDims = inputData.Count.size() - 1;
-    Dims startOut(nDims), countOut(nDims);
-    std::copy(inputData.Count.begin(), inputData.Count.end() - 1, countOut.begin());
-    std::copy(inputData.Start.begin(), inputData.Start.end() - 1, startOut.begin());
 
 #define declare_type_agrmag(T)                                                                     \
     if (type == helper::GetDataType<T>())                                                          \
@@ -567,7 +557,7 @@ DerivedData MagAggregatedFunc(DerivedData inputData, DataType type)
         {                                                                                          \
             magValues[i] = (T)std::sqrt(magValues[i]);                                             \
         }                                                                                          \
-        return DerivedData({(void *)magValues, startOut, countOut});                               \
+        return DerivedData({(void *)magValues});                                                   \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_agrmag)
     helper::Throw<std::invalid_argument>("Derived", "Function", "AddAggregateFunc",
@@ -592,7 +582,7 @@ DerivedData MagnitudeFunc(std::vector<DerivedData> inputData, DataType type)
         {                                                                                          \
             magValues[i] = (T)std::sqrt(magValues[i]);                                             \
         }                                                                                          \
-        return DerivedData({(void *)magValues, inputData[0].Start, inputData[0].Count});           \
+        return DerivedData({(void *)magValues});                                                   \
     }
     ADIOS2_FOREACH_ATTRIBUTE_PRIMITIVE_STDTYPE_1ARG(declare_type_mag)
     helper::Throw<std::invalid_argument>("Derived", "Function", "MagnitudeFunc",
@@ -612,10 +602,6 @@ DerivedData Cross3DFunc(const std::vector<DerivedData> inputData, DataType type)
                                       1, std::multiplies<size_t>());
 
     DerivedData cross;
-    cross.Start = inputData[0].Start;
-    cross.Start.push_back(0);
-    cross.Count = inputData[0].Count;
-    cross.Count.push_back(3);
 
 #define declare_type_cross(T)                                                                      \
     if (type == helper::GetDataType<T>())                                                          \
@@ -655,10 +641,6 @@ DerivedData Curl3DFunc(const std::vector<DerivedData> inputData, DataType type)
     size_t dims[3] = {inputData[0].Count[0], inputData[0].Count[1], inputData[0].Count[2]};
 
     DerivedData curl;
-    curl.Start = inputData[0].Start;
-    curl.Start.push_back(0);
-    curl.Count = inputData[0].Count;
-    curl.Count.push_back(3);
     curl.Data = NULL;
 #define declare_type_curl(T)                                                                       \
     if (type == helper::GetDataType<T>())                                                          \

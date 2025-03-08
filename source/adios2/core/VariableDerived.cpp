@@ -71,7 +71,7 @@ VariableDerived::ApplyExpression(std::map<std::string, std::unique_ptr<MinVarInf
         inputData.insert({variable.first, varData});
     }
     std::vector<adios2::derived::DerivedData> outputData =
-        m_Expr.ApplyExpression(m_Type, numBlocks, inputData);
+        m_Expr.ApplyExpression(numBlocks, inputData);
 
     std::vector<std::tuple<void *, Dims, Dims>> blockData;
     for (size_t i = 0; i < numBlocks; i++)
