@@ -349,19 +349,22 @@ ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
     std::vector<bool> deallocate;
     for (auto subexp : sub_exprs)
     {
+        // leafs
         if (!std::get<2>(subexp))
         {
             // do not deallocate leafs (this is user data)
             deallocate.push_back(false);
+            // get the operands data for each block
             for (size_t blk = 0; blk < numBlocks; blk++)
             {
                 exprData[blk].push_back(nameToData[std::get<1>(subexp)][blk]);
             }
         }
-        else
+        else // there is a sub-expression
         {
             deallocate.push_back(true);
-            auto subexpData = std::get<0>(subexp).ApplyExpression(type, numBlocks, nameToData);
+            // get the operands data for each block
+            auto subexpData = std::get<0>(subexp).ApplyExpression(numBlocks, nameToData);
             for (size_t blk = 0; blk < numBlocks; blk++)
             {
                 exprData[blk].push_back(subexpData[blk]);
@@ -371,9 +374,29 @@ ExpressionTree::ApplyExpression(DataType type, size_t numBlocks,
     // apply the computation operator on all blocks
     std::vector<DerivedData> outputData(numBlocks);
     auto op_fct = OpFunctions.at(detail.operation);
+    // get the type of the output data
+    std::vector<DataType> exprType;
+    for (auto op : exprData[0])
+        exprType.push_back(op.Type);
+    DataType outType = op_fct.TypeFct(exprType[0]);
     for (size_t blk = 0; blk < numBlocks; blk++)
     {
-        outputData[blk] = op_fct.ComputeFct(exprData[blk], type);
+        // get the output dimension for each block
+        std::vector<std::tuple<Dims, Dims, Dims>> exprDims;
+        for (auto op : exprData[blk])
+        {
+            auto start = op.Start;
+            auto count = op.Count;
+            exprDims.push_back({start, count, count});
+        }
+        auto outDims = op_fct.DimsFct(exprDims);
+
+        // apply function over the operands
+        outputData[blk] = op_fct.ComputeFct(exprData[blk], outType);
+        // set the dimension and type of the output data
+        outputData[blk].Type = outType;
+        outputData[blk].Start = std::get<0>(outDims);
+        outputData[blk].Count = std::get<1>(outDims);
     }
     // deallocate intermediate data after computing the operation
     for (size_t blk = 0; blk < numBlocks; blk++)
