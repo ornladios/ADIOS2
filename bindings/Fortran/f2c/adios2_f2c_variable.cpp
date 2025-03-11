@@ -71,7 +71,7 @@ void FC_GLOBAL(adios2_variable_shape_f2c,
         return;
     }
 
-    size_t shapeC[ndims];
+    size_t shapeC[adios2::helper::MAX_DIMS];
     *ierr = static_cast<int>(adios2_variable_shape(shapeC, *variable));
     if (*ierr > 0)
     {
