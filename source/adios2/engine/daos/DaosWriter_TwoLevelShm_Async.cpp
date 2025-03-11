@@ -36,7 +36,8 @@ using namespace adios2::format;
 */
 void DaosWriter::AsyncWriteThread_TwoLevelShm_Aggregator(AsyncWriteInfo *info)
 {
-    aggregator::MPIShmChain *a = dynamic_cast<aggregator::MPIShmChain *>(info->aggregator);
+    aggregator::MPIShmChain *a =
+        dynamic_cast<aggregator::MPIShmChain *>(info->aggregator);
     uint64_t totalSize = info->totalSize;
 
     /* Write own data first */
@@ -70,8 +71,8 @@ void DaosWriter::AsyncWriteThread_TwoLevelShm_Aggregator(AsyncWriteInfo *info)
    tokenChain in caller ensures only one process (per aggregator chain)
    is running this function at a time
 */
-void DaosWriter::AsyncWriteThread_TwoLevelShm_SendDataToAggregator(aggregator::MPIShmChain *a,
-                                                                   format::BufferV *Data)
+void DaosWriter::AsyncWriteThread_TwoLevelShm_SendDataToAggregator(
+    aggregator::MPIShmChain *a, format::BufferV *Data)
 {
     /* In a loop, copy the local data into the shared memory, alternating
        between the two segments.
@@ -137,7 +138,8 @@ int DaosWriter::AsyncWriteThread_TwoLevelShm(AsyncWriteInfo *info)
     Seconds ts = Now() - info->tstart;
     // std::cout << "ASYNC rank " << info->rank_global
     //          << " starts at: " << ts.count() << std::endl;
-    aggregator::MPIShmChain *a = dynamic_cast<aggregator::MPIShmChain *>(info->aggregator);
+    aggregator::MPIShmChain *a =
+        dynamic_cast<aggregator::MPIShmChain *>(info->aggregator);
     if (a->m_IsAggregator)
     {
         // Send token to first non-aggregator to start filling shm
@@ -167,14 +169,16 @@ int DaosWriter::AsyncWriteThread_TwoLevelShm(AsyncWriteInfo *info)
 
 void DaosWriter::WriteData_TwoLevelShm_Async(format::BufferV *Data)
 {
-    aggregator::MPIShmChain *a = dynamic_cast<aggregator::MPIShmChain *>(m_Aggregator);
+    aggregator::MPIShmChain *a =
+        dynamic_cast<aggregator::MPIShmChain *>(m_Aggregator);
 
     // new step writing starts at offset m_DataPos on master aggregator
     // other aggregators to the same file will need to wait for the position
     // to arrive from the rank below
 
     // align to PAGE_SIZE (only valid on master aggregator at this point)
-    m_DataPos += helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
+    m_DataPos +=
+        helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
 
     // Each aggregator needs to know the total size they write
     // This calculation is valid on aggregators only
@@ -197,7 +201,8 @@ void DaosWriter::WriteData_TwoLevelShm_Async(format::BufferV *Data)
         {
             alignment_size = m_Parameters.DirectIOAlignOffset;
         }
-        a->CreateShm(static_cast<size_t>(maxSize), m_Parameters.MaxShmSize, alignment_size);
+        a->CreateShm(static_cast<size_t>(maxSize), m_Parameters.MaxShmSize,
+                     alignment_size);
     }
 
     if (a->m_IsAggregator)
@@ -210,22 +215,26 @@ void DaosWriter::WriteData_TwoLevelShm_Async(format::BufferV *Data)
                 &m_DataPos, 1, a->m_AggregatorChainComm.Rank() - 1, 0,
                 "AggregatorChain token in DaosWriter::WriteData_TwoLevelShm");
             // align to PAGE_SIZE
-            m_DataPos += helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
+            m_DataPos += helper::PaddingToAlignOffset(m_DataPos,
+                                                      m_Parameters.StripeSize);
         }
         m_StartDataPos = m_DataPos; // metadata needs this info
-        if (a->m_AggregatorChainComm.Rank() < a->m_AggregatorChainComm.Size() - 1)
+        if (a->m_AggregatorChainComm.Rank() <
+            a->m_AggregatorChainComm.Size() - 1)
         {
             uint64_t nextWriterPos = m_DataPos + myTotalSize;
-            a->m_AggregatorChainComm.Isend(&nextWriterPos, 1, a->m_AggregatorChainComm.Rank() + 1,
-                                           0, "Chain token in DaosWriter::WriteData");
+            a->m_AggregatorChainComm.Isend(
+                &nextWriterPos, 1, a->m_AggregatorChainComm.Rank() + 1, 0,
+                "Chain token in DaosWriter::WriteData");
         }
         else if (a->m_AggregatorChainComm.Size() > 1)
         {
             // send back final position from last aggregator in file to master
             // aggregator
             uint64_t nextWriterPos = m_DataPos + myTotalSize;
-            a->m_AggregatorChainComm.Isend(&nextWriterPos, 1, 0, 0,
-                                           "Chain token in DaosWriter::WriteData");
+            a->m_AggregatorChainComm.Isend(
+                &nextWriterPos, 1, 0, 0,
+                "Chain token in DaosWriter::WriteData");
         }
 
         // Master aggregator needs to know where the last writing ended by the
@@ -235,8 +244,9 @@ void DaosWriter::WriteData_TwoLevelShm_Async(format::BufferV *Data)
         {
             if (a->m_AggregatorChainComm.Size() > 1)
             {
-                a->m_AggregatorChainComm.Recv(&m_DataPos, 1, a->m_AggregatorChainComm.Size() - 1, 0,
-                                              "Chain token in DaosWriter::WriteData");
+                a->m_AggregatorChainComm.Recv(
+                    &m_DataPos, 1, a->m_AggregatorChainComm.Size() - 1, 0,
+                    "Chain token in DaosWriter::WriteData");
             }
             else
             {
@@ -286,7 +296,8 @@ void DaosWriter::WriteData_TwoLevelShm_Async(format::BufferV *Data)
     m_AsyncWriteInfo->totalSize = myTotalSize;
     m_AsyncWriteInfo->deadline = m_ExpectedTimeBetweenSteps.count();
 
-    if (m_ComputationBlocksLength > 0.0 && m_Parameters.AsyncWrite == (int)AsyncWrite::Guided)
+    if (m_ComputationBlocksLength > 0.0 &&
+        m_Parameters.AsyncWrite == (int)AsyncWrite::Guided)
     {
         m_AsyncWriteInfo->inComputationBlock = &m_InComputationBlock;
         m_AsyncWriteInfo->computationBlocksLength = m_ComputationBlocksLength;
@@ -294,8 +305,10 @@ void DaosWriter::WriteData_TwoLevelShm_Async(format::BufferV *Data)
         {
             m_AsyncWriteInfo->deadline = m_ComputationBlocksLength;
         }
-        m_AsyncWriteInfo->expectedComputationBlocks = m_ComputationBlockTimes; // copy!
-        m_AsyncWriteInfo->currentComputationBlocks = &m_ComputationBlockTimes; // ptr!
+        m_AsyncWriteInfo->expectedComputationBlocks =
+            m_ComputationBlockTimes; // copy!
+        m_AsyncWriteInfo->currentComputationBlocks =
+            &m_ComputationBlockTimes; // ptr!
         m_AsyncWriteInfo->currentComputationBlockID = &m_ComputationBlockID;
 
         /* Clear current block tracker now so that async thread does not get
@@ -316,7 +329,8 @@ void DaosWriter::WriteData_TwoLevelShm_Async(format::BufferV *Data)
         m_AsyncWriteInfo->currentComputationBlockID = nullptr;
     }
 
-    m_WriteFuture = std::async(std::launch::async, AsyncWriteThread_TwoLevelShm, m_AsyncWriteInfo);
+    m_WriteFuture = std::async(std::launch::async, AsyncWriteThread_TwoLevelShm,
+                               m_AsyncWriteInfo);
 
     /* At this point it is prohibited in the main thread
        - to modify Data, which will be deleted in the async thread any tiume

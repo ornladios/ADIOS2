@@ -26,18 +26,27 @@
 #include <mpi.h>
 #include <vector>
 
-#define FAIL(fmt, ...)                                                                             \
-    do                                                                                             \
-    {                                                                                              \
-        fprintf(stderr, "Process %d(%s): " fmt " aborting\n", m_Comm.Rank(), node, ##__VA_ARGS__); \
-        MPI_Abort(MPI_COMM_WORLD, 1);                                                              \
+#include <caliper/cali.h>
+#include <caliper/cali-manager.h>
+
+#define MAX_KV_GET_REQS 100
+
+#define FAIL(fmt, ...)                                                         \
+    do                                                                         \
+    {                                                                          \
+        fprintf(stderr, "Process %d(%s): " fmt " aborting\n", m_Comm.Rank(),   \
+                node, ##__VA_ARGS__);                                          \
+        MPI_Abort(MPI_COMM_WORLD, 1);                                          \
     } while (0)
-#define ASSERT(cond, ...)                                                                          \
-    do                                                                                             \
-    {                                                                                              \
-        if (!(cond))                                                                               \
-            FAIL(__VA_ARGS__);                                                                     \
+#define ASSERT(cond, ...)                                                      \
+    do                                                                         \
+    {                                                                          \
+        if (!(cond))                                                           \
+            FAIL(__VA_ARGS__);                                                 \
     } while (0)
+
+#define MAX_AGGREGATE_METADATA_SIZE (5ULL * 1024 * 1024 * 1024)
+#define chunk_size_1mb 1048576
 
 namespace adios2
 {
@@ -57,11 +66,13 @@ public:
      * @param openMode only read
      * @param comm
      */
-    DaosReader(IO &io, const std::string &name, const Mode mode, helper::Comm comm);
+    DaosReader(IO &io, const std::string &name, const Mode mode,
+               helper::Comm comm);
 
     ~DaosReader();
 
-    StepStatus BeginStep(StepMode mode = StepMode::Read, const float timeoutSeconds = -1.0) final;
+    StepStatus BeginStep(StepMode mode = StepMode::Read,
+                         const float timeoutSeconds = -1.0) final;
 
     size_t CurrentStep() const final;
 
@@ -70,8 +81,10 @@ public:
     void PerformGets() final;
 
     MinVarInfo *MinBlocksInfo(const VariableBase &, const size_t Step) const;
-    bool VarShape(const VariableBase &Var, const size_t Step, Dims &Shape) const;
-    bool VariableMinMax(const VariableBase &, const size_t Step, MinMaxStruct &MinMax);
+    bool VarShape(const VariableBase &Var, const size_t Step,
+                  Dims &Shape) const;
+    bool VariableMinMax(const VariableBase &, const size_t Step,
+                        MinMaxStruct &MinMax);
 
 private:
     format::BP5Deserializer *m_BP5Deserializer = nullptr;
@@ -111,9 +124,7 @@ private:
 
     /* DAOS declarations */
 
-    uuid_t pool_uuid, cont_uuid;
-    char *pool_label = "pool_ranjansv";
-    char *cont_label = "adios-daos-engine-cont";
+    char m_pool_label[100], m_cont_label[100];
 
     /* Declare variables for pool and container handles */
     daos_handle_t poh, coh;
@@ -124,9 +135,39 @@ private:
         HANDLE_CO,
     };
 
-    /* Declare variables for the KV object */
-    daos_handle_t oh;
-    daos_obj_id_t oid;
+    /* Declare variables for the Array object */
+    daos_handle_t oh, mdsize_oh;
+    daos_obj_id_t oid, mdsize_oid;
+    daos_array_iod_t iod;
+    daos_range_t rg;
+    d_sg_list_t sgl;
+    d_iov_t iov;
+
+    /* Declare variables for the KV object */    
+    daos_handle_t eq;
+    daos_event_t ev[MAX_KV_GET_REQS], *evp[MAX_KV_GET_REQS];
+
+
+    enum class DaosEngine {
+        DAOS_ARRAY,
+        DAOS_ARRAY_1MB_ALIGNED,
+        DAOS_KV,
+        UNKNOWN
+    };
+    DaosEngine daosEngine;
+
+    void SetDaosEngine();
+    void SetPoolAndContName();
+
+    enum class DataFlag {
+        ON,
+        OFF
+    };
+    
+    void SetDataFlag();
+    DataFlag m_DataFlag = DataFlag::ON;
+
+    size_t m_step_offset = 0;
 
     char node[128] = "unknown";
 
@@ -152,19 +193,22 @@ private:
 
     /** DAOS pool connection and container opening */
     void InitDAOS();
+    void array_oh_share(daos_handle_t *);
 
     /* Sleep up to pollSeconds time if we have not reached timeoutInstant.
      * Return true if slept
      * return false if sleep was not needed because it was overtime
      */
-    bool SleepOrQuit(const TimePoint &timeoutInstant, const Seconds &pollSeconds);
+    bool SleepOrQuit(const TimePoint &timeoutInstant,
+                     const Seconds &pollSeconds);
     /** Open one category of files within timeout.
      * @return: 0 = OK, 1 = timeout, 2 = error
      * lasterrmsg contains the error message in case of error
      */
     size_t OpenWithTimeout(transportman::TransportMan &tm,
                            const std::vector<std::string> &fileNames,
-                           const TimePoint &timeoutInstant, const Seconds &pollSeconds,
+                           const TimePoint &timeoutInstant,
+                           const Seconds &pollSeconds,
                            std::string &lasterrmsg /*INOUT*/);
 
     /** Open files within timeout.
@@ -180,7 +224,8 @@ private:
      *  track if new steps (after filtering with SelectSteps) are read in
      *  and are ready to be processed.
      */
-    void UpdateBuffer(const TimePoint &timeoutInstant, const Seconds &pollSeconds,
+    void UpdateBuffer(const TimePoint &timeoutInstant,
+                      const Seconds &pollSeconds,
                       const Seconds &timeoutSeconds);
 
     bool ReadActiveFlag(std::vector<char> &buffer);
@@ -195,8 +240,15 @@ private:
      *   m_WriterMapIndex
      *   m_FilteredMetadataInfo
      */
-    size_t ParseMetadataIndex(format::BufferSTL &bufferSTL, const size_t absoluteStartPos,
+    size_t ParseMetadataIndex(format::BufferSTL &bufferSTL,
+                              const size_t absoluteStartPos,
                               const bool hasHeader);
+
+    void ReadMetadata(size_t);
+    void DaosArrayReadMetadata(size_t Step, uint64_t WriterCount);
+    void DaosKVReadMetadata(size_t Step, uint64_t WriterCount);
+    void ReadObjectIDsFromFile();
+    void OpenDAOSObjects();
 
     /** Process the new metadata coming in (in UpdateBuffer)
      *  @param newIdxSize: the size of the new content from Index Table
@@ -229,8 +281,8 @@ private:
      */
     void NotifyEngineNoVarsQuery();
 
-#define declare_type(T)                                                                            \
-    void DoGetSync(Variable<T> &, T *) final;                                                      \
+#define declare_type(T)                                                        \
+    void DoGetSync(Variable<T> &, T *) final;                                  \
     void DoGetDeferred(Variable<T> &, T *) final;
     ADIOS2_FOREACH_STDTYPE_1ARG(declare_type)
 #undef declare_type
@@ -249,7 +301,8 @@ private:
 
     size_t DoSteps() const final;
 
-    void DoGetAbsoluteSteps(const VariableBase &variable, std::vector<size_t> &keys) const final;
+    void DoGetAbsoluteSteps(const VariableBase &variable,
+                            std::vector<size_t> &keys) const final;
 
     uint32_t m_WriterColumnMajor = 0;
     bool m_ReaderIsRowMajor = true;
@@ -261,10 +314,11 @@ private:
 
     void InstallMetaMetaData(format::BufferSTL MetaMetadata);
     void InstallMetadataForTimestep(size_t Step);
-    std::pair<double, double> ReadData(adios2::transportman::TransportMan &FileManager,
-                                       const size_t maxOpenFiles, const size_t WriterRank,
-                                       const size_t Timestep, const size_t StartOffset,
-                                       const size_t Length, char *Destination);
+    std::pair<double, double>
+    ReadData(adios2::transportman::TransportMan &FileManager,
+             const size_t maxOpenFiles, const size_t WriterRank,
+             const size_t Timestep, const size_t StartOffset,
+             const size_t Length, char *Destination);
 
     struct WriterMapStruct
     {

@@ -30,8 +30,8 @@ namespace engine
 
 using namespace adios2::format;
 
-DaosWriter::ComputationStatus DaosWriter::IsInComputationBlock(AsyncWriteInfo *info,
-                                                               size_t &compBlockIdx)
+DaosWriter::ComputationStatus
+DaosWriter::IsInComputationBlock(AsyncWriteInfo *info, size_t &compBlockIdx)
 {
     ComputationStatus compStatus = ComputationStatus::NotInComp_ExpectMore;
     size_t nExpectedBlocks = info->expectedComputationBlocks.size();
@@ -54,11 +54,13 @@ DaosWriter::ComputationStatus DaosWriter::IsInComputationBlock(AsyncWriteInfo *i
         if (inComp)
         {
             while (compBlockIdx < nExpectedBlocks &&
-                   info->expectedComputationBlocks[compBlockIdx].blockID < compBlockID)
+                   info->expectedComputationBlocks[compBlockIdx].blockID <
+                       compBlockID)
             {
                 ++compBlockIdx;
             }
-            if (info->expectedComputationBlocks[compBlockIdx].blockID > compBlockID)
+            if (info->expectedComputationBlocks[compBlockIdx].blockID >
+                compBlockID)
             {
                 // the current computation block is a short one that was not
                 // recorded
@@ -73,8 +75,10 @@ DaosWriter::ComputationStatus DaosWriter::IsInComputationBlock(AsyncWriteInfo *i
     return compStatus;
 }
 
-void DaosWriter::AsyncWriteOwnData(AsyncWriteInfo *info, std::vector<core::iovec> &DataVec,
-                                   const size_t totalsize, const bool seekOnFirstWrite)
+void DaosWriter::AsyncWriteOwnData(AsyncWriteInfo *info,
+                                   std::vector<core::iovec> &DataVec,
+                                   const size_t totalsize,
+                                   const bool seekOnFirstWrite)
 {
     /* local variables to track variables modified by main thread */
     size_t compBlockIdx = 0; /* position in vector to get length */
@@ -98,7 +102,8 @@ void DaosWriter::AsyncWriteOwnData(AsyncWriteInfo *info, std::vector<core::iovec
 
         if (!doRush)
         {
-            ComputationStatus compStatus = IsInComputationBlock(info, compBlockIdx);
+            ComputationStatus compStatus =
+                IsInComputationBlock(info, compBlockIdx);
 
             /* Scheduling decisions:
                Cases:
@@ -131,8 +136,10 @@ void DaosWriter::AsyncWriteOwnData(AsyncWriteInfo *info, std::vector<core::iovec
 
         if (doRush)
         {
-            auto vec = std::vector<adios2::core::iovec>(DataVec.begin() + block, DataVec.end());
-            vec[0].iov_base = (const char *)DataVec[block].iov_base + temp_offset;
+            auto vec = std::vector<adios2::core::iovec>(DataVec.begin() + block,
+                                                        DataVec.end());
+            vec[0].iov_base =
+                (const char *)DataVec[block].iov_base + temp_offset;
             vec[0].iov_len = DataVec[block].iov_len - temp_offset;
             size_t pos = MaxSizeT; // <==> no seek inside WriteFileAt
             if (firstWrite)
@@ -165,13 +172,15 @@ void DaosWriter::AsyncWriteOwnData(AsyncWriteInfo *info, std::vector<core::iovec
 
         if (firstWrite)
         {
-            info->tm->WriteFileAt((const char *)DataVec[block].iov_base + temp_offset, n,
-                                  info->startPos);
+            info->tm->WriteFileAt((const char *)DataVec[block].iov_base +
+                                      temp_offset,
+                                  n, info->startPos);
             firstWrite = false;
         }
         else
         {
-            info->tm->WriteFiles((const char *)DataVec[block].iov_base + temp_offset, n);
+            info->tm->WriteFiles(
+                (const char *)DataVec[block].iov_base + temp_offset, n);
         }
 
         /* Have we processed the entire block or staying with it? */
@@ -215,29 +224,34 @@ int DaosWriter::AsyncWriteThread_EveryoneWrites(AsyncWriteInfo *info)
     return 1;
 };
 
-void DaosWriter::WriteData_EveryoneWrites_Async(format::BufferV *Data, bool SerializedWriters)
+void DaosWriter::WriteData_EveryoneWrites_Async(format::BufferV *Data,
+                                                bool SerializedWriters)
 {
 
-    const aggregator::MPIChain *a = dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
+    const aggregator::MPIChain *a =
+        dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
 
     // new step writing starts at offset m_DataPos on aggregator
     // others will wait for the position to arrive from the rank below
 
     if (a->m_Comm.Rank() > 0)
     {
-        a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Rank() - 1, 0,
-                       "Chain token in DaosWriter::WriteData_EveryoneWrites_Async");
+        a->m_Comm.Recv(
+            &m_DataPos, 1, a->m_Comm.Rank() - 1, 0,
+            "Chain token in DaosWriter::WriteData_EveryoneWrites_Async");
     }
 
     // align to PAGE_SIZE
-    m_DataPos += helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
+    m_DataPos +=
+        helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
     m_StartDataPos = m_DataPos;
 
     if (a->m_Comm.Rank() < a->m_Comm.Size() - 1)
     {
         uint64_t nextWriterPos = m_DataPos + Data->Size();
-        a->m_Comm.Isend(&nextWriterPos, 1, a->m_Comm.Rank() + 1, 0,
-                        "Chain token in DaosWriter::WriteData_EveryoneWrites_Async");
+        a->m_Comm.Isend(
+            &nextWriterPos, 1, a->m_Comm.Rank() + 1, 0,
+            "Chain token in DaosWriter::WriteData_EveryoneWrites_Async");
     }
 
     m_DataPos += Data->Size();
@@ -252,7 +266,8 @@ void DaosWriter::WriteData_EveryoneWrites_Async(format::BufferV *Data, bool Seri
         m_AsyncWriteInfo->comm_chain = a->m_Comm.GroupByShm();
         m_AsyncWriteInfo->rank_chain = m_AsyncWriteInfo->comm_chain.Rank();
         m_AsyncWriteInfo->nproc_chain = m_AsyncWriteInfo->comm_chain.Size();
-        m_AsyncWriteInfo->tokenChain = new shm::TokenChain<uint64_t>(&m_AsyncWriteInfo->comm_chain);
+        m_AsyncWriteInfo->tokenChain =
+            new shm::TokenChain<uint64_t>(&m_AsyncWriteInfo->comm_chain);
     }
     else
     {
@@ -270,7 +285,8 @@ void DaosWriter::WriteData_EveryoneWrites_Async(format::BufferV *Data, bool Seri
     m_AsyncWriteInfo->flagRush = &m_flagRush;
     m_AsyncWriteInfo->lock = &m_AsyncWriteLock;
 
-    if (m_ComputationBlocksLength > 0.0 && m_Parameters.AsyncWrite == (int)AsyncWrite::Guided)
+    if (m_ComputationBlocksLength > 0.0 &&
+        m_Parameters.AsyncWrite == (int)AsyncWrite::Guided)
     {
         m_AsyncWriteInfo->inComputationBlock = &m_InComputationBlock;
         m_AsyncWriteInfo->computationBlocksLength = m_ComputationBlocksLength;
@@ -278,8 +294,10 @@ void DaosWriter::WriteData_EveryoneWrites_Async(format::BufferV *Data, bool Seri
         {
             m_AsyncWriteInfo->deadline = m_ComputationBlocksLength;
         }
-        m_AsyncWriteInfo->expectedComputationBlocks = m_ComputationBlockTimes; // copy!
-        m_AsyncWriteInfo->currentComputationBlocks = &m_ComputationBlockTimes; // ptr!
+        m_AsyncWriteInfo->expectedComputationBlocks =
+            m_ComputationBlockTimes; // copy!
+        m_AsyncWriteInfo->currentComputationBlocks =
+            &m_ComputationBlockTimes; // ptr!
         m_AsyncWriteInfo->currentComputationBlockID = &m_ComputationBlockID;
 
         /* Clear current block tracker now so that async thread does not get
@@ -300,8 +318,8 @@ void DaosWriter::WriteData_EveryoneWrites_Async(format::BufferV *Data, bool Seri
         m_AsyncWriteInfo->currentComputationBlockID = nullptr;
     }
 
-    m_WriteFuture =
-        std::async(std::launch::async, AsyncWriteThread_EveryoneWrites, m_AsyncWriteInfo);
+    m_WriteFuture = std::async(
+        std::launch::async, AsyncWriteThread_EveryoneWrites, m_AsyncWriteInfo);
 
     // At this point modifying Data in main thread is prohibited !!!
 
@@ -317,8 +335,9 @@ void DaosWriter::WriteData_EveryoneWrites_Async(format::BufferV *Data, bool Seri
         }
         if (a->m_Comm.Rank() == 0)
         {
-            a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Size() - 1, 0,
-                           "Chain token in DaosWriter::WriteData_EveryoneWrites_Async");
+            a->m_Comm.Recv(
+                &m_DataPos, 1, a->m_Comm.Size() - 1, 0,
+                "Chain token in DaosWriter::WriteData_EveryoneWrites_Async");
         }
     }
 }
