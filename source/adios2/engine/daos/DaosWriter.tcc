@@ -19,8 +19,7 @@ namespace engine
 {
 
 template <class T>
-void DaosWriter::PutCommonSpan(Variable<T> &variable,
-                               typename Variable<T>::Span &span,
+void DaosWriter::PutCommonSpan(Variable<T> &variable, typename Variable<T>::Span &span,
                                const bool initialize, const T &value)
 {
     format::BufferV::BufferPos bp5span(0, 0, 0);
@@ -55,16 +54,14 @@ void DaosWriter::PutCommonSpan(Variable<T> &variable,
 
     if (std::is_same<T, std::string>::value)
     {
-        m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
-                                variable.m_Type, variable.m_ElementSize,
-                                DimCount, Shape, Count, Start, nullptr, false,
-                                &bp5span);
+        m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                                variable.m_ElementSize, DimCount, Shape, Count, Start, nullptr,
+                                false, &bp5span);
     }
     else
-        m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(),
-                                variable.m_Type, variable.m_ElementSize,
-                                DimCount, Shape, Count, Start, nullptr, false,
-                                &bp5span);
+        m_BP5Serializer.Marshal((void *)&variable, variable.m_Name.c_str(), variable.m_Type,
+                                variable.m_ElementSize, DimCount, Shape, Count, Start, nullptr,
+                                false, &bp5span);
 
     span.m_PayloadPosition = bp5span.posInBuffer;
     span.m_BufferIdx = bp5span.bufferIdx;
@@ -74,8 +71,8 @@ void DaosWriter::PutCommonSpan(Variable<T> &variable,
     if (initialize)
     {
         const size_t ElemCount = m_BP5Serializer.CalcSize(DimCount, Count);
-        T *itBegin = reinterpret_cast<T *>(
-            m_BP5Serializer.GetPtr(span.m_BufferIdx, span.m_PayloadPosition));
+        T *itBegin =
+            reinterpret_cast<T *>(m_BP5Serializer.GetPtr(span.m_BufferIdx, span.m_PayloadPosition));
 
         // TODO from BP4: does std::fill_n have a bug in gcc or due to
         // optimizations this is impossible due to memory alignment? This seg
