@@ -276,7 +276,7 @@ if(ADIOS2_HAVE_DAOS)
     engine/daos/DaosWriter_TwoLevelShm.cpp
     engine/daos/DaosReader.cpp engine/daos/DaosReader.tcc
     engine/daos/DaosWriter.cpp engine/daos/DaosWriter.tcc)
-  target_link_libraries(adios2_core PRIVATE DAOS::DAOS)
+  target_link_libraries(adios2_core PRIVATE DAOS::DAOS Caliper::Caliper)
 endif()
 
 if(ADIOS2_HAVE_MPI)
