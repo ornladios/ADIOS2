@@ -527,12 +527,12 @@ endif()
 find_package(DAOS)
 if(DAOS_FOUND)
   set(ADIOS2_HAVE_DAOS TRUE)
-endif()
 
-# Caliper
-find_package(Caliper)
-if(Caliper_FOUND)
-  set(ADIOS2_HAVE_Caliper TRUE)
+  # Caliper  (currently on needed by DAOS code)
+  find_package(Caliper REQUIRED)
+  if(Caliper_FOUND)
+     set(ADIOS2_HAVE_Caliper TRUE)
+  endif()
 endif()
 
 #SysV IPC
