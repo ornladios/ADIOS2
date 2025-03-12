@@ -106,7 +106,6 @@ stages:
       git
       ninja
       libffi
-      hdf5
       zstd
 
 setup:frontier-kokkos-hip:
