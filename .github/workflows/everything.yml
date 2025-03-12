@@ -323,9 +323,9 @@ jobs:
         id: restore-cache
         with:
           path: .ccache
-          key: ccache-${{ matrix.image}}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
+          key: ccache-${{ matrix.image}}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ matrix.shared }}-${{ github.sha }}
           restore-keys: |
-            ccache-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+            ccache-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ matrix.shared }}
       - name: Configure cache
         run: ccache -z
       - name: Update
@@ -342,7 +342,7 @@ jobs:
         id: save-cache
         with:
           path: .ccache
-          key: ccache-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
+          key: ccache-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ matrix.shared }}-${{ github.sha }}
       - name: Test
         run: gha/scripts/ci/gh-actions/run.sh test
 
