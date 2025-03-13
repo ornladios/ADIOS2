@@ -28,6 +28,20 @@ using TP = std::chrono::high_resolution_clock::time_point;
 #define DEBUG_BADALLOC 
 #undef DEBUG_BADALLOC
 
+#define FAIL(fmt, ...)                                                         \
+    do                                                                         \
+    {                                                                          \
+        fprintf(stderr, "Process %d(%s): " fmt " aborting\n", m_Comm.Rank(),   \
+                node, ##__VA_ARGS__);                                          \
+        exit(1);							       \
+    } while (0)
+#define ASSERT(cond, ...)                                                      \
+    do                                                                         \
+    {                                                                          \
+        if (!(cond))                                                           \
+            FAIL(__VA_ARGS__);                                                 \
+    } while (0)
+
 
 namespace adios2 {
 namespace core {
@@ -243,7 +257,7 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount) {
   size_t total_mdsize = 0;
   size_t buffer_size = 0;
   size_t sizeof_list_writer_mdsize;
-  uint64_t list_writer_mdsize[WriterCount];
+  uint64_t *list_writer_mdsize = (uint64_t*)malloc(sizeof(uint64_t) * WriterCount);
   daos_range_t *list_rg = NULL;
 
   // Get list of Metadata sizes for all writers
@@ -346,6 +360,7 @@ void DaosReader::DaosArrayReadMetadata(size_t Step, uint64_t WriterCount) {
   // Read in attributes
   size_t att_readin_size = total_attr_size - (WriterCount * sizeof(uint64_t));
   m_MDFileManager.ReadFile((char*)&meta_buff[index], att_readin_size, off_attr);
+  free(list_writer_mdsize);
 }
 
 void DaosReader::InstallMetadataForTimestep(size_t Step) {

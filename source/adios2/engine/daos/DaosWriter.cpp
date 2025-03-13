@@ -27,6 +27,20 @@
 #define DEBUG_BADALLOC
 #undef DEBUG_BADALLOC
 
+#define FAIL(fmt, ...)                                                         \
+    do                                                                         \
+    {                                                                          \
+        fprintf(stderr, "Process %d(%s): " fmt " aborting\n", m_Comm.Rank(),   \
+                node, ##__VA_ARGS__);                                          \
+        exit(1);							       \
+    } while (0)
+#define ASSERT(cond, ...)                                                      \
+    do                                                                         \
+    {                                                                          \
+        if (!(cond))                                                           \
+            FAIL(__VA_ARGS__);                                                 \
+    } while (0)
+
 
 
 namespace adios2
@@ -556,7 +570,7 @@ void DaosWriter::MarshalAttributes()
 void DaosWriter::DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &TSInfo) 
 {
         /* Use MPI_Allgather to gather list_metadata_size from all processes */
-        uint64_t list_metadata_size[m_Comm.Size()];
+        uint64_t *list_metadata_size = (uint64_t*)malloc(sizeof(uint64_t) * m_Comm.Size());
         m_Comm.Allgather((uint64_t*)&TSInfo.MetaEncodeBuffer->m_FixedSize, 1, (uint64_t*) list_metadata_size, 1);
         
     
@@ -617,7 +631,7 @@ void DaosWriter::DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &TSI
             ASSERT(rc == 0, "daos_kv_put() failed with %d", rc);
             CALI_MARK_END("DaosWriter::daos_kv_put");
         }
-
+	free(list_metadata_size);
 }
 
 void DaosWriter::DaosKVWriteMetadata(format::BP5Serializer::TimestepInfo &TSInfo) 

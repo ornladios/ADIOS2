@@ -31,20 +31,6 @@
 
 #define MAX_KV_GET_REQS 100
 
-#define FAIL(fmt, ...)                                                         \
-    do                                                                         \
-    {                                                                          \
-        fprintf(stderr, "Process %d(%s): " fmt " aborting\n", m_Comm.Rank(),   \
-                node, ##__VA_ARGS__);                                          \
-        MPI_Abort(MPI_COMM_WORLD, 1);                                          \
-    } while (0)
-#define ASSERT(cond, ...)                                                      \
-    do                                                                         \
-    {                                                                          \
-        if (!(cond))                                                           \
-            FAIL(__VA_ARGS__);                                                 \
-    } while (0)
-
 #define MAX_AGGREGATE_METADATA_SIZE (5ULL * 1024 * 1024 * 1024)
 #define chunk_size_1mb 1048576
 
