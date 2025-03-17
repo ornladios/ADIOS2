@@ -166,6 +166,12 @@ void VariableBase::SetShape(const adios2::Dims &shape)
                                                  m_Name + ", in call to SetShape");
     }
 
+    if (m_Shape.size() != shape.size())
+    {
+        helper::Throw<std::invalid_argument>("Core", "VariableBase", "SetShape",
+                                             "can't assign change dimension count on variable " +
+                                                 m_Name + ", in call to SetShape");
+    }
     m_Shape = shape;
 #if defined(ADIOS2_HAVE_KOKKOS) || defined(ADIOS2_HAVE_GPU_SUPPORT)
     UpdateLayout(m_Shape);
