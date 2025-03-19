@@ -40,7 +40,8 @@ TEST(FileTransport, FailOnEOF)
         w->Close();
     }
     {
-        std::vector<uint8_t> b(256);
+        // 10x the size of data which was written
+        std::vector<uint8_t> b(2560);
         helper::Comm comm = helper::CommDummy();
         std::unique_ptr<transport::FilePOSIX> r =
             std::unique_ptr<transport::FilePOSIX>(new transport::FilePOSIX(comm));
@@ -48,7 +49,7 @@ TEST(FileTransport, FailOnEOF)
         r->Open("FailOnEOF", Mode::Read);
         Params p = {{"FailOnEOF", "true"}};
         r->SetParameters(p);
-        EXPECT_THROW(r->Read((char *)b.data(), b.size() * 2), std::ios_base::failure);
+        EXPECT_THROW(r->Read((char *)b.data(), b.size()), std::ios_base::failure);
         r->Close();
     }
 }
