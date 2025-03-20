@@ -297,6 +297,11 @@ class Stream:
         if not variable:
             # Sequence variables
             if isinstance(content, np.ndarray):
+                # If shape and count are not specified, use the numpy array's shape
+                if shape == [] and count == []:
+                    shape = list(content.shape)
+                    count = shape
+                    start = [0] * content.ndim
                 variable = self._io.define_variable(name, content, shape, start, count)
             elif isinstance(content, list):
                 if shape == [] and count == []:

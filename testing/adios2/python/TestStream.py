@@ -1,5 +1,6 @@
 from adios2 import Stream, LocalValueDim
 from random import randint
+import numpy as np
 
 import unittest
 
@@ -22,14 +23,16 @@ class TestStream(unittest.TestCase):
                 s.write("Wind", [5], shape=[LocalValueDim])
                 # Local Array
                 s.write("Coords", [38, -46], [], [], [2])
+                s.write("humidity", np.random.rand(3, 1))
 
         with Stream("pythonstreamtest.bp", "r") as s:
             for _ in s.steps():
                 for var_name in s.available_variables():
                     print(f"var:{var_name}\t{s.read(var_name)}")
-                    self.assertEqual(s.read("Wind", block_id=0), 5)
-                    self.assertEqual(s.read("Coords", block_id=0)[0], 38)
-                    self.assertEqual(s.read("Coords", block_id=0)[1], -46)
+                self.assertEqual(s.read("Wind", block_id=0), 5)
+                self.assertEqual(s.read("Coords", block_id=0)[0], 38)
+                self.assertEqual(s.read("Coords", block_id=0)[1], -46)
+                self.assertEqual(s.read("humidity", block_id=0).ndim, 2)
 
     def test_start_count(self):
         with Stream("pythonstreamtest.bp", "w") as s:
