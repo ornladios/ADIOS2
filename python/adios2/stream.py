@@ -1,6 +1,6 @@
 """License:
-  Distributed under the OSI-approved Apache License, Version 2.0.  See
-  accompanying file Copyright.txt for details.
+Distributed under the OSI-approved Apache License, Version 2.0.  See
+accompanying file Copyright.txt for details.
 """
 
 from functools import singledispatchmethod
@@ -296,14 +296,17 @@ class Stream:
 
         if not variable:
             # Sequence variables
-            if isinstance(content, np.ndarray):
+            if isinstance(content, (list, np.ndarray)):
+                if isinstance(content, list):
+                    content = np.asarray(content)
+
+                # If shape, start, and count is not specified, use the numpy array's shape
+                if shape == [] and start == [] and count == []:
+                    shape = list(content.shape)
+                    start = [0] * content.ndim
+                    count = shape[:]
                 variable = self._io.define_variable(name, content, shape, start, count)
-            elif isinstance(content, list):
-                if shape == [] and count == []:
-                    shape = [len(content)]
-                    count = shape
-                    start = [0]
-                variable = self._io.define_variable(name, content, shape, start, count)
+
             # Scalar variables
             elif isinstance(content, str):
                 variable = self._io.define_variable(name, content)
