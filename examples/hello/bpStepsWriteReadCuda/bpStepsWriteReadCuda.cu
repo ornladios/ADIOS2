@@ -59,6 +59,7 @@ void writer(adios2::ADIOS &adios, const std::string &engine, const std::string &
     }
 
     bpWriter.Close();
+    cudaFree(gpuSimData);
 }
 
 void reader(adios2::ADIOS &adios, const std::string &engine, const std::string &fname,
@@ -101,6 +102,7 @@ void reader(adios2::ADIOS &adios, const std::string &engine, const std::string &
         }
     }
     bpReader.Close();
+    cudaFree(gpuSimData);
 }
 
 int main(int argc, char **argv)
