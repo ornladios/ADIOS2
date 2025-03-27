@@ -2370,6 +2370,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
     MV->IsReverseDims = ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
 
     MV->WasLocalValue = (VarRec->OrigShapeID == ShapeID::LocalValue);
+    MV->WasLocalValue |= (VarRec->OrigShapeID == ShapeID::JoinedArray);
     if ((VarRec->OrigShapeID == ShapeID::LocalValue) ||
         (VarRec->OrigShapeID == ShapeID::GlobalValue))
     {
