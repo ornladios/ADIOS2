@@ -45,7 +45,7 @@ if(ADIOS2_HAVE_ZFP)
   target_link_libraries(sst PRIVATE zfp::zfp)
 endif()
 
-if(ADIOS2_SST_HAVE_MPI_DP)
+if(ADIOS2_HAVE_MPI)
   target_sources(sst PRIVATE dp/mpi_dp.c)
   target_link_libraries(sst PRIVATE MPI::MPI_C)
 endif()
@@ -68,6 +68,7 @@ set(SST_CONFIG_OPTS
   CRAY_CXI
   NVStream
   MPI
+  MPI_DP_HEURISTICS_PASSED
 )
 include(SSTFunctions)
 GenerateSSTHeaderConfig(${SST_CONFIG_OPTS})

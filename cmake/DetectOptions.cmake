@@ -503,12 +503,8 @@ if(ADIOS2_USE_SST AND NOT WIN32)
           MPI_Finalize();
           exit(EXIT_SUCCESS);
         }]=]
-    ADIOS2_HAVE_MPI_CLIENT_SERVER)
+    ADIOS2_SST_HAVE_MPI_DP_HEURISTICS_PASSED)
     unset(CMAKE_REQUIRED_LIBRARIES)
-
-    if (ADIOS2_HAVE_MPI_CLIENT_SERVER)
-      set(ADIOS2_SST_HAVE_MPI_DP TRUE)
-    endif()
   endif()
 
   # UCX
