@@ -12,9 +12,8 @@ plugins/ @caitlinross
 .gitlab/ @vicentebolea
 .github/ @vicentebolea
 .circleci/ @vicentebolea
-.shellcheck_exclude_paths
+.shellcheck_exclude_paths @vicentebolea
 
-CMakeLists.txt @vicentebolea
 cmake/ @vicentebolea
 python/ @vicentebolea
 scripts/ @vicentebolea
