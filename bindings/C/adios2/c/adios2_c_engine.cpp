@@ -632,14 +632,14 @@ adios2_varinfo *adios2_inquire_blockinfo(adios2_engine *engine, adios2_variable 
             if (minBlocksInfo->WasLocalValue)
             {
                 varinfo->Shape = (size_t *)malloc(sizeof(size_t));
-                varinfo->Shape[0] = (intptr_t)minBlocksInfo->Shape;
+                varinfo->Shape[0] = minBlocksInfo->Shape[0];
             }
             else
             {
-                if (minBlocksInfo->Shape)
+                if (minBlocksInfo->Shape.size())
                 {
                     varinfo->Shape = (size_t *)malloc(sizeof(size_t) * minBlocksInfo->Dims);
-                    memcpy(varinfo->Shape, minBlocksInfo->Shape,
+                    memcpy(varinfo->Shape, minBlocksInfo->Shape.data(),
                            sizeof(size_t) * minBlocksInfo->Dims);
                 }
             }

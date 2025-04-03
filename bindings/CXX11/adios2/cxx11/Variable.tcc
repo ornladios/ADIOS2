@@ -154,13 +154,12 @@ Variable<T>::ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const
         typename Variable<T>::Info blockInfo;
 
         blockInfo.Step = Step;
-        if (coreVarInfo->Shape)
+        if (coreVarInfo->Shape.size())
         {
             blockInfo.Start.reserve(coreVarInfo->Dims);
             blockInfo.Count.reserve(coreVarInfo->Dims);
             if (coreVarInfo->WasLocalValue)
             {
-                /* Start and count are really values, not pointers */
                 blockInfo.Start.push_back((size_t)coreBlockInfo.Start);
                 blockInfo.Count.push_back((size_t)coreBlockInfo.Count);
             }
@@ -168,7 +167,8 @@ Variable<T>::ToBlocksInfoMin(const MinVarInfo *coreVarInfo) const
             {
                 for (int i = 0; i < coreVarInfo->Dims; i++)
                 {
-                    blockInfo.Start.push_back(coreBlockInfo.Start[i]);
+                    if (coreBlockInfo.Start)
+                        blockInfo.Start.push_back(coreBlockInfo.Start[i]);
                     blockInfo.Count.push_back(coreBlockInfo.Count[i]);
                 }
             }
