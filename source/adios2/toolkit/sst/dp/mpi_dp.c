@@ -766,31 +766,42 @@ static void MpiReleaseTimeStep(CP_Services Svcs, DP_WS_Stream Stream_v, size_t T
  */
 static int MpiGetPriority(CP_Services Svcs, void *CP_Stream, struct _SstParams *Params)
 {
+    char *ReasonMsg = NULL;
+    int ReturnValue = 10;
     int IsInitialized = 0;
-    int provided = 0;
-    int IsMPICH = 0;
-#if defined(MPICH)
-    IsMPICH = 1;
-
     MPI_Initialized(&IsInitialized);
     if (IsInitialized)
     {
-        MPI_Query_thread(&provided);
-        // Only enabled when MPI_THREAD_MULTIPLE and using MPICH
-        if (provided == MPI_THREAD_MULTIPLE)
+        int Provided = 0;
+        MPI_Query_thread(&Provided);
+        if (Provided == MPI_THREAD_MULTIPLE)
         {
-            return 100;
+#if defined(ADIOS2_SST_HAVE_MPI_DP_HEURISTICS_PASSED)
+            ReasonMsg = strdup("Heuristics determined good compatibility");
+            ReturnValue = 10;
+#else
+            ReasonMsg = strdup("Heuristics determined poor compatibility");
+            ReturnValue = 0;
+#endif
+        }
+        else
+        {
+            ReasonMsg = strdup("MPI_THREAD_MULTIPLE not supported by MPI");
+            ReturnValue = -1;
         }
     }
-#endif
+    else
+    {
+        ReasonMsg = strdup("MPI_Initialized() failed");
+        ReturnValue = -1;
+    }
 
-    Svcs->verbose(CP_Stream, DPTraceVerbose,
-                  "MPI DP disabled since the following predicate is false: "
-                  "(MPICH=%s AND MPI_initialized=%s AND MPI_THREAD_MULTIPLE=%s)",
-                  IsMPICH ? "true" : "false", IsInitialized ? "true" : "false",
-                  provided == MPI_THREAD_MULTIPLE ? "true" : "false");
+    Svcs->verbose(CP_Stream, DPSummaryVerbose, "mpi_dp priority=%d since: %s.", ReturnValue,
+                  ReasonMsg);
 
-    return -100;
+    free(ReasonMsg);
+
+    return ReturnValue;
 }
 
 /**
