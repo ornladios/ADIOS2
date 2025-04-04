@@ -2,13 +2,15 @@
 default:
   interruptible: true
   tags:
-    - medium
-    - uo
-    - public
-    - x86_64
+    - hpsf
+    - hpsf-x86_64
+    - linux-5.4
 
 #  This file is used to define the GitLab CI/CD pipeline for the ADIOS2 project.
 .common-sanitizer:
+  image:
+    name: ubuntu
+    pull_policy: always
   rules:
     - if: '$CI_PIPELINE_SOURCE != "schedule"'
       when: on_success
@@ -56,38 +58,46 @@ default:
 #===============================================================================
 
 build:uo-sanitizer-asan:
-  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20241205
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20241205
   extends: [.common-build]
 
 build:uo-sanitizer-msan:
-  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20241205
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20241205
   extends: [.common-build]
 
 build:uo-sanitizer-tsan:
-  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20241205
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20241205
   extends: [.common-build]
 
 build:uo-sanitizer-ubsan:
-  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20241205
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20241205
   extends: [.common-build]
 
 test:uo-sanitizer-asan:
-  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20241205
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-asan-20241205
   extends: [.common-test]
   needs: [build:uo-sanitizer-asan]
 
 test:uo-sanitizer-msan:
-  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20241205
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-msan-20241205
   extends: [.common-test]
   needs: [build:uo-sanitizer-msan]
 
 test:uo-sanitizer-tsan:
-  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20241205
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-tsan-20241205
   extends: [.common-test]
   needs: [build:uo-sanitizer-tsan]
 
 test:uo-sanitizer-ubsan:
-  image: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20241205
+  image:
+    name: ghcr.io/ornladios/adios2:ci-opensuse-tw-ubsan-20241205
   extends: [.common-test]
   needs: [build:uo-sanitizer-ubsan]
 
@@ -97,7 +107,9 @@ deploy:sync-ornl:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: on_success
     - when: never
-  image: ornladios/adios2:sync-20241206-b
+  image:
+    name: ornladios/adios2:sync-20241206-b
+    pull_policy: always
   script: >
     .gitlab/config/SpackCIBridge.py
     ornladios/ADIOS2
@@ -116,7 +128,9 @@ deploy:sync-spack:
     - if: '$CI_PIPELINE_SOURCE == "schedule"'
       when: on_success
     - when: never
-  image: ornladios/adios2:sync-20241206-b
+  image:
+    name: ornladios/adios2:sync-20241206-b
+    pull_policy: always
   script: >
     .gitlab/config/SpackCIBridge.py
     ornladios/ADIOS2
