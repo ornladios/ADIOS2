@@ -564,19 +564,15 @@ jobs:
       id: restore-cache
       with:
         path: .ccache
-        key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ github.sha }}
+        key: ccache-codeql-${{ github.sha }}
         restore-keys: |
-          ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || ''}}
+          ccache-codeql
     - run: ccache -z
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
-        config: |
-          paths:
-            - source
-          paths-ignore:
-            - source/thirdparty
+        source-root: source
     - name: Setup
       run: gha/scripts/ci/gh-actions/linux-setup.sh
     - name: Update
@@ -591,6 +587,7 @@ jobs:
         category: "/language:${{matrix.language}}"
         output: sarif-results
         upload: failure-only
+        checkout_path: "${{ github.workflow }}/source"
     - name: filter-sarif
       uses: advanced-security/filter-sarif@v1
       with:
@@ -608,13 +605,13 @@ jobs:
         name: sarif-results
         path: sarif-results
         retention-days: 1
-    - run: ccache -s | tee $GITHUB_STEP_SUMMARY
+    - run: ccache -s | tee "${GITHUB_STEP_SUMMARY}"
     - uses: actions/cache/save@v4
       if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
       id: save-cache
       with:
         path: .ccache
-        key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ github.sha }}
+        key: ccache-codeql-${{ github.sha }}
 
 #######################################
 # Workaround for skipping matrix jobs
