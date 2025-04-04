@@ -2315,6 +2315,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
     auto PossiblyAddValueBlocks = [this](MinVarInfo *MV, BP5VarRec *VarRec, size_t &Id,
                                          const size_t AbsStep) {
         const size_t writerCohortSize = WriterCohortSize(AbsStep);
+        size_t LocalValueCount = 0;
         for (size_t WriterRank = 0; WriterRank < writerCohortSize; WriterRank++)
         {
             MetaArrayRec *writer_meta_base =
@@ -2330,8 +2331,10 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
                 Blk.Count = NULL;
                 if (VarRec->OrigShapeID == ShapeID::LocalValue)
                 {
+                    // we are abusing this a bit, not pointers, but holding values
                     Blk.Count = (size_t *)1;
-                    Blk.Start = (size_t *)WriterRank;
+                    Blk.Start = (size_t *)LocalValueCount++;
+                    MV->Shape[0]++;
                 }
                 if (writer_meta_base)
                 {
@@ -2366,24 +2369,27 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
     size_t Id = 0;
     MV->Step = RelStep;
     MV->Dims = (int)VarRec->DimCount;
-    MV->Shape = NULL;
+    size_t *ShapeFromRankMetadata = NULL;
+
     MV->IsReverseDims = ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
 
     MV->WasLocalValue = (VarRec->OrigShapeID == ShapeID::LocalValue);
-    MV->WasLocalValue |= (VarRec->OrigShapeID == ShapeID::JoinedArray);
     if ((VarRec->OrigShapeID == ShapeID::LocalValue) ||
         (VarRec->OrigShapeID == ShapeID::GlobalValue))
     {
+        // This code path doesn't need to loop through blocks
         const size_t writerCohortSize = WriterCohortSize(AbsStep);
         if (VarRec->OrigShapeID == ShapeID::LocalValue)
         {
             // appear as an array locally
             MV->IsValue = false;
             MV->Dims = 1;
-            MV->Shape = (size_t *)writerCohortSize;
+            MV->Shape.resize(1);
+            MV->Shape[0] = 0;
         }
         else
         {
+            // Global value, leave dims = 0, Shape vector uninitialized
             MV->IsValue = true;
         }
         MV->BlocksInfo.reserve(writerCohortSize);
@@ -2394,6 +2400,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
         }
         return MV;
     }
+    // This code path loops through blocks
     for (size_t Step = StepLoopStart; Step < StepLoopEnd; Step++)
     {
         const size_t writerCohortSize = WriterCohortSize(Step);
@@ -2407,7 +2414,7 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
                 //  and should be immaterial otherise
                 if (writer_meta_base->Shape != NULL)
                 {
-                    MV->Shape = writer_meta_base->Shape;
+                    ShapeFromRankMetadata = writer_meta_base->Shape;
                 }
                 size_t WriterBlockCount =
                     writer_meta_base->Dims ? writer_meta_base->DBCount / writer_meta_base->Dims : 1;
@@ -2416,6 +2423,16 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
         }
     }
     MV->BlocksInfo.reserve(Id);
+    if (ShapeFromRankMetadata)
+    {
+        MV->Shape.resize(VarRec->DimCount);
+        for (int i = 0; i < MV->Dims; i++)
+            MV->Shape[i] = ShapeFromRankMetadata[i];
+        if (VarRec->OrigShapeID == ShapeID::JoinedArray)
+        {
+            MV->Shape[VarRec->JoinedDimen] = 0;
+        }
+    }
 
     Id = 0;
     for (size_t Step = StepLoopStart; Step < StepLoopEnd; Step++)
@@ -2448,6 +2465,8 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
                 Blk.Start = Offsets;
                 Blk.Count = Count;
                 Blk.MinMax.Init(VarRec->Type);
+                if (VarRec->OrigShapeID == ShapeID::JoinedArray)
+                    MV->Shape[VarRec->JoinedDimen] += writer_meta_base->Count[VarRec->JoinedDimen];
                 if (MMs)
                 {
 
@@ -2492,28 +2511,38 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
     size_t Id = 0;
     MV->Step = RelStep;
     MV->Dims = (int)VarRec->DimCount;
-    MV->Shape = NULL;
+    size_t *ShapeFromRankMetadata = NULL;
     MV->IsReverseDims = ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
 
     MV->WasLocalValue = (VarRec->OrigShapeID == ShapeID::LocalValue);
     if ((VarRec->OrigShapeID == ShapeID::LocalValue) ||
         (VarRec->OrigShapeID == ShapeID::GlobalValue))
     {
-        // Throw
+        // Throw??
     }
     for (size_t Step = StepLoopStart; Step < StepLoopEnd; Step++)
     {
         MetaArrayRec *writer_meta_base = (MetaArrayRec *)GetMetadataBase(VarRec, Step, WriterRank);
         if (writer_meta_base)
         {
-            if (MV->Shape == NULL)
+            if (ShapeFromRankMetadata == NULL)
             {
-                MV->Shape = writer_meta_base->Shape;
+                ShapeFromRankMetadata = writer_meta_base->Shape;
             }
             Id += 1; // one block
         }
     }
     MV->BlocksInfo.reserve(Id);
+    if (ShapeFromRankMetadata)
+    {
+        MV->Shape.resize(VarRec->DimCount);
+        for (int i = 0; i < MV->Dims; i++)
+            MV->Shape[i] = ShapeFromRankMetadata[i];
+        if (VarRec->OrigShapeID == ShapeID::JoinedArray)
+        {
+            MV->Shape[VarRec->JoinedDimen] = 0;
+        }
+    }
 
     Id = BlockID;
     for (size_t Step = StepLoopStart; Step < StepLoopEnd; Step++)
@@ -2544,6 +2573,13 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
         Blk.Start = Offsets;
         Blk.Count = Count;
         Blk.MinMax.Init(VarRec->Type);
+        if (VarRec->OrigShapeID == ShapeID::JoinedArray)
+        {
+            if (ShapeFromRankMetadata)
+            {
+                MV->Shape[VarRec->JoinedDimen] = Count[VarRec->JoinedDimen];
+            }
+        }
         if (MMs)
         {
             char *BlockMinAddr = (((char *)MMs) + 2 * BlockID * VarRec->ElementSize);

@@ -1132,6 +1132,12 @@ extern void SstStreamDestroy(SstStream Stream)
         Stream->Timesteps = Next;
     }
 
+    while (Stream->StepRequestQueue)
+    {
+        StepRequest Request = Stream->StepRequestQueue;
+        Stream->StepRequestQueue = Request->Next;
+        free(Request);
+    }
     if (Stream->DP_Stream)
     {
         STREAM_MUTEX_UNLOCK(Stream);
