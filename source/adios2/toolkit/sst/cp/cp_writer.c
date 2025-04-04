@@ -439,7 +439,8 @@ extern void WriterConnCloseHandler(CManager cm, CMConnection closed_conn, void *
     {
         CP_verbose(ParentWriterStream, PerRankVerbose,
                    "Writer-side Rank received a "
-                   "connection-close event on destroyed stream %p, ignored\n");
+                   "connection-close event on destroyed stream %p, ignored\n",
+                   ParentWriterStream);
         STREAM_MUTEX_UNLOCK(ParentWriterStream);
         return;
     }
@@ -2611,7 +2612,8 @@ extern void CP_ReleaseTimestepHandler(CManager cm, CMConnection conn, void *Msg_
     {
         CP_verbose(ParentStream, PerRankVerbose,
                    "Writer-side Rank received a "
-                   "timestep release event on destroyed stream %p, ignored\n");
+                   "timestep release event on destroyed stream %p, ignored\n",
+                   ParentStream);
         STREAM_MUTEX_UNLOCK(ParentStream);
         return;
     }
