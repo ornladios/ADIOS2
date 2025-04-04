@@ -7,6 +7,7 @@ conda.bat init bash
 Write-Host "::endgroup::"
 
 Write-Host "::group::Installing common deps"
+conda.bat config --set solver classic
 conda.bat config --remove channels defaults
 conda.bat config --add channels conda-forge
 conda.bat config --set channel_priority strict
