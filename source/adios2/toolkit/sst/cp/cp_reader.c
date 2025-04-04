@@ -384,7 +384,7 @@ attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params, SMPI
         if (Writer0Contact)
         {
 
-            CMContactString = malloc(strlen(Writer0Contact)); /* at least long enough */
+            CMContactString = malloc(strlen(Writer0Contact) + 1); /* +1 for null terminator */
             sscanf(Writer0Contact, "%p:%s", WriterFileID_p, CMContactString);
             //        printf("Writer contact info is fileID %p, contact info
             //        %s\n",
