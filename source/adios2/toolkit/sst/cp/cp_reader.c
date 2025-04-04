@@ -46,11 +46,11 @@
 #define STREAM_CONDITION_WAIT(Stream)                                                              \
     {                                                                                              \
         fprintf(stderr, "(PID %lx, TID %lx) CP_READER Dropping Condition Lock line %d\n",          \
-                (long)getpid(), (long)gettid(), __LINE__);                                         \
+                (unsigned long)getpid(), (unsigned long)gettid(), __LINE__);                       \
         Stream->Locked = 0;                                                                        \
         pthread_cond_wait(&Stream->DataCondition, &Stream->DataLock);                              \
         fprintf(stderr, "(PID %lx, TID %lx) CP_READER Acquired Condition Lock line %d\n",          \
-                (long)getpid(), (long)gettid(), __LINE__);                                         \
+                (unsigned long)getpid(), (unsigned long)gettid(), __LINE__);                       \
         Stream->Locked = 1;                                                                        \
     }
 #define STREAM_CONDITION_SIGNAL(Stream)                                                            \
@@ -342,8 +342,8 @@ static int HasAllPeers(SstStream Stream)
     if (!Stream->ConnectionsToWriter)
     {
         CP_verbose(Stream, PerRankVerbose,
-                   "(PID %lx, TID %lx) Waiting for first Peer notification\n", (long)gettid(),
-                   (long)getpid());
+                   "(PID %lx, TID %lx) Waiting for first Peer notification\n",
+                   (unsigned long)getpid(), (unsigned long)gettid());
         return 0;
     }
     i = 0;
@@ -384,7 +384,7 @@ attr_list ContactWriter(SstStream Stream, char *Filename, SstParams Params, SMPI
         if (Writer0Contact)
         {
 
-            CMContactString = malloc(strlen(Writer0Contact)); /* at least long enough */
+            CMContactString = malloc(strlen(Writer0Contact) + 1); /* +1 for null terminator */
             sscanf(Writer0Contact, "%p:%s", WriterFileID_p, CMContactString);
             //        printf("Writer contact info is fileID %p, contact info
             //        %s\n",
@@ -748,7 +748,7 @@ SstStream SstReaderOpen(const char *Name, SstParams Params, SMPI_Comm comm)
     sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReaderActivateFormat, &Msg,
                             &Msg.WSR_Stream);
     CP_verbose(Stream, PerStepVerbose,
-               "Finish opening Stream \"%s\", starting with Step number %d\n", Filename,
+               "Finish opening Stream \"%s\", starting with Step number %ld\n", Filename,
                ReturnData->StartingStepNumber);
 
     return Stream;
@@ -817,7 +817,7 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadat
         {
             CP_verbose(Stream, PerStepVerbose,
                        "Sending ReleaseTimestep message for PRIOR DISCARD "
-                       "timestep %d, one to each writer\n",
+                       "timestep %ld, one to each writer\n",
                        tsm->Timestep);
             sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
                                     &Msg.WSR_Stream);
@@ -825,7 +825,7 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadat
         else
         {
             CP_verbose(Stream, PerStepVerbose,
-                       "Received discard notice for timestep %d, "
+                       "Received discard notice for timestep %ld, "
                        "ignoring in PRIOR DISCARD\n",
                        tsm->Timestep);
         }
@@ -854,7 +854,7 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadat
             (tsm->Metadata->DataSize + tsm->AttributeData->DataSize);
     }
     CP_verbose(Stream, PerRankVerbose,
-               "Received a Timestep metadata message for timestep %d, "
+               "Received a Timestep metadata message for timestep %ld, "
                "signaling condition\n",
                tsm->Timestep);
 
@@ -870,7 +870,7 @@ void queueTimestepMetadataMsgAndNotify(SstStream Stream, struct _TimestepMetadat
          */
         CP_verbose(Stream, TraceVerbose,
                    "Got a new timestep in AlwaysProvideLatestTimestep mode, "
-                   "discard older than %d\n",
+                   "discard older than %ld\n",
                    tsm->Timestep);
         releasePriorTimesteps(Stream, tsm->Timestep);
     }
@@ -954,7 +954,7 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v, voi
         if (Msg->Metadata == NULL)
         {
             CP_verbose(Stream, PerRankVerbose,
-                       "Received a message that timestep %d has been discarded\n", Msg->Timestep);
+                       "Received a message that timestep %ld has been discarded\n", Msg->Timestep);
 
             /*
              * before discarding, install any precious metadata from this
@@ -976,7 +976,7 @@ void CP_TimestepMetadataHandler(CManager cm, CMConnection conn, void *Msg_v, voi
         else
         {
             CP_verbose(Stream, PerStepVerbose,
-                       "Received an incoming metadata message for timestep %d\n", Msg->Timestep);
+                       "Received an incoming metadata message for timestep %ld\n", Msg->Timestep);
         }
         /* arrange for this message data to stay around */
         CMtake_buffer(cm, Msg);
@@ -1084,7 +1084,7 @@ extern void CP_WriterCloseHandler(CManager cm, CMConnection conn, void *Msg_v, v
     STREAM_MUTEX_LOCK(Stream);
     CP_verbose(Stream, PerStepVerbose,
                "Received a writer close message. "
-               "Timestep %d was the final timestep.\n",
+               "timestep %ld was the final timestep.\n",
                Msg->FinalTimestep);
 
     Stream->FinalTimestep = Msg->FinalTimestep;
@@ -1107,7 +1107,7 @@ extern void CP_CommPatternLockedHandler(CManager cm, CMConnection conn, void *Ms
 
     STREAM_MUTEX_LOCK(Stream);
     CP_verbose(Stream, PerStepVerbose,
-               "Received a CommPatternLocked message, beginning with Timestep %d.\n",
+               "Received a CommPatternLocked message, beginning with timestep %ld.\n",
                Msg->Timestep);
 
     Stream->CommPatternLocked = 1;
@@ -1134,7 +1134,7 @@ static ssize_t MaxQueuedMetadata(SstStream Stream)
         }
         Next = Next->Next;
     }
-    CP_verbose(Stream, TraceVerbose, "MaxQueued Timestep returning %ld\n", MaxTimestep);
+    CP_verbose(Stream, TraceVerbose, "MaxQueued Timestep returning %zd\n", MaxTimestep);
     return MaxTimestep;
 }
 
@@ -1157,7 +1157,7 @@ static ssize_t NextQueuedMetadata(SstStream Stream)
         }
         Next = Next->Next;
     }
-    CP_verbose(Stream, TraceVerbose, "NextQueued Timestep returning %ld\n", MinTimestep);
+    CP_verbose(Stream, TraceVerbose, "NextQueued Timestep returning %zd\n", MinTimestep);
     return MinTimestep;
 }
 
@@ -1247,7 +1247,7 @@ static void releasePriorTimesteps(SstStream Stream, ssize_t Latest)
 {
     struct _TimestepMetadataList *Next, *Last;
     STREAM_ASSERT_LOCKED(Stream);
-    CP_verbose(Stream, PerRankVerbose, "Releasing any timestep earlier than %d\n", Latest);
+    CP_verbose(Stream, PerRankVerbose, "Releasing any timestep earlier than %ld\n", Latest);
     Next = Stream->Timesteps;
     Last = NULL;
     while (Next)
@@ -1283,7 +1283,7 @@ static void releasePriorTimesteps(SstStream Stream, ssize_t Latest)
              */
             CP_verbose(Stream, PerRankVerbose,
                        "Sending ReleaseTimestep message for RELEASE "
-                       "PRIOR timestep %d, one to each writer\n",
+                       "PRIOR timestep %ld, one to each writer\n",
                        This->MetadataMsg->Timestep);
 
             if (Last == NULL)
@@ -1357,7 +1357,7 @@ static void FreeTimestep(SstStream Stream, ssize_t Timestep)
 static TSMetadataList waitForNextMetadata(SstStream Stream, ssize_t LastTimestep)
 {
     TSMetadataList FoundTS = NULL;
-    CP_verbose(Stream, PerRankVerbose, "Wait for next metadata after last timestep %d\n",
+    CP_verbose(Stream, PerRankVerbose, "Wait for next metadata after last timestep %ld\n",
                LastTimestep);
     while (1)
     {
@@ -1365,7 +1365,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, ssize_t LastTimestep
         Next = Stream->Timesteps;
         while (Next)
         {
-            CP_verbose(Stream, TraceVerbose, "Examining metadata for Timestep %d\n",
+            CP_verbose(Stream, TraceVerbose, "Examining metadata for timestep %ld\n",
                        Next->MetadataMsg->Timestep);
             if (((Next->MetadataMsg->Metadata == NULL) ||
                  (Next->MetadataMsg->Timestep < Stream->DiscardPriorTimestep)) &&
@@ -1381,7 +1381,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, ssize_t LastTimestep
                  */
                 CP_verbose(Stream, PerRankVerbose,
                            "SstAdvanceStep installing precious "
-                           "metadata for discarded TS %d\n",
+                           "metadata for discarded TS %ld\n",
                            Next->MetadataMsg->Timestep);
                 if (Stream->WriterConfigParams->MarshalMethod == SstMarshalFFS)
                 {
@@ -1415,7 +1415,7 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, ssize_t LastTimestep
         }
         if (FoundTS)
         {
-            CP_verbose(Stream, PerRankVerbose, "Returning metadata for Timestep %d\n",
+            CP_verbose(Stream, PerRankVerbose, "Returning metadata for timestep %ld\n",
                        FoundTS->MetadataMsg->Timestep);
             Stream->CurrentWorkingTimestep = FoundTS->MetadataMsg->Timestep;
             return FoundTS;
@@ -1424,7 +1424,8 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, ssize_t LastTimestep
         if ((Stream->Status != Established) ||
             ((Stream->FinalTimestep != SSIZE_T_MAX) && (Stream->FinalTimestep >= LastTimestep)))
         {
-            CP_verbose(Stream, TraceVerbose, "Stream Final Timestep is %d, last timestep was %d\n",
+            CP_verbose(Stream, TraceVerbose,
+                       "Stream Final Timestep is %ld, last timestep was %ld\n",
                        Stream->FinalTimestep, LastTimestep);
             if (Stream->Status == NotOpen)
             {
@@ -1448,10 +1449,11 @@ static TSMetadataList waitForNextMetadata(SstStream Stream, ssize_t LastTimestep
             Stream->CurrentWorkingTimestep = -1;
             return NULL;
         }
-        CP_verbose(Stream, PerRankVerbose, "Waiting for metadata for a Timestep later than TS %d\n",
-                   LastTimestep);
-        CP_verbose(Stream, TraceVerbose, "(PID %lx, TID %lx) Stream status is %s\n", (long)getpid(),
-                   (long)gettid(), SSTStreamStatusStr[Stream->Status]);
+        CP_verbose(Stream, PerRankVerbose,
+                   "Waiting for metadata for a Timestep later than TS %ld\n", LastTimestep);
+        CP_verbose(Stream, TraceVerbose, "(PID %lx, TID %lx) Stream status is %s\n",
+                   (unsigned long)getpid(), (unsigned long)gettid(),
+                   SSTStreamStatusStr[Stream->Status]);
         /* wait until we get the timestep metadata or something else changes */
         STREAM_CONDITION_WAIT(Stream);
     }
@@ -1582,7 +1584,8 @@ static void sendOneToEachWriterRank(SstStream Stream, CMFormat f, void *Msg, voi
                 case Opening:
                 case Established:
                     CP_verbose(Stream, CriticalVerbose,
-                               "Message failed to send to writer %d (%p)\n", peer, *WS_StreamPtr);
+                               "Message failed to send to writer %d (%p)\n", peer,
+                               (void *)*WS_StreamPtr);
                     break;
                 case PeerClosed:
                 case PeerFailed:
@@ -1612,7 +1615,8 @@ static void sendOneToEachWriterRank(SstStream Stream, CMFormat f, void *Msg, voi
                 case Opening:
                 case Established:
                     CP_verbose(Stream, CriticalVerbose,
-                               "Message failed to send to writer %d (%p)\n", peer, *WS_StreamPtr);
+                               "Message failed to send to writer %d (%p)\n", peer,
+                               (void *)*WS_StreamPtr);
                     break;
                 case PeerClosed:
                 case PeerFailed:
@@ -1674,7 +1678,7 @@ extern void SstReleaseStep(SstStream Stream)
      * Streams)
      */
     CP_verbose(Stream, PerRankVerbose,
-               "Sending ReleaseTimestep message for timestep %d, one to each writer\n", Timestep);
+               "Sending ReleaseTimestep message for timestep %ld, one to each writer\n", Timestep);
     sendOneToEachWriterRank(Stream, Stream->CPInfo->SharedCM->ReleaseTimestepFormat, &Msg,
                             &Msg.WSR_Stream);
 
@@ -1835,7 +1839,7 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
             /* there was a peerClosed setting on rank0, we'll close */
             Stream->Status = PeerClosed;
             CP_verbose(Stream, PerStepVerbose,
-                       "SstAdvanceStep returning EndOfStream at timestep %d\n",
+                       "SstAdvanceStep returning EndOfStream at timestep %ld\n",
                        Stream->ReaderTimestep);
             return SstEndOfStream;
         }
@@ -1844,7 +1848,7 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
             /* there was a peerFailed setting on rank0, we'll fail */
             Stream->Status = PeerFailed;
             CP_verbose(Stream, PerStepVerbose,
-                       "SstAdvanceStep returning EndOfStream at timestep %d\n",
+                       "SstAdvanceStep returning EndOfStream at timestep %ld\n",
                        Stream->ReaderTimestep);
             STREAM_MUTEX_UNLOCK(Stream);
             Stream->DP_Interface->notifyConnFailure(&Svcs, Stream->DP_Stream, 0);
@@ -1865,7 +1869,7 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
              * timestep after this point.  It has to be released upon
              * arrival */
             CP_verbose(Stream, PerStepVerbose,
-                       "timed or Latest timestep, determined NextTimestep %d\n", NextTimestep);
+                       "timed or Latest timestep, determined Nexttimestep %ld\n", NextTimestep);
             Stream->DiscardPriorTimestep = NextTimestep;
             releasePriorTimesteps(Stream, NextTimestep);
         }
@@ -1911,20 +1915,20 @@ static SstStatusValue SstAdvanceStepPeer(SstStream Stream, SstStepMode mode,
         Stream->CurrentWorkingTimestep = Entry->MetadataMsg->Timestep;
         Stream->CurrentMetadata = Mdata;
 
-        CP_verbose(Stream, PerStepVerbose, "SstAdvanceStep returning Success on timestep %d\n",
+        CP_verbose(Stream, PerStepVerbose, "SstAdvanceStep returning Success on timestep %ld\n",
                    Entry->MetadataMsg->Timestep);
         return SstSuccess;
     }
     if (Stream->Status == PeerClosed)
     {
         CP_verbose(Stream, PerStepVerbose,
-                   "SstAdvanceStepPeer returning EndOfStream at timestep %d\n",
+                   "SstAdvanceStepPeer returning EndOfStream at timestep %ld\n",
                    Stream->ReaderTimestep);
         return SstEndOfStream;
     }
     else
     {
-        CP_verbose(Stream, PerStepVerbose, "SstAdvanceStep returning FatalError at timestep %d\n",
+        CP_verbose(Stream, PerStepVerbose, "SstAdvanceStep returning FatalError at timestep %ld\n",
                    Stream->ReaderTimestep);
         return SstFatalError;
     }
@@ -2011,14 +2015,14 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
             {
                 CP_verbose(Stream, PerStepVerbose,
                            "SstAdvanceStepMin returning FatalError because of "
-                           "connection failure at timestep %d\n",
+                           "connection failure at timestep %ld\n",
                            Stream->ReaderTimestep);
                 return_value = SstFatalError;
             }
             else if ((NextTimestep == -1) && (Stream->Status == PeerClosed))
             {
                 CP_verbose(Stream, PerStepVerbose,
-                           "SstAdvanceStepMin returning EndOfStream at timestep %d\n",
+                           "SstAdvanceStepMin returning EndOfStream at timestep %ld\n",
                            Stream->ReaderTimestep);
                 return_value = SstEndOfStream;
             }
@@ -2036,7 +2040,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
                  * timestep after this point.  It has to be released upon
                  * arrival */
                 CP_verbose(Stream, PerStepVerbose,
-                           "timed or Latest timestep, determined NextTimestep %d\n", NextTimestep);
+                           "timed or Latest timestep, determined Nexttimestep %ld\n", NextTimestep);
                 Stream->DiscardPriorTimestep = NextTimestep;
                 releasePriorTimesteps(Stream, NextTimestep);
             }
@@ -2045,7 +2049,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
         {
             CP_verbose(Stream, PerStepVerbose,
                        "SstAdvanceStepMin returning FatalError because of "
-                       "conn failure at timestep %d\n",
+                       "conn failure at timestep %ld\n",
                        Stream->ReaderTimestep);
             return_value = SstFatalError;
         }
@@ -2067,7 +2071,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
                 {
                     CP_verbose(Stream, PerStepVerbose,
                                "SstAdvanceStepMin rank 0 returning "
-                               "EndOfStream at timestep %d\n",
+                               "EndOfStream at timestep %ld\n",
                                Stream->ReaderTimestep);
                     msg.ReturnValue = SstEndOfStream;
                 }
@@ -2075,7 +2079,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
                 {
                     CP_verbose(Stream, PerStepVerbose,
                                "SstAdvanceStepMin rank 0 returning "
-                               "FatalError at timestep %d\n",
+                               "FatalError at timestep %ld\n",
                                Stream->ReaderTimestep);
                     msg.ReturnValue = SstFatalError;
                 }
@@ -2171,7 +2175,7 @@ static SstStatusValue SstAdvanceStepMin(SstStream Stream, SstStepMode mode, cons
         Mdata->FreeBlock = free_block;
         Stream->CurrentMetadata = Mdata;
 
-        CP_verbose(Stream, PerStepVerbose, "SstAdvanceStep returning Success on timestep %d\n",
+        CP_verbose(Stream, PerStepVerbose, "SstAdvanceStep returning Success on timestep %ld\n",
                    MetadataMsg->Timestep);
         return SstSuccess;
     }
