@@ -1,0 +1,22 @@
+name: upload-ccache
+description: upload ccache artifacts
+inputs:
+  key:
+    description: "cache key name"
+    required: true
+  setup-ccache-outputs:
+    description: "Output of ccache"
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Print ccache statistics
+      shell: bash
+      run: ccache -s
+    - name: Save cache
+      uses: actions/cache/save@v4
+      if: ${{ github.ref_name == 'master' && inputs.setup-ccache-outputs.cache-hit != 'true' }}
+      id: save-cache
+      with:
+        path: .ccache
+        key: ccache-${{ inputs.cache-key }}-${{ github.sha }}
