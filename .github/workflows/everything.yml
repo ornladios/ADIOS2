@@ -62,10 +62,10 @@ jobs:
         run: |
           scripts/ci/gh-actions/get-changed-files.sh
           echo "::group::Test script output files"
-          ls -la *-changed-files.txt
+          ls -la ./*-changed-files.txt
           NUM_CHANGES=$(wc -l < filtered-changed-files.txt)
           echo "Number of files changed (filtered): ${NUM_CHANGES}"
-          echo "num_code_changes=${NUM_CHANGES}" >> $GITHUB_OUTPUT
+          echo "num_code_changes=${NUM_CHANGES}" >> "${GITHUB_OUTPUT}"
 
 #######################################
 # Formatting jobs
@@ -175,16 +175,10 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
-      - name: Restore cache
-        uses: actions/cache/restore@v4
-        id: restore-cache
+      - uses: ./source/.github/actions/setup-ccache
+        id: setup-ccache
         with:
-          path: .ccache
-          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ github.sha }}
-          restore-keys: |
-            ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || ''}}
-      - name: Configure cache
-        run: ccache -z
+          key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || ''}}
       - name: Setup
         run: gha/scripts/ci/gh-actions/linux-setup.sh
       - name: Update
@@ -193,15 +187,10 @@ jobs:
         run: gha/scripts/ci/gh-actions/run.sh configure
       - name: Build
         run: gha/scripts/ci/gh-actions/run.sh build
-      - name: Print ccache statistics
-        run: ccache -s | tee $GITHUB_STEP_SUMMARY
-      - name: Save cache
-        uses: actions/cache/save@v4
-        if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
-        id: save-cache
+      - uses: ./source/.github/actions/upload-ccache
         with:
-          path: .ccache
-          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || ''}}-${{ github.sha }}
+          key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}${{ matrix.shared == 'static' && '-static' || ''}}
+          setup-ccache-outputs: steps.setup-ccache.outputs
       - name: Test
         if: ${{ matrix.constrains != 'build_only' }}
         run: gha/scripts/ci/gh-actions/run.sh test
@@ -240,16 +229,10 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           path: source
-      - name: Restore cache
-        uses: actions/cache/restore@v4
-        id: restore-cache
+      - uses: ./source/.github/actions/setup-ccache
+        id: setup-ccache
         with:
-          path: .ccache
-          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
-          restore-keys: |
-            ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
-      - name: Configure cache
-        run: ccache -z
+          key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
       - name: Setup
         run: gha/scripts/ci/gh-actions/linux-setup.sh
       - name: Update
@@ -258,17 +241,10 @@ jobs:
         run: gha/scripts/ci/gh-actions/run.sh configure
       - name: Build
         run: gha/scripts/ci/gh-actions/run.sh build
-      - name: Print ccache statistics
-        run: ccache -s
-      - name: Save cache
-        uses: actions/cache/save@v4
-        if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
-        id: save-cache
+      - uses: ./source/.github/actions/upload-ccache
         with:
-          path: .ccache
-          key: ccache-${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ github.sha }}
-      - name: Test
-        run: gha/scripts/ci/gh-actions/run.sh test
+          key: ${{ matrix.os }}-${{ matrix.compiler }}-${{ matrix.parallel }}
+          setup-ccache-outputs: steps.setup-ccache.outputs
 
   macos:
     needs: [format, git_checks]
@@ -318,31 +294,20 @@ jobs:
           path: source
       - name: Setup
         run: gha/scripts/ci/gh-actions/macos-setup.sh
-      - name: Restore cache
-        uses: actions/cache/restore@v4
-        id: restore-cache
+      - uses: ./source/.github/actions/setup-ccache
+        id: setup-ccache
         with:
-          path: .ccache
-          key: ccache-${{ matrix.image}}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ matrix.shared }}-${{ github.sha }}
-          restore-keys: |
-            ccache-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ matrix.shared }}
-      - name: Configure cache
-        run: ccache -z
+          key: ${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ matrix.shared }}
       - name: Update
         run: gha/scripts/ci/gh-actions/run.sh update
       - name: Configure
         run: gha/scripts/ci/gh-actions/run.sh configure
       - name: Build
         run: gha/scripts/ci/gh-actions/run.sh build
-      - name: Print ccache statistics
-        run: ccache -s
-      - name: Save cache
-        uses: actions/cache/save@v4
-        if: ${{ github.ref_name == 'master' && steps.restore-cache.outputs.cache-hit != 'true' }}
-        id: save-cache
+      - uses: ./source/.github/actions/upload-ccache
         with:
-          path: .ccache
-          key: ccache-${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ matrix.shared }}-${{ github.sha }}
+          key: ${{ matrix.image }}-${{ matrix.compiler }}-${{ matrix.parallel }}-${{ matrix.shared }}
+          setup-ccache-outputs: steps.setup-ccache.outputs
       - name: Test
         run: gha/scripts/ci/gh-actions/run.sh test
 
@@ -458,12 +423,12 @@ jobs:
             target_tag="${GITHUB_REF##refs/heads/}-${{ matrix.baseos }}"
             docker tag \
                 ornladios/adios2:ci-tmp \
-                ornladios/adios2:${target_tag}
+                "ornladios/adios2:${target_tag}"
             docker login \
                 --username="${DOCKERHUB_USERNAME}" \
                 --password="${DOCKERHUB_PASSWORD}"
             docker push \
-                ornladios/adios2:${target_tag}
+                "ornladios/adios2:${target_tag}"
 
 #######################################
 # Contract testing jobs
