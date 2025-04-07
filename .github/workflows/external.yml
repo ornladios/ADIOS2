@@ -10,6 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: vicentebolea/cdash-status@release
+      - uses: Kitware/cdash-status@release
         with:
           project: Adios
