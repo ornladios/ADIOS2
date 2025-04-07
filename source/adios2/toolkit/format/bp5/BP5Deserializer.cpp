@@ -2370,7 +2370,6 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
     MV->IsReverseDims = ((MV->Dims > 1) && (m_WriterIsRowMajor != m_ReaderIsRowMajor));
 
     MV->WasLocalValue = (VarRec->OrigShapeID == ShapeID::LocalValue);
-    MV->WasLocalValue |= (VarRec->OrigShapeID == ShapeID::JoinedArray);
     if ((VarRec->OrigShapeID == ShapeID::LocalValue) ||
         (VarRec->OrigShapeID == ShapeID::GlobalValue))
     {
@@ -2414,6 +2413,10 @@ MinVarInfo *BP5Deserializer::MinBlocksInfo(const VariableBase &Var, size_t RelSt
                 Id += WriterBlockCount;
             }
         }
+    }
+    if (VarRec->OrigShapeID == ShapeID::JoinedArray)
+    {
+        MV->Shape = VarRec->LastJoinedShape;
     }
     MV->BlocksInfo.reserve(Id);
 
@@ -2736,37 +2739,16 @@ bool BP5Deserializer::VarShape(const VariableBase &Var, const size_t RelStep, Di
     }
     else
     {
-        // Joined array case, first Shape gives us structure, then add joined dimensions
-        bool first = true;
-        for (size_t WriterRank = 0; WriterRank < WriterCohortSize(AbsStep); WriterRank++)
+        // Joined array case.  This was calculated during metadata installation
+        if (VarRec->LastJoinedShape)
         {
-            MetaArrayRec *writer_meta_base =
-                (MetaArrayRec *)GetMetadataBase(VarRec, AbsStep, WriterRank);
-            if (writer_meta_base && writer_meta_base->Shape)
+            Shape.resize(VarRec->DimCount);
+            for (size_t i = 0; i < VarRec->DimCount; i++)
             {
-                for (size_t Block = 0; Block < writer_meta_base->BlockCount; Block++)
-                {
-                    if (first)
-                    {
-                        Shape.resize(writer_meta_base->Dims);
-                        for (size_t i = 0; i < writer_meta_base->Dims; i++)
-                        {
-                            Shape[i] = writer_meta_base->Shape[i];
-                        }
-                        Shape[VarRec->JoinedDimen] =
-                            writer_meta_base->Count[VarRec->JoinedDimen + VarRec->DimCount * Block];
-                        first = false;
-                    }
-                    else
-                    {
-                        Shape[VarRec->JoinedDimen] +=
-                            writer_meta_base->Count[VarRec->JoinedDimen + VarRec->DimCount * Block];
-                    }
-                }
+                Shape[i] = VarRec->LastJoinedShape[i];
             }
-        }
-        if (!first)
             return true;
+        }
     }
     return false;
 }
