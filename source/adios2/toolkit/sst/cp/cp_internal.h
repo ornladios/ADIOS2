@@ -198,6 +198,7 @@ struct _SstStream
     char *AbsoluteFilename;
     int GlobalOpRequired;
     StepRequest StepRequestQueue;
+    int CloseMessagesSent;
 
     /* writer side marshal info */
     void *WriterMarshalData;
