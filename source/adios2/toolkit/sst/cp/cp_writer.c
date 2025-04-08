@@ -1505,8 +1505,8 @@ On writer close:
 void SstWriterClose(SstStream Stream)
 {
     struct timeval CloseTime, Diff;
-    Stream->CloseTimestepCount = Stream->WriterTimestep;
     STREAM_MUTEX_LOCK(Stream);
+    Stream->CloseTimestepCount = Stream->WriterTimestep;
     if ((Stream->ConfigParams->StepDistributionMode != StepsOnDemand) ||
         (Stream->LastDemandTimestep == Stream->CloseTimestepCount))
     {
