@@ -1486,6 +1486,7 @@ static void SendCloseMsgs(SstStream Stream)
 
     sendOneToEachReaderRank(Stream, Stream->CPInfo->SharedCM->WriterCloseFormat, &Msg,
                             &Msg.RS_Stream);
+    Stream->CloseMessagesSent = 1;
 }
 
 /*
@@ -1504,8 +1505,8 @@ On writer close:
 void SstWriterClose(SstStream Stream)
 {
     struct timeval CloseTime, Diff;
-    Stream->CloseTimestepCount = Stream->WriterTimestep;
     STREAM_MUTEX_LOCK(Stream);
+    Stream->CloseTimestepCount = Stream->WriterTimestep;
     if ((Stream->ConfigParams->StepDistributionMode != StepsOnDemand) ||
         (Stream->LastDemandTimestep == Stream->CloseTimestepCount))
     {
@@ -2530,6 +2531,12 @@ void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn, void *Msg_v, vo
 
     STREAM_MUTEX_LOCK(CP_WSR_Stream->ParentStream);
     CPTimestepList List = Stream->QueuedTimesteps;
+    if (Stream->CloseMessagesSent)
+    {
+        CP_verbose(Stream, TraceVerbose, "In RequestStepHandler, stream closing, ignore\n");
+        STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
+        return;
+    }
     int RequestingReader = -1;
     for (int i = 0; i < Stream->ReaderCount; i++)
     {
@@ -2538,6 +2545,14 @@ void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn, void *Msg_v, vo
             RequestingReader = i;
         }
     }
+    if (RequestingReader == -1)
+    {
+        CP_verbose(Stream, TraceVerbose,
+                   "In RequestStepHandler, RequestingReader not found, ignore\n");
+        STREAM_MUTEX_UNLOCK(CP_WSR_Stream->ParentStream);
+        return;
+    }
+
     while (List)
     {
         size_t NextTS = Stream->LastDemandTimestep + 1;
@@ -2580,7 +2595,6 @@ void CP_ReaderRequestStepHandler(CManager cm, CMConnection conn, void *Msg_v, vo
     }
 
     CP_verbose(Stream, TraceVerbose, "In RequestStepHandler, queueing request\n");
-    assert(RequestingReader != -1);
     StepRequest Request = calloc(sizeof(*Request), 1);
     Request->RequestingReader = RequestingReader;
     if (!Stream->StepRequestQueue)
