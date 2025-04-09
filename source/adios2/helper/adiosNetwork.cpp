@@ -249,7 +249,8 @@ void HandshakeWriter(Comm const &comm, size_t &appID, std::vector<std::string> &
     {
         std::string addr =
             "tcp://" + ip + ":" +
-            std::to_string(basePort + (100 * appID) + (mpiRank % 1000) * channelsPerRank + i) +
+            std::to_string(basePort + (100 * appID) +
+                           (mpiRank % 1000) * static_cast<unsigned long>(channelsPerRank) + i) +
             "\0";
         fullAddresses.push_back(addr);
     }
@@ -257,7 +258,8 @@ void HandshakeWriter(Comm const &comm, size_t &appID, std::vector<std::string> &
     std::string localAddressesStr = localAddressesJson.dump();
     std::vector<char> localAddressesChar(64 * channelsPerRank, '\0');
     std::memcpy(localAddressesChar.data(), localAddressesStr.c_str(), localAddressesStr.size());
-    std::vector<char> globalAddressesChar(64 * channelsPerRank * mpiSize, '\0');
+    std::vector<char> globalAddressesChar(static_cast<size_t>(64) * channelsPerRank * mpiSize,
+                                          '\0');
     comm.GatherArrays(localAddressesChar.data(), 64 * channelsPerRank, globalAddressesChar.data());
 
     // Writing handshake file
@@ -266,7 +268,9 @@ void HandshakeWriter(Comm const &comm, size_t &appID, std::vector<std::string> &
         nlohmann::json globalAddressesJson;
         for (int i = 0; i < mpiSize; ++i)
         {
-            auto j = nlohmann::json::parse(&globalAddressesChar[i * 64 * channelsPerRank]);
+            auto j = nlohmann::json::parse(
+                &globalAddressesChar[static_cast<size_t>(i) * static_cast<size_t>(64) *
+                                     static_cast<size_t>(channelsPerRank)]);
             for (auto &i : j)
             {
                 globalAddressesJson.push_back(i);
