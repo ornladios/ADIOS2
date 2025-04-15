@@ -20,7 +20,16 @@ void IOChrono::Start(const std::string process) noexcept
 {
     if (m_IsActive)
     {
-        m_Timers.at(process).Resume();
+        try
+        {
+            m_Timers.at(process).Resume();
+        }
+        catch (...)
+        {
+            std::cout << "Adding timer \"" << process << "\" didn't exist." << std::endl;
+            m_Timers.emplace(process, profiling::Timer(process, DefaultTimeUnitEnum, false));
+            m_Timers.at(process).Resume();
+        }
     }
 }
 
@@ -28,7 +37,14 @@ void IOChrono::Stop(const std::string process)
 {
     if (m_IsActive)
     {
-        m_Timers.at(process).Pause();
+        try
+        {
+            m_Timers.at(process).Pause();
+        }
+        catch (...)
+        {
+            std::cout << "Timer \"" << process << "\" doesn't exist." << std::endl;
+        }
     }
 }
 

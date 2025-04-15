@@ -28,20 +28,6 @@
 #include <caliper/cali.h>
 #include <daos.h>
 #include <daos_obj.h>
-#include <mpi.h>
-
-#define FAIL(fmt, ...)                                                                             \
-    do                                                                                             \
-    {                                                                                              \
-        fprintf(stderr, "Process %d(%s): " fmt " aborting\n", m_Comm.Rank(), node, ##__VA_ARGS__); \
-        MPI_Abort(MPI_COMM_WORLD, 1);                                                              \
-    } while (0)
-#define ASSERT(cond, ...)                                                                          \
-    do                                                                                             \
-    {                                                                                              \
-        if (!(cond))                                                                               \
-            FAIL(__VA_ARGS__);                                                                     \
-    } while (0)
 
 #define MAX_AGGREGATE_METADATA_SIZE (5ULL * 1024 * 1024 * 1024)
 #define chunk_size_1mb 1048576
@@ -172,6 +158,7 @@ private:
     std::vector<std::string> m_MetadataIndexFileNames;
     std::vector<std::string> m_DrainMetadataIndexFileNames;
     std::vector<std::string> m_ActiveFlagFileNames;
+    std::string m_OIDFileName;
 
     bool m_BetweenStepPairs = false;
 
