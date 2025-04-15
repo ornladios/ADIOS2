@@ -76,6 +76,7 @@ public:
     std::vector<std::string>
     GetBPMetaMetadataFileNames(const std::vector<std::string> &names) const noexcept;
     std::string GetBPMetadataFileName(const std::string &name) const noexcept;
+    std::string GetOIDFileName(const std::string &name) const noexcept;
     std::string GetBPMetaMetadataFileName(const std::string &name) const noexcept;
     std::vector<std::string>
     GetBPMetadataIndexFileNames(const std::vector<std::string> &names) const noexcept;

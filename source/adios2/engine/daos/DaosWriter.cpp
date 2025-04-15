@@ -27,6 +27,19 @@
 #define DEBUG_BADALLOC
 #undef DEBUG_BADALLOC
 
+#define FAIL(fmt, ...)                                                                             \
+    do                                                                                             \
+    {                                                                                              \
+        fprintf(stderr, "Process %d(%s): " fmt " aborting\n", m_Comm.Rank(), node, ##__VA_ARGS__); \
+        exit(1);                                                                                   \
+    } while (0)
+#define ASSERT(cond, ...)                                                                          \
+    do                                                                                             \
+    {                                                                                              \
+        if (!(cond))                                                                               \
+            FAIL(__VA_ARGS__);                                                                     \
+    } while (0)
+
 namespace adios2
 {
 namespace core
@@ -92,7 +105,7 @@ StepStatus DaosWriter::BeginStep(StepMode mode, const float timeoutSeconds)
         TimePoint wait_start = Now();
         if (m_WriteFuture.valid())
         {
-            m_Profiler.Start("WaitOnAsync");
+            m_Profiler.Start("BS_WaitOnAsync");
             m_WriteFuture.get();
             m_Comm.Barrier();
             AsyncWriteDataCleanup();
@@ -108,7 +121,7 @@ StepStatus DaosWriter::BeginStep(StepMode mode, const float timeoutSeconds)
                               << std::endl;
                 }
             }
-            m_Profiler.Stop("WaitOnAsync");
+            m_Profiler.Stop("BS_WaitOnAsync");
         }
     }
 
@@ -524,7 +537,7 @@ void DaosWriter::MarshalAttributes()
 void DaosWriter::DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &TSInfo)
 {
     /* Use MPI_Allgather to gather list_metadata_size from all processes */
-    uint64_t list_metadata_size[m_Comm.Size()];
+    uint64_t *list_metadata_size = (uint64_t *)malloc(sizeof(uint64_t) * m_Comm.Size());
     m_Comm.Allgather((uint64_t *)&TSInfo.MetaEncodeBuffer->m_FixedSize, 1,
                      (uint64_t *)list_metadata_size, 1);
 
@@ -589,6 +602,7 @@ void DaosWriter::DaosArrayWriteMetadata(format::BP5Serializer::TimestepInfo &TSI
         ASSERT(rc == 0, "daos_kv_put() failed with %d", rc);
         CALI_MARK_END("DaosWriter::daos_kv_put");
     }
+    free(list_metadata_size);
 }
 
 void DaosWriter::DaosKVWriteMetadata(format::BP5Serializer::TimestepInfo &TSInfo)
@@ -629,9 +643,9 @@ void DaosWriter::EndStep()
       std::cout << "END STEP starts at: " << ts.count() << std::endl; */
     m_BetweenStepPairs = false;
     PERFSTUBS_SCOPED_TIMER("DaosWriter::EndStep");
-    m_Profiler.Start("endstep");
+    m_Profiler.Start("ES");
 
-    m_Profiler.Start("close_ts");
+    m_Profiler.Start("ES_close");
     MarshalAttributes();
 
     // true: advances step
@@ -642,9 +656,9 @@ void DaosWriter::EndStep()
      * AttributeEncodeBuffer and the data encode Vector */
 
     m_ThisTimestepDataSize += TSInfo.DataBuffer->Size();
-    m_Profiler.Stop("close_ts");
+    m_Profiler.Stop("ES_close");
 
-    m_Profiler.Start("AWD");
+    m_Profiler.Start("ES_AWD");
 
     // TSInfo destructor would delete the DataBuffer so we need to save it
     // for async IO and let the writer free it up when not needed anymore
@@ -663,12 +677,12 @@ void DaosWriter::EndStep()
     else
         delete databuf;
 
-    m_Profiler.Stop("AWD");
+    m_Profiler.Stop("ES_AWD");
 
     /*
      * Two-step metadata aggregation
      */
-    m_Profiler.Start("meta_lvl1");
+    m_Profiler.Start("ES_meta1");
     std::vector<char> MetaBuffer;
     // core::iovec m{TSInfo.MetaEncodeBuffer->Data(),
     // TSInfo.MetaEncodeBuffer->m_FixedSize};
@@ -684,7 +698,7 @@ void DaosWriter::EndStep()
     CALI_MARK_BEGIN("DaosWriter::meta_lvl1");
     if (m_Aggregator->m_Comm.Size() > 1)
     { // level 1
-        m_Profiler.Start("meta_gather1");
+        m_Profiler.Start("ES_meta1_gather");
         CALI_MARK_BEGIN("DaosWriter::meta_gather1");
         size_t LocalSize = MetaBuffer.size();
         std::vector<size_t> RecvCounts = m_Aggregator->m_Comm.GatherValues(LocalSize, 0);
@@ -702,7 +716,7 @@ void DaosWriter::EndStep()
         m_Aggregator->m_Comm.GathervArrays(MetaBuffer.data(), LocalSize, RecvCounts.data(),
                                            RecvCounts.size(), RecvBuffer.data(), 0);
         CALI_MARK_END("DaosWriter::meta_gather1");
-        m_Profiler.Stop("meta_gather1");
+        m_Profiler.Stop("ES_meta1_gather");
         if (m_Aggregator->m_Comm.Rank() == 0)
         {
             std::vector<format::BP5Base::MetaMetaInfoBlock> UniqueMetaMetaBlocks;
@@ -719,8 +733,8 @@ void DaosWriter::EndStep()
         }
     } // level 1
     CALI_MARK_END("DaosWriter::meta_lvl1");
-    m_Profiler.Stop("meta_lvl1");
-    m_Profiler.Start("meta_lvl2");
+    m_Profiler.Stop("ES_meta1");
+    m_Profiler.Start("ES_meta2");
     // level 2
     CALI_MARK_BEGIN("DaosWriter::meta_lvl2");
     if (m_Aggregator->m_Comm.Rank() == 0)
@@ -732,7 +746,7 @@ void DaosWriter::EndStep()
         if (m_CommAggregators.Size() > 1)
         {
             CALI_MARK_BEGIN("DaosWriter::meta_gather2");
-            m_Profiler.Start("meta_gather2");
+            m_Profiler.Start("ES_meta2_gather");
             RecvCounts = m_CommAggregators.GatherValues(LocalSize, 0);
             if (m_CommAggregators.Rank() == 0)
             {
@@ -749,7 +763,7 @@ void DaosWriter::EndStep()
                                             RecvCounts.size(), RecvBuffer.data(), 0);
             buf = &RecvBuffer;
             CALI_MARK_END("DaosWriter::meta_gather2");
-            m_Profiler.Stop("meta_gather2");
+            m_Profiler.Stop("ES_meta2_gather");
         }
         else
         {
@@ -778,7 +792,7 @@ void DaosWriter::EndStep()
             }
         }
     } // level 2
-    m_Profiler.Stop("meta_lvl2");
+    m_Profiler.Stop("ES_meta2");
     // Barrier to exclude stragglers from MPI_Allgather()
     m_Comm.Barrier();
     CALI_MARK_END("DaosWriter::meta_lvl2");
@@ -800,7 +814,7 @@ void DaosWriter::EndStep()
         }
     }
 
-    m_Profiler.Stop("endstep");
+    m_Profiler.Stop("ES");
     m_WriterStep++;
     m_EndStepEnd = Now();
     /* Seconds ts2 = Now() - m_EngineStart;
@@ -1193,6 +1207,7 @@ void DaosWriter::InitTransports()
         m_MetadataFileNames = GetBPMetadataFileNames(transportsNames);
         m_MetaMetadataFileNames = GetBPMetaMetadataFileNames(transportsNames);
         m_MetadataIndexFileNames = GetBPMetadataIndexFileNames(transportsNames);
+        m_OIDFileName = GetOIDFileName(transportsNames[0]);
     }
     m_FileMetadataManager.MkDirsBarrier(m_MetadataFileNames, m_IO.m_TransportsParameters,
                                         m_Parameters.NodeLocal || m_WriteToBB);
@@ -1409,7 +1424,7 @@ void DaosWriter::InitDAOS()
 
 void DaosWriter::WriteObjectIDsToFile()
 {
-    FILE *fp = fopen("./share/oid.txt", "w");
+    FILE *fp = fopen(m_OIDFileName.c_str(), "w");
     if (fp == NULL)
     {
         perror("fopen");
@@ -1869,13 +1884,13 @@ void DaosWriter::DoClose(const int transportIndex)
     Seconds wait(0.0);
     if (m_WriteFuture.valid())
     {
-        m_Profiler.Start("WaitOnAsync");
+        m_Profiler.Start("DC_WaitOnAsync1");
         m_AsyncWriteLock.lock();
         m_flagRush = true;
         m_AsyncWriteLock.unlock();
         m_WriteFuture.get();
         wait += Now() - wait_start;
-        m_Profiler.Stop("WaitOnAsync");
+        m_Profiler.Stop("DC_WaitOnAsync1");
     }
 
     m_FileDataManager.CloseFiles(transportIndex);
@@ -1893,7 +1908,7 @@ void DaosWriter::DoClose(const int transportIndex)
     if (m_Parameters.AsyncWrite)
     {
         // wait until all process' writing thread completes
-        m_Profiler.Start("WaitOnAsync");
+        m_Profiler.Start("DC_WaitOnAsync2");
         wait_start = Now();
         m_Comm.Barrier();
         AsyncWriteDataCleanup();
@@ -1903,7 +1918,7 @@ void DaosWriter::DoClose(const int transportIndex)
             std::cout << "Close waited " << wait.count() << " seconds on async threads"
                       << std::endl;
         }
-        m_Profiler.Stop("WaitOnAsync");
+        m_Profiler.Stop("DC_WaitOnAsync2");
     }
 
     if (m_Comm.Rank() == 0)
