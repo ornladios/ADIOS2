@@ -65,6 +65,8 @@ void HDF5WriterP::Init()
                                              ", in call to ADIOS Open or HDF5Writer constructor");
     }
 
+    m_H5File.PreInitParseParameters(m_IO);
+
     if (m_OpenMode == Mode::Append)
     {
         m_H5File.Append(m_Name, m_Comm);
