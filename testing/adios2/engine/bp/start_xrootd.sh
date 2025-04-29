@@ -8,3 +8,4 @@ if [ "$(id -u)" -eq 0 ]; then
 fi
 
 "$1" -b -l /tmp/xroot.log -c "$2"/xroot/etc/xrootd/xrootd-ssi.cfg "${XROOTD_USER[@]}"
+exit 0
