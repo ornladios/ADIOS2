@@ -8,6 +8,7 @@ add_subdirectory(skeleton)
 add_subdirectory(inline)
 add_subdirectory(null)
 add_subdirectory(nullcore)
+add_subdirectory(time-series)
 
 if(ADIOS2_HAVE_HDF5)
   add_subdirectory(hdf5)
