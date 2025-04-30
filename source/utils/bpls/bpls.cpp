@@ -3177,13 +3177,11 @@ Dims get_global_array_signature(core::Engine *fp, core::IO *io, core::Variable<T
                 {
                     minBlocks = fp->MinBlocksInfo(*variable, step);
                 }
-                if (minBlocks->Shape)
+                if (minBlocks->Shape.size())
                 {
                     for (size_t k = 0; k < ndim; k++)
                     {
-                        size_t n =
-                            (minBlocks->WasLocalValue ? reinterpret_cast<size_t>(minBlocks->Shape)
-                                                      : minBlocks->Shape[k]);
+                        size_t n = minBlocks->Shape[k];
                         if (firstStep)
                         {
                             dims[k] = n;
