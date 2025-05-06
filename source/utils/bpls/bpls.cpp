@@ -3706,7 +3706,7 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io, core::Variable<T> *
 {
     /* Print block info */
     DataType adiosvartype = variable->m_Type;
-    const auto minBlocks = fp->MinBlocksInfo(*variable, fp->CurrentStep());
+    const adios2::MinVarInfo *minBlocks = fp->MinBlocksInfo(*variable, fp->CurrentStep());
 
     std::vector<typename core::Variable<T>::BPInfo> coreBlocks;
 
@@ -3882,14 +3882,16 @@ void print_decomp_singlestep(core::Engine *fp, core::IO *io, core::Variable<T> *
             fprintf(outf, "\n");
             if (dump)
             {
-                if (!minBlocks)
+                if (minBlocks)
                 {
-                    readVarBlock(fp, io, variable, stepRelative, j, coreBlocks[j].Count,
-                                 coreBlocks[j].Start);
+                    Dims s(minBlocks->BlocksInfo[j].Start, minBlocks->BlocksInfo[j].Start + ndim);
+                    Dims c(minBlocks->BlocksInfo[j].Count, minBlocks->BlocksInfo[j].Count + ndim);
+                    readVarBlock(fp, io, variable, stepRelative, j, c, s);
                 }
                 else
                 {
-                    // GSE todo
+                    readVarBlock(fp, io, variable, stepRelative, j, coreBlocks[j].Count,
+                                 coreBlocks[j].Start);
                 }
             }
         }
