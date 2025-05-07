@@ -48,7 +48,7 @@ static int64_t pread(int fd, void *buffer, size_t size, uint64_t start)
 
     HANDLE file = (HANDLE)_get_osfhandle(fd);
     SetLastError(0);
-    bool RF = ReadFile(file, buffer, size, &read_bytes, &overlapped);
+    bool RF = ReadFile(file, buffer, (DWORD)size, &read_bytes, &overlapped);
 
     if ((RF == 0) && GetLastError() != ERROR_HANDLE_EOF)
     {
