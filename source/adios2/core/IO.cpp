@@ -33,6 +33,7 @@
 #include "adios2/engine/plugin/PluginEngine.h"
 #include "adios2/engine/skeleton/SkeletonReader.h"
 #include "adios2/engine/skeleton/SkeletonWriter.h"
+#include "adios2/engine/timeseries/TimeSeriesReader.h"
 
 #include "adios2/helper/adiosComm.h"
 #include "adios2/helper/adiosCommDummy.h"
@@ -139,6 +140,9 @@ std::unordered_map<std::string, IO::EngineFactoryEntry> Factory = {
      {IO::NoEngine("ERROR: nullcore engine does not support read mode"),
       IO::MakeEngine<engine::NullWriter>}},
     {"plugin", {IO::MakeEngine<plugin::PluginEngine>, IO::MakeEngine<plugin::PluginEngine>}},
+    {"timeseries",
+     {IO::MakeEngine<engine::TimeSeriesReader>,
+      IO::NoEngine("ERROR: campaign engine does not support write mode")}},
 
     {"campaign",
 #ifdef ADIOS2_HAVE_CAMPAIGN
@@ -156,7 +160,7 @@ const std::unordered_map<std::string, bool> ReadRandomAccess_Supported = {
     {"ssc", false},     {"mhs", false},        {"sst", false},     {"daos", false},
     {"effis", false},   {"dataspaces", false}, {"hdf5", false},    {"skeleton", true},
     {"inline", false},  {"null", true},        {"nullcore", true}, {"plugin", false},
-    {"campaign", true},
+    {"campaign", true}, {"timeseries", true},
 };
 
 // Synchronize access to the factory in case one thread is
@@ -586,6 +590,10 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
         {
             engineTypeLC = "campaign";
         }
+        else if (helper::EndsWith(name, ".ats", false))
+        {
+            engineTypeLC = "timeseries";
+        }
         else if ((mode_to_use == Mode::Read) || (mode_to_use == Mode::ReadRandomAccess))
         {
             if (adios2sys::SystemTools::FileIsDirectory(name))
@@ -632,9 +640,16 @@ Engine &IO::Open(const std::string &name, const Mode mode, helper::Comm comm, co
        falls back to default (BP4) */
     if (engineTypeLC == "filestream")
     {
-        char v = helper::BPVersion(name, comm, m_TransportsParameters);
-        engineTypeLC = "bp";
-        engineTypeLC.push_back(v);
+        if (helper::EndsWith(name, ".ats", false))
+        {
+            engineTypeLC = "timeseries";
+        }
+        else
+        {
+            char v = helper::BPVersion(name, comm, m_TransportsParameters);
+            engineTypeLC = "bp";
+            engineTypeLC.push_back(v);
+        }
         // std::cout << "Engine " << engineTypeLC << " selected for FileStream"
         //          << std::endl;
     }

@@ -59,6 +59,8 @@ add_library(adios2_core
   engine/bp5/BP5Writer_TwoLevelShm_Async.cpp
   engine/bp5/BP5Writer_TwoLevelShm.cpp
 
+  engine/timeseries/TimeSeriesReader.cpp engine/timeseries/TimeSeriesReader.tcc
+
   engine/skeleton/SkeletonReader.cpp engine/skeleton/SkeletonReader.tcc
   engine/skeleton/SkeletonWriter.cpp engine/skeleton/SkeletonWriter.tcc
 
