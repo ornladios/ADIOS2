@@ -81,7 +81,7 @@ TEST(FileTransport, WaitForData)
             std::unique_ptr<transport::FilePOSIX>(new transport::FilePOSIX(comm));
 
         r->Open("FailOnEOF2", Mode::Read);
-        r->Read((char *)b.data(), size * 2);
+        r->Read((char *)b.data(), size * 2, 0);
         ASSERT_EQ(b[0], 0xef);
         ASSERT_EQ(b[size], 0xfe);
         r->Close();
