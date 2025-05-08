@@ -2,9 +2,8 @@
 default:
   interruptible: true
   tags:
-    - hpsf
-    - hpsf-x86_64
-    - linux-5.4
+    - hpsf-gpu
+    - linux-5.15
 
 #  This file is used to define the GitLab CI/CD pipeline for the ADIOS2 project.
 .common-sanitizer:
