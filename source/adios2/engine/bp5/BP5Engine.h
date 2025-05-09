@@ -123,6 +123,7 @@ public:
         EveryoneWrites,
         EveryoneWritesSerial,
         TwoLevelShm,
+        DataSizeBased,
         Auto
     };
 
