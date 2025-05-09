@@ -152,7 +152,7 @@ void TransportMan::OpenFileID(const std::string &name, const size_t id, const Mo
 
 std::vector<std::string>
 TransportMan::GetFilesBaseNames(const std::string &baseName,
-                                const std::vector<Params> &parametersVector) const
+                                const std::vector<Params> &parametersVector)
 {
     if (parametersVector.size() <= 1)
     {

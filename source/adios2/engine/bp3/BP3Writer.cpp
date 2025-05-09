@@ -191,7 +191,7 @@ void BP3Writer::InitTransports()
     {
         // Names passed to IO AddTransport option with key "Name"
         const std::vector<std::string> transportsNames =
-            m_FileDataManager.GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
+            transportman::TransportMan::GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
 
         // /path/name.bp.dir/name.bp.rank
         bpSubStreamNames = m_BP3Serializer.GetBPSubStreamNames(transportsNames);
@@ -323,7 +323,7 @@ void BP3Writer::WriteProfilingJSONFile()
         {
             // write profile to <filename.bp>_profiling.json
             auto transportsNames =
-                m_FileMetadataManager.GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
+                transportman::TransportMan::GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
 
             auto bpMetadataFileNames = m_BP3Serializer.GetBPMetadataFileNames(transportsNames);
             profileFileName = bpMetadataFileNames[0] + "_profiling.json";
@@ -343,7 +343,7 @@ void BP3Writer::WriteCollectiveMetadataFile(const bool isFinal)
     {
         // first init metadata files
         const std::vector<std::string> transportsNames =
-            m_FileMetadataManager.GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
+            transportman::TransportMan::GetFilesBaseNames(m_Name, m_IO.m_TransportsParameters);
 
         const std::vector<std::string> bpMetadataFileNames =
             m_BP3Serializer.GetBPMetadataFileNames(transportsNames);

@@ -34,6 +34,14 @@ TEST_F(BPNewFileAppendMode, ADIOS2BPNewFileAppendMode)
     {
         fname += "-TLS.bp";
     }
+    else if (aggregationType == "DataSizeBased")
+    {
+        fname += "-DSB.bp";
+    }
+    else if (aggregationType == "EveryoneWrites")
+    {
+        fname += "-EW.bp";
+    }
 
     const size_t Nx = 6;
 

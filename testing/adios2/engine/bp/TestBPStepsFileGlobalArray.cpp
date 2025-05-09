@@ -16,7 +16,8 @@
 
 #include <gtest/gtest.h>
 
-std::string engineName; // comes from command line
+std::string engineName;   // comes from command line
+std::string aggType = ""; // overridden on command line
 
 // Number of elements per process
 const std::size_t Nx = 10;
@@ -84,6 +85,30 @@ std::string ReadModeToString(ReadMode r)
     return "unknown";
 }
 
+std::string AggregationTypeAlias(const std::string &aggregationType)
+{
+    if (aggregationType == "DataSizeBased")
+    {
+        return ".DSB";
+    }
+    else if (aggregationType == "EveryoneWritesSerial")
+    {
+        return ".EWS";
+    }
+    else if (aggregationType == "EveryoneWrites")
+    {
+        return ".EW";
+    }
+    else if (aggregationType == "TwoLevelShm")
+    {
+        return ".TLS";
+    }
+    else
+    {
+        return "";
+    }
+}
+
 class BPStepsFileGlobalArrayReaders : public BPStepsFileGlobalArray,
                                       public ::testing::WithParamInterface<ReadMode>
 {
@@ -95,7 +120,8 @@ protected:
 TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
 {
     const ReadMode readMode = GetReadMode();
-    std::string fname_prefix = "BPStepsFileGlobalArray.EveryStep." + ReadModeToString(readMode);
+    std::string fname_prefix = "BPStepsFileGlobalArray.EveryStep." + ReadModeToString(readMode) +
+                               AggregationTypeAlias(aggType);
     int mpiRank = 0, mpiSize = 1;
     const std::size_t NSteps = 4;
 
@@ -130,6 +156,10 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
             io.SetEngine(engineName);
         }
 
+        if (aggType != "")
+        {
+            io.SetParameter("AggregationType", aggType);
+        }
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
@@ -349,7 +379,8 @@ TEST_P(BPStepsFileGlobalArrayReaders, EveryStep)
 TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
 {
     const ReadMode readMode = GetReadMode();
-    std::string fname_prefix = "BPStepsFileGlobalArray.NewVarPerStep." + ReadModeToString(readMode);
+    std::string fname_prefix = "BPStepsFileGlobalArray.NewVarPerStep." +
+                               ReadModeToString(readMode) + AggregationTypeAlias(aggType);
     int mpiRank = 0, mpiSize = 1;
     const std::size_t NSteps = 4;
 
@@ -386,6 +417,10 @@ TEST_P(BPStepsFileGlobalArrayReaders, NewVarPerStep)
             io.SetEngine(engineName);
         }
 
+        if (aggType != "")
+        {
+            io.SetParameter("AggregationType", aggType);
+        }
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         for (int step = 0; step < static_cast<int>(NSteps); ++step)
@@ -632,7 +667,7 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
     const ReadMode readMode = GetReadMode();
     std::string fname_prefix = "BPStepsFileGlobalArray.EveryOtherStep.Steps" +
                                std::to_string(NSteps) + ".Oddity" + std::to_string(Oddity) + "." +
-                               ReadModeToString(readMode);
+                               ReadModeToString(readMode) + AggregationTypeAlias(aggType);
     int mpiRank = 0, mpiSize = 1;
 
 #if ADIOS2_USE_MPI
@@ -670,6 +705,10 @@ TEST_P(BPStepsFileGlobalArrayParameters, EveryOtherStep)
             io.SetEngine(engineName);
         }
 
+        if (aggType != "")
+        {
+            io.SetParameter("AggregationType", aggType);
+        }
         adios2::Engine engine = io.Open(fname, adios2::Mode::Write);
 
         auto var_i32 = io.DefineVariable<int32_t>("i32", shape, start, count);
@@ -937,6 +976,12 @@ int main(int argc, char **argv)
     {
         engineName = std::string(argv[1]);
     }
+
+    if (argc > 2)
+    {
+        aggType = std::string(argv[2]);
+    }
+
     result = RUN_ALL_TESTS();
 
 #if ADIOS2_USE_MPI

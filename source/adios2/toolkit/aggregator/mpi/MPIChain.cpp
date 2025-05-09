@@ -47,6 +47,39 @@ void MPIChain::Init(const size_t numAggregators, const size_t subStreams,
     }
 }
 
+void MPIChain::InitExplicit(const int subStreams, const size_t subStreamIdx,
+                            const int aggregatorRank, const int rankOrder,
+                            helper::Comm const &parentComm)
+{
+    m_SubStreamIndex = subStreamIdx;
+    m_AggregatorRank = aggregatorRank;
+
+    m_Comm = parentComm.Split(m_AggregatorRank, rankOrder,
+                              "creating aggregators comm with split in InitExplicit");
+
+    m_Rank = m_Comm.Rank();
+    m_Size = m_Comm.Size();
+    m_IsAggregator = false;
+
+    if (m_Rank == 0)
+    {
+        m_IsAggregator = true;
+    }
+
+    m_IsActive = true;
+    m_SubStreams = subStreams;
+    m_NumAggregators = m_SubStreams;
+
+    HandshakeRank(0);
+    HandshakeLinks();
+
+    // add a receiving buffer except for the last rank (only sends)
+    if (m_Rank < m_Size)
+    {
+        m_Buffers.emplace_back(new format::BufferSTL()); // just one for now
+    }
+}
+
 void MPIChain::Close() { MPIAggregator::Close(); }
 
 MPIChain::ExchangeRequests MPIChain::IExchange(format::Buffer &buffer, const int step)

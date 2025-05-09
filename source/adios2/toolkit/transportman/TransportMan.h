@@ -106,8 +106,8 @@ public:
      * function)
      * @return transport base names
      */
-    std::vector<std::string> GetFilesBaseNames(const std::string &baseName,
-                                               const std::vector<Params> &parametersVector) const;
+    static std::vector<std::string> GetFilesBaseNames(const std::string &baseName,
+                                                      const std::vector<Params> &parametersVector);
 
     /**
      * m_Type from m_Transports based on derived classes of Transport
