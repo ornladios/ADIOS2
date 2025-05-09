@@ -1191,6 +1191,9 @@ void BP5Writer::InitAggregator()
     // m_Aggregator.m_Comm.Rank() will always succeed (not abort)
     // m_Aggregator.m_SubFileIndex is always set
     std::string init_str = "InitAgg";
+
+    std::cout << "BP5Writer::InitAggregator()" << std::endl;
+
     if (m_Parameters.AsyncWrite)
     {
         init_str += "-async";

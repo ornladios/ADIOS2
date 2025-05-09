@@ -2255,6 +2255,13 @@ TEST_F(BPWriteReadTestADIOS2, GetDeferredWithoutEndStep)
     }
 }
 
+
+TEST_F(BPWriteReadTestADIOS2, FirstExampleTest)
+{
+    // Test anything
+    EXPECT_TRUE(false) << " !!! Parameters: " << engineParameters;
+}
+
 //******************************************************************************
 // main
 //******************************************************************************
