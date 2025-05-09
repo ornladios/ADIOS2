@@ -50,6 +50,17 @@ const std::string HDF5Common::PARAMETER_COLLECTIVE = "H5CollectiveMPIO";
 const std::string HDF5Common::PARAMETER_CHUNK_FLAG = "H5ChunkDim";
 const std::string HDF5Common::PARAMETER_CHUNK_VARS = "H5ChunkVars";
 const std::string HDF5Common::PARAMETER_HAS_IDLE_WRITER_RANK = "IdleH5Writer";
+/*
+ * OpenPMD compliant H5 read/write: This could be triggered by either:
+ * * Read/write: During engine initialization using parameters
+ * * Read: While reading a compliant file using attributes
+*/
+const std::string HDF5Common::PARAMETER_OPENPMD_COMPLIANT = "H5OpenPMDCompliant";
+const std::string HDF5Common::PARAMETER_OPENPMD_FILE_BASED = "H5OpenPMDEncodingFileBased";
+const std::string HDF5Common::PARAMETER_OPENPMD_ITERATION = "H5OpenPMDFileBasedIteration";
+const std::string HDF5Common::ATTRNAME_OPENPMD_COMPLIANT = "ADIOSOpenPMDCompliant";
+const std::string HDF5Common::ATTRNAME_OPENPMD_FILE_BASED = "ADIOSOpenPMDEncodingFileBased";
+const std::string HDF5Common::ATTRNAME_OPENPMD_ITERATION = "ADIOSOpenPMDIteration";
 
 #define CHECK_H5_RETURN(returnCode, reason)                                                        \
     {                                                                                              \
@@ -69,6 +80,34 @@ public:
   double m_Max;
 };
 */
+
+static bool isSetOn(std::string input)
+{
+    std::transform(input.begin(), input.end(), input.begin(), 
+                   [](unsigned char c) { return std::tolower(c); });
+    return (input == "true" || input == "on" || input == "yes");
+}
+
+static std::vector<std::string> splitPath(const std::string &varName)
+{
+    std::vector<std::string> list;
+    char delimiter = '/';
+    int delimiterLength = 1;
+    std::string s = std::string(varName);
+    size_t pos = 0;
+    std::string token;
+    while ((pos = s.find(delimiter)) != std::string::npos)
+    {
+        if (pos > 0)
+        { // "///a/b/c" == "a/b/c"
+            token = s.substr(0, pos);
+            list.push_back(token);
+        }
+        s.erase(0, pos + delimiterLength);
+    }
+    list.push_back(s);
+    return list;
+}
 
 HDF5Common::HDF5Common()
 {
@@ -107,14 +146,14 @@ void HDF5Common::ParseParameters(core::IO &io)
         auto itKey = io.m_Parameters.find(PARAMETER_COLLECTIVE);
         if (itKey != io.m_Parameters.end())
         {
-            if (itKey->second == "yes" || itKey->second == "true")
+            if (isSetOn(itKey->second))
                 m_MPI->set_dxpl_mpio(m_PropertyTxfID, H5FD_MPIO_COLLECTIVE);
         }
 
         itKey = io.m_Parameters.find(PARAMETER_HAS_IDLE_WRITER_RANK);
         if (itKey != io.m_Parameters.end())
         {
-            if (itKey->second == "yes" || itKey->second == "true")
+            if (isSetOn(itKey->second))
                 m_IdleWriterOn = true;
         }
     }
@@ -168,6 +207,29 @@ void HDF5Common::ParseParameters(core::IO &io)
     m_OrderByC = (io.m_ArrayOrder == ArrayOrdering::RowMajor);
 }
 
+void HDF5Common::PreInitParseParameters(core::IO &io)
+{
+    auto itKey = io.m_Parameters.find(PARAMETER_OPENPMD_COMPLIANT);
+    if (itKey != io.m_Parameters.end())
+    {
+        if (isSetOn(itKey->second))
+            m_IsOpenPMDCompliant = true;
+    }
+
+    itKey = io.m_Parameters.find(PARAMETER_OPENPMD_FILE_BASED);
+    if (itKey != io.m_Parameters.end())
+    {
+        if (isSetOn(itKey->second))
+            m_IsOpenPMDFileBased = true;
+    }
+
+    itKey = io.m_Parameters.find(PARAMETER_OPENPMD_ITERATION);
+    if (itKey != io.m_Parameters.end())
+    {
+        m_OpenPMDIteration = std::stoi(itKey->second);
+    }
+}
+
 void HDF5Common::Append(const std::string &name, helper::Comm const &comm)
 {
     m_PropertyListId = H5Pcreate(H5P_FILE_ACCESS);
@@ -183,11 +245,13 @@ void HDF5Common::Append(const std::string &name, helper::Comm const &comm)
     m_FileId = H5Fopen(name.c_str(), H5F_ACC_RDWR, m_PropertyListId);
     H5Pclose(m_PropertyListId);
 
-    std::string ts0;
-    StaticGetAdiosStepString(ts0, 0);
-
     if (m_FileId >= 0)
     {
+        ReadOpenPMDAttributes();
+
+        std::string ts0;
+        GetAdiosStepString(ts0, m_CurrentAdiosStep);
+
         if (H5Lexists(m_FileId, ts0.c_str(), H5P_DEFAULT) != 0)
         {
             m_IsGeneratedByAdios = true;
@@ -202,7 +266,7 @@ void HDF5Common::Append(const std::string &name, helper::Comm const &comm)
             helper::Throw<std::ios_base::failure>("Toolkit", "interop::hdf5::HDF5Common", "Append",
                                                   "No valid steps found in " + name);
         if (1 == m_NumAdiosSteps)
-            m_GroupId = H5Gopen(m_FileId, ts0.c_str(), H5P_DEFAULT);
+            m_GroupIds.push_back(H5Gopen(m_FileId, ts0.c_str(), H5P_DEFAULT));
         else
             SetAdiosStep(m_NumAdiosSteps - 1);
 
@@ -227,9 +291,9 @@ void HDF5Common::Init(const std::string &name, helper::Comm const &comm, bool to
         }
     }
 
-    // std::string ts0 = "/AdiosStep0";
+    // std::string ts0 = "/Step0";
     std::string ts0;
-    StaticGetAdiosStepString(ts0, 0);
+    GetAdiosStepString(ts0, m_CurrentAdiosStep);
 
 #ifdef H5_HAVE_SUBFILING_VFD
     bool useMPI = false;
@@ -254,9 +318,18 @@ void HDF5Common::Init(const std::string &name, helper::Comm const &comm, bool to
         m_FileId = H5Fcreate(name.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, m_PropertyListId);
         if (m_FileId >= 0)
         {
-            m_GroupId = H5Gcreate2(m_FileId, ts0.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            std::vector<std::string> list = splitPath(ts0);
+            if (list.size() > 1)
+            {
+                hid_t topId = m_FileId;
+                for (size_t i = 0; i < list.size(); i++)
+                {
+                    topId = H5Gcreate2(topId, list[i].c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+                    m_GroupIds.push_back(topId);
+                }
+            }
 
-            if (m_GroupId < 0)
+            if (m_GroupIds.size() == 0)
             {
                 helper::Throw<std::ios_base::failure>(
                     "Toolkit", "interop::hdf5::HDF5Common", "Init",
@@ -270,15 +343,107 @@ void HDF5Common::Init(const std::string &name, helper::Comm const &comm, bool to
         m_FileId = H5Fopen(name.c_str(), H5F_ACC_RDONLY, m_PropertyListId);
         if (m_FileId >= 0)
         {
+            ReadOpenPMDAttributes();
+
+            GetAdiosStepString(ts0, m_CurrentAdiosStep);
+
             if (H5Lexists(m_FileId, ts0.c_str(), H5P_DEFAULT) != 0)
             {
-                m_GroupId = H5Gopen(m_FileId, ts0.c_str(), H5P_DEFAULT);
+                m_GroupIds.push_back(H5Gopen(m_FileId, ts0.c_str(), H5P_DEFAULT));
                 m_IsGeneratedByAdios = true;
             }
         }
     }
 
     H5Pclose(m_PropertyListId);
+}
+
+void HDF5Common::WriteOpenPMDAttributes()
+{
+    if (m_FileId < 0)
+    {
+        helper::Throw<std::invalid_argument>("Toolkit", "interop::hdf5::HDF5Common",
+                                             "WriteOpenPMDAttributes",
+                                             "invalid HDF5 file to record "
+                                             "steps, in call to Write");
+    }
+
+    if (!m_WriteMode)
+    {
+        return;
+    }
+
+    hid_t s = H5Screate(H5S_SCALAR);
+    hid_t attr = H5Aexists(m_FileId, ATTRNAME_OPENPMD_COMPLIANT.c_str());
+    if (0 == attr)
+        attr = H5Acreate(m_FileId, ATTRNAME_OPENPMD_COMPLIANT.c_str(), H5T_NATIVE_HBOOL, s, H5P_DEFAULT,
+                         H5P_DEFAULT);
+    else
+        attr = H5Aopen(m_FileId, ATTRNAME_OPENPMD_COMPLIANT.c_str(), H5P_DEFAULT);
+    H5Awrite(attr, H5T_NATIVE_HBOOL, &m_IsOpenPMDCompliant);
+    H5Sclose(s);
+    H5Aclose(attr);
+
+    s = H5Screate(H5S_SCALAR);
+    attr = H5Aexists(m_FileId, ATTRNAME_OPENPMD_FILE_BASED.c_str());
+    if (0 == attr)
+        attr = H5Acreate(m_FileId, ATTRNAME_OPENPMD_FILE_BASED.c_str(), H5T_NATIVE_HBOOL, s, H5P_DEFAULT,
+                         H5P_DEFAULT);
+    else
+        attr = H5Aopen(m_FileId, ATTRNAME_OPENPMD_FILE_BASED.c_str(), H5P_DEFAULT);
+    H5Awrite(attr, H5T_NATIVE_HBOOL, &m_IsOpenPMDFileBased);
+    H5Sclose(s);
+    H5Aclose(attr);
+
+    m_OpenPMDIteration = m_CurrentAdiosStep - 1;
+
+    s = H5Screate(H5S_SCALAR);
+    attr = H5Aexists(m_FileId, ATTRNAME_OPENPMD_ITERATION.c_str());
+    if (0 == attr)
+        attr = H5Acreate(m_FileId, ATTRNAME_OPENPMD_ITERATION.c_str(), m_TimeStepH5T, s, H5P_DEFAULT,
+                         H5P_DEFAULT);
+    else
+        attr = H5Aopen(m_FileId, ATTRNAME_OPENPMD_ITERATION.c_str(), H5P_DEFAULT);
+    H5Awrite(attr, m_TimeStepH5T, &m_OpenPMDIteration);
+    H5Sclose(s);
+    H5Aclose(attr);
+}
+
+// A valid file should have at least 1 step.
+void HDF5Common::ReadOpenPMDAttributes()
+{
+    if (m_WriteMode)
+    {
+        return;
+    }
+
+    if (m_FileId < 0)
+    {
+        helper::Throw<std::invalid_argument>("Toolkit", "interop::hdf5::HDF5Common",
+                                             "ReadOpenPMDAttributes",
+                                             "invalid HDF5 file to read step attribute");
+    }
+
+    if (H5Aexists(m_FileId, ATTRNAME_OPENPMD_COMPLIANT.c_str()))
+    {
+        hid_t attr = H5Aopen(m_FileId, ATTRNAME_OPENPMD_COMPLIANT.c_str(), H5P_DEFAULT);
+        H5Aread(attr, m_TimeStepH5T, &m_IsOpenPMDCompliant);
+        H5Aclose(attr);
+    }
+
+    if (H5Aexists(m_FileId, ATTRNAME_OPENPMD_FILE_BASED.c_str()))
+    {
+        hid_t attr = H5Aopen(m_FileId, ATTRNAME_OPENPMD_FILE_BASED.c_str(), H5P_DEFAULT);
+        H5Aread(attr, m_TimeStepH5T, &m_IsOpenPMDFileBased);
+        H5Aclose(attr);
+    }
+
+    if (H5Aexists(m_FileId, ATTRNAME_OPENPMD_ITERATION.c_str()))
+    {
+        hid_t attr = H5Aopen(m_FileId, ATTRNAME_OPENPMD_ITERATION.c_str(), H5P_DEFAULT);
+        H5Aread(attr, m_TimeStepH5T, &m_OpenPMDIteration);
+        H5Aclose(attr);
+    }
 }
 
 void HDF5Common::WriteAdiosSteps()
@@ -307,7 +472,7 @@ void HDF5Common::WriteAdiosSteps()
 
     size_t totalAdiosSteps = m_CurrentAdiosStep + 1;
 
-    if (m_GroupId < 0)
+    if (m_GroupIds.size() == 0)
     {
         totalAdiosSteps = m_CurrentAdiosStep;
     }
@@ -366,6 +531,17 @@ void HDF5Common::ReadAllVariables(core::IO &io)
     {
         FindVarsFromH5(io, m_FileId, "/", "", 0);
         return;
+    }
+
+    if (m_IsOpenPMDCompliant)
+    {
+        ReadOpenPMDAttributes();
+
+        if (m_IsOpenPMDFileBased)
+        {
+            ReadVariables(m_OpenPMDIteration, io);
+            return;
+        }
     }
 
     GetNumAdiosSteps();
@@ -446,7 +622,7 @@ void HDF5Common::ReadVariables(size_t ts, core::IO &io)
     std::string stepStr;
     hsize_t numObj;
 
-    StaticGetAdiosStepString(stepStr, ts);
+    GetAdiosStepString(stepStr, ts);
     hid_t gid = H5Gopen2(m_FileId, stepStr.c_str(), H5P_DEFAULT);
     HDF5TypeGuard g(gid, E_H5_GROUP);
 
@@ -756,9 +932,15 @@ void HDF5Common::Close()
 
     WriteAdiosSteps();
 
-    if (m_GroupId >= 0)
+    if (m_IsOpenPMDCompliant)
     {
-        H5Gclose(m_GroupId);
+        WriteOpenPMDAttributes();
+    }
+
+    while(! m_GroupIds.empty())
+    {
+        H5Gclose(m_GroupIds.back());
+        m_GroupIds.pop_back();
     }
 
     // close defined types
@@ -775,7 +957,6 @@ void HDF5Common::Close()
     H5Fclose(m_FileId);
 
     m_FileId = -1;
-    m_GroupId = -1;
 }
 
 void HDF5Common::SetAdiosStep(size_t step)
@@ -801,18 +982,31 @@ void HDF5Common::SetAdiosStep(size_t step)
         return;
     }
 
-    if (m_GroupId >= 0)
-        H5Gclose(m_GroupId);
+    if (m_IsOpenPMDCompliant && m_IsOpenPMDFileBased)
+    {
+        if (m_OpenPMDIteration != step)
+            helper::Throw<std::ios_base::failure>("Toolkit", "interop::hdf5::HDF5Common",
+                                              "SetAdiosStep",
+                                              "When OpenPMD is enabled, step can only be iteration");
+    }
+
+    while(! m_GroupIds.empty())
+    {
+        H5Gclose(m_GroupIds.back());
+        m_GroupIds.pop_back();
+    }
 
     std::string stepName;
-    StaticGetAdiosStepString(stepName, step);
-    m_GroupId = H5Gopen(m_FileId, stepName.c_str(), H5P_DEFAULT);
-    if (m_GroupId < 0)
+    GetAdiosStepString(stepName, step);
+    auto topId = H5Gopen(m_FileId, stepName.c_str(), H5P_DEFAULT);
+    if (topId < 0)
     {
         helper::Throw<std::ios_base::failure>(
             "Toolkit", "interop::hdf5::HDF5Common", "SetAdiosStep",
             "ERROR: unable to open HDF5 group " + stepName + ", in call to Open");
     }
+    else
+        m_GroupIds.push_back(topId);
 
     m_CurrentAdiosStep = step;
 }
@@ -862,16 +1056,16 @@ void HDF5Common::Advance()
     if (m_WriteMode)
         CheckWriteGroup();
 
-    if (m_GroupId >= 0)
+    while(! m_GroupIds.empty())
     {
-        H5Gclose(m_GroupId);
-        m_GroupId = -1;
+        H5Gclose(m_GroupIds.back());
+        m_GroupIds.pop_back();
     }
 
     if (m_WriteMode)
     {
-        // m_GroupId = H5Gcreate2(m_FileId, tsname.c_str(), H5P_DEFAULT,
-        //                       H5P_DEFAULT, H5P_DEFAULT);
+        // m_GroupIds.push_back(H5Gcreate2(m_FileId, tsname.c_str(), H5P_DEFAULT,
+        //                                H5P_DEFAULT, H5P_DEFAULT));
     }
     else
     {
@@ -887,16 +1081,23 @@ void HDF5Common::Advance()
         // std::string stepName =
         //    "/AdiosStep" + std::to_string(m_CurrentAdiosStep + 1);
         std::string stepName;
-        StaticGetAdiosStepString(stepName, m_CurrentAdiosStep + 1);
-        m_GroupId = H5Gopen(m_FileId, stepName.c_str(), H5P_DEFAULT);
-        if (m_GroupId < 0)
+        GetAdiosStepString(stepName, m_CurrentAdiosStep + 1);
+
+        auto topId = H5Gopen(m_FileId, stepName.c_str(), H5P_DEFAULT);
+        if (topId < 0)
         {
             helper::Throw<std::ios_base::failure>("Toolkit", "interop::hdf5::HDF5Common", "Advance",
                                                   "unable to open HDF5 group " + stepName +
                                                       ", in call to Open");
         }
+        else
+            m_GroupIds.push_back(topId);
     }
     ++m_CurrentAdiosStep;
+
+    if (m_IsOpenPMDCompliant)
+        m_OpenPMDIteration = m_CurrentAdiosStep;
+
 }
 
 void HDF5Common::CheckWriteGroup()
@@ -905,7 +1106,7 @@ void HDF5Common::CheckWriteGroup()
     {
         return;
     }
-    if (m_GroupId >= 0)
+    if (m_GroupIds.size() > 0)
     {
         return;
     }
@@ -913,15 +1114,17 @@ void HDF5Common::CheckWriteGroup()
     // std::string stepName = "/AdiosStep" +
     // std::to_string(m_CurrentAdiosStep);
     std::string stepName;
-    StaticGetAdiosStepString(stepName, m_CurrentAdiosStep);
-    m_GroupId = H5Gcreate2(m_FileId, stepName.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    GetAdiosStepString(stepName, m_CurrentAdiosStep);
 
-    if (m_GroupId < 0)
+    auto topId = H5Gcreate2(m_FileId, stepName.c_str(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+    if (topId < 0)
     {
         helper::Throw<std::ios_base::failure>("Toolkit", "interop::hdf5::HDF5Common",
                                               "CheckWriteGroup",
                                               "Unable to create group " + stepName);
     }
+    else
+        m_GroupIds.push_back(topId);
 }
 
 void HDF5Common::ReadStringScalarDataset(hid_t dataSetId, std::string &result)
@@ -969,24 +1172,8 @@ hid_t HDF5Common::GetTypeStringScalar(const std::string &input)
 void HDF5Common::CreateDataset(const std::string &varName, hid_t h5Type, hid_t filespaceID,
                                std::vector<hid_t> &datasetChain)
 {
-    std::vector<std::string> list;
-    char delimiter = '/';
-    int delimiterLength = 1;
-    std::string s = std::string(varName);
-    size_t pos = 0;
-    std::string token;
-    while ((pos = s.find(delimiter)) != std::string::npos)
-    {
-        if (pos > 0)
-        { // "///a/b/c" == "a/b/c"
-            token = s.substr(0, pos);
-            list.push_back(token);
-        }
-        s.erase(0, pos + delimiterLength);
-    }
-    list.push_back(s);
-
-    hid_t topId = m_GroupId;
+    std::vector<std::string> list = splitPath(varName);
+    hid_t topId = m_GroupIds.back();
     if (list.size() > 1)
     {
         for (size_t i = 0; i < list.size() - 1; i++)
@@ -1078,39 +1265,23 @@ void HDF5Common::ReadADIOSName(hid_t dsetID, std::string &adiosName)
 
 bool HDF5Common::OpenDataset(const std::string &varName, std::vector<hid_t> &datasetChain)
 {
-    std::vector<std::string> list;
-    char delimiter = '/';
-    int delimiterLength = 1;
-    std::string s = std::string(varName);
-    size_t pos = 0;
-    std::string token;
-    while ((pos = s.find(delimiter)) != std::string::npos)
-    {
-        if (pos > 0)
-        { // "///a/b/c" == "a/b/c"
-            token = s.substr(0, pos);
-            list.push_back(token);
-        }
-        s.erase(0, pos + delimiterLength);
-    }
-    list.push_back(s);
-
+    std::vector<std::string> list = splitPath(varName);
     if (list.size() == 1)
     {
-        if (H5Lexists(m_GroupId, list[0].c_str(), H5P_DEFAULT) == 0)
+        if (H5Lexists(m_GroupIds.back(), list[0].c_str(), H5P_DEFAULT) == 0)
         {
             datasetChain.push_back(-1);
             return false;
         }
         else
         {
-            hid_t dsetID = H5Dopen(m_GroupId, list[0].c_str(), H5P_DEFAULT);
+            hid_t dsetID = H5Dopen(m_GroupIds.back(), list[0].c_str(), H5P_DEFAULT);
             datasetChain.push_back(dsetID);
             return true;
         }
     }
 
-    hid_t topId = m_GroupId;
+    hid_t topId = m_GroupIds.back();
 
     for (size_t i = 0; i < list.size() - 1; i++)
     {
@@ -1146,40 +1317,24 @@ void HDF5Common::RemoveEmptyDataset(const std::string &varName)
     if (m_CommSize > 1)
         return;
 
-    std::vector<std::string> list;
-    char delimiter = '/';
-    int delimiterLength = 1;
-    std::string s = std::string(varName);
-    size_t pos = 0;
-    std::string token;
-    while ((pos = s.find(delimiter)) != std::string::npos)
-    {
-        if (pos > 0)
-        { // "///a/b/c" == "a/b/c"
-            token = s.substr(0, pos);
-            list.push_back(token);
-        }
-        s.erase(0, pos + delimiterLength);
-    }
-    list.push_back(s);
-
+    std::vector<std::string> list =splitPath(varName);
     if (list.size() == 1)
     {
-        if (H5Lexists(m_GroupId, list[0].c_str(), H5P_DEFAULT) != 0)
+        if (H5Lexists(m_GroupIds.back(), list[0].c_str(), H5P_DEFAULT) != 0)
         {
-            hid_t dsetID = H5Dopen(m_GroupId, list[0].c_str(), H5P_DEFAULT);
+            hid_t dsetID = H5Dopen(m_GroupIds.back(), list[0].c_str(), H5P_DEFAULT);
             HDF5TypeGuard d(dsetID, E_H5_DATASET);
 
             H5D_space_status_t status;
             herr_t s1 = H5Dget_space_status(dsetID, &status);
             CHECK_H5_RETURN(s1, "RemoveEmptyDataset");
             if (0 == H5Dget_storage_size(dsetID)) /*nothing is written */
-                H5Ldelete(m_GroupId, list[0].c_str(), H5P_DEFAULT);
+                H5Ldelete(m_GroupIds.back(), list[0].c_str(), H5P_DEFAULT);
         }
         return;
     }
 
-    hid_t topId = m_GroupId;
+    hid_t topId = m_GroupIds.back();
     std::vector<hid_t> datasetChain;
 
     for (size_t i = 0; i < list.size() - 1; i++)
@@ -1484,21 +1639,7 @@ void HDF5Common::LocateAttrParent(const std::string &attrName, std::vector<std::
                                   std::vector<hid_t> &parentChain)
 {
     char delimiter = '/';
-    int delimiterLength = 1;
-    std::string s = std::string(attrName);
-    size_t pos = 0;
-    std::string token;
-    while ((pos = s.find(delimiter)) != std::string::npos)
-    {
-        if (pos > 0)
-        { // "///a/b/c" == "a/b/c"
-            token = s.substr(0, pos);
-            list.push_back(token);
-        }
-        s.erase(0, pos + delimiterLength);
-    }
-    list.push_back(s);
-
+    list = splitPath(attrName);
     if (list.size() == 1)
     {
         return;
@@ -1510,7 +1651,7 @@ void HDF5Common::LocateAttrParent(const std::string &attrName, std::vector<std::
         std::string ts;
         for (size_t i = 0; i < m_CurrentAdiosStep; i++)
         {
-            StaticGetAdiosStepString(ts, i);
+            GetAdiosStepString(ts, i);
             for (size_t j = 0; j < list.size() - 1; j++)
             {
                 ts += delimiter;
@@ -1766,9 +1907,9 @@ void HDF5Common::ReadNativeAttrToIO(core::IO &io, hid_t datasetId, std::string c
     }
 }
 
-void HDF5Common::StaticGetAdiosStepString(std::string &stepName, size_t ts)
+void HDF5Common::GetAdiosStepString(std::string &stepName, size_t ts)
 {
-    stepName = "/Step" + std::to_string(ts);
+    stepName = (m_IsOpenPMDCompliant ? "/data/" : "/Step") + std::to_string(ts);
 }
 
 void HDF5Common::CheckVariableOperations(const core::VariableBase &variable) const
