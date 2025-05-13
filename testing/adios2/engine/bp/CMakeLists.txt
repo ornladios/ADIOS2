@@ -61,6 +61,9 @@ macro(bp_gtest_add_tests_helper testname mpi)
   gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5
     WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5"
   )
+  gtest_add_tests_helper(${testname} ${mpi} BP Engine.BP. .BP5.EWS
+    WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "AggregationType=EveryoneWritesSerial"
+  )
 endmacro()
 
 macro(async_gtest_add_tests_helper testname mpi)
@@ -105,7 +108,7 @@ set(CTEST_TEST_TIMEOUT 10)
 bp_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
 async_gtest_add_tests_helper(WriteReadADIOS2 MPI_ALLOW)
 
-gtest_add_tests_helper(WriteReadADIOS2 MPI_ONLY BP Engine.BP. .BP5.DSB
+gtest_add_tests_helper(DataSizeAggregationADIOS2 MPI_ONLY BP Engine.BP. .BP5.DSB
   WORKING_DIRECTORY ${BP5_DIR} EXTRA_ARGS "BP5" "AggregationType=DataSizeBased"
 )
 
