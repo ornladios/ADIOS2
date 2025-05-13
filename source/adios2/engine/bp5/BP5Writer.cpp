@@ -308,6 +308,7 @@ void BP5Writer::WriteData(format::BufferV *Data)
             WriteData_EveryoneWrites(Data, false);
             break;
         case (int)AggregationType::EveryoneWritesSerial:
+        case (int)AggregationType::DataSizeBased:
             WriteData_EveryoneWrites(Data, true);
             break;
         case (int)AggregationType::TwoLevelShm:
@@ -326,20 +327,54 @@ void BP5Writer::WriteData(format::BufferV *Data)
 
 void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedWriters)
 {
+    // int worldsize = m_Comm.Size();
+
+    /* Use MPI_Allgather to gather data size from all processes */
+    uint64_t mydatasize = Data->Size();
+    // uint64_t *rank_data_sizes = (uint64_t *)malloc(sizeof(uint64_t) * worldsize);
+    // m_Comm.Allgather((uint64_t *)&mydatasize, 1, (uint64_t *)rank_data_sizes, 1);
+
+    std::vector<uint64_t> allsizes = m_Comm.AllGatherValues(mydatasize);
+
+    std::cout << "Rank data sizes: [";
+    for (int i = 0; i < allsizes.size(); ++i)
+    {
+        if (i > 0)
+        {
+            std::cout << ", ";
+        }
+        // std::cout << rank_data_sizes[i];
+        std::cout << allsizes[i];
+    }
+    std::cout << "]" << std::endl;
+
+    std::cout << "A" << std::endl;
+
+    // free(rank_data_sizes);
+
+    std::cout << "B" << std::endl;
+
     const aggregator::MPIChain *a = dynamic_cast<aggregator::MPIChain *>(m_Aggregator);
+
+    std::cout << "C" << std::endl;
 
     // new step writing starts at offset m_DataPos on aggregator
     // others will wait for the position to arrive from the rank below
 
     if (a->m_Comm.Rank() > 0)
     {
+        std::cout << "C1" << std::endl;
         a->m_Comm.Recv(&m_DataPos, 1, a->m_Comm.Rank() - 1, 0,
                        "Chain token in BP5Writer::WriteData");
     }
 
+    std::cout << "D" << std::endl;
+
     // align to PAGE_SIZE
     m_DataPos += helper::PaddingToAlignOffset(m_DataPos, m_Parameters.StripeSize);
     m_StartDataPos = m_DataPos;
+
+    std::cout << "E" << std::endl;
 
     if (!SerializedWriters && a->m_Comm.Rank() < a->m_Comm.Size() - 1)
     {
@@ -348,6 +383,8 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
         a->m_Comm.Isend(&nextWriterPos, 1, a->m_Comm.Rank() + 1, 0,
                         "Chain token in BP5Writer::WriteData");
     }
+
+    std::cout << "F" << std::endl;
 
     m_DataPos += Data->Size();
     std::vector<core::iovec> DataVec = Data->DataVec();
