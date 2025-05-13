@@ -81,16 +81,16 @@ int sst_fi_mr_reg(
     *mr = NULL;
     int res = fi_mr_reg(domain, buf, len, acs, offset, requested_key, flags, mr, context);
     int is_mr_endpoint = (mr_mode & FI_MR_ENDPOINT) != 0;
-    if (!is_mr_endpoint)
-    {
-        return res;
-    }
     if (res != FI_SUCCESS || !*mr)
     {
         Svcs->verbose(CP_Stream, DPCriticalVerbose,
-                      "fi_mr_reg failed with %ul (%s). A possible cause is that some providers do "
+                      "fi_mr_reg failed with %il (%s). A possible cause is that some providers do "
                       "not support automated key provisioning, but ADIOS2 currently requires it.\n",
                       res, fi_strerror(res));
+        return res;
+    }
+    if (!is_mr_endpoint)
+    {
         return res;
     }
 
