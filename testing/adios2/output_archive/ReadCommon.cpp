@@ -35,7 +35,7 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
 {
     // Each process would write a 1x8 array and all processes would
     // form a mpiSize * Nx 1D array
-    int mpiRank = 0, mpiSize = 1;
+    int mpiRank = 0;
 
     adios2::ADIOS adios;
 
@@ -50,7 +50,6 @@ TEST_F(CommonReadTest, ADIOS2CommonRead1D8)
     auto ts = std::chrono::steady_clock::now();
     engine = io.Open(fname, adios2::Mode::Read);
 
-    Seconds timeOpen = std::chrono::steady_clock::now() - ts;
     EXPECT_TRUE(engine);
 
     size_t t = 0;
@@ -341,23 +340,6 @@ void ParseArgs(int argc, char **argv)
         else if (std::string(argv[1]) == "--filename")
         {
             fname = std::string(argv[2]);
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--read_mode")
-        {
-            if (strcasecmp(argv[2], "sync") == 0)
-            {
-                GlobalReadMode = adios2::Mode::Sync;
-            }
-            else if (strcasecmp(argv[2], "deferred") == 0)
-            {
-                GlobalReadMode = adios2::Mode::Deferred;
-            }
-            else
-            {
-                std::cerr << "Invalid mode for --write_mode " << argv[2] << std::endl;
-            }
             argv++;
             argc--;
         }

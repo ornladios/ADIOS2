@@ -178,40 +178,6 @@ void ParseArgs(int argc, char **argv)
             argv++;
             argc--;
         }
-        else if (std::string(argv[1]) == "--write_mode")
-        {
-            if (strcasecmp(argv[2], "sync") == 0)
-            {
-                GlobalWriteMode = adios2::Mode::Sync;
-            }
-            else if (strcasecmp(argv[2], "deferred") == 0)
-            {
-                GlobalWriteMode = adios2::Mode::Deferred;
-            }
-            else
-            {
-                std::cerr << "Invalid mode for --write_mode " << argv[2] << std::endl;
-            }
-            argv++;
-            argc--;
-        }
-        else if (std::string(argv[1]) == "--read_mode")
-        {
-            if (strcasecmp(argv[2], "sync") == 0)
-            {
-                GlobalReadMode = adios2::Mode::Sync;
-            }
-            else if (strcasecmp(argv[2], "deferred") == 0)
-            {
-                GlobalReadMode = adios2::Mode::Deferred;
-            }
-            else
-            {
-                std::cerr << "Invalid mode for --write_mode " << argv[2] << std::endl;
-            }
-            argv++;
-            argc--;
-        }
         else if (std::string(argv[1]) == "--engine_params")
         {
             engineParams = ParseEngineParams(argv[2]);
