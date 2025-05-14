@@ -342,7 +342,10 @@ void BP5Writer::WriteData_EveryoneWrites(format::BufferV *Data, bool SerializedW
         std::cout << allsizes[i];
     }
 
-    helper::Partitioning partitioning = helper::PartitionRanks(allsizes);
+    int numPartitions = std::max(m_Comm.Size() / 2, 1);
+    std::cout << "], request " << numPartitions << " partitions" << std::endl;
+
+    helper::Partitioning partitioning = helper::PartitionRanks(allsizes, numPartitions);
     std::pair<int, int> myLocation = partitioning.FindPartition(m_Comm.Rank());
     std::cout << "Rank " << m_Comm.Rank() << " is element " << myLocation.second
               << " in partition " << myLocation.first << std::endl;

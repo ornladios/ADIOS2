@@ -80,13 +80,13 @@ namespace
     Partitioner GetPartitioner(adios2::helper::PartitioningStrategy strategy)
     {
         const auto it = strategies.find(strategy);
-        if (it != strategies.end())
+        if (it == strategies.end())
         {
-            return it->second;
+            adios2::helper::Throw<std::runtime_error>("Helper", "adiosPartitioner", "GetPartitioner",
+                                                      "unknown partitioning strategy");
         }
 
-        adios2::helper::Throw<std::runtime_error>("Helper", "adiosPartitioner", "GetPartitioner",
-                                                  "unknown partitioning strategy");
+        return it->second;
     }
 }
 
