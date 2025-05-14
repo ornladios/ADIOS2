@@ -41,7 +41,7 @@ TEST_F(AttributeReadTest, ADIOS2AttributeRead)
 
     EXPECT_GT(myFloats.size(), 9); // at least one MPI rank
 
-    for (size_t i; i < myFloats.size(); i++)
+    for (size_t i = 0; i < myFloats.size(); i++)
     {
         EXPECT_FLOAT_EQ(myFloats[i], (float)i);
     }
