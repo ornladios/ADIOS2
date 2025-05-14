@@ -32,7 +32,7 @@ foreach (TestSet ${TestSets})
     endif()
 
     FILE(GLOB ${TestSet}S ${CMAKE_CURRENT_SOURCE_DIR}/zipped_output/${TestSet}*.zip)
-    set (OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/TempOutput")
+    set (OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/TempOutput")
     file(MAKE_DIRECTORY ${OUTPUT_DIRECTORY})
     LIST(REMOVE_DUPLICATES ${TestSet}S)
 
@@ -63,9 +63,9 @@ foreach (TestSet ${TestSets})
         MESSAGE (STATUS "output for engine ${Engine} and test set ${TestSet}")
         add_custom_target(
 		new_${TestSet}_${Engine}_OUTPUT ALL
-		COMMAND mpirun -n 4 Write${TestSet} ${Engine} ${CMAKE_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine}
-		COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${CMAKE_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine} -DARCHIVE_NAME=${CMAKE_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine}.zip -P ${CMAKE_SOURCE_DIR}/create_archive.cmake
-		COMMAND test_file_unique ${CMAKE_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine}.zip ${${TestSet}S}
+		COMMAND mpirun -n 4 Write${TestSet} ${Engine} ${CMAKE_CURRENT_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine}
+		COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${CMAKE_CURRENT_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine} -DARCHIVE_NAME=${CMAKE_CURRENT_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine}.zip -P ${CMAKE_SOURCE_DIR}/create_archive.cmake
+		COMMAND test_file_unique ${CMAKE_CURRENT_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine}.zip ${${TestSet}S}
 		BYPRODUCTS ${CURRENT_BINARY_DIR}/Current${TestSet}.${Engine}.zip)
 	add_dependencies(new_${TestSet}_${Engine}_OUTPUT Write${TestSet})
     endforeach()
