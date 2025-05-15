@@ -151,16 +151,18 @@ void CommonWrite()
 
 void ParseArgs(int argc, char **argv)
 {
-    if (argc != 3) {
+    if (argc != 3)
+    {
         throw std::invalid_argument("Usage: WriteCommon <engine name> <filename>");
-    } else {
+    }
+    else
+    {
         /* first arg is engine */
         engine = std::string(argv[1]);
         /* second arg is filename */
         fname = std::string(argv[2]);
     }
 }
-
 
 int main(int argc, char **argv)
 {
