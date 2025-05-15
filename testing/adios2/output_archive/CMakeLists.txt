@@ -34,21 +34,22 @@ foreach (TestSet ${TestSets})
     endif()
 
     file(GLOB ${TestSet}S ${CMAKE_CURRENT_SOURCE_DIR}/zipped_output/${TestSet}*.zip)
-    set (OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/TempOutput")
+    set (OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/TempOutput")
     file(MAKE_DIRECTORY ${OUTPUT_DIRECTORY})
     list(REMOVE_DUPLICATES ${TestSet}S)
 
     foreach (${TestSet}OUT ${${TestSet}S})
         get_filename_component(NO_ZIP ${${TestSet}OUT} NAME_WLE)
-    	get_filename_component(DIR ${${TestSet}OUT} DIRECTORY)
 	get_filename_component(UNIQNAME ${NO_ZIP} NAME)
-        set (EXTRACTED_BPFILE "${OUTPUT_DIRECTORY}/${NO_ZIP}")
-        file (MAKE_DIRECTORY ${EXTRACTED_BPFILE})
+	#
+	# Note:  cmake tar extracts to the current working directory.
+	# SetupTestPipeline changes the WD to ${CMAKE_CURRENT_BINARY_DIR}/<pipelinename>
+	# So we have to use that as the source of the read.
+	#
         add_test(NAME Archive.${UNIQNAME}.Extract
-            COMMAND ${CMAKE_COMMAND} -E tar xv ${${TestSet}OUT}
-	    WORKING_DIRECTORY ${EXTRACTED_BPFILE}
+            COMMAND ${CMAKE_COMMAND} -E tar xv "${${TestSet}OUT}"
 	)
-        add_test(NAME Archive.${UNIQNAME}.Read COMMAND Read${TestSet} ${EXTRACTED_BPFILE})
+        add_test(NAME Archive.${UNIQNAME}.Read COMMAND Read${TestSet} "${CMAKE_CURRENT_BINARY_DIR}/Archive.${UNIQNAME}")
 	SetupTestPipeline(Archive.${UNIQNAME} "Extract;Read" TRUE)
     endforeach()
 
@@ -67,18 +68,18 @@ foreach (TestSet ${TestSets})
         add_test(NAME Archive.${TestSet}.${Engine}.Write
             COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
 		${MPIEXEC_NUMPROC_FLAG} 4 $<TARGET_FILE:Write${TestSet}>
-		${Engine} ${CMAKE_CURRENT_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine}
+		${Engine} ${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}
 	)
 	set_tests_properties(Archive.${TestSet}.${Engine}.Write PROPERTIES PROCESSORS 4)
 
 	add_test(NAME Archive.${TestSet}.${Engine}.Zip
-	    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${CMAKE_CURRENT_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine}
-	  	-DARCHIVE_NAME=${CMAKE_CURRENT_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine}.zip 
+	    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}
+	  	-DARCHIVE_NAME=${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}.zip 
 		-P ${CMAKE_CURRENT_SOURCE_DIR}/create_archive.cmake
 	)
 
 	add_test(NAME Archive.${TestSet}.${Engine}.Unique
-	    COMMAND test_file_unique ${CMAKE_CURRENT_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine}.zip ${${TestSet}S}
+	    COMMAND test_file_unique ${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}.zip ${${TestSet}S}
 	)
 
 
