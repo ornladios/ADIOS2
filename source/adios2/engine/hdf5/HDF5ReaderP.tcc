@@ -36,7 +36,13 @@ void HDF5ReaderP::GetSyncCommon(Variable<T> &variable, T *data)
         variable.m_StepsStart = m_StreamAt;
         variable.m_StepsCount = 1;
     }
-    UseHDFRead(variable, data, h5Type);
+    std::vector<Remote::GetHandle> remoteHandles;
+    UseHDFRead(variable, data, h5Type, remoteHandles);
+    // Wait for all outstanding remote requests to be served
+    for (auto &h : remoteHandles)
+    {
+        m_Remote->WaitForGet(h);
+    }
 }
 
 template <class T>

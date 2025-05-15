@@ -15,6 +15,7 @@
 #include "adios2/core/IO.h"
 #include "adios2/helper/adiosComm.h"
 #include "adios2/toolkit/interop/hdf5/HDF5Common.h"
+#include "adios2/toolkit/remote/Remote.h"
 
 #include <map>
 #include <vector>
@@ -70,7 +71,8 @@ private:
     void DoClose(const int transportIndex = -1) final;
 
     template <class T>
-    size_t ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &variable, T *values);
+    size_t ReadDataset(hid_t dataSetId, hid_t h5Type, Variable<T> &variable, T *values,
+                       std::vector<Remote::GetHandle> &remoteHandles);
 
     template <class T>
     void GetSyncCommon(Variable<T> &variable, T *data);
@@ -91,11 +93,16 @@ private:
     BlocksInfoCommon(const core::Variable<T> &variable) const;
 
     template <class T>
-    void UseHDFRead(Variable<T> &variable, T *values, hid_t h5Type);
+    void UseHDFRead(Variable<T> &variable, T *values, hid_t h5Type,
+                    std::vector<Remote::GetHandle> &remoteHandles);
 
     std::vector<std::string> m_DeferredStack;
 
     size_t DoSteps() const final;
+
+    // Remote data access variables and functions
+    std::unique_ptr<Remote> m_Remote;
+    bool CheckRemote();
 };
 
 } // end namespace engine

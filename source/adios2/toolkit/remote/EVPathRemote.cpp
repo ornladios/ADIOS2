@@ -193,7 +193,7 @@ void EVPathRemote::OpenSimpleFile(const std::string hostname, const int32_t port
     m_Active = true;
 }
 
-EVPathRemote::GetHandle EVPathRemote::Get(char *VarName, size_t Step, size_t StepCount,
+EVPathRemote::GetHandle EVPathRemote::Get(const char *VarName, size_t Step, size_t StepCount,
                                           size_t BlockID, Dims &Count, Dims &Start,
                                           Accuracy &accuracy, void *dest)
 {

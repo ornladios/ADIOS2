@@ -43,8 +43,8 @@ public:
 
     typedef void *GetHandle;
 
-    virtual GetHandle Get(char *VarName, size_t Step, size_t StepCount, size_t BlockID, Dims &Count,
-                          Dims &Start, Accuracy &accuracy, void *dest);
+    virtual GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID,
+                          Dims &Count, Dims &Start, Accuracy &accuracy, void *dest);
 
     virtual bool WaitForGet(GetHandle handle);
 

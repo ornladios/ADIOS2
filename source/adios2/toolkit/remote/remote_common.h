@@ -53,7 +53,7 @@ typedef struct _GetRequestMsg
     int GetResponseCondition;
     int RequestType;
     int64_t FileHandle;
-    char *VarName;
+    const char *VarName;
     size_t Step;
     size_t StepCount;
     int64_t BlockID;

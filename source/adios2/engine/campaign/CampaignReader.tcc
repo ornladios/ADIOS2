@@ -13,6 +13,8 @@
 
 #include "CampaignReader.h"
 
+#include <adios2-perfstubs-interface.h>
+
 #include <iostream>
 
 namespace adios2
@@ -68,23 +70,136 @@ inline Attribute<T> CampaignReader::DuplicateAttribute(Attribute<T> *attribute, 
 }
 
 template <class T>
-inline std::pair<Variable<T> *, Engine *>
-CampaignReader::TranslateToActualVariable(Variable<T> &variable)
+std::pair<Variable<T> *, Engine *> CampaignReader::FindActualVariable(Variable<T> &variable)
 {
     auto it = m_VarInternalInfo.find(variable.m_Name);
+    if (it == m_VarInternalInfo.end())
+    {
+        return std::make_pair(nullptr, nullptr);
+    }
+
     Variable<T> *v = reinterpret_cast<Variable<T> *>(it->second.originalVar);
     Engine *e = m_Engines[it->second.engineIdx];
-    v->m_SelectionType = variable.m_SelectionType;
-    v->m_Start = variable.m_Start;
-    v->m_Count = variable.m_Count;
-    v->m_StepsStart = variable.m_StepsStart;
-    v->m_StepsCount = variable.m_StepsCount;
-    v->m_BlockID = variable.m_BlockID;
-    v->m_MemoryStart = variable.m_MemoryStart;
-    v->m_MemoryCount = variable.m_MemoryCount;
-    v->m_MemSpace = variable.m_MemSpace;
-    v->m_AccuracyRequested = variable.m_AccuracyRequested;
+
     return std::make_pair(v, e);
+}
+
+template <class T>
+Variable<T> *CampaignReader::CopyPropertiesToActualVariable(Variable<T> &campaignVariable,
+                                                            Variable<T> *actualVariable)
+{
+    actualVariable->m_SelectionType = campaignVariable.m_SelectionType;
+    actualVariable->m_Start = campaignVariable.m_Start;
+    actualVariable->m_Count = campaignVariable.m_Count;
+    actualVariable->m_StepsStart = campaignVariable.m_StepsStart;
+    actualVariable->m_StepsCount = campaignVariable.m_StepsCount;
+    actualVariable->m_BlockID = campaignVariable.m_BlockID;
+    actualVariable->m_MemoryStart = campaignVariable.m_MemoryStart;
+    actualVariable->m_MemoryCount = campaignVariable.m_MemoryCount;
+    actualVariable->m_MemSpace = campaignVariable.m_MemSpace;
+    actualVariable->m_AccuracyRequested = campaignVariable.m_AccuracyRequested;
+    return actualVariable;
+}
+
+template <class T>
+void CampaignReader::GetSyncTCC(Variable<T> &variable, T *data)
+{
+    PERFSTUBS_SCOPED_TIMER("CampaignReader::Get");
+    std::pair<Variable<T> *, Engine *> p = FindActualVariable(variable);
+    if (p.first != nullptr)
+    {
+        CopyPropertiesToActualVariable(variable, p.first);
+        p.second->Get(*p.first, data, adios2::Mode::Sync);
+    }
+    else if (DataType::Char == helper::GetDataType<T>())
+    {
+        auto it = m_CampaignVarInternalInfo.find(variable.m_Name);
+        if (it != m_CampaignVarInternalInfo.end())
+        {
+            GetVariableFromDB(it->first, it->second.dsIdx, variable.m_Type, (void *)data);
+        }
+    }
+}
+
+template <class T>
+void CampaignReader::GetDeferredTCC(Variable<T> &variable, T *data)
+{
+    PERFSTUBS_SCOPED_TIMER("CampaignReader::Get");
+    std::pair<Variable<T> *, Engine *> p = FindActualVariable(variable);
+    if (p.first != nullptr)
+    {
+        CopyPropertiesToActualVariable(variable, p.first);
+        p.second->Get(*p.first, data, adios2::Mode::Deferred);
+    }
+}
+
+template <class T>
+std::map<size_t, std::vector<typename Variable<T>::BPInfo>>
+CampaignReader::AllStepsBlocksInfoTCC(const Variable<T> &variable) const
+{
+}
+
+template <class T>
+std::vector<std::vector<typename Variable<T>::BPInfo>>
+CampaignReader::AllRelativeStepsBlocksInfoTCC(const Variable<T> &variable) const
+{
+}
+
+template <class T>
+std::vector<typename Variable<T>::BPInfo> CampaignReader::BlocksInfoTCC(const Variable<T> &variable,
+                                                                        const size_t step) const
+{
+}
+
+std::vector<typename core::Variable<std::string>::BPInfo>
+CampaignReader::BlocksInfoCommon(const core::Variable<std::string> &variable,
+                                 const std::vector<size_t> &blocksIndexOffsets) const
+{
+    std::vector<typename core::Variable<std::string>::BPInfo> blocksInfo;
+    /*
+        blocksInfo.reserve(1);
+
+        typename core::Variable<std::string>::BPInfo blockInfo;
+        blockInfo.Shape = blockCharacteristics.Shape;
+        blockInfo.Start = blockCharacteristics.Start;
+        blockInfo.Count = blockCharacteristics.Count;
+        blockInfo.WriterID = blockCharacteristics.Statistics.FileIndex;
+        blockInfo.IsReverseDims = m_ReverseDimensions;
+
+        if (m_ReverseDimensions)
+        {
+            std::reverse(blockInfo.Shape.begin(), blockInfo.Shape.end());
+            std::reverse(blockInfo.Start.begin(), blockInfo.Start.end());
+            std::reverse(blockInfo.Count.begin(), blockInfo.Count.end());
+        }
+
+        if (blockCharacteristics.Statistics.IsValue) // value
+        {
+            blockInfo.IsValue = true;
+            blockInfo.Value = blockCharacteristics.Statistics.Value;
+        }
+        else // array
+        {
+            blockInfo.IsValue = false;
+            blockInfo.Min = blockCharacteristics.Statistics.Min;
+            blockInfo.Max = blockCharacteristics.Statistics.Max;
+            blockInfo.MinMaxs = blockCharacteristics.Statistics.MinMaxs;
+            blockInfo.SubBlockInfo = blockCharacteristics.Statistics.SubBlockInfo;
+        }
+        if (blockInfo.Shape.size() == 1 && blockInfo.Shape.front() == LocalValueDim)
+        {
+            blockInfo.Shape = Dims{blocksIndexOffsets.size()};
+            blockInfo.Count = Dims{1};
+            blockInfo.Start = Dims{n};
+            blockInfo.Min = blockCharacteristics.Statistics.Value;
+            blockInfo.Max = blockCharacteristics.Statistics.Value;
+        }
+        // bp index starts at 1
+        blockInfo.Step = static_cast<size_t>(blockCharacteristics.Statistics.Step - 1);
+        blockInfo.BlockID = n;
+        blocksInfo.push_back(blockInfo);
+    */
+    return blocksInfo;
 }
 
 } // end namespace engine
