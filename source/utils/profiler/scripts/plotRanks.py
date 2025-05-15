@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
     jsonAttrStr = parseMe.command_options[parseMe.TAGS["attr"]]
     #  'secs' or  'nCalls' or 'MB'
-    whichKind = "secs"  
+    whichKind = "secs"
     if "whichKind" in parseMe.command_options:
         whichKind = "MB"
     for i in range(0, len(parseMe.args.ioTypes)):

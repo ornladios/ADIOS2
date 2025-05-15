@@ -10,19 +10,21 @@ parser = argparse.ArgumentParser(
 
 TAGS = {
     "input_dir": "dataDir",  # key name for input direcory is "dataDir"
-    "rank": "whichRank",     # which rank to peek profile 
+    "rank": "whichRank",     # which rank to peek profile
     "out": "plotPrefix",     # for output file name
     "showfig": "showFig",    # call plt.show or not
     "attr": "jsonAttr",  # key refer to specific json attr
-    "zero": "zeroIf",  # key refer to a min number to be treated as 0. Spot the first rank with this value, and only plot up to this rank.
+    # the "zeroif" key refers to a min number to be treated as 0.
+    # will process data until first rank <= this value is spotted, 
+    "zero": "zeroIf",  
     "level": "levelAxis",
 }
 
 TAGS_DEFAULT = {
     "input_dir": "outs/",  # key name for input direcory defaults to "outs/"
-    "rank": 0,  # 
-    "out": "plot",  # 
-    "showfig": "False",  # 
+    "rank": 0,  # by default observe rank 0 activites for plotStack.py
+    "out": "plot",  # output dir
+    "showfig": "False",  # do not call plt.show by default
     "attr": "ES",  # default json attr to look at is ES
     "zero": "0.000001",  # ignore if smaller than
     "level": "False",  # whether left/right axises (if both exist) should display same range
