@@ -64,19 +64,20 @@ if __name__ == "__main__":
         logScaleAxis = parseMe.command_options["logScale"]
 
     jsonAttrStr = parseMe.command_options[parseMe.TAGS["attr"]]
-    whichKind = "secs"  #  or 'nCalls'or 'MB'
+    #  'secs' or  'nCalls' or 'MB'
+    whichKind = "secs"  
     if "whichKind" in parseMe.command_options:
         whichKind = "MB"
     for i in range(0, len(parseMe.args.ioTypes)):
         ioType = parseMe.args.ioTypes[i]
 
         inputFile = (
-            parseMe.command_options[parseMe.TAGS["input_dir"]]
-            + ioType
-            + "_"
-            + whichKind
-            + "_"
-            + jsonAttrStr
+            parseMe.command_options[parseMe.TAGS["input_dir"]] +
+            ioType +
+            "_" +
+            whichKind +
+            "_" +
+            jsonAttrStr
         )
         currLabel = ioType + " " + jsonAttrStr + " ( " + whichKind + " )"
         if i == 0:

@@ -5,14 +5,14 @@ import textwrap
 import os
 
 parser = argparse.ArgumentParser(
-    description="ADIOS json file parser step 2 (step 1 is use compare.sh to collect properties from json)"
+    description="ADIOS json file parser inputs"
 )
 
 TAGS = {
     "input_dir": "dataDir",  # key name for input direcory is "dataDir"
-    "rank": "whichRank",  ##
-    "out": "plotPrefix",  ##
-    "showfig": "showFig",  ##
+    "rank": "whichRank",     # which rank to peek profile 
+    "out": "plotPrefix",     # for output file name
+    "showfig": "showFig",    # call plt.show or not
     "attr": "jsonAttr",  # key refer to specific json attr
     "zero": "zeroIf",  # key refer to a min number to be treated as 0. Spot the first rank with this value, and only plot up to this rank.
     "level": "levelAxis",
@@ -20,9 +20,9 @@ TAGS = {
 
 TAGS_DEFAULT = {
     "input_dir": "outs/",  # key name for input direcory defaults to "outs/"
-    "rank": 0,  ##
-    "out": "plot",  ##
-    "showfig": "False",  ##
+    "rank": 0,  # 
+    "out": "plot",  # 
+    "showfig": "False",  # 
     "attr": "ES",  # default json attr to look at is ES
     "zero": "0.000001",  # ignore if smaller than
     "level": "False",  # whether left/right axises (if both exist) should display same range
@@ -115,4 +115,3 @@ showFig_val = command_options[TAGS["showfig"]].lower()
 if showFig_val not in ("true", "false"):
     parser.error(f"showFig must be 'True' or 'False', got '{command_options[TAGS['level']]}'")
 command_options[TAGS["showfig"]] = showFig_val == "true"
-
