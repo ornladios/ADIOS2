@@ -13,25 +13,47 @@ script_home=$1
 time_deco=$2
 file_name=$3
 
-source ${script_home}/extract.sh  all $file_name
+# Validate files
+if [ ! -f "${script_home}/extract.sh" ]; then
+    echo "Error: extract.sh not found in ${script_home}"
+    exit 1
+fi
+if [ ! -f "${script_home}/draw.sh" ]; then
+    echo "Error: draw.sh not found in ${script_home}"
+    exit 1
+fi
+if [ ! -f "${file_name}" ]; then
+    echo "Error: Profile file '${file_name}' not found"
+    exit 1
+fi
+
+# shellcheck source=/dev/null
+source "${script_home}"/extract.sh  all "$file_name" || {
+    echo "Error: Failed to source ${script_home}/extract.sh"
+    exit 1
+}
 
 job_id=single
 aggType="ew"
-if grep -q "InitAgg-tls" ${file_name}; then
+if grep -q "InitAgg-tls" "${file_name}"; then
     aggType="tls"
 fi
 
-if grep -q "InitAgg-ews" ${file_name}; then
+if grep -q "InitAgg-ews" "${file_name}"; then
     aggType="ews"
 fi
 
-mkdir outs/${time_deco}
-mv outs/*_* outs/${time_deco}
+mkdir outs/"${time_deco}"
+mv outs/*_* outs/"${time_deco}"
 
-base_name=$(basename ${file_name} | cut -d. -f1)
+base_name=$(basename "${file_name}" | cut -d. -f1)
 
 echo "source one.sh ${job_id} ${script_home}  outs ${time_deco} ${aggType} ${base_name}"
-source ${script_home}/draw.sh ${job_id} ${script_home}  outs ${time_deco} ${aggType} ${base_name}
+# shellcheck source=/dev/null
+source "${script_home}"/draw.sh "${job_id}" "${script_home}"  outs "${time_deco}" "${aggType}" "${base_name}" || {
+    echo "Error: Failed to source ${script_home}/draw.sh"
+    exit 1
+}
 
 echo "Finished. plots are in: plots/${job_id}/${aggType}/${time_deco}"
 

@@ -48,10 +48,11 @@ mkdir -p "${currPlotDest}" || { echo "Error: Cannot create ${currPlotDest}"; ret
 
 detectContent()
 {
-    local key="$1"
-    local count=$(find "${extractedFilesLoc}" -maxdepth 1 -type f -name "${key}*" | wc -l)
+    local key count
+    key="$1"    
+    count=$(find "${extractedFilesLoc}" -maxdepth 1 -type f -name "${key}*" | wc -l)
 
-    if [ ${count} -gt 0 ]; then
+    if [ "${count}" -gt 0 ]; then
 	echo "${count} files has ${key}"
 	true; return
     else
@@ -62,41 +63,37 @@ detectContent()
 
 compareTwo()
 {
-    local filePrefix=$1
-    local type1=$2
-    local type2=$3
+    local filePrefix type1 type2
+    filePrefix=$1
+    type1=$2
+    type2=$3
     
-    #path1=($(ls ${extractedFilesLoc}/${type1}*  ))
-    #path2=($(ls ${extractedFilesLoc}/${type2}*  ))
-
-    #n=$((${#path1[@]}*${#path2[@]}))
-
     echo "python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=ES"
-        python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=ES
+        python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=ES
     
-    python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=ES_AWD
-    python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=ES_AWD logScale=x
-    python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=ES_aggregate_info levelAxis=True logScale=x
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=ES_AWD
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=ES_AWD logScale=x
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=ES_aggregate_info levelAxis=True logScale=x
 
-    python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=FixedMetaInfoGather  logScale=xy
-    python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=FixedMetaInfoGather  logScale=y	
-    python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=FixedMetaInfoGather
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=FixedMetaInfoGather  logScale=xy
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=FixedMetaInfoGather  logScale=y	
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=FixedMetaInfoGather
 
-    python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=MetaInfoBcast
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=MetaInfoBcast
 
-    python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=PDW
-    python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=PP logScale=x
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=PDW
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=PP logScale=x
 
-    python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=transport_0.wbytes  whichKind=MB
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=transport_0.wbytes  whichKind=MB
 
     if [[ $type1 == async* ]] ; then
-	python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=BS_WaitOnAsync    
-	python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=DC_WaitOnAsync1 logScale=x
-	python3 ${scriptsHome}/plotRanks.py ${type1} ${type2} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=DC_WaitOnAsync2 logScale=x
+	python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=BS_WaitOnAsync    
+	python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=DC_WaitOnAsync1 logScale=x
+	python3 "${scriptsHome}"/plotRanks.py "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=DC_WaitOnAsync2 logScale=x
     fi
 
     echo "==> plot all the times spent on rank 0: python3 ${scriptsHome}/plotStack.py  ${type1} ${type2} --set dataDir=${extractedFilesLoc}  whichRank=0 plotPrefix=${currPlotDest}/${filePrefix}"
-    python3 ${scriptsHome}/plotStack.py  ${type1} ${type2} --set dataDir=${extractedFilesLoc}  whichRank=0 plotPrefix=${currPlotDest}/${filePrefix}
+    python3 "${scriptsHome}"/plotStack.py  "${type1}" "${type2}" --set dataDir="${extractedFilesLoc}"  whichRank=0 plotPrefix="${currPlotDest}"/"${filePrefix}"
 
     #fi
 }
@@ -104,44 +101,47 @@ compareTwo()
 
 compareThree()
 {
-    local filePrefix=$1
-    local type1=$2
-    local type2=$3
-    local type3=$4
+    local filePrefix type1 type2 type3
+    filePrefix=$1
+    type1=$2
+    type2=$3
+    type3=$4
     
     echo "==> plot all the times spent on rank 0"
-    python3 ${scriptsHome}/plotStack.py  ${type1} ${type2} ${type3} --set dataDir=${extractedFilesLoc}  whichRank=0 plotPrefix=${currPlotDest}/${filePrefix}
+    python3 "${scriptsHome}"/plotStack.py  "${type1}" "${type2}" "${type3}" --set dataDir="${extractedFilesLoc}"  whichRank=0 plotPrefix="${currPlotDest}"/"${filePrefix}"
     
     echo "==> plot numCalls occurred"
     echo "${scriptsHome}/plotCall.py ${type1} ${type2} ${type3} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix}"
-    python3 ${scriptsHome}/plotCall.py ${type1} ${type2} ${type3} --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix}
+    python3 "${scriptsHome}"/plotCall.py "${type1}" "${type2}" "${type3}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}"
 }
 
 checkPossibilities()
 {
-    local prefix=$1
-    local typeA=${prefix}${key1}
-    local typeB=${prefix}${key2}
-    local typeC=${prefix}${key3}
+    local prefix typeA typeB typeC
+    prefix=$1
+    typeA=${prefix}${key1}
+    typeB=${prefix}${key2}
+    typeC=${prefix}${key3}
 
 
 
-    local trueCounter=0;
+    local trueCounter
+    trueCounter=0;
     
     has_key1=false
     has_key2=false
     has_key3=false
     
-    if detectContent $typeA; then
+    if detectContent "$typeA"; then
 	has_key1=true
 	trueCounter=$((trueCounter + 1))
     fi
     
-    if detectContent $typeB; then
+    if detectContent "$typeB"; then
 	has_key2=true
 	trueCounter=$((trueCounter + 1))
     fi
-    if detectContent $typeC; then
+    if detectContent "$typeC"; then
 	has_key3=true
 	trueCounter=$((trueCounter + 1))
     fi
@@ -149,18 +149,18 @@ checkPossibilities()
     echo "$prefix counter = $trueCounter, $has_key1 $has_key3 $has_key2"
     if [[ trueCounter -ge 2 ]]; then
 	if ($has_key1 && $has_key3); then
-	    compareTwo $prefix13 $typeA $typeC
+	    compareTwo "$prefix13" "$typeA" "$typeC"
 	fi
 	if ($has_key1 && $has_key2); then
-	    compareTwo $prefix12 $typeA $typeB 
+	    compareTwo "$prefix12" "$typeA" "$typeB" 
 	fi
 	if ($has_key3 && $has_key2); then    
-	    compareTwo $prefix23 $typeC $typeB 
+	    compareTwo "$prefix23" "$typeC" "$typeB"
 	fi
     fi
 
     if [[ trueCounter -eq 3 ]]; then 
-	compareThree djf $typeA $typeC $typeB 
+	compareThree djf "$typeA" "$typeC" "$typeB" 
     fi
 
     if [[ trueCounter -eq 1 ]]; then
@@ -170,7 +170,7 @@ checkPossibilities()
 	elif ${has_key2}; then 
 	    validType=$typeB
 	fi
-	compareTwo ${validType} ${validType}  ## first input is file prefix
+	compareTwo "${validType}" "${validType}"  ## first input is file prefix
     fi
 }
 

@@ -12,7 +12,7 @@ processFile() {
     local attrName="$2"
 
 
-    BASE_NAME=$(basename $filePath | cut -d. -f1)
+    BASE_NAME=$(basename "$filePath" | cut -d. -f1)
     local key=${BASE_NAME}
     if [[ "$filePath" == *"flatten"* ]]; then
 	key="flatten"
@@ -47,8 +47,8 @@ processFile() {
 if ((  $# <  2 )); then
     echo "Expecting: $0 jsonProperty file1 .."
 else
-    numFiles=$(($# - 1))
-    echo "Num Files: $numFiles"
+    #numFiles=$(($# - 1))
+    #echo "Num Files: $numFiles"
 
     if [[ $1 == "all" ]]; then
 	knownAttrs=( 'PP' 'PDW' 'ES' 'ES_AWD' 'ES_aggregate_info' 'MetaInfoBcast' 'FixedMetaInfoGather' 'transport_0.wbytes' )
@@ -57,12 +57,13 @@ else
 	knownAttrs=("$1")
     fi
     echo "Attributes: ${knownAttrs[*]}"
-    
+
+    args=("$@")  
     for ((i = 2; i <= $#; i++ )); do
-	currFile=$argv[i]
-	#currFile="${!i}"
-	for currAttr in ${knownAttrs[@]}; do
-	    processFile $currFile $currAttr
+	#currFile=$argv[i]
+	currFile="${args[$((i))]}"
+	for currAttr in "${knownAttrs[@]}"; do
+	    processFile "$currFile" "$currAttr"
 	done	
 	if [[ $currFile == *async* ]]; then
 	    for tmp in "${asyncAttrs[@]}"; do
