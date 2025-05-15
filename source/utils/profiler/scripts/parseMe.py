@@ -15,9 +15,9 @@ TAGS = {
     "showfig": "showFig",    # call plt.show or not
     "attr": "jsonAttr",  # key refer to specific json attr
     # the "zeroif" key refers to a min number to be treated as 0.
-    # will process data until first rank <= this value is spotted, 
-    "zero": "zeroIf",  
-    "level": "levelAxis",
+    # will process data until first rank <= this value is spotted
+    "zero": "zeroIf",
+    "level": "levelAxis"
 }
 
 TAGS_DEFAULT = {
