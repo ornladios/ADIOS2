@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse, textwrap
 import os
 parser = argparse.ArgumentParser(description="ADIOS json file parser step 2 (step 1 is use compare.sh to collect properties from json)")
