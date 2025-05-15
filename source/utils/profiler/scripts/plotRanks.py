@@ -3,7 +3,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import csv
-import sys, os
+import sys
+import os
 import parseMe
 import common
 
@@ -21,7 +22,7 @@ def processFile(inputFile, ax, color, tag):
     if idx > 10:
         ax.plot(data1[0:idx], "--o", color=color)
         ax.set_xticks([0, data1.size - 1])
-        # ax.set_xticks([]) ## no x ticks
+        # ax.set_xticks([]) #  no x ticks
     else:
         if color == "r":
             ax.plot(range(idx), data1[0:idx], "--o", color=color)
@@ -57,13 +58,13 @@ if __name__ == "__main__":
     elif len(parseMe.args.ioTypes) == 2:
         ax2 = ax1.twinx()
 
-    ## logscale and ticklabel_format cannot be present together. python error
+    # note: logscale and ticklabel_format cannot be present together. python error
     logScaleAxis = ""
     if "logScale" in parseMe.command_options:
         logScaleAxis = parseMe.command_options["logScale"]
 
     jsonAttrStr = parseMe.command_options[parseMe.TAGS["attr"]]
-    whichKind = "secs"  ## or 'nCalls'or 'MB'
+    whichKind = "secs"  #  or 'nCalls'or 'MB'
     if "whichKind" in parseMe.command_options:
         whichKind = "MB"
     for i in range(0, len(parseMe.args.ioTypes)):

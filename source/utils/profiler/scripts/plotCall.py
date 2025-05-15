@@ -35,7 +35,7 @@ def summarizeFile(inputFile):
         with open(inputFile, "r") as f:
             data = csv.reader(f, delimiter=",", quotechar="|")
             data1 = [float(row[0]) for row in data if row]  # Handle empty rows
-            return int(data1[0]) if data1 else 0  ## num of calls are the same for all ranks
+            return int(data1[0]) if data1 else 0  # num of calls are the same for all ranks
     except (FileNotFoundError, IndexError, ValueError) as e:
         print(f"Warning: Could not process {inputFile}: {e}")
         return 0

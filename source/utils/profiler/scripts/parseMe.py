@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
-import argparse, textwrap
+import argparse
+import textwrap
 import os
 
 parser = argparse.ArgumentParser(
@@ -8,23 +9,23 @@ parser = argparse.ArgumentParser(
 )
 
 TAGS = {
-    "input_dir": "dataDir",  ## key name for input direcory is "dataDir"
+    "input_dir": "dataDir",  # key name for input direcory is "dataDir"
     "rank": "whichRank",  ##
     "out": "plotPrefix",  ##
     "showfig": "showFig",  ##
-    "attr": "jsonAttr",  ## key refer to specific json attr
-    "zero": "zeroIf",  ## key refer to a min number to be treated as 0. Spot the first rank with this value, and only plot up to this rank.
+    "attr": "jsonAttr",  # key refer to specific json attr
+    "zero": "zeroIf",  # key refer to a min number to be treated as 0. Spot the first rank with this value, and only plot up to this rank.
     "level": "levelAxis",
 }
 
 TAGS_DEFAULT = {
-    "input_dir": "outs/",  ## key name for input direcory defaults to "outs/"
+    "input_dir": "outs/",  # key name for input direcory defaults to "outs/"
     "rank": 0,  ##
     "out": "plot",  ##
     "showfig": "False",  ##
-    "attr": "ES",  ## default json attr to look at is ES
-    "zero": "0.000001",  ## ignore if smaller than
-    "level": "False",  ## whether left/right axises (if both exist) should display same range
+    "attr": "ES",  # default json attr to look at is ES
+    "zero": "0.000001",  # ignore if smaller than
+    "level": "False",  # whether left/right axises (if both exist) should display same range
 }
 
 parser.add_argument(
@@ -115,12 +116,3 @@ if showFig_val not in ("true", "false"):
     parser.error(f"showFig must be 'True' or 'False', got '{command_options[TAGS['level']]}'")
 command_options[TAGS["showfig"]] = showFig_val == "true"
 
-# command_options[TAGS["level"]] = eval(command_options[TAGS["level"]])
-
-# valid_keys = set(TAGS.values())
-# for key in command_options:
-#    if key not in valid_keys:
-#        parser.warn(f"Invalid option key: '{key}'. Valid keys are: {', '.join(valid_keys)}")
-####     allow extra options      ####
-
-# print (command_options)
