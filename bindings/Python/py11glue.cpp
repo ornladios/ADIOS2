@@ -134,7 +134,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         .value("StoreData", adios2::DerivedVarType::StoreData)
         .export_values();
 
-#ifdef ADIOS2_HAVE_CUDA
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
     pybind11::enum_<adios2::MemorySpace>(m, "MemorySpace")
         .value("Host", adios2::MemorySpace::Host)
         .value("GPU", adios2::MemorySpace::GPU);
@@ -406,7 +406,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              (adios2::Dims(adios2::py11::Variable::*)(const size_t) const) &
                  adios2::py11::Variable::Shape,
              pybind11::arg("step") = adios2::EngineCurrentStep)
-#ifdef ADIOS2_HAVE_CUDA
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
         .def("Shape",
              (adios2::Dims(adios2::py11::Variable::*)(const adios2::MemorySpace, const size_t)
                   const) &
