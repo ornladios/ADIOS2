@@ -22,7 +22,7 @@ include(ADIOSFunctions)
 
 set (TestSets Attribute Common)
 
-add_executable(test_file_unique test_file_unique.c)
+add_executable(archive_utility archive_utility.c)
 
 foreach (TestSet ${TestSets})
 
@@ -61,7 +61,7 @@ foreach (TestSet ${TestSets})
     set(NewFileEngineList )
     if(ADIOS2_HAVE_MPI)
         #  Engines to create new files with  nothing if no MPI  (Not doing this for the moment)
-	#        set(NewFileEngineList bp5)
+	set(NewFileEngineList bp5)
     endif()
     
     foreach	(Engine ${NewFileEngineList})
@@ -72,6 +72,10 @@ foreach (TestSet ${TestSets})
 	)
 	set_tests_properties(Archive.${TestSet}.${Engine}.Write PROPERTIES PROCESSORS 4)
 
+	add_test(NAME Archive.${TestSet}.${Engine}.RemoveVersionInfo
+	    COMMAND archive_utility -make_version_neutral ${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}
+	)
+
 	add_test(NAME Archive.${TestSet}.${Engine}.Zip
 	    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}
 	  	-DARCHIVE_NAME=${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}.zip 
@@ -79,11 +83,11 @@ foreach (TestSet ${TestSets})
 	)
 
 	add_test(NAME Archive.${TestSet}.${Engine}.Unique
-	    COMMAND test_file_unique ${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}.zip ${${TestSet}S}
+	    COMMAND archive_utility -test_unique ${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}.zip ${${TestSet}S}
 	)
 
 
-	SetupTestPipeline(Archive.${TestSet}.${Engine} "Write;Zip;Unique" TRUE)
+	SetupTestPipeline(Archive.${TestSet}.${Engine} "Write;RemoveVersionInfo;Zip;Unique" TRUE)
     endforeach()
 # 
 endforeach()  # over testsets
