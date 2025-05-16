@@ -78,8 +78,7 @@ void Engine::Put(Variable variable, const pybind11::array &array, const Mode lau
     }
 }
 
-#ifdef ADIOS2_HAVE_CUDA
-void Engine::Put(Variable variable, long array, const Mode launch)
+void Engine::Put(Variable variable, std::uintptr_t array, const Mode launch)
 {
     helper::CheckForNullptr(m_Engine, "in call to Engine::Put list of cupy pointers");
     helper::CheckForNullptr(variable.m_VariableBase,
@@ -109,7 +108,6 @@ void Engine::Put(Variable variable, long array, const Mode launch)
                                     ", in call to Put\n");
     }
 }
-#endif
 
 void Engine::Put(Variable variable, const std::vector<int64_t> &ints, const Mode launch)
 {
@@ -203,8 +201,7 @@ void Engine::Get(Variable variable, pybind11::array &array, const Mode launch)
     }
 }
 
-#ifdef ADIOS2_HAVE_CUDA
-void Engine::Get(Variable variable, long array, const Mode launch)
+void Engine::Get(Variable variable, std::uintptr_t array, const Mode launch)
 {
     helper::CheckForNullptr(m_Engine, "for engine, in call to Engine::Get a cupy pointer");
     helper::CheckForNullptr(variable.m_VariableBase,
@@ -233,7 +230,6 @@ void Engine::Get(Variable variable, long array, const Mode launch)
                                     ", in call to Get\n");
     }
 }
-#endif
 
 std::string Engine::Get(Variable variable, const Mode launch)
 {

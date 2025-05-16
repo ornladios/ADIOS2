@@ -21,7 +21,7 @@ def write_array(fileName, nSteps, gpuArray, cpuArray):
         # write buffers
         wStream.BeginStep()
         wStream.Put(cpuVar, cpuArray)
-        wStream.Put(gpuVar, gpuArray.data.ptr)
+        wStream.Put(gpuVar, gpuArray.data.ptr, adios2.Mode.Deferred)
         wStream.EndStep()
         # update buffers
         gpuArray = gpuArray * 2
@@ -44,7 +44,7 @@ def read_array(fileName, nSteps):
         gpuBuffer = cp.zeros(gpuShape, dtype=np.float32)
         gpuVar.SetSelection([(0, 0), gpuShape])
         # populate data
-        rStream.Get(gpuVar, gpuBuffer.data.ptr)
+        rStream.Get(gpuVar, gpuBuffer.data.ptr, adios2.Mode.Deferred)
         rStream.Get(cpuVar, cpuBuffer)
         rStream.EndStep()
         print("Step %d: read GPU data\n %s" % (step, gpuBuffer))
