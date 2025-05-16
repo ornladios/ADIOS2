@@ -61,6 +61,41 @@ detectContent()
     
 }
 
+justOne()
+{
+    local filePrefix type1
+    filePrefix=$1
+    type1=$2
+
+    echo "python3 ${scriptsHome}/plotRanks.py ${type1}  --set dataDir=${extractedFilesLoc} plotPrefix=${currPlotDest}/${filePrefix} jsonAttr=ES"
+    python3 "${scriptsHome}"/plotRanks.py "${type1}"  --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=ES
+
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=ES_AWD
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=ES_AWD logScale=x
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=ES_aggregate_info levelAxis=True logScale=x
+
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=FixedMetaInfoGather  logScale=xy
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=FixedMetaInfoGather  logScale=y
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=FixedMetaInfoGather
+
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=MetaInfoBcast
+
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=PDW
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=PP logScale=x
+
+    python3 "${scriptsHome}"/plotRanks.py "${type1}" --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=transport_0.wbytes  whichKind=MB
+
+    if [[ $type1 == async* ]] ; then
+	python3 "${scriptsHome}"/plotRanks.py "${type1}"  --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=BS_WaitOnAsync
+	python3 "${scriptsHome}"/plotRanks.py "${type1}"  --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=DC_WaitOnAsync1 logScale=x
+	python3 "${scriptsHome}"/plotRanks.py "${type1}"  --set dataDir="${extractedFilesLoc}" plotPrefix="${currPlotDest}"/"${filePrefix}" jsonAttr=DC_WaitOnAsync2 logScale=x
+    fi
+
+    echo "==> plot all the times spent on rank 0: python3 ${scriptsHome}/plotStack.py  ${type1} ${type2} --set dataDir=${extractedFilesLoc}  whichRank=0 plotPrefix=${currPlotDest}/${filePrefix}"
+    python3 "${scriptsHome}"/plotStack.py  "${type1}"  --set dataDir="${extractedFilesLoc}"  whichRank=0 plotPrefix="${currPlotDest}"/"${filePrefix}"
+    #fi
+}
+
 compareTwo()
 {
     local filePrefix type1 type2
@@ -170,7 +205,7 @@ checkPossibilities()
 	elif ${has_key2}; then 
 	    validType=$typeB
 	fi
-	compareTwo "${validType}" "${validType}"  ## first input is file prefix
+	justOne "${validType}" "${validType}"  ## first input is file prefix
     fi
 }
 

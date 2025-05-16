@@ -117,3 +117,5 @@ showFig_val = command_options[TAGS["showfig"]].lower()
 if showFig_val not in ("true", "false"):
     parser.error(f"showFig must be 'True' or 'False', got '{command_options[TAGS['level']]}'")
 command_options[TAGS["showfig"]] = showFig_val == "true"
+
+#print (command_options)

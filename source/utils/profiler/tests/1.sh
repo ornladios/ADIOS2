@@ -48,7 +48,7 @@ mv outs/*_* outs/"${time_deco}"
 
 base_name=$(basename "${file_name}" | cut -d. -f1)
 
-echo "source one.sh ${job_id} ${script_home}  outs ${time_deco} ${aggType} ${base_name}"
+echo "Data extracted, now plotting.."
 # shellcheck source=/dev/null
 source "${script_home}"/draw.sh "${job_id}" "${script_home}"  outs "${time_deco}" "${aggType}" "${base_name}" || {
     echo "Error: Failed to source ${script_home}/draw.sh"
