@@ -6,10 +6,10 @@ import adios2.bindings as adios2
 def write_array(fileName, nSteps, gpuArray, cpuArray):
     adios = adios2.ADIOS()
     ioWriter = adios.DeclareIO("cupyWriter")
-    # define adios variables, the cpuArray is used for both variables to
-    # define the type of the variables (float32 in this case)
-    gpuVar = ioWriter.DefineVariable("gpuArray", cpuArray, gpuArray.shape,
-                                     [0] * len(gpuArray.shape), gpuArray.shape)
+    gpuVar = ioWriter.DefineVariable("gpuArray",
+                                     np.array([0], dtype=cpuArray.dtype),
+                                     gpuArray.shape, [0] * len(gpuArray.shape),
+                                     gpuArray.shape)
     # optionally the memory space can be set to GPU
     gpuVar.SetMemorySpace(adios2.MemorySpace.GPU)
     cpuVar = ioWriter.DefineVariable("cpuArray", cpuArray, cpuArray.shape,
