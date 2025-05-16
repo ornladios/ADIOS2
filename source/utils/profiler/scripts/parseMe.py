@@ -4,20 +4,18 @@ import argparse
 import textwrap
 import os
 
-parser = argparse.ArgumentParser(
-    description="ADIOS json file parser inputs"
-)
+parser = argparse.ArgumentParser(description="ADIOS json file parser inputs")
 
 TAGS = {
     "input_dir": "dataDir",  # key name for input direcory is "dataDir"
-    "rank": "whichRank",     # which rank to peek profile
-    "out": "plotPrefix",     # for output file name
-    "showfig": "showFig",    # call plt.show or not
+    "rank": "whichRank",  # which rank to peek profile
+    "out": "plotPrefix",  # for output file name
+    "showfig": "showFig",  # call plt.show or not
     "attr": "jsonAttr",  # key refer to specific json attr
     # the "zeroif" key refers to a min number to be treated as 0.
     # will process data until first rank <= this value is spotted
     "zero": "zeroIf",
-    "level": "levelAxis"
+    "level": "levelAxis",
 }
 
 TAGS_DEFAULT = {
