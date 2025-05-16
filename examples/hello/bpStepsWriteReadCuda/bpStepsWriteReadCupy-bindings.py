@@ -6,10 +6,10 @@ import adios2.bindings as adios2
 def write_array(fileName, nSteps, gpuArray, cpuArray):
     adios = adios2.ADIOS()
     ioWriter = adios.DeclareIO("cupyWriter")
-    # define adios variables, the cpuArray is used for both variables to
-    # define the type of the variables (float32 in this case)
-    gpuVar = ioWriter.DefineVariable("gpuArray", cpuArray, gpuArray.shape,
-                                     [0] * len(gpuArray.shape), gpuArray.shape)
+    gpuVar = ioWriter.DefineVariable("gpuArray",
+                                     np.array([0], dtype=cpuArray.dtype),
+                                     gpuArray.shape, [0] * len(gpuArray.shape),
+                                     gpuArray.shape)
     # optionally the memory space can be set to GPU
     gpuVar.SetMemorySpace(adios2.MemorySpace.GPU)
     cpuVar = ioWriter.DefineVariable("cpuArray", cpuArray, cpuArray.shape,
@@ -21,7 +21,7 @@ def write_array(fileName, nSteps, gpuArray, cpuArray):
         # write buffers
         wStream.BeginStep()
         wStream.Put(cpuVar, cpuArray)
-        wStream.Put(gpuVar, gpuArray.data.ptr)
+        wStream.Put(gpuVar, gpuArray.data.ptr, adios2.Mode.Deferred)
         wStream.EndStep()
         # update buffers
         gpuArray = gpuArray * 2
@@ -44,7 +44,7 @@ def read_array(fileName, nSteps):
         gpuBuffer = cp.zeros(gpuShape, dtype=np.float32)
         gpuVar.SetSelection([(0, 0), gpuShape])
         # populate data
-        rStream.Get(gpuVar, gpuBuffer.data.ptr)
+        rStream.Get(gpuVar, gpuBuffer.data.ptr, adios2.Mode.Deferred)
         rStream.Get(cpuVar, cpuBuffer)
         rStream.EndStep()
         print("Step %d: read GPU data\n %s" % (step, gpuBuffer))

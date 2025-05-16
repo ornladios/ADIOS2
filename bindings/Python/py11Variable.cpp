@@ -173,7 +173,7 @@ Dims Variable::Shape(const size_t step) const
     return shape;
 }
 
-#ifdef ADIOS2_HAVE_CUDA
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
 void Variable::SetMemorySpace(const MemorySpace memSpace)
 {
     m_VariableBase->SetMemorySpace(memSpace);
