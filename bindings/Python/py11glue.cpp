@@ -134,7 +134,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
         .value("StoreData", adios2::DerivedVarType::StoreData)
         .export_values();
 
-#ifdef ADIOS2_HAVE_CUDA
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
     pybind11::enum_<adios2::MemorySpace>(m, "MemorySpace")
         .value("Host", adios2::MemorySpace::Host)
         .value("GPU", adios2::MemorySpace::GPU);
@@ -406,7 +406,7 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              (adios2::Dims(adios2::py11::Variable::*)(const size_t) const) &
                  adios2::py11::Variable::Shape,
              pybind11::arg("step") = adios2::EngineCurrentStep)
-#ifdef ADIOS2_HAVE_CUDA
+#ifdef ADIOS2_HAVE_GPU_SUPPORT
         .def("Shape",
              (adios2::Dims(adios2::py11::Variable::*)(const adios2::MemorySpace, const size_t)
                   const) &
@@ -514,14 +514,11 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              pybind11::arg("variable"), pybind11::arg("floats"),
              pybind11::arg("launch") = adios2::Mode::Sync)
 
-#ifdef ADIOS2_HAVE_CUDA
         .def("Put",
-             (void(adios2::py11::Engine::*)(adios2::py11::Variable variable, long,
+             (void(adios2::py11::Engine::*)(adios2::py11::Variable variable, std::uintptr_t,
                                             const adios2::Mode launch)) &
                  adios2::py11::Engine::Put,
-             pybind11::arg("variable"), pybind11::arg("cypyPointer"),
-             pybind11::arg("launch") = adios2::Mode::Sync)
-#endif
+             pybind11::arg("variable"), pybind11::arg("pointer"), pybind11::arg("launch"))
 
         .def("Put",
              (void(adios2::py11::Engine::*)(adios2::py11::Variable,
@@ -542,20 +539,17 @@ PYBIND11_MODULE(ADIOS2_PYTHON_MODULE_NAME, m)
              pybind11::arg("variable"), pybind11::arg("array"),
              pybind11::arg("launch") = adios2::Mode::Deferred)
 
-#ifdef ADIOS2_HAVE_CUDA
-        .def("Get",
-             (void(adios2::py11::Engine::*)(adios2::py11::Variable variable, long,
-                                            const adios2::Mode launch)) &
-                 adios2::py11::Engine::Get,
-             pybind11::arg("variable"), pybind11::arg("cupyPointer"),
-             pybind11::arg("launch") = adios2::Mode::Sync)
-#endif
-
         .def("Get",
              (std::string(adios2::py11::Engine::*)(adios2::py11::Variable,
                                                    const adios2::Mode launch)) &
                  adios2::py11::Engine::Get,
              pybind11::arg("variable"), pybind11::arg("launch") = adios2::Mode::Deferred)
+
+        .def("Get",
+             (void(adios2::py11::Engine::*)(adios2::py11::Variable variable, std::uintptr_t,
+                                            const adios2::Mode launch)) &
+                 adios2::py11::Engine::Get,
+             pybind11::arg("variable"), pybind11::arg("pointer"), pybind11::arg("launch"))
 
         .def("PerformGets", &adios2::py11::Engine::PerformGets)
 
