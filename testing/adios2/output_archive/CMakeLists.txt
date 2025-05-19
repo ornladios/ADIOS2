@@ -18,56 +18,77 @@
 # interpreted.  <Version info> could/should also include relevant
 # architecture information, like byte order.
 #
-SET (TestSets Attribute Common)
+include(ADIOSFunctions)
 
-ADD_EXECUTABLE(test_file_unique test_file_unique.c)
+set (TestSets Attribute Common)
+
+add_executable(archive_utility archive_utility.c)
 
 foreach (TestSet ${TestSets})
 
-    ADD_EXECUTABLE(Read${TestSet} Read${TestSet}.cpp)
+    add_executable(Read${TestSet} Read${TestSet}.cpp)
     target_link_libraries(Read${TestSet} adios2::cxx11 adios2::c adios2_core adios2::thirdparty::gtest)
     if(ADIOS2_HAVE_MPI)
-        ADD_EXECUTABLE(Write${TestSet} Write${TestSet}.cpp)
+        add_executable(Write${TestSet} Write${TestSet}.cpp)
         target_link_libraries(Write${TestSet} adios2::cxx11_mpi adios2::c_mpi adios2_core_mpi MPI::MPI_CXX adios2::thirdparty::gtest)
     endif()
 
-    FILE(GLOB ${TestSet}S ${CMAKE_CURRENT_SOURCE_DIR}/zipped_output/${TestSet}*.zip)
-    set (OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/TempOutput")
-    file(MAKE_DIRECTORY ${OUTPUT_DIRECTORY})
-    LIST(REMOVE_DUPLICATES ${TestSet}S)
+    file(GLOB ${TestSet}S ${CMAKE_CURRENT_SOURCE_DIR}/zipped_output/${TestSet}*.zip)
+    set (OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+    file(MAKE_DIRECTORY ${OUTPUT_DIRECTORY}) 
+   list(REMOVE_DUPLICATES ${TestSet}S)
 
     foreach (${TestSet}OUT ${${TestSet}S})
-        GET_FILENAME_COMPONENT(NO_ZIP ${${TestSet}OUT} NAME_WLE)
-    	GET_FILENAME_COMPONENT(DIR ${${TestSet}OUT} DIRECTORY)
-	GET_FILENAME_COMPONENT(UNIQNAME ${NO_ZIP} NAME)
-        GET_FILENAME_COMPONENT(BASENAME ${NO_ZIP} NAME_WLE)
-        GET_FILENAME_COMPONENT(ENGINE_EXT ${NO_ZIP} LAST_EXT)
-        STRING(REGEX REPLACE "^\\." "" ENGINE ${ENGINE_EXT})
-        set (EXTRACTED_BPFILE "${OUTPUT_DIRECTORY}/${NO_ZIP}")
-        file (MAKE_DIRECTORY ${EXTRACTED_BPFILE})
-	#   MESSAGE (STATUS "Setting up read test for file ${EXTRACTED_BPFILE}")
-        file(ARCHIVE_EXTRACT INPUT ${${TestSet}OUT} DESTINATION ${EXTRACTED_BPFILE})
-        ADD_TEST(NAME ReadingOldOutput${UNIQNAME} COMMAND Read${TestSet} ${EXTRACTED_BPFILE})
+        get_filename_component(NO_ZIP ${${TestSet}OUT} NAME_WLE)
+	get_filename_component(UNIQNAME ${NO_ZIP} NAME)
+	#
+	# Note:  cmake tar extracts to the current working directory.
+	# SetupTestPipeline changes the WD to ${CMAKE_CURRENT_BINARY_DIR}/<pipelinename>
+	# So we have to use that as the source of the read.
+	#
+        add_test(NAME Archive.${UNIQNAME}.Extract
+            COMMAND ${CMAKE_COMMAND} -E tar xv "${${TestSet}OUT}"
+	)
+        add_test(NAME Archive.${UNIQNAME}.Read COMMAND Read${TestSet} "${CMAKE_CURRENT_BINARY_DIR}/Archive.${UNIQNAME}")
+	SetupTestPipeline(Archive.${UNIQNAME} "Extract;Read" TRUE)
     endforeach()
 
 
     # The code below is for creating "new" output and failing a test
-    # if it's unique so that it gets added to teh test set.  This is not
+    # if it's unique so that it gets added to the test set.  This is not
     # currently enabled.
     #
-    #  Engines to create new files with
-    #    SET(NewFileEngineList bp5)
-    SET(NewFileEngineList )
-
+    set(NewFileEngineList )
+    if(ADIOS2_HAVE_MPI)
+        #  Engines to create new files with  nothing if no MPI  (Not doing this for the moment)
+	set(NewFileEngineList bp5)
+    endif()
+    
     foreach	(Engine ${NewFileEngineList})
-        MESSAGE (STATUS "output for engine ${Engine} and test set ${TestSet}")
-        add_custom_target(
-		new_${TestSet}_${Engine}_OUTPUT ALL
-		COMMAND mpirun -n 4 Write${TestSet} ${Engine} ${CMAKE_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine}
-		COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${CMAKE_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine} -DARCHIVE_NAME=${CMAKE_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine}.zip -P ${CMAKE_SOURCE_DIR}/create_archive.cmake
-		COMMAND test_file_unique ${CMAKE_BINARY_DIR}/TempOutput/Current${TestSet}.${Engine}.zip ${${TestSet}S}
-		BYPRODUCTS ${CURRENT_BINARY_DIR}/Current${TestSet}.${Engine}.zip)
-	add_dependencies(new_${TestSet}_${Engine}_OUTPUT Write${TestSet})
+        add_test(NAME Archive.${TestSet}.${Engine}.Write
+            COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_EXTRA_FLAGS}
+		${MPIEXEC_NUMPROC_FLAG} 4 $<TARGET_FILE:Write${TestSet}>
+		${Engine} ${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}
+	)
+	set_tests_properties(Archive.${TestSet}.${Engine}.Write PROPERTIES PROCESSORS 4)
+
+	add_test(NAME Archive.${TestSet}.${Engine}.RemoveVersionInfo
+	    COMMAND archive_utility -make_version_neutral ${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}
+	)
+
+	add_test(NAME Archive.${TestSet}.${Engine}.Zip
+	    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}
+	  	-DARCHIVE_NAME=${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}.zip 
+		-P ${CMAKE_CURRENT_SOURCE_DIR}/create_archive.cmake
+	)
+
+	add_test(NAME Archive.${TestSet}.${Engine}.Unique
+	    COMMAND archive_utility -test_unique ${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}.zip ${${TestSet}S}
+	)
+
+
+	SetupTestPipeline(Archive.${TestSet}.${Engine} "Write;RemoveVersionInfo;Zip;Unique" TRUE)
     endforeach()
+# 
 endforeach()  # over testsets
 

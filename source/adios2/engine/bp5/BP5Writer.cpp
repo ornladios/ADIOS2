@@ -1406,7 +1406,7 @@ void BP5Writer::MakeHeader(std::vector<char> &buffer, size_t &position, const st
 
     if (sizeof(BP5IndexTableHeader) != 64)
     {
-        std::cerr << "BP6 Index Table Header must be 64 bytes" << std::endl;
+        std::cerr << "BP5 Index Table Header must be 64 bytes" << std::endl;
         exit(1);
     }
 

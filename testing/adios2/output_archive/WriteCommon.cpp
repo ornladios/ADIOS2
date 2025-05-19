@@ -15,7 +15,10 @@
 
 #include "TestData.h"
 
-#include "ParseArgs.h"
+std::string fname = "ADIOS2Common";
+std::string engine = "";
+adios2::Params engineParams = {};
+int NSteps = 10;
 
 // ADIOS2 COMMON write
 void CommonWrite()
@@ -61,13 +64,6 @@ void CommonWrite()
         adios2::Dims time_start{static_cast<unsigned int>(mpiRank)};
         adios2::Dims time_count{1};
 
-        if (ZeroDataVar)
-        {
-            if (mpiRank == 1)
-            {
-                start_r64[0] = 0;
-            }
-        }
         (void)io.DefineVariable<double>("scalar_r64");
         (void)io.DefineVariable<int8_t>("i8", shape, start, count);
         (void)io.DefineVariable<int16_t>("i16", shape, start, count);
@@ -115,13 +111,6 @@ void CommonWrite()
         adios2::Box<adios2::Dims> sel2({mpiRank * Nx, 0}, {Nx, 2});
         adios2::Box<adios2::Dims> sel3({0, mpiRank * Nx}, {2, Nx});
         adios2::Box<adios2::Dims> sel_time({static_cast<unsigned long>(mpiRank)}, {1});
-        if (ZeroDataVar)
-        {
-            if (mpiRank == 1)
-            {
-                sel_r64.first[0] = 0;
-            }
-        }
 
         var_i8.SetSelection(sel);
         var_i16.SetSelection(sel);
@@ -158,6 +147,21 @@ void CommonWrite()
     }
 
     engine.Close();
+}
+
+void ParseArgs(int argc, char **argv)
+{
+    if (argc != 3)
+    {
+        throw std::invalid_argument("Usage: WriteCommon <engine name> <filename>");
+    }
+    else
+    {
+        /* first arg is engine */
+        engine = std::string(argv[1]);
+        /* second arg is filename */
+        fname = std::string(argv[2]);
+    }
 }
 
 int main(int argc, char **argv)
