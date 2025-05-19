@@ -35,8 +35,7 @@ foreach (TestSet ${TestSets})
 
     file(GLOB ${TestSet}S ${CMAKE_CURRENT_SOURCE_DIR}/zipped_output/${TestSet}*.zip)
     set (OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-    file(MAKE_DIRECTORY ${OUTPUT_DIRECTORY}) 
-   list(REMOVE_DUPLICATES ${TestSet}S)
+    list(REMOVE_DUPLICATES ${TestSet}S)
 
     foreach (${TestSet}OUT ${${TestSet}S})
         get_filename_component(NO_ZIP ${${TestSet}OUT} NAME_WLE)
