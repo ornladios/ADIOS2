@@ -69,5 +69,5 @@ if __name__ == '__main__':
           pinned_mempool.n_free_blocks())
 
     nSteps = 2
-    write_array("StepsWriteReadCuPy.bp", nSteps, gpuArray, cpuArray)
-    read_array("StepsWriteReadCuPy.bp", nSteps)
+    write_array("StepsCuPyBindings.bp", nSteps, gpuArray, cpuArray)
+    read_array("StepsCuPyBindings.bp", nSteps)
