@@ -404,6 +404,8 @@ void BP5Helper::BP5AggregateInformation(helper::Comm &mpiComm,
     if (AttributeEncodeBuffers.size() > 0)
     {
         size_t AlignedSize = ((AttributeEncodeBuffers[0].iov_len + 7) & ~0x7);
+        memset((char *)AttributeEncodeBuffers[0].iov_base + AttributeEncodeBuffers[0].iov_len, 0,
+               AlignedSize - AttributeEncodeBuffers[0].iov_len);
         attrLen = AlignedSize;
     }
     if ((attrLen > 0) && AttributeEncodeBuffers[0].iov_base)
