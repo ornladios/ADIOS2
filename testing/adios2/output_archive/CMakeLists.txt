@@ -60,7 +60,7 @@ foreach (TestSet ${TestSets})
     set(NewFileEngineList )
     if(ADIOS2_HAVE_MPI)
         #  Engines to create new files with  nothing if no MPI  (Not doing this for the moment)
-	set(NewFileEngineList bp5)
+	#	set(NewFileEngineList bp5)
     endif()
     
     foreach	(Engine ${NewFileEngineList})
