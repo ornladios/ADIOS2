@@ -62,5 +62,5 @@ if __name__ == '__main__':
     print("Bytes required to store the gpu array", gpuArray.nbytes)
 
     nSteps = 2
-    write_array("StepsWriteReadTorch.bp", nSteps, gpuArray, cpuArray)
-    read_array("StepsWriteReadTorch.bp", nSteps)
+    write_array("StepsTorchBindings.bp", nSteps, gpuArray, cpuArray)
+    read_array("StepsTorchBindings.bp", nSteps)
