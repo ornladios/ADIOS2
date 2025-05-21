@@ -40,7 +40,8 @@ namespace core
 {
 
 using VarMap = std::unordered_map<std::string, std::unique_ptr<VariableBase>>;
-using AttrMap = std::unordered_map<std::string, std::unique_ptr<AttributeBase>>;
+// Note: AttrMap should stay an ordered map to preserve output consistency
+using AttrMap = std::map<std::string, std::unique_ptr<AttributeBase>>;
 
 // forward declaration needed as IO is passed to Engine derived
 // classes
