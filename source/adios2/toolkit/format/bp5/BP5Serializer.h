@@ -137,8 +137,9 @@ public:
     size_t m_PreMetaMetadataFileLength = 0;
 
     size_t m_BufferAlign = 1; // align buffers in memory
-    // align buffers to integer multiples of block size
-    size_t m_BufferBlockSize = sizeof(max_align_t);
+    // force buffer sizes to integer multiples of block size.
+    // size once was sizeof(max_align_t), changed for predictability across platforms
+    size_t m_BufferBlockSize = 16;
 
 private:
     void Init();

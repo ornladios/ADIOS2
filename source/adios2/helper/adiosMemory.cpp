@@ -668,17 +668,6 @@ void CopyPayload(char *dest, const Dims &destStart, const Dims &destCount, const
     }
 }
 
-size_t PaddingToAlignPointer(const void *ptr)
-{
-    auto memLocation = reinterpret_cast<std::uintptr_t>(ptr);
-    size_t padSize = sizeof(max_align_t) - (memLocation % sizeof(max_align_t));
-    if (padSize == sizeof(max_align_t))
-    {
-        padSize = 0;
-    }
-    return padSize;
-}
-
 uint64_t PaddingToAlignOffset(uint64_t offset, uint64_t alignment_size)
 {
     uint64_t padSize = alignment_size - (offset % alignment_size);
