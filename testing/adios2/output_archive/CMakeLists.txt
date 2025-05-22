@@ -24,6 +24,13 @@ set (TestSets Attribute Common)
 
 add_executable(archive_utility archive_utility.c)
 
+find_program(ZIP_EXECUTABLE NAMES zip PATHS /usr/bin /usr/local/bin /opt/local/bin DOC "Path to the zip executable")
+if(ZIP_EXECUTABLE)
+    message(STATUS "Found zip executable: ${ZIP_EXECUTABLE}")
+else()
+    message(WARNING "zip executable not found.")
+endif()
+
 foreach (TestSet ${TestSets})
 
     add_executable(Read${TestSet} Read${TestSet}.cpp)
@@ -58,7 +65,7 @@ foreach (TestSet ${TestSets})
     # currently enabled.
     #
     set(NewFileEngineList )
-    if(ADIOS2_HAVE_MPI)
+    if (ADIOS2_HAVE_MPI AND ZIP_EXECUTABLE )
         #  Engines to create new files with  nothing if no MPI  (Not doing this for the moment)
 	set(NewFileEngineList bp5)
     endif()
@@ -78,6 +85,7 @@ foreach (TestSet ${TestSets})
 	add_test(NAME Archive.${TestSet}.${Engine}.Zip
 	    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}
 	  	-DARCHIVE_NAME=${OUTPUT_DIRECTORY}/Current${TestSet}.${Engine}.zip 
+		-DZIP_EXECUTABLE=${ZIP_EXECUTABLE}
 		-P ${CMAKE_CURRENT_SOURCE_DIR}/create_archive.cmake
 	)
 
