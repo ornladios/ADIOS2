@@ -374,7 +374,7 @@ class Stream:
 
         self.write(variable, content)
 
-    def _read_var(self, variable: Variable):
+    def _read_var(self, variable: Variable, defer_read: bool = False):
         """
         Internal function to read when there is no preallocated buffer submitted.
         Settings must be done to Variable before the call.
@@ -384,6 +384,11 @@ class Stream:
                 adios2.Variable object to be read
                 Use variable.set_selection(), set_block_selection(), set_step_selection()
                 to prepare a read
+            defer_read
+                False: read now and blocking wait for completion (Sync mode)
+                True: defer reading all requests until read_complete().
+                        The returned numpy array will be filled with data
+                        only after calling read_complete().
         Returns
             array
                 resulting array from selection
@@ -420,8 +425,12 @@ class Stream:
             else:
                 output_shape = []
 
+        mode = bindings.Mode.Sync
+        if defer_read:
+            mode = bindings.Mode.Deferred
+
         output = np.zeros(output_shape, dtype=dtype)
-        self._engine.get(variable, output)
+        self._engine.get(variable, output, mode)
         return output
 
     def _set_variable_settings(self, variable, start, count, block_id, step_selection):
@@ -466,7 +475,14 @@ class Stream:
 
     @singledispatchmethod
     def read_in_buffer(
-        self, variable: Variable, buffer, start=[], count=[], block_id=None, step_selection=None
+        self,
+        variable: Variable,
+        buffer,
+        start=[],
+        count=[],
+        block_id=None,
+        step_selection=None,
+        defer_read: bool = False,
     ):
         """
         Read a variable into a preallocated buffer.
@@ -494,6 +510,12 @@ class Stream:
 
             step_selection
                 (list): On the form of [start, count].
+
+            defer_read
+                False: read now and blocking wait for completion (Sync mode)
+                True: defer reading all requests until read_complete().
+                      The returned numpy array will be filled with data
+                      only after calling read_complete().
         """
         variable = self._set_variable_settings(variable, start, count, block_id, step_selection)
         # make sure the buffer is a mutable array
@@ -526,10 +548,23 @@ class Stream:
         if count != buf_size:
             raise RuntimeError("Read buffer size {buf_size} does not match variable size {count}")
 
-        self._engine.get(variable, buffer)
+        mode = bindings.Mode.Sync
+        if defer_read:
+            mode = bindings.Mode.Deferred
+
+        self._engine.get(variable, buffer, mode)
 
     @read_in_buffer.register(str)
-    def _(self, name: str, buffer, start=[], count=[], block_id=None, step_selection=None):
+    def _(
+        self,
+        name: str,
+        buffer,
+        start=[],
+        count=[],
+        block_id=None,
+        step_selection=None,
+        defer_read: bool = False,
+    ):
         """
         Read a variable into a preallocated buffer.
         Random access read allowed to select steps.
@@ -554,15 +589,31 @@ class Stream:
 
             step_selection
                 (list): On the form of [start, count].
+
+            defer_read
+                False: read now and blocking wait for completion (Sync mode)
+                True: defer reading all requests until read_complete().
+                      The returned numpy array will be filled with data
+                      only after calling read_complete().
         """
         variable = self._io.inquire_variable(name)
         if not variable:
             raise ValueError()
 
-        self.read_in_buffer(variable, buffer, start, count, block_id, step_selection)
+        self.read_in_buffer(
+            variable, buffer, start, count, block_id, step_selection, defer_read=defer_read
+        )
 
     @singledispatchmethod
-    def read(self, variable: Variable, start=[], count=[], block_id=None, step_selection=None):
+    def read(
+        self,
+        variable: Variable,
+        start=[],
+        count=[],
+        block_id=None,
+        step_selection=None,
+        defer_read: bool = False,
+    ):
         """
         Read a variable.
         Random access read allowed to select steps.
@@ -585,6 +636,12 @@ class Stream:
 
             step_selection
                 (list): On the form of [start, count].
+
+            defer_read
+                False: read now and blocking wait for completion (Sync mode)
+                True: defer reading all requests until read_complete().
+                        The returned numpy array will be filled with data
+                        only after calling read_complete().
         Returns
             array
                 resulting array from selection
@@ -593,10 +650,18 @@ class Stream:
         variable = self._set_variable_settings(variable, start, count, block_id, step_selection)
         if variable.type() == "string" and variable.single_value() is True:
             return self._engine.get(variable)
-        return self._read_var(variable)
+        return self._read_var(variable, defer_read=defer_read)
 
     @read.register(str)
-    def _(self, name: str, start=[], count=[], block_id=None, step_selection=None):
+    def _(
+        self,
+        name: str,
+        start=[],
+        count=[],
+        block_id=None,
+        step_selection=None,
+        defer_read: bool = False,
+    ):
         """
         Read a variable.
         Random access read allowed to select steps.
@@ -617,6 +682,12 @@ class Stream:
 
             step_selection
                 (list): On the form of [start, count].
+
+            defer_read
+                False: read now and blocking wait for completion (Sync mode)
+                True: defer reading all requests until read_complete().
+                        The returned numpy array will be filled with data
+                        only after calling read_complete().
         Returns
             array
                 resulting array from selection
@@ -625,7 +696,15 @@ class Stream:
         if not variable:
             raise ValueError()
 
-        return self.read(variable, start, count, block_id, step_selection)
+        return self.read(variable, start, count, block_id, step_selection, defer_read=defer_read)
+
+    def read_complete(self):
+        """
+        Complete reading all deferred read requests.
+        The returned numpy arrays of each read(..., defer_read=True) will be
+        filled with data after this call.
+        """
+        self._engine.perform_gets()
 
     def write_attribute(self, name, content, variable_name="", separator="/"):
         """

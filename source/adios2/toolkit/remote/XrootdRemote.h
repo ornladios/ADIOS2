@@ -103,7 +103,7 @@ public:
     void Open(const std::string hostname, const int32_t port, const std::string filename,
               const Mode mode, bool RowMajorOrdering);
 
-    GetHandle Get(char *VarName, size_t Step, size_t StepCount, size_t BlockID, Dims &Count,
+    GetHandle Get(const char *VarName, size_t Step, size_t StepCount, size_t BlockID, Dims &Count,
                   Dims &Start, Accuracy &accuracy, void *dest);
 
     GetHandle Read(size_t Start, size_t Size, void *Dest);

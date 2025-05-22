@@ -58,7 +58,7 @@ Dims Variable<T>::DoCount() const
 
             if (!MVI->WasLocalValue)
             {
-                size_t *DimsPtr = (MVI->BlocksInfo)[m_BlockID].Count;
+                const size_t *DimsPtr = (MVI->BlocksInfo)[m_BlockID].Count;
                 Dims D;
                 D.resize(MVI->Dims);
                 for (int i = 0; i < MVI->Dims; i++)
