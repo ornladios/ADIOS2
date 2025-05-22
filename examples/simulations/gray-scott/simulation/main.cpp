@@ -82,90 +82,92 @@ int main(int argc, char **argv)
     }
 
     Settings settings = Settings::from_json(argv[1]);
-
-    GrayScott sim(settings, comm);
-    sim.init();
-
-    adios2::ADIOS adios(settings.adios_config, comm);
-    adios2::IO io_main = adios.DeclareIO("SimulationOutput");
-    adios2::IO io_ckpt = adios.DeclareIO("SimulationCheckpoint");
-
-    int restart_step = 0;
-    if (settings.restart)
     {
-        restart_step = ReadRestart(comm, settings, sim, io_ckpt);
-        io_main.SetParameter("AppendAfterSteps", std::to_string(restart_step / settings.plotgap));
-    }
 
-    Writer writer_main(settings, sim, io_main);
-    writer_main.open(settings.output, (restart_step > 0));
+        GrayScott sim(settings, comm);
+        sim.init();
 
-    if (rank == 0)
-    {
-        print_io_settings(io_main);
-        std::cout << "========================================" << std::endl;
-        print_settings(settings, restart_step);
-        print_simulator_settings(sim);
-        std::cout << "========================================" << std::endl;
-    }
+        adios2::ADIOS adios(settings.adios_config, comm);
+        adios2::IO io_main = adios.DeclareIO("SimulationOutput");
+        adios2::IO io_ckpt = adios.DeclareIO("SimulationCheckpoint");
 
-#ifdef ENABLE_TIMERS
-    Timer timer_total;
-    Timer timer_compute;
-    Timer timer_write;
-
-    std::ostringstream log_fname;
-    log_fname << "gray_scott_pe_" << rank << ".log";
-
-    std::ofstream log(log_fname.str());
-    log << "step\ttotal_gs\tcompute_gs\twrite_gs" << std::endl;
-#endif
-
-    for (int it = restart_step; it < settings.steps;)
-    {
-#ifdef ENABLE_TIMERS
-        MPI_Barrier(comm);
-        timer_total.start();
-        timer_compute.start();
-#endif
-
-        sim.iterate();
-        it++;
-
-#ifdef ENABLE_TIMERS
-        timer_compute.stop();
-        MPI_Barrier(comm);
-        timer_write.start();
-#endif
-
-        if (it % settings.plotgap == 0)
+        int restart_step = 0;
+        if (settings.restart)
         {
-            if (rank == 0)
+            restart_step = ReadRestart(comm, settings, sim, io_ckpt);
+            io_main.SetParameter("AppendAfterSteps",
+                                 std::to_string(restart_step / settings.plotgap));
+        }
+
+        Writer writer_main(settings, sim, io_main);
+        writer_main.open(settings.output, (restart_step > 0));
+
+        if (rank == 0)
+        {
+            print_io_settings(io_main);
+            std::cout << "========================================" << std::endl;
+            print_settings(settings, restart_step);
+            print_simulator_settings(sim);
+            std::cout << "========================================" << std::endl;
+        }
+
+#ifdef ENABLE_TIMERS
+        Timer timer_total;
+        Timer timer_compute;
+        Timer timer_write;
+
+        std::ostringstream log_fname;
+        log_fname << "gray_scott_pe_" << rank << ".log";
+
+        std::ofstream log(log_fname.str());
+        log << "step\ttotal_gs\tcompute_gs\twrite_gs" << std::endl;
+#endif
+
+        for (int it = restart_step; it < settings.steps;)
+        {
+#ifdef ENABLE_TIMERS
+            MPI_Barrier(comm);
+            timer_total.start();
+            timer_compute.start();
+#endif
+
+            sim.iterate();
+            it++;
+
+#ifdef ENABLE_TIMERS
+            timer_compute.stop();
+            MPI_Barrier(comm);
+            timer_write.start();
+#endif
+
+            if (it % settings.plotgap == 0)
             {
-                std::cout << "Simulation at step " << it << " writing output step     "
-                          << it / settings.plotgap << std::endl;
+                if (rank == 0)
+                {
+                    std::cout << "Simulation at step " << it << " writing output step     "
+                              << it / settings.plotgap << std::endl;
+                }
+
+                writer_main.write(it, sim);
             }
 
-            writer_main.write(it, sim);
-        }
-
-        if (settings.checkpoint && (it % settings.checkpoint_freq) == 0)
-        {
-            WriteCkpt(comm, it, settings, sim, io_ckpt);
-        }
+            if (settings.checkpoint && (it % settings.checkpoint_freq) == 0)
+            {
+                WriteCkpt(comm, it, settings, sim, io_ckpt);
+            }
 
 #ifdef ENABLE_TIMERS
-        double time_write = timer_write.stop();
-        double time_step = timer_total.stop();
-        MPI_Barrier(comm);
+            double time_write = timer_write.stop();
+            double time_step = timer_total.stop();
+            MPI_Barrier(comm);
 
-        log << it << "\t" << timer_total.elapsed() << "\t" << timer_compute.elapsed() << "\t"
-            << timer_write.elapsed() << std::endl;
+            log << it << "\t" << timer_total.elapsed() << "\t" << timer_compute.elapsed() << "\t"
+                << timer_write.elapsed() << std::endl;
 #endif
+        }
+
+        writer_main.close();
     }
-
-    writer_main.close();
-
 #ifdef ENABLE_TIMERS
     log << "total\t" << timer_total.elapsed() << "\t" << timer_compute.elapsed() << "\t"
         << timer_write.elapsed() << std::endl;
