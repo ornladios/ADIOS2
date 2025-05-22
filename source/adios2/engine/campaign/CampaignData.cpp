@@ -13,6 +13,7 @@
 #include "adios2/helper/adiosLog.h"
 #include "adios2/helper/adiosString.h"
 
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <stdio.h>
