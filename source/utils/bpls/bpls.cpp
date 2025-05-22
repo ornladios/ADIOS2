@@ -1773,13 +1773,13 @@ int doList(std::string path)
             doList_vars(fp, &io);
         }
 
+        fp->Close();
         if (nmasks > 0 && nEntriesMatched == 0)
         {
             fprintf(stderr, "\nError: None of the variables/attributes matched any "
                             "name/regexp you provided\n");
             return 4;
         }
-        fp->Close();
     }
     return 0;
 }
@@ -2664,6 +2664,7 @@ int print_data_as_string(const void *data, int maxlen, DataType adiosvartype)
     {
     case DataType::UInt8:
     case DataType::Int8:
+    case DataType::Char:
     case DataType::String:
         while (str[len - 1] == 0)
         {
@@ -3060,7 +3061,8 @@ int print_dataset(const void *data, const DataType vartype, uint64_t *s, uint64_
 
         // print item
         fprintf(outf, "%s", idxstr);
-        if (printByteAsChar && (adiosvartype == DataType::Int8 || adiosvartype == DataType::UInt8))
+        if (printByteAsChar && (adiosvartype == DataType::Int8 || adiosvartype == DataType::UInt8 ||
+                                adiosvartype == DataType::Char))
         {
             /* special case: k-D byte array printed as (k-1)D array of
              * strings
