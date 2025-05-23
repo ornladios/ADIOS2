@@ -257,6 +257,17 @@ std::set<T> KeysToSet(const std::unordered_map<T, U> &hash) noexcept
     return output;
 }
 
+template <class T, class U>
+std::set<T> KeysToSet(const std::map<T, U> &hash) noexcept
+{
+    std::set<T> output;
+    for (const auto &pair : hash)
+    {
+        output.insert(pair.first);
+    }
+    return output;
+}
+
 template <class T>
 std::set<T> VectorToSet(const std::vector<T> &input) noexcept
 {
