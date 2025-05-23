@@ -20,7 +20,13 @@ GrayScott::GrayScott(const Settings &settings, MPI_Comm comm)
 {
 }
 
-GrayScott::~GrayScott() {}
+GrayScott::~GrayScott()
+{
+    MPI_Comm_free(&cart_comm);
+    MPI_Type_free(&xy_face_type);
+    MPI_Type_free(&xz_face_type);
+    MPI_Type_free(&yz_face_type);
+}
 
 void GrayScott::init()
 {
